@@ -20,6 +20,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -46,15 +47,15 @@ func Preformatted(value string) string {
 	return b.String()
 }
 
-// Preview is Controls plus a 120-code-point cap and a byte-count suffix: it escapes the
-// first 120 runes and, when value was longer, appends "… (N bytes)" naming the original
-// byte length. The cap is counted in code points so a multibyte string is not cut at a
-// fraction of its apparent length.
+// Preview is Controls plus the bounds.PreviewRuneLimit cap and a byte-count suffix: it
+// escapes the first bounds.PreviewRuneLimit runes and, when value was longer, appends
+// "… (N bytes)" naming the original byte length. The cap is counted in code points so a
+// multibyte string is not cut at a fraction of its apparent length.
 func Preview(value string) string {
 	runes := []rune(value)
-	truncated := len(runes) > 120
+	truncated := len(runes) > bounds.PreviewRuneLimit
 	if truncated {
-		runes = runes[:120]
+		runes = runes[:bounds.PreviewRuneLimit]
 	}
 	var b strings.Builder
 	writeEscaped(&b, runes, false)

@@ -81,6 +81,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- A truncated preview of operator-influenced text now keeps 240 code points, not 120,
+  before the `… (N bytes)` suffix replaces the rest. The cap is the named
+  `bounds.PreviewRuneLimit` entry in the `internal/bounds` policy registry, and the
+  `bounds-policy` check reds when the preview stops naming it. A failure line and a
+  guard refusal therefore carry two times more of the string they report.
 - `bench gate-prose` usage text now carries a second line,
   `example: bench gate-prose . -- <path>`. The first operand is the root directory, so a
   caller who names one file there gets a refusal; the example shows the single-file form

@@ -51,6 +51,12 @@ const (
 	// a row spanning more is an outcome family no single test can go red on.
 	CoverageRowStories = 4
 	TestDeadlineFloor  = 20 * time.Second
+	// PreviewRuneLimit caps how many code points a preview of operator-influenced text
+	// keeps before the byte-count suffix replaces the rest. A `bench test` failure line
+	// and a guard refusal both carry a preview, and each must stay readable inside one
+	// bounded response. The value holds a full commit subject or an objective, and it
+	// stays short enough that two previews and their surrounding row fit one screen.
+	PreviewRuneLimit = 240
 )
 
 // TestDeadline derives an outer test deadline from the inner bound that deadline has
