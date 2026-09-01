@@ -457,6 +457,16 @@ func TestSubcommandRoutingGradesDoctorLeafThroughUsageParse(t *testing.T) {
 	}
 }
 
+func TestSubcommandRoutingKeepsWorktreeDispatcherExempt(t *testing.T) {
+	entry, found := subcommandRouting["worktree"]
+	if !found {
+		t.Fatal("subcommand routing lacks worktree")
+	}
+	if got, want := entry, exempt(whyNested); got != want {
+		t.Fatalf("worktree routing = %#v, want %#v", got, want)
+	}
+}
+
 // TestSubcommandRoutingRoutedClaimBites proves the routed disposition is verified, not
 // merely asserted. A package recorded as routed that no longer reaches the grammar helper
 // is reported.
