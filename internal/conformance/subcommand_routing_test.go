@@ -66,6 +66,7 @@ var subcommandRouting = map[string]routingEntry{
 	"harnesses": routed("internal/harnesses"),
 	"idea":      routed("internal/roadmap"),
 	"learning":  routed("internal/roadmap"),
+	"retro":     routed("internal/roadmap"),
 	"learnings": routed("internal/learnings"),
 	"maps":      routed("internal/maps"),
 	"models":    routed("internal/models"),

@@ -522,6 +522,7 @@ var keptRoutes = []struct {
 	{[]string{"guards", "--help"}, "usage: bench guards"},
 	{[]string{"idea", "--help"}, "usage: bench idea"},
 	{[]string{"learning", "--help"}, "usage: bench learning"},
+	{[]string{"retro", "--help"}, "usage: bench retro"},
 	{[]string{"roadmap", "--help"}, "usage: bench roadmap"},
 	{[]string{"spec", "retire", "--help"}, "usage: bench spec retire"},
 	{[]string{"spec", "history", "--help"}, "usage: bench spec history"},
