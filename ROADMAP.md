@@ -53,7 +53,6 @@ means the repository-controlled compliance assessment.
 
 **FT199 (MEDIUM) — a recovery-aware branch-retirement coordinator closes one repository-wide ref inventory.**
 
-**FT178 (MEDIUM) — `bench worktree`'s bare verb is a human porcelain that traps automation and leaks on signals.**
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
@@ -83,7 +82,6 @@ means the repository-controlled compliance assessment.
 
 **FT58 (LOW) — hardened pool roots.**
 
-**FT92 (LOW) — attributed subject drift and consumer-shipped input hygiene.**
 
 **FT99 (LOW) — spec problem-premise verification.**
 
@@ -105,11 +103,9 @@ means the repository-controlled compliance assessment.
 
 **FT267 (LOW) — `scripts/verify-release-artifact.mjs` has a gate-owned execution seam.**
 
-**FT268 (LOW) — FT251 residual test hardening: negative callers, bundle confinement, and one checkout-name source.**
 
 **FT269 (LOW) — `craft-gate`: a check on an indirected value grades both ends.**
 
-**FT270 (LOW) — `bench test` names its checks, prints every finding, and runs the system suite.**
 
 **FT272 (LOW) — `bench status` routes a tickets-only spec folder to a grammar `bench commit` refuses.**
 
@@ -145,7 +141,6 @@ means the repository-controlled compliance assessment.
 
 **FT130 (MEDIUM, decision required) — a capture write mid-lifecycle voids or blocks the run.**
 
-**FT164 (MEDIUM) — repair-lane charges, and a done-claim that resolves its named owners.**
 
 **FT200 (MEDIUM, decision required) — make preflight mechanical at the landing chokepoint.**
 
@@ -157,7 +152,6 @@ means the repository-controlled compliance assessment.
 
 **FT266 (LOW) — `craft-tdd` re-exec helpers return silently outside their role environment.**
 
-**FT166 (LOW) — a sanctioned writer and parser validator for primary-local learnings and retros.**
 
 **FT168 (LOW) — focused iteration evidence: a fixture-selecting canary and mutation probe.**
 
@@ -184,7 +178,6 @@ defect.
 
 **FT141 (MEDIUM, decision required) — red verdicts are recorded against a baseline, so inherited reds stop reading as caused.**
 
-**FT104 (LOW) — load-induced commit refusals: the stop rule and the pre-gate quiet check.**
 
 **FT115 (LOW) — load-robust test and phase deadlines derived from bounds.**
 
@@ -199,11 +192,8 @@ one-source-per-fact and cleanup sweeps under one gate. FT117's parser-routing
 half is the largest item in the batch. FT142 itself stays on the main list,
 because its ship track belongs to a separate `prep-release` hardening visit.
 
-**FT117 (MEDIUM) — FT87 parser-surface follow-ups.**
 
-**FT179 (MEDIUM) — comment quality: strip the reviewer-facing register, document high-stakes surfaces, sharpen `craft-comments`.**
 
-**FT94 (LOW) — single-sourced `bench resume` summary golden.**
 
 ## Session tax — evidence-supplied reader rows
 
