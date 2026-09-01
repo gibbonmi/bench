@@ -11,7 +11,9 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"io"
 	"os"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -39,7 +41,10 @@ func identityComponentFixtures() []identityComponentFixture {
 			request:   func(string) string { return "unknown-request" },
 			mutate:    func(*testing.T, string, Creation) {},
 			want: func(creation Creation, base, tip string) string {
-				next := "bench worktree reauthorize --assignment " + creation.Assignment.ID +
+				// LRS9: the request proof is the assignment group's first stage, so its
+				// fault leaves the source proofs unrun and the route says so ahead of the
+				// repair. Both the first run and the resume group their proofs this way.
+				next := laterProofsSkipped + "; bench worktree reauthorize --assignment " + creation.Assignment.ID +
 					" --request <new-request> --base '" + base + "' --source-tip '" + tip + "' '" + creation.Path + "'"
 				return "detail=request token matches no assignment,observed=assignment:" + creation.Assignment.ID + ",next=" + next
 			},
@@ -211,6 +216,171 @@ func TestIdentityComponentRegistryHasAProducingFixture(t *testing.T) {
 	}
 	if identityComponentByName(componentRequest).recovers == identityComponentByName(componentLock).recovers {
 		t.Errorf("the request component is the only one that carries a recovery command")
+	}
+}
+
+// landingRefusalFixture produces exactly one landing refusal face. mutate breaks the
+// landing fixture so that face is the one the preflight prints. The registry walk requires
+// one fixture per declared face, so a face added with no fixture turns this file red.
+// The registry states which faces the resume prints, so the fixture reads the stage
+// there rather than restating it: a resume fixture's mutation runs against the published
+// destination of an interrupted landing, not against the first run.
+type landingRefusalFixture struct {
+	face   string
+	mutate func(t *testing.T, root string, creation Creation)
+	// tip states the source tip the run names, read after the mutation. A face that
+	// refuses on the caller's own tip needs a value other than the worktree's head, which
+	// the walk names by default.
+	tip func(t *testing.T, creation Creation) string
+}
+
+func landingRefusalFixtures() []landingRefusalFixture {
+	return []landingRefusalFixture{
+		{
+			face: faceDestinationNotClean,
+			mutate: func(t *testing.T, root string, _ Creation) {
+				mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
+			},
+		},
+		{
+			face: faceDestinationResidue,
+			mutate: func(t *testing.T, root string, _ Creation) {
+				mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("ignored/\n"), 0o644)
+				mustMkdirAll(t, filepath.Join(root, "ignored"), 0o755)
+				mustWrite(t, filepath.Join(root, "ignored", "residue"), []byte("residue\n"), 0o600)
+			},
+		},
+		{
+			face: faceSourceNotClean,
+			mutate: func(t *testing.T, _ string, creation Creation) {
+				mustWrite(t, filepath.Join(creation.Path, "scratch"), []byte("scratch\n"), 0o600)
+			},
+		},
+		{
+			face: faceSourceNotFenced,
+			mutate: func(t *testing.T, _ string, creation Creation) {
+				commitInWorktree(t, creation.Path, "stray.txt", "stray\n", "out of fence")
+			},
+		},
+		{
+			// The source moves past the tip the caller names, which is the state an
+			// operator reaches when a review repair adds a commit.
+			face: faceSourceTipMismatch,
+			mutate: func(t *testing.T, _ string, creation Creation) {
+				commitInWorktree(t, creation.Path, "owned.txt", "moved\n", "source moved past the named tip")
+			},
+			tip: func(t *testing.T, creation Creation) string {
+				return gitOutput(t, creation.Path, "rev-parse", "HEAD~1")
+			},
+		},
+		{
+			// The destination moves onto a commit the reviewed source also changed, which
+			// is the state a composition conflict outside the rule table reaches.
+			face: faceCompositionConflict,
+			mutate: func(t *testing.T, root string, _ Creation) {
+				commitInWorktree(t, root, "owned.txt", "destination bytes\n", "destination conflict")
+			},
+		},
+		{
+			face: faceResumeDestinationResidue,
+			mutate: func(t *testing.T, root string, _ Creation) {
+				mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
+			},
+		},
+		{
+			face: faceResumeMarker,
+			mutate: func(t *testing.T, root string, _ Creation) {
+				// The marker refuses only once the destination has moved past the
+				// published landing, so the mutation moves it and then drops the marker.
+				commitInWorktree(t, root, "destination-after-publication", "forward\n", "destination movement")
+				gitRun(t, root, "update-ref", "-d", "refs/bench/green/main")
+			},
+		},
+	}
+}
+
+// landingFaceResume drives a resume fixture. It interrupts a landing at the release step,
+// applies the fixture's mutation to the published destination, and resumes.
+func landingFaceResume(t *testing.T, fixture landingRefusalFixture, root, home, base string, creation Creation, stdout, stderr *bytes.Buffer) int {
+	t.Helper()
+	request := "landing-face-" + fixture.face
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	broken := defaultJoins()
+	broken.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+	if code := landWith(broken, root, home, "", landArgs(request, base, tip, creation.Path), stdout, stderr); code != 3 {
+		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	published := gitOutput(t, root, "rev-parse", "main")
+	fixture.mutate(t, root, creation)
+	stdout.Reset()
+	stderr.Reset()
+	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
+	return landWith(defaultJoins(), root, home, "", args, stdout, stderr)
+}
+
+// landingFaceNext reads the next= value out of the refused record whose detail names the
+// face. next= is the last field the formatter writes, so the value runs to the closing
+// brace. The second result reports whether the face printed at all.
+func landingFaceNext(stdout, detail string) (string, bool) {
+	for _, line := range strings.Split(stdout, "\n") {
+		if !strings.HasPrefix(line, "refused{detail="+detail) {
+			continue
+		}
+		_, next, found := strings.Cut(line, ",next=")
+		if !found {
+			return "", true
+		}
+		return strings.TrimSuffix(next, "}"), true
+	}
+	return "", false
+}
+
+// TestLandingRefusalRegistryHasAProducingFixture is LRS1 and LRS2. The registry is the
+// source of the landing's face set, so a face added without a fixture reds here rather
+// than reaching an operator unproven, and a face whose route string is empty reds on the
+// value its fixture prints.
+func TestLandingRefusalRegistryHasAProducingFixture(t *testing.T) {
+	t.Parallel()
+	produced := map[string]bool{}
+	for _, fixture := range landingRefusalFixtures() {
+		if produced[fixture.face] {
+			t.Fatalf("face %q has two producing fixtures", fixture.face)
+		}
+		produced[fixture.face] = true
+	}
+	for _, face := range landingRefusalFaces {
+		if !produced[face.name] {
+			t.Errorf("registry face %q has no producing fixture", face.name)
+		}
+		delete(produced, face.name)
+	}
+	for name := range produced {
+		t.Errorf("fixture %q produces no registered face", name)
+	}
+	for _, fixture := range landingRefusalFixtures() {
+		t.Run(fixture.face, func(t *testing.T) {
+			t.Parallel()
+			request := "landing-face-" + fixture.face
+			root, creation, base, _, _, home := publicLandingFixture(t, request, "", "")
+			var stdout, stderr bytes.Buffer
+			code := 0
+			if landingRefusalFaceByName(fixture.face).stage == stageResume {
+				code = landingFaceResume(t, fixture, root, home, base, creation, &stdout, &stderr)
+			} else {
+				fixture.mutate(t, root, creation)
+				// A mutation may add a source commit, so the pinned tip is read after it. An
+				// unmoved source reads back the same commit the fixture created.
+				tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+				if fixture.tip != nil {
+					tip = fixture.tip(t, creation)
+				}
+				code = LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+			}
+			next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(fixture.face).detail)
+			if code != 1 || !printed || next == "" {
+				t.Fatalf("face %s = (%d, %q, %q), want exit 1 and a non-empty next= field", fixture.face, code, stdout.String(), stderr.String())
+			}
+		})
 	}
 }
 

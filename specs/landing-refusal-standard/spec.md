@@ -1,6 +1,6 @@
 # Landing refusal standard
 
-Status: staged
+Status: implemented
 
 Roadmap: FT169
 

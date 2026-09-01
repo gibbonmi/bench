@@ -767,15 +767,22 @@ func TestRetireDeletesTheFolderAndExitsZero(t *testing.T) {
 }
 
 // TestRetireOnPrimaryCheckoutRefusesAndDeletesNothing pins the primary-checkout refusal:
-// retire prints the one shared refusal and leaves the merged-implemented spec on disk.
+// retire prints the shared refusal with its own retire follow-on step, so the operator
+// reads one route, and it leaves the merged-implemented spec on disk.
 func TestRetireOnPrimaryCheckoutRefusesAndDeletesNothing(t *testing.T) {
 	root := retirePrimary(t, "s", "Status: implemented\nRoadmap: FT7\n", nil)
 	out, code := runRetire(t, root, "s")
 	if code != 1 {
 		t.Fatalf("code = %d, want 1; out = %q", code, out)
 	}
-	if want := usage.PrimaryCheckoutRefusal() + "\n"; out != want {
-		t.Errorf("out = %q, want %q", out, want)
+	if shared := usage.PrimaryCheckoutRefusal(); !strings.HasPrefix(out, shared) {
+		t.Errorf("out = %q, want the shared refusal as its prefix (%q)", out, shared)
+	}
+	if out == usage.PrimaryCheckoutRefusal()+"\n" {
+		t.Errorf("out = %q names only the worktree creation, want a retire follow-on step too", out)
+	}
+	if !strings.Contains(out, "bench spec retire") {
+		t.Errorf("out = %q, want it to name bench spec retire as the follow-on step", out)
 	}
 	if _, err := os.Stat(filepath.Join(root, "specs", "s", "spec.md")); err != nil {
 		t.Errorf("spec was deleted on refusal: %v", err)

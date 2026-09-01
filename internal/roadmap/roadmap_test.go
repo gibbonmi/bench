@@ -94,6 +94,11 @@ func TestIdeaRefusesPrimaryCheckout(t *testing.T) {
 	if code != 1 || out != usage.PrimaryCheckoutRefusal()+"\n" {
 		t.Fatalf("primary checkout = %q/%d, want the shared refusal on exit 1", out, code)
 	}
+	// The retire verb appends its own follow-on step at its call site, so that step
+	// must never reach the idea verb through the shared refusal.
+	if strings.Contains(out, "bench spec retire") {
+		t.Errorf("idea refusal = %q, want no bench spec retire step", out)
+	}
 	if _, err := os.Stat(ideasPath(t, primary)); err == nil {
 		t.Fatal("refused idea still appended to the inbox")
 	}

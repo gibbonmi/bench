@@ -23,7 +23,10 @@ func TestLandCommandRefusalListsDestinationPaths(t *testing.T) {
 	mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, home, "", landArgs("refusal-destination", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
-	if code != 1 || !strings.Contains(stdout.String(), "paths_total=1") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:") || !strings.Contains(stdout.String(), "dirty") || stderr.Len() != 0 {
+	// The route reads from the registry, so the face's repair keeps one source. The
+	// caller's own re-run rides behind it and this row does not pin it.
+	wantNext := "next=" + landingRefusalFaceByName(faceDestinationNotClean).route("")
+	if code != 1 || !strings.Contains(stdout.String(), wantNext) || !strings.Contains(stdout.String(), "paths_total=1") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:") || !strings.Contains(stdout.String(), "dirty") || stderr.Len() != 0 {
 		t.Fatalf("destination refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 }
@@ -43,6 +46,53 @@ func TestLandCommandRefusalListsIgnoredPaths(t *testing.T) {
 	code := LandCommand(root, home, "", landArgs("refusal-ignored", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.Contains(stdout.String(), "paths_total=1") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:") || !strings.Contains(stdout.String(), "ignored/residue") || stderr.Len() != 0 {
 		t.Fatalf("ignored refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	// LRS10 and LRS11. The operator chooses between the two routes out of undeclared
+	// residue, so the field names the declaration file and the removal of the exact path.
+	next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(faceDestinationResidue).detail)
+	if !printed || !strings.Contains(next, ".bench/build-outputs.json") || !strings.Contains(next, "rm -rf 'ignored/residue'") {
+		t.Fatalf("ignored refusal next = (%v, %q), want the declaration file and the removal command", printed, next)
+	}
+}
+
+// LRS10 edge: the residue face names no path when its own read fails, so the removal
+// command it states takes the placeholder the operator resolves by hand. The ignored
+// inventory refuses a control-bearing path before the route reads it, so this empty
+// list is the one state the placeholder covers.
+func TestLandCommandResidueRouteHoldsThePlaceholderWithoutPaths(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name  string
+		setup func(*testing.T, string)
+	}{
+		{name: "unreadable inventory", setup: func(t *testing.T, root string) {
+			mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("ignored/\n"), 0o644)
+			mustMkdirAll(t, filepath.Join(root, "ignored"), 0o755)
+			mustWrite(t, filepath.Join(root, "ignored", "res\x1bidue"), []byte("residue\n"), 0o600)
+		}},
+		// A directory in the declaration's place is not a regular file, so the
+		// declaration read fails.
+		{name: "unreadable declaration", setup: func(t *testing.T, root string) {
+			mustMkdirAll(t, filepath.Join(root, ".bench", "build-outputs.json"), 0o755)
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			request := "refusal-residue-" + strings.ReplaceAll(tc.name, " ", "-")
+			root := newWorktreeRepo(t)
+			home := filepath.Join(t.TempDir(), "bench-home")
+			creation := mustCreate(t, root, home, request, "refusal")
+			stageLandSpec(t, root, creation.Path)
+			base := gitOutput(t, root, "rev-parse", "HEAD")
+			commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
+			tc.setup(t, root)
+			var stdout, stderr bytes.Buffer
+			code := LandCommand(root, home, "", landArgs(request, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
+			next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(faceDestinationResidue).detail)
+			if code != 1 || !printed || !strings.Contains(next, "rm -rf <refusal_paths entries>") || strings.Contains(stdout.String(), "paths_total=") {
+				t.Fatalf("%s residue route = (%d, %q, %q), next %q, want the placeholder removal and no path table", tc.name, code, stdout.String(), stderr.String(), next)
+			}
+		})
 	}
 }
 

@@ -266,6 +266,16 @@ func pathsAuthorizedCheck(f Facts) CheckResult {
 	if !f.ReviewBaseResolved {
 		return red("paths-authorized", "review base does not resolve: "+f.ReviewBaseHint)
 	}
+	if unauthorized := unauthorizedPaths(f); len(unauthorized) > 0 {
+		return red("paths-authorized", "not authorized by any ownership fence: "+strings.Join(unauthorized, ", "))
+	}
+	return green("paths-authorized")
+}
+
+// unauthorizedPaths is every changed path no authorizing entry covers, in changed-path
+// order. The row's detail sentence and the landing's typed path list both read this one
+// answer, so a report and a refusal can never name a different set.
+func unauthorizedPaths(f Facts) []string {
 	var unauthorized []string
 	entries := authorizingEntries(f)
 	for _, p := range f.ChangedPaths {
@@ -273,10 +283,7 @@ func pathsAuthorizedCheck(f Facts) CheckResult {
 			unauthorized = append(unauthorized, p)
 		}
 	}
-	if len(unauthorized) > 0 {
-		return red("paths-authorized", "not authorized by any ownership fence: "+strings.Join(unauthorized, ", "))
-	}
-	return green("paths-authorized")
+	return unauthorized
 }
 
 // captureEntry is the phase-owned capture folder. Every phase close writes the

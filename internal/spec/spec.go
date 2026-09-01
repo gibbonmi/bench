@@ -331,7 +331,10 @@ func retireCommand(rest []string) (string, int) {
 			return toon.Errorf("checkout identity is unknown", "repair Git metadata, then retry from a Bench worktree") + "\n", 1
 		}
 		if primary {
-			return usage.PrimaryCheckoutRefusal() + "\n", 1
+			// The shared refusal names only the worktree creation. Retire appends its own
+			// follow-on step here, at the one call site that needs it, so the operator reads
+			// one route and no other verb inherits a retire step.
+			return usage.PrimaryCheckoutRefusal() + ", then rerun bench spec retire from that worktree\n", 1
 		}
 	}
 	content, resolved, tried, found, err := Resolve(base, arg)

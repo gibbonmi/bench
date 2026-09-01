@@ -211,6 +211,17 @@ func headTip(root string) string {
 	return tip
 }
 
+// UnauthorizedPathsError is the fence refusal AuthorizeReviewedSource returns when the
+// reviewed range holds paths no ownership fence covers. Detail is the report's own
+// sentence, and Paths is the same set unjoined. A caller that renders a path table reads
+// Paths, so it never splits a sentence back apart.
+type UnauthorizedPathsError struct {
+	Detail string
+	Paths  []string
+}
+
+func (e UnauthorizedPathsError) Error() string { return e.Detail }
+
 // AuthorizeReviewedSource gathers a new review snapshot for root, slug, and
 // base. It returns the source range only when its committed paths pass the
 // staged spec's ownership fences. It returns an error for gather failure, a
@@ -223,6 +234,9 @@ func AuthorizeReviewedSource(root, slug, base string) (diff.SourceRange, error) 
 	}
 	check := pathsAuthorizedCheck(facts)
 	if check.Verdict == verdictRed {
+		if unauthorized := unauthorizedPaths(facts); len(unauthorized) > 0 {
+			return diff.SourceRange{}, UnauthorizedPathsError{Detail: check.Detail, Paths: unauthorized}
+		}
 		return diff.SourceRange{}, errors.New(check.Detail)
 	}
 	if facts.SourceBase == "" || facts.SourceTip == "" {

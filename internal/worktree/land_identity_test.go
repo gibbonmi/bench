@@ -87,8 +87,13 @@ func TestLandCommandInvalidatesAChangedSourceFingerprintBeforeTheGate(t *testing
 
 	var stdout, stderr bytes.Buffer
 	code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 1 || !strings.Contains(stdout.String(), "reviewed source is not clean") {
-		t.Fatalf("changed source fingerprint = (%d, %q, %q), want a not-clean refusal", code, stdout.String(), stderr.String())
+	// The sentence and the repair read from the registry, so each keeps one source. The
+	// hostile-source surface stays bounded: the refusal carries a route and no path table,
+	// so no source-authored path name reaches the operator's terminal.
+	face := landingRefusalFaceByName(faceSourceNotClean)
+	if code != 1 || !strings.Contains(stdout.String(), face.detail) || !strings.Contains(stdout.String(), "next="+face.route("")) ||
+		strings.Contains(stdout.String(), "refusal_paths") || strings.Contains(stdout.String(), "dirty.txt") {
+		t.Fatalf("changed source fingerprint = (%d, %q, %q), want a routed not-clean refusal with no path table", code, stdout.String(), stderr.String())
 	}
 	requireIdentityRefusalState(t, root, creation.Path, tally, *composed)
 }
