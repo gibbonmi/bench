@@ -8,7 +8,7 @@ index: spawning a delegate / verifying a delegate's done-claim
 
 A delegate buys parallelism and isolates a heavy read-set. A misjudged delegate costs the thing
 that matters: the work happens unseen. `references/delegation-discipline.md` holds the rest of the
-discipline: the charge contents, the probe rules, and the landing checks.
+discipline: the charge contents, the repair-charge template, the probe rules, and the landing checks.
 
 ## Delegate or inline
 

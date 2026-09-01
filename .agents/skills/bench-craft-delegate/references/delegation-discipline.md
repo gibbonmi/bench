@@ -17,6 +17,19 @@ mutation-probe rule, and the done-claim check.
   common. The coordinator then orders the ports to keep the conflict surface
   small.
 
+## Repair-charge template
+
+Every repair charge uses this template. An improvised charge can omit a field
+that the coordinator needs to verify the repair.
+
+```text
+Base commit: <commit that the repair changes>
+Ownership fence: <exact repo-relative file or path prefix>
+Effort: <level and iteration cap>
+Focused suite: <exact command>
+Independent biting probe: <property, mutation kind, site, and expected red>
+```
+
 ## In the charge
 
 - A write charge names the root conformance pass and the file's wrap width in its

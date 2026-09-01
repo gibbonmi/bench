@@ -699,6 +699,62 @@ func TestCraftDelegateDisciplineAnchorsRedOnRemoval(t *testing.T) {
 	}
 }
 
+// TestRepairChargeTemplateAnchorsRedOnRemoval keeps each repair-charge field
+// independently red-capable. A coordinator cannot verify a repair when its charge
+// omits the base, fence, effort, focused suite, or independent probe.
+func TestRepairChargeTemplateAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		file    = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
+		section = "Repair-charge template"
+	)
+	rules := []struct{ needle, want string }{
+		{"Base commit:", "delegation-discipline.md Repair-charge template dropped the base commit field"},
+		{"Ownership fence:", "delegation-discipline.md Repair-charge template dropped the ownership fence field"},
+		{"Effort:", "delegation-discipline.md Repair-charge template dropped the effort field"},
+		{"Focused suite:", "delegation-discipline.md Repair-charge template dropped the focused suite field"},
+		{"Independent biting probe:", "delegation-discipline.md Repair-charge template dropped the independent biting probe field"},
+	}
+
+	// evaluate preserves the template section while it removes one field. The red
+	// therefore identifies the omitted field instead of a missing template section.
+	evaluate := func(t *testing.T, broken int) []string {
+		t.Helper()
+		root := t.TempDir()
+		body := "# subject\n\n## " + section + "\n\n"
+		for i, r := range rules {
+			if i != broken {
+				body += r.needle + " value\n"
+			}
+		}
+		path := filepath.Join(root, filepath.FromSlash(file))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	conformant := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(conformant, r.want) {
+			t.Errorf("tree carrying %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("tree without %q = %v, want %q", r.needle, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("dropping %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+}
+
 // TestReferenceFileAnchorsRedOnAbsence holds the two discipline references in the tree. A
 // skill that points at a reference the tree lost leaves the reader with a dead pointer, so
 // an absent file raises the missing-file diagnostic. The paths and the lead sentences are
