@@ -614,6 +614,9 @@ func resumeCleanCommand(c Command, args []string) int {
 // row and the grammar the verb refuses with have one source.
 func worktreeSuffix(grammar string) string { return strings.TrimPrefix(grammar, "bench worktree") }
 
+// worktreeCommand dispatches only an explicit worktree leaf. Each leaf owns the grammar
+// after its name; this wrapper resolves repository context where required and returns
+// usage without acquiring or creating a worktree for a missing or unknown leaf.
 func worktreeCommand(c Command, args []string) int {
 	if len(args) == 0 {
 		fmt.Fprint(c.Stdout, usage.WorktreeUsage())

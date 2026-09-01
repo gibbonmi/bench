@@ -23,7 +23,9 @@ import (
 	"time"
 )
 
-// Subshell starts the human worktree journey from the repository the caller is in.
+// Subshell owns the worktree shell leaf grammar and starts a shell in a newly owned,
+// leased worktree for the repository the caller is in. It releases the assignment when
+// the shell exits and forwards an interrupt or termination signal before release.
 func Subshell(home string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	root, err := git.Root()
 	if err != nil {

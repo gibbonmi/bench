@@ -24,13 +24,14 @@ import (
 
 func textDigest(value string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(value))) }
 
-// Pool is the boundary form of poolAt for a caller in another package: it resolves
-// the Bench home at the effect boundary. In-package callers below the boundary
-// receive home explicitly.
+// Pool returns the private Bench pool directory for root under the current Bench home.
 func Pool(root string) string { return poolAt(Home(), root) }
 
 // poolAt derives the repository's pool directory from an explicitly resolved home.
 func poolAt(home, root string) string { return poolkey.Pool(home, root) }
+
+// LeaseFile returns the absolute path of the repository-specific lease file for path.
+// It returns an error when path is not a worktree whose git administration path resolves.
 func LeaseFile(path string) (string, error) {
 	lease, err := git.Output("-C", path, "rev-parse", "--git-path", git.BenchLeaseFilename)
 	if err != nil {
@@ -82,8 +83,8 @@ type Registered struct {
 	Locked   bool
 }
 
-// ClassifyRegisteredWorktrees is the boundary form of classifyRegisteredWorktreesAt for
-// a caller in another package: it resolves the Bench home at the effect boundary.
+// ClassifyRegisteredWorktrees returns every registered worktree for root and classifies
+// each path relative to the primary checkout and the current Bench pool.
 func ClassifyRegisteredWorktrees(root string) ([]Registered, error) {
 	return classifyRegisteredWorktreesAt(root, Home())
 }
@@ -256,6 +257,10 @@ func cleanInvocationError(stdout io.Writer) int {
 	_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: "none", Reason: "invalid invocation; run " + usage.WorktreeClean})
 	return 2
 }
+
+// CleanCommand owns the worktree clean grammar and renders a cleanup plan without
+// mutation unless args supply a matching apply fingerprint or --apply-current for an
+// eligible unclaimed set. It returns 2 for invalid grammar and 1 for a refused plan.
 func CleanCommand(root, home string, args []string, stdout, stderr io.Writer) int {
 	return cleanCommandWith(defaultJoins(), root, home, args, stdout, stderr)
 }
@@ -432,6 +437,10 @@ func finishReleaseReceipt(root string, stdout io.Writer, receipt intent.CleanupR
 	}
 	return renderReleaseReceipt(stdout, receipt)
 }
+
+// ReleaseCommand owns the worktree release grammar and retires the exact owned
+// assignment selected by its request token and path. It returns 2 before lifecycle
+// mutation when the required --request grammar is invalid.
 func ReleaseCommand(root, home string, args []string, stdout, stderr io.Writer) int {
 	return releaseCommandWith(defaultJoins(), root, home, args, stdout, stderr)
 }
@@ -650,6 +659,9 @@ func createSiblingStart(root, from string) (string, error) {
 	return tip, nil
 }
 
+// CreateCommand owns the worktree create grammar and creates or replays one owned
+// assignment after parsing succeeds. Grammar answers perform no creation or tracing;
+// --from selects an active sibling tip and cannot be combined with --refresh.
 func CreateCommand(root, home string, args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(createGrammar, args)
 	if line != "" {
