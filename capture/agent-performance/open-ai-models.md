@@ -1,9 +1,8 @@
 # OpenAI model scorecard
 
-Last incorporated landing: `resolved-consumer-surface` (`41b329f9`, 2026-08-28) —
-Sol/high as the cross-family reviewer for three initial axes, one repair-scoped
-re-review, and one scoped re-check, through `codex exec`, under a Claude
-orchestrator with Opus/low writers.
+Last incorporated landing: `roadmap-light-path-fixes` (`b1a1b1d8`, 2026-09-01)
+— Codex coordinated Sol/low code delegates and Terra/high falsification review
+through implementation, repair, landing, and retirement.
 
 ## Cost assumptions
 
@@ -15,18 +14,18 @@ currently available.
 
 | model / effort | role and sample | observed quality | current use |
 | --- | --- | --- | --- |
-| Terra / medium, high | implementation, latest 10 bounded tickets/repairs | On `bench-shell-follow-on-guard`, medium returned clean bounded seams and biting probes but missed the routing registry, value-taking prefix options, and an ownership fence; high single-sourced projection/prefix policy across two guards and closed the expanded process matrix in one pass | Medium for exact one-seam tickets under coordinator mutation; high when one fact crosses multiple policy consumers |
+| Terra / medium, high | implementation, latest 10 bounded tickets/repairs | On `bench-shell-follow-on-guard`, medium returned clean bounded seams and biting probes but missed the routing registry, value-taking prefix options, and an ownership fence. High single-sourced policy across two guards and closed the expanded process matrix in one pass. | Medium for exact one-seam tickets under coordinator mutation; high when one fact crosses multiple policy consumers |
 | Luna / max, medium | implementation, 7 bounded tickets/repairs + reviewer, 4 axis passes on `stable-owner-landing` | Implementation: 2/7 first-pass with all terminal gates green. Review: three initial axes returned 9 raw findings and 8 de-duplicated targets with the citation standard held (one axis refuted four of its own leads by enumeration), and the repair-scoped re-review verified all seven predicates and stayed inside its blocking scope | Low-cost writer for narrow slices under mandatory inspection; standing tier for the three review axes |
-| Terra / high | implementation, 3 cross-fence lifecycle charges | 0/3 first-pass on review. On `prospective-artifact-recovery` ticket 01 landed with green rows, probes, and lane, but one branch left an authored binary outside the bundle, an unresolved temporary root leaked the Git registration, and its tests violated the branch-native census | Use when one behavior crosses classifier, planner, and lifecycle consumers; require consumer inventory in the charge |
-| Terra / high | semantic review, latest 10 independent axis passes across 4 landings | Found concrete wrapper, descriptor, prefix-value, query-seam, grammar, and one-source gaps with executable probes; final composition axes were clean, while one repair-scoped Standards pass reopened an untouched wrapper-grammar observation that the coordinator correctly kept advisory | Standards, Spec, and Coverage review in separate contexts; pin accepted predicates and prior tip for correction validation |
-| Sol / high | implementation and semantic review, 4 lifecycle charges + latest 10 axis passes | On `resolved-consumer-surface` three initial axes returned 28 raw findings that collapsed to 10 repair targets, two of them real behavior gaps in a new blast derivation, and each axis refuted its own leads by enumeration. The repair-scoped re-review found one more real gap the repair had missed (git C-quotes control bytes in patch headers) and stayed inside its scope; the final re-check found one unpinned decoder arm. | Kit-level and security-seam implementation and review; the cross-family reviewer on a large new-package landing |
-| Sol / high | orchestration, 5 full spec lifecycles + 1 partial | On `prospective-artifact-recovery` it accepted ticket 01 after a repository-identity probe, then hit the agent thread limit and wrote a handoff that a later session resumed cleanly; its probe did not reach the run-binary branch or the symlinked root that review found later | Complex lifecycle coordination; separate review and composition bases, preflight broker toolchains, and treat merge continuation as its own state transition |
+| Terra / high | semantic review, latest 10 independent axis passes across 5 landings | On `roadmap-light-path-fixes`, it found consumer-scope, path-race, test-independence, structured-output, and provenance defects. Its final re-check rejected a vacuous race proof, and the next repair closed cleanly. | Standards, Spec, and Coverage review in separate contexts; pin accepted predicates and prior tip for correction validation |
+| Sol / low | implementation, bounded tickets and repairs on 1 landing | The delegates returned focused tests and mutation probes. The retirement repair reproduced the FT94 ledger red, changed one owner, proved that restoring the old value made the test red, and restored green. | Exact ticket seams and small repairs under coordinator verification |
+| Sol / high | implementation and semantic review, 4 lifecycle charges + latest 10 axis passes | On `resolved-consumer-surface`, three initial axes collapsed 28 raw findings to 10 repair targets. A repair-scoped re-review found one missed control-byte gap, and the final re-check found one unpinned decoder arm. | Kit-level and security-seam implementation and review; the cross-family reviewer on a large new-package landing |
+| Codex / current | orchestration, 1 full spec lifecycle | On `roadmap-light-path-fixes`, it kept the frozen base, rejected an unsupported LF2 failure claim with exact repros, drove Terra/high repairs to clean review, and landed implementation plus retirement on green gates. | Record the explicit model tier before using this row for routing decisions |
 
 ## Representative evidence
 
 | task | result | attribution | routing signal |
 | --- | --- | --- | --- |
-| shell-follow-on guard lifecycle | Terra/medium+high implemented eight ticket slices; Terra/high reviews drove two scoped repair rounds; Sol recovered a destination merge and broker `PATH` refusal before green landing and retirement | delegate, reviewer, and orchestrator | Value-taking option partitions and ownership seams belong in the initial charge; composition bases and broker toolchains need preflight before landing |
+| roadmap light-path lifecycle | Sol/low implemented bounded tickets and the retirement repair; Terra/high found the LF2 and retrospective safety gaps; Codex held the frozen source and rejected a false LF2 claim | spec/ticket, delegate, reviewer, and orchestrator | Cross-consumer inputs and race-test reachability belong in the initial charge; exact frozen repros settle disputed findings |
 | landed-set tickets | Luna/max delivered four vertical slices with green mutations; three needed coordinator correction at an established renderer, dispatch, or terminal-lifecycle seam | spec/ticket and delegate | Five vertical tickets beat 17 row leaves, but advisory fences must include the existing owner seam before delegation |
 | hostile-metadata repair | Terra/high first instrumented only its new planner seam; a real-process `PATH` Git wrapper then exposed older list/resume lease routes and drove the shared guard | delegate | Universal safety claims require enumerated consumers and an oracle above every caller |
 | repair-scoped semantic review | Sol/high found real ancestry, resume, control-byte, and 64-hex-token gaps, then kept reopening the original range until a late changelog observation exposed the missing convergence rule | reviewer | Full discovery and correction validation are different modes; only accepted predicates and repair-induced changes block re-review |
@@ -34,22 +33,15 @@ currently available.
 
 ## Current decisions
 
-- Use Luna/max for bounded implementation when its expected token use is plausibly
-  below 5x Terra and wall-clock latency is acceptable.
-- Use Terra/high for semantic review and for implementation requiring judgment
-  across ownership fences, spec corrections, or several interacting lifecycle
-  branches.
-- A universal safety claim names every executable consumer and proves the shared
-  external boundary; a repair-owned seam is insufficient evidence.
-- Judge the orchestrator on both terminal correctness and avoidable lifecycle
-  churn. A green landing does not erase unnecessary gates, candidate moves, or
-  discovery refusals.
-- Give initial review the full frozen range and closed decisions explicitly. Give
-  repair re-review the accepted predicates and prior reviewed tip; unrelated older
-  observations are follow-ons, not blockers.
-- A cross-family Sol/high review through `codex exec` is a valid reviewer for a
-  Claude-built landing. The recipe closes stdin, sets `-C` to the source, and writes
-  the final message with `-o`. A scoped re-review at that tier found a gap the first
-  repair missed, so a repair pass gets its own scoped check before it lands.
+- Use Sol/low for exact ticket seams and small repairs when a coordinator can
+  rerun a distinct mutation probe.
+- Use Terra/high for semantic review across ownership fences and interacting
+  lifecycle branches. Give each re-review the accepted predicates and the prior
+  reviewed tip.
+- A race proof must show that both operations reached the intended seam. A
+  deterministic result is not sufficient when one branch can avoid the race.
+- Settle a disputed finding against the frozen candidate with an exact repro.
+  Do not repair a failure that the candidate does not produce.
+- Record the orchestrator model tier before the run can change routing policy.
 - Change routing only after two comparable runs or one controlled model
   comparison.
