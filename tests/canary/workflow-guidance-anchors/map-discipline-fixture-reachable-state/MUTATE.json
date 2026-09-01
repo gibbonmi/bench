@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "Each named diagnostic state is addable or mutable in a fixture.",
+    "new": "Each named diagnostic state is documented."
+  }
+]
