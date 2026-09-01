@@ -958,3 +958,29 @@ func TestContextMapTermAnchorsRedOnRemoval(t *testing.T) {
 		},
 	}.check(t)
 }
+
+// TestCraftGateBothEndsAnchorsRedOnRemoval holds the two rules a gate author reads at the
+// two places the author already opens. A check on an indirected value stays green while
+// the producer and the consumer disagree, so the check grades both ends, or their binding,
+// in one change. A new check that no single edit defeats is a check the author never saw
+// bite. Each section, needle, and diagnostic is written here independently of the registry.
+func TestCraftGateBothEndsAnchorsRedOnRemoval(t *testing.T) {
+	const file = ".agents/skills/bench-craft-gate/SKILL.md"
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    file,
+				section: "Run the real path",
+				needle:  "A check on a workflow output, config key, or environment variable grades the producer and the consumer, or their binding, in the same change.",
+				want:    ".agents/skills/bench-craft-gate/SKILL.md Run the real path dropped the both-ends rule for a check on an indirected value",
+			},
+			{
+				file:    file,
+				section: "Prove it bites",
+				needle:  "The author asks which single edit defeats a new check while the gate stays green.",
+				want:    ".agents/skills/bench-craft-gate/SKILL.md Prove it bites dropped the single-edit defeat question",
+			},
+		},
+	}.check(t)
+}
