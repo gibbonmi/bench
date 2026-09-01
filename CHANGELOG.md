@@ -75,6 +75,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- `bench gate-prose` usage text now carries a second line,
+  `example: bench gate-prose . -- <path>`. The first operand is the root directory, so a
+  caller who names one file there gets a refusal; the example shows the single-file form
+  instead. The `--help` output, the usage error, and the non-directory-root refusal all
+  print both lines, and that refusal sentence no longer repeats the form the example
+  carries.
 - A worktree `bench commit` on the kit root now runs only the checks its composed
   changes select. The commit derives its change list from the diff between the expected
   base tree and the composed tree, and each path's classes select checks from the
