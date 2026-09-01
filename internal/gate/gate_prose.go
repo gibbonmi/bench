@@ -3,9 +3,6 @@ package gate
 import (
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/prose"
@@ -36,7 +33,7 @@ func GateProseCommand(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, gateProseUsage)
 		return 2
 	}
-	findings := prose.GradeNamed(root, paths)
+	findings := prose.GradeNamedResults(root, paths)
 	if len(findings) == 0 {
 		rows := make([][]string, 0, len(paths))
 		for _, path := range paths {
@@ -53,40 +50,9 @@ func GateProseCommand(args []string, stdout, stderr io.Writer) int {
 		return 0
 	}
 	for _, f := range findings {
-		fmt.Fprintln(stdout, proseFindingWithSentence(root, paths, f))
+		fmt.Fprintln(stdout, prose.RenderNamedResult(f))
 	}
 	return 1
-}
-
-func proseFindingWithSentence(root string, paths []string, finding string) string {
-	if !strings.Contains(finding, ": sentence of ") {
-		return finding
-	}
-	for _, path := range paths {
-		prefix := fmt.Sprintf("prose: %q line ", path)
-		rest, ok := strings.CutPrefix(finding, prefix)
-		if !ok {
-			continue
-		}
-		lineText, _, ok := strings.Cut(rest, ":")
-		if !ok {
-			return finding
-		}
-		line, err := strconv.Atoi(lineText)
-		if err != nil || line < 1 {
-			return finding
-		}
-		body, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
-		if err != nil {
-			return finding
-		}
-		lines := strings.Split(string(body), "\n")
-		if line > len(lines) {
-			return finding
-		}
-		return finding + ": " + strconv.Quote(strings.TrimSpace(lines[line-1]))
-	}
-	return finding
 }
 
 // parseGateProseArgs splits args into the root and the named path list. The verb takes
