@@ -22,6 +22,19 @@ func TestCheckoutNameKeepsTheCheckoutLayout(t *testing.T) {
 	}
 }
 
+func TestReadPublishedRejectsAMalformedRecord(t *testing.T) {
+	path := filepath.Join(t.TempDir(), RecordName)
+	if err := os.WriteFile(path, []byte("{"), RecordMode); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := ReadPublished(path); err == nil {
+		t.Fatal("ReadPublished malformed record = nil, want published-record refusal")
+	} else if !strings.Contains(err.Error(), "is not a published prospective owner record") {
+		t.Fatalf("ReadPublished malformed record error = %q, want published-record refusal", err)
+	}
+}
+
 func TestOpenPublishesPrivateOwnerRecordBeforeCheckout(t *testing.T) {
 	repository := fixtureRepository(t)
 	owner, err := (Factory{TempRoot: t.TempDir()}).Open(repository)
