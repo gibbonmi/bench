@@ -27,7 +27,7 @@ refusals does each enforce? Where does the one-active limit live?
 ### Answer
 
 Resolved 2026-09-01. See
-`decisions/assets/landing-authority-authority.md`. The landing is the only
+`specs/landing-refusal-standard/decisions/assets/landing-authority-authority.md`. The landing is the only
 verb that writes `main`, and the only Bench verb that runs on the primary
 checkout. `bench commit` writes one branch tip and refuses the primary
 checkout. `bench spec retire` deletes files and commits nothing. No
@@ -49,7 +49,7 @@ partial, or open.
 ### Answer
 
 Resolved 2026-09-01. See
-`decisions/assets/landing-authority-refusals.md`. Three occurrences are
+`specs/landing-refusal-standard/decisions/assets/landing-authority-refusals.md`. Three occurrences are
 fixed by cause removal, and eight are partial. Two are open: the
 conflict-versus-pending-merge distinction, and the `--spec` path form on
 the staged branch. The gap is structural: the one refusal formatter makes
@@ -70,7 +70,7 @@ and where does `--base` validation run relative to the review?
 ### Answer
 
 Resolved 2026-09-01. See
-`decisions/assets/landing-authority-parse-seams.md`. A 4-to-39-character
+`specs/landing-refusal-standard/decisions/assets/landing-authority-parse-seams.md`. A 4-to-39-character
 hex prefix already expands to the worktree head; a symbolic tip refuses
 with a mismatch detail, not with the accepted form. The `--spec` slug
 resolves on both landing branches; the path form works on the tickets-only
@@ -91,7 +91,7 @@ the census record deleted, and what continues an incomplete publication?
 ### Answer
 
 Resolved 2026-09-01. See
-`decisions/assets/landing-authority-recovery.md`. The intent ledger stores
+`specs/landing-refusal-standard/decisions/assets/landing-authority-recovery.md`. The intent ledger stores
 the token digest and the plain token; a lost token refuses with a named
 `bench worktree reauthorize` or `bench worktree list` next step. The
 release step deletes the census record, so the record survives an
@@ -271,15 +271,15 @@ adopt the standard only when their code is touched.
 
 ## Sources
 
-- Path: `decisions/assets/landing-authority-authority.md`
+- Path: `specs/landing-refusal-standard/decisions/assets/landing-authority-authority.md`
   Supports: #6 and #7 — the authority split and the four one-active mechanisms. Produced 2026-09-01 by a read-only research delegate, with coordinator spot checks.
   Drift: re-read if `internal/worktree/land.go`, `internal/commit/commit.go`, or `internal/landing/landing.go` changes before the spec reads this map.
-- Path: `decisions/assets/landing-authority-refusals.md`
+- Path: `specs/landing-refusal-standard/decisions/assets/landing-authority-refusals.md`
   Supports: #9 and #12 — the per-occurrence refusal grades and the optional-next formatter gap. Produced 2026-09-01 by a read-only research delegate, with coordinator spot checks.
   Drift: re-grade after any landing-path refusal wording changes.
-- Path: `decisions/assets/landing-authority-parse-seams.md`
+- Path: `specs/landing-refusal-standard/decisions/assets/landing-authority-parse-seams.md`
   Supports: #5, #8, and #11 — the source-tip, `--spec`, and `--base` seams. Produced 2026-09-01 by a read-only research delegate, with coordinator spot checks.
   Drift: re-read if `internal/worktree/land_identity.go`, `internal/spec/spec.go`, or `internal/preflight` changes before the spec reads this map.
-- Path: `decisions/assets/landing-authority-recovery.md`
+- Path: `specs/landing-refusal-standard/decisions/assets/landing-authority-recovery.md`
   Supports: #6 and #9 — the token, census, seal, residue, and resume lifecycle. Produced 2026-09-01 by a read-only research delegate, with coordinator spot checks.
   Drift: re-read if the intent ledger, the resume path, or `.bench/build-outputs.json` changes before the spec reads this map.
