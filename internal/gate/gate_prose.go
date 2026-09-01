@@ -10,7 +10,11 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-const gateProseUsage = "usage: bench gate-prose <root> [--] [path...]"
+// gateProseUsage carries the grammar line and one example. The root operand is a
+// directory, so the single-file form names the file after the `--` separator; the
+// example shows that form, so a caller does not learn it by tripping the refusal.
+const gateProseUsage = "usage: bench gate-prose <root> [--] [path...]\n" +
+	"example: bench gate-prose . -- <path>"
 
 // gateProseFields is the pass table's schema, the shape `roadmap/FT270.md` decides for
 // this verb.
@@ -35,7 +39,9 @@ func GateProseCommand(args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 	if !rootIsDirectory(root) {
-		fmt.Fprintf(stderr, "gate-prose: root %q is not a directory: the root operand must be a directory; name a file after the %q separator\n", root, "--")
+		// The usage text's example carries the single-file form, so this sentence states
+		// the refusal alone rather than repeating that form.
+		fmt.Fprintf(stderr, "gate-prose: root %q is not a directory: the root operand must be a directory\n", root)
 		fmt.Fprintln(stderr, gateProseUsage)
 		return 2
 	}
