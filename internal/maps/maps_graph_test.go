@@ -274,6 +274,7 @@ func TestMapSourcesRequireExactRecordShape(t *testing.T) {
 		"duplicate support": {"- Path: evidence.md\n  Supports: support\n  Supports: repeated\n  Drift: drift\n", "duplicate field Supports"},
 		"reordered fields":  {"- Path: evidence.md\n  Drift: drift\n  Supports: support\n", "field Drift is out of order; expected Supports"},
 		"empty field":       {"- Path: evidence.md\n  Supports: \n  Drift: drift\n", "field Supports must be non-empty"},
+		"wrapped field":     {"- Path: evidence.md\n  Supports: support\n  that continues here.\n  Drift: drift\n", "Sources evidence.md line \"that continues here.\" has no field name; write each Sources record field on one physical line"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			if diagnostics := sourceDiagnostics(root, test.body); !hasDiagnostic(diagnostics, test.want) {
