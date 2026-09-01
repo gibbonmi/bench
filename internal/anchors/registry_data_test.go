@@ -1059,3 +1059,74 @@ func TestCraftTicketsPremiseCheckAnchorRedsOnRemoval(t *testing.T) {
 		t.Errorf("tree without the premise check = %v, want %q", diags, want)
 	}
 }
+
+// TestCommentAndReviewRuleAnchorsRedOnRemoval keeps short independent anchors for
+// LF15. The test does not copy the guidance prose, so the registry cannot make a
+// weakened rule self-consistent.
+func TestCommentAndReviewRuleAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		comments = ".agents/skills/bench-craft-comments/SKILL.md"
+		review   = ".agents/skills/bench-craft-review/SKILL.md"
+	)
+	rules := []struct{ file, section, needle, want string }{
+		{comments, "The register", "FT<n> story <n>", ".agents/skills/bench-craft-comments/SKILL.md dropped the identifier-provenance rule"},
+		{comments, "The register", "State the constraint first", ".agents/skills/bench-craft-comments/SKILL.md dropped the constraint-first rule"},
+		{comments, "The register", "One source owns a fact", ".agents/skills/bench-craft-comments/SKILL.md dropped the one-source rule"},
+		{comments, "The register", "A sparse file stays sparse", ".agents/skills/bench-craft-comments/SKILL.md dropped the sparse-file rule"},
+		{comments, "The register", "The commit or spec owns the red record", ".agents/skills/bench-craft-comments/SKILL.md dropped the red-record ownership rule"},
+		{review, "The axes stay separate", "A new `FT<n> story <n>` tag", ".agents/skills/bench-craft-review/SKILL.md dropped review rejection of a new story provenance tag"},
+	}
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	live := EvaluateGroup(root, AfterImplementSpec)
+	for _, rule := range rules {
+		if slices.Contains(live, rule.want) {
+			t.Errorf("live guidance raised %q", rule.want)
+		}
+	}
+
+	evaluate := func(t *testing.T, dropped int) []string {
+		t.Helper()
+		root := t.TempDir()
+		bodies := map[string]*strings.Builder{
+			comments: &strings.Builder{},
+			review:   &strings.Builder{},
+		}
+		fmt.Fprint(bodies[comments], "## The register\n\n")
+		fmt.Fprint(bodies[review], "## The axes stay separate\n\n")
+		for i, rule := range rules {
+			if i == dropped {
+				continue
+			}
+			body := bodies[rule.file]
+			fmt.Fprintf(body, "%s\n\n", rule.needle)
+		}
+		for file, body := range bodies {
+			path := filepath.Join(root, file)
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte(body.String()), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	if diags := evaluate(t, -1); len(diags) == 0 {
+		t.Fatal("minimal LF15 guidance did not exercise the anchor group")
+	} else {
+		for _, rule := range rules {
+			if slices.Contains(diags, rule.want) {
+				t.Errorf("guidance carrying %q raised %q", rule.needle, rule.want)
+			}
+		}
+	}
+	for i, rule := range rules {
+		if diags := evaluate(t, i); !slices.Contains(diags, rule.want) {
+			t.Errorf("guidance without %q = %v, want %q", rule.needle, diags, rule.want)
+		}
+	}
+}
