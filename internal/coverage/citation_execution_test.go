@@ -131,6 +131,35 @@ func TestCitationPackageScopeFailure(t *testing.T) {
 	})
 }
 
+// TestCitationExpansionIgnoresAStrayGitDirAboveTheCheckout grades the expansion's VCS
+// defense, on the pattern of the kit lane's build check. Go's VCS discovery treats a
+// linked worktree's `.git` file as no root, walks up, and adopts any `.git` directory
+// above the temporary checkout. Git refuses that directory, so the loader reds with
+// "error obtaining VCS status" and the expansion fails on a tree it must be able to read.
+// The stamp is a main package's, so the fixture holds one: a pattern of library packages
+// alone never asks the toolchain the question.
+func TestCitationExpansionIgnoresAStrayGitDirAboveTheCheckout(t *testing.T) {
+	stray := t.TempDir()
+	if err := os.Mkdir(filepath.Join(stray, ".git"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("TMPDIR", stray)
+
+	root := t.TempDir()
+	writeUnder(t, filepath.Join(root, "go.mod"), "module example.test/strayvcs\n\ngo 1.24\n")
+	writeUnder(t, filepath.Join(root, "main.go"), "package main\n\nfunc main() {}\n")
+
+	dirs, err := selectedPackageDirs(gate.TestExecution{
+		Name: "test", Packages: []string{"./..."}, Dir: root,
+	})
+	if err != nil {
+		t.Fatalf("selectedPackageDirs: %v", err)
+	}
+	if !containsDirectory(dirs, root) {
+		t.Fatalf("selectedPackageDirs = %q, want the module root under a stray .git", dirs)
+	}
+}
+
 // TestCitationPhaseEnv grades the phase-environment arm. A phase declares its own
 // platform, and `go test` would select and compile different files under it. So the check
 // reads the phase's environment rather than the host's on both sides: the package loader,

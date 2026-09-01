@@ -1,7 +1,7 @@
 # Add the buildvcs defense to the citation expansion
 
 Blocked by: none
-Writes: internal/coverage/citation_execution.go, internal/coverage/citation_execution_test.go, internal/gate/gate_go.go
+Writes: internal/coverage/citation_execution.go, internal/coverage/citation_execution_test.go, internal/gate/gate_go.go, internal/gate/lane.go, internal/gate/lane_test.go
 
 ## What to build
 

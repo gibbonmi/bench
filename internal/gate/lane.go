@@ -72,7 +72,7 @@ func BenchkitLane(root, kit string) []Phase {
 		{Name: "gofmt", Argv: []string{runBinaryArgvToken, "gate-go", "gofmt"}},
 		{Name: "prose", Argv: []string{runBinaryArgvToken, "gate-prose", root, "--", LaneNamedMarkdownToken}},
 		{Name: "vet", Argv: []string{"go", "vet", trimPath, "./..."}},
-		{Name: "build", Argv: []string{"go", "build", trimPath, disableBuildVCS, "./..."}},
+		{Name: "build", Argv: []string{"go", "build", trimPath, DisableBuildVCS, "./..."}},
 	}, documentLaneChecks()...)
 }
 
