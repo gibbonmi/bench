@@ -984,3 +984,28 @@ func TestCraftGateBothEndsAnchorsRedOnRemoval(t *testing.T) {
 		},
 	}.check(t)
 }
+
+// TestRepairTicketOwnerAnchorsRedOnRemoval holds the two rules that keep an accepted
+// repair on the coverage map. A repair that amends a mapped row leaves no ticket behind,
+// so the row loses its owner at the final check. Each section, needle, and diagnostic is
+// written here independently of the registry.
+func TestRepairTicketOwnerAnchorsRedOnRemoval(t *testing.T) {
+	const file = ".agents/commands/bench-review-implementation.md"
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    file,
+				section: "Review modes",
+				needle:  "writes one repair ticket before the repair-scoped re-review",
+				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the repair ticket the coordinator writes before the repair-scoped re-review",
+			},
+			{
+				file:    file,
+				section: "Review modes",
+				needle:  "it cites each amended row in `Covers:`.",
+				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the repair ticket's amended-row citation in `Covers:`",
+			},
+		},
+	}.check(t)
+}

@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "accepted repairs, and it cites each amended row in `Covers:`.",
+    "new": "accepted repairs in the review record."
+  }
+]

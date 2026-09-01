@@ -40,6 +40,10 @@ accepted repair predicates plus changes after the prior reviewed tip. This is
 checked for repair-induced Standards, Spec, and Coverage problems. A finding
 outside both is a non-blocking follow-on and cannot reopen the phase.
 
+The coordinator writes one repair ticket before the repair-scoped re-review,
+when accepted repairs amend the coverage map. The ticket records the
+accepted repairs, and it cites each amended row in `Covers:`.
+
 Landing proceeds when the repair-scoped result is clean. A repair-induced fix
 triggers a new check. It stays scoped to that predicate and repair delta;
 it never restarts initial discovery over the original range.
