@@ -488,16 +488,14 @@ func TestSweepRetainsABundleWithANonRegularRecord(t *testing.T) {
 	}
 }
 
-// TestSweepRetainsARecordThatIsNotPrivate is the permission half of PAR14. Each candidate
-// carries a regular record whose bytes would authorize removal, so only its permission
-// bits deny it. A record another account can read or the owner cannot rewrite is not the
-// private record the owner publishes.
 func TestSweepRetainsARecordThatIsNotPrivate(t *testing.T) {
 	for _, row := range []struct {
 		name string
 		mode os.FileMode
 	}{
+		// A 0644 record permits group and world reads, so it is not private.
 		{name: "group and world readable", mode: 0o644},
+		// A 0400 record prevents owner rewrites, so it is not private.
 		{name: "read only", mode: 0o400},
 	} {
 		t.Run(row.name, func(t *testing.T) {
