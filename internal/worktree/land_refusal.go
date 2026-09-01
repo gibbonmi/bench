@@ -5,7 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -75,11 +78,49 @@ func conflictCommitArg(commit string) string {
 	return "<full-destination-commit>"
 }
 
+// conflictContinuePrefix names the hand repair a source worktree that already holds a
+// pending merge demands. The merge is open, so a second merge is not the repair: the
+// operator resolves the conflicted paths and finishes the merge, which records the
+// resolution itself and needs no separate commit.
+func conflictContinuePrefix(assignment, path string) string {
+	if !lineSafe(path) {
+		return "bench worktree exec " + assignment + " -- git merge --continue (resolve the conflicted paths of the merge in progress first)"
+	}
+	return "git -C " + sanitize.ShellQuote(path) + " merge --continue (resolve the conflicted paths of the merge in progress first)"
+}
+
+// sourceMergePending reports whether the source worktree holds a pending merge, which
+// MERGE_HEAD in the worktree's Git directory records. An unreadable Git directory leaves
+// the state undecided and answers false, because the commit-and-review route is correct
+// under both states while the continuation route is correct under one.
+func sourceMergePending(source string) bool {
+	dir, err := git.Output("-C", source, "rev-parse", "--absolute-git-dir")
+	if err != nil || dir == "" {
+		return false
+	}
+	if _, err := os.ReadFile(filepath.Join(dir, "MERGE_HEAD")); err != nil {
+		return false
+	}
+	return true
+}
+
+// landingConflictRefusal is the one constructor the conflict face travels through. The
+// route is not an argument, so no call site composes it: the constructor reads the source
+// worktree's merge state and the route builder branches on the answer.
+func landingConflictRefusal(conflict landing.ConflictError, destination, assignment, specArg, path, source string) refusalError {
+	return refusalError{refusal{
+		detail: conflict.Error(),
+		paths:  conflict.Paths,
+		next:   landingConflictNext(destination, assignment, specArg, path, sourceMergePending(source)),
+	}}
+}
+
 // landingConflictNext names the source repair a conflict outside the rule table
-// demands, in the order the operator runs it: merge the destination into the source
-// worktree, commit the repair, review the new range, and re-run the landing with the
-// repaired tip.
-func landingConflictNext(destination, assignment, specArg, path string) string {
+// demands, in the order the operator runs it. A source worktree with no pending merge
+// merges the destination in, commits the repair, reviews the new range, and re-runs the
+// landing with the repaired tip. A source worktree that holds a pending merge finishes
+// that merge instead, so its route names the continuation and no second merge.
+func landingConflictNext(destination, assignment, specArg, path string, pending bool) string {
 	// A spec-less landing re-runs spec-less, so it names no --spec at all rather than an
 	// empty value the grammar refuses.
 	specFlag := ""
@@ -90,7 +131,11 @@ func landingConflictNext(destination, assignment, specArg, path string) string {
 		}
 	}
 	rerun := atSourceWorktree("bench worktree land --request <request> --base "+conflictCommitArg(destination)+" --source-tip <repaired-source-tip>"+specFlag+" -m <message>", path, assignment)
-	return conflictRepairPrefix(destination, assignment, path) + "; then /bench-review-implementation; then " + rerun
+	repair := conflictRepairPrefix(destination, assignment, path)
+	if pending {
+		repair = conflictContinuePrefix(assignment, path)
+	}
+	return repair + "; then /bench-review-implementation; then " + rerun
 }
 
 // atSourceWorktree addresses the source worktree a command's trailing positional

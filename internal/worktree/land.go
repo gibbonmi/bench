@@ -286,11 +286,7 @@ func landAttributed(measures *landingMeasures, j joins, root, home, _ string, ar
 	if err != nil {
 		var conflict landing.ConflictError
 		if errors.As(err, &conflict) {
-			return landRefusalError(stdout, refusalError{refusal{
-				detail: conflict.Error(),
-				paths:  conflict.Paths,
-				next:   landingConflictNext(destination, assignment.ID, parsed.Flags["--spec"], path),
-			}})
+			return landRefusalError(stdout, landingConflictRefusal(conflict, destination, assignment.ID, parsed.Flags["--spec"], path, assignment.Worktree))
 		}
 		return landRefusal(stdout, err.Error())
 	}
