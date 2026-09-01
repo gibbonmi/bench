@@ -67,3 +67,38 @@ Repair range: `1f60a2bf6e2a2d45e1fae168be9744d64d86cd75` through
 Final build and review preflights are 12/12 green. The final composition gate
 passed gofmt, vet, test, race, and system phases with six unchanged capability
 skips; shellcheck remained unavailable.
+
+## Terra-high falsification review
+
+Frozen base: `0b8096b18022bf3fc324e36e3afaae4c41151e74`.
+Reviewed tip: `820ccf8763e86f0e7a950afda85a37a936334a96`.
+
+### Accepted findings
+
+- Standards P1: `bench retro` follows a live `capture/retros` directory
+  symlink and can write outside the repository. A coordinator probe reproduced
+  a successful escaped write.
+- Standards P1: public help says `retro` replaces an artifact, while the
+  accepted implementation refuses an existing slug.
+- Standards P2: two new test fixtures duplicate the retrospective heading
+  policy without one shared expectation and a durable biting-mutation record.
+- Standards P2: `gate-prose` recovers structured prose fields by parsing the
+  rendered diagnostic string already owned by `internal/prose`.
+- Standards P2: three new anchor-test comments cite LF identifiers instead of
+  stating only current-code constraints.
+- Coverage P1: the LF2 hostile-input journey exercises only the zero-signal
+  scaffold; removing the detected-project hygiene call leaves current tests
+  green.
+- Standards P2: the independent seeded-input expectation adds `BENCH_KIT` and
+  `BENCH_RUN_BINARY` without a durable demonstrated removal red.
+
+All seven findings route to auto-fix.
+
+### Rejected finding
+
+The Spec reviewer reported that the LF2 gate journey failed before reaching
+the ignored-input check. The coordinator reran the focused test with the
+retained kit and binary, without ambient routing variables, and with an
+isolated HOME plus cached modules. All three subcases passed; the isolated run
+took 17.65 seconds. The review worktree lacked an authenticated candidate
+binary, so its `no packages` failure was review-environment-owned.
