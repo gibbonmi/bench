@@ -135,6 +135,18 @@ var canonicalDecisionMapSchema = decisionMapSchema{
 	unsupportedHeadings: []string{"## Handoff"},
 }
 
+// resolvedBlockedRule states, in the rendered template, the graph rule the walk in
+// graphDiagnostics already enforces. The template states the rule; it adds no check.
+const resolvedBlockedRule = "A resolved decision ticket cannot stay blocked by an unresolved ticket."
+
+// decisionMapSourcesExample teaches the Sources record grammar in the rendered
+// template. The locator is a URL, because validateSourcePath resolves a Path locator
+// against the repository root, where no placeholder file exists. Supports and Drift
+// stay on two physical lines, because a Sources record keeps each field on one line.
+const decisionMapSourcesExample = "\n- URL: https://example.invalid/decision-source\n" +
+	"  Supports: <the decision this source supports>\n" +
+	"  Drift: <the change that makes this source stale>\n"
+
 var decisionHeading = regexp.MustCompile(`^([1-9][0-9]*):\s+(.+?)\s*$`)
 var blockersField = regexp.MustCompile(`^(none|#[1-9][0-9]*(, #[1-9][0-9]*)*)$`)
 
@@ -439,6 +451,8 @@ func DecisionMapTemplate() string {
 	b.WriteString("none\n")
 	b.WriteString(canonicalDecisionMapSchema.field("Type").syntax)
 	b.WriteString(canonicalDecisionMapSchema.types[0])
+	b.WriteString("\n\n")
+	b.WriteString(resolvedBlockedRule)
 	b.WriteString("\n")
 	for _, field := range []field{canonicalDecisionMapSchema.field("Question"), canonicalDecisionMapSchema.field("Answer")} {
 		b.WriteString("\n")
@@ -451,6 +465,9 @@ func DecisionMapTemplate() string {
 		b.WriteString("\n")
 		b.WriteString(terminal.syntax)
 		b.WriteString("\n")
+		if terminal.heading == "Sources" {
+			b.WriteString(decisionMapSourcesExample)
+		}
 	}
 	return b.String()
 }
