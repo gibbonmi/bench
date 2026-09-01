@@ -48,3 +48,39 @@ func TestProductionCanaryDeclsHaveNoFunctionTypedParameters(t *testing.T) {
 		})
 	}
 }
+
+func TestCanaryMarkerReadersUseDeclaredNames(t *testing.T) {
+	entries, err := os.ReadDir(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	set := token.NewFileSet()
+	readers := 0
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".go" || strings.HasSuffix(entry.Name(), "_test.go") {
+			continue
+		}
+		file, err := parser.ParseFile(set, entry.Name(), nil, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ast.Inspect(file, func(node ast.Node) bool {
+			call, ok := node.(*ast.CallExpr)
+			if !ok || len(call.Args) < 2 {
+				return true
+			}
+			function, ok := call.Fun.(*ast.Ident)
+			if !ok || function.Name != "readMarker" {
+				return true
+			}
+			readers++
+			if _, ok := call.Args[1].(*ast.Ident); !ok {
+				t.Errorf("%s passes a marker name that has no declared owner", set.Position(call.Pos()))
+			}
+			return true
+		})
+	}
+	if readers == 0 {
+		t.Fatal("production canary package has no marker reader")
+	}
+}

@@ -297,7 +297,7 @@ func discoverFixtures(dir string) ([]fixtureRecord, error) {
 }
 
 func fixtureCheck(dir string) (registry.Tier, string, error) {
-	name, present, err := readMarker(dir, "CHECK")
+	name, present, err := readMarker(dir, checkFileName)
 	if err != nil {
 		return "", "", err
 	}
