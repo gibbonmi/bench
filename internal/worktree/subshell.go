@@ -30,10 +30,10 @@ func Subshell(home string, args []string, stdin io.Reader, stdout, stderr io.Wri
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
-	return subshellAt(root, home, args, stdin, stdout, stderr)
+	return subshellAt(root, home, subshellShell(), os.Environ(), args, stdin, stdout, stderr)
 }
 
-func subshellAt(root, home string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+func subshellAt(root, home, shell string, environ []string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	interrupts := make(chan os.Signal, 1)
 	signal.Notify(interrupts, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(interrupts)
@@ -59,13 +59,12 @@ func subshellAt(root, home string, args []string, stdin io.Reader, stdout, stder
 		return ReleaseCommand(root, home, []string{"--request", request, creation.Path}, io.Discard, stderr)
 	}
 	fmt.Fprintf(stderr, "🪵 worktree: %s  (exit to release)\n", creation.Path)
-	shell := subshellShell()
 	if shell == "" {
 		shell = "bash"
 	}
 	cmd := exec.Command(shell)
 	cmd.Dir, cmd.Stdin, cmd.Stdout, cmd.Stderr = creation.Path, stdin, stdout, stderr
-	cmd.Env = withHome(os.Environ(), home)
+	cmd.Env = withHome(environ, home)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := cmd.Start(); err != nil {
 		_ = os.Remove(lease)

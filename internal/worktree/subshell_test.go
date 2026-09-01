@@ -15,15 +15,15 @@ import (
 )
 
 func TestSubshellNormalExitReleasesItsAssignment(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	home := t.TempDir()
 	pwd := filepath.Join(t.TempDir(), "shell-pwd")
 	shell := writeSubshellScript(t, "printf %s \"$PWD\" > \"$BENCH_SUBSHELL_PWD\"\n")
-	t.Setenv("SHELL", shell)
-	t.Setenv("BENCH_SUBSHELL_PWD", pwd)
+	environ := append(os.Environ(), "BENCH_SUBSHELL_PWD="+pwd)
 
 	var stdout, stderr bytes.Buffer
-	code := subshellAt(root, home, nil, strings.NewReader(""), &stdout, &stderr)
+	code := subshellAt(root, home, shell, environ, nil, strings.NewReader(""), &stdout, &stderr)
 	requireTest(t, code == 0, "subshell exit = %d, stderr %q", code, stderr.String())
 	assignments, err := intent.Assignments(root)
 	requireTest(t, err == nil && len(assignments) == 0, "subshell assignments = %#v, %v; want no released owner", assignments, err)
@@ -36,11 +36,12 @@ func TestSubshellNormalExitReleasesItsAssignment(t *testing.T) {
 const subshellSignalHelperEnv = "BENCH_SUBSHELL_SIGNAL_HELPER"
 
 func TestSubshellSignalsLeaveAReclaimableLease(t *testing.T) {
+	t.Parallel()
 	if root := os.Getenv(subshellSignalHelperEnv); root != "" {
 		home := os.Getenv("BENCH_SUBSHELL_HOME")
 		signalValue := syscall.Signal(mustSubshellSignal(t, os.Getenv("BENCH_SUBSHELL_SIGNAL")))
 		var stdout, stderr bytes.Buffer
-		code := subshellAt(root, home, nil, strings.NewReader(""), &stdout, &stderr)
+		code := subshellAt(root, home, subshellShell(), os.Environ(), nil, strings.NewReader(""), &stdout, &stderr)
 		requireTest(t, code == 128+int(signalValue), "signalled subshell exit = %d, want %d (stderr %q)", code, 128+int(signalValue), stderr.String())
 		return
 	}
