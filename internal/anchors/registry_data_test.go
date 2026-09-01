@@ -225,6 +225,7 @@ func TestWorktreeRuleAnchorsRedOnRemoval(t *testing.T) {
 	rules := []struct{ file, needle, want string }{
 		{".bench/BENCH.md", "**Every phase runs in a bench worktree and lands through `bench worktree land`.**", ".bench/BENCH.md Workflow section dropped the worktree rule; every phase runs in a bench worktree and lands through bench worktree land"},
 		{".bench/BENCH-reference.md", "The spec is optional on the landing and on its resume: a spec-less phase lands with no `--spec`.", ".bench/BENCH-reference.md landing paragraph dropped the optional spec; a spec-less phase lands with no --spec"},
+		{".bench/BENCH-reference.md", "Each landing refusal face constructs through the registry constructor, which takes the recovery route as a required argument.", ".bench/BENCH-reference.md dropped the landing refusal shape; every landing refusal face constructs through the registry constructor, which takes the recovery route as a required argument"},
 	}
 	templates := map[string]string{
 		".bench/BENCH.md":           "# Bench Operating Guide\n\n## Workflow\n\n%s\n\n## Capture\n",
@@ -234,16 +235,23 @@ func TestWorktreeRuleAnchorsRedOnRemoval(t *testing.T) {
 	evaluate := func(t *testing.T, dropped int) []string {
 		t.Helper()
 		root := t.TempDir()
+		// Two rules share .bench/BENCH-reference.md, so the needles of one file join into
+		// one body before the write; a per-rule write would erase the earlier needle.
+		bodies := map[string][]string{}
 		for i, r := range rules {
 			needle := r.needle
 			if i == dropped {
 				needle = ""
 			}
-			path := filepath.Join(root, filepath.FromSlash(r.file))
+			bodies[r.file] = append(bodies[r.file], needle)
+		}
+		for file, needles := range bodies {
+			path := filepath.Join(root, filepath.FromSlash(file))
 			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 				t.Fatal(err)
 			}
-			if err := os.WriteFile(path, []byte(fmt.Sprintf(templates[r.file], needle)), 0o644); err != nil {
+			body := fmt.Sprintf(templates[file], strings.Join(needles, "\n\n"))
+			if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
 				t.Fatal(err)
 			}
 		}
