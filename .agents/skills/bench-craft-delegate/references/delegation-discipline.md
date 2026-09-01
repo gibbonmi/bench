@@ -99,6 +99,8 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   delegate for those reds. The coordinator gets the reds before the commit.
 - Keep an accepted finding on its original ticket when attribution is clear. Use
   an umbrella repair ticket only for a genuinely shared owner.
+- When an installed lane cannot commit its repair, run the same ordinary commit core from
+  the candidate tree. Grade the composed snapshot, then require the sanctioned rebuild after landing.
 - The checkpoint ticket records a reviewer decision that occurs during a build.
   Later review reads that decision.
 
