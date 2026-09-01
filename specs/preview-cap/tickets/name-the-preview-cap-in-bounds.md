@@ -1,7 +1,7 @@
 # Name the preview cap in the bounds registry
 
 Blocked by: none
-Writes: internal/bounds/bounds.go, internal/sanitize/sanitize.go, internal/sanitize/sanitize_test.go, internal/conformance/bounds_policy_test.go, CHANGELOG.md
+Writes: internal/bounds/bounds.go, internal/sanitize/sanitize.go, internal/sanitize/sanitize_test.go, internal/conformance/bounds_policy_test.go, internal/shift/objective.go, internal/shift/objective_test.go, CHANGELOG.md
 Covers: none
 
 ## What to build
