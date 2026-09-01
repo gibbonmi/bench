@@ -17,6 +17,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/spec"
 )
 
@@ -176,9 +177,16 @@ func landingSourceRange(j joins, worktree, slug, base, head string) (diff.Source
 		}
 		return resolved, detail, nil
 	}
-	const detail = "reviewed source range or ownership fence is invalid"
+	detail := landingRefusalFaceByName(faceSourceNotFenced).detail
 	resolved, err := j.authorizeLandingSource(worktree, slug, base)
 	if err != nil {
+		// The unfenced paths arrive typed, so they print as the refusal's own path table
+		// rather than inside the sentence. The assembler holds the caller's flags, so it
+		// attaches this face's route there.
+		var unfenced preflight.UnauthorizedPathsError
+		if errors.As(err, &unfenced) && len(unfenced.Paths) > 0 {
+			return diff.SourceRange{}, detail, landingFaceRefusal(faceSourceNotFenced, "", unfenced.Paths)
+		}
 		return diff.SourceRange{}, detail, fmt.Errorf("%s: %s", detail, err)
 	}
 	return resolved, detail, nil

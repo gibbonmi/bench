@@ -237,6 +237,12 @@ func landingRefusalFixtures() []landingRefusalFixture {
 				mustWrite(t, filepath.Join(creation.Path, "scratch"), []byte("scratch\n"), 0o600)
 			},
 		},
+		{
+			face: faceSourceNotFenced,
+			mutate: func(t *testing.T, _ string, creation Creation) {
+				commitInWorktree(t, creation.Path, "stray.txt", "stray\n", "out of fence")
+			},
+		},
 	}
 }
 
@@ -283,8 +289,11 @@ func TestLandingRefusalRegistryHasAProducingFixture(t *testing.T) {
 		t.Run(fixture.face, func(t *testing.T) {
 			t.Parallel()
 			request := "landing-face-" + fixture.face
-			root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
+			root, creation, base, _, _, home := publicLandingFixture(t, request, "", "")
 			fixture.mutate(t, root, creation)
+			// A mutation may add a source commit, so the pinned tip is read after it. An
+			// unmoved source reads back the same commit the fixture created.
+			tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 			var stdout, stderr bytes.Buffer
 			code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 			next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(fixture.face).detail)

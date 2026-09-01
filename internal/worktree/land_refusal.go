@@ -153,6 +153,7 @@ func atSourceWorktree(command, path, assignment string) string {
 const (
 	faceDestinationNotClean = "destination-not-clean"
 	faceSourceNotClean      = "source-not-clean"
+	faceSourceNotFenced     = "source-not-fenced"
 )
 
 // landingRefusalFace is one refusal the landing's preflight prints. detail is the
@@ -181,6 +182,13 @@ var landingRefusalFaces = []landingRefusalFace{
 		detail: "reviewed source is not clean",
 		route: func(rerun string) string {
 			return "commit the reviewed source's uncommitted work, or discard it; then " + rerun
+		},
+	},
+	{
+		name:   faceSourceNotFenced,
+		detail: "reviewed source range or ownership fence is invalid",
+		route: func(rerun string) string {
+			return "take the refusal_paths entries out of the reviewed range, or declare them under the spec's ## Ownership fences; then " + rerun
 		},
 	},
 }
