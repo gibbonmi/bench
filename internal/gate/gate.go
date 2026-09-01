@@ -92,11 +92,9 @@ func RealFS() FS {
 	}
 }
 
-// Resolve is the ordered chain as a pure function. An executable `.bench/gate.sh`
-// wins first, then a non-empty `$BENCH_GATE` wins next. After that, the first
-// auto-detect lockfile wins, in the fixed order pnpm → npm → pyproject → cargo, then
-// None wins. A reordered chain would silently run the wrong oracle. This is the
-// precedence the NEW resolution-order contract and the table test both pin.
+// Resolve selects one gate without running it. It prefers an executable gate script,
+// then BENCH_GATE, then the first recognized project file; otherwise it returns None.
+// The fixed order prevents a caller from silently selecting another oracle.
 func Resolve(root, benchGate string, fs FS) Resolution {
 	if fs.Executable(filepath.Join(root, ".bench", "gate.sh")) {
 		return Resolution{Kind: GateSh}
@@ -175,11 +173,8 @@ func gateEnv() ([]string, error) {
 	return gocache.Apply(base)
 }
 
-// Run executes the resolved gate from the repo root and returns its exit code, with
-// the gate's own output streamed to stdout/stderr. Run executes the gate from the
-// working tree by design. An agent can edit the file it is graded by. The canary
-// tripwire, not this call site, keeps that safe. None must not reach here; the caller
-// handles the no-gate exit-3-nothing-recorded case.
+// Run executes a selected gate from root and streams its output. The caller selects a
+// non-None resolution and owns the no-gate result. Run does not record evidence.
 func Run(root string, res Resolution, stdout, stderr io.Writer) int {
 	childEnv, err := gateEnv()
 	if err != nil {
@@ -189,11 +184,8 @@ func Run(root string, res Resolution, stdout, stderr io.Writer) int {
 	return runResolved(context.Background(), root, res, childEnv, stdout, stderr, false).Code
 }
 
-// RunContext executes the resolved gate like Run, but puts the gate in its own process
-// group. RunContext kills that group before returning when ctx is canceled. Shift uses
-// this path so an interrupt cannot release the pooled worktree while a gate child keeps
-// running and writing into it. Standalone `bench gate` uses Run, which preserves normal
-// foreground-process signal delivery.
+// RunContext executes a selected gate and streams its output. If ctx ends, RunContext
+// stops the gate process group before it returns. RunContext does not record evidence.
 func RunContext(ctx context.Context, root string, res Resolution, stdout, stderr io.Writer) int {
 	childEnv, err := gateEnv()
 	if err != nil {
@@ -207,26 +199,21 @@ func RunContext(ctx context.Context, root string, res Resolution, stdout, stderr
 	return result.Code
 }
 
-// RunAndRecord resolves, runs, and records the gate for root, returning its exit code.
-// The no-gate case exits 3 and records nothing (the chain resolved to None); every
-// resolved gate runs and then records its verdict. Shared by the `gate-run` subcommand
-// and the in-process shift loop, so neither carries its own resolve-run-record chain.
+// RunAndRecord selects and executes root's gate, then records its completed verdict.
+// It returns 3 and writes no evidence when no gate is selected.
 func RunAndRecord(root string, stdout, stderr io.Writer) int {
 	return Execute(context.Background(), root, stdout, stderr).ActionExit
 }
 
-// RunAndRecordContext is RunAndRecord with cancellation for in-process callers that
-// own teardown. A canceled gate is not recorded as red because the oracle did not
-// finish judging the tree.
+// RunAndRecordContext selects and executes root's gate with cancellation. If ctx ends,
+// it stops the gate and records no incomplete verdict.
 func RunAndRecordContext(ctx context.Context, root string, stdout, stderr io.Writer) int {
 	return Execute(ctx, root, stdout, stderr).ActionExit
 }
 
-// RunCommand is the `bench gate-run [--fresh] [root]` plumbing subcommand. The shell's
-// one-glance run_gate forwards here so gate resolution lives in exactly one place. Root
-// is the first non-flag argument when the shell passes the resolved repo root, else the
-// cwd's repo. RunCommand resolves root this way so the gate always runs from the top
-// level, even when invoked from a subdirectory. `--fresh` may sit on either side of it.
+// RunCommand executes the gate-run plumbing command and records its completed verdict.
+// It uses the first non-flag argument as root, or the current repository root. --fresh
+// requires execution instead of reuse; it can appear on either side of root.
 func RunCommand(args []string, stdout, stderr io.Writer) int {
 	var root string
 	mode := reuseFreshGreen
@@ -256,6 +243,8 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 
 const commandUsage = "usage: bench gate [--fresh|pin]"
 
+// Command selects the public gate action from its arguments. It dispatches gate runs
+// and human-attended pinning, and it rejects every other argument shape.
 func Command(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
 		return RunCommand(nil, stdout, stderr)
@@ -283,6 +272,9 @@ type Result struct {
 	Inspection Inspection
 }
 
+// Execute selects, executes, and records root's gate with the ordinary reuse policy.
+// It returns the action exit and the resulting evidence inspection. If ctx ends, the
+// incomplete gate run does not become verdict evidence.
 func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result {
 	ctx, finishSpan := beginGateSpan(ctx, root, "ordinary")
 	ctx, finishLog := beginGateRunLog(ctx, root, stderr, "ordinary")
@@ -292,15 +284,10 @@ func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result 
 	return result
 }
 
-// ExecuteReusingFreshGreen answers for root's tree like Execute, but a verdict already
-// reusable for this subject answers before the execution lock is touched. A gate run in
-// progress elsewhere therefore neither refuses the caller nor demotes the green it would
-// have reused. This is what makes the gated commit safe to run beside one.
-//
-// The optimistic subject comes from an evaluation-owned pre generation. The reuse
-// decision authorizes skipping the gate, so it answers from the same snapshot contract
-// a real run accepts, never from an independent capture. Everything else falls through
-// to Execute and pays for a real run under the lock.
+// ExecuteReusingFreshGreen returns reusable exact green evidence before it acquires the
+// execution lock. Otherwise it executes root's gate and records the completed verdict.
+// The reuse decision uses the same subject snapshot that an execution accepts. If ctx
+// ends during execution, no incomplete verdict becomes evidence.
 func ExecuteReusingFreshGreen(ctx context.Context, root string, stdout, stderr io.Writer) Result {
 	if plan, err := newGateEvaluation(root).acceptPre(); err == nil {
 		if reuse := reusableEvidence(root, plan, time.Now()); reuse.ReusableGreen {

@@ -28,7 +28,8 @@ type Decision struct {
 	Refusal   string
 }
 
-// Decide validates gate acceptance, scheduling, and evidence without repository or process access.
+// Decide validates a gate plan without repository or process access. It selects scheduled
+// phases and inherited evidence, or returns a refusal that the execution owner reports.
 func Decide(input DecisionInput) Decision {
 	if invalidDecisionValue(input.Subject) || input.Subject == "" {
 		return Decision{Refusal: "gate subject is required"}
