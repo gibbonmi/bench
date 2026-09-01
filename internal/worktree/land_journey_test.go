@@ -326,7 +326,10 @@ func TestLandCommandPublicConflictRepairRequiresNewReviewedTip(t *testing.T) {
 	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "repair conflict")
 	repairedTip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	code, stdout, stderr = run(reviewedTip)
-	want := "refused{detail=worktree source tip mismatch,observed=" + reviewedTip + ",wanted=" + repairedTip + "}\n"
+	// LRS17: the repair moved the source tip, so the refusal names both tips and routes the
+	// operator to the caller's own command re-pointed at the tip the worktree now holds.
+	want := "refused{detail=worktree source tip mismatch,observed=" + reviewedTip + ",wanted=" + repairedTip +
+		",next=" + landingRerun(request, base, repairedTip, "x", creation.Path, creation.Assignment.ID) + "}\n"
 	if code != 1 || stdout != want || stderr != "" {
 		t.Fatalf("old review after repair = (%d, %q, %q)", code, stdout, stderr)
 	}

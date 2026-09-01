@@ -21,6 +21,10 @@ import (
 	"github.com/gibbonmi/bench/internal/spec"
 )
 
+// sourceTipMismatchDetail is the sentence the source-tip proof prints. The registry face
+// that routes it reads the same value, so the sentence and its route are one fact.
+const sourceTipMismatchDetail = "worktree source tip mismatch"
+
 type landingSourceFact struct {
 	base, tip, specPath string
 	// closePath is the tickets-only folder the landing consumes, empty otherwise.
@@ -110,10 +114,10 @@ func landingSource(j joins, root string, a intent.Assignment, base, requestedTip
 	}
 	head, err := git.Output("-C", a.Worktree, "rev-parse", "HEAD^{commit}")
 	if err != nil {
-		return landingSourceFact{}, errors.New("worktree source tip mismatch")
+		return landingSourceFact{}, errors.New(sourceTipMismatchDetail)
 	}
 	if head != requestedTip {
-		return landingSourceFact{}, identityRefusal(requestedTip, head, "worktree source tip mismatch")
+		return landingSourceFact{}, identityRefusal(requestedTip, head, sourceTipMismatchDetail)
 	}
 	branchTip, err := git.Output("-C", root, "rev-parse", "--verify", a.Branch+"^{commit}")
 	if err != nil {

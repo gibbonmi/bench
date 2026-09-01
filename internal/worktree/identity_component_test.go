@@ -225,6 +225,10 @@ type landingRefusalFixture struct {
 	// resume marks a face the resume path prints. Its mutation runs against the
 	// published destination of an interrupted landing, not against the first run.
 	resume bool
+	// tip states the source tip the run names, read after the mutation. A face that
+	// refuses on the caller's own tip needs a value other than the worktree's head, which
+	// the walk names by default.
+	tip func(t *testing.T, creation Creation) string
 }
 
 func landingRefusalFixtures() []landingRefusalFixture {
@@ -253,6 +257,17 @@ func landingRefusalFixtures() []landingRefusalFixture {
 			face: faceSourceNotFenced,
 			mutate: func(t *testing.T, _ string, creation Creation) {
 				commitInWorktree(t, creation.Path, "stray.txt", "stray\n", "out of fence")
+			},
+		},
+		{
+			// The source moves past the tip the caller names, which is the state an
+			// operator reaches when a review repair adds a commit.
+			face: faceSourceTipMismatch,
+			mutate: func(t *testing.T, _ string, creation Creation) {
+				commitInWorktree(t, creation.Path, "owned.txt", "moved\n", "source moved past the named tip")
+			},
+			tip: func(t *testing.T, creation Creation) string {
+				return gitOutput(t, creation.Path, "rev-parse", "HEAD~1")
 			},
 		},
 		{
@@ -347,6 +362,9 @@ func TestLandingRefusalRegistryHasAProducingFixture(t *testing.T) {
 				// A mutation may add a source commit, so the pinned tip is read after it. An
 				// unmoved source reads back the same commit the fixture created.
 				tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+				if fixture.tip != nil {
+					tip = fixture.tip(t, creation)
+				}
 				code = LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 			}
 			next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(fixture.face).detail)

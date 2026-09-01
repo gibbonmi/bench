@@ -156,6 +156,7 @@ const (
 	faceDestinationResidue  = "destination-residue"
 	faceSourceNotClean      = "source-not-clean"
 	faceSourceNotFenced     = "source-not-fenced"
+	faceSourceTipMismatch   = "source-tip-mismatch"
 	// The resume path refuses on its own destination and marker state, so those two
 	// faces are declared here beside the first run's.
 	faceResumeDestinationResidue = "resume-destination-residue"
@@ -203,16 +204,33 @@ func residueRemovalCommand(paths []string) string {
 type landingRefusalFace struct {
 	name   string
 	detail string
-	repair func(rerun string, paths []string) string
+	repair func(rerun string, raised refusal) string
 }
 
-// route is the path-free reading of a face's repair, which the proofs that pin a repair
-// with no paths of its own read.
-func (f landingRefusalFace) route(rerun string) string { return f.repair(rerun, nil) }
+// route is the bare reading of a face's repair, which the proofs that pin a repair with no
+// observed values of its own read.
+func (f landingRefusalFace) route(rerun string) string { return f.repair(rerun, refusal{}) }
 
-// pathless adapts a repair that reads no paths to the registry's shape.
-func pathless(build func(rerun string) string) func(rerun string, paths []string) string {
-	return func(rerun string, _ []string) string { return build(rerun) }
+// pathless adapts a repair that reads none of the refusal's observed values.
+func pathless(build func(rerun string) string) func(rerun string, raised refusal) string {
+	return func(rerun string, _ refusal) string { return build(rerun) }
+}
+
+// withPaths adapts a repair that reads the refusal's own path table.
+func withPaths(build func(rerun string, paths []string) string) func(rerun string, raised refusal) string {
+	return func(rerun string, raised refusal) string { return build(rerun, raised.paths) }
+}
+
+// retargetSourceTip re-points the caller's own re-run at the source tip the landing read
+// in the tree, so a moved tip leaves exactly one command to run. The refusal carries the
+// requested tip and the read one already, and landingSourceTipFlag is the single rendering
+// of that flag, so the route comes from an exact swap and not from a re-parse of the
+// command. A refusal that names neither tip keeps the caller's command unchanged.
+func retargetSourceTip(rerun string, raised refusal) string {
+	if raised.observed == "" || raised.wanted == "" {
+		return rerun
+	}
+	return strings.Replace(rerun, landingSourceTipFlag(raised.observed), landingSourceTipFlag(raised.wanted), 1)
 }
 
 // landingRefusalFaces is the declared registry. It is the authoritative inventory of the
@@ -227,7 +245,15 @@ var landingRefusalFaces = []landingRefusalFace{
 	{
 		name:   faceDestinationResidue,
 		detail: "landing destination has undeclared ignored residue",
-		repair: destinationResidueRepair,
+		repair: withPaths(destinationResidueRepair),
+	},
+	{
+		// The mismatch refusal already carries the tip the tree holds beside the one the
+		// caller named, so the route is the caller's own command re-pointed at the tip that
+		// works. The operator then has one exact next command for a moved tip.
+		name:   faceSourceTipMismatch,
+		detail: sourceTipMismatchDetail,
+		repair: retargetSourceTip,
 	},
 	{
 		name:   faceSourceNotClean,
@@ -292,11 +318,18 @@ func landingFaceByDetail(detail string) (landingRefusalFace, bool) {
 // owns, and a face that declares its own sentence prints that one. The `refusal` struct
 // keeps its optional next field for the verbs outside this registry's reach.
 func landingFaceRefusal(name, detail, rerun string, paths []string) refusalError {
+	return landingFaceRefusalOf(name, refusal{detail: detail, paths: paths}, rerun)
+}
+
+// landingFaceRefusalOf renders one registered face over the refusal a proof already
+// raised, so the identities that refusal observed reach the route the face composes.
+func landingFaceRefusalOf(name string, raised refusal, rerun string) refusalError {
 	face := landingRefusalFaceByName(name)
 	if face.detail != "" {
-		detail = face.detail
+		raised.detail = face.detail
 	}
-	return refusalError{refusal{detail: detail, next: face.repair(rerun, paths), paths: paths}}
+	raised.next = face.repair(rerun, raised)
+	return refusalError{raised}
 }
 
 // landingFaceRoute attaches the caller's own re-run to a preflight refusal whose sentence
@@ -304,16 +337,16 @@ func landingFaceRefusal(name, detail, rerun string, paths []string) refusalError
 // preflight assembler is the one place that holds them, so the attachment happens there
 // rather than at the proof that failed. A refusal outside the registry travels unchanged.
 func landingFaceRoute(err error, rerun string) error {
-	detail, paths := err.Error(), []string(nil)
+	raised := refusal{detail: err.Error()}
 	var typed refusalError
 	if errors.As(err, &typed) {
-		detail, paths = typed.detail, typed.paths
+		raised = typed.refusal
 	}
-	face, ok := landingFaceByDetail(detail)
+	face, ok := landingFaceByDetail(raised.detail)
 	if !ok {
 		return err
 	}
-	return landingFaceRefusal(face.name, detail, rerun, paths)
+	return landingFaceRefusalOf(face.name, raised, rerun)
 }
 
 // landingRerun is the caller's own re-run of the landing, with the flag values it passed.
@@ -323,7 +356,7 @@ func landingFaceRoute(err error, rerun string) error {
 func landingRerun(request, base, tip, specArg, path, assignment string) string {
 	command := "bench worktree land --request " + landingRerunArg(request, "<request>") +
 		" --base " + landingRerunArg(base, "<full-review-base>") +
-		" --source-tip " + landingRerunArg(tip, "<full-source-tip>")
+		landingSourceTipFlag(tip)
 	if specArg != "" {
 		command += " --spec " + landingRerunArg(specArg, "<spec>")
 	}
@@ -335,6 +368,12 @@ func landingRerun(request, base, tip, specArg, path, assignment string) string {
 		return command + " " + sanitize.ShellQuote(path)
 	}
 	return command + " <worktree-path>"
+}
+
+// landingSourceTipFlag is the one rendering of the re-run's --source-tip argument. The
+// mismatch face swaps this exact text, so the composition and the swap read the same fact.
+func landingSourceTipFlag(tip string) string {
+	return " --source-tip " + landingRerunArg(tip, "<full-source-tip>")
 }
 
 // landingRerunArg renders one flag value the re-run repeats, and the placeholder that

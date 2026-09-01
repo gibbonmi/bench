@@ -245,7 +245,10 @@ func TestLandCommandDistinguishesSourceTipDriftFromAbbreviation(t *testing.T) {
 	for _, observed := range []string{base, tip[:3], "not-a-commit"} {
 		var stdout, stderr bytes.Buffer
 		code := LandCommand(root, home, "", landArgs(request, base, observed, creation.Path), &stdout, &stderr)
-		want := "refused{detail=worktree source tip mismatch,observed=" + observed + ",wanted=" + tip + "}\n"
+		// Drift is not abbreviation, so the refusal names both tips and routes the caller's
+		// own command at the tip the worktree holds, whatever value the caller named.
+		want := "refused{detail=worktree source tip mismatch,observed=" + observed + ",wanted=" + tip +
+			",next=" + landingRerun(request, base, tip, "x", creation.Path, creation.Assignment.ID) + "}\n"
 		if code != 1 || stdout.String() != want || stderr.Len() != 0 || strings.Contains(stdout.String(), "abbreviated") {
 			t.Fatalf("source tip drift %q = (%d, %q, %q), want (1, %q, empty)", observed, code, stdout.String(), stderr.String(), want)
 		}
