@@ -699,6 +699,93 @@ func TestCraftDelegateDisciplineAnchorsRedOnRemoval(t *testing.T) {
 	}
 }
 
+// TestLoadStopAndQuietAnchorsRedOnRemoval keeps LF4's stop and aggregate-readiness
+// conditions independently red-capable. The compact skill pointers lead the
+// coordinator to the reference that owns the detailed process.
+func TestLoadStopAndQuietAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		line      = ".agents/skills/bench-craft-line/SKILL.md"
+		delegate  = ".agents/skills/bench-craft-delegate/SKILL.md"
+		reference = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
+	)
+	rules := []struct {
+		file, section, needle, want string
+	}{
+		{
+			file:    line,
+			section: "Classify reds before the ladder moves",
+			needle:  "Known-flaky retry stops are in `craft-delegate`'s delegation discipline.",
+			want:    ".agents/skills/bench-craft-line/SKILL.md Classify reds before the ladder moves dropped the known-flaky retry-stop pointer",
+		},
+		{
+			file:    delegate,
+			section: "Verifying the done-claim",
+			needle:  "Before retry coordination or aggregate grading, load the stopped-retry and quiet-grade rules from `references/delegation-discipline.md`.",
+			want:    ".agents/skills/bench-craft-delegate/SKILL.md Verifying the done-claim dropped the stopped-retry and quiet-grade pointer",
+		},
+		{
+			file:    reference,
+			section: "Retry stops and aggregate readiness",
+			needle:  "After the second known-flaky refusal proves green in isolation, stop coordination and hand both results to the reviewer.",
+			want:    "delegation-discipline.md Retry stops and aggregate readiness dropped the second proven flaky-refusal stop",
+		},
+		{
+			file:    reference,
+			section: "Retry stops and aggregate readiness",
+			needle:  "Before aggregate grading, wait until returned delegates have no live tests and serialize the coordinator-owned resource.",
+			want:    "delegation-discipline.md Retry stops and aggregate readiness dropped the quiet-delegate aggregate-grade check",
+		},
+	}
+
+	evaluate := func(t *testing.T, broken int) []string {
+		t.Helper()
+		root := t.TempDir()
+		bodies := map[string]string{}
+		sections := map[string]map[string]bool{}
+		for i, r := range rules {
+			if sections[r.file] == nil {
+				sections[r.file] = map[string]bool{}
+				bodies[r.file] = "# subject\n"
+			}
+			if !sections[r.file][r.section] {
+				sections[r.file][r.section] = true
+				bodies[r.file] += "\n## " + r.section + "\n\n"
+			}
+			if i != broken {
+				bodies[r.file] += r.needle + "\n"
+			}
+		}
+		for file, body := range bodies {
+			path := filepath.Join(root, filepath.FromSlash(file))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	conformant := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(conformant, r.want) {
+			t.Errorf("tree conformant with %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("tree broken at %q in %s = %v, want %q", r.needle, r.file, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("breaking %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+}
+
 // TestDoneClaimOwnerAnchorsRedOnRemoval keeps owner resolution and repair
 // attribution independently red-capable. A done claim needs a tree artifact,
 // and an umbrella cannot become a ledger for unrelated findings.

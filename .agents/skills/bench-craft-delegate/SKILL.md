@@ -74,7 +74,6 @@ return the red→green log per row. Self-probe: apply the central-property
 mutation; report the observed result and the mutation's kind (omission or swap).
 ```
 Good — rows make the done-claim verifiable, and the self-probe names its kind.
-
 ## Scope
 
 One delegate, one coherent unit: one axis, one story, one search question.
@@ -110,7 +109,8 @@ its work, and confirm every coverage row went red-then-green. Run `git status` i
 it used, and resolve every identifier in an absence or exclusion claim to a real thing. Probe
 one accepted behavior independently of the delegate's own tests, kept constant across a batch,
 and spot-check citations before folding a summary in. Resolve every named Red-mutation owner to a real artifact in the tree.
-Installed-lane repair and its post-landing rebuild are in `references/delegation-discipline.md`.
+
+Installed-lane repair and its post-landing rebuild are in `references/delegation-discipline.md`. Before retry coordination or aggregate grading, load the stopped-retry and quiet-grade rules from `references/delegation-discipline.md`.
 
 Report every verification round in one line: accepted, or what was missed and where the fix went. Repairs
 beyond the allowance under Delegate or inline continue the authoring delegate for its own slice when the harness
