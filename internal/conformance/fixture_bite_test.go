@@ -709,6 +709,55 @@ func TestFixtureBiteResolutionRefusesInvalidInputs(t *testing.T) {
 	}
 }
 
+// TestFixtureDiagnosticProjectionKeepsPinnedLines grades the projection the bite
+// failure prints. A catch-all owner over a materialized tree answers with
+// hundreds of unrelated lines, and the reader needs the pinned ones.
+func TestFixtureDiagnosticProjectionKeepsPinnedLines(t *testing.T) {
+	unrelated := make([]string, 0, 30)
+	for index := range 30 {
+		unrelated = append(unrelated, fmt.Sprintf("anchor file missing: docs/other-%02d.md", index))
+	}
+	for _, testCase := range []struct {
+		name        string
+		diagnostics []string
+		pinned      []string
+		wantKept    []string
+		wantOmitted int
+	}{
+		{
+			name:        "pinned lines survive the projection",
+			diagnostics: append([]string{"anchor file missing: internal/example/base.go"}, unrelated...),
+			pinned:      []string{"internal/example/base.go"},
+			wantKept:    []string{"anchor file missing: internal/example/base.go"},
+			wantOmitted: 30,
+		},
+		{
+			name:        "an empty projection falls back to the first twenty lines",
+			diagnostics: unrelated,
+			pinned:      []string{"internal/example/base.go"},
+			wantKept:    unrelated[:20],
+			wantOmitted: 10,
+		},
+		{
+			name:        "a short list with no pin keeps every line",
+			diagnostics: unrelated[:3],
+			pinned:      nil,
+			wantKept:    unrelated[:3],
+			wantOmitted: 0,
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			kept, omitted := projectFixtureDiagnostics(testCase.diagnostics, testCase.pinned)
+			if !slices.Equal(kept, testCase.wantKept) {
+				t.Fatalf("kept = %v, want %v", kept, testCase.wantKept)
+			}
+			if omitted != testCase.wantOmitted {
+				t.Fatalf("omitted = %d, want %d", omitted, testCase.wantOmitted)
+			}
+		})
+	}
+}
+
 type fixtureBiteResolution struct {
 	check, expect string
 	tier          registry.Tier
@@ -760,15 +809,54 @@ func runFixtureBite(t *testing.T, kitRoot, fixture string, found canary.Fixture)
 	}
 	diagnostics := owner.run(root, kitRoot, resolved.tier)
 	if !containsDiagnostic(diagnostics, resolved.expect) {
-		t.Fatalf("%s did not bite through owner %s; want %q in diagnostics:\n%s", fixture, resolved.check, resolved.expect, strings.Join(diagnostics, "\n"))
+		t.Fatalf("%s did not bite through owner %s; want %q in diagnostics:\n%s", fixture, resolved.check, resolved.expect, fixtureDiagnosticReport(t, kitRoot, found.Dir, diagnostics))
 	}
 	if err := canary.RestoreMutationFixture(kitRoot, found.Dir, root); err != nil {
 		t.Fatalf("restore %s: %v", fixture, err)
 	}
 	if restored := owner.run(root, kitRoot, resolved.tier); containsDiagnostic(restored, resolved.expect) {
-		t.Fatalf("%s owner %s retained mutation-specific red %q after restoration:\n%s", fixture, resolved.check, resolved.expect, strings.Join(restored, "\n"))
+		t.Fatalf("%s owner %s retained mutation-specific red %q after restoration:\n%s", fixture, resolved.check, resolved.expect, fixtureDiagnosticReport(t, kitRoot, found.Dir, restored))
 	}
 }
+
+// fixtureDiagnosticReport renders the projected diagnostics for a bite failure.
+// It reads the pins of the one fixture under proof, and a pin read that fails
+// degrades to the unfiltered fallback rather than to a second failure.
+func fixtureDiagnosticReport(t *testing.T, kitRoot, fixtureDir string, diagnostics []string) string {
+	t.Helper()
+	pinned, err := canary.PinnedPaths(kitRoot, fixtureDir)
+	if err != nil {
+		t.Logf("pinned paths for %s: %v", fixtureDir, err)
+	}
+	kept, omitted := projectFixtureDiagnostics(diagnostics, pinned)
+	if omitted == 0 {
+		return strings.Join(kept, "\n")
+	}
+	return fmt.Sprintf("%s\n... and %d other diagnostics", strings.Join(kept, "\n"), omitted)
+}
+
+// projectFixtureDiagnostics narrows an owner's whole diagnostic list to the
+// lines that name a path the fixture pins, and reports how many lines it leaves
+// out. A catch-all owner over the materialized tree answers with hundreds of
+// unrelated lines, and the relevant line hides among them. When no line names a
+// pinned path, the first twenty lines stand in, so the reader still sees
+// evidence.
+func projectFixtureDiagnostics(diagnostics, pinned []string) ([]string, int) {
+	var kept []string
+	for _, diagnostic := range diagnostics {
+		if slices.ContainsFunc(pinned, func(path string) bool { return strings.Contains(diagnostic, path) }) {
+			kept = append(kept, diagnostic)
+		}
+	}
+	if len(kept) == 0 {
+		kept = diagnostics[:min(len(diagnostics), fixtureDiagnosticFallbackLines)]
+	}
+	return kept, len(diagnostics) - len(kept)
+}
+
+// fixtureDiagnosticFallbackLines is how many diagnostics the projection prints
+// when no line names a pinned path.
+const fixtureDiagnosticFallbackLines = 20
 
 func resolveFixtureBite(fixture string, fixtures map[string]canary.Fixture, fixtureCheck func(canary.Fixture) (string, bool)) (fixtureBiteResolution, error) {
 	found, ok := fixtures[fixture]
