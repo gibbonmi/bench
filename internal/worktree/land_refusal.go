@@ -332,21 +332,43 @@ func landingFaceRefusalOf(name string, raised refusal, rerun string) refusalErro
 	return refusalError{raised}
 }
 
+// laterProofsSkipped is the sentence a refusal from a short-circuited proof group carries.
+// The preflight runs its proofs in groups, and a fault stops the later proofs of its own
+// group, so the operator who repairs this one fault must expect another refusal from the
+// same group. A refusal from a group that ran to its end carries no such sentence.
+const laterProofsSkipped = "later proofs in this group did not run"
+
+// skippedProofs states the short-circuit ahead of the route, so the route still ends with
+// the caller's own re-run. A refusal that names no route gains no sentence, because the
+// sentence qualifies a repair rather than standing as one.
+func skippedProofs(raised refusalError, shortCircuited bool) refusalError {
+	if !shortCircuited || raised.next == "" {
+		return raised
+	}
+	raised.next = laterProofsSkipped + "; " + raised.next
+	return raised
+}
+
 // landingFaceRoute attaches the caller's own re-run to a preflight refusal whose sentence
 // names a registered face. The route reads the flag values the caller passed, and the
 // preflight assembler is the one place that holds them, so the attachment happens there
-// rather than at the proof that failed. A refusal outside the registry travels unchanged.
-func landingFaceRoute(err error, rerun string) error {
+// rather than at the proof that failed. shortCircuited states whether this fault stopped
+// the later proofs of its own group, which the assembler knows and the proof does not. A
+// refusal outside the registry travels unchanged unless it already carries a route, which
+// the sentence then qualifies.
+func landingFaceRoute(err error, rerun string, shortCircuited bool) error {
 	raised := refusal{detail: err.Error()}
 	var typed refusalError
 	if errors.As(err, &typed) {
 		raised = typed.refusal
 	}
-	face, ok := landingFaceByDetail(raised.detail)
-	if !ok {
+	if face, ok := landingFaceByDetail(raised.detail); ok {
+		return skippedProofs(landingFaceRefusalOf(face.name, raised, rerun), shortCircuited)
+	}
+	if !shortCircuited || raised.next == "" {
 		return err
 	}
-	return landingFaceRefusalOf(face.name, raised, rerun)
+	return skippedProofs(refusalError{raised}, true)
 }
 
 // landingRerun is the caller's own re-run of the landing, with the flag values it passed.

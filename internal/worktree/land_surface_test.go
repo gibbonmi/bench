@@ -167,6 +167,16 @@ func TestLandCommandReportsIdentityAndDestinationInOnePreflight(t *testing.T) {
 	if !printed || strings.Contains(next, "bench worktree exec") || !strings.HasSuffix(next, " '"+creation.Path+"'") {
 		t.Fatalf("destination next = %q (printed=%t) in %q, want a re-run ending with the operator's own path", next, printed, stdout)
 	}
+	// LRS9: the assignment fault stopped the source proofs of its own group, so its route
+	// says so and the operator expects a second refusal after the repair. The destination
+	// group ended at its own fault, so its route says no such thing.
+	if strings.Contains(next, laterProofsSkipped) {
+		t.Fatalf("destination next = %q, want no skipped-proof sentence from a group that ran to its end", next)
+	}
+	assignmentNext, printed := landingFaceNext(stdout, "request token matches no assignment")
+	if !printed || !strings.HasPrefix(assignmentNext, laterProofsSkipped+"; ") {
+		t.Fatalf("assignment next = %q (printed=%t) in %q, want the skipped-proof sentence ahead of the repair", assignmentNext, printed, stdout)
+	}
 }
 
 func TestLandCommandFenceRefusalNamesThePath(t *testing.T) {

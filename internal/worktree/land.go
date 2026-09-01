@@ -227,20 +227,26 @@ func landAttributed(measures *landingMeasures, j joins, root, home, _ string, ar
 	// Every reversible proof runs before the first refusal prints, so one preflight
 	// names every refusal the caller must clear. The destination proofs and the
 	// assignment proofs are independent; the source proofs need the assignment.
+	//
+	// The groups are the destination group and the assignment group, and the assignment
+	// group runs the assignment proofs ahead of the source proofs that read their result.
+	// A fault that stops a group's later proofs says so, and the operator then expects a
+	// second refusal from the same group after the repair. The destination group holds one
+	// stage, and the source stage is the assignment group's last, so neither states one.
 	var refusals []error
 	// The destination proof runs before the assignment resolves, so its route has no
 	// assignment id to address and names the operator's own worktree path instead.
 	unassignedRerun := landingRerun(parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, "")
 	destination, branch, priorMarker, destinationFingerprint, err := landingDestination(j, root)
 	if err != nil {
-		refusals = append(refusals, landingFaceRoute(err, unassignedRerun))
+		refusals = append(refusals, landingFaceRoute(err, unassignedRerun, false))
 	}
 	var source landingSourceFact
 	assignment, err := landingAssignment(j, root, path, parsed.Flags["--request"], base, tip)
 	if err != nil {
-		refusals = append(refusals, landingFaceRoute(err, unassignedRerun))
+		refusals = append(refusals, landingFaceRoute(err, unassignedRerun, true))
 	} else if source, err = landingSource(j, root, assignment, base, tip, parsed.Flags["--spec"]); err != nil {
-		refusals = append(refusals, landingFaceRoute(err, landingRerun(parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment.ID)))
+		refusals = append(refusals, landingFaceRoute(err, landingRerun(parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment.ID), false))
 	} else if !git.OK("-C", root, "merge-base", "--is-ancestor", assignment.Start, source.base) {
 		// The review base binds to the assignment's recorded start or to a descendant
 		// of it. The destination advances while an assignment is open, so a landing

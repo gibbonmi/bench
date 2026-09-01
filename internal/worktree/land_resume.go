@@ -49,11 +49,11 @@ func resumeLandWith(j joins, root, home string, args []string, stdout, stderr io
 		return landRefusalError(stdout, err)
 	}
 	result := landing.ReviewedResult{SourceBase: sourceBase, SourceTip: parsed.Flags["--source-tip"], DestinationBase: destinationBase, Commit: published, Tree: tree}
-	assignment, active, err := resumeAssignment(j, root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], landingSlug(parsed.Flags["--spec"]))
+	assignment, active, skipped, err := resumeAssignment(j, root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], landingSlug(parsed.Flags["--spec"]))
 	if err != nil {
 		// The assignment has not resolved yet, so the continuation this refusal names
 		// addresses the caller's own worktree path.
-		return landRefusalError(stdout, landingFaceRoute(err, resumeRerun(parsed.Flags, path, "")))
+		return landRefusalError(stdout, landingFaceRoute(err, resumeRerun(parsed.Flags, path, ""), skipped))
 	}
 	assignmentID := assignment.ID
 	if !active {
@@ -186,10 +186,13 @@ func ignoredResidueDeclared(j joins, root string) bool {
 	return ignoredWithinLandingAllowance(ignored, declared)
 }
 
-func resumeAssignment(j joins, root, path, request, tip, base, slug string) (intent.Assignment, bool, error) {
+// resumeAssignment runs the resume's assignment group: the identity proofs first, then the
+// source proofs that read their result. skipped reports whether the refusal stopped the
+// group's later proofs, which the caller states in the route it attaches.
+func resumeAssignment(j joins, root, path, request, tip, base, slug string) (a intent.Assignment, active, skipped bool, err error) {
 	a, found, err := intent.FindAssignmentForRequest(root, request)
 	if err != nil {
-		return intent.Assignment{}, false, err
+		return intent.Assignment{}, false, true, err
 	}
 	if !found {
 		recovery, recoverable, err := unmatchedRequestRecovery(root, assignmentRecoveryContext{
@@ -198,20 +201,21 @@ func resumeAssignment(j joins, root, path, request, tip, base, slug string) (int
 			tip:    tip,
 		})
 		if err != nil {
-			return intent.Assignment{}, false, err
+			return intent.Assignment{}, false, true, err
 		}
 		if recoverable {
-			return intent.Assignment{}, false, refusalError{recovery}
+			return intent.Assignment{}, false, true, refusalError{recovery}
 		}
-		return intent.Assignment{}, false, nil
+		return intent.Assignment{}, false, false, nil
 	}
 	if err := identityBundleRefusal(root, path, a, resumeActiveState); err != nil {
-		return intent.Assignment{}, false, err
+		return intent.Assignment{}, false, true, err
 	}
+	// The source proofs are the group's last stage, so their refusal stops no later proof.
 	if _, err := landingSource(j, root, a, base, tip, slug); err != nil {
-		return intent.Assignment{}, false, err
+		return intent.Assignment{}, false, false, err
 	}
-	return a, true, nil
+	return a, true, false, nil
 }
 
 func resumePublished(j joins, root, destination, value, base, source, slug string) (published, sourceBase, destinationBase, tree string, err error) {

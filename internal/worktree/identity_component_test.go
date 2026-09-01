@@ -41,7 +41,10 @@ func identityComponentFixtures() []identityComponentFixture {
 			request:   func(string) string { return "unknown-request" },
 			mutate:    func(*testing.T, string, Creation) {},
 			want: func(creation Creation, base, tip string) string {
-				next := "bench worktree reauthorize --assignment " + creation.Assignment.ID +
+				// LRS9: the request proof is the assignment group's first stage, so its
+				// fault leaves the source proofs unrun and the route says so ahead of the
+				// repair. Both the first run and the resume group their proofs this way.
+				next := laterProofsSkipped + "; bench worktree reauthorize --assignment " + creation.Assignment.ID +
 					" --request <new-request> --base '" + base + "' --source-tip '" + tip + "' '" + creation.Path + "'"
 				return "detail=request token matches no assignment,observed=assignment:" + creation.Assignment.ID + ",next=" + next
 			},
