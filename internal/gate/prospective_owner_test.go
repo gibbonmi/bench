@@ -45,13 +45,14 @@ func stubProspectiveBuilder(t *testing.T) *[]string {
 func TestProspectiveGateAuthorsItsExecutableFromTheGradedTree(t *testing.T) {
 	checkout := t.TempDir()
 	kit := t.TempDir()
+	artifactRoot := t.TempDir()
 	inherited := filepath.Join(t.TempDir(), "bench")
 	if err := os.WriteFile(inherited, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv(runbinary.Env, inherited)
 	sources := stubProspectiveBuilder(t)
-	owner := prospectiveRunBinaryOwnerAt(checkout, "")
+	owner := prospectiveRunBinaryOwnerAt(checkout, artifactRoot)
 
 	graded, err := owner(t.Context(), checkout)
 	if err != nil {
@@ -63,6 +64,7 @@ func TestProspectiveGateAuthorsItsExecutableFromTheGradedTree(t *testing.T) {
 	if graded.Path == inherited {
 		t.Fatalf("graded subject ran under the inherited selection %q", inherited)
 	}
+	requireProspectiveArtifactPath(t, graded.Path, artifactRoot)
 	if err := graded.Close(); err != nil {
 		t.Fatal(err)
 	}
@@ -105,9 +107,7 @@ func TestProspectiveGateConfinesABaselineKitBinaryToTheBundle(t *testing.T) {
 	if len(*sources) != 1 || (*sources)[0] != kit {
 		t.Fatalf("baseline-kit sources = %#v, want one selection built from %q", *sources, kit)
 	}
-	if !strings.HasPrefix(authored.Path, artifactRoot+string(filepath.Separator)) {
-		t.Fatalf("authored baseline-kit selection = %q, want a path under the bundle root %q", authored.Path, artifactRoot)
-	}
+	requireProspectiveArtifactPath(t, authored.Path, artifactRoot)
 
 	inherited := filepath.Join(t.TempDir(), "bench")
 	if err := os.WriteFile(inherited, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
@@ -120,6 +120,14 @@ func TestProspectiveGateConfinesABaselineKitBinaryToTheBundle(t *testing.T) {
 	}
 	if len(*sources) != 1 || baseline.Path != inherited {
 		t.Fatalf("inherited selection = %q with sources %#v, want the inherited %q", baseline.Path, *sources, inherited)
+	}
+}
+
+func requireProspectiveArtifactPath(t *testing.T, path, artifactRoot string) {
+	t.Helper()
+	rel, err := filepath.Rel(artifactRoot, path)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		t.Fatalf("authored selection = %q, want a path under the bundle root %q", path, artifactRoot)
 	}
 }
 
@@ -227,7 +235,7 @@ func TestProspectiveGateReportsAFailedBuildWithNoResidue(t *testing.T) {
 	}
 	t.Cleanup(func() { prospectiveRunBinary = old })
 
-	selection, err := prospectiveRunBinaryOwnerAt(checkout, "")(t.Context(), checkout)
+	selection, err := prospectiveRunBinaryOwnerAt(checkout, tempRoot)(t.Context(), checkout)
 	if err == nil || selection != nil {
 		t.Fatalf("failed prospective build = (%#v, %v), want no selection and an error", selection, err)
 	}
