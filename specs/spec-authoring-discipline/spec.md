@@ -1,6 +1,6 @@
 # Spec-authoring discipline
 
-Status: staged
+Status: implemented
 
 Roadmap: FT220, FT257, FT278
 

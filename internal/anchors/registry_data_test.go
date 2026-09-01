@@ -540,36 +540,61 @@ func TestHarnessRecordPointerAnchorsRedOnRemoval(t *testing.T) {
 // registry, so guidance that drops a rule cannot define itself green.
 func TestCraftSpecMapDisciplineAnchorsRedOnRemoval(t *testing.T) {
 	const file = ".agents/skills/bench-craft-spec/SKILL.md"
-	rules := []struct{ section, needle, want string }{
+	rules := []struct {
+		section, needle, want string
+		forbidden             bool
+	}{
 		{
-			"Slicing a build for delegates",
-			"A build may not edit its own spec's acceptance rows, budget targets, or ownership fences.",
-			".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates dropped the rule that a build may not edit its own spec's acceptance rows, budget targets, or ownership fences",
+			section: "Template",
+			needle:  "## Further notes\nThe flagged-additions list",
+			want:    ".agents/skills/bench-craft-spec/SKILL.md Template put contract text under the Further notes heading; that heading stays bare",
+
+			forbidden: true,
 		},
 		{
-			"Review rubric",
-			"Per row, does the map name the gate check or test that reds it, or mark the row review-owned?",
-			".agents/skills/bench-craft-spec/SKILL.md Review rubric dropped the per-row question that names the gate check or test which reds the row",
+			section: "Slicing a build for delegates",
+			needle:  "A build may not edit its own spec's acceptance rows, budget targets, or ownership fences.",
+			want:    ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates dropped the rule that a build may not edit its own spec's acceptance rows, budget targets, or ownership fences",
 		},
 		{
-			"The acceptance coverage map",
-			"`references/map-discipline.md` states the rule each row must satisfy",
-			".agents/skills/bench-craft-spec/SKILL.md The acceptance coverage map dropped the pointer to references/map-discipline.md",
+			section: "Review rubric",
+			needle:  "Per row, does the map name the gate check or test that reds it, or mark the row review-owned?",
+			want:    ".agents/skills/bench-craft-spec/SKILL.md Review rubric dropped the per-row question that names the gate check or test which reds the row",
+		},
+		{
+			section: "The acceptance coverage map",
+			needle:  "`references/map-discipline.md` states the rule each row must satisfy",
+			want:    ".agents/skills/bench-craft-spec/SKILL.md The acceptance coverage map dropped the pointer to references/map-discipline.md",
+		},
+		{
+			needle: "This reader sweep includes `.mjs` scripts and workflow files, and `references/map-discipline.md` states its rules.",
+			want:   ".agents/skills/bench-craft-spec/SKILL.md dropped the reader-sweep name from the whole-tree sweep step",
 		},
 	}
 
-	// evaluate writes one minimal skill that carries every section, and every needle except
-	// the dropped one. The section survives the drop, so a red reports the missing sentence
-	// rather than a missing section.
-	evaluate := func(t *testing.T, dropped int) []string {
+	// evaluate writes one minimal skill that carries every section, and every needle a
+	// conformant tree holds. A required needle leaves when the run breaks it; a forbidden
+	// needle arrives instead. The section survives either break, so a red reports the
+	// sentence rather than a missing section.
+	evaluate := func(t *testing.T, broken int) []string {
 		t.Helper()
 		root := t.TempDir()
 		body := "# subject\n"
 		for i, r := range rules {
-			body += "\n## " + r.section + "\n\n"
-			if i != dropped {
-				body += r.needle + "\n"
+			// A whole-file rule carries no section, so it takes no heading.
+			if r.section != "" {
+				body += "\n## " + r.section + "\n\n"
 			}
+			if (i == broken) != r.forbidden {
+				continue
+			}
+			if r.forbidden {
+				// The forbidden needle opens with an H2 heading. A fence keeps that
+				// heading from closing the section that must hold it.
+				body += "```markdown\n" + r.needle + "\n```\n"
+				continue
+			}
+			body += r.needle + "\n"
 		}
 		path := filepath.Join(root, filepath.FromSlash(file))
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -644,6 +669,16 @@ func TestCraftDelegateDisciplineAnchorsRedOnRemoval(t *testing.T) {
 			file:   writeSpec,
 			needle: "The round declares its iteration cap before the first charge",
 			want:   ".agents/commands/bench-write-spec.md dropped the review round's iteration-cap declaration",
+		},
+		{
+			file:   writeSpec,
+			needle: "Run `craft-spec`'s reader sweep before that lock.",
+			want:   ".agents/commands/bench-write-spec.md dropped the reader sweep sequenced before the craft-tickets charge",
+		},
+		{
+			file:   writeSpec,
+			needle: "ship on its own gate? Apply `craft-spec`'s named `Bootstrap authority before execution` rule. The ticket graph splits where a consumer branch lands green alone.",
+			want:   ".agents/commands/bench-write-spec.md dropped the consumer-branch split arm from the moved ship-test question",
 		},
 	}
 
@@ -1147,30 +1182,120 @@ func TestCommentAndReviewRuleAnchorsRedOnRemoval(t *testing.T) {
 // section, needle, and diagnostic is written here independently of the registry.
 func TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval(t *testing.T) {
 	const file = ".agents/skills/bench-craft-spec/references/map-discipline.md"
-	rules := []struct{ section, needle, want string }{
+	rules := []struct {
+		section, needle, want string
+		forbidden             bool
+	}{
 		{
-			"In the edge inventory",
-			"A kit spec names the audience each behavior serves: this repository, or every repository that links the kit. The inventory walks the absent-versus-empty pair for each directory the spec reads",
-			".agents/skills/bench-craft-spec/references/map-discipline.md In the edge inventory dropped the two-audience prompt with its absent-versus-empty directory pair",
+			section: "In the edge inventory",
+			needle:  "A kit spec names the audience each behavior serves: this repository, or every repository that links the kit. The inventory walks the absent-versus-empty pair for each directory the spec reads",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md In the edge inventory dropped the two-audience prompt with its absent-versus-empty directory pair",
 		},
 		{
-			"Per row",
-			"A transaction-shaped spec gives three rows for its verification failures. The rows are persistence before the oracle runs, interruption inside the oracle, and persistence at the terminal step.",
-			".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the three transaction verification failure rows",
+			section: "Per row",
+			needle:  "A transaction-shaped spec gives three rows for its verification failures. The rows are persistence before the oracle runs, interruption inside the oracle, and persistence at the terminal step.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the three transaction verification failure rows",
+		},
+		{
+			section: "Per row",
+			needle:  "Each in-scope edge-inventory promise, source promise, and fence-closure promise takes one red-capable row.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the one-red-capable-row rule for each in-scope promise",
+		},
+		{
+			section: "In the edge inventory",
+			needle:  "Each excluded edge takes a Won't handle line that names a surviving in-scope caller.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md In the edge inventory dropped the surviving-in-scope-caller clause from the Won't handle line",
+		},
+		{
+			section: "Before the map locks",
+			needle:  "The flagged-additions list sits under Further notes before the first review charge.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the flagged-additions list under Further notes before the first review charge",
+		},
+		{
+			section: "Before the map locks",
+			needle:  "The source-sentence-to-row table sits under Further notes before the first review charge.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the source-sentence-to-row table under Further notes before the first review charge",
+		},
+		{
+			section: "At review",
+			needle:  "The review round demands one row for each listed addition, and it removes each unlisted addition.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md At review dropped one arm of the addition disposition",
+		},
+		{
+			section: "Per row",
+			needle:  "An either-side predicate takes two rows, one side per row. One row that names both sides is not sufficient.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the two-row rule for an either-side predicate",
+		},
+		{
+			section: "Before the map locks",
+			needle:  "Each canary row and each conformance row traces to its executed root before the coverage map locks.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the executed-root trace for a canary or conformance row",
+		},
+		{
+			section: "Per row",
+			needle:  "Each named diagnostic state is addable or mutable in a fixture.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the fixture-reachable rule for a named diagnostic state",
+		},
+		{
+			section: "At ticket slicing",
+			needle:  "The author quotes each pasted operand in the delegate charge.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md At ticket slicing dropped the quoted-operand rule for a pasted operand in the delegate charge",
+		},
+		{
+			section: "Before the map locks",
+			needle:  "The reader sweep lists each named consumer of the decision fact.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the named-consumer rule for the reader sweep",
+		},
+		{
+			section: "Before the map locks",
+			needle:  "The reader sweep lists each helper that a named consumer calls directly.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the direct-helper rule for the reader sweep",
+		},
+		{
+			section: "Before the map locks",
+			needle:  "A deeper callee joins the reader sweep only when the callee reads the decision fact.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the depth bound that admits a deeper callee only when the callee reads the decision fact",
+		},
+		{
+			section: "Before the map locks",
+			needle:  "Each shared reader in the reader sweep takes an exact ownership fence.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the exact-ownership-fence rule for a shared reader",
+		},
+		{
+			needle:    "reader census",
+			want:      ".agents/skills/bench-craft-spec/references/map-discipline.md writes \"reader census\"; the canonical term is reader sweep",
+			forbidden: true,
 		},
 	}
 
-	// evaluate writes one minimal reference that carries every section, and every needle
-	// except the dropped one. The section survives the drop, so a red reports the missing
-	// sentence rather than a missing section.
+	// evaluate writes one minimal reference that carries every section once, and every
+	// needle except the dropped one. Several rules share a section, and MarkdownH2Sections
+	// reads only the first occurrence of a heading, so the needles group under one heading
+	// per section. The section survives the drop, so a red reports the missing sentence
+	// rather than a missing section.
 	evaluate := func(t *testing.T, dropped int) []string {
 		t.Helper()
 		root := t.TempDir()
 		body := "# subject\n"
+		var sections []string
+		for _, r := range rules {
+			if r.section != "" && !slices.Contains(sections, r.section) {
+				sections = append(sections, r.section)
+			}
+		}
 		for i, r := range rules {
-			body += "\n## " + r.section + "\n\n"
-			if i != dropped {
+			// A whole-file rule carries no section. A forbidden needle is present only
+			// when it is the broken one; a required needle is absent only then.
+			if r.section == "" && (i == dropped) == r.forbidden {
 				body += r.needle + "\n"
+			}
+		}
+		for _, section := range sections {
+			body += "\n## " + section + "\n\n"
+			for i, r := range rules {
+				if r.section == section && (i == dropped) == r.forbidden {
+					body += r.needle + "\n"
+				}
 			}
 		}
 		path := filepath.Join(root, filepath.FromSlash(file))
@@ -1193,6 +1318,158 @@ func TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval(t *testing.T)
 		diags := evaluate(t, i)
 		if !slices.Contains(diags, r.want) {
 			t.Errorf("reference without %q = %v, want %q", r.needle, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("dropping %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+}
+
+// TestDecisionMapAuthoringAnchorsRedOnRemoval holds the decision-map authoring steps and
+// the asset-path convention. The shaping phase file must send the author to one ready
+// map's Sources block, must name both first-skeleton verbs, and must keep the unnamed
+// prose-check term out. The two phase files and the template must spell one asset path,
+// so a drift in any one of the three files reds its own diagnostic. Each needle and
+// diagnostic is written here independently of the registry.
+func TestDecisionMapAuthoringAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		shapeIdea = ".agents/commands/bench-shape-idea.md"
+		writeSpec = ".agents/commands/bench-write-spec.md"
+		schema    = "internal/maps/schema.go"
+	)
+	rules := []struct {
+		file, needle, want string
+		forbidden          bool
+	}{
+		{
+			file:   shapeIdea,
+			needle: "Read one ready decision map's `## Sources` block before the first write.",
+			want:   ".agents/commands/bench-shape-idea.md dropped the ready-map Sources read before the first decision-map write",
+		},
+		{
+			file:   shapeIdea,
+			needle: "Run `bench maps` and `bench gate-prose` on the first skeleton.",
+			want:   ".agents/commands/bench-shape-idea.md dropped the bench-maps and bench-gate-prose checks on the first decision-map skeleton",
+		},
+		{
+			file:      shapeIdea,
+			needle:    "prose preflight",
+			want:      ".agents/commands/bench-shape-idea.md writes an unnamed prose check; `bench gate-prose` is the one handle",
+			forbidden: true,
+		},
+		{
+			file:   shapeIdea,
+			needle: "decisions/assets/",
+			want:   ".agents/commands/bench-shape-idea.md dropped the decisions/assets/ path for a map-owned asset",
+		},
+		{
+			file:   writeSpec,
+			needle: "decisions/assets/",
+			want:   ".agents/commands/bench-write-spec.md dropped the decisions/assets/ path for a map-owned asset",
+		},
+		{
+			file:   schema,
+			needle: "decisions/assets/",
+			want:   "internal/maps/schema.go dropped the decisions/assets/ path for a map-owned asset from the decision-map template",
+		},
+	}
+
+	// evaluate writes one minimal file per subject. A required needle is present unless it
+	// is the broken one; a forbidden needle is present only when it is the broken one.
+	evaluate := func(t *testing.T, broken int) []string {
+		t.Helper()
+		root := t.TempDir()
+		bodies := map[string]string{shapeIdea: "# subject\n", writeSpec: "# subject\n", schema: "package maps\n"}
+		for i, r := range rules {
+			if (i == broken) == r.forbidden {
+				bodies[r.file] += "\n" + r.needle + "\n"
+			}
+		}
+		for file, body := range bodies {
+			path := filepath.Join(root, filepath.FromSlash(file))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	// Other rows of the group fire against this minimal tree; only these rows are the test's
+	// subject, so both directions are read by membership.
+	conformant := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(conformant, r.want) {
+			t.Errorf("tree conformant with %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("tree broken at %q in %s = %v, want %q", r.needle, r.file, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("breaking %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+}
+
+// TestContextMapTermAnchorsRedOnRemoval holds the three map-term glossary entries in
+// CONTEXT.md. The coverage map and the decision map are two artifacts, and each Avoid
+// list names the bare word "map". The reader sweep entry reserves "census". Each needle
+// and diagnostic is written here independently of the registry, so a glossary that
+// merged the two map entries cannot define itself green.
+func TestContextMapTermAnchorsRedOnRemoval(t *testing.T) {
+	const file = "CONTEXT.md"
+	rules := []struct{ needle, want string }{
+		{
+			needle: "Not \"map\", not \"traceability matrix\" — coverage map.",
+			want:   "CONTEXT.md dropped the coverage-map glossary entry with the Avoid list that names the bare word map",
+		},
+		{
+			needle: "Not \"PRD\", not \"design doc\", not \"map\" — decision map.",
+			want:   "CONTEXT.md decision-map entry dropped the Avoid list that names the bare word map",
+		},
+		{
+			needle: "Not \"census\", not \"consumer audit\" — reader sweep.",
+			want:   "CONTEXT.md dropped the reader-sweep glossary entry with the Avoid list that reserves census",
+		},
+	}
+
+	// evaluate writes one minimal glossary that carries every needle except the dropped one.
+	evaluate := func(t *testing.T, dropped int) []string {
+		t.Helper()
+		root := t.TempDir()
+		body := "# Context\n"
+		for i, r := range rules {
+			if i != dropped {
+				body += "\n" + r.needle + "\n"
+			}
+		}
+		if err := os.WriteFile(filepath.Join(root, file), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return EvaluateGroup(root, AfterSpecAuthorization)
+	}
+
+	// Other rows of the group fire against this minimal tree; only these rows are the
+	// test's subject, so both directions are read by membership.
+	conformant := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(conformant, r.want) {
+			t.Errorf("glossary carrying %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("glossary without %q = %v, want %q", r.needle, diags, r.want)
 		}
 		for j, other := range rules {
 			if j != i && slices.Contains(diags, other.want) {

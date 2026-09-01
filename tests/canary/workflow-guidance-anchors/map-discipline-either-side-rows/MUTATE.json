@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "An either-side predicate takes two rows, one side per row. One row that names both sides is not sufficient.",
+    "new": "An either-side predicate takes a row that names each side."
+  }
+]

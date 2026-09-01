@@ -68,6 +68,76 @@ The maps package.
 	if _, diagnostics := ParseDecisionMap([]byte(strings.Replace(DecisionMapTemplate(), "Status: shaping", "Status: ready", 1))); len(diagnostics) != 0 {
 		t.Fatalf("ready status diagnostics = %v", diagnostics)
 	}
+	assertTemplateSourcesExample(t)
+	assertTemplateTicketRules(t)
+	assertTemplateValidatesClean(t)
+}
+
+// assertTemplateSourcesExample holds rows SAD1, SAD2, and SAD3. The Sources body
+// teaches the record grammar, so the bullet count, the locator kind, and the
+// two-physical-line shape each get an independent assertion.
+func assertTemplateSourcesExample(t *testing.T) {
+	t.Helper()
+	template := DecisionMapTemplate()
+	start := strings.Index(template, "## Sources")
+	if start < 0 {
+		t.Fatalf("template = %q, want a Sources heading", template)
+	}
+	lines := strings.Split(template[start:], "\n")
+	bullets := 0
+	for _, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "- ") {
+			bullets++
+		}
+	}
+	if bullets != 1 {
+		t.Errorf("Sources bullets = %d, want 1", bullets)
+	}
+	if !strings.Contains(template[start:], "\n- URL: ") || strings.Contains(template[start:], "- Path: ") {
+		t.Errorf("Sources example = %q, want a URL locator", template[start:])
+	}
+	supports := -1
+	for i, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "Supports: ") {
+			supports = i
+		}
+	}
+	if supports < 0 || supports+1 >= len(lines) || !strings.HasPrefix(strings.TrimSpace(lines[supports+1]), "Drift: ") {
+		t.Errorf("Sources record = %q, want Supports and Drift on two physical lines", template[start:])
+	}
+}
+
+// assertTemplateTicketRules holds rows SAD7 and SAD8. Every consumer resolves the
+// answer placeholder with a single-count replacement, so a second ticket breaks them.
+func assertTemplateTicketRules(t *testing.T) {
+	t.Helper()
+	template := DecisionMapTemplate()
+	headings := 0
+	for _, line := range strings.Split(template, "\n") {
+		if strings.HasPrefix(line, canonicalDecisionMapSchema.ticketHeading) {
+			headings++
+		}
+	}
+	if headings != 1 {
+		t.Errorf("decision-ticket headings = %d, want 1", headings)
+	}
+	if !strings.Contains(template, resolvedBlockedRule) {
+		t.Errorf("template = %q, want the resolved-blocked rule", template)
+	}
+}
+
+// assertTemplateValidatesClean holds row SAD4 at the maps seam. The temporary root
+// holds no repository files, so a Path locator would red here.
+func assertTemplateValidatesClean(t *testing.T) {
+	t.Helper()
+	root := t.TempDir()
+	template := strings.Replace(DecisionMapTemplate(), "<answer>", "Resolved.", 1)
+	for _, status := range []string{"shaping", "ready"} {
+		document := strings.Replace(template, "Status: shaping", "Status: "+status, 1)
+		if _, diagnostics := ValidateDecisionMap(root, "decisions/template.md", false, []byte(document)); len(diagnostics) != 0 {
+			t.Errorf("%s template diagnostics = %v", status, diagnostics)
+		}
+	}
 }
 
 func TestDecisionMapSchemaSyntaxDrivesParserAndTemplate(t *testing.T) {

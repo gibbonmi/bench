@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-write-spec.md",
+    "old": "Run `craft-spec`'s reader sweep before that lock.",
+    "new": "Lock the rows that touch it."
+  }
+]

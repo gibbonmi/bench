@@ -143,7 +143,8 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   decision tree at `decisions/<topic>.md`. Its **decision tickets** record
   reviewer choices, constraints, exclusions, research objects, and bounded
   discretion; a ready map is compiled beside its spec. It does not choose the
-  spec's engineering seams or tests. Not "PRD", not "design doc" — decision map.
+  spec's engineering seams or tests.
+  Not "PRD", not "design doc", not "map" — decision map.
 - **decision ticket** — one reviewer choice or evidence-producing question in
   a decision map, linked to other decision tickets by `Blocked by`. Distinct
   from an **implementation ticket**, the independently-green build unit under
@@ -153,6 +154,10 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   verdict and moves no green marker. `bench test --check system` is the named check
   that runs the gate's system phase as a focused run over the kit checkout only.
   Not "scoped gate", not "partial gate".
+- **coverage map** — the acceptance table of a spec. It holds one **coverage
+  row** for each in-scope story, and it locks before the build starts. It is a
+  different artifact from the **decision map**.
+  Not "map", not "traceability matrix" — coverage map.
 - **coverage row** — one row of a spec's acceptance coverage map. It ties one
   story to one observable behavior at a seam, behind an optional leading row
   ID. It carries four parts: story, behavior, seam, why it catches the
@@ -161,6 +166,10 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **acceptance row** — the **coverage row** an implementation ticket claims as
   its own acceptance. Not "the ticket's checklist", not "definition of done" —
   acceptance row.
+- **reader sweep** — the whole-tree read that finds each consumer of a decision
+  fact before the **coverage map** locks. `craft-spec` states its rules. The
+  word "census" stays with the raw-call **census** and the architecture census.
+  Not "census", not "consumer audit" — reader sweep.
 - **session handoff** — the phase-close continuation artifact at
   `capture/session-handoff.md`, which `bench handoff` rewrites in full. It hands the whole
   repository to the next session; the next session never appends to it.

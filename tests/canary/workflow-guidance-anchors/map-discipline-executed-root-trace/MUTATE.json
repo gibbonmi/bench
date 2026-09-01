@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "Each canary row and each conformance row traces to its executed root before the coverage map locks.",
+    "new": "Each canary row and each conformance row names its test."
+  }
+]

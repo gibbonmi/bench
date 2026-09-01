@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/SKILL.md",
+    "old": "This reader sweep includes `.mjs` scripts and workflow files, and `references/map-discipline.md` states its rules.",
+    "new": "This sweep includes `.mjs` scripts and workflow files."
+  }
+]

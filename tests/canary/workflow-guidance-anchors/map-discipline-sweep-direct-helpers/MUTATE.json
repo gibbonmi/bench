@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "The reader sweep lists each helper that a named consumer calls directly.",
+    "new": "The reader sweep may stop at the named consumers."
+  }
+]

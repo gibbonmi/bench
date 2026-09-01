@@ -151,7 +151,11 @@ func sourceDiagnostics(root, body string) []Diagnostic {
 		next := 0
 		for _, line := range lines[1:] {
 			name, fieldValue, hasSeparator := strings.Cut(line, ":")
-			if !hasSeparator || (name != "Supports" && name != "Drift") {
+			if !hasSeparator {
+				diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("Sources %s line %q has no field name; write each Sources record field on one physical line", value, line)})
+				continue
+			}
+			if name != "Supports" && name != "Drift" {
 				diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("Sources %s unexpected field %s", value, name)})
 				continue
 			}
