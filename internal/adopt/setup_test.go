@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -104,5 +105,53 @@ func TestSetupSeedsGateInputsInZeroSignalRepo(t *testing.T) {
 	runSetupYes(t)
 	if got := readGateInputs(t, root); got != wantSeededGateInputs {
 		t.Fatalf("zero-signal seeded gate-inputs.json =\n%s\nwant:\n%s", got, wantSeededGateInputs)
+	}
+}
+
+func TestSetupGateRejectsIgnoredDeclaredInputs(t *testing.T) {
+	for _, test := range []struct {
+		name, declared, want string
+		red                  bool
+	}{
+		{name: "space", declared: `"ignored\u0020file"`, want: "gate input path ignored file is gitignored", red: true},
+		{name: "glob", declared: `"literal[*].txt"`, want: "gate input path literal[*].txt is gitignored", red: true},
+		{name: "undeclared", declared: "", want: "gate: green"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			root := setupBareTestRepo(t)
+			runSetupYes(t)
+
+			gate := filepath.Join(root, ".bench", "gate.sh")
+			data, err := os.ReadFile(gate)
+			if err != nil {
+				t.Fatalf("read gate: %v", err)
+			}
+			if err := os.WriteFile(gate, []byte(strings.Replace(string(data), "err \"configure .bench/gate.sh - replace this sentinel with real checks\"  # "+SentinelMarker+"\n", "", 1)), 0o755); err != nil {
+				t.Fatalf("retire gate sentinel: %v", err)
+			}
+			if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("ignored file\nliteral[[][*][]].txt\nordinary-ignored\n"), 0o644); err != nil {
+				t.Fatalf("write .gitignore: %v", err)
+			}
+			if err := os.WriteFile(filepath.Join(root, "package.json"), []byte("{}\n"), 0o644); err != nil {
+				t.Fatalf("write package.json: %v", err)
+			}
+			if err := os.WriteFile(filepath.Join(root, "ordinary-ignored"), []byte("allowed\n"), 0o644); err != nil {
+				t.Fatalf("write ordinary ignored file: %v", err)
+			}
+			if err := os.WriteFile(filepath.Join(root, "fixture_test.go"), []byte("package fixture\n"), 0o644); err != nil {
+				t.Fatalf("write fixture package: %v", err)
+			}
+			manifest := `{"schema":1,"closure":"local","environment":["BENCH_HOME","HOME"],"paths":[` + test.declared + `],"tools":["bash","basename","dirname","git","readlink","uname"]}` + "\n"
+			if err := os.WriteFile(filepath.Join(root, ".bench", "gate-inputs.json"), []byte(manifest), 0o644); err != nil {
+				t.Fatalf("write gate inputs: %v", err)
+			}
+
+			cmd := exec.Command("bash", gate)
+			cmd.Dir = root
+			out, err := cmd.CombinedOutput()
+			if (err != nil) != test.red || !strings.Contains(string(out), test.want) {
+				t.Fatalf("gate = (%v, %q), want red=%t and %q", err, out, test.red, test.want)
+			}
+		})
 	}
 }

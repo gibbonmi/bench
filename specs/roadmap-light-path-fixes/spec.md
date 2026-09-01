@@ -140,6 +140,8 @@ remain eligible for parallel authoring.
 - `internal/adopt/adopt_test.go`
 - `internal/conformance/validity_checks_test.go`
 - `internal/conformance/subcommand_routing_test.go`
+- `internal/testreport/command.go`
+- `internal/testreport/check_test.go`
 - `internal/worktree/`
 - `internal/spec/`
 - `internal/adopt/doctor.go`

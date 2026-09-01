@@ -103,6 +103,47 @@ func writeProseCheckFile(t *testing.T, root, rel, body string) {
 	}
 }
 
+func TestNamedCheckRunsFromKitAgainstLinkedConsumer(t *testing.T) {
+	consumer := t.TempDir()
+	kit := t.TempDir()
+	marker := filepath.Join(t.TempDir(), "environment")
+	goDir := t.TempDir()
+	goPath := filepath.Join(goDir, "go")
+	source := "#!/usr/bin/env bash\npwd > " + sanitize.ShellQuote(marker) + "\nenv >> " + sanitize.ShellQuote(marker) + "\nprintf '%s\\n' '{\"Action\":\"pass\",\"Package\":\"checkfixture\"}'\n"
+	if err := os.WriteFile(goPath, []byte(source), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv("BENCH_KIT", kit)
+
+	selected := filepath.Join(t.TempDir(), "bench")
+	if err := os.WriteFile(selected, []byte("selected"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	previous := selectRunBinary
+	selectRunBinary = func(context.Context, string) (*runbinary.Selection, error) {
+		return &runbinary.Selection{Path: selected, SourceRoot: kit}, nil
+	}
+	t.Cleanup(func() { selectRunBinary = previous })
+
+	output, code := Command(consumer, []string{"--check", "load-validity-metadata"})
+	if code != 0 {
+		t.Fatalf("linked named check = %d, want 0\n%s", code, output)
+	}
+	environment := readTestReportFile(t, marker)
+	if !strings.HasPrefix(environment, kit+"\n") {
+		t.Fatalf("named check working directory = %q, want kit %q", strings.SplitN(environment, "\n", 2)[0], kit)
+	}
+	for name, want := range map[string]string{
+		registry.ConformanceRootEnv: consumer,
+		"BENCH_KIT":                 kit,
+	} {
+		if !strings.Contains(environment, name+"="+want+"\n") {
+			t.Errorf("child environment missing %s=%q:\n%s", name, want, environment)
+		}
+	}
+}
+
 func TestFocusedRequestGrammarRefusals(t *testing.T) {
 	root := t.TempDir()
 	marker := filepath.Join(t.TempDir(), "go-ran")

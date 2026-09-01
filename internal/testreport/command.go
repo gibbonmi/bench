@@ -202,7 +202,7 @@ func runNamedCheck(ctx context.Context, root string, request focusedRequest, sel
 	if err != nil {
 		return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
 	}
-	return runGoTest(ctx, root, request, argv, env)
+	return runGoTest(ctx, selection.SourceRoot, request, argv, env)
 }
 
 func runProseCheck(root string) (string, int) {

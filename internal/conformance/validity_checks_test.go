@@ -16,6 +16,10 @@ import (
 )
 
 func checkLoadValidityMetadata(root string) []string {
+	if kit := os.Getenv("BENCH_KIT"); kit != "" && root != kit {
+		// A linked consumer runs only the metadata rule that applies to its declared inputs.
+		return checkGateInputPathsNotIgnored(root)
+	}
 	var diags []string
 	diags = append(diags, checkShellSyntax(root)...)
 	diags = append(diags, checkExecutableGitModes(root)...)
