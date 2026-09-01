@@ -56,7 +56,11 @@ means the repository-controlled compliance assessment.
 
 **FT276 (MEDIUM, decision required) — one cycle-free owner derives canonical repository paths.**
 
-**FT277 (MEDIUM) — `bench test --changed` selects the edited packages and explains a widened set.**
+**FT277 (MEDIUM) — `bench test --changed` explains why it widened the selected set.**
+
+**FT283 (MEDIUM, decision required) — `bench worktree land --spec` has one phase-scoped transition contract.**
+
+**FT284 (MEDIUM, decision required) — `bench spec retire` owns its roadmap retirement atomically.**
 
 **FT255 (MEDIUM, decision required) — concurrent tests share one explicit machine budget.**
 
@@ -95,7 +99,7 @@ means the repository-controlled compliance assessment.
 
 **FT259 (MEDIUM) — repair coverage changes retain a ticket owner through repair-scoped re-review.**
 
-**FT260 (LOW, decision required) — coordinator worktree diff inspection needs a scoped native path.**
+**FT260 (LOW, decision required) — coordinator worktree diff inspection and sibling-worktree patch transfer need scoped native paths.**
 
 **FT262 (LOW) — preflight reports uncited coverage rows while a ticket breakdown is in progress.**
 
@@ -243,7 +247,7 @@ and signing-key custody remain outside this repository-controlled roadmap.
 
 **FT24 (parked pending upstream) — Codex agent-line guard parity.**
 
-**FT8 (scheduled, decision required) — Sonnet 5 mid-tier revisit: a risk-based escalation ladder for the default implementer.**
+**FT8 (overdue, decision required) — Sonnet 5 mid-tier revisit: a risk-based escalation ladder for the default implementer.**
 
 **FT38 (LOW, decision required) — dashboard visual identity pass.**
 
@@ -269,14 +273,10 @@ recommended table is sequencing advice.
 
 | FT | Better specified after | Why |
 |---|---|---|
-| FT71 | FT169 | The event schema should record the settled landing and recovery lifecycle rather than version an interim one. |
 | FT100 | FT89 | Cut prose after the correctness and coherence pass establishes which guidance is still authoritative. |
 | FT108 | FT89 | FT89 single-sources the skills index the new skill must join; the expand–migrate–contract and gate-cadence rules it builds on are already settled in `craft-tickets`. |
 | FT172 | FT106 | Reuse the document-claim probe for semantic roadmap claims instead of designing a second checker. |
-| FT162 | FT169 | Build full-run subject resolution on the settled landing primitive. |
 | FT166 | FT98 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
-| FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
-| FT253 | FT169 | The lease is one answer to the landing's authority questions; decide those first so the lease keys on the settled lifecycle. |
 | FT241 | FT231 | Retained acceptance-run evidence should reuse the harness's record shape rather than version a second one. |
 | FT204 | FT71 | The query reads the settled event schema before it reads transcript text. |
 | FT254 | FT258 | The resolution slice requires the decided `MERGE_HEAD` contract. |
@@ -297,12 +297,13 @@ FT100 builds last: after FT89 establishes which guidance is authoritative, and
 after FT231 supplies the measurement that tells a cut from a regression.
 
 FT99 rides the prose batch. FT106 and FT162 remain independently sequenced by
-their existing dependencies. FT71
-stays deferred behind its existing FT169 recommendation. FT172 is outside this
+their existing dependencies. FT172 is outside this
 critical path; the FT156 anchor registry shipped, so section-scoped
 `.bench/BENCH.md` anchors — the exact surface the prose batch edits — are now
 fixture-proven.
 
 ## Recommended sequence
 
-1. `$bench` — open FT142's light-path ticket for the next unblocked MEDIUM fix.
+1. `$bench-write-spec` — write FT71's versioned local shift-evidence spec for the unblocked HIGH work.
+2. `$bench` — open FT142's light-path ticket for the next unblocked MEDIUM fix.
+3. `$bench-shape-idea` — shape FT277's widened-set explanation and provenance feature.
