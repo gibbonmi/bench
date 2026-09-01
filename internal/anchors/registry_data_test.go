@@ -1326,3 +1326,96 @@ func TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval(t *testing.T)
 		}
 	}
 }
+
+// TestDecisionMapAuthoringAnchorsRedOnRemoval holds the decision-map authoring steps and
+// the asset-path convention. The shaping phase file must send the author to one ready
+// map's Sources block, must name both first-skeleton verbs, and must keep the unnamed
+// prose-check term out. The two phase files and the template must spell one asset path,
+// so a drift in any one of the three files reds its own diagnostic. Each needle and
+// diagnostic is written here independently of the registry.
+func TestDecisionMapAuthoringAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		shapeIdea = ".agents/commands/bench-shape-idea.md"
+		writeSpec = ".agents/commands/bench-write-spec.md"
+		schema    = "internal/maps/schema.go"
+	)
+	rules := []struct {
+		file, needle, want string
+		forbidden          bool
+	}{
+		{
+			file:   shapeIdea,
+			needle: "Read one ready decision map's `## Sources` block before the first write.",
+			want:   ".agents/commands/bench-shape-idea.md dropped the ready-map Sources read before the first decision-map write",
+		},
+		{
+			file:   shapeIdea,
+			needle: "Run `bench maps` and `bench gate-prose` on the first skeleton.",
+			want:   ".agents/commands/bench-shape-idea.md dropped the bench-maps and bench-gate-prose checks on the first decision-map skeleton",
+		},
+		{
+			file:      shapeIdea,
+			needle:    "prose preflight",
+			want:      ".agents/commands/bench-shape-idea.md writes an unnamed prose check; `bench gate-prose` is the one handle",
+			forbidden: true,
+		},
+		{
+			file:   shapeIdea,
+			needle: "decisions/assets/",
+			want:   ".agents/commands/bench-shape-idea.md dropped the decisions/assets/ path for a map-owned asset",
+		},
+		{
+			file:   writeSpec,
+			needle: "decisions/assets/",
+			want:   ".agents/commands/bench-write-spec.md dropped the decisions/assets/ path for a map-owned asset",
+		},
+		{
+			file:   schema,
+			needle: "decisions/assets/",
+			want:   "internal/maps/schema.go dropped the decisions/assets/ path for a map-owned asset from the decision-map template",
+		},
+	}
+
+	// evaluate writes one minimal file per subject. A required needle is present unless it
+	// is the broken one; a forbidden needle is present only when it is the broken one.
+	evaluate := func(t *testing.T, broken int) []string {
+		t.Helper()
+		root := t.TempDir()
+		bodies := map[string]string{shapeIdea: "# subject\n", writeSpec: "# subject\n", schema: "package maps\n"}
+		for i, r := range rules {
+			if (i == broken) == r.forbidden {
+				bodies[r.file] += "\n" + r.needle + "\n"
+			}
+		}
+		for file, body := range bodies {
+			path := filepath.Join(root, filepath.FromSlash(file))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	// Other rows of the group fire against this minimal tree; only these rows are the test's
+	// subject, so both directions are read by membership.
+	conformant := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(conformant, r.want) {
+			t.Errorf("tree conformant with %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("tree broken at %q in %s = %v, want %q", r.needle, r.file, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("breaking %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+}

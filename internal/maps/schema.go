@@ -147,6 +147,12 @@ const decisionMapSourcesExample = "\n- URL: https://example.invalid/decision-sou
 	"  Supports: <the decision this source supports>\n" +
 	"  Drift: <the change that makes this source stale>\n"
 
+// decisionMapAssetRule states, in the rendered template, where a map-owned asset stays.
+// The candidate scanner lists only the direct children of a decisions directory, so an
+// asset in this nested directory is never read as a decision map. The template states the
+// convention; it adds no check.
+const decisionMapAssetRule = "A map-owned asset stays in `decisions/assets/`."
+
 var decisionHeading = regexp.MustCompile(`^([1-9][0-9]*):\s+(.+?)\s*$`)
 var blockersField = regexp.MustCompile(`^(none|#[1-9][0-9]*(, #[1-9][0-9]*)*)$`)
 
@@ -453,6 +459,8 @@ func DecisionMapTemplate() string {
 	b.WriteString(canonicalDecisionMapSchema.types[0])
 	b.WriteString("\n\n")
 	b.WriteString(resolvedBlockedRule)
+	b.WriteString("\n")
+	b.WriteString(decisionMapAssetRule)
 	b.WriteString("\n")
 	for _, field := range []field{canonicalDecisionMapSchema.field("Question"), canonicalDecisionMapSchema.field("Answer")} {
 		b.WriteString("\n")

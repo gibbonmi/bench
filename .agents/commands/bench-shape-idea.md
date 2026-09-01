@@ -44,7 +44,8 @@ ticket answer. Do not manufacture a seam decision simply to complete a map.
 
 The map stays top-level while shaping is open. It loads whole into each
 planning session, so keep it tight. Link to research assets instead of an
-inline copy. `/bench-write-spec` moves a ready map and its owned assets into
+inline copy. A map-owned asset stays in `decisions/assets/`.
+`/bench-write-spec` moves a ready map and its owned assets into
 `specs/<slug>/decisions/`. Compiled maps there are settled provenance, not the
 active shaping frontier.
 
@@ -84,6 +85,10 @@ deliberation log:
   them.
 - **Sources** records structured research objects and the decision each
   supports. An all-grilled map may leave this section empty.
+
+Read one ready decision map's `## Sources` block before the first write. A live
+record shows the field grammar. Run `bench maps` and `bench gate-prose` on the
+first skeleton. One verb alone leaves one lane unrun.
 
 The map is ready only when its status is `ready`, every decision ticket is
 resolved, fog is empty, and every research object remains valid. Run
