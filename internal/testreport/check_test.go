@@ -71,6 +71,38 @@ func TestNamedCheckOwnsConformanceEnvironment(t *testing.T) {
 	}
 }
 
+func TestProseNamedCheckRunsCanonicalGraderAndPrintsEveryFinding(t *testing.T) {
+	root := t.TempDir()
+	writeProseCheckFile(t, root, ".bench/prose-exclusions", "")
+	writeProseCheckFile(t, root, "first.md", strings.Repeat("word ", 27)+".\n")
+	writeProseCheckFile(t, root, "second.md", strings.Repeat("word ", 27)+".\n")
+
+	output, code := Command(root, []string{"--check", "prose"})
+	if code != 1 {
+		t.Fatalf("prose named check = %d, want 1\n%s", code, output)
+	}
+	for _, finding := range []string{"prose: \"first.md\" line 1: sentence of 27 words", "prose: \"second.md\" line 1: sentence of 27 words"} {
+		if !strings.Contains(output, finding) {
+			t.Errorf("prose named check output = %q, want finding %q", output, finding)
+		}
+	}
+	help, helpCode := Command(root, []string{"--help"})
+	if helpCode != 0 || !strings.Contains(help, "\n  prose\n") {
+		t.Errorf("named-check help = %d, %q; want prose in the inventory", helpCode, help)
+	}
+}
+
+func writeProseCheckFile(t *testing.T, root, rel, body string) {
+	t.Helper()
+	path := filepath.Join(root, filepath.FromSlash(rel))
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestFocusedRequestGrammarRefusals(t *testing.T) {
 	root := t.TempDir()
 	marker := filepath.Join(t.TempDir(), "go-ran")
@@ -130,7 +162,7 @@ func TestNamedCheckHelpListsEverySupportedCheck(t *testing.T) {
 }
 
 func TestUnknownNamedCheckReportsOperandAndInventory(t *testing.T) {
-	inventory := "\nchecks:\n  " + strings.Join(append(registry.Names(registry.Dev), gate.SystemPhaseName), "\n  ") + "\n"
+	inventory := "\nchecks:\n  " + strings.Join(namedChecks(), "\n  ") + "\n"
 	for _, unknown := range []string{"not-registered", "release-evidence-probe"} {
 		output, code := Command(t.TempDir(), []string{"--check", unknown})
 		if code != 2 {

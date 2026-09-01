@@ -14,6 +14,7 @@ import (
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gocache"
+	"github.com/gibbonmi/bench/internal/prose"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -38,6 +39,8 @@ var grammar = usage.Grammar{
 var selectRunBinary = runbinary.ReuseOrOwn
 
 const goChildGroupCancelled = "child process group cancelled"
+
+const proseCheckName = "prose"
 
 type focusedRequest struct {
 	packageExpr string
@@ -90,11 +93,8 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	if hasSourceTip && !hasBase {
 		return focusedRequest{}, toon.Usage(grammar.Cmd, "--source-tip"), 2
 	}
-	if hasCheck && check != gate.SystemPhaseName {
-		registered, found := registry.Find(check)
-		if !found || !registered.RunsAt(registry.Dev) {
-			return focusedRequest{}, unknownCheck(check), 2
-		}
+	if hasCheck && !isNamedCheck(check) {
+		return focusedRequest{}, unknownCheck(check), 2
 	}
 	packageOperand := strings.Join(parsed.Positionals, "")
 	if explicit, ok := parsed.Flags["--package"]; ok {
@@ -123,8 +123,21 @@ func unknownCheck(check string) string {
 }
 
 func namedCheckInventory() string {
-	checks := append(registry.Names(registry.Dev), gate.SystemPhaseName)
+	checks := namedChecks()
 	return "checks:\n  " + strings.Join(checks, "\n  ")
+}
+
+func namedChecks() []string {
+	return append(registry.Names(registry.Dev), gate.SystemPhaseName, proseCheckName)
+}
+
+func isNamedCheck(check string) bool {
+	for _, name := range namedChecks() {
+		if name == check {
+			return true
+		}
+	}
+	return false
 }
 
 func runFocusedRequest(root string, request focusedRequest) (string, int) {
@@ -132,6 +145,9 @@ func runFocusedRequest(root string, request focusedRequest) (string, int) {
 	// Go. A root the suite may not grade therefore starts no child at all.
 	if request.check == gate.SystemPhaseName && !gate.SystemSuiteRuns(root, testBenchSource(root)) {
 		return toon.Errorf("system check unavailable", "the system suite grades the kit checkout only") + "\n", 1
+	}
+	if request.check == proseCheckName {
+		return runProseCheck(root)
 	}
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
@@ -187,6 +203,14 @@ func runNamedCheck(ctx context.Context, root string, request focusedRequest, sel
 		return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
 	}
 	return runGoTest(ctx, root, request, argv, env)
+}
+
+func runProseCheck(root string) (string, int) {
+	findings := prose.Grade(root)
+	if len(findings) == 0 {
+		return "", 0
+	}
+	return strings.Join(findings, "\n") + "\n", 1
 }
 
 // runSystemCheck runs the gate's system phase as a focused run. It reads the phase's
