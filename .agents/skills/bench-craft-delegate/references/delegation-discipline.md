@@ -85,6 +85,13 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   result. Plant the matching break and run the oracle before you believe either
   reading.
 
+## Retry stops and aggregate readiness
+
+- After the second known-flaky refusal proves green in isolation, stop
+  coordination and hand both results to the reviewer.
+- Before aggregate grading, wait until returned delegates have no live tests and
+  serialize the coordinator-owned resource.
+
 ## Before the landing
 
 - A running `bench commit` is active until its process exits. A reported red does
