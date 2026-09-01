@@ -30,7 +30,8 @@ const RecordSchema = 1
 // account can read, or the owner cannot rewrite, is not a published record.
 const RecordMode os.FileMode = 0o600
 
-const checkoutName = "checkout"
+// CheckoutName is the fixed checkout child name inside a bundle root.
+const CheckoutName = "checkout"
 
 // Record is the owner record's wire shape: the schema, the process that owns the bundle,
 // and the canonical Git common directory naming the repository the bundle belongs to.
@@ -53,7 +54,7 @@ type Owner struct {
 func (o *Owner) Root() string { return o.root }
 
 // Checkout returns the fixed checkout child path.
-func (o *Owner) Checkout() string { return filepath.Join(o.root, checkoutName) }
+func (o *Owner) Checkout() string { return filepath.Join(o.root, CheckoutName) }
 
 // Factory supplies the operating-system seams for a bundle owner.
 type Factory struct {
@@ -180,7 +181,7 @@ func sweep(base, repository, common string, probe func(int) error, remove func(s
 		if err := probe(record.OwnerPID); !errors.Is(err, syscall.ESRCH) {
 			continue
 		}
-		if err := removeBundle(repository, root, filepath.Join(root, checkoutName), remove); err != nil {
+		if err := removeBundle(repository, root, filepath.Join(root, CheckoutName), remove); err != nil {
 			return fmt.Errorf("recover prospective artifact bundle: %w", err)
 		}
 	}

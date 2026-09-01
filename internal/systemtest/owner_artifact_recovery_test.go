@@ -34,7 +34,7 @@ func TestProspectiveArtifactRecoveryAfterKilledLanding(t *testing.T) {
 
 	bundle := oneProspectiveBundle(t, private)
 	requirePublishedArtifactOwnerRecord(t, bundle, cmd.Process.Pid, root)
-	checkout := filepath.Join(bundle, "checkout")
+	checkout := filepath.Join(bundle, prospectiveartifact.CheckoutName)
 	oldBinary := oneOwnerBinary(t, bundle)
 	marker := filepath.Join(private, "old-candidate-ran")
 	plantedBinary := filepath.Join(bundle, "bench-run-planted", "bench")
@@ -345,7 +345,7 @@ func TestOneAuthorizationRecoversTheDeadBundleOfADeadAndLivePair(t *testing.T) {
 	deadCommand, deadOut, deadErr, deadDone := startArtifactAuthorization(t, root, home, tally, trees, ready, release, base, "artifact-dead", "loser.txt", "dead prospective subject")
 	awaitArtifactBarrier(t, ready, deadDone, deadOut, deadErr)
 	dead := otherProspectiveBundle(t, private, live)
-	deadCheckout := filepath.Join(dead, "checkout")
+	deadCheckout := filepath.Join(dead, prospectiveartifact.CheckoutName)
 	requireCheckoutRegistered(t, root, deadCheckout, true)
 	if err := syscall.Kill(-deadCommand.Process.Pid, syscall.SIGKILL); err != nil {
 		t.Fatal(err)
@@ -401,7 +401,7 @@ func plantLiveProspectiveBundle(t *testing.T, private, root string) (string, str
 	if err := prospectiveartifact.Publish(bundle, record); err != nil {
 		t.Fatal(err)
 	}
-	checkout := filepath.Join(bundle, "checkout")
+	checkout := filepath.Join(bundle, prospectiveartifact.CheckoutName)
 	systemGit(t, root, "worktree", "add", "-q", "--detach", checkout, "HEAD")
 	binary := filepath.Join(bundle, "bench-run-live", "bench")
 	if err := os.MkdirAll(filepath.Dir(binary), 0o700); err != nil {

@@ -16,6 +16,12 @@ import (
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
+func TestCheckoutNameKeepsTheCheckoutLayout(t *testing.T) {
+	if CheckoutName != "checkout" {
+		t.Fatalf("checkout name = %q, want checkout", CheckoutName)
+	}
+}
+
 func TestOpenPublishesPrivateOwnerRecordBeforeCheckout(t *testing.T) {
 	repository := fixtureRepository(t)
 	owner, err := (Factory{TempRoot: t.TempDir()}).Open(repository)
@@ -81,7 +87,7 @@ func TestOpenRecoversARegisteredDeadBundleBeforeItCreatesAnother(t *testing.T) {
 	}
 	base := t.TempDir()
 	dead := testBundle(t, base, Record{Schema: RecordSchema, OwnerPID: 42, CommonDir: common})
-	checkout := filepath.Join(dead, checkoutName)
+	checkout := filepath.Join(dead, CheckoutName)
 	gitRun(t, repository, "worktree", "add", "-q", "--detach", checkout, "HEAD")
 	run := filepath.Join(dead, "bench-run [*]", "bench")
 	if err := os.MkdirAll(filepath.Dir(run), 0o700); err != nil {
@@ -114,7 +120,7 @@ func TestOpenRecoversARegisteredDeadCheckoutWithoutARunBinary(t *testing.T) {
 	}
 	base := t.TempDir()
 	dead := testBundle(t, base, Record{Schema: RecordSchema, OwnerPID: 42, CommonDir: common})
-	checkout := filepath.Join(dead, checkoutName)
+	checkout := filepath.Join(dead, CheckoutName)
 	gitRun(t, repository, "worktree", "add", "-q", "--detach", checkout, "HEAD")
 
 	owner, err := (Factory{TempRoot: base, Probe: func(int) error { return syscall.ESRCH }}).Open(repository)
@@ -138,7 +144,7 @@ func TestOpenRecoversAStaleRegistrationWithoutACheckoutPath(t *testing.T) {
 	}
 	base := t.TempDir()
 	dead := testBundle(t, base, Record{Schema: RecordSchema, OwnerPID: 42, CommonDir: common})
-	checkout := filepath.Join(dead, checkoutName)
+	checkout := filepath.Join(dead, CheckoutName)
 	gitRun(t, repository, "worktree", "add", "-q", "--detach", checkout, "HEAD")
 	if err := os.RemoveAll(checkout); err != nil {
 		t.Fatal(err)
@@ -165,7 +171,7 @@ func TestOpenRefusesRecoveryWhenRegistrationRemovalFails(t *testing.T) {
 	}
 	base := t.TempDir()
 	dead := testBundle(t, base, Record{Schema: RecordSchema, OwnerPID: 42, CommonDir: common})
-	gitRun(t, repository, "worktree", "add", "-q", "--detach", filepath.Join(dead, checkoutName), "HEAD")
+	gitRun(t, repository, "worktree", "add", "-q", "--detach", filepath.Join(dead, CheckoutName), "HEAD")
 	planted := snapshotPath(t, base)
 	registrations := worktreeRegistrations(t, repository)
 
@@ -208,7 +214,7 @@ func TestOpenRecoversARegisteredDeadBundleUnderASymbolicallyLinkedRoot(t *testin
 		t.Fatal(err)
 	}
 	dead := testBundle(t, linked, Record{Schema: RecordSchema, OwnerPID: 42, CommonDir: common})
-	checkout := filepath.Join(dead, checkoutName)
+	checkout := filepath.Join(dead, CheckoutName)
 	gitRun(t, repository, "worktree", "add", "-q", "--detach", checkout, "HEAD")
 
 	owner, err := (Factory{TempRoot: linked, Probe: func(int) error { return syscall.ESRCH }}).Open(repository)
