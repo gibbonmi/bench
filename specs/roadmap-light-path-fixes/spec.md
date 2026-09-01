@@ -1,6 +1,6 @@
 # Roadmap light-path fixes
 
-Status: staged
+Status: implemented
 
 Roadmap: FT92, FT94, FT104, FT117, FT164, FT166, FT178, FT179, FT268, FT270
 
@@ -29,8 +29,11 @@ row at its executable seam. Each ticket owns one small behavior, focused
 evidence, and an exact write fence.
 
 Preserve behavior already present in the live tree. Tickets implement only the
-remaining delta. Blockers serialize shared files; unrelated frontier tickets
-remain eligible for parallel authoring.
+remaining delta. Blockers order behavioral dependencies. The coordinator
+explicitly serializes each otherwise-frontier pair whose `Writes:` entries
+overlap, including required registry and fixture closure paths, even when no
+blocker edge exists. Nonconflicting frontier tickets remain eligible for
+parallel authoring.
 
 ## User stories
 
@@ -85,7 +88,7 @@ remain eligible for parallel authoring.
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
 | LF1 | 1 | drift identifies tree movement or the exact manifest path | gate transaction outcome tests | a generic refusal cannot satisfy the expected subject |
-| LF2 | 1 | linked consumers reject ignored declared inputs | setup consumer-gate journey | benchkit-only conformance cannot make the consumer red |
+| LF2 | 1 | linked consumers reject ignored declared inputs through an explicit scaffolded consumer-only scope | setup consumer-gate journey and named-check environment ownership | path-derived scope or benchkit-only conformance cannot make the consumer red |
 | LF3 | 2 | two resume tests share one expected-format helper | worktree unit and runtime tests | a second literal violates the one-source rule |
 | LF4 | 3 | coordination stops after two proven flaky refusals and waits for quiet delegates | delegation anchors and behavior tests | prose without the stop and quiet conditions remains incomplete |
 | LF5 | 3 | an empty-reason infrastructure fold gets one verified retry | worktree merge tests | a second retry or an unverified retry fails the counter |
@@ -137,7 +140,12 @@ remain eligible for parallel authoring.
 - `internal/gate/run_outcomes_test.go`
 - `internal/adopt/setup.go`
 - `internal/adopt/setup_test.go`
+- `internal/adopt/adopt_test.go`
 - `internal/conformance/validity_checks_test.go`
+- `internal/conformance/registry/scope.go`
+- `internal/conformance/subcommand_routing_test.go`
+- `internal/testreport/command.go`
+- `internal/testreport/check_test.go`
 - `internal/worktree/`
 - `internal/spec/`
 - `internal/adopt/doctor.go`
@@ -148,14 +156,21 @@ remain eligible for parallel authoring.
 - `internal/testreport/`
 - `internal/gate/gate_prose.go`
 - `internal/gate/gate_prose_test.go`
+- `internal/prose/`
+- `internal/gate/gate.go`
+- `internal/gate/decision.go`
+- `internal/gate/engine.go`
+- `internal/gate/phases.go`
 - `internal/gate/prospective.go`
 - `internal/gate/prospective_owner_test.go`
 - `internal/gate/prospectiveartifact/`
 - `internal/systemtest/owner_artifact_recovery_test.go`
+- `internal/systemtest/adoption_test.go`
 - `internal/releaseevidence/`
 - `internal/preflight/`
 - `internal/contract/`
 - `cmd/bench/main.go`
+- `cmd/bench/main_test.go`
 - `cmd/bench/command_registry_test.go`
 - `.agents/skills/bench-craft-delegate/`
 - `.agents/skills/bench-craft-line/SKILL.md`

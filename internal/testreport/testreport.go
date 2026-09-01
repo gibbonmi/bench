@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testlines"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -164,7 +165,26 @@ func (r *report) render(full bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return packageBlock + failureBlock + skipBlock, nil
+	rootSkips := r.rootConformanceSkips()
+	if len(rootSkips) == 0 {
+		return packageBlock + failureBlock + skipBlock, nil
+	}
+	rootBlock, err := toon.Table("root_conformance", []string{"package", "status", "route"}, rootSkips)
+	if err != nil {
+		return "", err
+	}
+	return packageBlock + failureBlock + skipBlock + rootBlock, nil
+}
+
+func (r *report) rootConformanceSkips() [][]string {
+	rows := make([][]string, 0)
+	for _, test := range r.tests {
+		if test.test == registry.RootConformanceTest && test.skipped {
+			rows = append(rows, []string{test.packageName, "skipped", "bench test --check <name>"})
+		}
+	}
+	sort.Slice(rows, func(i, j int) bool { return rows[i][0] < rows[j][0] })
+	return rows
 }
 
 func (r *report) skips(full bool) [][]string {

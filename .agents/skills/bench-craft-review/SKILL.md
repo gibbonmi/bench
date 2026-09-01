@@ -46,9 +46,11 @@ and its worst issue.
   independently-green tracer grouping and the advisory `Writes:` disjointness note;
   the smell baseline below applies here. A false disjointness claim across two
   tickets' `Writes:` notes is a Standards finding; separate hard violations from
-  judgment calls and skip what the gate enforces. Grade comment prose against
-  `craft-comments`: a comment that narrates the change, cites provenance, or argues
-  its own correctness is a Standards finding.
+  judgment calls and skip what the gate enforces.
+- Grade new or edited comment prose against `craft-comments`. A new `FT<n> story <n>`
+  tag is a Standards finding. Duplicated sources, unstated constraints, excess density
+  in a sparse file, and a red record owned by the commit or spec are Standards findings.
+  Leave untouched legacy tags out of the finding.
 - **Spec** — the approved spec drives the behavior; quote the applicable spec line
   rather than trusting what a ticket or commit message claims was built. Hunt three
   things: missing or partial requirements, scope creep — behavior nobody asked for,

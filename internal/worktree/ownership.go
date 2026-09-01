@@ -127,9 +127,9 @@ func lockCreationRequest(j joins, root, digest string) (func(), error) {
 	return func() { _ = syscall.Flock(int(file.Fd()), syscall.LOCK_UN); _ = file.Close() }, nil
 }
 
-// Create makes one request-idempotent owned registration and persists its bundle. It is
-// the boundary form of createAt for a caller in another package, and resolves the clock
-// and the Bench home at the effect boundary.
+// Create makes one locked, request-idempotent owned worktree and persists its ownership
+// bundle. A repeated request returns the existing active assignment only when its label
+// and bundle still match; requestedStart selects the branch start when it is present.
 func Create(root, request, label string, fault Fault, requestedStart ...string) (Creation, error) {
 	start := ""
 	if len(requestedStart) > 0 {

@@ -9,7 +9,36 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	retrotestdata "github.com/gibbonmi/bench/internal/retros/testdata"
 )
+
+func TestParseAcceptsCanonicalRetro(t *testing.T) {
+	if err := Parse([]byte(retrotestdata.Eligible())); err != nil {
+		t.Fatalf("Parse(canonical retro) = %v, want nil", err)
+	}
+}
+
+func TestEligibleFixtureKeepsRequiredHeadings(t *testing.T) {
+	content := retrotestdata.Eligible()
+	for _, heading := range []string{
+		"## Outcome",
+		"## Gate-stage timings",
+		"## Ticket-versus-spec-slice and delegate performance",
+		"## Coordinator catches",
+		"## Repair attribution",
+		"## Agent-experience improvements",
+	} {
+		if !strings.Contains(content, heading+"\n") {
+			t.Errorf("eligible fixture is missing %q", heading)
+		}
+	}
+}
+
+func TestParseRejectsMissingRequiredHeading(t *testing.T) {
+	if err := Parse([]byte("## Outcome\n")); err == nil {
+		t.Fatal("Parse(incomplete retro) = nil, want an error")
+	}
+}
 
 func TestFactsClassifiesEligibleFilesInStableOrder(t *testing.T) {
 	root := t.TempDir()

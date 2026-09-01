@@ -8,7 +8,7 @@ index: spawning a delegate / verifying a delegate's done-claim
 
 A delegate buys parallelism and isolates a heavy read-set. A misjudged delegate costs the thing
 that matters: the work happens unseen. `references/delegation-discipline.md` holds the rest of the
-discipline: the charge contents, the probe rules, and the landing checks.
+discipline: the charge contents, the repair-charge template, the probe rules, and the landing checks.
 
 ## Delegate or inline
 
@@ -74,7 +74,6 @@ return the red→green log per row. Self-probe: apply the central-property
 mutation; report the observed result and the mutation's kind (omission or swap).
 ```
 Good — rows make the done-claim verifiable, and the self-probe names its kind.
-
 ## Scope
 
 One delegate, one coherent unit: one axis, one story, one search question.
@@ -109,13 +108,14 @@ A delegate's done-claim is a claim, not a result. Before accepting one, run the 
 its work, and confirm every coverage row went red-then-green. Run `git status` in the worktree
 it used, and resolve every identifier in an absence or exclusion claim to a real thing. Probe
 one accepted behavior independently of the delegate's own tests, kept constant across a batch,
-and spot-check citations before folding a summary in.
+and spot-check citations before folding a summary in. Resolve every named Red-mutation owner to a real artifact in the tree.
 
-Report every verification round in one line: accepted, or what was missed and where the fix
-went. Repairs beyond the allowance under Delegate or inline continue the authoring delegate
-for its own slice when the harness can resume it. Otherwise a fresh charge in an isolated
-worktree carries the finding and a sentinel. The coordinator verifies the repair in the
-checkout that owns the diff.
+Installed-lane repair and its post-landing rebuild are in `references/delegation-discipline.md`. Before retry coordination or aggregate grading, load the stopped-retry and quiet-grade rules from `references/delegation-discipline.md`.
+
+Report every verification round in one line: accepted, or what was missed and where the fix went. Repairs
+beyond the allowance under Delegate or inline continue the authoring delegate for its own slice when the harness
+can resume it. Otherwise a fresh charge in an isolated worktree carries the finding and a sentinel. The coordinator
+verifies the repair in the checkout that owns the diff.
 
 Acceptance closes an independent worktree after its slice lands: the coordinator runs `bench worktree release --request <opaque-id> <path>` for it. A reviewed
 dependent chain remains retained through explicit source review; only

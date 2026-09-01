@@ -334,9 +334,21 @@ func convergeSetup(root, kit, version string, facts setupFacts, stdout, stderr i
 // each re-authoring the shebang/set/git-root-guard lines.
 func setupGateScript(facts setupFacts) string {
 	if facts.zeroSignal {
-		return scaffoldGate()
+		return addDeclaredInputHygiene(scaffoldGate())
 	}
-	return gateScriptPreamble("# bench setup wrote this gate from the gate-inference table. Run /bench-setup-repo\n# to refine it.\n") + facts.gateCommand + "\n"
+	return gateScriptPreamble("# bench setup wrote this gate from the gate-inference table. Run /bench-setup-repo\n# to refine it.\n") + `bench="$(dirname "$0")/bin/bench.sh"; [ -x "$bench" ] || bench=bench
+` + consumerGateHygieneCheck() + facts.gateCommand + "\n"
+}
+
+func addDeclaredInputHygiene(gate string) string {
+	const resolver = `bench="$(dirname "$0")/bin/bench.sh"; [ -x "$bench" ] || bench=bench
+`
+	return strings.Replace(gate, resolver, resolver+consumerGateHygieneCheck(), 1)
+}
+
+func consumerGateHygieneCheck() string {
+	return `BENCH_CONFORMANCE_CONSUMER_ONLY=1 "$bench" test --check load-validity-metadata || exit 1
+`
 }
 
 // scaffoldGateInputs is the seeded gate input manifest every adopted repository starts
@@ -349,7 +361,7 @@ func scaffoldGateInputs() string {
 	return `{
   "schema": 1,
   "closure": "local",
-  "environment": ["BENCH_HOME", "HOME"],
+  "environment": ["BENCH_HOME", "BENCH_KIT", "BENCH_RUN_BINARY", "HOME"],
   "paths": [],
   "tools": ["bash", "basename", "dirname", "git", "readlink", "uname"]
 }

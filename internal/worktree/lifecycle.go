@@ -164,8 +164,9 @@ func isClean(dir string) bool {
 	return err == nil && out == ""
 }
 
-// Acquire is the boundary form of acquireAt for a caller in another package: it
-// resolves the Bench home and the instant at the effect boundary.
+// Acquire leases a clean pooled worktree, resets it to resetRef or HEAD, and removes
+// all residual files before it returns. Soft reset mode falls back to HEAD when
+// resetRef does not resolve; all other reset failures leave the acquisition failed.
 func Acquire(root, resetRef, resetMode string) (string, error) {
 	return acquireAt(defaultJoins(), root, resetRef, resetMode, Home(), currentTime())
 }
@@ -239,8 +240,9 @@ func worktreeAdd(root, cand, ref string) bool {
 	return exec.Command("git", args...).Run() == nil
 }
 
-// Release restores cleanliness before unleasing, and leaves a lease owned by another
-// live process untouched. Once unleased, a concurrent Acquire owns the checkout.
+// Release restores a pooled worktree to a clean detached checkout before it removes
+// the lease. It does nothing when wt is empty or another live process owns the lease;
+// after lease removal, callers must assume that a concurrent Acquire owns the checkout.
 func Release(wt string) {
 	releaseWith(defaultJoins(), wt)
 }

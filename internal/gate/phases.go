@@ -49,10 +49,8 @@ type Phase struct {
 
 var benchkitPhasesForCommand = BenchkitPhases
 
-// BenchkitPhases is the real phase table for the kit gate. root is the tree under
-// grade; kit is the checkout that owns the Go tests and wrapper scripts. The run owner
-// selects the Bench executable before this table is constructed, so phases consume it
-// and no phase authors another Bench binary.
+// BenchkitPhases selects the kit phase table for root. kit owns the Go tests and wrapper
+// scripts; the execution owner selects the Bench executable before it runs this table.
 func BenchkitPhases(root, kit string) []Phase {
 	phases := toolchainPhases(root, kit)
 	if SystemSuiteRuns(root, kit) {
@@ -79,16 +77,14 @@ const SystemPhaseName = "system"
 // SystemRootEnv carries the tree under grade to the system suite's owner.
 const SystemRootEnv = "BENCH_SYSTEM_ROOT"
 
-// SystemSuite returns the `go test` operands of the system suite and the environment its
-// owner reads, for the tree under grade. The gate's system phase and the named check
-// `bench test --check system` both compose it, so the two invocations cannot drift.
+// SystemSuite selects the system-suite test operands and its graded-root environment.
+// Callers compose this result into their own execution and do not run a second suite.
 func SystemSuite(root string) (operands, env []string) {
 	return []string{"-tags=system", "./internal/systemtest"}, []string{SystemRootEnv + "=" + root}
 }
 
-// SystemSuiteRuns reports whether root is the checkout the system suite may grade. The
-// suite drives the kit's own wrapper, pool, and hooks, so it grades the kit alone. Both
-// surfaces ask this, so a linked repo never starts the suite from either one.
+// SystemSuiteRuns reports whether root is the kit checkout that the system suite may
+// grade. Linked repositories do not select or execute the suite.
 func SystemSuiteRuns(root, kit string) bool {
 	return sameDirectory(root, kit)
 }
@@ -214,13 +210,9 @@ func declaresTest(dir, name string) bool {
 	return false
 }
 
-// BaseTestArgv is the one producer of every Bench-owned `go test` argv. It returns
-// `go test -trimpath -count=1` before the caller's arguments, with `-C kit` inserted
-// when the caller names a kit checkout to compile in. -trimpath keeps the package
-// directory out of Go's compile action IDs, so two checkouts with identical content
-// share one cache entry instead of each writing a full archive set. -count=1 keeps a
-// cached verdict from standing in for a run. Every test form composes this, so the
-// flag pair cannot drift between the gate, the lane, the focused run, and the release.
+// BaseTestArgv selects a Bench-owned go test command. It adds -C for a named kit and
+// always adds -trimpath and -count=1 before the caller's operands. The flags prevent
+// checkout paths and cached test results from changing execution evidence.
 func BaseTestArgv(kit string, args ...string) []string {
 	argv := []string{"go"}
 	if kit != "" {
@@ -238,10 +230,10 @@ func kitRoot(root string) string {
 	return root
 }
 
-// PhasesCommand is the `bench gate-phases [root]` plumbing command. Its table comes
-// from the graded root's phase manifest, or the built-in kit table when the root
-// declares none. It intentionally does not record the verdict cache; `gate-run` owns
-// resolve-run-record for the public `bench gate` path.
+// PhasesCommand executes the gate phase table for its root argument or the current
+// repository root. It selects a manifest table when present, otherwise the kit table.
+// It stops its phase process on cancellation and does not record verdict evidence.
+// gate-run owns that boundary.
 func PhasesCommand(args []string, stdout, stderr io.Writer) int {
 	var root string
 	if len(args) > 0 && args[0] != "" {
@@ -329,9 +321,8 @@ func isRegularFile(path string) bool {
 
 const pinFileName = "bench-gate-pin"
 
-// PinCommand is the human-attended `bench gate pin` porcelain. It refuses non-TTY
-// stdin before doing any write, then records HEAD's committed .bench tree beside the
-// gate cache for the managed pre-push hook to verify.
+// PinCommand records HEAD's committed .bench tree for the managed pre-push hook. It
+// refuses non-interactive input and requires the caller to confirm before it writes.
 func PinCommand(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	return pinCommand(args, stdin, stdout, stderr, terminal.IsTerminal)
 }

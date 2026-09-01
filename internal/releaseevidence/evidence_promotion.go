@@ -21,10 +21,16 @@ func SetExchangeForTesting(exchange func(string, string) error) func() {
 
 func AtomicExchangeForTesting(left, right string) error { return atomicExchangeDirs(left, right) }
 
+// PromoteEvidence atomically replaces dist/preflight with phase records and a manifest.
+// Callers must provide a root whose dist path is absent or a real directory. It returns stage, write,
+// synchronization, or exchange errors. A pre-exchange failure leaves existing preflight evidence unchanged.
 func PromoteEvidence(root string, mode Mode, results []Result, manifest Manifest) error {
 	return PromoteEvidenceFiles(root, mode, results, manifest, nil)
 }
 
+// PromoteEvidenceFiles atomically replaces dist/preflight with phase records, a manifest, and named files.
+// Callers must provide base file names and a root whose dist path is absent or a real directory.
+// It returns stage, write, synchronization, or exchange errors. A pre-exchange failure leaves existing preflight evidence unchanged.
 func PromoteEvidenceFiles(root string, mode Mode, results []Result, manifest Manifest, files map[string][]byte) error {
 	dist := filepath.Join(root, "dist")
 	if info, err := os.Lstat(dist); err == nil && (!info.IsDir() || info.Mode()&os.ModeSymlink != 0) {

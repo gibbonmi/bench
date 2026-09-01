@@ -30,6 +30,7 @@ func TestNamedCheckOwnsConformanceEnvironment(t *testing.T) {
 		registry.ConformanceScopeEnv:     "ambient-scope",
 		registry.ConformanceChecksEnv:    "ambient-checks",
 		registry.ConformanceInheritedEnv: "ambient-inherited",
+		registry.ConsumerOnlyEnv:         "ambient-consumer",
 		capability.LogEnv:                filepath.Join(t.TempDir(), "capability-log"),
 	} {
 		t.Setenv(name, value)
@@ -64,9 +65,84 @@ func TestNamedCheckOwnsConformanceEnvironment(t *testing.T) {
 			t.Errorf("child environment missing %s=%q:\n%s", name, want, environment)
 		}
 	}
-	for _, name := range []string{registry.ConformanceChecksEnv, registry.ConformanceInheritedEnv, capability.LogEnv} {
+	for _, name := range []string{registry.ConformanceChecksEnv, registry.ConformanceInheritedEnv, registry.ConsumerOnlyEnv, capability.LogEnv} {
 		if strings.Contains(environment, name+"=") {
 			t.Errorf("child environment retained %s:\n%s", name, environment)
+		}
+	}
+}
+
+func TestProseNamedCheckRunsCanonicalGraderAndPrintsEveryFinding(t *testing.T) {
+	root := t.TempDir()
+	writeProseCheckFile(t, root, ".bench/prose-exclusions", "")
+	writeProseCheckFile(t, root, "first.md", strings.Repeat("word ", 27)+".\n")
+	writeProseCheckFile(t, root, "second.md", strings.Repeat("word ", 27)+".\n")
+
+	output, code := Command(root, []string{"--check", "prose"})
+	if code != 1 {
+		t.Fatalf("prose named check = %d, want 1\n%s", code, output)
+	}
+	for _, finding := range []string{"prose: \"first.md\" line 1: sentence of 27 words", "prose: \"second.md\" line 1: sentence of 27 words"} {
+		if !strings.Contains(output, finding) {
+			t.Errorf("prose named check output = %q, want finding %q", output, finding)
+		}
+	}
+	help, helpCode := Command(root, []string{"--help"})
+	if helpCode != 0 || !strings.Contains(help, "\n  prose\n") {
+		t.Errorf("named-check help = %d, %q; want prose in the inventory", helpCode, help)
+	}
+}
+
+func writeProseCheckFile(t *testing.T, root, rel, body string) {
+	t.Helper()
+	path := filepath.Join(root, filepath.FromSlash(rel))
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestNamedCheckRunsFromKitAgainstLinkedConsumer(t *testing.T) {
+	consumer := t.TempDir()
+	kit := t.TempDir()
+	marker := filepath.Join(t.TempDir(), "environment")
+	goDir := t.TempDir()
+	goPath := filepath.Join(goDir, "go")
+	source := "#!/usr/bin/env bash\npwd > " + sanitize.ShellQuote(marker) + "\nenv >> " + sanitize.ShellQuote(marker) + "\nprintf '%s\\n' '{\"Action\":\"pass\",\"Package\":\"checkfixture\"}'\n"
+	if err := os.WriteFile(goPath, []byte(source), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv("BENCH_KIT", kit)
+	t.Setenv(registry.ConsumerOnlyEnv, "1")
+
+	selected := filepath.Join(t.TempDir(), "bench")
+	if err := os.WriteFile(selected, []byte("selected"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	previous := selectRunBinary
+	selectRunBinary = func(context.Context, string) (*runbinary.Selection, error) {
+		return &runbinary.Selection{Path: selected, SourceRoot: kit}, nil
+	}
+	t.Cleanup(func() { selectRunBinary = previous })
+
+	output, code := Command(consumer, []string{"--check", "load-validity-metadata"})
+	if code != 0 {
+		t.Fatalf("linked named check = %d, want 0\n%s", code, output)
+	}
+	environment := readTestReportFile(t, marker)
+	if !strings.HasPrefix(environment, kit+"\n") {
+		t.Fatalf("named check working directory = %q, want kit %q", strings.SplitN(environment, "\n", 2)[0], kit)
+	}
+	for name, want := range map[string]string{
+		registry.ConformanceRootEnv: consumer,
+		registry.ConsumerOnlyEnv:    "1",
+		"BENCH_KIT":                 kit,
+	} {
+		if !strings.Contains(environment, name+"="+want+"\n") {
+			t.Errorf("child environment missing %s=%q:\n%s", name, want, environment)
 		}
 	}
 }
@@ -104,8 +180,6 @@ func TestNamedCheckRefusalMatrix(t *testing.T) {
 	writeCheckGo(t, filepath.Join(goDir, "go"), marker)
 	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	for _, args := range [][]string{
-		{"--check", "not-registered"},
-		{"--check", "release-evidence-probe"},
 		{"--check", "line-routing", "--package", "./internal/conformance"},
 		{"--check", "line-routing", "--changed"},
 		{"--check", "line-routing", "--run", "^TestRootConformance$"},
@@ -116,6 +190,32 @@ func TestNamedCheckRefusalMatrix(t *testing.T) {
 	}
 	if _, err := os.Stat(marker); !os.IsNotExist(err) {
 		t.Fatalf("named-check refusal started go child: %v", err)
+	}
+}
+
+func TestNamedCheckHelpListsEverySupportedCheck(t *testing.T) {
+	output, code := Command(t.TempDir(), []string{"--help"})
+	if code != 0 {
+		t.Fatalf("named-check help = %d, want 0\n%s", code, output)
+	}
+	for _, check := range append(registry.Names(registry.Dev), gate.SystemPhaseName) {
+		if !strings.Contains(output, "\n  "+check+"\n") {
+			t.Errorf("named-check help missing %q:\n%s", check, output)
+		}
+	}
+}
+
+func TestUnknownNamedCheckReportsOperandAndInventory(t *testing.T) {
+	inventory := "\nchecks:\n  " + strings.Join(namedChecks(), "\n  ") + "\n"
+	for _, unknown := range []string{"not-registered", "release-evidence-probe"} {
+		output, code := Command(t.TempDir(), []string{"--check", unknown})
+		if code != 2 {
+			t.Errorf("unknown named check %q = %d, want 2\n%s", unknown, code, output)
+			continue
+		}
+		if want := "unknown check: " + unknown + inventory; output != want {
+			t.Errorf("unknown named check %q = %q, want %q", unknown, output, want)
+		}
 	}
 }
 

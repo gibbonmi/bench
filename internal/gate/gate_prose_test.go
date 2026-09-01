@@ -71,6 +71,9 @@ func TestGateProseCommandFindsAnOverLongSentence(t *testing.T) {
 	if !strings.Contains(out, "line 1") {
 		t.Fatalf("stdout = %q, want it to name line 1", out)
 	}
+	if !strings.Contains(out, strings.TrimSpace(words(27))) {
+		t.Fatalf("stdout = %q, want the offending sentence", out)
+	}
 	if strings.Contains(out, "prose[") {
 		t.Fatalf("stdout = %q, want no pass table on a red list", out)
 	}
@@ -128,6 +131,25 @@ func TestGateProseCommandUnknownFlagIsUsageError(t *testing.T) {
 	}
 	if stdout.Len() != 0 {
 		t.Fatalf("stdout = %q, want empty on a usage error", stdout.String())
+	}
+	if want := gateProseUsage + "\n"; stderr.String() != want {
+		t.Fatalf("stderr = %q, want usage %q", stderr.String(), want)
+	}
+}
+
+// TestGateProseCommandHelp prints the command contract without treating help as a refusal.
+func TestGateProseCommandHelp(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	code := GateProseCommand([]string{"--help"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("exit = %d, want 0; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+	if want := gateProseUsage + "\n"; stdout.String() != want {
+		t.Fatalf("stdout = %q, want usage %q", stdout.String(), want)
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
 	}
 }
 

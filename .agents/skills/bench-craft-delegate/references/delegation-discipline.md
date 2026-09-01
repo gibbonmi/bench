@@ -17,6 +17,19 @@ mutation-probe rule, and the done-claim check.
   common. The coordinator then orders the ports to keep the conflict surface
   small.
 
+## Repair-charge template
+
+Every repair charge uses this template. An improvised charge can omit a field
+that the coordinator needs to verify the repair.
+
+```text
+Base commit: <commit that the repair changes>
+Ownership fence: <exact repo-relative file or path prefix>
+Effort: <level and iteration cap>
+Focused suite: <exact command>
+Independent biting probe: <property, mutation kind, site, and expected red>
+```
+
 ## In the charge
 
 - A write charge names the root conformance pass and the file's wrap width in its
@@ -72,6 +85,13 @@ mutation-probe rule, and the done-claim check.
   result. Plant the matching break and run the oracle before you believe either
   reading.
 
+## Retry stops and aggregate readiness
+
+- After the second known-flaky refusal proves green in isolation, stop
+  coordination and hand both results to the reviewer.
+- Before aggregate grading, wait until returned delegates have no live tests and
+  serialize the coordinator-owned resource.
+
 ## Before the landing
 
 - A running `bench commit` is active until its process exits. A reported red does
@@ -84,6 +104,10 @@ mutation-probe rule, and the done-claim check.
   red-capable test.
 - A ticket that returns without a pre-edit red for each row goes back to the
   delegate for those reds. The coordinator gets the reds before the commit.
+- Keep an accepted finding on its original ticket when attribution is clear. Use
+  an umbrella repair ticket only for a genuinely shared owner.
+- When an installed lane cannot commit its repair, run the same ordinary commit core from
+  the candidate tree. Grade the composed snapshot, then require the sanctioned rebuild after landing.
 - The checkpoint ticket records a reviewer decision that occurs during a build.
   Later review reads that decision.
 

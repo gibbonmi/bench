@@ -1,7 +1,7 @@
 # Retry one verified infrastructure fold
 
 Blocked by: none
-Writes: internal/worktree/merge.go, internal/worktree/merge_test.go
+Writes: internal/worktree/merge.go, internal/worktree/merge_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
 Covers: LF5
 
 ## What to build

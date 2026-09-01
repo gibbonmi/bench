@@ -104,6 +104,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "consumers", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 23, Suffix: " <qualified-symbol> [--full]", Description: "every resolved Go reference edge as TOON (file:line, via, enclosing); identifies edges, never blessed seams"}), Run: outputCommand(consumers.CommandWithVersion(version))},
 	{Name: "idea", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 8, Suffix: " \"<text>\"", Description: "park an out-of-scope idea in capture/IDEAS.md (commit to nothing)"}), Run: outputCommand(roadmap.IdeaCommand)},
 	{Name: "learning", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 8, Suffix: " \"<title>\" --what --right [--rule]", Description: "append one open entry to capture/learnings.md (the drain verdicts it)"}), Run: outputCommand(roadmap.LearningCommand)},
+	{Name: "retro", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 8, Suffix: " <slug> --body <markdown>", Description: "validate and create one primary-local implementation retrospective"}), Run: outputCommand(roadmap.RetroCommand)},
 	{Name: "roadmap", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 9, Description: "show the top 10 roadmap rows + drain state"}), Run: outputCommand(roadmapCommand)},
 	{Name: "skills-index", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 7, Suffix: " [--check|--write]", Description: "print skills-index drift (default) or regenerate it"}), Run: outputCommand(skillsindex.Command)},
 	{Name: "tree-hash", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(treeHash)},
@@ -116,7 +117,7 @@ var commandRegistry = []commandDefinition{
 
 	{Name: "version", Attachment: attachmentDirect, AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 43, Description: "print the installed Bench version (os/arch)"}), Run: versionCommand},
 	{Name: "worktree", Attachment: attachmentDirect, AXI: axiApprovedChildren("list"), Inventory: publicInventory(
-		helpRow{Order: 31, Suffix: " [--refresh] [objective]", Gap: 1, Description: "create an owned worktree subshell and release it on exit"},
+		helpRow{Order: 31, Suffix: " shell [--refresh] [objective]", Gap: 1, Description: "create an owned worktree subshell and release it on exit"},
 		helpRow{Order: 32, Suffix: " list", Description: "list assignments and registered worktrees as TOON"},
 		helpRow{Order: 33, Suffix: worktreeSuffix(usage.WorktreePath), Description: "print one active owned worktree's absolute path"},
 		helpRow{Order: 34, Suffix: worktreeSuffix(usage.WorktreeExec), Description: "run a child directly in an active owned worktree"},
@@ -613,7 +614,14 @@ func resumeCleanCommand(c Command, args []string) int {
 // row and the grammar the verb refuses with have one source.
 func worktreeSuffix(grammar string) string { return strings.TrimPrefix(grammar, "bench worktree") }
 
+// worktreeCommand dispatches only an explicit worktree leaf. Each leaf owns the grammar
+// after its name; this wrapper resolves repository context where required and returns
+// usage without acquiring or creating a worktree for a missing or unknown leaf.
 func worktreeCommand(c Command, args []string) int {
+	if len(args) == 0 {
+		fmt.Fprint(c.Stdout, usage.WorktreeUsage())
+		return 2
+	}
 	if len(args) > 0 && args[0] == "exec" {
 		root, err := git.Root()
 		if err != nil {
@@ -621,6 +629,9 @@ func worktreeCommand(c Command, args []string) int {
 			return 1
 		}
 		return worktree.ExecCommand(root, worktree.Home(), args[1:], c.Stdin, c.Stdout, c.Stderr)
+	}
+	if len(args) > 0 && args[0] == "shell" {
+		return worktree.Subshell(worktree.Home(), args[1:], c.Stdin, c.Stdout, c.Stderr)
 	}
 	if len(args) > 0 && args[0] == "path" {
 		root, err := git.Root()
@@ -701,14 +712,8 @@ func worktreeCommand(c Command, args []string) int {
 		}
 		return worktree.LandCommand(root, worktree.Home(), c.Executable, args[1:], c.Stdout, c.Stderr)
 	}
-	// `recovery` is no longer a worktree subcommand. This family's fallback is a
-	// free-form objective, so naming it here reports the removed verb instead of
-	// opening a subshell called "recovery".
-	if len(args) > 0 && args[0] == "recovery" {
-		fmt.Fprintln(c.Stderr, toon.Usage("bench worktree", args[0]))
-		return 2
-	}
-	return worktree.Subshell(worktree.Home(), args, c.Stdin, c.Stdout, c.Stderr)
+	fmt.Fprintln(c.Stderr, toon.Usage("bench worktree", args[0]))
+	return 2
 }
 
 // versionLine renders the single line `bench version` prints. Kept as a pure

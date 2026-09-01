@@ -659,6 +659,64 @@ func TestMergeRefusesAFailingLaneCheck(t *testing.T) {
 	}
 }
 
+// An operational refusal with no diagnosis is retried only after the focused
+// verification proves the unchanged range green. A second retry can hide a persistent
+// failure, while retrying a diagnosed refusal ignores the owning gate's attribution.
+func TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name        string
+		first       error
+		verifyCode  int
+		second      error
+		wantRetries int
+	}{
+		{
+			name:        "green verification retries once",
+			first:       errors.New("prospective authorization refused: infrastructure; run bench doctor"),
+			verifyCode:  0,
+			wantRetries: 1,
+		},
+		{
+			name:        "reasoned infrastructure refusal does not retry",
+			first:       errors.New("prospective authorization refused: infrastructure (gate lock unavailable); run bench doctor"),
+			verifyCode:  0,
+			wantRetries: 0,
+		},
+		{
+			name:        "diff-owned refusal does not retry",
+			first:       errors.New("prospective authorization refused: candidate (the gate ran red); fix the failures above"),
+			verifyCode:  0,
+			wantRetries: 0,
+		},
+		{
+			name:        "red verification does not retry",
+			first:       errors.New("prospective authorization refused: infrastructure; run bench doctor"),
+			verifyCode:  1,
+			wantRetries: 0,
+		},
+		{
+			name:        "second refusal does not retry again",
+			first:       errors.New("prospective authorization refused: infrastructure; run bench doctor"),
+			verifyCode:  0,
+			second:      errors.New("prospective authorization refused: infrastructure; run bench doctor"),
+			wantRetries: 1,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			calls := 0
+			got := retryEmptyReasonInfrastructureFold(tc.first, func() int { return tc.verifyCode }, func() error {
+				calls++
+				return tc.second
+			})
+			if calls != tc.wantRetries {
+				t.Fatalf("retry calls = %d, want %d; result=%v", calls, tc.wantRetries, got)
+			}
+		})
+	}
+}
+
 // WM23: a fast-forward grades the incoming tree too, so a commit whose tree fails the
 // lane refuses and the tip stays. A lane skipped on fast-forward publishes an ungraded
 // tree.

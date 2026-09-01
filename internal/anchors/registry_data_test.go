@@ -699,6 +699,276 @@ func TestCraftDelegateDisciplineAnchorsRedOnRemoval(t *testing.T) {
 	}
 }
 
+// TestLoadStopAndQuietAnchorsRedOnRemoval keeps the stop and aggregate-readiness
+// conditions independently red-capable. The compact skill pointers lead the
+// coordinator to the reference that owns the detailed process.
+func TestLoadStopAndQuietAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		line      = ".agents/skills/bench-craft-line/SKILL.md"
+		delegate  = ".agents/skills/bench-craft-delegate/SKILL.md"
+		reference = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
+	)
+	rules := []struct {
+		file, section, needle, want string
+	}{
+		{
+			file:    line,
+			section: "Classify reds before the ladder moves",
+			needle:  "Known-flaky retry stops are in `craft-delegate`'s delegation discipline.",
+			want:    ".agents/skills/bench-craft-line/SKILL.md Classify reds before the ladder moves dropped the known-flaky retry-stop pointer",
+		},
+		{
+			file:    delegate,
+			section: "Verifying the done-claim",
+			needle:  "Before retry coordination or aggregate grading, load the stopped-retry and quiet-grade rules from `references/delegation-discipline.md`.",
+			want:    ".agents/skills/bench-craft-delegate/SKILL.md Verifying the done-claim dropped the stopped-retry and quiet-grade pointer",
+		},
+		{
+			file:    reference,
+			section: "Retry stops and aggregate readiness",
+			needle:  "After the second known-flaky refusal proves green in isolation, stop coordination and hand both results to the reviewer.",
+			want:    "delegation-discipline.md Retry stops and aggregate readiness dropped the second proven flaky-refusal stop",
+		},
+		{
+			file:    reference,
+			section: "Retry stops and aggregate readiness",
+			needle:  "Before aggregate grading, wait until returned delegates have no live tests and serialize the coordinator-owned resource.",
+			want:    "delegation-discipline.md Retry stops and aggregate readiness dropped the quiet-delegate aggregate-grade check",
+		},
+	}
+
+	evaluate := func(t *testing.T, broken int) []string {
+		t.Helper()
+		root := t.TempDir()
+		bodies := map[string]string{}
+		sections := map[string]map[string]bool{}
+		for i, r := range rules {
+			if sections[r.file] == nil {
+				sections[r.file] = map[string]bool{}
+				bodies[r.file] = "# subject\n"
+			}
+			if !sections[r.file][r.section] {
+				sections[r.file][r.section] = true
+				bodies[r.file] += "\n## " + r.section + "\n\n"
+			}
+			if i != broken {
+				bodies[r.file] += r.needle + "\n"
+			}
+		}
+		for file, body := range bodies {
+			path := filepath.Join(root, filepath.FromSlash(file))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	conformant := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(conformant, r.want) {
+			t.Errorf("tree conformant with %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("tree broken at %q in %s = %v, want %q", r.needle, r.file, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("breaking %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+}
+
+// TestDoneClaimOwnerAnchorsRedOnRemoval keeps owner resolution and repair
+// attribution independently red-capable. A done claim needs a tree artifact,
+// and an umbrella cannot become a ledger for unrelated findings.
+func TestDoneClaimOwnerAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		skill     = ".agents/skills/bench-craft-delegate/SKILL.md"
+		reference = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
+	)
+	rules := []struct {
+		file, section, needle, want string
+	}{
+		{
+			file:    skill,
+			section: "Verifying the done-claim",
+			needle:  "Resolve every named Red-mutation owner to a real artifact in the tree.",
+			want:    ".agents/skills/bench-craft-delegate/SKILL.md Verifying the done-claim dropped Red-mutation owner resolution to a tree artifact",
+		},
+		{
+			file:    reference,
+			section: "Before the landing",
+			needle:  "Keep an accepted finding on its original ticket when attribution is clear. Use an umbrella repair ticket only for a genuinely shared owner.",
+			want:    "delegation-discipline.md Before the landing dropped original-ticket attribution or the genuinely-shared-owner umbrella limit",
+		},
+	}
+
+	evaluate := func(t *testing.T, broken int) []string {
+		t.Helper()
+		root := t.TempDir()
+		for i, r := range rules {
+			path := filepath.Join(root, filepath.FromSlash(r.file))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			body := "# subject\n\n## " + r.section + "\n\n"
+			if i != broken {
+				body += r.needle + "\n"
+			}
+			if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	conformant := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(conformant, r.want) {
+			t.Errorf("tree conformant with %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("tree broken at %q in %s = %v, want %q", r.needle, r.file, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("breaking %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+}
+
+// TestInstalledLaneRepairAnchorsRedOnRemoval pins the installed-lane repair
+// constraint. The skill routes the installed-lane case to its canonical rule,
+// and the rule keeps snapshot grading
+// and the post-landing rebuild coupled to the fallback.
+func TestInstalledLaneRepairAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		skill     = ".agents/skills/bench-craft-delegate/SKILL.md"
+		reference = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
+	)
+	rules := []struct {
+		file, section, needle, want string
+	}{
+		{
+			file:    skill,
+			section: "Verifying the done-claim",
+			needle:  "Installed-lane repair and its post-landing rebuild are in `references/delegation-discipline.md`.",
+			want:    ".agents/skills/bench-craft-delegate/SKILL.md Verifying the done-claim dropped the installed-lane repair pointer",
+		},
+		{
+			file:    reference,
+			section: "Before the landing",
+			needle:  "When an installed lane cannot commit its repair, run the same ordinary commit core from the candidate tree. Grade the composed snapshot, then require the sanctioned rebuild after landing.",
+			want:    "delegation-discipline.md Before the landing dropped the candidate commit core, composed-snapshot grade, or sanctioned rebuild",
+		},
+	}
+
+	evaluate := func(t *testing.T, broken int) []string {
+		t.Helper()
+		root := t.TempDir()
+		for i, r := range rules {
+			path := filepath.Join(root, filepath.FromSlash(r.file))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			body := "# subject\n\n## " + r.section + "\n\n"
+			if i != broken {
+				body += r.needle + "\n"
+			}
+			if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	conformant := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(conformant, r.want) {
+			t.Errorf("tree conformant with %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("tree broken at %q in %s = %v, want %q", r.needle, r.file, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("breaking %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+}
+
+// TestRepairChargeTemplateAnchorsRedOnRemoval keeps each repair-charge field
+// independently red-capable. A coordinator cannot verify a repair when its charge
+// omits the base, fence, effort, focused suite, or independent probe.
+func TestRepairChargeTemplateAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		file    = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
+		section = "Repair-charge template"
+	)
+	rules := []struct{ needle, want string }{
+		{"Base commit:", "delegation-discipline.md Repair-charge template dropped the base commit field"},
+		{"Ownership fence:", "delegation-discipline.md Repair-charge template dropped the ownership fence field"},
+		{"Effort:", "delegation-discipline.md Repair-charge template dropped the effort field"},
+		{"Focused suite:", "delegation-discipline.md Repair-charge template dropped the focused suite field"},
+		{"Independent biting probe:", "delegation-discipline.md Repair-charge template dropped the independent biting probe field"},
+	}
+
+	// evaluate preserves the template section while it removes one field. The red
+	// therefore identifies the omitted field instead of a missing template section.
+	evaluate := func(t *testing.T, broken int) []string {
+		t.Helper()
+		root := t.TempDir()
+		body := "# subject\n\n## " + section + "\n\n"
+		for i, r := range rules {
+			if i != broken {
+				body += r.needle + " value\n"
+			}
+		}
+		path := filepath.Join(root, filepath.FromSlash(file))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	conformant := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(conformant, r.want) {
+			t.Errorf("tree carrying %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("tree without %q = %v, want %q", r.needle, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("dropping %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+}
+
 // TestReferenceFileAnchorsRedOnAbsence holds the two discipline references in the tree. A
 // skill that points at a reference the tree lost leaves the reader with a dead pointer, so
 // an absent file raises the missing-file diagnostic. The paths and the lead sentences are
@@ -788,5 +1058,76 @@ func TestCraftTicketsPremiseCheckAnchorRedsOnRemoval(t *testing.T) {
 	}
 	if diags := evaluate(t, false); !slices.Contains(diags, want) {
 		t.Errorf("tree without the premise check = %v, want %q", diags, want)
+	}
+}
+
+// TestCommentAndReviewRuleAnchorsRedOnRemoval keeps short independent anchors.
+// The test does not copy the guidance prose, so the registry cannot make a
+// weakened rule self-consistent.
+func TestCommentAndReviewRuleAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		comments = ".agents/skills/bench-craft-comments/SKILL.md"
+		review   = ".agents/skills/bench-craft-review/SKILL.md"
+	)
+	rules := []struct{ file, section, needle, want string }{
+		{comments, "The register", "FT<n> story <n>", ".agents/skills/bench-craft-comments/SKILL.md dropped the identifier-provenance rule"},
+		{comments, "The register", "State the constraint first", ".agents/skills/bench-craft-comments/SKILL.md dropped the constraint-first rule"},
+		{comments, "The register", "One source owns a fact", ".agents/skills/bench-craft-comments/SKILL.md dropped the one-source rule"},
+		{comments, "The register", "A sparse file stays sparse", ".agents/skills/bench-craft-comments/SKILL.md dropped the sparse-file rule"},
+		{comments, "The register", "The commit or spec owns the red record", ".agents/skills/bench-craft-comments/SKILL.md dropped the red-record ownership rule"},
+		{review, "The axes stay separate", "A new `FT<n> story <n>` tag", ".agents/skills/bench-craft-review/SKILL.md dropped review rejection of a new story provenance tag"},
+	}
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	live := EvaluateGroup(root, AfterImplementSpec)
+	for _, rule := range rules {
+		if slices.Contains(live, rule.want) {
+			t.Errorf("live guidance raised %q", rule.want)
+		}
+	}
+
+	evaluate := func(t *testing.T, dropped int) []string {
+		t.Helper()
+		root := t.TempDir()
+		bodies := map[string]*strings.Builder{
+			comments: &strings.Builder{},
+			review:   &strings.Builder{},
+		}
+		fmt.Fprint(bodies[comments], "## The register\n\n")
+		fmt.Fprint(bodies[review], "## The axes stay separate\n\n")
+		for i, rule := range rules {
+			if i == dropped {
+				continue
+			}
+			body := bodies[rule.file]
+			fmt.Fprintf(body, "%s\n\n", rule.needle)
+		}
+		for file, body := range bodies {
+			path := filepath.Join(root, file)
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte(body.String()), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	if diags := evaluate(t, -1); len(diags) == 0 {
+		t.Fatal("minimal LF15 guidance did not exercise the anchor group")
+	} else {
+		for _, rule := range rules {
+			if slices.Contains(diags, rule.want) {
+				t.Errorf("guidance carrying %q raised %q", rule.needle, rule.want)
+			}
+		}
+	}
+	for i, rule := range rules {
+		if diags := evaluate(t, i); !slices.Contains(diags, rule.want) {
+			t.Errorf("guidance without %q = %v, want %q", rule.needle, diags, rule.want)
+		}
 	}
 }

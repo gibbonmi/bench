@@ -149,6 +149,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench skills-index [--check|--write]  print skills-index drift (default) or regenerate it
   bench idea "<text>"        park an out-of-scope idea in capture/IDEAS.md (commit to nothing)
   bench learning "<title>" --what --right [--rule]  append one open entry to capture/learnings.md (the drain verdicts it)
+  bench retro <slug> --body <markdown>  validate and create one primary-local implementation retrospective
   bench roadmap              show the top 10 roadmap rows + drain state
   bench status               ambient dashboard: what needs attention + the next action
   bench handoff [--harness <name>] [--next <command>]  print the cold-start pin block and rewrite capture/session-handoff.md
@@ -173,7 +174,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench release-preflight --mode verify|publish [--profile public|bank] [--phase name]  run repository release authorization
   bench release prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--adapter npm|fixture] [--provenance] [--message text]  governed npm publication
   bench gate pin             pin HEAD's .bench tree for pre-push verification
-  bench worktree [--refresh] [objective] create an owned worktree subshell and release it on exit
+  bench worktree shell [--refresh] [objective] create an owned worktree subshell and release it on exit
   bench worktree list        list assignments and registered worktrees as TOON
   bench worktree path <target>  print one active owned worktree's absolute path
   bench worktree exec <target> [--env KEY=VALUE]... -- <command> [args...]  run a child directly in an active owned worktree

@@ -15,6 +15,9 @@ type ReleaseIntentError struct{ Message string }
 
 func (e *ReleaseIntentError) Error() string { return e.Message }
 
+// FinalizeEvidence validates a run and promotes complete evidence for a full preflight run.
+// Callers must provide a valid root and registered phase results. It returns validation,
+// cancellation, assembly, promotion, or release-intent errors. A focused verification run writes no evidence.
 func FinalizeEvidence(ctx context.Context, root string, run RunEvidence) error {
 	if err := validateRun(root, run); err != nil {
 		return err
@@ -268,6 +271,9 @@ func waitForEvidenceProbe(ctx context.Context) error {
 	}
 }
 
+// TerminalStatus returns interrupted when any result is interrupted.
+// It returns red when no result is interrupted and any result is red or not run. Otherwise it returns green.
+// Callers must pass results that use defined statuses.
 func TerminalStatus(results []Result) Status {
 	status := StatusGreen
 	for _, result := range results {

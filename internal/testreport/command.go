@@ -14,6 +14,7 @@ import (
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gocache"
+	"github.com/gibbonmi/bench/internal/prose"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -39,6 +40,8 @@ var selectRunBinary = runbinary.ReuseOrOwn
 
 const goChildGroupCancelled = "child process group cancelled"
 
+const proseCheckName = "prose"
+
 type focusedRequest struct {
 	packageExpr string
 	packages    []string
@@ -60,7 +63,7 @@ func Command(root string, args []string) (string, int) {
 }
 
 func parseFocusedRequest(root string, args []string) (focusedRequest, string, int) {
-	parsed, line, code := usage.Parse(grammar, args)
+	parsed, line, code := usage.Parse(testGrammar(), args)
 	if line != "" {
 		return focusedRequest{}, line, code
 	}
@@ -90,11 +93,8 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	if hasSourceTip && !hasBase {
 		return focusedRequest{}, toon.Usage(grammar.Cmd, "--source-tip"), 2
 	}
-	if hasCheck && check != gate.SystemPhaseName {
-		registered, found := registry.Find(check)
-		if !found || !registered.RunsAt(registry.Dev) {
-			return focusedRequest{}, toon.Usage(grammar.Cmd, "--check"), 2
-		}
+	if hasCheck && !isNamedCheck(check) {
+		return focusedRequest{}, unknownCheck(check), 2
 	}
 	packageOperand := strings.Join(parsed.Positionals, "")
 	if explicit, ok := parsed.Flags["--package"]; ok {
@@ -112,11 +112,42 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	}, "", 0
 }
 
+func testGrammar() usage.Grammar {
+	withInventory := grammar
+	withInventory.Help = grammar.Help + "\n" + namedCheckInventory()
+	return withInventory
+}
+
+func unknownCheck(check string) string {
+	return "unknown check: " + check + "\n" + namedCheckInventory()
+}
+
+func namedCheckInventory() string {
+	checks := namedChecks()
+	return "checks:\n  " + strings.Join(checks, "\n  ")
+}
+
+func namedChecks() []string {
+	return append(registry.Names(registry.Dev), gate.SystemPhaseName, proseCheckName)
+}
+
+func isNamedCheck(check string) bool {
+	for _, name := range namedChecks() {
+		if name == check {
+			return true
+		}
+	}
+	return false
+}
+
 func runFocusedRequest(root string, request focusedRequest) (string, int) {
 	// The refusal precedes the run-owner selection, which builds a Bench executable with
 	// Go. A root the suite may not grade therefore starts no child at all.
 	if request.check == gate.SystemPhaseName && !gate.SystemSuiteRuns(root, testBenchSource(root)) {
 		return toon.Errorf("system check unavailable", "the system suite grades the kit checkout only") + "\n", 1
+	}
+	if request.check == proseCheckName {
+		return runProseCheck(root)
 	}
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
@@ -171,7 +202,15 @@ func runNamedCheck(ctx context.Context, root string, request focusedRequest, sel
 	if err != nil {
 		return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
 	}
-	return runGoTest(ctx, root, request, argv, env)
+	return runGoTest(ctx, selection.SourceRoot, request, argv, env)
+}
+
+func runProseCheck(root string) (string, int) {
+	findings := prose.Grade(root)
+	if len(findings) == 0 {
+		return "", 0
+	}
+	return strings.Join(findings, "\n") + "\n", 1
 }
 
 // runSystemCheck runs the gate's system phase as a focused run. It reads the phase's
@@ -195,15 +234,30 @@ func focusedTestArgv(operands ...string) []string {
 }
 
 func conformanceEnvironment(base []string, root, scope string, selection *runbinary.Selection) ([]string, error) {
+	consumerOnly := environmentValue(base, registry.ConsumerOnlyEnv) == "1"
 	env, err := selectedRunEnvironment(base, selection)
 	if err != nil {
 		return nil, err
 	}
-	return append(env,
+	env = append(env,
 		registry.ConformanceRootEnv+"="+root,
 		registry.ConformanceTierEnv+"="+string(registry.Dev),
 		registry.ConformanceScopeEnv+"="+scope,
-	), nil
+	)
+	if consumerOnly {
+		env = append(env, registry.ConsumerOnlyEnv+"=1")
+	}
+	return env, nil
+}
+
+func environmentValue(env []string, name string) string {
+	prefix := name + "="
+	for i := len(env) - 1; i >= 0; i-- {
+		if strings.HasPrefix(env[i], prefix) {
+			return strings.TrimPrefix(env[i], prefix)
+		}
+	}
+	return ""
 }
 
 func selectedRunEnvironment(base []string, selection *runbinary.Selection) ([]string, error) {
@@ -230,6 +284,7 @@ func withoutConformanceEnvironment(base []string) []string {
 		registry.ConformanceScopeEnv,
 		registry.ConformanceChecksEnv,
 		registry.ConformanceInheritedEnv,
+		registry.ConsumerOnlyEnv,
 		capability.LogEnv,
 		"BENCH_KIT",
 	} {

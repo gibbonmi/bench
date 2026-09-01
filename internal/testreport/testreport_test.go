@@ -36,6 +36,28 @@ func TestDecodeSkipsRunnerLines(t *testing.T) {
 	}
 }
 
+func TestPackageResultDisclosesSkippedRootConformance(t *testing.T) {
+	report, err := decode(strings.NewReader(strings.Join([]string{
+		`{"Action":"run","Package":"github.com/gibbonmi/bench/internal/conformance","Test":"TestRootConformance"}`,
+		`{"Action":"output","Package":"github.com/gibbonmi/bench/internal/conformance","Test":"TestRootConformance","Output":"    gate_entry_test.go:19: kind=environment reason=BENCH_CONFORMANCE_ROOT not set\n"}`,
+		`{"Action":"skip","Package":"github.com/gibbonmi/bench/internal/conformance","Test":"TestRootConformance"}`,
+		`{"Action":"pass","Package":"github.com/gibbonmi/bench/internal/conformance"}`,
+	}, "\n")))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	output, err := report.render(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"root_conformance[1]{package,status,route}", "skipped", "bench test --check <name>"} {
+		if !strings.Contains(output, want) {
+			t.Errorf("package result = %q, want root-conformance disclosure %q", output, want)
+		}
+	}
+}
+
 func TestPackagePattern(t *testing.T) {
 	root := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(root, "internal", "usage"), 0o755); err != nil {

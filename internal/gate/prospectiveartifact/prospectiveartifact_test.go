@@ -16,6 +16,25 @@ import (
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
+func TestCheckoutNameKeepsTheCheckoutLayout(t *testing.T) {
+	if CheckoutName != "checkout" {
+		t.Fatalf("checkout name = %q, want checkout", CheckoutName)
+	}
+}
+
+func TestReadPublishedRejectsAMalformedRecord(t *testing.T) {
+	path := filepath.Join(t.TempDir(), RecordName)
+	if err := os.WriteFile(path, []byte("{"), RecordMode); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := ReadPublished(path); err == nil {
+		t.Fatal("ReadPublished malformed record = nil, want published-record refusal")
+	} else if !strings.Contains(err.Error(), "is not a published prospective owner record") {
+		t.Fatalf("ReadPublished malformed record error = %q, want published-record refusal", err)
+	}
+}
+
 func TestOpenPublishesPrivateOwnerRecordBeforeCheckout(t *testing.T) {
 	repository := fixtureRepository(t)
 	owner, err := (Factory{TempRoot: t.TempDir()}).Open(repository)
@@ -46,6 +65,36 @@ func TestOpenPublishesPrivateOwnerRecordBeforeCheckout(t *testing.T) {
 	}
 	if _, err := os.Lstat(owner.Checkout()); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("checkout before materialization = %v, want absent", err)
+	}
+}
+
+func TestOpenRefusesInvalidTemporaryRootsWithoutPublishing(t *testing.T) {
+	repository := fixtureRepository(t)
+	parent := t.TempDir()
+	dangling := filepath.Join(parent, "dangling")
+	if err := os.Symlink(filepath.Join(parent, "missing"), dangling); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, row := range []struct {
+		name string
+		root string
+	}{
+		{name: "absent root", root: filepath.Join(parent, "absent")},
+		{name: "dangling root link", root: dangling},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			owner, err := (Factory{TempRoot: row.root}).Open(repository)
+			if err == nil {
+				t.Fatal("Open with an invalid temporary root = nil, want refusal")
+			}
+			if owner != nil {
+				t.Fatalf("Open with an invalid temporary root owner = %v, want nil", owner)
+			}
+			if _, err := os.Lstat(filepath.Join(row.root, RecordName)); !errors.Is(err, os.ErrNotExist) {
+				t.Fatalf("published owner record = %v, want absent", err)
+			}
+		})
 	}
 }
 
@@ -81,7 +130,7 @@ func TestOpenRecoversARegisteredDeadBundleBeforeItCreatesAnother(t *testing.T) {
 	}
 	base := t.TempDir()
 	dead := testBundle(t, base, Record{Schema: RecordSchema, OwnerPID: 42, CommonDir: common})
-	checkout := filepath.Join(dead, checkoutName)
+	checkout := filepath.Join(dead, CheckoutName)
 	gitRun(t, repository, "worktree", "add", "-q", "--detach", checkout, "HEAD")
 	run := filepath.Join(dead, "bench-run [*]", "bench")
 	if err := os.MkdirAll(filepath.Dir(run), 0o700); err != nil {
@@ -114,7 +163,7 @@ func TestOpenRecoversARegisteredDeadCheckoutWithoutARunBinary(t *testing.T) {
 	}
 	base := t.TempDir()
 	dead := testBundle(t, base, Record{Schema: RecordSchema, OwnerPID: 42, CommonDir: common})
-	checkout := filepath.Join(dead, checkoutName)
+	checkout := filepath.Join(dead, CheckoutName)
 	gitRun(t, repository, "worktree", "add", "-q", "--detach", checkout, "HEAD")
 
 	owner, err := (Factory{TempRoot: base, Probe: func(int) error { return syscall.ESRCH }}).Open(repository)
@@ -138,7 +187,7 @@ func TestOpenRecoversAStaleRegistrationWithoutACheckoutPath(t *testing.T) {
 	}
 	base := t.TempDir()
 	dead := testBundle(t, base, Record{Schema: RecordSchema, OwnerPID: 42, CommonDir: common})
-	checkout := filepath.Join(dead, checkoutName)
+	checkout := filepath.Join(dead, CheckoutName)
 	gitRun(t, repository, "worktree", "add", "-q", "--detach", checkout, "HEAD")
 	if err := os.RemoveAll(checkout); err != nil {
 		t.Fatal(err)
@@ -165,7 +214,7 @@ func TestOpenRefusesRecoveryWhenRegistrationRemovalFails(t *testing.T) {
 	}
 	base := t.TempDir()
 	dead := testBundle(t, base, Record{Schema: RecordSchema, OwnerPID: 42, CommonDir: common})
-	gitRun(t, repository, "worktree", "add", "-q", "--detach", filepath.Join(dead, checkoutName), "HEAD")
+	gitRun(t, repository, "worktree", "add", "-q", "--detach", filepath.Join(dead, CheckoutName), "HEAD")
 	planted := snapshotPath(t, base)
 	registrations := worktreeRegistrations(t, repository)
 
@@ -208,7 +257,7 @@ func TestOpenRecoversARegisteredDeadBundleUnderASymbolicallyLinkedRoot(t *testin
 		t.Fatal(err)
 	}
 	dead := testBundle(t, linked, Record{Schema: RecordSchema, OwnerPID: 42, CommonDir: common})
-	checkout := filepath.Join(dead, checkoutName)
+	checkout := filepath.Join(dead, CheckoutName)
 	gitRun(t, repository, "worktree", "add", "-q", "--detach", checkout, "HEAD")
 
 	owner, err := (Factory{TempRoot: linked, Probe: func(int) error { return syscall.ESRCH }}).Open(repository)
@@ -439,16 +488,14 @@ func TestSweepRetainsABundleWithANonRegularRecord(t *testing.T) {
 	}
 }
 
-// TestSweepRetainsARecordThatIsNotPrivate is the permission half of PAR14. Each candidate
-// carries a regular record whose bytes would authorize removal, so only its permission
-// bits deny it. A record another account can read or the owner cannot rewrite is not the
-// private record the owner publishes.
 func TestSweepRetainsARecordThatIsNotPrivate(t *testing.T) {
 	for _, row := range []struct {
 		name string
 		mode os.FileMode
 	}{
+		// A 0644 record permits group and world reads, so it is not private.
 		{name: "group and world readable", mode: 0o644},
+		// A 0400 record prevents owner rewrites, so it is not private.
 		{name: "read only", mode: 0o400},
 	} {
 		t.Run(row.name, func(t *testing.T) {

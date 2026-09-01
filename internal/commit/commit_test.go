@@ -1,6 +1,7 @@
 package commit
 
 import (
+	"bytes"
 	"strings"
 	"testing"
 )
@@ -73,5 +74,15 @@ func TestParseArgsHelpIsSuccess(t *testing.T) {
 				t.Fatalf("help = %q, want the declared help text", help)
 			}
 		})
+	}
+}
+
+func TestCommandGrammarErrorPrintsFlatUsage(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	if code := Command([]string{"--unknown"}, &stdout, &stderr); code != 2 {
+		t.Fatalf("exit = %d, want 2; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+	if got, want := stderr.String(), "usage: bench commit (unknown argument: --unknown)\n"; got != want {
+		t.Fatalf("stderr = %q, want %q", got, want)
 	}
 }

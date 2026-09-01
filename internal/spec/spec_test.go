@@ -136,6 +136,52 @@ func TestSpecHelpPrintsThePublicSubcommandInventory(t *testing.T) {
 	}
 }
 
+func TestSpecSubcommandHelpUsesDeclaredUsage(t *testing.T) {
+	tests := []struct {
+		name    string
+		command func([]string) (string, int)
+		want    string
+	}{
+		{"retire", retireCommand, "usage: bench spec retire <spec.md | slug>\n"},
+		{"history", historyCommand, "usage: bench spec history <spec.md | slug>\n"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out, code := tt.command([]string{"help"})
+			if code != 0 {
+				t.Errorf("help code = %d, want 0; out = %q", code, out)
+			}
+			if out != tt.want {
+				t.Errorf("help out = %q, want %q", out, tt.want)
+			}
+		})
+	}
+}
+
+func TestSpecSubcommandUsageRefusals(t *testing.T) {
+	tests := []struct {
+		name    string
+		command func([]string) (string, int)
+		args    []string
+	}{
+		{"retire unknown flag", retireCommand, []string{"--unknown"}},
+		{"retire missing operand", retireCommand, nil},
+		{"history unknown flag", historyCommand, []string{"--unknown"}},
+		{"history missing operand", historyCommand, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out, code := tt.command(tt.args)
+			if code != 2 {
+				t.Errorf("code = %d, want 2; out = %q", code, out)
+			}
+			if !strings.HasPrefix(out, "usage: bench spec ") {
+				t.Errorf("out = %q, want usage", out)
+			}
+		})
+	}
+}
+
 func TestResolveConvention(t *testing.T) {
 	dir := t.TempDir()
 	slugPath := writeSpec(t, dir, "mine", "Status: staged\n")

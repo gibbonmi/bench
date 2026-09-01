@@ -13,7 +13,9 @@ import (
 	"github.com/gibbonmi/bench/internal/axi/axitest"
 	gitpkg "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
+	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
@@ -520,6 +522,7 @@ var keptRoutes = []struct {
 	{[]string{"guards", "--help"}, "usage: bench guards"},
 	{[]string{"idea", "--help"}, "usage: bench idea"},
 	{[]string{"learning", "--help"}, "usage: bench learning"},
+	{[]string{"retro", "--help"}, "usage: bench retro"},
 	{[]string{"roadmap", "--help"}, "usage: bench roadmap"},
 	{[]string{"spec", "retire", "--help"}, "usage: bench spec retire"},
 	{[]string{"spec", "history", "--help"}, "usage: bench spec history"},
@@ -575,6 +578,108 @@ func TestWorktreeHelpNamesCleanGrammar(t *testing.T) {
 	const grammar = "bench worktree clean [--discard-ignored] [--discard-branch] [--full] (<path> | --landed) [--apply <fingerprint>] | bench worktree clean --discard-branch --unclaimed [--apply <fingerprint> | --apply-current]"
 	if code != 0 || !strings.Contains(out, grammar) {
 		t.Fatalf("worktree --help exit=%d output=%q, want %q", code, out, grammar)
+	}
+}
+
+func TestBareWorktreeRefusesBeforeItAcquiresAssignment(t *testing.T) {
+	root := newAXIEnvelopeRepo(t)
+	t.Setenv("BENCH_HOME", t.TempDir())
+	before, err := intent.Assignments(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := runAXICommandAt(t, root, []string{"worktree"})
+	if result.stdout != usage.WorktreeUsage() || result.stderr != "" || result.code != 2 {
+		t.Fatalf("bare worktree = stdout=%q stderr=%q exit=%d, want usage on stdout and exit 2", result.stdout, result.stderr, result.code)
+	}
+	after, err := intent.Assignments(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(after, before) {
+		t.Fatalf("bare worktree assignments = %#v, want %#v", after, before)
+	}
+}
+
+func TestWorktreeShellRunsAndReleasesItsAssignment(t *testing.T) {
+	root := newAXIEnvelopeRepo(t)
+	t.Setenv("BENCH_HOME", t.TempDir())
+	t.Setenv("SHELL", "true")
+
+	result := runAXICommandAt(t, root, []string{"worktree", "shell"})
+	if result.code != 0 || !strings.Contains(result.stderr, "🪵 worktree: ") {
+		t.Fatalf("worktree shell = stdout=%q stderr=%q exit=%d, want successful shell journey", result.stdout, result.stderr, result.code)
+	}
+	assignments, err := intent.Assignments(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(assignments) != 0 {
+		t.Fatalf("worktree shell left assignments = %#v, want none after normal exit", assignments)
+	}
+}
+
+func TestUnknownWorktreeSubcommandRefusesBeforeItAcquiresAssignment(t *testing.T) {
+	root := newAXIEnvelopeRepo(t)
+	before, err := intent.Assignments(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := runAXICommandAt(t, root, []string{"worktree", "unknown"})
+	want := toon.Usage("bench worktree", "unknown") + "\n"
+	if result.stdout != "" || result.stderr != want || result.code != 2 {
+		t.Fatalf("unknown worktree subcommand = stdout=%q stderr=%q exit=%d, want stderr=%q and exit 2", result.stdout, result.stderr, result.code, want)
+	}
+	after, err := intent.Assignments(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(after, before) {
+		t.Fatalf("unknown worktree subcommand assignments = %#v, want %#v", after, before)
+	}
+}
+
+func TestUnknownWorktreeFlagRefusesBeforeItAcquiresAssignment(t *testing.T) {
+	root := newAXIEnvelopeRepo(t)
+	before, err := intent.Assignments(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := runAXICommandAt(t, root, []string{"worktree", "--unknown"})
+	want := toon.Usage("bench worktree", "--unknown") + "\n"
+	if result.stdout != "" || result.stderr != want || result.code != 2 {
+		t.Fatalf("unknown worktree flag = stdout=%q stderr=%q exit=%d, want stderr=%q and exit 2", result.stdout, result.stderr, result.code, want)
+	}
+	after, err := intent.Assignments(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(after, before) {
+		t.Fatalf("unknown worktree flag assignments = %#v, want %#v", after, before)
+	}
+}
+
+func TestWorktreeCreateKeepsParserFirstDispatch(t *testing.T) {
+	root := newAXIEnvelopeRepo(t)
+	before, err := intent.Assignments(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := runAXICommandAt(t, root, []string{"worktree", "create", "--unknown"})
+	want := toon.Usage("bench worktree create", "--unknown") + "\n"
+	if result.stdout != "" || result.stderr != want || result.code != 2 {
+		t.Fatalf("worktree create unknown flag = stdout=%q stderr=%q exit=%d, want stderr=%q and exit 2", result.stdout, result.stderr, result.code, want)
+	}
+	after, err := intent.Assignments(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(after, before) {
+		t.Fatalf("worktree create unknown flag assignments = %#v, want %#v", after, before)
 	}
 }
 

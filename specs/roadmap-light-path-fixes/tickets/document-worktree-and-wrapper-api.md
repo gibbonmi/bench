@@ -1,7 +1,7 @@
 # Document worktree and wrapper contracts
 
 Blocked by: add-retrospective-writer.md, retain-explicit-signal-safe-worktree-shell.md
-Writes: internal/worktree/lifecycle.go, internal/worktree/ownership.go, internal/worktree/worktree.go, cmd/bench/main.go
+Writes: internal/worktree/lifecycle.go, internal/worktree/ownership.go, internal/worktree/worktree.go, internal/worktree/subshell.go, cmd/bench/main.go, tests/canary/package-core-guard/unrouted-subcommand, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
 Covers: LF19
 
 ## What to build

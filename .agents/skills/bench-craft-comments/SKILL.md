@@ -41,6 +41,14 @@ what's true of the code as it stands.
 Match the surrounding file: its comment density, its idiom, its doc-comment
 shape. A sparse file stays sparse.
 
+Treat an identifier as provenance: `FT<n> story <n>` identifies a ticket, not
+code. Remove existing provenance only when editing its line. State the constraint
+first, then the relevant code context.
+
+One source owns a fact. Keep a contract in code or its canonical document, not in
+both. The commit or spec owns the red record. Do not retain a mutation transcript
+or test result in a code comment.
+
 ```go
 // Retry once: the registry returns 503 during its nightly compaction window.
 ```

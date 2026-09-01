@@ -95,6 +95,8 @@ Report every move in one line ("escalated to mid after 2 diff-owned
 reds"). Trust the ladder only where you trust the gate; it never substitutes
 for the up-bias row.
 
+Known-flaky retry stops are in `craft-delegate`'s delegation discipline.
+
 ## What is enforced vs. declared
 
 Two surfaces enforce model membership: the Agent-tool hook denies delegations to models outside `lines.env`,
@@ -113,4 +115,3 @@ out: expected red/green cycles plus a margin for one red. A review-axis delegate
 fix iteration, so it prices at ~1 iteration. A shift with a likely red and fix prices higher.
 
 If the stage exhausts its cap, stop and report — never grind, never escalate silently.
-

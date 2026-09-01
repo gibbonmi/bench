@@ -26,12 +26,15 @@ type EvidenceInspection struct {
 	Reason        string
 }
 
-// InspectTree reports retained exact evidence for an unpublished Git tree.
+// InspectTree reports retained exact evidence for tree. It does not execute the gate
+// or change evidence.
 func InspectTree(root, tree string) EvidenceInspection {
 	return inspectProspective(root, tree, time.Now())
 }
 
-// ExecuteTree runs or reuses the gate for an unpublished Git tree.
+// ExecuteTree executes or reuses the gate for tree and returns its evidence inspection.
+// It keeps the prospective checkout private and records evidence under root. If ctx
+// ends, the incomplete run does not become verdict evidence.
 func ExecuteTree(ctx context.Context, root, tree string, stdout, stderr io.Writer) Result {
 	ctx, finishSpan := beginGateSpan(ctx, root, "prospective")
 	ctx, finishLog := beginGateRunLog(ctx, root, stderr, "prospective")
@@ -56,7 +59,8 @@ func executeTreeWithOwner(ctx context.Context, root, tree string, stdout, stderr
 	return executeSubjectWithRunBinary(ctx, checkout, root, stdout, stderr, nil, reuseFreshGreen, evaluation, owner, root)
 }
 
-// ValidateProjectGreen reports whether branch's tip and marker have retained exact green evidence.
+// ValidateProjectGreen reports whether branch's current tip and marker have retained
+// exact green evidence. It does not execute the gate or change evidence.
 func ValidateProjectGreen(root, branch string) EvidenceInspection {
 	current, err := benchgit.Output("-C", root, "symbolic-ref", "--quiet", "--short", "HEAD")
 	if err != nil || current != branch {

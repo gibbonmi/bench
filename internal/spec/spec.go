@@ -284,30 +284,15 @@ func Command(args []string) (string, int) {
 	}
 }
 
-// specArg extracts the single spec argument shared by every `bench spec` subcommand:
-// exactly one positional, a path or a slug. `-h`/`--help` prints help at exit 0. An
-// unknown flag, a second positional, or a missing argument is a usage error at exit 2.
-// ok is false on any terminal outcome, with out and code carrying it; otherwise arg
-// holds the one positional. cmd names the subcommand for the usage line, and help is
-// its `-h` text.
+// specArg extracts the single positional that a subcommand grammar has already
+// validated. Parser-owned help and usage errors retain their standard rendering.
 func specArg(cmd, help string, rest []string) (arg, out string, code int, ok bool) {
-	for _, a := range rest {
-		switch {
-		case a == "-h" || a == "--help":
-			return "", help, 0, false
-		case strings.HasPrefix(a, "-"):
-			return "", toon.Usage(cmd, a) + "\n", 2, false
-		default:
-			if arg != "" {
-				return "", toon.Usage(cmd, a) + "\n", 2, false
-			}
-			arg = a
-		}
+	grammar := usage.Grammar{Cmd: cmd, Help: strings.TrimSuffix(help, "\n"), MinArgs: 1, MaxArgs: 1}
+	parsed, line, code := usage.Parse(grammar, rest)
+	if line != "" {
+		return "", line + "\n", code, false
 	}
-	if arg == "" {
-		return "", toon.MissingArg(cmd, "<spec.md | slug> is required") + "\n", 2, false
-	}
-	return arg, "", 0, true
+	return parsed.Positionals[0], "", 0, true
 }
 
 // RepoBase returns the repo root that anchors the specs/<slug>/spec.md fallback. It

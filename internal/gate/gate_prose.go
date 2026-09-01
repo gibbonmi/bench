@@ -17,18 +17,23 @@ var gateProseFields = []string{"path", "verdict"}
 
 // GateProseCommand is the `bench gate-prose <root> [--] [path...]` plumbing command. It
 // grades the named paths through the same per-subject grader the whole-tree prose check
-// composes, so the lane and the gate agree on one rule. Exit 0 is a clean list, 1 is a
-// list with findings printed to stdout, and 2 is a usage error: an unknown flag or an
-// omitted root. A pass states its verdict as a `prose[N]{path,verdict}` table, so a caller
-// tells a clean list from a list that graded nothing. The word `green` stays out of that
-// table: the lane composes this verb, and a lane pass is not a graded green.
+// composes, so the lane and the gate agree on one rule. A sole `--help` writes usage to
+// stdout and exits 0. Exit 0 is otherwise a clean list, 1 is a list with findings printed
+// to stdout, and 2 is a usage error: an unknown flag or an omitted root. A pass states its
+// verdict as a `prose[N]{path,verdict}` table, so a caller tells a clean list from a list
+// that graded nothing. The word `green` stays out of that table: the lane composes this
+// verb, and a lane pass is not a graded green.
 func GateProseCommand(args []string, stdout, stderr io.Writer) int {
+	if len(args) == 1 && args[0] == "--help" {
+		fmt.Fprintln(stdout, gateProseUsage)
+		return 0
+	}
 	root, paths, ok := parseGateProseArgs(args)
 	if !ok {
 		fmt.Fprintln(stderr, gateProseUsage)
 		return 2
 	}
-	findings := prose.GradeNamed(root, paths)
+	findings := prose.GradeNamedResults(root, paths)
 	if len(findings) == 0 {
 		rows := make([][]string, 0, len(paths))
 		for _, path := range paths {
@@ -45,7 +50,7 @@ func GateProseCommand(args []string, stdout, stderr io.Writer) int {
 		return 0
 	}
 	for _, f := range findings {
-		fmt.Fprintln(stdout, f)
+		fmt.Fprintln(stdout, prose.RenderNamedResult(f))
 	}
 	return 1
 }
