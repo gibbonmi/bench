@@ -1,7 +1,7 @@
 # Cover detected-project consumer hygiene
 
 Blocked by: scaffold-declared-input-hygiene.md
-Writes: internal/adopt/setup_test.go, internal/adopt/setup_prompt_test.go, specs/roadmap-light-path-fixes/tickets/scaffold-declared-input-hygiene.md, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
+Writes: internal/systemtest/adoption_test.go, specs/roadmap-light-path-fixes/tickets/scaffold-declared-input-hygiene.md
 Covers: none
 
 ## What to build
