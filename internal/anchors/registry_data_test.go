@@ -1419,3 +1419,62 @@ func TestDecisionMapAuthoringAnchorsRedOnRemoval(t *testing.T) {
 		}
 	}
 }
+
+// TestContextMapTermAnchorsRedOnRemoval holds the three map-term glossary entries in
+// CONTEXT.md. The coverage map and the decision map are two artifacts, and each Avoid
+// list names the bare word "map". The reader sweep entry reserves "census". Each needle
+// and diagnostic is written here independently of the registry, so a glossary that
+// merged the two map entries cannot define itself green.
+func TestContextMapTermAnchorsRedOnRemoval(t *testing.T) {
+	const file = "CONTEXT.md"
+	rules := []struct{ needle, want string }{
+		{
+			needle: "Not \"map\", not \"traceability matrix\" — coverage map.",
+			want:   "CONTEXT.md dropped the coverage-map glossary entry with the Avoid list that names the bare word map",
+		},
+		{
+			needle: "Not \"PRD\", not \"design doc\", not \"map\" — decision map.",
+			want:   "CONTEXT.md decision-map entry dropped the Avoid list that names the bare word map",
+		},
+		{
+			needle: "Not \"census\", not \"consumer audit\" — reader sweep.",
+			want:   "CONTEXT.md dropped the reader-sweep glossary entry with the Avoid list that reserves census",
+		},
+	}
+
+	// evaluate writes one minimal glossary that carries every needle except the dropped one.
+	evaluate := func(t *testing.T, dropped int) []string {
+		t.Helper()
+		root := t.TempDir()
+		body := "# Context\n"
+		for i, r := range rules {
+			if i != dropped {
+				body += "\n" + r.needle + "\n"
+			}
+		}
+		if err := os.WriteFile(filepath.Join(root, file), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return EvaluateGroup(root, AfterSpecAuthorization)
+	}
+
+	// Other rows of the group fire against this minimal tree; only these rows are the
+	// test's subject, so both directions are read by membership.
+	conformant := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(conformant, r.want) {
+			t.Errorf("glossary carrying %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("glossary without %q = %v, want %q", r.needle, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("dropping %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+}

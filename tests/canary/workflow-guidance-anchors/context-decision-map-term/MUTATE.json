@@ -1,0 +1,7 @@
+[
+  {
+    "path": "CONTEXT.md",
+    "old": "  Not \"PRD\", not \"design doc\", not \"map\" — decision map.\n",
+    "new": "  Not \"PRD\", not \"design doc\" — decision map.\n"
+  }
+]

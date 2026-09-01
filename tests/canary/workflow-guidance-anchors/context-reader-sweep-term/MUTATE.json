@@ -1,0 +1,7 @@
+[
+  {
+    "path": "CONTEXT.md",
+    "old": "- **reader sweep** — the whole-tree read that finds each consumer of a decision\n  fact before the **coverage map** locks. `craft-spec` states its rules. The\n  word \"census\" stays with the raw-call **census** and the architecture census.\n  Not \"census\", not \"consumer audit\" — reader sweep.\n",
+    "new": ""
+  }
+]

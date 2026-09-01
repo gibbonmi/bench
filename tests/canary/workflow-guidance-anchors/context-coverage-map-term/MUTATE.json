@@ -1,0 +1,7 @@
+[
+  {
+    "path": "CONTEXT.md",
+    "old": "- **coverage map** — the acceptance table of a spec. It holds one **coverage\n  row** for each in-scope story, and it locks before the build starts. It is a\n  different artifact from the **decision map**.\n  Not \"map\", not \"traceability matrix\" — coverage map.\n",
+    "new": ""
+  }
+]
