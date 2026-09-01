@@ -17,7 +17,7 @@ func checkBoundsPolicy(root string) []string {
 	if registry == "" {
 		return []string{"internal/bounds policy registry is absent"}
 	}
-	required := []string{"ProviderTimeout", "GitRefreshTimeout", "WorktreeListTimeout", "GuardScanTimeout", "GateTimeout", "ModelReadLimit", "OutlineFileLimit", "ControlRecordLimit", "IterationMin", "IterationMax", "MainIterationsDefault", "RefactorIterationsDefault", "MaxWall", "LeaseStale", "AssignmentStale"}
+	required := []string{"ProviderTimeout", "GitRefreshTimeout", "WorktreeListTimeout", "GuardScanTimeout", "GateTimeout", "PackageLoadTimeout", "ModelReadLimit", "OutlineFileLimit", "ControlRecordLimit", "IterationMin", "IterationMax", "MainIterationsDefault", "RefactorIterationsDefault", "MaxWall", "LeaseStale", "AssignmentStale"}
 	var diags []string
 	for _, name := range required {
 		if !strings.Contains(registry, name) {
@@ -33,6 +33,7 @@ func checkBoundsPolicy(root string) []string {
 		"internal/roadmap/roadmap.go":               {"bounds.ControlRecordLimit"},
 		"internal/guards/guards.go":                 {"bounds.GuardScanTimeout"},
 		"internal/gate/gate.go":                     {"bounds.GateTimeout"},
+		"internal/coverage/citation_execution.go":   {"bounds.PackageLoadTimeout"},
 		"internal/worktree/refresh/refresh.go":      {"bounds.GitRefreshTimeout"},
 		"internal/git/git.go":                       {"bounds.WorktreeListTimeout"},
 		"internal/worktree/lifecycle.go":            {"bounds.LeaseStale"},

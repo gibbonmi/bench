@@ -1,11 +1,13 @@
 package gate
 
-// The executed-tag census. It answers which build-tag sets the gate actually compiles
-// with on this host, so a consumer can prove that a named test file is reachable by a
-// gate run rather than merely declared. The answer comes from the resolved phase table
-// itself; no second copy of the tag list exists.
+// The executed-test census. It answers which Go test phases the gate actually runs on
+// this host, and for each one the build tags it compiles with and the packages it
+// selects, so a consumer can prove that a named test file is reachable by a gate run
+// rather than merely declared. The answer comes from the resolved phase table itself;
+// no second copy of the phase facts exists.
 
 import (
+	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -14,53 +16,91 @@ import (
 // The empty set is the untagged default, which the ordinary test phase carries.
 type TagSet []string
 
-// ExecutedTagCensus reports every build-tag set the gate executes for the tree under
+// TestExecution is one resolved Go test phase. Its package operands, tags, and
+// environment stay together, so one phase cannot authorize a file with another phase's
+// facts. Env carries the phase's own KEY=VALUE overrides, which decide what the
+// toolchain selects and compiles as surely as the argv does.
+type TestExecution struct {
+	Name     string
+	Tags     TagSet
+	Packages []string
+	Dir      string
+	GoC      string
+	Env      []string
+}
+
+// ExecutedTestCensus reports every Go test phase the gate executes for the tree under
 // grade. root is that tree; kit is the checkout that owns the Go tests, the same pair
 // the runner resolves its phase table with. The table is the root's phase manifest when
 // the root declares one, else the built-in kit table, so the census and the oracle
 // cannot disagree.
 //
-// Each `go test` phase contributes the set its argv declares, and a test phase with no
-// `-tags` operand contributes the untagged set. A table with no test phase yields an
-// empty census, which the caller reads as "inapplicable": a root the gate never runs
-// tests in has no execution claim to grade.
-func ExecutedTagCensus(root, kit string) ([]TagSet, error) {
+// A table with no test phase yields an empty census, which the caller reads as
+// "inapplicable": a root the gate never runs tests in has no execution claim to grade.
+func ExecutedTestCensus(root, kit string) ([]TestExecution, error) {
 	phases, err := phaseTable(root, kit)
 	if err != nil {
 		return nil, err
 	}
-	var census []TagSet
-	seen := make(map[string]bool)
+	var census []TestExecution
 	for _, phase := range phases {
-		if !isGoTestArgv(phase.Argv) {
+		testAt, goC := goTestIndex(phase.Argv)
+		if testAt < 0 {
 			continue
 		}
-		set := tagSetOf(phase.Argv)
-		key := strings.Join(set, ",")
-		if seen[key] {
-			continue
+		dir := phase.Dir
+		if dir == "" {
+			dir = root
 		}
-		seen[key] = true
-		census = append(census, set)
+		effectiveDir := dir
+		if goC != "" {
+			effectiveDir = goC
+			if !filepath.IsAbs(effectiveDir) {
+				effectiveDir = filepath.Join(dir, effectiveDir)
+			}
+			goC = filepath.Clean(effectiveDir)
+		}
+		census = append(census, TestExecution{
+			Name:     phase.Name,
+			Tags:     tagSetOf(phase.Argv),
+			Packages: testPackagesOf(phase.Argv, testAt),
+			Dir:      filepath.Clean(effectiveDir),
+			GoC:      goC,
+			Env:      phase.Env,
+		})
 	}
 	return census, nil
 }
 
-// isGoTestArgv reports whether argv invokes `go test`. The kit's own producer inserts
-// `-C <dir>` between the executable and the subcommand, so the scan steps over that
-// pair rather than reading a fixed position.
-func isGoTestArgv(argv []string) bool {
+// goTestIndex reports where the `test` subcommand sits in an argv that invokes
+// `go test`, and -1 for any other argv. The kit's own producer inserts `-C <dir>`
+// between the executable and the subcommand, so the scan steps over that pair rather
+// than reading a fixed position. The index is what the package-operand reader needs,
+// because every operand follows the subcommand.
+//
+// The same walk answers the Go process directory setting, because both facts live in the
+// one region between the executable and the subcommand. That setting stays attached to
+// the phase: Go resolves a relative package operand after it changes to that directory.
+func goTestIndex(argv []string) (testAt int, goC string) {
 	if len(argv) == 0 || goExecutable(argv[0]) == "" {
-		return false
+		return -1, ""
 	}
 	for i := 1; i < len(argv); i++ {
-		if argv[i] == "-C" {
+		switch {
+		case argv[i] == "-C":
+			// Go accepts -C only as the first argument, so a second occurrence makes the
+			// phase fail on its own terms. The first is the one this scan reports.
+			if goC == "" && i+1 < len(argv) {
+				goC = argv[i+1]
+			}
 			i++
-			continue
+		case argv[i] == "test":
+			return i, goC
+		default:
+			return -1, ""
 		}
-		return argv[i] == "test"
 	}
-	return false
+	return -1, ""
 }
 
 // goExecutable answers the argv[0] forms that name the Go toolchain: the bare name a
@@ -85,6 +125,62 @@ func tagSetOf(argv []string) TagSet {
 		tags = append(tags, splitTags(operand)...)
 	}
 	return normalizeTags(tags)
+}
+
+// testPackagesOf reads package operands from one Go test argv. Test-binary arguments
+// begin at -args or at a -test flag, so neither can become package evidence.
+func testPackagesOf(argv []string, testAt int) []string {
+	var packages []string
+	for i := testAt + 1; i < len(argv); i++ {
+		arg := argv[i]
+		if arg == "-args" || strings.HasPrefix(arg, "-test.") {
+			break
+		}
+		if strings.HasPrefix(arg, "-") {
+			if testFlagTakesValue(arg) {
+				i++
+			}
+			continue
+		}
+		packages = append(packages, arg)
+	}
+	return packages
+}
+
+// testFlagTakesValue reports whether a `go test` flag consumes the argument after it.
+// The set is every value-taking flag `go help build` and `go help testflag` document for
+// `go test`, less the ones that carry no separated value: a boolean flag, and any flag
+// written in the `-flag=value` form. An omission here reads a flag's own value as a
+// package operand, which makes `go list` reject the phase and false-reds every citation
+// that phase could have supplied.
+//
+// `-C` is absent because Go accepts it only as the first argument of the whole command
+// line, which is ahead of the subcommand this scan starts from. `-gocoverdir` is absent
+// because cmd/go withholds it from the end-user flag set.
+func testFlagTakesValue(arg string) bool {
+	if strings.Contains(arg, "=") {
+		return false
+	}
+	// Go's flag package accepts one or two leading dashes for the same flag, so the bare
+	// name is what this table keys on.
+	switch strings.TrimPrefix(strings.TrimPrefix(arg, "-"), "-") {
+	// Build flags, which `go test` shares with `go build`.
+	case "asmflags", "buildmode", "compiler", "covermode", "coverpkg", "gccgoflags",
+		"gcflags", "installsuffix", "ldflags", "mod", "modfile", "overlay", "p", "pgo",
+		"pkgdir", "tags", "toolexec":
+		return true
+	// Flags `go test` itself handles.
+	case "coverprofile", "exec", "o", "vet":
+		return true
+	// Flags `go test` forwards to the test binary.
+	case "bench", "benchtime", "blockprofile", "blockprofilerate", "count", "cpu",
+		"cpuprofile", "fuzz", "fuzzminimizetime", "fuzztime", "list", "memprofile",
+		"memprofilerate", "mutexprofile", "mutexprofilefraction", "outputdir", "parallel",
+		"run", "shuffle", "skip", "timeout", "trace":
+		return true
+	default:
+		return false
+	}
 }
 
 func tagsOperand(argv []string, i int, arg string) (string, bool) {
@@ -119,6 +215,12 @@ func normalizeTags(tags []string) TagSet {
 	sort.Strings(set)
 	return set
 }
+
+// BaselinePolicyEnv names the environment variable that points the phase schedule at a
+// landing's baseline rather than at the tree under grade. A census consumer's fixture
+// must neutralize it, or a prospective landing gate answers every synthetic root with
+// the baseline's phase table instead of the root's own.
+const BaselinePolicyEnv = baselinePolicyEnv
 
 // KitRoot resolves the checkout that owns the Go tests for a tree under grade, through
 // the same rule every gate entry point uses. A census consumer outside this package

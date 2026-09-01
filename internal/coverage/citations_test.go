@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/canary"
+	"github.com/gibbonmi/bench/internal/gate"
 )
 
 // citedSpec writes a folder spec at <root>/specs/<slug>/spec.md whose single mapped
@@ -24,6 +25,12 @@ func citedSpec(t *testing.T, slug, seam, fences string) (root, specPath string) 
 // prove which cell the grammar reads.
 func citedCellSpec(t *testing.T, slug, seam, why, fences string) (root, specPath string) {
 	t.Helper()
+	// A synthetic fixture root is not the kit. Without this pin the fixture becomes its
+	// own kit whenever the ambient one is unset, which materializes the system phase and
+	// its ./internal/systemtest operand in a tree that holds no such package. The tree
+	// itself then decides the census: a go.mod gets the toolchain test phase, and a root
+	// without one gets no test phase at all.
+	t.Setenv("BENCH_KIT", t.TempDir())
 	root = t.TempDir()
 	body := "# " + slug + "\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReduced +
 		"| 1 | b | " + seam + " | " + why + " |\n" + fences
@@ -199,13 +206,31 @@ func TestCommandCheckExitsOneOnAMissingReviewPickup(t *testing.T) {
 	}
 }
 
+// TestCommandCheckAcceptsARelativeSpecPath pins the documented invocation. `go list`
+// always prints an absolute package directory, so the repo root that a relative spec path
+// yields must become absolute before the two are compared. A relative root otherwise
+// matches no package, and every citation in the spec reports that no executed phase
+// selects it.
+func TestCommandCheckAcceptsARelativeSpecPath(t *testing.T) {
+	root, _ := citedFileSpec(t, "internal/x/plain_test.go", "")
+	goModuleRoot(t, root)
+	t.Chdir(root)
+
+	if out, code := Command([]string{"--check", "specs/s/spec.md"}); code != 0 {
+		t.Fatalf("Command = (%d, %q), want exit 0 for a relative spec path", code, out)
+	}
+}
+
 // citedFileSpec writes a folder spec whose one mapped row cites rel, and writes the
 // cited file with header ahead of its package clause. The file always declares the
 // cited name, so only the execution arm can red.
 func citedFileSpec(t *testing.T, rel, header string) (root, specPath string) {
 	t.Helper()
 	root, specPath = citedSpec(t, "s", "`"+rel+"` (`TestPresent`)", "")
-	writeUnder(t, filepath.Join(root, filepath.FromSlash(rel)), header+"package x\n\nfunc TestPresent(t *testing.T) {}\n")
+	cited := filepath.Join(root, filepath.FromSlash(rel))
+	source := header + "package x\n\nfunc TestPresent(t *testing.T) {}\n"
+	writeUnder(t, cited, source)
+	writeCompiledCompanion(t, cited, source)
 	return root, specPath
 }
 
@@ -230,9 +255,11 @@ func TestCitationUnexecutedConstraint(t *testing.T) {
 	})
 
 	t.Run("a system-tagged file passes", func(t *testing.T) {
-		root, specPath := citedFileSpec(t, "internal/x/sys_test.go", "//go:build system\n\n")
+		// The system phase carries one package operand, ./internal/systemtest, so that
+		// package is the only place a system-tagged file is executed evidence.
+		root, specPath := citedFileSpec(t, "internal/systemtest/sys_test.go", "//go:build system\n\n")
 		goModuleRoot(t, root)
-		t.Setenv("BENCH_KIT", root) // the system set exists only where the root is its own kit; the gate's ambient kit must not leak in
+		t.Setenv("BENCH_KIT", root) // the system phase materializes only where the root is its own kit
 
 		if v := checkFilesOf(t, specPath); len(v) != 0 {
 			t.Fatalf("CheckFiles = %#v, want no violation for the executed system set", v)
@@ -315,6 +342,10 @@ func TestCitationUnexecutedConstraint(t *testing.T) {
 
 	t.Run("a manifest-declared custom tag passes", func(t *testing.T) {
 		root, specPath := citedFileSpec(t, "internal/x/custom_test.go", "//go:build customsuite\n\n")
+		goModuleRoot(t, root)
+		// A prospective landing gate points the phase schedule at its baseline, which
+		// would answer this root with the kit's table instead of the manifest below.
+		t.Setenv(gate.BaselinePolicyEnv, "")
 		writeUnder(t, filepath.Join(root, filepath.FromSlash(canary.PhaseManifestPath)),
 			`{"phases":[{"name":"test","argv":["go","test","-tags=customsuite","./..."]}]}`+"\n")
 
@@ -454,7 +485,7 @@ func citationClassesSpec(t *testing.T, header string) string {
 	writeUnder(t, filepath.Join(root, "internal", "x", "stress_test.go"),
 		"//go:build stress\n\npackage x\n\nfunc TestStress(t *testing.T) {}\n")
 	goModuleRoot(t, root)
-	t.Setenv("BENCH_KIT", root) // the census must be the fixture root's own, not the gate's ambient kit
+	t.Setenv("BENCH_KIT", t.TempDir()) // the fixture is not its own kit; only its go.mod decides the census
 	return specPath
 }
 
