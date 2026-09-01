@@ -126,3 +126,13 @@ journey reaches a no-package failure. The coordinator ran the frozen retained
 candidate with an isolated HOME and the exact focused test. Its ignored-input
 assertion passed. The complete owner-authentication trio also passed in 13.59
 seconds. The reported failure is not reproducible on the retained candidate.
+
+## Terra-high final Standards re-review
+
+Frozen tip: `3e9fff378c999be13af4e6ec71d797c1cbafaa5e`.
+
+- Standards P1: the root-contained implementation is sound, but its new swap
+  test tries to create a symlink where `newRepo` already created `capture`.
+  The setup error itself produces the accepted refusal, so the test never
+  exercises a replaced component. This finding routes to auto-fix.
+- The two seed-removal records and the structured prose-test repair are clean.
