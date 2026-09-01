@@ -135,6 +135,27 @@ func TestLandCommandReportsEveryRefusalInOnePreflight(t *testing.T) {
 	if code != 1 || !strings.Contains(stdout, "landing destination is not clean") || !strings.Contains(stdout, "reviewed source is not clean") {
 		t.Fatalf("two-refusal preflight = (%d, %q, %q), want both refusals named", code, stdout, stderr)
 	}
+	// LRS3: every landing-preflight route ends with the caller's own re-run, so a repair
+	// does not cost the operator the flags it passed. The registry is the face set, so the
+	// walk covers each preflight face: the two this run raises are read from the printed
+	// record, and the rest from the route the face composes over the same re-run.
+	rerun := "bench worktree land --request '" + request + "' --base '" + base +
+		"' --source-tip '" + tip + "' --spec 'x' -m <message> '" + creation.Path + "'"
+	tail := "; then " + rerun
+	for _, face := range landingRefusalFaces {
+		if face.stage != stagePreflight {
+			continue
+		}
+		if next, printed := landingFaceNext(stdout, face.detail); printed {
+			if !strings.HasSuffix(next, tail) {
+				t.Fatalf("%s next = %q in %q, want a repair ending %q", face.name, next, stdout, tail)
+			}
+			continue
+		}
+		if route := face.route(rerun); !strings.HasSuffix(route, rerun) {
+			t.Fatalf("%s route = %q, want it to end with the caller's own re-run %q", face.name, route, rerun)
+		}
+	}
 }
 
 // TestLandCommandReportsIdentityAndDestinationInOnePreflight is LR10. The destination
@@ -151,6 +172,22 @@ func TestLandCommandReportsIdentityAndDestinationInOnePreflight(t *testing.T) {
 	if code != 1 || !both || strings.Count(stdout, "refused{") != 2 {
 		t.Fatalf("identity-and-destination preflight = (%d, %q, %q), want exactly two refusals", code, stdout, stderr)
 	}
+	// LRS20: the destination proof refuses before the assignment resolves, so its re-run
+	// addresses the operator's own worktree path rather than an assignment id.
+	next, printed := landingFaceNext(stdout, landingRefusalFaceByName(faceDestinationNotClean).detail)
+	if !printed || strings.Contains(next, "bench worktree exec") || !strings.HasSuffix(next, " '"+creation.Path+"'") {
+		t.Fatalf("destination next = %q (printed=%t) in %q, want a re-run ending with the operator's own path", next, printed, stdout)
+	}
+	// LRS9: the assignment fault stopped the source proofs of its own group, so its route
+	// says so and the operator expects a second refusal after the repair. The destination
+	// group ended at its own fault, so its route says no such thing.
+	if strings.Contains(next, laterProofsSkipped) {
+		t.Fatalf("destination next = %q, want no skipped-proof sentence from a group that ran to its end", next)
+	}
+	assignmentNext, printed := landingFaceNext(stdout, "request token matches no assignment")
+	if !printed || !strings.HasPrefix(assignmentNext, laterProofsSkipped+"; ") {
+		t.Fatalf("assignment next = %q (printed=%t) in %q, want the skipped-proof sentence ahead of the repair", assignmentNext, printed, stdout)
+	}
 }
 
 func TestLandCommandFenceRefusalNamesThePath(t *testing.T) {
@@ -160,8 +197,8 @@ func TestLandCommandFenceRefusalNamesThePath(t *testing.T) {
 	commitInWorktree(t, creation.Path, "stray.txt", "stray\n", "out of fence")
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	code, stdout, stderr := landIn(t, root, landArgs(request, base, tip, creation.Path))
-	if code != 1 || !strings.Contains(stdout, "stray.txt") {
-		t.Fatalf("fence refusal = (%d, %q, %q), want the offending path named", code, stdout, stderr)
+	if code != 1 || !strings.Contains(stdout, "paths_total=1") || !strings.Contains(stdout, "refusal_paths[1]{path}:\n  stray.txt\n") {
+		t.Fatalf("fence refusal = (%d, %q, %q), want the unfenced path in a refusal_paths row", code, stdout, stderr)
 	}
 }
 

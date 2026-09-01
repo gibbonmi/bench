@@ -183,6 +183,11 @@ before any proof runs. One preflight prints every refusal the caller must
 clear, and each refusal names its paths. A stale Bench executable is rebuilt,
 and the landing re-runs under it.
 
+Each landing refusal face constructs through the registry constructor, which
+takes the recovery route as a required argument. Therefore each landing refusal
+prints one exact next command. It also prints its failed paths when its own
+face reads them.
+
 A conflicted `capture/` path composes by a rule table with three verbs:
 `source`, `destination`, and `union`. `capture/session-handoff.md` takes
 `source`; `capture/learnings.md` and `capture/IDEAS.md` take `union`; every

@@ -81,7 +81,10 @@ func TestLandCommandSpecLessRefusesSourceTipMismatch(t *testing.T) {
 	root, creation, base, tip, tally, home := specLessLandingFixture(t, request)
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, home, "", specLessLandArgs(request, base, base, creation.Path), &stdout, &stderr)
-	want := "refused{detail=worktree source tip mismatch,observed=" + base + ",wanted=" + tip + "}\n"
+	// The route re-points the caller's own command at the tip the worktree holds, and a
+	// spec-less landing re-runs spec-less.
+	want := "refused{detail=worktree source tip mismatch,observed=" + base + ",wanted=" + tip +
+		",next=" + landingRerun(request, base, tip, "", creation.Path, creation.Assignment.ID) + "}\n"
 	if code != 1 || stdout.String() != want || stderr.Len() != 0 {
 		t.Fatalf("spec-less tip mismatch = (%d, %q, %q), want (1, %q, empty)", code, stdout.String(), stderr.String(), want)
 	}

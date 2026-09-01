@@ -86,8 +86,16 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 					}
 					return
 				}
-				if code != 1 || stdout != "refused{detail="+tc.detail+"}\n" || stderr != "" {
+				if code != 1 || !strings.HasPrefix(stdout, "refused{detail="+tc.detail+",next=") || stderr != "" {
 					t.Fatalf("destructive-state refusal = (%d, %q, %q), want detail %q", code, stdout, stderr, tc.detail)
+				}
+				// LRS5: the resume refusal carries the face's own repair with the
+				// caller's resume continuation behind it, so the route survives the
+				// interruption.
+				next, printed := landingFaceNext(stdout, tc.detail)
+				repair := landingRefusalFaceByName(faceResumeDestinationResidue).route("")
+				if !printed || !strings.HasPrefix(next, repair) || !strings.Contains(next, "bench worktree land --resume ") {
+					t.Fatalf("destructive-state route = (%q, %v), want %q ahead of the resume continuation", next, printed, repair)
 				}
 				if after := resumeDestinationState(t, root); after != before {
 					t.Fatalf("refusal changed destination state:\nbefore:\n%safter:\n%s", before, after)
@@ -97,6 +105,34 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 				}
 			})
 		}
+	}
+}
+
+// LRS5: a source-side face refuses on the resume too. The resume rebuilds the caller's
+// own continuation from the flags it passed, so the route ends with that resume rather
+// than with a first-run landing the operator must not repeat.
+func TestResumeLandCommandSourceRefusalNamesTheCallersResume(t *testing.T) {
+	t.Parallel()
+	request := "resume-source-not-clean"
+	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
+	broken := defaultJoins()
+	broken.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+	var stdout, stderr bytes.Buffer
+	if code := landWith(broken, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 {
+		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	published := gitOutput(t, root, "rev-parse", "main")
+	mustWrite(t, filepath.Join(creation.Path, "scratch"), []byte("scratch\n"), 0o600)
+	stdout.Reset()
+	stderr.Reset()
+	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
+	code := landWith(defaultJoins(), root, home, "", args, &stdout, &stderr)
+	resume := "bench worktree land --resume '" + published + "' --request <request> --base '" + base +
+		"' --source-tip '" + tip + "' --spec 'x' '" + creation.Path + "'"
+	want := landingRefusalFaceByName(faceSourceNotClean).route(resume)
+	next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(faceSourceNotClean).detail)
+	if code != 1 || !printed || next != want {
+		t.Fatalf("resume source refusal = (%d, %q, %q), want next %q", code, stdout.String(), stderr.String(), want)
 	}
 }
 

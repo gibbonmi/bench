@@ -385,19 +385,22 @@ file_sha256() {
   fi
 }
 
+land_override_refusal() {
+  echo "bench: worktree land does not honor inherited $1; unset it and re-run 'bench worktree land'" >&2
+  echo "bench: the landing runs outside 'bench worktree exec', from your own shell" >&2
+  exit 1
+}
+
 land_route() {
   local script bindir install manifest key value broker='' version='' platform='' digest='' installed actual
   if [[ -n "${BENCH_KIT+x}" ]]; then
-    echo 'bench: worktree land does not honor inherited BENCH_KIT; unset it and re-run' >&2
-    exit 1
+    land_override_refusal BENCH_KIT
   fi
   if [[ -n "${BENCH_RUN_BINARY+x}" ]]; then
-    echo 'bench: worktree land does not honor inherited BENCH_RUN_BINARY; unset it and re-run' >&2
-    exit 1
+    land_override_refusal BENCH_RUN_BINARY
   fi
   if [[ -n "${BENCH_WRAPPER+x}" ]]; then
-    echo 'bench: worktree land does not honor inherited BENCH_WRAPPER; unset it and re-run' >&2
-    exit 1
+    land_override_refusal BENCH_WRAPPER
   fi
   script="$(resolve_script_path)"
   bindir="$(cd -P "$(dirname "$script")" && pwd)"

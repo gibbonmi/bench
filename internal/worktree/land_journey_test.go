@@ -294,6 +294,29 @@ func TestLandCommandPublicConflictRepairRequiresNewReviewedTip(t *testing.T) {
 	if _, err := os.Stat(tally); !os.IsNotExist(err) || gitOutput(t, root, "rev-parse", "HEAD") != destination || gitOutput(t, creation.Path, "rev-parse", "HEAD") != reviewedTip || gitOutput(t, root, "status", "--porcelain=v1") != "" || gitOutput(t, creation.Path, "status", "--porcelain=v1") != "" {
 		t.Fatalf("conflict changed state or ran gate: tally=%v", err)
 	}
+	// LRS6: a source worktree that holds MERGE_HEAD is mid-merge, so the route names the
+	// continuation of that merge and not a second one.
+	mergeHead := filepath.Join(gitOutput(t, creation.Path, "rev-parse", "--absolute-git-dir"), "MERGE_HEAD")
+	mustWrite(t, mergeHead, []byte(destination+"\n"), 0o644)
+	code, stdout, stderr = run(reviewedTip)
+	if code != 1 || !strings.Contains(stdout, "next=git -C '"+creation.Path+"' merge --continue") || strings.Contains(stdout, "then bench commit") {
+		t.Fatalf("pending-merge conflict route = (%d, %q, %q), want the merge continuation", code, stdout, stderr)
+	}
+	// LRS22: an unreadable source Git directory leaves the merge state undecided, so the
+	// route falls back to the commit-and-review form the committed resolution needs.
+	if err := os.Remove(mergeHead); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(mergeHead, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	code, stdout, stderr = run(reviewedTip)
+	if code != 1 || !strings.Contains(stdout, "; then bench commit; then /bench-review-implementation; then ") || strings.Contains(stdout, "merge --continue") {
+		t.Fatalf("undecided merge state route = (%d, %q, %q), want the commit-and-review form", code, stdout, stderr)
+	}
+	if err := os.Remove(mergeHead); err != nil {
+		t.Fatal(err)
+	}
 	merge := descendant(t, "git", "-C", creation.Path, "merge", "--no-commit", "main")
 	if got, err := merge.CombinedOutput(); err == nil || !strings.Contains(string(got), "CONFLICT") {
 		t.Fatalf("repair setup merge = %v, %s", err, got)
@@ -303,7 +326,10 @@ func TestLandCommandPublicConflictRepairRequiresNewReviewedTip(t *testing.T) {
 	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "repair conflict")
 	repairedTip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	code, stdout, stderr = run(reviewedTip)
-	want := "refused{detail=worktree source tip mismatch,observed=" + reviewedTip + ",wanted=" + repairedTip + "}\n"
+	// LRS17: the repair moved the source tip, so the refusal names both tips and routes the
+	// operator to the caller's own command re-pointed at the tip the worktree now holds.
+	want := "refused{detail=worktree source tip mismatch,observed=" + reviewedTip + ",wanted=" + repairedTip +
+		",next=" + landingRerun(request, base, repairedTip, "x", creation.Path, creation.Assignment.ID) + "}\n"
 	if code != 1 || stdout != want || stderr != "" {
 		t.Fatalf("old review after repair = (%d, %q, %q)", code, stdout, stderr)
 	}

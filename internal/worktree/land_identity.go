@@ -17,8 +17,13 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/spec"
 )
+
+// sourceTipMismatchDetail is the sentence the source-tip proof prints. The registry face
+// that routes it reads the same value, so the sentence and its route are one fact.
+const sourceTipMismatchDetail = "worktree source tip mismatch"
 
 type landingSourceFact struct {
 	base, tip, specPath string
@@ -38,16 +43,26 @@ func landingDestination(j joins, root string) (string, string, string, string, e
 	if err != nil || current != branch {
 		return "", "", "", "", errors.New("landing checkout is not attached to the default branch")
 	}
-	if err := checkoutClean(root, "landing destination is not clean", ""); err != nil {
+	dirty, err := checkoutDirtyPaths(root)
+	if err != nil {
 		return "", "", "", "", err
+	}
+	// The destination's moved paths are the operator's own work, so the face carries them
+	// beside its route: the table names what to commit or discard.
+	if len(dirty) > 0 {
+		return "", "", "", "", landingFaceRefusal(faceDestinationNotClean, "", "", dirty)
 	}
 	ignored, _, ignoredErr := inventoryIgnored(j, root, false)
 	declared, _, declarationErr := loadBuildOutputs(root)
+	// The residue face reads its own paths, so the declared route names the removal of
+	// the exact entries beside the declaration file that would adopt them. An unreadable
+	// inventory or declaration names no path, and the same face routes it.
 	if ignoredErr != nil || declarationErr != nil || (ignored.Count > 0 && !ignoredWithinLandingAllowance(ignored, declared)) {
+		residue := []string(nil)
 		if ignoredErr == nil && declarationErr == nil {
-			return "", "", "", "", refusalError{refusal{detail: "landing destination has undeclared ignored residue", paths: undeclaredLandingIgnoredPaths(ignored, declared)}}
+			residue = undeclaredLandingIgnoredPaths(ignored, declared)
 		}
-		return "", "", "", "", errors.New("landing destination has undeclared ignored residue")
+		return "", "", "", "", landingFaceRefusal(faceDestinationResidue, "", "", residue)
 	}
 	tip, err := git.Output("-C", root, "rev-parse", "HEAD^{commit}")
 	if err != nil {
@@ -99,10 +114,10 @@ func landingSource(j joins, root string, a intent.Assignment, base, requestedTip
 	}
 	head, err := git.Output("-C", a.Worktree, "rev-parse", "HEAD^{commit}")
 	if err != nil {
-		return landingSourceFact{}, errors.New("worktree source tip mismatch")
+		return landingSourceFact{}, errors.New(sourceTipMismatchDetail)
 	}
 	if head != requestedTip {
-		return landingSourceFact{}, identityRefusal(requestedTip, head, "worktree source tip mismatch")
+		return landingSourceFact{}, identityRefusal(requestedTip, head, sourceTipMismatchDetail)
 	}
 	branchTip, err := git.Output("-C", root, "rev-parse", "--verify", a.Branch+"^{commit}")
 	if err != nil {
@@ -111,10 +126,14 @@ func landingSource(j joins, root string, a intent.Assignment, base, requestedTip
 	if branchTip != requestedTip {
 		return landingSourceFact{}, identityRefusal(requestedTip, branchTip, "assignment branch source tip mismatch")
 	}
-	if err := checkoutClean(a.Worktree, "reviewed source is not clean", ""); err != nil {
-		// The hostile-source surface pins this refusal to one line, so the source reads the
-		// shared fact and states it without the predicate's path table.
-		return landingSourceFact{}, errors.New("reviewed source is not clean")
+	dirty, err := checkoutDirtyPaths(a.Worktree)
+	if err != nil {
+		return landingSourceFact{}, err
+	}
+	// The hostile-source surface pins this refusal to one line, so the face carries its
+	// route and no paths: the source's own path names never reach the operator's terminal.
+	if len(dirty) > 0 {
+		return landingSourceFact{}, landingFaceRefusal(faceSourceNotClean, "", "", nil)
 	}
 	// A --spec naming a tickets-only folder is a close, not a staged spec. It names no
 	// ownership fence and carries no transition, so its range resolves and its proof
@@ -176,9 +195,16 @@ func landingSourceRange(j joins, worktree, slug, base, head string) (diff.Source
 		}
 		return resolved, detail, nil
 	}
-	const detail = "reviewed source range or ownership fence is invalid"
+	detail := landingRefusalFaceByName(faceSourceNotFenced).detail
 	resolved, err := j.authorizeLandingSource(worktree, slug, base)
 	if err != nil {
+		// The unfenced paths arrive typed, so they print as the refusal's own path table
+		// rather than inside the sentence. The assembler holds the caller's flags, so it
+		// attaches this face's route there.
+		var unfenced preflight.UnauthorizedPathsError
+		if errors.As(err, &unfenced) && len(unfenced.Paths) > 0 {
+			return diff.SourceRange{}, detail, landingFaceRefusal(faceSourceNotFenced, "", "", unfenced.Paths)
+		}
 		return diff.SourceRange{}, detail, fmt.Errorf("%s: %s", detail, err)
 	}
 	return resolved, detail, nil
@@ -223,25 +249,37 @@ func reconcileLandingDestination(j joins, root, destination, published, destinat
 	return nil
 }
 
-// checkoutClean proves one checkout holds no uncommitted work. It refuses any status
-// entry, untracked included; ignored residue is excluded, because a worktree's build
-// output is not uncommitted work. Each caller states the detail and the repair its own
-// refusal carries, because the fact reads the same but the repair does not.
-func checkoutClean(path, detail, next string) error {
+// checkoutDirtyPaths reports the uncommitted work one checkout holds. It counts any
+// status entry, untracked included; ignored residue is excluded, because a worktree's
+// build output is not uncommitted work. An empty result proves the checkout clean, and
+// the error is the unreadable-status refusal. It is the one status read the landing's
+// registry faces and the merge verb's own refusals share, because the fact reads the
+// same for all of them while the refusal each one prints does not.
+func checkoutDirtyPaths(path string) ([]string, error) {
 	raw, err := git.Raw("-C", path, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all")
 	if err != nil {
-		return refusalError{refusal{detail: "checkout status is unreadable"}}
+		return nil, refusalError{refusal{detail: "checkout status is unreadable"}}
 	}
 	entries, err := git.ParsePorcelainZStrict(raw)
 	if err != nil {
-		return refusalError{refusal{detail: "checkout status is unreadable"}}
-	}
-	if len(entries) == 0 {
-		return nil
+		return nil, refusalError{refusal{detail: "checkout status is unreadable"}}
 	}
 	paths := make([]string, 0, len(entries))
 	for _, entry := range entries {
 		paths = append(paths, entry.Path)
+	}
+	return paths, nil
+}
+
+// checkoutClean is the unregistered form the verbs outside the landing refusal registry
+// use: the caller states the detail and the repair its own refusal carries.
+func checkoutClean(path, detail, next string) error {
+	paths, err := checkoutDirtyPaths(path)
+	if err != nil {
+		return err
+	}
+	if len(paths) == 0 {
+		return nil
 	}
 	return refusalError{refusal{detail: detail, next: next, paths: paths}}
 }
