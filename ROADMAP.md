@@ -60,6 +60,8 @@ means the repository-controlled compliance assessment.
 
 **FT284 (MEDIUM, decision required) — `bench spec retire` owns its roadmap retirement atomically.**
 
+**FT285 (LOW, decision required) — a wrapped decision-map Sources continuation that holds a colon gets the one-physical-line refusal.**
+
 **FT255 (MEDIUM, decision required) — concurrent tests share one explicit machine budget.**
 
 **FT275 (MEDIUM) — code built under Bench traces its declared seams with OpenTelemetry.**
@@ -298,4 +300,4 @@ fixture-proven.
 
 1. `$bench-write-spec` — write FT71's versioned local shift-evidence spec for the unblocked HIGH work.
 2. `$bench` — open FT142's light-path ticket for the next unblocked MEDIUM fix.
-3. `$bench-shape-idea` — shape FT277's widened-set explanation and provenance feature.
+3. `$bench-write-spec` — write FT254's exec-comfort spec: the child stdin decision, the trailer, the redirect, and the exit status.
