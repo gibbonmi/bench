@@ -268,6 +268,14 @@ func TestWorktreeLandRouteRefusesInheritedRoutingBeforeRepositoryReads(t *testin
 			if result.code != 1 || !strings.Contains(result.stderr, name) {
 				t.Fatalf("override %s = (%d, %q, %q), want a refusal naming it", name, result.code, result.stdout, result.stderr)
 			}
+			// LRS14: the refusal hands back the command to re-run, not the variable alone.
+			if !strings.Contains(result.stderr, "'bench worktree land'") {
+				t.Fatalf("override %s stderr = %q, want the exact 'bench worktree land' command", name, result.stderr)
+			}
+			// LRS15: the refusal states the venue that re-run uses.
+			if !strings.Contains(result.stderr, "outside 'bench worktree exec'") {
+				t.Fatalf("override %s stderr = %q, want the venue sentence naming 'bench worktree exec'", name, result.stderr)
+			}
 			if result.stdout != "" {
 				t.Fatalf("override %s still started an executable: %q", name, result.stdout)
 			}
