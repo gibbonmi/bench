@@ -51,7 +51,9 @@ func resumeLandWith(j joins, root, home string, args []string, stdout, stderr io
 	result := landing.ReviewedResult{SourceBase: sourceBase, SourceTip: parsed.Flags["--source-tip"], DestinationBase: destinationBase, Commit: published, Tree: tree}
 	assignment, active, err := resumeAssignment(j, root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], landingSlug(parsed.Flags["--spec"]))
 	if err != nil {
-		return landRefusalError(stdout, err)
+		// The assignment has not resolved yet, so the continuation this refusal names
+		// addresses the caller's own worktree path.
+		return landRefusalError(stdout, landingFaceRoute(err, resumeRerun(parsed.Flags, path, "")))
 	}
 	assignmentID := assignment.ID
 	if !active {
@@ -66,8 +68,13 @@ func resumeLandWith(j joins, root, home string, args []string, stdout, stderr io
 	// resume states the same count it stated then.
 	records := censusCount(home, root, assignmentID)
 	printCensusHeads(stderr, home, root, assignmentID)
+	// Every refusal past this point names the caller's own resume, so the route survives
+	// the interruption the operator repairs.
+	rerun := landingResumeNext(result, parsed.Flags["--spec"], path, assignmentID)
+	// The residue policy owns the sentence, and the same guard runs inside the
+	// reconcile step, where no operator reads it. So the face is put on here.
 	if err := resumeDestructiveDestinationState(j, root, destination, published, destinationBase); err != nil {
-		return landRefusal(stdout, err.Error())
+		return landRefusalError(stdout, landingFaceRefusal(faceResumeDestinationResidue, err.Error(), rerun, nil))
 	}
 	switch landingpolicy.ResumeMarker(resumeMarkerFacts(root, destination, published, marker)) {
 	case landingpolicy.MarkerAdvance:
@@ -75,7 +82,7 @@ func resumeLandWith(j joins, root, home string, args []string, stdout, stderr io
 			return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "marker", records)
 		}
 	case landingpolicy.MarkerRefuse:
-		return landRefusal(stdout, landingpolicy.MarkerRefusalDetail)
+		return landRefusalError(stdout, landingFaceRefusal(faceResumeMarker, "", rerun, nil))
 	}
 	if err := j.reconcileLanding(j, root, destination, published, destinationBase); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "reconcile", records)
@@ -129,6 +136,14 @@ func resumeDestructiveDestinationState(j joins, root, destination, published, de
 		return errors.New(detail)
 	}
 	return nil
+}
+
+// resumeRerun is the caller's own resume, rebuilt from the flag values it passed. A
+// refusal that fires before the publication resolves has no result to read, so the flags
+// stand in for it.
+func resumeRerun(flags map[string]string, path, assignment string) string {
+	result := landing.ReviewedResult{Commit: flags["--resume"], SourceBase: flags["--base"], SourceTip: flags["--source-tip"]}
+	return landingResumeNext(result, flags["--spec"], path, assignment)
 }
 
 // destinationResidueFacts translates the destination's Git and filesystem state

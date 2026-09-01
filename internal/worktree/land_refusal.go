@@ -154,7 +154,18 @@ const (
 	faceDestinationNotClean = "destination-not-clean"
 	faceSourceNotClean      = "source-not-clean"
 	faceSourceNotFenced     = "source-not-fenced"
+	// The resume path refuses on its own destination and marker state, so those two
+	// faces are declared here beside the first run's.
+	faceResumeDestinationResidue = "resume-destination-residue"
+	faceResumeMarker             = "resume-marker"
 )
+
+// destinationCleanRepair is the repair a destination that carries uncommitted work
+// demands. The first run and the resume refuse on the same destination state, so both
+// faces name this one repair rather than each spelling it.
+func destinationCleanRepair(rerun string) string {
+	return "commit the destination's uncommitted work, or discard it; then " + rerun
+}
 
 // landingRefusalFace is one refusal the landing's preflight prints. detail is the
 // sentence, and route composes the face's own repair ahead of the caller's re-run. The
@@ -173,9 +184,7 @@ var landingRefusalFaces = []landingRefusalFace{
 	{
 		name:   faceDestinationNotClean,
 		detail: "landing destination is not clean",
-		route: func(rerun string) string {
-			return "commit the destination's uncommitted work, or discard it; then " + rerun
-		},
+		route:  destinationCleanRepair,
 	},
 	{
 		name:   faceSourceNotClean,
@@ -189,6 +198,19 @@ var landingRefusalFaces = []landingRefusalFace{
 		detail: "reviewed source range or ownership fence is invalid",
 		route: func(rerun string) string {
 			return "take the refusal_paths entries out of the reviewed range, or declare them under the spec's ## Ownership fences; then " + rerun
+		},
+	},
+	{
+		// The residue policy owns the sentence this face prints, so the entry declares
+		// none and the constructor carries the observed one.
+		name:  faceResumeDestinationResidue,
+		route: destinationCleanRepair,
+	},
+	{
+		name:   faceResumeMarker,
+		detail: landingpolicy.MarkerRefusalDetail,
+		route: func(rerun string) string {
+			return "run bench gate in the landing checkout to record its green marker; then " + rerun
 		},
 	},
 }
@@ -209,10 +231,12 @@ func landingRefusalFaceByName(name string) landingRefusalFace {
 	}
 }
 
-// landingFaceByDetail finds the registered face a refusal's own sentence names.
+// landingFaceByDetail finds the registered face a refusal's own sentence names. A face
+// that declares no sentence of its own matches nothing here, because its sentence comes
+// from the policy at the refusal rather than from the registry.
 func landingFaceByDetail(detail string) (landingRefusalFace, bool) {
 	for _, face := range landingRefusalFaces {
-		if face.detail == detail {
+		if face.detail != "" && face.detail == detail {
 			return face, true
 		}
 	}
@@ -221,11 +245,15 @@ func landingFaceByDetail(detail string) (landingRefusalFace, bool) {
 
 // landingFaceRefusal is the one constructor a registered face travels through. rerun is a
 // required argument, so no site can print a face's repair without the caller's own re-run
-// behind it. The `refusal` struct keeps its optional next field for the verbs outside
-// this registry's reach.
-func landingFaceRefusal(name, rerun string, paths []string) refusalError {
+// behind it. detail carries the observed sentence for a face whose sentence a policy
+// owns, and a face that declares its own sentence prints that one. The `refusal` struct
+// keeps its optional next field for the verbs outside this registry's reach.
+func landingFaceRefusal(name, detail, rerun string, paths []string) refusalError {
 	face := landingRefusalFaceByName(name)
-	return refusalError{refusal{detail: face.detail, next: face.route(rerun), paths: paths}}
+	if face.detail != "" {
+		detail = face.detail
+	}
+	return refusalError{refusal{detail: detail, next: face.route(rerun), paths: paths}}
 }
 
 // landingFaceRoute attaches the caller's own re-run to a preflight refusal whose sentence
@@ -242,7 +270,7 @@ func landingFaceRoute(err error, rerun string) error {
 	if !ok {
 		return err
 	}
-	return landingFaceRefusal(face.name, rerun, paths)
+	return landingFaceRefusal(face.name, detail, rerun, paths)
 }
 
 // landingRerun is the caller's own re-run of the landing, with the flag values it passed.

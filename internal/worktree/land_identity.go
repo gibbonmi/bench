@@ -46,7 +46,7 @@ func landingDestination(j joins, root string) (string, string, string, string, e
 	// The destination's moved paths are the operator's own work, so the face carries them
 	// beside its route: the table names what to commit or discard.
 	if len(dirty) > 0 {
-		return "", "", "", "", landingFaceRefusal(faceDestinationNotClean, "", dirty)
+		return "", "", "", "", landingFaceRefusal(faceDestinationNotClean, "", "", dirty)
 	}
 	ignored, _, ignoredErr := inventoryIgnored(j, root, false)
 	declared, _, declarationErr := loadBuildOutputs(root)
@@ -125,7 +125,7 @@ func landingSource(j joins, root string, a intent.Assignment, base, requestedTip
 	// The hostile-source surface pins this refusal to one line, so the face carries its
 	// route and no paths: the source's own path names never reach the operator's terminal.
 	if len(dirty) > 0 {
-		return landingSourceFact{}, landingFaceRefusal(faceSourceNotClean, "", nil)
+		return landingSourceFact{}, landingFaceRefusal(faceSourceNotClean, "", "", nil)
 	}
 	// A --spec naming a tickets-only folder is a close, not a staged spec. It names no
 	// ownership fence and carries no transition, so its range resolves and its proof
@@ -195,7 +195,7 @@ func landingSourceRange(j joins, worktree, slug, base, head string) (diff.Source
 		// attaches this face's route there.
 		var unfenced preflight.UnauthorizedPathsError
 		if errors.As(err, &unfenced) && len(unfenced.Paths) > 0 {
-			return diff.SourceRange{}, detail, landingFaceRefusal(faceSourceNotFenced, "", unfenced.Paths)
+			return diff.SourceRange{}, detail, landingFaceRefusal(faceSourceNotFenced, "", "", unfenced.Paths)
 		}
 		return diff.SourceRange{}, detail, fmt.Errorf("%s: %s", detail, err)
 	}

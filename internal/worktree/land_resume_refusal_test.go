@@ -86,8 +86,16 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 					}
 					return
 				}
-				if code != 1 || stdout != "refused{detail="+tc.detail+"}\n" || stderr != "" {
+				if code != 1 || !strings.HasPrefix(stdout, "refused{detail="+tc.detail+",next=") || stderr != "" {
 					t.Fatalf("destructive-state refusal = (%d, %q, %q), want detail %q", code, stdout, stderr, tc.detail)
+				}
+				// LRS5: the resume refusal carries the face's own repair with the
+				// caller's resume continuation behind it, so the route survives the
+				// interruption.
+				next, printed := landingFaceNext(stdout, tc.detail)
+				repair := landingRefusalFaceByName(faceResumeDestinationResidue).route("")
+				if !printed || !strings.HasPrefix(next, repair) || !strings.Contains(next, "bench worktree land --resume ") {
+					t.Fatalf("destructive-state route = (%q, %v), want %q ahead of the resume continuation", next, printed, repair)
 				}
 				if after := resumeDestinationState(t, root); after != before {
 					t.Fatalf("refusal changed destination state:\nbefore:\n%safter:\n%s", before, after)
