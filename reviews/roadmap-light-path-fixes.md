@@ -136,3 +136,12 @@ Frozen tip: `3e9fff378c999be13af4e6ec71d797c1cbafaa5e`.
   The setup error itself produces the accepted refusal, so the test never
   exercises a replaced component. This finding routes to auto-fix.
 - The two seed-removal records and the structured prose-test repair are clean.
+
+### Race-proof closure
+
+Repair tip: `6c8a38fcf7e6976d645bb50c3061546a68e2c44b`.
+
+The fresh Terra-high confirmation is clean. The test now replaces and verifies
+the destination symlink after opening the primary root. Setup failures fail
+directly, and the subsequent command refusal proves that no outside file is
+created.
