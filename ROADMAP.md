@@ -45,8 +45,6 @@ means the repository-controlled compliance assessment.
 
 **FT98 (MEDIUM) — one preserve-then-discard primitive; four faces.**
 
-**FT169 (MEDIUM) — the landing command names its refusals and recovery, and its authority is decided.**
-
 **FT253 (MEDIUM) — one landing lease in the intent ledger, from composition through publish.**
 
 **FT207 (MEDIUM, decision required) — worktree-mutating paths share malformed-admin refusal.**
