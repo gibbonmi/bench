@@ -75,6 +75,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- A truncated preview of operator-influenced text now keeps 240 code points, not 120,
+  before the `… (N bytes)` suffix replaces the rest. The cap is the named
+  `bounds.PreviewRuneLimit` entry in the `internal/bounds` policy registry, and the
+  `bounds-policy` check reds when the preview stops naming it. A failure line and a
+  guard refusal therefore carry two times more of the string they report.
 - A worktree `bench commit` on the kit root now runs only the checks its composed
   changes select. The commit derives its change list from the diff between the expected
   base tree and the composed tree, and each path's classes select checks from the

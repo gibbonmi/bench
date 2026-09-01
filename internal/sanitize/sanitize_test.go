@@ -3,6 +3,8 @@ package sanitize
 import (
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // bs is a single backslash, built from a raw literal so the escape-token expectations
@@ -20,7 +22,7 @@ func containsControl(s string) bool {
 	return false
 }
 
-// TestPreviewBoundariesAndControls pins Preview's escaping, its 120-code-point cap, and
+// TestPreviewBoundariesAndControls pins Preview's escaping, its bounds.PreviewRuneLimit cap, and
 // its byte-count suffix. Control runes are constructed from their code points and
 // escape tokens from bs, so no fragile backslash literal is typed inline.
 func TestPreviewBoundariesAndControls(t *testing.T) {
@@ -47,11 +49,13 @@ func TestPreviewBoundariesAndControls(t *testing.T) {
 		t.Errorf("Preview did not double a literal backslash: %q", backslash)
 	}
 
-	if got := Preview(strings.Repeat("é", 120)); got != strings.Repeat("é", 120) {
-		t.Errorf("Preview capped a 120-rune string: %q", got)
+	atCap := strings.Repeat("é", bounds.PreviewRuneLimit)
+	if got := Preview(atCap); got != atCap {
+		t.Errorf("Preview capped a %d-rune string: %q", bounds.PreviewRuneLimit, got)
 	}
-	if got := Preview(strings.Repeat("é", 121)); got != strings.Repeat("é", 120)+"… (242 bytes)" {
-		t.Errorf("Preview(121 runes) = %q", got)
+	overCap := strings.Repeat("é", bounds.PreviewRuneLimit+1)
+	if got := Preview(overCap); got != atCap+"… (482 bytes)" {
+		t.Errorf("Preview(%d runes) = %q", bounds.PreviewRuneLimit+1, got)
 	}
 }
 
