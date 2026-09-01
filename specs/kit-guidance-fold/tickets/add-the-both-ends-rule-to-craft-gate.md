@@ -24,8 +24,7 @@ the words `single edit` inside the needle.
 Give rule (a) one `RequireInSection` tuple over the section `Run the real path` in
 `internal/anchors/registry_data.go`. Give rule (b) one `RequireInSection` tuple over the
 section `Prove it bites`. Both tuples take `AfterImplementSpec`, the group the newest
-tuples in that file use. Keep each needle on one physical line, because a needle that
-wraps across two lines never matches.
+tuples in that file use. Keep each fixture needle on one physical line, because the fixture materializer refuses an `old` value that spans a line wrap.
 
 Add `TestCraftGateBothEndsAnchorsRedOnRemoval` to
 `internal/anchors/registry_data_test.go`. The function writes each needle and each

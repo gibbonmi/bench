@@ -49,8 +49,7 @@ today, and the pointer sentence needs one more line. The new row joins the exist
 skill rows, and an exact row beats the glob row of 120.
 
 Give each of the six rules one tuple in `internal/anchors/registry_data.go`. Every tuple
-takes `AfterImplementSpec`, the group the newest tuples in that file use. Keep each needle
-on one physical line, because a needle that wraps across two lines never matches.
+takes `AfterImplementSpec`, the group the newest tuples in that file use. Keep each fixture needle on one physical line, because the fixture materializer refuses an `old` value that spans a line wrap.
 
 The reference file has four H2 sections. They are `What a string expectation proves` for
 rule 1, `What a citation points at` for rule 2, `Where an axis under-reads` for rules 3,

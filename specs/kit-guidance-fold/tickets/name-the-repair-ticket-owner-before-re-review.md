@@ -24,7 +24,8 @@ ticket is an ordinary ticket to the parser.
 
 Insert the paragraph, and rewrite no existing sentence in the `Review modes` section. A
 live-tree test, `TestReviewConvergenceContractCurrentDocs`, pins six normalized substrings
-of this file. A reflow of the re-review paragraph breaks one of those substrings.
+of this file. The test collapses whitespace before it matches, so an insert survives and a
+rewritten sentence breaks one of those substrings.
 
 The rule has one home. Add no line to `.agents/commands/bench-implement-spec.md`, and add
 no line to `.agents/skills/bench-craft-tickets/SKILL.md`. The Standards axis reads the
@@ -32,8 +33,7 @@ diff for a second copy of the rule.
 
 Give each sentence one `RequireInSection` tuple over the section `Review modes` in
 `internal/anchors/registry_data.go`. Both tuples take `AfterImplementSpec`, the group the
-newest tuples in that file use. Keep each needle on one physical line, because a needle
-that wraps across two lines never matches.
+newest tuples in that file use. Keep each fixture needle on one physical line, because the fixture materializer refuses an `old` value that spans a line wrap.
 
 Add `TestRepairTicketOwnerAnchorsRedOnRemoval` to
 `internal/anchors/registry_data_test.go`. The function writes each needle and each

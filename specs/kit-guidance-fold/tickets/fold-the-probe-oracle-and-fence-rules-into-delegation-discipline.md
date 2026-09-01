@@ -2,7 +2,7 @@
 
 Blocked by: make-the-falsification-pass-standing-for-guidance-diffs.md
 Writes: .agents/skills/bench-craft-delegate/references/delegation-discipline.md, .agents/skills/bench-craft-spec/references/map-discipline.md, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, tests/canary/workflow-guidance-anchors, tests/canary/workflow-guidance-anchors/delegate-anchor-probe-owning-check (new), tests/canary/workflow-guidance-anchors/delegate-skip-ownership-check (new), tests/canary/workflow-guidance-anchors/delegate-root-conformance-pass (new), tests/canary/workflow-guidance-anchors/delegate-probe-mutated-bytes (new), tests/canary/workflow-guidance-anchors/delegate-serial-ceiling-fence (new), tests/canary/workflow-guidance-anchors/delegate-live-tree-inventory-fence (new), tests/canary/workflow-guidance-anchors/delegate-grammar-fence-inventory (new), tests/canary/workflow-guidance-anchors/delegate-out-of-fence-write (new), tests/canary/workflow-guidance-anchors/map-discipline-moved-bytes-sweep (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
-Covers: KG18, KG19, KG20, KG21, KG22, KG23, KG24, KG25, KG26, KG27, KG28, KG29
+Covers: KG18, KG19, KG20, KG21, KG22, KG23, KG24, KG25, KG26, KG27, KG28, KG29, KG42
 
 ## What to build
 
@@ -15,7 +15,8 @@ Five bullets land under `In the charge` in
 bullet requires an anchor-adding charge to name `bench test --check <owning-check>` as its
 probe. The second bullet requires the capability-skip conformance check in the focused
 checks of a charge that adds a test that can skip. The third bullet fences the
-serial-census ceiling file for a charge that binds `PATH` or the process environment. The
+serial-census ceiling file, `internal/worktree/parallel_census_test.go`, for a charge that
+binds `PATH` or the process environment. The
 fourth bullet fences `internal/conformance/tier_test.go` for a charge that adds a
 live-tree test.
 
@@ -62,8 +63,7 @@ Add `TestChargeProbeOracleAnchorsRedOnRemoval` to
 existing `TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval` with the row KG27
 needle. Each function writes its needles and its diagnostics independently of the
 registry. Each function proves a red on a synthetic tree that drops the needle, and
-silence on the live root. Keep each needle on one physical line, because a needle that
-wraps across two lines never matches.
+silence on the live root. Keep each fixture needle on one physical line, because the fixture materializer refuses an `old` value that spans a line wrap.
 
 Add nine fixtures under `tests/canary/workflow-guidance-anchors/` in the live-mirror
 shape. `BASE` names the live file path the tuple reads. `MUTATE.json` holds one
@@ -91,5 +91,6 @@ existing map-discipline test function.
 - [ ] KG25 — the fixture `delegate-out-of-fence-write` bites through `TestEveryRetainedFixtureBitesThroughRegisteredOwner`.
 - [ ] KG26 — `TestRepairChargeTemplateAnchorsRedOnRemoval` stays green on its five field needles.
 - [ ] KG27 — `TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval` reds when a synthetic tree drops the moved-sentence needle, and stays silent on the live root.
-- [ ] KG28 — `TestGuidanceProseBudgetsHoldOnTheLiveTree` stays green with both skill files inside their budget rows.
+- [ ] KG28 — `TestGuidanceProseBudgetsHoldOnTheLiveTree` stays green with `craft-delegate` SKILL.md at 122 lines or fewer.
+- [ ] KG42 — `TestGuidanceProseBudgetsHoldOnTheLiveTree` stays green with `craft-spec` SKILL.md at 152 lines or fewer.
 - [ ] KG29 — each rule this ticket adds appears once across the two reference files.
