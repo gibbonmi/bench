@@ -109,6 +109,25 @@ func TestExecutedTagCensus(t *testing.T) {
 			},
 		},
 		{
+			// A -test.-prefixed argument names a test-binary flag the toolchain forwards,
+			// not the end of the operand region, so the package operand behind it stays
+			// package evidence.
+			name:     "a -test. flag does not end the package scan",
+			manifest: `{"phases":[{"name":"test","argv":["go","test","-test.run=Pattern","./..."]}]}`,
+			want: []TestExecution{
+				{Name: "test", Tags: TagSet{}, Packages: []string{"./..."}, Dir: rootToken},
+			},
+		},
+		{
+			// Everything after -args passes to the test binary uninterpreted, so no
+			// argument behind it can become package evidence.
+			name:     "-args ends the package scan",
+			manifest: `{"phases":[{"name":"test","argv":["go","test","./...","-args","./notapackage"]}]}`,
+			want: []TestExecution{
+				{Name: "test", Tags: TagSet{}, Packages: []string{"./..."}, Dir: rootToken},
+			},
+		},
+		{
 			name:     "a root with no test phase yields an empty census",
 			manifest: `{"phases":[{"name":"vet","argv":["go","vet","./..."]}]}`,
 			want:     nil,
