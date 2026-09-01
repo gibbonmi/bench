@@ -2,8 +2,6 @@ package coverage
 
 import (
 	"fmt"
-	"go/build"
-	"go/build/constraint"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -85,11 +83,20 @@ func CheckFiles(p parsed, specPath string) []string {
 // spec.md`, yields both. Any other shape yields the directory that holds the spec and
 // an empty slug, which leaves the pickup check inapplicable rather than guessing a
 // name.
+//
+// The root is absolute, because the two consumers downstream both need it that way: the
+// phase census anchors a manifest phase's directory to it, and the package loader answers
+// with absolute directories that a relative root can never match. A working directory
+// that no longer resolves leaves the path as written, which reports a missing file rather
+// than a panic.
 func specLocation(specPath string) (base, slug string) {
 	if specPath == "" {
 		return "", ""
 	}
 	clean := filepath.Clean(specPath)
+	if absolute, err := filepath.Abs(clean); err == nil {
+		clean = absolute
+	}
 	dir := filepath.Dir(clean)
 	if filepath.Base(clean) == "spec.md" && filepath.Base(filepath.Dir(dir)) == "specs" {
 		return filepath.Dir(filepath.Dir(dir)), filepath.Base(dir)
@@ -106,7 +113,7 @@ func specLocation(specPath string) (base, slug string) {
 func checkCitations(p parsed, base string) []string {
 	var v []string
 	s := p.projection()
-	census := executedCensus(base)
+	scopes := executionScopes(executedCensus(base))
 	for idx, r := range p.dataRows {
 		rn := idx + 1
 		// Only the seam cell holds the row's evidence, so only it is graded. A test path
@@ -117,25 +124,27 @@ func checkCitations(p parsed, base string) []string {
 				v = append(v, fmt.Sprintf("coverage map row %d mentions '%s' without a cited name list", rn, c.rel))
 				continue
 			}
-			v = append(v, checkCitation(rn, base, c.rel, c.list, census)...)
+			v = append(v, checkCitation(rn, base, c.rel, c.list, scopes)...)
 		}
 	}
 	return v
 }
 
-// executedCensus answers which build-tag sets the gate compiles the tree at base with.
-// The gate package owns that derivation, so the census and the oracle cannot disagree,
-// and the kit resolves through the gate's own rule so the cited files and the census
-// come from one tree.
+// executedCensus answers which Go test phases the gate runs for the tree at base. Each
+// entry keeps one phase's tags beside its package operands and its execution directory,
+// so a later check can require one phase to both select a package and build a file. The
+// gate package owns that derivation, so the census and the oracle cannot disagree, and
+// the kit resolves through the gate's own rule so the cited files and the census come
+// from one tree.
 //
 // A census the gate cannot derive leaves the execution check inapplicable rather than
 // red. A root with no Go module, and a root whose phase manifest is a defect, are both
 // answered by the gate elsewhere; a coverage check is not the surface that reports them.
-func executedCensus(base string) []gate.TagSet {
+func executedCensus(base string) []gate.TestExecution {
 	if base == "" {
 		return nil
 	}
-	census, err := gate.ExecutedTagCensus(base, gate.KitRoot(base))
+	census, err := gate.ExecutedTestCensus(base, gate.KitRoot(base))
 	if err != nil {
 		return nil
 	}
@@ -145,7 +154,7 @@ func executedCensus(base string) []gate.TagSet {
 // checkCitation grades one citation: the file at rel must exist under base and must
 // declare each name the list cites. A missing file reports once, because every name
 // under it fails for the same reason.
-func checkCitation(rn int, base, rel, list string, census []gate.TagSet) []string {
+func checkCitation(rn int, base, rel, list string, scopes []*executionScope) []string {
 	names := citedNameRe.FindAllStringSubmatch(list, -1)
 	if len(names) == 0 {
 		return nil
@@ -190,7 +199,7 @@ func checkCitation(rn int, base, rel, list string, census []gate.TagSet) []strin
 		}
 		v = append(v, fmt.Sprintf("coverage map row %d cites '%s', whose subtest '%s' is no t.Run name in '%s'", rn, n[1], segment, rel))
 	}
-	return append(v, checkExecution(rn, rel, path, content, census)...)
+	return append(v, checkExecution(rn, rel, path, content, scopes)...)
 }
 
 // citedPathSafe reports whether rel is a repo-relative forward-slash path that stays
@@ -208,73 +217,6 @@ func citedPathSafe(rel string) bool {
 		}
 	}
 	return true
-}
-
-// checkExecution grades the cited file against the executed tag census: a declared test
-// is evidence only when a gate run on this host actually compiles the file that holds
-// it. An empty census means the gate runs no test phase here, so there is no execution
-// claim to grade and the check is inapplicable.
-//
-// One census set satisfying the file is enough, because the gate runs every set.
-func checkExecution(rn int, rel, path string, content []byte, census []gate.TagSet) []string {
-	if len(census) == 0 {
-		return nil
-	}
-	line, err := buildLine(content)
-	if err != nil {
-		return []string{fmt.Sprintf("coverage map row %d cites '%s', whose //go:build expression does not parse: %s", rn, rel, err)}
-	}
-	dir, name := filepath.Split(path)
-	for _, set := range census {
-		ctxt := contextFor(set)
-		if matched, err := ctxt.MatchFile(dir, name); err == nil && matched {
-			return nil
-		}
-	}
-	return []string{fmt.Sprintf("coverage map row %d cites '%s', which no executed tag set builds (%s)", rn, rel, constraintOf(line))}
-}
-
-// contextFor is the build context one executed tag set compiles in. It starts from the
-// toolchain's own default, so the host GOOS and GOARCH, the release tags, and the
-// toolchain-implied tags (unix, gc, cgo) all carry their real values rather than a
-// second list kept here. MatchFile then applies the two rules that decide reachability:
-// the //go:build expression and the GOOS and GOARCH filename suffix rule, which strips
-// _test before it reads the suffix.
-func contextFor(set gate.TagSet) build.Context {
-	ctxt := build.Default
-	ctxt.BuildTags = append(append([]string(nil), build.Default.BuildTags...), set...)
-	return ctxt
-}
-
-// buildLine returns the file's //go:build line, and an error when that line holds an
-// expression the toolchain cannot parse. A file with no such line returns the empty
-// string, which is the always-satisfied case. The scan stops at the package clause,
-// because a later line is a comment rather than a constraint.
-func buildLine(content []byte) (string, error) {
-	for _, raw := range strings.Split(string(content), "\n") {
-		line := strings.TrimSpace(raw)
-		if strings.HasPrefix(line, "package ") {
-			return "", nil
-		}
-		if !constraint.IsGoBuild(line) {
-			continue
-		}
-		if _, err := constraint.Parse(line); err != nil {
-			return "", err
-		}
-		return line, nil
-	}
-	return "", nil
-}
-
-// constraintOf names the constraint that kept a file out of every executed set, so the
-// repair starts at the constraint rather than at a hand census. A file with no build
-// line was refused by its own name.
-func constraintOf(line string) string {
-	if line == "" {
-		return "the filename's GOOS or GOARCH suffix"
-	}
-	return line
 }
 
 // declaresFunc reports whether content declares a function of this name, with or

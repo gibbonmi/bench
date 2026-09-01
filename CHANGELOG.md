@@ -158,6 +158,25 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- `bench coverage --check` now binds a cited test file to the package scope of the gate
+  phase that would run it. The citation check kept each test phase's build tags and
+  dropped its package operands, so a file passed whenever any phase's tags built it, even
+  where no phase ever compiled its package. A citation under `testdata` or under an
+  underscore-prefixed directory therefore posed as executed evidence. The check now keeps
+  one entry for each Go test phase, with its tags, package operands, and execution
+  directory together, and accepts a cited file only where one entry both selects its
+  package and builds the file. The Go package loader answers the selection, so Go alone
+  owns the recursive-pattern and ignored-directory rules. A row whose package scope no
+  phase selects reports `which no executed test phase selects`, and a phase whose
+  operands the loader cannot expand reports `could not expand packages for executed
+  phase`, both naming the row and the cited file. A phase entry also carries the phase's
+  own `env` object, so a phase that declares `GOOS`, `GOARCH`, or `CGO_ENABLED` is graded
+  on the platform it runs under rather than on the host's. The package loader runs under
+  that same environment, and the toolchain itself answers whether cgo is on under that
+  platform. An empty value reads as an unset one, the way `go` reads it. A manifest phase
+  that writes a value-taking flag in its separated
+  form, such as `-skip TestSlow` or `-o out`, keeps that value out of its package
+  operands.
 - The Go builder now pins `CGO_ENABLED=0` for every target, so the same source gives
   the same bytes on every runner. Go derives that variable from the host, so the Linux
   runner that built each Darwin package got cgo off, and the macOS runner that rebuilt

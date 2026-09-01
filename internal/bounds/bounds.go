@@ -29,9 +29,14 @@ const (
 	GitRefreshTimeout           = 30 * time.Second
 	// Git 2.43.0 can block while reading malformed worktree admin files; this
 	// backstop retires when upstream bounds those reads itself.
-	WorktreeListTimeout             = 15 * time.Second
-	GuardScanTimeout                = 5 * time.Second
-	GateTimeout                     = 45 * time.Minute
+	WorktreeListTimeout = 15 * time.Second
+	GuardScanTimeout    = 5 * time.Second
+	GateTimeout         = 45 * time.Minute
+	// PackageLoadTimeout bounds one Go package-loader invocation. The loader opens every
+	// file it walks, so one FIFO anywhere under a loaded package tree blocks it in open(2)
+	// with no deadline of its own. The value sits far above a cold expansion of `./...` on
+	// a large tree, so only a loader that will never return reaches it.
+	PackageLoadTimeout              = 30 * time.Second
 	ModelReadLimit            int64 = 5 << 20
 	OutlineFileLimit          int64 = 2 << 20
 	ControlRecordLimit        int64 = 2 << 20
