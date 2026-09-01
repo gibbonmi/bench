@@ -8,6 +8,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added an `elapsed_ms` column to the `bench test` `packages` table, so the table now
+  reads `packages[N]{package,status,elapsed_ms}`. Each cell is the wall time
+  `go test -json` reports for that one package, as an integer count of milliseconds. A
+  caller reads a real run apart from a cached or skipped one without a `date` call on
+  each side. The name matches the gate's `phases` table. A stream that carries no
+  per-package time gives 0.
 - Added `bench worktree build <target>`, which builds an active owned worktree's tree
   into that worktree's own `dist/bench`. The build runs the tree's `scripts/go-build.sh`,
   so the executable carries its seal. A success prints one `worktree_build` table with
