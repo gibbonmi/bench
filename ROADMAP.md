@@ -111,8 +111,6 @@ means the repository-controlled compliance assessment.
 
 **FT273 (LOW) — a charge names the live-tree check as its probe oracle, and a green probe is verified against the mutated bytes.**
 
-**FT278 (LOW) — `craft-spec` gives every edge-inventory promise a coverage row.**
-
 **FT282 (LOW) — a phase close reads its assignment census before it lands a worktree.**
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
@@ -124,8 +122,6 @@ means the repository-controlled compliance assessment.
 **FT218 (LOW) — named git readers instead of learned CLI flags.**
 
 **FT219 (LOW) — `/bench-deepen` refreshes a ready map's frontier to current state before handoff.**
-
-**FT220 (LOW) — `/bench-write-spec` censuses shared decision readers before ticket slicing.**
 
 **FT236 (LOW) — `craft-review` visit: what a string expectation proves, and where an axis under-reads.**
 
@@ -182,8 +178,6 @@ defect.
 **FT115 (LOW) — load-robust test and phase deadlines derived from bounds.**
 
 **FT120 (LOW) — gate, canary, and contract test-harness defects nothing asserts.**
-
-**FT257 (LOW) — the maps template and diagnostics state the grammar they enforce.**
 
 ## Standards debt — one batched light-path pass
 
