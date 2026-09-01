@@ -10,7 +10,8 @@ Exercise the generated consumer gate after setup detects a project, using a
 Git-ignored declared input with a hostile literal path. Demonstrate that
 removing the detected-project hygiene branch turns the focused journey red.
 Also demonstrate and record the removal mutation that makes the independent
-seeded routing-input expectation bite.
+seeded routing-input expectation bite. The system journey authenticates the
+selected executable with its retained BENCH_KIT pin.
 
 ## Acceptance
 

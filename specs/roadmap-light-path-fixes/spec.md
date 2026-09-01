@@ -156,6 +156,7 @@ parallel authoring.
 - `internal/testreport/`
 - `internal/gate/gate_prose.go`
 - `internal/gate/gate_prose_test.go`
+- `internal/prose/`
 - `internal/gate/gate.go`
 - `internal/gate/decision.go`
 - `internal/gate/engine.go`
@@ -164,6 +165,7 @@ parallel authoring.
 - `internal/gate/prospective_owner_test.go`
 - `internal/gate/prospectiveartifact/`
 - `internal/systemtest/owner_artifact_recovery_test.go`
+- `internal/systemtest/adoption_test.go`
 - `internal/releaseevidence/`
 - `internal/preflight/`
 - `internal/contract/`

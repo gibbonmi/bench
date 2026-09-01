@@ -1,7 +1,7 @@
 # Harden retrospective capture
 
 Blocked by: repair-retro-repeat-preservation.md
-Writes: internal/roadmap/retro.go, internal/roadmap/retro_test.go, internal/retros/retros_test.go, internal/retros/testdata/eligible.md (new), internal/retros/testdata/fixture.go (new), cmd/bench/main.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
+Writes: internal/roadmap/retro.go, internal/roadmap/retro_test.go, internal/retros/retros_test.go, internal/retros/testdata/eligible.md (new), internal/retros/testdata/fixture.go (new), cmd/bench/main.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go, tests/canary/package-core-guard/unrouted-subcommand
 Covers: none
 
 ## What to build
