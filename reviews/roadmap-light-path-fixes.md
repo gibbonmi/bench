@@ -102,3 +102,27 @@ retained kit and binary, without ambient routing variables, and with an
 isolated HOME plus cached modules. All three subcases passed; the isolated run
 took 17.65 seconds. The review worktree lacked an authenticated candidate
 binary, so its `no packages` failure was review-environment-owned.
+
+## Terra-high repair re-review
+
+Frozen repaired tip: `eb6bf5acee39a12e7d966d7a811d26cca526f641`.
+
+### Accepted findings
+
+- Standards P1: retrospective capture checks path components before its
+  separate create calls. A component can become a live outside symlink between
+  the check and write.
+- Standards P2: the seeded-input golden names both new routing inputs, but the
+  durable removal red demonstrates only `BENCH_RUN_BINARY`.
+- Standards P2: the new prose structured-result test independently repeats the
+  full rendered diagnostic without a biting-mutation record.
+
+All three findings route to auto-fix.
+
+### Rejected finding
+
+The Spec and Coverage reviewers again reported that the detected-project LF2
+journey reaches a no-package failure. The coordinator ran the frozen retained
+candidate with an isolated HOME and the exact focused test. Its ignored-input
+assertion passed. The complete owner-authentication trio also passed in 13.59
+seconds. The reported failure is not reproducible on the retained candidate.
