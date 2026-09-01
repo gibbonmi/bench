@@ -55,6 +55,47 @@ func TestLandCommandRefusalListsIgnoredPaths(t *testing.T) {
 	}
 }
 
+// LRS10 edge: the residue face names no path when its own read fails, so the removal
+// command it states takes the placeholder the operator resolves by hand. The ignored
+// inventory refuses a control-bearing path before the route reads it, so this empty
+// list is the one state the placeholder covers.
+func TestLandCommandResidueRouteHoldsThePlaceholderWithoutPaths(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name  string
+		setup func(*testing.T, string)
+	}{
+		{name: "unreadable inventory", setup: func(t *testing.T, root string) {
+			mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("ignored/\n"), 0o644)
+			mustMkdirAll(t, filepath.Join(root, "ignored"), 0o755)
+			mustWrite(t, filepath.Join(root, "ignored", "res\x1bidue"), []byte("residue\n"), 0o600)
+		}},
+		// A directory in the declaration's place is not a regular file, so the
+		// declaration read fails.
+		{name: "unreadable declaration", setup: func(t *testing.T, root string) {
+			mustMkdirAll(t, filepath.Join(root, ".bench", "build-outputs.json"), 0o755)
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			request := "refusal-residue-" + strings.ReplaceAll(tc.name, " ", "-")
+			root := newWorktreeRepo(t)
+			home := filepath.Join(t.TempDir(), "bench-home")
+			creation := mustCreate(t, root, home, request, "refusal")
+			stageLandSpec(t, root, creation.Path)
+			base := gitOutput(t, root, "rev-parse", "HEAD")
+			commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
+			tc.setup(t, root)
+			var stdout, stderr bytes.Buffer
+			code := LandCommand(root, home, "", landArgs(request, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
+			next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(faceDestinationResidue).detail)
+			if code != 1 || !printed || !strings.Contains(next, "rm -rf <refusal_paths entries>") || strings.Contains(stdout.String(), "paths_total=") {
+				t.Fatalf("%s residue route = (%d, %q, %q), next %q, want the placeholder removal and no path table", tc.name, code, stdout.String(), stderr.String(), next)
+			}
+		})
+	}
+}
+
 func TestLandCommandRefusalKeepsControlBearingPathInOneTableRow(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)

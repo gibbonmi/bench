@@ -136,13 +136,24 @@ func TestLandCommandReportsEveryRefusalInOnePreflight(t *testing.T) {
 		t.Fatalf("two-refusal preflight = (%d, %q, %q), want both refusals named", code, stdout, stderr)
 	}
 	// LRS3: every landing-preflight route ends with the caller's own re-run, so a repair
-	// does not cost the operator the flags it passed.
-	tail := "; then bench worktree land --request '" + request + "' --base '" + base +
+	// does not cost the operator the flags it passed. The registry is the face set, so the
+	// walk covers each preflight face: the two this run raises are read from the printed
+	// record, and the rest from the route the face composes over the same re-run.
+	rerun := "bench worktree land --request '" + request + "' --base '" + base +
 		"' --source-tip '" + tip + "' --spec 'x' -m <message> '" + creation.Path + "'"
-	for _, face := range []string{faceDestinationNotClean, faceSourceNotClean} {
-		next, printed := landingFaceNext(stdout, landingRefusalFaceByName(face).detail)
-		if !printed || !strings.HasSuffix(next, tail) {
-			t.Fatalf("%s next = %q (printed=%t) in %q, want a repair ending %q", face, next, printed, stdout, tail)
+	tail := "; then " + rerun
+	for _, face := range landingRefusalFaces {
+		if face.stage != stagePreflight {
+			continue
+		}
+		if next, printed := landingFaceNext(stdout, face.detail); printed {
+			if !strings.HasSuffix(next, tail) {
+				t.Fatalf("%s next = %q in %q, want a repair ending %q", face.name, next, stdout, tail)
+			}
+			continue
+		}
+		if route := face.route(rerun); !strings.HasSuffix(route, rerun) {
+			t.Fatalf("%s route = %q, want it to end with the caller's own re-run %q", face.name, route, rerun)
 		}
 	}
 }

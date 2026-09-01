@@ -105,23 +105,15 @@ func sourceMergePending(source string) bool {
 	return true
 }
 
-// landingConflictRefusal is the one constructor the conflict face travels through. The
-// route is not an argument, so no call site composes it: the constructor reads the source
-// worktree's merge state and the route builder branches on the answer.
+// landingConflictRefusal is the one constructor the conflict face travels through. It
+// reads the source worktree's merge state, chooses the hand repair that state demands,
+// and composes the re-run the repaired source takes. The registered face then puts the
+// review step and that re-run behind the repair, so no call site composes a route.
 func landingConflictRefusal(conflict landing.ConflictError, destination, assignment, specArg, path, source string) refusalError {
-	return refusalError{refusal{
-		detail: conflict.Error(),
-		paths:  conflict.Paths,
-		next:   landingConflictNext(destination, assignment, specArg, path, sourceMergePending(source)),
-	}}
-}
-
-// landingConflictNext names the source repair a conflict outside the rule table
-// demands, in the order the operator runs it. A source worktree with no pending merge
-// merges the destination in, commits the repair, reviews the new range, and re-runs the
-// landing with the repaired tip. A source worktree that holds a pending merge finishes
-// that merge instead, so its route names the continuation and no second merge.
-func landingConflictNext(destination, assignment, specArg, path string, pending bool) string {
+	repair := conflictRepairPrefix(destination, assignment, path)
+	if sourceMergePending(source) {
+		repair = conflictContinuePrefix(assignment, path)
+	}
 	// A spec-less landing re-runs spec-less, so it names no --spec at all rather than an
 	// empty value the grammar refuses.
 	specFlag := ""
@@ -132,10 +124,13 @@ func landingConflictNext(destination, assignment, specArg, path string, pending 
 		}
 	}
 	rerun := atSourceWorktree("bench worktree land --request <request> --base "+conflictCommitArg(destination)+" --source-tip <repaired-source-tip>"+specFlag+" -m <message>", path, assignment)
-	repair := conflictRepairPrefix(destination, assignment, path)
-	if pending {
-		repair = conflictContinuePrefix(assignment, path)
-	}
+	return landingFaceRefusalOf(faceCompositionConflict, refusal{detail: conflict.Error(), paths: conflict.Paths, next: repair}, rerun)
+}
+
+// landingConflictNext is the one composition of the conflict route, in the order the
+// operator runs it. The hand repair comes first, the review of the new range next, and
+// the re-run of the landing with the repaired tip last.
+func landingConflictNext(repair, rerun string) string {
 	return repair + "; then /bench-review-implementation; then " + rerun
 }
 
@@ -157,10 +152,29 @@ const (
 	faceSourceNotClean      = "source-not-clean"
 	faceSourceNotFenced     = "source-not-fenced"
 	faceSourceTipMismatch   = "source-tip-mismatch"
+	// The composition refuses after the preflight clears, so its face is declared here
+	// beside the preflight's.
+	faceCompositionConflict = "composition-conflict"
 	// The resume path refuses on its own destination and marker state, so those two
 	// faces are declared here beside the first run's.
 	faceResumeDestinationResidue = "resume-destination-residue"
 	faceResumeMarker             = "resume-marker"
+)
+
+// landingStage names when in a landing one face prints, which decides the command its
+// route ends with. The registry is the one source of the answer, so the proofs and the
+// producing fixtures read it here rather than each restating it.
+type landingStage int
+
+const (
+	// stagePreflight is the first run's preflight. Its route ends with the caller's own
+	// re-run of the landing.
+	stagePreflight landingStage = iota
+	// stageComposition is the first run past its preflight. Its route ends with a re-run
+	// the operator points at a repaired source tip.
+	stageComposition
+	// stageResume is the resume path. Its route ends with the caller's own resume.
+	stageResume
 )
 
 // destinationCleanRepair is the repair a destination that carries uncommitted work
@@ -204,6 +218,7 @@ func residueRemovalCommand(paths []string) string {
 type landingRefusalFace struct {
 	name   string
 	detail string
+	stage  landingStage
 	repair func(rerun string, raised refusal) string
 }
 
@@ -270,13 +285,24 @@ var landingRefusalFaces = []landingRefusalFace{
 		}),
 	},
 	{
+		// The composition names the conflicted paths in its own sentence, so the entry
+		// declares none and the constructor carries the observed one. The constructor
+		// reads the source worktree's merge state, so the hand repair that state demands
+		// arrives on the raised refusal and this face puts the route behind it.
+		name:   faceCompositionConflict,
+		stage:  stageComposition,
+		repair: func(rerun string, raised refusal) string { return landingConflictNext(raised.next, rerun) },
+	},
+	{
 		// The residue policy owns the sentence this face prints, so the entry declares
 		// none and the constructor carries the observed one.
 		name:   faceResumeDestinationResidue,
+		stage:  stageResume,
 		repair: pathless(destinationCleanRepair),
 	},
 	{
 		name:   faceResumeMarker,
+		stage:  stageResume,
 		detail: landingpolicy.MarkerRefusalDetail,
 		repair: pathless(func(rerun string) string {
 			return "run bench gate in the landing checkout to record its green marker; then " + rerun
@@ -300,12 +326,14 @@ func landingRefusalFaceByName(name string) landingRefusalFace {
 	}
 }
 
-// landingFaceByDetail finds the registered face a refusal's own sentence names. A face
-// that declares no sentence of its own matches nothing here, because its sentence comes
-// from the policy at the refusal rather than from the registry.
+// landingFaceByDetail finds the registered face a refusal's own sentence names. A proof
+// that reads a cause outside this package states the face's sentence and then the cause,
+// so a sentence that opens with a face's own one names that face too. A face that
+// declares no sentence of its own matches nothing here, because its sentence comes from
+// the policy at the refusal rather than from the registry.
 func landingFaceByDetail(detail string) (landingRefusalFace, bool) {
 	for _, face := range landingRefusalFaces {
-		if face.detail != "" && face.detail == detail {
+		if face.detail != "" && (face.detail == detail || strings.HasPrefix(detail, face.detail+": ")) {
 			return face, true
 		}
 	}
@@ -325,7 +353,9 @@ func landingFaceRefusal(name, detail, rerun string, paths []string) refusalError
 // raised, so the identities that refusal observed reach the route the face composes.
 func landingFaceRefusalOf(name string, raised refusal, rerun string) refusalError {
 	face := landingRefusalFaceByName(name)
-	if face.detail != "" {
+	// A refusal that already states a sentence keeps it, because that sentence carries
+	// the cause the face's declared one drops. The declared sentence fills an empty one.
+	if raised.detail == "" {
 		raised.detail = face.detail
 	}
 	raised.next = face.repair(rerun, raised)

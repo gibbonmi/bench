@@ -72,6 +72,15 @@ func TestLandCommandAbsentSpecFolderKeepsTheUnreadableRefusal(t *testing.T) {
 	if _, err := os.Stat(tally); !os.IsNotExist(err) {
 		t.Fatalf("unreadable-spec refusal ran the gate: %v", err)
 	}
+	// LRS3: the fence face routes its wrapped cause too, so the operator reads the
+	// face's own repair with the caller's own re-run behind it.
+	rerun := "bench worktree land --request '" + request + "' --base '" + base +
+		"' --source-tip '" + tip + "' --spec 'absent' -m <message> '" + creation.Path + "'"
+	next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(faceSourceNotFenced).detail)
+	repair := landingRefusalFaceByName(faceSourceNotFenced).route(rerun)
+	if !printed || next != repair {
+		t.Fatalf("absent spec folder next = %q (printed=%t) in %q, want %q", next, printed, stdout.String(), repair)
+	}
 }
 
 // Edge under WL8: a --resume carrying the tickets-only slug authenticates the folder's

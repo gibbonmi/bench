@@ -185,7 +185,8 @@ and the landing re-runs under it.
 
 Each landing refusal face constructs through the registry constructor, which
 takes the recovery route as a required argument. Therefore each landing refusal
-prints its failed paths and one exact next command.
+prints one exact next command. It also prints its failed paths when its own
+face reads them.
 
 A conflicted `capture/` path composes by a rule table with three verbs:
 `source`, `destination`, and `union`. `capture/session-handoff.md` takes

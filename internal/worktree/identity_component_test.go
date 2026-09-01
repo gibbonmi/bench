@@ -222,12 +222,12 @@ func TestIdentityComponentRegistryHasAProducingFixture(t *testing.T) {
 // landingRefusalFixture produces exactly one landing refusal face. mutate breaks the
 // landing fixture so that face is the one the preflight prints. The registry walk requires
 // one fixture per declared face, so a face added with no fixture turns this file red.
+// The registry states which faces the resume prints, so the fixture reads the stage
+// there rather than restating it: a resume fixture's mutation runs against the published
+// destination of an interrupted landing, not against the first run.
 type landingRefusalFixture struct {
 	face   string
 	mutate func(t *testing.T, root string, creation Creation)
-	// resume marks a face the resume path prints. Its mutation runs against the
-	// published destination of an interrupted landing, not against the first run.
-	resume bool
 	// tip states the source tip the run names, read after the mutation. A face that
 	// refuses on the caller's own tip needs a value other than the worktree's head, which
 	// the walk names by default.
@@ -274,15 +274,21 @@ func landingRefusalFixtures() []landingRefusalFixture {
 			},
 		},
 		{
-			face:   faceResumeDestinationResidue,
-			resume: true,
+			// The destination moves onto a commit the reviewed source also changed, which
+			// is the state a composition conflict outside the rule table reaches.
+			face: faceCompositionConflict,
+			mutate: func(t *testing.T, root string, _ Creation) {
+				commitInWorktree(t, root, "owned.txt", "destination bytes\n", "destination conflict")
+			},
+		},
+		{
+			face: faceResumeDestinationResidue,
 			mutate: func(t *testing.T, root string, _ Creation) {
 				mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
 			},
 		},
 		{
-			face:   faceResumeMarker,
-			resume: true,
+			face: faceResumeMarker,
 			mutate: func(t *testing.T, root string, _ Creation) {
 				// The marker refuses only once the destination has moved past the
 				// published landing, so the mutation moves it and then drops the marker.
@@ -358,7 +364,7 @@ func TestLandingRefusalRegistryHasAProducingFixture(t *testing.T) {
 			root, creation, base, _, _, home := publicLandingFixture(t, request, "", "")
 			var stdout, stderr bytes.Buffer
 			code := 0
-			if fixture.resume {
+			if landingRefusalFaceByName(fixture.face).stage == stageResume {
 				code = landingFaceResume(t, fixture, root, home, base, creation, &stdout, &stderr)
 			} else {
 				fixture.mutate(t, root, creation)
