@@ -661,7 +661,7 @@ func TestRepairChargeTemplateAnchorsRedOnRemoval(t *testing.T) {
 	}.check(t)
 }
 
-// TestReferenceFileAnchorsRedOnAbsence holds the two discipline references in the tree. A
+// TestReferenceFileAnchorsRedOnAbsence holds the discipline references in the tree. A
 // skill that points at a reference the tree lost leaves the reader with a dead pointer, so
 // an absent file raises the missing-file diagnostic. The paths and the lead sentences are
 // written here independently of the registry.
@@ -676,6 +676,11 @@ func TestReferenceFileAnchorsRedOnAbsence(t *testing.T) {
 			".agents/skills/bench-craft-spec/references/map-discipline.md",
 			"Charged from `craft-spec` when the author writes or audits an acceptance coverage map.",
 			".agents/skills/bench-craft-spec/references/map-discipline.md is absent or dropped its map-time lead",
+		},
+		{
+			".agents/skills/bench-craft-review/references/finding-discipline.md",
+			"Charged from `craft-review` when an axis writes a finding.",
+			".agents/skills/bench-craft-review/references/finding-discipline.md is absent or dropped its finding-time lead",
 		},
 	}
 	for _, reference := range references {
@@ -1138,6 +1143,69 @@ func TestChargeProbeOracleAnchorsRedOnRemoval(t *testing.T) {
 				section: charge,
 				needle:  "The delegate reports an out-of-fence write",
 				want:    "delegation-discipline.md In the charge dropped the out-of-fence write report before the delegate edits",
+			},
+		},
+	}.check(t)
+}
+
+// TestCraftReviewFindingDisciplineAnchorsRedOnRemoval holds the six per-axis finding rules
+// and the skill pointer that leads a reviewer to them. An axis that loses one rule reports a
+// weaker finding and the reviewer pays the read. Each section, needle, and diagnostic is
+// written here independently of the registry, so a weakened rule cannot define itself green.
+func TestCraftReviewFindingDisciplineAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		reference   = ".agents/skills/bench-craft-review/references/finding-discipline.md"
+		skill       = ".agents/skills/bench-craft-review/SKILL.md"
+		expectation = "What a string expectation proves"
+		citation    = "What a citation points at"
+		underRead   = "Where an axis under-reads"
+		seam        = "When a seam cannot reach the state"
+		cite        = "What a finding must cite"
+	)
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    reference,
+				section: expectation,
+				needle:  "A generated script's independently authored string expectation is the mutation catch.",
+				want:    "finding-discipline.md What a string expectation proves dropped the independently authored string expectation as the mutation catch",
+			},
+			{
+				file:    reference,
+				section: citation,
+				needle:  "A finding cites the line the axis read this pass, or the symbol instead.",
+				want:    "finding-discipline.md What a citation points at dropped the line-read-this-pass citation or its symbol arm",
+			},
+			{
+				file:    reference,
+				section: underRead,
+				needle:  "A test-deleting Standards finding names the surviving assertion or file as coverage.",
+				want:    "finding-discipline.md Where an axis under-reads dropped the surviving-assertion or file coverage name for a test-deleting Standards finding",
+			},
+			{
+				file:    reference,
+				section: underRead,
+				needle:  "An axis refutes a strong finding with a real run before the axis reports the finding.",
+				want:    "finding-discipline.md Where an axis under-reads dropped the real run that refutes a strong finding before the report",
+			},
+			{
+				file:    reference,
+				section: underRead,
+				needle:  "An environment-variable Coverage finding cites the producer before it claims absence.",
+				want:    "finding-discipline.md Where an axis under-reads dropped the producer citation an environment-variable Coverage finding makes before it claims absence",
+			},
+			{
+				file:    reference,
+				section: seam,
+				needle:  "An unreachable row seam amends the row's seam column.",
+				want:    "finding-discipline.md When a seam cannot reach the state dropped the seam-column amendment for an unreachable row seam",
+			},
+			{
+				file:    skill,
+				section: cite,
+				needle:  "`references/finding-discipline.md` states the per-axis rules a finding must satisfy.",
+				want:    ".agents/skills/bench-craft-review/SKILL.md What a finding must cite dropped the pointer to references/finding-discipline.md",
 			},
 		},
 	}.check(t)
