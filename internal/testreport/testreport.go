@@ -4,6 +4,7 @@ package testreport
 import (
 	"encoding/json"
 	"io"
+	"math"
 	"sort"
 	"strings"
 
@@ -20,6 +21,7 @@ type event struct {
 	ImportPath string
 	Test       string
 	Output     string
+	Elapsed    float64
 }
 
 type testResult struct {
@@ -34,6 +36,7 @@ type testResult struct {
 
 type report struct {
 	statuses   map[string]string
+	elapsedMS  map[string]int64
 	seen       map[string]bool
 	tests      map[string]*testResult
 	packageLog map[string]string
@@ -42,7 +45,7 @@ type report struct {
 }
 
 func decode(stream io.Reader) (*report, error) {
-	report := &report{statuses: map[string]string{}, seen: map[string]bool{}, tests: map[string]*testResult{}, packageLog: map[string]string{}}
+	report := &report{statuses: map[string]string{}, elapsedMS: map[string]int64{}, seen: map[string]bool{}, tests: map[string]*testResult{}, packageLog: map[string]string{}}
 	decoder := json.NewDecoder(stream)
 	for {
 		var e event
@@ -69,6 +72,9 @@ func decode(stream io.Reader) (*report, error) {
 		if e.Action == "pass" || e.Action == "fail" || e.Action == "skip" {
 			if e.Test == "" {
 				report.terminal = true
+				// The terminal package event is the one carrier of the package's own
+				// wall time. Every other event's Elapsed belongs to a single test.
+				report.elapsedMS[e.Package] = int64(math.Round(e.Elapsed * 1000))
 				if e.Action == "fail" || report.statuses[e.Package] != "no-tests" {
 					report.statuses[e.Package] = e.Action
 				}
@@ -148,12 +154,14 @@ func (r *report) render(full bool) (string, error) {
 		packages = append(packages, pkg)
 	}
 	sort.Strings(packages)
-	packageRows := make([][]string, 0, len(packages))
+	packageRows := make([][]any, 0, len(packages))
 	for _, pkg := range packages {
-		packageRows = append(packageRows, []string{pkg, r.statuses[pkg]})
+		// The name and the status are strings the encoder escapes; the third cell is a
+		// count of milliseconds, so it emits bare and stays an integer on a round-trip.
+		packageRows = append(packageRows, []any{pkg, r.statuses[pkg], r.elapsedMS[pkg]})
 	}
 	failures := r.failures(full)
-	packageBlock, err := toon.Table("packages", []string{"package", "status"}, packageRows)
+	packageBlock, err := toon.TableTyped("packages", []string{"package", "status", "elapsed_ms"}, packageRows)
 	if err != nil {
 		return "", err
 	}

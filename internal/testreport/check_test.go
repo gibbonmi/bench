@@ -434,7 +434,7 @@ func TestSystemCheckReportsAFailingSuite(t *testing.T) {
 	if code != 1 {
 		t.Fatalf("failing system check = %d, want 1\n%s", code, output)
 	}
-	if want := "packages[1]{package,status}:\n  checkfixture,fail\n"; !strings.Contains(output, want) {
+	if want := "packages[1]{package,status,elapsed_ms}:\n  checkfixture,fail,0\n"; !strings.Contains(output, want) {
 		t.Fatalf("failing system check output = %q, want %q", output, want)
 	}
 }
