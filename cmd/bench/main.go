@@ -614,6 +614,10 @@ func resumeCleanCommand(c Command, args []string) int {
 func worktreeSuffix(grammar string) string { return strings.TrimPrefix(grammar, "bench worktree") }
 
 func worktreeCommand(c Command, args []string) int {
+	if len(args) == 0 {
+		fmt.Fprint(c.Stdout, usage.WorktreeUsage())
+		return 2
+	}
 	if len(args) > 0 && args[0] == "exec" {
 		root, err := git.Root()
 		if err != nil {
@@ -701,14 +705,8 @@ func worktreeCommand(c Command, args []string) int {
 		}
 		return worktree.LandCommand(root, worktree.Home(), c.Executable, args[1:], c.Stdout, c.Stderr)
 	}
-	// `recovery` is no longer a worktree subcommand. This family's fallback is a
-	// free-form objective, so naming it here reports the removed verb instead of
-	// opening a subshell called "recovery".
-	if len(args) > 0 && args[0] == "recovery" {
-		fmt.Fprintln(c.Stderr, toon.Usage("bench worktree", args[0]))
-		return 2
-	}
-	return worktree.Subshell(worktree.Home(), args, c.Stdin, c.Stdout, c.Stderr)
+	fmt.Fprintln(c.Stderr, toon.Usage("bench worktree", args[0]))
+	return 2
 }
 
 // versionLine renders the single line `bench version` prints. Kept as a pure
