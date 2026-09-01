@@ -347,7 +347,7 @@ func addDeclaredInputHygiene(gate string) string {
 }
 
 func consumerGateHygieneCheck() string {
-	return `"$bench" test --check load-validity-metadata || exit 1
+	return `BENCH_CONFORMANCE_CONSUMER_ONLY=1 "$bench" test --check load-validity-metadata || exit 1
 `
 }
 

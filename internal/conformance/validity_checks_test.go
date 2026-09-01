@@ -16,7 +16,7 @@ import (
 )
 
 func checkLoadValidityMetadata(root string) []string {
-	if kit := os.Getenv("BENCH_KIT"); kit != "" && root != kit {
+	if os.Getenv(registry.ConsumerOnlyEnv) == "1" {
 		// A linked consumer runs only the metadata rule that applies to its declared inputs.
 		return checkGateInputPathsNotIgnored(root)
 	}

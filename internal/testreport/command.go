@@ -234,15 +234,30 @@ func focusedTestArgv(operands ...string) []string {
 }
 
 func conformanceEnvironment(base []string, root, scope string, selection *runbinary.Selection) ([]string, error) {
+	consumerOnly := environmentValue(base, registry.ConsumerOnlyEnv) == "1"
 	env, err := selectedRunEnvironment(base, selection)
 	if err != nil {
 		return nil, err
 	}
-	return append(env,
+	env = append(env,
 		registry.ConformanceRootEnv+"="+root,
 		registry.ConformanceTierEnv+"="+string(registry.Dev),
 		registry.ConformanceScopeEnv+"="+scope,
-	), nil
+	)
+	if consumerOnly {
+		env = append(env, registry.ConsumerOnlyEnv+"=1")
+	}
+	return env, nil
+}
+
+func environmentValue(env []string, name string) string {
+	prefix := name + "="
+	for i := len(env) - 1; i >= 0; i-- {
+		if strings.HasPrefix(env[i], prefix) {
+			return strings.TrimPrefix(env[i], prefix)
+		}
+	}
+	return ""
 }
 
 func selectedRunEnvironment(base []string, selection *runbinary.Selection) ([]string, error) {
@@ -269,6 +284,7 @@ func withoutConformanceEnvironment(base []string) []string {
 		registry.ConformanceScopeEnv,
 		registry.ConformanceChecksEnv,
 		registry.ConformanceInheritedEnv,
+		registry.ConsumerOnlyEnv,
 		capability.LogEnv,
 		"BENCH_KIT",
 	} {

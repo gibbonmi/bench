@@ -85,7 +85,7 @@ remain eligible for parallel authoring.
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
 | LF1 | 1 | drift identifies tree movement or the exact manifest path | gate transaction outcome tests | a generic refusal cannot satisfy the expected subject |
-| LF2 | 1 | linked consumers reject ignored declared inputs | setup consumer-gate journey | benchkit-only conformance cannot make the consumer red |
+| LF2 | 1 | linked consumers reject ignored declared inputs through an explicit scaffolded consumer-only scope | setup consumer-gate journey and named-check environment ownership | path-derived scope or benchkit-only conformance cannot make the consumer red |
 | LF3 | 2 | two resume tests share one expected-format helper | worktree unit and runtime tests | a second literal violates the one-source rule |
 | LF4 | 3 | coordination stops after two proven flaky refusals and waits for quiet delegates | delegation anchors and behavior tests | prose without the stop and quiet conditions remains incomplete |
 | LF5 | 3 | an empty-reason infrastructure fold gets one verified retry | worktree merge tests | a second retry or an unverified retry fails the counter |

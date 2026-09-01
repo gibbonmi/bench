@@ -155,3 +155,16 @@ func TestSetupGateRejectsIgnoredDeclaredInputs(t *testing.T) {
 		})
 	}
 }
+
+func TestSetupGateDeclaresConsumerOnlyValidityScope(t *testing.T) {
+	root := setupBareTestRepo(t)
+	runSetupYes(t)
+	gate, err := os.ReadFile(filepath.Join(root, ".bench", "gate.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `BENCH_CONFORMANCE_CONSUMER_ONLY=1 "$bench" test --check load-validity-metadata`
+	if !strings.Contains(string(gate), want) {
+		t.Fatalf("scaffolded gate missing consumer-only validity intent %q:\n%s", want, gate)
+	}
+}

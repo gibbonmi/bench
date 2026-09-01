@@ -1,7 +1,7 @@
 # Scaffold declared-input hygiene for consumers
 
 Blocked by: none
-Writes: internal/adopt/setup.go, internal/adopt/setup_test.go, internal/conformance/validity_checks_test.go, internal/testreport/command.go, internal/testreport/check_test.go
+Writes: internal/adopt/setup.go, internal/adopt/setup_test.go, internal/conformance/validity_checks_test.go, internal/conformance/registry/scope.go, internal/testreport/command.go, internal/testreport/check_test.go
 Covers: LF2
 
 ## What to build

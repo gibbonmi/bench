@@ -30,6 +30,7 @@ func TestNamedCheckOwnsConformanceEnvironment(t *testing.T) {
 		registry.ConformanceScopeEnv:     "ambient-scope",
 		registry.ConformanceChecksEnv:    "ambient-checks",
 		registry.ConformanceInheritedEnv: "ambient-inherited",
+		registry.ConsumerOnlyEnv:         "ambient-consumer",
 		capability.LogEnv:                filepath.Join(t.TempDir(), "capability-log"),
 	} {
 		t.Setenv(name, value)
@@ -64,7 +65,7 @@ func TestNamedCheckOwnsConformanceEnvironment(t *testing.T) {
 			t.Errorf("child environment missing %s=%q:\n%s", name, want, environment)
 		}
 	}
-	for _, name := range []string{registry.ConformanceChecksEnv, registry.ConformanceInheritedEnv, capability.LogEnv} {
+	for _, name := range []string{registry.ConformanceChecksEnv, registry.ConformanceInheritedEnv, registry.ConsumerOnlyEnv, capability.LogEnv} {
 		if strings.Contains(environment, name+"=") {
 			t.Errorf("child environment retained %s:\n%s", name, environment)
 		}
@@ -115,6 +116,7 @@ func TestNamedCheckRunsFromKitAgainstLinkedConsumer(t *testing.T) {
 	}
 	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	t.Setenv("BENCH_KIT", kit)
+	t.Setenv(registry.ConsumerOnlyEnv, "1")
 
 	selected := filepath.Join(t.TempDir(), "bench")
 	if err := os.WriteFile(selected, []byte("selected"), 0o755); err != nil {
@@ -136,6 +138,7 @@ func TestNamedCheckRunsFromKitAgainstLinkedConsumer(t *testing.T) {
 	}
 	for name, want := range map[string]string{
 		registry.ConformanceRootEnv: consumer,
+		registry.ConsumerOnlyEnv:    "1",
 		"BENCH_KIT":                 kit,
 	} {
 		if !strings.Contains(environment, name+"="+want+"\n") {
