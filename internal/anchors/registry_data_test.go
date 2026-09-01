@@ -762,6 +762,69 @@ func TestDoneClaimOwnerAnchorsRedOnRemoval(t *testing.T) {
 	}
 }
 
+// TestInstalledLaneRepairAnchorsRedOnRemoval pins LF11. The skill routes the
+// installed-lane case to its canonical rule, and the rule keeps snapshot grading
+// and the post-landing rebuild coupled to the fallback.
+func TestInstalledLaneRepairAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		skill     = ".agents/skills/bench-craft-delegate/SKILL.md"
+		reference = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
+	)
+	rules := []struct {
+		file, section, needle, want string
+	}{
+		{
+			file:    skill,
+			section: "Verifying the done-claim",
+			needle:  "Installed-lane repair and its post-landing rebuild are in `references/delegation-discipline.md`.",
+			want:    ".agents/skills/bench-craft-delegate/SKILL.md Verifying the done-claim dropped the installed-lane repair pointer",
+		},
+		{
+			file:    reference,
+			section: "Before the landing",
+			needle:  "When an installed lane cannot commit its repair, run the same ordinary commit core from the candidate tree. Grade the composed snapshot, then require the sanctioned rebuild after landing.",
+			want:    "delegation-discipline.md Before the landing dropped the candidate commit core, composed-snapshot grade, or sanctioned rebuild",
+		},
+	}
+
+	evaluate := func(t *testing.T, broken int) []string {
+		t.Helper()
+		root := t.TempDir()
+		for i, r := range rules {
+			path := filepath.Join(root, filepath.FromSlash(r.file))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			body := "# subject\n\n## " + r.section + "\n\n"
+			if i != broken {
+				body += r.needle + "\n"
+			}
+			if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	conformant := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(conformant, r.want) {
+			t.Errorf("tree conformant with %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("tree broken at %q in %s = %v, want %q", r.needle, r.file, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("breaking %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+}
+
 // TestRepairChargeTemplateAnchorsRedOnRemoval keeps each repair-charge field
 // independently red-capable. A coordinator cannot verify a repair when its charge
 // omits the base, fence, effort, focused suite, or independent probe.
