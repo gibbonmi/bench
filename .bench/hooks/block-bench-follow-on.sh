@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # name: block-bench-follow-on
 # boundary: PreToolUse:Bash
-# denies: Bench shell follow-ons and a cd into the Bench worktree pool path
+# denies: Bench shell follow-ons and a cd, an assignment, or a git -C into the Bench worktree pool path
 # why: Bench responses are bounded, complete, and self-contained evidence
 set -uo pipefail
 warn() { echo "WARNING: block-bench-follow-on: $1 — allowing Bash." >&2; }
