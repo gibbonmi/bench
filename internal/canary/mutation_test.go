@@ -140,3 +140,45 @@ func assertRefusedAndRootIntact(t *testing.T, root, fixture, dst string) {
 		t.Fatalf("restore with root %q and dst %q error = %v, want the dst == root refusal", root, dst, err)
 	}
 }
+
+// TestMaterializeMutationFixtureAnchorRefusals pins the anchor refusal messages. The
+// anchor evaluator matches under collapsed whitespace, so a needle that wraps across a
+// line in the target passes the evaluator and fails the byte-exact materializer. That
+// case names the wrap; the other misses keep the plain message.
+func TestMaterializeMutationFixtureAnchorRefusals(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		body     string
+		old      string
+		wantWrap bool
+	}{
+		{"wrapped anchor names the wrap", "alpha\nbeta gamma\n", "alpha beta", true},
+		{"absent anchor keeps the plain message", "alpha beta\n", "delta", false},
+		{"repeated anchor keeps the plain message", "alpha\nalpha\n", "alpha", false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fixture := t.TempDir()
+			files := filepath.Join(fixture, filesDirName)
+			if err := os.MkdirAll(files, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(files, "target.txt"), []byte(test.body), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			mutate := fmt.Sprintf("[{\"path\": \"target.txt\", \"old\": %q, \"new\": \"replaced\"}]", test.old)
+			if err := os.WriteFile(filepath.Join(fixture, "MUTATE.json"), []byte(mutate), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			err := materializeMutationFixture(t.TempDir(), fixture, t.TempDir())
+			if err == nil {
+				t.Fatal("materialize accepted an anchor that does not occur exactly once")
+			}
+			if !strings.Contains(err.Error(), "did not occur exactly once") {
+				t.Fatalf("refusal = %v, want the exactly-once message", err)
+			}
+			if got := strings.Contains(err.Error(), "line wrap"); got != test.wantWrap {
+				t.Fatalf("refusal = %v, wrap hint = %v, want %v", err, got, test.wantWrap)
+			}
+		})
+	}
+}
