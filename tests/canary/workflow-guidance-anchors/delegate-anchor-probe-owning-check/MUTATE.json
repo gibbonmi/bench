@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+    "old": "adds an anchor names `bench test --check <owning-check>`",
+    "new": "adds an anchor names `bench test --package ./internal/anchors`"
+  }
+]

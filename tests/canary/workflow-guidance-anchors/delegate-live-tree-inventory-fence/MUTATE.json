@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+    "old": "`internal/conformance/tier_test.go`.",
+    "new": "the tier inventory."
+  }
+]

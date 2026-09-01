@@ -10,8 +10,9 @@ the explore reads, the fence rules, and the review rubric.
   count into the spec, because the Standards axis grades a restated count.
 - A spec that retires a symbol enumerates every production consumer and every
   pinning test before it slices tickets.
-- A spec that deletes literal bytes runs one repo-wide search for those bytes. The
-  search includes the canary fixtures.
+- A spec that deletes or moves literal bytes runs one repo-wide search for
+  those bytes. The search includes the canary fixtures, `tests/`, and
+  `internal/conformance`.
 - A compile-flag spec runs one whole gate with its flag, then censuses every red,
   before it slices tickets.
 - A claim that something is or is not a tree convention cites the check that

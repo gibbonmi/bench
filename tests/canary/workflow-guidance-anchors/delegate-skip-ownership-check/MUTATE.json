@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+    "old": "lists `bench test --check skip-ownership` in its focused checks",
+    "new": "lists `bench test --check skip-ownership`"
+  }
+]

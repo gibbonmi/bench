@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+    "old": "`bench test --package ./internal/conformance` is not the root conformance",
+    "new": "`bench test --package ./internal/conformance` is the root conformance"
+  }
+]

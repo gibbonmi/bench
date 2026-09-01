@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+    "old": "The delegate reports an out-of-fence write",
+    "new": "The delegate reports an out-of-fence registry"
+  }
+]

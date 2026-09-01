@@ -870,6 +870,12 @@ func TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval(t *testing.T)
 				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the exact-ownership-fence rule for a shared reader",
 			},
 			{
+				file:    file,
+				section: "Before the map locks",
+				needle:  "A spec that deletes or moves literal bytes",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the moved-sentence extension of the literal-bytes search",
+			},
+			{
 				file:      file,
 				needle:    "reader census",
 				want:      ".agents/skills/bench-craft-spec/references/map-discipline.md writes \"reader census\"; the canonical term is reader sweep",
@@ -1066,6 +1072,72 @@ func TestStandingFalsificationAnchorsRedOnRemoval(t *testing.T) {
 				needle:    "Both are offers; the command never applies them silently.",
 				want:      ".agents/commands/bench-implement-spec.md retained the retired sentence that calls the tier escalation and the falsification pass both offers",
 				forbidden: true,
+			},
+		},
+	}.check(t)
+}
+
+// TestChargeProbeOracleAnchorsRedOnRemoval holds the charge-side fence rules and the
+// probe-side oracle rules a coordinator keeps missing. A charge that names the package
+// run grades a synthetic tree, and a charge that leaves the ceiling file, the live-tree
+// inventory, or an assertion family outside its fence buys a mid-build fence amendment.
+// Each section, needle, and diagnostic is written here independently of the registry.
+func TestChargeProbeOracleAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		file   = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
+		charge = "In the charge"
+		probes = "Probes"
+	)
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    file,
+				section: charge,
+				needle:  "adds an anchor names `bench test --check <owning-check>`",
+				want:    "delegation-discipline.md In the charge dropped the owning-check probe for an anchor-adding charge",
+			},
+			{
+				file:    file,
+				section: charge,
+				needle:  "lists `bench test --check skip-ownership` in its focused checks",
+				want:    "delegation-discipline.md In the charge dropped the skip-ownership check from a skippable test's focused checks",
+			},
+			{
+				file:    file,
+				section: probes,
+				needle:  "`bench test --package ./internal/conformance` is not the root conformance",
+				want:    "delegation-discipline.md Probes dropped the rule that the conformance package run is not the root conformance pass",
+			},
+			{
+				file:    file,
+				section: probes,
+				needle:  "Before the coordinator reads a probe verdict",
+				want:    "delegation-discipline.md Probes dropped the mutated-bytes confirmation before the probe verdict",
+			},
+			{
+				file:    file,
+				section: charge,
+				needle:  "binds `PATH` or the process environment includes the ceiling",
+				want:    "delegation-discipline.md In the charge dropped the serial-census ceiling file from a PATH or process-environment bind's fence",
+			},
+			{
+				file:    file,
+				section: charge,
+				needle:  "`internal/conformance/tier_test.go`",
+				want:    "delegation-discipline.md In the charge dropped the live-tree inventory file from a live-tree test charge's fence",
+			},
+			{
+				file:    file,
+				section: charge,
+				needle:  "the shared fixture owners and the exact-record assertion families",
+				want:    "delegation-discipline.md In the charge dropped the fixture-owner and assertion-family enumeration from a grammar charge's fence",
+			},
+			{
+				file:    file,
+				section: charge,
+				needle:  "The delegate reports an out-of-fence write",
+				want:    "delegation-discipline.md In the charge dropped the out-of-fence write report before the delegate edits",
 			},
 		},
 	}.check(t)
