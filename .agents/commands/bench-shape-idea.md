@@ -45,7 +45,7 @@ ticket answer. Do not manufacture a seam decision simply to complete a map.
 The map stays top-level while shaping is open. It loads whole into each
 planning session, so keep it tight. Link to research assets instead of an
 inline copy. A map-owned asset stays in `decisions/assets/`.
-`/bench-write-spec` moves a ready map and its owned assets into
+`/bench-write-spec` moves a ready decision map and its owned assets into
 `specs/<slug>/decisions/`. Compiled maps there are settled provenance, not the
 active shaping frontier.
 
