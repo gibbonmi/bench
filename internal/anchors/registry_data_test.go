@@ -566,6 +566,10 @@ func TestCraftSpecMapDisciplineAnchorsRedOnRemoval(t *testing.T) {
 			needle:  "`references/map-discipline.md` states the rule each row must satisfy",
 			want:    ".agents/skills/bench-craft-spec/SKILL.md The acceptance coverage map dropped the pointer to references/map-discipline.md",
 		},
+		{
+			needle: "This reader sweep includes `.mjs` scripts and workflow files, and `references/map-discipline.md` states its rules.",
+			want:   ".agents/skills/bench-craft-spec/SKILL.md dropped the reader-sweep name from the whole-tree sweep step",
+		},
 	}
 
 	// evaluate writes one minimal skill that carries every section, and every needle a
@@ -577,7 +581,10 @@ func TestCraftSpecMapDisciplineAnchorsRedOnRemoval(t *testing.T) {
 		root := t.TempDir()
 		body := "# subject\n"
 		for i, r := range rules {
-			body += "\n## " + r.section + "\n\n"
+			// A whole-file rule carries no section, so it takes no heading.
+			if r.section != "" {
+				body += "\n## " + r.section + "\n\n"
+			}
 			if (i == broken) != r.forbidden {
 				continue
 			}
@@ -662,6 +669,16 @@ func TestCraftDelegateDisciplineAnchorsRedOnRemoval(t *testing.T) {
 			file:   writeSpec,
 			needle: "The round declares its iteration cap before the first charge",
 			want:   ".agents/commands/bench-write-spec.md dropped the review round's iteration-cap declaration",
+		},
+		{
+			file:   writeSpec,
+			needle: "Run `craft-spec`'s reader sweep before that lock.",
+			want:   ".agents/commands/bench-write-spec.md dropped the reader sweep sequenced before the craft-tickets charge",
+		},
+		{
+			file:   writeSpec,
+			needle: "ship on its own gate? Apply `craft-spec`'s named `Bootstrap authority before execution` rule. The ticket graph splits where a consumer branch lands green alone.",
+			want:   ".agents/commands/bench-write-spec.md dropped the consumer-branch split arm from the moved ship-test question",
 		},
 	}
 
@@ -1165,61 +1182,89 @@ func TestCommentAndReviewRuleAnchorsRedOnRemoval(t *testing.T) {
 // section, needle, and diagnostic is written here independently of the registry.
 func TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval(t *testing.T) {
 	const file = ".agents/skills/bench-craft-spec/references/map-discipline.md"
-	rules := []struct{ section, needle, want string }{
+	rules := []struct {
+		section, needle, want string
+		forbidden             bool
+	}{
 		{
-			"In the edge inventory",
-			"A kit spec names the audience each behavior serves: this repository, or every repository that links the kit. The inventory walks the absent-versus-empty pair for each directory the spec reads",
-			".agents/skills/bench-craft-spec/references/map-discipline.md In the edge inventory dropped the two-audience prompt with its absent-versus-empty directory pair",
+			section: "In the edge inventory",
+			needle:  "A kit spec names the audience each behavior serves: this repository, or every repository that links the kit. The inventory walks the absent-versus-empty pair for each directory the spec reads",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md In the edge inventory dropped the two-audience prompt with its absent-versus-empty directory pair",
 		},
 		{
-			"Per row",
-			"A transaction-shaped spec gives three rows for its verification failures. The rows are persistence before the oracle runs, interruption inside the oracle, and persistence at the terminal step.",
-			".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the three transaction verification failure rows",
+			section: "Per row",
+			needle:  "A transaction-shaped spec gives three rows for its verification failures. The rows are persistence before the oracle runs, interruption inside the oracle, and persistence at the terminal step.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the three transaction verification failure rows",
 		},
 		{
-			"Per row",
-			"Each in-scope edge-inventory promise, source promise, and fence-closure promise takes one red-capable row.",
-			".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the one-red-capable-row rule for each in-scope promise",
+			section: "Per row",
+			needle:  "Each in-scope edge-inventory promise, source promise, and fence-closure promise takes one red-capable row.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the one-red-capable-row rule for each in-scope promise",
 		},
 		{
-			"In the edge inventory",
-			"Each excluded edge takes a Won't handle line that names a surviving in-scope caller.",
-			".agents/skills/bench-craft-spec/references/map-discipline.md In the edge inventory dropped the surviving-in-scope-caller clause from the Won't handle line",
+			section: "In the edge inventory",
+			needle:  "Each excluded edge takes a Won't handle line that names a surviving in-scope caller.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md In the edge inventory dropped the surviving-in-scope-caller clause from the Won't handle line",
 		},
 		{
-			"Before the map locks",
-			"The flagged-additions list sits under Further notes before the first review charge.",
-			".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the flagged-additions list under Further notes before the first review charge",
+			section: "Before the map locks",
+			needle:  "The flagged-additions list sits under Further notes before the first review charge.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the flagged-additions list under Further notes before the first review charge",
 		},
 		{
-			"Before the map locks",
-			"The source-sentence-to-row table sits under Further notes before the first review charge.",
-			".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the source-sentence-to-row table under Further notes before the first review charge",
+			section: "Before the map locks",
+			needle:  "The source-sentence-to-row table sits under Further notes before the first review charge.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the source-sentence-to-row table under Further notes before the first review charge",
 		},
 		{
-			"At review",
-			"The review round demands one row for each listed addition, and it removes each unlisted addition.",
-			".agents/skills/bench-craft-spec/references/map-discipline.md At review dropped one arm of the addition disposition",
+			section: "At review",
+			needle:  "The review round demands one row for each listed addition, and it removes each unlisted addition.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md At review dropped one arm of the addition disposition",
 		},
 		{
-			"Per row",
-			"An either-side predicate takes two rows, one side per row. One row that names both sides is not sufficient.",
-			".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the two-row rule for an either-side predicate",
+			section: "Per row",
+			needle:  "An either-side predicate takes two rows, one side per row. One row that names both sides is not sufficient.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the two-row rule for an either-side predicate",
 		},
 		{
-			"Before the map locks",
-			"Each canary row and each conformance row traces to its executed root before the coverage map locks.",
-			".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the executed-root trace for a canary or conformance row",
+			section: "Before the map locks",
+			needle:  "Each canary row and each conformance row traces to its executed root before the coverage map locks.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the executed-root trace for a canary or conformance row",
 		},
 		{
-			"Per row",
-			"Each named diagnostic state is addable or mutable in a fixture.",
-			".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the fixture-reachable rule for a named diagnostic state",
+			section: "Per row",
+			needle:  "Each named diagnostic state is addable or mutable in a fixture.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the fixture-reachable rule for a named diagnostic state",
 		},
 		{
-			"At ticket slicing",
-			"The author quotes each pasted operand in the delegate charge.",
-			".agents/skills/bench-craft-spec/references/map-discipline.md At ticket slicing dropped the quoted-operand rule for a pasted operand in the delegate charge",
+			section: "At ticket slicing",
+			needle:  "The author quotes each pasted operand in the delegate charge.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md At ticket slicing dropped the quoted-operand rule for a pasted operand in the delegate charge",
+		},
+		{
+			section: "Before the map locks",
+			needle:  "The reader sweep lists each named consumer of the decision fact.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the named-consumer rule for the reader sweep",
+		},
+		{
+			section: "Before the map locks",
+			needle:  "The reader sweep lists each helper that a named consumer calls directly.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the direct-helper rule for the reader sweep",
+		},
+		{
+			section: "Before the map locks",
+			needle:  "A deeper callee joins the reader sweep only when the callee reads the decision fact.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the depth bound that admits a deeper callee only when the callee reads the decision fact",
+		},
+		{
+			section: "Before the map locks",
+			needle:  "Each shared reader in the reader sweep takes an exact ownership fence.",
+			want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the exact-ownership-fence rule for a shared reader",
+		},
+		{
+			needle:    "reader census",
+			want:      ".agents/skills/bench-craft-spec/references/map-discipline.md writes \"reader census\"; the canonical term is reader sweep",
+			forbidden: true,
 		},
 	}
 
@@ -1234,14 +1279,21 @@ func TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval(t *testing.T)
 		body := "# subject\n"
 		var sections []string
 		for _, r := range rules {
-			if !slices.Contains(sections, r.section) {
+			if r.section != "" && !slices.Contains(sections, r.section) {
 				sections = append(sections, r.section)
+			}
+		}
+		for i, r := range rules {
+			// A whole-file rule carries no section. A forbidden needle is present only
+			// when it is the broken one; a required needle is absent only then.
+			if r.section == "" && (i == dropped) == r.forbidden {
+				body += r.needle + "\n"
 			}
 		}
 		for _, section := range sections {
 			body += "\n## " + section + "\n\n"
 			for i, r := range rules {
-				if r.section == section && i != dropped {
+				if r.section == section && (i == dropped) == r.forbidden {
 					body += r.needle + "\n"
 				}
 			}

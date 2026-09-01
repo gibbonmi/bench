@@ -13,8 +13,9 @@ Turn the authorized decision source and what you know of the codebase into
    - Open every enforcement file a row or a fence names. These files are the conformance checks, the contract tests, the
      wrapper help, the injected-port registry, and the grammar files. Cite each read.
    - Read one existing precedent for each named seam.
-   - Sweep the whole tree for each reader of a count, a schema field, or an artifact path the spec changes. The sweep
-     includes `.mjs` scripts and workflow files. Each reader takes a row or a named exclusion.
+   - Sweep the whole tree for each reader of a count, a schema field, or an artifact path the spec changes.
+     This reader sweep includes `.mjs` scripts and workflow files, and `references/map-discipline.md` states its rules.
+     Each reader takes a row or a named exclusion.
 2. **Sketch the seams** (`craft-seams`): existing over new, the highest that still shows the failure, ideally one;
    confirm them with the reviewer first.
 3. **Write the spec** from the template below, in ASD-STE100 prose per `references/ste-prose.md`, and run

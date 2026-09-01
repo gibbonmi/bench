@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "Each shared reader in the reader sweep takes an exact ownership fence.",
+    "new": "A shared reader takes a fence when the author wants one."
+  }
+]

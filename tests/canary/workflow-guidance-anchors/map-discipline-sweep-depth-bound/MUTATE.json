@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "A deeper callee joins the reader sweep only when the callee reads the decision fact.",
+    "new": "A deeper callee joins the reader sweep."
+  }
+]

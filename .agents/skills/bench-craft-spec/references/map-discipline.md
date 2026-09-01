@@ -20,6 +20,10 @@ the explore reads, the fence rules, and the review rubric.
 - The flagged-additions list sits under Further notes before the first review charge.
 - The source-sentence-to-row table sits under Further notes before the first review charge.
 - Each canary row and each conformance row traces to its executed root before the coverage map locks.
+- The reader sweep lists each named consumer of the decision fact.
+- The reader sweep lists each helper that a named consumer calls directly.
+- A deeper callee joins the reader sweep only when the callee reads the decision fact.
+- Each shared reader in the reader sweep takes an exact ownership fence.
 
 ## Per row
 
