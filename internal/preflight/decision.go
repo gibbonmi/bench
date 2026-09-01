@@ -149,9 +149,10 @@ type Verdict struct {
 	Red    bool
 }
 
-// Decide classifies immutable Facts into the verdict. It performs no I/O
-// and consults nothing but its argument, so the same Facts value always
-// yields the same Verdict; the byte-identical-rerun guarantee lives here.
+// Decide classifies a complete immutable Facts snapshot into a Verdict. It
+// performs no I/O and accepts no state beyond f. The same Facts value always
+// yields the same rows and Red value. Gather owns the snapshot and failure;
+// Decide does not gather, validate inputs, or retry an interrupted read.
 //
 // Mode applicability lives here rather than in the gatherer. An explicit
 // source range makes base-current grade that range's validity, while a

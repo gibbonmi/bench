@@ -31,11 +31,10 @@ type BootstrapFailure struct {
 	Kind, Hint string
 }
 
-// Gather is the thin gatherer: it reads git, the exported diff-base
-// resolution, the spec resolver, the coverage parser, and tickets/
-// enumeration. It returns either an immutable Facts value ready for
-// Decide, or the one BootstrapFailure that explains why no Facts value can
-// be trusted. Exactly one of the two return values is non-zero.
+// Gather gathers preflight facts for root, mode, slug, and the first optional
+// explicit base. It supplies no source-tip pin. It returns one immutable
+// Facts snapshot for Decide or one BootstrapFailure; it never classifies a
+// check. Exactly one result is non-zero.
 func Gather(root, mode, slug string, explicitBase ...string) (Facts, *BootstrapFailure) {
 	base := ""
 	if len(explicitBase) > 0 {
@@ -44,11 +43,11 @@ func Gather(root, mode, slug string, explicitBase ...string) (Facts, *BootstrapF
 	return GatherPinned(root, mode, slug, base, "")
 }
 
-// GatherPinned is Gather with the reviewer's frozen source tip supplied.
-// The pin is resolved here, never classified. An unresolvable value is the
-// gatherer's own structured failure, the same grammar-level answer an
-// unresolvable --base gets. A resolvable one that names the wrong commit
-// is a verdict row Decide owns.
+// GatherPinned gathers preflight facts for root, mode, slug, an explicit
+// base, and a source-tip pin. With an explicit base, it reads one
+// movement-checked source snapshot and retries one snapshot drift. It returns
+// snapshot drift after a second movement, or one BootstrapFailure for a read
+// or pin failure. A resolved pin that names the wrong commit is a Decide row.
 func GatherPinned(root, mode, slug, explicitBase, sourceTipPin string) (Facts, *BootstrapFailure) {
 	if explicitBase != "" {
 		var gathered Facts
@@ -212,9 +211,11 @@ func headTip(root string) string {
 	return tip
 }
 
-// AuthorizeReviewedSource returns the one shared range fact after checking its
-// committed paths against the staged spec's existing ownership-fence owner.
-// Landing consumes this narrower final authorization rather than re-parsing fences.
+// AuthorizeReviewedSource gathers a new review snapshot for root, slug, and
+// base. It returns the source range only when its committed paths pass the
+// staged spec's ownership fences. It returns an error for gather failure, a
+// red authorization row, or an unresolved range. A caller's earlier Facts or
+// range cannot replace this final authorization.
 func AuthorizeReviewedSource(root, slug, base string) (diff.SourceRange, error) {
 	facts, failure := Gather(root, "review", slug, base)
 	if failure != nil {
