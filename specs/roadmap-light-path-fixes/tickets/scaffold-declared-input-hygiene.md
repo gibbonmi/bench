@@ -67,3 +67,35 @@ GOTOOLCHAIN=local GOMODCACHE=/home/mgibs/go/pkg/mod GOPATH=/home/mgibs/go GOCACH
 FAIL
 FAIL github.com/gibbonmi/bench/internal/adopt 0.378s
 ```
+
+The `BENCH_KIT` seed removal mutation deleted `BENCH_KIT` from
+`scaffoldGateInputs`. This focused command turned the same independent seed
+expectation red:
+
+```sh
+GOTOOLCHAIN=local GOMODCACHE=/home/mgibs/go/pkg/mod GOPATH=/home/mgibs/go GOCACHE=/tmp/bench-lf2-gocache /home/mgibs/.local/opt/go-v1.25.0/bin/go test ./internal/adopt -run '^TestSetupSeedsGateInputs$' -count=1 -v
+```
+
+```text
+=== RUN   TestSetupSeedsGateInputs
+    setup_test.go:57: seeded gate-inputs.json =
+        {
+          "schema": 1,
+          "closure": "local",
+          "environment": ["BENCH_HOME", "BENCH_RUN_BINARY", "HOME"],
+          "paths": [],
+          "tools": ["bash", "basename", "dirname", "git", "readlink", "uname"]
+        }
+
+        want:
+        {
+          "schema": 1,
+          "closure": "local",
+          "environment": ["BENCH_HOME", "BENCH_KIT", "BENCH_RUN_BINARY", "HOME"],
+          "paths": [],
+          "tools": ["bash", "basename", "dirname", "git", "readlink", "uname"]
+        }
+--- FAIL: TestSetupSeedsGateInputs (0.41s)
+FAIL
+FAIL github.com/gibbonmi/bench/internal/adopt 0.411s
+```
