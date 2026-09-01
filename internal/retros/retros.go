@@ -4,6 +4,7 @@ package retros
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -12,6 +13,49 @@ import (
 
 // Directory is the repository-relative retrospective capture directory.
 const Directory = "capture/retros"
+
+var retrospectiveSlug = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
+
+var requiredHeadings = []string{
+	"## Outcome",
+	"## Gate-stage timings",
+	"## Ticket-versus-spec-slice and delegate performance",
+	"## Coordinator catches",
+	"## Repair attribution",
+	"## Agent-experience improvements",
+	"### Bench CLI",
+	"### Skills",
+	"### Process",
+}
+
+// ValidSlug reports whether value can name one retrospective file below Directory.
+func ValidSlug(value string) bool { return retrospectiveSlug.MatchString(value) }
+
+// Path returns the repository-relative path for one retrospective slug.
+func Path(value string) string { return filepath.ToSlash(filepath.Join(Directory, value+".md")) }
+
+// Parse validates the canonical implementation-retrospective headings and every
+// improvement destination marker. The writer calls it before it opens the destination.
+func Parse(content []byte) error {
+	lines := strings.Split(string(content), "\n")
+	next := 0
+	for _, line := range lines {
+		line = strings.TrimSuffix(line, "\r")
+		if next == len(requiredHeadings) || line != requiredHeadings[next] {
+			continue
+		}
+		next++
+	}
+	if next != len(requiredHeadings) {
+		return fmt.Errorf("missing or out-of-order heading %q", requiredHeadings[next])
+	}
+	for _, item := range Recommendations(content) {
+		if !item.FeedsMarked() {
+			return fmt.Errorf("improvement item on line %d carries no destination marker", item.Line)
+		}
+	}
+	return nil
+}
 
 // Fact is one eligible retrospective file and its bounded classification.
 type Fact struct {

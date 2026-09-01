@@ -11,6 +11,19 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 )
 
+func TestParseAcceptsCanonicalRetro(t *testing.T) {
+	content := []byte("## Outcome\n\nLand the ticket.\n\n## Gate-stage timings\n\n- test: 1s\n\n## Ticket-versus-spec-slice and delegate performance\n\nOne ticket.\n\n## Coordinator catches\n\nNone.\n\n## Repair attribution\n\n| ticket | rounds | causes |\n|---|---|---|\n| retro | 1 | none |\n\n## Agent-experience improvements\n\n### Bench CLI\n\n- Add the writer.\n  Feeds: none\n\n### Skills\n\n### Process\n")
+	if err := Parse(content); err != nil {
+		t.Fatalf("Parse(canonical retro) = %v, want nil", err)
+	}
+}
+
+func TestParseRejectsMissingRequiredHeading(t *testing.T) {
+	if err := Parse([]byte("## Outcome\n")); err == nil {
+		t.Fatal("Parse(incomplete retro) = nil, want an error")
+	}
+}
+
 func TestFactsClassifiesEligibleFilesInStableOrder(t *testing.T) {
 	root := t.TempDir()
 	dir := filepath.Join(root, Directory)
