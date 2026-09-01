@@ -139,6 +139,7 @@ remain eligible for parallel authoring.
 - `internal/adopt/setup_test.go`
 - `internal/adopt/adopt_test.go`
 - `internal/conformance/validity_checks_test.go`
+- `internal/conformance/registry/scope.go`
 - `internal/conformance/subcommand_routing_test.go`
 - `internal/testreport/command.go`
 - `internal/testreport/check_test.go`
