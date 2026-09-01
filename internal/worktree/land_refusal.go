@@ -103,6 +103,125 @@ func atSourceWorktree(command, path, assignment string) string {
 	return "bench worktree exec " + assignment + " -- " + command + " ."
 }
 
+// The landing refusal face names. An operator reads a face's sentence in the record, so
+// the name and the registry entry are the same fact.
+const (
+	faceDestinationNotClean = "destination-not-clean"
+	faceSourceNotClean      = "source-not-clean"
+)
+
+// landingRefusalFace is one refusal the landing's preflight prints. detail is the
+// sentence, and route composes the face's own repair ahead of the caller's re-run. The
+// registry test walks the slice and drives one producing fixture per entry, so a face
+// added without a fixture, or with an empty route, turns the gate red.
+type landingRefusalFace struct {
+	name   string
+	detail string
+	route  func(rerun string) string
+}
+
+// landingRefusalFaces is the declared registry. It is the authoritative inventory of the
+// landing's refusal faces, so a later ticket adds its face here rather than composing a
+// route at the proof that fails.
+var landingRefusalFaces = []landingRefusalFace{
+	{
+		name:   faceDestinationNotClean,
+		detail: "landing destination is not clean",
+		route: func(rerun string) string {
+			return "commit the destination's uncommitted work, or discard it; then " + rerun
+		},
+	},
+	{
+		name:   faceSourceNotClean,
+		detail: "reviewed source is not clean",
+		route: func(rerun string) string {
+			return "commit the reviewed source's uncommitted work, or discard it; then " + rerun
+		},
+	},
+}
+
+func landingRefusalFaceByName(name string) landingRefusalFace {
+	for _, face := range landingRefusalFaces {
+		if face.name == name {
+			return face
+		}
+	}
+	// A name outside the registry is a programming fault in this package, not an operator
+	// condition. It surfaces as a refusal rather than a panic, because the landing must not
+	// abort a caller's session over its own bookkeeping.
+	return landingRefusalFace{
+		name:   name,
+		detail: "landing refusal face " + name + " is unregistered",
+		route:  func(rerun string) string { return rerun },
+	}
+}
+
+// landingFaceByDetail finds the registered face a refusal's own sentence names.
+func landingFaceByDetail(detail string) (landingRefusalFace, bool) {
+	for _, face := range landingRefusalFaces {
+		if face.detail == detail {
+			return face, true
+		}
+	}
+	return landingRefusalFace{}, false
+}
+
+// landingFaceRefusal is the one constructor a registered face travels through. rerun is a
+// required argument, so no site can print a face's repair without the caller's own re-run
+// behind it. The `refusal` struct keeps its optional next field for the verbs outside
+// this registry's reach.
+func landingFaceRefusal(name, rerun string, paths []string) refusalError {
+	face := landingRefusalFaceByName(name)
+	return refusalError{refusal{detail: face.detail, next: face.route(rerun), paths: paths}}
+}
+
+// landingFaceRoute attaches the caller's own re-run to a preflight refusal whose sentence
+// names a registered face. The route reads the flag values the caller passed, and the
+// preflight assembler is the one place that holds them, so the attachment happens there
+// rather than at the proof that failed. A refusal outside the registry travels unchanged.
+func landingFaceRoute(err error, rerun string) error {
+	detail, paths := err.Error(), []string(nil)
+	var typed refusalError
+	if errors.As(err, &typed) {
+		detail, paths = typed.detail, typed.paths
+	}
+	face, ok := landingFaceByDetail(detail)
+	if !ok {
+		return err
+	}
+	return landingFaceRefusal(face.name, rerun, paths)
+}
+
+// landingRerun is the caller's own re-run of the landing, with the flag values it passed.
+// Every landing-preflight route ends with it, so a repair does not cost the operator its
+// flags. An assignment that has not resolved yet has no id for the pointer form to
+// address, so the re-run names the operator's own worktree path instead.
+func landingRerun(request, base, tip, specArg, path, assignment string) string {
+	command := "bench worktree land --request " + landingRerunArg(request, "<request>") +
+		" --base " + landingRerunArg(base, "<full-review-base>") +
+		" --source-tip " + landingRerunArg(tip, "<full-source-tip>")
+	if specArg != "" {
+		command += " --spec " + landingRerunArg(specArg, "<spec>")
+	}
+	command += " -m <message>"
+	if assignment != "" {
+		return atSourceWorktree(command, path, assignment)
+	}
+	if lineSafe(path) {
+		return command + " " + sanitize.ShellQuote(path)
+	}
+	return command + " <worktree-path>"
+}
+
+// landingRerunArg renders one flag value the re-run repeats, and the placeholder that
+// stands in for a value the operator could not paste back.
+func landingRerunArg(value, placeholder string) string {
+	if value == "" || !lineSafe(value) {
+		return placeholder
+	}
+	return sanitize.ShellQuote(value)
+}
+
 func landRefusal(stdout io.Writer, detail string) int {
 	fmt.Fprintln(stdout, "refused{detail="+sanitize.Controls(detail)+"}")
 	return 1

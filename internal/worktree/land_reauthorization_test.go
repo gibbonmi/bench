@@ -77,6 +77,18 @@ func TestLandCommandReauthorizeRecoveryPointsThroughUnsafePath(t *testing.T) {
 	if code != 1 || unsafe || !strings.HasSuffix(stdout.String(), wantNext) {
 		t.Fatalf("unsafe-path recovery = (%d, %q, %q), want one safe record ending %q", code, stdout.String(), stderr.String(), wantNext)
 	}
+	// LRS21: a landing-preflight face at the same unsafe path takes the same pointer form,
+	// so no route quotes a path the operator cannot paste.
+	mustWrite(t, filepath.Join(creation.Path, "scratch"), []byte("scratch\n"), 0o600)
+	stdout.Reset()
+	stderr.Reset()
+	code = LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	wantSource := "; then bench worktree exec " + creation.Assignment.ID + " -- bench worktree land --request '" +
+		request + "' --base '" + base + "' --source-tip '" + tip + "' --spec 'x' -m <message> .}\n"
+	unsafe = strings.ContainsRune(stdout.String(), '\x1b') || strings.Count(stdout.String(), "\n") != 1
+	if code != 1 || unsafe || !strings.HasSuffix(stdout.String(), wantSource) {
+		t.Fatalf("unsafe-path source refusal = (%d, %q, %q), want one safe record ending %q", code, stdout.String(), stderr.String(), wantSource)
+	}
 }
 
 func TestLandCommandStoredRequestDigestCannotAuthenticate(t *testing.T) {

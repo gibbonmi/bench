@@ -12,6 +12,7 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -211,6 +212,86 @@ func TestIdentityComponentRegistryHasAProducingFixture(t *testing.T) {
 	}
 	if identityComponentByName(componentRequest).recovers == identityComponentByName(componentLock).recovers {
 		t.Errorf("the request component is the only one that carries a recovery command")
+	}
+}
+
+// landingRefusalFixture produces exactly one landing refusal face. mutate breaks the
+// landing fixture so that face is the one the preflight prints. The registry walk requires
+// one fixture per declared face, so a face added with no fixture turns this file red.
+type landingRefusalFixture struct {
+	face   string
+	mutate func(t *testing.T, root string, creation Creation)
+}
+
+func landingRefusalFixtures() []landingRefusalFixture {
+	return []landingRefusalFixture{
+		{
+			face: faceDestinationNotClean,
+			mutate: func(t *testing.T, root string, _ Creation) {
+				mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
+			},
+		},
+		{
+			face: faceSourceNotClean,
+			mutate: func(t *testing.T, _ string, creation Creation) {
+				mustWrite(t, filepath.Join(creation.Path, "scratch"), []byte("scratch\n"), 0o600)
+			},
+		},
+	}
+}
+
+// landingFaceNext reads the next= value out of the refused record whose detail names the
+// face. next= is the last field the formatter writes, so the value runs to the closing
+// brace. The second result reports whether the face printed at all.
+func landingFaceNext(stdout, detail string) (string, bool) {
+	for _, line := range strings.Split(stdout, "\n") {
+		if !strings.HasPrefix(line, "refused{detail="+detail) {
+			continue
+		}
+		_, next, found := strings.Cut(line, ",next=")
+		if !found {
+			return "", true
+		}
+		return strings.TrimSuffix(next, "}"), true
+	}
+	return "", false
+}
+
+// TestLandingRefusalRegistryHasAProducingFixture is LRS1 and LRS2. The registry is the
+// source of the landing's face set, so a face added without a fixture reds here rather
+// than reaching an operator unproven, and a face whose route string is empty reds on the
+// value its fixture prints.
+func TestLandingRefusalRegistryHasAProducingFixture(t *testing.T) {
+	t.Parallel()
+	produced := map[string]bool{}
+	for _, fixture := range landingRefusalFixtures() {
+		if produced[fixture.face] {
+			t.Fatalf("face %q has two producing fixtures", fixture.face)
+		}
+		produced[fixture.face] = true
+	}
+	for _, face := range landingRefusalFaces {
+		if !produced[face.name] {
+			t.Errorf("registry face %q has no producing fixture", face.name)
+		}
+		delete(produced, face.name)
+	}
+	for name := range produced {
+		t.Errorf("fixture %q produces no registered face", name)
+	}
+	for _, fixture := range landingRefusalFixtures() {
+		t.Run(fixture.face, func(t *testing.T) {
+			t.Parallel()
+			request := "landing-face-" + fixture.face
+			root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
+			fixture.mutate(t, root, creation)
+			var stdout, stderr bytes.Buffer
+			code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+			next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(fixture.face).detail)
+			if code != 1 || !printed || next == "" {
+				t.Fatalf("face %s = (%d, %q, %q), want exit 1 and a non-empty next= field", fixture.face, code, stdout.String(), stderr.String())
+			}
+		})
 	}
 }
 

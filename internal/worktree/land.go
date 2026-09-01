@@ -228,16 +228,19 @@ func landAttributed(measures *landingMeasures, j joins, root, home, _ string, ar
 	// names every refusal the caller must clear. The destination proofs and the
 	// assignment proofs are independent; the source proofs need the assignment.
 	var refusals []error
+	// The destination proof runs before the assignment resolves, so its route has no
+	// assignment id to address and names the operator's own worktree path instead.
+	unassignedRerun := landingRerun(parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, "")
 	destination, branch, priorMarker, destinationFingerprint, err := landingDestination(j, root)
 	if err != nil {
-		refusals = append(refusals, err)
+		refusals = append(refusals, landingFaceRoute(err, unassignedRerun))
 	}
 	var source landingSourceFact
 	assignment, err := landingAssignment(j, root, path, parsed.Flags["--request"], base, tip)
 	if err != nil {
-		refusals = append(refusals, err)
+		refusals = append(refusals, landingFaceRoute(err, unassignedRerun))
 	} else if source, err = landingSource(j, root, assignment, base, tip, parsed.Flags["--spec"]); err != nil {
-		refusals = append(refusals, err)
+		refusals = append(refusals, landingFaceRoute(err, landingRerun(parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment.ID)))
 	} else if !git.OK("-C", root, "merge-base", "--is-ancestor", assignment.Start, source.base) {
 		// The review base binds to the assignment's recorded start or to a descendant
 		// of it. The destination advances while an assignment is open, so a landing

@@ -135,6 +135,16 @@ func TestLandCommandReportsEveryRefusalInOnePreflight(t *testing.T) {
 	if code != 1 || !strings.Contains(stdout, "landing destination is not clean") || !strings.Contains(stdout, "reviewed source is not clean") {
 		t.Fatalf("two-refusal preflight = (%d, %q, %q), want both refusals named", code, stdout, stderr)
 	}
+	// LRS3: every landing-preflight route ends with the caller's own re-run, so a repair
+	// does not cost the operator the flags it passed.
+	tail := "; then bench worktree land --request '" + request + "' --base '" + base +
+		"' --source-tip '" + tip + "' --spec 'x' -m <message> '" + creation.Path + "'"
+	for _, face := range []string{faceDestinationNotClean, faceSourceNotClean} {
+		next, printed := landingFaceNext(stdout, landingRefusalFaceByName(face).detail)
+		if !printed || !strings.HasSuffix(next, tail) {
+			t.Fatalf("%s next = %q (printed=%t) in %q, want a repair ending %q", face, next, printed, stdout, tail)
+		}
+	}
 }
 
 // TestLandCommandReportsIdentityAndDestinationInOnePreflight is LR10. The destination
@@ -150,6 +160,12 @@ func TestLandCommandReportsIdentityAndDestinationInOnePreflight(t *testing.T) {
 		strings.Contains(stdout, "refused{detail=request token matches no assignment")
 	if code != 1 || !both || strings.Count(stdout, "refused{") != 2 {
 		t.Fatalf("identity-and-destination preflight = (%d, %q, %q), want exactly two refusals", code, stdout, stderr)
+	}
+	// LRS20: the destination proof refuses before the assignment resolves, so its re-run
+	// addresses the operator's own worktree path rather than an assignment id.
+	next, printed := landingFaceNext(stdout, landingRefusalFaceByName(faceDestinationNotClean).detail)
+	if !printed || strings.Contains(next, "bench worktree exec") || !strings.HasSuffix(next, " '"+creation.Path+"'") {
+		t.Fatalf("destination next = %q (printed=%t) in %q, want a re-run ending with the operator's own path", next, printed, stdout)
 	}
 }
 
