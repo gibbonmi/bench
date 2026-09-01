@@ -18,6 +18,8 @@ var retroGrammar = usage.Grammar{
 	MaxArgs: 1,
 }
 
+var openRetroRoot = os.OpenRoot
+
 // RetroCommand validates and writes one primary-local implementation retrospective.
 func RetroCommand(args []string) (string, int) {
 	parsed, line, code := usage.Parse(retroGrammar, args)
@@ -39,14 +41,19 @@ func RetroCommand(args []string) (string, int) {
 	if refusal != "" {
 		return refusal, code
 	}
-	file := filepath.Join(root, filepath.FromSlash(path))
 	if err := refuseSymlinkComponents(root, path); err != nil {
 		return cannotWrite(path, err), 1
 	}
-	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+	openedRoot, err := openRetroRoot(root)
+	if err != nil {
 		return cannotWrite(path, err), 1
 	}
-	f, err := os.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+	defer openedRoot.Close()
+	file := filepath.FromSlash(path)
+	if err := openedRoot.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+		return cannotWrite(path, err), 1
+	}
+	f, err := openedRoot.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
 	if err != nil {
 		return cannotWrite(path, err), 1
 	}
