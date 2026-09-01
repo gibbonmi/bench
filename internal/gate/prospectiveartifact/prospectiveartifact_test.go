@@ -55,6 +55,36 @@ func TestOpenPublishesPrivateOwnerRecordBeforeCheckout(t *testing.T) {
 	}
 }
 
+func TestOpenRefusesInvalidTemporaryRootsWithoutPublishing(t *testing.T) {
+	repository := fixtureRepository(t)
+	parent := t.TempDir()
+	dangling := filepath.Join(parent, "dangling")
+	if err := os.Symlink(filepath.Join(parent, "missing"), dangling); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, row := range []struct {
+		name string
+		root string
+	}{
+		{name: "absent root", root: filepath.Join(parent, "absent")},
+		{name: "dangling root link", root: dangling},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			owner, err := (Factory{TempRoot: row.root}).Open(repository)
+			if err == nil {
+				t.Fatal("Open with an invalid temporary root = nil, want refusal")
+			}
+			if owner != nil {
+				t.Fatalf("Open with an invalid temporary root owner = %v, want nil", owner)
+			}
+			if _, err := os.Lstat(filepath.Join(row.root, RecordName)); !errors.Is(err, os.ErrNotExist) {
+				t.Fatalf("published owner record = %v, want absent", err)
+			}
+		})
+	}
+}
+
 func TestOpenRetainsForeignBundleAndRecoversDeadRecordOnlyBundle(t *testing.T) {
 	repository := fixtureRepository(t)
 	common, err := benchgit.CommonDir(repository)
