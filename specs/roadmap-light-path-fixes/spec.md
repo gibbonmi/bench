@@ -29,8 +29,11 @@ row at its executable seam. Each ticket owns one small behavior, focused
 evidence, and an exact write fence.
 
 Preserve behavior already present in the live tree. Tickets implement only the
-remaining delta. Blockers serialize shared files; unrelated frontier tickets
-remain eligible for parallel authoring.
+remaining delta. Blockers order behavioral dependencies. The coordinator
+explicitly serializes each otherwise-frontier pair whose `Writes:` entries
+overlap, including required registry and fixture closure paths, even when no
+blocker edge exists. Nonconflicting frontier tickets remain eligible for
+parallel authoring.
 
 ## User stories
 
