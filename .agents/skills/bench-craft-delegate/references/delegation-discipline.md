@@ -97,6 +97,8 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   red-capable test.
 - A ticket that returns without a pre-edit red for each row goes back to the
   delegate for those reds. The coordinator gets the reds before the commit.
+- Keep an accepted finding on its original ticket when attribution is clear. Use
+  an umbrella repair ticket only for a genuinely shared owner.
 - The checkpoint ticket records a reviewer decision that occurs during a build.
   Later review reads that decision.
 

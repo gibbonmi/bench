@@ -109,7 +109,7 @@ A delegate's done-claim is a claim, not a result. Before accepting one, run the 
 its work, and confirm every coverage row went red-then-green. Run `git status` in the worktree
 it used, and resolve every identifier in an absence or exclusion claim to a real thing. Probe
 one accepted behavior independently of the delegate's own tests, kept constant across a batch,
-and spot-check citations before folding a summary in.
+and spot-check citations before folding a summary in. Resolve every named Red-mutation owner to a real artifact in the tree.
 
 Report every verification round in one line: accepted, or what was missed and where the fix
 went. Repairs beyond the allowance under Delegate or inline continue the authoring delegate
