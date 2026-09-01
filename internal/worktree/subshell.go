@@ -9,12 +9,86 @@ import (
 	"fmt"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/toon"
+	refreshop "github.com/gibbonmi/bench/internal/worktree/refresh"
+	"io"
 	"os"
+	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
+	"time"
 )
+
+// Subshell starts the human worktree journey from the repository the caller is in.
+func Subshell(home string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	root, err := git.Root()
+	if err != nil {
+		fmt.Fprintln(stderr, toon.NotInRepo())
+		return 1
+	}
+	return subshellAt(root, home, args, stdin, stdout, stderr)
+}
+
+func subshellAt(root, home string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	interrupts := make(chan os.Signal, 1)
+	signal.Notify(interrupts, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(interrupts)
+
+	args, startRef := refreshop.Consume(root, args, stdout)
+	objective := strings.Join(args, " ")
+	if objective == "" {
+		objective = "interactive worktree"
+	}
+	request, err := randomID()
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	creation, err := createAt(defaultJoins(), root, home, request, objective, nil, currentTime(), func() (string, error) { return startRef, nil })
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	lease, err := LeaseFile(creation.Path)
+	if err != nil || !claimAt(defaultJoins(), lease, currentTime()) {
+		fmt.Fprintln(stderr, "bench worktree shell: cannot claim worktree lease")
+		return ReleaseCommand(root, home, []string{"--request", request, creation.Path}, io.Discard, stderr)
+	}
+	fmt.Fprintf(stderr, "🪵 worktree: %s  (exit to release)\n", creation.Path)
+	shell := subshellShell()
+	if shell == "" {
+		shell = "bash"
+	}
+	cmd := exec.Command(shell)
+	cmd.Dir, cmd.Stdin, cmd.Stdout, cmd.Stderr = creation.Path, stdin, stdout, stderr
+	cmd.Env = withHome(os.Environ(), home)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	if err := cmd.Start(); err != nil {
+		_ = os.Remove(lease)
+		fmt.Fprintf(stderr, "bench worktree shell: %v\n", err)
+		return ReleaseCommand(root, home, []string{"--request", request, creation.Path}, io.Discard, stderr)
+	}
+	done := make(chan error, 1)
+	go func() { done <- cmd.Wait() }()
+	select {
+	case <-done:
+		_ = os.Remove(lease)
+		return ReleaseCommand(root, home, []string{"--request", request, creation.Path}, io.Discard, stderr)
+	case interrupted := <-interrupts:
+		_ = syscall.Kill(-cmd.Process.Pid, interrupted.(syscall.Signal))
+		select {
+		case <-done:
+		case <-time.After(5 * time.Second):
+			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+			<-done
+		}
+		return 128 + int(interrupted.(syscall.Signal))
+	}
+}
 
 func canonicalPath(path string) (string, error) {
 	abs, err := filepath.Abs(path)

@@ -116,7 +116,7 @@ var commandRegistry = []commandDefinition{
 
 	{Name: "version", Attachment: attachmentDirect, AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 43, Description: "print the installed Bench version (os/arch)"}), Run: versionCommand},
 	{Name: "worktree", Attachment: attachmentDirect, AXI: axiApprovedChildren("list"), Inventory: publicInventory(
-		helpRow{Order: 31, Suffix: " [--refresh] [objective]", Gap: 1, Description: "create an owned worktree subshell and release it on exit"},
+		helpRow{Order: 31, Suffix: " shell [--refresh] [objective]", Gap: 1, Description: "create an owned worktree subshell and release it on exit"},
 		helpRow{Order: 32, Suffix: " list", Description: "list assignments and registered worktrees as TOON"},
 		helpRow{Order: 33, Suffix: worktreeSuffix(usage.WorktreePath), Description: "print one active owned worktree's absolute path"},
 		helpRow{Order: 34, Suffix: worktreeSuffix(usage.WorktreeExec), Description: "run a child directly in an active owned worktree"},
@@ -625,6 +625,9 @@ func worktreeCommand(c Command, args []string) int {
 			return 1
 		}
 		return worktree.ExecCommand(root, worktree.Home(), args[1:], c.Stdin, c.Stdout, c.Stderr)
+	}
+	if len(args) > 0 && args[0] == "shell" {
+		return worktree.Subshell(worktree.Home(), args[1:], c.Stdin, c.Stdout, c.Stderr)
 	}
 	if len(args) > 0 && args[0] == "path" {
 		root, err := git.Root()

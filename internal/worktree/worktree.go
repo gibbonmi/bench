@@ -720,41 +720,6 @@ func createAttributed(assignment *string, parsed usage.Result, root, home string
 	fmt.Fprintf(stdout, "next[2]:\n  bench worktree exec \"%s\" -- <command>\n  bench worktree path \"%s\"\n", label, label)
 	return 0
 }
-func Subshell(home string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
-	root, err := git.Root()
-	if err != nil {
-		fmt.Fprintln(stderr, toon.NotInRepo())
-		return 1
-	}
-	args, startRef := refreshop.Consume(root, args, stdout)
-	objective := strings.Join(args, " ")
-	if objective == "" {
-		objective = "interactive worktree"
-	}
-	request, err := randomID()
-	if err != nil {
-		fmt.Fprintln(stderr, err)
-		return 1
-	}
-	creation, err := createAt(defaultJoins(), root, home, request, objective, nil, currentTime(), func() (string, error) { return startRef, nil })
-	if err != nil {
-		fmt.Fprintln(stderr, err)
-		return 1
-	}
-	fmt.Fprintf(stderr, "🪵 worktree: %s  (exit to release)\n", creation.Path)
-	shell := subshellShell()
-	if shell == "" {
-		shell = "bash"
-	}
-	cmd := exec.Command(shell)
-	cmd.Dir, cmd.Stdin, cmd.Stdout, cmd.Stderr = creation.Path, stdin, stdout, stderr
-	// The interactive shell runs Bench verbs against the worktree this call just
-	// created, so it reads the home the call resolved rather than the one its own
-	// process carried.
-	cmd.Env = withHome(os.Environ(), home)
-	_ = cmd.Run()
-	return ReleaseCommand(root, home, []string{"--request", request, creation.Path}, io.Discard, stderr)
-}
 func cleanupOutputSafe(value string) bool { return toon.Representable(value) }
 func cleanupOutputValue(value string) string {
 	if cleanupOutputSafe(value) {

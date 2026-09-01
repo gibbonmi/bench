@@ -601,6 +601,24 @@ func TestBareWorktreeRefusesBeforeItAcquiresAssignment(t *testing.T) {
 	}
 }
 
+func TestWorktreeShellRunsAndReleasesItsAssignment(t *testing.T) {
+	root := newAXIEnvelopeRepo(t)
+	t.Setenv("BENCH_HOME", t.TempDir())
+	t.Setenv("SHELL", "true")
+
+	result := runAXICommandAt(t, root, []string{"worktree", "shell"})
+	if result.code != 0 || !strings.Contains(result.stderr, "🪵 worktree: ") {
+		t.Fatalf("worktree shell = stdout=%q stderr=%q exit=%d, want successful shell journey", result.stdout, result.stderr, result.code)
+	}
+	assignments, err := intent.Assignments(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(assignments) != 0 {
+		t.Fatalf("worktree shell left assignments = %#v, want none after normal exit", assignments)
+	}
+}
+
 func TestUnknownWorktreeSubcommandRefusesBeforeItAcquiresAssignment(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
 	before, err := intent.Assignments(root)
