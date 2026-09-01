@@ -107,9 +107,14 @@ func checkExecution(rn int, rel, path string, content []byte, scopes []*executio
 // resolve exits nonzero and becomes the caller's expansion failure. A pattern that
 // legitimately matches nothing exits zero with no line, which selects nothing rather
 // than fails.
+//
+// The loader carries the gate's own VCS defense, because it reads the same temporary
+// checkouts the gate's build and test commands do. Without it a stray `.git` directory
+// above the checkout reds the expansion on any pattern that holds a main package, which
+// is a fact about the host rather than about the citation under grade.
 func selectedPackageDirs(execution gate.TestExecution) ([]string, error) {
-	args := make([]string, 0, len(execution.Packages)+4)
-	args = append(args, "list", "-f", "{{.Dir}}")
+	args := make([]string, 0, len(execution.Packages)+5)
+	args = append(args, "list", "-f", "{{.Dir}}", gate.DisableBuildVCS)
 	if len(execution.Tags) != 0 {
 		args = append(args, "-tags="+strings.Join(execution.Tags, ","))
 	}

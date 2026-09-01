@@ -24,7 +24,15 @@ import (
 var raceTests = racetests.Tests
 
 const gateGoUsage = "usage: bench gate-go <gofmt|test> [root]"
-const disableBuildVCS = "-buildvcs=false"
+
+// DisableBuildVCS is the one owner of the VCS-stamping defense for every Bench-owned Go
+// argv that reads or builds a package. Go's VCS discovery treats a linked worktree's
+// `.git` file as no root, walks up, and adopts any `.git` directory above the temporary
+// checkout. Git refuses that directory, and the toolchain reds with "error obtaining VCS
+// status" over any pattern that holds a main package. It is exported because the coverage
+// citation expansion runs its own loader over the same checkouts and needs the same
+// defense from the same source.
+const DisableBuildVCS = "-buildvcs=false"
 
 // trimPath is the one owner of the path-trimming flag for every Bench-owned Go argv
 // that is not a test: the vet phase and the kit lane's vet and build checks. Without it
@@ -74,7 +82,7 @@ func GateGoArgv(kit, step, root string) []string {
 	if kit != "" {
 		argv = append(argv, "-C", kit)
 	}
-	return append(argv, "run", disableBuildVCS, "./cmd/bench", "gate-go", step, root)
+	return append(argv, "run", DisableBuildVCS, "./cmd/bench", "gate-go", step, root)
 }
 
 func gatePhaseGoArgv(step, root string) []string {
@@ -86,7 +94,7 @@ func gatePhaseGoArgv(step, root string) []string {
 // `go list` output alongside, so a caller that fails can attribute the failure to the
 // enumeration rather than to the test run.
 func CoreTestPackages(root string, tier registry.Tier) ([]string, string, error) {
-	listed, combined, err := stepOutput(root, "go", "list", disableBuildVCS, "./...")
+	listed, combined, err := stepOutput(root, "go", "list", DisableBuildVCS, "./...")
 	if err != nil {
 		return nil, combined, err
 	}

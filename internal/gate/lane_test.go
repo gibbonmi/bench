@@ -23,7 +23,7 @@ func TestBenchkitLaneTable(t *testing.T) {
 		{Name: "gofmt", Argv: []string{runBinaryArgvToken, "gate-go", "gofmt"}},
 		{Name: "prose", Argv: []string{runBinaryArgvToken, "gate-prose", "/repo", "--", LaneNamedMarkdownToken}},
 		{Name: "vet", Argv: []string{"go", "vet", "-trimpath", "./..."}},
-		{Name: "build", Argv: []string{"go", "build", "-trimpath", disableBuildVCS, "./..."}},
+		{Name: "build", Argv: []string{"go", "build", "-trimpath", DisableBuildVCS, "./..."}},
 	}
 	if len(lane) < len(want) || !reflect.DeepEqual(lane[:len(want)], want) {
 		t.Fatalf("kit lane = %+v, want it to open with %+v", lane, want)
