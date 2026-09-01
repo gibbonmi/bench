@@ -182,3 +182,35 @@ func TestGateProseCommandRefusesAMalformedExclusionRowWithNoSubject(t *testing.T
 		t.Fatalf("stdout = %q, want the malformed row named", stdout.String())
 	}
 }
+
+// TestGateProseCommandFileRootIsUsageError covers the file-root refusal: the root operand
+// must be a directory, so a file root is a malformed argument and never reaches the
+// exclusion file.
+func TestGateProseCommandFileRootIsUsageError(t *testing.T) {
+	dir := t.TempDir()
+	write(t, dir, "README.md", "Short prose.\n")
+	root := filepath.Join(dir, "README.md")
+
+	var stdout, stderr bytes.Buffer
+	code := GateProseCommand([]string{root}, &stdout, &stderr)
+
+	if code != 2 {
+		t.Fatalf("exit = %d, want 2; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout = %q, want empty on a usage error", stdout.String())
+	}
+	err := stderr.String()
+	if !strings.Contains(err, root) {
+		t.Fatalf("stderr = %q, want it to name the operand %q", err, root)
+	}
+	if !strings.Contains(err, "must be a directory") {
+		t.Fatalf("stderr = %q, want it to say the root must be a directory", err)
+	}
+	if !strings.Contains(err, gateProseUsage) {
+		t.Fatalf("stderr = %q, want the usage line %q", err, gateProseUsage)
+	}
+	if strings.Contains(err, "prose-exclusions") {
+		t.Fatalf("stderr = %q, want no exclusion-file diagnostic for a file root", err)
+	}
+}

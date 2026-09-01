@@ -3,6 +3,7 @@ package gate
 import (
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/prose"
@@ -33,6 +34,11 @@ func GateProseCommand(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, gateProseUsage)
 		return 2
 	}
+	if !rootIsDirectory(root) {
+		fmt.Fprintf(stderr, "gate-prose: root %q is not a directory: the root operand must be a directory; name a file after the %q separator\n", root, "--")
+		fmt.Fprintln(stderr, gateProseUsage)
+		return 2
+	}
 	findings := prose.GradeNamedResults(root, paths)
 	if len(findings) == 0 {
 		rows := make([][]string, 0, len(paths))
@@ -53,6 +59,17 @@ func GateProseCommand(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stdout, prose.RenderNamedResult(f))
 	}
 	return 1
+}
+
+// rootIsDirectory reports whether the root operand names an existing directory. A path
+// that does not exist reads as true, so the grader keeps its own diagnostic for a missing
+// root; only an existing non-directory is the malformed argument this guard refuses.
+func rootIsDirectory(root string) bool {
+	info, err := os.Stat(root)
+	if err != nil {
+		return true
+	}
+	return info.IsDir()
 }
 
 // parseGateProseArgs splits args into the root and the named path list. The verb takes
