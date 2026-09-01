@@ -143,9 +143,23 @@ func TestRetroContainsDestinationComponentReplacement(t *testing.T) {
 		if err != nil {
 			return nil, err
 		}
-		if err := os.Symlink(outside, filepath.Join(root, "capture")); err != nil {
+		capture := filepath.Join(root, "capture")
+		if err := os.Remove(capture); err != nil {
 			_ = opened.Close()
-			return nil, err
+			t.Fatalf("remove capture before replacement: %v", err)
+		}
+		if err := os.Symlink(outside, capture); err != nil {
+			_ = opened.Close()
+			t.Fatalf("replace capture with symlink: %v", err)
+		}
+		target, err := os.Readlink(capture)
+		if err != nil {
+			_ = opened.Close()
+			t.Fatalf("read capture replacement: %v", err)
+		}
+		if target != outside {
+			_ = opened.Close()
+			t.Fatalf("capture replacement target = %q, want %q", target, outside)
 		}
 		return opened, nil
 	}
