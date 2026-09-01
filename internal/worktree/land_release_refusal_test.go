@@ -23,7 +23,10 @@ func TestLandCommandRefusalListsDestinationPaths(t *testing.T) {
 	mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, home, "", landArgs("refusal-destination", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
-	if code != 1 || !strings.Contains(stdout.String(), "paths_total=1") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:") || !strings.Contains(stdout.String(), "dirty") || stderr.Len() != 0 {
+	// The route reads from the registry, so the face's repair keeps one source. The
+	// caller's own re-run rides behind it and this row does not pin it.
+	wantNext := "next=" + landingRefusalFaceByName(faceDestinationNotClean).route("")
+	if code != 1 || !strings.Contains(stdout.String(), wantNext) || !strings.Contains(stdout.String(), "paths_total=1") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:") || !strings.Contains(stdout.String(), "dirty") || stderr.Len() != 0 {
 		t.Fatalf("destination refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 }
