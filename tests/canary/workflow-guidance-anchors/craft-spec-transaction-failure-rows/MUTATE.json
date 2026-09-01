@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "The rows are persistence before the oracle runs, interruption inside the oracle, and persistence at the terminal step.",
+    "new": "The rows are persistence before the oracle runs and persistence at the terminal step."
+  }
+]
