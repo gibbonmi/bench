@@ -43,9 +43,9 @@ compatibility, or a reviewer-chosen seam.
 ## Process
 
 1. **Author.** Charge `bench-craft-spec` (and `bench-craft-domain` for terms) on the decision source; read the
-   enforcement surface before you lock rows that touch it. Give each story group its resolved model and effort from
-   `craft-line`. Write `specs/<feature>/spec.md` from `craft-spec`'s template and run `bench coverage --check`. The
-   stale-command-reference sweep remains fail-closed across staged specs.
+   enforcement surface before you lock rows that touch it. Run `craft-spec`'s reader sweep before that lock.
+   Give each story group its resolved model and effort from `craft-line`. Write `specs/<feature>/spec.md` from
+   `craft-spec`'s template and run `bench coverage --check`. The stale-command-reference sweep remains fail-closed across staged specs.
 
    A spec that ships a phase declares it on one `Introduces commands:` line, valid in its own directory while staged.
    When no hostile-input checklist class covers a surface, quarry the seams library and propose a tuned profile addition. Apply `craft-spec`'s named
@@ -54,14 +54,14 @@ compatibility, or a reviewer-chosen seam.
    decisions, delete the old spec under a `spec-retire: <name>` commit, repair references. The same
    promote-then-delete commit removes the spec's `ROADMAP.md` row and that row's `roadmap/FT<n>.md` detail file.
    Whole-folder retirement removes the compiled maps and map-owned assets, plus tickets.
-3. **Slice, then review once.** Charge `craft-tickets` and write the breakdown under `specs/<slug>/tickets/`. Carry
+3. **Slice, then review once.** Where the stories partition into disjoint package or fence sets, could a narrower
+   capability ship on its own gate? Apply `craft-spec`'s named `Bootstrap authority before execution` rule. The ticket graph splits where a consumer branch lands green alone.
+
+   Charge `craft-tickets` and write the breakdown under `specs/<slug>/tickets/`. Carry
    its numbered title, `Blocked by:`, and delivered outcome list into the approval table. The spec and tickets
    receive one sign-off.
 
-   One review round covers the spec-and-tickets pair with the reviewer-named model, and `craft-tickets`'
-   granularity/edges/merge-split quiz is its approval step. The round applies `craft-spec`'s review rubric and asks
-   one question of its own. Where the stories partition into disjoint package or fence sets, could a narrower
-   capability ship on its own gate? Apply `craft-spec`'s named `Bootstrap authority before execution` rule.
+   One review round covers the spec-and-tickets pair with the reviewer-named model, and `craft-tickets`' granularity/edges/merge-split quiz is its approval step. The round applies `craft-spec`'s review rubric.
 
    The round declares its iteration cap before the first charge. The author folds partials left after the round and names them in the verification log.
    `--reviewer <tier> [effort]` overrides the round's delegate. The tier resolves through the invoking harness's

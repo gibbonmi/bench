@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "The reader sweep lists each named consumer of the decision fact.",
+    "new": "The reader sweep lists the consumers it finds."
+  }
+]

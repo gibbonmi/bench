@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-write-spec.md",
+    "old": " The ticket graph splits where a consumer branch lands green alone.",
+    "new": ""
+  }
+]
