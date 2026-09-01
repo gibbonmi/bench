@@ -50,3 +50,20 @@ none bypasses a changed acceptance seam.
 Coordinator correlation: the accepted LF12 Spec finding also identifies the
 missing same-slug negative test. Standards and Spec findings remain separate;
 the Coverage axis added no independent defect.
+
+## Repair re-review
+
+Repair range: `1f60a2bf6e2a2d45e1fae168be9744d64d86cd75` through
+`fe7ef8051923250c3040c29265054cedae45cb18`.
+
+- Standards: clean. The spec now explicitly serializes overlapping frontier
+  `Writes:` entries, and the checkout compatibility mutation-red is durably
+  recorded with production restored.
+- Spec: clean. Repeating a retrospective slug refuses atomically before
+  mutation; distinct slugs, grammar, and primary-local routing remain intact.
+- Coverage: clean. The same-slug test proves both refusal and byte-for-byte
+  preservation, while the earlier distinct-slug test remains green.
+
+Final build and review preflights are 12/12 green. The final composition gate
+passed gofmt, vet, test, race, and system phases with six unchanged capability
+skips; shellcheck remained unavailable.
