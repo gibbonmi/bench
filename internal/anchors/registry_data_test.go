@@ -699,7 +699,7 @@ func TestCraftDelegateDisciplineAnchorsRedOnRemoval(t *testing.T) {
 	}
 }
 
-// TestLoadStopAndQuietAnchorsRedOnRemoval keeps LF4's stop and aggregate-readiness
+// TestLoadStopAndQuietAnchorsRedOnRemoval keeps the stop and aggregate-readiness
 // conditions independently red-capable. The compact skill pointers lead the
 // coordinator to the reference that owns the detailed process.
 func TestLoadStopAndQuietAnchorsRedOnRemoval(t *testing.T) {
@@ -849,8 +849,9 @@ func TestDoneClaimOwnerAnchorsRedOnRemoval(t *testing.T) {
 	}
 }
 
-// TestInstalledLaneRepairAnchorsRedOnRemoval pins LF11. The skill routes the
-// installed-lane case to its canonical rule, and the rule keeps snapshot grading
+// TestInstalledLaneRepairAnchorsRedOnRemoval pins the installed-lane repair
+// constraint. The skill routes the installed-lane case to its canonical rule,
+// and the rule keeps snapshot grading
 // and the post-landing rebuild coupled to the fallback.
 func TestInstalledLaneRepairAnchorsRedOnRemoval(t *testing.T) {
 	const (
@@ -1060,8 +1061,8 @@ func TestCraftTicketsPremiseCheckAnchorRedsOnRemoval(t *testing.T) {
 	}
 }
 
-// TestCommentAndReviewRuleAnchorsRedOnRemoval keeps short independent anchors for
-// LF15. The test does not copy the guidance prose, so the registry cannot make a
+// TestCommentAndReviewRuleAnchorsRedOnRemoval keeps short independent anchors.
+// The test does not copy the guidance prose, so the registry cannot make a
 // weakened rule self-consistent.
 func TestCommentAndReviewRuleAnchorsRedOnRemoval(t *testing.T) {
 	const (
