@@ -1,7 +1,7 @@
 # Retain an explicit signal-safe worktree shell
 
 Blocked by: make-bare-worktree-usage-safe.md
-Writes: cmd/bench/main.go, cmd/bench/command_registry_test.go, internal/worktree/subshell.go, internal/worktree/subshell_test.go, internal/worktree/worktree.go
+Writes: cmd/bench/main.go, cmd/bench/main_test.go, cmd/bench/command_registry_test.go, internal/worktree/subshell.go, internal/worktree/subshell_test.go, internal/worktree/worktree.go
 Covers: LF14
 
 ## What to build

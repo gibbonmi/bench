@@ -137,7 +137,9 @@ remain eligible for parallel authoring.
 - `internal/gate/run_outcomes_test.go`
 - `internal/adopt/setup.go`
 - `internal/adopt/setup_test.go`
+- `internal/adopt/adopt_test.go`
 - `internal/conformance/validity_checks_test.go`
+- `internal/conformance/subcommand_routing_test.go`
 - `internal/worktree/`
 - `internal/spec/`
 - `internal/adopt/doctor.go`
@@ -148,6 +150,10 @@ remain eligible for parallel authoring.
 - `internal/testreport/`
 - `internal/gate/gate_prose.go`
 - `internal/gate/gate_prose_test.go`
+- `internal/gate/gate.go`
+- `internal/gate/decision.go`
+- `internal/gate/engine.go`
+- `internal/gate/phases.go`
 - `internal/gate/prospective.go`
 - `internal/gate/prospective_owner_test.go`
 - `internal/gate/prospectiveartifact/`
@@ -156,6 +162,7 @@ remain eligible for parallel authoring.
 - `internal/preflight/`
 - `internal/contract/`
 - `cmd/bench/main.go`
+- `cmd/bench/main_test.go`
 - `cmd/bench/command_registry_test.go`
 - `.agents/skills/bench-craft-delegate/`
 - `.agents/skills/bench-craft-line/SKILL.md`
