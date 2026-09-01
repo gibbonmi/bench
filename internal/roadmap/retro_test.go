@@ -4,24 +4,16 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/retros"
+	retrotestdata "github.com/gibbonmi/bench/internal/retros/testdata"
 )
 
 func eligibleRetro(t *testing.T) string {
 	t.Helper()
-	_, source, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("cannot locate retro test source")
-	}
-	body, err := os.ReadFile(filepath.Join(filepath.Dir(source), "..", "retros", "testdata", "eligible.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	return string(body)
+	return retrotestdata.Eligible()
 }
 
 func TestRetroRejectsMalformedBodyWithoutWriting(t *testing.T) {

@@ -9,23 +9,17 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	retrotestdata "github.com/gibbonmi/bench/internal/retros/testdata"
 )
 
 func TestParseAcceptsCanonicalRetro(t *testing.T) {
-	content, err := os.ReadFile(filepath.Join("testdata", "eligible.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := Parse(content); err != nil {
+	if err := Parse([]byte(retrotestdata.Eligible())); err != nil {
 		t.Fatalf("Parse(canonical retro) = %v, want nil", err)
 	}
 }
 
 func TestEligibleFixtureKeepsRequiredHeadings(t *testing.T) {
-	content, err := os.ReadFile(filepath.Join("testdata", "eligible.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	content := retrotestdata.Eligible()
 	for _, heading := range []string{
 		"## Outcome",
 		"## Gate-stage timings",
@@ -34,7 +28,7 @@ func TestEligibleFixtureKeepsRequiredHeadings(t *testing.T) {
 		"## Repair attribution",
 		"## Agent-experience improvements",
 	} {
-		if !strings.Contains(string(content), heading+"\n") {
+		if !strings.Contains(content, heading+"\n") {
 			t.Errorf("eligible fixture is missing %q", heading)
 		}
 	}
