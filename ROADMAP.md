@@ -57,8 +57,6 @@ means the repository-controlled compliance assessment.
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
-**FT281 (MEDIUM) — citations record Go test package operands for every test phase.**
-
 **FT276 (MEDIUM, decision required) — one cycle-free owner derives canonical repository paths.**
 
 **FT277 (MEDIUM) — `bench test --changed` selects the edited packages and explains a widened set.**
@@ -319,5 +317,4 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `$bench-write-spec` — FT281: define package-scope matching for citation execution.
-2. `$bench` — open FT142's light-path ticket for the next unblocked MEDIUM fix.
+1. `$bench` — open FT142's light-path ticket for the next unblocked MEDIUM fix.
