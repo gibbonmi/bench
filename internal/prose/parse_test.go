@@ -178,6 +178,20 @@ func TestFindings(t *testing.T) {
 		{
 			name: "C1 a label line inside a run does not hide a deep paragraph",
 			doc:  "One. Two. Three.\nin fact: four. Five. Six. Seven. Eight.\n",
+			want: []Finding{{Kind: KindParagraph, Line: 1, Count: 8}},
+		},
+		{
+			name: "LP1 a mid-line terminator keeps a label-shaped line in its paragraph",
+			doc:  "One. Two. Three. Four. Five. Six.\nRun the real path: gate it. Then land\n",
+			want: []Finding{{Kind: KindParagraph, Line: 1, Count: 8}},
+		},
+		{
+			name: "LP2 twenty terminated Occurrence lines are twenty paragraphs",
+			doc:  repeatLine("Occurrence: 2026-08-15 gate build — the preflight failed.", 20),
+		},
+		{
+			name: "LP3 a Writes field line with no terminator is not graded",
+			doc:  "Writes: " + words(30) + "\nBlocked by: none\n",
 		},
 		{
 			name: "C3 a double-backtick span with an inner backtick is one token",
