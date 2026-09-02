@@ -20,6 +20,9 @@ the explore reads, the fence rules, and the review rubric.
   sample does not show an absent rule.
 - The flagged-additions list sits under Further notes before the first review charge.
 - The source-sentence-to-row table sits under Further notes before the first review charge.
+- Before the first review charge, Further notes carries a pre-review proof for each applicable class and records `none` for each absent class.
+- It resolves cited symbols and import edges, quotes source-row clauses with all occurrences, names exact field labels, and lists all changed-function callers.
+- When a new owner replaces copies, it names a red-capable row that fails if any copy survives.
 - Each canary row and each conformance row traces to its executed root before the coverage map locks.
 - The reader sweep lists each named consumer of the decision fact.
 - The reader sweep lists each helper that a named consumer calls directly.

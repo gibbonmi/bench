@@ -81,6 +81,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Changed the spec pre-review contract to require an exhaustive proof of cited
+  symbols, import edges, source-row occurrences, field labels, changed-function
+  callers, and copy survival before the first review charge.
 - A truncated preview of operator-influenced text now keeps 240 code points, not 120,
   before the `… (N bytes)` suffix replaces the rest. The cap is the named
   `bounds.PreviewRuneLimit` entry in the `internal/bounds` policy registry, and the

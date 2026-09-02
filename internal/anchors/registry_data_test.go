@@ -786,12 +786,10 @@ func TestCommentAndReviewRuleAnchorsRedOnRemoval(t *testing.T) {
 	harness.check(t)
 }
 
-// TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval holds the two rules a kit
-// spec keeps missing. A kit behavior serves this repository and every linked repository,
-// and the two audiences can want different answers for one directory state. A
-// transaction-shaped spec loses its middle failure when one row covers all three. Each
-// section, needle, and diagnostic is written here independently of the registry.
-func TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval(t *testing.T) {
+// TestMapDisciplineAnchorsRedOnRemoval holds the map rules that repeated spec
+// reviews need. Each section, needle, and diagnostic is written here
+// independently of the registry.
+func TestMapDisciplineAnchorsRedOnRemoval(t *testing.T) {
 	const file = ".agents/skills/bench-craft-spec/references/map-discipline.md"
 	anchorHarness{
 		group: AfterImplementSpec,
@@ -831,6 +829,24 @@ func TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval(t *testing.T)
 				section: "Before the map locks",
 				needle:  "The source-sentence-to-row table sits under Further notes before the first review charge.",
 				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the source-sentence-to-row table under Further notes before the first review charge",
+			},
+			{
+				file:    file,
+				section: "Before the map locks",
+				needle:  "Before the first review charge, Further notes carries a pre-review proof for each applicable class and records `none` for each absent class.",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the exhaustive pre-review proof",
+			},
+			{
+				file:    file,
+				section: "Before the map locks",
+				needle:  "It resolves cited symbols and import edges, quotes source-row clauses with all occurrences, names exact field labels, and lists all changed-function callers.",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped a source or consumer proof class",
+			},
+			{
+				file:    file,
+				section: "Before the map locks",
+				needle:  "When a new owner replaces copies, it names a red-capable row that fails if any copy survives.",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the copy-survival proof",
 			},
 			{
 				file:    file,
