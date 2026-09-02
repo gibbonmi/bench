@@ -37,7 +37,7 @@ means the repository-controlled compliance assessment.
 
 **FT71 (HIGH on the bank track) — versioned local shift evidence.**
 
-**FT162 (MEDIUM, decision required) — the handoff's pins resolve, and its shape has one owner.**
+**FT162 (MEDIUM) — the handoff's pins resolve, and its shape has one owner.**
 
 **FT142 (MEDIUM) — FT91 review residuals, two tracks.**
 
@@ -52,7 +52,7 @@ means the repository-controlled compliance assessment.
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
-**FT276 (MEDIUM, decision required) — one cycle-free owner derives canonical repository paths.**
+**FT276 (MEDIUM) — one cycle-free owner derives canonical repository paths.**
 
 **FT277 (MEDIUM) — `bench test --changed` explains why it widened the selected set.**
 
@@ -62,7 +62,7 @@ means the repository-controlled compliance assessment.
 
 **FT284 (MEDIUM, decision required) — `bench spec retire` owns its roadmap retirement atomically.**
 
-**FT285 (LOW, decision required) — a wrapped decision-map Sources continuation that holds a colon gets the one-physical-line refusal.**
+**FT285 (LOW) — a wrapped decision-map Sources continuation that holds a colon gets the one-physical-line refusal.**
 
 **FT255 (MEDIUM, decision required) — concurrent tests share one explicit machine budget.**
 
@@ -72,7 +72,7 @@ means the repository-controlled compliance assessment.
 
 **FT173 (MEDIUM, decision required) — AXI residual: the active-assignment-with-deleted-tree disclosure class.**
 
-**FT202 (MEDIUM, decision required) — a shared purity-census helper, and the census scope for process-backed fixtures.**
+**FT202 (MEDIUM) — a shared purity-census helper, and the census scope for process-backed fixtures.**
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.**
 
@@ -113,7 +113,7 @@ means the repository-controlled compliance assessment.
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
 
-**FT279 (LOW, decision required) — `bench link` refuses the kit source checkout.**
+**FT279 (LOW) — `bench link` refuses the kit source checkout.**
 
 **FT280 (LOW, decision required) — a Bench-owned worktree tip projection replaces raw `git rev-parse` in the landing pin.**
 
@@ -144,7 +144,7 @@ means the repository-controlled compliance assessment.
 
 **FT258 (MEDIUM, decision required) — `bench commit` derives a complete change set and has one explicit `MERGE_HEAD` contract, without weakening its ownership fence.**
 
-**FT264 (MEDIUM, decision required) — Go build-cache validation residuals.**
+**FT264 (MEDIUM) — Go build-cache validation residuals.**
 
 **FT265 (MEDIUM, decision required) — one coordinator-owned immutable drain evidence bundle.**
 
@@ -165,7 +165,7 @@ and prioritize as one theme.
 
 **FT286 (MEDIUM) — the prose six-sentence bound survives a label-shaped prose line.**
 
-**FT177 (MEDIUM, decision required) — a stale `dist/bench` invalidates tests and its promotion-broker manifest.**
+**FT177 (MEDIUM) — a stale `dist/bench` invalidates tests and its promotion-broker manifest.**
 
 **FT201 (LOW) — production cancel-signal registrations conform to one source.**
 
