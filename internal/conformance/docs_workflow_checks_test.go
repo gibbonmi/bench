@@ -306,7 +306,7 @@ func checkOccurrenceLedgerMigration(root string) []string {
 	if len(failures) != 0 {
 		return []string{"ROADMAP.md occurrence-ledger migration has malformed rows"}
 	}
-	want := map[string]int{"FT71": 1, "FT158": 3, "FT98": 3, "FT141": 1, "FT125": 1}
+	want := map[string]int{"FT71": 1, "FT98": 3, "FT141": 1, "FT125": 1}
 	got := map[string]int{}
 	for _, row := range doc.Rows {
 		if _, ok := want[row.ID]; ok {

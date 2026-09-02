@@ -266,7 +266,7 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 	}
 }
 
-func TestOccurrenceLedgerMigrationCheckBitesOnFT158Count(t *testing.T) {
+func TestOccurrenceLedgerMigrationCheckBitesOnFT98Count(t *testing.T) {
 	root := t.TempDir()
 	kit := NewHarness(t).KitRoot
 	index, err := os.ReadFile(filepath.Join(kit, "ROADMAP.md"))
@@ -274,34 +274,35 @@ func TestOccurrenceLedgerMigrationCheckBitesOnFT158Count(t *testing.T) {
 		t.Fatal(err)
 	}
 	// The mutation drops a key from the ledger, which lives in the row's own detail file.
-	// The fixture copies the live board's index beside a mutated roadmap/FT158.md.
-	rowFile := filepath.Join(kit, "roadmap", "FT158.md")
+	// The fixture copies the live board's index beside a mutated roadmap/FT98.md.
+	rowFile := filepath.Join(kit, "roadmap", "FT98.md")
 	row, err := os.ReadFile(rowFile)
 	if err != nil {
 		t.Fatal(err)
 	}
-	mutated := strings.Replace(string(row), "Occurrences: baseline-01, baseline-02, baseline-03", "Occurrences: baseline-01, baseline-02", 1)
+	mutated := strings.Replace(string(row), ", baseline-02\n", "\n", 1)
 	if mutated == string(row) {
-		t.Fatal("FT158 migration-count mutation did not change its ledger")
+		t.Fatal("FT98 migration-count mutation did not change its ledger")
 	}
-	roadmaptest.WriteSplitBoard(t, root, string(index), map[string]string{"FT158.md": mutated})
+	roadmaptest.WriteSplitBoard(t, root, string(index), map[string]string{"FT98.md": mutated})
 	found := false
 	for _, diag := range checkOccurrenceLedgerMigration(root) {
-		if diag == "ROADMAP.md occurrence-ledger migration count for FT158 is wrong" {
+		if diag == "ROADMAP.md occurrence-ledger migration count for FT98 is wrong" {
 			found = true
 		}
 	}
 	if !found {
-		t.Fatal("FT158 count mutation passed occurrence-ledger migration check")
+		t.Fatal("FT98 count mutation passed occurrence-ledger migration check")
 	}
 }
 
-func TestOccurrenceLedgerMigrationAllowsRetiredFT126(t *testing.T) {
+// A retired migration row leaves the board with its spec. The check must stop requiring
+// its count, or every retirement lands red.
+func TestOccurrenceLedgerMigrationAllowsRetiredRows(t *testing.T) {
 	root := t.TempDir()
 	index, files := "", map[string]string{}
 	for _, row := range [][2]string{
 		{"FT71", "baseline-01"},
-		{"FT158", "baseline-01, baseline-02, baseline-03"},
 		{"FT128", "baseline-01"},
 		{"FT98", "baseline-01, baseline-02, baseline-03"},
 		{"FT169", "baseline-01"},
@@ -314,7 +315,10 @@ func TestOccurrenceLedgerMigrationAllowsRetiredFT126(t *testing.T) {
 		files[row[0]+".md"] = heading + "\nOccurrences: " + row[1] + "\n"
 	}
 	roadmaptest.WriteSplitBoard(t, root, index, files)
-	if containsDiagnostic(checkOccurrenceLedgerMigration(root), "ROADMAP.md occurrence-ledger migration count for FT126 is wrong") {
-		t.Fatal("retired FT126 remained required by occurrence-ledger migration")
+	diags := checkOccurrenceLedgerMigration(root)
+	for _, retired := range []string{"FT126", "FT158"} {
+		if containsDiagnostic(diags, "ROADMAP.md occurrence-ledger migration count for "+retired+" is wrong") {
+			t.Fatalf("retired %s remained required by occurrence-ledger migration", retired)
+		}
 	}
 }
