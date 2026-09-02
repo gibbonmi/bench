@@ -481,6 +481,56 @@ printf '%s\n' "$BENCH_KIT" "$@" > "$BENCH_TEST_ARGV"
 	}
 }
 
+// repairUsageLine is the grammar the wrapper-only repair verb answers with. It is
+// written here independently of bin/bench.sh, so a reworded or deleted help arm reds this
+// test rather than passing against a re-derived expectation.
+const repairUsageLine = "usage: bench repair [--prune]\n"
+
+// TestShellWrapperRepairAnswersItsOwnHelp holds repair to the help contract every
+// Go-implemented verb keeps: `--help` prints the grammar on stdout at exit 0. The
+// unknown-argument leg runs beside it, because the help arm sits in front of the
+// usage-error arm and must not take that arm's cases with it. Neither leg resolves a
+// binary, so the case needs no dist/bench.
+func TestShellWrapperRepairAnswersItsOwnHelp(t *testing.T) {
+	root := t.TempDir()
+	kit := filepath.Join(root, "kit")
+	copyExecutable(t, filepath.Join("..", "..", "bin", "bench.sh"), filepath.Join(kit, "bin", "bench.sh"))
+
+	run := func(args ...string) (string, string, int) {
+		t.Helper()
+		cmd := exec.Command("bash", append([]string{filepath.Join(kit, "bin", "bench.sh"), "repair"}, args...)...)
+		env := capability.WithoutEnvironment(os.Environ(), runbinary.Env)
+		for _, name := range []string{"BENCH_KIT", "BENCH_WRAPPER"} {
+			env = capability.WithoutEnvironment(env, name)
+		}
+		cmd.Env = append(env, "BENCH_HOME="+filepath.Join(root, "home"), "BENCH_KIT="+kit)
+		var stdout, stderr bytes.Buffer
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		code := 0
+		if err := cmd.Run(); err != nil {
+			exit, ok := err.(*exec.ExitError)
+			if !ok {
+				t.Fatalf("bench.sh repair %v: %v", args, err)
+			}
+			code = exit.ExitCode()
+		}
+		return stdout.String(), stderr.String(), code
+	}
+
+	for _, flag := range []string{"--help", "-h", "help"} {
+		stdout, stderr, code := run(flag)
+		if code != 0 || stdout != repairUsageLine || stderr != "" {
+			t.Errorf("repair %s = (exit %d, stdout %q, stderr %q), want exit 0 and %q on stdout", flag, code, stdout, stderr, repairUsageLine)
+		}
+	}
+
+	stdout, stderr, code := run("--bogus")
+	if code != 2 || stdout != "" || stderr != repairUsageLine {
+		t.Fatalf("repair --bogus = (exit %d, stdout %q, stderr %q), want exit 2 and %q on stderr", code, stdout, stderr, repairUsageLine)
+	}
+}
+
 func TestShellWrapperOfflineMissingBinarySuppressesRepairBeforeStartingNode(t *testing.T) {
 	root := t.TempDir()
 	kit := filepath.Join(root, "kit")
