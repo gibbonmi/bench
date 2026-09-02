@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
@@ -155,13 +156,16 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 				gate.Execute(context.Background(), root, io.Discard, io.Discard)
 				close(done)
 			}()
-			deadline := time.Now().Add(5 * time.Second)
+			// Both waits are handshakes with the fixture gate, which holds no window of
+			// its own, so each takes the floor a zero bound derives.
+			lockWindow := bounds.TestDeadline(0)
+			deadline := time.Now().Add(lockWindow)
 			for {
 				if _, err := os.Stat(started); err == nil {
 					break
 				}
 				if time.Now().After(deadline) {
-					t.Fatal("gate fixture did not acquire its lock")
+					t.Fatal(bounds.TestTimeoutVerdict("the gate fixture to acquire its lock", lockWindow))
 				}
 				time.Sleep(10 * time.Millisecond)
 			}
@@ -169,8 +173,8 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 				_ = os.WriteFile(release, nil, 0o600)
 				select {
 				case <-done:
-				case <-time.After(5 * time.Second):
-					t.Error("gate fixture did not release its lock")
+				case <-time.After(lockWindow):
+					t.Error(bounds.TestTimeoutVerdict("the gate fixture to release its lock", lockWindow))
 				}
 			})
 			return root, Query{}

@@ -79,6 +79,16 @@ func TestDeadline(inner time.Duration) time.Duration {
 	return inner + half + TestDeadlineFloor
 }
 
+// TestTimeoutVerdict renders what a wait prints when the window TestDeadline gave it runs
+// out. The verdict names the wait and the exhausted window, so a red run reads as a
+// timeout and not as a failed assertion, and the reader sees how long the wait allowed
+// without opening the test file. The renderer takes no *testing.T, so this package stays
+// free of the testing import and a helper process with no test of its own reports the
+// same verdict.
+func TestTimeoutVerdict(wait string, window time.Duration) string {
+	return "timeout: waited " + window.String() + " for " + wait
+}
+
 func Offline() bool { return os.Getenv("BENCH_OFFLINE") == "1" }
 
 func Context(parent context.Context, limit time.Duration) (context.Context, context.CancelFunc) {

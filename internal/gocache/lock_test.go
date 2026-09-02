@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // The helper-process protocol. A lock row needs two processes, because a POSIX record lock
@@ -24,8 +26,10 @@ const (
 )
 
 // helperWait bounds every wait a lock row makes on the second process. A row that hangs
-// reports nothing, so the deadline turns a lost signal into a named failure.
-const helperWait = 20 * time.Second
+// reports nothing, so the deadline turns a lost signal into a named failure. A sentinel
+// handshake between two processes holds no window of its own, so the wait takes the floor
+// the derivation gives a zero bound.
+var helperWait = bounds.TestDeadline(0)
 
 // TestGocacheHelperProcess is the second process every lock row drives, inert unless the
 // parent selects it through the role environment variable. It is a test function so the
@@ -46,7 +50,9 @@ func TestGocacheHelperProcess(t *testing.T) {
 		if err := os.WriteFile(os.Getenv(helperReadyEnv), []byte("held\n"), 0o600); err != nil {
 			os.Exit(1)
 		}
-		waitForFile(os.Getenv(helperStopEnv))
+		if verdict := waitForFile(os.Getenv(helperStopEnv), helperWait); verdict != "" {
+			fmt.Fprintln(os.Stderr, verdict)
+		}
 		_ = holder.Release()
 		os.Exit(0)
 	default:
@@ -64,13 +70,19 @@ func cacheDir(home string) string {
 	return dir
 }
 
-// waitForFile polls until path exists or helperWait runs out. It is the helper's half of
-// the sentinel handshake; a lost signal ends the helper instead of leaking it.
-func waitForFile(path string) {
-	deadline := time.Now().Add(helperWait)
-	for time.Now().Before(deadline) {
+// waitForFile polls until path exists or the window runs out. It is the helper's half of
+// the sentinel handshake; a lost signal ends the helper instead of leaking it. The helper
+// process holds no *testing.T, so the wait answers the timeout verdict on expiry and the
+// empty string on arrival, and its caller reports it. The poll interval stays a literal:
+// it paces the loop and bounds nothing.
+func waitForFile(path string, window time.Duration) string {
+	deadline := time.Now().Add(window)
+	for {
 		if _, err := os.Stat(path); err == nil {
-			return
+			return ""
+		}
+		if !time.Now().Before(deadline) {
+			return bounds.TestTimeoutVerdict("the sentinel file "+path, window)
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
@@ -126,16 +138,10 @@ func startHolderProcess(t *testing.T, home string) func() {
 		_ = command.Wait()
 	}
 	t.Cleanup(release)
-	deadline := time.Now().Add(helperWait)
-	for {
-		if _, err := os.Stat(ready); err == nil {
-			return release
-		}
-		if !time.Now().Before(deadline) {
-			t.Fatalf("holder process did not signal a hold within %s", helperWait)
-		}
-		time.Sleep(10 * time.Millisecond)
+	if verdict := waitForFile(ready, helperWait); verdict != "" {
+		t.Fatalf("holder process did not signal a hold: %s", verdict)
 	}
+	return release
 }
 
 // L05: two holders take the shared lock at the same time, so the bound never serializes two
@@ -159,7 +165,25 @@ func TestTwoHoldersAcquireTheSharedLockAtTheSameTime(t *testing.T) {
 			t.Fatalf("second holder = %v, want a shared lock beside the first", err)
 		}
 	case <-time.After(helperWait):
-		t.Fatalf("second holder did not acquire the shared lock within %s", helperWait)
+		t.Fatal(bounds.TestTimeoutVerdict("the second holder to acquire the shared lock", helperWait))
+	}
+}
+
+// A migrated wait reports a timeout instead of returning silently. A zero window expires
+// on the first pass, so the row observes the verdict with no wall-clock wait, and it
+// grades the two halves the reader of a red run needs: the wait's name and its window.
+func TestWaitForFileAnswersTheTimeoutVerdictOnAnExpiredWindow(t *testing.T) {
+	missing := filepath.Join(t.TempDir(), "never-written")
+	verdict := waitForFile(missing, 0)
+	if !strings.Contains(verdict, missing) || !strings.Contains(verdict, "0s") {
+		t.Fatalf("expired waitForFile = %q, want the wait name %q and the window", verdict, missing)
+	}
+	present := filepath.Join(t.TempDir(), "written")
+	if err := os.WriteFile(present, []byte("ready\n"), 0o600); err != nil {
+		t.Fatalf("write sentinel: %v", err)
+	}
+	if arrived := waitForFile(present, helperWait); arrived != "" {
+		t.Fatalf("waitForFile over an existing sentinel = %q, want no verdict", arrived)
 	}
 }
 

@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/gocache"
 )
 
@@ -190,16 +191,19 @@ func readPID(t *testing.T, path string) int {
 	return pid
 }
 
+// requireProcessExit waits out the grace a cancelled builder group has to exit, so the
+// window derives from that grace rather than from a literal a loaded machine can beat.
 func requireProcessExit(t *testing.T, pid int) {
 	t.Helper()
-	deadline := time.Now().Add(2 * time.Second)
+	window := bounds.TestDeadline(BuilderCancelGrace)
+	deadline := time.Now().Add(window)
 	for time.Now().Before(deadline) {
 		if err := syscall.Kill(pid, 0); errors.Is(err, syscall.ESRCH) {
 			return
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	t.Fatalf("process %d survived builder return", pid)
+	t.Fatal(bounds.TestTimeoutVerdict(fmt.Sprintf("process %d to exit after the builder returned", pid), window))
 }
 
 // C09: the private build's environment carries the Bench build cache entry, so the

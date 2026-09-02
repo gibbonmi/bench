@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -59,11 +60,13 @@ func TestSubshellSignalsLeaveAReclaimableLease(t *testing.T) {
 			requireTest(t, cmd.Process.Signal(signalValue) == nil, "signal subshell helper with %s", signalValue)
 			done := make(chan error, 1)
 			go func() { done <- cmd.Wait() }()
+			// The signal is already delivered, so this exit contains no window of its own.
+			exitWindow := bounds.TestDeadline(0)
 			select {
 			case err := <-done:
 				requireTest(t, err == nil, "subshell signal helper: %v", err)
-			case <-time.After(5 * time.Second):
-				t.Fatal("subshell signal helper did not exit")
+			case <-time.After(exitWindow):
+				t.Fatal(bounds.TestTimeoutVerdict("the subshell signal helper to exit", exitWindow))
 			}
 
 			assignments, err := intent.Assignments(root)
@@ -86,9 +89,13 @@ func writeSubshellScript(t *testing.T, body string) string {
 	return path
 }
 
+// waitForSubshellFile waits out a subshell's start-up handshake. The handshake contains
+// no window of its own, so the wait takes the floor a zero bound derives. The tick stays
+// a literal: it paces the poll and bounds nothing.
 func waitForSubshellFile(t *testing.T, path string) {
 	t.Helper()
-	deadline := time.After(5 * time.Second)
+	window := bounds.TestDeadline(0)
+	deadline := time.After(window)
 	tick := time.NewTicker(10 * time.Millisecond)
 	defer tick.Stop()
 	for {
@@ -97,7 +104,7 @@ func waitForSubshellFile(t *testing.T, path string) {
 		}
 		select {
 		case <-deadline:
-			t.Fatalf("subshell did not create readiness file %s", path)
+			t.Fatal(bounds.TestTimeoutVerdict("the subshell to create its readiness file "+path, window))
 		case <-tick.C:
 		}
 	}

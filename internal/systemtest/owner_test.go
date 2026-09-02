@@ -18,6 +18,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 type executableIdentity struct {
@@ -264,13 +266,21 @@ func (o *systemOwner) interruptProcessGroup() (int, error) {
 	if err != nil {
 		return 0, err
 	}
+	// The child writes its descendant's pid and then idles, so this wait covers a start-up
+	// handshake with no window of its own.
+	pidWindow := bounds.TestDeadline(0)
 	var data []byte
-	deadline := time.Now().Add(2 * time.Second)
+	deadline := time.Now().Add(pidWindow)
 	for len(data) == 0 && time.Now().Before(deadline) {
 		data, _ = os.ReadFile(pidFile)
 		if len(data) == 0 {
 			time.Sleep(10 * time.Millisecond)
 		}
+	}
+	if len(data) == 0 {
+		_ = syscall.Kill(-pgid, syscall.SIGKILL)
+		_ = cmd.Wait()
+		return 0, errors.New(bounds.TestTimeoutVerdict("the interrupt child to write its pid file "+pidFile, pidWindow))
 	}
 	pid, err := strconv.Atoi(strings.TrimSpace(string(data)))
 	if err != nil {
@@ -283,12 +293,14 @@ func (o *systemOwner) interruptProcessGroup() (int, error) {
 	}
 	done := make(chan error, 1)
 	go func() { done <- cmd.Wait() }()
+	// SIGINT is already delivered, so the exit this waits for contains no window of its own.
+	exitWindow := bounds.TestDeadline(0)
 	select {
 	case <-done:
-	case <-time.After(2 * time.Second):
+	case <-time.After(exitWindow):
 		_ = syscall.Kill(-pgid, syscall.SIGKILL)
 		<-done
-		return 0, errors.New("process group ignored interrupt")
+		return 0, errors.New(bounds.TestTimeoutVerdict("the process group to exit on SIGINT", exitWindow))
 	}
 	return pid, nil
 }

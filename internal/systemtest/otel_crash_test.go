@@ -3,11 +3,13 @@
 package systemtest
 
 import (
+	"fmt"
 	"path/filepath"
 	"syscall"
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 )
 
@@ -58,10 +60,13 @@ func TestOtelCrashKeepsStartedPhaseLine(t *testing.T) {
 }
 
 // awaitStartedSpan blocks until the record below home holds a started span of the given
-// name. It reads leniently, because the run still appends while the wait reads.
+// name. It reads leniently, because the run still appends while the wait reads. The
+// window contains one gate run's start-up: the run reads git worktree state before it
+// enters the phase table, so that read is the longest bound the wait has to outlast.
 func awaitStartedSpan(t *testing.T, home, name string) {
 	t.Helper()
-	deadline := time.Now().Add(60 * time.Second)
+	window := bounds.TestDeadline(bounds.WorktreeListTimeout)
+	deadline := time.Now().Add(window)
 	for time.Now().Before(deadline) {
 		if matches, _ := filepath.Glob(filepath.Join(home, "otel", "*", "traces.jsonl")); len(matches) == 1 {
 			for _, span := range readRecordLines(t, home, false) {
@@ -72,5 +77,5 @@ func awaitStartedSpan(t *testing.T, home, name string) {
 		}
 		time.Sleep(25 * time.Millisecond)
 	}
-	t.Fatalf("no %s span appeared in the record below %s", name, home)
+	t.Fatal(bounds.TestTimeoutVerdict(fmt.Sprintf("a started %s span in the record below %s", name, home), window))
 }

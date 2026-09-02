@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
@@ -280,13 +281,16 @@ func TestCancelledProspectiveProducerLeavesNoBundle(t *testing.T) {
 	}()
 	waitForProspectiveBarrier(t, ready, result)
 	cancel()
+	// The cancelled producer's process group gets the runner's cancel grace to exit, so
+	// this wait derives from that grace through the helper the failure-outcome rows use.
+	returnWindow := failureOutcomeDeadline()
 	select {
 	case got := <-result:
 		if got.ActionExit == 0 {
 			t.Fatalf("cancelled prospective result = %#v, want refusal", got)
 		}
-	case <-time.After(5 * time.Second):
-		t.Fatal("cancelled prospective producer did not return")
+	case <-time.After(returnWindow):
+		t.Fatal(bounds.TestTimeoutVerdict("the cancelled prospective producer to return", returnWindow))
 	}
 	requireNoProspectiveBundles(t, tempRoot)
 }
@@ -354,9 +358,13 @@ func inertProspectiveSelection(_ context.Context, source string) (*runbinary.Sel
 	return &runbinary.Selection{Path: "/bin/true", SourceRoot: source}, nil
 }
 
+// waitForProspectiveBarrier waits out the producer's start-up handshake, which contains no
+// window of its own and so takes the floor a zero bound derives. The tick stays a literal:
+// it paces the poll and bounds nothing.
 func waitForProspectiveBarrier(t *testing.T, path string, result <-chan Result) {
 	t.Helper()
-	deadline := time.NewTimer(5 * time.Second)
+	window := bounds.TestDeadline(0)
+	deadline := time.NewTimer(window)
 	defer deadline.Stop()
 	ticker := time.NewTicker(10 * time.Millisecond)
 	defer ticker.Stop()
@@ -365,7 +373,7 @@ func waitForProspectiveBarrier(t *testing.T, path string, result <-chan Result) 
 		case got := <-result:
 			t.Fatalf("prospective producer returned before cancellation barrier: %#v", got)
 		case <-deadline.C:
-			t.Fatal("prospective producer did not reach cancellation barrier")
+			t.Fatal(bounds.TestTimeoutVerdict("the prospective producer to reach its cancellation barrier", window))
 		case <-ticker.C:
 			if data, err := os.ReadFile(path); err == nil && string(data) == "ready" {
 				return

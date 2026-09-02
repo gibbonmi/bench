@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/poolkey"
 )
@@ -149,6 +150,8 @@ func TestWriterRefusesANonRegularRecordFile(t *testing.T) {
 
 	answered := make(chan error, 1)
 	go func() { answered <- NewWriter(home, root).Append([]byte(`{"resourceSpans":[]}`)) }()
+	// The append decides by shape and opens nothing, so this wait contains no window.
+	window := bounds.TestDeadline(0)
 	select {
 	case err := <-answered:
 		if err == nil {
@@ -157,8 +160,8 @@ func TestWriterRefusesANonRegularRecordFile(t *testing.T) {
 		if !strings.Contains(err.Error(), "not a regular file") {
 			t.Fatalf("error = %v, want a non-regular-file refusal", err)
 		}
-	case <-time.After(10 * time.Second):
-		t.Fatal("append blocked on the FIFO at the record path")
+	case <-time.After(window):
+		t.Fatal(bounds.TestTimeoutVerdict("the append to answer at a FIFO record path", window))
 	}
 }
 

@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 )
 
@@ -234,8 +235,12 @@ func startArtifactLand(t *testing.T, root, home, tally, trees, ready, release st
 	return cmd, stdout, stderr, done
 }
 
+// awaitArtifactBarrier waits for a landing subprocess to open its prospective gate
+// barrier. The subprocess reads git worktree state on the way there, so that read is the
+// longest bound this wait contains.
 func awaitArtifactBarrier(t *testing.T, ready string, done <-chan error, stdout, stderr *bytes.Buffer) {
 	t.Helper()
+	window := bounds.TestDeadline(bounds.WorktreeListTimeout)
 	observed := make(chan error, 1)
 	go func() {
 		file, err := os.Open(ready)
@@ -258,8 +263,8 @@ func awaitArtifactBarrier(t *testing.T, ready string, done <-chan error, stdout,
 		}
 	case err := <-done:
 		t.Fatalf("prospective owner ended before the artifact barrier: %v, stdout=%q, stderr=%q", err, stdout.String(), stderr.String())
-	case <-time.After(20 * time.Second):
-		t.Fatal("prospective owner did not reach the artifact barrier")
+	case <-time.After(window):
+		t.Fatal(bounds.TestTimeoutVerdict("the prospective owner to reach the artifact barrier", window))
 	}
 }
 
