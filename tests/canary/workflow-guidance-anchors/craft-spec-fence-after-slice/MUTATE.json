@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/SKILL.md",
+    "old": "The author writes the fence section after the ticket slice, from the union of the tickets' `Writes:` lines.",
+    "new": "The author writes the fence section before the ticket slice."
+  }
+]

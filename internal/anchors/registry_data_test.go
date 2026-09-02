@@ -1223,3 +1223,59 @@ func TestCraftReviewFindingDisciplineAnchorsRedOnRemoval(t *testing.T) {
 		},
 	}.check(t)
 }
+
+// TestFenceOrderAndClaimWordAnchorsRedOnRemoval holds the three rules that keep a spec's
+// fence and its reader sweep honest. A fence derived before the slice omits the registry
+// files the tickets name. A Won't handle that paraphrases an anchored sentence loses the
+// bytes the sentence keeps. A reader sweep blind to the shipped-surface claim words
+// leaves the merge gate to find the claim. Each section, needle, and diagnostic is
+// written here independently of the registry.
+func TestFenceOrderAndClaimWordAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		skill    = ".agents/skills/bench-craft-spec/SKILL.md"
+		mapRules = ".agents/skills/bench-craft-spec/references/map-discipline.md"
+		slicing  = "Slicing a build for delegates"
+		locks    = "Before the map locks"
+	)
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    skill,
+				section: slicing,
+				needle:  "The author writes the fence section after the ticket slice, from the union of the tickets' `Writes:` lines.",
+				want:    ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates dropped the fence section the author writes after the ticket slice from the union of the tickets' Writes: lines",
+			},
+			{
+				file:    skill,
+				section: slicing,
+				needle:  "A Won't handle over an anchored sentence quotes the bytes it keeps.",
+				want:    ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates dropped the quoted-bytes rule for a Won't handle over an anchored sentence",
+			},
+			{
+				file:    mapRules,
+				section: locks,
+				needle:  "The reader sweep names the shipped-surface claim words, because `package-core-guard` reds a claim word beside a repo-only path.",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the shipped-surface claim words from the reader sweep",
+			},
+		},
+	}.check(t)
+}
+
+// TestSteProseLabelRuleAnchorRedsOnRemoval holds the second half of the label rule the
+// prose parser applies. A terminated label keeps its own paragraph only when it names a
+// closed template field. A reference that states the no-terminator half alone contradicts
+// that parser. The needle and the diagnostic are written here independently of the
+// registry.
+func TestSteProseLabelRuleAnchorRedsOnRemoval(t *testing.T) {
+	anchorHarness{
+		group: AfterSpecAuthorization,
+		rules: []anchorRule{
+			{
+				file:   ".agents/skills/bench-craft-spec/references/ste-prose.md",
+				needle: "A terminated label is a field line only when it names `Blocked by`, `Covers`, `Occurrence`, `Occurrences`, `Source`, `Sources`, or `Writes`.",
+				want:   ".agents/skills/bench-craft-spec/references/ste-prose.md dropped the template field-name clause beside the no-terminator clause",
+			},
+		},
+	}.check(t)
+}

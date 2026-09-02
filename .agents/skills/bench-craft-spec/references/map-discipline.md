@@ -25,6 +25,7 @@ the explore reads, the fence rules, and the review rubric.
 - The reader sweep lists each helper that a named consumer calls directly.
 - A deeper callee joins the reader sweep only when the callee reads the decision fact.
 - Each shared reader in the reader sweep takes an exact ownership fence.
+- The reader sweep names the shipped-surface claim words, because `package-core-guard` reds a claim word beside a repo-only path.
 
 ## Per row
 
