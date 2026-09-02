@@ -225,7 +225,7 @@ covers only the anchor bytes, so the line rises one step above the code tickets.
 - `internal/conformance/subcommand_routing_test.go`
 - `projects/benchkit.md`
 
-The fence is the union of the nine tickets' `Writes:` lines, closed by
+The fence is the union of the ten tickets' `Writes:` lines, closed by
 `bench preflight build` over the fixture and registry pins.
 
 ## Out of scope

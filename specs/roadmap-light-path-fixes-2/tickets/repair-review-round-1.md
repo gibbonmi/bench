@@ -65,7 +65,7 @@ findings 1, 2; and the models_test.go disposition).** All in
 
 - [ ] `TestWaitDeadlineLiteralsBites` covers all three spellings (two
       original, one new), each with a red and a green case.
-- [ ] The full dev-tier live-tree run is green with the two migrated sites
+- [ ] The full dev-tier live-tree run is green with the migrated site
       included.
 - [ ] `TestFindings` covers a terminated `Supports:` and a terminated
       `Drift:` line producing no finding.
