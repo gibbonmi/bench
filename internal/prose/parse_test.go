@@ -2,6 +2,7 @@ package prose
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 )
@@ -194,6 +195,14 @@ func TestFindings(t *testing.T) {
 			doc:  "Writes: " + words(30) + "\nBlocked by: none\n",
 		},
 		{
+			name: "LP11 twenty terminated Supports lines are twenty paragraphs",
+			doc:  repeatLine("Supports: #1 through #3 and the factual premises for #4.", 20),
+		},
+		{
+			name: "LP11 twenty terminated Drift lines are twenty paragraphs",
+			doc:  repeatLine("Drift: re-verify if the cited upstream sources move.", 20),
+		},
+		{
 			name: "C3 a double-backtick span with an inner backtick is one token",
 			doc:  "``a ` b`` " + words(24) + ".\n",
 		},
@@ -213,5 +222,51 @@ func TestFindings(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// steProseRulePath is the rule file that names the closed template-field set for an author.
+// The test reads it by a relative path, as internal/tickets/example_test.go reads its own
+// rule file.
+const steProseRulePath = "../../.agents/skills/bench-craft-spec/references/ste-prose.md"
+
+// templateFieldClause opens the rule file's one sentence about a terminated label. The
+// prefix locates the sentence, and the names inside it are the fact under test.
+const templateFieldClause = "A terminated label is a field line only when it names "
+
+// TestTemplateFieldNamesMatchTheRuleFile holds the parser's closed list and the rule file's
+// named list together. The parser decides what a terminated field line is, and the rule file
+// tells an author the same thing. A name in one list and not in the other makes the
+// reference lie about the code, in whichever direction the two drift.
+func TestTemplateFieldNamesMatchTheRuleFile(t *testing.T) {
+	doc, err := os.ReadFile(steProseRulePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	clause := ""
+	for _, line := range strings.Split(string(doc), "\n") {
+		if strings.HasPrefix(line, templateFieldClause) {
+			clause = line
+			break
+		}
+	}
+	if clause == "" {
+		t.Fatalf("%s carries no line that opens %q", steProseRulePath, templateFieldClause)
+	}
+	named := map[string]bool{}
+	for i, span := range strings.Split(clause, "`") {
+		if i%2 == 1 {
+			named[strings.ToLower(span)] = true
+		}
+	}
+	for name := range templateFields {
+		if !named[name] {
+			t.Errorf("templateFields names %q; %s does not", name, steProseRulePath)
+		}
+	}
+	for name := range named {
+		if !templateFields[name] {
+			t.Errorf("%s names %q; templateFields does not", steProseRulePath, name)
+		}
 	}
 }

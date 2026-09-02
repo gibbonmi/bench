@@ -31,18 +31,21 @@ var abbreviations = map[string]bool{
 	"cf.":  true,
 }
 
-// templateFields are the label prefixes of the ticket header and the roadmap ledger, in
-// lowercase and with one space between words. Such a field keeps its own paragraph even
-// when it ends with a period, because the template repeats the field and the repetition
-// is not one deep paragraph. The list is closed: the rule file names these fields, and a
-// new template field needs a rule edit and an edit here.
+// templateFields are the label prefixes of the ticket header, the roadmap ledger, and the
+// decision map's evidence ledger, in lowercase and with one space between words. Such a
+// field keeps its own paragraph even when it ends with a period, because the template
+// repeats the field and the repetition is not one deep paragraph. The list is closed: the
+// rule file names these fields, and a new template field needs a rule edit and an edit
+// here. TestTemplateFieldNamesMatchTheRuleFile holds the two halves together.
 var templateFields = map[string]bool{
 	"blocked by":  true,
 	"covers":      true,
+	"drift":       true,
 	"occurrence":  true,
 	"occurrences": true,
 	"source":      true,
 	"sources":     true,
+	"supports":    true,
 	"writes":      true,
 }
 

@@ -1,7 +1,7 @@
 # Repair review round 1
 
 Blocked by: state-the-census-read-the-changelog-rule-and-the-review-base.md
-Writes: internal/conformance/wait_deadline_literal_test.go, internal/gate/run_failure_outcomes_test.go, internal/gate/phases_test.go, internal/prose/parse.go, internal/prose/parse_test.go, .agents/skills/bench-craft-spec/references/ste-prose.md, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, specs/roadmap-light-path-fixes-2/spec.md
+Writes: internal/conformance/wait_deadline_literal_test.go, internal/gate/run_failure_outcomes_test.go, internal/prose/parse.go, internal/prose/parse_test.go, .agents/skills/bench-craft-spec/references/ste-prose.md, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, tests/canary/workflow-guidance-anchors/, specs/roadmap-light-path-fixes-2/spec.md
 Covers: LP9, LP11, LP1, LP2, LP3
 
 Accepted repairs from the initial review round
@@ -11,13 +11,27 @@ Accepted repairs from the initial review round
 
 **Repair A — widen the wait-deadline sweep's spelling set (Coverage finding 1).**
 `checkWaitDeadlineLiterals` in `internal/conformance/wait_deadline_literal_test.go`
-recognizes only `time.After` and `time.Now().Add`. Add `time.NewTimer(d)`,
-`context.WithTimeout(ctx, d)`, and `time.AfterFunc(d, f)` as the same
-deadline-argument shape, sharing `literalDeadline` and the `derivedDeadline`
-stop rule. Then migrate the two sites the finding named:
-`internal/gate/run_failure_outcomes_test.go:34` and
-`internal/gate/phases_test.go:103`, deriving each from `bounds.TestDeadline`.
-Add a bite case per new spelling.
+recognized only `time.After` and `time.Now().Add`. Add `time.NewTimer(d)` as
+the same deadline-argument shape. Share `literalDeadline` and the
+`derivedDeadline` stop rule. Derive `internal/gate/prospective_owner_test.go:367`
+from `bounds.TestDeadline` — the site this diff itself migrated, the
+finding's actual headline case.
+
+Narrowed during repair, reviewer sign-off 2026-09-02: `context.WithTimeout`
+and `time.AfterFunc` do not widen. The finding's named
+`run_failure_outcomes_test.go:34` site spells `context.WithTimeout(ctx,
+time.Second)`. `time.Second` is a named constant, not a numeric literal, so
+`containsNumericLiteral` never saw it. The finding's characterization of
+that site was wrong. `context.WithTimeout`'s other live sites sit in
+`internal/guards/guards_test.go`. This spec's own Won't-handle already
+covers guards subjects under test.
+
+`time.AfterFunc`'s one live site, `internal/gate/phases_test.go:103`, is a
+scheduled-callback delay before a fixture cancels a running phase. It is
+not a deadline a wait outlasts. Migrating it broke
+`TestFixturePhaseCancelledRunExitsOneHundredThirty`: the derived window let
+the phase finish first. `run_failure_outcomes_test.go:34` still migrates to
+`bounds.TestDeadline(0)`, a real wall-clock guess, in fence and harmless.
 
 **Repair B — close the `templateFields` gap (Standards finding 3, Coverage
 finding 2).** Add `supports` and `drift` to the closed `templateFields`
@@ -49,8 +63,8 @@ findings 1, 2; and the models_test.go disposition).** All in
 
 ## Acceptance
 
-- [ ] `TestWaitDeadlineLiteralsBites` covers all five spellings (two
-      original, three new), each with a red and a green case.
+- [ ] `TestWaitDeadlineLiteralsBites` covers all three spellings (two
+      original, one new), each with a red and a green case.
 - [ ] The full dev-tier live-tree run is green with the two migrated sites
       included.
 - [ ] `TestFindings` covers a terminated `Supports:` and a terminated
@@ -63,5 +77,5 @@ findings 1, 2; and the models_test.go disposition).** All in
 - [ ] `bench preflight review roadmap-light-path-fixes-2` is green on the
       repaired tip.
 - [ ] Self-probe: revert the `time.NewTimer` migration at
-      `run_failure_outcomes_test.go:34`, and report the sweep check red with
+      `prospective_owner_test.go:367`, and report the sweep check red with
       that file named.

@@ -1273,7 +1273,7 @@ func TestSteProseLabelRuleAnchorRedsOnRemoval(t *testing.T) {
 		rules: []anchorRule{
 			{
 				file:   ".agents/skills/bench-craft-spec/references/ste-prose.md",
-				needle: "A terminated label is a field line only when it names `Blocked by`, `Covers`, `Occurrence`, `Occurrences`, `Source`, `Sources`, or `Writes`.",
+				needle: "A terminated label is a field line only when it names `Blocked by`, `Covers`, `Drift`, `Occurrence`, `Occurrences`, `Source`, `Sources`, `Supports`, or `Writes`.",
 				want:   ".agents/skills/bench-craft-spec/references/ste-prose.md dropped the template field-name clause beside the no-terminator clause",
 			},
 		},
@@ -1362,13 +1362,13 @@ func TestCensusChangelogAndReviewBaseAnchorsRedOnRemoval(t *testing.T) {
 				file:    finalCheck,
 				section: exitHandoff,
 				needle:  "The phase close reads the assignment census record before `bench worktree land` removes it, and it carries the per-verb breakdown into the close.",
-				want:    ".agents/commands/bench-final-check.md post-merge tail dropped the census read that precedes the landing's removal of the record",
+				want:    ".agents/commands/bench-final-check.md Exit handoff dropped the census read that precedes the landing's removal of the record",
 			},
 			{
 				file:    finalCheck,
 				section: exitHandoff,
 				needle:  "A light-path fix lands before a spec's final merge only when its `CHANGELOG.md` entry sits under a heading no sibling touches.",
-				want:    ".agents/commands/bench-final-check.md gate-then-commit path dropped the light-path CHANGELOG-heading rule as a rule",
+				want:    ".agents/commands/bench-final-check.md Exit handoff dropped the light-path CHANGELOG-heading rule as a rule",
 			},
 			{
 				file:    ".agents/commands/bench-review-implementation.md",

@@ -37,7 +37,7 @@ func checkWaitDeadlineLiterals(root string) []string {
 				return nil
 			}
 			body := readIfExists(path)
-			if !strings.Contains(body, "time.After(") && !strings.Contains(body, "time.Now().Add(") {
+			if !mentionsWaitDeadline(body) {
 				return nil
 			}
 			diags = append(diags, waitDeadlineLiteralDiags(path, slashRel(root, path), body)...)
@@ -47,10 +47,39 @@ func checkWaitDeadlineLiterals(root string) []string {
 	return uniqueSorted(diags)
 }
 
-// waitDeadlineLiteralDiags reports each literal deadline in one test file. Two spellings
-// carry a deadline: time.After feeds a select's timeout arm, and time.Now().Add fixes the
-// instant a poll loop gives up at. A negative offset from now is a backdated fixture
-// timestamp, never a deadline, so it is not a wait at all.
+// waitDeadlineSpellings is the closed set of calls that open a wait, and the index of the
+// deadline argument in each. The set drives both the file prefilter and the AST test, so
+// one edit adds a spelling to both.
+var waitDeadlineSpellings = []struct {
+	name     string
+	pkg      string
+	fun      string
+	args     int
+	deadline int
+}{
+	{name: "time.After", pkg: "time", fun: "After", args: 1, deadline: 0},
+	{name: "time.NewTimer", pkg: "time", fun: "NewTimer", args: 1, deadline: 0},
+}
+
+// mentionsWaitDeadline reports whether a file spells any wait at all. The walk parses only
+// the files that pass, so the whole tree costs one substring scan per file.
+func mentionsWaitDeadline(body string) bool {
+	if strings.Contains(body, "time.Now().Add(") {
+		return true
+	}
+	for _, spelling := range waitDeadlineSpellings {
+		if strings.Contains(body, spelling.name+"(") {
+			return true
+		}
+	}
+	return false
+}
+
+// waitDeadlineLiteralDiags reports each literal deadline in one test file. Three spellings
+// carry a deadline: time.After feeds a select's timeout arm, time.NewTimer holds that same
+// arm behind a stoppable handle, and time.Now().Add fixes the instant a poll loop gives up
+// at. A negative offset from now is a backdated fixture timestamp, never a deadline, so it
+// is not a wait at all.
 func waitDeadlineLiteralDiags(path, rel, body string) []string {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, path, body, 0)
@@ -78,11 +107,15 @@ func waitDeadlineLiteralDiags(path, rel, body string) []string {
 			return true
 		}
 		call, ok := node.(*ast.CallExpr)
-		if !ok || polls[call] || len(call.Args) != 1 {
+		if !ok || polls[call] {
 			return true
 		}
-		deadline, spelling := call.Args[0], waitDeadlineSpelling(call)
-		if spelling == "" || !literalDeadline(deadline) {
+		spelling, index := waitDeadlineSpelling(call)
+		if spelling == "" {
+			return true
+		}
+		deadline := call.Args[index]
+		if !literalDeadline(deadline) {
 			return true
 		}
 		diags = append(diags, fmt.Sprintf(
@@ -93,19 +126,27 @@ func waitDeadlineLiteralDiags(path, rel, body string) []string {
 	return diags
 }
 
-// waitDeadlineSpelling names the wait a call opens, or "" when the call is neither.
-func waitDeadlineSpelling(call *ast.CallExpr) string {
+// waitDeadlineSpelling names the wait a call opens and the index of its deadline argument,
+// or "" when the call opens no wait. A package-qualified call reads from the closed
+// spelling set; time.Now().Add is the one spelling whose receiver is itself a call, so it
+// is matched apart.
+func waitDeadlineSpelling(call *ast.CallExpr) (string, int) {
 	selector, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok {
-		return ""
+		return "", 0
 	}
-	if pkg, ok := selector.X.(*ast.Ident); ok && pkg.Name == "time" && selector.Sel.Name == "After" {
-		return "time.After"
+	if pkg, ok := selector.X.(*ast.Ident); ok {
+		for _, spelling := range waitDeadlineSpellings {
+			if pkg.Name == spelling.pkg && selector.Sel.Name == spelling.fun && len(call.Args) == spelling.args {
+				return spelling.name, spelling.deadline
+			}
+		}
+		return "", 0
 	}
-	if selector.Sel.Name != "Add" || !isTimeNow(selector.X) || negativeOffset(call.Args[0]) {
-		return ""
+	if selector.Sel.Name != "Add" || len(call.Args) != 1 || !isTimeNow(selector.X) || negativeOffset(call.Args[0]) {
+		return "", 0
 	}
-	return "time.Now().Add"
+	return "time.Now().Add", 0
 }
 
 func isTimeNow(expr ast.Expr) bool {
@@ -170,9 +211,10 @@ func derivedDeadline(call *ast.CallExpr) bool {
 }
 
 // TestWaitDeadlineLiteralsBites is the recorded bite proof for checkWaitDeadlineLiterals. It
-// runs against a synthetic tree, not the repo, and walks the four states that decide the
-// check: a literal deadline, a derived deadline paced by a tick, a derived deadline whose
-// inner bound is a literal, and a backdated fixture timestamp.
+// runs against a synthetic tree, not the repo, and walks the states that decide the check: a
+// literal deadline, a derived deadline paced by a tick, a derived deadline whose inner bound
+// is a literal, and a backdated fixture timestamp. Each spelling the check knows carries its
+// own red and green pair, because a spelling the walk misses reads as a clean tree.
 func TestWaitDeadlineLiteralsBites(t *testing.T) {
 	root := t.TempDir()
 	write := func(rel, body string) {
@@ -222,5 +264,17 @@ func TestWaitDeadlineLiteralsBites(t *testing.T) {
 	write(rel, "package example\n\nimport (\n\t\"testing\"\n\t\"time\"\n)\n\nfunc TestX(t *testing.T) {\n\tdeadline := time.Now().Add(30 * time.Second)\n\tif time.Now().Before(deadline) {\n\t\tt.Fatal(\"timeout\")\n\t}\n}\n")
 	if diags := checkWaitDeadlineLiterals(root); len(diags) != 1 || !strings.Contains(diags[0], "waits on duration literal 30 * time.Second in time.Now().Add") {
 		t.Fatalf("literal poll-loop deadline: want one diagnostic, got %v", diags)
+	}
+
+	// A timer holds the same select arm time.After does, behind a handle the test can stop.
+	// The spelling changes; the deadline argument does not.
+	write(rel, "package example\n\nimport (\n\t\"testing\"\n\t\"time\"\n)\n\nfunc TestX(t *testing.T) {\n\tdone := make(chan struct{})\n\ttimer := time.NewTimer(45 * time.Second)\n\tdefer timer.Stop()\n\tselect {\n\tcase <-done:\n\tcase <-timer.C:\n\t\tt.Fatal(\"timeout\")\n\t}\n}\n")
+	if diags := checkWaitDeadlineLiterals(root); len(diags) != 1 || !strings.Contains(diags[0], "waits on duration literal 45 * time.Second in time.NewTimer") {
+		t.Fatalf("literal timer deadline: want one diagnostic, got %v", diags)
+	}
+
+	write(rel, "package example\n\nimport (\n\t\"testing\"\n\t\"time\"\n\n\t\"github.com/gibbonmi/bench/internal/bounds\"\n)\n\nfunc TestX(t *testing.T) {\n\tdone := make(chan struct{})\n\ttimer := time.NewTimer(bounds.TestDeadline(0))\n\tdefer timer.Stop()\n\tselect {\n\tcase <-done:\n\tcase <-timer.C:\n\t\tt.Fatal(\"timeout\")\n\t}\n}\n")
+	if diags := checkWaitDeadlineLiterals(root); len(diags) != 0 {
+		t.Fatalf("derived timer deadline: want no diagnostics, got %v", diags)
 	}
 }

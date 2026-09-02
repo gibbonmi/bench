@@ -31,7 +31,9 @@ func TestGateRunRefusesInFlightExecution(t *testing.T) {
 	go func() { finished <- Execute(context.Background(), root, &bytes.Buffer{}, &bytes.Buffer{}) }()
 	awaitGateMarker(t, filepath.Join(root, ".gate-running"))
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	// The contended Execute refuses at once, so this window only has to outlast that
+	// refusal. A wall-clock second is a guess a loaded machine can beat.
+	ctx, cancel := context.WithTimeout(context.Background(), bounds.TestDeadline(0))
 	defer cancel()
 	var stdout, stderr bytes.Buffer
 	result := Execute(ctx, root, &stdout, &stderr)

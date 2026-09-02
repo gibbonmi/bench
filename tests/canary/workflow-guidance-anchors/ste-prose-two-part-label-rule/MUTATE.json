@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/skills/bench-craft-spec/references/ste-prose.md",
-    "old": "A terminated label is a field line only when it names `Blocked by`, `Covers`, `Occurrence`, `Occurrences`, `Source`, `Sources`, or `Writes`.",
+    "old": "A terminated label is a field line only when it names `Blocked by`, `Covers`, `Drift`, `Occurrence`, `Occurrences`, `Source`, `Sources`, `Supports`, or `Writes`.",
     "new": "A terminated label is never a field line."
   }
 ]
