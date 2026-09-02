@@ -90,7 +90,7 @@ covers only the anchor bytes, so the line rises one step above the code tickets.
 - `bounds` gains one timeout-verdict renderer beside `TestDeadline`, with no `testing` import. Every migrated wait derives its window from `TestDeadline` and prints that verdict on expiry.
 - The literal-deadline sweep generalizes the marker-wait check: same walk, same literal scanner, keyed on a test wait's deadline argument, with a poll-interval allowlist. It registers at the dev tier beside the existing row.
 - Every guidance sentence ships as five things. They are the sentence, one anchor tuple, one red-on-removal registry test, one live-mirror fixture, and a guard-table row where Go guards the behavior. The `.claude` tree is a symlink, so a ticket names `.agents` paths only.
-- The guidance tickets form one serial chain, because they share the anchor registry, its test file, and the fixture directory. The ticket graph carries every `Writes:` overlap as a blocker edge. The deadline ticket follows the status route ticket over `status_producible_test.go`, and the guidance chain follows the deadline ticket over the five registry closure files.
+- The guidance tickets form one serial chain, because they share the anchor registry, its test file, and the fixture directory. The ticket graph carries every `Writes:` overlap on bytes a ticket edits as a blocker edge. A fixture-closure-only `Writes:` entry, where the ticket edits no bytes the fixture pins, needs no such edge to a sibling naming the same entry. The deadline ticket follows the status route ticket over `status_producible_test.go`, and the guidance chain follows the deadline ticket over the five registry closure files.
 - FT115 keeps its conformance-phase headroom clause. The drain reduces the row to that clause after this spec lands, so the `Roadmap:` line omits FT115.
 - The CHANGELOG-heading constraint is a rule, not a caution. A fix whose entry shares a heading with the spec waits for the landing.
 - FT282 and FT291 share `bench-final-check.md`, so one ticket carries both faces plus the review-base sentence.
@@ -163,6 +163,8 @@ covers only the anchor bytes, so the line rises one step above the code tickets.
 
 **Won't handle** — explicit headroom for long conformance phases — the gate runner keeps its phase deadlines, and FT115 survives with that clause.
 
+**Won't handle** — a faster concurrency-failure path in `internal/models/models_test.go` — the derived wait trades failure-path speed for the anti-hang property; it still catches a real defect, slower.
+
 ## Ownership fences
 
 - `specs/roadmap-light-path-fixes-2/`
@@ -211,6 +213,7 @@ covers only the anchor bytes, so the line rises one step above the code tickets.
 - `internal/benchguard/benchguard_test.go`
 - `tests/canary/workflow-guidance-anchors/`
 - `tests/canary/docs-currency-token-diet/`
+- `tests/canary/data-handling-derivation/`
 - `tests/canary/package-core-guard/bounds-duplicate-owner`
 - `tests/canary/guidance-prose-budgets/over-budget-skill`
 - `tests/canary/line-routing/line-binding-prose-drift`
@@ -221,7 +224,7 @@ covers only the anchor bytes, so the line rises one step above the code tickets.
 - `internal/conformance/subcommand_routing_test.go`
 - `projects/benchkit.md`
 
-The fence is the union of the eight tickets' `Writes:` lines, closed by
+The fence is the union of the nine tickets' `Writes:` lines, closed by
 `bench preflight build` over the fixture and registry pins.
 
 ## Out of scope
