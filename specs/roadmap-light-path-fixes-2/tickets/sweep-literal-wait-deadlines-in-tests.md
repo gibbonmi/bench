@@ -1,7 +1,7 @@
 # Sweep literal wait deadlines in tests
 
 Blocked by: derive-test-wait-deadlines-from-bounds.md
-Writes: internal/conformance/wait_deadline_literal_test.go (new), internal/conformance/marker_wait_deadline_test.go, internal/conformance/checks_test.go, internal/conformance/registry/registry.go, internal/models/models_test.go, projects/benchkit.md
+Writes: internal/conformance/wait_deadline_literal_test.go (new), internal/conformance/marker_wait_deadline_test.go, internal/conformance/checks_test.go, internal/conformance/registry/registry.go, internal/models/models_test.go, projects/benchkit.md, tests/canary/guidance-prose-budgets/over-budget-skill, tests/canary/line-routing/line-binding-prose-drift, tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading, tests/canary/workflow-guidance-anchors/benchkit-review-round-owner, tests/canary/workflow-guidance-anchors/benchkit-review-round-routing, tests/canary/workflow-guidance-anchors/benchkit-spec-ownership
 Covers: LP11, LP12, LP13
 
 ## What to build
