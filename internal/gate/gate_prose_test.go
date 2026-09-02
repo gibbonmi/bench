@@ -148,6 +148,11 @@ func TestGateProseCommandHelp(t *testing.T) {
 	if want := gateProseUsage + "\n"; stdout.String() != want {
 		t.Fatalf("stdout = %q, want usage %q", stdout.String(), want)
 	}
+	// The example line is written out here rather than read from the constant, so a
+	// dropped example reds instead of passing against its own absence.
+	if want := "example: bench gate-prose . -- <path>"; !strings.Contains(stdout.String(), want) {
+		t.Fatalf("stdout = %q, want the single-file example %q", stdout.String(), want)
+	}
 	if stderr.Len() != 0 {
 		t.Fatalf("stderr = %q, want empty", stderr.String())
 	}

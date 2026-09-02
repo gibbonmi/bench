@@ -186,6 +186,17 @@ func FixturePins(root string) (map[string][]string, error) {
 	return pins, nil
 }
 
+// PinnedPaths is every repository path one fixture directory pins, in BASE,
+// overlay, and mutation order. The fixture directory is an absolute path or a
+// path relative to the working directory; the root resolves the BASE includes.
+//
+// A caller that reads one fixture, such as a failure message that narrows a
+// diagnostic list to the pinned lines, uses this accessor. FixturePins builds
+// its map on the same reader, so the two answers cannot disagree.
+func PinnedPaths(root, fixtureDir string) ([]string, error) {
+	return pinnedPaths(root, fixtureDir)
+}
+
 // pinnedPaths is every repository path one fixture directory pins, in BASE,
 // overlay, and mutation order. It reuses the BASE reader the materializer
 // drives, so the pinned set and the materialized set cannot disagree.

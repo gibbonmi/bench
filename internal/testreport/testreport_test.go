@@ -58,6 +58,30 @@ func TestPackageResultDisclosesSkippedRootConformance(t *testing.T) {
 	}
 }
 
+// TestPackageTableCarriesElapsedMilliseconds pins the `elapsed_ms` column of the
+// packages table. The cell is the per-package `Elapsed` of the go test -json stream,
+// which arrives as seconds, and the table gives it as an integer count of
+// milliseconds. A package whose terminal event carries no `Elapsed` gives 0, so the
+// caller reads a complete table.
+func TestPackageTableCarriesElapsedMilliseconds(t *testing.T) {
+	report, err := decode(strings.NewReader(strings.Join([]string{
+		`{"Action":"pass","Package":"timed","Elapsed":0.412}`,
+		`{"Action":"pass","Package":"untimed"}`,
+	}, "\n")))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	output, err := report.render(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "packages[2]{package,status,elapsed_ms}:\n  timed,pass,412\n  untimed,pass,0\n"
+	if !strings.Contains(output, want) {
+		t.Fatalf("package result = %q, want %q", output, want)
+	}
+}
+
 func TestPackagePattern(t *testing.T) {
 	root := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(root, "internal", "usage"), 0o755); err != nil {

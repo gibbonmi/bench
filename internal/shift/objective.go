@@ -12,7 +12,8 @@ import (
 // objective is the one owner of the reviewer-authored shift objective. It is admitted
 // once through validateObjective and then hands out one projection per surface. No
 // caller decides how the text is escaped, bounded, or written. The banner and the
-// durable commit subject share the sanitizer's escaped, 120-rune-bounded preview. The
+// durable commit subject share the sanitizer's escaped preview, bounded at
+// bounds.PreviewRuneLimit code points. The
 // prompt, the predicate argument, and the scratch bytes carry the text verbatim. The
 // scratch file's 0600 mode is the only place that verbatim text persists.
 type objective string

@@ -8,6 +8,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added an `elapsed_ms` column to the `bench test` `packages` table, so the table now
+  reads `packages[N]{package,status,elapsed_ms}`. Each cell is the wall time
+  `go test -json` reports for that one package, as an integer count of milliseconds. A
+  caller reads a real run apart from a cached or skipped one without a `date` call on
+  each side. The name matches the gate's `phases` table. A stream that carries no
+  per-package time gives 0.
 - Added `bench worktree build <target>`, which builds an active owned worktree's tree
   into that worktree's own `dist/bench`. The build runs the tree's `scripts/go-build.sh`,
   so the executable carries its seal. A success prints one `worktree_build` table with
@@ -75,6 +81,17 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- A truncated preview of operator-influenced text now keeps 240 code points, not 120,
+  before the `… (N bytes)` suffix replaces the rest. The cap is the named
+  `bounds.PreviewRuneLimit` entry in the `internal/bounds` policy registry, and the
+  `bounds-policy` check reds when the preview stops naming it. A failure line and a
+  guard refusal therefore carry two times more of the string they report.
+- `bench gate-prose` usage text now carries a second line,
+  `example: bench gate-prose . -- <path>`. The first operand is the root directory, so a
+  caller who names one file there gets a refusal; the example shows the single-file form
+  instead. The `--help` output, the usage error, and the non-directory-root refusal all
+  print both lines, and that refusal sentence no longer repeats the form the example
+  carries.
 - A worktree `bench commit` on the kit root now runs only the checks its composed
   changes select. The commit derives its change list from the diff between the expected
   base tree and the composed tree, and each path's classes select checks from the
@@ -158,6 +175,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- `bench repair --help` now prints `usage: bench repair [--prune]` on stdout and exits 0,
+  which is the answer every other verb gives for `--help`. The wrapper-only verb sent the
+  help flags to its usage-error arm, so the grammar reached stderr at exit 2. `-h` and the
+  bare word `help` take the same arm, as they do for `bench gate`. An unknown argument
+  keeps the stderr line at exit 2.
 - `bench coverage --check` now binds a cited test file to the package scope of the gate
   phase that would run it. The citation check kept each test phase's build tags and
   dropped its package operands, so a file passed whenever any phase's tags built it, even

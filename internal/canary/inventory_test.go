@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 	"testing"
@@ -135,6 +136,27 @@ func TestFixturePinsAnswersEmptyForAnInventorylessRoot(t *testing.T) {
 	pins, err := FixturePins(t.TempDir())
 	if err != nil || len(pins) != 0 {
 		t.Fatalf("FixturePins(inventoryless) = %v, %v; want an empty map and no error", pins, err)
+	}
+}
+
+// TestPinnedPathsReadsOneFixtureInBaseThenMutationOrder holds the per-fixture
+// accessor to the order the materializer applies: the BASE list first, then the
+// MUTATE.json anchors. A caller that filters diagnostics by pin reads this
+// order, so a reversal changes which line the reader sees first.
+func TestPinnedPathsReadsOneFixtureInBaseThenMutationOrder(t *testing.T) {
+	root := t.TempDir()
+	fixture := filepath.Join(root, "tests", "canary", "example-family", "planted")
+	writeFixtureFile(t, filepath.Join(fixture, "EXPECT"), "planted diagnostic\n")
+	writeFixtureFile(t, filepath.Join(fixture, "BASE"), "internal/example/base.go\n")
+	writeFixtureFile(t, filepath.Join(fixture, "MUTATE.json"), `[{"path":"internal/example/mutated.go","old":"a","new":"b"}]`)
+
+	paths, err := PinnedPaths(root, fixture)
+	if err != nil {
+		t.Fatalf("PinnedPaths: %v", err)
+	}
+	want := []string{"internal/example/base.go", "internal/example/mutated.go"}
+	if !slices.Equal(paths, want) {
+		t.Fatalf("PinnedPaths = %v, want %v", paths, want)
 	}
 }
 

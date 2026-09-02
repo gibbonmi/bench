@@ -1,8 +1,11 @@
 package shift
 
 import (
+	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // TestObjectiveCommitSubjectSharesBannerPolicy pins the one behavior change of the
@@ -11,8 +14,12 @@ import (
 // never carries the raw objective.
 func TestObjectiveCommitSubjectSharesBannerPolicy(t *testing.T) {
 	esc := string(rune(0x1b))
-	long := objective(strings.Repeat("x", 150))
-	if got := long.commitSubject(3); !strings.HasPrefix(got, "shift: iteration 3 — "+strings.Repeat("x", 120)+"… (150 bytes)") || strings.Contains(got, strings.Repeat("x", 121)) {
+	// The fixture overruns the preview cap so the subject must truncate. "x" is one byte
+	// per rune, so the rune count is also the byte count the suffix names.
+	const overrun = bounds.PreviewRuneLimit + 30
+	long := objective(strings.Repeat("x", overrun))
+	want := "shift: iteration 3 — " + strings.Repeat("x", bounds.PreviewRuneLimit) + "… (" + strconv.Itoa(overrun) + " bytes)"
+	if got := long.commitSubject(3); !strings.HasPrefix(got, want) || strings.Contains(got, strings.Repeat("x", bounds.PreviewRuneLimit+1)) {
 		t.Fatalf("commit subject is not the bounded preview: %q", got)
 	}
 	hostile := objective("paint it " + esc + "[31mred")
