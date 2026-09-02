@@ -195,7 +195,7 @@ only one.
 The hermeticity is deliberate — the script's own comment says the private cache
 exists so ambient state cannot affect release bytes or require a trusted cache.
 So this is not a defect to fix but the same tier question #3 already answered
-once: is byte-reproducibility a per-commit property or a once-per-release one?
+once. Is byte-reproducibility a per-commit property or a once-per-release one?
 Re-tiering it moves an explicit evidence obligation to `prep-release`; it does
 not weaken a check, which stays out of scope.
 

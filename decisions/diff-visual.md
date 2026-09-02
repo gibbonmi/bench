@@ -106,9 +106,9 @@ it drives a visual encoding or changes a reviewer action. Full dimension
 panels rejected — see Out of scope.
 
 Amended by #10: the coverage badge is three-valued — direct tests /
-end-to-end only / test-infrastructure — and names the covering test; and the
+end-to-end only / test-infrastructure — and names the covering test. The
 attention level carries mandatory justification (hotspot: why + remediation +
-stakes; focus: why), applying the standing rule to heat itself.
+stakes; focus: why), which applies the standing rule to heat itself.
 
 ## #7: How is the edge vocabulary defined?
 

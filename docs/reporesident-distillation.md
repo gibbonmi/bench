@@ -186,11 +186,12 @@ paragraph in `AGENTS.md`.
 **How I'd improve it.** The conflict rule can be made computed rather than remembered.
 bench already resolves a gated tree hash (`internal/git`, `bench gate pin`) and reports
 staleness in `bench status`. A handoff that records the commit it was written at can be
-checked against `HEAD` automatically — `bench status` reports "handoff written at
-`<sha>`, HEAD is `<sha>`: stale" and points at the rebuild. That turns "trust git" from a
-rule the next session must recall into an ambient fact the SessionStart hook already
-prints. Cheap: the handoff gains one machine-readable line, `session-inspect` gains one
-comparison.
+checked against `HEAD` automatically. `bench status` reports "handoff written at
+`<sha>`, HEAD is `<sha>`: stale" and points at the rebuild.
+
+That turns "trust git" from a rule the next session must recall into an ambient fact
+the SessionStart hook already prints. Cheap: the handoff gains one machine-readable
+line, `session-inspect` gains one comparison.
 
 Keep the cap. The reason RepoResident gives is the right one, and it applies harder to
 bench. The handoff there is read cold by a fresh session paying for every line.

@@ -93,6 +93,7 @@ it never restarts initial discovery over the original range.
    for what each axis hunts and what a finding must cite; do not restate the
    charges here. A finding cites what its axis read now, not what it recalls.
    A universal claim answers to that citation standard: cite the enumeration, or name itself a sample.
+
    Procedural inputs per delegate: give Standards the docs from step 2. Give
    Spec the spec file. When the spec carries an acceptance coverage map, also
    give it the rows from `bench coverage <spec>`. The delegate must audit every

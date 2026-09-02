@@ -15,7 +15,7 @@ the wall, the post-build re-measurement, and the resulting decision analysis.
 
 The artifact split is landed. Its four package processes overlap: a focused
 recursive run spans about 51 s while their package spans total about 127 s.
-The changed-tree gate is now 89.91 s, down from 128 s, but its critical path is
+The changed-tree gate is now 89.91 s, down from 128 s. Its critical path is
 still the contract phase: `posture` takes 85.415 s under the full gate. The
 focused posture span is 50.917 s, so concurrent outer phases materially extend
 the process that otherwise bounds the split suite.
