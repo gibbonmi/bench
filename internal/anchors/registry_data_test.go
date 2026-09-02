@@ -1342,3 +1342,40 @@ func TestTddHelperReturnRuleAnchorRedsOnRemoval(t *testing.T) {
 		},
 	}.check(t)
 }
+
+// TestCensusChangelogAndReviewBaseAnchorsRedOnRemoval holds the three landing-phase rules
+// that no other check can see. The census record is deleted at release, so a close that
+// reads it after the landing reads a deleted file. Two CHANGELOG entries under one heading
+// conflict at composition, and an unnamed review base leaves the reviewed range to memory.
+// The sections, the needles, and the diagnostics are written here independently of the
+// registry, so a needle relaxed to a caution or to an unnamed base cannot define itself
+// green.
+func TestCensusChangelogAndReviewBaseAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		finalCheck  = ".agents/commands/bench-final-check.md"
+		exitHandoff = "Exit handoff"
+	)
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    finalCheck,
+				section: exitHandoff,
+				needle:  "The phase close reads the assignment census record before `bench worktree land` removes it, and it carries the per-verb breakdown into the close.",
+				want:    ".agents/commands/bench-final-check.md post-merge tail dropped the census read that precedes the landing's removal of the record",
+			},
+			{
+				file:    finalCheck,
+				section: exitHandoff,
+				needle:  "A light-path fix lands before a spec's final merge only when its `CHANGELOG.md` entry sits under a heading no sibling touches.",
+				want:    ".agents/commands/bench-final-check.md gate-then-commit path dropped the light-path CHANGELOG-heading rule as a rule",
+			},
+			{
+				file:    ".agents/commands/bench-review-implementation.md",
+				section: "Process",
+				needle:  "The frozen base is the `main` tip merged into the source before the landing, so the range holds the spec diff alone.",
+				want:    ".agents/commands/bench-review-implementation.md Pin the diff dropped the merged `main` tip as the frozen review base",
+			},
+		},
+	}.check(t)
+}

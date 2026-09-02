@@ -63,6 +63,8 @@ it never restarts initial discovery over the original range.
    When work already landed, use `bench diff --full --commit <sha>` for that
    historical commit.
 
+   The frozen base is the `main` tip merged into the source before the landing, so the range holds the spec diff alone.
+
 2. **Find the sources.** The spec source is `specs/<feature>/spec.md` for this
    work, or the path I give you. The standards sources are `AGENTS.md` and
    `.bench/BENCH.md`, the working agreement and the shared platform rules;
