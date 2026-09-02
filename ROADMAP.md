@@ -39,8 +39,6 @@ means the repository-controlled compliance assessment.
 
 **FT142 (MEDIUM) — FT91 review residuals, two tracks.**
 
-**FT158 (MEDIUM) — make cross-harness falsification standing for kit-guidance diffs.**
-
 **FT98 (MEDIUM) — one preserve-then-discard primitive; four faces.**
 
 **FT253 (MEDIUM) — one landing lease in the intent ledger, from composition through publish.**
@@ -97,8 +95,6 @@ means the repository-controlled compliance assessment.
 
 **FT261 (MEDIUM, decision required) — preflight review classifies an in-progress untracked spec folder without blocking ticket slicing.**
 
-**FT259 (MEDIUM) — repair coverage changes retain a ticket owner through repair-scoped re-review.**
-
 **FT260 (LOW, decision required) — coordinator worktree diff inspection and sibling-worktree patch transfer need scoped native paths.**
 
 **FT262 (LOW) — preflight reports uncited coverage rows while a ticket breakdown is in progress.**
@@ -106,12 +102,8 @@ means the repository-controlled compliance assessment.
 **FT267 (LOW) — `scripts/verify-release-artifact.mjs` has a gate-owned execution seam.**
 
 
-**FT269 (LOW) — `craft-gate`: a check on an indirected value grades both ends.**
-
 
 **FT272 (LOW) — `bench status` routes a tickets-only spec folder to a grammar `bench commit` refuses.**
-
-**FT273 (LOW) — a charge names the live-tree check as its probe oracle, and a green probe is verified against the mutated bytes.**
 
 **FT282 (LOW) — a phase close reads its assignment census before it lands a worktree.**
 
@@ -124,8 +116,6 @@ means the repository-controlled compliance assessment.
 **FT218 (LOW) — named git readers instead of learned CLI flags.**
 
 **FT219 (LOW) — `/bench-deepen` refreshes a ready map's frontier to current state before handoff.**
-
-**FT236 (LOW) — `craft-review` visit: what a string expectation proves, and where an axis under-reads.**
 
 **FT237 (LOW) — `craft-line` states the common case behind ceiling-not-binding.**
 
