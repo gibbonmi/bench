@@ -112,9 +112,9 @@ are in `references/mocking.md`.
 
 A green test you wrote is not proof of done — and neither is a runner's summary line. A
 run whose only matched test skipped still prints `ok` (Go does), so read the test
-output, not the summary. Done is `bench gate` green across the whole spec. Never edit,
-relax, or delete a test to reach green — if a test is wrong, stop and say so. The
-agent's own assertions are never the completion signal; the gate is.
+output, not the summary. A re-exec helper returns silently outside its role environment and never skips, because the kit gate treats an environment-class skip as red.
+Done is `bench gate` green across the whole spec. Never edit, relax, or delete a test to reach green — if a test is wrong, stop and say so.
+The agent's own assertions are never the completion signal; the gate is.
 
 ## Declare the line
 

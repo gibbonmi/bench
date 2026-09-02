@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-tdd/SKILL.md",
+    "old": "A re-exec helper returns silently outside its role environment and never skips, because the kit gate treats an environment-class skip as red.",
+    "new": "A re-exec helper may skip outside its role environment, because the absent role reads as a host fact."
+  }
+]

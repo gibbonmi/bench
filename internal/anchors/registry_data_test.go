@@ -1322,3 +1322,23 @@ func TestDelegateExecOnlyAndCapChangeAnchorsRedOnRemoval(t *testing.T) {
 		},
 	}.check(t)
 }
+
+// TestTddHelperReturnRuleAnchorRedsOnRemoval holds the rule that keeps a re-exec helper's
+// off-role arm silent. A helper that skips instead of returning routes an environment-class
+// skip into the gate, and that population is red with no host exemption, so the wrong arm
+// costs a green run. The section, the needle, and the diagnostic are written here
+// independently of the registry, so a needle relaxed to match a skipping helper cannot
+// define itself green.
+func TestTddHelperReturnRuleAnchorRedsOnRemoval(t *testing.T) {
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    ".agents/skills/bench-craft-tdd/SKILL.md",
+				section: "The oracle is the gate, not you",
+				needle:  "A re-exec helper returns silently outside its role environment and never skips, because the kit gate treats an environment-class skip as red.",
+				want:    ".agents/skills/bench-craft-tdd/SKILL.md The oracle is the gate, not you dropped the silent-return rule for a re-exec helper outside its role",
+			},
+		},
+	}.check(t)
+}
