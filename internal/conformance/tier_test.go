@@ -520,7 +520,7 @@ func TestTierMembership(t *testing.T) {
 		t.Fatal("the dev tier runs no checks at all")
 	}
 	if slices.Contains(dev, releaseEvidenceProbeCheck) {
-		t.Fatalf("the dev tier still runs %s, the ~372 s probe the split moves:\n%s", releaseEvidenceProbeCheck, strings.Join(dev, "\n"))
+		t.Fatalf("the dev tier runs release-only %s:\n%s", releaseEvidenceProbeCheck, strings.Join(dev, "\n"))
 	}
 	if !slices.Contains(ship, releaseEvidenceProbeCheck) {
 		t.Fatalf("the ship tier does not run %s, so the probe runs nowhere:\n%s", releaseEvidenceProbeCheck, strings.Join(ship, "\n"))

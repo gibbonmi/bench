@@ -20,9 +20,8 @@ import (
 
 const absentHarnessMessage = "canary fixture inventory is empty"
 
-const (
-	checkFileName = "CHECK"
-)
+// CheckFileName names the marker that binds a fixture to a conformance check.
+const CheckFileName = "CHECK"
 
 // PhaseManifestPath is where a graded root declares its phase table.
 const PhaseManifestPath = ".bench/phases.json"
@@ -308,7 +307,7 @@ func discoverFixtures(dir string) ([]fixtureRecord, error) {
 }
 
 func fixtureCheck(dir string) (registry.Tier, string, error) {
-	name, present, err := readMarker(dir, checkFileName)
+	name, present, err := readMarker(dir, CheckFileName)
 	if err != nil {
 		return "", "", err
 	}

@@ -100,11 +100,8 @@ func Steps(root, kit string) []Step {
 			Env:  []string{registry.ConformanceRootEnv + "=" + root, registry.ConformanceTierEnv + "=" + string(registry.Ship)},
 		},
 		{
-			// The release-only package suites (internal/releasepreflight,
-			// internal/releaseevidence, internal/publication) are excluded from the dev
-			// tier's package enumeration, so this ship-tier run is the only surface that
-			// executes them. Without it ship green covers three fewer suites than its
-			// exit code claims.
+			// registry.ReleaseOnlyPackages owns the suites that the dev tier excludes.
+			// This ship-tier run is the only surface that executes those suites.
 			Name: "core-tests-ship",
 			Argv: gate.GateGoArgv(kit, "test", root),
 			Env:  []string{registry.ConformanceTierEnv + "=" + string(registry.Ship)},

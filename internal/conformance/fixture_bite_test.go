@@ -43,7 +43,7 @@ func TestFixtureUniverseDerivesFamilyAndExplicitCheckBindings(t *testing.T) {
 		requireFixtureNoError(t, os.MkdirAll(dir, 0o755))
 		requireFixtureNoError(t, os.WriteFile(filepath.Join(dir, "EXPECT"), []byte("synthetic diagnostic\n"), 0o644))
 		if fixture.check != "" {
-			requireFixtureNoError(t, os.WriteFile(filepath.Join(dir, "CHECK"), []byte(fixture.check+"\n"), 0o644))
+			requireFixtureNoError(t, os.WriteFile(filepath.Join(dir, canary.CheckFileName), []byte(fixture.check+"\n"), 0o644))
 		}
 	}
 	observed := map[string]bool{}
