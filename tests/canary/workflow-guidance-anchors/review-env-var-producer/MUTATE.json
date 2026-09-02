@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-review/references/finding-discipline.md",
+    "old": "An environment-variable Coverage finding cites the producer before it claims absence.",
+    "new": "An environment-variable Coverage finding cites the producer."
+  }
+]

@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "A spec that deletes or moves literal bytes",
+    "new": "A spec that deletes literal bytes"
+  }
+]

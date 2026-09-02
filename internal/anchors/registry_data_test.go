@@ -661,10 +661,11 @@ func TestRepairChargeTemplateAnchorsRedOnRemoval(t *testing.T) {
 	}.check(t)
 }
 
-// TestReferenceFileAnchorsRedOnAbsence holds the two discipline references in the tree. A
-// skill that points at a reference the tree lost leaves the reader with a dead pointer, so
-// an absent file raises the missing-file diagnostic. The paths and the lead sentences are
-// written here independently of the registry.
+// TestReferenceFileAnchorsRedOnAbsence holds the discipline references in the tree. A
+// skill that points at a reference the tree lost leaves the reader with a dead pointer.
+// An absent file raises the missing-file diagnostic. A present file that carries a title
+// and no lead raises the dropped-lead diagnostic instead. The paths and the lead
+// sentences are written here independently of the registry.
 func TestReferenceFileAnchorsRedOnAbsence(t *testing.T) {
 	references := []struct{ file, lead, want string }{
 		{
@@ -677,26 +678,38 @@ func TestReferenceFileAnchorsRedOnAbsence(t *testing.T) {
 			"Charged from `craft-spec` when the author writes or audits an acceptance coverage map.",
 			".agents/skills/bench-craft-spec/references/map-discipline.md is absent or dropped its map-time lead",
 		},
+		{
+			".agents/skills/bench-craft-review/references/finding-discipline.md",
+			"Charged from `craft-review` when an axis writes a finding.",
+			".agents/skills/bench-craft-review/references/finding-discipline.md is absent or dropped its finding-time lead",
+		},
 	}
 	for _, reference := range references {
 		missing := "acceptance coverage anchor file missing: " + reference.file
-		present := EvaluateGroup(writeReferences(t, references, reference.file), AfterImplementSpec)
+		present := EvaluateGroup(writeReferences(t, references, reference.file, true), AfterImplementSpec)
 		if slices.Contains(present, missing) {
 			t.Errorf("tree carrying %s raised %q", reference.file, missing)
 		}
 		if slices.Contains(present, reference.want) {
 			t.Errorf("tree carrying %s raised %q", reference.file, reference.want)
 		}
-		absent := EvaluateGroup(writeReferences(t, references, ""), AfterImplementSpec)
+		absent := EvaluateGroup(writeReferences(t, references, "", true), AfterImplementSpec)
 		if !slices.Contains(absent, missing) {
 			t.Errorf("tree without %s = %v, want %q", reference.file, absent, missing)
+		}
+		leadless := EvaluateGroup(writeReferences(t, references, reference.file, false), AfterImplementSpec)
+		if !slices.Contains(leadless, reference.want) {
+			t.Errorf("tree carrying %s without its lead = %v, want %q", reference.file, leadless, reference.want)
+		}
+		if slices.Contains(leadless, missing) {
+			t.Errorf("tree carrying %s without its lead raised %q", reference.file, missing)
 		}
 	}
 }
 
-// writeReferences builds a tree that carries the named reference file and no other. It
-// returns the tree root.
-func writeReferences(t *testing.T, references []struct{ file, lead, want string }, keep string) string {
+// writeReferences builds a tree that carries the named reference file and no other. The
+// file takes its lead sentence only when withLead is true. It returns the tree root.
+func writeReferences(t *testing.T, references []struct{ file, lead, want string }, keep string, withLead bool) string {
 	t.Helper()
 	root := t.TempDir()
 	for _, reference := range references {
@@ -707,7 +720,11 @@ func writeReferences(t *testing.T, references []struct{ file, lead, want string 
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, []byte("# subject\n\n"+reference.lead+"\n"), 0o644); err != nil {
+		body := "# subject\n"
+		if withLead {
+			body += "\n" + reference.lead + "\n"
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -870,6 +887,12 @@ func TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval(t *testing.T)
 				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the exact-ownership-fence rule for a shared reader",
 			},
 			{
+				file:    file,
+				section: "Before the map locks",
+				needle:  "A spec that deletes or moves literal bytes",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the moved-sentence extension of the literal-bytes search",
+			},
+			{
 				file:      file,
 				needle:    "reader census",
 				want:      ".agents/skills/bench-craft-spec/references/map-discipline.md writes \"reader census\"; the canonical term is reader sweep",
@@ -954,6 +977,248 @@ func TestContextMapTermAnchorsRedOnRemoval(t *testing.T) {
 				file:   file,
 				needle: "Not \"census\", not \"consumer audit\" — reader sweep.",
 				want:   "CONTEXT.md dropped the reader-sweep glossary entry with the Avoid list that reserves census",
+			},
+		},
+	}.check(t)
+}
+
+// TestCraftGateBothEndsAnchorsRedOnRemoval holds the two rules a gate author reads at the
+// two places the author already opens. A check on an indirected value stays green while
+// the producer and the consumer disagree. The check thus grades both ends, or their
+// binding, in one change. A new check that no single edit defeats is a check the author
+// never saw bite. Each section, needle, and diagnostic is written here independently of
+// the registry.
+func TestCraftGateBothEndsAnchorsRedOnRemoval(t *testing.T) {
+	const file = ".agents/skills/bench-craft-gate/SKILL.md"
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    file,
+				section: "Run the real path",
+				needle:  "A check on a workflow output, config key, or environment variable grades the producer and the consumer, or their binding, in the same change.",
+				want:    ".agents/skills/bench-craft-gate/SKILL.md Run the real path dropped the both-ends rule for a check on an indirected value",
+			},
+			{
+				file:    file,
+				section: "Prove it bites",
+				needle:  "The author asks which single edit defeats a new check while the gate stays green.",
+				want:    ".agents/skills/bench-craft-gate/SKILL.md Prove it bites dropped the single-edit defeat question",
+			},
+		},
+	}.check(t)
+}
+
+// TestRepairTicketOwnerAnchorsRedOnRemoval holds the two rules that keep an accepted
+// repair on the coverage map. A repair that amends a mapped row leaves no ticket behind,
+// so the row loses its owner at the final check. Each section, needle, and diagnostic is
+// written here independently of the registry.
+func TestRepairTicketOwnerAnchorsRedOnRemoval(t *testing.T) {
+	const file = ".agents/commands/bench-review-implementation.md"
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    file,
+				section: "Review modes",
+				needle:  "writes one repair ticket before the repair-scoped re-review",
+				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the repair ticket the coordinator writes before the repair-scoped re-review",
+			},
+			{
+				file:    file,
+				section: "Review modes",
+				needle:  "it cites each amended row in `Covers:`.",
+				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the repair ticket's amended-row citation in `Covers:`",
+			},
+		},
+	}.check(t)
+}
+
+// TestStandingFalsificationAnchorsRedOnRemoval holds the rules that make a second
+// harness read every kit-guidance diff. The review phase file states the standing pass
+// and names the set by path. It gives a falsification finding its three labels, and it
+// bridges an accepted one to the repair-routing label. The recipes name the exec form the
+// guard allows, and the build phase file scopes its ask-before-adding rule and keeps the
+// retired offer sentence out. Each section, needle, and diagnostic is written here
+// independently of the registry.
+func TestStandingFalsificationAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		review   = ".agents/commands/bench-review-implementation.md"
+		recipes  = ".agents/skills/bench-craft-delegate/references/cross-harness-reviewers.md"
+		fullSpec = ".agents/commands/bench-implement-spec.md"
+	)
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    review,
+				section: "Review modes",
+				needle:  "A diff that changes kit guidance takes a standing cross-harness falsification pass.",
+				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the standing cross-harness falsification pass for a kit-guidance diff",
+			},
+			{
+				file:    review,
+				section: "Review modes",
+				needle:  "The kit-guidance set is any file under `.agents/` or the file `.bench/BENCH.md`.",
+				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the kit-guidance set of any file under `.agents/` plus the file `.bench/BENCH.md`",
+			},
+			{
+				file:    review,
+				section: "Review modes",
+				needle:  "Each falsification finding takes one explicit outcome of accept, merge, or dismiss.",
+				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the accept, merge, or dismiss outcome a falsification finding takes",
+			},
+			{
+				file:    review,
+				section: "Review modes",
+				needle:  "An accepted falsification finding joins the review findings and takes the repair-routing disposition.",
+				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the bridge that gives an accepted falsification finding the repair-routing disposition",
+			},
+			{
+				file:   recipes,
+				needle: "bench worktree exec <target> -- claude -p --model <id> --effort <level> \"<charge>\" <<'EOF'",
+				want:   ".agents/skills/bench-craft-delegate/references/cross-harness-reviewers.md dropped the exec reviewer form with the empty quoted heredoc",
+			},
+			{
+				file:    fullSpec,
+				section: "`--full <spec>`",
+				needle:  "Outside the kit-guidance set, a diff large enough to hide bugs",
+				want:    ".agents/commands/bench-implement-spec.md `--full` section dropped the kit-guidance-set scope on the ask-before-adding rule",
+			},
+			{
+				file:      fullSpec,
+				needle:    "Both are offers; the command never applies them silently.",
+				want:      ".agents/commands/bench-implement-spec.md retained the retired sentence that calls the tier escalation and the falsification pass both offers",
+				forbidden: true,
+			},
+		},
+	}.check(t)
+}
+
+// TestChargeProbeOracleAnchorsRedOnRemoval holds the charge-side fence rules and the
+// probe-side oracle rules a coordinator keeps missing. A charge that names the package
+// run grades a synthetic tree. A charge that leaves the ceiling file, the live-tree
+// inventory, or an assertion family outside its fence buys a mid-build fence amendment.
+// Each section, needle, and diagnostic is written here independently of the registry.
+func TestChargeProbeOracleAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		file   = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
+		charge = "In the charge"
+		probes = "Probes"
+	)
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    file,
+				section: charge,
+				needle:  "adds an anchor names `bench test --check <owning-check>`",
+				want:    "delegation-discipline.md In the charge dropped the owning-check probe for an anchor-adding charge",
+			},
+			{
+				file:    file,
+				section: charge,
+				needle:  "lists `bench test --check skip-ownership` in its focused checks",
+				want:    "delegation-discipline.md In the charge dropped the skip-ownership check from a skippable test's focused checks",
+			},
+			{
+				file:    file,
+				section: probes,
+				needle:  "`bench test --package ./internal/conformance` is not the root conformance",
+				want:    "delegation-discipline.md Probes dropped the rule that the conformance package run is not the root conformance pass",
+			},
+			{
+				file:    file,
+				section: probes,
+				needle:  "Before the coordinator reads a probe verdict",
+				want:    "delegation-discipline.md Probes dropped the mutated-bytes confirmation before the probe verdict",
+			},
+			{
+				file:    file,
+				section: charge,
+				needle:  "binds `PATH` or the process environment includes the ceiling",
+				want:    "delegation-discipline.md In the charge dropped the serial-census ceiling file from a PATH or process-environment bind's fence",
+			},
+			{
+				file:    file,
+				section: charge,
+				needle:  "`internal/conformance/tier_test.go`",
+				want:    "delegation-discipline.md In the charge dropped the live-tree inventory file from a live-tree test charge's fence",
+			},
+			{
+				file:    file,
+				section: charge,
+				needle:  "the shared fixture owners and the exact-record assertion families",
+				want:    "delegation-discipline.md In the charge dropped the fixture-owner and assertion-family enumeration from a grammar charge's fence",
+			},
+			{
+				file:    file,
+				section: charge,
+				needle:  "The delegate reports an out-of-fence write",
+				want:    "delegation-discipline.md In the charge dropped the out-of-fence write report before the delegate edits",
+			},
+		},
+	}.check(t)
+}
+
+// TestCraftReviewFindingDisciplineAnchorsRedOnRemoval holds the per-axis finding rules
+// and the skill pointer that leads a reviewer to them. An axis that loses one rule reports a
+// weaker finding and the reviewer pays the read. Each section, needle, and diagnostic is
+// written here independently of the registry, so a weakened rule cannot define itself green.
+func TestCraftReviewFindingDisciplineAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		reference   = ".agents/skills/bench-craft-review/references/finding-discipline.md"
+		skill       = ".agents/skills/bench-craft-review/SKILL.md"
+		expectation = "What a string expectation proves"
+		citation    = "What a citation points at"
+		underRead   = "Where an axis under-reads"
+		seam        = "When a seam cannot reach the state"
+		cite        = "What a finding must cite"
+	)
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    reference,
+				section: expectation,
+				needle:  "A generated script's independently authored string expectation is the mutation catch.",
+				want:    "finding-discipline.md What a string expectation proves dropped the independently authored string expectation as the mutation catch",
+			},
+			{
+				file:    reference,
+				section: citation,
+				needle:  "A finding cites the line the axis read this pass, or the symbol instead.",
+				want:    "finding-discipline.md What a citation points at dropped the line-read-this-pass citation or its symbol arm",
+			},
+			{
+				file:    reference,
+				section: underRead,
+				needle:  "A test-deleting Standards finding names the surviving assertion or file as coverage.",
+				want:    "finding-discipline.md Where an axis under-reads dropped the surviving-assertion or file coverage name for a test-deleting Standards finding",
+			},
+			{
+				file:    reference,
+				section: underRead,
+				needle:  "An axis refutes a strong finding with a real run before the axis reports the finding.",
+				want:    "finding-discipline.md Where an axis under-reads dropped the real run that refutes a strong finding before the report",
+			},
+			{
+				file:    reference,
+				section: underRead,
+				needle:  "An environment-variable Coverage finding cites the producer before it claims absence.",
+				want:    "finding-discipline.md Where an axis under-reads dropped the producer citation an environment-variable Coverage finding makes before it claims absence",
+			},
+			{
+				file:    reference,
+				section: seam,
+				needle:  "An unreachable row seam amends the row's seam column.",
+				want:    "finding-discipline.md When a seam cannot reach the state dropped the seam-column amendment for an unreachable row seam",
+			},
+			{
+				file:    skill,
+				section: cite,
+				needle:  "`references/finding-discipline.md` states the per-axis rules a finding must satisfy.",
+				want:    ".agents/skills/bench-craft-review/SKILL.md What a finding must cite dropped the pointer to references/finding-discipline.md",
 			},
 		},
 	}.check(t)

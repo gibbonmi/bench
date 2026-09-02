@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "writes one repair ticket before the repair-scoped re-review",
+    "new": "writes one repair ticket after the repair-scoped re-review"
+  }
+]

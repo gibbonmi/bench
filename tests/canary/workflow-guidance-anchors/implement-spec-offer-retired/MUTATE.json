@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-implement-spec.md",
+    "old": "Tier escalation is an offer; the review phase owns the standing pass.",
+    "new": "Both are offers; the command never applies them silently."
+  }
+]

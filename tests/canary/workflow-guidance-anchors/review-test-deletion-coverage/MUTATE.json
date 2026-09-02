@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-review/references/finding-discipline.md",
+    "old": "A test-deleting Standards finding names the surviving assertion or file as coverage.",
+    "new": "A test-deleting Standards finding may name the surviving assertion or file as coverage."
+  }
+]

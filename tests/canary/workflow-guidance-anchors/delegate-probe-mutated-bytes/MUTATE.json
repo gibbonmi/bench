@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+    "old": "Before the coordinator reads a probe verdict, the coordinator confirms the",
+    "new": "The coordinator confirms the"
+  }
+]

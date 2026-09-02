@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/cross-harness-reviewers.md",
+    "old": "-- claude -p --model <id> --effort <level> \"<charge>\" <<'EOF'`",
+    "new": "-- claude -p --model <id> --effort <level> \"<charge>\" < /dev/null`"
+  }
+]

@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "outcome of accept, merge, or dismiss.",
+    "new": "outcome."
+  }
+]

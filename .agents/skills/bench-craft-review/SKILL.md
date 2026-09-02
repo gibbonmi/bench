@@ -103,6 +103,8 @@ cites the enumeration of that set. The citation is the grep over all of it, or t
 per-member run, not one measured member extended to the rest. A sampled claim says
 so and names the unmeasured remainder.
 
+`references/finding-discipline.md` states the per-axis rules a finding must satisfy.
+
 ```
 Spec: story 4 asks "adapter refuses an unbound BENCH_MODEL"; the diff guards
 claude and codex but not opencode — no guard call in the opencode adapter.

@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+    "old": "binds `PATH` or the process environment includes the ceiling",
+    "new": "binds `PATH` or the process environment may include the ceiling"
+  }
+]

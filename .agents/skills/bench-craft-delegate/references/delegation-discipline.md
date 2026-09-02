@@ -35,8 +35,8 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A write charge names the root conformance pass and the file's wrap width in its
   verification list.
 - A write charge states that its ownership fence is a refusal boundary above any
-  mirror-every-registry instruction. The delegate reports an out-of-fence
-  registry; the delegate does not edit it.
+  mirror-every-registry instruction. The delegate reports an out-of-fence write
+  before the delegate edits.
 - A charge whose collapse crosses its `Writes:` list inside the spec fence takes a
   fence extension in a continuation. The delegate never writes a second spelling
   to stay in fence.
@@ -58,10 +58,20 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   The charge runs that test in the focused checks.
 - A charge that shells out names the branch-native census's allowed process seams.
   The charge never backgrounds a test run.
+- A charge that binds `PATH` or the process environment includes the ceiling
+  file `internal/worktree/parallel_census_test.go` in its fence.
+- A charge lists `bench test --check skip-ownership` in its focused checks
+  when the charge adds a test that can skip.
 - A conformance registry can name a file by path. A charge that moves such a file
   runs that check with `bench test --check` in the focused checks.
 - A charge that moves or reflows an anchor runs the fixture-bite check in the
   focused verification list.
+- A charge that adds an anchor names `bench test --check <owning-check>` as
+  its probe.
+- A grammar charge enumerates two inventories in its fence:
+  the shared fixture owners and the exact-record assertion families.
+- A charge that adds a live-tree test includes in its fence the live-tree
+  inventory file `internal/conformance/tier_test.go`.
 
 ## Isolation and end of life
 
@@ -77,8 +87,12 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 
 - Probe a tracked file that has pending changes with a copy aside.
   `git checkout --` wipes the whole in-flight diff, not only the probe.
+- Before the coordinator reads a probe verdict, the coordinator confirms the
+  mutated bytes against the copy aside.
 - A probe of a live-tree anchor or marker runs through the gate, not through the
   conformance package alone. Only the gate's entry test grades the live tree.
+  `bench test --package ./internal/conformance` is not the root conformance
+  pass.
 - A coordinator probe writes through the writer the test captures, not through an
   ambient stream the test ignores.
 - A delegate's reading of a gate skip or a gate-adjacent signal is a claim, not a
