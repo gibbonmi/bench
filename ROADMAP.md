@@ -31,6 +31,8 @@ means the repository-controlled compliance assessment.
 
 **FT249 (MEDIUM, decision required) — a primary-local idea inbox moves to a shared Git ref.**
 
+**FT287 (MEDIUM, decision required) — AXI conformance is assessed for every bench command, argument, and option.**
+
 **FT235 (MEDIUM) — a pool directory's name says what the worktree is for.**
 
 **FT71 (HIGH on the bank track) — versioned local shift evidence.**
@@ -45,7 +47,7 @@ means the repository-controlled compliance assessment.
 
 **FT207 (MEDIUM, decision required) — worktree-mutating paths share malformed-admin refusal.**
 
-**FT199 (MEDIUM) — a recovery-aware branch-retirement coordinator closes one repository-wide ref inventory.**
+**FT199 (MEDIUM) — the shipped unclaimed-ref cleanup grows into a recovery-aware repository-wide ref inventory.**
 
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
@@ -53,6 +55,8 @@ means the repository-controlled compliance assessment.
 **FT276 (MEDIUM, decision required) — one cycle-free owner derives canonical repository paths.**
 
 **FT277 (MEDIUM) — `bench test --changed` explains why it widened the selected set.**
+
+**FT290 (LOW) — `bench test` projects a check's fixture family, a full failure body, and a no-match attribution.**
 
 **FT283 (MEDIUM, decision required) — `bench worktree land --spec` has one phase-scoped transition contract.**
 
@@ -97,7 +101,7 @@ means the repository-controlled compliance assessment.
 
 **FT260 (LOW, decision required) — coordinator worktree diff inspection and sibling-worktree patch transfer need scoped native paths.**
 
-**FT262 (LOW) — preflight reports uncited coverage rows while a ticket breakdown is in progress.**
+**FT262 (LOW) — preflight projects uncited coverage rows during a breakdown and renders closure diagnostics as a table.**
 
 **FT267 (LOW) — `scripts/verify-release-artifact.mjs` has a gate-owned execution seam.**
 
@@ -116,6 +120,12 @@ means the repository-controlled compliance assessment.
 **FT218 (LOW) — named git readers instead of learned CLI flags.**
 
 **FT219 (LOW) — `/bench-deepen` refreshes a ready map's frontier to current state before handoff.**
+
+**FT288 (LOW) — `craft-spec` derives the fence from the tickets' Writes: lines and sweeps shipped-surface claim words.**
+
+**FT289 (LOW) — `craft-delegate` binds the exec-only command form to every caller and names the pinning package in a cap-change charge.**
+
+**FT291 (LOW) — the landing and review phases state the light-path CHANGELOG rule and the merged-main review base.**
 
 **FT237 (LOW) — `craft-line` states the common case behind ceiling-not-binding.**
 
@@ -152,6 +162,8 @@ missing warrant is a stale binary, a dead or skipping citation, a vacuous
 baseline, an unchecked absence, or a dependency edge nothing resolves. Each
 hardens a different oracle surface. They stay separate builds, but they read
 and prioritize as one theme.
+
+**FT286 (MEDIUM) — the prose six-sentence bound survives a label-shaped prose line.**
 
 **FT177 (MEDIUM, decision required) — a stale `dist/bench` invalidates tests and its promotion-broker manifest.**
 
@@ -289,5 +301,5 @@ fixture-proven.
 ## Recommended sequence
 
 1. `$bench-write-spec` — write FT71's versioned local shift-evidence spec for the unblocked HIGH work.
-2. `$bench` — open FT142's light-path ticket for the next unblocked MEDIUM fix.
-3. `$bench-write-spec` — write FT254's exec-comfort spec: the child stdin decision, the trailer, the redirect, and the exit status.
+2. `$bench` — open FT286's light-path ticket: the label-line terminator rule in internal/prose.
+3. `$bench` — open FT142's light-path ticket for the next unblocked MEDIUM fix.
