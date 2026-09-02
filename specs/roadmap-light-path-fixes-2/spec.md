@@ -197,6 +197,14 @@ covers only the anchor bytes, so the line rises one step above the code tickets.
 - `.agents/skills/bench-craft-tdd/SKILL.md`
 - `.agents/commands/bench-final-check.md`
 - `.agents/commands/bench-review-implementation.md`
+- `.agents/skills/bench-craft-review/SKILL.md`
+- `DATA_HANDLING.md`
+- `decisions/cost-follows-project-size.md`
+- `decisions/craft-research.md`
+- `decisions/diff-visual.md`
+- `decisions/gate-budget.md`
+- `decisions/gate-critical-path.md`
+- `docs/reporesident-distillation.md`
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
 - `internal/benchguard/benchguard_test.go`
@@ -254,3 +262,12 @@ Reviewer decisions closed in conversation on 2026-09-02:
 - FT272 ships the status route only.
 - FT291's CHANGELOG constraint is a rule.
 - Every subagent runs `opus` at low or medium effort, per the 2026-08-26 routing memory.
+
+Reviewer decision closed during implementation, 2026-09-02: the label-line
+ticket's own run of `TestProseMechanicsHoldsOnTheLiveTree` found ten
+over-length sites outside its fence. This is a material LP5 shortfall the
+spec's research did not anticipate. The reviewer chose a ninth ticket
+(`trim-over-length-prose-in-the-live-tree`) over widening the label-line
+ticket's fence or narrowing LP5. The ticket is Blocked by the label-line
+ticket and carries the ten sites; the Ownership fences list above carries its
+`Writes:` union.
