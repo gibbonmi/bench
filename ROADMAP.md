@@ -58,6 +58,14 @@ means the repository-controlled compliance assessment.
 
 **FT290 (LOW) — `bench test` projects a check's fixture family, a full failure body, and a no-match attribution.**
 
+**FT292 (MEDIUM, decision required) — `bench roadmap decide` records an already-made reviewer decision atomically.**
+
+**FT293 (MEDIUM, decision required) — preflight-closed ticket Writes determine registry pins and blocker edges.**
+
+**FT294 (MEDIUM) — spec pre-review proves the source and consumer surface before review.**
+
+**FT295 (MEDIUM) — read-only delegates use the named subject tree and return a clean shared worktree.**
+
 **FT283 (MEDIUM, decision required) — `bench worktree land --spec` has one phase-scoped transition contract.**
 
 **FT284 (MEDIUM, decision required) — `bench spec retire` owns its roadmap retirement atomically.**
@@ -287,3 +295,4 @@ fixture-proven.
 
 1. `$bench-write-spec` — write FT71's versioned local shift-evidence spec for the unblocked HIGH work.
 2. `$bench` — open FT142's light-path ticket for the next unblocked MEDIUM fix.
+3. `$bench` — route FT294 to a `craft-synthesis` kit edit for the spec pre-review proof.
