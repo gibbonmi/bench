@@ -340,7 +340,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			write(t, root, "specs/landed-ticket/tickets/one.md", "ticket\n", 0o644)
 			commit(t, root)
 			return root, Query{}
-		}, exact: []Signal{testSignal(11, "specs", "1 tickets-only spec folder", "bench commit --spec <slug>")}},
+		}, exact: []Signal{testSignal(11, "specs", "1 tickets-only spec folder", "bench worktree land --spec <slug>")}},
 		{name: "roadmap reconcile", signal: "roadmap", detail: "retired spec", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			write(t, root, roadmap.RoadmapFile, "specs/retired/spec.md\n", 0o644)

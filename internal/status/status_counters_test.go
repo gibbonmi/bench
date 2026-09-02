@@ -157,7 +157,7 @@ func TestTicketsOnlyResidueRowCountsAndRanksBelowItsBand(t *testing.T) {
 		return -1
 	}
 	residue := position("specs", "tickets-only")
-	if got, want := signals[residue], testSignal(11, "specs", "2 tickets-only spec folders", "bench commit --spec <slug>"); got != want {
+	if got, want := signals[residue], testSignal(11, "specs", "2 tickets-only spec folders", "bench worktree land --spec <slug>"); got != want {
 		t.Fatalf("residue row = %#v, want %#v", got, want)
 	}
 	retirement, orphaned := position("specs", "awaiting retirement"), position("reviews", "orphaned review")

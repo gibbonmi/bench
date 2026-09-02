@@ -137,7 +137,7 @@ var actionDefinitions = [actionCount]actionDefinition{
 	roadmapAction:                {kind: actionBench, command: "bench roadmap"},
 	structureAction:              {kind: actionBench, command: "bench structure"},
 	retireSpecAction:             {kind: actionBench, command: "bench spec retire", argument: oneWordArgument},
-	closeTicketsAction:           {kind: actionBench, command: "bench commit --spec", argument: oneWordArgument},
+	closeTicketsAction:           {kind: actionBench, command: "bench worktree land --spec", argument: oneWordArgument},
 	handoffAction:                {kind: actionBench, command: "bench handoff"},
 	gitPushAction:                {kind: actionGit, command: "git push"},
 	gitStatusAction:              {kind: actionGit, command: "git status"},
@@ -1045,9 +1045,11 @@ func appendRoadmapReconcile(rows []row, root string) []row {
 // the housekeeping band below retirement (8) and orphaned pickups (9), so a count of
 // residue never displaces a more urgent row.
 //
-// The tickets-only shape comes from landing.TicketsOnlyFolders, the same predicate
-// `bench commit --spec` consumes. An unreadable specs/ counts nothing, the posture the
-// other advisory housekeeping rows take.
+// The tickets-only shape comes from landing.TicketsOnlyFolders, the same predicate the
+// landing's `--spec` close consumes, so the row routes to `bench worktree land --spec
+// <slug>`. It names no request, base, or tip, because the primary checkout does not know
+// the in-flight worktree. An unreadable specs/ counts nothing, the posture the other
+// advisory housekeeping rows take.
 func appendTicketsOnly(rows []row, root string) []row {
 	slugs, err := landing.TicketsOnlyFolders(root)
 	if err != nil || len(slugs) == 0 {
