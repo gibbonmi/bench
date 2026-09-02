@@ -180,7 +180,10 @@ func TestClassifyNamesTheSideOfTheOperator(t *testing.T) {
 // option that reaches the pool path is the mistake the guard names. A read of a file
 // under the pool, a pool path the `bench worktree` grammar takes, and a relative target
 // inside a wrapper string stay allowed, because the guard reads text only and never
-// resolves a path.
+// resolves a path. A shell loop stays allowed, whether it iterates the pool path or cds
+// into it inside its body: the loop reads as one command whose first word is `for`, so
+// neither the `cd` arm nor the assignment arm reaches it. `craft-delegate` therefore
+// carries the loop as a guidance rule, and these two rows record how far Go reaches.
 func TestPoolReferenceRefusesAPoolPathOutsideTheExecVerb(t *testing.T) {
 	const pools = "/home/agent/.bench/worktrees"
 	const assignment = pools + "/bench-123/abc-def"
@@ -201,6 +204,8 @@ func TestPoolReferenceRefusesAPoolPathOutsideTheExecVerb(t *testing.T) {
 		{"worktree release takes the pool path", "bench worktree release --request r " + assignment, ""},
 		{"worktree land takes the pool path", "bench worktree land --request r --base a --source-tip b -m m " + assignment, ""},
 		{"assignment and git -C outside the pool", "W=/tmp/x; git -C /tmp/x log", ""},
+		{"shell loop over the pool path", "for f in " + assignment + "/*.md; do cat \"$f\"; done", ""},
+		{"shell loop whose body cds into the pool", "for f in a b; do cd " + assignment + "; done", ""},
 	} {
 		if got := PoolReference(tc.command, pools); got != tc.want {
 			t.Errorf("%s: PoolReference(%q) = %q, want %q", tc.name, tc.command, got, tc.want)

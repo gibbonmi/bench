@@ -43,7 +43,7 @@ Prefer compressed inputs: the named decision source, exact passages, coverage ro
 fixture-and-seam inventory. The delegate then uses prior art instead of re-deriving it. Name
 exemplar files to mirror when one exists. A charge that extends an enumerated family names every
 registry the family already appears in, traced from one existing sibling through the tree. A
-registry the charge does not name is one the delegate will miss.
+registry the charge does not name is one the delegate will miss. A cap-change charge's search list names the closest pinning package.
 
 A write-delegation from a spec carries its stories' coverage rows every time — behavior, seam, why
 it catches the failure. It requires the delegate to show each row red before the edit and green
@@ -83,10 +83,10 @@ One delegate, one coherent unit: one axis, one story, one search question.
 A write-delegation runs in an isolated worktree (`bench worktree`), so stray edits can't
 land in reviewer-owned files. Concurrent delegates get separate worktrees, one each. The
 harness's own `isolation: worktree` cannot cut a second one, since its request ID derives
-from the session ID alone. The coordinator therefore runs
-`bench worktree create --request <opaque-id> --label <work-item>` once per delegate. The
-charge names `bench worktree exec "<label>" -- <command>` as the only command form, never
-a `cd` into the path. `bench worktree path "<label>"` serves file reads and edits only.
+from the session ID alone. The coordinator therefore runs `bench worktree create --request <opaque-id> --label <work-item>` once per delegate.
+
+`bench worktree exec "<label>" -- <command>` is the one command form for every caller into an assignment worktree. The rule covers the coordinator, and it covers a read or a write.
+A shell loop inside the pool path is the same bypass. `bench worktree path "<label>"` serves file reads and edits only.
 
 Share a worktree only when a delegate's work depends on another's output. In that case, reviewed
 dependent tickets share one retained integration source, and each charge names its root and

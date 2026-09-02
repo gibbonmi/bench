@@ -1279,3 +1279,46 @@ func TestSteProseLabelRuleAnchorRedsOnRemoval(t *testing.T) {
 		},
 	}.check(t)
 }
+
+// TestDelegateExecOnlyAndCapChangeAnchorsRedOnRemoval holds the four rules that keep a
+// delegation charge and its coordinator on one command form. A rule bound to the charge
+// alone leaves the coordinator's own read outside it. A rule that names `cd` alone leaves
+// a shell loop over the pool path as an open route. A cap-change charge with no pinning
+// package in its search list finds the consuming packages and misses the pin. Each
+// section, needle, and diagnostic is written here independently of the registry.
+func TestDelegateExecOnlyAndCapChangeAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		skill     = ".agents/skills/bench-craft-delegate/SKILL.md"
+		isolation = "Isolation"
+		charge    = "The charge"
+	)
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    skill,
+				section: isolation,
+				needle:  "`bench worktree exec \"<label>\" -- <command>` is the one command form for every caller into an assignment worktree.",
+				want:    ".agents/skills/bench-craft-delegate/SKILL.md Isolation binds the exec-only command form to the charge instead of every caller",
+			},
+			{
+				file:    skill,
+				section: isolation,
+				needle:  "The rule covers the coordinator, and it covers a read or a write.",
+				want:    ".agents/skills/bench-craft-delegate/SKILL.md Isolation dropped the coordinator and the read-or-write case from the exec-only rule",
+			},
+			{
+				file:    skill,
+				section: isolation,
+				needle:  "A shell loop inside the pool path is the same bypass.",
+				want:    ".agents/skills/bench-craft-delegate/SKILL.md Isolation dropped the shell loop inside the pool path as the same bypass",
+			},
+			{
+				file:    skill,
+				section: charge,
+				needle:  "A cap-change charge's search list names the closest pinning package.",
+				want:    ".agents/skills/bench-craft-delegate/SKILL.md The charge dropped the closest pinning package from a cap-change charge's search list",
+			},
+		},
+	}.check(t)
+}
