@@ -39,7 +39,7 @@ means the repository-controlled compliance assessment.
 
 **FT162 (MEDIUM) — the handoff's pins resolve, and its shape has one owner.**
 
-**FT142 (MEDIUM) — FT91 review residuals, two tracks.**
+**FT142 (MEDIUM) — FT91 runtime residuals, two tracks.**
 
 **FT98 (MEDIUM) — one preserve-then-discard primitive; four faces.**
 
@@ -293,6 +293,5 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `$bench` — open FT142's light-path ticket for the next unblocked MEDIUM fix.
-2. `$bench` — route FT294 to a `craft-synthesis` kit edit for the spec pre-review proof.
-3. `$bench` — route FT295 to a `craft-synthesis` kit edit for read-only delegate hygiene.
+1. `$bench` — route FT294 to a `craft-synthesis` kit edit for the spec pre-review proof.
+2. `$bench` — route FT295 to a `craft-synthesis` kit edit for read-only delegate hygiene.
