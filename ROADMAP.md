@@ -107,10 +107,6 @@ means the repository-controlled compliance assessment.
 
 
 
-**FT272 (LOW) — `bench status` routes a tickets-only spec folder to a grammar `bench commit` refuses.**
-
-**FT282 (LOW) — a phase close reads its assignment census before it lands a worktree.**
-
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
 
 **FT279 (LOW) — `bench link` refuses the kit source checkout.**
@@ -120,12 +116,6 @@ means the repository-controlled compliance assessment.
 **FT218 (LOW) — named git readers instead of learned CLI flags.**
 
 **FT219 (LOW) — `/bench-deepen` refreshes a ready map's frontier to current state before handoff.**
-
-**FT288 (LOW) — `craft-spec` derives the fence from the tickets' Writes: lines and sweeps shipped-surface claim words.**
-
-**FT289 (LOW) — `craft-delegate` binds the exec-only command form to every caller and names the pinning package in a cap-change charge.**
-
-**FT291 (LOW) — the landing and review phases state the light-path CHANGELOG rule and the merged-main review base.**
 
 **FT237 (LOW) — `craft-line` states the common case behind ceiling-not-binding.**
 
@@ -148,22 +138,17 @@ means the repository-controlled compliance assessment.
 
 **FT265 (MEDIUM, decision required) — one coordinator-owned immutable drain evidence bundle.**
 
-**FT266 (LOW) — `craft-tdd` re-exec helpers return silently outside their role environment.**
-
-
 **FT168 (LOW) — focused iteration evidence: a fixture-selecting canary and mutation probe.**
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
 ## False greens — verdicts that credit unchecked work
 
-Three rows share one failure class: a green whose warrant is missing. The
+Two rows share one failure class: a green whose warrant is missing. The
 missing warrant is a stale binary, a dead or skipping citation, a vacuous
 baseline, an unchecked absence, or a dependency edge nothing resolves. Each
 hardens a different oracle surface. They stay separate builds, but they read
 and prioritize as one theme.
-
-**FT286 (MEDIUM) — the prose six-sentence bound survives a label-shaped prose line.**
 
 **FT177 (MEDIUM) — a stale `dist/bench` invalidates tests and its promotion-broker manifest.**
 
@@ -301,5 +286,4 @@ fixture-proven.
 ## Recommended sequence
 
 1. `$bench-write-spec` — write FT71's versioned local shift-evidence spec for the unblocked HIGH work.
-2. `$bench` — open FT286's light-path ticket: the label-line terminator rule in internal/prose.
-3. `$bench` — open FT142's light-path ticket for the next unblocked MEDIUM fix.
+2. `$bench` — open FT142's light-path ticket for the next unblocked MEDIUM fix.
