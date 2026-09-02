@@ -31,8 +31,8 @@ an exact write fence. Every ticket first verifies its row's premise against the
 code it names. The ticket graph carries each `Writes:` overlap as a blocker
 edge, and the rest of the frontier runs in parallel.
 
-This spec builds after the `roadmap-light-path-fixes-2` landing, so its base is
-that landing's commit or a descendant.
+The implementation of this spec starts after the `roadmap-light-path-fixes-2`
+landing, so its base is that landing's commit or a descendant.
 
 ## User stories
 
