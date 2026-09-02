@@ -2,7 +2,7 @@
 
 Charged from `craft-review` when an axis writes a finding. Each rule below settles one
 question the finding must answer. `craft-review` keeps the three-axis split, the smell
-baseline, the citation standard, and the refute step.
+baseline, and the universal-claim rule.
 
 ## What a string expectation proves
 

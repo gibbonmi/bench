@@ -40,16 +40,16 @@ A red gate must name its cause without archaeology.
 
 ## Run the real path
 
-A check exercises the actual command, script, or parser against a fixture
-and asserts the external verdict — exit code, output, a file appearing. It
-never reimplements the checked logic. A second derivation can disagree with
-the real one: green while the product is broken, or red while it is fine. A
-claim can live in docs while its enforcement lives in code — a file list, an
-index, a deny surface. Generate one from the other, or grade both
-directions. An advertisement without enforcement drifts, and an accident
-deletes an enforcement nothing advertises. A check on a workflow output,
-config key, or environment variable grades the producer and the
-consumer, or their binding, in the same change.
+A check exercises the actual command, script, or parser against a fixture and
+asserts the external verdict — exit code, output, a file appearing. It never
+reimplements the checked logic. A second derivation can disagree with the real one:
+green while the product is broken, or red while it is fine.
+
+A claim can live in docs while its enforcement lives in code — a file list, an
+index, a deny surface. Generate one from the other, or grade both directions. An
+advertisement without enforcement drifts, and an accident deletes an enforcement
+nothing advertises. A check on a workflow output, config key, or environment
+variable grades the producer and the consumer, or their binding, in the same change.
 
 ```
 ( cd "$tmp" && git init -q && bash "$root/bin/tool.sh" link )

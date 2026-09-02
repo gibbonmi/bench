@@ -46,7 +46,7 @@ author asks which single edit defeats a new check.
 `/bench-review-implementation` requires one repair ticket before the repair-scoped
 re-review when accepted repairs amend the map. The same phase file makes the
 cross-harness falsification pass standing for a kit-guidance diff, with one explicit
-disposition per finding. The cross-harness recipes name the `bench worktree exec` form
+outcome per finding. The cross-harness recipes name the `bench worktree exec` form
 with an empty quoted heredoc.
 
 `references/delegation-discipline.md` gains the probe-oracle rules and the fence rules
@@ -94,8 +94,8 @@ budget, and one guard test table, and medium carries a small Go table edit.
    pass, so that a second harness reads every guidance change.
 9. As a reviewer, I want the kit-guidance set named as `.agents/` plus `.bench/BENCH.md`,
    so that a coordinator decides by path.
-10. As a coordinator, I want each falsification finding to take accept, merge, or dismiss,
-    so that no finding drops in silence.
+10. As a coordinator, I want each falsification finding to take one explicit outcome of
+    accept, merge, or dismiss, so that no finding drops in silence.
 11. As a coordinator, I want an accepted falsification finding to take the existing
     repair-routing label, so that the kit keeps one repair vocabulary.
 12. As a coordinator, I want the recipes to name the exec form with an empty quoted
@@ -166,8 +166,8 @@ budget parser.
     axis finds the rules from the skill.
 38. As a kit maintainer, I want an exact budget row of 122 for `craft-review` SKILL.md, so
     that the pointer line fits.
-39. As a kit maintainer, I want line 84 of the review phase file untouched, so that its
-    anchor and fixture stay green.
+39. As a kit maintainer, I want the cite-what-you-read sentence of the review phase
+    file untouched, so that its anchor and fixture stay green.
 40. As a kit maintainer, I want the refute paragraph to hold one refute rule and no real-run
     copy, so that each source holds one rule.
 
@@ -210,7 +210,7 @@ substrings of the review phase file and two of the build phase file. The test co
 whitespace before it matches, so an insert or a reflow survives and a rewritten sentence
 reds. The build inserts paragraphs and rewrites no existing sentence in `Review modes`.
 
-**The falsification pass keeps the row's disposition labels.** The review phase file
+**The falsification pass keeps the row's outcome labels.** The review phase file
 already gives every review finding one repair-routing label. A falsification finding
 first takes accept, merge, or dismiss. An accepted one then joins the review findings
 and takes the existing label. One sentence states that bridge, so the two vocabularies
@@ -310,7 +310,7 @@ holds one ticket at a time.
 | KG7 | 7 | The six pinned substrings of the review convergence contract still match the live tree | `internal/conformance/docs_workflow_helpers_test.go` (`TestReviewConvergenceContractCurrentDocs`) | A rewritten sentence in the re-review paragraph breaks one pinned substring, because the test collapses whitespace before it matches |
 | KG8 | 8 | The review phase file states that a diff that changes kit guidance takes a standing cross-harness falsification pass | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) over `tests/canary/workflow-guidance-anchors/review-standing-falsification` | Swapping `standing` for `offered` removes the needle bytes, and the anchor reds |
 | KG9 | 9 | The standing rule names the kit-guidance set as any file under `.agents/` or the file `.bench/BENCH.md` | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) over `tests/canary/workflow-guidance-anchors/review-kit-guidance-set` | A set narrowed to one directory drops the needle, and the anchor reds |
-| KG10 | 10 | The review phase file gives each falsification finding one explicit disposition of accept, merge, or dismiss | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) over `tests/canary/workflow-guidance-anchors/review-falsification-dispositions` | Omitting the three labels leaves a disposition with no values, and the anchor reds |
+| KG10 | 10 | The review phase file gives each falsification finding one explicit outcome of accept, merge, or dismiss | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) over `tests/canary/workflow-guidance-anchors/review-falsification-dispositions` | Omitting the three labels leaves an outcome with no values, and the anchor reds |
 | KG11 | 11 | The review phase file states that an accepted falsification finding joins the review findings and takes the repair-routing disposition | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) over `tests/canary/workflow-guidance-anchors/review-falsification-accept-routing` | Dropping the bridge leaves two competing vocabularies, and the anchor reds |
 | KG12 | 12 | The cross-harness recipes name `bench worktree exec <target> --` with an empty quoted heredoc as the reviewer form | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) over `tests/canary/workflow-guidance-anchors/cross-harness-reviewer-exec-heredoc` | Reverting the form to a `/dev/null` redirection drops the needle, and the anchor reds |
 | KG13 | 13 | The two bare Claude and Codex recipe lines stay byte-identical | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) over `tests/canary/workflow-guidance-anchors/cross-harness-reviewer-recipes` | A rewritten recipe line keeps the diagnostic alive on the restored tree, so the existing fixture's restoration run reds |
@@ -339,7 +339,7 @@ holds one ticket at a time.
 | KG36 | 36 | `finding-discipline.md` exists and carries its charge-time lead sentence | `internal/anchors/registry_data_test.go` (`TestReferenceFileAnchorsRedOnAbsence`) | A missing or empty file raises the file-missing or needle-missing diagnostic the test asserts |
 | KG37 | 37 | `craft-review` SKILL.md points at `references/finding-discipline.md` under `What a finding must cite` | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) over `tests/canary/workflow-guidance-anchors/review-finding-discipline-pointer` | Removing the pointer leaves the reference unread, and the anchor reds |
 | KG38 | 38 | `.agents/skills/bench-craft-review/SKILL.md` holds 122 lines or fewer under its new exact row | `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetsHoldOnTheLiveTree`) | The check parses the profile table, so a missing row leaves the glob bound of 120 and the pointer line reds it |
-| KG39 | 39 | The citation sentence at line 84 of the review phase file stays byte-identical | `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | A rewrite of line 84 drops its anchored needle, and the live-root evaluation reds the `docs-currency-workflow` check |
+| KG39 | 39 | The sentence `A finding cites what its axis read now, not what it recalls.` in the review phase file stays byte-identical | `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | A rewrite of that sentence drops its anchored needle, and the live-root evaluation reds the `docs-currency-workflow` check |
 | KG41 | 16 | The `--full` paragraph scopes its ask-before-adding sentence to a diff outside the kit-guidance set | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) over `tests/canary/workflow-guidance-anchors/implement-spec-offer-scope` | Dropping the scope clause leaves the file asking before a standing pass, and the anchor reds |
 | KG42 | 28 | `.agents/skills/bench-craft-spec/SKILL.md` holds 152 lines or fewer | `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetsHoldOnTheLiveTree`) | The file sits one line under its bound, so two stray lines red the check |
 | KG40 | 40 | The `Refute before you report` section holds one refute rule and no copy of the real-run clause | review-owned: the Standards axis reads the skill and the reference together | A sectioned anchor cannot forbid a paraphrase, so only a reader can see the second copy |
@@ -353,8 +353,8 @@ holds one ticket at a time.
 - **The budget-ceiling edges.** `craft-gate` lands at exactly 120 after one reflow. The
   build phase file takes a same-count rewrite. `craft-delegate` and `craft-spec` take no
   line. `craft-review` rises to 122. Rows KG3, KG17, KG28, and KG38 hold these edges.
-- **The anchored-neighbour edges.** The two recipe lines and line 84 of the review phase
-  file are anchored, and the build rewrites neither. The anchored `--full` sentence takes
+- **The anchored-neighbour edges.** The two recipe lines and the citation sentence of the
+  review phase file are anchored, and the build rewrites neither. The anchored `--full` sentence takes
   a leading scope clause and keeps its needle. Rows KG13, KG16, KG39, and KG41 hold these
   edges.
 - **The pinned-contract edge.** The convergence contract test pins six normalized
@@ -396,6 +396,9 @@ review skill already asks what authenticates the verifier. The gate author still
 **Won't handle** — a system-test case for the empty heredoc through the installed hook —
 the ordinary guard table is the one predicate owner. The existing system journey still
 covers a heredoc with a body.
+
+**Won't handle** — a check that the two fenced file paths in `delegation-discipline.md`
+still exist — the anchor pins the spelling. The charge author still opens the file.
 
 ## Ownership fences
 
@@ -561,7 +564,7 @@ removes the item.
 | FT259 — the coordinator writes a retroactive repair ticket after repairs land and before re-review | KG4, KG6, KG7 |
 | FT259 — the ticket owns the amended rows and records the accepted repairs | KG5 |
 | FT158 — the pass becomes standing for a diff that changes kit guidance | KG8, KG9, KG16, KG17, KG41 |
-| FT158 — each finding takes an explicit accept, merge, or dismiss disposition | KG10, KG11 |
+| FT158 — each finding takes an explicit accept, merge, or dismiss outcome | KG10, KG11 |
 | FT158 — the reviewer runs the pass through `bench worktree exec`, with the empty heredoc named | KG12, KG13, KG14, KG15 |
 | FT273 — an anchor charge names `bench test --check <owning-check>` | KG18 |
 | FT273 — a skippable-test charge names the capability-skip check | KG19 |

@@ -70,8 +70,8 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   its probe.
 - A grammar charge enumerates two inventories in its fence:
   the shared fixture owners and the exact-record assertion families.
-- A charge that adds a live-tree test fences the live-tree inventory file
-  `internal/conformance/tier_test.go`.
+- A charge that adds a live-tree test includes in its fence the live-tree
+  inventory file `internal/conformance/tier_test.go`.
 
 ## Isolation and end of life
 

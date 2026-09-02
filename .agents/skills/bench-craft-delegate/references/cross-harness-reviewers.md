@@ -20,9 +20,11 @@ Codex:
 from the caller's shell. `-o` writes the final message alone, so findings are
 read without parsing the event stream around them.
 
-Inside a Bench worktree, take the exec form with an empty quoted heredoc,
-because the guard refuses any non-heredoc redirection inside an exec span:
+Inside a Bench worktree, use the exec form with an empty quoted heredoc,
+because the guard refuses a non-heredoc redirection:
 
-`bench worktree exec <target> -- claude -p --model <id> "<charge>" <<'EOF'`
+`bench worktree exec <target> -- claude -p --model <id> --effort <level> "<charge>" <<'EOF'`
+
+`bench worktree exec <target> -- codex exec --sandbox read-only -C . -m <id> -c model_reasoning_effort=<level> -o <file> "<charge>" <<'EOF'`
 
 `EOF`

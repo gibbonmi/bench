@@ -47,7 +47,7 @@ accepted repairs, and it cites each amended row in `Covers:`.
 A diff that changes kit guidance takes a standing cross-harness
 falsification pass. The kit-guidance set is any file under `.agents/` or
 the file `.bench/BENCH.md`. Each falsification finding takes one explicit
-disposition of accept, merge, or dismiss. An accepted falsification
+outcome of accept, merge, or dismiss. An accepted falsification
 finding joins the review findings and takes the repair-routing disposition.
 
 Landing proceeds when the repair-scoped result is clean. A repair-induced fix

@@ -662,9 +662,10 @@ func TestRepairChargeTemplateAnchorsRedOnRemoval(t *testing.T) {
 }
 
 // TestReferenceFileAnchorsRedOnAbsence holds the discipline references in the tree. A
-// skill that points at a reference the tree lost leaves the reader with a dead pointer, so
-// an absent file raises the missing-file diagnostic. The paths and the lead sentences are
-// written here independently of the registry.
+// skill that points at a reference the tree lost leaves the reader with a dead pointer.
+// An absent file raises the missing-file diagnostic. A present file that carries a title
+// and no lead raises the dropped-lead diagnostic instead. The paths and the lead
+// sentences are written here independently of the registry.
 func TestReferenceFileAnchorsRedOnAbsence(t *testing.T) {
 	references := []struct{ file, lead, want string }{
 		{
@@ -685,23 +686,30 @@ func TestReferenceFileAnchorsRedOnAbsence(t *testing.T) {
 	}
 	for _, reference := range references {
 		missing := "acceptance coverage anchor file missing: " + reference.file
-		present := EvaluateGroup(writeReferences(t, references, reference.file), AfterImplementSpec)
+		present := EvaluateGroup(writeReferences(t, references, reference.file, true), AfterImplementSpec)
 		if slices.Contains(present, missing) {
 			t.Errorf("tree carrying %s raised %q", reference.file, missing)
 		}
 		if slices.Contains(present, reference.want) {
 			t.Errorf("tree carrying %s raised %q", reference.file, reference.want)
 		}
-		absent := EvaluateGroup(writeReferences(t, references, ""), AfterImplementSpec)
+		absent := EvaluateGroup(writeReferences(t, references, "", true), AfterImplementSpec)
 		if !slices.Contains(absent, missing) {
 			t.Errorf("tree without %s = %v, want %q", reference.file, absent, missing)
+		}
+		leadless := EvaluateGroup(writeReferences(t, references, reference.file, false), AfterImplementSpec)
+		if !slices.Contains(leadless, reference.want) {
+			t.Errorf("tree carrying %s without its lead = %v, want %q", reference.file, leadless, reference.want)
+		}
+		if slices.Contains(leadless, missing) {
+			t.Errorf("tree carrying %s without its lead raised %q", reference.file, missing)
 		}
 	}
 }
 
-// writeReferences builds a tree that carries the named reference file and no other. It
-// returns the tree root.
-func writeReferences(t *testing.T, references []struct{ file, lead, want string }, keep string) string {
+// writeReferences builds a tree that carries the named reference file and no other. The
+// file takes its lead sentence only when withLead is true. It returns the tree root.
+func writeReferences(t *testing.T, references []struct{ file, lead, want string }, keep string, withLead bool) string {
 	t.Helper()
 	root := t.TempDir()
 	for _, reference := range references {
@@ -712,7 +720,11 @@ func writeReferences(t *testing.T, references []struct{ file, lead, want string 
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, []byte("# subject\n\n"+reference.lead+"\n"), 0o644); err != nil {
+		body := "# subject\n"
+		if withLead {
+			body += "\n" + reference.lead + "\n"
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -972,9 +984,10 @@ func TestContextMapTermAnchorsRedOnRemoval(t *testing.T) {
 
 // TestCraftGateBothEndsAnchorsRedOnRemoval holds the two rules a gate author reads at the
 // two places the author already opens. A check on an indirected value stays green while
-// the producer and the consumer disagree, so the check grades both ends, or their binding,
-// in one change. A new check that no single edit defeats is a check the author never saw
-// bite. Each section, needle, and diagnostic is written here independently of the registry.
+// the producer and the consumer disagree. The check thus grades both ends, or their
+// binding, in one change. A new check that no single edit defeats is a check the author
+// never saw bite. Each section, needle, and diagnostic is written here independently of
+// the registry.
 func TestCraftGateBothEndsAnchorsRedOnRemoval(t *testing.T) {
 	const file = ".agents/skills/bench-craft-gate/SKILL.md"
 	anchorHarness{
@@ -1022,10 +1035,10 @@ func TestRepairTicketOwnerAnchorsRedOnRemoval(t *testing.T) {
 }
 
 // TestStandingFalsificationAnchorsRedOnRemoval holds the rules that make a second
-// harness read every kit-guidance diff. The review phase file states the standing pass,
-// names the set by path, gives a falsification finding its three labels, and bridges an
-// accepted one to the repair-routing label. The recipes name the exec form the guard
-// allows, and the build phase file scopes its ask-before-adding rule and keeps the
+// harness read every kit-guidance diff. The review phase file states the standing pass
+// and names the set by path. It gives a falsification finding its three labels, and it
+// bridges an accepted one to the repair-routing label. The recipes name the exec form the
+// guard allows, and the build phase file scopes its ask-before-adding rule and keeps the
 // retired offer sentence out. Each section, needle, and diagnostic is written here
 // independently of the registry.
 func TestStandingFalsificationAnchorsRedOnRemoval(t *testing.T) {
@@ -1052,7 +1065,7 @@ func TestStandingFalsificationAnchorsRedOnRemoval(t *testing.T) {
 			{
 				file:    review,
 				section: "Review modes",
-				needle:  "Each falsification finding takes one explicit disposition of accept, merge, or dismiss.",
+				needle:  "Each falsification finding takes one explicit outcome of accept, merge, or dismiss.",
 				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the accept, merge, or dismiss disposition a falsification finding takes",
 			},
 			{
@@ -1063,7 +1076,7 @@ func TestStandingFalsificationAnchorsRedOnRemoval(t *testing.T) {
 			},
 			{
 				file:   recipes,
-				needle: "bench worktree exec <target> -- claude -p --model <id> \"<charge>\" <<'EOF'",
+				needle: "bench worktree exec <target> -- claude -p --model <id> --effort <level> \"<charge>\" <<'EOF'",
 				want:   ".agents/skills/bench-craft-delegate/references/cross-harness-reviewers.md dropped the exec reviewer form with the empty quoted heredoc",
 			},
 			{
@@ -1084,7 +1097,7 @@ func TestStandingFalsificationAnchorsRedOnRemoval(t *testing.T) {
 
 // TestChargeProbeOracleAnchorsRedOnRemoval holds the charge-side fence rules and the
 // probe-side oracle rules a coordinator keeps missing. A charge that names the package
-// run grades a synthetic tree, and a charge that leaves the ceiling file, the live-tree
+// run grades a synthetic tree. A charge that leaves the ceiling file, the live-tree
 // inventory, or an assertion family outside its fence buys a mid-build fence amendment.
 // Each section, needle, and diagnostic is written here independently of the registry.
 func TestChargeProbeOracleAnchorsRedOnRemoval(t *testing.T) {
@@ -1148,7 +1161,7 @@ func TestChargeProbeOracleAnchorsRedOnRemoval(t *testing.T) {
 	}.check(t)
 }
 
-// TestCraftReviewFindingDisciplineAnchorsRedOnRemoval holds the six per-axis finding rules
+// TestCraftReviewFindingDisciplineAnchorsRedOnRemoval holds the per-axis finding rules
 // and the skill pointer that leads a reviewer to them. An axis that loses one rule reports a
 // weaker finding and the reviewer pays the read. Each section, needle, and diagnostic is
 // written here independently of the registry, so a weakened rule cannot define itself green.
