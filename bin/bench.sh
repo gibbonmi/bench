@@ -298,13 +298,16 @@ repair_binary() {
   node "$script" "$mode" "$kit" "$(platform_pkg)" "$version" "$suffix"
 }
 
+repair_usage() { printf 'usage: bench repair [--prune]\n'; }
+
 repair_command() {
   local mode=repair kit wrapper
   case "$#:${1:-}" in
     0:) ;;
     1:--prune) mode=prune ;;
+    1:--help|1:-h|1:help) repair_usage; return 0 ;;
     *)
-      echo 'usage: bench repair [--prune]' >&2
+      repair_usage >&2
       exit 2
       ;;
   esac

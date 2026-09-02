@@ -175,6 +175,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- `bench repair --help` now prints `usage: bench repair [--prune]` on stdout and exits 0,
+  which is the answer every other verb gives for `--help`. The wrapper-only verb sent the
+  help flags to its usage-error arm, so the grammar reached stderr at exit 2. `-h` and the
+  bare word `help` take the same arm, as they do for `bench gate`. An unknown argument
+  keeps the stderr line at exit 2.
 - `bench coverage --check` now binds a cited test file to the package scope of the gate
   phase that would run it. The citation check kept each test phase's build tags and
   dropped its package operands, so a file passed whenever any phase's tags built it, even
