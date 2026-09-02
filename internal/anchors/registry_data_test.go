@@ -786,12 +786,10 @@ func TestCommentAndReviewRuleAnchorsRedOnRemoval(t *testing.T) {
 	harness.check(t)
 }
 
-// TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval holds the two rules a kit
-// spec keeps missing. A kit behavior serves this repository and every linked repository,
-// and the two audiences can want different answers for one directory state. A
-// transaction-shaped spec loses its middle failure when one row covers all three. Each
-// section, needle, and diagnostic is written here independently of the registry.
-func TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval(t *testing.T) {
+// TestMapDisciplineAnchorsRedOnRemoval holds the map rules that repeated spec
+// reviews need. Each section, needle, and diagnostic is written here
+// independently of the registry.
+func TestMapDisciplineAnchorsRedOnRemoval(t *testing.T) {
 	const file = ".agents/skills/bench-craft-spec/references/map-discipline.md"
 	anchorHarness{
 		group: AfterImplementSpec,
@@ -831,6 +829,48 @@ func TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval(t *testing.T)
 				section: "Before the map locks",
 				needle:  "The source-sentence-to-row table sits under Further notes before the first review charge.",
 				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the source-sentence-to-row table under Further notes before the first review charge",
+			},
+			{
+				file:    file,
+				section: "Before the map locks",
+				needle:  "Before the first review charge, Further notes carries this fixed pre-review proof checklist and records `none` for each absent class:",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the exhaustive pre-review proof checklist",
+			},
+			{
+				file:    file,
+				section: "Before the map locks",
+				needle:  "`Cited symbols` resolves every cited symbol.",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the cited-symbol proof",
+			},
+			{
+				file:    file,
+				section: "Before the map locks",
+				needle:  "`Import edges` resolves every cited import edge.",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the import-edge proof",
+			},
+			{
+				file:    file,
+				section: "Before the map locks",
+				needle:  "`Source-row clauses and occurrences` quotes each clause and lists every occurrence.",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the source-row occurrence proof",
+			},
+			{
+				file:    file,
+				section: "Before the map locks",
+				needle:  "`Promised field labels` names each exact field label.",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the field-label proof",
+			},
+			{
+				file:    file,
+				section: "Before the map locks",
+				needle:  "`Changed-function callers` lists every caller of each changed function.",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the changed-function caller proof",
+			},
+			{
+				file:    file,
+				section: "Before the map locks",
+				needle:  "`Copy survival`, when a new owner replaces copies, names a red-capable row that fails if any copy survives.",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the copy-survival proof",
 			},
 			{
 				file:    file,

@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "`Cited symbols` resolves every cited symbol.",
+    "new": "`Cited symbols` records cited symbols."
+  }
+]
