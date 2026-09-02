@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/SKILL.md",
+    "old": "`bench worktree exec \"<label>\" -- <command>` is the one command form for every caller into an assignment worktree.",
+    "new": "The charge names `bench worktree exec \"<label>\" -- <command>` as the only command form, never a `cd` into the path."
+  }
+]

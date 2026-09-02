@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "The frozen base is the `main` tip merged into the source before the landing, so the range holds the spec diff alone.",
+    "new": "The frozen base is whichever commit the reviewer recalls as the start of the work."
+  }
+]

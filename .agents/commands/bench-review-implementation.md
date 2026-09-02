@@ -63,6 +63,8 @@ it never restarts initial discovery over the original range.
    When work already landed, use `bench diff --full --commit <sha>` for that
    historical commit.
 
+   The frozen base is the `main` tip merged into the source before the landing, so the range holds the spec diff alone.
+
 2. **Find the sources.** The spec source is `specs/<feature>/spec.md` for this
    work, or the path I give you. The standards sources are `AGENTS.md` and
    `.bench/BENCH.md`, the working agreement and the shared platform rules;
@@ -93,6 +95,7 @@ it never restarts initial discovery over the original range.
    for what each axis hunts and what a finding must cite; do not restate the
    charges here. A finding cites what its axis read now, not what it recalls.
    A universal claim answers to that citation standard: cite the enumeration, or name itself a sample.
+
    Procedural inputs per delegate: give Standards the docs from step 2. Give
    Spec the spec file. When the spec carries an acceptance coverage map, also
    give it the rows from `bench coverage <spec>`. The delegate must audit every

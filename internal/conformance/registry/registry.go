@@ -136,6 +136,7 @@ var Checks = []Check{
 	{Name: "single-control-escaper", Implementation: "checkSingleControlEscaper", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "bounds-policy", Implementation: "checkBoundsPolicy", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "marker-wait-deadlines", Implementation: "checkMarkerWaitDeadlines", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
+	{Name: "wait-deadline-literals", Implementation: "checkWaitDeadlineLiterals", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "subcommand-routing", Implementation: "checkSubcommandRouting", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "axi-query-registry", Implementation: "checkAXIQueryRegistry", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "skip-ownership", Implementation: "checkSkipOwnership", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},

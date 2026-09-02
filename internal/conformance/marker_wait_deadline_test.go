@@ -70,6 +70,10 @@ func markerWaitDeadlineDiags(path, rel, body string) []string {
 	return diags
 }
 
+// containsNumericLiteral is the package's one duration-literal scanner. Both deadline
+// checks read it: this file grades the marker wait's slow leg, and checkWaitDeadlineLiterals
+// grades every other test wait. A second scanner would let the two disagree about what a
+// literal is.
 func containsNumericLiteral(expr ast.Expr) bool {
 	found := false
 	ast.Inspect(expr, func(node ast.Node) bool {

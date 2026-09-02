@@ -31,6 +31,24 @@ var abbreviations = map[string]bool{
 	"cf.":  true,
 }
 
+// templateFields are the label prefixes of the ticket header, the roadmap ledger, and the
+// decision map's evidence ledger, in lowercase and with one space between words. Such a
+// field keeps its own paragraph even when it ends with a period, because the template
+// repeats the field and the repetition is not one deep paragraph. The list is closed: the
+// rule file names these fields, and a new template field needs a rule edit and an edit
+// here. TestTemplateFieldNamesMatchTheRuleFile holds the two halves together.
+var templateFields = map[string]bool{
+	"blocked by":  true,
+	"covers":      true,
+	"drift":       true,
+	"occurrence":  true,
+	"occurrences": true,
+	"source":      true,
+	"sources":     true,
+	"supports":    true,
+	"writes":      true,
+}
+
 // foldCodeSpans replaces every inline code span with one token. A span opens at a run
 // of backticks and closes at the next run of the same length, so a shorter run inside
 // the span stays part of the span. An unclosed run is literal text.
@@ -195,7 +213,7 @@ func fenceMarker(trimmed string) string {
 }
 
 // gradeBlocks splits the remaining lines into paragraphs and grades each one. A blank
-// line, a skipped line, a list marker, and a label line each start a new paragraph.
+// line, a skipped line, a list marker, and a field line each start a new paragraph.
 func gradeBlocks(lines []string) []Finding {
 	var out []Finding
 	var current []token
@@ -254,11 +272,12 @@ func gradeBlocks(lines []string) []Finding {
 			flush()
 			content = content[len(m):]
 		}
-		if isLabelLine(content) {
+		terminated := hasTerminator(content, number)
+		if isFieldLine(content, terminated) {
 			flush()
-			// A label line is its own paragraph, so a run of such lines never forms one deep
-			// paragraph. A label line with no sentence terminator is a template field, not prose.
-			if hasTerminator(content, number) {
+			// A field line is its own paragraph, so a run of such lines never forms one deep
+			// paragraph. A field line with no terminator holds no sentence to grade.
+			if terminated {
 				add(content, number)
 				flush()
 			}
@@ -325,9 +344,13 @@ func indentWidth(line string) int {
 	return width
 }
 
-// isLabelLine reports whether the line opens with a label of at most four words and a
-// colon. The colon must end the label, so a URL scheme is not a label.
-func isLabelLine(content string) bool {
+// isFieldLine reports whether the line is a template field rather than prose. The line
+// must first be label-shaped: a prefix of one to four words that ends at the first
+// colon, which is why a URL scheme is not a label. Such a line is a field when its
+// prefix is a template field name, or when the whole line carries no sentence
+// terminator. A label-shaped prose line that carries a terminator is therefore prose,
+// and it stays in its paragraph for the paragraph bound to count.
+func isFieldLine(content string, terminated bool) bool {
 	colon := strings.IndexByte(content, ':')
 	if colon <= 0 {
 		return false
@@ -339,12 +362,10 @@ func isLabelLine(content string) bool {
 	if len(words) == 0 || len(words) > 4 {
 		return false
 	}
-	for _, w := range words {
-		if isBoundaryToken(w) {
-			return false
-		}
+	if !terminated {
+		return true
 	}
-	return true
+	return templateFields[strings.ToLower(strings.Join(words, " "))]
 }
 
 // hasTerminator reports whether the line carries a sentence terminator.

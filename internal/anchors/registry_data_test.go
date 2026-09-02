@@ -1223,3 +1223,159 @@ func TestCraftReviewFindingDisciplineAnchorsRedOnRemoval(t *testing.T) {
 		},
 	}.check(t)
 }
+
+// TestFenceOrderAndClaimWordAnchorsRedOnRemoval holds the three rules that keep a spec's
+// fence and its reader sweep honest. A fence derived before the slice omits the registry
+// files the tickets name. A Won't handle that paraphrases an anchored sentence loses the
+// bytes the sentence keeps. A reader sweep blind to the shipped-surface claim words
+// leaves the merge gate to find the claim. Each section, needle, and diagnostic is
+// written here independently of the registry.
+func TestFenceOrderAndClaimWordAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		skill    = ".agents/skills/bench-craft-spec/SKILL.md"
+		mapRules = ".agents/skills/bench-craft-spec/references/map-discipline.md"
+		slicing  = "Slicing a build for delegates"
+		locks    = "Before the map locks"
+	)
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    skill,
+				section: slicing,
+				needle:  "The author writes the fence section after the ticket slice, from the union of the tickets' `Writes:` lines.",
+				want:    ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates dropped the fence section the author writes after the ticket slice from the union of the tickets' Writes: lines",
+			},
+			{
+				file:    skill,
+				section: slicing,
+				needle:  "A Won't handle over an anchored sentence quotes the bytes it keeps.",
+				want:    ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates dropped the quoted-bytes rule for a Won't handle over an anchored sentence",
+			},
+			{
+				file:    mapRules,
+				section: locks,
+				needle:  "The reader sweep names the shipped-surface claim words, because `package-core-guard` reds a claim word beside a repo-only path.",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the shipped-surface claim words from the reader sweep",
+			},
+		},
+	}.check(t)
+}
+
+// TestSteProseLabelRuleAnchorRedsOnRemoval holds the second half of the label rule the
+// prose parser applies. A terminated label keeps its own paragraph only when it names a
+// closed template field. A reference that states the no-terminator half alone contradicts
+// that parser. The needle and the diagnostic are written here independently of the
+// registry.
+func TestSteProseLabelRuleAnchorRedsOnRemoval(t *testing.T) {
+	anchorHarness{
+		group: AfterSpecAuthorization,
+		rules: []anchorRule{
+			{
+				file:   ".agents/skills/bench-craft-spec/references/ste-prose.md",
+				needle: "A terminated label is a field line only when it names `Blocked by`, `Covers`, `Drift`, `Occurrence`, `Occurrences`, `Source`, `Sources`, `Supports`, or `Writes`.",
+				want:   ".agents/skills/bench-craft-spec/references/ste-prose.md dropped the template field-name clause beside the no-terminator clause",
+			},
+		},
+	}.check(t)
+}
+
+// TestDelegateExecOnlyAndCapChangeAnchorsRedOnRemoval holds the four rules that keep a
+// delegation charge and its coordinator on one command form. A rule bound to the charge
+// alone leaves the coordinator's own read outside it. A rule that names `cd` alone leaves
+// a shell loop over the pool path as an open route. A cap-change charge with no pinning
+// package in its search list finds the consuming packages and misses the pin. Each
+// section, needle, and diagnostic is written here independently of the registry.
+func TestDelegateExecOnlyAndCapChangeAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		skill     = ".agents/skills/bench-craft-delegate/SKILL.md"
+		isolation = "Isolation"
+		charge    = "The charge"
+	)
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    skill,
+				section: isolation,
+				needle:  "`bench worktree exec \"<label>\" -- <command>` is the one command form for every caller into an assignment worktree.",
+				want:    ".agents/skills/bench-craft-delegate/SKILL.md Isolation binds the exec-only command form to the charge instead of every caller",
+			},
+			{
+				file:    skill,
+				section: isolation,
+				needle:  "The rule covers the coordinator, and it covers a read or a write.",
+				want:    ".agents/skills/bench-craft-delegate/SKILL.md Isolation dropped the coordinator and the read-or-write case from the exec-only rule",
+			},
+			{
+				file:    skill,
+				section: isolation,
+				needle:  "A shell loop inside the pool path is the same bypass.",
+				want:    ".agents/skills/bench-craft-delegate/SKILL.md Isolation dropped the shell loop inside the pool path as the same bypass",
+			},
+			{
+				file:    skill,
+				section: charge,
+				needle:  "A cap-change charge's search list names the closest pinning package.",
+				want:    ".agents/skills/bench-craft-delegate/SKILL.md The charge dropped the closest pinning package from a cap-change charge's search list",
+			},
+		},
+	}.check(t)
+}
+
+// TestTddHelperReturnRuleAnchorRedsOnRemoval holds the rule that keeps a re-exec helper's
+// off-role arm silent. A helper that skips instead of returning routes an environment-class
+// skip into the gate, and that population is red with no host exemption, so the wrong arm
+// costs a green run. The section, the needle, and the diagnostic are written here
+// independently of the registry, so a needle relaxed to match a skipping helper cannot
+// define itself green.
+func TestTddHelperReturnRuleAnchorRedsOnRemoval(t *testing.T) {
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    ".agents/skills/bench-craft-tdd/SKILL.md",
+				section: "The oracle is the gate, not you",
+				needle:  "A re-exec helper returns silently outside its role environment and never skips, because the kit gate treats an environment-class skip as red.",
+				want:    ".agents/skills/bench-craft-tdd/SKILL.md The oracle is the gate, not you dropped the silent-return rule for a re-exec helper outside its role",
+			},
+		},
+	}.check(t)
+}
+
+// TestCensusChangelogAndReviewBaseAnchorsRedOnRemoval holds the three landing-phase rules
+// that no other check can see. The census record is deleted at release, so a close that
+// reads it after the landing reads a deleted file. Two CHANGELOG entries under one heading
+// conflict at composition, and an unnamed review base leaves the reviewed range to memory.
+// The sections, the needles, and the diagnostics are written here independently of the
+// registry, so a needle relaxed to a caution or to an unnamed base cannot define itself
+// green.
+func TestCensusChangelogAndReviewBaseAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		finalCheck  = ".agents/commands/bench-final-check.md"
+		exitHandoff = "Exit handoff"
+	)
+	anchorHarness{
+		group: AfterImplementSpec,
+		rules: []anchorRule{
+			{
+				file:    finalCheck,
+				section: exitHandoff,
+				needle:  "The phase close reads the assignment census record before `bench worktree land` removes it, and it carries the per-verb breakdown into the close.",
+				want:    ".agents/commands/bench-final-check.md Exit handoff dropped the census read that precedes the landing's removal of the record",
+			},
+			{
+				file:    finalCheck,
+				section: exitHandoff,
+				needle:  "A light-path fix lands before a spec's final merge only when its `CHANGELOG.md` entry sits under a heading no sibling touches.",
+				want:    ".agents/commands/bench-final-check.md Exit handoff dropped the light-path CHANGELOG-heading rule as a rule",
+			},
+			{
+				file:    ".agents/commands/bench-review-implementation.md",
+				section: "Process",
+				needle:  "The frozen base is the `main` tip merged into the source before the landing, so the range holds the spec diff alone.",
+				want:    ".agents/commands/bench-review-implementation.md Pin the diff dropped the merged `main` tip as the frozen review base",
+			},
+		},
+	}.check(t)
+}

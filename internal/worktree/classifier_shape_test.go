@@ -7,14 +7,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 )
 
 // noWriterDeadline bounds every read this package must decide without: a FIFO planted at
 // an assignment path or in a discovered control record has no writer, so a read of one
 // never returns. Running the subject off the test goroutine turns that into the waiting
-// test's own failure instead of a package-wide timeout.
-const noWriterDeadline = 15 * time.Second
+// test's own failure instead of a package-wide timeout. A read that never returns holds
+// no window of its own, so the deadline takes the floor the derivation gives a zero bound.
+var noWriterDeadline = bounds.TestDeadline(0)
 
 // TestClassifyPathShapeUnknownFileAsParent pins the first ShapeUnknown return site: the
 // path's own Lstat fails for a reason other than absence. A regular file makes an
@@ -90,7 +92,7 @@ func TestClassifyPathShapeRefusesSpecialGitEntry(t *testing.T) {
 		requireTest(t, got.err == nil && got.shape == ShapeSpecialMetadata,
 			"ClassifyPathShape over FIFO .git = %v, %v; want %v, <nil>", got.shape, got.err, ShapeSpecialMetadata)
 	case <-time.After(noWriterDeadline):
-		t.Fatal("ClassifyPathShape blocked reading a no-writer FIFO .git entry")
+		t.Fatal(bounds.TestTimeoutVerdict("ClassifyPathShape to return over a no-writer FIFO .git entry", noWriterDeadline))
 	}
 
 	info, err := os.Lstat(filepath.Join(creation.Path, ".git"))

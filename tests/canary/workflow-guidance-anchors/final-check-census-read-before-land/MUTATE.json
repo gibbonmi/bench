@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-final-check.md",
+    "old": "The phase close reads the assignment census record before `bench worktree land` removes it, and it carries the per-verb breakdown into the close.",
+    "new": "The phase close reads the assignment census record after the landing, and it reconstructs the per-verb breakdown from session memory."
+  }
+]

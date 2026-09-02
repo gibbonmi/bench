@@ -3,7 +3,8 @@
 This is an inventory of every repository-controlled path that operator- or
 environment-supplied data reaches when Bench runs a shift, a gate, or a status
 render. It describes the current decided state for an auditor with no prior
-context: what data travels where, how durable it is, and who can read it.
+context. The inventory shows what data travels where, how durable it is, and
+who can read it.
 
 Bench runs as the invoking user; see `SECURITY.md` for the trust model. Nothing
 here is a sandbox. The controls below bound *which* data reaches

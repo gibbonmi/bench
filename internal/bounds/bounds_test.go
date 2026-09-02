@@ -75,6 +75,16 @@ func TestDeadlineHoldsAtItsBoundaries(t *testing.T) {
 	}
 }
 
+// TestTimeoutVerdictNamesTheWaitAndTheWindow pins the text one wait name and one window
+// render. A verdict that drops either half leaves the reader of a red run unable to tell
+// a wedged wait from a window that was always too short.
+func TestTimeoutVerdictNamesTheWaitAndTheWindow(t *testing.T) {
+	const want = "timeout: waited 5s for the gate fixture to acquire its lock"
+	if got := TestTimeoutVerdict("the gate fixture to acquire its lock", 5*time.Second); got != want {
+		t.Fatalf("TestTimeoutVerdict = %q, want %q", got, want)
+	}
+}
+
 // registryDurations type-checks the policy registry's own declarations and returns every
 // time.Duration entry by name. It reads the const block instead of restating a sample of
 // it, so a duration bound added later is graded here with no one needing to add it.

@@ -92,8 +92,8 @@ A finding without a citation is an opinion.
 - Standards: the rule, named or quoted precisely; a baseline finding names the smell
   and quotes the hunk.
 - Spec: the spec line, quoted. For implemented-but-wrong behavior a traced execution
-  is also a valid citation — input, produced value, and violated expectation — so a
-  happy-path logic bug is reportable with no spec line for it.
+  is also a valid citation — input, produced value, and violated expectation. A
+  happy-path logic bug is therefore reportable with no spec line for it.
 - Coverage: the input or state, the expected break, and the row or test that should
   exist.
 

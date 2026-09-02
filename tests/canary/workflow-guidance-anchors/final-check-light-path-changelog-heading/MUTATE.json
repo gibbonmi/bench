@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-final-check.md",
+    "old": "A light-path fix lands before a spec's final merge only when its `CHANGELOG.md` entry sits under a heading no sibling touches.",
+    "new": "Take care with a light-path fix that lands before a spec's final merge, because its `CHANGELOG.md` entry can share a heading with a sibling."
+  }
+]

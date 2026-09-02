@@ -4,9 +4,12 @@ package systemtest
 
 import (
 	"errors"
+	"fmt"
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 func TestRedTimeoutAndDescendantTeardown(t *testing.T) {
@@ -28,16 +31,20 @@ func TestRedTimeoutAndDescendantTeardown(t *testing.T) {
 	owner.markTerminal("timeout")
 }
 
+// requireProcessGone waits for a signalled descendant to leave the process table. The
+// signal is already delivered when the wait starts, so the wait contains no window of its
+// own and takes the floor the derivation gives a zero bound.
 func requireProcessGone(t *testing.T, pid int, outcome string) {
 	t.Helper()
-	deadline := time.Now().Add(2 * time.Second)
+	window := bounds.TestDeadline(0)
+	deadline := time.Now().Add(window)
 	for {
 		err := syscall.Kill(pid, 0)
 		if errors.Is(err, syscall.ESRCH) {
 			break
 		}
 		if time.Now().After(deadline) {
-			t.Fatalf("descendant %d remains after process-group %s", pid, outcome)
+			t.Fatal(bounds.TestTimeoutVerdict(fmt.Sprintf("descendant %d to exit after process-group %s", pid, outcome), window))
 		}
 		time.Sleep(10 * time.Millisecond)
 	}

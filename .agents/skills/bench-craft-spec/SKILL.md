@@ -56,8 +56,9 @@ Price every cut as `<n> edits, <n> gate runs`. A cut must be a separate capabili
 ## Slicing a build for delegates
 
 Record **who-writes-where** ownership fences at spec time, checkable at charge time. A fence entry is an exact repo-relative file or path prefix, never a glob
-or an implementation ticket. An empty or invalid fence section is incomplete. Derive the fences from the tickets' own `Writes:` lines.
+or an implementation ticket. An empty or invalid fence section is incomplete. The author writes the fence section after the ticket slice, from the union of the tickets' `Writes:` lines.
 The fences include the review pickup and every conformance-pinned consumer of a moved symbol.
+A Won't handle over an anchored sentence quotes the bytes it keeps.
 
 A build may not edit its own spec's acceptance rows, budget targets, or ownership fences. A build that hits a spec-level
 shortfall stops and returns to `/bench-write-spec`, even inside those fences. A budget row equal to its subject's current

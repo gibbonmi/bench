@@ -27,6 +27,7 @@ Everything else takes the gate-then-commit path. On green, land the named
 paths with `bench commit -m "<msg>" <path>...`. This command gates and commits
 them atomically. When there is nothing to commit, the honest no-op runs
 `bench gate` and reports its verdict.
+A light-path fix lands before a spec's final merge only when its `CHANGELOG.md` entry sits under a heading no sibling touches.
 
 If the command refuses because of an
 unexplained working-tree file, surface that file. Do not commit or revert it.
@@ -46,6 +47,8 @@ Promote or delete an orphaned review pickup by hand.
 
 Scratch branches go through `bench worktree clean`.
 Leftover worktrees are retired by `bench worktree clean --landed`: run the plan, apply it, and carry the plan and apply result in the landing report.
+
+The phase close reads the assignment census record before `bench worktree land` removes it, and it carries the per-verb breakdown into the close.
 
 Read `census=<n>` from the landed record; for `n > 0`, write exactly one `bench learning --rule` entry for the landing.
 The entry's title names the assignment label and `n`.

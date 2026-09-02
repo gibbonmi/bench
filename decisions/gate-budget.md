@@ -245,9 +245,9 @@ empty tree can produce, so an EXPECT the wide run already emits goes
 unflagged." But `gate-pipeline` #5 made the opposite call on the conformance
 axis: one shared scoped baseline per check group. This is sound because the
 guard's premise is "would EXPECT match with no mutation under the same run
-shape the fixture pays", making scoped-vs-scoped the consistent comparison. Does that
-argument carry to a per-`(package, test)` baseline here, or do the two axes
-differ in a way the current wideness is protecting against?
+shape the fixture pays". That premise makes scoped-vs-scoped the consistent
+comparison. Does that argument carry to a per-`(package, test)` baseline here,
+or do the two axes differ in a way the current wideness is protecting against?
 
 ### Answer
 
@@ -886,11 +886,12 @@ current baseline: the branch-native, single-build serial gate. It runs one
 host binary per top-level run, one phase process at a time, direct
 mutation-to-check canaries, and no stripped-subject reruns. Update the census
 asset with exact commits, repetitions, CPU, wall, and the new workload-shape
-classification. Re-walk #4's fan-out inventory while there. The rebuild
-retired `eachIndex` and serialized the phase table, so the pool's client
-sites must be re-enumerated before #8 prices reintroduced width. Include the
-surviving `go list` module-closure derivation from #25. Only this reduced,
-reshaped workload may feed #8's reserve and split pricing.
+classification. Re-walk #4's fan-out inventory while there.
+
+The rebuild retired `eachIndex` and serialized the phase table, so the pool's
+client sites must be re-enumerated before #8 prices reintroduced width.
+Include the surviving `go list` module-closure derivation from #25. Only this
+reduced, reshaped workload may feed #8's reserve and split pricing.
 
 ### Answer
 

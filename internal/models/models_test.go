@@ -12,6 +12,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 func TestCommandOfflineSuppressesEveryProviderWithEvidence(t *testing.T) {
@@ -56,7 +58,7 @@ func TestInventoryStartsProvidersConcurrentlyAndRendersStableOrder(t *testing.T)
 		mu.Unlock()
 		select {
 		case <-allStarted:
-		case <-time.After(200 * time.Millisecond):
+		case <-time.After(bounds.TestDeadline(0)):
 			mu.Lock()
 			timedOut = true
 			mu.Unlock()

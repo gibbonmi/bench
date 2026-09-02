@@ -70,7 +70,7 @@ evidence summary based on committed examples rather than policy alone.
 ### Answer
 
 Resolved 2026-08-02. FT135 demonstrates six independent factual delegations
-synthesized into one coordinator-owned asset, but also demonstrates the key
+synthesized into one coordinator-owned asset. It also demonstrates the key
 failure: individually verified claims composed into a false later conclusion.
 Other tickets show that corpus-wide inventories and load-sensitive probes often
 need one serialized owner. Fan out by independent question, then verify both
