@@ -11,7 +11,7 @@ the explore reads, the fence rules, and the review rubric.
 - A spec that retires a symbol enumerates every production consumer and every
   pinning test before it slices tickets.
 - A spec that deletes or moves literal bytes runs one repo-wide search for
-  those bytes. The search includes the canary fixtures, `tests/`, and
+  those bytes. The search covers the canary fixtures, `tests/`, and
   `internal/conformance`.
 - A compile-flag spec runs one whole gate with its flag, then censuses every red,
   before it slices tickets.
