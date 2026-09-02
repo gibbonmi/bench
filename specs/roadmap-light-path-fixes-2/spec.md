@@ -189,6 +189,7 @@ covers only the anchor bytes, so the line rises one step above the code tickets.
 - `internal/conformance/checks_test.go`
 - `internal/conformance/registry/registry.go`
 - `internal/conformance/guidance_token_sweep_test.go`
+- `internal/models/models_test.go`
 - `.agents/skills/bench-craft-spec/SKILL.md`
 - `.agents/skills/bench-craft-spec/references/map-discipline.md`
 - `.agents/skills/bench-craft-spec/references/ste-prose.md`
@@ -271,3 +272,11 @@ spec's research did not anticipate. The reviewer chose a ninth ticket
 ticket's fence or narrowing LP5. The ticket is Blocked by the label-line
 ticket and carries the ten sites; the Ownership fences list above carries its
 `Writes:` union.
+
+Fence widening accepted during implementation, 2026-09-02: the sweep ticket's
+own live-tree run found one more literal wait deadline. It sits outside the
+fourteen the deadline ticket named, at `internal/models/models_test.go:59`.
+Unlike LP5, this is a one-line fix with a one-line import. It lands inside
+the sweep ticket rather than a new one, per the standing "fix, don't park"
+rule.
+The Ownership fences list above carries the added file.

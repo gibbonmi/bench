@@ -1,7 +1,7 @@
 # Sweep literal wait deadlines in tests
 
 Blocked by: derive-test-wait-deadlines-from-bounds.md
-Writes: internal/conformance/wait_deadline_literal_test.go (new), internal/conformance/marker_wait_deadline_test.go, internal/conformance/checks_test.go, internal/conformance/registry/registry.go
+Writes: internal/conformance/wait_deadline_literal_test.go (new), internal/conformance/marker_wait_deadline_test.go, internal/conformance/checks_test.go, internal/conformance/registry/registry.go, internal/models/models_test.go, projects/benchkit.md
 Covers: LP11, LP12, LP13
 
 ## What to build
