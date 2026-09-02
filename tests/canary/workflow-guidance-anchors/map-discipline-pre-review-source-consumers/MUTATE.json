@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
-    "old": "It resolves cited symbols and import edges, quotes source-row clauses with all occurrences, names exact field labels, and lists all changed-function callers.",
-    "new": "It records the source and consumer surface."
+    "old": "`Cited symbols` resolves every cited symbol.",
+    "new": "`Cited symbols` records cited symbols."
   }
 ]

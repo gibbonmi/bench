@@ -833,19 +833,43 @@ func TestMapDisciplineAnchorsRedOnRemoval(t *testing.T) {
 			{
 				file:    file,
 				section: "Before the map locks",
-				needle:  "Before the first review charge, Further notes carries a pre-review proof for each applicable class and records `none` for each absent class.",
-				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the exhaustive pre-review proof",
+				needle:  "Before the first review charge, Further notes carries this fixed pre-review proof checklist and records `none` for each absent class:",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the exhaustive pre-review proof checklist",
 			},
 			{
 				file:    file,
 				section: "Before the map locks",
-				needle:  "It resolves cited symbols and import edges, quotes source-row clauses with all occurrences, names exact field labels, and lists all changed-function callers.",
-				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped a source or consumer proof class",
+				needle:  "`Cited symbols` resolves every cited symbol.",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the cited-symbol proof",
 			},
 			{
 				file:    file,
 				section: "Before the map locks",
-				needle:  "When a new owner replaces copies, it names a red-capable row that fails if any copy survives.",
+				needle:  "`Import edges` resolves every cited import edge.",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the import-edge proof",
+			},
+			{
+				file:    file,
+				section: "Before the map locks",
+				needle:  "`Source-row clauses and occurrences` quotes each clause and lists every occurrence.",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the source-row occurrence proof",
+			},
+			{
+				file:    file,
+				section: "Before the map locks",
+				needle:  "`Promised field labels` names each exact field label.",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the field-label proof",
+			},
+			{
+				file:    file,
+				section: "Before the map locks",
+				needle:  "`Changed-function callers` lists every caller of each changed function.",
+				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the changed-function caller proof",
+			},
+			{
+				file:    file,
+				section: "Before the map locks",
+				needle:  "`Copy survival`, when a new owner replaces copies, names a red-capable row that fails if any copy survives.",
 				want:    ".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the copy-survival proof",
 			},
 			{

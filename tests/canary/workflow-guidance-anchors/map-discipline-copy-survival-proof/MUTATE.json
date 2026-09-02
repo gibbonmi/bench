@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
-    "old": "When a new owner replaces copies, it names a red-capable row that fails if any copy survives.",
-    "new": "When a new owner replaces copies, it names the new owner."
+    "old": "`Copy survival`, when a new owner replaces copies, names a red-capable row that fails if any copy survives.",
+    "new": "`Copy survival` names the new owner."
   }
 ]
