@@ -1,7 +1,7 @@
 # Repair review round 1
 
 Blocked by: state-the-census-read-the-changelog-rule-and-the-review-base.md
-Writes: internal/conformance/wait_deadline_literal_test.go, internal/gate/run_failure_outcomes_test.go, internal/prose/parse.go, internal/prose/parse_test.go, .agents/skills/bench-craft-spec/references/ste-prose.md, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, tests/canary/workflow-guidance-anchors/, specs/roadmap-light-path-fixes-2/spec.md
+Writes: internal/conformance/wait_deadline_literal_test.go, internal/gate/run_failure_outcomes_test.go, internal/prose/parse.go, internal/prose/parse_test.go, .agents/skills/bench-craft-spec/references/ste-prose.md, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, tests/canary/workflow-guidance-anchors/, specs/roadmap-light-path-fixes-2/spec.md, tests/canary/workflow-guidance-anchors/ste-prose-paragraph-bound, tests/canary/workflow-guidance-anchors/ste-prose-sentence-bound, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
 Covers: LP9, LP11, LP1, LP2, LP3
 
 Accepted repairs from the initial review round

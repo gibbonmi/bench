@@ -186,6 +186,7 @@ covers only the anchor bytes, so the line rises one step above the code tickets.
 - `internal/otelrecord/writer_test.go`
 - `internal/gocache/lock_test.go`
 - `internal/gate/prospective_owner_test.go`
+- `internal/gate/run_failure_outcomes_test.go`
 - `internal/conformance/marker_wait_deadline_test.go`
 - `internal/conformance/wait_deadline_literal_test.go`
 - `internal/conformance/checks_test.go`
