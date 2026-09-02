@@ -293,6 +293,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `$bench-write-spec` — write FT71's versioned local shift-evidence spec for the unblocked HIGH work.
-2. `$bench` — open FT142's light-path ticket for the next unblocked MEDIUM fix.
-3. `$bench` — route FT294 to a `craft-synthesis` kit edit for the spec pre-review proof.
+1. `$bench` — open FT142's light-path ticket for the next unblocked MEDIUM fix.
+2. `$bench` — route FT294 to a `craft-synthesis` kit edit for the spec pre-review proof.
+3. `$bench` — route FT295 to a `craft-synthesis` kit edit for read-only delegate hygiene.
