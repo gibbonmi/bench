@@ -1066,7 +1066,7 @@ func TestStandingFalsificationAnchorsRedOnRemoval(t *testing.T) {
 				file:    review,
 				section: "Review modes",
 				needle:  "Each falsification finding takes one explicit outcome of accept, merge, or dismiss.",
-				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the accept, merge, or dismiss disposition a falsification finding takes",
+				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the accept, merge, or dismiss outcome a falsification finding takes",
 			},
 			{
 				file:    review,

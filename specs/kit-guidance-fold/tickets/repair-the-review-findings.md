@@ -2,12 +2,12 @@
 
 Blocked by: add-the-finding-discipline-reference-to-craft-review.md
 Writes: .agents/skills/bench-craft-gate/SKILL.md, .agents/commands/bench-review-implementation.md, .agents/skills/bench-craft-delegate/references/cross-harness-reviewers.md, .agents/skills/bench-craft-delegate/references/delegation-discipline.md, .agents/skills/bench-craft-review/references/finding-discipline.md, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go, tests/canary/workflow-guidance-anchors, tests/canary/workflow-guidance-anchors/review-falsification-dispositions, tests/canary/workflow-guidance-anchors/cross-harness-reviewer-exec-heredoc, specs/kit-guidance-fold/spec.md, specs/kit-guidance-fold/tickets/repair-the-review-findings.md (new)
-Covers: KG10, KG12, KG36
+Covers: KG10, KG12, KG36, KG39
 
 ## What to build
 
 The review of this spec accepted nine repairs. This ticket lands them, and it amends the
-three coverage rows the repairs move.
+four coverage rows the repairs move.
 
 The review phase file gives a falsification finding an outcome, not a disposition.
 `CONTEXT.md` reserves disposition for the repair-routing label, so the two labels no
