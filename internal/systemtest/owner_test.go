@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 type executableIdentity struct {
@@ -76,6 +77,12 @@ func newSystemOwner() (*systemOwner, error) {
 	kit, err := filepath.Abs(os.Getenv("BENCH_KIT"))
 	if err != nil || kit == "" {
 		return nil, errors.New("BENCH_KIT must name an absolute kit root")
+	}
+	// The suite spends every row on the selected executable, so a stale one grades the
+	// wrong bytes for the whole run. Setup grades it against the kit it claims to be built
+	// from, and a hand run under a stale binary reds here rather than in a journey.
+	if _, err := runbinary.Inherit(kit); err != nil {
+		return nil, err
 	}
 	root, err := os.MkdirTemp("", "bench system [owner]-")
 	if err != nil {

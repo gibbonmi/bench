@@ -10,22 +10,31 @@ import (
 	"strings"
 )
 
-// Verify reports whether executable has a matching content seal for root.
+// Verify reports whether executable has a matching content seal for root, and names root
+// as the root its refusal tells the operator to rebuild in.
 func Verify(root, executable string) error {
+	return VerifyAt(root, root, executable)
+}
+
+// VerifyAt grades executable against root's sources and names repairRoot in the rebuild
+// command its refusal prints. A composed temporary tree is a sound digest root and an
+// unusable rebuild root, so a caller that grades one names the checkout an operator can
+// still rebuild in.
+func VerifyAt(root, repairRoot, executable string) error {
 	stored, err := verifiedExecutable(executable)
 	if err != nil {
-		return refusal(root, executable, err)
+		return refusal(repairRoot, executable, err)
 	}
 	sources, err := Digest(root)
 	if err != nil {
-		return refusal(root, executable, err)
+		return refusal(repairRoot, executable, err)
 	}
 	decision := Select(SelectionInput{
 		StoredSource: stored.Sources, CurrentSource: sources,
 		StoredExecutable: stored.Executable, CurrentExecutable: stored.Executable,
 	})
 	if !decision.Accepted {
-		return refusal(root, executable, errors.New(decision.Reason))
+		return refusal(repairRoot, executable, errors.New(decision.Reason))
 	}
 	return nil
 }
@@ -76,8 +85,8 @@ func Check(root, executable string) error {
 	return nil
 }
 
-func refusal(root, executable string, cause error) error {
-	return fmt.Errorf("bench binary %q is untrusted: %v; rebuild with %s", executable, cause, RebuildAction(root))
+func refusal(repairRoot, executable string, cause error) error {
+	return fmt.Errorf("bench binary %q is untrusted: %v; rebuild with %s", executable, cause, RebuildAction(repairRoot))
 }
 
 // RebuildAction returns the copy-paste command that republishes root's Bench binary.

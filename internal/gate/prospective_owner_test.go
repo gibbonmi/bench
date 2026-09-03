@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	benchfreshness "github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
@@ -81,6 +82,35 @@ func TestProspectiveGateAuthorsItsExecutableFromTheGradedTree(t *testing.T) {
 	}
 	if len(*sources) != 1 || baseline.Path != inherited {
 		t.Fatalf("baseline selection = %q with sources %#v, want the inherited %q", baseline.Path, *sources, inherited)
+	}
+}
+
+// TestProspectiveOwnerRefusalNamesTheKitRoot is BF5. The graded tree is a composed
+// temporary checkout, so a refusal that printed it as the rebuild root would hand the
+// operator a command for a directory the run removes. The refusal names the kit checkout
+// instead, and the digest root stays the graded tree.
+func TestProspectiveOwnerRefusalNamesTheKitRoot(t *testing.T) {
+	checkout := t.TempDir()
+	artifactRoot := t.TempDir()
+	kit := t.TempDir()
+	t.Setenv("BENCH_KIT", kit)
+	old := prospectiveRunBinary
+	prospectiveRunBinary = runbinary.Factory{
+		Build: func(_ context.Context, _, output string) error {
+			return os.WriteFile(output, []byte("#!/bin/sh\nexit 0\n"), 0o755)
+		},
+	}
+	t.Cleanup(func() { prospectiveRunBinary = old })
+
+	selection, err := prospectiveRunBinaryOwnerAt(checkout, artifactRoot)(t.Context(), checkout)
+	if err == nil {
+		t.Fatalf("unsealed gate executable = %#v, want a refusal", selection)
+	}
+	if !strings.Contains(err.Error(), benchfreshness.RebuildAction(kit)) {
+		t.Fatalf("prospective refusal = %q, want the kit rebuild action %q", err, benchfreshness.RebuildAction(kit))
+	}
+	if strings.Contains(err.Error(), benchfreshness.RebuildAction(checkout)) {
+		t.Fatalf("prospective refusal = %q, named the composed tree %q as the rebuild root", err, checkout)
 	}
 }
 
