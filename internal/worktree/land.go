@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
@@ -93,6 +94,12 @@ type joins struct {
 	// seam because the resolution reads the kit root out of the process environment, and a
 	// fixture that bound that environment would leave the package's parallel set.
 	mergeLane func(string) (*gate.Lane, error)
+	// kitSourceCheckout reports whether the landing destination is the kit's own source
+	// tree, which decides the install step the broker notice names. It is a seam for the
+	// same reason mergeLane is: the predicate reads the kit root out of the process
+	// environment, and a fixture that bound that environment would leave the package's
+	// parallel set.
+	kitSourceCheckout func(string) bool
 	// build authors one executable from a worktree's own tree. It is a seam because the
 	// default reaches a build script and a Go toolchain, and a fixture for that pair
 	// would make every output row wait on a real compile.
@@ -134,6 +141,7 @@ func defaultJoins() joins {
 		reauthorizeUnlock:        unlockWorktree,
 		reauthorizeLock:          lockWorktree,
 		mergeLane:                gate.LaneForCommit,
+		kitSourceCheckout:        adopt.KitSourceCheckout,
 		mergeReconcile:           reconcileMergeCheckout,
 		build:                    runbinary.Build,
 	}
@@ -279,7 +287,7 @@ func landAttributed(measures *landingMeasures, j joins, root, home, _ string, ar
 	}
 	fmt.Fprintf(stderr, "landing source{review_base=%s,assignment_start=%s}\n", source.base, assignment.Start)
 	printCensusHeads(stderr, home, root, assignment.ID)
-	if notice := brokerChangeNotice(assignment.Worktree, source.base, source.tip); notice != "" {
+	if notice := brokerChangeNotice(j.kitSourceCheckout, root, assignment.Worktree, source.base, source.tip); notice != "" {
 		fmt.Fprintln(stderr, notice)
 	}
 	result, err := j.landReviewed(context.Background(), landing.ReviewedRequest{
@@ -341,8 +349,9 @@ func hasResumeFlag(args []string) bool {
 // promotion broker's own build inputs. Source publication cannot replace the broker's
 // authority: the installed broker keeps landing until the release or repair path
 // installs the new one. An unresolvable input set reports nothing; the landing itself
-// stays under the installed owner either way.
-func brokerChangeNotice(worktree, base, tip string) string {
+// stays under the installed owner either way. The install step it names is the
+// destination's own route, so the printed command runs where the operator stands.
+func brokerChangeNotice(kitCheckout func(string) bool, root, worktree, base, tip string) string {
 	if !freshness.DeclaresBuildInputs(worktree) {
 		return ""
 	}
@@ -360,8 +369,19 @@ func brokerChangeNotice(worktree, base, tip string) string {
 	}
 	for _, input := range inputs {
 		if _, ok := changed[input]; ok {
-			return "landing changes the promotion broker source; the installed broker keeps authority until 'bench repair' or the release install publishes the new broker"
+			return "landing changes the promotion broker source; the installed broker keeps authority until " + brokerInstallStep(kitCheckout, root) + " publishes the new broker"
 		}
 	}
 	return ""
+}
+
+// brokerInstallStep names the route that installs the changed broker at root. The kit's
+// own source checkout carries no pin manifest, so 'bench repair' refuses there; its route
+// is the stamped rebuild and 'bench doctor --fix'. The sentence comes from the one
+// rebuild owner, never from a second copy of the command here.
+func brokerInstallStep(kitCheckout func(string) bool, root string) string {
+	if kitCheckout(root) {
+		return freshness.RebuildAction(root) + " with 'bench doctor --fix'"
+	}
+	return "'bench repair' or the release install"
 }
