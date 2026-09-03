@@ -99,6 +99,14 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   result. Plant the matching break and run the oracle before you believe either
   reading.
 
+## Read-only returns
+
+- The coordinator reads the census record at charge close for a read-only charge.
+- A shared-worktree reader restores every probe byte exactly, and confirms the
+  restore with `cmp` against the copy aside.
+- The coordinator verifies a clean `git status` in the shared worktree before it
+  trusts a read-only return.
+
 ## Retry stops and aggregate readiness
 
 - After the second known-flaky refusal proves green in isolation, stop
