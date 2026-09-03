@@ -932,14 +932,18 @@ func TestRoadmapFlagsRouteToTheirOwners(t *testing.T) {
 // verb a session runs to learn whether Bench answers at all, so a stale binary answering
 // it is a false pass nothing else in the loop catches. The rows run out of process,
 // because the verdict is about the executable that is running, and a test binary is not
-// the checkout's publication. Both rows read one real subject-mode build, so the
-// published pair under grading is the one the builder writes.
+// any checkout's publication.
+//
+// Each row grades a synthetic checkout under t.TempDir(): a git repository that declares
+// build inputs and holds the published pair at dist/bench. Nothing here writes into the
+// repository under test, which runs its own package sweeps concurrently over the same
+// tree. The real bench binary is what answers; only the sources it is graded against are
+// synthetic, and the handler resolves that checkout itself from the child's directory.
 func TestCommandsBriefGradesTheRunningExecutable(t *testing.T) {
-	root := commandsBriefCheckout(t)
-	published := commandsBriefPublication(t, root)
+	staged := commandsBriefBinary(t)
 
 	t.Run("a matching seal keeps the three-line answer", func(t *testing.T) {
-		binary := commandsBriefCopy(t, root, published)
+		root, binary := commandsBriefCheckout(t, staged)
 		out, code := commandsBriefProbe(t, root, binary)
 		if code != 0 {
 			t.Fatalf("commands --brief under a matching seal = exit %d:\n%s", code, out)
@@ -950,7 +954,7 @@ func TestCommandsBriefGradesTheRunningExecutable(t *testing.T) {
 	})
 
 	t.Run("a mismatched seal refuses with the rebuild action", func(t *testing.T) {
-		binary := commandsBriefCopy(t, root, published)
+		root, binary := commandsBriefCheckout(t, staged)
 		commandsBriefBreakSeal(t, binary)
 		out, code := commandsBriefProbe(t, root, binary)
 		if code == 0 {
@@ -962,69 +966,65 @@ func TestCommandsBriefGradesTheRunningExecutable(t *testing.T) {
 	})
 }
 
-// commandsBriefCheckout names the checkout exactly as the probe's own handler will,
-// because the rebuild action the refusal prints is built from that spelling.
-func commandsBriefCheckout(t *testing.T) string {
+// commandsBriefBinary compiles the subject once into a temporary directory. The rows need
+// the real handler, not the builder's stamping, so a plain build is the whole requirement
+// and the publication below binds these bytes to the checkout that grades them.
+func commandsBriefBinary(t *testing.T) string {
 	t.Helper()
-	root, err := filepath.Abs(filepath.Join("..", ".."))
-	if err != nil {
-		t.Fatal(err)
-	}
-	resolved, err := git.RootAt(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return resolved
-}
-
-// commandsBriefPublication builds the checkout's own binary into the checkout, which is
-// where the wrapper's binary route resolves it. A build outside the tree is not this
-// checkout's publication, so only an in-tree one exercises the grading branch.
-func commandsBriefPublication(t *testing.T, root string) string {
-	t.Helper()
-	dist := filepath.Join(root, "dist")
-	if err := os.MkdirAll(dist, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	dir, err := os.MkdirTemp(dist, "commands-brief-")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { os.RemoveAll(dir) })
-	out := filepath.Join(dir, "bench")
-	cmd := exec.Command("bash", filepath.Join(root, "scripts", "go-build.sh"), root, out)
-	cmd.Dir = root
+	staged := filepath.Join(t.TempDir(), "bench")
+	cmd := exec.Command("go", "build", "-o", staged, "./cmd/bench")
+	cmd.Dir = filepath.Join("..", "..")
 	cmd.Env = capability.WithoutEnvironment(os.Environ(), runbinary.Env)
 	if output, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("subject build: %v\n%s", err, output)
+		t.Fatalf("build the probe subject: %v\n%s", err, output)
 	}
-	return out
+	return staged
 }
 
-// commandsBriefCopy gives one row its own published pair, so neither row depends on the
-// order the other ran in.
-func commandsBriefCopy(t *testing.T, root, published string) string {
+// commandsBriefCheckout publishes staged as one synthetic checkout's own dist/bench and
+// returns the checkout with the published executable. The checkout carries the three
+// things the grading branch reads: a git top level for the child's directory, the
+// build-input manifest that scopes the verdict, and a resolvable ./cmd/bench for the
+// digest. The returned root is spelled as git reports it, because the refusal's rebuild
+// action is built from that spelling.
+func commandsBriefCheckout(t *testing.T, staged string) (string, string) {
 	t.Helper()
-	dir, err := os.MkdirTemp(filepath.Join(root, "dist"), "commands-brief-row-")
+	base, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { os.RemoveAll(dir) })
-	binary := filepath.Join(dir, "bench")
-	for _, pair := range [][2]string{{published, binary}, {published + ".seal", binary + ".seal"}} {
-		body, err := os.ReadFile(pair[0])
-		if err != nil {
+	kit := filepath.Join(base, "kit")
+	for path, body := range map[string]string{
+		filepath.Join(kit, "go.mod"):                  "module benchprobe\n\ngo 1.21\n",
+		filepath.Join(kit, "cmd", "bench", "main.go"): "package main\n\nfunc main() {}\n",
+		filepath.Join(kit, "scripts", "go-build.sh"):  "# the probe checkout's build entry point\n",
+		// One auxiliary input is enough; the manifest's own presence is what
+		// DeclaresBuildInputs reads, and its entries are what the digest covers.
+		filepath.Join(kit, "scripts", "go-build.inputs"): "build_script=scripts/go-build.sh\n",
+	} {
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatal(err)
 		}
-		mode := os.FileMode(0o644)
-		if pair[0] == published {
-			mode = 0o755
-		}
-		if err := os.WriteFile(pair[1], body, mode); err != nil {
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
-	return binary
+	gitInitRepo(t, kit)
+	root, err := git.RootAt(kit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	binary := filepath.Join(root, "dist", "bench")
+	if err := os.MkdirAll(filepath.Dir(binary), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// Publish consumes the staged bytes by renaming them, so each row publishes its own
+	// copy and neither depends on the order the other ran in.
+	copyExecutable(t, staged, filepath.Join(base, "staged"))
+	if err := freshness.Publish(root, filepath.Join(base, "staged"), binary, "probe"); err != nil {
+		t.Fatal(err)
+	}
+	return root, binary
 }
 
 // commandsBriefBreakSeal rewrites the source digest the seal records, which is the exact
