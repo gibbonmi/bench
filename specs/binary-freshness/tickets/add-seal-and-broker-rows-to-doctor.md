@@ -1,7 +1,7 @@
 # Add seal and broker rows to doctor
 
 Blocked by: none
-Writes: internal/adopt/doctor_rows.go, internal/adopt/doctor.go, internal/adopt/broker.go, internal/adopt/broker_test.go, internal/adopt/setup_test.go, internal/brokermanifest (new), internal/conformance/broker_reasons_test.go (new)
+Writes: internal/adopt/doctor_rows.go, internal/adopt/doctor.go, internal/adopt/broker.go, internal/adopt/broker_test.go, internal/adopt/setup_test.go, internal/brokermanifest (new), internal/conformance/broker_reasons_test.go (new), internal/conformance/compliance_checks_test.go
 Covers: BF3, BF4
 
 ## What to build
