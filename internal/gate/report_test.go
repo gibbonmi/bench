@@ -890,6 +890,25 @@ func TestOverBoundReporterRemovesNoFileAndIsNotRed(t *testing.T) {
 	}
 }
 
+// LQ19: a relative GOCACHE entry is refused rather than measured, and the reporter prints
+// the refusal naming the value. A walk of a relative path would report a directory that
+// moves with the process's own working directory.
+func TestReporterPrintsTheRelativeEntryRefusal(t *testing.T) {
+	env := []string{"HOME=/home/agent", gocache.Env + "=cache"}
+
+	rows, line, red := cacheFootprintReport(context.Background(), env, gocache.Measure, gocache.Bound)()
+
+	if red || len(rows) != 0 {
+		t.Errorf("reporter = (%v, red %v), want no rows and not red", rows, red)
+	}
+	if !strings.Contains(line, "GOCACHE is relative: cache") {
+		t.Errorf("line = %q, want the refusal naming the entry value", line)
+	}
+	if strings.Contains(line, "go-build-cache:") {
+		t.Errorf("line = %q, want no measured footprint line", line)
+	}
+}
+
 // hasVerdictLine matches a whole printed line, so a verdict is never satisfied by a
 // substring of some other line the tail printed.
 func hasVerdictLine(stdout, want string) bool {

@@ -1,6 +1,7 @@
 package gocache
 
 import (
+	"errors"
 	"slices"
 	"strings"
 	"testing"
@@ -81,6 +82,7 @@ func TestApplyReportsADerivationRefusal(t *testing.T) {
 
 // R18: FromEnv answers the entry when the slice carries one, falls back to the HOME
 // derivation when it does not, and answers an empty string when the slice names neither.
+// An empty entry is absent, so it reaches the derivation rather than a refusal.
 func TestFromEnvFallsBackToTheHomeDerivation(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
@@ -90,11 +92,71 @@ func TestFromEnvFallsBackToTheHomeDerivation(t *testing.T) {
 	}{
 		{"entry", []string{"HOME=/home/agent", "GOCACHE=/ambient/cache"}, "/ambient/cache"},
 		{"home derivation", []string{"HOME=/home/agent", "PATH=/usr/bin"}, "/home/agent/.cache/bench/go-build"},
+		{"empty entry", []string{"HOME=/home/agent", "GOCACHE="}, "/home/agent/.cache/bench/go-build"},
 		{"neither", []string{"PATH=/usr/bin"}, ""},
 		{"relative home", []string{"HOME=agent"}, ""},
 	} {
-		if got := FromEnv(tc.env); got != tc.want {
+		got, err := FromEnv(tc.env)
+		if err != nil {
+			t.Errorf("%s: FromEnv = %v, want no refusal", tc.name, err)
+			continue
+		}
+		if got != tc.want {
 			t.Errorf("%s: FromEnv = %q, want %q", tc.name, got, tc.want)
 		}
+	}
+}
+
+// C20: a relative entry is a refusal that names the value. A verbatim answer would report
+// a directory that moves with the reader's own working directory.
+func TestFromEnvRefusesARelativeEntry(t *testing.T) {
+	t.Parallel()
+	dir, err := FromEnv([]string{"HOME=/home/agent", "GOCACHE=cache"})
+	if err == nil {
+		t.Fatalf("FromEnv = %q, want a refusal", dir)
+	}
+	if dir != "" {
+		t.Errorf("FromEnv directory = %q, want an empty string beside the refusal", dir)
+	}
+	if !strings.Contains(err.Error(), "cache") {
+		t.Errorf("refusal = %q, want it to name the entry value", err)
+	}
+}
+
+// C21: Declared separates an environment that names no home from one whose home the
+// derivation refuses, which is the distinction the gate closure reads.
+func TestDeclaredReportsTheHomeName(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name string
+		env  []string
+		want bool
+	}{
+		{"absolute", []string{"HOME=/home/agent"}, true},
+		{"relative", []string{"HOME=agent"}, true},
+		{"empty", []string{"HOME="}, false},
+		{"absent", []string{"PATH=/usr/bin"}, false},
+	} {
+		if got := Declared(tc.env); got != tc.want {
+			t.Errorf("%s: Declared = %v, want %v", tc.name, got, tc.want)
+		}
+	}
+}
+
+// C22: the shared refusal line names the hold error and the derived path, and it names the
+// error alone when the derivation itself failed. A control byte in either reaches no
+// terminal raw.
+func TestRefusalNamesTheHoldErrorAndThePath(t *testing.T) {
+	t.Parallel()
+	held := Refusal([]string{"HOME=/home/ag\x1bent"}, errors.New("permission denied"))
+	if !strings.Contains(held, "permission denied") || !strings.Contains(held, "/home/ag\\u001bent/.cache/bench/go-build") {
+		t.Errorf("refusal = %q, want the error and the escaped path", held)
+	}
+	if strings.Contains(held, "\x1b") {
+		t.Errorf("refusal = %q, want no control byte", held)
+	}
+	underived := Refusal([]string{"PATH=/usr/bin"}, errors.New("HOME is absent"))
+	if !strings.Contains(underived, "HOME is absent") || strings.Contains(underived, " at ") {
+		t.Errorf("refusal = %q, want the derivation error alone", underived)
 	}
 }

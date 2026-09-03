@@ -107,10 +107,18 @@ func runLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 
 	// The lane holds the shared cache lock for its span, so one rule covers every holder
 	// and a clean cannot remove an archive a lane check is reading. A lock the lane cannot
-	// take never fails the lane: the checks, not the cache, decide the outcome.
-	if holder, err := gocache.Hold(os.Environ()); err == nil {
-		defer holder.Release()
+	// take refuses the lane, because a check that compiled unlocked would grade a tree
+	// against archives a clean is free to remove. An environment that names no home is the
+	// one exception, the same one the run transaction keeps: it derives no Bench cache, so
+	// no clean can reach what its checks compile. The refusal line goes to the lane's own
+	// stderr, and the returned error is what the caller's exit reads.
+	env := os.Environ()
+	holder, err := gocache.Hold(env)
+	if err != nil && gocache.Declared(env) {
+		fmt.Fprintln(discardIfNil(req.Stderr), gocache.Refusal(env, err))
+		return LaneResult{}, errors.New("gate: build cache lock unavailable")
 	}
+	defer holder.Release()
 
 	selected, names, classes, err := selectLaneChecks(req, checkout)
 	if err != nil {

@@ -55,5 +55,9 @@ func applyProcessBuildCache(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv(gocache.Env, gocache.FromEnv(applied))
+	dir, err := gocache.FromEnv(applied)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(gocache.Env, dir)
 }
