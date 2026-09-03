@@ -230,6 +230,7 @@ Line: opus / low. One new check row in an existing table.
 - `internal/preflight/decision.go`
 - `internal/preflight/gather.go`
 - `internal/preflight/decision_test.go`
+- `internal/preflight/source_tip_test.go`
 - `internal/benchguard/`
 - `internal/conformance/`
 - `bin/bench.sh`
@@ -268,6 +269,18 @@ ticket.
 - A second `bench doctor --fix` action that rebuilds `dist/bench`: 2 edits, 1 gate run.
 
 ## Further notes
+
+Recorded during the build, open to reviewer veto:
+
+- The `binary-seal` row is gated to build mode, because story 26 and rows
+  BF26 and BF27 name `bench preflight build`. An unconditional row also reds
+  `bench preflight review` on a stale `dist/bench`, which no source sentence
+  asks for.
+- `internal/preflight/source_tip_test.go` joins the fence. It asserts a
+  literal preflight row count for both modes, so the new row moves its
+  build-mode expectation. `internal/preflight/command_review_test.go` stays
+  outside the fence, because the build-mode gate keeps its review-mode count
+  at eleven.
 
 Flagged additions beyond the decision source:
 

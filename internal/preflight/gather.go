@@ -14,6 +14,7 @@ import (
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	specref "github.com/gibbonmi/bench/internal/spec"
@@ -155,6 +156,8 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		}
 	}
 
+	sealPresent, sealRefusal := binarySealFacts(root)
+
 	return Facts{
 		Mode:                  mode,
 		SpecPath:              filepath.ToSlash(specref.RelTo(root, resolved)),
@@ -181,7 +184,29 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		WritesSystemTagged:    ticketFacts.systemTag,
 		TicketPinsKit:         ticketFacts.kitPinned,
 		TicketsDirExists:      ticketFacts.dirExists,
+		BinarySealPresent:     sealPresent,
+		BinarySealRefusal:     sealRefusal,
 	}, nil
+}
+
+// destinationBinary is the published Bench executable a hand run, a hook, the
+// wrapper, and the landing all execute. It is the one path the seal row grades.
+const destinationBinary = "dist/bench"
+
+// binarySealFacts grades root's published binary through the seal verifier,
+// the one primitive that decides staleness by source digest. An absent binary
+// is reported as absent rather than graded, because a linked consumer repo
+// publishes none. The verifier's refusal is carried whole, so the row prints
+// the rebuild sentence the verifier composed rather than a second copy.
+func binarySealFacts(root string) (present bool, refusal string) {
+	executable := filepath.Join(root, filepath.FromSlash(destinationBinary))
+	if _, err := os.Stat(executable); err != nil {
+		return false, ""
+	}
+	if err := freshness.Verify(root, executable); err != nil {
+		return true, err.Error()
+	}
+	return true, ""
 }
 
 // resolvePin resolves a --source-tip value to its full commit identity. An

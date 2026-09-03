@@ -24,7 +24,8 @@ func baseFacts() Facts {
 			Writes: []string{"internal/example/foo.go"},
 			Covers: []string{"PF1", "PF2"},
 		}},
-		WritesPathExists: map[string]bool{"internal/example/foo.go": true},
+		WritesPathExists:  map[string]bool{"internal/example/foo.go": true},
+		BinarySealPresent: true,
 	}
 }
 
@@ -564,6 +565,93 @@ func TestKitPinRequiresBenchKit(t *testing.T) {
 	if c, _ := checkRow(Decide(untagged), "kit-pin"); c.Verdict != verdictGreen {
 		t.Errorf("kit-pin over a test file with no system tag = %+v, want green", c)
 	}
+}
+
+// TestBinarySealRedsAMismatchedDestination covers BF26. A build whose
+// published dist/bench fails its seal reds binary-seal, carries the
+// verifier's refusal whole, and makes the whole verdict red, so a --full run
+// names the rebuild before it opens the transaction.
+func TestBinarySealRedsAMismatchedDestination(t *testing.T) {
+	f := baseFacts()
+	f.Mode = modeBuild
+	f.TicketsDirExists = true
+	f.BinarySealPresent = true
+	const refusal = `bench binary "/root/dist/bench" is untrusted: source digest mismatch; ` +
+		`rebuild with cd '/root' && bash scripts/go-build.sh '/root' '/root/dist/bench'`
+	f.BinarySealRefusal = refusal
+
+	v := Decide(f)
+	c, ok := checkRow(v, "binary-seal")
+	if !ok {
+		t.Fatalf("Checks = %#v, want a binary-seal row", v.Checks)
+	}
+	if c.Verdict != verdictRed || c.Detail != refusal {
+		t.Errorf("binary-seal row = %+v, want the red detailed %q", c, refusal)
+	}
+	if !v.Red {
+		t.Errorf("Verdict.Red = false, want true when the destination seal mismatches")
+	}
+	if at := rowIndex(v, "binary-seal"); at != rowIndex(v, "kit-pin")+1 {
+		t.Errorf("binary-seal sits at index %d, want directly after kit-pin at %d", at, rowIndex(v, "kit-pin"))
+	}
+}
+
+// TestBinarySealNotApplicableWithoutADestinationBinary covers BF27. A root
+// that publishes no dist/bench reports the row not applicable, keeps the
+// verdict green, and leaves every other row exactly as it was.
+func TestBinarySealNotApplicableWithoutADestinationBinary(t *testing.T) {
+	f := baseFacts()
+	f.Mode = modeBuild
+	f.TicketsDirExists = true
+	f.BinarySealPresent = false
+
+	v := Decide(f)
+	c, ok := checkRow(v, "binary-seal")
+	if !ok {
+		t.Fatalf("Checks = %#v, want a binary-seal row", v.Checks)
+	}
+	if c.Verdict != verdictNA || c.Detail != "" || c.Next != "" {
+		t.Errorf("binary-seal row = %+v, want not-applicable with no detail and no remedy", c)
+	}
+	if v.Red {
+		t.Errorf("Verdict.Red = true, want false when no destination binary is published")
+	}
+	for _, other := range v.Checks {
+		if other.Check == "binary-seal" || other.Check == "diff-nonempty" {
+			continue
+		}
+		if other.Verdict != verdictGreen {
+			t.Errorf("%s row = %+v, want green and unchanged by an absent binary", other.Check, other)
+		}
+	}
+}
+
+// TestBinarySealIsBuildModeOnly pins the mode gate. Story 26 names
+// `bench preflight build`, so a review preflight renders no binary-seal row
+// at all, even over a root whose published binary fails its seal.
+func TestBinarySealIsBuildModeOnly(t *testing.T) {
+	f := baseFacts()
+	f.BinarySealPresent = true
+	f.BinarySealRefusal = "bench binary is untrusted: source digest mismatch"
+
+	v := Decide(f)
+	if _, ok := checkRow(v, "binary-seal"); ok {
+		t.Errorf("review Checks = %#v, want no binary-seal row", v.Checks)
+	}
+	if v.Red {
+		t.Errorf("Verdict.Red = true, want false: a review preflight does not grade the binary")
+	}
+}
+
+// rowIndex is the position of one named row, or -1. Order is part of the
+// verdict's contract, so a test that grades placement reads it here.
+func rowIndex(v Verdict, name string) int {
+	for i, c := range v.Checks {
+		if c.Check == name {
+			return i
+		}
+	}
+	return -1
 }
 
 // TestSixRowsNotApplicableWithoutTickets covers TG39. In build mode with no

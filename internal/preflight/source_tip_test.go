@@ -1,9 +1,26 @@
 package preflight
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
+
+// bareRowCount is the number of check rows one mode renders with no
+// --source-tip. Build mode carries the binary-seal row that review mode
+// omits, so the count is per-mode rather than one literal.
+func bareRowCount(mode string) int {
+	if mode == modeBuild {
+		return 12
+	}
+	return 11
+}
+
+// rowHeader is the checks header for a given row count. The pinned form
+// below passes bareRowCount+1, because --source-tip adds exactly one row.
+func rowHeader(rows int) string {
+	return fmt.Sprintf("checks[%d]{check,verdict,detail,next}", rows)
+}
 
 // TestSourceTipOmittedKeepsTodaysVerdict is H30's control half: without
 // the flag both modes render exactly the five rows they render today, in
@@ -17,7 +34,7 @@ func TestSourceTipOmittedKeepsTodaysVerdict(t *testing.T) {
 			if code != 0 {
 				t.Fatalf("bare %s = (%d):\n%s", mode, code, out)
 			}
-			if !strings.Contains(out, "checks[11]{check,verdict,detail,next}") {
+			if !strings.Contains(out, rowHeader(bareRowCount(mode))) {
 				t.Fatalf("bare %s did not render today's row table:\n%s", mode, out)
 			}
 			if strings.Contains(out, "tip-current") {
@@ -43,7 +60,7 @@ func TestSourceTipAcceptedByBothModes(t *testing.T) {
 			}
 			// WF41: the pinned-tip form carries the next column too, so the added
 			// row and the added column are pinned by the same fixture.
-			if !strings.Contains(out, "checks[12]{check,verdict,detail,next}") {
+			if !strings.Contains(out, rowHeader(bareRowCount(mode)+1)) {
 				t.Fatalf("pinned %s did not add exactly one row:\n%s", mode, out)
 			}
 			// The pin is verified against the derived tip, not compared literally: a

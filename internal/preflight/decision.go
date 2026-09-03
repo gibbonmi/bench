@@ -120,6 +120,17 @@ type Facts struct {
 	// present, empty directory runs row checks for real, reading as
 	// unowned rows rather than a pass.
 	TicketsDirExists bool
+
+	// BinarySealPresent reports whether the root publishes a dist/bench at all.
+	// A root that publishes none is not graded, because a linked consumer repo
+	// builds no Bench binary of its own.
+	BinarySealPresent bool
+
+	// BinarySealRefusal is the seal verifier's refusal for that published
+	// binary, empty when the seal matches the sources. The refusal already
+	// carries the one rebuild sentence, so the row renders this text whole
+	// rather than composing a second copy of it.
+	BinarySealRefusal string
 }
 
 // CheckResult is one verdict row: the check's name, its verdict ("green" or
@@ -160,10 +171,12 @@ type Verdict struct {
 // paths-authorized, runs every ticket row for real only when
 // specs/<slug>/tickets/ exists, and never runs diff-nonempty.
 //
-// tip-current is the one conditional row. It appears only when
-// --source-tip pinned a tip, directly after base-current. So the two
-// halves of the source identity are graded together, ahead of every
-// check that presupposes that identity.
+// Two rows are conditional. tip-current appears only when --source-tip
+// pinned a tip, directly after base-current, so the two halves of the
+// source identity are graded together, ahead of every check that
+// presupposes that identity. binary-seal appears only in build mode,
+// directly after kit-pin, because it guards the transaction a build is
+// about to open.
 func Decide(f Facts) Verdict {
 	checks := []CheckResult{baseCurrentCheck(f)}
 	if f.PinnedSourceTip != "" {
@@ -177,6 +190,11 @@ func Decide(f Facts) Verdict {
 		ticketRow(f, "fixture-closure", fixtureClosureCheck),
 		ticketRow(f, "registry-closure", registryClosureCheck),
 		ticketRow(f, "kit-pin", kitPinCheck),
+	)
+	if f.Mode == modeBuild {
+		checks = append(checks, binarySealCheck(f))
+	}
+	checks = append(checks,
 		ticketRow(f, "rows-owned", rowsOwnedCheck),
 		ticketRow(f, "rows-membership", rowsMembershipCheck),
 		diffNonemptyRow(f),
@@ -502,6 +520,23 @@ func kitPinCheck(f Facts) CheckResult {
 		return red("kit-pin", "ticket writes a system-tagged test file without stating BENCH_KIT: "+strings.Join(unpinned, ", "))
 	}
 	return green("kit-pin")
+}
+
+// binarySealCheck grades the published dist/bench a build is about to run.
+// A stale binary answers every consumer — a hand run, a hook, the wrapper, the
+// landing — from sources nobody reviewed, and no other row touches it. The
+// gathered refusal is rendered whole, because it already carries the one
+// rebuild sentence. A root that publishes no binary is not applicable, so a
+// linked consumer repo is reported on rather than refused. Decide calls this
+// in build mode alone; a review preflight renders no such row.
+func binarySealCheck(f Facts) CheckResult {
+	if !f.BinarySealPresent {
+		return notApplicable("binary-seal")
+	}
+	if f.BinarySealRefusal != "" {
+		return red("binary-seal", f.BinarySealRefusal)
+	}
+	return green("binary-seal")
 }
 
 // coversTokens is every row ID the parsed tickets cite, in enumeration order.
