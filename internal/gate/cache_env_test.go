@@ -3,6 +3,7 @@ package gate
 import (
 	"bytes"
 	"context"
+	"os"
 	"strings"
 	"testing"
 
@@ -117,6 +118,108 @@ func TestPhaseRedsWithoutAnAbsoluteHome(t *testing.T) {
 	}
 	if !strings.Contains(stderr.String(), "HOME") {
 		t.Fatalf("stderr = %q, want it to name HOME", stderr.String())
+	}
+}
+
+// unwritableCacheHome answers a HOME whose derived build cache directory exists and denies
+// a write, which is the state that fails a holder's lock-file open. The directory is the
+// derivation's own answer rather than a second spelling of it, and its mode is restored
+// before the temporary tree is removed.
+func unwritableCacheHome(t *testing.T) string {
+	t.Helper()
+	requireDirectoryWriteDenied(t)
+	home := t.TempDir()
+	dir, err := gocache.Dir([]string{"HOME=" + home})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	restoreMode(t, dir)
+	if err := os.Chmod(dir, 0o500); err != nil {
+		t.Fatal(err)
+	}
+	return home
+}
+
+// plannedEvaluation answers one fixed subject at every stage, so a row drives the run
+// transaction to a named step without staging a tree that must hash to that subject.
+type plannedEvaluation struct{ plan subject }
+
+func (e plannedEvaluation) acceptPre() (subject, error)   { return e.plan, nil }
+func (e plannedEvaluation) validatePre() (subject, error) { return e.plan, nil }
+func (e plannedEvaluation) capturePost() (subject, error) { return e.plan, nil }
+
+// LQ17: an unwritable cache directory refuses the gate transaction, and the refusal names
+// the hold error and the path. A run that graded a tree with the lock unheld would compile
+// beside a clean that is removing its archives.
+func TestGateTransactionRefusesAnUnheldCache(t *testing.T) {
+	home := unwritableCacheHome(t)
+	root := outcomeFixture(t)
+	plan := subject{
+		Tree:       strings.Repeat("a", 40),
+		Resolution: Resolution{Kind: GateSh},
+		Closed:     true,
+		Env:        []string{"HOME=" + home},
+	}
+	var stdout, stderr bytes.Buffer
+
+	result := executeSubjectWithRunBinary(context.Background(), root, root, &stdout, &stderr, nil, forceRun, plannedEvaluation{plan: plan}, nil, "")
+
+	if result.ActionExit != 1 {
+		t.Fatalf("result = %#v, want action exit 1; stderr=%q", result, stderr.String())
+	}
+	requireCacheRefusal(t, stderr.String(), home)
+}
+
+// LQ17: an unwritable cache directory refuses the lane the same way, because one rule
+// covers every holder.
+func TestLaneRefusesAnUnheldCache(t *testing.T) {
+	home := unwritableCacheHome(t)
+	t.Setenv("HOME", home)
+	root := outcomeFixture(t)
+	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	var stdout, stderr bytes.Buffer
+
+	result, err := RunLane(context.Background(), LaneRequest{
+		Root: root, Tree: tree,
+		Checks: []Phase{{Name: "declared", Argv: []string{"true"}}},
+		Stdout: &stdout, Stderr: &stderr,
+	})
+
+	if err == nil {
+		t.Fatalf("lane result = %#v, want a refusal", result)
+	}
+	requireCacheRefusal(t, stderr.String(), home)
+}
+
+// requireCacheRefusal grades one call site's refusal: the shared kind, the hold error, and
+// the cache path the operator has to fix.
+func requireCacheRefusal(t *testing.T, output, home string) {
+	t.Helper()
+	dir, err := gocache.Dir([]string{"HOME=" + home})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(output, "cache lock unavailable") || !strings.Contains(output, dir) {
+		t.Fatalf("output = %q, want the cache refusal naming %q", output, dir)
+	}
+}
+
+// LQ28: a closure that declares a HOME the derivation refuses fails subject construction.
+// Dropping the entry there would hand the oracle a hash no child of the run ever used.
+func TestSubjectPropagatesTheCacheApplyRefusal(t *testing.T) {
+	root := cacheClosureFixture(t)
+	t.Setenv("HOME", "relative/home")
+
+	s, err := buildSubject(root)
+
+	if err == nil {
+		t.Fatalf("buildSubject = %#v, want the Apply refusal", s)
+	}
+	if !strings.Contains(err.Error(), "HOME") {
+		t.Fatalf("error = %q, want it to name HOME", err)
 	}
 }
 

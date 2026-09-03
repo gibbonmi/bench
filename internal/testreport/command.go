@@ -298,10 +298,15 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 	cmd.Dir = root
 	cmd.Env = env
 	// The focused run holds the shared cache lock for its span, so a clean cannot remove an
-	// archive this run is writing or reading. A lock it cannot take never fails the run.
-	if holder, err := gocache.Hold(env); err == nil {
-		defer holder.Release()
+	// archive this run is writing or reading. A lock it cannot take refuses the run before
+	// the Go child starts, because a compile that ran unlocked would write archives a clean
+	// is free to remove. An environment that names no home is the one exception, the same
+	// one the gate keeps: it derives no Bench cache for a clean to reach.
+	holder, err := gocache.Hold(env)
+	if err != nil && gocache.Declared(env) {
+		return gocache.Refusal(env, err) + "\n", 1
 	}
+	defer holder.Release()
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	stream, err := cmd.StdoutPipe()
 	if err != nil {

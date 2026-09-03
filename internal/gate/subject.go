@@ -111,10 +111,15 @@ func buildSubjectForTree(root, identityRoot, policy, tree string) (subject, erro
 	}
 	// The build cache entry rides the closure unhashed. It is derived from the
 	// declared HOME the loop above already framed, so hashing it would frame the same
-	// fact twice. A closure that declares no absolute HOME carries no entry, because
-	// nothing in it names the directory.
-	if applied, err := gocache.Apply(s.Env); err == nil {
+	// fact twice. A closure that declares no HOME carries no entry, because nothing in
+	// it names the directory. A closure that declares one the derivation refuses fails
+	// here instead: dropping the entry there would hand the oracle an environment its
+	// own children never ran with, and no line would say so.
+	switch applied, err := gocache.Apply(s.Env); {
+	case err == nil:
 		s.Env = applied
+	case gocache.Declared(s.Env):
+		return subject{}, err
 	}
 	s.Oracle = hex.EncodeToString(h.Sum(nil))
 	return s, nil

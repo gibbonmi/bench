@@ -112,13 +112,19 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 	// The cache lock spans the whole run: it opens before the run-binary build, the first
 	// Go child of the run, and the deferred release closes it after every teardown above.
 	// A clean that arrives between those two points refuses instead of removing an archive
-	// a phase is reading. A lock this run cannot take never grades the tree, so the run
-	// continues and the log records why.
-	if holder, err := gocache.Hold(plan.Env); err == nil {
-		defer holder.Release()
-	} else {
+	// a phase is reading. A lock this run cannot take refuses the run: a gate that graded
+	// the tree unlocked would compile beside a clean removing the archives it is writing.
+	// A closure that names no home is the one exception. It derives no Bench cache, so its
+	// children write outside every directory a clean can reach, and there is no hold to
+	// take. Release answers a nil holder, so that run needs no second branch here.
+	holder, err := gocache.Hold(plan.Env)
+	if err != nil {
 		logGateEvent(ctx, gateLogRecord{Event: "cache.lock.unavailable", Root: storageRoot, Detail: err.Error()})
+		if gocache.Declared(plan.Env) {
+			return operational(storageRoot, 0, stderr, gocache.Refusal(plan.Env, err))
+		}
 	}
+	defer holder.Release()
 	var selection *runbinary.Selection
 	if owner != nil && phaseTableGate(runtimeRoot, plan.Resolution) {
 		source := runBinarySource(runtimeRoot, storageRoot, plan)
