@@ -284,20 +284,24 @@ func reportPrePush(stdout io.Writer) bool {
 	return true
 }
 
-// kitSourceCheckout reports whether root is the kit's own source tree. The kit repo is
+// KitSourceCheckout reports whether root is the kit's own source tree. The kit repo is
 // where the managed AGENTS.md block and the bin/bench.sh launcher are authored, so it
 // never carries the consumer-side copy of either, and a row that sent its reader to bench
 // link would name a remedy that breaks the shim route and the land route. A consumer repo
 // never satisfies the predicate, because its kit resolves to a package or cache directory
 // outside the repository. Both paths resolve through symlinks first, so a repository
 // reached by one spelling and a BENCH_KIT set to another still match.
-func kitSourceCheckout(root string) bool {
+func KitSourceCheckout(root string) bool {
 	kit := kitDir()
 	if root == "" || kit == "" {
 		return false
 	}
 	return resolvedPath(root) == resolvedPath(kit)
 }
+
+// kitSourceCheckout is the unexported spelling this package's other callers still use.
+// It holds no logic of its own; the landing line reads the exported name.
+func kitSourceCheckout(root string) bool { return KitSourceCheckout(root) }
 
 func resolvedPath(path string) string {
 	if resolved, err := filepath.EvalSymlinks(path); err == nil {
