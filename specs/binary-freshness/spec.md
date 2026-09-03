@@ -240,6 +240,7 @@ Line: opus / low. One new check row in an existing table.
 - `AGENTS.md`
 - `projects/benchkit.md`
 - `internal/anchors/registry_data.go`
+- `cmd/bench/testdata/anchors/pre-disclosure-populated.stdout`
 - `internal/anchors/registry_data_test.go`
 - `tests/canary/workflow-guidance-anchors/`
 - `tests/canary/guard-classifier-table/`
@@ -271,6 +272,19 @@ ticket.
 ## Further notes
 
 Recorded during the build, open to reviewer veto:
+
+- The doctor broker row names an absent manifest with an `ok:` verdict, not a
+  red one. The kit source checkout publishes no broker manifest beside its
+  resolved wrapper, and its landings still work. So a red there is a false
+  alarm for every kit session. A red also reds four tests outside the fence.
+  The row still carries refusal one's wording, so the reason list stays one
+  source.
+- `internal/conformance/compliance_checks_test.go` calls the new reason-list
+  expectation from the registered `kit-compliance` owner. A standalone
+  live-tree test reds `TestConformanceMetaBites` as unregistered.
+- `cmd/bench/testdata/anchors/pre-disclosure-populated.stdout` joins the
+  fence. It is a captured snapshot of the AGENTS.md anchor list, so a new
+  anchor moves it.
 
 - The `binary-seal` row is gated to build mode, because story 26 and rows
   BF26 and BF27 name `bench preflight build`. An unconditional row also reds

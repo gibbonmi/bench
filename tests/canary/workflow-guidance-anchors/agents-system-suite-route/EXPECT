@@ -1,0 +1,1 @@
+AGENTS.md dropped the system-suite hand-run route; a hand run goes through bench test --check system, which supplies the sealed run binary and the kit root

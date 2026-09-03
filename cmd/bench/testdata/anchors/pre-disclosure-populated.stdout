@@ -1,5 +1,6 @@
-anchors[4]{kind,section,needle}:
+anchors[5]{kind,section,needle}:
   require,"",never by polling a self-matching pattern
   require,"","runs plan-before-apply: print the exact target list, sample it, then apply"
   require,"",repository-wide sweep uses `rg --hidden`
   require,"",Discover Bench verbs non-interactively
+  require,"",Run the system suite by hand through `bench test --check system`.

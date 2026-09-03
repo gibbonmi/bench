@@ -631,3 +631,5 @@ escalation.
   `.claude/skills/` symlink entry created. Read "mirror" in any artifact as
   "symlink"; FT152's spec and map both assumed copied trees and specified
   mirror work that did not exist.
+- A hand run of the system suite goes through `bench test --check system`.
+  The verb supplies the sealed run binary and the kit root.

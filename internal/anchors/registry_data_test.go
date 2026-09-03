@@ -1446,3 +1446,25 @@ func TestCensusChangelogAndReviewBaseAnchorsRedOnRemoval(t *testing.T) {
 		},
 	}.check(t)
 }
+
+// TestSystemSuiteRouteAnchorsRedOnRemoval pins BF21. The working agreement and the profile
+// each name `bench test --check system` as the hand-run route for the system suite. The
+// needles and the diagnostics are written here independently of the registry, so guidance
+// that dropped the route cannot define itself green.
+func TestSystemSuiteRouteAnchorsRedOnRemoval(t *testing.T) {
+	anchorHarness{
+		group: AfterSpecAuthorization,
+		rules: []anchorRule{
+			{
+				file:   "AGENTS.md",
+				needle: "Run the system suite by hand through `bench test --check system`.",
+				want:   "AGENTS.md dropped the system-suite hand-run route; a hand run goes through bench test --check system, which supplies the sealed run binary and the kit root",
+			},
+			{
+				file:   "projects/benchkit.md",
+				needle: "A hand run of the system suite goes through `bench test --check system`.",
+				want:   "projects/benchkit.md dropped the system-suite hand-run route; a hand run goes through bench test --check system, which supplies the sealed run binary and the kit root",
+			},
+		},
+	}.check(t)
+}
