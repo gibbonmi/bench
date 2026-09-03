@@ -215,6 +215,7 @@ Line: opus / low. One new check row in an existing table.
 - `cmd/bench/freshness_publish.go`
 - `cmd/bench/freshness_publish_test.go`
 - `cmd/bench/build_artifact_mode_test.go`
+- `cmd/bench/build_subject_mode_test.go`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `internal/freshness/`
@@ -224,6 +225,7 @@ Line: opus / low. One new check row in an existing table.
 - `internal/systemtest/owner_test.go`
 - `internal/systemtest/owner_stale_seal_test.go`
 - `internal/systemtest/land_route_test.go`
+- `internal/systemtest/owner_artifact_recovery_test.go`
 - `internal/systemtest/bench_follow_on_test.go`
 - `internal/worktree/land.go`
 - `internal/worktree/land_freshness_test.go`
@@ -295,6 +297,23 @@ Recorded during the build, open to reviewer veto:
   build-mode expectation. `internal/preflight/command_review_test.go` stays
   outside the fence, because the build-mode gate keeps its review-mode count
   at eleven.
+
+Recorded during the build for the publish ticket, open to reviewer veto:
+
+- `freshness-publish` gains one argument, the version, not two. The published
+  path is already argument two, so a second copy of it would be a second
+  source of one fact. The manifest directory is derived from that path.
+- `freshness.Publish` gains a version parameter, so five call sites take a
+  one-argument edit. `internal/systemtest/owner_artifact_recovery_test.go`
+  joins the fence, because its fake builder calls the verb.
+- A coordinator probe found a missing row. The build script's version
+  argument was ungraded, because BF14's test calls `freshness.Publish`
+  directly. `TestGoBuildSubjectModePublishesTheStampedVersion` now runs a real
+  subject-mode build and grades the published manifest.
+- One mutation came back silently green: a manifest write that stays in place
+  but bypasses the transaction's step lock. It is behavior-equivalent for the
+  rollback, and only a signal-timing test in the manifest's own rename window
+  could see it. No row was added.
 
 Flagged additions beyond the decision source:
 

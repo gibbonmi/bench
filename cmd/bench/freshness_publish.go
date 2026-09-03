@@ -31,8 +31,8 @@ func freshnessCheck(args []string, invoked string, stderr io.Writer) int {
 }
 
 func freshnessPublish(args []string, invoked string, stderr io.Writer) int {
-	if len(args) != 2 {
-		fmt.Fprintln(stderr, "usage: bench freshness-publish <root> <output-path>")
+	if len(args) != 3 {
+		fmt.Fprintln(stderr, "usage: bench freshness-publish <root> <output-path> <version>")
 		return 2
 	}
 	root, err := filepath.Abs(args[0])
@@ -45,7 +45,7 @@ func freshnessPublish(args []string, invoked string, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	if err := freshness.Publish(root, executable, args[1]); err != nil {
+	if err := freshness.Publish(root, executable, args[1], args[2]); err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}

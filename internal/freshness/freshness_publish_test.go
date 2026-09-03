@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/brokermanifest"
 )
 
 func TestPublishAndVerifyRefuseEmptyExecutables(t *testing.T) {
@@ -24,7 +26,7 @@ func TestPublishAndVerifyRefuseEmptyExecutables(t *testing.T) {
 		if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
 			t.Fatal(err)
 		}
-		if err := Publish(root, staged, executable); err == nil {
+		if err := Publish(root, staged, executable, "1.2.3"); err == nil {
 			t.Fatal("Publish empty executable stage = nil, want refusal")
 		}
 	})
@@ -53,6 +55,36 @@ func TestPublishAndVerifyRefuseEmptyExecutables(t *testing.T) {
 	})
 }
 
+// TestPublishBindsTheBrokerManifestToThePublishedExecutable grades the outcome the land
+// route authenticates. The manifest has to bind the executable the publication promoted,
+// not the staged file the builder ran, so an operator's next landing meets the bytes the
+// seal describes.
+func TestPublishBindsTheBrokerManifestToThePublishedExecutable(t *testing.T) {
+	_, executable := writePublishedFixture(t)
+
+	fields, err := brokermanifest.Read(brokerManifestPath(executable))
+	if err != nil {
+		t.Fatal(err)
+	}
+	published := executable
+	if resolved, err := filepath.EvalSymlinks(executable); err == nil {
+		published = resolved
+	}
+	if fields["path"] != published {
+		t.Fatalf("manifest path = %q, want the published executable %q", fields["path"], published)
+	}
+	digest, err := brokermanifest.Digest(published)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fields["sha256"] != digest {
+		t.Fatalf("manifest digest = %q, want the published executable digest %q", fields["sha256"], digest)
+	}
+	if fields["version"] != "1.2.3" {
+		t.Fatalf("manifest version = %q, want the published version", fields["version"])
+	}
+}
+
 func TestPublishRefusesSymlinkedDestinationWithoutChangingPublishedPair(t *testing.T) {
 	root, executable := writePublishedFixture(t)
 	beforeSeal, err := os.ReadFile(sealPath(executable))
@@ -70,7 +102,7 @@ func TestPublishRefusesSymlinkedDestinationWithoutChangingPublishedPair(t *testi
 		t.Fatal(err)
 	}
 
-	if err := Publish(root, staged, executable); err == nil {
+	if err := Publish(root, staged, executable, "1.2.3"); err == nil {
 		t.Fatal("Publish symlinked destination = nil, want refusal")
 	}
 	if _, err := os.Lstat(staged); err != nil {
@@ -94,6 +126,10 @@ func TestPublishRestoresPriorPairWhenSealPromotionFails(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	beforeManifest, err := os.ReadFile(brokerManifestPath(executable))
+	if err != nil {
+		t.Fatal(err)
+	}
 	staged := filepath.Join(root, "replacement")
 	if err := os.WriteFile(staged, []byte("replacement executable"), 0o755); err != nil {
 		t.Fatal(err)
@@ -107,7 +143,7 @@ func TestPublishRestoresPriorPairWhenSealPromotionFails(t *testing.T) {
 	}
 	t.Cleanup(func() { replacePublicationFile = originalRename })
 
-	if err := Publish(root, staged, executable); err == nil {
+	if err := Publish(root, staged, executable, "1.2.3"); err == nil {
 		t.Fatal("Publish forced seal promotion failure = nil, want refusal")
 	}
 	afterExecutable, err := os.ReadFile(executable)
@@ -117,6 +153,13 @@ func TestPublishRestoresPriorPairWhenSealPromotionFails(t *testing.T) {
 	afterSeal, err := os.ReadFile(sealPath(executable))
 	if err != nil || !bytes.Equal(afterSeal, beforeSeal) {
 		t.Fatalf("Publish changed seal after failed seal promotion: %v, %q", err, afterSeal)
+	}
+	// The manifest is the third member of the published set. A manifest written before the
+	// rename, or outside the transaction, survives this restore and then binds an
+	// executable that is no longer there.
+	afterManifest, err := os.ReadFile(brokerManifestPath(executable))
+	if err != nil || !bytes.Equal(afterManifest, beforeManifest) {
+		t.Fatalf("Publish changed the broker manifest after failed seal promotion: %v, %q", err, afterManifest)
 	}
 	if _, err := os.Lstat(staged); !os.IsNotExist(err) {
 		t.Fatalf("Publish left staged executable after restoring the prior pair: %v", err)
@@ -145,10 +188,10 @@ func TestPublishLeavesNoArtifactsWhenFirstSealPromotionFails(t *testing.T) {
 	}
 	t.Cleanup(func() { replacePublicationFile = originalRename })
 
-	if err := Publish(root, staged, executable); err == nil {
+	if err := Publish(root, staged, executable, "1.2.3"); err == nil {
 		t.Fatal("Publish first forced seal promotion failure = nil, want refusal")
 	}
-	for _, path := range []string{executable, sealPath(executable), staged} {
+	for _, path := range []string{executable, sealPath(executable), brokerManifestPath(executable), staged} {
 		if _, err := os.Lstat(path); !os.IsNotExist(err) {
 			t.Fatalf("Publish first failure left %q: %v", path, err)
 		}
@@ -240,7 +283,7 @@ func runInterruptedPublicationChild(t *testing.T, root string) {
 		return errors.New("held publication was never interrupted")
 	}
 	t.Cleanup(func() { replacePublicationFile = original })
-	if err := Publish(root, os.Getenv(publicationInterruptStagedEnv), executable); err != nil {
+	if err := Publish(root, os.Getenv(publicationInterruptStagedEnv), executable, "1.2.3"); err != nil {
 		t.Fatalf("held publication returned instead of being interrupted: %v", err)
 	}
 }

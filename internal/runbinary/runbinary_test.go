@@ -171,7 +171,7 @@ func TestFactoryValidateRefusesAStaleInheritedSeal(t *testing.T) {
 		t.Fatal(err)
 	}
 	executable := filepath.Join(dir, "bench")
-	if err := freshness.Publish(source, staged, executable); err != nil {
+	if err := freshness.Publish(source, staged, executable, "1.2.3"); err != nil {
 		t.Fatal(err)
 	}
 	factory := Factory{}

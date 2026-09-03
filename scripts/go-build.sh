@@ -131,5 +131,5 @@ if [[ "$mode" == artifact ]]; then
   mv -- "$staged" "$out"
 else
   env -u GOOS -u GOARCH go build "${go_build_flags[@]}" -o "$staged" ./cmd/bench
-  env -u GOOS -u GOARCH "$staged" freshness-publish "$modroot" "$out"
+  env -u GOOS -u GOARCH "$staged" freshness-publish "$modroot" "$out" "$version"
 fi

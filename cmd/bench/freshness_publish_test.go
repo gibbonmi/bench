@@ -10,8 +10,8 @@ import (
 	"github.com/gibbonmi/bench/internal/freshness"
 )
 
-func TestFreshnessPublishRequiresRootAndDestination(t *testing.T) {
-	for _, args := range [][]string{nil, {"root"}, {"root", "output", "other-stage"}} {
+func TestFreshnessPublishRequiresRootDestinationAndVersion(t *testing.T) {
+	for _, args := range [][]string{nil, {"root"}, {"root", "output"}, {"root", "output", "1.2.3", "other-stage"}} {
 		var stderr bytes.Buffer
 		if code := freshnessPublish(args, "ignored", &stderr); code != 2 {
 			t.Fatalf("freshnessPublish(%q) = %d, want usage refusal; stderr=%q", args, code, stderr.String())
@@ -49,7 +49,7 @@ func TestFreshnessPublishBindsTheInvokedExecutable(t *testing.T) {
 	}
 	output := filepath.Join(t.TempDir(), "published bench")
 	var stderr bytes.Buffer
-	if code := freshnessPublish([]string{root, output}, staged, &stderr); code != 0 {
+	if code := freshnessPublish([]string{root, output, "1.2.3"}, staged, &stderr); code != 0 {
 		t.Fatalf("freshnessPublish = %d, stderr=%q", code, stderr.String())
 	}
 	if err := freshness.Verify(root, output); err != nil {

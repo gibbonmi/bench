@@ -243,7 +243,7 @@ func publishGateFixtureBench(t *testing.T, kit, program string) {
 	if err := os.Chmod(staged, 0o755); err != nil {
 		t.Fatalf("chmod staged fixture bench: %v", err)
 	}
-	if err := freshness.Publish(kit, staged, filepath.Join(kit, "dist", "bench")); err != nil {
+	if err := freshness.Publish(kit, staged, filepath.Join(kit, "dist", "bench"), "1.2.3"); err != nil {
 		t.Fatalf("publish fixture bench: %v", err)
 	}
 }

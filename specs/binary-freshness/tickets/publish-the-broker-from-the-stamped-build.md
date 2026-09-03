@@ -1,7 +1,7 @@
 # Publish the broker from the stamped build
 
 Blocked by: add-seal-and-broker-rows-to-doctor.md
-Writes: internal/freshness/freshness_publish.go, internal/freshness/freshness_publish_test.go, internal/freshness/publication_topology_test.go, internal/brokermanifest (new), internal/adopt/broker_test.go, scripts/go-build.sh, cmd/bench/main.go, cmd/bench/freshness_publish.go, cmd/bench/freshness_publish_test.go, cmd/bench/build_artifact_mode_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go, tests/canary/package-core-guard/unrouted-subcommand
+Writes: internal/freshness/freshness_publish.go, internal/freshness/freshness_publish_test.go, internal/freshness/publication_topology_test.go, internal/brokermanifest (new), internal/adopt/broker_test.go, internal/systemtest/owner_artifact_recovery_test.go, scripts/go-build.sh, cmd/bench/main.go, cmd/bench/freshness_publish.go, cmd/bench/freshness_publish_test.go, cmd/bench/build_artifact_mode_test.go (new), cmd/bench/build_subject_mode_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go, tests/canary/package-core-guard/unrouted-subcommand
 Covers: BF10, BF11, BF12, BF13, BF14
 
 ## What to build

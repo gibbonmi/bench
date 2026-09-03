@@ -64,6 +64,40 @@ func TestWriteBrokerManifestBindsTheRunningBrokerIdentity(t *testing.T) {
 	}
 }
 
+// TestPublishedBrokerManifestCarriesTheStampedVersion grades the field the land route
+// compares against the installed package. A build that published "dev" here re-created
+// refusal three, and the landing stopped at exit 127 with nothing to repair.
+func TestPublishedBrokerManifestCarriesTheStampedVersion(t *testing.T) {
+	root := t.TempDir()
+	writeSealFixture(t, root)
+	staged := filepath.Join(root, "staged-bench")
+	if err := os.WriteFile(staged, []byte("Bench executable"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	executable := filepath.Join(root, "dist", "bench")
+	if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := freshness.Publish(root, staged, executable, "4.5.6"); err != nil {
+		t.Fatal(err)
+	}
+	fields, err := brokermanifest.Read(filepath.Join(filepath.Dir(executable), brokermanifest.Name))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fields["version"] != "4.5.6" {
+		t.Fatalf("published manifest version = %q, want the stamped version", fields["version"])
+	}
+	digest, err := fingerprintPath(executable)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fields["sha256"] != digest {
+		t.Fatalf("published manifest digest = %q, want the published executable digest %q", fields["sha256"], digest)
+	}
+}
+
 // writeSealFixture materializes the smallest tree freshness.Digest can resolve: one
 // buildable cmd/bench, its module file, and the auxiliary inputs manifest that makes the
 // repository declare build inputs at all. The doctor seal row is scoped by that
@@ -105,7 +139,7 @@ func TestDoctorSealRowNamesTheSourceDigestMismatch(t *testing.T) {
 	if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := freshness.Publish(root, staged, executable); err != nil {
+	if err := freshness.Publish(root, staged, executable, "1.2.3"); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(root, "cmd", "bench", "main.go"), []byte("package main\n\nfunc main() { _ = 1 }\n"), 0o644); err != nil {

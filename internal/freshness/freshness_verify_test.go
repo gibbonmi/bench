@@ -173,7 +173,7 @@ func TestCheckRefusesFailingVerifiedExecutable(t *testing.T) {
 	if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := Publish(root, staged, executable); err != nil {
+	if err := Publish(root, staged, executable, "1.2.3"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -349,7 +349,7 @@ func writePublishedFixture(t *testing.T) (string, string) {
 	if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := Publish(root, staged, executable); err != nil {
+	if err := Publish(root, staged, executable, "1.2.3"); err != nil {
 		t.Fatal(err)
 	}
 	return root, executable
