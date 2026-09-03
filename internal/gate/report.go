@@ -271,13 +271,18 @@ func lastLines(lines []string, n int) []string {
 // that reached a verdict.
 //
 // An environment that names no directory, through neither the entry nor an absolute HOME,
-// gets no line and no event: the reporter has no directory to name.
+// gets no line and no event: the reporter has no directory to name. An environment whose
+// entry is relative gets the refusal in place of the measurement, because the walk would
+// otherwise report a directory that moves with this process's own working directory.
 //
 // measure and bound are parameters rather than direct calls on the gocache package, so a
 // test drives an over-bound footprint without staging ten gibibytes of fixture.
 func cacheFootprintReport(ctx context.Context, env []string, measure func(string) gocache.Footprint, bound int64) func() ([]string, string, bool) {
 	return func() ([]string, string, bool) {
-		dir := gocache.FromEnv(env)
+		dir, err := gocache.FromEnv(env)
+		if err != nil {
+			return nil, toon.Errorf("build cache path refused", sanitize.Strip(err.Error())), false
+		}
 		if dir == "" {
 			return nil, "", false
 		}

@@ -17,6 +17,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/gibbonmi/bench/internal/canonicalpath"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gocache"
 )
@@ -110,10 +111,15 @@ func buildSubjectForTree(root, identityRoot, policy, tree string) (subject, erro
 	}
 	// The build cache entry rides the closure unhashed. It is derived from the
 	// declared HOME the loop above already framed, so hashing it would frame the same
-	// fact twice. A closure that declares no absolute HOME carries no entry, because
-	// nothing in it names the directory.
-	if applied, err := gocache.Apply(s.Env); err == nil {
+	// fact twice. A closure that declares no HOME carries no entry, because nothing in
+	// it names the directory. A closure that declares one the derivation refuses fails
+	// here instead: dropping the entry there would hand the oracle an environment its
+	// own children never ran with, and no line would say so.
+	switch applied, err := gocache.Apply(s.Env); {
+	case err == nil:
 		s.Env = applied
+	case gocache.Declared(s.Env):
+		return subject{}, err
 	}
 	s.Oracle = hex.EncodeToString(h.Sum(nil))
 	return s, nil
@@ -393,12 +399,18 @@ func (c *identityCollector) identityPath(path string) string {
 	return path
 }
 
+// canonicalSubjectRoot refuses a root that does not exist. The owner keeps the absolute
+// spelling of an absent path rather than refusing, and a subject keyed to an absent root
+// would hash as a closed identity over nothing.
 func canonicalSubjectRoot(root string) (string, error) {
-	resolved, err := filepath.EvalSymlinks(root)
+	resolved, err := canonicalpath.Resolve(root)
 	if err != nil {
 		return "", err
 	}
-	return filepath.Abs(resolved)
+	if _, err := os.Stat(resolved); err != nil {
+		return "", err
+	}
+	return resolved, nil
 }
 
 func resolveTool(root, name, pathEnv string) (string, error) {

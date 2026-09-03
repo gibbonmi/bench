@@ -7,8 +7,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
 	refreshop "github.com/gibbonmi/bench/internal/worktree/refresh"
 	"io"
@@ -37,7 +39,10 @@ func Subshell(home string, args []string, stdin io.Reader, stdout, stderr io.Wri
 
 func subshellAt(root, home, shell string, environ []string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	interrupts := make(chan os.Signal, 1)
-	signal.Notify(interrupts, os.Interrupt, syscall.SIGTERM)
+	// The shell child runs in its own process group, so this handler is the only path that
+	// reaches it. subprocess.CancelSignals is the one source for that set; SIGHUP arrives
+	// when the terminal goes away, and an untrapped SIGHUP leaks the whole group.
+	signal.Notify(interrupts, subprocess.CancelSignals...)
 	defer signal.Stop(interrupts)
 
 	args, startRef := refreshop.Consume(root, args, stdout)
@@ -92,14 +97,7 @@ func subshellAt(root, home, shell string, environ []string, args []string, stdin
 }
 
 func canonicalPath(path string) (string, error) {
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		return "", err
-	}
-	if resolved, err := filepath.EvalSymlinks(abs); err == nil {
-		abs = resolved
-	}
-	return filepath.Clean(abs), nil
+	return canonicalpath.Resolve(path)
 }
 
 // resolveOperand canonicalizes an operator-supplied target, resolving the portable `~`

@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/canary"
+	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/git"
@@ -457,14 +458,7 @@ func relTo(base, path string) string {
 // same form for its own targets, but that package imports this one, so a shared
 // call would close an import cycle.
 func canonicalRoot(path string) (string, error) {
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		return "", err
-	}
-	if resolved, err := filepath.EvalSymlinks(abs); err == nil {
-		abs = resolved
-	}
-	return filepath.Clean(abs), nil
+	return canonicalpath.Resolve(path)
 }
 
 // baseCurrentFacts backs the base-current check: it resolves the default

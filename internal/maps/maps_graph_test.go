@@ -267,14 +267,15 @@ func TestMapSourcesRequireExactRecordShape(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, test := range map[string]struct{ body, want string }{
-		"second path":       {"- Path: evidence.md\n  Path: evidence.md\n  Supports: support\n  Drift: drift\n", "unexpected field Path"},
-		"second url":        {"- URL: https://example.invalid/one\n  URL: https://example.invalid/two\n  Supports: support\n  Drift: drift\n", "unexpected field URL"},
-		"mixed locator":     {"- Path: evidence.md\n  URL: https://example.invalid/two\n  Supports: support\n  Drift: drift\n", "unexpected field URL"},
-		"unknown field":     {"- Path: evidence.md\n  Owner: team\n  Supports: support\n  Drift: drift\n", "unexpected field Owner"},
-		"duplicate support": {"- Path: evidence.md\n  Supports: support\n  Supports: repeated\n  Drift: drift\n", "duplicate field Supports"},
-		"reordered fields":  {"- Path: evidence.md\n  Drift: drift\n  Supports: support\n", "field Drift is out of order; expected Supports"},
-		"empty field":       {"- Path: evidence.md\n  Supports: \n  Drift: drift\n", "field Supports must be non-empty"},
-		"wrapped field":     {"- Path: evidence.md\n  Supports: support\n  that continues here.\n  Drift: drift\n", "Sources evidence.md line \"that continues here.\" has no field name; write each Sources record field on one physical line"},
+		"second path":              {"- Path: evidence.md\n  Path: evidence.md\n  Supports: support\n  Drift: drift\n", "unexpected field Path"},
+		"second url":               {"- URL: https://example.invalid/one\n  URL: https://example.invalid/two\n  Supports: support\n  Drift: drift\n", "unexpected field URL"},
+		"mixed locator":            {"- Path: evidence.md\n  URL: https://example.invalid/two\n  Supports: support\n  Drift: drift\n", "unexpected field URL"},
+		"unknown field":            {"- Path: evidence.md\n  Owner: team\n  Supports: support\n  Drift: drift\n", "unexpected field Owner"},
+		"duplicate support":        {"- Path: evidence.md\n  Supports: support\n  Supports: repeated\n  Drift: drift\n", "duplicate field Supports"},
+		"reordered fields":         {"- Path: evidence.md\n  Drift: drift\n  Supports: support\n", "field Drift is out of order; expected Supports"},
+		"empty field":              {"- Path: evidence.md\n  Supports: \n  Drift: drift\n", "field Supports must be non-empty"},
+		"wrapped field":            {"- Path: evidence.md\n  Supports: support\n  that continues here.\n  Drift: drift\n", "Sources evidence.md line \"that continues here.\" has no field name; write each Sources record field on one physical line"},
+		"wrapped field with colon": {"- Path: evidence.md\n  Supports: support\n  and it continues: here.\n  Drift: drift\n", "Sources evidence.md line \"and it continues: here.\" has no field name; write each Sources record field on one physical line"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			if diagnostics := sourceDiagnostics(root, test.body); !hasDiagnostic(diagnostics, test.want) {

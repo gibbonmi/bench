@@ -1,0 +1,1 @@
+internal/shellcommand/shellcommand.go:18 registers signal.Notify with os.Interrupt instead of subprocess.CancelSignals

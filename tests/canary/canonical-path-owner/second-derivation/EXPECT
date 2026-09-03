@@ -1,0 +1,1 @@
+internal/gitguard/gitguard.go derives the canonical path in canonicalGuardPath with filepath.Abs and filepath.EvalSymlinks instead of internal/canonicalpath

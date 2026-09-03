@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gocache"
 )
@@ -175,11 +176,7 @@ func WithEnv(base []string, path string) []string {
 }
 
 func canonicalSourceRoot(root string) (string, error) {
-	abs, err := filepath.Abs(root)
-	if err != nil {
-		return "", fmt.Errorf("resolve Bench source root: %w", err)
-	}
-	resolved, err := filepath.EvalSymlinks(abs)
+	resolved, err := canonicalpath.Resolve(root)
 	if err != nil {
 		return "", fmt.Errorf("resolve Bench source root %q: %w", root, err)
 	}
@@ -208,7 +205,7 @@ func canonicalBuild(ctx context.Context, sourceRoot, output string) error {
 		return err
 	}
 	cmd.Env = buildEnv
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.SysProcAttr = builderProcAttr()
 	var outputBytes bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &outputBytes, &outputBytes
 	if err := cmd.Start(); err != nil {

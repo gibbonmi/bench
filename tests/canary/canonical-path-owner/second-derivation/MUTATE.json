@@ -1,0 +1,12 @@
+[
+  {
+    "path": "internal/gitguard/gitguard.go",
+    "old": "import (\n\t\"encoding/json\"\n",
+    "new": "import (\n\t\"encoding/json\"\n\t\"path/filepath\"\n"
+  },
+  {
+    "path": "internal/gitguard/gitguard.go",
+    "old": "type Checker struct {\n\tRefResolves  func(string) bool\n\tBranchExists func(string) bool\n}",
+    "new": "type Checker struct {\n\tRefResolves  func(string) bool\n\tBranchExists func(string) bool\n}\n\n// canonicalGuardPath is a second absolute-then-symlink-resolved derivation this fixture\n// plants outside internal/canonicalpath — the red the owner check exists to raise.\nfunc canonicalGuardPath(path string) string {\n\tabs, err := filepath.Abs(path)\n\tif err != nil {\n\t\treturn path\n\t}\n\tif resolved, err := filepath.EvalSymlinks(abs); err == nil {\n\t\tabs = resolved\n\t}\n\treturn filepath.Clean(abs)\n}"
+  }
+]

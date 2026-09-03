@@ -1,7 +1,7 @@
 # Refuse an unheld or invalid build cache
 
 Blocked by: derive-the-canonical-path-in-one-leaf-package.md
-Writes: internal/gocache/gocache.go, internal/gocache/gocache_test.go, internal/gate/run_transaction.go, internal/gate/lane.go, internal/gate/subject.go, internal/gate/report.go, internal/testreport/command.go
+Writes: internal/gocache/gocache.go, internal/gocache/gocache_test.go, internal/gate/run_transaction.go, internal/gate/lane.go, internal/gate/subject.go, internal/gate/report.go, internal/gate/report_test.go, internal/gate/cache_env_test.go, internal/gate/cache_footprint_run_test.go, internal/testreport/command.go, internal/testreport/check_test.go
 Covers: LQ17, LQ18, LQ19, LQ20, LQ28
 
 ## What to build

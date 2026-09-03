@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/gibbonmi/bench/internal/anchors"
+	"github.com/gibbonmi/bench/internal/canonicalpath"
 )
 
 const (
@@ -165,15 +166,7 @@ func RestoreMutationFixture(root, fixture, dst string) error {
 // its target, so two spellings of one directory compare equal. A path that does not exist
 // yet carries no link to follow, so it keeps its absolute spelling.
 func resolvePath(path string) (string, error) {
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		return "", err
-	}
-	resolved, err := filepath.EvalSymlinks(abs)
-	if err != nil {
-		return filepath.Clean(abs), nil
-	}
-	return filepath.Clean(resolved), nil
+	return canonicalpath.Resolve(path)
 }
 
 func restoredFixturePath(rel string) string {

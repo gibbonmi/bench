@@ -212,6 +212,65 @@ func TestLinkOutsideGitRepoNamesGitRepository(t *testing.T) {
 	}
 }
 
+// TestLinkInKitSourceCheckoutRefuses pins link's refusal in the kit's own source tree.
+// The kit authors the managed block and bin/bench.sh, so a link here writes a tracked
+// launcher copy the shim then prefers. The refusal names the kit source checkout and
+// sends the reader to the kit-side route, and it writes no destination file.
+func TestLinkInKitSourceCheckoutRefuses(t *testing.T) {
+	root := t.TempDir()
+	runAdoptGit(t, root, "init", "-q")
+	t.Setenv("BENCH_KIT", root)
+	t.Chdir(root)
+
+	var stdout, stderr bytes.Buffer
+	code := Link(nil, &stdout, &stderr, "1.0.0")
+	if code != 1 {
+		t.Fatalf("Link in the kit source checkout = %d, want 1\nstdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
+	}
+	got := stderr.String()
+	if !strings.Contains(got, "kit source checkout") {
+		t.Fatalf("stderr = %q, want it to name the kit source checkout", got)
+	}
+	if !strings.Contains(got, "bench doctor --fix") {
+		t.Fatalf("stderr = %q, want it to name bench doctor --fix", got)
+	}
+	if _, err := os.Lstat(filepath.Join(root, ".bench", "bin", "bench.sh")); !os.IsNotExist(err) {
+		t.Fatalf("launcher copy after the refusal = %v, want absent", err)
+	}
+}
+
+// TestLinkRelinkStaysGreenInAConsumerRepo is the over-broad guard on the kit-checkout
+// refusal. The first link writes the consumer copy of .bench/BENCH.md, so a predicate
+// that tests for that marker instead of the kit checkout refuses the second run. A
+// consumer repo relinks as often as it likes, whatever assets the first run left.
+func TestLinkRelinkStaysGreenInAConsumerRepo(t *testing.T) {
+	root := t.TempDir()
+	runAdoptGit(t, root, "init", "-q")
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("BENCH_KIT", filepath.Clean(filepath.Join(wd, "..", "..")))
+	t.Chdir(root)
+
+	var stdout, stderr bytes.Buffer
+	if code := Link(nil, &stdout, &stderr, "1.0.0"); code != 0 {
+		t.Fatalf("first Link = %d, want 0\nstdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
+	}
+	if _, statErr := os.Stat(filepath.Join(root, ".bench", "BENCH.md")); statErr != nil {
+		t.Fatalf("first Link left no .bench/BENCH.md: %v", statErr)
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	if code := Link(nil, &stdout, &stderr, "1.0.0"); code != 0 {
+		t.Fatalf("relink = %d, want 0\nstdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
+	}
+	if got := stdout.String(); !strings.Contains(got, "linked Bench into "+root) {
+		t.Fatalf("relink stdout = %q, want the linked message for %q", got, root)
+	}
+}
+
 func TestReportDoctorRowsReportsMalformedWorktreeAdmin(t *testing.T) {
 	root := t.TempDir()
 	runAdoptGit(t, root, "init", "-q")

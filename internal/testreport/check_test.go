@@ -3,6 +3,7 @@ package testreport
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
@@ -457,6 +459,56 @@ func canonicalTestDir(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return dir
+}
+
+// LQ17: an unwritable cache directory refuses the focused run before the Go child starts,
+// and the refusal names the hold error and the path. A focused run that compiled with the
+// lock unheld would write archives a clean is removing.
+func TestFocusedRunRefusesAnUnheldCache(t *testing.T) {
+	home := unwritableCacheHome(t)
+	dir, err := gocache.Dir([]string{"HOME=" + home})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	out, code := runGoTest(context.Background(), t.TempDir(), focusedRequest{}, []string{"true"}, []string{"HOME=" + home})
+
+	if code != 1 {
+		t.Fatalf("exit = %d, want 1; output=%q", code, out)
+	}
+	if !strings.Contains(out, "cache lock unavailable") || !strings.Contains(out, dir) {
+		t.Fatalf("output = %q, want the cache refusal naming %q", out, dir)
+	}
+}
+
+// unwritableCacheHome answers a HOME whose derived build cache directory exists and denies
+// a write, which is the state that fails a holder's lock-file open. The directory is the
+// derivation's own answer rather than a second spelling of it, and its mode is restored
+// before the temporary tree is removed.
+func unwritableCacheHome(t *testing.T) string {
+	t.Helper()
+	home := t.TempDir()
+	dir, err := gocache.Dir([]string{"HOME=" + home})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chmod(dir, 0o700); err != nil {
+			t.Errorf("restore mode %s: %v", dir, err)
+		}
+	})
+	if err := os.Chmod(dir, 0o500); err != nil {
+		capability.Capability(t, capability.Privilege, fmt.Sprintf("cannot remove directory write permission: %v", err))
+	}
+	probe, err := os.Create(filepath.Join(dir, "write-probe"))
+	if err == nil {
+		probe.Close()
+		capability.Capability(t, capability.Privilege, "mode 0500 directory remains writable")
+	}
+	return home
 }
 
 // WF46: the conformance registry must never name a check equal to the system phase.

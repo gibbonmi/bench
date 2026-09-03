@@ -1,0 +1,3 @@
+[
+  {"path":"specs/ft128-agent-line-binding/decisions/multi-harness-line-binding.md","old":"## Sources\n\n## Out of scope","new":"## Sources\n\n- URL: https://example.invalid/wrapped-colon\n  Supports: source shape\n  and it continues: here.\n  Drift: source shape\n\n## Out of scope"}
+]

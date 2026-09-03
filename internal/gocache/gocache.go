@@ -7,6 +7,9 @@ import (
 	"errors"
 	"path/filepath"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/sanitize"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // Env is the environment name a Go toolchain child reads the build cache from.
@@ -63,14 +66,42 @@ func value(env []string, name string) string {
 // caller re-derives a path that Apply already decided. A slice without the entry falls
 // back to the HOME derivation, because a runner launched from a plain shell carries no
 // GOCACHE entry and still reads the same directory. A slice with neither the entry nor an
-// absolute HOME answers an empty string.
-func FromEnv(env []string) string {
+// absolute HOME answers an empty string and no error: that slice names no directory, and a
+// reader with nothing to name has nothing to refuse.
+//
+// A relative entry is the one refusal. Apply never hands an inbound value to a child, so a
+// relative entry reaches this function alone, and a reader that answered it verbatim would
+// name a directory that moves with the reader's own working directory.
+func FromEnv(env []string) (string, error) {
 	if entry := value(env, Env); entry != "" {
-		return entry
+		if !filepath.IsAbs(entry) {
+			return "", errors.New(Env + " is relative: " + entry + "; the Bench build cache needs an absolute path")
+		}
+		return entry, nil
 	}
 	dir, err := Dir(env)
 	if err != nil {
-		return ""
+		return "", nil
 	}
-	return dir
+	return dir, nil
+}
+
+// Declared reports whether env names the home the derivation reads. A caller that must
+// tell "this environment names no cache directory" from "this environment names one the
+// derivation refuses" asks here, because the derivation's one input is this package's own
+// decision and a second reading of the name would drift from it.
+func Declared(env []string) bool { return value(env, homeEnv) != "" }
+
+// Refusal is the one line a Hold caller prints when the hold fails. The gate run, the lane,
+// and the focused run each refuse with this text, so an operator reads the same error and
+// the same cache path wherever a build stopped. The error and the path pass the control-rune
+// filter, because the path comes from HOME, which the operator owns, and no byte of it
+// reaches a terminal raw. A hold that failed in the derivation names no path, so the line
+// carries the derivation's own error alone.
+func Refusal(env []string, err error) string {
+	hint := sanitize.Controls(err.Error())
+	if dir, dirErr := Dir(env); dirErr == nil {
+		hint += " at " + sanitize.Controls(dir)
+	}
+	return toon.Errorf("cache lock unavailable", hint)
 }
