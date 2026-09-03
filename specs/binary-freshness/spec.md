@@ -288,6 +288,11 @@ Recorded during the build, open to reviewer veto:
 - The shell word test lives in `.bench/lib/resolve-bench.sh` as
   `bench_invokes_bench`, not in the shim. The conformance test sources the
   lib, and the shim keeps the posture.
+- A manifest that still reads `dev` after the recovery rebuild reuses the
+  existing version refusal rather than a sixth wording. That keeps the
+  doctor row and the land route on the same five reasons. The consequence is
+  that an install root with no readable `package.json` continues, which is
+  the silence the doctor row already keeps.
 
 - The doctor broker row names an absent manifest with an `ok:` verdict, not a
   red one. The kit source checkout publishes no broker manifest beside its
