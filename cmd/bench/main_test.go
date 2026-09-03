@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
+	"errors"
 	"io"
 	"os"
 	"os/exec"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/census"
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/poolkey"
@@ -923,4 +926,146 @@ func TestRoadmapFlagsRouteToTheirOwners(t *testing.T) {
 	if code != 0 || !strings.HasPrefix(flow, "flow[") {
 		t.Fatalf("roadmap --flow = %q, %d; want the flow block on exit 0", flow, code)
 	}
+}
+
+// TestCommandsBriefGradesTheRunningExecutable covers BF1 and BF2. The probe is the one
+// verb a session runs to learn whether Bench answers at all, so a stale binary answering
+// it is a false pass nothing else in the loop catches. The rows run out of process,
+// because the verdict is about the executable that is running, and a test binary is not
+// the checkout's publication. Both rows read one real subject-mode build, so the
+// published pair under grading is the one the builder writes.
+func TestCommandsBriefGradesTheRunningExecutable(t *testing.T) {
+	root := commandsBriefCheckout(t)
+	published := commandsBriefPublication(t, root)
+
+	t.Run("a matching seal keeps the three-line answer", func(t *testing.T) {
+		binary := commandsBriefCopy(t, root, published)
+		out, code := commandsBriefProbe(t, root, binary)
+		if code != 0 {
+			t.Fatalf("commands --brief under a matching seal = exit %d:\n%s", code, out)
+		}
+		if want, _ := commandsCommand([]string{"--brief"}); out != want {
+			t.Fatalf("commands --brief = %q, want the probe answer %q", out, want)
+		}
+	})
+
+	t.Run("a mismatched seal refuses with the rebuild action", func(t *testing.T) {
+		binary := commandsBriefCopy(t, root, published)
+		commandsBriefBreakSeal(t, binary)
+		out, code := commandsBriefProbe(t, root, binary)
+		if code == 0 {
+			t.Fatalf("commands --brief under a mismatched seal exited 0:\n%s", out)
+		}
+		if action := freshness.RebuildAction(root); !strings.Contains(out, action) {
+			t.Fatalf("commands --brief refusal = %q, want the rebuild action %q", out, action)
+		}
+	})
+}
+
+// commandsBriefCheckout names the checkout exactly as the probe's own handler will,
+// because the rebuild action the refusal prints is built from that spelling.
+func commandsBriefCheckout(t *testing.T) string {
+	t.Helper()
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resolved, err := git.RootAt(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return resolved
+}
+
+// commandsBriefPublication builds the checkout's own binary into the checkout, which is
+// where the wrapper's binary route resolves it. A build outside the tree is not this
+// checkout's publication, so only an in-tree one exercises the grading branch.
+func commandsBriefPublication(t *testing.T, root string) string {
+	t.Helper()
+	dist := filepath.Join(root, "dist")
+	if err := os.MkdirAll(dist, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	dir, err := os.MkdirTemp(dist, "commands-brief-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	out := filepath.Join(dir, "bench")
+	cmd := exec.Command("bash", filepath.Join(root, "scripts", "go-build.sh"), root, out)
+	cmd.Dir = root
+	cmd.Env = capability.WithoutEnvironment(os.Environ(), runbinary.Env)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("subject build: %v\n%s", err, output)
+	}
+	return out
+}
+
+// commandsBriefCopy gives one row its own published pair, so neither row depends on the
+// order the other ran in.
+func commandsBriefCopy(t *testing.T, root, published string) string {
+	t.Helper()
+	dir, err := os.MkdirTemp(filepath.Join(root, "dist"), "commands-brief-row-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	binary := filepath.Join(dir, "bench")
+	for _, pair := range [][2]string{{published, binary}, {published + ".seal", binary + ".seal"}} {
+		body, err := os.ReadFile(pair[0])
+		if err != nil {
+			t.Fatal(err)
+		}
+		mode := os.FileMode(0o644)
+		if pair[0] == published {
+			mode = 0o755
+		}
+		if err := os.WriteFile(pair[1], body, mode); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return binary
+}
+
+// commandsBriefBreakSeal rewrites the source digest the seal records, which is the exact
+// state a rebuilt tree beside an unrebuilt binary leaves behind.
+func commandsBriefBreakSeal(t *testing.T, binary string) {
+	t.Helper()
+	body, err := os.ReadFile(binary + ".seal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fields map[string]any
+	if err := json.Unmarshal(body, &fields); err != nil {
+		t.Fatal(err)
+	}
+	sources, ok := fields["sources"].(string)
+	if !ok || sources == "" {
+		t.Fatalf("seal records no source digest: %s", body)
+	}
+	fields["sources"] = strings.Repeat("0", len(sources))
+	edited, err := json.Marshal(fields)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(binary+".seal", edited, 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func commandsBriefProbe(t *testing.T, root, binary string) (string, int) {
+	t.Helper()
+	cmd := exec.Command(binary, "commands", "--brief")
+	cmd.Dir = root
+	cmd.Env = capability.WithoutEnvironment(os.Environ(), runbinary.Env)
+	output, err := cmd.CombinedOutput()
+	code := 0
+	if err != nil {
+		exit := &exec.ExitError{}
+		if !errors.As(err, &exit) {
+			t.Fatalf("run %s commands --brief: %v\n%s", binary, err, output)
+		}
+		code = exit.ExitCode()
+	}
+	return string(output), code
 }

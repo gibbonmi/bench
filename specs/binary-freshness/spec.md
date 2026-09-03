@@ -286,6 +286,12 @@ Recorded during the build, open to reviewer veto:
   than calling `adopt.KitSourceCheckout` directly. A fixture that bound
   `BENCH_KIT` would leave the package's parallel set and break its serial
   ceiling. `mergeLane` sets the same precedent.
+- `bench commands --brief` grades the answering executable only when that
+  executable lies inside the checkout. A release artifact, an installed
+  platform binary, and a private run selection each come from their own
+  tree. A grade against the current repository would refuse a sound binary.
+  Three release scripts run the verb on a deliberately unsealed artifact
+  from the kit repository.
 
 - The guard classifier table gets a new `familyChecks` row in
   `internal/conformance/registry/registry.go`. A canary fixture bites only
