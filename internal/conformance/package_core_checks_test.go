@@ -32,6 +32,7 @@ func checkPackageCoreAndGuards(root string, tier registry.Tier) []string {
 	diags = append(diags, checkUserFacingBenchkitStrings(root)...)
 	diags = append(diags, checkGuardHeaderManifests(root)...)
 	diags = append(diags, checkGuardResolverOrderDrift(root)...)
+	diags = append(diags, checkGuardClassifierTable(root)...)
 	return diags
 }
 

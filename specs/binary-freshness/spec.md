@@ -235,6 +235,7 @@ Line: opus / low. One new check row in an existing table.
 - `internal/preflight/source_tip_test.go`
 - `internal/benchguard/`
 - `internal/conformance/`
+- `internal/conformance/registry/registry.go`
 - `bin/bench.sh`
 - `scripts/go-build.sh`
 - `.bench/hooks/block-bench-follow-on.sh`
@@ -274,6 +275,19 @@ ticket.
 ## Further notes
 
 Recorded during the build, open to reviewer veto:
+
+- The guard classifier table gets a new `familyChecks` row in
+  `internal/conformance/registry/registry.go`. A canary fixture bites only
+  through a registered family owner, and every existing family is bound
+  there.
+- The guard classifier table's drift check binds to the existing
+  `package-core-guard` owner through one call line in
+  `internal/conformance/package_core_checks_test.go`. The check parses the
+  table's rows from the graded root. It then runs the shell word test over
+  each one, so the fixture bites under any graded tree.
+- The shell word test lives in `.bench/lib/resolve-bench.sh` as
+  `bench_invokes_bench`, not in the shim. The conformance test sources the
+  lib, and the shim keeps the posture.
 
 - The doctor broker row names an absent manifest with an `ok:` verdict, not a
   red one. The kit source checkout publishes no broker manifest beside its

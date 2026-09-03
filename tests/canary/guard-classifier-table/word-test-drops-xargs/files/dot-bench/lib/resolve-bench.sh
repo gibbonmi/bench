@@ -1,4 +1,8 @@
 # shellcheck shell=sh
+# Canary fixture: the shell word test has lost its xargs routine-prefix arm, so
+# "xargs -- bench help" reads as a non-Bench call. The shared table beside it still
+# declares that row true. The guard-classifier-table conformance check must go red
+# naming that one row.
 # This is the shared shell classification library for every hook shim
 # (.bench/hooks/*.sh) and shift adapter (.bench/adapters/*). It carries the one
 # source of the wrapper search order — repo `.bench/bin/bench.sh`, then kit
@@ -131,7 +135,7 @@ bench_segment_runs_bench() {
         # The duration operand sits between the options and the command.
         if [ "$#" -gt 0 ]; then shift; fi
         ;;
-      xargs)
+      xargs-dropped)
         shift
         while [ "$#" -gt 0 ]; do
           if [ "$1" = "--" ]; then

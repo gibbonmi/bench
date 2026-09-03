@@ -174,6 +174,10 @@ var canaryFixtureFamilyRegistry = map[string]fixtureRegistration{
 		"internal/conformance/injected_ports_test.go",
 		"internal/conformance/checks_test.go",
 	),
+	"guard-classifier-table": conformanceGoFixture(
+		"internal/conformance/guard_classifier_table_test.go",
+		"internal/conformance/package_core_checks_test.go",
+	),
 	"canonical-path-owner": conformanceGoFixture(
 		"internal/conformance/canonical_path_owner_test.go",
 		"internal/conformance/checks_test.go",
