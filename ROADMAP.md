@@ -52,8 +52,6 @@ means the repository-controlled compliance assessment.
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
-**FT276 (MEDIUM) — one cycle-free owner derives canonical repository paths.**
-
 **FT277 (MEDIUM) — `bench test --changed` explains why it widened the selected set.**
 
 **FT290 (LOW) — `bench test` projects a check's fixture family, a full failure body, and a no-match attribution.**
@@ -66,8 +64,6 @@ means the repository-controlled compliance assessment.
 
 **FT284 (MEDIUM, decision required) — `bench spec retire` owns its roadmap retirement atomically.**
 
-**FT285 (LOW) — a wrapped decision-map Sources continuation that holds a colon gets the one-physical-line refusal.**
-
 **FT255 (MEDIUM, decision required) — concurrent tests share one explicit machine budget.**
 
 **FT275 (MEDIUM) — code built under Bench traces its declared seams with OpenTelemetry.**
@@ -75,8 +71,6 @@ means the repository-controlled compliance assessment.
 **FT172 (MEDIUM, decision required) — the roadmap row grammar is a contract, and `roadmap_id` has one decided source.**
 
 **FT173 (MEDIUM, decision required) — AXI residual: the active-assignment-with-deleted-tree disclosure class.**
-
-**FT202 (MEDIUM) — a shared purity-census helper, and the census scope for process-backed fixtures.**
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.**
 
@@ -113,8 +107,6 @@ means the repository-controlled compliance assessment.
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
 
-**FT279 (LOW) — `bench link` refuses the kit source checkout.**
-
 **FT280 (LOW, decision required) — a Bench-owned worktree tip projection replaces raw `git rev-parse` in the landing pin.**
 
 **FT218 (LOW) — named git readers instead of learned CLI flags.**
@@ -138,8 +130,6 @@ means the repository-controlled compliance assessment.
 
 **FT258 (MEDIUM, decision required) — `bench commit` derives a complete change set and has one explicit `MERGE_HEAD` contract, without weakening its ownership fence.**
 
-**FT264 (MEDIUM) — Go build-cache validation residuals.**
-
 **FT265 (MEDIUM, decision required) — one coordinator-owned immutable drain evidence bundle.**
 
 **FT168 (LOW) — focused iteration evidence: a fixture-selecting canary and mutation probe.**
@@ -155,8 +145,6 @@ hardens a different oracle surface. They stay separate builds, but they read
 and prioritize as one theme.
 
 **FT177 (MEDIUM) — a stale `dist/bench` invalidates tests and its promotion-broker manifest.**
-
-**FT201 (LOW) — production cancel-signal registrations conform to one source.**
 
 ## Reds the diff doesn't own — inheritance, load, and harness defects
 
