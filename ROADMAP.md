@@ -33,6 +33,8 @@ means the repository-controlled compliance assessment.
 
 **FT287 (MEDIUM, decision required) — AXI conformance is assessed for every bench command, argument, and option.**
 
+**FT296 (MEDIUM) — a production child process dies with its parent.**
+
 **FT235 (MEDIUM) — a pool directory's name says what the worktree is for.**
 
 **FT71 (HIGH on the bank track) — versioned local shift evidence.**
@@ -276,4 +278,10 @@ critical path; the FT156 anchor registry shipped, so section-scoped
 fixture-proven.
 
 ## Recommended sequence
+
+1. FT177 binary-freshness — the spec is staged; run `/bench-implement-spec`.
+   A stale `dist/bench` invalidates every runtime test that consults it.
+2. FT162 handoff-sections — the spec is staged; run `/bench-implement-spec`.
+3. FT254 `bench worktree exec` — run `/bench-write-spec`. It carries the most
+   occurrences on the board, and each one costs raw calls in every phase.
 
