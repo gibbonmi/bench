@@ -1,7 +1,7 @@
 # Sweep cancel-signal registrations
 
 Blocked by: derive-the-canonical-path-in-one-leaf-package.md
-Writes: internal/conformance/cancel_signal_registrations_test.go (new), internal/conformance/checks_test.go, internal/conformance/registry/registry.go, internal/skillsindex/command.go, internal/worktree/subshell.go, tests/canary/cancel-signal-registrations (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
+Writes: internal/conformance/cancel_signal_registrations_test.go (new), internal/conformance/checks_test.go, internal/conformance/registry/registry.go, internal/skillsindex/command.go, internal/worktree/subshell.go, tests/canary/cancel-signal-registrations (new), internal/conformance/registry_test.go, projects/benchkit.md, tests/canary/guidance-prose-budgets/over-budget-skill, tests/canary/line-routing/line-binding-prose-drift, tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading, tests/canary/workflow-guidance-anchors/benchkit-review-round-owner, tests/canary/workflow-guidance-anchors/benchkit-review-round-routing, tests/canary/workflow-guidance-anchors/benchkit-spec-ownership, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
 Covers: LQ21, LQ22, LQ23
 
 ## What to build

@@ -207,7 +207,11 @@ new AST sweep at a known seam, and the attribute needs a platform split.
 - `internal/gate/lane.go`
 - `internal/gate/subject.go`
 - `internal/gate/report.go`
+- `internal/gate/report_test.go`
+- `internal/gate/cache_env_test.go`
+- `internal/gate/cache_footprint_run_test.go`
 - `internal/testreport/command.go`
+- `internal/testreport/check_test.go`
 - `internal/conformance/canonical_path_owner_test.go`
 - `tests/canary/canonical-path-owner/`
 - `internal/skillsindex/command.go`
