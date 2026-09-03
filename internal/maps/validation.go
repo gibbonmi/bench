@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/canonicalpath"
@@ -151,13 +152,23 @@ func sourceDiagnostics(root, body string) []Diagnostic {
 		expected := []string{"Supports", "Drift"}
 		seen := make(map[string]bool, len(expected))
 		next := 0
+		// A wrapped continuation that holds a colon cuts into a name with a space, so the
+		// space guard routes it to the one-physical-line message before the unknown-field
+		// branch reads it as a field.
+		oneLine := func(line string) Diagnostic {
+			return Diagnostic{Message: fmt.Sprintf("Sources %s line %q has no field name; write each Sources record field on one physical line", value, line)}
+		}
 		for _, line := range lines[1:] {
 			name, fieldValue, hasSeparator := strings.Cut(line, ":")
 			if !hasSeparator {
-				diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("Sources %s line %q has no field name; write each Sources record field on one physical line", value, line)})
+				diagnostics = append(diagnostics, oneLine(line))
 				continue
 			}
-			if name != "Supports" && name != "Drift" {
+			if strings.Contains(name, " ") {
+				diagnostics = append(diagnostics, oneLine(line))
+				continue
+			}
+			if !slices.Contains(expected, name) {
 				diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("Sources %s unexpected field %s", value, name)})
 				continue
 			}
