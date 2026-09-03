@@ -99,7 +99,7 @@ aside, restore the committed version with `git show HEAD:<path> > <path>`, test,
 lives inside the delegate's own worktree under a unique name, and every restore names exact files, never a
 glob.
 
-A read-only delegate that reads a tree the coordinator will grade runs in its own worktree. A primary-tree research charge names the primary checkout in its first line, and forbids the pool path there.
+A read-only delegate that reads a tree the coordinator will grade runs in its own worktree. A read-only research charge names its subject tree in its first line, the primary checkout or a worktree label, and forbids the pool path there.
 Without that worktree, the coordinator verifies the tree unchanged before the landing gate. `references/delegation-discipline.md` holds the read-only return rules under `Read-only returns`.
 
 ## Verifying the done-claim
