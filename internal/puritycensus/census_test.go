@@ -17,7 +17,7 @@ func TestCensusDiagnosesForbiddenImportAmbientEffectAndParallel(t *testing.T) {
 		"\tvalue := os." + "Getenv(\"HOME\")",
 		"\t" + "t." + "Parallel()",
 	}, "\n")
-	diagnostics := Diagnose("fixture.go", source, PolicyPackage())
+	diagnostics := diagnose("fixture.go", source, PolicyPackage())
 	if len(diagnostics) != 3 {
 		t.Fatalf("the census yields %d diagnostics, want 3: %v", len(diagnostics), diagnostics)
 	}
@@ -37,7 +37,7 @@ func TestCensusDiagnosesForbiddenImportAmbientEffectAndParallel(t *testing.T) {
 // so a process-backed git fixture inside a pure package reds. (Coverage row LQ15.)
 func TestCensusRefusesProcessBackedFixture(t *testing.T) {
 	line := "\tcmd := " + "exec" + "." + "Command(\"git\", \"status\")"
-	diagnostics := Diagnose("fixture_test.go", line, PolicyPackage())
+	diagnostics := diagnose("fixture_test.go", line, PolicyPackage())
 	if len(diagnostics) != 1 || !strings.Contains(diagnostics[0], "exec"+".Command") {
 		t.Fatalf("the census accepts a process-backed fixture: %v", diagnostics)
 	}
@@ -52,7 +52,7 @@ func TestCensusExemptsOnlyTheWrapperEffects(t *testing.T) {
 		"\t" + "t." + "Parallel()",
 		"\t\"github.com/gibbonmi/bench/" + "internal/git\"",
 	}, "\n")
-	diagnostics := Diagnose(censusFile, source, PolicyPackage())
+	diagnostics := diagnose(censusFile, source, PolicyPackage())
 	if len(diagnostics) != 1 || !strings.Contains(diagnostics[0], "forbidden import") {
 		t.Fatalf("the wrapper exemption covers the wrong checks: %v", diagnostics)
 	}
@@ -61,7 +61,7 @@ func TestCensusExemptsOnlyTheWrapperEffects(t *testing.T) {
 // TestCensusExemptsItsOwnImportPath proves a wrapper may import this package under the
 // leaf policy, which otherwise forbids every path under internal/.
 func TestCensusExemptsItsOwnImportPath(t *testing.T) {
-	if diagnostics := Diagnose("wrapper_test.go", "\t"+helperImport, LeafPackage()); len(diagnostics) != 0 {
+	if diagnostics := diagnose("wrapper_test.go", "\t"+helperImport, LeafPackage()); len(diagnostics) != 0 {
 		t.Fatalf("the leaf policy refuses the census helper itself: %v", diagnostics)
 	}
 }
@@ -70,7 +70,7 @@ func TestCensusExemptsItsOwnImportPath(t *testing.T) {
 // check, which keeps the policy documentation in this repository writable.
 func TestCensusReadsCodeBeforeTheComment(t *testing.T) {
 	line := "// a comment naming os." + "Getenv( and " + "t." + "Parallel("
-	if diagnostics := Diagnose("doc.go", line, PolicyPackage()); len(diagnostics) != 0 {
+	if diagnostics := diagnose("doc.go", line, PolicyPackage()); len(diagnostics) != 0 {
 		t.Fatalf("a comment trips the census: %v", diagnostics)
 	}
 }

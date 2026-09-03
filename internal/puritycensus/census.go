@@ -44,12 +44,13 @@ var leafImport = regexp.MustCompile(`"(os/exec|syscall|github\.com/gibbonmi/benc
 // so a process-backed fixture counts as an effect.
 var ambientEffect = regexp.MustCompile(`\b(os\.Getenv|os\.LookupEnv|os\.Setenv|os\.Getwd|os\.Chdir|os\.Environ|time\.Now|exec\.Command|exec\.CommandContext)\(`)
 
-// Policy carries the four facts a census grades against.
+// Policy carries the four facts a census grades against. The fields stay unexported,
+// so a caller takes a policy from PolicyPackage or LeafPackage and never assembles one.
 type Policy struct {
-	ForbiddenImport *regexp.Regexp
-	AmbientEffect   *regexp.Regexp
-	Subject         string
-	SelfExempt      string
+	forbiddenImport *regexp.Regexp
+	ambientEffect   *regexp.Regexp
+	subject         string
+	selfExempt      string
 }
 
 // PolicyPackage returns the policy a pure worktree decision owner runs. Its parent
@@ -57,10 +58,10 @@ type Policy struct {
 // facts, so the owner takes neither.
 func PolicyPackage() Policy {
 	return Policy{
-		ForbiddenImport: policyImport,
-		AmbientEffect:   ambientEffect,
-		Subject:         "the pure policy package",
-		SelfExempt:      censusFile,
+		forbiddenImport: policyImport,
+		ambientEffect:   ambientEffect,
+		subject:         "the pure policy package",
+		selfExempt:      censusFile,
 	}
 }
 
@@ -68,10 +69,10 @@ func PolicyPackage() Policy {
 // internal/, so no importer of it can close a cycle.
 func LeafPackage() Policy {
 	return Policy{
-		ForbiddenImport: leafImport,
-		AmbientEffect:   ambientEffect,
-		Subject:         "the leaf package",
-		SelfExempt:      censusFile,
+		forbiddenImport: leafImport,
+		ambientEffect:   ambientEffect,
+		subject:         "the leaf package",
+		selfExempt:      censusFile,
 	}
 }
 
@@ -107,7 +108,7 @@ func Scan(t testing.TB, dir string, policy Policy) Sources {
 		if err != nil {
 			t.Fatal(err)
 		}
-		for _, diagnostic := range Diagnose(name, string(data), policy) {
+		for _, diagnostic := range diagnose(name, string(data), policy) {
 			t.Error(diagnostic)
 		}
 	}
@@ -117,25 +118,25 @@ func Scan(t testing.TB, dir string, policy Policy) Sources {
 	return scanned
 }
 
-// Diagnose grades one source's content and returns one message per violation, each
+// diagnose grades one source's content and returns one message per violation, each
 // carrying the file and the line. A comment cannot trip a check, so the scan reads the
 // code before the first comment marker only.
-func Diagnose(name, content string, policy Policy) []string {
+func diagnose(name, content string, policy Policy) []string {
 	var diagnostics []string
-	exempt := name == policy.SelfExempt
+	exempt := name == policy.selfExempt
 	for i, line := range strings.Split(content, "\n") {
 		code := line
 		if idx := strings.Index(code, "//"); idx >= 0 {
 			code = code[:idx]
 		}
-		if match := policy.ForbiddenImport.FindString(code); match != "" && match != helperImport {
-			diagnostics = append(diagnostics, fmt.Sprintf("%s:%d: forbidden import %s in %s", name, i+1, match, policy.Subject))
+		if match := policy.forbiddenImport.FindString(code); match != "" && match != helperImport {
+			diagnostics = append(diagnostics, fmt.Sprintf("%s:%d: forbidden import %s in %s", name, i+1, match, policy.subject))
 		}
 		if exempt {
 			continue
 		}
-		if match := policy.AmbientEffect.FindString(code); match != "" {
-			diagnostics = append(diagnostics, fmt.Sprintf("%s:%d: ambient effect %s in %s", name, i+1, match, policy.Subject))
+		if match := policy.ambientEffect.FindString(code); match != "" {
+			diagnostics = append(diagnostics, fmt.Sprintf("%s:%d: ambient effect %s in %s", name, i+1, match, policy.subject))
 		}
 		if strings.Contains(code, parallelCall) {
 			diagnostics = append(diagnostics, fmt.Sprintf("%s:%d: t.Parallel is out of scope for this spec", name, i+1))
