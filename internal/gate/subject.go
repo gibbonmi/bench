@@ -17,6 +17,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/gibbonmi/bench/internal/canonicalpath"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gocache"
 )
@@ -393,12 +394,18 @@ func (c *identityCollector) identityPath(path string) string {
 	return path
 }
 
+// canonicalSubjectRoot refuses a root that does not exist. The owner keeps the absolute
+// spelling of an absent path rather than refusing, and a subject keyed to an absent root
+// would hash as a closed identity over nothing.
 func canonicalSubjectRoot(root string) (string, error) {
-	resolved, err := filepath.EvalSymlinks(root)
+	resolved, err := canonicalpath.Resolve(root)
 	if err != nil {
 		return "", err
 	}
-	return filepath.Abs(resolved)
+	if _, err := os.Stat(resolved); err != nil {
+		return "", err
+	}
+	return resolved, nil
 }
 
 func resolveTool(root, name, pathEnv string) (string, error) {

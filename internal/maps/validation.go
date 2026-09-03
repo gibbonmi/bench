@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/canonicalpath"
 )
 
 // ValidateDecisionMap validates one map at its repository-relative path.
@@ -231,11 +233,7 @@ func validateSourcePath(root, source string) string {
 	if source == "" || filepath.IsAbs(source) {
 		return "must be a non-empty repository-relative path"
 	}
-	root, err := filepath.Abs(root)
-	if err != nil {
-		return "root cannot be resolved"
-	}
-	root, err = filepath.EvalSymlinks(root)
+	root, err := canonicalpath.Resolve(root)
 	if err != nil {
 		return "root cannot be resolved"
 	}

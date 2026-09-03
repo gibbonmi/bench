@@ -213,6 +213,7 @@ new AST sweep at a known seam, and the attribute needs a platform split.
 - `internal/skillsindex/command.go`
 - `internal/conformance/cancel_signal_registrations_test.go`
 - `internal/conformance/checks_test.go`
+- `internal/conformance/registry_test.go`
 - `internal/conformance/registry/registry.go`
 - `tests/canary/cancel-signal-registrations/`
 - `internal/runbinary/`
