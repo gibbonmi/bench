@@ -499,11 +499,14 @@ func TestCraftSpecMapDisciplineAnchorsRedOnRemoval(t *testing.T) {
 // must keep: a read-only delegate that reads a graded tree gets its own worktree, a mutation
 // probe mutates behavior, the skill points at its discipline reference, and a review round
 // declares its iteration cap. It also holds the retired no-worktree sentence out of the
-// skill. Each needle and diagnostic is written here independently of the registry, so
-// guidance that drops a rule cannot define itself green.
+// skill. It also holds the read-only charge and return rules: a primary-tree research
+// charge names its subject tree in the first line, and the coordinator grades a clean
+// status before it trusts the return. Each needle and diagnostic is written here
+// independently of the registry, so guidance that drops a rule cannot define itself green.
 func TestCraftDelegateDisciplineAnchorsRedOnRemoval(t *testing.T) {
 	const (
 		skill     = ".agents/skills/bench-craft-delegate/SKILL.md"
+		reference = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
 		writeSpec = ".agents/commands/bench-write-spec.md"
 	)
 	anchorHarness{
@@ -514,6 +517,18 @@ func TestCraftDelegateDisciplineAnchorsRedOnRemoval(t *testing.T) {
 				section: "Isolation",
 				needle:  "A read-only delegate that reads a tree the coordinator will grade runs in its own worktree",
 				want:    ".agents/skills/bench-craft-delegate/SKILL.md Isolation dropped the own-worktree rule for a read-only delegate that reads a graded tree",
+			},
+			{
+				file:    skill,
+				section: "Isolation",
+				needle:  "A primary-tree research charge names the primary checkout in its first line, and forbids the pool path there.",
+				want:    ".agents/skills/bench-craft-delegate/SKILL.md Isolation dropped the first-line primary-checkout name or the pool-path refusal for a research charge",
+			},
+			{
+				file:    reference,
+				section: "Read-only returns",
+				needle:  "The coordinator verifies a clean `git status` in the shared worktree before it trusts a read-only return.",
+				want:    "delegation-discipline.md Read-only returns dropped the clean git status check before a read-only return",
 			},
 			{
 				file:    skill,

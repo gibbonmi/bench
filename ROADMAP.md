@@ -62,8 +62,6 @@ means the repository-controlled compliance assessment.
 
 **FT293 (MEDIUM, decision required) — preflight-closed ticket Writes determine registry pins and blocker edges.**
 
-**FT295 (MEDIUM) — read-only delegates use the named subject tree and return a clean shared worktree.**
-
 **FT283 (MEDIUM, decision required) — `bench worktree land --spec` has one phase-scoped transition contract.**
 
 **FT284 (MEDIUM, decision required) — `bench spec retire` owns its roadmap retirement atomically.**
@@ -291,4 +289,3 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `$bench` — route FT295 to a `craft-synthesis` kit edit for read-only delegate hygiene.
