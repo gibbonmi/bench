@@ -1,7 +1,7 @@
 # Split the guard posture on a stale answer
 
 Blocked by: none
-Writes: .bench/hooks/block-bench-follow-on.sh, .bench/lib/resolve-bench.sh, internal/benchguard/benchguard_test.go, internal/systemtest/bench_follow_on_test.go, internal/conformance/guard_classifier_table_test.go (new), tests/canary/guard-classifier-table (new), tests/canary/package-core-guard/guard-resolver-order-drift
+Writes: .bench/hooks/block-bench-follow-on.sh, .bench/lib/resolve-bench.sh, internal/benchguard/benchguard_test.go, internal/systemtest/bench_follow_on_test.go, internal/conformance/guard_classifier_table_test.go (new), tests/canary/guard-classifier-table (new), internal/conformance/registry/registry.go, internal/conformance/tier_test.go, internal/conformance/package_core_checks_test.go, internal/conformance/registry_test.go, tests/canary/package-core-guard/guard-resolver-order-drift
 Covers: BF22, BF23, BF24, BF25
 
 ## What to build

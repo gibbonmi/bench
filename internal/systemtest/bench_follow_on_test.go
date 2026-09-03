@@ -6,9 +6,37 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/benchguard"
+	"github.com/gibbonmi/bench/internal/freshness"
 )
+
+// plantWrapperAnswer builds a repository whose Bench wrapper answers one fixed stderr
+// line at one fixed exit code. Both hook tests stand a core in this way, because a stale
+// core and a genuine refusal differ only in that line and in nothing else the shim sees.
+// The line must hold no single quote.
+func plantWrapperAnswer(t *testing.T, line string, code int) string {
+	t.Helper()
+	repo := t.TempDir()
+	if result := owner.runAt(repo, nil, "git", "init", "-q"); result.code != 0 {
+		t.Fatal(result.stderr)
+	}
+	wrapper := filepath.Join(repo, ".bench", "bin", "bench.sh")
+	if err := os.MkdirAll(filepath.Dir(wrapper), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	script := "#!/bin/sh\ncat >/dev/null\necho '" + line + "' >&2\nexit " + strconv.Itoa(code) + "\n"
+	if err := os.WriteFile(wrapper, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return repo
+}
+
+// staleCoreAnswer is what a binary built before the guard subcommand existed says.
+const staleCoreAnswer = `bench: unknown subcommand: "guard-bench-follow-on"`
 
 func TestBenchFollowOnHookProcess(t *testing.T) {
 	repo := owner.repos[0]
@@ -167,6 +195,18 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 			t.Errorf("allowed command %q = (%d, %q, %q)", command, result.code, result.stdout, result.stderr)
 		}
 	}
+
+	// A core that refuses genuinely also exits 2, and its refusal must reach the caller
+	// unchanged. A shim that read every exit 2 as a stale answer would fail open on the
+	// pool denial, which is the one refusal a non-Bench call can earn. (Coverage row BF24.)
+	refusingRepo := plantWrapperAnswer(t, benchguard.PoolReferenceMessage("/pool/target"), 2)
+	refused := owner.runWithInput(refusingRepo, []string{"BENCH_KIT=" + owner.kit}, `{"tool_input":{"command":"ls"}}`, shellPath(t), hook)
+	if refused.code != 2 || !strings.Contains(refused.stderr, "BLOCKED:") {
+		t.Errorf("BF24 genuine refusal = (%d, %q, %q), want exit 2 with the refusal forwarded", refused.code, refused.stdout, refused.stderr)
+	}
+	if strings.Contains(refused.stderr, "bash scripts/go-build.sh") {
+		t.Errorf("BF24 genuine refusal = %q, want no stale-binary reading", refused.stderr)
+	}
 }
 
 func TestBenchFollowOnHookDegradedRim(t *testing.T) {
@@ -233,6 +273,31 @@ func TestBenchFollowOnHookDegradedRim(t *testing.T) {
 		result = run(hook, brokenRepo, nil, `{"tool_input":{"command":"bench help | cat"}}`)
 		if result.code != 0 || !strings.Contains(result.stderr, "bench core errored (exit "+tc.exit+")") {
 			t.Errorf("%s = (%d, %q, %q)", tc.name, result.code, result.stdout, result.stderr)
+		}
+	}
+
+	// A stale core answers `unknown subcommand` at exit 2, and the shim splits its
+	// posture on that answer. A non-Bench call passes, so the shell stays usable while
+	// the binary is rebuilt; a Bench call refuses, so no verb runs stale. Both carry
+	// the one rebuild sentence, which the test reads from its own owner rather than
+	// from a second copy. (Coverage rows BF22 and BF23.)
+	staleRepo := plantWrapperAnswer(t, staleCoreAnswer, 2)
+	action := freshness.RebuildAction(owner.kit)
+	for _, tc := range []struct {
+		row, command string
+		code         int
+		refuses      bool
+	}{
+		{"BF22 stale core passes a non-Bench call", "ls", 0, false},
+		{"BF23 stale core refuses a Bench call", "bench gate", 2, true},
+	} {
+		envelope := `{"tool_input":{"command":` + shellQuoteJSON(tc.command) + `}}`
+		result := run(hook, staleRepo, []string{"BENCH_KIT=" + owner.kit}, envelope)
+		if result.code != tc.code || !strings.Contains(result.stderr, action) {
+			t.Errorf("%s = (%d, %q, %q), want exit %d and the rebuild sentence %q", tc.row, result.code, result.stdout, result.stderr, tc.code, action)
+		}
+		if refused := strings.Contains(result.stderr, "BLOCKED:"); refused != tc.refuses {
+			t.Errorf("%s stderr = %q, want a refusal %t", tc.row, result.stderr, tc.refuses)
 		}
 	}
 }
