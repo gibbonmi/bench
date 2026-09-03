@@ -205,7 +205,7 @@ func canonicalBuild(ctx context.Context, sourceRoot, output string) error {
 		return err
 	}
 	cmd.Env = buildEnv
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.SysProcAttr = builderProcAttr()
 	var outputBytes bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &outputBytes, &outputBytes
 	if err := cmd.Start(); err != nil {
