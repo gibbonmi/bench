@@ -43,6 +43,14 @@ func Link(args []string, stdout, stderr io.Writer, version string) int {
 		return 1
 	}
 	kit := kitDir()
+	// The kit repo authors the managed block and bin/bench.sh, so a link here would commit
+	// a tracked launcher copy that the shim then prefers over the kit's own. The predicate
+	// runs after the git-root refusal, because it reads that root, and before the plan, so
+	// no destination byte is written. doctor --fix is the kit-side route to the same assets.
+	if kitSourceCheckout(root) {
+		fmt.Fprintln(stderr, toon.Errorf("kit source checkout", "bench link installs the consumer copy; run bench doctor --fix in the kit checkout"))
+		return 1
+	}
 	if isEphemeralKit(kit) && mode == "symlink" {
 		mode = "copy"
 		fmt.Fprintln(stdout, "(running from an ephemeral package cache - using copy mode so files don't dangle)")

@@ -584,6 +584,8 @@ escalation.
   Closed decision (2026-07-23): following the link would ship bytes the allowlist
   never named, so the allowlist would stop being the complete statement of what a
   consumer receives. Do not reopen it as a link/upgrade ergonomics fix.
+- `bench link` refuses the kit source checkout; `bench doctor --fix` is the
+  kit-side route to the same assets.
 - Never build `dist/bench` with plain `go build`; use
   `bash scripts/go-build.sh <root> <out>` so the binary carries the package
   version the version and upgrade contracts require. Inside an assignment
