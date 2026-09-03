@@ -91,10 +91,30 @@ func TestFactoryOwnRemovesPartialOutputOnBuilderFailure(t *testing.T) {
 	}
 }
 
-func TestCanonicalBuilderDrainsDescendantsBeforeReturningSelection(t *testing.T) {
+// parkingBuilder is one source tree whose build script publishes the selection and then
+// parks a descendant. The descendant traps INT and TERM, so only a group SIGKILL removes
+// it, and it records whether the selection went away before that kill arrived. The fields
+// name the paths a test reads back.
+type parkingBuilder struct {
+	source     string
+	builderPID string
+	childPID   string
+	premature  string
+}
+
+// newParkingBuilder writes that script under a fresh source root. When hold is true the
+// builder child waits on its descendant, so the builder child is still alive when its
+// owner dies. The drain test needs the opposite: a builder that returns while the
+// descendant stays parked.
+func newParkingBuilder(t *testing.T, hold bool) parkingBuilder {
+	t.Helper()
 	source := t.TempDir()
-	pids := filepath.Join(source, "builder-child")
-	premature := filepath.Join(source, "selection-removed-first")
+	builder := parkingBuilder{
+		source:     source,
+		builderPID: filepath.Join(source, "builder-self"),
+		childPID:   filepath.Join(source, "builder-child"),
+		premature:  filepath.Join(source, "selection-removed-first"),
+	}
 	if err := os.MkdirAll(filepath.Join(source, "scripts"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -102,29 +122,38 @@ func TestCanonicalBuilderDrainsDescendantsBeforeReturningSelection(t *testing.T)
 output="$2"
 printf selected > "$output"
 chmod 755 "$output"
+echo $$ > "` + builder.builderPID + `"
 (
   trap '' INT TERM
   exec >/dev/null 2>&1
   while test -e "$output"; do sleep .01; done
-  printf premature > "` + premature + `"
+  printf premature > "` + builder.premature + `"
 ) &
-echo $! > "` + pids + `"
+echo $! > "` + builder.childPID + `"
 `
+	if hold {
+		script += "wait\n"
+	}
 	if err := os.WriteFile(filepath.Join(source, "scripts", "go-build.sh"), []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}
+	return builder
+}
+
+func TestCanonicalBuilderDrainsDescendantsBeforeReturningSelection(t *testing.T) {
+	builder := newParkingBuilder(t, false)
 	factory := Factory{TempRoot: t.TempDir(), Verify: func(string, string) error { return nil }}
-	selection, err := factory.Own(context.Background(), source)
+	selection, err := factory.Own(context.Background(), builder.source)
 	if err != nil {
 		t.Fatal(err)
 	}
-	child := readPID(t, pids)
+	child := readPID(t, builder.childPID)
 	t.Cleanup(func() { _ = syscall.Kill(child, syscall.SIGKILL) })
 	requireProcessExit(t, child)
 	if err := selection.Close(); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(premature); !errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(builder.premature); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("builder descendant observed premature cleanup: %v", err)
 	}
 }
