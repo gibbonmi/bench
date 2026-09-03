@@ -104,3 +104,5 @@ information; the next session does not need to confirm it.
   and `bench <verb> --help` for a grammar. Note that `bench commands --brief`
   is a three-verb liveness probe, not an inventory. Never discover a verb by
   trying a bare unknown verb.
+- Run the system suite by hand through `bench test --check system`.
+  The verb supplies the sealed run binary and the kit root.
