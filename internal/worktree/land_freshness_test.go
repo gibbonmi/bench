@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 	"github.com/gibbonmi/bench/internal/landing"
 )
@@ -120,14 +121,12 @@ func TestLandCommandIgnoresAForgedPrimaryExecutableAndSeal(t *testing.T) {
 	}
 }
 
-// TestLandCommandReportsInstallStepForABrokerChangingDiff is SOL16. A reviewed diff
-// that changes the promotion broker's own build inputs lands as source, but the
-// installed broker keeps authority. The landing must name the install step so the
-// operator does not expect source publication to replace it.
-func TestLandCommandReportsInstallStepForABrokerChangingDiff(t *testing.T) {
-	t.Parallel()
-	request := "land-owner-broker-change"
-	root, creation, _, _, _, home := publicLandingFixture(t, request, "", "")
+// brokerChangingLanding is the landing fixture whose reviewed diff changes the promotion
+// broker's own build inputs. Both install-step rows read the same notice, so they compose
+// the same destination rather than each building one.
+func brokerChangingLanding(t *testing.T, request string) (root string, creation Creation, base, tip, home string) {
+	t.Helper()
+	root, creation, _, _, _, home = publicLandingFixture(t, request, "", "")
 	mustWrite(t, filepath.Join(root, "go.mod"), []byte("module benchfixture\n\ngo 1.22\n"), 0o644)
 	mustMkdirAll(t, filepath.Join(root, "cmd", "bench"), 0o755)
 	mustWrite(t, filepath.Join(root, "cmd", "bench", "main.go"), []byte("package main\n\nfunc main() {}\n"), 0o644)
@@ -143,17 +142,62 @@ func TestLandCommandReportsInstallStepForABrokerChangingDiff(t *testing.T) {
 	gitRun(t, root, "add", ".")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "broker build inputs")
 	gitRun(t, creation.Path, "rebase", "main")
-	base := gitOutput(t, root, "rev-parse", "HEAD")
+	base = gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, creation.Path, "scripts/go-build.sh", "#!/bin/sh\n# next broker\nexit 0\n", "change broker source")
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	return root, creation, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), home
+}
+
+// kitCheckoutJoins is the landing seam set whose checkout predicate answers a fixed
+// verdict. The real predicate reads the kit root from the process environment, so a
+// fixture that bound that environment would leave the package's parallel set.
+func kitCheckoutJoins(kit bool) joins {
+	j := defaultJoins()
+	j.kitSourceCheckout = func(string) bool { return kit }
+	return j
+}
+
+// TestLandCommandReportsInstallStepForABrokerChangingDiff is SOL16 and BF19. A reviewed
+// diff that changes the promotion broker's own build inputs lands as source, but the
+// installed broker keeps authority. The landing must name the install step so the
+// operator does not expect source publication to replace it. In the kit source checkout
+// that step is the stamped rebuild and bench doctor --fix, because bench repair reads a
+// pin manifest the source tree does not carry.
+func TestLandCommandReportsInstallStepForABrokerChangingDiff(t *testing.T) {
+	t.Parallel()
+	request := "land-owner-broker-change"
+	root, creation, base, tip, home := brokerChangingLanding(t, request)
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(kitCheckoutJoins(true), root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
+		t.Fatalf("broker-changing landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(stderr.String(), freshness.RebuildAction(root)) {
+		t.Fatalf("kit-checkout landing named no rebuild: %q", stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "bench doctor --fix") {
+		t.Fatalf("kit-checkout landing named no publication step: %q", stderr.String())
+	}
+}
+
+// TestLandCommandNamesTheInstalledRepairRouteOffTheKitCheckout is BF20. An installed kit
+// carries the pin manifest bench repair reads, so the notice keeps that route there and
+// names no source-tree rebuild.
+func TestLandCommandNamesTheInstalledRepairRouteOffTheKitCheckout(t *testing.T) {
+	t.Parallel()
+	request := "land-owner-broker-change-installed"
+	root, creation, base, tip, home := brokerChangingLanding(t, request)
+
+	var stdout, stderr bytes.Buffer
+	code := landWith(kitCheckoutJoins(false), root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("broker-changing landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
 	}
 	if !strings.Contains(stderr.String(), "bench repair") {
-		t.Fatalf("broker-changing landing named no install step: %q", stderr.String())
+		t.Fatalf("installed-kit landing named no install step: %q", stderr.String())
+	}
+	if strings.Contains(stderr.String(), freshness.RebuildAction(root)) {
+		t.Fatalf("installed-kit landing named the source-tree rebuild: %q", stderr.String())
 	}
 }
 

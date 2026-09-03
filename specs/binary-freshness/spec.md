@@ -276,6 +276,17 @@ ticket.
 
 Recorded during the build, open to reviewer veto:
 
+- The edge inventory's "Partial implementation" row is wrong. No Go-side
+  sweep reds a consumer that inlines the rebuild text. Two ticket self-probes
+  inlined it and stayed green. `TestFreshnessPublicationTopology` guards the
+  publish token, not the rebuild sentence, and only the two shell
+  derivations carry a pin each. A new sweep is a fresh enforcement, so it is
+  a reviewer call.
+- The landing line reads the checkout predicate through a `joins` seam rather
+  than calling `adopt.KitSourceCheckout` directly. A fixture that bound
+  `BENCH_KIT` would leave the package's parallel set and break its serial
+  ceiling. `mergeLane` sets the same precedent.
+
 - The guard classifier table gets a new `familyChecks` row in
   `internal/conformance/registry/registry.go`. A canary fixture bites only
   through a registered family owner, and every existing family is bound
