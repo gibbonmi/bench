@@ -22,6 +22,9 @@ line in the build script. Artifact mode stays excluded, and a new test in
 This ticket follows the doctor ticket because it imports the leaf package the
 doctor ticket creates.
 
+Run the system-tagged tests with `BENCH_KIT` and `BENCH_RUN_BINARY` set, as
+the system suite requires.
+
 ## Acceptance
 
 - [ ] After a subject-mode build, the manifest digest equals the published executable's digest and its version equals the package version.
