@@ -3,12 +3,12 @@ package skillsindex
 import (
 	"context"
 	"errors"
-	"os"
 	"os/exec"
 	"os/signal"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -46,10 +46,11 @@ func Command(args []string) (string, int) {
 		return discoveryRefusal(err) + "\n", 1
 	}
 	if write {
-		// The verb owns the interrupt for exactly as long as it is replacing bytes. An
-		// operator's Ctrl-C during a write is an instruction to abandon it, and the default
-		// handler would take the process down mid-replacement instead.
-		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+		// The verb owns the termination signals for exactly as long as it is replacing bytes.
+		// An operator's Ctrl-C during a write is an instruction to abandon it, and the default
+		// handler would take the process down mid-replacement instead. Session teardown sends
+		// SIGTERM or SIGHUP rather than SIGINT, so the trapped set is subprocess.CancelSignals.
+		ctx, stop := signal.NotifyContext(context.Background(), subprocess.CancelSignals...)
 		defer stop()
 		if werr := Write(ctx, root); werr != nil {
 			return werr.Error() + "\n", 1

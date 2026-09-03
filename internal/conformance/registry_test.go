@@ -178,6 +178,10 @@ var canaryFixtureFamilyRegistry = map[string]fixtureRegistration{
 		"internal/conformance/canonical_path_owner_test.go",
 		"internal/conformance/checks_test.go",
 	),
+	"cancel-signal-registrations": conformanceGoFixture(
+		"internal/conformance/cancel_signal_registrations_test.go",
+		"internal/conformance/checks_test.go",
+	),
 	"guidance-prose-budgets": conformanceGoFixture(
 		"internal/conformance/prose_budget_test.go",
 		"internal/conformance/checks_test.go",

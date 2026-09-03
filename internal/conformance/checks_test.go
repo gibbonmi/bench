@@ -69,6 +69,7 @@ func init() {
 		"bounds-policy":                 {checkBoundsPolicy, registry.Dev, registry.SubjectRoot},
 		"marker-wait-deadlines":         {checkMarkerWaitDeadlines, registry.Dev, registry.SubjectRoot},
 		"canonical-path-owner":          {checkCanonicalPathOwner, registry.Dev, registry.SubjectRoot},
+		"cancel-signal-registrations":   {checkCancelSignalRegistrations, registry.Dev, registry.SubjectRoot},
 		"wait-deadline-literals":        {checkWaitDeadlineLiterals, registry.Dev, registry.SubjectRoot},
 		"subcommand-routing":            {checkSubcommandRouting, registry.Dev, registry.SubjectRoot},
 		"axi-query-registry":            {checkAXIQueryRegistry, registry.Dev, registry.SubjectRoot},

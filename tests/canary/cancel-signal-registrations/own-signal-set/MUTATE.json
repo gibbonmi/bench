@@ -1,0 +1,12 @@
+[
+  {
+    "path": "internal/shellcommand/shellcommand.go",
+    "old": "import (\n\t\"path/filepath\"\n",
+    "new": "import (\n\t\"os\"\n\t\"os/signal\"\n\t\"path/filepath\"\n"
+  },
+  {
+    "path": "internal/shellcommand/shellcommand.go",
+    "old": "// TokenKind identifies the shell role of a token.\ntype TokenKind uint8",
+    "new": "// trapShellTermination registers its own termination set beside subprocess.CancelSignals —\n// the red the cancel-signal check exists to raise. The same token sits in this comment,\n// signal.Notify(interrupts, os.Interrupt), and in the returned string, so a byte grep reds\n// three times where the call-site walk reds once.\nfunc trapShellTermination() (chan os.Signal, string) {\n\tinterrupts := make(chan os.Signal, 1)\n\tsignal.Notify(interrupts, os.Interrupt)\n\treturn interrupts, \"signal.Notify(interrupts, os.Interrupt)\"\n}\n\n// TokenKind identifies the shell role of a token.\ntype TokenKind uint8"
+  }
+]
