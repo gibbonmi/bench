@@ -104,7 +104,7 @@ new AST sweep at a known seam, and the attribute needs a platform split.
 - The Sources guard tests the field name alone for a space, between the no-separator branch and the unknown-field branch. It reuses the `expected` slice; it does not restate the field names.
 - A new package `internal/puritycensus` owns the scan policy: forbidden-import patterns, the ambient-effect set, the `t.Parallel` ban, and the self-exempt file name. `exec.Command` and `exec.CommandContext` stay in the ambient set, so a process-backed git fixture counts. Each policy package keeps a one-line wrapper. The helper scans its own directory under the same policy. The census scope stays the three policy packages and the two new leaf packages.
 - `leasedRepo` stays as declared residue on FT202's successor row, if any.
-- A `Hold` error refuses at all three call sites with `toon.Errorf` and exit 1, printing the error and the sanitized cache path. `FromEnv` refuses a relative inbound `GOCACHE` value, because `Apply` never passes the inbound value to a child. An unwritable derived directory fails the lock-file open inside `Hold`, so no second check exists. A missing directory is created by `HoldDir`, as today; the "exists" leg is satisfied by that create. The gate subject closure propagates an `Apply` error.
+- A `Hold` error refuses at all three call sites with `toon.Errorf` and exit 1, printing the error and the sanitized cache path. The refusal needs a declared HOME; with none there is no Bench cache to hold, so the build proceeds (open to reviewer veto). `FromEnv` refuses a relative inbound `GOCACHE` value, because `Apply` never passes the inbound value to a child. An unwritable derived directory fails the lock-file open inside `Hold`, so no second check exists. A missing directory is created by `HoldDir`, as today; the "exists" leg is satisfied by that create. The gate subject closure propagates an `Apply` error.
 - A `Writes:` file that preflight adds for fixture or registry closure is authorization headroom. Only a file that a ticket's `What to build` names creates a blocker edge between tickets.
 - The cancel-signal check mirrors the bounds-policy walk: production files only, the owning package exempt, an AST call-site inspection. It registers at the dev tier with Go-source inputs. `internal/skillsindex` and `internal/worktree/subshell.go` migrate to `subprocess.CancelSignals`.
 - `Pdeathsig` is set on the builder child in `internal/runbinary` only, in a Linux build-tagged file with darwin and other legs, mirroring the release-evidence exchange files. `Setpgid` stays.
@@ -134,10 +134,10 @@ new AST sweep at a known seam, and the attribute needs a platform split.
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
 | LQ1 | 1, 2 | a symlinked root resolves to the ledger's canonical spelling through the shared owner | `TestGatherAssignmentTarget` and `TestRestoreMutationFixtureRefusesSymlinkedRootSpelling` | a `Clean`-only owner leaves the link spelling |
-| LQ2 | 4 | a destination path that does not exist resolves to its absolute spelling | `TestRestoreMutationFixtureReinstatesBaseAndRemovesOverlay` | an owner that propagates the symlink error breaks the restore |
+| LQ2 | 4 | a destination path that does not exist resolves to its absolute spelling | `TestResolveFollowsALinkAndKeepsAnAbsentPath` in `internal/canonicalpath` | an owner that propagates the symlink error refuses the absent path |
 | LQ3 | 3 | the new package imports nothing under `internal/` | `TestPurePackageSourceCensus` in the new package | an internal import reds the census |
 | LQ4 | 5 | `bench link` in the kit source checkout exits 1 and names the kit checkout | new adopt test with `BENCH_KIT` at the repo root | the old path installs the launcher and exits 0 |
-| LQ5 | 6 | `link copy` in an already-linked consumer exits 0 | `TestWrapperInstallFreshnessAndReloadJourneys` | a marker-based predicate refuses the relink |
+| LQ5 | 6 | `link copy` in an already-linked consumer exits 0 | `TestLinkRelinkStaysGreenInAConsumerRepo` | a marker-based predicate refuses the second link |
 | LQ6 | 7 | outside a git repository the git-repository message prints first | `TestLinkOutsideGitRepoNamesGitRepository` | a predicate before the root check reads an empty root |
 | LQ7 | 8 | the profile's cold-session notes hold the rule sentence | review-owned: the sentence is present under that heading | an omitted sentence leaves the rule unstated |
 | LQ8 | 9 | a continuation whose field name holds a space yields the one-physical-line message | `TestMapSourcesRequireExactRecordShape` new row | a guard after the unknown-field branch is unreachable |
@@ -149,7 +149,7 @@ new AST sweep at a known seam, and the attribute needs a platform split.
 | LQ14 | 16 | each wrapper asserts the scanned set holds the package's own source file | the three wrappers | a wrong-directory helper reds on the absent file |
 | LQ15 | 17 | a source that calls `exec.Command` reds the census | new helper test | an ambient set without exec lets a git fixture through |
 | LQ16 | 18 | the helper package's own census passes under the same policy | `TestPurePackageSourceCensus` in the helper package | an unscanned helper is a blind spot |
-| LQ17 | 19, 20 | an unwritable cache directory refuses the gate run, the lane, and the focused run with the error and the path | new refusal test per call site | an `err == nil` guard runs the build unlocked |
+| LQ17 | 19, 20 | with a HOME declared, an unwritable cache directory refuses the gate run, the lane, and the focused run with the error and the path | new refusal test per call site | an `err == nil` guard runs the build unlocked |
 | LQ18 | 21 | `GOCACHE=` falls through to the home derivation | `TestFromEnvFallsBackToTheHomeDerivation` | a refusal on empty breaks the derivation |
 | LQ19 | 22 | `FromEnv` with `GOCACHE=cache` returns a refusal that names `cache`, and the footprint report prints it | new `FromEnv` test row | a verbatim return reports a path that moves with the caller |
 | LQ20 | 23 | an absent derived cache directory is created by `HoldDir`, and an unwritable one fails the lock-file open | `TestHolderCreatesTheDirectoryAndTheLockFile` and the LQ17 refusal tests | a stat-based check refuses every first run |
@@ -159,8 +159,8 @@ new AST sweep at a known seam, and the attribute needs a platform split.
 | LQ24 | 28 | a builder child dies after SIGKILL to its owner on Linux | new `runbinary` test on the parking fixture | without `Pdeathsig` the child survives the drain that never runs |
 | LQ25 | 29 | `GOOS=darwin go build ./...` compiles | `TestResidualCheckCallsCrossCompileMatrix` | an untagged `Pdeathsig` field fails the darwin build |
 | LQ26 | 28 | `Setpgid` stays set on the builder child | `TestCanonicalBuilderDrainsDescendantsBeforeReturningSelection` | a dropped `Setpgid` addresses the owner's own group |
-| LQ27 | 1 | no production file outside `internal/canonicalpath` calls both `filepath.Abs` and `filepath.EvalSymlinks` | new dev-tier owner check and its fixture | a new package beside six untouched copies stays green |
-| LQ28 | 19 | the gate subject closure returns the `Apply` error | new `subject.go` test | a dropped entry changes the oracle hash in silence |
+| LQ27 | 1 | no production function outside `internal/canonicalpath` calls both `filepath.Abs` and `filepath.EvalSymlinks` | new dev-tier owner check and its fixture | a new package beside six untouched copies stays green |
+| LQ28 | 19 | with a HOME declared, the gate subject closure returns the `Apply` error | new `subject.go` test | a dropped entry changes the oracle hash in silence |
 
 ### Edge inventory
 
