@@ -29,6 +29,10 @@ func prospectiveRunBinaryOwnerAt(checkout, artifactRoot string) runBinaryOwner {
 	return func(ctx context.Context, source string) (*runbinary.Selection, error) {
 		factory := prospectiveRunBinary
 		factory.TempRoot = artifactRoot
+		// The graded tree is a composed checkout this run removes, so a refusal that named
+		// it as the rebuild root would print a command for a directory nobody can use. The
+		// wrapper-selected kit is the checkout an operator rebuilds in.
+		factory.RepairRoot = kitRoot(checkout)
 		if sameDirectory(source, checkout) {
 			return factory.Own(ctx, source)
 		}

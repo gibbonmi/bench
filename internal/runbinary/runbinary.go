@@ -31,11 +31,15 @@ type Builder func(context.Context, string, string) error
 type Verifier func(string, string) error
 
 // Factory supplies the authoring seams used by tests. Zero values select the private
-// operating-system temp directory, canonical builder, and freshness verifier.
+// operating-system temp directory, canonical builder, and freshness verifier. RepairRoot
+// is the checkout a refusal tells the operator to rebuild in; its zero value names the
+// source root the selection was graded against. They part only where the digest root is
+// a composed tree the operator cannot rebuild in.
 type Factory struct {
-	TempRoot string
-	Build    Builder
-	Verify   Verifier
+	TempRoot   string
+	RepairRoot string
+	Build      Builder
+	Verify     Verifier
 }
 
 // Selection is the exact source-bound executable used by one run. Close removes bytes
@@ -64,6 +68,9 @@ func ReuseOrOwn(ctx context.Context, sourceRoot string) (*Selection, error) {
 // ReuseOrOwn applies the factory's seams while preserving the inherited-selection rule.
 func (f Factory) ReuseOrOwn(ctx context.Context, sourceRoot string) (*Selection, error) {
 	if raw, present := os.LookupEnv(Env); present {
+		if err := requireSourceRoot(sourceRoot); err != nil {
+			return nil, err
+		}
 		return f.Inherit(sourceRoot, raw)
 	}
 	return f.Own(ctx, sourceRoot)
@@ -75,7 +82,20 @@ func Inherit(sourceRoot string) (*Selection, error) {
 	if !present {
 		return nil, fmt.Errorf("%s is required for an inherited Bench run", Env)
 	}
+	if err := requireSourceRoot(sourceRoot); err != nil {
+		return nil, err
+	}
 	return (Factory{}).Inherit(sourceRoot, raw)
+}
+
+// requireSourceRoot keeps a run that resolves its own kit fail-closed. Such a run always
+// has a tree to grade its selection against, so an empty root is a resolution defect, not
+// permission to fall back to the narrower check.
+func requireSourceRoot(sourceRoot string) error {
+	if sourceRoot == "" {
+		return errors.New("a Bench source root is required to grade an inherited selection")
+	}
+	return nil
 }
 
 // Own creates one private selection through the factory's builder.
@@ -102,26 +122,47 @@ func (f Factory) Own(ctx context.Context, sourceRoot string) (*Selection, error)
 	if err := build(ctx, source, selection.Path); err != nil {
 		return nil, fmt.Errorf("build private Bench executable: %w", err)
 	}
-	if err := f.validate(source, selection.Path, false); err != nil {
+	if err := f.validate(source, selection.Path); err != nil {
 		return nil, err
 	}
 	complete = true
 	return selection, nil
 }
 
-// Inherit validates value without taking ownership of its containing directory.
+// Inherit validates value without taking ownership of its containing directory. An empty
+// sourceRoot names no tree to grade against, which keeps the seal-pair check; every
+// entry point that resolves a run's own kit names one.
 func (f Factory) Inherit(sourceRoot, value string) (*Selection, error) {
-	source, err := canonicalSourceRoot(sourceRoot)
-	if err != nil {
-		return nil, err
+	source := ""
+	if sourceRoot != "" {
+		canonical, err := canonicalSourceRoot(sourceRoot)
+		if err != nil {
+			return nil, err
+		}
+		source = canonical
 	}
-	if err := f.validate(source, value, true); err != nil {
+	if err := f.validate(source, value); err != nil {
 		return nil, err
 	}
 	return &Selection{Path: value, SourceRoot: source}, nil
 }
 
-func (f Factory) validate(sourceRoot, executable string, inherited bool) error {
+// canonicalVerify is the freshness check a factory with no verification seam applies. A
+// named source root proves the seal's source digest, so a self-consistent stale seal
+// cannot pass; a caller that names no root keeps the narrower seal-pair check, which is
+// all an inherited consumer with no tree of its own can prove.
+func (f Factory) canonicalVerify(sourceRoot, executable string) error {
+	if sourceRoot == "" {
+		return freshness.VerifyExecutable(executable)
+	}
+	repairRoot := f.RepairRoot
+	if repairRoot == "" {
+		repairRoot = sourceRoot
+	}
+	return freshness.VerifyAt(sourceRoot, repairRoot, executable)
+}
+
+func (f Factory) validate(sourceRoot, executable string) error {
 	if executable == "" {
 		return errors.New("selected Bench executable path is empty")
 	}
@@ -141,13 +182,7 @@ func (f Factory) validate(sourceRoot, executable string, inherited bool) error {
 	}
 	verify := f.Verify
 	if verify == nil {
-		if inherited {
-			verify = func(_ string, executable string) error {
-				return freshness.VerifyExecutable(executable)
-			}
-		} else {
-			verify = freshness.Verify
-		}
+		verify = f.canonicalVerify
 	}
 	if err := verify(sourceRoot, executable); err != nil {
 		return fmt.Errorf("selected Bench executable %q does not match source %q: %w", executable, sourceRoot, err)

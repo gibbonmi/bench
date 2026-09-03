@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gocache"
 )
 
@@ -156,6 +157,64 @@ func TestCanonicalBuilderDrainsDescendantsBeforeReturningSelection(t *testing.T)
 	if _, err := os.Stat(builder.premature); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("builder descendant observed premature cleanup: %v", err)
 	}
+}
+
+// TestFactoryValidateRefusesAStaleInheritedSeal is BF7. An inherited executable carries
+// an intact seal pair of its own, so the pair check alone accepts a binary its sources
+// have moved past. A named source root grades the seal's source digest against the tree
+// the caller named, and only the caller that names no root keeps the narrower check.
+func TestFactoryValidateRefusesAStaleInheritedSeal(t *testing.T) {
+	source := writeInheritedSourceFixture(t)
+	dir := t.TempDir()
+	staged := filepath.Join(dir, "staged-bench")
+	if err := os.WriteFile(staged, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	executable := filepath.Join(dir, "bench")
+	if err := freshness.Publish(source, staged, executable); err != nil {
+		t.Fatal(err)
+	}
+	factory := Factory{}
+	if _, err := factory.Inherit(source, executable); err != nil {
+		t.Fatalf("freshly sealed inherited selection: %v", err)
+	}
+
+	if err := os.WriteFile(filepath.Join(source, "scripts", "go-build.sh"), []byte("#!/usr/bin/env bash\nexit 1\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	_, err := factory.Inherit(source, executable)
+	if err == nil {
+		t.Fatal("inherited selection with a stale source digest = nil, want refusal")
+	}
+	if !strings.Contains(err.Error(), freshness.RebuildAction(source)) {
+		t.Fatalf("stale inherited refusal = %q, want the rebuild action %q", err, freshness.RebuildAction(source))
+	}
+	if _, err := factory.Inherit("", executable); err != nil {
+		t.Fatalf("inherited selection with no named source root: %v", err)
+	}
+}
+
+// writeInheritedSourceFixture writes the smallest tree freshness.Digest resolves: one
+// command package, the module file, and the auxiliary manifest with the build script it
+// names.
+func writeInheritedSourceFixture(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	for name, body := range map[string]string{
+		"go.mod":                  "module example.com/runbinaryfixture\n\ngo 1.25\n",
+		"cmd/bench/main.go":       "package main\n\nfunc main() {}\n",
+		"scripts/go-build.sh":     "#!/usr/bin/env bash\nexit 0\n",
+		"scripts/go-build.inputs": "build_script=scripts/go-build.sh\n",
+	} {
+		path := filepath.Join(root, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return root
 }
 
 func TestFactoryInheritRequiresCleanAbsoluteRegularExecutable(t *testing.T) {
