@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/handoffdoc"
+	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 // HandoffFile is the phase-close continuation artifact `AGENTS.md` names: the document a
@@ -33,30 +36,50 @@ const HandoffFile = handoffdoc.DocumentPath
 // quiet and this row leads. On a busy board a red gate or a dirty tree is the more urgent
 // read, and must not be displaced by a document's age.
 func appendHandoff(rows []row, root string) []row {
+	return append(rows, handoffRows(root, false)...)
+}
+
+// handoffRows builds the whole handoff family: the document's own age, then one entry per
+// section whose assignment branch has moved past the tip that section records. Both the
+// board and its --all expansion read this, so the summary and the expanded list can never
+// state a different set.
+//
+// The document's clock and a section's clock answer different questions. The file is one
+// artifact with one write time, so its age covers `main`, the section a primary checkout
+// owns and the one no branch backs. A sibling worktree's section is dated against its own
+// branch instead: a session that rewrites its own section resets the file's write time,
+// and a file-level clock would then read every other section current on that write.
+func handoffRows(root string, all bool) []row {
+	return append(handoffAgeRows(root), handoffSectionRows(root, all)...)
+}
+
+// handoffAgeRows dates the document as a whole. A tracked handoff is dated by the commit
+// that last wrote it; an ignored one by its write time.
+func handoffAgeRows(root string) []row {
 	if _, err := git.Output("-C", root, "check-ignore", "-q", HandoffFile); err == nil {
-		return appendIgnoredHandoff(rows, root)
+		return ignoredHandoffAgeRows(root)
 	}
 	written, ok := handoffWrittenAt(root)
 	if !ok {
-		return rows
+		return nil
 	}
 	behind, ok := commitsSince(root, written)
 	if !ok || behind == 0 {
-		return rows
+		return nil
 	}
 	detail := fmt.Sprintf("written at %s, %s behind", Short(written), Plural(behind, "commit", "commits"))
-	return append(rows, row{12, "handoff", detail, commandAction(handoffAction)})
+	return []row{{12, "handoff", detail, commandAction(handoffAction)}}
 }
 
-// appendIgnoredHandoff is the age signal for a git-ignored handoff: a local file with
+// ignoredHandoffAgeRows is the age signal for a git-ignored handoff: a local file with
 // no commit of its own. The age comes from the file's own write time, the one computed
 // fact an ignored file still carries, and the distance counts the commits whose commit
 // date is after that write. A missing file reports nothing: keeping no handoff is a
 // choice rather than a defect.
-func appendIgnoredHandoff(rows []row, root string) []row {
+func ignoredHandoffAgeRows(root string) []row {
 	info, err := os.Stat(filepath.Join(root, filepath.FromSlash(HandoffFile)))
 	if err != nil {
-		return rows
+		return nil
 	}
 	written := info.ModTime()
 	// The bound starts one second after the write. Commit dates carry one-second
@@ -64,14 +87,14 @@ func appendIgnoredHandoff(rows []row, root string) []row {
 	// against the document it carries.
 	out, err := git.Output("-C", root, "rev-list", "--count", "--since="+written.Add(time.Second).Format(time.RFC3339), "HEAD")
 	if err != nil {
-		return rows
+		return nil
 	}
 	behind, err := strconv.Atoi(out)
 	if err != nil || behind == 0 {
-		return rows
+		return nil
 	}
 	detail := fmt.Sprintf("written at %s, %s behind", written.Format("2006-01-02 15:04"), Plural(behind, "commit", "commits"))
-	return append(rows, row{12, "handoff", detail, commandAction(handoffAction)})
+	return []row{{12, "handoff", detail, commandAction(handoffAction)}}
 }
 
 // handoffWrittenAt returns the commit that last wrote the handoff, and whether the age is
@@ -93,6 +116,175 @@ func handoffWrittenAt(root string) (string, bool) {
 		return "", false
 	}
 	return written, true
+}
+
+// handoffSection is one request section joined to the assignment its key names: either
+// the commits that assignment's branch holds past the tip the section records, or the
+// reason the join produced no distance.
+type handoffSection struct {
+	key        string
+	behind     int
+	unresolved string
+}
+
+// handoffSectionRows states the sections a reader must act on. With all false the list
+// reduces to the section furthest behind plus a count of the unresolved ones; with all
+// true, under `bench status --all`, every section states itself. That is the census row's
+// summary-and-expansion shape, and it keeps the default board's five-row budget bounded
+// however many worktrees are live.
+func handoffSectionRows(root string, all bool) []row {
+	sections := handoffSectionsBehind(root)
+	if len(sections) == 0 {
+		return nil
+	}
+	if all {
+		out := make([]row, 0, len(sections))
+		for _, section := range sections {
+			out = append(out, handoffSectionRow(section))
+		}
+		return out
+	}
+	var out []row
+	unresolved := 0
+	for _, section := range sections {
+		if section.unresolved != "" {
+			unresolved++
+		}
+	}
+	// The list is ordered by distance, so a resolved section leads whenever there is one.
+	if lead := sections[0]; lead.unresolved == "" {
+		out = append(out, handoffSectionRow(lead))
+	}
+	if unresolved > 0 {
+		out = append(out, row{12, "handoff", Plural(unresolved, "section unresolved", "sections unresolved"), advisoryAction("")})
+	}
+	return out
+}
+
+// handoffSectionRow renders one section. An unresolved section names no command: a section
+// the ledger has no active assignment for is residue a landing or a release removes, and
+// `bench handoff` would rewrite a live section rather than clear this one.
+func handoffSectionRow(section handoffSection) row {
+	key := Short(sanitize.Controls(section.key))
+	if section.unresolved != "" {
+		return row{12, "handoff", "request " + key + " " + section.unresolved, advisoryAction("")}
+	}
+	detail := "request " + key + " " + Plural(section.behind, "commit", "commits") + " behind"
+	return row{12, "handoff", detail, commandAction(handoffAction)}
+}
+
+// handoffSectionsBehind dates every request section against its own assignment branch. It
+// keeps a section only when it has something to report — a distance, or a join that
+// failed — and orders the distances first, largest before smallest, so the caller's lead
+// is the section furthest behind. An unreadable document reports nothing: the document's
+// grammar is the leaf package's to refuse, and this row is advisory housekeeping.
+func handoffSectionsBehind(root string) []handoffSection {
+	doc, err := handoffdoc.Read(filepath.Join(root, filepath.FromSlash(HandoffFile)))
+	if err != nil {
+		return nil
+	}
+	branches := activeAssignmentBranches(root)
+	var out []handoffSection
+	for _, section := range doc.Sections {
+		if section.Key == handoffdoc.MainKey {
+			continue
+		}
+		entry := sectionBehind(root, section, branches)
+		if entry.behind == 0 && entry.unresolved == "" {
+			continue
+		}
+		out = append(out, entry)
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if (out[i].unresolved == "") != (out[j].unresolved == "") {
+			return out[i].unresolved == ""
+		}
+		if out[i].behind != out[j].behind {
+			return out[i].behind > out[j].behind
+		}
+		return out[i].key < out[j].key
+	})
+	return out
+}
+
+// sectionBehind counts the commits one assignment branch holds past the tip its section
+// records. Each way the join can fail carries its own words, because the remedies differ:
+// a section with no active assignment is residue, and a section whose tip no longer
+// resolves names a commit the repository has lost.
+func sectionBehind(root string, section handoffdoc.Section, branches map[string]string) handoffSection {
+	entry := handoffSection{key: section.Key}
+	branch, found := branches[section.Key]
+	if !found {
+		entry.unresolved = "names no active assignment"
+		return entry
+	}
+	tip := sectionField(section, handoffdoc.LabelWorktreeTip)
+	if tip == "" {
+		entry.unresolved = "records no worktree tip"
+		return entry
+	}
+	out, err := git.Output("-C", root, "rev-list", "--count", tip+".."+branch)
+	if err != nil {
+		entry.unresolved = "records an unreadable tip"
+		return entry
+	}
+	behind, err := strconv.Atoi(out)
+	if err != nil {
+		entry.unresolved = "records an unreadable tip"
+		return entry
+	}
+	entry.behind = behind
+	return entry
+}
+
+// sectionField reads one label line's value.
+func sectionField(section handoffdoc.Section, label string) string {
+	for _, field := range section.Fields {
+		if field.Label == label {
+			return field.Value
+		}
+	}
+	return ""
+}
+
+// activeAssignmentBranches maps each active assignment's request digest to its branch. The
+// digest is the section key, so the map is the join between the document and the ledger. A
+// ledger that cannot be read leaves every section unresolved rather than current, because
+// an unknown distance is not a distance of zero.
+func activeAssignmentBranches(root string) map[string]string {
+	assignments, err := intent.Assignments(root)
+	if err != nil {
+		return nil
+	}
+	branches := make(map[string]string, len(assignments))
+	for _, assignment := range assignments {
+		if assignment.State != intent.StateActive {
+			continue
+		}
+		branches[assignment.Request] = assignment.Branch
+	}
+	return branches
+}
+
+// expandHandoffSignals replaces the summarized handoff rows with the per-section list. It
+// is the sibling of expandCensusSignals: it rebuilds the whole family from the same
+// source, so the summary it drops and the rows it adds cannot disagree.
+func expandHandoffSignals(root string, signals []Signal) []Signal {
+	rows := handoffRows(root, true)
+	if len(rows) == 0 {
+		return signals
+	}
+	out := make([]Signal, 0, len(signals)+len(rows))
+	for _, signal := range signals {
+		if signal.Name != "handoff" {
+			out = append(out, signal)
+		}
+	}
+	for _, r := range rows {
+		out = append(out, newSignal(r.sev, r.signal, r.detail, r.action))
+	}
+	sort.SliceStable(out, func(i, j int) bool { return out[i].Severity < out[j].Severity })
+	return out
 }
 
 // commitsSince counts the commits between a commit and HEAD. The subject always comes from
