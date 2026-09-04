@@ -1,7 +1,7 @@
 # Own the document path and reclaim the lock
 
 Blocked by: remove-the-section-at-retirement.md, resolve-the-callers-section-in-bench-handoff.md
-Writes: internal/handoffdoc, internal/status/handoff.go, internal/worktree/lifecycle.go, internal/handoff/text.go, internal/preflight/gather.go, internal/preflight/gather_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
+Writes: internal/handoffdoc, internal/status/handoff.go, internal/worktree/lifecycle.go, internal/worktree/worktree_test.go, internal/handoff/text.go, internal/preflight/gather.go, internal/preflight/gather_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
 Covers: HS4
 
 ## What to build

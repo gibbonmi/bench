@@ -619,16 +619,13 @@ func TestCleanDropsTheCensusRecords(t *testing.T) {
 // carry one ignore it, and a tracked copy would refuse the landing as a dirty destination.
 func seedOneHandoffSection(t *testing.T, root, key string) {
 	t.Helper()
-	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte(handoffFile+"\n"+handoffFile+".lock\n"), 0o644)
+	// Only the document is excluded. Update unlinks its lock on release, so no lock file
+	// is left for the landing to trip over.
+	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte(handoffdoc.DocumentPath+"\n"), 0o644)
 	section := handoffdoc.Section{Key: key, Next: "bench status", Fields: []handoffdoc.Field{{Label: handoffdoc.LabelLabel, Value: key}}}
 	path := handoffDocumentPath(root)
 	if err := handoffdoc.WriteSection(path, section); err != nil {
 		t.Fatalf("seed handoff section %s: %v", key, err)
-	}
-	// The write leaves its lock file behind. The seed drops it, so the landing's residue
-	// scan grades the checkout the way a repository that has never written one does.
-	if err := os.Remove(handoffdoc.LockPath(path)); err != nil {
-		t.Fatalf("drop the seed lock: %v", err)
 	}
 }
 

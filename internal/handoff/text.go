@@ -1,8 +1,9 @@
-// Package handoff implements the bench handoff command's core. It collects the
-// pin facts from the git tree, splits an existing capture/session-handoff.md into
-// its sections, renders the regenerated document, and writes it back. The
-// reviewer-owned State section passes through byte-for-byte. Every other
-// section is derived.
+// Package handoff implements the bench handoff command's core. It collects the pin
+// facts from the git tree and rewrites the one section the caller's checkout owns.
+// The document's grammar belongs to internal/handoffdoc, which parses, updates, and
+// renders the file; this package supplies the section's content alone. The
+// reviewer-owned State text passes through byte-for-byte. Every other line is
+// derived.
 package handoff
 
 // ShapeSection is the body of the handoff's "## Shape" section, emitted below

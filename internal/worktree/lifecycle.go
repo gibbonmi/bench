@@ -453,13 +453,6 @@ func executeCleanup(j joins, root string, plan CleanupPlan, checkpoint func(stri
 	return plan, nil
 }
 
-// handoffFile names the session handoff document relative to the checkout that owns it.
-//
-// internal/status exports the same name, and that package imports this one, so the name
-// cannot be read from there. The single source belongs in internal/handoffdoc, which both
-// packages may import; adding it there is outside this change's fence.
-const handoffFile = "capture/session-handoff.md"
-
 // fileExists reports whether path names a file the retirement may rewrite. A repository
 // with no handoff document keeps none: a removal that scaffolded one would leave an
 // untracked file behind every release.
@@ -472,11 +465,11 @@ func fileExists(path string) bool {
 // in the primary checkout alone, so a retirement run from a worktree still reaches the one
 // document; a tracked one is per-checkout and stays beside its root.
 func handoffDocumentPath(root string) string {
-	noteRoot, _, err := git.LocalNoteRoot(root, handoffFile)
+	noteRoot, _, err := git.LocalNoteRoot(root, handoffdoc.DocumentPath)
 	if err != nil {
 		noteRoot = root
 	}
-	return filepath.Join(noteRoot, filepath.FromSlash(handoffFile))
+	return filepath.Join(noteRoot, filepath.FromSlash(handoffdoc.DocumentPath))
 }
 
 // retireCheckout performs the removal itself: the recovery preservation, the ignored

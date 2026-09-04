@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -67,6 +68,84 @@ func TestTwoWritersOnDistinctSectionsBothSurvive(t *testing.T) {
 				t.Fatalf("section %q is missing; the document holds %d of the %d written sections", key, len(doc.Sections)-1, len(writers)*rewrites)
 			}
 		}
+	}
+}
+
+// TestUpdateLeavesNoLockFileBehind is the reclaim row. The lock file is a working
+// file, not an artifact: a residue beside the document is an undeclared ignored path
+// that a landing refuses.
+func TestUpdateLeavesNoLockFileBehind(t *testing.T) {
+	t.Parallel()
+	path := filepath.Join(t.TempDir(), "session-handoff.md")
+	if err := EnsureMain(path); err != nil {
+		t.Fatalf("EnsureMain: %v", err)
+	}
+	if _, err := os.Stat(LockPath(path)); !os.IsNotExist(err) {
+		t.Fatalf("Update left %s behind (stat error %v)", LockPath(path), err)
+	}
+}
+
+// TestUpdateReclaimsALockAKilledWriterLeft covers the crash residue. A writer killed
+// mid-hold cannot unlink its lock, so the file outlives it. The next writer takes it
+// as it stands, because the flock and not the file's presence is what excludes.
+func TestUpdateReclaimsALockAKilledWriterLeft(t *testing.T) {
+	t.Parallel()
+	path := filepath.Join(t.TempDir(), "session-handoff.md")
+	abandoned, err := os.OpenFile(LockPath(path), os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := abandoned.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := EnsureMain(path); err != nil {
+		t.Fatalf("Update over an abandoned lock file: %v", err)
+	}
+	doc, err := Read(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, found := doc.Section(MainKey); !found {
+		t.Fatal("the reclaimed write left no main section")
+	}
+}
+
+// TestDocumentPathIsSpelledOnce grades the single-source claim for the document's
+// name. It counts the production files that carry the literal across the leaf and the
+// two packages that read it. The needle comes from the constant, so this test holds
+// no second copy of the spelling it forbids.
+//
+// The scan is scoped to these three packages. Other packages still spell the path for
+// their own reasons, and moving them is a separate change.
+func TestDocumentPathIsSpelledOnce(t *testing.T) {
+	t.Parallel()
+	const owner = "store.go"
+	needle := strconv.Quote(DocumentPath)
+
+	var carriers []string
+	for _, dir := range []string{".", "../status", "../worktree"} {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, entry := range entries {
+			name := entry.Name()
+			if entry.IsDir() || filepath.Ext(name) != ".go" || strings.HasSuffix(name, "_test.go") {
+				continue
+			}
+			body, err := os.ReadFile(filepath.Join(dir, name))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(string(body), needle) {
+				carriers = append(carriers, filepath.ToSlash(filepath.Join(dir, name)))
+			}
+		}
+	}
+
+	if len(carriers) != 1 || filepath.Base(carriers[0]) != owner {
+		t.Fatalf("the document path is spelled in %v, want %s alone; read handoffdoc.DocumentPath instead", carriers, owner)
 	}
 }
 

@@ -11,7 +11,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/canary"
-	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
@@ -478,14 +477,6 @@ func relTo(base, path string) string {
 		return path
 	}
 	return rel
-}
-
-// canonicalRoot is a path's absolute, symlink-resolved, cleaned form — the one
-// identity two spellings of the same tree share. internal/worktree derives the
-// same form for its own targets, but that package imports this one, so a shared
-// call would close an import cycle.
-func canonicalRoot(path string) (string, error) {
-	return canonicalpath.Resolve(path)
 }
 
 // baseCurrentFacts backs the base-current check: it resolves the default

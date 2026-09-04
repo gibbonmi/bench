@@ -8,14 +8,16 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/handoffdoc"
 )
 
 // HandoffFile is the phase-close continuation artifact `AGENTS.md` names: the document a
 // cold session reads to resume without conversation history. Its shape is documented
 // inside the file itself so the template cannot drift from the artifact it describes. It
-// is exported as the one source of the artifact's name, shared with the command that emits
-// it. This way the staleness signal and the emitter can never watch different files.
-const HandoffFile = "capture/session-handoff.md"
+// is the name this package's callers read, and it derives from internal/handoffdoc, which
+// owns the document. This way the staleness signal and the writer can never watch
+// different files.
+const HandoffFile = handoffdoc.DocumentPath
 
 // appendHandoff adds the handoff-staleness signal (sev 12): the commits that landed since
 // the handoff was last written. It turns "trust git over the handoff" from a rule the next

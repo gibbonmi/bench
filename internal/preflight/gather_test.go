@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -235,9 +236,9 @@ func TestGatherAssignmentTarget(t *testing.T) {
 	t.Run("the assignment's own worktree", func(t *testing.T) {
 		// WF38: the ledger holds this tree, so its id fills the fact.
 		root, slug := seedConformant(t)
-		canonical, err := canonicalRoot(root)
+		canonical, err := canonicalpath.Resolve(root)
 		if err != nil {
-			t.Fatalf("canonicalRoot(%q): %v", root, err)
+			t.Fatalf("canonicalpath.Resolve(%q): %v", root, err)
 		}
 		id := activeAssignment(t, root, canonical)
 
@@ -254,9 +255,9 @@ func TestGatherAssignmentTarget(t *testing.T) {
 		// WF39: the ledger records a resolved path, so a raw string compare
 		// against a symlinked root would miss the assignment that owns it.
 		root, slug := seedConformant(t)
-		canonical, err := canonicalRoot(root)
+		canonical, err := canonicalpath.Resolve(root)
 		if err != nil {
-			t.Fatalf("canonicalRoot(%q): %v", root, err)
+			t.Fatalf("canonicalpath.Resolve(%q): %v", root, err)
 		}
 		id := activeAssignment(t, root, canonical)
 
@@ -281,9 +282,9 @@ func TestGatherAssignmentTarget(t *testing.T) {
 		// WF40: an active assignment owning some other tree names a stranger, so
 		// the primary checkout's remedy keeps the placeholder.
 		root, slug := seedConformant(t)
-		other, err := canonicalRoot(t.TempDir())
+		other, err := canonicalpath.Resolve(t.TempDir())
 		if err != nil {
-			t.Fatalf("canonicalRoot: %v", err)
+			t.Fatalf("canonicalpath.Resolve: %v", err)
 		}
 		activeAssignment(t, root, other)
 
