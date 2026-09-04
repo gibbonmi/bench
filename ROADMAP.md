@@ -105,6 +105,10 @@ means the repository-controlled compliance assessment.
 
 **FT267 (LOW) — `scripts/verify-release-artifact.mjs` has a gate-owned execution seam.**
 
+**FT297 (LOW) — a conformance row pins the Go-owned binary path against its two shell derivations.**
+
+**FT299 (LOW) — a landing rehearsal precedes the first landing of a promotion-broker-changing spec.**
+
 
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
@@ -133,6 +137,10 @@ means the repository-controlled compliance assessment.
 **FT258 (MEDIUM, decision required) — `bench commit` derives a complete change set and has one explicit `MERGE_HEAD` contract, without weakening its ownership fence.**
 
 **FT265 (MEDIUM, decision required) — one coordinator-owned immutable drain evidence bundle.**
+
+**FT298 (MEDIUM) — two skill-discipline gaps the binary-freshness retro surfaced.**
+
+**FT300 (MEDIUM) — ticket slicing adds the file a ticket's own change will move to its fence.**
 
 **FT168 (LOW) — focused iteration evidence: a fixture-selecting canary and mutation probe.**
 
@@ -280,4 +288,6 @@ fixture-proven.
 1. FT162 handoff-sections — the spec is staged; run `/bench-implement-spec`.
 2. FT254 `bench worktree exec` — run `/bench-write-spec`. It carries the most
    occurrences on the board, and each one costs raw calls in every phase.
+3. FT298 skill-discipline gaps — run a `craft-synthesis` kit edit. The go-vet
+   gap already reds a real gate; the fix is small and unblocked.
 
