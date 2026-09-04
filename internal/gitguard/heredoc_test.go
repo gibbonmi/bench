@@ -14,10 +14,10 @@ func TestClassifyTreatsHeredocBodiesAsData(t *testing.T) {
 		{"unquoted delimiter", "cat > f <<EOF\ngit push origin main\nEOF", ""},
 		{"dash form with tab-indented delimiter", "cat > f <<-EOF\n\tgit push\n\tEOF", ""},
 		{"two bodies on one command", "cat > a <<'A'\ngit push\nA\ncat > b <<'B'\ngit clean -fd\nB", ""},
-		{"verb after the delimiter line", "cat > f <<'EOF'\nx\nEOF\ngit push", "git push"},
-		{"verb on the operator's own line", "git push <<'EOF'\nx\nEOF", "git push"},
-		{"herestring keeps its classification", "git push <<< x", "git push"},
-		{"herestring never opens a body", "cat <<< x\ngit push", "git push"},
+		{"verb after the delimiter line", "cat > f <<'EOF'\nx\nEOF\ngit push", "git push with an unresolved destination"},
+		{"verb on the operator's own line", "git push <<'EOF'\nx\nEOF", "git push with an unresolved destination"},
+		{"herestring keeps its classification", "git push <<< x", "git push with an unresolved destination"},
+		{"herestring never opens a body", "cat <<< x\ngit push", "git push with an unresolved destination"},
 		{"unterminated body stays data", "cat > f <<'EOF'\ngit push", ""},
 	}
 	for _, c := range cases {
