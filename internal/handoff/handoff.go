@@ -155,6 +155,9 @@ func writeSection(target string, p plan) (string, error) {
 	var pin string
 	err := handoffdoc.Update(target, func(doc *handoffdoc.Document) error {
 		existing, _ := doc.Section(p.facts.Key)
+		if err := stateGrammar(existing.State); err != nil {
+			return err
+		}
 		if err := scanState(p.scanRoot, p.tip, existing.State); err != nil {
 			return err
 		}

@@ -1,6 +1,10 @@
 package handoff
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
+	"fmt"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -93,6 +97,116 @@ func TestStateScanLengthBoundary(t *testing.T) {
 				t.Fatalf("handoff over %q = (%q, %d), want exit %d", tc.token, out, code, tc.want)
 			}
 		})
+	}
+}
+
+// HS27, story 28. A State that opens a fence and never closes it swallows every section
+// below it, so a later run appends a duplicate of the section it could not see. The run
+// refuses on the line that opened the fence and leaves the document alone.
+func TestCommandRefusesAStateWithAnUnterminatedFence(t *testing.T) {
+	root := benchRepo(t)
+	document := filepath.Join(root, status.HandoffFile)
+	before := seedState(t, document, "Resume here:\n\n```console\n$ bench gate")
+
+	out, code := runAt(t, root, nil)
+	if code != 1 {
+		t.Fatalf("handoff over an unterminated fence = (%q, %d), want exit 1", out, code)
+	}
+	if !strings.Contains(out, "```console") {
+		t.Errorf("the refusal does not print the line that opened the fence\n%s", out)
+	}
+	if after := read(t, document); after != before {
+		t.Fatalf("a refused run rewrote the document\nbefore:\n%s\nafter:\n%s", before, after)
+	}
+}
+
+// HS29, story 29. A level-two heading in State opens a section this grammar has no key
+// for, and every later verb then refuses the file. The run refuses while the writer still
+// has the text, and prints the heading they wrote.
+func TestCommandRefusesAStateHeadingOutsideAFence(t *testing.T) {
+	root := benchRepo(t)
+	document := filepath.Join(root, status.HandoffFile)
+	before := seedState(t, document, "The build is live.\n\n## Open questions\n\nNone.")
+
+	out, code := runAt(t, root, nil)
+	if code != 1 {
+		t.Fatalf("handoff over an unfenced heading = (%q, %d), want exit 1", out, code)
+	}
+	if !strings.Contains(out, "## Open questions") {
+		t.Errorf("the refusal does not print the offending line\n%s", out)
+	}
+	if after := read(t, document); after != before {
+		t.Fatalf("a refused run rewrote the document\nbefore:\n%s\nafter:\n%s", before, after)
+	}
+}
+
+// HS31, story 31. A session quotes an earlier handoff line inside a fence. The sha in that
+// block reports a run that already happened; it pins nothing here, so a real off-ancestry
+// commit inside a fence is not a stale resume target.
+//
+// The sha is backticked inside the fence, which is what makes the row bite: the token rule
+// is a backticked hex run, so an unquoted sha in the block would pass a scan that skipped no
+// fence at all.
+func TestCommandAcceptsAnOffAncestryCommitInsideAFence(t *testing.T) {
+	root := benchRepo(t)
+	document := filepath.Join(root, status.HandoffFile)
+	off := offAncestryCommit(t, root)
+	seedState(t, document, "The earlier close wrote:\n\n```\nThe build resumes from `"+off+"`.\n```\n\nThe tree is clean.")
+
+	runIn(t, root, nil)
+}
+
+// HS32, story 32. An abbreviation that expands to two objects resolves to neither, so both
+// `cat-file` probes fail and the token reads as prose under the exit code alone. It is a
+// pin that sends a cold session nowhere, and it gets its own reason.
+func TestCommandRefusesAnAmbiguousAbbreviationInState(t *testing.T) {
+	root := benchRepo(t)
+	document := filepath.Join(root, status.HandoffFile)
+	prefix := ambiguousPrefix(t, root)
+	seedState(t, document, "Resume from `"+prefix+"`.")
+
+	out, code := runAt(t, root, nil)
+	if code != 1 {
+		t.Fatalf("handoff over %q = (%q, %d), want exit 1", prefix, out, code)
+	}
+	if !strings.Contains(out, faultAmbiguous) {
+		t.Errorf("the refusal does not give the ambiguity reason %q\n%s", faultAmbiguous, out)
+	}
+}
+
+// ambiguousPrefix writes two blobs whose object ids share their first seven hex digits and
+// returns that prefix. Git then expands the prefix to two objects, which is the state the
+// scan has to tell apart from prose.
+//
+// The search runs over Git's own blob hash in this process, so only the two colliding
+// blobs are ever written. Hashing every candidate through `git hash-object` would take
+// tens of thousands of subprocesses to reach the same pair. The candidate texts are a
+// counted sequence, so every run finds the same collision.
+func ambiguousPrefix(t *testing.T, root string) string {
+	t.Helper()
+	seen := map[string]string{}
+	for i := range 5_000_000 {
+		content := fmt.Sprintf("hs32 collision probe %d\n", i)
+		sum := sha1.Sum([]byte(fmt.Sprintf("blob %d\x00%s", len(content), content)))
+		prefix := hex.EncodeToString(sum[:])[:7]
+		if other, found := seen[prefix]; found {
+			writeBlob(t, root, other)
+			writeBlob(t, root, content)
+			return prefix
+		}
+		seen[prefix] = content
+	}
+	t.Fatal("no two probe blobs shared a seven-digit object id prefix")
+	return ""
+}
+
+// writeBlob stores one blob in the repository's object store.
+func writeBlob(t *testing.T, root, content string) {
+	t.Helper()
+	cmd := exec.Command("git", "-C", root, "hash-object", "-w", "--stdin")
+	cmd.Stdin = strings.NewReader(content)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("hash-object: %v\n%s", err, out)
 	}
 }
 
