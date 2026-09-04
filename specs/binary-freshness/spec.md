@@ -275,6 +275,15 @@ ticket.
 
 ## Further notes
 
+Reviewer decisions of 2026-09-04, taken on the review findings:
+
+- The stamped build takes a manifest-directory operand, and the build script
+  passes the kit's `bin/`. The manifest belongs where the land route and
+  `bench doctor` read it.
+- The shell word test learns to unquote the head word. A quoted `bench` call
+  must not run against a stale binary, so the shared table gains one row per
+  quoting form.
+
 Recorded during the build, open to reviewer veto:
 
 - The edge inventory's "Partial implementation" row is wrong. No Go-side
