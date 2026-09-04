@@ -1,23 +1,24 @@
 # Claude model scorecard
 
-Last incorporated landing: `binary-freshness` (`89f4706f`, 2026-09-04).
-Opus/medium ran as orchestrator over nine Opus ticket charges, five Opus
-repair charges, three Opus review axes, and two Opus repair-scoped
-re-reviews. Six of nine ticket charges landed their behavior first-pass, and
-three stopped on a shortfall instead of an out-of-fence edit. The
-coordinator's thirteen independent probes bit at a distinct site and kind
-each; three came back silently green and each one became a new row.
+Last incorporated landing: `agent-push-guard` (`f2399156`, 2026-09-04).
+Fable/medium ran as orchestrator over four Opus ticket charges, one Opus
+fence-extension continuation, and two Opus repair charges. Three Opus review
+axes and one Opus repair-scoped re-review ran at low effort.
+Three of four ticket charges landed their behavior first-pass, and two
+found a wrong premise and reported it. The coordinator's six independent
+probes bit at a distinct site and kind each; one came back silently green
+and became a new row.
 
-Fifty-four completed landings are recorded. Routing follows the
+Fifty-five completed landings are recorded. Routing follows the
 harness-to-tier binding.
 
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use |
 | --- | --- | --- | --- |
-| Fable / low–high | orchestrator, 22 landings + implementer, 9 charges + reviewer, 3 specs | On `roadmap-light-path-fixes-3` at low effort it ran seven tickets in four waves across seven worktrees, six merge gates, one review round, and one repair-scoped re-review. It recorded one behavior narrowing in the spec for veto instead of a silent widening. | Coordination of a parallel build and adversarial spec review; it implements nothing unless the reviewer names it |
+| Fable / low–high | orchestrator, 23 landings + implementer, 9 charges + reviewer, 3 specs | On `agent-push-guard` at medium effort it ran four tickets in two waves across four worktrees, one review round, and one repair-scoped re-review. It collapsed a twice-derived adapter before review, recorded two build decisions in the spec for veto, and left one ask-user finding open instead of a silent repair. | Coordination of a parallel build and adversarial spec review; it implements nothing unless the reviewer names it |
 | Opus / high | implementer, latest 10 charges (Go-seam rewrites, lifecycle, guidance prose) | On `harness-capability-seam` the record package and the parity check each landed first-pass on behavior; the parity charge found and joined one fixture registry the ticket did not name. | High for process-lifecycle, cleanup-authority, destructive-command, anchored guidance prose, and foundational Go-seam rewrites |
-| Opus / medium, low | implementer, orchestrator, and reviewer combined; latest 14 medium implementer charges, 72 review axes, 13 of 19 orchestrated landings | On `binary-freshness` fourteen medium charges verified every ticket premise with citations before an edit, and four found the premise itself wrong: a two-argument verb that needed one, a kit root that had to be derived, and a shared library neither hook sourced. One repair charge found that the default it was told to ship poisons the wrapper manifest on every gate run, proved it, and flagged the fork. | Medium for gate and conformance logic, guidance prose, canary fixtures, review axes, repair charges, and orchestration; low for a ticket from an exact spec at a known seam under a covering gate |
+| Opus / medium, low | implementer, orchestrator, and reviewer combined; latest 10 medium implementer charges, 76 review axes, 13 of 19 orchestrated landings | On `agent-push-guard` every ticket charge verified its premise with citations, and two found it wrong: a self-probe that could not red, and a probe bound the spec named but the code did not carry. The three review axes at low effort returned eleven cited findings, and the Spec and Coverage axes each found one fail-open case the 41-row map had missed. | Medium for gate and conformance logic, guidance prose, canary fixtures, repair charges, and orchestration; low for a ticket from an exact spec at a known seam under a covering gate, and for the review axes when the reviewer names it |
 | Sonnet / high | orchestrator, 3 landings | On `roadmap-light-path-fixes-2` it ran ten ticket charges and two review rounds (six axes) across two shared worktrees, caught a read-only delegate leaving the integration worktree dirty before the next commit, and routed two material acceptance shortfalls to the reviewer instead of silently resolving them. | Continues to hold at high effort; compare again after a fourth orchestrated build |
 | Sonnet / low–high | implementer, latest 10 of 70 ticket-sized charges | On `exec-census` three low charges landed first-pass on behavior; two restated a table or a join that an existing package owned and took one repair round each. | Low for an exact-spec ticket at a known seam; medium or high for a behavior-preserving refactor; charges name the package that owns each shared fact |
 | Sonnet / high | reviewer, 3 axes on 13 landings + 12 scoped re-reviews | On `exec-census` the three axes returned one cited finding each, collapsed to two repair targets; the Coverage axis probed a two-id text with a throwaway test and found the undecided edge. | Standing tier for the three review axes before the Opus rule; medium or high where the charge names a concern to settle by measurement |
@@ -28,7 +29,7 @@ harness-to-tier binding.
 | --- | --- | --- |
 | `roadmap-light-path-fixes-3` cache ticket | Opus / medium / implementer | Charged to refuse every hold error, the delegate found the unconditional refusal reds fifteen gate tests whose fixtures declare no HOME, added one predicate at all four sites, and reported the narrowing as a reviewer decision with the fixture cause traced. |
 | `roadmap-light-path-fixes-3` Coverage axis | Opus / medium / reviewer | The axis wrote four throwaway probes (a symlink loop, an aliased import, a tab in a field name, a `//` inside a string), observed each escape, removed every probe, and cited the spec line each edge sits outside. |
-| `kit-guidance-fold` Standards axis | Opus / medium / reviewer | The axis found a seven-sentence paragraph the prose check split at a label-shaped line, and it named the single edit that defeats the six-sentence bound. |
+| `agent-push-guard` Spec and Coverage axes | Opus / low / reviewer | The Spec axis traced `git -C /other push origin main` through the scanner and showed the push graded against the wrong repository. The Coverage axis probed `xargs git push`, `@`, and `heads/main` with throwaway tests and quoted each observed allow. |
 | `worktree-test-floor` ticket 12 | Opus / high / implementer | The charge asked the verb to set the gate child's environment. The delegate traced the closure, showed the value hashes into the subject identity, and stopped with the seam gap instead of editing three packages outside its fence. |
 | `citation-phase-package-scope` repair-scoped re-review | Opus / medium / reviewer | The repair-scoped re-review found a real bug the first repair round had itself introduced: a cross-architecture phase left `CgoEnabled` at the host's value, a false green a fresh three-axis pass would have missed entirely without a scoped second look. |
 
@@ -37,11 +38,14 @@ harness-to-tier binding.
 - Routing changes only after two comparable runs or one controlled model comparison.
 - The top tier implements nothing, code or guidance prose, unless the reviewer names it
   for the run.
-- Every subagent runs Opus at low or medium effort. Fifty-four landings now run under
+- Every subagent runs Opus at low or medium effort. Fifty-five landings now run under
   this rule.
 - A light-path ticket from an exact ticket file runs Opus at low. It runs at medium
   when it adds a conformance check, a canary fixture, or CLI output.
-- Opus at medium serves the review axes, the repair charges, and the scoped re-reviews.
+- Opus at medium serves the repair charges and the scoped re-reviews. The review axes
+  run at medium by default, and at low when the reviewer names it for the run.
+- The coordinator writes the repair ticket that cites the amended rows before the
+  repair-scoped re-review starts. The review preflight is then green on its first run.
 - A kit-guidance diff takes the standing Codex falsification pass at the mid tier
   beside the three axes. The kit-guidance set is `.agents/` and `.bench/BENCH.md`; a
   diff that touches neither takes no such pass.
