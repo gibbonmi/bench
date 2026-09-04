@@ -1468,3 +1468,21 @@ func TestSystemSuiteRouteAnchorsRedOnRemoval(t *testing.T) {
 		},
 	}.check(t)
 }
+
+// TestAgentPushRuleAnchorRedOnRemoval pins PG36. The reference guide's hook-layer list
+// states the agent push rule: the guard allows a push to any branch but the default, and
+// denies a force, a deletion, a broadcast, and an unresolved destination. The needle and
+// the diagnostic are written here independently of the registry, so a guide that dropped
+// the rule cannot define itself green.
+func TestAgentPushRuleAnchorRedOnRemoval(t *testing.T) {
+	anchorHarness{
+		group: AfterSpecAuthorization,
+		rules: []anchorRule{
+			{
+				file:   ".bench/BENCH-reference.md",
+				needle: "The destructive-git guard allows an agent push to any branch other than the default branch.",
+				want:   ".bench/BENCH-reference.md dropped the agent push rule; the guard allows a push to any branch but the default and denies force, delete, broadcast, and an unresolved destination",
+			},
+		},
+	}.check(t)
+}
