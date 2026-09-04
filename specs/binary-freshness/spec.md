@@ -209,6 +209,7 @@ Line: opus / low. One new check row in an existing table.
 - `internal/adopt/doctor_rows.go`
 - `internal/adopt/doctor.go`
 - `internal/adopt/broker.go`
+- `internal/adopt/link.go`
 - `internal/adopt/broker_test.go`
 - `internal/adopt/setup_test.go`
 - `internal/brokermanifest/`
