@@ -298,6 +298,48 @@ func TestAppendHandoffSectionNamesTheBehindSection(t *testing.T) {
 	}
 }
 
+// A section the join cannot resolve is residue a landing or a release removes, not a
+// distance a reader acts on. It reports nothing in the default view and under --all, so the
+// behind section is the whole handoff family either way. (Coverage row HS21.)
+func TestAppendHandoffSectionOmitsTheUnresolvedSection(t *testing.T) {
+	root, behind, _ := twoSectionRepo(t)
+	// A key no assignment names: the section stays in the document, and the ledger has
+	// nothing to join it to.
+	seedHandoffSection(t, root, strings.Repeat("a", 32), gitRun(t, root, "rev-parse", "HEAD"), "orphan")
+
+	for _, view := range []struct {
+		name string
+		rows []row
+	}{
+		{"default", appendHandoff(nil, root)},
+		{"--all", handoffRows(root, true)},
+	} {
+		sections := sectionRows(view.rows)
+		if len(sections) != 1 {
+			t.Fatalf("%s rows = %#v, want exactly one section row", view.name, view.rows)
+		}
+		if !strings.Contains(sections[0].detail, Short(behind)) {
+			t.Errorf("%s detail = %q, want it to name the behind section", view.name, sections[0].detail)
+		}
+		if !strings.Contains(sections[0].detail, "3 commits behind") {
+			t.Errorf("%s detail = %q, want the 3-commit distance", view.name, sections[0].detail)
+		}
+	}
+}
+
+// sectionRows keeps every handoff row but the document's own age row, which the
+// ignored-handoff fixture also produces. It drops nothing else, so a row that summarizes
+// the sections it does not name counts here too.
+func sectionRows(rows []row) []row {
+	var out []row
+	for _, r := range rows {
+		if !strings.HasPrefix(r.detail, "written at ") {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
 // Rewriting the fresh section resets the document's write time. The behind section's own
 // distance is unmoved by that, so the row it produces must not change. (Coverage row HS22.)
 func TestAppendHandoffSectionRewriteLeavesTheDistance(t *testing.T) {

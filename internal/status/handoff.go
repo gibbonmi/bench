@@ -118,20 +118,17 @@ func handoffWrittenAt(root string) (string, bool) {
 	return written, true
 }
 
-// handoffSection is one request section joined to the assignment its key names: either
-// the commits that assignment's branch holds past the tip the section records, or the
-// reason the join produced no distance.
+// handoffSection is one request section joined to the assignment its key names: the
+// commits that assignment's branch holds past the tip the section records.
 type handoffSection struct {
-	key        string
-	behind     int
-	unresolved string
+	key    string
+	behind int
 }
 
 // handoffSectionRows states the sections a reader must act on. With all false the list
-// reduces to the section furthest behind plus a count of the unresolved ones; with all
-// true, under `bench status --all`, every section states itself. That is the census row's
-// summary-and-expansion shape, and it keeps the default board's five-row budget bounded
-// however many worktrees are live.
+// reduces to the section furthest behind; with all true, under `bench status --all`, every
+// section states itself. That is the census row's summary-and-expansion shape, and it keeps
+// the default board's five-row budget bounded however many worktrees are live.
 func handoffSectionRows(root string, all bool) []row {
 	sections := handoffSectionsBehind(root)
 	if len(sections) == 0 {
@@ -144,40 +141,22 @@ func handoffSectionRows(root string, all bool) []row {
 		}
 		return out
 	}
-	var out []row
-	unresolved := 0
-	for _, section := range sections {
-		if section.unresolved != "" {
-			unresolved++
-		}
-	}
-	// The list is ordered by distance, so a resolved section leads whenever there is one.
-	if lead := sections[0]; lead.unresolved == "" {
-		out = append(out, handoffSectionRow(lead))
-	}
-	if unresolved > 0 {
-		out = append(out, row{12, "handoff", Plural(unresolved, "section unresolved", "sections unresolved"), advisoryAction("")})
-	}
-	return out
+	// The list is ordered by distance, so the first section is the one furthest behind.
+	return []row{handoffSectionRow(sections[0])}
 }
 
-// handoffSectionRow renders one section. An unresolved section names no command: a section
-// the ledger has no active assignment for is residue a landing or a release removes, and
-// `bench handoff` would rewrite a live section rather than clear this one.
+// handoffSectionRow renders one section's distance.
 func handoffSectionRow(section handoffSection) row {
 	key := Short(sanitize.Controls(section.key))
-	if section.unresolved != "" {
-		return row{12, "handoff", "request " + key + " " + section.unresolved, advisoryAction("")}
-	}
 	detail := "request " + key + " " + Plural(section.behind, "commit", "commits") + " behind"
 	return row{12, "handoff", detail, commandAction(handoffAction)}
 }
 
 // handoffSectionsBehind dates every request section against its own assignment branch. It
-// keeps a section only when it has something to report — a distance, or a join that
-// failed — and orders the distances first, largest before smallest, so the caller's lead
-// is the section furthest behind. An unreadable document reports nothing: the document's
-// grammar is the leaf package's to refuse, and this row is advisory housekeeping.
+// keeps a section only when it states a distance, and orders the distances largest before
+// smallest, so the caller's lead is the section furthest behind. An unreadable document
+// reports nothing: the document's grammar is the leaf package's to refuse, and this row is
+// advisory housekeeping.
 func handoffSectionsBehind(root string) []handoffSection {
 	doc, err := handoffdoc.Read(filepath.Join(root, filepath.FromSlash(HandoffFile)))
 	if err != nil {
@@ -189,16 +168,13 @@ func handoffSectionsBehind(root string) []handoffSection {
 		if section.Key == handoffdoc.MainKey {
 			continue
 		}
-		entry := sectionBehind(root, section, branches)
-		if entry.behind == 0 && entry.unresolved == "" {
+		behind, ok := sectionBehind(root, section, branches)
+		if !ok || behind == 0 {
 			continue
 		}
-		out = append(out, entry)
+		out = append(out, handoffSection{key: section.Key, behind: behind})
 	}
 	sort.SliceStable(out, func(i, j int) bool {
-		if (out[i].unresolved == "") != (out[j].unresolved == "") {
-			return out[i].unresolved == ""
-		}
 		if out[i].behind != out[j].behind {
 			return out[i].behind > out[j].behind
 		}
@@ -208,33 +184,28 @@ func handoffSectionsBehind(root string) []handoffSection {
 }
 
 // sectionBehind counts the commits one assignment branch holds past the tip its section
-// records. Each way the join can fail carries its own words, because the remedies differ:
-// a section with no active assignment is residue, and a section whose tip no longer
-// resolves names a commit the repository has lost.
-func sectionBehind(root string, section handoffdoc.Section, branches map[string]string) handoffSection {
-	entry := handoffSection{key: section.Key}
+// records, and reports whether the join produced a distance at all. A section the ledger
+// has no active assignment for is residue a landing or a release removes, and a section
+// whose tip does not resolve names a commit the repository has lost. Neither is a distance,
+// and neither is a defect this advisory row can act on, so both report nothing.
+func sectionBehind(root string, section handoffdoc.Section, branches map[string]string) (int, bool) {
 	branch, found := branches[section.Key]
 	if !found {
-		entry.unresolved = "names no active assignment"
-		return entry
+		return 0, false
 	}
 	tip := sectionField(section, handoffdoc.LabelWorktreeTip)
 	if tip == "" {
-		entry.unresolved = "records no worktree tip"
-		return entry
+		return 0, false
 	}
 	out, err := git.Output("-C", root, "rev-list", "--count", tip+".."+branch)
 	if err != nil {
-		entry.unresolved = "records an unreadable tip"
-		return entry
+		return 0, false
 	}
 	behind, err := strconv.Atoi(out)
 	if err != nil {
-		entry.unresolved = "records an unreadable tip"
-		return entry
+		return 0, false
 	}
-	entry.behind = behind
-	return entry
+	return behind, true
 }
 
 // sectionField reads one label line's value.
@@ -249,8 +220,8 @@ func sectionField(section handoffdoc.Section, label string) string {
 
 // activeAssignmentBranches maps each active assignment's request digest to its branch. The
 // digest is the section key, so the map is the join between the document and the ledger. A
-// ledger that cannot be read leaves every section unresolved rather than current, because
-// an unknown distance is not a distance of zero.
+// ledger that cannot be read joins no section, so every section reports nothing rather than
+// a distance the join never computed.
 func activeAssignmentBranches(root string) map[string]string {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
