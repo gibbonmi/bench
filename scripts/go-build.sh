@@ -13,7 +13,13 @@
 # as an unreproducible build. The version stamp comes from package.json, the one canonical version, so an
 # unstamped build, which prints "dev", never masquerades as a release.
 #
-#   Usage: go-build.sh [--mode artifact] <module-root> <output-path>
+#   Usage: go-build.sh [--mode artifact] [--manifest-dir <dir>] <module-root> <output-path>
+#
+# Subject mode publishes the broker manifest as part of the same transaction as the
+# executable and its seal. The manifest belongs beside the wrapper the land route
+# resolves, not beside the executable, so the default is the module's own bin/. A caller
+# that builds a throwaway executable passes --manifest-dir instead, because a manifest
+# beside the wrapper would outlive the binary it binds.
 #
 # This file stays repo-only: it is not listed in package.json's `files` array, so it
 # never ships. A consumer gets a prebuilt binary through the @redbench/<os>-<arch>
@@ -21,25 +27,32 @@
 set -euo pipefail
 
 usage() {
-  printf 'usage: go-build.sh [--mode artifact] <module-root> <output-path>\n' >&2
+  printf 'usage: go-build.sh [--mode artifact] [--manifest-dir <dir>] <module-root> <output-path>\n' >&2
   exit 2
 }
 
 mode=subject
-case "$#" in
-  2)
-    module_root="$1"
-    out="$2"
-    ;;
-  4)
-    [[ "$1" == --mode && "$2" == artifact ]] || usage
-    mode=artifact
-    module_root="$3"
-    out="$4"
-    ;;
-  *) usage ;;
-esac
+manifest_dir=
+while [[ "$#" -gt 2 ]]; do
+  case "$1" in
+    --mode)
+      [[ "${2-}" == artifact ]] || usage
+      mode=artifact
+      shift 2
+      ;;
+    --manifest-dir)
+      [[ -n "${2-}" ]] || usage
+      manifest_dir="$2"
+      shift 2
+      ;;
+    *) usage ;;
+  esac
+done
+[[ "$#" -eq 2 ]] || usage
+module_root="$1"
+out="$2"
 modroot="$(cd "$module_root" && pwd -P)"
+: "${manifest_dir:=$modroot/bin}"
 build_script=
 package_version=
 go_requirements=
@@ -131,5 +144,9 @@ if [[ "$mode" == artifact ]]; then
   mv -- "$staged" "$out"
 else
   env -u GOOS -u GOARCH go build "${go_build_flags[@]}" -o "$staged" ./cmd/bench
-  env -u GOOS -u GOARCH "$staged" freshness-publish "$modroot" "$out" "$version"
+  # The manifest belongs beside the wrapper, not beside the executable: bin/bench.sh and
+  # the doctor row both read the resolved wrapper's own directory, and this build publishes
+  # its executable to dist/. The publisher takes the directory as an operand, so the one
+  # caller that knows where its wrapper lives is the one that names it.
+  env -u GOOS -u GOARCH "$staged" freshness-publish "$modroot" "$out" "$manifest_dir" "$version"
 fi

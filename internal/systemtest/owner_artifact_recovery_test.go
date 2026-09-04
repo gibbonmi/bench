@@ -133,7 +133,9 @@ func configureArtifactLandingFixture(t *testing.T, root string) {
 	if err := os.WriteFile(filepath.Join(root, "cmd", "bench", "main.go"), []byte("package main\n\nfunc main() {}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	build := "#!/bin/sh\nset -eu\nroot=$1\nout=$2\nstaged=$out.staged\ncp \"$LAND_BASELINE_BENCH\" \"$staged\"\nchmod 0700 \"$staged\"\n\"$staged\" freshness-publish \"$root\" \"$out\" 1.2.3\n"
+	// The stub reads the two positionals off the end, because the real go-build.sh accepts
+	// options ahead of them and the private-selection builder passes --manifest-dir.
+	build := "#!/bin/sh\nset -eu\nshift $(($# - 2))\nroot=$1\nout=$2\nstaged=$out.staged\ncp \"$LAND_BASELINE_BENCH\" \"$staged\"\nchmod 0700 \"$staged\"\n\"$staged\" freshness-publish \"$root\" \"$out\" \"$(dirname \"$out\")\" 1.2.3\n"
 	if err := os.WriteFile(filepath.Join(root, "scripts", "go-build.sh"), []byte(build), 0o755); err != nil {
 		t.Fatal(err)
 	}

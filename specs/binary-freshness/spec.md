@@ -116,7 +116,8 @@ Line: opus / low. One new check row in an existing table.
 - The landing's gate refusal takes a repair root distinct from the digest root, threaded through a new `Factory` field. The prospective owner passes the kit checkout as the repair root.
 - `kitSourceCheckout` is exported from `internal/adopt`, so the landing line can call it.
 - `Factory.validate` verifies an inherited executable against its source root when the caller names one. The system suite owner names `BENCH_KIT`. The gate's private build path is unchanged.
-- The subject-mode build's `freshness-publish` step writes the broker manifest inside the same publication transaction, with the stamped version. The verb gains one argument, the version. The published path is already argument two, so the manifest binds the published executable and not the staged one. Artifact mode stays excluded. The manifest lands beside the resolved wrapper, as today.
+- The subject-mode build's `freshness-publish` step writes the broker manifest inside the same publication transaction, with the stamped version. The verb gains two arguments: the manifest directory and the version. The published path is already argument two, so the manifest binds the published executable and not the staged one. An empty manifest directory is refused, the way an empty version is refused. Artifact mode stays excluded.
+- The build script defaults the manifest directory to the module's own `bin/`, because the readers look beside the resolved wrapper. A `--manifest-dir` option overrides that default. The gate's private selection passes it, because that executable is deleted at close and a manifest beside the wrapper would outlive it.
 - The shim's shared classifier table holds resolver-independent rows only, because `benchguard.InvokesBench` takes a resolver the shell test lacks.
 - The land route splits refusal three from refusal five. The version branch runs the stamped build at the install root once, re-reads the manifest once, and refuses if the version still reads `dev`. The digest branch keeps its unconditional exit 127. The route reads no repository and honors no inherited override.
 - The landing line composes `kitSourceCheckout` with `RebuildAction` for the source checkout, and names `bench repair` for an installed kit.
@@ -161,8 +162,8 @@ Line: opus / low. One new check row in an existing table.
 | BF7 | 7 | an inherited executable with a stale source digest and a named source root refuses in `Factory.validate` | new `TestFactoryValidateRefusesAStaleInheritedSeal` beside the validate tests | the seal-pair check alone passes a self-consistent stale binary |
 | BF8 | 8 | the system suite owner refuses a `BENCH_RUN_BINARY` whose seal mismatches `BENCH_KIT` | new out-of-process test that runs the suite binary with a stale seal and reads its exit | `identifyExecutable` trusts any executable file |
 | BF9 | 9 | `runbinary.Own` still builds and verifies a private executable, as a regression row | `TestFactoryOwnBuildsOnePrivateAbsoluteSelectionAndCleansIt` | a changed owner path reds the gate loop |
-| BF10 | 10 | after a subject-mode build, the manifest digest equals the published executable's digest | new publish test | two commands leave the manifest one crash behind |
-| BF11 | 10 | a publication rolled back leaves no manifest change | publish rollback tests | a manifest written before the rename survives the rollback |
+| BF10 | 10 | after a subject-mode build, the manifest is at `<root>/bin/bench-broker.manifest` and its digest equals the published executable's digest | `TestGoBuildSubjectModePublishesTheStampedVersion` | a manifest beside the executable reaches no reader, and two commands leave the manifest one crash behind |
+| BF11 | 10 | a publication rolled back leaves no manifest change, with the manifest directory distinct from the executable's | publish rollback tests | a manifest written before the rename survives the rollback, and equal directories hide a manifest published in the wrong one |
 | BF12 | 11 | artifact mode writes no manifest and executes nothing | new `TestGoBuildArtifactModeWritesNoManifest` in `cmd/bench` | a manifest write in artifact mode runs the new binary |
 | BF13 | 12 | only `cmd/bench/freshness_publish.go`, `cmd/bench/main.go`, and `scripts/go-build.sh` carry the publish token | `TestFreshnessPublicationTopology` | a fourth caller reds the topology |
 | BF14 | 13 | the manifest written by the build carries the package version | new broker test | a `dev` manifest re-creates refusal three |
@@ -209,6 +210,7 @@ Line: opus / low. One new check row in an existing table.
 - `internal/adopt/doctor_rows.go`
 - `internal/adopt/doctor.go`
 - `internal/adopt/broker.go`
+- `internal/adopt/adopt_test.go`
 - `internal/adopt/link.go`
 - `internal/adopt/broker_test.go`
 - `internal/adopt/setup_test.go`
@@ -229,6 +231,7 @@ Line: opus / low. One new check row in an existing table.
 - `internal/systemtest/owner_artifact_recovery_test.go`
 - `internal/systemtest/bench_follow_on_test.go`
 - `internal/worktree/build.go`
+- `internal/worktree/build_test.go`
 - `internal/worktree/land.go`
 - `internal/worktree/land_freshness_test.go`
 - `internal/preflight/decision.go`
@@ -354,12 +357,15 @@ Recorded during the build, open to reviewer veto:
 
 Recorded during the build for the publish ticket, open to reviewer veto:
 
-- `freshness-publish` gains one argument, the version, not two. The published
-  path is already argument two, so a second copy of it would be a second
-  source of one fact. The manifest directory is derived from that path.
-- `freshness.Publish` gains a version parameter, so five call sites take a
-  one-argument edit. `internal/systemtest/owner_artifact_recovery_test.go`
-  joins the fence, because its fake builder calls the verb.
+- `freshness-publish` gains two arguments: the manifest directory and the
+  version. The reviewer decided the directory on 2026-09-04. A directory
+  derived from the published path sends the manifest to `dist/`, which no
+  reader looks in. The caller that knows where its wrapper resolves names the
+  directory instead.
+- `freshness.Publish` gains a manifest-directory parameter and a version
+  parameter, so every call site takes a one-argument edit.
+  `internal/systemtest/owner_artifact_recovery_test.go` joins the fence,
+  because its fake builder calls the verb.
 - A coordinator probe found a missing row. The build script's version
   argument was ungraded, because BF14's test calls `freshness.Publish`
   directly. `TestGoBuildSubjectModePublishesTheStampedVersion` now runs a real

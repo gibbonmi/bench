@@ -226,7 +226,7 @@ func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
 	}
 
 	binary := filepath.Join(t.TempDir(), "bench")
-	build := exec.Command("bash", filepath.Join(root, "scripts", "go-build.sh"), root, binary)
+	build := exec.Command("bash", filepath.Join(root, "scripts", "go-build.sh"), "--manifest-dir", filepath.Dir(binary), root, binary)
 	cleanEnv := append(capability.WithoutEnvironment(
 		capability.WithoutEnvironment(os.Environ(), runbinary.Env), "BENCH_HOME"), "BENCH_HOME="+home)
 	build.Dir = root
@@ -1021,7 +1021,7 @@ func commandsBriefCheckout(t *testing.T, staged string) (string, string) {
 	// Publish consumes the staged bytes by renaming them, so each row publishes its own
 	// copy and neither depends on the order the other ran in.
 	copyExecutable(t, staged, filepath.Join(base, "staged"))
-	if err := freshness.Publish(root, filepath.Join(base, "staged"), binary, "probe"); err != nil {
+	if err := freshness.Publish(root, filepath.Join(base, "staged"), binary, filepath.Dir(binary), "probe"); err != nil {
 		t.Fatal(err)
 	}
 	return root, binary

@@ -24,6 +24,7 @@ func TestGoBuildSubjectModePublishesTheStampedVersion(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := filepath.Join(t.TempDir(), "bench")
+	preserveWrapperManifest(t, root)
 
 	cmd := exec.Command("bash", filepath.Join(root, "scripts", "go-build.sh"), root, out)
 	cmd.Dir = root
@@ -32,7 +33,7 @@ func TestGoBuildSubjectModePublishesTheStampedVersion(t *testing.T) {
 		t.Fatalf("subject build: %v\n%s", err, output)
 	}
 
-	fields, err := brokermanifest.Read(filepath.Join(filepath.Dir(out), brokermanifest.Name))
+	fields, err := brokermanifest.Read(subjectManifestPath(root))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,6 +41,56 @@ func TestGoBuildSubjectModePublishesTheStampedVersion(t *testing.T) {
 	if fields["version"] != want {
 		t.Fatalf("published manifest version = %q, want the stamped version %q", fields["version"], want)
 	}
+	// The wrapper's own directory is the only place bin/bench.sh and the doctor row look,
+	// so a manifest beside the executable binds nothing either reader can find. The digest
+	// comparison keeps the found manifest bound to the executable this build published,
+	// rather than to whatever a previous run left in the wrapper's directory.
+	published, err := brokermanifest.Digest(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fields["sha256"] != published {
+		t.Fatalf("manifest at %s binds digest %q, want the published executable digest %q", subjectManifestPath(root), fields["sha256"], published)
+	}
+	// The digest alone cannot tell this build's manifest from a leftover one, because the
+	// build is reproducible and any prior manifest carries the same digest. The bound path
+	// is what changes: it names the executable this run published.
+	bound := out
+	if resolved, err := filepath.EvalSymlinks(out); err == nil {
+		bound = resolved
+	}
+	if fields["path"] != bound {
+		t.Fatalf("manifest at %s binds path %q, want this build's executable %q", subjectManifestPath(root), fields["path"], bound)
+	}
+}
+
+// subjectManifestPath names where a subject-mode build publishes the broker manifest: the
+// wrapper's own directory, which is the one place the land route and the doctor row read.
+func subjectManifestPath(root string) string {
+	return filepath.Join(root, "bin", brokermanifest.Name)
+}
+
+// preserveWrapperManifest restores whatever the checkout's wrapper directory held before a
+// build test republished over it. The row has to run against the real module root, because
+// only that root carries the build inputs, so it writes where a developer's own dev-install
+// manifest lives.
+func preserveWrapperManifest(t *testing.T, root string) {
+	t.Helper()
+	path := subjectManifestPath(root)
+	before, err := os.ReadFile(path)
+	if err != nil && !os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+	existed := err == nil
+	t.Cleanup(func() {
+		if !existed {
+			_ = os.Remove(path)
+			return
+		}
+		if err := os.WriteFile(path, before, 0o644); err != nil {
+			t.Error(err)
+		}
+	})
 }
 
 // stampedPackageVersion reads the version through the same two operands the builder walks:
