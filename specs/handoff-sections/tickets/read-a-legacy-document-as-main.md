@@ -2,7 +2,7 @@
 
 Blocked by: own-the-document-path-and-reclaim-the-lock.md
 Writes: internal/handoffdoc
-Covers: HS7
+Covers: HS26
 
 ## What to build
 

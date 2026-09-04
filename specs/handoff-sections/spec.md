@@ -97,6 +97,17 @@ Line: opus / low for the ignore entry, opus / medium for the guidance.
 25. As a consumer, I want that addition idempotent, so that a second `bench init` adds nothing.
 26. As a session, I want the working agreement to state the section rule, so that a phase close writes its own section.
 
+### Group F — the review repairs
+
+Line: opus / medium. Each repair changes a refusal or a parser edge.
+
+27. As a coordinator, I want a legacy document read as one `main` section, so that the new verb's first run does not refuse it.
+28. As a coordinator, I want an unterminated fence in State refused at write and at parse, so that one section cannot swallow its siblings.
+29. As a coordinator, I want a State line that opens a level-two heading refused at write, so that my prose cannot break every later verb.
+30. As a coordinator, I want a retirement whose section removal fails to print the error, so that a pinned dead section is never silent.
+31. As a reviewer, I want a commit hash inside a fenced block in State left unscanned, so that a quoted example never blocks a close.
+32. As a reviewer, I want an ambiguous abbreviation in State refused with its own reason, so that a stale short pin cannot pass as prose.
+
 ## Implementation decisions
 
 - A new leaf package `internal/handoffdoc` owns the grammar. The document is a header block, one `## main` section, one `## request <id>` section per live assignment, and the trailing `## Shape`. A section holds label lines for the six pins, one `Next command:` line, and a `### State` body. The package parses, renders, removes a section by key, and ensures `main`. It wraps every read-modify-write in an exclusive flock on a lock file beside the document, with temp-and-rename underneath.
@@ -162,6 +173,13 @@ Line: opus / low for the ignore entry, opus / medium for the guidance.
 | HS23 | 23 | `main` is dated by the file write time | `TestAppendHandoffIgnoredUsesFileTime` and `TestAppendHandoffIgnoredAbsentIsSilent` | a per-branch rule has no branch for `main` |
 | HS24 | 24, 25 | `bench init` adds the three entries once and a second run adds nothing | new init scaffold test | a blind append duplicates the lines |
 | HS25 | 26 | the working agreement states the section rule and the anchor pins it | anchor registry test and fixture `agents-handoff-section-rule` | the rewrite-in-full sentence survives |
+| HS26 | 27 | a legacy document with State, Closed decisions, Next command, and Shape reads as one `main` section, and its render parses back | legacy tests in the leaf package | a parser that knows only the section grammar refuses the file it replaces |
+| HS27 | 28 | `bench handoff` with a State that opens a fence and never closes it exits 1, prints the line, and writes nothing | new verb test | a write-time check that trusts the parser lets the fence reach disk |
+| HS28 | 28 | `Parse` refuses a document whose fence is still open at the end of the file, with the file and line | new leaf test | a per-file fence state absorbs every later section into one State |
+| HS29 | 29 | `bench handoff` with a State line that opens a level-two heading outside a fence exits 1 and prints the line | new verb test | a heading the reviewer writes bricks the document for every later verb |
+| HS30 | 30 | a retirement whose section removal fails prints the error and keeps its verdict | new lifecycle test with an unparseable document | a discarded error leaves the dead section pinned in silence |
+| HS31 | 31 | a real commit off the tip's ancestry inside a fenced block in State exits 0 | new verb test | a scan that splits on newlines alone refuses a quoted example |
+| HS32 | 32 | a State that names an ambiguous 7-hex abbreviation exits 1 with an ambiguity reason | new verb test | two failed `cat-file` probes read the token as prose |
 
 ### Edge inventory
 
@@ -236,6 +254,14 @@ Flagged additions beyond the decision source:
 - The leaf package and its lock. `internal/worktree` cannot import `internal/handoff`, and no capture-file lock exists.
 - `bench worktree clean` removes the section. The grill named land and release; clean shares their retirement path, so it comes for free.
 - The rule that the verb never rewrites State is existing behavior, covered by the section tests today, and takes no new row.
+
+Build decisions recorded for veto, made under the `--full` batch approval:
+
+- The lock is reclaimed on release with the safe-unlink shape. The alternative, a fourth ignore entry for the lock file, widened the landing predicate and the init list.
+- The legacy document is migrated on read (story 27). The pre-existing handoff in this repo refused the new parser on the first run.
+- The State scan prints one of two reasons, not-a-commit or off-ancestry, so the commit peel is observable.
+- The status row's unresolved-section advisories are cut. Spec line 109 names the behind section alone, and a dead section is residue the retirement removes.
+- The lock deadline is mirrored from the intent ledger's unexported literals. The collapse needs an export from `internal/intent`, and stays a reviewer decision.
 
 Source-sentence-to-row table:
 
