@@ -276,7 +276,7 @@ func reportPrePush(stdout io.Writer) bool {
 		fmt.Fprintf(stdout, "  pre-push: diverted by core.hooksPath to %s with no bench-managed hook - run bench link\n", health.Path)
 	default: // PrePushAbsent
 		remedy := "run bench link"
-		if kitSourceCheckout(root) {
+		if KitSourceCheckout(root) {
 			remedy = "run bench doctor --fix"
 		}
 		fmt.Fprintf(stdout, "  pre-push: absent at %s - a fresh clone drops it (git does not clone hooks); %s\n", health.Path, remedy)
@@ -298,10 +298,6 @@ func KitSourceCheckout(root string) bool {
 	}
 	return resolvedPath(root) == resolvedPath(kit)
 }
-
-// kitSourceCheckout is the unexported spelling this package's other callers still use.
-// It holds no logic of its own; the landing line reads the exported name.
-func kitSourceCheckout(root string) bool { return KitSourceCheckout(root) }
 
 func resolvedPath(path string) string {
 	if resolved, err := filepath.EvalSymlinks(path); err == nil {
@@ -440,7 +436,7 @@ func repairStalePrePush(stdout, stderr io.Writer) int {
 		// Only in the kit source checkout, where the absent-hook row names this fix because
 		// bench link is not a remedy there. Elsewhere an absent hook stays bench link's, so
 		// the fix does not silently take over a route the link transaction owns.
-		if !kitSourceCheckout(root) {
+		if !KitSourceCheckout(root) {
 			return 0
 		}
 		if err := installGitHook(root, stderr); err != nil {

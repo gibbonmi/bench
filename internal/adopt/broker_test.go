@@ -65,8 +65,8 @@ func TestWriteBrokerManifestBindsTheRunningBrokerIdentity(t *testing.T) {
 }
 
 // TestPublishedBrokerManifestCarriesTheStampedVersion grades the field the land route
-// compares against the installed package. A build that published "dev" here re-created
-// refusal three, and the landing stopped at exit 127 with nothing to repair.
+// compares against the installed package. A manifest that carries "dev" stops the landing
+// at exit 127 with nothing to repair.
 func TestPublishedBrokerManifestCarriesTheStampedVersion(t *testing.T) {
 	root := t.TempDir()
 	writeSealFixture(t, root)
@@ -121,8 +121,8 @@ func writeSealFixture(t *testing.T, root string) {
 }
 
 // TestDoctorSealRowNamesTheSourceDigestMismatch grades the row an operator reads before a
-// landing. Nine rows once reported healthy beside a binary built from sources that have
-// since changed, so the row must name the mismatch itself and carry the one rebuild
+// landing. Every other row reports healthy beside a binary built from sources that have
+// since changed, so this row must name the mismatch itself and carry the one rebuild
 // sentence, not a generic "stale binary" verdict.
 func TestDoctorSealRowNamesTheSourceDigestMismatch(t *testing.T) {
 	root := t.TempDir()

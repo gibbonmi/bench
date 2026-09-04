@@ -89,9 +89,18 @@ func refusal(repairRoot, executable string, cause error) error {
 	return fmt.Errorf("bench binary %q is untrusted: %v; rebuild with %s", executable, cause, RebuildAction(repairRoot))
 }
 
+// PublishedExecutable returns the path root's build script publishes the Bench
+// executable to. A hand run, a hook, the wrapper, the landing, and every row that
+// grades a published binary all name this one path. The package that owns the seal,
+// the digest, and the rebuild sentence owns the spelling too, so a move of the
+// destination cannot leave one consumer grading a path the build never writes.
+func PublishedExecutable(root string) string {
+	return filepath.Join(root, "dist", "bench")
+}
+
 // RebuildAction returns the copy-paste command that republishes root's Bench binary.
 func RebuildAction(root string) string {
-	return fmt.Sprintf("cd %s && bash scripts/go-build.sh %s %s", shellQuote(root), shellQuote(root), shellQuote(filepath.Join(root, "dist", "bench")))
+	return fmt.Sprintf("cd %s && bash scripts/go-build.sh %s %s", shellQuote(root), shellQuote(root), shellQuote(PublishedExecutable(root)))
 }
 
 func shellQuote(value string) string {

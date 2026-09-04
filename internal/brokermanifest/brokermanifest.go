@@ -20,8 +20,8 @@ import (
 // land route trusts only what it binds: path, version, platform, and executable digest.
 const Name = "bench-broker.manifest"
 
-// Fields are the four bound values one manifest carries.
-var Fields = []string{"path", "version", "platform", "sha256"}
+// boundFields are the four values one manifest carries.
+var boundFields = []string{"path", "version", "platform", "sha256"}
 
 // Write publishes the manifest in dir, binding broker as the promotion broker for
 // version. It returns the manifest path and the symlink-resolved broker it bound.
@@ -80,7 +80,7 @@ func Read(path string) (map[string]string, error) {
 		}
 		fields[key] = value
 	}
-	for _, key := range Fields {
+	for _, key := range boundFields {
 		if fields[key] == "" {
 			return nil, fmt.Errorf("broker manifest %s does not bind %s", path, key)
 		}

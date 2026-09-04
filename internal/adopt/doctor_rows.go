@@ -70,7 +70,7 @@ func reportDoctorRows(stdout io.Writer) bool {
 }
 
 func evalAgentsRow(root string) (bool, string) {
-	if kitSourceCheckout(root) {
+	if KitSourceCheckout(root) {
 		return true, "kit source checkout - AGENTS.md is the source agreement; no managed block applies"
 	}
 	path := filepath.Join(root, "AGENTS.md")
@@ -158,7 +158,7 @@ func evalProfileRow(root string) (bool, string) {
 }
 
 func evalRepoLocalBenchRow(root string) (bool, string) {
-	if kitSourceCheckout(root) {
+	if KitSourceCheckout(root) {
 		return true, "kit source checkout - the launcher is bin/bench.sh; no .bench/bin copy applies"
 	}
 	path := filepath.Join(root, ".bench", "bin", "bench.sh")
@@ -235,7 +235,7 @@ func evalBinarySealRow(root string) (bool, string) {
 	if !freshness.DeclaresBuildInputs(root) {
 		return true, ""
 	}
-	executable := filepath.Join(root, "dist", "bench")
+	executable := freshness.PublishedExecutable(root)
 	if _, err := os.Lstat(executable); err != nil {
 		return true, "dist/bench not published in this checkout - no seal to verify"
 	}

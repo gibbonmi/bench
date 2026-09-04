@@ -17,7 +17,7 @@ import (
 // its verdict from the exit code and the setup line, which no in-process assertion can
 // reach.
 func TestSystemOwnerRefusesAStaleSelectedSeal(t *testing.T) {
-	stale := staleySealedCopy(t, owner.selected.path)
+	stale := staleSealedCopy(t, owner.selected.path)
 	overrides := []string{"BENCH_RUN_BINARY=" + stale, "BENCH_KIT=" + owner.kit}
 
 	result := owner.runAt(owner.root, overrides, os.Args[0], "-test.run=^$")
@@ -32,10 +32,10 @@ func TestSystemOwnerRefusesAStaleSelectedSeal(t *testing.T) {
 	}
 }
 
-// staleySealedCopy publishes a copy of executable beside a seal whose source digest names
+// staleSealedCopy publishes a copy of executable beside a seal whose source digest names
 // a tree no kit produced. The copy keeps an intact seal pair, so only a source-digest
 // check refuses it.
-func staleySealedCopy(t *testing.T, executable string) string {
+func staleSealedCopy(t *testing.T, executable string) string {
 	t.Helper()
 	binary, err := os.ReadFile(executable)
 	if err != nil {
