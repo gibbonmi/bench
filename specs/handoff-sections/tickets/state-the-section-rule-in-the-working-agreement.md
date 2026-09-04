@@ -1,7 +1,7 @@
 # State the section rule in the working agreement
 
 Blocked by: keep-the-next-command-and-refuse-a-stale-state.md
-Writes: AGENTS.md, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, tests/canary/workflow-guidance-anchors/agents-handoff-section-rule (new), tests/canary/load-validity-metadata/shared-rule-drift, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
+Writes: AGENTS.md, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, tests/canary/workflow-guidance-anchors/agents-handoff-section-rule (new), tests/canary/workflow-guidance-anchors/agents-system-suite-route, tests/canary/load-validity-metadata/shared-rule-drift, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
 Covers: HS25
 
 ## What to build
