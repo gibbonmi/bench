@@ -50,10 +50,11 @@ func TestBlockMessageNamesLabel(t *testing.T) {
 	}
 }
 
-// TestBlockMessageCarriesUnresolvedAdvice pins the one advice sentence: the unresolved
-// push is the refusal an agent can act on, so the message ends with the fix.
+// TestBlockMessageCarriesUnresolvedAdvice pins the whole advice: the unresolved push is
+// the refusal an agent can act on, and it has two fixes. The redirected push moves back
+// into the repository, and the destination-less push names the remote and the branch.
 func TestBlockMessageCarriesUnresolvedAdvice(t *testing.T) {
-	const advice = "Name the remote and the branch: git push <remote> <branch>."
+	const advice = "Run the push from inside the repository. Name the remote and the branch: git push <remote> <branch>."
 	msg := BlockMessage("git push with an unresolved destination")
 	if !strings.HasSuffix(msg, advice) {
 		t.Errorf("BlockMessage for the unresolved label did not end with the advice: %q", msg)

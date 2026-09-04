@@ -50,7 +50,7 @@ var denyTable = []struct{ key, label, advice string }{
 	{"push-all", "git push --all", ""},
 	{"push-mirror", "git push --mirror", ""},
 	{"push-tags", "git push --tags", ""},
-	{"push-unresolved", "git push with an unresolved destination", "Name the remote and the branch: git push <remote> <branch>."},
+	{"push-unresolved", "git push with an unresolved destination", "Run the push from inside the repository. Name the remote and the branch: git push <remote> <branch>."},
 	{"reset", "git reset --hard", ""},
 	{"clean", "git clean -f", ""},
 	{"branch-force", "git branch -f", ""},

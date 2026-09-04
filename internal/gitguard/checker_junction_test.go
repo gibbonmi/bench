@@ -7,7 +7,12 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
+
+// topicRepo adapts the shared topic-tracking fixture to the setup signature the push
+// composition rows take.
+func topicRepo(t *testing.T) string { return gittest.TopicTrackingRepo(t) }
 
 // TestClassifyRealCheckerResolvedComposition composes Classify with the real Checker over
 // temp repositories. It pins the resolved-answer corner of the polarity matrix that the
@@ -64,18 +69,18 @@ func pushCompositionCases() []struct {
 		unresolved = "git push with an unresolved destination"
 	)
 	onMain := func(t *testing.T) string {
-		root := gcTopicRepo(t)
+		root := topicRepo(t)
 		runGit(t, root, "checkout", "-q", "main")
 		return root
 	}
 	detached := func(t *testing.T) string {
-		root := gcTopicRepo(t)
+		root := topicRepo(t)
 		runGit(t, root, "checkout", "-q", "--detach", "HEAD")
 		return root
 	}
 	mode := func(name string) func(t *testing.T) string {
 		return func(t *testing.T) string {
-			root := gcTopicRepo(t)
+			root := topicRepo(t)
 			runGit(t, root, "config", "push.default", name)
 			return root
 		}
@@ -91,7 +96,7 @@ func pushCompositionCases() []struct {
 			runGit(t, root, "config", "bench.allowProtectedPush", "true")
 			return root
 		}, "git push origin main", toDefault},
-		{"bare push on a topic branch with push.default unset allows", gcTopicRepo, "git push", ""},
+		{"bare push on a topic branch with push.default unset allows", topicRepo, "git push", ""},
 		{"bare push on a topic branch under current allows", mode("current"), "git push", ""},
 		{"bare push on the default branch blocks", onMain, "git push", toDefault},
 		{"bare push under upstream reads the upstream branch", mode("upstream"), "git push", toDefault},
@@ -168,29 +173,6 @@ func realChecker() Checker {
 		CheckedOut:      func() (string, bool) { return git.CheckedOutName(".") },
 		BareDestination: func() (string, bool) { return git.BarePushDestination(".") },
 	}
-}
-
-// gcTopicRepo builds a temp repo whose checked-out branch is "topic" and whose topic
-// branch tracks origin/main, so git.ResolvedDefault resolves "main" and the bare-push
-// destination has both a checked-out answer and an upstream answer. The remote-tracking
-// ref is written by hand, so the fixture needs no second repository and no network.
-func gcTopicRepo(t *testing.T) string {
-	t.Helper()
-	root := t.TempDir()
-	runGit(t, root, "init", "-q", "-b", "main")
-	runGit(t, root, "config", "user.email", "test@example.invalid")
-	runGit(t, root, "config", "user.name", "Test")
-	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("base\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	runGit(t, root, "add", ".")
-	runGit(t, root, "commit", "-qm", "initial")
-	runGit(t, root, "checkout", "-q", "-b", "topic")
-	runGit(t, root, "remote", "add", "origin", "https://example.invalid/r.git")
-	runGit(t, root, "update-ref", "refs/remotes/origin/main", "HEAD")
-	runGit(t, root, "config", "branch.topic.remote", "origin")
-	runGit(t, root, "config", "branch.topic.merge", "refs/heads/main")
-	return root
 }
 
 func runGit(t *testing.T, root string, args ...string) {

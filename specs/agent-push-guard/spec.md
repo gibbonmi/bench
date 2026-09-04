@@ -158,7 +158,7 @@ Line: opus / medium. A guidance sentence steers every session that reads it, and
 | PG25 | 22 | a bare `git push` on a detached `HEAD` returns the unresolved label | `internal/gitguard/checker_junction_test.go` (`TestClassifyRealCheckerResolvedComposition`) | a rule that reads `HEAD` as a name allows it |
 | PG26 | 23 | a bare `git push` with `push.default` set to `matching` returns the unresolved label | `internal/gitguard/checker_junction_test.go` (`TestClassifyRealCheckerResolvedComposition`) | a rule that reads the checked-out name allows the broadcast |
 | PG27 | 23 | a bare `git push` with `push.default` set to `nothing` returns the unresolved label | `internal/gitguard/checker_junction_test.go` (`TestClassifyRealCheckerResolvedComposition`) | a rule that reads the checked-out name allows the empty push |
-| PG28 | 24 | the block message for the unresolved label ends with the sentence `Name the remote and the branch: git push <remote> <branch>.` | `internal/gitguard/gitguard_test.go` (`TestBlockMessageNamesLabel`) extended | a generic message leaves the agent without the fix |
+| PG28 | 24 | the block message for the unresolved label ends with the sentence `Name the remote and the branch: git push <remote> <branch>.` | `internal/gitguard/gitguard_test.go` (`TestBlockMessageCarriesUnresolvedAdvice`) | a generic message leaves the agent without the fix |
 | PG29 | 25 | `git push origin` with no refspec on a checked-out `main` returns the default-branch label | `internal/gitguard/checker_junction_test.go` (`TestClassifyRealCheckerResolvedComposition`) | a rule that reads `origin` as a refspec allows it |
 | PG30 | 26 | a bare `git push` outside a repository returns the unresolved label | `internal/gitguard/checker_junction_test.go` (`TestClassifyRealCheckerResolvedComposition`) with a non-repository directory | a fail-open probe allows it |
 | PG31 | 27 | a bare `git push` with a stub `git` that sleeps past the probe bound returns the unresolved label | `internal/gitguard/checker_junction_test.go` (`TestClassifyRealCheckerTimeoutComposition`) | a probe without a bound hangs the guard |
@@ -172,6 +172,11 @@ Line: opus / medium. A guidance sentence steers every session that reads it, and
 | PG39 | 28 | `git push origin HEAD` with a fake checked-out fact that reports no branch returns the unresolved label | `internal/gitguard/verdict_test.go` (`TestClassifyVerdicts`) | a rule that reads `HEAD` as a name allows it |
 | PG40 | 28 | `git push origin HEAD` on a detached `HEAD` in a temp repository returns the unresolved label | `internal/gitguard/checker_junction_test.go` (`TestClassifyRealCheckerResolvedComposition`) | an adapter that passes the literal `HEAD` through allows it |
 | PG41 | 34 | the canary fixture reports the anchor diagnostic when its mutation replaces the sentence | the new canary fixture under the workflow-guidance-anchors family | a registry row without a fixture never proves it bites |
+| PG42 | 11 | `git -C /other push origin topic` returns the unresolved label | `internal/gitguard/verdict_test.go` (`TestClassifyVerdicts`) | a scanner that skips the global options grades the push against the current directory and allows it |
+| PG43 | 11 | `git --git-dir=/x push origin topic` and `git --work-tree=/x push origin topic` each return the unresolved label | `internal/gitguard/verdict_test.go` (`TestClassifyVerdicts`) | a rule that reads only `-C` allows the other two spellings |
+| PG44 | 11 | `xargs git push` with a resolvable topic destination returns the unresolved label | `internal/gitguard/verdict_test.go` (`TestClassifyVerdicts`) | a push rule that ignores the xargs prefix allows a destination that arrives on stdin |
+| PG45 | 8 | `git push origin @` returns the default-branch label on a checked-out `main`, and the allow verdict on a checked-out `topic` | `internal/gitguard/verdict_test.go` (`TestClassifyVerdicts`) | a rule that reads only the literal `HEAD` allows the `@` synonym |
+| PG46 | 5 | `git push origin heads/main` returns the default-branch label, and `git push origin heads/topic` returns the allow verdict | `internal/gitguard/verdict_test.go` (`TestClassifyVerdicts`) | a rule that strips only `refs/heads/` reads `heads/main` as a name other than the branch and allows it |
 
 ### Edge inventory
 
@@ -185,10 +190,13 @@ Line: opus / medium. A guidance sentence steers every session that reads it, and
 - Partial implementation: a build that ships the destination rule without the bare rule reds PG21 to PG27.
 - Audience: the classifier serves every repository that links the kit, and the guidance sentence serves every session in a linked repository.
 - Package-variable swaps: no test swaps a package variable; the fakes go through the injected `Checker`.
+- Redirected repositories: a global `-C`, `--git-dir`, or `--work-tree` names a repository other than the one the facts describe. The push then denies with the unresolved label (PG42, PG43). Every other verb grades the tokens alone and keeps its verdict.
+- Destination on stdin: an `xargs` prefix appends the destination after the analyzer reads the tokens. The push then denies with the unresolved label (PG44).
+- A remote named like a branch, as in `git push main`: the first free arg is always the remote. The command then takes the bare rule, and `git push origin main` stays the denied caller. The `TestClassifyVerdicts` row `push to a remote named like the default branch` pins it.
+
+**Won't handle** — `--force-if-includes` — it only adds a safety check, and `git push --force-if-includes origin topic` stays an allowed caller.
 
 **Won't handle** — `--follow-tags` — it adds only annotated tags reachable from the pushed commits, and `git push --follow-tags origin topic` stays an allowed caller.
-
-**Won't handle** — a remote named like a branch, as in `git push main` — the first free arg is always the remote, and `git push origin main` stays the denied caller.
 
 **Won't handle** — a force or delete clause in the pre-push hook — the hook guards a human pusher, and `git push origin topic` stays its surviving caller.
 
@@ -205,6 +213,7 @@ Line: opus / medium. A guidance sentence steers every session that reads it, and
 - `internal/gitguard/`
 - `internal/git/push_destination.go`
 - `internal/git/push_destination_test.go`
+- `internal/gittest/gittest.go`
 - `cmd/bench/main.go`
 - `cmd/bench/main_test.go`
 - `.bench/BENCH-reference.md`
@@ -249,6 +258,8 @@ Flagged additions beyond the decision source:
 Build decisions recorded for reviewer veto:
 
 - Row PG31 names a probe bound that the destination probes do not carry. Only the ref probe behind `RefResolves` and `BranchExists` has a timeout. `Output` and `OK` run git with no bound. The row passes because the sleeping stub exits with empty output, and the destination fact then reports no branch. A git that never exits blocks the guard on the push path. A bound on `Output` and `OK` changes every caller in the git package, so it is a reviewer decision and is not in this build.
+- A push that carries a global `-C`, `--git-dir`, or `--work-tree` denies with the unresolved class. The push facts come from the process working directory, and a redirected push names another repository, so the guard cannot grade it. The advice sentence gains a first clause that names the fix: run the push from inside the repository. Only the push rule reads the redirect; every other verb grades the tokens alone and keeps its verdict.
+- One exported builder, `gittest.TopicTrackingRepo`, owns the topic-tracking fixture. Three test packages built the same repository by hand, and the build collapsed the copies into the shared harness.
 - One exported helper, `git.CheckedOutName`, owns the mapping from the checked-out probe to a branch name. The wire ticket wrote that mapping three times, and the build collapsed the copies before review.
 
 Source-sentence-to-row table:

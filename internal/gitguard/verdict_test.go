@@ -56,6 +56,11 @@ func TestClassifyVerdicts(t *testing.T) {
 		{"push tag sharing the branch name allowed", "git push origin refs/tags/main", pushMain, ""},
 		{"push HEAD on a topic allowed", "git push origin HEAD", pushMain, ""},
 		{"push HEAD on the default branch", "git push origin HEAD", pushOnMain, "git push to the default branch"},
+		{"push at-sign on a topic allowed", "git push origin @", pushMain, ""},
+		{"push at-sign on the default branch", "git push origin @", pushOnMain, "git push to the default branch"},
+		{"push the heads-prefixed default", "git push origin heads/main", pushMain, "git push to the default branch"},
+		{"push a heads-prefixed topic allowed", "git push origin heads/topic", pushMain, ""},
+		{"push a remote-tracking ref of the default allowed", "git push origin refs/remotes/origin/main", pushMain, ""},
 		{"push HEAD with no checked-out branch", "git push origin HEAD", pushDetached, "git push with an unresolved destination"},
 		{"push two refspecs, one of them the default", "git push origin topic main", pushMain, "git push to the default branch"},
 		{"push the master default", "git push origin master", pushMaster, "git push to the default branch"},
@@ -86,6 +91,12 @@ func TestClassifyVerdicts(t *testing.T) {
 		{"push bare with no facts", "git push", refYes, "git push with an unresolved destination"},
 		{"push bare to a topic destination allowed", "git push", pushBareTopic, ""},
 		{"push bare to the default destination", "git push", pushBareMain, "git push to the default branch"},
+		// A push that names another repository, or that reads its destination from
+		// stdin, states a destination this analyzer cannot grade. Both fail closed.
+		{"push under a global -C", "git -C /other push origin topic", pushMain, "git push with an unresolved destination"},
+		{"push under a global --git-dir", "git --git-dir=/x push origin topic", pushMain, "git push with an unresolved destination"},
+		{"push under a global --work-tree", "git --work-tree=/x push origin topic", pushMain, "git push with an unresolved destination"},
+		{"xargs push blocks", "xargs git push", pushBareTopic, "git push with an unresolved destination"},
 
 		// unconditional destructive verbs
 		{"rebase", "git rebase main", refYes, "history rewrite"},

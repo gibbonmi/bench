@@ -10,10 +10,12 @@ import (
 // carve-outs for harness-delegate scratch (worktree-* branches, .claude/worktrees/
 // paths). The two verdicts that need repo truth (checkout ref-ness, forced-creation
 // clobber) and the push destination rule call through chk; every other verdict is pure.
-func classify(sub string, args []string, viaXargs bool, chk Checker) string {
+// Only the push rule reads redirected, because only the push facts come from the
+// process working directory; every other verdict grades the tokens alone.
+func classify(sub string, args []string, viaXargs, redirected bool, chk Checker) string {
 	switch sub {
 	case "push":
-		if key := pushVerdict(args, chk); key != "" {
+		if key := pushVerdict(args, viaXargs, redirected, chk); key != "" {
 			return denyLabels[key]
 		}
 	case "reset":
@@ -81,8 +83,14 @@ func classify(sub string, args []string, viaXargs bool, chk Checker) string {
 // deletion, and the three broadcast forms stay the reviewer's. The lexical classes are
 // read first, then the destination of every refspec. No option exempts a push, so
 // `--dry-run` reaches the same verdict as the real run. The rule fails closed: an
-// unresolvable default branch or destination denies with the unresolved key.
-func pushVerdict(args []string, chk Checker) string {
+// unresolvable default branch or destination denies with the unresolved key. Two states
+// leave the destination unreadable before any token is graded: a redirect names a
+// repository other than the one the facts describe, and an xargs prefix appends the
+// destination from stdin. Both deny first.
+func pushVerdict(args []string, viaXargs, redirected bool, chk Checker) string {
+	if viaXargs || redirected {
+		return "push-unresolved"
+	}
 	free := pushFreeArgs(args)
 	var refspecs []string
 	if len(free) > 1 {
@@ -192,15 +200,16 @@ func pushDeletes(args, refspecs []string) bool {
 
 // pushDestination resolves the branch a refspec updates, and whether it resolved. A
 // `src:dst` refspec targets `dst` and a bare `src` targets itself, so the source name
-// never decides the verdict. `HEAD` targets the checked-out branch, and a detached HEAD
-// leaves it unresolved. A `refs/heads/` prefix is stripped; a destination under any
-// other `refs/` namespace names no branch and is never protected.
+// never decides the verdict. `HEAD`, and its `@` synonym, target the checked-out branch,
+// and a detached HEAD leaves it unresolved. Git reads a bare `heads/` prefix as
+// `refs/heads/`, so both spellings of the full ref strip to the branch name; a
+// destination under any other `refs/` namespace names no branch and is never protected.
 func pushDestination(spec string, chk Checker) (string, bool) {
 	dest := strings.TrimPrefix(spec, "+")
 	if i := strings.Index(dest, ":"); i >= 0 {
 		dest = dest[i+1:]
 	}
-	if dest == "HEAD" {
+	if dest == "HEAD" || dest == "@" {
 		return chk.checkedOut()
 	}
 	if strings.HasPrefix(dest, "refs/heads/") {
@@ -208,6 +217,9 @@ func pushDestination(spec string, chk Checker) (string, bool) {
 	}
 	if strings.HasPrefix(dest, "refs/") {
 		return "", true
+	}
+	if strings.HasPrefix(dest, "heads/") {
+		return strings.TrimPrefix(dest, "heads/"), true
 	}
 	return dest, true
 }

@@ -2,25 +2,13 @@ package git
 
 import (
 	"path/filepath"
-	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
-// newTopicRepo initialises a repo whose checked-out branch is topic and whose topic
-// branch tracks origin/main. The remote-tracking ref is written by hand, so the test
-// needs no second repository and no network.
-func newTopicRepo(t *testing.T) string {
-	t.Helper()
-	root := newRepo(t)
-	runGit(t, root, "branch", "-M", "main")
-	head := strings.TrimSpace(runGit(t, root, "rev-parse", "HEAD"))
-	runGit(t, root, "checkout", "-b", "topic")
-	runGit(t, root, "remote", "add", "origin", "https://example.invalid/r.git")
-	runGit(t, root, "update-ref", "refs/remotes/origin/main", head)
-	runGit(t, root, "config", "branch.topic.remote", "origin")
-	runGit(t, root, "config", "branch.topic.merge", "refs/heads/main")
-	return root
-}
+// newTopicRepo adapts the shared topic-tracking fixture to the signature these rows take.
+func newTopicRepo(t *testing.T) string { return gittest.TopicTrackingRepo(t) }
 
 // TestCheckedOutName pins the helper the guard and the destination both compose: a named
 // branch answers, and a detached head answers no branch rather than the literal "HEAD"
