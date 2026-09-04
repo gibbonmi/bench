@@ -8,6 +8,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/subprocess"
@@ -429,7 +430,16 @@ func releaseRegistration(root, target string) error {
 // segment the recorder read, so the writer and the drop never disagree. A target that
 // names no assignment drops nothing. The drop error goes the way the recorder's does,
 // because an advisory board never changes a retirement's verdict.
+//
+// The retired assignment's handoff section leaves here too, beside the record drop, so
+// land, release, and clean all reach one removal. The section key is read before
+// retireCheckout runs, because the retirement mutates the record the key comes from. A
+// document that carries no such section is left as it is.
 func executeCleanup(j joins, root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
+	var request string
+	if plan.assignment != nil {
+		request = plan.assignment.Request
+	}
 	plan, err := retireCheckout(j, root, plan, checkpoint, fault)
 	if err != nil {
 		return plan, err
@@ -437,7 +447,36 @@ func executeCleanup(j joins, root string, plan CleanupPlan, checkpoint func(stri
 	if id, ok := poolkey.SplitAssignmentSegment(filepath.Base(plan.Target)); ok {
 		_ = census.Drop(j.home, root, id)
 	}
+	if path := handoffDocumentPath(root); request != "" && fileExists(path) {
+		_ = handoffdoc.RemoveSection(path, request)
+	}
 	return plan, nil
+}
+
+// handoffFile names the session handoff document relative to the checkout that owns it.
+//
+// internal/status exports the same name, and that package imports this one, so the name
+// cannot be read from there. The single source belongs in internal/handoffdoc, which both
+// packages may import; adding it there is outside this change's fence.
+const handoffFile = "capture/session-handoff.md"
+
+// fileExists reports whether path names a file the retirement may rewrite. A repository
+// with no handoff document keeps none: a removal that scaffolded one would leave an
+// untracked file behind every release.
+func fileExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.Mode().IsRegular()
+}
+
+// handoffDocumentPath resolves the document a retirement writes. An ignored handoff lives
+// in the primary checkout alone, so a retirement run from a worktree still reaches the one
+// document; a tracked one is per-checkout and stays beside its root.
+func handoffDocumentPath(root string) string {
+	noteRoot, _, err := git.LocalNoteRoot(root, handoffFile)
+	if err != nil {
+		noteRoot = root
+	}
+	return filepath.Join(noteRoot, filepath.FromSlash(handoffFile))
 }
 
 // retireCheckout performs the removal itself: the recovery preservation, the ignored
