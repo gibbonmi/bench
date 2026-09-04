@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/learnings"
 )
 
@@ -508,6 +509,85 @@ func TestInitReentryPreservesProjectInventoryInSpecialPath(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(root, "tests", "canary", "example")); !os.IsNotExist(err) {
 		t.Fatalf("retired seed directory exists or stat failed unexpectedly: %v", err)
+	}
+}
+
+// initRepo makes a git repo, points BENCH_KIT at this checkout, and enters the repo. The
+// Init tests all need this same three-step preamble before they can call Init.
+func initRepo(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	if out, err := exec.Command("git", "-C", root, "init", "-q").CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v\n%s", err, out)
+	}
+	t.Setenv("BENCH_KIT", filepath.Clean(filepath.Join(mustGetwd(t), "..", "..")))
+	t.Chdir(root)
+	return root
+}
+
+func runInit(t *testing.T) {
+	t.Helper()
+	var stdout, stderr bytes.Buffer
+	if code := Init(nil, &stdout, &stderr); code != 0 {
+		t.Fatalf("Init exit = %d, stderr:\n%s", code, stderr.String())
+	}
+}
+
+// TestInitIgnoresLocalCaptureFiles covers HS24. A linked repo must not track the capture
+// inboxes or the handoff, so init adds them to .gitignore. The re-run row is the point: a
+// blind append duplicates the lines every time the reviewer runs init again. The partial
+// row proves the check is per line rather than per file, so a repo that already ignores one
+// entry gains only the other two.
+func TestInitIgnoresLocalCaptureFiles(t *testing.T) {
+	cases := []struct {
+		name     string
+		existing string
+		want     string
+	}{
+		{
+			name: "absent file",
+			want: "capture/session-handoff.md\ncapture/IDEAS.md\ncapture/learnings.md\n",
+		},
+		{
+			name:     "no trailing newline",
+			existing: "dist/",
+			want:     "dist/\ncapture/session-handoff.md\ncapture/IDEAS.md\ncapture/learnings.md\n",
+		},
+		{
+			name:     "one entry already present",
+			existing: "capture/IDEAS.md\n",
+			want:     "capture/IDEAS.md\ncapture/session-handoff.md\ncapture/learnings.md\n",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			root := initRepo(t)
+			path := filepath.Join(root, ".gitignore")
+			if tc.existing != "" {
+				if err := os.WriteFile(path, []byte(tc.existing), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			runInit(t)
+			if got := readFile(t, path); got != tc.want {
+				t.Fatalf(".gitignore = %q, want %q", got, tc.want)
+			}
+			runInit(t)
+			if got := readFile(t, path); got != tc.want {
+				t.Fatalf("second init rewrote .gitignore to %q, want byte-identical %q", got, tc.want)
+			}
+		})
+	}
+}
+
+// TestLocalCaptureIgnoreLinesMatchTheLandingPredicate keeps the list init writes and the
+// predicate the landing composition reads from drifting apart. An entry init ignores that
+// landing does not recognize would be dropped from a landing as an unexplained ignored path.
+func TestLocalCaptureIgnoreLinesMatchTheLandingPredicate(t *testing.T) {
+	for _, line := range localCaptureIgnoreLines {
+		if !landing.LocalCapturePath(line) {
+			t.Errorf("init ignores %q, which landing.LocalCapturePath does not recognize", line)
+		}
 	}
 }
 
