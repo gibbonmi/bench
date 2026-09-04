@@ -191,6 +191,15 @@ func TestHandoffShapeNamesTheSectionGrammar(t *testing.T) {
 			t.Errorf("the Shape text names no %q, so it does not describe the section grammar", token)
 		}
 	}
+
+	// The per-section age rule has no symbol to read, so this expectation is authored.
+	// It grades the one claim checkHandoffShape cannot see: a Shape that still dated the
+	// whole file by its last write stays byte-equal to the constant and passes every
+	// other check here. Recorded red against that sentence.
+	const perSectionAge = "commits past its recorded tip"
+	if !strings.Contains(handoff.ShapeSection, perSectionAge) {
+		t.Errorf("the Shape text does not say %q, so it dates the file rather than each section", perSectionAge)
+	}
 }
 
 // handoffPkgDir holds the consumer package. prefixTablePkgDir and prefixTableFile hold the

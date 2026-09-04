@@ -8,7 +8,9 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/learnings"
+	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -74,8 +76,8 @@ func Init(args []string, stdout, stderr io.Writer) int {
 // landing.LocalCapturePath is the matching predicate; the adopt tests hold the two lists in
 // agreement, so a new capture file cannot be ignored here and stay unrecognized there.
 var localCaptureIgnoreLines = []string{
-	"capture/session-handoff.md",
-	"capture/IDEAS.md",
+	handoffdoc.DocumentPath,
+	roadmap.IdeasFile,
 	learnings.JournalPath,
 }
 

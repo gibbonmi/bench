@@ -32,10 +32,11 @@ const ShapeSection = "One section per live assignment, each rewritten in full by
 	"holds what is true now for that assignment, including anything uncommitted. **Next\n" +
 	"command** holds the exact harness-native invocation, not a description of it.\n" +
 	"\n" +
-	"The handoff carries no date of its own. `bench status` computes its age from the\n" +
-	"file's last write and reports a `handoff` row once anything has landed since.\n" +
-	"That write is the commit that carried the file, or the file's own timestamp\n" +
-	"when git ignores it. Where this document and the tree disagree, the tree wins.\n"
+	"The handoff carries no date of its own. `bench status` dates each assignment section\n" +
+	"by the branch commits past its recorded tip. It dates the `## main` section by the\n" +
+	"file's last write. That write is the commit that carried the file, or the file's own\n" +
+	"timestamp when git ignores it. Where this document and the tree disagree, the tree\n" +
+	"wins.\n"
 
 // scaffoldGuidance is rendered between the header block and the "## State"
 // heading only while State has no content. It is what the first session in
