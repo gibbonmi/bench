@@ -11,6 +11,33 @@ var (
 	refNo  = Checker{RefResolves: func(string) bool { return false }, BranchExists: func(string) bool { return true }}
 )
 
+// pushFact builds one injected push fact. An empty name means the fact reports no
+// value, the way the real adapters report a detached HEAD, an unresolvable default
+// branch, or a broadcast `push.default`.
+func pushFact(name string) func() (string, bool) {
+	return func() (string, bool) { return name, name != "" }
+}
+
+// pushChk extends the refYes world with the three push facts, so each push row states
+// its default branch, its checked-out branch, and its bare destination in that order.
+func pushChk(defaultBranch, checkedOut, bare string) Checker {
+	chk := refYes
+	chk.DefaultBranch = pushFact(defaultBranch)
+	chk.CheckedOut = pushFact(checkedOut)
+	chk.BareDestination = pushFact(bare)
+	return chk
+}
+
+var (
+	pushMain      = pushChk("main", "topic", "")
+	pushOnMain    = pushChk("main", "main", "")
+	pushDetached  = pushChk("main", "", "")
+	pushMaster    = pushChk("master", "topic", "")
+	pushNoDefault = pushChk("", "topic", "topic")
+	pushBareTopic = pushChk("main", "topic", "topic")
+	pushBareMain  = pushChk("main", "main", "main")
+)
+
 // TestClassifyVerdicts walks each verb's option and carve-out matrix through the full
 // tokenize→scan→classify path, pinning what the 79-case shell matrix samples.
 func TestClassifyVerdicts(t *testing.T) {
@@ -20,8 +47,58 @@ func TestClassifyVerdicts(t *testing.T) {
 		chk  Checker
 		want string
 	}{
+		// push: the destination rule, then the lexical deny classes
+		{"push topic allowed", "git push origin topic", pushMain, ""},
+		{"push default branch", "git push origin main", pushMain, "git push to the default branch"},
+		{"push HEAD colon default", "git push origin HEAD:main", pushMain, "git push to the default branch"},
+		{"push source colon topic allowed", "git push origin main:topic", pushMain, ""},
+		{"push full ref of the default", "git push origin refs/heads/main", pushMain, "git push to the default branch"},
+		{"push tag sharing the branch name allowed", "git push origin refs/tags/main", pushMain, ""},
+		{"push HEAD on a topic allowed", "git push origin HEAD", pushMain, ""},
+		{"push HEAD on the default branch", "git push origin HEAD", pushOnMain, "git push to the default branch"},
+		{"push at-sign on a topic allowed", "git push origin @", pushMain, ""},
+		{"push at-sign on the default branch", "git push origin @", pushOnMain, "git push to the default branch"},
+		{"push the heads-prefixed default", "git push origin heads/main", pushMain, "git push to the default branch"},
+		{"push a heads-prefixed topic allowed", "git push origin heads/topic", pushMain, ""},
+		{"push a remote-tracking ref of the default allowed", "git push origin refs/remotes/origin/main", pushMain, ""},
+		{"push HEAD with no checked-out branch", "git push origin HEAD", pushDetached, "git push with an unresolved destination"},
+		{"push two refspecs, one of them the default", "git push origin topic main", pushMain, "git push to the default branch"},
+		{"push the master default", "git push origin master", pushMaster, "git push to the default branch"},
+		{"push main under a master default allowed", "git push origin main", pushMaster, ""},
+		{"push with no resolvable default", "git push origin topic", pushNoDefault, "git push with an unresolved destination"},
+		{"push --dry-run is no exemption", "git push --dry-run origin main", pushMain, "git push to the default branch"},
+		{"push -f", "git push -f origin topic", pushMain, "git push --force"},
+		{"push --force", "git push --force origin topic", pushMain, "git push --force"},
+		{"push force in a short cluster", "git push -fu origin topic", pushMain, "git push --force"},
+		{"push --force-with-lease", "git push --force-with-lease origin topic", pushMain, "git push --force"},
+		{"push --force-with-lease with a value", "git push --force-with-lease=topic origin topic", pushMain, "git push --force"},
+		{"push --force-if-includes is not force", "git push --force-if-includes origin topic", pushMain, ""},
+		{"push a plus refspec", "git push origin +topic", pushMain, "git push --force"},
+		{"push a plus alone", "git push origin +", pushMain, "git push --force"},
+		{"push --delete", "git push --delete origin topic", pushMain, "git push --delete"},
+		{"push -d", "git push -d origin topic", pushMain, "git push --delete"},
+		{"push an empty-source refspec", "git push origin :topic", pushMain, "git push --delete"},
+		{"push a colon alone", "git push origin :", pushMain, "git push --delete"},
+		{"push --all", "git push --all origin", pushMain, "git push --all"},
+		{"push --mirror", "git push --mirror origin", pushMain, "git push --mirror"},
+		{"push --tags", "git push --tags origin", pushMain, "git push --tags"},
+		{"push -o skips its value", "git push -o ci.skip origin topic", pushMain, ""},
+		{"push --repo skips its value", "git push --repo other origin topic", pushMain, ""},
+		{"push refspec after a double dash", "git push origin -- main", pushMain, "git push to the default branch"},
+		// The first free arg is always the remote, never a refspec, so a remote spelled
+		// like the default branch takes the bare rule.
+		{"push to a remote named like the default branch", "git push main", pushBareTopic, ""},
+		{"push bare with no facts", "git push", refYes, "git push with an unresolved destination"},
+		{"push bare to a topic destination allowed", "git push", pushBareTopic, ""},
+		{"push bare to the default destination", "git push", pushBareMain, "git push to the default branch"},
+		// A push that names another repository, or that reads its destination from
+		// stdin, states a destination this analyzer cannot grade. Both fail closed.
+		{"push under a global -C", "git -C /other push origin topic", pushMain, "git push with an unresolved destination"},
+		{"push under a global --git-dir", "git --git-dir=/x push origin topic", pushMain, "git push with an unresolved destination"},
+		{"push under a global --work-tree", "git --work-tree=/x push origin topic", pushMain, "git push with an unresolved destination"},
+		{"xargs push blocks", "xargs git push", pushBareTopic, "git push with an unresolved destination"},
+
 		// unconditional destructive verbs
-		{"push", "git push", refYes, "git push"},
 		{"rebase", "git rebase main", refYes, "history rewrite"},
 		{"reset --hard", "git reset --hard", refYes, "git reset --hard"},
 		{"reset --soft allowed", "git reset --soft HEAD~1", refYes, ""},
@@ -107,13 +184,15 @@ func TestClassifyVerdicts(t *testing.T) {
 
 		// non-command git words, prefixes, wrappers
 		{"echo git push allowed", "echo git push", refYes, ""},
-		{"env prefix", "env git push", refYes, "git push"},
+		{"env prefix", "env git push origin main", pushMain, "git push to the default branch"},
 		{"timeout prefix", "timeout 5 git reset --hard", refYes, "git reset --hard"},
-		{"command prefix", "command git push", refYes, "git push"},
-		{"nohup prefix", "nohup git push", refYes, "git push"},
-		{"wrapper -lc", "bash -lc 'git push'", refYes, "git push"},
-		{"later separator blocks", "git status && git push", refYes, "git push"},
-		{"newline block blocks", "git add -A\ngit commit -m wip\ngit push origin main", refYes, "git push"},
+		{"command prefix", "command git push origin main", pushMain, "git push to the default branch"},
+		{"nohup prefix", "nohup git push origin main", pushMain, "git push to the default branch"},
+		{"wrapper -c", "bash -c 'git push origin main'", pushMain, "git push to the default branch"},
+		{"wrapper -lc", "bash -lc 'git push origin main'", pushMain, "git push to the default branch"},
+		{"later separator blocks", "git status && git push origin main", pushMain, "git push to the default branch"},
+		{"allowed push composes with a follow-on", "git push origin topic && ls", pushMain, ""},
+		{"newline block blocks", "git add -A\ngit commit -m wip\ngit push origin main", pushMain, "git push to the default branch"},
 		{"clean newline flow allowed", "git add -A\ngit status --short\ngit commit -m wip", refYes, ""},
 	}
 	for _, c := range cases {

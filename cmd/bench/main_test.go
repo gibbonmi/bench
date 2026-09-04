@@ -678,16 +678,27 @@ func TestGuardBenchFollowOnWithoutPoolPrefixResolvesNoRoot(t *testing.T) {
 	}
 }
 
+// TestGuardGitBlockAllow pins the guard subcommand's two exits over the push rule: a
+// forced push blocks with the message on stderr (PG35), and a push that names a topic
+// branch exits 0. The allow case needs a repository whose default branch resolves, so it
+// t.Chdir's into a temp repo the way the other cwd-reading tests here do.
 func TestGuardGitBlockAllow(t *testing.T) {
+	t.Chdir(gittest.TopicTrackingRepo(t))
 	var errb bytes.Buffer
-	block := `{"tool_input":{"command":"git push"}}`
+	block := `{"tool_input":{"command":"git push --force"}}`
 	if code := guardGit(nil, strings.NewReader(block), io.Discard, &errb); code != 2 {
 		t.Errorf("block exit = %d, want 2", code)
 	}
 	if !strings.Contains(errb.String(), "BLOCKED:") {
 		t.Errorf("block did not emit BLOCKED on stderr: %q", errb.String())
 	}
-	for _, in := range []string{`{"tool_input":{"command":"git status"}}`, "not json", `{"tool_input":{"command":""}}`} {
+	for _, in := range []string{
+		`{"tool_input":{"command":"git status"}}`,
+		"not json",
+		`{"tool_input":{"command":""}}`,
+		`{"tool_input":{"command":"git push origin topic"}}`,
+		`{"tool_input":{"command":"git push origin HEAD"}}`,
+	} {
 		if code := guardGit(nil, strings.NewReader(in), io.Discard, io.Discard); code != 0 {
 			t.Errorf("allow exit for %q = %d, want 0", in, code)
 		}

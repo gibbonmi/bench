@@ -1,7 +1,7 @@
 [
   {
     "path": "internal/gitguard/gitguard.go",
-    "old": "type Checker struct {\n\tRefResolves  func(string) bool\n\tBranchExists func(string) bool\n}",
-    "new": "type Checker struct {\n\tRefResolves  func(string) bool\n\tBranchExists func(string) bool\n}\n\n// Auditor is a port-shaped value this fixture plants and injects while leaving it out\n// of the registry \u2014 the unregistered-port red the check exists to raise.\ntype Auditor struct {\n\tAudit func(string) bool\n}\n\nfunc auditVerdict(command string, auditor Auditor) bool { return auditor.Audit(command) }"
+    "old": "type Checker struct {\n\tRefResolves     func(string) bool\n\tBranchExists    func(string) bool\n\tDefaultBranch   func() (string, bool)\n\tCheckedOut      func() (string, bool)\n\tBareDestination func() (string, bool)\n}",
+    "new": "type Checker struct {\n\tRefResolves     func(string) bool\n\tBranchExists    func(string) bool\n\tDefaultBranch   func() (string, bool)\n\tCheckedOut      func() (string, bool)\n\tBareDestination func() (string, bool)\n}\n\n// Auditor is a port-shaped value this fixture plants and injects while leaving it out\n// of the registry \u2014 the unregistered-port red the check exists to raise.\ntype Auditor struct {\n\tAudit func(string) bool\n}\n\nfunc auditVerdict(command string, auditor Auditor) bool { return auditor.Audit(command) }"
   }
 ]

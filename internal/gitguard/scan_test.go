@@ -12,10 +12,10 @@ func TestScanWrapperDepthAndGlobalOpts(t *testing.T) {
 		cmd  string
 		want string
 	}{
-		{"one-level wrapper scanned", `bash -c 'git push'`, "git push"},
+		{"one-level wrapper scanned", `bash -c 'git push'`, "git push with an unresolved destination"},
 		{"nested wrapper not re-expanded", `bash -c 'sh -c "git push"'`, ""},
 		{"global -C with value then verb", "git -C /tmp reset --hard", "git reset --hard"},
-		{"global --git-dir= form then verb", "git --git-dir=/x push", "git push"},
+		{"global --git-dir= form then verb", "git --git-dir=/x push", "git push with an unresolved destination"},
 		{"global opts, benign verb allowed", "git -C . status --short", ""},
 	}
 	for _, c := range cases {

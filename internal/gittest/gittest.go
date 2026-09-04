@@ -68,6 +68,23 @@ func RepoOnBranch(t testing.TB, branch string) string {
 	return root
 }
 
+// TopicTrackingRepo initializes a repository whose checked-out branch is "topic" and
+// whose "topic" branch tracks "origin/main". So the default branch resolves to "main",
+// and a bare push has both a checked-out answer and an upstream answer. It returns the
+// repository root. The remote-tracking ref is written by hand, so the fixture needs no
+// second repository and no network.
+func TopicTrackingRepo(t testing.TB) string {
+	t.Helper()
+	root := RepoOnBranch(t, "main")
+	run(t, root, "commit", "-qm", "initial", "--allow-empty")
+	run(t, root, "checkout", "-q", "-b", "topic")
+	run(t, root, "remote", "add", "origin", "https://example.invalid/r.git")
+	run(t, root, "update-ref", "refs/remotes/origin/main", "HEAD")
+	run(t, root, "config", "branch.topic.remote", "origin")
+	run(t, root, "config", "branch.topic.merge", "refs/heads/main")
+	return root
+}
+
 // FIFOWorktreeAdmin plants a writerless FIFO gitdir under the real repository's common directory.
 func FIFOWorktreeAdmin(t testing.TB, root, id string) string {
 	t.Helper()

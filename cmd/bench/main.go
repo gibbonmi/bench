@@ -573,7 +573,13 @@ func guardGit(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writer) (code 
 	if command == "" {
 		return 0
 	}
-	chk := gitguard.Checker{RefResolves: git.RefResolves, BranchExists: git.BranchExists}
+	chk := gitguard.Checker{
+		RefResolves:     git.RefResolves,
+		BranchExists:    git.BranchExists,
+		DefaultBranch:   guardDefaultBranch,
+		CheckedOut:      guardCheckedOut,
+		BareDestination: guardBareDestination,
+	}
 	label := gitguard.Classify(command, chk)
 	if label == "" {
 		return 0
@@ -581,6 +587,24 @@ func guardGit(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writer) (code 
 	fmt.Fprintln(stderr, gitguard.BlockMessage(label))
 	return 2
 }
+
+// guardProbeRoot is the directory the guard's three push facts read. The guarded Bash
+// command runs in the agent's cwd, and git.RefResolves and git.BranchExists already probe
+// that directory with no root operand, so the push facts name it explicitly to reach the
+// same repository.
+const guardProbeRoot = "."
+
+// guardDefaultBranch reports the repository's default branch, from the one Go owner of
+// that fact. No answer denies the push, so the guard never guesses a protected name.
+func guardDefaultBranch() (string, bool) { return git.ResolvedDefault(guardProbeRoot) }
+
+// guardCheckedOut reports the checked-out branch, or no branch, from the one Go owner of
+// that mapping. No answer denies a `HEAD` refspec with the unresolved class.
+func guardCheckedOut() (string, bool) { return git.CheckedOutName(guardProbeRoot) }
+
+// guardBareDestination reports the branch a bare `git push` targets, from the one Go
+// owner of that fact.
+func guardBareDestination() (string, bool) { return git.BarePushDestination(guardProbeRoot) }
 
 func guardBenchFollowOn(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writer) (code int) {
 	defer func() {

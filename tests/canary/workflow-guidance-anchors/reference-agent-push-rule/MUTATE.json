@@ -1,0 +1,1 @@
+[{"path": ".bench/BENCH-reference.md", "old": "The destructive-git guard allows an agent push to any branch other than the default branch.", "new": "The destructive-git guard reviews every push."}]

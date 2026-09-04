@@ -45,7 +45,8 @@ func scan(stream shellcommand.Stream, chk Checker, allowWrapper bool) string {
 			if base == "git" {
 				sub, argsStart, ok := FindSubcommand(tokens, j+1, len(tokens))
 				if ok {
-					if reason := classify(sub, tokens[argsStart:], viaXargs, chk); reason != "" {
+					redirected := redirectsRepository(tokens[j+1 : argsStart-1])
+					if reason := classify(sub, tokens[argsStart:], viaXargs, redirected, chk); reason != "" {
 						return reason
 					}
 				}
@@ -95,6 +96,25 @@ func FindSubcommand(tokens []string, start, end int) (string, int, bool) {
 		return tokens[j], j + 1, true
 	}
 	return "", 0, false
+}
+
+// repositoryRedirects are the global options that move git off the process working
+// directory. The facts a verdict reads come from that directory, so a verdict that needs
+// repository truth cannot grade a command carrying one of these.
+var repositoryRedirects = []string{"-C", "--git-dir", "--work-tree"}
+
+// redirectsRepository reports whether the global segment between `git` and its
+// subcommand names another repository, in either the separate-word or the `=value`
+// spelling.
+func redirectsRepository(globals []string) bool {
+	for _, token := range globals {
+		for _, opt := range repositoryRedirects {
+			if token == opt || strings.HasPrefix(token, opt+"=") {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // longOptWithValue reports whether current is a `--opt=value` form of a global option
