@@ -394,8 +394,46 @@ land_override_refusal() {
   exit 1
 }
 
+# land_read_manifest reads the four bindings the installation manifest carries into
+# broker, version, platform, and digest, and refuses a manifest that omits one. The
+# route reads the manifest twice — once as found, once after a recovery rebuild — so
+# both reads apply the same completeness rule from one place.
+land_read_manifest() {
+  local manifest="$1" key value
+  broker=''
+  version=''
+  platform=''
+  digest=''
+  while IFS=$'\t' read -r key value || [[ -n "$key" ]]; do
+    case "$key" in
+      path) broker="$value" ;;
+      version) version="$value" ;;
+      platform) platform="$value" ;;
+      sha256) digest="$value" ;;
+    esac
+  done < "$manifest"
+  if [[ -z "$broker" || -z "$version" || -z "$platform" || -z "$digest" ]]; then
+    echo "bench: promotion-broker manifest at $manifest is incomplete" >&2
+    land_repair_advice
+    exit 127
+  fi
+}
+
+# land_rebuild_broker runs the stamped build at the install root once, so a manifest an
+# unstamped build wrote can become authentic without the operator leaving the landing.
+# It reads the install root only, never the current directory's repository, and it says
+# nothing about a build that fails: the re-read then finds the same unstamped version,
+# and the version refusal reports it. One pass and no recursion, so a build that keeps
+# writing an unstamped version refuses instead of looping.
+land_rebuild_broker() {
+  local install="$1" target="$2"
+  [[ -x "$install/scripts/go-build.sh" ]] || return 0
+  recover_source_go_path "$install"
+  ( cd "$install" && ./scripts/go-build.sh "$install" "$target" ) >&2 || true
+}
+
 land_route() {
-  local script bindir install manifest key value broker='' version='' platform='' digest='' installed actual
+  local script bindir install manifest broker='' version='' platform='' digest='' installed actual target
   if [[ -n "${BENCH_KIT+x}" ]]; then
     land_override_refusal BENCH_KIT
   fi
@@ -414,18 +452,16 @@ land_route() {
     land_repair_advice
     exit 127
   fi
-  while IFS=$'\t' read -r key value || [[ -n "$key" ]]; do
-    case "$key" in
-      path) broker="$value" ;;
-      version) version="$value" ;;
-      platform) platform="$value" ;;
-      sha256) digest="$value" ;;
-    esac
-  done < "$manifest"
-  if [[ -z "$broker" || -z "$version" || -z "$platform" || -z "$digest" ]]; then
-    echo "bench: promotion-broker manifest at $manifest is incomplete" >&2
-    land_repair_advice
-    exit 127
+  land_read_manifest "$manifest"
+  # An unstamped version is the build's omission, not a tamper, so it earns exactly one
+  # stamped rebuild and one re-read before the version refusal grades it again. The
+  # digest branch below keeps its unconditional refusal, because tampered bytes never
+  # recover.
+  if [[ "$version" == dev ]]; then
+    target="$broker"
+    [[ "$target" == /* ]] || target="$install/$target"
+    land_rebuild_broker "$install" "$target"
+    land_read_manifest "$manifest"
   fi
   installed="$(package_version "$install" 2>/dev/null || true)"
   if [[ -n "$installed" && "$installed" != "$version" ]]; then

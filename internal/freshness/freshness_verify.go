@@ -10,22 +10,31 @@ import (
 	"strings"
 )
 
-// Verify reports whether executable has a matching content seal for root.
+// Verify reports whether executable has a matching content seal for root, and names root
+// as the root its refusal tells the operator to rebuild in.
 func Verify(root, executable string) error {
+	return VerifyAt(root, root, executable)
+}
+
+// VerifyAt grades executable against root's sources and names repairRoot in the rebuild
+// command its refusal prints. A composed temporary tree is a sound digest root and an
+// unusable rebuild root, so a caller that grades one names the checkout an operator can
+// still rebuild in.
+func VerifyAt(root, repairRoot, executable string) error {
 	stored, err := verifiedExecutable(executable)
 	if err != nil {
-		return refusal(root, executable, err)
+		return refusal(repairRoot, executable, err)
 	}
 	sources, err := Digest(root)
 	if err != nil {
-		return refusal(root, executable, err)
+		return refusal(repairRoot, executable, err)
 	}
 	decision := Select(SelectionInput{
 		StoredSource: stored.Sources, CurrentSource: sources,
 		StoredExecutable: stored.Executable, CurrentExecutable: stored.Executable,
 	})
 	if !decision.Accepted {
-		return refusal(root, executable, errors.New(decision.Reason))
+		return refusal(repairRoot, executable, errors.New(decision.Reason))
 	}
 	return nil
 }
@@ -76,13 +85,22 @@ func Check(root, executable string) error {
 	return nil
 }
 
-func refusal(root, executable string, cause error) error {
-	return fmt.Errorf("bench binary %q is untrusted: %v; rebuild with %s", executable, cause, RebuildAction(root))
+func refusal(repairRoot, executable string, cause error) error {
+	return fmt.Errorf("bench binary %q is untrusted: %v; rebuild with %s", executable, cause, RebuildAction(repairRoot))
+}
+
+// PublishedExecutable returns the path root's build script publishes the Bench
+// executable to. A hand run, a hook, the wrapper, the landing, and every row that
+// grades a published binary all name this one path. The package that owns the seal,
+// the digest, and the rebuild sentence owns the spelling too, so a move of the
+// destination cannot leave one consumer grading a path the build never writes.
+func PublishedExecutable(root string) string {
+	return filepath.Join(root, "dist", "bench")
 }
 
 // RebuildAction returns the copy-paste command that republishes root's Bench binary.
 func RebuildAction(root string) string {
-	return fmt.Sprintf("cd %s && bash scripts/go-build.sh %s %s", shellQuote(root), shellQuote(root), shellQuote(filepath.Join(root, "dist", "bench")))
+	return fmt.Sprintf("cd %s && bash scripts/go-build.sh %s %s", shellQuote(root), shellQuote(root), shellQuote(PublishedExecutable(root)))
 }
 
 func shellQuote(value string) string {

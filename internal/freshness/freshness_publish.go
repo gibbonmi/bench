@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
@@ -21,21 +22,43 @@ const publicationBackupPattern = ".bench-publish-backup-*"
 // sealTemporaryPattern names the staging file a seal write promotes into path.
 func sealTemporaryPattern(path string) string { return filepath.Base(path) + ".tmp-*" }
 
+// brokerManifestPath names the broker manifest one publication owns inside manifestDir.
+// The directory is the caller's operand rather than a derivation of the executable's own
+// directory, because the readers — the wrapper's land route and the doctor row — look
+// beside the resolved wrapper, and an ordinary build publishes its executable elsewhere.
+func brokerManifestPath(manifestDir string) string {
+	return filepath.Join(manifestDir, brokermanifest.Name)
+}
+
 var replacePublicationFile = os.Rename
 
-// Publish replaces executable with staged and writes its matching content seal.
-func Publish(root, staged, executable string) error {
+// Publish replaces executable with staged, writes its matching content seal, and
+// publishes the broker manifest that binds the published executable at version. The
+// manifest lands in manifestDir, which the caller names because only the caller knows
+// where its wrapper resolves. The three land as one transaction, so no interruption can
+// part a seal from its manifest.
+func Publish(root, staged, executable, manifestDir, version string) error {
+	if version == "" {
+		return fmt.Errorf("publish executable %q: no version to bind", executable)
+	}
+	if manifestDir == "" {
+		return fmt.Errorf("publish executable %q: no directory to publish the broker manifest in", executable)
+	}
+	manifest := brokerManifestPath(manifestDir)
 	if err := publicationTarget(executable); err != nil {
 		return fmt.Errorf("publish executable %q: %w", executable, err)
 	}
 	if err := publicationTarget(sealPath(executable)); err != nil {
 		return fmt.Errorf("publish seal %q: %w", sealPath(executable), err)
 	}
+	if err := publicationTarget(manifest); err != nil {
+		return fmt.Errorf("publish broker manifest %q: %w", manifest, err)
+	}
 	encoded, err := sealContents(root, staged)
 	if err != nil {
 		return err
 	}
-	transaction, err := beginPublication(executable)
+	transaction, err := beginPublication(executable, manifest)
 	if err != nil {
 		return err
 	}
@@ -43,9 +66,18 @@ func Publish(root, staged, executable string) error {
 	if err := transaction.install(staged); err != nil {
 		return fmt.Errorf("publish executable: %w", err)
 	}
+	// The manifest lands before the seal, so every step short of the seal's promotion is
+	// still one the transaction can undo. That keeps the published set — executable, seal,
+	// and manifest — a single outcome no interruption can part.
+	if err := transaction.brokerWith(version); err != nil {
+		if restoreErr := transaction.rollback(); restoreErr != nil {
+			return fmt.Errorf("publish broker manifest: %w; restore prior set: %v", err, restoreErr)
+		}
+		return fmt.Errorf("publish broker manifest: %w", err)
+	}
 	if err := transaction.sealWith(encoded); err != nil {
 		if restoreErr := transaction.rollback(); restoreErr != nil {
-			return fmt.Errorf("publish seal: %w; restore prior pair: %v", err, restoreErr)
+			return fmt.Errorf("publish seal: %w; restore prior set: %v", err, restoreErr)
 		}
 		return fmt.Errorf("publish seal: %w", err)
 	}
@@ -81,10 +113,13 @@ const publicationStepGrace = 2 * time.Second
 // between. The invoking shell holds no rollback state and needs none.
 type publication struct {
 	executable    string
+	manifest      string
 	backup        string
 	hadExecutable bool
 	sealBackup    string
 	hadSeal       bool
+	brokerBackup  string
+	hadBroker     bool
 	// step serializes the two renames against the termination restore, so a signal lands
 	// strictly between steps rather than inside one.
 	step     sync.Mutex
@@ -96,8 +131,8 @@ type publication struct {
 	sealTemporary atomic.Pointer[string]
 }
 
-func beginPublication(executable string) (*publication, error) {
-	transaction := &publication{executable: executable}
+func beginPublication(executable, manifest string) (*publication, error) {
+	transaction := &publication{executable: executable, manifest: manifest}
 	backup, hadExecutable, err := publicationBackup(executable, true)
 	if err != nil {
 		return nil, fmt.Errorf("backup executable: %w", err)
@@ -109,6 +144,13 @@ func beginPublication(executable string) (*publication, error) {
 		return nil, fmt.Errorf("backup seal: %w", err)
 	}
 	transaction.sealBackup, transaction.hadSeal = sealBackup, hadSeal
+	brokerBackup, hadBroker, err := publicationBackup(manifest, false)
+	if err != nil {
+		transaction.remove(backup)
+		transaction.remove(sealBackup)
+		return nil, fmt.Errorf("backup broker manifest: %w", err)
+	}
+	transaction.brokerBackup, transaction.hadBroker = brokerBackup, hadBroker
 	transaction.watch()
 	return transaction, nil
 }
@@ -168,6 +210,16 @@ func (p *publication) sealWith(encoded []byte) error {
 	return nil
 }
 
+// brokerWith publishes the manifest that binds the installed executable. It runs under the
+// same step lock the renames take, so a termination arriving here is answered between
+// steps rather than inside the manifest's own promotion.
+func (p *publication) brokerWith(version string) error {
+	p.step.Lock()
+	defer p.step.Unlock()
+	_, _, err := brokermanifest.Write(filepath.Dir(p.manifest), p.executable, version)
+	return err
+}
+
 func (p *publication) rollback() error {
 	p.step.Lock()
 	defer p.step.Unlock()
@@ -181,7 +233,10 @@ func (p *publication) restore() error {
 	if err := restorePriorFile(p.backup, p.executable, p.hadExecutable); err != nil {
 		return err
 	}
-	return restorePriorFile(p.sealBackup, sealPath(p.executable), p.hadSeal)
+	if err := restorePriorFile(p.sealBackup, sealPath(p.executable), p.hadSeal); err != nil {
+		return err
+	}
+	return restorePriorFile(p.brokerBackup, p.manifest, p.hadBroker)
 }
 
 func (p *publication) close() {
@@ -196,6 +251,7 @@ func (p *publication) close() {
 func (p *publication) removeTemporaries() {
 	p.remove(p.backup)
 	p.remove(p.sealBackup)
+	p.remove(p.brokerBackup)
 	if temporary := p.sealTemporary.Load(); temporary != nil {
 		p.remove(*temporary)
 	}

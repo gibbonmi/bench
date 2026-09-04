@@ -13,6 +13,10 @@ root="$(cd "$(dirname "$source_path")/.." && pwd)"
 binary="$root/dist/bench-preflight"
 if [ ! -x "$binary" ]; then
   mkdir -p "$root/dist"
-  bash "$root/scripts/go-build.sh" "$root" "$binary"
+  # This is an auxiliary artifact, not the checkout's published bench, so its manifest
+  # goes beside it. The builder's default publishes into the wrapper's bin/, which the
+  # land route reads and execs; a manifest bound to this artifact would outlive the next
+  # clean and refuse the landing.
+  bash "$root/scripts/go-build.sh" --manifest-dir "$root/dist" "$root" "$binary"
 fi
 exec env BENCH_RUN_BINARY="$binary" "$binary" release-preflight "$@"

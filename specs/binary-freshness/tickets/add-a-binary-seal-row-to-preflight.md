@@ -1,7 +1,7 @@
 # Add a binary-seal row to preflight
 
 Blocked by: none
-Writes: internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/decision_test.go
+Writes: internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/decision_test.go, internal/preflight/source_tip_test.go
 Covers: BF26, BF27
 
 ## What to build

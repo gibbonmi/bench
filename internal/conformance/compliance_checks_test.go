@@ -17,6 +17,7 @@ var (
 
 func checkKitCompliance(kitRoot string) []string {
 	diags := append(checkOtelFootprint(kitRoot), checkOtelSeamSpans(kitRoot)...)
+	diags = append(diags, checkBrokerReasons(kitRoot)...)
 	license, err := os.ReadFile(filepath.Join(kitRoot, "LICENSE"))
 	if os.IsNotExist(err) {
 		diags = append(diags, "kit root LICENSE is missing")

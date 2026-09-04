@@ -160,12 +160,14 @@ var Checks = []Check{
 // diagnostics its fixtures grade. The binding follows the emitting code, not the
 // directory's name. Three doc families share docs-currency-workflow. compliance-hardening
 // grades canary-fixture-compliance against the immutable fixture tree, rather than kit-
-// compliance against the live kit root.
+// compliance against the live kit root. guard-classifier-table shares package-core-guard
+// with the family of that name, because both grade guard shims that check emits.
 //
 // familyChecks is unexported, because map iteration order is nondeterministic and the
 // family list feeds a diagnostic. Families is the ordered way in.
 var familyChecks = map[string]string{
 	"package-core-guard":            "package-core-guard",
+	"guard-classifier-table":        "package-core-guard",
 	"line-routing":                  "line-routing",
 	"load-validity-metadata":        "load-validity-metadata",
 	"skills-index-command-adapters": "skills-index-command-adapters",

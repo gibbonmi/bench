@@ -173,7 +173,7 @@ func TestCheckRefusesFailingVerifiedExecutable(t *testing.T) {
 	if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := Publish(root, staged, executable); err != nil {
+	if err := Publish(root, staged, executable, fixtureManifestDir(t, root), "1.2.3"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -349,10 +349,23 @@ func writePublishedFixture(t *testing.T) (string, string) {
 	if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := Publish(root, staged, executable); err != nil {
+	if err := Publish(root, staged, executable, fixtureManifestDir(t, root), "1.2.3"); err != nil {
 		t.Fatal(err)
 	}
 	return root, executable
+}
+
+// fixtureManifestDir gives every publication fixture a manifest directory that is not the
+// executable's own. The two directories being distinct is what lets a row tell a manifest
+// published where the readers look from one published beside the binary; a fixture that
+// reused the executable's directory could not fail either way.
+func fixtureManifestDir(t *testing.T, root string) string {
+	t.Helper()
+	dir := filepath.Join(root, "wrapper-bin")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return dir
 }
 
 func assertRefusal(t *testing.T, root, executable string) {

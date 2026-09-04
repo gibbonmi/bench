@@ -31,17 +31,17 @@ func TestFreshnessPublicationTopologyBites(t *testing.T) {
 	writePublicationTopologyFile(t, root, "cmd/bench/freshness_publish.go", `package main
 import "github.com/gibbonmi/bench/internal/freshness"
 const usage = "freshness-publish"
-func freshnessPublish() { _ = freshness.Publish("", "", "") }
+func freshnessPublish() { _ = freshness.Publish("", "", "", "") }
 `)
 	writePublicationTopologyFile(t, root, "cmd/bench/main.go", "package main\nvar _ = \"freshness-publish\"\n")
 	writePublicationTopologyFile(t, root, "scripts/go-build.sh", "staged freshness-publish root output\n")
 	writePublicationTopologyFile(t, root, "internal/artifactpublisher/main.go", `package main
 import "github.com/gibbonmi/bench/internal/freshness"
-func main() { _ = freshness.Publish("", "", "") }
+func main() { _ = freshness.Publish("", "", "", "") }
 `)
 	writePublicationTopologyFile(t, root, "internal/artifactpublisher/library.go", `package artifactpublisher
 import "github.com/gibbonmi/bench/internal/freshness"
-func publishQuietly() { _ = freshness.Publish("", "", "") }
+func publishQuietly() { _ = freshness.Publish("", "", "", "") }
 `)
 	writePublicationTopologyFile(t, root, "scripts/artifact-publish.sh", "staged freshness-publish root output\n")
 

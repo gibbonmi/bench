@@ -7,8 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/brokermanifest"
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/lines"
+	"github.com/gibbonmi/bench/internal/releaseevidence"
 )
 
 // doctorRow evaluates one independent per-harness health signal. Each row prints its own
@@ -32,6 +35,8 @@ var doctorRows = []doctorRow{
 	{"binding migration", evalBindingMigrationRow},
 	{"binding columns", evalBindingColumnsRow},
 	{"worktree admin", evalWorktreeAdminRow},
+	{"binary seal", evalBinarySealRow},
+	{"promotion broker", evalBrokerManifestRow},
 }
 
 // reportDoctorRows renders every per-harness row when doctor runs inside a git worktree
@@ -65,7 +70,7 @@ func reportDoctorRows(stdout io.Writer) bool {
 }
 
 func evalAgentsRow(root string) (bool, string) {
-	if kitSourceCheckout(root) {
+	if KitSourceCheckout(root) {
 		return true, "kit source checkout - AGENTS.md is the source agreement; no managed block applies"
 	}
 	path := filepath.Join(root, "AGENTS.md")
@@ -153,7 +158,7 @@ func evalProfileRow(root string) (bool, string) {
 }
 
 func evalRepoLocalBenchRow(root string) (bool, string) {
-	if kitSourceCheckout(root) {
+	if KitSourceCheckout(root) {
 		return true, "kit source checkout - the launcher is bin/bench.sh; no .bench/bin copy applies"
 	}
 	path := filepath.Join(root, ".bench", "bin", "bench.sh")
@@ -218,6 +223,70 @@ func evalWorktreeAdminRow(root string) (bool, string) {
 		return false, err.Error()
 	}
 	return true, ""
+}
+
+// evalBinarySealRow grades the published dist/bench against the sources it was built
+// from. Every other row can be green beside a binary that answers from last week's code,
+// because nothing in the ordinary loop executes dist/bench. The verdict and its rebuild
+// sentence both come from freshness, so this row derives no digest of its own and never
+// reads an mtime. The row is scoped to a repository that declares build inputs, and it
+// stays plain where no binary is published, because an absent artifact is not a defect.
+func evalBinarySealRow(root string) (bool, string) {
+	if !freshness.DeclaresBuildInputs(root) {
+		return true, ""
+	}
+	executable := freshness.PublishedExecutable(root)
+	if _, err := os.Lstat(executable); err != nil {
+		return true, "dist/bench not published in this checkout - no seal to verify"
+	}
+	if err := freshness.Verify(root, executable); err != nil {
+		return false, err.Error()
+	}
+	return true, "dist/bench seal matches the current build inputs"
+}
+
+// evalBrokerManifestRow predicts the landing's exit 127 before an operator meets it. The
+// wrapper's land route is shell that runs before any binary is trusted, so it cannot call
+// this code; the row therefore applies the same five predicates in the same order, with
+// the same wording. One conformance expectation lists those five reasons and holds both
+// derivations to them. The manifest is read beside the resolved wrapper, which is where
+// the install and repair owner publishes it.
+//
+// An absent manifest is named, not red, and it names no path. The resolved wrapper
+// belongs to the environment rather than to the repository under doctor, so a checkout
+// opened beside a wrapper nobody installed a broker for has nothing to repair. A red
+// there would fail every such repository, and setup, on a state the repository does not
+// own. Every manifest that does exist is graded, and a defect in it stays red.
+func evalBrokerManifestRow(string) (bool, string) {
+	const remedy = " - run bench doctor --fix to republish the promotion broker"
+	bindir := filepath.Dir(resolvedWrapper())
+	path := filepath.Join(bindir, brokermanifest.Name)
+	if _, err := os.Stat(path); err != nil {
+		return true, "no promotion-broker manifest at the resolved wrapper; a landing there would refuse" + remedy
+	}
+	fields, err := brokermanifest.Read(path)
+	if err != nil {
+		return false, fmt.Sprintf("promotion-broker manifest at %s is incomplete%s", path, remedy)
+	}
+	install := filepath.Dir(bindir)
+	// The route compares only when it can read the installed package version, so an
+	// install root without a package.json leaves this predicate silent rather than red.
+	if installed, err := releaseevidence.ReadPackageVersion(install); err == nil && installed != fields["version"] {
+		return false, fmt.Sprintf("promotion broker version %s does not match installed package %s%s", fields["version"], installed, remedy)
+	}
+	broker := fields["path"]
+	if !filepath.IsAbs(broker) {
+		broker = filepath.Join(install, broker)
+	}
+	info, err := os.Lstat(broker)
+	if err != nil || !info.Mode().IsRegular() || info.Size() == 0 || info.Mode().Perm()&0o111 == 0 {
+		return false, fmt.Sprintf("promotion broker at %s is not a regular executable%s", broker, remedy)
+	}
+	digest, err := brokermanifest.Digest(broker)
+	if err != nil || digest != fields["sha256"] {
+		return false, fmt.Sprintf("promotion broker at %s does not match its manifest digest%s", broker, remedy)
+	}
+	return true, "promotion broker authenticated at " + broker
 }
 
 func bindingPath(root string) string {

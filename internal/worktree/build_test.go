@@ -45,12 +45,14 @@ func buildJoins(recorder *buildRecorder) joins {
 }
 
 // plantBuildScript writes the stub the production join executes. The stub writes marker
-// to its second argument, which is the output path the verb passes, so a row reads the
-// script's own bytes back out of `dist/bench`.
+// to its last argument, which is the output path the verb passes, so a row reads the
+// script's own bytes back out of `dist/bench`. Reading the last argument rather than the
+// second keeps the stub honest about the real script's grammar, which accepts options
+// ahead of the two positionals.
 func plantBuildScript(t *testing.T, worktree, marker string) {
 	t.Helper()
 	mustMkdirAll(t, filepath.Join(worktree, "scripts"), 0o755)
-	body := "#!/usr/bin/env bash\nset -eu\nmkdir -p \"$(dirname \"$2\")\"\nprintf '%s' '" + marker + "' > \"$2\"\n"
+	body := "#!/usr/bin/env bash\nset -eu\nout=\"${!#}\"\nmkdir -p \"$(dirname \"$out\")\"\nprintf '%s' '" + marker + "' > \"$out\"\n"
 	mustWrite(t, filepath.Join(worktree, "scripts", "go-build.sh"), []byte(body), 0o755)
 }
 

@@ -1,6 +1,6 @@
 # Binary freshness
 
-Status: staged
+Status: implemented
 
 Roadmap: FT177
 
@@ -110,13 +110,14 @@ Line: opus / low. One new check row in an existing table.
 
 - Staleness is `freshness.Select` over the seal's source digest and `freshness.Digest` of the current build inputs. No consumer reads an mtime, and no consumer re-derives the digest.
 - `freshness.RebuildAction` is the one rebuild sentence. Every new refusal or warning calls it; none inlines the text.
-- `bench commands --brief` becomes a root-taking handler. It resolves the running executable, verifies it against the kit root, and refuses with the sentence on a mismatch. Outside a repository it keeps its three-line answer.
+- `bench commands --brief` keeps its handler signature and resolves the repository root itself. `commandsProbeIsStale` grades the running executable against that root, and the verb refuses with the sentence on a mismatch. Outside a repository it keeps its three-line answer.
 - `bench doctor` gains two rows: the `dist/bench` seal verdict, and the broker manifest graded by the same five predicates the land route applies. The doctor row and the land route are two derivations by necessity, because the route runs before any binary is trusted. One authored conformance expectation pins that both enumerate the same five reasons.
 - The broker manifest reader and writer move to a new leaf package `internal/brokermanifest`, which `internal/adopt` and `internal/freshness` both import. Without it the doctor row and the publish transaction form an import cycle.
 - The landing's gate refusal takes a repair root distinct from the digest root, threaded through a new `Factory` field. The prospective owner passes the kit checkout as the repair root.
 - `kitSourceCheckout` is exported from `internal/adopt`, so the landing line can call it.
 - `Factory.validate` verifies an inherited executable against its source root when the caller names one. The system suite owner names `BENCH_KIT`. The gate's private build path is unchanged.
-- The subject-mode build's `freshness-publish` step writes the broker manifest inside the same publication transaction, with the stamped version. The verb gains two arguments, the published path and the version, so the manifest binds the published executable and not the staged one. Artifact mode stays excluded. The manifest lands beside the resolved wrapper, as today.
+- The subject-mode build's `freshness-publish` step writes the broker manifest inside the same publication transaction, with the stamped version. The verb gains two arguments: the manifest directory and the version. The published path is already argument two, so the manifest binds the published executable and not the staged one. An empty manifest directory is refused, the way an empty version is refused. Artifact mode stays excluded.
+- The build script defaults the manifest directory to the module's own `bin/`, because the readers look beside the resolved wrapper. A `--manifest-dir` option overrides that default. The criterion is whether the wrapper's manifest should bind this executable, not where the executable lands. A caller whose executable the wrapper must never exec passes the option. The gate's private selection, `scripts/release-preflight.sh`, and the row that grades an option-passing build are the three such callers. The row that grades the default keeps it.
 - The shim's shared classifier table holds resolver-independent rows only, because `benchguard.InvokesBench` takes a resolver the shell test lacks.
 - The land route splits refusal three from refusal five. The version branch runs the stamped build at the install root once, re-reads the manifest once, and refuses if the version still reads `dev`. The digest branch keeps its unconditional exit 127. The route reads no repository and honors no inherited override.
 - The landing line composes `kitSourceCheckout` with `RebuildAction` for the source checkout, and names `bench repair` for an installed kit.
@@ -161,8 +162,8 @@ Line: opus / low. One new check row in an existing table.
 | BF7 | 7 | an inherited executable with a stale source digest and a named source root refuses in `Factory.validate` | new `TestFactoryValidateRefusesAStaleInheritedSeal` beside the validate tests | the seal-pair check alone passes a self-consistent stale binary |
 | BF8 | 8 | the system suite owner refuses a `BENCH_RUN_BINARY` whose seal mismatches `BENCH_KIT` | new out-of-process test that runs the suite binary with a stale seal and reads its exit | `identifyExecutable` trusts any executable file |
 | BF9 | 9 | `runbinary.Own` still builds and verifies a private executable, as a regression row | `TestFactoryOwnBuildsOnePrivateAbsoluteSelectionAndCleansIt` | a changed owner path reds the gate loop |
-| BF10 | 10 | after a subject-mode build, the manifest digest equals the published executable's digest | new publish test | two commands leave the manifest one crash behind |
-| BF11 | 10 | a publication rolled back leaves no manifest change | publish rollback tests | a manifest written before the rename survives the rollback |
+| BF10 | 10 | after a subject-mode build, the manifest is at `<root>/bin/bench-broker.manifest` and its digest equals the published executable's digest | `TestGoBuildSubjectModePublishesTheStampedVersion` | a manifest beside the executable reaches no reader, and two commands leave the manifest one crash behind |
+| BF11 | 10 | a publication rolled back leaves no manifest change, with the manifest directory distinct from the executable's | publish rollback tests | a manifest written before the rename survives the rollback, and equal directories hide a manifest published in the wrong one |
 | BF12 | 11 | artifact mode writes no manifest and executes nothing | new `TestGoBuildArtifactModeWritesNoManifest` in `cmd/bench` | a manifest write in artifact mode runs the new binary |
 | BF13 | 12 | only `cmd/bench/freshness_publish.go`, `cmd/bench/main.go`, and `scripts/go-build.sh` carry the publish token | `TestFreshnessPublicationTopology` | a fourth caller reds the topology |
 | BF14 | 13 | the manifest written by the build carries the package version | new broker test | a `dev` manifest re-creates refusal three |
@@ -192,6 +193,12 @@ Line: opus / low. One new check row in an existing table.
 
 **Won't handle** — a wrapper script for the system suite — `bench test --check system` is the one seam, and a script would be a second producer of its operands.
 
+**Won't handle** — a subshell or a command-substitution head. The shell
+word test splits segments on `;`, `|`, and `&` alone. So `( bench gate )`
+and `$(bench gate)` keep their grammar inside one word. A split on `()`
+needs a lexer to tell a grammatical paren from a quoted one. Without it,
+`echo "(bench)"` classifies as a Bench call.
+
 **Won't handle** — the shell classifier reimplementing symlink resolution — the word test covers the first word of each segment, and the shared table pins its reach.
 
 **Won't handle** — `bench repair` reading a pin manifest in the kit source checkout — the decision keeps `bench repair` as the installed-kit route.
@@ -209,12 +216,15 @@ Line: opus / low. One new check row in an existing table.
 - `internal/adopt/doctor_rows.go`
 - `internal/adopt/doctor.go`
 - `internal/adopt/broker.go`
+- `internal/adopt/adopt_test.go`
+- `internal/adopt/link.go`
 - `internal/adopt/broker_test.go`
 - `internal/adopt/setup_test.go`
 - `internal/brokermanifest/`
 - `cmd/bench/freshness_publish.go`
 - `cmd/bench/freshness_publish_test.go`
 - `cmd/bench/build_artifact_mode_test.go`
+- `cmd/bench/build_subject_mode_test.go`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `internal/freshness/`
@@ -224,21 +234,30 @@ Line: opus / low. One new check row in an existing table.
 - `internal/systemtest/owner_test.go`
 - `internal/systemtest/owner_stale_seal_test.go`
 - `internal/systemtest/land_route_test.go`
+- `internal/systemtest/owner_artifact_recovery_test.go`
 - `internal/systemtest/bench_follow_on_test.go`
+- `internal/worktree/build.go`
+- `internal/worktree/build_test.go`
 - `internal/worktree/land.go`
 - `internal/worktree/land_freshness_test.go`
 - `internal/preflight/decision.go`
 - `internal/preflight/gather.go`
 - `internal/preflight/decision_test.go`
+- `internal/preflight/source_tip_test.go`
 - `internal/benchguard/`
 - `internal/conformance/`
+- `internal/conformance/registry/registry.go`
 - `bin/bench.sh`
 - `scripts/go-build.sh`
+- `scripts/release-preflight.sh`
 - `.bench/hooks/block-bench-follow-on.sh`
+- `.bench/hooks/block-dangerous-git.sh`
+- `.bench/hooks/session-start.sh`
 - `.bench/lib/resolve-bench.sh`
 - `AGENTS.md`
 - `projects/benchkit.md`
 - `internal/anchors/registry_data.go`
+- `cmd/bench/testdata/anchors/pre-disclosure-populated.stdout`
 - `internal/anchors/registry_data_test.go`
 - `tests/canary/workflow-guidance-anchors/`
 - `tests/canary/guard-classifier-table/`
@@ -268,6 +287,100 @@ ticket.
 - A second `bench doctor --fix` action that rebuilds `dist/bench`: 2 edits, 1 gate run.
 
 ## Further notes
+
+Reviewer decisions of 2026-09-04, taken on the review findings:
+
+- The dangerous-git guard now sources the shared library, and a missing
+  library refuses at exit 2. `.bench/lib` and `.bench/hooks` ship as one
+  consumer-payload tree, so an absent library means a broken installation.
+  Refusing is the posture that guard already declares.
+
+- The stamped build takes a manifest-directory operand, and the build script
+  passes the kit's `bin/`. The manifest belongs where the land route and
+  `bench doctor` read it.
+- The shell word test learns to unquote the head word. A quoted `bench` call
+  must not run against a stale binary, so the shared table gains one row per
+  quoting form.
+
+Recorded during the build, open to reviewer veto:
+
+- The edge inventory's "Partial implementation" row is wrong. No Go-side
+  sweep reds a consumer that inlines the rebuild text. Two ticket self-probes
+  inlined it and stayed green. `TestFreshnessPublicationTopology` guards the
+  publish token, not the rebuild sentence, and only the two shell
+  derivations carry a pin each. A new sweep is a fresh enforcement, so it is
+  a reviewer call.
+- The landing line reads the checkout predicate through a `joins` seam rather
+  than calling `adopt.KitSourceCheckout` directly. A fixture that bound
+  `BENCH_KIT` would leave the package's parallel set and break its serial
+  ceiling. `mergeLane` sets the same precedent.
+- `bench commands --brief` grades the answering executable only when that
+  executable lies inside the checkout. A release artifact, an installed
+  platform binary, and a private run selection each come from their own
+  tree. A grade against the current repository would refuse a sound binary.
+  Three release scripts run the verb on a deliberately unsealed artifact
+  from the kit repository.
+
+- The guard classifier table gets a new `familyChecks` row in
+  `internal/conformance/registry/registry.go`. A canary fixture bites only
+  through a registered family owner, and every existing family is bound
+  there.
+- The guard classifier table's drift check binds to the existing
+  `package-core-guard` owner through one call line in
+  `internal/conformance/package_core_checks_test.go`. The check parses the
+  table's rows from the graded root. It then runs the shell word test over
+  each one, so the fixture bites under any graded tree.
+- The shell word test lives in `.bench/lib/resolve-bench.sh` as
+  `bench_invokes_bench`, not in the shim. The conformance test sources the
+  lib, and the shim keeps the posture.
+- A manifest that still reads `dev` after the recovery rebuild reuses the
+  existing version refusal rather than a sixth wording. That keeps the
+  doctor row and the land route on the same five reasons. The consequence is
+  that an install root with no readable `package.json` continues, which is
+  the silence the doctor row already keeps.
+
+- The doctor broker row names an absent manifest with an `ok:` verdict, not a
+  red one. The kit source checkout publishes no broker manifest beside its
+  resolved wrapper, and its landings still work. So a red there is a false
+  alarm for every kit session. A red also reds four tests outside the fence.
+  The row still carries refusal one's wording, so the reason list stays one
+  source.
+- `internal/conformance/compliance_checks_test.go` calls the new reason-list
+  expectation from the registered `kit-compliance` owner. A standalone
+  live-tree test reds `TestConformanceMetaBites` as unregistered.
+- `cmd/bench/testdata/anchors/pre-disclosure-populated.stdout` joins the
+  fence. It is a captured snapshot of the AGENTS.md anchor list, so a new
+  anchor moves it.
+
+- The `binary-seal` row is gated to build mode, because story 26 and rows
+  BF26 and BF27 name `bench preflight build`. An unconditional row also reds
+  `bench preflight review` on a stale `dist/bench`, which no source sentence
+  asks for.
+- `internal/preflight/source_tip_test.go` joins the fence. It asserts a
+  literal preflight row count for both modes, so the new row moves its
+  build-mode expectation. `internal/preflight/command_review_test.go` stays
+  outside the fence, because the build-mode gate keeps its review-mode count
+  at eleven.
+
+Recorded during the build for the publish ticket, open to reviewer veto:
+
+- `freshness-publish` gains two arguments: the manifest directory and the
+  version. The reviewer decided the directory on 2026-09-04. A directory
+  derived from the published path sends the manifest to `dist/`, which no
+  reader looks in. The caller that knows where its wrapper resolves names the
+  directory instead.
+- `freshness.Publish` gains a manifest-directory parameter and a version
+  parameter, so every call site takes a one-argument edit.
+  `internal/systemtest/owner_artifact_recovery_test.go` joins the fence,
+  because its fake builder calls the verb.
+- A coordinator probe found a missing row. The build script's version
+  argument was ungraded, because BF14's test calls `freshness.Publish`
+  directly. `TestGoBuildSubjectModePublishesTheStampedVersion` now runs a real
+  subject-mode build and grades the published manifest.
+- One mutation came back silently green: a manifest write that stays in place
+  but bypasses the transaction's step lock. It is behavior-equivalent for the
+  rollback, and only a signal-timing test in the manifest's own rename window
+  could see it. No row was added.
 
 Flagged additions beyond the decision source:
 

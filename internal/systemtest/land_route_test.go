@@ -36,6 +36,43 @@ func (i landRouteInstall) writeManifest(t *testing.T, body string) {
 	}
 }
 
+// plantStampedBuild writes the install's stamped build script. Each run appends one
+// line to the install's build-run log and republishes the broker manifest at version,
+// which is what the real subject-mode build does inside its publication transaction.
+// A case states the version the rebuild publishes, so the route meets a recovered
+// manifest or a still-unstamped one, plus any shell line the publication runs after it.
+func (i landRouteInstall) plantStampedBuild(t *testing.T, version string, after ...string) {
+	t.Helper()
+	script := filepath.Join(i.root, "scripts", "go-build.sh")
+	if err := os.MkdirAll(filepath.Dir(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	body := "#!/bin/sh\necho run >> '" + i.buildLog() + "'\ncat > '" + i.manifest + "' <<'MANIFEST'\n" +
+		landRouteManifest(i.broker, version, brokerPlatformSuffix(), fileDigest(t, i.broker)) + "MANIFEST\n"
+	for _, line := range after {
+		body += line + "\n"
+	}
+	if err := os.WriteFile(script, []byte(body), 0o755); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func (i landRouteInstall) buildLog() string { return filepath.Join(i.root, "build-runs") }
+
+// buildRuns counts how many times the planted build script ran. The recovery is
+// single-pass by decision, so this count is what separates one rebuild from a loop.
+func (i landRouteInstall) buildRuns(t *testing.T) int {
+	t.Helper()
+	body, err := os.ReadFile(i.buildLog())
+	if errors.Is(err, os.ErrNotExist) {
+		return 0
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	return strings.Count(string(body), "\n")
+}
+
 // newLandRouteInstall fabricates an installed distribution: the kit's wrapper, a
 // package version, a stub promotion broker that prints its own identity, and the
 // broker manifest binding path, version, platform, and executable digest.
@@ -248,6 +285,10 @@ func TestWorktreeLandRouteRefusesInheritedRoutingBeforeRepositoryReads(t *testin
 	install := newLandRouteInstall(t)
 	primary := landRouteRepo(t, "land-route [override]-")
 	plantRepositoryDecoys(t, primary)
+	// The install carries the one state the route would rebuild for. The override
+	// refusals stand ahead of that recovery, so no build runs on an inherited route.
+	install.plantStampedBuild(t, "9.9.9")
+	install.writeManifest(t, landRouteManifest(install.broker, "dev", brokerPlatformSuffix(), fileDigest(t, install.broker)))
 	// Each variable appears twice: carrying a value, and set but empty. A guard that
 	// tests the value rather than the presence accepts the empty spelling, and the
 	// caller has then bypassed the promotion owner with an override the route reads.
@@ -279,6 +320,9 @@ func TestWorktreeLandRouteRefusesInheritedRoutingBeforeRepositoryReads(t *testin
 			if result.stdout != "" {
 				t.Fatalf("override %s still started an executable: %q", name, result.stdout)
 			}
+			if got := install.buildRuns(t); got != 0 {
+				t.Fatalf("override %s ran the stamped build %d times, want none before the refusal", name, got)
+			}
 			if _, err := os.Stat(marker); !errors.Is(err, os.ErrNotExist) {
 				t.Fatalf("override %s read the repository before refusing: %v", name, err)
 			}
@@ -308,11 +352,48 @@ func TestWorktreeLandRouteDoesNotRederiveTheBrokerPlatform(t *testing.T) {
 // binding the installation manifest carries. The land route is fail-closed on all of
 // them: it exits 127 with the diagnostic that names the broken binding, and neither
 // the planted broker nor a repository decoy ever runs.
+// The unstamped rows are the exception the table carries: a `dev` version is the
+// build's omission, not a tamper, so it earns one stamped rebuild and one re-read.
+// The recovered row lands; the row the rebuild leaves unstamped refuses like any
+// other version mismatch. wantBuilds pins the pass count on every row, so a rebuild
+// that reaches a tamper row, or that runs twice, reds here.
 func TestWorktreeLandRouteRefusesEveryUnauthenticatedBroker(t *testing.T) {
 	for _, row := range []struct {
 		name, want string
+		recovers   bool
+		wantBuilds int
 		breakIt    func(*testing.T, landRouteInstall)
 	}{
+		{
+			name:       "unstamped manifest recovers",
+			recovers:   true,
+			wantBuilds: 1,
+			breakIt: func(t *testing.T, i landRouteInstall) {
+				i.plantStampedBuild(t, "9.9.9")
+				i.writeManifest(t, landRouteManifest(i.broker, "dev", brokerPlatformSuffix(), fileDigest(t, i.broker)))
+			},
+		},
+		{
+			name:       "unstamped manifest after the rebuild",
+			want:       "does not match installed package",
+			wantBuilds: 1,
+			breakIt: func(t *testing.T, i landRouteInstall) {
+				i.plantStampedBuild(t, "dev")
+				i.writeManifest(t, landRouteManifest(i.broker, "dev", brokerPlatformSuffix(), fileDigest(t, i.broker)))
+			},
+		},
+		{
+			name:       "unstamped manifest with a tampered broker",
+			want:       "does not match its manifest digest",
+			wantBuilds: 1,
+			breakIt: func(t *testing.T, i landRouteInstall) {
+				// The rebuild republishes the manifest, then leaves the executable it
+				// bound tampered. A recovered version never authorizes bytes the digest
+				// does not bind.
+				i.plantStampedBuild(t, "9.9.9", "printf 'tampered\\n' >> '"+i.broker+"'")
+				i.writeManifest(t, landRouteManifest(i.broker, "dev", brokerPlatformSuffix(), fileDigest(t, i.broker)))
+			},
+		},
 		{
 			name: "missing manifest",
 			want: "no promotion-broker manifest at",
@@ -400,11 +481,24 @@ func TestWorktreeLandRouteRefusesEveryUnauthenticatedBroker(t *testing.T) {
 			shimDir, marker := landRouteGitShim(t)
 			result := owner.runAt(repo, landRouteEnv(shimDir, marker), "bash", install.wrapper,
 				"worktree", "land", "--request", "r", "--base", "b", "--source-tip", "t", "-m", "m", ".")
-			if result.code != 127 || !strings.Contains(result.stderr, row.want) {
-				t.Fatalf("%s = (%d, %q, %q), want exit 127 naming %q", row.name, result.code, result.stdout, result.stderr, row.want)
+			if row.recovers {
+				if result.code != 0 || !strings.Contains(result.stdout, "broker="+install.broker+"\n") {
+					t.Fatalf("%s = (%d, %q, %q), want the recovered broker %s", row.name, result.code, result.stdout, result.stderr, install.broker)
+				}
+			} else {
+				if result.code != 127 || !strings.Contains(result.stderr, row.want) {
+					t.Fatalf("%s = (%d, %q, %q), want exit 127 naming %q", row.name, result.code, result.stdout, result.stderr, row.want)
+				}
+				// Every refusal hands back the one repair that republishes the broker.
+				if !strings.Contains(result.stderr, "bench doctor --fix") {
+					t.Fatalf("%s stderr = %q, want the repair advice", row.name, result.stderr)
+				}
+				if strings.Contains(result.stdout, "broker=") || strings.Contains(result.stdout, "decoy=") {
+					t.Fatalf("%s still executed a candidate owner: %q", row.name, result.stdout)
+				}
 			}
-			if strings.Contains(result.stdout, "broker=") || strings.Contains(result.stdout, "decoy=") {
-				t.Fatalf("%s still executed a candidate owner: %q", row.name, result.stdout)
+			if got := install.buildRuns(t); got != row.wantBuilds {
+				t.Fatalf("%s ran the stamped build %d times, want %d", row.name, got, row.wantBuilds)
 			}
 			if _, err := os.Stat(marker); !errors.Is(err, os.ErrNotExist) {
 				t.Fatalf("%s read the repository before refusing: %v", row.name, err)

@@ -302,7 +302,10 @@ func TestReportDoctorRowsLeavesHealthyWorktreeAdminSilent(t *testing.T) {
 
 	var stdout bytes.Buffer
 	_ = reportDoctorRows(&stdout)
-	if got := stdout.String(); strings.Contains(got, "worktree admin") || strings.Contains(got, "worktrees/") {
+	// The match is the row's own name, not the word "worktrees" anywhere in the output. An
+	// unrelated row that prints an absolute path inside a Bench worktree pool otherwise
+	// reads as this row firing.
+	if got := stdout.String(); strings.Contains(got, "worktree admin") {
 		t.Fatalf("healthy doctor rows include worktree-admin row: %q", got)
 	}
 }

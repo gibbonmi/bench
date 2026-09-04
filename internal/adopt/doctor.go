@@ -276,7 +276,7 @@ func reportPrePush(stdout io.Writer) bool {
 		fmt.Fprintf(stdout, "  pre-push: diverted by core.hooksPath to %s with no bench-managed hook - run bench link\n", health.Path)
 	default: // PrePushAbsent
 		remedy := "run bench link"
-		if kitSourceCheckout(root) {
+		if KitSourceCheckout(root) {
 			remedy = "run bench doctor --fix"
 		}
 		fmt.Fprintf(stdout, "  pre-push: absent at %s - a fresh clone drops it (git does not clone hooks); %s\n", health.Path, remedy)
@@ -284,14 +284,14 @@ func reportPrePush(stdout io.Writer) bool {
 	return true
 }
 
-// kitSourceCheckout reports whether root is the kit's own source tree. The kit repo is
+// KitSourceCheckout reports whether root is the kit's own source tree. The kit repo is
 // where the managed AGENTS.md block and the bin/bench.sh launcher are authored, so it
 // never carries the consumer-side copy of either, and a row that sent its reader to bench
 // link would name a remedy that breaks the shim route and the land route. A consumer repo
 // never satisfies the predicate, because its kit resolves to a package or cache directory
 // outside the repository. Both paths resolve through symlinks first, so a repository
 // reached by one spelling and a BENCH_KIT set to another still match.
-func kitSourceCheckout(root string) bool {
+func KitSourceCheckout(root string) bool {
 	kit := kitDir()
 	if root == "" || kit == "" {
 		return false
@@ -436,7 +436,7 @@ func repairStalePrePush(stdout, stderr io.Writer) int {
 		// Only in the kit source checkout, where the absent-hook row names this fix because
 		// bench link is not a remedy there. Elsewhere an absent hook stays bench link's, so
 		// the fix does not silently take over a route the link transaction owns.
-		if !kitSourceCheckout(root) {
+		if !KitSourceCheckout(root) {
 			return 0
 		}
 		if err := installGitHook(root, stderr); err != nil {
