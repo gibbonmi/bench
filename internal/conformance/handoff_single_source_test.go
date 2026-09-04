@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/handoff"
+	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/status"
 )
 
@@ -166,6 +167,29 @@ func TestHandoffShapeSingleSourcedBites(t *testing.T) {
 	runGit(t, root, "rm", "--cached", "-q", status.HandoffFile)
 	if diags := checkHandoffShape(root); len(diags) != 0 {
 		t.Fatalf("untracked artifact: want no diagnostics, got %v", diags)
+	}
+}
+
+// TestHandoffShapeNamesTheSectionGrammar grades the Shape text against the grammar
+// the leaf package renders. checkHandoffShape holds the artifact to the constant and
+// says nothing about what the constant claims, so a Shape that still described the
+// one-phase document would pass it while the file grew a section per assignment.
+//
+// The spellings come from internal/handoffdoc, never from a second copy here.
+func TestHandoffShapeNamesTheSectionGrammar(t *testing.T) {
+	for _, token := range []string{
+		handoffdoc.MainHeading,
+		handoffdoc.RequestHeadingPrefix,
+		handoffdoc.StateHeading,
+		handoffdoc.LabelRequestToken,
+		handoffdoc.LabelWorktreeTip,
+		handoffdoc.LabelRecordedBase,
+		handoffdoc.LabelSpecStatus,
+		handoffdoc.LabelNextCommand,
+	} {
+		if !strings.Contains(handoff.ShapeSection, strings.TrimSpace(token)) {
+			t.Errorf("the Shape text names no %q, so it does not describe the section grammar", token)
+		}
 	}
 }
 
