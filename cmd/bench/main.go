@@ -573,7 +573,13 @@ func guardGit(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writer) (code 
 	if command == "" {
 		return 0
 	}
-	chk := gitguard.Checker{RefResolves: git.RefResolves, BranchExists: git.BranchExists}
+	chk := gitguard.Checker{
+		RefResolves:     git.RefResolves,
+		BranchExists:    git.BranchExists,
+		DefaultBranch:   guardDefaultBranch,
+		CheckedOut:      guardCheckedOut,
+		BareDestination: guardBareDestination,
+	}
 	label := gitguard.Classify(command, chk)
 	if label == "" {
 		return 0
@@ -581,6 +587,32 @@ func guardGit(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writer) (code 
 	fmt.Fprintln(stderr, gitguard.BlockMessage(label))
 	return 2
 }
+
+// guardProbeRoot is the directory the guard's three push facts read. The guarded Bash
+// command runs in the agent's cwd, and git.RefResolves and git.BranchExists already probe
+// that directory with no root operand, so the push facts name it explicitly to reach the
+// same repository.
+const guardProbeRoot = "."
+
+// guardDefaultBranch reports the repository's default branch, from the one Go owner of
+// that fact. No answer denies the push, so the guard never guesses a protected name.
+func guardDefaultBranch() (string, bool) { return git.ResolvedDefault(guardProbeRoot) }
+
+// guardCheckedOut reports the checked-out branch, or no branch. git.CheckedOutBranch
+// names a detached head with the literal "HEAD", which is a state and not a branch, so
+// that literal and any probe error both report no branch. A `HEAD` refspec then denies
+// with the unresolved class instead of passing the literal off as a name.
+func guardCheckedOut() (string, bool) {
+	branch, err := git.CheckedOutBranch(guardProbeRoot)
+	if err != nil || branch == "" || branch == "HEAD" {
+		return "", false
+	}
+	return branch, true
+}
+
+// guardBareDestination reports the branch a bare `git push` targets, from the one Go
+// owner of that fact.
+func guardBareDestination() (string, bool) { return git.BarePushDestination(guardProbeRoot) }
 
 func guardBenchFollowOn(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writer) (code int) {
 	defer func() {

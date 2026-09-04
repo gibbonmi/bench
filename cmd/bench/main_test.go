@@ -678,20 +678,49 @@ func TestGuardBenchFollowOnWithoutPoolPrefixResolvesNoRoot(t *testing.T) {
 	}
 }
 
+// TestGuardGitBlockAllow pins the guard subcommand's two exits over the push rule: a
+// forced push blocks with the message on stderr (PG35), and a push that names a topic
+// branch exits 0. The allow case needs a repository whose default branch resolves, so it
+// t.Chdir's into a temp repo the way the other cwd-reading tests here do.
 func TestGuardGitBlockAllow(t *testing.T) {
+	t.Chdir(guardPushRepo(t))
 	var errb bytes.Buffer
-	block := `{"tool_input":{"command":"git push"}}`
+	block := `{"tool_input":{"command":"git push --force"}}`
 	if code := guardGit(nil, strings.NewReader(block), io.Discard, &errb); code != 2 {
 		t.Errorf("block exit = %d, want 2", code)
 	}
 	if !strings.Contains(errb.String(), "BLOCKED:") {
 		t.Errorf("block did not emit BLOCKED on stderr: %q", errb.String())
 	}
-	for _, in := range []string{`{"tool_input":{"command":"git status"}}`, "not json", `{"tool_input":{"command":""}}`} {
+	for _, in := range []string{
+		`{"tool_input":{"command":"git status"}}`,
+		"not json",
+		`{"tool_input":{"command":""}}`,
+		`{"tool_input":{"command":"git push origin topic"}}`,
+	} {
 		if code := guardGit(nil, strings.NewReader(in), io.Discard, io.Discard); code != 0 {
 			t.Errorf("allow exit for %q = %d, want 0", in, code)
 		}
 	}
+}
+
+// guardPushRepo builds a temp repo on a "topic" branch whose "main" branch resolves, so
+// the guard's default-branch fact answers and a push to "topic" is an allowed push.
+func guardPushRepo(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	for _, args := range [][]string{
+		{"init", "-q", "-b", "main"},
+		{"config", "user.email", "test@example.invalid"},
+		{"config", "user.name", "Test"},
+		{"commit", "-qm", "initial", "--allow-empty"},
+		{"checkout", "-q", "-b", "topic"},
+	} {
+		if out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	return root
 }
 
 func TestCaptureClaudeAgentIntentReplayIsByteIdempotent(t *testing.T) {
