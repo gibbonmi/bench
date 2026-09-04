@@ -115,6 +115,7 @@ func TestCommandRefusesAStateWithAnUnterminatedFence(t *testing.T) {
 	if !strings.Contains(out, "```console") {
 		t.Errorf("the refusal does not print the line that opened the fence\n%s", out)
 	}
+	assertNamesLine(t, out, document, before, "```console")
 	if after := read(t, document); after != before {
 		t.Fatalf("a refused run rewrote the document\nbefore:\n%s\nafter:\n%s", before, after)
 	}
@@ -135,6 +136,7 @@ func TestCommandRefusesAStateHeadingOutsideAFence(t *testing.T) {
 	if !strings.Contains(out, "## Open questions") {
 		t.Errorf("the refusal does not print the offending line\n%s", out)
 	}
+	assertNamesLine(t, out, document, before, "## Open questions")
 	if after := read(t, document); after != before {
 		t.Fatalf("a refused run rewrote the document\nbefore:\n%s\nafter:\n%s", before, after)
 	}
@@ -229,6 +231,26 @@ func seedSection(t *testing.T, document, next, state string) string {
 		t.Fatalf("seed section: %v", err)
 	}
 	return read(t, document)
+}
+
+// assertNamesLine checks that a parser refusal points the reader at the document and the
+// line the offending text sits on. The expected line is read out of the seeded bytes rather
+// than counted by hand, so a change to the rendered shape moves the expectation with it.
+func assertNamesLine(t *testing.T, out, document, content, offending string) {
+	t.Helper()
+	line := 0
+	for i, text := range strings.Split(content, "\n") {
+		if strings.TrimRight(text, " \t") == offending {
+			line = i + 1
+			break
+		}
+	}
+	if line == 0 {
+		t.Fatalf("the seeded document holds no line %q\n%s", offending, content)
+	}
+	if want := fmt.Sprintf("%s:%d", document, line); !strings.Contains(out, want) {
+		t.Errorf("the refusal does not name %s\n%s", want, out)
+	}
 }
 
 func seedState(t *testing.T, document, state string) string {

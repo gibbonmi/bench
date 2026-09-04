@@ -1,7 +1,6 @@
 package handoff
 
 import (
-	"errors"
 	"regexp"
 	"strings"
 
@@ -30,20 +29,9 @@ const (
 	faultAmbiguous   = "the handoff State abbreviates a sha that names more than one object"
 )
 
-// stateRepair is the one instruction every State refusal ends in. The scan and the grammar
-// check both refuse a line the writer owns, and the repair is the same for both.
+// stateRepair is the one instruction every State refusal ends in. The scan refuses a line
+// the writer owns, and the repair is the same whichever token fault it names.
 const stateRepair = "rewrite or drop this line, then rerun bench handoff: "
-
-// stateGrammar refuses a State the document grammar cannot carry, before the run renders
-// anything. handoffdoc owns the rule, so the bytes this verb stores are graded by the same
-// fence reader that will parse them back.
-func stateGrammar(state string) error {
-	var fault *handoffdoc.StateError
-	if err := handoffdoc.ValidateState(state); errors.As(err, &fault) {
-		return refusal{fault.Reason, stateRepair + fault.Text}
-	}
-	return nil
-}
 
 // scanState refuses a State that pins a commit the section's tip does not contain. Such a
 // pin is a stale resume target: a cold session reads it, checks out work that the phase
@@ -62,7 +50,7 @@ func scanState(scanRoot, tip, state string) error {
 	if tip == "" {
 		return nil
 	}
-	for _, line := range handoffdoc.UnfencedLines(state) {
+	for line := range handoffdoc.UnfencedLines(state) {
 		for _, match := range stateToken.FindAllStringSubmatch(line, -1) {
 			fault := tokenFault(scanRoot, tip, match[1])
 			if fault == "" {

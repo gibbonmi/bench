@@ -166,50 +166,6 @@ func TestParseRefusesAFenceLeftOpenAtEndOfFile(t *testing.T) {
 	}
 }
 
-// The two State shapes ValidateState refuses, and the two it must not. The fenced heading
-// row is the one that separates the rule from a bare `## ` prefix test: a writer pasting
-// the rendered document into their own State is the case the parser already honours.
-func TestValidateStateRefusesTheShapesThatBreakTheGrammar(t *testing.T) {
-	for _, tc := range []struct {
-		name   string
-		state  string
-		reason string
-		line   int
-		text   string
-	}{
-		{name: "a closed fence passes", state: "Resume here:\n\n```\n## main\n```\n\nThat is all."},
-		{name: "an indented heading is prose", state: "  ## Open questions"},
-		{name: "an empty State passes"},
-		{
-			name:   "an unterminated fence",
-			state:  "Resume here:\n\n```console\n$ bench gate",
-			reason: StateFaultOpenFence, line: 3, text: "```console",
-		},
-		{
-			name:   "an unfenced level-two heading",
-			state:  "The build is live.\n\n## Open questions\n\nNone.",
-			reason: StateFaultHeading, line: 3, text: "## Open questions",
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateState(tc.state)
-			if tc.reason == "" {
-				if err != nil {
-					t.Fatalf("ValidateState refused a State the parser accepts: %v", err)
-				}
-				return
-			}
-			fault, ok := err.(*StateError)
-			if !ok {
-				t.Fatalf("ValidateState = %v, want a *StateError naming %q", err, tc.reason)
-			}
-			if fault.Reason != tc.reason || fault.Line != tc.line || fault.Text != tc.text {
-				t.Fatalf("fault = %+v, want reason %q at line %d, %q", *fault, tc.reason, tc.line, tc.text)
-			}
-		})
-	}
-}
-
 // TestEnsureMainAndRemoveKeepTheFallbackSection covers the retirement path's two
 // document-level moves: the removal drops one key, and main survives the last one.
 func TestEnsureMainAndRemoveKeepTheFallbackSection(t *testing.T) {
