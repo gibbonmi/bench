@@ -1,6 +1,6 @@
 # Handoff sections
 
-Status: staged
+Status: implemented
 
 Roadmap: FT162
 
@@ -97,6 +97,17 @@ Line: opus / low for the ignore entry, opus / medium for the guidance.
 25. As a consumer, I want that addition idempotent, so that a second `bench init` adds nothing.
 26. As a session, I want the working agreement to state the section rule, so that a phase close writes its own section.
 
+### Group F — the review repairs
+
+Line: opus / medium. Each repair changes a refusal or a parser edge.
+
+27. As a coordinator, I want a legacy document read as one `main` section, so that the new verb's first run does not refuse it.
+28. As a coordinator, I want an unterminated fence in State refused when the document is read, so that one section cannot swallow its siblings.
+29. As a coordinator, I want a level-two heading in State refused with its line, so that I can repair my prose in one look.
+30. As a coordinator, I want a retirement whose section removal fails to print the error, so that a pinned dead section is never silent.
+31. As a reviewer, I want a commit hash inside a fenced block in State left unscanned, so that a quoted example never blocks a close.
+32. As a reviewer, I want an ambiguous abbreviation in State refused with its own reason, so that a stale short pin cannot pass as prose.
+
 ## Implementation decisions
 
 - A new leaf package `internal/handoffdoc` owns the grammar. The document is a header block, one `## main` section, one `## request <id>` section per live assignment, and the trailing `## Shape`. A section holds label lines for the six pins, one `Next command:` line, and a `### State` body. The package parses, renders, removes a section by key, and ensures `main`. It wraps every read-modify-write in an exclusive flock on a lock file beside the document, with temp-and-rename underneath.
@@ -104,7 +115,7 @@ Line: opus / low for the ignore entry, opus / medium for the guidance.
 - `intent.AssignmentForWorktree` is promoted from the preflight lookup and exported. `bench handoff` owns `main` when `git.IsPrimaryCheckout` is true, owns the matching active assignment's section otherwise, and refuses when neither holds.
 - A section's spec lines come from `spec.Facts` over the assignment's worktree, one pair per live spec. The tip comes from `git rev-parse HEAD` in that worktree, or from the branch when the tree is gone.
 - Without `--next`, the verb keeps a non-empty `Next command:` value byte for byte and calls the board route only for an empty one. Whitespace-only and empty backticks count as empty.
-- The State scan finds backticked runs of seven to forty hex characters, keeps those that `cat-file -e <token>^{commit}` accepts, and refuses when `merge-base --is-ancestor <token> <tip>` is false. The refusal prints the line. A tree hash fails the commit test and refuses.
+- The State scan finds backticked runs of seven to forty hex characters and skips those that name no object. A token that names an object but fails `cat-file -e <token>^{commit}` refuses with a not-a-commit reason, so a tree hash refuses. A commit for which `merge-base --is-ancestor <token> <tip>` is false refuses with an ancestry reason. Each refusal prints the line.
 - `executeCleanup` in `internal/worktree` removes the section for the retired assignment and ensures `main`. It is the one call site, guarded by a single-owner test in the census shape. `internal/worktree` imports the leaf package, never `internal/handoff`.
 - `bench status` counts `rev-list --count <section tip>..<branch tip>` per section and names the behind section in its row. `main` keeps the file-age rule. Per-section expansion follows the census expansion under `--all`.
 - `bench init` appends `capture/session-handoff.md`, `capture/IDEAS.md`, and `capture/learnings.md` to the root ignore file when absent.
@@ -157,11 +168,18 @@ Line: opus / low for the ignore entry, opus / medium for the guidance.
 | HS18 | 20 | `clean --apply` removes the section | `TestCleanDropsTheCensusRecords` extended | a hook on `ReleaseCommand` misses clean |
 | HS19 | 19 | the removal has one call site in the package | new single-call-site test in the census-drop shape | two sites drift |
 | HS20 | 21 | after the last section is removed, the file holds `main` with no further verb run | new lifecycle test | a verb-time `main` leaves the file empty after release |
-| HS21 | 22 | with two sections, one three commits behind on its branch, the status row names that section with `3 commits behind` | new status test | a file-level clock reads both current |
+| HS21 | 22 | with two sections, one three commits behind on its branch, the status row names that section with `3 commits behind`, and a section the join cannot resolve adds no row | new status tests | a file-level clock reads both current, and an unresolved row is behavior the spec never asked for |
 | HS22 | 22 | rewriting the fresh section leaves the behind row's count unchanged | new status test | a shared write time resets the sibling |
 | HS23 | 23 | `main` is dated by the file write time | `TestAppendHandoffIgnoredUsesFileTime` and `TestAppendHandoffIgnoredAbsentIsSilent` | a per-branch rule has no branch for `main` |
 | HS24 | 24, 25 | `bench init` adds the three entries once and a second run adds nothing | new init scaffold test | a blind append duplicates the lines |
 | HS25 | 26 | the working agreement states the section rule and the anchor pins it | anchor registry test and fixture `agents-handoff-section-rule` | the rewrite-in-full sentence survives |
+| HS26 | 27 | a legacy document with State, Closed decisions, Next command, and Shape reads as one `main` section, and its render parses back | legacy tests in the leaf package | a parser that knows only the section grammar refuses the file it replaces |
+| HS27 | 28 | `bench handoff` over a document whose State opens a fence and never closes it exits 1, prints the file and line, and writes nothing | new verb test through the parser refusal | a parser that carries fence state across sections absorbs the siblings in silence |
+| HS28 | 28 | `Parse` refuses a document whose fence is still open at the end of the file, with the file and line | new leaf test | a per-file fence state absorbs every later section into one State |
+| HS29 | 29 | `bench handoff` over a document whose State holds a level-two heading outside a fence exits 1 and prints the file and line | new verb test through the parser refusal | a refusal without the line leaves the reviewer to find the heading by hand |
+| HS30 | 30 | a retirement whose section removal fails prints the error and keeps its verdict | new lifecycle test with an unparseable document | a discarded error leaves the dead section pinned in silence |
+| HS31 | 31 | a real commit off the tip's ancestry inside a fenced block in State exits 0 | new verb test | a scan that splits on newlines alone refuses a quoted example |
+| HS32 | 32 | a State that names an ambiguous 7-hex abbreviation exits 1 with an ambiguity reason | new verb test | two failed `cat-file` probes read the token as prose |
 
 ### Edge inventory
 
@@ -192,6 +210,7 @@ Line: opus / low for the ignore entry, opus / medium for the guidance.
 - `internal/intent/assignment.go`
 - `internal/intent/assignment_lookup_test.go`
 - `internal/preflight/gather.go`
+- `internal/preflight/gather_test.go`
 - `internal/worktree/lifecycle.go`
 - `internal/worktree/land_journey_test.go`
 - `internal/worktree/worktree_test.go`
@@ -207,13 +226,14 @@ Line: opus / low for the ignore entry, opus / medium for the guidance.
 - `tests/canary/workflow-guidance-anchors/`
 - `tests/canary/load-validity-metadata/shared-rule-drift`
 - `tests/canary/docs-currency-token-diet/signal-vocabulary-drift`
+- `cmd/bench/testdata/anchors/pre-disclosure-populated.stdout`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/main_test.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_test.go`
 
-The fence is the union of the seven tickets' `Writes:` lines, closed by
+The fence is the union of the eight tickets' `Writes:` lines, closed by
 `bench preflight build` over the fixture and registry pins. A closure
 headroom file creates no blocker edge; only a file a ticket's `What to build`
 names does.
@@ -234,6 +254,14 @@ Flagged additions beyond the decision source:
 - The leaf package and its lock. `internal/worktree` cannot import `internal/handoff`, and no capture-file lock exists.
 - `bench worktree clean` removes the section. The grill named land and release; clean shares their retirement path, so it comes for free.
 - The rule that the verb never rewrites State is existing behavior, covered by the section tests today, and takes no new row.
+
+Build decisions recorded for veto, made under the `--full` batch approval:
+
+- The lock is reclaimed on release with the safe-unlink shape. The alternative, a fourth ignore entry for the lock file, widened the landing predicate and the init list.
+- The legacy document is migrated on read (story 27). The pre-existing handoff in this repo refused the new parser on the first run.
+- The State scan prints one of two reasons, not-a-commit or off-ancestry, so the commit peel is observable.
+- The status row's unresolved-section advisories are cut. Spec line 109 names the behind section alone, and a dead section is residue the retirement removes.
+- The lock deadline is mirrored from the intent ledger's unexported literals. The collapse needs an export from `internal/intent`, and stays a reviewer decision.
 
 Source-sentence-to-row table:
 

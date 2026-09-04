@@ -6,6 +6,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/handoffdoc"
+	"github.com/gibbonmi/bench/internal/intent"
 )
 
 // commitFile makes one commit touching a uniquely-named file and returns its full sha.
@@ -202,6 +205,152 @@ func TestAppendHandoffIgnoredAbsentIsSilent(t *testing.T) {
 	}
 	if rows := appendHandoff(nil, root); len(rows) != 0 {
 		t.Fatalf("absent ignored handoff produced rows: %#v", rows)
+	}
+}
+
+// ignoreHandoff makes the handoff a local file, which is the state this repository keeps
+// it in and the one the file-age clock covers.
+func ignoreHandoff(t *testing.T, root string) {
+	t.Helper()
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("capture/session-handoff.md\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// seedBranchAssignment writes one active assignment and points its branch ref at tip. It
+// returns the request digest, which is the key of the section that assignment owns.
+func seedBranchAssignment(t *testing.T, root, id, tip string) string {
+	t.Helper()
+	seedAssignment(t, root, id, id, intent.StateActive)
+	gitRun(t, root, "update-ref", intent.AssignmentBranchRef(censusOwnerID, id), tip)
+	return intent.RequestDigest("request-" + id)
+}
+
+// seedHandoffSection writes one request section that records tip as its worktree tip. The
+// State body varies so a rewrite changes the document rather than replacing it byte for
+// byte.
+func seedHandoffSection(t *testing.T, root, key, tip, state string) {
+	t.Helper()
+	section := handoffdoc.Section{
+		Key:    key,
+		Fields: []handoffdoc.Field{{Label: handoffdoc.LabelWorktreeTip, Value: tip}},
+		State:  state,
+	}
+	if err := handoffdoc.WriteSection(filepath.Join(root, "capture/session-handoff.md"), section); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// twoSectionRepo builds the fixture both section tests read: a document with one section
+// three commits behind its assignment branch and one section at that branch's tip. It
+// returns the root and the two request digests.
+func twoSectionRepo(t *testing.T) (root, behind, fresh string) {
+	t.Helper()
+	root = initRepo(t)
+	commitFile(t, root, "base.txt")
+	ignoreHandoff(t, root)
+	base := gitRun(t, root, "rev-parse", "HEAD")
+	commitFile(t, root, "one.txt")
+	commitFile(t, root, "two.txt")
+	head := commitFile(t, root, "three.txt")
+
+	behind = seedBranchAssignment(t, root, strings.Repeat("d", 32), head)
+	fresh = seedBranchAssignment(t, root, strings.Repeat("e", 32), head)
+	seedHandoffSection(t, root, behind, base, "behind")
+	seedHandoffSection(t, root, fresh, head, "fresh")
+	return root, behind, fresh
+}
+
+// behindRow returns the one row that states a section's distance, and fails when the rows
+// hold none or more than one.
+func behindRow(t *testing.T, rows []row) row {
+	t.Helper()
+	var found []row
+	for _, r := range rows {
+		if strings.Contains(r.detail, "behind") {
+			found = append(found, r)
+		}
+	}
+	if len(found) != 1 {
+		t.Fatalf("rows = %#v, want exactly one row stating a distance", rows)
+	}
+	return found[0]
+}
+
+// A section is dated against its own assignment branch, not against the document's write
+// time. A file-level clock reads both sections current, so the stale sibling hides.
+// (Coverage row HS21.)
+func TestAppendHandoffSectionNamesTheBehindSection(t *testing.T) {
+	root, behind, fresh := twoSectionRepo(t)
+
+	got := behindRow(t, appendHandoff(nil, root))
+	if got.signal != "handoff" {
+		t.Errorf("signal = %q, want handoff", got.signal)
+	}
+	if !strings.Contains(got.detail, "3 commits behind") {
+		t.Errorf("detail = %q, want the 3-commit distance", got.detail)
+	}
+	if !strings.Contains(got.detail, Short(behind)) {
+		t.Errorf("detail = %q, want it to name the behind section", got.detail)
+	}
+	if strings.Contains(got.detail, Short(fresh)) {
+		t.Errorf("detail = %q, want it to leave the fresh section unnamed", got.detail)
+	}
+}
+
+// A section the join cannot resolve is residue a landing or a release removes, not a
+// distance a reader acts on. It reports nothing in the default view and under --all, so the
+// behind section is the whole handoff family either way. (Coverage row HS21.)
+func TestAppendHandoffSectionOmitsTheUnresolvedSection(t *testing.T) {
+	root, behind, _ := twoSectionRepo(t)
+	// A key no assignment names: the section stays in the document, and the ledger has
+	// nothing to join it to.
+	seedHandoffSection(t, root, strings.Repeat("a", 32), gitRun(t, root, "rev-parse", "HEAD"), "orphan")
+
+	for _, view := range []struct {
+		name string
+		rows []row
+	}{
+		{"default", appendHandoff(nil, root)},
+		{"--all", handoffRows(root, true)},
+	} {
+		sections := sectionRows(view.rows)
+		if len(sections) != 1 {
+			t.Fatalf("%s rows = %#v, want exactly one section row", view.name, view.rows)
+		}
+		if !strings.Contains(sections[0].detail, Short(behind)) {
+			t.Errorf("%s detail = %q, want it to name the behind section", view.name, sections[0].detail)
+		}
+		if !strings.Contains(sections[0].detail, "3 commits behind") {
+			t.Errorf("%s detail = %q, want the 3-commit distance", view.name, sections[0].detail)
+		}
+	}
+}
+
+// sectionRows keeps every handoff row but the document's own age row, which the
+// ignored-handoff fixture also produces. It drops nothing else, so a row that summarizes
+// the sections it does not name counts here too.
+func sectionRows(rows []row) []row {
+	var out []row
+	for _, r := range rows {
+		if !strings.HasPrefix(r.detail, "written at ") {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
+// Rewriting the fresh section resets the document's write time. The behind section's own
+// distance is unmoved by that, so the row it produces must not change. (Coverage row HS22.)
+func TestAppendHandoffSectionRewriteLeavesTheDistance(t *testing.T) {
+	root, _, fresh := twoSectionRepo(t)
+	before := behindRow(t, appendHandoff(nil, root))
+
+	head := gitRun(t, root, "rev-parse", "HEAD")
+	seedHandoffSection(t, root, fresh, head, "rewritten")
+
+	if after := behindRow(t, appendHandoff(nil, root)); after.detail != before.detail {
+		t.Errorf("detail = %q after the fresh rewrite, want %q", after.detail, before.detail)
 	}
 }
 

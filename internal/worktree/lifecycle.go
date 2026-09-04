@@ -8,6 +8,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/subprocess"
@@ -429,7 +430,17 @@ func releaseRegistration(root, target string) error {
 // segment the recorder read, so the writer and the drop never disagree. A target that
 // names no assignment drops nothing. The drop error goes the way the recorder's does,
 // because an advisory board never changes a retirement's verdict.
+//
+// The retired assignment's handoff section leaves here too, beside the record drop, so
+// land, release, and clean all reach one removal. The section key is read before
+// retireCheckout runs, because the retirement mutates the record the key comes from. A
+// document that carries no such section is left as it is, and a document the removal
+// cannot rewrite is announced rather than discarded.
 func executeCleanup(j joins, root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
+	var request string
+	if plan.assignment != nil {
+		request = plan.assignment.Request
+	}
 	plan, err := retireCheckout(j, root, plan, checkpoint, fault)
 	if err != nil {
 		return plan, err
@@ -437,7 +448,42 @@ func executeCleanup(j joins, root string, plan CleanupPlan, checkpoint func(stri
 	if id, ok := poolkey.SplitAssignmentSegment(filepath.Base(plan.Target)); ok {
 		_ = census.Drop(j.home, root, id)
 	}
+	if path := handoffDocumentPath(root); request != "" && fileExists(path) {
+		if err := handoffdoc.RemoveSection(path, request); err != nil {
+			warnSectionKept(j, request, err)
+		}
+	}
 	return plan, nil
+}
+
+// warnSectionKept announces a section the retirement could not remove. The removal is
+// advisory, so the verdict stays as the retirement decided it, but a silent discard
+// leaves a dead section pinned in a document nobody was told about. The error text
+// carries the file and the line for a parse refusal, so the reader can repair the
+// document by hand. It prints on the seam set's advisory writer, which is where the
+// live-binary guard already announces a non-fatal removal fact.
+func warnSectionKept(j joins, request string, err error) {
+	fmt.Fprintf(j.liveBinaryWarnings,
+		"bench: the retirement kept the handoff section for request %s: %v\n", request, err)
+}
+
+// fileExists reports whether path names a file the retirement may rewrite. A repository
+// with no handoff document keeps none: a removal that scaffolded one would leave an
+// untracked file behind every release.
+func fileExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.Mode().IsRegular()
+}
+
+// handoffDocumentPath resolves the document a retirement writes. An ignored handoff lives
+// in the primary checkout alone, so a retirement run from a worktree still reaches the one
+// document; a tracked one is per-checkout and stays beside its root.
+func handoffDocumentPath(root string) string {
+	noteRoot, _, err := git.LocalNoteRoot(root, handoffdoc.DocumentPath)
+	if err != nil {
+		noteRoot = root
+	}
+	return filepath.Join(noteRoot, filepath.FromSlash(handoffdoc.DocumentPath))
 }
 
 // retireCheckout performs the removal itself: the recovery preservation, the ignored

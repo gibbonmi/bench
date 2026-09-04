@@ -5,9 +5,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/learnings"
+	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -58,8 +61,60 @@ func Init(args []string, stdout, stderr io.Writer) int {
 		}
 		fmt.Fprintln(stdout, "scaffolded capture/learnings.md - the self-learning journal")
 	}
+	if added, err := ignoreLocalCapture(root); err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	} else if added > 0 {
+		fmt.Fprintf(stdout, "added %d local capture entries to .gitignore - these files stay out of history\n", added)
+	}
 	fmt.Fprintln(stdout, "see projects/<name>.md in the Bench kit for the profile template")
 	return 0
+}
+
+// localCaptureIgnoreLines are the project-local capture files a linked repo must not track.
+// Their content enters history only through a reviewed drain, so bench init ignores them.
+// landing.LocalCapturePath is the matching predicate; the adopt tests hold the two lists in
+// agreement, so a new capture file cannot be ignored here and stay unrecognized there.
+var localCaptureIgnoreLines = []string{
+	handoffdoc.DocumentPath,
+	roadmap.IdeasFile,
+	learnings.JournalPath,
+}
+
+// ignoreLocalCapture appends the missing localCaptureIgnoreLines entries to the root
+// .gitignore and reports how many it added. It creates the file when absent, and it
+// terminates a final line that carries no newline before it appends. A line already present
+// is left alone, so a re-run of bench init leaves the file byte-identical.
+func ignoreLocalCapture(root string) (int, error) {
+	path := filepath.Join(root, ".gitignore")
+	existing, err := os.ReadFile(path)
+	if err != nil && !os.IsNotExist(err) {
+		return 0, err
+	}
+	present := map[string]bool{}
+	for _, line := range strings.Split(string(existing), "\n") {
+		present[strings.TrimSpace(line)] = true
+	}
+	var appended strings.Builder
+	for _, line := range localCaptureIgnoreLines {
+		if !present[line] {
+			appended.WriteString(line)
+			appended.WriteString("\n")
+			present[line] = true
+		}
+	}
+	if appended.Len() == 0 {
+		return 0, nil
+	}
+	updated := existing
+	if len(updated) > 0 && updated[len(updated)-1] != '\n' {
+		updated = append(updated, '\n')
+	}
+	updated = append(updated, appended.String()...)
+	if err := os.WriteFile(path, updated, 0o644); err != nil {
+		return 0, err
+	}
+	return strings.Count(appended.String(), "\n"), nil
 }
 
 // SentinelMarker is the fail-closed-stub trailer scaffoldGate embeds as a shell comment.

@@ -3,6 +3,8 @@ package worktree
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -562,6 +564,7 @@ func TestReleaseDropsTheCensusRecords(t *testing.T) {
 	t.Parallel()
 	root, creation, home := newOwnedAssignment(t, "census-release")
 	recordRawCalls(t, home, root, creation.Path, 2)
+	survivor := seedHandoffSections(t, root, creation.Assignment)
 	var stdout, stderr strings.Builder
 	code := ReleaseCommand(root, home, []string{"--request", "landed-census-release", creation.Path}, &stdout, &stderr)
 	if code != 0 {
@@ -569,6 +572,59 @@ func TestReleaseDropsTheCensusRecords(t *testing.T) {
 	}
 	if _, err := os.Stat(censusRecordPath(home, root, creation.Assignment.ID)); !os.IsNotExist(err) {
 		t.Fatalf("the release kept the census record: %v", err)
+	}
+	requireHandoffSections(t, root, handoffdoc.MainKey, survivor)
+}
+
+// TestRetirementLeavesMainInTheDocument is HS20. The last assignment section leaves with
+// its retirement, and the document still carries main without a later `bench handoff`.
+func TestRetirementLeavesMainInTheDocument(t *testing.T) {
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "handoff-last-section")
+	seedOneHandoffSection(t, root, creation.Assignment.Request)
+	var stdout, stderr strings.Builder
+	code := ReleaseCommand(root, home, []string{"--request", "landed-handoff-last-section", creation.Path}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("release = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	requireHandoffSections(t, root, handoffdoc.MainKey)
+}
+
+// TestRetirementPrintsTheSectionRemovalError is HS30. A document the parser refuses
+// keeps its section, so the retirement says which document and which line refused it.
+// The verdict is the retirement's own, because the removal is advisory.
+func TestRetirementPrintsTheSectionRemovalError(t *testing.T) {
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "handoff-unparseable")
+	seedOneHandoffSection(t, root, creation.Assignment.Request)
+	path := handoffDocumentPath(root)
+	seeded, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read seeded handoff document: %v", err)
+	}
+	// The heading is one the grammar has no key for, so Parse refuses the document and
+	// the removal never reaches the section.
+	document := string(seeded) + "\n## Foo\n\n"
+	mustWrite(t, path, []byte(document), 0o644)
+	refused := 0
+	for i, line := range strings.Split(document, "\n") {
+		if line == "## Foo" {
+			refused = i + 1
+		}
+	}
+	j := defaultJoins()
+	var advisory bytes.Buffer
+	j.liveBinaryWarnings = &advisory
+	var stdout, stderr strings.Builder
+	code := releaseCommandWith(j, root, home, []string{"--request", "landed-handoff-unparseable", creation.Path}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("release = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(stdout.String(), string(ActionRemoved)) {
+		t.Fatalf("release verdict = %q, want %s", stdout.String(), ActionRemoved)
+	}
+	if want := fmt.Sprintf("%s:%d:", path, refused); !strings.Contains(advisory.String(), want) {
+		t.Fatalf("advisory = %q, want the file and line %q", advisory.String(), want)
 	}
 }
 
@@ -578,6 +634,7 @@ func TestCleanDropsTheCensusRecords(t *testing.T) {
 	t.Parallel()
 	root, creation, home := newOwnedAssignment(t, "census-clean")
 	recordRawCalls(t, home, root, creation.Path, 2)
+	survivor := seedHandoffSections(t, root, creation.Assignment)
 	var planned, stderr bytes.Buffer
 	if code := CleanCommand(root, home, []string{creation.Path}, &planned, &stderr); code != 0 {
 		t.Fatalf("clean plan = (%d, %q, %q)", code, planned.String(), stderr.String())
@@ -593,12 +650,71 @@ func TestCleanDropsTheCensusRecords(t *testing.T) {
 	if _, err := os.Stat(censusRecordPath(home, root, creation.Assignment.ID)); !os.IsNotExist(err) {
 		t.Fatalf("the clean kept the census record: %v", err)
 	}
+	requireHandoffSections(t, root, handoffdoc.MainKey, survivor)
+}
+
+// seedOneHandoffSection writes one section under key into the document the retirement
+// path resolves for root. The document is excluded first, because the repositories that
+// carry one ignore it, and a tracked copy would refuse the landing as a dirty destination.
+func seedOneHandoffSection(t *testing.T, root, key string) {
+	t.Helper()
+	// Only the document is excluded. Update unlinks its lock on release, so no lock file
+	// is left for the landing to trip over.
+	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte(handoffdoc.DocumentPath+"\n"), 0o644)
+	section := handoffdoc.Section{Key: key, Next: "bench status", Fields: []handoffdoc.Field{{Label: handoffdoc.LabelLabel, Value: key}}}
+	path := handoffDocumentPath(root)
+	if err := handoffdoc.WriteSection(path, section); err != nil {
+		t.Fatalf("seed handoff section %s: %v", key, err)
+	}
+}
+
+// seedHandoffSections gives the document the retired assignment's section and one other
+// assignment's, and returns the other's key. A one-section document cannot tell a removal
+// that drops the right section from one that empties the file.
+func seedHandoffSections(t *testing.T, root string, assignment intent.Assignment) string {
+	t.Helper()
+	survivor := intent.RequestDigest("handoff-survivor-" + assignment.ID)
+	seedOneHandoffSection(t, root, assignment.Request)
+	seedOneHandoffSection(t, root, survivor)
+	return survivor
+}
+
+// requireHandoffSections fails unless the document holds exactly these section keys, in
+// this order.
+func requireHandoffSections(t *testing.T, root string, want ...string) {
+	t.Helper()
+	doc, err := handoffdoc.Read(handoffDocumentPath(root))
+	if err != nil {
+		t.Fatalf("read handoff document: %v", err)
+	}
+	var got []string
+	for _, section := range doc.Sections {
+		got = append(got, section.Key)
+	}
+	if strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Fatalf("handoff sections = %v, want %v", got, want)
+	}
 }
 
 // TestCensusDropHasOneCallSiteInThisPackage pins the one drop owner. A second call
 // site is a second retirement rule, and the two drift.
 func TestCensusDropHasOneCallSiteInThisPackage(t *testing.T) {
 	t.Parallel()
+	requireOneCallSite(t, "census.Drop(", "lifecycle.go")
+}
+
+// TestHandoffSectionRemovalHasOneCallSiteInThisPackage is HS19. The section removal rides
+// the retirement path the census drop rides, so it is pinned the same way: a second site
+// is a second retirement rule.
+func TestHandoffSectionRemovalHasOneCallSiteInThisPackage(t *testing.T) {
+	t.Parallel()
+	requireOneCallSite(t, "handoffdoc.RemoveSection(", "lifecycle.go")
+}
+
+// requireOneCallSite fails unless needle appears once in the package's production files,
+// in the named file.
+func requireOneCallSite(t *testing.T, needle, owner string) {
+	t.Helper()
 	entries, err := os.ReadDir(".")
 	if err != nil {
 		t.Fatal(err)
@@ -613,12 +729,12 @@ func TestCensusDropHasOneCallSiteInThisPackage(t *testing.T) {
 		if readErr != nil {
 			t.Fatal(readErr)
 		}
-		if count := strings.Count(string(body), "census.Drop("); count > 0 {
+		if count := strings.Count(string(body), needle); count > 0 {
 			sites[name] = count
 		}
 	}
-	if len(sites) != 1 || sites["lifecycle.go"] != 1 {
-		t.Fatalf("census.Drop call sites = %v, want one in lifecycle.go", sites)
+	if len(sites) != 1 || sites[owner] != 1 {
+		t.Fatalf("%s call sites = %v, want one in %s", strings.TrimSuffix(needle, "("), sites, owner)
 	}
 }
 

@@ -1,0 +1,1 @@
+AGENTS.md dropped the handoff section rule; a phase close runs bench handoff from its own worktree, and the verb rewrites only that assignment's section

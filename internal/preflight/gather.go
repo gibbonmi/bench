@@ -11,7 +11,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/canary"
-	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
@@ -480,14 +479,6 @@ func relTo(base, path string) string {
 	return rel
 }
 
-// canonicalRoot is a path's absolute, symlink-resolved, cleaned form — the one
-// identity two spellings of the same tree share. internal/worktree derives the
-// same form for its own targets, but that package imports this one, so a shared
-// call would close an import cycle.
-func canonicalRoot(path string) (string, error) {
-	return canonicalpath.Resolve(path)
-}
-
 // baseCurrentFacts backs the base-current check: it resolves the default
 // branch and reports whether its tip is an ancestor of HEAD:
 // merge-base(default, HEAD) equal to rev-parse(default).
@@ -512,28 +503,16 @@ func baseCurrentFacts(root string) (branch string, resolved, current bool) {
 }
 
 // assignmentTarget is the id of the active assignment that owns this preflight
-// root, empty otherwise. The tree is matched by canonical path, because the
-// ledger records a resolved path while a root may arrive through a symlink. An
-// unreadable ledger answers empty: the remedy then prints its placeholder, which
-// is the same answer a root outside the pool gets.
+// root, empty otherwise. intent.AssignmentForWorktree owns the match, so the
+// assignment this remedy names and the section `bench handoff` rewrites resolve
+// from one lookup. An unowned tree answers empty, and the remedy then prints its
+// placeholder.
 func assignmentTarget(root string) string {
-	canonical, err := canonicalRoot(root)
-	if err != nil {
+	assignment, owned := intent.AssignmentForWorktree(root)
+	if !owned {
 		return ""
 	}
-	assignments, err := intent.Assignments(root)
-	if err != nil {
-		return ""
-	}
-	for _, a := range assignments {
-		if a.State != intent.StateActive {
-			continue
-		}
-		if owned, ownedErr := canonicalRoot(a.Worktree); ownedErr == nil && owned == canonical {
-			return a.ID
-		}
-	}
-	return ""
+	return assignment.ID
 }
 
 // reviewBaseFacts wraps the exported diff-base resolution, the single
