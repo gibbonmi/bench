@@ -46,10 +46,11 @@ func header(f facts, state string) string {
 	return b.String()
 }
 
-// section is the owned block, ready for the leaf package to place. State arrives from the
-// document the run read: this command derives every other field and never rewrites State.
-func section(f facts, state string) handoffdoc.Section {
-	return handoffdoc.Section{Key: f.Key, Fields: f.Pins, Next: nextField(f), State: state}
+// section is the owned block, ready for the leaf package to place. State and Next both
+// arrive from the document the run read, because both can be a reviewer's own words: this
+// command derives every other field.
+func section(f facts, state, next string) handoffdoc.Section {
+	return handoffdoc.Section{Key: f.Key, Fields: f.Pins, Next: next, State: state}
 }
 
 // preview is what the command prints: the header and the one section this run wrote. It
@@ -86,6 +87,19 @@ func nextField(f facts) string {
 		return "`" + f.Action + "`"
 	}
 	return "`" + f.Action + "` — the board's leading invocable signal (`" + f.Signal + "`)"
+}
+
+// blankNext answers whether a section's own Next command names nothing, so the board's
+// leading signal is the better value. A value the reviewer or an earlier run put there is
+// kept byte for byte: a mid-build resume invocation carries flags the board cannot derive,
+// and regenerating over it loses them.
+//
+// The rendered form of a named command is a backticked span, so an empty pair of backticks
+// is the same statement as an empty line. A rule that read the backticks as content would
+// leave that section routeless forever.
+func blankNext(next string) bool {
+	trimmed := strings.TrimSpace(next)
+	return trimmed == "" || trimmed == "``"
 }
 
 // validate refuses any field that cannot survive the sink it is about to be composed into,
