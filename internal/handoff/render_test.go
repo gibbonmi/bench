@@ -162,6 +162,57 @@ func TestCommandUsesShellRouteForNoHarness(t *testing.T) {
 	assertNextCommand(t, root, "`git push`")
 }
 
+// HS11, story 14. A mid-build resume invocation carries flags no board can derive, so a
+// run without `--next` keeps it byte for byte. The board here leads with `/bench-drain`,
+// which is the value a regenerating run would have written over it.
+//
+// The whole line is compared. A `Contains` check passes a rewrite that kept the command
+// and dropped its flags, which is the exact loss this row exists to catch.
+func TestCommandKeepsANonEmptyNextCommand(t *testing.T) {
+	root := benchRepo(t)
+	document := filepath.Join(root, status.HandoffFile)
+	write(t, filepath.Join(root, "capture", "IDEAS.md"), "- 2026-08-18  pending\n")
+	const planted = "`bench worktree exec hs-next -- bench gate --check prose --fix`"
+	seedSection(t, document, planted, "The build is live.")
+
+	runIn(t, root, nil)
+	if got := nextCommandLine(t, root); got != handoffdoc.LabelNextCommand+": "+planted {
+		t.Fatalf("next command line = %q, want %q", got, handoffdoc.LabelNextCommand+": "+planted)
+	}
+}
+
+// HS12, story 15. A section that names no command gets the board's. The rendered form of a
+// named command is a backticked span, so an empty pair of backticks says nothing at all;
+// a rule that read them as content would leave that section routeless forever.
+func TestCommandRoutesOnlyAnEmptyNextCommand(t *testing.T) {
+	for _, tc := range []struct{ name, planted string }{
+		{"empty", ""},
+		{"whitespace only", "   "},
+		{"empty backticks", "``"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := benchRepo(t)
+			seedSection(t, filepath.Join(root, status.HandoffFile), tc.planted, "The build is live.")
+			runIn(t, root, nil)
+			assertNextCommand(t, root, "`bench roadmap`")
+		})
+	}
+}
+
+// nextCommandLine returns main's whole `Next command` line, so a test can compare the
+// value rather than probe it for a substring.
+func nextCommandLine(t *testing.T, root string) string {
+	t.Helper()
+	got := sectionBytes(t, filepath.Join(root, status.HandoffFile), handoffdoc.MainKey)
+	for line := range strings.SplitSeq(got, "\n") {
+		if strings.HasPrefix(line, handoffdoc.LabelNextCommand+":") {
+			return line
+		}
+	}
+	t.Fatalf("section carries no %q line\n%s", handoffdoc.LabelNextCommand, got)
+	return ""
+}
+
 // assertNextCommand pins the routed value on the label line the leaf grammar renders.
 func assertNextCommand(t *testing.T, root, want string) {
 	t.Helper()

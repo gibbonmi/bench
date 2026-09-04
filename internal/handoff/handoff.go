@@ -1,6 +1,7 @@
 package handoff
 
 import (
+	"errors"
 	"path/filepath"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -68,21 +69,41 @@ func Command(args []string) (string, int) {
 	}
 	target := filepath.Join(noteRoot, status.HandoffFile)
 
-	f := collect(noteRoot, owned)
+	p := plan{facts: collect(noteRoot, owned), tip: sectionTip(noteRoot, owned), scanRoot: noteRoot}
 	if override, present := parsed.Flags["--next"]; present {
-		f.Action = override
+		p.facts.Action, p.overridden = override, true
 	} else {
-		applyRoute(&f, status.RouteFor(root, status.SignalsWith(root, status.Query{ExcludeDirtyPaths: []string{status.HandoffFile}}), harness))
-	}
-	if err := validate(f); err != nil {
-		return err.Error() + "\n", 1
+		p.route = func() status.RouteResult {
+			return status.RouteFor(root, status.SignalsWith(root, status.Query{ExcludeDirtyPaths: []string{status.HandoffFile}}), harness)
+		}
 	}
 
-	pin, err := writeSection(target, f)
+	pin, err := writeSection(target, p)
 	if err != nil {
+		// A refusal already reads as the answer. Wrapping it would bury the offending
+		// State line, or the unrepresentable field, under a write-failure headline.
+		var refuse refusal
+		if errors.As(err, &refuse) {
+			return refuse.Error() + "\n", 1
+		}
 		return refusal{"cannot write the session handoff", err.Error()}.Error() + "\n", 1
 	}
 	return pin, 0
+}
+
+// plan is what one run brings to the locked read-modify-write. The Next command and the
+// State scan both need the document's own bytes, which only exist inside the lock, so the
+// decisions ride in as inputs rather than as an already-derived value.
+//
+// route is nil when `--next` named the command. A non-nil route is called only for a
+// section whose own Next command is blank, so a run that keeps an existing invocation
+// never pays for the board scan.
+type plan struct {
+	facts      facts
+	overridden bool
+	route      func() status.RouteResult
+	tip        string // the owned section's worktree tip, or "" when none resolves
+	scanRoot   string // the checkout whose object store the State scan reads
 }
 
 // owner names the section one run rewrites. Assignment is the record behind a request
@@ -127,11 +148,27 @@ func resolveOwner(root string) (owner, error) {
 //
 // State is read back out of the document and put back unchanged. This command derives
 // every other field of the owned section and never rewrites State.
-func writeSection(target string, f facts) (string, error) {
+//
+// Every refusal is raised before the document is rendered, and Update replaces the file
+// only when the callback returns nil. So a refused run leaves the bytes it read.
+func writeSection(target string, p plan) (string, error) {
 	var pin string
 	err := handoffdoc.Update(target, func(doc *handoffdoc.Document) error {
-		existing, _ := doc.Section(f.Key)
-		owned := section(f, existing.State)
+		existing, _ := doc.Section(p.facts.Key)
+		if err := scanState(p.scanRoot, p.tip, existing.State); err != nil {
+			return err
+		}
+		f, next := p.facts, existing.Next
+		if !p.overridden && blankNext(next) {
+			applyRoute(&f, p.route())
+		}
+		if err := validate(f); err != nil {
+			return err
+		}
+		if p.overridden || blankNext(next) {
+			next = nextField(f)
+		}
+		owned := section(f, existing.State, next)
 		doc.Header = header(f, existing.State)
 		doc.Shape = ShapeSection
 		doc.Put(owned)
@@ -143,4 +180,24 @@ func writeSection(target string, f facts) (string, error) {
 		return "", err
 	}
 	return pin, nil
+}
+
+// sectionTip names the commit the State scan measures ancestry against: the tip of the
+// tree the owned section describes, never the caller's. main's tip is the document
+// checkout's HEAD, which is the tree main's section reports on.
+//
+// An empty answer means no tip resolves. The scan then has nothing to measure against and
+// refuses nothing: a repository with no commits is a state to pass through, not a defect.
+func sectionTip(documentRoot string, o owner) string {
+	if o.Key == handoffdoc.MainKey {
+		sha, err := git.Output("-C", documentRoot, "rev-parse", "HEAD")
+		if err != nil {
+			return ""
+		}
+		return sha
+	}
+	if tip := worktreeTip(documentRoot, o.Assignment); tip != unknownTip {
+		return tip
+	}
+	return ""
 }
