@@ -12,8 +12,8 @@ the verb never rewrites State. So `ValidateState` grades a State that
 `Parse` already accepted, and no production input reaches its refusals.
 
 Then delete `ValidateState`, `StateError`, `errOrNil`, and `stateGrammar`.
-Keep `scanFences` for the scan, and drop the line index that no caller
-reads. Keep the two verb tests, and make each assert the parser refusal's
+Fold the fence walk into `UnfencedLines`, and drop the line index that
+no caller reads. Keep the two verb tests, and make each assert the parser refusal's
 file and line in the printed error.
 
 ## Acceptance
