@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"os"
 	"os/exec"
@@ -103,15 +102,16 @@ func TestReleasePreflightBuildDoesNotRebindThePromotionBroker(t *testing.T) {
 	}
 
 	after, afterErr := os.ReadFile(subjectManifestPath(root))
-	if os.IsNotExist(beforeErr) {
-		if !os.IsNotExist(afterErr) {
-			t.Fatalf("release-preflight build published %s", subjectManifestPath(root))
-		}
+	if sameWrapperManifest(after, afterErr, before, beforeErr) {
 		return
 	}
-	if afterErr != nil || !bytes.Equal(after, before) {
-		t.Fatalf("release-preflight build rebound %s: %v", subjectManifestPath(root), afterErr)
+	// The comparison is the shared predicate; only the wording branches. The two messages
+	// name the two ways this build can be wrong: with no manifest in the wrapper's
+	// directory it published one, and with a manifest already there it rebound it.
+	if os.IsNotExist(beforeErr) {
+		t.Fatalf("release-preflight build published %s", subjectManifestPath(root))
 	}
+	t.Fatalf("release-preflight build rebound %s: %v", subjectManifestPath(root), afterErr)
 }
 
 // subjectManifestPath names where a subject-mode build publishes the broker manifest: the
