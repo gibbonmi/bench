@@ -79,10 +79,17 @@ func TestPublishedBrokerManifestCarriesTheStampedVersion(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := freshness.Publish(root, staged, executable, "4.5.6"); err != nil {
+	// The manifest directory is deliberately not the executable's own, because that is the
+	// shape an ordinary build has: the executable lands in dist/ and the manifest lands
+	// beside the wrapper the land route resolves.
+	manifestDir := filepath.Join(root, "bin")
+	if err := os.MkdirAll(manifestDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	fields, err := brokermanifest.Read(filepath.Join(filepath.Dir(executable), brokermanifest.Name))
+	if err := freshness.Publish(root, staged, executable, manifestDir, "4.5.6"); err != nil {
+		t.Fatal(err)
+	}
+	fields, err := brokermanifest.Read(filepath.Join(manifestDir, brokermanifest.Name))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,7 +146,7 @@ func TestDoctorSealRowNamesTheSourceDigestMismatch(t *testing.T) {
 	if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := freshness.Publish(root, staged, executable, "1.2.3"); err != nil {
+	if err := freshness.Publish(root, staged, executable, filepath.Dir(executable), "1.2.3"); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(root, "cmd", "bench", "main.go"), []byte("package main\n\nfunc main() { _ = 1 }\n"), 0o644); err != nil {

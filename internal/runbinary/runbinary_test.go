@@ -1,6 +1,7 @@
 package runbinary
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gocache"
 )
@@ -120,7 +122,7 @@ func newParkingBuilder(t *testing.T, hold bool) parkingBuilder {
 		t.Fatal(err)
 	}
 	script := `#!/usr/bin/env bash
-output="$2"
+output="${!#}"
 printf selected > "$output"
 chmod 755 "$output"
 echo $$ > "` + builder.builderPID + `"
@@ -171,7 +173,7 @@ func TestFactoryValidateRefusesAStaleInheritedSeal(t *testing.T) {
 		t.Fatal(err)
 	}
 	executable := filepath.Join(dir, "bench")
-	if err := freshness.Publish(source, staged, executable, "1.2.3"); err != nil {
+	if err := freshness.Publish(source, staged, executable, filepath.Dir(executable), "1.2.3"); err != nil {
 		t.Fatal(err)
 	}
 	factory := Factory{}
@@ -319,5 +321,48 @@ func TestBuildEnvironmentRefusesWithoutAnAbsoluteHome(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "HOME") {
 		t.Fatalf("error = %q, want it to name HOME", err)
+	}
+}
+
+// TestBuildLeavesTheWrapperManifestUntouched grades the one build the gate loop runs on
+// every pass. That build publishes a throwaway executable under a private temporary root,
+// and the executable is deleted the moment the selection closes. A wrapper manifest
+// written by it would therefore bind a path that no longer exists, and the next landing
+// would refuse at exit 127 with nothing wrong in the tree. Only the build that publishes
+// the checkout's own dist/bench may write beside the wrapper.
+func TestBuildLeavesTheWrapperManifestUntouched(t *testing.T) {
+	kit, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifest := filepath.Join(kit, "bin", brokermanifest.Name)
+	before, beforeErr := os.ReadFile(manifest)
+	if beforeErr != nil && !os.IsNotExist(beforeErr) {
+		t.Fatal(beforeErr)
+	}
+	t.Cleanup(func() {
+		if os.IsNotExist(beforeErr) {
+			_ = os.Remove(manifest)
+			return
+		}
+		if err := os.WriteFile(manifest, before, 0o644); err != nil {
+			t.Error(err)
+		}
+	})
+
+	output := filepath.Join(t.TempDir(), "bench")
+	if err := Build(context.Background(), kit, output); err != nil {
+		t.Fatalf("private build: %v", err)
+	}
+
+	after, afterErr := os.ReadFile(manifest)
+	if os.IsNotExist(beforeErr) {
+		if !os.IsNotExist(afterErr) {
+			t.Fatalf("private build published %s", manifest)
+		}
+		return
+	}
+	if afterErr != nil || !bytes.Equal(after, before) {
+		t.Fatalf("private build changed %s: %v", manifest, afterErr)
 	}
 }

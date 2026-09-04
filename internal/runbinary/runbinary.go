@@ -233,7 +233,10 @@ func canonicalBuild(ctx context.Context, sourceRoot, output string) error {
 	if _, err := exec.LookPath("go"); err != nil {
 		return errors.New("Go is absent from PATH; prepend an executable Go toolchain directory to PATH and retry")
 	}
-	cmd := exec.Command("bash", filepath.Join(sourceRoot, "scripts", "go-build.sh"), sourceRoot, output)
+	// The private selection is deleted when the run owner closes it, so its manifest goes
+	// beside it rather than beside the source checkout's wrapper. A manifest left in the
+	// wrapper's directory would outlive this executable and refuse the next landing.
+	cmd := exec.Command("bash", filepath.Join(sourceRoot, "scripts", "go-build.sh"), "--manifest-dir", filepath.Dir(output), sourceRoot, output)
 	cmd.Dir = sourceRoot
 	buildEnv, err := buildEnvironment(os.Environ())
 	if err != nil {

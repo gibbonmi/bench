@@ -1,7 +1,7 @@
 # Publish the manifest where the routes read it
 
 Blocked by: none
-Writes: internal/freshness/freshness_publish.go, internal/freshness/freshness_publish_test.go, internal/freshness/freshness_verify_test.go, internal/runbinary/runbinary_test.go, internal/conformance/gate_entry_test.go, internal/systemtest/owner_artifact_recovery_test.go, cmd/bench/freshness_publish.go, cmd/bench/freshness_publish_test.go, cmd/bench/build_artifact_mode_test.go, cmd/bench/build_subject_mode_test.go, internal/adopt/broker_test.go, scripts/go-build.sh, specs/binary-freshness/spec.md
+Writes: internal/runbinary/runbinary.go, internal/runbinary/runbinary_test.go, internal/worktree/build_test.go, internal/adopt/adopt_test.go, cmd/bench/main_test.go, internal/preflight/decision_test.go, internal/freshness/freshness_publish.go, internal/freshness/freshness_publish_test.go, internal/freshness/freshness_verify_test.go, internal/runbinary/runbinary_test.go, internal/conformance/gate_entry_test.go, internal/systemtest/owner_artifact_recovery_test.go, cmd/bench/freshness_publish.go, cmd/bench/freshness_publish_test.go, cmd/bench/build_artifact_mode_test.go, cmd/bench/build_subject_mode_test.go, internal/adopt/broker_test.go, scripts/go-build.sh, specs/binary-freshness/spec.md
 Covers: BF10, BF14
 
 ## What to build

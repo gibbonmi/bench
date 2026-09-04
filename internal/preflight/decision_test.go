@@ -677,7 +677,7 @@ func publishSealedBinary(t *testing.T, root string) string {
 	if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := freshness.Publish(root, staged, executable, "1.2.3"); err != nil {
+	if err := freshness.Publish(root, staged, executable, filepath.Dir(executable), "1.2.3"); err != nil {
 		t.Fatalf("Publish: %v", err)
 	}
 	return executable

@@ -26,8 +26,26 @@ func TestPublishAndVerifyRefuseEmptyExecutables(t *testing.T) {
 		if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
 			t.Fatal(err)
 		}
-		if err := Publish(root, staged, executable, "1.2.3"); err == nil {
+		if err := Publish(root, staged, executable, fixtureManifestDir(t, root), "1.2.3"); err == nil {
 			t.Fatal("Publish empty executable stage = nil, want refusal")
+		}
+	})
+
+	t.Run("no manifest directory", func(t *testing.T) {
+		root := writeBuildFixture(t)
+		staged := filepath.Join(root, "staged-bench")
+		if err := os.WriteFile(staged, []byte("Bench executable"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		executable := filepath.Join(root, "dist", "bench")
+		if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := Publish(root, staged, executable, "", "1.2.3"); err == nil {
+			t.Fatal("Publish without a manifest directory = nil, want refusal")
+		}
+		if _, err := os.Lstat(executable); !os.IsNotExist(err) {
+			t.Fatalf("Publish without a manifest directory installed the executable: %v", err)
 		}
 	})
 
@@ -60,9 +78,9 @@ func TestPublishAndVerifyRefuseEmptyExecutables(t *testing.T) {
 // not the staged file the builder ran, so an operator's next landing meets the bytes the
 // seal describes.
 func TestPublishBindsTheBrokerManifestToThePublishedExecutable(t *testing.T) {
-	_, executable := writePublishedFixture(t)
+	root, executable := writePublishedFixture(t)
 
-	fields, err := brokermanifest.Read(brokerManifestPath(executable))
+	fields, err := brokermanifest.Read(brokerManifestPath(fixtureManifestDir(t, root)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +120,7 @@ func TestPublishRefusesSymlinkedDestinationWithoutChangingPublishedPair(t *testi
 		t.Fatal(err)
 	}
 
-	if err := Publish(root, staged, executable, "1.2.3"); err == nil {
+	if err := Publish(root, staged, executable, fixtureManifestDir(t, root), "1.2.3"); err == nil {
 		t.Fatal("Publish symlinked destination = nil, want refusal")
 	}
 	if _, err := os.Lstat(staged); err != nil {
@@ -126,7 +144,8 @@ func TestPublishRestoresPriorPairWhenSealPromotionFails(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	beforeManifest, err := os.ReadFile(brokerManifestPath(executable))
+	manifest := brokerManifestPath(fixtureManifestDir(t, root))
+	beforeManifest, err := os.ReadFile(manifest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +162,7 @@ func TestPublishRestoresPriorPairWhenSealPromotionFails(t *testing.T) {
 	}
 	t.Cleanup(func() { replacePublicationFile = originalRename })
 
-	if err := Publish(root, staged, executable, "1.2.3"); err == nil {
+	if err := Publish(root, staged, executable, fixtureManifestDir(t, root), "1.2.3"); err == nil {
 		t.Fatal("Publish forced seal promotion failure = nil, want refusal")
 	}
 	afterExecutable, err := os.ReadFile(executable)
@@ -157,14 +176,14 @@ func TestPublishRestoresPriorPairWhenSealPromotionFails(t *testing.T) {
 	// The manifest is the third member of the published set. A manifest written before the
 	// rename, or outside the transaction, survives this restore and then binds an
 	// executable that is no longer there.
-	afterManifest, err := os.ReadFile(brokerManifestPath(executable))
+	afterManifest, err := os.ReadFile(manifest)
 	if err != nil || !bytes.Equal(afterManifest, beforeManifest) {
 		t.Fatalf("Publish changed the broker manifest after failed seal promotion: %v, %q", err, afterManifest)
 	}
 	if _, err := os.Lstat(staged); !os.IsNotExist(err) {
 		t.Fatalf("Publish left staged executable after restoring the prior pair: %v", err)
 	}
-	if leftovers := publicationResidue(t, executable); len(leftovers) != 0 {
+	if leftovers := publicationResidue(t, executable, manifest); len(leftovers) != 0 {
 		t.Fatalf("Publish residue = %v; want none", leftovers)
 	}
 }
@@ -175,6 +194,7 @@ func TestPublishLeavesNoArtifactsWhenFirstSealPromotionFails(t *testing.T) {
 	if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
 		t.Fatal(err)
 	}
+	manifest := brokerManifestPath(fixtureManifestDir(t, root))
 	staged := filepath.Join(root, "first-stage")
 	if err := os.WriteFile(staged, []byte("first executable"), 0o755); err != nil {
 		t.Fatal(err)
@@ -188,15 +208,15 @@ func TestPublishLeavesNoArtifactsWhenFirstSealPromotionFails(t *testing.T) {
 	}
 	t.Cleanup(func() { replacePublicationFile = originalRename })
 
-	if err := Publish(root, staged, executable, "1.2.3"); err == nil {
+	if err := Publish(root, staged, executable, fixtureManifestDir(t, root), "1.2.3"); err == nil {
 		t.Fatal("Publish first forced seal promotion failure = nil, want refusal")
 	}
-	for _, path := range []string{executable, sealPath(executable), brokerManifestPath(executable), staged} {
+	for _, path := range []string{executable, sealPath(executable), manifest, staged} {
 		if _, err := os.Lstat(path); !os.IsNotExist(err) {
 			t.Fatalf("Publish first failure left %q: %v", path, err)
 		}
 	}
-	if leftovers := publicationResidue(t, executable); len(leftovers) != 0 {
+	if leftovers := publicationResidue(t, executable, manifest); len(leftovers) != 0 {
 		t.Fatalf("Publish first-failure residue = %v; want none", leftovers)
 	}
 }
@@ -256,7 +276,7 @@ func TestPublishRestoresPriorPairWhenInterruptedBeforeItsSealLands(t *testing.T)
 	if err != nil || !bytes.Equal(afterSeal, beforeSeal) {
 		t.Fatalf("interrupted publication changed the seal: %v, %q", err, afterSeal)
 	}
-	if leftovers := publicationResidue(t, executable); len(leftovers) != 0 {
+	if leftovers := publicationResidue(t, executable, brokerManifestPath(fixtureManifestDir(t, root))); len(leftovers) != 0 {
 		t.Fatalf("interrupted publication residue = %v; want none", leftovers)
 	}
 }
@@ -283,7 +303,7 @@ func runInterruptedPublicationChild(t *testing.T, root string) {
 		return errors.New("held publication was never interrupted")
 	}
 	t.Cleanup(func() { replacePublicationFile = original })
-	if err := Publish(root, os.Getenv(publicationInterruptStagedEnv), executable, "1.2.3"); err != nil {
+	if err := Publish(root, os.Getenv(publicationInterruptStagedEnv), executable, fixtureManifestDir(t, root), "1.2.3"); err != nil {
 		t.Fatalf("held publication returned instead of being interrupted: %v", err)
 	}
 }
@@ -315,7 +335,7 @@ func TestPublishRemovesBackupPairWhenInterruptedAfterItsSealLands(t *testing.T) 
 	if err := Verify(root, executable); err != nil {
 		t.Fatalf("interrupted publication left an unverifiable pair: %v\n%s", err, transcript.String())
 	}
-	if leftovers := publicationResidue(t, executable); len(leftovers) != 0 {
+	if leftovers := publicationResidue(t, executable, brokerManifestPath(fixtureManifestDir(t, root))); len(leftovers) != 0 {
 		t.Fatalf("sealed publication residue = %v; want none", leftovers)
 	}
 }
@@ -329,7 +349,7 @@ func runSealedPublicationChild(t *testing.T, root string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	transaction, err := beginPublication(executable)
+	transaction, err := beginPublication(executable, brokerManifestPath(fixtureManifestDir(t, root)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -398,18 +418,22 @@ func awaitPublicationMarker(t *testing.T, path string, cmd *exec.Cmd) {
 	}
 }
 
-// publicationResidue lists every temporary a publication of executable can leave beside
-// it, matched by the publisher's own naming rather than a glob restated here. A new
-// temporary family is covered the moment the publisher can create one.
-func publicationResidue(t *testing.T, executable string) []string {
+// publicationResidue lists every temporary a publication can leave in either directory it
+// writes, matched by the publisher's own naming rather than a glob restated here. A new
+// temporary family is covered the moment the publisher can create one. The manifest
+// directory is swept as well, because the manifest's backup and staging files land there
+// rather than beside the executable.
+func publicationResidue(t *testing.T, executable, manifest string) []string {
 	t.Helper()
 	var leftovers []string
-	for _, pattern := range []string{publicationBackupPattern, sealTemporaryPattern(sealPath(executable))} {
-		matches, err := filepath.Glob(filepath.Join(filepath.Dir(executable), pattern))
-		if err != nil {
-			t.Fatal(err)
+	for _, dir := range []string{filepath.Dir(executable), filepath.Dir(manifest)} {
+		for _, pattern := range []string{publicationBackupPattern, sealTemporaryPattern(sealPath(executable)), ".bench-broker.*"} {
+			matches, err := filepath.Glob(filepath.Join(dir, pattern))
+			if err != nil {
+				t.Fatal(err)
+			}
+			leftovers = append(leftovers, matches...)
 		}
-		leftovers = append(leftovers, matches...)
 	}
 	return leftovers
 }

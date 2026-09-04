@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,6 +22,10 @@ func TestGoBuildArtifactModeWritesNoManifest(t *testing.T) {
 	root, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {
 		t.Fatal(err)
+	}
+	before, beforeErr := os.ReadFile(subjectManifestPath(root))
+	if beforeErr != nil && !os.IsNotExist(beforeErr) {
+		t.Fatal(beforeErr)
 	}
 	out := filepath.Join(t.TempDir(), "bench")
 	target := "arm64"
@@ -43,4 +48,22 @@ func TestGoBuildArtifactModeWritesNoManifest(t *testing.T) {
 			t.Fatalf("artifact build wrote %q: %v", path, err)
 		}
 	}
+	// The subject path now publishes into the wrapper's directory rather than beside the
+	// executable, so the "wrote no manifest" claim has to be graded there as well.
+	if after, err := os.ReadFile(subjectManifestPath(root)); !sameWrapperManifest(after, err, before, beforeErr) {
+		t.Fatalf("artifact build changed %s", subjectManifestPath(root))
+	}
+}
+
+// sameWrapperManifest compares two reads of the wrapper's manifest, counting "absent both
+// times" as unchanged. An artifact build must leave that file exactly as it found it,
+// present or not.
+func sameWrapperManifest(after []byte, afterErr error, before []byte, beforeErr error) bool {
+	if os.IsNotExist(afterErr) || os.IsNotExist(beforeErr) {
+		return os.IsNotExist(afterErr) && os.IsNotExist(beforeErr)
+	}
+	if afterErr != nil || beforeErr != nil {
+		return false
+	}
+	return bytes.Equal(after, before)
 }
