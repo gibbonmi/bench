@@ -117,7 +117,7 @@ Line: opus / low. One new check row in an existing table.
 - `kitSourceCheckout` is exported from `internal/adopt`, so the landing line can call it.
 - `Factory.validate` verifies an inherited executable against its source root when the caller names one. The system suite owner names `BENCH_KIT`. The gate's private build path is unchanged.
 - The subject-mode build's `freshness-publish` step writes the broker manifest inside the same publication transaction, with the stamped version. The verb gains two arguments: the manifest directory and the version. The published path is already argument two, so the manifest binds the published executable and not the staged one. An empty manifest directory is refused, the way an empty version is refused. Artifact mode stays excluded.
-- The build script defaults the manifest directory to the module's own `bin/`, because the readers look beside the resolved wrapper. A `--manifest-dir` option overrides that default. The gate's private selection passes it, because that executable is deleted at close and a manifest beside the wrapper would outlive it.
+- The build script defaults the manifest directory to the module's own `bin/`, because the readers look beside the resolved wrapper. A `--manifest-dir` option overrides that default. Only a build that publishes the checkout's own `dist/bench` keeps the default. Every other caller passes the option. Its executable is deleted at close or at the next clean, and a manifest beside the wrapper would outlive it. The gate's private selection and `scripts/release-preflight.sh` are the two such callers.
 - The shim's shared classifier table holds resolver-independent rows only, because `benchguard.InvokesBench` takes a resolver the shell test lacks.
 - The land route splits refusal three from refusal five. The version branch runs the stamped build at the install root once, re-reads the manifest once, and refuses if the version still reads `dev`. The digest branch keeps its unconditional exit 127. The route reads no repository and honors no inherited override.
 - The landing line composes `kitSourceCheckout` with `RebuildAction` for the source checkout, and names `bench repair` for an installed kit.
@@ -249,6 +249,7 @@ needs a lexer to tell a grammatical paren from a quoted one. Without it,
 - `internal/conformance/registry/registry.go`
 - `bin/bench.sh`
 - `scripts/go-build.sh`
+- `scripts/release-preflight.sh`
 - `.bench/hooks/block-bench-follow-on.sh`
 - `.bench/hooks/block-dangerous-git.sh`
 - `.bench/hooks/session-start.sh`

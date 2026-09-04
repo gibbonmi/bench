@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"os/exec"
@@ -61,6 +62,55 @@ func TestGoBuildSubjectModePublishesTheStampedVersion(t *testing.T) {
 	}
 	if fields["path"] != bound {
 		t.Fatalf("manifest at %s binds path %q, want this build's executable %q", subjectManifestPath(root), fields["path"], bound)
+	}
+}
+
+// TestReleasePreflightBuildDoesNotRebindThePromotionBroker grades the auxiliary build
+// scripts/release-preflight.sh runs. That script builds dist/bench-preflight, which is a
+// build output a clean deletes, and the wrapper's manifest names whatever the last
+// subject-mode build published. A manifest bound to the preflight artifact therefore
+// survives the artifact, and bin/bench.sh execs the missing path as the promotion broker:
+// the landing refuses at exit 127 with nothing wrong in the tree. Only the build that
+// publishes the checkout's own dist/bench may rebind that file.
+//
+// The row runs the real script, because the defect is which operands the script hands the
+// builder. A test that restated those operands would grade its own copy of them.
+func TestReleasePreflightBuildDoesNotRebindThePromotionBroker(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	preserveWrapperManifest(t, root)
+	before, beforeErr := os.ReadFile(subjectManifestPath(root))
+	if beforeErr != nil && !os.IsNotExist(beforeErr) {
+		t.Fatal(beforeErr)
+	}
+
+	// The script skips its build when the artifact is already present, so the row removes
+	// it to reach the build at all. It is a build output, which a clean deletes anyway.
+	artifact := filepath.Join(root, "dist", "bench-preflight")
+	if err := os.Remove(artifact); err != nil && !os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+	// The script execs the built binary once the build finishes. This row grades the build,
+	// not the verb, so the exit status of that exec says nothing and is ignored.
+	cmd := exec.Command("bash", filepath.Join(root, "scripts", "release-preflight.sh"), "--help")
+	cmd.Dir = root
+	cmd.Env = capability.WithoutEnvironment(os.Environ(), runbinary.Env)
+	_, _ = cmd.CombinedOutput()
+	if _, err := os.Stat(artifact); err != nil {
+		t.Fatalf("release-preflight build produced no auxiliary executable: %v", err)
+	}
+
+	after, afterErr := os.ReadFile(subjectManifestPath(root))
+	if os.IsNotExist(beforeErr) {
+		if !os.IsNotExist(afterErr) {
+			t.Fatalf("release-preflight build published %s", subjectManifestPath(root))
+		}
+		return
+	}
+	if afterErr != nil || !bytes.Equal(after, before) {
+		t.Fatalf("release-preflight build rebound %s: %v", subjectManifestPath(root), afterErr)
 	}
 }
 

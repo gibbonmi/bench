@@ -20,6 +20,12 @@ import (
 // land route trusts only what it binds: path, version, platform, and executable digest.
 const Name = "bench-broker.manifest"
 
+// TemporaryPrefix names the staging file Write promotes into the manifest. It is exported
+// because a caller that sweeps a publication's leftovers has to match the publisher's own
+// naming; a second copy of the prefix would keep matching after a rename here and report
+// no residue where a temporary had leaked.
+const TemporaryPrefix = ".bench-broker."
+
 // boundFields are the four values one manifest carries.
 var boundFields = []string{"path", "version", "platform", "sha256"}
 
@@ -38,7 +44,7 @@ func Write(dir, broker, version string) (string, string, error) {
 		"version\t" + version + "\n" +
 		"platform\t" + Platform() + "\n" +
 		"sha256\t" + digest + "\n"
-	tmp, err := os.CreateTemp(dir, ".bench-broker.")
+	tmp, err := os.CreateTemp(dir, TemporaryPrefix)
 	if err != nil {
 		return "", "", fmt.Errorf("publish broker manifest at %s: %w", path, err)
 	}

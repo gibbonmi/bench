@@ -427,7 +427,7 @@ func publicationResidue(t *testing.T, executable, manifest string) []string {
 	t.Helper()
 	var leftovers []string
 	for _, dir := range []string{filepath.Dir(executable), filepath.Dir(manifest)} {
-		for _, pattern := range []string{publicationBackupPattern, sealTemporaryPattern(sealPath(executable)), ".bench-broker.*"} {
+		for _, pattern := range []string{publicationBackupPattern, sealTemporaryPattern(sealPath(executable)), brokermanifest.TemporaryPrefix + "*"} {
 			matches, err := filepath.Glob(filepath.Join(dir, pattern))
 			if err != nil {
 				t.Fatal(err)
