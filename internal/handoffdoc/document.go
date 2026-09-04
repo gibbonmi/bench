@@ -196,25 +196,32 @@ func labelLine(label, value string) string {
 //
 // Fenced blocks are skipped when locating a heading. A heading inside a fence is
 // prose about the document, not a section of it.
+//
+// A document in the pre-section shape reads as main alone. See convertLegacy.
 func Parse(path string, content []byte) (*Document, error) {
 	lines := strings.Split(strings.ReplaceAll(string(content), "\r\n", "\n"), "\n")
 	doc := &Document{}
-	blocks, header, err := splitSections(path, lines)
+	blocks, header := splitSections(lines)
+	doc.Header = strings.Trim(strings.Join(header, "\n"), "\n")
+	blocks, err := convertLegacy(path, blocks)
 	if err != nil {
 		return nil, err
 	}
-	doc.Header = strings.Trim(strings.Join(header, "\n"), "\n")
 	seen := map[string]int{}
 	for _, block := range blocks {
-		if block.key == shapeHeading {
+		key, err := sectionKey(path, block.line, block.heading)
+		if err != nil {
+			return nil, err
+		}
+		if key == shapeHeading {
 			doc.Shape = strings.Trim(strings.Join(block.body, "\n"), "\n")
 			continue
 		}
-		if first, repeated := seen[block.key]; repeated {
-			return nil, &ParseError{path, block.line, fmt.Sprintf("section %q is declared twice, first at line %d; leave one section per key", block.key, first)}
+		if first, repeated := seen[key]; repeated {
+			return nil, &ParseError{path, block.line, fmt.Sprintf("section %q is declared twice, first at line %d; leave one section per key", key, first)}
 		}
-		seen[block.key] = block.line
-		section, err := parseSection(path, block)
+		seen[key] = block.line
+		section, err := parseSection(path, key, block)
 		if err != nil {
 			return nil, err
 		}
@@ -226,17 +233,19 @@ func Parse(path string, content []byte) (*Document, error) {
 	return doc, nil
 }
 
-// block is one section heading and the raw lines below it.
+// block is one level-two heading, as the file spells it, and the raw lines below
+// it. The heading stays unresolved here so that the legacy conversion can read a
+// spelling this grammar has no key for.
 type block struct {
-	key  string
-	line int
-	body []string
+	heading string
+	line    int
+	body    []string
 }
 
 // splitSections cuts the lines into the header and one block per level-two
 // heading. It returns the blocks in file order, so main keeps whatever place the
 // file gave it and Shape stays last.
-func splitSections(path string, lines []string) ([]block, []string, error) {
+func splitSections(lines []string) ([]block, []string) {
 	var blocks []block
 	var header []string
 	fenced := false
@@ -253,13 +262,71 @@ func splitSections(path string, lines []string) ([]block, []string, error) {
 			}
 			continue
 		}
-		key, err := sectionKey(path, i+1, trimmed)
-		if err != nil {
-			return nil, nil, err
-		}
-		blocks = append(blocks, block{key: key, line: i + 1})
+		blocks = append(blocks, block{heading: trimmed, line: i + 1})
 	}
-	return blocks, header, nil
+	return blocks, header
+}
+
+// The level-two headings the handoff carried before it held one section per
+// assignment. Both are derived from the spellings this package already owns, so a
+// rename of either carries here rather than leaving a stale legacy spelling.
+var (
+	legacyStateHeading = strings.TrimPrefix(StateHeading, "#")
+	legacyNextHeading  = "## " + LabelNextCommand
+)
+
+// convertLegacy rewrites a pre-section document into the blocks this grammar
+// reads, and passes any other document through untouched. The legacy file held
+// one State, one Next command, and further reviewer blocks above Shape; all of it
+// belongs to main, because that shape predates the per-assignment section.
+//
+// The conversion emits blocks rather than a Section, so the rendered legacy body
+// goes back through parseSection and no second reader of a section body exists.
+func convertLegacy(path string, blocks []block) ([]block, error) {
+	legacy, section := 0, ""
+	for _, b := range blocks {
+		if b.heading == legacyStateHeading && legacy == 0 {
+			legacy = b.line
+		}
+		if (b.heading == MainHeading || strings.HasPrefix(b.heading, RequestHeadingPrefix)) && section == "" {
+			section = b.heading
+		}
+	}
+	if legacy == 0 {
+		return blocks, nil
+	}
+	if section != "" {
+		return nil, &ParseError{path, legacy, fmt.Sprintf("heading %q sits in a document that also carries %q; the legacy shape and the section shape do not mix", legacyStateHeading, section)}
+	}
+
+	var state, extras, next string
+	var shape *block
+	for _, b := range blocks {
+		body := strings.Trim(strings.Join(b.body, "\n"), "\n")
+		switch {
+		case b.heading == shapeHeading:
+			copied := b
+			shape = &copied
+		case b.heading == legacyStateHeading:
+			state = body
+		case b.heading == legacyNextHeading:
+			if strings.Contains(body, "\n") {
+				return nil, &ParseError{path, b.line, fmt.Sprintf("heading %q carries more than one line; a next command is one line", b.heading)}
+			}
+			next = body
+		default:
+			extras += "\n\n### " + strings.TrimPrefix(b.heading, "## ") + "\n\n" + body
+		}
+	}
+
+	main := block{heading: MainHeading, line: legacy}
+	main.body = append(main.body, labelLine(LabelNextCommand, next), "", StateHeading, "")
+	main.body = append(main.body, strings.Split(state+extras, "\n")...)
+	converted := []block{main}
+	if shape != nil {
+		converted = append(converted, *shape)
+	}
+	return converted, nil
 }
 
 // sectionKey resolves one heading to its key. Shape keeps its heading as the key,
@@ -282,8 +349,8 @@ func sectionKey(path string, line int, trimmed string) (string, error) {
 
 // parseSection reads one block's label lines and its State body. Everything below
 // the State heading is the reviewer's, and it passes through untouched.
-func parseSection(path string, b block) (Section, error) {
-	section := Section{Key: b.key}
+func parseSection(path, key string, b block) (Section, error) {
+	section := Section{Key: key}
 	fenced := false
 	for i, raw := range b.body {
 		trimmed := strings.TrimRight(raw, " \t")
@@ -307,7 +374,7 @@ func parseSection(path string, b block) (Section, error) {
 		}
 		section.Fields = append(section.Fields, Field{Label: label, Value: value})
 	}
-	return Section{}, &ParseError{path, b.line, fmt.Sprintf("section %q carries no %q heading", b.key, StateHeading)}
+	return Section{}, &ParseError{path, b.line, fmt.Sprintf("section %q carries no %q heading", key, StateHeading)}
 }
 
 // splitLabel cuts a label line at its first colon. The label is one to four words
