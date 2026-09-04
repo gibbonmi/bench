@@ -6,13 +6,20 @@ import (
 
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/handoffdoc"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/status"
 )
 
-// facts is the pin block's field set, already reduced to the strings the renderer places.
-// Each field is either a fact or an explicit statement that the fact is unavailable.
-// Never an empty value, which a cold reader cannot tell apart from a deliberate blank.
+// facts is the written document's field set, already reduced to the strings the renderer
+// places. Each field is either a fact or an explicit statement that the fact is
+// unavailable. Never an empty value, which a cold reader cannot tell apart from a
+// deliberate blank.
+//
+// The header fields describe the repository the document lives in, and the section
+// fields describe the one assignment this run owns. The split is what lets two live
+// phases share a header while each keeps its own pins.
 type facts struct {
 	Repo     string // the repository's directory name
 	Origin   string // the origin remote's URL, or "" when the repo has none
@@ -21,10 +28,12 @@ type facts struct {
 	Head     string // the short HEAD sha, or a phrase naming why there is none
 	Dirty    string // the working-tree clause
 	Unpushed string // the unpushed-commit clause
-	Specs    []string
 	Gate     string
-	Action   string // the next command, derived or overridden
-	Signal   string // the board signal Action came from; "" when Action was overridden
+
+	Key    string             // the owned section's key: main, or the request digest
+	Pins   []handoffdoc.Field // the owned section's label lines, in render order
+	Action string             // the next command, derived or overridden
+	Signal string             // the board signal Action came from; "" when Action was overridden
 
 	// NoInvocable marks the board that had signals but no command among them. It is a
 	// third state, distinct from an empty Action on a clean board. Collapsing the two
@@ -39,25 +48,78 @@ const (
 	unknownHead     = "HEAD unknown (no commits yet)"
 	unknownDirty    = "dirty state unknown"
 	unknownUnpushed = "unpushed count unknown"
+	unknownToken    = "token not recorded"
+	unknownTip      = "tip unknown (neither tree nor branch resolves)"
 )
 
-// collect gathers every pin fact under root. It never fails: each query that cannot answer
-// degrades to its explicit unknown. A session resuming into a half-initialized repo still
-// needs the fields that do resolve.
-func collect(root string) facts {
+// collect gathers the header facts from documentRoot and the section pins from the
+// owner's tree. It never fails: each query that cannot answer degrades to its explicit
+// unknown. A session resuming into a half-initialized repo still needs the fields that
+// do resolve.
+//
+// The header reads documentRoot, the checkout the document lives in, rather than the
+// caller's tree. A worktree run that pinned its own HEAD in the header would state the
+// branch of one phase above the sections of every phase.
+func collect(documentRoot string, o owner) facts {
 	f := facts{
-		Repo:   filepath.Base(root),
-		Path:   renderPath(root, os.Getenv("HOME")),
-		Branch: branch(root),
-		Head:   head(root),
-		Specs:  liveSpecs(root),
-		Gate:   gateField(status.GateVerdict(root)),
+		Repo:   filepath.Base(documentRoot),
+		Path:   renderPath(documentRoot, os.Getenv("HOME")),
+		Branch: branch(documentRoot),
+		Head:   head(documentRoot),
+		Gate:   gateField(status.GateVerdict(documentRoot)),
+		Key:    o.Key,
+		Pins:   pins(documentRoot, o),
 	}
-	if origin, err := git.Output("-C", root, "remote", "get-url", "origin"); err == nil {
+	if origin, err := git.Output("-C", documentRoot, "remote", "get-url", "origin"); err == nil {
 		f.Origin = origin
 	}
-	f.Dirty, f.Unpushed = landedState(root)
+	f.Dirty, f.Unpushed = landedState(documentRoot)
 	return f
+}
+
+// pins renders the owned section's label lines. main carries no assignment, so it renders
+// its live specs alone: its request, label, tip, and base are the header's repository
+// facts, and a second copy of them under the heading would drift from the header.
+func pins(documentRoot string, o owner) []handoffdoc.Field {
+	var fields []handoffdoc.Field
+	if o.Key != handoffdoc.MainKey {
+		fields = append(fields,
+			handoffdoc.Field{Label: handoffdoc.LabelRequestToken, Value: requestToken(o.Assignment)},
+			handoffdoc.Field{Label: handoffdoc.LabelLabel, Value: o.Assignment.Label},
+			handoffdoc.Field{Label: handoffdoc.LabelWorktreeTip, Value: worktreeTip(documentRoot, o.Assignment)},
+			handoffdoc.Field{Label: handoffdoc.LabelRecordedBase, Value: o.Assignment.Start},
+		)
+	}
+	for _, live := range liveSpecs(o.Worktree) {
+		fields = append(fields,
+			handoffdoc.Field{Label: handoffdoc.LabelSpec, Value: live.Path},
+			handoffdoc.Field{Label: handoffdoc.LabelSpecStatus, Value: live.Status},
+		)
+	}
+	return fields
+}
+
+// requestToken is the plain caller token a resumed landing passes back. Records written
+// before the field existed carry none, and the phrase says so: an empty value here would
+// read as a token that is the empty string.
+func requestToken(a intent.Assignment) string {
+	if a.RequestToken == "" {
+		return unknownToken
+	}
+	return a.RequestToken
+}
+
+// worktreeTip reads the assignment's own tip, never the caller's and never main's. A
+// released tree still has its branch, so the branch tip answers once the tree is gone.
+// A section that pinned nothing would send a resuming session to no commit at all.
+func worktreeTip(documentRoot string, a intent.Assignment) string {
+	if sha, err := git.Output("-C", a.Worktree, "rev-parse", "HEAD"); err == nil && sha != "" {
+		return sha
+	}
+	if sha, err := git.Output("-C", documentRoot, "rev-parse", a.Branch); err == nil && sha != "" {
+		return sha
+	}
+	return unknownTip
 }
 
 // branch renders the checked-out branch for the pin block. git.CheckedOutBranch owns the
@@ -93,21 +155,25 @@ func landedState(root string) (dirty, unpushed string) {
 	return dirty, status.Plural(fact.UnpushedCommits, "unpushed commit", "unpushed commits")
 }
 
-// liveSpecs names the staged spec with its Status line, in path order. An implemented spec
-// is finished work and tells a resuming session nothing about what to build. A spec
-// carrying no Status line is malformed rather than staged. Naming it with an invented
-// status would state something the file does not say.
-func liveSpecs(root string) []string {
+// liveSpecs names the staged specs in root, in path order. An implemented spec is
+// finished work and tells a resuming session nothing about what to build. A spec carrying
+// no Status line is malformed rather than staged, and naming it with an invented status
+// would state something the file does not say.
+//
+// The root is the assignment's own worktree, so a section lists the specs the phase that
+// owns it is building. Two live phases hold different specs, and one enumeration over a
+// shared checkout would give both sections the same list.
+func liveSpecs(root string) []spec.Fact {
 	all, err := spec.Facts(root)
 	if err != nil {
 		return nil
 	}
-	var live []string
+	var live []spec.Fact
 	for _, s := range all {
 		if s.Status == "" || s.Status == spec.StatusImplemented {
 			continue
 		}
-		live = append(live, "`"+s.Path+"` (Status: "+s.Status+")")
+		live = append(live, s)
 	}
 	return live
 }

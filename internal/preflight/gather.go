@@ -512,28 +512,16 @@ func baseCurrentFacts(root string) (branch string, resolved, current bool) {
 }
 
 // assignmentTarget is the id of the active assignment that owns this preflight
-// root, empty otherwise. The tree is matched by canonical path, because the
-// ledger records a resolved path while a root may arrive through a symlink. An
-// unreadable ledger answers empty: the remedy then prints its placeholder, which
-// is the same answer a root outside the pool gets.
+// root, empty otherwise. intent.AssignmentForWorktree owns the match, so the
+// assignment this remedy names and the section `bench handoff` rewrites resolve
+// from one lookup. An unowned tree answers empty, and the remedy then prints its
+// placeholder.
 func assignmentTarget(root string) string {
-	canonical, err := canonicalRoot(root)
-	if err != nil {
+	assignment, owned := intent.AssignmentForWorktree(root)
+	if !owned {
 		return ""
 	}
-	assignments, err := intent.Assignments(root)
-	if err != nil {
-		return ""
-	}
-	for _, a := range assignments {
-		if a.State != intent.StateActive {
-			continue
-		}
-		if owned, ownedErr := canonicalRoot(a.Worktree); ownedErr == nil && owned == canonical {
-			return a.ID
-		}
-	}
-	return ""
+	return assignment.ID
 }
 
 // reviewBaseFacts wraps the exported diff-base resolution, the single
