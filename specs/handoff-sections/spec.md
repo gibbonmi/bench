@@ -102,8 +102,8 @@ Line: opus / low for the ignore entry, opus / medium for the guidance.
 Line: opus / medium. Each repair changes a refusal or a parser edge.
 
 27. As a coordinator, I want a legacy document read as one `main` section, so that the new verb's first run does not refuse it.
-28. As a coordinator, I want an unterminated fence in State refused at write and at parse, so that one section cannot swallow its siblings.
-29. As a coordinator, I want a State line that opens a level-two heading refused at write, so that my prose cannot break every later verb.
+28. As a coordinator, I want an unterminated fence in State refused when the document is read, so that one section cannot swallow its siblings.
+29. As a coordinator, I want a level-two heading in State refused with its line, so that I can repair my prose in one look.
 30. As a coordinator, I want a retirement whose section removal fails to print the error, so that a pinned dead section is never silent.
 31. As a reviewer, I want a commit hash inside a fenced block in State left unscanned, so that a quoted example never blocks a close.
 32. As a reviewer, I want an ambiguous abbreviation in State refused with its own reason, so that a stale short pin cannot pass as prose.
@@ -168,15 +168,15 @@ Line: opus / medium. Each repair changes a refusal or a parser edge.
 | HS18 | 20 | `clean --apply` removes the section | `TestCleanDropsTheCensusRecords` extended | a hook on `ReleaseCommand` misses clean |
 | HS19 | 19 | the removal has one call site in the package | new single-call-site test in the census-drop shape | two sites drift |
 | HS20 | 21 | after the last section is removed, the file holds `main` with no further verb run | new lifecycle test | a verb-time `main` leaves the file empty after release |
-| HS21 | 22 | with two sections, one three commits behind on its branch, the status row names that section with `3 commits behind` | new status test | a file-level clock reads both current |
+| HS21 | 22 | with two sections, one three commits behind on its branch, the status row names that section with `3 commits behind`, and a section the join cannot resolve adds no row | new status tests | a file-level clock reads both current, and an unresolved row is behavior the spec never asked for |
 | HS22 | 22 | rewriting the fresh section leaves the behind row's count unchanged | new status test | a shared write time resets the sibling |
 | HS23 | 23 | `main` is dated by the file write time | `TestAppendHandoffIgnoredUsesFileTime` and `TestAppendHandoffIgnoredAbsentIsSilent` | a per-branch rule has no branch for `main` |
 | HS24 | 24, 25 | `bench init` adds the three entries once and a second run adds nothing | new init scaffold test | a blind append duplicates the lines |
 | HS25 | 26 | the working agreement states the section rule and the anchor pins it | anchor registry test and fixture `agents-handoff-section-rule` | the rewrite-in-full sentence survives |
 | HS26 | 27 | a legacy document with State, Closed decisions, Next command, and Shape reads as one `main` section, and its render parses back | legacy tests in the leaf package | a parser that knows only the section grammar refuses the file it replaces |
-| HS27 | 28 | `bench handoff` with a State that opens a fence and never closes it exits 1, prints the line, and writes nothing | new verb test | a write-time check that trusts the parser lets the fence reach disk |
+| HS27 | 28 | `bench handoff` over a document whose State opens a fence and never closes it exits 1, prints the file and line, and writes nothing | new verb test through the parser refusal | a parser that carries fence state across sections absorbs the siblings in silence |
 | HS28 | 28 | `Parse` refuses a document whose fence is still open at the end of the file, with the file and line | new leaf test | a per-file fence state absorbs every later section into one State |
-| HS29 | 29 | `bench handoff` with a State line that opens a level-two heading outside a fence exits 1 and prints the line | new verb test | a heading the reviewer writes bricks the document for every later verb |
+| HS29 | 29 | `bench handoff` over a document whose State holds a level-two heading outside a fence exits 1 and prints the file and line | new verb test through the parser refusal | a refusal without the line leaves the reviewer to find the heading by hand |
 | HS30 | 30 | a retirement whose section removal fails prints the error and keeps its verdict | new lifecycle test with an unparseable document | a discarded error leaves the dead section pinned in silence |
 | HS31 | 31 | a real commit off the tip's ancestry inside a fenced block in State exits 0 | new verb test | a scan that splits on newlines alone refuses a quoted example |
 | HS32 | 32 | a State that names an ambiguous 7-hex abbreviation exits 1 with an ambiguity reason | new verb test | two failed `cat-file` probes read the token as prose |
