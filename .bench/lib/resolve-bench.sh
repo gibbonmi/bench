@@ -2,7 +2,8 @@
 # This is the shared shell classification library for every hook shim
 # (.bench/hooks/*.sh) and shift adapter (.bench/adapters/*). It carries the one
 # source of the wrapper search order — repo `.bench/bin/bench.sh`, then kit
-# `bin/bench.sh`, then `bench` on PATH — and the shell Bench-call word test. It
+# `bin/bench.sh`, then `bench` on PATH — the shell Bench-call word test, the
+# PreToolUse envelope read, and the shell spelling of the rebuild invocation. It
 # carries no fail posture: what a shim does with either answer is the shim's own.
 #
 # Each shim owns its own fail posture when the search comes up empty. The git and
@@ -164,4 +165,135 @@ bench_is_assignment() {
     ''|[!A-Za-z_]*|*[!A-Za-z0-9_]*) return 1 ;;
   esac
   return 0
+}
+
+# bench_envelope_command prints the string value of the PreToolUse envelope in $1, at
+# its `tool_input.command` field. It returns 1 when the envelope carries no readable
+# value:
+#   - the object is absent
+#   - the field is absent
+#   - the value is not a string
+#   - the string is unterminated
+#   - an escape cannot be decoded
+# It carries no fail posture. The git guard refuses on a 1, and the follow-on shim
+# stays open on one, so neither reads an unreadable envelope as an empty command.
+#
+# The read is scoped under `"tool_input"`, so a sibling field such as `cwd` that
+# follows that object never joins the command.
+bench_envelope_command() {
+  _bench_env_rest=${1#*'"tool_input"'}
+  [ "$_bench_env_rest" = "$1" ] && return 1
+  _bench_env_before=$_bench_env_rest
+  _bench_env_rest=${_bench_env_rest#*'"command"'}
+  [ "$_bench_env_rest" = "$_bench_env_before" ] && return 1
+  bench_env_skip_space
+  case $_bench_env_rest in :*) ;; *) return 1 ;; esac
+  _bench_env_rest=${_bench_env_rest#:}
+  bench_env_skip_space
+  case $_bench_env_rest in '"'*) ;; *) return 1 ;; esac
+  _bench_env_rest=${_bench_env_rest#\"}
+  _bench_env_value=''
+  while [ -n "$_bench_env_rest" ]; do
+    _bench_env_tail=${_bench_env_rest#?}
+    _bench_env_char=${_bench_env_rest%"$_bench_env_tail"}
+    if [ "$_bench_env_char" = '"' ]; then
+      printf '%s' "$_bench_env_value"
+      return 0
+    fi
+    if [ "$_bench_env_char" != '\' ]; then
+      _bench_env_value=$_bench_env_value$_bench_env_char
+      _bench_env_rest=$_bench_env_tail
+      continue
+    fi
+    _bench_env_rest=$_bench_env_tail
+    [ -n "$_bench_env_rest" ] || return 1
+    _bench_env_tail=${_bench_env_rest#?}
+    _bench_env_escape=${_bench_env_rest%"$_bench_env_tail"}
+    _bench_env_rest=$_bench_env_tail
+    case $_bench_env_escape in
+      n) _bench_env_octal=012 ;;
+      t) _bench_env_octal=011 ;;
+      r) _bench_env_octal=015 ;;
+      b|f) _bench_env_octal=040 ;;
+      '"') _bench_env_octal=042 ;;
+      '\') _bench_env_octal=134 ;;
+      /) _bench_env_octal=057 ;;
+      u) bench_env_unicode_octal || return 1 ;;
+      *) return 1 ;;
+    esac
+    # The sentinel survives the command substitution's trailing-newline strip, so a
+    # decoded newline reaches the value rather than vanishing from it.
+    _bench_env_value=$(printf '%s%bX' "$_bench_env_value" "\\0$_bench_env_octal")
+    _bench_env_value=${_bench_env_value%X}
+  done
+  return 1
+}
+
+# bench_env_skip_space advances the reader past JSON whitespace.
+bench_env_skip_space() {
+  while :; do
+    case $_bench_env_rest in
+      [[:space:]]*) _bench_env_rest=${_bench_env_rest#?} ;;
+      *) return 0 ;;
+    esac
+  done
+}
+
+# bench_env_unicode_octal consumes a four-hex-digit Unicode escape and sets
+# _bench_env_octal to the byte it decodes to.
+#
+# An escape in the ASCII range decodes to its own byte. Go's encoding/json escapes &,
+# <, and > by default, so a control operator or a command name reaches this decoder
+# escaped as often as literal. A placeholder there would hide the operator the word
+# test looks for.
+#
+# Above ASCII the placeholder `_` stands, because no such rune is a shell operator. A
+# NUL escape refuses, because the shell cannot carry NUL, so decoding it would
+# silently truncate the command the caller is deciding about.
+bench_env_unicode_octal() {
+  case $_bench_env_rest in
+    [0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]*) ;;
+    *) return 1 ;;
+  esac
+  _bench_env_after=${_bench_env_rest#????}
+  _bench_env_hex=${_bench_env_rest%"$_bench_env_after"}
+  _bench_env_rest=$_bench_env_after
+  case $_bench_env_hex in
+    00[0-7][0-9A-Fa-f])
+      _bench_env_code=$(( 0x$_bench_env_hex ))
+      [ "$_bench_env_code" -eq 0 ] && return 1
+      _bench_env_octal=$(printf '%03o' "$_bench_env_code")
+      ;;
+    *) _bench_env_octal=137 ;;
+  esac
+  return 0
+}
+
+# bench_shell_quote prints $1 as one single-quoted shell word. bench_rebuild_action
+# composes the one rebuild command for the kit root $1. Both are the shell spelling of
+# internal/freshness's shellQuote and RebuildAction, whose Go half is the source of the
+# invocation. This copy exists only because the invocation is needed at the one moment
+# the Go binary cannot run, so nothing can ask it for the string. internal/systemtest
+# asserts the printed line against freshness.RebuildAction, so a drift between the two
+# reds.
+bench_shell_quote() {
+  _bench_quote_rest=$1
+  _bench_quote_out=''
+  while :; do
+    case $_bench_quote_rest in
+      *\'*)
+        _bench_quote_out=$_bench_quote_out${_bench_quote_rest%%\'*}"'\\''"
+        _bench_quote_rest=${_bench_quote_rest#*\'}
+        ;;
+      *)
+        _bench_quote_out=$_bench_quote_out$_bench_quote_rest
+        break
+        ;;
+    esac
+  done
+  printf "'%s'" "$_bench_quote_out"
+}
+
+bench_rebuild_action() {
+  printf 'cd %s && bash scripts/go-build.sh %s %s' "$(bench_shell_quote "$1")" "$(bench_shell_quote "$1")" "$(bench_shell_quote "$1/dist/bench")"
 }

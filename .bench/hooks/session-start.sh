@@ -29,23 +29,12 @@ lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/../lib/resolve-bench.sh"
 # shellcheck source=../lib/resolve-bench.sh
 . "$lib"
 
-# shell_quote and rebuild_action are the shell spelling of internal/freshness's
-# shellQuote and RebuildAction. The Go function is the source of the rebuild
-# invocation. This copy exists only because the invocation is needed at the one moment
-# the Go binary cannot run, so nothing can ask it for the string. internal/systemtest
-# asserts the printed line against freshness.RebuildAction, so a drift between the two
-# reds.
-shell_quote() { printf "'%s'" "${1//\'/\'\\\'\'}"; }
-rebuild_action() {
-  printf 'cd %s && bash scripts/go-build.sh %s %s' "$(shell_quote "$1")" "$(shell_quote "$1")" "$(shell_quote "$1/dist/bench")"
-}
-
 # no_core_hint prints what a cold session gets when nothing here can render the
 # dashboard. It names the build script, not plain `go build`, because `go build`
 # produces a binary that carries no version and fails the freshness check the session
 # would hit next.
 no_core_hint() {
-  printf 'bench: no Bench core is reachable here, so this session opened without its dashboard. Rebuild it with: %s\n' "$(rebuild_action "$root")"
+  printf 'bench: no Bench core is reachable here, so this session opened without its dashboard. Rebuild it with: %s\n' "$(bench_rebuild_action "$root")"
 }
 
 cmd="$(bench_resolve_wrapper)" || { no_core_hint; exit 0; }
