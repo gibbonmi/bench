@@ -241,6 +241,8 @@ Line: opus / low. One new check row in an existing table.
 - `bin/bench.sh`
 - `scripts/go-build.sh`
 - `.bench/hooks/block-bench-follow-on.sh`
+- `.bench/hooks/block-dangerous-git.sh`
+- `.bench/hooks/session-start.sh`
 - `.bench/lib/resolve-bench.sh`
 - `AGENTS.md`
 - `projects/benchkit.md`
@@ -277,6 +279,11 @@ ticket.
 ## Further notes
 
 Reviewer decisions of 2026-09-04, taken on the review findings:
+
+- The dangerous-git guard now sources the shared library, and a missing
+  library refuses at exit 2. `.bench/lib` and `.bench/hooks` ship as one
+  consumer-payload tree, so an absent library means a broken installation.
+  Refusing is the posture that guard already declares.
 
 - The stamped build takes a manifest-directory operand, and the build script
   passes the kit's `bin/`. The manifest belongs where the land route and
