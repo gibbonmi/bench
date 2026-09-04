@@ -146,8 +146,6 @@ baseline, an unchecked absence, or a dependency edge nothing resolves. Each
 hardens a different oracle surface. They stay separate builds, but they read
 and prioritize as one theme.
 
-**FT177 (MEDIUM) — a stale `dist/bench` invalidates tests and its promotion-broker manifest.**
-
 ## Reds the diff doesn't own — inheritance, load, and harness defects
 
 Five rows share one failure class: a red that answers for something other
@@ -279,9 +277,7 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. FT177 binary-freshness — the spec is staged; run `/bench-implement-spec`.
-   A stale `dist/bench` invalidates every runtime test that consults it.
-2. FT162 handoff-sections — the spec is staged; run `/bench-implement-spec`.
-3. FT254 `bench worktree exec` — run `/bench-write-spec`. It carries the most
+1. FT162 handoff-sections — the spec is staged; run `/bench-implement-spec`.
+2. FT254 `bench worktree exec` — run `/bench-write-spec`. It carries the most
    occurrences on the board, and each one costs raw calls in every phase.
 
