@@ -208,6 +208,7 @@ Line: opus / low for the ignore entry, opus / medium for the guidance.
 - `tests/canary/workflow-guidance-anchors/`
 - `tests/canary/load-validity-metadata/shared-rule-drift`
 - `tests/canary/docs-currency-token-diet/signal-vocabulary-drift`
+- `cmd/bench/testdata/anchors/pre-disclosure-populated.stdout`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/main_test.go`

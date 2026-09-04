@@ -69,11 +69,15 @@ A phase close commits its tracked capture artifacts — the retro and the
 scorecard updates — together in one gate-priced commit. The git-ignored
 capture files stay local and never join that commit.
 
-Rewrite `capture/session-handoff.md` in full; do not append to it. The file
-is pruned, not accreted, because a fresh session pays for every line it reads
-cold. Follow the shape already in the file. When the handoff and the tree
-disagree, the tree wins. `bench status` reports how many commits have landed
-since the last handoff update. So a stale handoff is only ambient
+A phase close runs `bench handoff` from its own worktree.
+`bench handoff` rewrites only the calling worktree's assignment section.
+The primary checkout owns the `main` section. The verb keeps a non-empty Next
+command. The verb also refuses a State that pins a commit outside the tip's
+ancestry.
+
+When the handoff and the tree disagree, the tree wins. `bench
+status` dates each section by the branch commits past its recorded tip, and
+`main` keeps the file-age rule. So a stale section is only ambient
 information; the next session does not need to confirm it.
 
 **Shell conventions for agents in this repo.**
