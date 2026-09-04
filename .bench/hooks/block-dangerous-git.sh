@@ -38,8 +38,10 @@ set -uo pipefail
 # global `bench` — or fails when none is reachable. The eight-line search is inlined
 # rather than shared with .bench/hooks/stop.sh, to avoid a new fail-open mode.
 #
-# A missing shared lib would make the shim error before its rims run. A non-2
-# PreToolUse exit is a non-blocking error, and it would silently grant access.
+# The search stays inlined even though the shim sources the shared library for the
+# envelope read, because a resolver that came from the library would leave the shim
+# with no reachable rim when the library is gone. A non-2 PreToolUse exit is a
+# non-blocking error, and it would silently grant access.
 #
 # The conformance check in internal/conformance (checkGuardResolverOrderDrift) reds if
 # this inline's search order drifts from .bench/lib/resolve-bench.sh.
@@ -53,6 +55,24 @@ resolve_wrapper() {
   fi
   command -v bench 2>/dev/null || return 1
 }
+
+# The shared library carries the one envelope read. A missing library leaves the guard
+# unable to read the command it must classify, which is the condition the unreadable-
+# envelope rim already names, so it refuses rather than granting access.
+#
+# The path is composed from builtins alone. Every other shim spells this with dirname,
+# which this one cannot: the rim runs in the cold session where PATH may carry nothing,
+# and a shim that errored before its rims ran would grant access. `pwd -P` still
+# survives the .claude/hooks symlink.
+hook_dir=${BASH_SOURCE[0]%/*}
+[[ "$hook_dir" == "${BASH_SOURCE[0]}" ]] && hook_dir=.
+lib="$(cd -- "$hook_dir" && pwd -P)/../lib/resolve-bench.sh"
+if [[ ! -f "$lib" ]]; then
+  echo "BLOCKED: guard degraded (shared library missing) - no readable command in this tool call, so refusing it. Restore the bench core (bench link) or hand back." >&2
+  exit 2
+fi
+# shellcheck source=../lib/resolve-bench.sh
+. "$lib"
 
 input="$(cat)"
 
@@ -70,7 +90,7 @@ input="$(cat)"
 # pooled-worktree isolation as the backstops.
 fail_closed_no_core() {
   local command_text
-  if ! command_text="$(envelope_command)"; then
+  if ! command_text="$(bench_envelope_command "$input")"; then
     echo "BLOCKED: guard degraded (bench core missing) — no readable command in this tool call, so refusing it. Restore the bench core (bench link) or hand back." >&2
     exit 2
   fi
@@ -79,78 +99,6 @@ fail_closed_no_core() {
     exit 2
   fi
   exit 0
-}
-
-# envelope_command prints the string value of the PreToolUse envelope's
-# `tool_input.command` field. It fails when the envelope carries no readable value:
-#   - the object is absent
-#   - the field is absent
-#   - the value is not a string
-#   - the string is unterminated
-#   - an escape cannot be decoded
-# Failing here is a refusal upstream, so an unreadable envelope is never read as an
-# empty command.
-envelope_command() {
-  local rest before value ch esc i n hex dec oct chr
-  rest=${input#*'"tool_input"'}
-  [[ "$rest" == "$input" ]] && return 1
-  before=$rest
-  rest=${rest#*'"command"'}
-  [[ "$rest" == "$before" ]] && return 1
-  while [[ "$rest" == [[:space:]]* ]]; do rest=${rest#?}; done
-  [[ "$rest" == :* ]] || return 1
-  rest=${rest#:}
-  while [[ "$rest" == [[:space:]]* ]]; do rest=${rest#?}; done
-  [[ "$rest" == '"'* ]] || return 1
-  rest=${rest#\"}
-  value=''
-  n=${#rest}
-  i=0
-  while (( i < n )); do
-    ch=${rest:i:1}
-    if [[ "$ch" == '"' ]]; then
-      printf '%s' "$value"
-      return 0
-    fi
-    if [[ "$ch" == '\' ]]; then
-      esc=${rest:i+1:1}
-      case "$esc" in
-        n) value=$value$'\n' ;;
-        t) value=$value$'\t' ;;
-        r) value=$value$'\r' ;;
-        b | f) value="$value " ;;
-        # A \uXXXX escape in the ASCII range decodes to its own byte. Go's
-        # encoding/json escapes &, <, and > by default, so a control operator or a
-        # command name reaches this decoder escaped as often as literal. A
-        # placeholder there would hide the operator the scan below looks for.
-        #
-        # Above ASCII, the placeholder stands, because no such rune is a shell
-        # operator. \u0000 refuses: bash cannot carry NUL, so decoding it would
-        # silently truncate the command this guard is deciding about.
-        u)
-          hex=${rest:i+2:4}
-          [[ "$hex" == [0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f] ]] || return 1
-          if [[ "$hex" == 00[0-7][0-9A-Fa-f] ]]; then
-            printf -v dec '%d' "0x$hex"
-            (( dec == 0 )) && return 1
-            printf -v oct '%03o' "$dec"
-            printf -v chr "\\$oct"
-            value=$value$chr
-          else
-            value="${value}_"
-          fi
-          i=$(( i + 4 ))
-          ;;
-        '"' | '\' | /) value="$value$esc" ;;
-        *) return 1 ;;
-      esac
-      i=$(( i + 2 ))
-      continue
-    fi
-    value="$value$ch"
-    i=$(( i + 1 ))
-  done
-  return 1
 }
 
 # invokes_git succeeds when the command text runs `git` in command position. Argument $2

@@ -6,15 +6,6 @@
 set -uo pipefail
 warn() { echo "WARNING: block-bench-follow-on: $1 — allowing Bash." >&2; }
 
-# rebuild_action composes the one rebuild command for a kit root. It is the shell
-# derivation of internal/freshness.RebuildAction, which the shim cannot call because
-# the binary that would answer is the stale thing it is reporting. The system suite
-# pins the two derivations byte for byte.
-shell_quote() { printf "'%s'" "${1//\'/\'\\\'\'}"; }
-rebuild_action() {
-  printf 'cd %s && bash scripts/go-build.sh %s %s' "$(shell_quote "$1")" "$(shell_quote "$1")" "$(shell_quote "$1/dist/bench")"
-}
-
 # kit_root names the tree the rebuild runs in. BENCH_KIT is the caller's own answer
 # when it has one; otherwise the enclosing checkout is the best available reading.
 kit_root() {
@@ -23,18 +14,6 @@ kit_root() {
     return 0
   fi
   git rev-parse --show-toplevel 2>/dev/null
-}
-
-# envelope_command reads the Bash command out of the hook envelope. The core owns
-# this read in every ordinary call; the shim needs its own only when the core cannot
-# answer. An unreadable field yields the empty string, which classifies as non-Bench,
-# so the degraded posture stays open rather than denying a call it cannot read.
-envelope_command() {
-  local text
-  text="$(printf '%s' "$1" | sed -n 's/.*"command"[[:space:]]*:[[:space:]]*"\(.*\)".*/\1/p')"
-  text="${text//\\n/$'\n'}"
-  text="${text//\\\"/\"}"
-  printf '%s' "${text//\\\\/\\}"
 }
 
 lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/../lib/resolve-bench.sh"
@@ -61,8 +40,12 @@ fi
 # stale, and every other call passes with the rebuild named, because the shell has to
 # stay usable while the binary is rebuilt.
 if [[ "$rc" == 2 && "$answer" == *"unknown subcommand"* ]]; then
-  action="$(rebuild_action "$(kit_root)")"
-  if bench_invokes_bench "$(envelope_command "$input")"; then
+  action="$(bench_rebuild_action "$(kit_root)")"
+  # The core owns the envelope read in every ordinary call; the shim reaches for the
+  # shared reader only here, where the core cannot answer. An unreadable envelope is
+  # not a Bench call, so the degraded posture stays open rather than denying a call it
+  # cannot read.
+  if command_text="$(bench_envelope_command "$input")" && bench_invokes_bench "$command_text"; then
     echo "BLOCKED: the Bench binary is stale, so no Bench verb can answer. Rebuild it: $action" >&2
     exit 2
   fi

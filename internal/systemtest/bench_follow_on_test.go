@@ -300,6 +300,27 @@ func TestBenchFollowOnHookDegradedRim(t *testing.T) {
 			t.Errorf("%s stderr = %q, want a refusal %t", tc.row, result.stderr, tc.refuses)
 		}
 	}
+
+	// The shim reads the command out of the envelope's tool_input object, so a field
+	// that follows that object never joins the command, and a JSON-escaped operator
+	// classifies exactly as its literal spelling does. Both rows exercise the shim's
+	// own reader, which decides only under a stale core. (Coverage rows BF22 and BF23.)
+	for _, tc := range []struct {
+		row, envelope string
+		code          int
+		refuses       bool
+	}{
+		{"BF22 a trailing cwd stays out of the command", `{"tool_name":"Bash","tool_input":{"command":"ls"},"cwd":"/home/u/bench"}`, 0, false},
+		{"BF23 an escaped operator refuses like its literal spelling", `{"tool_input":{"command":"ls \u0026\u0026 bench gate"}}`, 2, true},
+	} {
+		result := run(hook, staleRepo, []string{"BENCH_KIT=" + owner.kit}, tc.envelope)
+		if result.code != tc.code || !strings.Contains(result.stderr, action) {
+			t.Errorf("%s = (%d, %q, %q), want exit %d and the rebuild sentence %q", tc.row, result.code, result.stdout, result.stderr, tc.code, action)
+		}
+		if refused := strings.Contains(result.stderr, "BLOCKED:"); refused != tc.refuses {
+			t.Errorf("%s stderr = %q, want a refusal %t", tc.row, result.stderr, tc.refuses)
+		}
+	}
 }
 
 func shellPath(t *testing.T) string {
