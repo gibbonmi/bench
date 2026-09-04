@@ -697,6 +697,7 @@ func TestGuardGitBlockAllow(t *testing.T) {
 		"not json",
 		`{"tool_input":{"command":""}}`,
 		`{"tool_input":{"command":"git push origin topic"}}`,
+		`{"tool_input":{"command":"git push origin HEAD"}}`,
 	} {
 		if code := guardGit(nil, strings.NewReader(in), io.Discard, io.Discard); code != 0 {
 			t.Errorf("allow exit for %q = %d, want 0", in, code)

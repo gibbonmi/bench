@@ -6,6 +6,19 @@ import "strings"
 // a state, not a branch, so no destination resolves from it.
 const detachedHead = "HEAD"
 
+// CheckedOutName is the single owner of the mapping from a CheckedOutBranch probe to a
+// branch name. CheckedOutBranch names a detached head with the literal "HEAD", which is a
+// state and not a branch, so that literal, an empty answer, and any probe error all report
+// no branch. A caller that guards on the name then fails closed rather than treating the
+// state literal as a branch it could push to or clobber.
+func CheckedOutName(root string) (string, bool) {
+	branch, err := CheckedOutBranch(root)
+	if err != nil || branch == "" || branch == detachedHead {
+		return "", false
+	}
+	return branch, true
+}
+
 // BarePushDestination is the single owner of the destination a bare `git push` targets
 // from root. It reads the same config git reads, because git's own `@{push}` fails for a
 // topic branch that has no remote-tracking ref. Under `simple`, `current`, or an unset
@@ -17,8 +30,8 @@ func BarePushDestination(root string) (string, bool) {
 	if !OK("-C", root, "rev-parse", "--git-dir") {
 		return "", false
 	}
-	branch, err := CheckedOutBranch(root)
-	if err != nil || branch == "" || branch == detachedHead {
+	branch, ok := CheckedOutName(root)
+	if !ok {
 		return "", false
 	}
 	// A missing push.default exits nonzero, and that unset value is the git default.

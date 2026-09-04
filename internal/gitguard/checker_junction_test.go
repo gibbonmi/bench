@@ -162,16 +162,10 @@ func gc1Repo(t *testing.T) string {
 // fact left nil would report no name and turn every push row into the unresolved label.
 func realChecker() Checker {
 	return Checker{
-		RefResolves:   git.RefResolves,
-		BranchExists:  git.BranchExists,
-		DefaultBranch: func() (string, bool) { return git.ResolvedDefault(".") },
-		CheckedOut: func() (string, bool) {
-			branch, err := git.CheckedOutBranch(".")
-			if err != nil || branch == "" || branch == "HEAD" {
-				return "", false
-			}
-			return branch, true
-		},
+		RefResolves:     git.RefResolves,
+		BranchExists:    git.BranchExists,
+		DefaultBranch:   func() (string, bool) { return git.ResolvedDefault(".") },
+		CheckedOut:      func() (string, bool) { return git.CheckedOutName(".") },
 		BareDestination: func() (string, bool) { return git.BarePushDestination(".") },
 	}
 }

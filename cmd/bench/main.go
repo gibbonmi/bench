@@ -598,17 +598,9 @@ const guardProbeRoot = "."
 // that fact. No answer denies the push, so the guard never guesses a protected name.
 func guardDefaultBranch() (string, bool) { return git.ResolvedDefault(guardProbeRoot) }
 
-// guardCheckedOut reports the checked-out branch, or no branch. git.CheckedOutBranch
-// names a detached head with the literal "HEAD", which is a state and not a branch, so
-// that literal and any probe error both report no branch. A `HEAD` refspec then denies
-// with the unresolved class instead of passing the literal off as a name.
-func guardCheckedOut() (string, bool) {
-	branch, err := git.CheckedOutBranch(guardProbeRoot)
-	if err != nil || branch == "" || branch == "HEAD" {
-		return "", false
-	}
-	return branch, true
-}
+// guardCheckedOut reports the checked-out branch, or no branch, from the one Go owner of
+// that mapping. No answer denies a `HEAD` refspec with the unresolved class.
+func guardCheckedOut() (string, bool) { return git.CheckedOutName(guardProbeRoot) }
 
 // guardBareDestination reports the branch a bare `git push` targets, from the one Go
 // owner of that fact.

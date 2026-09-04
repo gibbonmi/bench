@@ -22,6 +22,33 @@ func newTopicRepo(t *testing.T) string {
 	return root
 }
 
+// TestCheckedOutName pins the helper the guard and the destination both compose: a named
+// branch answers, and a detached head answers no branch rather than the literal "HEAD"
+// that CheckedOutBranch reports for that state.
+func TestCheckedOutName(t *testing.T) {
+	tests := []struct {
+		name     string
+		detach   bool
+		wantName string
+		wantOK   bool
+	}{
+		{name: "named branch", wantName: "topic", wantOK: true},
+		{name: "detached HEAD", detach: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root := newTopicRepo(t)
+			if tt.detach {
+				runGit(t, root, "checkout", "--detach", "HEAD")
+			}
+			got, ok := CheckedOutName(root)
+			if got != tt.wantName || ok != tt.wantOK {
+				t.Fatalf("CheckedOutName = (%q, %v), want (%q, %v)", got, ok, tt.wantName, tt.wantOK)
+			}
+		})
+	}
+}
+
 // TestBarePushDestinationCheckedOutModes pins row PG37: with push.default unset, and
 // under the two modes that push the current branch, the destination is the checked-out
 // branch.
