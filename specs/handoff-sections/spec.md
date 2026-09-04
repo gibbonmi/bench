@@ -192,6 +192,7 @@ Line: opus / low for the ignore entry, opus / medium for the guidance.
 - `internal/intent/assignment.go`
 - `internal/intent/assignment_lookup_test.go`
 - `internal/preflight/gather.go`
+- `internal/preflight/gather_test.go`
 - `internal/worktree/lifecycle.go`
 - `internal/worktree/land_journey_test.go`
 - `internal/worktree/worktree_test.go`
@@ -213,7 +214,7 @@ Line: opus / low for the ignore entry, opus / medium for the guidance.
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_test.go`
 
-The fence is the union of the seven tickets' `Writes:` lines, closed by
+The fence is the union of the eight tickets' `Writes:` lines, closed by
 `bench preflight build` over the fixture and registry pins. A closure
 headroom file creates no blocker edge; only a file a ticket's `What to build`
 names does.
