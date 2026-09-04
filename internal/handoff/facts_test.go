@@ -18,7 +18,7 @@ func TestApplyRouteUsesNoCommandState(t *testing.T) {
 func TestApplyRouteUsesCleanFallback(t *testing.T) {
 	var f facts
 	applyRoute(&f, status.RouteFor(t.TempDir(), nil, status.HarnessClaude))
-	if got := nextField(f); got != "`/bench-drain` — the board's leading invocable signal (`clean`)." {
+	if got := nextField(f); got != "`/bench-drain` — the board's leading invocable signal (`clean`)" {
 		t.Fatalf("next field = %q, want clean fallback", got)
 	}
 }

@@ -11,6 +11,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/canonicalpath"
 )
 
 const AssignmentRecordSchema = "bench-assignment/v1"
@@ -348,6 +350,37 @@ func FindAssignmentByRequest(root, requestDigest string) (Assignment, bool, erro
 // request-digest owner. Lifecycle commands never compare caller tokens directly.
 func FindAssignmentForRequest(root, request string) (Assignment, bool, error) {
 	return FindAssignmentByRequest(root, RequestDigest(request))
+}
+
+// AssignmentForWorktree returns the active assignment that owns the tree at path,
+// and reports whether one does. The tree is matched by canonical path, because the
+// ledger records a resolved path while a caller's root can arrive through a symlink.
+// An unreadable ledger and an unresolvable path both answer no owner, which is the
+// answer a path outside the pool gets: an unowned tree is a state to report, not a
+// failure to raise.
+//
+// This is the one worktree-to-assignment lookup. Preflight names the owning
+// assignment in its stale-base remedy, and `bench handoff` resolves the section it
+// owns from it. A second lookup would let the two disagree about which assignment
+// owns a tree.
+func AssignmentForWorktree(path string) (Assignment, bool) {
+	canonical, err := canonicalpath.Resolve(path)
+	if err != nil {
+		return Assignment{}, false
+	}
+	assignments, err := Assignments(path)
+	if err != nil {
+		return Assignment{}, false
+	}
+	for _, a := range assignments {
+		if a.State != StateActive {
+			continue
+		}
+		if owned, ownedErr := canonicalpath.Resolve(a.Worktree); ownedErr == nil && owned == canonical {
+			return a, true
+		}
+	}
+	return Assignment{}, false
 }
 
 func Assignments(root string) ([]Assignment, error) {
