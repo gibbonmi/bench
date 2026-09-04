@@ -3,6 +3,7 @@ package worktree
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -587,6 +588,44 @@ func TestRetirementLeavesMainInTheDocument(t *testing.T) {
 		t.Fatalf("release = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	requireHandoffSections(t, root, handoffdoc.MainKey)
+}
+
+// TestRetirementPrintsTheSectionRemovalError is HS30. A document the parser refuses
+// keeps its section, so the retirement says which document and which line refused it.
+// The verdict is the retirement's own, because the removal is advisory.
+func TestRetirementPrintsTheSectionRemovalError(t *testing.T) {
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "handoff-unparseable")
+	seedOneHandoffSection(t, root, creation.Assignment.Request)
+	path := handoffDocumentPath(root)
+	seeded, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read seeded handoff document: %v", err)
+	}
+	// The heading is one the grammar has no key for, so Parse refuses the document and
+	// the removal never reaches the section.
+	document := string(seeded) + "\n## Foo\n\n"
+	mustWrite(t, path, []byte(document), 0o644)
+	refused := 0
+	for i, line := range strings.Split(document, "\n") {
+		if line == "## Foo" {
+			refused = i + 1
+		}
+	}
+	j := defaultJoins()
+	var advisory bytes.Buffer
+	j.liveBinaryWarnings = &advisory
+	var stdout, stderr strings.Builder
+	code := releaseCommandWith(j, root, home, []string{"--request", "landed-handoff-unparseable", creation.Path}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("release = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(stdout.String(), string(ActionRemoved)) {
+		t.Fatalf("release verdict = %q, want %s", stdout.String(), ActionRemoved)
+	}
+	if want := fmt.Sprintf("%s:%d:", path, refused); !strings.Contains(advisory.String(), want) {
+		t.Fatalf("advisory = %q, want the file and line %q", advisory.String(), want)
+	}
 }
 
 // TestCleanDropsTheCensusRecords is the clean half of EC24. Release and clean reach
