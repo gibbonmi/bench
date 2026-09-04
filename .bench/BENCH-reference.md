@@ -348,6 +348,7 @@ Bench layers git safety:
   gate pin exists (`bench gate pin`), it also blocks `.bench` drift from the
   pinned tree, and the config knob does not lift the drift clause. Without a pin, the drift check stays disarmed; guard discovery
   reports a static, generic deny surface while enforcement stays live.
+- The destructive-git guard allows an agent push to any branch other than the default branch. The guard denies a force, a deletion, a broadcast (`--all`, `--mirror`, `--tags`), and a push with an unresolved destination.
 - Claude Code and Codex hook adapters call the shared scripts in
   `.bench/hooks/`. Codex loads `.codex/hooks.json` only after you trust it
   once through `/hooks` (its project-hook trust step). It loads only on a

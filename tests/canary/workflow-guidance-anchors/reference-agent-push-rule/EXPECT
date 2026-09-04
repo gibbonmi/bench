@@ -1,0 +1,1 @@
+.bench/BENCH-reference.md dropped the agent push rule; the guard allows a push to any branch but the default and denies force, delete, broadcast, and an unresolved destination
