@@ -12,6 +12,7 @@ package handoffdoc
 
 import (
 	"fmt"
+	"iter"
 	"strings"
 )
 
@@ -195,13 +196,18 @@ func labelLine(label, value string) string {
 // document with no main section. Each refusal names the file and the line.
 //
 // Fenced blocks are skipped when locating a heading. A heading inside a fence is
-// prose about the document, not a section of it.
+// prose about the document, not a section of it. A fence that is still open at the
+// end of the file is refused on the line that opened it, because such a fence makes
+// every heading below it prose and leaves the document one section.
 //
 // A document in the pre-section shape reads as main alone. See convertLegacy.
 func Parse(path string, content []byte) (*Document, error) {
 	lines := strings.Split(strings.ReplaceAll(string(content), "\r\n", "\n"), "\n")
 	doc := &Document{}
-	blocks, header := splitSections(lines)
+	blocks, header, opened := splitSections(lines)
+	if opened != 0 {
+		return nil, &ParseError{path, opened, fmt.Sprintf("line %q opens a fenced block that the file never closes; %s", strings.TrimRight(lines[opened-1], " \t"), openFenceRepair)}
+	}
 	doc.Header = strings.Trim(strings.Join(header, "\n"), "\n")
 	blocks, err := convertLegacy(path, blocks)
 	if err != nil {
@@ -245,13 +251,21 @@ type block struct {
 // splitSections cuts the lines into the header and one block per level-two
 // heading. It returns the blocks in file order, so main keeps whatever place the
 // file gave it and Shape stays last.
-func splitSections(lines []string) ([]block, []string) {
-	var blocks []block
-	var header []string
+//
+// opened is the line that opens a fence the file never closes, and 0 when every
+// fence closes. The fence state runs the whole file, so an unclosed one silently
+// absorbs every later section into the block it opened in. The caller refuses on
+// that line rather than parsing the absorbed shape.
+func splitSections(lines []string) (blocks []block, header []string, opened int) {
 	fenced := false
 	for i, raw := range lines {
 		trimmed := strings.TrimRight(raw, " \t")
 		if isFence(trimmed) {
+			if !fenced {
+				opened = i + 1
+			} else {
+				opened = 0
+			}
 			fenced = !fenced
 		}
 		if fenced || !strings.HasPrefix(trimmed, "## ") {
@@ -264,7 +278,7 @@ func splitSections(lines []string) ([]block, []string) {
 		}
 		blocks = append(blocks, block{heading: trimmed, line: i + 1})
 	}
-	return blocks, header
+	return blocks, header, opened
 }
 
 // The level-two headings the handoff carried before it held one section per
@@ -398,4 +412,105 @@ func splitLabel(line string) (string, string, bool) {
 func isFence(line string) bool {
 	trimmed := strings.TrimLeft(line, " \t")
 	return strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~")
+}
+
+// The two ways a State body breaks the grammar it is rendered back into. Each is
+// named by what the writer put there, because the reader has to find that line
+// again in their own editor.
+const (
+	StateFaultOpenFence = "the handoff State opens a fenced block and never closes it"
+	StateFaultHeading   = "the handoff State opens a level-two heading outside a fenced block"
+)
+
+// openFenceRepair is what Parse tells a reader holding a file it will not read.
+// Nothing derives the fix, so the refusal states it.
+const openFenceRepair = "close the fence, so the headings below it read as headings"
+
+// StateError names one State line that breaks the document grammar. Line is
+// one-based within the State body, and Text is that line with its trailing
+// whitespace removed — the spelling a search in the file finds.
+type StateError struct {
+	Line   int
+	Text   string
+	Reason string
+}
+
+func (e *StateError) Error() string {
+	return fmt.Sprintf("%s: line %d, %q", e.Reason, e.Line, e.Text)
+}
+
+// ValidateState refuses a State body that cannot survive a round trip through
+// Parse. A writer owns these bytes, and the command that stores them derives
+// nothing from them, so this is the one place the grammar meets them.
+//
+// Two shapes break the document. An unterminated fence swallows every section
+// below the one it opened. An unfenced level-two heading opens a section the
+// grammar has no key for, which makes every later verb refuse the file. Both are
+// cheap to fix while the writer still has the text and expensive to fix cold.
+func ValidateState(state string) error {
+	var fault *StateError
+	opened, openText := scanFences(state, func(line int, text string) bool {
+		if strings.HasPrefix(text, "## ") {
+			fault = &StateError{line, text, StateFaultHeading}
+			return false
+		}
+		return true
+	})
+	if opened != 0 {
+		return &StateError{opened, openText, StateFaultOpenFence}
+	}
+	return errOrNil(fault)
+}
+
+// errOrNil converts a possibly-nil *StateError to an error interface. A typed nil
+// assigned straight to an error is a non-nil error, and every caller here tests the
+// result against nil.
+func errOrNil(fault *StateError) error {
+	if fault == nil {
+		return nil
+	}
+	return fault
+}
+
+// UnfencedLines yields the State lines that sit outside a fenced block, with each
+// line's one-based position. A line inside a fence is an example the writer pasted,
+// not a claim about this repository, so no reader of State judges it.
+//
+// The fence rule is isFence, the same one Parse applies to the whole file. A second
+// reader of State with its own idea of a fence would disagree with the parser about
+// which bytes are prose.
+func UnfencedLines(state string) iter.Seq2[int, string] {
+	return func(yield func(int, string) bool) {
+		scanFences(state, yield)
+	}
+}
+
+// scanFences walks State once, calls visit for each line outside a fenced block,
+// and returns the line that opens an unterminated fence with that line's text. It
+// returns 0 and "" when every fence closes. A false from visit stops the walk, and
+// the fence answer is then the one the walk reached.
+func scanFences(state string, visit func(line int, text string) bool) (opened int, openText string) {
+	fenced := false
+	for i, raw := range strings.Split(state, "\n") {
+		trimmed := strings.TrimRight(raw, " \t")
+		if isFence(trimmed) {
+			if fenced {
+				opened, openText = 0, ""
+			} else {
+				opened, openText = i+1, trimmed
+			}
+			fenced = !fenced
+			continue
+		}
+		if fenced {
+			continue
+		}
+		if !visit(i+1, trimmed) {
+			return opened, openText
+		}
+	}
+	if !fenced {
+		return 0, ""
+	}
+	return opened, openText
 }

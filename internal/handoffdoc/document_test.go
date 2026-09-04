@@ -143,6 +143,73 @@ func TestParseKeepsAFencedHeadingInsideState(t *testing.T) {
 	}
 }
 
+// HS28, story 28. A fence the file never closes makes every heading below it prose, so
+// the parser would otherwise read one section holding the whole document and the next
+// writer would append a duplicate of the section it could not see. The refusal names the
+// file and the line that opened the fence, because that line is the one to close.
+func TestParseRefusesAFenceLeftOpenAtEndOfFile(t *testing.T) {
+	content := "# Session handoff\n\n## main\n\nNext command: `bench status`\n\n### State\n\n```console\n$ bench gate\n\n## request 9f2ab77\n\nNext command: `bench gate`\n\n### State\n\nThe worktree is live.\n"
+
+	_, err := Parse("capture/session-handoff.md", []byte(content))
+	if err == nil {
+		t.Fatal("Parse accepted a document whose fence is still open at the end of the file")
+	}
+	refusal, ok := err.(*ParseError)
+	if !ok {
+		t.Fatalf("error %v is not a *ParseError", err)
+	}
+	if refusal.Path != "capture/session-handoff.md" || refusal.Line != 9 {
+		t.Fatalf("refusal names %s:%d, want capture/session-handoff.md:9", refusal.Path, refusal.Line)
+	}
+	if !strings.Contains(refusal.Reason, "```console") {
+		t.Fatalf("refusal reason %q does not print the line that opened the fence", refusal.Reason)
+	}
+}
+
+// The two State shapes ValidateState refuses, and the two it must not. The fenced heading
+// row is the one that separates the rule from a bare `## ` prefix test: a writer pasting
+// the rendered document into their own State is the case the parser already honours.
+func TestValidateStateRefusesTheShapesThatBreakTheGrammar(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		state  string
+		reason string
+		line   int
+		text   string
+	}{
+		{name: "a closed fence passes", state: "Resume here:\n\n```\n## main\n```\n\nThat is all."},
+		{name: "an indented heading is prose", state: "  ## Open questions"},
+		{name: "an empty State passes"},
+		{
+			name:   "an unterminated fence",
+			state:  "Resume here:\n\n```console\n$ bench gate",
+			reason: StateFaultOpenFence, line: 3, text: "```console",
+		},
+		{
+			name:   "an unfenced level-two heading",
+			state:  "The build is live.\n\n## Open questions\n\nNone.",
+			reason: StateFaultHeading, line: 3, text: "## Open questions",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateState(tc.state)
+			if tc.reason == "" {
+				if err != nil {
+					t.Fatalf("ValidateState refused a State the parser accepts: %v", err)
+				}
+				return
+			}
+			fault, ok := err.(*StateError)
+			if !ok {
+				t.Fatalf("ValidateState = %v, want a *StateError naming %q", err, tc.reason)
+			}
+			if fault.Reason != tc.reason || fault.Line != tc.line || fault.Text != tc.text {
+				t.Fatalf("fault = %+v, want reason %q at line %d, %q", *fault, tc.reason, tc.line, tc.text)
+			}
+		})
+	}
+}
+
 // TestEnsureMainAndRemoveKeepTheFallbackSection covers the retirement path's two
 // document-level moves: the removal drops one key, and main survives the last one.
 func TestEnsureMainAndRemoveKeepTheFallbackSection(t *testing.T) {
