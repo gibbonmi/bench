@@ -1,7 +1,7 @@
 # Repair the review findings
 
 Blocked by: wire-the-guard-facts-in-the-subcommand.md
-Writes: internal/gitguard/scan.go, internal/gitguard/verdict.go, internal/gitguard/gitguard.go, internal/gitguard/verdict_test.go, internal/gitguard/gitguard_test.go, internal/gitguard/checker_junction_test.go, internal/git/push_destination_test.go, internal/gittest/gittest.go, cmd/bench/main_test.go, specs/agent-push-guard/spec.md
+Writes: internal/gitguard/scan.go, internal/gitguard/verdict.go, internal/gitguard/gitguard.go, internal/gitguard/verdict_test.go, internal/gitguard/gitguard_test.go, internal/gitguard/checker_junction_test.go, internal/git/push_destination_test.go, internal/gittest/gittest.go, cmd/bench/main_test.go, specs/agent-push-guard/spec.md, tests/canary/canonical-path-owner/second-derivation, tests/canary/injected-ports/unregistered-port, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
 Covers: PG28, PG42, PG43, PG44, PG45, PG46
 
 ## What to build
