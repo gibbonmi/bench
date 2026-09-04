@@ -52,6 +52,24 @@ var guardClassifierTable = []guardClassifierRow{
 	{"xargs -- bench help", true},
 	{"cat a && echo x; bench maps", true},
 	{"cat file; bench help", true},
+	// One row per quoting form the head word can carry. The shell half splits words
+	// before it reads them, so it saw the quote characters as part of the name and
+	// answered false on every one of these while the Go lexer answered true. Each row
+	// is resolver-independent: the head resolves to the literal name `bench`, never
+	// through PATH.
+	{`"bench" gate`, true},
+	{`'bench' gate`, true},
+	{`\bench gate`, true},
+	{`be"nch" gate`, true},
+	{`ls; "bench" gate`, true},
+	{`env "X=1" bench help`, true},
+	// The false direction for the class. Quote removal concatenates rather than
+	// splits, so the head is one word `benchgate`, which is not Bench.
+	{`'bench'gate`, false},
+	// A quote that spans the whitespace the shell half split on. Both halves arrive
+	// half-quoted, so neither folds, and the head keeps its quote character. The
+	// tokenizer reads one word `bench gate`, which is not Bench either.
+	{`bench" "gate`, false},
 	// One row per control operator that can stand between the command's head and a Bench
 	// call, each with bench in a later segment. Without them the shell splitter's arms go
 	// unpinned: a splitter narrowed to `;` alone still answers every other row correctly,

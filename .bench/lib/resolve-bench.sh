@@ -36,8 +36,11 @@ bench_resolve_wrapper() {
 #
 # Its reach is the head word of every control-operator-delimited segment, after the
 # shell assignments and the routine prefixes env, command, nohup, timeout, and
-# xargs. It resolves no path and reads no wrapper string, so a `bench` reached
-# through a symlink or through `bash -c` is outside it. The two derivations are
+# xargs. Each word is unquoted first, so a quoted or backslash-escaped head reads as
+# the name the shell would run. It resolves no path and reads no wrapper string, so a
+# `bench` reached through a symlink or through `bash -c` is outside it. So is a head
+# inside a subshell or a command substitution, which is grammar rather than quoting
+# and needs the lexer this half does not have. The two derivations are
 # pinned row by row by internal/conformance/guard_classifier_table_test.go, whose
 # table therefore holds resolver-independent, single-level rows only.
 bench_invokes_bench() {
@@ -69,6 +72,14 @@ bench_segment_runs_bench() {
   set -- $1
   set +f
   IFS=$_bench_outer_ifs
+  # Word splitting keeps the quotes it split on, so every word is unquoted before the
+  # reads below. Rotating the list replaces each word in place.
+  _bench_word_budget=$#
+  while [ "$_bench_word_budget" -gt 0 ]; do
+    set -- "$@" "$(bench_unquote_word "$1")"
+    shift
+    _bench_word_budget=$(( _bench_word_budget - 1 ))
+  done
   while [ "$#" -gt 0 ]; do
     if bench_is_assignment "$1"; then
       shift
@@ -155,6 +166,77 @@ bench_segment_runs_bench() {
   [ "$#" -gt 0 ] || return 1
   case ${1##*/} in bench|bench.sh) return 0 ;; esac
   return 1
+}
+
+# bench_unquote_word prints $1 with its shell quoting removed, so the word test reads
+# the name the shell would run rather than its spelling. A single-quoted run stands as
+# written, a double-quoted run drops its delimiters and honours the four escapes that
+# are special inside it, and a backslash elsewhere escapes the character after it.
+#
+# This is the shell derivation of the quote folding internal/shellcommand's tokenizer
+# performs. It reads one word, never a command line, so it decides no grammar: a
+# parenthesis or a dollar sign stays an ordinary character.
+#
+# A word whose quoting does not close stands unchanged. The caller split the command
+# text on whitespace before this ran, so a quoted space arrives as two half-quoted
+# words. Folding those halves would read `bench" "gate` as a Bench call, which the
+# tokenizer reads as the single word `bench gate`.
+bench_unquote_word() {
+  _bench_quote_in=$1
+  _bench_quote_word=''
+  _bench_quote_state=bare
+  while [ -n "$_bench_quote_in" ]; do
+    _bench_quote_next=${_bench_quote_in#?}
+    _bench_quote_char=${_bench_quote_in%"$_bench_quote_next"}
+    _bench_quote_in=$_bench_quote_next
+    case $_bench_quote_state in
+      single)
+        if [ "$_bench_quote_char" = "'" ]; then
+          _bench_quote_state=bare
+          continue
+        fi
+        ;;
+      double)
+        if [ "$_bench_quote_char" = '"' ]; then
+          _bench_quote_state=bare
+          continue
+        fi
+        if [ "$_bench_quote_char" = '\' ] && [ -n "$_bench_quote_in" ]; then
+          _bench_quote_next=${_bench_quote_in#?}
+          case ${_bench_quote_in%"$_bench_quote_next"} in
+            '"'|'\'|'$'|'`')
+              _bench_quote_char=${_bench_quote_in%"$_bench_quote_next"}
+              _bench_quote_in=$_bench_quote_next
+              ;;
+          esac
+        fi
+        ;;
+      *)
+        case $_bench_quote_char in
+          "'")
+            _bench_quote_state=single
+            continue
+            ;;
+          '"')
+            _bench_quote_state=double
+            continue
+            ;;
+          '\')
+            [ -n "$_bench_quote_in" ] || continue
+            _bench_quote_next=${_bench_quote_in#?}
+            _bench_quote_char=${_bench_quote_in%"$_bench_quote_next"}
+            _bench_quote_in=$_bench_quote_next
+            ;;
+        esac
+        ;;
+    esac
+    _bench_quote_word=$_bench_quote_word$_bench_quote_char
+  done
+  if [ "$_bench_quote_state" != bare ]; then
+    printf '%s' "$1"
+    return 0
+  fi
+  printf '%s' "$_bench_quote_word"
 }
 
 # bench_is_assignment reports whether a word is a portable NAME=VALUE assignment.

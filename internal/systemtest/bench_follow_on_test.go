@@ -290,6 +290,7 @@ func TestBenchFollowOnHookDegradedRim(t *testing.T) {
 	}{
 		{"BF22 stale core passes a non-Bench call", "ls", 0, false},
 		{"BF23 stale core refuses a Bench call", "bench gate", 2, true},
+		{"BF23 stale core refuses a quoted Bench call", "'bench' gate", 2, true},
 	} {
 		envelope := `{"tool_input":{"command":` + shellQuoteJSON(tc.command) + `}}`
 		result := run(hook, staleRepo, []string{"BENCH_KIT=" + owner.kit}, envelope)

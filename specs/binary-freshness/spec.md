@@ -192,6 +192,12 @@ Line: opus / low. One new check row in an existing table.
 
 **Won't handle** — a wrapper script for the system suite — `bench test --check system` is the one seam, and a script would be a second producer of its operands.
 
+**Won't handle** — a subshell or a command-substitution head. The shell
+word test splits segments on `;`, `|`, and `&` alone. So `( bench gate )`
+and `$(bench gate)` keep their grammar inside one word. A split on `()`
+needs a lexer to tell a grammatical paren from a quoted one. Without it,
+`echo "(bench)"` classifies as a Bench call.
+
 **Won't handle** — the shell classifier reimplementing symlink resolution — the word test covers the first word of each segment, and the shared table pins its reach.
 
 **Won't handle** — `bench repair` reading a pin manifest in the kit source checkout — the decision keeps `bench repair` as the installed-kit route.
