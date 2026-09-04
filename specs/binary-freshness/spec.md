@@ -110,13 +110,13 @@ Line: opus / low. One new check row in an existing table.
 
 - Staleness is `freshness.Select` over the seal's source digest and `freshness.Digest` of the current build inputs. No consumer reads an mtime, and no consumer re-derives the digest.
 - `freshness.RebuildAction` is the one rebuild sentence. Every new refusal or warning calls it; none inlines the text.
-- `bench commands --brief` becomes a root-taking handler. It resolves the running executable, verifies it against the kit root, and refuses with the sentence on a mismatch. Outside a repository it keeps its three-line answer.
+- `bench commands --brief` keeps its handler signature and resolves the repository root itself. `commandsProbeIsStale` grades the running executable against that root, and the verb refuses with the sentence on a mismatch. Outside a repository it keeps its three-line answer.
 - `bench doctor` gains two rows: the `dist/bench` seal verdict, and the broker manifest graded by the same five predicates the land route applies. The doctor row and the land route are two derivations by necessity, because the route runs before any binary is trusted. One authored conformance expectation pins that both enumerate the same five reasons.
 - The broker manifest reader and writer move to a new leaf package `internal/brokermanifest`, which `internal/adopt` and `internal/freshness` both import. Without it the doctor row and the publish transaction form an import cycle.
 - The landing's gate refusal takes a repair root distinct from the digest root, threaded through a new `Factory` field. The prospective owner passes the kit checkout as the repair root.
 - `kitSourceCheckout` is exported from `internal/adopt`, so the landing line can call it.
 - `Factory.validate` verifies an inherited executable against its source root when the caller names one. The system suite owner names `BENCH_KIT`. The gate's private build path is unchanged.
-- The subject-mode build's `freshness-publish` step writes the broker manifest inside the same publication transaction, with the stamped version. The verb gains two arguments, the published path and the version, so the manifest binds the published executable and not the staged one. Artifact mode stays excluded. The manifest lands beside the resolved wrapper, as today.
+- The subject-mode build's `freshness-publish` step writes the broker manifest inside the same publication transaction, with the stamped version. The verb gains one argument, the version. The published path is already argument two, so the manifest binds the published executable and not the staged one. Artifact mode stays excluded. The manifest lands beside the resolved wrapper, as today.
 - The shim's shared classifier table holds resolver-independent rows only, because `benchguard.InvokesBench` takes a resolver the shell test lacks.
 - The land route splits refusal three from refusal five. The version branch runs the stamped build at the install root once, re-reads the manifest once, and refuses if the version still reads `dev`. The digest branch keeps its unconditional exit 127. The route reads no repository and honors no inherited override.
 - The landing line composes `kitSourceCheckout` with `RebuildAction` for the source checkout, and names `bench repair` for an installed kit.
@@ -228,6 +228,7 @@ Line: opus / low. One new check row in an existing table.
 - `internal/systemtest/land_route_test.go`
 - `internal/systemtest/owner_artifact_recovery_test.go`
 - `internal/systemtest/bench_follow_on_test.go`
+- `internal/worktree/build.go`
 - `internal/worktree/land.go`
 - `internal/worktree/land_freshness_test.go`
 - `internal/preflight/decision.go`

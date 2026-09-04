@@ -1,8 +1,11 @@
 package preflight
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
@@ -640,6 +643,136 @@ func TestBinarySealIsBuildModeOnly(t *testing.T) {
 	}
 	if v.Red {
 		t.Errorf("Verdict.Red = true, want false: a review preflight does not grade the binary")
+	}
+}
+
+// sealFixtureRoot is the smallest rebuildable root the seal primitives
+// accept: a module whose ./cmd/bench resolves, plus the build-inputs
+// manifest the source digest reads.
+func sealFixtureRoot(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	for name, body := range map[string]string{
+		"go.mod":                  "module example.com/sealfixture\n\ngo 1.25\n",
+		"cmd/bench/main.go":       "package main\n\nfunc main() {}\n",
+		"scripts/go-build.sh":     "#!/usr/bin/env bash\n",
+		"scripts/go-build.inputs": "build_script=scripts/go-build.sh\n",
+	} {
+		mustWriteFile(t, filepath.Join(root, filepath.FromSlash(name)), body)
+	}
+	return root
+}
+
+// publishSealedBinary seals a dist/bench pair for root through the same
+// publisher a build runs, so the fixture's green case is a real seal rather
+// than a hand-written sidecar.
+func publishSealedBinary(t *testing.T, root string) string {
+	t.Helper()
+	staged := filepath.Join(root, "staged-bench")
+	mustWriteFile(t, staged, "Bench executable")
+	if err := os.Chmod(staged, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	executable := freshness.PublishedExecutable(root)
+	if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := freshness.Publish(root, staged, executable, "1.2.3"); err != nil {
+		t.Fatalf("Publish: %v", err)
+	}
+	return executable
+}
+
+// TestBinarySealFactsGradeARootOnDisk covers BF26 and BF27 at the gatherer
+// seam. Both row tests set the facts by hand, so the path spelling and the
+// verifier call answer to nothing. This drives binarySealFacts against real
+// trees instead. A dangling dist/bench is the state the two derivations
+// disagreed on: doctor lstats and reds it, so the build preflight grades it
+// too rather than reading a broken link as no binary at all.
+func TestBinarySealFactsGradeARootOnDisk(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		place   func(*testing.T, string)
+		present bool
+		refused bool
+	}{
+		{
+			name:  "no binary published",
+			place: func(*testing.T, string) {},
+		},
+		{
+			name:    "sealed pair",
+			place:   func(t *testing.T, root string) { publishSealedBinary(t, root) },
+			present: true,
+		},
+		{
+			name: "sources changed after the seal",
+			place: func(t *testing.T, root string) {
+				publishSealedBinary(t, root)
+				mustWriteFile(t, filepath.Join(root, "cmd", "bench", "main.go"), "package main\n\nfunc main() { _ = 1 }\n")
+			},
+			present: true,
+			refused: true,
+		},
+		{
+			name: "dangling symbolic link",
+			place: func(t *testing.T, root string) {
+				executable := freshness.PublishedExecutable(root)
+				if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Symlink(filepath.Join(root, "absent-bench"), executable); err != nil {
+					t.Fatal(err)
+				}
+			},
+			present: true,
+			refused: true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := sealFixtureRoot(t)
+			tc.place(t, root)
+
+			present, refusal := binarySealFacts(root)
+			if present != tc.present {
+				t.Errorf("binarySealFacts present = %v, want %v (refusal %q)", present, tc.present, refusal)
+			}
+			if refused := refusal != ""; refused != tc.refused {
+				t.Errorf("binarySealFacts refusal = %q, want refused = %v", refusal, tc.refused)
+			}
+		})
+	}
+}
+
+// TestDanglingDestinationBinaryRedsBinarySealInBuildMode carries the
+// gathered facts of a broken dist/bench link through to the verdict. The
+// row an operator reads is the whole point: a --full build that trusts a
+// link to nothing runs an executable nobody can name.
+func TestDanglingDestinationBinaryRedsBinarySealInBuildMode(t *testing.T) {
+	root := sealFixtureRoot(t)
+	executable := freshness.PublishedExecutable(root)
+	if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Join(root, "absent-bench"), executable); err != nil {
+		t.Fatal(err)
+	}
+
+	f := baseFacts()
+	f.Mode = modeBuild
+	f.TicketsDirExists = true
+	f.BinarySealPresent, f.BinarySealRefusal = binarySealFacts(root)
+
+	v := Decide(f)
+	c, ok := checkRow(v, "binary-seal")
+	if !ok {
+		t.Fatalf("Checks = %#v, want a binary-seal row", v.Checks)
+	}
+	if c.Verdict != verdictRed {
+		t.Errorf("binary-seal row = %+v, want red over a dangling dist/bench", c)
+	}
+	if !v.Red {
+		t.Errorf("Verdict.Red = false, want true when dist/bench links to nothing")
 	}
 }
 

@@ -23,8 +23,8 @@ func rowHeader(rows int) string {
 }
 
 // TestSourceTipOmittedKeepsTodaysVerdict is H30's control half: without
-// the flag both modes render exactly the five rows they render today, in
-// order, and no tip row appears. The flag is an addition, not a new
+// the flag both modes render exactly the rows bareRowCount names for them,
+// in order, and no tip row appears. The flag is an addition, not a new
 // requirement.
 func TestSourceTipOmittedKeepsTodaysVerdict(t *testing.T) {
 	for _, mode := range []string{"review", "build"} {

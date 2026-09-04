@@ -47,7 +47,7 @@ func Link(args []string, stdout, stderr io.Writer, version string) int {
 	// a tracked launcher copy that the shim then prefers over the kit's own. The predicate
 	// runs after the git-root refusal, because it reads that root, and before the plan, so
 	// no destination byte is written. doctor --fix is the kit-side route to the same assets.
-	if kitSourceCheckout(root) {
+	if KitSourceCheckout(root) {
 		fmt.Fprintln(stderr, toon.Errorf("kit source checkout", "bench link installs the consumer copy; run bench doctor --fix in the kit checkout"))
 		return 1
 	}

@@ -1,7 +1,7 @@
 # Repair the preflight facts and the comment record
 
 Blocked by: none
-Writes: internal/preflight/gather.go, internal/preflight/decision_test.go, internal/adopt/doctor.go, internal/adopt/doctor_rows.go, internal/adopt/link.go, internal/adopt/broker_test.go, internal/brokermanifest, internal/systemtest/owner_stale_seal_test.go, cmd/bench/build_subject_mode_test.go, internal/preflight/source_tip_test.go, specs/binary-freshness/spec.md
+Writes: internal/freshness/freshness_verify.go, internal/worktree/build.go, internal/freshness/freshness_verify_test.go, internal/preflight/gather.go, internal/preflight/decision_test.go, internal/adopt/doctor.go, internal/adopt/doctor_rows.go, internal/adopt/link.go, internal/adopt/broker_test.go, internal/brokermanifest, internal/systemtest/owner_stale_seal_test.go, cmd/bench/build_subject_mode_test.go, internal/preflight/source_tip_test.go, specs/binary-freshness/spec.md
 Covers: BF26, BF27
 
 ## What to build

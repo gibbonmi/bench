@@ -16,8 +16,8 @@ import (
 // TestGoBuildSubjectModePublishesTheStampedVersion grades the wiring between the builder's
 // version stamp and the manifest the land route authenticates. The publication library
 // binds whatever version its caller hands it, so only a real subject-mode build shows
-// whether the script hands it the stamped one. A build that published "dev" here re-created
-// the landing's refusal three, and no library test could see it.
+// whether the script hands it the stamped one. A manifest that carries "dev" fails the
+// land route's version comparison, and no library test reaches the binding.
 func TestGoBuildSubjectModePublishesTheStampedVersion(t *testing.T) {
 	root, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {

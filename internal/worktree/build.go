@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"path/filepath"
 
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/subprocess"
@@ -53,7 +53,7 @@ func buildAttributed(attributed *string, j joins, root string, parsed usage.Resu
 		return printTargetRefusal(stderr, buildVerb, err)
 	}
 	*attributed = assignment.ID
-	output := filepath.Join(path, "dist", "bench")
+	output := freshness.PublishedExecutable(path)
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 	if buildErr := j.build(ctx, path, output); buildErr != nil {
