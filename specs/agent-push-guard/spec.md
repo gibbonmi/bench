@@ -246,6 +246,11 @@ Flagged additions beyond the decision source:
 - The guard fails closed with no repository and with no resolvable default branch. The grill named the unresolvable destination only.
 - The guidance sentence and its anchor. The grill said every session must know the rule, and the reference guide is where the hook layers are stated.
 
+Build decisions recorded for reviewer veto:
+
+- Row PG31 names a probe bound that the destination probes do not carry. Only the ref probe behind `RefResolves` and `BranchExists` has a timeout. `Output` and `OK` run git with no bound. The row passes because the sleeping stub exits with empty output, and the destination fact then reports no branch. A git that never exits blocks the guard on the push path. A bound on `Output` and `OK` changes every caller in the git package, so it is a reviewer decision and is not in this build.
+- One exported helper, `git.CheckedOutName`, owns the mapping from the checked-out probe to a branch name. The wire ticket wrote that mapping three times, and the build collapsed the copies before review.
+
 Source-sentence-to-row table:
 
 | source sentence | rows |
