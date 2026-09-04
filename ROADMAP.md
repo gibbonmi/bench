@@ -39,8 +39,6 @@ means the repository-controlled compliance assessment.
 
 **FT71 (HIGH on the bank track) — versioned local shift evidence.**
 
-**FT162 (MEDIUM) — the handoff's pins resolve, and its shape has one owner.**
-
 **FT142 (MEDIUM) — FT91 runtime residuals, two tracks.**
 
 **FT98 (MEDIUM) — one preserve-then-discard primitive; four faces.**
@@ -277,17 +275,16 @@ shipped and FT107 is retired.
 FT100 builds last: after FT89 establishes which guidance is authoritative, and
 after FT231 supplies the measurement that tells a cut from a regression.
 
-FT99 rides the prose batch. FT106 and FT162 remain independently sequenced by
-their existing dependencies. FT172 is outside this
+FT99 rides the prose batch. FT106 remains independently sequenced by
+its existing dependencies. FT172 is outside this
 critical path; the FT156 anchor registry shipped, so section-scoped
 `.bench/BENCH.md` anchors — the exact surface the prose batch edits — are now
 fixture-proven.
 
 ## Recommended sequence
 
-1. FT162 handoff-sections — the spec is staged; run `/bench-implement-spec`.
-2. FT254 `bench worktree exec` — run `/bench-write-spec`. It carries the most
+1. FT254 `bench worktree exec` — run `/bench-write-spec`. It carries the most
    occurrences on the board, and each one costs raw calls in every phase.
-3. FT298 skill-discipline gaps — run a `craft-synthesis` kit edit. The go-vet
+2. FT298 skill-discipline gaps — run a `craft-synthesis` kit edit. The go-vet
    gap already reds a real gate; the fix is small and unblocked.
 
