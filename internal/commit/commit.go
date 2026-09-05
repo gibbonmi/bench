@@ -15,7 +15,6 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/gate"
-	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/otelrecord"
@@ -146,13 +145,7 @@ func commitAttributed(measures *commitMeasures, root, msg string, paths []string
 			fmt.Fprintf(stdout, "formatted Go paths: %s\n", strings.Join(shown, " "))
 		}
 	}
-	owner := landing.New()
-	if lane != nil {
-		owner = landing.NewLane(authorization.LaneAuthority{
-			Checks: lane.Checks, Kit: lane.Kit, Selective: lane.Selective,
-			Base: strings.TrimSpace(string(expectedBytes)),
-		})
-	}
+	owner := landing.NewForLane(lane, strings.TrimSpace(string(expectedBytes)))
 	if dryRun {
 		if err := owner.DryRun(context.Background(), landing.Request{
 			Root: root, Destination: destination, Expected: strings.TrimSpace(string(expectedBytes)),

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -130,6 +131,27 @@ func NewLane(lane authorization.LaneAuthority) Owner {
 	owner := New()
 	owner.authorize = lane.Authorize
 	return owner
+}
+
+// laneAuthority maps a resolved lane and the base it is measured against onto the
+// authority that grades a composed tree. It is the one place the lane's fields become an
+// authority, so no caller states the mapping a second time.
+func laneAuthority(lane *gate.Lane, base string) authorization.LaneAuthority {
+	return authorization.LaneAuthority{
+		Checks:    lane.Checks,
+		Kit:       lane.Kit,
+		Selective: lane.Selective,
+		Base:      base,
+	}
+}
+
+// NewForLane returns the owner a caller lands under given the lane its root declares. A
+// nil lane is a root that declares none, so it answers the whole-project gate owner.
+func NewForLane(lane *gate.Lane, base string) Owner {
+	if lane == nil {
+		return New()
+	}
+	return NewLane(laneAuthority(lane, base))
 }
 
 // composeAuthorized runs the prospective half every landing verdict shares: attribute,
