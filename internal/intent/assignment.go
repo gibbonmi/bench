@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"reflect"
+
+	"github.com/gibbonmi/bench/internal/intent/admissionpolicy"
 )
 
 func CleanupReceiptFor(root, repo, operation, target, fingerprint string) (CleanupReceipt, bool, error) {
@@ -43,52 +44,12 @@ func CleanupReceiptForRequest(root, repo, operation, target, request string) (Cl
 	return *found, true, nil
 }
 
+// PutCleanupReceipt records one cleanup receipt and holds the completed receipts to
+// their retention window. The rule validates the receipt, so this adapter does not.
 func PutCleanupReceipt(root string, receipt CleanupReceipt) error {
-	if err := validateCleanupReceipts([]CleanupReceipt{receipt}); err != nil {
-		return err
-	}
-	path, err := Address(root)
-	if err != nil {
-		return err
-	}
-	release, err := acquire(path + ".lock")
-	if err != nil {
-		return err
-	}
-	defer release()
-	ledger, err := readPath(path)
-	if err != nil {
-		return err
-	}
-	replaced := false
-	for i, current := range ledger.CleanupReceipts {
-		if current.Repo == receipt.Repo && current.Operation == receipt.Operation && current.Target == receipt.Target && current.Fingerprint == receipt.Fingerprint {
-			ledger.CleanupReceipts[i], replaced = receipt, true
-			break
-		}
-	}
-	if !replaced {
-		ledger.CleanupReceipts = append(ledger.CleanupReceipts, receipt)
-	}
-	completed := 0
-	for _, current := range ledger.CleanupReceipts {
-		if current.State == ReceiptComplete {
-			completed++
-		}
-	}
-	drop := completed - MaxCleanupReceipts
-	if drop > 0 {
-		next := ledger.CleanupReceipts[:0]
-		for _, current := range ledger.CleanupReceipts {
-			if drop > 0 && current.State == ReceiptComplete {
-				drop--
-				continue
-			}
-			next = append(next, current)
-		}
-		ledger.CleanupReceipts = next
-	}
-	return writePath(path, ledger)
+	return Transact(root, StrictRead, func(current Ledger) (Ledger, bool, error) {
+		return admissionpolicy.PutCleanupReceipt(current, receipt)
+	}, nil)
 }
 
 // LifecycleEvidence returns the exact persisted schema and assignment JSON values.
@@ -186,100 +147,64 @@ func PutAssignment(root string, assignment Assignment) error {
 	if err := ValidateAssignment(assignment); err != nil {
 		return err
 	}
-	path, err := Address(root)
-	if err != nil {
-		return err
-	}
-	release, err := acquire(path + ".lock")
-	if err != nil {
-		return err
-	}
-	defer release()
-	ledger, err := readPath(path)
-	if err != nil {
-		return err
-	}
-	for i, current := range ledger.Assignments {
-		if current.Request == assignment.Request && current.ID != assignment.ID {
-			return errors.New("assignment request already belongs to another assignment")
-		}
-		if current.ID != assignment.ID {
-			continue
-		}
-		if reflect.DeepEqual(current, assignment) {
-			return nil
-		}
-		ledger.Assignments[i] = assignment
-		return writePath(path, ledger)
-	}
-	ledger.Assignments = append(ledger.Assignments, assignment)
-	return writePath(path, ledger)
+	return Transact(root, StrictRead, func(current Ledger) (Ledger, bool, error) {
+		return admissionpolicy.PutAssignment(current, assignment)
+	}, nil)
 }
 
 // ReauthorizeAssignment swaps one request digest only after its caller's reversible
 // external transition succeeds. The rollback keeps that derived state coherent when
 // the expected-old write cannot commit.
 func ReauthorizeAssignment(root, id, request string, verify func(Assignment) error, transition func(Assignment, Assignment) (func(), error), beforeCAS func(*Assignment)) (Assignment, error) {
-	path, err := Address(root)
-	if err != nil {
-		return Assignment{}, err
-	}
-	release, err := acquire(path + ".lock")
-	if err != nil {
-		return Assignment{}, err
-	}
-	defer release()
-	ledger, err := readPath(path)
-	if err != nil {
-		return Assignment{}, err
-	}
-	for i := range ledger.Assignments {
-		current := ledger.Assignments[i]
-		if current.ID != id {
-			continue
-		}
-		expectedOld := current.Request
-		if err := verify(current); err != nil {
-			return Assignment{}, err
-		}
-		if !ValidIdentity(id) || request == "" {
-			return Assignment{}, errors.New("invalid reauthorization identity")
-		}
-		newDigest := RequestDigest(request)
-		for j, other := range ledger.Assignments {
-			if j != i && other.Request == newDigest {
-				return Assignment{}, errors.New("request digest already belongs to another assignment")
+	var previous Assignment
+	var rollback func()
+	err := Transact(root, StrictRead, func(current Ledger) (Ledger, bool, error) {
+		index := -1
+		for i := range current.Assignments {
+			if current.Assignments[i].ID == id {
+				index = i
+				break
 			}
 		}
-		next := current
+		if index < 0 {
+			return current, false, errors.New("assignment not found")
+		}
+		stored := current.Assignments[index]
+		if err := verify(stored); err != nil {
+			return current, false, err
+		}
+		if !ValidIdentity(id) || request == "" {
+			return current, false, errors.New("invalid reauthorization identity")
+		}
+		newDigest := RequestDigest(request)
+		if err := admissionpolicy.OtherAssignmentOwnsRequest(current, id, newDigest); err != nil {
+			return current, false, err
+		}
+		next := stored
 		next.Request = newDigest
 		next.RequestToken = request
-		rollback, err := transition(current, next)
+		step, err := transition(stored, next)
 		if err != nil {
-			return Assignment{}, err
+			return current, false, err
 		}
+		rollback = step
 		if beforeCAS != nil {
-			beforeCAS(&ledger.Assignments[i])
+			beforeCAS(&current.Assignments[index])
 		}
-		if err := compareAndSwapRequestDigest(&ledger.Assignments[i], expectedOld, newDigest); err != nil {
+		swapped, changed, err := admissionpolicy.ReauthorizeAssignment(current, id, stored.Request, newDigest)
+		if err != nil {
+			// The compensation covers the write alone, so the compare-and-swap arm
+			// runs the rollback itself. This keeps the pre-transaction behavior.
 			rollback()
-			return Assignment{}, err
+			return current, false, err
 		}
-		if err := writePath(path, ledger); err != nil {
-			rollback()
-			return Assignment{}, err
-		}
-		return current, nil
+		previous = stored
+		return swapped, changed, nil
+	}, func() { rollback() })
+	if err != nil {
+		return Assignment{}, err
 	}
-	return Assignment{}, errors.New("assignment not found")
-}
-
-func compareAndSwapRequestDigest(assignment *Assignment, expectedOld, replacement string) error {
-	if assignment.Request != expectedOld {
-		return errors.New("assignment request changed during reauthorization")
-	}
-	assignment.Request = replacement
-	return nil
+	return previous, nil
 }
 
 // PurgeAssignments drops every assignment record keep rejects, plus every record this
@@ -299,55 +224,20 @@ func PurgeAssignments(root string, keep func(Assignment) bool) (int, error) {
 	} else if err != nil {
 		return 0, fmt.Errorf("purge intent ledger: %w", err)
 	}
-	release, err := acquire(path + ".lock")
+	dropped := 0
+	err = transact(root, TolerantRead, func(current Ledger, records int) (Ledger, bool, error) {
+		next, count, changed, err := admissionpolicy.PurgeAssignments(current, records, keep)
+		dropped = count
+		return next, changed, err
+	}, nil)
 	if err != nil {
 		return 0, err
 	}
-	defer release()
-	ledger, records, err := readPathTolerant(path)
-	if err != nil {
-		return 0, err
-	}
-	kept := make([]Assignment, 0, len(ledger.Assignments))
-	ids, requests := map[string]bool{}, map[string]bool{}
-	for _, assignment := range ledger.Assignments {
-		if ids[assignment.ID] || requests[assignment.Request] || !keep(assignment) {
-			continue
-		}
-		ids[assignment.ID], requests[assignment.Request] = true, true
-		kept = append(kept, assignment)
-	}
-	dropped := records - len(kept)
-	if dropped == 0 {
-		return 0, nil
-	}
-	ledger.Assignments = kept
-	return dropped, writePath(path, ledger)
+	return dropped, nil
 }
 
 func DeleteAssignment(root, id string) error {
-	path, err := Address(root)
-	if err != nil {
-		return err
-	}
-	release, err := acquire(path + ".lock")
-	if err != nil {
-		return err
-	}
-	defer release()
-	ledger, err := readPath(path)
-	if err != nil {
-		return err
-	}
-	next := ledger.Assignments[:0]
-	for _, assignment := range ledger.Assignments {
-		if assignment.ID != id {
-			next = append(next, assignment)
-		}
-	}
-	if len(next) == len(ledger.Assignments) {
-		return nil
-	}
-	ledger.Assignments = next
-	return writePath(path, ledger)
+	return Transact(root, StrictRead, func(current Ledger) (Ledger, bool, error) {
+		return admissionpolicy.DeleteAssignment(current, id)
+	}, nil)
 }

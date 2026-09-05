@@ -34,6 +34,16 @@ type Compensation func()
 // exit, including every error exit. A nil compensation runs nothing, so only a caller
 // with an external effect pays for one.
 func Transact(root string, mode ReadMode, decide Decision, compensate Compensation) error {
+	return transact(root, mode, func(ledger Ledger, _ int) (Ledger, bool, error) { return decide(ledger) }, compensate)
+}
+
+// countedDecision also receives how many assignment records the file held. Only the
+// tolerant mode reports a count a decision cannot recover from the ledger it gets,
+// because that mode drops the records it cannot read. The purge is the one decision
+// that needs it, so the count stays off the exported decision.
+type countedDecision func(Ledger, int) (Ledger, bool, error)
+
+func transact(root string, mode ReadMode, decide countedDecision, compensate Compensation) error {
 	path, err := Address(root)
 	if err != nil {
 		return err
@@ -43,11 +53,11 @@ func Transact(root string, mode ReadMode, decide Decision, compensate Compensati
 		return err
 	}
 	defer release()
-	ledger, err := readMode(path, mode)
+	ledger, records, err := readMode(path, mode)
 	if err != nil {
 		return err
 	}
-	next, changed, err := decide(ledger)
+	next, changed, err := decide(ledger, records)
 	if err != nil {
 		return err
 	}
@@ -63,12 +73,12 @@ func Transact(root string, mode ReadMode, decide Decision, compensate Compensati
 	return nil
 }
 
-func readMode(path string, mode ReadMode) (Ledger, error) {
+func readMode(path string, mode ReadMode) (Ledger, int, error) {
 	if mode == TolerantRead {
-		ledger, _, err := readPathTolerant(path)
-		return ledger, err
+		return readPathTolerant(path)
 	}
-	return readPath(path)
+	ledger, err := readPath(path)
+	return ledger, len(ledger.Assignments), err
 }
 
 // readPathTolerant is the tolerant mode's read. It decodes each assignment as a raw
