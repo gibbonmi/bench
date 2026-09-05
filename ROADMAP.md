@@ -15,6 +15,8 @@ findings in the owner details.
 
 ## Software factory: initial evidence and selected improvements
 
+**FT302 (MEDIUM) — the four-candidate module-deepening batch lands one candidate at a time.**
+
 **FT303 (MEDIUM, decision required) — a CLI assessment selects and delivers one evidence-backed improvement.**
 
 **FT304 (MEDIUM, decision required) — one shared projection supplies a useful roadmap and execution view.**
@@ -100,8 +102,6 @@ findings in the owner details.
 **FT247 (MEDIUM) — the next slow test packages extract pure policy from effect adapters.**
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
-
-**FT218 (LOW) — named git readers instead of learned CLI flags.**
 
 **FT219 (LOW) — `/bench-deepen` refreshes a ready map's frontier to current state before handoff.**
 
