@@ -1,6 +1,7 @@
 package adopt
 
 import (
+	"bytes"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestClassifyPrePushIsAbsentFromProductionAPI(t *testing.T) {
@@ -117,8 +119,12 @@ func TestInspectPrePushRefusesSpecialFilesAndMissingGit(t *testing.T) {
 	}
 	writeHook(t, path, "baked")
 	t.Setenv("PATH", "")
-	if got := InspectPrePush(root); got.State != PrePushManaged || got.Branch != "baked" || got.Provenance != PrePushBaked {
-		t.Fatalf("missing-git record = %#v", got)
+	// With no git executable reachable at all, hooksDir's reader cannot resolve the hooks
+	// directory, and InspectPrePush reports the absent state with an empty path rather than
+	// falling back to a guessed .git/hooks. This is a direct consequence of GR23, not a
+	// missing-git-specific case: any unresolved hooks directory reads the same way.
+	if got := InspectPrePush(root); got.State != PrePushAbsent || got.Path != "" {
+		t.Fatalf("missing-git record = %#v, want absent with empty path", got)
 	}
 }
 
@@ -217,6 +223,102 @@ func runPrePushHook(t *testing.T, root, path, remoteRef string) (error, string) 
 	var stderr strings.Builder
 	command.Stderr = &stderr
 	return command.Run(), stderr.String()
+}
+
+// TestLinkRefusesUnresolvedHooksDirectory pins GR20: a failed hooks-directory
+// query makes transactionalLink refuse with exit 1 before it stages any file, and
+// the refusal names the root path and the reader's action. It is serial because
+// gittest.StubGit binds the process PATH.
+func TestLinkRefusesUnresolvedHooksDirectory(t *testing.T) {
+	root := hookTestRepo(t)
+	gittest.StubGit(t, root, "fail-git-path", filepath.Join(t.TempDir(), "argv"))
+
+	plan := []planEntry{{rel: "accepted.txt", kind: "inline", content: "accepted\n"}}
+	var stdout, stderr strings.Builder
+	code, changed := transactionalLink(root, t.TempDir(), "copy", "test", plan, &stdout, &stderr)
+	if code != 1 {
+		t.Fatalf("transactionalLink under unresolved hooks dir = %d, want 1\nstderr:\n%s", code, stderr.String())
+	}
+	if changed {
+		t.Fatal("transactionalLink reported a change under the refusal")
+	}
+	if _, err := os.Lstat(filepath.Join(root, "accepted.txt")); !os.IsNotExist(err) {
+		t.Fatalf("accepted.txt staged before the refusal: %v", err)
+	}
+	got := stderr.String()
+	const investigateGitFailure = "investigate the git failure"
+	if !strings.Contains(got, root) || !strings.Contains(got, investigateGitFailure) {
+		t.Fatalf("stderr = %q, want it to name %s and %q", got, root, investigateGitFailure)
+	}
+}
+
+// TestInspectPrePushReportsAbsentWhenHooksDirectoryIsUnresolved pins GR23: a
+// failed hooks-directory query reads as the absent state with an empty path,
+// never a guessed .git/hooks. It is serial because gittest.StubGit binds PATH.
+func TestInspectPrePushReportsAbsentWhenHooksDirectoryIsUnresolved(t *testing.T) {
+	root := hookTestRepo(t)
+	gittest.StubGit(t, root, "fail-git-path", filepath.Join(t.TempDir(), "argv"))
+
+	got := InspectPrePush(root)
+	if got.State != PrePushAbsent || got.Path != "" {
+		t.Fatalf("InspectPrePush under unresolved hooks dir = %#v, want absent with empty path", got)
+	}
+}
+
+// TestDoctorFixRefusesUnresolvedHooksDirectory pins GR21: an unresolved hooks
+// directory makes `bench doctor --fix` exit 1 in a consumer repository, naming the
+// root path and the reader's action, before the repair touches the hook state. It
+// is serial because gittest.StubGit binds the process PATH.
+func TestDoctorFixRefusesUnresolvedHooksDirectory(t *testing.T) {
+	root := t.TempDir()
+	runAdoptGit(t, root, "init", "-q")
+	t.Setenv("BENCH_KIT", t.TempDir())
+	bin := t.TempDir()
+	target := filepath.Join(bin, "bench-wrapper")
+	writeFixtureFile(t, target, "#!/bin/sh\n", 0o755)
+	t.Setenv("BENCH_WRAPPER", target)
+	t.Chdir(root)
+
+	gittest.StubGit(t, root, "fail-git-path", filepath.Join(t.TempDir(), "argv"))
+
+	var stdout, stderr bytes.Buffer
+	if code := Doctor([]string{"--fix"}, &stdout, &stderr, "1.0.0"); code != 1 {
+		t.Fatalf("Doctor --fix under unresolved hooks dir = %d, want 1\nstdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
+	}
+	got := stderr.String()
+	if !strings.Contains(got, root) || !strings.Contains(got, "investigate the git failure") {
+		t.Fatalf("stderr = %q, want it to name %s and %q", got, root, "investigate the git failure")
+	}
+}
+
+// TestUnlinkRefusesUnresolvedHooksDirectory pins GR22: an unresolved hooks
+// directory makes `bench unlink` exit 1 over a present managed hook, naming the
+// root path and the reader's action, and it leaves the hook in place. It is
+// serial because gittest.StubGit binds the process PATH.
+func TestUnlinkRefusesUnresolvedHooksDirectory(t *testing.T) {
+	root := t.TempDir()
+	runAdoptGit(t, root, "init", "-q")
+	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeFixtureFile(t, filepath.Join(root, ".bench", "link-manifest.tsv"), "#kit\t1.0.0\n", 0o644)
+	hook := filepath.Join(root, ".git", "hooks", "pre-push")
+	writeHook(t, hook, fallbackProtectedBranch)
+	t.Chdir(root)
+
+	gittest.StubGit(t, root, "fail-git-path", filepath.Join(t.TempDir(), "argv"))
+
+	var stdout, stderr bytes.Buffer
+	if code := Unlink(nil, &stdout, &stderr); code != 1 {
+		t.Fatalf("Unlink under unresolved hooks dir = %d, want 1\nstdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
+	}
+	got := stderr.String()
+	if !strings.Contains(got, root) || !strings.Contains(got, "investigate the git failure") {
+		t.Fatalf("stderr = %q, want it to name %s and %q", got, root, "investigate the git failure")
+	}
+	if _, err := os.Lstat(hook); err != nil {
+		t.Fatalf("managed hook removed despite the refusal: %v", err)
+	}
 }
 
 func TestPrePushHookAllowProtectedPushConfig(t *testing.T) {
