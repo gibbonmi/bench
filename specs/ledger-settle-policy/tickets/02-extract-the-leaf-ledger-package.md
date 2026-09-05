@@ -1,7 +1,7 @@
 # Extract the leaf ledger package
 
 Blocked by: none
-Writes: internal/intent/ledger/ (new), internal/intent/intent.go, internal/intent/assignment.go, internal/intent/validate.go, internal/intent/branches.go, internal/intent/intent_test.go
+Writes: internal/intent/ledger/ (new), internal/intent/ledger_aliases.go (new), internal/intent/ledger_aliases_test.go (new), internal/intent/intent.go, internal/intent/assignment.go, internal/intent/validate.go, internal/intent/branches.go, internal/intent/intent_test.go, internal/worktree/lifecyclepolicy/lifecyclepolicy.go, internal/worktree/lifecyclepolicy/lifecyclepolicy_test.go
 Covers: LS11, LS12, LS13, LS14
 
 ## What to build

@@ -220,7 +220,7 @@ reviewer's 2026-08-26 rule caps a subagent at medium effort.
 | LS33 | 36 | the landing refusal surface still holds the text `composition conflict: <kind>` at the front and the conflicted path, for the kinds `textual` and `mode` | `internal/worktree/land_surface_test.go` (`TestLandCommandConflictRefusalNamesThePath`), which asserts the `textual` kind, and `internal/worktree/merge_test.go` (`TestMergeRefusesACaptureAddAddWithDisagreeingModes`), which asserts the `mode` kind | a reason placed before the kind breaks every existing prefix match |
 | LS34 | 37 | with a refusing settle, `ConflictError.Error` does not equal `composition conflict: <kind>`, and it holds the separator `; settle refused: ` | the same new test, an assertion on every case | a build that renders the reason only in the typed field leaves the old text whole |
 | LS35 | 38 | each of the three new packages holds a `purity_census_test.go` whose census names that package's own source | review-owned: the reviewer reads the three wrapper files | no standing check enumerates census packages, so an omitted wrapper passes the gate |
-| LS36 | 39 | the policy census reports a forbidden import for a source that imports `internal/intent` and for a source that imports `internal/landing` | `internal/puritycensus/census_test.go` (`TestCensusDiagnosesForbiddenImportAmbientEffectAndParallel`), two new cases through `diagnose` with `PolicyPackage()` | a pattern left unchanged lets a policy child import its parent adapter |
+| LS36 | 39 | the policy census reports a forbidden import for a source that imports `internal/intent` and for a source that imports `internal/landing` | `internal/puritycensus/census_test.go` (`TestCensusRefusesTheIntentParentAdapter` and `TestCensusRefusesTheLandingParentAdapter`), two new cases through `diagnose` with `PolicyPackage()` | a pattern left unchanged lets a policy child import its parent adapter |
 | LS37 | 40 | `CONTEXT.md` holds the term `ledger transaction` with its Avoid list naming `lock helper` and `mutator envelope` | review-owned: the reviewer reads the entry | the prose mechanics check grades sentences, not terms |
 | LS38 | 41 | `CONTEXT.md` holds the term `settle verdict` with its Avoid list naming `resolution` and `merge result` | review-owned: the reviewer reads the entry | the prose mechanics check grades sentences, not terms |
 | LS39 | 28 | `bench structure` reports `internal/landing/composition_test.go` under its 400-line budget | the gate's structure phase | a move that leaves the settle tables in place keeps the file at 585 lines |
@@ -268,7 +268,11 @@ This section is derived from the reader sweep; the ticket slice confirms it.
 - `internal/intent/assignment_lookup_test.go`
 - `internal/intent/worktree_owner_test.go`
 - `internal/intent/ledger/` (new)
+- `internal/intent/ledger_aliases.go` (new)
+- `internal/intent/ledger_aliases_test.go` (new)
 - `internal/intent/admissionpolicy/` (new)
+- `internal/worktree/lifecyclepolicy/lifecyclepolicy.go`
+- `internal/worktree/lifecyclepolicy/lifecyclepolicy_test.go`
 - `internal/landing/composition.go`
 - `internal/landing/merge.go`
 - `internal/landing/landing.go`
@@ -321,6 +325,16 @@ Build decisions recorded for reviewer veto:
 - The package names are `internal/intent/ledger`, `internal/intent/admissionpolicy`, and `internal/landing/settlepolicy`. The tickets fix one spelling so that sibling tickets compile together.
 - The compensation step runs on the write failure alone. Today `ReauthorizeAssignment` also runs its rollback when the compare-and-swap fails. Under the transaction the compare-and-swap sits inside the closure, so the closure's own error path must run the rollback to keep today's behavior. LS7 pins the write-failure arm, and `TestCompareAndSwapRequestDigestRefusesConcurrentMovementAndPreservesOtherFields` pins the other arm.
 - The seven mutators keep their exported signatures. A signature change would move consumer files, which the source forbids.
+
+Build decisions recorded during the build (2026-09-05, `--full` run) for reviewer veto:
+
+- The `--full` invocation from the handoff's Next command is read as the sign-off, with the four recommended answers to the reviewer questions above.
+- `internal/worktree/lifecyclepolicy` imports `internal/intent` for schema types alone, so the widened policy census reds its wrapper. It moves onto `internal/intent/ledger`, and the LS12 allowlist gains that package. The fence gains its two Go files.
+- The LS36 cases are two named tests, `TestCensusRefusesTheIntentParentAdapter` and `TestCensusRefusesTheLandingParentAdapter`, because the cited test counts three diagnostics over one source.
+- The LS11 and LS12 tests live in a new file `internal/intent/ledger_aliases_test.go`, because `intent_test.go` sits at 397 lines. The aliases live in `internal/intent/ledger_aliases.go`.
+- A read-only ledger directory set before the call fails at the lock, not at the write. LS4, LS7, and LS8 set the directory read-only inside the closure, after the lock exists, and restore it in the compensation or the test cleanup.
+- The tolerant read decodes the entries and the cleanup receipts on every read. The old purge decoded them only before a write. So a file whose assignments parse and whose entries do not now returns an error, where it returned zero with nothing to drop.
+- The composition keeps two refusal journeys, not one. The policy refusal is `code-path-beside-a-capture-path`. The adapter's own union text-merge refusal is `binary-union-path`, which no policy table can cover. It gains a fourth settle journey, `removal`, because the coordinator's probe showed the removal verdict had no journey.
 
 Source-sentence-to-row table:
 
