@@ -87,6 +87,33 @@ func TestPurgeAssignmentsDropsEveryLegacySchemaRecord(t *testing.T) {
 	}
 }
 
+// TestPurgeAssignmentsRefusesAnUndecodableEntriesField draws the tolerant read's
+// boundary. Tolerance covers the assignment records one at a time, because a single bad
+// one there is debris the purge exists to clear. It does not cover the fields the purge
+// carries through untouched: an entries field it cannot decode would be written back as
+// an empty one, so the purge refuses instead of destroying the settlement history.
+func TestPurgeAssignmentsRefusesAnUndecodableEntriesField(t *testing.T) {
+	root := newRepo(t)
+	body := `{"schema":2,"entries":{"unexpected":"object"},"assignments":[],"cleanup_receipts":[]}`
+	path := writeLedgerBody(t, root, body)
+	before, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if dropped, err := PurgeAssignments(root, keepAll); err == nil {
+		t.Fatalf("PurgeAssignments = %d, nil; want an error on an undecodable entries field", dropped)
+	}
+
+	after, err := os.ReadFile(path)
+	if err != nil || string(after) != string(before) {
+		t.Fatalf("the refused purge rewrote the ledger: %v", err)
+	}
+	if _, err := os.Lstat(path + ".lock"); !os.IsNotExist(err) {
+		t.Fatalf("the refused purge left a lock at %s: %v", filepath.Base(path)+".lock", err)
+	}
+}
+
 // TestPurgeAssignmentsIsANoOpWithoutALedger keeps the reconcile silent in a repository
 // that has never written one. It runs at every session start, and creating a ledger
 // there would manufacture the state it exists to clean up.

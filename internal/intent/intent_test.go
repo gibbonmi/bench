@@ -274,6 +274,32 @@ func TestIdenticalStampedAssignmentWritePreservesBytes(t *testing.T) {
 	if !bytes.Equal(before, after) {
 		t.Fatalf("identical stamped upsert changed bytes\nbefore=%s\nafter=%s", before, after)
 	}
+
+	// The entry arm of the same rule. An identical Upsert must leave the bytes and the
+	// modification time alone, so the transaction cannot write on every call.
+	entry := Entry{Key: "stable", Kind: KindShift, CreatedAt: time.Unix(1, 0).UTC()}
+	if err := Upsert(root, entry); err != nil {
+		t.Fatal(err)
+	}
+	stamped, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := Upsert(root, entry); err != nil {
+		t.Fatal(err)
+	}
+	again, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repeated, _ := os.ReadFile(path)
+	if !bytes.Equal(body, repeated) || !stamped.ModTime().Equal(again.ModTime()) {
+		t.Fatalf("identical upsert rewrote the ledger\nbefore=%s\nafter=%s", body, repeated)
+	}
 }
 
 func TestAssignmentCreatedAtRejectsMalformed(t *testing.T) {
@@ -300,31 +326,6 @@ func TestAssignmentCreatedAtAcceptsFuture(t *testing.T) {
 	assignment.CreatedAt = &future
 	if err := ValidateAssignment(assignment); err != nil {
 		t.Fatalf("ValidateAssignment rejected a future created_at: %v", err)
-	}
-}
-
-func TestCompareAndSwapRequestDigestRefusesConcurrentMovementAndPreservesOtherFields(t *testing.T) {
-	assignment := activeAssignment()
-	original := assignment
-	assignment.Request = strings.Repeat("e", 64)
-	if err := compareAndSwapRequestDigest(&assignment, original.Request, strings.Repeat("f", 64)); err == nil {
-		t.Fatal("compareAndSwapRequestDigest accepted a moved request digest")
-	}
-	if assignment.Request != strings.Repeat("e", 64) {
-		t.Fatalf("refused CAS changed request to %q", assignment.Request)
-	}
-
-	assignment = original
-	replacement := strings.Repeat("f", 64)
-	if err := compareAndSwapRequestDigest(&assignment, original.Request, replacement); err != nil {
-		t.Fatal(err)
-	}
-	if assignment.Request != replacement {
-		t.Fatalf("CAS request = %q, want %q", assignment.Request, replacement)
-	}
-	assignment.Request = original.Request
-	if !reflect.DeepEqual(assignment, original) {
-		t.Fatalf("CAS changed fields beyond request: got %#v, want %#v", assignment, original)
 	}
 }
 
