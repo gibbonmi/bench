@@ -6,7 +6,8 @@ Covers: GR2, GR5, GR11, GR27
 
 ## What to build
 
-Read `reviews/git-admin-readers.md` for the accepted findings. Read `AdminPath` in
+Read the review round 1 entry under "Build decisions recorded for reviewer veto" in the
+spec for the accepted findings. Read `AdminPath` in
 internal/git/worktree_admin.go, `TestAdminPathJoinsRelativeAnswerOntoRoot` and
 `TestAdminPathMatchesIndependentRevParse` in internal/git/admin_readers_test.go,
 `TestLockCleanupRegistrationFallsBackForNonWorktree` in
@@ -26,8 +27,8 @@ the planted lock file fails while the release is pending and succeeds after it r
 
 Change the walker of `checkGitPlumbingOwner` so that it also grades the non-test Go
 files at the module root. Keep `cmd/` and `internal/` and skip every other
-directory. Add one root-level case to GR27's test. The pickup file leaves in the
-same commit that closes these findings. The five command registries in the
+directory. Add one root-level case to GR27's test. The pickup file `reviews/git-admin-readers.md` left in the
+same commit that closed these findings. The five command registries in the
 `Writes:` line are closure headroom for the worktree binding, and this ticket edits
 none of them.
 

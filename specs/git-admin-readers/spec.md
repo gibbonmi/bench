@@ -332,7 +332,15 @@ Build decisions recorded for reviewer veto:
 - The check lands in the contract ticket, after every migration, so no in-flight state reds it.
 - The `relative-git-path` and `fail-git-path` stubs pass every other invocation to the real `git`. A verb that runs many Git commands must reach the hooks query.
 - The file reader uses Git's default path format and joins a relative answer onto the root. The build found on 2026-09-05 that `--path-format=absolute` resolves an existing symlink. Under that spelling `TestReleaseSymlinkLeaseRetainsAsUncertain` reds, and every `Lstat` at a file site is defeated. Rows GR5, GR20 to GR23, GR25, and GR26 now drive a failing file query, and GR40 pins the symlink posture. The reviewer can veto this at the review.
-- Review round 1 on 2026-09-05 accepted four repairs. The file reader resolves the root's symlinks before the join (GR2, GR5). The GR11 test proves the lock is held, and the check walks the module root (GR27). The pickup `reviews/git-admin-readers.md` holds the eight non-blocking Standards findings and one no-op Coverage finding for the reviewer.
+- Review round 1 on 2026-09-05 accepted four repairs. The file reader resolves the root's symlinks before the join (GR2, GR5). The GR11 test proves the lock is held, and the check walks the module root (GR27). The repair commit closed the pickup file. The non-blocking findings stay here for the reviewer's decision:
+  - `Worktrees` repeats the common-directory resolution that `CommonDir` owns.
+  - `AdminPath` repeats the empty-answer refusal that `validateCommonDir` owns.
+  - `stringLiteralValue` in the check repeats `stringLiteral` in the routing check.
+  - The root-level walk in the check repeats the file eligibility filter of the recursive walk.
+  - The hostile reader table re-types the stub's three planted admin paths.
+  - The `StubGitDir` comment inventories the modes the script below encodes.
+  - The new test doc comments cite coverage row ids, and two carry the red record the spec owns.
+  - The pass-through stub modes match a flag as a substring of the whole argument line. A root whose path text holds a flag is intercepted. The harness is test-only, and no test root carries flag text.
 - The two verb tests GR21 and GR22 live in the adopt hook test file, not in the adopt test file the ticket named. That file sits over the structure budget, and the growth ratchet reds a line it gains.
 - A site the staged pin-removal spec deletes migrates only when it still exists at the build's base. If it does, the pin-removal landing composes over one migrated line and repairs by merge.
 - The two `PATH`-binding tests in `internal/worktree` (GR25 and GR35) join the package's serial set. The pinned serial ceiling in `internal/worktree/parallel_census_test.go` rises by two inside its recorded stub-test class. The fence gains that file.
