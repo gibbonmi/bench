@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -110,5 +111,35 @@ func TestResumeLandCommandTicketsOnlySpecCompletesAnInterruptedClose(t *testing.
 	}
 	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
 		t.Fatalf("tickets-only resume reran the gate: tally=%q error=%v", got, err)
+	}
+}
+
+// SR61: the interruption lands after the reconcile, so the destination checkout no longer
+// carries specs/t when the resume classifies the landing. The classification must read the
+// source commit's objects; a reader over the destination working tree finds no folder and
+// authenticates a spec transition the first run never published.
+func TestResumeLandCommandTicketsOnlyCloseSurvivesTheConsumedCheckout(t *testing.T) {
+	t.Parallel()
+	request := "tickets-only-resume-released"
+	root, creation, base, tip, tally, home := ticketsOnlyLandingFixture(t, request)
+	working := defaultJoins()
+	broken := working
+	broken.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+	var stdout, stderr bytes.Buffer
+	if code := landWith(broken, root, home, "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
+		t.Fatalf("interrupted release = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	if _, err := os.Stat(filepath.Join(root, "specs", "t")); !os.IsNotExist(err) {
+		t.Fatalf("destination checkout still carries specs/t after the reconcile: %v", err)
+	}
+	published := gitOutput(t, root, "rev-parse", "main")
+	stdout.Reset()
+	stderr.Reset()
+	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "t", creation.Path}
+	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
+		t.Fatalf("resume after a consumed checkout = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("resume reran the gate: tally=%q error=%v", got, err)
 	}
 }

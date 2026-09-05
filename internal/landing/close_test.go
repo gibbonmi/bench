@@ -66,6 +66,44 @@ func TestTicketsOnlyFolder(t *testing.T) {
 	}
 }
 
+// TestTicketsOnlyInCommit pins the same rule over a commit's objects, which is the tree
+// the resume reads: the source worktree is released by then, so the working-tree reader
+// would answer from a tree that no longer holds the folder. The rows are the four cases
+// the close branches on, and the name rows prove the rule travels with the predicate
+// rather than with one reader.
+func TestTicketsOnlyInCommit(t *testing.T) {
+	root := t.TempDir()
+	git(t, root, "init", "-q", "-b", "main")
+	git(t, root, "config", "user.email", "a@b.c")
+	git(t, root, "config", "user.name", "a")
+	write(t, root, "specs/tickets-only/tickets/one.md", "# One\n")
+	write(t, root, "specs/spec-backed/tickets/one.md", "# One\n")
+	write(t, root, "specs/spec-backed/spec.md", "Status: staged\n")
+	git(t, root, "add", ".")
+	git(t, root, "commit", "-qm", "specs")
+	commit := git(t, root, "rev-parse", "HEAD")
+
+	cases := []struct {
+		name string
+		want bool
+		why  string
+	}{
+		{name: "tickets-only", want: true, why: "a committed folder holding no spec.md is a close"},
+		{name: "spec-backed", want: false, why: "a committed folder carrying spec.md takes the status flip"},
+		{name: "absent", want: false, why: "a slug naming no committed folder is not tickets-only"},
+		{name: "spec-backed/tickets", want: false, why: "not a direct child of specs/"},
+		{name: "..", want: false, why: "a traversal names no direct child"},
+		{name: "", want: false, why: "an empty slug names nothing"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := TicketsOnly(CommitTree(root, commit), tc.name); got != tc.want {
+				t.Fatalf("TicketsOnly(CommitTree, %q) = %v, want %v: %s", tc.name, got, tc.want, tc.why)
+			}
+		})
+	}
+}
+
 // A repository with no specs/ directory counts zero rather than failing, so the status
 // row it feeds is a signal and not an error path.
 func TestTicketsOnlyFoldersWithoutSpecsDirectory(t *testing.T) {
