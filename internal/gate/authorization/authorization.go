@@ -215,7 +215,7 @@ func (a LaneAuthority) Authorize(ctx context.Context, root, tree string, stdout,
 		return Result{Kind: LaneFail}
 	}
 	result, err := gate.RunLane(ctx, gate.LaneRequest{
-		Root: root, Kit: a.Kit, Tree: tree, Lane: a.Lane,
+		Root: root, Kit: a.Kit, Tree: tree, Lane: a.Lane, Base: a.Base,
 		Checks: a.Checks, Changes: changes, Selective: a.Selective,
 		Stdout: stdout, Stderr: stderr,
 	})

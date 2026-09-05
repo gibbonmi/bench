@@ -152,7 +152,7 @@ func TestSelectLaneByClass(t *testing.T) {
 		{
 			name:    "PL9 a Go source file",
 			changes: []ComposedChange{laneChange("internal/x/y.go")},
-			checks:  []string{"gofmt", "vet", "build"},
+			checks:  []string{"gofmt", "vet", "build", "structure"},
 			classes: []string{"go-source"},
 		},
 		{
@@ -183,7 +183,7 @@ func TestSelectLaneByClass(t *testing.T) {
 		{
 			name:    "PL15 two classes take the union in declared order",
 			changes: []ComposedChange{laneChange("a.go"), laneChange("b.md")},
-			checks:  []string{"gofmt", "prose", "vet", "build"},
+			checks:  []string{"gofmt", "prose", "vet", "build", "structure"},
 			classes: []string{"go-source", "markdown"},
 		},
 		{
@@ -220,7 +220,7 @@ func TestSelectLaneByClass(t *testing.T) {
 		{
 			name:    "PL47 a deleted Go source file",
 			changes: []ComposedChange{laneDeletion("internal/x/y.go")},
-			checks:  []string{"gofmt", "vet", "build"},
+			checks:  []string{"gofmt", "vet", "build", "structure"},
 			classes: []string{"go-source"},
 		},
 		{

@@ -9,7 +9,6 @@ package gate
 // lane pass for a graded green.
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -20,7 +19,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -44,6 +42,12 @@ const (
 // an empty list; only its subject follows the named paths.
 const LaneNamedMarkdownToken = "<bench-named-markdown>"
 
+// LaneBaseToken is the placeholder a check carries for the commit the graded tree is
+// measured against. RunLane replaces the one argv element holding it with the request's
+// base, so a check that compares two revisions names its operand in the declared lane
+// rather than being handed a resolved revision the table cannot spell.
+const LaneBaseToken = "<bench-lane-base>"
+
 // laneRecordFile is the lane record's name inside the worktree's own Git dir. It is
 // distinct from the gate cache file, because a lane record is a distinct record class
 // that no gate reader may read as a verdict.
@@ -58,10 +62,12 @@ const defaultLaneName = "lane"
 // verification seams rather than paying a real build.
 var laneRunBinary = runbinary.Factory{}
 
-// BenchkitLane is the built-in fast lane for the kit root: gofmt, prose, vet, build, and
-// then one check per document family the registry binds. A Bench-owned check carries the
-// run-binary token, which the run replaces with the executable it selected, and the two
-// toolchain checks run the tool directly. The build disables VCS stamping, as every gate
+// BenchkitLane is the built-in fast lane for the kit root: gofmt, prose, vet, build,
+// structure, and then one check per document family the registry binds. A Bench-owned
+// check carries the run-binary token, which the run replaces with the executable it
+// selected, and the two toolchain checks run the tool directly. The structure check
+// carries the base token, so the growth ratchet reads what the commit composes. The
+// build disables VCS stamping, as every gate
 // Go argv does: the private checkout is a linked worktree under a temporary directory,
 // and Go's own discovery skips its `.git` file and adopts whatever `.git` directory sits
 // above it. The whole-project test phase is deliberately absent. The lane is the worktree
@@ -73,6 +79,7 @@ func BenchkitLane(root, kit string) []Phase {
 		{Name: "prose", Argv: []string{runBinaryArgvToken, "gate-prose", root, "--", LaneNamedMarkdownToken}},
 		{Name: "vet", Argv: []string{"go", "vet", trimPath, "./..."}},
 		{Name: "build", Argv: []string{"go", "build", trimPath, DisableBuildVCS, "./..."}},
+		{Name: "structure", Argv: []string{runBinaryArgvToken, "structure", "--growth", LaneBaseToken}},
 	}, documentLaneChecks()...)
 }
 
@@ -124,7 +131,7 @@ func runLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 	if err != nil {
 		return LaneResult{}, err
 	}
-	checks := resolveLane(selected, req.Root, checkout, proseSubject(req.Changes))
+	checks := resolveLane(selected, req.Root, checkout, proseSubject(req.Changes), req.Base)
 	runBinary, checks, closeSelection, err := selectLaneRunBinary(ctx, req, checkout, artifacts.Root(), checks)
 	if err != nil {
 		return LaneResult{}, err
@@ -204,11 +211,12 @@ func laneName(declared string) string {
 	return declared
 }
 
-// resolveLane rewrites a declared check list for the checkout that will run it. Two
-// substitutions apply. The prose placeholder becomes the named Markdown paths. Any argv
+// resolveLane rewrites a declared check list for the checkout that will run it. Three
+// substitutions apply. The prose placeholder becomes the named Markdown paths, and the
+// base placeholder becomes the commit the graded tree is measured against. Any argv
 // element or working directory anchored to the graded root is re-anchored to the private
 // checkout, because that is where the tree the lane grades actually is.
-func resolveLane(checks []Phase, root, checkout string, namedMarkdown []string) []Phase {
+func resolveLane(checks []Phase, root, checkout string, namedMarkdown []string, base string) []Phase {
 	resolved := make([]Phase, len(checks))
 	for i, check := range checks {
 		resolved[i] = check
@@ -216,6 +224,10 @@ func resolveLane(checks []Phase, root, checkout string, namedMarkdown []string) 
 		for _, arg := range check.Argv {
 			if arg == LaneNamedMarkdownToken {
 				resolved[i].Argv = append(resolved[i].Argv, namedMarkdown...)
+				continue
+			}
+			if arg == LaneBaseToken {
+				resolved[i].Argv = append(resolved[i].Argv, base)
 				continue
 			}
 			resolved[i].Argv = append(resolved[i].Argv, reanchor(arg, root, checkout))
@@ -317,92 +329,4 @@ func writeLaneRecord(gitdir string, result LaneResult) error {
 		return err
 	}
 	return durableReplaceRecordAt(gitdir, laneRecordFile, data)
-}
-
-// laneDiagnostics keeps each check's first output line while the run streams. A caller
-// naming a failing check needs one line of why, and re-reading the stream afterwards
-// would need the whole stream retained.
-type laneDiagnostics struct {
-	mu    sync.Mutex
-	first map[string]string
-}
-
-func (d *laneDiagnostics) record(name, line string) {
-	line = strings.TrimSpace(line)
-	if line == "" {
-		return
-	}
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	if _, held := d.first[name]; !held {
-		d.first[name] = line
-	}
-}
-
-// firstLine answers the check's first output line, and falls back to the start error for
-// a check that never ran and so wrote nothing.
-func (d *laneDiagnostics) firstLine(name string, startErr error) string {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	if line, held := d.first[name]; held {
-		return line
-	}
-	if startErr != nil {
-		return startErr.Error()
-	}
-	return ""
-}
-
-// laneWriters is the lane's output plumbing. It keeps the gate's prefixed streams and
-// taps each of them on the way through. The tap holds only the current partial line, so
-// a chatty check costs the lane no memory.
-func laneWriters(stdout, stderr io.Writer, diagnostics *laneDiagnostics) func(Phase) (io.Writer, io.Writer, func()) {
-	inner := prefixedPhaseWriters(discardIfNil(stdout), discardIfNil(stderr))
-	return func(check Phase) (io.Writer, io.Writer, func()) {
-		out, errOut, closeWriters := inner(check)
-		tapOut := &laneTapWriter{name: check.Name, dst: out, diagnostics: diagnostics}
-		tapErr := &laneTapWriter{name: check.Name, dst: errOut, diagnostics: diagnostics}
-		return tapOut, tapErr, func() {
-			// A final line with no newline after it still names the failure, so it is
-			// offered before the underlying writers close.
-			tapOut.flush()
-			tapErr.flush()
-			closeWriters()
-		}
-	}
-}
-
-func discardIfNil(w io.Writer) io.Writer {
-	if w == nil {
-		return io.Discard
-	}
-	return w
-}
-
-type laneTapWriter struct {
-	name        string
-	dst         io.Writer
-	diagnostics *laneDiagnostics
-	pending     []byte
-}
-
-func (w *laneTapWriter) Write(p []byte) (int, error) {
-	w.pending = append(w.pending, p...)
-	for {
-		idx := bytes.IndexByte(w.pending, '\n')
-		if idx < 0 {
-			break
-		}
-		w.diagnostics.record(w.name, string(w.pending[:idx]))
-		w.pending = w.pending[idx+1:]
-	}
-	return w.dst.Write(p)
-}
-
-func (w *laneTapWriter) flush() {
-	if len(w.pending) == 0 {
-		return
-	}
-	w.diagnostics.record(w.name, string(w.pending))
-	w.pending = nil
 }

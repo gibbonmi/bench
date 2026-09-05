@@ -346,6 +346,7 @@ a broken document reds at the commit.
 | `prose` | `bench gate-prose <root> -- <named Markdown>` | markdown, prose-policy |
 | `vet` | `go vet -trimpath ./...` | go-source, go-build-input |
 | `build` | `go build -trimpath -buildvcs=false ./...` | go-source, go-build-input |
+| `structure` | `bench structure --growth <base>` | go-source |
 | `decision-map-integrity` | `bench test --check decision-map-integrity` | decision-documents |
 | `guidance-prose-budgets` | `bench test --check guidance-prose-budgets` | benchkit-profile |
 | `profile-lane-table` | `bench test --check profile-lane-table` | benchkit-profile |
