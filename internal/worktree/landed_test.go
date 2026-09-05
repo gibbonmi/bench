@@ -261,6 +261,33 @@ func TestLandedClassifierOnlyActiveStateQualifies(t *testing.T) {
 	}
 }
 
+// TestMissingBranchScanKeepsTheActiveStateFilter pins the state filter the any-state
+// path match cannot supply. A retired record names a tree whose phase is over, so its
+// gone branch is the expected end state, not the recoverable loss the scan reports.
+func TestMissingBranchScanKeepsTheActiveStateFilter(t *testing.T) {
+	t.Parallel()
+	root := newWorktreeRepo(t)
+	home := filepath.Join(root, ".bench-home")
+	retired := mustCreate(t, root, home, "missing-branch-retired", "retired")
+	gitRun(t, root, "update-ref", "-d", retired.Assignment.Branch)
+	retired.Assignment.State = intent.StateCleanupPending
+	mustNoError(t, intent.PutAssignment(root, retired.Assignment))
+
+	if got, missing := activeAssignmentWithMissingBranch(root, retired.Path); missing {
+		t.Fatalf("activeAssignmentWithMissingBranch = (%q, true), want no assignment for a retired row", got.ID)
+	}
+
+	active := mustCreate(t, root, home, "missing-branch-active", "active")
+	gitRun(t, root, "update-ref", "-d", active.Assignment.Branch)
+	retired.Assignment.Worktree = active.Path
+	mustNoError(t, intent.PutAssignment(root, retired.Assignment))
+
+	got, missing := activeAssignmentWithMissingBranch(root, active.Path)
+	if !missing || got.ID != active.Assignment.ID {
+		t.Fatalf("activeAssignmentWithMissingBranch = (%q, %t), want (%q, true)", got.ID, missing, active.Assignment.ID)
+	}
+}
+
 func TestListCommandAdvertisesOneLandedSweep(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)

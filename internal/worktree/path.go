@@ -109,16 +109,19 @@ func selectAssignment(assignments []intent.Assignment, target string) (intent.As
 	if err != nil {
 		return intent.Assignment{}, err
 	}
-	matched := matchingAssignments(assignments, func(a intent.Assignment) bool {
-		if isPath {
-			worktree, worktreeErr := canonicalPath(a.Worktree)
-			return worktreeErr == nil && worktree == path
-		}
+	// The path arm answers every state, so the state refusal below names the state a
+	// non-active sibling is in.
+	var matched []intent.Assignment
+	if isPath {
+		matched = intent.AssignmentsOwning(assignments, path)
+	} else {
 		// The id is the address `bench worktree list` advertises in its executable help
 		// rows, and it is the only unique one. Labels can collide, and the ambiguity
 		// refusal below is what answers when they do.
-		return a.Label == target || a.ID == target
-	})
+		matched = matchingAssignments(assignments, func(a intent.Assignment) bool {
+			return a.Label == target || a.ID == target
+		})
+	}
 	if len(matched) == 0 && !isPath && len(target) >= minOperandPrefix && len(target) <= maxIdentifierPrefix {
 		// An unambiguous 8-12 character prefix of the label or the id also resolves.
 		// Shorter prefixes stay unresolved so a short word cannot grab a worktree.

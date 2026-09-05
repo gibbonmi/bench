@@ -11,8 +11,6 @@ import (
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/gibbonmi/bench/internal/canonicalpath"
 )
 
 const AssignmentRecordSchema = "bench-assignment/v1"
@@ -364,19 +362,12 @@ func FindAssignmentForRequest(root, request string) (Assignment, bool, error) {
 // owns from it. A second lookup would let the two disagree about which assignment
 // owns a tree.
 func AssignmentForWorktree(path string) (Assignment, bool) {
-	canonical, err := canonicalpath.Resolve(path)
-	if err != nil {
-		return Assignment{}, false
-	}
 	assignments, err := Assignments(path)
 	if err != nil {
 		return Assignment{}, false
 	}
-	for _, a := range assignments {
-		if a.State != StateActive {
-			continue
-		}
-		if owned, ownedErr := canonicalpath.Resolve(a.Worktree); ownedErr == nil && owned == canonical {
+	for _, a := range AssignmentsOwning(assignments, path) {
+		if a.State == StateActive {
 			return a, true
 		}
 	}
