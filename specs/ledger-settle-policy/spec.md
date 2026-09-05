@@ -224,6 +224,8 @@ reviewer's 2026-08-26 rule caps a subagent at medium effort.
 | LS37 | 40 | `CONTEXT.md` holds the term `ledger transaction` with its Avoid list naming `lock helper` and `mutator envelope` | review-owned: the reviewer reads the entry | the prose mechanics check grades sentences, not terms |
 | LS38 | 41 | `CONTEXT.md` holds the term `settle verdict` with its Avoid list naming `resolution` and `merge result` | review-owned: the reviewer reads the entry | the prose mechanics check grades sentences, not terms |
 | LS39 | 28 | `bench structure` reports `internal/landing/composition_test.go` under its 400-line budget | the gate's structure phase | a move that leaves the settle tables in place keeps the file at 585 lines |
+| LS40 | 5 | with a ledger whose `entries` field cannot decode, `PurgeAssignments` returns an error and the ledger file bytes are unchanged | a new test `TestPurgeAssignmentsRefusesAnUndecodableEntriesField` in `internal/intent/purge_test.go` | a tolerant read that skips the entries decode writes a ledger with the entries dropped |
+| LS41 | 21 | the settle policy answers a removal for a union path whose two sides are both absent, and the adapter renders no `union content not text` reason for it | a new case in `TestSettlePolicyAnswersTheCaptureRule` in `internal/landing/settlepolicy` | a policy that hands a side-less union to the adapter's text merge names a reason the content does not earn |
 
 ### Edge inventory
 
@@ -323,7 +325,7 @@ Flagged additions beyond the decision source:
 Build decisions recorded for reviewer veto:
 
 - The package names are `internal/intent/ledger`, `internal/intent/admissionpolicy`, and `internal/landing/settlepolicy`. The tickets fix one spelling so that sibling tickets compile together.
-- The compensation step runs on the write failure alone. Today `ReauthorizeAssignment` also runs its rollback when the compare-and-swap fails. Under the transaction the compare-and-swap sits inside the closure, so the closure's own error path must run the rollback to keep today's behavior. LS7 pins the write-failure arm, and `TestCompareAndSwapRequestDigestRefusesConcurrentMovementAndPreservesOtherFields` pins the other arm.
+- The compensation step runs on the write failure alone. Today `ReauthorizeAssignment` also runs its rollback when the compare-and-swap fails. Under the transaction the compare-and-swap sits inside the closure, so the closure's own error path must run the rollback to keep today's behavior. LS7 pins the write-failure arm, and the two policy table cases over `CompareAndSwapRequestDigest` pin the refusal the other arm reacts to.
 - The seven mutators keep their exported signatures. A signature change would move consumer files, which the source forbids.
 
 Build decisions recorded during the build (2026-09-05, `--full` run) for reviewer veto:
@@ -340,6 +342,14 @@ Build decisions recorded during the build (2026-09-05, `--full` run) for reviewe
 - `PutCleanupReceipt` validates the receipt inside its rule, under the lock, where it validated before the lock. The error text does not change.
 - `PutAssignment` exposes no hook that runs under the lock. So LS8 observes the nil compensation through a transaction over the `PutAssignment` rule on a read-only directory. It then drives `PutAssignment` itself over the same directory for the error.
 - `DeleteAssignment` had no real-filesystem journey before. The LS1 test supplies its journey.
+
+Review round decisions (2026-09-05, one round, opus at medium on three axes) for reviewer veto:
+
+- The compare-and-swap refusal is pinned by the two policy table cases that replaced the deleted intent test. Its rollback arm is reachable only through the `beforeCAS` hook, at the base and at the tip alike, so no journey pins it.
+- The two union journeys `union-deleted-on-one-side` and `union-added-on-both-sides` return to the composition suite, because the adapter's one-sided union arms have no policy twin. LS24 covers them.
+- The tolerant read's entries-decode failure becomes a decided behavior with its own row, LS40.
+- A union path whose two sides are both absent answers a removal, not a text merge, so the adapter never names `union content not text` for it. LS41 covers it.
+- The plural path list in the refusal message stays as written. Every producer supplies one path today, so the reviewer decides whether the promise narrows or a producer accumulates.
 
 Source-sentence-to-row table:
 
