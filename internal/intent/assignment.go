@@ -1,152 +1,12 @@
 package intent
 
 import (
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"reflect"
-	"regexp"
-	"strings"
-	"time"
 )
-
-const AssignmentRecordSchema = "bench-assignment/v1"
-
-const assignmentBranchNamespace = "refs/heads/bench/assign/"
-
-// AssignmentBranchPrefix names the local-ref namespace reserved for assignment branches.
-func AssignmentBranchPrefix() string { return assignmentBranchNamespace }
-
-// RecoveryRefNamespace is the one name for the namespace preserved work lives under.
-// Both the writer that puts refs there and the standing cleaner that sweeps it read
-// this constant. Neither can address a namespace the other does not.
-const RecoveryRefNamespace = "refs/bench/recovery/"
-
-func AssignmentBranchRef(ownerID, assignmentID string) string {
-	return assignmentBranchNamespace + ownerID + "/" + assignmentID
-}
-
-func RecoveryRefPrefix(ownerID, assignmentID string) string {
-	return RecoveryRefNamespace + ownerID + "/" + assignmentID + "/"
-}
-
-func validAssignmentBranchRef(ref string) bool {
-	return strings.HasPrefix(ref, assignmentBranchNamespace)
-}
-
-type AssignmentState string
-
-const (
-	StateActive         AssignmentState = "active"
-	StateCleanupPending AssignmentState = "cleanup-pending"
-	StateRecovered      AssignmentState = "recovered"
-	StateComplete       AssignmentState = "complete"
-)
-
-type Recovery struct {
-	Ref      string   `json:"ref"`
-	Root     string   `json:"root"`
-	Payloads []string `json:"payloads"`
-}
-
-// Assignment is the persisted half of a Bench-owned registration. The worktree
-// marker proves immutable owner identity. This record binds that owner to exactly
-// one caller request, branch, start commit, path, lifecycle state, and recovery set.
-type Assignment struct {
-	Schema  string `json:"schema"`
-	ID      string `json:"id"`
-	OwnerID string `json:"owner_id"`
-	Request string `json:"request"`
-	// RequestToken is the plain caller token the digest above derives from. The digest
-	// stays the authorization identity; the token is persisted so `bench worktree list`
-	// can hand a resumed landing the exact value to pass. Records written before the
-	// field existed carry none and serialize without the key.
-	RequestToken string          `json:"request_token,omitempty"`
-	Label        string          `json:"label"`
-	Start        string          `json:"start"`
-	Branch       string          `json:"branch"`
-	Worktree     string          `json:"worktree"`
-	State        AssignmentState `json:"state"`
-	Recovery     []Recovery      `json:"recovery"`
-	// CreatedAt is an RFC3339 creation time. A nil stamp is absence, which stays
-	// valid because records written before the field existed carry none and
-	// serialize without the key. A present stamp must parse, so the pointer is
-	// what keeps a hand-written empty string distinguishable from absence.
-	CreatedAt *string `json:"created_at,omitempty"`
-}
-
-const (
-	CleanupReceiptSchema  = "bench-cleanup-receipt/v1"
-	ReceiptInFlight       = "in-flight"
-	ReceiptComplete       = "complete"
-	MaxCleanupReceipts    = 256
-	ReceiptPhasePlanned   = "planned"
-	ReceiptPhasePreserved = "preserved"
-	ReceiptPhaseRemoving  = "removing"
-	ReceiptPhaseRemoved   = "removed"
-	ReceiptPhaseBranch    = "branch-removed"
-	ReceiptPhaseTerminal  = "terminal"
-)
-
-type CleanupReceipt struct {
-	Schema      string `json:"schema"`
-	Repo        string `json:"repo"`
-	Operation   string `json:"operation"`
-	Target      string `json:"target"`
-	Fingerprint string `json:"fingerprint"`
-	State       string `json:"state"`
-	Phase       string `json:"phase"`
-	Checkpoint  string `json:"checkpoint,omitempty"`
-	Action      string `json:"action"`
-	Tracked     string `json:"tracked"`
-	Ignored     string `json:"ignored"`
-	Recovery    string `json:"recovery"`
-	Detail      string `json:"detail"`
-	Owned       bool   `json:"owned,omitempty"`
-	Branch      string `json:"branch,omitempty"`
-	BranchOID   string `json:"branch_oid,omitempty"`
-	Owner       string `json:"owner,omitempty"`
-	Assignment  string `json:"assignment,omitempty"`
-	Request     string `json:"request,omitempty"`
-}
-
-func validateCleanupReceipts(receipts []CleanupReceipt) error {
-	seen := map[string]bool{}
-	for _, receipt := range receipts {
-		if receipt.Schema != CleanupReceiptSchema || !filepath.IsAbs(receipt.Repo) || filepath.Clean(receipt.Repo) != receipt.Repo || receipt.Operation == "" || !filepath.IsAbs(receipt.Target) || filepath.Clean(receipt.Target) != receipt.Target || !digestPattern.MatchString(receipt.Fingerprint) {
-			return errors.New("cleanup receipt has invalid identity")
-		}
-		if receipt.State != ReceiptInFlight && receipt.State != ReceiptComplete {
-			return errors.New("cleanup receipt has invalid state")
-		}
-		switch receipt.Phase {
-		case ReceiptPhasePlanned, ReceiptPhasePreserved, ReceiptPhaseRemoving, ReceiptPhaseRemoved, ReceiptPhaseBranch, ReceiptPhaseTerminal:
-		default:
-			return errors.New("cleanup receipt has invalid phase")
-		}
-		if receipt.Checkpoint != "" && !digestPattern.MatchString(receipt.Checkpoint) {
-			return errors.New("cleanup receipt has invalid checkpoint")
-		}
-		if (receipt.Branch == "") != (receipt.BranchOID == "") || receipt.Branch != "" && (!receipt.Owned || !validAssignmentBranchRef(receipt.Branch) || !oidPattern.MatchString(receipt.BranchOID)) {
-			return errors.New("cleanup receipt has invalid branch CAS")
-		}
-		if (receipt.Owner == "") != (receipt.Assignment == "") || (receipt.Assignment == "") != (receipt.Request == "") || receipt.Assignment != "" && (!receipt.Owned || !ValidIdentity(receipt.Owner) || !ValidIdentity(receipt.Assignment) || !digestPattern.MatchString(receipt.Request) || receipt.Branch != "" && receipt.Branch != AssignmentBranchRef(receipt.Owner, receipt.Assignment)) {
-			return errors.New("cleanup receipt has invalid owned assignment")
-		}
-		if receipt.State == ReceiptComplete && receipt.Phase != ReceiptPhaseTerminal {
-			return errors.New("completed cleanup receipt is not terminal")
-		}
-		key := receipt.Repo + "\x00" + receipt.Operation + "\x00" + receipt.Target + "\x00" + receipt.Fingerprint
-		if seen[key] {
-			return errors.New("cleanup receipt has duplicate identity")
-		}
-		seen[key] = true
-	}
-	return nil
-}
 
 func CleanupReceiptFor(root, repo, operation, target, fingerprint string) (CleanupReceipt, bool, error) {
 	ledger, err := Read(root)
@@ -267,68 +127,6 @@ func LifecycleEvidence(root string) ([]byte, error) {
 
 func lifecycleEvidenceValues(schema, assignments []byte) []byte {
 	return []byte(fmt.Sprintf("%d:%s%d:%s", len(schema), schema, len(assignments), assignments))
-}
-
-var (
-	idPattern     = regexp.MustCompile(`^[0-9a-f]{32}$`)
-	digestPattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
-	oidPattern    = regexp.MustCompile(`^(?:[0-9a-f]{40}|[0-9a-f]{64})$`)
-)
-
-func ValidIdentity(value string) bool { return idPattern.MatchString(value) }
-
-func ValidateAssignment(a Assignment) error {
-	if a.Schema != AssignmentRecordSchema {
-		return fmt.Errorf("assignment %q has unsupported schema %q", a.ID, a.Schema)
-	}
-	if !ValidIdentity(a.ID) || !ValidIdentity(a.OwnerID) {
-		return errors.New("assignment has invalid owner or assignment ID")
-	}
-	if !digestPattern.MatchString(a.Request) || a.Label == "" || !oidPattern.MatchString(a.Start) {
-		return fmt.Errorf("assignment %q has invalid request, label, or start", a.ID)
-	}
-	wantBranch := AssignmentBranchRef(a.OwnerID, a.ID)
-	if a.Branch != wantBranch {
-		return fmt.Errorf("assignment %q has non-canonical branch", a.ID)
-	}
-	if !filepath.IsAbs(a.Worktree) || filepath.Clean(a.Worktree) != a.Worktree {
-		return fmt.Errorf("assignment %q has non-canonical worktree", a.ID)
-	}
-	// A stamp ahead of the reading host's clock stays valid here: skew is the age
-	// predicate's to interpret. Rejecting it would make one skewed write unreadable
-	// to every command, since this runs on every ledger read.
-	if a.CreatedAt != nil {
-		if _, err := time.Parse(time.RFC3339, *a.CreatedAt); err != nil {
-			return fmt.Errorf("assignment %q has unparseable created_at", a.ID)
-		}
-	}
-	switch a.State {
-	case StateActive, StateCleanupPending, StateComplete:
-	case StateRecovered:
-		if len(a.Recovery) == 0 {
-			return fmt.Errorf("assignment %q is recovered without recovery metadata", a.ID)
-		}
-	default:
-		return fmt.Errorf("assignment %q has unknown state %q", a.ID, a.State)
-	}
-	if a.State == StateActive && len(a.Recovery) != 0 {
-		return fmt.Errorf("assignment %q is active with recovery metadata", a.ID)
-	}
-	if a.State == StateComplete && len(a.Recovery) != 0 {
-		return fmt.Errorf("assignment %q is complete with recovery metadata", a.ID)
-	}
-	for _, recovery := range a.Recovery {
-		prefix := RecoveryRefPrefix(a.OwnerID, a.ID)
-		if !strings.HasPrefix(recovery.Ref, prefix) || !oidPattern.MatchString(recovery.Root) || len(recovery.Payloads) == 0 {
-			return fmt.Errorf("assignment %q has invalid recovery metadata", a.ID)
-		}
-		for _, payload := range recovery.Payloads {
-			if !oidPattern.MatchString(payload) {
-				return fmt.Errorf("assignment %q has invalid recovery payload", a.ID)
-			}
-		}
-	}
-	return nil
 }
 
 func FindAssignmentByRequest(root, requestDigest string) (Assignment, bool, error) {
@@ -475,9 +273,6 @@ func ReauthorizeAssignment(root, id, request string, verify func(Assignment) err
 	}
 	return Assignment{}, errors.New("assignment not found")
 }
-
-// RequestDigest derives the persisted identity for an opaque caller request.
-func RequestDigest(value string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(value))) }
 
 func compareAndSwapRequestDigest(assignment *Assignment, expectedOld, replacement string) error {
 	if assignment.Request != expectedOld {

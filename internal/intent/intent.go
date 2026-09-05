@@ -18,41 +18,10 @@ import (
 	"github.com/gibbonmi/bench/internal/jsonfile"
 )
 
-const (
-	LegacySchema = 1
-	Schema       = 2
-	Filename     = "bench-intent.json"
-)
-
-type Kind string
-
-const (
-	KindShift       Kind = "shift"
-	KindWorktree    Kind = "worktree"
-	KindClaudeAgent Kind = "claude-agent"
-)
-
-type Entry struct {
-	Key       string    `json:"key"`
-	Kind      Kind      `json:"kind"`
-	CreatedAt time.Time `json:"created_at"`
-	Worktree  string    `json:"worktree,omitempty"`
-	Branch    string    `json:"branch,omitempty"`
-	// Outcome and Recovery record a shift's final result state. Outcome is one of the
-	// FT79 taxonomy's outcome names. Recovery is a pointer ("ref:<name>" | "worktree:<path>"
-	// | "none") once a later slice adds snapshot machinery. Both fields are optional, so
-	// every non-shift writer stays valid, as does every entry created before its writer
-	// resolves an outcome.
-	Outcome  string `json:"outcome,omitempty"`
-	Recovery string `json:"recovery,omitempty"`
-}
-
-type Ledger struct {
-	Schema          int              `json:"schema"`
-	Entries         []Entry          `json:"entries"`
-	Assignments     []Assignment     `json:"assignments,omitempty"`
-	CleanupReceipts []CleanupReceipt `json:"cleanup_receipts,omitempty"`
-}
+// Filename is the ledger's name inside git's common directory. The schema this file
+// holds lives in the leaf package internal/intent/ledger, which this package
+// re-exports; the address, the locking, and the file effects stay here.
+const Filename = "bench-intent.json"
 
 // Address resolves the ledger through git's absolute common-directory query, so
 // the primary checkout and every linked worktree share one file.

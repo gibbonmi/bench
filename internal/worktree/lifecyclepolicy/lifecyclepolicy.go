@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/intent/ledger"
 )
 
 // Action names what a cleanup plan will do, or why it will do nothing.
@@ -138,8 +138,8 @@ const (
 // An unparseable stamp is unknown age rather than infinite age.
 // ValidateAssignment rejects one on every ledger read, so a record reaching
 // here with one never came from the ledger.
-func Orphaned(a intent.Assignment, now time.Time, staleAfter time.Duration) bool {
-	if a.State != intent.StateActive {
+func Orphaned(a ledger.Assignment, now time.Time, staleAfter time.Duration) bool {
+	if a.State != ledger.StateActive {
 		return false
 	}
 	if a.CreatedAt == nil {
@@ -157,7 +157,7 @@ func Orphaned(a intent.Assignment, now time.Time, staleAfter time.Duration) bool
 // means residue. A non-empty set means preserved work that must never be
 // silently discarded. Both the release reconcile and the resume sweep consult
 // this one predicate.
-func Residual(a intent.Assignment) bool { return len(a.Recovery) == 0 }
+func Residual(a ledger.Assignment) bool { return len(a.Recovery) == 0 }
 
 // LandednessKind names which of the four ways the explicit planner can know a
 // branch's relationship to the default ref. The branch may be never resolvable
@@ -244,8 +244,8 @@ type ExplicitFacts struct {
 	MarkerErr           error
 	AssignmentLedgerErr error
 	AssignmentAmbiguous bool
-	MatchedAssignment   *intent.Assignment
-	ForeignAssignment   *intent.Assignment
+	MatchedAssignment   *ledger.Assignment
+	ForeignAssignment   *ledger.Assignment
 	// AssignmentLockReason is the Bench lock reason the matched assignment's
 	// bundle prescribes, rendered at the boundary. The decision only compares
 	// it to the registration's recorded reason.
@@ -288,7 +288,7 @@ type ExplicitVerdict struct {
 	Reason     string
 
 	Owned      bool
-	Assignment *intent.Assignment
+	Assignment *ledger.Assignment
 
 	Tracked string
 
@@ -430,7 +430,7 @@ type ExplicitOutcome struct {
 	HasAssignment        bool
 	Owned                bool
 	AssignmentID         string
-	AssignmentState      intent.AssignmentState
+	AssignmentState      ledger.AssignmentState
 	Tracked              string
 	RegistrationDetached bool
 	Landed               Landedness
@@ -514,9 +514,9 @@ func DecideAutomatic(f AutomaticFacts) AutomaticVerdict {
 	}
 
 	assignmentID := plan.AssignmentID
-	if plan.AssignmentState != intent.StateCleanupPending {
+	if plan.AssignmentState != ledger.StateCleanupPending {
 		reason := ReasonUncertain
-		if plan.AssignmentState == intent.StateActive {
+		if plan.AssignmentState == ledger.StateActive {
 			if f.Landed {
 				reason = ReasonLanded
 			} else {
