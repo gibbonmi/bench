@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -46,7 +47,7 @@ func Upgrade(args []string, stdout, stderr io.Writer, version string) int {
 		return code
 	}
 	pinned := manifest.KitVersion
-	kit := kitDir()
+	kit := gate.KitDir()
 	plan, err := buildLinkPlan(kit)
 	if err != nil {
 		fmt.Fprintln(stderr, toon.Errorf("consumer payload allowlist rejected", err.Error()))

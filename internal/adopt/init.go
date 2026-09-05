@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/learnings"
@@ -24,7 +25,7 @@ func Init(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
-	kit := kitDir()
+	kit := gate.KitDir()
 	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
