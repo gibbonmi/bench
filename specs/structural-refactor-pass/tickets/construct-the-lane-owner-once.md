@@ -1,7 +1,7 @@
 # Construct the lane owner once
 
 Blocked by: none
-Writes: internal/landing/landing.go, internal/landing/lane_test.go, internal/commit/commit.go, internal/worktree/merge.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
+Writes: internal/landing/landing.go, internal/landing/lane_owner.go (new), internal/landing/lane_test.go, internal/commit/commit.go, internal/worktree/merge.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
 Covers: SR15, SR16, SR17, SR18, SR19
 
 ## What to build
