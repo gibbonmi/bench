@@ -210,12 +210,12 @@ func TestCommandResolvesRecordedBaseOncePerAttempt(t *testing.T) {
 	}
 }
 
-// TestIndexIdentityRefusesRelativeAnswer is GR26: indexIdentity must call the
-// named reader and surface its typed failure rather than join a relative
-// answer onto the root. This test sets PATH and so stays serial.
-func TestIndexIdentityRefusesRelativeAnswer(t *testing.T) {
+// TestIndexIdentityRefusesUnresolvedAnswer is GR26: indexIdentity must call the
+// named reader and surface its typed failure rather than swallow an
+// unresolved answer. This test sets PATH and so stays serial.
+func TestIndexIdentityRefusesUnresolvedAnswer(t *testing.T) {
 	root, _, _, _ := seedDivergedRepo(t)
-	gittest.StubGit(t, root, "relative-git-path", filepath.Join(t.TempDir(), "argv"))
+	gittest.StubGit(t, root, "fail-git-path", filepath.Join(t.TempDir(), "argv"))
 	_, err := indexIdentity(root)
 	var resolutionErr *git.ResolutionError
 	if !errors.As(err, &resolutionErr) {
