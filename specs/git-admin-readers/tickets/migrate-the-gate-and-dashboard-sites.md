@@ -1,7 +1,7 @@
 # Migrate the gate and dashboard sites to the reader
 
 Blocked by: add-the-named-git-admin-readers.md
-Writes: internal/gate/lane.go, internal/gate/verdict.go, internal/gate/run_transaction.go, internal/gate/composed_green.go, internal/gate/phases.go, internal/gate/admin_readers_test.go (new), internal/dashboard/dashboard.go, internal/dashboard/dashboard_test.go, tests/canary/package-core-guard/git-flag-retyped/
+Writes: internal/gate/lane.go, internal/gate/verdict.go, internal/gate/run_transaction.go, internal/gate/composed_green.go, internal/gate/phases.go, internal/gate/admin_readers_test.go (new), internal/dashboard/dashboard.go, internal/dashboard/dashboard_test.go, tests/canary/package-core-guard/git-flag-retyped
 Covers: GR13, GR14, GR15, GR16, GR17
 
 ## What to build
