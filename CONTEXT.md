@@ -222,6 +222,10 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   landing source onto an expected landing destination, including any authorized
   final transition. It is the whole-project gate subject. Not the source diff,
   not the ambient working tree.
+- **settle verdict** — the settle policy's answer for one conflicted path: a
+  side, a union, a removal, or a refusal with a reason. The composition applies
+  each verdict to the prospective landing tree, and a refusal names its reason
+  in the refusal text. Not a resolution, not a merge result.
 - **frontier round** — one numbered round of `craft-grill`: every question whose
   prerequisites are already settled, asked together with a recommendation. The
   skill then waits and recomputes the next round. Not "one question at a time".

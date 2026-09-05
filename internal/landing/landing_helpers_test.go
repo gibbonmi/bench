@@ -260,6 +260,17 @@ func gitlinkConflict(t *testing.T, root, base string) (string, string) {
 
 func baseForNested(t *testing.T, root string) string { return git(t, root, "rev-parse", "main") }
 
+// compositionExpectation is what one composition row publishes, and what it leaves in the
+// index and the working tree.
+type compositionExpectation struct {
+	paths        []string
+	wantNames    []string
+	wantContent  map[string]string
+	wantMode     map[string]string
+	wantIndex    map[string]string
+	wantWorktree map[string]string
+}
+
 func commitSides(t *testing.T, root, base string, destinationChange, sourceChange func()) (string, string) {
 	git(t, root, "checkout", "-qb", "destination", base)
 	destinationChange()
@@ -292,6 +303,35 @@ func compositionState(t *testing.T, root string) compositionSnapshot {
 
 func compositionResult(paths, names []string, content map[string]string) compositionExpectation {
 	return compositionExpectation{paths: paths, wantNames: names, wantContent: content}
+}
+
+// assertCompositionRow observes what one composition row left outside the published tree:
+// the untouched foreign index and worktree bytes, and each row's own index and worktree
+// expectations. A gitlink publishes its commit, so that row reads the tree entry.
+func assertCompositionRow(t *testing.T, root string, got Result, want compositionExpectation) {
+	t.Helper()
+	if have := git(t, root, "show", ":foreign"); have != "foreign-index" {
+		t.Fatalf("foreign index = %q, want foreign-index", have)
+	}
+	if have := string(mustRead(t, filepath.Join(root, "foreign"))); have != "foreign-worktree" {
+		t.Fatalf("foreign worktree = %q, want foreign-worktree", have)
+	}
+	for path, content := range want.wantIndex {
+		if mode := want.wantMode[path]; mode == "160000" {
+			if have := strings.Fields(git(t, root, "ls-tree", got.Commit, "--", path))[2]; have != content {
+				t.Fatalf("published gitlink %s = %q, want %q", path, have, content)
+			}
+			continue
+		}
+		if have := git(t, root, "show", ":"+path); have != content {
+			t.Fatalf("index %s = %q, want %q", path, have, content)
+		}
+	}
+	for path, content := range want.wantWorktree {
+		if have := string(mustRead(t, filepath.Join(root, filepath.FromSlash(path)))); have != content {
+			t.Fatalf("worktree %s = %q, want %q", path, have, content)
+		}
+	}
 }
 
 func greenOwner() Owner {

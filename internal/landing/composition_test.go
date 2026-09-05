@@ -14,15 +14,6 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 )
 
-type compositionExpectation struct {
-	paths        []string
-	wantNames    []string
-	wantContent  map[string]string
-	wantMode     map[string]string
-	wantIndex    map[string]string
-	wantWorktree map[string]string
-}
-
 func TestLandRealGitCompositionTable(t *testing.T) {
 	cases := []struct {
 		name  string
@@ -157,28 +148,7 @@ func TestLandRealGitCompositionTable(t *testing.T) {
 				t.Fatal(err)
 			}
 			assertPublishedTree(t, root, got, want.wantNames, want.wantContent, want.wantMode)
-			if got := git(t, root, "show", ":foreign"); got != "foreign-index" {
-				t.Fatalf("foreign index = %q, want foreign-index", got)
-			}
-			if got := string(mustRead(t, filepath.Join(root, "foreign"))); got != "foreign-worktree" {
-				t.Fatalf("foreign worktree = %q, want foreign-worktree", got)
-			}
-			for path, content := range want.wantIndex {
-				if mode := want.wantMode[path]; mode == "160000" {
-					if got := strings.Fields(git(t, root, "ls-tree", got.Commit, "--", path))[2]; got != content {
-						t.Fatalf("published gitlink %s = %q, want %q", path, got, content)
-					}
-					continue
-				}
-				if got := git(t, root, "show", ":"+path); got != content {
-					t.Fatalf("index %s = %q, want %q", path, got, content)
-				}
-			}
-			for path, content := range want.wantWorktree {
-				if got := string(mustRead(t, filepath.Join(root, filepath.FromSlash(path)))); got != content {
-					t.Fatalf("worktree %s = %q, want %q", path, got, content)
-				}
-			}
+			assertCompositionRow(t, root, got, want)
 		})
 	}
 }
@@ -343,16 +313,43 @@ func TestComposeSettlesPhaseOwnedConflictsByRule(t *testing.T) {
 	}
 }
 
+// A refusing settle names its reason and its refusing paths in the refusal text, so the
+// reader learns which rule refused and where. The kind stays at the front of the text, so
+// every existing prefix match holds. (Coverage rows LS28, LS29, LS30, LS31, LS32, LS34.)
+func TestConflictErrorNamesTheSettleRefusalReason(t *testing.T) {
+	for _, tc := range settleRefusalRows("capture/learnings.md") {
+		t.Run(tc.name, func(t *testing.T) {
+			root := fixture(t)
+			base := captureBase(t, root, tc.files)
+			destination, source := commitSides(t, root, base,
+				func() { tc.destination(t, root) }, func() { tc.source(t, root) })
+			got, err := New().Compose(CompositionRequest{Root: root, Destination: destination, Source: source, ReviewBase: base})
+			if err != nil {
+				t.Fatal(err)
+			}
+			text := ConflictError{got.Conflict}.Error()
+			if !strings.Contains(text, tc.want) || text == "composition conflict: "+got.Conflict.Kind ||
+				strings.Count(text, "; settle refused: ") != 1 {
+				t.Fatalf("refusal = %q, want exactly one settle reason holding %q", text, tc.want)
+			}
+		})
+	}
+}
+
 // A conflict the rule table cannot settle keeps the whole conflict a refusal, and the
 // refusal names every conflicted path so repair starts from the path.
 func TestComposeRefusesConflictsTheRuleTableCannotSettle(t *testing.T) {
 	cases := []struct {
-		name      string
-		wantKind  string
-		wantPaths []string
-		setup     func(*testing.T, string, string) (string, string)
+		name       string
+		wantKind   string
+		wantReason string
+		wantPaths  []string
+		setup      func(*testing.T, string, string) (string, string)
 	}{
-		{name: "code-path-beside-a-capture-path", wantKind: "textual", wantPaths: []string{"capture/learnings.md", "named"}, setup: func(t *testing.T, root, base string) (string, string) {
+		// A conflict the table names nowhere engages the policy at all, so it keeps the
+		// bare kind and carries no reason.
+		{name: "no-capture-path", wantKind: "textual", wantPaths: []string{"named"}, setup: changeBoth("named", "destination", "source")},
+		{name: "code-path-beside-a-capture-path", wantKind: "textual", wantReason: "path outside the capture table", wantPaths: []string{"capture/learnings.md", "named"}, setup: func(t *testing.T, root, base string) (string, string) {
 			write(t, root, "capture/learnings.md", "shared\n")
 			git(t, root, "add", "-A")
 			git(t, root, "commit", "-qm", "capture base")
@@ -367,7 +364,7 @@ func TestComposeRefusesConflictsTheRuleTableCannotSettle(t *testing.T) {
 		}},
 		// The union verdict's text merge is the adapter's own step, so its refusal has
 		// no policy table twin and stays a journey.
-		{name: "binary-union-path", wantKind: "textual", wantPaths: []string{"capture/learnings.md"}, setup: func(t *testing.T, root, base string) (string, string) {
+		{name: "binary-union-path", wantKind: "textual", wantReason: "union content not text", wantPaths: []string{"capture/learnings.md"}, setup: func(t *testing.T, root, base string) (string, string) {
 			write(t, root, "capture/learnings.md", "shared\x00binary\n")
 			git(t, root, "add", "-A")
 			git(t, root, "commit", "-qm", "capture base")
@@ -386,6 +383,9 @@ func TestComposeRefusesConflictsTheRuleTableCannotSettle(t *testing.T) {
 			}
 			if got.Tree != "" || len(got.Resolved) != 0 || got.Conflict.Kind != tc.wantKind {
 				t.Fatalf("compose = %+v, want a %s refusal that settles nothing", got, tc.wantKind)
+			}
+			if got.Conflict.Refusal.Reason != tc.wantReason {
+				t.Fatalf("settle reason = %q, want %q", got.Conflict.Refusal.Reason, tc.wantReason)
 			}
 			// Git may add its own disambiguated sibling to a kind conflict, so the
 			// refusal must name every conflicted path, not exactly those paths.

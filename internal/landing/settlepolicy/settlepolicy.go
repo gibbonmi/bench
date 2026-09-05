@@ -109,6 +109,17 @@ func CaptureSide(path string) (stage int, side string, ok bool) {
 	return 0, "", false
 }
 
+// engaged answers whether the capture rule table names any conflicted path. A conflict of
+// code paths alone engages no rule, so the policy owns no answer over it.
+func engaged(records []StageRecord) bool {
+	for _, record := range records {
+		if _, _, ok := CaptureSide(record.Path); ok {
+			return true
+		}
+	}
+	return false
+}
+
 // ConflictKind classifies a conflict from the modes its stage records carry. The two
 // special modes are checked before the ordinary ones, so a gitlink or a symlink names
 // the conflict even when the ordinary modes also disagree.
@@ -131,12 +142,17 @@ func ConflictKind(modes []string) string {
 	return "textual"
 }
 
-// Settle decides how each conflicted path settles. It scans the records in merge-tree
-// order first: a path the table does not name, or a stage whose mode is not regular,
-// refuses at once, and the table check precedes the mode check inside one record. Only
-// then does it settle each path in merge-tree order, so both record reasons beat a
-// mode disagreement between the two sides.
+// Settle decides how each conflicted path settles. The policy answers nothing at all
+// until the table names at least one conflicted path, so a conflict that stays wholly
+// outside capture keeps the caller's own bare refusal. Once engaged, it scans the records
+// in merge-tree order first: a path the table does not name, or a stage whose mode is not
+// regular, refuses at once, and the table check precedes the mode check inside one
+// record. Only then does it settle each path in merge-tree order, so both record reasons
+// beat a mode disagreement between the two sides.
 func Settle(records []StageRecord) Settlement {
+	if !engaged(records) {
+		return Settlement{}
+	}
 	stages := map[string]map[int]StageRecord{}
 	var order []string
 	for _, record := range records {

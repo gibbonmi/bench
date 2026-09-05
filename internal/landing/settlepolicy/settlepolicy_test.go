@@ -60,16 +60,22 @@ func TestSettlePolicyAnswersTheCaptureRule(t *testing.T) {
 			}},
 		},
 		{
+			// The two rows below engage the table through a trailing capture record, so
+			// each observes the reason the earlier out-of-table record wins.
 			name:     "the prefix boundary sits outside the table",
-			records:  []StageRecord{blob("capture.md", 2), blob("capture.md", 3)},
+			records:  []StageRecord{blob("capture.md", 2), blob("capture.md", 3), blob("capture/notes.md", 2)},
 			reason:   ReasonOutsideTable,
 			refusing: []string{"capture.md"},
 		},
 		{
 			name:     "the table check beats the mode check inside one record",
-			records:  []StageRecord{{Mode: "120000", OID: "a", Stage: 3, Path: "capture.md"}},
+			records:  []StageRecord{{Mode: "120000", OID: "a", Stage: 3, Path: "capture.md"}, blob("capture/notes.md", 2)},
 			reason:   ReasonOutsideTable,
 			refusing: []string{"capture.md"},
+		},
+		{
+			name:    "a conflict the table names nowhere engages no rule",
+			records: []StageRecord{blob("named", 2), blob("named", 3)},
 		},
 		{
 			name: "the earlier record wins the reason",
