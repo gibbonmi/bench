@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent/admissionpolicy"
 	"github.com/gibbonmi/bench/internal/jsonfile"
 )
 
@@ -121,39 +122,9 @@ func Upsert(root string, entry Entry) error {
 	if err := validEntry(entry); err != nil {
 		return err
 	}
-	path, err := Address(root)
-	if err != nil {
-		return err
-	}
-	release, err := acquire(path + ".lock")
-	if err != nil {
-		return err
-	}
-	defer release()
-	ledger, err := readPath(path)
-	if err != nil {
-		return err
-	}
-	changed := true
-	for i := range ledger.Entries {
-		if ledger.Entries[i].Key != entry.Key {
-			continue
-		}
-		entry.CreatedAt = ledger.Entries[i].CreatedAt
-		if ledger.Entries[i] == entry {
-			return nil
-		}
-		ledger.Entries[i] = entry
-		changed = true
-		goto write
-	}
-	ledger.Entries = append(ledger.Entries, entry)
-
-write:
-	if !changed {
-		return nil
-	}
-	return writePath(path, ledger)
+	return Transact(root, StrictRead, func(current Ledger) (Ledger, bool, error) {
+		return admissionpolicy.Upsert(current, entry)
+	}, nil)
 }
 
 func writePath(path string, ledger Ledger) error {
@@ -267,42 +238,42 @@ func Snapshot(root string) ([]Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	return filterLive(root, ledger.Entries)
-}
-
-func filterLive(root string, entries []Entry) ([]Entry, error) {
-	candidates, err := claudeCandidates(root)
+	facts, err := livenessFacts(root, ledger.Entries)
 	if err != nil {
 		return nil, err
 	}
+	return admissionpolicy.Live(ledger, facts), nil
+}
+
+// livenessFacts translates this repository's Git and filesystem state into the typed
+// facts the admission policy's liveness rules read. It is the one boundary that
+// resolves them, so the snapshot and the compaction judge one set of proofs. A
+// worktree the stat cannot prove absent counts as present, because only a proven
+// absence retires an entry.
+func livenessFacts(root string, entries []Entry) (admissionpolicy.LivenessFacts, error) {
+	candidates, err := claudeCandidates(root)
+	if err != nil {
+		return admissionpolicy.LivenessFacts{}, err
+	}
+	facts := admissionpolicy.LivenessFacts{
+		Candidates:     candidates,
+		WorktreeExists: map[string]bool{},
+		Landed:         map[string]bool{},
+	}
 	def, defOK := git.ResolvedDefault(root)
-	live := make([]Entry, 0, len(entries))
 	for _, entry := range entries {
-		if entry.Kind == KindClaudeAgent && entry.Worktree == "" && entry.Branch == "" {
-			if candidates {
-				live = append(live, entry)
-			}
-			continue
-		}
 		if entry.Worktree != "" {
-			if _, err := os.Stat(entry.Worktree); errors.Is(err, os.ErrNotExist) {
-				continue
+			if _, err := os.Stat(entry.Worktree); !errors.Is(err, os.ErrNotExist) {
+				facts.WorktreeExists[entry.Worktree] = true
 			}
 		}
 		if entry.Branch != "" && defOK {
 			if landed, _, err := git.LandedInDefault(root, entry.Branch, def); err == nil && landed {
-				continue
+				facts.Landed[entry.Branch] = true
 			}
 		}
-		live = append(live, entry)
 	}
-	sort.Slice(live, func(i, j int) bool {
-		if live[i].CreatedAt.Equal(live[j].CreatedAt) {
-			return live[i].Key < live[j].Key
-		}
-		return live[i].CreatedAt.Before(live[j].CreatedAt)
-	})
-	return live, nil
+	return facts, nil
 }
 
 func claudeCandidates(root string) (bool, error) {
@@ -329,36 +300,11 @@ func claudeCandidates(root string) (bool, error) {
 
 // Compact atomically removes only entries Snapshot has proven done.
 func Compact(root string) error {
-	path, err := Address(root)
-	if err != nil {
-		return err
-	}
-	release, err := acquire(path + ".lock")
-	if err != nil {
-		return err
-	}
-	defer release()
-	current, err := readPath(path)
-	if err != nil {
-		return err
-	}
-	live, err := filterLive(root, current.Entries)
-	if err != nil {
-		return err
-	}
-	liveKeys := map[string]bool{}
-	for _, entry := range live {
-		liveKeys[entry.Key] = true
-	}
-	next := current.Entries[:0]
-	for _, entry := range current.Entries {
-		if liveKeys[entry.Key] {
-			next = append(next, entry)
+	return Transact(root, StrictRead, func(current Ledger) (Ledger, bool, error) {
+		facts, err := livenessFacts(root, current.Entries)
+		if err != nil {
+			return current, false, err
 		}
-	}
-	if len(next) == len(current.Entries) {
-		return nil
-	}
-	current.Entries = next
-	return writePath(path, current)
+		return admissionpolicy.Compact(current, facts)
+	}, nil)
 }
