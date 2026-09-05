@@ -1,7 +1,7 @@
 # Migrate the gate and dashboard sites to the reader
 
 Blocked by: add-the-named-git-admin-readers.md
-Writes: internal/gate/lane.go, internal/gate/verdict.go, internal/gate/run_transaction.go, internal/gate/composed_green.go, internal/gate/phases.go, internal/gate/admin_readers_test.go (new), internal/dashboard/dashboard.go, internal/dashboard/dashboard_test.go
+Writes: internal/gate/lane.go, internal/gate/verdict.go, internal/gate/run_transaction.go, internal/gate/composed_green.go, internal/gate/phases.go, internal/gate/admin_readers_test.go (new), internal/dashboard/dashboard.go, internal/dashboard/dashboard_test.go, tests/canary/package-core-guard/git-flag-retyped/
 Covers: GR13, GR14, GR15, GR16, GR17
 
 ## What to build
@@ -28,6 +28,9 @@ with `git directory unavailable`.
 The composed-green probe keeps its false answer. The dashboard keeps its exit 1
 with the text `cannot resolve git dir`. `pinPath` keeps its fallback path under
 `.git`. Drop the hand-written empty-answer guards the reader now owns.
+
+The fixture directory in the `Writes:` line is closure headroom for the pin the
+contract ticket's fixture puts on the dashboard file. This ticket edits nothing there.
 
 The fast lane file and the verdict file sit over the structure budget. Each must
 end at or under its base line count. The fast lane reds the structure growth check
