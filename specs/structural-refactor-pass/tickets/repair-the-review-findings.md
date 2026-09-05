@@ -10,8 +10,8 @@ The line is opus / medium. Repair the five code targets the review pickup
 `reviews/structural-refactor-pass.md` lists as R1 to R5, per decision (w).
 
 R1. The growth query compares the base commit against the working tree, not
-against HEAD. The lane's private checkout keeps HEAD at the base and holds the
-composed tree in its index and working tree. A query over `base..HEAD` is empty
+against HEAD. The lane's private checkout keeps the repository's HEAD, which both
+callers pass as the base, and holds the composed tree in its working tree. A query over `base..HEAD` is empty
 there, so the check never fires. Keep the NUL framing and the exact-rename
 pairing. An empty `--growth` value refuses at exit 2 through the grammar.
 
