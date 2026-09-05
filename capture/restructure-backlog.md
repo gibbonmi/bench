@@ -46,6 +46,7 @@ decides each split or exception when the file is flagged.
 | `internal/intent/assignment.go` | 593 | split (4) | `assignment.go` (identity, validation, lookup); `cleanup_receipt.go`; `lifecycle_evidence.go`; `assignment_store.go` | receipt: `CleanupReceipt` :96 through `PutCleanupReceipt` :188; evidence: `LifecycleEvidence` :239, `lifecycleEvidenceValues` :270; store: `PutAssignment` :396 through `DeleteAssignment` :568 | none |
 | `internal/landing/composition_test.go` | 585 | split (3) | `composition_test.go` (the real-git table and probes); `composition_conflict_fixtures_test.go`; `composition_settle_test.go` | fixtures: `changeBoth` :283 through `assertPublishedTree` :390, `captureGitlinkConflict` :561; settle: :420, :473 | none |
 | `internal/landing/landing_reviewed_test.go` | 438 | split (2) | `landing_reviewed_test.go`; `landing_reviewed_refusal_test.go` | :348, :382, :409 | none |
+| `internal/landing/landing.go` | 410 after the structural-refactor-pass ticket 2 (387 at 8eea2d15) | split (2) | `landing.go`; `lane_owner.go` (the lane mapping and the lane-to-owner constructor) | `laneAuthority`, `NewForLane`, `NewLane` | none; `bench consumers landing.NewLane` names the one caller |
 | `internal/lines/lines.go` | 617 | split (3) | `lines.go` (tier and harness vocabulary); `binding.go` (the matrix); `verdict.go` (the two verdict renderers) | binding: `Binding` :233 through `CellFault` :392; verdict: `Source` :405 through `isProviderModel` :606 | none |
 | `internal/maps/maps_parse_test.go` | 658 | split (3) | `maps_parse_test.go` (schema, template, required-shape parsing); `maps_tree_test.go`; `maps_diagnostics_test.go` | tree: :275 through :391, `liftedScan` :605, :623, :646; diagnostics: `TestDecisionMapDiagnosticsGolden` :405, `diagnosticMessages` :591 | none |
 | `internal/maps/schema.go` | 481 | split (3) | `schema.go` (schema declaration and template); `discovery.go`; `parse.go` | discovery: `DecisionMapCandidate` :14 through `discoverDecisionMapCandidates` :56; parse: `fieldScan` :230, `ParseDecisionMap` :268, `appendSectionLine` :437; `DecisionMapTemplate` :445 stays | `internal/conformance/registry_test.go:168` must add the two new files; `internal/anchors/registry_data.go:272`, `registry_data_test.go:982,1016`, and `tests/canary/workflow-guidance-anchors/decision-map-asset-path/*` hold because the template stays |
@@ -53,7 +54,7 @@ decides each split or exception when the file is flagged.
 
 | concern (partition 1) | detail |
 |---|---|
-| `cmd/bench/` file count | 11 of 12 today with no grant; the splits reach 20; a `cmd/bench/ <n>` budget row is a reviewer decision |
+| `cmd/bench/` file count | 11 of 12 at 8eea2d15 with no grant, 13 after the structural-refactor-pass leaf table; the splits reach 22; a `cmd/bench/ <n>` budget row is a reviewer decision |
 | `internal/adopt/` file count | already 27 of 12 with no grant; the two splits reach 31; a grant or per-file budgets instead of a split |
 | `internal/landing/` file count | already 15 of 12 with no grant; the two splits reach 18; same choice |
 | directories that land exactly at 12 | `internal/anchors/`, `internal/coverage/`, `internal/maps/`; the next file in any of them re-asks |
