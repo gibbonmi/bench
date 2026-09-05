@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 )
 
 func Run(args []string, stdout, stderr io.Writer, version string) int {
@@ -29,16 +28,4 @@ func Run(args []string, stdout, stderr io.Writer, version string) int {
 		fmt.Fprintf(stderr, "bench adopt: unknown subcommand: %q\n", args[0])
 		return 2
 	}
-}
-
-func kitDir() string {
-	if kit := os.Getenv("BENCH_KIT"); kit != "" {
-		return kit
-	}
-	if exe, err := os.Executable(); err == nil {
-		// Development layout: <kit>/dist/bench. Platform package layout:
-		// <pkg>/bin/bench, where callers should pass BENCH_KIT from the wrapper.
-		return filepath.Clean(filepath.Join(filepath.Dir(exe), ".."))
-	}
-	return "."
 }
