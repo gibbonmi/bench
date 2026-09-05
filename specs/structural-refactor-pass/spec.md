@@ -333,6 +333,7 @@ Not covered: story 40 — the baseline and the hypotheses are a record under Fur
 - `internal/landing/`
 - `internal/commit/commit.go`
 - `internal/commit/lane_test.go`
+- `internal/commit/lane_structure_test.go`
 - `internal/worktree/merge.go`
 - `internal/worktree/land.go`
 - `internal/worktree/land_identity.go`
@@ -420,7 +421,9 @@ Decisions recorded for the reviewer's veto:
 - (k) The growth check runs in the fast lane only, on `bench commit` and `bench worktree merge`. The landing gate is unchanged.
 - (l) The growth query pairs exact renames, so a pure move of an over-budget file passes. A rename with an edit reads as a deletion and an addition, and it reds when the new path is over its limit.
 - (m) The growth limit is the engine's limit for the path: the `structure.budgets` row when one exists, else `BENCH_MAX_LINES` or 400. A structure-accept row exempts the path.
-- (n) Part 2 changes three pins on purpose: `TestBenchkitLaneTable` and `TestLaneClassesNameOnlyDeclaredChecks` gain the structure row, and the structure usage line gains the growth flag.
+- (n) Part 2 changes existing pins on purpose. `TestBenchkitLaneTable` gains the structure row. `TestResolveLane` gains a base-replacement case. Three rows of `TestSelectLaneByClass` gain `structure` in the go-source selection. The structure usage line gains the growth flag, and no test pins that line. `TestLaneClassesNameOnlyDeclaredChecks` derives its expectation and needed no edit.
+- (u) The SR52 commit lane test lands in the new file `internal/commit/lane_structure_test.go`. The named neighbour file sits at 389 lines, and the test would grow it past 400. The "Part 2 new files" decision wins over the ticket's placement. The commit fixture declares a manifest lane of shell scripts, so the test drives a shell stand-in for the check. It proves the wiring: the base reaches the check, and the `FILE GREW` line and `check=structure` reach stdout. The growth arithmetic stays with the structure package's own tests.
+- (v) SR59 is observable only after the Part 2 fold, because the growth mode diffs `base..HEAD` and an uncommitted worktree shows no change. The build records the run from the integration worktree after the fold. A dirty-tree growth run that says so is parked as an idea.
 - (p) The review round's one blocking finding. The missing-branch scan filters on the active state today, and the any-state match would drop that filter in silence. The scan keeps the filter, and SR60 pins it with a new test. The author folded the finding at acceptance without a second round.
 - (q) Two leaves answer `--help` with no grammar today. `path` reads it as a target operand and refuses at exit 1. `reclaim` refuses it as an unknown argument at exit 2. Their leaf rows name no grammar constant, so SR1 covers the ten grammar-bearing leaves. The differential family records both answers as they are. A grammar-first `--help` arm in either leaf is a behavior change for a later decision.
 - (r) Every adopt fixture sets `BENCH_KIT`, so the suite never reaches the kit-directory fallback branch, before or after the move. The build's swap of that fallback for the graded root stayed green. The self-compare swap redded the link and doctor tests, and SR21 names that kill. The fallback stays untested, as today.
