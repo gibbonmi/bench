@@ -1,8 +1,8 @@
 # State the tickets-only rule once
 
 Blocked by: none
-Writes: internal/landing/close.go, internal/landing/close_test.go, internal/worktree/land_identity.go, internal/worktree/land_resume.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
-Covers: SR30, SR31, SR32, SR33, SR34, SR35
+Writes: internal/landing/close.go, internal/landing/close_test.go, internal/worktree/land_identity.go, internal/worktree/land_resume.go, internal/worktree/land_tickets_only_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
+Covers: SR30, SR31, SR32, SR33, SR34, SR35, SR61
 
 ## What to build
 

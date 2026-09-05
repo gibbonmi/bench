@@ -246,7 +246,8 @@ profile check advertises both.
 | SR30 | 29 | the predicate answers true for a folder with no spec file and false for a malformed name, an absent folder, and a present spec file, through the working-tree reader | `TestTicketsOnlyFolder` | a reader that skips the name check answers a nested slug |
 | SR31 | 29 | the predicate answers the same four cases through the git-object reader over a fixture commit | new test in `internal/landing` | a git reader that answers true on an unreadable spec file misclassifies a permission error |
 | SR32 | 30 | a `--spec` naming a tickets-only folder closes it, an already-removed folder still lands, and an absent folder keeps the unreadable refusal | `TestLandCommandTicketsOnlySpecClosesTheFolder`, `TestLandCommandTicketsOnlySpecLandsWhenTheDestinationAlreadyRemovedTheFolder`, `TestLandCommandAbsentSpecFolderKeepsTheUnreadableRefusal` | a first run that reads the git reader over HEAD misses the working tree |
-| SR33 | 31 | a resume of an interrupted close authenticates the folder's absence and releases | `TestResumeLandCommandTicketsOnlySpecCompletesAnInterruptedClose` | a resume that reads the working tree finds the folder the destination consumed |
+| SR33 | 31 | a resume of a close interrupted at the marker step authenticates the folder's absence and releases | `TestResumeLandCommandTicketsOnlySpecCompletesAnInterruptedClose` | a resume that never reaches the source commit's objects has nothing to authenticate |
+| SR61 | 31 | a resume of a close interrupted at the release step, after the reconcile removed the folder from the destination checkout, authenticates the close and releases | new test beside `TestResumeLandCommandTicketsOnlySpecCompletesAnInterruptedClose` | a resume that reads the working tree finds no folder and refuses the close as a missing transition |
 | SR34 | 32 | a resume completes a spec-backed landing and accepts the slug and the path spelling | `TestResumeLandCommandWithoutSpecCompletesASpecBackedLanding`, `TestResumeLandCommandAcceptsSpecSlugAndPath`, `TestResumeLandCommandSpecLessCompletesAnInterruptedLanding` | a predicate that answers close for a folder with a spec file skips the transition proof |
 | SR35 | 29 | `bench consumers landing.TicketsOnlyFolder` lists the first-run site and the folders sweep, and the resume file holds no `cat-file -e` and `show` pair over the spec folder | review-owned differential over the consumers output and a read of the resume file | a surviving second derivation keeps two owners |
 | SR36 | 35, 39 | the bounds-policy check names `internal/refresh/refresh.go` as the consumer of the refresh timeout and stays green | `bench test --check bounds-policy` | a row that still names the old path reds "does not consume" |
@@ -336,6 +337,7 @@ Not covered: story 40 — the baseline and the hypotheses are a record under Fur
 - `internal/worktree/land.go`
 - `internal/worktree/land_identity.go`
 - `internal/worktree/land_resume.go`
+- `internal/worktree/land_tickets_only_test.go`
 - `internal/worktree/landed.go`
 - `internal/worktree/landed_test.go`
 - `internal/worktree/path.go`
