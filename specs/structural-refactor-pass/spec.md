@@ -337,6 +337,7 @@ Not covered: story 40 — the baseline and the hypotheses are a record under Fur
 - `internal/worktree/land_identity.go`
 - `internal/worktree/land_resume.go`
 - `internal/worktree/landed.go`
+- `internal/worktree/landed_test.go`
 - `internal/worktree/path.go`
 - `internal/worktree/worktree.go`
 - `internal/worktree/subshell.go`

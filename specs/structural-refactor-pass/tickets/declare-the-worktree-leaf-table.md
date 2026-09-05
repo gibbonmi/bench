@@ -1,7 +1,7 @@
 # Declare the worktree leaf table
 
 Blocked by: none
-Writes: cmd/bench/worktree_leaves.go (new), cmd/bench/main.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/usage/worktree.go, tests/canary/package-core-guard/unrouted-subcommand, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
+Writes: cmd/bench/worktree_leaves.go (new), cmd/bench/worktree_leaves_test.go (new), cmd/bench/main.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/usage/worktree.go, tests/canary/package-core-guard/unrouted-subcommand, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
 Covers: SR1, SR2, SR3, SR4, SR5, SR6, SR7, SR8, SR9, SR10, SR11, SR12, SR13, SR14
 
 ## What to build

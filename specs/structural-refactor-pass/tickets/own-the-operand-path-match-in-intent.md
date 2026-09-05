@@ -1,7 +1,7 @@
 # Own the operand path match in intent
 
 Blocked by: none
-Writes: internal/intent/worktree_owner.go (new), internal/intent/worktree_owner_test.go (new), internal/intent/assignment.go, internal/worktree/path.go, internal/worktree/landed.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
+Writes: internal/intent/worktree_owner.go (new), internal/intent/worktree_owner_test.go (new), internal/intent/assignment.go, internal/worktree/path.go, internal/worktree/landed.go, internal/worktree/landed_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
 Covers: SR24, SR25, SR26, SR27, SR28, SR29, SR60
 
 ## What to build
