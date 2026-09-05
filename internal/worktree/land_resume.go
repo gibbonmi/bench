@@ -87,6 +87,9 @@ func resumeLandWith(j joins, root, home string, args []string, stdout, stderr io
 	if err := j.reconcileLanding(j, root, destination, published, destinationBase); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "reconcile", records)
 	}
+	if _, err := j.pruneLandedBranches(root); err != nil {
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "prune", records)
+	}
 	if !active {
 		return landedComplete(stdout, result, false, records)
 	}
