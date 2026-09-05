@@ -1,7 +1,7 @@
 # Migrate the assignment mutators onto the transaction
 
 Blocked by: 04-add-the-admission-policy-child.md
-Writes: internal/intent/assignment.go, internal/intent/intent.go, internal/intent/intent_test.go, internal/intent/purge_test.go, internal/intent/transaction_test.go (new), CONTEXT.md, tests/canary/docs-currency-token-diet/signal-vocabulary-drift, tests/canary/workflow-guidance-anchors/context-acceptance-row-vocabulary, tests/canary/workflow-guidance-anchors/context-coverage-map-term, tests/canary/workflow-guidance-anchors/context-coverage-row-parts, tests/canary/workflow-guidance-anchors/context-coverage-row-vocabulary, tests/canary/workflow-guidance-anchors/context-decision-map-term, tests/canary/workflow-guidance-anchors/context-reader-sweep-term, tests/canary/workflow-guidance-anchors/context-ticket-vocabulary
+Writes: internal/intent/assignment.go, internal/intent/intent.go, internal/intent/intent_test.go, internal/intent/purge_test.go, internal/intent/transaction.go, internal/intent/transaction_test.go (new), internal/intent/admissionpolicy/admissionpolicy_test.go, CONTEXT.md, tests/canary/docs-currency-token-diet/signal-vocabulary-drift, tests/canary/workflow-guidance-anchors/context-acceptance-row-vocabulary, tests/canary/workflow-guidance-anchors/context-coverage-map-term, tests/canary/workflow-guidance-anchors/context-coverage-row-parts, tests/canary/workflow-guidance-anchors/context-coverage-row-vocabulary, tests/canary/workflow-guidance-anchors/context-decision-map-term, tests/canary/workflow-guidance-anchors/context-reader-sweep-term, tests/canary/workflow-guidance-anchors/context-ticket-vocabulary
 Covers: LS1, LS2, LS5, LS6, LS7, LS8, LS10, LS18, LS37
 
 ## What to build
