@@ -1,0 +1,15 @@
+package admissionpolicy
+
+import (
+	"testing"
+
+	"github.com/gibbonmi/bench/internal/puritycensus"
+)
+
+// TestPurePackageSourceCensus scans this package's own directory under the pure-policy
+// package policy, which internal/puritycensus owns. The scanned set must hold this
+// package's own source, so a census pointed at another directory reds.
+// (Coverage row LS19.)
+func TestPurePackageSourceCensus(t *testing.T) {
+	puritycensus.Scan(t, ".", puritycensus.PolicyPackage()).MustHold(t, "admissionpolicy.go")
+}
