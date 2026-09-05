@@ -121,39 +121,22 @@ func Upsert(root string, entry Entry) error {
 	if err := validEntry(entry); err != nil {
 		return err
 	}
-	path, err := Address(root)
-	if err != nil {
-		return err
-	}
-	release, err := acquire(path + ".lock")
-	if err != nil {
-		return err
-	}
-	defer release()
-	ledger, err := readPath(path)
-	if err != nil {
-		return err
-	}
-	changed := true
-	for i := range ledger.Entries {
-		if ledger.Entries[i].Key != entry.Key {
-			continue
+	return Transact(root, StrictRead, func(ledger Ledger) (Ledger, bool, error) {
+		for i := range ledger.Entries {
+			if ledger.Entries[i].Key != entry.Key {
+				continue
+			}
+			stamped := entry
+			stamped.CreatedAt = ledger.Entries[i].CreatedAt
+			if ledger.Entries[i] == stamped {
+				return ledger, false, nil
+			}
+			ledger.Entries[i] = stamped
+			return ledger, true, nil
 		}
-		entry.CreatedAt = ledger.Entries[i].CreatedAt
-		if ledger.Entries[i] == entry {
-			return nil
-		}
-		ledger.Entries[i] = entry
-		changed = true
-		goto write
-	}
-	ledger.Entries = append(ledger.Entries, entry)
-
-write:
-	if !changed {
-		return nil
-	}
-	return writePath(path, ledger)
+		ledger.Entries = append(ledger.Entries, entry)
+		return ledger, true, nil
+	}, nil)
 }
 
 func writePath(path string, ledger Ledger) error {

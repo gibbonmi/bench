@@ -304,50 +304,24 @@ func PurgeAssignments(root string, keep func(Assignment) bool) (int, error) {
 		return 0, err
 	}
 	defer release()
-	data, err := os.ReadFile(path)
+	ledger, records, err := readPathTolerant(path)
 	if err != nil {
-		return 0, fmt.Errorf("purge intent ledger: %w", err)
+		return 0, err
 	}
-	// One tolerant pass for the records the purge decides about, and one for everything
-	// else in the file. Assignments are read as raw values so a single unreadable record
-	// is dropped on its own rather than taking the whole ledger with it.
-	var stored struct {
-		Schema      int               `json:"schema"`
-		Assignments []json.RawMessage `json:"assignments"`
-	}
-	if err := json.Unmarshal(data, &stored); err != nil {
-		return 0, fmt.Errorf("purge intent ledger: %w", err)
-	}
-	kept := make([]Assignment, 0, len(stored.Assignments))
+	kept := make([]Assignment, 0, len(ledger.Assignments))
 	ids, requests := map[string]bool{}, map[string]bool{}
-	// A record the legacy schema carries was never authorized to be there: Read refuses the
-	// whole file over one. Under that schema every record is debris, whatever it says about
-	// itself, so the loop that would judge them individually is skipped.
-	if stored.Schema != LegacySchema {
-		for _, record := range stored.Assignments {
-			var assignment Assignment
-			if json.Unmarshal(record, &assignment) != nil || ValidateAssignment(assignment) != nil {
-				continue
-			}
-			if ids[assignment.ID] || requests[assignment.Request] || !keep(assignment) {
-				continue
-			}
-			ids[assignment.ID], requests[assignment.Request] = true, true
-			kept = append(kept, assignment)
+	for _, assignment := range ledger.Assignments {
+		if ids[assignment.ID] || requests[assignment.Request] || !keep(assignment) {
+			continue
 		}
+		ids[assignment.ID], requests[assignment.Request] = true, true
+		kept = append(kept, assignment)
 	}
-	dropped := len(stored.Assignments) - len(kept)
+	dropped := records - len(kept)
 	if dropped == 0 {
 		return 0, nil
 	}
-	var rest struct {
-		Entries         []Entry          `json:"entries"`
-		CleanupReceipts []CleanupReceipt `json:"cleanup_receipts"`
-	}
-	if err := json.Unmarshal(data, &rest); err != nil {
-		return 0, fmt.Errorf("purge intent ledger: %w", err)
-	}
-	ledger := Ledger{Entries: rest.Entries, Assignments: kept, CleanupReceipts: rest.CleanupReceipts}
+	ledger.Assignments = kept
 	return dropped, writePath(path, ledger)
 }
 
