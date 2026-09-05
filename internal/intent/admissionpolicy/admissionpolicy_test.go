@@ -180,8 +180,8 @@ func TestAdmissionPolicyDecidesEveryMutator(t *testing.T) {
 			wantErr: "assignment request changed during reauthorization",
 		},
 		{
-			// Moved from the intent package, which held this partition against the
-			// unexported compare-and-swap the transaction migration removed.
+			// A refused compare-and-swap leaves every field of the stored assignment
+			// as it was, so the caller can retry against unchanged state.
 			name:  "a refused reauthorization changes no field",
 			start: ledger.Ledger{Assignments: []ledger.Assignment{assignment(firstID, otherHex)}},
 			run: func(t *testing.T, l ledger.Ledger) (ledger.Ledger, bool, error) {
