@@ -252,6 +252,7 @@ under the reviewer's 2026-08-26 rule.
 - `internal/worktree/lifecycle_acquire_test.go`
 - `internal/worktree/reauthorize_test.go`
 - `internal/worktree/admin_readers_test.go` (new)
+- `internal/worktree/parallel_census_test.go`
 - `internal/gate/lane.go`
 - `internal/gate/verdict.go`
 - `internal/gate/run_transaction.go`
@@ -330,6 +331,7 @@ Build decisions recorded for reviewer veto:
 - The check lands in the contract ticket, after every migration, so no in-flight state reds it.
 - The `relative-git-path` stub passes every other invocation to the real `git`, because a verb that runs many Git commands must reach the hooks query.
 - A site the staged pin-removal spec deletes migrates only when it still exists at the build's base. If it does, the pin-removal landing composes over one migrated line and repairs by merge.
+- The two `PATH`-binding tests in `internal/worktree` (GR25 and GR35) join the package's serial set. The pinned serial ceiling in `internal/worktree/parallel_census_test.go` rises by two inside its recorded stub-test class. The fence gains that file.
 
 Source-sentence-to-row table:
 

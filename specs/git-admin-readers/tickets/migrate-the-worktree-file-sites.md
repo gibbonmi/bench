@@ -1,7 +1,7 @@
 # Migrate the worktree file sites to the reader
 
 Blocked by: migrate-the-worktree-directory-sites.md
-Writes: internal/worktree/subshell.go, internal/worktree/clean.go, internal/worktree/worktree.go, internal/worktree/eligibility_test.go, internal/worktree/lifecycle_acquire_test.go, internal/worktree/reauthorize_test.go, internal/worktree/admin_readers_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
+Writes: internal/worktree/subshell.go, internal/worktree/clean.go, internal/worktree/worktree.go, internal/worktree/eligibility_test.go, internal/worktree/lifecycle_acquire_test.go, internal/worktree/reauthorize_test.go, internal/worktree/admin_readers_test.go (new), internal/worktree/parallel_census_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
 Covers: GR18, GR24, GR25
 
 ## What to build

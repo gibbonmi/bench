@@ -47,7 +47,7 @@ func recoverAssignmentWithFault(root string, assignment intent.Assignment, fault
 	if err != nil {
 		return assignment, fmt.Errorf("read recovery base tree: %w", err)
 	}
-	admin, err := git.Output("-C", assignment.Worktree, "rev-parse", "--path-format=absolute", "--git-dir")
+	admin, err := git.AdminDir(assignment.Worktree)
 	if err != nil {
 		return assignment, err
 	}

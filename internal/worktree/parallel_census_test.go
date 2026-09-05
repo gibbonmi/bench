@@ -1067,7 +1067,7 @@ func TestParallelCensusOnTheLiveTree(t *testing.T) {
 // The operand tests change the working directory because a relative or a
 // prefixed operand is what they grade. A fixture that falls back to a process
 // bind instead of the home it owns raises the count above this ceiling.
-const worktreeSerialCeiling = 44
+const worktreeSerialCeiling = 45
 
 // TestSerialSetStaysBelowTheCeiling proves no new test joins the serial set.
 // (Coverage row WF18.)

@@ -309,7 +309,7 @@ func lockCleanupFile(j joins, file *os.File, target string) (func(), error) {
 	return func() { _ = syscall.Flock(int(file.Fd()), syscall.LOCK_UN); _ = file.Close() }, nil
 }
 func lockCleanupRegistration(j joins, repo, target string) (func(), error) {
-	admin, err := git.Output("-C", target, "rev-parse", "--path-format=absolute", "--git-dir")
+	admin, err := git.AdminDir(target)
 	var file *os.File
 	if err == nil {
 		file, err = os.Open(admin)

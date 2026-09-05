@@ -95,8 +95,8 @@ func conflictContinuePrefix(assignment, path string) string {
 // the state undecided and answers false, because the commit-and-review route is correct
 // under both states while the continuation route is correct under one.
 func sourceMergePending(source string) bool {
-	dir, err := git.Output("-C", source, "rev-parse", "--absolute-git-dir")
-	if err != nil || dir == "" {
+	dir, err := git.AdminDir(source)
+	if err != nil {
 		return false
 	}
 	if _, err := os.ReadFile(filepath.Join(dir, "MERGE_HEAD")); err != nil {
