@@ -1,7 +1,7 @@
 # Repair the review round 1 findings
 
 Blocked by: add-the-git-plumbing-owner-check.md
-Writes: internal/git/worktree_admin.go, internal/git/admin_readers_test.go, internal/worktree/admin_readers_test.go, internal/conformance/git_plumbing_owner_test.go, reviews/git-admin-readers.md, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
+Writes: internal/git/worktree_admin.go, internal/git/admin_readers_test.go, internal/worktree/admin_readers_test.go, internal/conformance/git_plumbing_owner_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
 Covers: GR2, GR5, GR11, GR27
 
 ## What to build
