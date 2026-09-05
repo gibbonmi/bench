@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -16,24 +15,23 @@ import (
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
-func TestCommonDirReturnsUnvalidatedOutput(t *testing.T) {
+func TestCommonDirRefusesBadAnswer(t *testing.T) {
 	root := newRepo(t)
 	gittest.StubGit(t, root, "bad-rev-parse", filepath.Join(t.TempDir(), "argv"))
-	want := filepath.Join(root, "missing-common")
-	got, err := CommonDir(root)
-	if err != nil || got != want {
-		t.Fatalf("CommonDir = %q, %v, want %q, nil", got, err, want)
+	_, err := CommonDir(root)
+	var resolution *ResolutionError
+	if !errors.As(err, &resolution) || resolution.Action != "investigate the git failure" || !strings.Contains(err.Error(), "missing path") {
+		t.Fatalf("CommonDir = %v, want a typed refusal holding %q", err, "missing path")
 	}
 }
 
-func TestCommonDirKeepsPlainOutputFailure(t *testing.T) {
+func TestCommonDirTypesRevParseFailure(t *testing.T) {
 	root := newRepo(t)
 	gittest.StubGit(t, root, "fail-rev-parse", filepath.Join(t.TempDir(), "argv"))
 	_, err := CommonDir(root)
-	var exitErr *exec.ExitError
 	var resolution *ResolutionError
-	if !errors.As(err, &exitErr) || errors.As(err, &resolution) {
-		t.Fatalf("CommonDir failure = %T %v, want plain git.Output exit error", err, err)
+	if !errors.As(err, &resolution) || !strings.Contains(err.Error(), "rev-parse") {
+		t.Fatalf("CommonDir failure = %v, want a typed refusal holding %q", err, "rev-parse")
 	}
 }
 

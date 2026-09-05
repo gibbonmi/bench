@@ -37,6 +37,17 @@ func StubGit(t testing.TB, root, mode, logPath string) string {
 // StubGitDir writes the same stub into a fresh directory and returns that
 // directory with the common-directory path. It mutates no environment, so the
 // caller hands the directory to one child on its own PATH.
+//
+// The directory-query modes are bad-git-dir, empty-git-dir, symlink-git-dir,
+// file-git-dir, block-git-dir, and fail-git-dir, deterministically answering
+// (or refusing) the checkout administration directory query. A caller that
+// needs a symlink or a regular file at the bad-git-dir, symlink-git-dir, or
+// file-git-dir answer creates it at root joined with "missing-admin",
+// "symlink-admin", or "file-admin" respectively — the same join the stub uses.
+// The file-query modes are block-git-path and relative-git-path. In
+// fail-git-dir and relative-git-path mode, every invocation other than the
+// mode's own targeted query passes through to the real git the stub locates
+// with exec.LookPath before the test replaces PATH.
 func StubGitDir(t testing.TB, root, mode, logPath string) (string, string) {
 	t.Helper()
 	dir := t.TempDir()
@@ -50,7 +61,58 @@ func StubGitDir(t testing.TB, root, mode, logPath string) (string, string) {
 	case "symlink-rev-parse":
 		commonDir = filepath.Join(root, "symlink-common")
 	}
-	body := fmt.Sprintf("#!/bin/sh\nprintf '%%s\\n' \"$*\" >> %q\ncase \"$*\" in\n  *'--show-toplevel'*) printf '%%s\\n' %q;;\n  *'--git-common-dir'*)\n    if [ %q = fail-rev-parse ]; then exit 1; fi\n    if [ %q = fail-rev-parse-noisy ]; then printf 'fatal: common directory unavailable\\n' >&2; exit 7; fi\n    if [ %q = block-rev-parse ]; then /bin/sleep 600 & wait; fi\n    if [ %q = noisy-list ]; then printf 'rev-parse noise\\n' >&2; fi\n    if [ %q = vanish-after-rev-parse ]; then /bin/rm -- \"$0\"; fi\n    if [ %q = empty-rev-parse ]; then exit 0; fi\n    printf '%%s\\n' %q;;\n  *worktree*)\n    if [ %q = fail-worktree ]; then exit 1; fi\n    if [ %q = block-worktree ]; then /bin/sleep 600 & wait; fi\n    if [ %q = noisy-list ]; then printf 'worktree noise\\n' >&2; fi\n    if [ %q = noisy-list ]; then printf 'worktree %%s\\000\\000' %q; fi\n    exit 0;;\nesac\n", logPath, root, mode, mode, mode, mode, mode, mode, commonDir, mode, mode, mode, mode, root)
+	badAdminDir := filepath.Join(root, "missing-admin")
+	symlinkAdminDir := filepath.Join(root, "symlink-admin")
+	fileAdminDir := filepath.Join(root, "file-admin")
+	realGit, err := exec.LookPath("git")
+	if err != nil {
+		t.Fatalf("stub git: locate real git: %v", err)
+	}
+	body := fmt.Sprintf(`#!/bin/sh
+printf '%%s\n' "$*" >> %[1]q
+if [ %[2]q = fail-git-dir ]; then
+  case "$*" in
+    *'--git-dir'*) exit 1;;
+  esac
+  exec %[3]q "$@"
+fi
+if [ %[2]q = relative-git-path ]; then
+  case "$*" in
+    *'--git-path'*)
+      eval last=\${$#}
+      printf '.git/%%s\n' "$last"
+      exit 0;;
+  esac
+  exec %[3]q "$@"
+fi
+case "$*" in
+  *'--show-toplevel'*) printf '%%s\n' %[4]q;;
+  *'--git-common-dir'*)
+    if [ %[2]q = fail-rev-parse ]; then exit 1; fi
+    if [ %[2]q = fail-rev-parse-noisy ]; then printf 'fatal: common directory unavailable\n' >&2; exit 7; fi
+    if [ %[2]q = block-rev-parse ]; then /bin/sleep 600 & wait; fi
+    if [ %[2]q = noisy-list ]; then printf 'rev-parse noise\n' >&2; fi
+    if [ %[2]q = vanish-after-rev-parse ]; then /bin/rm -- "$0"; fi
+    if [ %[2]q = empty-rev-parse ]; then exit 0; fi
+    printf '%%s\n' %[5]q;;
+  *'--git-dir'*)
+    if [ %[2]q = bad-git-dir ]; then printf '%%s\n' %[6]q; exit 0; fi
+    if [ %[2]q = empty-git-dir ]; then exit 0; fi
+    if [ %[2]q = symlink-git-dir ]; then printf '%%s\n' %[7]q; exit 0; fi
+    if [ %[2]q = file-git-dir ]; then printf '%%s\n' %[8]q; exit 0; fi
+    if [ %[2]q = block-git-dir ]; then /bin/sleep 600 & wait; fi
+    printf '%%s\n' %[5]q;;
+  *'--git-path'*)
+    if [ %[2]q = block-git-path ]; then /bin/sleep 600 & wait; fi
+    printf '%%s\n' %[5]q;;
+  *worktree*)
+    if [ %[2]q = fail-worktree ]; then exit 1; fi
+    if [ %[2]q = block-worktree ]; then /bin/sleep 600 & wait; fi
+    if [ %[2]q = noisy-list ]; then printf 'worktree noise\n' >&2; fi
+    if [ %[2]q = noisy-list ]; then printf 'worktree %%s\000\000' %[4]q; fi
+    exit 0;;
+esac
+`, logPath, mode, realGit, root, commonDir, badAdminDir, symlinkAdminDir, fileAdminDir)
 	if err := os.WriteFile(script, []byte(body), 0o755); err != nil {
 		t.Fatalf("stub git: %v", err)
 	}
