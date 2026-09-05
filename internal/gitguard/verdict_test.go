@@ -111,6 +111,15 @@ func TestClassifyVerdicts(t *testing.T) {
 		{"tag -d", "git tag -d v1", refYes, "git tag -d"},
 		{"tag --delete", "git tag --delete v1", refYes, "git tag -d"},
 		{"reflog expire", "git reflog expire --expire=now --all", refYes, "git reflog expire"},
+		{"merge", "git merge main", refYes, "git merge"},
+		{"merge --squash", "git merge --squash topic", refYes, "git merge"},
+		{"merge --no-commit", "git merge --no-commit topic", refYes, "git merge"},
+		{"merge --abort", "git merge --abort", refYes, "git merge"},
+		{"cherry-pick", "git cherry-pick abc123", refYes, "git cherry-pick"},
+		{"cherry-pick --no-commit range", "git cherry-pick --no-commit main..topic", refYes, "git cherry-pick"},
+		{"cherry-pick --continue", "git cherry-pick --continue", refYes, "git cherry-pick"},
+		{"revert allowed", "git revert abc123", refYes, ""},
+		{"log --merges allowed", "git log --merges", refYes, ""},
 
 		// branch delete / force + worktree- carve-out
 		{"branch -D other", "git branch -D old-work", refYes, "git branch -D"},
