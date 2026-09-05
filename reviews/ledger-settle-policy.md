@@ -12,11 +12,13 @@ Count: 8 raw, 8 repair targets. Worst: a doc comment false about the constants i
 - `internal/intent/admissionpolicy/records.go:75` — `CompareAndSwapRequestDigest` is exported with one caller in its own file. Lazy Element. Disposition: ask-user (unexport).
 - `internal/intent/ledger_aliases_test.go:33` — the alias set is enumerated by hand, a second copy of the leaf's exported surface. A new leaf name with no alias passes. Disposition: ask-user (accept, or derive the set with `go/types`).
 - `internal/landing/composition.go:156` — `unionStages` hardcodes stages 2 and 3, which the settle policy owns. Disposition: ask-user (accept, or export the stage numbers).
+- `internal/landing/composition.go:157` — after ticket 10 the policy answers a removal for a side-less union, so the `!hasDestination && !hasSource` arm in `unionStages` is unreachable. Disposition: ask-user (delete the arm, or keep it as a stated guard). Found by the repair-scoped re-review.
 
 ## Spec
 
 Count: 4 raw, 2 repair targets. Worst: the two union journeys deleted with no policy twin (repaired in ticket 10).
 
+- `spec.md`, row LS41 — the row promises that the adapter renders no `union content not text` for a side-less union, but it cites only the policy table case. Disposition: ask-user (narrow the row to the policy, or cite an adapter journey). Found by the repair-scoped re-review.
 - `spec.md`, the message shape — "the refusing paths, comma-separated in merge-tree order". Every producer supplies one path, and `Settle` returns on the first refusal, so the list never joins. Disposition: ask-user (narrow the promise to one path, or make a producer accumulate).
 
 ## Coverage
