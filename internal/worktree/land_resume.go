@@ -281,11 +281,15 @@ func specTransitionFacts(root, published, source, slug string) landingpolicy.Spe
 		return transition
 	}
 	specPath := spec.LiveSpecPath(slug)
-	folder := landing.ClosedFolderPath(landingSlug(slug))
+	closeSlug := landingSlug(slug)
 	staged, stagedErr := git.Raw("-C", root, "show", source+":"+specPath)
-	if stagedErr != nil && git.OK("-C", root, "cat-file", "-e", source+":"+folder) {
+	// The resume classifies over the source commit's objects because the source checkout
+	// is released by then. The predicate's name check answers nothing new here: a slug the
+	// grammar admits is a single path element after LiveSpecSlug, so every name the check
+	// refuses is already unreachable at this call.
+	if landing.TicketsOnly(landing.CommitTree(root, source), closeSlug) {
 		transition.TicketsOnlyClose = true
-		transition.PublishedHasFolder = git.OK("-C", root, "cat-file", "-e", published+":"+folder)
+		transition.PublishedHasFolder = git.OK("-C", root, "cat-file", "-e", published+":"+landing.ClosedFolderPath(closeSlug))
 		return transition
 	}
 	implemented, implementedErr := spec.Implemented(staged)

@@ -9,6 +9,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/lines"
 	"github.com/gibbonmi/bench/internal/releaseevidence"
@@ -70,7 +71,7 @@ func reportDoctorRows(stdout io.Writer) bool {
 }
 
 func evalAgentsRow(root string) (bool, string) {
-	if KitSourceCheckout(root) {
+	if gate.KitSourceCheckout(root) {
 		return true, "kit source checkout - AGENTS.md is the source agreement; no managed block applies"
 	}
 	path := filepath.Join(root, "AGENTS.md")
@@ -158,7 +159,7 @@ func evalProfileRow(root string) (bool, string) {
 }
 
 func evalRepoLocalBenchRow(root string) (bool, string) {
-	if KitSourceCheckout(root) {
+	if gate.KitSourceCheckout(root) {
 		return true, "kit source checkout - the launcher is bin/bench.sh; no .bench/bin copy applies"
 	}
 	path := filepath.Join(root, ".bench", "bin", "bench.sh")

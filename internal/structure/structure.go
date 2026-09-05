@@ -1,9 +1,10 @@
 // Package structure ports `bench structure`. It is the FILE TOO LONG / DIR
 // CROWDED structural-debt check over the tracked source tree, plus the
 // violation count `bench status` reads. One engine (Check) drives the human
-// report, the status count, and the `--since <base>` touched-scope run. The
-// length/crowding rules, the per-path budget overrides, and the two caps have
-// a single definition — the two-derivations bug class this slice ends.
+// report, the status count, and the `--since <base>` run; Growth reds a file
+// grown past its limit. The length/crowding rules, the per-path budget
+// overrides, the accept grants, and the two caps have one definition here, so
+// no surface can answer a different limit than the report prints.
 //
 // The shell sent its debt summary and malformed-budget warnings to stderr. This
 // command layer folds every line (violations, warnings, the debt summary, the
@@ -18,7 +19,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -30,8 +30,8 @@ import (
 // Arity, flag recognition, `--`, and help all come from there rather than a local switch.
 var grammar = usage.Grammar{
 	Cmd:   "bench structure",
-	Help:  "usage: bench structure [--since <base>]",
-	Flags: []usage.Flag{{Name: "--since", HasValue: true}},
+	Help:  "usage: bench structure [--since <base> | --growth <base>]",
+	Flags: []usage.Flag{{Name: "--since", HasValue: true}, {Name: "--growth", HasValue: true, NoEmptyValue: true}},
 }
 
 // sourceRe matches a tracked source file by its trailing extension — the exact
@@ -69,7 +69,7 @@ func evaluate(root string, rawFiles []string, allMode bool) (report string, viol
 	// the one intentional exception to "non-zero only on real violations"; the ordinary
 	// accept states (absent, malformed, stale) never change the exit code.
 	if acceptErr != nil {
-		lines = append(lines, "structure-accept: present but unreadable: "+acceptErr.Error())
+		lines = append(lines, acceptUnreadable(acceptErr))
 		return strings.Join(lines, "\n") + "\n", 1, nil
 	}
 
@@ -87,33 +87,24 @@ func evaluate(root string, rawFiles []string, allMode bool) (report string, viol
 
 	var acceptedLines []string
 
-	// FILE TOO LONG: a file whose newline count exceeds its cap (its exact-path budget
-	// override, else the global BENCH_MAX_LINES). Missing and non-regular paths are
-	// skipped. An accepted subject is excluded from the count and recorded for the
-	// accepted: section.
+	// FILE TOO LONG: a file the shared predicate reads as over budget. An accepted
+	// subject is excluded from the count and recorded for the accepted: section.
 	for _, f := range files {
-		info, err := os.Stat(filepath.Join(root, f))
-		if err != nil || !info.Mode().IsRegular() {
+		sizing := sizeFile(root, f, budgets, maxLines)
+		if !sizing.overBudget() {
 			continue
 		}
-		n := 0
-		if content, err := os.ReadFile(filepath.Join(root, f)); err == nil {
-			n = bytes.Count(content, []byte{'\n'})
-		}
-		limit := budgetFor(budgets, f, maxLines)
-		if n > limit {
-			fact := Fact{Kind: "file", Path: f, Actual: n, Limit: limit, State: "violation"}
-			if reason, ok := accepts[f]; ok {
-				acceptedLines = append(acceptedLines, fmt.Sprintf("accepted: %s — %s", f, reason))
-				fact.State, fact.Detail = "accepted", reason
-				facts = append(facts, fact)
-				continue
-			}
-			fact.Detail = fmt.Sprintf("FILE TOO LONG   %d lines (max %d)   %s", n, limit, f)
+		fact := Fact{Kind: "file", Path: f, Actual: sizing.count, Limit: sizing.limit, State: "violation"}
+		if reason, granted := acceptedReason(accepts, f); granted {
+			acceptedLines = append(acceptedLines, fmt.Sprintf("accepted: %s — %s", f, reason))
+			fact.State, fact.Detail = "accepted", reason
 			facts = append(facts, fact)
-			lines = append(lines, fact.Detail)
-			violations++
+			continue
 		}
+		fact.Detail = fmt.Sprintf("FILE TOO LONG   %d lines (max %d)   %s", sizing.count, sizing.limit, f)
+		facts = append(facts, fact)
+		lines = append(lines, fact.Detail)
+		violations++
 	}
 
 	// DIR CROWDED: a directory whose source-file count exceeds its cap (its `<dir>/`
@@ -196,162 +187,36 @@ func filterSources(files []string) []string {
 	return out
 }
 
-// loadBudgets reads <root>/.bench/structure.budgets into a path→budget map plus the
-// warnings for malformed lines. Each line is stripped from its first '#'; a blank or
-// whitespace-only remainder is skipped; the rest splits on whitespace into (path,
-// budget). A non-digit budget yields a warning and is dropped, so the global cap
-// stands. A missing file is not an error. The last line may lack a trailing newline.
-// A path listed twice keeps its first budget, matching the shell's `awk … {exit}`.
-func loadBudgets(path string) (map[string]int, []string) {
-	budgets := map[string]int{}
-	var warnings []string
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return budgets, warnings
-	}
-	for _, line := range strings.Split(string(content), "\n") {
-		stripped := line
-		if i := strings.IndexByte(line, '#'); i >= 0 {
-			stripped = line[:i]
-		}
-		fields := strings.Fields(stripped)
-		if len(fields) == 0 {
-			continue
-		}
-		if len(fields) < 2 || !allDigits(fields[1]) {
-			warnings = append(warnings, "structure.budgets: ignoring malformed line: "+stripped)
-			continue
-		}
-		if _, seen := budgets[fields[0]]; seen {
-			continue
-		}
-		n, _ := strconv.Atoi(fields[1])
-		budgets[fields[0]] = n
-	}
-	return budgets, warnings
-}
-
-// loadAccepts reads <root>/.bench/structure-accept into a path→reason map plus warnings for
-// malformed rows. It mirrors loadBudgets' comment/whitespace discipline: strip from the first
-// '#'; a blank remainder is skipped; the last line may lack a trailing newline. A path
-// listed twice keeps its first reason. Three deliberate differences apply.
-//
-//   - The reason is the whole remainder after the first whitespace-delimited path token, not
-//     a Fields split, so a one-clause reason keeps its internal spaces.
-//   - A row with a path but no reason is malformed: warned and not honored. A reason is the
-//     price of acceptance.
-//   - The read-error posture is fail-closed: a missing file is an empty list with no error.
-//     Any other read error (present but unreadable) is returned so Check is loud (FT29),
-//     never a silent empty list at exit 0.
-func loadAccepts(path string) (map[string]string, []string, error) {
-	accepts := map[string]string{}
-	var warnings []string
-	content, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return accepts, nil, nil
-		}
-		return nil, nil, err
-	}
-	for _, line := range strings.Split(string(content), "\n") {
-		stripped := line
-		if i := strings.IndexByte(line, '#'); i >= 0 {
-			stripped = line[:i]
-		}
-		trimmed := strings.TrimLeft(stripped, " \t")
-		if trimmed == "" {
-			continue
-		}
-		subj, reason := trimmed, ""
-		if i := strings.IndexAny(trimmed, " \t"); i >= 0 {
-			subj, reason = trimmed[:i], strings.TrimSpace(trimmed[i+1:])
-		}
-		if reason == "" {
-			warnings = append(warnings, "structure-accept: ignoring malformed line (no reason): "+stripped)
-			continue
-		}
-		if _, seen := accepts[subj]; seen {
-			continue
-		}
-		accepts[subj] = reason
-	}
-	return accepts, warnings, nil
-}
-
-// staleAcceptWarnings reports each accept row whose subject is not a known scanned subject:
-// neither a scanned source file nor a scanned `<dir>/` key. So the accept list cannot
-// quietly accumulate dead entries. A subject present but under budget suppresses nothing,
-// yet is not stale. Warning on that inert case is a separate honesty check left out of
-// scope. The result is sorted for a deterministic report, since the map's own iteration
-// order is random.
-func staleAcceptWarnings(accepts map[string]string, files []string) []string {
-	known := make(map[string]bool, len(files)*2)
-	for _, f := range files {
-		known[f] = true
-		dir := "."
-		if i := strings.LastIndex(f, "/"); i >= 0 {
-			dir = f[:i]
-		}
-		known[dir+"/"] = true
-	}
-	var warnings []string
-	for subj := range accepts {
-		if !known[subj] {
-			warnings = append(warnings, "structure-accept: stale accept row (not a scanned source file): "+subj)
-		}
-	}
-	sort.Strings(warnings)
-	return warnings
-}
-
-// budgetFor returns the exact-key override or the fallback cap.
-func budgetFor(budgets map[string]int, key string, fallback int) int {
-	if b, ok := budgets[key]; ok {
-		return b
-	}
-	return fallback
-}
-
-// envInt reads an integer environment override, falling back to def when the value
-// is unset, empty, or not a valid integer.
-func envInt(key string, def int) int {
-	v := os.Getenv(key)
-	if v == "" {
-		return def
-	}
-	n, err := strconv.Atoi(v)
-	if err != nil {
-		return def
-	}
-	return n
-}
-
-// allDigits reports whether s is a non-empty run of ASCII digits (the `^[0-9]+$` test).
-func allDigits(s string) bool {
-	if s == "" {
-		return false
-	}
-	for i := 0; i < len(s); i++ {
-		if s[i] < '0' || s[i] > '9' {
-			return false
-		}
-	}
-	return true
-}
-
 // Command implements `bench structure`. No args → an "all" scan of the tree.
-// `--since <base>` → scan only the files a diff of base..HEAD touched. Unknown
-// argument → usage on stdout, exit 2; outside a repo → structured error, exit 1.
-// The exit code is 1 when the report carries any violation, else 0.
+// `--since <base>` → scan only the files a diff of base..HEAD touched. `--growth
+// <base>` → the growth ratchet over the working tree against base. Unknown argument,
+// an empty `--growth` value, or the two flags together → usage on stdout, exit 2;
+// outside a repo → structured error, exit 1. The exit code is 1 when the report
+// carries any violation, else 0.
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
 		return line + "\n", code
 	}
 	base, touched := parsed.Flags["--since"]
+	growthBase, growth := parsed.Flags["--growth"]
+	// The two flags name two different scopes, and the usage line spells them as an
+	// alternation. A call carrying both is a mistyped invocation, so it refuses with the
+	// reason before any git query rather than running one flag and dropping the other.
+	if touched && growth {
+		return grammar.Help + " (--since and --growth exclude each other)" + "\n", 2
+	}
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
+	}
+	if growth {
+		report, violations, gerr := Growth(root, growthBase)
+		if gerr != nil {
+			fmt.Fprintln(os.Stderr, gitOpError("diff", gerr))
+			return "", 1
+		}
+		return report, exitOf(violations)
 	}
 	if touched {
 		report, violations, terr := Touched(root, base)
@@ -391,6 +256,129 @@ func Touched(root, base string) (report string, violations int, err error) {
 	}
 	report, violations = Check(root, strings.Split(out, "\n"), false)
 	return report, violations, nil
+}
+
+// growthChange is one changed file of the growth query: the path it carries at the tip, and
+// the path the base knows it by, which differ only for an exact rename. addedAtTip marks a
+// path the base holds nothing for, whose base count is therefore zero.
+type growthChange struct {
+	path, basePath string
+	addedAtTip     bool
+}
+
+// Growth is the growth ratchet: it reds a source file only when the file both exceeds its
+// limit and gained lines since base. Existing debt therefore stays soft and a split is never
+// punished, while a file that grows past its cap is named on the spot. The limit and the
+// grant list come from the engine the all scan reads, so a `structure.budgets` row and a
+// `.bench/structure-accept` row mean here what they mean there, and the accept read keeps the
+// fail-closed posture (FT29). It returns the report, the count of grown files, and the git
+// error when the diff query failed; Command renders that error as `--since` does.
+func Growth(root, base string) (report string, violations int, err error) {
+	maxLines := envInt("BENCH_MAX_LINES", 400)
+	budgets, budgetWarnings := loadBudgets(filepath.Join(root, ".bench", "structure.budgets"))
+	accepts, _, acceptErr := loadAccepts(filepath.Join(root, ".bench", "structure-accept"))
+
+	lines := append([]string(nil), budgetWarnings...)
+	if acceptErr != nil {
+		lines = append(lines, acceptUnreadable(acceptErr))
+		return strings.Join(lines, "\n") + "\n", 1, nil
+	}
+
+	changes, err := growthChanges(root, base)
+	if err != nil {
+		return "", 0, err
+	}
+
+	paths := make([]string, 0, len(changes))
+	for _, change := range changes {
+		paths = append(paths, change.path)
+	}
+	sources := make(map[string]bool, len(paths))
+	for _, p := range filterSources(paths) {
+		sources[p] = true
+	}
+
+	// FILE GREW: a source file whose tip count exceeds both its limit and its base count.
+	// The over-budget half is the predicate the all scan reads, so a budget row and an
+	// accept row mean here what they mean there.
+	for _, change := range changes {
+		if !sources[change.path] {
+			continue
+		}
+		if _, granted := acceptedReason(accepts, change.path); granted {
+			continue
+		}
+		tip := sizeFile(root, change.path, budgets, maxLines)
+		if !tip.overBudget() {
+			continue
+		}
+		was := 0
+		if !change.addedAtTip {
+			was = growthBaseCount(root, base, change.basePath)
+		}
+		if tip.count <= was {
+			continue
+		}
+		lines = append(lines, fmt.Sprintf("FILE GREW       %d lines, was %d (max %d)   %s", tip.count, was, tip.limit, change.path))
+		violations++
+	}
+
+	if violations > 0 {
+		lines = append(lines, fmt.Sprintf("structure growth: %d file(s) grew past budget. Split along responsibility (see the craft-seams skill), or record a reviewer grant in .bench/structure-accept.", violations))
+	} else {
+		lines = append(lines, fmt.Sprintf("structure growth ok (no source file grew past its budget since %s)", base))
+	}
+	return strings.Join(lines, "\n") + "\n", violations, nil
+}
+
+// growthChanges lists what the working tree changed against base, with the two framing
+// choices the mode needs. The comparison is the base commit against the working tree, not
+// against HEAD: the fast lane grades a private checkout that holds the composed tree in its
+// index and working tree while HEAD stays where the checkout was made, so a commit-to-commit
+// query names nothing there. A hand run sees uncommitted work for the same reason.
+// The NUL framing is load-bearing: under the default `core.quotepath` a newline-framed name
+// with a byte above ASCII arrives C-quoted, so a reader would carry a path no file has and
+// the extension filter would drop it. `-M100%` pairs exact renames, so a pure move reads
+// its old path's count rather than reading as an addition.
+func growthChanges(root, base string) ([]growthChange, error) {
+	raw, err := git.Raw("-C", root, "diff", "--name-status", "-z", "-M100%", "--diff-filter=ACMR", base)
+	if err != nil {
+		return nil, err
+	}
+	frames := strings.Split(string(raw), "\x00")
+	var changes []growthChange
+	for i := 0; i < len(frames); i++ {
+		status := frames[i]
+		if status == "" {
+			continue
+		}
+		// A rename or copy spends three frames (status, old path, new path) and every other
+		// status two. A truncated tail is unreadable as a change, so it ends the scan.
+		if strings.HasPrefix(status, "R") || strings.HasPrefix(status, "C") {
+			if i+2 >= len(frames) {
+				break
+			}
+			changes = append(changes, growthChange{path: frames[i+2], basePath: frames[i+1], addedAtTip: status[0] == 'C'})
+			i += 2
+			continue
+		}
+		if i+1 >= len(frames) {
+			break
+		}
+		changes = append(changes, growthChange{path: frames[i+1], basePath: frames[i+1], addedAtTip: status == "A"})
+		i++
+	}
+	return changes, nil
+}
+
+// growthBaseCount is the newline count of path's blob at base. An unreadable blob counts
+// zero, which is the count of a path the base holds nothing for.
+func growthBaseCount(root, base, path string) int {
+	blob, err := git.Raw("-C", root, "show", base+":"+path)
+	if err != nil {
+		return 0
+	}
+	return bytes.Count(blob, []byte{'\n'})
 }
 
 func exitOf(violations int) int {

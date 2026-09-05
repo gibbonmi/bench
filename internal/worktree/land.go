@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
@@ -141,7 +140,7 @@ func defaultJoins() joins {
 		reauthorizeUnlock:        unlockWorktree,
 		reauthorizeLock:          lockWorktree,
 		mergeLane:                gate.LaneForCommit,
-		kitSourceCheckout:        adopt.KitSourceCheckout,
+		kitSourceCheckout:        gate.KitSourceCheckout,
 		mergeReconcile:           reconcileMergeCheckout,
 		build:                    runbinary.Build,
 	}

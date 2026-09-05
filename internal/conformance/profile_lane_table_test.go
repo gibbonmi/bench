@@ -23,6 +23,7 @@ const (
 	laneProfileRootToken   = "<root>"
 	laneProfileBinary      = "bench"
 	laneProfileMarkdown    = "<named Markdown>"
+	laneProfileBase        = "<base>"
 	laneProfileTableHeader = "check"
 )
 
@@ -110,6 +111,8 @@ func builtInLaneRows(root string) (rows []profileLaneRow, diagnostic string) {
 				rendered = append(rendered, laneProfileBinary)
 			case gate.LaneNamedMarkdownToken:
 				rendered = append(rendered, laneProfileMarkdown)
+			case gate.LaneBaseToken:
+				rendered = append(rendered, laneProfileBase)
 			default:
 				rendered = append(rendered, arg)
 			}

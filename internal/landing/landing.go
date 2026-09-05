@@ -124,14 +124,6 @@ func New() Owner {
 	}
 }
 
-// NewLane returns the worktree-commit owner whose authority is the root's declared fast
-// lane rather than the whole-project gate.
-func NewLane(lane authorization.LaneAuthority) Owner {
-	owner := New()
-	owner.authorize = lane.Authorize
-	return owner
-}
-
 // composeAuthorized runs the prospective half every landing verdict shares: attribute,
 // compose, refuse an empty diff, then authorize the exact composed tree.
 func (o Owner) composeAuthorized(ctx context.Context, r Request) ([]string, composedSnapshot, error) {

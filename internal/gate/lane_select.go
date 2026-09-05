@@ -120,12 +120,14 @@ func LaneForCommit(root string) (*Lane, error) {
 // LaneFor. Changes is the composed change list the prose placeholder and the selection
 // resolve from. Selective runs the classes the changes carry rather than the whole
 // declared list. Kit is the source root the run binary is built from; empty selects the
-// private checkout, which is the composed tree itself.
+// private checkout, which is the composed tree itself. Base is the commit the graded tree
+// is measured against, and the base placeholder resolves to it.
 type LaneRequest struct {
 	Root      string
 	Kit       string
 	Tree      string
 	Lane      string
+	Base      string
 	Checks    []Phase
 	Changes   []ComposedChange
 	Selective bool
@@ -184,7 +186,7 @@ var laneClasses = append([]PathClass{
 	{
 		Name:   "go-source",
 		Match:  func(path string, _ []string) bool { return strings.HasSuffix(path, ".go") },
-		Checks: []string{"gofmt", "vet", "build"},
+		Checks: []string{"gofmt", "vet", "build", "structure"},
 	},
 	{
 		Name: "go-build-input",

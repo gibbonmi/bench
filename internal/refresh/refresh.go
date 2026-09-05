@@ -63,6 +63,23 @@ func RenderRefresh(result RefreshResult) string {
 	return out
 }
 
+// Start is the one entry point that owns the refreshed-start-ref rule. An unrequested
+// refresh writes nothing and answers an empty ref. A requested one runs the fetch, renders
+// the table, and answers the new start ref only when the fetch succeeded. Every other
+// status — offline, failed, timed out — answers empty, so a caller never starts from a
+// remote head it did not fetch. Each caller maps the empty answer to its own default.
+func Start(root string, requested bool, stdout io.Writer) string {
+	if !requested {
+		return ""
+	}
+	result := Refresh(root)
+	_, _ = io.WriteString(stdout, RenderRefresh(result))
+	if result.Status != "refreshed" {
+		return ""
+	}
+	return RefreshedStartRef(root)
+}
+
 func Consume(root string, args []string, stdout io.Writer) ([]string, string) {
 	filtered := args[:0]
 	requested := false
@@ -73,12 +90,5 @@ func Consume(root string, args []string, stdout io.Writer) ([]string, string) {
 			filtered = append(filtered, arg)
 		}
 	}
-	if requested {
-		result := Refresh(root)
-		_, _ = io.WriteString(stdout, RenderRefresh(result))
-		if result.Status == "refreshed" {
-			return filtered, RefreshedStartRef(root)
-		}
-	}
-	return filtered, ""
+	return filtered, Start(root, requested, stdout)
 }
