@@ -144,6 +144,32 @@ func TestLandingDestinationFactAdapterTranslatesCleanCheckout(t *testing.T) {
 	}
 }
 
+// TestLandingResumeDestinationFactAdapterTranslatesCleanCheckout is the resume
+// identity fact group. A clean default-branch checkout must translate into
+// the exact commit, branch, and marker facts, with no cleanliness proof run.
+func TestLandingResumeDestinationFactAdapterTranslatesCleanCheckout(t *testing.T) {
+	t.Parallel()
+	root := newWorktreeRepo(t)
+	head := gitOutput(t, root, "rev-parse", "HEAD")
+	commit, branch, marker, err := landingDestinationIdentity(root)
+	if err != nil || commit != head || branch != "main" || marker != "" {
+		t.Fatalf("resume destination identity = (%q, %q, %q, %v), want (%q, main, empty marker, nil)", commit, branch, marker, err, head)
+	}
+}
+
+// TestLandingDestinationIdentityRefusesADetachedCheckout is the identity fact's
+// attachment proof, shared by the landing verb and the resume. A checkout not
+// attached to the default branch must refuse with the exact sentence.
+func TestLandingDestinationIdentityRefusesADetachedCheckout(t *testing.T) {
+	t.Parallel()
+	root := newWorktreeRepo(t)
+	gitRun(t, root, "checkout", "--detach", "-q")
+	_, _, _, err := landingDestinationIdentity(root)
+	if err == nil || err.Error() != "landing checkout is not attached to the default branch" {
+		t.Fatalf("landingDestinationIdentity error = %v, want %q", err, "landing checkout is not attached to the default branch")
+	}
+}
+
 // TestLandingSourceFactAdapterTranslatesRealWorktree is the source fact group.
 // A real reviewed assignment worktree must translate into the exact typed
 // base, tip, and fingerprint facts, with no spec named.

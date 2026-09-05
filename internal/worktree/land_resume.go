@@ -40,7 +40,7 @@ func resumeLandWith(j joins, root, home string, args []string, stdout, stderr io
 	for _, flag := range []string{"--resume", "--base", "--source-tip"} {
 		parsed.Flags[flag] = expandIdentity(root, parsed.Flags[flag])
 	}
-	destination, branch, marker, err := resumeLandingDestination(root)
+	destination, branch, marker, err := landingDestinationIdentity(root)
 	if err != nil {
 		return landRefusal(stdout, err.Error())
 	}
@@ -109,26 +109,6 @@ func terminalResumeReceipt(root, path, request, sourceTip string) (intent.Cleanu
 		return intent.CleanupReceipt{}, identityRefusal(sourceTip, receipt.BranchOID, "terminal receipt source tip mismatch")
 	}
 	return receipt, nil
-}
-
-func resumeLandingDestination(root string) (string, string, string, error) {
-	branch, ok := git.ResolvedDefault(root)
-	if !ok {
-		return "", "", "", errors.New("default branch is unresolved")
-	}
-	current, err := git.CheckedOutBranch(root)
-	if err != nil || current != branch {
-		return "", "", "", errors.New("landing checkout is not attached to the default branch")
-	}
-	destination, err := git.Output("-C", root, "rev-parse", "refs/heads/"+branch+"^{commit}")
-	if err != nil {
-		return "", "", "", errors.New("landing destination has no commit")
-	}
-	marker, err := landingMarker(root, branch, destination)
-	if err != nil {
-		return "", "", "", err
-	}
-	return destination, branch, marker, nil
 }
 
 func resumeDestructiveDestinationState(j joins, root, destination, published, destinationBase string) error {
