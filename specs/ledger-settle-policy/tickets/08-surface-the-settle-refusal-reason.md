@@ -1,7 +1,7 @@
 # Surface the settle refusal reason
 
 Blocked by: 05-migrate-the-assignment-mutators.md, 07-migrate-the-composition-adapter-onto-the-settle-policy.md
-Writes: internal/landing/composition.go, internal/landing/composition_test.go, internal/landing/merge.go, internal/landing/landing.go, internal/landing/merge_test.go, CONTEXT.md
+Writes: internal/landing/composition.go, internal/landing/composition_test.go, internal/landing/merge.go, internal/landing/landing.go, internal/landing/merge_test.go, CONTEXT.md, tests/canary/docs-currency-token-diet/signal-vocabulary-drift, tests/canary/workflow-guidance-anchors/context-acceptance-row-vocabulary, tests/canary/workflow-guidance-anchors/context-coverage-map-term, tests/canary/workflow-guidance-anchors/context-coverage-row-parts, tests/canary/workflow-guidance-anchors/context-coverage-row-vocabulary, tests/canary/workflow-guidance-anchors/context-decision-map-term, tests/canary/workflow-guidance-anchors/context-reader-sweep-term, tests/canary/workflow-guidance-anchors/context-ticket-vocabulary
 Covers: LS28, LS29, LS30, LS31, LS32, LS33, LS34, LS35, LS38
 
 ## What to build
@@ -43,6 +43,9 @@ Add the term **settle verdict** to CONTEXT.md. Define it as the policy's answer
 for one conflicted path: a side, a union, a removal, or a refusal with a
 reason. Give it the Avoid list `resolution` and `merge result`. `bench anchors
 CONTEXT.md` names seven required needles, and this entry touches none of them.
+
+The eight fixture directories in the `Writes:` line are closure headroom. They
+pin CONTEXT.md, and this ticket edits none of them.
 
 Write the new test `TestConflictErrorNamesTheSettleRefusalReason` in
 internal/landing/composition_test.go. Its first case is a conflict on `named`

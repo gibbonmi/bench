@@ -291,11 +291,13 @@ This section is derived from the reader sweep; the ticket slice confirms it.
 - `tests/canary/workflow-guidance-anchors/context-decision-map-term` — closure headroom only
 - `tests/canary/workflow-guidance-anchors/context-reader-sweep-term` — closure headroom only
 - `tests/canary/workflow-guidance-anchors/context-ticket-vocabulary` — closure headroom only
+- `tests/canary/docs-currency-token-diet/signal-vocabulary-drift` — closure headroom only
 
 A closure headroom entry creates no blocker edge and takes no edit. The five
-worktree files hold the prefix matches LS33 keeps. The seven fixture
-directories close the pins on `CONTEXT.md`; `bench anchors CONTEXT.md` names
-seven required needles, and none of them sits in the two new entries.
+worktree files hold the prefix matches LS33 keeps. The eight fixture
+directories close the pins on `CONTEXT.md`. The eighth is the token-diet
+vocabulary fixture. `bench anchors CONTEXT.md` names seven required needles,
+and none of them sits in the two new entries.
 
 ## Out of scope
 

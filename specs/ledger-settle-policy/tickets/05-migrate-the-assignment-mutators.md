@@ -1,7 +1,7 @@
 # Migrate the assignment mutators onto the transaction
 
 Blocked by: 04-add-the-admission-policy-child.md
-Writes: internal/intent/assignment.go, internal/intent/intent.go, internal/intent/intent_test.go, internal/intent/purge_test.go, internal/intent/transaction_test.go (new), CONTEXT.md
+Writes: internal/intent/assignment.go, internal/intent/intent.go, internal/intent/intent_test.go, internal/intent/purge_test.go, internal/intent/transaction_test.go (new), CONTEXT.md, tests/canary/docs-currency-token-diet/signal-vocabulary-drift, tests/canary/workflow-guidance-anchors/context-acceptance-row-vocabulary, tests/canary/workflow-guidance-anchors/context-coverage-map-term, tests/canary/workflow-guidance-anchors/context-coverage-row-parts, tests/canary/workflow-guidance-anchors/context-coverage-row-vocabulary, tests/canary/workflow-guidance-anchors/context-decision-map-term, tests/canary/workflow-guidance-anchors/context-reader-sweep-term, tests/canary/workflow-guidance-anchors/context-ticket-vocabulary
 Covers: LS1, LS2, LS5, LS6, LS7, LS8, LS10, LS18, LS37
 
 ## What to build
@@ -49,6 +49,9 @@ envelope over the intent ledger. State that it locks, reads in a named mode,
 runs one decision closure, and writes a reported change. Give it the Avoid list
 `lock helper` and `mutator envelope`. `bench anchors CONTEXT.md` names seven
 required needles, and this entry touches none of them.
+
+The eight fixture directories in the `Writes:` line are closure headroom. They
+pin CONTEXT.md, and this ticket edits none of them.
 
 Write the new tests in internal/intent/transaction_test.go. Name the first
 `TestLedgerTransactionPreservesEveryMutatorOutcome`. It runs the seven mutators
