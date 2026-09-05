@@ -1,7 +1,7 @@
 # Move the refresh package beside its consumers
 
 Blocked by: none
-Writes: internal/refresh/refresh.go (new), internal/refresh/refresh_test.go (new), internal/worktree/refresh/, internal/worktree/worktree.go, internal/worktree/subshell.go, internal/shift/loop.go, internal/conformance/bounds_policy_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
+Writes: internal/refresh/refresh.go (new), internal/refresh/refresh_test.go (new), internal/worktree/worktree.go, internal/worktree/subshell.go, internal/shift/loop.go, internal/conformance/bounds_policy_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
 Covers: SR36, SR37, SR38, SR39, SR40, SR41
 
 ## What to build
