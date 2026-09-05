@@ -1,7 +1,7 @@
 # Repair the review findings
 
 Blocked by: add-the-structure-growth-mode.md, run-the-growth-check-in-the-fast-lane.md, state-the-tickets-only-rule-once.md, construct-the-lane-owner-once.md
-Writes: internal/structure/structure.go, internal/structure/growth_test.go, internal/landing/close.go, internal/landing/close_test.go, internal/landing/lane_test.go
+Writes: internal/structure/structure.go, internal/structure/budgets.go, internal/structure/growth_test.go, internal/landing/close.go, internal/landing/close_test.go, internal/landing/lane_test.go
 Covers: SR62, SR63
 
 ## What to build
