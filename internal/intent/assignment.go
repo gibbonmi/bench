@@ -194,7 +194,7 @@ func ReauthorizeAssignment(root, id, request string, verify func(Assignment) err
 		swapped, changed, err := admissionpolicy.ReauthorizeAssignment(current, id, stored.Request, newDigest)
 		if err != nil {
 			// The compensation covers the write alone, so the compare-and-swap arm
-			// runs the rollback itself. This keeps the pre-transaction behavior.
+			// runs the rollback itself.
 			rollback()
 			return current, false, err
 		}
