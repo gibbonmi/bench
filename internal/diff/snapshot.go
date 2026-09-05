@@ -269,18 +269,15 @@ func recapturedIdentity(root string, facts git.DiffFacts) (snapshotIdentity, err
 }
 
 func indexIdentity(root string) (string, error) {
-	if indexPath, err := git.Output("-C", root, "rev-parse", "--git-path", "index"); err == nil {
-		if !filepath.IsAbs(indexPath) {
-			indexPath = filepath.Join(root, indexPath)
-		}
-		data, readErr := os.ReadFile(indexPath)
-		if readErr != nil {
-			return "", readErr
-		}
-		return digest(data), nil
-	} else {
+	indexPath, err := git.AdminPath(root, "index")
+	if err != nil {
 		return "", err
 	}
+	data, readErr := os.ReadFile(indexPath)
+	if readErr != nil {
+		return "", readErr
+	}
+	return digest(data), nil
 }
 
 func pathIdentities(root string, changes []git.PorcelainEntry) (contentDigest, modeDigest, gitlinkDigest string, err error) {

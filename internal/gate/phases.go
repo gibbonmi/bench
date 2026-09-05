@@ -410,8 +410,8 @@ func writePinFromHead(root string) error {
 }
 
 func pinPath(root string) string {
-	gitdir, err := git.Output("-C", root, "rev-parse", "--absolute-git-dir")
-	if err != nil || gitdir == "" {
+	gitdir, err := git.AdminDir(root)
+	if err != nil {
 		return filepath.Join(root, ".git", pinFileName)
 	}
 	return filepath.Join(gitdir, pinFileName)
