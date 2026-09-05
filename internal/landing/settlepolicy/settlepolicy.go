@@ -37,7 +37,9 @@ const (
 	ReasonUnionContentNotText = "union content not text"
 )
 
-// The two regular file modes. Every other mode leaves the conflict a refusal.
+// The four modes the package names: the two regular file modes a settle can publish,
+// then the two special modes ConflictKind reports by name. Every mode outside the
+// regular pair leaves the conflict a refusal.
 const (
 	regularMode     = "100644"
 	executableMode  = "100755"
@@ -182,6 +184,13 @@ func Settle(records []StageRecord) Settlement {
 		}
 		stage, side, _ := CaptureSide(path)
 		if stage == UnionStage {
+			// A union whose two sides are both absent holds no content to compose, so it
+			// settles as a removal. The parent's text merge never reads a side-less union,
+			// so it never names union content a refusal the content did not earn.
+			if !hasDestination && !hasSource {
+				verdicts = append(verdicts, Verdict{Path: path, Kind: VerdictRemove, Side: side})
+				continue
+			}
 			verdicts = append(verdicts, Verdict{Path: path, Kind: VerdictUnion, Side: side, Stages: stages[path]})
 			continue
 		}

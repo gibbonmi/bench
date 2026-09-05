@@ -284,6 +284,24 @@ func commitSides(t *testing.T, root, base string, destinationChange, sourceChang
 	return destination, git(t, root, "rev-parse", "HEAD")
 }
 
+// deletedSide is the settle-row side value that removes the row's path. No side writes
+// a NUL byte, so the sentinel cannot collide with content a row means to publish.
+const deletedSide = "\x00deleted"
+
+// settleSide builds one side of a settle row: deletedSide removes the path, and every
+// other value writes itself there.
+func settleSide(t *testing.T, root, path, value string) func() {
+	return func() {
+		if value == deletedSide {
+			if err := os.Remove(filepath.Join(root, filepath.FromSlash(path))); err != nil {
+				t.Fatal(err)
+			}
+			return
+		}
+		write(t, root, path, value)
+	}
+}
+
 type compositionSnapshot struct{ refs, index, status, worktree, mergeHead string }
 
 func compositionState(t *testing.T, root string) compositionSnapshot {

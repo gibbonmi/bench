@@ -60,6 +60,13 @@ func TestSettlePolicyAnswersTheCaptureRule(t *testing.T) {
 			}},
 		},
 		{
+			name:    "a union whose two sides are both absent answers a removal",
+			records: []StageRecord{blob("capture/learnings.md", 1)},
+			want: []Verdict{{
+				Path: "capture/learnings.md", Kind: VerdictRemove, Side: SideUnion,
+			}},
+		},
+		{
 			// The two rows below engage the table through a trailing capture record, so
 			// each observes the reason the earlier out-of-table record wins.
 			name:     "the prefix boundary sits outside the table",
