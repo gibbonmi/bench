@@ -232,6 +232,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT303 CLI assessment and selected improvement — run `/bench-shape-idea`. FT302 landed on 2026-09-05, so the assessment is unblocked.
-2. FT298 skill-discipline kit edits — run the `craft-synthesis` kit edit, one rule per commit.
-3. FT300 ticket-fence kit edits — run the `craft-synthesis` kit edit after FT298.
+1. FT302 deepening batch — build candidate 2 as the light-path ticket under the standing batch approval, then run `/bench-write-spec` for candidates 3 and 4.
+2. FT303 CLI assessment and selected improvement — run `/bench-shape-idea`. Candidate 1 landed on 2026-09-05, so the assessment is unblocked.
+3. FT298 skill-discipline kit edits — run the `craft-synthesis` kit edit, one rule per commit.
