@@ -65,8 +65,12 @@ func CommitTree(root, commit string) TreeReader {
 
 type commitTreeReader struct{ root, commit string }
 
+// The path must name a tree object, not merely exist. A commit can carry a blob at
+// specs/<name>, and an existence check would call that a directory where the working-tree
+// reader answers false. The object type is what makes the two readers agree.
 func (r commitTreeReader) FolderIsDirectory(name string) bool {
-	return benchgit.OK("-C", r.root, "cat-file", "-e", r.commit+":"+ClosedFolderPath(name))
+	kind, err := benchgit.Output("-C", r.root, "cat-file", "-t", r.commit+":"+ClosedFolderPath(name))
+	return err == nil && kind == "tree"
 }
 
 // A `show` that fails for any reason answers absent: over a commit's objects the only

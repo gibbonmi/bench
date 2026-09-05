@@ -8,7 +8,9 @@ package structure
 // It pairs with accept_validation.go, which grades the same accept list.
 
 import (
+	"bytes"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -120,6 +122,49 @@ func staleAcceptWarnings(accepts map[string]string, files []string) []string {
 	}
 	sort.Strings(warnings)
 	return warnings
+}
+
+// fileSizing is one path read against its cap: the working tree's newline count, the cap
+// that applies to the path, and whether the path is a regular file at all.
+type fileSizing struct {
+	count   int
+	limit   int
+	regular bool
+}
+
+// overBudget is the length rule itself: a regular file whose newline count exceeds its cap.
+func (s fileSizing) overBudget() bool { return s.regular && s.count > s.limit }
+
+// sizeFile reads one repository-relative path against its cap: the newline count of the
+// working tree's file (wc -l semantics) and the cap the budget list gives that exact path,
+// else fallback. A missing, non-regular, or unreadable path counts zero and is never over
+// budget. Every over-budget judgment goes through here — the all scan and the growth
+// ratchet alike — so the two cannot disagree about what "too long" means.
+func sizeFile(root, path string, budgets map[string]int, fallback int) fileSizing {
+	sizing := fileSizing{limit: budgetFor(budgets, path, fallback)}
+	info, err := os.Stat(filepath.Join(root, path))
+	if err != nil || !info.Mode().IsRegular() {
+		return sizing
+	}
+	sizing.regular = true
+	if content, err := os.ReadFile(filepath.Join(root, path)); err == nil {
+		sizing.count = bytes.Count(content, []byte{'\n'})
+	}
+	return sizing
+}
+
+// acceptedReason answers the accept-list exemption for one subject: the reviewer's reason
+// and whether a grant covers it. The all scan records the reason in its accepted: section
+// and the growth ratchet only needs the verdict, so both ask the same question here.
+func acceptedReason(accepts map[string]string, subject string) (string, bool) {
+	reason, granted := accepts[subject]
+	return reason, granted
+}
+
+// acceptUnreadable is the loud named line for a present-but-unreadable accept file (FT29).
+// No surface may silently observe an empty grant list, so every surface prints this line.
+func acceptUnreadable(err error) string {
+	return "structure-accept: present but unreadable: " + err.Error()
 }
 
 // budgetFor returns the exact-key override or the fallback cap.

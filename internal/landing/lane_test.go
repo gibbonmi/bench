@@ -11,9 +11,9 @@ import (
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 )
 
-// SR15: the mapping is what decides which tree the lane grades and which checks run on
-// it. Every field a caller used to state by hand is pinned here, so a dropped field is a
-// red rather than a silently wider or narrower grade.
+// SR15: the mapping decides which tree the lane grades and which checks run on it. Every
+// field the authority carries is pinned here, so a dropped field is a red rather than a
+// silently wider or narrower grade.
 func TestLaneAuthorityCarriesTheLaneAndTheBase(t *testing.T) {
 	lane := &gate.Lane{
 		Checks:    []gate.Phase{{Name: "build", Argv: []string{"go", "build", "./..."}}},

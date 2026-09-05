@@ -68,9 +68,9 @@ func TestTicketsOnlyFolder(t *testing.T) {
 
 // TestTicketsOnlyInCommit pins the same rule over a commit's objects, which is the tree
 // the resume reads: the source worktree is released by then, so the working-tree reader
-// would answer from a tree that no longer holds the folder. The rows are the four cases
-// the close branches on, and the name rows prove the rule travels with the predicate
-// rather than with one reader.
+// would answer from a tree that no longer holds the folder. The object rows are the tree
+// shapes the close branches on, a blob at the folder path among them, and the name rows
+// prove the rule travels with the predicate rather than with one reader.
 func TestTicketsOnlyInCommit(t *testing.T) {
 	root := t.TempDir()
 	git(t, root, "init", "-q", "-b", "main")
@@ -79,6 +79,7 @@ func TestTicketsOnlyInCommit(t *testing.T) {
 	write(t, root, "specs/tickets-only/tickets/one.md", "# One\n")
 	write(t, root, "specs/spec-backed/tickets/one.md", "# One\n")
 	write(t, root, "specs/spec-backed/spec.md", "Status: staged\n")
+	write(t, root, "specs/a-file", "a blob where a folder would be\n")
 	git(t, root, "add", ".")
 	git(t, root, "commit", "-qm", "specs")
 	commit := git(t, root, "rev-parse", "HEAD")
@@ -92,6 +93,7 @@ func TestTicketsOnlyInCommit(t *testing.T) {
 		{name: "spec-backed", want: false, why: "a committed folder carrying spec.md takes the status flip"},
 		{name: "absent", want: false, why: "a slug naming no committed folder is not tickets-only"},
 		{name: "spec-backed/tickets", want: false, why: "not a direct child of specs/"},
+		{name: "a-file", want: false, why: "a committed blob at the folder path is a file in either reader"},
 		{name: "..", want: false, why: "a traversal names no direct child"},
 		{name: "", want: false, why: "an empty slug names nothing"},
 	}

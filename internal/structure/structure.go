@@ -3,8 +3,8 @@
 // violation count `bench status` reads. One engine (Check) drives the human
 // report, the status count, and the `--since <base>` run; Growth reds a file
 // grown past its limit. The length/crowding rules, the per-path budget
-// overrides, and the two caps have a single definition — the two-derivations
-// bug class this slice ends.
+// overrides, the accept grants, and the two caps have one definition here, so
+// no surface can answer a different limit than the report prints.
 //
 // The shell sent its debt summary and malformed-budget warnings to stderr. This
 // command layer folds every line (violations, warnings, the debt summary, the
@@ -31,7 +31,7 @@ import (
 var grammar = usage.Grammar{
 	Cmd:   "bench structure",
 	Help:  "usage: bench structure [--since <base> | --growth <base>]",
-	Flags: []usage.Flag{{Name: "--since", HasValue: true}, {Name: "--growth", HasValue: true}},
+	Flags: []usage.Flag{{Name: "--since", HasValue: true}, {Name: "--growth", HasValue: true, NoEmptyValue: true}},
 }
 
 // sourceRe matches a tracked source file by its trailing extension — the exact
@@ -69,7 +69,7 @@ func evaluate(root string, rawFiles []string, allMode bool) (report string, viol
 	// the one intentional exception to "non-zero only on real violations"; the ordinary
 	// accept states (absent, malformed, stale) never change the exit code.
 	if acceptErr != nil {
-		lines = append(lines, "structure-accept: present but unreadable: "+acceptErr.Error())
+		lines = append(lines, acceptUnreadable(acceptErr))
 		return strings.Join(lines, "\n") + "\n", 1, nil
 	}
 
@@ -87,33 +87,24 @@ func evaluate(root string, rawFiles []string, allMode bool) (report string, viol
 
 	var acceptedLines []string
 
-	// FILE TOO LONG: a file whose newline count exceeds its cap (its exact-path budget
-	// override, else the global BENCH_MAX_LINES). Missing and non-regular paths are
-	// skipped. An accepted subject is excluded from the count and recorded for the
-	// accepted: section.
+	// FILE TOO LONG: a file the shared predicate reads as over budget. An accepted
+	// subject is excluded from the count and recorded for the accepted: section.
 	for _, f := range files {
-		info, err := os.Stat(filepath.Join(root, f))
-		if err != nil || !info.Mode().IsRegular() {
+		sizing := sizeFile(root, f, budgets, maxLines)
+		if !sizing.overBudget() {
 			continue
 		}
-		n := 0
-		if content, err := os.ReadFile(filepath.Join(root, f)); err == nil {
-			n = bytes.Count(content, []byte{'\n'})
-		}
-		limit := budgetFor(budgets, f, maxLines)
-		if n > limit {
-			fact := Fact{Kind: "file", Path: f, Actual: n, Limit: limit, State: "violation"}
-			if reason, ok := accepts[f]; ok {
-				acceptedLines = append(acceptedLines, fmt.Sprintf("accepted: %s — %s", f, reason))
-				fact.State, fact.Detail = "accepted", reason
-				facts = append(facts, fact)
-				continue
-			}
-			fact.Detail = fmt.Sprintf("FILE TOO LONG   %d lines (max %d)   %s", n, limit, f)
+		fact := Fact{Kind: "file", Path: f, Actual: sizing.count, Limit: sizing.limit, State: "violation"}
+		if reason, granted := acceptedReason(accepts, f); granted {
+			acceptedLines = append(acceptedLines, fmt.Sprintf("accepted: %s — %s", f, reason))
+			fact.State, fact.Detail = "accepted", reason
 			facts = append(facts, fact)
-			lines = append(lines, fact.Detail)
-			violations++
+			continue
 		}
+		fact.Detail = fmt.Sprintf("FILE TOO LONG   %d lines (max %d)   %s", sizing.count, sizing.limit, f)
+		facts = append(facts, fact)
+		lines = append(lines, fact.Detail)
+		violations++
 	}
 
 	// DIR CROWDED: a directory whose source-file count exceeds its cap (its `<dir>/`
@@ -197,9 +188,11 @@ func filterSources(files []string) []string {
 }
 
 // Command implements `bench structure`. No args → an "all" scan of the tree.
-// `--since <base>` → scan only the files a diff of base..HEAD touched. Unknown
-// argument → usage on stdout, exit 2; outside a repo → structured error, exit 1.
-// The exit code is 1 when the report carries any violation, else 0.
+// `--since <base>` → scan only the files a diff of base..HEAD touched. `--growth
+// <base>` → the growth ratchet over the working tree against base. Unknown argument,
+// an empty `--growth` value, or the two flags together → usage on stdout, exit 2;
+// outside a repo → structured error, exit 1. The exit code is 1 when the report
+// carries any violation, else 0.
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
@@ -207,11 +200,17 @@ func Command(args []string) (string, int) {
 	}
 	base, touched := parsed.Flags["--since"]
 	growthBase, growth := parsed.Flags["--growth"]
+	// The two flags name two different scopes, and the usage line spells them as an
+	// alternation. A call carrying both is a mistyped invocation, so it refuses with the
+	// reason before any git query rather than running one flag and dropping the other.
+	if touched && growth {
+		return grammar.Help + " (--since and --growth exclude each other)" + "\n", 2
+	}
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	if growth && !touched {
+	if growth {
 		report, violations, gerr := Growth(root, growthBase)
 		if gerr != nil {
 			fmt.Fprintln(os.Stderr, gitOpError("diff", gerr))
@@ -281,7 +280,7 @@ func Growth(root, base string) (report string, violations int, err error) {
 
 	lines := append([]string(nil), budgetWarnings...)
 	if acceptErr != nil {
-		lines = append(lines, "structure-accept: present but unreadable: "+acceptErr.Error())
+		lines = append(lines, acceptUnreadable(acceptErr))
 		return strings.Join(lines, "\n") + "\n", 1, nil
 	}
 
@@ -300,26 +299,27 @@ func Growth(root, base string) (report string, violations int, err error) {
 	}
 
 	// FILE GREW: a source file whose tip count exceeds both its limit and its base count.
+	// The over-budget half is the predicate the all scan reads, so a budget row and an
+	// accept row mean here what they mean there.
 	for _, change := range changes {
 		if !sources[change.path] {
 			continue
 		}
-		if _, granted := accepts[change.path]; granted {
+		if _, granted := acceptedReason(accepts, change.path); granted {
 			continue
 		}
-		limit := budgetFor(budgets, change.path, maxLines)
-		tip := growthTipCount(root, change.path)
-		if tip <= limit {
+		tip := sizeFile(root, change.path, budgets, maxLines)
+		if !tip.overBudget() {
 			continue
 		}
 		was := 0
 		if !change.addedAtTip {
 			was = growthBaseCount(root, base, change.basePath)
 		}
-		if tip <= was {
+		if tip.count <= was {
 			continue
 		}
-		lines = append(lines, fmt.Sprintf("FILE GREW       %d lines, was %d (max %d)   %s", tip, was, limit, change.path))
+		lines = append(lines, fmt.Sprintf("FILE GREW       %d lines, was %d (max %d)   %s", tip.count, was, tip.limit, change.path))
 		violations++
 	}
 
@@ -331,13 +331,17 @@ func Growth(root, base string) (report string, violations int, err error) {
 	return strings.Join(lines, "\n") + "\n", violations, nil
 }
 
-// growthChanges lists what base..HEAD changed, with the two framing choices the mode needs.
+// growthChanges lists what the working tree changed against base, with the two framing
+// choices the mode needs. The comparison is the base commit against the working tree, not
+// against HEAD: the fast lane grades a private checkout that holds the composed tree in its
+// index and working tree while HEAD stays where the checkout was made, so a commit-to-commit
+// query names nothing there. A hand run sees uncommitted work for the same reason.
 // The NUL framing is load-bearing: under the default `core.quotepath` a newline-framed name
 // with a byte above ASCII arrives C-quoted, so a reader would carry a path no file has and
 // the extension filter would drop it. `-M100%` pairs exact renames, so a pure move reads
 // its old path's count rather than reading as an addition.
 func growthChanges(root, base string) ([]growthChange, error) {
-	raw, err := git.Raw("-C", root, "diff", "--name-status", "-z", "-M100%", "--diff-filter=ACMR", base+"..HEAD")
+	raw, err := git.Raw("-C", root, "diff", "--name-status", "-z", "-M100%", "--diff-filter=ACMR", base)
 	if err != nil {
 		return nil, err
 	}
@@ -365,20 +369,6 @@ func growthChanges(root, base string) ([]growthChange, error) {
 		i++
 	}
 	return changes, nil
-}
-
-// growthTipCount is the working tree's newline count for path, counted exactly as evaluate
-// counts a scanned file. A missing or non-regular path counts zero.
-func growthTipCount(root, path string) int {
-	info, err := os.Stat(filepath.Join(root, path))
-	if err != nil || !info.Mode().IsRegular() {
-		return 0
-	}
-	content, err := os.ReadFile(filepath.Join(root, path))
-	if err != nil {
-		return 0
-	}
-	return bytes.Count(content, []byte{'\n'})
 }
 
 // growthBaseCount is the newline count of path's blob at base. An unreadable blob counts
