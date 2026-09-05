@@ -214,10 +214,14 @@ func AdminDir(root string) (string, error) {
 //
 // The query uses git's default path format, not --path-format=absolute, because
 // the absolute format resolves an existing symlink and would answer the target
-// rather than the named file. Every caller lstats the answer, so the symlink
-// must survive. The default format prints a path relative to git's working
+// rather than the named file: the default path format keeps a symlinked entry's
+// own path. The default format prints a path relative to git's working
 // directory for a primary checkout, which is root, so a relative answer joins
-// onto the absolute form of root.
+// onto root. Root itself is resolved with filepath.EvalSymlinks before the join,
+// because git's own -C resolves a symlinked path component physically: a root
+// that reaches the repository through a symlink followed by ".." must join
+// onto the same physical directory git ran in, not onto a lexically cleaned root
+// that never saw the symlink.
 func AdminPath(root, name string) (string, error) {
 	raw, err := boundedGit(subjectAdminPath, adminPathArgs(root, name)...)
 	if err != nil {
@@ -230,11 +234,32 @@ func AdminPath(root, name string) (string, error) {
 	if filepath.IsAbs(answer) {
 		return answer, nil
 	}
-	absoluteRoot, absErr := filepath.Abs(root)
+	resolvedRoot, resolveErr := resolveAdminRoot(root)
+	if resolveErr != nil {
+		return "", resolveErr
+	}
+	return filepath.Join(resolvedRoot, answer), nil
+}
+
+// resolveAdminRoot resolves root to the physical, absolute directory git ran in.
+// filepath.EvalSymlinks runs first, on the possibly-relative and possibly-unclean
+// root, so a symlinked path component resolves physically before any ".." that
+// follows it is applied — the same order the OS uses when git's -C changes into
+// root. filepath.Abs then covers the case EvalSymlinks leaves relative, which it
+// does not for an absolute input.
+func resolveAdminRoot(root string) (string, error) {
+	resolved, evalErr := filepath.EvalSymlinks(root)
+	if evalErr != nil {
+		return "", &ResolutionError{Path: root, Err: fmt.Errorf("cannot resolve symlinks in the checkout root: %w", evalErr), Action: investigateGitFailureAction, Subject: subjectAdminPath}
+	}
+	if filepath.IsAbs(resolved) {
+		return resolved, nil
+	}
+	absoluteRoot, absErr := filepath.Abs(resolved)
 	if absErr != nil {
 		return "", &ResolutionError{Path: root, Err: fmt.Errorf("cannot absolutize the checkout root: %w", absErr), Action: investigateGitFailureAction, Subject: subjectAdminPath}
 	}
-	return filepath.Join(absoluteRoot, answer), nil
+	return absoluteRoot, nil
 }
 
 func validateCommonDir(common, subject string) (string, error) {

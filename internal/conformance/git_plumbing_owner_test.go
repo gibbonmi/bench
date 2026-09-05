@@ -49,7 +49,27 @@ func checkGitPlumbingOwner(root string) []string {
 			return nil
 		})
 	}
+	diags = append(diags, gitPlumbingRootFiles(root)...)
 	return uniqueSorted(diags)
+}
+
+// gitPlumbingRootFiles grades the non-test Go files directly at the module root
+// (depth one), alongside cmd/ and internal/. Every other directory stays skipped —
+// the canary trees under tests/ are fixtures, not production code the rule owns.
+func gitPlumbingRootFiles(root string) []string {
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return nil
+	}
+	var diags []string
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".go" || strings.HasSuffix(entry.Name(), "_test.go") {
+			continue
+		}
+		path := filepath.Join(root, entry.Name())
+		diags = append(diags, gitPlumbingDerivations(path, slashRel(root, path))...)
+	}
+	return diags
 }
 
 func gitPlumbingDerivations(path, rel string) []string {
@@ -162,6 +182,21 @@ func TestGitPlumbingOwnerRedsARetypedFlag(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("root-level file", func(t *testing.T) {
+		root := throwawayRoot{
+			files: map[string]string{
+				"payload.go": gitPlumbingProductionSnippet("--git-dir"),
+			},
+		}.build(t)
+		diags := checkGitPlumbingOwner(root)
+		if len(diags) != 1 {
+			t.Fatalf("diagnostics = %v, want exactly one", diags)
+		}
+		if !strings.Contains(diags[0], "payload.go") || !strings.Contains(diags[0], "--git-dir") {
+			t.Fatalf("diagnostic = %q, want it to name the file and the flag --git-dir", diags[0])
+		}
+	})
 }
 
 // TestGitPlumbingOwnerSkipsTestsAndTheAdapter is GR28. A rev-parse call with

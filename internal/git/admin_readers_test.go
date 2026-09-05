@@ -61,11 +61,15 @@ func TestAdminPathMatchesIndependentRevParse(t *testing.T) {
 	primary := newRepo(t)
 	linked := linkedWorktree(t, primary)
 	bare := bareRepo(t)
-	for name, root := range map[string]string{
+	roots := map[string]string{
 		"primary checkout": primary,
 		"linked worktree":  linked,
 		"bare repository":  bare,
-	} {
+	}
+	if aliased, ok := symlinkedParentAlias(t, primary); ok {
+		roots["primary checkout via a symlinked parent"] = aliased
+	}
+	for name, root := range roots {
 		t.Run(name, func(t *testing.T) {
 			want := independentRevParse(t, root, "--path-format=absolute", "--git-path", "index")
 			got, err := AdminPath(root, "index")
@@ -74,6 +78,20 @@ func TestAdminPathMatchesIndependentRevParse(t *testing.T) {
 			}
 		})
 	}
+}
+
+// symlinkedParentAlias creates a symlink to repo's parent directory and returns repo
+// addressed through that alias, so a reader that keeps the alias instead of resolving
+// it reds against the independent, canonicalizing rev-parse run. (Coverage row GR2.)
+func symlinkedParentAlias(t *testing.T, repo string) (string, bool) {
+	t.Helper()
+	parent := filepath.Dir(repo)
+	alias := filepath.Join(t.TempDir(), "alias")
+	if err := os.Symlink(parent, alias); err != nil {
+		capability.Capability(t, capability.Symlink, "symlinks unavailable: "+err.Error())
+		return "", false
+	}
+	return filepath.Join(alias, filepath.Base(repo)), true
 }
 
 func TestBareRepositoryReadersAgree(t *testing.T) {
@@ -169,6 +187,29 @@ func TestAdminPathJoinsRelativeAnswerOntoRoot(t *testing.T) {
 	if err != nil || got != want {
 		t.Fatalf("AdminPath(%s, index) = %q, %v, want %q, nil", root, got, err, want)
 	}
+
+	t.Run("root reaches the repository through a symlink followed by dot-dot", func(t *testing.T) {
+		base := t.TempDir()
+		physical := filepath.Join(base, "physical")
+		child := filepath.Join(physical, "child")
+		if err := os.MkdirAll(child, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		jump := filepath.Join(base, "jump")
+		if err := os.Symlink(child, jump); err != nil {
+			capability.Capability(t, capability.Symlink, "symlinks unavailable: "+err.Error())
+		}
+		// A lexical filepath.Join would clean "jump/.." away before AdminPath ever
+		// sees it, so the root is built by concatenation to keep the symlinked
+		// component AdminPath must resolve physically.
+		root := jump + string(filepath.Separator) + ".."
+		gittest.StubGit(t, root, "relative-git-path", filepath.Join(t.TempDir(), "argv"))
+		want := filepath.Join(physical, ".git", "index")
+		got, err := AdminPath(root, "index")
+		if err != nil || got != want {
+			t.Fatalf("AdminPath(%s, index) = %q, %v, want %q, nil", root, got, err, want)
+		}
+	})
 }
 
 // TestAdminPathKeepsSymlinkPath proves the file reader answers the symlink's

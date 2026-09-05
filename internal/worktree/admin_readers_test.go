@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -37,7 +38,22 @@ func TestLockCleanupRegistrationFallsBackForNonWorktree(t *testing.T) {
 	if release == nil {
 		t.Fatal("lockCleanupRegistration returned a nil release function")
 	}
+
+	probe, err := os.OpenFile(lockPath, os.O_RDWR, 0o600)
+	if err != nil {
+		t.Fatalf("open the lock file for the probe: %v", err)
+	}
+	t.Cleanup(func() { probe.Close() })
+	if err := syscall.Flock(int(probe.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); !errors.Is(err, syscall.EWOULDBLOCK) {
+		t.Fatalf("non-blocking flock while release is pending = %v, want EWOULDBLOCK", err)
+	}
+
 	release()
+
+	if err := syscall.Flock(int(probe.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+		t.Fatalf("non-blocking flock after release = %v, want it to succeed", err)
+	}
+	_ = syscall.Flock(int(probe.Fd()), syscall.LOCK_UN)
 }
 
 // TestSourceMergePendingIsFalseWhenUndecided proves the merge-pending probe
