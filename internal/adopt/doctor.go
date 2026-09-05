@@ -250,13 +250,11 @@ func doctorReport(stdout io.Writer, version string) int {
 	return rc
 }
 
-// reportPrePush renders the pre-push backstop row when doctor runs inside a git worktree,
-// and returns whether the row is red. git does not clone hooks, so a fresh clone silently
-// drops the default-branch backstop; this catches that the next time doctor runs. A stale
-// bench-managed hook is repaired by bench doctor --fix; an absent, foreign, or diverted hook
-// is left untouched and points to bench link instead. In the kit source checkout bench link
-// is not a remedy at all, so an absent hook names bench doctor --fix, which installs it
-// there. A red row makes doctor exit 1 even when the shim is healthy.
+// reportPrePush renders the pre-push backstop row inside a git worktree and returns whether it
+// is red. Git does not clone hooks, so a fresh clone drops the backstop until doctor runs. A
+// stale managed hook is repaired by bench doctor --fix; an absent, foreign, or diverted hook
+// points to bench link, except in the kit source checkout, where bench doctor --fix installs
+// it. A red row makes doctor exit 1 even when the shim is healthy.
 func reportPrePush(stdout io.Writer) bool {
 	root, err := git.Root()
 	if err != nil {
@@ -389,6 +387,10 @@ func repairStalePrePush(stdout, stderr io.Writer) int {
 	if err != nil {
 		return 0
 	}
+	if _, err := hooksDir(root); err != nil {
+		fmt.Fprintf(stderr, "%s: %v\n", root, err)
+		return 1
+	}
 	health := InspectPrePush(root)
 	switch health.State {
 	case PrePushManaged:
@@ -412,9 +414,8 @@ func repairStalePrePush(stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "  refusing: %s exists and is not a bench-managed pre-push; left unchanged\n", health.Path)
 		return 1
 	case PrePushAbsent:
-		// Only in the kit source checkout, where the absent-hook row names this fix because
-		// bench link is not a remedy there. Elsewhere an absent hook stays bench link's, so
-		// the fix does not silently take over a route the link transaction owns.
+		// Only in the kit source checkout: an absent hook names this fix as its remedy. Elsewhere it
+		// stays bench link's; this fix never takes that route.
 		if !gate.KitSourceCheckout(root) {
 			return 0
 		}
@@ -426,10 +427,9 @@ func repairStalePrePush(stdout, stderr io.Writer) int {
 	return 0
 }
 
-// restorePrePushExecuteMode adds execute bits to a hook that was already present when the
-// repair rewrote it. Writing over an existing file leaves its mode untouched, and git
-// skips a pre-push it cannot execute. The other permission bits are the operator's, so
-// they stay.
+// restorePrePushExecuteMode adds execute bits to a hook already present when the repair rewrote
+// it. Writing over a file leaves its mode untouched, and git skips a pre-push it can't execute.
+// The other permission bits stay the operator's.
 func restorePrePushExecuteMode(path string) error {
 	if isExecutable(path) {
 		return nil

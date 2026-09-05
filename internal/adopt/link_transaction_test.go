@@ -22,6 +22,7 @@ func TestTransactionalLinkAdoptsUnownedAdapterThroughSymlinkParent(t *testing.T)
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := t.TempDir()
+			runAdoptGit(t, root, "init", "-q")
 			if err := os.MkdirAll(filepath.Join(root, ".agents", "commands"), 0o755); err != nil {
 				t.Fatal(err)
 			}
