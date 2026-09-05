@@ -15,7 +15,7 @@ findings in the owner details.
 
 ## Software factory: initial evidence and selected improvements
 
-**FT302 (MEDIUM) — the four-candidate module-deepening batch lands one candidate at a time.**
+**FT302 (MEDIUM) — the deepening batch's residuals: the diff package policy extraction and the Git-reader promotion.**
 
 **FT303 (MEDIUM, decision required) — a CLI assessment selects and delivers one evidence-backed improvement.**
 
@@ -98,8 +98,6 @@ findings in the owner details.
 **FT243 (LOW, decision required) — a recurring factory-maintenance policy selects useful structural, deepening, and CLI work.**
 
 **FT307 (MEDIUM, decision required) — `bench structure` diff queries read NUL-framed names and grade the working tree.**
-
-**FT247 (MEDIUM) — the next slow test packages extract pure policy from effect adapters.**
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
 
@@ -232,6 +230,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT302 deepening batch — build candidate 2 as the light-path ticket under the standing batch approval, then run `/bench-write-spec` for candidates 3 and 4.
-2. FT303 CLI assessment and selected improvement — run `/bench-shape-idea`. Candidate 1 landed on 2026-09-05, so the assessment is unblocked.
-3. FT298 skill-discipline kit edits — run the `craft-synthesis` kit edit, one rule per commit.
+1. FT303 CLI assessment and selected improvement — run `/bench-shape-idea`. The four-candidate deepening batch landed on 2026-09-05, so the assessment is unblocked.
+2. FT298 skill-discipline kit edits — run the `craft-synthesis` kit edit, one rule per commit.
+3. FT255 shared machine budget — run `/bench-shape-idea`. Three builds recorded load-induced reds.
