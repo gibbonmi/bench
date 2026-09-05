@@ -61,7 +61,7 @@ findings in the owner details.
 
 **FT300 (MEDIUM) — ticket slicing adds the file a ticket's own change will move to its fence.**
 
-**FT298 (MEDIUM) — two skill-discipline gaps the binary-freshness retro surfaced.**
+**FT298 (MEDIUM) — skill-discipline gaps the binary-freshness and structural-refactor retros surfaced.**
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
@@ -97,6 +97,8 @@ findings in the owner details.
 
 **FT243 (LOW, decision required) — a recurring factory-maintenance policy selects useful structural, deepening, and CLI work.**
 
+**FT307 (MEDIUM, decision required) — `bench structure` diff queries read NUL-framed names and grade the working tree.**
+
 **FT247 (MEDIUM) — the next slow test packages extract pure policy from effect adapters.**
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
@@ -117,9 +119,7 @@ findings in the owner details.
 
 **FT232 (EXPERIMENT, decision required) — repair-loop tripwire: an advisory signal from gate records.**
 
-**FT277 (MEDIUM) — `bench test --changed` explains why it widened the selected set.**
-
-**FT290 (LOW) — `bench test` projects a check's fixture family, a full failure body, and a no-match attribution.**
+**FT290 (MEDIUM) — `bench test` projects a check's fixture family, a full failure body, a no-match attribution, and a widened-set explanation.**
 
 **FT168 (LOW) — focused iteration evidence through registered check owners.**
 
