@@ -28,10 +28,11 @@ const censusFile = "purity_census_test.go"
 // census reads this file too, and a literal would report this line.
 var parallelCall = "t." + "Parallel("
 
-// policyImport names the dependencies a pure policy owner must never take: the parent
+// policyImport names the dependencies a pure policy owner must never take: every parent
 // effect adapter, the Git owner, process execution, the system-call surface, and the
-// bounds constants the parent boundary supplies as explicit threshold facts.
-var policyImport = regexp.MustCompile(`"(os/exec|syscall|github\.com/gibbonmi/bench/internal/git|github\.com/gibbonmi/bench/internal/bounds|github\.com/gibbonmi/bench/internal/worktree)"`)
+// bounds constants the parent boundary supplies as explicit threshold facts. The pattern
+// names every parent, so each policy child grades against one rule.
+var policyImport = regexp.MustCompile(`"(os/exec|syscall|github\.com/gibbonmi/bench/internal/git|github\.com/gibbonmi/bench/internal/bounds|github\.com/gibbonmi/bench/internal/worktree|github\.com/gibbonmi/bench/internal/intent|github\.com/gibbonmi/bench/internal/landing)"`)
 
 // leafImport names the dependencies a leaf owner must never take: any Bench package
 // under internal/, process execution, and the system-call surface. Every importer of a

@@ -33,6 +33,28 @@ func TestCensusDiagnosesForbiddenImportAmbientEffectAndParallel(t *testing.T) {
 	}
 }
 
+// TestCensusRefusesTheIntentParentAdapter proves the policy pattern forbids the intent
+// parent adapter, so a policy child under that parent cannot import it. (Coverage row
+// LS36.)
+func TestCensusRefusesTheIntentParentAdapter(t *testing.T) {
+	line := "\t\"github.com/gibbonmi/bench/" + "internal/intent\""
+	diagnostics := diagnose("fixture.go", line, PolicyPackage())
+	if len(diagnostics) != 1 || !strings.Contains(diagnostics[0], "internal/intent") {
+		t.Fatalf("the policy census accepts the intent parent adapter: %v", diagnostics)
+	}
+}
+
+// TestCensusRefusesTheLandingParentAdapter proves the policy pattern forbids the landing
+// parent adapter, so a policy child under that parent cannot import it. (Coverage row
+// LS36.)
+func TestCensusRefusesTheLandingParentAdapter(t *testing.T) {
+	line := "\t\"github.com/gibbonmi/bench/" + "internal/landing\""
+	diagnostics := diagnose("fixture.go", line, PolicyPackage())
+	if len(diagnostics) != 1 || !strings.Contains(diagnostics[0], "internal/landing") {
+		t.Fatalf("the policy census accepts the landing parent adapter: %v", diagnostics)
+	}
+}
+
 // TestCensusRefusesProcessBackedFixture proves exec.Command stays in the ambient set,
 // so a process-backed git fixture inside a pure package reds. (Coverage row LQ15.)
 func TestCensusRefusesProcessBackedFixture(t *testing.T) {
