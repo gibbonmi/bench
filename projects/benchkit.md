@@ -304,6 +304,11 @@ coverage map; a class skipped here returns as a regression.
   never matches. A filesystem-only cleanup then removes the directory and leaves
   the registration forever. Resolve the root the way the registrar resolves it,
   and assert against the registrar's own output
+- a check that runs inside the fast lane's private checkout. That checkout keeps
+  the repository's HEAD. It holds the composed tree only in its index and working
+  tree. A `base..HEAD` query names nothing there, so a check that reads it passes
+  every commit. Compare the base against the working tree. Prove the check with a
+  detached checkout plus `read-tree`, never with a shell stand-in
 
 Known residual risk: `bench setup`'s real-TTY confirm wiring is one untested
 constructor line binding stdin. Testing it needs a pty dependency, which is a
