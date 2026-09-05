@@ -259,39 +259,37 @@ func TestComposeRejectsUnresolvedCommit(t *testing.T) {
 // One journey for each settle verdict drives Compose against a real Git conflict, then
 // asserts the published bytes and the disclosed verb. The verdict partitions themselves
 // are policy table cases in settlepolicy_test.go; these rows prove the adapter applies
-// a verdict to a real tree, and the removal row is the one that observes the
-// force-remove the adapter alone performs.
+// a verdict to a real tree. The removal row observes the force-remove the adapter alone
+// performs, and the union rows observe the arms no policy table reaches, because the
+// policy hands the adapter the stages and never the blobs: one row per deleted side, and
+// one row for the union whose merge base is absent.
+// (Coverage row LS24.)
 func TestComposeSettlesPhaseOwnedConflictsByRule(t *testing.T) {
-	const deleted = "\x00deleted"
 	cases := []struct {
 		name, path                string
+		absentFromBase            bool
 		destination, source       string
 		wantContent, wantResolved string
 	}{
 		{name: "union", path: "capture/IDEAS.md", destination: "shared\ndestination idea\n", source: "shared\nsource idea\n", wantContent: "shared\ndestination idea\nsource idea", wantResolved: "capture/IDEAS.md:union"},
 		{name: "source", path: "capture/session-handoff.md", destination: "destination handoff\n", source: "source handoff\n", wantContent: "source handoff", wantResolved: "capture/session-handoff.md:source"},
 		{name: "destination", path: "capture/notes.md", destination: "destination notes\n", source: "source notes\n", wantContent: "destination notes", wantResolved: "capture/notes.md:destination"},
-		{name: "removal", path: "capture/notes.md", destination: deleted, source: "source notes\n", wantContent: deleted, wantResolved: "capture/notes.md:destination"},
+		{name: "removal", path: "capture/notes.md", destination: deletedSide, source: "source notes\n", wantContent: deletedSide, wantResolved: "capture/notes.md:destination"},
+		{name: "union-deleted-on-one-side", path: "capture/learnings.md", destination: deletedSide, source: "shared\nsource learning\n", wantContent: "shared\nsource learning", wantResolved: "capture/learnings.md:union"},
+		{name: "union-deleted-on-the-source-side", path: "capture/learnings.md", destination: "shared\ndestination learning\n", source: deletedSide, wantContent: "shared\ndestination learning", wantResolved: "capture/learnings.md:union"},
+		{name: "union-added-on-both-sides", path: "capture/learnings.md", absentFromBase: true, destination: "destination learning\n", source: "source learning\n", wantContent: "destination learning\nsource learning", wantResolved: "capture/learnings.md:union"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			root := fixture(t)
-			write(t, root, tc.path, "shared\n")
-			git(t, root, "add", "-A")
-			git(t, root, "commit", "-qm", "capture base")
-			base := git(t, root, "rev-parse", "HEAD")
-			side := func(value string) func() {
-				return func() {
-					if value == deleted {
-						if err := os.Remove(filepath.Join(root, filepath.FromSlash(tc.path))); err != nil {
-							t.Fatal(err)
-						}
-						return
-					}
-					write(t, root, tc.path, value)
-				}
+			if !tc.absentFromBase {
+				write(t, root, tc.path, "shared\n")
+				git(t, root, "add", "-A")
+				git(t, root, "commit", "-qm", "capture base")
 			}
-			destination, source := commitSides(t, root, base, side(tc.destination), side(tc.source))
+			base := git(t, root, "rev-parse", "HEAD")
+			destination, source := commitSides(t, root, base,
+				settleSide(t, root, tc.path, tc.destination), settleSide(t, root, tc.path, tc.source))
 			got, err := New().Compose(CompositionRequest{Root: root, Destination: destination, Source: source, ReviewBase: base})
 			if err != nil || got.Conflict.Kind != "" || got.Tree == "" {
 				t.Fatalf("compose = %+v, %v, want a settled tree", got, err)
@@ -299,7 +297,7 @@ func TestComposeSettlesPhaseOwnedConflictsByRule(t *testing.T) {
 			if !reflect.DeepEqual(got.Resolved, []string{tc.wantResolved}) {
 				t.Fatalf("resolved = %q, want [%q]", got.Resolved, tc.wantResolved)
 			}
-			if tc.wantContent == deleted {
+			if tc.wantContent == deletedSide {
 				names := git(t, root, "ls-tree", "-r", "--name-only", got.Tree)
 				if slices.Contains(strings.Split(names, "\n"), tc.path) {
 					t.Fatalf("settled tree still carries the removed %s", tc.path)
