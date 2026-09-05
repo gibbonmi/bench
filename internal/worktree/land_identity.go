@@ -34,14 +34,37 @@ type landingSourceFact struct {
 	specMode    os.FileMode
 }
 
-func landingDestination(j joins, root string) (string, string, string, string, error) {
+// landingDestinationIdentity is the one fact for the landing destination's identity:
+// the default branch, the checkout's attachment to it, the destination commit, and the
+// green marker. The commit resolves through the one spelling
+// `refs/heads/<branch>^{commit}`, so the landing verb and the resume read the same
+// commit. Both verbs call this fact rather than re-deriving it; the landing verb
+// composes the cleanliness, residue, and fingerprint proofs on top of it, and the
+// resume reads the identity alone.
+func landingDestinationIdentity(root string) (commit, branch, marker string, err error) {
 	branch, ok := git.ResolvedDefault(root)
 	if !ok {
-		return "", "", "", "", errors.New("default branch is unresolved")
+		return "", "", "", errors.New("default branch is unresolved")
 	}
 	current, err := git.CheckedOutBranch(root)
 	if err != nil || current != branch {
-		return "", "", "", "", errors.New("landing checkout is not attached to the default branch")
+		return "", "", "", errors.New("landing checkout is not attached to the default branch")
+	}
+	commit, err = git.Output("-C", root, "rev-parse", "refs/heads/"+branch+"^{commit}")
+	if err != nil {
+		return "", "", "", errors.New("landing destination has no commit")
+	}
+	marker, err = landingMarker(root, branch, commit)
+	if err != nil {
+		return "", "", "", err
+	}
+	return commit, branch, marker, nil
+}
+
+func landingDestination(j joins, root string) (string, string, string, string, error) {
+	tip, branch, marker, err := landingDestinationIdentity(root)
+	if err != nil {
+		return "", "", "", "", err
 	}
 	dirty, err := checkoutDirtyPaths(root)
 	if err != nil {
@@ -63,14 +86,6 @@ func landingDestination(j joins, root string) (string, string, string, string, e
 			residue = undeclaredLandingIgnoredPaths(ignored, declared)
 		}
 		return "", "", "", "", landingFaceRefusal(faceDestinationResidue, "", "", residue)
-	}
-	tip, err := git.Output("-C", root, "rev-parse", "HEAD^{commit}")
-	if err != nil {
-		return "", "", "", "", errors.New("landing destination has no commit")
-	}
-	marker, err := landingMarker(root, branch, tip)
-	if err != nil {
-		return "", "", "", "", err
 	}
 	fingerprint, err := landing.CheckoutFingerprint(root)
 	if err != nil {
