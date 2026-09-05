@@ -19,9 +19,10 @@ with `bench structure --growth <base>` selected by go-source. The profile
 check renders the base token as `<base>`, so the advertisement matches the
 lane.
 
-Three pins change on purpose, per decision (n): `TestBenchkitLaneTable` and
-`TestLaneClassesNameOnlyDeclaredChecks` gain the structure row, and
-`TestResolveLane` gains the base replacement.
+Pins change on purpose, per decision (n): `TestBenchkitLaneTable` gains the
+structure row, `TestResolveLane` gains the base replacement, and three rows
+of `TestSelectLaneByClass` gain `structure`. `TestLaneClassesNameOnlyDeclaredChecks`
+derives its expectation and needs no edit.
 
 Split two over-budget files, per decision (o). The lane diagnostics and the
 tap writer move to the new file `internal/gate/lane_output.go`. The moved
