@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 )
 
@@ -43,6 +46,79 @@ func divergedPair(t *testing.T, root string, destinationChange, sourceChange fun
 	destination, source = commitSides(t, root, git(t, root, "rev-parse", "HEAD"), destinationChange, sourceChange)
 	git(t, root, "checkout", "-q", "destination")
 	return destination, source
+}
+
+// captureBase commits the named files, so a settle case starts from a base the capture
+// rule table names, and returns that base commit.
+func captureBase(t *testing.T, root string, files map[string]string) string {
+	t.Helper()
+	for path, content := range files {
+		write(t, root, path, content)
+	}
+	git(t, root, "add", "-A")
+	git(t, root, "commit", "-qm", "capture base")
+	return git(t, root, "rev-parse", "HEAD")
+}
+
+// symlinkAt replaces a tracked file with a symlink, so that side carries a non-regular mode.
+func symlinkAt(t *testing.T, root, path string) {
+	full := filepath.Join(root, filepath.FromSlash(path))
+	if err := os.Remove(full); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("target", full); err != nil {
+		capability.Capability(t, capability.Symlink, err.Error())
+	}
+}
+
+// settleRefusalRow is one refusing settle: its base files, its two sides, and the text the
+// refusal must hold.
+type settleRefusalRow struct {
+	name, want          string
+	files               map[string]string
+	destination, source func(*testing.T, string)
+}
+
+// settleRefusalRows are the five refusals a conflicted composition can carry: a path
+// outside the rule table, a non-regular mode, a mode disagreement, union content the text
+// merge cannot read, and two refusing paths where the earlier one wins the reason.
+func settleRefusalRows(journal string) []settleRefusalRow {
+	shared := map[string]string{journal: "shared\n"}
+	return []settleRefusalRow{
+		{"outside-table-beside-a-capture-path", "composition conflict: textual; settle refused: path outside the capture table (named)", shared,
+			func(t *testing.T, root string) {
+				write(t, root, journal, "shared\ndestination\n")
+				write(t, root, "named", "destination")
+			},
+			func(t *testing.T, root string) {
+				write(t, root, journal, "shared\nsource\n")
+				write(t, root, "named", "source")
+			}},
+		{"non-regular-mode", "settle refused: non-regular mode (" + journal + ")", shared,
+			func(t *testing.T, root string) { symlinkAt(t, root, journal) },
+			func(t *testing.T, root string) { write(t, root, journal, "shared\nsource\n") }},
+		{"mode-disagreement", "settle refused: mode disagreement (" + journal + ")", shared,
+			func(t *testing.T, root string) {
+				write(t, root, journal, "shared\ndestination\n")
+				if err := os.Chmod(filepath.Join(root, filepath.FromSlash(journal)), 0o755); err != nil {
+					t.Fatal(err)
+				}
+			},
+			func(t *testing.T, root string) { write(t, root, journal, "shared\nsource\n") }},
+		{"union-content-not-text", "settle refused: union content not text (" + journal + ")", map[string]string{journal: "shared\x00binary\n"},
+			func(t *testing.T, root string) { write(t, root, journal, "shared\x00binary\x01destination\n") },
+			func(t *testing.T, root string) { write(t, root, journal, "shared\x00binary\x02source\n") }},
+		{"the-earlier-refusing-path-wins", "settle refused: path outside the capture table (capture.md)",
+			map[string]string{journal: "shared\n", "capture.md": "shared\n"},
+			func(t *testing.T, root string) {
+				symlinkAt(t, root, journal)
+				write(t, root, "capture.md", "destination")
+			},
+			func(t *testing.T, root string) {
+				write(t, root, journal, "shared\nsource\n")
+				write(t, root, "capture.md", "source")
+			}},
+	}
 }
 
 func TestMergePublishesPreviousTipAsFirstParent(t *testing.T) {

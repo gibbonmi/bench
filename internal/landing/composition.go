@@ -26,17 +26,26 @@ type CompositionResult struct {
 }
 
 // Conflict describes why Git could not produce one prospective tree, and names
-// every path it could not merge.
+// every path it could not merge. Refusal carries the settle refusal when the capture
+// policy was engaged and refused; its zero value means the policy settled nothing.
 type Conflict struct {
-	Kind  string
-	Paths []string
+	Kind    string
+	Paths   []string
+	Refusal settlepolicy.Refusal
 }
 
-// ConflictError is the refusal a conflicted reviewed landing returns. Its message is
-// the bounded kind; the paths ride typed so the caller can render them.
+// ConflictError is the refusal a conflicted reviewed landing returns. Its message leads
+// with the bounded kind, so every prefix match holds, and names the settle reason and its
+// refusing paths when one exists. The paths ride typed so the caller can render them.
 type ConflictError struct{ Conflict }
 
-func (e ConflictError) Error() string { return "composition conflict: " + e.Kind }
+func (e ConflictError) Error() string {
+	kind := "composition conflict: " + e.Kind
+	if e.Refusal.Reason == "" {
+		return kind
+	}
+	return kind + "; settle refused: " + e.Refusal.Reason + " (" + strings.Join(e.Refusal.Paths, ", ") + ")"
+}
 
 // Compose performs Git's three-way tree merge using the repository's real merge base.
 // ReviewBase is metadata only and is never used as the merge base.
@@ -68,15 +77,14 @@ func (o Owner) Compose(r CompositionRequest) (CompositionResult, error) {
 	if parseErr != nil {
 		return CompositionResult{}, parseErr
 	}
-	// The refusal ticket 08 surfaces on Conflict is dropped here; today's message
-	// carries the kind alone.
-	tree, resolved, _, ok, err := resolveCaptureConflict(r.Root, out, records)
+	tree, resolved, refusal, ok, err := resolveCaptureConflict(r.Root, out, records)
 	if err != nil {
 		return CompositionResult{}, err
 	}
 	if ok {
 		return CompositionResult{Base: base, Tree: tree, Resolved: resolved}, nil
 	}
+	conflict.Refusal = refusal
 	return CompositionResult{Base: base, Conflict: conflict}, nil
 }
 
