@@ -544,3 +544,6 @@ leaf-touching slices each cost fewer tokens than the baseline slice.
 Every write delegate runs `opus` at low or medium effort. The review round
 runs `sonnet` at xhigh effort by the reviewer's `--reviewer sonnet xhigh`
 override of 2026-09-04.
+
+Approval: on 2026-09-04 the reviewer accepted the spec, the eight tickets, and
+decisions (a) to (p) as recorded, with the words "I accept all decisions".
