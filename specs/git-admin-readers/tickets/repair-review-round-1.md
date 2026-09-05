@@ -1,7 +1,7 @@
 # Repair the review round 1 findings
 
 Blocked by: add-the-git-plumbing-owner-check.md
-Writes: internal/git/worktree_admin.go, internal/git/admin_readers_test.go, internal/worktree/admin_readers_test.go, internal/conformance/git_plumbing_owner_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
+Writes: internal/git/worktree_admin.go, internal/git/admin_readers_test.go, internal/canonicalpath/canonicalpath.go, internal/canonicalpath/canonicalpath_test.go, internal/worktree/admin_readers_test.go, internal/conformance/git_plumbing_owner_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
 Covers: GR2, GR5, GR11, GR27
 
 ## What to build
@@ -15,7 +15,9 @@ internal/worktree/admin_readers_test.go, and `checkGitPlumbingOwner` with
 `TestGitPlumbingOwnerRedsARetypedFlag` in
 internal/conformance/git_plumbing_owner_test.go.
 
-Change `AdminPath` to join a relative answer onto the symlink-resolved absolute root.
+Change `AdminPath` to join a relative answer onto the root that `canonicalpath.Resolve`
+returns. Change `Resolve` to resolve symlinks before it absolutizes. The
+`canonical-path-owner` check reds a second derivation.
 A root that reaches the repository through a symlink followed by `..` then answers
 the directory Git meant. Keep the final component unresolved, so GR40 holds. Rewrite the
 doc comment so that it states the constraint without a claim about every caller.

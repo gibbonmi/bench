@@ -254,6 +254,8 @@ under the reviewer's 2026-08-26 rule.
 - `internal/worktree/reauthorize_test.go`
 - `internal/worktree/admin_readers_test.go` (new)
 - `internal/worktree/parallel_census_test.go`
+- `internal/canonicalpath/canonicalpath.go`
+- `internal/canonicalpath/canonicalpath_test.go`
 - `internal/gate/lane.go`
 - `internal/gate/verdict.go`
 - `internal/gate/run_transaction.go`
@@ -332,6 +334,7 @@ Build decisions recorded for reviewer veto:
 - The check lands in the contract ticket, after every migration, so no in-flight state reds it.
 - The `relative-git-path` and `fail-git-path` stubs pass every other invocation to the real `git`. A verb that runs many Git commands must reach the hooks query.
 - The file reader uses Git's default path format and joins a relative answer onto the root. The build found on 2026-09-05 that `--path-format=absolute` resolves an existing symlink. Under that spelling `TestReleaseSymlinkLeaseRetainsAsUncertain` reds, and every `Lstat` at a file site is defeated. Rows GR5, GR20 to GR23, GR25, and GR26 now drive a failing file query, and GR40 pins the symlink posture. The reviewer can veto this at the review.
+- The landing gate found that the repair re-derived the canonical path beside its owner. `canonicalpath.Resolve` ran `filepath.Abs` before `filepath.EvalSymlinks`, so it cleaned a `..` after a symlink lexically, which is the defect GR5 pins. The fix moves into the owner: `Resolve` resolves symlinks first, and the file reader calls it. The fence gains the owner's two files.
 - Review round 1 on 2026-09-05 accepted four repairs. The file reader resolves the root's symlinks before the join (GR2, GR5). The GR11 test proves the lock is held, and the check walks the module root (GR27). The repair commit closed the pickup file. The non-blocking findings stay here for the reviewer's decision:
   - `Worktrees` repeats the common-directory resolution that `CommonDir` owns.
   - `AdminPath` repeats the empty-answer refusal that `validateCommonDir` owns.
