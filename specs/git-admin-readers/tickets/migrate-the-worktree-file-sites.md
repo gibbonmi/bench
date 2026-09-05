@@ -37,16 +37,16 @@ close the worktree binding, and this ticket edits none of them.
 
 Add the two new tests to internal/worktree/admin_readers_test.go, which the
 blocker ticket creates. Name them `TestLeaseFileMatchesIndependentRevParse` and
-`TestLeaseFileRefusesRelativeAnswer`. Drive the first over a linked worktree
+`TestLeaseFileRefusesUnresolvedAnswer`. Drive the first over a linked worktree
 against an independent `rev-parse` run. Drive the second with the
-`relative-git-path` stub on `PATH`.
+`fail-git-path` stub on `PATH`.
 
 ## Acceptance
 
 - [ ] `LeaseFile` answers the independent `rev-parse --git-path bench-lease` path over a linked worktree.
-- [ ] `LeaseFile` returns a typed resolution failure under the `relative-git-path` stub.
+- [ ] `LeaseFile` returns a typed resolution failure under the `fail-git-path` stub.
 - [ ] The two index reads call the file reader and spell no Git flag.
 - [ ] The four migrated test sites call the file reader or the directory reader.
 - [ ] The three named tests pass with their assertions unchanged.
 - [ ] `bench structure --growth <base>` reports no over-budget file that gained a line.
-- [ ] Self-probe: restore the join onto the worktree path in `LeaseFile`, and report the relative-answer test red.
+- [ ] Self-probe: restore the join onto the worktree path in `LeaseFile`, and report the unresolved-answer test red.

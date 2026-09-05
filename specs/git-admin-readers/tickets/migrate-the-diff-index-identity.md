@@ -16,15 +16,15 @@ typed failure of the reader instead of the join. Keep the current answer for an
 absent index file, because absence stays the caller's fact.
 
 Add one new test to internal/diff/identity_test.go, beside the existing identity
-tests. Name it `TestIndexIdentityRefusesRelativeAnswer`. The five command
+tests. Name it `TestIndexIdentityRefusesUnresolvedAnswer`. The five command
 registries in the `Writes:` line are closure headroom. They close the diff
-binding, and this ticket edits none of them. Install the `relative-git-path` stub on
-`PATH` with `gittest.StubGit`. The stub answers the file query with a relative
-path and passes every other invocation to the real `git`.
+binding, and this ticket edits none of them. Install the `fail-git-path` stub on
+`PATH` with `gittest.StubGit`. The stub exits nonzero on the file query and
+passes every other invocation to the real `git`.
 
 ## Acceptance
 
 - [ ] `indexIdentity` calls the file reader and spells no Git flag.
-- [ ] `indexIdentity` returns a typed resolution failure under the `relative-git-path` stub.
+- [ ] `indexIdentity` returns a typed resolution failure under the `fail-git-path` stub.
 - [ ] The pre-existing `internal/diff` suite passes with its test logic unchanged.
 - [ ] Self-probe: restore the join onto the root, and report the new test red.

@@ -154,13 +154,46 @@ func regularFileAt(t *testing.T, root, answer string) {
 	}
 }
 
-func TestAdminPathRefusesRelativeAnswer(t *testing.T) {
+// TestAdminPathJoinsRelativeAnswerOntoRoot proves the file reader joins git's
+// relative answer onto the absolute root, because git ran with -C root.
+// (Coverage row GR5.)
+func TestAdminPathJoinsRelativeAnswerOntoRoot(t *testing.T) {
 	root := newRepo(t)
 	gittest.StubGit(t, root, "relative-git-path", filepath.Join(t.TempDir(), "argv"))
-	_, err := AdminPath(root, "index")
-	var resolution *ResolutionError
-	if !errors.As(err, &resolution) || !strings.Contains(err.Error(), "relative path") || resolution.Action != investigateGitFailureAction {
-		t.Fatalf("AdminPath refusal = %v, want a typed refusal holding %q", err, "relative path")
+	absolute, err := filepath.Abs(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(absolute, ".git", "index")
+	got, err := AdminPath(root, "index")
+	if err != nil || got != want {
+		t.Fatalf("AdminPath(%s, index) = %q, %v, want %q, nil", root, got, err, want)
+	}
+}
+
+// TestAdminPathKeepsSymlinkPath proves the file reader answers the symlink's
+// own path, not its target, so an Lstat at a file site still sees the symlink.
+// (Coverage row GR40.)
+func TestAdminPathKeepsSymlinkPath(t *testing.T) {
+	root := newRepo(t)
+	target := filepath.Join(t.TempDir(), "outside-lease")
+	if err := os.WriteFile(target, []byte("lease"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	lease := filepath.Join(root, ".git", BenchLeaseFilename)
+	if err := os.Symlink(target, lease); err != nil {
+		capability.Capability(t, capability.Symlink, "symlinks unavailable: "+err.Error())
+	}
+	got, err := AdminPath(root, BenchLeaseFilename)
+	if err != nil {
+		t.Fatalf("AdminPath(%s, %s) = %v, want the symlink's own path", root, BenchLeaseFilename, err)
+	}
+	info, err := os.Lstat(got)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode()&os.ModeSymlink == 0 {
+		t.Fatalf("AdminPath returned %q, whose Lstat mode is %v, want a symlink", got, info.Mode())
 	}
 }
 

@@ -47,7 +47,7 @@ Add the new tests to the adopt suites. Put
 `TestInspectPrePushReportsAbsentWhenHooksDirectoryIsUnresolved` in
 internal/adopt/link_hook_test.go. Put `TestDoctorFixRefusesUnresolvedHooksDirectory`
 and `TestUnlinkRefusesUnresolvedHooksDirectory` in internal/adopt/adopt_test.go.
-Run each verb over a repository with the `relative-git-path` stub on `PATH`.
+Run each verb over a repository with the `fail-git-path` stub on `PATH`.
 
 ## Acceptance
 

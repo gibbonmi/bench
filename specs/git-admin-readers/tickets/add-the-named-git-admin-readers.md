@@ -2,7 +2,7 @@
 
 Blocked by: none
 Writes: internal/git/worktree_admin.go, internal/git/checkout.go, internal/git/admin_readers_test.go (new), internal/git/worktree_admin_hostile_test.go, internal/git/worktree_admin_enum_test.go, internal/gittest/gittest.go
-Covers: GR1, GR2, GR3, GR4, GR5, GR6, GR7, GR8, GR9, GR36, GR38, GR39
+Covers: GR1, GR2, GR3, GR4, GR5, GR6, GR7, GR8, GR9, GR36, GR38, GR39, GR40
 
 ## What to build
 
@@ -24,12 +24,14 @@ Export two readers under the exact names `AdminDir(root string) (string, error)`
 and `AdminPath(root, name string) (string, error)`. Every sibling ticket calls
 these two names, so do not rename them. `AdminDir` runs the arguments `rev-parse
 --path-format=absolute --git-dir` through `boundedGit`. `AdminPath` runs
-`rev-parse --path-format=absolute --git-path <name>` the same way. Route
+`rev-parse --git-path <name>` in Git's default path format the same way. It
+joins a relative answer onto the absolute root. The default format never
+resolves a symlink. Route
 `CommonDir` through `boundedGit` too.
 
 Validate the answer of `AdminDir` and the answer of `CommonDir` with
 `validateCommonDir`. Refuse an empty answer, a missing path, a symlink, and a
-non-directory. Refuse an empty answer and a relative answer in `AdminPath`. Run
+non-directory. Refuse an empty answer in `AdminPath`. Run
 no existence check in `AdminPath`, because absence is the caller's fact. Add a
 `Subject` field to `ResolutionError` with the three nouns `git common directory`,
 `checkout administration directory`, and `checkout administration path`. Open the
@@ -39,11 +41,12 @@ failure`.
 Change `IsPrimaryCheckout` to call `AdminDir` and `CommonDir`. Keep no
 `--absolute-git-dir` spelling in the adapter. Add the stub modes `bad-git-dir`,
 `empty-git-dir`, `symlink-git-dir`, `file-git-dir`, `block-git-dir`,
-`block-git-path`, `fail-git-dir`, and `relative-git-path` to `StubGitDir`.
+`block-git-path`, `fail-git-dir`, `fail-git-path`, and `relative-git-path` to `StubGitDir`.
 Answer the directory query and the file query in the stub.
 
-In `fail-git-dir` mode exit nonzero on the directory query. In `relative-git-path` mode answer the
-file query with `.git/<name>`. In those two modes pass every other invocation to
+In `fail-git-dir` mode exit nonzero on the directory query, and in `fail-git-path`
+mode exit nonzero on the file query. In `relative-git-path` mode answer the
+file query with `.git/<name>`. In those three modes pass every other invocation to
 the real `git`, which the stub locates before the test replaces `PATH`. Five
 sibling tickets need that pass-through, so prove it with one adapter test.
 
@@ -58,7 +61,8 @@ because the ordinary-build census allows one.
 - [ ] The file reader for `index` answers the independent `rev-parse` path over the same three repositories.
 - [ ] The directory reader and `CommonDir` each refuse a missing path, an empty answer, and a symlink.
 - [ ] The directory reader refuses a regular-file answer with the text `non-directory`.
-- [ ] The file reader refuses a relative answer with the text `relative path`.
+- [ ] The file reader joins a relative answer onto the absolute root.
+- [ ] The file reader returns a symlinked lease's own path, and `Lstat` reports a symlink.
 - [ ] The directory reader returns a `timed out` typed failure under a 50-millisecond test bound.
 - [ ] The file reader and `CommonDir` each return a `timed out` typed failure under the same bound.
 - [ ] With an empty `PATH`, the three readers each return a typed failure that holds `rev-parse` and `executable file not found`.

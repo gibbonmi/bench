@@ -184,7 +184,7 @@ func adminDirArgs(root string) []string {
 }
 
 func adminPathArgs(root, name string) []string {
-	return []string{"-C", root, "rev-parse", "--path-format=absolute", "--git-path", name}
+	return []string{"-C", root, "rev-parse", "--git-path", name}
 }
 
 // CommonDir resolves the repository's shared administrative directory, refusing
@@ -209,8 +209,15 @@ func AdminDir(root string) (string, error) {
 }
 
 // AdminPath resolves the absolute path of a named file inside the checkout's
-// administration directory. It refuses an empty or relative answer, and it runs
-// no existence check, because absence is the caller's fact.
+// administration directory. It refuses an empty answer, and it runs no existence
+// check, because absence is the caller's fact.
+//
+// The query uses git's default path format, not --path-format=absolute, because
+// the absolute format resolves an existing symlink and would answer the target
+// rather than the named file. Every caller lstats the answer, so the symlink
+// must survive. The default format prints a path relative to git's working
+// directory for a primary checkout, which is root, so a relative answer joins
+// onto the absolute form of root.
 func AdminPath(root, name string) (string, error) {
 	raw, err := boundedGit(subjectAdminPath, adminPathArgs(root, name)...)
 	if err != nil {
@@ -220,10 +227,14 @@ func AdminPath(root, name string) (string, error) {
 	if answer == "" {
 		return "", &ResolutionError{Err: errors.New("rev-parse returned an empty path"), Action: investigateGitFailureAction, Subject: subjectAdminPath}
 	}
-	if !filepath.IsAbs(answer) {
-		return "", &ResolutionError{Path: answer, Err: errors.New("relative path"), Action: investigateGitFailureAction, Subject: subjectAdminPath}
+	if filepath.IsAbs(answer) {
+		return answer, nil
 	}
-	return answer, nil
+	absoluteRoot, absErr := filepath.Abs(root)
+	if absErr != nil {
+		return "", &ResolutionError{Path: root, Err: fmt.Errorf("cannot absolutize the checkout root: %w", absErr), Action: investigateGitFailureAction, Subject: subjectAdminPath}
+	}
+	return filepath.Join(absoluteRoot, answer), nil
 }
 
 func validateCommonDir(common, subject string) (string, error) {

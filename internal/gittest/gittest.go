@@ -44,10 +44,11 @@ func StubGit(t testing.TB, root, mode, logPath string) string {
 // needs a symlink or a regular file at the bad-git-dir, symlink-git-dir, or
 // file-git-dir answer creates it at root joined with "missing-admin",
 // "symlink-admin", or "file-admin" respectively — the same join the stub uses.
-// The file-query modes are block-git-path and relative-git-path. In
-// fail-git-dir and relative-git-path mode, every invocation other than the
-// mode's own targeted query passes through to the real git the stub locates
-// with exec.LookPath before the test replaces PATH.
+// The file-query modes are block-git-path, relative-git-path, and
+// fail-git-path. In fail-git-dir, relative-git-path, and fail-git-path mode,
+// every invocation other than the mode's own targeted query passes through to
+// the real git the stub locates with exec.LookPath before the test replaces
+// PATH.
 func StubGitDir(t testing.TB, root, mode, logPath string) (string, string) {
 	t.Helper()
 	dir := t.TempDir()
@@ -73,6 +74,12 @@ printf '%%s\n' "$*" >> %[1]q
 if [ %[2]q = fail-git-dir ]; then
   case "$*" in
     *'--git-dir'*) exit 1;;
+  esac
+  exec %[3]q "$@"
+fi
+if [ %[2]q = fail-git-path ]; then
+  case "$*" in
+    *'--git-path'*) exit 1;;
   esac
   exec %[3]q "$@"
 fi
