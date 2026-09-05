@@ -204,7 +204,7 @@ func worktreeTree(path, admin string) (string, error) {
 	return gitInput(path, []string{"GIT_INDEX_FILE=" + index}, nil, "write-tree")
 }
 func realIndexTree(path, admin string) (string, error) {
-	realIndex, err := git.Output("-C", path, "rev-parse", "--path-format=absolute", "--git-path", "index")
+	realIndex, err := git.AdminPath(path, "index")
 	if err != nil {
 		return "", err
 	}
