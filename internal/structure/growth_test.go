@@ -280,3 +280,75 @@ func TestGrowthUnresolvableBaseIsLoud(t *testing.T) {
 		t.Errorf("unresolvable base: report %q exit %d, want an empty report at exit 1", report, code)
 	}
 }
+
+// SR62: the mode reads the tip from the working tree, so it fires in the shape the fast
+// lane runs it — a detached checkout whose HEAD is the base and whose working tree holds
+// the composed tree. A query between two commits sees nothing there.
+func TestGrowthReadsTheWorkingTreeNotHEAD(t *testing.T) {
+	t.Setenv("BENCH_MAX_LINES", "10")
+	root := initRepo(t)
+	write(t, root, "big.go", lines(12))
+	commit(t, root, "base")
+	base := headSha(t, root)
+
+	// The composed tree is an index-only object: the file grows, `write-tree` names the
+	// tree, and no commit carries it. That is what the lane hands its private checkout.
+	write(t, root, "big.go", lines(15))
+	add(t, root)
+	tree := run(t, root, "write-tree")
+
+	checkout := filepath.Join(t.TempDir(), "lane")
+	run(t, root, "worktree", "add", "--detach", checkout, base)
+	run(t, checkout, "read-tree", "--reset", "-u", tree)
+
+	if head := run(t, checkout, "rev-parse", "HEAD"); head != base {
+		t.Fatalf("checkout HEAD = %q, want the base %q", head, base)
+	}
+
+	report, code := growthRun(t, checkout, base)
+	if want := "FILE GREW       15 lines, was 12 (max 10)   big.go"; !strings.Contains(report, want) {
+		t.Errorf("missing growth row %q:\n%s", want, report)
+	}
+	if code != 1 {
+		t.Errorf("exit = %d, want 1:\n%s", code, report)
+	}
+	if head := run(t, checkout, "rev-parse", "HEAD"); head != base {
+		t.Errorf("HEAD moved to %q; the mode must read the working tree, not a commit", head)
+	}
+}
+
+// SR62: an empty `--growth` value names no base. The grammar refuses it, so the mode
+// never resolves it to a self-comparison that passes and prints a dangling base.
+func TestGrowthEmptyBaseRefuses(t *testing.T) {
+	root := initRepo(t)
+	write(t, root, "ok.go", lines(1))
+	commit(t, root, "base")
+	t.Chdir(root)
+
+	report, code := Command([]string{"--growth", ""})
+	if want := `usage: bench structure (unknown argument: --growth "")` + "\n"; report != want {
+		t.Errorf("report = %q, want %q", report, want)
+	}
+	if code != 2 {
+		t.Errorf("exit = %d, want 2", code)
+	}
+}
+
+// SR63: `--since` and `--growth` name two different scopes, so a call carrying both is a
+// mistyped invocation. It refuses with the usage line and one reason rather than running
+// one flag and dropping the other in silence.
+func TestSinceWithGrowthRefuses(t *testing.T) {
+	root := initRepo(t)
+	write(t, root, "ok.go", lines(1))
+	commit(t, root, "base")
+	base := headSha(t, root)
+	t.Chdir(root)
+
+	report, code := Command([]string{"--since", base, "--growth", base})
+	if want := grammar.Help + " (--since and --growth exclude each other)" + "\n"; report != want {
+		t.Errorf("report = %q, want %q", report, want)
+	}
+	if code != 2 {
+		t.Errorf("exit = %d, want 2", code)
+	}
+}
