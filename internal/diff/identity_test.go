@@ -1,6 +1,7 @@
 package diff
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -8,6 +9,9 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestCommandRefusesEachSnapshotIdentityDimensionAfterOneRetry(t *testing.T) {
@@ -203,6 +207,19 @@ func TestCommandResolvesRecordedBaseOncePerAttempt(t *testing.T) {
 	}
 	if got := strings.Count(string(raw), "merge-base --is-ancestor"); got != 2 {
 		t.Fatalf("recorded-base semantic resolutions = %d, want one fresh resolution per attempt; trace:\n%s", got, raw)
+	}
+}
+
+// TestIndexIdentityRefusesRelativeAnswer is GR26: indexIdentity must call the
+// named reader and surface its typed failure rather than join a relative
+// answer onto the root. This test sets PATH and so stays serial.
+func TestIndexIdentityRefusesRelativeAnswer(t *testing.T) {
+	root, _, _, _ := seedDivergedRepo(t)
+	gittest.StubGit(t, root, "relative-git-path", filepath.Join(t.TempDir(), "argv"))
+	_, err := indexIdentity(root)
+	var resolutionErr *git.ResolutionError
+	if !errors.As(err, &resolutionErr) {
+		t.Fatalf("indexIdentity(%s) error = %v, want a *git.ResolutionError", root, err)
 	}
 }
 
