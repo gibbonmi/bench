@@ -179,7 +179,7 @@ func planExplicitWith(j joins, root, path string, options CleanupOptions) (Clean
 		plan.Fingerprint = explicitRetainFingerprint(common, defaultRef, defaultOID, target, plan, options)
 		return plan, nil
 	}
-	admin, err := git.Output("-C", target, "rev-parse", "--path-format=absolute", "--git-dir")
+	admin, err := git.AdminDir(target)
 	if err != nil {
 		return CleanupPlan{}, err
 	}
@@ -258,7 +258,7 @@ func planExplicitWith(j joins, root, path string, options CleanupOptions) (Clean
 	if err != nil {
 		return CleanupPlan{}, err
 	}
-	indexPath, err := git.Output("-C", target, "rev-parse", "--path-format=absolute", "--git-path", "index")
+	indexPath, err := git.AdminPath(target, "index")
 	if err != nil {
 		return CleanupPlan{}, err
 	}

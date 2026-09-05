@@ -47,7 +47,7 @@ func recoverAssignmentWithFault(root string, assignment intent.Assignment, fault
 	if err != nil {
 		return assignment, fmt.Errorf("read recovery base tree: %w", err)
 	}
-	admin, err := git.Output("-C", assignment.Worktree, "rev-parse", "--path-format=absolute", "--git-dir")
+	admin, err := git.AdminDir(assignment.Worktree)
 	if err != nil {
 		return assignment, err
 	}
@@ -204,7 +204,7 @@ func worktreeTree(path, admin string) (string, error) {
 	return gitInput(path, []string{"GIT_INDEX_FILE=" + index}, nil, "write-tree")
 }
 func realIndexTree(path, admin string) (string, error) {
-	realIndex, err := git.Output("-C", path, "rev-parse", "--path-format=absolute", "--git-path", "index")
+	realIndex, err := git.AdminPath(path, "index")
 	if err != nil {
 		return "", err
 	}

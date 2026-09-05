@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/worktree"
@@ -331,6 +332,21 @@ func TestCommandArgs(t *testing.T) {
 	// --stdout runs inside this repo, the test cwd, and emits the document. It writes nothing.
 	if r, c := Command([]string{"--stdout"}); c != 0 || !strings.HasPrefix(r, "<!DOCTYPE html>") {
 		t.Errorf("--stdout: exit %d, prefix %q, want exit 0 and an HTML document", c, r[:min(20, len(r))])
+	}
+}
+
+// A reader that cannot resolve the checkout administration directory refuses the write
+// with the dashboard's own diagnostic, exit 1, instead of writing under a guessed path.
+func TestDashboardWriteRefusesWhenTheReaderFails(t *testing.T) {
+	root := gittest.RepoOnBranch(t, "main")
+	logPath := filepath.Join(t.TempDir(), "git.log")
+	gittest.StubGit(t, root, "fail-git-dir", logPath)
+	t.Chdir(root)
+
+	r, c := Command(nil)
+
+	if c != 1 || !strings.Contains(r, "cannot resolve git dir") {
+		t.Fatalf("Command(nil) = %q, %d, want exit 1 and %q", r, c, "cannot resolve git dir")
 	}
 }
 

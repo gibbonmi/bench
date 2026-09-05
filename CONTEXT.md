@@ -68,6 +68,10 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   `commondir`, `locked`, …), read by `git worktree` subcommands. Git-owned state
   that Bench never writes. Not "metadata file", not "worktree config" — admin
   entry.
+- **checkout administration directory** — the directory `rev-parse --git-dir`
+  names. For the primary checkout it is the common directory. For a linked
+  worktree it is that worktree's admin entry directory. Avoid "git dir",
+  "gitdir", "private git dir" — checkout administration directory.
 - **identity component** — one named check a lifecycle verb runs against an
   assignment's own records. The components are the request token, the assignment
   state, the assignment path, the owner marker, the worktree registration, and the

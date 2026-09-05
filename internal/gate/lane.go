@@ -101,8 +101,8 @@ func runLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 	if len(req.Checks) == 0 {
 		return LaneResult{}, errors.New("gate: lane declares no checks")
 	}
-	gitdir, err := benchgit.Output("-C", req.Root, "rev-parse", "--absolute-git-dir")
-	if err != nil || gitdir == "" {
+	gitdir, err := benchgit.AdminDir(req.Root)
+	if err != nil {
 		return LaneResult{}, errors.New("gate: git directory unavailable")
 	}
 	artifacts, err := openProspectiveArtifacts(req.Root, req.Tree)

@@ -55,7 +55,11 @@ func Unlink(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 
-	plan := planUnlink(root, m, dryRun)
+	plan, err := planUnlink(root, m, dryRun)
+	if err != nil {
+		fmt.Fprintf(stderr, "bench unlink: %s: %v\n", root, err)
+		return 1
+	}
 	if err := writeUnlinkReport(stdout, root, dryRun, plan); err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
@@ -79,7 +83,7 @@ type unlinkPlan struct {
 	manifestKept bool
 }
 
-func planUnlink(root string, m Manifest, dryRun bool) unlinkPlan {
+func planUnlink(root string, m Manifest, dryRun bool) (unlinkPlan, error) {
 	var p unlinkPlan
 
 	rels := make([]string, 0, len(m.hashes))
@@ -128,7 +132,11 @@ func planUnlink(root string, m Manifest, dryRun bool) unlinkPlan {
 
 	p.emptyDirs = sweepEmptyDirs(candidateDirs, removedSet, dryRun)
 	p.agentsAction = stripAgentsForUnlink(root, dryRun, &p)
-	p.hookAction = removeManagedHook(root, dryRun)
+	hookAction, err := removeManagedHook(root, dryRun)
+	if err != nil {
+		return unlinkPlan{}, err
+	}
+	p.hookAction = hookAction
 
 	// Manifest removed last, and only when nothing was refused, so a partial run leaves the
 	// residual managed state tracked for a follow-up. Dry-run never removes it.
@@ -137,7 +145,7 @@ func planUnlink(root string, m Manifest, dryRun bool) unlinkPlan {
 	} else if !dryRun {
 		_ = os.Remove(filepath.Join(root, ".bench", "link-manifest.tsv"))
 	}
-	return p
+	return p, nil
 }
 
 // resolveInside resolves a manifest rel against the repo root and returns the absolute path
@@ -268,16 +276,20 @@ func stripAgentsForUnlink(root string, dryRun bool, p *unlinkPlan) string {
 // resolves the effective hooks directory the same way link does, honoring core.hooksPath.
 // A hook without the marker is a foreign hook, left in place; its presence is not a
 // refusal because it was never Bench's. The hook is bespoke, not a manifest row.
-func removeManagedHook(root string, dryRun bool) string {
-	path := filepath.Join(hooksDir(root), "pre-push")
+func removeManagedHook(root string, dryRun bool) (string, error) {
+	hooks, err := hooksDir(root)
+	if err != nil {
+		return "", err
+	}
+	path := filepath.Join(hooks, "pre-push")
 	content, err := os.ReadFile(path)
 	if err != nil || !strings.Contains(string(content), PrePushMarker) {
-		return ""
+		return "", nil
 	}
 	if !dryRun {
 		_ = os.Remove(path)
 	}
-	return "pre-push hook (managed - removed)"
+	return "pre-push hook (managed - removed)", nil
 }
 
 func writeUnlinkReport(w io.Writer, root string, dryRun bool, p unlinkPlan) error {

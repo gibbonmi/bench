@@ -466,13 +466,12 @@ func validateOwnerMarker(root, path string) (ownerEvidence, error) {
 	if registration == nil {
 		return ownerEvidence{}, errors.New("target is not the current registered worktree")
 	}
-	admin, err := git.Output("-C", target, "rev-parse", "--path-format=absolute", "--git-dir")
-	if err != nil || !filepath.IsAbs(admin) {
-		return ownerEvidence{}, errors.New("private worktree administration directory is unavailable")
+	admin, err := git.AdminDir(target)
+	if err != nil {
+		return ownerEvidence{}, errors.New("checkout administration directory is unavailable")
 	}
-	admin = filepath.Clean(admin)
 	common, err := git.CommonDir(root)
-	if err != nil || !filepath.IsAbs(common) {
+	if err != nil {
 		return ownerEvidence{}, errors.New("common Git directory is unavailable")
 	}
 	privateRoot := filepath.Join(filepath.Clean(common), "worktrees")

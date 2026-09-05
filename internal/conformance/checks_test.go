@@ -30,12 +30,11 @@ import (
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
-// checkBinding is the executable half of a registry row. The map below deliberately
-// repeats only the facts an independent mutation oracle needs: the name-to-function
-// binding, tier, and subject. Registry order, meta membership, and inputs stay single-
-// sourced in registry.Checks. Keeping these three facts independent makes the named
-// CM5/CM6/CM7 mutations red. They red when functions are swapped, or when the advertised
-// tier or subject drifts while the executable binding is unchanged.
+// checkBinding is the executable half of a registry row. The map below repeats only the facts an
+// independent mutation oracle needs: the name-to-function binding, tier, and subject. Registry
+// order, meta membership, and inputs stay single-sourced in registry.Checks. Keeping them
+// independent makes the named CM5/CM6/CM7 mutations red when a function swaps, or the advertised
+// tier or subject drifts while the binding is unchanged.
 type checkBinding struct {
 	implementation any
 	tier           registry.Tier
@@ -69,6 +68,7 @@ func init() {
 		"bounds-policy":                 {checkBoundsPolicy, registry.Dev, registry.SubjectRoot},
 		"marker-wait-deadlines":         {checkMarkerWaitDeadlines, registry.Dev, registry.SubjectRoot},
 		"canonical-path-owner":          {checkCanonicalPathOwner, registry.Dev, registry.SubjectRoot},
+		"git-plumbing-owner":            {checkGitPlumbingOwner, registry.Dev, registry.SubjectRoot},
 		"cancel-signal-registrations":   {checkCancelSignalRegistrations, registry.Dev, registry.SubjectRoot},
 		"wait-deadline-literals":        {checkWaitDeadlineLiterals, registry.Dev, registry.SubjectRoot},
 		"subcommand-routing":            {checkSubcommandRouting, registry.Dev, registry.SubjectRoot},

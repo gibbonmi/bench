@@ -63,7 +63,7 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 			return reusedGreenResult(stdout, reuse)
 		}
 	}
-	gitdir, err := benchgit.Output("-C", storageRoot, "rev-parse", "--absolute-git-dir")
+	gitdir, err := benchgit.AdminDir(storageRoot)
 	if err != nil {
 		return operational(storageRoot, 0, stderr, "git directory unavailable")
 	}

@@ -80,7 +80,7 @@ func assertVerdictMatchesPlan(t *testing.T, root, path string, options CleanupOp
 		wantRecovery, err = nextRecoveryRef(root, *verdict.Assignment)
 		mustNoError(t, err)
 	case recoveryLookupForeign:
-		admin, adminErr := git.Output("-C", target, "rev-parse", "--path-format=absolute", "--git-dir")
+		admin, adminErr := git.AdminDir(target)
 		mustNoError(t, adminErr)
 		wantRecovery, err = predictedForeignRef(root, target, admin)
 		mustNoError(t, err)
@@ -110,7 +110,7 @@ func gatherExplicitFactsForTest(t *testing.T, root, target string, options Clean
 		}
 	}
 	requireTest(t, registration != nil, "fixture target %s is not a registered worktree", target)
-	admin, err := git.Output("-C", target, "rev-parse", "--path-format=absolute", "--git-dir")
+	admin, err := git.AdminDir(target)
 	mustNoError(t, err)
 
 	facts := explicitFacts{

@@ -282,9 +282,9 @@ func ensureRollbackAttribution(root string, assignment intent.Assignment) error 
 	return errors.Join(markerErr, recordErr)
 }
 func markerPath(path string) (string, error) {
-	admin, err := git.Output("-C", path, "rev-parse", "--path-format=absolute", "--git-dir")
-	if err != nil || !filepath.IsAbs(admin) {
-		return "", errors.New("resolve private worktree administration directory")
+	admin, err := git.AdminDir(path)
+	if err != nil {
+		return "", errors.New("resolve checkout administration directory")
 	}
 	return filepath.Join(admin, OwnerMarkerFile), nil
 }

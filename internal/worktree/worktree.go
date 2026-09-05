@@ -33,14 +33,7 @@ func poolAt(home, root string) string { return poolkey.Pool(home, root) }
 // LeaseFile returns the absolute path of the repository-specific lease file for path.
 // It returns an error when path is not a worktree whose git administration path resolves.
 func LeaseFile(path string) (string, error) {
-	lease, err := git.Output("-C", path, "rev-parse", "--git-path", git.BenchLeaseFilename)
-	if err != nil {
-		return "", err
-	}
-	if !filepath.IsAbs(lease) {
-		lease = filepath.Join(path, lease)
-	}
-	return lease, nil
+	return git.AdminPath(path, git.BenchLeaseFilename)
 }
 func PoolCommand(home string, args []string) (string, int) {
 	var root string

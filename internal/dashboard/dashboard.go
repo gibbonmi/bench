@@ -75,7 +75,7 @@ func Command(args []string) (string, int) {
 	if toStdout {
 		return page, 0
 	}
-	gitDir, err := git.Output("-C", root, "rev-parse", "--absolute-git-dir")
+	gitDir, err := git.AdminDir(root)
 	if err != nil {
 		return toon.Errorf("cannot resolve git dir", err.Error()) + "\n", 1
 	}
