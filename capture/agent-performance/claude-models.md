@@ -1,27 +1,25 @@
 # Claude model scorecard
 
-Last incorporated landing: `structural-refactor-pass` (`e86d344d`, 2026-09-05).
-Fable/low ran as orchestrator across eleven sibling worktrees. It charged four
-Opus censuses, one Opus ticket slicer, nine Opus ticket and split charges with
-three continuations, and one Opus repair. Sonnet/xhigh reviewed the
-spec and the tickets once, and three Opus review axes and one Opus re-review
-ran at medium. Five of eight ticket charges landed first-pass, and three
-delegates reported a spec or charge contradiction instead of an edit outside
-it. The coordinator ran eleven probes; nine bit, and the two silent ones
-became rows.
+Last incorporated landing: `git-admin-readers` (`5589e73a`, 2026-09-05).
+Fable/low ran as orchestrator across one integration source and four sibling
+worktrees. The reviewer named Sonnet for the seven ticket charges, five at low
+and two at medium. Opus/low ran the one adapter repair after a delegate
+reported a seam defect. The review round ran on Astra/medium through `codex
+exec`. Three ticket charges landed first-pass on behavior, and eight of the
+coordinator's nine probes bit.
 
-Fifty-seven completed landings are recorded. Routing follows the
+Fifty-eight completed landings are recorded. Routing follows the
 harness-to-tier binding.
 
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use |
 | --- | --- | --- | --- |
-| Fable / low–high | orchestrator, 25 landings + implementer, 9 charges + reviewer, 3 specs | On `structural-refactor-pass` at low effort it wrote the spec, re-scoped it twice as the reviewer reopened the count decision, and ran nine tickets in waves of two across eleven worktrees. Its first dogfood run of the new growth verb caught the pass's one real growth, and two of its eleven probes came back silently green and became rows. | Coordination of a parallel build and adversarial spec review; it implements nothing unless the reviewer names it |
+| Fable / low–high | orchestrator, 26 landings + implementer, 9 charges + reviewer, 3 specs | On `git-admin-readers` at low effort it ran seven tickets in pairs across four sibling worktrees, folded a delegate's seam report into a recorded spec amendment, and caught a test that graded the check against its own flag list. One lane-only repair reached the landing gate red, which cost one full gate. | Coordination of a parallel build and adversarial spec review; it implements nothing unless the reviewer names it |
 | Opus / high | implementer, latest 10 charges (Go-seam rewrites, lifecycle, guidance prose) | On `harness-capability-seam` the record package and the parity check each landed first-pass on behavior; the parity charge found and joined one fixture registry the ticket did not name. | High for process-lifecycle, cleanup-authority, destructive-command, anchored guidance prose, and foundational Go-seam rewrites |
-| Opus / medium, low | implementer, orchestrator, and reviewer combined; latest 10 medium implementer charges, 85 review axes, 13 of 19 orchestrated landings | On `structural-refactor-pass` nine ticket charges verified their premise with citations; three reported a spec or charge contradiction and offered the revert, and two named a pin the charge got wrong and followed the tree. Four medium research charges censused 104 files with path pins. The Coverage axis proved the lane's growth check a permanent no-op with a live dry run and an independent repro, and the repair charge fixed it with a detached-checkout test. | Medium for gate and conformance logic, guidance prose, canary fixtures, repair charges, and orchestration; low for a ticket from an exact spec at a known seam under a covering gate, and for the review axes when the reviewer names it |
+| Opus / medium, low | implementer, orchestrator, and reviewer combined; latest 10 medium implementer charges, 85 review axes, 13 of 19 orchestrated landings | On `git-admin-readers` one low repair charge moved the file reader onto Git's default path format, added the symlink row, and switched the dependent test in one pass with a biting swap probe. On `structural-refactor-pass` nine ticket charges verified their premise with citations, and three reported a spec or charge contradiction instead of an edit outside the fence. | Medium for gate and conformance logic, guidance prose, canary fixtures, repair charges, and orchestration; low for a ticket from an exact spec at a known seam under a covering gate, and for the review axes when the reviewer names it |
 | Sonnet / high | orchestrator, 3 landings | On `roadmap-light-path-fixes-2` it ran ten ticket charges and two review rounds (six axes) across two shared worktrees, caught a read-only delegate leaving the integration worktree dirty before the next commit, and routed two material acceptance shortfalls to the reviewer instead of silently resolving them. | Continues to hold at high effort; compare again after a fourth orchestrated build |
-| Sonnet / low–high | implementer, latest 10 of 70 ticket-sized charges | On `exec-census` three low charges landed first-pass on behavior; two restated a table or a join that an existing package owned and took one repair round each. | Low for an exact-spec ticket at a known seam; medium or high for a behavior-preserving refactor; charges name the package that owns each shared fact |
+| Sonnet / low–medium | implementer, latest 10 of 77 ticket-sized charges | On `git-admin-readers` seven ticket charges and one review repair ran; three landed first-pass on behavior, and every probe the delegates ran bit. The misses were a fence step outside the ticket, two over-budget files grown, a comment widened to hold a budget, a test that ranged over the production list it graded, and a repair that re-derived a fact beside its owner. | Low for an exact-spec ticket at a known seam under a covering gate when the reviewer names it; the coordinator probes every return and runs the whole-tree gate before the landing |
 | Sonnet / high, xhigh | reviewer, 3 axes on 13 landings + 12 scoped re-reviews + 1 spec round | On `structural-refactor-pass` one xhigh round over the spec and nine tickets resolved all 56 cited test names, verified four decisions against the code, and returned one blocking Coverage finding: a moved scan would drop its active-state filter in silence. | Spec-and-tickets review round when the reviewer names it; the review axes stay with Opus |
 
 ## Representative evidence
@@ -39,9 +37,17 @@ harness-to-tier binding.
 - Routing changes only after two comparable runs or one controlled model comparison.
 - The top tier implements nothing, code or guidance prose, unless the reviewer names it
   for the run.
-- Every subagent runs Opus at low or medium effort. Fifty-seven landings now run under
-  this rule. A reviewer-named `--reviewer <tier> <effort>` override applies to the
-  spec-and-tickets round alone.
+- Every subagent runs Opus at low or medium effort unless the reviewer names another
+  tier for the run. On `git-admin-readers` the reviewer named Sonnet for the tickets and
+  Opus/low as the escalation rung. Three of seven tickets landed first-pass, so the
+  Opus default stays until a second comparable run.
+- A reviewer-named `--reviewer` override sets the model for the review round it names.
+  On `git-admin-readers` it named Astra/medium through `codex exec` for the
+  implementation review and both re-reviews.
+- A whole-tree gate runs on the integration source after the last repair commit and
+  before `bench worktree land`, because a lane-only repair reached the landing gate red.
+- A test that ranges over the production list it grades is a coordinator catch. The
+  omission probe stays silent, and the test enumerates the list itself.
 - A light-path ticket from an exact ticket file runs Opus at low. It runs at medium
   when it adds a conformance check, a canary fixture, or CLI output.
 - Opus at medium serves the research censuses, the repair charges, and the scoped
