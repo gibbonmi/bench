@@ -1,7 +1,7 @@
 # Surface the settle refusal reason
 
 Blocked by: 05-migrate-the-assignment-mutators.md, 07-migrate-the-composition-adapter-onto-the-settle-policy.md
-Writes: internal/landing/composition.go, internal/landing/composition_test.go, internal/landing/merge.go, internal/landing/landing.go, internal/landing/merge_test.go, CONTEXT.md, tests/canary/docs-currency-token-diet/signal-vocabulary-drift, tests/canary/workflow-guidance-anchors/context-acceptance-row-vocabulary, tests/canary/workflow-guidance-anchors/context-coverage-map-term, tests/canary/workflow-guidance-anchors/context-coverage-row-parts, tests/canary/workflow-guidance-anchors/context-coverage-row-vocabulary, tests/canary/workflow-guidance-anchors/context-decision-map-term, tests/canary/workflow-guidance-anchors/context-reader-sweep-term, tests/canary/workflow-guidance-anchors/context-ticket-vocabulary
+Writes: internal/landing/composition.go, internal/landing/composition_test.go, internal/landing/landing_helpers_test.go, internal/landing/settlepolicy/, internal/landing/merge.go, internal/landing/landing.go, internal/landing/merge_test.go, CONTEXT.md, tests/canary/docs-currency-token-diet/signal-vocabulary-drift, tests/canary/workflow-guidance-anchors/context-acceptance-row-vocabulary, tests/canary/workflow-guidance-anchors/context-coverage-map-term, tests/canary/workflow-guidance-anchors/context-coverage-row-parts, tests/canary/workflow-guidance-anchors/context-coverage-row-vocabulary, tests/canary/workflow-guidance-anchors/context-decision-map-term, tests/canary/workflow-guidance-anchors/context-reader-sweep-term, tests/canary/workflow-guidance-anchors/context-ticket-vocabulary
 Covers: LS28, LS29, LS30, LS31, LS32, LS33, LS34, LS35, LS38
 
 ## What to build

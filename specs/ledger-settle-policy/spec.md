@@ -335,6 +335,7 @@ Build decisions recorded during the build (2026-09-05, `--full` run) for reviewe
 - A read-only ledger directory set before the call fails at the lock, not at the write. LS4, LS7, and LS8 set the directory read-only inside the closure, after the lock exists, and restore it in the compensation or the test cleanup.
 - The tolerant read decodes the entries and the cleanup receipts on every read. The old purge decoded them only before a write. So a file whose assignments parse and whose entries do not now returns an error, where it returned zero with nothing to drop.
 - The composition keeps two refusal journeys, not one. The policy refusal is `code-path-beside-a-capture-path`. The adapter's own union text-merge refusal is `binary-union-path`, which no policy table can cover. It gains a fourth settle journey, `removal`, because the coordinator's probe showed the removal verdict had no journey.
+- A settle refusal exists only when the policy is engaged, that is, when at least one stage record's path has a capture rule. A conflict whose paths all sit outside the table keeps today's bare `composition conflict: <kind>`. `TestLandCommandPublicConflictRepairRequiresNewReviewedTip` pins `detail=composition conflict: textual,next=` for a plain `owned.txt` conflict, and the fence names that file as closure headroom. Ticket 08's fence gains `internal/landing/settlepolicy/` for the engagement rule and its table case.
 
 Source-sentence-to-row table:
 
