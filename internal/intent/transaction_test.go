@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 // The refusal arm. A closure that returns an error must persist nothing, so the closure
@@ -50,7 +52,7 @@ func TestLedgerTransactionRefusalPersistsNothingAndReleasesTheLock(t *testing.T)
 // the compensation restores the directory so the release can still remove the lock.
 func TestLedgerTransactionTerminalWriteFailureKeepsThePreviousBytes(t *testing.T) {
 	if os.Geteuid() == 0 {
-		t.Skip("root ignores the read-only directory mode")
+		capability.Capability(t, capability.Privilege, "root ignores the read-only directory mode; cannot make the ledger directory unwritable")
 	}
 	root := newRepo(t)
 	if err := Upsert(root, Entry{Key: "seed", Kind: KindShift, CreatedAt: time.Unix(1, 0).UTC()}); err != nil {
