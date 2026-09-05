@@ -12,10 +12,10 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	refreshop "github.com/gibbonmi/bench/internal/refresh"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
-	refreshop "github.com/gibbonmi/bench/internal/worktree/refresh"
 )
 
 // finish emits the shift_result block and resolves res to its process exit code. When
@@ -146,13 +146,9 @@ func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "working tree not clean; commit or move the change aside first")
 		return usage(stdout, stderr, "working tree not clean")
 	}
-	startRef := "HEAD"
-	if refresh {
-		result := refreshop.Refresh(mainRoot)
-		fmt.Fprint(stdout, refreshop.RenderRefresh(result))
-		if result.Status == "refreshed" {
-			startRef = refreshop.RefreshedStartRef(mainRoot)
-		}
+	startRef := refreshop.Start(mainRoot, refresh, stdout)
+	if startRef == "" {
+		startRef = "HEAD"
 	}
 	base, err := git.Output("-C", mainRoot, "rev-parse", startRef+"^{commit}")
 	if err != nil {

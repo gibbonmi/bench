@@ -57,6 +57,33 @@ func TestRefreshOfflineStartsNoGitAndNamesFlag(t *testing.T) {
 	}
 }
 
+func TestStartWithoutRequestIsSilentAndOfflineRequestAnswersNoRef(t *testing.T) {
+	t.Run("not requested", func(t *testing.T) {
+		installFakeGit(t, ": > \"$BENCH_REFRESH_MARKER\"")
+		var out strings.Builder
+		if got := Start("/repo", false, &out); got != "" {
+			t.Fatalf("Start = %q, want empty", got)
+		}
+		if out.String() != "" {
+			t.Fatalf("Start wrote %q, want nothing", out.String())
+		}
+	})
+	t.Run("offline", func(t *testing.T) {
+		marker := installFakeGit(t, ": > \"$BENCH_REFRESH_MARKER\"")
+		t.Setenv("BENCH_OFFLINE", "1")
+		var out strings.Builder
+		if got := Start("/repo", true, &out); got != "" {
+			t.Fatalf("Start = %q, want empty", got)
+		}
+		if want := RenderRefresh(RefreshResult{Status: "offline", Detail: "BENCH_OFFLINE=1"}); out.String() != want {
+			t.Fatalf("Start wrote %q, want %q", out.String(), want)
+		}
+		if _, err := os.Stat(marker); !os.IsNotExist(err) {
+			t.Fatalf("offline start ran git: %v", err)
+		}
+	})
+}
+
 func installFakeGit(t *testing.T, body string) string {
 	t.Helper()
 	dir := t.TempDir()
