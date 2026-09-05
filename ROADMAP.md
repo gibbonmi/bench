@@ -15,8 +15,6 @@ findings in the owner details.
 
 ## Software factory: initial evidence and selected improvements
 
-**FT302 (MEDIUM, decision required) — the first selected module-deepening refactor hides behavior behind a useful seam.**
-
 **FT303 (MEDIUM, decision required) — a CLI assessment selects and delivers one evidence-backed improvement.**
 
 **FT304 (MEDIUM, decision required) — one shared projection supplies a useful roadmap and execution view.**
@@ -215,8 +213,7 @@ recommended table is sequencing advice.
 |---|---|---|
 | FT100 | FT231 | Editorial cuts need the measurement harness. |
 | FT240 | FT231 | The experiment keeps its approved three-arm comparison. |
-| FT303 | FT302 | The first CLI improvement follows the first deepening pass. |
-| FT304 | FT172, FT302, FT303 | The view needs the identity contract and the remaining independently delivered initial passes. |
+| FT304 | FT172, FT303 | The view needs the identity contract and the CLI assessment. |
 | FT306 | FT305, FT71 | Adoption follows durable execution and the held local evidence. |
 
 ### Recommended
@@ -235,6 +232,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT302 module-deepening survey and refactor — run `/bench-deepen`. The reviewer selects a target and limits. Then run `/bench-write-spec` and `/bench-implement-spec`.
-2. FT303 CLI assessment and selected improvement — after FT302 lands, run `/bench-shape-idea`.
-3. FT304 useful roadmap and execution view — after FT303 and FT172 land, run `/bench-shape-idea`.
+1. FT303 CLI assessment and selected improvement — run `/bench-shape-idea`. FT302 landed on 2026-09-05, so the assessment is unblocked.
+2. FT298 skill-discipline kit edits — run the `craft-synthesis` kit edit, one rule per commit.
+3. FT300 ticket-fence kit edits — run the `craft-synthesis` kit edit after FT298.
