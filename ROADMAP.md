@@ -1,45 +1,33 @@
 # Roadmap
 
-The working prioritization document: every row is open work, verified against
-the tree; a row leaves when the work ships (spec-retire) or a
-`/bench-drain` reconcile removes it. Raw capture never lands here — it
-goes to `capture/IDEAS.md` and enters only through a reviewed drain. A row for spec'd
-work names its spec path (`specs/<slug>/spec.md`). That path is what `bench status`
-cross-checks against the tree, so a row that omits it is a visible choice to
-stay outside the ambient check.
+This is the working prioritization document. Each row names one open owner.
+`roadmap/FT<n>.md` holds its requirements and occurrence evidence.
 
 FT-to-FT ordering is single-sourced in `## Dependencies`. A literal dependency
-blocks the dependent row until its prerequisite lands. A recommended dependency
-does not block work. It says the dependent row will be cheaper or less likely to
-churn when it is specified after the prerequisite.
+blocks the dependent row. A recommended dependency is sequencing advice.
 
 ## Release-readiness status
 
 Deployment remains **NO-GO** for other projects, public npm release, and bank
-use.
-The 2026-07-11 release-readiness and repository-controlled compliance
-assessments are evidence snapshots; this roadmap is the execution source for
-their active findings. Each finding still open appears exactly once on a
-`Sources` line below. `RR:` means the release-readiness assessment and `RC:`
-means the repository-controlled compliance assessment.
+use. The 2026-07-11 release-readiness and repository-controlled compliance
+assessments are evidence snapshots. `RR:` and `RC:` identify their active
+findings in the owner details.
 
-## Features, in priority order
+## Software factory: initial evidence and selected improvements
 
-**FT246 (MEDIUM) — other binary-building test packages select the gate executable once.**
+**FT302 (MEDIUM, decision required) — the first selected module-deepening refactor hides behavior behind a useful seam.**
 
-**FT247 (MEDIUM) — the next slow test packages extract pure policy from effect adapters.**
+**FT303 (MEDIUM, decision required) — a CLI assessment selects and delivers one evidence-backed improvement.**
 
-**FT249 (MEDIUM, decision required) — a primary-local idea inbox moves to a shared Git ref.**
+**FT304 (MEDIUM, decision required) — one shared projection supplies a useful roadmap and execution view.**
 
-**FT287 (MEDIUM, decision required) — AXI conformance is assessed for every bench command, argument, and option.**
+**FT305 (HIGH, decision required) — durable local factory execution survives a worker or conversation stop.**
 
-**FT296 (MEDIUM) — a production child process dies with its parent.**
+**FT306 (HIGH, external qualification required) — a qualified release and one Regroup adoption prove the factory on a user-visible change.**
 
-**FT235 (MEDIUM) — a pool directory's name says what the worktree is for.**
+## Factory correctness, recovery, and execution
 
-**FT71 (HIGH on the bank track) — versioned local shift evidence.**
-
-**FT142 (MEDIUM) — FT91 runtime residuals, two tracks.**
+**FT296 (MEDIUM, decision required) — the durable supervisor and production workers have distinct lifetimes.**
 
 **FT98 (MEDIUM) — one preserve-then-discard primitive; four faces.**
 
@@ -49,28 +37,33 @@ means the repository-controlled compliance assessment.
 
 **FT199 (MEDIUM) — the shipped unclaimed-ref cleanup grows into a recovery-aware repository-wide ref inventory.**
 
-
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
-
-**FT277 (MEDIUM) — `bench test --changed` explains why it widened the selected set.**
-
-**FT290 (LOW) — `bench test` projects a check's fixture family, a full failure body, and a no-match attribution.**
-
-**FT292 (MEDIUM, decision required) — `bench roadmap decide` records an already-made reviewer decision atomically.**
-
-**FT293 (MEDIUM, decision required) — preflight-closed ticket Writes determine registry pins and blocker edges.**
 
 **FT283 (MEDIUM, decision required) — `bench worktree land --spec` has one phase-scoped transition contract.**
 
 **FT284 (MEDIUM, decision required) — `bench spec retire` owns its roadmap retirement atomically.**
 
-**FT255 (MEDIUM, decision required) — concurrent tests share one explicit machine budget.**
+**FT258 (MEDIUM, decision required) — `bench commit` derives a complete change set and has one explicit `MERGE_HEAD` contract, without weakening its ownership fence.**
 
-**FT275 (MEDIUM) — code built under Bench traces its declared seams with OpenTelemetry.**
+**FT215 (MEDIUM, decision required) — the path-aware lane's open edges: the empty-diff merge, the real-binary hop, and the unknown-path cost.**
 
-**FT172 (MEDIUM, decision required) — the roadmap row grammar is a contract, and `roadmap_id` has one decided source.**
+**FT244 (LOW) — a standard scratch directory for worktree runs.**
 
-**FT173 (MEDIUM, decision required) — AXI residual: the active-assignment-with-deleted-tree disclosure class.**
+**FT235 (MEDIUM) — a pool directory's name says what the worktree is for.**
+
+**FT260 (LOW, decision required) — coordinator worktree diff inspection and sibling-worktree patch transfer need scoped native paths.**
+
+## Planning, ownership, and review integrity
+
+**FT99 (LOW) — spec problem-premise verification.**
+
+**FT293 (MEDIUM, decision required) — preflight-closed ticket Writes determine registry pins and blocker edges.**
+
+**FT300 (MEDIUM) — ticket slicing adds the file a ticket's own change will move to its fence.**
+
+**FT298 (MEDIUM) — two skill-discipline gaps the binary-freshness retro surfaced.**
+
+**FT140 (LOW) — review residuals that want a verdict, not a build.**
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.**
 
@@ -80,44 +73,91 @@ means the repository-controlled compliance assessment.
 
 **FT222 (MEDIUM, decision required) — delegate-tier routing has one source in `projects/benchkit.md`.**
 
-**FT204 (LOW, decision required) — one bounded transcript/session query.**
+**FT172 (MEDIUM, decision required) — the roadmap row grammar is a contract, and `roadmap_id` has one decided source.**
 
-**FT58 (LOW) — hardened pool roots.**
-
-
-**FT99 (LOW) — spec problem-premise verification.**
-
-**FT241 (LOW, decision required) — versioned acceptance promises with retained evidence.**
-
-**FT243 (LOW, decision required) — a repository-maintenance skill group.**
-
-**FT244 (LOW) — a standard scratch directory for worktree runs.**
-
-**FT215 (MEDIUM, decision required) — the path-aware lane's open edges: the empty-diff merge, the real-binary hop, and the unknown-path cost.**
+**FT292 (MEDIUM, decision required) — `bench roadmap decide` records an already-made reviewer decision atomically.**
 
 **FT261 (MEDIUM, decision required) — preflight review classifies an in-progress untracked spec folder without blocking ticket slicing.**
 
-**FT260 (LOW, decision required) — coordinator worktree diff inspection and sibling-worktree patch transfer need scoped native paths.**
-
 **FT262 (LOW) — preflight projects uncited coverage rows during a breakdown and renders closure diagnostics as a table.**
 
-**FT267 (LOW) — `scripts/verify-release-artifact.mjs` has a gate-owned execution seam.**
+**FT265 (MEDIUM, decision required) — one coordinator-owned immutable drain evidence bundle.**
 
-**FT297 (LOW) — a conformance row pins the Go-owned binary path against its two shell derivations.**
+**FT130 (MEDIUM, decision required) — a capture write mid-lifecycle voids or blocks the run.**
 
-**FT299 (LOW) — a landing rehearsal precedes the first landing of a promotion-broker-changing spec.**
+**FT200 (MEDIUM, decision required) — make preflight mechanical at the landing chokepoint.**
 
+**FT241 (LOW, decision required) — versioned acceptance promises with retained evidence.**
 
+**FT141 (MEDIUM, decision required) — red verdicts are recorded against a baseline, so inherited reds stop reading as caused.**
+
+## Evidence, diagnostics, and maintenance
+
+**FT231 (EXPERIMENT, decision required) — a measurement harness and the instrumentation it reads.**
+
+**FT243 (LOW, decision required) — a recurring factory-maintenance policy selects useful structural, deepening, and CLI work.**
+
+**FT247 (MEDIUM) — the next slow test packages extract pure policy from effect adapters.**
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
-
-**FT280 (LOW, decision required) — a Bench-owned worktree tip projection replaces raw `git rev-parse` in the landing pin.**
 
 **FT218 (LOW) — named git readers instead of learned CLI flags.**
 
 **FT219 (LOW) — `/bench-deepen` refreshes a ready map's frontier to current state before handoff.**
 
-**FT237 (LOW) — `craft-line` states the common case behind ceiling-not-binding.**
+**FT108 (LOW) — a refactor lane with a mechanical exit test.**
+
+**FT287 (MEDIUM, decision required) — AXI conformance is assessed for every bench command, argument, and option.**
+
+**FT204 (LOW, decision required) — one bounded transcript/session query.**
+
+**FT125 (LOW) — reader surfaces that return the slice, not the file.**
+
+**FT275 (MEDIUM) — code built under Bench traces its declared seams with OpenTelemetry.**
+
+**FT232 (EXPERIMENT, decision required) — repair-loop tripwire: an advisory signal from gate records.**
+
+**FT277 (MEDIUM) — `bench test --changed` explains why it widened the selected set.**
+
+**FT290 (LOW) — `bench test` projects a check's fixture family, a full failure body, and a no-match attribution.**
+
+**FT168 (LOW) — focused iteration evidence through registered check owners.**
+
+**FT120 (LOW) — gate, canary, and contract test-harness defects nothing asserts.**
+
+**FT115 (LOW) — load-robust test and phase deadlines derived from bounds.**
+
+**FT246 (MEDIUM) — other binary-building test packages select the gate executable once.**
+
+**FT249 (MEDIUM, decision required) — a primary-local idea inbox moves to a shared Git ref.**
+
+**FT255 (MEDIUM, decision required) — concurrent tests share one explicit machine budget.**
+
+**FT297 (LOW) — a conformance row pins the Go-owned binary path against its two shell derivations.**
+
+**FT299 (LOW) — a landing rehearsal precedes the first landing of a promotion-broker-changing spec.**
+
+**FT267 (LOW) — `scripts/verify-release-artifact.mjs` has a gate-owned execution seam.**
+
+## Release qualification
+
+FT71 does not start before 2026-09-16. Its hold outranks priority. Bank use,
+public release, and Regroup adoption stay NO-GO until the existing qualification
+requirements are met.
+
+**FT71 (HIGH on the bank track) — versioned local shift evidence.**
+
+**FT142 (MEDIUM) — FT91 runtime residuals, two tracks.**
+
+**FT58 (LOW) — hardened pool roots.**
+
+## Parked and scheduled work
+
+**FT6 (LOW, parked pending evidence — leave parked):**
+
+**FT24 (parked pending upstream) — Codex agent-line guard parity.**
+
+**FT38 (LOW, decision required) — dashboard visual identity pass.**
 
 **FT100 (LOW) — prose-weight pass on the kit's guidance surface.**
 
@@ -125,63 +165,7 @@ means the repository-controlled compliance assessment.
 
 **FT102 (LOW) — escalation-policy cross-check in the synthesis consistency and dogfood loops.**
 
-**FT108 (LOW) — a refactor lane with a mechanical exit test.**
-
-**FT130 (MEDIUM, decision required) — a capture write mid-lifecycle voids or blocks the run.**
-
-
-**FT200 (MEDIUM, decision required) — make preflight mechanical at the landing chokepoint.**
-
-**FT258 (MEDIUM, decision required) — `bench commit` derives a complete change set and has one explicit `MERGE_HEAD` contract, without weakening its ownership fence.**
-
-**FT265 (MEDIUM, decision required) — one coordinator-owned immutable drain evidence bundle.**
-
-**FT298 (MEDIUM) — two skill-discipline gaps the binary-freshness retro surfaced.**
-
-**FT300 (MEDIUM) — ticket slicing adds the file a ticket's own change will move to its fence.**
-
-**FT168 (LOW) — focused iteration evidence: a fixture-selecting canary and mutation probe.**
-
-**FT140 (LOW) — review residuals that want a verdict, not a build.**
-
-## False greens — verdicts that credit unchecked work
-
-Two rows share one failure class: a green whose warrant is missing. The
-missing warrant is a stale binary, a dead or skipping citation, a vacuous
-baseline, an unchecked absence, or a dependency edge nothing resolves. Each
-hardens a different oracle surface. They stay separate builds, but they read
-and prioritize as one theme.
-
-## Reds the diff doesn't own — inheritance, load, and harness defects
-
-Five rows share one failure class: a red that answers for something other
-than the diff in front of the gate. The cause is an inherited baseline,
-machine contention and a flaky oracle, a literal deadline, or a harness
-defect.
-
-**FT141 (MEDIUM, decision required) — red verdicts are recorded against a baseline, so inherited reds stop reading as caused.**
-
-
-**FT115 (LOW) — load-robust test and phase deadlines derived from bounds.**
-
-**FT120 (LOW) — gate, canary, and contract test-harness defects nothing asserts.**
-
-## Standards debt — one batched light-path pass
-
-Three rows plus FT142's standards track are shippable together as small
-one-source-per-fact and cleanup sweeps under one gate. FT117's parser-routing
-half is the largest item in the batch. FT142 itself stays on the main list,
-because its ship track belongs to a separate `prep-release` hardening visit.
-
-
-
-
-## Session tax — evidence-supplied reader rows
-
-This row is a measured, recurring reader cost from the week-of-2026-07-19
-transcript evidence and builds on surfaces that already exist.
-
-**FT125 (LOW) — reader surfaces that return the slice, not the file.**
+**FT240 (EXPERIMENT, decision required) — iq retrieval experiment: token-budgeted search against the EKS monorepo.**
 
 ## Release and bank reassessment gate
 
@@ -220,22 +204,6 @@ Host IAM, OS sandboxing, endpoint controls, firewalls, server-side branch
 protection, central CI administration, SIEM/retention, registry administration,
 and signing-key custody remain outside this repository-controlled roadmap.
 
-## Parked and scheduled work
-
-**FT6 (LOW, parked pending evidence — leave parked):**
-
-**FT24 (parked pending upstream) — Codex agent-line guard parity.**
-
-**FT8 (overdue, decision required) — Sonnet 5 mid-tier revisit: a risk-based escalation ladder for the default implementer.**
-
-**FT38 (LOW, decision required) — dashboard visual identity pass.**
-
-**FT231 (EXPERIMENT, decision required) — a measurement harness and the instrumentation it reads.**
-
-**FT232 (EXPERIMENT, decision required) — repair-loop tripwire: an advisory signal from gate records.**
-
-**FT240 (EXPERIMENT, decision required) — iq retrieval experiment: token-budgeted search against the EKS monorepo.**
-
 ## Dependencies
 
 The dependent FT is named first. Only the literal table blocks work; the
@@ -245,46 +213,28 @@ recommended table is sequencing advice.
 
 | FT | Depends on | Why |
 |---|---|---|
-| FT100 | FT231 | Editorial cuts to the guidance surface without measurement are coin flips; the harness is what tells a cut from a regression. |
-| FT240 | FT231 | The adoption rule is a measured three-arm comparison; without the harness the experiment cannot grade its result. |
+| FT100 | FT231 | Editorial cuts need the measurement harness. |
+| FT240 | FT231 | The experiment keeps its approved three-arm comparison. |
+| FT303 | FT302 | The first CLI improvement follows the first deepening pass. |
+| FT304 | FT172, FT302, FT303 | The view needs the identity contract and the remaining independently delivered initial passes. |
+| FT306 | FT305, FT71 | Adoption follows durable execution and the held local evidence. |
 
 ### Recommended
 
 | FT | Better specified after | Why |
 |---|---|---|
-| FT100 | FT89 | Cut prose after the correctness and coherence pass establishes which guidance is still authoritative. |
-| FT108 | FT89 | FT89 single-sources the skills index the new skill must join; the expand–migrate–contract and gate-cadence rules it builds on are already settled in `craft-tickets`. |
-| FT172 | FT106 | Reuse the document-claim probe for semantic roadmap claims instead of designing a second checker. |
-| FT166 | FT98 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
-| FT241 | FT231 | Retained acceptance-run evidence should reuse the harness's record shape rather than version a second one. |
-| FT204 | FT71 | The query reads the settled event schema before it reads transcript text. |
-| FT254 | FT258 | The resolution slice requires the decided `MERGE_HEAD` contract. |
-
-### Goal track: guidance prose
-
-The guidance-prose backlog follows one path. Its process precursor is landed:
-FT164's ticket-contract core shipped, so every later build slices independently
-green tickets through the current `craft-tickets` grammar. The payoff facts
-shaping the order, verified in-tree 2026-08-02 with an independent mid-tier
-refutation pass: `.agents/` and `.bench/BENCH.md` sit outside the gate's reduced
-scope, so every separately-landed prose diff pays a full gate. Rows batch on the
-shared full gate, not just shared files, and anchor-pinned files couple prose
-diffs to conformance fixture updates. The reviewed Pocock-alignment Spec C has
-shipped and FT107 is retired.
-
-FT100 builds last: after FT89 establishes which guidance is authoritative, and
-after FT231 supplies the measurement that tells a cut from a regression.
-
-FT99 rides the prose batch. FT106 remains independently sequenced by
-its existing dependencies. FT172 is outside this
-critical path; the FT156 anchor registry shipped, so section-scoped
-`.bench/BENCH.md` anchors — the exact surface the prose batch edits — are now
-fixture-proven.
+| FT305 | FT254, FT283, FT284 | Execution continuity reuses settled worktree and lifecycle contracts. |
+| FT306 | FT142, FT58 | Revalidate qualification residuals before the external pilot. |
+| FT222 | FT231 | Routing changes wait for comparable measurement evidence. |
+| FT204 | FT71 | The query reads the settled event schema. |
+| FT100 | FT89 | Cut prose after coherence identifies authoritative guidance. |
+| FT108 | FT89 | Use the established guidance owner before adding a refactor discipline. |
+| FT172 | FT106 | Reuse document-claim evidence for roadmap claims. |
+| FT241 | FT231 | Retained acceptance evidence reuses the harness record shape. |
+| FT254 | FT258 | Resolution follows the `MERGE_HEAD` contract. |
 
 ## Recommended sequence
 
-1. FT254 `bench worktree exec` — run `/bench-write-spec`. It carries the most
-   occurrences on the board, and each one costs raw calls in every phase.
-2. FT298 skill-discipline gaps — run a `craft-synthesis` kit edit. The go-vet
-   gap already reds a real gate; the fix is small and unblocked.
-
+1. FT302 module-deepening survey and refactor — run `/bench-deepen`. The reviewer selects a target and limits. Then run `/bench-write-spec` and `/bench-implement-spec`.
+2. FT303 CLI assessment and selected improvement — after FT302 lands, run `/bench-shape-idea`.
+3. FT304 useful roadmap and execution view — after FT303 and FT172 land, run `/bench-shape-idea`.
