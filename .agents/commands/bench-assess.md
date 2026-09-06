@@ -61,9 +61,7 @@ invariant 2. This command names the tier, not the model.
 ## 3. Synthesize adversarially (top tier)
 
 Synthesize adversarially on the top tier. `craft-research` owns the
-re-verification, the citations, and the residual unknowns. Mark each re-verified
-claim with a ✓ in the new file, and record a claim you could not verify as an
-unknown in the verification notes.
+re-verification, the citations, and the residual unknowns.
 
 ## 4. Write the assessment (the output contract)
 

@@ -19,8 +19,8 @@ question that leaves review becomes a run under the phase that owns the answer.
 
 Research establishes source-backed facts, contradictions, unknowns, and
 implications. Research never owns a write delegate, a done-claim, a reviewer
-decision, or a prototype. Route anything with write access or a done-claim
-through `craft-delegate`.
+decision, or a prototype. Route a write delegate or a done-claim through the
+calling phase and `craft-delegate`.
 
 ## The question graph
 

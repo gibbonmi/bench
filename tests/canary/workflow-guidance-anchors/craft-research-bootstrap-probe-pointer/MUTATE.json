@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/bootstrap-authority.md",
+    "old": "`craft-research` states the probe rule: a compatibility claim stays unverified\nuntil a separate runnable probe returns.",
+    "new": "Compatibility divergence is a reviewer decision."
+  }
+]

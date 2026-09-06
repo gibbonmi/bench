@@ -2,17 +2,9 @@ package anchors
 
 import "testing"
 
-// TestCraftResearchAnchorsRedOnRemoval holds the research rules that guidance must keep:
-// the question graph completes on one node per load-bearing claim, fan-out waits for two
-// mutually independent frontier questions, a round is synthesized before the next opens,
-// only the artifact and first-party upstream documentation warrant a finding, the
-// coordinator re-opens the sources and checks the joins, one durable output per run
-// carries every claim's citation, a compatibility claim waits for a runnable probe, and
-// research stays on the read side. The caller rows ride with them: the shaping command
-// points its Research ticket type at the skill and keeps none of the three research rules
-// the skill now owns, and the bootstrap-authority reference points at the probe rule. Each
-// needle and diagnostic is written here independently of the registry, so a rewrite that
-// drops a rule cannot define itself green.
+// TestCraftResearchAnchorsRedOnRemoval keeps the research skill's anchored sentences and
+// the caller pointers red-capable. Each needle and diagnostic is written here
+// independently of the registry, so a rewrite that drops a rule cannot define itself green.
 func TestCraftResearchAnchorsRedOnRemoval(t *testing.T) {
 	const skill = ".agents/skills/bench-craft-research/SKILL.md"
 	const shaping = ".agents/commands/bench-shape-idea.md"
@@ -72,7 +64,7 @@ func TestCraftResearchAnchorsRedOnRemoval(t *testing.T) {
 			},
 			{
 				file:   bootstrap,
-				needle: "Charge `craft-research` for the runnable probe that a compatibility claim needs.",
+				needle: "`craft-research` states the probe rule: a compatibility claim stays unverified\nuntil a separate runnable probe returns.",
 				want:   ".agents/skills/bench-craft-spec/references/bootstrap-authority.md dropped the pointer at the craft-research probe rule",
 			},
 			{
