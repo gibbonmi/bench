@@ -2,7 +2,9 @@ package worktree
 
 import (
 	"bytes"
+	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -30,6 +32,28 @@ func TestListPathActionRunsAsAdvertised(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	if code := PathCommand(root, home, []string{match[1]}, &stdout, &stderr); code != 0 {
 		t.Fatalf("advertised %q exited %d: %s", match[1], code, stderr.String())
+	}
+}
+
+// [PB34] The path serves the file tools, and a delegate that pastes it into a shell step
+// leaves the worktree boundary. The note says so on stderr, because stdout stays the one
+// path line a `$(...)` capture reads. The note quotes the target as typed, so the
+// suggested command is the one the caller can run.
+func TestPathNotesTheFileToolRouteOnStderr(t *testing.T) {
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "filetools")
+	target := creation.Assignment.Label
+	var stdout, stderr bytes.Buffer
+	if code := PathCommand(root, home, []string{target}, &stdout, &stderr); code != 0 {
+		t.Fatalf("path exited %d: %s", code, stderr.String())
+	}
+	printed := strings.TrimSuffix(stdout.String(), "\n")
+	if strings.Contains(printed, "\n") || !filepath.IsAbs(printed) {
+		t.Fatalf("stdout = %q, want one absolute path line alone", stdout.String())
+	}
+	want := "note: the path serves the file tools; run a shell step through bench worktree exec " + target + " -- <command>\n"
+	if stderr.String() != want {
+		t.Fatalf("stderr = %q, want %q", stderr.String(), want)
 	}
 }
 

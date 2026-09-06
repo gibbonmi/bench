@@ -119,7 +119,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "worktree", Attachment: attachmentDirect, AXI: axiApprovedChildren("list"), Inventory: publicInventory(
 		helpRow{Order: 31, Suffix: " shell [--refresh] [objective]", Gap: 1, Description: "create an owned worktree subshell and release it on exit"},
 		helpRow{Order: 32, Suffix: " list", Description: "list assignments and registered worktrees as TOON"},
-		helpRow{Order: 33, Suffix: worktreeSuffix(usage.WorktreePath), Description: "print one active owned worktree's absolute path"},
+		helpRow{Order: 33, Suffix: worktreeSuffix(usage.WorktreePath), Description: "print one active owned worktree's absolute path for the file tools"},
 		helpRow{Order: 34, Suffix: worktreeSuffix(usage.WorktreeExec), Description: "run a child directly in an active owned worktree"},
 		helpRow{Order: 34, Suffix: worktreeSuffix(usage.WorktreeShow), Description: "print one blob from a revision of an active owned worktree"},
 		helpRow{Order: 34, Suffix: worktreeSuffix(usage.WorktreeBuild), Description: "build an active owned worktree's tree into its own dist/bench"},

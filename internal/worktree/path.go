@@ -31,6 +31,10 @@ func PathCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	fmt.Fprintln(stdout, path)
+	// The note rides stderr, because stdout stays the one line a `$(...)` capture reads.
+	// A pasted path is the way a delegate leaves the worktree boundary, so the verb that
+	// answers the path is the place that names the exec route.
+	fmt.Fprintln(stderr, "note: the path serves the file tools; run a shell step through bench worktree exec "+sanitize.Controls(args[0])+" -- <command>")
 	return 0
 }
 
