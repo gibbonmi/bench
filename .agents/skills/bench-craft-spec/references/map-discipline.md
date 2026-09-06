@@ -41,6 +41,8 @@ the explore reads, the fence rules, and the review rubric.
 - A row that widens a forbidden-import pattern names the enumeration command for its
   current importers across every graded package. It also names each package the
   widened pattern reds today.
+- A spec that changes a rendered message enumerates the exact-match tests on that
+  text.
 
 ## Per row
 
