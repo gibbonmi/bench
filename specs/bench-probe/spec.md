@@ -6,7 +6,7 @@ Roadmap: FT303
 
 Decision source: the `software-factory` decision map tickets #10 to #12, answered by the reviewer on 2026-09-06, with `decisions/assets/ft303-cli-assessment.md` as the source evidence
 
-Verification log: 0 iteration(s) to accept — the round has not run
+Verification log: 2 iteration(s) to accept — the round on `gpt-6-astra` at high effort returned revise at iteration 1 with six blocking findings. The author folded all six. Iteration 2 returned accept with six prose and accounting corrections, folded into the acceptance. The acceptance grades the spec and the tickets; the build records the runtime reds.
 
 ## Problem
 
@@ -27,12 +27,12 @@ a shell step.
 and one focused run in the `bench test` selection grammar. It preserves the
 subject under the Bench home, applies the mutation once, and runs the focused
 test. Then it restores the subject and proves the restore byte-exact against
-the preserved copy.
+the bytes it read at the start.
 
 It prints one verdict row and then the focused run's own tables. The verdicts
 are `bit` at exit 0, `silent` at exit 1, `invalid` at exit 1, and
-`restore-failed` at exit 2 with the preserved copy named. Every refusal runs
-before any write. `bench worktree path` gains a one-line note on stderr that
+`restore-failed` at exit 2 with the preserved copy named. Every validation
+refusal runs before any write. `bench worktree path` gains a one-line note on stderr that
 the path serves the file tools.
 
 ## User stories
@@ -64,7 +64,7 @@ effort.
 
 13. As a coordinator, I want the subject bytes preserved under the Bench home before the mutation, so that a crash leaves a copy.
 14. As a coordinator, I want the subject restored to the preserved bytes after the focused run, so that the tree is clean.
-15. As a coordinator, I want the restore proven by a byte comparison against the preserved copy, so that `restored=yes` is evidence.
+15. As a coordinator, I want the restore proven by a byte comparison against the start bytes, so that `restored=yes` is evidence.
 16. As a coordinator, I want the verdict `restore-failed` at exit 2 to name the preserved copy path, so that I can restore by hand.
 17. As a coordinator, I want the preserved copy removed after a proven restore, so that the home holds no litter.
 18. As a coordinator, I want the restore to run when the focused run is interrupted, so that an interrupt leaves no mutation.
@@ -84,7 +84,7 @@ tier at medium effort.
 25. As a coordinator, I want a usage exit 2 for a missing or doubled selection or mutation, so that the grammar has one of each.
 26. As a coordinator, I want an unknown `--check` name refused by the `bench test` rule before any write, so that the two verbs agree.
 27. As a coordinator, I want `--check prose` and `--check system` refused as probe targets, so that a probe always runs a Go test or a registered check.
-28. As a coordinator, I want every refusal printed as one structured error line on stdout, so that the answer is parseable.
+28. As a coordinator, I want each refusal as one structured line on stdout, and an unknown check as `bench test`'s usage, so that answers parse.
 29. As a coordinator, I want a refusal to touch no subject, write no copy, and start no run child, so that nothing changes.
 30. As a session outside a repository, I want the not-in-repo error, so that the verb matches every AXI command.
 
@@ -128,7 +128,7 @@ the scorecard and records the conflict for the reviewer.
 - The mutation is one exact string. `--swap <old> --with <new>` replaces the one match of `old` with `new`. `--omit <old>` replaces the one match with nothing. The old string must match exactly once. Zero or several matches refuse with `error: probe mutation ambiguous — the old string matches <n> times, want exactly 1`. A `--with` equal to `--swap` refuses with `error: probe mutation empty — --with equals --swap`.
 - The verb refuses while a gate run holds the tree. It asks the gate package's new reader `ExecutionInProgress(root)`, which resolves the checkout administration directory and reads the execution lock as the verdict inspection does. A held lock refuses with `error: gate execution in progress — wait for the gate run to finish before you mutate the tree`. An unreadable lock refuses with `error: gate execution state unavailable — <reason>`.
 - The verb validates the selection through the focused-run owner before any write. `testreport.Prepare(root, args)` parses the selection with `bench test`'s grammar and returns its usage line and code verbatim. The verb passes `--package`, `--run`, `--check`, and `--full` through unchanged. `--check prose` and `--check system` refuse, because neither runs a Go test through the report. The line is `error: probe focused run unsupported — --check prose and --check system are not probe targets`.
-- The refusal order is: usage, not in a repository, the subject, the mutation count, the selection, the unsupported check, then the gate lock. Every refusal runs before the preserved copy is written and before any focused-run or run-binary build child starts. The root read and the administration-directory read run Git, which is not a run child.
+- The refusal order is: usage, not in a repository, the subject, the mutation count, the selection, the unsupported check, then the gate lock. Every validation refusal runs before the preserved copy is written and before any focused-run or run-binary build child starts. The root read and the administration-directory read run Git, which is not a run child.
 - The preserved copy lives at `<home>/probe/<repo-key>/<unix-nanoseconds>-<pid>/<basename>` with mode 0600 in a 0700 directory. The home is the one `BENCH_HOME` read, and the repository key is the pool key. A failure to write the copy refuses with `error: probe preservation failed — <reason>` and mutates nothing.
 - The mutation write and the restore write each replace the subject atomically. The verb writes a sibling temporary file with the subject's mode and renames it over the subject. A failed mutation write leaves the subject unchanged, removes the copy, and refuses with `error: probe mutation failed — <reason>`.
 - The focused run is `testreport.Execute(root, request)`, which returns a typed outcome, the rendered report, and the exit code `bench test` prints. The outcome kinds are `passed`, `failed`, `build-failed`, `no-test-run`, `refused`, and `interrupted`, with the failed-test count. `Command` becomes `Prepare` then `Execute`, so `bench test` keeps its output and exit codes.
@@ -147,13 +147,13 @@ the scorecard and records the conflict for the reviewer.
 
 - A good verb test drives `probe.Command` over a temporary Go module with the real `go` on `PATH`. It reads the exact stdout, the exit code, the subject bytes, and the preserved directory. The prior art is `TestRunPatternRefusesZeroMatches` in `internal/testreport`, which drives a real focused run over `focusedTestModule`. The probe package builds its own module fixture `probefixture` with `clamp.go` and `clamp_test.go`, one module constructor for the package.
 - The fixture is `Clamp(n int) int` with a comment `// Clamp keeps n at or above zero.`, a guard `if n < 0 {` that returns `0`, and a final `return n`. `TestClampNegative` asserts `Clamp(-1) == 0`, and `TestClampPositive` asserts `Clamp(3) == 3`.
-- The outcome kinds run through a stub `go` on `PATH` that emits canned `-json` events. The prior art is `writeCheckGo` in `internal/testreport/check_test.go`. The stub records a marker file when it starts, so a refusal row proves that no child started.
+- The outcome kinds run through a stub `go` on `PATH` that emits canned `-json` events. The prior art is `writeCheckGo` in `internal/testreport/check_test.go`. The stub records a marker file when it starts, so a refusal row proves that no run child started.
 - The restore-failure row makes the subject's directory read-only from inside the stub `go`, so the restore's temporary file cannot be created.
 - The interrupt row runs the verb in a child process and signals it, in the shape of `TestFocusedGoTestDrainsGroupOnCancelSignal` in `internal/testreport/cancel_test.go`.
 - The gate-lock rows hold the execution lock from a child process, in the shape of `runGateLockHolder` in `internal/gate/run_failure_outcomes_test.go`.
 - The `--check` form is proven at the parse seam and by one recorded run over this repository. A registered check builds a Bench executable and grades the kit, so a fixture module cannot host it. The `internal/probe` tests reach no test-only helper of `internal/testreport`; the `refused` outcome case runs inside `internal/testreport` with that package's selection factory.
 - The focused-run tables and the `--full` rows use canned events, because a real run's `elapsed_ms` differs between two runs. The `--full` row uses a diagnostic longer than `bounds.PreviewRuneLimit`, because `--full` lifts the preview limit on the first diagnostic line.
-- The `bench test` compatibility row records the base commit's exact output for each canned set before the refactor, and the candidate matches those goldens.
+- The `bench test` compatibility row records the base commit's exact output for each canned set before the refactor, and the candidate matches those goldens. The goldens cover the package form and the run form. The merge caller's `--changed` form keeps its existing changed-selection tests, so the comparison is not a differential over every caller form.
 - The gate's test phase runs the new package tests and the root conformance entry, which observes the routing, the AXI registry, and the parity checks. The fast lane's growth check observes story 36 on each worktree commit.
 
 ### Seam diagram
@@ -408,6 +408,6 @@ Reader sweep of the changed facts:
 
 The shipped-surface claim words: the reference guide paragraph names no repo-only path beside a claim word.
 
-The trust chain is unchanged. The wrapper resolves the Bench executable as it does for every verb. The verb starts no child before its refusals pass. The focused run's owner selects the run binary and launches `go` from `PATH` through the gate's one test-argv producer, as `bench test` does today. The gate-lock refusal, the subject refusal, and the selection parse run before the preserved copy is written and before any run child starts (PB25).
+The trust chain is unchanged. The wrapper resolves the Bench executable as it does for every verb. The verb starts no run child before its refusals pass. The focused run's owner selects the run binary and launches `go` from `PATH` through the gate's one test-argv producer, as `bench test` does today. The gate-lock refusal, the subject refusal, and the selection parse run before the preserved copy is written and before any run child starts (PB25).
 
 The review round runs `codex exec` with the reviewer-named model `gpt-6-astra` at high effort with a cap of two iterations. The reviewer named it for this run on 2026-09-06. Every subagent runs `opus` at low or medium effort.

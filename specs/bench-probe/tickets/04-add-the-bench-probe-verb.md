@@ -46,12 +46,12 @@ Record two runs over the integration worktree under Further notes in the spec: t
 worktree's own `dist/bench` is rebuilt with `bench worktree build`.
 
 Self-probe: remove the byte comparison after the restore and show
-`TestProbeReportsARestoreFailure` red.
+`TestProbeReportsAReadBackMismatch` red.
 
 ## Acceptance
 
 - [ ] The six verdict and cause rows PB1 to PB5 and PB38 print the exact rows and exit codes.
-- [ ] The nine refusal rows PB18 to PB26 print the exact lines, leave the subject and the home untouched, and start no child.
+- [ ] The nine refusal rows PB18 to PB26 print the exact lines, leave the subject and the home untouched, and start no run child.
 - [ ] The restore rows PB12 to PB17, PB40, PB41, and PB43 hold, with the copy kept only on `restore-failed`.
 - [ ] The write-failure rows PB44 and PB45 and the no-record row PB46 hold.
 - [ ] `bench help` prints the probe row, `bench probe --help` exits 0, and the three registry checks pass through `bench test --check`.
