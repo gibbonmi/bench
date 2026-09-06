@@ -343,3 +343,40 @@ func TestPrePushHookAllowProtectedPushConfig(t *testing.T) {
 		t.Fatal("bench.allowProtectedPush=false must keep the block")
 	}
 }
+
+// TestPrePushHookTopicPushIsSilent pins the quiet path: a topic-branch push leaves the
+// hook with nothing to say, so any ambient stderr line is a regression.
+func TestPrePushHookTopicPushIsSilent(t *testing.T) {
+	root := hookTestRepo(t)
+	path := filepath.Join(root, ".git", "hooks", "pre-push")
+	writeHook(t, path, "main")
+
+	err, out := runPrePushHook(t, root, path, "refs/heads/topic")
+	if err != nil {
+		t.Fatalf("topic push: %v\nstderr:\n%s", err, out)
+	}
+	if out != "" {
+		t.Fatalf("topic push stderr = %q, want empty", out)
+	}
+}
+
+// TestPrePushHookIgnoresALegacyPin plants the pin file a previously linked repository
+// left in its git dir. The hook reads no pin, so a foreign tree hash beside a pushed oid
+// that is not a commit still passes silently.
+func TestPrePushHookIgnoresALegacyPin(t *testing.T) {
+	root := hookTestRepo(t)
+	path := filepath.Join(root, ".git", "hooks", "pre-push")
+	writeHook(t, path, "main")
+	pin := filepath.Join(root, ".git", "bench-gate-pin")
+	if err := os.WriteFile(pin, []byte(strings.Repeat("b", 40)+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	err, out := runPrePushHook(t, root, path, "refs/heads/topic")
+	if err != nil {
+		t.Fatalf("topic push over a legacy pin: %v\nstderr:\n%s", err, out)
+	}
+	if out != "" {
+		t.Fatalf("legacy-pin stderr = %q, want empty", out)
+	}
+}
