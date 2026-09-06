@@ -39,8 +39,6 @@ findings in the owner details.
 
 **FT309 (LOW) — the fold and landing refusals name their route: `merge --from` accepts a sibling tip sha, and the non-ancestor base refusal names the two bases.**
 
-**FT310 (MEDIUM, decision required) — a test binary writes no seam record under the user's Bench home.**
-
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
 **FT283 (MEDIUM, decision required) — `bench worktree land --spec` has one phase-scoped transition contract.**
@@ -234,6 +232,5 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT310 test-home posture — decide the writer refusal, then run the light-path ticket. Test binaries wrote 321 MB under `~/.bench/otel`.
-2. FT298 skill-discipline kit edits — run the `craft-synthesis` kit edit, one rule per commit.
-3. FT309 fold and landing refusal routes — run the light-path ticket. The growth refusal joined the row on 2026-09-06.
+1. FT298 skill-discipline kit edits — run the `craft-synthesis` kit edit, one rule per commit.
+2. FT309 fold and landing refusal routes — run the light-path ticket. The growth refusal joined the row on 2026-09-06.

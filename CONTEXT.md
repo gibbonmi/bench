@@ -219,6 +219,18 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   assessment** reads: a harness transcript store, the **census**, the seam
   record, or a gate log. An assessment names an absent source; it never
   substitutes a sample. Not "log", not "trace" — log source.
+- **Bench home** — the directory Bench state lives under. `internal/benchhome.Dir`
+  resolves it once, from `BENCH_HOME` or the **fallback home**. The **census**
+  and the **seam record** both key off it. Not "the home directory", not
+  "BENCH_HOME" alone — Bench home.
+- **fallback home** — the **Bench home** `Dir` supplies when `BENCH_HOME` is
+  unset: the user's own home directory, joined with `.bench`. While a test
+  binary runs, the **seam record** refuses to write there, whether `BENCH_HOME`
+  names that same path or the fallback supplies it. Not "the default home" —
+  fallback home.
+- **seam record** — the per-repository trace `internal/otelrecord` appends
+  below the **Bench home**. A **log source** names it as one of four. Not
+  "trace log", not "span file" — seam record.
 - **mutation probe** — one deliberate behavior change to a subject file, a
   focused test that must run red, and an exact restore of the subject. A probe
   that fails to compile proves nothing. Not "mutation test", not "smoke test",

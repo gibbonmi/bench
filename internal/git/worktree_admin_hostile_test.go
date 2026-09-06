@@ -135,7 +135,18 @@ func TestWorktreesPropagatesScanTraversalFailureBeforePorcelain(t *testing.T) {
 	_, err := Worktrees(root)
 	var got *WorktreeScanError
 	if !errors.As(err, &got) || got.Path != "worktrees/unreadable" || got.Action != "investigate the git failure" {
-		t.Fatalf("scan traversal failure = %v", err)
+		// A fresh stat and read tell whether the directory was still unreadable.
+		var mode any
+		if info, statErr := os.Lstat(id); statErr != nil {
+			mode = statErr
+		} else {
+			mode = info.Mode()
+		}
+		var reread any = "readable"
+		if _, rereadErr := os.ReadDir(id); rereadErr != nil {
+			reread = rereadErr
+		}
+		t.Fatalf("scan traversal failure = %v (euid=%d, mode=%v, reread=%v)", err, os.Geteuid(), mode, reread)
 	}
 	data, readErr := os.ReadFile(logPath)
 	if readErr != nil {
