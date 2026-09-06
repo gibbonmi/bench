@@ -27,6 +27,11 @@ baseline, and the universal-claim rule.
   that names a symbol the production file declares can stay green while the assertion
   never runs.
 
+## When a ticket already decided
+
+- A finding that contradicts a ticket's explicit keep decision is a `no-op`. The
+  coordinator cites the ticket line in the disposition.
+
 ## When a seam cannot reach the state
 
 - An unreachable row seam amends the row's seam column. The build records the helper seam
