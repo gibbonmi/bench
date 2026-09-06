@@ -184,7 +184,7 @@ the artifact. Add the rewrite-in-full plus conflict rules to the phase-close han
 paragraph in `AGENTS.md`.
 
 **How I'd improve it.** The conflict rule can be made computed rather than remembered.
-bench already resolves a gated tree hash (`internal/git`, `bench gate pin`) and reports
+bench already resolves a gated tree hash (`internal/git`) and reports
 staleness in `bench status`. A handoff that records the commit it was written at can be
 checked against `HEAD` automatically. `bench status` reports "handoff written at
 `<sha>`, HEAD is `<sha>`: stale" and points at the rebuild.
