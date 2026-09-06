@@ -44,6 +44,9 @@ The coordinator writes one repair ticket before the repair-scoped re-review,
 when accepted repairs amend the coverage map. The ticket records the
 accepted repairs, and it cites each amended row in `Covers:`.
 
+The coordinator records every dogfood run in the spec before the
+repair-scoped re-review starts. An unrecorded run is a blocking finding.
+
 A diff that changes kit guidance takes a standing cross-harness
 falsification pass. The kit-guidance set is any file under `.agents/` or
 the file `.bench/BENCH.md`. Each falsification finding takes one explicit
