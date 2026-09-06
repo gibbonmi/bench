@@ -1,7 +1,7 @@
 # Repair the verdict override rows from the review round
 
 Blocked by: 06-state-the-probe-verb-in-the-guidance.md
-Writes: internal/probe/probe.go, internal/probe/outcome_test.go, internal/probe/probe_test.go, internal/probe/refusal_test.go, internal/testreport/outcome_test.go
+Writes: internal/probe/probe.go, internal/probe/outcome_test.go, internal/probe/probe_test.go, internal/probe/refusal_test.go, internal/testreport/outcome_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: PB38, PB47
 
 ## What to build
@@ -27,6 +27,8 @@ internal/probe/probe_test.go. Keep every golden and every assertion unchanged.
 
 Self-probe: return the render error before the restore check and show
 `TestProbeNamesTheCopyWhenTheRenderAndTheRestoreFail` red.
+
+The five registry files on the Writes line are closure headroom, and they take no edit.
 
 ## Acceptance
 
