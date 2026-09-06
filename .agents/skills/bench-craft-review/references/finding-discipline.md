@@ -23,6 +23,9 @@ baseline, and the universal-claim rule.
   A strong finding is one that names a defect, a gap, or a violation without a hedge.
 - An environment-variable Coverage finding cites the producer before it claims absence.
   The consumer alone does not show which producer binds the variable.
+- The Coverage axis probes a test's fixture source, not only its assertion. A fixture
+  that names a symbol the production file declares can stay green while the assertion
+  never runs.
 
 ## When a seam cannot reach the state
 
