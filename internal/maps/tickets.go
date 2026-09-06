@@ -3,6 +3,7 @@ package maps
 import (
 	"fmt"
 	"os"
+	pathpkg "path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -28,9 +29,19 @@ var inlineTicketHeading = regexp.MustCompile(`^## #([1-9][0-9]*):`)
 // no check.
 const resolvedBlockedRule = "A resolved decision ticket cannot stay blocked by an unresolved ticket."
 
-// gistLine is one Decisions so far entry. The link is relative to the map file,
-// and the parser resolves the entry by the ticket-number segment alone.
-var gistLine = regexp.MustCompile(`^- \[[^\]]*\]\([^)]*/` + ticketsDirName + `/([1-9][0-9]*)\.md\):\s*\S`)
+// gistLine is one Decisions so far entry. The capture is the whole link target,
+// because a gist resolves against this map's own tickets folder and not against
+// any folder that ends in a ticket-shaped name.
+var gistLine = regexp.MustCompile(`^- \[[^\]]*\]\(([^)]*)\):\s*\S`)
+
+// templateTicketsSegment is the tickets-folder placeholder the rendered skeleton
+// carries where a filled-in map spells its own topic folder. The skeleton is a
+// valid map, so a gist that still holds the placeholder resolves by number alone.
+const templateTicketsSegment = "<topic>/" + ticketsDirName
+
+// gistTicket reads the ticket number one gist link target ends in. A target the
+// expression rejects names no ticket file at all.
+var gistTicket = regexp.MustCompile(`(?:^|/)` + ticketsDirName + `/([1-9][0-9]*)\.md$`)
 
 // indexHeading reports the index section one line opens, or an empty name.
 func (s decisionMapSchema) indexHeading(line string) string {
@@ -142,9 +153,22 @@ func DecisionTicketTemplate() string {
 	return b.String()
 }
 
+// ticketsSegment is the one derivation of the ticket-file layout: the index
+// basename without ".md", then the tickets folder, in slash form. A gist link
+// spells exactly this segment, and the readers below anchor it to a directory.
+func ticketsSegment(indexPath string) string {
+	return strings.TrimSuffix(pathpkg.Base(indexPath), ".md") + "/" + ticketsDirName
+}
+
+// ticketsDir is the same folder, still in slash form, relative to whatever the
+// index path is relative to.
+func ticketsDir(indexPath string) string {
+	return strings.TrimSuffix(indexPath, pathpkg.Base(indexPath)) + ticketsSegment(indexPath)
+}
+
 // ticketFolder is where the ticket files of the map at path live.
 func ticketFolder(root, path string) string {
-	return filepath.Join(root, filepath.FromSlash(strings.TrimSuffix(path, ".md")), ticketsDirName)
+	return filepath.Join(root, filepath.FromSlash(ticketsDir(path)))
 }
 
 // splitTickets reads the ticket files beside one map index. An absent folder adds
@@ -187,9 +211,9 @@ func ticketNumber(id string) int {
 	return number
 }
 
-// indexDiagnostics grades one map index: the two sections it must
+// indexDiagnostics grades one map index at indexPath: the two sections it must
 // carry, and the gists that must track its resolved tickets.
-func indexDiagnostics(m DecisionMap, tickets []DecisionTicket) []Diagnostic {
+func indexDiagnostics(indexPath string, m DecisionMap, tickets []DecisionTicket) []Diagnostic {
 	var diagnostics []Diagnostic
 	for _, section := range canonicalDecisionMapSchema.indexSections {
 		if !m.IndexSections[section.heading] {
@@ -200,22 +224,36 @@ func indexDiagnostics(m DecisionMap, tickets []DecisionTicket) []Diagnostic {
 	for _, ticket := range tickets {
 		byID[ticket.ID] = ticket
 	}
+	segment := ticketsSegment(indexPath)
 	gists := map[string]bool{}
 	for _, line := range nonEmptyLines(m.Decisions) {
-		match := gistLine.FindStringSubmatch(line)
-		if match == nil {
+		target := ""
+		if match := gistLine.FindStringSubmatch(line); match != nil {
+			target = match[1]
+		}
+		number := gistTicket.FindStringSubmatch(target)
+		if number == nil {
 			diagnostics = append(diagnostics, Diagnostic{Message: "Decisions so far line has no ticket link"})
 			continue
 		}
-		if gists[match[1]] {
+		id := number[1]
+		if gists[id] {
+			diagnostics = append(diagnostics, Diagnostic{Message: "Decisions so far duplicate gist for ticket #" + id})
 			continue
 		}
-		gists[match[1]] = true
-		switch ticket, found := byID[match[1]]; {
+		gists[id] = true
+		// The number alone does not resolve the gist. A target that leaves this map's own
+		// tickets folder — a dot prefix, a parent step, another topic, an escaped space,
+		// or an absolute path — names a file of some other map, so the ticket is missing.
+		if target != segment+"/"+id+".md" && target != templateTicketsSegment+"/"+id+".md" {
+			diagnostics = append(diagnostics, Diagnostic{Message: "Decisions so far links missing ticket #" + id})
+			continue
+		}
+		switch ticket, found := byID[id]; {
 		case !found:
-			diagnostics = append(diagnostics, Diagnostic{Message: "Decisions so far links missing ticket #" + match[1]})
+			diagnostics = append(diagnostics, Diagnostic{Message: "Decisions so far links missing ticket #" + id})
 		case !resolved(ticket):
-			diagnostics = append(diagnostics, Diagnostic{Message: "Decisions so far links unresolved ticket #" + match[1]})
+			diagnostics = append(diagnostics, Diagnostic{Message: "Decisions so far links unresolved ticket #" + id})
 		}
 	}
 	for _, ticket := range tickets {

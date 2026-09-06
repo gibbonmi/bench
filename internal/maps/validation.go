@@ -21,7 +21,7 @@ func ValidateDecisionMap(root, path string, compiled bool, content []byte) (Deci
 	if len(tickets) == 0 {
 		parsed = append(parsed, Diagnostic{Message: "missing decision ticket"})
 	}
-	parsed = append(parsed, indexDiagnostics(m, tickets)...)
+	parsed = append(parsed, indexDiagnostics(path, m, tickets)...)
 	diagnostics := make([]Diagnostic, 0, len(parsed))
 	for _, diagnostic := range parsed {
 		diagnostics = append(diagnostics, Diagnostic{Message: path + ": " + diagnostic.Message})

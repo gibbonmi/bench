@@ -28,7 +28,7 @@ var decisionMapIntegrityFixtureCategories = map[string][]string{
 		"source-absolute-path", "source-empty-path", "source-escape-path", "source-invalid-url", "source-missing-drift", "source-missing-path", "source-missing-supports", "source-not-bullet", "source-second-locator", "source-unknown-kind", "source-wrapped-field", "source-wrapped-field-colon",
 	},
 	"split": {
-		"ticket-basename", "tickets-absent", "tickets-empty", "orphan-tickets-folder", "notes-missing", "decisions-so-far-missing", "gist-missing", "gist-unresolved", "gist-missing-file", "gist-malformed", "inline-ticket-heading",
+		"ticket-basename", "tickets-absent", "tickets-empty", "orphan-tickets-folder", "notes-missing", "decisions-so-far-missing", "gist-missing", "gist-unresolved", "gist-missing-file", "gist-malformed", "gist-wrong-folder", "gist-duplicate", "inline-ticket-heading",
 	},
 	"terminal-list": {
 		"terminal-discretion-prose", "terminal-fog-prose", "terminal-out-of-scope-prose",

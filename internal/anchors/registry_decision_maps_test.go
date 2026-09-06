@@ -124,6 +124,24 @@ func TestDecisionMapSplitAnchorsRedOnRemoval(t *testing.T) {
 	}.check(t)
 }
 
+// TestReadmeSplitShapeAnchorRedsOnRemoval holds the README sentence that teaches the
+// split shape to a first reader: the map file is an index, and one ticket file under
+// the map's tickets folder holds each decision. The needle and the diagnostic are
+// written here independently of the registry, so a README rewrite that dropped the
+// sentence cannot define itself green.
+func TestReadmeSplitShapeAnchorRedsOnRemoval(t *testing.T) {
+	anchorHarness{
+		group: AfterSpecAuthorization,
+		rules: []anchorRule{
+			{
+				file:   "README.md",
+				needle: "each decision lives in one ticket file under the map's tickets folder",
+				want:   "README.md dropped the split decision-map shape; each decision lives in one ticket file under the map's tickets folder",
+			},
+		},
+	}.check(t)
+}
+
 // TestContextMapTermAnchorsRedOnRemoval holds the four map-term glossary entries in
 // CONTEXT.md. The coverage map and the decision map are two artifacts, and each Avoid
 // list names the bare word "map". The reader sweep entry reserves "census". The gist

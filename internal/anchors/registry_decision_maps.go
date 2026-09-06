@@ -1,12 +1,10 @@
 package anchors
 
-// decisionMapAnchors holds every anchor that pins the decision-map shape: the two
-// phase commands, the rendered template, and the CONTEXT.md glossary. A decision map
-// is an index beside its topic folder, and each decision lives in one ticket file the
-// index links. The rows sit here, and not in registry_data.go, so the split shape has
-// one registry home and the general registry keeps its line budget.
-// TestDecisionMapSplitAnchorsRedOnRemoval, TestDecisionMapAuthoringAnchorsRedOnRemoval,
-// and TestContextMapTermAnchorsRedOnRemoval prove these rows bite.
+// This file holds the decision-map anchor rows — the two phase commands, the rendered
+// template, and the README description of the split shape — plus the CONTEXT.md
+// map-term glossary rows, which moved here for the line budget of registry_data.go.
+// A decision map is an index beside its topic folder, and each decision lives in one
+// ticket file the index links.
 var decisionMapAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-shape-idea.md", Kind: Require, Section: "", Needle: "Read one ready decision map's `## Sources` block before the first write.", Diagnostic: ".agents/commands/bench-shape-idea.md dropped the ready-map Sources read before the first decision-map write"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-shape-idea.md", Kind: Require, Section: "", Needle: "Run `bench maps` and `bench gate-prose` on the first skeleton.", Diagnostic: ".agents/commands/bench-shape-idea.md dropped the bench-maps and bench-gate-prose checks on the first decision-map skeleton"},
@@ -24,6 +22,7 @@ var decisionMapAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-shape-idea.md", Kind: Require, Section: "", Needle: "The shaping worktree lease is the claim, and no owner field enters a ticket.", Diagnostic: ".agents/commands/bench-shape-idea.md dropped the worktree-lease claim or admitted an owner field into a ticket"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-shape-idea.md", Kind: Require, Section: "", Needle: "Name a ticket by its title, with its number beside it.", Diagnostic: ".agents/commands/bench-shape-idea.md dropped the title-first naming rule for a decision ticket"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-shape-idea.md", Kind: Require, Section: "", Needle: "A grill recommendation that asserts current-code behavior names the evidence read in the current session.", Diagnostic: ".agents/commands/bench-shape-idea.md dropped the current-session evidence rule for a grill recommendation"},
+	{Group: AfterSpecAuthorization, File: "README.md", Kind: Require, Section: "", Needle: "each decision lives in one ticket file under the map's tickets folder", Diagnostic: "README.md dropped the split decision-map shape; each decision lives in one ticket file under the map's tickets folder"},
 	{Group: AfterSpecAuthorization, File: "CONTEXT.md", Kind: Require, Section: "", Needle: "Not \"map\", not \"traceability matrix\" — coverage map.", Diagnostic: "CONTEXT.md dropped the coverage-map glossary entry with the Avoid list that names the bare word map"},
 	{Group: AfterSpecAuthorization, File: "CONTEXT.md", Kind: Require, Section: "", Needle: "Not \"PRD\", not \"design doc\", not \"map\" — decision map.", Diagnostic: "CONTEXT.md decision-map entry dropped the Avoid list that names the bare word map"},
 	{Group: AfterSpecAuthorization, File: "CONTEXT.md", Kind: Require, Section: "", Needle: "Not \"census\", not \"consumer audit\" — reader sweep.", Diagnostic: "CONTEXT.md dropped the reader-sweep glossary entry with the Avoid list that reserves census"},

@@ -127,7 +127,7 @@ func (s *activeScan) invalid(name, path, reason string) {
 
 // ticketPath names the file one projected ticket row points the reader at.
 func ticketPath(indexPath, id string) string {
-	return strings.TrimSuffix(indexPath, ".md") + "/" + ticketsDirName + "/" + id + ".md"
+	return ticketsDir(indexPath) + "/" + id + ".md"
 }
 
 func projectedRows(name, path string, m DecisionMap) [][]any {
@@ -140,7 +140,7 @@ func projectedRows(name, path string, m DecisionMap) [][]any {
 		if resolved(ticket) {
 			continue
 		}
-		state := unresolvedState(ticket)
+		state := ticketAnswerState(ticket)
 		blockers := unresolvedBlockerTitles(ticket, byID)
 		if state == "frontier" && blockers != "" {
 			state = "blocked"
@@ -156,10 +156,6 @@ func projectedRows(name, path string, m DecisionMap) [][]any {
 		rows = append(rows, []any{name, m.Title, "map", "ready", "", path})
 	}
 	return rows
-}
-
-func unresolvedState(ticket DecisionTicket) string {
-	return ticketAnswerState(ticket)
 }
 
 func unresolvedBlockerTitles(ticket DecisionTicket, byID map[string]DecisionTicket) string {

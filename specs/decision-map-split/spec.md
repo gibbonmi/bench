@@ -203,7 +203,7 @@ No linked repository holds a map on 2026-09-06, a reviewer-supplied premise, so 
 | DS50 | 18, 21 | `decisions/my map.md` with `decisions/my map/tickets/1.md` projects one row whose path cell is `decisions/my map/tickets/1.md` | `maps.Command` on a gittest repo | A path join that splits on spaces loses the folder |
 | DS51 | 12 | A gist to `other/tickets/1.md` on map `split` reds with `Decisions so far links missing ticket #1` | integrity fixture `gist-wrong-folder` | A parser that reads only the number accepts a link to another folder |
 | DS52 | 10 | Two gists to `split/tickets/1.md` red with `Decisions so far duplicate gist for ticket #1` | integrity fixture `gist-duplicate` | A set keyed by number drops the second gist in silence |
-| DS53 | 45 | The README sentence `each decision lives in one ticket file under the map's tickets folder` reds when removed | `TestContextMapTermAnchorsRedOnRemoval` and the README anchor row | A README rewrite that drops the split description passes an unchanged anchor |
+| DS53 | 45 | The README sentence `each decision lives in one ticket file under the map's tickets folder` reds when removed | `TestReadmeSplitShapeAnchorRedsOnRemoval` and the README anchor row | A README rewrite that drops the split description passes an unchanged anchor |
 
 Not covered: story 47 — the measure is recorded in the phase-close retro by final-check, which no ticket owns.
 

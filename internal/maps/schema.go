@@ -292,7 +292,7 @@ func DecisionMapTemplate() string {
 	b.WriteString(canonicalDecisionMapSchema.field("Destination").syntax)
 	b.WriteString("\n\n<what this map decides>\n")
 	for _, index := range canonicalDecisionMapSchema.indexSections {
-		body := "- [<decision question>](<topic>/" + ticketsDirName + "/1.md): <gist>"
+		body := "- [<decision question>](" + templateTicketsSegment + "/1.md): <gist>"
 		if index.heading == "Notes" {
 			body = decisionMapAssetRule
 		}

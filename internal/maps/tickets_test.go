@@ -169,8 +169,20 @@ func TestValidateDecisionMapTreeGradesTicketTypeAndBlockerValues(t *testing.T) {
 func TestValidateDecisionMapTreeGradesGistDrift(t *testing.T) {
 	resolved := strings.Replace(splitTicket, "— (open)", "The maps package.", 1)
 	gist := "## Decisions so far\n\n- [Which parser](split/tickets/1.md): The maps package.\n"
+	// The ticket number alone must not resolve a gist, so each rewritten target below
+	// keeps the number and moves the folder off the map's own tickets folder.
+	target := func(link string) string {
+		return strings.Replace(splitIndex, "## Decisions so far\n", strings.Replace(gist, "split/tickets/1.md", link, 1), 1)
+	}
+	const wrongFolder = "Decisions so far links missing ticket #1"
 	for _, testCase := range []struct{ name, index, ticket, want string }{
 		{"resolved without a gist", splitIndex, resolved, "ticket #1: resolved without a gist in Decisions so far"},
+		{"dot-prefixed target", target("./split/tickets/1.md"), resolved, wrongFolder},
+		{"parent-step target", target("../split/tickets/1.md"), resolved, wrongFolder},
+		{"other topic target", target("other/tickets/1.md"), resolved, wrongFolder},
+		{"encoded-space target", target("split%20map/tickets/1.md"), resolved, wrongFolder},
+		{"absolute target", target("/decisions/split/tickets/1.md"), resolved, wrongFolder},
+		{"duplicate gist", strings.Replace(splitIndex, "## Decisions so far\n", gist+"- [Which parser again](split/tickets/1.md): The maps package.\n", 1), resolved, "Decisions so far duplicate gist for ticket #1"},
 		{"unresolved gist", strings.Replace(splitIndex, "## Decisions so far\n", gist, 1), splitTicket, "Decisions so far links unresolved ticket #1"},
 		{"missing ticket file", strings.Replace(splitIndex, "## Decisions so far\n", strings.Replace(gist, "/1.md", "/9.md", 1), 1), resolved, "Decisions so far links missing ticket #9"},
 		{"malformed gist", strings.Replace(splitIndex, "## Decisions so far\n", "## Decisions so far\n\n- The maps package owns it.\n", 1), resolved, "Decisions so far line has no ticket link"},
@@ -190,6 +202,19 @@ func TestValidateDecisionMapTreeGradesGistDrift(t *testing.T) {
 				t.Fatalf("gist-drift diagnostics = %v, want %q", diagnostics, testCase.want)
 			}
 		})
+	}
+}
+
+// A space is legal in a map name, so the gist target that spells the folder verbatim
+// must validate instead of falling to the wrong-folder diagnostic.
+func TestValidateDecisionMapTreeAcceptsAGistUnderASpacedMapName(t *testing.T) {
+	root := t.TempDir()
+	index := strings.Replace(splitIndex, "## Decisions so far\n", "## Decisions so far\n\n- [Which parser](my map/tickets/1.md): The maps package.\n", 1)
+	writeSplitMap(t, root, "decisions/my map.md", index, map[string]string{
+		"1.md": strings.Replace(splitTicket, "— (open)", "The maps package.", 1),
+	})
+	if diagnostics := ValidateDecisionMapTree(root); len(diagnostics) != 0 {
+		t.Fatalf("spaced map name diagnostics = %v", diagnostics)
 	}
 }
 
