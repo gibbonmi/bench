@@ -74,6 +74,9 @@ the explore reads, the fence rules, and the review rubric.
 - Each in-scope edge-inventory promise, source promise, and fence-closure promise takes one red-capable row.
 - An either-side predicate takes two rows, one side per row. One row that names both sides is not sufficient.
 - Each named diagnostic state is addable or mutable in a fixture.
+- A row that drives a failure through a verb or a probe names each guard the input
+  passes before the producer. An earlier guard that stops the input leaves the
+  row's seam unreached.
 
 ## In the edge inventory
 
