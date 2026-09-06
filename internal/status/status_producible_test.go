@@ -89,10 +89,6 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 		}
 		return root
 	}
-	readyMap := func() string {
-		body := strings.Replace(maps.DecisionMapTemplate(), "<answer>", "Resolved.", 1)
-		return strings.Replace(body, "Status: shaping", "Status: ready", 1)
-	}
 
 	type fixture struct {
 		name, signal, detail string
@@ -299,7 +295,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 		}, exact: []Signal{testSignal(5, "structure", "1 issue(s)", "bench structure")}},
 		{name: "unresolved map", signal: "decisions", detail: "unresolved map", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
-			write(t, root, "decisions/shaping.md", maps.DecisionMapTemplate(), 0o644)
+			writeDecisionMap(t, root, "decisions/shaping.md", maps.DecisionMapTemplate())
 			commit(t, root)
 			return root, Query{}
 		}, exact: []Signal{testSignal(6, "decisions", "1 unresolved map(s)", "/bench-shape-idea")},
@@ -307,7 +303,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			route: &RouteResult{Lead: testSignal(6, "decisions", "1 unresolved map(s)", "/bench-shape-idea")}},
 		{name: "one ready map", signal: "decisions", detail: "1 ready map", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
-			write(t, root, "decisions/my map.md", readyMap(), 0o644)
+			writeDecisionMap(t, root, "decisions/my map.md", readyMapIndex())
 			commit(t, root)
 			return root, Query{}
 		}, exact: []Signal{testSignal(6, "decisions", "1 ready map(s)", "/bench-write-spec decisions/my map.md")},
@@ -315,8 +311,8 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			route: &RouteResult{Lead: testSignal(6, "decisions", "1 ready map(s)", "/bench-write-spec decisions/my map.md")}},
 		{name: "multiple ready maps", signal: "decisions", detail: "2 ready map", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
-			write(t, root, "decisions/one.md", readyMap(), 0o644)
-			write(t, root, "decisions/two.md", readyMap(), 0o644)
+			writeDecisionMap(t, root, "decisions/one.md", readyMapIndex())
+			writeDecisionMap(t, root, "decisions/two.md", readyMapIndex())
 			commit(t, root)
 			return root, Query{}
 		}},

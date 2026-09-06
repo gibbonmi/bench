@@ -15,54 +15,10 @@ import (
 
 func TestCommandAppendsOnlyMapActionsToTheCapturedPrimaryResponse(t *testing.T) {
 	root := gittest.Repo(t)
-	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	const frontier = `# Alpha
-
-Status: shaping
-
-## Destination
-
-Settle it.
-
-## #1: First
-
-Blocked by: none
-Type: Research
-
-### Question
-
-What first?
-
-### Answer
-
-— (open)
-
-## #2: Second
-
-Blocked by: none
-Type: Task
-
-### Question
-
-What second?
-
-### Answer
-
-— (open)
-
-## Not yet specified
-
-## Spec-writer discretion
-
-## Out of scope
-
-## Sources
-`
-	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "alpha.md"), []byte(frontier), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeSplitMap(t, root, "decisions/alpha.md", splitIndex, map[string]string{
+		"1.md": strings.Replace(splitTicket, "# Which parser owns the map?", "# First", 1),
+		"2.md": strings.NewReplacer("# Which parser owns the map?", "# Second", "Type: Research", "Type: Task").Replace(splitTicket),
+	})
 	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "broken.md"), []byte("# Broken\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -89,13 +45,8 @@ func TestCommandAppendsHonestEmptyHelpForEmptyAndCompleteMaps(t *testing.T) {
 			name: "complete (aliases terminal empty)", fixture: "pre-disclosure-terminal.stdout",
 			write: func(t *testing.T, root string) {
 				t.Helper()
-				if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
-					t.Fatal(err)
-				}
-				document := strings.NewReplacer("Status: shaping", "Status: ready", "<answer>", "Resolved.").Replace(DecisionMapTemplate())
-				if err := os.WriteFile(filepath.Join(root, DecisionsDir, "complete.md"), []byte(document), 0o644); err != nil {
-					t.Fatal(err)
-				}
+				index := strings.Replace(DecisionMapTemplate(), "Status: shaping", "Status: ready", 1)
+				writeSplitMap(t, root, "decisions/complete.md", index, map[string]string{"1.md": DecisionTicketTemplate()})
 			},
 		},
 	} {
@@ -148,69 +99,14 @@ func TestCommandDisclosesTheFullPathForABoundsInvalidMap(t *testing.T) {
 
 func TestActiveRowsProjectUnresolvedTicketsAndFog(t *testing.T) {
 	root := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
-		t.Fatal(err)
+	ticket := func(title, typ, blockedBy, answer string) string {
+		return "# " + title + "\n\nBlocked by: " + blockedBy + "\nType: " + typ + "\n\n### Question\n\nWhat?\n\n### Answer\n\n" + answer + "\n"
 	}
-	document := `# Model
-
-Status: shaping
-
-## Destination
-
-Settle it.
-
-## #1: First
-
-Blocked by: none
-Type: Research
-
-### Question
-
-What?
-
-### Answer
-
-— (open)
-
-## #2: Second
-
-Blocked by: #1
-Type: Task
-
-### Question
-
-What next?
-
-### Answer
-
-— (open)
-
-## #3: Third
-
-Blocked by: #1
-Type: Prototype
-
-### Question
-
-What later?
-
-### Answer
-
-— (deferred)
-
-## Not yet specified
-
-- Honest fog.
-
-## Spec-writer discretion
-
-## Out of scope
-
-## Sources
-`
-	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "model.md"), []byte(document), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeSplitMap(t, root, "decisions/model.md", splitIndex, map[string]string{
+		"1.md": ticket("First", "Research", "none", "— (open)"),
+		"2.md": ticket("Second", "Task", "#1", "— (open)"),
+		"3.md": ticket("Third", "Prototype", "#1", "— (deferred)"),
+	})
 	rows, count, state := ActiveRows(root)
 	if state != bounds.StateParsed {
 		t.Fatalf("ActiveRows state = %s, want parsed", state)
@@ -230,43 +126,10 @@ What later?
 
 func TestActiveRowsProjectFogOnlyShapingMap(t *testing.T) {
 	root := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	document := `# Model
-
-Status: shaping
-
-## Destination
-
-Settle it.
-
-## #1: Settled
-
-Blocked by: none
-Type: Grill
-
-### Question
-
-What?
-
-### Answer
-
-Resolved.
-
-## Not yet specified
-
-- Honest fog.
-
-## Spec-writer discretion
-
-## Out of scope
-
-## Sources
-`
-	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "model.md"), []byte(document), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	gist := "## Decisions so far\n\n- [Settled](model/tickets/1.md): Resolved.\n"
+	writeSplitMap(t, root, "decisions/model.md", strings.Replace(splitIndex, "## Decisions so far\n", gist, 1), map[string]string{
+		"1.md": strings.NewReplacer("# Which parser owns the map?", "# Settled", "— (open)", "Resolved.").Replace(splitTicket),
+	})
 	rows, count, state := ActiveRows(root)
 	if state != bounds.StateParsed {
 		t.Fatalf("ActiveRows state = %s, want parsed", state)
@@ -280,10 +143,26 @@ Resolved.
 	}
 }
 
-func TestCommandRejectsCountAndTemplateTogether(t *testing.T) {
-	out, code := Command([]string{"--count", "--template"})
-	if code != 2 || !strings.Contains(out, "--count and --template are mutually exclusive") {
-		t.Fatalf("Command(--count --template) = (%q, %d), want usage exit 2", out, code)
+func TestCommandRejectsExclusiveFlagsTogether(t *testing.T) {
+	for _, testCase := range []struct {
+		argv []string
+		want string
+	}{
+		{[]string{"--count", "--template"}, "--count and --template are mutually exclusive"},
+		{[]string{"--template", "--ticket-template"}, "--template and --ticket-template are mutually exclusive"},
+		{[]string{"--count", "--ticket-template"}, "--count and --ticket-template are mutually exclusive"},
+	} {
+		out, code := Command(testCase.argv)
+		if code != 2 || !strings.Contains(out, testCase.want) {
+			t.Fatalf("Command(%v) = (%q, %d), want usage exit 2 with %q", testCase.argv, out, code, testCase.want)
+		}
+	}
+}
+
+func TestCommandPrintsTheTicketTemplate(t *testing.T) {
+	out, code := Command([]string{"--ticket-template"})
+	if code != 0 || out != DecisionTicketTemplate() {
+		t.Fatalf("Command(--ticket-template) = (%q, %d), want the ticket skeleton", out, code)
 	}
 }
 
@@ -303,13 +182,7 @@ func TestInvalidMapActionWithUnsupportedWhyUsesHonestEmptyHelp(t *testing.T) {
 
 func TestActiveRowsCountsSilentShapingMap(t *testing.T) {
 	root := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	document := strings.Replace(DecisionMapTemplate(), "<answer>", "Resolved.", 1)
-	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "silent.md"), []byte(document), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeSplitMap(t, root, "decisions/silent.md", DecisionMapTemplate(), map[string]string{"1.md": DecisionTicketTemplate()})
 	rows, count, state := ActiveRows(root)
 	want := [][]any{{"silent", "Not yet specified", "fog", "shaping", ""}}
 	if state != bounds.StateParsed || !reflect.DeepEqual(rows, want) || count != 1 {
@@ -319,15 +192,10 @@ func TestActiveRowsCountsSilentShapingMap(t *testing.T) {
 
 func TestActiveCountsSeparatesReadyMaps(t *testing.T) {
 	root := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	shaping := strings.Replace(DecisionMapTemplate(), "<answer>", "Resolved.", 1)
+	shaping := DecisionMapTemplate()
 	ready := strings.Replace(shaping, "Status: shaping", "Status: ready", 1)
-	for name, document := range map[string]string{"shaping.md": shaping, "ready.md": ready} {
-		if err := os.WriteFile(filepath.Join(root, DecisionsDir, name), []byte(document), 0o644); err != nil {
-			t.Fatal(err)
-		}
+	for name, index := range map[string]string{"shaping.md": shaping, "ready.md": ready} {
+		writeSplitMap(t, root, "decisions/"+name, index, map[string]string{"1.md": DecisionTicketTemplate()})
 	}
 
 	unresolved, readyCount, state := ActiveCounts(root)

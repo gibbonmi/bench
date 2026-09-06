@@ -1012,8 +1012,8 @@ func TestDecisionMapAuthoringAnchorsRedOnRemoval(t *testing.T) {
 			},
 			{
 				file:   schema,
-				needle: "decisions/assets/",
-				want:   "internal/maps/schema.go dropped the decisions/assets/ path for a map-owned asset from the decision-map template",
+				needle: "decisions/<topic>/assets/",
+				want:   "internal/maps/schema.go dropped the decisions/<topic>/assets/ path for a map-owned asset from the decision-map template",
 			},
 		},
 		templates: map[string]string{schema: "package maps\n%s"},

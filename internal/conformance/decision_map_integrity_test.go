@@ -11,11 +11,12 @@ import (
 
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/maps"
 )
 
 var decisionMapIntegrityFixtureCategories = map[string][]string{
 	"graph": {
-		"graph-cycle", "graph-dangling", "graph-duplicate-blocker", "graph-duplicate-id", "graph-resolved-on-unresolved", "graph-self-edge",
+		"graph-cycle", "graph-dangling", "graph-duplicate-blocker", "graph-resolved-on-unresolved", "graph-self-edge",
 	},
 	"readiness": {
 		"readiness-compiled-shaping", "readiness-fog", "readiness-unresolved",
@@ -27,7 +28,7 @@ var decisionMapIntegrityFixtureCategories = map[string][]string{
 		"source-absolute-path", "source-empty-path", "source-escape-path", "source-invalid-url", "source-missing-drift", "source-missing-path", "source-missing-supports", "source-not-bullet", "source-second-locator", "source-unknown-kind", "source-wrapped-field", "source-wrapped-field-colon",
 	},
 	"split": {
-		"ticket-basename", "tickets-absent", "tickets-empty", "orphan-tickets-folder", "notes-missing", "decisions-so-far-missing", "gist-missing", "gist-unresolved", "gist-missing-file", "gist-malformed",
+		"ticket-basename", "tickets-absent", "tickets-empty", "orphan-tickets-folder", "notes-missing", "decisions-so-far-missing", "gist-missing", "gist-unresolved", "gist-missing-file", "gist-malformed", "inline-ticket-heading",
 	},
 	"terminal-list": {
 		"terminal-discretion-prose", "terminal-fog-prose", "terminal-out-of-scope-prose",
@@ -90,18 +91,14 @@ func TestDecisionMapIntegrityCheckValidatesEveryCandidate(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	// The template still renders the inline shape, so every split map under proof is
-	// written by hand: an index carrying both index sections and one gist, beside the
-	// one ticket file that gist links.
-	const ticketTitle = "Which parser owns the map?"
+	// The two templates render the whole map, so each map under proof is one index
+	// beside the one ticket file its Decisions so far gist links.
+	const ticketTitle = "<decision question>"
 	writeSplitMap := func(path, status, blockedBy string) {
 		t.Helper()
-		topic := strings.TrimSuffix(filepath.Base(path), ".md")
-		writeMap(path, "# "+topic+"\n\nStatus: "+status+"\n\n## Destination\n\nDecide the "+topic+" question.\n\n"+
-			"## Notes\n\n## Decisions so far\n\n- [Which parser]("+topic+"/tickets/1.md): The maps package owns it.\n\n"+
-			"## Not yet specified\n\n## Spec-writer discretion\n\n## Out of scope\n\n## Sources\n")
+		writeMap(path, strings.Replace(maps.DecisionMapTemplate(), "Status: shaping", "Status: "+status, 1))
 		writeMap(filepath.Join(strings.TrimSuffix(path, ".md"), "tickets", "1.md"),
-			"# "+ticketTitle+"\n\nBlocked by: "+blockedBy+"\nType: Research\n\n### Question\n\n"+ticketTitle+"\n\n### Answer\n\nThe maps package owns it.\n")
+			strings.Replace(maps.DecisionTicketTemplate(), "Blocked by: none", "Blocked by: "+blockedBy, 1))
 	}
 	writeSplitMap(filepath.Join(root, "decisions", "active.md"), "shaping", "none")
 	writeSplitMap(filepath.Join(root, "specs", "compiled", "decisions", "compiled.md"), "ready", "none")

@@ -19,6 +19,15 @@ const ticketsDirName = "tickets"
 
 var ticketBasename = regexp.MustCompile(`^[1-9][0-9]*$`)
 
+// inlineTicketHeading matches the retired inline decision-ticket heading. The
+// parser keeps the match only to name the ticket file the heading belongs in.
+var inlineTicketHeading = regexp.MustCompile(`^## #([1-9][0-9]*):`)
+
+// resolvedBlockedRule states, in the rendered ticket skeleton, the graph rule the
+// walk in graphDiagnostics already enforces. The skeleton states the rule; it adds
+// no check.
+const resolvedBlockedRule = "A resolved decision ticket cannot stay blocked by an unresolved ticket."
+
 // gistLine is one Decisions so far entry. The link is relative to the map file,
 // and the parser resolves the entry by the ticket-number segment alone.
 var gistLine = regexp.MustCompile(`^- \[[^\]]*\]\([^)]*/` + ticketsDirName + `/([1-9][0-9]*)\.md\):\s*\S`)
@@ -48,8 +57,7 @@ func (s decisionMapSchema) ticketFileScan(id string) FieldScan {
 	}
 }
 
-// ticketDiagnostics grades one decision ticket's fields. Both file shapes share
-// it, so an inline ticket and a ticket file answer with one message set.
+// ticketDiagnostics grades one decision ticket's fields.
 func ticketDiagnostics(ticket DecisionTicket, answerSeen bool) []Diagnostic {
 	var diagnostics []Diagnostic
 	report := func(message string) {
@@ -118,22 +126,36 @@ func parseDecisionTicket(id string, content []byte) (DecisionTicket, []Diagnosti
 	return ticket, append(diagnostics, ticketDiagnostics(ticket, answerSeen)...)
 }
 
+// DecisionTicketTemplate renders one decision-ticket Markdown skeleton. The file
+// is the whole ticket, so its `# ` line carries the decision question.
+func DecisionTicketTemplate() string {
+	schema := canonicalDecisionMapSchema
+	var b strings.Builder
+	b.WriteString(schema.field("title").syntax + "<decision question>\n\n")
+	b.WriteString(schema.field("Blocked by").syntax + "none\n")
+	b.WriteString(schema.field("Type").syntax + schema.types[0] + "\n\n")
+	b.WriteString(resolvedBlockedRule + "\n")
+	for _, name := range []string{"Question", "Answer"} {
+		f := schema.field(name)
+		b.WriteString("\n" + f.syntax + "\n\n<" + strings.ToLower(f.name) + ">\n")
+	}
+	return b.String()
+}
+
 // ticketFolder is where the ticket files of the map at path live.
 func ticketFolder(root, path string) string {
 	return filepath.Join(root, filepath.FromSlash(strings.TrimSuffix(path, ".md")), ticketsDirName)
 }
 
-// splitTickets reads the ticket files beside one map index. The present flag
-// separates a split map from an inline one, which keeps today's rules.
-func splitTickets(root, path string) (tickets []DecisionTicket, diagnostics []Diagnostic, present bool) {
+// splitTickets reads the ticket files beside one map index. An absent folder adds
+// no diagnostic here; the caller's ticket-count rule reports it.
+func splitTickets(root, path string) (tickets []DecisionTicket, diagnostics []Diagnostic) {
 	folder := ticketFolder(root, path)
 	classified := bounds.ClassifyDir(folder)
 	switch classified.State {
-	case bounds.StateAbsent:
-		return nil, nil, false
-	case bounds.StateEmpty, bounds.StateParsed:
+	case bounds.StateAbsent, bounds.StateEmpty, bounds.StateParsed:
 	default:
-		return nil, []Diagnostic{{Message: fmt.Sprintf("%s: %s: %s", ticketsDirName, classified.State, classified.Reason)}}, true
+		return nil, []Diagnostic{{Message: fmt.Sprintf("%s: %s: %s", ticketsDirName, classified.State, classified.Reason)}}
 	}
 	for _, entry := range classified.Entries {
 		name := entry.Name()
@@ -157,7 +179,7 @@ func splitTickets(root, path string) (tickets []DecisionTicket, diagnostics []Di
 	// A directory read is lexical, so #10 would precede #2. Numeric order keeps the
 	// diagnostics and the projected rows in the order the reader numbered them.
 	sort.SliceStable(tickets, func(i, j int) bool { return ticketNumber(tickets[i].ID) < ticketNumber(tickets[j].ID) })
-	return tickets, diagnostics, true
+	return tickets, diagnostics
 }
 
 func ticketNumber(id string) int {
@@ -165,7 +187,7 @@ func ticketNumber(id string) int {
 	return number
 }
 
-// indexDiagnostics grades the index of a split map: the two sections it must
+// indexDiagnostics grades one map index: the two sections it must
 // carry, and the gists that must track its resolved tickets.
 func indexDiagnostics(m DecisionMap, tickets []DecisionTicket) []Diagnostic {
 	var diagnostics []Diagnostic

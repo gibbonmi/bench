@@ -135,10 +135,34 @@ func TestValidateDecisionMapTreeRequiresTheIndexSectionsOfASplitMap(t *testing.T
 			}
 		})
 	}
+}
+
+func TestValidateDecisionMapTreeRefusesAnInlineDecisionTicket(t *testing.T) {
 	root := t.TempDir()
-	writeSplitMap(t, root, "decisions/inline.md", strings.Replace(splitIndex, "## Notes\n\n## Decisions so far\n", "## #1: Which parser owns the map?\n\nBlocked by: none\nType: Research\n\n### Question\n\nWhich?\n\n### Answer\n\n— (open)\n", 1), nil)
-	if diagnostics := ValidateDecisionMapTree(root); len(diagnostics) != 0 {
-		t.Fatalf("inline map without the new sections diagnostics = %v", diagnostics)
+	inline := strings.Replace(splitIndex, "## Not yet specified\n", "## #2: Old\n\nBlocked by: none\nType: Research\n\n### Question\n\nOld?\n\n### Answer\n\nOld.\n\n## Not yet specified\n", 1)
+	writeSplitMap(t, root, "decisions/alpha.md", inline, map[string]string{"1.md": splitTicket})
+	want := "decisions/alpha.md: inline ticket #2: move it to alpha/tickets/2.md"
+	if diagnostics := ValidateDecisionMapTree(root); !hasMessage(diagnostics, want) {
+		t.Fatalf("inline-heading diagnostics = %v, want %q", diagnostics, want)
+	}
+}
+
+func TestValidateDecisionMapTreeGradesTicketTypeAndBlockerValues(t *testing.T) {
+	for _, typ := range []string{"Research", "Prototype", "Grill", "Task"} {
+		root := t.TempDir()
+		writeSplitMap(t, root, "decisions/split.md", splitIndex, map[string]string{
+			"1.md": strings.Replace(splitTicket, "Type: Research", "Type: "+typ, 1),
+		})
+		if diagnostics := ValidateDecisionMapTree(root); len(diagnostics) != 0 {
+			t.Fatalf("type %q diagnostics = %v", typ, diagnostics)
+		}
+	}
+	root := t.TempDir()
+	writeSplitMap(t, root, "decisions/split.md", splitIndex, map[string]string{
+		"1.md": strings.Replace(splitTicket, "Blocked by: none", "Blocked by: #0", 1),
+	})
+	if diagnostics := ValidateDecisionMapTree(root); !hasMessage(diagnostics, "decisions/split.md: ticket #1: malformed Blocked by") {
+		t.Fatalf("malformed blocker diagnostics = %v", diagnostics)
 	}
 }
 

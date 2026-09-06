@@ -14,6 +14,7 @@ import (
 	gitpkg "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -325,37 +326,13 @@ func setupAXILearnings(t *testing.T, root string) {
 	writeAXIFixture(t, filepath.Join(root, "capture", "learnings.md"), "# Learnings — usage journal\n\n## 2026-01-01 — fixture [open]\n")
 }
 
+// setupAXIMap writes one unresolved map: the index skeleton without its gist, and
+// one ticket file whose Answer is open, so the query projects exactly one row.
 func setupAXIMap(t *testing.T, root string) {
-	const document = `# Fixture
-
-Status: shaping
-
-## Destination
-
-Settle it.
-
-## #1: Decide
-
-Blocked by: none
-Type: Research
-
-### Question
-
-What now?
-
-### Answer
-
-— (open)
-
-## Not yet specified
-
-## Spec-writer discretion
-
-## Out of scope
-
-## Sources
-`
-	writeAXIFixture(t, filepath.Join(root, "decisions", "fixture.md"), document)
+	index := strings.Replace(maps.DecisionMapTemplate(), "\n- [<decision question>](<topic>/tickets/1.md): <gist>\n", "", 1)
+	ticket := strings.Replace(maps.DecisionTicketTemplate(), "<answer>", "— (open)", 1)
+	writeAXIFixture(t, filepath.Join(root, "decisions", "fixture.md"), index)
+	writeAXIFixture(t, filepath.Join(root, "decisions", "fixture", "tickets", "1.md"), ticket)
 }
 
 func setupAXIEmptyGuards(t *testing.T, root string) {

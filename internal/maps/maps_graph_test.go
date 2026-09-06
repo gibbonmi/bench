@@ -10,168 +10,47 @@ import (
 	"testing"
 )
 
-func TestMapGraphRejectsInvalidEdges(t *testing.T) {
-	const document = `# Graph
-
-Status: shaping
-
-## Destination
-
-Settle the graph.
-
-## #1: First
-
-Blocked by: #2, #2
-Type: Grill
-
-### Question
-
-First?
-
-### Answer
-
-Resolved.
-
-## #1: Duplicate
-
-Blocked by: #9
-Type: Grill
-
-### Question
-
-Duplicate?
-
-### Answer
-
-Resolved.
-
-## #2: Second
-
-Blocked by: #2
-Type: Grill
-
-### Question
-
-Second?
-
-### Answer
-
-— (open)
-
-## #3: Third
-
-Blocked by: #4
-Type: Grill
-
-### Question
-
-Third?
-
-### Answer
-
-— (open)
-
-## #4: Fourth
-
-Blocked by: #3
-Type: Grill
-
-### Question
-
-Fourth?
-
-### Answer
-
-— (open)
-
-## Not yet specified
-
-## Spec-writer discretion
-
-## Out of scope
-
-## Sources
-`
-	_, diagnostics := ValidateDecisionMap(t.TempDir(), "decisions/graph.md", false, []byte(document))
-	for _, want := range []string{"duplicate ID #1", "duplicate blocker #2", "dangling blocker #9", "self-edge #2 -> #2", "cycle edge ticket #4: Fourth -> ticket #3: Third", "resolved ticket #1: First depends on unresolved #2: Second"} {
-		if !hasDiagnostic(diagnostics, want) {
-			t.Errorf("diagnostics = %v, want %q", diagnostics, want)
-		}
-	}
+// readyIndex renders one ready-map index. The graph and readiness rules read the
+// ticket files, so each caller writes the index beside the ticket it grades.
+func readyIndex(status, fog, sources string) string {
+	return "# Ready\n\nStatus: " + status +
+		"\n\n## Destination\n\nSettle it.\n\n## Notes\n\n## Decisions so far\n\n- [Answer](ready/tickets/1.md): Resolved.\n" +
+		"\n## Not yet specified\n" + fog +
+		"\n## Spec-writer discretion\n\n- A bounded choice.\n\n## Out of scope\n\n- Not included.\n\n## Sources\n" + sources
 }
 
 func TestMapReadinessAndStructuredSources(t *testing.T) {
-	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "evidence.md"), []byte("evidence"), 0o644); err != nil {
-		t.Fatal(err)
+	sources := strings.ReplaceAll("\n- Path: TICKevidence.mdTICK\n  Supports: The settled answer.\n  Drift: Update when evidence changes.\n"+
+		"- URL: TICKhttps://example.invalid/sourceTICK\n  Supports: External context.\n  Drift: Update when it changes.\n", "TICK", "`")
+	const resolvedTicket = "# Answer\n\nBlocked by: none\nType: Grill\n\n### Question\n\nAnswer?\n\n### Answer\n\nRESULT\n"
+	validate := func(t *testing.T, index, answer string) []string {
+		t.Helper()
+		root := t.TempDir()
+		if err := os.WriteFile(filepath.Join(root, "evidence.md"), []byte("evidence"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		writeSplitMap(t, root, "decisions/ready.md", index, map[string]string{"1.md": strings.Replace(resolvedTicket, "RESULT", answer, 1)})
+		return ValidateDecisionMapTree(root)
 	}
-	body := `# Ready
-
-Status: STATUS
-
-## Destination
-
-Settle it.
-
-## #1: Answer
-
-Blocked by: none
-Type: Grill
-
-### Question
-
-Answer?
-
-### Answer
-
-Resolved.
-
-## Not yet specified
-
-FOG
-
-## Spec-writer discretion
-
-- A bounded choice.
-
-## Out of scope
-
-- Not included.
-
-## Sources
-
-- Path: TICKevidence.mdTICK
-  Supports: The settled answer.
-  Drift: Update when evidence changes.
-- URL: TICKhttps://example.invalid/sourceTICK
-  Supports: External context.
-  Drift: Update when it changes.
-`
-	body = strings.ReplaceAll(body, "TICK", "`")
-	_, shaping := ValidateDecisionMap(root, "decisions/ready.md", false, []byte(strings.ReplaceAll(strings.ReplaceAll(body, "STATUS", "shaping"), "FOG", "- Honest fog.")))
-	if len(shaping) != 0 {
-		t.Fatalf("shaping diagnostics = %v", shaping)
+	if diagnostics := validate(t, readyIndex("shaping", "\n- Honest fog.\n", sources), "Resolved."); len(diagnostics) != 0 {
+		t.Fatalf("shaping diagnostics = %v", diagnostics)
 	}
-	_, ready := ValidateDecisionMap(root, "decisions/ready.md", false, []byte(strings.ReplaceAll(strings.ReplaceAll(body, "STATUS", "ready"), "FOG", "- Honest fog.")))
-	if !hasDiagnostic(ready, "ready map has non-empty Not yet specified") {
-		t.Fatalf("ready diagnostics = %v", ready)
+	if diagnostics := validate(t, readyIndex("ready", "\n- Honest fog.\n", sources), "Resolved."); !hasMessage(diagnostics, "decisions/ready.md: ready map has non-empty Not yet specified") {
+		t.Fatalf("ready diagnostics = %v", diagnostics)
 	}
 	for _, marker := range []string{"— (open)", "— (deferred)", "GRILL DEFERRED"} {
-		unresolved := strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(body, "STATUS", "ready"), "FOG", ""), "Resolved.", marker)
-		_, diagnostics := ValidateDecisionMap(root, "decisions/ready.md", false, []byte(unresolved))
-		if !hasDiagnostic(diagnostics, "ready map has unresolved ticket") {
+		// An unresolved ticket also drops its gist, so the index under proof carries none.
+		index := strings.Replace(readyIndex("ready", "", sources), "\n- [Answer](ready/tickets/1.md): Resolved.\n", "", 1)
+		diagnostics := validate(t, index, marker)
+		if !hasTreeDiagnostic(diagnostics, "ready map has unresolved ticket") {
 			t.Errorf("ready marker %q diagnostics = %v", marker, diagnostics)
 		}
 	}
-	emptySourceBody := body[:strings.Index(body, "## Sources")+len("## Sources\n")]
-	emptySourceBody = strings.ReplaceAll(strings.ReplaceAll(emptySourceBody, "STATUS", "ready"), "FOG", "")
-	_, emptySources := ValidateDecisionMap(root, "decisions/ready.md", false, []byte(emptySourceBody))
-	if len(emptySources) != 0 {
-		t.Fatalf("empty sources diagnostics = %v", emptySources)
+	if diagnostics := validate(t, readyIndex("ready", "", ""), "Resolved."); len(diagnostics) != 0 {
+		t.Fatalf("empty sources diagnostics = %v", diagnostics)
 	}
-	_, sentinel := ValidateDecisionMap(root, "decisions/ready.md", false, []byte(emptySourceBody+"n/a\n"))
-	if !hasDiagnostic(sentinel, "Sources entry") {
-		t.Fatalf("sentinel diagnostics = %v", sentinel)
+	if diagnostics := validate(t, readyIndex("ready", "", "\nn/a\n"), "Resolved."); !hasTreeDiagnostic(diagnostics, "Sources entry") {
+		t.Fatalf("sentinel diagnostics = %v", diagnostics)
 	}
 }
 
@@ -225,24 +104,34 @@ func TestMapSourcesAndTerminalListsRejectHostileShapes(t *testing.T) {
 }
 
 func TestMapTerminalContinuationAndEmptyAnswer(t *testing.T) {
-	root := t.TempDir()
-	document := func(status, answer, fog, discretion, sources string) string {
-		return "# Map\n\nStatus: " + status + "\n\n## Destination\n\nSettle it.\n\n## #1: Decision\n\nBlocked by: none\nType: Grill\n\n### Question\n\nQuestion?\n\n### Answer\n" + answer + "\n## Not yet specified\n" + fog + "\n## Spec-writer discretion\n" + discretion + "\n## Out of scope\n\n- Excluded.\n\n## Sources\n" + sources
+	index := func(status, gist, fog, discretion string) string {
+		return "# Map\n\nStatus: " + status + "\n\n## Destination\n\nSettle it.\n\n## Notes\n\n## Decisions so far\n" + gist +
+			"\n## Not yet specified\n" + fog + "\n## Spec-writer discretion\n" + discretion + "\n## Out of scope\n\n- Excluded.\n\n## Sources\n"
 	}
-	wrapped := document("shaping", "\nResolved.\n\n", "\n- A fog item\n  that continues on the next line.\n\n", "\n- A bounded choice.\n\n", "")
-	if _, diagnostics := ValidateDecisionMap(root, "decisions/map.md", false, []byte(wrapped)); len(diagnostics) != 0 {
+	ticket := func(answer string) string {
+		return "# Decision\n\nBlocked by: none\nType: Grill\n\n### Question\n\nQuestion?\n\n### Answer\n" + answer
+	}
+	validate := func(t *testing.T, index, ticket string) []string {
+		t.Helper()
+		root := t.TempDir()
+		writeSplitMap(t, root, "decisions/map.md", index, map[string]string{"1.md": ticket})
+		return ValidateDecisionMapTree(root)
+	}
+	const gist = "\n- [Decision](map/tickets/1.md): Resolved.\n"
+	wrapped := index("shaping", gist, "\n- A fog item\n  that continues on the next line.\n\n", "\n- A bounded choice.\n\n")
+	if diagnostics := validate(t, wrapped, ticket("\nResolved.\n")); len(diagnostics) != 0 {
 		t.Fatalf("wrapped list diagnostics = %v", diagnostics)
 	}
 	prose := strings.Replace(wrapped, "- A bounded choice.", "A bounded choice.", 1)
-	if _, diagnostics := ValidateDecisionMap(root, "decisions/map.md", false, []byte(prose)); !hasDiagnostic(diagnostics, "Spec-writer discretion must be a Markdown bullet list") {
+	if diagnostics := validate(t, prose, ticket("\nResolved.\n")); !hasTreeDiagnostic(diagnostics, "Spec-writer discretion must be a Markdown bullet list") {
 		t.Fatalf("prose diagnostics = %v", diagnostics)
 	}
-	empty := document("shaping", "\n", "", "", "")
-	if _, diagnostics := ValidateDecisionMap(root, "decisions/map.md", false, []byte(empty)); len(diagnostics) != 0 {
+	empty := index("shaping", "", "", "")
+	if diagnostics := validate(t, empty, ticket("\n")); len(diagnostics) != 0 {
 		t.Fatalf("shaping empty-answer diagnostics = %v", diagnostics)
 	}
 	ready := strings.Replace(empty, "Status: shaping", "Status: ready", 1)
-	if _, diagnostics := ValidateDecisionMap(root, "decisions/map.md", false, []byte(ready)); !hasDiagnostic(diagnostics, "ready map has unresolved ticket") {
+	if diagnostics := validate(t, ready, ticket("\n")); !hasTreeDiagnostic(diagnostics, "ready map has unresolved ticket") {
 		t.Fatalf("ready empty-answer diagnostics = %v", diagnostics)
 	}
 }

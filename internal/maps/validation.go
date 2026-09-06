@@ -13,16 +13,15 @@ import (
 
 // ValidateDecisionMap validates one map at its repository-relative path.
 func ValidateDecisionMap(root, path string, compiled bool, content []byte) (DecisionMap, []Diagnostic) {
-	fileTickets, ticketFolderDiagnostics, split := splitTickets(root, path)
-	m, parsed := parseDecisionMap(content, !split)
-	if split {
-		m.Tickets = append(m.Tickets, fileTickets...)
-		parsed = append(parsed, ticketFolderDiagnostics...)
-		if len(m.Tickets) == 0 {
-			parsed = append(parsed, Diagnostic{Message: "missing decision ticket"})
-		}
-		parsed = append(parsed, indexDiagnostics(m, fileTickets)...)
+	topic := strings.TrimSuffix(filepath.Base(path), ".md")
+	tickets, ticketFolderDiagnostics := splitTickets(root, path)
+	m, parsed := parseDecisionMap(topic, content)
+	m.Tickets = tickets
+	parsed = append(parsed, ticketFolderDiagnostics...)
+	if len(tickets) == 0 {
+		parsed = append(parsed, Diagnostic{Message: "missing decision ticket"})
 	}
+	parsed = append(parsed, indexDiagnostics(m, tickets)...)
 	diagnostics := make([]Diagnostic, 0, len(parsed))
 	for _, diagnostic := range parsed {
 		diagnostics = append(diagnostics, Diagnostic{Message: path + ": " + diagnostic.Message})
@@ -38,12 +37,10 @@ func ValidateDecisionMap(root, path string, compiled bool, content []byte) (Deci
 
 func graphDiagnostics(m DecisionMap) []Diagnostic {
 	var diagnostics []Diagnostic
+	// A ticket id is its file's basename, so the directory read cannot deliver two
+	// tickets with one id and no duplicate-id rule is reachable.
 	byID := make(map[string]DecisionTicket)
 	for _, ticket := range m.Tickets {
-		if original, exists := byID[ticket.ID]; exists {
-			diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("duplicate ID #%s: %s conflicts with %s", ticket.ID, ticket.Title, original.Title)})
-			continue
-		}
 		byID[ticket.ID] = ticket
 	}
 	walk := GraphWalk{}

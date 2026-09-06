@@ -19,12 +19,17 @@ const DecisionsDir = "decisions"
 
 var grammar = usage.Grammar{
 	Cmd:  "bench maps",
-	Help: "usage: bench maps [--count|--template]",
+	Help: "usage: bench maps [--count|--template|--ticket-template]",
 	Flags: []usage.Flag{
 		{Name: "--count"},
 		{Name: "--template"},
+		{Name: "--ticket-template"},
 	},
 }
+
+// exclusiveMapFlags is the mutually exclusive flag set, in the order the help line
+// spells it. The first conflicting pair names the refusal.
+var exclusiveMapFlags = []string{"--count", "--template", "--ticket-template"}
 
 type activeScan struct {
 	rows         [][]any
@@ -146,13 +151,20 @@ func Command(args []string) (string, int) {
 	if line != "" {
 		return line + "\n", code
 	}
-	if _, count := parsed.Flags["--count"]; count {
-		if _, template := parsed.Flags["--template"]; template {
-			return grammar.Help + " (--count and --template are mutually exclusive)\n", 2
+	var chosen []string
+	for _, flag := range exclusiveMapFlags {
+		if _, set := parsed.Flags[flag]; set {
+			chosen = append(chosen, flag)
 		}
+	}
+	if len(chosen) > 1 {
+		return grammar.Help + " (" + chosen[0] + " and " + chosen[1] + " are mutually exclusive)\n", 2
 	}
 	if _, template := parsed.Flags["--template"]; template {
 		return DecisionMapTemplate(), 0
+	}
+	if _, template := parsed.Flags["--ticket-template"]; template {
+		return DecisionTicketTemplate(), 0
 	}
 	root, err := git.Root()
 	if err != nil {

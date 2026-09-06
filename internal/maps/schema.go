@@ -24,7 +24,6 @@ type decisionMapSchema struct {
 	fields              []field
 	terminalSections    []terminalSection
 	indexSections       []terminalSection
-	ticketHeading       string
 	unsupportedHeadings []string
 }
 
@@ -46,19 +45,14 @@ var canonicalDecisionMapSchema = decisionMapSchema{
 		{heading: "Out of scope", syntax: "## Out of scope"},
 		{heading: "Sources", syntax: "## Sources"},
 	},
-	// A split map's index carries these two sections. They stay optional for an
-	// inline map, so they are not terminal sections and the template omits them.
+	// A map index carries these two sections. They are graded by indexDiagnostics
+	// against the ticket files, so they are not terminal sections.
 	indexSections: []terminalSection{
 		{heading: "Notes", syntax: "## Notes"},
 		{heading: "Decisions so far", syntax: "## Decisions so far"},
 	},
-	ticketHeading:       "## #",
 	unsupportedHeadings: []string{"## Handoff"},
 }
-
-// resolvedBlockedRule states, in the rendered template, the graph rule the walk in
-// graphDiagnostics already enforces. The template states the rule; it adds no check.
-const resolvedBlockedRule = "A resolved decision ticket cannot stay blocked by an unresolved ticket."
 
 // decisionMapSourcesExample teaches the Sources record grammar in the rendered
 // template. The locator is a URL, because validateSourcePath resolves a Path locator
@@ -70,11 +64,10 @@ const decisionMapSourcesExample = "\n- URL: https://example.invalid/decision-sou
 
 // decisionMapAssetRule states, in the rendered template, where a map-owned asset stays.
 // The candidate scanner lists only the direct children of a decisions directory, so an
-// asset in this nested directory is never read as a decision map. The template states the
-// convention; it adds no check.
-const decisionMapAssetRule = "A map-owned asset stays in `decisions/assets/`."
+// asset in this nested directory is never read as a decision map. The sentence renders
+// without Markdown quoting, because the anchor registry pins the bare path.
+const decisionMapAssetRule = "A map-owned asset stays in the map's assets folder, decisions/<topic>/assets/."
 
-var decisionHeading = regexp.MustCompile(`^([1-9][0-9]*):\s+(.+?)\s*$`)
 var blockersField = regexp.MustCompile(`^(none|#[1-9][0-9]*(, #[1-9][0-9]*)*)$`)
 
 // Diagnostic describes one structural decision-map problem.
@@ -143,77 +136,39 @@ func (s decisionMapSchema) terminalHeading(line string) string {
 	return ""
 }
 
-func (s decisionMapSchema) ticket(line string) (id, title string, ok bool) {
-	match := decisionHeading.FindStringSubmatch(strings.TrimPrefix(line, s.ticketHeading))
-	if !strings.HasPrefix(line, s.ticketHeading) || match == nil {
-		return "", "", false
-	}
-	return match[1], match[2], true
-}
-
-// fieldScan drives the shared field scan with the decision-map field table. A
-// decision ticket opens one scope, and a section heading closes it.
+// fieldScan drives the shared field scan over one map index. The index owns no
+// ticket field, so the scoped half of the field table stays with ticketFileScan.
 func (s decisionMapSchema) fieldScan() FieldScan {
-	table := make([]FieldSpec, 0, len(s.fields)+len(s.terminalSections))
+	var table []FieldSpec
 	for _, f := range s.fields {
-		table = append(table, FieldSpec{Name: f.name, Syntax: f.syntax, Heading: f.heading, Scoped: f.scoped})
+		if f.scoped {
+			continue
+		}
+		table = append(table, FieldSpec{Name: f.name, Syntax: f.syntax, Heading: f.heading})
 	}
 	for _, terminal := range append(append([]terminalSection{}, s.terminalSections...), s.indexSections...) {
 		table = append(table, FieldSpec{Name: terminal.heading, Syntax: terminal.syntax, Heading: true})
 	}
 	return FieldScan{
 		Table: table,
-		Scope: func(line string) (string, bool) {
-			if id, _, ok := s.ticket(line); ok {
-				return id, true
-			}
-			if line == s.field("Destination").syntax || s.terminalHeading(line) != "" || s.indexHeading(line) != "" {
-				return "", true
-			}
-			for _, heading := range s.unsupportedHeadings {
-				if line == heading {
-					return "", true
-				}
-			}
-			return "", false
-		},
-		Duplicate: func(spec FieldSpec, scope string) string {
-			switch {
-			case spec.Scoped:
-				return fmt.Sprintf("ticket #%s: duplicate %s", scope, spec.Name)
-			case spec.Name == "title", spec.Name == "Status":
+		Duplicate: func(spec FieldSpec, _ string) string {
+			if spec.Name == "title" || spec.Name == "Status" {
 				return "duplicate " + spec.Name
-			default:
-				return "duplicate " + spec.Name + " section"
 			}
+			return "duplicate " + spec.Name + " section"
 		},
 	}
 }
 
-// ParseDecisionMap parses a decision map according to the canonical schema.
-func ParseDecisionMap(content []byte) (DecisionMap, []Diagnostic) {
-	return parseDecisionMap(content, true)
-}
-
-// parseDecisionMap parses one map index. A split map carries its tickets in
-// files beside the index, so requireInlineTickets is false there and the
-// ticket-count rule moves to the caller that read the folder.
-func parseDecisionMap(content []byte, requireInlineTickets bool) (DecisionMap, []Diagnostic) {
+// parseDecisionMap parses one map index. Every decision lives in a ticket file
+// beside the index, so an inline decision-ticket heading is refused here and the
+// ticket-count rule belongs to the caller that read the folder. The topic names
+// the index's own folder, which the refusal points at.
+func parseDecisionMap(topic string, content []byte) (DecisionMap, []Diagnostic) {
 	m := DecisionMap{IndexSections: map[string]bool{}}
 	var diagnostics []Diagnostic
 	seenTerminal := map[string]bool{}
-	var current *DecisionTicket
-	answerSeen := false
 	section := ""
-
-	finishTicket := func() {
-		if current == nil {
-			return
-		}
-		diagnostics = append(diagnostics, ticketDiagnostics(*current, answerSeen)...)
-		m.Tickets = append(m.Tickets, *current)
-		current = nil
-	}
 
 	scanned, _ := canonicalDecisionMapSchema.fieldScan().Scan(content)
 	for _, entry := range scanned {
@@ -242,7 +197,6 @@ func parseDecisionMap(content []byte, requireInlineTickets bool) (DecisionMap, [
 		unsupported := false
 		for _, heading := range canonicalDecisionMapSchema.unsupportedHeadings {
 			if line == heading {
-				finishTicket()
 				diagnostics = append(diagnostics, Diagnostic{Message: "unsupported Handoff section"})
 				section = "Handoff"
 				unsupported = true
@@ -252,8 +206,12 @@ func parseDecisionMap(content []byte, requireInlineTickets bool) (DecisionMap, [
 		if unsupported {
 			continue
 		}
+		if match := inlineTicketHeading.FindStringSubmatch(line); match != nil {
+			diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("inline ticket #%s: move it to %s/%s/%s.md", match[1], topic, ticketsDirName, match[1])})
+			section = "inline ticket"
+			continue
+		}
 		if heading := canonicalDecisionMapSchema.indexHeading(line); heading != "" {
-			finishTicket()
 			if duplicate {
 				report()
 			}
@@ -262,7 +220,6 @@ func parseDecisionMap(content []byte, requireInlineTickets bool) (DecisionMap, [
 			continue
 		}
 		if heading := canonicalDecisionMapSchema.terminalHeading(line); heading != "" {
-			finishTicket()
 			if duplicate {
 				report()
 			}
@@ -271,55 +228,10 @@ func parseDecisionMap(content []byte, requireInlineTickets bool) (DecisionMap, [
 			continue
 		}
 		if entry.Field == "Destination" {
-			finishTicket()
 			if duplicate {
 				report()
 			}
 			section = "Destination"
-			continue
-		}
-		if id, title, ok := canonicalDecisionMapSchema.ticket(line); ok {
-			finishTicket()
-			current = &DecisionTicket{ID: id, Title: title}
-			answerSeen = false
-			section = "ticket"
-			continue
-		}
-		if current != nil {
-			switch entry.Field {
-			case "Blocked by":
-				if duplicate {
-					report()
-					break
-				}
-				current.BlockedBy = entry.Value
-			case "Type":
-				if duplicate {
-					report()
-					break
-				}
-				current.Type = entry.Value
-			case "Question":
-				if duplicate {
-					report()
-				}
-				section = "Question"
-			case "Answer":
-				if duplicate {
-					report()
-				}
-				answerSeen = true
-				section = "Answer"
-			default:
-				if strings.TrimSpace(line) == "" {
-					break
-				}
-				if section == "Question" {
-					current.Question = appendSectionLine(current.Question, strings.TrimSpace(line))
-				} else if section == "Answer" {
-					current.Answer = appendSectionLine(current.Answer, strings.TrimSpace(line))
-				}
-			}
 			continue
 		}
 		if strings.TrimSpace(line) == "" {
@@ -342,7 +254,6 @@ func parseDecisionMap(content []byte, requireInlineTickets bool) (DecisionMap, [
 			m.Decisions = appendSectionLine(m.Decisions, line)
 		}
 	}
-	finishTicket()
 	if m.Title == "" {
 		diagnostics = append(diagnostics, Diagnostic{Message: "missing title"})
 	}
@@ -353,9 +264,6 @@ func parseDecisionMap(content []byte, requireInlineTickets bool) (DecisionMap, [
 	}
 	if m.Destination == "" {
 		diagnostics = append(diagnostics, Diagnostic{Message: "missing Destination"})
-	}
-	if requireInlineTickets && len(m.Tickets) == 0 {
-		diagnostics = append(diagnostics, Diagnostic{Message: "missing decision ticket"})
 	}
 	for _, terminal := range canonicalDecisionMapSchema.terminalSections {
 		if !seenTerminal[terminal.heading] {
@@ -372,7 +280,8 @@ func appendSectionLine(section, line string) string {
 	return section + "\n" + line
 }
 
-// DecisionMapTemplate renders the canonical decision-map Markdown skeleton.
+// DecisionMapTemplate renders the canonical map-index Markdown skeleton. The
+// decisions themselves live in the ticket files DecisionTicketTemplate renders.
 func DecisionMapTemplate() string {
 	var b strings.Builder
 	b.WriteString(canonicalDecisionMapSchema.field("title").syntax)
@@ -381,24 +290,13 @@ func DecisionMapTemplate() string {
 	b.WriteString(canonicalDecisionMapSchema.statuses[0])
 	b.WriteString("\n\n")
 	b.WriteString(canonicalDecisionMapSchema.field("Destination").syntax)
-	b.WriteString("\n\n<what this map decides>\n\n")
-	b.WriteString(canonicalDecisionMapSchema.ticketHeading)
-	b.WriteString("1: <decision question>\n\n")
-	b.WriteString(canonicalDecisionMapSchema.field("Blocked by").syntax)
-	b.WriteString("none\n")
-	b.WriteString(canonicalDecisionMapSchema.field("Type").syntax)
-	b.WriteString(canonicalDecisionMapSchema.types[0])
-	b.WriteString("\n\n")
-	b.WriteString(resolvedBlockedRule)
-	b.WriteString("\n")
-	b.WriteString(decisionMapAssetRule)
-	b.WriteString("\n")
-	for _, field := range []field{canonicalDecisionMapSchema.field("Question"), canonicalDecisionMapSchema.field("Answer")} {
-		b.WriteString("\n")
-		b.WriteString(field.syntax)
-		b.WriteString("\n\n<")
-		b.WriteString(strings.ToLower(field.name))
-		b.WriteString(">\n")
+	b.WriteString("\n\n<what this map decides>\n")
+	for _, index := range canonicalDecisionMapSchema.indexSections {
+		body := "- [<decision question>](<topic>/" + ticketsDirName + "/1.md): <gist>"
+		if index.heading == "Notes" {
+			body = decisionMapAssetRule
+		}
+		b.WriteString("\n" + index.syntax + "\n\n" + body + "\n")
 	}
 	for _, terminal := range canonicalDecisionMapSchema.terminalSections {
 		b.WriteString("\n")

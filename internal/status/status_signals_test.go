@@ -141,36 +141,30 @@ func TestAppendStagedSpecsRoutesAndOrdersBeforeRetirement(t *testing.T) {
 func TestAppendMapsRoutesReadyOnlyWithoutUnresolvedOrInvalidMaps(t *testing.T) {
 	root := t.TempDir()
 	dir := filepath.Join(root, "decisions")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	ready := strings.Replace(maps.DecisionMapTemplate(), "<answer>", "Resolved.", 1)
-	ready = strings.Replace(ready, "Status: shaping", "Status: ready", 1)
-	if err := os.WriteFile(filepath.Join(dir, "ready.md"), []byte(ready), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeDecisionMap(t, root, "decisions/ready.md", readyMapIndex())
 	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "1 ready map(s)", commandActionWithArgument(writeSpecPhaseAction, "decisions/ready.md")}}) {
 		t.Fatalf("ready-only maps row = %#v", got)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "second.md"), []byte(ready), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeDecisionMap(t, root, "decisions/second.md", readyMapIndex())
 	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "2 ready map(s)", commandAction(writeSpecPhaseAction)}}) {
 		t.Fatalf("multiple-ready maps row = %#v", got)
 	}
-	if err := os.Remove(filepath.Join(dir, "second.md")); err != nil {
+	if err := os.RemoveAll(filepath.Join(dir, "second.md")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.RemoveAll(filepath.Join(dir, "second")); err != nil {
 		t.Fatal(err)
 	}
 
-	shaping := strings.Replace(maps.DecisionMapTemplate(), "<answer>", "Resolved.", 1)
-	if err := os.WriteFile(filepath.Join(dir, "shaping.md"), []byte(shaping), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeDecisionMap(t, root, "decisions/shaping.md", maps.DecisionMapTemplate())
 	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "1 unresolved map(s)", commandAction(shapeIdeaPhaseAction)}}) {
 		t.Fatalf("ready plus shaping maps row = %#v", got)
 	}
 
-	if err := os.Remove(filepath.Join(dir, "shaping.md")); err != nil {
+	if err := os.RemoveAll(filepath.Join(dir, "shaping.md")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.RemoveAll(filepath.Join(dir, "shaping")); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(dir, "invalid.md"), []byte("# invalid\n"), 0o644); err != nil {
@@ -332,15 +326,7 @@ func TestRouteForInvokesStagedSpecWhosePathContainsSpacesAheadOfDrain(t *testing
 
 func TestRouteForInvokesReadyMapWhosePathContainsSpaces(t *testing.T) {
 	root := initRepo(t)
-	ready := strings.Replace(maps.DecisionMapTemplate(), "<answer>", "Resolved.", 1)
-	ready = strings.Replace(ready, "Status: shaping", "Status: ready", 1)
-	path := filepath.Join(root, "decisions", "my map.md")
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(path, []byte(ready), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeDecisionMap(t, root, "decisions/my map.md", readyMapIndex())
 	gitRun(t, root, "add", "-A")
 	gitRun(t, root, "commit", "-m", "base")
 
