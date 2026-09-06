@@ -3,6 +3,28 @@ package canonicalpath
 
 import "path/filepath"
 
+// Operand answers what a path operand on a Bench command line names: the cleaned path the
+// verb acts on, and the repo-relative spelling with forward slashes that every row and
+// refusal prints, which is what an agent would type. An absolute operand stays, and a
+// relative one joins onto cwd, so the same operand from two working directories names one
+// file. A root that cannot relativize the path leaves nothing root-relative to print, so
+// the display keeps the cleaned operand itself.
+//
+// The caller reads its own working directory and passes it in, because this package stays
+// pure: it answers from its arguments alone and touches no ambient state.
+func Operand(root, cwd, arg string) (path, display string) {
+	path = arg
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(cwd, path)
+	}
+	path = filepath.Clean(path)
+	relative, err := filepath.Rel(root, path)
+	if err != nil {
+		return path, filepath.ToSlash(filepath.Clean(arg))
+	}
+	return path, filepath.ToSlash(relative)
+}
+
 // Resolve returns one cleaned absolute spelling of path. A symbolic link resolves to its
 // target, so two spellings of one directory compare equal. A path that does not exist yet
 // carries no link to follow, so it keeps its absolute spelling. The only refusal is the

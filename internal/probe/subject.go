@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -29,16 +30,15 @@ type subject struct {
 // directory. Lstat decides the kind, so a symlink refuses instead of the verb mutating
 // whatever it points at.
 func resolveSubject(root, arg string) (subject, string) {
-	path := arg
-	if !filepath.IsAbs(path) {
-		cwd, err := os.Getwd()
+	cwd := ""
+	if !filepath.IsAbs(arg) {
+		working, err := os.Getwd()
 		if err != nil {
 			return subject{}, unavailable(filepath.ToSlash(filepath.Clean(arg)), "absent")
 		}
-		path = filepath.Join(cwd, path)
+		cwd = working
 	}
-	path = filepath.Clean(path)
-	display := displayPath(root, path)
+	path, display := canonicalpath.Operand(root, cwd, arg)
 	if !withinRoot(root, path) {
 		return subject{}, unavailable(display, "outside the repository")
 	}
@@ -63,16 +63,6 @@ func resolveSubject(root, arg string) (subject, string) {
 
 func unavailable(display, reason string) string {
 	return toon.Errorf("probe subject unavailable", display+" is "+reason) + "\n"
-}
-
-// displayPath spells the subject repo-relative with forward slashes, which is what an
-// agent would type. A path the root cannot relativize keeps its cleaned operand form.
-func displayPath(root, path string) string {
-	relative, err := filepath.Rel(root, path)
-	if err != nil {
-		return filepath.ToSlash(path)
-	}
-	return filepath.ToSlash(relative)
 }
 
 func withinRoot(root, path string) bool {
