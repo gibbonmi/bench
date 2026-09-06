@@ -1,1 +1,1 @@
-[{"path":"internal/maps/schema.go","old":"decisions/assets/","new":"decisions/attachments/"}]
+[{"path":"internal/maps/schema.go","old":"decisions/<topic>/assets/","new":"decisions/<topic>/attachments/"}]

@@ -56,11 +56,13 @@ func TestRenderHelpRendersReusableInvocationAndHarnessPhase(t *testing.T) {
 		ExecutableInvocation("inspect active worktree", KnownArgument("worktree"), KnownArgument("exec"), KnownArgument("alpha"), KnownArgument("--"), FutureInput("command")),
 		HarnessPhase("/bench-shape-idea", "shape model"),
 		HarnessPhase("/bench-what-next", "drain the capture inbox"),
+		HarnessPhase("/bench-write-spec", "spec the ready map"),
+		HarnessPhaseOn("/bench-write-spec", "decisions/my map.md", "spec my map: Model"),
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	const want = "help[4]{cmd,why}:\n  bench maps --template,repair decisions/model.md\n  bench worktree exec alpha -- <command>,inspect active worktree\n  /bench-shape-idea,shape model\n  /bench-what-next,drain the capture inbox\n"
+	const want = "help[6]{cmd,why}:\n  bench maps --template,repair decisions/model.md\n  bench worktree exec alpha -- <command>,inspect active worktree\n  /bench-shape-idea,shape model\n  /bench-what-next,drain the capture inbox\n  /bench-write-spec,spec the ready map\n  /bench-write-spec decisions/my map.md,\"spec my map: Model\"\n"
 	if got != want {
 		t.Fatalf("RenderHelp = %q, want %q", got, want)
 	}
@@ -138,6 +140,8 @@ func TestRenderHelpRejectsLossyReusableActions(t *testing.T) {
 		{name: "unsafe executable name", action: ExecutableInvocation("repair", KnownArgument("maps!"))},
 		{name: "future command", action: ExecutableInvocation("repair", FutureInput("command"))},
 		{name: "shell command phase", action: HarnessPhase("bench /bench-shape-idea", "shape model")},
+		{name: "non-canonical phase with an argument", action: HarnessPhaseOn("/bench-compile-map", "decisions/model.md", "spec model")},
+		{name: "placeholder phase argument", action: HarnessPhaseOn("/bench-write-spec", "decisions/<map>.md", "spec model")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if _, err := RenderHelp([]Action{tc.action}); err == nil {

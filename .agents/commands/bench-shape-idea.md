@@ -14,10 +14,15 @@ to `/bench-write-spec`.
 Charge `bench-craft-domain` on entry so decision tickets use canonical terms
 and concept-edge scenarios rather than overloaded vocabulary.
 
-The phase produces or resumes a compact top-level `decisions/<topic>.md` map.
-Run `bench maps --template` for the canonical paste-ready schema. The CLI
-template and parser share one schema owner, so this command does not restate
-the exact Markdown grammar.
+The phase produces or resumes a top-level `decisions/<topic>.md` map beside its
+`decisions/<topic>/tickets/` folder.
+The map is an index: it lists the decisions made and links the ticket that holds each one.
+A decision ticket is one file under the map's tickets folder, named by its number.
+The answer lives only in the ticket file.
+Run `bench maps --template` for the canonical paste-ready schema, and
+`bench maps --ticket-template` for one ticket file. The CLI templates and the
+parser share one schema owner, so this command does not restate the exact
+Markdown grammar.
 
 ## Exit handoff
 
@@ -42,12 +47,13 @@ hostile-input attachment, and gate attachment. A reviewer may explicitly
 choose an engineering seam while shaping. Record that choice in its decision
 ticket answer. Do not manufacture a seam decision simply to complete a map.
 
-The map stays top-level while shaping is open. It loads whole into each
-planning session, so keep it tight. Link to research assets instead of an
-inline copy. A map-owned asset stays in `decisions/assets/`.
-`/bench-write-spec` moves a ready decision map and its owned assets into
-`specs/<slug>/decisions/`. Compiled maps there are settled provenance, not the
-active shaping frontier.
+The topic folder stays top-level while shaping is open. The index loads whole
+into each planning session, so keep it tight. Link to a research asset instead
+of an inline copy. A map-owned asset stays in the map's assets folder,
+`decisions/<topic>/assets/`.
+`/bench-write-spec` moves a ready topic folder and its index file into
+`specs/<slug>/decisions/`.
+Compiled maps there are settled provenance, not the active shaping frontier.
 
 ## Decision tickets
 
@@ -61,8 +67,10 @@ IDs. Use the four schema-owned types:
 - **Prototype** — write throwaway code to make a reviewer choice concrete;
   charge the `prototype` skill.
 - **Grill** — run `craft-grill` frontier rounds to record the reviewer decision.
-- **Task** — complete manual work needed before the reviewer can decide, and
-  name who owns the work.
+- **Task** — complete the manual work needed before the reviewer can decide.
+
+Name a ticket by its title, with its number beside it.
+The shaping worktree lease is the claim, and no owner field enters a ticket.
 
 Grill and Prototype decision tickets resolve only through live exchange with
 me. Research runs agent-alone. When the harness can delegate and another
@@ -70,14 +78,16 @@ frontier decision ticket can proceed concurrently, route Research through
 `craft-delegate` as a read-only delegation. Otherwise resolve it inline.
 Before asking me about a fact, look it up in the tree — reviewer attention is
 for decisions.
+A grill recommendation that asserts current-code behavior names the evidence read in the current session.
 
 ## Map content
 
-Use `bench maps --template`, then fill the map as current state rather than a
-deliberation log:
+Use the two templates, then fill the index and each ticket as current state
+rather than a deliberation log.
+Decisions so far holds one gist line per resolved ticket, with a link to its file.
+Notes holds the domain, the skills a session consults, and the standing preferences of that map.
 
 - **Destination** fixes the outcome and scope.
-- **Decision tickets** record each question, dependency, type, and answer.
 - **Not yet specified** holds honest in-scope fog that is not sharp enough to
   become a decision ticket.
 - **Spec-writer discretion** lists only the bounded discretion shaping grants.
@@ -92,8 +102,9 @@ first skeleton. One verb alone leaves one lane unrun.
 
 The map is ready only when its status is `ready`, every decision ticket is
 resolved, fog is empty, and every research object remains valid. Run
-`bench maps` before declaring readiness. A diagnostic or any row for this map
-means it is not ready.
+`bench maps` before declaring readiness. A diagnostic for this map means it is
+not ready. A ready map projects a `ready` row and a `/bench-write-spec <path>`
+action.
 
 ## Starting from the roadmap
 
@@ -117,15 +128,18 @@ and build until shipped retirement removes it. This command never edits
 ## Two modes
 
 **Bootstrap** (loose idea in): use `craft-grill` to discover whether the idea
-really contains a multi-session dependency tree. If it does, create the map
-from `bench maps --template` and record the frontier. Stop after that first
-focused shaping pass. If it does not, create no map. Recommend
-`/bench-write-spec` from the reviewer-confirmed current conversation.
+really contains a multi-session dependency tree. If it does, create the index
+from `bench maps --template` and each ticket from `bench maps --ticket-template`,
+then record the frontier. Stop after that first focused shaping pass. If it does
+not, create no map. Recommend `/bench-write-spec` from the reviewer-confirmed
+current conversation.
 
-**Resume** (map + decision-ticket number in): load the whole map and resolve
-that decision ticket. Record the current answer. Add any newly discovered
-decision tickets with correct `Blocked by` edges. If an answer invalidates
-other tickets, update or delete them.
+**Resume** (map name in): run `bench maps <map>` to resume one map, because
+every row names the file to read next. Read the index and the ticket file the
+chosen row names, not the whole folder. A fog row names the index alone. Record the answer in the ticket, then add its gist line to
+Decisions so far. Add any newly discovered decision tickets with correct
+`Blocked by` edges. If an answer invalidates other tickets, update or delete
+them.
 
 While the reviewer is present, carry a
 Grill straight into newly unblocked decision tickets as the next numbered

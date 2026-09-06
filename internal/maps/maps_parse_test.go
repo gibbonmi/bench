@@ -1,4 +1,4 @@
-// Tests for decision-map parsing, schema, candidate discovery, and tree validation.
+// Tests for map-index parsing, schema, candidate discovery, and tree validation.
 package maps
 
 import (
@@ -12,64 +12,30 @@ import (
 )
 
 func TestParseDecisionMapSchemaAndTemplate(t *testing.T) {
-	const document = `# Schema map
-
-Status: shaping
-
-## Destination
-
-Ship one canonical parser.
-
-## #1: Which parser owns the map?
-
-Blocked by: none
-Type: Research
-
-### Question
-
-Which parser owns the map?
-
-### Answer
-
-The maps package.
-
-## Not yet specified
-
-- None.
-
-## Spec-writer discretion
-
-- None.
-
-## Out of scope
-
-- None.
-
-## Sources
-`
-	got, diagnostics := ParseDecisionMap([]byte(document))
+	got, diagnostics := parseDecisionMap("split", []byte(splitIndex))
 	if len(diagnostics) != 0 {
-		t.Fatalf("ParseDecisionMap diagnostics = %v", diagnostics)
+		t.Fatalf("parseDecisionMap diagnostics = %v", diagnostics)
 	}
-	if got.Title != "Schema map" || got.Status != "shaping" {
-		t.Fatalf("ParseDecisionMap = %+v", got)
+	if got.Title != "Split map" || got.Status != "shaping" {
+		t.Fatalf("parseDecisionMap = %+v", got)
 	}
-	for _, required := range []string{"# ", "Status: shaping", "## Destination", "## #", "Type: Research", "### Question", "### Answer", "## Not yet specified", "## Spec-writer discretion", "## Out of scope", "## Sources"} {
-		if !strings.Contains(DecisionMapTemplate(), required) {
-			t.Errorf("template missing schema token %q", required)
+	template := DecisionMapTemplate()
+	for _, required := range []string{"# ", "Status: shaping", "## Destination", "## Notes", "## Decisions so far", "## Not yet specified", "## Spec-writer discretion", "## Out of scope", "## Sources"} {
+		if !strings.Contains(template, required) {
+			t.Errorf("index template missing schema token %q", required)
 		}
 	}
-	if strings.Contains(DecisionMapTemplate(), "|") {
-		t.Fatalf("template status is not paste-ready: %q", DecisionMapTemplate())
+	if strings.Contains(template, "|") {
+		t.Fatalf("template status is not paste-ready: %q", template)
 	}
-	if _, diagnostics := ParseDecisionMap([]byte(DecisionMapTemplate())); len(diagnostics) != 0 {
+	if _, diagnostics := parseDecisionMap("template", []byte(template)); len(diagnostics) != 0 {
 		t.Fatalf("template diagnostics = %v", diagnostics)
 	}
-	if _, diagnostics := ParseDecisionMap([]byte(strings.Replace(DecisionMapTemplate(), "Status: shaping", "Status: ready", 1))); len(diagnostics) != 0 {
+	if _, diagnostics := parseDecisionMap("template", []byte(strings.Replace(template, "Status: shaping", "Status: ready", 1))); len(diagnostics) != 0 {
 		t.Fatalf("ready status diagnostics = %v", diagnostics)
 	}
 	assertTemplateSourcesExample(t)
-	assertTemplateTicketRules(t)
+	assertTicketTemplateShape(t)
 	assertTemplateValidatesClean(t)
 }
 
@@ -107,22 +73,25 @@ func assertTemplateSourcesExample(t *testing.T) {
 	}
 }
 
-// assertTemplateTicketRules holds rows SAD7 and SAD8. Every consumer resolves the
-// answer placeholder with a single-count replacement, so a second ticket breaks them.
-func assertTemplateTicketRules(t *testing.T) {
+// assertTicketTemplateShape holds rows DS17, DS18, and DS20. The index skeleton
+// renders no decision ticket, and the ticket skeleton carries the whole ticket.
+func assertTicketTemplateShape(t *testing.T) {
 	t.Helper()
-	template := DecisionMapTemplate()
-	headings := 0
-	for _, line := range strings.Split(template, "\n") {
-		if strings.HasPrefix(line, canonicalDecisionMapSchema.ticketHeading) {
-			headings++
+	index := DecisionMapTemplate()
+	if strings.Contains(index, "## #") {
+		t.Errorf("index template = %q, want no inline decision ticket", index)
+	}
+	if !strings.Contains(index, "A map-owned asset stays in the map's assets folder, decisions/<topic>/assets/.") {
+		t.Errorf("index template = %q, want the asset rule", index)
+	}
+	ticket := DecisionTicketTemplate()
+	if !strings.HasPrefix(ticket, "# ") {
+		t.Errorf("ticket template = %q, want a title line", ticket)
+	}
+	for _, required := range []string{"Blocked by: none", "Type: Research", "### Question", "### Answer", resolvedBlockedRule} {
+		if !strings.Contains(ticket, required) {
+			t.Errorf("ticket template missing %q", required)
 		}
-	}
-	if headings != 1 {
-		t.Errorf("decision-ticket headings = %d, want 1", headings)
-	}
-	if !strings.Contains(template, resolvedBlockedRule) {
-		t.Errorf("template = %q, want the resolved-blocked rule", template)
 	}
 }
 
@@ -130,11 +99,11 @@ func assertTemplateTicketRules(t *testing.T) {
 // holds no repository files, so a Path locator would red here.
 func assertTemplateValidatesClean(t *testing.T) {
 	t.Helper()
-	root := t.TempDir()
-	template := strings.Replace(DecisionMapTemplate(), "<answer>", "Resolved.", 1)
 	for _, status := range []string{"shaping", "ready"} {
-		document := strings.Replace(template, "Status: shaping", "Status: "+status, 1)
-		if _, diagnostics := ValidateDecisionMap(root, "decisions/template.md", false, []byte(document)); len(diagnostics) != 0 {
+		root := t.TempDir()
+		index := strings.Replace(DecisionMapTemplate(), "Status: shaping", "Status: "+status, 1)
+		writeSplitMap(t, root, "decisions/template.md", index, map[string]string{"1.md": DecisionTicketTemplate()})
+		if diagnostics := ValidateDecisionMapTree(root); len(diagnostics) != 0 {
 			t.Errorf("%s template diagnostics = %v", status, diagnostics)
 		}
 	}
@@ -158,67 +127,31 @@ func TestDecisionMapSchemaSyntaxDrivesParserAndTemplate(t *testing.T) {
 	if !strings.Contains(template, "Phase: shaping") {
 		t.Fatalf("template = %q, want schema status syntax", template)
 	}
-	if _, diagnostics := ParseDecisionMap([]byte(template)); len(diagnostics) != 0 {
+	if _, diagnostics := parseDecisionMap("template", []byte(template)); len(diagnostics) != 0 {
 		t.Fatalf("parser drifted from schema syntax: %v", diagnostics)
 	}
 }
 
 func TestParseDecisionMapRequiredShapeDiagnostics(t *testing.T) {
-	const valid = `# Schema map
-
-Status: shaping
-
-## Destination
-
-Ship one canonical parser.
-
-## #1: Which parser owns the map?
-
-Blocked by: none
-Type: Research
-
-### Question
-
-Which parser owns the map?
-
-### Answer
-
-The maps package.
-
-## Not yet specified
-
-- None.
-
-## Spec-writer discretion
-
-- None.
-
-## Out of scope
-
-- None.
-
-## Sources
-`
 	cases := []struct {
 		name, document, want string
 	}{
-		{"missing title", strings.TrimPrefix(valid, "# Schema map\n\n"), "missing title"},
-		{"missing status", strings.Replace(valid, "Status: shaping\n\n", "", 1), "missing Status"},
-		{"missing destination", strings.Replace(valid, "Ship one canonical parser.", "", 1), "missing Destination"},
-		{"missing ticket", valid[:strings.Index(valid, "## #1:")] + "## Not yet specified\n\n## Spec-writer discretion\n\n## Out of scope\n\n## Sources\n", "missing decision ticket"},
-		{"missing terminal section", strings.Replace(valid, "## Sources\n", "", 1), "missing Sources section"},
-		{"duplicate terminal section", valid + "\n## Sources\n", "duplicate Sources section"},
-		{"duplicate title", valid + "\n# Another title\n", "duplicate title"},
-		{"duplicate status", valid + "\nStatus: ready\n", "duplicate Status"},
-		{"duplicate destination", valid + "\n## Destination\n\nAnother destination.\n", "duplicate Destination section"},
-		{"duplicate ticket field", strings.Replace(valid, "Type: Research", "Type: Research\nType: Grill", 1), "ticket #1: duplicate Type"},
-		{"malformed blockers", strings.Replace(valid, "Blocked by: none", "Blocked by: #0", 1), "ticket #1: malformed Blocked by"},
-		{"unsupported handoff", valid + "\n## Handoff\n", "unsupported Handoff section"},
-		{"unsupported type", strings.Replace(valid, "Type: Research", "Type: Guess", 1), "ticket #1: unsupported Type \"Guess\""},
+		{"missing title", strings.TrimPrefix(splitIndex, "# Split map\n\n"), "missing title"},
+		{"missing status", strings.Replace(splitIndex, "Status: shaping\n\n", "", 1), "missing Status"},
+		{"unsupported status", strings.Replace(splitIndex, "Status: shaping", "Status: done", 1), `unsupported Status "done"`},
+		{"missing destination", strings.Replace(splitIndex, "Ship one canonical parser.", "", 1), "missing Destination"},
+		{"missing terminal section", strings.Replace(splitIndex, "## Sources\n", "", 1), "missing Sources section"},
+		{"duplicate terminal section", splitIndex + "\n## Sources\n", "duplicate Sources section"},
+		{"duplicate title", splitIndex + "\n# Another title\n", "duplicate title"},
+		{"duplicate status", splitIndex + "\nStatus: ready\n", "duplicate Status"},
+		{"duplicate destination", splitIndex + "\n## Destination\n\nAnother destination.\n", "duplicate Destination section"},
+		{"duplicate index section", splitIndex + "\n## Notes\n", "duplicate Notes section"},
+		{"unsupported handoff", splitIndex + "\n## Handoff\n", "unsupported Handoff section"},
+		{"inline ticket", strings.Replace(splitIndex, "## Notes\n", "## #2: Old\n\nBlocked by: none\n\n", 1), "inline ticket #2: move it to split/tickets/2.md"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			_, diagnostics := ParseDecisionMap([]byte(c.document))
+			_, diagnostics := parseDecisionMap("split", []byte(c.document))
 			for _, diagnostic := range diagnostics {
 				if diagnostic.Message == c.want {
 					return
@@ -229,45 +162,9 @@ The maps package.
 	}
 }
 
-func TestParseDecisionMapTicketTypesAndMarkdownEdges(t *testing.T) {
-	for _, typ := range []string{"Research", "Prototype", "Grill", "Task"} {
-		t.Run(typ, func(t *testing.T) {
-			document := strings.Replace(`# Map
-
-Status: shaping
-
-## Destination
-
-Parse maps.
-
-## #1: A decision?
-
-Blocked by: none
-Type: TYPE
-
-### Question
-
-A decision?
-
-### Answer
-
-Decided.
-
-## Not yet specified
-
-## Spec-writer discretion
-
-## Out of scope
-
-## Sources
-`, "TYPE", typ, 1)
-			if _, diagnostics := ParseDecisionMap([]byte(document)); len(diagnostics) != 0 {
-				t.Fatalf("diagnostics = %v", diagnostics)
-			}
-		})
-	}
-	const fenced = "# Map\r\n\r\nStatus: shaping\r\n\r\n## Destination\r\n\r\nParse maps.\r\n\r\n```md\r\n## Handoff\r\nType: Guess\r\n```\r\n\r\n## #1: A decision?\r\n\r\nBlocked by: none\r\nType: Grill\r\n\r\n### Question\r\n\r\nA decision?\r\n\r\n### Answer\r\n\r\nDecided.\r\n\r\n## Not yet specified\r\n\r\n## Spec-writer discretion\r\n\r\n## Out of scope\r\n\r\n## Sources"
-	if _, diagnostics := ParseDecisionMap([]byte(fenced)); len(diagnostics) != 0 {
+func TestParseDecisionMapMarkdownEdges(t *testing.T) {
+	const fenced = "# Map\r\n\r\nStatus: shaping\r\n\r\n## Destination\r\n\r\nParse maps.\r\n\r\n```md\r\n## Handoff\r\n## #1: Inline\r\n```\r\n\r\n## Notes\r\n\r\n## Decisions so far\r\n\r\n## Not yet specified\r\n\r\n## Spec-writer discretion\r\n\r\n## Out of scope\r\n\r\n## Sources"
+	if _, diagnostics := parseDecisionMap("map", []byte(fenced)); len(diagnostics) != 0 {
 		t.Fatalf("CRLF/fenced/no-final-newline diagnostics = %v", diagnostics)
 	}
 }
@@ -280,12 +177,12 @@ func TestDiscoverDecisionMapCandidatesDirectChildren(t *testing.T) {
 		"decisions/README.md",
 		"decisions/readme.MD",
 		"decisions/uppercase.MD",
-		"decisions/assets/nested.md",
+		"decisions/active/assets/nested.md",
 		"specs/compiled/decisions/compiled.md",
 		"specs/compiled/decisions/.hidden.md",
 		"specs/compiled/decisions/README.MD",
 		"specs/compiled/decisions/uppercase.MD",
-		"specs/compiled/decisions/assets/nested.md",
+		"specs/compiled/decisions/compiled/assets/nested.md",
 		"specs/no-map/notes.md",
 	} {
 		full := filepath.Join(root, path)
@@ -311,27 +208,20 @@ func TestDiscoverDecisionMapCandidatesDirectChildren(t *testing.T) {
 
 func TestValidateDecisionMapTreeValidatesActiveAndCompiledCandidates(t *testing.T) {
 	root := t.TempDir()
-	writeMap := func(path, document string) {
-		t.Helper()
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(path, []byte(document), 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-	active := strings.Replace(DecisionMapTemplate(), "<answer>", "Resolved.", 1)
+	active := DecisionMapTemplate()
 	compiled := strings.Replace(active, "Status: shaping", "Status: ready", 1)
-	writeMap(filepath.Join(root, "decisions", "active.md"), active)
-	writeMap(filepath.Join(root, "specs", "compiled", "decisions", "compiled.md"), compiled)
-	writeMap(filepath.Join(root, "specs", "no-map", "spec.md"), "# No map\n")
+	writeSplitMap(t, root, "decisions/active.md", active, map[string]string{"1.md": DecisionTicketTemplate()})
+	writeSplitMap(t, root, "specs/compiled/decisions/compiled.md", compiled, map[string]string{"1.md": DecisionTicketTemplate()})
+	writeSplitMap(t, root, "specs/no-map/spec.md", "# No map\n", nil)
 
 	if diagnostics := ValidateDecisionMapTree(root); len(diagnostics) != 0 {
 		t.Fatalf("ValidateDecisionMapTree diagnostics = %v", diagnostics)
 	}
 
-	writeMap(filepath.Join(root, "specs", "broken", "decisions", "broken.md"), "# Broken\n")
-	writeMap(filepath.Join(root, "decisions", "graph.md"), strings.Replace(active, "Blocked by: none", "Blocked by: #1", 1))
+	writeSplitMap(t, root, "specs/broken/decisions/broken.md", "# Broken\n", nil)
+	writeSplitMap(t, root, "decisions/graph.md", active, map[string]string{
+		"1.md": strings.Replace(DecisionTicketTemplate(), "Blocked by: none", "Blocked by: #1", 1),
+	})
 	diagnostics := ValidateDecisionMapTree(root)
 	for _, want := range []string{
 		"specs/broken/decisions/broken.md: missing Status",
@@ -411,28 +301,13 @@ Status: shaping
 
 Ship it.
 
+## Notes
+
+## Decisions so far
+
 ## #1: First
 
 Blocked by: none
-Blocked by: #2
-Type: Research
-Type: Grill
-
-### Question
-
-First?
-
-### Answer
-
-Resolved.
-
-## #2: Second
-
-Type: Guess
-
-### Question
-
-Second?
 
 ## Not yet specified
 
@@ -448,35 +323,24 @@ Second?
 
 Status: ready
 `
-	const fenced = "# Map\n\nStatus: shaping\n\n## Destination\n\nShip it.\n\n```md\nStatus: ready\n## Handoff\n## Sources\n```\n\n## #1: First\n\nBlocked by: none\nType: Grill\n\n### Question\n\nFirst?\n\n### Answer\n\nResolved.\n\n## Not yet specified\n\n## Spec-writer discretion\n\n## Out of scope\n\n## Sources\n"
+	const fenced = "# Map\n\nStatus: shaping\n\n## Destination\n\nShip it.\n\n```md\nStatus: ready\n## Handoff\n## Sources\n```\n\n## Notes\n\n## Decisions so far\n\n## Not yet specified\n\n## Spec-writer discretion\n\n## Out of scope\n\n## Sources\n"
 	const bare = `# Map
 
-## #1: First
-
-### Question
-
-First?
+## Notes
 `
 	for _, c := range []struct {
 		name     string
 		document string
 		want     []string
 	}{
-		{"duplicate and missing fields", duplicated, []string{
-			"ticket #1: duplicate Blocked by",
-			"ticket #1: duplicate Type",
-			"ticket #2: missing Blocked by",
-			`ticket #2: unsupported Type "Guess"`,
-			"ticket #2: missing Answer",
+		{"inline ticket and duplicate sections", duplicated, []string{
+			"inline ticket #1: move it to map/tickets/1.md",
 			"duplicate Sources section",
 			"duplicate title",
 			"duplicate Status",
 		}},
 		{"fenced lines grade nothing", fenced, nil},
 		{"bare skeleton", bare, []string{
-			"ticket #1: missing Blocked by",
-			"ticket #1: missing Type",
-			"ticket #1: missing Answer",
 			"missing Status",
 			"missing Destination",
 			"missing Not yet specified section",
@@ -486,105 +350,33 @@ First?
 		}},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			_, diagnostics := ParseDecisionMap([]byte(c.document))
+			_, diagnostics := parseDecisionMap("map", []byte(c.document))
 			if got := diagnosticMessages(diagnostics); !reflect.DeepEqual(got, c.want) {
-				t.Fatalf("ParseDecisionMap diagnostics =\n%#v\nwant\n%#v", got, c.want)
+				t.Fatalf("parseDecisionMap diagnostics =\n%#v\nwant\n%#v", got, c.want)
 			}
 		})
 	}
 
-	const graph = `# Graph
-
-Status: shaping
-
-## Destination
-
-Settle the graph.
-
-## #1: First
-
-Blocked by: #2, #2
-Type: Grill
-
-### Question
-
-First?
-
-### Answer
-
-Resolved.
-
-## #1: Duplicate
-
-Blocked by: #9
-Type: Grill
-
-### Question
-
-Duplicate?
-
-### Answer
-
-Resolved.
-
-## #2: Second
-
-Blocked by: #2
-Type: Grill
-
-### Question
-
-Second?
-
-### Answer
-
-— (open)
-
-## #3: Third
-
-Blocked by: #4
-Type: Grill
-
-### Question
-
-Third?
-
-### Answer
-
-— (open)
-
-## #4: Fourth
-
-Blocked by: #3
-Type: Grill
-
-### Question
-
-Fourth?
-
-### Answer
-
-— (open)
-
-## Not yet specified
-
-## Spec-writer discretion
-
-## Out of scope
-
-## Sources
-`
-	_, diagnostics := ValidateDecisionMap(t.TempDir(), "decisions/graph.md", false, []byte(graph))
-	want := []string{
-		"decisions/graph.md: duplicate ID #1: Duplicate conflicts with First",
-		"decisions/graph.md: resolved ticket #1: First depends on unresolved #2: Second",
-		"decisions/graph.md: ticket #1: First duplicate blocker #2",
-		"decisions/graph.md: ticket #1: Duplicate dangling blocker #9",
-		"decisions/graph.md: ticket #2: Second self-edge #2 -> #2",
-		"decisions/graph.md: cycle edge ticket #4: Fourth -> ticket #3: Third (#4 -> #3)",
+	root := t.TempDir()
+	gist := "## Decisions so far\n\n- [First](graph/tickets/1.md): Resolved.\n"
+	ticket := func(blockedBy, answer string) string {
+		return "# T\n\nBlocked by: " + blockedBy + "\nType: Grill\n\n### Question\n\nQ?\n\n### Answer\n\n" + answer + "\n"
 	}
-	if got := diagnosticMessages(diagnostics); !reflect.DeepEqual(got, want) {
-		t.Fatalf("ValidateDecisionMap diagnostics =\n%#v\nwant\n%#v", got, want)
+	writeSplitMap(t, root, "decisions/graph.md", strings.Replace(splitIndex, "## Decisions so far\n", gist, 1), map[string]string{
+		"1.md": ticket("#2, #2", "Resolved."),
+		"2.md": ticket("#2", "— (open)"),
+		"3.md": ticket("#4", "— (open)"),
+		"4.md": ticket("#3, #9", "— (open)"),
+	})
+	want := []string{
+		"decisions/graph.md: resolved ticket #1: T depends on unresolved #2: T",
+		"decisions/graph.md: ticket #1: T duplicate blocker #2",
+		"decisions/graph.md: ticket #2: T self-edge #2 -> #2",
+		"decisions/graph.md: ticket #4: T dangling blocker #9",
+		"decisions/graph.md: cycle edge ticket #4: T -> ticket #3: T (#4 -> #3)",
+	}
+	if got := ValidateDecisionMapTree(root); !reflect.DeepEqual(got, want) {
+		t.Fatalf("ValidateDecisionMapTree diagnostics =\n%#v\nwant\n%#v", got, want)
 	}
 }
 

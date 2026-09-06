@@ -279,68 +279,11 @@ accepted.
 
 Record the measured FT91 critical path and leave the only remaining policy choice — whether to bound outer-phase concurrency — explicitly with the reviewer.
 
-## #1: How should the artifact suite expose its remaining independent work?
+## Notes
 
-Blocked by: none
-Type: Task
+## Decisions so far
 
-### Question
-
-How should the artifact contract suite remove its one-package serial wall
-without weakening a check or changing oracle semantics?
-
-### Answer
-
-With lever 1 landed, the wall was the contract phase ≈ the artifact package
-(~109 s solo) inside a 128 s changed-tree gate. This is why the split became
-a separate capability (test-package architecture, not oracle semantics). The
-retired FT91 inventory established that the package's remaining cost is
-legitimate. The collapsible generations already share one build. What
-remains is posture subjects (4 hermetic double-builds, 3 GOPROXY-off, 2
-stale-record), Distributable's host+non-host build, and npm/node/git-heavy
-offline-smoke work. None of it is cuttable without changing what green
-proves.
-
-The non-semantic lever left is **scheduling within the phase**: the package
-runs serially (no `t.Parallel`; `go test` parallelizes across packages, not
-within one). Splitting it by subject into 3–4 sub-packages (posture / offline
-journey / promotion+staging / distributable) lets the existing `go test`
-scheduler overlap them. Watch-outs from the inventory: `TestMain`'s
-shared-cache posture is package-wide and must travel with each split.
-Posture tests must keep stripping it. The shared prepared-artifact singleton
-is per-package and would need one owner package or per-split sets. The
-sharers all live on the inspection/promotion side, so keeping them together
-preserves the hoist.
-
-Alternative — introducing `t.Parallel` — changes the hazard analysis from
-ordering to races (inventory's explicit warning), and is the worse trade.
-Expected: artifact wall ~109 s → ~40–60 s, gate wall → ~60–75 s (then
-jointly bound with the `test` phase at ~62 s).
-
-The split's measurement changes the dormant outer conformance/contract
-width-cap posture. The focused package trace completes posture in 50.917 s.
-The full gate leaves posture at 85.415 s while the 69.506 s test phase
-overlaps it. That is enough contention evidence to ask the reviewer whether
-a bounded outer scheduler is worth its policy and implementation cost. It is
-not enough authority to choose or install a cap.
-
-## Re-design verdict
-
-A re-write of gate sequencing is not the fast path. The current design is
-already: one thin entry (`.bench/gate.sh` → `gate-phases`), a DAG scheduler
-that runs every phase concurrently with only real edges (build → readers of
-`dist/bench`), per-phase attribution, durable subject-bound verdicts, and a
-self-defending canary. FT91 #4 already falsified "pipeline structure is the
-wall" once. The measured wall was (1) one serial test package and (2)
-re-judging unchanged subjects, and no re-ordering of phase calls touches
-either. Lever 2 closed the second; the first is all that is left at 128 s.
-
-The one architectural idea a re-design would surface — memoizing verdicts at
-finer grain (per phase or per package) — collapses on inspection. The only
-*closed* input key the system has is the whole-subject key (tree + oracle
-closure). Any finer key is a file→test map, which is diff-scoped gating,
-ruled unsound. So sound memoization is exactly lever 2, at whole-gate
-granularity, and the machinery for it already exists.
+- [How should the artifact suite expose its remaining independent work?](gate-critical-path/tickets/1.md): With lever 1 landed.
 
 ## Not yet specified
 

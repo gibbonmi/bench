@@ -15,54 +15,10 @@ import (
 
 func TestCommandAppendsOnlyMapActionsToTheCapturedPrimaryResponse(t *testing.T) {
 	root := gittest.Repo(t)
-	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	const frontier = `# Alpha
-
-Status: shaping
-
-## Destination
-
-Settle it.
-
-## #1: First
-
-Blocked by: none
-Type: Research
-
-### Question
-
-What first?
-
-### Answer
-
-— (open)
-
-## #2: Second
-
-Blocked by: none
-Type: Task
-
-### Question
-
-What second?
-
-### Answer
-
-— (open)
-
-## Not yet specified
-
-## Spec-writer discretion
-
-## Out of scope
-
-## Sources
-`
-	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "alpha.md"), []byte(frontier), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeSplitMap(t, root, "decisions/alpha.md", splitIndex, map[string]string{
+		"1.md": strings.Replace(splitTicket, "# Which parser owns the map?", "# First", 1),
+		"2.md": strings.NewReplacer("# Which parser owns the map?", "# Second", "Type: Research", "Type: Task").Replace(splitTicket),
+	})
 	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "broken.md"), []byte("# Broken\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -79,40 +35,89 @@ What second?
 	}
 }
 
-func TestCommandAppendsHonestEmptyHelpForEmptyAndCompleteMaps(t *testing.T) {
-	for _, tc := range []struct {
-		name, fixture string
-		write         func(t *testing.T, root string)
-	}{
-		{name: "empty", fixture: "pre-disclosure-terminal.stdout", write: func(t *testing.T, root string) {}},
-		{
-			name: "complete (aliases terminal empty)", fixture: "pre-disclosure-terminal.stdout",
-			write: func(t *testing.T, root string) {
-				t.Helper()
-				if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
-					t.Fatal(err)
-				}
-				document := strings.NewReplacer("Status: shaping", "Status: ready", "<answer>", "Resolved.").Replace(DecisionMapTemplate())
-				if err := os.WriteFile(filepath.Join(root, DecisionsDir, "complete.md"), []byte(document), 0o644); err != nil {
-					t.Fatal(err)
-				}
-			},
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			primary, err := os.ReadFile(filepath.Join("testdata", tc.fixture))
-			if err != nil {
-				t.Fatal(err)
-			}
-			root := gittest.Repo(t)
-			tc.write(t, root)
-			t.Chdir(root)
+func TestCommandAppendsHonestEmptyHelpForAnEmptyDecisionsDirectory(t *testing.T) {
+	primary, err := os.ReadFile(filepath.Join("testdata", "pre-disclosure-terminal.stdout"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := gittest.Repo(t)
+	t.Chdir(root)
 
-			out, code := Command(nil)
-			if code != 0 || out != string(primary)+"help[0]{cmd,why}:\n" {
-				t.Fatalf("Command(%v) = (exit %d, %q), want terminal empty help", []string(nil), code, out)
-			}
+	out, code := Command(nil)
+	if code != 0 || out != string(primary)+"help[0]{cmd,why}:\n" {
+		t.Fatalf("Command(%v) = (exit %d, %q), want terminal empty help", []string(nil), code, out)
+	}
+}
+
+// readyMap writes one ready split map, whose single ticket the skeleton's own gist
+// already records, and returns its title.
+func readyMap(t *testing.T, root, rel string) string {
+	t.Helper()
+	index := strings.Replace(DecisionMapTemplate(), "Status: shaping", "Status: ready", 1)
+	writeSplitMap(t, root, rel, index, map[string]string{"1.md": DecisionTicketTemplate()})
+	return "<decision map title>"
+}
+
+func TestCommandProjectsAReadyActiveMapAndSkipsAReadyCompiledMap(t *testing.T) {
+	root := gittest.Repo(t)
+	title := readyMap(t, root, "decisions/ready.md")
+	readyMap(t, root, "specs/compiled/decisions/buried.md")
+	t.Chdir(root)
+
+	out, code := Command(nil)
+	want := "maps[1]{map,title,type,state,blockers,path}:\n" +
+		"  ready,<decision map title>,map,ready,\"\",decisions/ready.md\n" +
+		"help[1]{cmd,why}:\n  /bench-write-spec decisions/ready.md,\"spec ready: <decision map title>\"\n"
+	if code != 0 || out != want {
+		t.Fatalf("Command(nil) with the ready map %q = (exit %d, %q), want %q", title, code, out, want)
+	}
+}
+
+func TestCommandFiltersEveryRowAndHelpLineToTheNamedMap(t *testing.T) {
+	root := gittest.Repo(t)
+	for _, name := range []string{"alpha", "beta"} {
+		writeSplitMap(t, root, "decisions/"+name+".md", splitIndex, map[string]string{
+			"1.md": strings.Replace(splitTicket, "# Which parser owns the map?", "# "+name+" one", 1),
 		})
+	}
+	t.Chdir(root)
+
+	out, code := Command([]string{"alpha"})
+	want := "maps[1]{map,title,type,state,blockers,path}:\n" +
+		"  alpha,alpha one,Research,frontier,\"\",decisions/alpha/tickets/1.md\n" +
+		"help[1]{cmd,why}:\n  /bench-shape-idea,\"shape alpha: alpha one\"\n"
+	if code != 0 || out != want {
+		t.Fatalf("Command(alpha) = (exit %d, %q), want %q", code, out, want)
+	}
+}
+
+func TestCommandRefusesAnUnknownMapNameAndAPathShapedOperand(t *testing.T) {
+	root := gittest.Repo(t)
+	writeSplitMap(t, root, "decisions/alpha.md", splitIndex, map[string]string{"1.md": splitTicket})
+	t.Chdir(root)
+
+	if out, code := Command([]string{"gamma"}); code != 1 || out != "maps: no active map named \"gamma\"\n" {
+		t.Fatalf("Command(gamma) = (exit %d, %q), want exit 1 with the named refusal", code, out)
+	}
+	for _, operand := range []string{"decisions/alpha.md", "alpha.md", "alpha\x1b"} {
+		out, code := Command([]string{operand})
+		if code != 2 || out != grammar.Help+"\n" {
+			t.Fatalf("Command(%q) = (exit %d, %q), want exit 2 with %q", operand, code, out, grammar.Help)
+		}
+	}
+}
+
+func TestCommandKeepsTheTicketPathOfAMapNameHoldingASpace(t *testing.T) {
+	root := gittest.Repo(t)
+	writeSplitMap(t, root, "decisions/my map.md", splitIndex, map[string]string{"1.md": splitTicket})
+	t.Chdir(root)
+
+	out, code := Command(nil)
+	want := "maps[1]{map,title,type,state,blockers,path}:\n" +
+		"  my map,Which parser owns the map?,Research,frontier,\"\",decisions/my map/tickets/1.md\n" +
+		"help[1]{cmd,why}:\n  /bench-shape-idea,\"shape my map: Which parser owns the map?\"\n"
+	if code != 0 || out != want {
+		t.Fatalf("Command(nil) = (exit %d, %q), want %q", code, out, want)
 	}
 }
 
@@ -148,77 +153,22 @@ func TestCommandDisclosesTheFullPathForABoundsInvalidMap(t *testing.T) {
 
 func TestActiveRowsProjectUnresolvedTicketsAndFog(t *testing.T) {
 	root := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
-		t.Fatal(err)
+	ticket := func(title, typ, blockedBy, answer string) string {
+		return "# " + title + "\n\nBlocked by: " + blockedBy + "\nType: " + typ + "\n\n### Question\n\nWhat?\n\n### Answer\n\n" + answer + "\n"
 	}
-	document := `# Model
-
-Status: shaping
-
-## Destination
-
-Settle it.
-
-## #1: First
-
-Blocked by: none
-Type: Research
-
-### Question
-
-What?
-
-### Answer
-
-— (open)
-
-## #2: Second
-
-Blocked by: #1
-Type: Task
-
-### Question
-
-What next?
-
-### Answer
-
-— (open)
-
-## #3: Third
-
-Blocked by: #1
-Type: Prototype
-
-### Question
-
-What later?
-
-### Answer
-
-— (deferred)
-
-## Not yet specified
-
-- Honest fog.
-
-## Spec-writer discretion
-
-## Out of scope
-
-## Sources
-`
-	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "model.md"), []byte(document), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeSplitMap(t, root, "decisions/model.md", splitIndex, map[string]string{
+		"1.md": ticket("First", "Research", "none", "— (open)"),
+		"2.md": ticket("Second", "Task", "#1", "— (open)"),
+		"3.md": ticket("Third", "Prototype", "#1", "— (deferred)"),
+	})
 	rows, count, state := ActiveRows(root)
 	if state != bounds.StateParsed {
 		t.Fatalf("ActiveRows state = %s, want parsed", state)
 	}
 	want := [][]any{
-		{"model", "First", "Research", "frontier", ""},
-		{"model", "Second", "Task", "blocked", "First"},
-		{"model", "Third", "Prototype", "deferred", "First"},
+		{"model", "First", "Research", "frontier", "", "decisions/model/tickets/1.md"},
+		{"model", "Second", "Task", "blocked", "First", "decisions/model/tickets/2.md"},
+		{"model", "Third", "Prototype", "deferred", "First", "decisions/model/tickets/3.md"},
 	}
 	if !reflect.DeepEqual(rows, want) {
 		t.Fatalf("ActiveRows rows = %#v, want %#v", rows, want)
@@ -230,48 +180,15 @@ What later?
 
 func TestActiveRowsProjectFogOnlyShapingMap(t *testing.T) {
 	root := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	document := `# Model
-
-Status: shaping
-
-## Destination
-
-Settle it.
-
-## #1: Settled
-
-Blocked by: none
-Type: Grill
-
-### Question
-
-What?
-
-### Answer
-
-Resolved.
-
-## Not yet specified
-
-- Honest fog.
-
-## Spec-writer discretion
-
-## Out of scope
-
-## Sources
-`
-	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "model.md"), []byte(document), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	gist := "## Decisions so far\n\n- [Settled](model/tickets/1.md): Resolved.\n"
+	writeSplitMap(t, root, "decisions/model.md", strings.Replace(splitIndex, "## Decisions so far\n", gist, 1), map[string]string{
+		"1.md": strings.NewReplacer("# Which parser owns the map?", "# Settled", "— (open)", "Resolved.").Replace(splitTicket),
+	})
 	rows, count, state := ActiveRows(root)
 	if state != bounds.StateParsed {
 		t.Fatalf("ActiveRows state = %s, want parsed", state)
 	}
-	want := [][]any{{"model", "Not yet specified", "fog", "shaping", ""}}
+	want := [][]any{{"model", "Not yet specified", "fog", "shaping", "", "decisions/model.md"}}
 	if !reflect.DeepEqual(rows, want) {
 		t.Fatalf("ActiveRows rows = %#v, want %#v", rows, want)
 	}
@@ -280,10 +197,26 @@ Resolved.
 	}
 }
 
-func TestCommandRejectsCountAndTemplateTogether(t *testing.T) {
-	out, code := Command([]string{"--count", "--template"})
-	if code != 2 || !strings.Contains(out, "--count and --template are mutually exclusive") {
-		t.Fatalf("Command(--count --template) = (%q, %d), want usage exit 2", out, code)
+func TestCommandRejectsExclusiveFlagsTogether(t *testing.T) {
+	for _, testCase := range []struct {
+		argv []string
+		want string
+	}{
+		{[]string{"--count", "--template"}, "--count and --template are mutually exclusive"},
+		{[]string{"--template", "--ticket-template"}, "--template and --ticket-template are mutually exclusive"},
+		{[]string{"--count", "--ticket-template"}, "--count and --ticket-template are mutually exclusive"},
+	} {
+		out, code := Command(testCase.argv)
+		if code != 2 || !strings.Contains(out, testCase.want) {
+			t.Fatalf("Command(%v) = (%q, %d), want usage exit 2 with %q", testCase.argv, out, code, testCase.want)
+		}
+	}
+}
+
+func TestCommandPrintsTheTicketTemplate(t *testing.T) {
+	out, code := Command([]string{"--ticket-template"})
+	if code != 0 || out != DecisionTicketTemplate() {
+		t.Fatalf("Command(--ticket-template) = (%q, %d), want the ticket skeleton", out, code)
 	}
 }
 
@@ -303,15 +236,9 @@ func TestInvalidMapActionWithUnsupportedWhyUsesHonestEmptyHelp(t *testing.T) {
 
 func TestActiveRowsCountsSilentShapingMap(t *testing.T) {
 	root := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	document := strings.Replace(DecisionMapTemplate(), "<answer>", "Resolved.", 1)
-	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "silent.md"), []byte(document), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeSplitMap(t, root, "decisions/silent.md", DecisionMapTemplate(), map[string]string{"1.md": DecisionTicketTemplate()})
 	rows, count, state := ActiveRows(root)
-	want := [][]any{{"silent", "Not yet specified", "fog", "shaping", ""}}
+	want := [][]any{{"silent", "Not yet specified", "fog", "shaping", "", "decisions/silent.md"}}
 	if state != bounds.StateParsed || !reflect.DeepEqual(rows, want) || count != 1 {
 		t.Fatalf("ActiveRows = (%#v, %d, %s), want (%#v, 1, parsed)", rows, count, state, want)
 	}
@@ -319,15 +246,10 @@ func TestActiveRowsCountsSilentShapingMap(t *testing.T) {
 
 func TestActiveCountsSeparatesReadyMaps(t *testing.T) {
 	root := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	shaping := strings.Replace(DecisionMapTemplate(), "<answer>", "Resolved.", 1)
+	shaping := DecisionMapTemplate()
 	ready := strings.Replace(shaping, "Status: shaping", "Status: ready", 1)
-	for name, document := range map[string]string{"shaping.md": shaping, "ready.md": ready} {
-		if err := os.WriteFile(filepath.Join(root, DecisionsDir, name), []byte(document), 0o644); err != nil {
-			t.Fatal(err)
-		}
+	for name, index := range map[string]string{"shaping.md": shaping, "ready.md": ready} {
+		writeSplitMap(t, root, "decisions/"+name, index, map[string]string{"1.md": DecisionTicketTemplate()})
 	}
 
 	unresolved, readyCount, state := ActiveCounts(root)

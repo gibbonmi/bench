@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -123,9 +124,7 @@ func TestCommandRouteEscapesControlBytesInProducerPaths(t *testing.T) {
 	writeFile(".bench/gate-inputs.json", "{\"schema\":1,\"closure\":\"local\",\"environment\":[],\"paths\":[],\"tools\":[]}\n", 0o644)
 	writeFile(".bench/gate.sh", "#!/bin/sh\nexit 7\n", 0o755)
 	writeFile("specs/my [draft]\x1b/spec.md", "Status: staged\n", 0o644)
-	ready := strings.Replace(maps.DecisionMapTemplate(), "<answer>", "Resolved.", 1)
-	ready = strings.Replace(ready, "Status: shaping", "Status: ready", 1)
-	writeFile("decisions/my * map\x07.md", ready, 0o644)
+	writeDecisionMap(t, root, "decisions/my * map\x07.md", readyMapIndex())
 	gitRun(t, root, "add", "-A")
 	gitRun(t, root, "commit", "-m", "base")
 	if result := gate.Execute(context.Background(), root, io.Discard, io.Discard); result.ActionExit != 7 {
@@ -153,28 +152,30 @@ func TestCommandRouteEscapesControlByteInLeadStagedSpecPath(t *testing.T) {
 	want := "next[1]{state,why,command}:\n" +
 		"  specs,1 staged spec(s),\"/bench-implement-spec specs/lead\\\\u001b/spec.md\"\n" +
 		"also: none\n"
-	assertLeadControlRoute(t, "specs/lead\x1b/spec.md", "Status: staged\n", want)
+	assertLeadControlRoute(t, func(t *testing.T, root string) {
+		path := filepath.Join(root, "specs", "lead\x1b", "spec.md")
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte("Status: staged\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}, want)
 }
 
 func TestCommandRouteEscapesControlByteInLeadReadyMapPath(t *testing.T) {
-	ready := strings.Replace(maps.DecisionMapTemplate(), "<answer>", "Resolved.", 1)
-	ready = strings.Replace(ready, "Status: shaping", "Status: ready", 1)
 	want := "next[1]{state,why,command}:\n" +
 		"  decisions,1 ready map(s),\"/bench-write-spec decisions/lead\\\\u0007.md\"\n" +
 		"also: none\n"
-	assertLeadControlRoute(t, "decisions/lead\x07.md", ready, want)
+	assertLeadControlRoute(t, func(t *testing.T, root string) {
+		writeDecisionMap(t, root, "decisions/lead\x07.md", readyMapIndex())
+	}, want)
 }
 
-func assertLeadControlRoute(t *testing.T, relativePath, body, want string) {
+func assertLeadControlRoute(t *testing.T, write func(*testing.T, string), want string) {
 	t.Helper()
 	root := initRepo(t)
-	path := filepath.Join(root, filepath.FromSlash(relativePath))
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	write(t, root)
 	gitRun(t, root, "add", "-A")
 	gitRun(t, root, "commit", "-m", "base")
 
@@ -214,4 +215,62 @@ func TestCommandRoutePrintsTheCodexPhaseForm(t *testing.T) {
 	if code != 0 || !strings.Contains(got, ",$bench-drain\n") {
 		t.Fatalf("Command(--route --harness codex) = (%q, %d), want the $bench- form", got, code)
 	}
+}
+
+// TestAppendMapsCountsSplitMaps grades the status seam on the split shape, where
+// the tickets live in files beside the index. A count that reads only the inline
+// shape sees no ticket and routes the map wrong.
+func TestAppendMapsCountsSplitMaps(t *testing.T) {
+	root := t.TempDir()
+	index := "# Split map\n\nStatus: STATUS\n\n## Destination\n\nShip it.\n\n## Notes\n\n## Decisions so far\nGISTS\n## Not yet specified\n\n## Spec-writer discretion\n\n## Out of scope\n\n## Sources\n"
+	ticket := "# Which parser owns the map?\n\nBlocked by: none\nType: Research\n\n### Question\n\nWhich?\n\n### Answer\n\nANSWER\n"
+	write := func(name, status, gists, answer string) {
+		t.Helper()
+		folder := filepath.Join(root, "decisions", name, "tickets")
+		if err := os.MkdirAll(folder, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		document := strings.Replace(strings.Replace(index, "STATUS", status, 1), "GISTS", gists, 1)
+		if err := os.WriteFile(filepath.Join(root, "decisions", name+".md"), []byte(document), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(folder, "1.md"), []byte(strings.Replace(ticket, "ANSWER", answer, 1)), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	write("ready", "ready", "\n- [Which parser](ready/tickets/1.md): The maps package.\n", "The maps package.")
+	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "1 ready map(s)", commandActionWithArgument(writeSpecPhaseAction, "decisions/ready.md")}}) {
+		t.Fatalf("split ready maps row = %#v", got)
+	}
+
+	write("shaping", "shaping", "", "\u2014 (open)")
+	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "1 unresolved map(s)", commandAction(shapeIdeaPhaseAction)}}) {
+		t.Fatalf("split ready plus shaping maps row = %#v", got)
+	}
+}
+
+// writeDecisionMap writes one map at rel: the index, and the one ticket file its
+// Decisions so far gist links. The ticket body comes from the maps template.
+func writeDecisionMap(t *testing.T, root, rel, index string) {
+	t.Helper()
+	path := filepath.Join(root, filepath.FromSlash(rel))
+	files := map[string]string{
+		path: index,
+		filepath.Join(strings.TrimSuffix(path, ".md"), "tickets", "1.md"): maps.DecisionTicketTemplate(),
+	}
+	for file, body := range files {
+		if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(file, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+// readyMapIndex renders a ready map index. Its one template ticket is resolved,
+// so the map routes to the spec phase.
+func readyMapIndex() string {
+	return strings.Replace(maps.DecisionMapTemplate(), "Status: shaping", "Status: ready", 1)
 }

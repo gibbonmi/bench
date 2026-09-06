@@ -1,6 +1,6 @@
 # Decision-map split: an index map, one file per ticket, per-topic assets
 
-Status: staged
+Status: implemented
 
 Decision source: the ready compiled map `specs/decision-map-split/decisions/craft-research.md`, tickets #10 through #14, resolved 2026-09-06. Both `## Sources` entries were re-verified on 2026-09-06 before the seams below were chosen. The research asset's local citations were re-resolved: nine hold, seven moved, and four are gone. The gone citations point at FT135 spec files that retired with promote-then-delete. They support only the fan-out precedent in map ticket #3, which stays closed. The assessment asset's four external report links are readable but unverifiable, as its own Evidence status states.
 
@@ -201,6 +201,9 @@ No linked repository holds a map on 2026-09-06, a reviewer-supplied premise, so 
 | DS47 | 45 | `README.md` keeps `Decision maps are situational` and describes the index and ticket files | the README anchors in the `workflow-guidance-anchors` family | A README rewrite that drops the anchored phrase reds |
 | DS48 | 46 | Every anchor row changed in this spec has a mutation-table row that bites | `TestDecisionMapSplitAnchorsRedOnRemoval` | A needle without a mutation row is a claim, not a bite |
 | DS50 | 18, 21 | `decisions/my map.md` with `decisions/my map/tickets/1.md` projects one row whose path cell is `decisions/my map/tickets/1.md` | `maps.Command` on a gittest repo | A path join that splits on spaces loses the folder |
+| DS51 | 12 | A gist to `other/tickets/1.md` on map `split` reds with `Decisions so far links missing ticket #1` | integrity fixture `gist-wrong-folder` | A parser that reads only the number accepts a link to another folder |
+| DS52 | 10 | Two gists to `split/tickets/1.md` red with `Decisions so far duplicate gist for ticket #1` | integrity fixture `gist-duplicate` | A set keyed by number drops the second gist in silence |
+| DS53 | 45 | The README sentence `each decision lives in one ticket file under the map's tickets folder` reds when removed | `TestReadmeSplitShapeAnchorRedsOnRemoval` and the README anchor row | A README rewrite that drops the split description passes an unchanged anchor |
 
 Not covered: story 47 — the measure is recorded in the phase-close retro by final-check, which no ticket owns.
 
@@ -219,6 +222,8 @@ Not covered: story 47 — the measure is recorded in the phase-close retro by fi
 - Both audiences, this repository and a linked repository, get the same answer, because the kit ships one parser.
 - Two concurrent `bench maps` runs: read-only, no lock needed.
 - An untracked map or asset in the stale compare: DS31.
+- An encoded gist target such as `my%20map/tickets/1.md` for a map named `my map`: **Won't handle** — the parser accepts the verbatim relative path only. The template and the migration write that spelling, DS50 covers it, and no gist in the tree uses another form.
+- A `tickets` folder that is a symlink: **Won't handle** — `bounds.ClassifyDir` follows it as the `decisions/` scan does today. The review recorded the edge for reviewer veto.
 - A tickets folder plus an inline heading during the expand phase: **Won't handle** — the migration commit lands before the contract, and DS3 closes the window.
 - A linked repository with inline maps after the contract: **Won't handle** — no linked repository holds a map on 2026-09-06, and DS40 covers the deletion.
 - The FT99 premise sentence: **Won't handle** a mechanical check — `bench preflight build` owns premise checks, and DS43 covers the prose.
@@ -255,6 +260,33 @@ Not covered: story 47 — the measure is recorded in the phase-close retro by fi
 - `docs/adr/0020-a-decision-lives-in-its-ticket-file.md`
 - `reviews/decision-map-split.md`
 - `capture/retros/`
+- `internal/axi/action.go`
+- `internal/axi/action_test.go`
+- `internal/anchors/registry_decision_maps.go`
+- `internal/anchors/registry_decision_maps_test.go`
+- `internal/conformance/registry_test.go`
+
+## Build decisions
+
+Each entry below is a call the build made under the batch approval of 2026-09-06. The reviewer can veto any one of them at the review.
+
+- The `graph-duplicate-id` fixture retired at the contract. A ticket id is a file basename, so two tickets cannot share one id, and the duplicate-id branch is dead. DS15 now covers the five remaining graph fixtures.
+- `TestMapGraphRejectsInvalidEdges` folded into `TestDecisionMapDiagnosticsGolden`, which asserts the same faults as one ordered slice on the split shape.
+- The status helpers for a split map moved into `status_command_test.go`. The two signal test files are over budget, so the growth rule forbids a line there.
+- The fence gained `internal/axi/action.go` and its test. The ready row's help action `/bench-write-spec <path>` needs the phase in the harness-phase set with a path argument. `bench status` already renders that action through its own table.
+- The decision-map anchor rows and their mutation tables moved into `registry_decision_maps.go` and its test. Both registry files are over budget with no grant, and a grant is the reviewer's decision, so the ticket moved its headroom instead. The family owner set in `internal/conformance/registry_test.go` names the new file too.
+- The migration program moved `gate-pipeline-fixture-inventory.md` into the `gate-pipeline` assets folder. Only that map names the asset, in prose rather than in Sources.
+- Two seeded gists read thin and wait for a reviewer edit: `gate-critical-path` #1 and `worktree-orphan-retirement` #5.
+
+**Migration evidence for DS34 and DS39, 2026-09-06.** The dry run printed fourteen maps with 128 ticket files, ten asset moves, thirteen reference files, and the ignore line. After the dry run, `git status` showed only the program folder. After `--apply`, `bench maps` printed the same nine rows and three help lines as the coordinator's saved pre-migration output, byte for byte. The `path` column did not exist yet.
+
+The per-map counts of resolved tickets and gists were equal for all fourteen maps. The program is deleted, so the record here is the evidence.
+
+**Review repairs, 2026-09-06.** The review accepted eight repair targets. Rows DS51 to DS53 record the three that add a check. The prose repairs keep every anchored sentence byte-identical. Six items stay open in the pickup for the reviewer.
+
+**Dogfood runs before the review, 2026-09-06.** The coordinator ran the worktree binary over the real tree at the last ticket's tip. `bench maps` printed fourteen rows with six cells, five `ready` rows, and eight help actions. `bench maps software-factory` printed that map's two rows and one action. `bench maps --ticket-template` printed the ticket skeleton.
+
+`bench status` kept the decisions row at eight unresolved maps. No stale row printed, because the migration committed each asset beside its index.
 
 ## Out of scope
 

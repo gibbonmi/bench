@@ -21,7 +21,8 @@ projects/gl-axi.md
 # normal exit/interrupt; ignored so an unclean kill can't leave them to be committed.
 .bench-objective
 .bench-notes.md
-research/
+# Anchor the rule to the root shift-scratch folder, so docs/research/ stays tracked.
+/research/
 
 # Local design reference images — kept on disk, never committed.
 ui_example/

@@ -16,7 +16,7 @@ import (
 
 var decisionMapIntegrityFixtureCategories = map[string][]string{
 	"graph": {
-		"graph-cycle", "graph-dangling", "graph-duplicate-blocker", "graph-duplicate-id", "graph-resolved-on-unresolved", "graph-self-edge",
+		"graph-cycle", "graph-dangling", "graph-duplicate-blocker", "graph-resolved-on-unresolved", "graph-self-edge",
 	},
 	"readiness": {
 		"readiness-compiled-shaping", "readiness-fog", "readiness-unresolved",
@@ -26,6 +26,9 @@ var decisionMapIntegrityFixtureCategories = map[string][]string{
 	},
 	"source": {
 		"source-absolute-path", "source-empty-path", "source-escape-path", "source-invalid-url", "source-missing-drift", "source-missing-path", "source-missing-supports", "source-not-bullet", "source-second-locator", "source-unknown-kind", "source-wrapped-field", "source-wrapped-field-colon",
+	},
+	"split": {
+		"ticket-basename", "tickets-absent", "tickets-empty", "orphan-tickets-folder", "notes-missing", "decisions-so-far-missing", "gist-missing", "gist-unresolved", "gist-missing-file", "gist-malformed", "gist-wrong-folder", "gist-duplicate", "inline-ticket-heading",
 	},
 	"terminal-list": {
 		"terminal-discretion-prose", "terminal-fog-prose", "terminal-out-of-scope-prose",
@@ -88,20 +91,28 @@ func TestDecisionMapIntegrityCheckValidatesEveryCandidate(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	valid := strings.Replace(maps.DecisionMapTemplate(), "<answer>", "Resolved.", 1)
-	writeMap(filepath.Join(root, "decisions", "active.md"), valid)
-	writeMap(filepath.Join(root, "specs", "compiled", "decisions", "compiled.md"), strings.Replace(valid, "Status: shaping", "Status: ready", 1))
+	// The two templates render the whole map, so each map under proof is one index
+	// beside the one ticket file its Decisions so far gist links.
+	const ticketTitle = "<decision question>"
+	writeSplitMap := func(path, status, blockedBy string) {
+		t.Helper()
+		writeMap(path, strings.Replace(maps.DecisionMapTemplate(), "Status: shaping", "Status: "+status, 1))
+		writeMap(filepath.Join(strings.TrimSuffix(path, ".md"), "tickets", "1.md"),
+			strings.Replace(maps.DecisionTicketTemplate(), "Blocked by: none", "Blocked by: "+blockedBy, 1))
+	}
+	writeSplitMap(filepath.Join(root, "decisions", "active.md"), "shaping", "none")
+	writeSplitMap(filepath.Join(root, "specs", "compiled", "decisions", "compiled.md"), "ready", "none")
 	writeMap(filepath.Join(root, "specs", "no-map", "spec.md"), "# No map\n")
 	if diagnostics := RunConformance(root, h.KitRoot, registry.Dev, "decision-map-integrity"); len(diagnostics) != 0 {
 		t.Fatalf("valid active and compiled maps diagnostics = %v", diagnostics)
 	}
 
 	writeMap(filepath.Join(root, "specs", "broken", "decisions", "broken.md"), "# Broken\n")
-	writeMap(filepath.Join(root, "decisions", "graph.md"), strings.Replace(valid, "Blocked by: none", "Blocked by: #1", 1))
+	writeSplitMap(filepath.Join(root, "decisions", "graph.md"), "shaping", "#1")
 	diagnostics := RunConformance(root, h.KitRoot, registry.Dev, "decision-map-integrity")
 	for _, want := range []string{
 		"specs/broken/decisions/broken.md: missing Status",
-		"decisions/graph.md: ticket #1: <decision question> self-edge #1 -> #1",
+		"decisions/graph.md: ticket #1: " + ticketTitle + " self-edge #1 -> #1",
 	} {
 		if !containsDiagnostic(diagnostics, want) {
 			t.Fatalf("candidate diagnostics = %v, want %q", diagnostics, want)
