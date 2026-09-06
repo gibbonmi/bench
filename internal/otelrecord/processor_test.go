@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -202,5 +203,73 @@ func TestTheConstructorResolvesTheHomeWhenTheCallerHasNone(t *testing.T) {
 	span.End()
 	if lines := recordLines(t, home, root); len(lines) != 2 {
 		t.Fatalf("the resolved home holds %d lines, want 2", len(lines))
+	}
+}
+
+// TestNewProviderRefusesTheFallbackHomeUnderTest holds the FT310 refusal: while a test
+// binary runs, a resolved home that matches the user's own fallback home writes nothing,
+// with BENCH_HOME unset.
+func TestNewProviderRefusesTheFallbackHomeUnderTest(t *testing.T) {
+	root := t.TempDir()
+	userHome := t.TempDir()
+	t.Setenv("HOME", userHome)
+	t.Setenv(benchhome.Env, "")
+
+	provider := NewProvider("", root)
+	_, span := provider.Tracer().Start(context.Background(), "bench.gate")
+	span.End()
+	if err := provider.Shutdown(context.Background()); err != nil {
+		t.Fatalf("shut the provider down: %v", err)
+	}
+
+	fallback := filepath.Join(userHome, ".bench")
+	if _, err := os.Stat(Path(fallback, root)); !os.IsNotExist(err) {
+		t.Fatalf("Stat(record) = %v, want a not-exist error under the fallback home", err)
+	}
+}
+
+// TestNewProviderRefusesAnExplicitBenchHomeEqualToTheFallback holds the explicit half of
+// the same refusal: BENCH_HOME naming the fallback path, rather than an unset BENCH_HOME,
+// still writes nothing.
+func TestNewProviderRefusesAnExplicitBenchHomeEqualToTheFallback(t *testing.T) {
+	root := t.TempDir()
+	userHome := t.TempDir()
+	t.Setenv("HOME", userHome)
+	fallback := filepath.Join(userHome, ".bench")
+	t.Setenv(benchhome.Env, fallback)
+
+	provider := NewProvider("", root)
+	_, span := provider.Tracer().Start(context.Background(), "bench.gate")
+	span.End()
+	if err := provider.Shutdown(context.Background()); err != nil {
+		t.Fatalf("shut the provider down: %v", err)
+	}
+
+	if _, err := os.Stat(Path(fallback, root)); !os.IsNotExist(err) {
+		t.Fatalf("Stat(record) = %v, want a not-exist error under an explicit fallback home", err)
+	}
+}
+
+// TestNewProviderRecordsAnExplicitBenchHomeElsewhere holds the exception the refusal
+// carves out: BENCH_HOME naming a directory other than the fallback home still records,
+// even while a test binary runs.
+func TestNewProviderRecordsAnExplicitBenchHomeElsewhere(t *testing.T) {
+	root := t.TempDir()
+	userHome := t.TempDir()
+	t.Setenv("HOME", userHome)
+	home := t.TempDir()
+	t.Setenv(benchhome.Env, home)
+
+	provider := NewProvider("", root)
+	defer func() {
+		if err := provider.Shutdown(context.Background()); err != nil {
+			t.Fatalf("shut the provider down: %v", err)
+		}
+	}()
+	_, span := provider.Tracer().Start(context.Background(), "bench.gate")
+	span.End()
+
+	if lines := recordLines(t, home, root); len(lines) != 2 {
+		t.Fatalf("an explicit home elsewhere holds %d lines, want 2", len(lines))
 	}
 }

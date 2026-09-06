@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/anchors"
+	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
@@ -450,6 +451,11 @@ func runWithInputEnv(dir string, env []string, input string, args ...string) *Pr
 	return runProbe(cmd, args)
 }
 
+// conformanceSubprocessEnv is the one environment-composition seam every probe child's
+// environment passes through. It never carries the operator's real Bench home: BENCH_HOME
+// is scrubbed like every other conformance control var, and a private below-os.TempDir
+// home replaces it, so a probe's own bench child never writes a seam record into the
+// operator's real home.
 func conformanceSubprocessEnv() []string {
 	env := make([]string, 0, len(os.Environ()))
 	hasNpmCache := false
@@ -459,7 +465,8 @@ func conformanceSubprocessEnv() []string {
 		if strings.HasPrefix(kv, "BENCH_CONFORMANCE_ROOT=") ||
 			strings.HasPrefix(kv, registry.ConformanceTierEnv+"=") ||
 			strings.HasPrefix(kv, registry.ConformanceChecksEnv+"=") ||
-			strings.HasPrefix(kv, registry.ConformanceInheritedEnv+"=") {
+			strings.HasPrefix(kv, registry.ConformanceInheritedEnv+"=") ||
+			strings.HasPrefix(kv, benchhome.Env+"=") {
 			continue
 		}
 		if strings.HasPrefix(kv, "NPM_CONFIG_CACHE=") && strings.TrimPrefix(kv, "NPM_CONFIG_CACHE=") != "" {
@@ -470,6 +477,7 @@ func conformanceSubprocessEnv() []string {
 	if !hasNpmCache {
 		env = append(env, "NPM_CONFIG_CACHE="+filepath.Join(os.TempDir(), "bench-npm-cache"))
 	}
+	env = append(env, benchhome.Env+"="+filepath.Join(os.TempDir(), "bench-conformance-home"))
 	return env
 }
 

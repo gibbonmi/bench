@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
@@ -38,6 +39,7 @@ type systemOwner struct {
 	selected executableIdentity
 	kit      string
 	root     string
+	home     string
 	repos    []string
 	mu       sync.Mutex
 	starts   int
@@ -88,7 +90,12 @@ func newSystemOwner() (*systemOwner, error) {
 	if err != nil {
 		return nil, err
 	}
-	o := &systemOwner{selected: selected, kit: kit, root: root, terminal: map[string]bool{}}
+	// home is the private Bench home every bench child gets by default, below root so
+	// cleanup removes it with everything else. A test that names its own BENCH_HOME in
+	// its overrides still wins; this is the fallback for one that does not, so a bench
+	// child never inherits the operator's real Bench home from the process running
+	// go test.
+	o := &systemOwner{selected: selected, kit: kit, root: root, home: filepath.Join(root, "bench-home"), terminal: map[string]bool{}}
 	for range 3 {
 		repo, err := os.MkdirTemp(root, "repository [journey]-")
 		if err != nil {
@@ -164,7 +171,7 @@ func (o *systemOwner) runWithInput(dir string, overrides []string, input string,
 	o.mu.Unlock()
 	cmd := exec.Command(program, args...)
 	cmd.Dir = dir
-	cmd.Env = mergeEnvironment(os.Environ(), overrides)
+	cmd.Env = o.childEnvironment(overrides)
 	cmd.Stdin = strings.NewReader(input)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -196,7 +203,7 @@ func (o *systemOwner) startProcessGroup(dir string, overrides []string, program 
 	o.mu.Unlock()
 	cmd := exec.Command(program, args...)
 	cmd.Dir = dir
-	cmd.Env = mergeEnvironment(os.Environ(), overrides)
+	cmd.Env = o.childEnvironment(overrides)
 	cmd.Stdin = strings.NewReader("")
 	var output bytes.Buffer
 	cmd.Stdout = &output
@@ -264,7 +271,7 @@ func (o *systemOwner) interruptProcessGroup() (int, error) {
 	o.mu.Unlock()
 	pidFile := filepath.Join(o.root, "interrupt-descendant.pid")
 	cmd := exec.Command(os.Args[0], "-test.run=^$")
-	cmd.Env = mergeEnvironment(os.Environ(), []string{"BENCH_SYSTEM_INTERRUPT_CHILD=" + pidFile})
+	cmd.Env = o.childEnvironment([]string{"BENCH_SYSTEM_INTERRUPT_CHILD=" + pidFile})
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := cmd.Start(); err != nil {
 		return 0, err
@@ -401,6 +408,58 @@ func mergeEnvironment(base, overrides []string) []string {
 		}
 	}
 	return out
+}
+
+// namesEnv reports whether entries names key, spelled either as key=value or as the
+// bare-NAME removal form.
+func namesEnv(entries []string, key string) bool {
+	for _, entry := range entries {
+		if entryKey, _, _ := strings.Cut(entry, "="); entryKey == key {
+			return true
+		}
+	}
+	return false
+}
+
+// childEnvironment is the one seam every bench child's environment passes through. A
+// caller that names its own BENCH_HOME in overrides keeps it; one that does not gets
+// o.home instead, so a bench child never inherits the operator's real Bench home from
+// the process running go test.
+func (o *systemOwner) childEnvironment(overrides []string) []string {
+	if !namesEnv(overrides, benchhome.Env) {
+		overrides = append(append([]string{}, overrides...), benchhome.Env+"="+o.home)
+	}
+	return mergeEnvironment(os.Environ(), overrides)
+}
+
+// TestChildEnvironmentDefaultsBenchHomeWhenUnnamed holds the FT310 default: overrides
+// that name no BENCH_HOME still start a bench child under the owner's private home,
+// never the operator's real one.
+func TestChildEnvironmentDefaultsBenchHomeWhenUnnamed(t *testing.T) {
+	env := owner.childEnvironment([]string{"BENCH_COMMAND_OBSERVE=1"})
+	if got := envValue(env, benchhome.Env); got != owner.home {
+		t.Fatalf("BENCH_HOME = %q, want the owner's private home %q", got, owner.home)
+	}
+}
+
+// TestChildEnvironmentKeepsAnExplicitBenchHome holds the exception: a caller that
+// already names its own BENCH_HOME keeps it, rather than the owner's private home.
+func TestChildEnvironmentKeepsAnExplicitBenchHome(t *testing.T) {
+	want := t.TempDir()
+	env := owner.childEnvironment([]string{benchhome.Env + "=" + want})
+	if got := envValue(env, benchhome.Env); got != want {
+		t.Fatalf("BENCH_HOME = %q, want the caller's own home %q", got, want)
+	}
+}
+
+// envValue returns the value entries assigns key, or "" when entries never names it.
+func envValue(entries []string, key string) string {
+	for _, entry := range entries {
+		if entryKey, value, found := strings.Cut(entry, "="); found && entryKey == key {
+			return value
+		}
+	}
+	return ""
 }
 
 func systemGitOutput(t *testing.T, repo string, args ...string) string {
