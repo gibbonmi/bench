@@ -35,6 +35,49 @@ func TestPlanUnclaimedAssignmentSetExcludesClaimedCheckedOutAndForeignRefs(t *te
 	}
 }
 
+// TestPlanUnclaimedShiftResidueBranch proves the shift namespace joins the unclaimed set
+// under the same protections: a checked-out shift branch and a foreign ref stay out, the
+// residue row carries the shift reason, and the plan's fingerprint authorizes its removal.
+func TestPlanUnclaimedShiftResidueBranch(t *testing.T) {
+	t.Parallel()
+	root := newWorktreeRepo(t)
+	home := filepath.Join(root, ".bench-home")
+	residue := strings.TrimPrefix(intent.ShiftBranchPrefix(), "refs/heads/") + "20260101-000000"
+	checkedOut := strings.TrimPrefix(intent.ShiftBranchPrefix(), "refs/heads/") + "20260101-000001"
+	for index, branch := range []string{residue, checkedOut} {
+		gitRun(t, root, "checkout", "-qb", branch)
+		commitInWorktree(t, root, "shift-"+string(rune('a'+index))+".txt", "x\n", branch)
+		gitRun(t, root, "checkout", "-q", "main")
+	}
+	gitRun(t, root, "worktree", "add", "-q", filepath.Join(t.TempDir(), "checked-out"), checkedOut)
+	gitRun(t, root, "branch", "archive/x")
+
+	set, err := planUnclaimedAssignmentSet(root, CleanupOptions{DiscardBranch: true, Unclaimed: true})
+	if err != nil || len(set.rows) != 1 || set.rows[0].ref != "refs/heads/"+residue {
+		t.Fatalf("plan = %#v, err=%v; want only %q", set, err, residue)
+	}
+	if set.rows[0].reason != "shift residue branch" {
+		t.Fatalf("plan reason = %q, want shift residue branch", set.rows[0].reason)
+	}
+
+	plan, _, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
+	if code != 0 || !strings.Contains(plan, "shift residue branch") {
+		t.Fatalf("plan exit=%d stdout=%q, want the shift reason", code, plan)
+	}
+	output, _, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed", "--apply", cleanupRowFingerprint(t, plan))
+	if code != 0 || !strings.Contains(output, "refs/heads/"+residue+",removed,") {
+		t.Fatalf("apply exit=%d stdout=%q, want the residue removed", code, output)
+	}
+	if git.OK("-C", root, "show-ref", "--verify", "--quiet", "refs/heads/"+residue) {
+		t.Fatalf("apply retained %q", residue)
+	}
+	for _, ref := range []string{"refs/heads/" + checkedOut, "refs/heads/archive/x"} {
+		if !git.OK("-C", root, "show-ref", "--verify", "--quiet", ref) {
+			t.Fatalf("apply deleted protected ref %q", ref)
+		}
+	}
+}
+
 func TestPlanUnclaimedAssignmentSetExcludesDefaultBranchInAssignmentNamespace(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
