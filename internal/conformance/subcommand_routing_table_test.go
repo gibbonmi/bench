@@ -51,6 +51,7 @@ var subcommandRouting = map[string]routingEntry{
 	"gate-prose":            exempt(whyPlumbing),
 	"gate-phases":           exempt(whyPlumbing),
 	"guard-bench-follow-on": exempt(whyPlumbing),
+	"guard-file-write":      exempt(whyPlumbing),
 	"guard-git":             exempt(whyPlumbing),
 	"resolve-model":         exempt(whyPlumbing),
 	"stop-verdict":          exempt(whyPlumbing),

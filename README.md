@@ -359,6 +359,7 @@ the tool you're building.
 | design-it-twice in `craft-seams` | codebase-design | — | high-effort line at the uncertain seam |
 | `bench shift` notes.md | — | gnhf (iteration context) | — |
 | `block-dangerous-git.sh` | git-guardrails | — | agent has no destructive authority |
+| `block-primary-file-write.sh` | — | — | main receives writes only through landings |
 | Stop hook + `.bench/gate.sh` | — | no-mistakes (external gate) | the gate is the oracle |
 | The line declaration | — | — | "suggest model and effort" |
 

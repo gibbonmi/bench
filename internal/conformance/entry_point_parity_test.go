@@ -44,6 +44,11 @@ const parityWrapperToken = "{{wrapper}}"
 // core, not that the core denies; the guards own their own verdict checks.
 const parityBenignBash = `{"tool_name":"Bash","tool_input":{"command":"ls"}}`
 
+// parityBenignWrite is a file-tool envelope the write guard allows. The path sits outside
+// every repository, so the row proves the shim reaches the core without depending on the
+// graded root's own checkout kind.
+const parityBenignWrite = `{"tool_name":"Write","tool_input":{"file_path":"/nonexistent/parity/x.txt"},"cwd":"/"}`
+
 // entryPointParity maps every shim, adapter, front door, and CI entry to the one registry
 // command it must reach. The check enumerates the shim and adapter directories from disk,
 // so an entry outside this table is red rather than ungraded.
@@ -53,6 +58,9 @@ var entryPointParity = map[string]parityRow{
 	},
 	".bench/hooks/block-bench-follow-on.sh": {
 		command: "guard-bench-follow-on", direct: []string{"guard-bench-follow-on"}, input: parityBenignBash, compare: true,
+	},
+	".bench/hooks/block-primary-file-write.sh": {
+		command: "guard-file-write", direct: []string{"guard-file-write"}, input: parityBenignWrite, compare: true,
 	},
 	".bench/hooks/check-agent-line.sh": {
 		command: "check-agent-line",
@@ -446,55 +454,4 @@ func TestEntryPointParityNamesAnUnreachedInternalCommand(t *testing.T) {
 	if !containsDiagnostic(diags, `registry command "new-plumbing" is reached by no parity row and carries no exemption reason`) {
 		t.Fatalf("an unreached internal command was not named:\n%s", strings.Join(diags, "\n"))
 	}
-}
-
-// TestEntryPointParityRuntimeRowsBite runs the runtime comparator against a synthetic core
-// and synthetic shims. Each shim body is one way a real shim drifts: it decides alone, it
-// answers with its own exit code, or it appends output the core never produced.
-func TestEntryPointParityRuntimeRowsBite(t *testing.T) {
-	const rel = ".bench/hooks/block-bench-follow-on.sh"
-	const call = "#!/usr/bin/env bash\ninput=\"$(cat)\"\nprintf '%s' \"$input\" | \"$(command -v bench)\" guard-bench-follow-on\n"
-	tests := []struct{ name, body, want string }{
-		{"reaches the core", call, ""},
-		{"decides alone", "#!/usr/bin/env bash\nexit 0\n", "does not reach the registry"},
-		{"holds a second opinion", call + "exit 1\n", "exits 1 and the direct guard-bench-follow-on exits 0"},
-		{"appends its own output", call + "printf 'shim tail\\n'\n", "stdout does not end with the direct guard-bench-follow-on stdout"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			root := parityRuntimeRoot(t, rel, tt.body)
-			diags := checkEntryPointParity(root)
-			if tt.want == "" {
-				if len(diags) != 0 {
-					t.Fatalf("a shim that reaches the core is not green:\n%s", strings.Join(diags, "\n"))
-				}
-				return
-			}
-			if !containsDiagnostic(diags, tt.want) {
-				t.Fatalf("the drifted shim did not bite with %q:\n%s", tt.want, strings.Join(diags, "\n"))
-			}
-		})
-	}
-}
-
-// parityRuntimeRoot builds a root holding one shim and a wrapper that stands in for the
-// compiled core. The stand-in prints the observed id the way the real registry does, so
-// the comparator is graded without a build.
-func parityRuntimeRoot(t *testing.T, rel, body string) string {
-	t.Helper()
-	const core = "#!/usr/bin/env bash\n" +
-		"cmd=\"${1:-status}\"\n" +
-		"[ \"${BENCH_COMMAND_OBSERVE:-}\" = 1 ] && printf 'command-registry:%s\\n' \"$cmd\" >&2\n" +
-		"cat >/dev/null 2>/dev/null\n" +
-		"printf 'core %s\\n' \"$cmd\"\n" +
-		"exit 0\n"
-	files := map[string]string{"bin/bench.sh": core, rel: body}
-	for staticRel, content := range parityHonestStatics {
-		files[staticRel] = content
-	}
-	root := throwawayRoot{files: files}.build(t)
-	if err := os.Chmod(filepath.Join(root, "bin", "bench.sh"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	return root
 }

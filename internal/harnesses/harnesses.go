@@ -228,6 +228,7 @@ var Rows = []Row{
 			"Stop",
 			"PreToolUse:Bash",
 			"PreToolUse:Agent",
+			"PreToolUse:Edit|Write|MultiEdit|NotebookEdit",
 		},
 		DelegationGuard: Cell{
 			Value:   Yes,

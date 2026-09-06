@@ -23,7 +23,7 @@ type want struct {
 
 var expected = []want{
 	{"codex", OpenAI, "$bench-", ".codex/hooks.json", 3, No, ".bench/adapters/codex", Yes},
-	{"claude", Anthropic, "/bench-", ".claude/settings.json", 6, Yes, ".bench/adapters/claude", Yes},
+	{"claude", Anthropic, "/bench-", ".claude/settings.json", 7, Yes, ".bench/adapters/claude", Yes},
 	{"opencode", AnyProvider, "", "", 0, Unknown, ".bench/adapters/opencode", Yes},
 	{"none", NoProvider, "", "", 0, No, "", No},
 }
