@@ -185,7 +185,56 @@ the two served asks close as out of scope.
 
 ### Answer
 
-— (open)
+The reviewer selected the mutation-probe verb on 2026-09-06. One spec delivers
+FT168's probe verdict and FT98's preserve-and-restore face together. One
+guidance ticket in that spec adds the one-line note to `bench worktree path`.
+The route is `/bench-write-spec`, because the verb crosses the declared CLI
+seam. The `--time` face and the heredoc route are out of scope, and the `PWD`
+ask stays with FT254. Ticket #11 bounds the verb.
+
+## #11: Where does the probe verb live, and what bounds it?
+
+Blocked by: #10
+Type: Grill
+
+### Question
+
+FT168 names a root verb `bench probe`, and FT98 names a `bench worktree` face.
+Which placement holds, which mutation grammar does the verb take, which exit
+posture does each verdict carry, and in which checkouts does it run?
+
+### Answer
+
+The verb is the root verb `bench probe`, and FT98's probe face folds into it.
+A worktree probe runs as `bench worktree exec <target> -- bench probe ...`, the
+only worktree form. The mutation is an exact string pair or an omission on one
+named file. The forms are `--swap <old> --with <new>` and `--omit <old>`, and
+the old string matches exactly once.
+
+The verdicts are `bit` at exit 0, `silent` and `invalid` at exit 1, and
+`restore-failed` at exit 2 with the preserved copy named. The verb runs in any
+checkout and refuses while a gate run holds the tree. The restore is proven
+byte-exact before exit. The focused run composes the `bench test` selection
+grammar, because FT168 requires the registered check owner. Ticket #12 bounds
+the focused-run forms and the verdict record.
+
+## #12: Which focused-run forms and records does the probe verb carry?
+
+Blocked by: #11
+Type: Grill
+
+### Question
+
+Does the focused run accept both `bench test` selection forms, the package and
+run regex and the `--check <name>`? Does the verb record its verdicts beyond
+the terminal answer?
+
+### Answer
+
+The focused run accepts both `bench test` selection forms: a package expression
+with `--run <go-regex>`, and `--check <name>` for a registered check. The verb
+writes no record beyond the terminal verdict row, and the caller cites that
+row. A probe ledger or a census entry is a later row if a retro asks for it.
 
 ## Not yet specified
 
@@ -198,6 +247,8 @@ the two served asks close as out of scope.
   readers are verified.
 - Choose a view layout that consumes the shared projection without becoming a
   state owner.
+- Choose the preserved copy's location for the probe verb; it is reversible and
+  changes no verdict.
 
 ## Out of scope
 
@@ -205,6 +256,11 @@ the two served asks close as out of scope.
   claim.
 - A release, deployment, or Regroup mutation before qualification.
 - Automatic implementation from `/bench-deepen`.
+- A `--time` face on `bench worktree exec` and a heredoc route to the exec
+  child: the shell `time` prefix and the exec child's stdin serve both
+  (2026-09-06).
+- A probe verdict record in the census or a probe ledger: the terminal verdict
+  row is the complete evidence (2026-09-06).
 
 ## Sources
 
