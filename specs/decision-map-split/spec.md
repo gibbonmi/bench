@@ -255,6 +255,19 @@ Not covered: story 47 — the measure is recorded in the phase-close retro by fi
 - `docs/adr/0020-a-decision-lives-in-its-ticket-file.md`
 - `reviews/decision-map-split.md`
 - `capture/retros/`
+- `internal/axi/action.go`
+- `internal/axi/action_test.go`
+
+## Build decisions
+
+Each entry below is a call the build made under the batch approval of 2026-09-06. The reviewer can veto any one of them at the review.
+
+- The `graph-duplicate-id` fixture retired at the contract. A ticket id is a file basename, so two tickets cannot share one id, and the duplicate-id branch is dead. DS15 now covers the five remaining graph fixtures.
+- `TestMapGraphRejectsInvalidEdges` folded into `TestDecisionMapDiagnosticsGolden`, which asserts the same faults as one ordered slice on the split shape.
+- The status helpers for a split map moved into `status_command_test.go`. The two signal test files are over budget, so the growth rule forbids a line there.
+- The fence gained `internal/axi/action.go` and its test. The ready row's help action `/bench-write-spec <path>` needs the phase in the harness-phase set with a path argument. `bench status` already renders that action through its own table.
+- The migration program moved `gate-pipeline-fixture-inventory.md` into the `gate-pipeline` assets folder. Only that map names the asset, in prose rather than in Sources.
+- Two seeded gists read thin and wait for a reviewer edit: `gate-critical-path` #1 and `worktree-orphan-retirement` #5.
 
 ## Out of scope
 

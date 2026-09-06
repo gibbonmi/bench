@@ -28,7 +28,11 @@ type Action struct {
 	invocation []string
 	arguments  []InvocationArgument
 	phase      string
-	why        string
+	// phaseArgument is the one operand a harness phase takes: a path the caller has
+	// already resolved. It renders bare beside the phase, because a slash command is
+	// typed into a harness rather than into a shell.
+	phaseArgument string
+	why           string
 }
 
 // InvocationArgument is one declared part of an executable invocation.
@@ -71,6 +75,12 @@ func ExecutableInvocation(why string, arguments ...InvocationArgument) Action {
 // HarnessPhase returns the canonical follow-up phase rather than a shell command.
 func HarnessPhase(phase, why string) Action {
 	return Action{kind: actionHarnessPhase, phase: phase, why: why}
+}
+
+// HarnessPhaseOn returns the canonical follow-up phase applied to one resolved
+// argument, so the reader can paste the phase and its subject together.
+func HarnessPhaseOn(phase, argument, why string) Action {
+	return Action{kind: actionHarnessPhase, phase: phase, phaseArgument: argument, why: why}
 }
 
 // InspectFull returns the bounded action for a live diff when commit is empty, or
@@ -122,7 +132,7 @@ func RenderHelp(actions []Action) (string, error) {
 }
 
 func (action Action) hasUnsupportedDisclosureValue() bool {
-	if hasUnsupportedControl(action.why) {
+	if hasUnsupportedControl(action.why) || hasUnsupportedControl(action.phaseArgument) {
 		return true
 	}
 	for _, argument := range action.arguments {
@@ -214,7 +224,13 @@ func (action Action) render() (string, string, error) {
 		if !validHarnessPhase(action.phase) || action.why == "" {
 			return "", "", errors.New("harness phase action requires a canonical phase and reason")
 		}
-		return action.phase, action.why, nil
+		if action.phaseArgument == "" {
+			return action.phase, action.why, nil
+		}
+		if !validKnownArgument(action.phaseArgument) {
+			return "", "", errors.New("harness phase action requires one resolved argument")
+		}
+		return action.phase + " " + action.phaseArgument, action.why, nil
 	default:
 		return "", "", errors.New("unknown action kind")
 	}
@@ -255,7 +271,7 @@ func validFutureInput(name string) bool {
 
 func validHarnessPhase(phase string) bool {
 	switch phase {
-	case "/bench-shape-idea", "/bench-drain", "/bench-what-next":
+	case "/bench-shape-idea", "/bench-drain", "/bench-what-next", "/bench-write-spec":
 		return true
 	default:
 		return false

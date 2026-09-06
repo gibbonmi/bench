@@ -35,35 +35,89 @@ func TestCommandAppendsOnlyMapActionsToTheCapturedPrimaryResponse(t *testing.T) 
 	}
 }
 
-func TestCommandAppendsHonestEmptyHelpForEmptyAndCompleteMaps(t *testing.T) {
-	for _, tc := range []struct {
-		name, fixture string
-		write         func(t *testing.T, root string)
-	}{
-		{name: "empty", fixture: "pre-disclosure-terminal.stdout", write: func(t *testing.T, root string) {}},
-		{
-			name: "complete (aliases terminal empty)", fixture: "pre-disclosure-terminal.stdout",
-			write: func(t *testing.T, root string) {
-				t.Helper()
-				index := strings.Replace(DecisionMapTemplate(), "Status: shaping", "Status: ready", 1)
-				writeSplitMap(t, root, "decisions/complete.md", index, map[string]string{"1.md": DecisionTicketTemplate()})
-			},
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			primary, err := os.ReadFile(filepath.Join("testdata", tc.fixture))
-			if err != nil {
-				t.Fatal(err)
-			}
-			root := gittest.Repo(t)
-			tc.write(t, root)
-			t.Chdir(root)
+func TestCommandAppendsHonestEmptyHelpForAnEmptyDecisionsDirectory(t *testing.T) {
+	primary, err := os.ReadFile(filepath.Join("testdata", "pre-disclosure-terminal.stdout"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := gittest.Repo(t)
+	t.Chdir(root)
 
-			out, code := Command(nil)
-			if code != 0 || out != string(primary)+"help[0]{cmd,why}:\n" {
-				t.Fatalf("Command(%v) = (exit %d, %q), want terminal empty help", []string(nil), code, out)
-			}
+	out, code := Command(nil)
+	if code != 0 || out != string(primary)+"help[0]{cmd,why}:\n" {
+		t.Fatalf("Command(%v) = (exit %d, %q), want terminal empty help", []string(nil), code, out)
+	}
+}
+
+// readyMap writes one ready split map, whose single ticket the skeleton's own gist
+// already records, and returns its title.
+func readyMap(t *testing.T, root, rel string) string {
+	t.Helper()
+	index := strings.Replace(DecisionMapTemplate(), "Status: shaping", "Status: ready", 1)
+	writeSplitMap(t, root, rel, index, map[string]string{"1.md": DecisionTicketTemplate()})
+	return "<decision map title>"
+}
+
+func TestCommandProjectsAReadyActiveMapAndSkipsAReadyCompiledMap(t *testing.T) {
+	root := gittest.Repo(t)
+	title := readyMap(t, root, "decisions/ready.md")
+	readyMap(t, root, "specs/compiled/decisions/buried.md")
+	t.Chdir(root)
+
+	out, code := Command(nil)
+	want := "maps[1]{map,title,type,state,blockers,path}:\n" +
+		"  ready,<decision map title>,map,ready,\"\",decisions/ready.md\n" +
+		"help[1]{cmd,why}:\n  /bench-write-spec decisions/ready.md,\"spec ready: <decision map title>\"\n"
+	if code != 0 || out != want {
+		t.Fatalf("Command(nil) with the ready map %q = (exit %d, %q), want %q", title, code, out, want)
+	}
+}
+
+func TestCommandFiltersEveryRowAndHelpLineToTheNamedMap(t *testing.T) {
+	root := gittest.Repo(t)
+	for _, name := range []string{"alpha", "beta"} {
+		writeSplitMap(t, root, "decisions/"+name+".md", splitIndex, map[string]string{
+			"1.md": strings.Replace(splitTicket, "# Which parser owns the map?", "# "+name+" one", 1),
 		})
+	}
+	t.Chdir(root)
+
+	out, code := Command([]string{"alpha"})
+	want := "maps[1]{map,title,type,state,blockers,path}:\n" +
+		"  alpha,alpha one,Research,frontier,\"\",decisions/alpha/tickets/1.md\n" +
+		"help[1]{cmd,why}:\n  /bench-shape-idea,\"shape alpha: alpha one\"\n"
+	if code != 0 || out != want {
+		t.Fatalf("Command(alpha) = (exit %d, %q), want %q", code, out, want)
+	}
+}
+
+func TestCommandRefusesAnUnknownMapNameAndAPathShapedOperand(t *testing.T) {
+	root := gittest.Repo(t)
+	writeSplitMap(t, root, "decisions/alpha.md", splitIndex, map[string]string{"1.md": splitTicket})
+	t.Chdir(root)
+
+	if out, code := Command([]string{"gamma"}); code != 1 || out != "maps: no active map named \"gamma\"\n" {
+		t.Fatalf("Command(gamma) = (exit %d, %q), want exit 1 with the named refusal", code, out)
+	}
+	for _, operand := range []string{"decisions/alpha.md", "alpha.md", "alpha\x1b"} {
+		out, code := Command([]string{operand})
+		if code != 2 || out != grammar.Help+"\n" {
+			t.Fatalf("Command(%q) = (exit %d, %q), want exit 2 with %q", operand, code, out, grammar.Help)
+		}
+	}
+}
+
+func TestCommandKeepsTheTicketPathOfAMapNameHoldingASpace(t *testing.T) {
+	root := gittest.Repo(t)
+	writeSplitMap(t, root, "decisions/my map.md", splitIndex, map[string]string{"1.md": splitTicket})
+	t.Chdir(root)
+
+	out, code := Command(nil)
+	want := "maps[1]{map,title,type,state,blockers,path}:\n" +
+		"  my map,Which parser owns the map?,Research,frontier,\"\",decisions/my map/tickets/1.md\n" +
+		"help[1]{cmd,why}:\n  /bench-shape-idea,\"shape my map: Which parser owns the map?\"\n"
+	if code != 0 || out != want {
+		t.Fatalf("Command(nil) = (exit %d, %q), want %q", code, out, want)
 	}
 }
 
@@ -112,9 +166,9 @@ func TestActiveRowsProjectUnresolvedTicketsAndFog(t *testing.T) {
 		t.Fatalf("ActiveRows state = %s, want parsed", state)
 	}
 	want := [][]any{
-		{"model", "First", "Research", "frontier", ""},
-		{"model", "Second", "Task", "blocked", "First"},
-		{"model", "Third", "Prototype", "deferred", "First"},
+		{"model", "First", "Research", "frontier", "", "decisions/model/tickets/1.md"},
+		{"model", "Second", "Task", "blocked", "First", "decisions/model/tickets/2.md"},
+		{"model", "Third", "Prototype", "deferred", "First", "decisions/model/tickets/3.md"},
 	}
 	if !reflect.DeepEqual(rows, want) {
 		t.Fatalf("ActiveRows rows = %#v, want %#v", rows, want)
@@ -134,7 +188,7 @@ func TestActiveRowsProjectFogOnlyShapingMap(t *testing.T) {
 	if state != bounds.StateParsed {
 		t.Fatalf("ActiveRows state = %s, want parsed", state)
 	}
-	want := [][]any{{"model", "Not yet specified", "fog", "shaping", ""}}
+	want := [][]any{{"model", "Not yet specified", "fog", "shaping", "", "decisions/model.md"}}
 	if !reflect.DeepEqual(rows, want) {
 		t.Fatalf("ActiveRows rows = %#v, want %#v", rows, want)
 	}
@@ -184,7 +238,7 @@ func TestActiveRowsCountsSilentShapingMap(t *testing.T) {
 	root := t.TempDir()
 	writeSplitMap(t, root, "decisions/silent.md", DecisionMapTemplate(), map[string]string{"1.md": DecisionTicketTemplate()})
 	rows, count, state := ActiveRows(root)
-	want := [][]any{{"silent", "Not yet specified", "fog", "shaping", ""}}
+	want := [][]any{{"silent", "Not yet specified", "fog", "shaping", "", "decisions/silent.md"}}
 	if state != bounds.StateParsed || !reflect.DeepEqual(rows, want) || count != 1 {
 		t.Fatalf("ActiveRows = (%#v, %d, %s), want (%#v, 1, parsed)", rows, count, state, want)
 	}

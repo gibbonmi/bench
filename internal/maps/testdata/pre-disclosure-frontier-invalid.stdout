@@ -1,4 +1,4 @@
-maps[3]{map,title,type,state,blockers}:
-  alpha,First,Research,frontier,""
-  alpha,Second,Task,frontier,""
-  broken,invalid,map,invalid,"decisions/broken.md: missing Status"
+maps[3]{map,title,type,state,blockers,path}:
+  alpha,First,Research,frontier,"",decisions/alpha/tickets/1.md
+  alpha,Second,Task,frontier,"",decisions/alpha/tickets/2.md
+  broken,invalid,map,invalid,"decisions/broken.md: missing Status",decisions/broken.md

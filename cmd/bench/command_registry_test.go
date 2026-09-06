@@ -256,7 +256,7 @@ func axiEnvelopeCases() map[string]axiEnvelopeCase {
 		"maps": {
 			route: []string{"maps"}, successArgv: []string{"maps"}, emptyArgv: []string{"maps"},
 			blocks:        []string{"maps", "help"},
-			successMarker: "maps[1]{map,title,type,state,blockers}:\n", emptyMarker: "maps[0]{map,title,type,state,blockers}:\n", usage: "usage: bench maps", setupSuccess: setupAXIMap, setupEmpty: noSetup,
+			successMarker: "maps[1]{map,title,type,state,blockers,path}:\n", emptyMarker: "maps[0]{map,title,type,state,blockers,path}:\n", usage: "usage: bench maps", setupSuccess: setupAXIMap, setupEmpty: noSetup,
 		},
 		"guards": {
 			route: []string{"guards"}, successArgv: []string{"guards"}, emptyArgv: []string{"guards"},
