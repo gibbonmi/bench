@@ -211,6 +211,18 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   resolution steps over `env`, `timeout`, `xargs`, and leading assignments.
   When the word is `git`, the head includes the subcommand: `git add`,
   `python3`, `sed`. Not "command name" — verb head.
+- **CLI assessment** — the recurring FT243 review of the machine-local
+  **log sources**. It groups the repeated calls with the current verbs and
+  selects at most one improvement. Not "audit", not "platform assessment" (that is
+  `/bench-assess`), not "census" — CLI assessment.
+- **log source** — one machine-local record of agent calls that a **CLI
+  assessment** reads: a harness transcript store, the **census**, the seam
+  record, or a gate log. An assessment names an absent source; it never
+  substitutes a sample. Not "log", not "trace" — log source.
+- **mutation probe** — one deliberate behavior change to a subject file, a
+  focused test that must run red, and an exact restore of the subject. A probe
+  that fails to compile proves nothing. Not "mutation test", not "smoke test",
+  not "sanity check" — mutation probe.
 - **landing source** — a build-owned Git integration branch identified by its
   frozen base and current source tip. Serial green tickets accumulate there;
   semantic review binds to that pair and `bench worktree land` consumes it. Not
@@ -273,4 +285,5 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - "boundary" / "abstraction point" when you mean a **seam**.
 - "framework" / "tooling" when you mean the **kit**.
 - "icebox" / "backlog" when you mean the **roadmap**.
+- "audit" / "platform assessment" when you mean the **CLI assessment**.
 - "loaded environment" / "working PATH" when you mean **environment closure**.
