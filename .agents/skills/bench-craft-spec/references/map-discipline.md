@@ -34,6 +34,8 @@ the explore reads, the fence rules, and the review rubric.
 - Each shared reader in the reader sweep takes an exact ownership fence.
 - The reader sweep names the shipped-surface claim words, because `package-core-guard` reds a claim word beside a repo-only path.
 - A posture change lists every existing test fixture it reds before the map locks.
+- A spec that names a Git flag cites an observed run of that flag over the hostile
+  shapes. A flag's documented behavior is an assumption until that run exists.
 
 ## Per row
 
