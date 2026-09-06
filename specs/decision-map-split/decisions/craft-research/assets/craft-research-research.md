@@ -108,7 +108,7 @@ Other resolved Research tickets show when fan-out is the wrong tool:
 - A single bounded inventory of 39 gate fixtures exposed ownership exceptions
   that an arbitrary per-file split could hide
   (`decisions/gate-pipeline.md:246-278`,
-  `decisions/assets/gate-pipeline-fixture-inventory.md:1-78`).
+  `decisions/gate-pipeline/assets/gate-pipeline-fixture-inventory.md:1-78`).
 - One serialized timing probe falsified a proposed parallelization direction;
   concurrent probes would have distorted the host-load evidence
   (`decisions/cost-follows-project-size.md:33-72`).
