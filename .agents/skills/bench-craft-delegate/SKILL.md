@@ -93,9 +93,9 @@ dependent tickets share one retained integration source, and each charge names i
 expected tip. The whole-tree gate runs serially: a write-delegate stops at diff-ready with focused tests
 green; the coordinator runs `bench commit` per worktree, one at a time.
 
-A worktree isolates the working tree, not the repo-global stash stack a concurrent delegate shares. A charge
-bans `git stash` — the destructive-git guard refuses it — and names the substitute. `cp` the working file
-aside, restore the committed version with `git show HEAD:<path> > <path>`, test, then copy it back. The copy
+A worktree isolates the working tree, not the repo-global stash stack a concurrent delegate shares. A charge bans `git stash` — the destructive-git guard refuses it — and names the substitute.
+A probe runs through `bench probe`, which preserves the subject, applies one swap or omission, and proves the restore. The copy-aside sequence stays for a non-probe edit that must test the committed version.
+`cp` the working file aside, restore the committed version with `git show HEAD:<path> > <path>`, test, then copy it back. The copy
 lives inside the delegate's own worktree under a unique name, and every restore names exact files, never a
 glob.
 

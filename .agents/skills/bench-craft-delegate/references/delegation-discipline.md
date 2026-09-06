@@ -85,6 +85,11 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 
 ## Probes
 
+- A coordinator probe runs through `bench probe`, which preserves the subject and
+  proves the restore. A charge names `bench probe` as the delegate's self-probe
+  form, so no charge carries the copy-aside sequence.
+- A probe the verb reports as `invalid` proves nothing. Replace that probe before
+  you read a verdict.
 - Probe a tracked file that has pending changes with a copy aside.
   `git checkout --` wipes the whole in-flight diff, not only the probe.
 - Before the coordinator reads a probe verdict, the coordinator confirms the
