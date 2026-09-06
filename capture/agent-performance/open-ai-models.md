@@ -1,9 +1,9 @@
 # OpenAI model scorecard
 
-Last incorporated landing: `git-admin-readers` (`5589e73a`, 2026-09-05) — Fable
-(Claude Code) orchestrated. Astra/medium, a reviewer-named model outside the
-tier binding, ran the three review axes and two re-reviews through `codex exec`
-inside `bench worktree exec` with an empty quoted heredoc.
+Last incorporated landing: `decision-map-split` (`21de019a`, 2026-09-06) — Fable
+(Claude Code) orchestrated. Terra/medium ran the standing falsification pass over
+the kit-guidance diff through `codex exec` inside `bench worktree exec` with an
+empty quoted heredoc. It returned five cited findings, of which four were accepted.
 
 ## Cost assumptions
 
@@ -17,7 +17,7 @@ currently available.
 | --- | --- | --- | --- |
 | Terra / medium, high | implementation, latest 10 bounded tickets/repairs | On `landing-refusal-standard`, medium landed 11 tickets and one 5-target repair pass with biting probes and honest fence-limit reports; 7 of 12 charges were first-pass accepted, and the misses were sampled assertions and unobserved helpers. | Medium for exact one-seam tickets under coordinator mutation; high when one fact crosses multiple policy consumers |
 | Luna / max, medium | implementation, 7 bounded tickets/repairs + reviewer, 4 axis passes on `stable-owner-landing` | Implementation: 2/7 first-pass with all terminal gates green. Review: three initial axes returned 9 raw findings and 8 de-duplicated targets with the citation standard held (one axis refuted four of its own leads by enumeration), and the repair-scoped re-review verified all seven predicates and stayed inside its blocking scope | Low-cost writer for narrow slices under mandatory inspection; standing tier for the three review axes |
-| Terra / high, low | semantic review, latest 10 independent axis passes across 7 landings | On `kit-guidance-fold`, one high-effort falsification pass over eight guidance files returned three cited findings; two were accepted, and one of them was the term collision on "disposition" that the three Claude axes missed. It grepped the registry before it claimed an uncovered sentence. | Standards, Spec, and Coverage review in separate contexts, and the standing cross-harness falsification pass on a kit-guidance diff |
+| Terra / high, medium, low | semantic review, latest 10 independent axis passes across 8 landings | On `decision-map-split`, one medium falsification pass over five guidance files returned five cited findings; four were accepted, and the worst was a contradiction between the index and the gist wording that the three Claude axes missed. It read the parser and a migrated map before it claimed a contradiction. | Standards, Spec, and Coverage review in separate contexts, and the standing cross-harness falsification pass on a kit-guidance diff |
 | Sol / low | implementation, bounded tickets and repairs on 1 landing | The delegates returned focused tests and mutation probes. The retirement repair reproduced the FT94 ledger red, changed one owner, proved that restoring the old value made the test red, and restored green. | Exact ticket seams and small repairs under coordinator verification |
 | Sol / high | implementation and semantic review, 4 lifecycle charges + latest 10 axis passes | On `resolved-consumer-surface`, three initial axes collapsed 28 raw findings to 10 repair targets. A repair-scoped re-review found one missed control-byte gap, and the final re-check found one unpinned decoder arm. | Kit-level and security-seam implementation and review; the cross-family reviewer on a large new-package landing |
 | Astra / medium | semantic review, 3 axes + 2 re-reviews on 1 landing | On `git-admin-readers` the three axes returned 13 raw findings and 6 repair targets; the Coverage axis probed a symlink-plus-`..` root and a symlinked temp parent and observed both breaks, and the Spec axis found the check walked only two directories. Both re-reviews closed every predicate and stayed inside the blocking scope. A read-only sandbox refused the Go cache, so the blast table and `bench test --check` ran outside it. | Reviewer-named implementation review when the tier binding is not the reviewer's choice; give the Coverage axis a writable worktree |
@@ -38,8 +38,9 @@ currently available.
   probes; it carried an 11-ticket build with 7 of 12 first-pass acceptances.
 - Use Terra/low for the three review axes; its findings held the citation
   standard, and the coordinator settles a predicted red against the oracle.
-- Use Terra/high for the standing cross-harness falsification pass on a kit-guidance
-  diff; run it through `bench worktree exec` with an empty quoted heredoc.
+- Use Terra at medium or high for the standing cross-harness falsification pass on a
+  kit-guidance diff; run it through `bench worktree exec` with an empty quoted heredoc.
+  On `decision-map-split` medium found four accepted prose contradictions.
 - Use Sol/low for exact ticket seams and small repairs when a coordinator can
   rerun a distinct mutation probe.
 - Settle a disputed finding against the frozen candidate with an exact repro.
