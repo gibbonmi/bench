@@ -1,6 +1,6 @@
 # Craft research: one model-invoked skill for factual reading legwork
 
-Status: staged
+Status: implemented
 
 Decision source: the named reviewed artifact `specs/decision-map-split/decisions/craft-research.md`, tickets #4 through #9, #13, and #14, resolved 2026-08-02 and 2026-09-06. That folder retires with the sibling spec, so the settled answers this spec rests on are restated under Implementation decisions. The three upstream URLs in the research asset were not re-fetched on 2026-09-06. The `craft-spec` compatibility-probe wording that map ticket #8 replaces was already removed by a later remake. That clause lands as a pointer beside the surviving spec-side duty.
 
@@ -154,6 +154,9 @@ Not covered: story 31 — the checklist hits are recorded by the next research r
 - `.agents/skills/bench-craft-spec/references/bootstrap-authority.md`
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
+- `internal/anchors/registry_craft_research.go`
+- `internal/anchors/registry_craft_research_test.go`
+- `internal/conformance/registry_test.go`
 - `tests/canary/workflow-guidance-anchors/`
 - `tests/canary/skills-index-command-adapters/`
 - `tests/canary/guidance-prose-budgets/`
@@ -166,6 +169,16 @@ Not covered: story 31 — the checklist hits are recorded by the next research r
 - `internal/conformance/subcommand_routing_table_test.go`
 - `reviews/craft-research-skill.md`
 - `capture/retros/`
+
+## Build decisions
+
+**Fence extension, 2026-09-06.** The anchor registry file and its test file are over the line budget, and the commit lane refuses growth there. The research anchor rows and their mutation table therefore live in `internal/anchors/registry_craft_research.go` and `internal/anchors/registry_craft_research_test.go`, on the precedent of the decision-map anchor pair. Both files join the ownership fence. The content of the rows is unchanged.
+
+**Fixtures per needle, 2026-09-06.** The registry mutation table is the per-needle proof, and each rule is shown red in both directions. The `workflow-guidance-anchors` family holds one fixture per edited subject file: the skill, the shaping command, and the bootstrap-authority reference. Fourteen fixture copies of the same needles would be a second source for the table.
+
+**Review repair fence, 2026-09-06.** The Coverage axis found that `internal/conformance/registry_test.go` lists the anchor registry files that own the fixture family, and the list lacked the new file. That file joins the ownership fence for the one-line addition.
+
+**Assessment step 2 wording.** The read-only clause of the area sweeps moved to the skill, which owns the read-side boundary. The step keeps its tier, its one-delegate-per-area shape, and its six areas.
 
 ## Out of scope
 

@@ -42,8 +42,8 @@ reconcile.
 
 ## 2. Fan out the area sweeps (mid tier)
 
-Fan out read-only area sweeps on the mid tier, one delegate per area, each reading
-source and running live commands but writing nothing. The six areas:
+Fan out read-only area sweeps on the mid tier, one delegate per area. Charge
+`craft-research` for the round, the charges, and the citations. The six areas:
 
 1. **Adoption and packaging** — the install paths, the first hour, the tarball shape.
 2. **Workflow commands and skills** — the phase files, the craft skills, the docs and
@@ -60,11 +60,8 @@ invariant 2. This command names the tier, not the model.
 
 ## 3. Synthesize adversarially (top tier)
 
-Synthesize adversarially on the top tier. A delegate's finding is a claim, not a
-result. Re-verify every load-bearing claim against source or live output before it
-enters the file, and mark each re-verified claim with a ✓. A claim that survives
-only in a delegate's summary does not make the assessment. Record a claim you could
-not verify as an unknown in the verification notes; do not assert it.
+Synthesize adversarially on the top tier. `craft-research` owns the
+re-verification, the citations, and the residual unknowns.
 
 ## 4. Write the assessment (the output contract)
 

@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-research/SKILL.md",
+    "old": "Research never owns a write delegate, a done-claim, a reviewer\ndecision, or a prototype.",
+    "new": "Research reports the facts that it reads."
+  }
+]

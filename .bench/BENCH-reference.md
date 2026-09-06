@@ -88,6 +88,7 @@ Edit the skill, not the list below:
 - adding, weakening, or removing a gate check / authoring the oracle → `.agents/skills/bench-craft-gate/SKILL.md`
 - surfacing decisions in numbered frontier rounds → `.agents/skills/bench-craft-grill/SKILL.md`
 - declaring the line / picking a delegate's model or effort → `.agents/skills/bench-craft-line/SKILL.md`
+- doing factual reading legwork / writing a cited research report → `.agents/skills/bench-craft-research/SKILL.md`
 - reviewing a diff / what a finding must cite → `.agents/skills/bench-craft-review/SKILL.md`
 - placing a test / designing an interface → `.agents/skills/bench-craft-seams/SKILL.md`
 - writing or pruning a skill → `.agents/skills/bench-craft-skills/SKILL.md`

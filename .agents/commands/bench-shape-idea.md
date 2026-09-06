@@ -61,9 +61,8 @@ A decision ticket is one unresolved reviewer choice or evidence-producing
 question, sized for a focused session and connected through its `Blocked by`
 IDs. Use the four schema-owned types:
 
-- **Research** — read primary docs, APIs, or local code and produce a short
-  cited summary asset. Include a runnable compatibility probe when the answer
-  claims byte or wire compatibility.
+- **Research** — factual reading legwork that makes evidence for a decision.
+  The Research ticket type charges `craft-research`, and a required compatibility probe becomes a Prototype ticket that the Research ticket names in `Blocked by`.
 - **Prototype** — write throwaway code to make a reviewer choice concrete;
   charge the `prototype` skill.
 - **Grill** — run `craft-grill` frontier rounds to record the reviewer decision.
@@ -73,9 +72,8 @@ Name a ticket by its title, with its number beside it.
 The shaping worktree lease is the claim, and no owner field enters a ticket.
 
 Grill and Prototype decision tickets resolve only through live exchange with
-me. Research runs agent-alone. When the harness can delegate and another
-frontier decision ticket can proceed concurrently, route Research through
-`craft-delegate` as a read-only delegation. Otherwise resolve it inline.
+me. Research runs agent-alone under `craft-research`, which owns its rounds,
+its delegates, and its output.
 Before asking me about a fact, look it up in the tree — reviewer attention is
 for decisions.
 A grill recommendation that asserts current-code behavior names the evidence read in the current session.
