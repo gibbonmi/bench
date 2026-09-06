@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
@@ -71,7 +70,12 @@ type joins struct {
 	advanceLandingMarker     func(context.Context, string, string, string, string) error
 	reconcileLanding         func(joins, string, string, string, string) error
 	releaseLandingAssignment func(joins, string, string, []string, io.Writer, io.Writer) int
-	authorizeLandingSource   func(string, string, string) (diff.SourceRange, error)
+	// pruneLandedBranches retires every unclaimed assignment branch the landed
+	// default branch already carries. It runs at the landing because that is the
+	// one moment the proof is cheap and certain: a later commit can move or delete
+	// the files a folded sibling touched, and the content proof then fails forever.
+	pruneLandedBranches    func(string) (int, error)
+	authorizeLandingSource func(string, string, string) (diff.SourceRange, error)
 	// cleanupBoundary is the deterministic transaction fault seam. A nil value carries no
 	// fault, exactly as hit reads it, so it is also the default.
 	cleanupBoundary      Fault
@@ -126,6 +130,7 @@ func defaultJoins() joins {
 		advanceLandingMarker:     authorization.AdvanceMarker,
 		reconcileLanding:         reconcileLandingDestination,
 		releaseLandingAssignment: releaseCommandWith,
+		pruneLandedBranches:      intent.PruneUnclaimedLandedBranches,
 		authorizeLandingSource:   preflight.AuthorizeReviewedSource,
 		cleanupLockAttempt:       func(string) {},
 		creationLockAttempt:      func(string) {},
@@ -141,7 +146,7 @@ func defaultJoins() joins {
 		reauthorizeUnlock:        unlockWorktree,
 		reauthorizeLock:          lockWorktree,
 		mergeLane:                gate.LaneForCommit,
-		kitSourceCheckout:        adopt.KitSourceCheckout,
+		kitSourceCheckout:        gate.KitSourceCheckout,
 		mergeReconcile:           reconcileMergeCheckout,
 		build:                    runbinary.Build,
 	}
@@ -312,6 +317,9 @@ func landAttributed(measures *landingMeasures, j joins, root, home, _ string, ar
 	}
 	if err := j.reconcileLanding(j, root, result.Commit, result.Commit, result.DestinationBase); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "reconcile", records)
+	}
+	if _, err := j.pruneLandedBranches(root); err != nil {
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "prune", records)
 	}
 	var releaseDiagnostic bytes.Buffer
 	if release := j.releaseLandingAssignment(j, root, home, []string{"--request", parsed.Flags["--request"], path}, io.Discard, &releaseDiagnostic); release != 0 {

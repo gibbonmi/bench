@@ -29,6 +29,20 @@ func TestSessionStartTE5DiagnosesPartialEnvironment(t *testing.T) {
 	}
 }
 
+func TestSessionStartTE5IgnoresBashEnvMarker(t *testing.T) {
+	fixture := newSessionEnvironmentFixture(t)
+	bashEnv := filepath.Join(t.TempDir(), "bash-env")
+	if err := os.WriteFile(bashEnv, []byte("export ENVMAN_LOAD=loaded\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	result := fixture.run(t, []string{"BASH_ENV=" + bashEnv})
+	for _, want := range []string{"environment closure is partial", fixture.goExecutable} {
+		if !strings.Contains(result.stdout, want) {
+			t.Fatalf("TE5 BASH_ENV marker stdout missing %q: %q", want, result.stdout)
+		}
+	}
+}
+
 func TestSessionStartTE5DiscoversGoWithMarkerAbsentOrEmpty(t *testing.T) {
 	fixture := newSessionEnvironmentFixture(t)
 	for _, marker := range []struct {

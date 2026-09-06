@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/canonicalpath"
 )
 
 // Worktree is one registered checkout reported by git. Worktrees is the sole
@@ -30,11 +31,22 @@ const BenchLeaseFilename = "bench-lease"
 
 const investigateGitFailureAction = "investigate the git failure"
 
-// ResolutionError reports a common-directory resolution that cannot be trusted.
+// The three subject nouns a ResolutionError can carry. Each reader names its own
+// fact, so one error type still serves every WorktreeFailure type check.
+const (
+	subjectCommonDir = "git common directory"
+	subjectAdminDir  = "checkout administration directory"
+	subjectAdminPath = "checkout administration path"
+)
+
+// ResolutionError reports a git administration fact that cannot be trusted. Subject
+// names which of the three facts failed; an empty Subject renders as the common
+// directory, the field's original sole meaning.
 type ResolutionError struct {
-	Path   string
-	Err    error
-	Action string
+	Path    string
+	Err     error
+	Action  string
+	Subject string
 }
 
 // WorktreeFailure exposes the recovery action for a worktree discovery failure.
@@ -150,10 +162,14 @@ func fileShape(mode os.FileMode) string {
 }
 
 func (e *ResolutionError) Error() string {
-	if e.Path != "" {
-		return fmt.Sprintf("git common directory %q has shape %v; %s", e.Path, e.Err, e.Action)
+	subject := e.Subject
+	if subject == "" {
+		subject = subjectCommonDir
 	}
-	return fmt.Sprintf("git common directory resolution failed (%s); %s", e.Err, e.Action)
+	if e.Path != "" {
+		return fmt.Sprintf("%s %q has shape %v; %s", subject, e.Path, e.Err, e.Action)
+	}
+	return fmt.Sprintf("%s resolution failed (%s); %s", subject, e.Err, e.Action)
 }
 
 func (e *ResolutionError) Unwrap() error { return e.Err }
@@ -164,29 +180,97 @@ func commonDirArgs(root string) []string {
 	return []string{"-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir"}
 }
 
-// CommonDir resolves the repository's shared administrative directory.
-func CommonDir(root string) (string, error) {
-	return Output(commonDirArgs(root)...)
+func adminDirArgs(root string) []string {
+	return []string{"-C", root, "rev-parse", "--path-format=absolute", "--git-dir"}
 }
 
-func validateCommonDir(common string) (string, error) {
+func adminPathArgs(root, name string) []string {
+	return []string{"-C", root, "rev-parse", "--git-path", name}
+}
+
+// CommonDir resolves the repository's shared administrative directory, refusing
+// an empty, missing, symlinked, or non-directory answer the way Worktrees does.
+func CommonDir(root string) (string, error) {
+	raw, err := boundedGit(subjectCommonDir, commonDirArgs(root)...)
+	if err != nil {
+		return "", typeGitFailure(err, subjectCommonDir)
+	}
+	return validateCommonDir(strings.TrimRight(string(raw), "\n"), subjectCommonDir)
+}
+
+// AdminDir resolves the checkout's own administration directory: the common
+// directory for a primary checkout, or the linked worktree's private admin entry
+// beneath it. It validates its answer the way CommonDir does.
+func AdminDir(root string) (string, error) {
+	raw, err := boundedGit(subjectAdminDir, adminDirArgs(root)...)
+	if err != nil {
+		return "", typeGitFailure(err, subjectAdminDir)
+	}
+	return validateCommonDir(strings.TrimRight(string(raw), "\n"), subjectAdminDir)
+}
+
+// AdminPath resolves the absolute path of a named file inside the checkout's
+// administration directory. It refuses an empty answer, and it runs no existence
+// check, because absence is the caller's fact.
+//
+// The query uses git's default path format, not --path-format=absolute, because
+// the absolute format resolves an existing symlink and would answer the target
+// rather than the named file: the default path format keeps a symlinked entry's
+// own path. The default format prints a path relative to git's working
+// directory for a primary checkout, which is root, so a relative answer joins
+// onto root. Root itself is resolved by internal/canonicalpath, the one canonical-path
+// derivation, because git's own -C resolves a symlinked path component physically: a root
+// that reaches the repository through a symlink followed by ".." must join onto the same
+// physical directory git ran in, not onto a lexically cleaned root that never saw the
+// symlink.
+func AdminPath(root, name string) (string, error) {
+	raw, err := boundedGit(subjectAdminPath, adminPathArgs(root, name)...)
+	if err != nil {
+		return "", typeGitFailure(err, subjectAdminPath)
+	}
+	answer := strings.TrimRight(string(raw), "\n")
+	if answer == "" {
+		return "", &ResolutionError{Err: errors.New("rev-parse returned an empty path"), Action: investigateGitFailureAction, Subject: subjectAdminPath}
+	}
+	if filepath.IsAbs(answer) {
+		return answer, nil
+	}
+	resolvedRoot, resolveErr := canonicalpath.Resolve(root)
+	if resolveErr != nil {
+		return "", &ResolutionError{Path: root, Err: fmt.Errorf("cannot resolve the checkout root: %w", resolveErr), Action: investigateGitFailureAction, Subject: subjectAdminPath}
+	}
+	return filepath.Join(resolvedRoot, answer), nil
+}
+
+func validateCommonDir(common, subject string) (string, error) {
 	if common == "" {
-		return "", &ResolutionError{Err: errors.New("rev-parse returned an empty path"), Action: investigateGitFailureAction}
+		return "", &ResolutionError{Err: errors.New("rev-parse returned an empty path"), Action: investigateGitFailureAction, Subject: subject}
 	}
 	info, statErr := os.Lstat(common)
 	if statErr != nil {
-		return "", &ResolutionError{Path: common, Err: fmt.Errorf("missing path: %w", statErr), Action: investigateGitFailureAction}
+		return "", &ResolutionError{Path: common, Err: fmt.Errorf("missing path: %w", statErr), Action: investigateGitFailureAction, Subject: subject}
 	}
 	if info.Mode()&os.ModeSymlink != 0 {
-		return "", &ResolutionError{Path: common, Err: errors.New("symlink"), Action: investigateGitFailureAction}
+		return "", &ResolutionError{Path: common, Err: errors.New("symlink"), Action: investigateGitFailureAction, Subject: subject}
 	}
 	if !info.IsDir() {
-		return "", &ResolutionError{Path: common, Err: errors.New("non-directory"), Action: investigateGitFailureAction}
+		return "", &ResolutionError{Path: common, Err: errors.New("non-directory"), Action: investigateGitFailureAction, Subject: subject}
 	}
 	return common, nil
 }
 
-func boundedGit(args ...string) ([]byte, error) {
+// typeGitFailure wraps a boundedGit exit failure in a ResolutionError carrying
+// subject, unless it is already typed — the timeout and start-failure branches of
+// boundedGit return an already-typed error, and re-wrapping it would lose that
+// subject.
+func typeGitFailure(err error, subject string) error {
+	if typed, ok := err.(*ResolutionError); ok {
+		return typed
+	}
+	return &ResolutionError{Err: err, Action: investigateGitFailureAction, Subject: subject}
+}
+
+func boundedGit(subject string, args ...string) ([]byte, error) {
 	var stdout bytes.Buffer
 	result := bounds.RunOutput(context.Background(), worktreeListTimeout, exec.Command("git", args...), &stdout)
 	if result.Status == bounds.ProcessComplete {
@@ -201,34 +285,27 @@ func boundedGit(args ...string) ([]byte, error) {
 		return stdout.Bytes(), failure
 	}
 	if result.Status == bounds.ProcessTimeout {
-		return nil, &ResolutionError{Err: fmt.Errorf("%s timed out after %s", invocation, worktreeListTimeout), Action: investigateGitFailureAction}
+		return nil, &ResolutionError{Err: fmt.Errorf("%s timed out after %s", invocation, worktreeListTimeout), Action: investigateGitFailureAction, Subject: subject}
 	}
-	return nil, &ResolutionError{Err: fmt.Errorf("%s failed to start or was canceled: %w", invocation, result.Err), Action: investigateGitFailureAction}
+	return nil, &ResolutionError{Err: fmt.Errorf("%s failed to start or was canceled: %w", invocation, result.Err), Action: investigateGitFailureAction, Subject: subject}
 }
 
 // Worktrees returns every registered checkout using NUL-framed porcelain. The framing
 // matters because a valid worktree path may contain a newline.
 func Worktrees(root string) ([]Worktree, error) {
-	commonRaw, err := boundedGit(commonDirArgs(root)...)
+	commonRaw, err := boundedGit(subjectCommonDir, commonDirArgs(root)...)
 	if err != nil {
-		if _, ok := err.(*ResolutionError); ok {
-			return nil, err
-		}
-		return nil, &ResolutionError{Err: err, Action: investigateGitFailureAction}
+		return nil, typeGitFailure(err, subjectCommonDir)
 	}
-	common, err := validateCommonDir(strings.TrimRight(string(commonRaw), "\n"))
+	common, err := validateCommonDir(strings.TrimRight(string(commonRaw), "\n"), subjectCommonDir)
 	if err != nil {
 		return nil, err
 	}
 	if err := ScanWorktreeAdmin(common); err != nil {
 		return nil, err
 	}
-	raw, err := boundedGit("-C", root, "worktree", "list", "--porcelain", "-z")
+	raw, err := boundedGit(subjectCommonDir, "-C", root, "worktree", "list", "--porcelain", "-z")
 	if err != nil {
-		var typed *ResolutionError
-		if errors.As(err, &typed) {
-			return nil, err
-		}
 		return nil, err
 	}
 	var worktrees []Worktree

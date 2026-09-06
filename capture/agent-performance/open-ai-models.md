@@ -1,9 +1,9 @@
 # OpenAI model scorecard
 
-Last incorporated landing: `kit-guidance-fold` (`6e51b1ec`, 2026-09-02) — Fable
-(Claude Code) orchestrated, and Terra/high ran the standing cross-harness
-falsification pass over the kit-guidance diff through `codex exec` inside
-`bench worktree exec` with an empty quoted heredoc.
+Last incorporated landing: `git-admin-readers` (`5589e73a`, 2026-09-05) — Fable
+(Claude Code) orchestrated. Astra/medium, a reviewer-named model outside the
+tier binding, ran the three review axes and two re-reviews through `codex exec`
+inside `bench worktree exec` with an empty quoted heredoc.
 
 ## Cost assumptions
 
@@ -20,7 +20,7 @@ currently available.
 | Terra / high, low | semantic review, latest 10 independent axis passes across 7 landings | On `kit-guidance-fold`, one high-effort falsification pass over eight guidance files returned three cited findings; two were accepted, and one of them was the term collision on "disposition" that the three Claude axes missed. It grepped the registry before it claimed an uncovered sentence. | Standards, Spec, and Coverage review in separate contexts, and the standing cross-harness falsification pass on a kit-guidance diff |
 | Sol / low | implementation, bounded tickets and repairs on 1 landing | The delegates returned focused tests and mutation probes. The retirement repair reproduced the FT94 ledger red, changed one owner, proved that restoring the old value made the test red, and restored green. | Exact ticket seams and small repairs under coordinator verification |
 | Sol / high | implementation and semantic review, 4 lifecycle charges + latest 10 axis passes | On `resolved-consumer-surface`, three initial axes collapsed 28 raw findings to 10 repair targets. A repair-scoped re-review found one missed control-byte gap, and the final re-check found one unpinned decoder arm. | Kit-level and security-seam implementation and review; the cross-family reviewer on a large new-package landing |
-| Codex / current | orchestration, 1 full spec lifecycle | On `roadmap-light-path-fixes`, it kept the frozen base, rejected an unsupported LF2 failure claim with exact repros, drove Terra/high repairs to clean review, and landed implementation plus retirement on green gates. | Record the explicit model tier before using this row for routing decisions |
+| Astra / medium | semantic review, 3 axes + 2 re-reviews on 1 landing | On `git-admin-readers` the three axes returned 13 raw findings and 6 repair targets; the Coverage axis probed a symlink-plus-`..` root and a symlinked temp parent and observed both breaks, and the Spec axis found the check walked only two directories. Both re-reviews closed every predicate and stayed inside the blocking scope. A read-only sandbox refused the Go cache, so the blast table and `bench test --check` ran outside it. | Reviewer-named implementation review when the tier binding is not the reviewer's choice; give the Coverage axis a writable worktree |
 
 ## Representative evidence
 
@@ -46,5 +46,10 @@ currently available.
   Do not repair a failure that the candidate does not produce.
 - On a landing gate red with no green baseline, run the fresh baseline before
   diagnosis; one transient red cost one avoidable debugging pass here.
+- Astra/medium is a reviewer-named review model outside the tier binding; it held
+  the citation standard and probed its Coverage claims on `git-admin-readers`.
+  Compare again before it joins a binding.
+- Give a `codex exec` Coverage axis a writable sandbox in its own worktree; a
+  read-only sandbox refuses the Go build cache and the blast table.
 - Change routing only after two comparable runs or one controlled model
   comparison.

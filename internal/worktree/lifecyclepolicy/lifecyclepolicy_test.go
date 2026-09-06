@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/intent/ledger"
 )
 
 // The tables in this file are the LC1 typed lifecycle matrices: each partition
@@ -14,8 +14,8 @@ import (
 // pins the verdict the parent's real-Git characterization matrices observe. A
 // missing ownership or preservation branch turns its named partition red.
 
-func ownedAssignment(id string) *intent.Assignment {
-	return &intent.Assignment{ID: id, Branch: "refs/heads/bench/a", State: intent.StateActive, Recovery: []intent.Recovery{}}
+func ownedAssignment(id string) *ledger.Assignment {
+	return &ledger.Assignment{ID: id, Branch: "refs/heads/bench/a", State: ledger.StateActive, Recovery: []ledger.Recovery{}}
 }
 
 // ownedFacts is a clean, owned, correctly locked, trivially landed fixture the
@@ -77,7 +77,7 @@ func TestExplicitDecisionTable(t *testing.T) {
 		{"preservation/dirty-recover-remove", func(f *ExplicitFacts) { f.InitialTracked = "dirty" }, ActionRecoverRemove, "", ""},
 		{"preservation/detached-registration", func(f *ExplicitFacts) { f.RegistrationDetached = true }, ActionRecoverRemove, "", ""},
 		{"preservation/recorded-recovery", func(f *ExplicitFacts) {
-			f.MatchedAssignment.Recovery = []intent.Recovery{{Ref: "refs/bench/r1"}}
+			f.MatchedAssignment.Recovery = []ledger.Recovery{{Ref: "refs/bench/r1"}}
 		}, ActionRecoverRemove, "", ""},
 		{"eligibility/unsafe-target-override", func(f *ExplicitFacts) { f.UnsafeTarget = true }, ActionRetain, ReasonUncertain, "target contains unsafe control bytes"},
 		// The three combined-fact cases below pin cross-block precedence in the
@@ -139,7 +139,7 @@ func TestExplicitVerdictEvidence(t *testing.T) {
 	t.Run("preservation/recorded-ref-needs-no-lookup", func(t *testing.T) {
 		facts := ownedFacts()
 		facts.InitialTracked = "dirty"
-		facts.MatchedAssignment.Recovery = []intent.Recovery{{Ref: "refs/bench/r1"}}
+		facts.MatchedAssignment.Recovery = []ledger.Recovery{{Ref: "refs/bench/r1"}}
 		if v := DecideExplicit(facts); v.RecoveryLookup != RecoveryNoLookup || v.Recovery != "refs/bench/r1" {
 			t.Fatalf("recorded-recovery verdict = %+v, want the recorded ref without a lookup", v)
 		}
@@ -160,7 +160,7 @@ func pendingOutcome() ExplicitOutcome {
 		HasAssignment:   true,
 		Owned:           true,
 		AssignmentID:    "a1",
-		AssignmentState: intent.StateCleanupPending,
+		AssignmentState: ledger.StateCleanupPending,
 		Tracked:         "clean",
 		Landed:          Landedness{Kind: LandednessProven, Landed: true},
 	}
@@ -209,22 +209,22 @@ func TestAutomaticDecisionTable(t *testing.T) {
 		}, ActionRetain, ReasonForeign, "registration is not a verified owned assignment", ""},
 		{"age/young-active", func() AutomaticFacts {
 			o := pendingOutcome()
-			o.AssignmentState = intent.StateActive
+			o.AssignmentState = ledger.StateActive
 			return AutomaticFacts{Explicit: o}
 		}, ActionRetain, ReasonActive, "assignment is not cleanup-pending", "a1"},
 		{"age/orphaned-active", func() AutomaticFacts {
 			o := pendingOutcome()
-			o.AssignmentState = intent.StateActive
+			o.AssignmentState = ledger.StateActive
 			return AutomaticFacts{Explicit: o, OrphanedActive: true}
 		}, ActionRetain, ReasonOrphaned, "assignment is not cleanup-pending", "a1"},
 		{"age/landed-active", func() AutomaticFacts {
 			o := pendingOutcome()
-			o.AssignmentState = intent.StateActive
+			o.AssignmentState = ledger.StateActive
 			return AutomaticFacts{Explicit: o, Landed: true}
 		}, ActionRetain, ReasonLanded, "assignment is not cleanup-pending", "a1"},
 		{"eligibility/recovered-state-uncertain", func() AutomaticFacts {
 			o := pendingOutcome()
-			o.AssignmentState = intent.StateRecovered
+			o.AssignmentState = ledger.StateRecovered
 			return AutomaticFacts{Explicit: o}
 		}, ActionRetain, ReasonUncertain, "assignment is not cleanup-pending", "a1"},
 		{"eligibility/recovery-mismatch", func() AutomaticFacts {
@@ -359,15 +359,15 @@ func TestOrphanedTable(t *testing.T) {
 	unparseable := "yesterday"
 	cases := []struct {
 		name string
-		a    intent.Assignment
+		a    ledger.Assignment
 		want bool
 	}{
-		{"age/non-active-never-orphaned", intent.Assignment{State: intent.StateCleanupPending}, false},
-		{"age/absent-stamp-aged", intent.Assignment{State: intent.StateActive}, true},
-		{"age/young", intent.Assignment{State: intent.StateActive, CreatedAt: stamp(now.Add(-time.Hour))}, false},
-		{"age/aged", intent.Assignment{State: intent.StateActive, CreatedAt: stamp(now.Add(-8 * 24 * time.Hour))}, true},
-		{"age/future-stamp-not-aged", intent.Assignment{State: intent.StateActive, CreatedAt: stamp(now.Add(time.Hour))}, false},
-		{"age/unparseable-stamp-unknown", intent.Assignment{State: intent.StateActive, CreatedAt: &unparseable}, false},
+		{"age/non-active-never-orphaned", ledger.Assignment{State: ledger.StateCleanupPending}, false},
+		{"age/absent-stamp-aged", ledger.Assignment{State: ledger.StateActive}, true},
+		{"age/young", ledger.Assignment{State: ledger.StateActive, CreatedAt: stamp(now.Add(-time.Hour))}, false},
+		{"age/aged", ledger.Assignment{State: ledger.StateActive, CreatedAt: stamp(now.Add(-8 * 24 * time.Hour))}, true},
+		{"age/future-stamp-not-aged", ledger.Assignment{State: ledger.StateActive, CreatedAt: stamp(now.Add(time.Hour))}, false},
+		{"age/unparseable-stamp-unknown", ledger.Assignment{State: ledger.StateActive, CreatedAt: &unparseable}, false},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -379,10 +379,10 @@ func TestOrphanedTable(t *testing.T) {
 }
 
 func TestResidualTable(t *testing.T) {
-	if !Residual(intent.Assignment{}) {
+	if !Residual(ledger.Assignment{}) {
 		t.Fatal("empty recovery set is residue")
 	}
-	if Residual(intent.Assignment{Recovery: []intent.Recovery{{Ref: "refs/bench/r1"}}}) {
+	if Residual(ledger.Assignment{Recovery: []ledger.Recovery{{Ref: "refs/bench/r1"}}}) {
 		t.Fatal("recorded recovery is preserved work, never residue")
 	}
 }

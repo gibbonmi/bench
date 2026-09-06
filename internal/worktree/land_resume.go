@@ -40,7 +40,7 @@ func resumeLandWith(j joins, root, home string, args []string, stdout, stderr io
 	for _, flag := range []string{"--resume", "--base", "--source-tip"} {
 		parsed.Flags[flag] = expandIdentity(root, parsed.Flags[flag])
 	}
-	destination, branch, marker, err := resumeLandingDestination(root)
+	destination, branch, marker, err := landingDestinationIdentity(root)
 	if err != nil {
 		return landRefusal(stdout, err.Error())
 	}
@@ -87,6 +87,9 @@ func resumeLandWith(j joins, root, home string, args []string, stdout, stderr io
 	if err := j.reconcileLanding(j, root, destination, published, destinationBase); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "reconcile", records)
 	}
+	if _, err := j.pruneLandedBranches(root); err != nil {
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "prune", records)
+	}
 	if !active {
 		return landedComplete(stdout, result, false, records)
 	}
@@ -109,26 +112,6 @@ func terminalResumeReceipt(root, path, request, sourceTip string) (intent.Cleanu
 		return intent.CleanupReceipt{}, identityRefusal(sourceTip, receipt.BranchOID, "terminal receipt source tip mismatch")
 	}
 	return receipt, nil
-}
-
-func resumeLandingDestination(root string) (string, string, string, error) {
-	branch, ok := git.ResolvedDefault(root)
-	if !ok {
-		return "", "", "", errors.New("default branch is unresolved")
-	}
-	current, err := git.CheckedOutBranch(root)
-	if err != nil || current != branch {
-		return "", "", "", errors.New("landing checkout is not attached to the default branch")
-	}
-	destination, err := git.Output("-C", root, "rev-parse", "refs/heads/"+branch+"^{commit}")
-	if err != nil {
-		return "", "", "", errors.New("landing destination has no commit")
-	}
-	marker, err := landingMarker(root, branch, destination)
-	if err != nil {
-		return "", "", "", err
-	}
-	return destination, branch, marker, nil
 }
 
 func resumeDestructiveDestinationState(j joins, root, destination, published, destinationBase string) error {
@@ -281,11 +264,15 @@ func specTransitionFacts(root, published, source, slug string) landingpolicy.Spe
 		return transition
 	}
 	specPath := spec.LiveSpecPath(slug)
-	folder := landing.ClosedFolderPath(landingSlug(slug))
+	closeSlug := landingSlug(slug)
 	staged, stagedErr := git.Raw("-C", root, "show", source+":"+specPath)
-	if stagedErr != nil && git.OK("-C", root, "cat-file", "-e", source+":"+folder) {
+	// The resume classifies over the source commit's objects because the source checkout
+	// is released by then. The predicate's name check answers nothing new here: a slug the
+	// grammar admits is a single path element after LiveSpecSlug, so every name the check
+	// refuses is already unreachable at this call.
+	if landing.TicketsOnly(landing.CommitTree(root, source), closeSlug) {
 		transition.TicketsOnlyClose = true
-		transition.PublishedHasFolder = git.OK("-C", root, "cat-file", "-e", published+":"+folder)
+		transition.PublishedHasFolder = git.OK("-C", root, "cat-file", "-e", published+":"+landing.ClosedFolderPath(closeSlug))
 		return transition
 	}
 	implemented, implementedErr := spec.Implemented(staged)

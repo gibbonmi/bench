@@ -304,6 +304,11 @@ coverage map; a class skipped here returns as a regression.
   never matches. A filesystem-only cleanup then removes the directory and leaves
   the registration forever. Resolve the root the way the registrar resolves it,
   and assert against the registrar's own output
+- a check that runs inside the fast lane's private checkout. That checkout keeps
+  the repository's HEAD. It holds the composed tree only in its index and working
+  tree. A `base..HEAD` query names nothing there, so a check that reads it passes
+  every commit. Compare the base against the working tree. Prove the check with a
+  detached checkout plus `read-tree`, never with a shell stand-in
 
 Known residual risk: `bench setup`'s real-TTY confirm wiring is one untested
 constructor line binding stdin. Testing it needs a pty dependency, which is a
@@ -346,6 +351,7 @@ a broken document reds at the commit.
 | `prose` | `bench gate-prose <root> -- <named Markdown>` | markdown, prose-policy |
 | `vet` | `go vet -trimpath ./...` | go-source, go-build-input |
 | `build` | `go build -trimpath -buildvcs=false ./...` | go-source, go-build-input |
+| `structure` | `bench structure --growth <base>` | go-source |
 | `decision-map-integrity` | `bench test --check decision-map-integrity` | decision-documents |
 | `guidance-prose-budgets` | `bench test --check guidance-prose-budgets` | benchkit-profile |
 | `profile-lane-table` | `bench test --check profile-lane-table` | benchkit-profile |
@@ -421,6 +427,7 @@ current-state advertisement of its non-meta input bindings:
 | `bounds-policy` | `catch-all` |
 | `marker-wait-deadlines` | `go-source` |
 | `canonical-path-owner` | `go-source` |
+| `git-plumbing-owner` | `go-source` |
 | `cancel-signal-registrations` | `go-source` |
 | `wait-deadline-literals` | `go-source` |
 | `subcommand-routing` | `go-source` |

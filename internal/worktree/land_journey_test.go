@@ -12,6 +12,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -450,6 +451,7 @@ func TestLandCommandStatesTheCensusCountAndDropsTheRecords(t *testing.T) {
 	request := "census-landed-count"
 	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
 	recordRawCalls(t, home, root, creation.Path, 3)
+	survivor := seedHandoffSections(t, root, creation.Assignment)
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.HasSuffix(stdout.String(), ",census=3}\n") {
@@ -458,6 +460,7 @@ func TestLandCommandStatesTheCensusCountAndDropsTheRecords(t *testing.T) {
 	if _, err := os.Stat(censusRecordPath(home, root, creation.Assignment.ID)); !os.IsNotExist(err) {
 		t.Fatalf("the released landing kept the census record: %v", err)
 	}
+	requireHandoffSections(t, root, handoffdoc.MainKey, survivor)
 }
 
 // TestLandCommandStatesZeroForAnAssignmentWithNoRecords is EC21. Zero is a stated

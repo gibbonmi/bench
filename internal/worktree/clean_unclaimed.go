@@ -12,13 +12,27 @@ import (
 
 const unclaimedAssignmentFingerprintVersion = "bench-unclaimed-assignment-branches/v1"
 
-type unclaimedAssignmentBranch struct{ ref, oid string }
+type unclaimedAssignmentBranch struct{ ref, oid, reason string }
 type unclaimedAssignmentSet struct {
 	rows        []unclaimedAssignmentBranch
 	fingerprint string
 }
 
-// planUnclaimedAssignmentSet excludes every assignment record and checked-out ref.
+// unclaimedBranchReason reports whether ref sits in a Bench-created branch namespace and
+// names the reason its row carries. Bench creates both namespaces, so Bench retires both.
+func unclaimedBranchReason(ref string) (string, bool) {
+	switch {
+	case strings.HasPrefix(ref, intent.AssignmentBranchPrefix()):
+		return "unclaimed assignment branch", true
+	case strings.HasPrefix(ref, intent.ShiftBranchPrefix()):
+		return "shift residue branch", true
+	default:
+		return "", false
+	}
+}
+
+// planUnclaimedAssignmentSet selects the unclaimed assignment and shift branches. It
+// excludes every assignment record, checked-out ref, and the default branch.
 func planUnclaimedAssignmentSet(root string, options CleanupOptions) (unclaimedAssignmentSet, error) {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
@@ -49,14 +63,15 @@ func planUnclaimedAssignmentSet(root string, options CleanupOptions) (unclaimedA
 	set := unclaimedAssignmentSet{}
 	for _, branch := range branches {
 		ref := "refs/heads/" + branch
-		if !strings.HasPrefix(ref, intent.AssignmentBranchPrefix()) || protected[ref] {
+		reason, owned := unclaimedBranchReason(ref)
+		if !owned || protected[ref] {
 			continue
 		}
 		oid, err := git.Output("-C", root, "rev-parse", "--verify", ref+"^{commit}")
 		if err != nil {
 			return unclaimedAssignmentSet{}, fmt.Errorf("git assignment branch identity %s: %w", ref, err)
 		}
-		set.rows = append(set.rows, unclaimedAssignmentBranch{ref, oid})
+		set.rows = append(set.rows, unclaimedAssignmentBranch{ref, oid, reason})
 	}
 	sort.Slice(set.rows, func(i, j int) bool { return set.rows[i].ref < set.rows[j].ref })
 	if len(set.rows) == 0 {
@@ -64,7 +79,7 @@ func planUnclaimedAssignmentSet(root string, options CleanupOptions) (unclaimedA
 	}
 	parts := [][]byte{[]byte(unclaimedAssignmentFingerprintVersion), []byte("discard-branch=true"), []byte(fmt.Sprintf("unclaimed=%t", options.Unclaimed))}
 	for _, row := range set.rows {
-		parts = append(parts, []byte(row.ref), []byte(row.oid))
+		parts = append(parts, []byte(row.ref), []byte(row.oid), []byte(row.reason))
 	}
 	set.fingerprint = fingerprintParts(parts...)
 	return set, nil
@@ -73,7 +88,7 @@ func planUnclaimedAssignmentSet(root string, options CleanupOptions) (unclaimedA
 func renderUnclaimedAssignmentSet(stdout io.Writer, set unclaimedAssignmentSet) error {
 	plans := make([]CleanupPlan, 0, len(set.rows))
 	for _, row := range set.rows {
-		plans = append(plans, CleanupPlan{Target: row.ref, Action: ActionDiscardRemove, Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: set.fingerprint, Reason: "unclaimed assignment branch"})
+		plans = append(plans, CleanupPlan{Target: row.ref, Action: ActionDiscardRemove, Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: set.fingerprint, Reason: row.reason})
 	}
 	return renderCleanups(stdout, plans)
 }
@@ -103,7 +118,8 @@ func applyUnclaimedAssignmentSet(root string, set unclaimedAssignmentSet) ([]Cle
 	return plans, nil
 }
 
-// UnclaimedAssignmentBranchRefs gives status the same sorted selection used by clean.
+// UnclaimedAssignmentBranchRefs gives status the same sorted assignment-and-shift
+// selection used by clean.
 func UnclaimedAssignmentBranchRefs(root string) ([]string, error) {
 	set, err := planUnclaimedAssignmentSet(root, CleanupOptions{DiscardBranch: true, Unclaimed: true})
 	if err != nil {

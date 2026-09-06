@@ -178,6 +178,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- Fixed SessionStart Go discovery when `BASH_ENV` restores `ENVMAN_LOAD` before
+  the clean login reads its profile.
+
 - `bench repair --help` now prints `usage: bench repair [--prune]` on stdout and exits 0,
   which is the answer every other verb gives for `--help`. The wrapper-only verb sent the
   help flags to its usage-error arm, so the grammar reached stderr at exit 2. `-h` and the

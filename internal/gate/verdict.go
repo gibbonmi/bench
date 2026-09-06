@@ -193,7 +193,7 @@ func inspectAt(root string, now time.Time) Inspection {
 
 func inspectSubjectAt(root string, s subject, now time.Time) Inspection {
 	gi := Inspection{CurrentTree: s.Tree, Reason: s.Reason}
-	gitdir, err := benchgit.Output("-C", root, "rev-parse", "--absolute-git-dir")
+	gitdir, err := benchgit.AdminDir(root)
 	if err != nil {
 		gi.State = Unavailable
 		gi.Reason = "git directory unavailable"

@@ -34,8 +34,11 @@ func activeAssignmentWithMissingBranch(root, path string) (intent.Assignment, bo
 	if err != nil {
 		return intent.Assignment{}, false
 	}
-	for _, assignment := range assignments {
-		if assignment.State != intent.StateActive || !samePath(assignment.Worktree, path) {
+	// The match answers every state, and the scan keeps its own active filter: a retired
+	// record names a tree whose phase is over, so its gone branch is the expected end
+	// state rather than the recoverable loss this scan reports.
+	for _, assignment := range intent.AssignmentsOwning(assignments, path) {
+		if assignment.State != intent.StateActive {
 			continue
 		}
 		registered := false

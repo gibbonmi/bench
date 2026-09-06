@@ -153,6 +153,10 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"unrouted-subcommand":                    conformanceFixture(".bench/gate.sh"),
 	"reintroduced-bare-skip":                 conformanceFixture(".bench/gate.sh"),
 	"offline-slice1-operation-omitted":       conformanceFixture(".bench/gate.sh"),
+	"git-flag-retyped": conformanceGoFixture(
+		"internal/conformance/git_plumbing_owner_test.go",
+		"internal/conformance/checks_test.go",
+	),
 }
 
 // canaryFixtureFamilyRegistry assigns one owner to every fixture in a family whose

@@ -1469,6 +1469,24 @@ func TestSystemSuiteRouteAnchorsRedOnRemoval(t *testing.T) {
 	}.check(t)
 }
 
+// TestHandoffSectionRuleAnchorRedOnRemoval pins HS25. The working agreement states the
+// handoff section rule: a phase close runs `bench handoff` from its own worktree, and the
+// verb rewrites only that assignment's section. The needle and the diagnostic are written
+// here independently of the registry, so an agreement that dropped the rule cannot define
+// itself green.
+func TestHandoffSectionRuleAnchorRedOnRemoval(t *testing.T) {
+	anchorHarness{
+		group: AfterSpecAuthorization,
+		rules: []anchorRule{
+			{
+				file:   "AGENTS.md",
+				needle: "`bench handoff` rewrites only the calling worktree's assignment section.",
+				want:   "AGENTS.md dropped the handoff section rule; a phase close runs bench handoff from its own worktree, and the verb rewrites only that assignment's section",
+			},
+		},
+	}.check(t)
+}
+
 // TestAgentPushRuleAnchorRedOnRemoval pins PG36. The reference guide's hook-layer list
 // states the agent push rule: the guard allows a push to any branch but the default, and
 // denies a force, a deletion, a broadcast, and an unresolved destination. The needle and

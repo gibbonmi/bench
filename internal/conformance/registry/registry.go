@@ -137,6 +137,7 @@ var Checks = []Check{
 	{Name: "bounds-policy", Implementation: "checkBoundsPolicy", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "marker-wait-deadlines", Implementation: "checkMarkerWaitDeadlines", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "canonical-path-owner", Implementation: "checkCanonicalPathOwner", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
+	{Name: "git-plumbing-owner", Implementation: "checkGitPlumbingOwner", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "cancel-signal-registrations", Implementation: "checkCancelSignalRegistrations", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "wait-deadline-literals", Implementation: "checkWaitDeadlineLiterals", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "subcommand-routing", Implementation: "checkSubcommandRouting", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},

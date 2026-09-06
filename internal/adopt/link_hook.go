@@ -69,7 +69,11 @@ type PrePushHealth struct {
 
 // InspectPrePush reads the effective hook without contacting a remote and returns its health.
 func InspectPrePush(root string) PrePushHealth {
-	path := filepath.Join(hooksDir(root), "pre-push")
+	hooks, err := hooksDir(root)
+	if err != nil {
+		return PrePushHealth{State: PrePushAbsent, Currency: PrePushNotApplicable}
+	}
+	path := filepath.Join(hooks, "pre-push")
 	if _, err := os.Lstat(path); err != nil {
 		return noPrePushHealth(root, path)
 	}
@@ -197,15 +201,11 @@ func hooksPathConfigured(root string) bool {
 	return err == nil && strings.TrimSpace(v) != ""
 }
 
-func hooksDir(root string) string {
-	out, err := git.Output("-C", root, "rev-parse", "--git-path", "hooks")
-	if err != nil || out == "" {
-		return filepath.Join(root, ".git", "hooks")
-	}
-	if filepath.IsAbs(out) {
-		return out
-	}
-	return filepath.Join(root, out)
+// hooksDir resolves the checkout's effective hooks directory through the named Git
+// adapter reader. It returns the reader's typed failure rather than guessing a path,
+// so a caller can refuse before it stages, removes, or reports anything under a guess.
+func hooksDir(root string) (string, error) {
+	return git.AdminPath(root, "hooks")
 }
 
 // fallbackProtectedBranch is baked into the pre-push hook when the repository has no
@@ -226,7 +226,11 @@ func protectedBranch(root string) string {
 }
 
 func installGitHook(root string, stderr io.Writer) error {
-	hooks := hooksDir(root)
+	hooks, err := hooksDir(root)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return err
+	}
 	if err := os.MkdirAll(hooks, 0o755); err != nil {
 		fmt.Fprintln(stderr, err)
 		return err

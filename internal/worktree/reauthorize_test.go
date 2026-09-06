@@ -239,7 +239,7 @@ func reauthorizeEvidence(t *testing.T, root, path string) reauthorizeState {
 	if len(assignments) != 1 {
 		t.Fatalf("assignment count = %d, want 1", len(assignments))
 	}
-	indexPath := gitOutput(t, path, "rev-parse", "--git-path", "index")
+	indexPath := mustAdminPath(t, path, "index")
 	index, err := os.ReadFile(indexPath)
 	if err != nil {
 		t.Fatal(err)

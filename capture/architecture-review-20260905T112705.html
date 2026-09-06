@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Architecture review — bench</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+    <style>
+      .seam { border-style: dashed; }
+      .leak { color: #dc2626; }
+      .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
+      .arrow { color: #64748b; font-size: 1.35rem; line-height: 1; }
+      .module-shadow { box-shadow: 0 12px 30px -24px rgb(15 23 42 / 0.55); }
+      .band { height: 2.25rem; display: flex; align-items: center; padding-left: .75rem; }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
+
+      <header class="space-y-4">
+        <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Architecture review</p>
+        <div class="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+          <h1 class="text-4xl font-serif font-semibold">bench</h1>
+          <span class="text-slate-500">2026-09-05</span>
+          <span class="font-mono text-xs">main @ 9d1a59e0</span>
+        </div>
+        <div class="flex flex-wrap gap-x-6 gap-y-2 text-xs text-slate-600">
+          <span class="flex items-center gap-2"><span class="h-5 w-8 rounded border-2 border-slate-500 bg-white"></span>module</span>
+          <span class="flex items-center gap-2"><span class="h-5 w-8 rounded border-2 border-dashed border-slate-500 bg-white"></span>seam</span>
+          <span class="flex items-center gap-2"><span class="leak font-bold">→</span>leakage</span>
+          <span class="flex items-center gap-2"><span class="h-5 w-8 rounded border-4 border-slate-900 bg-slate-800"></span>deep module</span>
+        </div>
+        <dl class="grid grid-cols-3 gap-4 text-sm border-t border-slate-200 pt-4">
+          <div><dt class="text-xs uppercase tracking-wider text-slate-500">Territory</dt><dd>FT302 survey: FT217, FT218, FT247 re-verified; worktree, gate, adopt, landing, intent scanned</dd></div>
+          <div><dt class="text-xs uppercase tracking-wider text-slate-500">Candidates</dt><dd>5 source-verified · 2 Strong · 2 Worth exploring · 1 Speculative</dd></div>
+          <div><dt class="text-xs uppercase tracking-wider text-slate-500">Prior survey</dt><dd>FT216 landed; gate transaction, verdict registry, shift objective, green marker, skills-index reader excluded</dd></div>
+        </dl>
+      </header>
+
+      <section id="candidates" class="space-y-10">
+
+        <!-- C1 -->
+        <article id="c1" class="rounded-xl border border-slate-200 bg-white p-8 space-y-6 module-shadow">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500">Candidate 1 · FT218 widened</p>
+              <h2 class="mt-2 text-2xl font-serif font-semibold">Name the private administration-directory fact in the Git adapter</h2>
+            </div>
+            <div class="flex gap-2 shrink-0">
+              <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Strong</span>
+              <span class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-800">local-substitutable</span>
+            </div>
+          </div>
+          <div class="font-mono text-sm text-slate-700 space-y-1">
+            <p><span class="text-slate-400">--path-format=absolute --git-dir</span> · worktree/classifier.go:469 · lifecycle.go:312 · ownership.go:285 · subshell.go:182 · clean.go:50 · git/checkout.go:8</p>
+            <p><span class="text-slate-400">--absolute-git-dir</span> · worktree/land_refusal.go:98 · gate/lane.go:104 · gate/phases.go:413 · gate/verdict.go:196 · gate/run_transaction.go:66 · gate/composed_green.go:21 · dashboard/dashboard.go:78</p>
+            <p><span class="text-slate-400">--git-path</span> · worktree/subshell.go:261 · clean.go:207 · worktree.go:36 · diff/snapshot.go:272 · adopt/link_hook.go:201</p>
+            <p><span class="text-slate-400">precedent</span> · git/worktree_admin.go:163–185 (CommonDir, validateCommonDir)</p>
+          </div>
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Before</p>
+              <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 h-80 flex flex-col justify-between">
+                <div class="grid grid-cols-4 gap-2 text-[10px] uppercase tracking-wider text-center">
+                  <div class="rounded border-2 border-slate-500 bg-white py-2">classifier</div>
+                  <div class="rounded border-2 border-slate-500 bg-white py-2">ownership</div>
+                  <div class="rounded border-2 border-slate-500 bg-white py-2">clean</div>
+                  <div class="rounded border-2 border-slate-500 bg-white py-2">subshell</div>
+                  <div class="rounded border-2 border-slate-500 bg-white py-2">lifecycle</div>
+                  <div class="rounded border-2 border-slate-500 bg-white py-2">land refusal</div>
+                  <div class="rounded border-2 border-slate-500 bg-white py-2">gate ×5</div>
+                  <div class="rounded border-2 border-slate-500 bg-white py-2">dashboard</div>
+                </div>
+                <div class="text-center leak text-2xl">↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓</div>
+                <div class="rounded seam border-2 border-slate-500 bg-white p-3 text-xs">
+                  <p class="font-mono">git.Output(rev-parse, …)</p>
+                  <p class="mt-2 leak">two spellings · four failure postures · absoluteness checked at 2 of 13 sites</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">After</p>
+              <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 h-80 flex flex-col justify-between">
+                <div class="grid grid-cols-4 gap-2 text-[10px] uppercase tracking-wider text-center">
+                  <div class="rounded border-2 border-slate-400 bg-white py-2 text-slate-500">cleanup</div>
+                  <div class="rounded border-2 border-slate-400 bg-white py-2 text-slate-500">ownership</div>
+                  <div class="rounded border-2 border-slate-400 bg-white py-2 text-slate-500">landing</div>
+                  <div class="rounded border-2 border-slate-400 bg-white py-2 text-slate-500">gate</div>
+                </div>
+                <div class="text-center arrow">↓</div>
+                <div class="rounded border-4 border-slate-900 deep p-4 text-white">
+                  <p class="text-xs uppercase tracking-wider text-slate-300">Git adapter · deep</p>
+                  <p class="mt-1 text-sm">AdminDir(root) · AdminPath(root, name)</p>
+                  <p class="mt-2 text-[11px] text-slate-400">flags · absoluteness · Lstat · symlink refusal · one ResolutionError · CommonDir already lives here</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-6 text-sm">
+            <div><h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Problem</h3><p class="mt-1">Thirteen production readers spell the same repository fact in two ways, and the failure posture has already drifted four ways across them.</p></div>
+            <div><h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Solution</h3><p class="mt-1">Deepen the Git adapter with two named readers that validate like <span class="font-mono">CommonDir</span>; <span class="font-mono">Output</span>, <span class="font-mono">Raw</span>, <span class="font-mono">OK</span> stay as plumbing.</p></div>
+            <div><h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Wins</h3><ul class="mt-1 list-disc pl-4 space-y-0.5"><li>locality: flag grammar in one adapter</li><li>leverage: one fact, eighteen callers</li><li>failure posture stops drifting</li><li>hostile-test exemplar already exists</li></ul></div>
+          </div>
+          <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900"><strong>ADR 0005 constraint:</strong> classifier.go:469 uses this path as ownership evidence, so the reader keeps the strictest current posture. No reopening is warranted.</div>
+          <p class="text-xs text-slate-500">Deletion test: the adapter is already deep for <span class="font-mono">CommonDir</span>; deleting the new readers would push grammar, validation, and posture back into thirteen callers.</p>
+        </article>
+
+        <!-- C2 -->
+        <article id="c2" class="rounded-xl border border-slate-200 bg-white p-8 space-y-6 module-shadow">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500">Candidate 2 · new</p>
+              <h2 class="mt-2 text-2xl font-serif font-semibold">Make the landing destination one fact</h2>
+            </div>
+            <div class="flex gap-2 shrink-0">
+              <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Strong</span>
+              <span class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-800">local-substitutable</span>
+            </div>
+          </div>
+          <div class="font-mono text-sm text-slate-700 space-y-1">
+            <p>internal/worktree/land_identity.go:37 (landingDestination) · :66 <span class="text-slate-400">rev-parse HEAD^{commit}</span></p>
+            <p>internal/worktree/land_resume.go:114 (resumeLandingDestination) · :121 <span class="text-slate-400">rev-parse refs/heads/&lt;branch&gt;^{commit}</span></p>
+            <p>callers · land.go:247 · land_resume.go:43 &nbsp; tests · land_facts_test.go:137 · land_release_refusal_test.go:214 · merge_test.go:918</p>
+          </div>
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Before</p>
+              <div class="rounded-lg border border-slate-200 bg-white p-4 h-80">
+                <pre class="mermaid">
+flowchart TB
+  L[landAttributed] --> D1[landingDestination<br/>5 positional returns]
+  R[resumeLandWith] --> D2[resumeLandingDestination<br/>4 positional returns]
+  D1 --> G1[ResolvedDefault · branch proof<br/>rev-parse HEAD · landingMarker]
+  D2 --> G2[ResolvedDefault · branch proof<br/>rev-parse refs/heads · landingMarker]
+  D1 -.no test.- D2
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class D2,G2 leak
+                </pre>
+              </div>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">After</p>
+              <div class="rounded-lg border border-slate-200 bg-white p-4 h-80">
+                <pre class="mermaid">
+flowchart TB
+  L[landAttributed] --> D[[Landing destination<br/>named fact + typed refusal]]
+  R[resumeLandWith] --> D
+  D --> G[one Git spelling<br/>branch proof · marker]
+  L -. first run only .-> P[cleanliness · residue proofs]
+  classDef deep fill:#0f172a,stroke:#0f172a,color:#fff,stroke-width:4px;
+  class D deep
+                </pre>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-6 text-sm">
+            <div><h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Problem</h3><p class="mt-1">The first run and the resume each derive the destination with a different Git spelling, and the resume twin has no direct test.</p></div>
+            <div><h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Solution</h3><p class="mt-1">One module answers "what is the destination and does it admit a landing", returning a named fact; the first run adds its cleanliness and residue proofs on top.</p></div>
+            <div><h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Wins</h3><ul class="mt-1 list-disc pl-4 space-y-0.5"><li>locality: one destination spelling</li><li>leverage: two verbs, one fact</li><li>named fields replace positions</li><li>resume and first run cannot drift</li></ul></div>
+          </div>
+          <p class="text-xs text-slate-500">Deletion test: delete it and the proof set, both spellings, and the marker check reappear in both callers. Composes ADR 0014 and 0016; reopens nothing.</p>
+        </article>
+
+        <!-- C3 -->
+        <article id="c3" class="rounded-xl border border-slate-200 bg-white p-8 space-y-6 module-shadow">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500">Candidate 3 · FT247, intent</p>
+              <h2 class="mt-2 text-2xl font-serif font-semibold">One ledger transaction behind every intent mutation</h2>
+            </div>
+            <div class="flex gap-2 shrink-0">
+              <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">Worth exploring</span>
+              <span class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-800">local-substitutable</span>
+            </div>
+          </div>
+          <div class="font-mono text-sm text-slate-700 space-y-1">
+            <p>internal/intent/intent.go:151 Upsert · :362 Compact</p>
+            <p>internal/intent/assignment.go:186 PutCleanupReceipt · :387 PutAssignment · :424 ReauthorizeAssignment · :497 PurgeAssignments · :559 DeleteAssignment</p>
+            <p>envelope · intent.go:59 Address · :75 readPath · :190 writePath · :239 acquire · :274 staleLock</p>
+          </div>
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Before · each of 7 mutators</p>
+              <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 h-80 flex flex-col justify-center gap-1 text-[11px] uppercase tracking-wider">
+                <div class="band border-l-4 border-slate-400 bg-white">Address(root)</div>
+                <div class="band border-l-4 border-slate-400 bg-white">acquire(path.lock) · defer release</div>
+                <div class="band border-l-4 border-slate-400 bg-white">readPath · absent-is-empty</div>
+                <div class="band border-l-4 border-red-500 bg-red-50 leak">admission decision · inside the lock</div>
+                <div class="band border-l-4 border-slate-400 bg-white">writePath · atomic replace</div>
+                <p class="mt-3 normal-case tracking-normal text-slate-500">× 7 · every partition test pays a repository and a lock</p>
+              </div>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">After</p>
+              <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 h-80 flex flex-col justify-center gap-3">
+                <div class="rounded border-2 border-slate-500 bg-white p-3 text-xs">
+                  <p class="uppercase tracking-wider text-slate-500">7 pure decisions</p>
+                  <p class="mt-1">ledger → ledger · duplicate digest · identical bytes · CAS · keep predicate</p>
+                </div>
+                <div class="text-center arrow">↓</div>
+                <div class="rounded border-4 border-slate-900 deep p-4 text-white">
+                  <p class="text-xs uppercase tracking-wider text-slate-300">Ledger transaction · deep</p>
+                  <p class="mt-1 text-sm">apply(root, decision)</p>
+                  <p class="mt-2 text-[11px] text-slate-400">address · lock · stale lock · read · write · atomic replace</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-6 text-sm">
+            <div><h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Problem</h3><p class="mt-1">Seven mutators re-type the lock-read-decide-write envelope, so no admission rule is testable without a filesystem and a lock.</p></div>
+            <div><h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Solution</h3><p class="mt-1">One transaction seam applies a pure ledger-to-ledger decision under the lock; each mutator becomes its decision.</p></div>
+            <div><h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Wins</h3><ul class="mt-1 list-disc pl-4 space-y-0.5"><li>locality: lock ordering in one place</li><li>leverage: one envelope, seven mutators</li><li>admission rules become pure</li><li>mirrors the landed gate transaction</li></ul></div>
+          </div>
+          <p class="text-xs text-slate-500">Deletion test: seven callers would each re-derive lock order, stale-lock handling, and atomic replacement. The restructure backlog's four-way split of assignment.go becomes unnecessary. No ADR touched.</p>
+        </article>
+
+        <!-- C4 -->
+        <article id="c4" class="rounded-xl border border-slate-200 bg-white p-8 space-y-6 module-shadow">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500">Candidate 4 · FT247, landing</p>
+              <h2 class="mt-2 text-2xl font-serif font-semibold">Move the capture-conflict settle rule into pure policy</h2>
+            </div>
+            <div class="flex gap-2 shrink-0">
+              <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">Worth exploring</span>
+              <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">in-process policy · local-substitutable adapter</span>
+            </div>
+          </div>
+          <div class="font-mono text-sm text-slate-700 space-y-1">
+            <p>internal/landing/composition.go:116 resolveCaptureConflict · :120–125 admission · :163–179 editTree/indexRun · :197 unionStages · :318 contentConflictKind</p>
+            <p>tests · composition_test.go:283–346 (7 real-Git conflict fixtures) · :420 · :473 (settle tables) &nbsp; exemplars · worktree/landingpolicy · lifecyclepolicy · reclaimpolicy</p>
+          </div>
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Before · interface vs implementation</p>
+              <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 h-80 flex items-end justify-center gap-10">
+                <div class="text-center text-[10px] uppercase tracking-wider">
+                  <div class="w-28 h-52 rounded border-2 border-red-500 bg-red-50 flex items-center justify-center leak">caller must know:<br/>table · modes · sides<br/>+ a real tree</div>
+                  <p class="mt-2">interface</p>
+                </div>
+                <div class="text-center text-[10px] uppercase tracking-wider">
+                  <div class="w-28 h-56 rounded border-2 border-slate-500 bg-white flex items-center justify-center">decide<br/>+ editTree<br/>+ update-index</div>
+                  <p class="mt-2">implementation</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">After</p>
+              <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 h-80 flex items-end justify-center gap-10">
+                <div class="text-center text-[10px] uppercase tracking-wider">
+                  <div class="w-28 h-12 rounded border-2 border-slate-500 bg-white flex items-center justify-center">stage records in<br/>verdict per path out</div>
+                  <p class="mt-2">policy interface</p>
+                </div>
+                <div class="text-center text-[10px] uppercase tracking-wider">
+                  <div class="w-28 h-56 rounded border-4 border-slate-900 deep text-white flex items-center justify-center">settle precedence<br/>mode agreement<br/>refusal kinds</div>
+                  <p class="mt-2">policy · deep</p>
+                </div>
+                <div class="text-center text-[10px] uppercase tracking-wider">
+                  <div class="w-28 h-24 rounded border-2 border-slate-400 bg-white flex items-center justify-center text-slate-500">adapter<br/>Git only</div>
+                  <p class="mt-2">composition</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-6 text-sm">
+            <div><h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Problem</h3><p class="mt-1">The settle decision and the Git tree edit sit in one function, so seven tests build real repositories to reach a classification a mode list decides.</p></div>
+            <div><h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Solution</h3><p class="mt-1">A pure policy answers "publish this side, publish the union, or refuse" per path; the composition adapter applies it and owns only Git.</p></div>
+            <div><h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Wins</h3><ul class="mt-1 list-disc pl-4 space-y-0.5"><li>locality: settle precedence in one module</li><li>leverage: table cases replace repositories</li><li>refusal reasons become nameable</li><li>real-Git journeys stay representative</li></ul></div>
+          </div>
+          <p class="text-xs text-slate-500">Deletion test: the precedence returns inside the effect function where no test reaches it without a repository. Partial extraction: <span class="font-mono">unionStages</span> still shells to Git for text merges. No ADR touched.</p>
+        </article>
+
+        <!-- C5 -->
+        <article id="c5" class="rounded-xl border border-slate-200 bg-white p-8 space-y-6 module-shadow">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500">Candidate 5 · companion</p>
+              <h2 class="mt-2 text-2xl font-serif font-semibold">Collapse the gate's execution entries to the ones with a caller</h2>
+            </div>
+            <div class="flex gap-2 shrink-0">
+              <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">Speculative</span>
+              <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">in-process</span>
+            </div>
+          </div>
+          <div class="font-mono text-sm text-slate-700 space-y-1">
+            <p>internal/gate/gate.go:178 Run · :189 RunContext · :204 RunAndRecord · :291 ExecuteReusingFreshGreen — <span class="leak">no caller in the tree</span></p>
+            <p>:210 RunAndRecordContext ← shift/session.go:210 · :217 RunCommand · :248 Command ← cmd/bench/main.go:156–157 · :278 Execute ← status tests, run_outcomes_test</p>
+          </div>
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Before</p>
+              <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 h-80 grid grid-cols-2 gap-2 text-[10px] uppercase tracking-wider text-center content-center">
+                <div class="rounded border-2 border-red-400 bg-red-50 py-3 leak">Run</div>
+                <div class="rounded border-2 border-red-400 bg-red-50 py-3 leak">RunContext</div>
+                <div class="rounded border-2 border-red-400 bg-red-50 py-3 leak">RunAndRecord</div>
+                <div class="rounded border-2 border-slate-500 bg-white py-3">RunAndRecordContext</div>
+                <div class="rounded border-2 border-slate-500 bg-white py-3">RunCommand</div>
+                <div class="rounded border-2 border-slate-500 bg-white py-3">Command</div>
+                <div class="rounded border-2 border-slate-500 bg-white py-3">Execute</div>
+                <div class="rounded border-2 border-red-400 bg-red-50 py-3 leak">ExecuteReusingFreshGreen</div>
+                <p class="col-span-2 mt-2 normal-case tracking-normal text-slate-500">three axes (context · record · reuse) encoded as eight names</p>
+              </div>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">After</p>
+              <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 h-80 flex flex-col justify-center gap-3">
+                <div class="rounded border-2 border-slate-500 bg-white p-3 text-center text-[10px] uppercase tracking-wider">Command · RunCommand · RunAndRecordContext</div>
+                <div class="text-center arrow">↓</div>
+                <div class="rounded border-4 border-slate-900 deep p-4 text-white text-center">
+                  <p class="text-xs uppercase tracking-wider text-slate-300">Execute(ctx, root, mode)</p>
+                  <p class="mt-2 text-[11px] text-slate-400">reuse policy is a value, not a name · four entries deleted</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-6 text-sm">
+            <div><h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Problem</h3><p class="mt-1">Eight exported entries encode three axes; four have no caller, and the reuse decision is a function name rather than a stated argument.</p></div>
+            <div><h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Solution</h3><p class="mt-1">One execution seam takes the run mode; the three live entries build on it and the four dead ones go.</p></div>
+            <div><h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Wins</h3><ul class="mt-1 list-disc pl-4 space-y-0.5"><li>leverage: one entry, stated policy</li><li>interface shrinks by four</li><li>reuse policy becomes testable</li></ul></div>
+          </div>
+          <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900"><strong>ADR 0002 constraint:</strong> the collapse must not change which entry records evidence. <strong>Why Speculative:</strong> this narrows an interface; it hides no behavior the callers know today. A light-path companion, not a deepening.</div>
+        </article>
+
+      </section>
+
+      <section id="parked" class="space-y-4">
+        <h2 class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Parked rows re-verified</h2>
+        <table class="w-full text-sm border-collapse">
+          <thead><tr class="text-left text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200"><th class="py-2 pr-4">Row</th><th class="py-2 pr-4">Verdict</th><th class="py-2">Deciding pins</th></tr></thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr><td class="py-2 pr-4 font-mono">FT217</td><td class="py-2 pr-4"><span class="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900">Weakened · re-scope</span></td><td class="py-2">link.go:64, setup.go:315, upgrade.go:78 all apply through <span class="font-mono">transactionalLink</span>; only unlink.go:82 derives separately. The live defect is inside upgrade: <span class="font-mono">PlanLifecycle</span> (upgrade.go:142) counts add/change/remove from a poorer model than the transaction applies (ownership, converged bytes, symlink parents, dropped rows at link_transaction.go:177–307), so the printed plan and the applied plan can disagree. <span class="font-mono">PlanLifecycle</span> has one caller and is shallow. Recommend re-scoping FT217 to "the upgrade plan is a projection of the transaction's own decision".</td></tr>
+            <tr><td class="py-2 pr-4 font-mono">FT218</td><td class="py-2 pr-4"><span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">Holds · strengthened</span></td><td class="py-2">Six sites became thirteen in two spellings, plus five <span class="font-mono">--git-path</span> sites split on absoluteness. Candidate 1 carries it.</td></tr>
+            <tr><td class="py-2 pr-4 font-mono">FT247</td><td class="py-2 pr-4"><span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">Holds · landing, intent</span></td><td class="py-2">Candidates 3 and 4 carry it. <span class="font-mono">internal/diff</span> is weak: range.go and diff.go already separate resolution from rendering; its one leak (snapshot.go:272) is absorbed by candidate 1. <span class="font-mono">internal/preflight</span> (decision.go:21 Facts, :180 Decide, gather.go:39 Gather) is already the exemplar shape and is not a target.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="rejected" class="space-y-3">
+        <h2 class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Rejected suspects · passed the deletion test</h2>
+        <ul class="text-sm space-y-1 text-slate-700">
+          <li><span class="font-mono">internal/preflight</span> — already typed facts plus pure decision; deleting <span class="font-mono">Decide</span> scatters twelve rules into the gatherer.</li>
+          <li><span class="font-mono">internal/worktree</span> <span class="font-mono">joins</span> (land.go:68) — a 28-field seam struct read one field at a time by nine files; shape, not depth. Deleting it binds every fixture to process environment.</li>
+          <li><span class="font-mono">cmd/bench/main.go</span> <span class="font-mono">commandRegistry</span> — a declarative table; deletion scatters dispatch, AXI disposition, and help inventory.</li>
+          <li><span class="font-mono">internal/gate/lane_select.go:41</span> <span class="font-mono">ComposedChanges</span> — one derivation of the lane subject; NUL framing lives in one place.</li>
+          <li><span class="font-mono">internal/worktree/worktree.go</span> (781 lines) — a junk drawer with no concept split across files; nothing for a deep module to absorb. Route through the restructure backlog.</li>
+          <li><span class="font-mono">internal/adopt/link_transaction.go:131</span> <span class="font-mono">transactionalLink</span> — every branch is load-bearing convergence knowledge; see the FT217 re-scope for the one defect beside it.</li>
+        </ul>
+      </section>
+
+      <section id="top-recommendation" class="rounded-xl border-4 border-slate-900 deep p-10 text-white space-y-3">
+        <p class="text-xs uppercase tracking-[0.2em] text-slate-300">Top recommendation</p>
+        <h2 class="text-3xl font-serif font-semibold"><a href="#c1" class="underline decoration-slate-500 hover:decoration-white">Candidate 1 — name the administration-directory fact in the Git adapter</a></h2>
+        <p class="text-slate-200">Eighteen production sites already disagree on spelling and failure posture, ADR 0005's ownership evidence passes through one of them, and the adapter already holds the exemplar reader and its hostile test, so the deepening has the widest leverage at the lowest design risk.</p>
+        <p class="text-sm text-slate-400">Runner-up: <a href="#c2" class="underline">Candidate 2</a>, the landing destination fact. It sits in the hottest change area and composes onto Candidate 1 at land_refusal.go:98.</p>
+      </section>
+
+    </main>
+  </body>
+</html>

@@ -13,6 +13,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -77,7 +78,7 @@ func environmentPhase(ctx context.Context, stdout, _ io.Writer, root string) int
 	}
 	command := exec.Command("bash", "-c", "exec bash -lc 'command -v go' 2>/dev/null")
 	command.Dir = root
-	command.Env = environmentWithout(os.Environ(), "ENVMAN_LOAD")
+	command.Env = capability.WithoutEnvironment(capability.WithoutEnvironment(os.Environ(), "ENVMAN_LOAD"), "BASH_ENV")
 	result := bounds.Run(ctx, bounds.EnvironmentDiscoveryTimeout, command)
 	executable, valid := discoveredExecutable(result)
 	if !valid {
@@ -87,17 +88,6 @@ func environmentPhase(ctx context.Context, stdout, _ io.Writer, root string) int
 	fmt.Fprintf(stdout, "bench: environment closure is partial: Go is absent from PATH, but the clean Bash login resolves %s (ENVMAN_LOAD=%q).\n", executable, os.Getenv("ENVMAN_LOAD"))
 	fmt.Fprintf(stdout, "bench: recover without replacing harness tools: export PATH=%s:\"$PATH\"\n", sanitize.ShellQuote(filepath.Dir(executable)))
 	return 0
-}
-
-func environmentWithout(environment []string, name string) []string {
-	clean := make([]string, 0, len(environment))
-	for _, entry := range environment {
-		key, _, _ := strings.Cut(entry, "=")
-		if key != name {
-			clean = append(clean, entry)
-		}
-	}
-	return clean
 }
 
 func discoveredExecutable(result bounds.ProcessResult) (string, bool) {

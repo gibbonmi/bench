@@ -6,16 +6,17 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	refreshop "github.com/gibbonmi/bench/internal/refresh"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
-	refreshop "github.com/gibbonmi/bench/internal/worktree/refresh"
 )
 
 // finish emits the shift_result block and resolves res to its process exit code. When
@@ -75,15 +76,15 @@ func evidenceResult(s *session, detail string) Result {
 // shifts. It still fails fast on a genuinely broken repo.
 const branchCollisionRetries = 10
 
-// createShiftBranch derives the bench/shift-<timestamp> branch name and switches wt
-// onto a freshly created branch of that name. A same-second collision, two shifts
+// createShiftBranch derives the branch name from the one shift-namespace source and
+// switches wt onto a freshly created branch of that name. A same-second collision, two shifts
 // deriving the same timestamp, is not fatal: it retries with a disambiguating "-2",
 // "-3", suffix appended to the per-second name. The recovery ref path, built from the
 // resolved branch name, then gets a fresh, non-colliding pair too. Retries continue
 // until creation succeeds or branchCollisionRetries is exhausted; at that point it
 // reports the same creation failure it always reported for an unresolvable collision.
 func createShiftBranch(wt, timestamp string) (string, error) {
-	base := "bench/shift-" + timestamp
+	base := strings.TrimPrefix(intent.ShiftBranchPrefix(), "refs/heads/") + timestamp
 	var lastErr error
 	for attempt := 1; attempt <= branchCollisionRetries; attempt++ {
 		candidate := base
@@ -146,13 +147,9 @@ func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "working tree not clean; commit or move the change aside first")
 		return usage(stdout, stderr, "working tree not clean")
 	}
-	startRef := "HEAD"
-	if refresh {
-		result := refreshop.Refresh(mainRoot)
-		fmt.Fprint(stdout, refreshop.RenderRefresh(result))
-		if result.Status == "refreshed" {
-			startRef = refreshop.RefreshedStartRef(mainRoot)
-		}
+	startRef := refreshop.Start(mainRoot, refresh, stdout)
+	if startRef == "" {
+		startRef = "HEAD"
 	}
 	base, err := git.Output("-C", mainRoot, "rev-parse", startRef+"^{commit}")
 	if err != nil {

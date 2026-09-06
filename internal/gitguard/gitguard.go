@@ -40,6 +40,10 @@ func callFact(fact func() (string, bool)) (string, bool) {
 	return fact()
 }
 
+// composeAdvice is the fix for both raw-composition classes, so the merge row and the
+// cherry-pick row name the two Bench verbs from one source.
+const composeAdvice = "Compose through Bench: bench worktree merge <target> --from <commit> folds a sibling, and bench worktree land lands a source."
+
 // denyTable is the ordered source for every destructive class; classification returns
 // its labels in the live block verdict. The advice column is the one source of the
 // sentence a refusal appends, and only a class whose fix the agent can type carries one.
@@ -61,6 +65,8 @@ var denyTable = []struct{ key, label, advice string }{
 	{"restore", "git restore path", ""},
 	{"rebase", "history rewrite", ""},
 	{"filter-branch", "git filter-branch", ""},
+	{"merge", "git merge", composeAdvice},
+	{"cherry-pick", "git cherry-pick", composeAdvice},
 	{"amend", "git commit --amend", ""},
 	{"update-ref", "git update-ref -d", ""},
 	{"tag", "git tag -d", ""},

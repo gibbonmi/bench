@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/landing/settlepolicy"
 )
 
 // CompositionRequest identifies two immutable commits to merge without checkout state.
@@ -24,47 +26,25 @@ type CompositionResult struct {
 }
 
 // Conflict describes why Git could not produce one prospective tree, and names
-// every path it could not merge.
+// every path it could not merge. Refusal carries the settle refusal when the capture
+// policy was engaged and refused; its zero value means the policy settled nothing.
 type Conflict struct {
-	Kind  string
-	Paths []string
+	Kind    string
+	Paths   []string
+	Refusal settlepolicy.Refusal
 }
 
-// ConflictError is the refusal a conflicted reviewed landing returns. Its message is
-// the bounded kind; the paths ride typed so the caller can render them.
+// ConflictError is the refusal a conflicted reviewed landing returns. Its message leads
+// with the bounded kind, so every prefix match holds, and names the settle reason and its
+// refusing paths when one exists. The paths ride typed so the caller can render them.
 type ConflictError struct{ Conflict }
 
-func (e ConflictError) Error() string { return "composition conflict: " + e.Kind }
-
-// stageRecord is one conflicted-file line of `merge-tree -z`: the mode and object of
-// one stage (1 base, 2 destination, 3 source) at one path.
-type stageRecord struct {
-	mode, oid, path string
-	stage           int
-}
-
-// unionStage is the CaptureSide stage of a path the rule table settles by union
-// rather than by taking one side; no merge-tree stage carries that number.
-const unionStage = 0
-
-// CaptureSide is the rule table for a conflicted phase-owned path: it names the verb
-// that settles the path and, for a take-a-side verb, the merge-tree stage that wins.
-// The phase handoff is the source session's closing state, so the source wins it. The
-// two append-only journals compose as the union of both sides, so no appended entry is
-// lost. Every other capture file is the destination's running ledger, so the
-// destination wins. A path outside the table has no rule, and the conflict stays a
-// refusal.
-func CaptureSide(path string) (stage int, side string, ok bool) {
-	switch path {
-	case "capture/session-handoff.md":
-		return 3, "source", true
-	case "capture/learnings.md", "capture/IDEAS.md":
-		return unionStage, "union", true
+func (e ConflictError) Error() string {
+	kind := "composition conflict: " + e.Kind
+	if e.Refusal.Reason == "" {
+		return kind
 	}
-	if strings.HasPrefix(path, "capture/") {
-		return 2, "destination", true
-	}
-	return 0, "", false
+	return kind + "; settle refused: " + e.Refusal.Reason + " (" + strings.Join(e.Refusal.Paths, ", ") + ")"
 }
 
 // Compose performs Git's three-way tree merge using the repository's real merge base.
@@ -97,96 +77,75 @@ func (o Owner) Compose(r CompositionRequest) (CompositionResult, error) {
 	if parseErr != nil {
 		return CompositionResult{}, parseErr
 	}
-	tree, resolved, ok, err := resolveCaptureConflict(r.Root, out, records)
+	tree, resolved, refusal, ok, err := resolveCaptureConflict(r.Root, out, records)
 	if err != nil {
 		return CompositionResult{}, err
 	}
 	if ok {
 		return CompositionResult{Base: base, Tree: tree, Resolved: resolved}, nil
 	}
+	conflict.Refusal = refusal
 	return CompositionResult{Base: base, Conflict: conflict}, nil
 }
 
-// resolveCaptureConflict settles a conflict whose every path is a regular file the
-// rule table names, by applying that path's verb. The merge's own written tree carries
-// Git's conflict markers at those paths; each is replaced by the settled object, or
-// removed when the settled verb takes a side that deleted the file. A conflict touching
-// any path the table does not name, any non-regular stage, any mode disagreement, or
-// any union content Git cannot merge as text is left for the caller to refuse.
-func resolveCaptureConflict(root, mergeOutput string, records []stageRecord) (string, []string, bool, error) {
-	stages := map[string]map[int]stageRecord{}
-	var order []string
-	for _, record := range records {
-		if _, _, ok := CaptureSide(record.path); !ok {
-			return "", nil, false, nil
-		}
-		if record.mode != "100644" && record.mode != "100755" {
-			return "", nil, false, nil
-		}
-		if _, seen := stages[record.path]; !seen {
-			stages[record.path] = map[int]stageRecord{}
-			order = append(order, record.path)
-		}
-		stages[record.path][record.stage] = record
-	}
-	if len(order) == 0 {
-		return "", nil, false, nil
+// resolveCaptureConflict applies the settle policy's verdict over a conflict. The
+// merge's own written tree carries Git's conflict markers at the conflicted paths; each
+// is replaced by the settled object, or removed when the verdict is a removal. A policy
+// refusal, or a union verdict whose content Git cannot merge as text, leaves the whole
+// conflict for the caller to refuse; the refusal rides back so the caller can name it.
+func resolveCaptureConflict(root, mergeOutput string, records []settlepolicy.StageRecord) (string, []string, settlepolicy.Refusal, bool, error) {
+	settlement := settlepolicy.Settle(records)
+	if settlement.Refusal.Reason != "" || len(settlement.Verdicts) == 0 {
+		return "", nil, settlement.Refusal, false, nil
 	}
 	// settled holds the object each path publishes; a nil entry publishes a removal.
-	settled := map[string]*stageRecord{}
-	for _, path := range order {
-		// Two sides that disagree on the file mode leave no settled mode to publish,
-		// so the conflict stays a refusal under every verb.
-		destination, hasDestination := stages[path][2]
-		source, hasSource := stages[path][3]
-		if hasDestination && hasSource && destination.mode != source.mode {
-			return "", nil, false, nil
-		}
-		if stage, _, _ := CaptureSide(path); stage != unionStage {
-			if record, ok := stages[path][stage]; ok {
-				settled[path] = &record
-			} else {
-				settled[path] = nil
+	settled := make([]*settlepolicy.StageRecord, len(settlement.Verdicts))
+	for i, verdict := range settlement.Verdicts {
+		switch verdict.Kind {
+		case settlepolicy.VerdictRemove:
+			settled[i] = nil
+		case settlepolicy.VerdictUnion:
+			record, ok, err := unionStages(root, verdict.Path, verdict.Stages)
+			if err != nil {
+				return "", nil, settlepolicy.Refusal{}, false, err
 			}
-			continue
+			if !ok {
+				refusal := settlepolicy.Refuse(settlepolicy.ReasonUnionContentNotText, []string{verdict.Path})
+				return "", nil, refusal, false, nil
+			}
+			settled[i] = record
+		default:
+			record := verdict.Record
+			settled[i] = &record
 		}
-		record, ok, err := unionStages(root, path, stages[path])
-		if err != nil {
-			return "", nil, false, err
-		}
-		if !ok {
-			return "", nil, false, nil
-		}
-		settled[path] = record
 	}
 	baseTree, err := mergeTreeResult(mergeOutput)
 	if err != nil {
-		return "", nil, false, err
+		return "", nil, settlepolicy.Refusal{}, false, err
 	}
 	tree, err := editTree(root, baseTree, func(idx string) error {
-		for _, path := range order {
-			record := settled[path]
+		for i, verdict := range settlement.Verdicts {
+			record := settled[i]
 			if record == nil {
-				if err := indexRun(root, idx, "update-index", "--force-remove", "--", path); err != nil {
-					return fmt.Errorf("resolve %q: %w", path, err)
+				if err := indexRun(root, idx, "update-index", "--force-remove", "--", verdict.Path); err != nil {
+					return fmt.Errorf("resolve %q: %w", verdict.Path, err)
 				}
 				continue
 			}
-			if err := indexRun(root, idx, "update-index", "--add", "--cacheinfo", record.mode+","+record.oid+","+path); err != nil {
-				return fmt.Errorf("resolve %q: %w", path, err)
+			if err := indexRun(root, idx, "update-index", "--add", "--cacheinfo", record.Mode+","+record.OID+","+verdict.Path); err != nil {
+				return fmt.Errorf("resolve %q: %w", verdict.Path, err)
 			}
 		}
 		return nil
 	})
 	if err != nil {
-		return "", nil, false, err
+		return "", nil, settlepolicy.Refusal{}, false, err
 	}
-	resolved := make([]string, 0, len(order))
-	for _, path := range order {
-		_, side, _ := CaptureSide(path)
-		resolved = append(resolved, path+":"+side)
+	resolved := make([]string, 0, len(settlement.Verdicts))
+	for _, verdict := range settlement.Verdicts {
+		resolved = append(resolved, verdict.Path+":"+verdict.Side)
 	}
-	return tree, resolved, true, nil
+	return tree, resolved, settlepolicy.Refusal{}, true, nil
 }
 
 // unionStages composes one union path from its merge-tree stages. With both sides
@@ -194,7 +153,7 @@ func resolveCaptureConflict(root, mergeOutput string, records []stageRecord) (st
 // with an absent merge base standing in as empty content. With one side absent, the
 // present side's blob is the result, so a deletion cannot erase the other side's
 // entries. A false ok is a refusal: Git could not merge the content as text.
-func unionStages(root, path string, stages map[int]stageRecord) (*stageRecord, bool, error) {
+func unionStages(root, path string, stages map[int]settlepolicy.StageRecord) (*settlepolicy.StageRecord, bool, error) {
 	destination, hasDestination := stages[2]
 	source, hasSource := stages[3]
 	switch {
@@ -215,7 +174,7 @@ func unionStages(root, path string, stages map[int]stageRecord) (*stageRecord, b
 		file := filepath.Join(dir, fmt.Sprintf("stage%d", stage))
 		content := []byte(nil)
 		if record, ok := stages[stage]; ok {
-			if content, err = blobContent(root, record.oid); err != nil {
+			if content, err = blobContent(root, record.OID); err != nil {
 				return nil, false, err
 			}
 		}
@@ -234,7 +193,7 @@ func unionStages(root, path string, stages map[int]stageRecord) (*stageRecord, b
 	if err != nil {
 		return nil, false, fmt.Errorf("write union of %q: %w", path, err)
 	}
-	return &stageRecord{mode: source.mode, oid: oid, path: path, stage: 3}, true, nil
+	return &settlepolicy.StageRecord{Mode: source.Mode, OID: oid, Path: path, Stage: 3}, true, nil
 }
 
 func compositionCommit(root, value, role string) (string, error) {
@@ -262,7 +221,7 @@ func mergeTreeResult(output string) (string, error) {
 // one stage record per conflicted file (`<mode> <object> <stage>\t<path>`), a NUL
 // separator, then the informational messages that carry the conflict kind. It
 // returns the bounded kind with every conflicted path, and the stage records.
-func parseConflict(output string) (Conflict, []stageRecord, error) {
+func parseConflict(output string) (Conflict, []settlepolicy.StageRecord, error) {
 	parts := bytes.Split([]byte(output), []byte{0})
 	separator := -1
 	for i, part := range parts {
@@ -274,7 +233,7 @@ func parseConflict(output string) (Conflict, []stageRecord, error) {
 	if separator < 1 {
 		return Conflict{}, nil, errors.New("merge-tree returned no conflict records")
 	}
-	records := make([]stageRecord, 0, separator-1)
+	records := make([]settlepolicy.StageRecord, 0, separator-1)
 	modes := make([]string, 0, separator-1)
 	var paths []string
 	seen := map[string]bool{}
@@ -284,7 +243,7 @@ func parseConflict(output string) (Conflict, []stageRecord, error) {
 		if !found || path == "" || len(fields) != 3 || len(fields[2]) != 1 || fields[2][0] < '1' || fields[2][0] > '3' {
 			return Conflict{}, nil, errors.New("merge-tree returned malformed conflict record")
 		}
-		records = append(records, stageRecord{mode: fields[0], oid: fields[1], stage: int(fields[2][0] - '0'), path: path})
+		records = append(records, settlepolicy.StageRecord{Mode: fields[0], OID: fields[1], Stage: int(fields[2][0] - '0'), Path: path})
 		modes = append(modes, fields[0])
 		if !seen[path] {
 			seen[path] = true
@@ -301,35 +260,16 @@ func parseConflict(output string) (Conflict, []stageRecord, error) {
 		case "CONFLICT (directory/file)", "CONFLICT (file/directory)":
 			kind = "file/directory"
 		case "CONFLICT (distinct modes)":
-			kind = contentConflictKind(modes)
+			kind = settlepolicy.ConflictKind(modes)
 			if kind == "textual" {
 				kind = "mode"
 			}
 		case "CONFLICT (contents)":
-			kind = contentConflictKind(modes)
+			kind = settlepolicy.ConflictKind(modes)
 		}
 		if kind != "" {
 			return Conflict{Kind: kind, Paths: paths}, records, nil
 		}
 	}
 	return Conflict{}, nil, errors.New("merge-tree returned an unrecognized conflict kind")
-}
-
-func contentConflictKind(modes []string) string {
-	for _, mode := range modes {
-		if mode == "160000" {
-			return "gitlink"
-		}
-		if mode == "120000" {
-			return "symlink"
-		}
-	}
-	for _, mode := range modes {
-		for _, other := range modes {
-			if mode != other {
-				return "mode"
-			}
-		}
-	}
-	return "textual"
 }

@@ -34,6 +34,33 @@ func TestResolveFollowsALinkAndKeepsAnAbsentPath(t *testing.T) {
 		}
 	})
 
+	t.Run("a dot-dot after a symlink resolves physically", func(t *testing.T) {
+		base := t.TempDir()
+		physical := filepath.Join(base, "physical")
+		child := filepath.Join(physical, "child")
+		if err := os.MkdirAll(child, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		jump := filepath.Join(base, "jump")
+		if err := os.Symlink(child, jump); err != nil {
+			t.Fatal(err)
+		}
+		// filepath.Join would clean "jump/.." away before Resolve ever saw it, so the
+		// root is built by concatenation to keep the symlinked component in place.
+		root := jump + string(filepath.Separator) + ".."
+		want, err := Resolve(physical)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := Resolve(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got != want {
+			t.Fatalf("Resolve(%q) = %q, want the physical directory %q", root, got, want)
+		}
+	})
+
 	t.Run("an absent path keeps its absolute spelling", func(t *testing.T) {
 		absent := filepath.Join(t.TempDir(), "absent", "child.txt")
 		got, err := Resolve(absent)

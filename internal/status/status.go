@@ -477,6 +477,7 @@ func render(root string, all bool) string {
 	if all {
 		signals = expandIntentSignals(root, signals)
 		signals = expandCensusSignals(root, home, signals)
+		signals = expandHandoffSignals(root, signals)
 	}
 
 	var b strings.Builder

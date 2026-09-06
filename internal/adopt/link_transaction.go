@@ -154,6 +154,13 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 		conflicts = append(conflicts, lifecycleVerdict{"CLAUDE.md", "project-owned"})
 	}
 	populateOriginHead(root)
+	// The hooks directory is resolved through the reader before InspectPrePush, and before
+	// any file is staged, so an unresolved answer refuses the whole transaction rather than
+	// leaving InspectPrePush's own absent-state fallback silently skip the hook.
+	if _, err := hooksDir(root); err != nil {
+		fmt.Fprintf(stderr, "%s: %v\n", root, err)
+		return 1, false
+	}
 	hook := InspectPrePush(root)
 	_, hookPresent := os.Lstat(hook.Path)
 	if hook.State == PrePushForeign || (hook.State == PrePushDiverted && hookPresent == nil) {

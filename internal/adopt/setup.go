@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/terminal"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -33,7 +34,7 @@ func setup(args []string, stdin io.Reader, stdout, stderr io.Writer, version str
 		fmt.Fprintln(stderr, "bench setup: not a git repository - run 'git init' first, then re-run bench setup")
 		return 1
 	}
-	kit := kitDir()
+	kit := gate.KitDir()
 	facts := inspectRepo(root, kit)
 	fmt.Fprint(stdout, renderSetupPreview(root, facts))
 

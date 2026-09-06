@@ -3,28 +3,16 @@ package landing
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"reflect"
 	"slices"
-	"sort"
 	"strings"
 	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
-	"github.com/gibbonmi/bench/internal/gate/authorization"
 )
-
-type compositionExpectation struct {
-	paths        []string
-	wantNames    []string
-	wantContent  map[string]string
-	wantMode     map[string]string
-	wantIndex    map[string]string
-	wantWorktree map[string]string
-}
 
 func TestLandRealGitCompositionTable(t *testing.T) {
 	cases := []struct {
@@ -160,28 +148,7 @@ func TestLandRealGitCompositionTable(t *testing.T) {
 				t.Fatal(err)
 			}
 			assertPublishedTree(t, root, got, want.wantNames, want.wantContent, want.wantMode)
-			if got := git(t, root, "show", ":foreign"); got != "foreign-index" {
-				t.Fatalf("foreign index = %q, want foreign-index", got)
-			}
-			if got := string(mustRead(t, filepath.Join(root, "foreign"))); got != "foreign-worktree" {
-				t.Fatalf("foreign worktree = %q, want foreign-worktree", got)
-			}
-			for path, content := range want.wantIndex {
-				if mode := want.wantMode[path]; mode == "160000" {
-					if got := strings.Fields(git(t, root, "ls-tree", got.Commit, "--", path))[2]; got != content {
-						t.Fatalf("published gitlink %s = %q, want %q", path, got, content)
-					}
-					continue
-				}
-				if got := git(t, root, "show", ":"+path); got != content {
-					t.Fatalf("index %s = %q, want %q", path, got, content)
-				}
-			}
-			for path, content := range want.wantWorktree {
-				if got := string(mustRead(t, filepath.Join(root, filepath.FromSlash(path)))); got != content {
-					t.Fatalf("worktree %s = %q, want %q", path, got, content)
-				}
-			}
+			assertCompositionRow(t, root, got, want)
 		})
 	}
 }
@@ -266,9 +233,18 @@ func TestComposeClassifiesRealGitConflictsWithoutMutation(t *testing.T) {
 	}
 }
 
+// The parser is the one reader of Git's format, so it refuses output it cannot read:
+// output holding no record, and a record whose header does not hold three fields.
 func TestConflictKindRejectsEmptyMergeTreeOutput(t *testing.T) {
-	if _, _, err := parseConflict(""); err == nil {
-		t.Fatal("empty merge-tree output classified without an error")
+	for _, tc := range []struct{ name, output string }{
+		{"empty", ""},
+		{"malformed-header-field-count", "0123456789abcdef0123456789abcdef01234567\x00100644 3\tcapture/learnings.md\x00\x00CONFLICT (contents)"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if _, _, err := parseConflict(tc.output); err == nil {
+				t.Fatalf("merge-tree output %q classified without an error", tc.output)
+			}
+		})
 	}
 }
 
@@ -280,158 +256,28 @@ func TestComposeRejectsUnresolvedCommit(t *testing.T) {
 	}
 }
 
-func changeBoth(path, destinationValue, sourceValue string) func(*testing.T, string, string) (string, string) {
-	return func(t *testing.T, root, base string) (string, string) {
-		return commitSides(t, root, base, func() { write(t, root, path, destinationValue) }, func() { write(t, root, path, sourceValue) })
-	}
-}
-
-func modifyDelete(t *testing.T, root, base string) (string, string) {
-	return commitSides(t, root, base, func() { write(t, root, "named", "destination") }, func() { git(t, root, "rm", "-q", "named") })
-}
-
-func renameRename(t *testing.T, root, base string) (string, string) {
-	return commitSides(t, root, base, func() { git(t, root, "mv", "named", "destination-name") }, func() { git(t, root, "mv", "named", "source-name") })
-}
-
-func fileDirectory(t *testing.T, root, base string) (string, string) {
-	return commitSides(t, root, base, func() { write(t, root, "clash", "file") }, func() { write(t, root, "clash/child", "child") })
-}
-
-func modeConflict(t *testing.T, root, base string) (string, string) {
-	return commitSides(t, root, base, func() {
-		write(t, root, "named", "destination")
-		if err := os.Chmod(filepath.Join(root, "named"), 0o755); err != nil {
-			t.Fatal(err)
-		}
-	}, func() { write(t, root, "named", "source") })
-}
-
-func symlinkConflict(t *testing.T, root, base string) (string, string) {
-	return commitSides(t, root, base, func() {
-		if err := os.Remove(filepath.Join(root, "named")); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.Symlink("destination-target", filepath.Join(root, "named")); err != nil {
-			capability.Capability(t, capability.Symlink, err.Error())
-		}
-	}, func() { write(t, root, "named", "source") })
-}
-
-func gitlinkConflict(t *testing.T, root, base string) (string, string) {
-	nested := filepath.Join(root, "nested")
-	if err := os.Mkdir(nested, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	git(t, nested, "init", "-q", "-b", "main")
-	git(t, nested, "config", "user.email", "a@b.c")
-	git(t, nested, "config", "user.name", "a")
-	write(t, nested, "inside", "base")
-	git(t, nested, "add", "inside")
-	git(t, nested, "commit", "-qm", "base")
-	git(t, root, "add", "nested")
-	git(t, root, "commit", "-qm", "add gitlink")
-	base = git(t, root, "rev-parse", "HEAD")
-	git(t, nested, "checkout", "-qb", "destination")
-	write(t, nested, "inside", "destination")
-	git(t, nested, "commit", "-am", "destination", "-q")
-	destinationNested := git(t, nested, "rev-parse", "HEAD")
-	git(t, nested, "checkout", "-qb", "source", baseForNested(t, nested))
-	write(t, nested, "inside", "source")
-	git(t, nested, "commit", "-am", "source", "-q")
-	sourceNested := git(t, nested, "rev-parse", "HEAD")
-	return commitSides(t, root, base, func() { git(t, nested, "checkout", "-q", destinationNested); git(t, root, "add", "nested") }, func() { git(t, nested, "checkout", "-q", sourceNested); git(t, root, "add", "nested") })
-}
-
-func baseForNested(t *testing.T, root string) string { return git(t, root, "rev-parse", "main") }
-
-func commitSides(t *testing.T, root, base string, destinationChange, sourceChange func()) (string, string) {
-	git(t, root, "checkout", "-qb", "destination", base)
-	destinationChange()
-	git(t, root, "add", "-A")
-	git(t, root, "commit", "-qm", "destination")
-	destination := git(t, root, "rev-parse", "HEAD")
-	git(t, root, "checkout", "-qb", "source", base)
-	sourceChange()
-	git(t, root, "add", "-A")
-	git(t, root, "commit", "-qm", "source")
-	return destination, git(t, root, "rev-parse", "HEAD")
-}
-
-type compositionSnapshot struct{ refs, index, status, worktree, mergeHead string }
-
-func compositionState(t *testing.T, root string) compositionSnapshot {
-	t.Helper()
-	mergeHead, err := os.ReadFile(filepath.Join(root, ".git", "MERGE_HEAD"))
-	if err != nil && !os.IsNotExist(err) {
-		t.Fatal(err)
-	}
-	return compositionSnapshot{
-		refs:      string(gitBytes(t, root, "for-each-ref", "--format=%(refname) %(objectname)")),
-		index:     string(gitBytes(t, root, "ls-files", "--stage", "-z")),
-		status:    string(gitBytes(t, root, "status", "--porcelain=v2", "--untracked-files=all")),
-		worktree:  string(gitBytes(t, root, "diff", "--binary", "HEAD")),
-		mergeHead: string(mergeHead),
-	}
-}
-
-func compositionResult(paths, names []string, content map[string]string) compositionExpectation {
-	return compositionExpectation{paths: paths, wantNames: names, wantContent: content}
-}
-
-func greenOwner() Owner {
-	o := New()
-	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
-		return authorization.Result{Kind: authorization.Green}
-	}
-	return o
-}
-
-func assertPublishedTree(t *testing.T, root string, got Result, wantNames []string, wantContent, wantMode map[string]string) {
-	t.Helper()
-	if got.Tree != git(t, root, "rev-parse", got.Commit+"^{tree}") || git(t, root, "rev-parse", "HEAD") != got.Commit {
-		t.Fatal("authorized tree was not the exact published tree")
-	}
-	rawNames := git(t, root, "ls-tree", "-rz", "--name-only", got.Commit)
-	names := strings.Split(rawNames, "\x00")
-	if names[len(names)-1] == "" {
-		names = names[:len(names)-1]
-	}
-	sort.Strings(wantNames)
-	if !reflect.DeepEqual(names, wantNames) {
-		t.Fatalf("published paths = %q, want %q", names, wantNames)
-	}
-	for path, content := range wantContent {
-		if got := git(t, root, "show", got.Commit+":"+path); got != content {
-			t.Fatalf("published %s = %q, want %q", path, got, content)
-		}
-	}
-	for path, mode := range wantMode {
-		fields := strings.Fields(git(t, root, "ls-tree", got.Commit, "--", path))
-		if len(fields) < 4 || fields[0] != mode {
-			t.Fatalf("published mode %s = %q, want %s", path, fields, mode)
-		}
-	}
-}
-
-// The rule table settles a conflicted phase-owned path by its verb. Each row drives
-// Compose against a real Git conflict, then asserts the published bytes and the
-// disclosed verb. The table itself stays in CaptureSide; a row states one behavior.
+// One journey for each settle verdict drives Compose against a real Git conflict, then
+// asserts the published bytes and the disclosed verb. The verdict partitions themselves
+// are policy table cases in settlepolicy_test.go; these rows prove the adapter applies
+// a verdict to a real tree. The removal row observes the force-remove the adapter alone
+// performs, and the union rows observe the arms no policy table reaches, because the
+// policy hands the adapter the stages and never the blobs: one row per deleted side, and
+// one row for the union whose merge base is absent.
+// (Coverage row LS24.)
 func TestComposeSettlesPhaseOwnedConflictsByRule(t *testing.T) {
-	const deleted = "\x00deleted"
 	cases := []struct {
 		name, path                string
 		absentFromBase            bool
 		destination, source       string
 		wantContent, wantResolved string
 	}{
-		{name: "ideas-union", path: "capture/IDEAS.md", destination: "shared\ndestination idea\n", source: "shared\nsource idea\n", wantContent: "shared\ndestination idea\nsource idea", wantResolved: "capture/IDEAS.md:union"},
-		{name: "learnings-union", path: "capture/learnings.md", destination: "shared\ndestination learning\n", source: "shared\nsource learning\n", wantContent: "shared\ndestination learning\nsource learning", wantResolved: "capture/learnings.md:union"},
-		{name: "handoff-source", path: "capture/session-handoff.md", destination: "destination handoff\n", source: "source handoff\n", wantContent: "source handoff", wantResolved: "capture/session-handoff.md:source"},
-		{name: "other-capture-destination", path: "capture/notes.md", destination: "destination notes\n", source: "source notes\n", wantContent: "destination notes", wantResolved: "capture/notes.md:destination"},
-		{name: "union-deleted-on-one-side", path: "capture/learnings.md", destination: deleted, source: "shared\nsource learning\n", wantContent: "shared\nsource learning", wantResolved: "capture/learnings.md:union"},
+		{name: "union", path: "capture/IDEAS.md", destination: "shared\ndestination idea\n", source: "shared\nsource idea\n", wantContent: "shared\ndestination idea\nsource idea", wantResolved: "capture/IDEAS.md:union"},
+		{name: "source", path: "capture/session-handoff.md", destination: "destination handoff\n", source: "source handoff\n", wantContent: "source handoff", wantResolved: "capture/session-handoff.md:source"},
+		{name: "destination", path: "capture/notes.md", destination: "destination notes\n", source: "source notes\n", wantContent: "destination notes", wantResolved: "capture/notes.md:destination"},
+		{name: "removal", path: "capture/notes.md", destination: deletedSide, source: "source notes\n", wantContent: deletedSide, wantResolved: "capture/notes.md:destination"},
+		{name: "union-deleted-on-one-side", path: "capture/learnings.md", destination: deletedSide, source: "shared\nsource learning\n", wantContent: "shared\nsource learning", wantResolved: "capture/learnings.md:union"},
+		{name: "union-deleted-on-the-source-side", path: "capture/learnings.md", destination: "shared\ndestination learning\n", source: deletedSide, wantContent: "shared\ndestination learning", wantResolved: "capture/learnings.md:union"},
 		{name: "union-added-on-both-sides", path: "capture/learnings.md", absentFromBase: true, destination: "destination learning\n", source: "source learning\n", wantContent: "destination learning\nsource learning", wantResolved: "capture/learnings.md:union"},
-		{name: "path-with-a-space", path: "capture/space name.md", destination: "destination spaced\n", source: "source spaced\n", wantContent: "destination spaced", wantResolved: "capture/space name.md:destination"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -442,18 +288,8 @@ func TestComposeSettlesPhaseOwnedConflictsByRule(t *testing.T) {
 				git(t, root, "commit", "-qm", "capture base")
 			}
 			base := git(t, root, "rev-parse", "HEAD")
-			side := func(value string) func() {
-				return func() {
-					if value == deleted {
-						if err := os.Remove(filepath.Join(root, filepath.FromSlash(tc.path))); err != nil {
-							t.Fatal(err)
-						}
-						return
-					}
-					write(t, root, tc.path, value)
-				}
-			}
-			destination, source := commitSides(t, root, base, side(tc.destination), side(tc.source))
+			destination, source := commitSides(t, root, base,
+				settleSide(t, root, tc.path, tc.destination), settleSide(t, root, tc.path, tc.source))
 			got, err := New().Compose(CompositionRequest{Root: root, Destination: destination, Source: source, ReviewBase: base})
 			if err != nil || got.Conflict.Kind != "" || got.Tree == "" {
 				t.Fatalf("compose = %+v, %v, want a settled tree", got, err)
@@ -461,8 +297,38 @@ func TestComposeSettlesPhaseOwnedConflictsByRule(t *testing.T) {
 			if !reflect.DeepEqual(got.Resolved, []string{tc.wantResolved}) {
 				t.Fatalf("resolved = %q, want [%q]", got.Resolved, tc.wantResolved)
 			}
+			if tc.wantContent == deletedSide {
+				names := git(t, root, "ls-tree", "-r", "--name-only", got.Tree)
+				if slices.Contains(strings.Split(names, "\n"), tc.path) {
+					t.Fatalf("settled tree still carries the removed %s", tc.path)
+				}
+				return
+			}
 			if published := git(t, root, "show", got.Tree+":"+tc.path); published != tc.wantContent {
 				t.Fatalf("published %s = %q, want %q", tc.path, published, tc.wantContent)
+			}
+		})
+	}
+}
+
+// A refusing settle names its reason and its refusing paths in the refusal text, so the
+// reader learns which rule refused and where. The kind stays at the front of the text, so
+// every existing prefix match holds. (Coverage rows LS28, LS29, LS30, LS31, LS32, LS34.)
+func TestConflictErrorNamesTheSettleRefusalReason(t *testing.T) {
+	for _, tc := range settleRefusalRows("capture/learnings.md") {
+		t.Run(tc.name, func(t *testing.T) {
+			root := fixture(t)
+			base := captureBase(t, root, tc.files)
+			destination, source := commitSides(t, root, base,
+				func() { tc.destination(t, root) }, func() { tc.source(t, root) })
+			got, err := New().Compose(CompositionRequest{Root: root, Destination: destination, Source: source, ReviewBase: base})
+			if err != nil {
+				t.Fatal(err)
+			}
+			text := ConflictError{got.Conflict}.Error()
+			if !strings.Contains(text, tc.want) || text == "composition conflict: "+got.Conflict.Kind ||
+				strings.Count(text, "; settle refused: ") != 1 {
+				t.Fatalf("refusal = %q, want exactly one settle reason holding %q", text, tc.want)
 			}
 		})
 	}
@@ -472,12 +338,16 @@ func TestComposeSettlesPhaseOwnedConflictsByRule(t *testing.T) {
 // refusal names every conflicted path so repair starts from the path.
 func TestComposeRefusesConflictsTheRuleTableCannotSettle(t *testing.T) {
 	cases := []struct {
-		name      string
-		wantKind  string
-		wantPaths []string
-		setup     func(*testing.T, string, string) (string, string)
+		name       string
+		wantKind   string
+		wantReason string
+		wantPaths  []string
+		setup      func(*testing.T, string, string) (string, string)
 	}{
-		{name: "code-path-beside-a-capture-path", wantKind: "textual", wantPaths: []string{"capture/learnings.md", "named"}, setup: func(t *testing.T, root, base string) (string, string) {
+		// A conflict the table names nowhere engages the policy at all, so it keeps the
+		// bare kind and carries no reason.
+		{name: "no-capture-path", wantKind: "textual", wantPaths: []string{"named"}, setup: changeBoth("named", "destination", "source")},
+		{name: "code-path-beside-a-capture-path", wantKind: "textual", wantReason: "path outside the capture table", wantPaths: []string{"capture/learnings.md", "named"}, setup: func(t *testing.T, root, base string) (string, string) {
 			write(t, root, "capture/learnings.md", "shared\n")
 			git(t, root, "add", "-A")
 			git(t, root, "commit", "-qm", "capture base")
@@ -490,44 +360,9 @@ func TestComposeRefusesConflictsTheRuleTableCannotSettle(t *testing.T) {
 				write(t, root, "named", "source")
 			})
 		}},
-		{name: "symlink-under-capture", wantKind: "symlink", wantPaths: []string{"capture/learnings.md"}, setup: func(t *testing.T, root, base string) (string, string) {
-			write(t, root, "capture/learnings.md", "shared\n")
-			git(t, root, "add", "-A")
-			git(t, root, "commit", "-qm", "capture base")
-			base = git(t, root, "rev-parse", "HEAD")
-			return commitSides(t, root, base, func() {
-				if err := os.Remove(filepath.Join(root, "capture", "learnings.md")); err != nil {
-					t.Fatal(err)
-				}
-				if err := os.Symlink("elsewhere", filepath.Join(root, "capture", "learnings.md")); err != nil {
-					capability.Capability(t, capability.Symlink, err.Error())
-				}
-			}, func() { write(t, root, "capture/learnings.md", "shared\nsource\n") })
-		}},
-		{name: "gitlink-under-capture", wantKind: "gitlink", wantPaths: []string{"capture/nested"}, setup: captureGitlinkConflict},
-		// The rule table keys on the capture/ prefix; a sibling that merely starts
-		// with "capture" has no rule and stays a refusal.
-		{name: "capture-prefix-boundary", wantKind: "textual", wantPaths: []string{"capture.md"}, setup: func(t *testing.T, root, base string) (string, string) {
-			write(t, root, "capture.md", "shared\n")
-			git(t, root, "add", "-A")
-			git(t, root, "commit", "-qm", "capture sibling base")
-			base = git(t, root, "rev-parse", "HEAD")
-			return commitSides(t, root, base, func() { write(t, root, "capture.md", "shared\ndestination\n") },
-				func() { write(t, root, "capture.md", "shared\nsource\n") })
-		}},
-		{name: "mode-conflict-on-a-phase-owned-path", wantKind: "mode", wantPaths: []string{"capture/learnings.md"}, setup: func(t *testing.T, root, base string) (string, string) {
-			write(t, root, "capture/learnings.md", "shared\n")
-			git(t, root, "add", "-A")
-			git(t, root, "commit", "-qm", "capture base")
-			base = git(t, root, "rev-parse", "HEAD")
-			return commitSides(t, root, base, func() {
-				write(t, root, "capture/learnings.md", "shared\ndestination\n")
-				if err := os.Chmod(filepath.Join(root, "capture", "learnings.md"), 0o755); err != nil {
-					t.Fatal(err)
-				}
-			}, func() { write(t, root, "capture/learnings.md", "shared\nsource\n") })
-		}},
-		{name: "binary-union-path", wantKind: "textual", wantPaths: []string{"capture/learnings.md"}, setup: func(t *testing.T, root, base string) (string, string) {
+		// The union verdict's text merge is the adapter's own step, so its refusal has
+		// no policy table twin and stays a journey.
+		{name: "binary-union-path", wantKind: "textual", wantReason: "union content not text", wantPaths: []string{"capture/learnings.md"}, setup: func(t *testing.T, root, base string) (string, string) {
 			write(t, root, "capture/learnings.md", "shared\x00binary\n")
 			git(t, root, "add", "-A")
 			git(t, root, "commit", "-qm", "capture base")
@@ -547,6 +382,9 @@ func TestComposeRefusesConflictsTheRuleTableCannotSettle(t *testing.T) {
 			if got.Tree != "" || len(got.Resolved) != 0 || got.Conflict.Kind != tc.wantKind {
 				t.Fatalf("compose = %+v, want a %s refusal that settles nothing", got, tc.wantKind)
 			}
+			if got.Conflict.Refusal.Reason != tc.wantReason {
+				t.Fatalf("settle reason = %q, want %q", got.Conflict.Refusal.Reason, tc.wantReason)
+			}
 			// Git may add its own disambiguated sibling to a kind conflict, so the
 			// refusal must name every conflicted path, not exactly those paths.
 			for _, want := range tc.wantPaths {
@@ -556,30 +394,4 @@ func TestComposeRefusesConflictsTheRuleTableCannotSettle(t *testing.T) {
 			}
 		})
 	}
-}
-
-func captureGitlinkConflict(t *testing.T, root, base string) (string, string) {
-	nested := filepath.Join(root, "capture", "nested")
-	if err := os.MkdirAll(nested, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	git(t, nested, "init", "-q", "-b", "main")
-	git(t, nested, "config", "user.email", "a@b.c")
-	git(t, nested, "config", "user.name", "a")
-	write(t, nested, "inside", "base")
-	git(t, nested, "add", "inside")
-	git(t, nested, "commit", "-qm", "base")
-	git(t, root, "add", "capture")
-	git(t, root, "commit", "-qm", "add capture gitlink")
-	base = git(t, root, "rev-parse", "HEAD")
-	git(t, nested, "checkout", "-qb", "destination")
-	write(t, nested, "inside", "destination")
-	git(t, nested, "commit", "-am", "destination", "-q")
-	destinationNested := git(t, nested, "rev-parse", "HEAD")
-	git(t, nested, "checkout", "-qb", "source", baseForNested(t, nested))
-	write(t, nested, "inside", "source")
-	git(t, nested, "commit", "-am", "source", "-q")
-	sourceNested := git(t, nested, "rev-parse", "HEAD")
-	return commitSides(t, root, base, func() { git(t, nested, "checkout", "-q", destinationNested); git(t, root, "add", "capture") },
-		func() { git(t, nested, "checkout", "-q", sourceNested); git(t, root, "add", "capture") })
 }

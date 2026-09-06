@@ -1,0 +1,7 @@
+[
+  {
+    "path": "internal/dashboard/dashboard.go",
+    "old": "\tgitDir, err := git.AdminDir(root)\n",
+    "new": "\tgitDir, err := git.Output(\"-C\", root, \"rev-parse\", \"--absolute-git-dir\")\n"
+  }
+]

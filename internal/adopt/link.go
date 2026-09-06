@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	kitpayload "github.com/gibbonmi/bench"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -42,12 +43,12 @@ func Link(args []string, stdout, stderr io.Writer, version string) int {
 		fmt.Fprintln(stderr, toon.Errorf("not a git repository", "run inside a git repository (e.g. run 'git init' first)"))
 		return 1
 	}
-	kit := kitDir()
+	kit := gate.KitDir()
 	// The kit repo authors the managed block and bin/bench.sh, so a link here would commit
 	// a tracked launcher copy that the shim then prefers over the kit's own. The predicate
 	// runs after the git-root refusal, because it reads that root, and before the plan, so
 	// no destination byte is written. doctor --fix is the kit-side route to the same assets.
-	if KitSourceCheckout(root) {
+	if gate.KitSourceCheckout(root) {
 		fmt.Fprintln(stderr, toon.Errorf("kit source checkout", "bench link installs the consumer copy; run bench doctor --fix in the kit checkout"))
 		return 1
 	}

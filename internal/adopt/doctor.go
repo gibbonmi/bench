@@ -9,6 +9,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -249,13 +250,11 @@ func doctorReport(stdout io.Writer, version string) int {
 	return rc
 }
 
-// reportPrePush renders the pre-push backstop row when doctor runs inside a git worktree,
-// and returns whether the row is red. git does not clone hooks, so a fresh clone silently
-// drops the default-branch backstop; this catches that the next time doctor runs. A stale
-// bench-managed hook is repaired by bench doctor --fix; an absent, foreign, or diverted hook
-// is left untouched and points to bench link instead. In the kit source checkout bench link
-// is not a remedy at all, so an absent hook names bench doctor --fix, which installs it
-// there. A red row makes doctor exit 1 even when the shim is healthy.
+// reportPrePush renders the pre-push backstop row inside a git worktree and returns whether it
+// is red. Git does not clone hooks, so a fresh clone drops the backstop until doctor runs. A
+// stale managed hook is repaired by bench doctor --fix; an absent, foreign, or diverted hook
+// points to bench link, except in the kit source checkout, where bench doctor --fix installs
+// it. A red row makes doctor exit 1 even when the shim is healthy.
 func reportPrePush(stdout io.Writer) bool {
 	root, err := git.Root()
 	if err != nil {
@@ -276,34 +275,12 @@ func reportPrePush(stdout io.Writer) bool {
 		fmt.Fprintf(stdout, "  pre-push: diverted by core.hooksPath to %s with no bench-managed hook - run bench link\n", health.Path)
 	default: // PrePushAbsent
 		remedy := "run bench link"
-		if KitSourceCheckout(root) {
+		if gate.KitSourceCheckout(root) {
 			remedy = "run bench doctor --fix"
 		}
 		fmt.Fprintf(stdout, "  pre-push: absent at %s - a fresh clone drops it (git does not clone hooks); %s\n", health.Path, remedy)
 	}
 	return true
-}
-
-// KitSourceCheckout reports whether root is the kit's own source tree. The kit repo is
-// where the managed AGENTS.md block and the bin/bench.sh launcher are authored, so it
-// never carries the consumer-side copy of either, and a row that sent its reader to bench
-// link would name a remedy that breaks the shim route and the land route. A consumer repo
-// never satisfies the predicate, because its kit resolves to a package or cache directory
-// outside the repository. Both paths resolve through symlinks first, so a repository
-// reached by one spelling and a BENCH_KIT set to another still match.
-func KitSourceCheckout(root string) bool {
-	kit := kitDir()
-	if root == "" || kit == "" {
-		return false
-	}
-	return resolvedPath(root) == resolvedPath(kit)
-}
-
-func resolvedPath(path string) string {
-	if resolved, err := filepath.EvalSymlinks(path); err == nil {
-		return resolved
-	}
-	return filepath.Clean(path)
 }
 
 func printSkewWarning(stdout io.Writer, version string) {
@@ -410,6 +387,10 @@ func repairStalePrePush(stdout, stderr io.Writer) int {
 	if err != nil {
 		return 0
 	}
+	if _, err := hooksDir(root); err != nil {
+		fmt.Fprintf(stderr, "%s: %v\n", root, err)
+		return 1
+	}
 	health := InspectPrePush(root)
 	switch health.State {
 	case PrePushManaged:
@@ -433,10 +414,9 @@ func repairStalePrePush(stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "  refusing: %s exists and is not a bench-managed pre-push; left unchanged\n", health.Path)
 		return 1
 	case PrePushAbsent:
-		// Only in the kit source checkout, where the absent-hook row names this fix because
-		// bench link is not a remedy there. Elsewhere an absent hook stays bench link's, so
-		// the fix does not silently take over a route the link transaction owns.
-		if !KitSourceCheckout(root) {
+		// Only in the kit source checkout: an absent hook names this fix as its remedy. Elsewhere it
+		// stays bench link's; this fix never takes that route.
+		if !gate.KitSourceCheckout(root) {
 			return 0
 		}
 		if err := installGitHook(root, stderr); err != nil {
@@ -447,10 +427,9 @@ func repairStalePrePush(stdout, stderr io.Writer) int {
 	return 0
 }
 
-// restorePrePushExecuteMode adds execute bits to a hook that was already present when the
-// repair rewrote it. Writing over an existing file leaves its mode untouched, and git
-// skips a pre-push it cannot execute. The other permission bits are the operator's, so
-// they stay.
+// restorePrePushExecuteMode adds execute bits to a hook already present when the repair rewrote
+// it. Writing over a file leaves its mode untouched, and git skips a pre-push it can't execute.
+// The other permission bits stay the operator's.
 func restorePrePushExecuteMode(path string) error {
 	if isExecutable(path) {
 		return nil

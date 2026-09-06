@@ -5,6 +5,9 @@ import (
 	"io"
 	"sort"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 type processAttachment string
@@ -95,6 +98,80 @@ type commandDefinition struct {
 	Hook bool
 	Kind commandKind
 	Run  commandHandler
+}
+
+// leafRootNeed states how one leaf of a nested command family receives the repository
+// root. The dispatcher reads this value once per call and resolves the root at that one
+// site, so the family has a single producer of the not-in-repo refusal.
+type leafRootNeed uint8
+
+const (
+	// rootNone gives the leaf no repository context: it resolves what it needs itself.
+	rootNone leafRootNeed = iota
+	// rootRequired refuses outside a repository before the leaf runs.
+	rootRequired
+	// rootBoundary passes the empty string outside a repository, so the leaf still
+	// answers its grammar there.
+	rootBoundary
+)
+
+// commandLeaf is one row of a nested command family. The row is the single declaration
+// of the leaf: its name, the grammar its help form answers, how it takes the root, and
+// the handler that runs it.
+type commandLeaf struct {
+	Name string
+	// Grammar is the grammar `<family> <leaf> --help` answers at exit 0. It is empty
+	// for a leaf that takes `--help` as an operand or refuses it, and for a leaf with
+	// no grammar constant.
+	Grammar string
+	Root    leafRootNeed
+	Run     func(c Command, root string, args []string) int
+}
+
+// dispatchLeafFamily answers the forms that belong to the family rather than to any
+// leaf, then routes an explicit leaf. A bare call, a help call, and an unknown leaf are
+// all answered before the root is resolved, so a typo creates no worktree and acquires
+// no assignment. The help form matches on exactly one argument: a second argument is an
+// unknown-argument refusal, not a help request.
+func dispatchLeafFamily(c Command, family, familyUsage string, leaves []commandLeaf, args []string) int {
+	if len(args) == 0 {
+		fmt.Fprint(c.Stdout, familyUsage)
+		return 2
+	}
+	if len(args) == 1 && (args[0] == "help" || args[0] == "--help" || args[0] == "-h") {
+		fmt.Fprint(c.Stdout, familyUsage)
+		return 0
+	}
+	for _, leaf := range leaves {
+		if leaf.Name != args[0] {
+			continue
+		}
+		root, ok := leafRoot(c, leaf.Root)
+		if !ok {
+			return 1
+		}
+		return leaf.Run(c, root, args[1:])
+	}
+	fmt.Fprintln(c.Stderr, toon.Usage(family, args[0]))
+	return 2
+}
+
+// leafRoot is the family's one root producer. A required root that cannot resolve prints
+// the not-in-repo line here, so no leaf repeats that refusal.
+func leafRoot(c Command, need leafRootNeed) (string, bool) {
+	switch need {
+	case rootRequired:
+		root, err := git.Root()
+		if err != nil {
+			fmt.Fprintln(c.Stderr, toon.NotInRepo())
+			return "", false
+		}
+		return root, true
+	case rootBoundary:
+		return boundaryRoot(), true
+	default:
+		return "", true
+	}
 }
 
 // Command is the in-process production entry for ordinary command behavior.
