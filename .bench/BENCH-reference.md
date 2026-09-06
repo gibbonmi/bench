@@ -358,6 +358,7 @@ Bench layers git safety:
   `git config bench.allowProtectedPush true`. Guard discovery reports a
   static, generic deny surface, and enforcement stays live.
 - The destructive-git guard allows an agent push to any branch other than the default branch. The guard denies a force, a deletion, a broadcast (`--all`, `--mirror`, `--tags`), and a push with an unresolved destination. The guard also denies a raw git merge and a raw git cherry-pick in every form; `bench worktree merge` folds a sibling, and `bench worktree land` lands a source.
+- The primary-checkout write guard (`guard-file-write`) denies a file-tool write to a tracked path in the primary checkout, because main receives writes only through landings. The guard allows a write in a Bench worktree, a write to a path git ignores, and a write outside every repository. It wires on Claude Code only, because Codex has no file-tool hook surface.
 - Claude Code and Codex hook adapters call the shared scripts in
   `.bench/hooks/`. Codex loads `.codex/hooks.json` only after you trust it
   once through `/hooks` (its project-hook trust step). It loads only on a
