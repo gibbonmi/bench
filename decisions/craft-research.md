@@ -1,13 +1,14 @@
 # Research
 
-Status: shaping
+Status: ready
 
 ## Destination
 
 Define a model-invoked `craft-research` skill and consolidate the research
 portions of FT99, FT106, FT125, FT304, and FT231. It fans out mutually
 independent primary-source reading to read-only subagents, then returns one
-verified cited Markdown artifact without duplicating research policy.
+verified cited Markdown artifact without duplicating research policy. The map
+also fixes the decision-map storage that those research artifacts live in.
 
 ## #1: Where does research policy live in Bench today, and what must remain single-sourced?
 
@@ -323,7 +324,29 @@ Consider a migration only if a demonstrated reader benefit justifies it.
 
 ### Answer
 
-— (open: the reviewer chooses the current storage boundary)
+Resolved 2026-09-06 (reviewer). `decisions/<topic>.md` becomes an index. It
+holds the title, Status, Destination, Notes, Decisions so far, Not yet
+specified, Spec-writer discretion, Out of scope, and Sources. Each decision
+ticket is one file at `decisions/<topic>/tickets/<n>.md`. The file carries a
+title line, `Blocked by`, `Type`, `### Question`, and `### Answer`.
+
+The number is the id, and the title is the name. The answer lives only in the
+ticket file.
+
+`## Decisions so far` holds one hand-written gist line per resolved ticket,
+with a link to its file. The map lists no open ticket. `## Notes` holds the
+domain, the skills a session consults, and the standing preferences of that
+map. The shaping worktree lease is the claim, and no owner field enters a
+ticket.
+
+One plan-before-apply script migrates every active map, ready maps included.
+After the migration, the parser accepts only the split shape. The map lane
+reds three defects: a resolved ticket without a gist, a gist that links an
+unresolved or missing ticket, and a `Blocked by` that names a missing ticket.
+Resolved still means the Answer is not a placeholder. Prose to the reviewer names a ticket by
+its title with the number beside it. The decision map and decision ticket
+entries in `CONTEXT.md` change with the parser, and an ADR records the split
+under `craft-adr`.
 
 ## #12: Which focused reader discovers ready work without another state owner?
 
@@ -337,7 +360,16 @@ maps without treating the default unresolved `bench maps` view as data loss.
 
 ### Answer
 
-— (open: the reviewer chooses after #11)
+Resolved 2026-09-06 (reviewer). `bench maps` stays the one frontier owner. It
+reads the ticket files and derives the frontier from `Blocked by` and
+placeholder answers. It gains an optional map argument: `bench maps <topic>`
+prints that map's frontier rows with each ticket's path. The default view
+keeps the frontier rows and adds one `ready` row per ready map with the
+write-spec action.
+
+No body reader is built, because the ticket file is the slice. `--count` and
+`--template` stay. `bench status` and FT304's shared view consume this
+projection and compute no map state of their own.
 
 ## #13: How do FT106's artifact home and freshness projection resolve?
 
@@ -351,7 +383,20 @@ FT106. Keep the settled coordinator, Sources, drift, and retirement rules.
 
 ### Answer
 
-— (open: the reviewer chooses after #11)
+Resolved 2026-09-06 (reviewer). A map-owned asset lives at
+`decisions/<topic>/assets/`, so the topic folder moves into
+`specs/<slug>/decisions/` as one unit. Repository-consumed research lives at
+`docs/research/<topic>.md`. The ignore rule narrows to the root shift-scratch
+folder, so that path becomes trackable.
+
+The migration moves each asset a live map names into that map's folder. It
+moves an asset no live map names to `docs/research/<slug>.md`, then removes
+the flat `decisions/assets/` folder.
+
+Freshness is an advisory projection. `bench maps` prints a `stale` row when a
+Source path is missing, or when its last commit is newer than the map's last
+commit. It does no content check, and the gate stays silent. The coordinator,
+Sources, drift, and retirement rules from #6 stay.
 
 ## #14: How should the work compose for specification and measurement?
 
@@ -365,12 +410,34 @@ each cut. Keep FT231's full harness advisory until its own decision resolves.
 
 ### Answer
 
-— (open: the reviewer chooses the specification cuts and measurement)
+Resolved 2026-09-06 (reviewer). Two specs land in order.
+
+Spec 1 is the decision-map split. It lands ticket-per-file storage, the
+parser, and the migration script. It lands the `bench maps` projection from
+#12 and the freshness row from #13. It lands the shape-idea command, the
+template, `CONTEXT.md`, and the ADR. It also carries FT99's rule: a grill recommendation that asserts
+current-code behavior names the evidence read in the current session.
+
+Spec 2 is the research skill. It lands `craft-research` per #8, the report
+contract per #9, the caller pointers, and the asset home and ignore-rule fix
+per #13. Spec 2 cites the topic folder that spec 1 creates.
+
+Measurement rides with each spec as an FT231 advisory measure. Spec 1 records
+the lines a session reads to resume this map before and after the split. Spec 2
+applies the report contract as a checklist to the next research run and records
+the hits. The three-arm harness stays outside both specs. Each roadmap row keeps
+its wider scope, and a new row for the split is the drain's call.
 
 ## Not yet specified
 
 ## Spec-writer discretion
 
+- The gist line grammar in `Decisions so far`, provided each line links one
+  resolved ticket file and the map lane can parse it.
+- The ticket file's exact heading text and the `stale` and `ready` row column
+  names, provided `bench maps` keeps one row shape.
+- The migration script's language and location, provided it prints its target
+  list before it applies.
 - Exact skill headings and the compact contrastive example required by
   `craft-skills`, provided the example demonstrates independent fan-out versus a
   dependent question that stays serial.
@@ -381,12 +448,17 @@ each cut. Keep FT231's full harness advisory until its own decision resolves.
 
 ## Out of scope
 
-- Changing the four decision-ticket types or the decision-map schema.
+- Changing the four decision-ticket types.
+- A tracker-backed map on GitLab or any issue tracker; the repository holds
+  the map.
+- An `Owner` field or any per-ticket claim; the worktree lease is the claim.
+- A body reader such as `bench maps show`; the ticket file is the slice.
+- A gate red on a stale Source; freshness stays advisory.
+- A dual-shape parser; only the split shape parses after the migration.
 - Implementing a general-purpose knowledge base, citation database, or web-search CLI.
 - Replacing `craft-delegate`, `craft-line`, or harness-native subagent controls.
 - Folding formal `/bench-review-implementation` axis review into generic research.
-- Changing the decision-map schema unless the reviewer explicitly reopens this
-  exclusion in ticket #11.
+- FT231's three-arm measurement harness.
 
 ## Sources
 
@@ -396,3 +468,6 @@ each cut. Keep FT231's full harness advisory until its own decision resolves.
 - Path: `decisions/assets/research-workflow-assessment.md`
   Supports: #9 through #14. It compares the local format references with the settled research map and current roadmap and map owners.
   Drift: re-verify when the reference report set, research policy, roadmap rows, map reader, or status projection changes.
+- URL: https://github.com/mattpocock/skills/blob/main/skills/engineering/wayfinder/SKILL.md
+  Supports: #11 through #13, retrieved 2026-09-06. It supplies the map-as-index, frontier, claim, and asset-link rules the reviewer chose or rejected.
+  Drift: re-verify if the upstream skill's storage, ticket, or frontier rules change.
