@@ -223,6 +223,9 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   focused test that must run red, and an exact restore of the subject. A probe
   that fails to compile proves nothing. Not "mutation test", not "smoke test",
   not "sanity check" — mutation probe.
+- **probe verdict** — the one word `bench probe` prints for a run: `bit`,
+  `silent`, `invalid`, or `restore-failed`. Not "test result", not "probe
+  outcome", not "mutation score" — probe verdict.
 - **landing source** — a build-owned Git integration branch identified by its
   frozen base and current source tip. Serial green tickets accumulate there;
   semantic review binds to that pair and `bench worktree land` consumes it. Not
