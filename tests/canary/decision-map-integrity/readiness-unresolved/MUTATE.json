@@ -1,3 +1,7 @@
 [
-  {"path":"specs/ft128-agent-line-binding/decisions/multi-harness-line-binding.md","old":"**Symmetric peers.**","new":"— (open)"}
+  {
+    "path": "specs/ft128-agent-line-binding/decisions/multi-harness-line-binding/tickets/1.md",
+    "old": "**Symmetric peers.**",
+    "new": "— (open)"
+  }
 ]

@@ -1,3 +1,7 @@
 [
-  {"path":"specs/ft128-agent-line-binding/decisions/multi-harness-line-binding.md","old":"## #2: lines.env schema — key shape and harness set","new":"## #1: lines.env schema — key shape and harness set"}
+  {
+    "path": "specs/ft128-agent-line-binding/decisions/multi-harness-line-binding.md",
+    "old": "## Not yet specified",
+    "new": "## #1: Data model — one canonical family, or symmetric peers?\n\nBlocked by: none\nType: Grill\n\n### Question\n\nAn inline copy of the split ticket.\n\n### Answer\n\nAn inline copy of the split ticket.\n\n## Not yet specified"
+  }
 ]

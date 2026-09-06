@@ -11,7 +11,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
-	"github.com/gibbonmi/bench/internal/maps"
 )
 
 var decisionMapIntegrityFixtureCategories = map[string][]string{
@@ -91,20 +90,32 @@ func TestDecisionMapIntegrityCheckValidatesEveryCandidate(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	valid := strings.Replace(maps.DecisionMapTemplate(), "<answer>", "Resolved.", 1)
-	writeMap(filepath.Join(root, "decisions", "active.md"), valid)
-	writeMap(filepath.Join(root, "specs", "compiled", "decisions", "compiled.md"), strings.Replace(valid, "Status: shaping", "Status: ready", 1))
+	// The template still renders the inline shape, so every split map under proof is
+	// written by hand: an index carrying both index sections and one gist, beside the
+	// one ticket file that gist links.
+	const ticketTitle = "Which parser owns the map?"
+	writeSplitMap := func(path, status, blockedBy string) {
+		t.Helper()
+		topic := strings.TrimSuffix(filepath.Base(path), ".md")
+		writeMap(path, "# "+topic+"\n\nStatus: "+status+"\n\n## Destination\n\nDecide the "+topic+" question.\n\n"+
+			"## Notes\n\n## Decisions so far\n\n- [Which parser]("+topic+"/tickets/1.md): The maps package owns it.\n\n"+
+			"## Not yet specified\n\n## Spec-writer discretion\n\n## Out of scope\n\n## Sources\n")
+		writeMap(filepath.Join(strings.TrimSuffix(path, ".md"), "tickets", "1.md"),
+			"# "+ticketTitle+"\n\nBlocked by: "+blockedBy+"\nType: Research\n\n### Question\n\n"+ticketTitle+"\n\n### Answer\n\nThe maps package owns it.\n")
+	}
+	writeSplitMap(filepath.Join(root, "decisions", "active.md"), "shaping", "none")
+	writeSplitMap(filepath.Join(root, "specs", "compiled", "decisions", "compiled.md"), "ready", "none")
 	writeMap(filepath.Join(root, "specs", "no-map", "spec.md"), "# No map\n")
 	if diagnostics := RunConformance(root, h.KitRoot, registry.Dev, "decision-map-integrity"); len(diagnostics) != 0 {
 		t.Fatalf("valid active and compiled maps diagnostics = %v", diagnostics)
 	}
 
 	writeMap(filepath.Join(root, "specs", "broken", "decisions", "broken.md"), "# Broken\n")
-	writeMap(filepath.Join(root, "decisions", "graph.md"), strings.Replace(valid, "Blocked by: none", "Blocked by: #1", 1))
+	writeSplitMap(filepath.Join(root, "decisions", "graph.md"), "shaping", "#1")
 	diagnostics := RunConformance(root, h.KitRoot, registry.Dev, "decision-map-integrity")
 	for _, want := range []string{
 		"specs/broken/decisions/broken.md: missing Status",
-		"decisions/graph.md: ticket #1: <decision question> self-edge #1 -> #1",
+		"decisions/graph.md: ticket #1: " + ticketTitle + " self-edge #1 -> #1",
 	} {
 		if !containsDiagnostic(diagnostics, want) {
 			t.Fatalf("candidate diagnostics = %v, want %q", diagnostics, want)

@@ -1,3 +1,7 @@
 [
-  {"path":"specs/ft128-agent-line-binding/decisions/multi-harness-line-binding.md","old":"## #2: lines.env schema — key shape and harness set\n\nBlocked by: none","new":"## #2: lines.env schema — key shape and harness set\n\nBlocked by: #99"}
+  {
+    "path": "specs/ft128-agent-line-binding/decisions/multi-harness-line-binding/tickets/2.md",
+    "old": "Blocked by: none",
+    "new": "Blocked by: #99"
+  }
 ]

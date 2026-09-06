@@ -1,3 +1,7 @@
 [
-  {"path":"specs/ft128-agent-line-binding/decisions/multi-harness-line-binding.md","old":"## #1: Data model — one canonical family, or symmetric peers?\n\nBlocked by: none\nType: Grill","new":"## #1: Data model — one canonical family, or symmetric peers?\n\nBlocked by: none\nType: Unknown"}
+  {
+    "path": "specs/ft128-agent-line-binding/decisions/multi-harness-line-binding/tickets/1.md",
+    "old": "Type: Grill",
+    "new": "Type: Unknown"
+  }
 ]

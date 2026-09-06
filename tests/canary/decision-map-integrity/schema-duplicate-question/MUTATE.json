@@ -1,1 +1,7 @@
-[{"path":"specs/ft128-agent-line-binding/decisions/multi-harness-line-binding.md","old":"### Question\n`BENCH_TIER_*`","new":"### Question\n### Question\n`BENCH_TIER_*`"}]
+[
+  {
+    "path": "specs/ft128-agent-line-binding/decisions/multi-harness-line-binding/tickets/1.md",
+    "old": "### Question\n",
+    "new": "### Question\n### Question\n"
+  }
+]
