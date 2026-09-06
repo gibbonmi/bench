@@ -257,6 +257,9 @@ Not covered: story 47 — the measure is recorded in the phase-close retro by fi
 - `capture/retros/`
 - `internal/axi/action.go`
 - `internal/axi/action_test.go`
+- `internal/anchors/registry_decision_maps.go`
+- `internal/anchors/registry_decision_maps_test.go`
+- `internal/conformance/registry_test.go`
 
 ## Build decisions
 
@@ -266,6 +269,7 @@ Each entry below is a call the build made under the batch approval of 2026-09-06
 - `TestMapGraphRejectsInvalidEdges` folded into `TestDecisionMapDiagnosticsGolden`, which asserts the same faults as one ordered slice on the split shape.
 - The status helpers for a split map moved into `status_command_test.go`. The two signal test files are over budget, so the growth rule forbids a line there.
 - The fence gained `internal/axi/action.go` and its test. The ready row's help action `/bench-write-spec <path>` needs the phase in the harness-phase set with a path argument. `bench status` already renders that action through its own table.
+- The decision-map anchor rows and their mutation tables moved into `registry_decision_maps.go` and its test. Both registry files are over budget with no grant, and a grant is the reviewer's decision, so the ticket moved its headroom instead. The family owner set in `internal/conformance/registry_test.go` names the new file too.
 - The migration program moved `gate-pipeline-fixture-inventory.md` into the `gate-pipeline` assets folder. Only that map names the asset, in prose rather than in Sources.
 - Two seeded gists read thin and wait for a reviewer edit: `gate-critical-path` #1 and `worktree-orphan-retirement` #5.
 

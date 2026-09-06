@@ -22,8 +22,9 @@ reviewer-confirmed current conversation, or a named reviewed artifact. No
 unnamed memory, unreviewed note, or fourth override authorizes a draft. Top-level `decisions/` holds pre-spec
 working maps; compiled maps live under `specs/<slug>/decisions/`.
 
-- **Ready compiled map.** Validate it. Then move (do not copy) the source map and any map-owned assets from top-level
-  `decisions/` into `specs/<slug>/decisions/`. A map-owned asset stays in `decisions/assets/`. Then update every reference to the moved paths in the same green change. A re-run reads the already-compiled spec-local map; it never recreates a top-level copy.
+- **Ready compiled map.** Validate it.
+  Move the topic folder, its tickets and assets included, into the spec's decisions folder as one unit.
+  Move it out of top-level `decisions/` into `specs/<slug>/decisions/`; do not copy it. Then update every reference to the moved paths in the same green change. A re-run reads the already-compiled spec-local map; it never recreates a top-level copy.
 - **Reviewer-confirmed current conversation.** Close every load-bearing product or scope fork here, dated. Do
   not manufacture a map to restate it.
 - **Named reviewed artifact.** Name it. It holds settled decisions, not unresolved prompts. A resolved ticket answer and its asset in a multi-item shaping map also count, even while a sibling ticket stays open. The phase copies only that ticket's asset, and the map stays in place.
@@ -52,8 +53,7 @@ compatibility, or a reviewer-chosen seam.
    `Bootstrap authority before execution` rule.
 2. **Retire superseded work by promotion then deletion.** Leave no `Superseded by` marker: promote durable
    decisions, delete the old spec under a `spec-retire: <name>` commit, repair references. The same
-   promote-then-delete commit removes the spec's `ROADMAP.md` row and that row's `roadmap/FT<n>.md` detail file.
-   Whole-folder retirement removes the compiled maps and map-owned assets, plus tickets.
+   promote-then-delete commit removes the spec's `ROADMAP.md` row and that row's `roadmap/FT<n>.md` detail file. Whole-folder retirement removes the compiled topic folders, their tickets and assets included.
 3. **Slice, then review once.** Where the stories partition into disjoint package or fence sets, could a narrower
    capability ship on its own gate? Apply `craft-spec`'s named `Bootstrap authority before execution` rule. The ticket graph splits where a consumer branch lands green alone.
 

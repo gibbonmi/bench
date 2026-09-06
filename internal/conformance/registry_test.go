@@ -166,6 +166,7 @@ var canaryFixtureFamilyRegistry = map[string]fixtureRegistration{
 		"internal/anchors/match.go",
 		"internal/anchors/registry.go",
 		"internal/anchors/registry_data.go",
+		"internal/anchors/registry_decision_maps.go",
 		"internal/conformance/docs_workflow_helpers_test.go",
 	),
 	"decision-map-integrity": conformanceGoFixture(
