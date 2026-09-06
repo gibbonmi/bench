@@ -216,13 +216,8 @@ func runHookGit(t *testing.T, root string, args ...string) {
 // error, if any, and the hook's stderr.
 func runPrePushHook(t *testing.T, root, path, remoteRef string) (error, string) {
 	t.Helper()
-	command := exec.Command("bash", path)
-	command.Dir = root
 	oid := strings.Repeat("a", 40)
-	command.Stdin = strings.NewReader("refs/heads/topic " + oid + " " + remoteRef + " " + oid + "\n")
-	var stderr strings.Builder
-	command.Stderr = &stderr
-	return command.Run(), stderr.String()
+	return runPrePushHookStdin(t, root, path, "refs/heads/topic "+oid+" "+remoteRef+" "+oid+"\n")
 }
 
 // TestLinkRefusesUnresolvedHooksDirectory pins GR20: a failed hooks-directory
