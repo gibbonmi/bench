@@ -29,6 +29,10 @@ them atomically. When there is nothing to commit, the honest no-op runs
 `bench gate` and reports its verdict.
 A light-path fix lands before a spec's final merge only when its `CHANGELOG.md` entry sits under a heading no sibling touches.
 
+After a lane-only repair commit and before the landing, run the whole-tree
+gate on the source. The lane skips the conformance checks the landing gate
+runs.
+
 If the command refuses because of an
 unexplained working-tree file, surface that file. Do not commit or revert it.
 Then hand back to the reviewer to merge or to decide what ships. On red,
