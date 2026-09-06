@@ -102,6 +102,13 @@ the explore reads, the fence rules, and the review rubric.
   package.
 - A fence over the public help traces every inventory fixture that help forces.
 - The author quotes each pasted operand in the delegate charge.
+- Before the first review charge, the author walks each coverage row's seam path
+  against the ticket `Writes:` lines. The author moves the row to the ticket that
+  writes that path.
+- A golden-file row states its exact predicate, and the old-versus-new diff stays
+  review-owned.
+- A build-time rewrite scope excludes `specs/*/spec.md` and the tickets by name.
+- The spec quotes every anchor needle verbatim.
 
 ## At review
 
