@@ -2,7 +2,7 @@
 
 Blocked by: refuse-the-inline-shape-and-render-both-templates.md
 Writes: internal/maps/maps.go, internal/maps/freshness.go (new), internal/maps/freshness_test.go (new), internal/maps/maps_command_test.go, internal/maps/testdata/, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: DS22, DS23, DS24, DS25, DS26, DS27, DS28, DS29, DS30, DS31, DS32
+Covers: DS22, DS23, DS24, DS25, DS26, DS27, DS28, DS29, DS30, DS31, DS32, DS50
 
 ## What to build
 
@@ -14,7 +14,8 @@ The map operand filters the rows by map name after the scan. A well-formed name 
 
 ## Acceptance
 
-- [ ] [P1] The regenerated frontier-plus-invalid golden output differs from the old one only by the `path` column.
+- [ ] [P1] Every pre-existing row of the regenerated golden keeps its five cells and gains a path cell, and the return pastes the old-versus-new `git diff`.
+- [ ] [P7] `decisions/my map.md` with `decisions/my map/tickets/1.md` projects one row whose path cell is `decisions/my map/tickets/1.md`.
 - [ ] [P2] A ready active map projects its row and its write-spec help line, and a ready compiled map projects nothing.
 - [ ] [P3] `bench maps alpha` prints only alpha's rows and help lines, and `bench maps gamma` exits 1 with the refusal.
 - [ ] [P4] `bench maps decisions/alpha.md`, `bench maps alpha.md`, and an operand with `\x1b` each exit 2.

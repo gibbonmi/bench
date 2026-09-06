@@ -113,9 +113,11 @@ A missing Sources Path stays a validity diagnostic and a gate red. That check ex
 
 **Migration program.** A one-shot Go program at `scripts/split-decision-maps/main.go` runs as `go run ./scripts/split-decision-maps [--apply]`. Without `--apply` it prints every target: each map with its ticket files, each asset with its destination, each reference file, and the ignore line. With `--apply` it writes them. It parses the inline shape through the expand-era parser and writes the split shape. It seeds each gist from the answer's first sentence.
 
-**Migration moves.** The program moves each asset named by a map's Sources into that map's assets folder. It rewrites every reference to the old path in tracked files under `decisions/`, `specs/`, and `docs/`. It then searches the whole tree for the old paths and reports any remaining hit. It moves an asset that no map names to `docs/research/<slug>.md`, then removes `decisions/assets/`. It replaces the `research/` ignore line with `/research/` under a comment that names the shift-scratch folder.
+**Migration moves.** The program moves each asset named by a map's Sources into that map's assets folder. It rewrites every reference to the old path in tracked files under `decisions/`, `specs/*/decisions/`, and `docs/`. It never edits `specs/*/spec.md` or `specs/*/tickets/`, because a build may not edit a spec. It then searches the whole tree for the old paths and reports any remaining hit. The template and command needles that carry the old path change in the contract and guidance tickets.
 
-No linked repository holds a map on 2026-09-06, so this repository is the program's only audience.
+It moves an asset that no map names to `docs/research/<slug>.md`, then removes `decisions/assets/`. It replaces the `research/` ignore line with `/research/` under a comment that names the shift-scratch folder.
+
+No linked repository holds a map on 2026-09-06, a reviewer-supplied premise, so this repository is the program's only audience.
 
 **Expand, migrate, contract.** The parser first accepts both shapes, and the index-drift rules run only for a map that has a tickets folder. The migration then lands the split tree and the rebuilt fixture family. The contract then refuses the inline shape, makes the drift rules universal, renders both templates, and deletes the program with the inline parse. The tree is green at each commit.
 
@@ -170,8 +172,8 @@ No linked repository holds a map on 2026-09-06, so this repository is the progra
 | DS18 | 16 | `bench maps --ticket-template` output starts with `# ` and holds `Blocked by: none`, `Type: Research`, `### Question`, and `### Answer` | `maps.Command` | A missing flag exits 2 and prints no skeleton |
 | DS19 | 16 | `bench maps --template --ticket-template` exits 2 with the mutual-exclusion help line | `maps.Command` | A parse that takes the first flag exits 0 |
 | DS20 | 17 | The index skeleton holds `A map-owned asset stays in the map's assets folder, decisions/<topic>/assets/.` | `maps.Command` and anchor fixture `decision-map-asset-path` | A template with the flat-folder sentence passes an unchanged anchor |
-| DS21 | 18 | `decisions/my map.md` with `decisions/my map/tickets/1.md` projects one row with path `decisions/my map/tickets/1.md` | `maps.Command` on a gittest repo | A path join that splits on spaces loses the folder |
-| DS22 | 19 | The frontier-plus-invalid golden output is byte-identical to the old one except for the added `path` column | `internal/maps/maps_command_test.go` (`TestCommandAppendsOnlyMapActionsToTheCapturedPrimaryResponse`) against the regenerated golden file | Any dropped or reordered row changes the bytes |
+| DS21 | 18 | `decisions/my map.md` with `decisions/my map/tickets/1.md` validates with no diagnostic | `ValidateDecisionMapTree` on a temp tree | A path join that splits on spaces loses the folder |
+| DS22 | 19 | Every pre-existing row of the frontier-plus-invalid golden keeps its five cells and gains a sixth cell with its file path, and no row is added, dropped, or reordered | `internal/maps/maps_command_test.go` (`TestCommandAppendsOnlyMapActionsToTheCapturedPrimaryResponse`) against the regenerated golden file | Any dropped or reordered row changes the bytes |
 | DS23 | 20 | A ready active map projects `[name, title, map, ready, "", decisions/name.md]` and the help line `/bench-write-spec decisions/name.md` | `maps.Command` on a gittest repo | A projection that skips ready maps prints no row |
 | DS24 | 20 | A ready compiled map under `specs/` projects no row | `maps.Command` on a gittest repo | A scan that lists compiled maps adds a row the status count lacks |
 | DS25 | 21 | The header is exactly `maps[N]{map,title,type,state,blockers,path}` and every row has six cells | `maps.Command` golden bytes | A five-cell row fails the typed table render |
@@ -185,7 +187,7 @@ No linked repository holds a map on 2026-09-06, so this repository is the progra
 | DS33 | 28 | `appendMaps` returns `1 ready map(s)` with `/bench-write-spec decisions/ready.md` for one ready split map and `1 unresolved map(s)` for one shaping split map | `internal/status/status_signals_test.go` (`TestAppendMapsRoutesReadyOnlyWithoutUnresolvedOrInvalidMaps`) on split maps | A count that reads only inline maps returns zero |
 | DS34 | 29 | The dry run prints every map, ticket, asset move, reference file, and the ignore line, and changes no file | review-owned: the migration ticket records the plan and a clean `git status` | A program that applies on a dry run leaves a dirty tree |
 | DS35 | 30, 31 | After `--apply`, every index has Notes, one gist per resolved ticket, and no `## #n:` line, and each ticket file validates | `ValidateDecisionMapTree` over the migrated tree through `bench maps` | A migration that leaves one inline ticket reds the contract's parser |
-| DS36 | 32 | Every Sources Path names a file under that map's assets folder, and `rg 'decisions/assets/'` over tracked files finds no hit | review-owned: the migration ticket records both searches | A rewrite that misses one reference leaves a hit |
+| DS36 | 32 | Every Sources Path names a file under that map's assets folder, and no asset reference under `decisions/`, `specs/*/decisions/`, or `docs/` names a file in `decisions/assets/` | review-owned: the migration ticket records both searches | A rewrite that misses one reference leaves a hit |
 | DS37 | 33 | `docs/research/ft191-resolved-reader-research.md` is tracked and `decisions/assets/` does not exist | review-owned: the migration ticket records `git ls-files` | An orphan left in place keeps the flat folder alive |
 | DS38 | 34 | `git check-ignore docs/research/x.md` exits 1 and `git check-ignore research/x` exits 0 | review-owned: the migration ticket records both runs | A rule left as `research/` still ignores the docs path |
 | DS39 | 35 | The `bench maps` rows before and after the migration are equal once the `path` column is dropped | review-owned: the migration ticket records both outputs and their diff | A ticket whose answer moved wrong changes its state |
@@ -198,6 +200,7 @@ No linked repository holds a map on 2026-09-06, so this repository is the progra
 | DS46 | 44 | `docs/adr/0020-a-decision-lives-in-its-ticket-file.md` exists, records the three decisions, and names no path | review-owned: the guidance ticket cites the file | An ADR with paths rots |
 | DS47 | 45 | `README.md` keeps `Decision maps are situational` and describes the index and ticket files | the README anchors in the `workflow-guidance-anchors` family | A README rewrite that drops the anchored phrase reds |
 | DS48 | 46 | Every anchor row changed in this spec has a mutation-table row that bites | `TestDecisionMapSplitAnchorsRedOnRemoval` | A needle without a mutation row is a claim, not a bite |
+| DS50 | 18, 21 | `decisions/my map.md` with `decisions/my map/tickets/1.md` projects one row whose path cell is `decisions/my map/tickets/1.md` | `maps.Command` on a gittest repo | A path join that splits on spaces loses the folder |
 
 Not covered: story 47 — the measure is recorded in the phase-close retro by final-check, which no ticket owns.
 
@@ -232,7 +235,7 @@ Not covered: story 47 — the measure is recorded in the phase-close retro by fi
 - `cmd/bench/help_inventory_test.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
-- `scripts/split-decision-maps/`
+- `scripts/`
 - `decisions/`
 - `specs/decision-map-split/decisions/`
 - `docs/research/`
@@ -246,7 +249,6 @@ Not covered: story 47 — the measure is recorded in the phase-close retro by fi
 - `internal/anchors/registry_data_test.go`
 - `.agents/commands/bench-shape-idea.md`
 - `.agents/commands/bench-write-spec.md`
-- `.agents/skills/bench-craft-adr/SKILL.md`
 - `CONTEXT.md`
 - `README.md`
 - `docs/field-guide.html`
@@ -272,6 +274,9 @@ Not covered: story 47 — the measure is recorded in the phase-close retro by fi
 - The orphan-folder diagnostic (DS7) and the basename rule (DS4) are edge cases the split creates.
 - The refusal grammar for the map operand (DS27, DS28) is the hostile-input checklist applied to the new operand.
 - The missing-Sources-Path deviation is recorded under Implementation decisions.
+- The ignore-rule narrowing moves here from spec 2, because the orphan move needs a trackable `docs/research/`. Map #14 assigned it to spec 2, so this is a reassignment for reviewer veto.
+- A `ready` row projects for an active map only, because the status count reads active maps only.
+- The linked-repository premise is reviewer-supplied and not checkable in this tree.
 
 **Source sentence to row.**
 
@@ -292,22 +297,31 @@ Not covered: story 47 — the measure is recorded in the phase-close retro by fi
 - Map #13, `docs/research/` trackable: DS37, DS38.
 - Map #13, orphan move: DS37.
 - Map #13, stale row by git dates, advisory: DS29, DS30, DS31, DS32.
+- Map #13, a missing Source path as a stale row: deviation recorded under Existing rules unchanged, the validity red stays.
 - Map #14, spec 1 contents: every group above.
 - Map #14, FT99 rule: DS43.
 - Map #14, measurement: the Not covered line for story 47.
 
 **Anchored sentences the guidance ticket registers.**
 
-- In `bench-shape-idea.md`: the map is an index.
-- In `bench-shape-idea.md`: a decision ticket is one file under the map's tickets folder.
-- In `bench-shape-idea.md`: the answer lives only in the ticket file.
-- In `bench-shape-idea.md`: Decisions so far holds one gist per resolved ticket.
-- In `bench-shape-idea.md`: Notes holds the map's standing preferences.
-- In `bench-shape-idea.md`: the shaping worktree lease is the claim.
-- In `bench-shape-idea.md`: name a ticket by its title with its number beside it.
-- In `bench-shape-idea.md`: a grill recommendation that asserts current-code behavior names the evidence read in the current session.
-- In `bench-write-spec.md`: move the topic folder into the spec as one unit.
-- In `CONTEXT.md`: the gist entry.
+- In `bench-shape-idea.md`: `The map is an index: it lists the decisions made and links the ticket that holds each one.`
+- In `bench-shape-idea.md`: `A decision ticket is one file under the map's tickets folder, named by its number.`
+- In `bench-shape-idea.md`: `The answer lives only in the ticket file.`
+- In `bench-shape-idea.md`: `Decisions so far holds one gist line per resolved ticket, with a link to its file.`
+- In `bench-shape-idea.md`: `Notes holds the domain, the skills a session consults, and the standing preferences of that map.`
+- In `bench-shape-idea.md`: `The shaping worktree lease is the claim, and no owner field enters a ticket.`
+- In `bench-shape-idea.md`: `Name a ticket by its title, with its number beside it.`
+- In `bench-shape-idea.md`: `A grill recommendation that asserts current-code behavior names the evidence read in the current session.`
+- In `bench-write-spec.md`: `Move the topic folder, its tickets and assets included, into the spec's decisions folder as one unit.`
+- In `CONTEXT.md`: `one line in Decisions so far that links a resolved decision ticket`.
+- Forbidden after the move, in both commands and the template constant: `decisions/assets/`.
+
+**Cheapest wrong implementation per group.**
+
+- Index and ticket files: a parser that keeps the inline tickets and ignores the folder. DS3 and DS1 red it.
+- Projection: a filter that returns an empty table for an unknown name. DS27 reds it.
+- Migration: hand-edited maps with no program. DS34 is review-owned, so the migration ticket's return cites the program source file and the dry-run output.
+- Guidance: a reworded rule with no needle. DS43 and DS48 red it.
 
 **Pre-review proof checklist.**
 
@@ -326,7 +340,7 @@ Not covered: story 47 — the measure is recorded in the phase-close retro by fi
 - `internal/conformance` binds the check and holds the fixture inventory.
 - `internal/spec/spec.go` removes the folder at retirement, unchanged.
 - `internal/anchors/registry_data.go` holds the needles.
-- The two command files, `CONTEXT.md`, `README.md`, `docs/field-guide.html`, and `.agents/skills/bench-craft-adr/SKILL.md` describe the shape.
+- The two command files, `CONTEXT.md`, `README.md`, and `docs/field-guide.html` describe the shape. The ADR skill's sentence that maps live in `decisions/` stays true and is not edited.
 - The canary fixture copies of the two commands repeat the prose.
 - `bench handoff` reads maps only through the status board. `bench roadmap` does not read them. No script or workflow reads `decisions/`.
 - Shipped-surface claim words: none added.

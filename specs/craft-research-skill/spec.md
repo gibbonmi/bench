@@ -115,18 +115,18 @@ The bootstrap-authority reference keeps "compatibility proven, not promised" and
 | CR4 | 3, 8 | The skill states the primary-source rule and the re-open-and-check-joins rule | `TestCraftResearchAnchorsRedOnRemoval` | A skill that trusts delegate summaries passes without the needle |
 | CR5 | 5, 6 | The skill points at the fan-out clause for width and at the delegate discipline for charge mechanics, and states no tier or effort | review-owned: the skill ticket quotes both pointers | A restated tier table duplicates the line skill |
 | CR6 | 9, 10, 16 | The skill states one output per run, the four-step destination precedence, and the three metadata labels | `TestCraftResearchAnchorsRedOnRemoval` | A skill without the precedence lets each session choose a home |
-| CR7 | 11, 12, 13, 14 | The skill's report section lists recommendation-first, the four separated sections, the option table, kept unknowns, the diagram rule, and the validation plan | review-owned: the skill ticket cites the section | A report contract missing one element lands a thinner report |
+| CR7 | 11, 12, 13, 14 | The skill's report section lists recommendation-first, the four separated sections, the option table, kept unknowns, the diagram rule, the validation plan, one section per question, every question answered or unknown, and a statement of what could not be verified | review-owned: the skill ticket cites the section | A report contract missing one element lands a thinner report |
 | CR8 | 15 | The skill states the citation rule: exact local path and line, or a primary URL with retrieval date | `TestCraftResearchAnchorsRedOnRemoval` | A citation rule without a needle can soften to "cite sources" |
 | CR9 | 17, 23 | The skill states that a compatibility claim stays unverified until a runnable probe returns, and the shaping command names the Prototype ticket rule | `TestCraftResearchAnchorsRedOnRemoval` | A research run that closes a compatibility claim passes without the needle |
 | CR10 | 18 | The skill states the read-side boundary: no write delegate, done-claim, reviewer decision, or prototype | `TestCraftResearchAnchorsRedOnRemoval` | A skill that absorbs probes blurs the phase boundary |
 | CR11 | 19 | The skill carries one contrastive pair marked as such | review-owned: the skill ticket quotes the pair | A skill without the pair fails the craft-skills rule |
 | CR12 | 20 | The skill's checklist names each report element and says where the tick lands | review-owned: the skill ticket cites the list | A checklist without a landing place is never ticked |
 | CR13 | 21 | The skill passes `bench gate-prose` and the `guidance-prose-budgets` check at or under 120 lines | conformance check `guidance-prose-budgets` and the prose lane | A longer skill reds the budget without a named row |
-| CR14 | 22 | The shaping command's Research bullet names `craft-research` and no longer states the source, artifact, probe, or delegation rules | `TestCraftResearchAnchorsRedOnRemoval` | A bullet that keeps the old rules is a second copy |
+| CR14 | 22 | The shaping command's Research bullet names `craft-research`, and the three forbidden fragments listed under Further notes are absent | `TestCraftResearchAnchorsRedOnRemoval` with Forbid rows | A bullet that keeps the old rules is a second copy |
 | CR15 | 24, 25 | The assessment command names `craft-research` in its fan-out and synthesis steps and keeps its five anchored phrases | the assessment anchors in the `workflow-guidance-anchors` family | A rewrite that drops one phrase reds |
 | CR16 | 26 | The bootstrap-authority reference keeps "compatibility proven, not promised" and points at the skill's probe rule | `TestCraftResearchAnchorsRedOnRemoval` | A reference without the pointer leaves two owners |
-| CR17 | 27 | `git diff` for the build touches neither `bench-craft-delegate/SKILL.md` nor `bench-craft-line/SKILL.md` | review-owned: the review reads the diff file list | An edit there breaks the composition decision |
-| CR18 | 28 | `.claude/skills/bench-craft-research` resolves to `.agents/skills/bench-craft-research/SKILL.md` | conformance check `load-validity-metadata` | A missing or wrong symlink reds the mirror check |
+| CR17 | 27 | `git diff` for the build touches none of `bench-craft-delegate/SKILL.md`, `bench-craft-line/SKILL.md`, and `bench-craft-tickets/SKILL.md` | review-owned: the review reads the diff file list | An edit there breaks the composition decision |
+| CR18 | 28 | `.claude/skills/bench-craft-research` is a relative symlink that resolves to `.agents/skills/bench-craft-research/` | conformance check `load-validity-metadata` | A missing or wrong symlink reds the mirror check |
 | CR19 | 29 | The skills index block carries the new trigger line in alphabetical position | conformance check `skills-index-command-adapters` | A stale index reds with the regenerate hint |
 | CR20 | 30 | Every needle listed under Further notes has a mutation row that bites | `TestCraftResearchAnchorsRedOnRemoval` | A needle without a mutation row is a claim |
 
@@ -171,6 +171,7 @@ Not covered: story 31 — the checklist hits are recorded by the next research r
 - Folding formal review's axis judgment into research: rejected.
 - A named prose-budget row above 120 lines: a reviewer decision if the skill cannot fit, 1 edit, 1 gate run.
 - The decision-map storage, projection, and asset home: the sibling spec `decision-map-split`.
+- The ignore-rule narrowing: moved to the sibling spec's migration, because the orphan move needs a trackable `docs/research/`.
 
 ## Further notes
 
@@ -206,6 +207,9 @@ Not covered: story 31 — the checklist hits are recorded by the next research r
 - Research never owns a write delegate, a done-claim, a reviewer decision, or a prototype.
 - In the shaping command: the Research ticket type points at `craft-research`.
 - In the bootstrap-authority reference: the pointer to the probe rule.
+- Forbidden in the shaping command after the pointer lands: `and produce a short`, `Include a runnable compatibility probe when the answer`, and `as a read-only delegation. Otherwise resolve it inline.`
+
+**Open reviewer question.** The skill's budget is the 120-line glob row. Every comparable craft skill needed a named row, and the budget file is reviewer-owned. The recommendation is a named row `.agents/skills/bench-craft-research/SKILL.md | 122` before the build starts. Without it, an overflow stops the build as a spec-level shortfall.
 
 **Pre-review proof checklist.**
 
@@ -214,7 +218,7 @@ Not covered: story 31 — the checklist hits are recorded by the next research r
 - Source-row clauses and occurrences: listed under Source sentence to row.
 - Promised field labels: `name: craft-research`, `index:`, `Consumed by`, `Drift`, `Retire when`.
 - Changed-function callers: none; no Go function changes.
-- Copy survival: CR14 reds a Research bullet that keeps the old rules.
+- Copy survival: CR14's Forbid rows red a Research bullet that keeps any of the three old fragments.
 
 **Reader sweep.**
 

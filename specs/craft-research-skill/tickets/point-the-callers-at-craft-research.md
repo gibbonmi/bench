@@ -10,12 +10,12 @@ Re-read the landed shaping command first, because the sibling spec edits it. Its
 
 The assessment command charges `craft-research` in its fan-out and synthesis steps. It keeps its five anchored phrases, its six areas, the previous-backlog reconciliation, the severity grammar, the ranked backlog, the verification marks, and the replace-in-place lifecycle. The bootstrap-authority reference keeps "compatibility proven, not promised" and gains one pointer to the skill's probe rule.
 
-Register the two pointer needles with mutation rows, and update the fixture copies of both commands. Do not edit the delegate or line skills. Cite the diff file list in the return.
+Register the two pointer needles and the three Forbid fragments with mutation rows, and update the fixture copies of both commands. Do not edit the delegate, line, or tickets skills. Cite the diff file list in the return.
 
 ## Acceptance
 
 - [ ] [K1] The Research bullet names `craft-research` and states no source, artifact, probe, or delegation rule.
 - [ ] [K2] The assessment command names `craft-research`, and the assessment anchors still pass.
 - [ ] [K3] The bootstrap-authority reference carries the pointer and its existing sentence.
-- [ ] [K4] The diff touches neither `bench-craft-delegate/SKILL.md` nor `bench-craft-line/SKILL.md`.
+- [ ] [K4] The diff touches none of the delegate, line, and tickets skills.
 - [ ] [K5] The workflow-guidance-anchors and skills-index-command-adapters fixtures pass against the updated registry.
