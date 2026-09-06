@@ -36,6 +36,8 @@ the explore reads, the fence rules, and the review rubric.
 - A posture change lists every existing test fixture it reds before the map locks.
 - A spec that names a Git flag cites an observed run of that flag over the hostile
   shapes. A flag's documented behavior is an assumption until that run exists.
+- A spec that inherits a closed decision about a bench signal quotes that signal's
+  current value in its first status update.
 
 ## Per row
 
