@@ -7,6 +7,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/axi"
+	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -47,17 +48,16 @@ func anchorsCommand(args []string) (string, int) {
 	return out, 0
 }
 
+// anchorQueryPath spells the operand the way the anchor registry keys its files. A path
+// that does not exist has no file to key, so the query keeps the operand as typed.
 func anchorQueryPath(root, arg string) string {
-	candidate := arg
-	if !filepath.IsAbs(candidate) {
-		if cwd, err := os.Getwd(); err == nil {
-			candidate = filepath.Join(cwd, candidate)
-		}
+	cwd, err := os.Getwd()
+	if err != nil {
+		cwd = ""
 	}
+	candidate, display := canonicalpath.Operand(root, cwd, arg)
 	if _, err := os.Lstat(candidate); err == nil {
-		if relative, err := filepath.Rel(root, candidate); err == nil {
-			return filepath.ToSlash(filepath.Clean(relative))
-		}
+		return display
 	}
 	return filepath.ToSlash(filepath.Clean(arg))
 }

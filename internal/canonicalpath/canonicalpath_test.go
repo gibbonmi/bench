@@ -6,6 +6,74 @@ import (
 	"testing"
 )
 
+// TestOperandJoinsTheWorkingDirectoryAndSpellsTheDisplay pins the one operand rule both
+// `bench anchors` and `bench probe` read. The rows are built from filepath.Join rather
+// than from literals, so the case runs on a platform whose separator is not "/".
+func TestOperandJoinsTheWorkingDirectoryAndSpellsTheDisplay(t *testing.T) {
+	root := filepath.Join(string(filepath.Separator), "repo")
+	cwd := filepath.Join(root, "internal", "probe")
+	cases := []struct {
+		name        string
+		root        string
+		cwd         string
+		arg         string
+		wantPath    string
+		wantDisplay string
+	}{
+		{
+			name:        "an absolute operand stays",
+			root:        root,
+			cwd:         cwd,
+			arg:         filepath.Join(root, "cmd", "bench", "main.go"),
+			wantPath:    filepath.Join(root, "cmd", "bench", "main.go"),
+			wantDisplay: "cmd/bench/main.go",
+		},
+		{
+			name:        "a relative operand joins onto the working directory",
+			root:        root,
+			cwd:         cwd,
+			arg:         filepath.Join("subject.go"),
+			wantPath:    filepath.Join(cwd, "subject.go"),
+			wantDisplay: "internal/probe/subject.go",
+		},
+		{
+			name:        "a dot-dot operand cleans",
+			root:        root,
+			cwd:         cwd,
+			arg:         filepath.Join("..", "toon", "toon.go"),
+			wantPath:    filepath.Join(root, "internal", "toon", "toon.go"),
+			wantDisplay: "internal/toon/toon.go",
+		},
+		{
+			name:        "an operand outside the root spells its way out",
+			root:        root,
+			cwd:         cwd,
+			arg:         filepath.Join(string(filepath.Separator), "elsewhere", "file.go"),
+			wantPath:    filepath.Join(string(filepath.Separator), "elsewhere", "file.go"),
+			wantDisplay: "../elsewhere/file.go",
+		},
+		{
+			name:        "a root that cannot relativize keeps the cleaned operand",
+			root:        filepath.Join("relative", "root"),
+			cwd:         cwd,
+			arg:         filepath.Join("..", "probe", "subject.go"),
+			wantPath:    filepath.Join(root, "internal", "probe", "subject.go"),
+			wantDisplay: "../probe/subject.go",
+		},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			path, display := Operand(testCase.root, testCase.cwd, testCase.arg)
+			if path != testCase.wantPath {
+				t.Fatalf("Operand path = %q, want %q", path, testCase.wantPath)
+			}
+			if display != testCase.wantDisplay {
+				t.Fatalf("Operand display = %q, want %q", display, testCase.wantDisplay)
+			}
+		})
+	}
+}
+
 // TestResolveFollowsALinkAndKeepsAnAbsentPath pins the two halves of the derivation the
 // six former copies each carried. The link row compares two spellings of one directory
 // rather than a literal, because the temp root itself can sit under a link. The absent row
