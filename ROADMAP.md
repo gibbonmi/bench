@@ -39,6 +39,10 @@ findings in the owner details.
 
 **FT309 (LOW) — the fold and landing refusals name their route: `merge --from` accepts a sibling tip sha, and the non-ancestor base refusal names the two bases.**
 
+**FT310 (MEDIUM) — a guard refuses a file-tool write to a tracked path in the primary checkout.**
+
+**FT311 (MEDIUM, decision required) — repeated coordinator chunks fold into Bench verbs and cheap-tier delegates.**
+
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
 **FT283 (MEDIUM, decision required) — `bench worktree land --spec` has one phase-scoped transition contract.**
@@ -233,4 +237,5 @@ recommended table is sequencing advice.
 ## Recommended sequence
 
 1. FT298 skill-discipline kit edits — run the `craft-synthesis` kit edit, one rule per commit.
-2. FT309 fold and landing refusal routes — run the light-path ticket. The growth refusal joined the row on 2026-09-06.
+2. FT310 primary-checkout file-tool guard — run the light-path ticket.
+3. FT309 fold and landing refusal routes — run the light-path ticket.
