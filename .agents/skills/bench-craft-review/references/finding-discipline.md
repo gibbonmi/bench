@@ -14,6 +14,8 @@ baseline, and the universal-claim rule.
 
 - A finding cites the line the axis read this pass, or the symbol instead. A line number
   from an earlier pass points at bytes that moved.
+- A review-owned row names the artifact that stores its evidence. Evidence that lives
+  only in a delegate return is not citable at the landing.
 
 ## Where an axis under-reads
 
@@ -23,6 +25,14 @@ baseline, and the universal-claim rule.
   A strong finding is one that names a defect, a gap, or a violation without a hedge.
 - An environment-variable Coverage finding cites the producer before it claims absence.
   The consumer alone does not show which producer binds the variable.
+- The Coverage axis probes a test's fixture source, not only its assertion. A fixture
+  that names a symbol the production file declares can stay green while the assertion
+  never runs.
+
+## When a ticket already decided
+
+- A finding that contradicts a ticket's explicit keep decision is a `no-op`. The
+  coordinator cites the ticket line in the disposition.
 
 ## When a seam cannot reach the state
 

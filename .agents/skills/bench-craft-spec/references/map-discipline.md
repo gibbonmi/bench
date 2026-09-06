@@ -33,6 +33,16 @@ the explore reads, the fence rules, and the review rubric.
 - A deeper callee joins the reader sweep only when the callee reads the decision fact.
 - Each shared reader in the reader sweep takes an exact ownership fence.
 - The reader sweep names the shipped-surface claim words, because `package-core-guard` reds a claim word beside a repo-only path.
+- A posture change lists every existing test fixture it reds before the map locks.
+- A spec that names a Git flag cites an observed run of that flag over the hostile
+  shapes. A flag's documented behavior is an assumption until that run exists.
+- A spec that inherits a closed decision about a bench signal quotes that signal's
+  current value in its first status update.
+- A row that widens a forbidden-import pattern names the enumeration command for its
+  current importers across every graded package. It also names each package the
+  widened pattern reds today.
+- A spec that changes a rendered message enumerates the exact-match tests on that
+  text.
 
 ## Per row
 
@@ -74,6 +84,9 @@ the explore reads, the fence rules, and the review rubric.
 - Each in-scope edge-inventory promise, source promise, and fence-closure promise takes one red-capable row.
 - An either-side predicate takes two rows, one side per row. One row that names both sides is not sufficient.
 - Each named diagnostic state is addable or mutable in a fixture.
+- A row that drives a failure through a verb or a probe names each guard the input
+  passes before the producer. An earlier guard that stops the input leaves the
+  row's seam unreached.
 
 ## In the edge inventory
 
@@ -89,6 +102,13 @@ the explore reads, the fence rules, and the review rubric.
   package.
 - A fence over the public help traces every inventory fixture that help forces.
 - The author quotes each pasted operand in the delegate charge.
+- Before the first review charge, the author walks each coverage row's seam path
+  against the ticket `Writes:` lines. The author moves the row to the ticket that
+  writes that path.
+- A golden-file row states its exact predicate, and the old-versus-new diff stays
+  review-owned.
+- A build-time rewrite scope excludes `specs/*/spec.md` and the tickets by name.
+- The spec quotes every anchor needle verbatim.
 
 ## At review
 

@@ -72,6 +72,12 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   the shared fixture owners and the exact-record assertion families.
 - A charge that adds a live-tree test includes in its fence the live-tree
   inventory file `internal/conformance/tier_test.go`.
+- A charge that writes a Go file under `tests/canary/` lists `go vet` in its
+  focused checks. The fixture-bite test only parses the overlay, and `go vet`
+  compiles every Go file in the tree.
+- A charge that names an over-budget file as a write target names the headroom
+  route before the dispatch. That route is the sibling file the new rows land
+  in.
 
 ## Isolation and end of life
 
@@ -103,6 +109,9 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A delegate's reading of a gate skip or a gate-adjacent signal is a claim, not a
   result. Plant the matching break and run the oracle before you believe either
   reading.
+- An independent probe reaches the production adapter through the
+  production-grading test. A junction that rebuilds its own wiring proves the
+  junction, not the adapter.
 
 ## Read-only returns
 

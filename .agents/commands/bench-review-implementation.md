@@ -44,6 +44,9 @@ The coordinator writes one repair ticket before the repair-scoped re-review,
 when accepted repairs amend the coverage map. The ticket records the
 accepted repairs, and it cites each amended row in `Covers:`.
 
+The coordinator records every dogfood run in the spec before the
+repair-scoped re-review starts. An unrecorded run is a blocking finding.
+
 A diff that changes kit guidance takes a standing cross-harness
 falsification pass. The kit-guidance set is any file under `.agents/` or
 the file `.bench/BENCH.md`. Each falsification finding takes one explicit
@@ -167,3 +170,7 @@ it never restarts initial discovery over the original range.
    through a hand commit on the destination. A clean review hands its frozen
    base and reviewed tip to `bench worktree land`; `/bench-final-check`
    reports that landing's oracle.
+
+   The review base is the fold commit that merged `main` into the source. The
+   landing base is that `main` tip itself. `bench worktree land --base` takes
+   the `main` tip, and it refuses the fold commit.
