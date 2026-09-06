@@ -109,6 +109,9 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A delegate's reading of a gate skip or a gate-adjacent signal is a claim, not a
   result. Plant the matching break and run the oracle before you believe either
   reading.
+- An independent probe reaches the production adapter through the
+  production-grading test. A junction that rebuilds its own wiring proves the
+  junction, not the adapter.
 
 ## Read-only returns
 
