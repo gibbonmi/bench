@@ -51,7 +51,8 @@ The topic folder stays top-level while shaping is open. The index loads whole
 into each planning session, so keep it tight. Link to a research asset instead
 of an inline copy. A map-owned asset stays in the map's assets folder,
 `decisions/<topic>/assets/`.
-`/bench-write-spec` moves a ready topic folder into `specs/<slug>/decisions/`.
+`/bench-write-spec` moves a ready topic folder and its index file into
+`specs/<slug>/decisions/`.
 Compiled maps there are settled provenance, not the active shaping frontier.
 
 ## Decision tickets
@@ -134,8 +135,8 @@ not, create no map. Recommend `/bench-write-spec` from the reviewer-confirmed
 current conversation.
 
 **Resume** (map name in): run `bench maps <map>` to resume one map, because
-every row names the file to read next. Read the index and that one ticket file,
-not the whole folder. Record the answer in the ticket, then add its gist line to
+every row names the file to read next. Read the index and the ticket file the
+chosen row names, not the whole folder. A fog row names the index alone. Record the answer in the ticket, then add its gist line to
 Decisions so far. Add any newly discovered decision tickets with correct
 `Blocked by` edges. If an answer invalidates other tickets, update or delete
 them.
