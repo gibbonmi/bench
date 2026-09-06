@@ -222,6 +222,7 @@ Not covered: story 47 — the measure is recorded in the phase-close retro by fi
 - Both audiences, this repository and a linked repository, get the same answer, because the kit ships one parser.
 - Two concurrent `bench maps` runs: read-only, no lock needed.
 - An untracked map or asset in the stale compare: DS31.
+- An encoded gist target such as `my%20map/tickets/1.md` for a map named `my map`: **Won't handle** — the parser accepts the verbatim relative path only. The template and the migration write that spelling, DS50 covers it, and no gist in the tree uses another form.
 - A `tickets` folder that is a symlink: **Won't handle** — `bounds.ClassifyDir` follows it as the `decisions/` scan does today. The review recorded the edge for reviewer veto.
 - A tickets folder plus an inline heading during the expand phase: **Won't handle** — the migration commit lands before the contract, and DS3 closes the window.
 - A linked repository with inline maps after the contract: **Won't handle** — no linked repository holds a map on 2026-09-06, and DS40 covers the deletion.
