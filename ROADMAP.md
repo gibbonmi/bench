@@ -65,8 +65,6 @@ findings in the owner details.
 
 **FT300 (MEDIUM) — ticket slicing adds the file a ticket's own change will move to its fence.**
 
-**FT298 (MEDIUM, decision required) — a batch approval's license to amend a build's own acceptance row.**
-
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.**

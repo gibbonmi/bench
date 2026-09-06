@@ -63,6 +63,10 @@ A build may not edit its own spec's acceptance rows, budget targets, or ownershi
 shortfall stops and returns to `/bench-write-spec`, even inside those fences. A budget row equal to its subject's current
 line count proves nothing, because the check parses only that one source.
 
+A batch approval licenses one narrow exception to that rule. A build may amend its own acceptance row when the code
+contradicts the row's literal premise. The amendment keeps the row's verdict unchanged and cites the contradicting
+evidence under Build decisions. The exception never licenses a build to loosen what the row counts as passing.
+
 `craft-tickets` owns the build-time **what-lands-green-next** unit; each ticket receives the spec's fence. Each fence carries value contracts across it. A contract between tickets is stated in the ticket's `What to build`
 and `Acceptance`. Review re-derives that contract from the tree; it does not trust the ticket's account.
 
