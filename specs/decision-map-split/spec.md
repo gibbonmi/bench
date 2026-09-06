@@ -316,6 +316,8 @@ Not covered: story 47 — the measure is recorded in the phase-close retro by fi
 - In `CONTEXT.md`: `one line in Decisions so far that links a resolved decision ticket`.
 - Forbidden after the move, in both commands and the template constant: `decisions/assets/`.
 
+**Reviewer sign-off, 2026-09-06.** The reviewer approved the ignore-rule move into the migration ticket, the missing-Sources-Path validity red, the fences as written, and the seven-ticket graph.
+
 **Cheapest wrong implementation per group.**
 
 - Index and ticket files: a parser that keeps the inline tickets and ignores the folder. DS3 and DS1 red it.

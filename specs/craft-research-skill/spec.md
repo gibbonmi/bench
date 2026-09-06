@@ -40,7 +40,7 @@ Line: opus / high. A skill steers every later research run, so the leverage over
 18. As a reviewer, I want research to own no write delegate, done-claim, reviewer decision, or prototype, so that judgment stays with the phase.
 19. As a coordinator, I want a contrastive example of independent fan-out versus a dependent serial question, so that the skill teaches by contrast.
 20. As a coordinator, I want a report checklist to tick in the verification record, so that the next run measures the contract.
-21. As a reviewer, I want the skill inside the 120-line budget in ASD-STE100, so that it loads cheap and passes the prose lane.
+21. As a reviewer, I want the skill inside a named 122-line budget in ASD-STE100, so that it loads cheap and passes the prose lane.
 
 ### Integration
 
@@ -59,7 +59,7 @@ Line: opus / high. The pointer sentences steer the shaping and assessment phases
 
 ## Implementation decisions
 
-**The skill file.** `.agents/skills/bench-craft-research/SKILL.md` carries frontmatter with `name: craft-research`, a `description` that names the trigger, and an `index:` line for the skills index. It is model-invoked on both harnesses and needs no phase command, adapter, payload row, parser, or source schema. The body is ASD-STE100 prose within the 120-line glob budget. It carries one contrastive pair: an independent fan-out that runs in parallel against a dependent question that stays serial.
+**The skill file.** `.agents/skills/bench-craft-research/SKILL.md` carries frontmatter with `name: craft-research`, a `description` that names the trigger, and an `index:` line for the skills index. It is model-invoked on both harnesses and needs no phase command, adapter, payload row, parser, or source schema. The body is ASD-STE100 prose within a named 122-line budget row. The skill ticket adds that row to the project profile in the same commit, because a row for an absent file reds the budget check. It carries one contrastive pair: an independent fan-out that runs in parallel against a dependent question that stays serial.
 
 **Trigger and ownership.** The skill fires when work becomes factual reading legwork in shaping, specification, diagnosis, assessment, or implementation. Each calling phase keeps authority over its decisions, artifacts, and completion contract. Formal review is not a caller. Research establishes source-backed facts, contradictions, unknowns, and implications. It never owns a write delegate, a done-claim, a reviewer decision, or a prototype.
 
@@ -121,7 +121,7 @@ The bootstrap-authority reference keeps "compatibility proven, not promised" and
 | CR10 | 18 | The skill states the read-side boundary: no write delegate, done-claim, reviewer decision, or prototype | `TestCraftResearchAnchorsRedOnRemoval` | A skill that absorbs probes blurs the phase boundary |
 | CR11 | 19 | The skill carries one contrastive pair marked as such | review-owned: the skill ticket quotes the pair | A skill without the pair fails the craft-skills rule |
 | CR12 | 20 | The skill's checklist names each report element and says where the tick lands | review-owned: the skill ticket cites the list | A checklist without a landing place is never ticked |
-| CR13 | 21 | The skill passes `bench gate-prose` and the `guidance-prose-budgets` check at or under 120 lines | conformance check `guidance-prose-budgets` and the prose lane | A longer skill reds the budget without a named row |
+| CR13 | 21 | The skill passes `bench gate-prose` and the `guidance-prose-budgets` check at or under 122 lines with its named row present | conformance check `guidance-prose-budgets` and the prose lane | A longer skill, or a row without its file, reds the check |
 | CR14 | 22 | The shaping command's Research bullet names `craft-research`, and the three forbidden fragments listed under Further notes are absent | `TestCraftResearchAnchorsRedOnRemoval` with Forbid rows | A bullet that keeps the old rules is a second copy |
 | CR15 | 24, 25 | The assessment command names `craft-research` in its fan-out and synthesis steps and keeps its five anchored phrases | the assessment anchors in the `workflow-guidance-anchors` family | A rewrite that drops one phrase reds |
 | CR16 | 26 | The bootstrap-authority reference keeps "compatibility proven, not promised" and points at the skill's probe rule | `TestCraftResearchAnchorsRedOnRemoval` | A reference without the pointer leaves two owners |
@@ -148,6 +148,7 @@ Not covered: story 31 — the checklist hits are recorded by the next research r
 - `.agents/skills/bench-craft-research/`
 - `.claude/skills/bench-craft-research`
 - `.bench/BENCH-reference.md`
+- `projects/benchkit.md`
 - `.agents/commands/bench-shape-idea.md`
 - `.agents/commands/bench-assess.md`
 - `.agents/skills/bench-craft-spec/references/bootstrap-authority.md`
@@ -155,6 +156,8 @@ Not covered: story 31 — the checklist hits are recorded by the next research r
 - `internal/anchors/registry_data_test.go`
 - `tests/canary/workflow-guidance-anchors/`
 - `tests/canary/skills-index-command-adapters/`
+- `tests/canary/guidance-prose-budgets/`
+- `tests/canary/line-routing/`
 - `tests/canary/docs-currency-token-diet/`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
@@ -169,7 +172,6 @@ Not covered: story 31 — the checklist hits are recorded by the next research r
 - A general-purpose knowledge base, citation database, or web-search CLI: own spec, 0 edits here.
 - A replacement for `craft-delegate`, `craft-line`, or harness-native subagent controls: rejected.
 - Folding formal review's axis judgment into research: rejected.
-- A named prose-budget row above 120 lines: a reviewer decision if the skill cannot fit, 1 edit, 1 gate run.
 - The decision-map storage, projection, and asset home: the sibling spec `decision-map-split`.
 - The ignore-rule narrowing: moved to the sibling spec's migration, because the orphan move needs a trackable `docs/research/`.
 
@@ -209,7 +211,7 @@ Not covered: story 31 — the checklist hits are recorded by the next research r
 - In the bootstrap-authority reference: the pointer to the probe rule.
 - Forbidden in the shaping command after the pointer lands: `and produce a short`, `Include a runnable compatibility probe when the answer`, and `as a read-only delegation. Otherwise resolve it inline.`
 
-**Open reviewer question.** The skill's budget is the 120-line glob row. Every comparable craft skill needed a named row, and the budget file is reviewer-owned. The recommendation is a named row `.agents/skills/bench-craft-research/SKILL.md | 122` before the build starts. Without it, an overflow stops the build as a spec-level shortfall.
+**Reviewer sign-off, 2026-09-06.** The reviewer approved the named budget row `.agents/skills/bench-craft-research/SKILL.md | 122`, the ignore-rule move to the sibling spec, the fences, and the ticket graph. The row lands in the skill ticket's commit.
 
 **Pre-review proof checklist.**
 
