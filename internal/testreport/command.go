@@ -53,15 +53,6 @@ type focusedRequest struct {
 	check       string
 }
 
-// Command runs Go from root and renders one stable row for each observed result.
-func Command(root string, args []string) (string, int) {
-	request, line, code := parseFocusedRequest(root, args)
-	if line != "" {
-		return line + "\n", code
-	}
-	return runFocusedRequest(root, request)
-}
-
 func parseFocusedRequest(root string, args []string) (focusedRequest, string, int) {
 	parsed, line, code := usage.Parse(testGrammar(), args)
 	if line != "" {
@@ -140,11 +131,11 @@ func isNamedCheck(check string) bool {
 	return false
 }
 
-func runFocusedRequest(root string, request focusedRequest) (string, int) {
+func runFocusedRequest(root string, request focusedRequest) (Outcome, string, int) {
 	// The refusal precedes the run-owner selection, which builds a Bench executable with
 	// Go. A root the suite may not grade therefore starts no child at all.
 	if request.check == gate.SystemPhaseName && !gate.SystemSuiteRuns(root, testBenchSource(root)) {
-		return toon.Errorf("system check unavailable", "the system suite grades the kit checkout only") + "\n", 1
+		return refusedOutcome(toon.Errorf("system check unavailable", "the system suite grades the kit checkout only")+"\n", 1)
 	}
 	if request.check == proseCheckName {
 		return runProseCheck(root)
@@ -153,21 +144,21 @@ func runFocusedRequest(root string, request focusedRequest) (string, int) {
 	defer stop()
 	selection, err := selectRunBinary(ctx, testBenchSource(root))
 	if err != nil {
-		return toon.Errorf("Bench executable selection failed", err.Error()) + "\n", 1
+		return refusedOutcome(toon.Errorf("Bench executable selection failed", err.Error())+"\n", 1)
 	}
 	defer selection.Close()
 	if request.changed {
 		subject, kind, hint := diff.ResolveChangedSubject(root, request.base, request.sourceTip)
 		if kind != "" {
-			return toon.Errorf("changed selection failed", kind+": "+hint) + "\n", 1
+			return refusedOutcome(toon.Errorf("changed selection failed", kind+": "+hint)+"\n", 1)
 		}
 		changedEnv, err := selectedRunEnvironment(os.Environ(), selection)
 		if err != nil {
-			return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
+			return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 		}
 		packages, err := resolveChangedPackagesWithEnvironment(ctx, root, subject.Paths, changedEnv)
 		if err != nil {
-			return toon.Errorf("changed selection failed", err.Error()) + "\n", 1
+			return refusedOutcome(toon.Errorf("changed selection failed", err.Error())+"\n", 1)
 		}
 		if len(packages) == 0 {
 			return emptyReport(request.full)
@@ -188,40 +179,42 @@ func runFocusedRequest(root string, request focusedRequest) (string, int) {
 	}
 	env, err := selectedRunEnvironment(os.Environ(), selection)
 	if err != nil {
-		return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
+		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 	}
 	return runGoTest(ctx, root, request, focusedTestArgv(operands...), env)
 }
 
-func runNamedCheck(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (string, int) {
+func runNamedCheck(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (Outcome, string, int) {
 	if request.check == gate.SystemPhaseName {
 		return runSystemCheck(ctx, root, request, selection)
 	}
 	argv := focusedTestArgv("./internal/conformance", "-run", "^"+registry.RootConformanceTest+"$")
 	env, err := conformanceEnvironment(os.Environ(), root, request.check, selection)
 	if err != nil {
-		return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
+		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 	}
 	return runGoTest(ctx, selection.SourceRoot, request, argv, env)
 }
 
-func runProseCheck(root string) (string, int) {
+// runProseCheck grades sentences rather than a Go test, so its outcome reads each
+// finding as a failure row and an empty grade as a pass.
+func runProseCheck(root string) (Outcome, string, int) {
 	findings := prose.Grade(root)
 	if len(findings) == 0 {
-		return "", 0
+		return Outcome{Kind: OutcomePassed}, "", 0
 	}
-	return strings.Join(findings, "\n") + "\n", 1
+	return Outcome{Kind: OutcomeFailed, FailedTests: len(findings)}, strings.Join(findings, "\n") + "\n", 1
 }
 
 // runSystemCheck runs the gate's system phase as a focused run. It reads the phase's
 // operands and environment from the gate's producer, and it sets no conformance
 // variable, because the system suite is a build-tagged package rather than a
 // conformance scope.
-func runSystemCheck(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (string, int) {
+func runSystemCheck(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (Outcome, string, int) {
 	operands, suiteEnv := gate.SystemSuite(root)
 	env, err := selectedRunEnvironment(os.Environ(), selection)
 	if err != nil {
-		return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
+		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 	}
 	return runGoTest(ctx, root, request, focusedTestArgv(operands...), append(env, suiteEnv...))
 }
@@ -293,7 +286,7 @@ func withoutConformanceEnvironment(base []string) []string {
 	return env
 }
 
-func runGoTest(ctx context.Context, root string, request focusedRequest, argv, env []string) (string, int) {
+func runGoTest(ctx context.Context, root string, request focusedRequest, argv, env []string) (Outcome, string, int) {
 	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir = root
 	cmd.Env = env
@@ -304,16 +297,16 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 	// one the gate keeps: it derives no Bench cache for a clean to reach.
 	holder, err := gocache.Hold(env)
 	if err != nil && gocache.Declared(env) {
-		return gocache.Refusal(env, err) + "\n", 1
+		return refusedOutcome(gocache.Refusal(env, err)+"\n", 1)
 	}
 	defer holder.Release()
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	stream, err := cmd.StdoutPipe()
 	if err != nil {
-		return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
+		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 	}
 	if err := cmd.Start(); err != nil {
-		return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
+		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 	}
 	type decoded struct {
 		report *report
@@ -333,7 +326,7 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 		cancelGoProcessGroup(cmd, decodedDone)
 		result = <-decodedResult
 		_ = cmd.Wait()
-		return toon.Errorf("go test interrupted", goChildGroupCancelled) + "\n", 1
+		return interruptedOutcome(toon.Errorf("go test interrupted", goChildGroupCancelled)+"\n", 1)
 	}
 	completed := make(chan error, 1)
 	done := make(chan struct{})
@@ -347,32 +340,33 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 	case <-ctx.Done():
 		cancelGoProcessGroup(cmd, done)
 		<-completed
-		return toon.Errorf("go test interrupted", goChildGroupCancelled) + "\n", 1
+		return interruptedOutcome(toon.Errorf("go test interrupted", goChildGroupCancelled)+"\n", 1)
 	}
 	report, decodeErr := result.report, result.err
 	if decodeErr != nil {
-		return toon.Errorf("go test output malformed", decodeErr.Error()) + "\n", 1
+		return refusedOutcome(toon.Errorf("go test output malformed", decodeErr.Error())+"\n", 1)
 	}
 	if waitErr != nil {
 		report.markNonzeroFailures()
 	}
 	if !report.terminal {
-		return toon.Errorf("go test reported no packages", "no package terminal event") + "\n", 1
+		return refusedOutcome(toon.Errorf("go test reported no packages", "no package terminal event")+"\n", 1)
 	}
 	if incomplete := report.incompletePackages(); len(incomplete) != 0 {
-		return toon.Errorf("go test reported incomplete packages", strings.Join(incomplete, ", ")) + "\n", 1
+		return refusedOutcome(toon.Errorf("go test reported incomplete packages", strings.Join(incomplete, ", "))+"\n", 1)
 	}
 	if request.run != "" && !report.ranTest {
-		return toon.Errorf("go test reported no test runs", "run pattern matched no tests") + "\n", 1
+		return Outcome{Kind: OutcomeNoTestRun}, toon.Errorf("go test reported no test runs", "run pattern matched no tests") + "\n", 1
 	}
 	out, renderErr := report.render(request.full)
 	if renderErr != nil {
-		return toon.RenderError(renderErr) + "\n", 1
+		return refusedOutcome(toon.RenderError(renderErr)+"\n", 1)
 	}
+	outcome := report.outcome(request.full)
 	if waitErr != nil {
-		return out, 1
+		return outcome, out, 1
 	}
-	return out, 0
+	return outcome, out, 0
 }
 
 func cancelGoProcessGroup(cmd *exec.Cmd, completed <-chan struct{}) {
@@ -388,12 +382,13 @@ func drainGoProcessGroup(pgid int) {
 	_ = syscall.Kill(-pgid, syscall.SIGKILL)
 }
 
-func emptyReport(full bool) (string, int) {
-	out, err := (&report{statuses: map[string]string{}, seen: map[string]bool{}, tests: map[string]*testResult{}, packageLog: map[string]string{}}).render(full)
+func emptyReport(full bool) (Outcome, string, int) {
+	empty := &report{statuses: map[string]string{}, seen: map[string]bool{}, tests: map[string]*testResult{}, packageLog: map[string]string{}}
+	out, err := empty.render(full)
 	if err != nil {
-		return toon.RenderError(err) + "\n", 1
+		return refusedOutcome(toon.RenderError(err)+"\n", 1)
 	}
-	return out, 0
+	return empty.outcome(full), out, 0
 }
 
 // packagePattern maps a bare directory-relative operand to a "./"-prefixed
