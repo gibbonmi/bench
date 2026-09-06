@@ -17,8 +17,7 @@ fi
 # The reviewer who owns the merge can lift the clause for one repository with
 # 'git config bench.allowProtectedPush true'.
 allow_protected="$(git config --type=bool --get bench.allowProtectedPush 2>/dev/null || true)"
-# The read keeps its second arm so a last line with no trailing newline still reaches
-# the clause.
+# The second read arm passes a last line with no trailing newline to the clause.
 while IFS= read -r line || [ -n "$line" ]; do
   read -r _ _ remote_ref _ <<< "$line"
   if [[ "$allow_protected" != "true" && "$remote_ref" == "refs/heads/$protected" ]]; then

@@ -326,8 +326,9 @@ func TestPrePushHookAllowProtectedPushConfig(t *testing.T) {
 	path := filepath.Join(root, ".git", "hooks", "pre-push")
 	writeHook(t, path, "main")
 
-	if err, out := runPrePushHook(t, root, path, "refs/heads/main"); err == nil || !strings.Contains(out, "blocked: direct push to main") {
-		t.Fatalf("default hook: err=%v stderr=%q, want a block", err, out)
+	wantBlock := "blocked: direct push to main. Open a PR or merge it yourself.\n"
+	if err, out := runPrePushHook(t, root, path, "refs/heads/main"); err == nil || out != wantBlock {
+		t.Fatalf("default hook: err=%v stderr=%q, want exactly the blocked line", err, out)
 	}
 	if err, out := runPrePushHook(t, root, path, "refs/heads/topic"); err != nil {
 		t.Fatalf("default hook on a topic branch: %v\n%s", err, out)
