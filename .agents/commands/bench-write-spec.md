@@ -26,7 +26,7 @@ working maps; compiled maps live under `specs/<slug>/decisions/`.
   `decisions/` into `specs/<slug>/decisions/`. A map-owned asset stays in `decisions/assets/`. Then update every reference to the moved paths in the same green change. A re-run reads the already-compiled spec-local map; it never recreates a top-level copy.
 - **Reviewer-confirmed current conversation.** Close every load-bearing product or scope fork here, dated. Do
   not manufacture a map to restate it.
-- **Named reviewed artifact.** Name it. It holds settled decisions, not unresolved prompts.
+- **Named reviewed artifact.** Name it. It holds settled decisions, not unresolved prompts. A resolved ticket answer and its asset in a multi-item shaping map also count, even while a sibling ticket stays open. The phase copies only that ticket's asset, and the map stays in place.
 
 Record exactly one `Decision source:` line in the spec. For a map-backed source, re-read and re-verify every structured `## Sources`
 entry before you choose seams. Disclose what you could not re-read, and consume them in place without copying a research manifest into the spec. Ask at most two late clarification

@@ -29,15 +29,14 @@ Partial redundancy is the point. A story is a want, never an engineering layer (
 
 ## The acceptance coverage map
 
-Each row ties a story to one observable behavior at a seam: `story`, `behavior`, `seam`, `why it catches the failure`.
-An optional leading `row` column opts the spec into ticket covers traceability (new specs default to it).
-`bench coverage --check` refuses a row that references more than four stories, and it refuses a row that states two
-predicates (`;`). It also refuses a declared story that no row references, unless a `Not covered: story <n> — <reason>`
-line sits under the map. Name the cheapest wrong implementation per story. Name the row that goes red on it, across
-fences and through the composition degenerate to the real producer.
+Each row ties a story to one observable behavior at a seam: `story`, `behavior`, `seam`, `why it catches the failure`. An optional leading `row` column opts the spec into ticket covers traceability (new specs default to it).
+`bench coverage --check` refuses a row that references more than four stories, and it refuses a row that states two predicates (`;`). It also refuses a declared story that no row references, unless a `Not covered: story <n> — <reason>` line sits under the map.
+Name the cheapest wrong implementation per story. Name the row that goes red on it, across fences and through the composition degenerate to the real producer.
 
-Enumerate every quantifier; every source behavior becomes a row or an exception. `references/map-discipline.md` states
-the rule each row must satisfy; open that reference before you lock the rows.
+Enumerate every quantifier; every source behavior becomes a row or an exception. `references/map-discipline.md` states the rule each row must satisfy; open that reference before you lock the rows.
+
+Three checks run before the first review charge. Walk each restore or copy promise for a deterministic omission case. A restore comparison without an omission row is green by construction.
+Cite no test-only helper across a package boundary, because such a row has no seam in the graded package. Use canned events for any row that compares two rendered reports, because two real runs differ in their elapsed times.
 
 ## The edge inventory
 
