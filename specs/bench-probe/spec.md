@@ -275,6 +275,7 @@ the scorecard and records the conflict for the reviewer.
 - `internal/testreport/testreport.go`
 - `internal/testreport/outcome.go` (new)
 - `internal/testreport/outcome_test.go` (new)
+- `internal/testreport/check_test.go` — the one test caller of the changed `runGoTest`
 - `internal/gate/run_transaction.go`
 - `internal/gate/execution_probe_test.go` (new)
 - `cmd/bench/main.go`
