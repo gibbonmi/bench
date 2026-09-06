@@ -25,3 +25,4 @@ Findings: 3 raw, 3 repair targets, 1 repaired at ticket 07. Worst issue: a rende
 
 - `ask-user` — a subject inside the checkout's administration directory mutates and restores. The spec closes the hostile-subject list at five reasons, so a sixth reason is a spec change.
 - `ask-user` — a build failure in one package beside a failing test in another package reports `bit` at 0 under `--package ./...`. Ticket 02 fixes the precedence as a failing test row first, so the behavior obeys the spec. The reviewer decides whether a build failure anywhere must dominate.
+- `ask-user` — a control byte in the subject's base name reaches the copy path. The `preserved[1]` row then refuses, and the caller gets the render error alone at exit 2. The repair-scoped re-review found it. The spec now lists the edge as a Won't handle for veto.

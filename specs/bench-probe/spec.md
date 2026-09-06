@@ -265,6 +265,8 @@ the scorecard and records the conflict for the reviewer.
 
 **Won't handle** — a `bench worktree probe <target>` face — the reviewer chose the root verb in ticket #11, and `bench worktree exec` stays the worktree form.
 
+**Won't handle** — a control byte in the subject's base name — the byte reaches the preserved copy's path, so the `preserved[1]` row cannot render. The verb still exits 2, and the copy still sits under `$BENCH_HOME/probe/<repo-key>/`. The reviewer decides whether a second channel names the copy.
+
 **Won't handle** — a prose or system probe — `bench test --check prose` and `bench test --check system` stay the callers for those runs after a hand mutation.
 
 ## Ownership fences
