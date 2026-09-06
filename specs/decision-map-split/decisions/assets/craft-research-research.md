@@ -125,4 +125,4 @@ The sources do not decide the activation breadth, fan-out threshold and cap,
 or durable artifact contract. They also do not decide the judgment boundary,
 compatibility-probe owner, or the exact clauses migrated from current phase
 guidance. Those remain reviewer-owned tickets #4 through #8 in
-`decisions/craft-research.md`.
+`specs/decision-map-split/decisions/craft-research.md`.
