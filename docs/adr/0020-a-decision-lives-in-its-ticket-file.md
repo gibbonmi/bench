@@ -7,19 +7,20 @@ Status: accepted (2026-09-06)
 A decision of a decision map lives in its ticket file. Each decision is one
 file under the map's tickets folder, and the file is named by the decision's
 number. That file holds the question, the answer, the type, and the blockers of
-that decision. No other file holds the answer. Thus a session that resumes one
-decision reads one file.
+that decision. The ticket file is the one canonical home of that answer. Thus a
+session that resumes one decision reads one file.
 
 The map file is an index. It holds the title, the status, the destination, the
 notes, the decisions made so far, and the four terminal sections. Each decision
-made so far is one gist line. A gist line links its ticket file and states the
-answer in one sentence. Thus the index gives the low-resolution view of the
-map, and it never keeps a second copy of an answer.
+made so far is one gist line. A gist line links its ticket file and condenses
+that answer into one sentence. Thus the index gives the low-resolution view of
+the map, and it holds no canonical answer.
 
 The topic folder moves as one unit. The tickets and the map-owned assets sit in
 one folder beside the index. Spec authoring moves that folder into the spec,
-and retirement removes the folder whole. Thus a reference between the index, a
-ticket, and an asset stays correct after the move.
+and the index moves with it. Retirement removes the folder and the index
+together. Thus a reference between the index, a ticket, and an asset stays
+correct after the move.
 
 ## Consequence
 
