@@ -1,14 +1,13 @@
-# Craft research
+# Research
 
-Status: ready
+Status: shaping
 
 ## Destination
 
-Define a model-invoked `craft-research` skill. It fans out primary-source
-reading to read-only subagents when the questions are mutually independent,
-then returns one verified, cited Markdown artifact. Bench shaping,
-specification, diagnosis, assessment, and implementation work can consume
-that artifact without duplicating research policy.
+Define a model-invoked `craft-research` skill and consolidate the research
+portions of FT99, FT106, FT125, FT304, and FT231. It fans out mutually
+independent primary-source reading to read-only subagents, then returns one
+verified cited Markdown artifact without duplicating research policy.
 
 ## #1: Where does research policy live in Bench today, and what must remain single-sourced?
 
@@ -271,6 +270,103 @@ re-reads the landed wording before editing. FT164's edit set stays owned by its
 spec. Its current “disjoint” statement is stale, because the shared file makes
 the changes non-disjoint even though ordering remains free.
 
+## #9: What quality must a durable research report provide?
+
+Blocked by: #6, #7
+Type: Research
+
+### Question
+
+Identify a compact report contract that makes research findings easier to
+consume without moving decision, delegate, or asset authority.
+
+### Answer
+
+Resolved 2026-09-06. A report starts with its recommendation, scope, and
+evidence status. It uses capability or option tables when comparison matters.
+Each option records its consequence and nearby primary citation. It separates
+facts, inferences, tested results, and proposals.
+
+It preserves contradictions and unknowns. It uses a diagram where relationships
+need one. It ends with a validation plan. Detail: research workflow assessment.
+
+## #10: How does this map group related roadmap work?
+
+Blocked by: #9
+Type: Grill
+
+### Question
+
+Decide whether the research portions of FT99, FT106, FT125, FT304, and FT231
+share this map while each row retains its wider roadmap scope.
+
+### Answer
+
+Resolved 2026-09-06. This map is the research-planning index for those row
+portions. FT99 supplies premise currency. FT106 supplies document freshness
+and the research-home conflict. FT125 supplies focused readers. FT304 supplies
+observation.
+
+FT231 supplies advisory measurement. Each roadmap row remains live for its
+broader scope. The map does not approve all row closures or one monolithic
+spec. Detail: research workflow assessment.
+
+## #11: What storage boundary keeps the decision map authoritative?
+
+Blocked by: #10
+Type: Grill
+
+### Question
+
+Choose whether inline map storage stays authoritative for focused discovery.
+Consider a migration only if a demonstrated reader benefit justifies it.
+
+### Answer
+
+— (open: the reviewer chooses the current storage boundary)
+
+## #12: Which focused reader discovers ready work without another state owner?
+
+Blocked by: #11
+Type: Grill
+
+### Question
+
+Choose a focused reader or projection that distinguishes unresolved and ready
+maps without treating the default unresolved `bench maps` view as data loss.
+
+### Answer
+
+— (open: the reviewer chooses after #11)
+
+## #13: How do FT106's artifact home and freshness projection resolve?
+
+Blocked by: #9, #11
+Type: Grill
+
+### Question
+
+Choose the trackable artifact home and the mechanical freshness projection for
+FT106. Keep the settled coordinator, Sources, drift, and retirement rules.
+
+### Answer
+
+— (open: the reviewer chooses after #11)
+
+## #14: How should the work compose for specification and measurement?
+
+Blocked by: #10, #12, #13
+Type: Grill
+
+### Question
+
+Choose the approved specification cuts and the measurement that accompanies
+each cut. Keep FT231's full harness advisory until its own decision resolves.
+
+### Answer
+
+— (open: the reviewer chooses the specification cuts and measurement)
+
 ## Not yet specified
 
 ## Spec-writer discretion
@@ -289,9 +385,14 @@ the changes non-disjoint even though ordering remains free.
 - Implementing a general-purpose knowledge base, citation database, or web-search CLI.
 - Replacing `craft-delegate`, `craft-line`, or harness-native subagent controls.
 - Folding formal `/bench-review-implementation` axis review into generic research.
+- Changing the decision-map schema unless the reviewer explicitly reopens this
+  exclusion in ticket #11.
 
 ## Sources
 
 - Path: `decisions/assets/craft-research-research.md`
   Supports: #1 through #3 and the factual premises for #4 through #8. Three read-only research delegations ran 2026-08-02, with upstream sources re-read and local claims spot-checked by the coordinator.
   Drift: re-verify if research, delegation, line-routing, map-source, skill-index, assessment, or artifact-lifecycle guidance changes, or if the cited upstream research contracts move. Re-resolve the asset's line citations before `/bench-write-spec` reads this map if FT164 has landed.
+- Path: `decisions/assets/research-workflow-assessment.md`
+  Supports: #9 through #14. It compares the local format references with the settled research map and current roadmap and map owners.
+  Drift: re-verify when the reference report set, research policy, roadmap rows, map reader, or status projection changes.
