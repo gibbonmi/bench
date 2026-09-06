@@ -21,9 +21,9 @@ const (
 	FastLaneLandingShapeMarker = "runs the fast lane on a private checkout of the composed snapshot, and a lane pass"
 )
 
-// registry is the ordered anchor registry every evaluation reads. It composes the
-// general rows below with the decision-map rows registry_decision_maps.go owns.
-var registry = append(generalAnchors, decisionMapAnchors...)
+// registry is the ordered anchor registry every evaluation reads. It appends onto a
+// fresh slice, so no source slice below or in a sibling registry file is ever aliased.
+var registry = append(append(append([]Anchor{}, generalAnchors...), decisionMapAnchors...), craftResearchAnchors...)
 
 var generalAnchors = []Anchor{
 	{File: ".agents/commands/bench-write-spec.md", Kind: Require, Section: "", Needle: "acceptance coverage map", Diagnostic: ".agents/commands/bench-write-spec.md missing acceptance coverage anchor: acceptance coverage map"},
