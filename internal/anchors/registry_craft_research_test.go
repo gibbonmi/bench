@@ -8,10 +8,15 @@ import "testing"
 // only the artifact and first-party upstream documentation warrant a finding, the
 // coordinator re-opens the sources and checks the joins, one durable output per run
 // carries every claim's citation, a compatibility claim waits for a runnable probe, and
-// research stays on the read side. Each needle and diagnostic is written here
-// independently of the registry, so a rewrite that drops a rule cannot define itself green.
+// research stays on the read side. The caller rows ride with them: the shaping command
+// points its Research ticket type at the skill and keeps none of the three research rules
+// the skill now owns, and the bootstrap-authority reference points at the probe rule. Each
+// needle and diagnostic is written here independently of the registry, so a rewrite that
+// drops a rule cannot define itself green.
 func TestCraftResearchAnchorsRedOnRemoval(t *testing.T) {
 	const skill = ".agents/skills/bench-craft-research/SKILL.md"
+	const shaping = ".agents/commands/bench-shape-idea.md"
+	const bootstrap = ".agents/skills/bench-craft-spec/references/bootstrap-authority.md"
 	anchorHarness{
 		group: AfterImplementSpec,
 		rules: []anchorRule{
@@ -59,6 +64,34 @@ func TestCraftResearchAnchorsRedOnRemoval(t *testing.T) {
 				file:   skill,
 				needle: "Research never owns a write delegate, a done-claim, a reviewer decision, or a prototype.",
 				want:   ".agents/skills/bench-craft-research/SKILL.md dropped the read-side boundary",
+			},
+			{
+				file:   shaping,
+				needle: "The Research ticket type charges `craft-research`, and a required compatibility probe becomes a Prototype ticket that the Research ticket names in `Blocked by`.",
+				want:   ".agents/commands/bench-shape-idea.md dropped the Research ticket type's pointer at craft-research and the Prototype ticket a compatibility probe needs",
+			},
+			{
+				file:   bootstrap,
+				needle: "Charge `craft-research` for the runnable probe that a compatibility claim needs.",
+				want:   ".agents/skills/bench-craft-spec/references/bootstrap-authority.md dropped the pointer at the craft-research probe rule",
+			},
+			{
+				file:      shaping,
+				needle:    "and produce a short",
+				want:      ".agents/commands/bench-shape-idea.md keeps the Research ticket's own output rule; craft-research owns the durable output",
+				forbidden: true,
+			},
+			{
+				file:      shaping,
+				needle:    "Include a runnable compatibility probe when the answer",
+				want:      ".agents/commands/bench-shape-idea.md keeps the Research ticket's own probe rule; craft-research owns the compatibility evidence rule",
+				forbidden: true,
+			},
+			{
+				file:      shaping,
+				needle:    "as a read-only delegation. Otherwise resolve it inline.",
+				want:      ".agents/commands/bench-shape-idea.md keeps its own research delegation rule; craft-research owns the rounds and the delegates",
+				forbidden: true,
 			},
 		},
 	}.check(t)

@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-shape-idea.md",
+    "old": "its delegates, and its output.",
+    "new": "its delegates, and its output. Route Research through `craft-delegate`\nas a read-only delegation. Otherwise resolve it inline."
+  }
+]

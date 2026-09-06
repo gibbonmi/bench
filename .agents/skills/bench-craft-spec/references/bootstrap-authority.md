@@ -19,3 +19,4 @@ Two guards apply to the exclusions. First, no **amputated callers**: a
 **Won't handle** line needs one surviving in-scope caller. Second,
 **compatibility proven, not promised**: divergence from a named external
 format is a reviewer decision, never a silent promise.
+Charge `craft-research` for the runnable probe that a compatibility claim needs.
