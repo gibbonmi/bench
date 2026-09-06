@@ -1073,9 +1073,11 @@
                 <div class="solution">
                   <div class="label">How it works</div>
                   <p>Used only when an idea needs more than one session of decisions. It produces
-                  (or resumes) an open decision map in top-level <code>decisions/&lt;topic&gt;.md</code>:
-                  the open questions as tickets, sequenced so answering one unlocks the next,
-                  with resolved answers written into the file. The agent works the frontier one
+                  (or resumes) an open decision map in top-level <code>decisions/</code>: an index
+                  at <code>&lt;topic&gt;.md</code> beside a <code>&lt;topic&gt;/tickets/</code> folder
+                  holding one file per open question, sequenced so answering one unlocks the next.
+                  Each answer is written into its own ticket file, and the index links it with a
+                  one-line gist. The agent works the frontier one
                   question at a time until nothing unresolved still blocks a spec. Decision maps
                   normally come from this phase; the write-spec entry contract owns the narrow
                   recording exception. Shaping runs on the top-tier model, because eliminating
@@ -1647,8 +1649,8 @@
           </tr>
           <tr>
             <td><code>decisions/</code></td>
-            <td>Pre-spec working maps normally come from <code>/bench-shape-idea</code>; the write-spec entry contract owns the narrow recording exception.</td>
-            <td><code>/bench-write-spec</code> moves a closed map and its owned assets under the spec's <code>decisions/</code> folder.</td>
+            <td>Pre-spec working maps normally come from <code>/bench-shape-idea</code>: an index at <code>&lt;topic&gt;.md</code> beside a <code>&lt;topic&gt;/tickets/</code> folder holding one file per decision. The write-spec entry contract owns the narrow recording exception.</td>
+            <td><code>/bench-write-spec</code> moves the whole topic folder — index, tickets, and owned assets — under the spec's <code>decisions/</code> folder as one unit.</td>
           </tr>
           <tr>
             <td><code>specs/</code></td>

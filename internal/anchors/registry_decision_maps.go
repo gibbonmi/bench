@@ -27,4 +27,5 @@ var decisionMapAnchors = []Anchor{
 	{Group: AfterSpecAuthorization, File: "CONTEXT.md", Kind: Require, Section: "", Needle: "Not \"map\", not \"traceability matrix\" — coverage map.", Diagnostic: "CONTEXT.md dropped the coverage-map glossary entry with the Avoid list that names the bare word map"},
 	{Group: AfterSpecAuthorization, File: "CONTEXT.md", Kind: Require, Section: "", Needle: "Not \"PRD\", not \"design doc\", not \"map\" — decision map.", Diagnostic: "CONTEXT.md decision-map entry dropped the Avoid list that names the bare word map"},
 	{Group: AfterSpecAuthorization, File: "CONTEXT.md", Kind: Require, Section: "", Needle: "Not \"census\", not \"consumer audit\" — reader sweep.", Diagnostic: "CONTEXT.md dropped the reader-sweep glossary entry with the Avoid list that reserves census"},
+	{Group: AfterSpecAuthorization, File: "CONTEXT.md", Kind: Require, Section: "", Needle: "one line in Decisions so far that links a resolved decision ticket", Diagnostic: "CONTEXT.md dropped the gist glossary entry that names the Decisions so far line linking a resolved decision ticket"},
 }

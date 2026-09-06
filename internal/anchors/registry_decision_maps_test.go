@@ -124,11 +124,12 @@ func TestDecisionMapSplitAnchorsRedOnRemoval(t *testing.T) {
 	}.check(t)
 }
 
-// TestContextMapTermAnchorsRedOnRemoval holds the three map-term glossary entries in
+// TestContextMapTermAnchorsRedOnRemoval holds the four map-term glossary entries in
 // CONTEXT.md. The coverage map and the decision map are two artifacts, and each Avoid
-// list names the bare word "map". The reader sweep entry reserves "census". Each needle
-// and diagnostic is written here independently of the registry, so a glossary that
-// merged the two map entries cannot define itself green.
+// list names the bare word "map". The reader sweep entry reserves "census". The gist
+// entry names the one line that carries a resolved decision into the map index. Each
+// needle and diagnostic is written here independently of the registry, so a glossary
+// that merged the two map entries cannot define itself green.
 func TestContextMapTermAnchorsRedOnRemoval(t *testing.T) {
 	const file = "CONTEXT.md"
 	anchorHarness{
@@ -148,6 +149,11 @@ func TestContextMapTermAnchorsRedOnRemoval(t *testing.T) {
 				file:   file,
 				needle: "Not \"census\", not \"consumer audit\" — reader sweep.",
 				want:   "CONTEXT.md dropped the reader-sweep glossary entry with the Avoid list that reserves census",
+			},
+			{
+				file:   file,
+				needle: "one line in Decisions so far that links a resolved decision ticket",
+				want:   "CONTEXT.md dropped the gist glossary entry that names the Decisions so far line linking a resolved decision ticket",
 			},
 		},
 	}.check(t)

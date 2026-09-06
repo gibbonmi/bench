@@ -51,12 +51,14 @@ multi-session decision fog -> /bench-shape-idea ---^
 ```
 
 Decision maps are situational: `/bench-shape-idea` uses decision tickets only
-when reviewer choices form a multi-session dependency tree. It compiles a
-ready map beside its spec, under `specs/<slug>/decisions/`. A clear idea may
+when reviewer choices form a multi-session dependency tree. The map file is an
+index, and each decision lives in one ticket file under the map's tickets
+folder. It compiles a ready map beside its spec, under
+`specs/<slug>/decisions/`. A clear idea may
 instead authorize `/bench-write-spec` through the reviewer-confirmed
 current conversation or a named reviewed artifact. Spec authoring records
-exactly one `Decision source:` line and owns engineering seams and coverage.
-Implementation then derives independently-green implementation tickets. For
+exactly one `Decision source:` line and owns engineering seams and coverage,
+and implementation then derives independently-green implementation tickets. For
 bugs, use `/bench-debug`; it builds the repro loop first.
 
 Each command orients you at entry. It then hands you off at exit with what

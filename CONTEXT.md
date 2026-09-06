@@ -147,15 +147,27 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   (`bench idea "<text>"`). A *parked idea* graduates into committed work only when
   `/bench-shape-idea` pulls it into a decision map. Not "stash", not "file" — park.
 - **decision map** — a situational working map for a multi-session unresolved
-  decision tree at `decisions/<topic>.md`. Its **decision tickets** record
+  decision tree. Its index at `decisions/<topic>.md` sits beside the topic
+  folder `decisions/<topic>/tickets/`. Its **decision tickets** record
   reviewer choices, constraints, exclusions, research objects, and bounded
-  discretion; a ready map is compiled beside its spec. It does not choose the
-  spec's engineering seams or tests.
+  discretion; a ready map is compiled beside its spec as one folder. It does
+  not choose the spec's engineering seams or tests.
   Not "PRD", not "design doc", not "map" — decision map.
-- **decision ticket** — one reviewer choice or evidence-producing question in
-  a decision map, linked to other decision tickets by `Blocked by`. Distinct
-  from an **implementation ticket**, the independently-green build unit under
-  `specs/<slug>/tickets/`.
+- **map index** — the `decisions/<topic>.md` file of a **decision map**. It
+  holds the title, the Status, the Destination, Notes, Decisions so far, and
+  the four terminal sections. It holds no answer, so it stays the
+  low-resolution view of the map.
+  Not "the map file", not "the map" — map index.
+- **decision ticket** — one reviewer choice or evidence-producing question of a
+  decision map. It is one file under the map's tickets folder, and its number
+  names it. The answer lives only there, and `Blocked by` links the ticket to
+  the other decision tickets. Distinct from an **implementation ticket**, the
+  independently-green build unit under `specs/<slug>/tickets/`.
+  Not "question", not "issue" — decision ticket.
+- **gist** — one line in Decisions so far that links a resolved decision ticket
+  and states its answer in one sentence. The **map index** holds one gist for
+  each resolved decision ticket, and it holds no gist for an open one.
+  Not "summary", not "abstract" — gist.
 - **focused test run** — one `bench test` execution limited by explicit or
   diff-derived package, test, or conformance selection. It writes no gate
   verdict and moves no green marker. `bench test --check system` is the named check
