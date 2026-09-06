@@ -49,6 +49,7 @@ var (
 	AssignmentBranchRef    = ledger.AssignmentBranchRef
 	RecoveryRefPrefix      = ledger.RecoveryRefPrefix
 	RequestDigest          = ledger.RequestDigest
+	ShiftBranchPrefix      = ledger.ShiftBranchPrefix
 	ValidIdentity          = ledger.ValidIdentity
 	ValidateAssignment     = ledger.ValidateAssignment
 

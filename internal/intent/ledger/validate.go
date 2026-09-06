@@ -19,6 +19,12 @@ var (
 // AssignmentBranchPrefix names the local-ref namespace reserved for assignment branches.
 func AssignmentBranchPrefix() string { return assignmentBranchNamespace }
 
+const shiftBranchNamespace = "refs/heads/bench/shift-"
+
+// ShiftBranchPrefix names the local-ref namespace reserved for shift branches. The shift
+// loop derives its branch name from it, and the unclaimed cleanup selects on it.
+func ShiftBranchPrefix() string { return shiftBranchNamespace }
+
 func AssignmentBranchRef(ownerID, assignmentID string) string {
 	return assignmentBranchNamespace + ownerID + "/" + assignmentID
 }
