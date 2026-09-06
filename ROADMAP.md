@@ -67,7 +67,7 @@ findings in the owner details.
 
 **FT300 (MEDIUM) — ticket slicing adds the file a ticket's own change will move to its fence.**
 
-**FT298 (MEDIUM) — skill-discipline gaps the binary-freshness and structural-refactor retros surfaced.**
+**FT298 (MEDIUM, decision required) — the FT298 residual: five fold-or-move edits on the landed rules, and the batch-approval amendment decision.**
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
@@ -236,6 +236,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT298 skill-discipline kit edits — run the `craft-synthesis` kit edit, one rule per commit.
-2. FT310 primary-checkout file-tool guard — run the light-path ticket.
+1. FT310 primary-checkout file-tool guard — run the light-path ticket.
+2. FT298 residual folds — run the `craft-synthesis` kit edit, then the batch-approval decision.
 3. FT309 fold and landing refusal routes — run the light-path ticket.
