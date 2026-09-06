@@ -352,6 +352,17 @@ func runCaptured(ctx context.Context, root string, s subject, stdout, stderr io.
 	return runResolved(ctx, root, s.Resolution, s.Env, controlSafeWriter{stdout}, controlSafeWriter{stderr}, true).Code
 }
 
+// ExecutionInProgress answers whether a gate run holds the checkout's execution
+// lock. It reads the same lock the verdict inspection reads, so a caller outside
+// the package sees one execution fact.
+func ExecutionInProgress(root string) (bool, error) {
+	gitdir, err := benchgit.AdminDir(root)
+	if err != nil {
+		return false, err
+	}
+	return lockHeld(gitdir)
+}
+
 func lockHeld(gitdir string) (bool, error) {
 	path := filepath.Join(gitdir, "bench-gate.lock")
 	executionLockOwners.Lock()
