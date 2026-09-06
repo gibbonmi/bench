@@ -19,9 +19,9 @@ type BindingRow struct {
 var commandRegistries = []string{
 	"cmd/bench/command_registry.go",
 	"cmd/bench/command_registry_test.go",
-	"cmd/bench/main_test.go",
+	"cmd/bench/help_inventory_test.go",
 	"internal/conformance/axi_query_registry_test.go",
-	"internal/conformance/subcommand_routing_test.go",
+	"internal/conformance/subcommand_routing_table_test.go",
 }
 
 // seedOwners are the package prefixes the table binds beyond the command rows:
@@ -48,6 +48,7 @@ var bindings = []BindingRow{
 	{Prefix: "internal/harnesses", Files: commandRegistries},
 	{Prefix: "internal/learnings", Files: commandRegistries},
 	{Prefix: "internal/maps", Files: commandRegistries},
+	{Prefix: "internal/probe", Files: commandRegistries},
 	{Prefix: "internal/roadmap", Files: commandRegistries},
 	{Prefix: "internal/terminal", Files: []string{
 		"internal/adopt/setup_prompt_test.go",
