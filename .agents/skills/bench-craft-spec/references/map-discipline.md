@@ -33,6 +33,7 @@ the explore reads, the fence rules, and the review rubric.
 - A deeper callee joins the reader sweep only when the callee reads the decision fact.
 - Each shared reader in the reader sweep takes an exact ownership fence.
 - The reader sweep names the shipped-surface claim words, because `package-core-guard` reds a claim word beside a repo-only path.
+- A posture change lists every existing test fixture it reds before the map locks.
 
 ## Per row
 
