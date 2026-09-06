@@ -154,6 +154,8 @@ Not covered: story 31 — the checklist hits are recorded by the next research r
 - `.agents/skills/bench-craft-spec/references/bootstrap-authority.md`
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
+- `internal/anchors/registry_craft_research.go`
+- `internal/anchors/registry_craft_research_test.go`
 - `tests/canary/workflow-guidance-anchors/`
 - `tests/canary/skills-index-command-adapters/`
 - `tests/canary/guidance-prose-budgets/`
@@ -166,6 +168,12 @@ Not covered: story 31 — the checklist hits are recorded by the next research r
 - `internal/conformance/subcommand_routing_table_test.go`
 - `reviews/craft-research-skill.md`
 - `capture/retros/`
+
+## Build decisions
+
+**Fence extension, 2026-09-06.** The anchor registry file and its test file are over the line budget, and the commit lane refuses growth there. The research anchor rows and their mutation table therefore live in `internal/anchors/registry_craft_research.go` and `internal/anchors/registry_craft_research_test.go`, on the precedent of the decision-map anchor pair. Both files join the ownership fence. The content of the rows is unchanged.
+
+**Assessment step 2 wording.** The read-only clause of the area sweeps moved to the skill, which owns the read-side boundary. The step keeps its tier, its one-delegate-per-area shape, and its six areas.
 
 ## Out of scope
 
