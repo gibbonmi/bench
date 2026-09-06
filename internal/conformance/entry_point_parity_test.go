@@ -125,7 +125,6 @@ var parityExemptCommands = map[string]string{
 	"worktree-lease-file": whyWrapperVerb,
 	"resume-clean":        whyWrapperVerb,
 	"gate-run":            whyWrapperVerb,
-	"gate-pin":            whyWrapperVerb,
 	"freshness-check":     whyWrapperVerb,
 	"gate-go":             whyGatePhase,
 	"gate-prose":          whyGatePhase,

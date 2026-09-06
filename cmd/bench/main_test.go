@@ -53,7 +53,7 @@ func TestRunUnknownExits2(t *testing.T) {
 func TestRunGateRejectsBriefUsage(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := (Command{Stdout: &stdout, Stderr: &stderr}).Run([]string{"gate", "--brief"})
-	if code != 2 || stdout.Len() != 0 || stderr.String() != "usage: bench gate [--fresh|pin]\n" {
+	if code != 2 || stdout.Len() != 0 || stderr.String() != "usage: bench gate [--fresh]\n" {
 		t.Fatalf("gate --brief = (stdout %q, stderr %q, exit %d), want usage on stderr and exit 2", stdout.String(), stderr.String(), code)
 	}
 }
@@ -173,7 +173,6 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench prep-release         ship-tier rehearsal: artifacts, cross-compile, preflight verify, ship canary
   bench release-preflight --mode verify|publish [--profile public|bank] [--phase name]  run repository release authorization
   bench release prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--adapter npm|fixture] [--provenance] [--message text]  governed npm publication
-  bench gate pin             pin HEAD's .bench tree for pre-push verification
   bench worktree shell [--refresh] [objective] create an owned worktree subshell and release it on exit
   bench worktree list        list assignments and registered worktrees as TOON
   bench worktree path <target>  print one active owned worktree's absolute path

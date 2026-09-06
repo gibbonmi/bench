@@ -126,7 +126,7 @@ func TestCommandRendersRealStaleManagedPrePushHookAndRepairAction(t *testing.T) 
 	t.Chdir(root)
 	out, code := Command(nil)
 	want := "guards[1]{guard,boundary,denies,branch,provenance,currency,wired}:\n" +
-		"  pre-push,pre-push,direct push to the protected branch; .bench drift when pinned,main,live,stale,git\n" +
+		"  pre-push,pre-push,direct push to the protected branch,main,live,stale,git\n" +
 		"guard_scan[1]{status,inspected,total,omitted,reason}:\n" +
 		"  complete,\"1\",\"1\",\"0\",none\n" +
 		"help[1]{cmd,why}:\n  bench link,repair pre-push\n"

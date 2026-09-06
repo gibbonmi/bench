@@ -29,23 +29,19 @@ export BENCH_HOME="${BENCH_HOME:-${HOME:?the Bench pool home needs BENCH_HOME se
 # route_binary, which writes no forged verdict.
 run_gate() { route_porcelain gate-run "$@"; }
 
-gate_usage() { printf 'usage: bench gate [--fresh|pin]\n'; }
+gate_usage() { printf 'usage: bench gate [--fresh]\n'; }
 
 gate_command() {
   case "$#" in
     1) run_gate ;;
     2)
       case "$2" in
-        pin) route_porcelain gate-pin ;;
         --fresh) run_gate --fresh ;;
         --help|-h|help) gate_usage ;;
         *) gate_usage >&2; return 2 ;;
       esac
       ;;
     *)
-      if [[ "$2" == pin ]]; then
-        route_porcelain gate-pin "${@:3}"
-      fi
       gate_usage >&2
       return 2
       ;;

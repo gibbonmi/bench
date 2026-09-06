@@ -344,10 +344,8 @@ Bench layers git safety:
 
 - The git `pre-push` hook blocks a direct push to the default branch. The
   reviewer lifts that clause for one repository with
-  `git config bench.allowProtectedPush true`. When a
-  gate pin exists (`bench gate pin`), it also blocks `.bench` drift from the
-  pinned tree, and the config knob does not lift the drift clause. Without a pin, the drift check stays disarmed; guard discovery
-  reports a static, generic deny surface while enforcement stays live.
+  `git config bench.allowProtectedPush true`. Guard discovery reports a
+  static, generic deny surface, and enforcement stays live.
 - The destructive-git guard allows an agent push to any branch other than the default branch. The guard denies a force, a deletion, a broadcast (`--all`, `--mirror`, `--tags`), and a push with an unresolved destination. The guard also denies a raw git merge and a raw git cherry-pick in every form; `bench worktree merge` folds a sibling, and `bench worktree land` lands a source.
 - Claude Code and Codex hook adapters call the shared scripts in
   `.bench/hooks/`. Codex loads `.codex/hooks.json` only after you trust it
