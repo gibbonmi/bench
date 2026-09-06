@@ -75,9 +75,6 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A charge that writes a Go file under `tests/canary/` lists `go vet` in its
   focused checks. The fixture-bite test only parses the overlay, and `go vet`
   compiles every Go file in the tree.
-- A charge that names an over-budget file as a write target names the headroom
-  route before the dispatch. That route is the sibling file the new rows land
-  in.
 
 ## Isolation and end of life
 

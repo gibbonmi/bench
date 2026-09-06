@@ -12,7 +12,8 @@ the explore reads, the fence rules, and the review rubric.
   pinning test before it slices tickets.
 - A spec that deletes or moves literal bytes runs one repo-wide search for
   those bytes. The search covers the canary fixtures, `tests/`, and
-  `internal/conformance`.
+  `internal/conformance`. A changed rendered message is a moved literal, and
+  the spec also enumerates the exact-match tests on that text.
 - A compile-flag spec runs one whole gate with its flag, then censuses every red,
   before it slices tickets.
 - A claim that something is or is not a tree convention cites the check that
@@ -36,13 +37,9 @@ the explore reads, the fence rules, and the review rubric.
 - A posture change lists every existing test fixture it reds before the map locks.
 - A spec that names a Git flag cites an observed run of that flag over the hostile
   shapes. A flag's documented behavior is an assumption until that run exists.
-- A spec that inherits a closed decision about a bench signal quotes that signal's
-  current value in its first status update.
 - A row that widens a forbidden-import pattern names the enumeration command for its
   current importers across every graded package. It also names each package the
   widened pattern reds today.
-- A spec that changes a rendered message enumerates the exact-match tests on that
-  text.
 
 ## Per row
 
@@ -62,7 +59,10 @@ the explore reads, the fence rules, and the review rubric.
   a surface that did not exist when someone wrote that row.
 - A row that names a failure mechanism traces the message to its producer. It also
   confirms the claimed input reaches that producer. Evidence from an operator
-  session does not establish reachability inside the tree.
+  session does not establish reachability inside the tree. A row that drives the
+  failure through a verb or a probe also names each guard the input passes before
+  the producer. An earlier guard that stops the input leaves the row's seam
+  unreached.
 - A row whose seam is the existing tests names the test function, and someone reads
   that function in the same session.
 - A row that substitutes a package variable names the venue. A substitution in the
@@ -84,9 +84,6 @@ the explore reads, the fence rules, and the review rubric.
 - Each in-scope edge-inventory promise, source promise, and fence-closure promise takes one red-capable row.
 - An either-side predicate takes two rows, one side per row. One row that names both sides is not sufficient.
 - Each named diagnostic state is addable or mutable in a fixture.
-- A row that drives a failure through a verb or a probe names each guard the input
-  passes before the producer. An earlier guard that stops the input leaves the
-  row's seam unreached.
 
 ## In the edge inventory
 
@@ -101,14 +98,14 @@ the explore reads, the fence rules, and the review rubric.
 - The last ticket that touches a package carries the invariant for that whole
   package.
 - A fence over the public help traces every inventory fixture that help forces.
-- The author quotes each pasted operand in the delegate charge.
+- The author quotes each pasted operand in the delegate charge. An anchor needle
+  is a pasted operand, and the spec quotes it verbatim.
 - Before the first review charge, the author walks each coverage row's seam path
   against the ticket `Writes:` lines. The author moves the row to the ticket that
   writes that path.
 - A golden-file row states its exact predicate, and the old-versus-new diff stays
   review-owned.
 - A build-time rewrite scope excludes `specs/*/spec.md` and the tickets by name.
-- The spec quotes every anchor needle verbatim.
 
 ## At review
 
