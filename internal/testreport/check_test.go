@@ -470,7 +470,7 @@ func TestFocusedRunRefusesAnUnheldCache(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	out, code := runGoTest(context.Background(), t.TempDir(), focusedRequest{}, []string{"true"}, []string{"HOME=" + home})
+	_, out, code := runGoTest(context.Background(), t.TempDir(), focusedRequest{}, []string{"true"}, []string{"HOME=" + home})
 
 	if code != 1 {
 		t.Fatalf("exit = %d, want 1; output=%q", code, out)
