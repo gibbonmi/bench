@@ -17,8 +17,6 @@ findings in the owner details.
 
 **FT302 (MEDIUM) — the deepening batch's residuals: the diff package policy extraction and the Git-reader promotion.**
 
-**FT303 (MEDIUM, decision required) — a CLI assessment selects and delivers one evidence-backed improvement.**
-
 **FT304 (MEDIUM, decision required) — one shared projection supplies a useful roadmap and execution view.**
 
 **FT305 (HIGH, decision required) — durable local factory execution survives a worker or conversation stop.**
@@ -217,7 +215,7 @@ recommended table is sequencing advice.
 |---|---|---|
 | FT100 | FT231 | Editorial cuts need the measurement harness. |
 | FT240 | FT231 | The experiment keeps its approved three-arm comparison. |
-| FT304 | FT172, FT303 | The view needs the identity contract and the CLI assessment. |
+| FT304 | FT172 | The view needs the identity contract. |
 | FT306 | FT305, FT71 | Adoption follows durable execution and the held local evidence. |
 
 ### Recommended
@@ -236,6 +234,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT303 bench-probe veto — decide the three `ask-user` findings in `reviews/bench-probe.md`, then run `/bench-drain` to retire the spec and close the row.
-2. FT310 test-home posture — decide the writer refusal, then run the light-path ticket. Test binaries wrote 321 MB under `~/.bench/otel`.
-3. FT298 skill-discipline kit edits — run the `craft-synthesis` kit edit, one rule per commit.
+1. FT310 test-home posture — decide the writer refusal, then run the light-path ticket. Test binaries wrote 321 MB under `~/.bench/otel`.
+2. FT298 skill-discipline kit edits — run the `craft-synthesis` kit edit, one rule per commit.
+3. FT309 fold and landing refusal routes — run the light-path ticket. The growth refusal joined the row on 2026-09-06.
