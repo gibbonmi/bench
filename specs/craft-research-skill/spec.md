@@ -156,6 +156,7 @@ Not covered: story 31 — the checklist hits are recorded by the next research r
 - `internal/anchors/registry_data_test.go`
 - `internal/anchors/registry_craft_research.go`
 - `internal/anchors/registry_craft_research_test.go`
+- `internal/conformance/registry_test.go`
 - `tests/canary/workflow-guidance-anchors/`
 - `tests/canary/skills-index-command-adapters/`
 - `tests/canary/guidance-prose-budgets/`
@@ -172,6 +173,10 @@ Not covered: story 31 — the checklist hits are recorded by the next research r
 ## Build decisions
 
 **Fence extension, 2026-09-06.** The anchor registry file and its test file are over the line budget, and the commit lane refuses growth there. The research anchor rows and their mutation table therefore live in `internal/anchors/registry_craft_research.go` and `internal/anchors/registry_craft_research_test.go`, on the precedent of the decision-map anchor pair. Both files join the ownership fence. The content of the rows is unchanged.
+
+**Fixtures per needle, 2026-09-06.** The registry mutation table is the per-needle proof, and each rule is shown red in both directions. The `workflow-guidance-anchors` family holds one fixture per edited subject file: the skill, the shaping command, and the bootstrap-authority reference. Fourteen fixture copies of the same needles would be a second source for the table.
+
+**Review repair fence, 2026-09-06.** The Coverage axis found that `internal/conformance/registry_test.go` lists the anchor registry files that own the fixture family, and the list lacked the new file. That file joins the ownership fence for the one-line addition.
 
 **Assessment step 2 wording.** The read-only clause of the area sweeps moved to the skill, which owns the read-side boundary. The step keeps its tier, its one-delegate-per-area shape, and its six areas.
 
