@@ -263,7 +263,6 @@ func TestExplicitFocusedRunsWriteNoGateOwnedRecords(t *testing.T) {
 		".git/bench-last-gate":            "cache",
 		".git/bench-last-lane":            "lane",
 		".git/bench-gate-owner":           "owner",
-		".git/bench-gate-pin":             "pin",
 		".git/bench-gate-evidence/record": "evidence",
 		".git/refs/bench/green/main":      "green",
 	}

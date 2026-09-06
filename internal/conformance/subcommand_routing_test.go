@@ -99,7 +99,6 @@ var subcommandRouting = map[string]routingEntry{
 	"canary":            exempt(whyNested),
 	"doctor":            routed("internal/adopt"),
 	"gate":              exempt(whyNested),
-	"gate-pin":          exempt(whyNested),
 	"gate-run":          exempt(whyNested),
 	"init":              exempt(whyNested),
 	"link":              exempt(whyNested),

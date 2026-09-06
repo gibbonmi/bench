@@ -241,17 +241,15 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 	return result.ActionExit
 }
 
-const commandUsage = "usage: bench gate [--fresh|pin]"
+const commandUsage = "usage: bench gate [--fresh]"
 
-// Command selects the public gate action from its arguments. It dispatches gate runs
-// and human-attended pinning, and it rejects every other argument shape.
+// Command selects the public gate action from its arguments. It dispatches gate runs,
+// and it rejects every other argument shape.
 func Command(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
 		return RunCommand(nil, stdout, stderr)
 	}
 	switch args[0] {
-	case "pin":
-		return PinCommand(args[1:], stdin, stdout, stderr)
 	case "--fresh":
 		if len(args) == 1 {
 			return RunCommand(args, stdout, stderr)

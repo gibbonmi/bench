@@ -152,10 +152,8 @@ var commandRegistry = []commandDefinition{
 	{Name: "worktree-hook", Hook: true, Attachment: attachmentSystem, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return harness.WorktreeCommand(args, c.Stdin, c.Stdout, c.Stderr) }},
 	{Name: "gate", Attachment: attachmentSystem, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(
 		helpRow{Order: 26, Suffix: " [--fresh]", Description: "run the project gate (the oracle; --fresh ignores a reusable green)"},
-		helpRow{Order: 30, Suffix: " pin", Description: "pin HEAD's .bench tree for pre-push verification"},
 	), Run: func(c Command, args []string) int { return gate.Command(args, c.Stdin, c.Stdout, c.Stderr) }},
 	{Name: "gate-run", Attachment: attachmentSystem, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return gate.RunCommand(args, c.Stdout, c.Stderr) }},
-	{Name: "gate-pin", Attachment: attachmentSystem, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return gate.PinCommand(args, c.Stdin, c.Stdout, c.Stderr) }},
 	{Name: "gate-phases", Attachment: attachmentSystem, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return gatePhasesCommand(args, c.Stdout, c.Stderr) }},
 	{Name: "freshness-check", Attachment: attachmentSystem, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return freshnessCheck(args, c.Executable, c.Stderr) }},
 	{Name: "freshness-publish", Attachment: attachmentSystem, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return freshnessPublish(args, c.Executable, c.Stderr) }},
