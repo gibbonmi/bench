@@ -50,7 +50,7 @@ compatibility, or a reviewer-chosen seam.
 
    A spec that ships a phase declares it on one `Introduces commands:` line, valid in its own directory while staged.
    When no hostile-input checklist class covers a surface, quarry the seams library and propose a tuned profile addition. Apply `craft-spec`'s named
-   `Bootstrap authority before execution` rule.
+   `Bootstrap authority before execution` rule. A spec that inherits a closed decision about a bench signal quotes that signal's current value in its first status update.
 2. **Retire superseded work by promotion then deletion.** Leave no `Superseded by` marker: promote durable
    decisions, delete the old spec under a `spec-retire: <name>` commit, repair references. The same
    promote-then-delete commit removes the spec's `ROADMAP.md` row and that row's `roadmap/FT<n>.md` detail file. Whole-folder retirement removes the compiled topic folders, their tickets and assets included. It removes each compiled index file too.
