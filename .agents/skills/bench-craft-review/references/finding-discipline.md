@@ -14,6 +14,8 @@ baseline, and the universal-claim rule.
 
 - A finding cites the line the axis read this pass, or the symbol instead. A line number
   from an earlier pass points at bytes that moved.
+- A review-owned row names the artifact that stores its evidence. Evidence that lives
+  only in a delegate return is not citable at the landing.
 
 ## Where an axis under-reads
 
