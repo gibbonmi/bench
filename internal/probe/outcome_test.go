@@ -118,6 +118,35 @@ func TestProbeRestoresBeforeARenderRefusal(t *testing.T) {
 	requireHomeEmpty(t, f)
 }
 
+// PB47: a subject the encoder cannot carry and a restore that cannot write answer at once.
+// The caller reads the render refusal and still learns where the copy is, because the
+// restore-failed verdict overrides every other answer.
+func TestProbeNamesTheCopyWhenTheRenderAndTheRestoreFail(t *testing.T) {
+	f := newFixture(t)
+	// The BEL byte sits in the directory component, so the row's subject cell refuses while
+	// the copy's own path, which carries only the base name, still renders.
+	held := filepath.Join(f.root, "data\aalert")
+	operand := filepath.Join("data\aalert", "alert.txt")
+	writeFixtureFile(t, filepath.Join(held, "alert.txt"), "alpha\n", 0o644)
+	installStubGo(t, f, cannedPass, 0, "chmod 0500 "+sanitize.ShellQuote(held)+"\n")
+	t.Cleanup(func() { _ = os.Chmod(held, 0o755) })
+	out, code := runProbe(t, operand, "--swap", "alpha", "--with", "beta", "--package", "./", "--run", "^TestClampPositive$")
+	if code != 2 {
+		t.Fatalf("exit = %d, want 2\n%s", code, out)
+	}
+	if !strings.HasPrefix(out, "error: unrepresentable TOON cell — ") {
+		t.Fatalf("stdout = %q, want the shared render error first", out)
+	}
+	kept := preservedCopy(t, f)
+	if !strings.Contains(out, "preserved[1]{path,reason}:\n  "+kept) {
+		t.Fatalf("stdout = %q, want the preserved row naming %s", out, kept)
+	}
+	saved, err := os.ReadFile(kept)
+	if err != nil || string(saved) != "alpha\n" {
+		t.Fatalf("preserved copy = (%q, %v), want the start bytes", saved, err)
+	}
+}
+
 // PB16: the restore is deferred, so an interrupt during the focused run still puts the
 // subject back before the verb answers.
 func TestProbeRestoresOnInterrupt(t *testing.T) {
@@ -323,6 +352,17 @@ func TestVerdictExitCodes(t *testing.T) {
 			verdict, code := verdictFor(tc.kind)
 			if verdict != tc.verdict || code != tc.code {
 				t.Fatalf("verdictFor(%q) = (%q, %d), want (%q, %d)", tc.kind, verdict, code, tc.verdict, tc.code)
+			}
+		})
+		t.Run(string(tc.kind)+" over a failed restore", func(t *testing.T) {
+			preserved := preservation{file: filepath.Join(t.TempDir(), "clamp.go")}
+			out, code := render(subject{display: "clamp.go"}, "swap", testreport.Outcome{Kind: tc.kind}, "", preserved, false, "denied")
+			if code != 2 {
+				t.Fatalf("render(%q) over a failed restore exit = %d, want 2\n%s", tc.kind, code, out)
+			}
+			want := probeRow(t, "restore-failed", "clamp.go", "swap", string(tc.kind), 0, "no")
+			if !strings.HasPrefix(out, want) {
+				t.Fatalf("stdout = %q, want %q first", out, want)
 			}
 		})
 	}

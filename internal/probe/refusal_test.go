@@ -92,25 +92,30 @@ func TestProbeRefusesUnderALiveGateRun(t *testing.T) {
 // startGateHolder runs the lock-holding half in its own process and answers the release.
 func startGateHolder(t *testing.T, f *fixture) func() {
 	t.Helper()
-	ready := filepath.Join(scratchDir(t), "gate-ready")
-	releaseMarker := filepath.Join(filepath.Dir(ready), "gate-release")
+	releaseMarker := filepath.Join(scratchDir(t), "gate-release")
 	holder := exec.Command(os.Args[0], "-test.run=^TestProbeRefusesUnderALiveGateRun$", "-test.timeout="+interruptDeadline().String())
 	holder.Env = append(os.Environ(), gateHolderRootEnv+"="+f.root, gateHolderReleaseEnv+"="+releaseMarker)
 	if err := holder.Start(); err != nil {
 		t.Fatal(err)
 	}
-	awaitFile(t, filepath.Join(f.root, ".git", "bench-gate.lock"), ready)
+	awaitFile(t, gateLockPath(f.root))
 	return func() {
 		_ = os.WriteFile(releaseMarker, nil, 0o644)
 		_ = holder.Wait()
 	}
 }
 
+// gateLockPath spells the execution lock both halves of the gate row name. internal/gate
+// does not export the path, so this file owns the one spelling the test side derives.
+func gateLockPath(root string) string {
+	return filepath.Join(root, ".git", "bench-gate.lock")
+}
+
 // holdGateLock takes the execution lock the gate takes and parks until the release marker
 // appears, so the refusal under test observes a genuinely held lock.
 func holdGateLock(t *testing.T, root, releaseMarker string) {
 	t.Helper()
-	lock, err := os.OpenFile(filepath.Join(root, ".git", "bench-gate.lock"), os.O_CREATE|os.O_RDWR, 0o600)
+	lock, err := os.OpenFile(gateLockPath(root), os.O_CREATE|os.O_RDWR, 0o600)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +134,7 @@ func holdGateLock(t *testing.T, root, releaseMarker string) {
 
 // awaitFile waits for the holder's lock file to appear and then settles, because the
 // create and the lock are two steps in the holder's own process.
-func awaitFile(t *testing.T, path, _ string) {
+func awaitFile(t *testing.T, path string) {
 	t.Helper()
 	expiry := time.Now().Add(interruptDeadline())
 	for time.Now().Before(expiry) {

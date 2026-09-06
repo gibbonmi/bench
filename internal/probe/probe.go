@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -128,9 +129,10 @@ func probe(root string, subject subject, mutated []byte, mutation string, reques
 }
 
 // render prints the verdict row first, so a caller reads the answer before the evidence.
-// A subject the encoder cannot carry answers with the shared render error, and the
-// restore has already run by then, which is why an unprintable name still leaves a clean
-// tree.
+// A subject the encoder cannot carry answers with the shared render error in place of the
+// row and the report, and the restore has already run by then, which is why an unprintable
+// name still leaves a clean tree. The restore-failed verdict overrides every other answer,
+// so a failed restore keeps the preserved row and exit 2 even when the row itself refuses.
 func render(subject subject, mutation string, outcome testreport.Outcome, report string, preserved preservation, restored bool, reason string) (string, int) {
 	verdict, code := verdictFor(outcome.Kind)
 	restoredCell := "yes"
@@ -140,13 +142,20 @@ func render(subject subject, mutation string, outcome testreport.Outcome, report
 	row := []any{verdict, subject.display, mutation, string(outcome.Kind), outcome.FailedTests, restoredCell}
 	out, err := toon.TableTyped("probe", probeFields, [][]any{row})
 	if err != nil {
-		return toon.RenderError(err) + "\n", 1
+		out, report = toon.RenderError(err)+"\n", ""
+		if restored {
+			code = 1
+		}
 	}
 	if !restored {
-		preservedRow := [][]string{{preserved.file, reason}}
+		// The reason is diagnostic prose, and a failed write quotes the subject path inside
+		// it, so a subject the row already refused would refuse here too and the caller would
+		// lose the copy path. The path cell stays verbatim, because a stripped path names a
+		// file that is not there.
+		preservedRow := [][]string{{preserved.file, sanitize.Strip(reason)}}
 		block, err := toon.Table("preserved", []string{"path", "reason"}, preservedRow)
 		if err != nil {
-			return toon.RenderError(err) + "\n", 1
+			return toon.RenderError(err) + "\n", code
 		}
 		out += block
 	}

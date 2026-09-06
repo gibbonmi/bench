@@ -61,9 +61,9 @@ func cannedSets() []cannedSet {
 	}
 }
 
-// installCannedGo puts a stub `go` on PATH that replays one canned stream. The prior
-// art is writeCheckGo in check_test.go; this stub adds the exit code, because the
-// build-fail and failing sets are only complete with the nonzero exit.
+// installCannedGo puts a stub `go` on PATH that replays one canned stream and exits with
+// the set's own code. The build-fail and failing sets are only complete with the nonzero
+// exit, which is why this stub carries a code where writeCheckGo does not.
 func installCannedGo(t *testing.T, set cannedSet) {
 	t.Helper()
 	dir := t.TempDir()
@@ -222,11 +222,10 @@ func installSignallingGo(t *testing.T) {
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 }
 
-// baseGoldens holds the exact stdout and exit that `Command` gave for each canned set
-// in each selection form. Every literal was recorded from the base commit
-// 963aa880f9365b6a34211e49fd067ef421bff399, before the Prepare/Execute split, so a
-// rendering or exit change anywhere in the split reds this table rather than passing
-// as a fresh expectation. (Coverage row PB28.)
+// baseGoldens holds the exact stdout and exit `Command` owes for each canned set in each
+// selection form. Every literal is independent of the Prepare/Execute pair, so a rendering
+// or exit change anywhere in the pair reds this table rather than passing as a fresh
+// expectation. (Coverage row PB28.)
 var baseGoldens = map[string]struct {
 	output string
 	code   int

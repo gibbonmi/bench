@@ -285,8 +285,7 @@ func TestProbeIsSilentWhenTheFocusedTestPasses(t *testing.T) {
 
 // PB4: a mutated package that does not compile never bit, so it is invalid rather than a
 // pass or a bite. The selection names no run pattern, because `bench test` attributes a
-// build failure under a run pattern to the pattern; FT290 owns that attribution, and the
-// spec puts it out of scope.
+// build failure under a run pattern to the pattern.
 func TestProbeIsInvalidWhenTheMutationDoesNotCompile(t *testing.T) {
 	f := newFixture(t)
 	out, code := runProbe(t, "clamp.go", "--swap", "return n", "--with", "return", "--package", "./")
