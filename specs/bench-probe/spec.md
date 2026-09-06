@@ -449,4 +449,6 @@ pool path.
         github.com/gibbonmi/bench/internal/probe,TestVerdictExitCodes/failed,"outcome_test.go:325: verdictFor(\"failed\") = (\"bit\", 1), want (\"bit\", 0)"
       skips[0]{package,test,reason}:
 
+- Coordinator runs. After the ticket 04 commit, the coordinator probed `internal/probe/probe.go` through the verb with an omission of the gate-lock refusal and the run `^TestProbeRefusesUnderALiveGateRun$`. The row was `bit,internal/probe/probe.go,omit,failed,1,yes`, and `cmp` proved the restore. After the ticket 05 commit, the coordinator probed `internal/worktree/path.go` with an omission of the typed target and the run `^TestPathNotesTheFileToolRouteOnStderr$`. The row was `bit,internal/worktree/path.go,omit,failed,1,yes`. After the ticket 06 fold, `bench worktree path bench-probe` through the rebuilt binary printed the path alone on stdout and the note with the typed target on stderr.
+
 The review round runs `codex exec` with the reviewer-named model `gpt-6-astra` at high effort with a cap of two iterations. The reviewer named it for this run on 2026-09-06. Every subagent runs `opus` at low or medium effort.
