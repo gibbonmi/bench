@@ -1,7 +1,7 @@
 # Note the file-tool route on the path verb
 
 Blocked by: 04-add-the-bench-probe-verb.md
-Writes: internal/worktree/path.go, internal/worktree/path_identifier_test.go, cmd/bench/main.go, cmd/bench/main_test.go, cmd/bench/help_inventory_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go, tests/canary/package-core-guard/unrouted-subcommand
+Writes: internal/worktree/path.go, internal/worktree/path_identifier_test.go, cmd/bench/main.go, cmd/bench/main_test.go, cmd/bench/help_inventory_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go, internal/conformance/subcommand_routing_table_test.go (new), tests/canary/package-core-guard/unrouted-subcommand
 Covers: PB34, PB35
 
 ## What to build

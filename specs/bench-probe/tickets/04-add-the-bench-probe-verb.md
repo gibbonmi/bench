@@ -2,7 +2,7 @@
 
 Blocked by: 01-make-headroom-in-the-registry-files.md, 02-expose-the-focused-run-outcome.md, 03-export-the-gate-execution-probe.md
 Writes: internal/probe/command.go (new), internal/probe/probe.go (new), internal/probe/subject.go (new), internal/probe/probe_test.go (new), internal/probe/refusal_test.go (new), internal/probe/outcome_test.go (new), cmd/bench/main.go, cmd/bench/main_test.go, cmd/bench/help_inventory_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go, internal/conformance/subcommand_routing_table_test.go (new), internal/tickets/registry_data.go, tests/canary/package-core-guard/unrouted-subcommand
-Covers: PB1, PB2, PB3, PB4, PB5, PB6, PB7, PB8, PB9, PB10, PB11, PB12, PB13, PB14, PB15, PB16, PB17, PB18, PB19, PB20, PB21, PB22, PB23, PB24, PB25, PB26, PB29, PB30, PB31, PB38, PB39, PB40, PB41
+Covers: PB1, PB2, PB3, PB4, PB5, PB6, PB7, PB8, PB9, PB10, PB11, PB12, PB13, PB14, PB15, PB16, PB17, PB18, PB19, PB20, PB21, PB22, PB23, PB24, PB25, PB26, PB29, PB30, PB31, PB38, PB39, PB40, PB41, PB43, PB44, PB45, PB46
 
 ## What to build
 
@@ -29,10 +29,17 @@ Build the verb end to end in `internal/probe`:
   and the help row the spec fixes. Add `"probe": routed("internal/probe")` to the
   routing table. Add the help golden row after the `bench test` row.
 
+The preserved copy file is the restore source, and the bytes read at the start are
+the oracle. Compare the read-back with the start bytes, never with the copy. The
+`internal/probe` tests reach no test-only helper of `internal/testreport`; PB7 grades
+the parse step in-package against `testreport.Prepare`.
+
 Write the tests the coverage map names. Build one module fixture `probefixture` with
 the `Clamp` function and its two tests, with the real `go` on `PATH`. Write one stub
-`go` for the outcome rows that writes a marker file when it starts. Run the interrupt
-row as a child-process helper. Hold the gate lock from a child process for PB20.
+`go` for the outcome rows that writes a marker file when it starts. On request, the
+stub truncates the preserved copy or makes the subject's directory read-only. Run the
+interrupt row as a child-process helper. Hold the gate lock from a child process
+for PB20.
 
 Record two runs over the integration worktree under Further notes in the spec: the
 `--check subcommand-routing` run of PB8 and the exec form of PB11. Run them after the
@@ -45,6 +52,7 @@ Self-probe: remove the byte comparison after the restore and show
 
 - [ ] The six verdict and cause rows PB1 to PB5 and PB38 print the exact rows and exit codes.
 - [ ] The nine refusal rows PB18 to PB26 print the exact lines, leave the subject and the home untouched, and start no child.
-- [ ] The restore rows PB12 to PB17 and PB40 to PB41 hold, with the copy kept only on `restore-failed`.
+- [ ] The restore rows PB12 to PB17, PB40, PB41, and PB43 hold, with the copy kept only on `restore-failed`.
+- [ ] The write-failure rows PB44 and PB45 and the no-record row PB46 hold.
 - [ ] `bench help` prints the probe row, `bench probe --help` exits 0, and the three registry checks pass through `bench test --check`.
 - [ ] The two recorded runs sit under Further notes with their stdout.

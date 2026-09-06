@@ -32,15 +32,21 @@ the report:
 - the `go test interrupted` refusal gives `interrupted`
 - every other refusal before or after the child gives `refused`
 
+Before the refactor, run the base commit's `Command` over the four canned event sets in
+the package form and the run form. Record each exact output and exit as a golden in
+`TestCommandKeepsItsBaseOutput`. Then refactor, and keep those goldens green.
+
 Drive the kinds through a stub `go` on `PATH` that emits one canned `-json` event set
-per kind. Assert `Command` equals `Prepare` then `Execute` for the four sets. Keep every
-existing test in the package unchanged.
+per kind. Drive the `refused` kind through `installTestSelectionFactory` with a `Build`
+that returns an error. Assert `Command` equals `Prepare` then `Execute` for the four
+sets. Keep every existing test in the package unchanged.
 
 Self-probe: make `Execute` answer `failed` for a build failure and show
 `TestExecuteClassifiesTheOutcome` red.
 
 ## Acceptance
 
-- [ ] `TestExecuteClassifiesTheOutcome` answers the five kinds and the failed count for the canned event sets.
+- [ ] `TestExecuteClassifiesTheOutcome` answers the six kinds and the failed count, with `refused` from a failed selection.
+- [ ] `TestCommandKeepsItsBaseOutput` holds the base commit's exact output and exit for each canned set.
 - [ ] `TestCommandIsThePrepareExecuteProjection` shows `Command` equal to `Prepare` then `Execute` for the four sets.
 - [ ] `go test ./internal/testreport` passes with the existing assertions unchanged.
