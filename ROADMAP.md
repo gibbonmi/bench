@@ -37,6 +37,10 @@ findings in the owner details.
 
 **FT199 (MEDIUM) — the shipped unclaimed-ref cleanup grows into a recovery-aware repository-wide ref inventory.**
 
+**FT308 (MEDIUM, decision required) — the cleanup transaction's persistence lock leaves `.git` when its record is gone.**
+
+**FT309 (LOW) — the fold and landing refusals name their route: `merge --from` accepts a sibling tip sha, and the non-ancestor base refusal names the two bases.**
+
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
 **FT283 (MEDIUM, decision required) — `bench worktree land --spec` has one phase-scoped transition contract.**
@@ -129,7 +133,7 @@ findings in the owner details.
 
 **FT255 (MEDIUM, decision required) — concurrent tests share one explicit machine budget.**
 
-**FT297 (LOW) — a conformance row pins the Go-owned binary path against its two shell derivations.**
+**FT297 (LOW) — conformance rows pin the Go-owned binary path against its shell derivations and the VCS-disable flag on every Go tool call.**
 
 **FT299 (LOW) — a landing rehearsal precedes the first landing of a promotion-broker-changing spec.**
 
@@ -232,4 +236,4 @@ recommended table is sequencing advice.
 
 1. FT303 CLI assessment and selected improvement — run `/bench-shape-idea`. The four-candidate deepening batch landed on 2026-09-05, so the assessment is unblocked.
 2. FT298 skill-discipline kit edits — run the `craft-synthesis` kit edit, one rule per commit.
-3. FT255 shared machine budget — run `/bench-shape-idea`. Three builds recorded load-induced reds.
+3. FT309 fold and landing refusal routes — run the light-path ticket. Both refusals cost one call each on the 2026-09-06 pin-removal landing.
