@@ -13,7 +13,16 @@ import (
 
 // ValidateDecisionMap validates one map at its repository-relative path.
 func ValidateDecisionMap(root, path string, compiled bool, content []byte) (DecisionMap, []Diagnostic) {
-	m, parsed := ParseDecisionMap(content)
+	fileTickets, ticketFolderDiagnostics, split := splitTickets(root, path)
+	m, parsed := parseDecisionMap(content, !split)
+	if split {
+		m.Tickets = append(m.Tickets, fileTickets...)
+		parsed = append(parsed, ticketFolderDiagnostics...)
+		if len(m.Tickets) == 0 {
+			parsed = append(parsed, Diagnostic{Message: "missing decision ticket"})
+		}
+		parsed = append(parsed, indexDiagnostics(m, fileTickets)...)
+	}
 	diagnostics := make([]Diagnostic, 0, len(parsed))
 	for _, diagnostic := range parsed {
 		diagnostics = append(diagnostics, Diagnostic{Message: path + ": " + diagnostic.Message})

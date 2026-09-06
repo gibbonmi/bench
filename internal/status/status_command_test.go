@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -213,5 +214,38 @@ func TestCommandRoutePrintsTheCodexPhaseForm(t *testing.T) {
 	got, code := Command([]string{"--route", "--harness", "codex"})
 	if code != 0 || !strings.Contains(got, ",$bench-drain\n") {
 		t.Fatalf("Command(--route --harness codex) = (%q, %d), want the $bench- form", got, code)
+	}
+}
+
+// TestAppendMapsCountsSplitMaps grades the status seam on the split shape, where
+// the tickets live in files beside the index. A count that reads only the inline
+// shape sees no ticket and routes the map wrong.
+func TestAppendMapsCountsSplitMaps(t *testing.T) {
+	root := t.TempDir()
+	index := "# Split map\n\nStatus: STATUS\n\n## Destination\n\nShip it.\n\n## Notes\n\n## Decisions so far\nGISTS\n## Not yet specified\n\n## Spec-writer discretion\n\n## Out of scope\n\n## Sources\n"
+	ticket := "# Which parser owns the map?\n\nBlocked by: none\nType: Research\n\n### Question\n\nWhich?\n\n### Answer\n\nANSWER\n"
+	write := func(name, status, gists, answer string) {
+		t.Helper()
+		folder := filepath.Join(root, "decisions", name, "tickets")
+		if err := os.MkdirAll(folder, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		document := strings.Replace(strings.Replace(index, "STATUS", status, 1), "GISTS", gists, 1)
+		if err := os.WriteFile(filepath.Join(root, "decisions", name+".md"), []byte(document), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(folder, "1.md"), []byte(strings.Replace(ticket, "ANSWER", answer, 1)), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	write("ready", "ready", "\n- [Which parser](ready/tickets/1.md): The maps package.\n", "The maps package.")
+	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "1 ready map(s)", commandActionWithArgument(writeSpecPhaseAction, "decisions/ready.md")}}) {
+		t.Fatalf("split ready maps row = %#v", got)
+	}
+
+	write("shaping", "shaping", "", "\u2014 (open)")
+	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "1 unresolved map(s)", commandAction(shapeIdeaPhaseAction)}}) {
+		t.Fatalf("split ready plus shaping maps row = %#v", got)
 	}
 }

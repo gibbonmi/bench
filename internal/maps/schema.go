@@ -2,95 +2,9 @@ package maps
 
 import (
 	"fmt"
-	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
-
-	"github.com/gibbonmi/bench/internal/bounds"
 )
-
-// DecisionMapCandidate identifies a directly discovered map and its ownership.
-type DecisionMapCandidate struct {
-	Path     string
-	Compiled bool
-}
-
-func isDirectoryDoc(name string) bool {
-	return strings.EqualFold(strings.TrimSuffix(name, filepath.Ext(name)), "README")
-}
-
-// discoverDirectoryCandidates is the sole direct-child candidate policy for active
-// and compiled decision-map directories. Callers choose which directories to compose.
-func discoverDirectoryCandidates(root, dir string, compiled bool) ([]DecisionMapCandidate, bounds.FileState, string) {
-	classified := bounds.ClassifyDir(dir)
-	if classified.State != bounds.StateParsed {
-		return nil, classified.State, classified.Reason
-	}
-	var candidates []DecisionMapCandidate
-	for _, entry := range classified.Entries {
-		name := entry.Name()
-		if entry.IsDir() || strings.HasPrefix(name, ".") || !strings.HasSuffix(name, ".md") || isDirectoryDoc(name) {
-			continue
-		}
-		path, err := filepath.Rel(root, filepath.Join(dir, name))
-		if err != nil {
-			return nil, bounds.StateUnreadable, err.Error()
-		}
-		candidates = append(candidates, DecisionMapCandidate{Path: filepath.ToSlash(path), Compiled: compiled})
-	}
-	return candidates, bounds.StateParsed, ""
-}
-
-// DiscoverDecisionMapCandidates finds active and compiled direct Markdown candidates.
-func DiscoverDecisionMapCandidates(root string) ([]DecisionMapCandidate, error) {
-	candidates, diagnostics := discoverDecisionMapCandidates(root)
-	if len(diagnostics) > 0 {
-		return nil, fmt.Errorf("%s", diagnostics[0])
-	}
-	return candidates, nil
-}
-
-// discoverDecisionMapCandidates is the sole active-and-compiled candidate traversal.
-// Callers receive every readable candidate plus any independent directory diagnostics.
-func discoverDecisionMapCandidates(root string) ([]DecisionMapCandidate, []string) {
-	var candidates []DecisionMapCandidate
-	var diagnostics []string
-	appendDirectory := func(dir string, compiled bool) {
-		discovered, state, reason := discoverDirectoryCandidates(root, dir, compiled)
-		if state == bounds.StateAbsent {
-			return
-		}
-		if state != bounds.StateParsed && state != bounds.StateEmpty {
-			rel, err := filepath.Rel(root, dir)
-			if err != nil {
-				rel = dir
-			}
-			diagnostics = append(diagnostics, fmt.Sprintf("%s: %s: %s", filepath.ToSlash(rel), state, reason))
-			return
-		}
-		candidates = append(candidates, discovered...)
-	}
-	appendDirectory(filepath.Join(root, DecisionsDir), false)
-	specs := filepath.Join(root, "specs")
-	classified := bounds.ClassifyDir(specs)
-	if classified.State == bounds.StateAbsent {
-		sort.Slice(candidates, func(i, j int) bool { return candidates[i].Path < candidates[j].Path })
-		return candidates, diagnostics
-	}
-	if classified.State != bounds.StateParsed && classified.State != bounds.StateEmpty {
-		diagnostics = append(diagnostics, fmt.Sprintf("specs: %s: %s", classified.State, classified.Reason))
-		return candidates, diagnostics
-	}
-	for _, spec := range classified.Entries {
-		if !spec.IsDir() || strings.HasPrefix(spec.Name(), ".") {
-			continue
-		}
-		appendDirectory(filepath.Join(specs, spec.Name(), DecisionsDir), true)
-	}
-	sort.Slice(candidates, func(i, j int) bool { return candidates[i].Path < candidates[j].Path })
-	return candidates, diagnostics
-}
 
 type field struct {
 	name    string
@@ -109,6 +23,7 @@ type decisionMapSchema struct {
 	types               []string
 	fields              []field
 	terminalSections    []terminalSection
+	indexSections       []terminalSection
 	ticketHeading       string
 	unsupportedHeadings []string
 }
@@ -130,6 +45,12 @@ var canonicalDecisionMapSchema = decisionMapSchema{
 		{heading: "Spec-writer discretion", syntax: "## Spec-writer discretion"},
 		{heading: "Out of scope", syntax: "## Out of scope"},
 		{heading: "Sources", syntax: "## Sources"},
+	},
+	// A split map's index carries these two sections. They stay optional for an
+	// inline map, so they are not terminal sections and the template omits them.
+	indexSections: []terminalSection{
+		{heading: "Notes", syntax: "## Notes"},
+		{heading: "Decisions so far", syntax: "## Decisions so far"},
 	},
 	ticketHeading:       "## #",
 	unsupportedHeadings: []string{"## Handoff"},
@@ -179,6 +100,11 @@ type DecisionMap struct {
 	Discretion  string
 	OutOfScope  string
 	Sources     string
+	Notes       string
+	Decisions   string
+	// IndexSections holds the index sections the document opened. A section can
+	// be present and empty, which the body alone cannot report.
+	IndexSections map[string]bool
 }
 
 func (s decisionMapSchema) hasStatus(status string) bool {
@@ -232,7 +158,7 @@ func (s decisionMapSchema) fieldScan() FieldScan {
 	for _, f := range s.fields {
 		table = append(table, FieldSpec{Name: f.name, Syntax: f.syntax, Heading: f.heading, Scoped: f.scoped})
 	}
-	for _, terminal := range s.terminalSections {
+	for _, terminal := range append(append([]terminalSection{}, s.terminalSections...), s.indexSections...) {
 		table = append(table, FieldSpec{Name: terminal.heading, Syntax: terminal.syntax, Heading: true})
 	}
 	return FieldScan{
@@ -241,7 +167,7 @@ func (s decisionMapSchema) fieldScan() FieldScan {
 			if id, _, ok := s.ticket(line); ok {
 				return id, true
 			}
-			if line == s.field("Destination").syntax || s.terminalHeading(line) != "" {
+			if line == s.field("Destination").syntax || s.terminalHeading(line) != "" || s.indexHeading(line) != "" {
 				return "", true
 			}
 			for _, heading := range s.unsupportedHeadings {
@@ -266,7 +192,14 @@ func (s decisionMapSchema) fieldScan() FieldScan {
 
 // ParseDecisionMap parses a decision map according to the canonical schema.
 func ParseDecisionMap(content []byte) (DecisionMap, []Diagnostic) {
-	var m DecisionMap
+	return parseDecisionMap(content, true)
+}
+
+// parseDecisionMap parses one map index. A split map carries its tickets in
+// files beside the index, so requireInlineTickets is false there and the
+// ticket-count rule moves to the caller that read the folder.
+func parseDecisionMap(content []byte, requireInlineTickets bool) (DecisionMap, []Diagnostic) {
+	m := DecisionMap{IndexSections: map[string]bool{}}
 	var diagnostics []Diagnostic
 	seenTerminal := map[string]bool{}
 	var current *DecisionTicket
@@ -277,22 +210,7 @@ func ParseDecisionMap(content []byte) (DecisionMap, []Diagnostic) {
 		if current == nil {
 			return
 		}
-		if current.BlockedBy == "" {
-			diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("ticket #%s: missing Blocked by", current.ID)})
-		} else if !blockersField.MatchString(current.BlockedBy) {
-			diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("ticket #%s: malformed Blocked by", current.ID)})
-		}
-		if current.Type == "" {
-			diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("ticket #%s: missing Type", current.ID)})
-		} else if !canonicalDecisionMapSchema.hasType(current.Type) {
-			diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("ticket #%s: unsupported Type %q", current.ID, current.Type)})
-		}
-		if current.Question == "" {
-			diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("ticket #%s: missing Question", current.ID)})
-		}
-		if !answerSeen {
-			diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("ticket #%s: missing Answer", current.ID)})
-		}
+		diagnostics = append(diagnostics, ticketDiagnostics(*current, answerSeen)...)
 		m.Tickets = append(m.Tickets, *current)
 		current = nil
 	}
@@ -332,6 +250,15 @@ func ParseDecisionMap(content []byte) (DecisionMap, []Diagnostic) {
 			}
 		}
 		if unsupported {
+			continue
+		}
+		if heading := canonicalDecisionMapSchema.indexHeading(line); heading != "" {
+			finishTicket()
+			if duplicate {
+				report()
+			}
+			m.IndexSections[heading] = true
+			section = heading
 			continue
 		}
 		if heading := canonicalDecisionMapSchema.terminalHeading(line); heading != "" {
@@ -409,6 +336,10 @@ func ParseDecisionMap(content []byte) (DecisionMap, []Diagnostic) {
 			m.OutOfScope = appendSectionLine(m.OutOfScope, line)
 		case "Sources":
 			m.Sources = appendSectionLine(m.Sources, line)
+		case "Notes":
+			m.Notes = appendSectionLine(m.Notes, line)
+		case "Decisions so far":
+			m.Decisions = appendSectionLine(m.Decisions, line)
 		}
 	}
 	finishTicket()
@@ -423,7 +354,7 @@ func ParseDecisionMap(content []byte) (DecisionMap, []Diagnostic) {
 	if m.Destination == "" {
 		diagnostics = append(diagnostics, Diagnostic{Message: "missing Destination"})
 	}
-	if len(m.Tickets) == 0 {
+	if requireInlineTickets && len(m.Tickets) == 0 {
 		diagnostics = append(diagnostics, Diagnostic{Message: "missing decision ticket"})
 	}
 	for _, terminal := range canonicalDecisionMapSchema.terminalSections {
