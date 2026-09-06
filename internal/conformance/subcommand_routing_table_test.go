@@ -40,6 +40,9 @@ var subcommandRouting = map[string]routingEntry{
 	"status":       routed("internal/status"),
 	"structure":    routed("internal/structure"),
 	"test":         routed("internal/testreport"),
+	// probe owns its own grammar and hands the focused-run owner only the selection it
+	// parsed, so it is routed rather than nested.
+	"probe": routed("internal/probe"),
 
 	"check-agent-line":      exempt(whyPlumbing),
 	"freshness-check":       exempt(whyPlumbing),

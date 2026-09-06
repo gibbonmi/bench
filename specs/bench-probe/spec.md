@@ -189,7 +189,7 @@ the scorecard and records the conflict for the reviewer.
 | PB1 | 1, 3, 7 | over the fixture module, `probe clamp.go --swap "n < 0" --with "n > 0" --package ./ --run ^TestClampNegative$` prints the first line `probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:` and the row `bit,clamp.go,swap,failed,1,yes`, and exits 0 | a new test `TestProbeBitesWhenTheFocusedTestFails` in `internal/probe` with the real `go` | a verb that skips the mutation reports `silent`, and a verb that skips the run has no failed count |
 | PB2 | 2, 3 | over the fixture module, `--omit "return 0"` with the same selection prints the row `bit,clamp.go,omit,failed,1,yes` and exits 0 | a new test `TestProbeOmitsTheMatchOnce` in `internal/probe` | a verb that ignores `--omit` runs an unchanged file and reports `silent` |
 | PB3 | 4 | over the fixture module, `--swap "keeps n at" --with "holds n at"` with the same selection prints the row `silent,clamp.go,swap,passed,0,yes` and exits 1 | a new test `TestProbeIsSilentWhenTheFocusedTestPasses` in `internal/probe` | a verb that exits 0 on every completed run reds the exit assertion |
-| PB4 | 5 | over the fixture module, `--swap "return n" --with "return"` with the same selection prints the row `invalid,clamp.go,swap,build-failed,0,yes` and exits 1 | a new test `TestProbeIsInvalidWhenTheMutationDoesNotCompile` in `internal/probe` | a verb that reads a nonzero `go` exit as a bite reports `bit` |
+| PB4 | 5 | over the fixture module, `--swap "return n" --with "return"` with `--package ./` and no `--run` prints the row `invalid,clamp.go,swap,build-failed,0,yes` and exits 1 | a new test `TestProbeIsInvalidWhenTheMutationDoesNotCompile` in `internal/probe` | a verb that reads a nonzero `go` exit as a bite reports `bit` |
 | PB5 | 6 | over the fixture module, the PB1 mutation with `--run ^TestNoSuch$` prints the row `invalid,clamp.go,swap,no-test-run,0,yes` and exits 1 | a new test `TestProbeIsInvalidWhenNoTestRuns` in `internal/probe` | a verb that reads an empty failure table as `silent` reds the cause cell |
 | PB6 | 8 | over the stub `go` with a canned failing event set, stdout after the probe row equals the output `testreport.Command` prints for the same selection over the same canned set | a new test `TestProbeCarriesTheFocusedRunTables` in `internal/probe` over the stub `go` | a verb that prints the tables before the row, or drops them, reds the equality |
 | PB7 | 9 | for `--check line-routing`, the parse step's selection request equals the request `testreport.Prepare` returns for `--check line-routing`, and the existing named-check test pins that request's argv | a new in-package test `TestProbeSelectsTheCheckForm` in `internal/probe` over the parse step, and `internal/testreport/check_test.go` (`TestNamedCheckOwnsConformanceEnvironment`) | a verb that maps `--check` onto `--package` builds a different request |
@@ -366,6 +366,12 @@ Build decisions recorded for reviewer veto:
 
 - The registry line, the routing row, and the golden row land in one ticket after the relocation ticket.
 - The path-note ticket runs after the verb ticket, because both write the dispatcher and the golden.
+- Row PB4 drops `--run` from its selection. Under a run pattern, `bench test` reports `no-test-run` before it reports the build failure, so the compile row under `--run` answers `no-test-run`. The verdict and the exit stay `invalid` at 1. The Out of scope list already parks the compile attribution with FT290.
+- The verdict row renders through `toon.TableTyped`, so the `failed_tests` cell is an integer. `toon.Table` quotes a numeric-looking string, and row PB1 spells a bare `1`. Every test expectation derives through the same call.
+- The subject refusal has one reason beyond the spec's list: a regular file that cannot be read answers `is unreadable`.
+- Ticket 02 took one fence amendment: one line in `internal/testreport/check_test.go`, because that test calls the changed `runGoTest` directly.
+- `cmd/bench/command_registry.go` took one pure move: `outputCommand` and `adoptCommand` sit beside the `commandHandler` type they construct. The lane grades growth against the current tip, so the two registry lines in `cmd/bench/main.go` needed headroom at the same commit.
+- `internal/probe` carries its own `prose` check name, because `testreport` does not export its constant. The one-source rule prefers an export; the ticket fence did not cover `internal/testreport/command.go`.
 
 Source-sentence-to-row table:
 
@@ -409,5 +415,38 @@ Reader sweep of the changed facts:
 The shipped-surface claim words: the reference guide paragraph names no repo-only path beside a claim word.
 
 The trust chain is unchanged. The wrapper resolves the Bench executable as it does for every verb. The verb starts no run child before its refusals pass. The focused run's owner selects the run binary and launches `go` from `PATH` through the gate's one test-argv producer, as `bench test` does today. The gate-lock refusal, the subject refusal, and the selection parse run before the preserved copy is written and before any run child starts (PB25).
+
+Recorded runs:
+
+The build ran the two review-owned rows in the integration worktree. Each run used
+the worktree's own `dist/bench`, because the installed wrapper resolves the landed
+executable, which does not hold the verb before the landing. Neither command names a
+pool path.
+
+- PB8, the check form. The command was `bench probe
+  internal/conformance/subcommand_routing_table_test.go --omit '"probe":
+  routed("internal/probe"),' --check subcommand-routing`. The omission removes the
+  routing row, and the check reports the unrouted verb. The stdout was:
+
+      probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:
+        bit,internal/conformance/subcommand_routing_table_test.go,omit,failed,1,yes
+      packages[1]{package,status,elapsed_ms}:
+        github.com/gibbonmi/bench/internal/conformance,fail,15
+      failures[1]{package,test,line}:
+        github.com/gibbonmi/bench/internal/conformance,TestRootConformance,"gate_entry_test.go:33: gate: cmd/bench/main.go dispatches \"probe\" with no entry in the subcommand argument-routing registry; record it as routed through usage.Parse or as an exemption with its reason"
+      skips[0]{package,test,reason}:
+
+- PB11, the exec form. The command was `bench worktree exec bench-probe --
+  ./dist/bench probe internal/probe/probe.go --swap 'return "bit", 0' --with 'return
+  "bit", 1' --package ./internal/probe --run '^TestVerdictExitCodes$'`. The swap
+  breaks the verdict mapping, and the focused test reports it. The stdout was:
+
+      probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:
+        bit,internal/probe/probe.go,swap,failed,1,yes
+      packages[1]{package,status,elapsed_ms}:
+        github.com/gibbonmi/bench/internal/probe,fail,3
+      failures[1]{package,test,line}:
+        github.com/gibbonmi/bench/internal/probe,TestVerdictExitCodes/failed,"outcome_test.go:325: verdictFor(\"failed\") = (\"bit\", 1), want (\"bit\", 0)"
+      skips[0]{package,test,reason}:
 
 The review round runs `codex exec` with the reviewer-named model `gpt-6-astra` at high effort with a cap of two iterations. The reviewer named it for this run on 2026-09-06. Every subagent runs `opus` at low or medium effort.

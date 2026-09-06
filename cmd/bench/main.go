@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/benchguard"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/census"
@@ -40,6 +39,7 @@ import (
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preprelease"
+	"github.com/gibbonmi/bench/internal/probe"
 	"github.com/gibbonmi/bench/internal/publication"
 	"github.com/gibbonmi/bench/internal/releasepreflight"
 	"github.com/gibbonmi/bench/internal/roadmap"
@@ -111,6 +111,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "worktree-pool", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(poolCommand)},
 	{Name: "worktree-lease-file", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(worktree.LeaseFileCommand)},
 	{Name: "test", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 22, Suffix: " [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>", Description: "run focused Go-test or named-check evidence as TOON; no gate verdict"}), Run: outputCommand(testCommand)},
+	{Name: "probe", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 22, Suffix: " <file> (--swap <old> --with <new> | --omit <old>) (--package <expr> [--run <go-regex>] | --check <name>) [--full]", Description: "mutate one file once, run one focused test or check, restore the file, and report bit, silent, invalid, or restore-failed"}), Run: outputCommand(probe.Command)},
 	{Name: "help", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(), Kind: commandHelp},
 	{Name: "repair", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 25, Suffix: " [--prune]", Description: "explicitly install the pinned platform binary or prune stale cache entries"}), WrapperOnly: true},
 
@@ -161,20 +162,6 @@ var commandRegistry = []commandDefinition{
 	{Name: "release-preflight", Attachment: attachmentShip, AXI: axiExempt(axiReasonRelease), Inventory: publicInventory(helpRow{Order: 28, Suffix: " --mode verify|publish [--profile public|bank] [--phase name]", Description: "run repository release authorization"}), Run: func(c Command, args []string) int { return releasepreflight.Command(args, version, c.Stderr) }},
 	{Name: "prep-release", Attachment: attachmentShip, AXI: axiExempt(axiReasonRelease), Inventory: publicInventory(helpRow{Order: 27, Description: "ship-tier rehearsal: artifacts, cross-compile, preflight verify, ship canary"}), Run: func(c Command, args []string) int { return preprelease.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "release", Attachment: attachmentShip, AXI: axiExempt(axiReasonRelease), Inventory: publicInventory(helpRow{Order: 29, Suffix: " prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--adapter npm|fixture] [--provenance] [--message text]", Description: "governed npm publication"}), Run: func(c Command, args []string) int { return publication.Command(args, c.Stdout, c.Stderr) }},
-}
-
-func outputCommand(fn func([]string) (string, int)) commandHandler {
-	return func(c Command, args []string) int {
-		out, code := fn(args)
-		fmt.Fprint(c.Stdout, out)
-		return code
-	}
-}
-
-func adoptCommand(name string) commandHandler {
-	return func(c Command, args []string) int {
-		return adopt.Run(append([]string{name}, args...), c.Stdout, c.Stderr, version)
-	}
 }
 
 func versionCommand(c Command, _ []string) int {
