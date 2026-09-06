@@ -76,20 +76,20 @@ close its claim before the probe returns
 ([fan-out](../craft-research.md:132), [boundary](../craft-research.md:203)).
 
 The current parser keeps answers inline and supports `shaping` and `ready`
-states ([schema](../../internal/maps/schema.go:116)). `bench maps` projects
-unresolved ticket rows ([projection](../../internal/maps/maps.go:44)). Status
+states ([schema](../../../../internal/maps/schema.go:116)). `bench maps` projects
+unresolved ticket rows ([projection](../../../../internal/maps/maps.go:44)). Status
 shows unresolved maps before ready maps
-([status](../../internal/status/status.go:950)). This supports focused discovery
+([status](../../../../internal/status/status.go:950)). This supports focused discovery
 without treating default-output omission as data loss or adding another state
 owner.
 
 ## Roadmap composition
 
-[FT99](../../roadmap/FT99.md:3) contributes current-tree premise checks.
-[FT106](../../roadmap/FT106.md:58) contributes document freshness and the
-artifact-home conflict. [FT125](../../roadmap/FT125.md:3) contributes focused
-readers. [FT304](../../roadmap/FT304.md:3) contributes shared observation.
-[FT231](../../roadmap/FT231.md:73) contributes advisory measurement and permits
+[FT99](../../../../roadmap/FT99.md:3) contributes current-tree premise checks.
+[FT106](../../../../roadmap/FT106.md:58) contributes document freshness and the
+artifact-home conflict. [FT125](../../../../roadmap/FT125.md:3) contributes focused
+readers. [FT304](../../../../roadmap/FT304.md:3) contributes shared observation.
+[FT231](../../../../roadmap/FT231.md:73) contributes advisory measurement and permits
 a minimal baseline before the first approved pass.
 
 The map groups those research portions only. FT89, FT219, and FT292 remain
@@ -119,8 +119,8 @@ specification cuts and related measurement.
 ## Sources
 
 - [Settled Research map](../craft-research.md:25) owns research policy.
-- [FT99](../../roadmap/FT99.md:3), [FT106](../../roadmap/FT106.md:58),
-  [FT125](../../roadmap/FT125.md:3), [FT304](../../roadmap/FT304.md:3), and
-  [FT231](../../roadmap/FT231.md:73) own the grouped roadmap scope.
+- [FT99](../../../../roadmap/FT99.md:3), [FT106](../../../../roadmap/FT106.md:58),
+  [FT125](../../../../roadmap/FT125.md:3), [FT304](../../../../roadmap/FT304.md:3), and
+  [FT231](../../../../roadmap/FT231.md:73) own the grouped roadmap scope.
 - The four absolute incident-investigation links above are report-structure
   references with the Evidence status limitation.

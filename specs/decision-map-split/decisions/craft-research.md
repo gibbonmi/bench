@@ -462,10 +462,10 @@ its wider scope, and a new row for the split is the drain's call.
 
 ## Sources
 
-- Path: `decisions/assets/craft-research-research.md`
+- Path: `specs/decision-map-split/decisions/assets/craft-research-research.md`
   Supports: #1 through #3 and the factual premises for #4 through #8. Three read-only research delegations ran 2026-08-02, with upstream sources re-read and local claims spot-checked by the coordinator.
   Drift: re-verify if research, delegation, line-routing, map-source, skill-index, assessment, or artifact-lifecycle guidance changes, or if the cited upstream research contracts move. Re-resolve the asset's line citations before `/bench-write-spec` reads this map if FT164 has landed.
-- Path: `decisions/assets/research-workflow-assessment.md`
+- Path: `specs/decision-map-split/decisions/assets/research-workflow-assessment.md`
   Supports: #9 through #14. It compares the local format references with the settled research map and current roadmap and map owners.
   Drift: re-verify when the reference report set, research policy, roadmap rows, map reader, or status projection changes.
 - URL: https://github.com/mattpocock/skills/blob/main/skills/engineering/wayfinder/SKILL.md

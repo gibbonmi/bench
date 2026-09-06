@@ -347,7 +347,7 @@ Claim classes the target does not cover; the spec says so explicitly:
 
 - **Runtime and behavioral claims** (concurrency, performance, wire
   compatibility). These need runnable probes; the craft-research contract
-  already routes them there (`decisions/craft-research.md`, #7).
+  already routes them there (`specs/decision-map-split/decisions/craft-research.md`, #7).
 - **Dynamic edges**: reflection, `go:linkname`, `exec` of external binaries,
   and shell-to-Go CLI invocation edges. Registry rows
   (`cmd/bench/main.go:77`) and `rg` sweeps cover these as candidate-class
