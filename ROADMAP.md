@@ -65,7 +65,7 @@ findings in the owner details.
 
 **FT300 (MEDIUM) — ticket slicing adds the file a ticket's own change will move to its fence.**
 
-**FT298 (MEDIUM, decision required) — the FT298 residual: five fold-or-move edits on the landed rules, and the batch-approval amendment decision.**
+**FT298 (MEDIUM, decision required) — a batch approval's license to amend a build's own acceptance row.**
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
@@ -234,6 +234,5 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT298 residual folds — run the `craft-synthesis` kit edit, then the batch-approval decision.
-2. FT309 fold and landing refusal routes — run the light-path ticket.
-3. FT311 coordinator chunk folds — a reviewer decision on the fold-runs-the-lane question.
+1. FT309 fold and landing refusal routes — run the light-path ticket.
+2. FT311 coordinator chunk folds — a reviewer decision on the fold-runs-the-lane question.
