@@ -8,9 +8,9 @@ calls, the current verbs, and the ranked candidates. The reviewer selects the
 improvement in ticket #10. This asset selects nothing.
 
 The window starts at the factory decision, 2026-09-04 00:00 UTC, and ends at
-the extraction, 2026-09-06 08:45 UTC. The git-ignored machine-local inventory
-at `research/ft303-cli-assessment/` holds the extraction scripts and the raw
-counts.
+the extraction, 2026-09-06 08:45 UTC. The machine-local inventory at
+`~/.bench/assessments/bench-2826441890/ft303-cli-assessment/` holds the
+extraction scripts and the raw counts.
 
 ## Application inventory
 

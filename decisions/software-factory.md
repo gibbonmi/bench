@@ -277,5 +277,5 @@ row. A probe ledger or a census entry is a later row if a retro asks for it.
   Supports: typed lifecycle-control design input.
   Drift: use only as inspiration; it establishes no Bench capability.
 - Path: `decisions/assets/ft303-cli-assessment.md`
-  Supports: #7 and the #10 selection; the git-ignored inventory at `research/ft303-cli-assessment/` holds the extraction.
+  Supports: #7 and the #10 selection; the machine-local inventory at `~/.bench/assessments/bench-2826441890/ft303-cli-assessment/` holds the extraction.
   Drift: re-run the extraction when a probe verb, a production filter, or a structure path filter lands, or at the next CLI assessment.
