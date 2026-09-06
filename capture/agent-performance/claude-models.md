@@ -1,24 +1,24 @@
 # Claude model scorecard
 
-Last incorporated landing: `decision-map-split` (`21de019a`, 2026-09-06).
-Fable/low ran as orchestrator across one integration source and three sibling
-worktrees. Opus at medium ran five ticket and repair charges, and Opus at high
-ran the two guidance tickets and the prose repair. Opus at low and medium ran the
-three review axes and the scoped re-review. Every charge landed first-pass on
-behavior, and every delegate probe bit.
+Last incorporated landing: `craft-research-skill` (`28e47254`, 2026-09-06).
+Fable/low ran as orchestrator across one integration source and one review
+worktree. Opus at high ran the two guidance tickets, and Sonnet at low ran the
+review repair as the reviewer named. Opus at low and medium ran the three review
+axes and the scoped re-review. Every charge landed first-pass on behavior, and
+every delegate probe bit.
 
-Sixty-two completed landings are recorded. Routing follows the
+Sixty-three completed landings are recorded. Routing follows the
 harness-to-tier binding.
 
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use |
 | --- | --- | --- | --- |
-| Fable / low–high | orchestrator, 30 landings + implementer, 9 charges + reviewer, 3 specs | On `decision-map-split` at low effort it ran nine charges across four worktrees, probed every return at a distinct site, and collapsed nineteen findings to eight repair targets in one round. It ran one fold gate beside a live delegate test run and rebuilt the broker by hand, and each slip cost one retry. | Coordination of a parallel build and adversarial spec review; it implements nothing unless the reviewer names it |
-| Opus / high | implementer, latest 10 charges (Go-seam rewrites, lifecycle, guidance prose) | On `decision-map-split` the two command rewrites and the prose repair kept every anchored sentence byte-identical, cut the sentences the new shape made false, and passed the prose lane first time. The commands charge stopped on the growth lane and named the grant file instead of a silent workaround. | High for process-lifecycle, cleanup-authority, destructive-command, anchored guidance prose, and foundational Go-seam rewrites |
-| Opus / medium, low | implementer, orchestrator, and reviewer combined; latest 10 medium implementer charges, 96 review axes, 13 of 19 orchestrated landings | On `decision-map-split` five medium charges landed first-pass on behavior, including a plan-before-apply migration of fourteen maps that fixed its prose reds in the program rather than by hand. The projection charge reported the unreachable help action as a material shortfall. The Coverage axis at medium found two accepted gaps with throwaway probes, and the low axes returned eleven cited findings, of which four became repairs. | Medium for gate and conformance logic, guidance prose, canary fixtures, repair charges, the Coverage axis, and orchestration; low for a ticket from an exact spec at a known seam under a covering gate, and for the Standards and Spec axes |
+| Fable / low–high | orchestrator, 31 landings + implementer, 9 charges + reviewer, 3 specs | On `craft-research-skill` at low effort it ran three charges and five review passes, probed every return at a distinct site and kind, and collapsed eight findings to five repair targets in one round. It omitted the headroom route from the first charge and started to delete a pickup with an open item, and each slip cost one correction. | Coordination of a parallel build and adversarial spec review; it implements nothing unless the reviewer names it |
+| Opus / high | implementer, latest 10 charges (Go-seam rewrites, lifecycle, guidance prose) | On `craft-research-skill` the skill charge wrote a 121-line skill that carried all nine anchored sentences verbatim, passed the prose lane first time, and listed the silences it filled and left open. The callers charge kept every pre-existing needle byte-identical and cited the diff file list for the untouched skills. | High for process-lifecycle, cleanup-authority, destructive-command, anchored guidance prose, and foundational Go-seam rewrites |
+| Opus / medium, low | implementer, orchestrator, and reviewer combined; latest 10 medium implementer charges, 100 review axes, 13 of 19 orchestrated landings | On `craft-research-skill` the Coverage axis at medium ran seven probes and found that four assessment anchors also sit in the frontmatter, so a body-only rewrite stays green. The low axes returned three cited findings, two accepted, and the low re-review verified all six predicates and stayed inside its blocking scope. | Medium for gate and conformance logic, guidance prose, canary fixtures, repair charges, the Coverage axis, and orchestration; low for a ticket from an exact spec at a known seam under a covering gate, and for the Standards and Spec axes |
 | Sonnet / high | orchestrator, 3 landings | On `roadmap-light-path-fixes-2` it ran ten ticket charges and two review rounds (six axes) across two shared worktrees, caught a read-only delegate leaving the integration worktree dirty before the next commit, and routed two material acceptance shortfalls to the reviewer instead of silently resolving them. | Continues to hold at high effort; compare again after a fourth orchestrated build |
-| Sonnet / low–medium | implementer, latest 10 of 77 ticket-sized charges | On `git-admin-readers` seven ticket charges and one review repair ran; three landed first-pass on behavior, and every probe the delegates ran bit. The misses were a fence step outside the ticket, two over-budget files grown, a comment widened to hold a budget, a test that ranged over the production list it graded, and a repair that re-derived a fact beside its owner. | Low for an exact-spec ticket at a known seam under a covering gate when the reviewer names it; the coordinator probes every return and runs the whole-tree gate before the landing |
+| Sonnet / low–medium | implementer, latest 10 of 78 ticket-sized charges | On `craft-research-skill` one low review repair closed five prose and registry findings first-pass, kept every anchored sentence byte-identical, added a biting fixture, and ran an omission probe that bit. On `git-admin-readers` three of eight charges landed first-pass, and the misses were fence steps, over-budget growth, and a re-derived fact. | Low for a prose or exact-spec repair at a known seam under a covering gate when the reviewer names it; the coordinator probes every return and runs the whole-tree gate before the landing |
 | Sonnet / high, xhigh | reviewer, 3 axes on 13 landings + 12 scoped re-reviews + 1 spec round | On `structural-refactor-pass` one xhigh round over the spec and nine tickets resolved all 56 cited test names, verified four decisions against the code, and returned one blocking Coverage finding: a moved scan would drop its active-state filter in silence. | Spec-and-tickets review round when the reviewer names it; the review axes stay with Opus |
 
 ## Representative evidence
@@ -37,12 +37,13 @@ harness-to-tier binding.
 - The top tier implements nothing, code or guidance prose, unless the reviewer names it
   for the run.
 - Every subagent runs Opus at low or medium effort unless the reviewer names another
-  tier for the run. On `decision-map-split` Opus served all nine charges, and every
-  one landed first-pass on behavior, so the Opus default holds.
-- Guidance prose runs Opus at high under the leverage override. On `decision-map-split`
-  the three high charges kept every anchor and passed the prose lane first time.
+  tier for the run. On `craft-research-skill` the reviewer named Sonnet at low for the
+  review repair, and it landed first-pass.
+- Guidance prose runs Opus at high under the leverage override. On `craft-research-skill`
+  both high charges kept every anchor and passed the prose lane first time.
 - A charge that will touch an over-budget file names its headroom route. The route is
-  a fenced file with room, or a second file the spec fence names.
+  a fenced file with room, or a sibling file on an existing precedent. The first charge
+  here omitted it and paid one continuation.
 - A material shortfall that needs a seam outside the spec fence takes a fence extension
   recorded under the spec's Build decisions, not a narrowed row.
 - The landing rebuilds the broker; a hand rebuild of the primary binary before the
@@ -56,10 +57,10 @@ harness-to-tier binding.
 - A light-path ticket from an exact ticket file runs Opus at low. It runs at medium
   when it adds a conformance check, a canary fixture, or CLI output.
 - Opus at medium serves the research censuses, the repair charges, and the Coverage
-  axis. The Standards and Spec axes run at low; on `pin-removal` and `bench-probe` the
-  low axes found the accepted Standards and Spec repairs.
-- A review finding that restates a decision the spec records under Further notes is a
-  no-op. The coordinator cites the decision line.
+  axis. The Standards and Spec axes run at low; on `craft-research-skill` the low axes
+  found the two accepted Standards repairs.
+- A review finding that restates a decision the spec records under Further notes or
+  Build decisions is a no-op. The coordinator cites the decision line.
 - A review finding that names a missing capability is refuted or accepted against the
   package's exports, never against one file's grep.
 - The coordinator writes the repair ticket that cites the amended rows before the
@@ -86,8 +87,9 @@ harness-to-tier binding.
   spec's Build decisions, and proceeds.
 - The Coverage review axis runs in its own worktree when it writes throwaway probes;
   the Standards and Spec axes read the retained source.
-- A non-blocking review finding is reported in the pickup, not repaired.
-- The coordinator runs a new verb over the real artifact at the first phase boundary
-  after its ticket folds. It records every dogfood run in the spec before the review.
+- A non-blocking review finding is reported in the pickup, not repaired. A pickup that
+  holds an open reviewer item survives the repair commit with that item alone.
+- A fixture-pinned path in a ticket Writes line names its fixture. A repair that adds
+  a fixture updates every ticket that names the pinned path.
 - A spec that changes a rendered message enumerates the exact-match tests on that
   text.
