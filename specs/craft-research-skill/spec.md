@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: the named reviewed artifact `specs/decision-map-split/decisions/craft-research.md`, tickets #4 through #9, #13, and #14, resolved 2026-08-02 and 2026-09-06. That folder retires with the sibling spec, so the settled answers this spec rests on are restated under Implementation decisions. The three upstream URLs in the research asset were not re-fetched on 2026-09-06. The `craft-spec` compatibility-probe wording that map ticket #8 replaces was already removed by a later remake. That clause lands as a pointer beside the surviving spec-side duty.
 
-Verification log: 0 iteration(s) to accept — pending the first review round
+Verification log: 2 iteration(s) to accept — round one accepted with folds, round two verified them, and the 120-line budget stays an open reviewer question
 
 ## Problem
 

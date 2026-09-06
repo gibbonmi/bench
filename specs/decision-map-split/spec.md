@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: the ready compiled map `specs/decision-map-split/decisions/craft-research.md`, tickets #10 through #14, resolved 2026-09-06. Both `## Sources` entries were re-verified on 2026-09-06 before the seams below were chosen. The research asset's local citations were re-resolved: nine hold, seven moved, and four are gone. The gone citations point at FT135 spec files that retired with promote-then-delete. They support only the fan-out precedent in map ticket #3, which stays closed. The assessment asset's four external report links are readable but unverifiable, as its own Evidence status states.
 
-Verification log: 0 iteration(s) to accept — pending the first review round
+Verification log: 2 iteration(s) to accept — round one rejected on seven blocking findings, the fold split the guidance ticket and restated four rows, and round two verified the folds with three small folds folded in
 
 ## Problem
 
@@ -197,7 +197,7 @@ No linked repository holds a map on 2026-09-06, a reviewer-supplied premise, so 
 | DS43 | 39, 40, 41 | The shape-idea command carries the eight anchored sentences listed under Further notes, and each mutation-table row bites | `TestDecisionMapSplitAnchorsRedOnRemoval` and the `workflow-guidance-anchors` fixtures | A reworded rule with no anchor passes the docs check |
 | DS44 | 42 | The write-spec command carries the topic-folder move sentence, and the old `decisions/assets/` needle is forbidden there | `TestDecisionMapSplitAnchorsRedOnRemoval` | A command that keeps the flat-folder sentence passes an unchanged anchor |
 | DS45 | 43 | `CONTEXT.md` carries the four glossary entries with an Avoid list each, and the gist entry has an anchor | `TestDecisionMapSplitAnchorsRedOnRemoval` | A glossary that drops an entry passes without the anchor |
-| DS46 | 44 | `docs/adr/0020-a-decision-lives-in-its-ticket-file.md` exists, records the three decisions, and names no path | review-owned: the guidance ticket cites the file | An ADR with paths rots |
+| DS46 | 44 | `docs/adr/0020-a-decision-lives-in-its-ticket-file.md` exists, records the three decisions, and names no path | review-owned: the docs ticket cites the file | An ADR with paths rots |
 | DS47 | 45 | `README.md` keeps `Decision maps are situational` and describes the index and ticket files | the README anchors in the `workflow-guidance-anchors` family | A README rewrite that drops the anchored phrase reds |
 | DS48 | 46 | Every anchor row changed in this spec has a mutation-table row that bites | `TestDecisionMapSplitAnchorsRedOnRemoval` | A needle without a mutation row is a claim, not a bite |
 | DS50 | 18, 21 | `decisions/my map.md` with `decisions/my map/tickets/1.md` projects one row whose path cell is `decisions/my map/tickets/1.md` | `maps.Command` on a gittest repo | A path join that splits on spaces loses the folder |
@@ -235,7 +235,7 @@ Not covered: story 47 — the measure is recorded in the phase-close retro by fi
 - `cmd/bench/help_inventory_test.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
-- `scripts/`
+- `scripts/split-decision-maps/`
 - `decisions/`
 - `specs/decision-map-split/decisions/`
 - `docs/research/`
@@ -302,7 +302,7 @@ Not covered: story 47 — the measure is recorded in the phase-close retro by fi
 - Map #14, FT99 rule: DS43.
 - Map #14, measurement: the Not covered line for story 47.
 
-**Anchored sentences the guidance ticket registers.**
+**Anchored sentences the commands ticket and the docs ticket register.**
 
 - In `bench-shape-idea.md`: `The map is an index: it lists the decisions made and links the ticket that holds each one.`
 - In `bench-shape-idea.md`: `A decision ticket is one file under the map's tickets folder, named by its number.`

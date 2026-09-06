@@ -1,12 +1,12 @@
 # Refuse the inline shape and render both templates
 
 Blocked by: split-every-map-with-the-migration-program.md, rebuild-the-integrity-fixture-family-on-the-split-shape.md
-Writes: internal/maps/, scripts/, internal/status/status_signals_test.go, internal/status/status_producible_test.go, internal/status/status_command_test.go, internal/conformance/decision_map_integrity_test.go, tests/canary/decision-map-integrity/, tests/canary/workflow-guidance-anchors/decision-map-asset-path, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/maps/, scripts/split-decision-maps/ (new), internal/status/status_signals_test.go, internal/status/status_producible_test.go, internal/status/status_command_test.go, internal/conformance/decision_map_integrity_test.go, tests/canary/decision-map-integrity/, tests/canary/workflow-guidance-anchors/decision-map-asset-path, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: DS3, DS17, DS18, DS19, DS20, DS40
 
 ## What to build
 
-This is the contract step. An `## #n:` heading in a map index reds with `inline ticket #n: move it to <topic>/tickets/<n>.md`. Notes and Decisions so far become required for every map, and the three drift rules run for every map. The inline ticket parse and the migration program are deleted together.
+This is the contract step. An `## #n:` heading in a map index reds with `inline ticket #n: move it to <topic>/tickets/<n>.md`. Notes and Decisions so far become required for every map, and the three drift rules run for every map. The inline ticket parse and the migration program are deleted together. The `(new)` marker on the program folder only satisfies the preflight before the migration lands; this ticket deletes that folder.
 
 `DecisionMapTemplate` renders the index skeleton with Notes and Decisions so far and no inline ticket. A new `DecisionTicketTemplate` renders one ticket skeleton, and `bench maps --ticket-template` prints it. The two template flags and `--count` are mutually exclusive. The asset-rule sentence becomes `A map-owned asset stays in the map's assets folder, decisions/<topic>/assets/.` The anchor needle that pins `decisions/assets/` in `schema.go`, its mutation-table row, and the `decision-map-asset-path` fixture change with it.
 
