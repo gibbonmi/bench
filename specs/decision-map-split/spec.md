@@ -273,6 +273,10 @@ Each entry below is a call the build made under the batch approval of 2026-09-06
 - The migration program moved `gate-pipeline-fixture-inventory.md` into the `gate-pipeline` assets folder. Only that map names the asset, in prose rather than in Sources.
 - Two seeded gists read thin and wait for a reviewer edit: `gate-critical-path` #1 and `worktree-orphan-retirement` #5.
 
+**Dogfood runs before the review, 2026-09-06.** The coordinator ran the worktree binary over the real tree at the last ticket's tip. `bench maps` printed fourteen rows with six cells, five `ready` rows, and eight help actions. `bench maps software-factory` printed that map's two rows and one action. `bench maps --ticket-template` printed the ticket skeleton.
+
+`bench status` kept the decisions row at eight unresolved maps. No stale row printed, because the migration committed each asset beside its index.
+
 ## Out of scope
 
 - A tracker-backed map: 0 edits here, its own decision first.
