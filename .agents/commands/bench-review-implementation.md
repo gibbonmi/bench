@@ -167,3 +167,7 @@ it never restarts initial discovery over the original range.
    through a hand commit on the destination. A clean review hands its frozen
    base and reviewed tip to `bench worktree land`; `/bench-final-check`
    reports that landing's oracle.
+
+   The review base is the fold commit that merged `main` into the source. The
+   landing base is that `main` tip itself. `bench worktree land --base` takes
+   the `main` tip, and it refuses the fold commit.
