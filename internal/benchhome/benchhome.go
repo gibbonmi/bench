@@ -19,6 +19,22 @@ func Dir() string {
 	if h := os.Getenv(Env); h != "" {
 		return h
 	}
+	return fallbackDir()
+}
+
+// fallbackDir is the Bench home Dir supplies when BENCH_HOME is unset: the
+// user's own home directory joined with .bench. Dir and IsFallback share this
+// one join, so a caller never re-derives the fallback path a second way.
+func fallbackDir() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".bench")
+}
+
+// IsFallback reports whether home names the user's own Bench home — the value
+// Dir supplies when BENCH_HOME is unset — regardless of whether BENCH_HOME
+// named that exact path or the fallback supplied it. A caller that must not
+// write into the user's real home during a test run grades the resolved home
+// here before it writes.
+func IsFallback(home string) bool {
+	return home == fallbackDir()
 }

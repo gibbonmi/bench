@@ -40,7 +40,16 @@ internal/conformance/docs_workflow_helpers_test.go 660
 # below are what the family costs after the duplication came out. Granted
 # 2026-08-24 under module-size-split, following the FT152 precedent above; each
 # exact cap re-asks on the next line of growth.
-internal/conformance/checks_test.go 692
+# checks_test.go re-asked 2026-09-06 under seam-record-test-refusal (FT310): the
+# line-repo fixture's one environment-composition seam now scrubs an inherited
+# BENCH_HOME and injects a private one.
+internal/conformance/checks_test.go 707
 internal/conformance/docs_workflow_checks_test.go 786
 internal/conformance/fixture_bite_test.go 826
 internal/conformance/tier_test.go 972
+
+# owner_test.go's childEnvironment is the system owner's one environment-
+# composition seam: every bench child gets a private BENCH_HOME unless it
+# already names its own. Granted 2026-09-06 under seam-record-test-refusal
+# (FT310).
+internal/systemtest/owner_test.go 520

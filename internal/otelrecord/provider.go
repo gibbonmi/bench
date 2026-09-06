@@ -2,6 +2,7 @@ package otelrecord
 
 import (
 	"context"
+	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
 	"go.opentelemetry.io/otel/attribute"
@@ -22,9 +23,18 @@ type Provider struct {
 // NewProvider returns the provider that records root's spans below home. An empty home
 // resolves through internal/benchhome, the one BENCH_HOME read in the tree, so a caller
 // that has already resolved the home passes it in rather than reading it twice.
+//
+// While a test binary runs, a resolved home that names the user's own Bench home — the
+// fallback home, whether BENCH_HOME named that exact path or the fallback supplied it —
+// returns a provider with no span processor. The refusal is a silent no-op: every span
+// still starts and ends, but nothing reaches disk. A test that names its own BENCH_HOME
+// elsewhere still records, so a test that wants its own record still gets one.
 func NewProvider(home, root string) *Provider {
 	if home == "" {
 		home = benchhome.Dir()
+	}
+	if testing.Testing() && benchhome.IsFallback(home) {
+		return &Provider{provider: sdktrace.NewTracerProvider()}
 	}
 	return &Provider{provider: sdktrace.NewTracerProvider(
 		sdktrace.WithSpanProcessor(newProcessor(home, root)),
