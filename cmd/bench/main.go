@@ -12,9 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gibbonmi/bench/internal/adopt"
-	"github.com/gibbonmi/bench/internal/anchors"
-	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/benchguard"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/census"
@@ -42,6 +39,7 @@ import (
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preprelease"
+	"github.com/gibbonmi/bench/internal/probe"
 	"github.com/gibbonmi/bench/internal/publication"
 	"github.com/gibbonmi/bench/internal/releasepreflight"
 	"github.com/gibbonmi/bench/internal/roadmap"
@@ -113,6 +111,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "worktree-pool", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(poolCommand)},
 	{Name: "worktree-lease-file", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(worktree.LeaseFileCommand)},
 	{Name: "test", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 22, Suffix: " [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>", Description: "run focused Go-test or named-check evidence as TOON; no gate verdict"}), Run: outputCommand(testCommand)},
+	{Name: "probe", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 22, Suffix: " <file> (--swap <old> --with <new> | --omit <old>) (--package <expr> [--run <go-regex>] | --check <name>) [--full]", Description: "mutate one file once, run one focused test or check, restore the file, and report bit, silent, invalid, or restore-failed"}), Run: outputCommand(probe.Command)},
 	{Name: "help", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(), Kind: commandHelp},
 	{Name: "repair", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 25, Suffix: " [--prune]", Description: "explicitly install the pinned platform binary or prune stale cache entries"}), WrapperOnly: true},
 
@@ -120,7 +119,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "worktree", Attachment: attachmentDirect, AXI: axiApprovedChildren("list"), Inventory: publicInventory(
 		helpRow{Order: 31, Suffix: " shell [--refresh] [objective]", Gap: 1, Description: "create an owned worktree subshell and release it on exit"},
 		helpRow{Order: 32, Suffix: " list", Description: "list assignments and registered worktrees as TOON"},
-		helpRow{Order: 33, Suffix: worktreeSuffix(usage.WorktreePath), Description: "print one active owned worktree's absolute path"},
+		helpRow{Order: 33, Suffix: worktreeSuffix(usage.WorktreePath), Description: "print one active owned worktree's absolute path for the file tools"},
 		helpRow{Order: 34, Suffix: worktreeSuffix(usage.WorktreeExec), Description: "run a child directly in an active owned worktree"},
 		helpRow{Order: 34, Suffix: worktreeSuffix(usage.WorktreeShow), Description: "print one blob from a revision of an active owned worktree"},
 		helpRow{Order: 34, Suffix: worktreeSuffix(usage.WorktreeBuild), Description: "build an active owned worktree's tree into its own dist/bench"},
@@ -165,20 +164,6 @@ var commandRegistry = []commandDefinition{
 	{Name: "release", Attachment: attachmentShip, AXI: axiExempt(axiReasonRelease), Inventory: publicInventory(helpRow{Order: 29, Suffix: " prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--adapter npm|fixture] [--provenance] [--message text]", Description: "governed npm publication"}), Run: func(c Command, args []string) int { return publication.Command(args, c.Stdout, c.Stderr) }},
 }
 
-func outputCommand(fn func([]string) (string, int)) commandHandler {
-	return func(c Command, args []string) int {
-		out, code := fn(args)
-		fmt.Fprint(c.Stdout, out)
-		return code
-	}
-}
-
-func adoptCommand(name string) commandHandler {
-	return func(c Command, args []string) int {
-		return adopt.Run(append([]string{name}, args...), c.Stdout, c.Stderr, version)
-	}
-}
-
 func versionCommand(c Command, _ []string) int {
 	fmt.Fprintln(c.Stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
 	return 0
@@ -191,71 +176,6 @@ func helpCommand(c Command, args []string) int {
 	}
 	fmt.Fprint(c.Stdout, renderCommandHelp())
 	return 0
-}
-
-var anchorsGrammar = usage.Grammar{
-	Cmd:     "bench anchors",
-	Help:    "usage: bench anchors <path>",
-	MinArgs: 1,
-	MaxArgs: 1,
-}
-
-func anchorsCommand(args []string) (string, int) {
-	parsed, line, code := usage.Parse(anchorsGrammar, args)
-	if line != "" {
-		return line + "\n", code
-	}
-	root, err := git.Root()
-	if err != nil {
-		return toon.NotInRepo() + "\n", 1
-	}
-	path := anchorQueryPath(root, parsed.Positionals[0])
-	var rows [][]string
-	for _, anchor := range anchors.Entries() {
-		if anchor.File == path {
-			rows = append(rows, []string{anchorKindName(anchor.Kind), anchor.Section, anchor.Needle})
-		}
-	}
-	out, err := toon.Table("anchors", []string{"kind", "section", "needle"}, rows)
-	if err != nil {
-		return toon.RenderError(err) + "\n", 1
-	}
-	help, err := axi.RenderHelp(nil)
-	if err != nil {
-		return toon.RenderError(err) + "\n", 1
-	}
-	out += help
-	return out, 0
-}
-
-func anchorQueryPath(root, arg string) string {
-	candidate := arg
-	if !filepath.IsAbs(candidate) {
-		if cwd, err := os.Getwd(); err == nil {
-			candidate = filepath.Join(cwd, candidate)
-		}
-	}
-	if _, err := os.Lstat(candidate); err == nil {
-		if relative, err := filepath.Rel(root, candidate); err == nil {
-			return filepath.ToSlash(filepath.Clean(relative))
-		}
-	}
-	return filepath.ToSlash(filepath.Clean(arg))
-}
-
-func anchorKindName(kind anchors.Kind) string {
-	switch kind {
-	case anchors.Require:
-		return "require"
-	case anchors.Forbid:
-		return "forbid"
-	case anchors.RequireInSection:
-		return "require-in-section"
-	case anchors.ForbidInSection:
-		return "forbid-in-section"
-	default:
-		return "unknown"
-	}
 }
 
 func testCommand(args []string) (string, int) {

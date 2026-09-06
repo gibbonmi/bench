@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -24,6 +25,20 @@ type commandDisposition struct {
 }
 
 type commandHandler func(Command, []string) int
+
+func outputCommand(fn func([]string) (string, int)) commandHandler {
+	return func(c Command, args []string) int {
+		out, code := fn(args)
+		fmt.Fprint(c.Stdout, out)
+		return code
+	}
+}
+
+func adoptCommand(name string) commandHandler {
+	return func(c Command, args []string) int {
+		return adopt.Run(append([]string{name}, args...), c.Stdout, c.Stderr, version)
+	}
+}
 
 type commandKind uint8
 

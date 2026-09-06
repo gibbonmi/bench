@@ -164,6 +164,16 @@ tip. Each success response ends with one citation row before the help
 envelope, so a reviewer replays the answer. The review phase runs the blast
 step before it dispatches the axes.
 
+`bench probe` proves that a focused run bites. The verb preserves the subject
+under the Bench home, applies the one mutation, and runs the focused test or
+check. The verb then restores the subject and proves the restore byte-exact.
+The verb prints one verdict: `bit` at exit 0, `silent` at exit 1, `invalid` at
+exit 1, and `restore-failed` at exit 2. A `restore-failed` run names the
+preserved copy under `$BENCH_HOME/probe/<repo-key>/`; every other verdict
+removes the copy. For a worktree, run
+`bench worktree exec <target> -- bench probe ...`, because the verb takes no
+target operand.
+
 A reviewed spec-backed build keeps its serial ticket commits in one retained
 integration source. Semantic review freezes the explicit base and source tip.
 Accepted findings commit there on the same cadence.

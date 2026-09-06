@@ -1,7 +1,7 @@
 # Expose the focused run as a typed outcome
 
 Blocked by: none
-Writes: internal/testreport/command.go, internal/testreport/testreport.go, internal/testreport/outcome.go (new), internal/testreport/outcome_test.go (new)
+Writes: internal/testreport/command.go, internal/testreport/testreport.go, internal/testreport/outcome.go (new), internal/testreport/outcome_test.go (new), internal/testreport/check_test.go
 Covers: PB27, PB28
 
 ## What to build
