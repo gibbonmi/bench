@@ -49,5 +49,5 @@ tree.
 - [ ] `bench worktree merge --from <sibling tip sha> <target>` still refuses when the sibling checkout is dirty, detached, or behind its tip, with the existing sibling refusal details.
 - [ ] `bench worktree merge --from <sha> <target>` with a sha that is no sibling tip and is outside the default branch's history refuses, and the detail names both routes.
 - [ ] `bench worktree land --base <fold commit>` refuses with the detail text stated above, `observed=` the base, and `wanted=` the destination.
-- [ ] `bench structure --growth <base>` prints the red summary line with `since <base>` when a file grew past budget, and `internal/structure/growth_test.go` reds when the base is missing from that line.
+- [ ] `bench structure --growth <base>` prints the red summary line with `since <base>` when a file grew past budget.
 - [ ] `ROADMAP.md` carries no FT309 line, its sequence is renumbered, and `roadmap/FT309.md` is absent.
