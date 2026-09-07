@@ -43,6 +43,8 @@ findings in the owner details.
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
+**FT312 (MEDIUM) — a native `bench` verb codifies the cross-harness reviewer invocation.**
+
 **FT283 (MEDIUM, decision required) — `bench worktree land --spec` has one phase-scoped transition contract.**
 
 **FT284 (MEDIUM, decision required) — `bench spec retire` owns its roadmap retirement atomically.**
@@ -234,3 +236,4 @@ recommended table is sequencing advice.
 
 1. FT309 fold and landing refusal routes — run the light-path ticket.
 2. FT311 coordinator chunk folds — a reviewer decision on the fold-runs-the-lane question.
+3. FT312 cross-harness reviewer verb — run `/bench-write-spec`.
