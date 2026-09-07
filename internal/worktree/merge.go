@@ -245,9 +245,34 @@ func mergeIncoming(root string, assignments []intent.Assignment, target intent.A
 	case owned:
 		return commit, nil
 	case resolved:
-		return "", refusalError{refusal{detail: "--from is outside the default branch's history and is no sibling tip", observed: commit}}
+		return "", refusalError{refusal{detail: "--from is outside the default branch's history and is no sibling tip: give a default-branch commit, or a sibling's label or tip", observed: commit}}
 	}
 	return "", refusalError{refusal{detail: "--from names no assignment and no commit", observed: from}}
+}
+
+// siblingByTipSha resolves --from by a sibling's branch tip sha, the second route an
+// operator who reads the handoff can pin: the label spells the assignment, and the sha
+// spells the commit the handoff pinned. It reuses the same tip read the label route
+// checks, so a sha and a label of the same sibling resolve to the same assignment. The
+// target's own assignment is excluded from the match, so a sha that coincidentally
+// equals the target's own tip (a fast-forward can leave one there) falls through to the
+// commit lookup instead of a false self-match refusal. Zero matches is not a refusal
+// here; the commit lookup answers next.
+func siblingByTipSha(root string, active []intent.Assignment, exclude, from string) (intent.Assignment, bool) {
+	commit, err := git.Output("-C", root, "rev-parse", "--verify", "--quiet", from+"^{commit}")
+	if err != nil || commit == "" {
+		return intent.Assignment{}, false
+	}
+	for _, a := range active {
+		if exclude != "" && a.ID == exclude {
+			continue
+		}
+		tip, tipErr := git.Output("-C", root, "rev-parse", "--verify", a.Branch+"^{commit}")
+		if tipErr == nil && tip == commit {
+			return a, true
+		}
+	}
+	return intent.Assignment{}, false
 }
 
 // activeAssignments narrows the sibling lookup to the assignments the bootstrap authority
@@ -270,17 +295,23 @@ func activeAssignments(assignments []intent.Assignment) []intent.Assignment {
 // the one assignment the caller refuses to resolve to, and is empty for a caller that has
 // no such assignment yet.
 func siblingTip(root string, assignments []intent.Assignment, exclude, from string) (tip, id string, ok bool, err error) {
-	selected, selectErr := selectAssignment(activeAssignments(assignments), from)
+	active := activeAssignments(assignments)
+	selected, selectErr := selectAssignment(active, from)
 	if selectErr != nil {
 		// An ambiguous prefix alone refuses, because the commit lookup resolves no
 		// collision between assignments. Every other selector outcome — an unassigned
 		// spelling, and a spelling the target grammar rejects as a path above all — is a
-		// candidate for the commit lookup, so it falls through as no sibling.
+		// candidate for the sibling tip sha lookup and then the commit lookup, so it
+		// falls through rather than refusing here.
 		var ambiguous ambiguousTargetError
 		if errors.As(selectErr, &ambiguous) {
 			return "", "", false, refusalError{refusal{detail: selectErr.Error(), observed: from}}
 		}
-		return "", "", false, nil
+		matched, hasMatch := siblingByTipSha(root, active, exclude, from)
+		if !hasMatch {
+			return "", "", false, nil
+		}
+		selected = matched
 	}
 	if exclude != "" && selected.ID == exclude {
 		return "", "", false, refusalError{refusal{detail: "--from resolves to the target itself", observed: selected.ID}}

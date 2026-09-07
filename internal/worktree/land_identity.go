@@ -225,6 +225,12 @@ func landingSourceRange(j joins, worktree, slug, base, head string) (diff.Source
 	return resolved, detail, nil
 }
 
+// landingBaseNotAncestorDetail names the two commits `--base` can mean, because the
+// review reads the fold commit as its frozen base while the landing takes the
+// default-branch tip the source folded — a mismatch between the two is not a typo an
+// operator can fix without knowing which base the flag wants.
+const landingBaseNotAncestorDetail = "review base is not an ancestor of the landing destination: --base takes the landing base, the default-branch tip the source folded, not the fold commit the review read"
+
 func identityRefusal(observed, wanted, detail string) error {
 	return refusalError{refusal{detail: detail, observed: observed, wanted: wanted}}
 }
