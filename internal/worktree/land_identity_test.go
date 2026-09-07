@@ -116,6 +116,34 @@ func requireIdentityRefusalState(t *testing.T, root, path, tally string, compose
 	}
 }
 
+// TestLandCommandRefusesAReviewBaseThatIsNotAnAncestorOfTheDestination covers the
+// confusion the detail is for: the source folded the destination advance, and the
+// operator names that fold commit as `--base`. The fold is a descendant of the recorded
+// start, so the recorded-start binding accepts it, but it lives on the source branch and
+// the destination never composed it. The detail names the two bases the flag can mean,
+// because the fold commit a review reads and the destination tip the source folded are
+// easy to confuse when only one prints as `--base`.
+func TestLandCommandRefusesAReviewBaseThatIsNotAnAncestorOfTheDestination(t *testing.T) {
+	t.Parallel()
+	request := "land-identity-not-ancestor"
+	root, creation, destination, fold, tip, tally, home := foldedLandingFixture(t, request)
+	if git.OK("-C", root, "merge-base", "--is-ancestor", fold, destination) {
+		t.Fatalf("premise failed: the fold commit %q must not already be on the destination %q", fold, destination)
+	}
+	j, composed := forbidLandingComposition()
+
+	var stdout, stderr bytes.Buffer
+	code := landWith(j, root, home, "", specLessLandArgs(request, fold, tip, creation.Path), &stdout, &stderr)
+	// The expectation is spelled out here rather than read from landingBaseNotAncestorDetail,
+	// so a mutation of that constant turns this test red instead of passing silently.
+	const wantDetail = "review base is not an ancestor of the landing destination: --base takes the landing base, the default-branch tip the source folded, not the fold commit the review read"
+	want := "detail=" + wantDetail + ",observed=" + fold + ",wanted=" + destination
+	if code != 1 || !strings.Contains(stdout.String(), want) {
+		t.Fatalf("non-ancestor base = (%d, %q, %q), want a refusal carrying %q", code, stdout.String(), stderr.String(), want)
+	}
+	requireIdentityRefusalState(t, root, creation.Path, tally, *composed)
+}
+
 // TestLandCommandRefusesAReviewBaseBehindTheRecordedStart is the SOL06 mutation guard
 // the ancestry check alone cannot answer, and it closes C4. The base names an earlier
 // ancestor of the recorded start, so it is a valid ancestor of the destination and the

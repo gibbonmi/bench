@@ -270,7 +270,7 @@ func landAttributed(measures *landingMeasures, j joins, root, home, _ string, ar
 	} else if destination != "" && !git.OK("-C", root, "merge-base", "--is-ancestor", source.base, destination) {
 		// The review base binds before composition: a base outside the destination's
 		// history grades a range the destination never reviewed against.
-		refusals = append(refusals, identityRefusal(source.base, destination, "review base is not an ancestor of the landing destination"))
+		refusals = append(refusals, identityRefusal(source.base, destination, landingBaseNotAncestorDetail))
 	}
 	if len(refusals) > 0 {
 		for _, err := range refusals {

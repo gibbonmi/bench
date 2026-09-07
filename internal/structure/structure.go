@@ -324,7 +324,7 @@ func Growth(root, base string) (report string, violations int, err error) {
 	}
 
 	if violations > 0 {
-		lines = append(lines, fmt.Sprintf("structure growth: %d file(s) grew past budget. Split along responsibility (see the craft-seams skill), or record a reviewer grant in .bench/structure-accept.", violations))
+		lines = append(lines, fmt.Sprintf("structure growth: %d file(s) grew past budget since %s. Split along responsibility (see the craft-seams skill), or record a reviewer grant in .bench/structure-accept.", violations, base))
 	} else {
 		lines = append(lines, fmt.Sprintf("structure growth ok (no source file grew past its budget since %s)", base))
 	}

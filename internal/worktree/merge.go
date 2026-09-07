@@ -219,10 +219,12 @@ func fromRepresentable(from string) error {
 	return nil
 }
 
-// mergeIncoming resolves `--from` in the two lookups the bootstrap authority allows: a
-// sibling assignment's branch tip, and a commit in the default branch's history. A value
-// both lookups answer is ambiguous, because a first-match resolver would merge whichever
-// lookup happened to run first.
+// mergeIncoming resolves `--from` in the lookups the bootstrap authority allows: a
+// sibling assignment's label, a commit in the default branch's history, and, for a commit
+// the default branch does not own, a sibling's branch tip sha. A value both the label and
+// the commit lookup answer is ambiguous, because a first-match resolver would merge
+// whichever lookup happened to run first. The sha route runs last, so a fresh sibling that
+// sits at the default-branch tip does not shadow the ordinary fold.
 func mergeIncoming(root string, assignments []intent.Assignment, target intent.Assignment, from string) (string, error) {
 	if err := fromRepresentable(from); err != nil {
 		return "", err
@@ -245,9 +247,41 @@ func mergeIncoming(root string, assignments []intent.Assignment, target intent.A
 	case owned:
 		return commit, nil
 	case resolved:
-		return "", refusalError{refusal{detail: "--from is outside the default branch's history and is no sibling tip", observed: commit}}
+		return siblingByTipSha(root, activeAssignments(assignments), target.ID, commit)
 	}
 	return "", refusalError{refusal{detail: "--from names no assignment and no commit", observed: from}}
+}
+
+// fromIsTheTargetDetail is the one sentence both `--from` routes print for a value that
+// addresses the target itself, so a label and a tip sha of the target refuse alike.
+const fromIsTheTargetDetail = "--from resolves to the target itself"
+
+// siblingByTipSha is the merge verb's `--from` sha route, and the merge verb reaches it
+// for a commit the default branch does not own: an operator who reads the handoff pins
+// the sha the handoff names. It owns the refusal for a commit no route claims, because
+// zero matches here means every lookup has now answered. A commit two or more siblings
+// share names no one sibling, so it refuses rather than fold a first match.
+func siblingByTipSha(root string, active []intent.Assignment, targetID, commit string) (string, error) {
+	var matched []intent.Assignment
+	var ids []string
+	for _, a := range active {
+		tip, err := git.Output("-C", root, "rev-parse", "--verify", a.Branch+"^{commit}")
+		if err != nil || tip != commit {
+			continue
+		}
+		if a.ID == targetID {
+			return "", refusalError{refusal{detail: fromIsTheTargetDetail, observed: a.ID}}
+		}
+		matched = append(matched, a)
+		ids = append(ids, a.ID)
+	}
+	if len(matched) == 1 {
+		return siblingContribution(root, matched[0], commit)
+	}
+	if len(matched) > 1 {
+		return "", refusalError{refusal{detail: "--from is the branch tip of more than one sibling", observed: commit, wanted: strings.Join(ids, " or ")}}
+	}
+	return "", refusalError{refusal{detail: "--from is outside the default branch's history and is no sibling tip: give a default-branch commit, or a sibling's label or tip", observed: commit}}
 }
 
 // activeAssignments narrows the sibling lookup to the assignments the bootstrap authority
@@ -263,19 +297,48 @@ func activeAssignments(assignments []intent.Assignment) []intent.Assignment {
 	return active
 }
 
-// siblingTip answers the assignment lookup for every verb that starts from a sibling: the
-// merge verb's `--from`, and the create verb's. A sibling contributes its committed branch
-// tip alone: `bench commit` stays the one snapshot composer, so a detached or dirty
-// sibling refuses rather than have its uncommitted work silently dropped. exclude names
-// the one assignment the caller refuses to resolve to, and is empty for a caller that has
-// no such assignment yet.
+// siblingContribution proves one sibling can contribute its branch tip, and it answers
+// with that tip. Both `--from` routes run it, so a label and a tip sha of one sibling
+// refuse for the same reason. A sibling contributes its committed branch tip alone:
+// `bench commit` stays the one snapshot composer, so a detached or dirty sibling refuses
+// rather than have its uncommitted work silently dropped. tip is the branch tip the
+// caller read to select the sibling, and is empty for a caller that read none.
+func siblingContribution(root string, selected intent.Assignment, tip string) (string, error) {
+	if err := mergeOnAssignmentBranch(selected, "sibling is not on its assignment branch"); err != nil {
+		return "", err
+	}
+	if err := identityBundleRefusal(root, selected.Worktree, selected, landingActiveState); err != nil {
+		return "", err
+	}
+	if tip == "" {
+		read, err := git.Output("-C", root, "rev-parse", "--verify", selected.Branch+"^{commit}")
+		if err != nil {
+			return "", refusalError{refusal{detail: "sibling assignment branch has no commit", observed: selected.Branch}}
+		}
+		tip = read
+	}
+	head, err := git.Output("-C", selected.Worktree, "rev-parse", "HEAD^{commit}")
+	if err != nil || head != tip {
+		return "", refusalError{refusal{detail: "sibling checkout is not at its branch tip", observed: head, wanted: tip}}
+	}
+	if err := checkoutClean(selected.Worktree, "sibling checkout is not clean", "bench worktree exec "+selected.ID+" -- bench commit"); err != nil {
+		return "", err
+	}
+	return tip, nil
+}
+
+// siblingTip answers the label lookup for every verb that starts from a sibling: the
+// merge verb's `--from`, and the create verb's. exclude names the one assignment the
+// caller refuses to resolve to, and is empty for a caller that has no such assignment
+// yet. The sha route belongs to the merge verb alone, so the create verb's `--from`
+// keeps its label-only contract.
 func siblingTip(root string, assignments []intent.Assignment, exclude, from string) (tip, id string, ok bool, err error) {
 	selected, selectErr := selectAssignment(activeAssignments(assignments), from)
 	if selectErr != nil {
 		// An ambiguous prefix alone refuses, because the commit lookup resolves no
 		// collision between assignments. Every other selector outcome — an unassigned
-		// spelling, and a spelling the target grammar rejects as a path above all — is a
-		// candidate for the commit lookup, so it falls through as no sibling.
+		// spelling, and a spelling the target grammar rejects as a path above all — falls
+		// through to the commit lookup, and then to the merge verb's sha route.
 		var ambiguous ambiguousTargetError
 		if errors.As(selectErr, &ambiguous) {
 			return "", "", false, refusalError{refusal{detail: selectErr.Error(), observed: from}}
@@ -283,23 +346,10 @@ func siblingTip(root string, assignments []intent.Assignment, exclude, from stri
 		return "", "", false, nil
 	}
 	if exclude != "" && selected.ID == exclude {
-		return "", "", false, refusalError{refusal{detail: "--from resolves to the target itself", observed: selected.ID}}
+		return "", "", false, refusalError{refusal{detail: fromIsTheTargetDetail, observed: selected.ID}}
 	}
-	if err := mergeOnAssignmentBranch(selected, "sibling is not on its assignment branch"); err != nil {
-		return "", "", false, err
-	}
-	if err := identityBundleRefusal(root, selected.Worktree, selected, landingActiveState); err != nil {
-		return "", "", false, err
-	}
-	tip, err = git.Output("-C", root, "rev-parse", "--verify", selected.Branch+"^{commit}")
+	tip, err = siblingContribution(root, selected, "")
 	if err != nil {
-		return "", "", false, refusalError{refusal{detail: "sibling assignment branch has no commit", observed: selected.Branch}}
-	}
-	head, err := git.Output("-C", selected.Worktree, "rev-parse", "HEAD^{commit}")
-	if err != nil || head != tip {
-		return "", "", false, refusalError{refusal{detail: "sibling checkout is not at its branch tip", observed: head, wanted: tip}}
-	}
-	if err := checkoutClean(selected.Worktree, "sibling checkout is not clean", "bench worktree exec "+selected.ID+" -- bench commit"); err != nil {
 		return "", "", false, err
 	}
 	return tip, selected.ID, true, nil

@@ -40,6 +40,24 @@ func specLessLandingFixture(t *testing.T, request string) (string, Creation, str
 	return root, creation, base, tip, tally, home
 }
 
+// foldedLandingFixture is the spec-less landing fixture after the destination advanced
+// and the source folded that advance, with one more source commit on top of the fold. It
+// returns the destination tip, the fold commit a review reads as its frozen base, and the
+// source tip that follows the fold — the pair `--base` is easy to confuse.
+func foldedLandingFixture(t *testing.T, request string) (string, Creation, string, string, string, string, string) {
+	t.Helper()
+	root, creation, _, _, tally, home := specLessLandingFixture(t, request)
+	mustWrite(t, filepath.Join(root, "advance.txt"), []byte("destination advance\n"), 0o644)
+	gitRun(t, root, "add", "advance.txt")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "destination advance")
+	destination := gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local",
+		"merge", "-q", "--no-ff", "-m", "fold the destination", destination)
+	fold := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	commitInWorktree(t, creation.Path, "owned.txt", "reviewed bytes after the fold\n", "work after the fold")
+	return root, creation, destination, fold, gitOutput(t, creation.Path, "rev-parse", "HEAD"), tally, home
+}
+
 func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home string, gradeSpec bool) (string, Creation, string, string, string) {
 	t.Helper()
 	gateSpec, prospectiveSpec := "", ""

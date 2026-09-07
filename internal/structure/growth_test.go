@@ -47,7 +47,7 @@ func TestGrowthOverBudgetFileGrew(t *testing.T) {
 	if want := "FILE GREW       15 lines, was 12 (max 10)   big.go"; !strings.Contains(report, want) {
 		t.Errorf("missing growth row %q:\n%s", want, report)
 	}
-	if !strings.Contains(report, "structure growth: 1 file(s) grew past budget.") {
+	if !strings.Contains(report, "structure growth: 1 file(s) grew past budget since "+base+".") {
 		t.Errorf("missing growth summary line:\n%s", report)
 	}
 	if code != 1 {
