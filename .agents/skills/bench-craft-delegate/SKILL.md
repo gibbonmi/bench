@@ -40,9 +40,9 @@ The delegate then uses prior art instead of re-deriving it.
 
 Use a read-only mid-tier delegate to interpret ambiguous repair evidence. It distinguishes invalid probes, no executed tests, missing coverage, and scope defects only when evidence supports each classification. Missing or contradictory evidence remains unknown. Resolve the harness's bound mid model at medium effort for one iteration. Use high effort only when existing line rules require it.
 
-Name exemplar files to mirror when one exists. A charge that extends an enumerated family names every registry the family already
-appears in, traced from one existing sibling through the tree. A registry the charge does not name is one the
-delegate will miss. A cap-change charge's search list names the closest pinning package.
+Name exemplar files to mirror when one exists. A charge that extends an enumerated family names every
+registry the family already appears in, traced from one existing sibling through the tree. A
+registry the charge does not name is one the delegate will miss. A cap-change charge's search list names the closest pinning package.
 
 A write-delegation from a spec carries its stories' coverage rows every time — behavior, seam, why
 it catches the failure. It requires the delegate to show each row red before the edit and green
