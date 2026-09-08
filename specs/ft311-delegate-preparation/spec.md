@@ -355,6 +355,8 @@ They authorize implementation only after the reviewer approves this spec and its
 - `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`
 - `.agents/skills/bench-craft-delegate/references/cross-harness-reviewers.md`
 - `reviews/ft311-delegate-preparation.md`
+- `specs/ft311-delegate-preparation/decisions/ft311-coordinator-work/tickets/10.md`
+- `specs/ft311-delegate-preparation/decisions/ft311-coordinator-work/tickets/18.md`
 
 The build cannot edit this spec, its acceptance rows, or its ticket graph without the existing spec-change authority.
 The anchor prefix permits a separate registry file rather than growing the over-budget registry body.

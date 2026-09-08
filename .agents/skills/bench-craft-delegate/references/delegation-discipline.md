@@ -116,6 +116,9 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 ## Read-only returns
 
 - The coordinator reads the census record at charge close for a read-only charge.
+- A triage return cites evidence and proposes a bounded repair charge.
+- The coordinator accepts the diagnosis and routes repairs under existing authoring and verification rules.
+- Triage cannot close a finding, expand a fence, waive a probe, or change default tiers.
 - A shared-worktree reader restores every probe byte exactly, and confirms the
   restore with `cmp` against the copy aside.
 - The coordinator verifies a clean `git status` in the shared worktree before it
