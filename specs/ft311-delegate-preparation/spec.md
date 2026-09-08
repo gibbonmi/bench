@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: specs/ft311-delegate-preparation/decisions/ft311-coordinator-work.md
 
-Verification log: 0 iteration(s) to accept — draft awaits the required native review.
+Verification log: 1 iteration(s) to accept — Terra/high reviewed once. The author folded one artifact-contract finding and verified fence closure.
 
 ## Problem
 
@@ -322,18 +322,19 @@ If implementation needs one, its ticket must attach the corresponding hostile ca
 These entries are the union of ticket Writes.
 They authorize implementation only after the reviewer approves this spec and its ticket graph.
 
-- `internal/preflight/`
+- `tests/canary/package-core-guard/unrouted-subcommand`
+- `internal/preflight`
 - `cmd/bench/main.go`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
-- `internal/anchors/`
+- `internal/anchors`
 - `internal/conformance/registry_test.go`
 - `internal/conformance/docs_workflow_helpers_test.go`
 - `internal/conformance/ft311_preparation_test.go`
-- `tests/canary/workflow-guidance-anchors/`
+- `tests/canary/workflow-guidance-anchors`
 - `.agents/commands/bench-implement-spec.md`
 - `.agents/commands/bench-review-implementation.md`
 - `.agents/skills/bench-craft-delegate/SKILL.md`
@@ -466,7 +467,9 @@ The proposed seams were presented for reviewer confirmation before drafting.
 The serial edges reflect shared preflight and guidance owners.
 Each ticket includes its public behavior, focused tests, and required registry closure.
 Ticket 3 carries the final preflight invariant.
-Ticket 5 carries the final shared-guidance invariant and the implementation review pickup.
+Ticket 5 carries the final shared-guidance invariant and the existing review-output contract.
+The review pickup is created only for actionable findings.
+Clean review evidence references belong in the existing exit and handoff.
 
 ### Approval surface
 
@@ -477,3 +480,20 @@ Ticket 5 carries the final shared-guidance invariant and the implementation revi
 | Acceptance and edges | Approve DP1–DP27 and the explicit exclusions. |
 | Ownership fences | Approve the exact union above for implementation. |
 | Scope and tickets | Approve the five-ticket graph within the first FT311 capability. |
+
+### Verification outcome
+
+The native reviewer checked the spec and five tickets at 712bff0465b28989bcf7f3b79081558ec2131137.
+The one blocking finding was a required artifact after clean review.
+The author preserved the current clean-review contract and kept native evidence references in the existing exit or handoff.
+The pickup fence remains conditional on actionable findings, as coverage validation requires.
+No second review round ran.
+
+The coordinator also corrected directory fence spelling and added the command registry's pinned canary to ticket 3.
+Explicit-base preflight verified ticket grammar, blockers, Writes resolution, fixture closure, registry closure, and coverage ownership after those corrections.
+The coverage map and prose checks passed.
+The spec remains staged pending reviewer approval of stories, seams, fences, exclusions, and the ticket graph.
+
+The native reader's checkout was clean on return.
+No assignment census record was located for that reader, so its command cost remains unknown.
+Implementation tests and native phase exercises are future acceptance work, not results claimed by this spec phase.
