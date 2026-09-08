@@ -8,7 +8,7 @@ import (
 const ticketBindingRegistry = "internal/tickets/registry_data.go"
 
 func proposeWritesCommand(root, mode, slug, base, sourceTip, name string, args []string) (string, int) {
-	return preparedCommand(root, mode, slug, base, sourceTip, name, false, args, proposalPreparation)
+	return preparedCommand(root, mode, slug, base, sourceTip, name, false, "", args, proposalPreparation)
 }
 
 func proposalSourceCheck(root string, facts Facts, selected *tickets.Entry) string {

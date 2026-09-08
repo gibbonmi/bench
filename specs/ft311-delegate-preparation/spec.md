@@ -336,11 +336,14 @@ They authorize implementation only after the reviewer approves this spec and its
 - `internal/tickets/enumerate.go`
 - `internal/tickets/enumerate_test.go`
 - `cmd/bench/main.go`
+- `cmd/bench/preflight_version_test.go`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
+- `internal/conformance/injected_ports_test.go`
+- `internal/conformance/injected_ports_registry_test.go`
 - `internal/anchors`
 - `internal/conformance/registry_test.go`
 - `internal/conformance/docs_workflow_helpers_test.go`

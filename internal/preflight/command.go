@@ -16,8 +16,14 @@ import (
 // `review` and `build` are accepted modes. The mode-validity check below
 // rejects anything else the same way it rejects any unknown word.
 var grammar = usage.Grammar{
-	Cmd:  "bench preflight",
-	Help: "usage: bench preflight review <slug> [--base <commit>] [--source-tip <commit>]\n       bench preflight build <slug> [--base <commit>] [--source-tip <commit>]\n       bench preflight build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--full]\n       bench preflight build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>\n",
+	Cmd: "bench preflight",
+	Help: "usage: bench preflight review <slug> [--base <commit>] [--source-tip <commit>]\n" +
+		"       bench preflight review <slug> --charge --base <commit> --source-tip <commit> [--full]\n" +
+		"       bench preflight build <slug> [--base <commit>] [--source-tip <commit>]\n" +
+		"       bench preflight build <slug> --charge --ticket <basename> --base <commit> " +
+		"--source-tip <commit> [--full]\n" +
+		"       bench preflight build <slug> --propose-writes --ticket <basename> --base <commit> " +
+		"--source-tip <commit>\n",
 	Flags: []usage.Flag{
 		{Name: "--base", HasValue: true, NoEmptyValue: true},
 		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
@@ -30,12 +36,22 @@ var grammar = usage.Grammar{
 	MaxArgs: 2,
 }
 
-// Command implements `bench preflight review <slug>` and `bench preflight build
-// <slug>`. It is the CLI-contract seam. Grammar and usage errors ride
+// Command is the legacy adapter for `bench preflight review <slug>` and `bench
+// preflight build <slug>`. It is the CLI-contract seam. Grammar and usage errors ride
 // usage.Parse (exit 2). A not-in-repo cwd or a bootstrap failure is one
 // toon.Errorf line (exit 1). Otherwise the verdict renders as TOON and the
 // exit code follows Verdict.Red (0 green, 1 red).
 func Command(args []string) (string, int) {
+	return CommandWithVersion("")(args)
+}
+
+// CommandWithVersion returns the preflight command bound to one executable version.
+// Review charges pass that version to the consumer citation owner.
+func CommandWithVersion(version string) func([]string) (string, int) {
+	return func(args []string) (string, int) { return command(version, args) }
+}
+
+func command(version string, args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
 		return line + "\n", code
@@ -53,8 +69,14 @@ func Command(args []string) (string, int) {
 	if charge && proposeWrites {
 		return toon.Usage(grammar.Cmd, "--charge and --propose-writes cannot be combined") + "\n", 2
 	}
-	if charge && (mode != modeBuild || base == "" || sourceTip == "" || ticket == "") {
+	if charge && mode == modeBuild && (base == "" || sourceTip == "" || ticket == "") {
 		return toon.Usage(grammar.Cmd, "--charge requires build, --ticket, --base, and --source-tip") + "\n", 2
+	}
+	if charge && mode == "review" && ticket != "" {
+		return toon.Usage(grammar.Cmd, "--charge requires build with --ticket, or review without --ticket") + "\n", 2
+	}
+	if charge && mode == "review" && (base == "" || sourceTip == "") {
+		return toon.Usage(grammar.Cmd, "review --charge requires --base and --source-tip") + "\n", 2
 	}
 	if proposeWrites && (mode != modeBuild || base == "" || sourceTip == "" || ticket == "") {
 		return toon.Usage(grammar.Cmd, "--propose-writes requires build, --ticket, --base, and --source-tip") + "\n", 2
@@ -74,7 +96,7 @@ func Command(args []string) (string, int) {
 		return toon.RenderError(err) + "\n", 1
 	}
 	if charge {
-		return chargeCommand(root, mode, slug, base, sourceTip, ticket, full, args)
+		return chargeCommand(root, mode, slug, base, sourceTip, ticket, full, version, args)
 	}
 	if proposeWrites {
 		return proposeWritesCommand(root, mode, slug, base, sourceTip, ticket, args)

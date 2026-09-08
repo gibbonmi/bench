@@ -18,7 +18,13 @@ const (
 	proposalPreparation
 )
 
-func preparedCommand(root, mode, slug, base, sourceTip, name string, full bool, args []string, form preparationMode) (string, int) {
+func preparedCommand(
+	root, mode, slug, base, sourceTip, name string,
+	full bool,
+	version string,
+	args []string,
+	form preparationMode,
+) (string, int) {
 	var out string
 	code := 1
 	result := diff.MovementCheckedRetry(root, func(snapshot diff.MovementSnapshot) (string, string) {
@@ -48,7 +54,11 @@ func preparedCommand(root, mode, slug, base, sourceTip, name string, full bool, 
 		}
 		switch form {
 		case chargePreparation:
-			out, code = renderCharge(root, facts, Decide(facts), name, full)
+			if mode == modeBuild {
+				out, code = renderCharge(root, facts, Decide(facts), name, full)
+			} else {
+				out, code = renderReviewCharge(root, facts, Decide(facts), full, version)
+			}
 		case proposalPreparation:
 			out, code = renderWritesProposal(root, facts, name)
 		}

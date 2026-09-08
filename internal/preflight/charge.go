@@ -36,8 +36,13 @@ func (source chargeSource) handle() string {
 
 // chargeCommand keeps every required read in the source snapshot's one retry. A charge
 // must not turn GatherPinned's retry into nested retries with mixed source evidence.
-func chargeCommand(root, mode, slug, base, sourceTip, ticket string, full bool, args []string) (string, int) {
-	return preparedCommand(root, mode, slug, base, sourceTip, ticket, full, args, chargePreparation)
+func chargeCommand(
+	root, mode, slug, base, sourceTip, ticket string,
+	full bool,
+	version string,
+	args []string,
+) (string, int) {
+	return preparedCommand(root, mode, slug, base, sourceTip, ticket, full, version, args, chargePreparation)
 }
 
 func renderCharge(root string, facts Facts, verdict Verdict, name string, full bool) (string, int) {
@@ -121,6 +126,10 @@ func chargeSources(root, sourceTip, specPath string, selected *tickets.Entry) ([
 		buildPhase,
 		delegateProcedure,
 	}
+	return loadChargeSources(root, sourceTip, paths)
+}
+
+func loadChargeSources(root, sourceTip string, paths []string) ([]chargeSource, string) {
 	sources := make([]chargeSource, 0, len(paths))
 	for _, path := range paths {
 		data, failure := readChargeSource(root, sourceTip, path)
