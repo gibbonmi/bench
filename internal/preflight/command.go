@@ -17,11 +17,12 @@ import (
 // rejects anything else the same way it rejects any unknown word.
 var grammar = usage.Grammar{
 	Cmd:  "bench preflight",
-	Help: "usage: bench preflight review <slug> [--base <commit>] [--source-tip <commit>]\n       bench preflight build <slug> [--base <commit>] [--source-tip <commit>]\n       bench preflight build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--full]\n",
+	Help: "usage: bench preflight review <slug> [--base <commit>] [--source-tip <commit>]\n       bench preflight build <slug> [--base <commit>] [--source-tip <commit>]\n       bench preflight build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--full]\n       bench preflight build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>\n",
 	Flags: []usage.Flag{
 		{Name: "--base", HasValue: true, NoEmptyValue: true},
 		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
 		{Name: "--charge"},
+		{Name: "--propose-writes"},
 		{Name: "--ticket", HasValue: true, NoEmptyValue: true},
 		{Name: "--full"},
 	},
@@ -43,16 +44,26 @@ func Command(args []string) (string, int) {
 	base := parsed.Flags["--base"]
 	sourceTip := parsed.Flags["--source-tip"]
 	_, charge := parsed.Flags["--charge"]
+	_, proposeWrites := parsed.Flags["--propose-writes"]
 	_, full := parsed.Flags["--full"]
 	ticket := parsed.Flags["--ticket"]
 	if mode != "review" && mode != modeBuild {
 		return toon.Usage(grammar.Cmd, mode) + "\n", 2
 	}
+	if charge && proposeWrites {
+		return toon.Usage(grammar.Cmd, "--charge and --propose-writes cannot be combined") + "\n", 2
+	}
 	if charge && (mode != modeBuild || base == "" || sourceTip == "" || ticket == "") {
 		return toon.Usage(grammar.Cmd, "--charge requires build, --ticket, --base, and --source-tip") + "\n", 2
 	}
-	if !charge && (ticket != "" || full) {
+	if proposeWrites && (mode != modeBuild || base == "" || sourceTip == "" || ticket == "") {
+		return toon.Usage(grammar.Cmd, "--propose-writes requires build, --ticket, --base, and --source-tip") + "\n", 2
+	}
+	if !charge && (ticket != "" || full) && !proposeWrites {
 		return toon.Usage(grammar.Cmd, "--ticket and --full require --charge") + "\n", 2
+	}
+	if proposeWrites && full {
+		return toon.Usage(grammar.Cmd, "--full requires --charge") + "\n", 2
 	}
 	root, err := git.Root()
 	if err != nil {
@@ -64,6 +75,9 @@ func Command(args []string) (string, int) {
 	}
 	if charge {
 		return chargeCommand(root, mode, slug, base, sourceTip, ticket, full, args)
+	}
+	if proposeWrites {
+		return proposeWritesCommand(root, mode, slug, base, sourceTip, ticket, args)
 	}
 
 	facts, bootErr := GatherPinned(root, mode, slug, base, sourceTip)
