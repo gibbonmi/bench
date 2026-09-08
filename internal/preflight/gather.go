@@ -32,73 +32,12 @@ type BootstrapFailure struct {
 	Kind, Hint string
 }
 
-// Gather gathers preflight facts for root, mode, slug, and the first optional
-// explicit base. It supplies no source-tip pin. It returns one immutable
-// Facts snapshot for Decide or one BootstrapFailure; it never classifies a
-// check. Exactly one result is non-zero.
-func Gather(root, mode, slug string, explicitBase ...string) (Facts, *BootstrapFailure) {
-	base := ""
-	if len(explicitBase) > 0 {
-		base = explicitBase[0]
-	}
-	return GatherPinned(root, mode, slug, base, "")
-}
-
-// GatherPinned gathers preflight facts for root, mode, slug, an explicit
-// base, and a source-tip pin. With an explicit base, it reads one
-// movement-checked source snapshot and retries one snapshot drift. It returns
-// snapshot drift after a second movement, or one BootstrapFailure for a read
-// or pin failure. A resolved pin that names the wrong commit is a Decide row.
-func GatherPinned(root, mode, slug, explicitBase, sourceTipPin string) (Facts, *BootstrapFailure) {
-	if explicitBase != "" {
-		var gathered Facts
-		var gatherFailure *BootstrapFailure
-		result := diff.MovementCheckedRetry(root, func(snapshot diff.MovementSnapshot) (string, string) {
-			var err error
-			var resolveKind, resolveHint string
-			source, resolveKind, resolveHint := snapshot.ResolveSourceRange(explicitBase)
-			if resolveKind != "" {
-				return resolveKind, resolveHint
-			}
-			paths, err := snapshot.SourceSnapshotPaths(source)
-			if err != nil {
-				return "changed files not readable", err.Error()
-			}
-			if mode == "review" {
-				dirty, statusErr := git.Output("-C", root, "status", "--porcelain")
-				if statusErr != nil {
-					return "source status unreadable", statusErr.Error()
-				}
-				if dirty != "" {
-					return "source not clean", "review source has uncommitted changes"
-				}
-			}
-			gathered, gatherFailure = gather(root, mode, slug, &source, paths, sourceTipPin)
-			if gatherFailure != nil {
-				return gatherFailure.Kind, gatherFailure.Hint
-			}
-			return "", ""
-		})
-		if result.Kind != "" {
-			if gatherFailure != nil {
-				return Facts{}, gatherFailure
-			}
-			return Facts{}, &BootstrapFailure{result.Kind, result.Hint}
-		}
-		if result.DriftKind != "" {
-			return Facts{}, &BootstrapFailure{"snapshot drift", result.DriftHint}
-		}
-		return gathered, nil
-	}
-	return gather(root, mode, slug, nil, nil, sourceTipPin)
-}
-
-func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []string, sourceTipPin string) (Facts, *BootstrapFailure) {
+func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []string, sourceTipPin string, noFollow bool) (Facts, *BootstrapFailure) {
 	pinnedTip, pinErr := resolvePin(root, sourceTipPin)
 	if pinErr != nil {
 		return Facts{}, pinErr
 	}
-	content, resolved, tried, ok, err := specref.Resolve(root, slug)
+	content, resolved, tried, ok, err := resolveSpecInput(root, slug, noFollow)
 	if err != nil {
 		return Facts{}, &BootstrapFailure{"spec not readable", "spec " + slug + ": " + err.Error()}
 	}
@@ -130,7 +69,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		return Facts{}, &BootstrapFailure{"coverage map invalid", strings.Join(violations, "; ")}
 	}
 
-	ticketFacts, ticketErr := gatherTickets(root, filepath.Join(filepath.Dir(resolved), "tickets"), mode, specTag(ids))
+	ticketFacts, ticketErr := gatherTicketsWithPolicy(root, filepath.Join(filepath.Dir(resolved), "tickets"), mode, specTag(ids), noFollow)
 	if ticketErr != nil {
 		return Facts{}, ticketErr
 	}
@@ -328,8 +267,13 @@ type ticketFacts struct {
 // tell an absent directory (row checks not-applicable) from a
 // present-but-empty one (row checks run for real, reading as unowned
 // rows).
-func gatherTickets(root, dir, mode, tag string) (ticketFacts, *BootstrapFailure) {
-	d := bounds.ClassifyDir(dir)
+func gatherTicketsWithPolicy(root, dir, mode, tag string, noFollow bool) (ticketFacts, *BootstrapFailure) {
+	var d bounds.ClassifiedDir
+	if noFollow {
+		d = bounds.ClassifyDirNoFollow(dir)
+	} else {
+		d = bounds.ClassifyDir(dir)
+	}
 	switch d.State {
 	case bounds.StateAbsent:
 		if mode == "review" {
@@ -344,7 +288,14 @@ func gatherTickets(root, dir, mode, tag string) (ticketFacts, *BootstrapFailure)
 		return ticketFacts{}, &BootstrapFailure{"tickets directory not readable", dir + " is " + string(d.State) + ": " + d.Reason}
 	}
 
-	files, duplicates, refusal := tickets.Enumerate(dir, d.Entries)
+	var files []tickets.Entry
+	var duplicates []string
+	var refusal *tickets.Refusal
+	if noFollow {
+		files, duplicates, refusal = tickets.EnumerateNoFollow(dir, d.Entries)
+	} else {
+		files, duplicates, refusal = tickets.Enumerate(dir, d.Entries)
+	}
 	if refusal != nil {
 		return ticketFacts{}, &BootstrapFailure{refusal.Kind, refusal.Message(dir)}
 	}

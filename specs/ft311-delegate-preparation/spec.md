@@ -86,6 +86,10 @@ The review form rejects `--ticket` and prepares the existing spec-backed axes.
 New forms require an active assignment and a clean source at the supplied tip.
 Existing forms retain their current grammar, checks, output, and exit meanings.
 
+Charge-only producer reads refuse symbolic links before content access.
+They share the existing directory grader, spec resolver, and ticket scanner.
+Plain preflight keeps its follow-mode defaults.
+
 Add `--propose-writes` as a separate build form with the same ticket and revision arguments.
 It cannot combine with `--charge`.
 It presents repairs even when fixture or registry closure is red.
@@ -324,6 +328,13 @@ They authorize implementation only after the reviewer approves this spec and its
 
 - `tests/canary/package-core-guard/unrouted-subcommand`
 - `internal/preflight`
+- `internal/bounds/classify.go`
+- `internal/bounds/classify_nofollow_test.go`
+- `internal/spec/spec.go`
+- `internal/spec/resolve.go`
+- `internal/spec/resolve_nofollow_test.go`
+- `internal/tickets/enumerate.go`
+- `internal/tickets/enumerate_test.go`
 - `cmd/bench/main.go`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`

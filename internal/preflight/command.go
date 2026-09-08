@@ -17,10 +17,13 @@ import (
 // rejects anything else the same way it rejects any unknown word.
 var grammar = usage.Grammar{
 	Cmd:  "bench preflight",
-	Help: "usage: bench preflight review <slug> [--base <commit>] [--source-tip <commit>]\n       bench preflight build <slug> [--base <commit>] [--source-tip <commit>]\n",
+	Help: "usage: bench preflight review <slug> [--base <commit>] [--source-tip <commit>]\n       bench preflight build <slug> [--base <commit>] [--source-tip <commit>]\n       bench preflight build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--full]\n",
 	Flags: []usage.Flag{
 		{Name: "--base", HasValue: true, NoEmptyValue: true},
 		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
+		{Name: "--charge"},
+		{Name: "--ticket", HasValue: true, NoEmptyValue: true},
+		{Name: "--full"},
 	},
 	MinArgs: 2,
 	MaxArgs: 2,
@@ -39,8 +42,17 @@ func Command(args []string) (string, int) {
 	mode, slug := parsed.Positionals[0], parsed.Positionals[1]
 	base := parsed.Flags["--base"]
 	sourceTip := parsed.Flags["--source-tip"]
+	_, charge := parsed.Flags["--charge"]
+	_, full := parsed.Flags["--full"]
+	ticket := parsed.Flags["--ticket"]
 	if mode != "review" && mode != modeBuild {
 		return toon.Usage(grammar.Cmd, mode) + "\n", 2
+	}
+	if charge && (mode != modeBuild || base == "" || sourceTip == "" || ticket == "") {
+		return toon.Usage(grammar.Cmd, "--charge requires build, --ticket, --base, and --source-tip") + "\n", 2
+	}
+	if !charge && (ticket != "" || full) {
+		return toon.Usage(grammar.Cmd, "--ticket and --full require --charge") + "\n", 2
 	}
 	root, err := git.Root()
 	if err != nil {
@@ -49,6 +61,9 @@ func Command(args []string) (string, int) {
 
 	if err := unrepresentableCell("--source-tip", sourceTip); err != nil {
 		return toon.RenderError(err) + "\n", 1
+	}
+	if charge {
+		return chargeCommand(root, mode, slug, base, sourceTip, ticket, full, args)
 	}
 
 	facts, bootErr := GatherPinned(root, mode, slug, base, sourceTip)
