@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "   A historical review and a spec-less review keep their existing preparation\n   entry points under this same native authority rule.",
+    "new": "   A historical review and a spec-less review need no native authority."
+  }
+]

@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/cross-harness-reviewers.md",
+    "old": "subagent surface takes the capable-harness handoff in\n`.agents/commands/bench-review-implementation.md`, and it substitutes no\nsame-family CLI.",
+    "new": "subagent surface takes the capable-harness handoff in\n`.agents/commands/bench-review-implementation.md`. It also falls back to its own family's CLI."
+  }
+]

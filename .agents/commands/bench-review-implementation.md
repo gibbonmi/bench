@@ -94,6 +94,14 @@ it never restarts initial discovery over the original range.
    its axis, and its charge from the `craft-review` skill
    (`.agents/skills/bench-craft-review/SKILL.md`).
 
+   An authorized review dispatches every prepared axis through the native agent
+   surface. It asks no second approval turn inside that authorization. Each axis
+   keeps its own context, its own isolated read-only venue, and its own
+   independent source derivation.
+
+   Collect every axis return before you accept a finding. A missing or failed
+   axis return leaves the review incomplete. It is never a clean finding set.
+
    That skill is the one source
    for what each axis hunts and what a finding must cite; do not restate the
    charges here. A finding cites what its axis read now, not what it recalls.
@@ -110,9 +118,20 @@ it never restarts initial discovery over the original range.
    If there is no spec, skip the Spec axis and say so. The Coverage axis still
    runs; it needs only the diff and the existing tests.
 
-   If this harness forbids unsolicited sub-agents, run the same axes inline.
-   State that fallback in the exit handoff. Keep the same charges and citation
-   standard.
+   Native availability is a fact of the active session. A compiled harness
+   record is not runtime proof of a native agent surface.
+
+   When the native tool is unavailable, or when the reviewer prohibits
+   delegation, preserve the prepared charges and stop dispatch. Then emit a
+   capable-harness handoff. The handoff names the repository, the assignment,
+   the frozen pair, the charge inputs, the destination harness, and that
+   harness's exact native continuation command. Substitute no same-family CLI
+   launcher, and collect no axis into coordinator context. The standing
+   cross-harness falsification pass keeps its separate route and its existing
+   trigger.
+
+   A historical review and a spec-less review keep their existing preparation
+   entry points under this same native authority rule.
 
 5. **Aggregate, don't merge.** Report under `## Standards`, `## Spec`, and
    `## Coverage` headings, and keep the findings separate. Do not rerank across

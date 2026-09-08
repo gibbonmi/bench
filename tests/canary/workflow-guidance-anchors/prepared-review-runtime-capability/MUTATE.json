@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "   Native availability is a fact of the active session. A compiled harness\n   record is not runtime proof of a native agent surface.",
+    "new": "   The compiled harness record proves that a native agent surface exists here."
+  }
+]

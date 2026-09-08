@@ -1,7 +1,9 @@
 # Cross-harness reviewer invocations
 
 Use a family CLI for a cross-family reviewer. A harness without a native
-subagent surface falls back to its own family's CLI.
+subagent surface takes the capable-harness handoff in
+`.agents/commands/bench-review-implementation.md`, and it substitutes no
+same-family CLI.
 
 Close stdin on every one of these. A family CLI that receives both a prompt argument and
 an open stdin waits for stdin to supply more prompt. So a backgrounded reviewer

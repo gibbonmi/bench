@@ -32,8 +32,8 @@ path, seam, return shape, budget. Route model and effort with `craft-line`. Name
 model id on every call. An omission inherits your model and may silently escalate.
 
 Put effort and iteration cap in the charge. An own-family reviewer uses the harness's native agent
-surface, never that family's CLI. Cross-family reviews and the no-native-surface fallback use the
-exact recipes in `references/cross-harness-reviewers.md`.
+surface, never that family's CLI. Cross-family reviews use the exact recipes in
+`references/cross-harness-reviewers.md`. Without a native surface, hand off to a capable harness.
 
 Prefer compressed inputs: the named decision source, exact passages, coverage rows, and the fence's fixture-and-seam inventory.
 The delegate then uses prior art instead of re-deriving it.
