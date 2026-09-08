@@ -305,6 +305,10 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   unqualified, and not "progressive loading" (the split is progressive disclosure) —
   always-loaded core.
 
+- **delegate charge** — the task instructions and evidence supplied to one delegate. It identifies the assignment, revision, approved scope, checks, and required return. Not "prompt bundle" or "task packet" — delegate charge.
+- **landing effect** — one recorded operation after publication, such as broker refresh or eligible sibling cleanup. Its completion is separate from publication. Not "landing verdict" or "gate result" — landing effect.
+- **recovery checkpoint** — an explicitly named commit in the assignment history that a worktree reset restores. It is not inferred from the current default branch. Not "latest main" or "automatic rollback target" — recovery checkpoint.
+
 ## Avoid
 
 - "CI" / "the build" when you mean **the gate**.
