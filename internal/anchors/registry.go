@@ -3,7 +3,6 @@ package anchors
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 )
@@ -139,16 +138,9 @@ func read(path, rel string) fileResult {
 }
 
 // StripHTMLComments removes complete comments and truncates at an unterminated comment.
+// It projects stripCommentsMapped, the package's one comment strip, so the evaluator reads
+// the text Locate searches.
 func StripHTMLComments(text string) string {
-	for {
-		start := strings.Index(text, "<!--")
-		if start < 0 {
-			return text
-		}
-		end := strings.Index(text[start+4:], "-->")
-		if end < 0 {
-			return text[:start]
-		}
-		text = text[:start] + text[start+4+end+3:]
-	}
+	stripped, _ := stripCommentsMapped(text)
+	return string(stripped)
 }
