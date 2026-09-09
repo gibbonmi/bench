@@ -396,6 +396,10 @@ They authorize implementation only after the reviewer approves this spec and its
 - `internal/worktree/land_resume.go`
 - `internal/worktree/land_freshness_test.go`
 - `internal/worktree/land_resume_test.go`
+- `internal/worktree/land_specless_test.go`
+- `internal/worktree/land_journey_test.go`
+- `internal/systemtest/owner_land_race_test.go`
+- `internal/systemtest/owner_artifact_recovery_test.go`
 - `internal/worktree/land_trace_test.go`
 - `internal/worktree/clean_landed.go`
 - `internal/worktree/clean_landed_apply_test.go`

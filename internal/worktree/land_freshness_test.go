@@ -13,23 +13,22 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 	"github.com/gibbonmi/bench/internal/landing"
 )
 
-// TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion is SOL01. The
-// candidate tree carries its own build entry point, a go-build.sh that records a
-// marker. A candidate-owned promotion rebuilds through that script and re-runs the
-// landing under the result; the stable owner completes the landing without ever
-// executing it.
+// TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion is SOL01 and LC6. The
+// candidate tree carries its own build entry point, a go-build.sh that records the
+// destination branch it observed. The refresh effect runs that script once, and nothing
+// before it does: the branch the script read is the published commit, so the candidate
+// code reached no step that decided which bytes were published.
 func TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion(t *testing.T) {
 	t.Parallel()
 	request := "land-owner-no-candidate-code"
 	root, creation, _, _, tally, home := publicLandingFixture(t, request, "", "")
 	marker := filepath.Join(t.TempDir(), "candidate-ran")
 	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")
-	mustWrite(t, filepath.Join(root, "scripts", "go-build.sh"), []byte("#!/bin/sh\nprintf ran > "+marker+"\nexit 1\n"), 0o755)
+	mustWrite(t, filepath.Join(root, "scripts", "go-build.sh"), []byte("#!/bin/sh\ngit rev-parse main > "+marker+"\nexit 1\n"), 0o755)
 	gitRun(t, root, "add", "scripts/go-build.sh")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "candidate build entry")
 	base := gitOutput(t, root, "rev-parse", "HEAD")
@@ -38,11 +37,12 @@ func TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion(t *testin
 
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, home, filepath.Join(root, "dist", "bench"), landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
-		t.Fatalf("stable-owner landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
+	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
+		t.Fatalf("stable-owner landing = (%d, %q, %q), want a failed refresh", code, stdout.String(), stderr.String())
 	}
-	if _, err := os.Stat(marker); !os.IsNotExist(err) {
-		t.Fatalf("candidate landing code ran during its own promotion: %v", err)
+	published := gitOutput(t, root, "rev-parse", "main")
+	if got := strings.TrimSpace(fixtureFileText(t, marker)); got != published {
+		t.Fatalf("candidate build entry observed branch %q, want the published commit %q", got, published)
 	}
 	if strings.Contains(stderr.String(), "rebuilt") {
 		t.Fatalf("landing rebuilt an executable: %q", stderr.String())
@@ -52,10 +52,12 @@ func TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion(t *testin
 	}
 }
 
-// TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease is SOL04. The
-// invoked owner carries the complete landing — publication, marker, reconcile, and
-// release — in one process. A rebuild-and-re-exec path would either replace the
-// process or surface its rebuild disclosure; neither may appear.
+// TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease is SOL04 and LC7. The
+// invoked owner carries the complete landing — publication, marker, reconcile, release,
+// and the effects — in one process. A rebuild-and-re-exec path would either replace the
+// process or surface its rebuild disclosure; neither may appear. This destination
+// declares build inputs but carries no build entry point, so the refresh reports failed
+// under that same owner rather than handing the landing to another process.
 func TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease(t *testing.T) {
 	t.Parallel()
 	request := "land-owner-single-process"
@@ -68,8 +70,8 @@ func TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease(t *testing.
 	ownerPid := os.Getpid()
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, home, filepath.Join(root, "dist", "bench"), landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
-		t.Fatalf("single-owner landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
+	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
+		t.Fatalf("single-owner landing = (%d, %q, %q), want a failed refresh", code, stdout.String(), stderr.String())
 	}
 	if os.Getpid() != ownerPid {
 		t.Fatalf("owner process identity changed: %d -> %d", ownerPid, os.Getpid())
@@ -85,10 +87,12 @@ func TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease(t *testing.
 	}
 }
 
-// TestLandCommandIgnoresAForgedPrimaryExecutableAndSeal is SOL17, at the real owner
-// through the process seam. A forged dist/bench and adjacent seal sit at the primary
-// repository path; the stable owner completes the landing without consulting or
-// executing them.
+// TestLandCommandIgnoresAForgedPrimaryExecutableAndSeal is SOL17 and LC4, at the real
+// owner through the process seam. A forged dist/bench and adjacent seal sit at the
+// primary repository path. The stable owner publishes without consulting them, and the
+// refresh then reads that pair rather than running it: the forged seal authenticates
+// nothing, and the destination carries no build entry point, so the effect reports
+// failed at exit 3 over a published commit that stands.
 func TestLandCommandIgnoresAForgedPrimaryExecutableAndSeal(t *testing.T) {
 	t.Parallel()
 	binary := testRunBinary(t)
@@ -107,8 +111,8 @@ func TestLandCommandIgnoresAForgedPrimaryExecutableAndSeal(t *testing.T) {
 	cmd := descendant(t, binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path)
 	cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
 	code := exitCode(cmd.Run())
-	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
-		t.Fatalf("forged-primary landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
+	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
+		t.Fatalf("forged-primary landing = (%d, %q, %q), want a failed refresh", code, stdout.String(), stderr.String())
 	}
 	if _, err := os.Stat(marker); !os.IsNotExist(err) {
 		t.Fatalf("forged primary executable ran during promotion: %v", err)
@@ -118,86 +122,6 @@ func TestLandCommandIgnoresAForgedPrimaryExecutableAndSeal(t *testing.T) {
 	}
 	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
 		t.Fatalf("gate tally = %q, %v, want one prospective run", got, err)
-	}
-}
-
-// brokerChangingLanding is the landing fixture whose reviewed diff changes the promotion
-// broker's own build inputs. Both install-step rows read the same notice, so they compose
-// the same destination rather than each building one.
-func brokerChangingLanding(t *testing.T, request string) (root string, creation Creation, base, tip, home string) {
-	t.Helper()
-	root, creation, _, _, _, home = publicLandingFixture(t, request, "", "")
-	mustWrite(t, filepath.Join(root, "go.mod"), []byte("module benchfixture\n\ngo 1.22\n"), 0o644)
-	mustMkdirAll(t, filepath.Join(root, "cmd", "bench"), 0o755)
-	mustWrite(t, filepath.Join(root, "cmd", "bench", "main.go"), []byte("package main\n\nfunc main() {}\n"), 0o644)
-	mustMkdirAll(t, filepath.Join(root, "scripts"), 0o755)
-	mustWrite(t, filepath.Join(root, "scripts", "go-build.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
-	mustWrite(t, filepath.Join(root, "scripts", "go-build.inputs"), []byte("build_script=scripts/go-build.sh\n"), 0o644)
-	spec := filepath.Join(root, "specs", "x", "spec.md")
-	body, err := os.ReadFile(spec)
-	if err != nil {
-		t.Fatal(err)
-	}
-	mustWrite(t, spec, append(body, []byte("- `scripts/go-build.sh`\n")...), 0o644)
-	gitRun(t, root, "add", ".")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "broker build inputs")
-	gitRun(t, creation.Path, "rebase", "main")
-	base = gitOutput(t, root, "rev-parse", "HEAD")
-	commitInWorktree(t, creation.Path, "scripts/go-build.sh", "#!/bin/sh\n# next broker\nexit 0\n", "change broker source")
-	return root, creation, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), home
-}
-
-// kitCheckoutJoins is the landing seam set whose checkout predicate answers a fixed
-// verdict. The real predicate reads the kit root from the process environment, so a
-// fixture that bound that environment would leave the package's parallel set.
-func kitCheckoutJoins(kit bool) joins {
-	j := defaultJoins()
-	j.kitSourceCheckout = func(string) bool { return kit }
-	return j
-}
-
-// TestLandCommandReportsInstallStepForABrokerChangingDiff is SOL16 and BF19. A reviewed
-// diff that changes the promotion broker's own build inputs lands as source, but the
-// installed broker keeps authority. The landing must name the install step so the
-// operator does not expect source publication to replace it. In the kit source checkout
-// that step is the stamped rebuild and bench doctor --fix, because bench repair reads a
-// pin manifest the source tree does not carry.
-func TestLandCommandReportsInstallStepForABrokerChangingDiff(t *testing.T) {
-	t.Parallel()
-	request := "land-owner-broker-change"
-	root, creation, base, tip, home := brokerChangingLanding(t, request)
-
-	var stdout, stderr bytes.Buffer
-	code := landWith(kitCheckoutJoins(true), root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
-		t.Fatalf("broker-changing landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
-	}
-	if !strings.Contains(stderr.String(), freshness.RebuildAction(root)) {
-		t.Fatalf("kit-checkout landing named no rebuild: %q", stderr.String())
-	}
-	if !strings.Contains(stderr.String(), "bench doctor --fix") {
-		t.Fatalf("kit-checkout landing named no publication step: %q", stderr.String())
-	}
-}
-
-// TestLandCommandNamesTheInstalledRepairRouteOffTheKitCheckout is BF20. An installed kit
-// carries the pin manifest bench repair reads, so the notice keeps that route there and
-// names no source-tree rebuild.
-func TestLandCommandNamesTheInstalledRepairRouteOffTheKitCheckout(t *testing.T) {
-	t.Parallel()
-	request := "land-owner-broker-change-installed"
-	root, creation, base, tip, home := brokerChangingLanding(t, request)
-
-	var stdout, stderr bytes.Buffer
-	code := landWith(kitCheckoutJoins(false), root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
-		t.Fatalf("broker-changing landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
-	}
-	if !strings.Contains(stderr.String(), "bench repair") {
-		t.Fatalf("installed-kit landing named no install step: %q", stderr.String())
-	}
-	if strings.Contains(stderr.String(), freshness.RebuildAction(root)) {
-		t.Fatalf("installed-kit landing named the source-tree rebuild: %q", stderr.String())
 	}
 }
 
@@ -231,18 +155,6 @@ func temporaryProspectiveArtifacts(t *testing.T, dir string) []string {
 		}
 	}
 	return residue
-}
-
-// projectGreenMarker reads the destination's project-green marker, answering the empty
-// string when no marker is recorded. An absent marker is an ordinary state before the
-// first landing, so it is a value here rather than a test failure.
-func projectGreenMarker(t *testing.T, root string) string {
-	t.Helper()
-	output, err := descendant(t, "git", "-C", root, "rev-parse", "--verify", "--quiet", "refs/bench/green/main").Output()
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(string(output))
 }
 
 // TestLandCommandLeavesTheDestinationUnchangedAfterARedProspectiveGate is SOL11. The

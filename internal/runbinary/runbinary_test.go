@@ -366,3 +366,35 @@ func TestBuildLeavesTheWrapperManifestUntouched(t *testing.T) {
 		t.Fatalf("private build changed %s: %v", manifest, afterErr)
 	}
 }
+
+// TestBuildSubjectLeavesTheManifestDirectoryToTheScript grades the one operand that parts
+// the two builders. The private build names a manifest directory beside its throwaway
+// executable; the subject build names none, so the script publishes the manifest beside
+// the checkout's own wrapper.
+func TestBuildSubjectLeavesTheManifestDirectoryToTheScript(t *testing.T) {
+	source, recorded := t.TempDir(), filepath.Join(t.TempDir(), "argv")
+	if err := os.MkdirAll(filepath.Join(source, "scripts"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	script := "#!/usr/bin/env bash\nprintf '%s ' \"$@\" > " + recorded + "\n"
+	if err := os.WriteFile(filepath.Join(source, "scripts", "go-build.sh"), []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	output := filepath.Join(t.TempDir(), "bench")
+	argv := func(build func(context.Context, string, string) error) string {
+		if err := build(context.Background(), source, output); err != nil {
+			t.Fatal(err)
+		}
+		recordedArgv, err := os.ReadFile(recorded)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(recordedArgv)
+	}
+	if got := argv(Build); !strings.Contains(got, "--manifest-dir "+filepath.Dir(output)) {
+		t.Fatalf("private build argv = %q, want the throwaway's own manifest directory", got)
+	}
+	if got := argv(BuildSubject); strings.Contains(got, "--manifest-dir") {
+		t.Fatalf("subject build argv = %q, want no manifest directory of its own", got)
+	}
+}

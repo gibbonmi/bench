@@ -66,13 +66,15 @@ func TestLandCommandPublicResumeCompletesPublishedReleaseWithoutRepublishing(t *
 	}
 	commitInWorktree(t, root, "destination-after-publication", "forward\n", "destination movement")
 	// LF4: the destination declares Go build inputs only after publication, so the resume
-	// faces a freshness proof it could not pass. This fixture's executable has no seal
-	// these sources could match. It is committed because an untracked file would trip the
-	// resume's own untracked-collision proof and hide the exemption behind another refusal.
+	// owns a broker refresh it cannot finish. This fixture carries no build entry point,
+	// and no seal these sources could match, so the effect reports failed at exit 3 while
+	// the published commit stands. The manifest is committed because an untracked file
+	// would trip the resume's own untracked-collision proof and hide the effect behind
+	// another refusal.
 	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")
 	destination := gitOutput(t, root, "rev-parse", "main")
 	code, stdout, stderr = land("--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path)
-	if code != 0 || !strings.Contains(stdout, "source_base="+base) || !strings.Contains(stdout, "worktree=released,census=0}") || stderr != "" {
+	if code != 3 || !strings.Contains(stdout, "source_base="+base) || !strings.Contains(stdout, "worktree=incomplete:refresh,next=") || !strings.Contains(stderr, "landing refresh failed") {
 		t.Fatalf("resume = (%d, %q, %q)", code, stdout, stderr)
 	}
 	if got := gitOutput(t, root, "rev-parse", "main"); got != destination {
@@ -81,8 +83,10 @@ func TestLandCommandPublicResumeCompletesPublishedReleaseWithoutRepublishing(t *
 	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
 		t.Fatalf("resume reran gate: tally=%q error=%v", got, err)
 	}
+	// The release settled on the resume above, so this call reaches the terminal path.
+	// That path owns the effects too, and the refresh still cannot finish.
 	code, stdout, stderr = land("--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path)
-	if code != 0 || !strings.Contains(stdout, "source_base="+base) || !strings.Contains(stdout, "worktree=already-complete,census=0}") || stderr != "" {
+	if code != 3 || !strings.Contains(stdout, "source_base="+base) || !strings.Contains(stdout, "worktree=incomplete:refresh,next=") {
 		t.Fatalf("completed resume = (%d, %q, %q)", code, stdout, stderr)
 	}
 }

@@ -23,7 +23,7 @@ func TestLandCommandSpecLessLandsPublishesAndReleases(t *testing.T) {
 	code := LandCommand(root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	published := gitOutput(t, root, "rev-parse", "main")
 	tree := gitOutput(t, root, "rev-parse", published+"^{tree}")
-	want := "landed{source_base=" + base + ",source_tip=" + tip + ",destination_base=" + base + ",published_commit=" + published + ",tree=" + tree + ",worktree=released,census=0}\n"
+	want := wantEffects("not-applicable") + "landed{source_base=" + base + ",source_tip=" + tip + ",destination_base=" + base + ",published_commit=" + published + ",tree=" + tree + ",worktree=released,census=0}\n"
 	if code != 0 || stdout.String() != want {
 		t.Fatalf("spec-less land = (%d, %q, %q), want (0, %q)", code, stdout.String(), stderr.String(), want)
 	}

@@ -108,6 +108,10 @@ type joins struct {
 	// default reaches a build script and a Go toolchain, and a fixture for that pair
 	// would make every output row wait on a real compile.
 	build func(context.Context, string, string) error
+	// buildSubject authors a checkout's own published executable, under the manifest
+	// directory the build owner defaults to. It is a sibling of build, not a second
+	// caller of it, because the two publish different subjects and different manifests.
+	buildSubject func(context.Context, string, string) error
 	// mergeReconcile is the merge verb's publication boundary: the checkout catch-up that
 	// runs after the branch ref moved. It is a seam because its failure is the one
 	// outcome that reads apart from a refusal, and no fixture can make a bare reset fail.
@@ -149,6 +153,7 @@ func defaultJoins() joins {
 		kitSourceCheckout:        gate.KitSourceCheckout,
 		mergeReconcile:           reconcileMergeCheckout,
 		build:                    runbinary.Build,
+		buildSubject:             runbinary.BuildSubject,
 	}
 }
 
@@ -328,7 +333,7 @@ func landAttributed(measures *landingMeasures, j joins, root, home, _ string, ar
 		}
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release", records)
 	}
-	return landedComplete(stdout, result, true, records)
+	return landedAfterEffects(j, root, result, parsed.Flags["--spec"], path, assignment.ID, true, records, stdout, stderr)
 }
 
 // censusCount is the assignment's raw-call count for the landed record. An unreadable

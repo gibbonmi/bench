@@ -229,14 +229,33 @@ func Build(ctx context.Context, sourceRoot, output string) error {
 	return canonicalBuild(ctx, sourceRoot, output)
 }
 
+// BuildSubject publishes one Bench executable from sourceRoot at output under the build
+// script's own manifest directory. It is the form a caller takes when output is the
+// checkout's own published executable, so the manifest lands where that checkout's
+// wrapper reads it rather than beside a throwaway.
+func BuildSubject(ctx context.Context, sourceRoot, output string) error {
+	return runBuildScript(ctx, sourceRoot, output, "")
+}
+
 func canonicalBuild(ctx context.Context, sourceRoot, output string) error {
-	if _, err := exec.LookPath("go"); err != nil {
-		return errors.New("Go is absent from PATH; prepend an executable Go toolchain directory to PATH and retry")
-	}
 	// The private selection is deleted when the run owner closes it, so its manifest goes
 	// beside it rather than beside the source checkout's wrapper. A manifest left in the
 	// wrapper's directory would outlive this executable and refuse the next landing.
-	cmd := exec.Command("bash", filepath.Join(sourceRoot, "scripts", "go-build.sh"), "--manifest-dir", filepath.Dir(output), sourceRoot, output)
+	return runBuildScript(ctx, sourceRoot, output, filepath.Dir(output))
+}
+
+// runBuildScript runs the sanctioned build script once. An empty manifestDir passes no
+// manifest-directory flag, which leaves the script its own default; a named one overrides
+// it. The two callers differ only in that operand, so they share this one exec.
+func runBuildScript(ctx context.Context, sourceRoot, output, manifestDir string) error {
+	if _, err := exec.LookPath("go"); err != nil {
+		return errors.New("Go is absent from PATH; prepend an executable Go toolchain directory to PATH and retry")
+	}
+	script := []string{filepath.Join(sourceRoot, "scripts", "go-build.sh")}
+	if manifestDir != "" {
+		script = append(script, "--manifest-dir", manifestDir)
+	}
+	cmd := exec.Command("bash", append(script, sourceRoot, output)...)
 	cmd.Dir = sourceRoot
 	buildEnv, err := buildEnvironment(os.Environ())
 	if err != nil {
