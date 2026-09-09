@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+    "old": "- The coordinator gives triage the failed command, the selected checks, the\n  actual execution evidence, the findings, and the frozen source.",
+    "new": "- The coordinator gives triage the context that the coordinator judges useful."
+  }
+]

@@ -67,7 +67,7 @@ func preparedReviewDispatchAnchors() []anchors.Anchor {
 // directions together are what DP26 asks of the canonical review readers.
 func TestPreparedReviewGuidance(t *testing.T) {
 	dispatchAnchors := preparedReviewDispatchAnchors()
-	if got, want := len(dispatchAnchors), 9; got != want {
+	if got, want := len(dispatchAnchors), 13; got != want {
 		t.Fatalf("prepared-review dispatch anchor count = %d, want %d", got, want)
 	}
 	var required, forbidden int
@@ -81,8 +81,8 @@ func TestPreparedReviewGuidance(t *testing.T) {
 			t.Errorf("prepared-review dispatch anchor %q uses an unsupported kind", anchor.Diagnostic)
 		}
 	}
-	if required != 7 || forbidden != 2 {
-		t.Fatalf("prepared-review dispatch kinds = %d Require and %d Forbid, want 7 and 2", required, forbidden)
+	if required != 11 || forbidden != 2 {
+		t.Fatalf("prepared-review dispatch kinds = %d Require and %d Forbid, want 11 and 2", required, forbidden)
 	}
 
 	for _, anchor := range dispatchAnchors {

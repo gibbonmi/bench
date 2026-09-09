@@ -59,12 +59,20 @@ it never restarts initial discovery over the original range.
 
 ## Process
 
-1. **Pin the diff.** Pull the whole base-relative context with
-   `bench diff --full` in explicit-base mode. Supply the same frozen base that
-   preflight used. Record the complete reported base and source tip. A dirty
-   source, a moved tip, or a pair that differs from preflight stops the review.
-   When work already landed, use `bench diff --full --commit <sha>` for that
-   historical commit.
+1. **Pin the diff from the prepared evidence.**
+   Collect the shared evidence once with
+   `bench preflight review <spec> --charge --base <b> --source-tip <t> --full`.
+   Supply the same frozen base that preflight used. The command returns one
+   charge row for each axis. It also returns a `shared_evidence` table with one
+   identity each for diff, consumers, and coverage.
+
+   Read the base-relative diff facts from that prepared evidence. Do not collect
+   the same pair a second time with `bench diff --full`. Record the complete
+   reported base and source tip. A dirty source, a moved tip, or a pair that
+   differs from preflight stops the review.
+
+   A historical review keeps `bench diff --full --commit <sha>` for the landed
+   commit. A spec-less review keeps `bench diff --full` in explicit-base mode.
 
    The frozen base is the `main` tip merged into the source before the landing, so the range holds the spec diff alone.
 
@@ -74,12 +82,15 @@ it never restarts initial discovery over the original range.
    `CLAUDE.md` holds import pointers only. Also use `projects/<name>.md` and
    any `CONTRIBUTING` or conventions docs in the repo.
 
-3. **Run the blast before axis dispatch.** Run
-   `bench consumers --changed --base <b> --source-tip <t> --full` over the same
-   frozen pair that preflight and `bench diff` pinned. Attach the returned
-   tables and their citation row to the review record. Walk the `touched=false`
-   rows first, because a consumer outside the diff's file set is the FT210 class
-   an unlisted-consumer miss hides. Then hand each axis the table.
+3. **Walk the blast before axis dispatch.**
+   Take the consumer tables and their citation row from the shared evidence's
+   `consumers` identity. Do not run a second `bench consumers --changed`
+   collection for the same frozen pair. Attach those tables and that citation row
+   to the review record.
+
+   Walk the `touched=false` rows first, because a consumer outside the diff's
+   file set is the FT210 class an unlisted-consumer miss hides. Then hand each
+   axis the same shared evidence.
 
    - Walk a `blast_deleted` row as a deletion whose consumers the tip already edited.
    - A blast refusal stops the review, as a red preflight does.
