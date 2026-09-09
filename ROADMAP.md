@@ -65,7 +65,7 @@ findings in the owner details.
 
 **FT293 (MEDIUM, decision required) — preflight-closed ticket Writes determine registry pins and blocker edges.**
 
-**FT300 (MEDIUM) — ticket slicing adds the file a ticket's own change will move to its fence.**
+**FT300 (MEDIUM) — ticket slicing fences the file a ticket's own change moves and names the fixture that reaches a refusal state.**
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
@@ -238,4 +238,5 @@ recommended table is sequencing advice.
 1. FT311 landing-completion spec, the third of five from `specs/ft311-diagnostics/decisions/ft311-coordinator-work.md` — run `/bench-write-spec`.
 2. FT311 recoverable-reset spec, the fourth of five — run `/bench-write-spec` after the landing-completion spec lands.
 3. FT312 cross-harness reviewer verb — run `/bench-write-spec`.
-4. FT172 roadmap row grammar — a reviewer decision, after the last FT311 stage.
+4. FT300 ticket-slicing fence and refusal-state rules — a `craft-synthesis` kit edit to `craft-tickets`.
+5. FT172 roadmap row grammar — a reviewer decision, after the last FT311 stage.

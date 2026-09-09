@@ -72,7 +72,7 @@ func main() {
 }
 
 var commandRegistry = []commandDefinition{
-	{Name: "anchors", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 15, Suffix: " <path>", Description: "anchors pinning a repo-relative path as TOON (kind, section, needle)"}), Run: outputCommand(anchorsCommand)},
+	{Name: "anchors", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 15, Suffix: " <path>", Description: "anchors pinning a repo-relative path as TOON (kind, section, needle, line)"}), Run: outputCommand(anchorsCommand)},
 	{Name: "learnings", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 16, Description: "open journal entries as a TOON table (date, title)"}), Run: outputCommand(learnings.Command)},
 	{Name: "maps", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 17, Description: "unresolved decision-map tickets as TOON (map, ticket, type, state)"}), Run: outputCommand(maps.Command)},
 	{Name: "guards", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 18, Description: "every guard's deny surface as TOON (guard, boundary, denies)"}), Run: outputCommand(guards.Command)},

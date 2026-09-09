@@ -52,7 +52,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench commands --brief     print the direct, read-only command probe
   bench dashboard [--stdout] write a self-contained HTML snapshot of the board (--stdout emits it)
   bench canary [root]        validate fixture inventory
-  bench anchors <path>       anchors pinning a repo-relative path as TOON (kind, section, needle)
+  bench anchors <path>       anchors pinning a repo-relative path as TOON (kind, section, needle, line)
   bench learnings            open journal entries as a TOON table (date, title)
   bench maps                 unresolved decision-map tickets as TOON (map, ticket, type, state)
   bench guards               every guard's deny surface as TOON (guard, boundary, denies)

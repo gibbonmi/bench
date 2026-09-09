@@ -29,13 +29,24 @@ const (
 	KindFrontmatter FindingKind = "frontmatter"
 )
 
+// SentenceStart names one sentence of a paragraph: the 1-based physical line it opens on,
+// and the first three whitespace-separated words as the document writes them. A sentence of
+// fewer than three words carries the words it has, and an inline code span stays verbatim.
+type SentenceStart struct {
+	Line int
+	Text string
+}
+
 // Finding is one graded fault in one document. Line is the 1-based physical line of the
 // sentence, of the first line of the paragraph, or of the opening delimiter. Count is
-// the observed word or sentence count, and it is zero for a delimiter fault.
+// the observed word or sentence count, and it is zero for a delimiter fault. Starts holds
+// one entry per sentence of a paragraph fault, in document order, and it is empty for
+// every other kind.
 type Finding struct {
-	Kind  FindingKind
-	Line  int
-	Count int
+	Kind   FindingKind
+	Line   int
+	Count  int
+	Starts []SentenceStart
 }
 
 // Render states one finding as the diagnostic the gate prints for the subject at rel.

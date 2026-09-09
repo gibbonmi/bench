@@ -79,6 +79,78 @@ func TestGateProseCommandFindsAnOverLongSentence(t *testing.T) {
 	}
 }
 
+// TestGateProseCommandNamesTheSentenceStarts is DG13: a paragraph finding from the named
+// form lists each sentence's line and start, in document order. The seven sentences sit on
+// three lines, so a start that carried the paragraph's own line rather than the sentence's
+// would red here.
+func TestGateProseCommandNamesTheSentenceStarts(t *testing.T) {
+	root := t.TempDir()
+	write(t, root, ".bench/prose-exclusions", "")
+	write(t, root, "docs/deep.md", "Alpha one two. Beta two three. Gamma three four.\n"+
+		"Delta four five. Epsilon five six.\n"+
+		"Zeta six seven. Eta seven eight.\n")
+
+	var stdout, stderr bytes.Buffer
+	code := GateProseCommand([]string{root, "--", "docs/deep.md"}, &stdout, &stderr)
+
+	if code != 1 {
+		t.Fatalf("exit = %d, want 1; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+	out := strings.TrimSuffix(stdout.String(), "\n")
+	if strings.Contains(out, "\n") {
+		t.Fatalf("stdout = %q, want one diagnostic line", out)
+	}
+	const marker = ": sentences "
+	at := strings.Index(out, marker)
+	if at < 0 {
+		t.Fatalf("stdout = %q, want the sentence list after %q", out, marker)
+	}
+	got := strings.Split(out[at+len(marker):], ", ")
+	want := []string{
+		`1 "Alpha one two."`,
+		`1 "Beta two three."`,
+		`1 "Gamma three four."`,
+		`2 "Delta four five."`,
+		`2 "Epsilon five six."`,
+		`3 "Zeta six seven."`,
+		`3 "Eta seven eight."`,
+	}
+	if len(got) != len(want) {
+		t.Fatalf("sentence items = %q, want %q", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("sentence item %d = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
+// TestParagraphStartsEscapeControlBytes is DG16: a control byte inside a sentence start is
+// escaped the way the sentence text is escaped, so one finding stays one line and no raw
+// byte reaches the gate output.
+func TestParagraphStartsEscapeControlBytes(t *testing.T) {
+	root := t.TempDir()
+	write(t, root, ".bench/prose-exclusions", "")
+	write(t, root, "docs/esc.md", "One\x1btwo three four. Five. Six. Seven. Eight. Nine. Ten.\n")
+
+	var stdout, stderr bytes.Buffer
+	code := GateProseCommand([]string{root, "--", "docs/esc.md"}, &stdout, &stderr)
+
+	if code != 1 {
+		t.Fatalf("exit = %d, want 1; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+	out := strings.TrimSuffix(stdout.String(), "\n")
+	if strings.ContainsRune(out, '\x1b') {
+		t.Fatalf("stdout = %q, want no raw control byte", out)
+	}
+	if strings.Contains(out, "\n") {
+		t.Fatalf("stdout = %q, want one diagnostic line", out)
+	}
+	if !strings.Contains(out, `One\x1btwo three four`) {
+		t.Fatalf("stdout = %q, want the escaped start", out)
+	}
+}
+
 // TestGateProseCommandCleanList exits 0 on a clean named file and states its verdict as a
 // `prose[N]{path,verdict}` table, so a caller reads the pass rather than inferring it from
 // the exit code.

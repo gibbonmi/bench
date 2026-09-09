@@ -41,11 +41,13 @@ type report struct {
 	tests      map[string]*testResult
 	packageLog map[string]string
 	terminal   bool
-	ranTest    bool
+	// ranTests holds one key for each test that emitted a run event, so the count of
+	// tests that ran and the fact that any ran are one observation.
+	ranTests map[string]bool
 }
 
 func decode(stream io.Reader) (*report, error) {
-	report := &report{statuses: map[string]string{}, elapsedMS: map[string]int64{}, seen: map[string]bool{}, tests: map[string]*testResult{}, packageLog: map[string]string{}}
+	report := &report{statuses: map[string]string{}, elapsedMS: map[string]int64{}, seen: map[string]bool{}, tests: map[string]*testResult{}, packageLog: map[string]string{}, ranTests: map[string]bool{}}
 	decoder := json.NewDecoder(stream)
 	for {
 		var e event
@@ -64,7 +66,7 @@ func decode(stream io.Reader) (*report, error) {
 		}
 		report.seen[e.Package] = true
 		if e.Action == "run" && e.Test != "" {
-			report.ranTest = true
+			report.ranTests[e.Package+"\x00"+e.Test] = true
 		}
 		if e.Test == "" && strings.Contains(e.Output, "[no test files]") {
 			report.statuses[e.Package] = "no-tests"

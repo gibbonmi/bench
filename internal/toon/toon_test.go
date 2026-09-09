@@ -1,6 +1,9 @@
 package toon
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // This test pins the adapter's spec-TOON quoting and escaping at the pure-function seam.
 // It runs one row per special-value trigger class the library quotes, plus the
@@ -59,6 +62,54 @@ func TestTableUnrepresentableCellErrors(t *testing.T) {
 		}
 		if got != "" {
 			t.Errorf("Table(%q) returned block %q alongside the error; want empty", in, got)
+		}
+	}
+}
+
+// A row whose cell count differs from the field count is a caller defect. The encoder
+// refuses it instead of indexing past the row and crashing the command. Both Table and
+// TableTyped share the check, and both a short row and a long row are refused. The
+// error text names the row index, the cell count, and the field count, so the caller
+// can find the row that built wrong.
+func TestTableRaggedRowErrors(t *testing.T) {
+	fields := []string{"a", "b", "c"}
+	cases := []struct {
+		label string
+		str   [][]string
+		typed [][]any
+		want  string
+	}{
+		{
+			label: "short row",
+			str:   [][]string{{"1", "2", "3"}, {"4", "5"}},
+			typed: [][]any{{"1", "2", "3"}, {"4", "5"}},
+			want:  "row 1 has 2 cells, want 3",
+		},
+		{
+			label: "long row",
+			str:   [][]string{{"1", "2", "3", "4"}},
+			typed: [][]any{{"1", "2", "3", "4"}},
+			want:  "row 0 has 4 cells, want 3",
+		},
+	}
+	for _, c := range cases {
+		got, err := Table("t", fields, c.str)
+		if err == nil {
+			t.Errorf("Table %s = %q, want an error", c.label, got)
+		} else if !strings.Contains(err.Error(), c.want) {
+			t.Errorf("Table %s error = %q, want it to contain %q", c.label, err, c.want)
+		}
+		if got != "" {
+			t.Errorf("Table %s returned block %q alongside the error; want empty", c.label, got)
+		}
+		got, err = TableTyped("t", fields, c.typed)
+		if err == nil {
+			t.Errorf("TableTyped %s = %q, want an error", c.label, got)
+		} else if !strings.Contains(err.Error(), c.want) {
+			t.Errorf("TableTyped %s error = %q, want it to contain %q", c.label, err, c.want)
+		}
+		if got != "" {
+			t.Errorf("TableTyped %s returned block %q alongside the error; want empty", c.label, got)
 		}
 	}
 }

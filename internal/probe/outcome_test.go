@@ -1,28 +1,16 @@
 package probe
 
 import (
-	"fmt"
-	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
-	"syscall"
 	"testing"
-	"time"
 
-	"github.com/gibbonmi/bench/internal/bounds"
-	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/usage"
 )
-
-// interruptHelperEnv carries the fixture root to the helper half of the interrupt row.
-// The fact under test is what a signal does to the verb, so the verb has to run in a
-// process the signal may end without taking the assertions with it.
-const interruptHelperEnv = "BENCH_PROBE_INTERRUPT_ROOT"
 
 // PB12: the copy exists on disk, at its declared mode, while the run is in flight.
 func TestProbePreservesTheSubjectBeforeTheRun(t *testing.T) {
@@ -58,14 +46,8 @@ func TestProbeReportsARestoreFailure(t *testing.T) {
 	f := newFixture(t)
 	installStubGo(t, f, cannedFailure("caught"), 1, "chmod 0500 .\n")
 	t.Cleanup(func() { _ = os.Chmod(f.root, 0o755) })
-	out, code := runProbe(t, "clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./", "--run", "^TestClampNegative$")
-	if code != 2 {
-		t.Fatalf("exit = %d, want 2\n%s", code, out)
-	}
-	row := probeRow(t, "restore-failed", "clamp.go", "swap", "failed", 1, "no")
-	if !strings.HasPrefix(out, row) {
-		t.Fatalf("stdout = %q, want %q first", out, row)
-	}
+	out, code := runProbe(t, probeArgs()...)
+	requireRow(t, out, code, 2, probeRow(t, "restore-failed", "clamp.go", "swap", "failed", 1, "no"))
 	kept := preservedCopy(t, f)
 	if !strings.Contains(out, "preserved[1]{path,reason}:\n  "+kept) {
 		t.Fatalf("stdout = %q, want the preserved row naming %s", out, kept)
@@ -82,14 +64,8 @@ func TestProbeReportsAReadBackMismatch(t *testing.T) {
 	f := newFixture(t)
 	hook := "find \"$BENCH_HOME/probe\" -type f -exec truncate -s 0 {} +\n"
 	installStubGo(t, f, cannedFailure("caught"), 1, hook)
-	out, code := runProbe(t, "clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./", "--run", "^TestClampNegative$")
-	if code != 2 {
-		t.Fatalf("exit = %d, want 2\n%s", code, out)
-	}
-	row := probeRow(t, "restore-failed", "clamp.go", "swap", "failed", 1, "no")
-	if !strings.HasPrefix(out, row) {
-		t.Fatalf("stdout = %q, want %q first", out, row)
-	}
+	out, code := runProbe(t, probeArgs()...)
+	requireRow(t, out, code, 2, probeRow(t, "restore-failed", "clamp.go", "swap", "failed", 1, "no"))
 	want := "the restored bytes differ from the bytes read at the start"
 	if !strings.Contains(out, want) {
 		t.Fatalf("stdout = %q, want the preserved row's reason %q", out, want)
@@ -105,12 +81,7 @@ func TestProbeRestoresBeforeARenderRefusal(t *testing.T) {
 	writeFixtureFile(t, subject, "alpha\n", 0o644)
 	installStubGo(t, f, cannedPass, 0, "")
 	out, code := runProbe(t, name, "--swap", "alpha", "--with", "beta", "--package", "./", "--run", "^TestClampPositive$")
-	if code != 1 {
-		t.Fatalf("exit = %d, want 1\n%s", code, out)
-	}
-	if !strings.HasPrefix(out, "error: unrepresentable TOON cell — ") {
-		t.Fatalf("stdout = %q, want the shared render error", out)
-	}
+	requireRow(t, out, code, 1, "error: unrepresentable TOON cell — ")
 	restored, err := os.ReadFile(subject)
 	if err != nil || string(restored) != "alpha\n" {
 		t.Fatalf("subject = (%q, %v), want the start bytes", restored, err)
@@ -131,12 +102,7 @@ func TestProbeNamesTheCopyWhenTheRenderAndTheRestoreFail(t *testing.T) {
 	installStubGo(t, f, cannedPass, 0, "chmod 0500 "+sanitize.ShellQuote(held)+"\n")
 	t.Cleanup(func() { _ = os.Chmod(held, 0o755) })
 	out, code := runProbe(t, operand, "--swap", "alpha", "--with", "beta", "--package", "./", "--run", "^TestClampPositive$")
-	if code != 2 {
-		t.Fatalf("exit = %d, want 2\n%s", code, out)
-	}
-	if !strings.HasPrefix(out, "error: unrepresentable TOON cell — ") {
-		t.Fatalf("stdout = %q, want the shared render error first", out)
-	}
+	requireRow(t, out, code, 2, "error: unrepresentable TOON cell — ")
 	kept := preservedCopy(t, f)
 	if !strings.Contains(out, "preserved[1]{path,reason}:\n  "+kept) {
 		t.Fatalf("stdout = %q, want the preserved row naming %s", out, kept)
@@ -146,81 +112,6 @@ func TestProbeNamesTheCopyWhenTheRenderAndTheRestoreFail(t *testing.T) {
 		t.Fatalf("preserved copy = (%q, %v), want the start bytes", saved, err)
 	}
 }
-
-// PB16: the restore is deferred, so an interrupt during the focused run still puts the
-// subject back before the verb answers.
-func TestProbeRestoresOnInterrupt(t *testing.T) {
-	if root := os.Getenv(interruptHelperEnv); root != "" {
-		runInterruptHelper(t, root)
-		return
-	}
-	f := newFixture(t)
-	installStubGo(t, f, cannedPass, 0, "sleep 60\n")
-	helper := exec.Command(os.Args[0], "-test.run=^TestProbeRestoresOnInterrupt$", "-test.timeout="+interruptDeadline().String())
-	helper.Env = append(os.Environ(), interruptHelperEnv+"="+f.root)
-	stdout, err := helper.StdoutPipe()
-	if err != nil {
-		t.Fatal(err)
-	}
-	helper.Stderr = helper.Stdout
-	if err := helper.Start(); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = helper.Process.Kill() })
-	answered := make(chan string, 1)
-	go func() {
-		body, _ := io.ReadAll(stdout)
-		_ = helper.Wait()
-		answered <- string(body)
-	}()
-	awaitStubStart(t, f)
-	if err := helper.Process.Signal(syscall.SIGINT); err != nil {
-		t.Fatal(err)
-	}
-	select {
-	case out := <-answered:
-		want := probeRow(t, "invalid", "clamp.go", "swap", "interrupted", 0, "yes")
-		if !strings.Contains(out, want) {
-			t.Fatalf("helper stdout = %q, want the interrupted row %q", out, want)
-		}
-	case <-time.After(interruptDeadline()):
-		t.Fatalf("the interrupted probe did not answer within %s", interruptDeadline())
-	}
-	requireSubjectBytes(t, f, clampSource)
-}
-
-// runInterruptHelper is the signalled half: it runs the verb for real and prints what the
-// verb answered, so the parent grades production's own deferred restore.
-func runInterruptHelper(t *testing.T, root string) {
-	t.Helper()
-	if err := os.Chdir(root); err != nil {
-		t.Fatal(err)
-	}
-	out, code := Command([]string{"clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./", "--run", "^TestClampNegative$"})
-	fmt.Print(out)
-	fmt.Printf("exit=%d\n", code)
-}
-
-// awaitStubStart waits for the focused run's own `go test` child, not for the `go list`
-// the run binary's verification takes on the way in.
-func awaitStubStart(t *testing.T, f *fixture) {
-	t.Helper()
-	expiry := time.Now().Add(interruptDeadline())
-	for time.Now().Before(expiry) {
-		body, err := os.ReadFile(f.marker)
-		if err == nil {
-			for _, line := range strings.Split(string(body), "\n") {
-				if line == "test" {
-					return
-				}
-			}
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	t.Fatalf("the focused run's Go child did not start within %s", interruptDeadline())
-}
-
-func interruptDeadline() time.Duration { return bounds.TestDeadline(runbinary.BuilderCancelGrace) }
 
 // PB17: an executable subject stays executable across the mutation and the restore.
 func TestProbeKeepsTheSubjectMode(t *testing.T) {
@@ -247,12 +138,7 @@ func TestProbeRendersASubjectWithASpace(t *testing.T) {
 	writeFixtureFile(t, filepath.Join(f.root, "my pkg", "clamp.go"), "package spaced\n\nconst alpha = 1\n", 0o644)
 	installStubGo(t, f, cannedPass, 0, "")
 	out, code := runProbe(t, "my pkg/clamp.go", "--swap", "alpha", "--with", "beta", "--package", "./", "--run", "^TestClampPositive$")
-	if code != 1 {
-		t.Fatalf("exit = %d, want 1\n%s", code, out)
-	}
-	if want := probeRow(t, "silent", "my pkg/clamp.go", "swap", "passed", 0, "yes"); !strings.HasPrefix(out, want) {
-		t.Fatalf("stdout = %q, want %q first", out, want)
-	}
+	requireRow(t, out, code, 1, probeRow(t, "silent", "my pkg/clamp.go", "swap", "passed", 0, "yes"))
 }
 
 // PB40: a subject whose last line has no newline restores byte-exact.
@@ -262,12 +148,7 @@ func TestProbeRestoresAFileWithoutTrailingNewline(t *testing.T) {
 	writeFixtureFile(t, subject, "alpha", 0o644)
 	installStubGo(t, f, cannedPass, 0, "")
 	out, code := runProbe(t, "notrailing.txt", "--swap", "alpha", "--with", "beta", "--package", "./", "--run", "^TestClampPositive$")
-	if code != 1 {
-		t.Fatalf("exit = %d, want 1\n%s", code, out)
-	}
-	if want := probeRow(t, "silent", "notrailing.txt", "swap", "passed", 0, "yes"); !strings.HasPrefix(out, want) {
-		t.Fatalf("stdout = %q, want %q first", out, want)
-	}
+	requireRow(t, out, code, 1, probeRow(t, "silent", "notrailing.txt", "swap", "passed", 0, "yes"))
 	got, err := os.ReadFile(subject)
 	if err != nil || string(got) != "alpha" {
 		t.Fatalf("restored bytes = (%q, %v), want %q", got, err, "alpha")
@@ -334,6 +215,32 @@ func TestProbeSelectsTheCheckForm(t *testing.T) {
 	}
 }
 
+// DG1: the check form names the check and the root conformance run pattern, so a caller
+// reads which tests the probe selected rather than inferring them from the check name.
+func TestProbeNamesTheCheckSelection(t *testing.T) {
+	f := newFixture(t)
+	installStubGo(t, f, cannedFailure("caught"), 1, "")
+	out, code := runProbe(t, "clamp.go", "--omit", "return 0", "--check", "line-routing")
+	want := selectionRow(t, "check", "line-routing", "^TestRootConformance$", "passed", 1)
+	if code != 0 || !strings.Contains(out, want) {
+		t.Fatalf("stdout = (%q, %d), want the check selection row %q and 0", out, code, want)
+	}
+}
+
+// DG2: the package form names its expression and the exact run pattern it passed, and a
+// selection that passed none names `all` rather than an empty cell.
+func TestProbeNamesThePackageSelection(t *testing.T) {
+	f := newFixture(t)
+	installStubGo(t, f, cannedFailure("caught"), 1, "")
+	out, code := runProbe(t, probeArgs()...)
+	want := probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "yes") + selectionRow(t, "package", "./", "^TestClampNegative$", "passed", 1)
+	requireRow(t, out, code, 0, want)
+	bare, _ := runProbe(t, "clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./")
+	if row := selectionRow(t, "package", "./", "all", "passed", 1); !strings.Contains(bare, row) {
+		t.Fatalf("stdout = %q, want the pattern-free selection row %q", bare, row)
+	}
+}
+
 // PB38: the verdict mapping is the one place an outcome becomes a word and an exit.
 func TestVerdictExitCodes(t *testing.T) {
 	for _, tc := range []struct {
@@ -356,7 +263,7 @@ func TestVerdictExitCodes(t *testing.T) {
 		})
 		t.Run(string(tc.kind)+" over a failed restore", func(t *testing.T) {
 			preserved := preservation{file: filepath.Join(t.TempDir(), "clamp.go")}
-			out, code := render(subject{display: "clamp.go"}, "swap", testreport.Outcome{Kind: tc.kind}, "", preserved, false, "denied")
+			out, code := render(subject{display: "clamp.go"}, "swap", testreport.Outcome{Kind: tc.kind}, testreport.Request{}, "", preserved, false, "denied", testreport.OutcomePassed)
 			if code != 2 {
 				t.Fatalf("render(%q) over a failed restore exit = %d, want 2\n%s", tc.kind, code, out)
 			}

@@ -252,6 +252,10 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **probe verdict** — the one word `bench probe` prints for a run: `bit`,
   `silent`, `invalid`, or `restore-failed`. Not "test result", not "probe
   outcome", not "mutation score" — probe verdict.
+- **probe baseline** — the focused run `bench probe` makes over the unmutated
+  tree before the mutation. A baseline that does not pass gives the **probe
+  verdict** `invalid` with a `baseline-` cause, and the probe writes nothing.
+  Not "the control run", not "the green run" — probe baseline.
 - **landing source** — a build-owned Git integration branch identified by its
   frozen base and current source tip. Serial green tickets accumulate there;
   semantic review binds to that pair and `bench worktree land` consumes it. Not

@@ -30,6 +30,11 @@ import (
 // escapable tab, newline, or return — makes the library refuse. The refusal surfaces
 // as an error, so the caller emits the AXI error contract instead of a crash or a
 // lossy block.
+//
+// A row whose cell count differs from the field count is a caller defect, so it also
+// returns an error. The error names the row index, the cell count, and the field count,
+// because a hand-built row otherwise crashes the command on an out-of-range index
+// instead of printing an error line.
 func table(name string, fields []string, rows [][]any) (string, error) {
 	if len(rows) == 0 {
 		// There are no cells, so no escaping is at stake. This branch joins the schema
@@ -38,6 +43,9 @@ func table(name string, fields []string, rows [][]any) (string, error) {
 	}
 	objs := make([]toonlib.Object, len(rows))
 	for i, row := range rows {
+		if len(row) != len(fields) {
+			return "", fmt.Errorf("row %d has %d cells, want %d to match the fields", i, len(row), len(fields))
+		}
 		cells := make([]toonlib.Field, len(fields))
 		for j, f := range fields {
 			cells[j] = toonlib.Field{Key: f, Value: row[j]}
@@ -60,8 +68,9 @@ func table(name string, fields []string, rows [][]any) (string, error) {
 // Empty rows yield the definitive empty table `name[0]{fields}:`. Field names are
 // emitted verbatim (they are schema identifiers, not data). The returned string ends
 // with a trailing newline on every line, header included. It returns an error when a
-// cell holds a byte spec-TOON cannot represent. The caller then emits the AXI error
-// contract instead of a crash or forged output.
+// cell holds a byte spec-TOON cannot represent, and when a row's cell count differs
+// from the field count. The caller then emits the AXI error contract instead of a
+// crash or forged output.
 func Table(name string, fields []string, rows [][]string) (string, error) {
 	typed := make([][]any, len(rows))
 	for i, row := range rows {
