@@ -49,6 +49,9 @@ func TestExplicitDecisionTable(t *testing.T) {
 		{"ownership/ambiguous-assignments", func(f *ExplicitFacts) { f.AssignmentAmbiguous = true }, ActionRetain, ReasonMalformed, "registration has ambiguous assignments"},
 		{"ownership/no-matching-assignment", func(f *ExplicitFacts) { f.MatchedAssignment = nil }, ActionRetain, ReasonMalformed, "owner marker has no matching assignment"},
 		{"ownership/branch-mismatch", func(f *ExplicitFacts) { f.RegistrationBranchRef = "refs/heads/other" }, ActionRetain, ReasonUncertain, "assignment does not match current branch"},
+		{"ownership/shift-branch-discard-removes", func(f *ExplicitFacts) {
+			f.RegistrationBranchRef, f.RegistrationShiftBranch, f.DiscardBranch = "refs/heads/other", true, true
+		}, ActionRemove, "", ""},
 		{"ownership/lock-mismatch", func(f *ExplicitFacts) { f.RegistrationLockReason = "foreign reason" }, ActionRetain, ReasonUnexpectedLock, "assignment does not match current Bench lock"},
 		{"ownership/foreign-lock", func(f *ExplicitFacts) {
 			f.MarkerPresent, f.MatchedAssignment, f.RegistrationLocked = false, nil, true
@@ -80,11 +83,9 @@ func TestExplicitDecisionTable(t *testing.T) {
 			f.MatchedAssignment.Recovery = []ledger.Recovery{{Ref: "refs/bench/r1"}}
 		}, ActionRecoverRemove, "", ""},
 		{"eligibility/unsafe-target-override", func(f *ExplicitFacts) { f.UnsafeTarget = true }, ActionRetain, ReasonUncertain, "target contains unsafe control bytes"},
-		// The three combined-fact cases below pin cross-block precedence in the
-		// explicit decision: two conflicting facts are set together, and the
-		// later block's reason must win. They carry forward the EX3, EX5, and
-		// EX6 verdicts of the deleted real-Git outcome matrix, so a block
-		// reorder in DecideExplicit turns at least one of them red.
+		// The three combined-fact cases below pin cross-block precedence: two
+		// conflicting facts are set together, and the later block's reason must win.
+		// They carry the EX3, EX5, and EX6 verdicts of the deleted real-Git matrix.
 		{"ignored/declaration-overrides-marker-malformed", func(f *ExplicitFacts) {
 			f.MarkerErr = errors.New("owner marker is malformed")
 			f.BuildOutputErr = errors.New("bad json")
@@ -110,8 +111,7 @@ func TestExplicitDecisionTable(t *testing.T) {
 	}
 }
 
-// TestExplicitVerdictEvidence pins the non-action evidence the verdict carries:
-// landed branch-deletion authority and the recovery lookup kinds.
+// TestExplicitVerdictEvidence pins the verdict's non-action evidence: landed branch-deletion authority and the recovery lookup kinds.
 func TestExplicitVerdictEvidence(t *testing.T) {
 	t.Run("action/landed-branch-deletion", func(t *testing.T) {
 		v := DecideExplicit(ownedFacts())

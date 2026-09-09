@@ -3,8 +3,7 @@
 // eligibility, assignment age, ignored-output authorization, preservation, and
 // the resulting action. The parent package translates Git, filesystem, and
 // process state into these typed facts once at its effect boundary. The
-// decisions here read only the supplied facts and return a verdict the parent
-// projects; the package performs no effects, reads no ambient process state,
+// decisions here read only the supplied facts; the package performs no effects
 // and starts no descendants. The source census test enforces that boundary.
 package lifecyclepolicy
 
@@ -61,9 +60,8 @@ func (action Action) Removes() bool {
 // Preserves reports whether executing a plan with this action, tracked state,
 // and registration shape would write work to a recovery ref before removing the
 // checkout. The execution and the planners that must not reach it read the same
-// predicate. A plan can never be preserving to one and not to the other. A
-// detached registration counts whatever its tree holds: the checkout's HEAD is
-// the only thing naming its commits, so the removal would strand them.
+// predicate, so a plan can never preserve for one and not the other. A detached
+// registration counts whatever its tree holds: its HEAD alone names the commits.
 func Preserves(action Action, tracked string, registrationDetached bool) bool {
 	return action == ActionRecoverRemove ||
 		(action == ActionDiscardRemove && tracked != "clean") ||
@@ -128,16 +126,14 @@ const (
 
 // Orphaned reports whether an assignment has been abandoned by the session that
 // cut it. Age is the whole test: nothing records liveness for a request-created
-// worktree. staleAfter, the caller-supplied window, is the only thing
-// separating a long-running one from residue. Every consumer must ask this one
-// question, so the window has a single meaning.
+// worktree. staleAfter, the caller-supplied window, is the only thing separating
+// a long-running one from residue, so the window has a single meaning.
 //
 // An absent stamp is aged, because a record written before the field existed
-// carries none and would otherwise be immortal. A stamp the reading host's
-// clock has not reached yet is not aged, so skew cannot manufacture an orphan.
-// An unparseable stamp is unknown age rather than infinite age.
-// ValidateAssignment rejects one on every ledger read, so a record reaching
-// here with one never came from the ledger.
+// carries none and would otherwise be immortal. A stamp the reading host's clock
+// has not reached yet is not aged, so skew cannot manufacture an orphan. An
+// unparseable stamp is unknown age; ValidateAssignment rejects one on every
+// ledger read, so a record reaching here with one never came from the ledger.
 func Orphaned(a ledger.Assignment, now time.Time, staleAfter time.Duration) bool {
 	if a.State != ledger.StateActive {
 		return false
@@ -229,16 +225,19 @@ const (
 )
 
 // ExplicitFacts carries every typed fact the explicit planner gathers before it
-// can answer "ours and safe to remove". Each field is evidence, not a
-// conclusion: the same facts feed DecideExplicit whether the eventual verdict
-// retains, removes, recovers, or discards. A field left at its zero value was
-// never gathered, because an earlier fact already made it inapplicable. The
-// assignment ledger, for one, is read only when a marker validated.
+// can answer "ours and safe to remove". Each field is evidence, not a conclusion:
+// the same facts feed DecideExplicit whether the verdict retains, removes,
+// recovers, or discards. A field left at its zero value was never gathered,
+// because an earlier fact made it inapplicable: the ledger needs a valid marker.
 type ExplicitFacts struct {
 	RegistrationBranchRef  string
 	RegistrationLockReason string
 	RegistrationLocked     bool
 	RegistrationDetached   bool
+	// RegistrationShiftBranch reports that the registration's branch ref sits in
+	// the shift namespace. Together with DiscardBranch it is the one exception to
+	// the branch-mismatch retain: a shift checkout the operator authorizes.
+	RegistrationShiftBranch bool
 
 	MarkerPresent       bool
 	MarkerErr           error
@@ -264,6 +263,7 @@ type ExplicitFacts struct {
 	IgnoredCount     int
 	DeclaredIgnored  bool
 	DiscardIgnored   bool
+	DiscardBranch    bool
 
 	InitialTracked string
 
@@ -307,7 +307,7 @@ type ExplicitVerdict struct {
 // state. It also covers ignored-residue authorization, the
 // recover/discard-remove promotion, and the final unsafe-target override. The
 // order and the last-write-wins collisions between blocks are pinned by
-// TestExplicitEligibilityOutcomeMatrix and must not change here without that
+// TestExplicitDecisionTable and must not change here without that
 // characterization moving first.
 func DecideExplicit(f ExplicitFacts) ExplicitVerdict {
 	v := ExplicitVerdict{Action: ActionRemove, Tracked: f.InitialTracked, Recovery: "none"}
@@ -327,7 +327,7 @@ func DecideExplicit(f ExplicitFacts) ExplicitVerdict {
 		default:
 			v.Owned = true
 			v.Assignment = f.MatchedAssignment
-			if f.RegistrationBranchRef != f.MatchedAssignment.Branch {
+			if f.RegistrationBranchRef != f.MatchedAssignment.Branch && !(f.DiscardBranch && f.RegistrationShiftBranch) {
 				v.Action, v.ReasonCode, v.Reason = ActionRetain, ReasonUncertain, "assignment does not match current branch"
 			} else if f.RegistrationLockReason != f.AssignmentLockReason {
 				v.Action, v.ReasonCode, v.Reason = ActionRetain, ReasonUnexpectedLock, "assignment does not match current Bench lock"
@@ -481,7 +481,7 @@ type AutomaticVerdict struct {
 // the foreign/unowned refusal, the not-cleanup-pending reasons (with the
 // orphaned-age override), the recovery-metadata-match check, the
 // unknown/unmerged landedness checks, and the final preservation refusal. The
-// order and every message are pinned by TestAutomaticEligibilityOutcomeMatrix
+// order and every message are pinned by TestAutomaticDecisionTable
 // and must not change here without that characterization moving first.
 func DecideAutomatic(f AutomaticFacts) AutomaticVerdict {
 	if f.ExplicitErr != nil {

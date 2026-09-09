@@ -192,3 +192,33 @@ func TestDiscardBranchLeavesADetachedHeadUnaffected(t *testing.T) {
 	requireTest(t, plan.branchRef == "", "detached-HEAD plan named a deletable branch: %q", plan.branchRef)
 	requireTest(t, plan.Action == ActionRecoverRemove, "detached-HEAD action = %q, want recover-remove — the two checks above only bind while the fixture still reaches a removing verdict", plan.Action)
 }
+
+// [RW5] A bench shift leaves a pooled checkout on a bench/shift-* branch rather than its
+// assignment branch. The mismatch retains the tree on every path, so no verb could remove
+// it. With --discard-branch the operator authorizes that one namespace: the explicit clean
+// removes the checkout and retires the shift branch. The automatic sweep plans with empty
+// options, so it still retains.
+func TestDiscardBranchRemovesAShiftCheckout(t *testing.T) {
+	t.Parallel()
+	root, creation := unprovableLandedAssignment(t, "rw5-shift")
+	shift := strings.TrimPrefix(intent.ShiftBranchPrefix(), "refs/heads/") + "20260101-000000"
+	shiftRef := "refs/heads/" + shift
+	gitRun(t, creation.Path, "switch", "-q", "-c", shift)
+
+	automatic, err := PlanAutomatic(root, creation.Path)
+	mustNoError(t, err)
+	requireTest(t, automatic.Action == ActionRetain, "automatic action = %q, want retain", automatic.Action)
+
+	options := CleanupOptions{DiscardBranch: true}
+	plan, err := PlanExplicitWithOptions(root, creation.Path, options)
+	mustNoError(t, err)
+	requireTest(t, plan.Action.Removes(), "plan action = %q, want a removal", plan.Action)
+	requireTest(t, plan.deleteBranch && plan.branchRef == shiftRef, "plan branch = %t/%q, want %q", plan.deleteBranch, plan.branchRef, shiftRef)
+
+	applied, err := ApplyExplicitWithOptions(root, creation.Path, plan.Fingerprint, options)
+	mustNoError(t, err)
+	requireTest(t, applied.Action == ActionRemoved, "applied action = %q, want removed", applied.Action)
+	_, statErr := os.Lstat(creation.Path)
+	requireTest(t, os.IsNotExist(statErr), "checkout survived the apply: %v", statErr)
+	requireTest(t, !branchExists(t, root, shiftRef), "shift branch %s survived the apply", shiftRef)
+}

@@ -193,11 +193,13 @@ func planExplicitWith(j joins, root, path string, options CleanupOptions) (Clean
 	}
 	plan := CleanupPlan{Target: target, Action: ActionRemove, Tracked: "clean", Recovery: "none", registration: *registration, discardIgnored: options.DiscardIgnored, discardBranch: options.DiscardBranch}
 	facts := explicitFacts{
-		RegistrationBranchRef:  registration.BranchRef,
-		RegistrationLockReason: registration.LockReason,
-		RegistrationLocked:     registration.Locked,
-		RegistrationDetached:   registration.Detached,
-		DiscardIgnored:         options.DiscardIgnored,
+		RegistrationBranchRef:   registration.BranchRef,
+		RegistrationLockReason:  registration.LockReason,
+		RegistrationLocked:      registration.Locked,
+		RegistrationDetached:    registration.Detached,
+		DiscardIgnored:          options.DiscardIgnored,
+		DiscardBranch:           options.DiscardBranch,
+		RegistrationShiftBranch: strings.HasPrefix(registration.BranchRef, intent.ShiftBranchPrefix()),
 	}
 	_, markerStatErr := os.Lstat(filepath.Join(admin, OwnerMarkerFile))
 	if markerStatErr == nil {
@@ -313,15 +315,13 @@ func planExplicitWith(j joins, root, path string, options CleanupOptions) (Clean
 	plan.deleteBranch, plan.branchRef, plan.branchOID = verdict.DeleteBranch, verdict.BranchRef, verdict.BranchOID
 	// The derivation above reads ancestry, then merges, then patch-equivalence, then
 	// reverse-applicability. That proves a squash-landing but still refuses whatever it
-	// cannot represent byte- and mode-exactly. A fully-landed branch can therefore read as
+	// cannot represent byte- and mode-exactly, so a fully-landed branch can read as
 	// unmerged. DiscardBranch is the operator supplying that missing proof by hand, applied
-	// here rather than fed into the decision. The recorded landedness — typed and wire
-	// form alike — reports what the tool concluded on its own.
+	// here rather than fed into the decision. The recorded landedness reports what the tool
+	// concluded on its own.
 	//
 	// The automatic path plans with an empty CleanupOptions, so this override never reaches
-	// it. The detached conjunct holds because a detached HEAD has no branch for the operator
-	// to authorize deleting. headRef is the "detached" sentinel rather than a ref. Dropping
-	// the conjunct would hand that sentinel to the branch deletion as if it named something.
+	// it. The detached conjunct holds because headRef is the "detached" sentinel, not a ref.
 	if options.DiscardBranch && !facts.HeadDetached {
 		plan.deleteBranch = true
 		plan.branchRef, plan.branchOID = headRef, head
