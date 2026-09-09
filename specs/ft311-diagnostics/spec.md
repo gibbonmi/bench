@@ -353,6 +353,7 @@ They authorize implementation only after the reviewer approves this spec and its
 - `internal/probe/probe.go`
 - `internal/probe/baseline.go`
 - `internal/probe/probe_test.go`
+- `internal/probe/baseline_test.go`
 - `internal/probe/refusal_test.go`
 - `internal/probe/outcome_test.go`
 - `internal/testreport/selection_facts.go`
