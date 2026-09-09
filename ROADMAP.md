@@ -37,11 +37,13 @@ findings in the owner details.
 
 **FT308 (MEDIUM, decision required) — the cleanup transaction's persistence lock leaves `.git` when its record is gone.**
 
-**FT311 (MEDIUM, decision required) — repeated coordinator chunks fold into Bench verbs and cheap-tier delegates.**
+**FT311 (MEDIUM) — repeated coordinator chunks fold into Bench verbs and cheap-tier delegates.**
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
 **FT312 (MEDIUM) — a native `bench` verb codifies the cross-harness reviewer invocation.**
+
+**FT313 (MEDIUM) — a write or repair charge binds every acceptance row to a named test and names its baseline artifact.**
 
 **FT283 (MEDIUM, decision required) — `bench worktree land --spec` has one phase-scoped transition contract.**
 
@@ -215,6 +217,7 @@ recommended table is sequencing advice.
 | FT240 | FT231 | The experiment keeps its approved three-arm comparison. |
 | FT304 | FT172 | The view needs the identity contract. |
 | FT306 | FT305, FT71 | Adoption follows durable execution and the held local evidence. |
+| FT172 | FT311 | The stage-list grammar lands after the last staged row it grades. |
 
 ### Recommended
 
@@ -232,5 +235,7 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT311 coordinator chunk folds — a reviewer decision on the fold-runs-the-lane question.
-2. FT312 cross-harness reviewer verb — run `/bench-write-spec`.
+1. FT311 landing-completion spec, the third of five from `specs/ft311-diagnostics/decisions/ft311-coordinator-work.md` — run `/bench-write-spec`.
+2. FT311 recoverable-reset spec, the fourth of five — run `/bench-write-spec` after the landing-completion spec lands.
+3. FT312 cross-harness reviewer verb — run `/bench-write-spec`.
+4. FT172 roadmap row grammar — a reviewer decision, after the last FT311 stage.
