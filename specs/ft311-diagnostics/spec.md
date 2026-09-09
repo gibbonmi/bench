@@ -2,7 +2,7 @@
 
 Status: implemented
 
-Decision source: specs/ft311-diagnostics/decisions/ft311-coordinator-work.md
+Decision source: specs/ft311-landing-completion/decisions/ft311-coordinator-work.md
 
 Verification log: 2 iteration(s) to accept — Astra/medium reviewed through codex exec. Iteration one returned four blocking findings, the author folded all seven findings, and iteration two accepted with one accounting finding.
 
@@ -425,8 +425,8 @@ A hand run of `bench gate-prose . --staged` from the worktree top refused the re
 
 The whole ready map and its topic folder moved together into this spec's decisions directory.
 The two roadmap references to the old path moved with it in the same change.
-Future FT311 specs consume this same source in place.
-Before this spec is retired, move the shared map back to the top-level decisions folder and repair its references in the same change.
+The landing-completion spec then took the map into its own decisions directory, and it repaired every reference in that same change.
+This spec is therefore free to retire, and the map stays with the FT311 spec that is still open.
 Do not retire the FT311 roadmap row when only this second capability lands.
 
 The three structured map sources were reread on 2026-09-09.
