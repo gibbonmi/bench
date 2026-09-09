@@ -357,6 +357,7 @@ They authorize implementation only after the reviewer approves this spec and its
 - `internal/testreport/selection_facts.go`
 - `internal/testreport/selection_facts_test.go`
 - `internal/testreport/outcome.go`
+- `internal/testreport/outcome_test.go`
 - `internal/testreport/testreport.go`
 - `internal/testreport/command.go`
 - `.bench/BENCH-reference.md`
