@@ -18,12 +18,15 @@ import (
 // spelling, repetition, and arity, and accepts anything as a declared flag's value.
 var grammar = usage.Grammar{
 	Cmd:  "bench handoff",
-	Help: "usage: bench handoff [--harness " + status.HarnessChoices() + "] [--next <command>]",
+	Help: "usage: bench handoff [--harness " + status.HarnessChoices() + "] [--next <command>] [--state-file <path>]",
 	Flags: []usage.Flag{
 		{Name: "--harness", HasValue: true, NoEmptyValue: true},
 		// An empty override names no command. Left to fall through it would read as a
 		// clean board, which is a different — and false — statement about the tree.
 		{Name: "--next", HasValue: true, NoEmptyValue: true},
+		// An empty path names no file. The empty *State* a caller wants comes from an
+		// empty file, which is a draft they wrote rather than a flag they mistyped.
+		{Name: "--state-file", HasValue: true, NoEmptyValue: true},
 	},
 }
 
@@ -33,8 +36,9 @@ var grammar = usage.Grammar{
 // assignment that holds it. A checkout that is neither owns nothing and writes nothing.
 //
 // It creates freely and destroys never. A missing file is scaffolded, the reviewer-owned
-// State body of the owned section passes through untouched, and a document that cannot be
-// parsed is left exactly as it was behind a non-zero exit.
+// State body of the owned section passes through untouched unless `--state-file` names a
+// new one, and a document that cannot be parsed is left exactly as it was behind a
+// non-zero exit.
 //
 // Exits: 2 for a usage error, 1 outside a repository, from a checkout that owns no
 // section, or when the document cannot be parsed, rendered, or written, 0 otherwise.
@@ -70,6 +74,13 @@ func Command(args []string) (string, int) {
 	target := filepath.Join(noteRoot, status.HandoffFile)
 
 	p := plan{facts: collect(noteRoot, owned), tip: sectionTip(noteRoot, owned), scanRoot: noteRoot}
+	if path, present := parsed.Flags["--state-file"]; present {
+		state, err := readStateFile(path)
+		if err != nil {
+			return err.Error() + "\n", 1
+		}
+		p.state = &state
+	}
 	if override, present := parsed.Flags["--next"]; present {
 		p.facts.Action, p.overridden = override, true
 	} else {
@@ -102,8 +113,9 @@ type plan struct {
 	facts      facts
 	overridden bool
 	route      func() status.RouteResult
-	tip        string // the owned section's worktree tip, or "" when none resolves
-	scanRoot   string // the checkout whose object store the State scan reads
+	tip        string  // the owned section's worktree tip, or "" when none resolves
+	scanRoot   string  // the checkout whose object store the State scan reads
+	state      *string // the drafted State body, or nil when the document's own stands
 }
 
 // owner names the section one run rewrites. Assignment is the record behind a request
@@ -146,8 +158,9 @@ func resolveOwner(root string) (owner, error) {
 // read, the rewrite, and the replace happen under the leaf package's lock, so a sibling
 // phase writing its own section at the same moment loses nothing.
 //
-// State is read back out of the document and put back unchanged. This command derives
-// every other field of the owned section and never rewrites State.
+// State is read back out of the document and put back unchanged, unless the plan carries a
+// drafted body from `--state-file`. This command derives every other field of the owned
+// section, and it never composes a State of its own.
 //
 // Every refusal is raised before the document is rendered, and Update replaces the file
 // only when the callback returns nil. So a refused run leaves the bytes it read.
@@ -155,7 +168,11 @@ func writeSection(target string, p plan) (string, error) {
 	var pin string
 	err := handoffdoc.Update(target, func(doc *handoffdoc.Document) error {
 		existing, _ := doc.Section(p.facts.Key)
-		if err := scanState(p.scanRoot, p.tip, existing.State); err != nil {
+		state := existing.State
+		if p.state != nil {
+			state = *p.state
+		}
+		if err := scanState(p.scanRoot, p.tip, state); err != nil {
 			return err
 		}
 		f, next := p.facts, existing.Next
@@ -168,8 +185,8 @@ func writeSection(target string, p plan) (string, error) {
 		if p.overridden || blankNext(next) {
 			next = nextField(f)
 		}
-		owned := section(f, existing.State, next)
-		doc.Header = header(f, existing.State)
+		owned := section(f, state, next)
+		doc.Header = header(f, state)
 		doc.Shape = ShapeSection
 		doc.Put(owned)
 		doc.EnsureMain()

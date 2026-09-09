@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/status"
 )
 
@@ -222,17 +221,6 @@ func offAncestryCommit(t *testing.T, root string) string {
 	return gitOut(t, a.Worktree, "rev-parse", "HEAD")
 }
 
-// seedSection plants main's reviewer-owned fields and returns the document's bytes, so a
-// refusal test can compare against exactly what the refused run read. It goes in through
-// the leaf package's own writer, so the planted bytes are the ones a real run would parse.
-func seedSection(t *testing.T, document, next, state string) string {
-	t.Helper()
-	if err := handoffdoc.WriteSection(document, handoffdoc.Section{Key: handoffdoc.MainKey, Next: next, State: state}); err != nil {
-		t.Fatalf("seed section: %v", err)
-	}
-	return read(t, document)
-}
-
 // assertNamesLine checks that a parser refusal points the reader at the document and the
 // line the offending text sits on. The expected line is read out of the seeded bytes rather
 // than counted by hand, so a change to the rendered shape moves the expectation with it.
@@ -251,9 +239,4 @@ func assertNamesLine(t *testing.T, out, document, content, offending string) {
 	if want := fmt.Sprintf("%s:%d", document, line); !strings.Contains(out, want) {
 		t.Errorf("the refusal does not name %s\n%s", want, out)
 	}
-}
-
-func seedState(t *testing.T, document, state string) string {
-	t.Helper()
-	return seedSection(t, document, "", state)
 }
