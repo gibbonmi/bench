@@ -420,16 +420,6 @@ func exprHoldsTag(expr constraint.Expr, tag string) bool {
 	return false
 }
 
-// relTo is path expressed against base, falling back to the full path when
-// the two share no relation. A diagnostic then still names something real.
-func relTo(base, path string) string {
-	rel, err := filepath.Rel(base, path)
-	if err != nil {
-		return path
-	}
-	return rel
-}
-
 // baseCurrentFacts backs the base-current check: it resolves the default
 // branch and reports whether its tip is an ancestor of HEAD:
 // merge-base(default, HEAD) equal to rev-parse(default).

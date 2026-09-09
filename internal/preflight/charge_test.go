@@ -144,7 +144,7 @@ func TestChargeProjectionAndFullRetrieval(t *testing.T) {
 		t.Fatalf("compact charge = (%d):\n%s", code, compact)
 	}
 	full, code := Command(chargeArgs(t, root, slug, true))
-	if code != 0 || !strings.Contains(full, "\"true\"") || !strings.Contains(full, "evidence[5]{path,content}") || !strings.Contains(full, "## Acceptance") || !strings.Contains(full, "Status: staged") || !strings.Contains(full, "Delegation skill") || !strings.Contains(full, "Build phase") || !strings.Contains(full, "Focused suite:") {
+	if code != 0 || !strings.Contains(full, "\"true\"") || !strings.Contains(full, "evidence[5]{source,content}") || !strings.Contains(full, "## Acceptance") || !strings.Contains(full, "Status: staged") || !strings.Contains(full, "Delegation skill") || !strings.Contains(full, "Build phase") || !strings.Contains(full, "Focused suite:") {
 		t.Fatalf("full charge = (%d):\n%s", code, full)
 	}
 
@@ -247,7 +247,7 @@ func TestLegacyPreflightDifferential(t *testing.T) {
 		code            int
 		root, base, tip string
 	}
-	run := func(t *testing.T, args []string, root, base, tip string) result {
+	run := func(args []string, root, base, tip string) result {
 		out, code := Command(args)
 		return result{out, code, root, base, tip}
 	}
@@ -258,17 +258,17 @@ func TestLegacyPreflightDifferential(t *testing.T) {
 		{"valid-build", func(t *testing.T) result {
 			root, slug := seedConformant(t)
 			base, tip := runGit(t, "rev-parse", "main"), runGit(t, "rev-parse", "HEAD")
-			return run(t, []string{"build", slug}, root, base, tip)
+			return run([]string{"build", slug}, root, base, tip)
 		}},
 		{"valid-review", func(t *testing.T) result {
 			root, slug := seedConformant(t)
 			base, tip := runGit(t, "rev-parse", "main"), runGit(t, "rev-parse", "HEAD")
-			return run(t, []string{"review", slug}, root, base, tip)
+			return run([]string{"review", slug}, root, base, tip)
 		}},
 		{"absent-tickets", func(t *testing.T) result {
 			root, slug := seedBuildFresh(t)
 			base, tip := runGit(t, "rev-parse", "main"), runGit(t, "rev-parse", "HEAD")
-			return run(t, []string{"build", slug}, root, base, tip)
+			return run([]string{"build", slug}, root, base, tip)
 		}},
 		{"empty-tickets", func(t *testing.T) result {
 			root, slug := seedConformant(t)
@@ -278,7 +278,7 @@ func TestLegacyPreflightDifferential(t *testing.T) {
 			}
 			runGit(t, "add", "-A")
 			runGit(t, "commit", "-q", "-m", "empty tickets")
-			return run(t, []string{"build", slug}, root, base, runGit(t, "rev-parse", "HEAD"))
+			return run([]string{"build", slug}, root, base, runGit(t, "rev-parse", "HEAD"))
 		}},
 		{"stale-base", func(t *testing.T) result {
 			root, slug := seedConformant(t)
@@ -288,27 +288,27 @@ func TestLegacyPreflightDifferential(t *testing.T) {
 			runGit(t, "add", "advance.txt")
 			runGit(t, "commit", "-q", "-m", "advance")
 			runGit(t, "checkout", "-q", "feature")
-			return run(t, []string{"build", slug}, root, base, tip)
+			return run([]string{"build", slug}, root, base, tip)
 		}},
 		{"dirty-review", func(t *testing.T) result {
 			root, slug := seedConformant(t)
 			base, tip := runGit(t, "rev-parse", "main"), runGit(t, "rev-parse", "HEAD")
 			mustWriteFile(t, "dirty.txt", "dirty\n")
-			return run(t, []string{"review", slug, "--base", base}, root, base, tip)
+			return run([]string{"review", slug, "--base", base}, root, base, tip)
 		}},
 		{"explicit-base-success", func(t *testing.T) result {
 			root, slug := seedConformant(t)
 			base, tip := runGit(t, "rev-parse", "main"), runGit(t, "rev-parse", "HEAD")
-			return run(t, []string{"build", slug, "--base", base}, root, base, tip)
+			return run([]string{"build", slug, "--base", base}, root, base, tip)
 		}},
 		{"source-tip-mismatch", func(t *testing.T) result {
 			root, slug := seedConformant(t)
 			base, tip := runGit(t, "rev-parse", "main"), runGit(t, "rev-parse", "HEAD")
-			return run(t, []string{"build", slug, "--base", base, "--source-tip", base}, root, base, tip)
+			return run([]string{"build", slug, "--base", base, "--source-tip", base}, root, base, tip)
 		}},
 		{"invalid-invocation", func(t *testing.T) result {
 			root, _ := seedConformant(t)
-			return run(t, []string{"unknown", "example"}, root, "", "")
+			return run([]string{"unknown", "example"}, root, "", "")
 		}},
 		{"empty-diff", func(t *testing.T) result {
 			root := initRepo(t)
@@ -319,7 +319,7 @@ func TestLegacyPreflightDifferential(t *testing.T) {
 			runGit(t, "commit", "-q", "-m", "c0")
 			runGit(t, "checkout", "-q", "-b", "feature")
 			base, tip := runGit(t, "rev-parse", "main"), runGit(t, "rev-parse", "HEAD")
-			return run(t, []string{"review", slug, "--base", base}, root, base, tip)
+			return run([]string{"review", slug, "--base", base}, root, base, tip)
 		}},
 	}
 	for _, test := range cases {

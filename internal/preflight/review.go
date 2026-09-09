@@ -2,9 +2,9 @@ package preflight
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/consumers"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
@@ -44,7 +44,7 @@ func (e reviewEvidence) shared() chargeSource {
 	}
 }
 
-func collectReviewEvidence(version string, facts Facts, observe reviewEvidenceObserver) (reviewEvidence, string) {
+func collectReviewEvidence(root, version string, facts Facts, observe reviewEvidenceObserver) (reviewEvidence, string) {
 	diffArgs := []string{"--base", facts.SourceBase, "--source-tip", facts.SourceTip, "--full"}
 	observe("diff")
 	diffOut, code := diff.Command(diffArgs)
@@ -66,8 +66,12 @@ func collectReviewEvidence(version string, facts Facts, observe reviewEvidenceOb
 		return reviewEvidence{}, "consumer evidence is incomplete: full collection omitted unrepresentable rows"
 	}
 
+	// The coverage collector resolves a slashed argument against the caller's working
+	// directory, not against the repository root. The charge anchors the spec path at the
+	// root, so the packet stays identical from any working directory. Coverage renders the
+	// result repo-relative again, so the anchored argument changes no output byte.
 	observe("coverage")
-	coverageOut, code := coverage.Command([]string{facts.SpecPath})
+	coverageOut, code := coverage.Command([]string{filepath.Join(root, filepath.FromSlash(facts.SpecPath))})
 	if code != 0 {
 		return reviewEvidence{}, "coverage evidence failed: " + strings.TrimSpace(coverageOut)
 	}
@@ -113,46 +117,54 @@ func renderReviewCharge(root string, facts Facts, verdict Verdict, full bool, ve
 	if failure != "" {
 		return chargeRefusal("source", failure, "restore the named canonical source and rerun the exact charge"), 1
 	}
-	evidence, failure := collectReviewEvidence(version, facts, reviewEvidenceObserved)
+	evidence, failure := collectReviewEvidence(root, version, facts, reviewEvidenceObserved)
 	if failure != "" {
 		return chargeRefusal("evidence", failure, "repair the named collector input and rerun the exact charge"), 1
 	}
 	return renderReviewPacket(root, facts, sources, evidence, full)
 }
 
-func reviewChargeSources(root, sourceTip, specPath string) ([]chargeSource, string) {
-	paths := []string{specPath, reviewSkill, reviewPhase, delegateSkill, delegateProcedure}
-	return loadChargeSources(root, sourceTip, paths)
+// reviewChargeSourceSet names each frozen review source, for the reason
+// buildChargeSourceSet does: a column reads a field name, never a list position.
+type reviewChargeSourceSet struct {
+	spec, reviewSkill, reviewPhase, delegateSkill, delegateProcedure chargeSource
+}
+
+func (set reviewChargeSourceSet) list() []chargeSource {
+	return []chargeSource{set.spec, set.reviewSkill, set.reviewPhase, set.delegateSkill, set.delegateProcedure}
+}
+
+func reviewChargeSources(root, sourceTip, specPath string) (reviewChargeSourceSet, string) {
+	var set reviewChargeSourceSet
+	failure := loadChargeSources(root, sourceTip, []namedChargeSource{
+		{specPath, &set.spec},
+		{reviewSkill, &set.reviewSkill},
+		{reviewPhase, &set.reviewPhase},
+		{delegateSkill, &set.delegateSkill},
+		{delegateProcedure, &set.delegateProcedure},
+	})
+	if failure != "" {
+		return reviewChargeSourceSet{}, failure
+	}
+	return set, ""
 }
 
 func renderReviewPacket(
 	root string,
 	facts Facts,
-	sources []chargeSource,
+	sources reviewChargeSourceSet,
 	evidence reviewEvidence,
 	full bool,
 ) (string, int) {
 	shared := evidence.shared()
-	next := reviewChargeInvocation(facts)
-	complete := "false"
-	if full {
-		complete, next = "true", ""
-	}
 	chargeRows := make([][]string, 0, 3)
 	for _, axis := range []string{"Standards", "Spec", "Coverage"} {
 		chargeRows = append(chargeRows, []string{
 			axis, facts.AssignmentTarget, root, facts.SourceBase, facts.SourceTip,
-			sources[0].handle(), sources[0].handle(), "read-only", shared.handle(),
-			sources[1].handle(), sourceHandles(sources[2], sources[3], sources[4]), complete, next,
+			chargeFenceCell(facts), sources.spec.handle(), "read-only", shared.handle(),
+			sources.reviewSkill.handle(),
+			sourceHandles(sources.reviewPhase, sources.delegateSkill, sources.delegateProcedure),
 		})
-	}
-	chargeFields := []string{
-		"axis", "assignment", "checkout", "base", "source_tip", "fence", "ticket",
-		"writes", "evidence", "checks", "return", "complete", "next",
-	}
-	charge, err := toon.Table("charge", chargeFields, chargeRows)
-	if err != nil {
-		return toon.RenderError(err) + "\n", 1
 	}
 	sharedRows := make([][]string, 0, 3)
 	for _, item := range evidence.sources() {
@@ -162,57 +174,15 @@ func renderReviewPacket(
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
-	all := append(append([]chargeSource{}, sources...), evidence.sources()...)
-	sourceRows := make([][]string, 0, len(all)+1)
-	for _, source := range all {
-		sourceRows = append(sourceRows, []string{source.path, source.identity()})
-	}
-	sourceRows = append(sourceRows, []string{shared.path, shared.identity()})
-	identities, err := toon.Table("sources", []string{"path", "identity"}, sourceRows)
-	if err != nil {
-		return toon.RenderError(err) + "\n", 1
-	}
-
-	var b strings.Builder
-	b.WriteString(charge)
-	b.WriteString(sharedTable)
-	b.WriteString(identities)
-	if full {
-		rows := make([][]string, len(all))
-		for i, source := range all {
-			rows[i] = []string{source.path, string(source.data)}
-		}
-		table, err := toon.Table("evidence", []string{"source", "content"}, rows)
-		if err != nil {
-			return toon.RenderError(err) + "\n", 1
-		}
-		b.WriteString(table)
-		return b.String(), 0
-	}
-	omitted := make([][]string, len(all))
-	for i, source := range all {
-		omitted[i] = []string{source.path}
-	}
-	omittedTable, err := toon.Table("omitted", []string{"source"}, omitted)
-	if err != nil {
-		return toon.RenderError(err) + "\n", 1
-	}
-	help, err := toon.Table("help", []string{"cmd", "why"}, [][]string{{next, "retrieve every omitted source before dispatch"}})
-	if err != nil {
-		return toon.RenderError(err) + "\n", 1
-	}
-	b.WriteString(omittedTable)
-	b.WriteString(help)
-	return b.String(), 0
-}
-
-func reviewChargeInvocation(facts Facts) string {
-	args := []string{
-		"bench", "preflight", "review", facts.SpecPath, "--charge", "--base",
-		facts.SourceBase, "--source-tip", facts.SourceTip, "--full",
-	}
-	for i := range args {
-		args[i] = axi.ShellQuote(args[i])
-	}
-	return strings.Join(args, " ")
+	return renderChargePacket(chargePacket{
+		fields: []string{
+			"axis", "assignment", "checkout", "base", "source_tip", "fence", "ticket",
+			"writes", "evidence", "checks", "return",
+		},
+		rows:           chargeRows,
+		middle:         []string{sharedTable},
+		sources:        append(append([]chargeSource{}, sources.list()...), evidence.sources()...),
+		identitiesOnly: []chargeSource{shared},
+		next:           chargeInvocation("review", facts, ""),
+	}, full)
 }

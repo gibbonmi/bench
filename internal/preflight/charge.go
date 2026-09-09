@@ -45,40 +45,46 @@ func chargeCommand(
 	return preparedCommand(root, mode, slug, base, sourceTip, ticket, full, version, args, chargePreparation)
 }
 
-func renderCharge(root string, facts Facts, verdict Verdict, name string, full bool) (string, int) {
-	if refusal := preparationCheckoutRefusal(root, facts, "charge"); refusal != "" {
-		return refusal, 1
-	}
-	if verdict.Red {
-		return chargeVerdictRefusal(verdict), 1
-	}
-	selected, parsed, detail, selectionNext := preparationTicket(root, facts, name)
-	if detail != "" {
-		return chargeRefusal("ticket", detail, selectionNext), 1
-	}
-	sources, failure := chargeSources(root, facts.SourceTip, facts.SpecPath, selected)
-	if failure != "" {
-		return chargeRefusal("source", failure, "restore the named canonical source and rerun the exact charge"), 1
-	}
-	next := chargeInvocation(facts, name)
-	complete := "false"
+// chargePacket is the one source for every charge tail. Build and review differ only in
+// their charge columns and in the table between the charge and the sources listing. The
+// complete/next flip, the sources listing, and the full-or-omitted projection are the
+// same fact in both modes, so they are authored once here.
+type chargePacket struct {
+	// fields and rows exclude the trailing complete and next columns; the renderer owns
+	// that pair because it owns the flip that fills them.
+	fields []string
+	rows   [][]string
+
+	// middle holds already-rendered tables that sit between the charge and the sources
+	// listing: the build coverage rows, or the review shared-evidence identities.
+	middle []string
+
+	// sources are the frozen inputs the packet lists, retrieves under --full, and names
+	// as omitted otherwise. identitiesOnly are listed but never retrieved: the review
+	// packet's derived shared-evidence handle is one.
+	sources        []chargeSource
+	identitiesOnly []chargeSource
+
+	// next is the exact retrieval invocation a compact packet advertises.
+	next string
+}
+
+func renderChargePacket(packet chargePacket, full bool) (string, int) {
+	complete, next := "false", packet.next
 	if full {
 		complete, next = "true", ""
 	}
-	charge, err := toon.Table("charge", []string{"assignment", "checkout", "base", "source_tip", "fence", "ticket", "writes", "evidence", "checks", "return", "complete", "next"}, [][]string{{
-		facts.AssignmentTarget, root, facts.SourceBase, facts.SourceTip,
-		sources[1].handle(), sources[0].handle(), strings.Join(parsed.Writes, ", "),
-		sources[1].handle(), sourceHandles(sources[0], sources[3]), sourceHandles(sources[2], sources[4]), complete, next,
-	}})
+	chargeRows := make([][]string, len(packet.rows))
+	for i, row := range packet.rows {
+		chargeRows[i] = append(append([]string{}, row...), complete, next)
+	}
+	charge, err := toon.Table("charge", append(append([]string{}, packet.fields...), "complete", "next"), chargeRows)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
-	coverage, err := toon.Table("coverage", []string{"row"}, rows(parsed.Covers))
-	if err != nil {
-		return toon.RenderError(err) + "\n", 1
-	}
-	sourceRows := make([][]string, len(sources))
-	for i, source := range sources {
+	listed := append(append([]chargeSource{}, packet.sources...), packet.identitiesOnly...)
+	sourceRows := make([][]string, len(listed))
+	for i, source := range listed {
 		sourceRows[i] = []string{source.path, source.identity()}
 	}
 	identities, err := toon.Table("sources", []string{"path", "identity"}, sourceRows)
@@ -87,22 +93,24 @@ func renderCharge(root string, facts Facts, verdict Verdict, name string, full b
 	}
 	var b strings.Builder
 	b.WriteString(charge)
-	b.WriteString(coverage)
+	for _, table := range packet.middle {
+		b.WriteString(table)
+	}
 	b.WriteString(identities)
 	if full {
-		evidenceRows := make([][]string, len(sources))
-		for i, source := range sources {
+		evidenceRows := make([][]string, len(packet.sources))
+		for i, source := range packet.sources {
 			evidenceRows[i] = []string{source.path, string(source.data)}
 		}
-		evidence, err := toon.Table("evidence", []string{"path", "content"}, evidenceRows)
+		evidence, err := toon.Table("evidence", []string{"source", "content"}, evidenceRows)
 		if err != nil {
 			return toon.RenderError(err) + "\n", 1
 		}
 		b.WriteString(evidence)
 		return b.String(), 0
 	}
-	omittedRows := make([][]string, len(sources))
-	for i, source := range sources {
+	omittedRows := make([][]string, len(packet.sources))
+	for i, source := range packet.sources {
 		omittedRows[i] = []string{source.path}
 	}
 	omitted, err := toon.Table("omitted", []string{"source"}, omittedRows)
@@ -118,30 +126,91 @@ func renderCharge(root string, facts Facts, verdict Verdict, name string, full b
 	return b.String(), 0
 }
 
-func chargeSources(root, sourceTip, specPath string, selected *tickets.Entry) ([]chargeSource, string) {
-	paths := []string{
-		filepath.ToSlash(filepath.Join(filepath.Dir(specPath), "tickets", selected.Rel)),
-		specPath,
-		delegateSkill,
-		buildPhase,
-		delegateProcedure,
-	}
-	return loadChargeSources(root, sourceTip, paths)
+// chargeFenceCell is the spec's declared ownership fence, the one fact the fence column
+// carries. It is deliberately not a source handle: the ticket and evidence columns
+// already carry handles, and a column that repeats one of them grades nothing.
+func chargeFenceCell(facts Facts) string {
+	return strings.Join(facts.FenceEntries, ", ")
 }
 
-func loadChargeSources(root, sourceTip string, paths []string) ([]chargeSource, string) {
-	sources := make([]chargeSource, 0, len(paths))
-	for _, path := range paths {
-		data, failure := readChargeSource(root, sourceTip, path)
+func renderCharge(root string, facts Facts, verdict Verdict, name string, full bool) (string, int) {
+	if refusal := preparationCheckoutRefusal(root, facts, "charge"); refusal != "" {
+		return refusal, 1
+	}
+	if verdict.Red {
+		return chargeVerdictRefusal(verdict), 1
+	}
+	selected, parsed, detail, selectionNext := preparationTicket(root, facts, name)
+	if detail != "" {
+		return chargeRefusal("ticket", detail, selectionNext), 1
+	}
+	sources, failure := chargeSources(root, facts.SourceTip, facts.SpecPath, selected)
+	if failure != "" {
+		return chargeRefusal("source", failure, "restore the named canonical source and rerun the exact charge"), 1
+	}
+	coverage, err := toon.Table("coverage", []string{"row"}, rows(parsed.Covers))
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return renderChargePacket(chargePacket{
+		fields: []string{"assignment", "checkout", "base", "source_tip", "fence", "ticket", "writes", "evidence", "checks", "return"},
+		rows: [][]string{{
+			facts.AssignmentTarget, root, facts.SourceBase, facts.SourceTip,
+			chargeFenceCell(facts), sources.ticket.handle(), strings.Join(parsed.Writes, ", "),
+			sourceHandles(sources.list()...),
+			sourceHandles(sources.ticket, sources.buildPhase),
+			sourceHandles(sources.delegateSkill, sources.delegateProcedure),
+		}},
+		middle:  []string{coverage},
+		sources: sources.list(),
+		next:    chargeInvocation(modeBuild, facts, name),
+	}, full)
+}
+
+// buildChargeSourceSet names each frozen build source. Every charge column reads a field
+// name, so a reorder of the load list below cannot silently reassign a column.
+type buildChargeSourceSet struct {
+	ticket, spec, delegateSkill, buildPhase, delegateProcedure chargeSource
+}
+
+func (set buildChargeSourceSet) list() []chargeSource {
+	return []chargeSource{set.ticket, set.spec, set.delegateSkill, set.buildPhase, set.delegateProcedure}
+}
+
+func chargeSources(root, sourceTip, specPath string, selected *tickets.Entry) (buildChargeSourceSet, string) {
+	var set buildChargeSourceSet
+	failure := loadChargeSources(root, sourceTip, []namedChargeSource{
+		{filepath.ToSlash(filepath.Join(filepath.Dir(specPath), "tickets", selected.Rel)), &set.ticket},
+		{specPath, &set.spec},
+		{delegateSkill, &set.delegateSkill},
+		{buildPhase, &set.buildPhase},
+		{delegateProcedure, &set.delegateProcedure},
+	})
+	if failure != "" {
+		return buildChargeSourceSet{}, failure
+	}
+	return set, ""
+}
+
+// namedChargeSource binds one canonical path to the field that holds it. The binding is
+// one literal, so a path and its meaning never drift apart.
+type namedChargeSource struct {
+	path string
+	into *chargeSource
+}
+
+func loadChargeSources(root, sourceTip string, named []namedChargeSource) string {
+	for _, item := range named {
+		data, failure := readChargeSource(root, sourceTip, item.path)
 		if failure != "" {
-			return nil, failure
+			return failure
 		}
 		if !toon.Representable(string(data)) {
-			return nil, path + " contains a byte spec-TOON cannot represent"
+			return item.path + " contains a byte spec-TOON cannot represent"
 		}
-		sources = append(sources, chargeSource{path: path, data: data})
+		*item.into = chargeSource{path: item.path, data: data}
 	}
-	return sources, ""
+	return ""
 }
 
 func selectedTicket(entries []tickets.Entry, name string) *tickets.Entry {
@@ -185,8 +254,14 @@ func sourceHandles(sources ...chargeSource) string {
 	return strings.Join(handles, "; ")
 }
 
-func chargeInvocation(facts Facts, name string) string {
-	args := []string{"bench", "preflight", "build", facts.SpecPath, "--charge", "--ticket", name, "--base", facts.SourceBase, "--source-tip", facts.SourceTip, "--full"}
+// chargeInvocation is the exact full-retrieval command a compact packet advertises. An
+// empty name is the review form, which takes no ticket.
+func chargeInvocation(mode string, facts Facts, name string) string {
+	args := []string{"bench", "preflight", mode, facts.SpecPath, "--charge"}
+	if name != "" {
+		args = append(args, "--ticket", name)
+	}
+	args = append(args, "--base", facts.SourceBase, "--source-tip", facts.SourceTip, "--full")
 	for i := range args {
 		args[i] = axi.ShellQuote(args[i])
 	}
