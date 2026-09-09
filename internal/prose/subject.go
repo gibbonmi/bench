@@ -25,6 +25,7 @@ type NamedResult struct {
 	Rule       FindingKind
 	Count      int
 	Sentence   string
+	Starts     []SentenceStart
 	diagnostic string
 }
 
@@ -38,7 +39,31 @@ func RenderNamedResult(result NamedResult) string {
 	if result.Sentence != "" {
 		diagnostic += ": " + strconv.Quote(result.Sentence)
 	}
+	if len(result.Starts) > 0 {
+		items := make([]string, 0, len(result.Starts))
+		for _, start := range result.Starts {
+			// The start is quoted the way the sentence text is quoted, so a control byte inside
+			// it is escaped and one finding stays one line.
+			items = append(items, strconv.Itoa(start.Line)+" "+strconv.Quote(start.Text))
+		}
+		diagnostic += ": sentences " + strings.Join(items, ", ")
+	}
 	return diagnostic
+}
+
+// renderStripped renders results without the document text. The whole-tree grade and the
+// `prose` named check state the counts alone, so neither the sentence nor a start reaches
+// the gate output.
+func renderStripped(results []NamedResult) []string {
+	if len(results) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(results))
+	for _, result := range results {
+		result.Sentence, result.Starts = "", nil
+		out = append(out, RenderNamedResult(result))
+	}
+	return out
 }
 
 // NewGrader loads the exclusion list under root once, so a caller that grades many
@@ -57,13 +82,7 @@ func (g *Grader) GradeSubject(rel string) []string {
 	if g.ex.excluded(rel) {
 		return nil
 	}
-	results := g.gradeSubjectResults(rel)
-	out := make([]string, 0, len(results))
-	for _, result := range results {
-		result.Sentence = ""
-		out = append(out, RenderNamedResult(result))
-	}
-	return out
+	return renderStripped(g.gradeSubjectResults(rel))
 }
 
 // GradeNamed grades a caller-selected list of repository-relative paths through the same
@@ -72,16 +91,7 @@ func (g *Grader) GradeSubject(rel string) []string {
 // what it commits, not what it once named. A symbolic link is not followed and is not
 // graded, matching the whole-tree walk's own rule for a linked directory.
 func GradeNamed(root string, rels []string) []string {
-	results := GradeNamedResults(root, rels)
-	if len(results) == 0 {
-		return nil
-	}
-	out := make([]string, 0, len(results))
-	for _, result := range results {
-		result.Sentence = ""
-		out = append(out, RenderNamedResult(result))
-	}
-	return out
+	return renderStripped(GradeNamedResults(root, rels))
 }
 
 // GradeNamedResults grades caller-selected paths and exposes each prose finding as
@@ -118,7 +128,7 @@ func (g *Grader) gradeSubjectResults(rel string) []NamedResult {
 		lines := strings.Split(string(classification.Data), "\n")
 		var out []NamedResult
 		for _, finding := range Findings(string(classification.Data)) {
-			result := NamedResult{Path: rel, Line: finding.Line, Rule: finding.Kind, Count: finding.Count}
+			result := NamedResult{Path: rel, Line: finding.Line, Rule: finding.Kind, Count: finding.Count, Starts: finding.Starts}
 			if finding.Kind == KindSentence && finding.Line <= len(lines) {
 				result.Sentence = strings.TrimSpace(lines[finding.Line-1])
 			}
