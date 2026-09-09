@@ -217,11 +217,43 @@ func TestFindings(t *testing.T) {
 				t.Fatalf("Findings() = %+v, want %+v", got, tt.want)
 			}
 			for i := range got {
-				if got[i] != tt.want[i] {
+				// The three graded fields are compared one by one, because a finding carries a
+				// sentence-start slice that TestParagraphSentenceStarts owns.
+				if got[i].Kind != tt.want[i].Kind || got[i].Line != tt.want[i].Line || got[i].Count != tt.want[i].Count {
 					t.Errorf("finding %d = %+v, want %+v", i, got[i], tt.want[i])
 				}
 			}
 		})
+	}
+}
+
+// TestParagraphSentenceStarts is DG14: a paragraph finding carries one start per sentence,
+// in document order. Two sentences on one line keep their own start, a code span stays
+// verbatim inside a start, and a sentence of two words carries the two words it has.
+func TestParagraphSentenceStarts(t *testing.T) {
+	doc := "One two three four. Five six seven eight.\n" +
+		"Run `foo bar` now here. Short one. Next sentence goes here. Sixth sentence goes here. Seventh sentence ends it.\n"
+
+	got := Findings(doc)
+	if len(got) != 1 || got[0].Kind != KindParagraph {
+		t.Fatalf("Findings() = %+v, want one paragraph finding", got)
+	}
+	want := []SentenceStart{
+		{Line: 1, Text: "One two three"},
+		{Line: 1, Text: "Five six seven"},
+		{Line: 2, Text: "Run `foo bar` now"},
+		{Line: 2, Text: "Short one."},
+		{Line: 2, Text: "Next sentence goes"},
+		{Line: 2, Text: "Sixth sentence goes"},
+		{Line: 2, Text: "Seventh sentence ends"},
+	}
+	if len(got[0].Starts) != len(want) {
+		t.Fatalf("starts = %+v, want %+v", got[0].Starts, want)
+	}
+	for i := range want {
+		if got[0].Starts[i] != want[i] {
+			t.Errorf("start %d = %+v, want %+v", i, got[0].Starts[i], want[i])
+		}
 	}
 }
 
