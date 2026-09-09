@@ -21,8 +21,10 @@ func Locate(kind Kind, section, needle, data string) int {
 	stripped, origin := stripCommentsMapped(data)
 	text, textOrigin := stripped, origin
 	if kind == RequireInSection || kind == ForbidInSection {
-		body, bodyOrigin, ok := sectionRunesMapped(stripped, origin, section)
-		if !ok {
+		body, bodyOrigin, count := sectionRunesMapped(stripped, origin, section)
+		// An absent section and a duplicated one both refuse: the evaluator resolves a
+		// scoped anchor against exactly one owning heading.
+		if count != 1 {
 			return 0
 		}
 		text, textOrigin = body, bodyOrigin
@@ -41,23 +43,25 @@ func Locate(kind Kind, section, needle, data string) int {
 	return lineAtRune(data, collapsedOrigin[at])
 }
 
-// commentOpen and commentClose delimit an HTML comment for stripCommentsMapped, the
-// same two literals StripHTMLComments matches against. They are declared once here
-// rather than allocated fresh on every call.
-var commentOpen, commentClose = []rune("<!--"), []rune("-->")
+// commentOpen and commentClose delimit an HTML comment, fenceMark opens a fenced block,
+// and headingMark opens an H2 heading. They are declared once here rather than allocated
+// fresh on every call.
+var (
+	commentOpen, commentClose = []rune("<!--"), []rune("-->")
+	fenceMark                 = []rune("```")
+	headingMark               = []rune("## ")
+)
 
-// stripCommentsMapped strips HTML comments the way StripHTMLComments does — a complete
-// comment is removed, an unterminated one truncates the text, and the scan restarts on the
-// rewritten text — but over runes, and it returns each surviving rune's index in data
-// alongside it. The restart is what makes a comment that the removal itself creates, from
-// text either side of a removed comment, hide its needle here as it hides it from the
-// evaluator. A single pass would locate a needle the evaluator reads as absent.
+// stripCommentsMapped is the package's one comment strip: a complete comment is removed,
+// an unterminated one truncates the text, and the scan restarts on the rewritten text. It
+// works over runes and returns each surviving rune's index in data alongside it, so a
+// caller can map a match back to its source position; StripHTMLComments is this function's
+// string projection. The restart is what makes a comment that the removal itself creates,
+// from text either side of a removed comment, hide its needle from Locate as it hides it
+// from the evaluator. A single pass would locate a needle the evaluator reads as absent.
 func stripCommentsMapped(data string) (text []rune, origin []int) {
 	text = []rune(data)
-	origin = make([]int, len(text))
-	for i := range origin {
-		origin[i] = i
-	}
+	origin = identityOrigin(len(text))
 	for {
 		start := indexRunes(text, commentOpen)
 		if start < 0 {
@@ -73,41 +77,39 @@ func stripCommentsMapped(data string) (text []rune, origin []int) {
 	}
 }
 
-// sectionRunesMapped resolves title's owning section within runes the same way
-// MarkdownH2Sections does — headings inside a fenced block neither delimit nor count —
-// and returns the body as a rune slice with its origin mapping into runes. ok is false
-// when the section is absent or carries more than one owning heading, matching
-// MarkdownH2Sections's own duplicate refusal.
-func sectionRunesMapped(runes []rune, origin []int, title string) (body []rune, bodyOrigin []int, ok bool) {
-	if _, count := MarkdownH2Sections(string(runes), title); count != 1 {
-		return nil, nil, false
-	}
+// sectionRunesMapped is the package's one H2 section resolution: it walks the lines once
+// and answers title's first owning section as a rune slice, its origin mapping into runes,
+// and the number of owning headings. A heading inside a fenced block neither delimits a
+// section nor counts as one. The body and the count come from the same walk, so a caller
+// that refuses a duplicated section reads the count the body came from.
+// MarkdownH2Sections is this function's string projection.
+func sectionRunesMapped(runes []rune, origin []int, title string) (body []rune, bodyOrigin []int, count int) {
 	lines := splitRuneLines(runes)
-	heading := "## " + title
+	heading := []rune("## " + title)
 	fenced := false
 	start, end := -1, -1
 	for i, line := range lines {
 		trimmed := trimSpaceRunes(line)
-		if hasPrefixRunes(trimmed, []rune("```")) {
+		if hasPrefixRunes(trimmed, fenceMark) {
 			fenced = !fenced
 			continue
 		}
 		if fenced {
 			continue
 		}
-		if string(trimmed) == heading {
-			if start < 0 {
+		if slices.Equal(trimmed, heading) {
+			count++
+			if count == 1 {
 				start = i + 1
 			}
 			continue
 		}
-		if start >= 0 && end < 0 && hasPrefixRunes(line, []rune("## ")) {
+		if start >= 0 && end < 0 && hasPrefixRunes(line, headingMark) {
 			end = i
-			break
 		}
 	}
-	if start < 0 {
-		return nil, nil, false
+	if count == 0 {
+		return nil, nil, 0
 	}
 	if end < 0 {
 		end = len(lines)
@@ -128,13 +130,13 @@ func sectionRunesMapped(runes []rune, origin []int, title string) (body []rune, 
 	if endOffset < startOffset {
 		endOffset = startOffset
 	}
-	return runes[startOffset:endOffset], origin[startOffset:endOffset], true
+	return runes[startOffset:endOffset], origin[startOffset:endOffset], count
 }
 
-// collapseSpaceMapped collapses whitespace like CollapseSpace — each run becomes one
-// ASCII space, and a leading or trailing run drops — and returns each output rune's
-// origin in runes' own index space (already itself an origin into data, for a composed
-// pipeline).
+// collapseSpaceMapped is the package's one whitespace collapse: each whitespace run becomes
+// one ASCII space, and a leading or trailing run drops. It returns each output rune's origin
+// in runes' own index space, which is itself already an origin into data for a composed
+// pipeline. CollapseSpace is this function's string projection.
 func collapseSpaceMapped(runes []rune, origin []int) (out []rune, outOrigin []int) {
 	inField := false
 	for i, r := range runes {
@@ -151,6 +153,17 @@ func collapseSpaceMapped(runes []rune, origin []int) (out []rune, outOrigin []in
 		inField = true
 	}
 	return out, outOrigin
+}
+
+// identityOrigin answers the origin map of a rune slice that has had nothing removed yet:
+// rune i comes from index i. A string-form caller starts a mapped transform with it and
+// then discards the mapping the transform returns.
+func identityOrigin(n int) []int {
+	origin := make([]int, n)
+	for i := range origin {
+		origin[i] = i
+	}
+	return origin
 }
 
 func toLowerRunes(runes []rune) []rune {

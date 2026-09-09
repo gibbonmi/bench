@@ -49,43 +49,22 @@ func MarkdownH2Section(text, title string) string {
 }
 
 // MarkdownH2Sections returns the first matching H2 section body and occurrence
-// count. Headings inside backtick fences do not delimit or count as sections.
+// count. Headings inside backtick fences do not delimit or count as sections. It
+// projects sectionRunesMapped, the package's one section resolution, so the evaluator
+// and Locate read the same body from the same walk.
 func MarkdownH2Sections(text, title string) (string, int) {
-	lines := strings.Split(text, "\n")
-	heading := "## " + title
-	count := 0
-	start := -1
-	end := -1
-	fenced := false
-	for i, line := range lines {
-		if strings.HasPrefix(strings.TrimSpace(line), "```") {
-			fenced = !fenced
-			continue
-		}
-		if fenced {
-			continue
-		}
-		if strings.TrimSpace(line) == heading {
-			count++
-			if count == 1 {
-				start = i + 1
-			}
-			continue
-		}
-		if start >= 0 && end < 0 && strings.HasPrefix(line, "## ") {
-			end = i
-		}
-	}
+	runes := []rune(text)
+	body, _, count := sectionRunesMapped(runes, identityOrigin(len(runes)), title)
 	if count == 0 {
 		return "", 0
 	}
-	if end < 0 {
-		end = len(lines)
-	}
-	return strings.Join(lines[start:end], "\n"), count
+	return string(body), count
 }
 
-// CollapseSpace replaces each whitespace run with one ASCII space.
+// CollapseSpace replaces each whitespace run with one ASCII space. It projects
+// collapseSpaceMapped, the package's one collapse.
 func CollapseSpace(text string) string {
-	return strings.Join(strings.Fields(text), " ")
+	runes := []rune(text)
+	collapsed, _ := collapseSpaceMapped(runes, identityOrigin(len(runes)))
+	return string(collapsed)
 }
