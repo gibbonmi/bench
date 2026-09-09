@@ -201,6 +201,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- The TOON table encoder now returns an error for a row whose cell count differs from
+  the field count, instead of a panic on an out-of-range index. The error names the row
+  index, the cell count, and the field count, so a command prints its AXI error line
+  instead of a crash.
 - Fixed SessionStart Go discovery when `BASH_ENV` restores `ENVMAN_LOAD` before
   the clean login reads its profile.
 
