@@ -88,3 +88,34 @@ func TestLocateMapsCollapsedMatchesToLines(t *testing.T) {
 		}
 	})
 }
+
+// TestLocateStripsRejoinedComments pins DG43: the removal of one comment can join the text
+// on either side of it into a second comment, and the evaluator's strip rescans and removes
+// that one too. Locate rescans with it, so a needle the evaluator reads as absent locates
+// nothing here either. A single-pass strip prints a line for that needle.
+func TestLocateStripsRejoinedComments(t *testing.T) {
+	const needle = "never by polling"
+	rejoined := "before\n<!<!-- z -->-- " + needle + " -->\ntail needle\n"
+	if got := Locate(Require, "", needle, rejoined); got != 0 {
+		t.Fatalf("needle inside a rejoined comment: Locate = %d, want 0", got)
+	}
+	if StripHTMLComments(rejoined) != "before\n\ntail needle\n" {
+		t.Fatalf("the evaluator's strip left %q, so the fixture does not rejoin", StripHTMLComments(rejoined))
+	}
+	// The text after the rejoined comment keeps its physical line, so the repeat maps its
+	// surviving runes back to data rather than shifting them.
+	if got := Locate(Require, "", "tail needle", rejoined); got != 3 {
+		t.Fatalf("text after a rejoined comment: Locate = %d, want line 3", got)
+	}
+
+	// The same needle as plain text locates its line, so the strip — not an absent needle —
+	// is what zeroes the row above. A plain comment around it keeps that behavior.
+	plain := "before\n" + needle + " here\n"
+	if got := Locate(Require, "", needle, plain); got != 2 {
+		t.Fatalf("plain needle: Locate = %d, want line 2", got)
+	}
+	commented := "before\n<!-- " + needle + " -->\n" + needle + " here\n"
+	if got := Locate(Require, "", needle, commented); got != 3 {
+		t.Fatalf("needle after a plain comment: Locate = %d, want line 3", got)
+	}
+}

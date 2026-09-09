@@ -104,6 +104,14 @@ func absentExclusionDiagnostic() string {
 	return fmt.Sprintf("prose: %q: the exclusion file is absent", ExclusionFile)
 }
 
+// UnreadableExclusionDiagnostic is the one sentence a policy that cannot be read answers,
+// with reason naming what stopped the read. The working-tree loader states it for a
+// classified file, and a staged caller states it for a classified index blob, so the two
+// forms refuse a policy in the same words.
+func UnreadableExclusionDiagnostic(reason string) string {
+	return fmt.Sprintf("prose: %q: refused unreadable exclusion file: %s", ExclusionFile, reason)
+}
+
 // worktreeLookup validates a target against the files under root.
 func worktreeLookup(root string) targetLookup {
 	return func(target string) targetKind {
@@ -153,7 +161,7 @@ func loadExclusions(root string) (*exclusions, []string) {
 	case bounds.StateParsed:
 		return gradeExclusionRows(c.Data, worktreeLookup(root))
 	default:
-		return nil, []string{fmt.Sprintf("prose: %q: refused unreadable exclusion file: %s", ExclusionFile, c.Reason)}
+		return nil, []string{UnreadableExclusionDiagnostic(c.Reason)}
 	}
 }
 

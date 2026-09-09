@@ -17,12 +17,12 @@ type IndexEntry struct {
 	Path string
 }
 
-// RegularFileModes are the index modes of a regular file. A caller that grades file
-// content keys on this set, so the mode vocabulary has one source.
-var RegularFileModes = map[string]bool{"100644": true, "100755": true}
+// regularFileModes are the index modes of a regular file. IsRegularFile is the one reader
+// of the set, so the mode vocabulary has one source and no caller can widen it.
+var regularFileModes = map[string]bool{"100644": true, "100755": true}
 
 // IsRegularFile reports whether the entry holds regular-file content.
-func (e IndexEntry) IsRegularFile() bool { return RegularFileModes[e.Mode] }
+func (e IndexEntry) IsRegularFile() bool { return regularFileModes[e.Mode] }
 
 // StagedIndex is one read of a repository's index. Entries is every index entry with its
 // mode, which is what a policy validates its targets against. Staged is the subset whose
@@ -92,9 +92,7 @@ func IndexBlob(root, path string) ([]byte, error) {
 }
 
 // IsWorkTreeTop reports whether dir is the top of a Git working tree. A directory inside a
-// repository is not the top, and a directory outside every repository is not either. The
-// comparison resolves both sides, because a temporary directory is often reached through a
-// symbolic link and Git answers the resolved path.
+// repository is not the top, and a directory outside every repository is not either.
 func IsWorkTreeTop(dir string) bool {
 	top, err := RootAt(dir)
 	if err != nil || top == "" {
@@ -103,16 +101,33 @@ func IsWorkTreeTop(dir string) bool {
 	return sameDirectory(top, dir)
 }
 
+// sameDirectory reports whether two directory operands name one directory. Both sides are
+// made absolute first, because Git answers an absolute top while a caller may spell its
+// root relative to the process directory: `.` names the top as often as the top's own
+// path does. The resolved comparison follows, because a temporary directory is often
+// reached through a symbolic link and Git answers the resolved path.
 func sameDirectory(a, b string) bool {
-	if filepath.Clean(a) == filepath.Clean(b) {
+	absA, absB := absolute(a), absolute(b)
+	if absA == absB {
 		return true
 	}
-	resolvedA, errA := filepath.EvalSymlinks(a)
-	resolvedB, errB := filepath.EvalSymlinks(b)
+	resolvedA, errA := filepath.EvalSymlinks(absA)
+	resolvedB, errB := filepath.EvalSymlinks(absB)
 	if errA != nil || errB != nil {
 		return false
 	}
-	return filepath.Clean(resolvedA) == filepath.Clean(resolvedB)
+	return resolvedA == resolvedB
+}
+
+// absolute makes path absolute against the process directory, and cleans it in place when
+// the process directory is unavailable. A cleaned relative path never equals an absolute
+// one, so the caller's comparison stays false rather than becoming accidentally true.
+func absolute(path string) string {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return filepath.Clean(path)
+	}
+	return abs
 }
 
 // parseIndexEntriesZ splits `ls-files --stage -z` output. Each record is

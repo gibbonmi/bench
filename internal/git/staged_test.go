@@ -146,6 +146,37 @@ func TestReadStagedIndexRefusesAnyRootThatIsNotAWorkingTreeTop(t *testing.T) {
 	}
 }
 
+// TestIsWorkTreeTopAcceptsARelativeRoot proves the comparison absolutizes both operands:
+// `.` inside the top names the top, and `.` inside a subdirectory still does not. Git
+// answers an absolute top, so a comparison against the operand as spelled refuses every
+// relative root.
+func TestIsWorkTreeTopAcceptsARelativeRoot(t *testing.T) {
+	root := initRepo(t)
+	plant(t, root, "docs/one.md", "one\n")
+	runGit(t, root, "add", "-A")
+
+	t.Run("the top itself", func(t *testing.T) {
+		t.Chdir(root)
+		if !IsWorkTreeTop(".") {
+			t.Fatal(`IsWorkTreeTop(".") = false at the top, want true`)
+		}
+		index, err := ReadStagedIndex(".")
+		if err != nil {
+			t.Fatalf(`ReadStagedIndex(".") at the top: %v`, err)
+		}
+		if !equalStrings(stagedPaths(index), []string{"docs/one.md"}) {
+			t.Fatalf("staged paths = %q, want the one staged file", stagedPaths(index))
+		}
+	})
+
+	t.Run("a subdirectory", func(t *testing.T) {
+		t.Chdir(filepath.Join(root, "docs"))
+		if IsWorkTreeTop(".") {
+			t.Fatal(`IsWorkTreeTop(".") = true inside a subdirectory, want false`)
+		}
+	})
+}
+
 // TestIndexBlobReadsTheIndexNotTheWorkingFile proves the blob read answers the staged
 // bytes for an ordinary path and for a framing-sensitive one.
 func TestIndexBlobReadsTheIndexNotTheWorkingFile(t *testing.T) {

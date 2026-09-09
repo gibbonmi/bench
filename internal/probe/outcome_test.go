@@ -263,7 +263,7 @@ func TestVerdictExitCodes(t *testing.T) {
 		})
 		t.Run(string(tc.kind)+" over a failed restore", func(t *testing.T) {
 			preserved := preservation{file: filepath.Join(t.TempDir(), "clamp.go")}
-			out, code := render(subject{display: "clamp.go"}, "swap", testreport.Outcome{Kind: tc.kind}, testreport.Request{}, "", preserved, false, "denied")
+			out, code := render(subject{display: "clamp.go"}, "swap", testreport.Outcome{Kind: tc.kind}, testreport.Request{}, "", preserved, false, "denied", testreport.OutcomePassed)
 			if code != 2 {
 				t.Fatalf("render(%q) over a failed restore exit = %d, want 2\n%s", tc.kind, code, out)
 			}

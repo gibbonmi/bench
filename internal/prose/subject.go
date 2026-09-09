@@ -169,8 +169,16 @@ func (g *Grader) gradeSubjectResults(rel string) []NamedResult {
 	case bounds.StateWrongType:
 		return []NamedResult{{diagnostic: fmt.Sprintf("prose: %q: refused subject: %s", rel, classification.Reason)}}
 	default:
-		return []NamedResult{{diagnostic: fmt.Sprintf("prose: %q: refused unreadable subject: %s", rel, classification.Reason)}}
+		return []NamedResult{{diagnostic: UnreadableSubjectDiagnostic(rel, classification.Reason)}}
 	}
+}
+
+// UnreadableSubjectDiagnostic is the one sentence a subject that cannot be read answers,
+// with reason naming what stopped the read. The working-file grade states it for a
+// classified file, and a staged caller states it for a classified index blob, so the two
+// forms refuse a subject in the same words.
+func UnreadableSubjectDiagnostic(rel, reason string) string {
+	return fmt.Sprintf("prose: %q: refused unreadable subject: %s", rel, reason)
 }
 
 // gradeDocument applies the one parser to a document's bytes and attaches the offending

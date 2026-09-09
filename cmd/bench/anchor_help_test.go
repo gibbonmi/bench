@@ -8,25 +8,36 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// The six real AGENTS.md registry needles, in registry order, copied by hand from the
-// live registry into both this slice and testdata/anchors/fixture-repo/AGENTS.md. That
-// duplication is the fixture-bite shape this package uses: a registry needle a maintainer
-// edits without updating the fixture reds TestAnchorsReportsNeedleLines on purpose, which
-// is cheaper to keep honest than a live-tree read that drifts silently.
-var anchorsFixtureNeedles = []string{
-	"never by polling a self-matching pattern",
-	"runs plan-before-apply: print the exact target list, sample it, then apply",
-	"repository-wide sweep uses `rg --hidden`",
-	"Discover Bench verbs non-interactively",
-	"Run the system suite by hand through `bench test --check system`.",
-	"`bench handoff` rewrites only the calling worktree's assignment section.",
+// anchorsFixtureNeedles are the AGENTS.md registry needles that the fixture file at
+// testdata/anchors/fixture-repo/AGENTS.md carries, in registry order. The list is the
+// intersection of the registry and the fixture, so the fixture stays the only hand copy of
+// a needle. That copy is the fixture-bite shape this package uses: a registry needle a
+// maintainer edits without updating the fixture leaves the registry row and the fixture
+// line unmatched, so the derived list is shorter than the rows the command prints and
+// TestAnchorsReportsNeedleLines reds on purpose. It is cheaper to keep honest than a
+// live-tree read that drifts silently.
+func anchorsFixtureNeedles(t *testing.T) []string {
+	t.Helper()
+	planted := map[string]bool{}
+	for _, line := range strings.Split(readAnchorsFixture(t, "AGENTS.md"), "\n") {
+		planted[line] = true
+	}
+	var needles []string
+	for _, anchor := range anchors.Entries() {
+		if anchor.File == "AGENTS.md" && planted[anchor.Needle] {
+			needles = append(needles, anchor.Needle)
+		}
+	}
+	return needles
 }
 
 func TestAnchorsReportsNeedleLines(t *testing.T) {
+	needles := anchorsFixtureNeedles(t)
 	body := readAnchorsFixture(t, "AGENTS.md")
 	root := newAXIEnvelopeRepo(t)
 	writeAXIFixture(t, filepath.Join(root, "AGENTS.md"), body)
@@ -37,10 +48,9 @@ func TestAnchorsReportsNeedleLines(t *testing.T) {
 	}
 	// The fixture file places each needle on its own line, two lines apart, starting at
 	// line 3 (line 1 is the title, line 2 is blank).
-	wantLines := []int{3, 5, 7, 9, 11, 13}
-	rows := make([][]any, len(anchorsFixtureNeedles))
-	for i, needle := range anchorsFixtureNeedles {
-		rows[i] = []any{"require", "", needle, wantLines[i]}
+	rows := make([][]any, len(needles))
+	for i, needle := range needles {
+		rows[i] = []any{"require", "", needle, 3 + 2*i}
 	}
 	want, err := toon.TableTyped("anchors", []string{"kind", "section", "needle", "line"}, rows)
 	if err != nil {
@@ -53,11 +63,17 @@ func TestAnchorsReportsNeedleLines(t *testing.T) {
 }
 
 func TestAnchorsReportsAbsentNeedles(t *testing.T) {
-	// Drop the second, fourth, and sixth needle's line (and its blank separator) from the
-	// on-disk fixture, so those rows must read 0 while their kept siblings — unmoved by
-	// the removal — keep the same lines TestAnchorsReportsNeedleLines expects of them.
-	body := dropFixtureLines(readAnchorsFixture(t, "AGENTS.md"),
-		anchorsFixtureNeedles[1], anchorsFixtureNeedles[3], anchorsFixtureNeedles[5])
+	needles := anchorsFixtureNeedles(t)
+	// Drop every second needle's line (and its blank separator) from the on-disk fixture,
+	// so those rows must read 0 while their kept siblings — unmoved by the removal — close
+	// up to lines 3, 5, and 7.
+	var drop []string
+	for i, needle := range needles {
+		if i%2 == 1 {
+			drop = append(drop, needle)
+		}
+	}
+	body := dropFixtureLines(readAnchorsFixture(t, "AGENTS.md"), drop...)
 	root := newAXIEnvelopeRepo(t)
 	writeAXIFixture(t, filepath.Join(root, "AGENTS.md"), body)
 
@@ -65,14 +81,17 @@ func TestAnchorsReportsAbsentNeedles(t *testing.T) {
 	if result.code != 0 || result.stderr != "" {
 		t.Fatalf("anchors AGENTS.md = %#v, want exit 0 and no stderr", result)
 	}
-	want, err := toon.TableTyped("anchors", []string{"kind", "section", "needle", "line"}, [][]any{
-		{"require", "", anchorsFixtureNeedles[0], 3},
-		{"require", "", anchorsFixtureNeedles[1], 0},
-		{"require", "", anchorsFixtureNeedles[2], 5},
-		{"require", "", anchorsFixtureNeedles[3], 0},
-		{"require", "", anchorsFixtureNeedles[4], 7},
-		{"require", "", anchorsFixtureNeedles[5], 0},
-	})
+	kept := make([][]any, len(needles))
+	line := 3
+	for i, needle := range needles {
+		if i%2 == 1 {
+			kept[i] = []any{"require", "", needle, 0}
+			continue
+		}
+		kept[i] = []any{"require", "", needle, line}
+		line += 2
+	}
+	want, err := toon.TableTyped("anchors", []string{"kind", "section", "needle", "line"}, kept)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,8 +106,8 @@ func TestAnchorsReportsAbsentNeedles(t *testing.T) {
 	if result.code != 0 || result.stderr != "" {
 		t.Fatalf("anchors AGENTS.md (absent file) = %#v, want exit 0 and no stderr", result)
 	}
-	rows := make([][]any, len(anchorsFixtureNeedles))
-	for i, needle := range anchorsFixtureNeedles {
+	rows := make([][]any, len(needles))
+	for i, needle := range needles {
 		rows[i] = []any{"require", "", needle, 0}
 	}
 	want, err = toon.TableTyped("anchors", []string{"kind", "section", "needle", "line"}, rows)

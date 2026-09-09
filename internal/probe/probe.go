@@ -63,10 +63,11 @@ func run(root string, parsed usage.Result) (string, int) {
 		return line, 1
 	}
 	mutation := mutationName(omit)
-	if line, code := gradeBaseline(root, subject, mutation, request); line != "" {
+	line, code, baseline := gradeBaseline(root, subject, mutation, request)
+	if line != "" {
 		return line, code
 	}
-	return probe(root, subject, mutated, mutation, request)
+	return probe(root, subject, mutated, mutation, request, baseline)
 }
 
 func mutationForm(parsed usage.Result) (string, string, bool) {
@@ -128,7 +129,7 @@ func gradeGateLock(root string) string {
 // probe preserves, mutates, runs, and restores. The restore is deferred around the run,
 // so an interrupt or a panic inside the focused run still puts the subject back before
 // the verb answers, and the render runs only after the restore has been proven.
-func probe(root string, subject subject, mutated []byte, mutation string, request testreport.Request) (string, int) {
+func probe(root string, subject subject, mutated []byte, mutation string, request testreport.Request, baseline testreport.OutcomeKind) (string, int) {
 	preserved, line := preserve(root, subject)
 	if line != "" {
 		return line, 1
@@ -147,7 +148,7 @@ func probe(root string, subject subject, mutated []byte, mutation string, reques
 	if restored {
 		preserved.release()
 	}
-	return render(subject, mutation, outcome, request, report, preserved, restored, reason)
+	return render(subject, mutation, outcome, request, report, preserved, restored, reason, baseline)
 }
 
 // render prints the verdict row first, so a caller reads the answer before the evidence.
@@ -155,14 +156,14 @@ func probe(root string, subject subject, mutated []byte, mutation string, reques
 // row and the report, and the restore has already run by then, which is why an unprintable
 // name still leaves a clean tree. The restore-failed verdict overrides every other answer,
 // so a failed restore keeps the preserved row and exit 2 even when the row itself refuses.
-func render(subject subject, mutation string, outcome testreport.Outcome, request testreport.Request, report string, preserved preservation, restored bool, reason string) (string, int) {
-	// The mutated run is reached only over a passed baseline, so the baseline cell here is
-	// that one kind rather than a value carried down from the baseline call.
+func render(subject subject, mutation string, outcome testreport.Outcome, request testreport.Request, report string, preserved preservation, restored bool, reason string, baseline testreport.OutcomeKind) (string, int) {
+	// The baseline cell carries the kind the baseline run observed, so the row joins the two
+	// runs it reports rather than asserting the kind the refusal order implies.
 	cells := verdictCells{
 		cause:    string(outcome.Kind),
 		failed:   outcome.FailedTests,
 		restored: "yes",
-		baseline: string(testreport.OutcomePassed),
+		baseline: string(baseline),
 		ran:      outcome.Ran,
 	}
 	var code int

@@ -1,6 +1,9 @@
 package anchors
 
-import "unicode"
+import (
+	"slices"
+	"unicode"
+)
 
 // Locate answers the 1-based physical line, in data as stored, of the first
 // character of an anchor's first match, or 0 when the needle has no match,
@@ -44,24 +47,30 @@ func Locate(kind Kind, section, needle, data string) int {
 var commentOpen, commentClose = []rune("<!--"), []rune("-->")
 
 // stripCommentsMapped strips HTML comments the way StripHTMLComments does — a complete
-// comment is removed, and an unterminated one truncates the text — but over runes, and
-// it returns each surviving rune's index in data alongside it.
+// comment is removed, an unterminated one truncates the text, and the scan restarts on the
+// rewritten text — but over runes, and it returns each surviving rune's index in data
+// alongside it. The restart is what makes a comment that the removal itself creates, from
+// text either side of a removed comment, hide its needle here as it hides it from the
+// evaluator. A single pass would locate a needle the evaluator reads as absent.
 func stripCommentsMapped(data string) (text []rune, origin []int) {
-	runes := []rune(data)
-	for i := 0; i < len(runes); {
-		if runesEqual(runeWindow(runes, i, len(commentOpen)), commentOpen) {
-			end := indexRunes(runeWindow(runes, i+len(commentOpen), len(runes)-i-len(commentOpen)), commentClose)
-			if end < 0 {
-				break
-			}
-			i = i + len(commentOpen) + end + len(commentClose)
-			continue
-		}
-		text = append(text, runes[i])
-		origin = append(origin, i)
-		i++
+	text = []rune(data)
+	origin = make([]int, len(text))
+	for i := range origin {
+		origin[i] = i
 	}
-	return text, origin
+	for {
+		start := indexRunes(text, commentOpen)
+		if start < 0 {
+			return text, origin
+		}
+		end := indexRunes(text[start+len(commentOpen):], commentClose)
+		if end < 0 {
+			return text[:start], origin[:start]
+		}
+		cut := start + len(commentOpen) + end + len(commentClose)
+		text = append(text[:start:start], text[cut:]...)
+		origin = append(origin[:start:start], origin[cut:]...)
+	}
 }
 
 // sectionRunesMapped resolves title's owning section within runes the same way
@@ -177,31 +186,11 @@ func indexRunes(haystack, needle []rune) int {
 		return 0
 	}
 	for i := 0; i+len(needle) <= len(haystack); i++ {
-		if runesEqual(haystack[i:i+len(needle)], needle) {
+		if slices.Equal(haystack[i:i+len(needle)], needle) {
 			return i
 		}
 	}
 	return -1
-}
-
-func runesEqual(a, b []rune) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
-// runeWindow returns runes[start:start+n], or nil when that window runs past the end.
-func runeWindow(runes []rune, start, n int) []rune {
-	if start < 0 || n < 0 || start+n > len(runes) {
-		return nil
-	}
-	return runes[start : start+n]
 }
 
 func splitRuneLines(runes []rune) [][]rune {
@@ -241,9 +230,10 @@ func trimSpaceRunes(runes []rune) []rune {
 	return runes[start:end]
 }
 
+// hasPrefixRunes reports whether runes starts with prefix.
 func hasPrefixRunes(runes, prefix []rune) bool {
 	if len(prefix) > len(runes) {
 		return false
 	}
-	return runesEqual(runes[:len(prefix)], prefix)
+	return slices.Equal(runes[:len(prefix)], prefix)
 }

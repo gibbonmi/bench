@@ -22,10 +22,13 @@ const baselineCause = "baseline-"
 // The evidence after the rows is the baseline's own report, so its failures table names the
 // tests that were red before the probe ran. The `ran` cell reads 0, because the mutated run
 // never started, and the `baseline` cell names the kind the caller has to fix first.
-func gradeBaseline(root string, subject subject, mutation string, request testreport.Request) (string, int) {
+//
+// The third result is the kind this run observed. The probe that follows prints it in its
+// own `baseline` cell, so that cell reports one run's answer rather than a constant.
+func gradeBaseline(root string, subject subject, mutation string, request testreport.Request) (string, int, testreport.OutcomeKind) {
 	outcome, report, _ := testreport.Execute(root, request)
 	if outcome.Kind == testreport.OutcomePassed {
-		return "", 0
+		return "", 0, outcome.Kind
 	}
 	cells := verdictCells{
 		verdict:  "invalid",
@@ -36,7 +39,7 @@ func gradeBaseline(root string, subject subject, mutation string, request testre
 	}
 	out, err := rows(subject, mutation, cells, request)
 	if err != nil {
-		return toon.RenderError(err) + "\n", 1
+		return toon.RenderError(err) + "\n", 1, outcome.Kind
 	}
-	return out + report, 1
+	return out + report, 1, outcome.Kind
 }

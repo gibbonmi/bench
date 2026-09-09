@@ -314,8 +314,9 @@ func TestProbeIsInvalidWhenTheMutationDoesNotCompile(t *testing.T) {
 	requireSubjectBytes(t, f, clampSource)
 }
 
-// PB5: a mutated run that started no test cannot bite. The baseline passes and the mutated
-// run is the quiet one, because a pattern that matches nothing now refuses at the baseline.
+// PB5: a mutated run that started no test cannot bite. The stub keeps the baseline green
+// and silences only the mutated run, because a selection pattern that matches no test is
+// refused at the baseline instead.
 func TestProbeIsInvalidWhenNoTestRuns(t *testing.T) {
 	f := newFixture(t)
 	installStubGo(t, f, quietRun, 0, "")

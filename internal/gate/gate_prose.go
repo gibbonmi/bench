@@ -1,11 +1,13 @@
 package gate
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/prose"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -83,7 +85,9 @@ func renderProseVerdict(subjects []string, findings []prose.NamedResult, stdout 
 // gateProseStaged grades the Markdown the index holds rather than the working files. The
 // subjects are the staged regular-file `.md` entries, the bytes come from each index blob,
 // and the exclusion policy comes from the index blob of the policy file. So the verb
-// grades what a commit would carry, which is what a pre-commit caller asks about.
+// grades what a commit would carry, which is what a pre-commit caller asks about. Every
+// blob is bounded and classified before it is graded, so an index holds no bytes the named
+// form would refuse and this form would parse.
 //
 // The refusal for a root that is not a working-tree top reaches stdout at exit 1 rather
 // than stderr at exit 2, because the operand is well formed and only the repository state
@@ -104,9 +108,9 @@ func gateProseStaged(root string, stdout io.Writer) int {
 	}
 	policy.Entries = entries
 	if policy.PolicyPresent {
-		body, err := git.IndexBlob(root, prose.ExclusionFile)
-		if err != nil {
-			fmt.Fprintf(stdout, "prose: %q: refused unreadable exclusion file: %s\n", prose.ExclusionFile, err)
+		body, reason := readIndexBlob(root, prose.ExclusionFile)
+		if reason != "" {
+			fmt.Fprintln(stdout, prose.UnreadableExclusionDiagnostic(reason))
 			return 1
 		}
 		policy.Policy = body
@@ -121,18 +125,35 @@ func gateProseStaged(root string, stdout io.Writer) int {
 	var subjects []string
 	var findings []prose.NamedResult
 	for _, entry := range index.Staged {
-		if !entry.IsRegularFile() || !strings.HasSuffix(entry.Path, ".md") {
+		if !entry.IsRegularFile() || !prose.IsSubjectName(entry.Path) {
 			continue
 		}
 		subjects = append(subjects, entry.Path)
-		body, err := git.IndexBlob(root, entry.Path)
-		if err != nil {
-			fmt.Fprintf(stdout, "prose: %q: refused unreadable subject: %s\n", entry.Path, err)
+		body, reason := readIndexBlob(root, entry.Path)
+		if reason != "" {
+			fmt.Fprintln(stdout, prose.UnreadableSubjectDiagnostic(entry.Path, reason))
 			return 1
 		}
 		findings = append(findings, grader.GradeBytes(entry.Path, body)...)
 	}
 	return renderProseVerdict(subjects, findings, stdout)
+}
+
+// readIndexBlob reads one index blob under the control-record bound and grades the bytes
+// through the classifier the named form's file read uses. A blob over the limit or holding
+// invalid UTF-8 is refused rather than parsed, so the staged form and the named form
+// dispose of the same bytes the same way. The returned reason is empty for bytes a grade
+// may trust, and it names the fault otherwise.
+func readIndexBlob(root, path string) ([]byte, string) {
+	raw, err := git.IndexBlob(root, path)
+	if err != nil {
+		return nil, err.Error()
+	}
+	classified := bounds.ClassifyBytes(bounds.Read(bytes.NewReader(raw), bounds.ControlRecordLimit))
+	if classified.State.Failed() {
+		return nil, classified.Reason
+	}
+	return classified.Data, ""
 }
 
 // rootIsDirectory reports whether the root operand names an existing directory. A path
