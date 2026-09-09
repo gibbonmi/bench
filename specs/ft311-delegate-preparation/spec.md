@@ -355,6 +355,8 @@ They authorize implementation only after the reviewer approves this spec and its
 - `internal/conformance/tier_test.go`
 - `tests/canary/workflow-guidance-anchors`
 - `CHANGELOG.md`
+- `CONTEXT.md`
+- `docs/research/ft311-session-orchestration.md`
 - `.agents/commands/bench-implement-spec.md`
 - `.agents/commands/bench-review-implementation.md`
 - `.agents/skills/bench-craft-delegate/SKILL.md`
@@ -368,6 +370,8 @@ The build cannot edit this spec, its acceptance rows, or its ticket graph withou
 The anchor prefix permits a separate registry file rather than growing the over-budget registry body.
 The workflow canary prefix supplies the family closure for its pinned owners.
 Existing generated adapters consume the canonical commands without copied content.
+The context vocabulary and FT311 research predate the frozen implementation base.
+They move with this source branch but add no implementation behavior.
 
 ## Out of scope
 
