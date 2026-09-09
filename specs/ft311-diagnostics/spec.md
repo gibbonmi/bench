@@ -346,6 +346,7 @@ They authorize implementation only after the reviewer approves this spec and its
 - `internal/prose/exclusions.go`
 - `internal/gate/gate_prose.go`
 - `internal/gate/gate_prose_test.go`
+- `internal/gate/gate_prose_staged_test.go`
 - `internal/git/staged.go`
 - `internal/git/staged_test.go`
 - `internal/probe/command.go`
