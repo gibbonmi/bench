@@ -408,7 +408,7 @@ No outside source or current model-pricing claim is required here.
 The reviewer approved each ownership-fence extension in the owning session, before the edit.
 Commits eb9f9785, cd97a787, and 6f7c7b93 carry that approved authority.
 Commit 6f7c7b93 also rewrote the Answer text of decision tickets 10 and 18.
-That edit replaced the obsolete wording "worktree recovery" with the current term "recoverable reset".
+That edit aligns the closed decision text with the current term "recoverable reset".
 It followed a clean baseline at cd97a787, which reproduced a `docs-currency-workflow` red.
 The wording change altered no capability, no decision, and no order.
 
