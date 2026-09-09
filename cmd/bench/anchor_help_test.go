@@ -12,9 +12,11 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// The six real AGENTS.md registry needles, in registry order. These tests key an
-// isolated fixture repository's own AGENTS.md instead of reading the live tree, so a
-// prose edit to the real AGENTS.md cannot move these lines out from under the test.
+// The six real AGENTS.md registry needles, in registry order, copied by hand from the
+// live registry into both this slice and testdata/anchors/fixture-repo/AGENTS.md. That
+// duplication is the fixture-bite shape this package uses: a registry needle a maintainer
+// edits without updating the fixture reds TestAnchorsReportsNeedleLines on purpose, which
+// is cheaper to keep honest than a live-tree read that drifts silently.
 var anchorsFixtureNeedles = []string{
 	"never by polling a self-matching pattern",
 	"runs plan-before-apply: print the exact target list, sample it, then apply",
@@ -25,23 +27,17 @@ var anchorsFixtureNeedles = []string{
 }
 
 func TestAnchorsReportsNeedleLines(t *testing.T) {
-	var body strings.Builder
-	body.WriteString("# AGENTS fixture\n")
-	wantLines := make([]int, len(anchorsFixtureNeedles))
-	line := 1
-	for i, needle := range anchorsFixtureNeedles {
-		body.WriteString("\n")
-		line += 2
-		body.WriteString(needle + "\n")
-		wantLines[i] = line
-	}
+	body := readAnchorsFixture(t, "AGENTS.md")
 	root := newAXIEnvelopeRepo(t)
-	writeAXIFixture(t, filepath.Join(root, "AGENTS.md"), body.String())
+	writeAXIFixture(t, filepath.Join(root, "AGENTS.md"), body)
 
 	result := runAXICommandAt(t, root, []string{"anchors", "AGENTS.md"})
 	if result.code != 0 || result.stderr != "" {
 		t.Fatalf("anchors AGENTS.md = %#v, want exit 0 and no stderr", result)
 	}
+	// The fixture file places each needle on its own line, two lines apart, starting at
+	// line 3 (line 1 is the title, line 2 is blank).
+	wantLines := []int{3, 5, 7, 9, 11, 13}
 	rows := make([][]any, len(anchorsFixtureNeedles))
 	for i, needle := range anchorsFixtureNeedles {
 		rows[i] = []any{"require", "", needle, wantLines[i]}
@@ -57,12 +53,11 @@ func TestAnchorsReportsNeedleLines(t *testing.T) {
 }
 
 func TestAnchorsReportsAbsentNeedles(t *testing.T) {
-	// The fixture keeps the first, third, and fifth needle and drops the rest, so the
-	// dropped rows must read 0 while their siblings keep their real lines.
-	body := "# AGENTS fixture\n\n" +
-		anchorsFixtureNeedles[0] + "\n\n" +
-		anchorsFixtureNeedles[2] + "\n\n" +
-		anchorsFixtureNeedles[4] + "\n"
+	// Drop the second, fourth, and sixth needle's line (and its blank separator) from the
+	// on-disk fixture, so those rows must read 0 while their kept siblings — unmoved by
+	// the removal — keep the same lines TestAnchorsReportsNeedleLines expects of them.
+	body := dropFixtureLines(readAnchorsFixture(t, "AGENTS.md"),
+		anchorsFixtureNeedles[1], anchorsFixtureNeedles[3], anchorsFixtureNeedles[5])
 	root := newAXIEnvelopeRepo(t)
 	writeAXIFixture(t, filepath.Join(root, "AGENTS.md"), body)
 
@@ -156,6 +151,40 @@ func TestAnchorsUsageRefusesAMissingArgument(t *testing.T) {
 	if code != 2 || got != "usage: bench anchors (missing argument: argument)\n" {
 		t.Fatalf("anchorsCommand(nil) = (%q, %d), want unchanged usage refusal", got, code)
 	}
+}
+
+// readAnchorsFixture reads name from the isolated fixture repository under
+// testdata/anchors/fixture-repo, so the anchors query is graded against fixture content
+// instead of the live tree.
+func readAnchorsFixture(t *testing.T, name string) string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("testdata", "anchors", "fixture-repo", name))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
+}
+
+// dropFixtureLines removes each line in body that exactly matches one of drop, along
+// with the blank line immediately before it, so every line that survives keeps its
+// original line number.
+func dropFixtureLines(body string, drop ...string) string {
+	remove := make(map[string]bool, len(drop))
+	for _, needle := range drop {
+		remove[needle] = true
+	}
+	lines := strings.Split(body, "\n")
+	kept := make([]string, 0, len(lines))
+	for _, line := range lines {
+		if remove[line] {
+			if len(kept) > 0 && kept[len(kept)-1] == "" {
+				kept = kept[:len(kept)-1]
+			}
+			continue
+		}
+		kept = append(kept, line)
+	}
+	return strings.Join(kept, "\n")
 }
 
 func requireAnchorSymlink(t *testing.T, target, link string) {
