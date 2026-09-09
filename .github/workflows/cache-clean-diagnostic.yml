@@ -1,0 +1,72 @@
+name: cache clean diagnostic
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/cache-clean-diagnostic.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trace-cache-clean:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: 8dc2fe201890a65c7c7a1f3587e21d41480d31fd
+          fetch-depth: 1
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+        with:
+          go-version-file: go.mod
+      - name: Pin the exact Go toolchain from go.mod
+        run: echo "GOTOOLCHAIN=$(sed -n 's/^toolchain //p' go.mod)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+      - name: Trace the cache-clean test
+        shell: bash
+        env:
+          GOTELEMETRY: local
+          BENCH_REQUIRE_CAPABILITIES: '1'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq strace
+          set -uo pipefail
+          umask 077
+          log_dir="$RUNNER_TEMP/cache-clean-diagnostic"
+          mkdir -p "$log_dir"
+          actual_toolchain="$(go env GOTOOLCHAIN)"
+          printf 'go version=%s; GOTOOLCHAIN=%s; GOTELEMETRY=%s\n' "$(go version)" "$actual_toolchain" "$GOTELEMETRY" | tee "$log_dir/go-test.log"
+          if [ "$actual_toolchain" != 'go1.25.14' ]; then
+            exit 1
+          fi
+          set +e
+          timeout --preserve-status 10m strace -ff -o "$log_dir/strace" -e trace=process,file \
+            go test -v -trimpath -count=100 -run '^TestCleanReportsThePreRemovalMeasurement$' \
+            ./internal/gocache 2>&1 | tee -a "$log_dir/go-test.log"
+          statuses=("${PIPESTATUS[@]}")
+          test_status="${statuses[0]}"
+          tee_status="${statuses[1]}"
+          set -e
+          pass_count="$(awk '/^--- PASS: TestCleanReportsThePreRemovalMeasurement/ { count++ } END { print count + 0 }' "$log_dir/go-test.log")"
+          skip_count="$(awk '/^--- SKIP: TestCleanReportsThePreRemovalMeasurement/ { count++ } END { print count + 0 }' "$log_dir/go-test.log")"
+          printf 'go test exit=%s; tee exit=%s; passes=%s; skips=%s\n' "$test_status" "$tee_status" "$pass_count" "$skip_count" | tee -a "$log_dir/go-test.log"
+          if [ "$test_status" -ne 0 ]; then
+            exit "$test_status"
+          fi
+          if [ "$tee_status" -ne 0 ]; then
+            exit "$tee_status"
+          fi
+          if [ "$pass_count" -ne 100 ] || [ "$skip_count" -ne 0 ]; then
+            exit 1
+          fi
+      - name: Upload cache-clean diagnostic
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cache-clean-diagnostic
+          path: ${{ runner.temp }}/cache-clean-diagnostic/
+          if-no-files-found: warn
+          retention-days: 7
