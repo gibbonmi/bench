@@ -108,6 +108,13 @@ All notable user-facing changes to Bench are documented here. The format follows
   stream stops at the control-record limit plus one byte, so an oversized staged blob
   never reaches memory whole. The oversized diagnostic and the missing-path error text
   do not change.
+- Added four standing rules from the `ft311-diagnostics` retro to the kit references.
+  `map-discipline.md` requires a row and a fixture for each state, kind, or condition an
+  implementation decision names, one row per enumerated kind, a producer before any
+  printed cell, and a second test file when a ticket's tests outgrow a near-budget
+  sibling. `delegation-discipline.md` requires a charge to name each fenced path that
+  must survive, and the coordinator to run `bench preflight build` after every ticket
+  commit.
 - Changed the spec pre-review contract to require an exhaustive proof of cited
   symbols, import edges, source-row occurrences, field labels, changed-function
   callers, and copy survival before the first review charge.
@@ -205,6 +212,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- The TOON table encoder now returns an error for a row whose cell count differs from
+  the field count, instead of a panic on an out-of-range index. The error names the row
+  index, the cell count, and the field count, so a command prints its AXI error line
+  instead of a crash.
 - Fixed SessionStart Go discovery when `BASH_ENV` restores `ENVMAN_LOAD` before
   the clean login reads its profile.
 
