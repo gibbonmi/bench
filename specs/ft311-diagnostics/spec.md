@@ -342,6 +342,13 @@ They authorize implementation only after the reviewer approves this spec and its
 - `CONTEXT.md`
 - `CHANGELOG.md`
 - `reviews/ft311-diagnostics.md`
+- `ROADMAP.md`
+- `roadmap/FT311.md`
+- `decisions/ft311-coordinator-work.md`
+- `decisions/ft311-coordinator-work`
+
+The last four entries are the spec phase's own change, which the landed range carries.
+They are the two roadmap references to the moved map and the map's source paths, and no ticket writes them.
 
 The build cannot edit this spec, its acceptance rows, or its ticket graph without the existing spec-change authority.
 Four fenced files are over the line budget: the command registry, its registry test, the prose parser, and the focused-run command file.
