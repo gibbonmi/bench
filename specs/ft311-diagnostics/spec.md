@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: specs/ft311-diagnostics/decisions/ft311-coordinator-work.md
 
-Verification log: 0 iteration(s) to accept — the review round has not run.
+Verification log: 2 iteration(s) to accept — Astra/medium reviewed through codex exec. Iteration one returned four blocking findings, the author folded all seven findings, and iteration two accepted with one accounting finding.
 
 ## Problem
 
@@ -507,10 +507,21 @@ The review pickup is created only for actionable findings.
 |---|---|
 | Stories and lines | Approve the six outcome groups and their bound model efforts. |
 | Seams | Approve the three public command seams and the two unit seams. |
-| Acceptance and edges | Approve DG1 through DG33 and the five explicit exclusions. |
+| Acceptance and edges | Approve DG1 through DG39 and the five explicit exclusions. |
 | Ownership fences | Approve the exact union above for implementation. |
 | Scope and tickets | Approve the six-ticket graph within the second FT311 capability. |
 
 ### Verification outcome
 
-The review round has not run.
+The reviewer-named model reviewed the spec and the six tickets twice through `codex exec` in a read-only sandbox.
+Iteration one, at `1e2700c07deb61210a491f0a54ab5fa5cbd90631`, returned `revise` with four blocking findings and three non-blocking findings.
+The blocking findings were a constant baseline cell in ticket 4 and working-tree validation of staged exclusion targets.
+The other two were two baseline kinds without a case and three stated states without a fixture.
+
+The author folded all seven findings into rows DG34 through DG39, the two probe tickets, ticket 3, the fence paragraph, and the Git-flag note.
+Iteration two, at `2de046fdce479cc3c465e2a5390b7940061e5331`, verified every fold closed and accepted with one accounting finding, which the author folded.
+The journal carries the two-iteration learning under the title `ft311-diagnostics spec round needed two iterations`.
+
+The build preflight was green on every check after the closure fold.
+The coverage map validated at 39 rows, and the prose lane passed on the spec and the six tickets.
+The reviewed graph, fences, rows, and lines are the approval surface above.
