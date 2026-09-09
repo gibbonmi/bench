@@ -104,6 +104,13 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Added four standing rules from the `ft311-diagnostics` retro to the kit references.
+  `map-discipline.md` requires a row and a fixture for each state, kind, or condition an
+  implementation decision names, one row per enumerated kind, a producer before any
+  printed cell, and a second test file when a ticket's tests outgrow a near-budget
+  sibling. `delegation-discipline.md` requires a charge to name each fenced path that
+  must survive, and the coordinator to run `bench preflight build` after every ticket
+  commit.
 - Changed the spec pre-review contract to require an exhaustive proof of cited
   symbols, import edges, source-row occurrences, field labels, changed-function
   callers, and copy survival before the first review charge.

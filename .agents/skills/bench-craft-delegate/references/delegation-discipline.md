@@ -88,6 +88,8 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A charge whose ticket names a write target runs `bench structure` before
   dispatch. When the run reports the target over budget, the coordinator
   confirms the ticket's stated headroom route.
+- A charge names each fenced path that must still exist on return, so a fixture
+  directory that the fence names stays in the tree.
 
 ## Isolation and end of life
 
@@ -169,6 +171,9 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - Before the coordinator changes a completion plan after a user stop, the
   coordinator records the scope of that stop. The scope is cross-harness
   verification only, or all verification.
+- The coordinator runs `bench preflight build` on the integration source after
+  every ticket commit and before the next charge. A delegate can remove a fenced
+  path.
 
 ## In a review round
 
