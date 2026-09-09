@@ -264,8 +264,8 @@ The full landing gate remains the final code oracle.
 | DP4 | 4 | An absent or invalid required input refuses a build charge with a repair action. | New TestChargeRequiredInputs through preflight Command | Missing assignment, spec, ticket, coverage, or procedural source cannot produce complete=true. |
 | DP5 | 5 | A moved or dirty source refuses a complete charge. | New TestChargeSnapshotMovement through preflight Command | Change the tip or index between reads using the existing snapshot test seam. |
 | DP6 | 6 | Legacy preflight responses retain their existing semantics. | New TestLegacyPreflightDifferential through preflight Command | Compare baseline and candidate results over the same enumerated legacy fixtures. |
-| DP7 | 7 | Compact output identifies omitted content and its exact full retrieval command. | New TestChargeProjection through preflight Command | An oversized ticket cannot appear complete in the compact response. |
-| DP8 | 7 | Full retrieval contains every required input from the pinned source. | New TestChargeFullRetrieval through preflight Command | Remove one evidence block while retaining its handle to make the test red. |
+| DP7 | 7 | Compact output identifies omitted content and its exact full retrieval command. | New TestChargeProjectionAndFullRetrieval through preflight Command | An oversized ticket cannot appear complete in the compact response. |
+| DP8 | 7 | Full retrieval contains every required input from the pinned source. | New TestChargeProjectionAndFullRetrieval through preflight Command | Remove one evidence block while retaining its handle to make the test red. |
 | DP9 | 8 | Hostile input remains data or produces a named refusal. | New TestChargeHostileInputs through preflight Command | Shell-looking prose cannot create a sentinel or split an output field. |
 | DP10 | 9 | A closure proposal names each missing fixture and registry path once. | New TestWritesProposalClosure through preflight Command | Omit either closure producer's contribution to make the fixture red. |
 | DP11 | 10 | A closure proposal leaves every tracked and local authority input unchanged. | New TestWritesProposalReadOnly through preflight Command | Compare ticket, spec, index, worktree, and assignment records before and after. |
@@ -285,6 +285,10 @@ The full landing gate remains the final code oracle.
 | DP25 | 22 | Repair acceptance retains coordinator authority and independent verification. | Review-owned repair exercise plus docs-currency-workflow canaries | A triage done-claim cannot close a finding or authorize a fence expansion. |
 | DP26 | 23 | Canonical guidance has no surviving same-family CLI or inline-axis fallback for review. | New TestPreparedReviewGuidance through docs-currency-workflow | Swap the route while retaining command tokens to expose a contradictory fallback. |
 | DP27 | 24 | This spec preserves the other four capability boundaries. | Review-owned spec and implementation scope audit | A tier-default, landing, recovery, or diagnostic behavior edit is outside this fence. |
+
+One test serves DP7 and DP8.
+The merged test covers the compact projection and the full retrieval over the same fixture.
+A split of an adequate test to satisfy a stale name buys nothing.
 
 ### Edge inventory
 
@@ -348,7 +352,9 @@ They authorize implementation only after the reviewer approves this spec and its
 - `internal/conformance/registry_test.go`
 - `internal/conformance/docs_workflow_helpers_test.go`
 - `internal/conformance/ft311_preparation_test.go`
+- `internal/conformance/tier_test.go`
 - `tests/canary/workflow-guidance-anchors`
+- `CHANGELOG.md`
 - `.agents/commands/bench-implement-spec.md`
 - `.agents/commands/bench-review-implementation.md`
 - `.agents/skills/bench-craft-delegate/SKILL.md`
@@ -396,6 +402,15 @@ The three structured map sources were reread on 2026-09-08.
 The research report and FT311 roadmap were checked against the current preflight, review phase, closure owners, and tier profile.
 The source's historical corpus counts remain observational evidence, not a performance target for this spec.
 No outside source or current model-pricing claim is required here.
+
+### Fence extension authority
+
+The reviewer approved each ownership-fence extension in the owning session, before the edit.
+Commits eb9f9785, cd97a787, and 6f7c7b93 carry that approved authority.
+Commit 6f7c7b93 also rewrote the Answer text of decision tickets 10 and 18.
+That edit replaced the obsolete wording "worktree recovery" with the current term "recoverable reset".
+It followed a clean baseline at cd97a787, which reproduced a `docs-currency-workflow` red.
+The wording change altered no capability, no decision, and no order.
 
 ### Source-sentence-to-row accounting
 
