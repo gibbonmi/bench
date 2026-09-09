@@ -188,7 +188,7 @@ func runNamedCheck(ctx context.Context, root string, request focusedRequest, sel
 	if request.check == gate.SystemPhaseName {
 		return runSystemCheck(ctx, root, request, selection)
 	}
-	argv := focusedTestArgv("./internal/conformance", "-run", "^"+registry.RootConformanceTest+"$")
+	argv := focusedTestArgv("./internal/conformance", "-run", namedCheckRunPattern())
 	env, err := conformanceEnvironment(os.Environ(), root, request.check, selection)
 	if err != nil {
 		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
@@ -355,7 +355,7 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 	if incomplete := report.incompletePackages(); len(incomplete) != 0 {
 		return refusedOutcome(toon.Errorf("go test reported incomplete packages", strings.Join(incomplete, ", "))+"\n", 1)
 	}
-	if request.run != "" && !report.ranTest {
+	if request.run != "" && len(report.ranTests) == 0 {
 		return Outcome{Kind: OutcomeNoTestRun}, toon.Errorf("go test reported no test runs", "run pattern matched no tests") + "\n", 1
 	}
 	out, renderErr := report.render(request.full)

@@ -113,8 +113,8 @@ func TestExecuteClassifiesTheOutcome(t *testing.T) {
 		want  Outcome
 		count int
 	}{
-		{set: "failing", want: Outcome{Kind: OutcomeFailed, FailedTests: 1}},
-		{set: "passing", want: Outcome{Kind: OutcomePassed}},
+		{set: "failing", want: Outcome{Kind: OutcomeFailed, FailedTests: 1, Ran: 1}},
+		{set: "passing", want: Outcome{Kind: OutcomePassed, Ran: 1}},
 		{set: "build-fail", want: Outcome{Kind: OutcomeBuildFailed}},
 		{set: "no-run", want: Outcome{Kind: OutcomeNoTestRun}},
 	} {

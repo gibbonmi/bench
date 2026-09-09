@@ -2,15 +2,18 @@ package prose
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 	"unicode"
 )
 
-// codeSpanToken replaces every inline code span before the label test and before the
-// split into sentences, so a colon or a period inside a span never ends a field line or
-// a sentence, and a long span counts as one word. The NUL bytes keep the placeholder
-// outside any authored token.
-const codeSpanToken = "\x00code\x00"
+// codeSpanToken opens the placeholder that replaces every inline code span before the
+// label test and before the split into sentences, so a colon or a period inside a span
+// never ends a field line or a sentence, and a long span counts as one word. The whole
+// placeholder is the prefix, the span's index in the fold, and a closing NUL, so a
+// diagnostic restores the span as the author wrote it. The NUL bytes keep the placeholder
+// outside any authored token, and the letters keep it a word.
+const codeSpanToken = "\x00code"
 
 var (
 	inlineLinkPattern  = regexp.MustCompile(`!?\[([^\]]*)\]\([^)]*\)`)
@@ -49,11 +52,13 @@ var templateFields = map[string]bool{
 	"writes":      true,
 }
 
-// foldCodeSpans replaces every inline code span with one token. A span opens at a run
-// of backticks and closes at the next run of the same length, so a shorter run inside
-// the span stays part of the span. An unclosed run is literal text.
-func foldCodeSpans(content string) string {
+// foldCodeSpans replaces every inline code span with one token and returns the spans it
+// folded, in order. A span opens at a run of backticks and closes at the next run of the
+// same length, so a shorter run inside the span stays part of the span. An unclosed run is
+// literal text.
+func foldCodeSpans(content string) (string, []string) {
 	var out strings.Builder
+	var spans []string
 	for i := 0; i < len(content); {
 		if content[i] != '`' {
 			out.WriteByte(content[i])
@@ -79,10 +84,11 @@ func foldCodeSpans(content string) string {
 			i += open
 			continue
 		}
-		out.WriteString(codeSpanToken)
+		spans = append(spans, content[i:end+open])
+		out.WriteString(codeSpanToken + strconv.Itoa(len(spans)-1) + "\x00")
 		i = end + open
 	}
-	return out.String()
+	return out.String(), spans
 }
 
 // backtickRun returns the length of the run of backticks that starts at index i.
@@ -95,10 +101,12 @@ func backtickRun(content string, i int) int {
 }
 
 // token is one word candidate and the physical line it came from. The line travels with
-// the token, because a sentence reports the line of its first token.
+// the token, because a sentence reports the line of its first token. raw is the token as
+// the author wrote it, and it is empty for a token that folded no code span.
 type token struct {
 	text string
 	line int
+	raw  string
 }
 
 // Findings grades one document and returns every fault in document order. An
@@ -225,8 +233,8 @@ func gradeBlocks(lines []string) []Finding {
 		}
 		current, start = nil, 0
 	}
-	add := func(content string, line int) {
-		toks := tokenize(content, line)
+	add := func(content string, line int, spans []string) {
+		toks := tokenize(content, line, spans)
 		if len(toks) == 0 {
 			return
 		}
@@ -267,7 +275,7 @@ func gradeBlocks(lines []string) []Finding {
 		}
 		// The fold comes before the label test, so a colon inside a code span never makes a
 		// field line. Only a field line is skipped.
-		content := foldCodeSpans(trimmed)
+		content, spans := foldCodeSpans(trimmed)
 		if m := listMarkerPattern.FindString(content); m != "" {
 			flush()
 			content = content[len(m):]
@@ -278,12 +286,12 @@ func gradeBlocks(lines []string) []Finding {
 			// A field line is its own paragraph, so a run of such lines never forms one deep
 			// paragraph. A field line with no terminator holds no sentence to grade.
 			if terminated {
-				add(content, number)
+				add(content, number, spans)
 				flush()
 			}
 			continue
 		}
-		add(content, number)
+		add(content, number, spans)
 	}
 	flush()
 	return out
@@ -370,7 +378,7 @@ func isFieldLine(content string, terminated bool) bool {
 
 // hasTerminator reports whether the line carries a sentence terminator.
 func hasTerminator(content string, line int) bool {
-	for _, t := range tokenize(content, line) {
+	for _, t := range tokenize(content, line, nil) {
 		if isBoundaryToken(t.text) {
 			return true
 		}
@@ -378,11 +386,11 @@ func hasTerminator(content string, line int) bool {
 	return false
 }
 
-// tokenize turns one line of prose into tokens. It folds each code span into one token,
-// keeps link text, drops link targets, and removes the emphasis marks around a word.
-func tokenize(content string, line int) []token {
-	s := foldCodeSpans(content)
-	s = inlineLinkPattern.ReplaceAllString(s, "$1")
+// tokenize turns one folded line of prose into tokens. It keeps link text, drops link
+// targets, and removes the emphasis marks around a word. spans are the code spans the fold
+// of that line returned, so each token can restore the span its placeholder stands for.
+func tokenize(content string, line int, spans []string) []token {
+	s := inlineLinkPattern.ReplaceAllString(content, "$1")
 	s = refLinkPattern.ReplaceAllString(s, "$1")
 	var out []token
 	for _, field := range strings.FieldsFunc(s, unicode.IsSpace) {
@@ -390,38 +398,7 @@ func tokenize(content string, line int) []token {
 		if field == "" {
 			continue
 		}
-		out = append(out, token{text: field, line: line})
-	}
-	return out
-}
-
-// gradeParagraph splits one paragraph into sentences and grades both bounds.
-func gradeParagraph(start int, toks []token) []Finding {
-	var out []Finding
-	sentences := 0
-	words, first := 0, start
-	closeSentence := func() {
-		if words > MaxSentenceWords {
-			out = append(out, Finding{Kind: KindSentence, Line: first, Count: words})
-		}
-		sentences++
-		words = 0
-	}
-	for i, t := range toks {
-		if words == 0 {
-			first = t.line
-		}
-		if isWord(t.text) {
-			words++
-		}
-		if isBoundaryToken(t.text) || i == len(toks)-1 {
-			if words > 0 {
-				closeSentence()
-			}
-		}
-	}
-	if sentences > MaxParagraphSentences {
-		out = append(out, Finding{Kind: KindParagraph, Line: start, Count: sentences})
+		out = append(out, token{text: field, line: line, raw: unfoldCodeSpans(field, spans)})
 	}
 	return out
 }

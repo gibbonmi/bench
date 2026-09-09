@@ -22,10 +22,13 @@ const (
 )
 
 // Outcome is the typed verdict beside the rendered report. FailedTests counts the
-// failing test rows, so a caller cites the count without parsing the report.
+// failing test rows, so a caller cites the count without parsing the report. Ran counts
+// the distinct tests that emitted a run event, and it reads 0 when the run did not start,
+// so a caller can never read no execution as evidence.
 type Outcome struct {
 	Kind        OutcomeKind
 	FailedTests int
+	Ran         int
 }
 
 // Request is one parsed focused-run selection. Its fields stay unexported, because
@@ -75,6 +78,7 @@ func interruptedOutcome(line string, code int) (Outcome, string, int) {
 // failure rows; a row with no test name is the package's own diagnostic, which is the
 // build failure the kinds separate from a test failure.
 func (r *report) outcome(full bool) Outcome {
+	ran := len(r.ranTests)
 	failed := 0
 	for _, row := range r.failures(full) {
 		if row[1] != "" {
@@ -82,15 +86,15 @@ func (r *report) outcome(full bool) Outcome {
 		}
 	}
 	if failed != 0 {
-		return Outcome{Kind: OutcomeFailed, FailedTests: failed}
+		return Outcome{Kind: OutcomeFailed, FailedTests: failed, Ran: ran}
 	}
 	for _, status := range r.statuses {
 		if status == "fail" {
-			return Outcome{Kind: OutcomeBuildFailed}
+			return Outcome{Kind: OutcomeBuildFailed, Ran: ran}
 		}
 	}
-	if !r.ranTest {
+	if ran == 0 {
 		return Outcome{Kind: OutcomeNoTestRun}
 	}
-	return Outcome{Kind: OutcomePassed}
+	return Outcome{Kind: OutcomePassed, Ran: ran}
 }

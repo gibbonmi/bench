@@ -175,6 +175,23 @@ removes the copy. For a worktree, run
 `bench worktree exec <target> -- bench probe ...`, because the verb takes no
 target operand.
 
+Before the mutation, the verb runs the same selection once over the unmutated
+tree. A baseline that does not pass ends the probe before any write. The verdict
+is then `invalid`, the cause is `baseline-` with the baseline kind, and the
+`restored` cell reads `untouched`. A
+`selection[1]{form,target,run,baseline,ran}` row follows the verdict row. Its
+cells name the form, the target, the `-run` pattern, the baseline outcome, and
+the count of the tests that ran. The help names the `--package` and `--check`
+forms in a `notes:` block.
+
+`bench gate-prose <root> --staged` grades the staged Markdown from the index and
+takes no path list. The subject bytes and the exclusion policy come from the
+index blobs, so a working file does not change the answer. A paragraph finding
+names the line and the start of each sentence in the paragraph. `bench anchors`
+prints a `line` cell that carries the physical line of the first match. The cell
+reads 0 when the needle has no match. A link, a special file, or an unreadable
+file at the path answers a structured refusal at exit 1.
+
 A reviewed spec-backed build keeps its serial ticket commits in one retained
 integration source. Semantic review freezes the explicit base and source tip.
 Accepted findings commit there on the same cadence.

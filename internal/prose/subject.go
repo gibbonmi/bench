@@ -25,6 +25,7 @@ type NamedResult struct {
 	Rule       FindingKind
 	Count      int
 	Sentence   string
+	Starts     []SentenceStart
 	diagnostic string
 }
 
@@ -38,7 +39,31 @@ func RenderNamedResult(result NamedResult) string {
 	if result.Sentence != "" {
 		diagnostic += ": " + strconv.Quote(result.Sentence)
 	}
+	if len(result.Starts) > 0 {
+		items := make([]string, 0, len(result.Starts))
+		for _, start := range result.Starts {
+			// The start is quoted the way the sentence text is quoted, so a control byte inside
+			// it is escaped and one finding stays one line.
+			items = append(items, strconv.Itoa(start.Line)+" "+strconv.Quote(start.Text))
+		}
+		diagnostic += ": sentences " + strings.Join(items, ", ")
+	}
 	return diagnostic
+}
+
+// renderStripped renders results without the document text. The whole-tree grade and the
+// `prose` named check state the counts alone, so neither the sentence nor a start reaches
+// the gate output.
+func renderStripped(results []NamedResult) []string {
+	if len(results) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(results))
+	for _, result := range results {
+		result.Sentence, result.Starts = "", nil
+		out = append(out, RenderNamedResult(result))
+	}
+	return out
 }
 
 // NewGrader loads the exclusion list under root once, so a caller that grades many
@@ -51,19 +76,53 @@ func NewGrader(root string) (*Grader, []string) {
 	return &Grader{root: root, ex: ex}, nil
 }
 
+// IndexSource is the staged material a policy needs: the exclusion file's index blob,
+// whether the index holds that entry at all, and every index entry path. The target
+// validation reads Entries, so a policy that names a path present in the index and absent
+// from the working tree is honored.
+type IndexSource struct {
+	Policy        []byte
+	PolicyPresent bool
+	Entries       []string
+}
+
+// NewGraderFromIndex builds a grader whose exclusion policy is the index blob rather than
+// the working file, and whose targets validate against the index entry list. An index
+// without the exclusion entry answers the same absent-policy diagnostic the working-tree
+// loader states, because a staged commit with no policy is as ungradeable as a tree
+// without one.
+func NewGraderFromIndex(src IndexSource) (*Grader, []string) {
+	if !src.PolicyPresent {
+		return nil, []string{absentExclusionDiagnostic()}
+	}
+	if len(src.Policy) == 0 {
+		return &Grader{ex: &exclusions{files: map[string]bool{}}}, nil
+	}
+	ex, diags := gradeExclusionRows(src.Policy, indexLookup(src.Entries))
+	if len(diags) > 0 {
+		return nil, diags
+	}
+	return &Grader{ex: ex}, nil
+}
+
+// GradeBytes grades caller-supplied bytes as the subject at the repository-relative path
+// rel. A staged grade reads the index blob, so the subject never comes from a file the
+// grader could open itself. It returns nil for a subject that is excluded, empty, or
+// clean.
+func (g *Grader) GradeBytes(rel string, data []byte) []NamedResult {
+	if g.ex.excluded(rel) || len(data) == 0 {
+		return nil
+	}
+	return gradeDocument(rel, data)
+}
+
 // GradeSubject grades one repository-relative path and returns its findings. It returns
 // nil for a subject that is excluded, empty, or clean.
 func (g *Grader) GradeSubject(rel string) []string {
 	if g.ex.excluded(rel) {
 		return nil
 	}
-	results := g.gradeSubjectResults(rel)
-	out := make([]string, 0, len(results))
-	for _, result := range results {
-		result.Sentence = ""
-		out = append(out, RenderNamedResult(result))
-	}
-	return out
+	return renderStripped(g.gradeSubjectResults(rel))
 }
 
 // GradeNamed grades a caller-selected list of repository-relative paths through the same
@@ -72,16 +131,7 @@ func (g *Grader) GradeSubject(rel string) []string {
 // what it commits, not what it once named. A symbolic link is not followed and is not
 // graded, matching the whole-tree walk's own rule for a linked directory.
 func GradeNamed(root string, rels []string) []string {
-	results := GradeNamedResults(root, rels)
-	if len(results) == 0 {
-		return nil
-	}
-	out := make([]string, 0, len(results))
-	for _, result := range results {
-		result.Sentence = ""
-		out = append(out, RenderNamedResult(result))
-	}
-	return out
+	return renderStripped(GradeNamedResults(root, rels))
 }
 
 // GradeNamedResults grades caller-selected paths and exposes each prose finding as
@@ -115,19 +165,34 @@ func (g *Grader) gradeSubjectResults(rel string) []NamedResult {
 	case bounds.StateEmpty:
 		return nil
 	case bounds.StateParsed:
-		lines := strings.Split(string(classification.Data), "\n")
-		var out []NamedResult
-		for _, finding := range Findings(string(classification.Data)) {
-			result := NamedResult{Path: rel, Line: finding.Line, Rule: finding.Kind, Count: finding.Count}
-			if finding.Kind == KindSentence && finding.Line <= len(lines) {
-				result.Sentence = strings.TrimSpace(lines[finding.Line-1])
-			}
-			out = append(out, result)
-		}
-		return out
+		return gradeDocument(rel, classification.Data)
 	case bounds.StateWrongType:
 		return []NamedResult{{diagnostic: fmt.Sprintf("prose: %q: refused subject: %s", rel, classification.Reason)}}
 	default:
-		return []NamedResult{{diagnostic: fmt.Sprintf("prose: %q: refused unreadable subject: %s", rel, classification.Reason)}}
+		return []NamedResult{{diagnostic: UnreadableSubjectDiagnostic(rel, classification.Reason)}}
 	}
+}
+
+// UnreadableSubjectDiagnostic is the one sentence a subject that cannot be read answers,
+// with reason naming what stopped the read. The working-file grade states it for a
+// classified file, and a staged caller states it for a classified index blob, so the two
+// forms refuse a subject in the same words.
+func UnreadableSubjectDiagnostic(rel, reason string) string {
+	return fmt.Sprintf("prose: %q: refused unreadable subject: %s", rel, reason)
+}
+
+// gradeDocument applies the one parser to a document's bytes and attaches the offending
+// sentence text. Every entry point reaches the rule through here, so the working-file
+// grade and the staged grade cannot drift apart.
+func gradeDocument(rel string, data []byte) []NamedResult {
+	lines := strings.Split(string(data), "\n")
+	var out []NamedResult
+	for _, finding := range Findings(string(data)) {
+		result := NamedResult{Path: rel, Line: finding.Line, Rule: finding.Kind, Count: finding.Count, Starts: finding.Starts}
+		if finding.Kind == KindSentence && finding.Line <= len(lines) {
+			result.Sentence = strings.TrimSpace(lines[finding.Line-1])
+		}
+		out = append(out, result)
+	}
+	return out
 }

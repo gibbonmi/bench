@@ -8,6 +8,28 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added a `bench probe` baseline run and a `selection[1]{form,target,run,baseline,ran}`
+  row. The verb runs the focused selection once over the unmutated tree before the
+  mutation. A baseline that does not pass prints the verdict `invalid`, a
+  `baseline-<kind>` cause, and `untouched` in the `restored` cell. That run writes
+  nothing, and the report after the rows is the baseline's own report. The selection row
+  follows the verdict row, and the help names the `--package` and `--check` forms in a
+  `notes:` block.
+- Added the sentence starts of a long paragraph to the `bench gate-prose` named-path
+  finding. The diagnostic ends with `: sentences ` and one `<line> "<start>"` item per
+  sentence, in document order. A start is the first three words of the sentence as
+  written. The whole-tree grade and the `prose` check strip the starts as they strip the
+  sentence text.
+- Added `bench gate-prose <root> --staged`, which grades every staged Markdown file from
+  the index and takes no path list. The subject bytes and the exclusion policy come from
+  the index blobs, so a working-tree edit does not change the answer. A staged deletion
+  and a staged symlink are not subjects. `--staged` with a path or with `--` is a usage
+  error at exit 2.
+- Added a `line` column to the `bench anchors` table, so the table now reads
+  `anchors[N]{kind,section,needle,line}`. The cell is the 1-based physical line of the
+  first match. It reads 0 when the needle has no match, when the section is absent or
+  duplicated, or when the file is absent. A link, a special file, or an unreadable file
+  at the path now answers a structured refusal at exit 1.
 - Added prepared build and review charges, read-only write proposals, and native review dispatch.
 - Added an `elapsed_ms` column to the `bench test` `packages` table, so the table now
   reads `packages[N]{package,status,elapsed_ms}`. Each cell is the wall time
