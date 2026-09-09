@@ -232,6 +232,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT311 diagnostics spec, the second of five from `specs/ft311-diagnostics/decisions/ft311-coordinator-work.md` — run `/bench-write-spec`.
-2. FT311 landing-completion spec, the third of five — run `/bench-write-spec` after the diagnostics spec lands.
+1. FT311 landing-completion spec, the third of five from `specs/ft311-diagnostics/decisions/ft311-coordinator-work.md` — run `/bench-write-spec`.
+2. FT311 recoverable-reset spec, the fourth of five — run `/bench-write-spec` after the landing-completion spec lands.
 3. FT312 cross-harness reviewer verb — run `/bench-write-spec`.
