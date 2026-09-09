@@ -17,13 +17,18 @@ var skippedDirs = map[string]bool{
 	"testdata":     true,
 }
 
+// IsSubjectName reports whether a file name is a prose subject. The rule is the `.md`
+// suffix, so a comment inside a `.go` or shell file is outside the grade. The walk keys on
+// it for a name it finds on disk, and a staged caller keys on it for an index entry path,
+// so the two selections cannot disagree about what prose grades.
+func IsSubjectName(name string) bool { return strings.HasSuffix(name, ".md") }
+
 // Grade walks root and returns one diagnostic for each fault it finds. It returns no
 // diagnostic for a clean root and none at all for a root that holds no `*.md` subject:
 // a tree with nothing to grade cannot fail an exclusion rule it has no use for.
 //
-// The walk keys on the `*.md` name, so a comment inside a `.go` or shell file is outside
-// the grade. Grade composes the same per-subject Grader that GradeNamed uses, so the
-// exclusion list, the byte classifier, and the finding render have one source.
+// Grade composes the same per-subject Grader that GradeNamed uses, so the exclusion list,
+// the byte classifier, and the finding render have one source.
 func Grade(root string) []string {
 	subjects, diags := collect(root)
 	if len(diags) > 0 {
@@ -58,7 +63,7 @@ func collect(root string) ([]string, []string) {
 			}
 			return nil
 		}
-		if !strings.HasSuffix(d.Name(), ".md") {
+		if !IsSubjectName(d.Name()) {
 			return nil
 		}
 		if d.Type()&fs.ModeSymlink != 0 {

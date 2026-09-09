@@ -40,6 +40,9 @@ the explore reads, the fence rules, and the review rubric.
 - A row that widens a forbidden-import pattern names the enumeration command for its
   current importers across every graded package. It also names each package the
   widened pattern reds today.
+- Each implementation-decision sentence that names a state, a kind, or a condition
+  cites the row and the fixture that reach it. An enumerated kind list takes one
+  row per kind.
 
 ## Per row
 
@@ -84,6 +87,9 @@ the explore reads, the fence rules, and the review rubric.
 - Each in-scope edge-inventory promise, source promise, and fence-closure promise takes one red-capable row.
 - An either-side predicate takes two rows, one side per row. One row that names both sides is not sufficient.
 - Each named diagnostic state is addable or mutable in a fixture.
+- A row that names a refusal state cites the fixture path that reaches the state.
+  The author reads that fixture and confirms that the verb's own seams reach the
+  state. A defensive check with no reachable input is not an acceptance row.
 
 ## In the edge inventory
 
@@ -106,6 +112,11 @@ the explore reads, the fence rules, and the review rubric.
 - A golden-file row states its exact predicate, and the old-versus-new diff stays
   review-owned.
 - A build-time rewrite scope excludes `specs/*/spec.md` and the tickets by name.
+- A ticket that prints a cell or a field before its producer lands is a slicing
+  defect. The author reads each ticket's `What to build` as a committed slice.
+- A ticket with more than six command-level tests names a second test file in its
+  `Writes:` line. The rule applies when the sibling test file is near its line
+  budget.
 
 ## At review
 

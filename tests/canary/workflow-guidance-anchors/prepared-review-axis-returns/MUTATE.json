@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "   Collect every axis return before you accept a finding. A missing or failed\n   axis return leaves the review incomplete. It is never a clean finding set.",
+    "new": "   A missing axis return leaves the other returns as a clean finding set."
+  }
+]

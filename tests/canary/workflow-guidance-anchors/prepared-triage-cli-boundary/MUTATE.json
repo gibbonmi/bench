@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+    "old": "- The CLI owns routine deterministic failure projection. A triage delegate never\n  repeats it.",
+    "new": "- Let a triage delegate project the routine deterministic failures again."
+  }
+]

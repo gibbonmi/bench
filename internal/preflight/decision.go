@@ -449,24 +449,7 @@ func pathCovered(required string, owned []string) bool {
 // that edits a fixture-pinned line without naming the owning fixture directory
 // leaves the proof outside the charge, and the bite breaks unnoticed.
 func fixtureClosureCheck(f Facts) CheckResult {
-	var unnamed []string
-	seen := map[string]bool{}
-	for _, ticket := range f.Tickets {
-		owned := ownedPaths(ticket)
-		for _, entry := range ticket.Writes {
-			for _, fixture := range f.WritesFixturePins[entry] {
-				if pathCovered(fixture, owned) {
-					continue
-				}
-				named := ticket.Name + ": " + entry + " is pinned by " + fixture
-				if seen[named] {
-					continue
-				}
-				seen[named] = true
-				unnamed = append(unnamed, named)
-			}
-		}
-	}
+	unnamed := closureMessages(missingClosures(f, fixtureClosure))
 	if len(unnamed) > 0 {
 		return red("fixture-closure", "Writes: entry names a fixture-pinned path without naming the fixture: "+strings.Join(unnamed, ", "))
 	}
@@ -477,24 +460,7 @@ func fixtureClosureCheck(f Facts) CheckResult {
 // writes a bound package and omits a bound registry finds that registry mid-build
 // and pays a repair round.
 func registryClosureCheck(f Facts) CheckResult {
-	var omitted []string
-	seen := map[string]bool{}
-	for _, ticket := range f.Tickets {
-		owned := ownedPaths(ticket)
-		for _, entry := range ticket.Writes {
-			for _, file := range f.WritesBoundFiles[entry] {
-				if pathCovered(file, owned) {
-					continue
-				}
-				named := ticket.Name + ": " + entry + " requires " + file
-				if seen[named] {
-					continue
-				}
-				seen[named] = true
-				omitted = append(omitted, named)
-			}
-		}
-	}
+	omitted := closureMessages(missingClosures(f, registryClosure))
 	if len(omitted) > 0 {
 		return red("registry-closure", "Writes: entry names a bound package without naming every bound file: "+strings.Join(omitted, ", "))
 	}

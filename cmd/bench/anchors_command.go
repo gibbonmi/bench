@@ -7,6 +7,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/axi"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -30,13 +31,20 @@ func anchorsCommand(args []string) (string, int) {
 		return toon.NotInRepo() + "\n", 1
 	}
 	path := anchorQueryPath(root, parsed.Positionals[0])
-	var rows [][]string
+	// Classification precedes the read: a link, a special file, or an unreadable file
+	// answers a structured refusal instead of blocking or lying with a row of zeros.
+	classified := bounds.ClassifyNoFollow(filepath.Join(root, filepath.FromSlash(path)))
+	if classified.State.Failed() {
+		return toon.RecordError(path, classified.State, classified.Reason) + "\n", 1
+	}
+	data := string(classified.Data)
+	var rows [][]any
 	for _, anchor := range anchors.Entries() {
 		if anchor.File == path {
-			rows = append(rows, []string{anchorKindName(anchor.Kind), anchor.Section, anchor.Needle})
+			rows = append(rows, []any{anchorKindName(anchor.Kind), anchor.Section, anchor.Needle, anchors.Locate(anchor.Kind, anchor.Section, anchor.Needle, data)})
 		}
 	}
-	out, err := toon.Table("anchors", []string{"kind", "section", "needle"}, rows)
+	out, err := toon.TableTyped("anchors", []string{"kind", "section", "needle", "line"}, rows)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}

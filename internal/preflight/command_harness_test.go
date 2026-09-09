@@ -51,6 +51,8 @@ func specBody(slug string, extraFenceLines ...string) string {
 	b.WriteString("\n## Ownership fences\n\n")
 	b.WriteString("- `internal/" + slug + "/` (implementation)\n")
 	b.WriteString("- `reviews/" + slug + ".md` (review pickup)\n")
+	b.WriteString("- `.agents/skills/bench-craft-delegate/` (delegation instructions)\n")
+	b.WriteString("- `.agents/commands/bench-implement-spec.md` (build instructions)\n")
 	for _, line := range extraFenceLines {
 		b.WriteString(line + "\n")
 	}
@@ -79,6 +81,9 @@ func seedConformant(t *testing.T) (root, slug string) {
 	root = initRepo(t)
 	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
 	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2"))
+	mustWriteFile(t, delegateSkill, "# Delegation skill\n")
+	mustWriteFile(t, delegateProcedure, "# Delegation procedure\n\nFocused suite: bench test --package ./internal/preflight\n")
+	mustWriteFile(t, buildPhase, "# Build phase\n\nRun root conformance before return.\n")
 	runGit(t, "add", ".")
 	runGit(t, "commit", "-q", "-m", "c0")
 	runGit(t, "checkout", "-q", "-b", "feature")

@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "   Take the consumer tables and their citation row from the shared evidence's\n   `consumers` identity. Do not run a second `bench consumers --changed`\n   collection for the same frozen pair. Attach those tables and that citation row\n   to the review record.",
+    "new": "   Run `bench consumers --changed --base <b> --source-tip <t> --full` again over\n   the same frozen pair. Attach the returned tables to the review record."
+  }
+]

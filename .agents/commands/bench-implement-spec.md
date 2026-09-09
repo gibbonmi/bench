@@ -5,7 +5,6 @@ description: Implement a spec (or a clearly-scoped change) at the pre-agreed sea
 # /bench-implement-spec — do the work at the seams
 
 ## Entry orientation
-
 This is the implementation phase. It starts from an approved spec, or from a change
 small enough for the lighter-path threshold. It declares the line and works vertical
 slices at the pre-agreed seams. If there is no spec, the change must fall under that
@@ -14,7 +13,6 @@ fall under that threshold, route to `/bench-write-spec` first.
 
 If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no
 ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there.
-
 ## Exit handoff
 
 Close by reporting the implemented stories, each acceptance row's coverage status, and
@@ -22,7 +20,6 @@ the landed commits. A reviewed spec-backed build closes through `/bench-review-i
 and `bench worktree land`, then `/bench-final-check`. A light-path build goes straight
 to `/bench-final-check`. A build that stops short exits through "When the build stops
 short" below, which recommends its one durable next action.
-
 ## Declare the line, validate the tickets, route the venue
 
 Declare the line before you touch code. `craft-line` owns the template, the tier decision,
@@ -30,6 +27,8 @@ and the escalation ladder. After the write-spec-phase approval,
 create or retain one integration worktree at the reviewed graph commit; that
 commit is its frozen review base. Enter it and run `bench preflight build <slug>`
 before the first edit; a red preflight stops the phase.
+
+After reviewer approval of the selected spec and ticket, run `bench preflight build <slug> --charge --ticket <ticket> --base <base> --source-tip <tip> --full` and retrieve its complete mechanical inputs. Require a complete task-specific supplement. A generated charge or staged artifact does not supply approval. The supplement names selectors, model, effort, cap, and mutation. Verify the fence, dependency completion, and expected source tip before a write delegate starts.
 
 Every spec-backed run assigns genuine write work to a write subagent before
 implementation; `craft-delegate` owns isolation and verification, and `craft-line`
@@ -41,9 +40,10 @@ owns its model and effort. A read-only helper does not satisfy this requirement.
 Work the user stories in vertical slices at the agreed seams. Use TDD only where
 `craft-tdd` marks the seam. When the spec carries a coverage map, seed the
 harness's native task list from `bench coverage <spec>`, whose
-`rows[N]{story,behavior,seam}` projection is one task per row. Charge the whole frontier in parallel unless `craft-tickets` names a conflict. Each write
-delegate runs its ticket's focused checks and its own mutation probe. The
-coordinator independently verifies the returned diff before it lands.
+`rows[N]{story,behavior,seam}` projection is one task per row. Charge the whole frontier in parallel unless
+`craft-tickets` names a conflict.
+
+Before delegate dispatch, revalidate prepared source identity and required source bytes. Regenerate a charge when either changes. Each write delegate runs its focused checks and mutation probe. The coordinator independently verifies the returned diff before it lands.
 
 ## Land
 

@@ -42,10 +42,11 @@ func atLimit() string {
 // subject classification each own their rows.
 func TestGrade(t *testing.T) {
 	for _, tt := range []struct {
-		name    string
-		build   func(*testing.T, string)
-		count   int
-		wantSub string
+		name      string
+		build     func(*testing.T, string)
+		count     int
+		wantSub   string
+		wantEqual string
 	}{
 		{
 			name: "PD22 skipped directories are not graded",
@@ -136,6 +137,17 @@ func TestGrade(t *testing.T) {
 			wantSub: `"docs/guide.md" line 1: sentence of 40 words`,
 		},
 		{
+			// DG15: the whole-tree grade states the paragraph line the renderer states, so a
+			// sentence start or a sentence text never reaches the gate output.
+			name: "a paragraph over the bound reports the renderer's line and no start",
+			build: func(t *testing.T, root string) {
+				write(t, root, "docs/deep.md", "One. Two. Three. Four. Five. Six. Seven.\n")
+				write(t, root, ".bench/prose-exclusions", "")
+			},
+			count:     1,
+			wantEqual: Render("docs/deep.md", Finding{Kind: KindParagraph, Line: 1, Count: 7}),
+		},
+		{
 			name: "an excluded file is not graded",
 			build: func(t *testing.T, root string) {
 				write(t, root, "docs/guide.md", longSentence())
@@ -218,6 +230,9 @@ func TestGrade(t *testing.T) {
 			}
 			if tt.wantSub != "" && !strings.Contains(got[0], tt.wantSub) {
 				t.Errorf("Grade() = %q, want a diagnostic that holds %q", got[0], tt.wantSub)
+			}
+			if tt.wantEqual != "" && got[0] != tt.wantEqual {
+				t.Errorf("Grade() = %q, want exactly %q", got[0], tt.wantEqual)
 			}
 		})
 	}

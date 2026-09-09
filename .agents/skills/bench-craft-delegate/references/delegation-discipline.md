@@ -49,6 +49,16 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A repair charge names the property the fixture must make red-capable, and lets
   the delegate derive the shape. A prescribed shape buys a vacuous test when the
   prescribed shape is not red-capable.
+- A write charge that preserves behavior names the baseline capture artifact and
+  the permanent comparison test. The delegate captures the original command
+  responses once before the delegate edits. The permanent test compares a current
+  command run against the stored baseline data. A test never rewrites the
+  repository source during an ordinary run.
+- A repair charge replays the acceptance tests against the exact pre-change
+  production code when the ticket kept no pre-edit red evidence.
+- A repair charge binds each acceptance row and each applicable edge case to a
+  named test or to an explicit gap. The coordinator verifies the complete
+  checklist on the return.
 - A charge that pins an exact verification command names one the coordinator ran
   this session. Otherwise the charge makes the delegate report the command's wall
   time and prove that the command did not skip. A test binary that exits green in
@@ -78,6 +88,8 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A charge whose ticket names a write target runs `bench structure` before
   dispatch. When the run reports the target over budget, the coordinator
   confirms the ticket's stated headroom route.
+- A charge names each fenced path that must still exist on return, so a fixture
+  directory that the fence names stays in the tree.
 
 ## Isolation and end of life
 
@@ -116,6 +128,13 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 ## Read-only returns
 
 - The coordinator reads the census record at charge close for a read-only charge.
+- The CLI owns routine deterministic failure projection. A triage delegate never
+  repeats it.
+- The coordinator gives triage the failed command, the selected checks, the
+  actual execution evidence, the findings, and the frozen source.
+- A triage return cites evidence and proposes a bounded repair charge.
+- The coordinator accepts the diagnosis and routes repairs under existing authoring and verification rules.
+- Triage cannot close a finding, expand a fence, waive a probe, or change default tiers.
 - A shared-worktree reader restores every probe byte exactly, and confirms the
   restore with `cmp` against the copy aside.
 - The coordinator verifies a clean `git status` in the shared worktree before it
@@ -127,6 +146,9 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   coordination and hand both results to the reviewer.
 - Before aggregate grading, wait until returned delegates have no live tests and
   serialize the coordinator-owned resource.
+- A retry cap counts coherent attempts at implementation and verification. A
+  planned TDD red is not a failed attempt, and a slow tool call is not a failed
+  attempt.
 
 ## Before the landing
 
@@ -146,6 +168,12 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   the candidate tree. Grade the composed snapshot, then require the sanctioned rebuild after landing.
 - The checkpoint ticket records a reviewer decision that occurs during a build.
   Later review reads that decision.
+- Before the coordinator changes a completion plan after a user stop, the
+  coordinator records the scope of that stop. The scope is cross-harness
+  verification only, or all verification.
+- The coordinator runs `bench preflight build` on the integration source after
+  every ticket commit and before the next charge. A delegate can remove a fenced
+  path.
 
 ## In a review round
 

@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "   An authorized review dispatches every prepared axis through the native agent\n   surface. It asks no second approval turn inside that authorization. Each axis\n   keeps its own context, its own isolated read-only venue, and its own\n   independent source derivation.",
+    "new": "   Ask the reviewer again before you start an axis, and share one context."
+  }
+]

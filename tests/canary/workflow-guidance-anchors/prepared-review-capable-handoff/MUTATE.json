@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "   the frozen pair, the charge inputs, the destination harness, and that\n   harness's exact native continuation command.",
+    "new": "   the frozen pair and the destination harness."
+  }
+]

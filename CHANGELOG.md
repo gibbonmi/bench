@@ -8,6 +8,29 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added a `bench probe` baseline run and a `selection[1]{form,target,run,baseline,ran}`
+  row. The verb runs the focused selection once over the unmutated tree before the
+  mutation. A baseline that does not pass prints the verdict `invalid`, a
+  `baseline-<kind>` cause, and `untouched` in the `restored` cell. That run writes
+  nothing, and the report after the rows is the baseline's own report. The selection row
+  follows the verdict row, and the help names the `--package` and `--check` forms in a
+  `notes:` block.
+- Added the sentence starts of a long paragraph to the `bench gate-prose` named-path
+  finding. The diagnostic ends with `: sentences ` and one `<line> "<start>"` item per
+  sentence, in document order. A start is the first three words of the sentence as
+  written. The whole-tree grade and the `prose` check strip the starts as they strip the
+  sentence text.
+- Added `bench gate-prose <root> --staged`, which grades every staged Markdown file from
+  the index and takes no path list. The subject bytes and the exclusion policy come from
+  the index blobs, so a working-tree edit does not change the answer. A staged deletion
+  and a staged symlink are not subjects. `--staged` with a path or with `--` is a usage
+  error at exit 2.
+- Added a `line` column to the `bench anchors` table, so the table now reads
+  `anchors[N]{kind,section,needle,line}`. The cell is the 1-based physical line of the
+  first match. It reads 0 when the needle has no match, when the section is absent or
+  duplicated, or when the file is absent. A link, a special file, or an unreadable file
+  at the path now answers a structured refusal at exit 1.
+- Added prepared build and review charges, read-only write proposals, and native review dispatch.
 - Added an `elapsed_ms` column to the `bench test` `packages` table, so the table now
   reads `packages[N]{package,status,elapsed_ms}`. Each cell is the wall time
   `go test -json` reports for that one package, as an integer count of milliseconds. A
@@ -81,6 +104,17 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- `bench gate-prose --staged` now bounds each index blob during the read. The `git show`
+  stream stops at the control-record limit plus one byte, so an oversized staged blob
+  never reaches memory whole. The oversized diagnostic and the missing-path error text
+  do not change.
+- Added four standing rules from the `ft311-diagnostics` retro to the kit references.
+  `map-discipline.md` requires a row and a fixture for each state, kind, or condition an
+  implementation decision names, one row per enumerated kind, a producer before any
+  printed cell, and a second test file when a ticket's tests outgrow a near-budget
+  sibling. `delegation-discipline.md` requires a charge to name each fenced path that
+  must survive, and the coordinator to run `bench preflight build` after every ticket
+  commit.
 - Changed the spec pre-review contract to require an exhaustive proof of cited
   symbols, import edges, source-row occurrences, field labels, changed-function
   callers, and copy survival before the first review charge.
@@ -178,6 +212,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- The TOON table encoder now returns an error for a row whose cell count differs from
+  the field count, instead of a panic on an out-of-range index. The error names the row
+  index, the cell count, and the field count, so a command prints its AXI error line
+  instead of a crash.
 - Fixed SessionStart Go discovery when `BASH_ENV` restores `ENVMAN_LOAD` before
   the clean login reads its profile.
 

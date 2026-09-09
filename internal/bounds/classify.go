@@ -72,7 +72,18 @@ func Classify(path string, limit int64) Classified {
 
 // ClassifyDir reports the state of a control directory at path.
 func ClassifyDir(path string) ClassifiedDir {
-	info, state, reason := resolve(path)
+	return classifyDir(path, resolve)
+}
+
+// ClassifyDirNoFollow reports the state of a producer directory without following a link.
+func ClassifyDirNoFollow(path string) ClassifiedDir {
+	return classifyDir(path, resolveNoFollow)
+}
+
+type pathResolver func(string) (fs.FileInfo, FileState, string)
+
+func classifyDir(path string, resolvePath pathResolver) ClassifiedDir {
+	info, state, reason := resolvePath(path)
 	if state != "" {
 		return ClassifiedDir{State: state, Reason: reason}
 	}
@@ -96,12 +107,9 @@ func ClassifyDir(path string) ClassifiedDir {
 // succeeds, a vanished target is unreadable. The link itself is then followed, because a
 // control record linked elsewhere is still a control record.
 func resolve(path string) (fs.FileInfo, FileState, string) {
-	info, err := os.Lstat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, StateAbsent, ""
-		}
-		return nil, StateUnreadable, err.Error()
+	info, state, reason := resolveNoFollow(path)
+	if state != "" {
+		return nil, state, reason
 	}
 	if info.Mode()&fs.ModeSymlink != 0 {
 		target, err := os.Stat(path)
@@ -123,22 +131,28 @@ func resolve(path string) (fs.FileInfo, FileState, string) {
 // open(2). The limit is not a parameter, because one producer read under two bounds is
 // the divergence ControlRecordLimit forbids.
 func ClassifyNoFollow(path string) Classified {
-	info, err := os.Lstat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return Classified{State: StateAbsent}
-		}
-		return Classified{State: StateUnreadable, Reason: err.Error()}
+	info, state, reason := resolveNoFollow(path)
+	if state != "" {
+		return Classified{State: state, Reason: reason}
 	}
 	return gradeBytes(path, info, ControlRecordLimit)
 }
 
-// gradeBytes is what both public forms mean by "read this and say what it is". The two
+func resolveNoFollow(path string) (fs.FileInfo, FileState, string) {
+	info, err := os.Lstat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, StateAbsent, ""
+		}
+		return nil, StateUnreadable, err.Error()
+	}
+	return info, "", ""
+}
+
+// gradeBytes is what both file forms mean by "read this and say what it is". The two
 // differ only in how they resolve the path, followed or refused, and in which limit they
-// bind. Everything from the regular-file check onward is one fact about how bounded bytes
-// are graded, and splitting it would let the oversized or UTF-8 disposition drift between
-// the forms one edit at a time. info must already be the caller's resolved stat: this
-// helper does not decide whether a link is a control record.
+// bind. info must already be the caller's resolved stat: this helper does not decide
+// whether a link is a control record.
 func gradeBytes(path string, info fs.FileInfo, limit int64) Classified {
 	if !info.Mode().IsRegular() {
 		return Classified{State: StateWrongType, Reason: fmt.Sprintf("not a regular file: %s", info.Mode().Type())}
@@ -148,7 +162,17 @@ func gradeBytes(path string, info fs.FileInfo, limit int64) Classified {
 		return Classified{State: StateUnreadable, Reason: err.Error()}
 	}
 	defer file.Close()
-	read := Read(file, limit)
+	return ClassifyBytes(Read(file, limit))
+}
+
+// ClassifyBytes grades the result of one bounded read. It is the whole disposition of
+// bounded bytes: an oversized or failed read is unreadable, invalid UTF-8 is malformed,
+// and the rest is empty or parsed. A caller whose bytes never came from a path — a Git
+// index blob, for example — reaches the same grade the file forms reach, so the oversized
+// and UTF-8 rules cannot drift between a file subject and a blob subject one edit at a
+// time. The caller binds the limit through Read, so ControlRecordLimit stays the control
+// record's one bound.
+func ClassifyBytes(read ReadResult) Classified {
 	switch read.Status {
 	case ReadOversized, ReadFailed:
 		return Classified{State: StateUnreadable, Stream: read.Status, Reason: read.Err.Error()}

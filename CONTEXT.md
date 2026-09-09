@@ -252,6 +252,10 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **probe verdict** — the one word `bench probe` prints for a run: `bit`,
   `silent`, `invalid`, or `restore-failed`. Not "test result", not "probe
   outcome", not "mutation score" — probe verdict.
+- **probe baseline** — the focused run `bench probe` makes over the unmutated
+  tree before the mutation. A baseline that does not pass gives the **probe
+  verdict** `invalid` with a `baseline-` cause, and the probe writes nothing.
+  Not "the control run", not "the green run" — probe baseline.
 - **landing source** — a build-owned Git integration branch identified by its
   frozen base and current source tip. Serial green tickets accumulate there;
   semantic review binds to that pair and `bench worktree land` consumes it. Not
@@ -304,6 +308,10 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   session loads; the mechanics live in `.bench/BENCH-reference.md`. Not "the guide"
   unqualified, and not "progressive loading" (the split is progressive disclosure) —
   always-loaded core.
+
+- **delegate charge** — the task instructions and evidence supplied to one delegate. It identifies the assignment, revision, approved scope, checks, and required return. Not "prompt bundle" or "task packet" — delegate charge.
+- **landing effect** — one recorded operation after publication, such as broker refresh or eligible sibling cleanup. Its completion is separate from publication. Not "landing verdict" or "gate result" — landing effect.
+- **recovery checkpoint** — an explicitly named commit in the assignment history that a worktree reset restores. It is not inferred from the current default branch. Not "latest main" or "automatic rollback target" — recovery checkpoint.
 
 ## Avoid
 

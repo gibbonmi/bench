@@ -247,7 +247,8 @@ func TestProbeOutsideARepository(t *testing.T) {
 }
 
 // PB44: preservation runs before the mutation, so a home that cannot hold the copy leaves
-// the subject exactly as it was.
+// the subject exactly as it was. The baseline is the one run this refusal allows, because
+// it runs before preservation; the refusal itself starts no mutated run.
 func TestProbeRefusesWhenPreservationFails(t *testing.T) {
 	f := refusalFixture(t)
 	writeFixtureFile(t, filepath.Join(f.home, "probe"), "not a directory\n", 0o644)
@@ -256,11 +257,12 @@ func TestProbeRefusesWhenPreservationFails(t *testing.T) {
 		t.Fatalf("refusal = (%q, %d), want the preservation failure and 1", out, code)
 	}
 	requireSubjectBytes(t, f, clampSource)
-	requireNoRunChild(t, f)
+	requireBaselineOnly(t, f)
 }
 
-// PB45: a mutation write that fails leaves the subject unchanged, removes the copy, and
-// starts no run, so a probe never runs over a file it did not mutate.
+// PB45: a mutation write that fails leaves the subject unchanged and removes the copy, so a
+// probe never runs over a file it did not mutate. The baseline is the one run that already
+// happened, and the refusal starts no mutated run after it.
 func TestProbeRefusesWhenTheMutationWriteFails(t *testing.T) {
 	f := refusalFixture(t)
 	if err := os.Chmod(f.root, 0o500); err != nil {
@@ -273,19 +275,29 @@ func TestProbeRefusesWhenTheMutationWriteFails(t *testing.T) {
 	}
 	requireSubjectBytes(t, f, clampSource)
 	requireHomeEmpty(t, f)
-	requireNoRunChild(t, f)
+	requireBaselineOnly(t, f)
 }
 
-// PB30: every help spelling answers the grammar's usage line on stdout with exit 0.
+// probeHelpNotes is the three facts the help owes, spelled independently of the producer.
+// A dropped or reworded note reds this row rather than passing as a fresh expectation.
+var probeHelpNotes = []string{
+	"--package <expr> takes a Go package expression, as bench test --package does.",
+	"--check <name> names a conformance check from the bench test --help inventory, and prose and system are not probe targets.",
+	"A named check compiles from the run binary's source, so an edited tree needs bench worktree build <target> first.",
+}
+
+// PB30 and DG4: every help spelling answers the usage line and then the notes block with
+// exit 0.
 func TestProbeHelpSpellings(t *testing.T) {
 	for _, spelling := range []string{"--help", "-h", "help"} {
 		t.Run(spelling, func(t *testing.T) {
 			out, code := Command([]string{spelling})
-			if code != 0 || out != grammar.Help+"\n" {
-				t.Fatalf("%s = (%q, %d), want the usage line and 0", spelling, out, code)
-			}
 			if !strings.HasPrefix(out, "usage: bench probe <file> (--swap") {
 				t.Fatalf("usage line = %q", out)
+			}
+			want := grammar.Help + "\nnotes:\n  " + strings.Join(probeHelpNotes, "\n  ") + "\n"
+			if code != 0 || out != want {
+				t.Fatalf("%s = (%q, %d), want (%q, 0)", spelling, out, code, want)
 			}
 		})
 	}

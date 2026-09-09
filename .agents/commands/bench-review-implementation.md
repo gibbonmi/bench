@@ -59,12 +59,20 @@ it never restarts initial discovery over the original range.
 
 ## Process
 
-1. **Pin the diff.** Pull the whole base-relative context with
-   `bench diff --full` in explicit-base mode. Supply the same frozen base that
-   preflight used. Record the complete reported base and source tip. A dirty
-   source, a moved tip, or a pair that differs from preflight stops the review.
-   When work already landed, use `bench diff --full --commit <sha>` for that
-   historical commit.
+1. **Pin the diff from the prepared evidence.**
+   Collect the shared evidence once with
+   `bench preflight review <spec> --charge --base <b> --source-tip <t> --full`.
+   Supply the same frozen base that preflight used. The command returns one
+   charge row for each axis. It also returns a `shared_evidence` table with one
+   identity each for diff, consumers, and coverage.
+
+   Read the base-relative diff facts from that prepared evidence. Do not collect
+   the same pair a second time with `bench diff --full`. Record the complete
+   reported base and source tip. A dirty source, a moved tip, or a pair that
+   differs from preflight stops the review.
+
+   A historical review keeps `bench diff --full --commit <sha>` for the landed
+   commit. A spec-less review keeps `bench diff --full` in explicit-base mode.
 
    The frozen base is the `main` tip merged into the source before the landing, so the range holds the spec diff alone.
 
@@ -74,12 +82,15 @@ it never restarts initial discovery over the original range.
    `CLAUDE.md` holds import pointers only. Also use `projects/<name>.md` and
    any `CONTRIBUTING` or conventions docs in the repo.
 
-3. **Run the blast before axis dispatch.** Run
-   `bench consumers --changed --base <b> --source-tip <t> --full` over the same
-   frozen pair that preflight and `bench diff` pinned. Attach the returned
-   tables and their citation row to the review record. Walk the `touched=false`
-   rows first, because a consumer outside the diff's file set is the FT210 class
-   an unlisted-consumer miss hides. Then hand each axis the table.
+3. **Walk the blast before axis dispatch.**
+   Take the consumer tables and their citation row from the shared evidence's
+   `consumers` identity. Do not run a second `bench consumers --changed`
+   collection for the same frozen pair. Attach those tables and that citation row
+   to the review record.
+
+   Walk the `touched=false` rows first, because a consumer outside the diff's
+   file set is the FT210 class an unlisted-consumer miss hides. Then hand each
+   axis the same shared evidence.
 
    - Walk a `blast_deleted` row as a deletion whose consumers the tip already edited.
    - A blast refusal stops the review, as a red preflight does.
@@ -93,6 +104,14 @@ it never restarts initial discovery over the original range.
    candidate — see `craft-review`. Give each delegate the diff, the sources for
    its axis, and its charge from the `craft-review` skill
    (`.agents/skills/bench-craft-review/SKILL.md`).
+
+   An authorized review dispatches every prepared axis through the native agent
+   surface. It asks no second approval turn inside that authorization. Each axis
+   keeps its own context, its own isolated read-only venue, and its own
+   independent source derivation.
+
+   Collect every axis return before you accept a finding. A missing or failed
+   axis return leaves the review incomplete. It is never a clean finding set.
 
    That skill is the one source
    for what each axis hunts and what a finding must cite; do not restate the
@@ -110,9 +129,20 @@ it never restarts initial discovery over the original range.
    If there is no spec, skip the Spec axis and say so. The Coverage axis still
    runs; it needs only the diff and the existing tests.
 
-   If this harness forbids unsolicited sub-agents, run the same axes inline.
-   State that fallback in the exit handoff. Keep the same charges and citation
-   standard.
+   Native availability is a fact of the active session. A compiled harness
+   record is not runtime proof of a native agent surface.
+
+   When the native tool is unavailable, or when the reviewer prohibits
+   delegation, preserve the prepared charges and stop dispatch. Then emit a
+   capable-harness handoff. The handoff names the repository, the assignment,
+   the frozen pair, the charge inputs, the destination harness, and that
+   harness's exact native continuation command. Substitute no same-family CLI
+   launcher, and collect no axis into coordinator context. The standing
+   cross-harness falsification pass keeps its separate route and its existing
+   trigger.
+
+   A historical review and a spec-less review keep their existing preparation
+   entry points under this same native authority rule.
 
 5. **Aggregate, don't merge.** Report under `## Standards`, `## Spec`, and
    `## Coverage` headings, and keep the findings separate. Do not rerank across

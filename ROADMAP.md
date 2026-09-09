@@ -37,7 +37,7 @@ findings in the owner details.
 
 **FT308 (MEDIUM, decision required) — the cleanup transaction's persistence lock leaves `.git` when its record is gone.**
 
-**FT311 (MEDIUM, decision required) — repeated coordinator chunks fold into Bench verbs and cheap-tier delegates.**
+**FT311 (MEDIUM) — repeated coordinator chunks fold into Bench verbs and cheap-tier delegates.**
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
