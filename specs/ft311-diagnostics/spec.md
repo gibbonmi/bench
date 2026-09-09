@@ -326,6 +326,8 @@ If implementation needs one, its ticket must attach the corresponding hostile ca
 These entries are the union of the ticket Writes.
 They authorize implementation only after the reviewer approves this spec and its ticket graph.
 
+- `internal/bounds/classify.go`
+- `internal/bounds/classify_bytes_test.go`
 - `internal/anchors/locate.go`
 - `internal/anchors/locate_test.go`
 - `cmd/bench/anchors_command.go`
