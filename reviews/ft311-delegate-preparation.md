@@ -145,19 +145,21 @@ confirmed the baseline as pass, 18104 ms, zero skips. The assertions use a
 substring match over the whole packet. The co-located tables therefore satisfy
 them.
 
-### CV2. Six review-owned rows have no stored record
+### CV2. Review-owned live evidence is incomplete
 
-Disposition: `stopped`; durable complete live evidence is still absent.
+Disposition: `partial`; DP19, DP22, DP23, DP24, and DP25 have retained native exercise outcomes.
+DP20 and DP21 remain open for the coordinator's prepared-review return and withheld-return record in the existing primary handoff.
 
-Rows DP19, DP21, DP22, DP23, DP24, and DP25 name a live exercise. No artifact in
-the tree holds a dispatch record or a return. The finding discipline states that
-evidence which lives only in a delegate return is not citable at the landing.
-Row DP20 is the exception, because this three-axis run is its exercise.
+An approved build dispatched only after it observed reviewer approval, complete task inputs, and the frozen tip.
+An unapproved ticket wrote nothing; stale prepared input refused until regeneration.
+Native triage recorded invalid-probe, no-test-executed, scope-defect, unknown, and missing-coverage.
+Its missing-coverage baseline ran in 18.104 seconds with zero skips, and four silent mutations restored.
+The coordinator retained acceptance and independently verified the repair probe.
 
-DP24 has native triage evidence for missing coverage: the owning preflight baseline
-ran in 18.104 seconds with zero skips, and four mutations restored silently. It does
-not close CV2. DP21 and DP22 failure exercises, real shift, and re-review stopped by
-the latest user instruction.
+The native surface refused an additional context with `agent thread limit reached`.
+The handoff retained prepared charges and used neither a substitute launcher nor inline axes.
+The linked-repository dogfood shift completed one Terra README iteration at `6c95593` and passed its configured `go test ./...` gate.
+Earlier failed disposable attempts receive no acceptance credit.
 
 ### CV3. A cross-package contract has no test
 
@@ -191,8 +193,7 @@ runtime fact about the operator environment.
 
 ### FA2. The live review exercise is open
 
-Disposition: `stopped`; this finding remains in CV2 because live exercises stopped
-by the latest user instruction.
+Disposition: `pending`; this finding remains in CV2 until the coordinator records the prepared native review and its withheld-return exercise in the existing primary handoff.
 
 ### FA3. The anchor matcher is a substring match
 

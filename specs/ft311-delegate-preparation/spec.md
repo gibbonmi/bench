@@ -494,11 +494,14 @@ The proposed seams were presented for reviewer confirmation before drafting.
 | 3. Prepare shared review evidence | 2.md | Complete frozen evidence and independent axis inputs |
 | 4. Consume build charges and triage repairs | 3.md | Native build preparation and bounded mid-tier repair proposals |
 | 5. Dispatch prepared native reviews | 4.md | Automatic independent axes with capability and return handling |
+| 6. Repair charge evidence seams | 5.md | Correct DP7 and DP8 seam citations without changing their predicates |
 
 The serial edges reflect shared preflight and guidance owners.
 Each ticket includes its public behavior, focused tests, and required registry closure.
 Ticket 3 carries the final preflight invariant.
 Ticket 5 carries the final shared-guidance invariant and the existing review-output contract.
+Ticket 6 records the accepted DP7 and DP8 seam correction against the existing charge predicates.
+
 The review pickup is created only for actionable findings.
 Clean review evidence references belong in the existing exit and handoff.
 
@@ -510,7 +513,7 @@ Clean review evidence references belong in the existing exit and handoff.
 | Seams | Approve public preflight tests and review-owned native exercises. |
 | Acceptance and edges | Approve DP1–DP27 and the explicit exclusions. |
 | Ownership fences | Approve the exact union above for implementation. |
-| Scope and tickets | Approve the five-ticket graph within the first FT311 capability. |
+| Scope and tickets | Approve the six-ticket graph within the first FT311 capability. |
 
 ### Verification outcome
 
@@ -523,8 +526,25 @@ No second review round ran.
 The coordinator also corrected directory fence spelling and added the command registry's pinned canary to ticket 3.
 Explicit-base preflight verified ticket grammar, blockers, Writes resolution, fixture closure, registry closure, and coverage ownership after those corrections.
 The coverage map and prose checks passed.
-The spec remains staged pending reviewer approval of stories, seams, fences, exclusions, and the ticket graph.
+The approved implementation proceeded from the reviewed stories, seams, fences, exclusions, and ticket graph.
 
 The native reader's checkout was clean on return.
 No assignment census record was located for that reader, so its command cost remains unknown.
-Implementation tests and native phase exercises are future acceptance work, not results claimed by this spec phase.
+That initial spec-phase record predates the implementation exercises below.
+
+### Implementation exercise record
+
+An approved build charge verified reviewer approval, complete task inputs, and the frozen tip before its fenced write.
+An unapproved ticket did not dispatch, and a changed prepared input refused until preparation repeated.
+
+Native triage retained invalid-probe, no-test-executed, scope-defect, unknown, and missing-coverage dispositions.
+The missing-coverage baseline ran in 18.104 seconds with zero skips; four silent mutations restored.
+Triage proposed no acceptance outcome, and the coordinator independently verified the repair probe.
+
+Native capacity refusal recorded `agent thread limit reached` without a substitute launcher or inline axes.
+Its capable-harness handoff retained the prepared charges.
+DP20 and DP21 remain pending the coordinator's prepared-review return and withheld-return record in the existing primary handoff.
+
+The isolated linked-repository dogfood shift consumed this corrected kit and committed Terra's README completion-rule change as `6c95593`.
+Its configured `go test ./...` gate passed.
+Earlier disposable attempts ended before a green shift and provide no acceptance credit.
