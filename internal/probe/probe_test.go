@@ -179,6 +179,17 @@ func probeRow(t *testing.T, verdict, subject, mutation, cause string, failed int
 	return out
 }
 
+// selectionRow derives one expected selection block through the encoder the verb renders
+// with, so the expectation and the row share one quoting rule.
+func selectionRow(t *testing.T, form, target, run string, ran int) string {
+	t.Helper()
+	out, err := toon.TableTyped("selection", selectionFields, [][]any{{form, target, run, ran}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return out
+}
+
 // runProbe drives the verb and answers its stdout and exit.
 func runProbe(t *testing.T, args ...string) (string, int) {
 	t.Helper()
@@ -324,8 +335,34 @@ func TestProbeCarriesTheFocusedRunTables(t *testing.T) {
 	if reportCode != 1 {
 		t.Fatalf("focused run exit = %d, want 1\n%s", reportCode, report)
 	}
-	if out != row+report {
-		t.Fatalf("stdout = %q, want the row then %q", out, report)
+	if want := row + selectionRow(t, "package", "./", "^TestClampNegative$", 1) + report; out != want {
+		t.Fatalf("stdout = %q, want %q", out, want)
+	}
+}
+
+// twoRuns is one stream with a run event for each of two tests, so the count the row
+// carries is observable apart from the number of failures.
+const twoRuns = `{"Action":"run","Package":"probefixture","Test":"TestClampNegative"}
+{"Action":"output","Package":"probefixture","Test":"TestClampNegative","Output":"    caught\n"}
+{"Action":"fail","Package":"probefixture","Test":"TestClampNegative","Elapsed":0}
+{"Action":"run","Package":"probefixture","Test":"TestClampPositive"}
+{"Action":"pass","Package":"probefixture","Test":"TestClampPositive","Elapsed":0}
+{"Action":"fail","Package":"probefixture","Elapsed":0.01}`
+
+// DG3: the ran cell counts the distinct tests that emitted a run event, so a run that
+// started no test cannot read as evidence beside its invalid verdict.
+func TestProbeCountsTheTestsThatRan(t *testing.T) {
+	f := newFixture(t)
+	installStubGo(t, f, twoRuns, 1, "")
+	out, code := runProbe(t, probeArgs()...)
+	if want := selectionRow(t, "package", "./", "^TestClampNegative$", 2); code != 0 || !strings.Contains(out, want) {
+		t.Fatalf("stdout = (%q, %d), want %q and 0", out, code, want)
+	}
+	installStubGo(t, f, `{"Action":"pass","Package":"probefixture","Elapsed":0.01}`, 0, "")
+	quiet, code := runProbe(t, probeArgs()...)
+	want := probeRow(t, "invalid", "clamp.go", "swap", "no-test-run", 0, "yes") + selectionRow(t, "package", "./", "^TestClampNegative$", 0)
+	if code != 1 || !strings.HasPrefix(quiet, want) {
+		t.Fatalf("stdout = (%q, %d), want %q first and 1", quiet, code, want)
 	}
 }
 

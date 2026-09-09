@@ -334,6 +334,34 @@ func TestProbeSelectsTheCheckForm(t *testing.T) {
 	}
 }
 
+// DG1: the check form names the check and the root conformance run pattern, so a caller
+// reads which tests the probe selected rather than inferring them from the check name.
+func TestProbeNamesTheCheckSelection(t *testing.T) {
+	f := newFixture(t)
+	installStubGo(t, f, cannedFailure("caught"), 1, "")
+	out, code := runProbe(t, "clamp.go", "--omit", "return 0", "--check", "line-routing")
+	want := selectionRow(t, "check", "line-routing", "^TestRootConformance$", 1)
+	if code != 0 || !strings.Contains(out, want) {
+		t.Fatalf("stdout = (%q, %d), want the check selection row %q and 0", out, code, want)
+	}
+}
+
+// DG2: the package form names its expression and the exact run pattern it passed, and a
+// selection that passed none names `all` rather than an empty cell.
+func TestProbeNamesThePackageSelection(t *testing.T) {
+	f := newFixture(t)
+	installStubGo(t, f, cannedFailure("caught"), 1, "")
+	out, code := runProbe(t, probeArgs()...)
+	want := probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "yes") + selectionRow(t, "package", "./", "^TestClampNegative$", 1)
+	if code != 0 || !strings.HasPrefix(out, want) {
+		t.Fatalf("stdout = (%q, %d), want %q first and 0", out, code, want)
+	}
+	bare, _ := runProbe(t, "clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./")
+	if row := selectionRow(t, "package", "./", "all", 1); !strings.Contains(bare, row) {
+		t.Fatalf("stdout = %q, want the pattern-free selection row %q", bare, row)
+	}
+}
+
 // PB38: the verdict mapping is the one place an outcome becomes a word and an exit.
 func TestVerdictExitCodes(t *testing.T) {
 	for _, tc := range []struct {
@@ -356,7 +384,7 @@ func TestVerdictExitCodes(t *testing.T) {
 		})
 		t.Run(string(tc.kind)+" over a failed restore", func(t *testing.T) {
 			preserved := preservation{file: filepath.Join(t.TempDir(), "clamp.go")}
-			out, code := render(subject{display: "clamp.go"}, "swap", testreport.Outcome{Kind: tc.kind}, "", preserved, false, "denied")
+			out, code := render(subject{display: "clamp.go"}, "swap", testreport.Outcome{Kind: tc.kind}, testreport.Request{}, "", preserved, false, "denied")
 			if code != 2 {
 				t.Fatalf("render(%q) over a failed restore exit = %d, want 2\n%s", tc.kind, code, out)
 			}

@@ -276,16 +276,26 @@ func TestProbeRefusesWhenTheMutationWriteFails(t *testing.T) {
 	requireNoRunChild(t, f)
 }
 
-// PB30: every help spelling answers the grammar's usage line on stdout with exit 0.
+// probeHelpNotes is the three facts the help owes, spelled independently of the producer.
+// A dropped or reworded note reds this row rather than passing as a fresh expectation.
+var probeHelpNotes = []string{
+	"--package <expr> takes a Go package expression, as bench test --package does.",
+	"--check <name> names a conformance check from the bench test --help inventory, and prose and system are not probe targets.",
+	"A named check compiles from the run binary's source, so an edited tree needs bench worktree build <target> first.",
+}
+
+// PB30 and DG4: every help spelling answers the usage line and then the notes block with
+// exit 0.
 func TestProbeHelpSpellings(t *testing.T) {
 	for _, spelling := range []string{"--help", "-h", "help"} {
 		t.Run(spelling, func(t *testing.T) {
 			out, code := Command([]string{spelling})
-			if code != 0 || out != grammar.Help+"\n" {
-				t.Fatalf("%s = (%q, %d), want the usage line and 0", spelling, out, code)
-			}
 			if !strings.HasPrefix(out, "usage: bench probe <file> (--swap") {
 				t.Fatalf("usage line = %q", out)
+			}
+			want := grammar.Help + "\nnotes:\n  " + strings.Join(probeHelpNotes, "\n  ") + "\n"
+			if code != 0 || out != want {
+				t.Fatalf("%s = (%q, %d), want (%q, 0)", spelling, out, code, want)
 			}
 		})
 	}

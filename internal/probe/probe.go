@@ -21,6 +21,10 @@ const proseCheck = "prose"
 // renders through toon.TableTyped and that cell stays an integer on a round-trip.
 var probeFields = []string{"verdict", "subject", "mutation", "cause", "failed_tests", "restored"}
 
+// selectionFields is the schema of the row that names what the probe ran. ran is a genuine
+// count, so the row renders through toon.TableTyped and that cell stays an integer.
+var selectionFields = []string{"form", "target", "run", "ran"}
+
 // run applies the refusal order and then the probe itself. Every refusal below answers
 // before preserve writes anything, which is what makes a refused probe leave the tree,
 // the Bench home, and the process table exactly as it found them.
@@ -125,7 +129,7 @@ func probe(root string, subject subject, mutated []byte, mutation string, reques
 	if restored {
 		preserved.release()
 	}
-	return render(subject, mutation, outcome, report, preserved, restored, reason)
+	return render(subject, mutation, outcome, request, report, preserved, restored, reason)
 }
 
 // render prints the verdict row first, so a caller reads the answer before the evidence.
@@ -133,14 +137,13 @@ func probe(root string, subject subject, mutated []byte, mutation string, reques
 // row and the report, and the restore has already run by then, which is why an unprintable
 // name still leaves a clean tree. The restore-failed verdict overrides every other answer,
 // so a failed restore keeps the preserved row and exit 2 even when the row itself refuses.
-func render(subject subject, mutation string, outcome testreport.Outcome, report string, preserved preservation, restored bool, reason string) (string, int) {
+func render(subject subject, mutation string, outcome testreport.Outcome, request testreport.Request, report string, preserved preservation, restored bool, reason string) (string, int) {
 	verdict, code := verdictFor(outcome.Kind)
 	restoredCell := "yes"
 	if !restored {
 		verdict, code, restoredCell = "restore-failed", 2, "no"
 	}
-	row := []any{verdict, subject.display, mutation, string(outcome.Kind), outcome.FailedTests, restoredCell}
-	out, err := toon.TableTyped("probe", probeFields, [][]any{row})
+	out, err := rows(subject, mutation, verdict, restoredCell, outcome, request)
 	if err != nil {
 		out, report = toon.RenderError(err)+"\n", ""
 		if restored {
@@ -160,6 +163,24 @@ func render(subject subject, mutation string, outcome testreport.Outcome, report
 		out += block
 	}
 	return out + report, code
+}
+
+// rows renders the verdict row and the selection row that follows it. The pair renders in
+// one call, so a cell the encoder cannot carry refuses both rather than printing half an
+// answer. The selection row names what the focused run selected and how many tests it ran,
+// which is what separates a mutation no test observed from a run that started none.
+func rows(subject subject, mutation, verdict, restoredCell string, outcome testreport.Outcome, request testreport.Request) (string, error) {
+	verdictRow := []any{verdict, subject.display, mutation, string(outcome.Kind), outcome.FailedTests, restoredCell}
+	out, err := toon.TableTyped("probe", probeFields, [][]any{verdictRow})
+	if err != nil {
+		return "", err
+	}
+	selectionRow := []any{request.Form(), request.Target(), request.Run(), outcome.Ran}
+	block, err := toon.TableTyped("selection", selectionFields, [][]any{selectionRow})
+	if err != nil {
+		return "", err
+	}
+	return out + block, nil
 }
 
 // verdictFor maps the focused run's outcome onto the word a caller cites. A failing test is
