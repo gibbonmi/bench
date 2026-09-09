@@ -1,7 +1,6 @@
 package gate
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -142,14 +141,19 @@ func gateProseStaged(root string, stdout io.Writer) int {
 // readIndexBlob reads one index blob under the control-record bound and grades the bytes
 // through the classifier the named form's file read uses. A blob over the limit or holding
 // invalid UTF-8 is refused rather than parsed, so the staged form and the named form
-// dispose of the same bytes the same way. The returned reason is empty for bytes a grade
-// may trust, and it names the fault otherwise.
+// dispose of the same bytes the same way. The bound applies to the stream, so an oversized
+// blob stops the read at the limit rather than reaching memory whole. The returned reason
+// is empty for bytes a grade may trust, and it names the fault otherwise.
 func readIndexBlob(root, path string) ([]byte, string) {
-	raw, err := git.IndexBlob(root, path)
+	stream, err := git.IndexBlobReader(root, path)
 	if err != nil {
 		return nil, err.Error()
 	}
-	classified := bounds.ClassifyBytes(bounds.Read(bytes.NewReader(raw), bounds.ControlRecordLimit))
+	read := bounds.Read(stream, bounds.ControlRecordLimit)
+	if err := stream.Close(); err != nil {
+		return nil, err.Error()
+	}
+	classified := bounds.ClassifyBytes(read)
 	if classified.State.Failed() {
 		return nil, classified.Reason
 	}

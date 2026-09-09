@@ -1,9 +1,14 @@
 package git
 
 import (
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // hostilePaths are the framing-sensitive names the index must carry whole. Every non-`-z`
@@ -177,8 +182,25 @@ func TestIsWorkTreeTopAcceptsARelativeRoot(t *testing.T) {
 	})
 }
 
+// indexBlobBytes drains one index blob through the stream form and closes it. A blob under
+// the caller's bound reaches memory whole, so an assertion over its bytes reads as it did
+// before the stream form.
+func indexBlobBytes(t *testing.T, root, path string) ([]byte, error) {
+	t.Helper()
+	stream, err := IndexBlobReader(root, path)
+	if err != nil {
+		return nil, err
+	}
+	body, readErr := io.ReadAll(stream)
+	if closeErr := stream.Close(); closeErr != nil {
+		return nil, closeErr
+	}
+	return body, readErr
+}
+
 // TestIndexBlobReadsTheIndexNotTheWorkingFile proves the blob read answers the staged
-// bytes for an ordinary path and for a framing-sensitive one.
+// bytes for an ordinary path and for a framing-sensitive one, and that a path the index
+// does not hold refuses under the `git show :<path> in <root>` text every caller reports.
 func TestIndexBlobReadsTheIndexNotTheWorkingFile(t *testing.T) {
 	root := initRepo(t)
 	const hostile = "docs/new\nline.md"
@@ -192,15 +214,53 @@ func TestIndexBlobReadsTheIndexNotTheWorkingFile(t *testing.T) {
 		{"docs/one.md", "staged\n"},
 		{hostile, "staged hostile\n"},
 	} {
-		body, err := IndexBlob(root, want.path)
+		body, err := indexBlobBytes(t, root, want.path)
 		if err != nil {
-			t.Fatalf("IndexBlob %q: %v", want.path, err)
+			t.Fatalf("IndexBlobReader %q: %v", want.path, err)
 		}
 		if string(body) != want.body {
-			t.Errorf("IndexBlob %q = %q, want %q", want.path, body, want.body)
+			t.Errorf("IndexBlobReader %q = %q, want %q", want.path, body, want.body)
 		}
 	}
-	if _, err := IndexBlob(root, "docs/absent.md"); err == nil {
-		t.Fatal("IndexBlob accepted a path the index does not hold")
+	_, err := indexBlobBytes(t, root, "docs/absent.md")
+	if err == nil {
+		t.Fatal("IndexBlobReader accepted a path the index does not hold")
+	}
+	if want := "git show :docs/absent.md in " + root + ": "; !strings.HasPrefix(err.Error(), want) {
+		t.Fatalf("missing-path error = %q, want the %q prefix", err, want)
+	}
+}
+
+// TestIndexBlobReaderBoundsAnOversizedBlob proves the read stops at the caller's bound: a
+// blob three times the control-record limit answers the oversized verdict at the limit,
+// and the close returns rather than leaving the child git writing into the pipe. A form
+// that buffered the whole blob first would hold every byte before the bound applied.
+func TestIndexBlobReaderBoundsAnOversizedBlob(t *testing.T) {
+	root := initRepo(t)
+	plant(t, root, "docs/big.md", strings.Repeat("a", int(bounds.ControlRecordLimit*3)))
+	runGit(t, root, "add", "-A")
+
+	stream, err := IndexBlobReader(root, "docs/big.md")
+	if err != nil {
+		t.Fatalf("IndexBlobReader: %v", err)
+	}
+	read := bounds.Read(stream, bounds.ControlRecordLimit)
+	if read.Status != bounds.ReadOversized {
+		t.Fatalf("read status = %q, want %q", read.Status, bounds.ReadOversized)
+	}
+	if got := int64(len(read.Data)); got != bounds.ControlRecordLimit {
+		t.Fatalf("bytes kept = %d, want the limit %d", got, bounds.ControlRecordLimit)
+	}
+
+	closed := make(chan error, 1)
+	go func() { closed <- stream.Close() }()
+	window := bounds.TestDeadline(0)
+	select {
+	case err := <-closed:
+		if err != nil {
+			t.Fatalf("close after a bounded read: %v", err)
+		}
+	case <-time.After(window):
+		t.Fatal(bounds.TestTimeoutVerdict("the bounded blob read to reap its git child", window))
 	}
 }

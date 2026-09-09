@@ -104,6 +104,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- `bench gate-prose --staged` now bounds each index blob during the read. The `git show`
+  stream stops at the control-record limit plus one byte, so an oversized staged blob
+  never reaches memory whole. The oversized diagnostic and the missing-path error text
+  do not change.
 - Added four standing rules from the `ft311-diagnostics` retro to the kit references.
   `map-discipline.md` requires a row and a fixture for each state, kind, or condition an
   implementation decision names, one row per enumerated kind, a producer before any
