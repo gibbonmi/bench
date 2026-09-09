@@ -119,7 +119,8 @@ The `form` cell is `check` or `package`.
 
 The `target` cell is the check name or the package expression.
 The `run` cell is the exact `-run` pattern the focused run passed to Go, or `all` when it passed none.
-The `baseline` cell is the baseline outcome kind.
+The `baseline` cell is the observed baseline outcome kind, and it joins the row with the baseline run.
+The selection ticket renders the row without that cell, so no committed slice prints a baseline it did not run.
 The `ran` cell counts the distinct tests that emitted a run event in the mutated run.
 It reads 0 when that run did not start.
 
@@ -140,6 +141,8 @@ The report after the rows is the baseline report, so its failures table names th
 `--full` reaches both runs.
 
 The baseline holds the shared cache lock like every focused run.
+The five non-passed kinds are `failed`, `build-failed`, `no-test-run`, `refused`, and `interrupted`, and each one has its own case.
+A baseline that reaches no Go verdict answers `baseline-refused`.
 An interrupt during the baseline answers `baseline-interrupted` and leaves the tree as it was.
 The probe writes no record and reads no gate verdict.
 
@@ -168,6 +171,10 @@ On an unborn branch every index entry is staged.
 The subject bytes come from the index blob, never from the working file.
 
 The exclusion policy comes from the index blob of the exclusion file, and an absent entry answers the existing absent-policy diagnostic.
+The policy constructor validates each exclusion target against the index entry list, never against the working tree.
+A target that is an index entry is a file row, and a target that is a prefix of index entries is a directory.
+A target that is neither reds as an absent path, and a directory row without a trailing slash reds as today.
+
 A staged deletion and a staged symlink are not subjects.
 The Git adapter owns the two index reads.
 It lists paths with NUL framing, so a space, a quote, a tab, or a newline survives.
@@ -242,7 +249,7 @@ The full landing gate remains the code oracle.
 | DG8 | 10 | A failing baseline answers verdict `invalid`, cause `baseline-failed`, and the baseline failures table. | New TestProbeRefusesARedBaseline through probe Command | A stub that fails on the first start must not answer `bit`. |
 | DG9 | 11 | A red baseline writes no mutation and leaves the Bench home empty. | New TestProbeRefusesARedBaseline through probe Command | The subject bytes and the home listing red on any write. |
 | DG10 | 12 | The selection row's baseline cell reads `passed` on a bite and `failed` on a red baseline. | New TestProbeNamesTheCheckSelection and TestProbeRefusesARedBaseline | A constant cell fails one of the two comparisons. |
-| DG11 | 13 | A baseline with no verdict names its kind in the cause. | New TestProbeReportsABaselineWithoutAVerdict through probe Command | Build-failed and no-test streams give `baseline-build-failed` and `baseline-no-test-run`, never `baseline-failed`. |
+| DG11 | 13 | A baseline with no verdict names its kind in the cause. | New TestProbeReportsABaselineWithoutAVerdict through probe Command | A build-failed stream without `--run` and a no-test stream give `baseline-build-failed` and `baseline-no-test-run`, never `baseline-failed`. |
 | DG12 | 9 | `--full` reaches the baseline report. | Existing TestProbeForwardsFullToTheFocusedRun extended | A long baseline diagnostic is previewed without the flag and complete with it. |
 | DG13 | 14 | A paragraph finding from the named form lists each sentence's line and start in order. | New TestGateProseCommandNamesTheSentenceStarts through GateProseCommand | Seven sentences across three lines give seven items with the right lines. |
 | DG14 | 15 | A start is the first three words as written, and a short sentence gives its words. | New TestParagraphSentenceStarts through prose Findings | Two sentences on one line give two distinct starts, and a code span stays verbatim. |
@@ -261,10 +268,16 @@ The full landing gate remains the code oracle.
 | DG27 | 27 | An absent needle prints 0, and an absent file prints 0 on every row. | New TestAnchorsReportsAbsentNeedles through anchorsCommand | A removed needle must read 0 while its siblings keep their lines. |
 | DG28 | 28 | A section needle outside its section prints 0, and one inside prints its line. | New TestLocateHonorsSectionScope in the anchors package | A whole-file search reds the outside placement. |
 | DG29 | 29 | A needle split across lines, after a multi-line comment, or after non-ASCII uppercase text prints its first character's line. | New TestLocateMapsCollapsedMatchesToLines in the anchors package | Byte-offset locating reds the comment and case-fold shapes. |
-| DG30 | 30 | A symlink, a FIFO, or an unreadable anchor file answers a structured refusal at exit 1. | New TestAnchorsRefusesAnUnreadableFile through anchorsCommand | A plain read prints zero lines at exit 0. |
-| DG31 | 31 | The empty state is the four-cell header plus the empty help envelope, and the help names four cells. | Existing command_registry_test AXI matrix and help_inventory_test updated | The pinned markers red on the old shape. |
+| DG30 | 30 | A symlink, a FIFO, or an unreadable anchor file answers a structured refusal at exit 1. | New TestAnchorsRefusesAnUnreadableFile through anchorsCommand | A plain read prints 0 on every row at exit 0 for the link, and blocks in open on the FIFO. |
+| DG31 | 31 | The empty state is the four-cell header plus the empty help envelope, and the help names four cells. | Existing TestAXIRegistryBindsEachRealCommandEnvelope and TestHelpInventoryIsComplete updated | The pinned markers red on the old shape. |
 | DG32 | 32 | The reference and the glossary describe the baseline, the selection row, the staged form, the starts, and the line. | Review-owned Spec axis over the two files | A missing paragraph leaves a cold session on the old behavior. |
 | DG33 | 33 | No landing, reset, tier-default, or `bench test` table change enters the build. | Review-owned scope audit | An added report column or a landing edit is outside the fence. |
+| DG34 | 20 | An exclusion target present in the index and absent from the working tree is honored, and a target absent from the index reds the policy. | New TestGateProseStagedValidatesTargetsAgainstTheIndex through GateProseCommand | A working-tree stat reds the first case and passes the second. |
+| DG35 | 13 | A baseline that reaches no Go verdict answers `baseline-refused` with `untouched`. | New TestProbeReportsABaselineRefusal through probe Command | A stub Go that prints no event and exits 1 reaches the no-packages refusal, and a collapsed cause reds. |
+| DG36 | 13 | An interrupt during the baseline answers `baseline-interrupted` and `untouched` with the subject and the home untouched. | Existing TestProbeRestoresOnInterrupt split into a first-start case and a second-start case | The first-start signal must not print `interrupted` with `yes`, and the second-start signal keeps the restored row. |
+| DG37 | 18 | On an unborn branch the staged form grades every index entry. | New TestGateProseStagedUnbornBranch through GateProseCommand | A form that diffs against HEAD refuses or grades nothing. |
+| DG38 | 20 | An index without the exclusion file answers the absent-policy diagnostic at exit 1. | New TestGateProseStagedAbsentPolicy through GateProseCommand | A form that treats an absent policy as empty passes. |
+| DG39 | 28 | A duplicated owning section prints 0 for its section needle. | New TestLocateHonorsSectionScope in the anchors package | A locate that searches the first duplicate prints its line. |
 
 ### Edge inventory
 
@@ -274,17 +287,18 @@ Every behavior serves this repository and every repository that links the kit, e
 
 | Class | Concrete disposition | Rows |
 |---|---|---|
-| Absent versus empty | An absent anchor file gives 0 on every row, and an empty index gives an empty pass table. An absent exclusion entry in the index keeps the absent-policy diagnostic. | DG19, DG22, DG27 |
+| Absent versus empty | An absent anchor file gives 0 on every row, and an empty index gives an empty pass table. An absent exclusion entry in the index keeps the absent-policy diagnostic. | DG22, DG27, DG38 |
+| Sections | A section needle outside its section, or under a duplicated heading, prints 0. | DG28, DG39 |
 | File kinds | A link, a FIFO, or a device at the anchor path refuses before the read. A staged symlink is not a prose subject. | DG20, DG30 |
 | Paths | A space, a double quote, a tab, and a newline in a staged path survive NUL framing and the encoder. | DG21 |
 | Text sinks | A control byte in a sentence start is escaped, and the whole-tree grade carries no document text. | DG15, DG16 |
 | Grammar | `--staged` beside a path or a `--`, and a probe form refusal, answer one usage line at exit 2. | DG6, DG23 |
-| Index versus working tree | The staged bytes and the staged policy win over the working file. An unborn branch stages every entry. | DG18, DG19 |
+| Index versus working tree | The staged bytes, the staged policy, and the policy's target validation win over the working tree. An unborn branch stages every entry. | DG18, DG19, DG34, DG37 |
 | Whitespace and case | A needle split across lines and a case fold that changes byte length still map to the first character's line. | DG29 |
 | Comments | A needle inside an HTML comment has no match, and text after a multi-line comment keeps its physical line. | DG27, DG29 |
-| No execution | A baseline or a mutated run with no test run cannot read as evidence. | DG3, DG11 |
+| No execution | A baseline or a mutated run with no test run cannot read as evidence, and a baseline with no Go verdict is refused. | DG3, DG11, DG35 |
 | Already red | A red baseline is `invalid` and names the red tests, and it writes nothing. | DG8, DG9 |
-| Interruption | An interrupt during the baseline answers `baseline-interrupted` and leaves the tree untouched. | DG11 |
+| Interruption | An interrupt during the baseline answers `baseline-interrupted` and leaves the tree untouched. | DG36 |
 | Repetition | Two probes on one repository keep separate preserved copies, as today, and the baseline adds no record. | DG9 |
 | Process boundary | The stub Go proves the baseline start order from outside the verb's process. | DG7 |
 | Root | A root that is not a working-tree top refuses the staged form. | DG25 |
@@ -360,8 +374,10 @@ The command registry, its two pinned conformance tests, and the four canary entr
 The registry is named because the probe and the anchors query are bound commands, and the canary families pin the guidance files.
 The expected edit inside them is the anchors description and the three-cell pins, and no guidance fixture changes.
 
+The coordinator owns the conditional review pickup, so no ticket names it.
+
 The build cannot edit this spec, its acceptance rows, or its ticket graph without the existing spec-change authority.
-Four fenced files are over the line budget: the command registry, its registry test, the prose parser, and the focused-run command file.
+Four fenced files are over the line budget: `cmd/bench/main.go`, `cmd/bench/command_registry_test.go`, `internal/prose/parse.go`, and `internal/testreport/command.go`.
 Each of them changes in place or sheds lines in the same commit, and none of them gains a line.
 
 ## Out of scope
@@ -457,7 +473,7 @@ Historical audits under docs and the closed FT303 assessment name the verbs with
 - Promised field labels: `selection`, `form`, `target`, `run`, `baseline`, `ran`, `untouched`, `baseline-failed`, `baseline-build-failed`, `baseline-no-test-run`, `baseline-refused`, `baseline-interrupted`, `notes:`, `--staged`, `sentences`, `line`.
 - Changed-function callers: probe render and run are called inside the probe only. testreport Prepare and Execute are called by the probe, and Command by the registry and the merge verb. prose Render is called by RenderNamedResult only. GateProseCommand is called by the registry only. anchorsCommand is called by the registry and its test.
 - Copy survival: none. No copy is replaced by a new owner.
-- Git flags: `diff --cached --name-only -z --diff-filter=ACMRT --no-renames`, `ls-files --stage -z`, and `show :<path>` ran on 2026-09-09 over the hostile shapes. The shapes were an unborn branch, a differing working file, a staged deletion, a staged symlink, a rename, and a type change. The paths carried a space, a double quote, a tab, and a newline. The listing framed every path whole, the symlink carried mode 120000, and the deletion was absent under the filter.
+- Git flags: `diff --cached --name-only -z --diff-filter=ACMRT --no-renames`, `ls-files --stage -z`, and `show :<path>` ran on 2026-09-09 under Git 2.43.0 over the hostile shapes. On an unborn branch the listing named the one added file. With the index at `Two.` and the working file at `Three working.`, the blob read answered `Two.`. The deletion was absent under the filter, and the rename listed only its new name. A link-to-file type change listed under `T`, and the symlink entry carried mode 120000 and answered the link target. The listing framed a space, a double quote, a tab, and a newline whole, and the blob reads for those paths answered their bytes.
 
 ### Flagged additions and engineering choices
 
@@ -474,8 +490,8 @@ The three-word start is a choice, and a reviewer can widen it without a row chan
 | 1. Locate anchor needles | none | `bench anchors` prints a typed line per needle and refuses an unreadable file |
 | 2. Print the sentence starts of a long paragraph | none | The named prose form lists each sentence's line and start |
 | 3. Grade the staged Markdown | 2.md | `bench gate-prose <root> --staged` grades the index bytes and policy |
-| 4. Name the probe selection and its help | 1.md | The selection row and the owner-derived help notes |
-| 5. Run the baseline before the mutation | 4.md | A red baseline is `invalid`, writes nothing, and names the red tests |
+| 4. Name the probe selection and its help | 1.md | The four-cell selection row and the owner-derived help notes |
+| 5. Run the baseline before the mutation | 4.md | The baseline run, its cell in the selection row, and the five non-passed kinds |
 | 6. Fold the guidance and the changelog | 3.md, 5.md | The reference, the glossary, and the changelog state the landed behavior |
 
 Tickets 1 and 2 form the first frontier and run in parallel, one worktree each.
