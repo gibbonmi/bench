@@ -248,7 +248,7 @@ The full landing gate remains the code oracle.
 | DG7 | 9 | The probe starts one Go test before the mutation and one after it. | New TestProbeRunsTheBaselineFirst through probe Command | The marker records two starts, and the stub's first-start copy of the subject holds the unmutated bytes. |
 | DG8 | 10 | A failing baseline answers verdict `invalid`, cause `baseline-failed`, and the baseline failures table. | New TestProbeRefusesARedBaseline through probe Command | A stub that fails on the first start must not answer `bit`. |
 | DG9 | 11 | A red baseline writes no mutation and leaves the Bench home empty. | New TestProbeRefusesARedBaseline through probe Command | The subject bytes and the home listing red on any write. |
-| DG10 | 12 | The selection row's baseline cell reads `passed` on a bite and `failed` on a red baseline. | New TestProbeNamesTheCheckSelection and TestProbeRefusesARedBaseline | A constant cell fails one of the two comparisons. |
+| DG10 | 12 | The selection row's baseline cell reads `passed` on a bite and `failed` on a red baseline. | New TestProbeNamesTheCheckSelection and TestProbeRefusesARedBaseline | A constant `failed` cell fails the bite comparison, and the `passed` cell is a structural repair, because the mutated run is reachable only over a passed baseline. |
 | DG11 | 13 | A baseline with no verdict names its kind in the cause. | New TestProbeReportsABaselineWithoutAVerdict through probe Command | A build-failed stream without `--run` and a no-test stream give `baseline-build-failed` and `baseline-no-test-run`, never `baseline-failed`. |
 | DG12 | 9 | `--full` reaches the baseline report. | Existing TestProbeForwardsFullToTheFocusedRun extended | A long baseline diagnostic is previewed without the flag and complete with it. |
 | DG13 | 14 | A paragraph finding from the named form lists each sentence's line and start in order. | New TestGateProseCommandNamesTheSentenceStarts through GateProseCommand | Seven sentences across three lines give seven items with the right lines. |
@@ -414,7 +414,7 @@ The existing merge lane and the landing gate remain unchanged.
 
 The initial review at tip `9eed6663e1c2fc9ae656b1ffe9903f1393fa10bc` over base `f41917040c24637ca0c5d69441398361559ce319` returned 15 findings across the three axes and 9 repair targets.
 Ticket 7 carries the accepted repairs and rows DG40 through DG43.
-The build extended three ticket fences in range for test files that did not fit the line budget. It flags each extension for reviewer veto.
+The build extended the ticket fences in range. Five test files did not fit the line budget, and the one-source repairs needed `internal/prose/walk.go` and `internal/bounds/classify.go`. It flags each extension for reviewer veto.
 
 The coordinator ran three dogfood runs on the reviewed tip.
 A `bench probe` swap of one word in the owner's notes reddened the three help spellings, so the independent help expectation is the mutation catch.
