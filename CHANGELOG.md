@@ -104,6 +104,13 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- `bench worktree clean --discard-branch <path>` now removes a checkout that sits on a
+  `bench/shift-*` branch. A `bench shift` leaves that branch checked out in place of the
+  assignment branch, and the mismatch retained the tree on every path. The flag
+  authorizes the shift namespace alone; a mismatch onto any other branch still retains
+  with the reason `assignment does not match current branch`. The apply deletes the
+  shift branch and leaves the assignment branch unclaimed. The automatic sweep and the
+  `--landed` set plan with empty options, so neither sees the exception.
 - `bench gate-prose --staged` now bounds each index blob during the read. The `git show`
   stream stops at the control-record limit plus one byte, so an oversized staged blob
   never reaches memory whole. The oversized diagnostic and the missing-path error text
