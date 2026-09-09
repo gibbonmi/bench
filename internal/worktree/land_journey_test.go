@@ -414,8 +414,8 @@ func TestLandRelaysTheBoundedGreenShapeBeforeTheLandedRecord(t *testing.T) {
 	if !strings.HasPrefix(stdout.String(), cannedGreenShape) {
 		t.Fatalf("stdout = %q, want it to open with the gate's bytes unchanged %q", stdout.String(), cannedGreenShape)
 	}
-	if rest := strings.TrimPrefix(stdout.String(), cannedGreenShape); !strings.HasPrefix(rest, "landed{") {
-		t.Errorf("stdout after the shape = %q, want the landed record next", rest)
+	if rest := strings.TrimPrefix(stdout.String(), cannedGreenShape); !strings.HasPrefix(rest, wantEffects("not-applicable")+"landed{") {
+		t.Errorf("stdout after the shape = %q, want the effects table and then the landed record", rest)
 	}
 }
 
