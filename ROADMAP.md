@@ -43,6 +43,8 @@ findings in the owner details.
 
 **FT312 (MEDIUM) — a native `bench` verb codifies the cross-harness reviewer invocation.**
 
+**FT313 (MEDIUM) — a write or repair charge binds every acceptance row to a named test and names its baseline artifact.**
+
 **FT283 (MEDIUM, decision required) — `bench worktree land --spec` has one phase-scoped transition contract.**
 
 **FT284 (MEDIUM, decision required) — `bench spec retire` owns its roadmap retirement atomically.**
@@ -215,6 +217,7 @@ recommended table is sequencing advice.
 | FT240 | FT231 | The experiment keeps its approved three-arm comparison. |
 | FT304 | FT172 | The view needs the identity contract. |
 | FT306 | FT305, FT71 | Adoption follows durable execution and the held local evidence. |
+| FT172 | FT311 | The stage-list grammar lands after the last staged row it grades. |
 
 ### Recommended
 
@@ -236,3 +239,4 @@ recommended table is sequencing advice.
 2. FT311 recoverable-reset spec, the fourth of five — run `/bench-write-spec` after the landing-completion spec lands.
 3. FT312 cross-harness reviewer verb — run `/bench-write-spec`.
 4. FT300 ticket-slicing fence and refusal-state rules — a `craft-synthesis` kit edit to `craft-tickets`.
+5. FT172 roadmap row grammar — a reviewer decision, after the last FT311 stage.
