@@ -428,16 +428,64 @@ func TestStructuredPhaseContractPinsTheFixedClauseSet(t *testing.T) {
 	}
 }
 
-const integrationSourceDiagnosticPrefix = "workflow integration source: "
+// plantedAnchorContradiction replaces a file's conformant text. It matches no anchor
+// needle, so it contradicts a Require row and satisfies a Forbid row.
+const plantedAnchorContradiction = "planted contradictory clause"
 
-func integrationSourceWorkflowAnchors() []anchors.Anchor {
+func anchorsWithDiagnosticPrefix(prefix string) []anchors.Anchor {
 	var found []anchors.Anchor
 	for _, anchor := range anchors.Entries() {
-		if strings.HasPrefix(anchor.Diagnostic, integrationSourceDiagnosticPrefix) {
+		if strings.HasPrefix(anchor.Diagnostic, prefix) {
 			found = append(found, anchor)
 		}
 	}
 	return found
+}
+
+// runAnchorBites proves that each anchor in a family bites alone. A subtest writes the
+// conformant file, requires silence, plants the contradiction, and requires the
+// diagnostic. A Forbid row swaps the pair, because its needle is the contradiction.
+// subject names each subtest. Two anchors that share one subject hide each other in the
+// run output, so a repeated subject fails the family.
+func runAnchorBites(t *testing.T, family []anchors.Anchor, subject func(anchors.Anchor) string) {
+	t.Helper()
+	seen := map[string]bool{}
+	for _, anchor := range family {
+		name := subject(anchor)
+		if seen[name] {
+			t.Fatalf("anchor bite subject repeated: %s", name)
+		}
+		seen[name] = true
+		t.Run(name, func(t *testing.T) {
+			conformant, contradictory := anchor.Needle, plantedAnchorContradiction
+			if anchor.Kind == anchors.Forbid {
+				conformant, contradictory = contradictory, anchor.Needle
+			}
+			root := t.TempDir()
+			path := filepath.Join(root, filepath.FromSlash(anchor.File))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte(conformant+"\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if diags := checkWorkflowAnchors(root); containsDiagnostic(diags, anchor.Diagnostic) {
+				t.Fatalf("anchor is red while its file conforms: %s", anchor.Diagnostic)
+			}
+			if err := os.WriteFile(path, []byte(contradictory+"\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if diags := checkWorkflowAnchors(root); !containsDiagnostic(diags, anchor.Diagnostic) {
+				t.Fatalf("the contradictory file did not bite with %q", anchor.Diagnostic)
+			}
+		})
+	}
+}
+
+const integrationSourceDiagnosticPrefix = "workflow integration source: "
+
+func integrationSourceWorkflowAnchors() []anchors.Anchor {
+	return anchorsWithDiagnosticPrefix(integrationSourceDiagnosticPrefix)
 }
 
 func checkIntegrationSourceWorkflowCurrency(root string) []string {
@@ -469,30 +517,5 @@ func TestIntegrationSourceWorkflowAnchorsBiteIndependently(t *testing.T) {
 	if got, want := len(workflowAnchors), 11; got != want {
 		t.Fatalf("integration-source workflow anchor count = %d, want %d", got, want)
 	}
-	seenFiles := map[string]bool{}
-	for _, anchor := range workflowAnchors {
-		if seenFiles[anchor.File] {
-			t.Fatalf("integration-source workflow surface repeated: %s", anchor.File)
-		}
-		seenFiles[anchor.File] = true
-		t.Run(anchor.File, func(t *testing.T) {
-			root := t.TempDir()
-			path := filepath.Join(root, filepath.FromSlash(anchor.File))
-			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-				t.Fatal(err)
-			}
-			if err := os.WriteFile(path, []byte(anchor.Needle+"\n"), 0o644); err != nil {
-				t.Fatal(err)
-			}
-			if diags := checkWorkflowAnchors(root); containsDiagnostic(diags, anchor.Diagnostic) {
-				t.Fatalf("anchor is red while its current-state sentence is present: %s", anchor.Diagnostic)
-			}
-			if err := os.WriteFile(path, []byte("planted old workflow\n"), 0o644); err != nil {
-				t.Fatal(err)
-			}
-			if diags := checkWorkflowAnchors(root); !containsDiagnostic(diags, anchor.Diagnostic) {
-				t.Fatalf("reverting current-state sentence did not bite with %q", anchor.Diagnostic)
-			}
-		})
-	}
+	runAnchorBites(t, workflowAnchors, func(anchor anchors.Anchor) string { return anchor.File })
 }

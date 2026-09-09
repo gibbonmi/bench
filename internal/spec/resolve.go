@@ -62,8 +62,11 @@ func pathExists(path string) bool {
 	return err == nil
 }
 
-// readCandidate separates a directory, which permits the next resolution form, from
-// every other wrong-type producer path, which is a failed read.
+// readCandidate reads path as a candidate spec through the classifier, so a FIFO or
+// device parked where a spec belongs is rejected before the open rather than blocking
+// forever. An absent path or a directory is not a candidate; it returns (nil, nil) so
+// the caller can try the next form. Any other failure is a real error to surface,
+// never masked as not-found.
 func readCandidate(path string, noFollow bool) ([]byte, error) {
 	var c bounds.Classified
 	if noFollow {
@@ -85,6 +88,10 @@ func readCandidate(path string, noFollow bool) ([]byte, error) {
 	return c.Data, nil
 }
 
+// isDir separates the one non-regular path that means "keep resolving" from the ones
+// that mean "this read failed." A directory named like the candidate simply is not the
+// spec file. A special file where a spec belongs is a problem the caller must hear
+// about.
 func isDir(path string, noFollow bool) bool {
 	var (
 		fi  os.FileInfo

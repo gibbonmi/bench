@@ -19,7 +19,7 @@ the two copies have drifted.
 
 ### ST1. The charge packet renders twice
 
-Disposition: `auto-fix`.
+Disposition: `repaired` by `de8a3854`.
 
 `AGENTS.md` states that two derivations of one fact must collapse into one
 source. `renderCharge` at `internal/preflight/charge.go:48-115` and
@@ -29,7 +29,7 @@ table column `path`. `review.go:185` names the same column `source`.
 
 ### ST2. The anchor bite harness is pasted three times
 
-Disposition: `auto-fix`.
+Disposition: `repaired` in the current conformance patch.
 
 `internal/conformance/docs_workflow_helpers_test.go:431-497` owns the pattern.
 `internal/conformance/ft311_preparation_test.go:12-50` and `:52-113` repeat it.
@@ -38,7 +38,7 @@ subtests with the same name.
 
 ### ST3. A live-tree test escapes its classification
 
-Disposition: `auto-fix`.
+Disposition: `repaired` in the current conformance patch.
 
 `internal/conformance/tier_test.go:422-426` states that `classifiedLiveTreeTests`
 is the sole classification of tests that read the live tree.
@@ -48,14 +48,14 @@ map.
 
 ### ST4. A move deleted a why-comment
 
-Disposition: `auto-fix`.
+Disposition: `repaired` in the current conformance patch.
 
 The rationale that bound `readCandidate` to the hostile-input rule is gone from
 the `internal/spec/` production code.
 
 ### ST5. Both guidance files sit at exactly their budget
 
-Disposition: `ask-user`.
+Disposition: `no-op`.
 
 No rule forbids the long lines or the abutting headings. The base already
 carried both patterns. The axis asks whether zero growth by compression meets
@@ -63,7 +63,7 @@ the budget intent.
 
 ### ST6. The build widened its own fence
 
-Disposition: `ask-user`.
+Disposition: `repaired` by `f14319d4`.
 
 Commits `eb9f9785`, `cd97a787`, and `6f7c7b93` added ownership-fence rows. They
 also rewrote the `Writes:` lines of three tickets. `6f7c7b93` rewrote the answer
@@ -72,20 +72,20 @@ neither shows nor refutes an approval.
 
 ### ST7. Positional source slices couple two renderers to list order
 
-Disposition: `auto-fix`.
+Disposition: `repaired` by `de8a3854`.
 
 `charge.go:70-71` and `review.go:145-146` map an index to a meaning. A reorder
 reassigns the columns with no compile error.
 
 ### ST8. A new anchor registry file carries no doc comment
 
-Disposition: `auto-fix`.
+Disposition: `repaired` in the current conformance patch.
 
 Every sibling file in `internal/anchors` carries one.
 
 ### ST9. Operator diagnostics carry a roadmap identifier
 
-Disposition: `ask-user`.
+Disposition: `repaired` in the current conformance patch.
 
 Every new diagnostic starts with an FT number. The family it copies uses a
 subject-descriptive prefix.
@@ -97,7 +97,7 @@ shared evidence that ticket 3 built.
 
 ### SP1. The review phase does not consume the prepared evidence
 
-Disposition: `auto-fix`.
+Disposition: `repaired` by `062aaafd`.
 
 Ticket 5 requires the phase to consume the ticket 3 shared evidence. No
 `--charge` invocation exists in `.agents/commands/bench-review-implementation.md`.
@@ -107,7 +107,7 @@ that file.
 
 ### SP2. The charge output contract deviates
 
-Disposition: `auto-fix`.
+Disposition: `repaired` by `de8a3854`.
 
 The spec pins ten labels at `specs/ft311-delegate-preparation/spec.md:111`. The
 build form emits twelve. The `fence` cell and the `evidence` cell hold the
@@ -116,7 +116,7 @@ identical. The coordinator observed both results in real runs.
 
 ### SP3. The triage input contract landed nowhere
 
-Disposition: `auto-fix`.
+Disposition: `repaired` by `062aaafd`.
 
 Spec lines 213 and 214 name the inputs that triage must receive. The list is the
 failed command, the selected checks, the execution evidence, the findings, and
@@ -124,7 +124,7 @@ the frozen source. A repository sweep finds that requirement in no guidance file
 
 ### SP4. Two acceptance rows name tests that do not exist
 
-Disposition: `ask-user`.
+Disposition: `repaired` by `f14319d4`.
 
 Rows DP7 and DP8 name `TestChargeProjection` and `TestChargeFullRetrieval`. The
 build shipped one merged test. Both behaviors are covered, so this is a false
@@ -137,7 +137,7 @@ the owning suite stays green.
 
 ### CV1. The charge row cells are graded only by co-located tables
 
-Disposition: `auto-fix`.
+Disposition: `repaired` by `de8a3854`.
 
 Four probes at the reviewed tip emptied required cells. Each one returned
 `silent` against `./internal/preflight`, and each one restored. The coordinator
@@ -147,16 +147,21 @@ them.
 
 ### CV2. Six review-owned rows have no stored record
 
-Disposition: `ask-user`.
+Disposition: `stopped`; durable complete live evidence is still absent.
 
 Rows DP19, DP21, DP22, DP23, DP24, and DP25 name a live exercise. No artifact in
 the tree holds a dispatch record or a return. The finding discipline states that
 evidence which lives only in a delegate return is not citable at the landing.
 Row DP20 is the exception, because this three-axis run is its exercise.
 
+DP24 has native triage evidence for missing coverage: the owning preflight baseline
+ran in 18.104 seconds with zero skips, and four mutations restored silently. It does
+not close CV2. DP21 and DP22 failure exercises, real shift, and re-review stopped by
+the latest user instruction.
+
 ### CV3. A cross-package contract has no test
 
-Disposition: `auto-fix`.
+Disposition: `repaired` by `de8a3854`.
 
 `internal/preflight/review.go:83-105` hard-codes the meta shape that
 `internal/consumers/command.go:99` declares. A rename there refuses every review
@@ -164,7 +169,7 @@ charge. The consumers suite stays green.
 
 ### CV4. One hostile-input class is open
 
-Disposition: `auto-fix`.
+Disposition: `repaired` by `de8a3854`.
 
 The project profile lists a working directory deeper than the repository root.
 No charge test and no proposal test runs from a nested directory. The spec edge
@@ -186,7 +191,8 @@ runtime fact about the operator environment.
 
 ### FA2. The live review exercise is open
 
-Accepted. This finding merges into CV2.
+Disposition: `stopped`; this finding remains in CV2 because live exercises stopped
+by the latest user instruction.
 
 ### FA3. The anchor matcher is a substring match
 
