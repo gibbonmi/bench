@@ -37,7 +37,7 @@ findings in the owner details.
 
 **FT308 (MEDIUM, decision required) — the cleanup transaction's persistence lock leaves `.git` when its record is gone.**
 
-**FT311 (MEDIUM, decision required) — repeated coordinator chunks fold into Bench verbs and cheap-tier delegates.**
+**FT311 (MEDIUM) — repeated coordinator chunks fold into Bench verbs and cheap-tier delegates.**
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
@@ -232,5 +232,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT311 coordinator chunk folds — a reviewer decision on the fold-runs-the-lane question.
-2. FT312 cross-harness reviewer verb — run `/bench-write-spec`.
+1. FT311 diagnostics spec, the second of five from `decisions/ft311-coordinator-work.md` — run `/bench-write-spec`.
+2. FT311 landing-completion spec, the third of five — run `/bench-write-spec` after the diagnostics spec lands.
+3. FT312 cross-harness reviewer verb — run `/bench-write-spec`.
