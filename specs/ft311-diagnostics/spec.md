@@ -315,6 +315,13 @@ They authorize implementation only after the reviewer approves this spec and its
 - `cmd/bench/main.go`
 - `cmd/bench/help_inventory_test.go`
 - `cmd/bench/command_registry_test.go`
+- `cmd/bench/command_registry.go`
+- `tests/canary/package-core-guard/unrouted-subcommand`
+- `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
+- `tests/canary/docs-currency-token-diet`
+- `tests/canary/skills-index-command-adapters`
+- `tests/canary/workflow-guidance-anchors`
 - `internal/prose/prose.go`
 - `internal/prose/subject.go`
 - `internal/prose/starts.go`
@@ -349,6 +356,9 @@ They authorize implementation only after the reviewer approves this spec and its
 
 The last four entries are the spec phase's own change, which the landed range carries.
 They are the two roadmap references to the moved map and the map's source paths, and no ticket writes them.
+The command registry, its two pinned conformance tests, and the four canary entries are closure declarations from the preflight proposal.
+The registry is named because the probe and the anchors query are bound commands, and the canary families pin the guidance files.
+The expected edit inside them is the anchors description and the three-cell pins, and no guidance fixture changes.
 
 The build cannot edit this spec, its acceptance rows, or its ticket graph without the existing spec-change authority.
 Four fenced files are over the line budget: the command registry, its registry test, the prose parser, and the focused-run command file.
@@ -464,11 +474,12 @@ The three-word start is a choice, and a reviewer can widen it without a row chan
 | 1. Locate anchor needles | none | `bench anchors` prints a typed line per needle and refuses an unreadable file |
 | 2. Print the sentence starts of a long paragraph | none | The named prose form lists each sentence's line and start |
 | 3. Grade the staged Markdown | 2.md | `bench gate-prose <root> --staged` grades the index bytes and policy |
-| 4. Name the probe selection and its help | none | The selection row and the owner-derived help notes |
+| 4. Name the probe selection and its help | 1.md | The selection row and the owner-derived help notes |
 | 5. Run the baseline before the mutation | 4.md | A red baseline is `invalid`, writes nothing, and names the red tests |
-| 6. Fold the guidance and the changelog | 1.md, 3.md, 5.md | The reference, the glossary, and the changelog state the landed behavior |
+| 6. Fold the guidance and the changelog | 3.md, 5.md | The reference, the glossary, and the changelog state the landed behavior |
 
-Tickets 1, 2, and 4 form the first frontier and run in parallel, one worktree each.
+Tickets 1 and 2 form the first frontier and run in parallel, one worktree each.
+Ticket 4 follows ticket 1 only because both name the command registry closure, and tickets 3 and 4 run in parallel.
 Ticket 3 carries the prose and gate invariants, and ticket 5 carries the probe invariant.
 Ticket 4 carries the focused-run owner invariant.
 Ticket 6 is the last writer of the shared guidance files.
