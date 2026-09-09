@@ -1,59 +1,44 @@
 # OpenAI model scorecard
 
-Last incorporated landing: `craft-research-skill` (`28e47254`, 2026-09-06) — Fable
-(Claude Code) orchestrated. Terra/medium ran the standing falsification pass over
-the kit-guidance diff through `codex exec` inside `bench worktree exec` with an
-empty quoted heredoc. It returned three cited findings, of which two were accepted.
+Last incorporated landing: `ft311-delegate-preparation` (`4d0354d1784e8f5959759dc074b6ace1aeb98462`, 2026-09-08). Sol/high implemented tickets 1, 2, and the ticket 2 repair.
+
+Terra/high implemented ticket 4 and completed closeout repairs through `676484a`. Three fresh Terra/high axes returned zero findings.
 
 ## Cost assumptions
 
-The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches
-dollar break-even near 5x Terra's token use. Per-agent token telemetry is not
-currently available.
+The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches dollar break-even near 5x Terra's token use. FT311 telemetry is unknown.
 
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use |
 | --- | --- | --- | --- |
-| Terra / medium, high | implementation, latest 10 bounded tickets/repairs | On `landing-refusal-standard`, medium landed 11 tickets and one 5-target repair pass with biting probes and honest fence-limit reports; 7 of 12 charges were first-pass accepted, and the misses were sampled assertions and unobserved helpers. | Medium for exact one-seam tickets under coordinator mutation; high when one fact crosses multiple policy consumers |
+| Terra / medium, high | implementation, latest 10 bounded tickets and repairs | Terra/high implemented FT311 ticket 4 with live evidence open. Review found the missing triage input contract, and repair added its five inputs. | Medium for exact one-seam tickets under coordinator mutation. High when one fact crosses multiple policy consumers. |
 | Luna / max, medium | implementation, 7 bounded tickets/repairs + reviewer, 4 axis passes on `stable-owner-landing` | Implementation: 2/7 first-pass with all terminal gates green. Review: three initial axes returned 9 raw findings and 8 de-duplicated targets with the citation standard held (one axis refuted four of its own leads by enumeration), and the repair-scoped re-review verified all seven predicates and stayed inside its blocking scope | Low-cost writer for narrow slices under mandatory inspection; standing tier for the three review axes |
-| Terra / high, medium, low | semantic review, latest 10 independent axis passes across 8 landings | On `craft-research-skill`, one medium falsification pass over the new skill and three callers returned three cited findings; two were accepted, and the worst was a caller pointer that charged the skill with a probe the skill's own boundary excludes, which the three Claude axes missed. Its third finding restated a decision the spec's Further notes record. | Standards, Spec, and Coverage review in separate contexts, and the standing cross-harness falsification pass on a kit-guidance diff |
+| Terra / high, medium, low | semantic review and closeout, latest 10 independent axis passes | Terra/high repaired FT311's tier helper, changelog, and stale token. Three repair-scoped source axes found nothing across accepted predicates and later closure and fence deltas. | Standards, Spec, and Coverage review in separate contexts. Further cross-harness verification stopped on user instruction for this run. |
 | Sol / low | implementation, bounded tickets and repairs on 1 landing | The delegates returned focused tests and mutation probes. The retirement repair reproduced the FT94 ledger red, changed one owner, proved that restoring the old value made the test red, and restored green. | Exact ticket seams and small repairs under coordinator verification |
-| Sol / high | implementation and semantic review, 4 lifecycle charges + latest 10 axis passes | On `resolved-consumer-surface`, three initial axes collapsed 28 raw findings to 10 repair targets. A repair-scoped re-review found one missed control-byte gap, and the final re-check found one unpinned decoder arm. | Kit-level and security-seam implementation and review; the cross-family reviewer on a large new-package landing |
+| Sol / high | implementation and semantic review, latest comparable lifecycle charges | Sol/high implemented FT311 tickets 1 and 2. Ticket 2 needed one repair for DP10-DP14 coverage and shared retry orchestration. | Kit and security-seam implementation and review. Use for cross-consumer repair when the public seam is exact. |
 | Astra / medium | semantic review, 3 axes + 2 re-reviews on 1 landing | On `git-admin-readers` the three axes returned 13 raw findings and 6 repair targets; the Coverage axis probed a symlink-plus-`..` root and a symlinked temp parent and observed both breaks, and the Spec axis found the check walked only two directories. Both re-reviews closed every predicate and stayed inside the blocking scope. A read-only sandbox refused the Go cache, so the blast table and `bench test --check` ran outside it. | Reviewer-named implementation review when the tier binding is not the reviewer's choice; give the Coverage axis a writable worktree |
 
 ## Representative evidence
 
 | task | result | attribution | routing signal |
 | --- | --- | --- | --- |
-| roadmap light-path lifecycle | Sol/low implemented bounded tickets and the retirement repair; Terra/high found the LF2 and retrospective safety gaps; Codex held the frozen source and rejected a false LF2 claim | spec/ticket, delegate, reviewer, and orchestrator | Cross-consumer inputs and race-test reachability belong in the initial charge; exact frozen repros settle disputed findings |
-| landing-refusal build | Terra/medium landed a 24-file, 11-ticket registry build with one repair commit; two delegates reported fence limits instead of routing around them, and the coordinator ran one blocked probe itself | delegate and spec/ticket | A charge that names the shared constructor lets eight serialized tickets compose without a merge conflict |
-| hostile-metadata repair | Terra/high first instrumented only its new planner seam; a real-process `PATH` Git wrapper then exposed older list/resume lease routes and drove the shared guard | delegate | Universal safety claims require enumerated consumers and an oracle above every caller |
-| repair-scoped semantic review | Sol/high found real ancestry, resume, control-byte, and 64-hex-token gaps, then kept reopening the original range until a late changelog observation exposed the missing convergence rule | reviewer | Full discovery and correction validation are different modes; only accepted predicates and repair-induced changes block re-review |
+| FT311 ticket 2 repair | Sol/high unified charge and proposal orchestration and completed every DP10-DP14 partition. Exact-baseline tests and two restored mutations bit. | delegate | Use Sol/high when bounded repair crosses command retry, authority, and graph semantics. |
+| FT311 ticket 4 | Terra/high produced build and triage guidance. Review found that active guidance omitted the required triage inputs. | delegate | Trace each spec input into final phase text before returning a guidance ticket. |
+| FT311 closeout | Terra/high repaired the tier helper, changelog, and stale-token wording. Three fresh axes returned zero findings. | delegate and reviewer | Keep closeout repair and independent review at high effort when kit guidance and conformance move together. |
+| FT311 linked dogfood | Terra used `gpt-5.6-terra`; the shift exited 0 with one commit, two iterations, and no recovery. | orchestrator | Use a linked repository when the kit repository cannot exercise its installed surface. |
 | landing-refusal orchestration | Sol/high preserved exact review identity, proved four independent mutations, fixed the review-loop policy, and resumed a green published-but-incomplete landing; it paid avoidable pickup and full-gate churn before breaking the loop | orchestrator | Treat recursive review as a process red and build a tight repro before accepting another unrelated repair target |
 
 ## Current decisions
 
-- Use Terra/medium for ticket-sized write charges under coordinator mutation
-  probes; it carried an 11-ticket build with 7 of 12 first-pass acceptances.
-- Use Terra/low for the three review axes; its findings held the citation
-  standard, and the coordinator settles a predicted red against the oracle.
-- Use Terra at medium or high for the standing cross-harness falsification pass on a
-  kit-guidance diff; run it through `bench worktree exec` with an empty quoted heredoc.
-  On `craft-research-skill` medium found the one caller-versus-skill contradiction the
-  three Claude axes missed.
-- A falsification finding that restates a decision the spec records is dismissed with
-  the decision line cited; on `craft-research-skill` one of three was.
-- Use Sol/low for exact ticket seams and small repairs when a coordinator can
-  rerun a distinct mutation probe.
-- Settle a disputed finding against the frozen candidate with an exact repro.
-  Do not repair a failure that the candidate does not produce.
-- On a landing gate red with no green baseline, run the fresh baseline before
-  diagnosis; one transient red cost one avoidable debugging pass here.
-- Astra/medium is a reviewer-named review model outside the tier binding; it held
-  the citation standard and probed its Coverage claims on `git-admin-readers`.
-  Compare again before it joins a binding.
-- Give a `codex exec` Coverage axis a writable sandbox in its own worktree; a
-  read-only sandbox refuses the Go build cache and the blast table.
-- Change routing only after two comparable runs or one controlled model
-  comparison.
+- Use Terra/medium for ticket-sized write charges under coordinator mutation probes.
+- Stop further cross-harness verification for FT311 as the user directed.
+- Use Terra/high for final independent review when closeout changes kit guidance and conformance together.
+- Use Sol/low for exact ticket seams and small repairs when a coordinator can run a distinct mutation probe.
+- Use Sol/high for bounded repair crossing command retry, authority, and dependency-graph behavior.
+- Require fixture-only, registry-only, combined, deduplicated, exact-ownership, prefix-ownership, and blocker-graph cases for ownership-closure proposals.
+- Settle disputed findings against the frozen candidate with an exact reproduction.
+- On a landing gate red without a green baseline, run the fresh baseline before diagnosis.
+- Give a Codex Coverage axis a writable isolated worktree when it must run throwaway probes.
+- Use only Terra and Sol for the remaining FT311 reviewer roles.
+- Change routing only after two comparable runs or one controlled model comparison.
