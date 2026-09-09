@@ -68,10 +68,10 @@ func entries(t *testing.T, dir string) []string {
 	return names
 }
 
-// cleanEnv is the environment slice the clean reads: the fixture home and the PATH that
-// resolves the real toolchain.
+// cleanEnv keeps Go's telemetry child from outliving the temporary home.
+// The null device cannot become a telemetry directory, even for a root caller.
 func cleanEnv(home string) []string {
-	return []string{"HOME=" + home, "PATH=" + os.Getenv("PATH")}
+	return []string{"HOME=" + home, "PATH=" + os.Getenv("PATH"), "TEST_TELEMETRY_DIR=" + os.DevNull}
 }
 
 // While a holder holds the cache lock, the clean exits 1. This row grades the Hold-to-clean
@@ -137,12 +137,16 @@ func TestCleanRefusalNamesTheHolderPID(t *testing.T) {
 // L07: it leaves bench.lock, trim.txt, and README, so the file the next holder opens survives.
 func TestCleanRemovesTheShardsAndKeepsTheRest(t *testing.T) {
 	fixture := newCacheFixture(t)
+	homeEntries := entries(t, fixture.home)
 	out, code := clean(cleanEnv(fixture.home))
 	if code != 0 {
 		t.Fatalf("clean = exit %d, want 0; out=%q", code, out)
 	}
 	if got, want := entries(t, fixture.dir), []string{"README", LockFile, trimFile}; !slices.Equal(got, want) {
 		t.Fatalf("directory after a clean = %q, want %q", got, want)
+	}
+	if got := entries(t, fixture.home); !slices.Equal(got, homeEntries) {
+		t.Fatalf("clean wrote outside the cache: home entries = %q, want %q", got, homeEntries)
 	}
 }
 
