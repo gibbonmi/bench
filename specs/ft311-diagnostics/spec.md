@@ -278,6 +278,10 @@ The full landing gate remains the code oracle.
 | DG37 | 18 | On an unborn branch the staged form grades every index entry. | New TestGateProseStagedUnbornBranch through GateProseCommand | A form that diffs against HEAD refuses or grades nothing. |
 | DG38 | 20 | An index without the exclusion file answers the absent-policy diagnostic at exit 1. | New TestGateProseStagedAbsentPolicy through GateProseCommand | A form that treats an absent policy as empty passes. |
 | DG39 | 28 | A duplicated owning section prints 0 for its section needle. | New TestLocateHonorsSectionScope in the anchors package | A locate that searches the first duplicate prints its line. |
+| DG40 | 18 | A relative root that names a working-tree top grades the staged form. | New TestGateProseStagedAcceptsARelativeRoot through GateProseCommand | A top compared as spelled refuses `.`, which is the help's own example. |
+| DG41 | 19 | A staged blob that is invalid UTF-8 or over the record limit answers the named form's unreadable-subject diagnostic at exit 1. | New TestGateProseStagedRefusesAnUnboundedBlob through GateProseCommand | An unbounded index read grades bytes the named form refuses. |
+| DG42 | 22 | A staged path with an ESC byte answers the shared unrepresentable-cell refusal at exit 1. | New TestGateProseStagedRefusesAControlBytePath through GateProseCommand | A refusal that names no path is the documented choice, and a pass table would be a lie. |
+| DG43 | 29 | A comment that the strip creates from rejoined text hides its needle from the locate step as it hides it from the evaluator. | New TestLocateStripsRejoinedComments in the anchors package | A single-pass strip prints a line for a needle the evaluator reads as absent. |
 
 ### Edge inventory
 
@@ -290,18 +294,19 @@ Every behavior serves this repository and every repository that links the kit, e
 | Absent versus empty | An absent anchor file gives 0 on every row, and an empty index gives an empty pass table. An absent exclusion entry in the index keeps the absent-policy diagnostic. | DG22, DG27, DG38 |
 | Sections | A section needle outside its section, or under a duplicated heading, prints 0. | DG28, DG39 |
 | File kinds | A link, a FIFO, or a device at the anchor path refuses before the read. A staged symlink is not a prose subject. | DG20, DG30 |
-| Paths | A space, a double quote, a tab, and a newline in a staged path survive NUL framing and the encoder. | DG21 |
+| Paths | A space, a double quote, a tab, and a newline in a staged path survive NUL framing and the encoder. An ESC byte in a staged path refuses the run. | DG21, DG42 |
+| Encoding and size | A staged blob that is invalid UTF-8 or over the record limit is refused as the named form refuses it. | DG41 |
 | Text sinks | A control byte in a sentence start is escaped, and the whole-tree grade carries no document text. | DG15, DG16 |
 | Grammar | `--staged` beside a path or a `--`, and a probe form refusal, answer one usage line at exit 2. | DG6, DG23 |
 | Index versus working tree | The staged bytes, the staged policy, and the policy's target validation win over the working tree. An unborn branch stages every entry. | DG18, DG19, DG34, DG37 |
 | Whitespace and case | A needle split across lines and a case fold that changes byte length still map to the first character's line. | DG29 |
-| Comments | A needle inside an HTML comment has no match, and text after a multi-line comment keeps its physical line. | DG27, DG29 |
+| Comments | A needle inside an HTML comment has no match, text after a multi-line comment keeps its physical line, and a comment the strip creates hides its needle. | DG27, DG29, DG43 |
 | No execution | A baseline or a mutated run with no test run cannot read as evidence, and a baseline with no Go verdict is refused. | DG3, DG11, DG35 |
 | Already red | A red baseline is `invalid` and names the red tests, and it writes nothing. | DG8, DG9 |
 | Interruption | An interrupt during the baseline answers `baseline-interrupted` and leaves the tree untouched. | DG36 |
 | Repetition | Two probes on one repository keep separate preserved copies, as today, and the baseline adds no record. | DG9 |
 | Process boundary | The stub Go proves the baseline start order from outside the verb's process. | DG7 |
-| Root | A root that is not a working-tree top refuses the staged form. | DG25 |
+| Root | A root that is not a working-tree top refuses the staged form, and a relative root that is a top grades it. | DG25, DG40 |
 
 **Won't handle:** A named green baseline from the gate cache instead of a baseline run is a separate capability. Every probe runs its baseline, so no caller loses a verdict.
 
@@ -343,6 +348,7 @@ They authorize implementation only after the reviewer approves this spec and its
 - `internal/prose/parse_test.go`
 - `internal/prose/subject_test.go`
 - `internal/prose/walk_test.go`
+- `internal/prose/walk.go`
 - `internal/prose/exclusions.go`
 - `internal/gate/gate_prose.go`
 - `internal/gate/gate_prose_test.go`
@@ -400,6 +406,17 @@ FT120, FT254, FT258, and FT290 retain their neighboring subjects.
 The existing merge lane and the landing gate remain unchanged.
 
 ## Further notes
+
+### Review round and dogfood runs
+
+The initial review at tip `9eed6663e1c2fc9ae656b1ffe9903f1393fa10bc` over base `f41917040c24637ca0c5d69441398361559ce319` returned 15 findings across the three axes and 9 repair targets.
+Ticket 7 carries the accepted repairs and rows DG40 through DG43.
+The build extended three ticket fences in range for test files that did not fit the line budget. It flags each extension for reviewer veto.
+
+The coordinator ran three dogfood runs on the reviewed tip.
+A `bench probe` swap of one word in the owner's notes reddened the three help spellings, so the independent help expectation is the mutation catch.
+A `bench probe` swap that dropped the `$` from the named-check pattern reddened the facts test and the argv test. So the independent pattern expectation is the mutation catch.
+A hand run of `bench gate-prose . --staged` from the worktree top refused the relative root, which is DG40.
 
 ### Decision provenance
 
