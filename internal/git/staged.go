@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -80,15 +82,52 @@ func ReadStagedIndex(root string) (StagedIndex, error) {
 	return index, nil
 }
 
-// IndexBlob returns the bytes the index holds for the repository-relative path, through
-// `git show :<path>`. The bytes are verbatim: a staged grade reads what a commit would
-// carry, which is never the working file.
-func IndexBlob(root, path string) ([]byte, error) {
-	out, err := Raw("-C", root, "show", ":"+path)
+// IndexBlobReader starts `git show :<path>` in root and returns its stdout stream. The
+// bytes are verbatim: a staged grade reads what a commit would carry, which is never the
+// working file. The caller reads under its own bound and closes the stream, so a blob
+// larger than that bound never reaches memory whole.
+//
+// Close closes the pipe and reaps the child, so a bounded read leaves no running git. A
+// caller that stops short at its bound leaves the child writing into a closed pipe, and
+// that exit is the bound rather than a fault; Close therefore reports an error only when
+// the child failed before it delivered a byte, which is the missing-path case.
+func IndexBlobReader(root, path string) (io.ReadCloser, error) {
+	cmd := exec.Command("git", "-C", root, "show", ":"+path)
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, fmt.Errorf("git show :%s in %s: %w", path, root, err)
 	}
-	return out, nil
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("git show :%s in %s: %w", path, root, err)
+	}
+	return &indexBlobStream{cmd: cmd, stdout: stdout, root: root, path: path}, nil
+}
+
+// indexBlobStream is one running `git show` beside its stdout pipe. It counts the bytes it
+// delivers, because that count is what tells a child that failed from a child the caller
+// cut off at its own bound.
+type indexBlobStream struct {
+	cmd       *exec.Cmd
+	stdout    io.ReadCloser
+	root      string
+	path      string
+	delivered int64
+}
+
+func (s *indexBlobStream) Read(p []byte) (int, error) {
+	n, err := s.stdout.Read(p)
+	s.delivered += int64(n)
+	return n, err
+}
+
+func (s *indexBlobStream) Close() error {
+	// The pipe closes before the reap, so a child still writing sees the closed pipe and
+	// exits rather than blocking the wait below forever.
+	pipeErr := s.stdout.Close()
+	if err := errors.Join(s.cmd.Wait(), pipeErr); err != nil && s.delivered == 0 {
+		return fmt.Errorf("git show :%s in %s: %w", s.path, s.root, err)
+	}
+	return nil
 }
 
 // IsWorkTreeTop reports whether dir is the top of a Git working tree. A directory inside a
