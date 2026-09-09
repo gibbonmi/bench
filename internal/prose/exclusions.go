@@ -83,27 +83,88 @@ func ExclusionRows(root string) ([]string, error) {
 	return subjects, nil
 }
 
-// loadExclusions reads and grades the row list under root. It returns one diagnostic for
-// each broken state and refuses the whole list on any of them: a list the parser cannot
-// trust would silently widen or narrow the grade. The row grammar is a repository-relative
-// path, one space, and a one-clause reason, with a `#` comment and a blank line ignored.
+// targetKind is what an exclusion target names in the source the policy validates
+// against. The row grammar reads the same three answers from a working tree and from a
+// Git index, so the validation core keys on them rather than on a stat.
+type targetKind int
+
+const (
+	targetAbsent targetKind = iota
+	targetFile
+	targetDirectory
+)
+
+// targetLookup answers what one exclusion target names. The target arrives with any
+// trailing slash already removed, so a directory row and a file row ask the same question.
+type targetLookup func(target string) targetKind
+
+// absentExclusionDiagnostic is the one sentence an absent policy answers. The working-tree
+// loader and the index loader both state it, so the diagnostic has one source.
+func absentExclusionDiagnostic() string {
+	return fmt.Sprintf("prose: %q: the exclusion file is absent", ExclusionFile)
+}
+
+// worktreeLookup validates a target against the files under root.
+func worktreeLookup(root string) targetLookup {
+	return func(target string) targetKind {
+		info, err := os.Lstat(filepath.Join(root, filepath.FromSlash(target)))
+		switch {
+		case err != nil:
+			return targetAbsent
+		case info.IsDir():
+			return targetDirectory
+		default:
+			return targetFile
+		}
+	}
+}
+
+// indexLookup validates a target against a Git index entry list. An index holds no
+// directory record, so a target that is the prefix of some entry is the directory.
+func indexLookup(entries []string) targetLookup {
+	files := make(map[string]bool, len(entries))
+	for _, entry := range entries {
+		files[entry] = true
+	}
+	return func(target string) targetKind {
+		if files[target] {
+			return targetFile
+		}
+		prefix := target + "/"
+		for _, entry := range entries {
+			if strings.HasPrefix(entry, prefix) {
+				return targetDirectory
+			}
+		}
+		return targetAbsent
+	}
+}
+
+// loadExclusions reads and grades the row list under root. The row grammar is a
+// repository-relative path, one space, and a one-clause reason, with a `#` comment and a
+// blank line ignored.
 func loadExclusions(root string) (*exclusions, []string) {
-	path := filepath.Join(root, filepath.FromSlash(ExclusionFile))
-	c := bounds.ClassifyNoFollow(path)
+	c := bounds.ClassifyNoFollow(filepath.Join(root, filepath.FromSlash(ExclusionFile)))
 	switch c.State {
 	case bounds.StateAbsent:
-		return nil, []string{fmt.Sprintf("prose: %q: the exclusion file is absent", ExclusionFile)}
+		return nil, []string{absentExclusionDiagnostic()}
 	case bounds.StateEmpty:
 		return &exclusions{files: map[string]bool{}}, nil
 	case bounds.StateParsed:
+		return gradeExclusionRows(c.Data, worktreeLookup(root))
 	default:
 		return nil, []string{fmt.Sprintf("prose: %q: refused unreadable exclusion file: %s", ExclusionFile, c.Reason)}
 	}
+}
 
+// gradeExclusionRows grades a policy body against the caller's target source. It returns
+// one diagnostic for each broken state and refuses the whole list on any of them: a list
+// the parser cannot trust would silently widen or narrow the grade.
+func gradeExclusionRows(data []byte, lookup targetLookup) (*exclusions, []string) {
 	out := &exclusions{files: map[string]bool{}}
 	var diags []string
 	seen := map[string]int{}
-	for _, row := range splitExclusionRows(string(c.Data)) {
+	for _, row := range splitExclusionRows(string(data)) {
 		subject, number := row.subject, row.number
 		if row.reason == "" {
 			diags = append(diags, fmt.Sprintf("prose: %q line %d: malformed exclusion row: the reason is absent", ExclusionFile, number))
@@ -118,8 +179,8 @@ func loadExclusions(root string) (*exclusions, []string) {
 			continue
 		}
 		seen[subject] = number
-		info, err := os.Lstat(filepath.Join(root, filepath.FromSlash(strings.TrimSuffix(subject, "/"))))
-		if err != nil {
+		kind := lookup(strings.TrimSuffix(subject, "/"))
+		if kind == targetAbsent {
 			diags = append(diags, fmt.Sprintf("prose: %q line %d: exclusion row %q names an absent path", ExclusionFile, number, subject))
 			continue
 		}
@@ -129,7 +190,7 @@ func loadExclusions(root string) (*exclusions, []string) {
 		}
 		// A directory row with no trailing slash excludes nothing, because the walk compares
 		// a prefix. The row reds rather than passing as a file row that never matches.
-		if info.IsDir() {
+		if kind == targetDirectory {
 			diags = append(diags, fmt.Sprintf("prose: %q line %d: exclusion row %q names a directory: a directory row needs a trailing slash", ExclusionFile, number, subject))
 			continue
 		}
