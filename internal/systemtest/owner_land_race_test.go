@@ -128,7 +128,7 @@ func TestWorktreeLandPublicRaceAndRerun(t *testing.T) {
 		t.Fatal(err)
 	}
 	resumed := systemSelected(t, root, systemLandEnv(root, home, tally, trees, ready, release), "worktree", "land", "--resume", published, "--request", loser.request, "--base", base, "--source-tip", loser.tip, "--spec", "x", loser.path)
-	releasedEnvelope := "landed{source_base=" + base + ",source_tip=" + loser.tip + ",destination_base=" + winnerCommit + ",published_commit=" + published + ",tree=" + publishedTree + ",worktree=released,census=0}\n"
+	releasedEnvelope := "effects[1]{effect,result}:\n  refresh,not-applicable\nlanded{source_base=" + base + ",source_tip=" + loser.tip + ",destination_base=" + winnerCommit + ",published_commit=" + published + ",tree=" + publishedTree + ",worktree=released,census=0}\n"
 	if resumed.code != 0 || resumed.stdout != releasedEnvelope || !strings.Contains(resumed.stderr, "command-registry:worktree") {
 		t.Fatalf("resume land = (%d, %q, %q), want %q", resumed.code, resumed.stdout, resumed.stderr, releasedEnvelope)
 	}
