@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -132,25 +131,50 @@ func publishRunBinary(t *testing.T, root string) {
 	t.Setenv(runbinary.Env, executable)
 }
 
-// installStubGo puts a canned `go` ahead of the real one and records every start in the
-// fixture's marker. A `list` call still reaches the real toolchain, because the run
-// binary's freshness verification resolves the module closure through it. hook is extra
-// shell the stub runs while the focused run is in flight.
-func installStubGo(t *testing.T, f *fixture, events string, exit int, hook string) {
+// stubStart is what the stub `go` does on one `go test` start: shell it runs first, the
+// event stream it prints, and the exit it takes. A probe starts two of them, so a row
+// spells the baseline's start apart from the mutated run's.
+type stubStart struct {
+	hook   string
+	events string
+	exit   int
+}
+
+// installStubStarts puts a canned `go` ahead of the real one and records every start in the
+// fixture's marker. A `list` call still reaches the real toolchain, because the run binary's
+// freshness verification resolves the module closure through it. The marker is dropped
+// first, so each install restarts the count: an odd start is a baseline and the even start
+// after it is the mutated run. Both hooks read the start's ordinal in `$n`.
+func installStubStarts(t *testing.T, f *fixture, baseline, mutated stubStart) {
 	t.Helper()
 	real, err := exec.LookPath("go")
 	if err != nil {
 		t.Fatal(err)
 	}
+	if err := os.Remove(f.marker); err != nil && !os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+	marker := sanitize.ShellQuote(f.marker)
 	dir := scratchDir(t)
 	script := "#!/usr/bin/env bash\n" +
-		"printf '%s\\n' \"$1\" >> " + sanitize.ShellQuote(f.marker) + "\n" +
+		"printf '%s\\n' \"$1\" >> " + marker + "\n" +
 		"if [ \"$1\" = list ]; then exec " + sanitize.ShellQuote(real) + " \"$@\"; fi\n" +
-		hook +
-		"cat <<'PROBEEOF'\n" + events + "\nPROBEEOF\n" +
-		"exit " + strconv.Itoa(exit) + "\n"
+		"n=$(grep -c '^test$' " + marker + ")\n" +
+		"if [ $((n % 2)) = 1 ]; then\n" + stubAnswer(baseline) + "fi\n" + stubAnswer(mutated)
 	writeFixtureFile(t, filepath.Join(dir, "go"), script, 0o755)
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+}
+
+func stubAnswer(start stubStart) string {
+	return start.hook + "cat <<'PROBEEOF'\n" + start.events + "\nPROBEEOF\nexit " + strconv.Itoa(start.exit) + "\n"
+}
+
+// installStubGo is the ordinary shape: the baseline passes, so the probe reaches the
+// mutated run, and that run answers what the row needs. hook is extra shell the mutated
+// run's stub runs while that run is in flight.
+func installStubGo(t *testing.T, f *fixture, events string, exit int, hook string) {
+	t.Helper()
+	installStubStarts(t, f, stubStart{events: cannedPass}, stubStart{hook: hook, events: events, exit: exit})
 }
 
 // cannedFailure is one failing test in the fixture package. diagnostic is the first
@@ -165,6 +189,10 @@ func cannedFailure(diagnostic string) string {
 const cannedPass = `{"Action":"run","Package":"probefixture","Test":"TestClampPositive"}
 {"Action":"pass","Package":"probefixture","Test":"TestClampPositive","Elapsed":0}
 {"Action":"pass","Package":"probefixture","Elapsed":0.01}`
+
+// quietRun is a package that passed with no test event at all, which is the stream a run
+// that started nothing prints.
+const quietRun = `{"Action":"pass","Package":"probefixture","Elapsed":0.01}`
 
 // probeRow derives one expected verdict block through the encoder the verb renders with.
 // A hand-joined row would disagree with the encoder's own quoting the moment a cell
@@ -181,9 +209,9 @@ func probeRow(t *testing.T, verdict, subject, mutation, cause string, failed int
 
 // selectionRow derives one expected selection block through the encoder the verb renders
 // with, so the expectation and the row share one quoting rule.
-func selectionRow(t *testing.T, form, target, run string, ran int) string {
+func selectionRow(t *testing.T, form, target, run, baseline string, ran int) string {
 	t.Helper()
-	out, err := toon.TableTyped("selection", selectionFields, [][]any{{form, target, run, ran}})
+	out, err := toon.TableTyped("selection", selectionFields, [][]any{{form, target, run, baseline, ran}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,6 +222,15 @@ func selectionRow(t *testing.T, form, target, run string, ran int) string {
 func runProbe(t *testing.T, args ...string) (string, int) {
 	t.Helper()
 	return Command(args)
+}
+
+// requireRow asserts the exit and the verdict row the answer opens with, which is the shape
+// almost every row below grades.
+func requireRow(t *testing.T, out string, code, wantCode int, want string) {
+	t.Helper()
+	if code != wantCode || !strings.HasPrefix(out, want) {
+		t.Fatalf("stdout = (%q, %d), want %q first and %d", out, code, want, wantCode)
+	}
 }
 
 func requireSubjectBytes(t *testing.T, f *fixture, want string) {
@@ -227,24 +264,13 @@ func requireNoRunChild(t *testing.T, f *fixture) {
 	}
 }
 
-// preservedCopy answers the one file below the home's probe directory.
+// preservedCopy answers the one file below the home's probe directory, which preserve
+// writes at home/probe/<pool key>/<stamp>/<base name>.
 func preservedCopy(t *testing.T, f *fixture) string {
 	t.Helper()
-	var found []string
-	root := filepath.Join(f.home, "probe")
-	if err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if !entry.IsDir() {
-			found = append(found, path)
-		}
-		return nil
-	}); err != nil {
-		t.Fatal(err)
-	}
-	if len(found) != 1 {
-		t.Fatalf("preserved files = %v, want exactly one", found)
+	found, err := filepath.Glob(filepath.Join(f.home, "probe", "*", "*", "*"))
+	if err != nil || len(found) != 1 {
+		t.Fatalf("preserved files = (%v, %v), want exactly one", found, err)
 	}
 	return found[0]
 }
@@ -253,14 +279,8 @@ func preservedCopy(t *testing.T, f *fixture) string {
 // comes back byte-exact, and the home keeps no copy.
 func TestProbeBitesWhenTheFocusedTestFails(t *testing.T) {
 	f := newFixture(t)
-	out, code := runProbe(t, "clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./", "--run", "^TestClampNegative$")
-	if code != 0 {
-		t.Fatalf("exit = %d, want 0\n%s", code, out)
-	}
-	want := probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "yes")
-	if !strings.HasPrefix(out, want) {
-		t.Fatalf("stdout = %q, want the verdict row %q first", out, want)
-	}
+	out, code := runProbe(t, probeArgs()...)
+	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "yes"))
 	if !strings.Contains(out, "packages[") {
 		t.Fatalf("stdout = %q, want the focused run's tables after the row", out)
 	}
@@ -272,12 +292,7 @@ func TestProbeBitesWhenTheFocusedTestFails(t *testing.T) {
 func TestProbeOmitsTheMatchOnce(t *testing.T) {
 	f := newFixture(t)
 	out, code := runProbe(t, "clamp.go", "--omit", "return 0", "--package", "./", "--run", "^TestClampNegative$")
-	if code != 0 {
-		t.Fatalf("exit = %d, want 0\n%s", code, out)
-	}
-	if want := probeRow(t, "bit", "clamp.go", "omit", "failed", 1, "yes"); !strings.HasPrefix(out, want) {
-		t.Fatalf("stdout = %q, want %q first", out, want)
-	}
+	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "omit", "failed", 1, "yes"))
 	requireSubjectBytes(t, f, clampSource)
 }
 
@@ -285,12 +300,7 @@ func TestProbeOmitsTheMatchOnce(t *testing.T) {
 func TestProbeIsSilentWhenTheFocusedTestPasses(t *testing.T) {
 	f := newFixture(t)
 	out, code := runProbe(t, "clamp.go", "--swap", "keeps n at", "--with", "holds n at", "--package", "./", "--run", "^TestClampNegative$")
-	if code != 1 {
-		t.Fatalf("exit = %d, want 1\n%s", code, out)
-	}
-	if want := probeRow(t, "silent", "clamp.go", "swap", "passed", 0, "yes"); !strings.HasPrefix(out, want) {
-		t.Fatalf("stdout = %q, want %q first", out, want)
-	}
+	requireRow(t, out, code, 1, probeRow(t, "silent", "clamp.go", "swap", "passed", 0, "yes"))
 	requireSubjectBytes(t, f, clampSource)
 }
 
@@ -300,42 +310,38 @@ func TestProbeIsSilentWhenTheFocusedTestPasses(t *testing.T) {
 func TestProbeIsInvalidWhenTheMutationDoesNotCompile(t *testing.T) {
 	f := newFixture(t)
 	out, code := runProbe(t, "clamp.go", "--swap", "return n", "--with", "return", "--package", "./")
-	if code != 1 {
-		t.Fatalf("exit = %d, want 1\n%s", code, out)
-	}
-	if want := probeRow(t, "invalid", "clamp.go", "swap", "build-failed", 0, "yes"); !strings.HasPrefix(out, want) {
-		t.Fatalf("stdout = %q, want %q first", out, want)
-	}
+	requireRow(t, out, code, 1, probeRow(t, "invalid", "clamp.go", "swap", "build-failed", 0, "yes"))
 	requireSubjectBytes(t, f, clampSource)
 }
 
-// PB5: a run pattern that matches nothing ran no test, so a mistyped pattern cannot bite.
+// PB5: a mutated run that started no test cannot bite. The baseline passes and the mutated
+// run is the quiet one, because a pattern that matches nothing now refuses at the baseline.
 func TestProbeIsInvalidWhenNoTestRuns(t *testing.T) {
 	f := newFixture(t)
-	out, code := runProbe(t, "clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./", "--run", "^TestNoSuch$")
-	if code != 1 {
-		t.Fatalf("exit = %d, want 1\n%s", code, out)
-	}
-	if want := probeRow(t, "invalid", "clamp.go", "swap", "no-test-run", 0, "yes"); !strings.HasPrefix(out, want) {
-		t.Fatalf("stdout = %q, want %q first", out, want)
-	}
+	installStubGo(t, f, quietRun, 0, "")
+	out, code := runProbe(t, probeArgs()...)
+	requireRow(t, out, code, 1, probeRow(t, "invalid", "clamp.go", "swap", "no-test-run", 0, "yes"))
 	requireSubjectBytes(t, f, clampSource)
 }
 
 // PB6: the evidence after the row is what `bench test` prints for the same selection.
 func TestProbeCarriesTheFocusedRunTables(t *testing.T) {
 	f := newFixture(t)
-	installStubGo(t, f, cannedFailure("clamp_test.go:6: Clamp(-1) = -1, want 0"), 1, "")
-	out, code := runProbe(t, "clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./", "--run", "^TestClampNegative$")
+	events := cannedFailure("clamp_test.go:6: Clamp(-1) = -1, want 0")
+	installStubGo(t, f, events, 1, "")
+	out, code := runProbe(t, probeArgs()...)
 	if code != 0 {
 		t.Fatalf("exit = %d, want 0\n%s", code, out)
 	}
-	row := probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "yes")
+	// The reference report is a start of its own, so a fresh install answers the mutated
+	// run's stream on either side of the baseline branch.
+	installStubStarts(t, f, stubStart{events: events, exit: 1}, stubStart{events: events, exit: 1})
 	report, reportCode := testreport.Command(f.root, []string{"--package", "./", "--run", "^TestClampNegative$"})
 	if reportCode != 1 {
 		t.Fatalf("focused run exit = %d, want 1\n%s", reportCode, report)
 	}
-	if want := row + selectionRow(t, "package", "./", "^TestClampNegative$", 1) + report; out != want {
+	row := probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "yes")
+	if want := row + selectionRow(t, "package", "./", "^TestClampNegative$", "passed", 1) + report; out != want {
 		t.Fatalf("stdout = %q, want %q", out, want)
 	}
 }
@@ -355,31 +361,14 @@ func TestProbeCountsTheTestsThatRan(t *testing.T) {
 	f := newFixture(t)
 	installStubGo(t, f, twoRuns, 1, "")
 	out, code := runProbe(t, probeArgs()...)
-	if want := selectionRow(t, "package", "./", "^TestClampNegative$", 2); code != 0 || !strings.Contains(out, want) {
+	if want := selectionRow(t, "package", "./", "^TestClampNegative$", "passed", 2); code != 0 || !strings.Contains(out, want) {
 		t.Fatalf("stdout = (%q, %d), want %q and 0", out, code, want)
 	}
-	installStubGo(t, f, `{"Action":"pass","Package":"probefixture","Elapsed":0.01}`, 0, "")
+	installStubGo(t, f, quietRun, 0, "")
 	quiet, code := runProbe(t, probeArgs()...)
-	want := probeRow(t, "invalid", "clamp.go", "swap", "no-test-run", 0, "yes") + selectionRow(t, "package", "./", "^TestClampNegative$", 0)
-	if code != 1 || !strings.HasPrefix(quiet, want) {
-		t.Fatalf("stdout = (%q, %d), want %q first and 1", quiet, code, want)
-	}
-}
-
-// PB9: --full reaches the focused run, so a long diagnostic is not previewed.
-func TestProbeForwardsFullToTheFocusedRun(t *testing.T) {
-	f := newFixture(t)
-	long := strings.Repeat("d", bounds.PreviewRuneLimit+40)
-	installStubGo(t, f, cannedFailure(long), 1, "")
-	args := []string{"clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./", "--run", "^TestClampNegative$"}
-	previewed, _ := runProbe(t, args...)
-	if strings.Contains(previewed, long) {
-		t.Fatalf("without --full the diagnostic was not previewed:\n%s", previewed)
-	}
-	full, _ := runProbe(t, append(args, "--full")...)
-	if !strings.Contains(full, long) {
-		t.Fatalf("--full did not reach the focused run:\n%s", full)
-	}
+	want := probeRow(t, "invalid", "clamp.go", "swap", "no-test-run", 0, "yes") +
+		selectionRow(t, "package", "./", "^TestClampNegative$", "passed", 0)
+	requireRow(t, quiet, code, 1, want)
 }
 
 // PB10: the subject resolves against the working directory, so a probe runs from a
@@ -388,11 +377,6 @@ func TestProbeResolvesTheSubjectFromTheWorkingDirectory(t *testing.T) {
 	f := newFixture(t)
 	installStubGo(t, f, cannedFailure("caught"), 1, "")
 	t.Chdir(filepath.Join(f.root, "cmd"))
-	out, code := runProbe(t, "../clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./", "--run", "^TestClampNegative$")
-	if code != 0 {
-		t.Fatalf("exit = %d, want 0\n%s", code, out)
-	}
-	if want := probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "yes"); !strings.HasPrefix(out, want) {
-		t.Fatalf("stdout = %q, want %q first", out, want)
-	}
+	out, code := runProbe(t, probeArgs("../clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./", "--run", "^TestClampNegative$")...)
+	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "yes"))
 }

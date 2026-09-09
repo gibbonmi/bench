@@ -247,7 +247,8 @@ func TestProbeOutsideARepository(t *testing.T) {
 }
 
 // PB44: preservation runs before the mutation, so a home that cannot hold the copy leaves
-// the subject exactly as it was.
+// the subject exactly as it was. The baseline is the one run this refusal allows, because
+// it runs before preservation; the refusal itself starts no mutated run.
 func TestProbeRefusesWhenPreservationFails(t *testing.T) {
 	f := refusalFixture(t)
 	writeFixtureFile(t, filepath.Join(f.home, "probe"), "not a directory\n", 0o644)
@@ -256,11 +257,12 @@ func TestProbeRefusesWhenPreservationFails(t *testing.T) {
 		t.Fatalf("refusal = (%q, %d), want the preservation failure and 1", out, code)
 	}
 	requireSubjectBytes(t, f, clampSource)
-	requireNoRunChild(t, f)
+	requireBaselineOnly(t, f)
 }
 
-// PB45: a mutation write that fails leaves the subject unchanged, removes the copy, and
-// starts no run, so a probe never runs over a file it did not mutate.
+// PB45: a mutation write that fails leaves the subject unchanged and removes the copy, so a
+// probe never runs over a file it did not mutate. The baseline is the one run that already
+// happened, and the refusal starts no mutated run after it.
 func TestProbeRefusesWhenTheMutationWriteFails(t *testing.T) {
 	f := refusalFixture(t)
 	if err := os.Chmod(f.root, 0o500); err != nil {
@@ -273,7 +275,7 @@ func TestProbeRefusesWhenTheMutationWriteFails(t *testing.T) {
 	}
 	requireSubjectBytes(t, f, clampSource)
 	requireHomeEmpty(t, f)
-	requireNoRunChild(t, f)
+	requireBaselineOnly(t, f)
 }
 
 // probeHelpNotes is the three facts the help owes, spelled independently of the producer.

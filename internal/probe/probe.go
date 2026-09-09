@@ -23,11 +23,25 @@ var probeFields = []string{"verdict", "subject", "mutation", "cause", "failed_te
 
 // selectionFields is the schema of the row that names what the probe ran. ran is a genuine
 // count, so the row renders through toon.TableTyped and that cell stays an integer.
-var selectionFields = []string{"form", "target", "run", "ran"}
+var selectionFields = []string{"form", "target", "run", "baseline", "ran"}
 
-// run applies the refusal order and then the probe itself. Every refusal below answers
-// before preserve writes anything, which is what makes a refused probe leave the tree,
-// the Bench home, and the process table exactly as it found them.
+// verdictCells is one probe answer's variable half: the four cells the verdict row takes
+// from a run, and the two cells the selection row takes from the baseline and the mutated
+// run. The six travel together, because they come from two different runs and one outcome
+// value cannot carry both.
+type verdictCells struct {
+	verdict  string
+	cause    string
+	failed   int
+	restored string
+	baseline string
+	ran      int
+}
+
+// run applies the refusal order, grades the baseline, and then runs the probe itself. Every
+// refusal below answers before preserve writes anything, which is what makes a refused probe
+// leave the tree, the Bench home, and the process table exactly as it found them. The
+// baseline is the last of them, because it is the only one that starts a run child.
 func run(root string, parsed usage.Result) (string, int) {
 	subject, line := resolveSubject(root, parsed.Positionals[0])
 	if line != "" {
@@ -48,7 +62,11 @@ func run(root string, parsed usage.Result) (string, int) {
 	if line := gradeGateLock(root); line != "" {
 		return line, 1
 	}
-	return probe(root, subject, mutated, mutationName(omit), request)
+	mutation := mutationName(omit)
+	if line, code := gradeBaseline(root, subject, mutation, request); line != "" {
+		return line, code
+	}
+	return probe(root, subject, mutated, mutation, request)
 }
 
 func mutationForm(parsed usage.Result) (string, string, bool) {
@@ -138,12 +156,21 @@ func probe(root string, subject subject, mutated []byte, mutation string, reques
 // name still leaves a clean tree. The restore-failed verdict overrides every other answer,
 // so a failed restore keeps the preserved row and exit 2 even when the row itself refuses.
 func render(subject subject, mutation string, outcome testreport.Outcome, request testreport.Request, report string, preserved preservation, restored bool, reason string) (string, int) {
-	verdict, code := verdictFor(outcome.Kind)
-	restoredCell := "yes"
-	if !restored {
-		verdict, code, restoredCell = "restore-failed", 2, "no"
+	// The mutated run is reached only over a passed baseline, so the baseline cell here is
+	// that one kind rather than a value carried down from the baseline call.
+	cells := verdictCells{
+		cause:    string(outcome.Kind),
+		failed:   outcome.FailedTests,
+		restored: "yes",
+		baseline: string(testreport.OutcomePassed),
+		ran:      outcome.Ran,
 	}
-	out, err := rows(subject, mutation, verdict, restoredCell, outcome, request)
+	var code int
+	cells.verdict, code = verdictFor(outcome.Kind)
+	if !restored {
+		cells.verdict, code, cells.restored = "restore-failed", 2, "no"
+	}
+	out, err := rows(subject, mutation, cells, request)
 	if err != nil {
 		out, report = toon.RenderError(err)+"\n", ""
 		if restored {
@@ -167,15 +194,16 @@ func render(subject subject, mutation string, outcome testreport.Outcome, reques
 
 // rows renders the verdict row and the selection row that follows it. The pair renders in
 // one call, so a cell the encoder cannot carry refuses both rather than printing half an
-// answer. The selection row names what the focused run selected and how many tests it ran,
-// which is what separates a mutation no test observed from a run that started none.
-func rows(subject subject, mutation, verdict, restoredCell string, outcome testreport.Outcome, request testreport.Request) (string, error) {
-	verdictRow := []any{verdict, subject.display, mutation, string(outcome.Kind), outcome.FailedTests, restoredCell}
+// answer. The selection row names what the focused run selected, what the baseline reached,
+// and how many tests the mutated run ran, which is what separates a mutation no test
+// observed from a run that started none.
+func rows(subject subject, mutation string, cells verdictCells, request testreport.Request) (string, error) {
+	verdictRow := []any{cells.verdict, subject.display, mutation, cells.cause, cells.failed, cells.restored}
 	out, err := toon.TableTyped("probe", probeFields, [][]any{verdictRow})
 	if err != nil {
 		return "", err
 	}
-	selectionRow := []any{request.Form(), request.Target(), request.Run(), outcome.Ran}
+	selectionRow := []any{request.Form(), request.Target(), request.Run(), cells.baseline, cells.ran}
 	block, err := toon.TableTyped("selection", selectionFields, [][]any{selectionRow})
 	if err != nil {
 		return "", err
