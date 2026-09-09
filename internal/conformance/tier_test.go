@@ -434,6 +434,7 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestFixtureBiteProofArchitecture":                             true,
 	"TestGuidanceProseBudgetCanaryFixtureBites":                    true,
 	"TestGuidanceProseBudgetsHoldOnTheLiveTree":                    true,
+	"TestPreparedReviewGuidanceHoldsOnTheLiveTree":                 true,
 	"TestProseMechanicsCanaryFixturesBite":                         true,
 	"TestProseMechanicsHoldsOnTheLiveTree":                         true,
 	"TestProfileLaneTableHoldsOnTheLiveTree":                       true,
@@ -498,11 +499,7 @@ func TestClassifiedLiveTreeInventoryNamesDetectedTests(t *testing.T) {
 
 func relativePathLiteral(expr ast.Expr) bool {
 	literal, ok := expr.(*ast.BasicLit)
-	if !ok || literal.Kind != token.STRING {
-		return false
-	}
-	path := strings.Trim(literal.Value, "`\"")
-	return path != "" && !filepath.IsAbs(path)
+	return ok && literal.Kind == token.STRING && strings.Trim(literal.Value, "`\"") != "" && !filepath.IsAbs(strings.Trim(literal.Value, "`\""))
 }
 
 func newHarnessCall(expr ast.Expr) bool {

@@ -168,7 +168,10 @@ var canaryFixtureFamilyRegistry = map[string]fixtureRegistration{
 		"internal/anchors/registry_data.go",
 		"internal/anchors/registry_decision_maps.go",
 		"internal/anchors/registry_craft_research.go",
+		"internal/anchors/registry_ft311_preparation.go",
+		"internal/anchors/registry_ft311_review_dispatch.go",
 		"internal/conformance/docs_workflow_helpers_test.go",
+		"internal/conformance/ft311_preparation_test.go",
 	),
 	"decision-map-integrity": conformanceGoFixture(
 		"internal/maps/schema.go",
@@ -178,6 +181,7 @@ var canaryFixtureFamilyRegistry = map[string]fixtureRegistration{
 	),
 	"injected-ports": conformanceGoFixture(
 		"internal/conformance/injected_ports_test.go",
+		"internal/conformance/injected_ports_registry_test.go",
 		"internal/conformance/checks_test.go",
 	),
 	"guard-classifier-table": conformanceGoFixture(

@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/SKILL.md",
+    "old": "Use a read-only mid-tier delegate to interpret ambiguous repair evidence. It distinguishes invalid probes, no executed tests, missing coverage, and scope defects only when evidence supports each classification. Missing or contradictory evidence remains unknown. Resolve the harness's bound mid model at medium effort for one iteration. Use high effort only when existing line rules require it.",
+    "new": "Use triage whenever a repair needs interpretation."
+  }
+]

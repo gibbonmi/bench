@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-implement-spec.md",
+    "old": "After reviewer approval of the selected spec and ticket, run `bench preflight build <slug> --charge --ticket <ticket> --base <base> --source-tip <tip> --full` and retrieve its complete mechanical inputs. Require a complete task-specific supplement. A generated charge or staged artifact does not supply approval. The supplement names selectors, model, effort, cap, and mutation. Verify the fence, dependency completion, and expected source tip before a write delegate starts.",
+    "new": "After the reviewer approves the spec, start the write delegate."
+  }
+]

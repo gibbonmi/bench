@@ -1,6 +1,10 @@
 package tickets
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 // TestTagOfDerivesTheSpecTag pins the one derivation both the sweep and the
 // preflight rows read. The degenerate case matters most: a digit-leading row ID
@@ -33,5 +37,30 @@ func TestUnrepresentableValueNamesABlockerControlByte(t *testing.T) {
 	}
 	if _, _, found := UnrepresentableValue(Ticket{Name: "one.md", Blockers: []string{"two.md"}, Writes: []string{"a.go"}}); found {
 		t.Error("UnrepresentableValue(clean ticket) reported a value, want none")
+	}
+}
+
+func TestEnumerateNoFollowRefusesLinkAndPreservesDefault(t *testing.T) {
+	root := t.TempDir()
+	target := filepath.Join(root, "target.txt")
+	if err := os.WriteFile(target, []byte("ticket bytes"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(root, "one.md")
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatal(err)
+	}
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, _, refusal := Enumerate(root, entries)
+	if refusal != nil || len(got) != 1 || string(got[0].Data) != "ticket bytes" {
+		t.Fatalf("Enumerate() = %#v, refusal=%v", got, refusal)
+	}
+	_, _, refusal = EnumerateNoFollow(root, entries)
+	if refusal == nil || refusal.State != "wrong-type" {
+		t.Fatalf("EnumerateNoFollow() refusal = %#v, want wrong-type", refusal)
 	}
 }

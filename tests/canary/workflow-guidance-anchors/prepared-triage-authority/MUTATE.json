@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+    "old": "Triage cannot close a finding, expand a fence, waive a probe, or change default tiers.",
+    "new": "Triage can accept a repair when the evidence is clear."
+  }
+]

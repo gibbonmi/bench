@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "   If there is no spec, skip the Spec axis and say so. The Coverage axis still\n   runs; it needs only the diff and the existing tests.",
+    "new": "   If there is no spec, skip the Spec axis and say so. The Coverage axis still\n   runs; it needs only the diff and the existing tests.\n\n   If this harness forbids unsolicited sub-agents, run the same axes inline."
+  }
+]

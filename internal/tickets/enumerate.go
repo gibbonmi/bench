@@ -69,7 +69,16 @@ func (r Refusal) Message(dir string) string {
 // returned diagnostics and dropped, so the returned set holds one entry per
 // name.
 func Enumerate(base string, entries []fs.DirEntry) ([]Entry, []string, *Refusal) {
-	found, refusal := scan(base, base, entries)
+	return enumerate(base, entries, false)
+}
+
+// EnumerateNoFollow enumerates producer tickets without following symbolic links.
+func EnumerateNoFollow(base string, entries []fs.DirEntry) ([]Entry, []string, *Refusal) {
+	return enumerate(base, entries, true)
+}
+
+func enumerate(base string, entries []fs.DirEntry, noFollow bool) ([]Entry, []string, *Refusal) {
+	found, refusal := scan(base, base, entries, noFollow)
 	if refusal != nil {
 		return nil, nil, refusal
 	}
@@ -88,17 +97,22 @@ func Enumerate(base string, entries []fs.DirEntry) ([]Entry, []string, *Refusal)
 }
 
 // scan collects one directory level and recurses with the same classification.
-func scan(base, dir string, entries []fs.DirEntry) ([]Entry, *Refusal) {
+func scan(base, dir string, entries []fs.DirEntry, noFollow bool) ([]Entry, *Refusal) {
 	var files []Entry
 	for _, entry := range entries {
 		path := filepath.Join(dir, entry.Name())
 		if entry.IsDir() {
-			below := bounds.ClassifyDir(path)
+			var below bounds.ClassifiedDir
+			if noFollow {
+				below = bounds.ClassifyDirNoFollow(path)
+			} else {
+				below = bounds.ClassifyDir(path)
+			}
 			switch below.State {
 			case bounds.StateEmpty:
 				continue
 			case bounds.StateParsed:
-				nested, refusal := scan(base, path, below.Entries)
+				nested, refusal := scan(base, path, below.Entries, noFollow)
 				if refusal != nil {
 					return nil, refusal
 				}
@@ -112,7 +126,12 @@ func scan(base, dir string, entries []fs.DirEntry) ([]Entry, *Refusal) {
 		if !toon.Representable(rel) {
 			return nil, &Refusal{Kind: "ticket path not representable", Path: rel}
 		}
-		classified := bounds.Classify(path, bounds.ControlRecordLimit)
+		var classified bounds.Classified
+		if noFollow {
+			classified = bounds.ClassifyNoFollow(path)
+		} else {
+			classified = bounds.Classify(path, bounds.ControlRecordLimit)
+		}
 		unreadable := &Refusal{Kind: "ticket file not readable", Path: rel, State: string(classified.State), Reason: classified.Reason}
 		switch classified.State {
 		case bounds.StateWrongType, bounds.StateUnreadable, bounds.StateAbsent:

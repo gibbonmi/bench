@@ -8,6 +8,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added prepared build and review charges, read-only write proposals, and native review dispatch.
 - Added an `elapsed_ms` column to the `bench test` `packages` table, so the table now
   reads `packages[N]{package,status,elapsed_ms}`. Each cell is the wall time
   `go test -json` reports for that one package, as an integer count of milliseconds. A

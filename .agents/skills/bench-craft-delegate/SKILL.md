@@ -5,16 +5,12 @@ index: spawning a delegate / verifying a delegate's done-claim
 ---
 
 # Delegating without losing the plot
-
-A delegate buys parallelism and isolates a heavy read-set. A misjudged delegate costs the thing
-that matters: the work happens unseen. `references/delegation-discipline.md` holds the rest of the
+A delegate buys parallelism and isolates a heavy read-set. A misjudged delegate costs the thing that matters: the work happens unseen. `references/delegation-discipline.md` holds the rest of the
 discipline: the charge contents, the repair-charge template, the probe rules, and the landing checks.
 
 ## Delegate or inline
 
-The coordinator scopes, routes, and verifies work; a write-delegate authors code. The inline
-allowance is exactly one source-line insertion, one source-line deletion, or one source-line
-replacement in code or tests. A replacement counts as one correction. This allowance spans the
+The coordinator scopes, routes, and verifies work; a write-delegate authors code. The inline allowance is exactly one source-line insertion, one source-line deletion, or one source-line replacement in code or tests. A replacement counts as one correction. This allowance spans the
 current reviewer request and does not reset when work is split into tasks, slices, delegates,
 or verification rounds. A no-spec change admitted by the lighter-path threshold in
 `.bench/BENCH.md` may also remain inline — the only other allowance. All other code authorship
@@ -36,12 +32,15 @@ path, seam, return shape, budget. Route model and effort with `craft-line`. Name
 model id on every call. An omission inherits your model and may silently escalate.
 
 Put effort and iteration cap in the charge. An own-family reviewer uses the harness's native agent
-surface, never that family's CLI. Cross-family reviews and the no-native-surface fallback use the
-exact recipes in `references/cross-harness-reviewers.md`.
+surface, never that family's CLI. Cross-family reviews use the exact recipes in
+`references/cross-harness-reviewers.md`. Without a native surface, hand off to a capable harness.
 
-Prefer compressed inputs: the named decision source, exact passages, coverage rows, and the fence's
-fixture-and-seam inventory. The delegate then uses prior art instead of re-deriving it. Name
-exemplar files to mirror when one exists. A charge that extends an enumerated family names every
+Prefer compressed inputs: the named decision source, exact passages, coverage rows, and the fence's fixture-and-seam inventory.
+The delegate then uses prior art instead of re-deriving it.
+
+Use a read-only mid-tier delegate to interpret ambiguous repair evidence. It distinguishes invalid probes, no executed tests, missing coverage, and scope defects only when evidence supports each classification. Missing or contradictory evidence remains unknown. Resolve the harness's bound mid model at medium effort for one iteration. Use high effort only when existing line rules require it.
+
+Name exemplar files to mirror when one exists. A charge that extends an enumerated family names every
 registry the family already appears in, traced from one existing sibling through the tree. A
 registry the charge does not name is one the delegate will miss. A cap-change charge's search list names the closest pinning package.
 
@@ -74,6 +73,7 @@ return the red→green log per row. Self-probe: apply the central-property
 mutation; report the observed result and the mutation's kind (omission or swap).
 ```
 Good — rows make the done-claim verifiable, and the self-probe names its kind.
+
 ## Scope
 
 One delegate, one coherent unit: one axis, one story, one search question.

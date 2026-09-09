@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "   Collect the shared evidence once with\n   `bench preflight review <spec> --charge --base <b> --source-tip <t> --full`.\n   Supply the same frozen base that preflight used. The command returns one\n   charge row for each axis. It also returns a `shared_evidence` table with one\n   identity each for diff, consumers, and coverage.",
+    "new": "   Pull the whole base-relative context with `bench diff --full` in\n   explicit-base mode. Supply the same frozen base that preflight used."
+  }
+]
