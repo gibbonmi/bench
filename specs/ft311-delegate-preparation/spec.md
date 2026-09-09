@@ -543,7 +543,8 @@ Triage proposed no acceptance outcome, and the coordinator independently verifie
 
 Native capacity refusal recorded `agent thread limit reached` without a substitute launcher or inline axes.
 Its capable-harness handoff retained the prepared charges.
-DP20 and DP21 remain pending the coordinator's prepared-review return and withheld-return record in the existing primary handoff.
+The primary handoff records authorized native dispatch and an incomplete aggregate while Coverage was withheld.
+The restored Coverage return completed the zero-finding aggregate.
 
 The isolated linked-repository dogfood shift consumed this corrected kit and committed Terra's README completion-rule change as `6c95593`.
 Its configured `go test ./...` gate passed.
