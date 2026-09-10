@@ -21,11 +21,7 @@ import (
 func brokerChangingLanding(t *testing.T, request string) (root string, creation Creation, base, tip, home string) {
 	t.Helper()
 	root, creation, _, _, _, home = publicLandingFixture(t, request, "", "")
-	mustWrite(t, filepath.Join(root, "go.mod"), []byte("module benchfixture\n\ngo 1.22\n"), 0o644)
-	mustMkdirAll(t, filepath.Join(root, "cmd", "bench"), 0o755)
-	mustWrite(t, filepath.Join(root, "cmd", "bench", "main.go"), []byte("package main\n\nfunc main() {}\n"), 0o644)
-	mustMkdirAll(t, filepath.Join(root, "scripts"), 0o755)
-	mustWrite(t, filepath.Join(root, "scripts", "go-build.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
+	writeGoMainFixture(t, root)
 	mustWrite(t, filepath.Join(root, "scripts", "go-build.inputs"), []byte("build_script=scripts/go-build.sh\n"), 0o644)
 	spec := filepath.Join(root, "specs", "x", "spec.md")
 	body, err := os.ReadFile(spec)
@@ -39,6 +35,19 @@ func brokerChangingLanding(t *testing.T, request string) (root string, creation 
 	base = gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, creation.Path, "scripts/go-build.sh", "#!/bin/sh\n# next broker\nexit 0\n", "change broker source")
 	return root, creation, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), home
+}
+
+// writeGoMainFixture writes the resolvable Go main package and build script a broker
+// fixture's destination stands on. The seal's source digest is the build-input closure of
+// that package, so a destination without it reports an unresolvable tree rather than the
+// broker state the row is about.
+func writeGoMainFixture(t *testing.T, root string) {
+	t.Helper()
+	mustWrite(t, filepath.Join(root, "go.mod"), []byte("module benchfixture\n\ngo 1.22\n"), 0o644)
+	mustMkdirAll(t, filepath.Join(root, "cmd", "bench"), 0o755)
+	mustWrite(t, filepath.Join(root, "cmd", "bench", "main.go"), []byte("package main\n\nfunc main() {}\n"), 0o644)
+	mustMkdirAll(t, filepath.Join(root, "scripts"), 0o755)
+	mustWrite(t, filepath.Join(root, "scripts", "go-build.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
 }
 
 // kitCheckoutJoins is the landing seam set whose checkout predicate answers a fixed
@@ -124,8 +133,10 @@ func projectGreenMarker(t *testing.T, root string) string {
 }
 
 // wantEffects is the two-row effects table a landing prints for a refresh result and the
-// cleanup result beside it. The bytes are written out here rather than composed from the
-// owner's own values, so a format drift in either place fails this comparison.
+// cleanup result beside it. It composes the cleanup word from the owner's own constants,
+// so a rename there moves the expectation with it. It spells the row header, the row
+// layout, and the caller's refresh word here, so a drift in any of the three fails this
+// comparison.
 //
 // A caller that states the refresh word alone takes the cleanup word its own fixture
 // expects: a failed refresh starts no cleanup, and a fixture that carries no sibling of
@@ -150,14 +161,7 @@ func brokerDestinationFixture(t *testing.T, request string) (root string, creati
 	if err := os.Remove(filepath.Join(creation.Path, "dist", "bench")); err != nil {
 		t.Fatal(err)
 	}
-	// The destination carries a resolvable Go main package, because the seal's source
-	// digest is the build-input closure of that package. Without it the refresh would
-	// report failed for an unresolvable tree rather than for a stale executable.
-	mustWrite(t, filepath.Join(root, "go.mod"), []byte("module benchfixture\n\ngo 1.22\n"), 0o644)
-	mustMkdirAll(t, filepath.Join(root, "cmd", "bench"), 0o755)
-	mustWrite(t, filepath.Join(root, "cmd", "bench", "main.go"), []byte("package main\n\nfunc main() {}\n"), 0o644)
-	mustMkdirAll(t, filepath.Join(root, "scripts"), 0o755)
-	mustWrite(t, filepath.Join(root, "scripts", "go-build.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
+	writeGoMainFixture(t, root)
 	gitRun(t, root, "add", ".")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "broker sources")
 	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")

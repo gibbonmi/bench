@@ -411,6 +411,9 @@ They authorize implementation only after the reviewer approves this spec and its
 - `internal/handoff/state_file.go`
 - `internal/handoff/state_file_test.go`
 - `internal/handoff/state_scan_test.go`
+- `internal/handoffdoc/document.go`
+- `internal/handoffdoc/document_test.go`
+- `internal/handoffdoc/fence.go`
 - `internal/otelrecord/reader.go`
 - `internal/otelrecord/reader_test.go`
 - `internal/otelrecord/registry.go`

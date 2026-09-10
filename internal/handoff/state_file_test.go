@@ -205,6 +205,33 @@ func TestHandoffStateFileRefusesASectionHeading(t *testing.T) {
 	runIn(t, root, []string{"--state-file", fenced})
 }
 
+// LC44, story 29. A fence the draft never closes absorbs every heading below it, so the
+// written document reads as one section and no later run parses it. The draft gets the
+// document parser's own fence rule, and it gets it while the writer still holds the text.
+func TestHandoffStateFileRefusesAnUnclosedFence(t *testing.T) {
+	root := benchRepo(t)
+	document := filepath.Join(root, status.HandoffFile)
+	before := seedState(t, document, "The reviewer's own words.")
+	file := stateFile(t, "The earlier close wrote:\n\n```\n"+handoffdoc.MainHeading+"\n")
+
+	out, code := runAt(t, root, []string{"--state-file", file})
+	if code != 1 {
+		t.Fatalf("handoff over a drafted open fence = (%q, %d), want exit 1", out, code)
+	}
+	if !strings.Contains(out, faultStateFileFence) {
+		t.Errorf("the refusal does not give the fence reason %q\n%s", faultStateFileFence, out)
+	}
+	if after := read(t, document); after != before {
+		t.Fatalf("a refused run rewrote the document\nbefore:\n%s\nafter:\n%s", before, after)
+	}
+
+	// The refusal exists so the next run still parses the file. The same draft with the
+	// fence closed writes, and the bare run after it reads the document back.
+	closed := stateFile(t, "The earlier close wrote:\n\n```\n"+handoffdoc.MainHeading+"\n```\n")
+	runIn(t, root, []string{"--state-file", closed})
+	runIn(t, root, nil)
+}
+
 // LC28, story 30. An empty draft is a deliberate reset rather than a failed read, so it
 // writes an empty State and the header carries the first-session guidance again.
 func TestHandoffStateFileAcceptsAnEmptyFile(t *testing.T) {

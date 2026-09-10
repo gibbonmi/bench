@@ -8,13 +8,14 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// The three ways a drafted State never reaches the document, each named by what the writer
+// The four ways a drafted State never reaches the document, each named by what the writer
 // has to fix. The read faults share one headline because the repair is the same for all
-// four file kinds: name a file this command can read. The two text faults are separate,
-// because a byte to remove and a line to reword are different edits.
+// four file kinds: name a file this command can read. The three text faults are separate,
+// because a byte to remove, a fence to close, and a line to reword are different edits.
 const (
 	faultStateFileUnreadable = "the handoff state file is not a readable regular file"
 	faultStateFileByte       = "the handoff state file carries a control byte"
+	faultStateFileFence      = "the handoff state file opens a fence it never closes"
 	faultStateFileHeading    = "the handoff state file opens a section heading"
 )
 
@@ -22,6 +23,11 @@ const (
 	stateFileRepair = "name a readable regular file, then rerun bench handoff: "
 	stateByteRepair = "remove the control byte, then rerun bench handoff: "
 )
+
+// stateFenceRepair takes the fix from the document parser, which owns the words for this
+// fence. The draft and the document refuse the same fence for the same reason, so a
+// reworded instruction there carries here.
+var stateFenceRepair = handoffdoc.OpenFenceRepair + ", then rerun bench handoff: "
 
 // sectionOpener is the prefix that opens a level-two block, derived from the document's
 // own main heading rather than spelled again here. handoffdoc splits the file on this
@@ -56,6 +62,12 @@ func readStateFile(path string) (string, error) {
 	// an escape byte is what would ride into every downstream reader of the artifact.
 	if !toon.Representable(state) {
 		return "", refusal{faultStateFileByte, stateByteRepair + path}
+	}
+	// The fence walk below reads a fence that closes. An open one hides every heading
+	// under it from that walk and from the document the next run parses, so it refuses
+	// first, through the parser's own rule.
+	if opened, open := handoffdoc.OpenFence(state); open {
+		return "", refusal{faultStateFileFence, stateFenceRepair + strings.TrimSpace(strings.Split(state, "\n")[opened-1])}
 	}
 	for line := range handoffdoc.UnfencedLines(state) {
 		if strings.HasPrefix(line, sectionOpener) {
