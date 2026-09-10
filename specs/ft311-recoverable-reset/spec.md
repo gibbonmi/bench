@@ -592,8 +592,8 @@ The recovery prefix's Go readers were enumerated with a repository-wide search f
 | worktree validateCreationBundle, identityBundleRefusal, ownerMarkerRefusal, and registrationRefusal | The bundle components and their order. The reset runs the marker step and reads the registration step's facts, and RR31 proves the bundle passes after the lock repair. |
 | worktree recoverAssignmentWithFault, worktreeTree, realIndexTree, readIndexEntries, and commitTree | The layer capture and the envelope writer. Ticket 1 moves the capture into one shared function, and RR43 is the differential. |
 | worktree readRecoveryManifest and nextRecoveryRef | The manifest reader and the ordinal walk. The reset composes both with its own prefix, and the reader accepts the `tip` field. |
-| worktree recoveryEnvelopeValid and verifyRecovery | The cleanup's validity reader and its record-naming verifier. Neither proves the reset's envelope, so the reset composes its own three checks. |
-| worktree recoveryMetadataMatches | The reader that compares recorded recovery refs against the refs present. A sibling namespace does not change it. |
+| The cleanup's recoveryEnvelopeValid and verifyRecovery in worktree | The cleanup's validity reader and its record-naming verifier. Neither proves the reset's envelope, so the reset composes its own three checks. |
+| The cleanup's recoveryMetadataMatches in worktree | The reader that compares recorded recovery refs against the refs present. A sibling namespace does not change it. |
 | worktree predictedForeignRef | The reader that predicts an unowned checkout's recovery ref from digests. A sibling namespace does not change it. |
 | worktree retireCheckout and releaseLeftover | The cleanup's preservation callers. Neither changes, because the capture keeps its signature behind the moved function. |
 | worktree reconcile sweepLifecycleRefs and reconcileLifecycleDebris | The two swept namespaces and the ledger purge. RR41, RR42, and RR66 add the record-bound reset rule beside them. |
