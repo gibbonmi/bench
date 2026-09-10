@@ -230,14 +230,44 @@ order:
 - review the new range
 - re-run the landing with the new source tip
 
+After publication and source release, the landing runs two effects: the broker
+refresh and the eligible-sibling cleanup. The landing prints one
+`effects[2]{effect,result}` row on stdout before the `landed{...}` record, which
+stays the last stdout line. A result cell reads `complete`, `failed`, `pending`,
+or `not-applicable`. `pending` names an effect an earlier failure stopped. The
+refresh republishes the destination's own Bench executable, and it applies only
+where the destination declares Bench build inputs. The cleanup retires the
+sibling worktrees whose work this landing carries, and it prints its plan rows on
+stderr.
+
+A failed effect exits 3 with `incomplete:refresh` or `incomplete:cleanup` in the
+`worktree` cell. That record carries the same `next=` resume every other
+incomplete step carries. Each effect answers a predicate over the tree rather
+than a recorded step, so the resume repeats no complete effect.
+
 Its exit meanings follow the publication boundary:
 
 - `0` — the source was released
 - `1` — a refusal before publication
 - `2` — invalid command usage
-- `3` — publication succeeded but marker, checkout reconciliation, or source
-  release remains incomplete; the exit-3 record carries the
+- `3` — publication succeeded but marker, checkout reconciliation, source
+  release, or a landing effect remains incomplete; the exit-3 record carries the
   `bench worktree land --resume` invocation you need
+
+`bench handoff [--harness <name>] [--next <command>] [--state-file <path>]`
+rewrites the calling worktree's own section. `--state-file` names the file that
+holds the drafted State body. The verb refuses a path it cannot read as a
+regular file. It also refuses a draft that carries a control byte and a draft
+that opens a section heading. An empty draft resets the State to the scaffold
+guidance.
+
+`bench retro <slug> (--body <markdown> | --scaffold)` writes the retrospective or
+prints its draft. `--scaffold` prints the draft and writes no file, so the later
+`--body` call keeps its exclusive create. The draft renders the retrospective
+parser's own heading list and the stage timings of the newest landing span. It
+also gives one repair row per ticket of the slug. The rounds cell and the cause
+cell read `unknown`, and an absent tickets directory gives one `unknown` row.
+The verb refuses a call that names both forms or neither form.
 
 ## Plumbing subcommands
 

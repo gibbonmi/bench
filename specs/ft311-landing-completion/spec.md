@@ -432,6 +432,7 @@ They authorize implementation only after the reviewer approves this spec and its
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
 - `tests/canary/workflow-guidance-anchors/final-check-landed-worktree-sweep`
+- `tests/canary/workflow-guidance-anchors/final-check-bare-leftover-clean-retired`
 - `tests/canary/package-core-guard/unrouted-subcommand`
 - `tests/canary/skills-index-command-adapters`
 - `tests/canary/load-validity-metadata`
