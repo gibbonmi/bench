@@ -13,14 +13,16 @@ import (
 
 var retroGrammar = usage.Grammar{
 	Cmd:     "bench retro",
-	Help:    "usage: bench retro <slug> --body <markdown>",
-	Flags:   []usage.Flag{{Name: "--body", HasValue: true, NoEmptyValue: true}},
+	Help:    "usage: bench retro <slug> (--body <markdown> | --scaffold)",
+	Flags:   []usage.Flag{{Name: "--body", HasValue: true, NoEmptyValue: true}, {Name: "--scaffold"}},
 	MaxArgs: 1,
 }
 
 var openRetroRoot = os.OpenRoot
 
-// RetroCommand validates and writes one primary-local implementation retrospective.
+// RetroCommand prints one retrospective draft, or validates and writes one primary-local
+// implementation retrospective. Exactly one of the two forms is required: a call that
+// names both content sources, and a call that names neither, is a usage error.
 func RetroCommand(args []string) (string, int) {
 	parsed, line, code := usage.Parse(retroGrammar, args)
 	if line != "" {
@@ -30,8 +32,12 @@ func RetroCommand(args []string) (string, int) {
 		return retroGrammar.Help + "\n", 2
 	}
 	body, present := parsed.Flags["--body"]
-	if !present {
-		return toon.MissingArg(retroGrammar.Cmd, "--body") + "\n", 2
+	_, scaffold := parsed.Flags["--scaffold"]
+	if present == scaffold {
+		return retroGrammar.Help + "\n", 2
+	}
+	if scaffold {
+		return retroScaffold(parsed.Positionals[0])
 	}
 	if err := retros.Parse([]byte(body)); err != nil {
 		return toon.Errorf("invalid retrospective", err.Error()) + "\n", 1

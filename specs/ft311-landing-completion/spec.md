@@ -412,6 +412,7 @@ They authorize implementation only after the reviewer approves this spec and its
 - `internal/handoff/state_scan_test.go`
 - `internal/otelrecord/reader.go`
 - `internal/otelrecord/reader_test.go`
+- `internal/otelrecord/registry.go`
 - `internal/roadmap/retro.go`
 - `internal/roadmap/retro_scaffold.go`
 - `internal/roadmap/retro_scaffold_test.go`

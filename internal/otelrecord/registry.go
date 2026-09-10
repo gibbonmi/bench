@@ -21,10 +21,10 @@ type SeamEntry struct {
 // Registry is the instrumented set in seam order.
 var Registry = []SeamEntry{
 	{Seam: "gate", Package: "internal/gate", Function: "beginGateSpan"},
-	{Seam: "gate.phase", Package: "internal/gate", Function: "startPhaseSpan"},
+	{Seam: SeamGatePhase, Package: "internal/gate", Function: "startPhaseSpan"},
 	{Seam: "lane", Package: "internal/gate", Function: "beginLaneSpan"},
 	{Seam: "commit", Package: "internal/commit", Function: "beginCommitSpan"},
-	{Seam: "worktree.land", Package: "internal/worktree", Function: "beginLandingSpan"},
+	{Seam: SeamLanding, Package: "internal/worktree", Function: "beginLandingSpan"},
 	{Seam: "worktree.create", Package: "internal/worktree", Function: "beginVerbSpan"},
 	{Seam: "worktree.exec", Package: "internal/worktree", Function: "beginVerbSpan"},
 	{Seam: "worktree.merge", Package: "internal/worktree", Function: "beginVerbSpan"},

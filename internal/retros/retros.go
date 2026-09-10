@@ -16,17 +16,33 @@ const Directory = "capture/retros"
 
 var retrospectiveSlug = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
 
+// The two headings a scaffold fills with derived facts. They are named here, beside the
+// heading list itself, so a renderer addresses a section through this symbol rather than
+// through a second spelling of the heading.
+const (
+	// TimingsHeading opens the gate-stage timings section.
+	TimingsHeading = "## Gate-stage timings"
+
+	// RepairHeading opens the repair-attribution section.
+	RepairHeading = "## Repair attribution"
+)
+
 var requiredHeadings = []string{
 	"## Outcome",
-	"## Gate-stage timings",
+	TimingsHeading,
 	"## Ticket-versus-spec-slice and delegate performance",
 	"## Coordinator catches",
-	"## Repair attribution",
+	RepairHeading,
 	"## Agent-experience improvements",
 	"### Bench CLI",
 	"### Skills",
 	"### Process",
 }
+
+// RequiredHeadings returns the canonical heading list in the order Parse demands. A
+// renderer composes its body from this list, so every rendered body parses and no second
+// copy of the list can drift from it.
+func RequiredHeadings() []string { return append([]string(nil), requiredHeadings...) }
 
 // ValidSlug reports whether value can name one retrospective file below Directory.
 func ValidSlug(value string) bool { return retrospectiveSlug.MatchString(value) }

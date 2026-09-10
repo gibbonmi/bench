@@ -34,6 +34,22 @@ func TestEligibleFixtureKeepsRequiredHeadings(t *testing.T) {
 	}
 }
 
+// A renderer composes its body from RequiredHeadings, so the answer must be a copy the
+// caller may rewrite without changing what Parse then demands.
+func TestRequiredHeadingsAnswersACopy(t *testing.T) {
+	first := RequiredHeadings()
+	if len(first) == 0 {
+		t.Fatal("RequiredHeadings() is empty")
+	}
+	first[0] = "## Mutated"
+	if second := RequiredHeadings(); second[0] == first[0] {
+		t.Fatalf("RequiredHeadings() answered the parser's own list: %q", second[0])
+	}
+	if err := Parse([]byte(retrotestdata.Eligible())); err != nil {
+		t.Fatalf("Parse after a mutated copy = %v, want nil", err)
+	}
+}
+
 func TestParseRejectsMissingRequiredHeading(t *testing.T) {
 	if err := Parse([]byte("## Outcome\n")); err == nil {
 		t.Fatal("Parse(incomplete retro) = nil, want an error")
