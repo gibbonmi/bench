@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -75,7 +76,7 @@ func TestReadSpansRefusesAnUnreadableRecord(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chmod(Path(home, root), 0o600) })
 	if os.Geteuid() == 0 {
-		t.Skip("root reads a mode-000 file")
+		capability.Capability(t, capability.Privilege, "root reads mode 0000 files; the unreadable record is unobservable")
 	}
 	if _, err := ReadSpans(home, root); err == nil {
 		t.Fatal("ReadSpans over an unreadable record = nil error, want a refusal")

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/retros"
 	"go.opentelemetry.io/otel/attribute"
@@ -117,7 +118,7 @@ func TestRetroScaffoldReportsUnknownTimings(t *testing.T) {
 			switch name {
 			case "unreadable":
 				if os.Geteuid() == 0 {
-					t.Skip("root reads a mode-000 file")
+					capability.Capability(t, capability.Privilege, "root reads mode 0000 files; the unreadable record is unobservable")
 				}
 				recordLanding(home, root, "commit", "build", 0)
 				record := otelrecord.Path(home, root)
