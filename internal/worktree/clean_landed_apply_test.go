@@ -151,7 +151,7 @@ func TestCleanLandedApplyReplansEachRowBeforeMutation(t *testing.T) {
 	if planCode != 0 || planErr != "" {
 		t.Fatalf("plan exit=%d stdout=%q stderr=%q", planCode, plan, planErr)
 	}
-	set, err := planLandedSet(defaultJoins(), root, CleanupOptions{})
+	set, err := planLandedSet(defaultJoins(), root, CleanupOptions{}, "")
 	if err != nil || len(set.rows) != 3 {
 		t.Fatalf("landed set = %#v, %v; want three rows", set, err)
 	}

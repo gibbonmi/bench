@@ -33,7 +33,11 @@ type landedCleanupSet struct {
 	fingerprint string
 }
 
-func planLandedSet(j joins, root string, options CleanupOptions) (landedCleanupSet, error) {
+// planLandedSet plans every assignment the landed selector admits under scope. An empty
+// scope is the whole repository, which is what `bench worktree clean --landed` asks for.
+// A non-empty scope is one landing's destination base, which narrows the set to the
+// assignments whose work that landing carries.
+func planLandedSet(j joins, root string, options CleanupOptions, scope string) (landedCleanupSet, error) {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return landedCleanupSet{}, err
@@ -51,7 +55,7 @@ func planLandedSet(j joins, root string, options CleanupOptions) (landedCleanupS
 	set := landedCleanupSet{rows: make([]landedCleanupRow, 0, len(assignments))}
 	for _, assignment := range assignments {
 		lease := leases[assignment.OwnerID]
-		if row, selected := selectLandedCleanupRow(j, root, assignment, defaultRef, lease, options); selected {
+		if row, selected := selectLandedCleanupRow(j, root, assignment, defaultRef, lease, options, scope); selected {
 			set.rows = append(set.rows, row)
 		}
 	}
@@ -68,13 +72,25 @@ func planLandedSet(j joins, root string, options CleanupOptions) (landedCleanupS
 // selectLandedCleanupRow is the selector's single per-assignment proof. The set plan and
 // every pre-mutation row re-plan use it. A row cannot become removable through a
 // different route after its shared fingerprint was validated.
-func selectLandedCleanupRow(j joins, root string, assignment intent.Assignment, defaultRef, lease string, options CleanupOptions) (landedCleanupRow, bool) {
+//
+// scope narrows the selector to one landing's own work. The same landed proof answers
+// both questions: the branch has to be landed in the destination as it stands now, and it
+// has to be unlanded at the destination base this landing composed against. An assignment
+// that was already landed before this landing belongs to no landing's own set.
+func selectLandedCleanupRow(j joins, root string, assignment intent.Assignment, defaultRef, lease string, options CleanupOptions, scope string) (landedCleanupRow, bool) {
 	if assignment.State != intent.StateActive || assignment.Branch == "" {
 		return landedCleanupRow{}, false
 	}
-	landed, byContent, proofErr := git.LandedInDefault(root, strings.TrimPrefix(assignment.Branch, "refs/heads/"), defaultRef)
+	branch := strings.TrimPrefix(assignment.Branch, "refs/heads/")
+	landed, byContent, proofErr := git.LandedInDefault(root, branch, defaultRef)
 	if proofErr != nil || !landed {
 		return landedCleanupRow{}, false
+	}
+	if scope != "" {
+		before, _, scopeErr := git.LandedInDefault(root, branch, scope)
+		if scopeErr != nil || before {
+			return landedCleanupRow{}, false
+		}
 	}
 	if lease == "" {
 		lease = "none"
@@ -278,7 +294,7 @@ func sameLandedCleanupTuple(a, b landedCleanupRow) bool {
 		a.lease == b.lease
 }
 
-func replanLandedCleanupRow(j joins, root, assignmentID string, options CleanupOptions) (landedCleanupRow, bool, error) {
+func replanLandedCleanupRow(j joins, root, assignmentID string, options CleanupOptions, scope string) (landedCleanupRow, bool, error) {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return landedCleanupRow{}, false, err
@@ -293,21 +309,21 @@ func replanLandedCleanupRow(j joins, root, assignmentID string, options CleanupO
 	}
 	for _, assignment := range assignments {
 		if assignment.ID == assignmentID {
-			row, selected := selectLandedCleanupRow(j, root, assignment, defaultRef, leases[assignment.OwnerID], options)
+			row, selected := selectLandedCleanupRow(j, root, assignment, defaultRef, leases[assignment.OwnerID], options, scope)
 			return row, selected, nil
 		}
 	}
 	return landedCleanupRow{}, false, nil
 }
 
-func applyLandedSet(j joins, root string, set landedCleanupSet, options CleanupOptions) ([]CleanupPlan, error) {
+func applyLandedSet(j joins, root string, set landedCleanupSet, options CleanupOptions, scope string) ([]CleanupPlan, error) {
 	plans := make([]CleanupPlan, 0, len(set.rows))
 	for _, planned := range set.rows {
 		if !planned.plan.Action.Removes() {
 			plans = append(plans, planned.plan)
 			continue
 		}
-		current, selected, err := replanLandedCleanupRow(j, root, planned.assignment.ID, options)
+		current, selected, err := replanLandedCleanupRow(j, root, planned.assignment.ID, options, scope)
 		if err != nil {
 			return append(plans, planned.plan), err
 		}
@@ -320,7 +336,7 @@ func applyLandedSet(j joins, root string, set landedCleanupSet, options CleanupO
 			return plans, errStaleFingerprint
 		}
 		planner := func(string) (CleanupPlan, error) {
-			fresh, stillSelected, planErr := replanLandedCleanupRow(j, root, planned.assignment.ID, options)
+			fresh, stillSelected, planErr := replanLandedCleanupRow(j, root, planned.assignment.ID, options, scope)
 			if planErr != nil {
 				return CleanupPlan{}, planErr
 			}

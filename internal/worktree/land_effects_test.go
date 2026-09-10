@@ -123,11 +123,22 @@ func projectGreenMarker(t *testing.T, root string) string {
 	return strings.TrimSpace(string(output))
 }
 
-// wantEffects is the one-row effects table a landing prints for result. The bytes are
-// written out here rather than composed from the owner's own values, so a format drift
-// in either place fails this comparison.
-func wantEffects(result string) string {
-	return "effects[1]{effect,result}:\n  refresh," + result + "\n"
+// wantEffects is the two-row effects table a landing prints for a refresh result and the
+// cleanup result beside it. The bytes are written out here rather than composed from the
+// owner's own values, so a format drift in either place fails this comparison.
+//
+// A caller that states the refresh word alone takes the cleanup word its own fixture
+// expects: a failed refresh starts no cleanup, and a fixture that carries no sibling of
+// its own settles an empty set. A caller whose fixture expects another word states it.
+func wantEffects(refresh string, cleanup ...string) string {
+	result := effectComplete
+	if refresh == effectFailed {
+		result = effectPending
+	}
+	if len(cleanup) > 0 {
+		result = cleanup[0]
+	}
+	return "effects[2]{effect,result}:\n  refresh," + refresh + "\n  cleanup," + result + "\n"
 }
 
 // brokerDestinationFixture is the public landing fixture whose destination declares Bench
@@ -221,19 +232,47 @@ func TestLandSkipsAFreshBroker(t *testing.T) {
 	}
 }
 
-// TestLandReportsAFailedRefresh is LC4 and LC5. A build that returns without publishing a
-// verified executable leaves the destination's broker stale. The landing reports the
-// failed effect with the resume every incomplete step names, and it unpublishes nothing.
+// TestLandRefreshesTheBrokerAfterPublication is LC1. A destination that declares Bench
+// build inputs and carries a stale executable is rebuilt once after the release, and the
+// landing then reports both effects and exits zero.
+func TestLandRefreshesTheBrokerAfterPublication(t *testing.T) {
+	t.Parallel()
+	request := "land-refresh-after-publication"
+	root, creation, base, tip, home := brokerDestinationFixture(t, request)
+	j, calls := refreshJoins(func(root, executable string) error {
+		return publishVerifyingBroker(t, root, executable)
+	})
+
+	var stdout, stderr bytes.Buffer
+	code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	if code != 0 || !strings.Contains(stdout.String(), wantEffects("complete")) {
+		t.Fatalf("landing with a stale broker = (%d, %q, %q), want a complete refresh at exit 0", code, stdout.String(), stderr.String())
+	}
+	if *calls != 1 {
+		t.Fatalf("refresh build calls = %d, want exactly one", *calls)
+	}
+}
+
+// TestLandReportsAFailedRefresh is LC4, LC5, and LC13. A build that returns without
+// publishing a verified executable leaves the destination's broker stale. The landing
+// reports the failed effect with the resume every incomplete step names, and it
+// unpublishes nothing. A failed effect stops every later effect, so the cleanup reports
+// pending and the folded sibling's checkout is untouched.
 func TestLandReportsAFailedRefresh(t *testing.T) {
 	t.Parallel()
 	request := "land-refresh-failed"
-	root, creation, base, tip, home := brokerDestinationFixture(t, request)
+	root, creation, base, _, home := brokerDestinationFixture(t, request)
+	sibling, tip := foldLandingSibling(t, root, home, request+"-sibling", creation)
 	j, calls := refreshJoins(nil)
 
 	var stdout, stderr bytes.Buffer
 	code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
+	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed", "pending")) {
 		t.Fatalf("failed refresh = (%d, %q, %q), want exit 3 with a failed refresh", code, stdout.String(), stderr.String())
+	}
+	requirePresent(t, sibling.Path, "sibling worktree")
+	if strings.Contains(stderr.String(), "landing cleanup{") {
+		t.Fatalf("failed refresh stderr = %q, want no cleanup plan row", stderr.String())
 	}
 	if !strings.Contains(stdout.String(), "worktree=incomplete:refresh,next=bench worktree land --resume ") {
 		t.Fatalf("failed refresh record = %q, want an incomplete:refresh cell with a resume", stdout.String())
@@ -290,10 +329,10 @@ func TestLandEffectsRowPrecedesTheLandedRecord(t *testing.T) {
 		t.Fatalf("landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
 	}
 	lines := strings.Split(strings.TrimSuffix(stdout.String(), "\n"), "\n")
-	if len(lines) < 3 {
+	if len(lines) < 4 {
 		t.Fatalf("landing stdout = %q, want the effects table before the landed record", stdout.String())
 	}
-	tail := strings.Join(lines[len(lines)-3:], "\n") + "\n"
+	tail := strings.Join(lines[len(lines)-4:], "\n") + "\n"
 	if !strings.HasPrefix(tail, wantEffects("not-applicable")) {
 		t.Fatalf("landing stdout tail = %q, want the effects table first", tail)
 	}
