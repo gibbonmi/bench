@@ -235,8 +235,8 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT311 landing-completion spec, the third of five from `specs/ft311-landing-completion/decisions/ft311-coordinator-work.md` — run `/bench-write-spec`.
-2. FT311 recoverable-reset spec, the fourth of five — run `/bench-write-spec` after the landing-completion spec lands.
+1. FT311 recoverable-reset spec, the fourth of five from `specs/ft311-landing-completion/decisions/ft311-coordinator-work.md` — run `/bench-write-spec`.
+2. FT311 lower-tier-trials spec, the fifth of five — run `/bench-write-spec` after the recoverable-reset spec lands.
 3. FT312 cross-harness reviewer verb — run `/bench-write-spec`.
 4. FT300 ticket-slicing fence and refusal-state rules — a `craft-synthesis` kit edit to `craft-tickets`.
 5. FT172 roadmap row grammar — a reviewer decision, after the last FT311 stage.
