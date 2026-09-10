@@ -334,16 +334,17 @@ The full landing gate remains the code oracle.
 | LC31 | 34, 41 | The scaffold lists each gate stage of the landing's own trace with its elapsed milliseconds. | New TestRetroScaffoldNamesTheLandingStages over a canned record of `schedule` phase spans under the landing span | A scaffold that reads the newest gate run names the operator's own gate instead. |
 | LC32 | 35 | An absent record, an unreadable record, and a record with no landing span each write `unknown` under the timings heading at exit 0. | New TestRetroScaffoldReportsUnknownTimings through RetroCommand | A refusal blocks the draft the decision source requires. |
 | LC33 | 36, 37 | The repair-attribution table carries one row per ticket file, in name order, with `unknown` in the rounds cell and the cause cell. | New TestRetroScaffoldListsTheTickets through RetroCommand | A missing ticket row or an invented cause fails the exact comparison. |
-| LC34 | 38 | An absent tickets directory gives one row whose ticket cell reads `unknown`. | New TestRetroScaffoldListsTheTickets through RetroCommand | A scaffold that omits the table leaves the retired-folder case with no shape. |
+| LC34 | 38 | An absent tickets directory gives one row whose ticket cell reads `unknown`. | New TestRetroScaffoldListsUnknownWithoutATicketsDirectory through RetroCommand | A scaffold that omits the table leaves the retired-folder case with no shape. |
 | LC35 | 39 | `--scaffold` creates no file, and a later `--body` for the same slug still creates one. | New TestRetroScaffoldWritesNoFile through RetroCommand | A scaffold that writes makes the capture call refuse on an existing file. |
 | LC36 | 40 | `bench retro <slug> --scaffold --body <markdown>` is a usage error at exit 2 with no file written. | New TestRetroRefusesBothForms through RetroCommand | A form that prefers one source silently discards the other. |
 | LC37 | 40 | `bench retro <slug>` with neither form is a usage error at exit 2. | New TestRetroRefusesNeitherForm through RetroCommand | A form made optional writes an empty retrospective. |
 | LC38 | 32 | The scaffold emits no improvement item, so the destination-marker check reports no diagnostic over the captured body. | New TestRetroScaffoldProposesNoImprovement through retros.ValidateImprovementMarkers | A scaffolded item without a `Feeds:` line reds the gate for every later capture. |
 | LC39 | 41 | The lane's phase spans carry the landing span's trace identity. | New TestLandRecordsOneTraceForThePhases in the worktree package over a bound Bench home | A fresh trace at the authorization call leaves the phases unreachable from the landing. |
-| LC40 | 42 | The reference, the final-check guidance, and the changelog state the two effects, the state-file form, and the scaffold form. | Review-owned Spec axis over the four guidance files | A missing paragraph leaves a cold session running the old eight-call close. |
+| LC40 | 42 | The reference and the changelog state the two effects, the state-file form, and the scaffold form, and the final-check guidance states the landing's own cleanup. | Review-owned Spec axis over the four guidance files | A missing paragraph leaves a cold session running the old eight-call close. |
 | LC41 | 43 | No reset, tier-default, commit change-set, or test-table change enters the build. | Review-owned scope audit | An added grammar or a reset edit belongs to another spec's fence. |
 | LC42 | 9 | The landing's own cleanup prints no fingerprint and asks for no second call. | New TestLandCleansTheFoldedSibling through landWith | A printed apply action reintroduces the two-call chunk this spec removes. |
 | LC43 | 12 | A cleanup row whose worktree path is not line safe names its assignment pointer rather than its path. | New TestLandRetainsAnUnprovenSibling through landWith | A raw hostile path in the stderr evidence splits its own line. |
+| LC44 | 29 | A state file whose fence never closes refuses at exit 1, and the document keeps its bytes. | New TestHandoffStateFileRefusesAnUnclosedFence through handoff.Command | An open fence absorbs every later heading, so the next run cannot parse the document. |
 
 ### Edge inventory
 
@@ -362,7 +363,7 @@ Every behavior serves this repository and every repository that links the kit, e
 | Process boundary | The invoked owner keeps one process identity through publication, release, and both effects. | LC7 |
 | Output shape | The effects row precedes the landed record, and the landed record stays the last stdout line. | LC20 |
 | File kinds | An absent, linked, special, or unreadable state file refuses before the read. | LC25 |
-| Text sinks | An escape byte and a section heading in a state file each refuse before the document renders. | LC26, LC27 |
+| Text sinks | An escape byte, a section heading, and an unclosed fence in a state file each refuse before the document renders. | LC26, LC27, LC44 |
 | Identity | A pin outside the ancestry, a pin that is not a commit, and an ambiguous prefix each answer their own fault. | LC22, LC23, LC24 |
 | Paths | A retained worktree whose path is not line safe is named by its assignment pointer. | LC43 |
 | Missing evidence | An absent record, an unreadable record, a record with no landing span, and an absent tickets directory all write unknown. | LC32, LC34 |
@@ -627,6 +628,7 @@ The repaired paragraph inside the implemented diagnostics spec is a prose repair
 | 3. Read the handoff State from a file | none | `bench handoff --state-file <file>` with the existing scan and the hostile-file refusals |
 | 4. Scaffold the retrospective from the landing's record | 2.md, 3.md | `bench retro <slug> --scaffold`, the seam-record reader, and the landing's single trace |
 | 5. Fold the guidance and the changelog | 3.md, 4.md | The reference, the phase guidance, and the changelog state the landed behavior |
+| 6. Repair the review findings | 5.md | The unclosed-fence refusal, one fixture helper, one reworded comment, and the closed pickup |
 
 Tickets 1 and 3 form the first frontier and run in parallel, one worktree each.
 Ticket 2 follows ticket 1 because both write the effects owner and the two landing entry points.
