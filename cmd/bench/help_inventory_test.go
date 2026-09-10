@@ -45,10 +45,10 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench skills-index [--check|--write]  print skills-index drift (default) or regenerate it
   bench idea "<text>"        park an out-of-scope idea in capture/IDEAS.md (commit to nothing)
   bench learning "<title>" --what --right [--rule]  append one open entry to capture/learnings.md (the drain verdicts it)
-  bench retro <slug> --body <markdown>  validate and create one primary-local implementation retrospective
+  bench retro <slug> (--body <markdown> | --scaffold)  draft, or validate and create, one primary-local implementation retrospective
   bench roadmap              show the top 10 roadmap rows + drain state
   bench status               ambient dashboard: what needs attention + the next action
-  bench handoff [--harness <name>] [--next <command>]  print the cold-start pin block and rewrite capture/session-handoff.md
+  bench handoff [--harness <name>] [--next <command>] [--state-file <path>]  print the cold-start pin block and rewrite capture/session-handoff.md
   bench commands --brief     print the direct, read-only command probe
   bench dashboard [--stdout] write a self-contained HTML snapshot of the board (--stdout emits it)
   bench canary [root]        validate fixture inventory

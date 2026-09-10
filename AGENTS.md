@@ -67,13 +67,15 @@ conversation history.
 
 A phase close commits its tracked capture artifacts — the retro and the
 scorecard updates — together in one gate-priced commit. The git-ignored
-capture files stay local and never join that commit.
+capture files stay local and never join that commit. Read
+`bench retro <slug> --scaffold` before you write the retrospective, because
+that draft carries the headings, the stage timings, and one row per ticket.
 
 A phase close runs `bench handoff` from its own worktree.
 `bench handoff` rewrites only the calling worktree's assignment section.
 The primary checkout owns the `main` section. The verb keeps a non-empty Next
 command. The verb also refuses a State that pins a commit outside the tip's
-ancestry.
+ancestry. Give the drafted State to `bench handoff --state-file <path>`.
 
 When the handoff and the tree disagree, the tree wins. `bench
 status` dates each section by the branch commits past its recorded tip, and

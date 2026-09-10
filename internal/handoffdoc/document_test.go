@@ -166,6 +166,31 @@ func TestParseRefusesAFenceLeftOpenAtEndOfFile(t *testing.T) {
 	}
 }
 
+// TestOpenFenceNamesTheOpeningLine proves the export a writer calls before its text
+// reaches a section answers the same fence rule Parse applies. The reopened case is the
+// sharp one: a later pair closes the fence before it, so only the last unmatched opener
+// is the line to close.
+func TestOpenFenceNamesTheOpeningLine(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		text string
+		line int
+		open bool
+	}{
+		{"no fence", "The build is live.\n\n## main", 0, false},
+		{"closed fence", "Pasted:\n\n```console\n## main\n```\n\nDone.", 0, false},
+		{"open fence", "Pasted:\n\n```console\n## main\n", 3, true},
+		{"reopened fence", "```\nfirst\n```\n\n~~~\n## main\n", 5, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			line, open := OpenFence(tc.text)
+			if line != tc.line || open != tc.open {
+				t.Fatalf("OpenFence(%q) = (%d, %t), want (%d, %t)", tc.text, line, open, tc.line, tc.open)
+			}
+		})
+	}
+}
+
 // TestEnsureMainAndRemoveKeepTheFallbackSection covers the retirement path's two
 // document-level moves: the removal drops one key, and main survives the last one.
 func TestEnsureMainAndRemoveKeepTheFallbackSection(t *testing.T) {

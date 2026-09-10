@@ -50,7 +50,7 @@ with its tickets, so there is no separate top-level decision-map delete.
 Promote or delete an orphaned review pickup by hand.
 
 Scratch branches go through `bench worktree clean`.
-Leftover worktrees are retired by `bench worktree clean --landed`: run the plan, apply it, and carry the plan and apply result in the landing report.
+The landing retires the sibling worktrees whose work it carries, and `bench worktree clean --landed` retires every other landed assignment.
 
 The phase close reads the assignment census record before `bench worktree land` removes it, and it carries the per-verb breakdown into the close.
 

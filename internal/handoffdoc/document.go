@@ -12,7 +12,6 @@ package handoffdoc
 
 import (
 	"fmt"
-	"iter"
 	"strings"
 )
 
@@ -204,10 +203,10 @@ func labelLine(label, value string) string {
 func Parse(path string, content []byte) (*Document, error) {
 	lines := strings.Split(strings.ReplaceAll(string(content), "\r\n", "\n"), "\n")
 	doc := &Document{}
-	blocks, header, opened := splitSections(lines)
-	if opened != 0 {
-		return nil, &ParseError{path, opened, fmt.Sprintf("line %q opens a fenced block that the file never closes; %s", strings.TrimRight(lines[opened-1], " \t"), openFenceRepair)}
+	if opened, open := OpenFence(string(content)); open {
+		return nil, &ParseError{path, opened, fmt.Sprintf("line %q opens a fenced block that the file never closes; %s", strings.TrimRight(lines[opened-1], " \t"), OpenFenceRepair)}
 	}
+	blocks, header := splitSections(lines)
 	doc.Header = strings.Trim(strings.Join(header, "\n"), "\n")
 	blocks, err := convertLegacy(path, blocks)
 	if err != nil {
@@ -252,20 +251,13 @@ type block struct {
 // heading. It returns the blocks in file order, so main keeps whatever place the
 // file gave it and Shape stays last.
 //
-// opened is the line that opens a fence the file never closes, and 0 when every
-// fence closes. The fence state runs the whole file, so an unclosed one silently
-// absorbs every later section into the block it opened in. The caller refuses on
-// that line rather than parsing the absorbed shape.
-func splitSections(lines []string) (blocks []block, header []string, opened int) {
+// A heading inside a fence stays body. The caller has already refused a fence the
+// file never closes, so no block here absorbs the sections below one.
+func splitSections(lines []string) (blocks []block, header []string) {
 	fenced := false
 	for i, raw := range lines {
 		trimmed := strings.TrimRight(raw, " \t")
 		if isFence(trimmed) {
-			if !fenced {
-				opened = i + 1
-			} else {
-				opened = 0
-			}
 			fenced = !fenced
 		}
 		if fenced || !strings.HasPrefix(trimmed, "## ") {
@@ -278,7 +270,7 @@ func splitSections(lines []string) (blocks []block, header []string, opened int)
 		}
 		blocks = append(blocks, block{heading: trimmed, line: i + 1})
 	}
-	return blocks, header, opened
+	return blocks, header
 }
 
 // The level-two headings the handoff carried before it held one section per
@@ -405,42 +397,4 @@ func splitLabel(line string) (string, string, bool) {
 	}
 	value := strings.TrimSpace(line[colon+1:])
 	return label, value, true
-}
-
-// isFence reports whether a line opens or closes a fenced block. Both markdown
-// fence characters count, and leading indentation does not disqualify one.
-func isFence(line string) bool {
-	trimmed := strings.TrimLeft(line, " \t")
-	return strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~")
-}
-
-// openFenceRepair is what Parse tells a reader holding a file it will not read.
-// Nothing derives the fix, so the refusal states it.
-const openFenceRepair = "close the fence, so the headings below it read as headings"
-
-// UnfencedLines yields the State lines that sit outside a fenced block, with each
-// line's trailing whitespace removed. A line inside a fence is an example the
-// writer pasted, not a claim about this repository, so no reader of State judges it.
-//
-// The fence rule is isFence, the same one Parse applies to the whole file. A second
-// reader of State with its own idea of a fence would disagree with the parser about
-// which bytes are prose. A State that breaks the document grammar is refused by
-// Parse itself, which reads the file before any writer reaches this walk.
-func UnfencedLines(state string) iter.Seq[string] {
-	return func(yield func(string) bool) {
-		fenced := false
-		for _, raw := range strings.Split(state, "\n") {
-			trimmed := strings.TrimRight(raw, " \t")
-			if isFence(trimmed) {
-				fenced = !fenced
-				continue
-			}
-			if fenced {
-				continue
-			}
-			if !yield(trimmed) {
-				return
-			}
-		}
-	}
 }

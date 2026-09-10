@@ -108,6 +108,10 @@ type joins struct {
 	// default reaches a build script and a Go toolchain, and a fixture for that pair
 	// would make every output row wait on a real compile.
 	build func(context.Context, string, string) error
+	// buildSubject authors a checkout's own published executable, under the manifest
+	// directory the build owner defaults to. It is a sibling of build, not a second
+	// caller of it, because the two publish different subjects and different manifests.
+	buildSubject func(context.Context, string, string) error
 	// mergeReconcile is the merge verb's publication boundary: the checkout catch-up that
 	// runs after the branch ref moved. It is a seam because its failure is the one
 	// outcome that reads apart from a refusal, and no fixture can make a bare reset fail.
@@ -149,6 +153,7 @@ func defaultJoins() joins {
 		kitSourceCheckout:        gate.KitSourceCheckout,
 		mergeReconcile:           reconcileMergeCheckout,
 		build:                    runbinary.Build,
+		buildSubject:             runbinary.BuildSubject,
 	}
 }
 
@@ -175,8 +180,8 @@ func LandCommand(root, home, executable string, args []string, stdout, stderr io
 // seam as the first run.
 func landWith(j joins, root, home, executable string, args []string, stdout, stderr io.Writer) int {
 	var measures landingMeasures
-	finishSpan := beginLandingSpan(home, root)
-	exit := landAttributed(&measures, j, root, home, executable, args, stdout, stderr)
+	ctx, finishSpan := beginLandingSpan(home, root)
+	exit := landAttributed(ctx, &measures, j, root, home, executable, args, stdout, stderr)
 	finishSpan(exit, measures)
 	return exit
 }
@@ -197,12 +202,12 @@ type landingMeasures struct {
 	censusRawCallsRead bool
 }
 
-// beginLandingSpan starts the landing's span and returns the closer that ends it. The
-// home is the one the verb boundary already resolved, so the record is not addressed
-// from a second read of the environment.
-func beginLandingSpan(home, root string) func(int, landingMeasures) {
-	_, span, finish := otelrecord.Begin(home, root, otelLandingSeam)
-	return func(exit int, measures landingMeasures) {
+// beginLandingSpan starts the landing's span and returns its context with the closer
+// that ends it. The home is the one the verb boundary already resolved, and the context
+// carries the span, so the authorization gate joins this trace rather than opening one.
+func beginLandingSpan(home, root string) (context.Context, func(int, landingMeasures)) {
+	ctx, span, finish := otelrecord.Begin(home, root, otelLandingSeam)
+	return ctx, func(exit int, measures landingMeasures) {
 		if measures.subject != "" {
 			span.SetAttributes(attribute.String(otelrecord.AttrSubjectID, measures.subject))
 		}
@@ -221,7 +226,7 @@ func beginLandingSpan(home, root string) func(int, landingMeasures) {
 
 // landAttributed is the first-run landing itself, with the span's measures written to
 // measures as each becomes known.
-func landAttributed(measures *landingMeasures, j joins, root, home, _ string, args []string, stdout, stderr io.Writer) int {
+func landAttributed(ctx context.Context, measures *landingMeasures, j joins, root, home, _ string, args []string, stdout, stderr io.Writer) int {
 	j.home = home
 	if hasResumeFlag(args) {
 		return resumeLandWith(j, root, home, args, stdout, stderr)
@@ -295,7 +300,7 @@ func landAttributed(measures *landingMeasures, j joins, root, home, _ string, ar
 	if notice := brokerChangeNotice(j.kitSourceCheckout, root, assignment.Worktree, source.base, source.tip); notice != "" {
 		fmt.Fprintln(stderr, notice)
 	}
-	result, err := j.landReviewed(context.Background(), landing.ReviewedRequest{
+	result, err := j.landReviewed(ctx, landing.ReviewedRequest{
 		Root: root, Destination: "refs/heads/" + branch, DestinationBase: destination,
 		Source: assignment.Branch, SourceTip: source.tip, ReviewBase: source.base,
 		SourceWorktree: assignment.Worktree, SourceFingerprint: source.fingerprint, DestinationFingerprint: destinationFingerprint,
@@ -328,7 +333,7 @@ func landAttributed(measures *landingMeasures, j joins, root, home, _ string, ar
 		}
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release", records)
 	}
-	return landedComplete(stdout, result, true, records)
+	return landedAfterEffects(j, root, result, parsed.Flags["--spec"], path, assignment.ID, true, records, stdout, stderr)
 }
 
 // censusCount is the assignment's raw-call count for the landed record. An unreadable

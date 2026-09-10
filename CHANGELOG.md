@@ -8,6 +8,23 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added two `bench worktree land` effects after publication and source release: the
+  broker refresh and the eligible-sibling cleanup. The landing prints one
+  `effects[2]{effect,result}` row on stdout before the `landed{...}` record. A result
+  cell reads `complete`, `failed`, `pending`, or `not-applicable`. A failed effect exits
+  3 with `incomplete:refresh` or `incomplete:cleanup` in the `worktree` cell. That record
+  carries the same `bench worktree land --resume` invocation, and the resume repeats no
+  complete effect.
+- Added `bench handoff --state-file <path>`, which reads the drafted State body from a
+  file. Without the flag the owned section keeps the State it already carries. The verb
+  refuses a path it cannot read as a regular file, a draft that carries a control byte,
+  and a draft that opens a section heading. An empty draft resets the State to the
+  scaffold guidance.
+- Added `bench retro <slug> --scaffold`, which prints a retrospective draft and writes
+  no file. The draft renders the retrospective parser's own heading list, the stage
+  timings of the newest landing span, and one repair row per ticket of the slug. The
+  rounds cell and the cause cell read `unknown`, and an absent tickets directory gives
+  one `unknown` row. `--scaffold` with `--body` is a usage error at exit 2.
 - Added a `bench probe` baseline run and a `selection[1]{form,target,run,baseline,ran}`
   row. The verb runs the focused selection once over the unmutated tree before the
   mutation. A baseline that does not pass prints the verdict `invalid`, a

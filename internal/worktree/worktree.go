@@ -365,7 +365,7 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 		return 0
 	}
 	if landed {
-		set, planErr := planLandedSet(j, root, options)
+		set, planErr := planLandedSet(j, root, options, "")
 		if planErr != nil {
 			_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: fingerprint, Reason: planErr.Error()})
 			return 1
@@ -378,7 +378,7 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 			return 1
 		}
 		if fingerprint != "" {
-			plans, applyErr := applyLandedSet(j, root, set, options)
+			plans, applyErr := applyLandedSet(j, root, set, options, "")
 			if renderErr := renderCleanups(stdout, plans); renderErr != nil {
 				fmt.Fprintf(stderr, "bench worktree clean: %v\n", renderErr)
 				return 1

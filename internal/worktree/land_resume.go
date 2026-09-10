@@ -90,13 +90,15 @@ func resumeLandWith(j joins, root, home string, args []string, stdout, stderr io
 	if _, err := j.pruneLandedBranches(root); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "prune", records)
 	}
+	// A released assignment still owns its effects, so the terminal path runs them rather
+	// than returning a complete landing over an unfinished tree.
 	if !active {
-		return landedComplete(stdout, result, false, records)
+		return landedAfterEffects(j, root, result, parsed.Flags["--spec"], path, assignmentID, false, records, stdout, stderr)
 	}
 	if j.releaseLandingAssignment(j, root, home, []string{"--request", parsed.Flags["--request"], assignment.Worktree}, io.Discard, stderr) != 0 {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "release", records)
 	}
-	return landedComplete(stdout, result, true, records)
+	return landedAfterEffects(j, root, result, parsed.Flags["--spec"], path, assignmentID, true, records, stdout, stderr)
 }
 
 func terminalResumeReceipt(root, path, request, sourceTip string) (intent.CleanupReceipt, error) {

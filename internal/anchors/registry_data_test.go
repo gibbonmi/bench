@@ -100,8 +100,8 @@ func TestLandedRetirementAnchorTuples(t *testing.T) {
 			File:       ".agents/commands/bench-final-check.md",
 			Kind:       RequireInSection,
 			Section:    "Exit handoff",
-			Needle:     "leftover worktrees are retired by `bench worktree clean --landed`: run the plan, apply it, and carry the plan and apply result in the landing report",
-			Diagnostic: ".agents/commands/bench-final-check.md post-merge tail dropped the landed worktree sweep step",
+			Needle:     "the landing retires the sibling worktrees whose work it carries, and `bench worktree clean --landed` retires every other landed assignment",
+			Diagnostic: ".agents/commands/bench-final-check.md post-merge tail dropped the landing's own sibling cleanup",
 		},
 		{
 			Group:      AfterImplementSpec,
