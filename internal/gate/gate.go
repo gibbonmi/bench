@@ -3,8 +3,8 @@
 // the gate run from the repo root, and the verdict-cache record keyed to
 // git.TreeHash.
 //
-// Both the standalone `bench gate` (via the shell's one-glance run_gate →
-// `bench gate-run`) and the in-process shift loop read this package. So gate
+// Both the standalone `bench gate` (through Command) and the in-process shift
+// loop read this package. So gate
 // resolution and the cache-write format each live in exactly one place. A second live
 // resolver, or a second cache writer, is the worst class of bug in this kit. This kit's
 // premise is "the gate is the oracle".
@@ -27,11 +27,8 @@ import (
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gocache"
-	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/propagation"
 )
 
 var gateTimeout = bounds.GateTimeout
@@ -215,15 +212,10 @@ func RunAndRecordContext(ctx context.Context, root string, stdout, stderr io.Wri
 // It uses the first non-flag argument as root, or the current repository root. --fresh
 // requires execution instead of reuse; it can appear on either side of root.
 func RunCommand(args []string, stdout, stderr io.Writer) int {
-	var root string
-	mode := reuseFreshGreen
-	for _, arg := range args {
-		switch {
-		case arg == "--fresh":
-			mode = forceRun
-		case root == "":
-			root = arg
-		}
+	root, mode, checkpoint, err := parseGateArgs(args, true)
+	if err != nil {
+		fmt.Fprintln(stderr, CommandUsage)
+		return 2
 	}
 	if root == "" {
 		r, err := git.Root()
@@ -233,7 +225,7 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 		}
 		root = r
 	}
-	ctx, finishSpan := beginGateSpan(context.Background(), root, mode.String())
+	ctx, finishSpan := beginGateSpan(WithCheckpoint(context.Background(), checkpoint), root, mode.String())
 	ctx, finishLog := beginGateRunLog(ctx, root, stderr, mode.String())
 	result := executeAfterAcquire(ctx, root, stdout, stderr, notifyGateSignals, mode)
 	finishLog(result)
@@ -241,27 +233,20 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 	return result.ActionExit
 }
 
-const commandUsage = "usage: bench gate [--fresh]"
+// CommandUsage is the public grammar shared with the CLI inventory.
+const CommandUsage = "usage: bench gate [--fresh] [--checkpoint <spec-path> (--chunk <id> | --complete)]"
 
-// Command selects the public gate action from its arguments. It dispatches gate runs,
-// and it rejects every other argument shape.
+// Command validates the public grammar before entering the gate owner.
 func Command(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
-	if len(args) == 0 {
-		return RunCommand(nil, stdout, stderr)
+	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h" || args[0] == "help") {
+		fmt.Fprintln(stdout, CommandUsage)
+		return 0
 	}
-	switch args[0] {
-	case "--fresh":
-		if len(args) == 1 {
-			return RunCommand(args, stdout, stderr)
-		}
-	case "--help", "-h", "help":
-		if len(args) == 1 {
-			fmt.Fprintln(stdout, commandUsage)
-			return 0
-		}
+	if _, _, _, err := parseGateArgs(args, false); err != nil {
+		fmt.Fprintln(stderr, CommandUsage)
+		return 2
 	}
-	fmt.Fprintln(stderr, commandUsage)
-	return 2
+	return RunCommand(args, stdout, stderr)
 }
 
 type Result struct {
@@ -287,7 +272,7 @@ func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result 
 // The reuse decision uses the same subject snapshot that an execution accepts. If ctx
 // ends during execution, no incomplete verdict becomes evidence.
 func ExecuteReusingFreshGreen(ctx context.Context, root string, stdout, stderr io.Writer) Result {
-	if plan, err := newGateEvaluation(root).acceptPre(); err == nil {
+	if plan, err := checkpointEvaluation(ctx, newGateEvaluation(root)).acceptPre(); err == nil {
 		if reuse := reusableEvidence(root, plan, time.Now()); reuse.ReusableGreen {
 			return reusedGreenResult(stdout, reuse)
 		}
@@ -371,72 +356,17 @@ func notifyGateSignals(ctx context.Context) (context.Context, func()) {
 }
 
 func execute(ctx context.Context, root string, stdout, stderr io.Writer) Result {
-	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, nil, reuseFreshGreen, newGateEvaluation(root), productionRunBinaryOwner(), "")
+	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, nil, reuseFreshGreen, checkpointEvaluation(ctx, newGateEvaluation(root)), productionRunBinaryOwner(), "")
 }
 
 func executeAfterAcquire(ctx context.Context, root string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode) Result {
-	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, arm, mode, newGateEvaluation(root), productionRunBinaryOwner(), "")
+	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, arm, mode, checkpointEvaluation(ctx, newGateEvaluation(root)), productionRunBinaryOwner(), "")
 }
 
 func operational(root string, gateExit int, stderr io.Writer, msg string) Result {
 	fmt.Fprintln(stderr, msg)
 	inspection := inspectAt(root, time.Now().UTC())
 	inspection.ReusableGreen = false
+	inspection.Reason = msg
 	return Result{GateExit: gateExit, ActionExit: 1, Inspection: inspection}
-}
-
-// The gate's seam record. The verb boundary resolves the Bench home once, builds the
-// provider, and puts its tracer on the context for the whole run, the way the run log
-// threads its own file. The phase table runs in a second process, so the record's
-// repository and this run's trace reach that process through the environment.
-const (
-	otelGateSeam      = "gate"
-	otelGatePhaseSeam = "gate.phase"
-
-	otelRootEnv        = "BENCH_OTEL_ROOT"
-	otelTraceparentEnv = "BENCH_OTEL_TRACEPARENT"
-)
-
-// otelGateEnv is the whole set the phases process inherits, so the stripper and the
-// composer read one list rather than two that can disagree.
-var otelGateEnv = []string{otelRootEnv, otelTraceparentEnv}
-
-// otelRecordRootKey addresses the repository the run records under. The child that runs
-// the phases records under the same repository, so the run's spans land in one file.
-type otelRecordRootKey struct{}
-
-// beginGateSpan starts the run's root span and returns the closer that ends it. The
-// mode rides in the span name: story 19's declared attribute set names the seam, the
-// subject, the outcome, and the measures, and none of those carries a run mode.
-func beginGateSpan(ctx context.Context, root, mode string) (context.Context, func(Result)) {
-	ctx, span, finish := otelrecord.BeginIn(ctx, "", root, otelGateSeam, otelGateSeam+"."+mode)
-	ctx = context.WithValue(ctx, otelRecordRootKey{}, root)
-	return ctx, func(result Result) {
-		// A subject the run never resolved has no digest to group its iterations by, and
-		// an empty attribute would read as one.
-		if subject := result.Inspection.CurrentTree; subject != "" {
-			span.SetAttributes(attribute.String(otelrecord.AttrSubjectID, subject))
-		}
-		// The action exit is the one the operator sees, so the record and the shell
-		// agree about the same run.
-		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, otelrecord.ExitOutcome(result.ActionExit)))
-		finish()
-	}
-}
-
-// withGateSpanEnv hands the phases child the repository it records under and this run's
-// trace, so its phase spans join the root span rather than start a trace of their own.
-// A context outside a recorded run adds nothing.
-func withGateSpanEnv(ctx context.Context, base []string) []string {
-	root, _ := ctx.Value(otelRecordRootKey{}).(string)
-	if root == "" {
-		return base
-	}
-	env := append(base, otelRootEnv+"="+root)
-	carrier := propagation.MapCarrier{}
-	propagation.TraceContext{}.Inject(ctx, carrier)
-	if parent := carrier.Get("traceparent"); parent != "" {
-		env = append(env, otelTraceparentEnv+"="+parent)
-	}
-	return env
 }

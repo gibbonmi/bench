@@ -8,6 +8,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added source-bound verification and review evidence at explicit completion checkpoints.
+
 - Added `bench worktree reset` with checkpoint and restore modes. Each mode plans
   before its apply and preserves work under a reset envelope.
 - Added two `bench worktree land` effects after publication and source release: the

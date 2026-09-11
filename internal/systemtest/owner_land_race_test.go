@@ -9,8 +9,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 )
 
 func TestWorktreeLandPublicRaceAndRerun(t *testing.T) {
@@ -18,7 +19,7 @@ func TestWorktreeLandPublicRaceAndRerun(t *testing.T) {
 	loser := systemCreateLandingWorktree(t, root, home, "race-loser", "race loser")
 	base := systemGitOutput(t, root, "rev-parse", "main")
 	systemCommit(t, loser.path, "loser.txt", "loser\n", "reviewed loser")
-	loser.tip = systemGitOutput(t, loser.path, "rev-parse", "HEAD")
+	loser.tip = systemRetainLandingEvidence(t, loser.path, base)
 	review := systemSelected(t, loser.path, systemLandEnv(root, home, tally, trees, ready, release), "preflight", "review", "x", "--base", base)
 	if review.code != 0 {
 		t.Fatalf("reviewed source %s = (%d, %q, %q)", loser.request, review.code, review.stdout, review.stderr)
@@ -107,6 +108,12 @@ func TestWorktreeLandPublicRaceAndRerun(t *testing.T) {
 		t.Fatalf("loser gate tally = %q, %v", got, readErr)
 	}
 
+	unreviewed := systemLand(t, root, home, tally, trees, ready, release, loser, base)
+	if unreviewed.code != 1 || !strings.Contains(unreviewed.stdout, "completion composition changes winner.txt") || systemGitOutput(t, root, "rev-parse", "main") != winnerCommit {
+		t.Fatalf("unreviewed destination retry = (%d, %q, %q)", unreviewed.code, unreviewed.stdout, unreviewed.stderr)
+	}
+	systemGit(t, loser.path, "merge", "--no-edit", winnerCommit)
+	loser.tip = systemRetainLandingEvidence(t, loser.path, base)
 	if err := os.WriteFile(filepath.Join(loser.path, "retained-output"), []byte("retained\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -159,80 +166,6 @@ func TestWorktreeLandPublicRaceAndRerun(t *testing.T) {
 
 type systemLandingWorktree struct {
 	path, assignment, branch, request, tip string
-}
-
-// systemTicketBody is the one grammar-conformant ticket the synthetic spec
-// carries. It cites the spec's declared row LX1, so the review preflight the
-// landing runs grades ownership green rather than reporting an unowned row.
-const systemTicketBody = "# One\n\n" +
-	"Blocked by: none\n" +
-	"Writes: specs/x/spec.md\n" +
-	"Covers: LX1\n\n" +
-	"## What to build\n\nLand the source.\n\n" +
-	"## Acceptance\n\n- [ ] The source lands.\n"
-
-func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, release string) {
-	t.Helper()
-	var err error
-	root, err = os.MkdirTemp(owner.root, "landing-race [journey]-")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if result := owner.runAt(root, nil, "git", "init", "-q", "-b", "main"); result.code != 0 {
-		t.Fatalf("git init landing race = (%d, %q)", result.code, result.stderr)
-	}
-	// The landing creates its own commit in this repository, so the identity belongs in
-	// the config. A per-command -c leaves the product's commit without an author.
-	for _, identity := range [][]string{{"user.email", "bench@local"}, {"user.name", "bench"}} {
-		if result := owner.runAt(root, nil, "git", "config", identity[0], identity[1]); result.code != 0 {
-			t.Fatalf("git config %s = (%d, %q)", identity[0], result.code, result.stderr)
-		}
-	}
-	home, err = os.MkdirTemp(owner.root, "landing-race [home]-")
-	if err != nil {
-		t.Fatal(err)
-	}
-	tally = filepath.Join(home, "gate-tally")
-	trees = filepath.Join(home, "gate-trees")
-	ready = filepath.Join(home, "loser-ready")
-	release = filepath.Join(home, "loser-release")
-	if err := syscall.Mkfifo(ready, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if err := syscall.Mkfifo(release, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	gate := "#!/bin/sh\nset -eu\nruntime=$1\ngrep -q '^Status: implemented$' \"$runtime/specs/x/spec.md\"\ntree=$(git -C \"$runtime\" write-tree)\nprintf '%s\\n' \"$tree\" >> \"$LAND_GATE_TREES\"\nif [ -f \"$runtime/loser.txt\" ]; then\n  printf l >> \"$LAND_GATE_TALLY\"\n  if [ ! -f \"$runtime/winner.txt\" ]; then\n    printf r > \"$LAND_RACE_READY\"\n    IFS= read -r _ < \"$LAND_RACE_RELEASE\"\n  fi\nelse\n  printf w >> \"$LAND_GATE_TALLY\"\nfi\n"
-	for _, file := range []string{"gate.sh", "gate-prospective.sh"} {
-		if err := os.WriteFile(filepath.Join(root, ".bench", file), []byte(gate), 0o755); err != nil {
-			t.Fatal(err)
-		}
-	}
-	inputs := "{\"schema\":1,\"closure\":\"local\",\"environment\":[\"LAND_GATE_TALLY\",\"LAND_GATE_TREES\",\"LAND_RACE_READY\",\"LAND_RACE_RELEASE\"],\"paths\":[],\"tools\":[]}\n"
-	if err := os.WriteFile(filepath.Join(root, ".bench", "gate-inputs.json"), []byte(inputs), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	specBody := "# x\n\nStatus: staged\n\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| LX1 | 1 | lands | command | catches failure |\n\n## Ownership fences\n\n- `loser.txt`\n- `winner.txt`\n- `reviews/x.md`\n"
-	if err := os.MkdirAll(filepath.Join(root, "specs", "x", "tickets"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, "specs", "x", "spec.md"), []byte(specBody), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, "specs", "x", "tickets", "one.md"), []byte(systemTicketBody), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("retained-output\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	systemGit(t, root, "add", ".")
-	systemGit(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "landing race base")
-	base := systemGitOutput(t, root, "rev-parse", "HEAD")
-	systemGit(t, root, "update-ref", "refs/bench/green/main", base)
-	return root, home, tally, trees, ready, release
 }
 
 func systemCreateLandingWorktree(t *testing.T, root, home, label, request string) systemLandingWorktree {
@@ -338,4 +271,10 @@ func systemExitCode(err error) int {
 		return exit.ExitCode()
 	}
 	return -1
+}
+
+func systemRetainLandingEvidence(t *testing.T, source, base string) string {
+	t.Helper()
+	recordtest.RetainSingleChunk(t, source, "specs/x/spec.md", base)
+	return systemGitOutput(t, source, "rev-parse", "HEAD")
 }

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -246,6 +247,9 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 		if tree, err = removeTreeFolder(r.Root, tree, r.ClosePath); err != nil {
 			return ReviewedResult{}, fmt.Errorf("close tickets-only folder: %w", err)
 		}
+	}
+	if r.SpecPath != "" {
+		ctx = gate.WithCompletion(ctx, r.SpecPath, source)
 	}
 	if got := o.authorize(ctx, r.Root, tree, r.Stdout, r.Stderr); !o.reviewedPublishes.permits(got.Kind) {
 		return ReviewedResult{}, errors.New(refusalMessage(got))

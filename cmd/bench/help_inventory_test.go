@@ -66,7 +66,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench consumers <qualified-symbol> [--full]  every resolved Go reference edge as TOON (file:line, via, enclosing); identifies edges, never blessed seams
   bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
   bench repair [--prune]     explicitly install the pinned platform binary or prune stale cache entries
-  bench gate [--fresh]       run the project gate (the oracle; --fresh ignores a reusable green)
+  bench gate [--fresh] [--checkpoint <spec-path> (--chunk <id> | --complete)]  run the project gate (the oracle; --fresh ignores a reusable green)
   bench prep-release         ship-tier rehearsal: artifacts, cross-compile, preflight verify, ship canary
   bench release-preflight --mode verify|publish [--profile public|bank] [--phase name]  run repository release authorization
   bench release prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--adapter npm|fixture] [--provenance] [--message text]  governed npm publication

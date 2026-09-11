@@ -14,20 +14,23 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
+const siblingReviewPath = "reviews/sibling.md"
+
 // foldLandingSibling mints one more assignment, commits its own reviewed bytes, and folds
 // that branch into the landing source. The landing then carries the sibling's commits, so
 // the landed proof holds for the sibling against the published commit and fails against
 // the destination base. It answers the sibling and the source's new tip.
 //
-// The sibling writes `reviews/x.md`, which the landing fixture's own spec declares in its
+// The sibling writes its own review file, which the landing fixture's own spec declares in its
 // ownership fence, so the folded range still authorizes.
 func foldLandingSibling(t *testing.T, root, home, request string, source Creation) (Creation, string) {
 	t.Helper()
 	sibling := mustCreate(t, root, home, request, "folded sibling")
 	mustMkdirAll(t, filepath.Join(sibling.Path, "reviews"), 0o755)
-	commitInWorktree(t, sibling.Path, filepath.Join("reviews", "x.md"), "sibling review\n", "sibling review")
+	commitInWorktree(t, sibling.Path, siblingReviewPath, "sibling review\n", "sibling review")
 	gitRun(t, source.Path, "-c", "user.name=bench", "-c", "user.email=bench@local",
 		"merge", "-q", "--no-ff", "-m", "fold the sibling", strings.TrimPrefix(sibling.Assignment.Branch, "refs/heads/"))
+	refreshLandingEvidence(t, source.Path, gitOutput(t, root, "merge-base", "main", source.Assignment.Branch))
 	return sibling, gitOutput(t, source.Path, "rev-parse", "HEAD")
 }
 
@@ -131,7 +134,7 @@ func TestLandRetainsAnUnprovenSibling(t *testing.T) {
 	request := "land-cleanup-unproven-sibling"
 	root, creation, base, _, _, home := publicLandingFixture(t, request, "", "")
 	sibling, tip := foldLandingSibling(t, root, home, request+"-sibling", creation)
-	mustWrite(t, filepath.Join(sibling.Path, "reviews", "x.md"), []byte("uncommitted review\n"), 0o644)
+	mustWrite(t, filepath.Join(sibling.Path, siblingReviewPath), []byte("uncommitted review\n"), 0o644)
 	j, _ := refreshJoins(nil)
 
 	var stdout, stderr bytes.Buffer

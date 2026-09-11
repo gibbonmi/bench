@@ -2,6 +2,8 @@ package git
 
 import (
 	"bytes"
+	"fmt"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -135,4 +137,61 @@ func idxOutput(root, idx string, args ...string) (string, error) {
 	cmd.Stdout = &out
 	err := cmd.Run()
 	return strings.TrimRight(out.String(), "\n"), err
+}
+
+// TreeWithoutFile returns a tree with one exact file removed through a private index.
+func TreeWithoutFile(root, tree, path string) (string, error) {
+	listing, err := Output("-C", root, "ls-tree", "-z", tree, "--", path)
+	if err != nil {
+		return "", err
+	}
+	if strings.HasPrefix(listing, "040000 ") {
+		return "", fmt.Errorf("tree exclusion names a directory: %s", path)
+	}
+	dir, err := os.MkdirTemp("", "bench-tree-exclusion-")
+	if err != nil {
+		return "", err
+	}
+	defer os.RemoveAll(dir)
+	idx := filepath.Join(dir, "index")
+	if !idxOK(root, idx, "read-tree", tree) || !idxOK(root, idx, "update-index", "--force-remove", "--", path) {
+		return "", fmt.Errorf("cannot exclude exact file %s", path)
+	}
+	return idxOutput(root, idx, "write-tree")
+}
+
+// ReadTreeFile reads a regular immutable blob under the control-record bound.
+func ReadTreeFile(root, tree, path string) ([]byte, error) {
+	listing, err := Output("-C", root, "ls-tree", "-z", tree, "--", path)
+	if err != nil {
+		return nil, err
+	}
+	metadata, listedPath, ok := strings.Cut(strings.TrimSuffix(listing, "\x00"), "\t")
+	fields := strings.Fields(metadata)
+	if !ok || listedPath != path || len(fields) != 3 || !(IndexEntry{Mode: fields[0]}).IsRegularFile() {
+		return nil, fmt.Errorf("missing or nonregular tree file %s", path)
+	}
+	return ReadControlBlob(root, fields[2])
+}
+
+// ReadControlBlob bounds an immutable blob read for control-file consumers.
+func ReadControlBlob(root, object string) ([]byte, error) {
+	cmd := exec.Command("git", "-C", root, "cat-file", "blob", object)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	if err := cmd.Start(); err != nil {
+		return nil, err
+	}
+	read := bounds.Read(stdout, bounds.ControlRecordLimit)
+	_ = stdout.Close()
+	waitErr := cmd.Wait()
+	if read.Err != nil {
+		return nil, read.Err
+	}
+	if waitErr != nil {
+		return nil, waitErr
+	}
+	return read.Data, nil
 }

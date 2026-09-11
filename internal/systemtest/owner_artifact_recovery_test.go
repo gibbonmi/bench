@@ -25,7 +25,7 @@ func TestProspectiveArtifactRecoveryAfterKilledLanding(t *testing.T) {
 	first := systemCreateLandingWorktree(t, root, home, "artifact-dead", "artifact dead")
 	base := systemGitOutput(t, root, "rev-parse", "main")
 	systemCommit(t, first.path, "loser.txt", "dead\n", "dead prospective subject")
-	first.tip = systemGitOutput(t, first.path, "rev-parse", "HEAD")
+	first.tip = systemRetainLandingEvidence(t, first.path, base)
 	if review := systemSelected(t, first.path, systemLandEnv(root, home, tally, trees, ready, release), "preflight", "review", "x", "--base", base); review.code != 0 {
 		t.Fatalf("first review = (%d, %q, %q)", review.code, review.stdout, review.stderr)
 	}
@@ -55,7 +55,7 @@ func TestProspectiveArtifactRecoveryAfterKilledLanding(t *testing.T) {
 
 	fresh := systemCreateLandingWorktree(t, root, home, "artifact-fresh", "artifact fresh")
 	systemCommit(t, fresh.path, "winner.txt", "fresh\n", "fresh prospective subject")
-	fresh.tip = systemGitOutput(t, fresh.path, "rev-parse", "HEAD")
+	fresh.tip = systemRetainLandingEvidence(t, fresh.path, base)
 	if review := systemSelected(t, fresh.path, systemLandEnv(root, home, tally, trees, ready, release), "preflight", "review", "x", "--base", base); review.code != 0 {
 		t.Fatalf("fresh review = (%d, %q, %q)", review.code, review.stdout, review.stderr)
 	}
@@ -103,53 +103,6 @@ func TestProspectiveArtifactRecoveryAfterKilledLanding(t *testing.T) {
 		t.Fatalf("a prospective checkout registration survived the second sweep:\n%s", registrations)
 	}
 	owner.markTerminal("green")
-}
-
-func configureArtifactLandingFixture(t *testing.T, root string) {
-	t.Helper()
-	gate := "#!/bin/sh\nset -eu\nroot=${1:-$(git rev-parse --show-toplevel)}\nkit=${BENCH_KIT:?}\nbench=${BENCH_RUN_BINARY:?}\nexec env BENCH_KIT=\"$kit\" BENCH_RUN_BINARY=\"$bench\" \"$bench\" gate-phases \"$root\"\n"
-	for _, file := range []string{"gate.sh", "gate-prospective.sh"} {
-		if err := os.WriteFile(filepath.Join(root, ".bench", file), []byte(gate), 0o755); err != nil {
-			t.Fatal(err)
-		}
-	}
-	phase := "#!/bin/sh\nset -eu\nruntime=$(git rev-parse --show-toplevel)\ngrep -q '^Status: implemented$' \"$runtime/specs/x/spec.md\"\ntree=$(git -C \"$runtime\" write-tree)\nprintf '%s\\n' \"$tree\" >> \"$LAND_GATE_TREES\"\nif [ -f \"$runtime/loser.txt\" ]; then\n  printf l >> \"$LAND_GATE_TALLY\"\nelse\n  printf w >> \"$LAND_GATE_TALLY\"\nfi\nprintf r > \"$LAND_RACE_READY\"\nIFS= read -r _ < \"$LAND_RACE_RELEASE\"\n"
-	if err := os.WriteFile(filepath.Join(root, ".bench", "landing-race-phase.sh"), []byte(phase), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	phases := "{\"phases\":[{\"name\":\"landing-race\",\"argv\":[\".bench/landing-race-phase.sh\"]}]}\n"
-	if err := os.WriteFile(filepath.Join(root, ".bench", "phases.json"), []byte(phases), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.MkdirAll(filepath.Join(root, "cmd", "bench"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.MkdirAll(filepath.Join(root, "scripts"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module landingrace\n\ngo 1.24\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, "cmd", "bench", "main.go"), []byte("package main\n\nfunc main() {}\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	// The stub reads the two positionals off the end and creates the output directory, as
-	// the real go-build.sh does; that script also takes options ahead of the positionals.
-	build := "#!/bin/sh\nset -eu\nshift $(($# - 2))\nroot=$1\nout=$2\nstaged=$out.staged\nmkdir -p \"$(dirname \"$out\")\"\ncp \"$LAND_BASELINE_BENCH\" \"$staged\"\nchmod 0700 \"$staged\"\n\"$staged\" freshness-publish \"$root\" \"$out\" \"$(dirname \"$out\")\" 1.2.3\n"
-	if err := os.WriteFile(filepath.Join(root, "scripts", "go-build.sh"), []byte(build), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, "scripts", "go-build.inputs"), []byte("build_script=scripts/go-build.sh\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	inputs := "{\"schema\":1,\"closure\":\"local\",\"environment\":[\"HOME\",\"LAND_BASELINE_BENCH\",\"LAND_GATE_TALLY\",\"LAND_GATE_TREES\",\"LAND_RACE_READY\",\"LAND_RACE_RELEASE\"],\"paths\":[],\"tools\":[]}\n"
-	if err := os.WriteFile(filepath.Join(root, ".bench", "gate-inputs.json"), []byte(inputs), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	systemGit(t, root, "add", ".")
-	systemGit(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "artifact recovery fixture")
-	base := systemGitOutput(t, root, "rev-parse", "HEAD")
-	systemGit(t, root, "update-ref", "refs/bench/green/main", base)
 }
 
 func requirePublishedArtifactOwnerRecord(t *testing.T, bundle string, pid int, repository string) {
@@ -441,7 +394,7 @@ func startArtifactAuthorization(t *testing.T, root, home, tally, trees, ready, r
 	t.Helper()
 	source := systemCreateLandingWorktree(t, root, home, name, name)
 	systemCommit(t, source.path, file, message+"\n", message)
-	source.tip = systemGitOutput(t, source.path, "rev-parse", "HEAD")
+	source.tip = systemRetainLandingEvidence(t, source.path, base)
 	if review := systemSelected(t, source.path, systemLandEnv(root, home, tally, trees, ready, release), "preflight", "review", "x", "--base", base); review.code != 0 {
 		t.Fatalf("%s review = (%d, %q, %q)", name, review.code, review.stdout, review.stderr)
 	}

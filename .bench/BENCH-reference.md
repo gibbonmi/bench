@@ -312,6 +312,12 @@ check set, meta checks included, and so validates the registry itself. There
 is no separate conformance phase, driver, or per-check evidence partition.
 `gate --fresh`, prospective execution, and ship remain full boundaries.
 
+`bench gate --checkpoint specs/<slug>/spec.md --chunk <id>` checks the named chunk's
+source-bound author verification and three independent review results before advancement.
+Use `--complete` instead of `--chunk <id>` for final acceptance and integration evidence.
+Checkpoint purpose and record bytes participate in the existing gate verdict identity.
+Ordinary lane checks remain available while implementation, review, or repair is in progress.
+
 The document is one object with a `phases` array. Each phase carries:
 
 - `name` (required) — the phase's addressable identity. It fills the `phase`

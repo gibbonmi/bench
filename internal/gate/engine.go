@@ -29,7 +29,12 @@ type EvidenceInspection struct {
 // InspectTree reports retained exact evidence for tree. It does not execute the gate
 // or change evidence.
 func InspectTree(root, tree string) EvidenceInspection {
-	return inspectProspective(root, tree, time.Now())
+	return InspectTreeContext(context.Background(), root, tree)
+}
+
+// InspectTreeContext checks retained evidence for the same obligation used by execution.
+func InspectTreeContext(ctx context.Context, root, tree string) EvidenceInspection {
+	return inspectProspective(ctx, root, tree, time.Now())
 }
 
 // ExecuteTree executes or reuses the gate for tree and returns its evidence inspection.
@@ -55,7 +60,7 @@ func executeTreeWithOwner(ctx context.Context, root, tree string, stdout, stderr
 	if owner == nil {
 		owner = prospectiveRunBinaryOwnerAt(checkout, artifacts.Root())
 	}
-	evaluation := newProspectiveTreeEvaluation(checkout, root, tree)
+	evaluation := checkpointEvaluation(ctx, newProspectiveTreeEvaluation(checkout, root, tree))
 	return executeSubjectWithRunBinary(ctx, checkout, root, stdout, stderr, nil, reuseFreshGreen, evaluation, owner, root)
 }
 
@@ -81,13 +86,14 @@ func ValidateProjectGreen(root, branch string) EvidenceInspection {
 	return inspectEvidence(root, plan, time.Now())
 }
 
-func inspectProspective(root, tree string, now time.Time) EvidenceInspection {
+func inspectProspective(ctx context.Context, root, tree string, now time.Time) EvidenceInspection {
 	artifacts, err := openProspectiveArtifacts(root, tree)
 	if err != nil {
 		return EvidenceInspection{Reason: "subject unavailable"}
 	}
 	defer artifacts.Close()
-	plan, err := buildProspectiveSubjectFor(artifacts.Checkout(), root)
+	evaluation := checkpointEvaluation(ctx, newProspectiveTreeEvaluation(artifacts.Checkout(), root, tree))
+	plan, err := evaluation.acceptPre()
 	if err != nil || plan.Tree != tree {
 		return EvidenceInspection{Reason: "subject unavailable"}
 	}

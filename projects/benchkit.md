@@ -41,6 +41,11 @@ works on any branch. This line only states the binding.)
   destination permits the three exact ignored local-capture files without
   treating the broader `capture/` tree as disposable residue.
 
+  Completion checkpoints require current author verification and all three
+  terminal review axes. Final landing also requires the complete acceptance
+  reconciliation and final integration results. The prospective gate permits
+  the broker's exact status transform; new destination content requires review.
+
   One installed promotion broker owns the complete landing. The wrapper
   authenticates that broker through the installation manifest, and its land
   route honors no inherited routing override. The broker composes the exact

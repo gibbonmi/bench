@@ -1,6 +1,6 @@
 # Require source-bound review evidence at completion checkpoints
 
-Status: staged
+Status: implemented
 Decision source: `docs/adr/0021-benchmark-workflow-orchestration.md`
 Verification log: 2 iteration(s) to accept — Sol/high verified the design repairs. The author folded its final three E21 prose corrections and checked them against the coverage row.
 
@@ -108,6 +108,87 @@ Implement these tickets in the retained session. Each ticket is one initial revi
 | 2.md — Check evidence before chunk advancement | 1.md | Add gate checkpoint obligations and connect the implementation phase | yes |
 | 3.md — Require complete evidence before landing | 2.md | Pass the final obligation from spec-backed landing to the prospective gate | yes |
 
+## Verification inventory
+
+The fenced plan names required commands and probes. Each chunk derives its rows and dependencies from its named tickets.
+The parser hashes the plan, spec, and ticket bytes. A plan amendment must map old chunk IDs to new IDs.
+
+A review occurrence also records its frozen `base` and `tip`. Each chunk records its own `plan_digest`.
+These fields preserve earlier evidence when a later reviewed delta changes the plan.
+
+```bench-completion-plan
+{
+  "version": 1,
+  "chunks": [
+    {
+      "id": "1",
+      "tickets": [
+        "1.md",
+        "r1.md"
+      ],
+      "verification": [
+        {
+          "id": "record-tests",
+          "command": "bench test --package ./internal/reviewrecord --run TestReviewRecord",
+          "probe": "omit missing-axis rejection"
+        },
+        {
+          "id": "preflight-tests",
+          "command": "bench test --package ./internal/preflight --run TestReviewCharge"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "tickets": [
+        "2.md",
+        "r2.md"
+      ],
+      "verification": [
+        {
+          "id": "checkpoint-tests",
+          "command": "bench test --package ./internal/gate --run TestReviewCheckpoint",
+          "probe": "omit checkpoint evidence validation"
+        },
+        {
+          "id": "axis-tests",
+          "command": "bench test --package ./internal/gate --run TestReviewCheckpointCanonicalAxes",
+          "probe": "omit canonical Coverage axis"
+        },
+        {
+          "id": "route-tests",
+          "command": "bench test --package ./cmd/bench --run TestGateCheckpointRoute"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "tickets": [
+        "3.md",
+        "r3.md"
+      ],
+      "verification": [
+        {
+          "id": "landing-tests",
+          "command": "bench test --package ./internal/landing --run TestLandingCompletionEvidence",
+          "probe": "omit landing completion obligation"
+        }
+      ]
+    }
+  ],
+  "final_verification": [
+    {
+      "id": "acceptance",
+      "command": "bench test --package ./..."
+    },
+    {
+      "id": "integration",
+      "command": "bench test --check system"
+    }
+  ]
+}
+```
+
 ## Testing decisions
 
 Use the named existing owner and new tests below. A new test name is a planned seam, not a claim that the test exists. Read its nearest fixture before implementation. Demonstrate each required omission or behavioral mutation as a diagnostic red, restore it, and show green. A compile failure is not the required red. Semantic review judges prose quality and the sufficiency of the test.
@@ -126,45 +207,45 @@ phase checkpoint / landing broker -> gate obligation -> publish or refuse
 
 | row | story | behavior | seam | why it catches the failure |
 | --- | --- | --- | --- | --- |
-| E1 | 1 | A zero-finding axis has a durable completed result | New test: TestReviewRecord in internal/reviewrecord/record_test.go | Delete the clean result before loading and observe a missing axis. |
-| E2 | 2 | Author verification cannot satisfy a review axis | New test: TestReviewRecord in internal/reviewrecord/record_test.go | Relabel a test command as independent review and require refusal. |
-| E3 | 3 | Every terminal result binds its source and performer | New test: TestReviewRecord in internal/reviewrecord/record_test.go | Remove the source digest from a completed item and require refusal. |
-| E4 | 4 | A pending axis blocks a checkpoint | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Supply two complete axes and one pending axis. |
-| E5 | 5 | A failed axis blocks a checkpoint | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Supply a failed transport result with an empty findings list. |
-| E6 | 6 | A skipped axis blocks a checkpoint | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Supply a skipped axis with a success-looking summary. |
-| E7 | 7 | An absent required axis blocks a checkpoint | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Omit Coverage from an otherwise valid record. |
-| E8 | 8 | An uncovered source delta blocks a checkpoint | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Edit one source file after recording the reviewed tip. |
-| E9 | 9 | An unreviewed repair blocks advancement | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Append a repair commit without axis coverage for its tip. |
-| E10 | 10 | A completed checkpoint requires all three canonical axes | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Remove one axis from the required inventory and demonstrate the independent omission red. |
-| E11 | 11 | An ordinary lane tolerates incomplete review state | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Exercise absent active pending repair and sibling-spec fixtures through the normal lane. |
-| E12 | 12 | Ordinary green cannot satisfy a completion checkpoint | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Seed ordinary green before requesting a stronger obligation. |
-| E13 | 13 | A record-only update preserves the reviewed source identity | New test: TestReviewRecord in internal/reviewrecord/record_test.go | Append a native result while leaving source bytes unchanged. |
-| E14 | 14 | Changed record bytes invalidate checkpoint verdict reuse | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Remove a completed axis after a green checkpoint. |
-| E15 | 15 | Completion requires final acceptance reconciliation | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Leave one planned row without a final disposition. |
-| E16 | 16 | A landing with missing completion evidence publishes no ref | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Pass a valid source pair with an incomplete review record. |
-| E17 | 17 | A new destination delta cannot inherit source-only review | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Compose a destination change that modifies reviewed content. |
-| E18 | 18 | The exact broker status transform preserves review coverage | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Run the existing status flip through the complete gate obligation. |
-| E19 | 19 | Invalid records fail before source traversal | New test: TestReviewRecord in internal/reviewrecord/record_test.go | Compete a malformed version with an escaping native reference. |
-| E20 | 20 | A nonregular or escaping record path is refused | New test: TestReviewRecord in internal/reviewrecord/record_test.go | Use FIFO symlink traversal and control-byte fixtures without opening the target. |
-| E21 | 21 | A retained native result remains inspectable without its local log | New test: TestReviewRecord in internal/reviewrecord/record_test.go | Remove the supplemental local log and load the embedded terminal result. |
+| E1 | 1 | A zero-finding axis has a durable completed result | `internal/reviewrecord/record_test.go` (`TestReviewRecord`) | Delete the clean result before loading and observe a missing axis. |
+| E2 | 2 | Author verification cannot satisfy a review axis | `internal/reviewrecord/source_test.go` (`TestReviewRecordTerminal`) | Relabel a test command as independent review and require refusal. |
+| E3 | 3 | Every terminal result binds its source and performer | `internal/reviewrecord/source_test.go` (`TestReviewRecordTerminal`) | Remove the source digest from a completed item and require refusal. |
+| E4 | 4 | A pending axis blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Supply two complete axes and one pending axis. |
+| E5 | 5 | A failed axis blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Supply a failed transport result with an empty findings list. |
+| E6 | 6 | A skipped axis blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Supply a skipped axis with a success-looking summary. |
+| E7 | 7 | An absent required axis blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Omit Coverage from an otherwise valid record. |
+| E8 | 8 | An uncovered source delta blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointLaterSource`) | Edit one source file after recording the reviewed tip. |
+| E9 | 9 | An unreviewed repair blocks advancement | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointLaterSource`) | Append a repair commit without axis coverage for its tip. |
+| E10 | 10 | A completed checkpoint requires all three canonical axes | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointCanonicalAxes`) | Remove one axis from the required inventory and demonstrate the independent omission red. |
+| E11 | 11 | An ordinary lane tolerates incomplete review state | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointOrdinaryWork`) | Exercise absent active pending repair and sibling-spec fixtures through the normal lane. |
+| E12 | 12 | Ordinary green cannot satisfy a completion checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointReuse`) | Seed ordinary green before requesting a stronger obligation. |
+| E13 | 13 | A record-only update preserves the reviewed source identity | `internal/reviewrecord/source_test.go` (`TestReviewRecordSource`) | Append a native result while leaving source bytes unchanged. |
+| E14 | 14 | Changed record bytes invalidate checkpoint verdict reuse | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointReuse`) | Remove a completed axis after a green checkpoint. |
+| E15 | 15 | Completion requires final acceptance reconciliation | `internal/landing/completion_evidence_test.go` (`TestLandingCompletionEvidence`) | Leave one planned row without a final disposition. |
+| E16 | 16 | A landing with missing completion evidence publishes no ref | `internal/landing/completion_evidence_test.go` (`TestLandingCompletionEvidence`) | Pass a valid source pair with an incomplete review record. |
+| E17 | 17 | A new destination delta cannot inherit source-only review | `internal/landing/completion_evidence_test.go` (`TestLandingCompletionEvidence`) | Compose a destination change that modifies reviewed content. |
+| E18 | 18 | The exact broker status transform preserves review coverage | `internal/landing/completion_evidence_test.go` (`TestLandingCompletionEvidence`) | Run the existing status flip through the complete gate obligation. |
+| E19 | 19 | Invalid records fail before source traversal | `internal/reviewrecord/source_test.go` (`TestReviewRecordTerminal`) | Compete a malformed version with an escaping native reference. |
+| E20 | 20 | A nonregular or escaping record path is refused | `internal/reviewrecord/source_test.go` (`TestReviewRecordPaths`, `TestReviewRecordControlPath`, `TestReviewRecordLiteralTickets`) | Use FIFO symlink traversal and control-byte fixtures without opening the target. |
+| E21 | 21 | A retained native result remains inspectable without its local log | `internal/reviewrecord/source_test.go` (`TestReviewRecordSource`) | Remove the supplemental local log and load the embedded terminal result. |
 | E22 | 22 | The result distinguishes review occurrence from judgment correctness | review-owned: Spec checks phase output and field descriptions | Reject any claim that record validation proves semantic correctness. |
-| E23 | 23 | A continuous reviewed chain covers completed chunks | New test: TestReviewRecord in internal/reviewrecord/record_test.go | Cover two chunk deltas and then mutate the second base to create a gap. |
-| E24 | 24 | An unreviewed plan amendment makes completion stale | New test: TestReviewRecord in internal/reviewrecord/record_test.go | Change chunk rows or dependency mappings after the last review. |
+| E23 | 23 | A continuous reviewed chain covers completed chunks | `internal/reviewrecord/source_test.go` (`TestReviewRecordSource`) | Cover two chunk deltas and then mutate the second base to create a gap. |
+| E24 | 24 | An unreviewed plan amendment makes completion stale | `internal/reviewrecord/source_test.go` (`TestReviewRecordPlanAmendment`) | Change chunk rows or dependency mappings after the last review. |
 
-| E25 | 25 | Missing required author verification blocks a checkpoint | New test: TestReviewCheckpointVerification in internal/gate/review_checkpoint_verification_test.go | Provide all review axes and omit one required test result. |
-| E26 | 26 | Pending author verification blocks a checkpoint | New test: TestReviewCheckpointVerification in internal/gate/review_checkpoint_verification_test.go | Provide a pending test with complete review axes. |
-| E27 | 27 | A nonzero required verification exit blocks a checkpoint | New test: TestReviewCheckpointVerification in internal/gate/review_checkpoint_verification_test.go | Set exit code one with an otherwise complete record. |
-| E28 | 28 | A stale verification source blocks a checkpoint | New test: TestReviewCheckpointVerification in internal/gate/review_checkpoint_verification_test.go | Bind the test to the pre-repair source. |
-| E29 | 29 | Missing verification performer blocks a checkpoint | New test: TestReviewCheckpointVerification in internal/gate/review_checkpoint_verification_test.go | Omit the performer from a passing command result. |
-| E30 | 30 | A missing required mutation result blocks a checkpoint | New test: TestReviewCheckpointVerification in internal/gate/review_checkpoint_verification_test.go | Keep tests green but omit the planned probe evidence. |
-| E31 | 31 | A failed required probe restore blocks a checkpoint | New test: TestReviewCheckpointVerification in internal/gate/review_checkpoint_verification_test.go | Record a biting mutation with failed restoration. |
-| E32 | 32 | Review evidence cannot substitute for author verification | New test: TestReviewCheckpointVerification in internal/gate/review_checkpoint_verification_test.go | Populate only review items for a required command. |
-| E33 | 33 | Missing final integration execution blocks completion | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Supply reconciliation prose with no final command result. |
-| E34 | 34 | Failed final integration execution blocks completion | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Record a final integration command with a nonzero exit. |
-| E35 | 35 | Stale final integration execution blocks completion | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Change source after the final command ran. |
-| E36 | 36 | An extra spec-byte change beside the status flip blocks publication | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Change one acceptance byte beside the valid status transform before updateRef. |
-| E37 | 37 | The public gate wrapper forwards checkpoint arguments | New test: TestGateCheckpointRoute in cmd/bench/gate_route_test.go | Drive chunk and complete forms through bin/bench.sh. |
-| E38 | 38 | Repairs append new evidence without erasing earlier outcomes | New test: TestReviewRecord in internal/reviewrecord/record_test.go | Load initial findings and their superseding repair results. |
+| E25 | 25 | Missing required author verification blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Provide all review axes and omit one required test result. |
+| E26 | 26 | Pending author verification blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Provide a pending test with complete review axes. |
+| E27 | 27 | A nonzero required verification exit blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Set exit code one with an otherwise complete record. |
+| E28 | 28 | A stale verification source blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Bind the test to the pre-repair source. |
+| E29 | 29 | Missing verification performer blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Omit the performer from a passing command result. |
+| E30 | 30 | A missing required mutation result blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Keep tests green but omit the planned probe evidence. |
+| E31 | 31 | A failed required probe restore blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Record a biting mutation with failed restoration. |
+| E32 | 32 | Review evidence cannot substitute for author verification | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Populate only review items for a required command. |
+| E33 | 33 | Missing final integration execution blocks completion | `internal/landing/completion_evidence_test.go` (`TestLandingCompletionEvidence`) | Supply reconciliation prose with no final command result. |
+| E34 | 34 | Failed final integration execution blocks completion | `internal/landing/completion_evidence_test.go` (`TestLandingCompletionEvidence`) | Record a final integration command with a nonzero exit. |
+| E35 | 35 | Stale final integration execution blocks completion | `internal/landing/completion_evidence_test.go` (`TestLandingCompletionEvidence`) | Change source after the final command ran. |
+| E36 | 36 | An extra spec-byte change beside the status flip blocks publication | `internal/landing/completion_evidence_test.go` (`TestLandingCompletionEvidence`) | Change one acceptance byte beside the valid status transform before updateRef. |
+| E37 | 37 | The public gate wrapper forwards checkpoint arguments | `cmd/bench/gate_route_test.go` (`TestGateCheckpointRoute`) | Drive chunk and complete forms through bin/bench.sh. |
+| E38 | 38 | Repairs append new evidence without erasing earlier outcomes | `internal/reviewrecord/source_test.go` (`TestReviewRecordTerminal`) | Load initial findings and their superseding repair results. |
 
 ### Edge inventory
 
@@ -181,10 +262,16 @@ No signed-attestation system is promised. The threat model covers omitted, malfo
 These paths are the union of ticket expectations. A directory entry is an exact prefix for that existing owner or fixture family. Expansion follows decision #5, with the plan updated before use. It cannot weaken existing guarantees.
 
 - `internal/reviewrecord` (new)
+- `internal/git/tree.go`
+- `CHANGELOG.md`
+- `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
+- `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
 - `internal/preflight/review.go`
 - `internal/preflight/review_charge_test.go`
 - `.agents/commands/bench-review-implementation.md`
 - `internal/anchors/registry_ft311_review_dispatch.go`
+- `internal/anchors/registry_data.go`
+- `tests/canary/workflow-guidance-anchors/review-clean-terminal-result`
 - `internal/conformance/registry/packages.go`
 - `internal/conformance/injected_ports_registry_test.go`
 - `internal/gate`
@@ -281,6 +368,8 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `bin/bench.sh`
 - `cmd/bench/gate_route_test.go`
 - `cmd/bench/main_test.go`
+- `cmd/bench/main.go`
+- `internal/worktree/parallel_census_test.go`
 
 - `tests/canary/docs-currency-token-diet/missing-cli-inventory`
 - `tests/canary/docs-currency-token-diet/stale-cli-doc-reference`
@@ -289,6 +378,10 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `tests/canary/package-core-guard/bounds-duplicate-owner`
 - `tests/canary/package-core-guard/reintroduced-bare-skip`
 - `tests/canary/package-core-guard/unrouted-subcommand`
+
+- `internal/systemtest/owner_land_race_test.go`
+- `internal/systemtest/owner_artifact_recovery_test.go`
+- `internal/systemtest/owner_landing_fixture_test.go`
 
 ## Out of scope
 
@@ -338,3 +431,49 @@ Plan-edit authority is limited to chunk boundaries, dependencies, row assignment
 Authoring close: this spec and its tickets are staged for user sign-off. The reviews above assess the proposed build. No implementation or implementation test result is claimed.
 
 Reviewer amendment on 2026-09-11: apply decision #13 to the declared implementation model. Sol implementations use Astra/high review axes. This amendment follows the spec-authoring reviews recorded above.
+
+Implementation plan repair: chunk 1 includes `r1.md` for the accepted review findings.
+The final acceptance command runs every ordinary package. The separate system command covers the tagged system package.
+This repair changes test citations and ownership only; the approved behavior remains the same.
+
+Chunk 1 guard repair replaces the retired clean-review no-artifact requirement with a terminal-result requirement.
+The omission fixture retains the gate’s refusal behavior and the existing persistence constraints.
+
+Chunk 2 keeps public gate grammar in the Go gate owner. The shell forwards its arguments unchanged.
+The help inventory derives its suffix from that owner, and wrapper tests execute that same owner.
+
+Chunk 2 repair keeps verification cases in the shared checkpoint fixture.
+It adds partial-inventory, completion-purpose reuse, and hostile-path wrapper coverage before advancement.
+
+Chunk 3 migrates the existing landing fixtures through the shared record producer.
+Capture composition keeps its settlement rules, but a new composed source requires
+current review and verification before publication. The public journey checks both
+the initial refusal and the reviewed retry. This expansion stays within ticket 3.
+
+Dogfood on 2026-09-11 used the changed kit in `/tmp/ce-dogfood-grq0wdc6`.
+The copied binary digest was `sha256:436cb42d105e73ee9588e2971d146f46bbaf96295f15cab5b68f48a854828dc3`.
+The retained Astra author supplied a deterministic shell adapter; no other model
+implemented the fixture. A staged small spec required `result.txt` to contain
+`ready`.
+
+The actual shift completed one committed iteration at
+`8e06aeb04ce7578cd31ce39e5538493b06c388a6`. The ordinary gate and Stop hook
+rejected pending output, then passed the corrected output without a review record.
+The shift reused that current green verdict. A final gate passed on the shift
+branch. The installed pre-push hook refused main and allowed a topic ref.
+
+Native results: `codex:tool/8c4b4d` and `codex:tool/bca9d7`.
+The first follow-up script misread the TOON result after successful completion;
+the corrected follow-up verified the same shift without executing another one.
+
+Chunk 3 review repair includes `r3.md` for the three accepted targets.
+It extends the fixture fence to the system landing and recovery producers.
+The shared record producer supplies their plans and native fixture outcomes.
+The race journey retains its original ref and recovery assertions and adds a
+refusal before review of the destination delta. The completion reader uses the
+gate snapshot for entry metadata and the shared Git owner for bounded blob data.
+This expansion preserves the approved acceptance rows and pass criteria.
+
+The changed-package selector refuses system-only packages outside its current Go graph.
+Final acceptance therefore expands to all ordinary packages, with the full system
+suite still required separately. No test or pass criterion is removed.

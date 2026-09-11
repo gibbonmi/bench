@@ -13,6 +13,17 @@ retained evidence and captures the retro. Other work lands only on green. It
 does not substitute the model's own judgment for tests, types, lint, or
 conformance checks.
 
+Before spec-backed landing, reconcile every planned acceptance row and retain
+the author's final acceptance and integration command results in the review
+record. Each result must name its examined source and terminal outcome.
+Obtain `bench gate --checkpoint <spec-path> --complete` on that source.
+
+The landing carries that complete obligation into the prospective gate. The
+gate checks the composed tree against the reviewed source. It permits only
+the exact broker-owned status transform and this spec's review-record delta.
+If destination composition adds another change, include that change in the
+source and complete its review and verification before retrying landing.
+
 ## Exit handoff
 
 Close by reporting the applicable oracle result plainly. A reviewed spec's

@@ -47,6 +47,12 @@ When evidence requires an in-scope plan, `Writes:`, or gate expansion, apply `.b
 
 Tickets commit green serially in `Blocked by:` order on the retained integration source. After each chunk review, accepted findings return to the retained author and commit there with current repair coverage. Start the successor only after that repair closes.
 
+Retain author verification and all three native review results in `reviews/<slug>.md`.
+Commit the artifact on its ordinary lane, then run `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>` before the successor.
+
+An ordinary lane pass or ordinary green cannot replace this checkpoint. Follow its named record or review action when evidence fails.
+After a repair, append current results or native reaffirmations from every axis before retrying.
+
 After the last chunk, reconcile every acceptance row and the integrated behavior. Repeat delegated review only when a later delta or cross-chunk concern invalidates prior evidence. From the clean destination, hand the accepted source to `bench worktree land`; it composes, gates, publishes `Status: implemented`, and releases the source. Then run `/bench-final-check`.
 
 ## When the build stops short

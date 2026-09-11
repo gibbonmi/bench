@@ -160,25 +160,27 @@ The successor chunk starts only after findings and repair coverage close. After 
    `## Spec`, and `## Coverage`. Each section carries its
    finding count, its worst issue, and every actionable finding, with its
    disposition and the file or doc citation its axis supplied.
-   Keep all three headings, even when only one axis has findings. Replace a
-   stale artifact; do not append to it.
+   Keep all three headings, including axes with zero findings.
+
+   Retain every terminal return in one fenced `bench-review-record` JSON payload.
+   The `internal/reviewrecord` types own the schema. Preflight supplies the source and plan digests.
+   Record the performer, role, model, effort, frozen base and tip, source, state, and native result.
+
+   Use explicit `unknown` for unavailable model or effort metadata.
+   Embed the minimal native excerpt and its SHA-256 digest; local logs are supplemental evidence.
+   Keep author verification separate from independent review.
+
+   A request is pending. A failed transport or skipped review remains failed or skipped.
+   Completed results with zero findings are positive terminal results.
 
    Commit the artifact in the same session that writes it, before any repair edit lands.
-   This also applies when another harness picks up this review mid-flight and
-   returns findings. Capture and commit its findings the same way, before you
-   touch the fix.
+   Append superseding occurrences and retain earlier findings.
+   Obtain a current result or reviewer-authored reaffirmation from every axis after a repair.
 
-   A clean review writes no artifact. So does a review where the reviewer
-   accepts every residual risk. The `reviews/` directory means "there is fix
-   work to do", not "a review happened". Never commit an empty `reviews/`
-   directory or a `.gitkeep`. A no-spec review stays chat-only, unless the
-   reviewer supplies an explicit slug. Without a durable spec, an invented
-   artifact name would create a second source of feature identity.
+   Record validation checks occurrence and source coverage. It cannot prove judgment correctness or authenticate an invented transcript.
 
-   The ordinary artifact is transient pickup state, not a review log. The
-   `/bench-implement-spec` session that resolves the findings deletes it in
-   the same green fix commit that closes them, so resolved findings cannot
-   resurface.
+   Keep the artifact through completion. The existing retirement path removes it after the committed results remain reachable in history.
+   A no-spec review stays chat-only unless the reviewer supplies an explicit slug.
 
 7. **Hand off, don't repair.** This phase makes no fixes and runs no gate. Accepted findings return to `/bench-implement-spec` on the same integration source. A spec amendment commits to that source on the finding cadence.
 

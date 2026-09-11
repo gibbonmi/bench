@@ -1,5 +1,3 @@
-// The gate route family: the wrapper is driven out of process from a synthetic kit
-// under t.TempDir(), over the shapes that never reach the oracle.
 package main
 
 import (
@@ -7,51 +5,98 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
-// gateUsageLine is the grammar the wrapper answers a rejected gate shape with. It is
-// written here independently of bin/bench.sh, so a reworded or deleted usage arm reds
-// this test rather than passing against a re-derived expectation.
-const gateUsageLine = "usage: bench gate [--fresh]\n"
-
-// TestShellWrapperRejectsUnknownGateShapes holds the gate route to its three accepted
-// spellings: the bare run, --fresh, and help. Every other shape is a usage error, and
-// none of these cases reaches run_gate, so the case needs no oracle and no dist/bench.
-func TestShellWrapperRejectsUnknownGateShapes(t *testing.T) {
-	root := t.TempDir()
-	kit := filepath.Join(root, "kit")
-	copyExecutable(t, filepath.Join("..", "..", "bin", "bench.sh"), filepath.Join(kit, "bin", "bench.sh"))
-
-	run := func(args ...string) (string, string, int) {
-		t.Helper()
-		cmd := exec.Command("bash", append([]string{filepath.Join(kit, "bin", "bench.sh"), "gate"}, args...)...)
-		env := capability.WithoutEnvironment(os.Environ(), runbinary.Env)
-		for _, name := range []string{"BENCH_KIT", "BENCH_WRAPPER"} {
-			env = capability.WithoutEnvironment(env, name)
-		}
-		cmd.Env = append(env, "BENCH_HOME="+filepath.Join(root, "home"), "BENCH_KIT="+kit)
-		var stdout, stderr bytes.Buffer
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
-		code := 0
-		if err := cmd.Run(); err != nil {
-			exit, ok := err.(*exec.ExitError)
-			if !ok {
-				t.Fatalf("bench.sh gate %v: %v", args, err)
-			}
-			code = exit.ExitCode()
-		}
-		return stdout.String(), stderr.String(), code
+func TestGateRouteOwnerProcess(t *testing.T) {
+	if os.Getenv("BENCH_GATE_ROUTE_PROCESS") != "1" {
+		return
 	}
-
-	for _, shape := range [][]string{{"pin"}, {"--fresh", "unexpected"}, {"--brief"}} {
-		stdout, stderr, code := run(shape...)
-		if code != 2 || stdout != "" || stderr != gateUsageLine {
-			t.Errorf("gate %v = (exit %d, stdout %q, stderr %q), want exit 2 and %q on stderr", shape, code, stdout, stderr, gateUsageLine)
+	for i, arg := range os.Args {
+		if arg == "--" {
+			os.Exit((Command{Stdout: os.Stdout, Stderr: os.Stderr}).Run(os.Args[i+1:]))
 		}
+	}
+	t.Fatal("missing owner process arguments")
+}
+
+func gateRoute(t *testing.T, root string, args ...string) (string, string, int) {
+	t.Helper()
+	kit := t.TempDir()
+	copyExecutable(t, filepath.Join("..", "..", "bin", "bench.sh"), filepath.Join(kit, "bin", "bench.sh"))
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeExecutable(t, filepath.Join(kit, "dist", "bench"), "#!/bin/sh\nexec \"$BENCH_GATE_ROUTE_EXECUTABLE\" -test.run '^TestGateRouteOwnerProcess$' -- \"$@\"\n")
+	cmd := exec.Command("bash", append([]string{filepath.Join(kit, "bin", "bench.sh"), "gate"}, args...)...)
+	if root != "" {
+		cmd.Dir = root
+	}
+	environment := capability.WithoutEnvironment(os.Environ(), runbinary.Env)
+	environment = capability.WithoutEnvironment(capability.WithoutEnvironment(environment, "BENCH_KIT"), "BENCH_WRAPPER")
+	cmd.Env = append(environment, "BENCH_GATE_ROUTE_PROCESS=1", "BENCH_GATE_ROUTE_EXECUTABLE="+executable, "BENCH_HOME="+filepath.Join(kit, "home"), "BENCH_KIT="+kit)
+	var out, diagnostic bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &diagnostic
+	code := 0
+	if err := cmd.Run(); err != nil {
+		exit, ok := err.(*exec.ExitError)
+		if !ok {
+			t.Fatal(err)
+		}
+		code = exit.ExitCode()
+	}
+	return out.String(), diagnostic.String(), code
+}
+
+func TestShellWrapperRejectsUnknownGateShapes(t *testing.T) {
+	for _, args := range [][]string{{"pin"}, {"--fresh", "unexpected"}, {"--brief"}, {"--checkpoint"}, {"--checkpoint", "specs/x/spec.md"}, {"--chunk", "1"}, {"--checkpoint", "specs/x/spec.md", "--chunk", "1", "--complete"}} {
+		out, diagnostic, code := gateRoute(t, "", args...)
+		if code != 2 || out != "" || diagnostic != gate.CommandUsage+"\n" {
+			t.Fatalf("gate %v: %d %q %q", args, code, out, diagnostic)
+		}
+	}
+}
+
+func TestGateCheckpointRoute(t *testing.T) {
+	f := recordtest.AttachAt(t, gittest.RepoOnBranch(t, "main"), 1, "specs/example [*] space/spec.md")
+	f.Write(".bench/gate.sh", "#!/bin/sh\nexit 0\n")
+	if err := os.Chmod(filepath.Join(f.Root, ".bench/gate.sh"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	f.Write(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n")
+	f.AddChunk()
+	f.Complete()
+	f.Save()
+	f.Commit("record evidence")
+	_, diagnostic, code := gateRoute(t, f.Root, "--checkpoint", f.Record.Spec, "--chunk", "1")
+	if code != 0 {
+		t.Fatalf("public chunk checkpoint: %d %s", code, diagnostic)
+	}
+	_, diagnostic, code = gateRoute(t, f.Root, "--checkpoint", f.Record.Spec, "--complete")
+	if code != 0 {
+		t.Fatalf("public complete checkpoint: %d %s", code, diagnostic)
+	}
+	f.Record.Chunks[0].Reviews = f.Record.Chunks[0].Reviews[:2]
+	f.Save()
+	_, diagnostic, code = gateRoute(t, f.Root, "--checkpoint", f.Record.Spec, "--chunk", "1")
+	if code == 0 || !strings.Contains(diagnostic, "missing Coverage") {
+		t.Fatalf("public wrapper lost checkpoint: %d %s", code, diagnostic)
+	}
+}
+
+func TestRunGateRejectsBriefUsage(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	code := (Command{Stdout: &stdout, Stderr: &stderr}).Run([]string{"gate", "--brief"})
+	if code != 2 || stdout.Len() != 0 || stderr.String() != gate.CommandUsage+"\n" {
+		t.Fatalf("gate --brief = (stdout %q, stderr %q, exit %d), want usage on stderr and exit 2", stdout.String(), stderr.String(), code)
 	}
 }

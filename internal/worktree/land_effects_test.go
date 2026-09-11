@@ -32,8 +32,10 @@ func brokerChangingLanding(t *testing.T, request string) (root string, creation 
 	gitRun(t, root, "add", ".")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "broker build inputs")
 	gitRun(t, creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
 	base = gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, creation.Path, "scripts/go-build.sh", "#!/bin/sh\n# next broker\nexit 0\n", "change broker source")
+	refreshLandingEvidence(t, creation.Path, base)
 	return root, creation, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), home
 }
 
@@ -167,6 +169,7 @@ func brokerDestinationFixture(t *testing.T, request string) (root string, creati
 	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")
 	base = gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
 	return root, creation, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), home
 }
 

@@ -14,15 +14,18 @@ type executionEvaluation interface {
 }
 
 type gateEvaluation struct {
-	runtimeRoot     string
-	identityRoot    string
-	prospective     bool
-	preSource       treeSource
-	validateTree    func(string) error
-	postSource      treeSource
-	pre             *treeGeneration
-	post            *treeGeneration
-	acceptedSubject subject
+	runtimeRoot      string
+	identityRoot     string
+	prospective      bool
+	preSource        treeSource
+	validateTree     func(string) error
+	postSource       treeSource
+	pre              *treeGeneration
+	post             *treeGeneration
+	acceptedSubject  subject
+	checkpoint       Checkpoint
+	checkpointTip    string
+	completionSource string
 }
 
 func newGateEvaluation(root string) *gateEvaluation {
@@ -107,8 +110,15 @@ func (e *gateEvaluation) capturePost() (subject, error) {
 }
 
 func (e *gateEvaluation) build(generation *treeGeneration) (subject, error) {
+	var plan subject
+	var err error
 	if e.prospective {
-		return buildProspectiveSubjectForGeneration(e.runtimeRoot, e.identityRoot, generation)
+		plan, err = buildProspectiveSubjectForGeneration(e.runtimeRoot, e.identityRoot, generation)
+	} else {
+		plan, err = buildSubjectForGeneration(e.runtimeRoot, e.identityRoot, generation)
 	}
-	return buildSubjectForGeneration(e.runtimeRoot, e.identityRoot, generation)
+	if err != nil {
+		return subject{}, err
+	}
+	return e.applyCheckpoint(generation, plan)
 }

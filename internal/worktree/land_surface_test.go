@@ -62,10 +62,17 @@ func TestLandCommandComposesCaptureOntoMovedDestination(t *testing.T) {
 	})
 	commitInWorktree(t, creation.Path, "capture/session-handoff.md", "handoff source\n", "source handoff")
 	commitInWorktree(t, creation.Path, "capture/learnings.md", "learnings source\n", "source learnings")
+	refreshLandingEvidence(t, creation.Path, base)
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	commitInWorktree(t, root, "capture/session-handoff.md", "handoff destination\n", "destination handoff")
 	commitInWorktree(t, root, "capture/learnings.md", "learnings destination\n", "destination learnings")
+	destination := gitOutput(t, root, "rev-parse", "main")
 	code, stdout, stderr := landIn(t, root, landArgs(request, base, tip, creation.Path))
+	if code != 1 || !strings.Contains(stdout, "completion composition changes capture/learnings.md") || gitOutput(t, root, "rev-parse", "main") != destination {
+		t.Fatalf("unreviewed capture composition = (%d, %q, %q)", code, stdout, stderr)
+	}
+	tip = foldCompletionComposition(t, root, creation.Path, base, tip, destination)
+	code, stdout, stderr = landIn(t, root, landArgs(request, base, tip, creation.Path))
 	if code != 0 || !strings.Contains(stdout, "worktree=released,census=0}") {
 		t.Fatalf("capture-conflict landing = (%d, %q, %q), want released", code, stdout, stderr)
 	}
@@ -89,11 +96,13 @@ func TestLandCommandDisclosesAUnionResolution(t *testing.T) {
 	root, creation, _, _ := landSurface(t, request)
 	base := seedCaptureBase(t, root, creation.Path, map[string]string{"capture/learnings.md": "learnings base\n"})
 	commitInWorktree(t, creation.Path, "capture/learnings.md", "learnings base\nlearnings source\n", "source learnings")
+	refreshLandingEvidence(t, creation.Path, base)
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	commitInWorktree(t, root, "capture/learnings.md", "learnings base\nlearnings destination\n", "destination learnings")
+	destination := gitOutput(t, root, "rev-parse", "main")
 	code, stdout, stderr := landIn(t, root, landArgs(request, base, tip, creation.Path))
-	if code != 0 || !strings.Contains(stdout, "worktree=released,census=0}") {
-		t.Fatalf("union landing = (%d, %q, %q), want released", code, stdout, stderr)
+	if code != 1 || !strings.Contains(stdout, "completion composition changes capture/learnings.md") || gitOutput(t, root, "rev-parse", "main") != destination {
+		t.Fatalf("unreviewed union = (%d, %q, %q)", code, stdout, stderr)
 	}
 	lines := 0
 	for _, line := range strings.Split(stderr, "\n") {
@@ -107,6 +116,11 @@ func TestLandCommandDisclosesAUnionResolution(t *testing.T) {
 	if lines != 1 {
 		t.Fatalf("disclosure lines = %d in %q, want exactly one", lines, stderr)
 	}
+	tip = foldCompletionComposition(t, root, creation.Path, base, tip, destination)
+	code, stdout, stderr = landIn(t, root, landArgs(request, base, tip, creation.Path))
+	if code != 0 || !strings.Contains(stdout, "worktree=released,census=0}") {
+		t.Fatalf("reviewed union landing = (%d, %q, %q), want released", code, stdout, stderr)
+	}
 }
 
 func TestLandCommandAuthorizesCaptureOutsideTheFence(t *testing.T) {
@@ -115,6 +129,7 @@ func TestLandCommandAuthorizesCaptureOutsideTheFence(t *testing.T) {
 	root, creation, base, _ := landSurface(t, request)
 	mustMkdirAll(t, filepath.Join(creation.Path, "capture"), 0o755)
 	commitInWorktree(t, creation.Path, "capture/learnings.md", "learning\n", "phase-owned learning")
+	refreshLandingEvidence(t, creation.Path, base)
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	code, stdout, stderr := landIn(t, root, landArgs(request, base, tip, creation.Path))
 	if code != 0 || !strings.Contains(stdout, "worktree=released,census=0}") {

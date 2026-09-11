@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "Completed results with zero findings are positive terminal results.",
+    "new": "Clean reviewers retain no result."
+  }
+]

@@ -14,10 +14,10 @@ func TestCommandHandlesPublicGateUsageWithoutStartingTheOracle(t *testing.T) {
 		wantStdout string
 		wantStderr string
 	}{
-		{name: "help", args: []string{"--help"}, wantExit: 0, wantStdout: commandUsage},
-		{name: "unknown", args: []string{"unexpected"}, wantExit: 2, wantStderr: commandUsage},
-		{name: "fresh extra argument", args: []string{"--fresh", "unexpected"}, wantExit: 2, wantStderr: commandUsage},
-		{name: "pin", args: []string{"pin"}, wantExit: 2, wantStderr: commandUsage},
+		{name: "help", args: []string{"--help"}, wantExit: 0, wantStdout: CommandUsage},
+		{name: "unknown", args: []string{"unexpected"}, wantExit: 2, wantStderr: CommandUsage},
+		{name: "fresh extra argument", args: []string{"--fresh", "unexpected"}, wantExit: 2, wantStderr: CommandUsage},
+		{name: "pin", args: []string{"pin"}, wantExit: 2, wantStderr: CommandUsage},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var stdout, stderr bytes.Buffer
