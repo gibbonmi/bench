@@ -49,7 +49,8 @@ Coverage review completed with 3 findings; worst issue high.
 
 Spec reaffirms E1, E2, E3, E13, E19, E20, E21, E22, E23, E24, and E38 at the current pair.
 All three reviewers used gpt-5.6-sol/high for one repair iteration and executed no tests or probes.
-The cross-harness waiver or authorization remains pending before advancement. Chunks 2 and 3 have not started.
+The user approved waiving the extra Claude pass and continuing with the three Sol/high reviews.
+Chunk 1 review and repair coverage are closed; chunk 2 may begin.
 
 ## Repair verification
 
@@ -63,7 +64,7 @@ A separate direct TestRootConformance selection skipped because its required roo
 The registered docs-currency-workflow check passed after the guard repair.
 
 Two Claude review attempts timed out. Automatic approval review rejected the network retry because the destination lacked user authorization.
-The author asked the user to waive that extra pass or authorize the read-only review. No Claude verdict is claimed.
+The user approved the requested waiver. No Claude verdict is claimed.
 
 ## Current shared consumer evidence
 
