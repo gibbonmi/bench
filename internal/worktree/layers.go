@@ -13,8 +13,8 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 )
 
-// checkoutStatus owns the tracked-state argv that the cleanup planner, the nested
-// classifier, and the reset planner all read, so the four flags never drift apart.
+// checkoutStatus owns the tracked-state argv that every reader of a checkout's dirty
+// state shares, so the flags never drift apart.
 func checkoutStatus(target string) ([]byte, error) {
 	return git.Raw("--no-optional-locks", "-C", target, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignore-submodules=none")
 }

@@ -266,7 +266,8 @@ Its exit meanings follow the preservation boundary:
 - `0` — a plan, or an apply that landed
 - `1` — a refusal before any write
 - `2` — invalid command usage
-- `3` — a fault after preservation; the record names the restore command
+- `3` — a fault at or after the move; the record names the restore command when an
+  envelope was preserved, and the plan command otherwise
 
 If the move would overwrite an ignored path, the plan refuses before any write.
 The refusal names the colliding paths.

@@ -227,6 +227,12 @@ func TestResetApplyKeepsIgnoredBytesAcrossAnIgnoreRuleChange(t *testing.T) {
 	requireTest(t, string(body) == "build output\n", "ignored bytes changed: %q", body)
 	requireTest(t, gitOutput(t, creation.Path, "rev-parse", "HEAD") == creation.Assignment.Start &&
 		gitOutput(t, creation.Path, "status", "--porcelain=v1") == "?? build/", "checkpoint state = %s", gitOutput(t, creation.Path, "status", "--porcelain=v1"))
+	fingerprint = restoreFingerprint(t, root, home, ref, creation.Assignment.ID)
+	code, out, errout = runReset(t, root, home, "--restore", ref, creation.Assignment.ID, "--apply", fingerprint)
+	second := intent.ResetRefPrefix(creation.Assignment.OwnerID, creation.Assignment.ID) + "2"
+	requireTest(t, code == 0 && strings.Contains(out, "preserved="+second), "named restore = %d %s %s", code, out, errout)
+	manifest, ok := readRecoveryManifest(root, second)
+	requireTest(t, ok && gitOutput(t, root, "show", manifest.Layers["working"]+":build/output") == "build output", "second envelope lost the drifted bytes: %#v", manifest)
 }
 
 func TestResetApplyExitsThreeWithoutAnEnvelope(t *testing.T) {

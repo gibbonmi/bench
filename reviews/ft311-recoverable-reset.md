@@ -2,7 +2,7 @@
 
 Frozen base: `cf2caa6d5c195c6b6ed5852fb4478902d1d99fbd`
 
-Reviewed tip: `f5667b6ba7b4a9506a0606c45d09a9d15ad04078`
+Reviewed tip: `8016bde9ac69a19bc0b8163e0bcb39068f47aba7`
 
 Current findings: Standards 0, Spec 0, Coverage 0.
 
@@ -38,3 +38,12 @@ Those targets are the command constructor, the single index read, the below-path
 They also include the dropped capture return, the reconcile read order, the stale seam names, the approval line, three comments, and two prose items.
 One judgment call stays open as no-op: the long plan function.
 The six in-range fence widenings from the benchmark stay as veto surface.
+
+## Scoped re-review of the fold
+
+Three fresh opus/medium axes re-reviewed the fold commit `8016bde9` alone: Standards 3, Spec 2, Coverage 2, none blocking.
+Every predicate the fold claimed was verified, and five mutations each turned a new test red.
+The fold of this round repaired the status reader's comment, the reference's exit-3 bullet, and ticket 3's `Writes` line.
+The Coverage axis found that the restore RR73 names preserves the drifted file in a second envelope and reports it as `preserved`.
+That is the RR35 shape, so it stays as decided, and RR73 now follows the named restore and asserts the second envelope holds the bytes.
+The three-tag set of the hidden-flag reader is complete for its argv, and the reviewer may pin the `s` tag later.
