@@ -1164,6 +1164,36 @@ help[13]{cmd,why}:
   bench consumers worktree.recordRawCalls --full,walk the consumers outside the diff
 ```
 
+## Chunk 3 review findings
+
+All three fresh Sol/high axes completed on `55520083`. Standards returned two findings, Spec two, and Coverage one.
+The five raw findings map to three repair targets. Each finding has disposition `auto-fix`.
+No axis grants completion or publication authority.
+
+### Standards
+
+S-C3-1 (high) cites the green-tree rule at `.bench/BENCH.md:53` and the four system failures in `codex:tool/87aeb6`.
+The shared producer at `internal/systemtest/owner_land_race_test.go:174` lacks completion evidence.
+S-C3-2 (medium) cites `AGENTS.md:34` and `internal/gate/tree_snapshot.go:3`: `completion.go:22-46` reads the same entry through two parsers.
+Use the existing tree snapshot and one bounded blob reader for both content and mode.
+
+### Spec
+
+P6 (high) shares the system producer target with S-C3-1 and C3-C1.
+It cites the fixture migration clause at `spec.md:443` and preserved broker tests at `spec.md:255`.
+P7 (high) cites E17 and `spec.md:95,225,445`: `owner_land_race_test.go:65,113` still expects an unreviewed winner delta to publish.
+Preserve its race refusal, add the composition refusal, then retain current evidence for the source that includes the winner before retrying.
+
+### Coverage
+
+C3-C1 (high) enumerates the four system consumers of the shared producer.
+They are the public race journey and the killed, concurrent, and dead-plus-live artifact recovery journeys.
+Expand the approved fence before migrating this producer through `recordtest`.
+The axis refuted its other E15–E18 and E33–E36 candidates against existing tests.
+
+The Coverage reviewer proposes adding command-boundary system consumers to the consumer census.
+The current function census did not expose these binary-driven journeys.
+
 ## Machine record
 
 ```bench-review-record
@@ -1986,6 +2016,80 @@ help[13]{cmd,why}:
           "tip": "55520083eb588b3d9aa17667d18a06b9c6a51c5c",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "c3-standards-terminal",
+          "performer": "/root/c3_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "c9201fa276fabba32c215fa364122fd46a775776",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "codex:agent//root/c3_standards/55520083",
+            "excerpt": "Standards review completed with findings.\nCount: 2 hard violations, 0 judgment calls. Worst issue: high. Repair targets: 2.\nS-C3-1 \u2014 high \u2014 auto-fix: The chunk leaves the authoritative system suite red. The shared landing-race fixture creates a staged spec without its completion plan and evidence record, then invokes a spec-backed landing.\nS-C3-2 \u2014 medium \u2014 auto-fix: The new completion owner independently parses the same immutable Git-tree entry through two production paths.\nFrozen pair: 06a589b935ce26fd9e27d18292f20985c81db487..55520083eb588b3d9aa17667d18a06b9c6a51c5c. Actual line: gpt-5.6-sol / high / 1 iteration. Worktree clean; no candidate execution or authorship.",
+            "digest": "sha256:04b841c687c1a2aa75aaf9a7ce2ebaa0b6d77cfd10044728441feff596253535"
+          },
+          "axis": "Standards",
+          "base": "06a589b935ce26fd9e27d18292f20985c81db487",
+          "tip": "55520083eb588b3d9aa17667d18a06b9c6a51c5c",
+          "finding_ids": [
+            "S-C3-1",
+            "S-C3-2"
+          ],
+          "supersedes": [
+            "c3-standards-pending"
+          ]
+        },
+        {
+          "id": "c3-spec-terminal",
+          "performer": "/root/c3_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "c9201fa276fabba32c215fa364122fd46a775776",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "codex:agent//root/c3_spec/55520083",
+            "excerpt": "Spec axis terminal state: completed with findings. Findings: 2. Worst issue: high. Deduplicated repair targets: 2.\nP6 \u2014 high \u2014 auto-fix. System landing fixtures were not migrated to completion evidence.\nP7 \u2014 high \u2014 auto-fix. The public race journey still expects an unreviewed destination delta to publish.\nComplete acceptance-row audit: E1\u2013E16 satisfied; E17 partial P7; E18 partial P6; E19\u2013E38 satisfied.\nFrozen pair: 06a589b935ce26fd9e27d18292f20985c81db487..55520083eb588b3d9aa17667d18a06b9c6a51c5c. Actual line: gpt-5.6-sol / high / 1 iteration. Worktree clean; no candidate execution or authorship.",
+            "digest": "sha256:f8d7ab9fc6b5817b21a47e1e8af90b5d167833b12a597e7fbcdcb8a0bbbb9a90"
+          },
+          "axis": "Spec",
+          "base": "06a589b935ce26fd9e27d18292f20985c81db487",
+          "tip": "55520083eb588b3d9aa17667d18a06b9c6a51c5c",
+          "finding_ids": [
+            "P6",
+            "P7"
+          ],
+          "supersedes": [
+            "c3-spec-pending"
+          ]
+        },
+        {
+          "id": "c3-coverage-terminal",
+          "performer": "/root/c3_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "c9201fa276fabba32c215fa364122fd46a775776",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "codex:agent//root/c3_coverage/55520083",
+            "excerpt": "Coverage review completed with findings. Findings: 1. Worst issue: high. Repair targets: 1.\nC3-C1 \u2014 high \u2014 auto-fix. Input: a valid spec-backed public landing from systemLandingRaceFixture. Its staged spec has no bench-completion-plan, and its source has no terminal completion record.\nRepair: migrate the one shared system producer through the completion-record fixture, then preserve the tests\u2019 intended barrier states.\nFrozen pair: 06a589b935ce26fd9e27d18292f20985c81db487..55520083eb588b3d9aa17667d18a06b9c6a51c5c. Actual line: gpt-5.6-sol / high / 1 iteration. Worktree clean; no candidate execution or authorship.",
+            "digest": "sha256:50f2c2a5969fb2f15075a7bf2902d0730602943d7cfa0bf72347d3b7214624cd"
+          },
+          "axis": "Coverage",
+          "base": "06a589b935ce26fd9e27d18292f20985c81db487",
+          "tip": "55520083eb588b3d9aa17667d18a06b9c6a51c5c",
+          "finding_ids": [
+            "C3-C1"
+          ],
+          "supersedes": [
+            "c3-coverage-pending"
+          ]
         }
       ]
     }
