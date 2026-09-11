@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -69,6 +70,11 @@ func Compare(p Plan, runs []Run) (Comparison, error) {
 			reason("causal arm must change exactly one capability")
 		}
 	}
+	qualityNames := make([]string, 0, len(p.QualityTolerance.Measures))
+	for name := range p.QualityTolerance.Measures {
+		qualityNames = append(qualityNames, name)
+	}
+	sort.Strings(qualityNames)
 	seen := map[string]bool{}
 	slots := map[trialSlot]bool{}
 	filled := map[trialPair]int{}
@@ -149,7 +155,8 @@ func Compare(p Plan, runs []Run) (Comparison, error) {
 		if r.State == "failed" || r.State == "cancelled" {
 			failures[r.Condition]++
 		}
-		for name, bounds := range p.QualityTolerance.Measures {
+		for _, name := range qualityNames {
+			bounds := p.QualityTolerance.Measures[name]
 			measure, ok := r.Quality[name]
 			if !ok || measure.Value == nil {
 				reason("quality is unknown: " + r.RunID + "/" + name)
