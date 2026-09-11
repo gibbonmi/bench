@@ -40,7 +40,7 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
 {
   "version": 1,
   "spec": "specs/workflow-assessment/spec.md",
-  "plan_digest": "sha256:82186d2d4fcd82623f78a0ebd72f7bbafe68b30a5162cf5bd0a51f01ee15d749",
+  "plan_digest": "sha256:aff6509bac30fe7b34cd6a633e325b4c4a33233c0d2ede9abf25f18b0709db0f",
   "implementation_session": "01a0920d-3021-73c1-9ed3-9980d5decc71",
   "chunks": [
     {
@@ -419,11 +419,13 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
     {
       "id": "2",
       "base": "0d2551411b84cf1b6fc9391ea4e3e37af99afa9c",
-      "tip": "ab6b4fa5e404e29044f1fc6071f7df38f1c612e7",
-      "plan_digest": "sha256:82186d2d4fcd82623f78a0ebd72f7bbafe68b30a5162cf5bd0a51f01ee15d749",
-      "source_digest": "ec3c315e56d392625d2bc6d4a0bdf435315fb94a",
+      "tip": "c3b6028b20090e4b43fb75e9db4f844db2151c3a",
+      "plan_digest": "sha256:aff6509bac30fe7b34cd6a633e325b4c4a33233c0d2ede9abf25f18b0709db0f",
+      "source_digest": "9f797271a4b1a01da15cbf9a80b707c624f1762c",
       "acceptance_rows": [
+        "A7",
         "A13",
+        "A16",
         "A23",
         "A30",
         "A31",
@@ -491,6 +493,71 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
             "restore": "pass",
             "native_ref": {
               "ref": "native-tool:e21992",
+              "excerpt": "bit,internal/assessment/record.go,swap,failed,1,yes",
+              "digest": "sha256:f1551004eb42781e7eb5bfe06363bf276267178abd689b3052585165095023b7"
+            }
+          }
+        },
+        {
+          "id": "chunk2-repair-assessment",
+          "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "9f797271a4b1a01da15cbf9a80b707c624f1762c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-tool:00a623",
+            "excerpt": "github.com/gibbonmi/bench/internal/assessment,pass,1878",
+            "digest": "sha256:467444cc423017e1d97c8001e4ebc6d4be14a9b8c2054555ded1dac612e56f0a"
+          },
+          "requirement": "assessment",
+          "command": "bench test --package ./internal/assessment",
+          "exit_code": 0
+        },
+        {
+          "id": "chunk2-repair-dispatcher",
+          "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "9f797271a4b1a01da15cbf9a80b707c624f1762c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-tool:912b17",
+            "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,18862",
+            "digest": "sha256:ea01223062834f543b021cc30d242496b1a44c4bfa1e62968d94d2c6c8cb887f"
+          },
+          "requirement": "dispatcher",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "chunk2-repair-cache-probe",
+          "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "9f797271a4b1a01da15cbf9a80b707c624f1762c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-tool:6c2363",
+            "excerpt": "package,./internal/assessment,TestAssessmentRecord,passed,35",
+            "digest": "sha256:767e0741aa92fba8f475dbc3420108bfbab2ac1b42fd7961a96217cf54a6d44a"
+          },
+          "requirement": "cache-probe",
+          "command": "bench test --package ./internal/assessment --run TestAssessmentRecord",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit cached-input subtraction",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "native-tool:6c2363",
               "excerpt": "bit,internal/assessment/record.go,swap,failed,1,yes",
               "digest": "sha256:f1551004eb42781e7eb5bfe06363bf276267178abd689b3052585165095023b7"
             }
@@ -569,6 +636,78 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "chunk2-standards-2",
+          "performer": "/root/assessment_2_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "9f797271a4b1a01da15cbf9a80b707c624f1762c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_2_standards:reaffirmation-1",
+            "excerpt": "Terminal exact-source result: **completed with 2 later-delta findings**.",
+            "digest": "sha256:038630ffc3a52ba804d97cc2579512fff3be78907b73365b51a735420662e113"
+          },
+          "axis": "Standards",
+          "base": "0d2551411b84cf1b6fc9391ea4e3e37af99afa9c",
+          "tip": "c3b6028b20090e4b43fb75e9db4f844db2151c3a",
+          "finding_ids": [
+            "S4",
+            "S5"
+          ],
+          "supersedes": [
+            "chunk2-standards-1"
+          ]
+        },
+        {
+          "id": "chunk2-spec-2",
+          "performer": "/root/assessment_2_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "9f797271a4b1a01da15cbf9a80b707c624f1762c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_2_spec:reaffirmation-1",
+            "excerpt": "**Spec axis terminal result: PASS**",
+            "digest": "sha256:30669027abedcf827f6c331d15a368fde3bafcad3793ea5eb0a995044e246c75"
+          },
+          "axis": "Spec",
+          "base": "0d2551411b84cf1b6fc9391ea4e3e37af99afa9c",
+          "tip": "c3b6028b20090e4b43fb75e9db4f844db2151c3a",
+          "finding_ids": [],
+          "supersedes": [
+            "chunk2-spec-1"
+          ]
+        },
+        {
+          "id": "chunk2-coverage-2",
+          "performer": "/root/assessment_2_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "9f797271a4b1a01da15cbf9a80b707c624f1762c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_2_coverage:reaffirmation-1",
+            "excerpt": "Terminal result: **findings** \u2014 2 raw findings; worst severity **medium**.",
+            "digest": "sha256:7d6e6ca431cd2b839262aeae60e33079ee477eb5f21fa48b3ee43cc7fe8dc4dc"
+          },
+          "axis": "Coverage",
+          "base": "0d2551411b84cf1b6fc9391ea4e3e37af99afa9c",
+          "tip": "c3b6028b20090e4b43fb75e9db4f844db2151c3a",
+          "finding_ids": [
+            "C5",
+            "C6"
+          ],
+          "supersedes": [
+            "chunk2-coverage-1"
+          ]
         }
       ]
     }
@@ -614,6 +753,21 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
     {
       "from": "sha256:6f06ccba79638027e926a1b9c57015c3ab3eafc619b40be11a772608c8d092ed",
       "to": "sha256:82186d2d4fcd82623f78a0ebd72f7bbafe68b30a5162cf5bd0a51f01ee15d749",
+      "chunk_ids": {
+        "1": [
+          "1"
+        ],
+        "2": [
+          "2"
+        ],
+        "3": [
+          "3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:82186d2d4fcd82623f78a0ebd72f7bbafe68b30a5162cf5bd0a51f01ee15d749",
+      "to": "sha256:aff6509bac30fe7b34cd6a633e325b4c4a33233c0d2ede9abf25f18b0709db0f",
       "chunk_ids": {
         "1": [
           "1"
@@ -682,3 +836,16 @@ All three native Sol/high reviews completed against 0d255141..ab6b4fa. Nine raw 
 - Coverage C4 (medium): cover parent-symlink refusal and present-empty harness diagnostics (harness.go:23-34; spec.md:100,143,150).
 
 Shared consumer inventory: sha256:80889260ec510414b445dae47e3e50ca3ab929111fef72a838030f90d046a2e9. Coverage inventory: sha256:06966e263ca07d6663ed7a156a5ad5ef4c9d70c5f867f43712299abc5a20f2e7. All reviewers verified the clean frozen source and used only read commands. Author package verification and the cache subtraction probe passed on that source.
+
+## Chunk 2 first repair reaffirmation
+
+All three Sol reviews completed against c3b6028b. Prior S1-S3, P1-P2, and C1-C4 are closed. Spec passed. Standards and Coverage returned four later-delta findings, all accepted as auto-fix; worst severity medium.
+
+- S4 (low): remove trailing whitespace and turn parallel spec details into vertical lists (spec.md:478,486; ste-prose.md:27).
+- S5 (medium): the commit and landing producer fixtures duplicate their harness and assertion (assessment_span_test.go:10-24 in both packages; AGENTS.md:34-47).
+- C5 (medium): prove actual landing assignment propagation, not only emission from supplied measures (land.go:183; land_trace_test.go:19-45).
+- C6 (medium): exercise conflicting duplicate selectors with two valid attempt mappings (collection.go:231-239; spec.md:161,312,324).
+
+S5 and C5 share a repair: remove the duplicated landing fixture and add the assignment assertion to the existing full landing test. Ticket 5 also owns the valid-mapping ambiguity partition. Native usage and charges remain unknown.
+
+The current source passed assessment, dispatcher, OTEL, and required cache-probe verification. Consumers hash: c7ada9326ff215c8ee935db83169804e7b91c599a14c5ac4ee5f2ed03b5b25b2. Coverage hash: 06966e263ca07d6663ed7a156a5ad5ef4c9d70c5f867f43712299abc5a20f2e7. The standalone coverage file was initially absent; it was restored from the complete prepared charge, then verified by Spec.
