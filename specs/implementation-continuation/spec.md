@@ -125,6 +125,7 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `.agents/commands/bench-implement-spec.md`
 - `.agents/skills/bench-craft-line/SKILL.md`
 - `internal/anchors/registry_data.go`
+- `internal/anchors/registry_retained_workflow.go`
 - `internal/conformance/implementation_continuation_test.go` (new)
 - `tests/canary/workflow-guidance-anchors`
 - `.agents/skills/bench-craft-delegate/SKILL.md`
