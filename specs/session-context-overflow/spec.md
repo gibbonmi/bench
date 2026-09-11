@@ -123,17 +123,22 @@ caller -> domain entrypoint -> verification -> existing operation -> complete re
 | OV15 | 14 | Repeated completion delivery resolves to the same complete artifact | planned TestOverflowDuplicateCompletion in internal/harnessoverflow | Concurrent callback delivery cannot overwrite another invocation artifact |
 | OV16 | 15 | The artifact path rejects traversal and symlink redirection | planned TestOverflowArtifactPath in internal/harnessoverflow | A hostile result identifier cannot redirect the write outside its private directory |
 | OV17 | 16 | An empty supported result retains its status and empty body | planned TestOverflowEmptyResult in internal/harnessoverflow | Treating empty as missing creates a false limitation |
-| OV18 | 17 | Below-budget supported results retain their original body | planned TestOverflowBelowBudget in internal/harnessoverflow | Unnecessary replacement changes a result that needs no projection |
+| OV18 | 17 | Supported results at or below the approved budget retain their original body | planned TestOverflowWithinBudget in internal/harnessoverflow | Unnecessary replacement changes a result that needs no projection |
 | OV19 | 18 | Installed configuration exposes only the verified harness paths | planned TestOverflowInstalledWiring in internal/systemtest | A supported core without its actual adapter cannot satisfy the end-to-end result |
 | OV20 | 2 | Each eligible runtime path proves complete producer bytes before its model-visible replacement | review-owned: runtime-evidence.md compares the independent producer record with the stored artifact | A replacement-only demonstration cannot certify complete-output preservation |
 | OV21 | 3 | Each eligible runtime path preserves a nonzero producer status at the model boundary | review-owned: runtime-evidence.md records the failing producer and observed result | A successful callback cannot stand in for the failed producer status |
 | OV22 | 6 | Each eligible runtime path retrieves the exact complete artifact through its reported detail route | review-owned: runtime-evidence.md records actual retrieval and byte comparison | A plausible path without a successful retrieval cannot authorize enablement |
+| OV23 | 8 | An artifact-creation failure retains the original tool result | planned TestOverflowCreateFailure in internal/harnessoverflow | Replacement after failed creation loses the only complete result |
+| OV24 | 8 | An artifact-close failure retains the original tool result | planned TestOverflowCloseFailure in internal/harnessoverflow | A successful write cannot certify a failed close |
+| OV25 | 8 | An artifact-readback failure retains the original tool result | planned TestOverflowReadbackFailure in internal/harnessoverflow | A published path cannot certify unreadable preserved bytes |
 
 ### Edge inventory
 
-OV2 and OV8 cover artifact creation, write, close, and readback failures before replacement.
+OV2 checks preservation before replacement.
+OV8 and OV23–OV25 separately cover write, creation, close, and readback failures.
 OV7 and OV11 cover malformed callbacks, missing producer bytes, and upstream truncation.
 OV12 covers absent and changed runtime identities.
+
 OV14 and OV19 cover the actual installed path rather than a test-only package variable.
 
 OV15 covers repeated delivery and concurrent distinct invocations.
@@ -181,7 +186,7 @@ A build cannot change this spec, its acceptance rows, or its tickets.
 | Ticket | Blocked by | Delivered coverage |
 | --- | --- | --- |
 | [1. Prove installed overflow paths](tickets/1-prove-runtime-paths.md) | none | OV1, OV20, OV21, OV22 |
-| [2. Install verified overflow projection](tickets/2-install-verified-overflow.md) | 1-prove-runtime-paths.md | OV2, OV3, OV4, OV5, OV6, OV7, OV8, OV9, OV10, OV11, OV12, OV13, OV14, OV15, OV16, OV17, OV18, OV19 |
+| [2. Install verified overflow projection](tickets/2-install-verified-overflow.md) | 1-prove-runtime-paths.md | OV2, OV3, OV4, OV5, OV6, OV7, OV8, OV9, OV10, OV11, OV12, OV13, OV14, OV15, OV16, OV17, OV18, OV19, OV23, OV24, OV25 |
 
 ## Out of scope
 

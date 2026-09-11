@@ -2,7 +2,7 @@
 
 Blocked by: none
 Writes: internal/worktree/worktree.go, internal/worktree/clean_landed.go, internal/worktree/clean_set.go (new), internal/worktree/clean_set_test.go (new), internal/worktree/clean_set_command_test.go (new), internal/usage/worktree.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: CL1, CL2, CL3, CL10, CL11, CL13, CL14, CL15, CL16
+Covers: CL1, CL2, CL3, CL10, CL11, CL13, CL14, CL15, CL16, CL17
 
 ## What to build
 

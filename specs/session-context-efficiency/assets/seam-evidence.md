@@ -103,17 +103,20 @@ They covered source, tests, fixtures, JavaScript, JSON, and workflow files.
 | Search fact | Readers | Row or exclusion |
 | --- | --- | --- |
 | Worktree list fields, grammar, and `ListCommand` | Leaf dispatch, usage, list action tests, command inventory | QU1–QU3, QU9, QU10, QU16, QU17 |
-| `HistoryFact`, `History`, `historyCommand`, and history invocations | Spec dispatch, history tests, help, debug and drain guidance | QU4–QU13, QU16, QU17 |
+| `HistoryFact`, `History`, `historyCommand`, and history invocations | Spec dispatch, roadmap context, history tests, help, debug and drain guidance | QU4–QU13, QU16, QU17 |
 | Harness `Measures` and record rows | Harness query and tests, guards, lines, status, conformance | ME9 and ME11 retain compiled consumers |
 | `ReadSpans` and `NewestLanding` | OTEL tests, worktree trace/reset tests, retro scaffold | ME16 retains the existing Bench metric owner |
 | Hook event names and result fields | Current configurations, hook dispatch, adoption, harness declarations | OV1 and OV19 require actual adapter closure before implementation |
-| Cleanup grammar and apply owners | Worktree leaf, public help, landed/unclaimed tests | CL1–CL14, CL16 |
+| Cleanup grammar and apply owners | Worktree leaf, landing effects, public help, landed/unclaimed tests | CL1–CL14, CL16 |
 | Old decision paths | Compiled map, ticket 1, source assets, new specs | SC7 requires one compiled copy |
 
 The worktree default fixture family stays unchanged under QU9.
 It includes the pre-disclosure argv, empty, foreign, and complete-assignment cases in `internal/worktree/testdata/`.
 The sweep found no JavaScript or workflow consumer of the selected query schemas.
 No existing query field is renamed or removed by the additive tickets.
+
+The roadmap context reader retains the complete `History` producer contract under QU23.
+The landing effect retains scoped automatic cleanup under CL18 and CL19.
 The later budget checkpoint must repeat the reader sweep for each newly changed default.
 
 ## Hostile-input attachment
@@ -158,3 +161,21 @@ No fixture expectation or production rule changes during spec authoring.
 
 The source merge includes `6090a69e` and passed the existing six-phase gate.
 Its merged source tip is `09f8e78de17d75cda11663254096d1204ff3de68` before the closure corrections.
+
+## Shared-reader correction
+
+Sol review found two production callers missing from the initial delegated census.
+The coordinator re-ran the whole-tree symbol search and read both definitions.
+The roadmap context parser consumes `History` at `internal/roadmap/context_parse.go:173`.
+QU23 preserves that producer's complete ordered facts without changing the roadmap reader.
+Selected limits remain in the command projection.
+
+The landing effect calls both landed-set helpers at `internal/worktree/land_effects.go:116` and `:125`.
+CL18 and CL19 retain its scoped automatic cleanup and exclude earlier landed assignments.
+The coordinator read both cited test functions in the landing cleanup test file.
+The cleanup ticket and fence now name that reader and its tests.
+
+The direct `ListCommand` test callers also include path identifiers, request tokens, landed state, and hostile landed-cleanup cases.
+QU9 includes these caller families in the unchanged-default matrix.
+QU19 separately protects positional history.
+The selected-history content case QU25 isolates an unrepresentable commit subject before combined output serialization.

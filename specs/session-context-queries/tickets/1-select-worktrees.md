@@ -19,3 +19,4 @@ The selected view omits the old unselected inventory.
 - [ ] Bare invocations match the baseline input matrix.
 - [ ] Hostile operands cannot erase other results.
 - [ ] The selected result names `bench worktree list` as its complete-detail action.
+- [ ] The baseline matrix covers list actions, path identifiers, request tokens, landed state, and hostile landed-cleanup callers.

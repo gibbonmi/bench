@@ -62,12 +62,18 @@ Normalized duplicate slugs appear once in first-request order.
 The existing history producer retains exact slug matching, retire/delete classification, commit deduplication, and newest-first order.
 No additional Git parser or batch command language joins the owner.
 
+The shared `History` producer keeps its complete ordered fact contract for roadmap context and positional history.
+Selection and limits apply only after that producer returns.
+
 The selected history output has one summary row per requested spec.
 Its fields are `target`, `slug`, `total_events`, `total_bytes`, `omitted_events`, `detail`, and `error`.
 A separate event table carries `slug`, `hash`, `date`, `kind`, and `subject`.
 The summary counts complete serialized history before projection.
 The `detail` cell contains the correctly quoted `bench spec history <slug>` command.
 A successful empty history has zero events and no error.
+
+A failed history uses unknown counts and a per-spec error.
+The selected view validates each history before it joins the combined event table.
 
 Successful selected queries return exit 0.
 A valid selection with any per-target failure returns exit 1 after all results render.
@@ -116,29 +122,37 @@ named input -> existing command owner -> typed producer -> projected result
 | QU3 | 3 | Worktree aliases resolving to one identity emit one row at their first occurrence | planned TestSelectedWorktreeAliases in internal/worktree | Repeated labels and IDs cannot inflate the result set |
 | QU4 | 4 | Each selected spec receives newest-first history from the existing history owner | planned TestSelectedSpecHistories in internal/spec | A prefix match includes another spec or changes retire/delete classification |
 | QU5 | 5 | The history view emits at most the explicit per-spec event limit | planned TestSelectedSpecLimit in internal/spec | Concatenating complete histories violates the requested bound |
-| QU6 | 5 | Each omitted history reports its complete event count and complete serialized byte count | planned TestSelectedSpecOmissions in internal/spec | A clipped count cannot describe the omitted evidence |
+| QU6 | 5 | Each omitted history reports its complete event count | planned TestSelectedSpecOmissions in internal/spec | A clipped count cannot describe the omitted evidence |
 | QU7 | 6 | Each selected spec result includes an exact complete-history command | planned TestSelectedSpecDetailRoute in internal/spec | A generic help action cannot recover the omitted target |
 | QU8 | 7 | A failed spec target retains its own result beside successful targets | planned TestSelectedSpecPartialFailure in internal/spec | One Git failure cannot erase another target result |
-| QU9 | 8 | Existing bare worktree and positional history views match the baseline before new budgets | planned TestSelectedViewsPreserveDefaults in the respective command packages | A differential input matrix catches accidental default changes |
-| QU10 | 9 | Malformed selection grammar returns usage at exit 2 | planned TestSelectedQueryGrammar in the respective command packages | Mixed modes and invalid limits cannot silently choose a different query |
+| QU9 | 8 | The bare worktree view matches the baseline before new budgets | planned TestSelectedWorktreesPreserveDefault in internal/worktree | A differential input matrix catches accidental default changes |
+| QU10 | 9 | Malformed worktree selection grammar returns usage at exit 2 | planned TestSelectedWorktreeGrammar in internal/worktree | Mixed modes and invalid limits cannot silently choose a different query |
 | QU11 | 10 | Raw-read guidance selects relevant sections, paths, failures, or rows before full detail | review-owned: Standards axis reads the three guidance files | Advice to concatenate complete results defeats projection |
 | QU12 | 11 | Raw-read guidance retains an explicit complete-detail route | review-owned: Standards axis reads the examples | A bounded example without recovery hides required evidence |
-| QU13 | 12 | Guidance keeps polling and distinct authority boundaries as separate operations | review-owned: Spec axis compares ticket 4 and ticket 6 | A call-saving example cannot combine mutation with later approval |
+| QU13 | 12 | Guidance keeps polling and distinct authority boundaries as separate operations | review-owned: Spec axis compares `specs/session-context-efficiency/decisions/session-context-efficiency/tickets/4.md` and `specs/session-context-efficiency/decisions/session-context-efficiency/tickets/6.md` | A call-saving example cannot combine mutation with later approval |
 | QU14 | 13 | New numeric defaults require an approved per-surface byte policy before their build ticket starts | review-owned: budget record and ticket-entry inspection | A build cannot turn the diagnostic cut into its own cap |
 | QU15 | 14 | Approved defaults retain their complete-detail routes and owner metadata | planned TestApprovedQueryBudget in the respective command packages | Boundary fixtures catch lost detail routes or missing omission metadata |
-| QU16 | 15 | Control-bearing target failures remain representable without hiding other results | planned TestSelectedQueryHostileTarget in the respective command packages | An unsafe TOON cell cannot collapse the complete result into one render error |
-| QU17 | 16 | Selected query results omit unrequested worktree rows and history bodies | planned TestSelectedQueriesExcludeOldOutput in the respective command packages | Presence-only assertions would let the old full output survive |
+| QU16 | 15 | A control-bearing worktree target failure does not hide other target results | planned TestSelectedWorktreeHostileTarget in internal/worktree | An unsafe TOON cell cannot collapse the complete result into one render error |
+| QU17 | 16 | Selected worktree output omits unrequested worktree rows | planned TestSelectedWorktreesExcludeOldOutput in internal/worktree | Presence-only assertions would let the old full output survive |
 | QU18 | 17 | The selected worktree view names `bench worktree list` as its complete-detail action | planned TestSelectedWorktreeDetailRoute in internal/worktree | A result without the exact full inventory command fails the recovery contract |
+| QU19 | 8 | The positional history view matches the baseline before new budgets | planned TestSelectedHistoriesPreserveDefault in internal/spec | A differential history matrix catches accidental changes to complete history |
+| QU20 | 9 | Malformed spec selection grammar returns usage at exit 2 | planned TestSelectedHistoryGrammar in internal/spec | An invalid history limit cannot silently choose another query |
+| QU21 | 15 | A control-bearing spec target failure does not hide other target results | planned TestSelectedHistoryHostileTarget in internal/spec | One unsafe target cannot collapse the whole result into a render error |
+| QU22 | 16 | Selected history output omits unrequested history bodies | planned TestSelectedHistoriesExcludeOldOutput in internal/spec | Presence-only assertions would let full histories survive beside selected output |
+| QU23 | 4, 8 | The shared history producer preserves the baseline complete ordered fact sequence | planned TestSelectedHistoryPreservesProducer in internal/spec | Applying selection limits inside History would truncate roadmap context |
+| QU24 | 5 | Each omitted history reports its complete serialized UTF-8 byte count | planned TestSelectedHistoryTrueBytes in internal/spec | A correct event count cannot hide a byte total computed after projection |
+| QU25 | 7, 15 | An unrepresentable history subject fails only its selected spec result | planned TestSelectedHistoryHostileSubject in internal/spec | A combined table failure must not erase valid histories for other specs |
 
 ### Edge inventory
 
 QU1–QU3 cover active, complete, cleanup-pending, absent, and ambiguous worktree selections.
 QU4–QU8 cover empty histories, duplicate slugs, retire-only, delete-only, mixed history, and per-target Git failures.
 QU5 covers a limit of one, exact-boundary output, and omitted output.
-QU10 covers zero, negative, nonnumeric, and overflowing limits, missing values, and mixed positional modes.
+QU10 covers missing worktree values and mixed worktree modes.
+QU20 covers zero, negative, nonnumeric, and overflowing limits, missing values, and mixed history modes.
 
-QU16 covers spaces, control bytes, leading dashes, and command-shaped operands for kit and linked-repository callers.
-QU9 preserves existing no-repository and default-view behavior through a differential matrix.
+QU16 and QU21 cover spaces, control bytes, leading dashes, and command-shaped operands for kit and linked-repository callers.
+QU9 and QU19 preserve existing no-repository and default-view behavior through separate differential matrices.
 No query acquires mutation authority or substitutes a package variable across subprocesses.
 
 Won't handle: arbitrary command batches — the two existing query owners remain the callers.
@@ -196,7 +210,7 @@ A build cannot change this spec, its acceptance rows, or its tickets.
 | Ticket | Blocked by | Delivered coverage |
 | --- | --- | --- |
 | [1. Select worktree path facts](tickets/1-select-worktrees.md) | none | QU1, QU2, QU3, QU9, QU10, QU16, QU17, QU18 |
-| [2. Select bounded spec histories](tickets/2-select-histories.md) | none | QU4, QU5, QU6, QU7, QU8, QU9, QU10, QU16, QU17 |
+| [2. Select bounded spec histories](tickets/2-select-histories.md) | none | QU4, QU5, QU6, QU7, QU8, QU19, QU20, QU21, QU22, QU23, QU24, QU25 |
 | [3. Guide relevant raw reads](tickets/3-guide-relevant-reads.md) | 1-select-worktrees.md, 2-select-histories.md | QU11, QU12, QU13 |
 | [4. Apply reviewed owner budgets](tickets/4-apply-reviewed-budgets.md) | 1-select-worktrees.md, 2-select-histories.md, 3-guide-relevant-reads.md | QU14, QU15 |
 
@@ -227,18 +241,24 @@ Source-row clauses and occurrences: the sole compiled map owns the clauses above
 
 Promised field labels: the two selected schemas appear in Implementation decisions.
 Changed-function callers: worktree leaf dispatch calls `ListCommand`; spec dispatch calls `historyCommand`.
+
+The roadmap context parser also consumes every fact from the shared `History` producer under QU23.
 Their local tests, public help tests, and command registry tests consume their grammar and output.
-Copy survival: QU17 fails if the old full output survives beside the new projection.
+Copy survival: QU17 and QU22 fail if old full output survives beside the respective selected projection.
 
 The bare worktree fixture family remains unchanged under QU9.
+Its matrix includes list actions, path identifiers, request tokens, landed state, and hostile landed-cleanup callers.
+
+The source test files are list_actions, path_identifier, request_token, landed, and clean_landed_hostile within the worktree package.
 The debug and drain history examples receive QU11–QU13 and exact ownership fences.
 The repository-wide sweep found no JavaScript or workflow schema reader.
+The roadmap context reader remains unchanged because QU23 preserves its producer contract.
 The AXI approved-query set remains unchanged.
 The selected history view retains the spec owner's operational contract.
 
 ### Flagged additions
 
 Repeated selectors, first-occurrence deduplication, and the explicit history limit are proposed grammar decisions for this sign-off.
-QU1–QU10 and QU16–QU17 grade these additions.
+QU1–QU10 and QU16–QU22 grade these additions.
 The numeric-default ticket remains staged until its external checkpoint is complete.
 The checkpoint retains the full bounded-default scope rather than silently declaring the early selectors complete.

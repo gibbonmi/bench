@@ -82,7 +82,7 @@ reviewed map -> coordinating record -> four child specs -> child ticket graphs
 
 | row | story | behavior | seam | why it catches the failure |
 | --- | --- | --- | --- | --- |
-| SC1 | 1, 6 | The coordinator links each approved child spec without copying its acceptance rows | review-owned: Spec axis compares ticket 7 with the child table | Omitting one child leaves an approved outcome without an owner |
+| SC1 | 1, 6 | The coordinator links each approved child spec without copying its acceptance rows | review-owned: Spec axis compares ticket 7 with the child table | The child census exposes missing owners and copied child rows expose a second requirement source |
 | SC2 | 2 | Measurement has an independent build entrypoint | review-owned: ticket graph inspection | A dependency on query or overflow implementation creates a cycle |
 | SC3 | 3 | Cleanup has no dependency on a new output budget | review-owned: prerequisite inspection | A measurement blocker on cleanup contradicts the approved split |
 | SC4 | 4 | New numeric defaults wait for reviewer approval of measured proposals | review-owned: child readiness and budget record inspection | A numeric default chosen during a build bypasses the retained decision |

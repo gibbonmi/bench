@@ -70,11 +70,12 @@ The failing target reports its actual retained or failed outcome.
 Each remaining selected target reports `not-attempted`.
 The command returns nonzero and does not claim rollback of completed effects.
 
-The result preserves the selected mode and modifiers in its exact re-plan command.
+A stale result preserves the selected mode and modifiers in its exact re-plan command.
 Explicit targets are safely quoted in that command.
 The command never substitutes a fresh fingerprint into the failed apply automatically.
 Existing `--apply-current` behavior remains limited to its existing unclaimed-branch mode.
 No new efficiency denial or numeric result cap is introduced.
+The landing effect retains its existing scoped plan-and-apply call without a user-facing fingerprint round trip.
 
 The existing late-drift test remains valid.
 It changes the second target after the first target's terminal receipt.
@@ -109,14 +110,17 @@ caller -> domain entrypoint -> verification -> existing operation -> complete re
 | CL6 | 6 | Each target retains the existing under-lock lifecycle recheck | planned TestCleanSetLateDrift in internal/worktree | A race after preflight cannot use an obsolete removal plan |
 | CL7 | 7 | A partial apply reports completed outcomes without claiming rollback | planned TestCleanSetPartialApply in internal/worktree | A failed later transaction cannot erase the earlier completed result |
 | CL8 | 8 | A partial apply reports every unstarted target as not attempted | planned TestCleanSetUnstartedOutcomes in internal/worktree | Omitting remaining rows hides part of the selected intent |
-| CL9 | 9 | A stale or partial result names the exact selector-preserving re-plan command | planned TestCleanSetReplanAction in internal/worktree | A generic clean command loses the selection or discard modifiers |
+| CL9 | 9 | A stale result names the exact selector-preserving re-plan command | planned TestCleanSetStaleReplanAction in internal/worktree | A generic clean command loses the selection or discard modifiers |
 | CL10 | 10 | Active or unsafe targets retain the existing cleanup refusal | planned TestCleanSetRetainsAuthority in internal/worktree | Set selection cannot widen deletion authority |
 | CL11 | 11 | Existing single-target and selector success cases match the baseline lifecycle effects | planned TestCleanSetCompatibility in internal/worktree | A differential state comparison catches changed branch or receipt behavior |
 | CL12 | 12 | A completed target cannot be removed twice through a repeated apply | planned TestCleanSetSpentPlan in internal/worktree | Reusing a spent plan cannot replay cleanup side effects |
-| CL13 | 13 | An empty selected set reports a definitive empty plan without mutation | planned TestCleanSetEmptySelection in internal/worktree | Absent and empty owner inventories cannot produce fabricated removable rows |
+| CL13 | 13 | A present empty landed-assignment inventory reports an empty plan without mutation | planned TestCleanSetPresentEmptyInventory in internal/worktree | A present empty inventory cannot produce fabricated removable rows |
 | CL14 | 14 | Invalid mixed selection grammar returns usage before plan creation | planned TestCleanSetGrammar in internal/worktree | A selector plus explicit targets cannot silently widen the selected set |
 | CL15 | 15 | Cleanup starts without a new numeric output-budget dependency | review-owned: ticket graph and entry checks | A measurement prerequisite on cleanup contradicts the approved independent capability |
 | CL16 | 16 | Hostile operand text remains data throughout selection and re-plan output | planned TestCleanSetHostileOperand in internal/worktree | A command-shaped path cannot execute through the recovery action renderer |
+| CL17 | 13 | An absent landed-assignment inventory reports an empty plan without mutation | planned TestCleanSetAbsentInventory in internal/worktree | Treating a missing assignment store as a command failure violates the existing empty state |
+| CL18 | 11 | Landing retains automatic cleanup of the sibling carried by that landing | `internal/worktree/land_effects_cleanup_test.go` (`TestLandCleansTheFoldedSibling`) | A command-only fingerprint requirement would prevent the existing landing effect |
+| CL19 | 11 | Landing retains a previously landed assignment outside its cleanup scope | `internal/worktree/land_effects_cleanup_test.go` (`TestLandLeavesAPriorLandedAssignment`) | Discarding the scope argument would turn one landing into repository-wide cleanup |
 
 ### Edge inventory
 
@@ -126,7 +130,7 @@ CL6–CL8 cover under-lock refusal, transaction faults, terminal receipt faults,
 CL10 and CL11 retain the existing lifecycle owner's unsafe, active, dirty, ignored, and branch-preservation cases.
 
 CL12 covers repeated apply after a completed target.
-CL13 covers absent owner state and an existing empty selection for kit and linked-repository callers.
+CL13 and CL17 distinguish present-empty and absent landed-assignment inventories for kit and linked-repository callers.
 CL16 covers spaces, newlines, leading dashes, and shell-shaped target text.
 Tests use the existing cleanup boundary in-process; no package-variable swap is expected to affect a separate executable.
 
@@ -150,6 +154,8 @@ Won't handle: automatic stale-plan approval — the agent runs the rendered re-p
 - `internal/worktree/clean_set_test.go`
 - `internal/worktree/clean_unclaimed.go`
 - `internal/worktree/clean_unclaimed_test.go`
+- `internal/worktree/land_effects.go`
+- `internal/worktree/land_effects_cleanup_test.go`
 - `internal/worktree/worktree.go`
 - `reviews/session-context-cleanup.md`
 
@@ -161,8 +167,8 @@ A build cannot change this spec, its acceptance rows, or its tickets.
 
 | Ticket | Blocked by | Delivered coverage |
 | --- | --- | --- |
-| [1. Plan and apply explicit cleanup sets](tickets/1-plan-explicit-sets.md) | none | CL1, CL2, CL3, CL10, CL11, CL13, CL14, CL15, CL16 |
-| [2. Preflight and report the complete set](tickets/2-complete-preflight-outcomes.md) | 1-plan-explicit-sets.md | CL4, CL5, CL6, CL7, CL8, CL9, CL12 |
+| [1. Plan and apply explicit cleanup sets](tickets/1-plan-explicit-sets.md) | none | CL1, CL2, CL3, CL10, CL11, CL13, CL14, CL15, CL16, CL17 |
+| [2. Preflight and report the complete set](tickets/2-complete-preflight-outcomes.md) | 1-plan-explicit-sets.md | CL4, CL5, CL6, CL7, CL8, CL9, CL12, CL18, CL19 |
 
 ## Out of scope
 
@@ -189,12 +195,17 @@ Source-row clauses and occurrences: the sole compiled map owns the clauses above
 
 Promised field labels: `not-attempted` is an apply outcome, never a planned removal claim.
 Changed-function callers: the worktree leaf calls `CleanCommand`; landed apply calls the existing cleanup transaction.
+
+The landing effect also calls `planLandedSet` and `applyLandedSet` with its destination-base scope.
+
+CL18 and CL19 protect that existing caller.
 Local cleanup tests and public grammar tests consume the changed behavior.
 Copy survival: no lifecycle copy is authorized.
 
 The existing post-first-removal drift fixture remains an in-scope success under CL6 and CL7.
 The new pre-existing-drift fixture belongs to CL4 and CL5.
 The unclaimed selector retains its current whole-set replan and branch transaction authority.
+The landing effect retains its automatic scoped cleanup through the existing caller.
 The final ticket carries the cleanup package's complete-set invariant.
 
 ### Flagged additions
