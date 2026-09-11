@@ -1,7 +1,10 @@
 package preflight
 
 import (
+	"errors"
 	"fmt"
+	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"path/filepath"
 	"strings"
 
@@ -158,7 +161,7 @@ func renderReviewPacket(
 ) (string, int) {
 	shared := evidence.shared()
 	chargeRows := make([][]string, 0, 3)
-	for _, axis := range []string{"Standards", "Spec", "Coverage"} {
+	for _, axis := range reviewrecord.Axes() {
 		chargeRows = append(chargeRows, []string{
 			axis, facts.AssignmentTarget, root, facts.SourceBase, facts.SourceTip,
 			chargeFenceCell(facts), sources.spec.handle(), "read-only", shared.handle(),
@@ -174,15 +177,46 @@ func renderReviewPacket(
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
+	completionTable, err := completionEvidenceTable(root, facts)
+	if err != nil {
+		return chargeRefusal("completion-evidence", err.Error(), "repair the record path and retry"), 1
+	}
 	return renderChargePacket(chargePacket{
 		fields: []string{
 			"axis", "assignment", "checkout", "base", "source_tip", "fence", "ticket",
 			"writes", "evidence", "checks", "return",
 		},
 		rows:           chargeRows,
-		middle:         []string{sharedTable},
+		middle:         []string{sharedTable, completionTable},
 		sources:        append(append([]chargeSource{}, sources.list()...), evidence.sources()...),
 		identitiesOnly: []chargeSource{shared},
 		next:           chargeInvocation("review", facts, ""),
 	}, full)
+}
+
+func completionEvidenceTable(root string, facts Facts) (string, error) {
+	path, err := reviewrecord.RecordPath(facts.SpecPath)
+	if err != nil {
+		return "", err
+	}
+	tree, err := benchgit.Output("-C", root, "rev-parse", "--verify", facts.SourceTip+"^{tree}")
+	if err != nil {
+		return "", err
+	}
+	source, err := reviewrecord.SourceDigest(root, tree, facts.SpecPath)
+	if err != nil {
+		return "", err
+	}
+	plan, planErr := reviewrecord.ReadPlan(root, tree, facts.SpecPath)
+	state, detail := "parsed", ""
+	_, readErr := reviewrecord.Read(root, facts.SpecPath)
+	if errors.Is(readErr, reviewrecord.ErrMissing) {
+		state = "missing"
+	} else if readErr != nil {
+		state, detail = "invalid", readErr.Error()
+	}
+	if planErr != nil {
+		detail = "completion plan unavailable: " + planErr.Error()
+	}
+	return toon.Table("completion_evidence", []string{"record", "source_digest", "plan_digest", "record_state", "detail"}, [][]string{{path, source, plan.Digest, state, detail}})
 }

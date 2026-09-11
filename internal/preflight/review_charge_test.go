@@ -366,3 +366,11 @@ func TestReviewChargeGrammarRejectsTicket(t *testing.T) {
 		t.Fatalf("review ticket grammar = (%d):\n%s", code, out)
 	}
 }
+
+func TestReviewChargeCompletionIdentity(t *testing.T) {
+	_, _, args := seedReviewEvidence(t, false)
+	out, code := Command(args)
+	if code != 0 || !strings.Contains(out, "completion_evidence[1]") || !strings.Contains(out, "reviews/example.md") {
+		t.Fatalf("review completion identity missing (%d): %s", code, out)
+	}
+}

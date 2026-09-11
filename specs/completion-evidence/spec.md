@@ -108,6 +108,79 @@ Implement these tickets in the retained session. Each ticket is one initial revi
 | 2.md — Check evidence before chunk advancement | 1.md | Add gate checkpoint obligations and connect the implementation phase | yes |
 | 3.md — Require complete evidence before landing | 2.md | Pass the final obligation from spec-backed landing to the prospective gate | yes |
 
+## Verification inventory
+
+The fenced plan names required commands and probes. Each chunk derives its rows and dependencies from its named tickets.
+The parser hashes the plan, spec, and ticket bytes. A plan amendment must map old chunk IDs to new IDs.
+
+A review occurrence also records its frozen `base` and `tip`. Each chunk records its own `plan_digest`.
+These fields preserve earlier evidence when a later reviewed delta changes the plan.
+
+```bench-completion-plan
+{
+  "version": 1,
+  "chunks": [
+    {
+      "id": "1",
+      "tickets": [
+        "1.md"
+      ],
+      "verification": [
+        {
+          "id": "record-tests",
+          "command": "bench test --package ./internal/reviewrecord --run TestReviewRecord",
+          "probe": "omit missing-axis rejection"
+        },
+        {
+          "id": "preflight-tests",
+          "command": "bench test --package ./internal/preflight --run TestReviewCharge"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "tickets": [
+        "2.md"
+      ],
+      "verification": [
+        {
+          "id": "checkpoint-tests",
+          "command": "bench test --package ./internal/gate --run TestReviewCheckpoint",
+          "probe": "omit checkpoint evidence validation"
+        },
+        {
+          "id": "route-tests",
+          "command": "bench test --package ./cmd/bench --run TestGateCheckpointRoute"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "tickets": [
+        "3.md"
+      ],
+      "verification": [
+        {
+          "id": "landing-tests",
+          "command": "bench test --package ./internal/landing --run TestLandingCompletionEvidence",
+          "probe": "omit landing completion obligation"
+        }
+      ]
+    }
+  ],
+  "final_verification": [
+    {
+      "id": "acceptance",
+      "command": "bench test --package ./internal/reviewrecord,./internal/gate,./internal/landing,./internal/preflight,./cmd/bench"
+    },
+    {
+      "id": "integration",
+      "command": "bench test --check system"
+    }
+  ]
+}
+```
+
 ## Testing decisions
 
 Use the named existing owner and new tests below. A new test name is a planned seam, not a claim that the test exists. Read its nearest fixture before implementation. Demonstrate each required omission or behavioral mutation as a diagnostic red, restore it, and show green. A compile failure is not the required red. Semantic review judges prose quality and the sufficiency of the test.
@@ -181,6 +254,9 @@ No signed-attestation system is promised. The threat model covers omitted, malfo
 These paths are the union of ticket expectations. A directory entry is an exact prefix for that existing owner or fixture family. Expansion follows decision #5, with the plan updated before use. It cannot weaken existing guarantees.
 
 - `internal/reviewrecord` (new)
+- `internal/git/tree.go`
+- `internal/coverage/completion_rows.go`
+- `CHANGELOG.md`
 - `internal/preflight/review.go`
 - `internal/preflight/review_charge_test.go`
 - `.agents/commands/bench-review-implementation.md`
