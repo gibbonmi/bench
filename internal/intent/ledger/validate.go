@@ -33,6 +33,10 @@ func RecoveryRefPrefix(ownerID, assignmentID string) string {
 	return RecoveryRefNamespace + ownerID + "/" + assignmentID + "/"
 }
 
+func ResetRefPrefix(ownerID, assignmentID string) string {
+	return ResetRefNamespace + ownerID + "/" + assignmentID + "/"
+}
+
 // ValidAssignmentBranchRef reports whether ref sits in the assignment namespace. The
 // name is exported because the intent package is a sibling and cannot reach an
 // unexported declaration here.

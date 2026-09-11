@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -20,6 +19,7 @@ const recoverySchema = "bench-recovery/v1"
 type recoveryManifest struct {
 	Schema string            `json:"schema"`
 	Base   string            `json:"base"`
+	Tip    string            `json:"tip,omitempty"`
 	Layers map[string]string `json:"layers"`
 }
 type indexEntry struct {
@@ -39,89 +39,7 @@ func recoverAssignmentWithFault(root string, assignment intent.Assignment, fault
 		}
 		return assignment, nil
 	}
-	head, err := git.Output("-C", assignment.Worktree, "rev-parse", "HEAD")
-	if err != nil {
-		return assignment, fmt.Errorf("read recovery HEAD: %w", err)
-	}
-	headTree, err := git.Output("-C", assignment.Worktree, "rev-parse", "HEAD^{tree}")
-	if err != nil {
-		return assignment, fmt.Errorf("read recovery base tree: %w", err)
-	}
-	admin, err := git.AdminDir(assignment.Worktree)
-	if err != nil {
-		return assignment, err
-	}
-	layerTrees := map[string]string{}
-	workingTree, err := worktreeTree(assignment.Worktree, admin)
-	if err != nil {
-		return assignment, fmt.Errorf("capture working layer: %w", err)
-	}
-	if workingTree != headTree {
-		layerTrees["working"] = workingTree
-	}
-	entries, conflicted, err := readIndexEntries(assignment.Worktree)
-	if err != nil {
-		return assignment, err
-	}
-	if conflicted {
-		for stage, name := range map[int]string{1: "base", 2: "ours", 3: "theirs"} {
-			tree, err := conflictTree(assignment.Worktree, admin, entries, stage)
-			if err != nil {
-				return assignment, fmt.Errorf("capture conflict %s layer: %w", name, err)
-			}
-			layerTrees[name] = tree
-		}
-	} else {
-		stagedTree, err := realIndexTree(assignment.Worktree, admin)
-		if err != nil {
-			return assignment, fmt.Errorf("capture staged layer: %w", err)
-		}
-		if stagedTree != headTree {
-			layerTrees["staged"] = stagedTree
-		}
-	}
-	if len(layerTrees) == 0 {
-		return assignment, errors.New("recovery requested for a clean assignment")
-	}
-	treePayload := map[string]string{}
-	layers := map[string]string{}
-	names := make([]string, 0, len(layerTrees))
-	for name := range layerTrees {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-	for _, name := range names {
-		tree := layerTrees[name]
-		payload := treePayload[tree]
-		if payload == "" {
-			payload, err = commitTree(root, tree, []string{head}, "bench recovery payload: "+name+"\n")
-			if err != nil {
-				return assignment, err
-			}
-			treePayload[tree] = payload
-		}
-		layers[name] = payload
-	}
-	payloads := make([]string, 0, len(treePayload))
-	for _, payload := range treePayload {
-		payloads = append(payloads, payload)
-	}
-	sort.Strings(payloads)
-	manifest := recoveryManifest{Schema: recoverySchema, Base: head, Layers: layers}
-	manifestBytes, err := json.Marshal(manifest)
-	if err != nil {
-		return assignment, err
-	}
-	manifestBytes = append(manifestBytes, '\n')
-	blob, err := gitInput(root, nil, manifestBytes, "hash-object", "-w", "--stdin")
-	if err != nil {
-		return assignment, err
-	}
-	rootTree, err := gitInput(root, nil, []byte("100644 blob "+blob+"\tmanifest.json\n"), "mktree")
-	if err != nil {
-		return assignment, err
-	}
-	rootOID, err := commitTree(root, rootTree, payloads, "bench recovery root\n")
+	rootOID, payloads, _, err := captureLayers(root, assignment.Worktree, false, "")
 	if err != nil {
 		return assignment, err
 	}

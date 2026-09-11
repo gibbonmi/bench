@@ -72,10 +72,166 @@ func refsUnder(t *testing.T, root string, namespaces ...string) string {
 func runResume(t *testing.T, root, home string) string {
 	t.Helper()
 	chdir(t, root)
+	return runResumeAt(t, root, home)
+}
+
+func runResumeAt(t *testing.T, root, home string) string {
+	t.Helper()
 	var stdout, stderr bytes.Buffer
 	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
 	requireTest(t, code == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", code, stdout.String(), stderr.String())
 	return stdout.String()
+}
+
+func TestResumeReconcileKeepsAnActiveAssignmentsResetRefs(t *testing.T) {
+	t.Parallel()
+	home, root := t.TempDir(), newWorktreeRepo(t)
+	pool := mustCreate(t, root, home, "reset-active", "reset active")
+	ref := "refs/bench/reset/" + pool.Assignment.OwnerID + "/" + pool.Assignment.ID + "/1"
+	gitRun(t, root, "update-ref", ref, "HEAD")
+	want := refsUnder(t, root, ref)
+	out := runResumeAt(t, root, home)
+	requireTest(t, refsUnder(t, root, ref) == want, "active assignment reset ref was swept")
+	requireTest(t, strings.Contains(out, "swept refs 0;"), "active reset ref entered swept count: %s", out)
+}
+
+func TestResumeReconcileSweepsOrphanedResetRefs(t *testing.T) {
+	t.Parallel()
+	home, root := t.TempDir(), newWorktreeRepo(t)
+	pool := mustCreate(t, root, home, "reset-orphan", "reset orphan")
+	for _, pair := range [][2]string{
+		{pool.Assignment.OwnerID, strings.Repeat("a", 32)},
+		{strings.Repeat("b", 32), pool.Assignment.ID},
+	} {
+		gitRun(t, root, "update-ref", "refs/bench/reset/"+pair[0]+"/"+pair[1]+"/1", "HEAD")
+	}
+	out := runResumeAt(t, root, home)
+	requireTest(t, refsUnder(t, root, "refs/bench/reset/") == "", "orphaned reset refs survived")
+	requireTest(t, strings.Contains(out, "swept refs 2;"), "orphaned reset refs missing from swept count: %s", out)
+}
+
+func TestResumeReconcileKeepsResetRefsOverAnUnreadableLedger(t *testing.T) {
+	t.Parallel()
+	for _, state := range []string{"missing", "empty", "malformed", "unreadable"} {
+		t.Run(state, func(t *testing.T) {
+			home, root := t.TempDir(), newWorktreeRepo(t)
+			ref := "refs/bench/reset/" + strings.Repeat("a", 32) + "/" + strings.Repeat("b", 32) + "/1"
+			gitRun(t, root, "update-ref", ref, "HEAD")
+			want := refsUnder(t, root, ref)
+			path := filepath.Join(root, ".git", intent.Filename)
+			switch state {
+			case "empty":
+				mustWrite(t, path, nil, 0o600)
+			case "malformed":
+				mustWrite(t, path, []byte("{"), 0o600)
+			case "unreadable":
+				mustWrite(t, path, []byte("{}"), 0o000)
+			}
+			var stdout, stderr bytes.Buffer
+			ResumeCleanCommand(root, home, nil, &stdout, &stderr)
+			requireTest(t, refsUnder(t, root, ref) == want, "reset ref was swept over %s ledger: %s %s", state, &stdout, &stderr)
+		})
+	}
+}
+
+func TestCaptureLayersKeepsAnUnchangedWorkingLayer(t *testing.T) {
+	t.Parallel()
+	root := newWorktreeRepo(t)
+	head := gitOutput(t, root, "rev-parse", "HEAD")
+	refs := refsUnder(t, root, "refs/")
+	rootOID, payloads, base, err := captureLayers(root, root, true, "")
+	mustNoError(t, err)
+	manifest, ok := readRecoveryManifest(root, rootOID)
+	requireTest(t, ok && base == head && manifest.Base == head, "capture base = %q, manifest = %#v", base, manifest)
+	requireTest(t, len(manifest.Layers) == 1 && len(payloads) == 1 && manifest.Layers["working"] == payloads[0],
+		"unchanged working layer is absent: %#v, %v", manifest, payloads)
+	requireTest(t, gitOutput(t, root, "rev-parse", payloads[0]+"^{tree}") == gitOutput(t, root, "rev-parse", "HEAD^{tree}"),
+		"working payload differs from the clean checkout")
+	requireTest(t, gitOutput(t, root, "show", "-s", "--format=%P", payloads[0]) == head, "working payload does not retain HEAD")
+	requireTest(t, refsUnder(t, root, "refs/") == refs, "capture wrote a ref")
+	_, err = os.Stat(filepath.Join(root, ".git", intent.Filename))
+	requireTest(t, os.IsNotExist(err), "capture wrote a ledger: %v", err)
+}
+
+func TestCaptureLayersRecordsADifferentTipAsAParent(t *testing.T) {
+	t.Parallel()
+	root := newWorktreeRepo(t)
+	head := gitOutput(t, root, "rev-parse", "HEAD")
+	tip, err := commitTree(root, gitOutput(t, root, "rev-parse", "HEAD^{tree}"), []string{head}, "assignment tip\n")
+	mustNoError(t, err)
+	rootOID, payloads, _, err := captureLayers(root, root, true, tip)
+	mustNoError(t, err)
+	var manifest map[string]any
+	mustNoError(t, json.Unmarshal([]byte(gitOutput(t, root, "show", rootOID+":manifest.json")), &manifest))
+	requireTest(t, manifest["tip"] == tip, "manifest tip = %v, want %s", manifest["tip"], tip)
+	parents := strings.Fields(gitOutput(t, root, "show", "-s", "--format=%P", rootOID))
+	requireTest(t, len(parents) == len(payloads)+1 && parents[len(parents)-1] == tip,
+		"root parents = %v, want payloads and tip %s", parents, tip)
+}
+
+func TestCaptureLayersOmitsAnAbsentOrEqualTip(t *testing.T) {
+	t.Parallel()
+	root := newWorktreeRepo(t)
+	for _, tip := range []string{"", gitOutput(t, root, "rev-parse", "HEAD")} {
+		rootOID, payloads, _, err := captureLayers(root, root, true, tip)
+		mustNoError(t, err)
+		manifest, ok := readRecoveryManifest(root, rootOID)
+		requireTest(t, ok && manifest.Tip == "", "optional tip = %#v", manifest)
+		requireTest(t, !strings.Contains(gitOutput(t, root, "show", rootOID+":manifest.json"), "\"tip\""),
+			"absent or equal tip was serialized")
+		requireTest(t, gitOutput(t, root, "show", "-s", "--format=%P", rootOID) == strings.Join(payloads, " "),
+			"absent or equal tip added a root parent")
+	}
+	_, _, _, err := captureLayers(root, root, false, "")
+	requireTest(t, err != nil && strings.Contains(err.Error(), "clean assignment"), "flag-off clean capture error = %v", err)
+}
+
+func TestResumeReconcileKeepsResetRefsForEveryRecordedState(t *testing.T) {
+	t.Parallel()
+	for _, state := range []intent.AssignmentState{intent.StateCleanupPending, intent.StateComplete, intent.StateRecovered} {
+		t.Run(string(state), func(t *testing.T) {
+			home, root := t.TempDir(), newWorktreeRepo(t)
+			pool := mustCreate(t, root, home, "reset-state", "reset state")
+			a := pool.Assignment
+			a.State = state
+			head := gitOutput(t, root, "rev-parse", "HEAD")
+			recoveryRef := intent.RecoveryRefPrefix(a.OwnerID, a.ID) + "1"
+			if state == intent.StateRecovered {
+				a.Recovery = []intent.Recovery{{Ref: recoveryRef, Root: head, Payloads: []string{head}}}
+			}
+			mustNoError(t, intent.PutAssignment(root, a))
+			ref := intent.ResetRefPrefix(a.OwnerID, a.ID) + "1"
+			gitRun(t, root, "update-ref", ref, head)
+			gitRun(t, root, "update-ref", recoveryRef, head)
+			out := runResumeAt(t, root, home)
+			requireTest(t, gitOutput(t, root, "rev-parse", ref) == head, "recorded %s reset ref was swept", state)
+			requireTest(t, refsUnder(t, root, recoveryRef) == "", "recovery ref survived its whole-namespace sweep")
+			requireTest(t, strings.Contains(out, "swept refs 1;"), "reset/recovery count = %s", out)
+		})
+	}
+}
+
+func TestResumeReconcileRefusesAResetRefMovedAfterListing(t *testing.T) {
+	t.Parallel()
+	home, root := t.TempDir(), newWorktreeRepo(t)
+	mustCreate(t, root, home, "reset-cas", "reset cas")
+	ref := intent.ResetRefPrefix(strings.Repeat("a", 32), strings.Repeat("b", 32)) + "1"
+	gitRun(t, root, "update-ref", ref, "HEAD")
+	moved, err := commitTree(root, gitOutput(t, root, "rev-parse", "HEAD^{tree}"), nil, "concurrent ref\n")
+	mustNoError(t, err)
+	j := defaultJoins()
+	j.cleanupBoundary = func(step LifecycleStep) error {
+		if step == StepLifecycleSweep {
+			gitRun(t, root, "update-ref", ref, moved)
+		}
+		return nil
+	}
+	var stdout, stderr bytes.Buffer
+	code := resumeCleanCommandWith(j, root, home, nil, &stdout, &stderr)
+	requireTest(t, code == 1 && strings.Contains(stderr.String(), "delete lifecycle ref "+ref),
+		"moved reset ref did not refuse: code=%d stdout=%s stderr=%s", code, &stdout, &stderr)
+	requireTest(t, gitOutput(t, root, "rev-parse", ref) == moved, "reconcile deleted the moved reset ref")
+	requireTest(t, strings.Contains(stdout.String(), "swept refs 0;"), "failed delete entered swept count: %s", &stdout)
 }
 
 // TestResumeReconcileSparesGreenVerdictRefs is the RM10 guard: the sweep's blast

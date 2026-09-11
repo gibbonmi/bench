@@ -15,10 +15,8 @@ import (
 // The standing cleaner is its only remaining reader.
 const specbuildRefNamespace = "refs/bench/specbuild/"
 
-// lifecycleRefNamespaces bounds what the sweep may delete. Everything else under
-// refs/bench/ belongs to another owner — the gate's `refs/bench/green/<branch>` verdict
-// store above all. The two namespaces are enumerated rather than derived from the shared
-// prefix. A ref is deleted only after its own name is checked against them.
+// lifecycleRefNamespaces names the namespaces that the cleaner empties.
+// Reset refs have a separate record-bound rule. Green verdict refs stay outside both rules.
 var lifecycleRefNamespaces = []string{specbuildRefNamespace, intent.RecoveryRefNamespace}
 
 func insideLifecycleNamespace(ref string) bool {
@@ -30,14 +28,12 @@ func insideLifecycleNamespace(ref string) bool {
 	return false
 }
 
-// sweepLifecycleRefs deletes every ref inside the lifecycle namespaces, whatever its name
-// under them, and reports how many it deleted. Each ref is deleted against the object the
-// listing read, so a ref something else moved between the two is refused rather than
-// dropped blind. Deletions are independent: a run killed partway leaves the refs it
-// already deleted deleted, and the rest exactly as they were. That is a state the next
-// run finishes rather than misreads.
+// sweepLifecycleRefs empties the lifecycle namespaces and deletes reset refs with no record.
+// Each deletion checks the listed object, so a concurrent ref move refuses.
 func sweepLifecycleRefs(j joins, root string) (int, error) {
 	args := append([]string{"-C", root, "for-each-ref", "--format=%(refname) %(objectname)"}, lifecycleRefNamespaces...)
+	args = append(args, intent.ResetRefNamespace)
+	resetPrefixes := recordedResetPrefixes(root)
 	listing, err := git.Output(args...)
 	if err != nil {
 		return 0, fmt.Errorf("list lifecycle refs: %w", err)
@@ -45,8 +41,17 @@ func sweepLifecycleRefs(j joins, root string) (int, error) {
 	swept := 0
 	for _, line := range strings.Split(listing, "\n") {
 		ref, oid, ok := strings.Cut(line, " ")
-		if !ok || !insideLifecycleNamespace(ref) {
+		if !ok {
 			continue
+		}
+		if !insideLifecycleNamespace(ref) {
+			if !strings.HasPrefix(ref, intent.ResetRefNamespace) || resetPrefixes == nil {
+				continue
+			}
+			parts := strings.SplitN(strings.TrimPrefix(ref, intent.ResetRefNamespace), "/", 3)
+			if len(parts) == 3 && resetPrefixes[intent.ResetRefPrefix(parts[0], parts[1])] {
+				continue
+			}
 		}
 		if err := hit(j.cleanupBoundary, StepLifecycleSweep); err != nil {
 			return swept, err
@@ -57,6 +62,27 @@ func sweepLifecycleRefs(j joins, root string) (int, error) {
 		swept++
 	}
 	return swept, nil
+}
+
+func recordedResetPrefixes(root string) map[string]bool {
+	// An absent ledger is not proof that every reset envelope has lost its record.
+	path, err := intent.Address(root)
+	if err != nil {
+		return nil
+	}
+	info, err := os.Lstat(path)
+	if err != nil || !info.Mode().IsRegular() {
+		return nil
+	}
+	assignments, err := intent.Assignments(root)
+	if err != nil {
+		return nil
+	}
+	prefixes := make(map[string]bool, len(assignments))
+	for _, assignment := range assignments {
+		prefixes[intent.ResetRefPrefix(assignment.OwnerID, assignment.ID)] = true
+	}
+	return prefixes
 }
 
 // poolAssignment reports whether a ledger record is one the surviving worktree pool wrote
@@ -84,13 +110,9 @@ func poolAssignment(a intent.Assignment, registered []Registered, now time.Time)
 	return a.State == intent.StateActive && !orphaned(a, now)
 }
 
-// reconcileLifecycleDebris is the standing cleaner every session start runs. It empties
-// the two lifecycle ref namespaces and purges the ledger records the removed lifecycle
-// left behind, reporting what each half removed. Refs go first, so a run killed between
-// the halves leaves records whose refs are already gone. That is the same state a
-// repository carrying only ledger debris is in, one the next run finishes from.
-// The instant is the caller's explicit boundary resolution: one instant for the whole
-// pass, so two records of the same age cannot straddle the staleness window and disagree.
+// reconcileLifecycleDebris removes obsolete refs before it purges obsolete records.
+// A reset ref keeps its record's protection through this pass, even when the purge removes that record.
+// The caller supplies one instant so records of the same age get the same decision.
 func reconcileLifecycleDebris(j joins, root string, registered []Registered, now time.Time) (int, int, error) {
 	swept, err := sweepLifecycleRefs(j, root)
 	if err != nil {
