@@ -60,7 +60,7 @@ func TestAssessmentRecordPreservesHistory(t *testing.T) {
 }
 
 func usageEvent(id string, n int64) Event {
-	return Event{EventID: id, SessionID: "session-1", Mode: "delta", Counter: "tokens", Reference: Reference{"synthetic", "fixture:" + id}, Usage: Usage{InputUncached: ptr(n), InputCached: ptr(int64(0)), Output: ptr(int64(0))}}
+	return Event{EventID: id, SessionID: "session-1", Mode: DeltaMode, Counter: "tokens", Reference: Reference{"synthetic", "fixture:" + id}, Usage: Usage{InputUncached: ptr(n), InputCached: ptr(int64(0)), Output: ptr(int64(0))}}
 }
 func TestAssessmentRecordDuplicateEvents(t *testing.T) {
 	e := usageEvent("event-1", 7)
@@ -72,13 +72,13 @@ func TestAssessmentRecordDuplicateEvents(t *testing.T) {
 
 func TestAssessmentRecordEpochs(t *testing.T) {
 	a := usageEvent("a", 10)
-	a.Mode = "cumulative"
+	a.Mode = CumulativeMode
 	a.Sequence = 1
 	b := usageEvent("b", 15)
-	b.Mode = "cumulative"
+	b.Mode = CumulativeMode
 	b.Sequence = 2
 	c := usageEvent("c", 3)
-	c.Mode = "cumulative"
+	c.Mode = CumulativeMode
 	c.Epoch = 1
 	c.Sequence = 1
 	got, err := UsageTotal([]Event{a, b, c})
@@ -119,6 +119,7 @@ func TestAssessmentRecordWall(t *testing.T) {
 	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	end := start.Add(10 * time.Second)
 	a := r.Attempts[0]
+	a.TimeReference = &Reference{"synthetic", "fixture:wall"}
 	a.StartedAt = &start
 	a.EndedAt = &end
 	b := a
@@ -150,7 +151,7 @@ func TestAssessmentRecordUnknownAndCharges(t *testing.T) {
 		a := fixtureRun(t.TempDir()).Attempts[0]
 		a.Usage = []Event{usageEvent("priced", 1)}
 		a.Cost.Estimated = &Rates{InputUncached: ptr(1.0), InputCached: ptr(1.0), Output: ptr(1.0), UnitScale: 1, Currency: "USD", Source: "fixture", Date: "2026-01-01", Conditions: "synthetic"}
-		a.Cost.Other = []Charge{{Kind: "tool", Currency: "USD"}}
+		a.Cost.Other = []Charge{{Kind: "tool", Currency: "USD", Reference: Reference{"synthetic", "fixture:tool"}}}
 		got, err := Estimate(a)
 		if err != nil || !got.Estimated.Partial {
 			t.Fatalf("missing tool rate appears complete: %+v %v", got, err)
@@ -159,7 +160,7 @@ func TestAssessmentRecordUnknownAndCharges(t *testing.T) {
 	t.Run("A24 every role and failure counts", func(t *testing.T) {
 		r := fixtureRun(t.TempDir())
 		r.Attempts = nil
-		for i, role := range []string{"implementation", "repair", "verification", "review", "diagnostic"} {
+		for i, role := range Roles() {
 			a := fixtureRun(t.TempDir()).Attempts[0]
 			a.AttemptID = fmt.Sprint("attempt-", i)
 			a.Role = role
@@ -190,8 +191,14 @@ func TestAssessmentRecordUpdates(t *testing.T) {
 			before, _ := os.ReadFile(path)
 			refusal := false
 			switch kind {
+			case "A27 identical":
+				s.Files.WriteFile = func(string, []byte, os.FileMode) error {
+					t.Error("identical update attempted a write")
+					return fmt.Errorf("unexpected write")
+				}
 			case "A14 identity":
 				r.Attempts[0].SessionID = "foreign"
+				r.Attempts[0].Usage[0].SessionID = "foreign"
 				refusal = true
 			case "A25 append":
 				a := r.Attempts[0]
@@ -240,14 +247,14 @@ func TestAssessmentRecordCrossAttemptCounters(t *testing.T) {
 	r := fixtureRun(t.TempDir())
 	a := r.Attempts[0]
 	a.Usage = []Event{usageEvent("first", 10)}
-	a.Usage[0].Mode = "cumulative"
+	a.Usage[0].Mode = CumulativeMode
 	a.Usage[0].Sequence = 1
 	a.Cost.Estimated = &Rates{InputUncached: ptr(1.0), InputCached: ptr(1.0), Output: ptr(1.0), UnitScale: 1, Currency: "USD", Source: "fixture", Date: "2026-01-01", Conditions: "synthetic"}
 	b := a
 	b.AttemptID = "repair"
 	b.Role = "repair"
 	b.Usage = []Event{usageEvent("second", 15)}
-	b.Usage[0].Mode = "cumulative"
+	b.Usage[0].Mode = CumulativeMode
 	b.Usage[0].Sequence = 2
 	r.Attempts = []Attempt{a, b}
 	got, err := Summarize(r)

@@ -12,10 +12,12 @@ Unknown JSON fields cause a refusal. A missing numeric value is unknown. A numer
 The store uses the repository pool key and keeps records outside the worktree pool.
 Records have no automatic expiry. To remove a record, name its exact stored path before explicit file removal.
 
+Quality entries use `Measure`: a nullable value and its producer/native reference.
+Known timestamps require `time_reference`; applicable charges require references even when amounts are unknown.
+
 Each run names its source, condition, task, held-out status, state, timestamps, attempts, evidence, and quality values.
 Each attempt names its chunk, role, session, model, effort, state, timestamps, usage events, costs, and evidence.
-The roles are `implementation`, `repair`, `verification`, `review`, and `diagnostic`.
-States are `running`, `succeeded`, `failed`, `cancelled`, and `incomplete`.
+[Roles and States](vocabulary.go) define the accepted versioned vocabulary.
 
 Each usage event names its native event ID, session ID, epoch, sequence, mode, counter, and reference.
 A reference names the producer and a native evidence location. A reference never causes a URL fetch or command execution.
@@ -24,7 +26,7 @@ The `usage` object inside each event holds `input_uncached`, `input_cached`, `ou
 Declare `total_semantics` as `inclusive` or `exclusive` when a total exists.
 Inclusive totals contain cached input. Exclusive totals contain only uncached input.
 
-Declare `mode` as `delta` for event quantities or `cumulative` for snapshots from an epoch's zero baseline.
+[DeltaMode and CumulativeMode](vocabulary.go) define the counter mode values and their meanings.
 Use increasing sequence numbers within each cumulative epoch. A counter reset requires a new epoch.
 Unknown or conflicting semantics cannot produce a complete total. Repeated event identities count once.
 

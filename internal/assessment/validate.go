@@ -2,17 +2,23 @@ package assessment
 
 import (
 	"fmt"
+	"github.com/gibbonmi/bench/internal/toon"
+	"reflect"
+	"slices"
 	"time"
 )
 
 func Validate(r Run) error {
+	if !safeText(reflect.ValueOf(r)) {
+		return fmt.Errorf("control characters in assessment record")
+	}
 	if r.Version != 1 {
 		return fmt.Errorf("unsupported assessment version")
 	}
 	if !safeID.MatchString(r.RunID) || r.RepoKey == "" || r.Source == "" || r.TaskID == "" || r.Condition == "" || !state(r.State) {
 		return fmt.Errorf("invalid run identity or state")
 	}
-	if err := interval(r.StartedAt, r.EndedAt); err != nil {
+	if err := interval(r.StartedAt, r.EndedAt, r.TimeReference); err != nil {
 		return err
 	}
 	ids := map[string]bool{}
@@ -25,12 +31,10 @@ func Validate(r Run) error {
 		if a.ChunkID == "" || a.SessionID == "" || a.Model == "" || a.Effort == "" || !state(a.State) {
 			return fmt.Errorf("incomplete attempt identity")
 		}
-		switch a.Role {
-		case "implementation", "repair", "verification", "review", "diagnostic":
-		default:
+		if !slices.Contains(Roles(), a.Role) {
 			return fmt.Errorf("unknown performer role")
 		}
-		if err := interval(a.StartedAt, a.EndedAt); err != nil {
+		if err := interval(a.StartedAt, a.EndedAt, a.TimeReference); err != nil {
 			return err
 		}
 		for _, e := range a.Usage {
@@ -58,20 +62,20 @@ func Validate(r Run) error {
 		}
 	}
 	for _, v := range r.Quality {
-		if v != nil && (!finite(*v) || *v < 0) {
+		if !validReference(v.Reference) || (v.Value != nil && (!finite(*v.Value) || *v.Value < 0)) {
 			return fmt.Errorf("invalid quality measure")
 		}
 	}
 	return nil
 }
-func state(s string) bool {
-	switch s {
-	case "running", "succeeded", "failed", "cancelled", "incomplete":
-		return true
+func state(s string) bool { return slices.Contains(States(), s) }
+func interval(start, end *time.Time, ref *Reference) error {
+	if (start != nil || end != nil) && (ref == nil || !validReference(*ref)) {
+		return fmt.Errorf("missing time provenance")
 	}
-	return false
-}
-func interval(start, end *time.Time) error {
+	if ref != nil && !validReference(*ref) {
+		return fmt.Errorf("invalid time provenance")
+	}
 	if start != nil && start.IsZero() || end != nil && end.IsZero() {
 		return fmt.Errorf("zero timestamp")
 	}
@@ -79,4 +83,35 @@ func interval(start, end *time.Time) error {
 		return fmt.Errorf("invalid time interval")
 	}
 	return nil
+}
+
+func safeText(v reflect.Value) bool {
+	switch v.Kind() {
+	case reflect.String:
+		return toon.Representable(v.String())
+	case reflect.Pointer, reflect.Interface:
+		if !v.IsNil() {
+			return safeText(v.Elem())
+		}
+	case reflect.Struct:
+		for i := 0; i < v.NumField(); i++ {
+			if !safeText(v.Field(i)) {
+				return false
+			}
+		}
+	case reflect.Slice, reflect.Array:
+		for i := 0; i < v.Len(); i++ {
+			if !safeText(v.Index(i)) {
+				return false
+			}
+		}
+	case reflect.Map:
+		it := v.MapRange()
+		for it.Next() {
+			if !safeText(it.Key()) || !safeText(it.Value()) {
+				return false
+			}
+		}
+	}
+	return true
 }

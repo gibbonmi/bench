@@ -63,8 +63,8 @@ func estimateUsage(a Attempt, u Usage) (CostSummary, error) {
 func finite(v float64) bool { return !math.IsNaN(v) && !math.IsInf(v, 0) }
 func charges(m *Money, list []Charge) error {
 	for _, c := range list {
-		if c.Kind == "" {
-			return fmt.Errorf("charge kind missing")
+		if c.Kind == "" || !validReference(c.Reference) {
+			return fmt.Errorf("charge kind or provenance missing")
 		}
 		if c.Amount == nil {
 			m.Partial = true

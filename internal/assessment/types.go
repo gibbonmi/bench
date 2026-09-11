@@ -2,6 +2,11 @@ package assessment
 
 import "time"
 
+type Measure struct {
+	Value     *float64  `json:"value,omitempty"`
+	Reference Reference `json:"reference"`
+}
+
 type Reference struct {
 	Producer string `json:"producer"`
 	Native   string `json:"native"`
@@ -43,32 +48,34 @@ type Cost struct {
 }
 
 type Attempt struct {
-	AttemptID string      `json:"attempt_id"`
-	ChunkID   string      `json:"chunk_id"`
-	Role      string      `json:"role"`
-	SessionID string      `json:"session_id"`
-	Model     string      `json:"model"`
-	Effort    string      `json:"effort"`
-	State     string      `json:"state"`
-	StartedAt *time.Time  `json:"started_at,omitempty"`
-	EndedAt   *time.Time  `json:"ended_at,omitempty"`
-	Usage     []Event     `json:"usage"`
-	Cost      Cost        `json:"cost"`
-	Evidence  []Reference `json:"evidence"`
+	AttemptID     string      `json:"attempt_id"`
+	ChunkID       string      `json:"chunk_id"`
+	Role          string      `json:"role"`
+	SessionID     string      `json:"session_id"`
+	Model         string      `json:"model"`
+	Effort        string      `json:"effort"`
+	State         string      `json:"state"`
+	TimeReference *Reference  `json:"time_reference,omitempty"`
+	StartedAt     *time.Time  `json:"started_at,omitempty"`
+	EndedAt       *time.Time  `json:"ended_at,omitempty"`
+	Usage         []Event     `json:"usage"`
+	Cost          Cost        `json:"cost"`
+	Evidence      []Reference `json:"evidence"`
 }
 
 type Run struct {
-	Version   int                 `json:"version"`
-	RunID     string              `json:"run_id"`
-	RepoKey   string              `json:"repo_key"`
-	Source    string              `json:"source"`
-	Condition string              `json:"condition"`
-	TaskID    string              `json:"task_id"`
-	Holdout   bool                `json:"holdout"`
-	StartedAt *time.Time          `json:"started_at,omitempty"`
-	EndedAt   *time.Time          `json:"ended_at,omitempty"`
-	State     string              `json:"state"`
-	Attempts  []Attempt           `json:"attempts"`
-	Evidence  []Reference         `json:"evidence"`
-	Quality   map[string]*float64 `json:"quality"`
+	Version       int                `json:"version"`
+	RunID         string             `json:"run_id"`
+	RepoKey       string             `json:"repo_key"`
+	Source        string             `json:"source"`
+	Condition     string             `json:"condition"`
+	TaskID        string             `json:"task_id"`
+	Holdout       bool               `json:"holdout"`
+	TimeReference *Reference         `json:"time_reference,omitempty"`
+	StartedAt     *time.Time         `json:"started_at,omitempty"`
+	EndedAt       *time.Time         `json:"ended_at,omitempty"`
+	State         string             `json:"state"`
+	Attempts      []Attempt          `json:"attempts"`
+	Evidence      []Reference        `json:"evidence"`
+	Quality       map[string]Measure `json:"quality"`
 }

@@ -1,16 +1,15 @@
 package assessment
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"reflect"
 	"regexp"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/jsonfile"
 	"github.com/gibbonmi/bench/internal/poolkey"
 )
 
@@ -57,6 +56,10 @@ func noLinks(path string) error {
 }
 
 func readJSON(path string, target any) error {
+	return decodeFile(path, target, jsonfile.DecodeDocument)
+}
+
+func decodeFile(path string, target any, decode func([]byte, any) error) error {
 	if err := noLinks(path); err != nil {
 		return err
 	}
@@ -67,15 +70,7 @@ func readJSON(path string, target any) error {
 	if read.State != bounds.StateParsed {
 		return fmt.Errorf("%s: %s %s", path, read.State, read.Reason)
 	}
-	dec := json.NewDecoder(bytes.NewReader(read.Data))
-	dec.DisallowUnknownFields()
-	if err := dec.Decode(target); err != nil {
-		return err
-	}
-	if err := dec.Decode(new(any)); err != io.EOF {
-		return fmt.Errorf("trailing JSON input")
-	}
-	return nil
+	return decode(read.Data, target)
 }
 
 func (s Store) Read(id string) (Run, error) {
@@ -84,7 +79,7 @@ func (s Store) Read(id string) (Run, error) {
 	if err != nil {
 		return r, err
 	}
-	if err = readJSON(path, &r); err != nil {
+	if err = decodeFile(path, &r, jsonfile.Decode); err != nil {
 		return r, err
 	}
 	if r.RunID != id || r.RepoKey != poolkey.Key(s.Root) {
