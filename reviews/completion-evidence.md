@@ -718,6 +718,32 @@ help[4]{cmd,why}:
   bench consumers reviewrecord.Read --full,walk the consumers outside the diff
 ```
 
+## Chunk 2 initial review findings
+
+The three axes returned seven findings and six distinct repair targets. All have disposition `auto-fix`.
+P5 and C2-C3 share the complete-wrapper repair. The author verified each citation against the frozen source.
+
+## Standards
+
+One finding; worst issue: stale/dead gate-routing ownership. Repair targets: 1.
+
+S1 — auto-fix: Remove unused run_gate and update the stale routing comments. Sources: bin/bench.sh:6-30 and internal/gate/gate.go:6-10. Native terminal conclusion: Standards returned one actionable finding.
+
+## Spec
+
+Spec review completed with 3 medium findings; worst issue: medium. Disposition for each is auto-fix.
+
+P3: Name the last covered/requested chunk in the stale-source refusal (internal/reviewrecord/coverage.go:112-113; spec.md:93). P4: Add the planned verification test/file or amend the approved seam before using the alternative (spec.md:233-240). P5: Add a positive wrapper traversal for --checkpoint … --complete (cmd/bench/gate_route_test.go:68-87). Terminal conclusion: completed with findings.
+
+## Coverage
+
+Coverage review completed with 3 findings; worst issue high. All three dispositions are auto-fix.
+
+C2-C1: Add at least two plan requirements, omit one, and require refusal naming that requirement (recordtest/fixture.go:34; review_checkpoint_test.go:40; E25). C2-C2: Add a valid chunk → complete transition on unchanged source and require another oracle run (review_checkpoint_test.go:67; spec.md:89). C2-C3: Add a valid complete request through the shell using a hostile but valid slug (gate_route_test.go:68; E37). Terminal conclusion: Coverage does not close chunk 2 until C2-C1 through C2-C3 are repaired and re-reviewed.
+
+All results examined `5457042ec3e0919327dc7943aea7f002a54285b2..e22288dae5b1514ebb3f223fb72f12e03390cd24`.
+Each performer used gpt-5.6-sol, high effort, and one read-only iteration. No reviewer ran tests or probes.
+
 ## Machine record
 
 ```bench-review-record
@@ -1145,6 +1171,82 @@ help[4]{cmd,why}:
             "ref": "",
             "digest": "",
             "excerpt": ""
+          }
+        },
+        {
+          "id": "c2-standards-terminal",
+          "performer": "/root/c2_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "8e1b770b166fac00e706c8c60572ca9a7eff00d0",
+          "state": "completed",
+          "outcome": "findings",
+          "axis": "Standards",
+          "base": "5457042ec3e0919327dc7943aea7f002a54285b2",
+          "tip": "e22288dae5b1514ebb3f223fb72f12e03390cd24",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": [
+            "c2-standards"
+          ],
+          "native_ref": {
+            "ref": "codex:agent//root/c2_standards/terminal-e22288d",
+            "excerpt": "One finding; worst issue: stale/dead gate-routing ownership. Repair targets: 1.\nS1 \u2014 auto-fix: Remove unused run_gate and update the stale routing comments. Sources: bin/bench.sh:6-30 and internal/gate/gate.go:6-10. Native terminal conclusion: Standards returned one actionable finding.",
+            "digest": "sha256:eefe7a4e39bf810229893fa705b781d2ffa9e327e74b8d9e92f29781a2bbe9be"
+          }
+        },
+        {
+          "id": "c2-spec-terminal",
+          "performer": "/root/c2_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "8e1b770b166fac00e706c8c60572ca9a7eff00d0",
+          "state": "completed",
+          "outcome": "findings",
+          "axis": "Spec",
+          "base": "5457042ec3e0919327dc7943aea7f002a54285b2",
+          "tip": "e22288dae5b1514ebb3f223fb72f12e03390cd24",
+          "finding_ids": [
+            "P3",
+            "P4",
+            "P5"
+          ],
+          "supersedes": [
+            "c2-spec"
+          ],
+          "native_ref": {
+            "ref": "codex:agent//root/c2_spec/terminal-e22288d",
+            "excerpt": "Spec review completed with 3 medium findings; worst issue: medium. Disposition for each is auto-fix.\nP3: Name the last covered/requested chunk in the stale-source refusal (internal/reviewrecord/coverage.go:112-113; spec.md:93). P4: Add the planned verification test/file or amend the approved seam before using the alternative (spec.md:233-240). P5: Add a positive wrapper traversal for --checkpoint \u2026 --complete (cmd/bench/gate_route_test.go:68-87). Terminal conclusion: completed with findings.",
+            "digest": "sha256:cf4d0d6888e2d424d93d03c386d5f825d7b6c617ca2b1e419ad4378c14cf62e8"
+          }
+        },
+        {
+          "id": "c2-coverage-terminal",
+          "performer": "/root/c2_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "8e1b770b166fac00e706c8c60572ca9a7eff00d0",
+          "state": "completed",
+          "outcome": "findings",
+          "axis": "Coverage",
+          "base": "5457042ec3e0919327dc7943aea7f002a54285b2",
+          "tip": "e22288dae5b1514ebb3f223fb72f12e03390cd24",
+          "finding_ids": [
+            "C2-C1",
+            "C2-C2",
+            "C2-C3"
+          ],
+          "supersedes": [
+            "c2-coverage"
+          ],
+          "native_ref": {
+            "ref": "codex:agent//root/c2_coverage/terminal-e22288d",
+            "excerpt": "Coverage review completed with 3 findings; worst issue high. All three dispositions are auto-fix.\nC2-C1: Add at least two plan requirements, omit one, and require refusal naming that requirement (recordtest/fixture.go:34; review_checkpoint_test.go:40; E25). C2-C2: Add a valid chunk \u2192 complete transition on unchanged source and require another oracle run (review_checkpoint_test.go:67; spec.md:89). C2-C3: Add a valid complete request through the shell using a hostile but valid slug (gate_route_test.go:68; E37). Terminal conclusion: Coverage does not close chunk 2 until C2-C1 through C2-C3 are repaired and re-reviewed.",
+            "digest": "sha256:7aad36e6c6161c8f6f1519b87da3943704a25400ddebd0bd64705076214be919"
           }
         }
       ]
