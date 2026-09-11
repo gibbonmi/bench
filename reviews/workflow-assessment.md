@@ -40,7 +40,7 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
 {
   "version": 1,
   "spec": "specs/workflow-assessment/spec.md",
-  "plan_digest": "sha256:84e8b2c7abc7f9dc7d421b4a334c23d25835fd6888b541add2fd58544481b276",
+  "plan_digest": "sha256:6807f636a4e82d18f585442eb71ac714b1d3d5af033fe8dd267a7e51ab9c732a",
   "implementation_session": "01a0920d-3021-73c1-9ed3-9980d5decc71",
   "chunks": [
     {
@@ -976,9 +976,9 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
     {
       "id": "3",
       "base": "ccbe834e59c4b8469108e934a577a82fb9e0a05e",
-      "tip": "4e43382a694d7c66d5bba49f12cf12c2a8f38f4e",
-      "plan_digest": "sha256:84e8b2c7abc7f9dc7d421b4a334c23d25835fd6888b541add2fd58544481b276",
-      "source_digest": "0a2e66bbcc83f212d5a19673841dc31fb8cb213a",
+      "tip": "a874a8d1b3dc4477e1723b1502d1eac1da29d024",
+      "plan_digest": "sha256:6807f636a4e82d18f585442eb71ac714b1d3d5af033fe8dd267a7e51ab9c732a",
+      "source_digest": "fab42e4804059e972908dcff8a7b50876848211c",
       "acceptance_rows": [
         "A18",
         "A19",
@@ -994,7 +994,73 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
         "A16",
         "A24"
       ],
-      "verification": [],
+      "verification": [
+        {
+          "id": "final-assessment",
+          "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "fab42e4804059e972908dcff8a7b50876848211c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-tool:43369d",
+            "excerpt": "github.com/gibbonmi/bench/internal/assessment,pass,2395",
+            "digest": "sha256:dbb48bce23404bbcac1377d4ff4c7336080e3abaf8b5a0f597645031f92d6f8d"
+          },
+          "requirement": "assessment",
+          "command": "bench test --package ./internal/assessment",
+          "exit_code": 0
+        },
+        {
+          "id": "final-dispatcher",
+          "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "fab42e4804059e972908dcff8a7b50876848211c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-tool:daf6f0",
+            "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,15286",
+            "digest": "sha256:18d99ca39d60dc44e61fe360d573a02d991ef5a49fd18ed31e92a9cc580c9727"
+          },
+          "requirement": "dispatcher",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "final-cache-probe",
+          "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "fab42e4804059e972908dcff8a7b50876848211c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-tool:f17518",
+            "excerpt": "package,./internal/assessment,TestAssessmentRecord,passed,35",
+            "digest": "sha256:767e0741aa92fba8f475dbc3420108bfbab2ac1b42fd7961a96217cf54a6d44a"
+          },
+          "requirement": "cache-probe",
+          "command": "bench test --package ./internal/assessment --run TestAssessmentRecord",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit cached-input subtraction",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "native-tool:f17518",
+              "excerpt": "bit,internal/assessment/record.go,swap,failed,1,yes",
+              "digest": "sha256:f1551004eb42781e7eb5bfe06363bf276267178abd689b3052585165095023b7"
+            }
+          }
+        }
+      ],
       "reviews": [
         {
           "id": "chunk3-standards-1",
@@ -1142,16 +1208,177 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
           "supersedes": [
             "chunk3-coverage-1"
           ]
+        },
+        {
+          "id": "chunk3-standards-3",
+          "performer": "/root/assessment_3_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "fab42e4804059e972908dcff8a7b50876848211c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_3_standards:final",
+            "excerpt": "## Standards: terminal pass\n\n**Findings:** 0\n**Worst issue:** None",
+            "digest": "sha256:51b00a436d392ba41d64f7d36b7cf7cc99776f24bf9779a6993a678837b0819b"
+          },
+          "axis": "Standards",
+          "base": "ccbe834e59c4b8469108e934a577a82fb9e0a05e",
+          "tip": "a874a8d1b3dc4477e1723b1502d1eac1da29d024",
+          "finding_ids": [],
+          "supersedes": [
+            "chunk3-standards-2"
+          ]
+        },
+        {
+          "id": "chunk3-spec-3",
+          "performer": "/root/assessment_3_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "fab42e4804059e972908dcff8a7b50876848211c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_3_spec:final",
+            "excerpt": "Final Spec reaffirmation: **PASS**.",
+            "digest": "sha256:e36c5cc2b2f597f3ad8c9f5d5a73bff45b5b3f7659788c62d7fc5d931882a625"
+          },
+          "axis": "Spec",
+          "base": "ccbe834e59c4b8469108e934a577a82fb9e0a05e",
+          "tip": "a874a8d1b3dc4477e1723b1502d1eac1da29d024",
+          "finding_ids": [],
+          "supersedes": [
+            "chunk3-spec-2"
+          ]
+        },
+        {
+          "id": "chunk3-coverage-3",
+          "performer": "/root/assessment_3_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "fab42e4804059e972908dcff8a7b50876848211c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_3_coverage:final",
+            "excerpt": "Coverage review: **PASS**.",
+            "digest": "sha256:0f8c9406c7e5aa3c79fafd33323d6c42e84b521546bf19edf569cf1ae1831a25"
+          },
+          "axis": "Coverage",
+          "base": "ccbe834e59c4b8469108e934a577a82fb9e0a05e",
+          "tip": "a874a8d1b3dc4477e1723b1502d1eac1da29d024",
+          "finding_ids": [],
+          "supersedes": [
+            "chunk3-coverage-2"
+          ]
         }
       ]
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "fab42e4804059e972908dcff8a7b50876848211c",
+    "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
+    "reconciliation": {
+      "A1": "covered",
+      "A2": "covered",
+      "A3": "covered",
+      "A4": "covered",
+      "A5": "covered",
+      "A6": "covered",
+      "A7": "covered",
+      "A8": "covered",
+      "A9": "covered",
+      "A10": "covered",
+      "A11": "covered",
+      "A12": "covered",
+      "A13": "covered",
+      "A14": "covered",
+      "A15": "covered",
+      "A16": "covered",
+      "A17": "covered",
+      "A18": "covered",
+      "A19": "covered",
+      "A20": "covered",
+      "A21": "covered",
+      "A22": "covered",
+      "A23": "covered",
+      "A24": "covered",
+      "A25": "covered",
+      "A26": "covered",
+      "A27": "covered",
+      "A28": "covered",
+      "A29": "covered",
+      "A30": "covered",
+      "A31": "covered",
+      "A32": "covered",
+      "A33": "covered",
+      "A34": "covered",
+      "A35": "covered",
+      "A36": "covered",
+      "A37": "covered",
+      "A38": "covered",
+      "A39": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-assessment",
+        "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
+        "role": "author-verification",
+        "model": "gpt-6-astra",
+        "effort": "medium",
+        "source_digest": "fab42e4804059e972908dcff8a7b50876848211c",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "native-tool:43369d",
+          "excerpt": "github.com/gibbonmi/bench/internal/assessment,pass,2395",
+          "digest": "sha256:dbb48bce23404bbcac1377d4ff4c7336080e3abaf8b5a0f597645031f92d6f8d"
+        },
+        "requirement": "assessment",
+        "command": "bench test --package ./internal/assessment",
+        "exit_code": 0
+      },
+      {
+        "id": "final-dispatcher",
+        "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
+        "role": "author-verification",
+        "model": "gpt-6-astra",
+        "effort": "medium",
+        "source_digest": "fab42e4804059e972908dcff8a7b50876848211c",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "native-tool:daf6f0",
+          "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,15286",
+          "digest": "sha256:18d99ca39d60dc44e61fe360d573a02d991ef5a49fd18ed31e92a9cc580c9727"
+        },
+        "requirement": "dispatcher",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "final-system",
+        "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
+        "role": "author-verification",
+        "model": "gpt-6-astra",
+        "effort": "medium",
+        "source_digest": "fab42e4804059e972908dcff8a7b50876848211c",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "native-tool:030fb7",
+          "excerpt": "github.com/gibbonmi/bench/internal/systemtest,pass,39645",
+          "digest": "sha256:e11f145799045ff7b6c47002d369e059141cd9fa5e7097b5772d7b5436490967"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -1247,6 +1474,21 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
     {
       "from": "sha256:41eac3487facc0230a48ce1f7389512900a35ea0c900efb00b5539ea68ebf4db",
       "to": "sha256:84e8b2c7abc7f9dc7d421b4a334c23d25835fd6888b541add2fd58544481b276",
+      "chunk_ids": {
+        "1": [
+          "1"
+        ],
+        "2": [
+          "2"
+        ],
+        "3": [
+          "3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:84e8b2c7abc7f9dc7d421b4a334c23d25835fd6888b541add2fd58544481b276",
+      "to": "sha256:6807f636a4e82d18f585442eb71ac714b1d3d5af033fe8dd267a7e51ab9c732a",
       "chunk_ids": {
         "1": [
           "1"
@@ -1409,3 +1651,14 @@ Count: zero. All 39 rows were re-audited. P1 and P2 are closed.
 Count: two. Worst issue: C9.
 
 Both complete package checks passed. Fifteen repair probes bit and restored source. They covered cache, plan differences, quality requirements and bounds, costs, second-task completeness, purposes, parent links, trial bindings, and bounded reason output.
+
+
+## Final acceptance reconciliation
+
+All 39 acceptance rows are covered by the retained author evidence and current Sol reviews. Standards, Spec, and Coverage pass on a874a8d1.
+
+Storage, updates, counter semantics, native joins, comparison eligibility, and typed reporting passed synthetic verification. Required cache subtraction produced a red and restored production. No paid trial or model-default change occurred.
+
+The final system check failed twice during setup because the worktree broker manifest named an older binary digest. Native runs 88d111 and ed7a8f retain those failures. The isolated setup reproduced exit 3 at 6c64b7. The existing doctor repair republished generated metadata at 4711d0. The same setup passed at f89f3a, and the unchanged system suite passed at 030fb7. No production source or assertion changed.
+
+Final reviewer usage and charges are unavailable. Author cumulative usage includes repairs, verification, and diagnostics. Separate role allocations remain unknown.
