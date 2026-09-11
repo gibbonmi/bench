@@ -300,6 +300,15 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   prompt, scratch, predicate argument, durable commit subject) issued by the objective
   module. No surface receives the unprojected text. Not "the objective string" —
   objective projection.
+- **tool-result text** — the text a tool-result payload adds to a session transcript.
+  It is counted independently from provider tokens and model prose. Not "tool-output
+  cost", not "response size", not "returned text" — tool-result text.
+- **result projection** — the task-shaped fields, range, failures, or aggregate from
+  one tool result. It reports complete-result size and a route to omitted detail. Not
+  "objective projection", not "filter", not "truncation" — result projection.
+- **call consolidation** — one owner-level operation for one repeated domain intent,
+  with per-item outcomes preserved. Not "batching", not "fan-in", not "shell chain"
+  — call consolidation.
 - **prose mechanics check** — the `prose-mechanics` conformance check, which grades the
   two ASD-STE100 rules a program can measure: sentence length and paragraph length. Not
   "STE lint", not "prose lint", not "grammar check" — prose mechanics check.
