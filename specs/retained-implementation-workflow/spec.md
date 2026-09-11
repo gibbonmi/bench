@@ -155,6 +155,7 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `internal/conformance/docs_workflow_helpers_test.go`
 - `internal/conformance/docs_workflow_checks_test.go`
 - `internal/conformance/ft311_preparation_test.go`
+- `internal/conformance/fixture_bite_test.go`
 - `tests/canary/workflow-guidance-anchors`
 - `internal/conformance/retained_workflow_test.go` (new)
 - `.agents/skills/bench-craft-gate/SKILL.md`
