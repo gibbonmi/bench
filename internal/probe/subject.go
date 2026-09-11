@@ -73,26 +73,37 @@ func withinRoot(root, path string) bool {
 	return relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator))
 }
 
-// mutate applies the one exact-string mutation and refuses every argv that would change
-// the wrong site or nothing at all. A count other than one refuses, because replacing
-// the first of several matches mutates a site the caller did not name.
-func mutate(start []byte, old, replacement, kind string) ([]byte, string) {
+// mutationResult carries mutation classification and bytes together, so callers cannot
+// recount the subject to distinguish a miss from the exact-match mutation.
+type mutationResult struct {
+	mutated []byte
+	matches int
+}
+
+// mutate classifies the exact-string match once and applies the mutation only for one
+// match. Several matches refuse because replacing the first would mutate a site the
+// caller did not name.
+func mutate(start []byte, old, replacement, kind string) (mutationResult, string) {
 	if kind == "swap" && replacement == old {
-		return nil, toon.Errorf("probe mutation empty", "--with equals --swap") + "\n"
+		return mutationResult{}, toon.Errorf("probe mutation empty", "--with equals --swap") + "\n"
 	}
 	count := bytes.Count(start, []byte(old))
-	if count != 1 {
+	switch count {
+	case 0:
+		return mutationResult{}, ""
+	case 1:
+	default:
 		hint := fmt.Sprintf("the old string matches %d times, want exactly 1", count)
-		return nil, toon.Errorf("probe mutation ambiguous", hint) + "\n"
+		return mutationResult{}, toon.Errorf("probe mutation ambiguous", hint) + "\n"
 	}
 	if kind == "unwrap" {
 		replacement, ok := unwrapCall(old)
 		if !ok {
-			return nil, toon.Errorf("probe unwrap invalid", "--unwrap must name one outer call") + "\n"
+			return mutationResult{}, toon.Errorf("probe unwrap invalid", "--unwrap must name one outer call") + "\n"
 		}
-		return bytes.Replace(start, []byte(old), []byte(replacement), 1), ""
+		return mutationResult{mutated: bytes.Replace(start, []byte(old), []byte(replacement), 1), matches: 1}, ""
 	}
-	return bytes.Replace(start, []byte(old), []byte(replacement), 1), ""
+	return mutationResult{mutated: bytes.Replace(start, []byte(old), []byte(replacement), 1), matches: 1}, ""
 }
 
 func unwrapCall(call string) (string, bool) {
