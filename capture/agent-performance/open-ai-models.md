@@ -32,14 +32,13 @@ The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches dol
 
 ## Current decisions
 
-- Use Terra/medium for ticket-sized write charges under coordinator mutation probes.
-- Use Astra/medium as a retained author when the reviewer names it, under an independent review at a higher tier.
-- Pair a Terra/medium review of a same-provider build with one Fable/high or Sol/high round before the landing.
-- Use Terra/high for guidance work and independent review when closeout changes guidance and conformance together.
-- Use Sol/low for exact ticket seams and small repairs under a distinct coordinator probe.
-- Use Sol/high for uncertain spec boundaries, lifecycle repair, and retained-author orchestration.
-- Verify a seam delegate's production-caller census before acceptance rows lock.
+- Use Sol/high for retained implementation across uncertain spec and lifecycle boundaries under the current Codex mid binding.
+- Use Terra for a narrower retained build when the reviewer approves that implementation line.
+- Use Astra as the retained author only when the reviewer names that line.
+- Apply the current conditional review line from `craft-line` after each implementation chunk.
+- Keep implementation and accepted repairs in the approved retained session.
+- Verify a seam helper's production-caller census before acceptance rows lock.
 - Settle disputed findings against the frozen candidate with an exact reproduction.
 - On a landing gate red without a green baseline, run the fresh baseline before diagnosis.
 - Give a Codex Coverage axis a writable isolated worktree when it must run throwaway probes.
-- Change routing only after two comparable runs or one controlled model comparison.
+- Change routing only after two comparable runs, one controlled comparison, or explicit reviewer direction.

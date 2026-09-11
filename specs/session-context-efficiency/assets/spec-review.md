@@ -60,3 +60,15 @@ Sol's acceptance closes the requested spec-review round.
 The user still owns spec content, ticket boundaries, and build approval.
 The proposed record view, selected-query grammars, and explicit cleanup targets remain visible for that sign-off.
 Query budget implementation and overflow adapter implementation retain their later evidence and spec-authoring checkpoints.
+
+## Current workflow alignment
+
+After acceptance, main published the retained-session workflow at `9d1c4a81587f61650a432ac4df02a51a7f51ff20`.
+The author added one stable implementation chunk per existing ticket.
+Each child now recommends the current Codex mid binding, `gpt-5.6-sol`, at high effort.
+The chunk tables preserve accepted product rows, ticket dependencies, concrete write paths, and evidence checkpoints.
+The platform owns subsequent execution-plan expansion.
+
+Sol's two-pass acceptance applies to the product contracts and ticket breakdown at the accepted source above.
+The subsequent workflow metadata receives the current conformance checks and the final landing gate.
+No third semantic review pass is claimed.

@@ -31,7 +31,9 @@ The child ticket folders provide the complete build breakdown.
 
 ### Coordinate the delivered capabilities
 
-Line: gpt-5.6-terra / high.
+Line: gpt-5.6-sol / high.
+Implementation-line reason: the child specs use the current Codex mid binding for their uncertain material chunks.
+Harder chunks: the child plans identify them.
 The work coordinates uncertain semantics across existing owners.
 
 1. As a reviewer, I want one source for each child requirement, so that the program cannot drift between copies.
@@ -61,6 +63,12 @@ The measurement owner supplies facts to the other children.
 The query and lifecycle owners retain command policy.
 The overflow owner supplies capability evidence without claiming provider-token attribution.
 The approved map remains the sole record of reviewer decisions.
+
+## Implementation chunks
+
+This coordinating document has no implementation chunk.
+Each child owns its retained implementation session and named chunk table.
+The table follows the existing ticket graph and preserves every evidence checkpoint.
 
 ## Testing decisions
 

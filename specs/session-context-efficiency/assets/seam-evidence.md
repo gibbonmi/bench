@@ -179,3 +179,11 @@ The direct `ListCommand` test callers also include path identifiers, request tok
 QU9 includes these caller families in the unchanged-default matrix.
 QU19 separately protects positional history.
 The selected-history content case QU25 isolates an unrepresentable commit subject before combined output serialization.
+
+## Current workflow baseline
+
+Main `9d1c4a81587f61650a432ac4df02a51a7f51ff20` changes implementation ownership, model bindings, and review-chunk requirements.
+The coordinator read the changed phase, spec, ticket, line, delegation, and platform contracts.
+The new retained-workflow conformance file supplies the model and chunk-table enforcement precedent.
+The behavior owners cited above remain unchanged by that main delta.
+The implementation metadata follows the current platform contract.

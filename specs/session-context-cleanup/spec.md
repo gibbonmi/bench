@@ -22,7 +22,9 @@ This capability requires no new numeric output budget.
 
 ## User stories
 
-Line: gpt-5.6-terra / high.
+Line: gpt-5.6-sol / high.
+Implementation-line reason: Complete-set preflight is the hardest chunk. The source fixes the lifecycle outcome, but concurrent drift needs tests at existing transaction boundaries.
+Harder chunks: CL-C2.
 The work crosses uncertain runtime or lifecycle boundaries.
 
 1. As an agent, I want one fingerprint for my selected cleanup set, so that one apply represents the whole intent.
@@ -81,6 +83,24 @@ The existing late-drift test remains valid.
 It changes the second target after the first target's terminal receipt.
 That fixture proves the required per-target race posture, not stale state present before set preflight.
 A separate fixture introduces later-target drift before apply entry and requires zero removals.
+
+## Implementation chunks
+
+One retained implementation session owns this child after approval.
+Each existing ticket forms one named review chunk and one serial commit checkpoint.
+The table orders independent tickets that share command inventory writes.
+After each chunk, freeze its predecessor and current tips for Standards, Spec, and Coverage review.
+The successor starts after accepted findings have current repair coverage.
+
+| chunk / ticket | blocked by | delivered outcome | acceptance rows | tests | harder chunk |
+| --- | --- | --- | --- | --- | --- |
+| CL-C1 / `1-plan-explicit-sets.md` | none | Explicit cleanup sets | CL1, CL2, CL3, CL10, CL11, CL13, CL14, CL15, CL16, CL17 | TestCleanExplicitSetPlan and the remaining owned-row tests | no |
+| CL-C2 / `2-complete-preflight-outcomes.md` | 1-plan-explicit-sets.md | Complete preflight and outcomes | CL4, CL5, CL6, CL7, CL8, CL9, CL12, CL18, CL19 | TestCleanSetPreflightAllRows and the existing landing-effect tests | yes |
+
+The coverage map supplies the complete test inventory for each chunk's owned rows.
+The final reconciliation checks every acceptance row and the integrated result.
+The existing evidence checkpoints continue to block their implementation chunks.
+Execution-plan changes follow `.bench/BENCH.md`.
 
 ## Testing decisions
 
@@ -161,7 +181,7 @@ Won't handle: automatic stale-plan approval — the agent runs the rendered re-p
 
 Reviewer disposition: Sol/high review accepted; user spec and ticket sign-off remains pending.
 The fence is the union of ticket writes and the review pickup.
-A build cannot change this spec, its acceptance rows, or its tickets.
+`.bench/BENCH.md` governs execution-plan changes.
 
 ## Ticket graph
 

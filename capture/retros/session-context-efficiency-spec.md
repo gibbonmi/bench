@@ -92,3 +92,8 @@ Feeds: none
 The source merge and review-checkout update each ran the existing whole-project gate.
 Those costs remain separate from semantic-review token use, which is unknown.
 Feeds: none
+
+A concurrent main landing changed implementation ownership and model bindings after review acceptance.
+The author added one stable chunk per existing ticket and updated the proposed implementation line to Sol/high.
+The accepted product contracts and evidence checkpoints remain intact.
+Feeds: none

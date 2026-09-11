@@ -22,7 +22,9 @@ The report proposes budgets for later reviewer approval.
 
 ## User stories
 
-Line: gpt-5.6-terra / high.
+Line: gpt-5.6-sol / high.
+Implementation-line reason: The pinned reader is the hardest chunk. Its contract is precise, but source boundaries remain uncertain and new command tests must establish coverage.
+Harder chunks: ME-C1.
 The source fixes the outcome, but the seams require careful evidence and compatibility work.
 
 1. As an agent, I want direct result-text measures, so that optimization starts with observed bytes.
@@ -85,6 +87,24 @@ Each case names its task, input digest, harness version, baseline, candidate byt
 Large histories, long diagnostics, multibyte text, empty output, and failed commands join the case inventory.
 Unavailable cases remain unavailable and cannot justify a default.
 The report names each proposed surface owner and retains current policy until approval.
+
+## Implementation chunks
+
+One retained implementation session owns this child after approval.
+Each existing ticket forms one named review chunk and one serial commit checkpoint.
+The table orders independent tickets that share command inventory writes.
+After each chunk, freeze its predecessor and current tips for Standards, Spec, and Coverage review.
+The successor starts after accepted findings have current repair coverage.
+
+| chunk / ticket | blocked by | delivered outcome | acceptance rows | tests | harder chunk |
+| --- | --- | --- | --- | --- | --- |
+| ME-C1 / `1-inspect-record.md` | none | Explicit record observations | ME1, ME2, ME3, ME4, ME5, ME6, ME7, ME8, ME9, ME10, ME11, ME12, ME17, ME18, ME19, ME20, ME21, ME22, ME23, ME24, ME25 | TestObservedTextBoundary and the remaining owned-row tests | yes |
+| ME-C2 / `2-compare-budget-cases.md` | 1-inspect-record.md | Comparative budget evidence | ME13, ME14, ME15, ME16 | Matched case evidence and reviewer inspection | no |
+
+The coverage map supplies the complete test inventory for each chunk's owned rows.
+The final reconciliation checks every acceptance row and the integrated result.
+The existing evidence checkpoints continue to block their implementation chunks.
+Execution-plan changes follow `.bench/BENCH.md`.
 
 ## Testing decisions
 
@@ -164,7 +184,7 @@ Won't handle: provider pricing — FT231 can consume independent pricing evidenc
 
 Reviewer disposition: Sol/high review accepted; user spec and ticket sign-off remains pending.
 The fence is the union of ticket writes and the review pickup.
-A build cannot change this spec, its acceptance rows, or its tickets.
+`.bench/BENCH.md` governs execution-plan changes.
 
 ## Ticket graph
 

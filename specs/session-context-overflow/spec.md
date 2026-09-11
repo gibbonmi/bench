@@ -22,7 +22,9 @@ No efficiency denial or automatic retry joins the operation.
 
 ## User stories
 
-Line: gpt-5.6-terra / high.
+Line: gpt-5.6-sol / high.
+Implementation-line reason: Runtime proof and adapter preservation are the hardest chunks. The source fixes the guarantees, but installed capability is unknown and fixtures cannot replace live evidence.
+Harder chunks: OV-C1, OV-C2.
 The work crosses uncertain runtime or lifecycle boundaries.
 
 1. As a reviewer, I want installed-runtime proof, so that documented hooks do not become assumed capabilities.
@@ -85,6 +87,24 @@ It reports that complete-output preservation is unavailable.
 It never repeats the operation to reconstruct missing bytes.
 If the harness cannot express this posture, that path remains unsupported.
 The existing safety guards retain their behavior and execution order.
+
+## Implementation chunks
+
+One retained implementation session owns this child after approval.
+Each existing ticket forms one named review chunk and one serial commit checkpoint.
+The table orders independent tickets that share command inventory writes.
+After each chunk, freeze its predecessor and current tips for Standards, Spec, and Coverage review.
+The successor starts after accepted findings have current repair coverage.
+
+| chunk / ticket | blocked by | delivered outcome | acceptance rows | tests | harder chunk |
+| --- | --- | --- | --- | --- | --- |
+| OV-C1 / `1-prove-runtime-paths.md` | none | Installed runtime proof | OV1, OV20, OV21, OV22 | Live preservation, status, replacement, and retrieval evidence | yes |
+| OV-C2 / `2-install-verified-overflow.md` | 1-prove-runtime-paths.md | Verified overflow adapter | OV2, OV3, OV4, OV5, OV6, OV7, OV8, OV9, OV10, OV11, OV12, OV13, OV14, OV15, OV16, OV17, OV18, OV19, OV23, OV24, OV25 | TestOverflowPreservesBeforeReturn and the remaining owned-row tests | yes |
+
+The coverage map supplies the complete test inventory for each chunk's owned rows.
+The final reconciliation checks every acceptance row and the integrated result.
+The existing evidence checkpoints continue to block their implementation chunks.
+Execution-plan changes follow `.bench/BENCH.md`.
 
 ## Testing decisions
 
@@ -179,7 +199,7 @@ Won't handle: automatic producer retry — the agent retains the existing explic
 
 Reviewer disposition: Sol/high review accepted; user spec and ticket sign-off remains pending.
 The fence is the union of ticket writes and the review pickup.
-A build cannot change this spec, its acceptance rows, or its tickets.
+`.bench/BENCH.md` governs execution-plan changes.
 
 ## Ticket graph
 

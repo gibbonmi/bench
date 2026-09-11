@@ -22,7 +22,9 @@ Current domain-owned truncation policies remain authoritative.
 
 ## User stories
 
-Line: gpt-5.6-terra / high.
+Line: gpt-5.6-sol / high.
+Implementation-line reason: Shared history and later budgets are the hardest chunks. The selected contracts are precise, but producer preservation and future policy need new tests.
+Harder chunks: QU-C2, QU-C4.
 The source fixes the outcome, but the seams require careful evidence and compatibility work.
 
 1. As an agent, I want selected worktree identity, path, and state, so that one read supplies my next operation.
@@ -93,9 +95,30 @@ Before that ticket starts, spec authoring records each numeric value, surface, u
 That authoring pass also closes any additional owner fence required by the selected surfaces.
 
 If several owners receive approved budgets, the author splits the final ticket into one vertical ticket per owner.
-The build cannot amend its own policy or expand its own fence.
+The build cannot choose its own numeric policy.
+The platform governs in-scope plan expansion after the required checkpoint.
 Until that checkpoint, the final ticket is not on the executable frontier.
 Existing budgets remain active and do not require reapproval.
+
+## Implementation chunks
+
+One retained implementation session owns this child after approval.
+Each existing ticket forms one named review chunk and one serial commit checkpoint.
+The table orders independent tickets that share command inventory writes.
+After each chunk, freeze its predecessor and current tips for Standards, Spec, and Coverage review.
+The successor starts after accepted findings have current repair coverage.
+
+| chunk / ticket | blocked by | delivered outcome | acceptance rows | tests | harder chunk |
+| --- | --- | --- | --- | --- | --- |
+| QU-C1 / `1-select-worktrees.md` | none | Selected worktree facts | QU1, QU2, QU3, QU9, QU10, QU16, QU17, QU18 | TestSelectedWorktreeFacts and the remaining owned-row tests | no |
+| QU-C2 / `2-select-histories.md` | none | Selected bounded histories | QU4, QU5, QU6, QU7, QU8, QU19, QU20, QU21, QU22, QU23, QU24, QU25 | TestSelectedHistoryPreservesProducer and the remaining owned-row tests | yes |
+| QU-C3 / `3-guide-relevant-reads.md` | 1-select-worktrees.md, 2-select-histories.md | Focused raw-read guidance | QU11, QU12, QU13 | Standards and Spec inspection at QU11–QU13 | no |
+| QU-C4 / `4-apply-reviewed-budgets.md` | 1-select-worktrees.md, 2-select-histories.md, 3-guide-relevant-reads.md | Reviewed owner budgets | QU14, QU15 | TestApprovedQueryBudget after the policy checkpoint | yes |
+
+The coverage map supplies the complete test inventory for each chunk's owned rows.
+The final reconciliation checks every acceptance row and the integrated result.
+The existing evidence checkpoints continue to block their implementation chunks.
+Execution-plan changes follow `.bench/BENCH.md`.
 
 ## Testing decisions
 
@@ -203,7 +226,7 @@ Won't handle: a general guidance rewrite — the named read examples remain the 
 
 Reviewer disposition: Sol/high review accepted; user spec and ticket sign-off remains pending.
 The fence is the union of ticket writes and the review pickup.
-A build cannot change this spec, its acceptance rows, or its tickets.
+`.bench/BENCH.md` governs execution-plan changes.
 
 ## Ticket graph
 
