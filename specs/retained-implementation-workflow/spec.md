@@ -57,7 +57,7 @@ Each chunk review uses Standards, Spec, and Coverage against the whole approved 
 
 The spec author recommends one implementation tier and starting effort. The reason considers the hardest material chunk, spec precision, uncertainty, and tests. Mark harder chunks in the chunk table. The author can adjust effort and report it.
 
-A different implementation model or session requires user direction. A recommendation for a review exception names its reason. The canonical default is one fresh mid/high subagent per review axis per chunk.
+A different implementation model or session requires user direction. A recommendation for a review exception names its reason. The canonical default is one fresh mid/high subagent per review axis per chunk. A Sol implementation instead uses Astra/high for each axis.
 
 Bind GPT top to `gpt-6-astra`, mid to `gpt-5.6-sol`, and cheap to `gpt-5.6-terra`. Cheap is the existing configuration key for the user's low tier. Preserve other harness columns and their resolution behavior.
 
@@ -69,13 +69,13 @@ Deliver guidance with honest enforcement limits. Anchors detect missing or contr
 
 ## Implementation chunks
 
-Implement these tickets in the retained session. Each ticket is one initial review chunk. Commit the ticket on its lane pass, run the three delegated axes, and repair findings before the next chunk. Review line: the canonical mid/high policy in decision #13, resolved here as gpt-5.6-sol / high. Final acceptance reconciliation stays with the author.
+Implement these tickets in the retained session. Each ticket is one initial review chunk. Commit the ticket on its lane pass, run the three delegated axes, and repair findings before the next chunk. Review line: decision #13, resolved for this implementation as gpt-6-astra / high. Final acceptance reconciliation stays with the author.
 
 | chunk / ticket | blocked by | delivered outcome | harder chunk |
 | --- | --- | --- | --- |
-| 1.md — Retain the author through chunk review | none | Apply the authorship and review cadence end to end, including the drain and field guide | yes |
+| 3.md — Bind the model tiers and review recommendation | none | Update GPT bindings and the checked project table | no |
+| 1.md — Retain the author through chunk review | 3.md | Apply the authorship and review cadence end to end, including the drain and field guide | yes |
 | 2.md — Permit logged within-scope plan expansion | 1.md | Apply standing authority to chunk amendments, Writes expectations, and gate additions | no |
-| 3.md — Bind the model tiers and review recommendation | 2.md | Update GPT bindings and the checked project table | no |
 
 ## Testing decisions
 
@@ -106,7 +106,7 @@ approved source -> canonical workflow and line policy -> phase and skill readers
 | W11 | 11 | Plan and gate expansions enter the learning drain | New test: TestRetainedWorkflow in internal/conformance/retained_workflow_test.go | Remove the learning step from the canonical policy and observe red. |
 | W12 | 12 | The spec template requires one implementation line with a reason | New test: TestRetainedWorkflow in internal/conformance/retained_workflow_test.go | Omit the hardest-chunk factor and observe red. |
 | W13 | 13 | The GPT mid binding is gpt-5.6-sol | New test: TestRetainedWorkflow in internal/conformance/retained_workflow_test.go | Replace only the mid binding and observe red. |
-| W14 | 14 | Each axis resolves the canonical mid/high default | New test: TestRetainedWorkflow in internal/conformance/retained_workflow_test.go | Introduce a competing review-line rule in a live consumer and observe red. |
+| W14 | 14 | Each axis resolves the canonical conditional review line | New test: TestRetainedWorkflow in internal/conformance/retained_workflow_test.go | Test Sol implementation with Astra/high review and other implementation lines with mid/high review. Mutate each branch independently. |
 | W15 | 15 | A model switch requires user direction | New test: TestRetainedWorkflow in internal/conformance/retained_workflow_test.go | Remove the switch boundary while retaining effort changes and observe red. |
 | W16 | 16 | No live workflow reader retains mandatory fresh implementation writers | New test: TestRetainedWorkflow in internal/conformance/retained_workflow_test.go | Leave an old writer instruction in the drain or field guide and observe red. |
 
@@ -216,7 +216,7 @@ Pre-review proof checklist:
 | #2: "Implementation stays in one model session" | W1, W3, W5, W16 |
 | #12: "Each chunk receives delegated review before the next starts" | W2, W4, W6, W7 |
 | #4 and #5: amend chunks and use standing expansion authority | W8, W9, W10, W11 |
-| #13: recommend implementation line and use mid/high reviews | W12, W13, W14, W15 |
+| #13: recommend implementation line and resolve its review policy | W12, W13, W14, W15 |
 
 Exact reader closure for W16: `.bench/BENCH.md`, `.bench/BENCH-reference.md`, `.agents/commands/bench-implement-spec.md`, `.agents/commands/bench-write-spec.md`, `.agents/commands/bench-review-implementation.md`, `.agents/commands/bench-final-check.md`, and `.agents/commands/bench-drain.md`.
 
@@ -229,3 +229,7 @@ Review repair coverage: W17, W18, W19, W20, W21, W22, W23. These rows refine the
 Plan-edit authority is limited to chunk boundaries, dependencies, row assignments, Writes expectations, and necessary ownership expansion under decision #5. Preserve the approved behavior and pass criteria. A material acceptance change still needs the user's decision. Bulk rewrites exclude this spec and its tickets. Completion evidence must review a changed plan digest before it can satisfy the next checkpoint.
 
 Authoring close: this spec and its tickets are staged for user sign-off. The reviews above assess the proposed build. No implementation or implementation test result is claimed.
+
+Reviewer amendment on 2026-09-11: apply decision #13 to the declared implementation model. Sol implementations use Astra/high review axes. This amendment follows the spec-authoring reviews recorded above.
+
+Execute tickets in dependency order: 3.md, 1.md, then 2.md. The binding ticket enables Astra before the first review. This order preserves each ticket checkpoint and each chunk review.

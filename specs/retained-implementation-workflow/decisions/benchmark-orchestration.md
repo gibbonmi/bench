@@ -32,7 +32,7 @@ The reviewer requires flexible implementation effort.
 - [Where must missing or stale assurance block completion?](benchmark-orchestration/tickets/10.md): Missing or stale required evidence blocks chunk advancement and spec completion through the gate-owned check.
 - [What assessment record and trial rule support adoption?](benchmark-orchestration/tickets/11.md): Keep local run records and require an approved plan for paid comparison trials.
 - [How are implementation chunks defined and reviewed?](benchmark-orchestration/tickets/12.md): The spec author defines chunks. Each chunk receives delegated review before the next starts.
-- [Who recommends the implementation line, and what line do reviews use?](benchmark-orchestration/tickets/13.md): The spec author recommends the implementation line. Reviews default to mid/high; the GPT mid tier is Sol.
+- [Who recommends the implementation line, and what line do reviews use?](benchmark-orchestration/tickets/13.md): The spec author recommends the implementation line. Reviews default to mid/high, with Astra/high for Sol implementations.
 
 ## Not yet specified
 

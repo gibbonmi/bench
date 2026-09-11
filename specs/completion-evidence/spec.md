@@ -100,7 +100,7 @@ A missing legacy record remains visible. Unchanged historical implemented specs 
 
 ## Implementation chunks
 
-Implement these tickets in the retained session. Each ticket is one initial review chunk. Commit the ticket on its lane pass, run the three delegated axes, and repair findings before the next chunk. Review line: the canonical mid/high policy in decision #13, resolved here as gpt-5.6-sol / high. Final acceptance reconciliation stays with the author.
+Implement these tickets in the retained session. Each ticket is one initial review chunk. Commit the ticket on its lane pass, run the three delegated axes, and repair findings before the next chunk. Review line: decision #13, resolved for this implementation as gpt-5.6-sol / high. Final acceptance reconciliation stays with the author.
 
 | chunk / ticket | blocked by | delivered outcome | harder chunk |
 | --- | --- | --- | --- |
@@ -336,3 +336,5 @@ Review repair coverage: E25, E26, E27, E28, E29, E30, E31, E32, E33, E34, E35, E
 Plan-edit authority is limited to chunk boundaries, dependencies, row assignments, Writes expectations, and necessary ownership expansion under decision #5. Preserve the approved behavior and pass criteria. A material acceptance change still needs the user's decision. Bulk rewrites exclude this spec and its tickets. Completion evidence must review a changed plan digest before it can satisfy the next checkpoint.
 
 Authoring close: this spec and its tickets are staged for user sign-off. The reviews above assess the proposed build. No implementation or implementation test result is claimed.
+
+Reviewer amendment on 2026-09-11: apply decision #13 to the declared implementation model. Sol implementations use Astra/high review axes. This amendment follows the spec-authoring reviews recorded above.

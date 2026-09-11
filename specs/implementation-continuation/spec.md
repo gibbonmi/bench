@@ -61,7 +61,7 @@ Stop for a required user decision, an external blocker with no remaining indepen
 
 ## Implementation chunks
 
-Implement these tickets in the retained session. Each ticket is one initial review chunk. Commit the ticket on its lane pass, run the three delegated axes, and repair findings before the next chunk. Review line: the canonical mid/high policy in decision #13, resolved here as gpt-5.6-sol / high. Final acceptance reconciliation stays with the author.
+Implement these tickets in the retained session. Each ticket is one initial review chunk. Commit the ticket on its lane pass, run the three delegated axes, and repair findings before the next chunk. Review line: decision #13, resolved for this implementation as gpt-6-astra / high. Final acceptance reconciliation stays with the author.
 
 | chunk / ticket | blocked by | delivered outcome | harder chunk |
 | --- | --- | --- | --- |
@@ -180,3 +180,5 @@ Plan updates follow source decision #5 and preserve approved behavior. Bulk rewr
 Review repair coverage: C11, C12, C13, C14, C15, C16, C17, C18, C19, C20, C21, C22, C23. These rows refine the source clauses already mapped above.
 
 Authoring close: this spec and its tickets are staged for user sign-off. The reviews above assess the proposed build. No implementation or implementation test result is claimed.
+
+Reviewer amendment on 2026-09-11: apply decision #13 to the declared implementation model. Sol implementations use Astra/high review axes. This amendment follows the spec-authoring reviews recorded above.

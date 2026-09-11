@@ -101,7 +101,7 @@ Use bounded regular-file reads, schema validation, atomic replacement, no symlin
 
 ## Implementation chunks
 
-Implement these tickets in the retained session. Each ticket is one initial review chunk. Commit the ticket on its lane pass, run the three delegated axes, and repair findings before the next chunk. Review line: the canonical mid/high policy in decision #13, resolved here as gpt-5.6-sol / high. Final acceptance reconciliation stays with the author.
+Implement these tickets in the retained session. Each ticket is one initial review chunk. Commit the ticket on its lane pass, run the three delegated axes, and repair findings before the next chunk. Review line: decision #13, resolved for this implementation as gpt-6-astra / high. Final acceptance reconciliation stays with the author.
 
 | chunk / ticket | blocked by | delivered outcome | harder chunk |
 | --- | --- | --- | --- |
@@ -321,3 +321,5 @@ Plan-edit authority is limited to chunk boundaries, dependencies, row assignment
 The A33, A38, and A21 fixture tables must execute every named case independently. A combined mutation cannot replace an individual case. These case refinements close the second assessment review.
 
 Authoring close: this spec and its tickets are staged for user sign-off. The reviews above assess the proposed build. No implementation or implementation test result is claimed.
+
+Reviewer amendment on 2026-09-11: apply decision #13 to the declared implementation model. Sol implementations use Astra/high review axes. This amendment follows the spec-authoring reviews recorded above.
