@@ -130,6 +130,7 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `tests/canary/workflow-guidance-anchors`
 - `.agents/skills/bench-craft-delegate/SKILL.md`
 - `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`
+- `CHANGELOG.md`
 - `specs/implementation-continuation/spec.md`
 - `specs/implementation-continuation/tickets`
 - `reviews/implementation-continuation.md` (new)
