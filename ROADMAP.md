@@ -37,7 +37,7 @@ findings in the owner details.
 
 **FT308 (MEDIUM, decision required) — the cleanup transaction's persistence lock leaves `.git` when its record is gone.**
 
-**FT311 (MEDIUM, decision required) — coordinator chunks need one current orchestration contract.**
+**FT311 (MEDIUM, decision required) — benchmark workflow specs are staged; the landing cleanup selector remains open.**
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
@@ -235,6 +235,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT311 chunk-orchestration decisions — /bench-shape-idea
-2. FT312 cross-harness reviewer and review-axis creation verb — /bench-write-spec
-3. FT300 ticket-slicing verification passes — /bench-update-kit
+1. FT312 cross-harness reviewer and review-axis creation verb — /bench-write-spec
+2. FT300 ticket-slicing verification passes — /bench-update-kit
+3. FT313 acceptance evidence in write and repair charges — /bench-update-kit
