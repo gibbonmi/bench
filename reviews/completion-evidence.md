@@ -1194,13 +1194,312 @@ The axis refuted its other E15–E18 and E33–E36 candidates against existing t
 The Coverage reviewer proposes adding command-boundary system consumers to the consumer census.
 The current function census did not expose these binary-driven journeys.
 
+## Chunk 3 repair closure and final acceptance
+
+The retained Astra author repaired the three targets and retained current results.
+Standards, Spec, and Coverage each returned zero findings on `943a373b`.
+The coordinator checked each review venue and each cited repair before acceptance.
+All 38 acceptance rows are covered. Record validation proves occurrence and source
+coverage; it does not prove judgment correctness or authenticate an invented result.
+
+The final ordinary package suite and the separate full system suite passed.
+The required landing omission probe bit all 11 refusal cases and restored.
+The regular-file, executable-mode, and byte-bound probes also bit and restored.
+Those supplemental probes examined the same production bytes before the final plan amendment.
+
+The changed-package selector refused a changed system-only package on `d8bd938b`.
+The approved expansion selected every ordinary package and retained the separate system suite.
+The refused result remains in the record. No test or pass criterion was removed.
+Chunk IDs remain 1, 2, and 3. Ticket r3 adds E20 to the final chunk.
+
+| Acceptance rows | Final evidence |
+| --- | --- |
+| E1–E3, E13, E19–E21, E23–E24, E38 | Record parser, source-chain, hostile-path, amendment, and supersession tests passed. |
+| E4–E12, E14, E25–E32, E37 | Checkpoint, canonical-axis, ordinary-work, reuse, and wrapper tests passed. |
+| E15–E18, E33–E36 | Landing completion cases and the full system race and recovery journeys passed. |
+| E22 | Spec review confirmed the documented trusted-harness limit. |
+
+The current shared charge retains the same untouched-consumer inventory as `d8bd938b`.
+The coordinator walked every untouched row. Existing ordinary callers retain an empty
+obligation, and existing injected-authority tests retain their publication assertions.
+
+```text
+probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:
+  bit,internal/gate/completion.go,swap,failed,1,yes
+selection[1]{form,target,run,baseline,ran}:
+  package,./internal/gate,TestCompletionFile,passed,6
+packages[1]{package,status,elapsed_ms}:
+  github.com/gibbonmi/bench/internal/gate,fail,279
+failures[1]{package,test,line}:
+  github.com/gibbonmi/bench/internal/gate,TestCompletionFile/symlink,"completion_test.go:42: symlink completion file admitted: 10 bytes"
+skips[0]{package,test,reason}:
+
+```
+
+```text
+probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:
+  bit,internal/gate/completion.go,swap,failed,1,yes
+selection[1]{form,target,run,baseline,ran}:
+  package,./internal/gate,TestCompletionFile,passed,6
+packages[1]{package,status,elapsed_ms}:
+  github.com/gibbonmi/bench/internal/gate,fail,298
+failures[1]{package,test,line}:
+  github.com/gibbonmi/bench/internal/gate,TestCompletionFile/executable,"completion_test.go:51: completion file = {data:[115 111 117 114 99 101 10] mode:100644}, <nil>"
+skips[0]{package,test,reason}:
+
+```
+
+```text
+probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:
+  bit,internal/git/tree.go,swap,failed,1,yes
+selection[1]{form,target,run,baseline,ran}:
+  package,./internal/gate,TestCompletionFile,passed,6
+packages[1]{package,status,elapsed_ms}:
+  github.com/gibbonmi/bench/internal/gate,fail,301
+failures[1]{package,test,line}:
+  github.com/gibbonmi/bench/internal/gate,TestCompletionFile/oversized,"completion_test.go:42: oversized completion file admitted: 2097153 bytes"
+skips[0]{package,test,reason}:
+
+```
+
+```toon
+blast[201]{changed_symbol,file,line,touched}:
+  authorization.AuthorizeWithWriters,internal/gate/authorization/authorization.go,145,true
+  authorization.AuthorizeWithWriters,internal/gate/authorization/authorization_test.go,17,false
+  authorization.AuthorizeWithWriters,internal/landing/completion_evidence_test.go,117,true
+  authorization.AuthorizeWithWriters,internal/landing/completion_evidence_test.go,126,true
+  authorization.AuthorizeWithWriters,internal/landing/landing.go,120,true
+  gate.InspectTree,internal/gate/authorization/authorization.go,172,true
+  gate.InspectTree,internal/gate/prospective_owner_test.go,435,false
+  gate.InspectTreeContext,internal/gate/authorization/authorization.go,152,true
+  gate.InspectTreeContext,internal/gate/engine.go,32,true
+  gate.WithCompletion,internal/landing/landing.go,252,true
+  gate.WithCompletion,internal/worktree/land_journey_test.go,82,true
+  gate.beginGateSpan,internal/gate/engine.go,44,true
+  gate.beginGateSpan,internal/gate/gate.go,228,true
+  gate.beginGateSpan,internal/gate/gate.go,262,true
+  gate.checkpointEvaluation,internal/gate/engine.go,63,true
+  gate.checkpointEvaluation,internal/gate/engine.go,95,true
+  gate.checkpointEvaluation,internal/gate/gate.go,275,true
+  gate.checkpointEvaluation,internal/gate/gate.go,359,true
+  gate.checkpointEvaluation,internal/gate/gate.go,363,true
+  gate.completionFile,internal/gate/completion.go,79,true
+  gate.completionFile,internal/gate/completion.go,83,true
+  gate.completionFile,internal/gate/completion.go,86,true
+  gate.completionSourceKey,internal/gate/checkpoint.go,30,true
+  gate.completionSourceKey,internal/gate/completion.go,19,true
+  gate.executeTreeWithOwner,internal/gate/engine.go,46,true
+  gate.executeTreeWithOwner,internal/gate/prospective_owner_test.go,292,false
+  gate.executeTreeWithOwner,internal/gate/prospective_owner_test.go,310,false
+  gate.executeTreeWithOwner,internal/gate/prospective_owner_test.go,343,false
+  gate.executeTreeWithOwner,internal/gate/prospective_owner_test.go,362,false
+  gate.gateEvaluation,internal/gate/checkpoint.go,28,true
+  gate.gateEvaluation,internal/gate/checkpoint.go,28,true
+  gate.gateEvaluation,internal/gate/checkpoint.go,86,true
+  gate.gateEvaluation,internal/gate/completion.go,22,true
+  gate.gateEvaluation,internal/gate/completion.go,66,true
+  gate.gateEvaluation,internal/gate/completion.go,79,true
+  gate.gateEvaluation,internal/gate/evaluation.go,31,true
+  gate.gateEvaluation,internal/gate/evaluation.go,32,true
+  gate.gateEvaluation,internal/gate/evaluation.go,50,true
+  gate.gateEvaluation,internal/gate/evaluation.go,51,true
+  gate.gateEvaluation,internal/gate/evaluation.go,75,true
+  gate.gateEvaluation,internal/gate/evaluation.go,89,true
+  gate.gateEvaluation,internal/gate/evaluation.go,99,true
+  gate.gateEvaluation,internal/gate/evaluation.go,112,true
+  gate.gateEvaluation.applyCheckpoint,internal/gate/evaluation.go,123,true
+  gate.gateEvaluation.completionFile,internal/gate/completion.go,32,true
+  gate.gateEvaluation.completionFile,internal/gate/completion.go,40,true
+  gate.gateEvaluation.completionFile,internal/gate/completion_test.go,39,true
+  gate.gateEvaluation.completionTree,internal/gate/checkpoint.go,113,true
+  gate.inspectProspective,internal/gate/engine.go,37,true
+  gate.operational,internal/gate/run_transaction.go,45,false
+  gate.operational,internal/gate/run_transaction.go,57,false
+  gate.operational,internal/gate/run_transaction.go,68,false
+  gate.operational,internal/gate/run_transaction.go,73,false
+  gate.operational,internal/gate/run_transaction.go,94,false
+  gate.operational,internal/gate/run_transaction.go,98,false
+  gate.operational,internal/gate/run_transaction.go,124,false
+  gate.operational,internal/gate/run_transaction.go,142,false
+  gate.operational,internal/gate/run_transaction.go,165,false
+  gate.operational,internal/gate/run_transaction.go,176,false
+  gate.operational,internal/gate/run_transaction.go,181,false
+  gate.operational,internal/gate/run_transaction.go,207,false
+  gate.otelGateEnv,internal/gate/gate.go,167,true
+  gate.otelGateEnv,internal/gate/otel_env_test.go,21,false
+  gate.otelGatePhaseSeam,internal/gate/runner.go,572,false
+  gate.otelGateSeam,internal/gate/telemetry.go,34,true
+  gate.otelGateSeam,internal/gate/telemetry.go,34,true
+  gate.otelRecordRootKey,internal/gate/telemetry.go,35,true
+  gate.otelRecordRootKey,internal/gate/telemetry.go,53,true
+  gate.otelRootEnv,internal/gate/otel_env_test.go,14,false
+  gate.otelRootEnv,internal/gate/runner.go,556,false
+  gate.otelRootEnv,internal/gate/telemetry.go,24,true
+  gate.otelRootEnv,internal/gate/telemetry.go,57,true
+  gate.otelTraceparentEnv,internal/gate/otel_env_test.go,15,false
+  gate.otelTraceparentEnv,internal/gate/runner.go,562,false
+  gate.otelTraceparentEnv,internal/gate/telemetry.go,24,true
+  gate.otelTraceparentEnv,internal/gate/telemetry.go,61,true
+  gate.validateCompletionContext,internal/gate/checkpoint.go,87,true
+  gate.withGateSpanEnv,internal/gate/engine.go,237,true
+  git.ReadControlBlob,internal/gate/completion.go,85,true
+  git.ReadControlBlob,internal/git/tree.go,174,true
+  git.ReadTreeFile,internal/reviewrecord/files.go,72,false
+  git.ReadTreeFile,internal/reviewrecord/plan.go,40,false
+  git.ReadTreeFile,internal/reviewrecord/plan.go,82,false
+  landing.Owner.LandReviewed,internal/landing/completion_evidence_test.go,139,true
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,46,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,93,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,145,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,190,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,223,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,282,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,290,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,294,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,320,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,367,false
+  landing.Owner.LandReviewed,internal/landing/lane_test.go,75,false
+  landing.Owner.LandReviewed,internal/landing/state_test.go,307,false
+  landing.Owner.LandReviewed,internal/worktree/joins.go,94,false
+  landing.completionFixture,internal/landing/completion_evidence_test.go,22,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,43,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,46,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,68,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,70,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,71,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,75,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,80,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,84,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,89,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,93,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,97,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,101,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,106,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,110,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,120,true
+  landing.completionFixture.request,internal/landing/completion_evidence_test.go,138,true
+  landing.newCompletionFixture,internal/landing/completion_evidence_test.go,132,true
+  recordtest.AttachAt,cmd/bench/gate_route_test.go,70,false
+  recordtest.AttachAt,internal/reviewrecord/recordtest/fixture.go,29,true
+  recordtest.Fixture.AddChunk,cmd/bench/gate_route_test.go,76,false
+  recordtest.Fixture.AddChunk,internal/gate/review_checkpoint_test.go,18,false
+  recordtest.Fixture.AddChunk,internal/landing/completion_evidence_test.go,36,true
+  recordtest.Fixture.AddChunk,internal/landing/completion_evidence_test.go,39,true
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,18,false
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,21,false
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,73,false
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,129,false
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,187,false
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,219,false
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,238,false
+  recordtest.Fixture.RecordChunk,internal/reviewrecord/recordtest/fixture.go,79,true
+  recordtest.Fixture.RecordChunk,internal/reviewrecord/recordtest/fixture.go,149,true
+  recordtest.Fixture.loadPlan,internal/reviewrecord/recordtest/fixture.go,57,true
+  recordtest.Fixture.loadPlan,internal/reviewrecord/recordtest/fixture.go,75,true
+  recordtest.Prepare,internal/reviewrecord/recordtest/fixture.go,33,true
+  recordtest.Prepare,internal/worktree/land_fixtures_test.go,91,true
+  recordtest.RetainSingleChunk,internal/worktree/completion_fixture_test.go,13,true
+  reviewrecord.CheckTrees,internal/gate/checkpoint.go,118,true
+  reviewrecord.CheckTrees,internal/reviewrecord/check.go,10,true
+  worktree.brokerChangingLanding,internal/worktree/land_effects_test.go,73,true
+  worktree.brokerChangingLanding,internal/worktree/land_effects_test.go,95,true
+  worktree.brokerDestinationFixture,internal/worktree/land_effects_cleanup_test.go,211,true
+  worktree.brokerDestinationFixture,internal/worktree/land_effects_cleanup_test.go,269,true
+  worktree.brokerDestinationFixture,internal/worktree/land_effects_test.go,226,true
+  worktree.brokerDestinationFixture,internal/worktree/land_effects_test.go,248,true
+  worktree.brokerDestinationFixture,internal/worktree/land_effects_test.go,271,true
+  worktree.brokerDestinationFixture,internal/worktree/land_effects_test.go,308,true
+  worktree.brokerDestinationFixture,internal/worktree/land_effects_test.go,357,true
+  worktree.censusRecordPath,internal/worktree/land_census_test.go,49,true
+  worktree.censusRecordPath,internal/worktree/land_census_test.go,116,true
+  worktree.censusRecordPath,internal/worktree/land_resume_test.go,316,false
+  worktree.censusRecordPath,internal/worktree/worktree_test.go,573,false
+  worktree.censusRecordPath,internal/worktree/worktree_test.go,650,false
+  worktree.foldCompletionComposition,internal/worktree/land_surface_test.go,74,true
+  worktree.foldCompletionComposition,internal/worktree/land_surface_test.go,119,true
+  worktree.foldLandingSibling,internal/worktree/land_effects_cleanup_test.go,79,true
+  worktree.foldLandingSibling,internal/worktree/land_effects_cleanup_test.go,110,true
+  worktree.foldLandingSibling,internal/worktree/land_effects_cleanup_test.go,136,true
+  worktree.foldLandingSibling,internal/worktree/land_effects_cleanup_test.go,173,true
+  worktree.foldLandingSibling,internal/worktree/land_effects_cleanup_test.go,212,true
+  worktree.foldLandingSibling,internal/worktree/land_effects_cleanup_test.go,270,true
+  worktree.foldLandingSibling,internal/worktree/land_effects_test.go,272,true
+  worktree.landingFixtureAtHome,internal/worktree/land_fixtures_test.go,31,true
+  worktree.landingFixtureAtHome,internal/worktree/land_fixtures_test.go,40,true
+  worktree.landingSpecAmendment,internal/worktree/land_spec_amendment_test.go,39,true
+  worktree.landingSpecAmendment,internal/worktree/land_spec_amendment_test.go,64,true
+  worktree.recordRawCalls,internal/worktree/land_census_test.go,42,true
+  worktree.recordRawCalls,internal/worktree/land_census_test.go,107,true
+  worktree.recordRawCalls,internal/worktree/land_resume_test.go,308,false
+  worktree.recordRawCalls,internal/worktree/worktree_test.go,566,false
+  worktree.recordRawCalls,internal/worktree/worktree_test.go,636,false
+  worktree.recordRawCallsWithHead,internal/worktree/land_census_test.go,16,true
+  worktree.recordRawCallsWithHead,internal/worktree/land_census_test.go,75,true
+  worktree.recordRawCallsWithHead,internal/worktree/land_census_test.go,76,true
+  worktree.redProspectiveGateLanding,internal/worktree/land_freshness_test.go,171,true
+  worktree.redProspectiveGateLanding,internal/worktree/land_freshness_test.go,210,true
+  worktree.refreshLandingEvidence,internal/worktree/completion_fixture_test.go,25,true
+  worktree.refreshLandingEvidence,internal/worktree/land_effects_cleanup_test.go,33,true
+  worktree.refreshLandingEvidence,internal/worktree/land_effects_test.go,35,true
+  worktree.refreshLandingEvidence,internal/worktree/land_effects_test.go,38,true
+  worktree.refreshLandingEvidence,internal/worktree/land_effects_test.go,172,true
+  worktree.refreshLandingEvidence,internal/worktree/land_fixtures_test.go,95,true
+  worktree.refreshLandingEvidence,internal/worktree/land_freshness_test.go,36,true
+  worktree.refreshLandingEvidence,internal/worktree/land_freshness_test.go,69,true
+  worktree.refreshLandingEvidence,internal/worktree/land_freshness_test.go,106,true
+  worktree.refreshLandingEvidence,internal/worktree/land_freshness_test.go,142,true
+  worktree.refreshLandingEvidence,internal/worktree/land_freshness_test.go,308,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,45,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,129,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,167,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,191,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,220,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,230,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,332,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,382,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,412,true
+  worktree.refreshLandingEvidence,internal/worktree/land_spec_amendment_test.go,30,true
+  worktree.refreshLandingEvidence,internal/worktree/land_surface_test.go,65,true
+  worktree.refreshLandingEvidence,internal/worktree/land_surface_test.go,99,true
+  worktree.refreshLandingEvidence,internal/worktree/land_surface_test.go,132,true
+  worktree.siblingReviewPath,internal/worktree/land_effects_cleanup_test.go,30,true
+  worktree.siblingReviewPath,internal/worktree/land_effects_cleanup_test.go,137,true
+  worktree.siblingReviewPath,internal/worktree/land_fixtures_test.go,90,true
+blast_deleted[6]{changed_symbol,base_file,base_line}:
+  systemtest.TestProspectiveArtifactRecoveryAfterKilledLanding,internal/systemtest/owner_artifact_recovery_test.go,20
+  systemtest.TestWorktreeLandPublicRaceAndRerun,internal/systemtest/owner_land_race_test.go,16
+  systemtest.configureArtifactLandingFixture,internal/systemtest/owner_artifact_recovery_test.go,108
+  systemtest.startArtifactAuthorization,internal/systemtest/owner_artifact_recovery_test.go,440
+  systemtest.systemLandingRaceFixture,internal/systemtest/owner_land_race_test.go,174
+  systemtest.systemTicketBody,internal/systemtest/owner_land_race_test.go,167
+meta[1]{packages,files,matches,rows,truncated}:
+  266,38,72,201,false
+citation[1]{sha,state,version,cmd,hash}:
+  943a373b3e4b714b7074da233f7ad1c4b7a6f1e5,clean,0.2.0,bench consumers --changed --base 06a589b935ce26fd9e27d18292f20985c81db487 --source-tip 943a373b3e4b714b7074da233f7ad1c4b7a6f1e5 --full,cf570a8740b91c2fdb47f1b6f8a0605ed21e24614de81ee1bbd98dad20459c33
+help[14]{cmd,why}:
+  bench consumers authorization.AuthorizeWithWriters --full,walk the consumers outside the diff
+  bench consumers gate.InspectTree --full,walk the consumers outside the diff
+  bench consumers gate.executeTreeWithOwner --full,walk the consumers outside the diff
+  bench consumers gate.operational --full,walk the consumers outside the diff
+  bench consumers gate.otelGateEnv --full,walk the consumers outside the diff
+  bench consumers gate.otelGatePhaseSeam --full,walk the consumers outside the diff
+  bench consumers gate.otelRootEnv --full,walk the consumers outside the diff
+  bench consumers gate.otelTraceparentEnv --full,walk the consumers outside the diff
+  bench consumers git.ReadTreeFile --full,walk the consumers outside the diff
+  bench consumers landing.Owner.LandReviewed --full,walk the consumers outside the diff
+  bench consumers recordtest.AttachAt --full,walk the consumers outside the diff
+  bench consumers recordtest.Fixture.AddChunk --full,walk the consumers outside the diff
+  bench consumers worktree.censusRecordPath --full,walk the consumers outside the diff
+  bench consumers worktree.recordRawCalls --full,walk the consumers outside the diff
+```
+
 ## Machine record
 
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/completion-evidence/spec.md",
-  "plan_digest": "sha256:013da5369b1c20983a9334647a1662e26944f81926d81846258ef531f71fd2ed",
+  "plan_digest": "sha256:e298566dc9a9abc5e580968cae0bf69057dfe06abb8e59feb3fb286948d0c754",
   "implementation_session": "/root",
   "chunks": [
     {
@@ -1912,9 +2211,9 @@ The current function census did not expose these binary-driven journeys.
     {
       "id": "3",
       "base": "06a589b935ce26fd9e27d18292f20985c81db487",
-      "tip": "55520083eb588b3d9aa17667d18a06b9c6a51c5c",
-      "source_digest": "c9201fa276fabba32c215fa364122fd46a775776",
-      "plan_digest": "sha256:013da5369b1c20983a9334647a1662e26944f81926d81846258ef531f71fd2ed",
+      "tip": "943a373b3e4b714b7074da233f7ad1c4b7a6f1e5",
+      "source_digest": "46ce309594a597037464d2511c9d2d9da3c0e3fd",
+      "plan_digest": "sha256:e298566dc9a9abc5e580968cae0bf69057dfe06abb8e59feb3fb286948d0c754",
       "acceptance_rows": [
         "E15",
         "E16",
@@ -1923,7 +2222,8 @@ The current function census did not expose these binary-driven journeys.
         "E33",
         "E34",
         "E35",
-        "E36"
+        "E36",
+        "E20"
       ],
       "verification": [
         {
@@ -1952,6 +2252,35 @@ The current function census did not expose these binary-driven journeys.
               "ref": "codex:tool/4256ae",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/landing/landing.go,swap,failed,11,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/landing,TestLandingCompletionEvidence,passed,13\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/landing,fail,4890\n",
               "digest": "sha256:7a3ea6fc1451a54df8ff92fd6e85e4dd964f45e4c925166b060948320065f80f"
+            }
+          }
+        },
+        {
+          "id": "c3-landing-tests-repair",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "46ce309594a597037464d2511c9d2d9da3c0e3fd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:tool/03cddf",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/landing,pass,14843\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n",
+            "digest": "sha256:8e9139bb84bd1aec7b9bfb10826f11eab66b55152bedffe64759339248261502"
+          },
+          "requirement": "landing-tests",
+          "command": "bench test --package ./internal/landing --run TestLandingCompletionEvidence",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit landing completion obligation",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "codex:tool/71684d",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/landing/landing.go,swap,failed,11,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/landing,TestLandingCompletionEvidence,passed,13\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/landing,fail,5181\nfailures[11]{package,test,line}:\n  github.com/gibbonmi/bench/internal/landing,TestLandingCompletionEvidence/destination_addition,\"completion_evidence_test.go:157: incomplete evidence published or lost reason \\\"completion composition changes added.txt\\\": <nil>\"\n  github.com/gibbonmi/bench/internal/landing,TestLandingCompletionEvidence/destination_deletion,\"completion_evidence_test.go:157: incomplete evidence published or lost reason \\\"completion composition changes foreign\\\": <nil>\"\n  github.com/gibbonmi/bench/internal/landing,TestLandingCompletionEvidence/extra_spec_bytes,\"completion_evidence_test.go:157: incomplete evidence published or lost reason \\\"exact status transform\\\": <nil>\"\n  github.com/gibbonmi/bench/internal/landing,TestLandingCompletionEvidence/failed_integration,\"completion_evidence_test.go:157: incomplete evidence published or lost reason \\\"verification integration\\\": <nil>\"\n  github.com/gibbonmi/bench/internal/landing,TestLandingCompletionEvidence/missing_integration,\"completion_evidence_test.go:157: incomplete evidence published or lost reason \\\"verification integration\\\": <nil>\"\n  github.com/gibbonmi/bench/internal/landing,TestLandingCompletionEvidence/missing_reconciliation,\"completion_evidence_test.go:157: incomplete evidence published or lost reason \\\"reconciliation E1\\\": <nil>\"\n  github.com/gibbonmi/bench/internal/landing,TestLandingCompletionEvidence/missing_record,\"completion_evidence_test.go:157: incomplete evidence published or lost reason \\\"retain a valid native result record\\\": <nil>\"\n  github.com/gibbonmi/bench/internal/landing,TestLandingCompletionEvidence/pending_integration,\"completion_evidence_test.go:157: incomplete evidence published or lost reason \\\"verification integration\\\": <nil>\"\n  github.com/gibbonmi/bench/internal/landing,TestLandingCompletionEvidence/spec_mode_change,\"completion_evidence_test.go:157: incomplete evidence published or lost reason \\\"exact status transform\\\": <nil>\"\n  github.com/gibbonmi/bench/internal/landing,TestLandingCompletionEvidence/stale_integration,\"completion_evidence_test.go:157: incomplete evidence published or lost reason \\\"verification integration\\\": <nil>\"\n  github.com/gibbonmi/bench/internal/landing,TestLandingCompletionEvidence/wrong_final_verifier,\"completion_evidence_test.go:157: incomplete evidence published or lost reason \\\"verification integration\\\": <nil>\"\nskips[0]{package,test,reason}:\n",
+              "digest": "sha256:c1ec32e8a19aa9c7bfae231950f94a1bea115f09e1b662017f4b4c86abdcf26d"
             }
           }
         }
@@ -2090,15 +2419,120 @@ The current function census did not expose these binary-driven journeys.
           "supersedes": [
             "c3-coverage-pending"
           ]
+        },
+        {
+          "id": "c3-standards-repair-terminal",
+          "performer": "/root/c3_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "46ce309594a597037464d2511c9d2d9da3c0e3fd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:agent//root/c3_standards/943a373b",
+            "excerpt": "Standards repair review completed clean.\n\n- Frozen pair: `06a589b935ce26fd9e27d18292f20985c81db487..943a373b3e4b714b7074da233f7ad1c4b7a6f1e5`\n- Actual line: `gpt-5.6-sol / high / 1 iteration`\n- Terminal state: positive, completed\n- Hard violations: 0\n- Judgment calls: 0\n- Worst issue: none\n- Repair targets: 0",
+            "digest": "sha256:c34a790123ffb18ea5ae787a1b6479cbfc03b3d9e0b76a910147463553dd58bc"
+          },
+          "axis": "Standards",
+          "base": "06a589b935ce26fd9e27d18292f20985c81db487",
+          "tip": "943a373b3e4b714b7074da233f7ad1c4b7a6f1e5",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-standards-terminal"
+          ]
+        },
+        {
+          "id": "c3-spec-repair-terminal",
+          "performer": "/root/c3_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "46ce309594a597037464d2511c9d2d9da3c0e3fd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:agent//root/c3_spec/943a373b",
+            "excerpt": "Spec repair axis terminal state: **completed, clean**.\n\n- Frozen pair: `06a589b935ce26fd9e27d18292f20985c81db487..943a373b3e4b714b7074da233f7ad1c4b7a6f1e5`\n- Repair focus: `55520083eb588b3d9aa17667d18a06b9c6a51c5c..943a373b3e4b714b7074da233f7ad1c4b7a6f1e5`\n- Actual line: `gpt-5.6-sol / high / 1 iteration`\n- Findings: 0\n- Worst issue: none\n- Deduplicated repair targets: 0",
+            "digest": "sha256:3a106aed04f774e910c09f0be4375efd8cd54df88cd54ddb49b441206dc6f992"
+          },
+          "axis": "Spec",
+          "base": "06a589b935ce26fd9e27d18292f20985c81db487",
+          "tip": "943a373b3e4b714b7074da233f7ad1c4b7a6f1e5",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-spec-terminal"
+          ]
+        },
+        {
+          "id": "c3-coverage-repair-terminal",
+          "performer": "/root/c3_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "46ce309594a597037464d2511c9d2d9da3c0e3fd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:agent//root/c3_coverage/943a373b",
+            "excerpt": "Coverage repair review completed clean.\n\n- Frozen pair: `06a589b935ce26fd9e27d18292f20985c81db487..943a373b3e4b714b7074da233f7ad1c4b7a6f1e5`\n- Repair delta reviewed: `55520083eb588b3d9aa17667d18a06b9c6a51c5c..943a373b3e4b714b7074da233f7ad1c4b7a6f1e5`\n- Actual line: `gpt-5.6-sol` / high / 1 iteration\n- Terminal state: completed clean\n- Findings: 0\n- Worst issue: none\n- Repair targets: 0",
+            "digest": "sha256:dfbbe9ba0f648fe179afcabcacee6c011a774e3a4a519756b93e589af87fd99a"
+          },
+          "axis": "Coverage",
+          "base": "06a589b935ce26fd9e27d18292f20985c81db487",
+          "tip": "943a373b3e4b714b7074da233f7ad1c4b7a6f1e5",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-coverage-terminal"
+          ]
         }
       ]
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "c9201fa276fabba32c215fa364122fd46a775776",
+    "state": "completed",
+    "source_digest": "46ce309594a597037464d2511c9d2d9da3c0e3fd",
     "performer": "/root",
-    "reconciliation": {},
+    "reconciliation": {
+      "E1": "covered",
+      "E2": "covered",
+      "E3": "covered",
+      "E4": "covered",
+      "E5": "covered",
+      "E6": "covered",
+      "E7": "covered",
+      "E8": "covered",
+      "E9": "covered",
+      "E10": "covered",
+      "E11": "covered",
+      "E12": "covered",
+      "E13": "covered",
+      "E14": "covered",
+      "E15": "covered",
+      "E16": "covered",
+      "E17": "covered",
+      "E18": "covered",
+      "E19": "covered",
+      "E20": "covered",
+      "E21": "covered",
+      "E22": "covered",
+      "E23": "covered",
+      "E24": "covered",
+      "E25": "covered",
+      "E26": "covered",
+      "E27": "covered",
+      "E28": "covered",
+      "E29": "covered",
+      "E30": "covered",
+      "E31": "covered",
+      "E32": "covered",
+      "E33": "covered",
+      "E34": "covered",
+      "E35": "covered",
+      "E36": "covered",
+      "E37": "covered",
+      "E38": "covered"
+    },
     "verification": [
       {
         "id": "c3-integration-initial",
@@ -2117,6 +2551,60 @@ The current function census did not expose these binary-driven journeys.
         "requirement": "integration",
         "command": "bench test --check system",
         "exit_code": 1
+      },
+      {
+        "id": "c3-acceptance-selector-refusal",
+        "performer": "/root",
+        "role": "author-verification",
+        "model": "gpt-6-astra",
+        "effort": "high",
+        "source_digest": "1807c31d4fe57a17dd7b1bab70eb42ccbb68a765",
+        "state": "failed",
+        "outcome": "fail",
+        "native_ref": {
+          "ref": "codex:tool/f4a1d7",
+          "excerpt": "error: changed selection failed \u2014 changed Go path is not in a current package\nworktree: /home/mgibs/.bench/worktrees/bench-2826441890/c615fc296ef1abf0cc0456b06d3b1d9c-9d9cea28c60222a3010e9e1d497d8da1\n",
+          "digest": "sha256:60b0122516a1d97d96340c9333e41f71d2df4b899d19a0c1dbe59ea83829ce0d"
+        },
+        "requirement": "acceptance",
+        "command": "bench test --changed --base de1447b31903b170679b66bd200431cc15ddc73f",
+        "exit_code": 1
+      },
+      {
+        "id": "c3-acceptance-final",
+        "performer": "/root",
+        "role": "author-verification",
+        "model": "gpt-6-astra",
+        "effort": "high",
+        "source_digest": "46ce309594a597037464d2511c9d2d9da3c0e3fd",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "codex:tool/e67fc9",
+          "excerpt": "packages[97]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench,pass,4\n  github.com/gibbonmi/bench/cmd/bench,pass,40099\n  github.com/gibbonmi/bench/internal/adopt,pass,21270\n  github.com/gibbonmi/bench/internal/anchors,pass,526\n  github.com/gibbonmi/bench/internal/axi,pass,17\n  github.com/gibbonmi/bench/internal/axi/axitest,pass,6\n  github.com/gibbonmi/bench/internal/benchguard,pass,5\n  github.com/gibbonmi/bench/internal/benchhome,pass,5\n  github.com/gibbonmi/bench/internal/bounds,pass,524\n  github.com/gibbonmi/bench/internal/brokermanifest,no-tests,0\n  github.com/gibbonmi/bench/internal/canary,pass,81\n  github.com/gibbonmi/bench/internal/canonicalpath,pass,15\n  github.com/gibbonmi/bench/internal/capability,pass,32\n  github.com/gibbonmi/bench/internal/census,pass,849\n  github.com/gibbonmi/bench/internal/commit,pass,15122\n  github.com/gibbonmi/bench/internal/conformance,pass,42663\n  github.com/gibbonmi/bench/internal/conformance/registry,pass,3\n  github.com/gibbonmi/bench/internal/consumers,pass,7788\n  github.com/gibbonmi/bench/internal/contract,pass,3\n  github.com/gibbonmi/bench/internal/coverage,pass,7213\n  github.com/gibbonmi/bench/internal/dashboard,pass,5181\n  github.com/gibbonmi/bench/internal/diff,pass,44838\n  github.com/gibbonmi/bench/internal/env,pass,17\n  github.com/gibbonmi/bench/internal/freshness,pass,28414\n  github.com/gibbonmi/bench/internal/freshness/check,no-tests,0\n  github.com/gibbonmi/bench/internal/gate,pass,33242\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,1068\n  github.com/gibbonmi/bench/internal/gate/greenmarker,pass,317\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,2911\n  github.com/gibbonmi/bench/internal/git,pass,8099\n  github.com/gibbonmi/bench/internal/gitguard,pass,20173\n  github.com/gibbonmi/bench/internal/gittest,no-tests,0\n  github.com/gibbonmi/bench/internal/gocache,pass,401\n  github.com/gibbonmi/bench/internal/gocache/cleanprobe,no-tests,0\n  github.com/gibbonmi/bench/internal/guards,pass,234\n  github.com/gibbonmi/bench/internal/handoff,pass,11770\n  github.com/gibbonmi/bench/internal/handoffdoc,pass,2031\n  github.com/gibbonmi/bench/internal/harness,no-tests,0\n  github.com/gibbonmi/bench/internal/harnesses,pass,4\n  github.com/gibbonmi/bench/internal/intent,pass,11517\n  github.com/gibbonmi/bench/internal/intent/admissionpolicy,pass,7\n  github.com/gibbonmi/bench/internal/intent/ledger,pass,5\n  github.com/gibbonmi/bench/internal/jsonfile,pass,5\n  github.com/gibbonmi/bench/internal/landing,pass,31800\n  github.com/gibbonmi/bench/internal/landing/settlepolicy,pass,5\n  github.com/gibbonmi/bench/internal/learnings,pass,323\n  github.com/gibbonmi/bench/internal/lines,pass,13\n  github.com/gibbonmi/bench/internal/maps,pass,868\n  github.com/gibbonmi/bench/internal/modelid,pass,6\n  github.com/gibbonmi/bench/internal/modelid/modelidtest,no-tests,0\n  github.com/gibbonmi/bench/internal/models,pass,558\n  github.com/gibbonmi/bench/internal/otelrecord,pass,407\n  github.com/gibbonmi/bench/internal/outline,pass,600\n  github.com/gibbonmi/bench/internal/packagesurface,pass,19\n  github.com/gibbonmi/bench/internal/poolkey,pass,64\n  github.com/gibbonmi/bench/internal/preflight,pass,64530\n  github.com/gibbonmi/bench/internal/preprelease,pass,43\n  github.com/gibbonmi/bench/internal/probe,pass,41457\n  github.com/gibbonmi/bench/internal/prose,pass,619\n  github.com/gibbonmi/bench/internal/publication,pass,9947\n  github.com/gibbonmi/bench/internal/puritycensus,pass,5\n  github.com/gibbonmi/bench/internal/racetests,no-tests,0\n  github.com/gibbonmi/bench/internal/refresh,pass,36\n  github.com/gibbonmi/bench/internal/releaseevidence,pass,2992\n  github.com/gibbonmi/bench/internal/releasepreflight,pass,7\n  github.com/gibbonmi/bench/internal/retros,pass,34\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,2613\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0\n  github.com/gibbonmi/bench/internal/roadmap,pass,6029\n  github.com/gibbonmi/bench/internal/roadmap/roadmaptest,no-tests,0\n  github.com/gibbonmi/bench/internal/roadmapflow,pass,680\n  github.com/gibbonmi/bench/internal/runbinary,pass,25053\n  github.com/gibbonmi/bench/internal/sanitize,pass,5\n  github.com/gibbonmi/bench/internal/sessioninspect,pass,2026\n  github.com/gibbonmi/bench/internal/shellcommand,pass,2\n  github.com/gibbonmi/bench/internal/shift,pass,3868\n  github.com/gibbonmi/bench/internal/skillsindex,pass,194\n  github.com/gibbonmi/bench/internal/spec,pass,931\n  github.com/gibbonmi/bench/internal/status,pass,22389\n  github.com/gibbonmi/bench/internal/stophook,pass,355\n  github.com/gibbonmi/bench/internal/structure,pass,1409\n  github.com/gibbonmi/bench/internal/subprocess,pass,593\n  github.com/gibbonmi/bench/internal/terminal,no-tests,0\n  github.com/gibbonmi/bench/internal/testlines,pass,4\n  github.com/gibbonmi/bench/internal/testrepo,no-tests,0\n  github.com/gibbonmi/bench/internal/testreport,pass,26595\n  github.com/gibbonmi/bench/internal/tickets,pass,10\n  github.com/gibbonmi/bench/internal/toon,pass,3\n  github.com/gibbonmi/bench/internal/usage,pass,3\n  github.com/gibbonmi/bench/internal/worktree,pass,152226\n  github.com/gibbonmi/bench/internal/worktree/landingpolicy,pass,4\n  github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy,pass,7\n  github.com/gibbonmi/bench/internal/worktree/reclaimpolicy,pass,4\n  github.com/gibbonmi/bench/internal/writeguard,pass,3\n  github.com/gibbonmi/bench/tests/canary/guard-classifier-table/word-test-drops-xargs/files/internal/conformance,pass,2\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/default-branch-refabricated/files/internal/git,no-tests,0\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/default-branch-refabricated/files/internal/roadmap,no-tests,0\nfailures[0]{package,test,line}:\nskips[10]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/capability,TestCapabilityWritesLineBeforeSkip/file_transport/skips,\"capability_test.go:120: requires a host fifo\"\n  github.com/gibbonmi/bench/internal/capability,TestCapabilityWritesLineBeforeSkip/stdout_fallback/skips,\"capability_test.go:144: requires a host fifo\"\n  github.com/gibbonmi/bench/internal/capability,TestEnvironmentWritesLineBeforeSkip/skips,\"capability_test.go:165: subject root has no bin/bench.sh\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket3598157310/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"environment: BENCH_CONFORMANCE_ROOT not set\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket3843996133/001/.bench-home/worktrees/001-2454750424/40f7b64c89793a53690db58b5f594fb8-b0524f47541b3954dc2a5cbc8e5a9c14: bind:\u2026 (257 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket3259797845/001/.bench-home/worktrees/001-4283935671/1d094b12e696abe5e55ef5861a77ed6f-0c1ad5c5445297e4edb980c4f697bf5\u2026 (270 bytes)\"\nroot_conformance[1]{package,status,route}:\n  github.com/gibbonmi/bench/internal/conformance,skipped,bench test --check <name>\n",
+          "digest": "sha256:72d121ca9fda2be59b5c606f25fc751b3fb9e828e9a61cda6a37f936a6ec571e"
+        },
+        "requirement": "acceptance",
+        "command": "bench test --package ./...",
+        "exit_code": 0
+      },
+      {
+        "id": "c3-integration-final",
+        "performer": "/root",
+        "role": "author-verification",
+        "model": "gpt-6-astra",
+        "effort": "high",
+        "source_digest": "46ce309594a597037464d2511c9d2d9da3c0e3fd",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "codex:tool/de0bc0",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,96472\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n",
+          "digest": "sha256:45b64836f49c508dec8549dd09f48b7111654c08c4273db70ba3621284adb627"
+        },
+        "requirement": "integration",
+        "command": "bench test --check system",
+        "exit_code": 0
       }
     ]
   },
@@ -2154,6 +2642,21 @@ The current function census did not expose these binary-driven journeys.
     {
       "from": "sha256:2dafdcc48cb42371008792230a53b6c03b9084f37d8ae5cac79d58ab919fe94f",
       "to": "sha256:013da5369b1c20983a9334647a1662e26944f81926d81846258ef531f71fd2ed",
+      "chunk_ids": {
+        "1": [
+          "1"
+        ],
+        "2": [
+          "2"
+        ],
+        "3": [
+          "3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:013da5369b1c20983a9334647a1662e26944f81926d81846258ef531f71fd2ed",
+      "to": "sha256:e298566dc9a9abc5e580968cae0bf69057dfe06abb8e59feb3fb286948d0c754",
       "chunk_ids": {
         "1": [
           "1"
