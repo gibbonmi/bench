@@ -214,3 +214,7 @@ governs how you make it.
 If verification surfaces a design problem that the tests pass through, name it
 as a finding for `/bench-review-implementation`. That phase owns semantic
 review. Do not fold it silently into a fix.
+
+## Ordinary assessment evidence
+
+Before final landing, update the ordinary-work assessment record through `bench assessment record --input <file>`. Follow `.bench/BENCH-reference.md` and retain this final verification work with its native evidence. After landing, append available close evidence to that same record.

@@ -56,3 +56,31 @@ Replace the repository key with the target repository's pool key before import.
 
 The package tests provide fixed native event fragments and unequal synthetic rates.
 The prices in those tests are arithmetic fixtures. They are not current provider prices or actual account charges.
+
+## Selected native evidence
+
+`record --input` accepts optional `bench_inputs` and `harness_inputs` on the normalized Run.
+[The collection types](collection.go) define selectors and their explicit attempt, chunk, and role mapping.
+The expected assignment must match the selected trace's worktree subject and each census event's assignment.
+Selection uses identities. It does not discover sessions from timestamps.
+
+`trace_ids` contains selectors whose `id` is a trace ID. Finished spans become observed attempt intervals and provenance references.
+The reader streams the existing OTEL file, retaining bounded selected evidence. Start records with a completed counterpart do not remain unfinished.
+Nested and disjoint spans use the same interval-union calculation as other attempt timing.
+
+`census_event_ids` contains selectors whose `id` combines the assignment ID, a colon, and the one-based record position.
+The existing census owner decodes each selected row. Each observed raw command has a referenced measure and its native verb head.
+Collect census evidence before release removes the assignment's census file.
+
+[The harness mapper](harness.go) owns the supported native format and counter mapping.
+It accepts an explicitly supplied, bounded Codex token-count JSON fragment; it does not read a whole session automatically.
+Inclusive native input subtracts cached input. Reasoning output is already part of output and is not added again.
+Unsupported counter semantics refuse the import. Missing or malformed native fragments remain diagnostics with unknown measurements.
+
+The `measures` map retains other explicitly supplied numeric observations with a reference per measure.
+Tools, read paths, turns, and iterations remain unknown when the selected producer does not expose them.
+Use native evidence references for read paths. Do not infer a read from arbitrary shell command text.
+
+The `intervals` array retains observed start/end pairs and their native references. It does not replace explicit attempt endpoints.
+The `diagnostics` array preserves incomplete-input evidence. Diagnostic references remain part of the record when later evidence arrives.
+Unknown native coverage never becomes a zero-valued measurement.

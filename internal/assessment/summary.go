@@ -22,6 +22,7 @@ func Summarize(r Run) (Summary, error) {
 	if err != nil {
 		return out, err
 	}
+	out.Incomplete = len(r.Diagnostics) > 0
 	var spans [][2]time.Time
 	for _, a := range r.Attempts {
 		cost, err := estimateUsage(a, usages[a.AttemptID])
@@ -30,12 +31,18 @@ func Summarize(r Run) (Summary, error) {
 		}
 		addMoney(&out.Cost.Estimated, cost.Estimated)
 		addMoney(&out.Cost.Actual, cost.Actual)
-		if a.StartedAt == nil || a.EndedAt == nil {
-			out.Incomplete = true
-			continue
+		var observed [][2]time.Time
+		for _, span := range a.Intervals {
+			observed = append(observed, [2]time.Time{span.Start, span.End})
 		}
-		spans = append(spans, [2]time.Time{*a.StartedAt, *a.EndedAt})
-		out.EffortSeconds += a.EndedAt.Sub(*a.StartedAt).Seconds()
+		if a.StartedAt != nil && a.EndedAt != nil {
+			observed = append(observed, [2]time.Time{*a.StartedAt, *a.EndedAt})
+		}
+		if len(observed) == 0 || (a.StartedAt != nil && a.EndedAt == nil) {
+			out.Incomplete = true
+		}
+		out.EffortSeconds += unionSeconds(observed)
+		spans = append(spans, observed...)
 	}
 	if len(r.Attempts) == 0 {
 		out.Cost.Estimated.Partial = true
@@ -46,19 +53,7 @@ func Summarize(r Run) (Summary, error) {
 		v := r.EndedAt.Sub(*r.StartedAt).Seconds()
 		out.WallSeconds = &v
 	} else if len(spans) > 0 {
-		sort.Slice(spans, func(i, j int) bool { return spans[i][0].Before(spans[j][0]) })
-		start, end := spans[0][0], spans[0][1]
-		total := 0.0
-		for _, p := range spans[1:] {
-			if p[0].After(end) {
-				total += end.Sub(start).Seconds()
-				start = p[0]
-				end = p[1]
-			} else if p[1].After(end) {
-				end = p[1]
-			}
-		}
-		total += end.Sub(start).Seconds()
+		total := unionSeconds(spans)
 		out.WallSeconds = &total
 	} else {
 		out.Incomplete = true
@@ -77,4 +72,22 @@ func addMoney(dst *Money, src Money) {
 	for currency, n := range src.Known {
 		dst.Known[currency] += n
 	}
+}
+
+func unionSeconds(spans [][2]time.Time) float64 {
+	if len(spans) == 0 {
+		return 0
+	}
+	sort.Slice(spans, func(i, j int) bool { return spans[i][0].Before(spans[j][0]) })
+	start, end := spans[0][0], spans[0][1]
+	total := 0.0
+	for _, p := range spans[1:] {
+		if p[0].After(end) {
+			total += end.Sub(start).Seconds()
+			start, end = p[0], p[1]
+		} else if p[1].After(end) {
+			end = p[1]
+		}
+	}
+	return total + end.Sub(start).Seconds()
 }

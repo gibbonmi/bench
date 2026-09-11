@@ -37,6 +37,11 @@ func Validate(r Run) error {
 		if err := interval(a.StartedAt, a.EndedAt, a.TimeReference); err != nil {
 			return err
 		}
+		for _, span := range a.Intervals {
+			if err := interval(&span.Start, &span.End, &span.Reference); err != nil {
+				return err
+			}
+		}
 		for _, e := range a.Usage {
 			if e.EventID == "" || e.SessionID != a.SessionID || e.Epoch < 0 || e.Sequence < 0 || e.Counter == "" || !validReference(e.Reference) {
 				return fmt.Errorf("missing native usage provenance")
@@ -50,10 +55,20 @@ func Validate(r Run) error {
 		if _, err := Estimate(a); err != nil {
 			return err
 		}
+		for _, v := range a.Measures {
+			if !validReference(v.Reference) || (v.Value != nil && (!finite(*v.Value) || *v.Value < 0)) {
+				return fmt.Errorf("invalid collected measure or provenance")
+			}
+		}
 		for _, ref := range a.Evidence {
 			if !validReference(ref) {
 				return fmt.Errorf("missing evidence provenance")
 			}
+		}
+	}
+	for _, ref := range r.Diagnostics {
+		if !validReference(ref) {
+			return fmt.Errorf("invalid diagnostic provenance")
 		}
 	}
 	for _, ref := range r.Evidence {

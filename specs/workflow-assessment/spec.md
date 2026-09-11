@@ -73,7 +73,7 @@ Trial execution remains a separately approved action.
 
 Store versioned JSON at `$BENCH_HOME/assessment/<repo-key>/<run-id>.json`, beside the census and OTEL stores and outside the disposable worktree pool. Resolve repo identity through the existing pool-key owner. Records survive worktree release and reclaim. They remain until explicit cleanup. Do not add automatic expiry. Initial explicit cleanup uses a user-directed file removal after naming exact records; this spec adds no cleanup verb.
 
-Run fields are `version`, `run_id`, `repo_key`, `source`, `condition`, `task_id`, `holdout`, `started_at`, `ended_at`, `time_reference`, `state`, `attempts`, `evidence`, and `quality`. An attempt names `attempt_id`, `chunk_id`, `role`, `session_id`, `model`, `effort`, `state`, `started_at`, `ended_at`, `time_reference`, `usage`, `cost`, and native evidence references. Roles distinguish implementation, repair, verification, review, and diagnostic consultation. Failed and cancelled attempts remain. An imported update may append or fill previously unknown evidence, but cannot silently discard an existing attempt or change a known identity. Identical import is idempotent; conflicting content is a refusal.
+Run fields are `version`, `run_id`, `repo_key`, `source`, `condition`, `task_id`, `holdout`, `started_at`, `ended_at`, `time_reference`, `state`, `attempts`, `evidence`, `quality`, `bench_inputs`, `harness_inputs`, and `diagnostics`. An attempt names `attempt_id`, `chunk_id`, `role`, `session_id`, `model`, `effort`, `state`, `started_at`, `ended_at`, `time_reference`, `usage`, `cost`, `measures`, `intervals`, and native evidence references. Roles distinguish implementation, repair, verification, review, and diagnostic consultation. Failed and cancelled attempts remain. An imported update may append or fill previously unknown evidence, but cannot silently discard an existing attempt or change a known identity. Identical import is idempotent; conflicting content is a refusal.
 
 Usage fields are `input_uncached`, `input_cached`, and `output`. A source may also supply `input_total` with its declared semantics. If total includes cached input, derive uncached as total minus cached. Never add total and cached together.
 
@@ -147,7 +147,7 @@ Bench spans + census / native measures -> normalized run -> local store
 | A20 | 20 | Comparison reports variation and failed quality outcomes | New test: TestAssessmentComparison in internal/assessment/comparison_test.go | Use mixed successful failed and incomplete runs. |
 | A21 | 21 | A kit-causal comparison requires the three FT231 conditions | New test: TestAssessmentComparison in internal/assessment/comparison_test.go | Omit each required arm independently. Also add an unknown fourth arm. Require refusal for every case. |
 | A22 | 22 | Assessment never changes executable model defaults | New test: TestAssessmentCommand in internal/assessment/command_test.go | Run each assessment command and compare binding bytes before and after. |
-| A23 | 23 | Malformed or unfinished native input remains incomplete | New test: TestAssessmentRecord in internal/assessment/record_test.go | Mix one valid span with a truncated span and omit an expected session log. |
+| A23 | 23 | Malformed or unfinished native input remains incomplete | New test: TestAssessmentCollectionNativeGaps and TestAssessmentCollectionSpanCoverage in internal/assessment/collection_test.go | Mix one valid span with a truncated span and omit an expected session log. |
 
 | A24 | 24 | Total cost includes every role and terminal attempt state | New test: TestAssessmentRecordUnknownAndCharges in internal/assessment/record_test.go | Use distinct costs for implementation failures repairs reviews verification and advice. |
 | A25 | 25 | An update can append an attempt without deleting earlier attempts | New test: TestAssessmentRecordUpdates in internal/assessment/record_test.go | Append a successful attempt to a failed run. |
@@ -446,3 +446,21 @@ Synthetic lifecycle dogfood recorded synthetic-release from a disposable main-ba
 The second repair pass closes P4/C3 and P5. TestAssessmentRecordDeltaEpochs first failed with an unknown total for independent quantities 10 and 5. The fix limits epoch-order validation to cumulative counters. The same test and the full assessment suite then passed. Both authoritative timestamp field lists now include time_reference.
 
 The broader reviewer-merge gate found a guidance-table ordering regression. Restoring the original first row made TestAXIGuidanceContractBites pass without changing its assertion.
+
+## Chunk 2 author evidence
+
+Chunk 1 closed at 0d255141 after three clean Sol reaffirmations. Its checkpoint passed gofmt, vet, tests, race checks, and the system suite. Shellcheck was skipped; six capability-dependent cases were skipped. Ticket 4 is now checked complete.
+
+Collection selectors and their explicit mappings are defined in internal/assessment/collection.go. Bench inputs select trace IDs and census event IDs under one expected assignment. Harness inputs select a bounded native fragment and explicitly declare its session, event, epoch, sequence, and supported counter semantics.
+
+Attempt measures retain referenced numeric observations. Attempt intervals retain observed start/end pairs with native references. Run diagnostics retain missing, malformed, or unfinished input coverage. These fields implement the existing native-evidence and elapsed-union requirements.
+
+Initial command fixtures failed because native selectors were unsupported. After collection was added, four further cases failed: start/end closure, disjoint spans, nested spans, and malformed coverage. The shared OTEL decoder and interval-union owner now cover those cases.
+
+Named probes bit and restored production. Bypassing trace assignment checks failed both foreign and ambiguous cases. Dropping the second selected trace failed the two-trace union case. Dropping the second census event failed its selected-count case. Bypassing census collection failed both census refusal partitions.
+
+Omitting native diagnostics failed four missing/malformed/unfinished cases. Bypassing harness counter semantics failed the unsupported-semantics case. Native inputs and expected arithmetic use synthetic fixtures. No comparison trial or model launch occurred.
+
+The existing OTEL and census suites passed after their read projections were extended. Historical readers retain their existing behavior. Phase guidance requests ordinary record updates at review and final close, without requiring optional harness metrics or authorizing paid experiments.
+
+The census event projection lives in internal/census/events.go. The commit lane caught growth beyond census.go's 400-line bound, so this approved ownership expansion preserves that existing file budget.

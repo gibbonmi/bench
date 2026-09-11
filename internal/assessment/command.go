@@ -46,6 +46,11 @@ func Command(s Store, args []string) (string, int) {
 		if err := readJSON(parsed.Flags["--input"], &r); err != nil {
 			return fail(err)
 		}
+		var err error
+		r, err = Collect(s, r)
+		if err != nil {
+			return fail(err)
+		}
 		if err := s.Record(r); err != nil {
 			return fail(err)
 		}

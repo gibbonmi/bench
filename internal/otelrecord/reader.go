@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"os"
 	"strconv"
 	"time"
@@ -110,22 +111,38 @@ func NewestLanding(home, root string) (Landing, bool) {
 // line the decoder refuses answers none, and so does a start line, whose omitted end
 // time is what marks the span as still running.
 func finishedSpans(line []byte) []Span {
-	var data tracesData
-	if json.Unmarshal(line, &data) != nil {
-		return nil
-	}
+	entries, _ := decodeRecord(line)
 	var out []Span
-	for _, resource := range data.ResourceSpans {
-		for _, scope := range resource.ScopeSpans {
-			for _, encoded := range scope.Spans {
-				if encoded.EndTimeUnixNano == "" {
-					continue
-				}
-				out = append(out, decodeSpan(encoded))
-			}
+	for _, entry := range entries {
+		if entry.finished {
+			out = append(out, entry.Span)
 		}
 	}
 	return out
+}
+
+type decodedRecordSpan struct {
+	Span
+	finished bool
+}
+
+func decodeRecord(line []byte) ([]decodedRecordSpan, error) {
+	var data tracesData
+	if err := json.Unmarshal(line, &data); err != nil {
+		return nil, err
+	}
+	if len(data.ResourceSpans) == 0 {
+		return nil, fmt.Errorf("missing resource spans")
+	}
+	var out []decodedRecordSpan
+	for _, resource := range data.ResourceSpans {
+		for _, scope := range resource.ScopeSpans {
+			for _, encoded := range scope.Spans {
+				out = append(out, decodedRecordSpan{Span: decodeSpan(encoded), finished: encoded.EndTimeUnixNano != ""})
+			}
+		}
+	}
+	return out, nil
 }
 
 func decodeSpan(encoded span) Span {
@@ -169,4 +186,80 @@ func decodeValue(value anyValue) string {
 		return strconv.FormatFloat(*value.DoubleValue, 'g', -1, 64)
 	}
 	return ""
+}
+
+// ReadSelected streams only selected traces into memory, including unfinished spans.
+// Malformed lines remain explicit coverage gaps instead of disappearing as empty results.
+func ReadSelected(home, root string, traceIDs []string) ([]Span, []string, error) {
+	path := Path(home, root)
+	if err := NewWriter(home, root).gradeRecordPath(path); err != nil {
+		return nil, nil, err
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer file.Close()
+	wanted := map[string]bool{}
+	for _, id := range traceIDs {
+		wanted[id] = true
+	}
+	scanner := bufio.NewScanner(file)
+	scanner.Buffer(make([]byte, 0, 64<<10), recordLineLimit)
+	var out []Span
+	var problems []string
+	line := 0
+	retained := int64(0)
+	problem := func(reason string) bool {
+		retained += int64(len(reason))
+		if retained > bounds.ControlRecordLimit {
+			return false
+		}
+		problems = append(problems, reason)
+		return true
+	}
+	for scanner.Scan() {
+		line++
+		entries, err := decodeRecord(scanner.Bytes())
+		if err != nil {
+			if !problem(fmt.Sprintf("line %d malformed", line)) {
+				return nil, nil, fmt.Errorf("native diagnostics exceed control record bound")
+			}
+			continue
+		}
+		for _, entry := range entries {
+			decoded := entry.Span
+			if !wanted[decoded.TraceID] {
+				continue
+			}
+			if decoded.TraceID == "" || decoded.SpanID == "" || decoded.Start.IsZero() || (!decoded.End.IsZero() && decoded.End.Before(decoded.Start)) || (entry.finished && decoded.End.IsZero()) {
+				if !problem(fmt.Sprintf("line %d invalid span", line)) {
+					return nil, nil, fmt.Errorf("native diagnostics exceed control record bound")
+				}
+				continue
+			}
+			retained += int64(len(scanner.Bytes()))
+			if retained > bounds.ControlRecordLimit {
+				return nil, problems, fmt.Errorf("selected spans exceed control record bound")
+			}
+			out = append(out, decoded)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return out, problems, fmt.Errorf("read selected spans: %w", err)
+	}
+	finished := map[string]bool{}
+	for _, s := range out {
+		if !s.End.IsZero() {
+			finished[s.TraceID+"/"+s.SpanID] = true
+		}
+	}
+	selected := out[:0]
+	for _, s := range out {
+		if s.End.IsZero() && finished[s.TraceID+"/"+s.SpanID] {
+			continue
+		}
+		selected = append(selected, s)
+	}
+	return selected, problems, nil
 }

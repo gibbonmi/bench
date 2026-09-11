@@ -47,23 +47,34 @@ type Cost struct {
 	Actual    []Charge `json:"actual,omitempty"`
 }
 
+type ObservedInterval struct {
+	Start     time.Time `json:"start"`
+	End       time.Time `json:"end"`
+	Reference Reference `json:"reference"`
+}
+
 type Attempt struct {
-	AttemptID     string      `json:"attempt_id"`
-	ChunkID       string      `json:"chunk_id"`
-	Role          string      `json:"role"`
-	SessionID     string      `json:"session_id"`
-	Model         string      `json:"model"`
-	Effort        string      `json:"effort"`
-	State         string      `json:"state"`
-	TimeReference *Reference  `json:"time_reference,omitempty"`
-	StartedAt     *time.Time  `json:"started_at,omitempty"`
-	EndedAt       *time.Time  `json:"ended_at,omitempty"`
-	Usage         []Event     `json:"usage"`
-	Cost          Cost        `json:"cost"`
-	Evidence      []Reference `json:"evidence"`
+	Intervals     []ObservedInterval `json:"intervals,omitempty"`
+	Measures      map[string]Measure `json:"measures,omitempty"`
+	AttemptID     string             `json:"attempt_id"`
+	ChunkID       string             `json:"chunk_id"`
+	Role          string             `json:"role"`
+	SessionID     string             `json:"session_id"`
+	Model         string             `json:"model"`
+	Effort        string             `json:"effort"`
+	State         string             `json:"state"`
+	TimeReference *Reference         `json:"time_reference,omitempty"`
+	StartedAt     *time.Time         `json:"started_at,omitempty"`
+	EndedAt       *time.Time         `json:"ended_at,omitempty"`
+	Usage         []Event            `json:"usage"`
+	Cost          Cost               `json:"cost"`
+	Evidence      []Reference        `json:"evidence"`
 }
 
 type Run struct {
+	BenchInputs   *BenchInputs       `json:"bench_inputs,omitempty"`
+	HarnessInputs []HarnessInput     `json:"harness_inputs,omitempty"`
+	Diagnostics   []Reference        `json:"diagnostics,omitempty"`
 	Version       int                `json:"version"`
 	RunID         string             `json:"run_id"`
 	RepoKey       string             `json:"repo_key"`

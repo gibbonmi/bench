@@ -72,3 +72,7 @@ boundary it writes the phase reached into `capture/session-handoff.md` and refre
 the pin with `bench handoff`. Outside the kit-guidance set, a diff large enough to hide
 bugs pauses to ask the reviewer before escalating tier or adding a cross-harness
 falsification pass. Tier escalation is an offer; the review phase owns the standing pass.
+
+## Ordinary assessment evidence
+
+The review and final-check phases own ordinary assessment updates. Keep the retained run identity available for those phase boundaries.

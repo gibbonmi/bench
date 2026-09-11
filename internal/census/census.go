@@ -70,15 +70,16 @@ func composeRecord(timestamp, head string) string {
 // and a later field is not part of it. A line with no separator, and a line whose head
 // field is empty, carry no head at all; only a foreign writer makes either.
 func parseRecord(line string) (string, bool) {
-	_, rest, ok := strings.Cut(line, recordSeparator)
+	_, head, ok := recordFields(line)
+	return head, ok
+}
+func recordFields(line string) (string, string, bool) {
+	timestamp, rest, ok := strings.Cut(line, recordSeparator)
 	if !ok {
-		return "", false
+		return "", "", false
 	}
 	head, _, _ := strings.Cut(rest, recordSeparator)
-	if head == "" {
-		return "", false
-	}
-	return head, true
+	return timestamp, head, head != ""
 }
 
 // assignment returns the assignment id of the first pool path in the raw command text.
