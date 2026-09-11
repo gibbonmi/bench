@@ -179,7 +179,7 @@ These fields preserve earlier evidence when a later reviewed delta changes the p
   "final_verification": [
     {
       "id": "acceptance",
-      "command": "bench test --changed --base de1447b31903b170679b66bd200431cc15ddc73f"
+      "command": "bench test --package ./..."
     },
     {
       "id": "integration",
@@ -433,7 +433,7 @@ Authoring close: this spec and its tickets are staged for user sign-off. The rev
 Reviewer amendment on 2026-09-11: apply decision #13 to the declared implementation model. Sol implementations use Astra/high review axes. This amendment follows the spec-authoring reviews recorded above.
 
 Implementation plan repair: chunk 1 includes `r1.md` for the accepted review findings.
-The final acceptance command uses the existing changed-package selector from the pinned landing base.
+The final acceptance command runs every ordinary package. The separate system command covers the tagged system package.
 This repair changes test citations and ownership only; the approved behavior remains the same.
 
 Chunk 1 guard repair replaces the retired clean-review no-artifact requirement with a terminal-result requirement.
@@ -473,3 +473,7 @@ The race journey retains its original ref and recovery assertions and adds a
 refusal before review of the destination delta. The completion reader uses the
 gate snapshot for entry metadata and the shared Git owner for bounded blob data.
 This expansion preserves the approved acceptance rows and pass criteria.
+
+The changed-package selector refuses system-only packages outside its current Go graph.
+Final acceptance therefore expands to all ordinary packages, with the full system
+suite still required separately. No test or pass criterion is removed.
