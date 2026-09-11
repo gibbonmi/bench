@@ -107,6 +107,29 @@ func TestNewestLandingChoosesTheNewestCompletedLandingTrace(t *testing.T) {
 	}
 }
 
+func TestNewestLandingSkipsTheNewestSubjectlessLanding(t *testing.T) {
+	home, root := t.TempDir(), t.TempDir()
+	recordLanding := func(subject, stage string) {
+		landing, span, finish := BeginIn(context.Background(), home, root, SeamLanding, SeamLanding)
+		if subject != "" {
+			span.SetAttributes(attribute.String(AttrSubjectID, subject))
+		}
+		_, closePhase := beginRecorded(landing, home, root, SeamGatePhase, stage)
+		closePhase()
+		finish()
+	}
+	recordLanding("published", "published-build")
+	recordLanding("", "unpublished-build")
+
+	got, ok := NewestLanding(home, root)
+	if !ok || got.Commit != "published" {
+		t.Fatalf("NewestLanding = %+v, %v, want the newest published landing", got, ok)
+	}
+	if len(got.Stages) != 1 || got.Stages[0].Name != "published-build" {
+		t.Fatalf("stages = %+v, want the published landing's phase", got.Stages)
+	}
+}
+
 func TestNewestLandingAnswersFalseWithoutALanding(t *testing.T) {
 	home, root := t.TempDir(), t.TempDir()
 	if _, ok := NewestLanding(home, root); ok {
@@ -116,6 +139,16 @@ func TestNewestLandingAnswersFalseWithoutALanding(t *testing.T) {
 	finish()
 	if got, ok := NewestLanding(home, root); ok {
 		t.Fatalf("NewestLanding over a record with no landing = %+v, ok, want false", got)
+	}
+}
+
+func TestNewestLandingAnswersFalseWithOnlyASubjectlessLanding(t *testing.T) {
+	home, root := t.TempDir(), t.TempDir()
+	_, finish := beginRecorded(context.Background(), home, root, SeamLanding, SeamLanding)
+	finish()
+
+	if got, ok := NewestLanding(home, root); ok {
+		t.Fatalf("NewestLanding over a subjectless landing = %+v, ok, want false", got)
 	}
 }
 
