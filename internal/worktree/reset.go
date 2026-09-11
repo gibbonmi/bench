@@ -83,11 +83,17 @@ func resetWith(j joins, root, home string, args []string, stdout, stderr io.Writ
 	return 0
 }
 
+// resetCommand owns the layout of every reset command the verb prints, so the plan's
+// apply, the record's restore, and the exit-3 next cell never drift apart.
+func resetCommand(flag, operand, id string) string {
+	return "bench worktree reset " + flag + " " + operand + " " + id
+}
+
 func resetPlanCommand(plan resetPlan) string {
 	if plan.envelope != "" {
-		return "bench worktree reset --restore " + plan.envelope + " " + plan.assignment.ID
+		return resetCommand("--restore", plan.envelope, plan.assignment.ID)
 	}
-	return "bench worktree reset --to " + plan.checkpoint + " " + plan.assignment.ID
+	return resetCommand("--to", plan.checkpoint, plan.assignment.ID)
 }
 
 type resetPlan struct {
@@ -139,7 +145,7 @@ func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
 		plan.manifest, err = readResetRestore(root, selected, envelope)
 		checkpoint = plan.manifest.Base
 	} else {
-		checkpoint, err = git.Output("-C", root, "rev-parse", "--verify", "--quiet", "--end-of-options", checkpoint+"^{commit}")
+		checkpoint, err = git.Output("-C", selected.Worktree, "rev-parse", "--verify", "--quiet", "--end-of-options", checkpoint+"^{commit}")
 	}
 	if err != nil && envelope != "" {
 		return resetPlan{}, err
@@ -188,7 +194,7 @@ func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
 	if !evidence.registration.Locked || evidence.registration.LockReason != lockReason(selected) {
 		plan.lock = "repair"
 	}
-	plan.status, err = resetStatus(selected.Worktree)
+	plan.status, err = checkoutStatus(selected.Worktree)
 	if err != nil {
 		return resetPlan{}, err
 	}
@@ -196,12 +202,23 @@ func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
 	if err != nil {
 		return resetPlan{}, err
 	}
-	_, conflicted, err := readIndexEntries(selected.Worktree)
+	index, err := rawIndexEntries(selected.Worktree)
+	if err != nil {
+		return resetPlan{}, err
+	}
+	_, conflicted, err := parseIndexEntries(index)
 	if err != nil {
 		return resetPlan{}, err
 	}
 	if conflicted {
 		return resetPlan{}, refusalError{refusal{detail: "checkout is conflicted", next: "bench worktree clean " + selected.ID}}
+	}
+	hidden, err := hiddenIndexFlags(selected.Worktree)
+	if err != nil {
+		return resetPlan{}, err
+	}
+	if len(hidden) > 0 {
+		return resetPlan{}, refusalError{refusal{detail: "index carries hidden flags", paths: hidden}}
 	}
 	materialized := []string{checkpoint}
 	if envelope != "" {
@@ -232,10 +249,6 @@ func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
 		if err != nil {
 			return resetPlan{}, err
 		}
-		index, err := git.Raw("--no-optional-locks", "-C", selected.Worktree, "ls-files", "--stage", "-z")
-		if err != nil {
-			return resetPlan{}, fmt.Errorf("read index entries: %w", err)
-		}
 		common, err := git.CommonDir(root)
 		if err != nil {
 			return resetPlan{}, err
@@ -247,33 +260,60 @@ func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
 	return plan, err
 }
 
-func resetStatus(path string) ([]byte, error) {
-	return git.Raw("--no-optional-locks", "-C", path, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignore-submodules=none")
+// hiddenIndexFlags lists every index entry marked assume-unchanged or skip-worktree.
+// Such an entry hides its edit from the status, the content identity, and the staged
+// listing, so no envelope could carry it.
+func hiddenIndexFlags(path string) ([]string, error) {
+	listing, err := git.Raw("--no-optional-locks", "-C", path, "ls-files", "-v", "-z")
+	if err != nil {
+		return nil, fmt.Errorf("read index flags: %w", err)
+	}
+	var hidden []string
+	for record := range bytes.SplitSeq(listing, []byte{0}) {
+		if len(record) < 2 {
+			continue
+		}
+		if tag := record[0]; tag == 'h' || tag == 'S' || tag == 's' {
+			hidden = append(hidden, string(record[2:]))
+		}
+	}
+	return hidden, nil
 }
 
 // ignoredCollisions lists every ignored path that the given trees would overwrite when
-// the move writes them into the checkout. A tracked directory above an ignored path
-// collides too, because the move replaces that directory with a file.
+// the move writes them into the checkout. A tracked file whose path is a parent
+// directory of the ignored path collides, because the move replaces that directory with
+// the file. A tracked file below the ignored path collides too, because the move
+// replaces the ignored file with a directory.
 func ignoredCollisions(path string, trees []string) ([]string, error) {
-	ignored, err := git.Raw("--no-optional-locks", "-C", path, "ls-files", "--others", "--ignored", "--exclude-standard", "-z")
+	ignored, err := ignoredListing(path)
 	if err != nil {
 		return nil, fmt.Errorf("read ignored inventory: %w", err)
 	}
-	tracked := map[string]bool{}
+	tracked, above := map[string]bool{}, map[string]bool{}
 	for _, tree := range trees {
 		names, err := git.Raw("-C", path, "ls-tree", "-r", "-z", "--name-only", tree)
 		if err != nil {
 			return nil, fmt.Errorf("read materialized tree: %w", err)
 		}
 		for name := range bytes.SplitSeq(names, []byte{0}) {
-			if len(name) > 0 {
-				tracked[string(name)] = true
+			if len(name) == 0 {
+				continue
+			}
+			tracked[string(name)] = true
+			for dir := string(name); strings.Contains(dir, "/"); {
+				dir = dir[:strings.LastIndexByte(dir, '/')]
+				above[dir] = true
 			}
 		}
 	}
 	var collisions []string
 	for record := range bytes.SplitSeq(ignored, []byte{0}) {
 		if len(record) == 0 {
+			continue
+		}
+		if above[string(record)] {
+			collisions = append(collisions, string(record))
 			continue
 		}
 		for candidate := string(record); ; candidate = candidate[:strings.LastIndexByte(candidate, '/')] {

@@ -23,4 +23,18 @@ Story 53 and rows RR70 and RR71 carry that decision.
 
 ## Earlier benchmark findings carried by this candidate
 
-The cross-state reset-ref survival and the moved-ref conditional deletion are covered by TestResumeReconcileKeepsResetRefsForEveryRecordedState and TestResumeReconcileRefusesAResetRefMovedAfterListing at the frozen tip.
+TestResumeReconcileKeepsResetRefsForEveryRecordedState and TestResumeReconcileRefusesAResetRefMovedAfterListing cover the cross-state survival and the moved-ref conditional deletion at the frozen tip.
+
+## Review round of 2026-09-11
+
+Three fresh Sol/high axes reviewed `aed6f18c` over the frozen base: Standards 14, Spec 3, Coverage 9.
+The reviewer decided the three behavior targets.
+The move cleans before the reset, so an ignore-rule change never deletes bytes.
+An index with hidden flags refuses, and a symbolic checkpoint resolves in the target.
+The reviewer also extended the fence to the cleanup planner file, so the status argv and the ignored listing have one owner each.
+
+The fold closed every auto-fix target.
+Those targets are the command constructor, the single index read, the below-path collision, and the manifest read.
+They also include the dropped capture return, the reconcile read order, the stale seam names, the approval line, three comments, and two prose items.
+One judgment call stays open as no-op: the long plan function.
+The six in-range fence widenings from the benchmark stay as veto surface.

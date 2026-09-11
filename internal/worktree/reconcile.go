@@ -33,11 +33,13 @@ func insideLifecycleNamespace(ref string) bool {
 func sweepLifecycleRefs(j joins, root string) (int, error) {
 	args := append([]string{"-C", root, "for-each-ref", "--format=%(refname) %(objectname)"}, lifecycleRefNamespaces...)
 	args = append(args, intent.ResetRefNamespace)
-	resetPrefixes := recordedResetPrefixes(root)
 	listing, err := git.Output(args...)
 	if err != nil {
 		return 0, fmt.Errorf("list lifecycle refs: %w", err)
 	}
+	// The ledger read comes after the listing, so a record written between the two reads
+	// still protects the ref it names.
+	resetPrefixes := recordedResetPrefixes(root)
 	swept := 0
 	for _, line := range strings.Split(listing, "\n") {
 		ref, oid, ok := strings.Cut(line, " ")

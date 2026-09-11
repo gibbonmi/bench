@@ -34,7 +34,7 @@ func TestResetRestoreRefusesAForeignTip(t *testing.T) {
 	root, creation, home, ref := restoreFixture(t)
 	foreign, err := commitTree(root, gitOutput(t, root, "rev-parse", "HEAD^{tree}"), nil, "foreign root\n")
 	mustNoError(t, err)
-	rootOID, _, _, err := captureLayers(root, creation.Path, true, foreign)
+	rootOID, _, err := captureLayers(root, creation.Path, true, foreign)
 	mustNoError(t, err)
 	gitRun(t, root, "update-ref", ref, rootOID)
 	code, out, errout := runReset(t, root, home, "--restore", ref, creation.Assignment.ID)
@@ -125,4 +125,21 @@ func TestResetRestoreRefusesAnIgnoredCollision(t *testing.T) {
 	mustNoError(t, err)
 	requireTest(t, string(body) == "ignored now\n" && gitOutput(t, creation.Path, "rev-parse", "HEAD") == head &&
 		gitOutput(t, root, "rev-parse", creation.Assignment.Branch) == head, "collision refusal changed the ignored bytes or moved the checkout")
+}
+
+func TestResetRestoreRefusesACollisionWithTheEnvelopeTip(t *testing.T) {
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "restore-tip-collision")
+	commitInWorktree(t, creation.Path, "gen", "generated\n", "track gen on the tip")
+	gitRun(t, creation.Path, "switch", "--detach", creation.Assignment.Start)
+	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("dirty\n"), 0o644)
+	fingerprint := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	code, out, errout := runReset(t, root, home, "--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", fingerprint)
+	requireTest(t, code == 0, "fixture reset = %d %s %s", code, out, errout)
+	ref := intent.ResetRefPrefix(creation.Assignment.OwnerID, creation.Assignment.ID) + "1"
+	commitInWorktree(t, creation.Path, ".gitignore", "gen\n", "ignore gen")
+	mustWrite(t, filepath.Join(creation.Path, "gen"), []byte("ignored now\n"), 0o644)
+	code, out, errout = runReset(t, root, home, "--restore", ref, creation.Assignment.ID)
+	requireTest(t, code == 1 && strings.Contains(out, "ignored content would be overwritten") && strings.Contains(out, "refusal_paths[1]{path}:\n  gen\n"),
+		"tip collision = %d %s %s", code, out, errout)
 }

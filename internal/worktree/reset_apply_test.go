@@ -151,7 +151,7 @@ func TestResetApplyPreservesTheLayersAndMovesTheCheckout(t *testing.T) {
 	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("staged\n"), 0o644)
 	gitRun(t, creation.Path, "add", "README.md")
 	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("working\n"), 0o644)
-	before, _, _, err := captureLayers(root, creation.Path, true, checkpoint)
+	before, _, err := captureLayers(root, creation.Path, true, checkpoint)
 	mustNoError(t, err)
 	expected, ok := readRecoveryManifest(root, before)
 	requireTest(t, ok, "fixture envelope is unreadable")
@@ -187,18 +187,20 @@ func TestResetRefusesAnIgnoredCollision(t *testing.T) {
 	root, creation, home := newOwnedAssignment(t, "reset-collision")
 	commitInWorktree(t, creation.Path, "output", "tracked output\n", "track output")
 	commitInWorktree(t, creation.Path, "build", "tracked build\n", "track build")
+	mustMkdirAll(t, filepath.Join(creation.Path, "out"), 0o755)
+	commitInWorktree(t, creation.Path, "out/a.c", "tracked source\n", "track a directory")
 	checkpoint := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-	gitRun(t, creation.Path, "rm", "-q", "output", "build")
-	commitInWorktree(t, creation.Path, ".gitignore", "output\nbuild/\nother.log\n", "ignore the outputs")
+	gitRun(t, creation.Path, "rm", "-q", "output", "build", "out/a.c")
+	commitInWorktree(t, creation.Path, ".gitignore", "output\nbuild/\nout\nother.log\n", "ignore the outputs")
 	mustMkdirAll(t, filepath.Join(creation.Path, "build"), 0o755)
-	ignored := map[string]string{"output": "ignored output\n", "build/inner": "ignored build\n", "other.log": "ignored log\n"}
+	ignored := map[string]string{"output": "ignored output\n", "build/inner": "ignored build\n", "out": "ignored file over a directory\n", "other.log": "ignored log\n"}
 	for path, body := range ignored {
 		mustWrite(t, filepath.Join(creation.Path, path), []byte(body), 0o644)
 	}
 	head := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	code, out, errout := runReset(t, root, home, "--to", checkpoint, creation.Assignment.ID)
 	requireTest(t, code == 1 && strings.Contains(out, "refused{detail=ignored content would be overwritten}"), "collision plan = %d %s %s", code, out, errout)
-	requireTest(t, strings.Contains(out, "refusal_paths[2]{path}:\n  build/inner\n  output\n"), "collision paths = %s", out)
+	requireTest(t, strings.Contains(out, "refusal_paths[3]{path}:\n  build/inner\n  out\n  output\n"), "collision paths = %s", out)
 	for path, body := range ignored {
 		got, err := os.ReadFile(filepath.Join(creation.Path, path))
 		mustNoError(t, err)
@@ -207,4 +209,34 @@ func TestResetRefusesAnIgnoredCollision(t *testing.T) {
 	requireTest(t, gitOutput(t, creation.Path, "rev-parse", "HEAD") == head &&
 		gitOutput(t, root, "for-each-ref", "--format=%(refname)", intent.ResetRefPrefix(creation.Assignment.OwnerID, creation.Assignment.ID)) == "",
 		"collision refusal moved the checkout or wrote a ref")
+}
+
+func TestResetApplyKeepsIgnoredBytesAcrossAnIgnoreRuleChange(t *testing.T) {
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "reset-ignore-drift")
+	commitInWorktree(t, creation.Path, ".gitignore", "build/\n", "ignore the build directory")
+	mustMkdirAll(t, filepath.Join(creation.Path, "build"), 0o755)
+	mustWrite(t, filepath.Join(creation.Path, "build/output"), []byte("build output\n"), 0o644)
+	fingerprint := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	code, out, errout := runReset(t, root, home, "--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", fingerprint)
+	ref := intent.ResetRefPrefix(creation.Assignment.OwnerID, creation.Assignment.ID) + "1"
+	requireTest(t, code == 3 && strings.Contains(out, "preserved="+ref) && strings.Contains(out, "next=bench worktree reset --restore "+ref+" "+creation.Assignment.ID),
+		"ignore drift = %d %s %s", code, out, errout)
+	body, err := os.ReadFile(filepath.Join(creation.Path, "build/output"))
+	mustNoError(t, err)
+	requireTest(t, string(body) == "build output\n", "ignored bytes changed: %q", body)
+	requireTest(t, gitOutput(t, creation.Path, "rev-parse", "HEAD") == creation.Assignment.Start &&
+		gitOutput(t, creation.Path, "status", "--porcelain=v1") == "?? build/", "checkpoint state = %s", gitOutput(t, creation.Path, "status", "--porcelain=v1"))
+}
+
+func TestResetApplyExitsThreeWithoutAnEnvelope(t *testing.T) {
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "reset-fault-no-envelope")
+	gitRun(t, creation.Path, "switch", "--detach", "HEAD")
+	j := defaultJoins()
+	j.resetMove = func(string, string, string) error { return errors.New("move failed") }
+	fingerprint := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	code, out, errout := runResetWith(t, j, root, home, "--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", fingerprint)
+	requireTest(t, code == 3 && strings.Contains(out, "preserved=none") &&
+		strings.Contains(out, "next=bench worktree reset --to "+creation.Assignment.Start+" "+creation.Assignment.ID+"}"), "fault without envelope = %d %s %s", code, out, errout)
 }

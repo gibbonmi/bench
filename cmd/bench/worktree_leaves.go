@@ -69,4 +69,6 @@ func worktreeCommand(c Command, args []string) int {
 	return dispatchLeafFamily(c, "bench worktree", usage.WorktreeUsage(), worktreeLeaves, args)
 }
 
+// worktreeSuffix derives a leaf's help suffix from its usage grammar, so the inventory
+// row and the grammar the verb refuses with have one source.
 func worktreeSuffix(grammar string) string { return strings.TrimPrefix(grammar, "bench worktree") }

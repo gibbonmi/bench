@@ -98,6 +98,17 @@ func TestResetPlanReachesADriftedLock(t *testing.T) {
 		strings.Contains(out, "preserve=none"), "lock plan = %d %s %s", code, out, errout)
 }
 
+func TestResetResolvesTheCheckpointInTheTarget(t *testing.T) {
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "reset-symbolic")
+	commitInWorktree(t, creation.Path, "ahead", "ahead\n", "ahead")
+	head := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	requireTest(t, gitOutput(t, root, "rev-parse", "HEAD") != head, "fixture root and target share a head")
+	code, out, errout := runReset(t, root, home, "--to", "HEAD", creation.Assignment.ID)
+	requireTest(t, code == 0 && strings.Contains(out, "checkpoint="+head) && strings.Contains(out, "action=none"),
+		"symbolic checkpoint = %d %s %s", code, out, errout)
+}
+
 func TestResetPlanOpensNoSpan(t *testing.T) {
 	t.Parallel()
 	root, creation, home := newOwnedAssignment(t, "reset-no-span")

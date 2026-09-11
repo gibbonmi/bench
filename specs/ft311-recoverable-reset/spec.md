@@ -6,7 +6,7 @@ Roadmap: FT311
 
 Decision source: specs/ft311-landing-completion/decisions/ft311-coordinator-work.md
 
-Verification log: 2 iteration(s) to accept — opus/high reviewed through the native agent surface. Iteration one returned 23 findings with 9 blocking, and the author folded 22 and recorded 1 as a reviewer-visible exception. Iteration two accepted the nine folds and returned 8 residuals with 1 blocking, which the author folded after the round. On 2026-09-11 the reviewer decided the ignored-path collision policy, and the repair added story 53 and rows RR70 through RR72.
+Verification log: 2 iteration(s) to accept — opus/high reviewed through the native agent surface. Iteration one returned 23 findings with 9 blocking, and the author folded 22 and recorded 1 as a reviewer-visible exception. Iteration two accepted the nine folds and returned 8 residuals with 1 blocking, which the author folded after the round. On 2026-09-11 the reviewer decided the ignored-path collision policy, and the repair added story 53 and rows RR70 through RR72. The same day, one Sol/high three-axis round returned 26 findings, and the reviewer decided the four open targets. That fold added stories 54 and 55 and rows RR73 through RR77.
 
 ## Problem
 
@@ -125,6 +125,8 @@ Line: gpt-5.6-terra / high.
 The refusal guards the same destructive move as the apply, so it takes the apply's line.
 
 53. As a coordinator, I want a move over an ignored path refused with the paths named, so that no build output is lost.
+54. As a coordinator, I want an index with a hidden-flag entry refused with the paths named, so that a hidden edit is never lost.
+55. As a coordinator, I want a symbolic checkpoint spelling resolved in the target checkout, so that `HEAD` names the target's head and not the primary's.
 
 ## Implementation decisions
 
@@ -148,6 +150,7 @@ The primary checkout, a retired assignment, and a pooled shift worktree that is 
 A `--to` or `--restore` value with a control byte refuses before any lookup, through the shared line-safety predicate.
 The verb owns its own two refusal sentences, because the merge verb's guard hard-codes its own flag name.
 The verb's ledger read comes after that check, which is the verb's own ordering promise.
+A `--to` spelling resolves in the target checkout, so a symbolic spelling names the target's own head.
 
 ### The checkpoint predicate
 
@@ -183,9 +186,12 @@ Every refusal renders through the worktree refusal record at exit 1, with a sani
 
 An ignored path that the move would materialize refuses `ignored content would be overwritten` at exit 1, with every colliding path in the table.
 The reset materializes the checkpoint tree, and the restore materializes the envelope's tip, base, and working layer.
-An ignored path collides when one of those trees tracks the path itself or a directory above it.
+An ignored path collides when one of those trees tracks the path itself, a directory above it, or a path below it.
 The refusal writes nothing, because the reset envelope carries no ignored bytes and the overwrite would be unrecoverable.
 The coordinator moves the ignored content aside and plans again.
+
+An index entry marked assume-unchanged or skip-worktree hides its edit from the status, the content identity, and the staged listing.
+So the plan refuses `index carries hidden flags` at exit 1 with those paths in the table, because no envelope could carry the edit.
 
 ### The fingerprint
 
@@ -232,8 +238,11 @@ A verified envelope under it is trusted as the cleanup trusts its own refs, and 
 The apply takes the per-target cleanup registration lock, re-plans, and compares the fingerprint.
 A mismatch refuses `reset plan is stale` with the fresh fingerprint as the wanted value and the fresh plan command as the next command.
 The apply then writes and verifies the envelope when the plan says `preserve=envelope`, and a verification failure refuses before any move.
-The move attaches HEAD to the assignment branch and resets the branch and the checkout to the checkpoint.
-It removes untracked files and keeps ignored files, through a clean that names no ignored entry.
+The move removes the untracked files first, under the current ignore rules, through a clean that names no ignored entry.
+It then attaches HEAD to the assignment branch and resets the branch and the checkout to the checkpoint.
+
+A file that the checkpoint's rules no longer ignore keeps its bytes.
+That file then fails the post-move clean check, so the record exits 3 with the restore command.
 A lock repair unlocks the registration and locks it again with the exact Bench reason, because Git refuses a second lock on a locked worktree.
 
 The move runs through one seam-set field, so a test injects a fault or a no-op move without a Git stand-in.
@@ -352,7 +361,7 @@ The round-trip recaptured both layers equal to the captured trees.
 | RR18 | 19 | `--apply` over a dirty checkout writes `refs/bench/reset/<owner>/<id>/1`, and the envelope's working and staged layers equal the trees captured before the apply. | New TestResetApplyPreservesTheLayersAndMovesTheCheckout through resetWith | A move before the capture preserves the checkpoint's tree. |
 | RR19 | 21 | After the apply, HEAD is attached to the assignment branch, the branch and the head equal the checkpoint, and the status is clean. | New TestResetApplyPreservesTheLayersAndMovesTheCheckout through resetWith | A move of the ref alone leaves the tree dirty. |
 | RR20 | 22 | Over the nested shape, the apply removes the untracked directory's untracked file and the untracked symlink, and it keeps the ignored file inside that directory, the ignored directory, and their bytes. | New TestResetApplyPreservesTheLayersAndMovesTheCheckout through resetWith | A clean with the ignored flag removes the build output, and a clean without the directory flag leaves the untracked file. |
-| RR21 | 23 | The record reads `preserved=<ref>` and `restore=bench worktree reset --restore <ref> <id>` at exit 0. | New TestResetRecordNamesTheRestoreCommand through resetWith | A record without the ref leaves the operator no way back. |
+| RR21 | 23 | The record reads `preserved=<ref>` and `restore=bench worktree reset --restore <ref> <id>` at exit 0. | New TestResetApplyPreservesTheLayersAndMovesTheCheckout through resetWith | A record without the ref leaves the operator no way back. |
 | RR22 | 20 | An envelope whose root the seam builds without one named payload as a parent refuses `reset envelope failed verification` at exit 1, and the head and the status are unchanged. | New TestResetApplyRefusesAnUnverifiedEnvelope through resetWith with the envelope seam | A verification after the move discovers the loss too late. |
 | RR23 | 24 | A `--to` of the commit before the tip moves the branch to that commit, and the previous tip is the parent of the envelope's working payload. | New TestResetApplyKeepsTheRewoundTipReachable through resetWith | A capture that skips an unchanged working layer leaves the tip unreachable. |
 | RR24 | 25 | A file edited between the plan and the apply refuses `reset plan is stale` at exit 1 with no new ref and no move. | New TestResetApplyRefusesAStalePlan through resetWith | An apply that trusts the operand resets a checkout it never planned. |
@@ -384,7 +393,7 @@ The round-trip recaptured both layers equal to the captured trees.
 | RR50 | 18 | A checkout on a shift-namespace branch plans `action=reset` with `ref=<shift branch>` at exit 0. | New TestResetPlanReachesAShiftBranchCheckout through resetWith | A target resolved through the shared resolver refuses the state the verb repairs. |
 | RR51 | 18 | A registration locked with a foreign reason plans `lock=repair` at exit 0. | New TestResetPlanReachesADriftedLock through resetWith | A target resolved through the creation bundle refuses the drifted lock. |
 | RR52 | 43 | A restore whose seam writes a wrong working layer exits 3 after the production recapture, and the record's `next` cell names a restore. | New TestResetRestoreExitsThreeOnARecaptureMismatch through resetWith with the layer-write seam | A restore that skips its own recapture reports a match it never checked. |
-| RR53 | 27 | After a move fault with an envelope, the record's `next` cell is `bench worktree reset --restore <ref> <id>`. | New TestResetRecordNamesTheRestoreCommand through resetWith with the move seam | An exit-3 record without the command leaves the envelope orphaned. |
+| RR53 | 27 | After a move fault with an envelope, the record's `next` cell is `bench worktree reset --restore <ref> <id>`. | New TestResetApplyExitsThreeOnAMoveFault through resetWith with the move seam | An exit-3 record without the command leaves the envelope orphaned. |
 | RR54 | 6 | `bench worktree reset --to <tip> --restore <ref> <id>` exits 2 with the grammar. | New TestResetRefusesBothModes through resetWith | A verb that prefers one mode silently discards the other. |
 | RR55 | 9 | An abbreviated sha that names two objects refuses `checkpoint is not a commit` at exit 1. | New TestResetRefusesAnAmbiguousCheckpoint through resetWith | A peel that takes the first match resets to the wrong commit. |
 | RR56 | 10 | The label of a retired assignment refuses the assignment-state component at exit 1. | New TestResetRefusesARetiredAssignment through resetWith | A selector over every state resets a completed worktree. |
@@ -399,11 +408,16 @@ The round-trip recaptured both layers equal to the captured trees.
 | RR65 | 24 | A clean shift-branch checkout at the checkpoint with the assignment tip ahead applies with the previous tip a parent of the envelope root. | New TestResetApplyKeepsTheTipOfAShiftBranchCheckout through resetWith | The same omission loses the tip through the shift-branch route. |
 | RR66 | 48 | A reconcile over an unreadable ledger deletes no reset ref. | New TestResumeReconcileKeepsResetRefsOverAnUnreadableLedger through ResumeCleanCommand | A rule that reads absence as no record deletes every envelope. |
 | RR67 | 14 | The fingerprint differs after an edit inside an already-dirty file. | New TestResetFingerprintTracksTheContent through resetWith | A fingerprint over the status bytes alone applies the plan to content it never showed. |
-| RR68 | 42 | A restore that leaves HEAD detached prints `next=bench worktree reset --to <tip> <id>`, and a restore that leaves HEAD attached prints no `next` cell. | New TestResetRestoreNamesTheReattachWhenDetached through resetWith | A detached checkout with no named way back refuses every lifecycle verb. |
+| RR68 | 42 | A restore that leaves HEAD detached prints `next=bench worktree reset --to <tip> <id>`, and a restore that leaves HEAD attached prints no `next` cell. | New TestResetRestoreReturnsAnOffBranchCapture and TestResetRestoreOmitsReattachWhenAttached through resetWith | A detached checkout with no named way back refuses every lifecycle verb. |
 | RR69 | 41 | A ref under this assignment's prefix that does not exist refuses `reset envelope does not verify` at exit 1. | New TestResetRestoreRefusesAMissingRef through resetWith | A missing ref read as empty restores nothing and reports a restore. |
-| RR70 | 53 | Over a checkpoint that tracks a file and a directory the tip removed and ignored, with ignored bytes at the file and inside the directory, `--to <checkpoint>` refuses `ignored content would be overwritten` at exit 1 with both paths in the table and a non-colliding ignored path absent, the ignored bytes unchanged, the head unchanged, and no ref written. | New TestResetRefusesAnIgnoredCollision through resetWith | A move that keeps ignored files by omission still overwrites the one the checkpoint tracks, and a check over the file alone misses the directory. |
+| RR70 | 53 | Over a checkpoint that tracks a file, a file above an ignored directory, and a file below an ignored file, with the tip having removed and ignored all three, `--to <checkpoint>` refuses `ignored content would be overwritten` at exit 1 with the three ignored paths in the table and a non-colliding ignored path absent, the ignored bytes unchanged, the head unchanged, and no ref written. | New TestResetRefusesAnIgnoredCollision through resetWith | A move that keeps ignored files by omission still overwrites the one the checkpoint tracks, and a check over the exact path alone misses both directory directions. |
 | RR71 | 53 | After a tracked path in an envelope's working layer becomes ignored with new bytes, `--restore <ref>` refuses the same detail with that path in the table, the bytes unchanged, and the head and the branch unchanged. | New TestResetRestoreRefusesAnIgnoredCollision through resetWith | A restore that checks the checkpoint tree alone overwrites through the layer write. |
 | RR72 | 14 | A staged blob changed under equal status and working bytes changes the fingerprint, and an apply of the old fingerprint refuses `reset plan is stale` in both modes with the new staged bytes intact. | New TestResetFingerprintTracksTheIndex and TestResetRestoreRefusesAStaleIndex through resetWith | A fingerprint over the status and the working diff alone accepts a plan the staged layer outgrew. |
+| RR73 | 22 | Over a tip that added an ignore rule after the checkpoint, with an ignored file under that rule, the apply keeps the file's bytes, exits 3 with `preserved=<ref>` and the restore command, and leaves the checkout at the checkpoint with the file untracked. | New TestResetApplyKeepsIgnoredBytesAcrossAnIgnoreRuleChange through resetWith | A clean that runs under the checkpoint's rules deletes the file, and no envelope holds it. |
+| RR74 | 54 | An index entry marked assume-unchanged or skip-worktree refuses `index carries hidden flags` at exit 1 with the path in the table and the hidden edit intact. | New TestResetRefusesHiddenIndexFlags through resetWith | A plan that reads the status alone applies with `preserve=none` and loses the edit. |
+| RR75 | 55 | `--to HEAD` over a target one commit ahead of the primary plans `checkpoint=<target head>` and `action=none`. | New TestResetResolvesTheCheckpointInTheTarget through resetWith | A spelling resolved in the primary plans a rewind the operator never spelled. |
+| RR76 | 53 | A restore whose envelope tip tracks a path the working layer does not, with that path now ignored and present, refuses `ignored content would be overwritten` with the path in the table. | New TestResetRestoreRefusesACollisionWithTheEnvelopeTip through resetWith | A collision check over the working layer alone lets the move to the tip overwrite the path. |
+| RR77 | 27 | A move fault over a pure re-attach exits 3 with `preserved=none` and `next=bench worktree reset --to <checkpoint> <id>`. | New TestResetApplyExitsThreeWithoutAnEnvelope through resetWith with the move seam | A record that always names a restore points at an envelope that does not exist. |
 
 ### Edge inventory
 
@@ -418,13 +432,13 @@ Every behavior serves this repository and every repository that links the kit.
 | Errors | A non-commit, a foreign checkpoint, a conflicted index, a nested repository, and a live lease each refuse before any write. | RR7, RR9, RR12, RR13, RR15 |
 | Ordering | The envelope is written and verified before the move, and the lock is taken before the re-plan. | RR18, RR22, RR28 |
 | Repetition | A consumed fingerprint refuses, and a restore of a restore's envelope returns the intermediate state. | RR61, RR35 |
-| Interruption | A move fault and a silent move both exit 3 with the envelope named. | RR26, RR27, RR53 |
-| Process boundary | The reconcile in a fresh process keeps a live assignment's refs and drops an orphaned one. | RR41, RR42 |
+| Interruption | A move fault and a silent move both exit 3 with the envelope named, and a fault with no envelope names the plan. | RR26, RR27, RR53, RR77 |
+| Process boundary | The reconcile reads the ledger and the refs from disk on every run, so a fresh process keeps a live assignment's refs and drops an orphaned one as the in-process seam does. | RR41, RR42 |
 | Output shape | The plan line precedes the paths table, and the `none` plan has no `next` cell. | RR2, RR5 |
 | Paths | A control byte in a changed path renders sanitized, and every command names the id operand. | RR3, RR4 |
-| Identity | A control byte in the checkpoint, an ambiguous sha, and a foreign restore ref each refuse by their own fault. | RR10, RR55, RR36 |
-| Ignored files | Ignored entries leave the fingerprint alone and survive the apply, and a collision with a materialized path refuses. | RR17, RR20, RR70, RR71 |
-| Staged layer | A staged blob that changes under equal status and working bytes stales the plan. | RR72 |
+| Identity | A control byte in the checkpoint, an ambiguous sha, and a foreign restore ref each refuse by their own fault, and a symbolic spelling resolves in the target. | RR10, RR55, RR36, RR75 |
+| Ignored files | Ignored entries leave the fingerprint alone and survive the apply, a collision with a materialized path refuses, and an ignore-rule change never deletes bytes. | RR17, RR20, RR70, RR71, RR73, RR76 |
+| Staged layer | A staged blob that changes under equal status and working bytes stales the plan, and a hidden index flag refuses. | RR72, RR74 |
 | Ledger | The assignment record is never written, and an unreadable ledger deletes no envelope. | RR29, RR66 |
 | Grammar | Neither mode and both modes are usage errors at exit 2. | RR6, RR54 |
 | Off-branch capture | A detached or shift-branch capture keeps the tip reachable, and its restore returns the branch to that tip and names the re-attach. | RR64, RR65, RR49, RR68 |
@@ -457,6 +471,7 @@ They authorize implementation only after the reviewer approves this spec and its
 - `internal/intent/ledger/validate.go`
 - `internal/intent/ledger_aliases.go`
 - `internal/worktree/clean.go`
+- `internal/worktree/subshell.go`
 - `internal/worktree/layers.go`
 - `internal/worktree/reconcile.go`
 - `internal/worktree/resume_reconcile_test.go`
@@ -670,7 +685,7 @@ The review pickup is created only for actionable findings.
 |---|---|
 | Stories and lines | Approve the six outcome groups and their bound model efforts. |
 | Seams | Approve the package-internal reset entry point, the seam-set move field, the shared capture, and the reconcile rule. |
-| Acceptance and edges | Approve RR1 through RR69 and the eight explicit exclusions. |
+| Acceptance and edges | Approve RR1 through RR77 and the eight explicit exclusions. |
 | Ownership fences | Approve the exact union above for implementation. |
 | Scope and tickets | Approve the five-ticket graph within the fourth FT311 capability. |
 | Branch move | Decide before ticket 3 dispatches whether a rewind moves the assignment branch, as recommended. |

@@ -9,17 +9,19 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
+const resetEnvelopeUnverified = "reset envelope does not verify"
+
 func readResetRestore(root string, assignment intent.Assignment, ref string) (recoveryManifest, error) {
 	if !strings.HasPrefix(ref, intent.ResetRefPrefix(assignment.OwnerID, assignment.ID)) {
 		return recoveryManifest{}, errors.New("restore ref is not this assignment's")
 	}
 	rootOID, err := git.Output("-C", root, "rev-parse", "--verify", ref+"^{commit}")
-	if err != nil || !resetEnvelopeValid(root, intent.Recovery{Ref: ref, Root: rootOID}) {
-		return recoveryManifest{}, errors.New("reset envelope does not verify")
+	if err != nil {
+		return recoveryManifest{}, errors.New(resetEnvelopeUnverified)
 	}
-	manifest, ok := readRecoveryManifest(root, ref)
+	manifest, ok := resetEnvelopeValid(root, intent.Recovery{Ref: ref, Root: rootOID})
 	if !ok {
-		return recoveryManifest{}, errors.New("reset envelope does not verify")
+		return recoveryManifest{}, errors.New(resetEnvelopeUnverified)
 	}
 	reached, err := authorization.IsAncestor(root, assignment.Start, manifest.Tip)
 	if err != nil {
@@ -44,7 +46,7 @@ func restoreResetLayers(path string, manifest recoveryManifest) error {
 }
 
 func resetRestoredLayersMatch(root string, plan resetPlan) bool {
-	rootOID, _, _, err := captureLayers(root, plan.assignment.Worktree, true, plan.manifest.Tip)
+	rootOID, _, err := captureLayers(root, plan.assignment.Worktree, true, plan.manifest.Tip)
 	if err != nil {
 		return false
 	}

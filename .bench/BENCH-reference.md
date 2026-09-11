@@ -261,12 +261,17 @@ Before a destructive move, the verb verifies a reset envelope under
 The restore returns HEAD, the index, and the working tree to the preserved state.
 The verb repairs a partial migration, a shift-branch checkout, a detached checkout, a drifted
 registration lock, and an unreconciled merge checkout.
-Plans and successful applies exit 0; refusals exit 1; usage errors exit 2.
-A fault after preservation exits 3 and names the restore command.
+Its exit meanings follow the preservation boundary:
+
+- `0` — a plan, or an apply that landed
+- `1` — a refusal before any write
+- `2` — invalid command usage
+- `3` — a fault after preservation; the record names the restore command
 
 If the move would overwrite an ignored path, the plan refuses before any write.
 The refusal names the colliding paths.
 Move the ignored content aside, then plan again.
+An index entry marked assume-unchanged or skip-worktree refuses the plan the same way.
 
 `bench handoff [--harness <name>] [--next <command>] [--state-file <path>]`
 rewrites the calling worktree's own section. `--state-file` names the file that

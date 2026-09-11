@@ -39,7 +39,7 @@ func recoverAssignmentWithFault(root string, assignment intent.Assignment, fault
 		}
 		return assignment, nil
 	}
-	rootOID, payloads, _, err := captureLayers(root, assignment.Worktree, false, "")
+	rootOID, payloads, err := captureLayers(root, assignment.Worktree, false, "")
 	if err != nil {
 		return assignment, err
 	}
@@ -141,10 +141,20 @@ func realIndexTree(path, admin string) (string, error) {
 	return gitInput(path, []string{"GIT_INDEX_FILE=" + index}, nil, "write-tree")
 }
 func readIndexEntries(path string) ([]indexEntry, bool, error) {
-	raw, err := git.Raw("-C", path, "ls-files", "--stage", "-z")
+	raw, err := rawIndexEntries(path)
 	if err != nil {
 		return nil, false, err
 	}
+	return parseIndexEntries(raw)
+}
+
+// rawIndexEntries owns the staged listing's argv. The reset binds these bytes into its
+// fingerprint and parses them once, so the listing has one read per plan.
+func rawIndexEntries(path string) ([]byte, error) {
+	return git.Raw("--no-optional-locks", "-C", path, "ls-files", "--stage", "-z")
+}
+
+func parseIndexEntries(raw []byte) ([]indexEntry, bool, error) {
 	var entries []indexEntry
 	conflicted := false
 	for record := range bytes.SplitSeq(raw, []byte{0}) {

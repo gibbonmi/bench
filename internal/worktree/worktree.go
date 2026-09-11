@@ -15,7 +15,6 @@ import (
 	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -213,7 +212,7 @@ func classifyNestedState(root string) (state nestedState, err error) {
 			return err
 		}
 		embedded := !strings.HasPrefix(tracked, "160000 ")
-		out, err := exec.Command("git", "--no-optional-locks", "-C", path, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignore-submodules=none").Output()
+		out, err := checkoutStatus(path)
 		if err != nil {
 			return err
 		}

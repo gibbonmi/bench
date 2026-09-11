@@ -29,7 +29,7 @@ func applyReset(j joins, root, home string, plan resetPlan, fingerprint string, 
 		if err != nil {
 			return landRefusalError(stdout, err)
 		}
-		if !resetEnvelopeValid(root, envelope) {
+		if _, ok := resetEnvelopeValid(root, envelope); !ok {
 			return landRefusal(stdout, "reset envelope failed verification")
 		}
 	}
@@ -78,7 +78,7 @@ func resetCheckoutMatches(plan resetPlan) bool {
 	if err != nil || ref != plan.assignment.Branch {
 		return false
 	}
-	status, err := resetStatus(plan.assignment.Worktree)
+	status, err := checkoutStatus(plan.assignment.Worktree)
 	return err == nil && len(status) == 0
 }
 
@@ -86,7 +86,7 @@ func resetResult(stdout io.Writer, plan resetPlan, preserved string, code int) i
 	next := ""
 	restore := "none"
 	if preserved != "none" {
-		restore = "bench worktree reset --restore " + preserved + " " + plan.assignment.ID
+		restore = resetCommand("--restore", preserved, plan.assignment.ID)
 	}
 	if code == 3 {
 		next = ",next=" + resetPlanCommand(plan)
@@ -98,20 +98,23 @@ func resetResult(stdout io.Writer, plan resetPlan, preserved string, code int) i
 	if plan.mode == "restore" && plan.manifest.Base != plan.manifest.Tip {
 		ref = "detached"
 		if code == 0 {
-			next = ",next=bench worktree reset --to " + plan.manifest.Tip + " " + plan.assignment.ID
+			next = ",next=" + resetCommand("--to", plan.manifest.Tip, plan.assignment.ID)
 		}
 	}
 	fmt.Fprintf(stdout, "reset{worktree=%s,mode=%s,checkpoint=%s,previous=%s,ref=%s,preserved=%s,restore=%s%s}\n", plan.assignment.ID, plan.mode, plan.checkpoint, plan.head, ref, preserved, restore, next)
 	return code
 }
 
+// moveResetCheckout removes the untracked files under the current ignore rules before
+// the hard reset, so a file the checkpoint's rules no longer ignore keeps its bytes.
+// Such a file then fails the post-move clean check, and the record exits 3.
 func moveResetCheckout(path, branch, checkpoint string) error {
+	if _, err := git.Output("-C", path, "clean", "-fd"); err != nil {
+		return err
+	}
 	if _, err := git.Output("-C", path, "symbolic-ref", "HEAD", branch); err != nil {
 		return err
 	}
-	if _, err := git.Output("-C", path, "reset", "--hard", checkpoint); err != nil {
-		return err
-	}
-	_, err := git.Output("-C", path, "clean", "-fd")
+	_, err := git.Output("-C", path, "reset", "--hard", checkpoint)
 	return err
 }

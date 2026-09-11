@@ -8,7 +8,7 @@ import (
 )
 
 func writeResetEnvelope(root string, plan resetPlan) (intent.Recovery, error) {
-	rootOID, payloads, _, err := captureLayers(root, plan.assignment.Worktree, true, plan.tip)
+	rootOID, payloads, err := captureLayers(root, plan.assignment.Worktree, true, plan.tip)
 	if err != nil {
 		return intent.Recovery{}, err
 	}
@@ -21,18 +21,20 @@ func writeResetEnvelope(root string, plan resetPlan) (intent.Recovery, error) {
 	return recovery, err
 }
 
-func resetEnvelopeValid(root string, envelope intent.Recovery) bool {
+// resetEnvelopeValid runs the reset's three checks and returns the manifest it parsed,
+// so a caller that needs the manifest reads it once.
+func resetEnvelopeValid(root string, envelope intent.Recovery) (recoveryManifest, bool) {
 	resolved, err := git.Output("-C", root, "rev-parse", "--verify", envelope.Ref+"^{commit}")
 	if err != nil || resolved != envelope.Root {
-		return false
+		return recoveryManifest{}, false
 	}
 	manifest, ok := readRecoveryManifest(root, envelope.Root)
 	if !ok || manifest.Tip == "" {
-		return false
+		return recoveryManifest{}, false
 	}
 	parents, err := git.Output("-C", root, "show", "-s", "--format=%P", envelope.Root)
 	if err != nil {
-		return false
+		return recoveryManifest{}, false
 	}
 	parentSet := map[string]bool{}
 	for _, parent := range strings.Fields(parents) {
@@ -40,8 +42,8 @@ func resetEnvelopeValid(root string, envelope intent.Recovery) bool {
 	}
 	for _, payload := range manifest.Layers {
 		if !parentSet[payload] {
-			return false
+			return recoveryManifest{}, false
 		}
 	}
-	return true
+	return manifest, true
 }

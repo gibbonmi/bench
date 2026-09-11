@@ -139,10 +139,10 @@ func TestCaptureLayersKeepsAnUnchangedWorkingLayer(t *testing.T) {
 	root := newWorktreeRepo(t)
 	head := gitOutput(t, root, "rev-parse", "HEAD")
 	refs := refsUnder(t, root, "refs/")
-	rootOID, payloads, base, err := captureLayers(root, root, true, "")
+	rootOID, payloads, err := captureLayers(root, root, true, "")
 	mustNoError(t, err)
 	manifest, ok := readRecoveryManifest(root, rootOID)
-	requireTest(t, ok && base == head && manifest.Base == head, "capture base = %q, manifest = %#v", base, manifest)
+	requireTest(t, ok && manifest.Base == head, "capture manifest = %#v", manifest)
 	requireTest(t, len(manifest.Layers) == 1 && len(payloads) == 1 && manifest.Layers["working"] == payloads[0],
 		"unchanged working layer is absent: %#v, %v", manifest, payloads)
 	requireTest(t, gitOutput(t, root, "rev-parse", payloads[0]+"^{tree}") == gitOutput(t, root, "rev-parse", "HEAD^{tree}"),
@@ -159,7 +159,7 @@ func TestCaptureLayersRecordsADifferentTipAsAParent(t *testing.T) {
 	head := gitOutput(t, root, "rev-parse", "HEAD")
 	tip, err := commitTree(root, gitOutput(t, root, "rev-parse", "HEAD^{tree}"), []string{head}, "assignment tip\n")
 	mustNoError(t, err)
-	rootOID, payloads, _, err := captureLayers(root, root, true, tip)
+	rootOID, payloads, err := captureLayers(root, root, true, tip)
 	mustNoError(t, err)
 	var manifest map[string]any
 	mustNoError(t, json.Unmarshal([]byte(gitOutput(t, root, "show", rootOID+":manifest.json")), &manifest))
@@ -173,7 +173,7 @@ func TestCaptureLayersRecordsOnlyASuppliedTip(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
 	for _, tip := range []string{"", gitOutput(t, root, "rev-parse", "HEAD")} {
-		rootOID, payloads, _, err := captureLayers(root, root, true, tip)
+		rootOID, payloads, err := captureLayers(root, root, true, tip)
 		mustNoError(t, err)
 		manifest, ok := readRecoveryManifest(root, rootOID)
 		requireTest(t, ok && manifest.Tip == tip, "optional tip = %#v, want %q", manifest, tip)
@@ -182,7 +182,7 @@ func TestCaptureLayersRecordsOnlyASuppliedTip(t *testing.T) {
 		requireTest(t, gitOutput(t, root, "show", "-s", "--format=%P", rootOID) == strings.Join(payloads, " "),
 			"absent or equal tip added a root parent")
 	}
-	_, _, _, err := captureLayers(root, root, false, "")
+	_, _, err := captureLayers(root, root, false, "")
 	requireTest(t, err != nil && strings.Contains(err.Error(), "clean assignment"), "flag-off clean capture error = %v", err)
 }
 
@@ -234,10 +234,10 @@ func TestResumeReconcileRefusesAResetRefMovedAfterListing(t *testing.T) {
 	requireTest(t, strings.Contains(stdout.String(), "swept refs 0;"), "failed delete entered swept count: %s", &stdout)
 }
 
-// TestResumeReconcileSparesGreenVerdictRefs is the RM10 guard: the sweep's blast
-// radius is the two lifecycle namespaces and nothing else. The gate's verdict
-// store shares the refs/bench/ prefix, so an over-broad delete would destroy
-// green evidence at every session start.
+// TestResumeReconcileSparesGreenVerdictRefs is the RM10 guard: the sweep empties the
+// two lifecycle namespaces, deletes only record-less reset refs, and touches nothing
+// else. The gate's verdict store shares the refs/bench/ prefix, so an over-broad delete
+// would destroy green evidence at every session start.
 func TestResumeReconcileSparesGreenVerdictRefs(t *testing.T) {
 	home := t.TempDir()
 	root := newWorktreeRepo(t)
