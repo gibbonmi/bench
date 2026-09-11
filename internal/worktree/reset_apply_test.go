@@ -74,7 +74,7 @@ func TestResetApplyExitsThreeOnAMoveFault(t *testing.T) {
 	fingerprint := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
 	code, out, errout := runResetWith(t, j, root, home, "--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", fingerprint)
 	ref := intent.ResetRefPrefix(creation.Assignment.OwnerID, creation.Assignment.ID) + "1"
-	requireTest(t, code == 3 && strings.Contains(out, "preserved="+ref) && strings.Contains(out, "next=bench worktree reset --to "+creation.Assignment.Start+" "+creation.Assignment.ID), "move fault = %d %s %s", code, out, errout)
+	requireTest(t, code == 3 && strings.Contains(out, "preserved="+ref) && strings.Contains(out, "next=bench worktree reset --restore "+ref+" "+creation.Assignment.ID), "move fault = %d %s %s", code, out, errout)
 	_, ok := readRecoveryManifest(root, ref)
 	requireTest(t, ok, "move fault lost the envelope")
 }
@@ -166,7 +166,7 @@ func TestResetApplyPreservesTheLayersAndMovesTheCheckout(t *testing.T) {
 		got := gitOutput(t, root, "rev-parse", actual.Layers[layer]+"^{tree}")
 		requireTest(t, got == want, "%s layer differs: %s != %s", layer, got, want)
 	}
-	requireTest(t, strings.Contains(out, "preserved="+ref) && strings.Contains(out, "restore=none"), "reset record = %s", out)
+	requireTest(t, strings.Contains(out, "preserved="+ref) && strings.Contains(out, "restore=bench worktree reset --restore "+ref+" "+creation.Assignment.ID), "reset record = %s", out)
 	for _, path := range []string{"untracked-dir/keep.txt", "link.txt"} {
 		_, err := os.Lstat(filepath.Join(creation.Path, path))
 		requireTest(t, os.IsNotExist(err), "untracked %s survives: %v", path, err)

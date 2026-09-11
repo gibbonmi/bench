@@ -92,7 +92,7 @@ func equalStringSets(got, want []string) bool {
 func TestResetHelpIsAvailableAtEveryLevel(t *testing.T) {
 	for _, argv := range [][]string{{"worktree", "reset", "--help"}, {"worktree", "--help"}, {"help"}} {
 		result := runAXICommandAt(t, newAXIEnvelopeRepo(t), argv)
-		const grammar = "bench worktree reset --to <commit> <target> [--apply <fingerprint>]"
+		const grammar = "bench worktree reset (--to <commit> | --restore <ref>) <target> [--apply <fingerprint>]"
 		if result.code != 0 || !strings.Contains(result.stdout+result.stderr, grammar) {
 			t.Fatalf("%v = %d %s %s, want %s", argv, result.code, result.stdout, result.stderr, grammar)
 		}

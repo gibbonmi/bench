@@ -19,7 +19,8 @@ var resetGrammar = usage.Grammar{
 	Cmd: "bench worktree reset", Help: "usage: " + usage.WorktreeReset,
 	MinArgs: 1, MaxArgs: 1,
 	Flags: []usage.Flag{
-		{Name: "--to", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "--to", HasValue: true, NoEmptyValue: true},
+		{Name: "--restore", HasValue: true, NoEmptyValue: true},
 		{Name: "--apply", HasValue: true, NoEmptyValue: true},
 	},
 }
@@ -39,10 +40,16 @@ func resetWith(j joins, root, home string, args []string, stdout, stderr io.Writ
 		}
 		return code
 	}
-	if !lineSafe(parsed.Flags["--to"]) {
-		return landRefusal(stdout, "--to contains control characters")
+	if (parsed.Flags["--to"] == "") == (parsed.Flags["--restore"] == "") {
+		fmt.Fprintln(stderr, resetGrammar.Help)
+		return 2
 	}
-	plan, err := planReset(root, parsed.Positionals[0], parsed.Flags["--to"])
+	for _, flag := range []string{"--to", "--restore"} {
+		if !lineSafe(parsed.Flags[flag]) {
+			return landRefusal(stdout, flag+" contains control characters")
+		}
+	}
+	plan, err := planReset(root, parsed.Positionals[0], parsed.Flags["--to"], parsed.Flags["--restore"])
 	if err != nil {
 		return landRefusalError(stdout, err)
 	}
@@ -53,8 +60,11 @@ func resetWith(j joins, root, home string, args []string, stdout, stderr io.Writ
 	if plan.action != "none" {
 		next = ",next=" + resetPlanCommand(plan) + " --apply " + plan.fingerprint
 	}
-	fmt.Fprintf(stdout, "reset_plan{worktree=%s,mode=reset,action=%s,checkpoint=%s,head=%s,ref=%s,tip=%s,tracked=%s,lock=%s,preserve=%s%s,fingerprint=%s}\n",
-		plan.assignment.ID, plan.action, plan.checkpoint, plan.head, plan.ref, plan.tip, plan.tracked, plan.lock, plan.preserve, next, plan.fingerprint)
+	if plan.envelope != "" {
+		next += ",envelope=" + plan.envelope
+	}
+	fmt.Fprintf(stdout, "reset_plan{worktree=%s,mode=%s,action=%s,checkpoint=%s,head=%s,ref=%s,tip=%s,tracked=%s,lock=%s,preserve=%s%s,fingerprint=%s}\n",
+		plan.assignment.ID, plan.mode, plan.action, plan.checkpoint, plan.head, plan.ref, plan.tip, plan.tracked, plan.lock, plan.preserve, next, plan.fingerprint)
 	var rows [][]string
 	for _, entry := range plan.paths {
 		if entry.Status != "" {
@@ -72,6 +82,9 @@ func resetWith(j joins, root, home string, args []string, stdout, stderr io.Writ
 }
 
 func resetPlanCommand(plan resetPlan) string {
+	if plan.envelope != "" {
+		return "bench worktree reset --restore " + plan.envelope + " " + plan.assignment.ID
+	}
 	return "bench worktree reset --to " + plan.checkpoint + " " + plan.assignment.ID
 }
 
@@ -82,9 +95,11 @@ type resetPlan struct {
 	status                                       []byte
 	paths                                        []git.PorcelainEntry
 	registrationLocked                           bool
+	mode, envelope                               string
+	manifest                                     recoveryManifest
 }
 
-func planReset(root, operand, checkpoint string) (resetPlan, error) {
+func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return resetPlan{}, errors.New("assignment ledger is unreadable")
@@ -103,7 +118,7 @@ func planReset(root, operand, checkpoint string) (resetPlan, error) {
 	if err != nil {
 		return resetPlan{}, err
 	}
-	plan := resetPlan{assignment: selected, checkpoint: checkpoint, action: "reset", tracked: "dirty", lock: "ok", preserve: "envelope"}
+	plan := resetPlan{assignment: selected, checkpoint: checkpoint, mode: "reset", envelope: envelope, action: "reset", tracked: "dirty", lock: "ok", preserve: "envelope"}
 	plan.registrationLocked = evidence.registration.Locked
 	plan.head, err = git.Output("-C", selected.Worktree, "rev-parse", "HEAD^{commit}")
 	if err != nil {
@@ -117,21 +132,32 @@ func planReset(root, operand, checkpoint string) (resetPlan, error) {
 	if err != nil {
 		return resetPlan{}, err
 	}
-	checkpoint, err = git.Output("-C", root, "rev-parse", "--verify", "--quiet", "--end-of-options", checkpoint+"^{commit}")
+	if envelope != "" {
+		plan.mode = "restore"
+		plan.manifest, err = readResetRestore(root, selected, envelope)
+		checkpoint = plan.manifest.Base
+	} else {
+		checkpoint, err = git.Output("-C", root, "rev-parse", "--verify", "--quiet", "--end-of-options", checkpoint+"^{commit}")
+	}
+	if err != nil && envelope != "" {
+		return resetPlan{}, err
+	}
 	if err != nil || checkpoint == "" {
 		return resetPlan{}, errors.New("checkpoint is not a commit")
 	}
 	plan.checkpoint = checkpoint
-	fromStart, err := authorization.IsAncestor(root, selected.Start, checkpoint)
-	if err != nil {
-		return resetPlan{}, err
-	}
-	toTip, err := authorization.IsAncestor(root, checkpoint, plan.tip)
-	if err != nil {
-		return resetPlan{}, err
-	}
-	if !fromStart || !toTip {
-		return resetPlan{}, refusalError{refusal{detail: "checkpoint is outside the assignment history", wanted: selected.Start + ".." + plan.tip}}
+	if envelope == "" {
+		fromStart, err := authorization.IsAncestor(root, selected.Start, checkpoint)
+		if err != nil {
+			return resetPlan{}, err
+		}
+		toTip, err := authorization.IsAncestor(root, checkpoint, plan.tip)
+		if err != nil {
+			return resetPlan{}, err
+		}
+		if !fromStart || !toTip {
+			return resetPlan{}, refusalError{refusal{detail: "checkpoint is outside the assignment history", wanted: selected.Start + ".." + plan.tip}}
+		}
 	}
 	nested, err := classifyNestedState(selected.Worktree)
 	if err != nil || nested == nestedUnknown {
@@ -177,10 +203,14 @@ func planReset(root, operand, checkpoint string) (resetPlan, error) {
 	}
 	if len(plan.status) == 0 {
 		plan.tracked = "clean"
-		if plan.head == checkpoint && plan.tip == checkpoint {
+		targetTip := checkpoint
+		if envelope != "" {
+			targetTip = plan.manifest.Tip
+		}
+		if plan.head == checkpoint && plan.tip == targetTip {
 			plan.preserve = "none"
 		}
-		if plan.head == checkpoint && plan.ref == selected.Branch && plan.lock == "ok" {
+		if envelope == "" && plan.head == checkpoint && plan.ref == selected.Branch && plan.lock == "ok" {
 			plan.action, plan.fingerprint = "none", "none"
 		}
 	}
@@ -194,8 +224,8 @@ func planReset(root, operand, checkpoint string) (resetPlan, error) {
 			return resetPlan{}, err
 		}
 		plan.fingerprint = fingerprintParts([]byte("bench-reset/v1"), []byte(common), []byte(selected.OwnerID),
-			[]byte(selected.ID), []byte("reset"), []byte(checkpoint), []byte(plan.head), []byte(plan.ref),
-			[]byte(plan.tip), []byte(evidence.registration.LockReason), plan.status, []byte(content), []byte(""))
+			[]byte(selected.ID), []byte(plan.mode), []byte(checkpoint), []byte(plan.head), []byte(plan.ref),
+			[]byte(plan.tip), []byte(evidence.registration.LockReason), plan.status, []byte(content), []byte(envelope))
 	}
 	return plan, err
 }

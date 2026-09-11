@@ -76,6 +76,7 @@ type joins struct {
 	mergeReconcile func(string, string) error
 	// resetMove attaches the assignment branch and replaces the checkout at the checkpoint.
 	resetMove     func(string, string, string) error
+	resetLayers   func(string, recoveryManifest) error
 	resetEnvelope func(string, resetPlan) (intent.Recovery, error)
 	// home is the Bench home the verb's own boundary resolved. The retirement path
 	// needs it to drop the retired assignment's census records, and it travels in the
@@ -114,6 +115,7 @@ func defaultJoins() joins {
 		kitSourceCheckout:        gate.KitSourceCheckout,
 		mergeReconcile:           reconcileMergeCheckout,
 		resetMove:                moveResetCheckout,
+		resetLayers:              restoreResetLayers,
 		resetEnvelope:            writeResetEnvelope,
 		build:                    runbinary.Build,
 		buildSubject:             runbinary.BuildSubject,

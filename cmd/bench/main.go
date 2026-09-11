@@ -121,7 +121,7 @@ var commandRegistry = []commandDefinition{
 		helpRow{Order: 34, Suffix: worktreeSuffix(usage.WorktreeExecGate), Description: "run one active owned worktree's gate"},
 		helpRow{Order: 35, Suffix: " reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>", Description: "replace one lost request token after identity proof"},
 		helpRow{Order: 36, Suffix: " merge --from <commit|target> <target>", Description: "merge a default-branch commit or a sibling's tip into an owned worktree"},
-		helpRow{Order: 36, Suffix: worktreeSuffix(usage.WorktreeReset), Description: "plan a recoverable reset to an assignment checkpoint"},
+		helpRow{Order: 36, Suffix: worktreeSuffix(usage.WorktreeReset), Description: "plan or apply a recoverable reset or restore"},
 		helpRow{Order: 37, Suffix: " --help", Description: "show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, and reset grammar"},
 	), Run: worktreeCommand},
 	{Name: "resume-clean", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: resumeCleanCommand},
