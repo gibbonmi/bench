@@ -47,8 +47,8 @@ func run(root string, parsed usage.Result) (string, int) {
 	if line != "" {
 		return line, 1
 	}
-	old, replacement, omit := mutationForm(parsed)
-	mutated, line := mutate(subject.start, old, replacement, omit)
+	old, replacement, kind := mutationForm(parsed)
+	mutated, line := mutate(subject.start, old, replacement, kind)
 	if line != "" {
 		return line, 1
 	}
@@ -62,7 +62,7 @@ func run(root string, parsed usage.Result) (string, int) {
 	if line := gradeGateLock(root); line != "" {
 		return line, 1
 	}
-	mutation := mutationName(omit)
+	mutation := kind
 	line, code, baseline := gradeBaseline(root, subject, mutation, request)
 	if line != "" {
 		return line, code
@@ -70,18 +70,14 @@ func run(root string, parsed usage.Result) (string, int) {
 	return probe(root, subject, mutated, mutation, request, baseline)
 }
 
-func mutationForm(parsed usage.Result) (string, string, bool) {
+func mutationForm(parsed usage.Result) (string, string, string) {
 	if old, omit := parsed.Flags["--omit"]; omit {
-		return old, "", true
+		return old, "", "omit"
 	}
-	return parsed.Flags["--swap"], parsed.Flags["--with"], false
-}
-
-func mutationName(omit bool) string {
-	if omit {
-		return "omit"
+	if call, unwrap := parsed.Flags["--unwrap"]; unwrap {
+		return call, "", "unwrap"
 	}
-	return "swap"
+	return parsed.Flags["--swap"], parsed.Flags["--with"], "swap"
 }
 
 // selectionArgs spells the focused run in `bench test`'s own grammar, so the probe and
