@@ -73,6 +73,8 @@ applies to each surface. Commands not listed retain their own contracts.
 
 | approved query | contextual disclosure |
 | --- | --- |
+| `bench assessment list` | List local runs; an empty store has zero rows. |
+| `bench assessment show` | Show complete record and cost detail. Both assessment queries end with `help[0]`. |
 | `bench anchors` | Report anchor matches or a definitive empty result; terminal checks offer no repair busywork. |
 | `bench learnings` | Offer the learnings drain for each distinct open entry. |
 | `bench maps` | Offer shaping or template repair for each decision state that needs it. |

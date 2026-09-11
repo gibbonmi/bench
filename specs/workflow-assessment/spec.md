@@ -125,23 +125,23 @@ Bench spans + census / native measures -> normalized run -> local store
 
 | row | story | behavior | seam | why it catches the failure |
 | --- | --- | --- | --- | --- |
-| A1 | 1 | A record survives release of its worktree | New test: TestAssessmentRecord in internal/assessment/record_test.go | Release a disposable fixture assignment and read its assessment record. |
-| A2 | 2 | Failed and cancelled attempts remain in the run | New test: TestAssessmentRecord in internal/assessment/record_test.go | Import a success after failure and verify the failure remains. |
-| A3 | 3 | A report separates chunk and performer roles | New test: TestAssessmentCommand in internal/assessment/command_test.go | Mix implementation repair review verification and advice in one fixture. |
+| A1 | 1 | A record survives release of its worktree | New test: TestAssessmentRecordStorage in internal/assessment/record_test.go | Release a disposable fixture assignment and read its assessment record. |
+| A2 | 2 | Failed and cancelled attempts remain in the run | New test: TestAssessmentRecordPreservesHistory in internal/assessment/record_test.go | Import a success after failure and verify the failure remains. |
+| A3 | 3 | A report separates chunk and performer roles | New test: TestAssessmentCommandDetail in internal/assessment/command_test.go | Mix implementation repair review verification and advice in one fixture. |
 | A4 | 4 | Inclusive input totals exclude cached tokens from uncached input | New test: TestAssessmentRecord in internal/assessment/record_test.go | Use total 100 cached 80 and require uncached 20. |
-| A5 | 5 | Repeated native events do not duplicate usage | New test: TestAssessmentRecord in internal/assessment/record_test.go | Import the same event twice. |
-| A6 | 6 | Usage sums both epochs across a cumulative counter reset | New test: TestAssessmentRecord in internal/assessment/record_test.go | Require the pre-reset and post-reset usage in the total. |
-| A7 | 7 | Absent usage is reported as unknown | New test: TestAssessmentRecord in internal/assessment/record_test.go | Compare an absent field with a measured zero. |
-| A8 | 8 | The estimate charges uncached input cached input and output at their own rates | New test: TestAssessmentRecord in internal/assessment/record_test.go | Use three unequal nonzero rates and quantities so omitting any category fails. |
-| A9 | 9 | An estimated cost cannot populate actual charges | New test: TestAssessmentRecord in internal/assessment/record_test.go | Import token counts and rates without a billing record. |
-| A10 | 10 | A missing charge component makes total cost partial | New test: TestAssessmentRecord in internal/assessment/record_test.go | Omit tool pricing from a run with tool charges. |
-| A11 | 11 | Concurrent attempts do not multiply elapsed wall time | New test: TestAssessmentRecord in internal/assessment/record_test.go | Overlap two reviews inside one run interval. |
-| A12 | 12 | Each measure names its producer and native evidence | New test: TestAssessmentRecord in internal/assessment/record_test.go | Supply a token value without provenance and require refusal. |
+| A5 | 5 | Repeated native events do not duplicate usage | New test: TestAssessmentRecordDuplicateEvents in internal/assessment/record_test.go | Import the same event twice. |
+| A6 | 6 | Usage sums both epochs across a cumulative counter reset | New test: TestAssessmentRecordEpochs in internal/assessment/record_test.go | Require the pre-reset and post-reset usage in the total. |
+| A7 | 7 | Absent usage is reported as unknown | New test: TestAssessmentRecordUnknownAndCharges in internal/assessment/record_test.go | Compare an absent field with a measured zero. |
+| A8 | 8 | The estimate charges uncached input cached input and output at their own rates | New test: TestAssessmentRecordPrices in internal/assessment/record_test.go | Use three unequal nonzero rates and quantities so omitting any category fails. |
+| A9 | 9 | An estimated cost cannot populate actual charges | New test: TestAssessmentRecordUnknownAndCharges in internal/assessment/record_test.go | Import token counts and rates without a billing record. |
+| A10 | 10 | A missing charge component makes total cost partial | New test: TestAssessmentRecordUnknownAndCharges in internal/assessment/record_test.go | Omit tool pricing from a run with tool charges. |
+| A11 | 11 | Concurrent attempts do not multiply elapsed wall time | New test: TestAssessmentRecordWall in internal/assessment/record_test.go | Overlap two reviews inside one run interval. |
+| A12 | 12 | Each measure names its producer and native evidence | New test: TestAssessmentRecordProvenance in internal/assessment/record_test.go | Supply a token value without provenance and require refusal. |
 | A13 | 13 | Phase guidance requests records without requiring paid trials | review-owned: Spec checks phase instructions | Reject collection guidance that launches an experiment or blocks builds for missing optional metrics. |
-| A14 | 14 | A conflicting record update preserves prior data | New test: TestAssessmentRecord in internal/assessment/record_test.go | Change a known session identity and verify refusal before replacement. |
+| A14 | 14 | A conflicting record update preserves prior data | New test: TestAssessmentRecordUpdates in internal/assessment/record_test.go | Change a known session identity and verify refusal before replacement. |
 | A15 | 15 | The query renders typed empty and complete detail states | New test: TestAssessmentCommand in internal/assessment/command_test.go | Exercise empty store list detail errors and each help spelling. |
-| A16 | 16 | Invalid or unsafe imports produce no stored run | New test: TestAssessmentCommand in internal/assessment/command_test.go | Use traversal FIFO symlink oversized version and duplicate-ID cases. |
-| A17 | 17 | An interrupted update leaves the previous record readable | New test: TestAssessmentRecord in internal/assessment/record_test.go | Inject write and rename failures with an existing record. |
+| A16 | 16 | Invalid or unsafe imports produce no stored run | New test: TestAssessmentCommandUnsafe in internal/assessment/command_test.go | Use traversal FIFO symlink oversized version and duplicate-ID cases. |
+| A17 | 17 | An interrupted update leaves the previous record readable | New test: TestAssessmentRecordUpdates in internal/assessment/record_test.go | Inject write and rename failures with an existing record. |
 | A18 | 18 | A paid-trial plan names approval and pinned conditions | New test: TestAssessmentComparison in internal/assessment/comparison_test.go | Omit budget approval or quality tolerance from the plan. |
 | A19 | 19 | A pilot cannot establish default-change evidence | New test: TestAssessmentComparison in internal/assessment/comparison_test.go | Supply only the FT311 authoring case or one repetition. |
 | A20 | 20 | Comparison reports variation and failed quality outcomes | New test: TestAssessmentComparison in internal/assessment/comparison_test.go | Use mixed successful failed and incomplete runs. |
@@ -149,12 +149,12 @@ Bench spans + census / native measures -> normalized run -> local store
 | A22 | 22 | Assessment never changes executable model defaults | New test: TestAssessmentCommand in internal/assessment/command_test.go | Run each assessment command and compare binding bytes before and after. |
 | A23 | 23 | Malformed or unfinished native input remains incomplete | New test: TestAssessmentRecord in internal/assessment/record_test.go | Mix one valid span with a truncated span and omit an expected session log. |
 
-| A24 | 24 | Total cost includes every role and terminal attempt state | New test: TestAssessmentRecord in internal/assessment/record_test.go | Use distinct costs for implementation failures repairs reviews verification and advice. |
-| A25 | 25 | An update can append an attempt without deleting earlier attempts | New test: TestAssessmentRecord in internal/assessment/record_test.go | Append a successful attempt to a failed run. |
-| A26 | 26 | An update can fill an unknown measure from new native evidence | New test: TestAssessmentRecord in internal/assessment/record_test.go | Supply a previously absent output count with provenance. |
-| A27 | 27 | An identical import leaves the stored record unchanged | New test: TestAssessmentRecord in internal/assessment/record_test.go | Import the same normalized run twice and compare bytes. |
-| A28 | 28 | An update that deletes an existing attempt is refused | New test: TestAssessmentRecord in internal/assessment/record_test.go | Omit an earlier failed attempt from a replacement. |
-| A29 | 29 | Conflicting known evidence is refused before replacement | New test: TestAssessmentRecord in internal/assessment/record_test.go | Change a measured token count while retaining its native event ID. |
+| A24 | 24 | Total cost includes every role and terminal attempt state | New test: TestAssessmentRecordUnknownAndCharges in internal/assessment/record_test.go | Use distinct costs for implementation failures repairs reviews verification and advice. |
+| A25 | 25 | An update can append an attempt without deleting earlier attempts | New test: TestAssessmentRecordUpdates in internal/assessment/record_test.go | Append a successful attempt to a failed run. |
+| A26 | 26 | An update can fill an unknown measure from new native evidence | New test: TestAssessmentRecordUpdates in internal/assessment/record_test.go | Supply a previously absent output count with provenance. |
+| A27 | 27 | An identical import leaves the stored record unchanged | New test: TestAssessmentRecordUpdates in internal/assessment/record_test.go | Import the same normalized run twice and compare bytes. |
+| A28 | 28 | An update that deletes an existing attempt is refused | New test: TestAssessmentRecordPreservesHistory in internal/assessment/record_test.go | Omit an earlier failed attempt from a replacement. |
+| A29 | 29 | Conflicting known evidence is refused before replacement | New test: TestAssessmentRecordUpdates in internal/assessment/record_test.go | Change a measured token count while retaining its native event ID. |
 | A30 | 30 | Selected OTEL spans reach the stored run with provenance | New test: TestAssessmentCollection in internal/assessment/collection_test.go | Join two known trace IDs and verify their derived elapsed value and references. |
 | A31 | 31 | Selected census events reach the stored run with provenance | New test: TestAssessmentCollection in internal/assessment/collection_test.go | Join known raw-command events from the expected assignment. |
 | A32 | 32 | Mapped harness counters reach the stored attempt with provenance | New test: TestAssessmentCollection in internal/assessment/collection_test.go | Import a valid session epoch and cache-bearing usage event. |
@@ -325,3 +325,105 @@ The A33, A38, and A21 fixture tables must execute every named case independently
 Authoring close: this spec and its tickets are staged for user sign-off. The reviews above assess the proposed build. No implementation or implementation test result is claimed.
 
 Reviewer amendment on 2026-09-11: apply decision #13 to the declared implementation model. Sol implementations use Astra/high review axes. This amendment follows the spec-authoring reviews recorded above.
+
+## Completion verification plan
+
+The stable chunk IDs are `1`, `2`, and `3`, in the approved ticket order.
+Each checkpoint requires current author tests and all three independent review results.
+The user approves Astra implementation in the retained session and Sol/high review axes.
+The synthetic cross-attempt counter case extends A6 and A24 without changing their pass criteria.
+
+```bench-completion-plan
+{
+  "version": 1,
+  "chunks": [
+    {
+      "id": "1",
+      "tickets": [
+        "1.md"
+      ],
+      "verification": [
+        {
+          "id": "assessment",
+          "command": "bench test --package ./internal/assessment"
+        },
+        {
+          "id": "dispatcher",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "cache-probe",
+          "command": "bench test --package ./internal/assessment --run TestAssessmentRecord",
+          "probe": "omit cached-input subtraction"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "tickets": [
+        "2.md"
+      ],
+      "verification": [
+        {
+          "id": "assessment",
+          "command": "bench test --package ./internal/assessment"
+        },
+        {
+          "id": "dispatcher",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "cache-probe",
+          "command": "bench test --package ./internal/assessment --run TestAssessmentRecord",
+          "probe": "omit cached-input subtraction"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "tickets": [
+        "3.md"
+      ],
+      "verification": [
+        {
+          "id": "assessment",
+          "command": "bench test --package ./internal/assessment"
+        },
+        {
+          "id": "dispatcher",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "cache-probe",
+          "command": "bench test --package ./internal/assessment --run TestAssessmentRecord",
+          "probe": "omit cached-input subtraction"
+        }
+      ]
+    }
+  ],
+  "final_verification": [
+    {
+      "id": "assessment",
+      "command": "bench test --package ./internal/assessment"
+    },
+    {
+      "id": "dispatcher",
+      "command": "bench test --package ./cmd/bench"
+    },
+    {
+      "id": "system",
+      "command": "bench test --check system"
+    }
+  ]
+}
+```
+
+## Chunk 1 author evidence
+
+The synthetic suite observed behavioral reds for storage, inclusive cache arithmetic, duplicate events, counter resets, rates, provenance, and concurrent wall time.
+The cross-attempt cumulative test observed USD 25 before repair and USD 15 after repair.
+The large-integer test rejected loss of precision after the JSON comparison repair.
+Cache subtraction, history preservation, and token pricing mutations each produced a diagnostic red and restored the source.
+The remaining update and unknown-value cases exercised behavior already present when their rows were added.
+
+The assessment suite and full dispatcher suite passed. The chunk has no paid comparison trial or model-default change.

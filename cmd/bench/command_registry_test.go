@@ -242,7 +242,7 @@ func TestAXIRegistryBindsEachRealCommandEnvelope(t *testing.T) {
 
 func axiEnvelopeCases() map[string]axiEnvelopeCase {
 	noSetup := func(*testing.T, string) {}
-	return map[string]axiEnvelopeCase{
+	cases := map[string]axiEnvelopeCase{
 		"anchors": {
 			route: []string{"anchors"}, successArgv: []string{"anchors", ".bench/BENCH.md"}, deepSuccessArgv: []string{"anchors", "../../.bench/BENCH.md"}, emptyArgv: []string{"anchors", "unregistered.md"},
 			blocks:        []string{"anchors", "help"},
@@ -296,6 +296,10 @@ func axiEnvelopeCases() map[string]axiEnvelopeCase {
 			successMarker: "roadmap[", emptyMarker: "roadmap[0]{id,title,spec,spec_status,external_trigger,occurrence_count,occurrence_keys}:\n", usage: "usage: bench roadmap", setupSuccess: setupAXIRoadmap, setupEmpty: noSetup,
 		},
 	}
+	for name, item := range assessmentEnvelopeCases() {
+		cases[name] = item
+	}
+	return cases
 }
 
 func axiEnvelopeCaseNames(cases map[string]axiEnvelopeCase) []string {
@@ -326,8 +330,6 @@ func setupAXILearnings(t *testing.T, root string) {
 	writeAXIFixture(t, filepath.Join(root, "capture", "learnings.md"), "# Learnings — usage journal\n\n## 2026-01-01 — fixture [open]\n")
 }
 
-// setupAXIMap writes one unresolved map: the index skeleton without its gist, and
-// one ticket file whose Answer is open, so the query projects exactly one row.
 func setupAXIMap(t *testing.T, root string) {
 	index := strings.Replace(maps.DecisionMapTemplate(), "\n- [<decision question>](<topic>/tickets/1.md): <gist>\n", "", 1)
 	ticket := strings.Replace(maps.DecisionTicketTemplate(), "<answer>", "— (open)", 1)
@@ -402,8 +404,6 @@ func setupAXIWorktree(t *testing.T, root string) {
 	runAXIGit(t, "-C", root, "worktree", "add", "-q", "-b", "fixture-linked", linked)
 }
 
-// setupAXIRoadmap writes the split board the roadmap surfaces read: one index heading
-// line and the row file that owns its detail.
 func setupAXIRoadmap(t *testing.T, root string) {
 	const heading = "**FT1 — fixture.**"
 	roadmaptest.WriteSplitBoard(t, root, heading+"\n", map[string]string{"FT1.md": heading + "\n"})

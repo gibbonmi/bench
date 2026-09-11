@@ -17,7 +17,7 @@ import (
 
 var approvedAXIQueries = map[string][]string{
 	"anchors": nil, "learnings": nil, "maps": nil, "guards": nil, "diff": nil, "coverage": nil,
-	"consumers": nil,
+	"assessment": {"list", "show"}, "consumers": nil,
 	"harnesses": nil,
 	"roadmap":   nil,
 	"worktree":  {"list"},

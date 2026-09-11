@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"github.com/gibbonmi/bench/internal/assessment"
+	"github.com/gibbonmi/bench/internal/poolkey"
 	"testing"
 )
 
@@ -58,6 +60,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench guards               every guard's deny surface as TOON (guard, boundary, denies)
   bench diff                 review base + changed files as TOON (--full appends log + diff body; --base freezes source)
   bench harnesses [<harness>]  the harness record as TOON (harness, provider, phase_form, hooks, delegation_guard); one name prints that harness's cells
+  bench assessment list | show <run-id> | record --input <file>  store and inspect local workflow cost and quality
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
   bench preflight review|build <slug>  phase-entry checks that a spec's artifacts agree with the tree, one verdict row per check
   bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>  run focused Go-test or named-check evidence as TOON; no gate verdict
@@ -94,5 +97,21 @@ func TestHelpInventoryIsComplete(t *testing.T) {
 	}
 	if stdout.String() != want {
 		t.Fatalf("help inventory:\n%s\nwant complete public inventory:\n%s", stdout.String(), want)
+	}
+}
+
+func assessmentEnvelopeCases() map[string]axiEnvelopeCase {
+	return map[string]axiEnvelopeCase{
+		"assessment list": {route: []string{"assessment", "list"}, successArgv: []string{"assessment", "list"}, emptyArgv: []string{"assessment", "list"}, blocks: []string{"runs", "help"}, successMarker: "runs[1]", emptyMarker: "runs[0]", usage: "usage: bench assessment", setupSuccess: setupAssessment, setupEmpty: func(t *testing.T, _ string) { t.Setenv("BENCH_HOME", t.TempDir()) }},
+		"assessment show": {route: []string{"assessment", "show"}, successArgv: []string{"assessment", "show", "fixture"}, blocks: []string{"attempts", "summary", "record", "help"}, successMarker: "record[", usage: "usage: bench assessment", setupSuccess: setupAssessment, recordBacked: true},
+	}
+}
+func setupAssessment(t *testing.T, root string) {
+	t.Helper()
+	home := t.TempDir()
+	t.Setenv("BENCH_HOME", home)
+	r := assessment.Run{Version: 1, RunID: "fixture", RepoKey: poolkey.Key(root), Source: "synthetic", Condition: "bench", TaskID: "fixture", State: "running"}
+	if err := (assessment.Store{Home: home, Root: root}).Record(r); err != nil {
+		t.Fatal(err)
 	}
 }
