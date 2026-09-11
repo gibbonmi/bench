@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: `specs/session-context-efficiency/decisions/session-context-efficiency.md` (ready compiled map).
 
-Verification log: 0 iteration(s) to accept — pending the requested Sol/high review.
+Verification log: 2 iteration(s) to accept — Sol/high accepted the suite. Trace-only partials and review-state bookkeeping are folded.
 
 Coordinator: [Session context efficiency](../session-context-efficiency/spec.md)
 
@@ -159,7 +159,7 @@ Won't handle: automatic stale-plan approval — the agent runs the rendered re-p
 - `internal/worktree/worktree.go`
 - `reviews/session-context-cleanup.md`
 
-Reviewer disposition: pending sign-off.
+Reviewer disposition: Sol/high review accepted; user spec and ticket sign-off remains pending.
 The fence is the union of ticket writes and the review pickup.
 A build cannot change this spec, its acceptance rows, or its tickets.
 
@@ -181,9 +181,9 @@ Rollback across completed removals is a separate lifecycle capability: approxima
 
 | Source clause | Coverage |
 | --- | --- |
-| Ticket 4: one selected-set plan, fingerprint, apply, and per-target outcomes | CL1–CL9, CL12, CL13 |
+| Ticket 4: one selected-set plan, fingerprint, apply, and per-target outcomes | CL1–CL9, CL12, CL13, CL17 |
 | Ticket 4: stale checks before removal and a re-plan operation | CL4–CL6, CL9 |
-| Ticket 6: existing safety guards remain | CL10, CL11, CL14, CL16 |
+| Ticket 6: existing safety guards remain | CL10, CL11, CL14, CL16, CL18, CL19 |
 | Ticket 7: independently useful cleanup | CL15 |
 
 ### Reader sweep and proof checklist

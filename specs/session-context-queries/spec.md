@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: `specs/session-context-efficiency/decisions/session-context-efficiency.md` (ready compiled map).
 
-Verification log: 0 iteration(s) to accept — pending the requested Sol/high review.
+Verification log: 2 iteration(s) to accept — Sol/high accepted the suite. Trace-only partials and review-state bookkeeping are folded.
 
 Coordinator: [Session context efficiency](../session-context-efficiency/spec.md)
 
@@ -201,7 +201,7 @@ Won't handle: a general guidance rewrite — the named read examples remain the 
 - `tests/canary/workflow-guidance-anchors/drain-split-board-row-detail-owner`
 - `tests/canary/workflow-guidance-anchors/implementation-retro-drain-anchor`
 
-Reviewer disposition: pending sign-off.
+Reviewer disposition: Sol/high review accepted; user spec and ticket sign-off remains pending.
 The fence is the union of ticket writes and the review pickup.
 A build cannot change this spec, its acceptance rows, or its tickets.
 
@@ -226,11 +226,11 @@ Build-then-run consolidation needs separate evidence: approximately 4 edits, 1 g
 
 | Source clause | Coverage |
 | --- | --- |
-| Ticket 3: bounded raw reads and Bench queries | QU5–QU7, QU11, QU12, QU14, QU15 |
+| Ticket 3: bounded raw reads and Bench queries | QU5–QU7, QU11, QU12, QU14, QU15, QU18, QU24 |
 | Ticket 4: selected multi-target queries and archive guidance | QU1–QU4, QU8, QU11, QU13 |
-| Ticket 8: identity, path, state, and bounded histories | QU1–QU8, QU16–QU18 |
+| Ticket 8: identity, path, state, and bounded histories | QU1–QU8, QU16–QU18, QU21, QU22, QU24, QU25 |
 | Ticket 9: reviewer-approved numeric budgets | QU14, QU15 |
-| FT173: existing owners and full-detail routes | QU4, QU7, QU9, QU12, QU15 |
+| FT173: existing owners and full-detail routes | QU4, QU7, QU9, QU12, QU15, QU18–QU20, QU23 |
 
 ### Reader sweep and proof checklist
 

@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: `specs/session-context-efficiency/decisions/session-context-efficiency.md` (ready compiled map).
 
-Verification log: 0 iteration(s) to accept — pending the requested Sol/high review.
+Verification log: 2 iteration(s) to accept — Sol/high accepted the suite. Trace-only partials and review-state bookkeeping are folded.
 
 ## Problem
 
@@ -105,7 +105,8 @@ Won't handle: a new orchestration service — the existing phase and worktree ow
 
 - `reviews/session-context-efficiency.md`
 
-The reviewer disposition is pending sign-off.
+Sol/high accepted the spec review.
+User spec and ticket sign-off remains pending.
 This coordination source authorizes no product-code writes.
 Each child declares its own complete fence.
 
@@ -138,3 +139,5 @@ Their enforcement references are in [seam evidence](assets/seam-evidence.md).
 
 The coordination format introduces no behavior beyond the approved coordinating spec and four-child split.
 The review-owned dependency record does not add a new CLI or gate check.
+
+The [spec review record](assets/spec-review.md) records Sol/high acceptance and the retained user approval boundary.

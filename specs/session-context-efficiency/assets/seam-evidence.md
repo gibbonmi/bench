@@ -102,12 +102,12 @@ They covered source, tests, fixtures, JavaScript, JSON, and workflow files.
 
 | Search fact | Readers | Row or exclusion |
 | --- | --- | --- |
-| Worktree list fields, grammar, and `ListCommand` | Leaf dispatch, usage, list action tests, command inventory | QU1–QU3, QU9, QU10, QU16, QU17 |
-| `HistoryFact`, `History`, `historyCommand`, and history invocations | Spec dispatch, roadmap context, history tests, help, debug and drain guidance | QU4–QU13, QU16, QU17 |
+| Worktree list fields, grammar, and `ListCommand` | Leaf dispatch, usage, list action tests, command inventory | QU1–QU3, QU9, QU10, QU16–QU18 |
+| `HistoryFact`, `History`, `historyCommand`, and history invocations | Spec dispatch, roadmap context, history tests, help, debug and drain guidance | QU4–QU8, QU11–QU13, QU19–QU25 |
 | Harness `Measures` and record rows | Harness query and tests, guards, lines, status, conformance | ME9 and ME11 retain compiled consumers |
 | `ReadSpans` and `NewestLanding` | OTEL tests, worktree trace/reset tests, retro scaffold | ME16 retains the existing Bench metric owner |
-| Hook event names and result fields | Current configurations, hook dispatch, adoption, harness declarations | OV1 and OV19 require actual adapter closure before implementation |
-| Cleanup grammar and apply owners | Worktree leaf, landing effects, public help, landed/unclaimed tests | CL1–CL14, CL16 |
+| Hook event names and result fields | Current configurations, hook dispatch, adoption, harness declarations | OV1 and OV19–OV22 require actual adapter closure before implementation |
+| Cleanup grammar and apply owners | Worktree leaf, landing effects, public help, landed/unclaimed tests | CL1–CL14, CL16–CL19 |
 | Old decision paths | Compiled map, ticket 1, source assets, new specs | SC7 requires one compiled copy |
 
 The worktree default fixture family stays unchanged under QU9.
@@ -129,7 +129,7 @@ A class without a new parser or mutation retains its current owner and receives 
 | Spaces, glob text, leading dashes, quoted multi-word operands | ME17, QU10, QU16, CL14, CL16 |
 | Control bytes and permitted newline/tab sink boundaries | ME17, QU16, CL16 |
 | Numeric-looking IDs and encoded output cells | ME12, QU1, QU16 use the current TOON owner |
-| Absent versus empty input | ME5, ME6, QU9, CL13, OV16, OV17 |
+| Absent versus empty input | ME5, ME6, QU9, QU19, CL13, CL17, OV16, OV17 |
 | Special files and live or dangling input symlinks | ME19 and OV16 |
 | Last line without a newline | ME7 uses a valid final JSON event without a newline |
 | JSON-escaped separators | ME17 and OV7 treat decoded record contents as data |
@@ -139,7 +139,7 @@ A class without a new parser or mutation retains its current owner and receives 
 | Shipped CLI, linked invocation, and actual hook path | ME11, QU9, OV19, CL11 |
 | Destructive worktree identity and state | CL4–CL6, CL10, CL11 retain current lifecycle authority |
 | Fresh-process durable retrieval | OV6 uses the stored artifact through its actual retrieval route |
-| Slow or failed artifact persistence | OV8 retains the original result without producer replay |
+| Slow or failed artifact persistence | OV8 and OV23–OV25 retain the original result without producer replay |
 | C-quoted Git patch paths | Excluded: these tickets use the existing history producer and do not parse patches |
 | Unicode whitespace or Markdown parser changes | Excluded: no new whitespace or Markdown parser joins these tickets |
 | Operator runs and shell-command classification | Excluded: no shell parser joins the record or selected-query owners |

@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: `specs/session-context-efficiency/decisions/session-context-efficiency.md` (ready compiled map).
 
-Verification log: 0 iteration(s) to accept — pending the requested Sol/high review.
+Verification log: 2 iteration(s) to accept — Sol/high accepted the suite. Trace-only partials and review-state bookkeeping are folded.
 
 Coordinator: [Session context efficiency](../session-context-efficiency/spec.md)
 
@@ -162,7 +162,7 @@ Won't handle: provider pricing — FT231 can consume independent pricing evidenc
 - `specs/session-context-measurement/assets/budget-evidence.md`
 - `tests/canary/package-core-guard/unrouted-subcommand`
 
-Reviewer disposition: pending sign-off.
+Reviewer disposition: Sol/high review accepted; user spec and ticket sign-off remains pending.
 The fence is the union of ticket writes and the review pickup.
 A build cannot change this spec, its acceptance rows, or its tickets.
 

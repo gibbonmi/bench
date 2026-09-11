@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: `specs/session-context-efficiency/decisions/session-context-efficiency.md` (ready compiled map).
 
-Verification log: 0 iteration(s) to accept — pending the requested Sol/high review.
+Verification log: 2 iteration(s) to accept — Sol/high accepted the suite. Trace-only partials and review-state bookkeeping are folded.
 
 Coordinator: [Session context efficiency](../session-context-efficiency/spec.md)
 
@@ -177,7 +177,7 @@ Won't handle: automatic producer retry — the agent retains the existing explic
 - `tests/canary/load-validity-metadata/codex-hooks-timeout-typed`
 - `tests/canary/package-core-guard/unrouted-subcommand`
 
-Reviewer disposition: pending sign-off.
+Reviewer disposition: Sol/high review accepted; user spec and ticket sign-off remains pending.
 The fence is the union of ticket writes and the review pickup.
 A build cannot change this spec, its acceptance rows, or its tickets.
 
@@ -202,7 +202,7 @@ Automatic artifact retention policy is separate: approximately 4 edits, 1 gate r
 | --- | --- |
 | Ticket 3: complete artifact, bounded diagnostics, status, true size, detail route | OV2–OV6 |
 | Ticket 5: unresolved runtime and upstream boundaries | OV1, OV7, OV11, OV12, OV19–OV22 |
-| Ticket 6: preserve the original, report limitations, add no denial | OV7–OV10, OV14 |
+| Ticket 6: preserve the original, report limitations, add no denial | OV7–OV10, OV14, OV23–OV25 |
 | Ticket 9: measured budget approval | OV13 |
 
 ### Reader sweep and proof checklist
