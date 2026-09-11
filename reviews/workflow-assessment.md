@@ -40,7 +40,7 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
 {
   "version": 1,
   "spec": "specs/workflow-assessment/spec.md",
-  "plan_digest": "sha256:e8ced3d4a983e8fa78f76997f817dffd2a6d2158adfd9a5dfba0315cd27c3956",
+  "plan_digest": "sha256:41eac3487facc0230a48ce1f7389512900a35ea0c900efb00b5539ea68ebf4db",
   "implementation_session": "01a0920d-3021-73c1-9ed3-9980d5decc71",
   "chunks": [
     {
@@ -972,6 +972,104 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
           ]
         }
       ]
+    },
+    {
+      "id": "3",
+      "base": "ccbe834e59c4b8469108e934a577a82fb9e0a05e",
+      "tip": "fdd961d17a78560931c75c916a0d7eae539e984a",
+      "plan_digest": "sha256:41eac3487facc0230a48ce1f7389512900a35ea0c900efb00b5539ea68ebf4db",
+      "source_digest": "2ef89bc2082d6a4345d9f1bc19d40f83f4fba664",
+      "acceptance_rows": [
+        "A18",
+        "A19",
+        "A20",
+        "A21",
+        "A22",
+        "A34",
+        "A35",
+        "A36",
+        "A37",
+        "A38",
+        "A39"
+      ],
+      "verification": [],
+      "reviews": [
+        {
+          "id": "chunk3-standards-1",
+          "performer": "/root/assessment_3_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "2ef89bc2082d6a4345d9f1bc19d40f83f4fba664",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_3_standards:initial",
+            "excerpt": "Standards review: **2 findings**. Worst issue: **S1**.",
+            "digest": "sha256:241f0dad94bc64dbf0a77205f525528be25674e0484d4d1ab3e830a54914a3f4"
+          },
+          "axis": "Standards",
+          "base": "ccbe834e59c4b8469108e934a577a82fb9e0a05e",
+          "tip": "fdd961d17a78560931c75c916a0d7eae539e984a",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "chunk3-spec-1",
+          "performer": "/root/assessment_3_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "2ef89bc2082d6a4345d9f1bc19d40f83f4fba664",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_3_spec:initial",
+            "excerpt": "Findings: 2. Worst: P1.",
+            "digest": "sha256:f515aec8a549c4ca2d9c70261de9383d3e23f7624d32798c946bc97873ae533a"
+          },
+          "axis": "Spec",
+          "base": "ccbe834e59c4b8469108e934a577a82fb9e0a05e",
+          "tip": "fdd961d17a78560931c75c916a0d7eae539e984a",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "chunk3-coverage-1",
+          "performer": "/root/assessment_3_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "2ef89bc2082d6a4345d9f1bc19d40f83f4fba664",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_3_coverage:initial",
+            "excerpt": "Coverage review iteration 1/1 found **8 findings**. Worst is **C1**, where a valid bounded plan can expand into quadratic reason processing and exhaust resources.",
+            "digest": "sha256:70cd52339f2a9a4086d07cab342b504f9057d82b210a13f98e037e9bd4e4354b"
+          },
+          "axis": "Coverage",
+          "base": "ccbe834e59c4b8469108e934a577a82fb9e0a05e",
+          "tip": "fdd961d17a78560931c75c916a0d7eae539e984a",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C7",
+            "C8"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1045,6 +1143,21 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
     {
       "from": "sha256:aff6509bac30fe7b34cd6a633e325b4c4a33233c0d2ede9abf25f18b0709db0f",
       "to": "sha256:e8ced3d4a983e8fa78f76997f817dffd2a6d2158adfd9a5dfba0315cd27c3956",
+      "chunk_ids": {
+        "1": [
+          "1"
+        ],
+        "2": [
+          "2"
+        ],
+        "3": [
+          "3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e8ced3d4a983e8fa78f76997f817dffd2a6d2158adfd9a5dfba0315cd27c3956",
+      "to": "sha256:41eac3487facc0230a48ce1f7389512900a35ea0c900efb00b5539ea68ebf4db",
       "chunk_ids": {
         "1": [
           "1"
@@ -1142,3 +1255,43 @@ The repair moves the unchanged assessment paragraph into Land and removes its se
 All three Sol axes reaffirmed 07baefb5 with zero findings. The plan and acceptance criteria are unchanged. Current assessment and dispatcher verification passed; the cache-subtraction probe bit and restored production. Native reviewer usage and charges remain unknown.
 
 Consumers hash: 890c106dcd6280500804a82409cd16a6fdf3be3b1dc0802e53e860f6e6835f0f. Coverage hash: 06966e263ca07d6663ed7a156a5ad5ef4c9d70c5f867f43712299abc5a20f2e7. Every reviewer verified both hashes and its clean frozen tip.
+
+
+# Chunk 3 pickup
+
+All three Sol/high native reviews completed at fdd961d1. Standards found two issues, Spec found two, and Coverage found eight. There are twelve repair targets. Native reviewer usage and charges are unknown.
+
+## Standards
+
+- S1, auto-fix: comparison_report.go:93 emits full attempt bodies in default output. The craft-cli minimal-schema rule requires compact decision fields and detail access.
+- S2, auto-fix: plan_validate.go:14,20,78 and comparison.go:35,58 repeat comparison policy. AGENTS requires one production owner per fact.
+
+Worst issue: S1. Count: two.
+
+## Spec
+
+- P1, auto-fix: comparison.go:101 allows an explicit incomplete run with complete timestamps. A20 requires incomplete evidence to stay ineligible.
+- P2, auto-fix: plan_validate.go:74 removes the declared variable without requiring a difference. The single-variable comparison contract requires an actual treatment difference.
+
+Worst issue: P1. Count: two.
+
+## Coverage
+
+- C1: comparison.go:26-33,152-159 expands each task/condition pair into a reason and scans prior reasons. A bounded plan can cause excessive work. The native review proposed ask-user for a new limit. Root routes auto-fix under existing bounded-input behavior: aggregate missing tasks from observed slots without a new limit or weaker guarantee.
+- C2, auto-fix: add hostile plan-file partitions at Command. Existing unsafe tests cover only record input. A16 and A18 cover this surface.
+- C3, auto-fix: add independent plan-condition mismatches for revision, model, effort, harness, and limits. A38 currently exercises only selected runs.
+- C4, auto-fix: add wrong plan, missing reference, invalid repetition, capability mismatch, and assurance mismatch. These bind A18, A35, and A36 to actual trial provenance.
+- C5, auto-fix: assert exact comparison cost totals with actual charges, partial values, roles, terminal states, and two currencies. A24 applies across the comparison boundary.
+- C6, auto-fix: add the lower quality bound and both exact boundaries for A37.
+- C7, auto-fix: add a second task whose required repetition is missing for A35.
+- C8, auto-fix: add complete pilot and descriptive runs for A19.
+
+Worst issue: C1. Count: eight. The coverage CLI suggestion is to expose stable row IDs and the reason each seam catches its failure.
+
+## Author verification
+
+Assessment and dispatcher suites passed at the frozen source. Cache, default preservation, budget, approval, pilot, assurance, quality, variation, repetition, causal arms, and fixed-run-field probes bit and restored production.
+
+The AXI named check found the missing profile terminator. Restore the exact parser anchor without changing the checker.
+
+The synthetic CLI comparison returned four runs with unknown costs and measured variation. The first environment override selected the ordinary store. All four generated records were preserved and verified, then removed. The corrected child environment used the isolated temporary store and passed. No paid trial ran.
