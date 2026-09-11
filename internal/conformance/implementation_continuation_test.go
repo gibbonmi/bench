@@ -124,7 +124,7 @@ func TestImplementationContinuation(t *testing.T) {
 		},
 		"implementation continuation: delegation discipline allowed an undeclared model substitution": {
 			file: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", section: "Read-only returns",
-			needle: "If the selected model is unavailable, report the failure and use an authorized diagnostic route without an undeclared model substitution.",
+			needle: "If the selected model is unavailable, report the failure and use an available authorized diagnostic route without an undeclared model substitution.",
 		},
 	}
 	family := anchorsWithDiagnosticPrefix("implementation continuation: ")

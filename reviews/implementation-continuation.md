@@ -22,3 +22,9 @@ Worst issue: The unavailable-model fallback does not require an available route.
   available. The approved decision requires a route that is available and
   authorized. The guidance and its anchor predicate permit an unavailable
   authorized route to satisfy the approved unavailable-model edge.
+
+## Resolution
+
+The retained author required an available authorized route in the guidance and
+its independent predicate. Removing `available` now makes
+`docs-currency-workflow` fail with the expected diagnostic.
