@@ -65,8 +65,8 @@ func ReadSpans(home, root string) ([]Span, error) {
 	return spans, nil
 }
 
-// Landing is the newest completed landing of one repository's record and the gate
-// stages that ran below it.
+// Landing is the newest completed landing with a published subject in one
+// repository's record and the gate stages that ran below it.
 type Landing struct {
 	// Commit is the published subject the landing recorded, empty when the landing
 	// published none.
@@ -77,9 +77,9 @@ type Landing struct {
 	Stages []Span
 }
 
-// NewestLanding returns the newest completed landing of root's record. It answers false
-// when the record is absent, is unreadable, or names no completed landing, which is the
-// same answer a consumer states as unknown.
+// NewestLanding returns the newest completed landing with a published subject from
+// root's record. It answers false when the record is absent, is unreadable, or names
+// no such landing, which is the same answer a consumer states as unknown.
 func NewestLanding(home, root string) (Landing, bool) {
 	spans, err := ReadSpans(home, root)
 	if err != nil {
@@ -87,7 +87,7 @@ func NewestLanding(home, root string) (Landing, bool) {
 	}
 	newest := -1
 	for index, candidate := range spans {
-		if candidate.Seam != SeamLanding {
+		if candidate.Seam != SeamLanding || candidate.Attributes[AttrSubjectID] == "" {
 			continue
 		}
 		if newest < 0 || candidate.End.After(spans[newest].End) {
