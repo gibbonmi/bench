@@ -12,6 +12,8 @@ discipline: the charge contents, the repair-charge template, the probe rules, an
 
 `.bench/BENCH.md` owns retained implementation authorship. Delegation normally buys independent read-only review or brief diagnostic consultation. A diagnostic helper can inspect evidence, but it receives no implementation or repair assignment.
 
+During retained implementation, brief higher-tier diagnostic consultation is pre-approved through the top tier.
+
 Never delegate a decision the reviewer owns. A change of implementation author or session requires user direction. When the user explicitly selects delegated authorship, the write delegate uses an isolated worktree and this skill's charge and verification rules. A harness limitation never changes authorship silently.
 
 Before you spawn a delegation that changes who performs the requested work, surface it.

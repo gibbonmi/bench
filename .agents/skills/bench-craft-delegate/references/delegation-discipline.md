@@ -121,6 +121,10 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 
 ## Read-only returns
 
+- A diagnostic request contains only one question, the relevant error, minimal code, and attempted hypotheses.
+- A diagnostic return contains a short diagnosis and the next check.
+- Record the actual consultation line used.
+- If the selected model is unavailable, report the failure and use an authorized diagnostic route without an undeclared model substitution.
 - The coordinator reads the census record at charge close for a read-only charge.
 - The CLI owns routine deterministic failure projection. A triage delegate never
   repeats it.

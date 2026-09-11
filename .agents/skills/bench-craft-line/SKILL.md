@@ -97,24 +97,24 @@ Declare fan-out for visibility before spend. Report an overrun like a ladder mov
 
 ## Retained implementation continuation
 
-A verified acceptance improvement is progress.
-New useful evidence is progress when it changes the next action.
+A verified acceptance improvement is progress. New useful evidence is progress when it changes the next action.
 Continue while progress holds inside the approved scope.
 
 An attempt contains one coherent hypothesis, implementation change, and verification.
-An expected TDD red is not an attempt.
-An individual tool call is not an attempt.
+An expected TDD red is not an attempt. An individual tool call is not an attempt.
 A diagnostic-only action is not a completed implementation-and-verification attempt.
 
 After two completed attempts with no progress, reassess before the next implementation attempt.
-State the changed hypothesis and the next discriminating check.
+State the changed hypothesis and the next discriminating check. After reassessment, the retained author can invoke `$bench-debug`.
+
 Stop when the run exhausts a selected numeric cap.
 Stop dependent implementation for a required user decision.
 Stop for an external blocker when no independent work remains.
 Stop when the run reaches an explicit user budget.
 
-Stop immediately when the user cancels.
-If no useful next check remains, report the unresolved blocker and the smallest decision or evidence needed.
+Stop immediately when the user cancels. If no useful next check remains, report the unresolved blocker and the smallest decision or evidence needed.
+
+A diagnostic route does not change the retained implementation session. A diagnostic route does not change the retained implementation model.
 
 An uncapped retained implementation has no artificial iteration stop within the approved spec.
 It retains the user budget, approval boundaries, external blockers, and cancellation stops.

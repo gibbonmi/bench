@@ -86,6 +86,46 @@ func TestImplementationContinuation(t *testing.T) {
 			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
 			needle: "An uncapped retained implementation has no artificial iteration stop within the approved spec.",
 		},
+		"implementation continuation: craft-line dropped the debug route": {
+			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
+			needle: "After reassessment, the retained author can invoke `$bench-debug`.",
+		},
+		"implementation continuation: craft-delegate allowed diagnostic helper repairs": {
+			file: ".agents/skills/bench-craft-delegate/SKILL.md", section: "Delegate or retain",
+			needle: "A diagnostic helper can inspect evidence, but it receives no implementation or repair assignment.",
+		},
+		"implementation continuation: diagnostic escalation changed the retained session": {
+			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
+			needle: "A diagnostic route does not change the retained implementation session.",
+		},
+		"implementation continuation: craft-line dropped retained-session effort adjustment": {
+			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Ticketed-build stage defaults",
+			needle: "The author can adjust effort in the retained session and reports the change.",
+		},
+		"implementation continuation: craft-delegate dropped top-tier diagnostic pre-approval": {
+			file: ".agents/skills/bench-craft-delegate/SKILL.md", section: "Delegate or retain",
+			needle: "During retained implementation, brief higher-tier diagnostic consultation is pre-approved through the top tier.",
+		},
+		"implementation continuation: delegation discipline expanded diagnostic request context": {
+			file: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", section: "Read-only returns",
+			needle: "A diagnostic request contains only one question, the relevant error, minimal code, and attempted hypotheses.",
+		},
+		"implementation continuation: delegation discipline dropped the short diagnostic return": {
+			file: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", section: "Read-only returns",
+			needle: "A diagnostic return contains a short diagnosis and the next check.",
+		},
+		"implementation continuation: diagnostic escalation changed the retained model": {
+			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
+			needle: "A diagnostic route does not change the retained implementation model.",
+		},
+		"implementation continuation: delegation discipline dropped the actual consultation line": {
+			file: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", section: "Read-only returns",
+			needle: "Record the actual consultation line used.",
+		},
+		"implementation continuation: delegation discipline allowed an undeclared model substitution": {
+			file: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", section: "Read-only returns",
+			needle: "If the selected model is unavailable, report the failure and use an authorized diagnostic route without an undeclared model substitution.",
+		},
 	}
 	family := anchorsWithDiagnosticPrefix("implementation continuation: ")
 	for diagnostic, predicate := range wantPredicates {
