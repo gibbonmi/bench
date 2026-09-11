@@ -193,6 +193,7 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `internal/otelrecord/reader.go`
 - `internal/otelrecord/reader_test.go`
 - `internal/census/census.go`
+- `internal/census/events.go`
 - `internal/census/census_test.go`
 - `.agents/commands/bench-implement-spec.md`
 - `.agents/commands/bench-review-implementation.md`
