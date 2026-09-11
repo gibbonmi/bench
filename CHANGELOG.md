@@ -123,6 +123,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Changed retained implementation to continue while verified progress holds, reassess
+  repeated nonprogress, and permit bounded read-only diagnostic consultation without
+  switching the implementation session or model.
+
 - `bench worktree clean --discard-branch <path>` now removes a checkout that sits on a
   `bench/shift-*` branch. A `bench shift` leaves that branch checked out in place of the
   assignment branch, and the mismatch retained the tree on every path. The flag

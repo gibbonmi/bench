@@ -1,6 +1,6 @@
 # Continue the retained implementation session while it advances
 
-Status: staged
+Status: implemented
 Decision source: `docs/adr/0021-benchmark-workflow-orchestration.md`
 Verification log: 2 iteration(s) to accept — Sol/high approved the repaired spec and ticket graph. Attempt counting, stop causes, and diagnostic boundaries were corrected.
 
@@ -125,10 +125,12 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `.agents/commands/bench-implement-spec.md`
 - `.agents/skills/bench-craft-line/SKILL.md`
 - `internal/anchors/registry_data.go`
+- `internal/anchors/registry_retained_workflow.go`
 - `internal/conformance/implementation_continuation_test.go` (new)
 - `tests/canary/workflow-guidance-anchors`
 - `.agents/skills/bench-craft-delegate/SKILL.md`
 - `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`
+- `CHANGELOG.md`
 - `specs/implementation-continuation/spec.md`
 - `specs/implementation-continuation/tickets`
 - `reviews/implementation-continuation.md` (new)
