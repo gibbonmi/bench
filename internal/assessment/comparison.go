@@ -153,10 +153,11 @@ func Compare(p Plan, runs []Run) (Comparison, error) {
 			measure, ok := r.Quality[name]
 			if !ok || measure.Value == nil {
 				reason("quality is unknown: " + r.RunID + "/" + name)
-				continue
+				break
 			}
 			if (bounds.Min != nil && *measure.Value < *bounds.Min) || (bounds.Max != nil && *measure.Value > *bounds.Max) {
 				reason("quality exceeds tolerance: " + r.RunID + "/" + name)
+				break
 			}
 		}
 		out.Runs = append(out.Runs, ComparedRun{Run: r, Summary: summary, Usage: usage})
