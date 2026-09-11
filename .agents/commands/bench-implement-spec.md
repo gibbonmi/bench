@@ -68,8 +68,7 @@ consumed the cap. Keep landed work landed. Then route by cause:
 
 ## `--full <spec>`
 
-This command orchestrates retained implementation, chunk reviews, the final landing,
-and `/bench-final-check`. It refuses on a missing or unnamed spec. At every phase
+This command orchestrates retained implementation, chunk reviews, the final landing, and `/bench-final-check`. It refuses on a missing or unnamed spec. At every phase
 boundary it writes the phase reached into `capture/session-handoff.md` and refreshes
 the pin with `bench handoff`. Outside the kit-guidance set, a diff large enough to hide
 bugs pauses to ask the reviewer before escalating tier or adding a cross-harness
