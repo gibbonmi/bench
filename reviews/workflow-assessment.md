@@ -40,7 +40,7 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
 {
   "version": 1,
   "spec": "specs/workflow-assessment/spec.md",
-  "plan_digest": "sha256:41eac3487facc0230a48ce1f7389512900a35ea0c900efb00b5539ea68ebf4db",
+  "plan_digest": "sha256:84e8b2c7abc7f9dc7d421b4a334c23d25835fd6888b541add2fd58544481b276",
   "implementation_session": "01a0920d-3021-73c1-9ed3-9980d5decc71",
   "chunks": [
     {
@@ -976,9 +976,9 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
     {
       "id": "3",
       "base": "ccbe834e59c4b8469108e934a577a82fb9e0a05e",
-      "tip": "fdd961d17a78560931c75c916a0d7eae539e984a",
-      "plan_digest": "sha256:41eac3487facc0230a48ce1f7389512900a35ea0c900efb00b5539ea68ebf4db",
-      "source_digest": "2ef89bc2082d6a4345d9f1bc19d40f83f4fba664",
+      "tip": "4e43382a694d7c66d5bba49f12cf12c2a8f38f4e",
+      "plan_digest": "sha256:84e8b2c7abc7f9dc7d421b4a334c23d25835fd6888b541add2fd58544481b276",
+      "source_digest": "0a2e66bbcc83f212d5a19673841dc31fb8cb213a",
       "acceptance_rows": [
         "A18",
         "A19",
@@ -990,7 +990,9 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
         "A36",
         "A37",
         "A38",
-        "A39"
+        "A39",
+        "A16",
+        "A24"
       ],
       "verification": [],
       "reviews": [
@@ -1068,6 +1070,78 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
             "C8"
           ],
           "supersedes": []
+        },
+        {
+          "id": "chunk3-standards-2",
+          "performer": "/root/assessment_3_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "0a2e66bbcc83f212d5a19673841dc31fb8cb213a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_3_standards:repair-1",
+            "excerpt": "Standards reaffirmation: **2 new findings**. Worst issue: **S3**.",
+            "digest": "sha256:b97ab74dc4b783ed28fff4b4568325a66e9e1f03f572a7dc9ecaf91dd3cc8a89"
+          },
+          "axis": "Standards",
+          "base": "ccbe834e59c4b8469108e934a577a82fb9e0a05e",
+          "tip": "4e43382a694d7c66d5bba49f12cf12c2a8f38f4e",
+          "finding_ids": [
+            "S3",
+            "S4"
+          ],
+          "supersedes": [
+            "chunk3-standards-1"
+          ]
+        },
+        {
+          "id": "chunk3-spec-2",
+          "performer": "/root/assessment_3_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "0a2e66bbcc83f212d5a19673841dc31fb8cb213a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_3_spec:repair-1",
+            "excerpt": "Spec reaffirmation: **PASS**.",
+            "digest": "sha256:b1ffd5c500cdf504706189313b9cfebd87456e5a3b91dd44264aad0edc985bf4"
+          },
+          "axis": "Spec",
+          "base": "ccbe834e59c4b8469108e934a577a82fb9e0a05e",
+          "tip": "4e43382a694d7c66d5bba49f12cf12c2a8f38f4e",
+          "finding_ids": [],
+          "supersedes": [
+            "chunk3-spec-1"
+          ]
+        },
+        {
+          "id": "chunk3-coverage-2",
+          "performer": "/root/assessment_3_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "0a2e66bbcc83f212d5a19673841dc31fb8cb213a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_3_coverage:repair-1",
+            "excerpt": "Coverage repair review: **2 later-delta findings**. C1\u2013C8 are closed. Worst is **C9**.",
+            "digest": "sha256:ec10483ef31638ee3454592506f385c47d055745f1d4914267c6e83f814e5595"
+          },
+          "axis": "Coverage",
+          "base": "ccbe834e59c4b8469108e934a577a82fb9e0a05e",
+          "tip": "4e43382a694d7c66d5bba49f12cf12c2a8f38f4e",
+          "finding_ids": [
+            "C9",
+            "C10"
+          ],
+          "supersedes": [
+            "chunk3-coverage-1"
+          ]
         }
       ]
     }
@@ -1158,6 +1232,21 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
     {
       "from": "sha256:e8ced3d4a983e8fa78f76997f817dffd2a6d2158adfd9a5dfba0315cd27c3956",
       "to": "sha256:41eac3487facc0230a48ce1f7389512900a35ea0c900efb00b5539ea68ebf4db",
+      "chunk_ids": {
+        "1": [
+          "1"
+        ],
+        "2": [
+          "2"
+        ],
+        "3": [
+          "3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:41eac3487facc0230a48ce1f7389512900a35ea0c900efb00b5539ea68ebf4db",
+      "to": "sha256:84e8b2c7abc7f9dc7d421b4a334c23d25835fd6888b541add2fd58544481b276",
       "chunk_ids": {
         "1": [
           "1"
@@ -1295,3 +1384,28 @@ Assessment and dispatcher suites passed at the frozen source. Cache, default pre
 The AXI named check found the missing profile terminator. Restore the exact parser anchor without changing the checker.
 
 The synthetic CLI comparison returned four runs with unknown costs and measured variation. The first environment override selected the ordinary store. All four generated records were preserved and verified, then removed. The corrected child environment used the isolated temporary store and passed. No paid trial ran.
+
+
+# Chunk 3 second pickup
+
+The repaired source is 4e43382a. All initial findings are closed. Spec passed. Standards and Coverage each found two later-delta issues. Four repair targets remain, all auto-fix.
+
+## Standards
+
+- S3: comparison_report.go:102,188 embeds JSON in TOON cells. The craft-cli output boundary and flat-table profile require typed rows.
+- S4: plan_policy.go:5,11 holds mutable global policy maps. Replace these with pure lookup and projection functions while retaining one policy owner.
+
+Count: two. Worst issue: S3.
+
+## Spec
+
+Count: zero. All 39 rows were re-audited. P1 and P2 are closed.
+
+## Coverage
+
+- C9: comparison.go:73-77,158-168 selects one sorted quality failure. Add two failing measures to prove stable selection and one reason. This extends A37.
+- C10: cost.go:57-65 checks aggregate overflow. Add finite actual components whose sum overflows and require structured refusal. This extends A24.
+
+Count: two. Worst issue: C9.
+
+Both complete package checks passed. Fifteen repair probes bit and restored source. They covered cache, plan differences, quality requirements and bounds, costs, second-task completeness, purposes, parent links, trial bindings, and bounded reason output.
