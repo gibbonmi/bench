@@ -47,7 +47,10 @@ func run(root string, parsed usage.Result) (string, int) {
 	if line != "" {
 		return line, 1
 	}
-	old, replacement, kind := mutationForm(parsed)
+	old, replacement, kind, line := mutationInput(parsed)
+	if line != "" {
+		return line, 1
+	}
 	mutationResult, line := mutate(subject.start, old, replacement, kind)
 	if line != "" {
 		return line, 1

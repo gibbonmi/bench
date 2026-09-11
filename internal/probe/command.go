@@ -16,12 +16,13 @@ import (
 // defaulted either would mutate or run something the caller did not name.
 var grammar = usage.Grammar{
 	Cmd:  "bench probe",
-	Help: "usage: bench probe <file> (--swap <old> --with <new> | --omit <old> | --unwrap <call>) (--package <expr> [--run <go-regex>] | --check <name>) [--full]",
+	Help: "usage: bench probe <file> (--swap <old> --with <new> | --omit <old> | --unwrap <call> | --omit-file <path>) (--package <expr> [--run <go-regex>] | --check <name>) [--full]",
 	Flags: []usage.Flag{
 		{Name: "--swap", HasValue: true, NoEmptyValue: true},
 		{Name: "--with", HasValue: true, NoEmptyValue: true},
 		{Name: "--omit", HasValue: true, NoEmptyValue: true},
 		{Name: "--unwrap", HasValue: true, NoEmptyValue: true},
+		{Name: "--omit-file", HasValue: true, NoEmptyValue: true},
 		{Name: "--package", HasValue: true, NoEmptyValue: true},
 		{Name: "--run", HasValue: true, NoEmptyValue: true},
 		{Name: "--check", HasValue: true, NoEmptyValue: true},
@@ -68,11 +69,12 @@ func gradeForms(parsed usage.Result) (string, int) {
 	_, with := parsed.Flags["--with"]
 	_, omit := parsed.Flags["--omit"]
 	_, unwrap := parsed.Flags["--unwrap"]
+	_, omitFile := parsed.Flags["--omit-file"]
 	_, pkg := parsed.Flags["--package"]
 	_, run := parsed.Flags["--run"]
 	_, check := parsed.Flags["--check"]
 	switch {
-	case (swap && omit) || (swap && unwrap) || (omit && unwrap) || (!swap && !omit && !unwrap):
+	case (swap && omit) || (swap && unwrap) || (swap && omitFile) || (omit && unwrap) || (omit && omitFile) || (unwrap && omitFile) || (!swap && !omit && !unwrap && !omitFile):
 		return usageLine()
 	case swap && !with, (!swap && with):
 		return usageLine()
