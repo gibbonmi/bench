@@ -79,7 +79,8 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench worktree exec <target> -- bench gate  run one active owned worktree's gate
   bench worktree reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>  replace one lost request token after identity proof
   bench worktree merge --from <commit|target> <target>  merge a default-branch commit or a sibling's tip into an owned worktree
-  bench worktree --help      show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, and merge grammar
+  bench worktree reset --to <commit> <target> [--apply <fingerprint>]  plan a recoverable reset to an assignment checkpoint
+  bench worktree --help      show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, and reset grammar
   bench shift [--refresh] "<objective>" gated loop in a pooled worktree; commit on green
   bench commit -m <msg> <path>...  gate, then commit named paths on green
   bench spec retire <slug>   delete a merged spec + its review pickup (validated)

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // TestWorktreeLeafHelpAnswersItsOwnGrammar grades SR1. Every row that names a help
@@ -41,7 +42,7 @@ func TestWorktreeRootRequiredLeavesRefuseOutsideARepository(t *testing.T) {
 			names = append(names, leaf.Name)
 		}
 	}
-	want := []string{"exec", "path", "show", "build", "create", "release", "reauthorize", "merge", "land"}
+	want := []string{"exec", "path", "show", "build", "create", "release", "reauthorize", "merge", "reset", "land"}
 	if !equalStringSets(names, want) {
 		t.Fatalf("root-required leaves = %q, want %q", names, want)
 	}
@@ -86,4 +87,33 @@ func equalStringSets(got, want []string) bool {
 		}
 	}
 	return true
+}
+
+func TestResetHelpIsAvailableAtEveryLevel(t *testing.T) {
+	for _, argv := range [][]string{{"worktree", "reset", "--help"}, {"worktree", "--help"}, {"help"}} {
+		result := runAXICommandAt(t, newAXIEnvelopeRepo(t), argv)
+		const grammar = "bench worktree reset --to <commit> <target> [--apply <fingerprint>]"
+		if result.code != 0 || !strings.Contains(result.stdout+result.stderr, grammar) {
+			t.Fatalf("%v = %d %s %s, want %s", argv, result.code, result.stdout, result.stderr, grammar)
+		}
+	}
+}
+
+// keptWorktreeGrammars are the pool operations the worktree family help must keep naming.
+// The surviving family route says nothing about the operations under it. Each operation is
+// reachable only through that dispatcher, so the grammar line is where its survival shows.
+var keptWorktreeGrammars = []string{
+	// WF42: the full create grammar, so the family help pins `--from` rather than the
+	// bare verb.
+	usage.WorktreeCreate,
+	"bench worktree path",
+	"bench worktree exec",
+	usage.WorktreeShow,
+	usage.WorktreeBuild,
+	"bench worktree release",
+	"bench worktree clean",
+	"bench worktree reauthorize",
+	"bench worktree merge",
+	usage.WorktreeReset,
+	"bench worktree land",
 }
