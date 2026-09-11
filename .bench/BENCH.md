@@ -124,6 +124,8 @@ Three predicates ride with them:
 
 After a chunk's ticket commits, freeze its delta and run Standards, Spec, and Coverage against the whole approved spec before starting its successor. Return findings to the retained author and obtain current repair coverage. After the last chunk, the retained author reconciles overall acceptance and integration. Repeat delegated review only for a later delta or a cross-chunk concern that invalidates prior evidence.
 
+**Expand an approved implementation plan in scope.** The retained author may split, combine, or reorder chunks and expand ticket `Writes:` expectations or gate coverage within the approved behavior. Before using a plan expansion, update the affected spec and tickets; preserve acceptance coverage, dependencies, review checkpoints, existing checks, pass criteria, and required behavior. Unrelated scope, a material acceptance change, or a weakened guarantee still requires my decision. Record every plan or gate expansion with `bench learning`, including what changed, why, and verification; `/bench-drain` owns its later disposition.
+
 **Right-size the process; ask before deviating.** A few-line change does not need the full pipeline. You may propose a lighter path. A skip of a canonical step needs a standing approval or my explicit OK.
 The standing approvals are the table below, a size rule I have given you, and the fix-and-gate path for review findings. Behavior defects run focused regression checks, then the gate.
 

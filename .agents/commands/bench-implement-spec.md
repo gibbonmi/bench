@@ -39,6 +39,8 @@ harness's native task list from `bench coverage <spec>`, whose
 
 Before each ticket, revalidate prepared source identity and required source bytes. Regenerate a charge when either changes. The retained author runs focused checks and the required mutation probe, then commits the ticket on a green lane. After the last ticket in a chunk, freeze the chunk delta and run the three review axes before advancing.
 
+When evidence requires an in-scope plan, `Writes:`, or gate expansion, apply `.bench/BENCH.md`'s approved plan-expansion policy before using it.
+
 ## Land
 
 Tickets commit green serially in `Blocked by:` order on the retained integration source. After each chunk review, accepted findings return to the retained author and commit there with current repair coverage. Start the successor only after that repair closes.

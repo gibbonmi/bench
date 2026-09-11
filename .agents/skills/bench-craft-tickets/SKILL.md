@@ -65,6 +65,8 @@ basenames; a basename survives a retitle, and `--ticket` already names it. Each
 `Writes:` path exists in the tree or carries the `(new)` marker. A fixture-pinned path
 also names its fixture, and a bound package also names its registries. `Covers:` holds
 `none` or declared row ids, cited in full because preflight reads ids, not ranges.
+
+`Writes:` predicts the touched paths; `.bench/BENCH.md` owns how the retained author updates that expectation before an approved in-scope expansion is used.
 `Acceptance` rows are observable behavioral criteria, not a project-gate checkbox.
 
 Good:

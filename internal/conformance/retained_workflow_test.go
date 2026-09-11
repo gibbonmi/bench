@@ -51,6 +51,13 @@ func checkRetainedWorkflow(root string) []string {
 		"retained workflow: implementation phase dropped retained policy reference",
 		"retained workflow: drain restored delegated batch authorship",
 		"retained workflow: field guide dropped retained chunk review",
+		"retained workflow: craft-spec dropped the canonical plan-expansion owner",
+		"retained workflow: operating guide dropped plan-update timing or preserved guarantees",
+		"retained workflow: operating guide dropped expansion learning and drain ownership",
+		"retained workflow: implementation phase dropped plan-expansion timing",
+		"retained workflow: craft-gate dropped approved expansion timing",
+		"retained workflow: craft-tickets restored Writes as an approval boundary",
+		"retained workflow: delegation discipline restored Writes as a refusal boundary",
 	}
 	wantPredicates := map[string]struct {
 		file    string
@@ -114,6 +121,36 @@ func checkRetainedWorkflow(root string) []string {
 			file:   "docs/field-guide.html",
 			needle: "One implementation session retains authorship through the approved ticket graph and its chunk reviews.",
 		},
+		"retained workflow: craft-spec dropped the canonical plan-expansion owner": {
+			file:    ".agents/skills/bench-craft-spec/SKILL.md",
+			section: "Slicing a build for delegates",
+			needle:  "During a build, `.bench/BENCH.md` owns approved in-scope plan expansion.",
+		},
+		"retained workflow: operating guide dropped plan-update timing or preserved guarantees": {
+			file:   ".bench/BENCH.md",
+			needle: "Before using a plan expansion, update the affected spec and tickets; preserve acceptance coverage, dependencies, review checkpoints, existing checks, pass criteria, and required behavior.",
+		},
+		"retained workflow: operating guide dropped expansion learning and drain ownership": {
+			file:   ".bench/BENCH.md",
+			needle: "Record every plan or gate expansion with `bench learning`, including what changed, why, and verification; `/bench-drain` owns its later disposition.",
+		},
+		"retained workflow: implementation phase dropped plan-expansion timing": {
+			file:   ".agents/commands/bench-implement-spec.md",
+			needle: "When evidence requires an in-scope plan, `Writes:`, or gate expansion, apply `.bench/BENCH.md`'s approved plan-expansion policy before using it.",
+		},
+		"retained workflow: craft-gate dropped approved expansion timing": {
+			file:   ".agents/skills/bench-craft-gate/SKILL.md",
+			needle: "An in-scope gate addition during implementation follows `.bench/BENCH.md`'s approved plan-expansion policy before the author uses it.",
+		},
+		"retained workflow: craft-tickets restored Writes as an approval boundary": {
+			file:   ".agents/skills/bench-craft-tickets/SKILL.md",
+			needle: "`Writes:` predicts the touched paths; `.bench/BENCH.md` owns how the retained author updates that expectation before an approved in-scope expansion is used.",
+		},
+		"retained workflow: delegation discipline restored Writes as a refusal boundary": {
+			file:    ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+			section: "In the charge",
+			needle:  "A user-directed write delegate treats `Writes:` as an expectation.",
+		},
 	}
 	family := anchorsWithDiagnosticPrefix("retained workflow: ")
 	for _, want := range wantDiagnostics {
@@ -151,6 +188,12 @@ func checkRetainedWorkflow(root string) []string {
 		".agents/skills/bench-craft-delegate/SKILL.md": {
 			"All other code authorship\nruns as a write-delegation",
 			"Otherwise a fresh charge in an isolated worktree carries the finding",
+		},
+		".agents/skills/bench-craft-spec/SKILL.md": {
+			"A build may not edit its own spec's acceptance rows",
+		},
+		".agents/skills/bench-craft-delegate/references/delegation-discipline.md": {
+			"takes a\n  fence extension in a continuation",
 		},
 		"docs/field-guide.html": {
 			"their build starts in a fresh session",

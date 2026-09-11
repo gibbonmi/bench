@@ -58,9 +58,7 @@ Record **who-writes-where** ownership fences at spec time, checkable at charge t
 The fences include the review pickup and every conformance-pinned consumer of a moved symbol.
 A Won't handle over an anchored sentence quotes the bytes it keeps.
 
-A build may not edit its own spec's acceptance rows, budget targets, or ownership fences. A build that hits a spec-level shortfall stops and returns to `/bench-write-spec`, even inside those fences. A budget row equal to its subject's current line count proves nothing, because the check parses only that one source.
-
-A batch approval licenses one narrow exception to that rule. A build may amend its own acceptance row when the code contradicts the row's literal premise. The amendment keeps the row's verdict unchanged and cites the contradicting evidence under Build decisions. The exception never licenses a build to loosen what the row counts as passing.
+During a build, `.bench/BENCH.md` owns approved in-scope plan expansion. A material acceptance change, unrelated scope, or weakened guarantee returns to `/bench-write-spec` for a reviewer decision. A budget row equal to its subject's current line count proves nothing, because the check parses only that one source.
 
 Apply `.bench/BENCH.md`'s implementation-chunk contract. Each planned chunk has a stable ID and names its tickets, coherent outcome, acceptance rows, tests, and review checkpoint.
 `craft-tickets` owns the build-time **what-lands-green-next** unit; each ticket receives the spec's fence. Each fence carries value contracts across it. A contract between tickets is stated in the ticket's `What to build` and `Acceptance`. Review re-derives that contract from the tree; it does not trust the ticket's account.

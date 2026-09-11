@@ -25,7 +25,7 @@ fixture, the one observed red is the minimum, stated in the spec or commit.
 A new check is complete when you observed one red with the targeted message,
 green after the fix, and a red reproducible from the diff. Use a fixture, or
 a documented break-it command. The author asks which single edit defeats a
-new check while the gate stays green.
+new check while the gate stays green. An in-scope gate addition during implementation follows `.bench/BENCH.md`'s approved plan-expansion policy before the author uses it.
 
 ## Attribute every failure
 

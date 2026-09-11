@@ -33,9 +33,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A write charge states that its ownership fence is a refusal boundary above any
   mirror-every-registry instruction. The delegate reports an out-of-fence write
   before the delegate edits.
-- A charge whose collapse crosses its `Writes:` list inside the spec fence takes a
-  fence extension in a continuation. The delegate never writes a second spelling
-  to stay in fence.
+- A user-directed write delegate treats `Writes:` as an expectation. When evidence requires an approved in-scope expansion, the retained coordinator applies `.bench/BENCH.md`'s plan-expansion policy before continuing. The delegate never writes a second spelling to stay in fence.
 - A charge that exports from a package outside its fence names the fence amendment
   in its return.
 - A charge treats a coverage-row citation in a test doc as a reference to keep.

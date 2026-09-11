@@ -150,6 +150,7 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `internal/anchors/registry_data_test.go`
 - `internal/anchors/registry_ft311_preparation.go`
 - `internal/anchors/registry_ft311_review_dispatch.go`
+- `internal/anchors/registry_retained_workflow.go`
 - `internal/conformance/docs_workflow_helpers_test.go`
 - `internal/conformance/docs_workflow_checks_test.go`
 - `internal/conformance/ft311_preparation_test.go`
