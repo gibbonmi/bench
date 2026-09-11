@@ -12,9 +12,8 @@ iteration policy. Use the same three signals and the gate-feedback ladder.
 ## Resolve the tiers first
 
 Tiers are abstract roles: **cheap / mid / top**, the only identity harnesses share.
-The reviewer binds each harness to opaque model IDs in `.bench/lines.env`.
-One `BENCH_<HARNESS>_<TIER>` key names each cell. The narrative binding, cached
-routings, and escalation opt-out live in `projects/<name>.md` `Lines`.
+The reviewer binds each harness to opaque model IDs in `.bench/lines.env`. One
+`BENCH_<HARNESS>_<TIER>` key names each cell. Cached routes live in `projects/<name>.md` `Lines`.
 
 `bench models` refreshes candidates but never assigns a tier. Resolve the tier through the harness. No `lines.env` means the repo is unrouted; use the `Lines` prose and flag the missing binding.
 
@@ -94,13 +93,14 @@ Effort has no enforcement surface, so the declaration must name it.
 > <one clause: the signals that selected this row.>
 
 The iteration policy is a numeric cap or an explicit `uncapped` policy.
-Declare fan-out for visibility before spend. Report an overrun like a ladder move.
-Derive a numeric cap from expected cycles plus one red. Price a likely shift repair higher.
+Declare fan-out for visibility before spend. Report an overrun like a ladder move. Derive a numeric cap from expected cycles plus one red. Price a likely shift repair higher.
 
 ## Retained implementation continuation
 
 A verified acceptance improvement is progress.
 New useful evidence is progress when it changes the next action.
+Continue while progress holds inside the approved scope.
+
 An attempt contains one coherent hypothesis, implementation change, and verification.
 An expected TDD red is not an attempt.
 An individual tool call is not an attempt.

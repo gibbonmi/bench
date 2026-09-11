@@ -42,6 +42,10 @@ func TestImplementationContinuation(t *testing.T) {
 			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
 			needle: "New useful evidence is progress when it changes the next action.",
 		},
+		"implementation continuation: craft-line dropped continuation while progress holds": {
+			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
+			needle: "Continue while progress holds inside the approved scope.",
+		},
 		"implementation continuation: craft-line counted individual tool calls as attempts": {
 			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
 			needle: "An individual tool call is not an attempt.",
@@ -77,6 +81,10 @@ func TestImplementationContinuation(t *testing.T) {
 		"implementation continuation: implementation phase dropped the continuation-policy action": {
 			file: ".agents/commands/bench-implement-spec.md", section: "Build",
 			needle: "Apply `craft-line`'s retained implementation continuation policy throughout the ticket graph.",
+		},
+		"implementation continuation: craft-line restored an artificial stop for uncapped work": {
+			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
+			needle: "An uncapped retained implementation has no artificial iteration stop within the approved spec.",
 		},
 	}
 	family := anchorsWithDiagnosticPrefix("implementation continuation: ")
