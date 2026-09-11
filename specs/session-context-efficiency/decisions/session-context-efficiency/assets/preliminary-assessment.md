@@ -16,7 +16,7 @@ Evidence status: observed for counts and call shapes in that slice; inferred for
 their design implications; proposed for interventions. This is one long Codex
 session, not a cross-harness baseline.
 
-Consumed by: `decisions/session-context-efficiency.md` and its tickets.
+Consumed by: `specs/session-context-efficiency/decisions/session-context-efficiency.md` and its tickets.
 Drift: refresh when the transcript schema, tool wrapper, or measured surfaces change.
 Retire when: the map's resulting specs absorb this evidence or a later census supersedes it.
 

@@ -5,7 +5,7 @@ Keep transcript observations separate from documented interfaces and installed b
 Scope: Codex, Claude Code, OpenCode, and the current Bench measurement owners.
 Evidence status: source-verified contracts and one observed Codex transcript; no runtime interception compatibility claim.
 
-Consumed by: `decisions/session-context-efficiency.md`, especially tickets 5, 6, and 9.
+Consumed by: `specs/session-context-efficiency/decisions/session-context-efficiency.md`, especially tickets 5, 6, and 9.
 Drift: refresh after a harness release, transcript schema change, integration change, or change to the named Bench owners.
 Retire when: the resulting specs absorb this evidence or a later capability assessment supersedes it.
 
