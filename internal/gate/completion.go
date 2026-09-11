@@ -29,21 +29,19 @@ func (e *gateEvaluation) completionTree(graded *treeGeneration) (string, error) 
 		return "", err
 	}
 	path := e.checkpoint.Spec
-	original, err := benchgit.ReadTreeFile(e.identityRoot, sourceTree, path)
+	original, err := e.completionFile(source, path)
 	if err != nil {
 		return "", err
 	}
-	want, err := spec.Implemented(original)
+	want, err := spec.Implemented(original.data)
 	if err != nil {
 		return "", err
 	}
-	got, err := benchgit.ReadTreeFile(e.identityRoot, graded.tree, path)
+	got, err := e.completionFile(graded, path)
 	if err != nil {
 		return "", err
 	}
-	before, _ := source.entry(path)
-	after, _ := graded.entry(path)
-	if !bytes.Equal(want, got) || strings.Fields(before.Metadata)[0] != strings.Fields(after.Metadata)[0] {
+	if !bytes.Equal(want, got.data) || original.mode != got.mode {
 		return "", fmt.Errorf("completion spec %s differs from the exact status transform; review the spec delta", path)
 	}
 	record, err := reviewrecord.RecordPath(path)
@@ -70,4 +68,20 @@ func validateCompletionContext(e *gateEvaluation) error {
 		return errors.New("prospective completion requires the reviewed source tip")
 	}
 	return nil
+}
+
+type completionFile struct {
+	data []byte
+	mode string
+}
+
+// The captured entry supplies both mode and object identity for the bounded read.
+func (e *gateEvaluation) completionFile(generation *treeGeneration, path string) (completionFile, error) {
+	entry, present := generation.entry(path)
+	fields := strings.Fields(entry.Metadata)
+	if !present || !(benchgit.IndexEntry{Mode: fields[0]}).IsRegularFile() {
+		return completionFile{}, fmt.Errorf("missing or nonregular completion file %s", path)
+	}
+	data, err := benchgit.ReadControlBlob(e.identityRoot, fields[2])
+	return completionFile{data: data, mode: fields[0]}, err
 }

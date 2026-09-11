@@ -171,7 +171,12 @@ func ReadTreeFile(root, tree, path string) ([]byte, error) {
 	if !ok || listedPath != path || len(fields) != 3 || !(IndexEntry{Mode: fields[0]}).IsRegularFile() {
 		return nil, fmt.Errorf("missing or nonregular tree file %s", path)
 	}
-	cmd := exec.Command("git", "-C", root, "cat-file", "blob", fields[2])
+	return ReadControlBlob(root, fields[2])
+}
+
+// ReadControlBlob bounds an immutable blob read for control-file consumers.
+func ReadControlBlob(root, object string) ([]byte, error) {
+	cmd := exec.Command("git", "-C", root, "cat-file", "blob", object)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
