@@ -181,6 +181,8 @@ Scope cut: a broad experimental runner could ship separately after this record a
 These paths are the union of ticket expectations. A directory entry is an exact prefix for that existing owner or fixture family. Expansion follows decision #5, with the plan updated before use. It cannot weaken existing guarantees.
 
 - `CHANGELOG.md`
+- `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
+- `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
 - `internal/assessment` (new)
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
