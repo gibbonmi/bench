@@ -82,9 +82,17 @@ func CheckSource(root, tree, tip string, record Record, chunkID string, complete
 				return fmt.Errorf("chunk %s: invalid plan mapping target %s", chunk.ID, id)
 			}
 			covered[id] = true
+			for _, predecessor := range current.Chunks {
+				if !covered[predecessor.ID] {
+					return fmt.Errorf("missing planned chunk %s before %s", predecessor.ID, id)
+				}
+				if predecessor.ID == id {
+					break
+				}
+			}
 		}
 		previous = chunk
-		if !complete && chunk.ID == chunkID {
+		if !complete && contains(ids, chunkID) {
 			matched = true
 			break
 		}

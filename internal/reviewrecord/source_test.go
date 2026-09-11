@@ -2,6 +2,7 @@ package reviewrecord_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,6 +29,11 @@ func TestReviewRecordSource(t *testing.T) {
 	if err := rr.CheckSource(f.Root, f.Tree(), f.Tip(), loaded, "", true); err != nil {
 		t.Fatalf("continuous chain: %v", err)
 	}
+	omitted := loaded
+	omitted.Chunks = omitted.Chunks[1:]
+	if err := rr.CheckSource(f.Root, f.Tree(), f.Tip(), omitted, "2", false); err == nil || !strings.Contains(err.Error(), "missing planned chunk 1") {
+		t.Fatalf("checkpoint accepted omitted predecessor: %v", err)
+	}
 	first := loaded.Chunks[0]
 	loaded.Chunks[1].Base = first.Base
 	if err := rr.CheckSource(f.Root, f.Tree(), f.Tip(), loaded, "", true); err == nil || !strings.Contains(err.Error(), "chain gap") {
@@ -51,16 +57,21 @@ func TestReviewRecordSource(t *testing.T) {
 	if !strings.Contains(loaded.Chunks[1].Reviews[0].NativeRef.Excerpt, "without a local log") {
 		t.Fatal("native result not retained")
 	}
-	f.Write("specs/example/tickets/2.md", "# Changed plan\n")
+	ticket, err := os.ReadFile(filepath.Join(f.Root, "specs/example/tickets/2.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.Write("specs/example/tickets/2.md", strings.Replace(string(ticket), "Covers: E2", "Covers: E20", 1))
 	f.Commit("unreviewed plan")
-	if err := rr.CheckSource(f.Root, f.Tree(), f.Tip(), loaded, "", true); err == nil {
-		t.Fatal("unreviewed plan accepted")
+	if err := rr.CheckSource(f.Root, f.Tree(), f.Tip(), loaded, "", true); err == nil || !strings.Contains(err.Error(), "stale plan digest") {
+		t.Fatalf("unreviewed valid plan accepted: %v", err)
 	}
 }
 
 func TestReviewRecordTerminal(t *testing.T) {
 	f := recordtest.New(t, 1)
 	f.AddChunk()
+	f.Complete()
 	data, _ := json.Marshal(f.Record)
 	if _, err := rr.Parse(data); err != nil {
 		t.Fatal(err)
@@ -69,6 +80,8 @@ func TestReviewRecordTerminal(t *testing.T) {
 		name, want string
 		mutate     func(*rr.Record)
 	}{
+		{"missing completion source", "terminal completion", func(r *rr.Record) { r.Completion.SourceDigest = "" }},
+		{"missing completion performer", "terminal completion", func(r *rr.Record) { r.Completion.Performer = "" }},
 		{"author as reviewer", "independent review", func(r *rr.Record) { r.Chunks[0].Reviews[0].Performer = r.ImplementationSession }},
 		{"verification as review", "independent review", func(r *rr.Record) { r.Chunks[0].Reviews[0].Role = "author-verification" }},
 		{"missing source", "terminal source", func(r *rr.Record) { r.Chunks[0].Reviews[0].SourceDigest = "" }},
@@ -157,8 +170,81 @@ func TestReviewRecordPaths(t *testing.T) {
 		})
 	}
 	for _, spec := range []string{"specs/../spec.md", "specs/x\n/spec.md", "reviews", "/specs/x/spec.md"} {
-		if _, err := rr.Read(t.TempDir(), spec); err == nil {
+		if _, err := rr.RecordPath(spec); err == nil {
 			t.Fatalf("unsafe path %q accepted", spec)
 		}
+	}
+}
+
+func TestReviewRecordControlPath(t *testing.T) {
+	for _, control := range []string{"\n", "\r", "\t", "\x00", "\x1f", "\x7f"} {
+		spec := "specs/x" + control + "/spec.md"
+		if _, err := rr.RecordPath(spec); err == nil {
+			t.Errorf("control path accepted: %q", spec)
+		}
+	}
+	f := recordtest.New(t, 1)
+	f.AddChunk()
+	f.Record.Spec = "specs/x\n/spec.md"
+	data, err := json.Marshal(f.Record)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.Write("reviews/x\n.md", "```bench-review-record\n"+string(data)+"\n```\n")
+	if _, err := rr.Read(f.Root, f.Record.Spec); err == nil || !strings.Contains(err.Error(), "invalid checkpoint spec path") {
+		t.Fatalf("existing control path accepted: %v", err)
+	}
+}
+
+func TestReviewRecordLiteralTickets(t *testing.T) {
+	f := recordtest.New(t, 1)
+	f.Plan.Chunks[0].Tickets = []string{"a*.md", "ab.md"}
+	for i, name := range f.Plan.Chunks[0].Tickets {
+		f.Write("specs/example/tickets/"+name, fmt.Sprintf("# Literal ticket\n\nBlocked by: none\nWrites: source.txt\nCovers: E%d\n\n## What to build\n\nA behavior.\n\n## Acceptance\n\n- [ ] Works.\n", i+1))
+	}
+	data, _ := json.Marshal(f.Plan)
+	f.Write(recordtest.Spec, "# Example\n\nStatus: staged\n\n```bench-completion-plan\n"+string(data)+"\n```\n")
+	f.Commit("literal ticket names")
+	plan, err := rr.ReadPlan(f.Root, f.Tree(), recordtest.Spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Chunks[0].Rows) != 2 {
+		t.Fatalf("lost literal ticket: %+v", plan.Chunks)
+	}
+}
+
+func TestReviewRecordPlanAmendment(t *testing.T) {
+	f := recordtest.New(t, 2)
+	f.AddChunk()
+	f.Save()
+	f.Commit("first review")
+	base := f.Tip()
+	old := f.Plan.Digest
+	ticket, err := os.ReadFile(filepath.Join(f.Root, "specs/example/tickets/2.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.Write("specs/example/tickets/2.md", strings.Replace(string(ticket), "Covers: E2", "Covers: E20", 1))
+	f.Commit("valid amended plan")
+	f.Plan, err = rr.ReadPlan(f.Root, f.Tree(), recordtest.Spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := rr.CheckSource(f.Root, f.Tree(), f.Tip(), f.Record, "1", false); err == nil || !strings.Contains(err.Error(), "stale plan digest") {
+		t.Fatalf("unreviewed amendment: %v", err)
+	}
+	f.Record.PlanDigest = f.Plan.Digest
+	f.AddChunk()
+	f.Record.Chunks[1].Base = base
+	for i := range f.Record.Chunks[1].Reviews {
+		f.Record.Chunks[1].Reviews[i].Base = base
+	}
+	if err := rr.CheckSource(f.Root, f.Tree(), f.Tip(), f.Record, "2", false); err == nil || !strings.Contains(err.Error(), "explicit old-to-new") {
+		t.Fatalf("unmapped amendment: %v", err)
+	}
+	f.Record.Amendments = []rr.Amendment{{From: old, To: f.Plan.Digest, ChunkIDs: map[string][]string{"1": {"1"}, "2": {"2"}}}}
+	if err := rr.CheckSource(f.Root, f.Tree(), f.Tip(), f.Record, "2", false); err != nil {
+		t.Fatalf("reviewed mapped amendment: %v", err)
 	}
 }

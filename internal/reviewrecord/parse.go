@@ -73,6 +73,9 @@ func Parse(data []byte) (Record, error) {
 	if record.Completion.State != "" && !occurrenceState(record.Completion.State) {
 		return record, errors.New("invalid completion occurrence state")
 	}
+	if record.Completion.State != "" && record.Completion.State != "pending" && (!objectID.MatchString(record.Completion.SourceDigest) || record.Completion.Performer == "") {
+		return record, errors.New("missing terminal completion source or performer")
+	}
 	if err := validateVerification(record.Completion.Verification, ids); err != nil {
 		return record, err
 	}

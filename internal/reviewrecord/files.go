@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -21,7 +22,7 @@ func RecordPath(spec string) (string, error) {
 }
 
 func safeRelative(path string) bool {
-	return fs.ValidPath(path) && path != "." && !strings.Contains(path, "\\") && toon.Representable(path)
+	return fs.ValidPath(path) && path != "." && !strings.Contains(path, "\\") && strings.IndexFunc(path, unicode.IsControl) < 0 && toon.Representable(path)
 }
 
 func readFile(root, relative string) ([]byte, error) {

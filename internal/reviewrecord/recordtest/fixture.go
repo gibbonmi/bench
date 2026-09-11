@@ -118,7 +118,7 @@ func (f *Fixture) AddChunk() {
 	}
 	chunk := rr.Chunk{ID: planned.ID, Base: base, Tip: f.Tip(), PlanDigest: f.Plan.Digest, SourceDigest: digest, AcceptanceRows: planned.Rows}
 	chunk.Verification = f.Verification("chunk-"+planned.ID, digest, planned.Verification)
-	for _, axis := range []string{"Standards", "Spec", "Coverage"} {
+	for _, axis := range rr.Axes() {
 		chunk.Reviews = append(chunk.Reviews, rr.Review{Evidence: f.Evidence("chunk-"+planned.ID+"-"+axis, digest, "independent-review"), Axis: axis, Base: base, Tip: chunk.Tip})
 	}
 	f.Record.Chunks = append(f.Record.Chunks, chunk)
