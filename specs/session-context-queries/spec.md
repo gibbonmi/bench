@@ -42,6 +42,8 @@ The source fixes the outcome, but the seams require careful evidence and compati
 15. As an agent, I want hostile target text handled per target, so that output remains usable.
 16. As an agent, I want unrequested output omitted, so that selected queries actually reduce context.
 
+17. As an agent, I want a complete worktree-detail route, so that the selected view cannot hide additional worktree facts.
+
 ## Implementation decisions
 
 Proposed worktree grammar: `bench worktree list --view paths --target <target> [--target <target>]...`.
@@ -50,6 +52,8 @@ It does not use the authority-taking active-path resolver.
 The fixed view emits `target`, `id`, `path`, `state`, and `error`.
 Successful identities appear once in first-request order.
 Unresolved operands retain one result per distinct operand.
+
+The selected view includes `bench worktree list` in its contextual help as the complete-detail action.
 
 Proposed history grammar: `bench spec history --spec <slug-or-path> [--spec <slug-or-path>]... --limit <positive-count>`.
 The initial selected mode requires an explicit event limit.
@@ -81,6 +85,8 @@ Build-then-run consolidation needs separate evidence and remains outside these t
 The final ticket waits for the measurement child's budget evidence and an explicit reviewer decision.
 Before that ticket starts, spec authoring records each numeric value, surface, unit, omission metadata, and full-detail route.
 That authoring pass also closes any additional owner fence required by the selected surfaces.
+
+If several owners receive approved budgets, the author splits the final ticket into one vertical ticket per owner.
 The build cannot amend its own policy or expand its own fence.
 Until that checkpoint, the final ticket is not on the executable frontier.
 Existing budgets remain active and do not require reapproval.
@@ -122,6 +128,7 @@ named input -> existing command owner -> typed producer -> projected result
 | QU15 | 14 | Approved defaults retain their complete-detail routes and owner metadata | planned TestApprovedQueryBudget in the respective command packages | Boundary fixtures catch lost detail routes or missing omission metadata |
 | QU16 | 15 | Control-bearing target failures remain representable without hiding other results | planned TestSelectedQueryHostileTarget in the respective command packages | An unsafe TOON cell cannot collapse the complete result into one render error |
 | QU17 | 16 | Selected query results omit unrequested worktree rows and history bodies | planned TestSelectedQueriesExcludeOldOutput in the respective command packages | Presence-only assertions would let the old full output survive |
+| QU18 | 17 | The selected worktree view names `bench worktree list` as its complete-detail action | planned TestSelectedWorktreeDetailRoute in internal/worktree | A result without the exact full inventory command fails the recovery contract |
 
 ### Edge inventory
 
@@ -160,6 +167,25 @@ Won't handle: a general guidance rewrite — the named read examples remain the 
 - `internal/worktree/list_selected_test.go`
 - `internal/worktree/path.go`
 - `reviews/session-context-queries.md`
+- `tests/canary/package-core-guard/unrouted-subcommand`
+- `tests/canary/row-next-grammar/token-table-lacks-kit-edit`
+- `tests/canary/skills-index-command-adapters/debug-implicit-invocation-reverted`
+- `tests/canary/workflow-guidance-anchors/debug-archaeology-anchor`
+- `tests/canary/workflow-guidance-anchors/debug-phase1-stop-gate-softened`
+- `tests/canary/workflow-guidance-anchors/debug-red-commit`
+- `tests/canary/workflow-guidance-anchors/debug-reproduction-economics-deleted`
+- `tests/canary/workflow-guidance-anchors/drain-anchor`
+- `tests/canary/workflow-guidance-anchors/drain-implement-now-commit`
+- `tests/canary/workflow-guidance-anchors/drain-implement-now-per-spec-exception`
+- `tests/canary/workflow-guidance-anchors/drain-implement-now-route`
+- `tests/canary/workflow-guidance-anchors/drain-implement-now-row-fallback`
+- `tests/canary/workflow-guidance-anchors/drain-implement-now-second-exception`
+- `tests/canary/workflow-guidance-anchors/drain-roadmap-context-anchor`
+- `tests/canary/workflow-guidance-anchors/drain-spec-history-anchor`
+- `tests/canary/workflow-guidance-anchors/drain-split-board-detail-owner`
+- `tests/canary/workflow-guidance-anchors/drain-split-board-retirement-pair`
+- `tests/canary/workflow-guidance-anchors/drain-split-board-row-detail-owner`
+- `tests/canary/workflow-guidance-anchors/implementation-retro-drain-anchor`
 
 Reviewer disposition: pending sign-off.
 The fence is the union of ticket writes and the review pickup.
@@ -169,7 +195,7 @@ A build cannot change this spec, its acceptance rows, or its tickets.
 
 | Ticket | Blocked by | Delivered coverage |
 | --- | --- | --- |
-| [1. Select worktree path facts](tickets/1-select-worktrees.md) | none | QU1, QU2, QU3, QU9, QU10, QU16, QU17 |
+| [1. Select worktree path facts](tickets/1-select-worktrees.md) | none | QU1, QU2, QU3, QU9, QU10, QU16, QU17, QU18 |
 | [2. Select bounded spec histories](tickets/2-select-histories.md) | none | QU4, QU5, QU6, QU7, QU8, QU9, QU10, QU16, QU17 |
 | [3. Guide relevant raw reads](tickets/3-guide-relevant-reads.md) | 1-select-worktrees.md, 2-select-histories.md | QU11, QU12, QU13 |
 | [4. Apply reviewed owner budgets](tickets/4-apply-reviewed-budgets.md) | 1-select-worktrees.md, 2-select-histories.md, 3-guide-relevant-reads.md | QU14, QU15 |
@@ -188,7 +214,7 @@ Build-then-run consolidation needs separate evidence: approximately 4 edits, 1 g
 | --- | --- |
 | Ticket 3: bounded raw reads and Bench queries | QU5–QU7, QU11, QU12, QU14, QU15 |
 | Ticket 4: selected multi-target queries and archive guidance | QU1–QU4, QU8, QU11, QU13 |
-| Ticket 8: identity, path, state, and bounded histories | QU1–QU8, QU16, QU17 |
+| Ticket 8: identity, path, state, and bounded histories | QU1–QU8, QU16–QU18 |
 | Ticket 9: reviewer-approved numeric budgets | QU14, QU15 |
 | FT173: existing owners and full-detail routes | QU4, QU7, QU9, QU12, QU15 |
 

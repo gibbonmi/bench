@@ -62,6 +62,8 @@ A path without complete producer bytes remains unsupported even if its callback 
 The second ticket is blocked by runtime evidence and the measurement child's approved budget decision.
 Before it starts, spec authoring records the exact eligible adapters, callback mappings, byte values, and detail-route grammar.
 The author also closes adoption and configuration fences for those verified adapters.
+If several adapters qualify, the author splits the final ticket into one vertical ticket per adapter.
+
 The current candidate fence is not authority to guess an unverified adapter.
 A missing proof or policy stops the ticket before product writes.
 The child remains staged when no path qualifies.
@@ -77,7 +79,6 @@ A generated invocation identity selects the artifact name; raw callback identifi
 The owner preserves bytes before publishing a detail route.
 A completed artifact remains available after the callback and across session compaction.
 Its route names the file and its full byte count without embedding complete output into the summary.
-Artifact cleanup is explicit and cannot delete an artifact still referenced by the active session.
 
 At a write, close, or readback failure, the adapter preserves the original result.
 It reports that complete-output preservation is unavailable.
@@ -124,6 +125,9 @@ caller -> domain entrypoint -> verification -> existing operation -> complete re
 | OV17 | 16 | An empty supported result retains its status and empty body | planned TestOverflowEmptyResult in internal/harnessoverflow | Treating empty as missing creates a false limitation |
 | OV18 | 17 | Below-budget supported results retain their original body | planned TestOverflowBelowBudget in internal/harnessoverflow | Unnecessary replacement changes a result that needs no projection |
 | OV19 | 18 | Installed configuration exposes only the verified harness paths | planned TestOverflowInstalledWiring in internal/systemtest | A supported core without its actual adapter cannot satisfy the end-to-end result |
+| OV20 | 2 | Each eligible runtime path proves complete producer bytes before its model-visible replacement | review-owned: runtime-evidence.md compares the independent producer record with the stored artifact | A replacement-only demonstration cannot certify complete-output preservation |
+| OV21 | 3 | Each eligible runtime path preserves a nonzero producer status at the model boundary | review-owned: runtime-evidence.md records the failing producer and observed result | A successful callback cannot stand in for the failed producer status |
+| OV22 | 6 | Each eligible runtime path retrieves the exact complete artifact through its reported detail route | review-owned: runtime-evidence.md records actual retrieval and byte comparison | A plausible path without a successful retrieval cannot authorize enablement |
 
 ### Edge inventory
 
@@ -159,8 +163,14 @@ Won't handle: automatic producer retry — the agent retains the existing explic
 - `internal/harnessoverflow`
 - `internal/otelrecord/registry.go`
 - `internal/systemtest/harness_overflow_test.go`
-- `specs/session-context-overflow/assets/runtime-evidence.md`
 - `reviews/session-context-overflow.md`
+- `specs/session-context-overflow/assets/runtime-evidence.md`
+- `tests/canary/line-routing/agent-hook-unwired`
+- `tests/canary/line-routing/stop-hook-unwired`
+- `tests/canary/load-validity-metadata/codex-hooks-broken`
+- `tests/canary/load-validity-metadata/codex-hooks-timeout`
+- `tests/canary/load-validity-metadata/codex-hooks-timeout-typed`
+- `tests/canary/package-core-guard/unrouted-subcommand`
 
 Reviewer disposition: pending sign-off.
 The fence is the union of ticket writes and the review pickup.
@@ -170,7 +180,7 @@ A build cannot change this spec, its acceptance rows, or its tickets.
 
 | Ticket | Blocked by | Delivered coverage |
 | --- | --- | --- |
-| [1. Prove installed overflow paths](tickets/1-prove-runtime-paths.md) | none | OV1 |
+| [1. Prove installed overflow paths](tickets/1-prove-runtime-paths.md) | none | OV1, OV20, OV21, OV22 |
 | [2. Install verified overflow projection](tickets/2-install-verified-overflow.md) | 1-prove-runtime-paths.md | OV2, OV3, OV4, OV5, OV6, OV7, OV8, OV9, OV10, OV11, OV12, OV13, OV14, OV15, OV16, OV17, OV18, OV19 |
 
 ## Out of scope
@@ -186,7 +196,7 @@ Automatic artifact retention policy is separate: approximately 4 edits, 1 gate r
 | Source clause | Coverage |
 | --- | --- |
 | Ticket 3: complete artifact, bounded diagnostics, status, true size, detail route | OV2–OV6 |
-| Ticket 5: unresolved runtime and upstream boundaries | OV1, OV7, OV11, OV12, OV19 |
+| Ticket 5: unresolved runtime and upstream boundaries | OV1, OV7, OV11, OV12, OV19–OV22 |
 | Ticket 6: preserve the original, report limitations, add no denial | OV7–OV10, OV14 |
 | Ticket 9: measured budget approval | OV13 |
 

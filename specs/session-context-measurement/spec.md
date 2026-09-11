@@ -41,6 +41,9 @@ The source fixes the outcome, but the seams require careful evidence and compati
 14. As an agent, I want records treated as data, so that an inspected transcript cannot execute instructions.
 15. As an analyst, I want missing result boundaries exposed, so that transcript visibility cannot imply complete producer capture.
 
+16. As an analyst, I want explicit turn observations, so that unavailable turn boundaries cannot become invented counts.
+17. As an analyst, I want explicit read-path observations, so that observed reads remain separate from shell-text guesses.
+
 ## Implementation decisions
 
 Proposed grammar: `bench harnesses <harness> --record <path> --format <source-id>`.
@@ -65,7 +68,9 @@ Only an observed zero has a numeric zero value.
 
 Required metrics include result-text bytes, result-text characters, result-text lines, outer calls, observed nested calls, and unmatched calls.
 Native token dimensions, compactions, turns, and explicit read paths retain their source-specific boundaries.
+Each token dimension has its own observation, including input, cached input, output, and reasoning.
 A missing dimension stays unknown.
+
 Shell text is not a reliable read-path census and receives no speculative parser.
 Cumulative snapshots use their documented identity and interval semantics rather than a sum.
 The command never estimates provider dollars or tokens from byte counts.
@@ -120,6 +125,12 @@ named input -> existing command owner -> typed producer -> projected result
 | ME17 | 14 | Record contents never execute as shell commands | planned TestObservedHostileRecord in internal/harnesses | A command-shaped string produces data without creating its sentinel file |
 | ME18 | 15 | The report identifies unobserved tool results without claiming complete producer output | planned TestObservedMissingResult in internal/harnesses | An unmatched call or upstream truncation cannot become a complete-byte claim |
 | ME19 | 14 | Non-regular or symlink record inputs refuse before the first content read | planned TestObservedRegularFileBoundary in internal/harnesses | A FIFO or linked record cannot block the reader or supply unowned bytes |
+| ME20 | 6 | Input-token observations match the pinned source field availability and value | planned TestObservedInputTokens in internal/harnesses | Always returning unknown fails a fixture with an explicit input counter |
+| ME21 | 6 | Cached-input-token observations match the pinned source field availability and value | planned TestObservedCachedInputTokens in internal/harnesses | Omitting cache usage fails a fixture with an explicit cached-input counter |
+| ME22 | 6 | Output-token observations match the pinned source field availability and value | planned TestObservedOutputTokens in internal/harnesses | Omitting output usage fails a fixture with an explicit output counter |
+| ME23 | 6 | Reasoning-token observations match the pinned source field availability and value | planned TestObservedReasoningTokens in internal/harnesses | Treating reasoning as universally absent fails a source that supplies it |
+| ME24 | 16 | Turn observations match the pinned source field availability and value | planned TestObservedTurns in internal/harnesses | Omitting turn availability fails the pinned event inventory |
+| ME25 | 17 | Explicit read-path observations match the pinned source field availability and value | planned TestObservedReadPaths in internal/harnesses | Inferring shell paths or dropping observed read paths fails the pinned tool inventory |
 
 ### Edge inventory
 
@@ -147,8 +158,9 @@ Won't handle: provider pricing — FT231 can consume independent pricing evidenc
 - `internal/harnesses/command_test.go`
 - `internal/harnesses/observed_test.go`
 - `internal/harnesstranscript`
-- `specs/session-context-measurement/assets/budget-evidence.md`
 - `reviews/session-context-measurement.md`
+- `specs/session-context-measurement/assets/budget-evidence.md`
+- `tests/canary/package-core-guard/unrouted-subcommand`
 
 Reviewer disposition: pending sign-off.
 The fence is the union of ticket writes and the review pickup.
@@ -158,7 +170,7 @@ A build cannot change this spec, its acceptance rows, or its tickets.
 
 | Ticket | Blocked by | Delivered coverage |
 | --- | --- | --- |
-| [1. Inspect one pinned harness record](tickets/1-inspect-record.md) | none | ME1, ME2, ME3, ME4, ME5, ME6, ME7, ME8, ME9, ME10, ME11, ME12, ME17, ME18 |
+| [1. Inspect one pinned harness record](tickets/1-inspect-record.md) | none | ME1, ME2, ME3, ME4, ME5, ME6, ME7, ME8, ME9, ME10, ME11, ME12, ME17, ME18, ME19, ME20, ME21, ME22, ME23, ME24, ME25 |
 | [2. Compare representative budget cases](tickets/2-compare-budget-cases.md) | 1-inspect-record.md | ME13, ME14, ME15, ME16 |
 
 ## Out of scope
@@ -175,7 +187,7 @@ Neither capability blocks the explicit record view.
 | --- | --- |
 | Ticket 1: measured tool-result census | ME1, ME2, ME3, ME18 |
 | Ticket 2: result text before call consolidation | ME1, ME13, ME14 |
-| Ticket 5: documented, observed, and unknown measures | ME4–ME12, ME16 |
+| Ticket 5: documented, observed, and unknown measures | ME4–ME12, ME16, ME20–ME25 |
 | Ticket 6: measure and advise | ME15, ME17 |
 | Ticket 9: representative cases, task success, and recovery calls | ME13–ME15 |
 
@@ -198,5 +210,5 @@ The existing OTEL reader and SessionStart inspector remain unchanged under ME16.
 
 The opt-in `harnesses` grammar is a proposed command-owner extension for spec approval.
 It preserves the existing compiled views and does not replace FT173 policy.
-ME1–ME12, ME17, and ME18 grade the new mode.
+ME1–ME12, ME17–ME25 grade the new mode.
 The evidence ticket is an independent, review-owned deliverable after the reader ships.

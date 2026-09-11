@@ -1,8 +1,8 @@
 # 1. Inspect one pinned harness record
 
 Blocked by: none
-Writes: internal/harnesstranscript (new), internal/harnesses/command.go, internal/harnesses/command_test.go, internal/harnesses/observed_test.go (new), cmd/bench/main.go, .agents/skills/bench-craft-cli/SKILL.md, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: ME1, ME2, ME3, ME4, ME5, ME6, ME7, ME8, ME9, ME10, ME11, ME12, ME17, ME18, ME19
+Writes: internal/harnesstranscript (new), internal/harnesses/command.go, internal/harnesses/command_test.go, internal/harnesses/observed_test.go (new), cmd/bench/main.go, .agents/skills/bench-craft-cli/SKILL.md, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/package-core-guard/unrouted-subcommand
+Covers: ME1, ME2, ME3, ME4, ME5, ME6, ME7, ME8, ME9, ME10, ME11, ME12, ME17, ME18, ME19, ME20, ME21, ME22, ME23, ME24, ME25
 
 ## What to build
 
@@ -20,3 +20,6 @@ The command exposes all reliable dimensions and names every unavailable dimensio
 - [ ] Native cumulative snapshots do not inflate the token total.
 - [ ] A differential run preserves both compiled views over the registered harness inventory.
 - [ ] Hostile record contents cannot create a sentinel file or execute a command.
+- [ ] Input, cached-input, output, and reasoning token observations each retain source availability and values.
+- [ ] Turn and explicit read-path observations each retain source availability and values.
+- [ ] Each dimension tests a present value, an observed zero where valid, and source absence.

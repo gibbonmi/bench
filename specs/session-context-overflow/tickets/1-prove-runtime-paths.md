@@ -2,7 +2,7 @@
 
 Blocked by: none
 Writes: specs/session-context-overflow/assets/runtime-evidence.md (new)
-Covers: OV1
+Covers: OV1, OV20, OV21, OV22
 
 ## What to build
 
@@ -17,3 +17,4 @@ This ticket delivers a capability report and enables no automatic replacement.
 - [ ] A documentation-only or simulated path remains unsupported.
 - [ ] The report records the installed version and the exact callback path.
 - [ ] No adapter becomes enabled when this evidence ticket completes.
+- [ ] Runtime proof separately records preservation, failing status, replacement, and actual complete-detail retrieval.

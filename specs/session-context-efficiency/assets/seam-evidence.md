@@ -147,3 +147,14 @@ A class without a new parser or mutation retains its current owner and receives 
 
 The overflow checkpoint must close any additional installed-path edge before the adapter ticket starts.
 The numeric-default checkpoint must close each new byte boundary before its implementation ticket starts.
+
+## Fixture closure correction
+
+Build preflight identified fixture co-ownership missing from the initial ticket drafts.
+The coordinator read each fixture's expectation, mutation data, or relevant file delta.
+The corrected ticket writes name every reported fixture folder.
+The child fences derive from those writes.
+No fixture expectation or production rule changes during spec authoring.
+
+The source merge includes `6090a69e` and passed the existing six-phase gate.
+Its merged source tip is `09f8e78de17d75cda11663254096d1204ff3de68` before the closure corrections.

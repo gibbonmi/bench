@@ -1,7 +1,7 @@
 # 2. Install verified overflow projection
 
 Blocked by: 1-prove-runtime-paths.md
-Writes: internal/harnessoverflow (new), .bench/hooks/result-overflow.sh (new), .codex/hooks.json, .claude/settings.json, internal/harnesses/harnesses.go, internal/harnesses/harnesses_test.go, internal/conformance/harness_record_test.go, cmd/bench/main.go, cmd/bench/otel_hook_seams_test.go, internal/otelrecord/registry.go, internal/systemtest/harness_overflow_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/harnessoverflow (new), .bench/hooks/result-overflow.sh (new), .codex/hooks.json, .claude/settings.json, internal/harnesses/harnesses.go, internal/harnesses/harnesses_test.go, internal/conformance/harness_record_test.go, cmd/bench/main.go, cmd/bench/otel_hook_seams_test.go, internal/otelrecord/registry.go, internal/systemtest/harness_overflow_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/package-core-guard/unrouted-subcommand, tests/canary/load-validity-metadata/codex-hooks-broken, tests/canary/load-validity-metadata/codex-hooks-timeout, tests/canary/load-validity-metadata/codex-hooks-timeout-typed, tests/canary/line-routing/agent-hook-unwired, tests/canary/line-routing/stop-hook-unwired
 Covers: OV2, OV3, OV4, OV5, OV6, OV7, OV8, OV9, OV10, OV11, OV12, OV13, OV14, OV15, OV16, OV17, OV18, OV19
 
 ## What to build
