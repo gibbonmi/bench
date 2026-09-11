@@ -24,6 +24,10 @@ func collectHarness(r *Run, input HarnessInput) error {
 		return err
 	}
 	read := bounds.ClassifyNoFollow(input.Path)
+	if read.State == bounds.StateEmpty {
+		diagnostic(r, "Codex", input.Path, "malformed native input")
+		return nil
+	}
 	if read.State != bounds.StateParsed {
 		diagnostic(r, "Codex", input.Path, "native input "+string(read.State))
 		return nil
@@ -57,6 +61,9 @@ func collectHarness(r *Run, input HarnessInput) error {
 	if err := json.Unmarshal(raw, &counters); err != nil {
 		diagnostic(r, "Codex", input.Path, "malformed native counters")
 		return nil
+	}
+	if counters.Input == nil || counters.Cached == nil || counters.Output == nil {
+		diagnostic(r, "Codex", input.Path, "incomplete native counters")
 	}
 	event := Event{EventID: input.EventID, SessionID: input.SessionID, Epoch: input.Epoch, Sequence: input.Sequence, Mode: input.Mode, Counter: input.Counter, Reference: Reference{"Codex", input.Path + "#" + input.EventID}, Usage: Usage{InputTotal: counters.Input, InputCached: counters.Cached, Output: counters.Output, TotalSemantics: "inclusive"}}
 	for _, old := range a.Usage {

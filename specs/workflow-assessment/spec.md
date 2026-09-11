@@ -284,6 +284,12 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `tests/canary/workflow-guidance-anchors/benchkit-spec-ownership`
 - `tests/canary/workflow-guidance-anchors/benchkit-system-suite-route`
 
+- `internal/otelrecord/attributes.go`
+- `internal/commit/commit.go`
+- `internal/commit/assessment_span_test.go`
+- `internal/worktree/land.go`
+- `internal/worktree/assessment_span_test.go`
+
 ## Out of scope
 
 This spec excludes a paid benchmark launcher, the complete FT231 program, automatic default adoption, and automatic expiry. It also excludes speculative harness adapters and recovery of unavailable charges.
@@ -363,7 +369,8 @@ The synthetic cross-attempt counter case extends A6 and A24 without changing the
     {
       "id": "2",
       "tickets": [
-        "2.md"
+        "2.md",
+        "5.md"
       ],
       "verification": [
         {
@@ -465,3 +472,15 @@ Omitting native diagnostics failed four missing/malformed/unfinished cases. Bypa
 The existing OTEL and census suites passed after their read projections were extended. Historical readers retain their existing behavior. Phase guidance requests ordinary record updates at review and final close, without requiring optional harness metrics or authorizing paid experiments.
 
 The census event projection lives in internal/census/events.go. The commit lane caught growth beyond census.go's 400-line bound, so this approved ownership expansion preserves that existing file budget.
+
+## Chunk 2 repair plan
+
+Ticket 5 belongs to chunk 2 and blocks chunk 3. It closes all nine Sol findings without changing acceptance criteria. A30 adds authentic commit and landing spans with separate assignment provenance, diff-path values, and references. 
+
+A30-A32 each add positive second-attempt routing. A32 and A7 add delta and partial native counters. A16 and A23 add parent-symlink and present-empty native fragments. Unknown fields stay unknown, and partial native counters mark coverage incomplete.
+
+The necessary ownership expansion adds the OTEL assignment attribute and its commit and landing producers with synthetic producer tests. The assignment identifier stays separate from the published Git subject. Historical subject-bearing traces without assignment evidence remain unjoinable.
+
+Chunk 2 repair validation reproduced five failures: commit and landing publication joins, plus each missing native counter category. A present-empty fragment then reproduced a separate classification failure. All six pass after repair.
+
+Named probes bit for all three producer attribution cases, both diff-path projections, and all three missing-counter diagnostics. Other probes covered delta semantics, parent-symlink protection, and landing assignment emission. Each probe restored production. The first commit-assignment omission could not compile because it left an unused variable; a compiling wrong-assignment mutation replaced that diagnostic attempt. The unsuccessful attempt remains in cost accounting.

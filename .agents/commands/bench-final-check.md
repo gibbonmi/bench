@@ -217,4 +217,4 @@ review. Do not fold it silently into a fix.
 
 ## Ordinary assessment evidence
 
-Before final landing, update the ordinary-work assessment record through `bench assessment record --input <file>`. Follow `.bench/BENCH-reference.md` and retain this final verification work with its native evidence. After landing, append available close evidence to that same record.
+Before final landing, update the ordinary-work assessment record through `bench assessment record --input <file>`. Follow `.bench/BENCH-reference.md`. Retain this final verification work with its native evidence. After landing, append available close evidence to that same record.

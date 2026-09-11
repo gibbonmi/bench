@@ -49,13 +49,7 @@ func mapped(r *Run, m Mapping) (*Attempt, error) {
 	return nil, fmt.Errorf("unknown mapped attempt")
 }
 func diagnostic(r *Run, producer, path, reason string) {
-	ref := Reference{producer, path + ": " + reason}
-	for _, old := range r.Diagnostics {
-		if old == ref {
-			return
-		}
-	}
-	r.Diagnostics = append(r.Diagnostics, ref)
+	r.Diagnostics = appendReference(r.Diagnostics, Reference{producer, path + ": " + reason})
 }
 func measure(a *Attempt, key string, v float64, ref Reference) error {
 	if a.Measures == nil {
@@ -110,13 +104,13 @@ func collectCensus(s Store, r *Run, b BenchInputs) error {
 		if err != nil {
 			return err
 		}
-		if prior, ok := selected[sel.ID]; ok {
-			if prior != sel.Mapping {
-				return fmt.Errorf("ambiguous census mapping")
-			}
+		fresh, err := selectMapping(selected, sel)
+		if err != nil {
+			return fmt.Errorf("census: %w", err)
+		}
+		if !fresh {
 			continue
 		}
-		selected[sel.ID] = sel.Mapping
 		found := false
 		for _, event := range events {
 			if event.ID != sel.ID {
@@ -169,20 +163,24 @@ func collectSpans(s Store, r *Run, b BenchInputs) error {
 		if err != nil {
 			return err
 		}
-		if prior, ok := selected[sel.ID]; ok {
-			if prior != sel.Mapping {
-				return fmt.Errorf("ambiguous trace mapping")
-			}
+		fresh, err := selectMapping(selected, sel)
+		if err != nil {
+			return fmt.Errorf("trace: %w", err)
+		}
+		if !fresh {
 			continue
 		}
-		selected[sel.ID] = sel.Mapping
 		var group []otelrecord.Span
 		assignments := map[string]bool{}
 		for _, span := range spans {
 			if span.TraceID == sel.ID {
 				group = append(group, span)
-				if strings.HasPrefix(span.Seam, "worktree.") && span.Attributes[otelrecord.AttrSubjectID] != "" {
-					assignments[span.Attributes[otelrecord.AttrSubjectID]] = true
+				id := span.Attributes[otelrecord.AttrAssignmentID]
+				if id == "" && strings.HasPrefix(span.Seam, "worktree.") && span.Seam != otelrecord.SeamLanding {
+					id = span.Attributes[otelrecord.AttrSubjectID]
+				}
+				if id != "" {
+					assignments[id] = true
 				}
 			}
 		}
@@ -228,4 +226,15 @@ func collectSpans(s Store, r *Run, b BenchInputs) error {
 		}
 	}
 	return nil
+}
+
+func selectMapping(selected map[string]Mapping, sel Selection) (bool, error) {
+	if prior, ok := selected[sel.ID]; ok {
+		if prior != sel.Mapping {
+			return false, fmt.Errorf("ambiguous selection mapping")
+		}
+		return false, nil
+	}
+	selected[sel.ID] = sel.Mapping
+	return true, nil
 }

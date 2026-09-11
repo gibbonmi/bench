@@ -88,6 +88,7 @@ const otelLandingSeam = "worktree.land"
 // census count rides here because the release step drops the records, so the record is
 // where the count survives.
 type landingMeasures struct {
+	assignment         string
 	subject            string
 	pathCount          int
 	counted            bool
@@ -101,6 +102,9 @@ type landingMeasures struct {
 func beginLandingSpan(home, root string) (context.Context, func(int, landingMeasures)) {
 	ctx, span, finish := otelrecord.Begin(home, root, otelLandingSeam)
 	return ctx, func(exit int, measures landingMeasures) {
+		if measures.assignment != "" {
+			span.SetAttributes(attribute.String(otelrecord.AttrAssignmentID, measures.assignment))
+		}
 		if measures.subject != "" {
 			span.SetAttributes(attribute.String(otelrecord.AttrSubjectID, measures.subject))
 		}
@@ -176,6 +180,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, roo
 		}
 		return 1
 	}
+	measures.assignment = assignment.ID
 	// The count is read before the release step, because that step drops the records.
 	// A landing that stops at an earlier step states the same count, and its resume
 	// reads the file the release never removed.
