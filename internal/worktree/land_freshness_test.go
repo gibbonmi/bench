@@ -33,6 +33,7 @@ func TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion(t *testin
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "candidate build entry")
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 
 	var stdout, stderr bytes.Buffer
@@ -65,6 +66,7 @@ func TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease(t *testing.
 	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 
 	ownerPid := os.Getpid()
@@ -101,6 +103,7 @@ func TestLandCommandIgnoresAForgedPrimaryExecutableAndSeal(t *testing.T) {
 	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	marker := filepath.Join(t.TempDir(), "forged-ran")
 	mustMkdirAll(t, filepath.Join(root, "dist"), 0o755)
@@ -136,6 +139,7 @@ func redProspectiveGateLanding(t *testing.T, request string) (root string, creat
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "red prospective gate")
 	base = gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
 	return root, creation, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), tally, home
 }
 
@@ -301,6 +305,7 @@ func TestLandCommandCarriesTheBaselineScheduleRootIntoTheProspectiveGate(t *test
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "record the baseline schedule root")
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 
 	var stdout, stderr bytes.Buffer

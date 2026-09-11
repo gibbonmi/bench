@@ -149,7 +149,7 @@ func Authorize(ctx context.Context, root, tree string) Result {
 func AuthorizeWithWriters(ctx context.Context, root, tree string, stdout, stderr io.Writer) Result {
 	inheritedGreen := inheritedSubjectGreen(root)
 	execution := gate.ExecuteTree(ctx, root, tree, stdout, stderr)
-	inspection := gate.InspectTree(root, tree)
+	inspection := gate.InspectTreeContext(ctx, root, tree)
 	kind := Infrastructure
 	if execution.ActionExit == 0 && inspection.ReusableGreen {
 		kind = Green

@@ -12,6 +12,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
@@ -86,15 +87,12 @@ func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home stri
 		ignore = strings.Split(ignored, "/")[0] + "/\n"
 		mustWrite(t, filepath.Join(root, ".gitignore"), []byte(ignore), 0o644)
 	}
-	specBody := "# x\n\nStatus: staged\n\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| LX1 | 1 | lands | command | catches failure |\n\n## Ownership fences\n\n- `owned.txt`\n- `reviews/x.md`\n"
-	mustMkdirAll(t, filepath.Join(root, "specs", "x", "tickets"), 0o755)
-	mustWrite(t, filepath.Join(root, "specs", "x", "spec.md"), []byte(specBody), 0o644)
-	mustWrite(t, filepath.Join(root, "specs", "x", "tickets", "one.md"), []byte("Ticket covers LX1.\n"), 0o644)
-	gitRun(t, root, "add", ".")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "landing base")
-	base := gitOutput(t, root, "rev-parse", "HEAD")
+	specBody := "# x\n\nStatus: staged\n\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | lands | command | catches failure |\n\n## Ownership fences\n\n- `owned.txt`\n- `reviews/x.md`\n- `" + siblingReviewPath + "`\n"
+	prepared := recordtest.Prepare(t, root, 1, "specs/x/spec.md", specBody)
+	base := prepared.Tip()
 	creation := mustCreate(t, root, home, request, "public landing")
 	commitInWorktree(t, creation.Path, "owned.txt", "reviewed bytes\n", "reviewed source")
+	refreshLandingEvidence(t, creation.Path, base)
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	if ignored != "" {
 		mustMkdirAll(t, filepath.Dir(filepath.Join(creation.Path, filepath.FromSlash(ignored))), 0o755)

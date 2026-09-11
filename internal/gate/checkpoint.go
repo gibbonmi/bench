@@ -27,6 +27,7 @@ func WithCheckpoint(ctx context.Context, checkpoint Checkpoint) context.Context 
 
 func checkpointEvaluation(ctx context.Context, evaluation *gateEvaluation) *gateEvaluation {
 	evaluation.checkpoint, _ = ctx.Value(checkpointKey{}).(Checkpoint)
+	evaluation.completionSource, _ = ctx.Value(completionSourceKey{}).(string)
 	return evaluation
 }
 
@@ -83,6 +84,9 @@ func parseGateArgs(args []string, plumbing bool) (string, runMode, Checkpoint, e
 }
 
 func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subject) (subject, error) {
+	if err := validateCompletionContext(e); err != nil {
+		return subject{}, err
+	}
 	if err := e.checkpoint.validate(); err != nil {
 		return subject{}, err
 	}
@@ -90,6 +94,12 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 		return plan, nil
 	}
 	tip, err := benchgit.Output("-C", e.identityRoot, "rev-parse", "--verify", "HEAD^{commit}")
+	if e.completionSource != "" {
+		tip, err = benchgit.Output("-C", e.identityRoot, "rev-parse", "--verify", e.completionSource+"^{commit}")
+		if err == nil && (!e.prospective || !e.checkpoint.Complete || tip != e.completionSource) {
+			return subject{}, errors.New("invalid prospective completion source")
+		}
+	}
 	if err != nil {
 		return subject{}, err
 	}
@@ -98,7 +108,14 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 	} else if e.checkpointTip != tip {
 		return subject{}, errors.New("checkpoint source tip changed")
 	}
-	if err := reviewrecord.Check(e.identityRoot, generation.tree, tip, e.checkpoint.Spec, e.checkpoint.Chunk, e.checkpoint.Complete); err != nil {
+	sourceTree := generation.tree
+	if e.completionSource != "" {
+		sourceTree, err = e.completionTree(generation)
+		if err != nil {
+			return subject{}, err
+		}
+	}
+	if err := reviewrecord.CheckTrees(e.identityRoot, sourceTree, generation.tree, tip, e.checkpoint.Spec, e.checkpoint.Chunk, e.checkpoint.Complete); err != nil {
 		return subject{}, fmt.Errorf("completion evidence: %w", err)
 	}
 	purpose, _ := json.Marshal(e.checkpoint)

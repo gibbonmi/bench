@@ -14,17 +14,18 @@ type executionEvaluation interface {
 }
 
 type gateEvaluation struct {
-	runtimeRoot     string
-	identityRoot    string
-	prospective     bool
-	preSource       treeSource
-	validateTree    func(string) error
-	postSource      treeSource
-	pre             *treeGeneration
-	post            *treeGeneration
-	acceptedSubject subject
-	checkpoint      Checkpoint
-	checkpointTip   string
+	runtimeRoot      string
+	identityRoot     string
+	prospective      bool
+	preSource        treeSource
+	validateTree     func(string) error
+	postSource       treeSource
+	pre              *treeGeneration
+	post             *treeGeneration
+	acceptedSubject  subject
+	checkpoint       Checkpoint
+	checkpointTip    string
+	completionSource string
 }
 
 func newGateEvaluation(root string) *gateEvaluation {

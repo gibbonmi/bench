@@ -220,10 +220,10 @@ phase checkpoint / landing broker -> gate obligation -> publish or refuse
 | E12 | 12 | Ordinary green cannot satisfy a completion checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointReuse`) | Seed ordinary green before requesting a stronger obligation. |
 | E13 | 13 | A record-only update preserves the reviewed source identity | `internal/reviewrecord/source_test.go` (`TestReviewRecordSource`) | Append a native result while leaving source bytes unchanged. |
 | E14 | 14 | Changed record bytes invalidate checkpoint verdict reuse | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointReuse`) | Remove a completed axis after a green checkpoint. |
-| E15 | 15 | Completion requires final acceptance reconciliation | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Leave one planned row without a final disposition. |
-| E16 | 16 | A landing with missing completion evidence publishes no ref | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Pass a valid source pair with an incomplete review record. |
-| E17 | 17 | A new destination delta cannot inherit source-only review | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Compose a destination change that modifies reviewed content. |
-| E18 | 18 | The exact broker status transform preserves review coverage | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Run the existing status flip through the complete gate obligation. |
+| E15 | 15 | Completion requires final acceptance reconciliation | `internal/landing/completion_evidence_test.go` (`TestLandingCompletionEvidence`) | Leave one planned row without a final disposition. |
+| E16 | 16 | A landing with missing completion evidence publishes no ref | `internal/landing/completion_evidence_test.go` (`TestLandingCompletionEvidence`) | Pass a valid source pair with an incomplete review record. |
+| E17 | 17 | A new destination delta cannot inherit source-only review | `internal/landing/completion_evidence_test.go` (`TestLandingCompletionEvidence`) | Compose a destination change that modifies reviewed content. |
+| E18 | 18 | The exact broker status transform preserves review coverage | `internal/landing/completion_evidence_test.go` (`TestLandingCompletionEvidence`) | Run the existing status flip through the complete gate obligation. |
 | E19 | 19 | Invalid records fail before source traversal | `internal/reviewrecord/source_test.go` (`TestReviewRecordTerminal`) | Compete a malformed version with an escaping native reference. |
 | E20 | 20 | A nonregular or escaping record path is refused | `internal/reviewrecord/source_test.go` (`TestReviewRecordPaths`, `TestReviewRecordControlPath`, `TestReviewRecordLiteralTickets`) | Use FIFO symlink traversal and control-byte fixtures without opening the target. |
 | E21 | 21 | A retained native result remains inspectable without its local log | `internal/reviewrecord/source_test.go` (`TestReviewRecordSource`) | Remove the supplemental local log and load the embedded terminal result. |
@@ -239,10 +239,10 @@ phase checkpoint / landing broker -> gate obligation -> publish or refuse
 | E30 | 30 | A missing required mutation result blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Keep tests green but omit the planned probe evidence. |
 | E31 | 31 | A failed required probe restore blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Record a biting mutation with failed restoration. |
 | E32 | 32 | Review evidence cannot substitute for author verification | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Populate only review items for a required command. |
-| E33 | 33 | Missing final integration execution blocks completion | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Supply reconciliation prose with no final command result. |
-| E34 | 34 | Failed final integration execution blocks completion | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Record a final integration command with a nonzero exit. |
-| E35 | 35 | Stale final integration execution blocks completion | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Change source after the final command ran. |
-| E36 | 36 | An extra spec-byte change beside the status flip blocks publication | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Change one acceptance byte beside the valid status transform before updateRef. |
+| E33 | 33 | Missing final integration execution blocks completion | `internal/landing/completion_evidence_test.go` (`TestLandingCompletionEvidence`) | Supply reconciliation prose with no final command result. |
+| E34 | 34 | Failed final integration execution blocks completion | `internal/landing/completion_evidence_test.go` (`TestLandingCompletionEvidence`) | Record a final integration command with a nonzero exit. |
+| E35 | 35 | Stale final integration execution blocks completion | `internal/landing/completion_evidence_test.go` (`TestLandingCompletionEvidence`) | Change source after the final command ran. |
+| E36 | 36 | An extra spec-byte change beside the status flip blocks publication | `internal/landing/completion_evidence_test.go` (`TestLandingCompletionEvidence`) | Change one acceptance byte beside the valid status transform before updateRef. |
 | E37 | 37 | The public gate wrapper forwards checkpoint arguments | `cmd/bench/gate_route_test.go` (`TestGateCheckpointRoute`) | Drive chunk and complete forms through bin/bench.sh. |
 | E38 | 38 | Repairs append new evidence without erasing earlier outcomes | `internal/reviewrecord/source_test.go` (`TestReviewRecordTerminal`) | Load initial findings and their superseding repair results. |
 
@@ -439,3 +439,24 @@ The help inventory derives its suffix from that owner, and wrapper tests execute
 
 Chunk 2 repair keeps verification cases in the shared checkpoint fixture.
 It adds partial-inventory, completion-purpose reuse, and hostile-path wrapper coverage before advancement.
+
+Chunk 3 migrates the existing landing fixtures through the shared record producer.
+Capture composition keeps its settlement rules, but a new composed source requires
+current review and verification before publication. The public journey checks both
+the initial refusal and the reviewed retry. This expansion stays within ticket 3.
+
+Dogfood on 2026-09-11 used the changed kit in `/tmp/ce-dogfood-grq0wdc6`.
+The copied binary digest was `sha256:436cb42d105e73ee9588e2971d146f46bbaf96295f15cab5b68f48a854828dc3`.
+The retained Astra author supplied a deterministic shell adapter; no other model
+implemented the fixture. A staged small spec required `result.txt` to contain
+`ready`.
+
+The actual shift completed one committed iteration at
+`8e06aeb04ce7578cd31ce39e5538493b06c388a6`. The ordinary gate and Stop hook
+rejected pending output, then passed the corrected output without a review record.
+The shift reused that current green verdict. A final gate passed on the shift
+branch. The installed pre-push hook refused main and allowed a topic ref.
+
+Native results: `codex:tool/8c4b4d` and `codex:tool/bca9d7`.
+The first follow-up script misread the TOON result after successful completion;
+the corrected follow-up verified the same shift without executing another one.

@@ -8,11 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/gibbonmi/bench/internal/census"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
-	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -44,6 +42,7 @@ func TestLandCommandPublicRealGitJourney(t *testing.T) {
 				gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "configure ignored residue")
 				base = gitOutput(t, root, "rev-parse", "HEAD")
 				gitRun(t, creation.Path, "rebase", "main")
+				refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
 				tip = gitOutput(t, creation.Path, "rev-parse", "HEAD")
 				if tc.foreignIgnored != "" {
 					mustMkdirAll(t, filepath.Dir(filepath.Join(creation.Path, filepath.FromSlash(tc.foreignIgnored))), 0o755)
@@ -80,7 +79,7 @@ func TestLandCommandPublicRealGitJourney(t *testing.T) {
 			}
 			if tc.name == "clean" {
 				tree := gitOutput(t, root, "rev-parse", published+"^{tree}")
-				if got := authorization.Authorize(t.Context(), root, tree); got.Kind != authorization.Green {
+				if got := authorization.Authorize(gate.WithCompletion(t.Context(), "specs/x/spec.md", tip), root, tree); got.Kind != authorization.Green {
 					t.Fatalf("identical-tree authorization = %+v", got)
 				}
 				if got, readErr := os.ReadFile(tally); readErr != nil || string(got) != "g" {
@@ -127,6 +126,7 @@ func TestLandCommandPublicPreservesHistoricalRuntimeLogs(t *testing.T) {
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore runtime logs")
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	mustMkdirAll(t, filepath.Join(root, ".logs"), 0o700)
 	history := filepath.Join(root, ".logs", "history.jsonl")
@@ -164,6 +164,7 @@ func TestLandCommandRefusesPostGateUnknownIgnoredMutation(t *testing.T) {
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "inject post-gate ignored mutation")
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 
 	var stdout, stderr bytes.Buffer
@@ -187,6 +188,7 @@ func TestLandCommandRetainsJustInTimeTrackedDestinationEdit(t *testing.T) {
 	commitInWorktree(t, root, "victim.txt", "saved\n", "track victim")
 	base = gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
 	tip = gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	victim := filepath.Join(root, "victim.txt")
 	injectLandingResetEdit(t, root, victim)
@@ -215,6 +217,7 @@ func TestLandCommandRetainsJustInTimeOverlappingDestinationEdit(t *testing.T) {
 	commitInWorktree(t, root, "victim.txt", "saved\n", "track victim")
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
 	mustWrite(t, filepath.Join(creation.Path, "victim.txt"), []byte("reviewed bytes\n"), 0o600)
 	specPath := filepath.Join(creation.Path, "specs", "x", "spec.md")
 	specBytes, err := os.ReadFile(specPath)
@@ -224,6 +227,7 @@ func TestLandCommandRetainsJustInTimeOverlappingDestinationEdit(t *testing.T) {
 	mustWrite(t, specPath, append(specBytes, []byte("- `victim.txt`\n")...), 0o644)
 	gitRun(t, creation.Path, "add", "victim.txt", "specs/x/spec.md")
 	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "review victim change")
+	refreshLandingEvidence(t, creation.Path, base)
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	victim := filepath.Join(root, "victim.txt")
 	injectLandingResetEdit(t, root, victim)
@@ -325,6 +329,7 @@ func TestLandCommandPublicConflictRepairRequiresNewReviewedTip(t *testing.T) {
 	mustWrite(t, filepath.Join(creation.Path, "owned.txt"), []byte("destination bytes\nreviewed repair\n"), 0o644)
 	gitRun(t, creation.Path, "add", "owned.txt")
 	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "repair conflict")
+	refreshLandingEvidence(t, creation.Path, base)
 	repairedTip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	code, stdout, stderr = run(reviewedTip)
 	// LRS17: the repair moved the source tip, so the refusal names both tips and routes the
@@ -374,6 +379,7 @@ func TestLandGradesASourceCommittedByALanePass(t *testing.T) {
 	if err := os.Remove(manifest); err != nil {
 		t.Fatal(err)
 	}
+	refreshLandingEvidence(t, creation.Path, base)
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 
 	var stdout, stderr bytes.Buffer
@@ -403,6 +409,7 @@ func TestLandRelaysTheBoundedGreenShapeBeforeTheLandedRecord(t *testing.T) {
 	root, creation, _, _, _, home := publicLandingFixture(t, request, "", "")
 	base := commitCannedShapeGate(t, root, cannedGreenShape)
 	gitRun(t, creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 
 	var stdout, stderr bytes.Buffer
@@ -422,109 +429,3 @@ func TestLandRelaysTheBoundedGreenShapeBeforeTheLandedRecord(t *testing.T) {
 // recordRawCalls appends n raw-call records for the assignment the pool path names.
 // The fixture calls the recorder rather than write the file, so the test and the
 // production writer keep one shape.
-func recordRawCalls(t *testing.T, home, root, path string, n int) {
-	t.Helper()
-	recordRawCallsWithHead(t, home, root, path, "sed -i s/a/b/", n)
-}
-
-// recordRawCallsWithHead appends n raw-call records that one command text makes, which
-// lets a test state a breakdown over more than one verb head.
-func recordRawCallsWithHead(t *testing.T, home, root, path, command string, n int) {
-	t.Helper()
-	for range n {
-		if err := census.Record(command+" "+filepath.Join(path, "owned.txt"), root, home, time.Now()); err != nil {
-			t.Fatal(err)
-		}
-	}
-}
-
-// censusRecordPath names one assignment's record file.
-func censusRecordPath(home, root, assignment string) string {
-	return filepath.Join(census.Dir(home, root), assignment)
-}
-
-// TestLandCommandStatesTheCensusCountAndDropsTheRecords is EC20 and the landing half
-// of EC24. The landed record carries the count as its last key, and the release step
-// the landing runs leaves no record file for the retired assignment.
-func TestLandCommandStatesTheCensusCountAndDropsTheRecords(t *testing.T) {
-	t.Parallel()
-	request := "census-landed-count"
-	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
-	recordRawCalls(t, home, root, creation.Path, 3)
-	survivor := seedHandoffSections(t, root, creation.Assignment)
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.HasSuffix(stdout.String(), ",census=3}\n") {
-		t.Fatalf("landed record = (%d, %q, %q), want census=3 as the last key", code, stdout.String(), stderr.String())
-	}
-	if _, err := os.Stat(censusRecordPath(home, root, creation.Assignment.ID)); !os.IsNotExist(err) {
-		t.Fatalf("the released landing kept the census record: %v", err)
-	}
-	requireHandoffSections(t, root, handoffdoc.MainKey, survivor)
-}
-
-// TestLandCommandStatesZeroForAnAssignmentWithNoRecords is EC21. Zero is a stated
-// fact, and an absent record file is not a landing failure.
-func TestLandCommandStatesZeroForAnAssignmentWithNoRecords(t *testing.T) {
-	t.Parallel()
-	request := "census-landed-zero"
-	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.HasSuffix(stdout.String(), ",census=0}\n") {
-		t.Fatalf("landed record = (%d, %q, %q), want census=0", code, stdout.String(), stderr.String())
-	}
-}
-
-// TestLandCommandPrintsTheCensusHeadBreakdown proves the landing states the raw-call
-// count for each verb head before the release step drops the records, so the retro
-// reads the breakdown from the run. The heaviest head prints first.
-func TestLandCommandPrintsTheCensusHeadBreakdown(t *testing.T) {
-	t.Parallel()
-	request := "census-landed-heads"
-	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
-	recordRawCallsWithHead(t, home, root, creation.Path, "sed -i s/a/b/", 2)
-	recordRawCallsWithHead(t, home, root, creation.Path, "awk -f x", 1)
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stderr.String(), "census heads{sed=2,awk=1}\n") {
-		t.Fatalf("landing evidence = (%d, %q, %q), want the head breakdown on stderr", code, stdout.String(), stderr.String())
-	}
-	if !strings.HasSuffix(stdout.String(), ",census=3}\n") {
-		t.Fatalf("landed record = %q, want census=3 beside the breakdown", stdout.String())
-	}
-}
-
-// TestLandCommandPrintsNoHeadsLineWithoutRecords proves an assignment that made no raw
-// call prints no breakdown at all, and still states the zero count in its record.
-func TestLandCommandPrintsNoHeadsLineWithoutRecords(t *testing.T) {
-	t.Parallel()
-	request := "census-landed-no-heads"
-	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 0 || strings.Contains(stderr.String(), "census heads{") || !strings.HasSuffix(stdout.String(), ",census=0}\n") {
-		t.Fatalf("empty census landing = (%d, %q, %q), want no heads line and census=0", code, stdout.String(), stderr.String())
-	}
-}
-
-// TestLandCommandRefusalKeepsTheCensusRecords proves a landing that refuses before
-// its gate prints no landed record and drops nothing, so the operator can repair the
-// invocation and land with the evidence intact.
-func TestLandCommandRefusalKeepsTheCensusRecords(t *testing.T) {
-	t.Parallel()
-	request := "census-landed-refusal"
-	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
-	recordRawCalls(t, home, root, creation.Path, 2)
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs("no-such-request", base, tip, creation.Path), &stdout, &stderr)
-	if code == 0 || !strings.Contains(stdout.String(), "refused{") || strings.Contains(stdout.String(), "landed{") {
-		t.Fatalf("refused landing = (%d, %q, %q), want a refusal and no landed record", code, stdout.String(), stderr.String())
-	}
-	if _, err := os.Stat(tally); !os.IsNotExist(err) {
-		t.Fatalf("the refusal ran the gate: %v", err)
-	}
-	if _, err := os.Stat(censusRecordPath(home, root, creation.Assignment.ID)); err != nil {
-		t.Fatalf("the refusal dropped the census records: %v", err)
-	}
-}

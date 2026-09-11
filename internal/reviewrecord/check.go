@@ -7,11 +7,17 @@ import (
 
 // Check grades retained occurrences against the requested source and obligation.
 func Check(root, tree, tip, spec, chunk string, complete bool) error {
-	record, err := ReadTree(root, tree, spec)
+	return CheckTrees(root, tree, tree, tip, spec, chunk, complete)
+}
+
+// CheckTrees reads evidence from the graded tree and coverage from its proven source.
+// The gate owns proof that the composition preserves that source.
+func CheckTrees(root, sourceTree, evidenceTree, tip, spec, chunk string, complete bool) error {
+	record, err := ReadTree(root, evidenceTree, spec)
 	if err != nil {
 		return fmt.Errorf("checkpoint %s: %w; retain a valid native result record", spec, err)
 	}
-	return checkSource(root, tree, tip, record, chunk, complete, true)
+	return checkSource(root, sourceTree, tip, record, chunk, complete, true)
 }
 
 func checkVerification(items []Verification, requirements []Requirement, performer, source, scope string) error {

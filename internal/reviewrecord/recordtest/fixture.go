@@ -30,6 +30,11 @@ func Attach(t testing.TB, root string, count int) *Fixture {
 }
 
 func AttachAt(t testing.TB, root string, count int, spec string) *Fixture {
+	return Prepare(t, root, count, spec, "# Example\n\nStatus: staged\n\n")
+}
+
+// Prepare supplies a plan and tickets beside the consumer fixture's own spec body.
+func Prepare(t testing.TB, root string, count int, spec, body string) *Fixture {
 	t.Helper()
 	f := &Fixture{T: t, Root: root}
 	plan := rr.Plan{Version: 1, FinalVerification: []rr.Requirement{{ID: "acceptance", Command: "go test ./..."}, {ID: "integration", Command: "go test -tags=system ./..."}}}
@@ -46,15 +51,40 @@ func AttachAt(t testing.TB, root string, count int, spec string) *Fixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.Write(spec, "# Example\n\nStatus: staged\n\n```bench-completion-plan\n"+string(data)+"\n```\n")
+	f.Write(spec, body+"```bench-completion-plan\n"+string(data)+"\n```\n")
 	f.Write("source.txt", "base\n")
 	f.Commit("fixture plan")
-	f.Plan, err = rr.ReadPlan(root, f.Tree(), spec)
+	f.loadPlan(spec)
+	return f
+}
+
+func (f *Fixture) loadPlan(spec string) {
+	f.T.Helper()
+	var err error
+	f.Plan, err = rr.ReadPlan(f.Root, f.Tree(), spec)
+	if err != nil {
+		f.T.Fatal(err)
+	}
+	f.Record = rr.Record{Version: 1, Spec: spec, PlanDigest: f.Plan.Digest, ImplementationSession: "fixture-author"}
+}
+
+// RetainSingleChunk adds complete fixture evidence for an already committed source.
+func RetainSingleChunk(t testing.TB, root, spec, base string) {
+	t.Helper()
+	f := &Fixture{T: t, Root: root}
+	f.loadPlan(spec)
+	if len(f.Plan.Chunks) != 1 {
+		t.Fatal("single-chunk fixture requires one planned chunk")
+	}
+	f.RecordChunk(base)
+	f.Complete()
+	f.Save()
+	path, err := rr.RecordPath(spec)
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.Record = rr.Record{Version: 1, Spec: spec, PlanDigest: f.Plan.Digest, ImplementationSession: "fixture-author"}
-	return f
+	f.Git("add", "--", ":(literal)"+path)
+	f.Git("-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "retain fixture completion")
 }
 
 func (f *Fixture) Write(path, data string) {
@@ -116,6 +146,12 @@ func (f *Fixture) AddChunk() {
 	base := f.Tip()
 	f.Write("source.txt", "implemented chunk "+planned.ID+"\n")
 	f.Commit("chunk " + planned.ID)
+	f.RecordChunk(base)
+}
+
+func (f *Fixture) RecordChunk(base string) {
+	f.T.Helper()
+	planned := f.Plan.Chunks[len(f.Record.Chunks)]
 	digest, err := rr.SourceDigest(f.Root, f.Tree(), f.Record.Spec)
 	if err != nil {
 		f.T.Fatal(err)

@@ -27,6 +27,7 @@ func landingSpecAmendment(t *testing.T, source string) []byte {
 		t.Fatal("spec amendment fixture changed nothing")
 	}
 	commitInWorktree(t, source, rel, string(amended), "amend the spec in range")
+	refreshLandingEvidence(t, source, gitOutput(t, source, "merge-base", "main", "HEAD"))
 	return amended
 }
 
