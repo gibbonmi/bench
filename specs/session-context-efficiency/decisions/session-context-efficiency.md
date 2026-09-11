@@ -53,7 +53,7 @@ Readiness authorizes spec authoring; ticket 9 retains the review checkpoint for 
 
 ## Sources
 
-- Path: `decisions/session-context-efficiency/assets/preliminary-assessment.md`
+- Path: `specs/session-context-efficiency/decisions/session-context-efficiency/assets/preliminary-assessment.md`
   Supports: the session census, pattern inventory, owner map, and preliminary ranking.
   Drift: re-run after the transcript schema, tool wrapper, or named Bench surfaces change.
 - Path: `roadmap/FT231.md`
@@ -68,6 +68,6 @@ Readiness authorizes spec authoring; ticket 9 retains the review checkpoint for 
 - Path: `roadmap/FT89.md`
   Supports: placement of deterministic operations in the CLI and judgment in operating guidance.
   Drift: FT89 lands, retires, or changes its ownership rule.
-- Path: `decisions/session-context-efficiency/assets/harness-measures.md`
+- Path: `specs/session-context-efficiency/decisions/session-context-efficiency/assets/harness-measures.md`
   Supports: ticket 5's capability evidence and the enforcement and budget decisions.
   Drift: a harness release, schema change, integration change, or change to the named Bench owners.
