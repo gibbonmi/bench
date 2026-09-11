@@ -63,8 +63,8 @@ func checkWorkflowAnchors(root string) []string {
 		if !strings.Contains(text, "craft-line") {
 			diags = append(diags, "bench-write-spec.md does not reference craft-line")
 		}
-		if !strings.Contains(text, "model and effort") {
-			diags = append(diags, "bench-write-spec.md does not mandate per-story model and effort")
+		if !strings.Contains(text, "implementation-line recommendation contract") {
+			diags = append(diags, "bench-write-spec.md does not reference craft-spec's implementation-line recommendation contract")
 		}
 		if strings.Count(text, "`Bootstrap authority before execution` rule") != 2 {
 			diags = append(diags, "bench-write-spec.md does not apply craft-spec's named bootstrap-authority rule during edge walking and falsification")
@@ -466,15 +466,20 @@ func runAnchorBites(t *testing.T, family []anchors.Anchor, subject func(anchors.
 			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 				t.Fatal(err)
 			}
-			if err := os.WriteFile(path, []byte(conformant+"\n"), 0o644); err != nil {
-				t.Fatal(err)
+			write := func(text string) {
+				t.Helper()
+				if anchor.Section != "" {
+					text = "# Fixture\n\n## " + anchor.Section + "\n\n" + text
+				}
+				if err := os.WriteFile(path, []byte(text+"\n"), 0o644); err != nil {
+					t.Fatal(err)
+				}
 			}
+			write(conformant)
 			if diags := checkWorkflowAnchors(root); containsDiagnostic(diags, anchor.Diagnostic) {
 				t.Fatalf("anchor is red while its file conforms: %s", anchor.Diagnostic)
 			}
-			if err := os.WriteFile(path, []byte(contradictory+"\n"), 0o644); err != nil {
-				t.Fatal(err)
-			}
+			write(contradictory)
 			if diags := checkWorkflowAnchors(root); !containsDiagnostic(diags, anchor.Diagnostic) {
 				t.Fatalf("the contradictory file did not bite with %q", anchor.Diagnostic)
 			}

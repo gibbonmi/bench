@@ -1,8 +1,6 @@
 package conformance
 
 import (
-	"os"
-	"path/filepath"
 	"slices"
 	"testing"
 
@@ -34,44 +32,45 @@ func TestRetainedWorkflow(t *testing.T) {
 		"retained workflow: project profile dropped the conditional review-line reference",
 		"retained workflow: craft-line dropped the user-directed model-switch boundary",
 	}
+	wantPredicates := map[string]struct {
+		file    string
+		section string
+		needle  string
+	}{
+		"retained workflow: craft-spec dropped the implementation-line reason factors": {
+			file:    ".agents/skills/bench-craft-spec/SKILL.md",
+			section: "Template",
+			needle:  "Implementation-line reason: <hardest material chunk, spec precision, seam uncertainty, and test strength>.",
+		},
+		"retained workflow: craft-line dropped the Codex mid-to-top review branch": {
+			file:   ".agents/skills/bench-craft-line/SKILL.md",
+			needle: "A Codex mid implementation sends each axis to the Codex top binding.",
+		},
+		"retained workflow: craft-line dropped the default mid review branch": {
+			file:   ".agents/skills/bench-craft-line/SKILL.md",
+			needle: "Every other implementation sends each axis to the invoking harness's mid binding.",
+		},
+		"retained workflow: craft-line dropped the user-directed model-switch boundary": {
+			file:   ".agents/skills/bench-craft-line/SKILL.md",
+			needle: "A different implementation model or session requires user direction. The author can adjust effort in the retained session and reports the change.",
+		},
+	}
 	family := anchorsWithDiagnosticPrefix("retained workflow: ")
 	for _, want := range wantDiagnostics {
-		if !slices.ContainsFunc(family, func(anchor anchors.Anchor) bool { return anchor.Diagnostic == want }) {
+		index := slices.IndexFunc(family, func(anchor anchors.Anchor) bool { return anchor.Diagnostic == want })
+		if index < 0 {
 			t.Errorf("retained-workflow anchor is absent: %s", want)
+			continue
+		}
+		if predicate, ok := wantPredicates[want]; ok {
+			anchor := family[index]
+			if anchor.File != predicate.file || anchor.Section != predicate.section || anchor.Needle != predicate.needle {
+				t.Errorf("retained-workflow predicate drifted for %q: %#v", want, anchor)
+			}
 		}
 	}
 	if t.Failed() {
 		return
 	}
-	runRetainedWorkflowAnchorBites(t, family)
-}
-
-func runRetainedWorkflowAnchorBites(t *testing.T, family []anchors.Anchor) {
-	t.Helper()
-	for _, anchor := range family {
-		t.Run(anchor.Diagnostic, func(t *testing.T) {
-			root := t.TempDir()
-			path := filepath.Join(root, filepath.FromSlash(anchor.File))
-			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-				t.Fatal(err)
-			}
-			write := func(text string) {
-				t.Helper()
-				if anchor.Section != "" {
-					text = "# Fixture\n\n## " + anchor.Section + "\n\n" + text
-				}
-				if err := os.WriteFile(path, []byte(text+"\n"), 0o644); err != nil {
-					t.Fatal(err)
-				}
-			}
-			write(anchor.Needle)
-			if diags := checkWorkflowAnchors(root); slices.Contains(diags, anchor.Diagnostic) {
-				t.Fatalf("anchor is red while its file conforms: %s", anchor.Diagnostic)
-			}
-			write(plantedAnchorContradiction)
-			if diags := checkWorkflowAnchors(root); !slices.Contains(diags, anchor.Diagnostic) {
-				t.Fatalf("the contradictory file did not bite with %q", anchor.Diagnostic)
-			}
-		})
-	}
+	runAnchorBites(t, family, func(anchor anchors.Anchor) string { return anchor.Diagnostic })
 }

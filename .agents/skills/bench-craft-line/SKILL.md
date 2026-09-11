@@ -65,7 +65,7 @@ line is a **ceiling, not a binding**: re-run the decision table per ticket at ch
 routed mid for its uncertain seam often decomposes into tickets that are exact-spec, known-shape,
 gate-covered tickets.
 
-The leverage override still wins: kit guidance prose routes mid + high in every stage.
+The leverage override still wins for orchestration and implementation: kit guidance prose routes mid + high in those stages. The conditional review line below owns review.
 `craft-delegate` owns whether authorship runs inline or in an isolated worktree; this skill routes
 the chosen author. When stories land as one atomic diff, run the author at the highest tier any
 story needs. Flag each collapsed line in the exit report.
