@@ -419,9 +419,9 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
     {
       "id": "2",
       "base": "0d2551411b84cf1b6fc9391ea4e3e37af99afa9c",
-      "tip": "935184c924f3e8511f01c7a3626021e37d513c4e",
+      "tip": "07baefb511448dc8d982ac3378f6c54fc2f56c7a",
       "plan_digest": "sha256:e8ced3d4a983e8fa78f76997f817dffd2a6d2158adfd9a5dfba0315cd27c3956",
-      "source_digest": "5db545de65dd98e6d2e9a13a8f6318c5cf4d23e2",
+      "source_digest": "dc474aa6e6efa58f07aec7272726c8e17abf2cd2",
       "acceptance_rows": [
         "A7",
         "A13",
@@ -623,6 +623,71 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
             "restore": "pass",
             "native_ref": {
               "ref": "native-tool:8e1572",
+              "excerpt": "bit,internal/assessment/record.go,swap,failed,1,yes",
+              "digest": "sha256:f1551004eb42781e7eb5bfe06363bf276267178abd689b3052585165095023b7"
+            }
+          }
+        },
+        {
+          "id": "chunk2-budget-assessment",
+          "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "dc474aa6e6efa58f07aec7272726c8e17abf2cd2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-tool:32cf6d",
+            "excerpt": "github.com/gibbonmi/bench/internal/assessment,pass,1857",
+            "digest": "sha256:c4aa5ed11ffea62d1e348a60af478f0bc4e9c9786e5a8538f9b21dba9ef86bf8"
+          },
+          "requirement": "assessment",
+          "command": "bench test --package ./internal/assessment",
+          "exit_code": 0
+        },
+        {
+          "id": "chunk2-budget-dispatcher",
+          "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "dc474aa6e6efa58f07aec7272726c8e17abf2cd2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-tool:08cbc6",
+            "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,18533",
+            "digest": "sha256:9aee43b318ec99c7c2c4064eee6ec3a68930e2d9691bbd31b44715d1467626a4"
+          },
+          "requirement": "dispatcher",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "chunk2-budget-cache-probe",
+          "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "dc474aa6e6efa58f07aec7272726c8e17abf2cd2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-tool:c18075",
+            "excerpt": "package,./internal/assessment,TestAssessmentRecord,passed,35",
+            "digest": "sha256:767e0741aa92fba8f475dbc3420108bfbab2ac1b42fd7961a96217cf54a6d44a"
+          },
+          "requirement": "cache-probe",
+          "command": "bench test --package ./internal/assessment --run TestAssessmentRecord",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit cached-input subtraction",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "native-tool:c18075",
               "excerpt": "bit,internal/assessment/record.go,swap,failed,1,yes",
               "digest": "sha256:f1551004eb42781e7eb5bfe06363bf276267178abd689b3052585165095023b7"
             }
@@ -839,6 +904,72 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
           "supersedes": [
             "chunk2-coverage-2"
           ]
+        },
+        {
+          "id": "chunk2-standards-4",
+          "performer": "/root/assessment_2_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "dc474aa6e6efa58f07aec7272726c8e17abf2cd2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_2_standards:budget-reaffirmation",
+            "excerpt": "Terminal result: **completed/pass** \u2014 **0 raw Standards findings**; worst severity **none**; dispositions **none**.",
+            "digest": "sha256:6f460fb1e8f224af382feaf78e7d49f6be139baad13130dbdcc6768880f2bf02"
+          },
+          "axis": "Standards",
+          "base": "0d2551411b84cf1b6fc9391ea4e3e37af99afa9c",
+          "tip": "07baefb511448dc8d982ac3378f6c54fc2f56c7a",
+          "finding_ids": [],
+          "supersedes": [
+            "chunk2-standards-3"
+          ]
+        },
+        {
+          "id": "chunk2-spec-4",
+          "performer": "/root/assessment_2_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "dc474aa6e6efa58f07aec7272726c8e17abf2cd2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_2_spec:budget-reaffirmation",
+            "excerpt": "**Spec exact-source result: PASS**",
+            "digest": "sha256:84b38855e15659b404a7b7a57768f006476de60b2846197dd9fe52e90dbfe729"
+          },
+          "axis": "Spec",
+          "base": "0d2551411b84cf1b6fc9391ea4e3e37af99afa9c",
+          "tip": "07baefb511448dc8d982ac3378f6c54fc2f56c7a",
+          "finding_ids": [],
+          "supersedes": [
+            "chunk2-spec-3"
+          ]
+        },
+        {
+          "id": "chunk2-coverage-4",
+          "performer": "/root/assessment_2_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "dc474aa6e6efa58f07aec7272726c8e17abf2cd2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_2_coverage:budget-reaffirmation",
+            "excerpt": "**Coverage \u2014 PASS**",
+            "digest": "sha256:5c5812dcbdb2c9fae441c4b682163aab99a9750d03f9d64420260056b671e5e8"
+          },
+          "axis": "Coverage",
+          "base": "0d2551411b84cf1b6fc9391ea4e3e37af99afa9c",
+          "tip": "07baefb511448dc8d982ac3378f6c54fc2f56c7a",
+          "finding_ids": [],
+          "supersedes": [
+            "chunk2-coverage-3"
+          ]
         }
       ]
     }
@@ -1001,3 +1132,13 @@ The current source passed assessment, dispatcher, OTEL, and required cache-probe
 Standards, Spec, and Coverage independently passed the frozen 935184c9 source with zero findings. All S1-S5, P1-P2, and C1-C6 findings are closed. Author assessment and dispatcher tests passed, and the required cache subtraction probe bit and restored production on that source.
 
 All reviewers verified clean tips and the shared evidence. Consumers hash: c0053ff00962a4a9167f2f5ccc2ec7140998c3305c3ea35539b5be307982b91d. Coverage hash: 06966e263ca07d6663ed7a156a5ad5ef4c9d70c5f867f43712299abc5a20f2e7. Native reviewer usage and charges remain unknown. The checkpoint is the remaining condition before chunk 3 starts.
+
+## Chunk 2 checkpoint budget repair
+
+The first full checkpoint failed because bench-implement-spec.md exceeded its existing 75-line budget. Its log is .logs/gate-20260911T220747.134283757Z-3035694.jsonl. Native terminal output e42a16 reported the guidance-budget failures.
+
+The repair moves the unchanged assessment paragraph into Land and removes its separate heading and one source wrap. The final file has 75 lines. Two intermediate edits still exceeded the bound; those failed checks remain in ordinary-work accounting. The named guidance-budget check now passes. No gate or budget was weakened.
+
+All three Sol axes reaffirmed 07baefb5 with zero findings. The plan and acceptance criteria are unchanged. Current assessment and dispatcher verification passed; the cache-subtraction probe bit and restored production. Native reviewer usage and charges remain unknown.
+
+Consumers hash: 890c106dcd6280500804a82409cd16a6fdf3be3b1dc0802e53e860f6e6835f0f. Coverage hash: 06966e263ca07d6663ed7a156a5ad5ef4c9d70c5f867f43712299abc5a20f2e7. Every reviewer verified both hashes and its clean frozen tip.
