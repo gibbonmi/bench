@@ -164,7 +164,8 @@ These fields preserve earlier evidence when a later reviewed delta changes the p
     {
       "id": "3",
       "tickets": [
-        "3.md"
+        "3.md",
+        "r3.md"
       ],
       "verification": [
         {
@@ -378,6 +379,10 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `tests/canary/package-core-guard/reintroduced-bare-skip`
 - `tests/canary/package-core-guard/unrouted-subcommand`
 
+- `internal/systemtest/owner_land_race_test.go`
+- `internal/systemtest/owner_artifact_recovery_test.go`
+- `internal/systemtest/owner_landing_fixture_test.go`
+
 ## Out of scope
 
 This spec excludes semantic proof of judgment, a new approval service, automatic reviewers, and automatic repair. It also excludes probe classification changes and a parallel implementation engine. General preflight enforcement remains under FT200.
@@ -460,3 +465,11 @@ branch. The installed pre-push hook refused main and allowed a topic ref.
 Native results: `codex:tool/8c4b4d` and `codex:tool/bca9d7`.
 The first follow-up script misread the TOON result after successful completion;
 the corrected follow-up verified the same shift without executing another one.
+
+Chunk 3 review repair includes `r3.md` for the three accepted targets.
+It extends the fixture fence to the system landing and recovery producers.
+The shared record producer supplies their plans and native fixture outcomes.
+The race journey retains its original ref and recovery assertions and adds a
+refusal before review of the destination delta. The completion reader uses the
+gate snapshot for entry metadata and the shared Git owner for bounded blob data.
+This expansion preserves the approved acceptance rows and pass criteria.
