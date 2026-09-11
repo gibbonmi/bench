@@ -2,6 +2,10 @@
 
 ## Standards
 
+Current repair review: zero findings; worst issue none. The native reviewer reaffirms source `5457042`.
+
+Historical initial review:
+
 Standards review completed with 2 findings (1 medium, 1 low); worst issue medium.
 
 - S1 (medium, auto-fix): The fixture repeats the canonical axis inventory. Use reviewrecord.Axes().
@@ -12,6 +16,10 @@ Standards review completed with 2 findings (1 medium, 1 low); worst issue medium
 
 ## Spec
 
+Current repair review: zero findings; worst issue none. The native reviewer reaffirms source `5457042`.
+
+Historical initial review:
+
 completed with findings; Spec axis failed clean review.
 
 - P1 (high, auto-fix): A checkpoint for chunk 2 accepts evidence with no predecessor. Require the ordered planned prefix, including amendment mappings.
@@ -21,6 +29,10 @@ completed with findings; Spec axis failed clean review.
   Citations at frozen tip 205c929: docs/adr/0021-benchmark-workflow-orchestration.md:12; specs/completion-evidence/spec.md:204; internal/reviewrecord/parse.go:73.
 
 ## Coverage
+
+Current repair review: zero findings; worst issue none. The native reviewer reaffirms source `5457042`.
+
+Historical initial review:
 
 Coverage review completed with 3 findings; worst issue high.
 
@@ -33,13 +45,19 @@ Coverage review completed with 3 findings; worst issue high.
 - C3 (medium, auto-fix): The changed-plan test fails on malformed ticket syntax. Use a valid ticket amendment and prove stale identity plus explicit mapping.
   Citations at frozen tip 205c929: specs/completion-evidence/spec.md:225; internal/reviewrecord/source_test.go:54; internal/reviewrecord/plan.go:86.
 
+## Chunk 1 reconciliation
+
+Spec reaffirms E1, E2, E3, E13, E19, E20, E21, E22, E23, E24, and E38 at the current pair.
+All three reviewers used gpt-5.6-sol/high for one repair iteration and executed no tests or probes.
+The cross-harness waiver or authorization remains pending before advancement. Chunks 2 and 3 have not started.
+
 ## Repair verification
 
 The author repaired the confirmed findings and retained their earlier results below.
-All three repair follow-ups are pending against `5457042ec3e0919327dc7943aea7f002a54285b2`.
+All three repair follow-ups completed clean against `5457042ec3e0919327dc7943aea7f002a54285b2`.
 Both required test suites passed without skips. The missing-axis probe bit and restored successfully.
 
-C2 is proposed no-op: the literal ticket fixture passed before any Git reader edit.
+Coverage confirmed C2 is no-op: the literal ticket fixture passed before any Git reader edit.
 The new regression preserves that behavior. The full retained-fixture test passed, including the new clean-result omission.
 A separate direct TestRootConformance selection skipped because its required root environment was absent; it supplies no proof.
 The registered docs-currency-workflow check passed after the guard repair.
@@ -323,7 +341,8 @@ help[0]{cmd,why}:
 
 ## Review disposition
 
-Seven raw findings identify seven repair targets. All are accepted within the approved scope.
+The initial reviews reported seven raw findings. Six became repair targets; C2 was refuted by the author’s exact fixture run.
+The three current reviews report zero findings. The author also repaired the obsolete clean-result guard found by the full gate.
 The three native reviewers used gpt-5.6-sol/high, one iteration, and ran no tests or probes.
 
 The separate Claude opus/high falsification attempt failed with `Request timed out` (exit 1).
@@ -766,12 +785,12 @@ help[0]{cmd,why}:
           "model": "gpt-5.6-sol",
           "effort": "high",
           "source_digest": "6eb528d5bbc0b629a82fcd2cb19fa9ea4e69799d",
-          "state": "pending",
-          "outcome": "",
+          "state": "completed",
+          "outcome": "pass",
           "native_ref": {
-            "ref": "",
-            "digest": "",
-            "excerpt": ""
+            "ref": "codex:agent/c1_standards/repair-followup",
+            "excerpt": "Standards repair review completed with no findings; S1 and S2 are closed at the repaired source.",
+            "digest": "sha256:c6f3c4277709be4c4e23f9f8b4031907a35922a60cd897e67a50dd16e439e54a"
           },
           "axis": "Standards",
           "base": "de1447b31903b170679b66bd200431cc15ddc73f",
@@ -788,12 +807,12 @@ help[0]{cmd,why}:
           "model": "gpt-5.6-sol",
           "effort": "high",
           "source_digest": "6eb528d5bbc0b629a82fcd2cb19fa9ea4e69799d",
-          "state": "pending",
-          "outcome": "",
+          "state": "completed",
+          "outcome": "pass",
           "native_ref": {
-            "ref": "",
-            "digest": "",
-            "excerpt": ""
+            "ref": "codex:agent/c1_spec/repair-followup",
+            "excerpt": "completed clean; Spec axis reaffirms the repaired current pair",
+            "digest": "sha256:f10817ce3a90da4b216c7457a0cda693d06d4e3a947a01d71293ae943899f84a"
           },
           "axis": "Spec",
           "base": "de1447b31903b170679b66bd200431cc15ddc73f",
@@ -810,12 +829,12 @@ help[0]{cmd,why}:
           "model": "gpt-5.6-sol",
           "effort": "high",
           "source_digest": "6eb528d5bbc0b629a82fcd2cb19fa9ea4e69799d",
-          "state": "pending",
-          "outcome": "",
+          "state": "completed",
+          "outcome": "pass",
           "native_ref": {
-            "ref": "",
-            "digest": "",
-            "excerpt": ""
+            "ref": "codex:agent/c1_coverage/repair-followup",
+            "excerpt": "Coverage completed with zero findings; C1 and C3 are resolved, and C2 is no-op.",
+            "digest": "sha256:41258191ea65766980d34a08c91ed198e6bbd5df9076212c830ae327034ffe4a"
           },
           "axis": "Coverage",
           "base": "de1447b31903b170679b66bd200431cc15ddc73f",
