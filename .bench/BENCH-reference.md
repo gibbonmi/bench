@@ -453,7 +453,7 @@ harness-independent backstops.
 
 ## Assessment records
 
-Use `bench assessment` to store and inspect local workflow cost and quality.
+Use `bench assessment` to store, compare, and inspect local workflow cost and quality.
 The [record schema](../internal/assessment/README.md) defines the normalized input and unknown-value rules.
 Assessment never launches a paid trial or changes a model default.
 

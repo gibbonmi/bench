@@ -72,6 +72,7 @@ type Attempt struct {
 }
 
 type Run struct {
+	Trial         *Trial             `json:"trial,omitempty"`
 	BenchInputs   *BenchInputs       `json:"bench_inputs,omitempty"`
 	HarnessInputs []HarnessInput     `json:"harness_inputs,omitempty"`
 	Diagnostics   []Reference        `json:"diagnostics,omitempty"`

@@ -70,7 +70,7 @@ func main() {
 }
 
 var commandRegistry = []commandDefinition{
-	{Name: "assessment", AXI: axiApprovedChildren("list", "show"), Inventory: publicInventory(helpRow{Order: 20, Suffix: " list | show <run-id> | record --input <file>", Description: "store and inspect local workflow cost and quality"}), Run: outputCommand(func(args []string) (string, int) {
+	{Name: "assessment", AXI: axiApprovedChildren("list", "show", "compare"), Inventory: publicInventory(helpRow{Order: 20, Suffix: " list | show <run-id> | record --input <file> | compare --plan <file> --runs <id,...>", Description: "store and inspect local workflow cost and quality"}), Run: outputCommand(func(args []string) (string, int) {
 		return assessment.Command(assessment.Store{Home: worktree.Home(), Root: boundaryRoot()}, args)
 	})},
 	{Name: "anchors", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 15, Suffix: " <path>", Description: "anchors pinning a repo-relative path as TOON (kind, section, needle, line)"}), Run: outputCommand(anchorsCommand)},

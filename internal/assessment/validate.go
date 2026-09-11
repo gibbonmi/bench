@@ -12,6 +12,9 @@ func Validate(r Run) error {
 	if !safeText(reflect.ValueOf(r)) {
 		return fmt.Errorf("control characters in assessment record")
 	}
+	if r.Trial != nil && (!validReference(r.Trial.Reference) || r.Trial.PlanID == "" || (r.Trial.Repetition != nil && *r.Trial.Repetition < 1)) {
+		return fmt.Errorf("invalid trial provenance or identity")
+	}
 	if r.Version != 1 {
 		return fmt.Errorf("unsupported assessment version")
 	}

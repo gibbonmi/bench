@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-const help = "usage: bench assessment list | show <run-id> | record --input <file>\n"
+const help = "usage: bench assessment list | show <run-id> | record --input <file> | compare --plan <file> --runs <id,...>\n"
 
 func Command(s Store, args []string) (string, int) {
 	if len(args) == 0 {
@@ -25,6 +25,8 @@ func Command(s Store, args []string) (string, int) {
 	case "show":
 		g.MinArgs = 1
 		g.MaxArgs = 1
+	case "compare":
+		g.Flags = []usage.Flag{{Name: "--plan", HasValue: true, NoEmptyValue: true, Required: true}, {Name: "--runs", HasValue: true, Required: true}}
 	case "record":
 		g.Flags = []usage.Flag{{Name: "--input", HasValue: true, NoEmptyValue: true, Required: true}}
 	default:
@@ -41,6 +43,8 @@ func Command(s Store, args []string) (string, int) {
 		return fail(fmt.Errorf("BENCH_HOME is not set"))
 	}
 	switch args[0] {
+	case "compare":
+		return compareCommand(s, parsed.Flags["--plan"], parsed.Flags["--runs"])
 	case "record":
 		var r Run
 		if err := readJSON(parsed.Flags["--input"], &r); err != nil {

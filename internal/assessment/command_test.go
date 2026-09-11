@@ -48,7 +48,7 @@ func TestAssessmentCommandDetail(t *testing.T) {
 	if !strings.Contains(out, "/attempts/0/session_id") || !strings.Contains(out, "summary[1]") {
 		t.Fatal("A15 detail omits native metadata or summary")
 	}
-	for _, verb := range []string{"list", "show", "record"} {
+	for _, verb := range []string{"list", "show", "record", "compare"} {
 		for _, h := range []string{"help", "--help", "-h"} {
 			if out, code := Command(s, []string{verb, h}); code != 0 || !strings.HasPrefix(out, "usage:") {
 				t.Fatalf("help: %d %s", code, out)

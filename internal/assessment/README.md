@@ -92,3 +92,25 @@ Use native evidence references for read paths. Do not infer a read from arbitrar
 The `intervals` array retains observed start/end pairs and their native references. It does not replace explicit attempt endpoints.
 The `diagnostics` array preserves incomplete-input evidence. Diagnostic references remain part of the record when later evidence arrives.
 Unknown native coverage never becomes a zero-valued measurement.
+
+## Comparisons
+
+Use `bench assessment compare --plan <file> --runs <id,...>` to compare stored runs.
+Pass an empty runs value for a typed empty report.
+[Plan and Trial](plan.go) define the plan and run provenance schemas.
+Each condition pins a revision, harness version, execution limits, capabilities, and model/effort lines by role.
+The optional run trial object names the plan, repetition, execution conditions, assurance obligations, and evidence reference.
+Run source and actual attempt lines supply revision, model, and effort.
+
+A plan declares one experimental variable, a budget, approval reference, and quality tolerance.
+The command validates the reference structure. It does not authenticate approval or execute trials.
+It reports pilot and descriptive limits, missing repetitions, unknown evidence, and assurance or quality differences.
+
+Default-change evidence requires repeated held-out tasks outside the FT311 authoring case.
+Kit-causal plans require no Bench, current Bench, and one changed capability.
+Eligibility never grants adoption approval.
+
+Reports retain all selected runs and attempts, including failures and unknown values.
+Condition totals separate known estimates from actual charges and preserve partial flags.
+Variation reports known and unknown counts, minimum, maximum, mean, and population standard deviation.
+Currency totals stay separate.

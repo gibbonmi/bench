@@ -73,7 +73,7 @@ Trial execution remains a separately approved action.
 
 Store versioned JSON at `$BENCH_HOME/assessment/<repo-key>/<run-id>.json`, beside the census and OTEL stores and outside the disposable worktree pool. Resolve repo identity through the existing pool-key owner. Records survive worktree release and reclaim. They remain until explicit cleanup. Do not add automatic expiry. Initial explicit cleanup uses a user-directed file removal after naming exact records; this spec adds no cleanup verb.
 
-Run fields are `version`, `run_id`, `repo_key`, `source`, `condition`, `task_id`, `holdout`, `started_at`, `ended_at`, `time_reference`, `state`, `attempts`, `evidence`, `quality`, `bench_inputs`, `harness_inputs`, and `diagnostics`. An attempt names `attempt_id`, `chunk_id`, `role`, `session_id`, `model`, `effort`, `state`, `started_at`, `ended_at`, `time_reference`, `usage`, `cost`, `measures`, `intervals`, and native evidence references. Roles distinguish implementation, repair, verification, review, and diagnostic consultation. Failed and cancelled attempts remain. An imported update may append or fill previously unknown evidence, but cannot silently discard an existing attempt or change a known identity. Identical import is idempotent; conflicting content is a refusal.
+Run fields are `version`, `run_id`, `repo_key`, `source`, `condition`, `task_id`, `holdout`, `started_at`, `ended_at`, `time_reference`, `state`, `attempts`, `evidence`, `quality`, `bench_inputs`, `harness_inputs`, `diagnostics`, and `trial`. An attempt names `attempt_id`, `chunk_id`, `role`, `session_id`, `model`, `effort`, `state`, `started_at`, `ended_at`, `time_reference`, `usage`, `cost`, `measures`, `intervals`, and native evidence references. Roles distinguish implementation, repair, verification, review, and diagnostic consultation. Failed and cancelled attempts remain. An imported update may append or fill previously unknown evidence, but cannot silently discard an existing attempt or change a known identity. Identical import is idempotent; conflicting content is a refusal.
 
 Usage fields are `input_uncached`, `input_cached`, and `output`. A source may also supply `input_total` with its declared semantics. If total includes cached input, derive uncached as total minus cached. Never add total and cached together.
 
@@ -504,3 +504,9 @@ The first commit-assignment omission could not compile because it left an unused
 The second repair pass extends the existing full landing test to assert resolved assignment provenance. It removes the duplicate landing fixture. A33 adds conflicting duplicate selectors whose two attempt mappings are both valid. The existing guarantees remain unchanged.
 
 The full landing assignment-copy omission produced one diagnostic red and restored production. The valid duplicate-selector mutation produced two reds, one for census and one for traces, and restored production. An initial test-field typo prevented test execution twice; the corrected fixture uses creation.Assignment.ID. Those diagnostic attempts remain recorded.
+
+## Chunk 3 implementation details
+
+The optional trial object binds a run to its plan and repetition. It records the harness version, limits, capabilities, assurance obligations, and native reference. The run source and actual attempt lines remain the owners of revision, model, and effort.
+
+Comparison validation checks each actual run against its condition. Missing planned repetitions remain incomplete evidence. Repetition checks use observed slots and counts, so large declared repetition counts cannot cause unbounded iteration.
