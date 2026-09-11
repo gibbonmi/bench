@@ -1,7 +1,7 @@
 # Continue the retained implementation session while it advances
 
 Status: staged
-Decision source: `specs/retained-implementation-workflow/decisions/benchmark-orchestration.md`
+Decision source: `docs/adr/0021-benchmark-workflow-orchestration.md`
 Verification log: 2 iteration(s) to accept — Sol/high approved the repaired spec and ticket graph. Attempt counting, stop causes, and diagnostic boundaries were corrected.
 
 ## Problem

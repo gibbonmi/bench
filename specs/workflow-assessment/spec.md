@@ -1,7 +1,7 @@
 # Measure complete workflow cost and quality
 
 Status: staged
-Decision source: `specs/retained-implementation-workflow/decisions/benchmark-orchestration.md`
+Decision source: `docs/adr/0021-benchmark-workflow-orchestration.md`
 Verification log: 2 iteration(s) to accept — Sol/high verified the design repairs. The author folded its final independent fixture cases for A21, A33, and A38.
 
 ## Problem

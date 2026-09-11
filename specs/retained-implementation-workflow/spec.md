@@ -1,7 +1,7 @@
 # Retain implementation authorship and review each chunk
 
 Status: staged
-Decision source: `specs/retained-implementation-workflow/decisions/benchmark-orchestration.md`
+Decision source: `docs/adr/0021-benchmark-workflow-orchestration.md`
 Verification log: 2 iteration(s) to accept — Sol/high approved the repaired spec and ticket graph. Source predicates, tier cases, and reader closure were corrected.
 
 ## Problem
@@ -145,6 +145,7 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `.agents/skills/bench-craft-delegate/SKILL.md`
 - `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`
 - `.agents/skills/bench-craft-line/SKILL.md`
+- `docs/adr/0021-benchmark-workflow-orchestration.md` (new)
 - `docs/field-guide.html`
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
