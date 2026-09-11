@@ -27,6 +27,7 @@ func checkDocsCurrencyAndWorkflow(root, _ string) []string {
 	diags = append(diags, checkSignalVocabulary(root)...)
 	diags = append(diags, checkCommandFirstAnchors(root)...)
 	diags = append(diags, checkWorkflowAnchors(root)...)
+	diags = append(diags, checkRetainedWorkflow(root)...)
 	diags = append(diags, checkOccurrenceLedgerAndMaintenance(root)...)
 	diags = append(diags, checkPrePushREADMEClaim(root)...)
 	diags = append(diags, checkCoverageMaps(root)...)
@@ -34,8 +35,7 @@ func checkDocsCurrencyAndWorkflow(root, _ string) []string {
 	return diags
 }
 
-// checkRemovedVerbSweep keeps the deleted provisional lifecycle out of kit prose. The
-// literal command tokens `spec build` and `worktree recovery` must not reappear in any
+// checkRemovedVerbSweep keeps the deleted provisional lifecycle out of kit prose. The literal command tokens `spec build` and `worktree recovery` must not reappear in any
 // surface an agent reads for guidance. The stale-command and cold-pickup sweeps match
 // only slash-command and single-word `bench <cmd>` tokens. A leftover `bench spec build
 // promote` therefore passes both sweeps. Three surfaces are exempt because their job is

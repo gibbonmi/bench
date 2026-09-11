@@ -146,6 +146,8 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **park** — to capture an idea in the **ideas inbox** without committing to it
   (`bench idea "<text>"`). A *parked idea* graduates into committed work only when
   `/bench-shape-idea` pulls it into a decision map. Not "stash", not "file" — park.
+- **implementation chunk** — a coherent, verifiable unit with a stable ID, outcome, acceptance rows, tests, and a review checkpoint.
+  Not "delegate group", not "implementation session" — implementation chunk.
 - **decision map** — a situational working map for a multi-session unresolved
   decision tree. Its index at `decisions/<topic>.md` sits beside the topic
   folder `decisions/<topic>/tickets/`. The index holds the fog, the reviewed

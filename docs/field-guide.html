@@ -1115,7 +1115,7 @@
                   top-level <code>decisions/</code> for pre-spec decision work. Its entry contract owns
                   the narrow same-session recording
                   exception. The spec stops for your sign-off, tickets are sliced and approved in
-                  that context, then their build starts in a fresh session. The target is locked before the loop starts, so the loop can't
+                  that context, then one implementation session retains authorship through the build. The target is locked before the loop starts, so the loop can't
                   renegotiate it.</p>
                 </div>
               </div></div>
@@ -1137,11 +1137,7 @@
                 </div>
                 <div class="solution">
                   <div class="label">How it works</div>
-                  <p>Starting from the approved spec and ticket breakdown, the agent works one
-                  unblocked frontier ticket per fresh write-delegate context on one retained
-                  integration source. Focused seam checks drive iteration; each ticket commits
-                  green there, and the finished source is reviewed by its explicit frozen base and
-                  tip before <code>bench worktree land</code> composes and gates it on the destination. The acceptance coverage map keeps the
+                  <p>One implementation session retains authorship through the approved ticket graph and its chunk reviews. Starting from the approved spec and ticket breakdown, the agent works dependency-ordered tickets on one retained integration source. Focused seam checks drive iteration; each ticket commits green there. Standards, Spec, and Coverage review each coherent chunk before its successor starts. After the last chunk, the author reconciles acceptance and integration before <code>bench worktree land</code> composes and gates the source on the destination. The acceptance coverage map keeps the
                   target fixed. A build that stalls exits early with an honest report instead of
                   grinding past its cap.</p>
                 </div>
@@ -1164,7 +1160,7 @@
                 </div>
                 <div class="solution">
                   <div class="label">How it works</div>
-                  <p>A semantic review of the retained integration source's explicit frozen-base-to-tip diff on three separate axes:
+                  <p>A semantic review of each frozen implementation-chunk diff on three separate axes:
                   <strong>Standards</strong> (does it follow this repo's documented conventions),
                   <strong>Spec</strong> (does it match what was approved), and
                   <strong>Coverage</strong> (what breaking inputs does nothing exercise). Every
@@ -1326,9 +1322,7 @@
           A durable phase artifact makes a session boundary safe, but does not require one.
           The session holding a ready decision source authors the spec and tickets at whatever
           tier it runs, retaining the reviewed intent while it turns that source into engineering
-          seams, coverage, and an approved breakdown. After ticket approval, implementation
-          starts in a fresh mid-tier session: it orchestrates cheap-tier work at known seams and
-          escalates a stage only where a seam is genuinely uncertain.
+          seams, coverage, and an approved breakdown. After ticket approval, the approved implementation line retains one author through production changes, tests, probes, repairs, and chunk reviews. A model or session change requires your direction.
         </p>
       </div>
 

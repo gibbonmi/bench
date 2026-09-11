@@ -4,8 +4,8 @@
 
 | tier | codex |
 |---|---|
-| mid | `gpt-5.4` |
-| cheap | `gpt-5.4-mini` |
+| mid | `gpt-5.6-sol` |
+| cheap | `gpt-5.6-terra` |
 
 ## Seams
 

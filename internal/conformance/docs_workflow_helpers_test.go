@@ -63,8 +63,8 @@ func checkWorkflowAnchors(root string) []string {
 		if !strings.Contains(text, "craft-line") {
 			diags = append(diags, "bench-write-spec.md does not reference craft-line")
 		}
-		if !strings.Contains(text, "model and effort") {
-			diags = append(diags, "bench-write-spec.md does not mandate per-story model and effort")
+		if !strings.Contains(text, "implementation-line recommendation contract") {
+			diags = append(diags, "bench-write-spec.md does not reference craft-spec's implementation-line recommendation contract")
 		}
 		if strings.Count(text, "`Bootstrap authority before execution` rule") != 2 {
 			diags = append(diags, "bench-write-spec.md does not apply craft-spec's named bootstrap-authority rule during edge walking and falsification")
@@ -95,24 +95,26 @@ func checkReviewConvergenceContract(implementSpec, reviewImplementation string) 
 	reviewImplementation = normalize(reviewImplementation)
 
 	reviewRequirements := []string{
-		"initial review blocks on the full frozen-base..reviewed-tip diff across standards, spec, and coverage",
-		"full frozen-base..current-tip diff only as context",
-		"blocking scope is the accepted repair predicates plus changes after the prior reviewed tip",
-		"checked for repair-induced standards, spec, and coverage problems",
-		"outside both is a non-blocking follow-on and cannot reopen the phase",
-		"stays scoped to that predicate and repair delta; it never restarts initial discovery",
+		"each planned chunk takes one review across standards, spec, and coverage",
+		"the axes read the whole approved spec and focus on the frozen chunk-base..chunk-tip delta",
+		"current repair coverage closes those predicates",
+		"repeat delegated review only for a later semantic delta or a cross-chunk concern that invalidates prior evidence",
+		"the successor chunk starts only after findings and repair coverage close",
+		"after the last chunk, the retained author reconciles overall acceptance and integration before landing",
 	}
 	for _, requirement := range reviewRequirements {
 		if !strings.Contains(reviewImplementation, requirement) {
-			return []string{"bench-review-implementation dropped the repair-scoped convergence contract: " + requirement}
+			return []string{"bench-review-implementation dropped the chunk-review convergence contract: " + requirement}
 		}
 	}
 	for _, requirement := range []string{
-		"run /bench-review-implementation in repair-scoped mode",
-		"accepted repair predicates and the prior reviewed tip",
+		"after the last ticket in a chunk, freeze the chunk delta and run the three review axes before advancing",
+		"accepted findings return to the retained author",
+		"after the last chunk, reconcile every acceptance row and the integrated behavior",
+		"repeat delegated review only when a later delta or cross-chunk concern invalidates prior evidence",
 	} {
 		if !strings.Contains(implementSpec, requirement) {
-			return []string{"bench-implement-spec does not invoke repair-scoped re-review: " + requirement}
+			return []string{"bench-implement-spec dropped the retained chunk-review loop: " + requirement}
 		}
 	}
 	return nil
@@ -132,15 +134,15 @@ func TestReviewConvergenceContractCurrentDocs(t *testing.T) {
 	normalizedReview := strings.ToLower(collapseSpace(reviewImplementation))
 	mutated := strings.Replace(
 		normalizedReview,
-		"blocking scope is the accepted repair predicates plus changes after the prior reviewed tip",
-		"blocking scope is the full frozen-base..current-tip diff",
+		"the successor chunk starts only after findings and repair coverage close",
+		"the successor chunk starts before findings and repair coverage close",
 		1,
 	)
 	if mutated == normalizedReview {
 		t.Fatal("scope-widening mutation did not apply")
 	}
-	if !containsDiagnostic(checkReviewConvergenceContract(implementSpec, mutated), "repair-scoped convergence contract") {
-		t.Fatal("widening repair scope back to the full diff did not bite")
+	if !containsDiagnostic(checkReviewConvergenceContract(implementSpec, mutated), "chunk-review convergence contract") {
+		t.Fatal("advancing before chunk findings close did not bite")
 	}
 }
 
@@ -466,15 +468,20 @@ func runAnchorBites(t *testing.T, family []anchors.Anchor, subject func(anchors.
 			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 				t.Fatal(err)
 			}
-			if err := os.WriteFile(path, []byte(conformant+"\n"), 0o644); err != nil {
-				t.Fatal(err)
+			write := func(text string) {
+				t.Helper()
+				if anchor.Section != "" {
+					text = "# Fixture\n\n## " + anchor.Section + "\n\n" + text
+				}
+				if err := os.WriteFile(path, []byte(text+"\n"), 0o644); err != nil {
+					t.Fatal(err)
+				}
 			}
+			write(conformant)
 			if diags := checkWorkflowAnchors(root); containsDiagnostic(diags, anchor.Diagnostic) {
 				t.Fatalf("anchor is red while its file conforms: %s", anchor.Diagnostic)
 			}
-			if err := os.WriteFile(path, []byte(contradictory+"\n"), 0o644); err != nil {
-				t.Fatal(err)
-			}
+			write(contradictory)
 			if diags := checkWorkflowAnchors(root); !containsDiagnostic(diags, anchor.Diagnostic) {
 				t.Fatalf("the contradictory file did not bite with %q", anchor.Diagnostic)
 			}
@@ -514,7 +521,7 @@ func checkIntegrationSourceWorkflowCurrency(root string) []string {
 
 func TestIntegrationSourceWorkflowAnchorsBiteIndependently(t *testing.T) {
 	workflowAnchors := integrationSourceWorkflowAnchors()
-	if got, want := len(workflowAnchors), 11; got != want {
+	if got, want := len(workflowAnchors), 10; got != want {
 		t.Fatalf("integration-source workflow anchor count = %d, want %d", got, want)
 	}
 	runAnchorBites(t, workflowAnchors, func(anchor anchors.Anchor) string { return anchor.File })

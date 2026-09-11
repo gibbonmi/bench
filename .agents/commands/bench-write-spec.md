@@ -13,7 +13,7 @@ synthesize, with no interview. It owns the discipline: stories, acceptance cover
 ## Exit handoff
 
 The spec carries `Status: staged` (staged → implemented at the green gate → promote-then-delete on merge). Stop for sign-off.
-Then recommend a fresh mid-tier build session on one retained integration source. Review its frozen base and tip, and hand the accepted source to `bench worktree land`.
+Then recommend the approved implementation line for one retained session on one integration source. Review each frozen chunk before its successor, reconcile the final source, and hand it to `bench worktree land`.
 
 ## Entry contract
 
@@ -36,17 +36,15 @@ tree or multi-session fog to `$bench-shape-idea`.
 
 ## Who runs this phase
 
-The session holding the decision source authors the spec and tickets at whatever tier it runs. A fresh session
-builds after ticket approval. Spec authoring owns engineering seams, deep-versus-thin design, tests,
+The session holding the decision source authors the spec and tickets at whatever tier it runs. The approved implementation session starts after ticket approval and retains authorship through the build. Spec authoring owns engineering seams, deep-versus-thin design, tests,
 acceptance coverage, hostile-input attachment, and gate attachment; shaping sources constrain behavior, scope,
 compatibility, or a reviewer-chosen seam.
 
 ## Process
 
-1. **Author.** Charge `bench-craft-spec` (and `bench-craft-domain` for terms) on the decision source; read the
-   enforcement surface before you lock rows that touch it. Run `craft-spec`'s reader sweep before that lock.
-   Give each story group its resolved model and effort from `craft-line`. Write `specs/<feature>/spec.md` from
-   `craft-spec`'s template and run `bench coverage --check`. The stale-command-reference sweep remains fail-closed across staged specs.
+1. **Author.** Charge `bench-craft-spec` (and `bench-craft-domain` for terms) on the decision source; read the enforcement surface before you lock rows that touch it. Run `craft-spec`'s reader sweep before that lock.
+
+   Apply `craft-spec`'s implementation-line recommendation contract through `craft-line`. Write `specs/<feature>/spec.md` from the template and run `bench coverage --check`. The stale-command-reference sweep remains fail-closed across staged specs.
 
    A spec that ships a phase declares it on one `Introduces commands:` line, valid in its own directory while staged.
    When no hostile-input checklist class covers a surface, quarry the seams library and propose a tuned profile addition. Apply `craft-spec`'s named
