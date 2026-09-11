@@ -55,8 +55,8 @@ func refusalFixture(t *testing.T) *fixture {
 // first of several would mutate a site the caller never named.
 func TestProbeRefusesAnAmbiguousMutation(t *testing.T) {
 	for _, tc := range []struct{ name, old, want string }{
+		{"no match", "absent text", "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  invalid,clamp.go,swap,substring-miss,0,untouched\nselection[1]{form,target,run,baseline,ran}:\n  package,./,^TestClampNegative$,\"\",0\n"},
 		{"several matches", "return", "error: probe mutation ambiguous — the old string matches 2 times, want exactly 1\n"},
-		{"no match", "absent text", "error: probe mutation ambiguous — the old string matches 0 times, want exactly 1\n"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := refusalFixture(t)
