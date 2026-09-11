@@ -76,8 +76,8 @@ func withinRoot(root, path string) bool {
 // mutate applies the one exact-string mutation and refuses every argv that would change
 // the wrong site or nothing at all. A count other than one refuses, because replacing
 // the first of several matches mutates a site the caller did not name.
-func mutate(start []byte, old, replacement string, omit bool) ([]byte, string) {
-	if !omit && replacement == old {
+func mutate(start []byte, old, replacement, kind string) ([]byte, string) {
+	if kind == "swap" && replacement == old {
 		return nil, toon.Errorf("probe mutation empty", "--with equals --swap") + "\n"
 	}
 	count := bytes.Count(start, []byte(old))
@@ -85,7 +85,37 @@ func mutate(start []byte, old, replacement string, omit bool) ([]byte, string) {
 		hint := fmt.Sprintf("the old string matches %d times, want exactly 1", count)
 		return nil, toon.Errorf("probe mutation ambiguous", hint) + "\n"
 	}
+	if kind == "unwrap" {
+		replacement, ok := unwrapCall(old)
+		if !ok {
+			return nil, toon.Errorf("probe unwrap invalid", "--unwrap must name one outer call") + "\n"
+		}
+		return bytes.Replace(start, []byte(old), []byte(replacement), 1), ""
+	}
 	return bytes.Replace(start, []byte(old), []byte(replacement), 1), ""
+}
+
+func unwrapCall(call string) (string, bool) {
+	open := strings.IndexByte(call, '(')
+	if open <= 0 || !strings.HasSuffix(call, ")") {
+		return "", false
+	}
+	depth := 0
+	for i := open; i < len(call); i++ {
+		switch call[i] {
+		case '(':
+			depth++
+		case ')':
+			depth--
+			if depth == 0 && i != len(call)-1 {
+				return "", false
+			}
+			if depth < 0 {
+				return "", false
+			}
+		}
+	}
+	return call[open+1 : len(call)-1], depth == 0
 }
 
 // preservation is the copy a probe leaves under the Bench home for the run's span. dir

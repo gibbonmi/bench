@@ -199,6 +199,8 @@ func TestProbeUsageNamesOneSelectionAndOneMutation(t *testing.T) {
 		{"two selections", []string{"clamp.go", "--omit", "n < 0", "--package", "./", "--check", "line-routing"}},
 		{"run without package", []string{"clamp.go", "--omit", "n < 0", "--check", "line-routing", "--run", "^X$"}},
 		{"two mutations", []string{"clamp.go", "--omit", "n < 0", "--swap", "a", "--with", "b", "--package", "./"}},
+		{"unwrap with replacement", []string{"clamp.go", "--unwrap", "ensureNonNegative(n)", "--with", "n", "--package", "./"}},
+		{"omit with replacement", []string{"clamp.go", "--omit", "n < 0", "--with", "n", "--package", "./"}},
 		{"no mutation", []string{"clamp.go", "--package", "./"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
