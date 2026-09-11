@@ -158,6 +158,7 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `.bench/lines.env`
 - `projects/benchkit.md`
 - `internal/conformance/line_routing_static_test.go`
+- `internal/conformance/tier_test.go`
 - `tests/canary/line-routing/line-binding-prose-drift/files/dot-bench/lines.env`
 - `specs/retained-implementation-workflow/spec.md`
 - `specs/retained-implementation-workflow/tickets`
