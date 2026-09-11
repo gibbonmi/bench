@@ -996,7 +996,7 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
       ],
       "verification": [
         {
-          "id": "final-assessment",
+          "id": "chunk3-current-assessment",
           "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
           "role": "author-verification",
           "model": "gpt-6-astra",
@@ -1014,7 +1014,7 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
           "exit_code": 0
         },
         {
-          "id": "final-dispatcher",
+          "id": "chunk3-current-dispatcher",
           "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
           "role": "author-verification",
           "model": "gpt-6-astra",
@@ -1032,7 +1032,7 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
           "exit_code": 0
         },
         {
-          "id": "final-cache-probe",
+          "id": "chunk3-current-cache-probe",
           "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
           "role": "author-verification",
           "model": "gpt-6-astra",
