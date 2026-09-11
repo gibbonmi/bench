@@ -2,20 +2,16 @@
 
 Charged from `craft-delegate` when the coordinator writes a charge, runs a probe,
 or accepts a return. Each rule below settles one question the delegation must
-answer. `craft-delegate` keeps the inline allowance, the worktree rule, the
+answer. `craft-delegate` keeps the retained-author boundary, the worktree rule, the
 mutation-probe rule, and the done-claim check.
 
 ## Before the charge
 
-- A spec-backed ticket that will commit on the integration source runs there from
-  the start, in `Blocked by:` order. An independent worktree is for a diff that
-  lands on its own.
+- A spec-backed ticket stays with the retained implementation session on its integration source, in `Blocked by:` order. An independent worktree is for a user-directed delegated diff that lands on its own.
 - Disjoint ownership fences across sibling tickets do not license concurrent
   writers in one tree. The lever for parallelism is separate worktrees. A build
   that wants serial verdicts and parallel delegates says which one it buys.
-- A parallel repair batch declares which files its tickets expect to touch in
-  common. The coordinator then orders the ports to keep the conflict surface
-  small.
+- A user-directed parallel repair batch declares which files its tickets expect to touch in common. The coordinator then orders the ports to keep the conflict surface small.
 
 ## Repair-charge template
 
@@ -37,9 +33,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A write charge states that its ownership fence is a refusal boundary above any
   mirror-every-registry instruction. The delegate reports an out-of-fence write
   before the delegate edits.
-- A charge whose collapse crosses its `Writes:` list inside the spec fence takes a
-  fence extension in a continuation. The delegate never writes a second spelling
-  to stay in fence.
+- A user-directed write delegate treats `Writes:` as an expectation. When evidence requires an approved in-scope expansion, the retained coordinator applies `.bench/BENCH.md`'s plan-expansion policy before continuing. The delegate never writes a second spelling to stay in fence.
 - A charge that exports from a package outside its fence names the fence amendment
   in its return.
 - A charge treats a coverage-row citation in a test doc as a reference to keep.
@@ -160,8 +154,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   coordinator grades each destination change that a new oracle check reads.
 - A hand verification does not close an acceptance row without a named
   red-capable test.
-- A ticket that returns without a pre-edit red for each row goes back to the
-  delegate for those reds. The coordinator gets the reds before the commit.
+- A ticket without a pre-edit red for each row goes back to the retained author for those reds. The coordinator gets the reds before the commit.
 - Keep an accepted finding on its original ticket when attribution is clear. Use
   an umbrella repair ticket only for a genuinely shared owner.
 - When an installed lane cannot commit its repair, run the same ordinary commit core from
@@ -171,9 +164,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - Before the coordinator changes a completion plan after a user stop, the
   coordinator records the scope of that stop. The scope is cross-harness
   verification only, or all verification.
-- The coordinator runs `bench preflight build` on the integration source after
-  every ticket commit and before the next charge. A delegate can remove a fenced
-  path.
+- The coordinator runs `bench preflight build` on the integration source after every ticket commit and before the next charge. An edit can remove a fenced path.
 
 ## In a review round
 

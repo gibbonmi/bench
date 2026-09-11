@@ -92,7 +92,7 @@ Edit the skill, not the list below:
 - reviewing a diff / what a finding must cite → `.agents/skills/bench-craft-review/SKILL.md`
 - placing a test / designing an interface → `.agents/skills/bench-craft-seams/SKILL.md`
 - writing or pruning a skill → `.agents/skills/bench-craft-skills/SKILL.md`
-- coverage-map rows, edge inventories, story sizing, and delegate slicing for a spec → `.agents/skills/bench-craft-spec/SKILL.md`
+- coverage-map rows, edge inventories, story sizing, and review-chunk slicing for a spec → `.agents/skills/bench-craft-spec/SKILL.md`
 - evaluating a change to the kit itself → `.agents/skills/bench-craft-synthesis/SKILL.md` (kit-only)
 - writing tests first → `.agents/skills/bench-craft-tdd/SKILL.md`
 - breaking a build into tracer-bullet tickets → `.agents/skills/bench-craft-tickets/SKILL.md`
@@ -192,9 +192,7 @@ prints a `line` cell that carries the physical line of the first match. The cell
 reads 0 when the needle has no match. A link, a special file, or an unreadable
 file at the path answers a structured refusal at exit 1.
 
-A reviewed spec-backed build keeps its serial ticket commits in one retained
-integration source. Semantic review freezes the explicit base and source tip.
-Accepted findings commit there on the same cadence.
+A reviewed spec-backed build keeps its serial ticket commits in one retained integration source. Its approved plan groups tickets into coherent chunks. Semantic review freezes each chunk's predecessor tip and current tip, and accepted findings return to the retained author there.
 
 A worktree `bench commit`
 runs the fast lane on a private checkout of the composed snapshot, and a lane pass

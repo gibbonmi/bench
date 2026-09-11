@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/commands/bench-review-implementation.md",
-    "old": "The frozen base is the `main` tip merged into the source before the landing, so the range holds the spec diff alone.",
-    "new": "The frozen base is whichever commit the reviewer recalls as the start of the work."
+    "old": "The first chunk base is the `main` tip merged into the source. Each later chunk base is the accepted predecessor tip, so the range holds only that chunk's delta.",
+    "new": "Every chunk uses whichever base the reviewer recalls."
   }
 ]

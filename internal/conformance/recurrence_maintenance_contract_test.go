@@ -76,14 +76,14 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 		diags = append(diags, "bench-drain does not require the fixed read-delegate return shape")
 	}
 
-	decisionsBeforeWriter := "Resolve duplicate incidents and reviewer decisions before any batch writer starts."
+	decisionsBeforeWriter := "Resolve duplicate incidents and reviewer decisions before retained batch authorship starts."
 	treeVerification := "Verify that the tree stayed unchanged."
 	coordinatorOwnership := "Keep ignored capture removal, the handoff, verification, and landing with the coordinator."
-	implementOverlap := "An implement-now writer may run while other reads continue."
-	implementRouting := "Route each implement-now writer through `craft-delegate` isolation and `craft-line` routing."
+	implementOverlap := "Retained implement-now work may run while other reads continue."
+	implementRouting := "Route its line through `craft-line` and keep its authorship under `.bench/BENCH.md`."
 	withImplementTiming := "If an implement-now item exists, create the batch worktree only after every such item lands green on `main`."
 	withoutImplementTiming := "If no implement-now item exists, create the batch worktree after all reads finish and the coordinator resolves duplicate incidents and reviewer decisions."
-	singleWriter := "If tracked changes remain, one later write delegate authors the complete tracked batch."
+	singleWriter := "If tracked changes remain, the retained drain session authors the complete tracked batch."
 	decisionAt := strings.Index(delegation, decisionsBeforeWriter)
 	writerAt := strings.Index(delegation, singleWriter)
 	if delegationCount != 1 || decisionAt < 0 || writerAt <= decisionAt {
@@ -99,7 +99,7 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 		diags = append(diags, "bench-drain does not allow implement-now work to overlap remaining reads")
 	}
 	if delegationCount != 1 || !strings.Contains(delegation, implementRouting) {
-		diags = append(diags, "bench-drain does not route implement-now writers through isolation and line routing")
+		diags = append(diags, "bench-drain does not route implement-now work through craft-line and retained authorship")
 	}
 	if delegationCount != 1 || !strings.Contains(delegation, withImplementTiming) {
 		diags = append(diags, "bench-drain does not wait for every implement-now landing before batch creation")
@@ -108,7 +108,7 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 		diags = append(diags, "bench-drain does not create the batch after reads when no implement-now item exists")
 	}
 	if delegationCount != 1 || !strings.Contains(delegation, singleWriter) {
-		diags = append(diags, "bench-drain does not retain one conditional tracked batch writer")
+		diags = append(diags, "bench-drain does not retain one conditional tracked batch author")
 	}
 
 	noTrackedWriter := "If no tracked changes remain, start no batch writer."
@@ -218,14 +218,14 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 		{"delegate routing", "Charge every delegate under\n`craft-delegate` and `craft-line`.", "Charge every delegate without routing.", "bench-drain does not route every delegate through craft-delegate and craft-line"},
 		{"read fence", "Read delegates edit nothing, take no new inventory, and use only the snapshot and its named paths.", "Read delegates may edit notes and take a new inventory.", "bench-drain does not keep read delegates inside the snapshot-only fence"},
 		{"return shape", "Each read delegate returns these fields: proposed owner, classification, occurrence, evidence, and reviewer decision.", "Each read delegate returns a summary.", "bench-drain does not require the fixed read-delegate return shape"},
-		{"decisions before writer", "Resolve duplicate incidents and reviewer decisions before any batch writer starts.", "Resolve duplicate incidents after the batch writer starts.", "bench-drain does not resolve cross-source decisions before batch writing"},
+		{"decisions before writer", "Resolve duplicate incidents and reviewer decisions before retained batch authorship starts.", "Resolve duplicate incidents after retained batch authorship starts.", "bench-drain does not resolve cross-source decisions before batch writing"},
 		{"tree verification", "Verify that the tree stayed unchanged.", "Assume that the tree stayed unchanged.", "bench-drain does not verify the tree stayed unchanged after reading"},
 		{"coordinator ownership", "Keep ignored capture removal, the handoff,\nverification, and landing with the coordinator.", "Delegate ignored capture removal and landing.", "bench-drain does not retain coordinator ownership of local and landing work"},
-		{"implement-now overlap", "An implement-now writer may run\nwhile other reads continue.", "Start implement-now work after every read finishes.", "bench-drain does not allow implement-now work to overlap remaining reads"},
-		{"implement-now routing", "Route each implement-now writer through\n`craft-delegate` isolation and `craft-line` routing.", "Route implement-now writers without isolation.", "bench-drain does not route implement-now writers through isolation and line routing"},
+		{"implement-now overlap", "Retained implement-now work may run while other reads continue.", "Start implement-now work after every read finishes.", "bench-drain does not allow implement-now work to overlap remaining reads"},
+		{"implement-now routing", "Route its line through `craft-line` and keep its authorship under `.bench/BENCH.md`.", "Route implement-now work without craft-line or retained authorship.", "bench-drain does not route implement-now work through craft-line and retained authorship"},
 		{"implement-now landing timing", "If an implement-now item exists, create the batch worktree only after every such item lands green on `main`.", "Create the batch worktree before implement-now items land.", "bench-drain does not wait for every implement-now landing before batch creation"},
 		{"no-implement-now timing", "If no implement-now item exists, create the batch worktree after all reads finish and the coordinator resolves duplicate incidents and reviewer decisions.", "If no implement-now item exists, never create the batch worktree.", "bench-drain does not create the batch after reads when no implement-now item exists"},
-		{"single batch writer", "If tracked changes remain, one later write delegate authors the complete tracked batch.", "Several later write delegates author the complete tracked batch.", "bench-drain does not retain one conditional tracked batch writer"},
+		{"single batch writer", "If tracked changes remain, the retained drain session authors the complete tracked batch.", "A later write delegate authors the complete tracked batch.", "bench-drain does not retain one conditional tracked batch author"},
 		{"no tracked writer", "If no tracked changes\nremain, start no batch writer.", "If no tracked changes remain, start a batch writer.", "bench-drain does not suppress the batch writer when no tracked changes remain"},
 		{"ignored removal after approval", "After approval, the coordinator empties ignored inbox and journal sources.", "Before approval, remove ignored sources.", "bench-drain does not delay ignored-source removal until approval"},
 		{"ignored handoff last", "It\nwrites ignored `capture/session-handoff.md` last.", "It writes the ignored handoff first.", "bench-drain does not keep the ignored handoff last"},

@@ -36,9 +36,7 @@ works on any branch. This line only states the binding.)
   `bench repair` action. Automation opts into the same repair path with exactly
   `BENCH_REPAIR=1`, while `BENCH_OFFLINE=1` and `BENCH_NO_REPAIR` suppress it.
 
-  Reviewed spec-backed builds keep serial green ticket commits on one
-  retained integration source. Semantic review binds its frozen base and tip.
-  `bench worktree land` composes and gates that pair on the destination, and
+  Reviewed spec-backed builds keep serial green ticket commits on one retained integration source. Semantic review binds each chunk's predecessor and current tips before the next chunk starts. `bench worktree land` composes and gates the reconciled source on the destination, and
   its published commit owns the spec's `Status: implemented` flip. The landing
   destination permits the three exact ignored local-capture files without
   treating the broader `capture/` tree as disposable residue.
@@ -528,9 +526,9 @@ column — no family is canonical.
 
 | tier | codex | claude | opencode |
 |---|---|---|---|
-| top | `gpt-5.6-sol` | `fable` | unbound |
-| mid | `gpt-5.6-terra` | `opus` | unbound |
-| cheap | `gpt-5.6-luna` | `sonnet` | unbound |
+| top | `gpt-6-astra` | `fable` | unbound |
+| mid | `gpt-5.6-sol` | `opus` | unbound |
+| cheap | `gpt-5.6-terra` | `sonnet` | unbound |
 
 These opaque safe tokens are this repo's current choices, not a namespace rule;
 the token grammar and discovery posture live in `craft-line`. OpenCode stays
@@ -558,8 +556,8 @@ escalation.
   `/bench-write-spec` accepts exactly one of three sources: a ready compiled
   map, a reviewer-confirmed current conversation, or a named reviewed artifact.
   It authors the spec and tickets from that source and the current tree. Top +
-  high remains a reviewer-approved escalation. After ticket approval, a fresh
-  mid-tier session starts the build. Distinct from the doc-authoring leverage
+  high remains a reviewer-approved escalation. After ticket approval, one
+  session on the approved implementation line retains the build. Distinct from the doc-authoring leverage
   override above: that spends high effort on the kit's guidance prose.
 - **`bench` CLI shell plumbing** → cheap model, low–medium effort at the known seam.
   This stays mechanical once the gate-resolution and worktree-pool shapes exist.
@@ -571,10 +569,9 @@ escalation.
   It reviews the spec and its ticket breakdown together against `craft-tickets`
   after `/bench-write-spec` slices it; `/bench-write-spec` owns the round's
   operating protocol.
-- **Review-axis delegate** (`/bench-review-implementation`, one per axis) → mid
-  model, medium effort, **~1 iteration each** (three axes can run in parallel).
-  This stays read-heavy: each delegate takes the full diff plus standards docs and
-  runs verification commands.
+- **Review-axis delegate** (`/bench-review-implementation`, one per axis) → the
+  conditional review line in `craft-line`, at high effort and **~1 iteration each**.
+  Three axes can run in parallel with the full diff and their axis sources.
 
 ## Notes for cold sessions
 

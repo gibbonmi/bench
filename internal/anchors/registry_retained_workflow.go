@@ -1,0 +1,14 @@
+package anchors
+
+// retainedWorkflowAnchors keep plan expansion within the approved behavior while
+// allowing the retained author to update the plan before new evidence is used.
+var retainedWorkflowAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: RequireInSection, Section: "Slicing a build for delegates", Needle: "During a build, `.bench/BENCH.md` owns approved in-scope plan expansion.", Diagnostic: "retained workflow: craft-spec dropped the canonical plan-expansion owner"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "When chunk boundaries change, record old-to-new stable IDs.", Diagnostic: "retained workflow: operating guide dropped changed-chunk identity mapping"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "Before using a plan expansion, update the affected spec and tickets; preserve acceptance coverage, dependencies, review checkpoints, existing checks, pass criteria, and required behavior.", Diagnostic: "retained workflow: operating guide dropped plan-update timing or preserved guarantees"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "Record every plan or gate expansion with `bench learning`, including what changed, why, and verification; `/bench-drain` owns its later disposition.", Diagnostic: "retained workflow: operating guide dropped expansion learning and drain ownership"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "When evidence requires an in-scope plan, `Writes:`, or gate expansion, apply `.bench/BENCH.md`'s approved plan-expansion policy before using it.", Diagnostic: "retained workflow: implementation phase dropped plan-expansion timing"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-gate/SKILL.md", Kind: Require, Needle: "An in-scope gate addition during implementation follows `.bench/BENCH.md`'s approved plan-expansion policy before the author uses it.", Diagnostic: "retained workflow: craft-gate dropped approved expansion timing"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-tickets/SKILL.md", Kind: Require, Needle: "`Writes:` predicts the touched paths; `.bench/BENCH.md` owns how the retained author updates that expectation before an approved in-scope expansion is used.", Diagnostic: "retained workflow: craft-tickets restored Writes as an approval boundary"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "In the charge", Needle: "A user-directed write delegate treats `Writes:` as an expectation.", Diagnostic: "retained workflow: delegation discipline restored Writes as a refusal boundary"},
+}

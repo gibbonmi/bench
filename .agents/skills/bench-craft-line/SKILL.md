@@ -58,17 +58,21 @@ Before you assess from scratch, read `Lines` for a cached routing; a cache hit s
 |---|---|
 | Orchestration | mid + medium |
 | Ticket implementation | cheap + low |
-| Review (axis or falsification) | mid + high |
+| Review axis | conditional + high |
 
 These are starting defaults under the decision table and ladder, not a flat rule. A spec's per-story
 line is a **ceiling, not a binding**: re-run the decision table per ticket at charge time. A story
 routed mid for its uncertain seam often decomposes into tickets that are exact-spec, known-shape,
 gate-covered tickets.
 
-The leverage override still wins: kit guidance prose routes mid + high in every stage.
+The leverage override still wins for orchestration and implementation: kit guidance prose routes mid + high in those stages. The conditional review line below owns review.
 `craft-delegate` owns whether authorship runs inline or in an isolated worktree; this skill routes
 the chosen author. When stories land as one atomic diff, run the author at the highest tier any
 story needs. Flag each collapsed line in the exit report.
+
+The conditional review line uses high effort and ~1 iteration. A Codex mid implementation sends each axis to the Codex top binding.
+Every other implementation sends each axis to the invoking harness's mid binding.
+A different implementation model or session requires user direction. The author can adjust effort in the retained session and reports the change.
 
 
 ## Classify reds before the ladder moves
@@ -111,7 +115,6 @@ enforcement surface anywhere — it exists only in your declaration, which is wh
 
 Declare fan-out for the same reason as model and effort: visibility before spend. Report an overrun of
 the declared count like any ladder move; never exceed it silently. Derive the cap; don't feel it
-out: expected red/green cycles plus a margin for one red. A review-axis delegate is one pass with no
-fix iteration, so it prices at ~1 iteration. A shift with a likely red and fix prices higher.
+out: expected red/green cycles plus a margin for one red. A shift with a likely red and fix prices higher.
 
 If the stage exhausts its cap, stop and report — never grind, never escalate silently.

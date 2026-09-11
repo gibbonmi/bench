@@ -455,6 +455,7 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestRetiredConformanceFixturesDoNotLeaveShellTwinMessages":    true,
 	"TestRetroImprovementMarkersFixtureInventoryRejectsDeletion":   true,
 	"TestRetroImprovementMarkersFixturesCoverEveryDiagnosticClass": true,
+	"TestRetainedWorkflow":                                         true,
 	"TestRoadmapDetailIntegrityFixturesCoverEveryDiagnosticClass":  true,
 	"TestRowNextGrammarBindsTableToParserTokens":                   true,
 	"TestRowNextGrammarFixturesCoverEveryDiagnosticClass":          true,

@@ -1,17 +1,15 @@
 ---
 name: craft-spec
-description: The spec-authoring discipline — the acceptance-coverage-map row schema, which edges a spec must dispose of, how stories and scope cuts are sized, and how a build is sliced for delegates. Use when authoring or auditing a spec, writing coverage rows, deciding an edge is a Won't handle, judging whether a cut is genuinely out of scope, or slicing a build for delegates.
-index: coverage-map rows, edge inventories, story sizing, and delegate slicing for a spec
+description: The spec-authoring discipline — the acceptance-coverage-map row schema, which edges a spec must dispose of, how stories and scope cuts are sized, and how a build is sliced into review chunks. Use when authoring or auditing a spec, writing coverage rows, deciding an edge is a Won't handle, judging whether a cut is genuinely out of scope, or slicing a build into review chunks.
+index: coverage-map rows, edge inventories, story sizing, and review-chunk slicing for a spec
 ---
 
 # Spec: synthesize, don't interview
 
-Turn the authorized decision source and what you know of the codebase into
-`specs/<slug>/spec.md` — synthesize, with at most two late questions.
+Turn the authorized decision source and what you know of the codebase into `specs/<slug>/spec.md` — synthesize, with at most two late questions.
 
 1. **Explore the repo**; use the glossary's terms and respect the area's ADRs. Before the coverage map locks, do three reads.
-   - Open every enforcement file a row or a fence names. These files are the conformance checks, the contract tests, the
-     wrapper help, the injected-port registry, and the grammar files. Cite each read.
+   - Open every enforcement file a row or a fence names. These files are the conformance checks, the contract tests, the wrapper help, the injected-port registry, and the grammar files. Cite each read.
    - Read one existing precedent for each named seam.
    - Sweep the whole tree for each reader of a count, a schema field, or an artifact path the spec changes.
      This reader sweep includes `.mjs` scripts and workflow files, and `references/map-discipline.md` states its rules.
@@ -25,7 +23,9 @@ Turn the authorized decision source and what you know of the codebase into
 
 Write a long, numbered list grouped by outcome, with an extensive breadth floor. One story per actor-want-benefit —
 `As an <actor>, I want <feature>, so that <benefit>` — covers every behavior, edge, and reviewed exclusion the source promises.
-Partial redundancy is the point. A story is a want, never an engineering layer (`craft-tickets` owns slice sizing). Each group carries one `Line:`.
+Partial redundancy is the point. A story is a want, never an engineering layer (`craft-tickets` owns slice sizing).
+
+Recommend one implementation line for the complete build. Explain it from the hardest material chunk, spec precision, seam uncertainty, and test strength. Mark each harder chunk in the implementation plan.
 
 ## The acceptance coverage map
 
@@ -54,21 +54,14 @@ Price every cut as `<n> edits, <n> gate runs`. A cut must be a separate capabili
 
 ## Slicing a build for delegates
 
-Record **who-writes-where** ownership fences at spec time, checkable at charge time. A fence entry is an exact repo-relative file or path prefix, never a glob
-or an implementation ticket. An empty or invalid fence section is incomplete. The author writes the fence section after the ticket slice, from the union of the tickets' `Writes:` lines.
+Record **who-writes-where** ownership fences at spec time, checkable at charge time. A fence entry is an exact repo-relative file or path prefix, never a glob or an implementation ticket. An empty or invalid fence section is incomplete. The author writes the fence section after the ticket slice, from the union of the tickets' `Writes:` lines.
 The fences include the review pickup and every conformance-pinned consumer of a moved symbol.
 A Won't handle over an anchored sentence quotes the bytes it keeps.
 
-A build may not edit its own spec's acceptance rows, budget targets, or ownership fences. A build that hits a spec-level
-shortfall stops and returns to `/bench-write-spec`, even inside those fences. A budget row equal to its subject's current
-line count proves nothing, because the check parses only that one source.
+During a build, `.bench/BENCH.md` owns approved in-scope plan expansion. A material acceptance change, unrelated scope, or weakened guarantee returns to `/bench-write-spec` for a reviewer decision. A budget row equal to its subject's current line count proves nothing, because the check parses only that one source.
 
-A batch approval licenses one narrow exception to that rule. A build may amend its own acceptance row when the code
-contradicts the row's literal premise. The amendment keeps the row's verdict unchanged and cites the contradicting
-evidence under Build decisions. The exception never licenses a build to loosen what the row counts as passing.
-
-`craft-tickets` owns the build-time **what-lands-green-next** unit; each ticket receives the spec's fence. Each fence carries value contracts across it. A contract between tickets is stated in the ticket's `What to build`
-and `Acceptance`. Review re-derives that contract from the tree; it does not trust the ticket's account.
+Apply `.bench/BENCH.md`'s implementation-chunk contract. Each planned chunk has a stable ID and names its tickets, coherent outcome, acceptance rows, tests, and review checkpoint.
+`craft-tickets` owns the build-time **what-lands-green-next** unit; each ticket receives the spec's fence. Each fence carries value contracts across it. A contract between tickets is stated in the ticket's `What to build` and `Acceptance`. Review re-derives that contract from the tree; it does not trust the ticket's account.
 
 After a pass that touches many sections, reread the complete artifact end to end and reconcile contradictions before the handoff.
 
@@ -112,12 +105,18 @@ The problem, from the user's point of view.
 The solution, from the user's point of view.
 
 ## User stories
-A long, numbered, extensive breadth floor grouped by outcome — one `As an <actor>, I want <feature>, so
-that <benefit>` per behavior, edge, and reviewed exclusion, partially redundant on purpose. Each group
-opens with its `Line: <resolved model id> / <effort>.` and one plain sentence explaining why.
+Line: <resolved implementation model id> / <starting effort>.
+Implementation-line reason: <hardest material chunk, spec precision, seam uncertainty, and test strength>.
+Harder chunks: <chunk IDs or none>.
+A long, numbered story list grouped by outcome, with one actor-want-benefit sentence per behavior, edge, and reviewed exclusion.
 
 ## Implementation decisions
 Modules, interfaces, schema or contract changes, and architectural calls. Record decisions rather than file paths or snippets that rot.
+
+## Implementation chunks
+| stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
+| --- | --- | --- | --- | --- |
+| <ID / ticket basenames> | <coherent behavior outcome> | <row IDs> | <named checks> | <yes or no> |
 
 ## Testing decisions
 - What external behavior a good test exercises.
@@ -152,4 +151,3 @@ Each genuine separate capability includes its derived `<n> edits, <n> gate runs`
 
 Before a build starts, emit a scannable approval table. The table covers stories and their lines, seam diagrams, acceptance coverage including edge dispositions, ownership fences with an explicit reviewer disposition, and out
 of scope. Pause for sign-off. The user stories set breadth, engineering seams place tests, and the gate defines done.
-
