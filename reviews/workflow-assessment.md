@@ -40,7 +40,7 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
 {
   "version": 1,
   "spec": "specs/workflow-assessment/spec.md",
-  "plan_digest": "sha256:6f06ccba79638027e926a1b9c57015c3ab3eafc619b40be11a772608c8d092ed",
+  "plan_digest": "sha256:82186d2d4fcd82623f78a0ebd72f7bbafe68b30a5162cf5bd0a51f01ee15d749",
   "implementation_session": "01a0920d-3021-73c1-9ed3-9980d5decc71",
   "chunks": [
     {
@@ -415,6 +415,162 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
           ]
         }
       ]
+    },
+    {
+      "id": "2",
+      "base": "0d2551411b84cf1b6fc9391ea4e3e37af99afa9c",
+      "tip": "ab6b4fa5e404e29044f1fc6071f7df38f1c612e7",
+      "plan_digest": "sha256:82186d2d4fcd82623f78a0ebd72f7bbafe68b30a5162cf5bd0a51f01ee15d749",
+      "source_digest": "ec3c315e56d392625d2bc6d4a0bdf435315fb94a",
+      "acceptance_rows": [
+        "A13",
+        "A23",
+        "A30",
+        "A31",
+        "A32",
+        "A33"
+      ],
+      "verification": [
+        {
+          "id": "chunk2-assessment-1",
+          "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "ec3c315e56d392625d2bc6d4a0bdf435315fb94a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-tool:b5be6b",
+            "excerpt": "github.com/gibbonmi/bench/internal/assessment,pass,1474",
+            "digest": "sha256:994aa9c4876c89e054147b2ccface3818aeaff5f97cf517185e23d8a55575548"
+          },
+          "requirement": "assessment",
+          "command": "bench test --package ./internal/assessment",
+          "exit_code": 0
+        },
+        {
+          "id": "chunk2-dispatcher-1",
+          "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "ec3c315e56d392625d2bc6d4a0bdf435315fb94a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-tool:9d85ab",
+            "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,17775",
+            "digest": "sha256:cf406e825cb5a0ce0f519558a75348f7f504a8c08d10afc6e066b361840616a7"
+          },
+          "requirement": "dispatcher",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "chunk2-cache-probe-1",
+          "performer": "01a0920d-3021-73c1-9ed3-9980d5decc71",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "ec3c315e56d392625d2bc6d4a0bdf435315fb94a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native-tool:e21992",
+            "excerpt": "package,./internal/assessment,TestAssessmentRecord,passed,35",
+            "digest": "sha256:767e0741aa92fba8f475dbc3420108bfbab2ac1b42fd7961a96217cf54a6d44a"
+          },
+          "requirement": "cache-probe",
+          "command": "bench test --package ./internal/assessment --run TestAssessmentRecord",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit cached-input subtraction",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "native-tool:e21992",
+              "excerpt": "bit,internal/assessment/record.go,swap,failed,1,yes",
+              "digest": "sha256:f1551004eb42781e7eb5bfe06363bf276267178abd689b3052585165095023b7"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "chunk2-standards-1",
+          "performer": "/root/assessment_2_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "ec3c315e56d392625d2bc6d4a0bdf435315fb94a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_2_standards",
+            "excerpt": "Terminal result: **completed with 3 findings**. Raw count: **3**. Worst severity: **medium**.",
+            "digest": "sha256:ff60c8462bec3cc8cc2dbf813f403df75b71e3a6d7d5dc3734ba10f5b741967f"
+          },
+          "axis": "Standards",
+          "base": "0d2551411b84cf1b6fc9391ea4e3e37af99afa9c",
+          "tip": "ab6b4fa5e404e29044f1fc6071f7df38f1c612e7",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "chunk2-spec-1",
+          "performer": "/root/assessment_2_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "ec3c315e56d392625d2bc6d4a0bdf435315fb94a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_2_spec",
+            "excerpt": "**Terminal state:** findings\n**Raw count:** 2\n**Worst issue:** high",
+            "digest": "sha256:48b987e4c2b63e265b841bbc8ecc6767a9b85f79f43dc820dd3c074331b39670"
+          },
+          "axis": "Spec",
+          "base": "0d2551411b84cf1b6fc9391ea4e3e37af99afa9c",
+          "tip": "ab6b4fa5e404e29044f1fc6071f7df38f1c612e7",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "chunk2-coverage-1",
+          "performer": "/root/assessment_2_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "ec3c315e56d392625d2bc6d4a0bdf435315fb94a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native-agent:/root/assessment_2_coverage",
+            "excerpt": "Terminal result: **findings** \u2014 4 raw findings; worst severity **medium**.",
+            "digest": "sha256:7971ed19dff3de0cd77261c7224a60042f704ce90d1ff5fbb21d297c8212d13f"
+          },
+          "axis": "Coverage",
+          "base": "0d2551411b84cf1b6fc9391ea4e3e37af99afa9c",
+          "tip": "ab6b4fa5e404e29044f1fc6071f7df38f1c612e7",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -443,6 +599,21 @@ All three native Sol reviewers inspected read-only isolated worktrees. Native us
     {
       "from": "sha256:bebc30452041719f1f95abf6b093687e13ad5ca87665ba14a62a8d50bfb4f811",
       "to": "sha256:6f06ccba79638027e926a1b9c57015c3ab3eafc619b40be11a772608c8d092ed",
+      "chunk_ids": {
+        "1": [
+          "1"
+        ],
+        "2": [
+          "2"
+        ],
+        "3": [
+          "3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:6f06ccba79638027e926a1b9c57015c3ab3eafc619b40be11a772608c8d092ed",
+      "to": "sha256:82186d2d4fcd82623f78a0ebd72f7bbafe68b30a5162cf5bd0a51f01ee15d749",
       "chunk_ids": {
         "1": [
           "1"
@@ -495,3 +666,19 @@ Second repair reaffirmation: completed/pass, zero findings. C1-C3 are closed.
 All axes independently reaffirmed the current chunk-1 source. There are zero remaining repair targets. Native reviewer usage and charges remain unknown. Author verification and the cache-subtraction probe passed on that exact source.
 
 The current shared consumer inventory is sha256:0e2f3aa75a548d400a9596b827a71c49c8f9f13775c09ec9a7bda09fd30d5467. Its untouched sites match the initial inspected command, ticket, injected-port, and routing consumers. Coverage remains sha256:88d970ec144226c7bb9cee7100b772d384552fc5bfeeb116ef0412a992107ac7.
+
+## Chunk 2 Sol review pickup
+
+All three native Sol/high reviews completed against 0d255141..ab6b4fa. Nine raw findings are accepted for repair; worst severity high. All dispositions are auto-fix. The user waived the additional cross-harness review. Reviewer usage and charges are unknown.
+
+- Standards S1 (medium): centralize selector uniqueness and ambiguity (collection.go:104,166; AGENTS.md:34).
+- Standards S2 (low): reuse appendReference for diagnostic deduplication (collection.go:51,138).
+- Standards S3 (low): split final-check instructions and put README conditions first and four measures in a vertical list (final-check.md:220; README.md:73,81; ste-prose.md:19,27).
+- Spec P1 (high): authentic commit and landing diff spans cannot pass the assignment join (collection.go:180-213; commit.go:29,47-52; land.go:84,104-110; spec.md:88,158). Add producer-derived assignment correlation and fixtures.
+- Spec P2 (high): partial native counter objects lack a diagnostic, so a timed run appears complete (harness.go:52-61; summary.go:25,34-45; spec.md:90,150). Preserve unknown categories and mark incomplete.
+- Coverage C1 (medium): prove positive second-attempt routing for all three sources (collection.go:39-49; spec.md:76,88,312).
+- Coverage C2 (medium): cover last_token_usage delta semantics and partial native objects (harness.go:19-21,47-61; spec.md:80,92,160).
+- Coverage C3 (medium): assert authentic diff-path value and provenance (attributes.go:31-35; collection.go:206-213; spec.md:88,158).
+- Coverage C4 (medium): cover parent-symlink refusal and present-empty harness diagnostics (harness.go:23-34; spec.md:100,143,150).
+
+Shared consumer inventory: sha256:80889260ec510414b445dae47e3e50ca3ab929111fef72a838030f90d046a2e9. Coverage inventory: sha256:06966e263ca07d6663ed7a156a5ad5ef4c9d70c5f867f43712299abc5a20f2e7. All reviewers verified the clean frozen source and used only read commands. Author package verification and the cache subtraction probe passed on that source.
