@@ -187,3 +187,7 @@ The successor chunk starts only after findings and repair coverage close. After 
    A clean chunk review hands its frozen pair back to the retained author. The author starts the successor or performs final reconciliation. Only the reconciled final source proceeds to `bench worktree land`; `/bench-final-check` reports that landing's oracle.
 
    The landing base is the `main` tip merged before the first chunk. `bench worktree land --base` takes that `main` tip, not a later chunk base.
+
+## Ordinary assessment evidence
+
+At each chunk review, update the ordinary-work assessment record through `bench assessment record --input <file>`. Follow the collection guidance in `.bench/BENCH-reference.md`. Retain unavailable harness measurements as unknown; they do not block implementation.

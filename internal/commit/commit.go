@@ -18,6 +18,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/otelrecord"
+	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -42,6 +43,9 @@ type commitMeasures struct {
 // objective text by design, and DATA_HANDLING.md keeps it out of a third durable place.
 func beginCommitSpan(root string) func(int, commitMeasures) {
 	_, span, finish := otelrecord.Begin("", root, otelCommitSeam)
+	if id, ok := poolkey.SplitAssignmentSegment(filepath.Base(root)); ok {
+		span.SetAttributes(attribute.String(otelrecord.AttrAssignmentID, id))
+	}
 	return func(exit int, measures commitMeasures) {
 		if measures.subject != "" {
 			span.SetAttributes(attribute.String(otelrecord.AttrSubjectID, measures.subject))

@@ -1,6 +1,6 @@
 # Measure complete workflow cost and quality
 
-Status: staged
+Status: implemented
 Decision source: `docs/adr/0021-benchmark-workflow-orchestration.md`
 Verification log: 2 iteration(s) to accept — Sol/high verified the design repairs. The author folded its final independent fixture cases for A21, A33, and A38.
 
@@ -73,7 +73,7 @@ Trial execution remains a separately approved action.
 
 Store versioned JSON at `$BENCH_HOME/assessment/<repo-key>/<run-id>.json`, beside the census and OTEL stores and outside the disposable worktree pool. Resolve repo identity through the existing pool-key owner. Records survive worktree release and reclaim. They remain until explicit cleanup. Do not add automatic expiry. Initial explicit cleanup uses a user-directed file removal after naming exact records; this spec adds no cleanup verb.
 
-Run fields are `version`, `run_id`, `repo_key`, `source`, `condition`, `task_id`, `holdout`, `started_at`, `ended_at`, `state`, `attempts`, `evidence`, and `quality`. An attempt names `attempt_id`, `chunk_id`, `role`, `session_id`, `model`, `effort`, `state`, `started_at`, `ended_at`, `usage`, `cost`, and native evidence references. Roles distinguish implementation, repair, verification, review, and diagnostic consultation. Failed and cancelled attempts remain. An imported update may append or fill previously unknown evidence, but cannot silently discard an existing attempt or change a known identity. Identical import is idempotent; conflicting content is a refusal.
+Run fields are `version`, `run_id`, `repo_key`, `source`, `condition`, `task_id`, `holdout`, `started_at`, `ended_at`, `time_reference`, `state`, `attempts`, `evidence`, `quality`, `bench_inputs`, `harness_inputs`, `diagnostics`, and `trial`. An attempt names `attempt_id`, `chunk_id`, `role`, `session_id`, `model`, `effort`, `state`, `started_at`, `ended_at`, `time_reference`, `usage`, `cost`, `measures`, `intervals`, and native evidence references. Roles distinguish implementation, repair, verification, review, and diagnostic consultation. Failed and cancelled attempts remain. An imported update may append or fill previously unknown evidence, but cannot silently discard an existing attempt or change a known identity. Identical import is idempotent; conflicting content is a refusal.
 
 Usage fields are `input_uncached`, `input_cached`, and `output`. A source may also supply `input_total` with its declared semantics. If total includes cached input, derive uncached as total minus cached. Never add total and cached together.
 
@@ -101,7 +101,7 @@ Use bounded regular-file reads, schema validation, atomic replacement, no symlin
 
 ## Implementation chunks
 
-Implement these tickets in the retained session. Each ticket is one initial review chunk. Commit the ticket on its lane pass, run the three delegated axes, and repair findings before the next chunk. Review line: decision #13, resolved for this implementation as gpt-6-astra / high. Final acceptance reconciliation stays with the author.
+Implement these tickets in the retained session. Each ticket is one initial review chunk. Commit the ticket on its lane pass, run the three delegated axes, and repair findings before the next chunk. Review line: decision #13, overridden by the user for this implementation as gpt-5.6-sol / high on each axis. Final acceptance reconciliation stays with the author.
 
 | chunk / ticket | blocked by | delivered outcome | harder chunk |
 | --- | --- | --- | --- |
@@ -125,36 +125,36 @@ Bench spans + census / native measures -> normalized run -> local store
 
 | row | story | behavior | seam | why it catches the failure |
 | --- | --- | --- | --- | --- |
-| A1 | 1 | A record survives release of its worktree | New test: TestAssessmentRecord in internal/assessment/record_test.go | Release a disposable fixture assignment and read its assessment record. |
-| A2 | 2 | Failed and cancelled attempts remain in the run | New test: TestAssessmentRecord in internal/assessment/record_test.go | Import a success after failure and verify the failure remains. |
-| A3 | 3 | A report separates chunk and performer roles | New test: TestAssessmentCommand in internal/assessment/command_test.go | Mix implementation repair review verification and advice in one fixture. |
+| A1 | 1 | A record survives release of its worktree | New test: TestAssessmentRecordStorage in internal/assessment/record_test.go | Release a disposable fixture assignment and read its assessment record. |
+| A2 | 2 | Failed and cancelled attempts remain in the run | New test: TestAssessmentRecordPreservesHistory in internal/assessment/record_test.go | Import a success after failure and verify the failure remains. |
+| A3 | 3 | A report separates chunk and performer roles | New test: TestAssessmentCommandDetail in internal/assessment/command_test.go | Mix implementation repair review verification and advice in one fixture. |
 | A4 | 4 | Inclusive input totals exclude cached tokens from uncached input | New test: TestAssessmentRecord in internal/assessment/record_test.go | Use total 100 cached 80 and require uncached 20. |
-| A5 | 5 | Repeated native events do not duplicate usage | New test: TestAssessmentRecord in internal/assessment/record_test.go | Import the same event twice. |
-| A6 | 6 | Usage sums both epochs across a cumulative counter reset | New test: TestAssessmentRecord in internal/assessment/record_test.go | Require the pre-reset and post-reset usage in the total. |
-| A7 | 7 | Absent usage is reported as unknown | New test: TestAssessmentRecord in internal/assessment/record_test.go | Compare an absent field with a measured zero. |
-| A8 | 8 | The estimate charges uncached input cached input and output at their own rates | New test: TestAssessmentRecord in internal/assessment/record_test.go | Use three unequal nonzero rates and quantities so omitting any category fails. |
-| A9 | 9 | An estimated cost cannot populate actual charges | New test: TestAssessmentRecord in internal/assessment/record_test.go | Import token counts and rates without a billing record. |
-| A10 | 10 | A missing charge component makes total cost partial | New test: TestAssessmentRecord in internal/assessment/record_test.go | Omit tool pricing from a run with tool charges. |
-| A11 | 11 | Concurrent attempts do not multiply elapsed wall time | New test: TestAssessmentRecord in internal/assessment/record_test.go | Overlap two reviews inside one run interval. |
-| A12 | 12 | Each measure names its producer and native evidence | New test: TestAssessmentRecord in internal/assessment/record_test.go | Supply a token value without provenance and require refusal. |
+| A5 | 5 | Repeated native events do not duplicate usage | New test: TestAssessmentRecordDuplicateEvents in internal/assessment/record_test.go | Import the same event twice. |
+| A6 | 6 | Usage sums both epochs across a cumulative counter reset | New test: TestAssessmentRecordEpochs in internal/assessment/record_test.go | Require pre-reset and post-reset usage; reject epoch regression and isolate ambiguity by attempt. TestAssessmentRecordReviewCounters covers cumulative ambiguity; TestAssessmentRecordDeltaEpochs preserves independent delta quantities. |
+| A7 | 7 | Absent usage is reported as unknown | New test: TestAssessmentRecordUnknownAndCharges in internal/assessment/record_test.go | Compare absent with measured zero; TestAssessmentRecordReviewCounters also covers a missing field between cumulative snapshots. |
+| A8 | 8 | The estimate charges uncached input cached input and output at their own rates | New test: TestAssessmentRecordPrices in internal/assessment/record_test.go | Use three unequal nonzero rates and quantities so omitting any category fails. |
+| A9 | 9 | An estimated cost cannot populate actual charges | New test: TestAssessmentRecordUnknownAndCharges in internal/assessment/record_test.go | Import token counts and rates without a billing record. |
+| A10 | 10 | A missing charge component makes total cost partial | New test: TestAssessmentRecordUnknownAndCharges in internal/assessment/record_test.go | Omit tool pricing from a run with tool charges. |
+| A11 | 11 | Concurrent attempts do not multiply elapsed wall time | New test: TestAssessmentRecordWall in internal/assessment/record_test.go | Overlap two reviews inside one run interval. |
+| A12 | 12 | Each measure names its producer and native evidence | New test: TestAssessmentRecordProvenance in internal/assessment/record_test.go | Refuse unattributed tokens; TestAssessmentRecordMeasureProvenance also rejects unattributed quality, timestamps, and applicable charges. |
 | A13 | 13 | Phase guidance requests records without requiring paid trials | review-owned: Spec checks phase instructions | Reject collection guidance that launches an experiment or blocks builds for missing optional metrics. |
-| A14 | 14 | A conflicting record update preserves prior data | New test: TestAssessmentRecord in internal/assessment/record_test.go | Change a known session identity and verify refusal before replacement. |
+| A14 | 14 | A conflicting record update preserves prior data | New test: TestAssessmentRecordUpdates in internal/assessment/record_test.go | Change a known session identity and verify refusal before replacement. |
 | A15 | 15 | The query renders typed empty and complete detail states | New test: TestAssessmentCommand in internal/assessment/command_test.go | Exercise empty store list detail errors and each help spelling. |
-| A16 | 16 | Invalid or unsafe imports produce no stored run | New test: TestAssessmentCommand in internal/assessment/command_test.go | Use traversal FIFO symlink oversized version and duplicate-ID cases. |
-| A17 | 17 | An interrupted update leaves the previous record readable | New test: TestAssessmentRecord in internal/assessment/record_test.go | Inject write and rename failures with an existing record. |
+| A16 | 16 | Invalid or unsafe imports produce no stored run | New test: TestAssessmentCommandUnsafe in internal/assessment/command_test.go | Exercise traversal, FIFO, symlinks, oversized input, version, duplicate IDs and keys, and ESC/BEL in task and chunk IDs. |
+| A17 | 17 | An interrupted update leaves the previous record readable | New test: TestAssessmentRecordUpdates in internal/assessment/record_test.go | Inject write and rename failures with an existing record. |
 | A18 | 18 | A paid-trial plan names approval and pinned conditions | New test: TestAssessmentComparison in internal/assessment/comparison_test.go | Omit budget approval or quality tolerance from the plan. |
 | A19 | 19 | A pilot cannot establish default-change evidence | New test: TestAssessmentComparison in internal/assessment/comparison_test.go | Supply only the FT311 authoring case or one repetition. |
 | A20 | 20 | Comparison reports variation and failed quality outcomes | New test: TestAssessmentComparison in internal/assessment/comparison_test.go | Use mixed successful failed and incomplete runs. |
 | A21 | 21 | A kit-causal comparison requires the three FT231 conditions | New test: TestAssessmentComparison in internal/assessment/comparison_test.go | Omit each required arm independently. Also add an unknown fourth arm. Require refusal for every case. |
 | A22 | 22 | Assessment never changes executable model defaults | New test: TestAssessmentCommand in internal/assessment/command_test.go | Run each assessment command and compare binding bytes before and after. |
-| A23 | 23 | Malformed or unfinished native input remains incomplete | New test: TestAssessmentRecord in internal/assessment/record_test.go | Mix one valid span with a truncated span and omit an expected session log. |
+| A23 | 23 | Malformed or unfinished native input remains incomplete | New test: TestAssessmentCollectionNativeGaps and TestAssessmentCollectionSpanCoverage in internal/assessment/collection_test.go | Mix one valid span with a truncated span and omit an expected session log. |
 
-| A24 | 24 | Total cost includes every role and terminal attempt state | New test: TestAssessmentRecord in internal/assessment/record_test.go | Use distinct costs for implementation failures repairs reviews verification and advice. |
-| A25 | 25 | An update can append an attempt without deleting earlier attempts | New test: TestAssessmentRecord in internal/assessment/record_test.go | Append a successful attempt to a failed run. |
-| A26 | 26 | An update can fill an unknown measure from new native evidence | New test: TestAssessmentRecord in internal/assessment/record_test.go | Supply a previously absent output count with provenance. |
-| A27 | 27 | An identical import leaves the stored record unchanged | New test: TestAssessmentRecord in internal/assessment/record_test.go | Import the same normalized run twice and compare bytes. |
-| A28 | 28 | An update that deletes an existing attempt is refused | New test: TestAssessmentRecord in internal/assessment/record_test.go | Omit an earlier failed attempt from a replacement. |
-| A29 | 29 | Conflicting known evidence is refused before replacement | New test: TestAssessmentRecord in internal/assessment/record_test.go | Change a measured token count while retaining its native event ID. |
+| A24 | 24 | Total cost includes every role and terminal attempt state | New test: TestAssessmentRecordUnknownAndCharges in internal/assessment/record_test.go | Use distinct costs for implementation failures repairs reviews verification and advice. |
+| A25 | 25 | An update can append an attempt without deleting earlier attempts | New test: TestAssessmentRecordUpdates in internal/assessment/record_test.go | Append a successful attempt to a failed run. |
+| A26 | 26 | An update can fill an unknown measure from new native evidence | New test: TestAssessmentRecordUpdates in internal/assessment/record_test.go | Supply a previously absent output count with provenance. |
+| A27 | 27 | An identical import leaves the stored record unchanged | New test: TestAssessmentRecordUpdates in internal/assessment/record_test.go | Import the same normalized run twice; compare bytes and require no replacement write. |
+| A28 | 28 | An update that deletes an existing attempt is refused | New test: TestAssessmentRecordPreservesHistory in internal/assessment/record_test.go | Omit an earlier failed attempt from a replacement. |
+| A29 | 29 | Conflicting known evidence is refused before replacement | New test: TestAssessmentRecordUpdates in internal/assessment/record_test.go | Change a measured token count while retaining its native event ID. |
 | A30 | 30 | Selected OTEL spans reach the stored run with provenance | New test: TestAssessmentCollection in internal/assessment/collection_test.go | Join two known trace IDs and verify their derived elapsed value and references. |
 | A31 | 31 | Selected census events reach the stored run with provenance | New test: TestAssessmentCollection in internal/assessment/collection_test.go | Join known raw-command events from the expected assignment. |
 | A32 | 32 | Mapped harness counters reach the stored attempt with provenance | New test: TestAssessmentCollection in internal/assessment/collection_test.go | Import a valid session epoch and cache-bearing usage event. |
@@ -176,8 +176,13 @@ Scope cut: a broad experimental runner could ship separately after this record a
 
 ## Ownership fences
 
+- `tests/canary/workflow-guidance-anchors/review-clean-terminal-result`
+
 These paths are the union of ticket expectations. A directory entry is an exact prefix for that existing owner or fixture family. Expansion follows decision #5, with the plan updated before use. It cannot weaken existing guarantees.
 
+- `CHANGELOG.md`
+- `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
+- `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
 - `internal/assessment` (new)
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
@@ -191,6 +196,7 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `internal/otelrecord/reader.go`
 - `internal/otelrecord/reader_test.go`
 - `internal/census/census.go`
+- `internal/census/events.go`
 - `internal/census/census_test.go`
 - `.agents/commands/bench-implement-spec.md`
 - `.agents/commands/bench-review-implementation.md`
@@ -281,6 +287,12 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `tests/canary/workflow-guidance-anchors/benchkit-spec-ownership`
 - `tests/canary/workflow-guidance-anchors/benchkit-system-suite-route`
 
+- `internal/otelrecord/attributes.go`
+- `internal/commit/commit.go`
+- `internal/commit/assessment_span_test.go`
+- `internal/worktree/land.go`
+- `internal/worktree/land_trace_test.go`
+
 ## Out of scope
 
 This spec excludes a paid benchmark launcher, the complete FT231 program, automatic default adoption, and automatic expiry. It also excludes speculative harness adapters and recovery of unavailable charges.
@@ -323,3 +335,207 @@ The A33, A38, and A21 fixture tables must execute every named case independently
 Authoring close: this spec and its tickets are staged for user sign-off. The reviews above assess the proposed build. No implementation or implementation test result is claimed.
 
 Reviewer amendment on 2026-09-11: apply decision #13 to the declared implementation model. Sol implementations use Astra/high review axes. This amendment follows the spec-authoring reviews recorded above.
+
+## Completion verification plan
+
+The stable chunk IDs are `1`, `2`, and `3`, in the approved ticket order.
+Each checkpoint requires current author tests and all three independent review results.
+The user approves Astra implementation in the retained session and Sol/high review axes.
+The synthetic cross-attempt counter case extends A6 and A24 without changing their pass criteria.
+
+```bench-completion-plan
+{
+  "version": 1,
+  "chunks": [
+    {
+      "id": "1",
+      "tickets": [
+        "1.md",
+        "4.md"
+      ],
+      "verification": [
+        {
+          "id": "assessment",
+          "command": "bench test --package ./internal/assessment"
+        },
+        {
+          "id": "dispatcher",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "cache-probe",
+          "command": "bench test --package ./internal/assessment --run TestAssessmentRecord",
+          "probe": "omit cached-input subtraction"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "tickets": [
+        "2.md",
+        "5.md"
+      ],
+      "verification": [
+        {
+          "id": "assessment",
+          "command": "bench test --package ./internal/assessment"
+        },
+        {
+          "id": "dispatcher",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "cache-probe",
+          "command": "bench test --package ./internal/assessment --run TestAssessmentRecord",
+          "probe": "omit cached-input subtraction"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "tickets": [
+        "3.md",
+        "6.md",
+        "7.md"
+      ],
+      "verification": [
+        {
+          "id": "assessment",
+          "command": "bench test --package ./internal/assessment"
+        },
+        {
+          "id": "dispatcher",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "cache-probe",
+          "command": "bench test --package ./internal/assessment --run TestAssessmentRecord",
+          "probe": "omit cached-input subtraction"
+        }
+      ]
+    }
+  ],
+  "final_verification": [
+    {
+      "id": "assessment",
+      "command": "bench test --package ./internal/assessment"
+    },
+    {
+      "id": "dispatcher",
+      "command": "bench test --package ./cmd/bench"
+    },
+    {
+      "id": "system",
+      "command": "bench test --check system"
+    }
+  ]
+}
+```
+
+## Chunk 1 author evidence
+
+The synthetic suite observed behavioral reds for storage, inclusive cache arithmetic, duplicate events, counter resets, rates, provenance, and concurrent wall time.
+The cross-attempt cumulative test observed USD 25 before repair and USD 15 after repair.
+The large-integer test rejected loss of precision after the JSON comparison repair.
+Cache subtraction, history preservation, and token pricing mutations each produced a diagnostic red and restored the source.
+The remaining update and unknown-value cases exercised behavior already present when their rows were added.
+
+The assessment suite and full dispatcher suite passed. The chunk has no paid comparison trial or model-default change.
+
+## Chunk 1 repair evidence
+
+User approval permits the higher implementation model in this retained session. The three independent reviewers used Sol at high effort. The additional cross-harness review was waived explicitly by the user. No comparison trial was authorized or launched.
+
+Repair ticket 4 belongs to chunk 1 and blocks chunk 2. It covers the eight accepted findings recorded in reviews/workflow-assessment.md. These changes refine tests and implementation within the approved acceptance criteria.
+
+Synthetic tests reproduced eight failures before repair. Cases covered missing cumulative fields, epoch regression, unrelated-attempt ambiguity, duplicate JSON keys, and ESC/BEL in task and chunk identifiers. Five further red cases reproduced missing provenance for quality, run time, attempt time, unknown tool charges, and unknown actual charges. The full assessment suite then passed.
+
+Named omission probes bit and restored production. A3 omitted a typed role cell; A7 changed absent input to zero; A9 marked absent billing complete. A14 bypassed preservation; A15 omitted the summary; A17 bypassed write and rename failure seams. A25 refused array growth; A26 refused omitted-field fills; A27 bypassed the idempotent early return. Each reported one failing test and successful restoration.
+
+The first A26 probe was silent because its changed nil branch did not own omitted JSON fields. The first A3 probe was silent because raw-record text masked the typed-table omission. Two subsequent probes were invalid because the strengthened baseline ignored TOON numeric-string quoting. Corrected fixtures and targeted mutations produced the biting results above. These unsuccessful diagnostic attempts remain part of ordinary-work accounting.
+
+Synthetic lifecycle dogfood recorded synthetic-release from a disposable main-based assignment. After bench worktree release removed that assignment, the integration assignment successfully queried the same record. Earlier release attempts against unmerged source-based fixtures refused and preserved their assignments. No model ran in these lifecycle fixtures.
+
+The second repair pass closes P4/C3 and P5. TestAssessmentRecordDeltaEpochs first failed with an unknown total for independent quantities 10 and 5. The fix limits epoch-order validation to cumulative counters. The same test and the full assessment suite then passed. Both authoritative timestamp field lists now include time_reference.
+
+The broader reviewer-merge gate found a guidance-table ordering regression. Restoring the original first row made TestAXIGuidanceContractBites pass without changing its assertion.
+
+## Chunk 2 author evidence
+
+Chunk 1 closed at 0d255141 after three clean Sol reaffirmations. Its checkpoint passed gofmt, vet, tests, race checks, and the system suite. Shellcheck was skipped; six capability-dependent cases were skipped. Ticket 4 is now checked complete.
+
+Collection selectors and their explicit mappings are defined in internal/assessment/collection.go. Bench inputs select trace IDs and census event IDs under one expected assignment. Harness inputs select a bounded native fragment and explicitly declare its session, event, epoch, sequence, and supported counter semantics.
+
+Attempt measures retain referenced numeric observations. Attempt intervals retain observed start/end pairs with native references. Run diagnostics retain missing, malformed, or unfinished input coverage. These fields implement the existing native-evidence and elapsed-union requirements.
+
+Initial command fixtures failed because native selectors were unsupported. After collection was added, four further cases failed: start/end closure, disjoint spans, nested spans, and malformed coverage. The shared OTEL decoder and interval-union owner now cover those cases.
+
+Named probes bit and restored production. Bypassing trace assignment checks failed both foreign and ambiguous cases. Dropping the second selected trace failed the two-trace union case. Dropping the second census event failed its selected-count case. Bypassing census collection failed both census refusal partitions.
+
+Omitting native diagnostics failed four missing/malformed/unfinished cases. Bypassing harness counter semantics failed the unsupported-semantics case. Native inputs and expected arithmetic use synthetic fixtures. No comparison trial or model launch occurred.
+
+The existing OTEL and census suites passed after their read projections were extended. Historical readers retain their existing behavior. Phase guidance requests ordinary record updates at review and final close, without requiring optional harness metrics or authorizing paid experiments.
+
+The census event projection lives in internal/census/events.go. The commit lane caught growth beyond census.go's 400-line bound, so this approved ownership expansion preserves that existing file budget.
+
+## Chunk 2 repair plan
+
+Ticket 5 belongs to chunk 2 and blocks chunk 3. It closes all nine initial Sol findings without changing acceptance criteria.
+
+A30 adds these publication details:
+
+- Authentic commit and landing spans with separate assignment provenance
+- Diff-path values
+- Native references
+
+A30-A32 each add positive second-attempt routing. A32 and A7 add delta and partial native counters. A16 and A23 add parent-symlink and present-empty native fragments. Unknown fields stay unknown, and partial native counters mark coverage incomplete.
+
+The necessary ownership expansion adds the OTEL assignment attribute and its commit and landing producers with synthetic producer tests. The assignment identifier stays separate from the published Git subject. Historical subject-bearing traces without assignment evidence remain unjoinable.
+
+Chunk 2 repair validation reproduced five failures: both publication joins and each missing native counter category. A present-empty fragment then reproduced a separate classification failure. All six pass after repair.
+
+Named probes bit for these partitions and restored production:
+
+- Second-attempt attribution for each producer
+- Diff-path projection for each publication shape
+- Missing-counter diagnostics for each token category
+- Delta semantics
+- Parent-symlink protection
+- Landing assignment emission
+- Commit assignment identity
+
+The first commit-assignment omission could not compile because it left an unused variable. A compiling wrong-assignment mutation replaced that diagnostic attempt. The unsuccessful attempt remains in cost accounting.
+
+The second repair pass extends the existing full landing test to assert resolved assignment provenance. It removes the duplicate landing fixture. A33 adds conflicting duplicate selectors whose two attempt mappings are both valid. The existing guarantees remain unchanged.
+
+The full landing assignment-copy omission produced one diagnostic red and restored production. The valid duplicate-selector mutation produced two reds, one for census and one for traces, and restored production. An initial test-field typo prevented test execution twice; the corrected fixture uses creation.Assignment.ID. Those diagnostic attempts remain recorded.
+
+## Chunk 3 implementation details
+
+The optional trial object binds a run to its plan and repetition. It records the harness version, limits, capabilities, assurance obligations, and native reference. The run source and actual attempt lines remain the owners of revision, model, and effort.
+
+Comparison validation checks each actual run against its condition. Missing planned repetitions remain incomplete evidence. Repetition checks use observed slots and counts, so large declared repetition counts cannot cause unbounded iteration.
+
+## Chunk 3 repair plan
+
+Ticket 6 belongs to chunk 3 and follows ticket 3. It closes the native review findings without changing the approved behavior. CHANGELOG.md joins the ownership fence for the delivered command entry.
+
+A16 and A18 include hostile comparison-plan files and bounded task/condition processing. Missing-repetition reports aggregate absent tasks from observed slots. They retain an example missing task without expanding all task/condition pairs.
+
+A18, A35, and A36 include trial identity, reference, repetition range, capabilities, and assurance partitions. A24 includes exact condition totals for estimates and actual charges across roles, states, partial values, and currencies. A37 includes both quality boundaries. A38 includes each fixed plan field independently. A19 includes complete pilot and descriptive cases. A20 includes explicit incomplete state.
+
+Synthetic CLI validation passed through the built binary. The temporary environment was corrected after the first import used the ordinary store. All four generated records were preserved, verified, and removed from that store. The corrected temporary-store comparison passed. No paid trial ran.
+
+Initial probes bit for cache subtraction, default preservation, budget, approval, pilot repetition, assurance, missing repetitions, quality, failure tolerance, variation, and causal restrictions. Each fixed run field also produced its independent red. Every probe restored production.
+
+## Chunk 3 final repair plan
+
+Ticket 7 follows ticket 6 within chunk 3. It closes the four later-delta findings. A20 uses typed comparison rows. A24 includes aggregate overflow refusal. A37 includes one deterministic diagnostic from multiple failing measures. Policy lookup becomes pure without changing accepted vocabulary.
+
+The initial twelve findings are closed at 4e43382a. Both complete packages passed. Fifteen repair probes bit and restored source, including exact estimated and actual totals in two currencies. The required cache probe also bit.
+
+The final repair uses typed outcome, role, usage, cost, and variation rows. Policy lookup and projection have no mutable global registry. Sparse metric aggregation counts unknown observations without expanding a run-by-metric matrix.
+
+Final repair probes bit for quality ordering, both diagnostic stops, actual-cost overflow, condition overflow, and opaque JSON output. The first unknown-stop omission caused a panic. A replacement continue mutation then demonstrated multiple diagnostics without a panic. Both restored production.
+
+Typed report probes bit for missing-observation counts, cached input values, and unknown actual charges. The full assessment suite passed after restoration. No paid trial or model-default change occurred.
