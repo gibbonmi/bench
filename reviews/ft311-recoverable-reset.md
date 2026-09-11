@@ -2,25 +2,21 @@
 
 Frozen base: `cf2caa6d5c195c6b6ed5852fb4478902d1d99fbd`
 
-Reviewed tip: `2e50ae20d8162392d251494e5651918f507cb52b`
+Reviewed tip: `4642603b6212fa8cd9fd8ace93c30b92b3687345`
 
-Raw findings: Standards 2, Spec 2, Coverage 1.
+Current findings: Standards 0, Spec 1, Coverage 1.
 
-De-duplicated repair or decision targets: 3.
+De-duplicated decision targets: 1.
 
 ## Standards
 
-Count: 2. Worst issue: the exported reset-ref constructor has no public documentation.
-
-- `auto-fix` — `internal/intent/ledger/validate.go:36` exports `ResetRefPrefix` without the full-sentence symbol-leading Go doc required by the comment standard. Add the contract comment without changing behavior.
-- `auto-fix` — `cmd/bench/worktree_leaves.go:72` restates the private `worktreeSuffix` name and one-line body. Delete the redundant comment.
+Count: 0. Worst issue: none. The repair-scoped re-review closed both comment findings at the reviewed tip.
 
 ## Spec
 
-Count: 2 raw, 1 actionable. Worst issue: the ignored-versus-tracked collision has no authorized behavior.
+Count: 1. Worst issue: the ignored-versus-tracked collision has no authorized behavior.
 
 - `ask-user` — `specs/ft311-recoverable-reset/spec.md:66` promises that ignored files are kept, while line 416 says ignored files are neither preserved nor removed. `internal/worktree/reset_apply.go:108` can overwrite an ignored untracked object when the checkpoint tracks the same path, and `internal/worktree/reset_apply_test.go:143` covers only non-colliding ignored paths. Choose refusal, deletion, or another recoverable collision policy; the benchmark prompt explicitly withholds that decision.
-- `no-op` — the proposed exit-3 guidance omission is refuted by `.bench/BENCH-reference.md:264`, which says that a fault after preservation exits 3 and names the restore command. No repair target remains.
 
 ## Coverage
 
