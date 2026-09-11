@@ -84,7 +84,7 @@ Use these headings exactly:
 
 ## Gate-stage timings
 
-## Ticket-versus-spec-slice and retained-session performance
+## Ticket-versus-spec-slice and delegate performance
 
 ## Coordinator catches
 

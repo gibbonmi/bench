@@ -13,7 +13,7 @@ synthesize, with no interview. It owns the discipline: stories, acceptance cover
 ## Exit handoff
 
 The spec carries `Status: staged` (staged → implemented at the green gate → promote-then-delete on merge). Stop for sign-off.
-Then recommend a fresh mid-tier build session on one retained integration source. Review its frozen base and tip, and hand the accepted source to `bench worktree land`.
+Then recommend the approved implementation line for one retained session on one integration source. Review each frozen chunk before its successor, reconcile the final source, and hand it to `bench worktree land`.
 
 ## Entry contract
 

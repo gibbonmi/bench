@@ -31,8 +31,6 @@ func checkRetainedWorkflow(root string) []string {
 	if got, want := binding.Cell("codex", "cheap"), "gpt-5.6-terra"; got != want {
 		diags = append(diags, fmt.Sprintf("Codex cheap binding = %q, want %q", got, want))
 	}
-	diags = append(diags, checkImplementationChunkTable(readIfExists(filepath.Join(root, "specs", "retained-implementation-workflow", "spec.md")))...)
-
 	wantDiagnostics := []string{
 		"retained workflow: craft-spec dropped the one implementation-line template",
 		"retained workflow: craft-spec dropped the implementation-line reason factors",
@@ -137,6 +135,7 @@ func checkRetainedWorkflow(root string) []string {
 		},
 		".agents/commands/bench-write-spec.md": {
 			"A fresh session\nbuilds after ticket approval",
+			"fresh mid-tier build session",
 		},
 		".agents/commands/bench-drain.md": {
 			"one later write delegate authors the complete tracked batch",
@@ -145,9 +144,6 @@ func checkRetainedWorkflow(root string) []string {
 		".agents/commands/bench-review-implementation.md": {
 			"Initial review blocks on the full",
 			"repair-scoped re-review",
-		},
-		".agents/commands/bench-final-check.md": {
-			"Ticket-versus-spec-slice and delegate performance",
 		},
 		".agents/skills/bench-craft-tickets/SKILL.md": {
 			"one fresh write-delegate charge",
@@ -159,6 +155,9 @@ func checkRetainedWorkflow(root string) []string {
 		"docs/field-guide.html": {
 			"their build starts in a fresh session",
 			"per fresh write-delegate context",
+		},
+		"projects/benchkit.md": {
+			"After ticket approval, a fresh\n  mid-tier session starts the build.",
 		},
 	} {
 		text := readIfExists(filepath.Join(root, filepath.FromSlash(file)))
@@ -219,6 +218,9 @@ func checkImplementationChunkTable(spec string) []string {
 
 func TestRetainedWorkflowChunkTableBites(t *testing.T) {
 	valid := "## Implementation chunks\n\n| chunk / ticket | blocked by | delivered outcome | acceptance rows | tests | harder chunk |\n| --- | --- | --- | --- | --- | --- |\n| 1.md | none | retained behavior | W1 | `TestRetainedWorkflow` | no |\n\n## Testing decisions\n"
+	if diags := checkImplementationChunkTable(valid); len(diags) != 0 {
+		t.Fatalf("valid implementation chunk table failed: %v", diags)
+	}
 	for _, tc := range []struct {
 		name       string
 		from       string

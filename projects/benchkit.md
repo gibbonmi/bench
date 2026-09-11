@@ -556,8 +556,8 @@ escalation.
   `/bench-write-spec` accepts exactly one of three sources: a ready compiled
   map, a reviewer-confirmed current conversation, or a named reviewed artifact.
   It authors the spec and tickets from that source and the current tree. Top +
-  high remains a reviewer-approved escalation. After ticket approval, a fresh
-  mid-tier session starts the build. Distinct from the doc-authoring leverage
+  high remains a reviewer-approved escalation. After ticket approval, one
+  session on the approved implementation line retains the build. Distinct from the doc-authoring leverage
   override above: that spends high effort on the kit's guidance prose.
 - **`bench` CLI shell plumbing** → cheap model, low–medium effort at the known seam.
   This stays mechanical once the gate-resolution and worktree-pool shapes exist.
