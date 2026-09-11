@@ -930,6 +930,14 @@ help[6]{cmd,why}:
   bench consumers reviewrecord.Read --full,walk the consumers outside the diff
 ```
 
+## Chunk 2 repair review closure
+
+All three fresh Sol/high axes returned current clean repair reaffirmations on `06a589b935ce26fd9e27d18292f20985c81db487`.
+Standards closed S1. Spec closed P3–P5. Coverage closed C2-C1–C2-C3.
+
+Each axis reports zero findings, no worst issue, and zero repair targets.
+The native excerpts remain below. These reviews grant no gate or publication authority.
+
 ## Machine record
 
 ```bench-review-record
@@ -1575,6 +1583,72 @@ help[6]{cmd,why}:
             "ref": "",
             "digest": "",
             "excerpt": ""
+          }
+        },
+        {
+          "id": "c2-standards-repair-clean",
+          "performer": "/root/c2_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "3b22f1eb96beee54fe69fb6a9ee56c4e10b6e17e",
+          "state": "completed",
+          "outcome": "pass",
+          "axis": "Standards",
+          "base": "5457042ec3e0919327dc7943aea7f002a54285b2",
+          "tip": "06a589b935ce26fd9e27d18292f20985c81db487",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-standards-repair-pending"
+          ],
+          "native_ref": {
+            "ref": "codex:agent//root/c2_standards/repair-06a589b",
+            "excerpt": "Clean reaffirmation: zero findings; worst issue: none; repair targets: 0. S1 is closed. No repair-delta or cross-chunk Standards concern remains. Native terminal conclusion: Standards repair follow-up completed with zero findings.\nFrozen pair: 5457042ec3e0919327dc7943aea7f002a54285b2..06a589b935ce26fd9e27d18292f20985c81db487. Actual line: gpt-5.6-sol / high / 1 iteration.",
+            "digest": "sha256:895d6a25f857eea6490e2a71756bb8e24554c829b1076cf5bc6a1e07bae97523"
+          }
+        },
+        {
+          "id": "c2-spec-repair-clean",
+          "performer": "/root/c2_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "3b22f1eb96beee54fe69fb6a9ee56c4e10b6e17e",
+          "state": "completed",
+          "outcome": "pass",
+          "axis": "Spec",
+          "base": "5457042ec3e0919327dc7943aea7f002a54285b2",
+          "tip": "06a589b935ce26fd9e27d18292f20985c81db487",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-spec-repair-pending"
+          ],
+          "native_ref": {
+            "ref": "codex:agent//root/c2_spec/repair-06a589b",
+            "excerpt": "Spec repair follow-up completed clean: 0 findings; worst issue none; repair targets 0. P3\u2013P5 are closed. Whole-spec audit: E1\u2013E14, E19\u2013E32, E37, and E38 remain satisfied at this source. E15\u2013E18 and E33\u2013E36 remain correctly deferred to chunk 3. Terminal conclusion: Spec reaffirms the repaired chunk-2 source with no findings.\nFrozen pair: 5457042ec3e0919327dc7943aea7f002a54285b2..06a589b935ce26fd9e27d18292f20985c81db487. Actual line: gpt-5.6-sol / high / 1 iteration.",
+            "digest": "sha256:4b8579973127ec9911649091cb493e533eec8452d9254f00f46ba39f9a7af3bb"
+          }
+        },
+        {
+          "id": "c2-coverage-repair-clean",
+          "performer": "/root/c2_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "3b22f1eb96beee54fe69fb6a9ee56c4e10b6e17e",
+          "state": "completed",
+          "outcome": "pass",
+          "axis": "Coverage",
+          "base": "5457042ec3e0919327dc7943aea7f002a54285b2",
+          "tip": "06a589b935ce26fd9e27d18292f20985c81db487",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-coverage-repair-pending"
+          ],
+          "native_ref": {
+            "ref": "codex:agent//root/c2_coverage/repair-06a589b",
+            "excerpt": "Coverage repair follow-up completed with zero findings; worst issue none. No repair-delta or cross-chunk Coverage finding remains. The shared-seam amendment and r2.md retain the approved rows, and the stale-source diagnostic remains exercised with the chunk identity. Terminal conclusion: current clean Coverage reaffirmation; C2-C1 through C2-C3 are closed at 06a589b935ce26fd9e27d18292f20985c81db487.\nFrozen pair: 5457042ec3e0919327dc7943aea7f002a54285b2..06a589b935ce26fd9e27d18292f20985c81db487. Actual line: gpt-5.6-sol / high / 1 iteration.",
+            "digest": "sha256:1be754e84f4597d9a374cf036ff11eb7205e44a48fafbe3476e2a13f2d091ff8"
           }
         }
       ]
