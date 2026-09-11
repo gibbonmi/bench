@@ -115,3 +115,8 @@ Use `show <run-id>` for complete attempts and native evidence.
 Condition totals separate known estimates from actual charges and preserve partial flags.
 Variation reports known and unknown counts, minimum, maximum, mean, and population standard deviation.
 Currency totals stay separate.
+
+Comparison values use typed TOON rows for outcomes, role states, usage, costs, and variation.
+A cost row with an empty role is the condition total. A populated role gives that role's total.
+Unknown numeric values read `unknown`; measured zero reads `0`. Partial flags describe incomplete totals.
+Variation counts absent observations without manufacturing zero values.

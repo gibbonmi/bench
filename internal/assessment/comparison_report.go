@@ -85,118 +85,114 @@ func compareCommand(s Store, path, ids string) (string, int) {
 	return renderComparison(report)
 }
 func renderComparison(report Comparison) (string, int) {
-	out, code := table("comparison", []string{"plan", "purpose", "eligible", "limits"}, [][]string{{report.Plan.ID, report.Plan.Purpose, fmt.Sprint(report.Eligible), "eligibility is not adoption approval; approval reference is unverified; inspect native details with bench assessment show <run-id>"}}, false)
-	if code != 0 {
-		return out, code
-	}
-	rows := [][]string{}
-	for _, r := range report.Runs {
-		rows = append(rows, []string{r.Run.RunID, r.Run.Condition, r.Run.TaskID, r.Run.State})
-	}
-	more, code := table("runs", []string{"run_id", "condition", "task", "state"}, rows, false)
-	if code != 0 {
-		return more, code
-	}
-	out += more
-	rows = nil
-	for _, r := range report.Runs {
-		quality := map[string]*float64{}
-		for name, m := range r.Run.Quality {
-			quality[name] = m.Value
-		}
-		rows = append(rows, []string{r.Run.RunID, encoded(quality), fmt.Sprint(r.Summary.Incomplete || r.Run.State == "incomplete")})
-	}
-	more, code = table("outcomes", []string{"run_id", "quality", "incomplete"}, rows, false)
-	if code != 0 {
-		return more, code
-	}
-	out += more
-	rows, err := comparisonRoleRows(report)
+	roles, err := comparisonRoles(report)
 	if err != nil {
 		return fail(err)
 	}
-	more, code = table("roles", []string{"condition", "role", "states", "metrics"}, rows, false)
-	if code != 0 {
-		return more, code
+	conditions, err := comparisonConditions(report)
+	if err != nil {
+		return fail(err)
 	}
-	out += more
-	rows = nil
-	for _, c := range report.Plan.Conditions {
-		metrics := map[string][]*float64{}
-		selected := []ComparedRun{}
-		keys := map[string]bool{"wall_seconds": true, "effort_seconds": true}
-		totals := CostSummary{Estimated: Money{Known: map[string]float64{}}, Actual: Money{Known: map[string]float64{}}}
-		for _, r := range report.Runs {
-			if r.Run.Condition != c.ID {
-				continue
-			}
-			selected = append(selected, r)
-			for currency := range r.Summary.Cost.Estimated.Known {
-				keys["estimated_known/"+currency] = true
-			}
-			for currency := range r.Summary.Cost.Actual.Known {
-				keys["actual_known/"+currency] = true
-			}
-			for k := range r.Run.Quality {
-				keys["quality/"+k] = true
-			}
-			addMoney(&totals.Estimated, r.Summary.Cost.Estimated)
-			addMoney(&totals.Actual, r.Summary.Cost.Actual)
+	runRows, outcomes, roleRows, usageRows, costRows, conditionRows, variationRows := [][]string{}, [][]string{}, [][]string{}, [][]string{}, [][]string{}, [][]string{}, [][]string{}
+	for _, r := range report.Runs {
+		runRows = append(runRows, []string{r.Run.RunID, r.Run.Condition, r.Run.TaskID, r.Run.State})
+		outcomes = append(outcomes, []string{r.Run.RunID, "incomplete", fmt.Sprint(r.Summary.Incomplete || r.Run.State == "incomplete"), "true"})
+		for _, name := range sortedKeys(r.Run.Quality) {
+			m := r.Run.Quality[name]
+			outcomes = append(outcomes, []string{r.Run.RunID, "quality/" + name, number(m.Value), fmt.Sprint(m.Value != nil)})
 		}
-		if len(selected) == 0 {
-			totals.Estimated.Partial = true
-			totals.Actual.Partial = true
+	}
+	for _, r := range roles {
+		for _, state := range sortedKeys(r.states) {
+			roleRows = append(roleRows, []string{r.condition, r.role, state, fmt.Sprint(r.states[state])})
 		}
-		if err := checkCost(totals); err != nil {
-			return fail(err)
-		}
-		for k := range keys {
-			for _, r := range selected {
-				var value *float64
-				switch {
-				case k == "wall_seconds":
-					value = r.Summary.WallSeconds
-				case k == "effort_seconds":
-					n := r.Summary.EffortSeconds
-					if !r.Summary.Incomplete {
-						value = &n
-					}
-				case strings.HasPrefix(k, "quality/"):
-					value = r.Run.Quality[strings.TrimPrefix(k, "quality/")].Value
-				default:
-					money := r.Summary.Cost.Estimated
-					currency := strings.TrimPrefix(k, "estimated_known/")
-					if strings.HasPrefix(k, "actual_known/") {
-						money = r.Summary.Cost.Actual
-						currency = strings.TrimPrefix(k, "actual_known/")
-					}
-					if n, ok := money.Known[currency]; ok {
-						value = &n
-					}
-				}
-				metrics[k] = append(metrics[k], value)
+		for i, n := range []*int64{r.usage.InputUncached, r.usage.InputCached, r.usage.Output} {
+			value := "unknown"
+			if n != nil {
+				value = fmt.Sprint(*n)
 			}
+			usageRows = append(usageRows, []string{r.condition, r.role, []string{"input_uncached", "input_cached", "output"}[i], value, fmt.Sprint(n == nil || len(r.usage.Unknown) > 0)})
 		}
-		variation := map[string]Distribution{}
-		for k, values := range metrics {
-			d, err := distribution(values)
+		costRows = appendCostRows(costRows, r.condition, r.role, r.cost)
+	}
+	for _, c := range conditions {
+		conditionRows = append(conditionRows, []string{c.condition, fmt.Sprint(c.runs)})
+		costRows = appendCostRows(costRows, c.condition, "", c.cost)
+		for _, metric := range sortedKeys(c.metrics) {
+			d, err := distribution(c.metrics[metric])
 			if err != nil {
 				return fail(err)
 			}
-			variation[k] = d
+			d.Unknown = c.runs - d.Known
+			variationRows = append(variationRows, []string{c.condition, metric, "known", fmt.Sprint(d.Known)}, []string{c.condition, metric, "unknown", fmt.Sprint(d.Unknown)})
+			for _, stat := range []struct {
+				name  string
+				value *float64
+			}{{"min", d.Min}, {"max", d.Max}, {"mean", d.Mean}, {"stddev", d.StdDev}} {
+				variationRows = append(variationRows, []string{c.condition, metric, stat.name, number(stat.value)})
+			}
 		}
-		rows = append(rows, []string{c.ID, fmt.Sprint(len(selected)), encoded(totals), encoded(variation)})
 	}
-	more, code = table("conditions", []string{"condition", "runs", "cost", "variation"}, rows, false)
-	if code != 0 {
-		return more, code
-	}
-	out += more
-	rows = nil
+	reasonRows := [][]string{}
 	sort.Strings(report.Reasons)
 	for _, reason := range report.Reasons {
-		rows = append(rows, []string{reason})
+		reasonRows = append(reasonRows, []string{reason})
 	}
-	more, code = table("reasons", []string{"reason"}, rows, true)
-	return out + more, code
+	tables := []struct {
+		name   string
+		fields []string
+		rows   [][]string
+	}{
+		{"comparison", []string{"plan", "purpose", "eligible", "limits"}, [][]string{{report.Plan.ID, report.Plan.Purpose, fmt.Sprint(report.Eligible), "eligibility is not adoption approval; approval reference is unverified; inspect native details with bench assessment show <run-id>"}}},
+		{"runs", []string{"run_id", "condition", "task", "state"}, runRows},
+		{"outcomes", []string{"run_id", "measure", "value", "known"}, outcomes},
+		{"roles", []string{"condition", "role", "state", "attempts"}, roleRows},
+		{"usage", []string{"condition", "role", "category", "known_value", "partial"}, usageRows},
+		{"costs", []string{"condition", "role", "kind", "currency", "known_value", "partial"}, costRows},
+		{"conditions", []string{"condition", "runs"}, conditionRows},
+		{"variation", []string{"condition", "metric", "statistic", "value"}, variationRows},
+		{"reasons", []string{"reason"}, reasonRows},
+	}
+	out := ""
+	for i, t := range tables {
+		part, code := table(t.name, t.fields, t.rows, i == len(tables)-1)
+		if code != 0 {
+			return part, code
+		}
+		out += part
+	}
+	return out, 0
+}
+func number(v *float64) string {
+	if v == nil {
+		return "unknown"
+	}
+	return fmt.Sprint(*v)
+}
+func sortedKeys[V any](values map[string]V) []string {
+	keys := make([]string, 0, len(values))
+	for k := range values {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+func appendCostRows(rows [][]string, condition, role string, cost CostSummary) [][]string {
+	for _, item := range []struct {
+		kind  string
+		money Money
+	}{{"estimated", cost.Estimated}, {"actual", cost.Actual}} {
+		currencies := sortedKeys(item.money.Known)
+		if len(currencies) == 0 {
+			currencies = []string{""}
+		}
+		for _, currency := range currencies {
+			value := "unknown"
+			if n, ok := item.money.Known[currency]; ok {
+				value = fmt.Sprint(n)
+			}
+			rows = append(rows, []string{condition, role, item.kind, currency, value, fmt.Sprint(item.money.Partial)})
+		}
+	}
+	return rows
 }

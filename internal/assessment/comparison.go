@@ -34,7 +34,8 @@ func Compare(p Plan, runs []Run) (Comparison, error) {
 		out.Reasons = append(out.Reasons, s)
 		out.Eligible = false
 	}
-	if !purposes[p.Purpose].eligible {
+	policy, _ := purpose(p.Purpose)
+	if !policy.eligible {
 		reason("descriptive evidence only; not default-change evidence")
 	}
 	if len(p.Conditions) < 2 {
@@ -64,7 +65,7 @@ func Compare(p Plan, runs []Run) (Comparison, error) {
 			reason("planned repetitions are only a pilot: " + task.ID)
 		}
 	}
-	if purposes[p.Purpose].causal {
+	if policy.causal {
 		arms, _ := resolveCausalArms(p.Conditions)
 		if len(arms.none.Capabilities) != 0 || len(arms.current.Capabilities) == 0 || capabilityChanges(arms.current.Capabilities, arms.changed.Capabilities) != 1 {
 			reason("causal arm must change exactly one capability")

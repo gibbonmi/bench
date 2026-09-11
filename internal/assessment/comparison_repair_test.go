@@ -146,3 +146,32 @@ func TestAssessmentComparisonCardinality(t *testing.T) {
 		t.Fatalf("unbounded missing-repetition expansion: %d %v", len(got.Reasons), err)
 	}
 }
+
+func TestAssessmentComparisonQualityDiagnostic(t *testing.T) {
+	for _, kind := range []string{"bounds", "unknown"} {
+		t.Run(kind, func(t *testing.T) {
+			p := comparisonPlan()
+			p.QualityTolerance.Measures = map[string]Range{}
+			p.QualityTolerance.Measures["z"] = Range{Max: ptr(0.0)}
+			p.QualityTolerance.Measures["a"] = Range{Max: ptr(0.0)}
+			runs := comparisonRuns(t.TempDir(), p)
+			for i := range runs {
+				runs[i].Quality = map[string]Measure{"a": {Value: ptr(0.0), Reference: Reference{"synthetic", "a"}}, "z": {Value: ptr(0.0), Reference: Reference{"synthetic", "z"}}}
+			}
+			if kind == "unknown" {
+				runs[0].Quality = nil
+			} else {
+				for name, m := range runs[0].Quality {
+					m.Value = ptr(1.0)
+					runs[0].Quality[name] = m
+				}
+			}
+			for i := 0; i < 32; i++ {
+				got, err := Compare(p, runs)
+				if err != nil || got.Eligible || len(got.Reasons) != 1 || !strings.HasSuffix(got.Reasons[0], "/a") {
+					t.Fatalf("quality diagnostic unstable or unbounded: %v %v", got.Reasons, err)
+				}
+			}
+		})
+	}
+}

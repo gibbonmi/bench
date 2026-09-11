@@ -395,7 +395,8 @@ The synthetic cross-attempt counter case extends A6 and A24 without changing the
       "id": "3",
       "tickets": [
         "3.md",
-        "6.md"
+        "6.md",
+        "7.md"
       ],
       "verification": [
         {
@@ -526,3 +527,15 @@ A18, A35, and A36 include trial identity, reference, repetition range, capabilit
 Synthetic CLI validation passed through the built binary. The temporary environment was corrected after the first import used the ordinary store. All four generated records were preserved, verified, and removed from that store. The corrected temporary-store comparison passed. No paid trial ran.
 
 Initial probes bit for cache subtraction, default preservation, budget, approval, pilot repetition, assurance, missing repetitions, quality, failure tolerance, variation, and causal restrictions. Each fixed run field also produced its independent red. Every probe restored production.
+
+## Chunk 3 final repair plan
+
+Ticket 7 follows ticket 6 within chunk 3. It closes the four later-delta findings. A20 uses typed comparison rows. A24 includes aggregate overflow refusal. A37 includes one deterministic diagnostic from multiple failing measures. Policy lookup becomes pure without changing accepted vocabulary.
+
+The initial twelve findings are closed at 4e43382a. Both complete packages passed. Fifteen repair probes bit and restored source, including exact estimated and actual totals in two currencies. The required cache probe also bit.
+
+The final repair uses typed outcome, role, usage, cost, and variation rows. Policy lookup and projection have no mutable global registry. Sparse metric aggregation counts unknown observations without expanding a run-by-metric matrix.
+
+Final repair probes bit for quality ordering, both diagnostic stops, actual-cost overflow, condition overflow, and opaque JSON output. The first unknown-stop omission caused a panic. A replacement continue mutation then demonstrated multiple diagnostics without a panic. Both restored production.
+
+Typed report probes bit for missing-observation counts, cached input values, and unknown actual charges. The full assessment suite passed after restoration. No paid trial or model-default change occurred.

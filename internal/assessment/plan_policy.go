@@ -2,21 +2,39 @@ package assessment
 
 type purposePolicy struct{ eligible, causal bool }
 
-var purposes = map[string]purposePolicy{
-	"pilot": {}, "descriptive": {}, "default-change": {eligible: true}, "kit-causal": {eligible: true, causal: true},
+func purpose(name string) (purposePolicy, bool) {
+	switch name {
+	case "pilot", "descriptive":
+		return purposePolicy{}, true
+	case "default-change":
+		return purposePolicy{eligible: true}, true
+	case "kit-causal":
+		return purposePolicy{eligible: true, causal: true}, true
+	default:
+		return purposePolicy{}, false
+	}
 }
 
 const capabilityVariable = "capability"
 
-var variableProjections = map[string]func(*Condition){
-	capabilityVariable: func(c *Condition) { c.Capabilities = nil },
-	"revision":         func(c *Condition) { c.Revision = "" },
-	"harness":          func(c *Condition) { c.Harness = "" },
-	"limits":           func(c *Condition) { c.Limits = nil },
-	"model":            func(c *Condition) { projectLines(c, func(l Line) Line { l.Model = ""; return l }) },
-	"effort":           func(c *Condition) { projectLines(c, func(l Line) Line { l.Effort = ""; return l }) },
+func variableProjection(name string) (func(*Condition), bool) {
+	switch name {
+	case capabilityVariable:
+		return func(c *Condition) { c.Capabilities = nil }, true
+	case "revision":
+		return func(c *Condition) { c.Revision = "" }, true
+	case "harness":
+		return func(c *Condition) { c.Harness = "" }, true
+	case "limits":
+		return func(c *Condition) { c.Limits = nil }, true
+	case "model":
+		return func(c *Condition) { projectLines(c, func(l Line) Line { l.Model = ""; return l }) }, true
+	case "effort":
+		return func(c *Condition) { projectLines(c, func(l Line) Line { l.Effort = ""; return l }) }, true
+	default:
+		return nil, false
+	}
 }
-
 func projectLines(c *Condition, project func(Line) Line) {
 	lines := map[string]Line{}
 	for role, line := range c.Lines {
@@ -31,7 +49,7 @@ func fixedCondition(c Condition, variable string) Condition {
 	if len(c.Capabilities) == 0 {
 		c.Capabilities = nil
 	}
-	if project := variableProjections[variable]; project != nil {
+	if project, ok := variableProjection(variable); ok {
 		project(&c)
 	}
 	return c

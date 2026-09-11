@@ -6,7 +6,14 @@ type roleAggregate struct {
 	events []Event
 }
 
-func comparisonRoleRows(report Comparison) ([][]string, error) {
+type roleReport struct {
+	condition, role string
+	states          map[string]int
+	cost            CostSummary
+	usage           Usage
+}
+
+func comparisonRoles(report Comparison) ([]roleReport, error) {
 	type key struct{ condition, role string }
 	groups := map[key]*roleAggregate{}
 	for _, r := range report.Runs {
@@ -28,7 +35,7 @@ func comparisonRoleRows(report Comparison) ([][]string, error) {
 			addMoney(&g.cost.Actual, cost.Actual)
 		}
 	}
-	rows := [][]string{}
+	rows := []roleReport{}
 	for _, c := range report.Plan.Conditions {
 		for _, role := range Roles() {
 			g := groups[key{c.ID, role}]
@@ -45,11 +52,7 @@ func comparisonRoleRows(report Comparison) ([][]string, error) {
 			if err := checkCost(g.cost); err != nil {
 				return nil, err
 			}
-			metrics := struct {
-				Usage Usage       `json:"usage"`
-				Cost  CostSummary `json:"cost"`
-			}{u, g.cost}
-			rows = append(rows, []string{c.ID, role, encoded(g.states), encoded(metrics)})
+			rows = append(rows, roleReport{c.ID, role, g.states, g.cost, u})
 		}
 	}
 	return rows, nil

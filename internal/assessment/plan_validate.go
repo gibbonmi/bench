@@ -11,13 +11,14 @@ func ValidatePlan(p Plan) error {
 	if !safeText(reflect.ValueOf(p)) || p.Version != 1 || !safeID.MatchString(p.ID) {
 		return fmt.Errorf("invalid comparison plan identity")
 	}
-	if _, ok := purposes[p.Purpose]; !ok {
+	policy, ok := purpose(p.Purpose)
+	if !ok {
 		return fmt.Errorf("unknown comparison purpose")
 	}
 	if !validReference(p.Approval) || p.Budget.Amount == nil || !finite(*p.Budget.Amount) || *p.Budget.Amount < 0 || p.Budget.Currency == "" {
 		return fmt.Errorf("plan requires approval reference and budget")
 	}
-	if _, ok := variableProjections[p.Variable]; !ok {
+	if _, ok := variableProjection(p.Variable); !ok {
 		return fmt.Errorf("plan requires one declared experimental variable")
 	}
 	q := p.QualityTolerance
@@ -75,7 +76,7 @@ func ValidatePlan(p Plan) error {
 			return fmt.Errorf("undeclared condition difference")
 		}
 	}
-	if purposes[p.Purpose].causal {
+	if policy.causal {
 		if _, ok := resolveCausalArms(p.Conditions); !ok || p.Variable != capabilityVariable {
 			return fmt.Errorf("kit-causal plan requires exactly three FT231 conditions")
 		}
