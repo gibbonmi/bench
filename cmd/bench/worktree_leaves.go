@@ -69,5 +69,4 @@ func worktreeCommand(c Command, args []string) int {
 	return dispatchLeafFamily(c, "bench worktree", usage.WorktreeUsage(), worktreeLeaves, args)
 }
 
-// worktreeSuffix renders a grammar as its help-row suffix.
 func worktreeSuffix(grammar string) string { return strings.TrimPrefix(grammar, "bench worktree") }

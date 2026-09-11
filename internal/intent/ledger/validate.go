@@ -33,6 +33,7 @@ func RecoveryRefPrefix(ownerID, assignmentID string) string {
 	return RecoveryRefNamespace + ownerID + "/" + assignmentID + "/"
 }
 
+// ResetRefPrefix names the reset-envelope prefix for one assignment.
 func ResetRefPrefix(ownerID, assignmentID string) string {
 	return ResetRefNamespace + ownerID + "/" + assignmentID + "/"
 }
