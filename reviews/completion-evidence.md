@@ -584,13 +584,147 @@ help[0]{cmd,why}:
 
 ```
 
+## Chunk 2 verification and review
+
+Three fresh native Sol/high reviews are pending on the frozen chunk 2 pair.
+The author ran the checkpoint, canonical-axis, and public-route requirements against source `e22288d`.
+All passed without skips. Both omission probes bit and restored successfully.
+The retained plan mapping names unchanged chunk IDs and covers the reviewed verification-inventory amendment.
+
+The shell route now delegates grammar to the gate owner; the installed wrapper still has its pre-landing grammar.
+Use this worktree’s source wrapper for the new checkpoint during implementation, preserving the installed publication broker.
+
+Shared consumer evidence is complete. The author walked the untouched command registry,
+RunCommand failure/reuse tests, reviewrecord source tests, and preflight reader before dispatch.
+
+```toon
+blast[105]{changed_symbol,file,line,touched}:
+  bench.commandRegistry,cmd/bench/command_registry.go,245,false
+  bench.commandRegistry,cmd/bench/command_registry.go,261,false
+  bench.commandRegistry,cmd/bench/command_registry.go,289,false
+  bench.commandRegistry,cmd/bench/command_registry_test.go,69,false
+  bench.commandRegistry,cmd/bench/help_inventory_test.go,9,true
+  bench.commandRegistry,cmd/bench/help_inventory_test.go,10,true
+  bench.commandRegistry,cmd/bench/help_inventory_test.go,11,true
+  bench.commandRegistry,cmd/bench/otel_hook_seams_test.go,18,false
+  bench.gateRoute,cmd/bench/gate_route_test.go,61,true
+  bench.gateRoute,cmd/bench/gate_route_test.go,78,true
+  bench.gateRoute,cmd/bench/gate_route_test.go,84,true
+  gate.Checkpoint,internal/gate/checkpoint.go,24,true
+  gate.Checkpoint,internal/gate/checkpoint.go,29,true
+  gate.Checkpoint,internal/gate/checkpoint.go,33,true
+  gate.Checkpoint,internal/gate/checkpoint.go,49,true
+  gate.Checkpoint,internal/gate/checkpoint.go,50,true
+  gate.Checkpoint,internal/gate/evaluation.go,26,true
+  gate.Checkpoint.validate,internal/gate/checkpoint.go,82,true
+  gate.Checkpoint.validate,internal/gate/checkpoint.go,86,true
+  gate.Command,cmd/bench/main.go,151,true
+  gate.Command,internal/gate/command_test.go,24,true
+  gate.CommandUsage,cmd/bench/gate_route_test.go,62,true
+  gate.CommandUsage,cmd/bench/gate_route_test.go,93,true
+  gate.CommandUsage,cmd/bench/main.go,150,true
+  gate.CommandUsage,internal/gate/command_test.go,17,true
+  gate.CommandUsage,internal/gate/command_test.go,18,true
+  gate.CommandUsage,internal/gate/command_test.go,19,true
+  gate.CommandUsage,internal/gate/command_test.go,20,true
+  gate.CommandUsage,internal/gate/gate.go,220,true
+  gate.CommandUsage,internal/gate/gate.go,245,true
+  gate.CommandUsage,internal/gate/gate.go,249,true
+  gate.RunCommand,cmd/bench/main.go,152,true
+  gate.RunCommand,internal/gate/gate.go,252,true
+  gate.RunCommand,internal/gate/review_checkpoint_test.go,27,true
+  gate.RunCommand,internal/gate/run_failure_outcomes_test.go,72,false
+  gate.RunCommand,internal/gate/run_failure_outcomes_test.go,93,false
+  gate.RunCommand,internal/gate/run_failure_outcomes_test.go,157,false
+  gate.RunCommand,internal/gate/run_failure_outcomes_test.go,185,false
+  gate.RunCommand,internal/gate/run_failure_outcomes_test.go,211,false
+  gate.RunCommand,internal/gate/run_failure_outcomes_test.go,233,false
+  gate.RunCommand,internal/gate/run_failure_outcomes_test.go,254,false
+  gate.RunCommand,internal/gate/run_outcomes_test.go,79,false
+  gate.RunCommand,internal/gate/run_outcomes_test.go,104,false
+  gate.WithCheckpoint,internal/gate/gate.go,231,true
+  gate.checkpointEvaluation,internal/gate/gate.go,278,true
+  gate.checkpointEvaluation,internal/gate/gate.go,362,true
+  gate.checkpointEvaluation,internal/gate/gate.go,366,true
+  gate.checkpointFixture,internal/gate/review_checkpoint_test.go,53,true
+  gate.checkpointFixture,internal/gate/review_checkpoint_test.go,68,true
+  gate.checkpointFixture,internal/gate/review_checkpoint_test.go,91,true
+  gate.checkpointFixture,internal/gate/review_checkpoint_test.go,107,true
+  gate.checkpointFixture,internal/gate/review_checkpoint_test.go,126,true
+  gate.checkpointFixture,internal/gate/review_checkpoint_test.go,156,true
+  gate.checkpointFixture,internal/gate/review_checkpoint_test.go,168,true
+  gate.checkpointKey,internal/gate/checkpoint.go,25,true
+  gate.checkpointKey,internal/gate/checkpoint.go,29,true
+  gate.execute,internal/gate/gate.go,267,true
+  gate.execute,internal/gate/gate.go,283,true
+  gate.executeAfterAcquire,internal/gate/gate.go,233,true
+  gate.gateEvaluation,internal/gate/checkpoint.go,28,true
+  gate.gateEvaluation,internal/gate/checkpoint.go,28,true
+  gate.gateEvaluation,internal/gate/checkpoint.go,85,true
+  gate.gateEvaluation,internal/gate/evaluation.go,30,true
+  gate.gateEvaluation,internal/gate/evaluation.go,31,true
+  gate.gateEvaluation,internal/gate/evaluation.go,49,true
+  gate.gateEvaluation,internal/gate/evaluation.go,50,true
+  gate.gateEvaluation,internal/gate/evaluation.go,74,true
+  gate.gateEvaluation,internal/gate/evaluation.go,88,true
+  gate.gateEvaluation,internal/gate/evaluation.go,98,true
+  gate.gateEvaluation,internal/gate/evaluation.go,111,true
+  gate.gateEvaluation.applyCheckpoint,internal/gate/evaluation.go,122,true
+  gate.gateEvaluation.build,internal/gate/evaluation.go,80,true
+  gate.gateEvaluation.build,internal/gate/evaluation.go,95,true
+  gate.gateEvaluation.build,internal/gate/evaluation.go,104,true
+  gate.parseGateArgs,internal/gate/gate.go,218,true
+  gate.parseGateArgs,internal/gate/gate.go,248,true
+  gate.runCheckpoint,internal/gate/review_checkpoint_test.go,56,true
+  gate.runCheckpoint,internal/gate/review_checkpoint_test.go,72,true
+  gate.runCheckpoint,internal/gate/review_checkpoint_test.go,78,true
+  gate.runCheckpoint,internal/gate/review_checkpoint_test.go,83,true
+  gate.runCheckpoint,internal/gate/review_checkpoint_test.go,96,true
+  gate.runCheckpoint,internal/gate/review_checkpoint_test.go,116,true
+  gate.runCheckpoint,internal/gate/review_checkpoint_test.go,160,true
+  gate.runCheckpoint,internal/gate/review_checkpoint_test.go,180,true
+  reviewrecord.Check,internal/gate/checkpoint.go,101,true
+  reviewrecord.CheckSource,internal/reviewrecord/source_test.go,29,false
+  reviewrecord.CheckSource,internal/reviewrecord/source_test.go,34,false
+  reviewrecord.CheckSource,internal/reviewrecord/source_test.go,39,false
+  reviewrecord.CheckSource,internal/reviewrecord/source_test.go,66,false
+  reviewrecord.CheckSource,internal/reviewrecord/source_test.go,234,false
+  reviewrecord.CheckSource,internal/reviewrecord/source_test.go,243,false
+  reviewrecord.CheckSource,internal/reviewrecord/source_test.go,247,false
+  reviewrecord.Read,internal/preflight/review.go,212,false
+  reviewrecord.Read,internal/reviewrecord/source_test.go,25,false
+  reviewrecord.Read,internal/reviewrecord/source_test.go,53,false
+  reviewrecord.Read,internal/reviewrecord/source_test.go,167,false
+  reviewrecord.Read,internal/reviewrecord/source_test.go,194,false
+  reviewrecord.ReadTree,internal/reviewrecord/check.go,10,true
+  reviewrecord.checkCompletion,internal/reviewrecord/coverage.go,123,true
+  reviewrecord.checkSource,internal/reviewrecord/check.go,14,true
+  reviewrecord.checkSource,internal/reviewrecord/coverage.go,13,true
+  reviewrecord.checkVerification,internal/reviewrecord/check.go,56,true
+  reviewrecord.checkVerification,internal/reviewrecord/coverage.go,65,true
+  reviewrecord.parseRecord,internal/reviewrecord/files.go,64,true
+  reviewrecord.parseRecord,internal/reviewrecord/files.go,76,true
+blast_deleted[2]{changed_symbol,base_file,base_line}:
+  bench.gateUsageLine,cmd/bench/gate_route_test.go,19
+  gate.commandUsage,internal/gate/gate.go,244
+meta[1]{packages,files,matches,rows,truncated}:
+  266,18,41,105,false
+citation[1]{sha,state,version,cmd,hash}:
+  e22288dae5b1514ebb3f223fb72f12e03390cd24,clean,0.2.0,bench consumers --changed --base 5457042ec3e0919327dc7943aea7f002a54285b2 --source-tip e22288dae5b1514ebb3f223fb72f12e03390cd24 --full,8d749af8f8cc7d0d415c6689f96ac20315561ee888b6531947ebe3f8b4e656e3
+help[4]{cmd,why}:
+  bench consumers bench.commandRegistry --full,walk the consumers outside the diff
+  bench consumers gate.RunCommand --full,walk the consumers outside the diff
+  bench consumers reviewrecord.CheckSource --full,walk the consumers outside the diff
+  bench consumers reviewrecord.Read --full,walk the consumers outside the diff
+```
+
 ## Machine record
 
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/completion-evidence/spec.md",
-  "plan_digest": "sha256:267c4a827157b8e6acb6a9a24a56b984305fdea06ed5601964bef8e434df0f05",
+  "plan_digest": "sha256:344ffe2a529e7043e5bd579bdd1bec47f28129f293c913f5d98a0e33cf8be4dc",
   "implementation_session": "/root",
   "chunks": [
     {
@@ -846,6 +980,174 @@ help[0]{cmd,why}:
           ]
         }
       ]
+    },
+    {
+      "id": "2",
+      "base": "5457042ec3e0919327dc7943aea7f002a54285b2",
+      "tip": "e22288dae5b1514ebb3f223fb72f12e03390cd24",
+      "plan_digest": "sha256:344ffe2a529e7043e5bd579bdd1bec47f28129f293c913f5d98a0e33cf8be4dc",
+      "source_digest": "8e1b770b166fac00e706c8c60572ca9a7eff00d0",
+      "acceptance_rows": [
+        "E4",
+        "E5",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10",
+        "E11",
+        "E12",
+        "E14",
+        "E25",
+        "E26",
+        "E27",
+        "E28",
+        "E29",
+        "E30",
+        "E31",
+        "E32",
+        "E37"
+      ],
+      "verification": [
+        {
+          "id": "c2-checkpoint-tests",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "8e1b770b166fac00e706c8c60572ca9a7eff00d0",
+          "state": "completed",
+          "outcome": "pass",
+          "requirement": "checkpoint-tests",
+          "command": "bench test --package ./internal/gate --run TestReviewCheckpoint",
+          "exit_code": 0,
+          "native_ref": {
+            "ref": "codex:tool/0696f4",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,6090\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n",
+            "digest": "sha256:26b6e128a98f830845e62584212004bb975b9c0d4dbc12ccbaf10be6ba987e0f"
+          },
+          "probe": {
+            "mutation": "omit checkpoint evidence validation",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "codex:tool/983e10",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/evaluation.go,swap,failed,24,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestReviewCheckpoint,passed,34\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,5298\nfailures[24]{package,test,line}:\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpoint/failed_restore,\"review_checkpoint_test.go:58: checkpoint accepted invalid evidence or lost reason: exit 0:\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpoint/failed_transport,\"review_checkpoint_test.go:58: checkpoint accepted invalid evidence or lost reason: exit 0:\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpoint/failed_verification,\"review_checkpoint_test.go:58: checkpoint accepted invalid evidence or lost reason: exit 0:\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpoint/missing_axis,\"review_checkpoint_test.go:58: checkpoint accepted invalid evidence or lost reason: exit 0:\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpoint/missing_probe,\"review_checkpoint_test.go:58: checkpoint accepted invalid evidence or lost reason: exit 0:\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpoint/missing_verification,\"review_checkpoint_test.go:58: checkpoint accepted invalid evidence or lost reason: exit 0:\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpoint/missing_verifier,\"review_checkpoint_test.go:58: checkpoint accepted invalid evidence or lost reason: exit 0:\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpoint/pending_axis,\"review_checkpoint_test.go:58: checkpoint accepted invalid evidence or lost reason: exit 0:\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpoint/pending_verification,\"review_checkpoint_test.go:58: checkpoint accepted invalid evidence or lost reason: exit 0:\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpoint/review_as_verification,\"review_checkpoint_test.go:58: checkpoint accepted invalid evidence or lost reason: exit 0:\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpoint/silent_probe,\"review_checkpoint_test.go:58: checkpoint accepted invalid evidence or lost reason: exit 0:\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpoint/skipped_axis,\"review_checkpoint_test.go:58: checkpoint accepted invalid evidence or lost reason: exit 0:\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpoint/stale_verification,\"review_checkpoint_test.go:58: checkpoint accepted invalid evidence or lost reason: exit 0:\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpoint/wrong_verifier,\"review_checkpoint_test.go:58: checkpoint accepted invalid evidence or lost reason: exit 0:\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointCanonicalAxes/Coverage,\"review_checkpoint_test.go:117: canonical axis omitted without refusal: 0\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointCanonicalAxes/Spec,\"review_checkpoint_test.go:117: canonical axis omitted without refusal: 0\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointCanonicalAxes/Standards,\"review_checkpoint_test.go:117: canonical axis omitted without refusal: 0\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointFindingAndReviewIdentity/findings,\"review_checkpoint_test.go:181: invalid axis accepted: 0\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointFindingAndReviewIdentity/pair,\"review_checkpoint_test.go:181: invalid axis accepted: 0\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointFindingAndReviewIdentity/source,\"review_checkpoint_test.go:181: invalid axis accepted: 0\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointLaterSource/dirty_source,\"review_checkpoint_test.go:97: uncovered delta accepted: 0\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointLaterSource/unreviewed_repair,\"review_checkpoint_test.go:97: uncovered delta accepted: 0\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointMissingRecord,\"review_checkpoint_test.go:161: missing legacy record passed checkpoint: 0\"\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointReuse,\"review_checkpoint_test.go:76: ordinary green satisfied stronger checkpoint: 1 runs\"\nskips[0]{package,test,reason}:\n",
+              "digest": "sha256:5591453d694ac62738d77e868f56ee71f004cd89c7b037bd4cc29bdfcead51ca"
+            }
+          }
+        },
+        {
+          "id": "c2-axis-tests",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "8e1b770b166fac00e706c8c60572ca9a7eff00d0",
+          "state": "completed",
+          "outcome": "pass",
+          "requirement": "axis-tests",
+          "command": "bench test --package ./internal/gate --run TestReviewCheckpointCanonicalAxes",
+          "exit_code": 0,
+          "native_ref": {
+            "ref": "codex:tool/c1acb2",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,530\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n",
+            "digest": "sha256:cec1fd7009e3473ceb65cf2a65f2aae7e499ba46c7a28ec20f03784c3e6552d3"
+          },
+          "probe": {
+            "mutation": "omit canonical Coverage axis",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "codex:tool/fd92c7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/record.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestReviewCheckpointCanonicalAxes,passed,4\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointCanonicalAxes/Coverage,\"review_checkpoint_test.go:117: canonical axis omitted without refusal: 0\"\nskips[0]{package,test,reason}:",
+              "digest": "sha256:2c251d29863ae93f6cd06a6298e482a346e476289d38fd037623b4f95617e7ad"
+            }
+          }
+        },
+        {
+          "id": "c2-route-tests",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "8e1b770b166fac00e706c8c60572ca9a7eff00d0",
+          "state": "completed",
+          "outcome": "pass",
+          "requirement": "route-tests",
+          "command": "bench test --package ./cmd/bench --run TestGateCheckpointRoute",
+          "exit_code": 0,
+          "native_ref": {
+            "ref": "codex:tool/62bce4",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,691\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n",
+            "digest": "sha256:e4a00c8dc1e699d77fe4ba807aeb3c31550bd6a1aa6ccf15bb05312156401005"
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "c2-standards",
+          "performer": "/root/c2_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "8e1b770b166fac00e706c8c60572ca9a7eff00d0",
+          "state": "pending",
+          "outcome": "",
+          "axis": "Standards",
+          "base": "5457042ec3e0919327dc7943aea7f002a54285b2",
+          "tip": "e22288dae5b1514ebb3f223fb72f12e03390cd24",
+          "finding_ids": [],
+          "supersedes": [],
+          "native_ref": {
+            "ref": "",
+            "digest": "",
+            "excerpt": ""
+          }
+        },
+        {
+          "id": "c2-spec",
+          "performer": "/root/c2_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "8e1b770b166fac00e706c8c60572ca9a7eff00d0",
+          "state": "pending",
+          "outcome": "",
+          "axis": "Spec",
+          "base": "5457042ec3e0919327dc7943aea7f002a54285b2",
+          "tip": "e22288dae5b1514ebb3f223fb72f12e03390cd24",
+          "finding_ids": [],
+          "supersedes": [],
+          "native_ref": {
+            "ref": "",
+            "digest": "",
+            "excerpt": ""
+          }
+        },
+        {
+          "id": "c2-coverage",
+          "performer": "/root/c2_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "8e1b770b166fac00e706c8c60572ca9a7eff00d0",
+          "state": "pending",
+          "outcome": "",
+          "axis": "Coverage",
+          "base": "5457042ec3e0919327dc7943aea7f002a54285b2",
+          "tip": "e22288dae5b1514ebb3f223fb72f12e03390cd24",
+          "finding_ids": [],
+          "supersedes": [],
+          "native_ref": {
+            "ref": "",
+            "digest": "",
+            "excerpt": ""
+          }
+        }
+      ]
     }
   ],
   "completion": {
@@ -854,6 +1156,23 @@ help[0]{cmd,why}:
     "performer": "/root",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:267c4a827157b8e6acb6a9a24a56b984305fdea06ed5601964bef8e434df0f05",
+      "to": "sha256:344ffe2a529e7043e5bd579bdd1bec47f28129f293c913f5d98a0e33cf8be4dc",
+      "chunk_ids": {
+        "1": [
+          "1"
+        ],
+        "2": [
+          "2"
+        ],
+        "3": [
+          "3"
+        ]
+      }
+    }
+  ]
 }
 ```
