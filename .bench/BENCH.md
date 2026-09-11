@@ -118,7 +118,7 @@ Three predicates ride with them:
 4. `/bench-review-implementation` for semantic review after each implementation chunk.
 5. `/bench-final-check` to gate, commit on green, and report the landing evidence.
 
-**Retain implementation authorship through each approved spec.** The retained implementation session writes production changes, tests, probes, and repairs. A brief read-only diagnostic consultation can inspect evidence, but it receives no implementation or repair assignment. `craft-line` owns any user-directed change of implementation model or session.
+**Retain implementation authorship through each approved spec.** The retained implementation session writes production changes, tests, probes, and repairs. A brief read-only diagnostic consultation can inspect evidence, but it receives no implementation or repair assignment. `craft-line` owns any user-directed change of implementation model or session. `craft-line` owns the retained implementation continuation policy.
 
 **Plan and review coherent chunks.** An implementation chunk is one coherent behavior outcome with acceptance rows, tests, and a review checkpoint. A ticket remains a serial green commit checkpoint. Each planned chunk names its stable ID, outcome, acceptance rows, and tests. A chunk can contain several tickets.
 
