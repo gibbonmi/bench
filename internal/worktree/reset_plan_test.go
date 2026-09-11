@@ -26,7 +26,17 @@ func TestResetPlanReportsTheDirtyCheckoutAndWritesNothing(t *testing.T) {
 	after, err := git.Raw("-C", creation.Path, "status", "--porcelain=v1", "-z", "--untracked-files=all")
 	mustNoError(t, err)
 	requireTest(t, string(after) == string(before), "plan changed checkout status")
-	requireTest(t, !strings.Contains(out, "next="), "plan offers an unavailable apply: %s", out)
+	requireTest(t, strings.Contains(out, "next=bench worktree reset --to "), "plan lacks the apply command: %s", out)
+}
+
+func TestResetPlanNamesTheApplyCommand(t *testing.T) {
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "reset-next")
+	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("dirty\n"), 0o644)
+	fingerprint := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	code, out, errout := runReset(t, root, home, "--to", creation.Assignment.Start, creation.Assignment.ID)
+	want := "next=bench worktree reset --to " + creation.Assignment.Start + " " + creation.Assignment.ID + " --apply " + fingerprint
+	requireTest(t, code == 0 && strings.Contains(out, want), "apply command = %d %s %s; want %s", code, out, errout, want)
 }
 
 func TestResetPlanReportsNothingToReset(t *testing.T) {

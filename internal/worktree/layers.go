@@ -79,7 +79,7 @@ func captureLayers(root, path string, keepWorking bool, tip string) (string, []s
 	}
 	sort.Strings(payloads)
 	manifest := recoveryManifest{Schema: recoverySchema, Base: head, Layers: layers}
-	if tip != "" && tip != head {
+	if tip != "" {
 		manifest.Tip = tip
 	}
 	manifestBytes, err := json.Marshal(manifest)
@@ -96,7 +96,7 @@ func captureLayers(root, path string, keepWorking bool, tip string) (string, []s
 		return "", nil, "", err
 	}
 	parents := append([]string(nil), payloads...)
-	if manifest.Tip != "" {
+	if manifest.Tip != "" && manifest.Tip != head {
 		parents = append(parents, manifest.Tip)
 	}
 	rootOID, err := commitTree(root, rootTree, parents, "bench recovery root\n")

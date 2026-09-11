@@ -24,7 +24,7 @@ var resetGrammar = usage.Grammar{
 	},
 }
 
-// ResetCommand plans a return to an explicit assignment checkpoint.
+// ResetCommand plans or applies a recoverable return to an assignment checkpoint.
 func ResetCommand(root, home string, args []string, stdout, stderr io.Writer) int {
 	return resetWith(defaultJoins(), root, home, args, stdout, stderr)
 }
@@ -42,15 +42,19 @@ func resetWith(j joins, root, home string, args []string, stdout, stderr io.Writ
 	if !lineSafe(parsed.Flags["--to"]) {
 		return landRefusal(stdout, "--to contains control characters")
 	}
-	if _, apply := parsed.Flags["--apply"]; apply {
-		return landRefusal(stdout, "reset apply is not available")
-	}
 	plan, err := planReset(root, parsed.Positionals[0], parsed.Flags["--to"])
 	if err != nil {
 		return landRefusalError(stdout, err)
 	}
-	fmt.Fprintf(stdout, "reset_plan{worktree=%s,mode=reset,action=%s,checkpoint=%s,head=%s,ref=%s,tip=%s,tracked=%s,lock=%s,preserve=%s,fingerprint=%s}\n",
-		plan.assignment.ID, plan.action, plan.checkpoint, plan.head, plan.ref, plan.tip, plan.tracked, plan.lock, plan.preserve, plan.fingerprint)
+	if fingerprint, apply := parsed.Flags["--apply"]; apply {
+		return applyReset(j, root, home, plan, fingerprint, stdout)
+	}
+	next := ""
+	if plan.action != "none" {
+		next = ",next=" + resetPlanCommand(plan) + " --apply " + plan.fingerprint
+	}
+	fmt.Fprintf(stdout, "reset_plan{worktree=%s,mode=reset,action=%s,checkpoint=%s,head=%s,ref=%s,tip=%s,tracked=%s,lock=%s,preserve=%s%s,fingerprint=%s}\n",
+		plan.assignment.ID, plan.action, plan.checkpoint, plan.head, plan.ref, plan.tip, plan.tracked, plan.lock, plan.preserve, next, plan.fingerprint)
 	var rows [][]string
 	for _, entry := range plan.paths {
 		if entry.Status != "" {
@@ -67,12 +71,17 @@ func resetWith(j joins, root, home string, args []string, stdout, stderr io.Writ
 	return 0
 }
 
+func resetPlanCommand(plan resetPlan) string {
+	return "bench worktree reset --to " + plan.checkpoint + " " + plan.assignment.ID
+}
+
 type resetPlan struct {
 	assignment                                   intent.Assignment
 	checkpoint, head, ref, tip                   string
 	action, tracked, lock, preserve, fingerprint string
 	status                                       []byte
 	paths                                        []git.PorcelainEntry
+	registrationLocked                           bool
 }
 
 func planReset(root, operand, checkpoint string) (resetPlan, error) {
@@ -95,6 +104,7 @@ func planReset(root, operand, checkpoint string) (resetPlan, error) {
 		return resetPlan{}, err
 	}
 	plan := resetPlan{assignment: selected, checkpoint: checkpoint, action: "reset", tracked: "dirty", lock: "ok", preserve: "envelope"}
+	plan.registrationLocked = evidence.registration.Locked
 	plan.head, err = git.Output("-C", selected.Worktree, "rev-parse", "HEAD^{commit}")
 	if err != nil {
 		return resetPlan{}, err
@@ -150,7 +160,7 @@ func planReset(root, operand, checkpoint string) (resetPlan, error) {
 	if !evidence.registration.Locked || evidence.registration.LockReason != lockReason(selected) {
 		plan.lock = "repair"
 	}
-	plan.status, err = git.Raw("--no-optional-locks", "-C", selected.Worktree, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignore-submodules=none")
+	plan.status, err = resetStatus(selected.Worktree)
 	if err != nil {
 		return resetPlan{}, err
 	}
@@ -188,4 +198,8 @@ func planReset(root, operand, checkpoint string) (resetPlan, error) {
 			[]byte(plan.tip), []byte(evidence.registration.LockReason), plan.status, []byte(content), []byte(""))
 	}
 	return plan, err
+}
+
+func resetStatus(path string) ([]byte, error) {
+	return git.Raw("--no-optional-locks", "-C", path, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignore-submodules=none")
 }

@@ -169,16 +169,16 @@ func TestCaptureLayersRecordsADifferentTipAsAParent(t *testing.T) {
 		"root parents = %v, want payloads and tip %s", parents, tip)
 }
 
-func TestCaptureLayersOmitsAnAbsentOrEqualTip(t *testing.T) {
+func TestCaptureLayersRecordsOnlyASuppliedTip(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
 	for _, tip := range []string{"", gitOutput(t, root, "rev-parse", "HEAD")} {
 		rootOID, payloads, _, err := captureLayers(root, root, true, tip)
 		mustNoError(t, err)
 		manifest, ok := readRecoveryManifest(root, rootOID)
-		requireTest(t, ok && manifest.Tip == "", "optional tip = %#v", manifest)
-		requireTest(t, !strings.Contains(gitOutput(t, root, "show", rootOID+":manifest.json"), "\"tip\""),
-			"absent or equal tip was serialized")
+		requireTest(t, ok && manifest.Tip == tip, "optional tip = %#v, want %q", manifest, tip)
+		requireTest(t, strings.Contains(gitOutput(t, root, "show", rootOID+":manifest.json"), "\"tip\"") == (tip != ""),
+			"serialized tip presence differs from supplied tip %q", tip)
 		requireTest(t, gitOutput(t, root, "show", "-s", "--format=%P", rootOID) == strings.Join(payloads, " "),
 			"absent or equal tip added a root parent")
 	}

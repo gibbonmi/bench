@@ -213,6 +213,9 @@ func gitInput(root string, extraEnv []string, input []byte, args ...string) (str
 }
 func nextRecoveryRef(root string, assignment intent.Assignment) (string, error) {
 	prefix := intent.RecoveryRefPrefix(assignment.OwnerID, assignment.ID)
+	return nextEnvelopeRef(root, prefix)
+}
+func nextEnvelopeRef(root, prefix string) (string, error) {
 	out, err := git.Output("-C", root, "for-each-ref", "--format=%(refname)", prefix)
 	if err != nil {
 		return "", err

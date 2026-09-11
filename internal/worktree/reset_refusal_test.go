@@ -14,8 +14,13 @@ import (
 
 func runReset(t *testing.T, root, home string, args ...string) (int, string, string) {
 	t.Helper()
+	return runResetWith(t, defaultJoins(), root, home, args...)
+}
+
+func runResetWith(t *testing.T, j joins, root, home string, args ...string) (int, string, string) {
+	t.Helper()
 	var stdout, stderr bytes.Buffer
-	code := resetWith(defaultJoins(), root, home, args, &stdout, &stderr)
+	code := resetWith(j, root, home, args, &stdout, &stderr)
 	return code, stdout.String(), stderr.String()
 }
 
@@ -165,10 +170,10 @@ func TestResetRefusesAnAmbiguousCheckpoint(t *testing.T) {
 	t.Fatal("no commit prefix collision")
 }
 
-func TestResetRefusesUnavailableApply(t *testing.T) {
+func TestResetApplyRefusesAFingerprintForANonePlan(t *testing.T) {
 	t.Parallel()
 	root, creation, home := newOwnedAssignment(t, "reset-apply")
 	code, out, _ := runReset(t, root, home, "--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", "fingerprint")
-	requireTest(t, code == 1 && strings.Contains(out, "reset apply is not available") && !strings.Contains(out, "reset_plan"),
-		"unavailable apply = %d %s", code, out)
+	requireTest(t, code == 1 && strings.Contains(out, "reset plan is stale") && strings.Contains(out, "wanted=none") && !strings.Contains(out, "reset_plan"),
+		"none-plan apply = %d %s", code, out)
 }
