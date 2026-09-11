@@ -33,6 +33,294 @@ Coverage review completed with 3 findings; worst issue high.
 - C3 (medium, auto-fix): The changed-plan test fails on malformed ticket syntax. Use a valid ticket amendment and prove stale identity plus explicit mapping.
   Citations at frozen tip 205c929: specs/completion-evidence/spec.md:225; internal/reviewrecord/source_test.go:54; internal/reviewrecord/plan.go:86.
 
+## Repair verification
+
+The author repaired the confirmed findings and retained their earlier results below.
+All three repair follow-ups are pending against `5457042ec3e0919327dc7943aea7f002a54285b2`.
+Both required test suites passed without skips. The missing-axis probe bit and restored successfully.
+
+C2 is proposed no-op: the literal ticket fixture passed before any Git reader edit.
+The new regression preserves that behavior. The full retained-fixture test passed, including the new clean-result omission.
+A separate direct TestRootConformance selection skipped because its required root environment was absent; it supplies no proof.
+The registered docs-currency-workflow check passed after the guard repair.
+
+Two Claude review attempts timed out. Automatic approval review rejected the network retry because the destination lacked user authorization.
+The author asked the user to waive that extra pass or authorize the read-only review. No Claude verdict is claimed.
+
+## Current shared consumer evidence
+
+```toon
+blast[263]{changed_symbol,file,line,touched}:
+  anchors.generalAnchors,internal/anchors/registry_data.go,26,true
+  git.ReadTreeFile,internal/reviewrecord/plan.go,40,true
+  git.ReadTreeFile,internal/reviewrecord/plan.go,82,true
+  git.TreeWithoutFile,internal/reviewrecord/plan.go,134,true
+  preflight.completionEvidenceTable,internal/preflight/review.go,180,true
+  preflight.renderReviewPacket,internal/preflight/review.go,127,true
+  recordtest.Attach,internal/reviewrecord/recordtest/fixture.go,26,true
+  recordtest.Fixture,internal/reviewrecord/recordtest/fixture.go,26,true
+  recordtest.Fixture,internal/reviewrecord/recordtest/fixture.go,28,true
+  recordtest.Fixture,internal/reviewrecord/recordtest/fixture.go,30,true
+  recordtest.Fixture,internal/reviewrecord/recordtest/fixture.go,56,true
+  recordtest.Fixture,internal/reviewrecord/recordtest/fixture.go,67,true
+  recordtest.Fixture,internal/reviewrecord/recordtest/fixture.go,75,true
+  recordtest.Fixture,internal/reviewrecord/recordtest/fixture.go,76,true
+  recordtest.Fixture,internal/reviewrecord/recordtest/fixture.go,77,true
+  recordtest.Fixture,internal/reviewrecord/recordtest/fixture.go,88,true
+  recordtest.Fixture,internal/reviewrecord/recordtest/fixture.go,96,true
+  recordtest.Fixture,internal/reviewrecord/recordtest/fixture.go,109,true
+  recordtest.Fixture,internal/reviewrecord/recordtest/fixture.go,127,true
+  recordtest.Fixture,internal/reviewrecord/recordtest/fixture.go,139,true
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,18,true
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,21,true
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,73,true
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,129,true
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,187,true
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,219,true
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,238,true
+  recordtest.Fixture.Commit,internal/reviewrecord/recordtest/fixture.go,47,true
+  recordtest.Fixture.Commit,internal/reviewrecord/recordtest/fixture.go,114,true
+  recordtest.Fixture.Commit,internal/reviewrecord/source_test.go,20,true
+  recordtest.Fixture.Commit,internal/reviewrecord/source_test.go,24,true
+  recordtest.Fixture.Commit,internal/reviewrecord/source_test.go,48,true
+  recordtest.Fixture.Commit,internal/reviewrecord/source_test.go,65,true
+  recordtest.Fixture.Commit,internal/reviewrecord/source_test.go,207,true
+  recordtest.Fixture.Commit,internal/reviewrecord/source_test.go,221,true
+  recordtest.Fixture.Commit,internal/reviewrecord/source_test.go,229,true
+  recordtest.Fixture.Complete,internal/reviewrecord/source_test.go,22,true
+  recordtest.Fixture.Complete,internal/reviewrecord/source_test.go,74,true
+  recordtest.Fixture.Evidence,internal/reviewrecord/recordtest/fixture.go,100,true
+  recordtest.Fixture.Evidence,internal/reviewrecord/recordtest/fixture.go,122,true
+  recordtest.Fixture.Git,internal/reviewrecord/recordtest/fixture.go,75,true
+  recordtest.Fixture.Git,internal/reviewrecord/recordtest/fixture.go,76,true
+  recordtest.Fixture.Save,internal/reviewrecord/source_test.go,19,true
+  recordtest.Fixture.Save,internal/reviewrecord/source_test.go,23,true
+  recordtest.Fixture.Save,internal/reviewrecord/source_test.go,47,true
+  recordtest.Fixture.Save,internal/reviewrecord/source_test.go,130,true
+  recordtest.Fixture.Save,internal/reviewrecord/source_test.go,220,true
+  recordtest.Fixture.Tip,internal/reviewrecord/recordtest/fixture.go,112,true
+  recordtest.Fixture.Tip,internal/reviewrecord/recordtest/fixture.go,119,true
+  recordtest.Fixture.Tip,internal/reviewrecord/source_test.go,29,true
+  recordtest.Fixture.Tip,internal/reviewrecord/source_test.go,34,true
+  recordtest.Fixture.Tip,internal/reviewrecord/source_test.go,39,true
+  recordtest.Fixture.Tip,internal/reviewrecord/source_test.go,66,true
+  recordtest.Fixture.Tip,internal/reviewrecord/source_test.go,222,true
+  recordtest.Fixture.Tip,internal/reviewrecord/source_test.go,234,true
+  recordtest.Fixture.Tip,internal/reviewrecord/source_test.go,243,true
+  recordtest.Fixture.Tip,internal/reviewrecord/source_test.go,247,true
+  recordtest.Fixture.Tree,internal/reviewrecord/recordtest/fixture.go,48,true
+  recordtest.Fixture.Tree,internal/reviewrecord/recordtest/fixture.go,115,true
+  recordtest.Fixture.Tree,internal/reviewrecord/source_test.go,29,true
+  recordtest.Fixture.Tree,internal/reviewrecord/source_test.go,34,true
+  recordtest.Fixture.Tree,internal/reviewrecord/source_test.go,39,true
+  recordtest.Fixture.Tree,internal/reviewrecord/source_test.go,42,true
+  recordtest.Fixture.Tree,internal/reviewrecord/source_test.go,49,true
+  recordtest.Fixture.Tree,internal/reviewrecord/source_test.go,66,true
+  recordtest.Fixture.Tree,internal/reviewrecord/source_test.go,208,true
+  recordtest.Fixture.Tree,internal/reviewrecord/source_test.go,230,true
+  recordtest.Fixture.Tree,internal/reviewrecord/source_test.go,234,true
+  recordtest.Fixture.Tree,internal/reviewrecord/source_test.go,243,true
+  recordtest.Fixture.Tree,internal/reviewrecord/source_test.go,247,true
+  recordtest.Fixture.Verification,internal/reviewrecord/recordtest/fixture.go,120,true
+  recordtest.Fixture.Verification,internal/reviewrecord/recordtest/fixture.go,135,true
+  recordtest.Fixture.Write,internal/reviewrecord/recordtest/fixture.go,39,true
+  recordtest.Fixture.Write,internal/reviewrecord/recordtest/fixture.go,45,true
+  recordtest.Fixture.Write,internal/reviewrecord/recordtest/fixture.go,46,true
+  recordtest.Fixture.Write,internal/reviewrecord/recordtest/fixture.go,113,true
+  recordtest.Fixture.Write,internal/reviewrecord/recordtest/fixture.go,145,true
+  recordtest.Fixture.Write,internal/reviewrecord/source_test.go,64,true
+  recordtest.Fixture.Write,internal/reviewrecord/source_test.go,158,true
+  recordtest.Fixture.Write,internal/reviewrecord/source_test.go,160,true
+  recordtest.Fixture.Write,internal/reviewrecord/source_test.go,163,true
+  recordtest.Fixture.Write,internal/reviewrecord/source_test.go,165,true
+  recordtest.Fixture.Write,internal/reviewrecord/source_test.go,193,true
+  recordtest.Fixture.Write,internal/reviewrecord/source_test.go,203,true
+  recordtest.Fixture.Write,internal/reviewrecord/source_test.go,206,true
+  recordtest.Fixture.Write,internal/reviewrecord/source_test.go,228,true
+  recordtest.Native,internal/reviewrecord/recordtest/fixture.go,93,true
+  recordtest.Native,internal/reviewrecord/recordtest/fixture.go,102,true
+  recordtest.Native,internal/reviewrecord/source_test.go,46,true
+  recordtest.New,internal/reviewrecord/source_test.go,17,true
+  recordtest.New,internal/reviewrecord/source_test.go,72,true
+  recordtest.New,internal/reviewrecord/source_test.go,128,true
+  recordtest.New,internal/reviewrecord/source_test.go,186,true
+  recordtest.New,internal/reviewrecord/source_test.go,200,true
+  recordtest.New,internal/reviewrecord/source_test.go,218,true
+  recordtest.Spec,internal/reviewrecord/recordtest/fixture.go,45,true
+  recordtest.Spec,internal/reviewrecord/recordtest/fixture.go,48,true
+  recordtest.Spec,internal/reviewrecord/recordtest/fixture.go,52,true
+  recordtest.Spec,internal/reviewrecord/recordtest/fixture.go,115,true
+  recordtest.Spec,internal/reviewrecord/source_test.go,25,true
+  recordtest.Spec,internal/reviewrecord/source_test.go,42,true
+  recordtest.Spec,internal/reviewrecord/source_test.go,49,true
+  recordtest.Spec,internal/reviewrecord/source_test.go,53,true
+  recordtest.Spec,internal/reviewrecord/source_test.go,167,true
+  recordtest.Spec,internal/reviewrecord/source_test.go,206,true
+  recordtest.Spec,internal/reviewrecord/source_test.go,208,true
+  recordtest.Spec,internal/reviewrecord/source_test.go,230,true
+  reviewrecord.Amendment,internal/reviewrecord/coverage.go,133,true
+  reviewrecord.Amendment,internal/reviewrecord/record.go,73,true
+  reviewrecord.Amendment,internal/reviewrecord/source_test.go,246,true
+  reviewrecord.Axes,internal/preflight/review.go,164,true
+  reviewrecord.Axes,internal/reviewrecord/parse.go,57,true
+  reviewrecord.Axes,internal/reviewrecord/record.go,77,true
+  reviewrecord.Axes,internal/reviewrecord/recordtest/fixture.go,121,true
+  reviewrecord.CheckReviews,internal/reviewrecord/coverage.go,73,true
+  reviewrecord.CheckReviews,internal/reviewrecord/record_test.go,11,true
+  reviewrecord.CheckReviews,internal/reviewrecord/source_test.go,120,true
+  reviewrecord.CheckSource,internal/reviewrecord/source_test.go,29,true
+  reviewrecord.CheckSource,internal/reviewrecord/source_test.go,34,true
+  reviewrecord.CheckSource,internal/reviewrecord/source_test.go,39,true
+  reviewrecord.CheckSource,internal/reviewrecord/source_test.go,66,true
+  reviewrecord.CheckSource,internal/reviewrecord/source_test.go,234,true
+  reviewrecord.CheckSource,internal/reviewrecord/source_test.go,243,true
+  reviewrecord.CheckSource,internal/reviewrecord/source_test.go,247,true
+  reviewrecord.Chunk,internal/reviewrecord/coverage.go,32,true
+  reviewrecord.Chunk,internal/reviewrecord/record.go,71,true
+  reviewrecord.Chunk,internal/reviewrecord/record.go,76,true
+  reviewrecord.Chunk,internal/reviewrecord/record_test.go,11,true
+  reviewrecord.Chunk,internal/reviewrecord/recordtest/fixture.go,119,true
+  reviewrecord.Completion,internal/reviewrecord/record.go,72,true
+  reviewrecord.Completion,internal/reviewrecord/recordtest/fixture.go,129,true
+  reviewrecord.Digest,internal/reviewrecord/parse.go,129,true
+  reviewrecord.Digest,internal/reviewrecord/plan.go,108,true
+  reviewrecord.Digest,internal/reviewrecord/recordtest/fixture.go,85,true
+  reviewrecord.ErrMissing,internal/preflight/review.go,213,true
+  reviewrecord.ErrMissing,internal/reviewrecord/files.go,38,true
+  reviewrecord.ErrMissing,internal/reviewrecord/parse.go,217,true
+  reviewrecord.Evidence,internal/reviewrecord/parse.go,108,true
+  reviewrecord.Evidence,internal/reviewrecord/record.go,30,true
+  reviewrecord.Evidence,internal/reviewrecord/record.go,37,true
+  reviewrecord.Evidence,internal/reviewrecord/recordtest/fixture.go,88,true
+  reviewrecord.Evidence,internal/reviewrecord/recordtest/fixture.go,93,true
+  reviewrecord.NativeRef,internal/reviewrecord/parse.go,128,true
+  reviewrecord.NativeRef,internal/reviewrecord/record.go,20,true
+  reviewrecord.NativeRef,internal/reviewrecord/record.go,27,true
+  reviewrecord.NativeRef,internal/reviewrecord/recordtest/fixture.go,84,true
+  reviewrecord.NativeRef,internal/reviewrecord/recordtest/fixture.go,85,true
+  reviewrecord.Parse,internal/reviewrecord/files.go,67,true
+  reviewrecord.Parse,internal/reviewrecord/record_test.go,19,true
+  reviewrecord.Parse,internal/reviewrecord/source_test.go,76,true
+  reviewrecord.Parse,internal/reviewrecord/source_test.go,101,true
+  reviewrecord.Parse,internal/reviewrecord/source_test.go,113,true
+  reviewrecord.Plan,internal/reviewrecord/coverage.go,116,true
+  reviewrecord.Plan,internal/reviewrecord/plan.go,32,true
+  reviewrecord.Plan,internal/reviewrecord/plan.go,33,true
+  reviewrecord.Plan,internal/reviewrecord/recordtest/fixture.go,23,true
+  reviewrecord.Plan,internal/reviewrecord/recordtest/fixture.go,31,true
+  reviewrecord.PlannedChunk,internal/reviewrecord/coverage.go,116,true
+  reviewrecord.PlannedChunk,internal/reviewrecord/plan.go,27,true
+  reviewrecord.PlannedChunk,internal/reviewrecord/recordtest/fixture.go,34,true
+  reviewrecord.Probe,internal/reviewrecord/record.go,34,true
+  reviewrecord.Probe,internal/reviewrecord/recordtest/fixture.go,102,true
+  reviewrecord.Read,internal/preflight/review.go,212,true
+  reviewrecord.Read,internal/reviewrecord/source_test.go,25,true
+  reviewrecord.Read,internal/reviewrecord/source_test.go,53,true
+  reviewrecord.Read,internal/reviewrecord/source_test.go,167,true
+  reviewrecord.Read,internal/reviewrecord/source_test.go,194,true
+  reviewrecord.ReadPlan,internal/preflight/review.go,210,true
+  reviewrecord.ReadPlan,internal/reviewrecord/coverage.go,13,true
+  reviewrecord.ReadPlan,internal/reviewrecord/coverage.go,49,true
+  reviewrecord.ReadPlan,internal/reviewrecord/recordtest/fixture.go,48,true
+  reviewrecord.ReadPlan,internal/reviewrecord/source_test.go,208,true
+  reviewrecord.ReadPlan,internal/reviewrecord/source_test.go,230,true
+  reviewrecord.Record,internal/reviewrecord/coverage.go,12,true
+  reviewrecord.Record,internal/reviewrecord/coverage.go,125,true
+  reviewrecord.Record,internal/reviewrecord/files.go,54,true
+  reviewrecord.Record,internal/reviewrecord/files.go,57,true
+  reviewrecord.Record,internal/reviewrecord/files.go,61,true
+  reviewrecord.Record,internal/reviewrecord/files.go,65,true
+  reviewrecord.Record,internal/reviewrecord/parse.go,25,true
+  reviewrecord.Record,internal/reviewrecord/parse.go,26,true
+  reviewrecord.Record,internal/reviewrecord/record_test.go,18,true
+  reviewrecord.Record,internal/reviewrecord/recordtest/fixture.go,22,true
+  reviewrecord.Record,internal/reviewrecord/recordtest/fixture.go,52,true
+  reviewrecord.Record,internal/reviewrecord/source_test.go,81,true
+  reviewrecord.Record,internal/reviewrecord/source_test.go,83,true
+  reviewrecord.Record,internal/reviewrecord/source_test.go,84,true
+  reviewrecord.Record,internal/reviewrecord/source_test.go,85,true
+  reviewrecord.Record,internal/reviewrecord/source_test.go,86,true
+  reviewrecord.Record,internal/reviewrecord/source_test.go,87,true
+  reviewrecord.Record,internal/reviewrecord/source_test.go,88,true
+  reviewrecord.Record,internal/reviewrecord/source_test.go,89,true
+  reviewrecord.Record,internal/reviewrecord/source_test.go,90,true
+  reviewrecord.Record,internal/reviewrecord/source_test.go,91,true
+  reviewrecord.Record,internal/reviewrecord/source_test.go,92,true
+  reviewrecord.Record,internal/reviewrecord/source_test.go,93,true
+  reviewrecord.Record,internal/reviewrecord/source_test.go,97,true
+  reviewrecord.RecordPath,internal/preflight/review.go,198,true
+  reviewrecord.RecordPath,internal/reviewrecord/files.go,55,true
+  reviewrecord.RecordPath,internal/reviewrecord/parse.go,33,true
+  reviewrecord.RecordPath,internal/reviewrecord/plan.go,34,true
+  reviewrecord.RecordPath,internal/reviewrecord/plan.go,127,true
+  reviewrecord.RecordPath,internal/reviewrecord/source_test.go,173,true
+  reviewrecord.RecordPath,internal/reviewrecord/source_test.go,182,true
+  reviewrecord.Requirement,internal/reviewrecord/plan.go,22,true
+  reviewrecord.Requirement,internal/reviewrecord/plan.go,28,true
+  reviewrecord.Requirement,internal/reviewrecord/plan.go,112,true
+  reviewrecord.Requirement,internal/reviewrecord/recordtest/fixture.go,31,true
+  reviewrecord.Requirement,internal/reviewrecord/recordtest/fixture.go,34,true
+  reviewrecord.Requirement,internal/reviewrecord/recordtest/fixture.go,96,true
+  reviewrecord.Review,internal/reviewrecord/record.go,52,true
+  reviewrecord.Review,internal/reviewrecord/record.go,78,true
+  reviewrecord.Review,internal/reviewrecord/recordtest/fixture.go,122,true
+  reviewrecord.SourceDigest,internal/preflight/review.go,206,true
+  reviewrecord.SourceDigest,internal/reviewrecord/coverage.go,20,true
+  reviewrecord.SourceDigest,internal/reviewrecord/coverage.go,42,true
+  reviewrecord.SourceDigest,internal/reviewrecord/coverage.go,65,true
+  reviewrecord.SourceDigest,internal/reviewrecord/recordtest/fixture.go,115,true
+  reviewrecord.SourceDigest,internal/reviewrecord/source_test.go,42,true
+  reviewrecord.SourceDigest,internal/reviewrecord/source_test.go,49,true
+  reviewrecord.Verification,internal/reviewrecord/parse.go,85,true
+  reviewrecord.Verification,internal/reviewrecord/record.go,51,true
+  reviewrecord.Verification,internal/reviewrecord/record.go,59,true
+  reviewrecord.Verification,internal/reviewrecord/recordtest/fixture.go,96,true
+  reviewrecord.Verification,internal/reviewrecord/recordtest/fixture.go,97,true
+  reviewrecord.Verification,internal/reviewrecord/recordtest/fixture.go,100,true
+  reviewrecord.contains,internal/reviewrecord/coverage.go,95,true
+  reviewrecord.contains,internal/reviewrecord/parse.go,57,true
+  reviewrecord.contains,internal/reviewrecord/plan.go,99,true
+  reviewrecord.decode,internal/reviewrecord/parse.go,27,true
+  reviewrecord.decode,internal/reviewrecord/plan.go,48,true
+  reviewrecord.fenced,internal/reviewrecord/files.go,63,true
+  reviewrecord.fenced,internal/reviewrecord/plan.go,44,true
+  reviewrecord.findChunk,internal/reviewrecord/coverage.go,56,true
+  reviewrecord.findChunk,internal/reviewrecord/coverage.go,81,true
+  reviewrecord.mappedIDs,internal/reviewrecord/coverage.go,76,true
+  reviewrecord.objectID,internal/reviewrecord/coverage.go,24,true
+  reviewrecord.objectID,internal/reviewrecord/parse.go,46,true
+  reviewrecord.objectID,internal/reviewrecord/parse.go,46,true
+  reviewrecord.objectID,internal/reviewrecord/parse.go,46,true
+  reviewrecord.objectID,internal/reviewrecord/parse.go,60,true
+  reviewrecord.objectID,internal/reviewrecord/parse.go,60,true
+  reviewrecord.objectID,internal/reviewrecord/parse.go,76,true
+  reviewrecord.objectID,internal/reviewrecord/parse.go,119,true
+  reviewrecord.objectID,internal/reviewrecord/plan.go,37,true
+  reviewrecord.objectID,internal/reviewrecord/plan.go,131,true
+  reviewrecord.occurrenceState,internal/reviewrecord/parse.go,73,true
+  reviewrecord.occurrenceState,internal/reviewrecord/parse.go,113,true
+  reviewrecord.readFile,internal/reviewrecord/files.go,59,true
+  reviewrecord.requirementsValid,internal/reviewrecord/plan.go,63,true
+  reviewrecord.requirementsValid,internal/reviewrecord/plan.go,77,true
+  reviewrecord.safeRelative,internal/reviewrecord/files.go,18,true
+  reviewrecord.safeRelative,internal/reviewrecord/files.go,29,true
+  reviewrecord.safeRelative,internal/reviewrecord/plan.go,67,true
+  reviewrecord.sameSet,internal/reviewrecord/coverage.go,57,true
+  reviewrecord.uniqueJSON,internal/reviewrecord/parse.go,154,true
+  reviewrecord.uniqueJSON,internal/reviewrecord/parse.go,190,true
+  reviewrecord.validateEvidence,internal/reviewrecord/parse.go,54,true
+  reviewrecord.validateEvidence,internal/reviewrecord/parse.go,87,true
+  reviewrecord.validateNative,internal/reviewrecord/parse.go,100,true
+  reviewrecord.validateNative,internal/reviewrecord/parse.go,122,true
+  reviewrecord.validateVerification,internal/reviewrecord/parse.go,49,true
+  reviewrecord.validateVerification,internal/reviewrecord/parse.go,79,true
+meta[1]{packages,files,matches,rows,truncated}:
+  266,10,66,263,false
+citation[1]{sha,state,version,cmd,hash}:
+  5457042ec3e0919327dc7943aea7f002a54285b2,clean,0.2.0,bench consumers --changed --base de1447b31903b170679b66bd200431cc15ddc73f --source-tip 5457042ec3e0919327dc7943aea7f002a54285b2 --full,82147b8690fd13f0bfed88d8a7efe1282179faf25d930434318490c8bb12c15a
+help[0]{cmd,why}:
+```
+
 ## Review disposition
 
 Seven raw findings identify seven repair targets. All are accepted within the approved scope.
@@ -282,15 +570,15 @@ help[0]{cmd,why}:
 {
   "version": 1,
   "spec": "specs/completion-evidence/spec.md",
-  "plan_digest": "sha256:ecc3b81b5ceb5dfce8779c67628e3da53115ef86f98c94c53200541d13732436",
+  "plan_digest": "sha256:267c4a827157b8e6acb6a9a24a56b984305fdea06ed5601964bef8e434df0f05",
   "implementation_session": "/root",
   "chunks": [
     {
       "id": "1",
       "base": "de1447b31903b170679b66bd200431cc15ddc73f",
-      "tip": "205c92928a4bbf35b4540e1f867808c96310d97a",
-      "plan_digest": "sha256:ecc3b81b5ceb5dfce8779c67628e3da53115ef86f98c94c53200541d13732436",
-      "source_digest": "5ebad816a00190ded84344b26c34bd07e818a01b",
+      "tip": "5457042ec3e0919327dc7943aea7f002a54285b2",
+      "plan_digest": "sha256:267c4a827157b8e6acb6a9a24a56b984305fdea06ed5601964bef8e434df0f05",
+      "source_digest": "6eb528d5bbc0b629a82fcd2cb19fa9ea4e69799d",
       "acceptance_rows": [
         "E1",
         "E2",
@@ -347,6 +635,53 @@ help[0]{cmd,why}:
             "ref": "codex:tool/721367",
             "digest": "sha256:bedecc25f4b65b146aaba8ffe6b645fc94367d1e7908225138b28bc443c6f796",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight,pass,10399\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "preflight-tests",
+          "command": "bench test --package ./internal/preflight --run TestReviewCharge",
+          "exit_code": 0
+        },
+        {
+          "id": "c1r3-record-tests",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "6eb528d5bbc0b629a82fcd2cb19fa9ea4e69799d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:tool/0bcbdd",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,2048\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n",
+            "digest": "sha256:02e2ff4e74cc2fe949de205b949d0a1676fc02f9c2829e7ca512a7eae58386c3"
+          },
+          "requirement": "record-tests",
+          "command": "bench test --package ./internal/reviewrecord --run TestReviewRecord",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit missing-axis rejection",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "codex:tool/94b1e8",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/record.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,TestReviewRecord,passed,29\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,1823\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewRecord/missing_clean_axis,\"record_test.go:12: missing clean review result: <nil>\"\nskips[0]{package,test,reason}:\n",
+              "digest": "sha256:bbc5f78b2f519348986e8d6d0d1f4524f263b37c76f98e4e53a7c0bbc5df3ca4"
+            }
+          }
+        },
+        {
+          "id": "c1r3-preflight-tests",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "6eb528d5bbc0b629a82fcd2cb19fa9ea4e69799d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:tool/2975c6",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight,pass,10807\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n",
+            "digest": "sha256:00c0cb76546d4f748d08d29f2b30392ceb85af9a21b59c8a9c2090ba2d8b12d5"
           },
           "requirement": "preflight-tests",
           "command": "bench test --package ./internal/preflight --run TestReviewCharge",
@@ -423,6 +758,72 @@ help[0]{cmd,why}:
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c1r3-standards",
+          "performer": "/root/c1_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "6eb528d5bbc0b629a82fcd2cb19fa9ea4e69799d",
+          "state": "pending",
+          "outcome": "",
+          "native_ref": {
+            "ref": "",
+            "digest": "",
+            "excerpt": ""
+          },
+          "axis": "Standards",
+          "base": "de1447b31903b170679b66bd200431cc15ddc73f",
+          "tip": "5457042ec3e0919327dc7943aea7f002a54285b2",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-standards"
+          ]
+        },
+        {
+          "id": "c1r3-spec",
+          "performer": "/root/c1_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "6eb528d5bbc0b629a82fcd2cb19fa9ea4e69799d",
+          "state": "pending",
+          "outcome": "",
+          "native_ref": {
+            "ref": "",
+            "digest": "",
+            "excerpt": ""
+          },
+          "axis": "Spec",
+          "base": "de1447b31903b170679b66bd200431cc15ddc73f",
+          "tip": "5457042ec3e0919327dc7943aea7f002a54285b2",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-spec"
+          ]
+        },
+        {
+          "id": "c1r3-coverage",
+          "performer": "/root/c1_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "6eb528d5bbc0b629a82fcd2cb19fa9ea4e69799d",
+          "state": "pending",
+          "outcome": "",
+          "native_ref": {
+            "ref": "",
+            "digest": "",
+            "excerpt": ""
+          },
+          "axis": "Coverage",
+          "base": "de1447b31903b170679b66bd200431cc15ddc73f",
+          "tip": "5457042ec3e0919327dc7943aea7f002a54285b2",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-coverage"
+          ]
         }
       ]
     }
