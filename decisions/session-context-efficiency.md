@@ -1,6 +1,6 @@
 # Session context efficiency
 
-Status: shaping
+Status: ready
 
 ## Destination
 
@@ -9,6 +9,8 @@ owner-level operation for one repeated domain intent. Tool-result text is the
 primary cost to reduce; call consolidation is secondary. This map decides the
 projection, aggregation, measurement, and enforcement boundaries, then routes
 the resulting work to the existing CLI, guidance, and performance owners.
+The ready map supplies one coordinating spec and the four-child structure in ticket 7.
+Readiness authorizes spec authoring; ticket 9 retains the review checkpoint for new numeric budgets.
 
 ## Notes
 
@@ -27,14 +29,16 @@ the resulting work to the existing CLI, guidance, and performance owners.
 
 - [What did the 2026-09-11 session actually spend on tool results?](session-context-efficiency/tickets/1.md): 31 large results produced 73.2% of all tool-result text.
 - [Which cost leads prioritization?](session-context-efficiency/tickets/2.md): Tool-result text is primary; call consolidation is secondary (reviewer, 2026-09-11).
+- [Which result surfaces require bounded defaults?](session-context-efficiency/tickets/3.md): Bounded raw reads and Bench queries retain full-detail routes; wrapper overflow depends on harness capability.
+- [Which repeated sequences earn one owner-level operation?](session-context-efficiency/tickets/4.md): Product changes cover set-wide cleanup and selected multi-target queries; archive batches belong in guidance.
+- [Which measures are reliable across harnesses?](session-context-efficiency/tickets/5.md): The source matrix distinguishes documented contracts, local observations, and unresolved capability gaps.
+- [Which findings deny, advise, or only measure?](session-context-efficiency/tickets/6.md): Measure and advise; replacement requires runtime proof and preserves original results when unsupported.
+- [Which multi-target query outcomes belong in scope?](session-context-efficiency/tickets/8.md): Multi-target queries cover worktree identity, path, and state, plus bounded spec histories.
+- [How does the work set numeric result budgets?](session-context-efficiency/tickets/9.md): Measurement precedes reviewer approval of each new per-surface byte budget.
+
+- [How does the work split across existing owners?](session-context-efficiency/tickets/7.md): One coordinating spec links four child specs and their reviewer checkpoints.
 
 ## Not yet specified
-
-- [Which result surfaces require bounded defaults?](session-context-efficiency/tickets/3.md)
-- [Which repeated sequences earn one owner-level operation?](session-context-efficiency/tickets/4.md)
-- [Which measures are reliable across harnesses?](session-context-efficiency/tickets/5.md)
-- [Which findings deny, advise, or only measure?](session-context-efficiency/tickets/6.md)
-- [How does the work split across existing owners?](session-context-efficiency/tickets/7.md)
 
 ## Spec-writer discretion
 
@@ -64,3 +68,6 @@ the resulting work to the existing CLI, guidance, and performance owners.
 - Path: `roadmap/FT89.md`
   Supports: placement of deterministic operations in the CLI and judgment in operating guidance.
   Drift: FT89 lands, retires, or changes its ownership rule.
+- Path: `decisions/session-context-efficiency/assets/harness-measures.md`
+  Supports: ticket 5's capability evidence and the enforcement and budget decisions.
+  Drift: a harness release, schema change, integration change, or change to the named Bench owners.
