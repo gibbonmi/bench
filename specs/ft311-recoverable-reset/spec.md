@@ -458,6 +458,7 @@ They authorize implementation only after the reviewer approves this spec and its
 - `internal/otelrecord/registry.go`
 - `internal/usage/worktree.go`
 - `cmd/bench/worktree_leaves.go`
+- `cmd/bench/worktree_leaves_test.go`
 - `cmd/bench/main.go`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
