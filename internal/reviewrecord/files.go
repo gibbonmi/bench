@@ -10,6 +10,7 @@ import (
 	"unicode"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -60,6 +61,22 @@ func Read(root, spec string) (Record, error) {
 	if err != nil {
 		return Record{}, err
 	}
+	return parseRecord(data, spec)
+}
+
+func ReadTree(root, tree, spec string) (Record, error) {
+	path, err := RecordPath(spec)
+	if err != nil {
+		return Record{}, err
+	}
+	data, err := benchgit.ReadTreeFile(root, tree, path)
+	if err != nil {
+		return Record{}, err
+	}
+	return parseRecord(data, spec)
+}
+
+func parseRecord(data []byte, spec string) (Record, error) {
 	payload, err := fenced(data, "bench-review-record")
 	if err != nil {
 		return Record{}, err

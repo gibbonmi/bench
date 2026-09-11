@@ -10,6 +10,10 @@ import (
 
 // CheckSource compares retained occurrences with the requested immutable source.
 func CheckSource(root, tree, tip string, record Record, chunkID string, complete bool) error {
+	return checkSource(root, tree, tip, record, chunkID, complete, false)
+}
+
+func checkSource(root, tree, tip string, record Record, chunkID string, complete, verification bool) error {
 	current, err := ReadPlan(root, tree, record.Spec)
 	if err != nil {
 		return err
@@ -56,6 +60,11 @@ func CheckSource(root, tree, tip string, record Record, chunkID string, complete
 		planned := findChunk(plan, chunk.ID)
 		if planned == nil || !sameSet(chunk.AcceptanceRows, planned.Rows) {
 			return fmt.Errorf("chunk %s: stale acceptance rows", chunk.ID)
+		}
+		if verification {
+			if err := checkVerification(chunk.Verification, planned.Verification, record.ImplementationSession, chunk.SourceDigest, "chunk "+chunk.ID); err != nil {
+				return err
+			}
 		}
 		if previous != nil {
 			baseTree, err := benchgit.Output("-C", root, "rev-parse", "--verify", chunk.Base+"^{tree}")
@@ -109,6 +118,9 @@ func CheckSource(root, tree, tip string, record Record, chunkID string, complete
 				return fmt.Errorf("missing planned chunk %s", planned.ID)
 			}
 		}
+	}
+	if complete && verification {
+		return checkCompletion(record, current, digest)
 	}
 	return nil
 }

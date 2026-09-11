@@ -215,15 +215,10 @@ func RunAndRecordContext(ctx context.Context, root string, stdout, stderr io.Wri
 // It uses the first non-flag argument as root, or the current repository root. --fresh
 // requires execution instead of reuse; it can appear on either side of root.
 func RunCommand(args []string, stdout, stderr io.Writer) int {
-	var root string
-	mode := reuseFreshGreen
-	for _, arg := range args {
-		switch {
-		case arg == "--fresh":
-			mode = forceRun
-		case root == "":
-			root = arg
-		}
+	root, mode, checkpoint, err := parseGateArgs(args, true)
+	if err != nil {
+		fmt.Fprintln(stderr, CommandUsage)
+		return 2
 	}
 	if root == "" {
 		r, err := git.Root()
@@ -233,7 +228,7 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 		}
 		root = r
 	}
-	ctx, finishSpan := beginGateSpan(context.Background(), root, mode.String())
+	ctx, finishSpan := beginGateSpan(WithCheckpoint(context.Background(), checkpoint), root, mode.String())
 	ctx, finishLog := beginGateRunLog(ctx, root, stderr, mode.String())
 	result := executeAfterAcquire(ctx, root, stdout, stderr, notifyGateSignals, mode)
 	finishLog(result)
@@ -241,27 +236,20 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 	return result.ActionExit
 }
 
-const commandUsage = "usage: bench gate [--fresh]"
+// CommandUsage is the public grammar shared with the CLI inventory.
+const CommandUsage = "usage: bench gate [--fresh] [--checkpoint <spec-path> (--chunk <id> | --complete)]"
 
-// Command selects the public gate action from its arguments. It dispatches gate runs,
-// and it rejects every other argument shape.
+// Command validates the public grammar before entering the gate owner.
 func Command(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
-	if len(args) == 0 {
-		return RunCommand(nil, stdout, stderr)
+	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h" || args[0] == "help") {
+		fmt.Fprintln(stdout, CommandUsage)
+		return 0
 	}
-	switch args[0] {
-	case "--fresh":
-		if len(args) == 1 {
-			return RunCommand(args, stdout, stderr)
-		}
-	case "--help", "-h", "help":
-		if len(args) == 1 {
-			fmt.Fprintln(stdout, commandUsage)
-			return 0
-		}
+	if _, _, _, err := parseGateArgs(args, false); err != nil {
+		fmt.Fprintln(stderr, CommandUsage)
+		return 2
 	}
-	fmt.Fprintln(stderr, commandUsage)
-	return 2
+	return RunCommand(args, stdout, stderr)
 }
 
 type Result struct {
@@ -287,7 +275,7 @@ func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result 
 // The reuse decision uses the same subject snapshot that an execution accepts. If ctx
 // ends during execution, no incomplete verdict becomes evidence.
 func ExecuteReusingFreshGreen(ctx context.Context, root string, stdout, stderr io.Writer) Result {
-	if plan, err := newGateEvaluation(root).acceptPre(); err == nil {
+	if plan, err := checkpointEvaluation(ctx, newGateEvaluation(root)).acceptPre(); err == nil {
 		if reuse := reusableEvidence(root, plan, time.Now()); reuse.ReusableGreen {
 			return reusedGreenResult(stdout, reuse)
 		}
@@ -371,11 +359,11 @@ func notifyGateSignals(ctx context.Context) (context.Context, func()) {
 }
 
 func execute(ctx context.Context, root string, stdout, stderr io.Writer) Result {
-	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, nil, reuseFreshGreen, newGateEvaluation(root), productionRunBinaryOwner(), "")
+	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, nil, reuseFreshGreen, checkpointEvaluation(ctx, newGateEvaluation(root)), productionRunBinaryOwner(), "")
 }
 
 func executeAfterAcquire(ctx context.Context, root string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode) Result {
-	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, arm, mode, newGateEvaluation(root), productionRunBinaryOwner(), "")
+	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, arm, mode, checkpointEvaluation(ctx, newGateEvaluation(root)), productionRunBinaryOwner(), "")
 }
 
 func operational(root string, gateExit int, stderr io.Writer, msg string) Result {

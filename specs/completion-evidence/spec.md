@@ -150,6 +150,11 @@ These fields preserve earlier evidence when a later reviewed delta changes the p
           "probe": "omit checkpoint evidence validation"
         },
         {
+          "id": "axis-tests",
+          "command": "bench test --package ./internal/gate --run TestReviewCheckpointCanonicalAxes",
+          "probe": "omit canonical Coverage axis"
+        },
+        {
           "id": "route-tests",
           "command": "bench test --package ./cmd/bench --run TestGateCheckpointRoute"
         }
@@ -203,17 +208,17 @@ phase checkpoint / landing broker -> gate obligation -> publish or refuse
 | E1 | 1 | A zero-finding axis has a durable completed result | `internal/reviewrecord/record_test.go` (`TestReviewRecord`) | Delete the clean result before loading and observe a missing axis. |
 | E2 | 2 | Author verification cannot satisfy a review axis | `internal/reviewrecord/source_test.go` (`TestReviewRecordTerminal`) | Relabel a test command as independent review and require refusal. |
 | E3 | 3 | Every terminal result binds its source and performer | `internal/reviewrecord/source_test.go` (`TestReviewRecordTerminal`) | Remove the source digest from a completed item and require refusal. |
-| E4 | 4 | A pending axis blocks a checkpoint | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Supply two complete axes and one pending axis. |
-| E5 | 5 | A failed axis blocks a checkpoint | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Supply a failed transport result with an empty findings list. |
-| E6 | 6 | A skipped axis blocks a checkpoint | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Supply a skipped axis with a success-looking summary. |
-| E7 | 7 | An absent required axis blocks a checkpoint | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Omit Coverage from an otherwise valid record. |
-| E8 | 8 | An uncovered source delta blocks a checkpoint | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Edit one source file after recording the reviewed tip. |
-| E9 | 9 | An unreviewed repair blocks advancement | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Append a repair commit without axis coverage for its tip. |
-| E10 | 10 | A completed checkpoint requires all three canonical axes | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Remove one axis from the required inventory and demonstrate the independent omission red. |
-| E11 | 11 | An ordinary lane tolerates incomplete review state | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Exercise absent active pending repair and sibling-spec fixtures through the normal lane. |
-| E12 | 12 | Ordinary green cannot satisfy a completion checkpoint | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Seed ordinary green before requesting a stronger obligation. |
+| E4 | 4 | A pending axis blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Supply two complete axes and one pending axis. |
+| E5 | 5 | A failed axis blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Supply a failed transport result with an empty findings list. |
+| E6 | 6 | A skipped axis blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Supply a skipped axis with a success-looking summary. |
+| E7 | 7 | An absent required axis blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Omit Coverage from an otherwise valid record. |
+| E8 | 8 | An uncovered source delta blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointLaterSource`) | Edit one source file after recording the reviewed tip. |
+| E9 | 9 | An unreviewed repair blocks advancement | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointLaterSource`) | Append a repair commit without axis coverage for its tip. |
+| E10 | 10 | A completed checkpoint requires all three canonical axes | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointCanonicalAxes`) | Remove one axis from the required inventory and demonstrate the independent omission red. |
+| E11 | 11 | An ordinary lane tolerates incomplete review state | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointOrdinaryWork`) | Exercise absent active pending repair and sibling-spec fixtures through the normal lane. |
+| E12 | 12 | Ordinary green cannot satisfy a completion checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointReuse`) | Seed ordinary green before requesting a stronger obligation. |
 | E13 | 13 | A record-only update preserves the reviewed source identity | `internal/reviewrecord/source_test.go` (`TestReviewRecordSource`) | Append a native result while leaving source bytes unchanged. |
-| E14 | 14 | Changed record bytes invalidate checkpoint verdict reuse | New test: TestReviewCheckpoint in internal/gate/review_checkpoint_test.go | Remove a completed axis after a green checkpoint. |
+| E14 | 14 | Changed record bytes invalidate checkpoint verdict reuse | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointReuse`) | Remove a completed axis after a green checkpoint. |
 | E15 | 15 | Completion requires final acceptance reconciliation | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Leave one planned row without a final disposition. |
 | E16 | 16 | A landing with missing completion evidence publishes no ref | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Pass a valid source pair with an incomplete review record. |
 | E17 | 17 | A new destination delta cannot inherit source-only review | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Compose a destination change that modifies reviewed content. |
@@ -237,7 +242,7 @@ phase checkpoint / landing broker -> gate obligation -> publish or refuse
 | E34 | 34 | Failed final integration execution blocks completion | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Record a final integration command with a nonzero exit. |
 | E35 | 35 | Stale final integration execution blocks completion | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Change source after the final command ran. |
 | E36 | 36 | An extra spec-byte change beside the status flip blocks publication | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Change one acceptance byte beside the valid status transform before updateRef. |
-| E37 | 37 | The public gate wrapper forwards checkpoint arguments | New test: TestGateCheckpointRoute in cmd/bench/gate_route_test.go | Drive chunk and complete forms through bin/bench.sh. |
+| E37 | 37 | The public gate wrapper forwards checkpoint arguments | `cmd/bench/gate_route_test.go` (`TestGateCheckpointRoute`) | Drive chunk and complete forms through bin/bench.sh. |
 | E38 | 38 | Repairs append new evidence without erasing earlier outcomes | `internal/reviewrecord/source_test.go` (`TestReviewRecordTerminal`) | Load initial findings and their superseding repair results. |
 
 ### Edge inventory
@@ -361,6 +366,8 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `bin/bench.sh`
 - `cmd/bench/gate_route_test.go`
 - `cmd/bench/main_test.go`
+- `cmd/bench/main.go`
+- `internal/worktree/parallel_census_test.go`
 
 - `tests/canary/docs-currency-token-diet/missing-cli-inventory`
 - `tests/canary/docs-currency-token-diet/stale-cli-doc-reference`
@@ -425,3 +432,6 @@ This repair changes test citations and ownership only; the approved behavior rem
 
 Chunk 1 guard repair replaces the retired clean-review no-artifact requirement with a terminal-result requirement.
 The omission fixture retains the gate’s refusal behavior and the existing persistence constraints.
+
+Chunk 2 keeps public gate grammar in the Go gate owner. The shell forwards its arguments unchanged.
+The help inventory derives its suffix from that owner, and wrapper tests execute that same owner.

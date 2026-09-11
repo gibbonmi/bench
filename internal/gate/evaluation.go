@@ -23,6 +23,8 @@ type gateEvaluation struct {
 	pre             *treeGeneration
 	post            *treeGeneration
 	acceptedSubject subject
+	checkpoint      Checkpoint
+	checkpointTip   string
 }
 
 func newGateEvaluation(root string) *gateEvaluation {
@@ -107,8 +109,15 @@ func (e *gateEvaluation) capturePost() (subject, error) {
 }
 
 func (e *gateEvaluation) build(generation *treeGeneration) (subject, error) {
+	var plan subject
+	var err error
 	if e.prospective {
-		return buildProspectiveSubjectForGeneration(e.runtimeRoot, e.identityRoot, generation)
+		plan, err = buildProspectiveSubjectForGeneration(e.runtimeRoot, e.identityRoot, generation)
+	} else {
+		plan, err = buildSubjectForGeneration(e.runtimeRoot, e.identityRoot, generation)
 	}
-	return buildSubjectForGeneration(e.runtimeRoot, e.identityRoot, generation)
+	if err != nil {
+		return subject{}, err
+	}
+	return e.applyCheckpoint(generation, plan)
 }

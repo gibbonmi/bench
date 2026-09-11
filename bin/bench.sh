@@ -29,23 +29,9 @@ export BENCH_HOME="${BENCH_HOME:-${HOME:?the Bench pool home needs BENCH_HOME se
 # route_binary, which writes no forged verdict.
 run_gate() { route_porcelain gate-run "$@"; }
 
-gate_usage() { printf 'usage: bench gate [--fresh]\n'; }
-
 gate_command() {
-  case "$#" in
-    1) run_gate ;;
-    2)
-      case "$2" in
-        --fresh) run_gate --fresh ;;
-        --help|-h|help) gate_usage ;;
-        *) gate_usage >&2; return 2 ;;
-      esac
-      ;;
-    *)
-      gate_usage >&2
-      return 2
-      ;;
-  esac
+  shift
+  route_porcelain gate "$@"
 }
 
 # This resolves where the canonical kit lives — the parent of this script's bin/ —
