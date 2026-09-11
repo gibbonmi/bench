@@ -70,10 +70,12 @@ func eventDeltas(events []Event) ([]Event, error) {
 			return nil, fmt.Errorf("unrecognized counter semantics")
 		}
 		stream := e.SessionID + "/" + e.Counter
-		if last, ok := epochs[stream]; ok && e.Epoch < last {
-			regressed[stream] = true
+		if e.Mode == CumulativeMode {
+			if last, ok := epochs[stream]; ok && e.Epoch < last {
+				regressed[stream] = true
+			}
+			epochs[stream] = e.Epoch
 		}
-		epochs[stream] = e.Epoch
 		group := fmt.Sprintf("%s/%s/%d", e.SessionID, e.Counter, e.Epoch)
 		groups[group] = append(groups[group], e)
 	}
@@ -88,7 +90,7 @@ func eventDeltas(events []Event) ([]Event, error) {
 		sort.Slice(entries, func(i, j int) bool { return entries[i].Sequence < entries[j].Sequence })
 		var previous Usage
 		var group []Event
-		ambiguous := regressed[entries[0].SessionID+"/"+entries[0].Counter]
+		ambiguous := entries[0].Mode == CumulativeMode && regressed[entries[0].SessionID+"/"+entries[0].Counter]
 		for i, e := range entries {
 			u, err := NormalizeUsage(e.Usage)
 			if err != nil {

@@ -74,3 +74,12 @@ func TestAssessmentRecordMeasureProvenance(t *testing.T) {
 		})
 	}
 }
+
+func TestAssessmentRecordDeltaEpochs(t *testing.T) {
+	a, b := usageEvent("delta-a", 10), usageEvent("delta-b", 5)
+	a.Epoch = 1
+	got, err := UsageTotal([]Event{a, b})
+	if err != nil || got.InputUncached == nil || *got.InputUncached != 15 || len(got.Unknown) != 0 {
+		t.Fatalf("independent delta quantities lost: %+v %v", got, err)
+	}
+}
