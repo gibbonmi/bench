@@ -157,3 +157,37 @@ func TestAssessmentCollectionHostileHarness(t *testing.T) {
 		})
 	}
 }
+
+func TestAssessmentCollectionAmbiguousSelectors(t *testing.T) {
+	for _, producer := range []string{"trace", "census"} {
+		t.Run(producer, func(t *testing.T) {
+			s := Store{Home: t.TempDir(), Root: t.TempDir()}
+			r := fixtureRun(s.Root)
+			second := r.Attempts[0]
+			second.AttemptID = "attempt-2"
+			second.ChunkID = "2"
+			second.Role = "review"
+			r.Attempts = append(r.Attempts, second)
+			assignment := "11111111111111111111111111111111"
+			first := Mapping{r.Attempts[0].AttemptID, r.Attempts[0].ChunkID, r.Attempts[0].Role}
+			other := Mapping{second.AttemptID, second.ChunkID, second.Role}
+			b := BenchInputs{AssignmentID: assignment}
+			if producer == "trace" {
+				nativeSpan(t, s, assignment, true)
+				b.TraceIDs = []Selection{{ID: "trace-1", Mapping: first}, {ID: "trace-1", Mapping: other}}
+			} else {
+				dir := census.Dir(s.Home, s.Root)
+				os.MkdirAll(dir, 0700)
+				os.WriteFile(filepath.Join(dir, assignment), []byte("2026-01-01T00:00:00Z\tgit\n"), 0600)
+				b.CensusEventIDs = []Selection{{ID: assignment + ":1", Mapping: first}, {ID: assignment + ":1", Mapping: other}}
+			}
+			input := collectionInput(t, s, map[string]any{"attempts": r.Attempts, "bench_inputs": b})
+			if out, code := Command(s, []string{"record", "--input", input}); code != 1 {
+				t.Fatalf("ambiguous selectors accepted: %s", out)
+			}
+			if _, err := s.Read("run-1"); !os.IsNotExist(err) {
+				t.Fatal("ambiguous run stored", err)
+			}
+		})
+	}
+}

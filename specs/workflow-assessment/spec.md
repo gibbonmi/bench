@@ -289,6 +289,7 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `internal/commit/assessment_span_test.go`
 - `internal/worktree/land.go`
 - `internal/worktree/assessment_span_test.go`
+- `internal/worktree/land_trace_test.go`
 
 ## Out of scope
 
@@ -475,12 +476,32 @@ The census event projection lives in internal/census/events.go. The commit lane 
 
 ## Chunk 2 repair plan
 
-Ticket 5 belongs to chunk 2 and blocks chunk 3. It closes all nine Sol findings without changing acceptance criteria. A30 adds authentic commit and landing spans with separate assignment provenance, diff-path values, and references. 
+Ticket 5 belongs to chunk 2 and blocks chunk 3. It closes all nine initial Sol findings without changing acceptance criteria.
+
+A30 adds these publication details:
+
+- Authentic commit and landing spans with separate assignment provenance
+- Diff-path values
+- Native references
 
 A30-A32 each add positive second-attempt routing. A32 and A7 add delta and partial native counters. A16 and A23 add parent-symlink and present-empty native fragments. Unknown fields stay unknown, and partial native counters mark coverage incomplete.
 
 The necessary ownership expansion adds the OTEL assignment attribute and its commit and landing producers with synthetic producer tests. The assignment identifier stays separate from the published Git subject. Historical subject-bearing traces without assignment evidence remain unjoinable.
 
-Chunk 2 repair validation reproduced five failures: commit and landing publication joins, plus each missing native counter category. A present-empty fragment then reproduced a separate classification failure. All six pass after repair.
+Chunk 2 repair validation reproduced five failures: both publication joins and each missing native counter category. A present-empty fragment then reproduced a separate classification failure. All six pass after repair.
 
-Named probes bit for all three producer attribution cases, both diff-path projections, and all three missing-counter diagnostics. Other probes covered delta semantics, parent-symlink protection, and landing assignment emission. Each probe restored production. The first commit-assignment omission could not compile because it left an unused variable; a compiling wrong-assignment mutation replaced that diagnostic attempt. The unsuccessful attempt remains in cost accounting.
+Named probes bit for these partitions and restored production:
+
+- Second-attempt attribution for each producer
+- Diff-path projection for each publication shape
+- Missing-counter diagnostics for each token category
+- Delta semantics
+- Parent-symlink protection
+- Landing assignment emission
+- Commit assignment identity
+
+The first commit-assignment omission could not compile because it left an unused variable. A compiling wrong-assignment mutation replaced that diagnostic attempt. The unsuccessful attempt remains in cost accounting.
+
+The second repair pass extends the existing full landing test to assert resolved assignment provenance. It removes the duplicate landing fixture. A33 adds conflicting duplicate selectors whose two attempt mappings are both valid. The existing guarantees remain unchanged.
+
+The full landing assignment-copy omission produced one diagnostic red and restored production. The valid duplicate-selector mutation produced two reds, one for census and one for traces, and restored production. An initial test-field typo prevented test execution twice; the corrected fixture uses creation.Assignment.ID. Those diagnostic attempts remain recorded.

@@ -30,6 +30,22 @@ func TestLandRecordsOneTraceForThePhases(t *testing.T) {
 	if !ok {
 		t.Fatal("the landing's record names no completed landing")
 	}
+	spans, err := otelrecord.ReadSpans(home, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, span := range spans {
+		if span.Seam == otelrecord.SeamLanding && span.TraceID == landing.TraceID {
+			found = true
+			if span.Attributes[otelrecord.AttrAssignmentID] != creation.Assignment.ID {
+				t.Fatalf("landing lost resolved assignment: %+v", span)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("landing span missing")
+	}
 	authorized, err := otelrecord.ReadSpans(privateBenchHome, root)
 	if err != nil {
 		t.Fatalf("read the authorization's record: %v", err)
