@@ -1,10 +1,12 @@
 package worktree
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
@@ -201,6 +203,17 @@ func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
 	if conflicted {
 		return resetPlan{}, refusalError{refusal{detail: "checkout is conflicted", next: "bench worktree clean " + selected.ID}}
 	}
+	materialized := []string{checkpoint}
+	if envelope != "" {
+		materialized = []string{plan.manifest.Tip, plan.manifest.Base, plan.manifest.Layers["working"]}
+	}
+	collisions, err := ignoredCollisions(selected.Worktree, materialized)
+	if err != nil {
+		return resetPlan{}, err
+	}
+	if len(collisions) > 0 {
+		return resetPlan{}, refusalError{refusal{detail: "ignored content would be overwritten", paths: collisions}}
+	}
 	if len(plan.status) == 0 {
 		plan.tracked = "clean"
 		targetTip := checkpoint
@@ -219,17 +232,59 @@ func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
 		if err != nil {
 			return resetPlan{}, err
 		}
+		index, err := git.Raw("--no-optional-locks", "-C", selected.Worktree, "ls-files", "--stage", "-z")
+		if err != nil {
+			return resetPlan{}, fmt.Errorf("read index entries: %w", err)
+		}
 		common, err := git.CommonDir(root)
 		if err != nil {
 			return resetPlan{}, err
 		}
 		plan.fingerprint = fingerprintParts([]byte("bench-reset/v1"), []byte(common), []byte(selected.OwnerID),
 			[]byte(selected.ID), []byte(plan.mode), []byte(checkpoint), []byte(plan.head), []byte(plan.ref),
-			[]byte(plan.tip), []byte(evidence.registration.LockReason), plan.status, []byte(content), []byte(envelope))
+			[]byte(plan.tip), []byte(evidence.registration.LockReason), plan.status, index, []byte(content), []byte(envelope))
 	}
 	return plan, err
 }
 
 func resetStatus(path string) ([]byte, error) {
 	return git.Raw("--no-optional-locks", "-C", path, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignore-submodules=none")
+}
+
+// ignoredCollisions lists every ignored path that the given trees would overwrite when
+// the move writes them into the checkout. A tracked directory above an ignored path
+// collides too, because the move replaces that directory with a file.
+func ignoredCollisions(path string, trees []string) ([]string, error) {
+	ignored, err := git.Raw("--no-optional-locks", "-C", path, "ls-files", "--others", "--ignored", "--exclude-standard", "-z")
+	if err != nil {
+		return nil, fmt.Errorf("read ignored inventory: %w", err)
+	}
+	tracked := map[string]bool{}
+	for _, tree := range trees {
+		names, err := git.Raw("-C", path, "ls-tree", "-r", "-z", "--name-only", tree)
+		if err != nil {
+			return nil, fmt.Errorf("read materialized tree: %w", err)
+		}
+		for name := range bytes.SplitSeq(names, []byte{0}) {
+			if len(name) > 0 {
+				tracked[string(name)] = true
+			}
+		}
+	}
+	var collisions []string
+	for record := range bytes.SplitSeq(ignored, []byte{0}) {
+		if len(record) == 0 {
+			continue
+		}
+		for candidate := string(record); ; candidate = candidate[:strings.LastIndexByte(candidate, '/')] {
+			if tracked[candidate] {
+				collisions = append(collisions, string(record))
+				break
+			}
+			if !strings.Contains(candidate, "/") {
+				break
+			}
+		}
+	}
+	return collisions, nil
 }

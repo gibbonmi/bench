@@ -259,9 +259,14 @@ Its exit meanings follow the publication boundary:
 Before a destructive move, the verb verifies a reset envelope under
 `refs/bench/reset/<owner>/<assignment>/<n>` that preserves staged, unstaged, and untracked work.
 The restore returns HEAD, the index, and the working tree to the preserved state.
-The verb repairs a partial migration, a shift-branch checkout, and an unreconciled merge checkout.
+The verb repairs a partial migration, a shift-branch checkout, a detached checkout, a drifted
+registration lock, and an unreconciled merge checkout.
 Plans and successful applies exit 0; refusals exit 1; usage errors exit 2.
 A fault after preservation exits 3 and names the restore command.
+
+If the move would overwrite an ignored path, the plan refuses before any write.
+The refusal names the colliding paths.
+Move the ignored content aside, then plan again.
 
 `bench handoff [--harness <name>] [--next <command>] [--state-file <path>]`
 rewrites the calling worktree's own section. `--state-file` names the file that

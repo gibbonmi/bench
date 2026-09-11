@@ -1,6 +1,7 @@
 package worktree
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -94,4 +95,34 @@ func TestResetRestoreRefusesAControlByteBeforeTheLedger(t *testing.T) {
 	mustWrite(t, filepath.Join(root, ".git", intent.Filename), []byte("invalid ledger"), 0o644)
 	code, out, errout := runReset(t, root, t.TempDir(), "--restore", "refs/bench/reset/\x1b", "unknown")
 	requireTest(t, code == 1 && strings.Contains(out, "--restore contains control characters"), "control restore = %d %s %s", code, out, errout)
+}
+
+func TestResetRestoreRefusesAStaleIndex(t *testing.T) {
+	t.Parallel()
+	root, creation, home, ref := restoreFixture(t)
+	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("staged one\n"), 0o644)
+	gitRun(t, creation.Path, "add", "README.md")
+	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("working\n"), 0o644)
+	fingerprint := restoreFingerprint(t, root, home, ref, creation.Assignment.ID)
+	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("staged two\n"), 0o644)
+	gitRun(t, creation.Path, "add", "README.md")
+	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("working\n"), 0o644)
+	code, out, errout := runReset(t, root, home, "--restore", ref, creation.Assignment.ID, "--apply", fingerprint)
+	requireTest(t, code == 1 && strings.Contains(out, "reset plan is stale") && gitOutput(t, creation.Path, "show", ":README.md") == "staged two",
+		"stale staged restore = %d %s %s", code, out, errout)
+}
+
+func TestResetRestoreRefusesAnIgnoredCollision(t *testing.T) {
+	t.Parallel()
+	root, creation, home, ref := restoreFixture(t)
+	commitInWorktree(t, creation.Path, ".gitignore", "untracked\n", "ignore the untracked path")
+	head := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	mustWrite(t, filepath.Join(creation.Path, "untracked"), []byte("ignored now\n"), 0o644)
+	code, out, errout := runReset(t, root, home, "--restore", ref, creation.Assignment.ID)
+	requireTest(t, code == 1 && strings.Contains(out, "refused{detail=ignored content would be overwritten}") &&
+		strings.Contains(out, "refusal_paths[1]{path}:\n  untracked\n"), "collision restore = %d %s %s", code, out, errout)
+	body, err := os.ReadFile(filepath.Join(creation.Path, "untracked"))
+	mustNoError(t, err)
+	requireTest(t, string(body) == "ignored now\n" && gitOutput(t, creation.Path, "rev-parse", "HEAD") == head &&
+		gitOutput(t, root, "rev-parse", creation.Assignment.Branch) == head, "collision refusal changed the ignored bytes or moved the checkout")
 }

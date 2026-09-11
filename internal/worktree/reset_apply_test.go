@@ -181,3 +181,30 @@ func TestResetApplyPreservesTheLayersAndMovesTheCheckout(t *testing.T) {
 		gitOutput(t, creation.Path, "symbolic-ref", "HEAD") == creation.Assignment.Branch &&
 		gitOutput(t, creation.Path, "status", "--porcelain=v1") == "", "apply did not leave the checkpoint clean and attached")
 }
+
+func TestResetRefusesAnIgnoredCollision(t *testing.T) {
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "reset-collision")
+	commitInWorktree(t, creation.Path, "output", "tracked output\n", "track output")
+	commitInWorktree(t, creation.Path, "build", "tracked build\n", "track build")
+	checkpoint := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	gitRun(t, creation.Path, "rm", "-q", "output", "build")
+	commitInWorktree(t, creation.Path, ".gitignore", "output\nbuild/\nother.log\n", "ignore the outputs")
+	mustMkdirAll(t, filepath.Join(creation.Path, "build"), 0o755)
+	ignored := map[string]string{"output": "ignored output\n", "build/inner": "ignored build\n", "other.log": "ignored log\n"}
+	for path, body := range ignored {
+		mustWrite(t, filepath.Join(creation.Path, path), []byte(body), 0o644)
+	}
+	head := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	code, out, errout := runReset(t, root, home, "--to", checkpoint, creation.Assignment.ID)
+	requireTest(t, code == 1 && strings.Contains(out, "refused{detail=ignored content would be overwritten}"), "collision plan = %d %s %s", code, out, errout)
+	requireTest(t, strings.Contains(out, "refusal_paths[2]{path}:\n  build/inner\n  output\n"), "collision paths = %s", out)
+	for path, body := range ignored {
+		got, err := os.ReadFile(filepath.Join(creation.Path, path))
+		mustNoError(t, err)
+		requireTest(t, string(got) == body, "ignored bytes changed at %s: %q", path, got)
+	}
+	requireTest(t, gitOutput(t, creation.Path, "rev-parse", "HEAD") == head &&
+		gitOutput(t, root, "for-each-ref", "--format=%(refname)", intent.ResetRefPrefix(creation.Assignment.OwnerID, creation.Assignment.ID)) == "",
+		"collision refusal moved the checkout or wrote a ref")
+}

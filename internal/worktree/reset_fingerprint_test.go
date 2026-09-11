@@ -76,3 +76,22 @@ func TestResetFingerprintTracksTheCheckpoint(t *testing.T) {
 	after := resetFingerprint(t, root, home, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Assignment.ID)
 	requireTest(t, before != after, "checkpoint did not change fingerprint")
 }
+
+func TestResetFingerprintTracksTheIndex(t *testing.T) {
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "reset-index")
+	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("staged one\n"), 0o644)
+	gitRun(t, creation.Path, "add", "README.md")
+	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("working\n"), 0o644)
+	status := gitOutput(t, creation.Path, "status", "--porcelain=v1")
+	before := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("staged two\n"), 0o644)
+	gitRun(t, creation.Path, "add", "README.md")
+	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("working\n"), 0o644)
+	requireTest(t, gitOutput(t, creation.Path, "status", "--porcelain=v1") == status, "fixture changed the status")
+	after := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	requireTest(t, before != after, "staged-only edit did not change fingerprint: %s", after)
+	code, out, errout := runReset(t, root, home, "--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", before)
+	requireTest(t, code == 1 && strings.Contains(out, "reset plan is stale") && gitOutput(t, creation.Path, "show", ":README.md") == "staged two",
+		"stale staged apply = %d %s %s", code, out, errout)
+}

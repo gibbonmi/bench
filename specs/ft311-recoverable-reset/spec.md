@@ -6,7 +6,7 @@ Roadmap: FT311
 
 Decision source: specs/ft311-landing-completion/decisions/ft311-coordinator-work.md
 
-Verification log: 2 iteration(s) to accept — opus/high reviewed through the native agent surface. Iteration one returned 23 findings with 9 blocking, and the author folded 22 and recorded 1 as a reviewer-visible exception. Iteration two accepted the nine folds and returned 8 residuals with 1 blocking, which the author folded after the round.
+Verification log: 2 iteration(s) to accept — opus/high reviewed through the native agent surface. Iteration one returned 23 findings with 9 blocking, and the author folded 22 and recorded 1 as a reviewer-visible exception. Iteration two accepted the nine folds and returned 8 residuals with 1 blocking, which the author folded after the round. On 2026-09-11 the reviewer decided the ignored-path collision policy, and the repair added story 53 and rows RR70 through RR72.
 
 ## Problem
 
@@ -119,6 +119,13 @@ Guidance prose compounds through every session, so the leverage override applies
 51. As a teammate, I want the reference, the changelog, and the glossary to state the verb, so that a cold session finds the plan-and-apply form.
 52. As a reviewer, I want the trials, the residuals, and the landing selector kept out of this build, so that this spec has one outcome.
 
+### Refuse the ignored collision
+
+Line: gpt-5.6-terra / high.
+The refusal guards the same destructive move as the apply, so it takes the apply's line.
+
+53. As a coordinator, I want a move over an ignored path refused with the paths named, so that no build output is lost.
+
 ## Implementation decisions
 
 ### The grammar and the target
@@ -174,6 +181,12 @@ The conflicted refusal names the explicit cleanup verb as its next command, beca
 The unknown nested state is the walk error the nested classifier returns, and the verb fails closed on it.
 Every refusal renders through the worktree refusal record at exit 1, with a sanitized path table where the refusal reads paths.
 
+An ignored path that the move would materialize refuses `ignored content would be overwritten` at exit 1, with every colliding path in the table.
+The reset materializes the checkpoint tree, and the restore materializes the envelope's tip, base, and working layer.
+An ignored path collides when one of those trees tracks the path itself or a directory above it.
+The refusal writes nothing, because the reset envelope carries no ignored bytes and the overwrite would be unrecoverable.
+The coordinator moves the ignored content aside and plans again.
+
 ### The fingerprint
 
 The fingerprint binds the version tag, the common directory, the owner id, the assignment id, the mode, and the checkpoint.
@@ -182,6 +195,9 @@ The content identity is the one the explicit cleanup planner computes, so an edi
 The status bytes exclude ignored entries, so a build output written between the plan and the apply does not stale the plan.
 The landing's checkout fingerprint includes ignored entries except the runtime-log and local-capture paths, because the landing must see them.
 The digest composes through the shared fingerprint-parts helper, so the byte layout has one owner.
+
+The fingerprint also binds the raw index entries from the staged listing.
+So a staged blob that changes under equal status and working bytes stales the plan too.
 
 ### The reset envelope
 
@@ -385,6 +401,9 @@ The round-trip recaptured both layers equal to the captured trees.
 | RR67 | 14 | The fingerprint differs after an edit inside an already-dirty file. | New TestResetFingerprintTracksTheContent through resetWith | A fingerprint over the status bytes alone applies the plan to content it never showed. |
 | RR68 | 42 | A restore that leaves HEAD detached prints `next=bench worktree reset --to <tip> <id>`, and a restore that leaves HEAD attached prints no `next` cell. | New TestResetRestoreNamesTheReattachWhenDetached through resetWith | A detached checkout with no named way back refuses every lifecycle verb. |
 | RR69 | 41 | A ref under this assignment's prefix that does not exist refuses `reset envelope does not verify` at exit 1. | New TestResetRestoreRefusesAMissingRef through resetWith | A missing ref read as empty restores nothing and reports a restore. |
+| RR70 | 53 | Over a checkpoint that tracks a file and a directory the tip removed and ignored, with ignored bytes at the file and inside the directory, `--to <checkpoint>` refuses `ignored content would be overwritten` at exit 1 with both paths in the table and a non-colliding ignored path absent, the ignored bytes unchanged, the head unchanged, and no ref written. | New TestResetRefusesAnIgnoredCollision through resetWith | A move that keeps ignored files by omission still overwrites the one the checkpoint tracks, and a check over the file alone misses the directory. |
+| RR71 | 53 | After a tracked path in an envelope's working layer becomes ignored with new bytes, `--restore <ref>` refuses the same detail with that path in the table, the bytes unchanged, and the head and the branch unchanged. | New TestResetRestoreRefusesAnIgnoredCollision through resetWith | A restore that checks the checkpoint tree alone overwrites through the layer write. |
+| RR72 | 14 | A staged blob changed under equal status and working bytes changes the fingerprint, and an apply of the old fingerprint refuses `reset plan is stale` in both modes with the new staged bytes intact. | New TestResetFingerprintTracksTheIndex and TestResetRestoreRefusesAStaleIndex through resetWith | A fingerprint over the status and the working diff alone accepts a plan the staged layer outgrew. |
 
 ### Edge inventory
 
@@ -404,7 +423,8 @@ Every behavior serves this repository and every repository that links the kit.
 | Output shape | The plan line precedes the paths table, and the `none` plan has no `next` cell. | RR2, RR5 |
 | Paths | A control byte in a changed path renders sanitized, and every command names the id operand. | RR3, RR4 |
 | Identity | A control byte in the checkpoint, an ambiguous sha, and a foreign restore ref each refuse by their own fault. | RR10, RR55, RR36 |
-| Ignored files | Ignored entries leave the fingerprint alone and survive the apply. | RR17, RR20 |
+| Ignored files | Ignored entries leave the fingerprint alone and survive the apply, and a collision with a materialized path refuses. | RR17, RR20, RR70, RR71 |
+| Staged layer | A staged blob that changes under equal status and working bytes stales the plan. | RR72 |
 | Ledger | The assignment record is never written, and an unreadable ledger deletes no envelope. | RR29, RR66 |
 | Grammar | Neither mode and both modes are usage errors at exit 2. | RR6, RR54 |
 | Off-branch capture | A detached or shift-branch capture keeps the tip reachable, and its restore returns the branch to that tip and names the re-attach. | RR64, RR65, RR49, RR68 |
@@ -413,7 +433,7 @@ Every behavior serves this repository and every repository that links the kit.
 
 **Won't handle:** The name of the previous HEAD ref is not restored. The shift branch keeps its ref and its commits, and `bench worktree clean --discard-branch --unclaimed` retires it.
 
-**Won't handle:** Ignored files are neither preserved nor removed. `bench worktree clean --discard-ignored` owns the ignored inventory.
+**Won't handle:** Ignored files are neither preserved nor removed. `bench worktree clean --discard-ignored` owns the ignored inventory. A move that would overwrite an ignored path refuses before any write, and the coordinator moves that content aside by hand.
 
 **Won't handle:** A pooled shift worktree that is no assignment is refused as unassigned. `bench worktree clean --discard-branch <path>` retires it, which is the route the light-path landing of 2026-09-09 used.
 
