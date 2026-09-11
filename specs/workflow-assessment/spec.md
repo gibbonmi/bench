@@ -288,7 +288,6 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `internal/commit/commit.go`
 - `internal/commit/assessment_span_test.go`
 - `internal/worktree/land.go`
-- `internal/worktree/assessment_span_test.go`
 - `internal/worktree/land_trace_test.go`
 
 ## Out of scope
