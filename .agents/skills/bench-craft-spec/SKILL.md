@@ -6,12 +6,10 @@ index: coverage-map rows, edge inventories, story sizing, and delegate slicing f
 
 # Spec: synthesize, don't interview
 
-Turn the authorized decision source and what you know of the codebase into
-`specs/<slug>/spec.md` — synthesize, with at most two late questions.
+Turn the authorized decision source and what you know of the codebase into `specs/<slug>/spec.md` — synthesize, with at most two late questions.
 
 1. **Explore the repo**; use the glossary's terms and respect the area's ADRs. Before the coverage map locks, do three reads.
-   - Open every enforcement file a row or a fence names. These files are the conformance checks, the contract tests, the
-     wrapper help, the injected-port registry, and the grammar files. Cite each read.
+   - Open every enforcement file a row or a fence names. These files are the conformance checks, the contract tests, the wrapper help, the injected-port registry, and the grammar files. Cite each read.
    - Read one existing precedent for each named seam.
    - Sweep the whole tree for each reader of a count, a schema field, or an artifact path the spec changes.
      This reader sweep includes `.mjs` scripts and workflow files, and `references/map-discipline.md` states its rules.
@@ -25,7 +23,9 @@ Turn the authorized decision source and what you know of the codebase into
 
 Write a long, numbered list grouped by outcome, with an extensive breadth floor. One story per actor-want-benefit —
 `As an <actor>, I want <feature>, so that <benefit>` — covers every behavior, edge, and reviewed exclusion the source promises.
-Partial redundancy is the point. A story is a want, never an engineering layer (`craft-tickets` owns slice sizing). Each group carries one `Line:`.
+Partial redundancy is the point. A story is a want, never an engineering layer (`craft-tickets` owns slice sizing).
+
+Recommend one implementation line for the complete build. Explain it from the hardest material chunk, spec precision, seam uncertainty, and test strength. Mark each harder chunk in the implementation plan.
 
 ## The acceptance coverage map
 
@@ -112,9 +112,10 @@ The problem, from the user's point of view.
 The solution, from the user's point of view.
 
 ## User stories
-A long, numbered, extensive breadth floor grouped by outcome — one `As an <actor>, I want <feature>, so
-that <benefit>` per behavior, edge, and reviewed exclusion, partially redundant on purpose. Each group
-opens with its `Line: <resolved model id> / <effort>.` and one plain sentence explaining why.
+Line: <resolved implementation model id> / <starting effort>.
+Implementation-line reason: <hardest material chunk, spec precision, seam uncertainty, and test strength>.
+Harder chunks: <chunk IDs or none>.
+A long, numbered story list grouped by outcome, with one actor-want-benefit sentence per behavior, edge, and reviewed exclusion.
 
 ## Implementation decisions
 Modules, interfaces, schema or contract changes, and architectural calls. Record decisions rather than file paths or snippets that rot.
@@ -152,4 +153,3 @@ Each genuine separate capability includes its derived `<n> edits, <n> gate runs`
 
 Before a build starts, emit a scannable approval table. The table covers stories and their lines, seam diagrams, acceptance coverage including edge dispositions, ownership fences with an explicit reviewer disposition, and out
 of scope. Pause for sign-off. The user stories set breadth, engineering seams place tests, and the gate defines done.
-

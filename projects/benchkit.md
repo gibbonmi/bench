@@ -528,9 +528,9 @@ column — no family is canonical.
 
 | tier | codex | claude | opencode |
 |---|---|---|---|
-| top | `gpt-5.6-sol` | `fable` | unbound |
-| mid | `gpt-5.6-terra` | `opus` | unbound |
-| cheap | `gpt-5.6-luna` | `sonnet` | unbound |
+| top | `gpt-6-astra` | `fable` | unbound |
+| mid | `gpt-5.6-sol` | `opus` | unbound |
+| cheap | `gpt-5.6-terra` | `sonnet` | unbound |
 
 These opaque safe tokens are this repo's current choices, not a namespace rule;
 the token grammar and discovery posture live in `craft-line`. OpenCode stays
@@ -571,10 +571,9 @@ escalation.
   It reviews the spec and its ticket breakdown together against `craft-tickets`
   after `/bench-write-spec` slices it; `/bench-write-spec` owns the round's
   operating protocol.
-- **Review-axis delegate** (`/bench-review-implementation`, one per axis) → mid
-  model, medium effort, **~1 iteration each** (three axes can run in parallel).
-  This stays read-heavy: each delegate takes the full diff plus standards docs and
-  runs verification commands.
+- **Review-axis delegate** (`/bench-review-implementation`, one per axis) → the
+  conditional review line in `craft-line`, at high effort and **~1 iteration each**.
+  Three axes can run in parallel with the full diff and their axis sources.
 
 ## Notes for cold sessions
 

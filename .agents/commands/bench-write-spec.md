@@ -43,10 +43,10 @@ compatibility, or a reviewer-chosen seam.
 
 ## Process
 
-1. **Author.** Charge `bench-craft-spec` (and `bench-craft-domain` for terms) on the decision source; read the
-   enforcement surface before you lock rows that touch it. Run `craft-spec`'s reader sweep before that lock.
-   Give each story group its resolved model and effort from `craft-line`. Write `specs/<feature>/spec.md` from
-   `craft-spec`'s template and run `bench coverage --check`. The stale-command-reference sweep remains fail-closed across staged specs.
+1. **Author.** Charge `bench-craft-spec` (and `bench-craft-domain` for terms) on the decision source; read the enforcement surface before you lock rows that touch it. Run `craft-spec`'s reader sweep before that lock.
+
+   Recommend one implementation line through `craft-line`, with its model and effort. Explain it from the hardest chunk, precision, uncertainty, and tests.
+   Mark harder chunks. Write `specs/<feature>/spec.md` from `craft-spec`'s template and run `bench coverage --check`. The stale-command-reference sweep remains fail-closed across staged specs.
 
    A spec that ships a phase declares it on one `Introduces commands:` line, valid in its own directory while staged.
    When no hostile-input checklist class covers a surface, quarry the seams library and propose a tuned profile addition. Apply `craft-spec`'s named

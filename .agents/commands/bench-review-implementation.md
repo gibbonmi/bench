@@ -105,6 +105,8 @@ it never restarts initial discovery over the original range.
    its axis, and its charge from the `craft-review` skill
    (`.agents/skills/bench-craft-review/SKILL.md`).
 
+   Resolve every axis through `craft-line`'s conditional review line from the implementation model.
+
    An authorized review dispatches every prepared axis through the native agent
    surface. It asks no second approval turn inside that authorization. Each axis
    keeps its own context, its own isolated read-only venue, and its own
