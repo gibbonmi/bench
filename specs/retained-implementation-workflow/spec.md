@@ -161,6 +161,9 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `tests/canary/line-routing/line-binding-prose-drift/files/dot-bench/lines.env`
 - `specs/retained-implementation-workflow/spec.md`
 - `specs/retained-implementation-workflow/tickets`
+- `specs/completion-evidence`
+- `specs/implementation-continuation`
+- `specs/workflow-assessment`
 - `reviews/retained-implementation-workflow.md` (new)
 
 - `cmd/bench/command_registry.go`
