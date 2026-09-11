@@ -2,15 +2,44 @@
 
 ## Standards
 
-Pending native return.
+Standards review completed with 2 findings (1 medium, 1 low); worst issue medium.
+
+- S1 (medium, auto-fix): The fixture repeats the canonical axis inventory. Use reviewrecord.Axes().
+  Citations at frozen tip 205c929: AGENTS.md:34; AGENTS.md:41; internal/reviewrecord/record.go:100; internal/reviewrecord/recordtest/fixture.go:121.
+
+- S2 (low, auto-fix): Move the changelog entry under the typed Added heading.
+  Citations at frozen tip 205c929: CHANGELOG.md:9; .agents/skills/bench-craft-synthesis/SKILL.md.
 
 ## Spec
 
-Pending native return.
+completed with findings; Spec axis failed clean review.
+
+- P1 (high, auto-fix): A checkpoint for chunk 2 accepts evidence with no predecessor. Require the ordered planned prefix, including amendment mappings.
+  Citations at frozen tip 205c929: specs/completion-evidence/spec.md:81; specs/completion-evidence/spec.md:105; internal/reviewrecord/coverage.go:60.
+
+- P2 (high, auto-fix): Terminal completion accepts an empty source digest or performer. Validate both fields.
+  Citations at frozen tip 205c929: docs/adr/0021-benchmark-workflow-orchestration.md:12; specs/completion-evidence/spec.md:204; internal/reviewrecord/parse.go:73.
 
 ## Coverage
 
-Pending native return.
+Coverage review completed with 3 findings; worst issue high.
+
+- C1 (high, auto-fix): Control-byte record paths can be accepted when the file exists. Reject newline, return, and tab before traversal and exercise real files.
+  Citations at frozen tip 205c929: specs/completion-evidence/spec.md:221; internal/reviewrecord/files.go:23; internal/toon/toon.go:94; internal/reviewrecord/source_test.go:159.
+
+- C2 (medium, auto-fix): Immutable tree reads interpret literal glob characters as Git pathspec syntax. Load both a*.md and ab.md literally.
+  Citations at frozen tip 205c929: projects/benchkit.md:178; internal/reviewrecord/plan.go:66; internal/git/tree.go:164.
+
+- C3 (medium, auto-fix): The changed-plan test fails on malformed ticket syntax. Use a valid ticket amendment and prove stale identity plus explicit mapping.
+  Citations at frozen tip 205c929: specs/completion-evidence/spec.md:225; internal/reviewrecord/source_test.go:54; internal/reviewrecord/plan.go:86.
+
+## Review disposition
+
+Seven raw findings identify seven repair targets. All are accepted within the approved scope.
+The three native reviewers used gpt-5.6-sol/high, one iteration, and ran no tests or probes.
+
+The separate Claude opus/high falsification attempt failed with `Request timed out` (exit 1).
+This transport failure supplies no review verdict.
 
 ## Verification
 
@@ -332,17 +361,20 @@ help[0]{cmd,why}:
           "model": "gpt-5.6-sol",
           "effort": "high",
           "source_digest": "5ebad816a00190ded84344b26c34bd07e818a01b",
-          "state": "pending",
-          "outcome": "",
+          "state": "completed",
+          "outcome": "findings",
           "native_ref": {
-            "ref": "",
-            "digest": "",
-            "excerpt": ""
+            "ref": "codex:agent/c1_standards",
+            "excerpt": "Standards review completed with 2 findings (1 medium, 1 low); worst issue medium.",
+            "digest": "sha256:0cc67e8ec6ebcee965aaedbae50ba5caaf0281d7fc3e2eb7df136157865281aa"
           },
           "axis": "Standards",
           "base": "de1447b31903b170679b66bd200431cc15ddc73f",
           "tip": "205c92928a4bbf35b4540e1f867808c96310d97a",
-          "finding_ids": [],
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
           "supersedes": []
         },
         {
@@ -352,17 +384,20 @@ help[0]{cmd,why}:
           "model": "gpt-5.6-sol",
           "effort": "high",
           "source_digest": "5ebad816a00190ded84344b26c34bd07e818a01b",
-          "state": "pending",
-          "outcome": "",
+          "state": "completed",
+          "outcome": "findings",
           "native_ref": {
-            "ref": "",
-            "digest": "",
-            "excerpt": ""
+            "ref": "codex:agent/c1_spec",
+            "excerpt": "completed with findings; Spec axis failed clean review.",
+            "digest": "sha256:2fcd632e4be4bd0c75889eed7260f518352f7540532fe9933f4dc15b67ef8c14"
           },
           "axis": "Spec",
           "base": "de1447b31903b170679b66bd200431cc15ddc73f",
           "tip": "205c92928a4bbf35b4540e1f867808c96310d97a",
-          "finding_ids": [],
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
           "supersedes": []
         },
         {
@@ -372,17 +407,21 @@ help[0]{cmd,why}:
           "model": "gpt-5.6-sol",
           "effort": "high",
           "source_digest": "5ebad816a00190ded84344b26c34bd07e818a01b",
-          "state": "pending",
-          "outcome": "",
+          "state": "completed",
+          "outcome": "findings",
           "native_ref": {
-            "ref": "",
-            "digest": "",
-            "excerpt": ""
+            "ref": "codex:agent/c1_coverage",
+            "excerpt": "Coverage review completed with 3 findings; worst issue high.",
+            "digest": "sha256:deaea2bf973fd416e6ecdc37ac80dbbd1827fe3c9e736bdd5adc405b71f4eb69"
           },
           "axis": "Coverage",
           "base": "de1447b31903b170679b66bd200431cc15ddc73f",
           "tip": "205c92928a4bbf35b4540e1f867808c96310d97a",
-          "finding_ids": [],
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
           "supersedes": []
         }
       ]
