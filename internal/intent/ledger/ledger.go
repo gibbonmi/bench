@@ -52,6 +52,9 @@ const assignmentBranchNamespace = "refs/heads/bench/assign/"
 // this constant. Neither can address a namespace the other does not.
 const RecoveryRefNamespace = "refs/bench/recovery/"
 
+// ResetRefNamespace holds envelopes for recoverable assignment resets.
+const ResetRefNamespace = "refs/bench/reset/"
+
 type AssignmentState string
 
 const (

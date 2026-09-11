@@ -28,6 +28,7 @@ var Registry = []SeamEntry{
 	{Seam: "worktree.create", Package: "internal/worktree", Function: "beginVerbSpan"},
 	{Seam: "worktree.exec", Package: "internal/worktree", Function: "beginVerbSpan"},
 	{Seam: "worktree.merge", Package: "internal/worktree", Function: "beginVerbSpan"},
+	{Seam: "worktree.reset", Package: "internal/worktree", Function: "beginVerbSpan"},
 	{Seam: "worktree.release", Package: "internal/worktree", Function: "beginVerbSpan"},
 	{Seam: "worktree.build", Package: "internal/worktree", Function: "beginVerbSpan"},
 	{Seam: "worktree.reauthorize", Package: "internal/worktree", Function: "beginVerbSpan"},

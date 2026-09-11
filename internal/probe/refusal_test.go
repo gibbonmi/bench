@@ -55,8 +55,8 @@ func refusalFixture(t *testing.T) *fixture {
 // first of several would mutate a site the caller never named.
 func TestProbeRefusesAnAmbiguousMutation(t *testing.T) {
 	for _, tc := range []struct{ name, old, want string }{
+		{"no match", "absent text", "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  invalid,clamp.go,swap,substring-miss,0,untouched\nselection[1]{form,target,run,baseline,ran}:\n  package,./,^TestClampNegative$,\"\",0\n"},
 		{"several matches", "return", "error: probe mutation ambiguous — the old string matches 2 times, want exactly 1\n"},
-		{"no match", "absent text", "error: probe mutation ambiguous — the old string matches 0 times, want exactly 1\n"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := refusalFixture(t)
@@ -199,6 +199,13 @@ func TestProbeUsageNamesOneSelectionAndOneMutation(t *testing.T) {
 		{"two selections", []string{"clamp.go", "--omit", "n < 0", "--package", "./", "--check", "line-routing"}},
 		{"run without package", []string{"clamp.go", "--omit", "n < 0", "--check", "line-routing", "--run", "^X$"}},
 		{"two mutations", []string{"clamp.go", "--omit", "n < 0", "--swap", "a", "--with", "b", "--package", "./"}},
+		{"omit-file with swap", []string{"clamp.go", "--omit-file", "x", "--swap", "a", "--with", "b", "--package", "./"}},
+		{"omit-file with omit", []string{"clamp.go", "--omit-file", "x", "--omit", "n < 0", "--package", "./"}},
+		{"omit-file with unwrap", []string{"clamp.go", "--omit-file", "x", "--unwrap", "ensureNonNegative(n)", "--package", "./"}},
+		{"with only swap", []string{"clamp.go", "--with", "x", "--package", "./"}},
+		{"omit-file with replacement", []string{"clamp.go", "--omit-file", "x", "--with", "n", "--package", "./"}},
+		{"unwrap with replacement", []string{"clamp.go", "--unwrap", "ensureNonNegative(n)", "--with", "n", "--package", "./"}},
+		{"omit with replacement", []string{"clamp.go", "--omit", "n < 0", "--with", "n", "--package", "./"}},
 		{"no mutation", []string{"clamp.go", "--package", "./"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

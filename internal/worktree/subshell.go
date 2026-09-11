@@ -242,7 +242,7 @@ func planExplicitWith(j joins, root, path string, options CleanupOptions) (Clean
 	if headRef == "" {
 		headRef = "detached"
 	}
-	status, err := git.Raw("--no-optional-locks", "-C", target, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignore-submodules=none")
+	status, err := checkoutStatus(target)
 	if err != nil {
 		return CleanupPlan{}, err
 	}
@@ -394,44 +394,6 @@ func canonicalParts(parts ...[]byte) []byte {
 	}
 	return output.Bytes()
 }
-func explicitContentIdentity(target string) (string, error) {
-	diff, err := git.Raw("--no-optional-locks", "-C", target, "diff", "--no-ext-diff", "--binary", "HEAD", "--")
-	if err != nil {
-		return "", fmt.Errorf("read worktree content identity: %w", err)
-	}
-	untracked, err := git.Raw("--no-optional-locks", "-C", target, "ls-files", "--others", "--exclude-standard", "-z")
-	if err != nil {
-		return "", fmt.Errorf("read untracked content identity: %w", err)
-	}
-	parts := [][]byte{diff}
-	for record := range bytes.SplitSeq(untracked, []byte{0}) {
-		if len(record) == 0 {
-			continue
-		}
-		name := string(record)
-		full := filepath.Join(target, filepath.FromSlash(name))
-		info, statErr := os.Lstat(full)
-		if statErr != nil {
-			return "", fmt.Errorf("stat untracked path: %w", statErr)
-		}
-		parts = append(parts, []byte(name), []byte(strconv.FormatUint(uint64(info.Mode()), 10)))
-		switch {
-		case info.Mode().IsRegular():
-			body, readErr := os.ReadFile(full)
-			if readErr != nil {
-				return "", fmt.Errorf("read untracked path: %w", readErr)
-			}
-			parts = append(parts, body)
-		case info.Mode()&os.ModeSymlink != 0:
-			link, readErr := os.Readlink(full)
-			if readErr != nil {
-				return "", fmt.Errorf("read untracked symlink: %w", readErr)
-			}
-			parts = append(parts, []byte(link))
-		}
-	}
-	return fingerprintParts(parts...), nil
-}
 func predictedForeignRef(root, target, admin string) (string, error) {
 	common, err := git.CommonDir(root)
 	if err != nil {
@@ -455,8 +417,9 @@ func predictedForeignRef(root, target, admin string) (string, error) {
 		}
 	}
 }
+
 func inventoryIgnored(j joins, target string, full bool) (IgnoredInventory, []byte, error) {
-	raw, err := git.Raw("--no-optional-locks", "-C", target, "ls-files", "--others", "--ignored", "--exclude-standard", "-z", "--")
+	raw, err := ignoredListing(target)
 	if err != nil {
 		return IgnoredInventory{Uncertain: true}, nil, err
 	}

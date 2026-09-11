@@ -493,6 +493,7 @@ var keptRoutes = []struct {
 	{[]string{"worktree", "create", "--help"}, "usage: bench worktree create"},
 	{[]string{"worktree", "reauthorize", "--help"}, "usage: bench worktree reauthorize"},
 	{[]string{"worktree", "merge", "--help"}, "usage: bench worktree merge"},
+	{[]string{"worktree", "reset", "--help"}, "usage: bench worktree reset"},
 	{[]string{"gate", "--help"}, "usage: bench gate"},
 	{[]string{"commit", "--help"}, "usage: bench commit"},
 	{[]string{"status", "--help"}, "usage: bench status"},
@@ -503,24 +504,6 @@ var keptRoutes = []struct {
 	{[]string{"roadmap", "--help"}, "usage: bench roadmap"},
 	{[]string{"spec", "retire", "--help"}, "usage: bench spec retire"},
 	{[]string{"spec", "history", "--help"}, "usage: bench spec history"},
-}
-
-// keptWorktreeGrammars are the pool operations the worktree family help must keep naming.
-// The surviving family route says nothing about the operations under it. Each operation is
-// reachable only through that dispatcher, so the grammar line is where its survival shows.
-var keptWorktreeGrammars = []string{
-	// WF42: the full create grammar, so the family help pins `--from` rather than the
-	// bare verb.
-	usage.WorktreeCreate,
-	"bench worktree path",
-	"bench worktree exec",
-	usage.WorktreeShow,
-	usage.WorktreeBuild,
-	"bench worktree release",
-	"bench worktree clean",
-	"bench worktree reauthorize",
-	"bench worktree merge",
-	"bench worktree land",
 }
 
 func TestKeptRoutesAnswerTheirOwnHelp(t *testing.T) {

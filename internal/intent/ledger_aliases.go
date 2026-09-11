@@ -26,6 +26,7 @@ const (
 
 	AssignmentRecordSchema = ledger.AssignmentRecordSchema
 	RecoveryRefNamespace   = ledger.RecoveryRefNamespace
+	ResetRefNamespace      = ledger.ResetRefNamespace
 
 	StateActive         = ledger.StateActive
 	StateCleanupPending = ledger.StateCleanupPending
@@ -48,6 +49,7 @@ var (
 	AssignmentBranchPrefix = ledger.AssignmentBranchPrefix
 	AssignmentBranchRef    = ledger.AssignmentBranchRef
 	RecoveryRefPrefix      = ledger.RecoveryRefPrefix
+	ResetRefPrefix         = ledger.ResetRefPrefix
 	RequestDigest          = ledger.RequestDigest
 	ShiftBranchPrefix      = ledger.ShiftBranchPrefix
 	ValidIdentity          = ledger.ValidIdentity

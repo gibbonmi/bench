@@ -4,6 +4,7 @@
     "dist/",
     ".claude/scheduled_tasks.lock",
     ".claude/settings.local.json",
-    "bin/bench-broker.manifest"
+    "bin/bench-broker.manifest",
+    "capture/benchmarks/"
   ]
 }

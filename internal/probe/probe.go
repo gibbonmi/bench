@@ -47,10 +47,16 @@ func run(root string, parsed usage.Result) (string, int) {
 	if line != "" {
 		return line, 1
 	}
-	old, replacement, omit := mutationForm(parsed)
-	mutated, line := mutate(subject.start, old, replacement, omit)
+	old, replacement, kind, line := mutationInput(parsed)
 	if line != "" {
 		return line, 1
+	}
+	mutationResult, line := mutate(subject.start, old, replacement, kind)
+	if line != "" {
+		return line, 1
+	}
+	if mutationResult.matches == 0 {
+		return renderInvalidMutation(subject, kind, parsed)
 	}
 	request, line, code := testreport.Prepare(root, selectionArgs(parsed))
 	if line != "" {
@@ -62,26 +68,37 @@ func run(root string, parsed usage.Result) (string, int) {
 	if line := gradeGateLock(root); line != "" {
 		return line, 1
 	}
-	mutation := mutationName(omit)
+	mutation := kind
 	line, code, baseline := gradeBaseline(root, subject, mutation, request)
 	if line != "" {
 		return line, code
 	}
-	return probe(root, subject, mutated, mutation, request, baseline)
+	return probe(root, subject, mutationResult.mutated, mutation, request, baseline)
 }
 
-func mutationForm(parsed usage.Result) (string, string, bool) {
+func renderInvalidMutation(subject subject, mutation string, parsed usage.Result) (string, int) {
+	cells := verdictCells{verdict: "invalid", cause: "substring-miss", restored: untouchedCell}
+	form, target, run := "package", parsed.Flags["--package"], testreport.AllTests
+	if check, ok := parsed.Flags["--check"]; ok {
+		form, target = "check", check
+	} else if pattern, ok := parsed.Flags["--run"]; ok {
+		run = pattern
+	}
+	out, err := rowsWithSelection(subject, mutation, cells, form, target, run)
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return out, 1
+}
+
+func mutationForm(parsed usage.Result) (string, string, string) {
 	if old, omit := parsed.Flags["--omit"]; omit {
-		return old, "", true
+		return old, "", "omit"
 	}
-	return parsed.Flags["--swap"], parsed.Flags["--with"], false
-}
-
-func mutationName(omit bool) string {
-	if omit {
-		return "omit"
+	if call, unwrap := parsed.Flags["--unwrap"]; unwrap {
+		return call, "", "unwrap"
 	}
-	return "swap"
+	return parsed.Flags["--swap"], parsed.Flags["--with"], "swap"
 }
 
 // selectionArgs spells the focused run in `bench test`'s own grammar, so the probe and
@@ -199,12 +216,16 @@ func render(subject subject, mutation string, outcome testreport.Outcome, reques
 // and how many tests the mutated run ran, which is what separates a mutation no test
 // observed from a run that started none.
 func rows(subject subject, mutation string, cells verdictCells, request testreport.Request) (string, error) {
+	return rowsWithSelection(subject, mutation, cells, request.Form(), request.Target(), request.Run())
+}
+
+func rowsWithSelection(subject subject, mutation string, cells verdictCells, form, target, run string) (string, error) {
 	verdictRow := []any{cells.verdict, subject.display, mutation, cells.cause, cells.failed, cells.restored}
 	out, err := toon.TableTyped("probe", probeFields, [][]any{verdictRow})
 	if err != nil {
 		return "", err
 	}
-	selectionRow := []any{request.Form(), request.Target(), request.Run(), cells.baseline, cells.ran}
+	selectionRow := []any{form, target, run, cells.baseline, cells.ran}
 	block, err := toon.TableTyped("selection", selectionFields, [][]any{selectionRow})
 	if err != nil {
 		return "", err
