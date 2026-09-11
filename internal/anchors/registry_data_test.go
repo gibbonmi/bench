@@ -471,8 +471,8 @@ func TestCraftSpecMapDisciplineAnchorsRedOnRemoval(t *testing.T) {
 			{
 				file:    file,
 				section: "Slicing a build for delegates",
-				needle:  "A build may not edit its own spec's acceptance rows, budget targets, or ownership fences.",
-				want:    ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates dropped the rule that a build may not edit its own spec's acceptance rows, budget targets, or ownership fences",
+				needle:  "During a build, `.bench/BENCH.md` owns approved in-scope plan expansion.",
+				want:    "retained workflow: craft-spec dropped the canonical plan-expansion owner",
 			},
 			{
 				file:    file,

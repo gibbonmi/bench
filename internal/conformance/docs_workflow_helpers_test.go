@@ -521,7 +521,7 @@ func checkIntegrationSourceWorkflowCurrency(root string) []string {
 
 func TestIntegrationSourceWorkflowAnchorsBiteIndependently(t *testing.T) {
 	workflowAnchors := integrationSourceWorkflowAnchors()
-	if got, want := len(workflowAnchors), 11; got != want {
+	if got, want := len(workflowAnchors), 10; got != want {
 		t.Fatalf("integration-source workflow anchor count = %d, want %d", got, want)
 	}
 	runAnchorBites(t, workflowAnchors, func(anchor anchors.Anchor) string { return anchor.File })
