@@ -85,15 +85,37 @@ func compareCommand(s Store, path, ids string) (string, int) {
 	return renderComparison(report)
 }
 func renderComparison(report Comparison) (string, int) {
-	out, code := table("comparison", []string{"plan", "purpose", "eligible", "limits"}, [][]string{{report.Plan.ID, report.Plan.Purpose, fmt.Sprint(report.Eligible), "eligibility is not adoption approval; approval reference is unverified"}}, false)
+	out, code := table("comparison", []string{"plan", "purpose", "eligible", "limits"}, [][]string{{report.Plan.ID, report.Plan.Purpose, fmt.Sprint(report.Eligible), "eligibility is not adoption approval; approval reference is unverified; inspect native details with bench assessment show <run-id>"}}, false)
 	if code != 0 {
 		return out, code
 	}
 	rows := [][]string{}
 	for _, r := range report.Runs {
-		rows = append(rows, []string{r.Run.RunID, r.Run.Condition, r.Run.TaskID, r.Run.State, encoded(r.Summary), encoded(r.Usage), encoded(r.Run.Quality), encoded(r.Run.Attempts)})
+		rows = append(rows, []string{r.Run.RunID, r.Run.Condition, r.Run.TaskID, r.Run.State})
 	}
-	more, code := table("runs", []string{"run_id", "condition", "task", "state", "summary", "usage", "quality", "attempts"}, rows, false)
+	more, code := table("runs", []string{"run_id", "condition", "task", "state"}, rows, false)
+	if code != 0 {
+		return more, code
+	}
+	out += more
+	rows = nil
+	for _, r := range report.Runs {
+		quality := map[string]*float64{}
+		for name, m := range r.Run.Quality {
+			quality[name] = m.Value
+		}
+		rows = append(rows, []string{r.Run.RunID, encoded(quality), fmt.Sprint(r.Summary.Incomplete || r.Run.State == "incomplete")})
+	}
+	more, code = table("outcomes", []string{"run_id", "quality", "incomplete"}, rows, false)
+	if code != 0 {
+		return more, code
+	}
+	out += more
+	rows, err := comparisonRoleRows(report)
+	if err != nil {
+		return fail(err)
+	}
+	more, code = table("roles", []string{"condition", "role", "states", "metrics"}, rows, false)
 	if code != 0 {
 		return more, code
 	}
@@ -125,12 +147,8 @@ func renderComparison(report Comparison) (string, int) {
 			totals.Estimated.Partial = true
 			totals.Actual.Partial = true
 		}
-		for _, money := range []Money{totals.Estimated, totals.Actual} {
-			for _, value := range money.Known {
-				if !finite(value) {
-					return fail(fmt.Errorf("comparison cost overflow"))
-				}
-			}
+		if err := checkCost(totals); err != nil {
+			return fail(err)
 		}
 		for k := range keys {
 			for _, r := range selected {

@@ -3,6 +3,7 @@ package assessment
 import (
 	"fmt"
 	"maps"
+	"reflect"
 	"strings"
 )
 
@@ -23,16 +24,16 @@ func Compare(p Plan, runs []Run) (Comparison, error) {
 	if err := ValidatePlan(p); err != nil {
 		return out, err
 	}
+	reasonSet := map[string]bool{}
 	reason := func(s string) {
-		for _, old := range out.Reasons {
-			if old == s {
-				return
-			}
+		if reasonSet[s] {
+			return
 		}
+		reasonSet[s] = true
 		out.Reasons = append(out.Reasons, s)
 		out.Eligible = false
 	}
-	if p.Purpose == "pilot" || p.Purpose == "descriptive" {
+	if !purposes[p.Purpose].eligible {
 		reason("descriptive evidence only; not default-change evidence")
 	}
 	if len(p.Conditions) < 2 {
@@ -40,11 +41,18 @@ func Compare(p Plan, runs []Run) (Comparison, error) {
 	}
 	conditions := map[string]Condition{}
 	tasks := map[string]PlanTask{}
+	different := false
 	for _, c := range p.Conditions {
+		if !reflect.DeepEqual(fixedCondition(c, ""), fixedCondition(p.Conditions[0], "")) {
+			different = true
+		}
 		conditions[c.ID] = c
 		if len(c.Acceptance) == 0 || len(c.ReviewAxes) == 0 || !sameSet(c.Acceptance, p.Conditions[0].Acceptance) || !sameSet(c.ReviewAxes, p.Conditions[0].ReviewAxes) {
 			reason("unequal or missing acceptance and review obligations")
 		}
+	}
+	if !different {
+		reason("conditions have no experimental difference")
 	}
 	for _, task := range p.Tasks {
 		tasks[task.ID] = task
@@ -55,8 +63,9 @@ func Compare(p Plan, runs []Run) (Comparison, error) {
 			reason("planned repetitions are only a pilot: " + task.ID)
 		}
 	}
-	if p.Purpose == "kit-causal" {
-		if len(conditions["no-bench"].Capabilities) != 0 || len(conditions["current-bench"].Capabilities) == 0 || capabilityChanges(conditions["current-bench"].Capabilities, conditions["changed-capability"].Capabilities) != 1 {
+	if purposes[p.Purpose].causal {
+		arms, _ := resolveCausalArms(p.Conditions)
+		if len(arms.none.Capabilities) != 0 || len(arms.current.Capabilities) == 0 || capabilityChanges(arms.current.Capabilities, arms.changed.Capabilities) != 1 {
 			reason("causal arm must change exactly one capability")
 		}
 	}
@@ -90,6 +99,9 @@ func Compare(p Plan, runs []Run) (Comparison, error) {
 			return out, fmt.Errorf("run revision differs from pinned condition")
 		}
 		for _, a := range r.Attempts {
+			if a.State == "running" || a.State == "incomplete" {
+				reason("attempt has incomplete evidence: " + r.RunID + "/" + a.AttemptID)
+			}
 			line, ok := c.Lines[a.Role]
 			if !ok || a.Model != line.Model || a.Effort != line.Effort {
 				return out, fmt.Errorf("run model or effort differs from pinned condition")
@@ -98,7 +110,7 @@ func Compare(p Plan, runs []Run) (Comparison, error) {
 		if !r.Holdout {
 			reason("run is not held out: " + r.RunID)
 		}
-		if summary.Incomplete || r.State == "running" {
+		if summary.Incomplete || r.State == "running" || r.State == "incomplete" {
 			reason("run has incomplete evidence: " + r.RunID)
 		}
 		if r.Trial == nil {
@@ -149,10 +161,22 @@ func Compare(p Plan, runs []Run) (Comparison, error) {
 		}
 		out.Runs = append(out.Runs, ComparedRun{Run: r, Summary: summary, Usage: usage})
 	}
+	completed := map[string]map[string]bool{}
+	for pair, n := range filled {
+		if n == tasks[pair.task].Repetitions {
+			if completed[pair.condition] == nil {
+				completed[pair.condition] = map[string]bool{}
+			}
+			completed[pair.condition][pair.task] = true
+		}
+	}
 	for _, c := range p.Conditions {
-		for _, task := range p.Tasks {
-			if missing := task.Repetitions - filled[trialPair{task.ID, c.ID}]; missing > 0 {
-				reason(fmt.Sprintf("missing %d planned repetitions: %s / %s", missing, task.ID, c.ID))
+		if missing := len(p.Tasks) - len(completed[c.ID]); missing > 0 {
+			for _, task := range p.Tasks {
+				if !completed[c.ID][task.ID] {
+					reason(fmt.Sprintf("missing planned repetitions for %d tasks in %s; first: %s", missing, c.ID, task.ID))
+					break
+				}
 			}
 		}
 		if counts[c.ID] > 0 && float64(failures[c.ID])/float64(counts[c.ID]) > *p.QualityTolerance.MaxFailureRate {

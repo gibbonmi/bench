@@ -11,13 +11,13 @@ func ValidatePlan(p Plan) error {
 	if !safeText(reflect.ValueOf(p)) || p.Version != 1 || !safeID.MatchString(p.ID) {
 		return fmt.Errorf("invalid comparison plan identity")
 	}
-	if !slices.Contains([]string{"pilot", "descriptive", "default-change", "kit-causal"}, p.Purpose) {
+	if _, ok := purposes[p.Purpose]; !ok {
 		return fmt.Errorf("unknown comparison purpose")
 	}
 	if !validReference(p.Approval) || p.Budget.Amount == nil || !finite(*p.Budget.Amount) || *p.Budget.Amount < 0 || p.Budget.Currency == "" {
 		return fmt.Errorf("plan requires approval reference and budget")
 	}
-	if !slices.Contains([]string{"capability", "revision", "model", "effort", "harness", "limits"}, p.Variable) {
+	if _, ok := variableProjections[p.Variable]; !ok {
 		return fmt.Errorf("plan requires one declared experimental variable")
 	}
 	q := p.QualityTolerance
@@ -75,8 +75,8 @@ func ValidatePlan(p Plan) error {
 			return fmt.Errorf("undeclared condition difference")
 		}
 	}
-	if p.Purpose == "kit-causal" {
-		if len(conditions) != 3 || !conditions["no-bench"] || !conditions["current-bench"] || !conditions["changed-capability"] || p.Variable != "capability" {
+	if purposes[p.Purpose].causal {
+		if _, ok := resolveCausalArms(p.Conditions); !ok || p.Variable != capabilityVariable {
 			return fmt.Errorf("kit-causal plan requires exactly three FT231 conditions")
 		}
 	}
@@ -97,33 +97,6 @@ func sameSet(a, b []string) bool {
 	sort.Strings(left)
 	sort.Strings(right)
 	return slices.Equal(left, right)
-}
-func fixedCondition(c Condition, variable string) Condition {
-	c.ID = ""
-	c.Acceptance = nil
-	c.ReviewAxes = nil
-	switch variable {
-	case "capability":
-		c.Capabilities = nil
-	case "revision":
-		c.Revision = ""
-	case "harness":
-		c.Harness = ""
-	case "limits":
-		c.Limits = nil
-	case "model", "effort":
-		lines := map[string]Line{}
-		for role, line := range c.Lines {
-			if variable == "model" {
-				line.Model = ""
-			} else {
-				line.Effort = ""
-			}
-			lines[role] = line
-		}
-		c.Lines = lines
-	}
-	return c
 }
 func capabilityChanges(a, b map[string]string) int {
 	keys := map[string]bool{}

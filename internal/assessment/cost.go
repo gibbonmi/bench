@@ -51,15 +51,20 @@ func estimateUsage(a Attempt, u Usage) (CostSummary, error) {
 	if err = charges(&out.Actual, a.Cost.Actual); err != nil {
 		return out, err
 	}
-	for _, m := range []Money{out.Estimated, out.Actual} {
+	return out, checkCost(out)
+}
+
+func checkCost(cost CostSummary) error {
+	for _, m := range []Money{cost.Estimated, cost.Actual} {
 		for _, v := range m.Known {
 			if !finite(v) {
-				return out, fmt.Errorf("cost overflow")
+				return fmt.Errorf("cost overflow")
 			}
 		}
 	}
-	return out, nil
+	return nil
 }
+
 func finite(v float64) bool { return !math.IsNaN(v) && !math.IsInf(v, 0) }
 func charges(m *Money, list []Charge) error {
 	for _, c := range list {

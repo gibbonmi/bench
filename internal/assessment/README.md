@@ -110,7 +110,8 @@ Default-change evidence requires repeated held-out tasks outside the FT311 autho
 Kit-causal plans require no Bench, current Bench, and one changed capability.
 Eligibility never grants adoption approval.
 
-Reports retain all selected runs and attempts, including failures and unknown values.
+Reports summarize selected runs and role states, including failures and unknown values.
+Use `show <run-id>` for complete attempts and native evidence.
 Condition totals separate known estimates from actual charges and preserve partial flags.
 Variation reports known and unknown counts, minimum, maximum, mean, and population standard deviation.
 Currency totals stay separate.

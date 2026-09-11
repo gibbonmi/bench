@@ -8,6 +8,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added local workflow assessment records, native evidence collection, and pinned-plan comparison reports with explicit cost and quality limits.
+
 - Added source-bound verification and review evidence at explicit completion checkpoints.
 
 - Added `bench worktree reset` with checkpoint and restore modes. Each mode plans

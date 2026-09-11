@@ -180,6 +180,7 @@ Scope cut: a broad experimental runner could ship separately after this record a
 
 These paths are the union of ticket expectations. A directory entry is an exact prefix for that existing owner or fixture family. Expansion follows decision #5, with the plan updated before use. It cannot weaken existing guarantees.
 
+- `CHANGELOG.md`
 - `internal/assessment` (new)
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
@@ -391,7 +392,8 @@ The synthetic cross-attempt counter case extends A6 and A24 without changing the
     {
       "id": "3",
       "tickets": [
-        "3.md"
+        "3.md",
+        "6.md"
       ],
       "verification": [
         {
@@ -510,3 +512,15 @@ The full landing assignment-copy omission produced one diagnostic red and restor
 The optional trial object binds a run to its plan and repetition. It records the harness version, limits, capabilities, assurance obligations, and native reference. The run source and actual attempt lines remain the owners of revision, model, and effort.
 
 Comparison validation checks each actual run against its condition. Missing planned repetitions remain incomplete evidence. Repetition checks use observed slots and counts, so large declared repetition counts cannot cause unbounded iteration.
+
+## Chunk 3 repair plan
+
+Ticket 6 belongs to chunk 3 and follows ticket 3. It closes the native review findings without changing the approved behavior. CHANGELOG.md joins the ownership fence for the delivered command entry.
+
+A16 and A18 include hostile comparison-plan files and bounded task/condition processing. Missing-repetition reports aggregate absent tasks from observed slots. They retain an example missing task without expanding all task/condition pairs.
+
+A18, A35, and A36 include trial identity, reference, repetition range, capabilities, and assurance partitions. A24 includes exact condition totals for estimates and actual charges across roles, states, partial values, and currencies. A37 includes both quality boundaries. A38 includes each fixed plan field independently. A19 includes complete pilot and descriptive cases. A20 includes explicit incomplete state.
+
+Synthetic CLI validation passed through the built binary. The temporary environment was corrected after the first import used the ordinary store. All four generated records were preserved, verified, and removed from that store. The corrected temporary-store comparison passed. No paid trial ran.
+
+Initial probes bit for cache subtraction, default preservation, budget, approval, pilot repetition, assurance, missing repetitions, quality, failure tolerance, variation, and causal restrictions. Each fixed run field also produced its independent red. Every probe restored production.

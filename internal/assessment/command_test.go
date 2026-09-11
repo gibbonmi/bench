@@ -67,7 +67,6 @@ func TestAssessmentCommandUnsafe(t *testing.T) {
 		t.Run(kind, func(t *testing.T) {
 			s := Store{Home: t.TempDir(), Root: t.TempDir()}
 			r := fixtureRun(s.Root)
-			input := filepath.Join(t.TempDir(), "input.json")
 			switch kind {
 			case "task-esc":
 				r.TaskID = "task\x1b"
@@ -85,37 +84,7 @@ func TestAssessmentCommandUnsafe(t *testing.T) {
 				r.Attempts = append(r.Attempts, r.Attempts[0])
 			}
 			data, _ := json.Marshal(r)
-			if kind == "oversized" {
-				data = []byte(strings.Repeat(" ", int(bounds.ControlRecordLimit)+1))
-			}
-			if kind == "duplicate-key" {
-				data = []byte(strings.Replace(string(data), "{", "{\"version\":1,", 1))
-			}
-			if kind == "unknown-field" {
-				data = []byte(strings.Replace(string(data), "{", "{\"execute\":\"false\",", 1))
-			}
-			if err := os.WriteFile(input, data, 0600); err != nil {
-				t.Fatal(err)
-			}
-			switch kind {
-			case "fifo":
-				os.Remove(input)
-				if err := syscall.Mkfifo(input, 0600); err != nil {
-					t.Fatal(err)
-				}
-			case "symlink":
-				link := input + ".link"
-				if err := os.Symlink(input, link); err != nil {
-					t.Fatal(err)
-				}
-				input = link
-			case "parent-link":
-				link := filepath.Join(t.TempDir(), "link")
-				if err := os.Symlink(filepath.Dir(input), link); err != nil {
-					t.Fatal(err)
-				}
-				input = filepath.Join(link, "input.json")
-			}
+			input := unsafeAssessmentInput(t, data, kind)
 			if out, code := Command(s, []string{"record", "--input", input}); code != 1 {
 				t.Fatalf("A16 unsafe import accepted: %d %s", code, out)
 			}
@@ -125,4 +94,41 @@ func TestAssessmentCommandUnsafe(t *testing.T) {
 			}
 		})
 	}
+}
+
+func unsafeAssessmentInput(t *testing.T, data []byte, kind string) string {
+	t.Helper()
+	input := filepath.Join(t.TempDir(), "input.json")
+	if kind == "oversized" {
+		data = []byte(strings.Repeat(" ", int(bounds.ControlRecordLimit)+1))
+	}
+	if kind == "duplicate-key" {
+		data = []byte(strings.Replace(string(data), "{", "{\"version\":1,", 1))
+	}
+	if kind == "unknown-field" {
+		data = []byte(strings.Replace(string(data), "{", "{\"execute\":\"false\",", 1))
+	}
+	if err := os.WriteFile(input, data, 0600); err != nil {
+		t.Fatal(err)
+	}
+	switch kind {
+	case "fifo":
+		os.Remove(input)
+		if err := syscall.Mkfifo(input, 0600); err != nil {
+			t.Fatal(err)
+		}
+	case "symlink":
+		link := input + ".link"
+		if err := os.Symlink(input, link); err != nil {
+			t.Fatal(err)
+		}
+		input = link
+	case "parent-link":
+		link := filepath.Join(t.TempDir(), "link")
+		if err := os.Symlink(filepath.Dir(input), link); err != nil {
+			t.Fatal(err)
+		}
+		input = filepath.Join(link, "input.json")
+	}
+	return input
 }

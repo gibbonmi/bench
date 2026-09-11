@@ -94,7 +94,8 @@ works on any branch. This line only states the binding.)
   missing `go` on `PATH` is a named refusal.
 - **The AXI query surface** (`bench anchors`, `bench learnings`, `bench maps`, `bench guards`,
   `bench diff`, `bench coverage`, `bench consumers`, `bench harnesses`,
-  `bench roadmap`, `bench assessment list`, `bench assessment show`, `bench assessment compare`, and `bench worktree list`). This is the agent-facing read-only
+  `bench roadmap`, `bench assessment list`, `bench assessment show`, `bench assessment compare`, and `bench worktree list`, and the
+  shared flat-table TOON emitter). This is the agent-facing read-only
   surface, and the AXI-conformant half of the hybrid output contract. It emits TOON
   stdout, definitive empty states, structured errors on stdout, and exit 0/1/2. The
   AXI contract fragments gate-test it. Each guard script's static leading-comment

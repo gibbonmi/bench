@@ -1,7 +1,6 @@
 package assessment
 
 import (
-	"fmt"
 	"sort"
 	"time"
 )
@@ -58,15 +57,9 @@ func Summarize(r Run) (Summary, error) {
 	} else {
 		out.Incomplete = true
 	}
-	for _, m := range []Money{out.Cost.Estimated, out.Cost.Actual} {
-		for _, v := range m.Known {
-			if !finite(v) {
-				return out, fmt.Errorf("cost overflow")
-			}
-		}
-	}
-	return out, nil
+	return out, checkCost(out.Cost)
 }
+
 func addMoney(dst *Money, src Money) {
 	dst.Partial = dst.Partial || src.Partial
 	for currency, n := range src.Known {
