@@ -49,15 +49,13 @@ Skip a scope when its indexed source set is empty. Charge every delegate under
 Read delegates edit nothing, take no new inventory, and use only the snapshot and its named paths.
 Each read delegate returns these fields: proposed owner, classification, occurrence, evidence, and reviewer decision.
 
-Resolve duplicate incidents and reviewer decisions before any batch writer starts.
+Resolve duplicate incidents and reviewer decisions before retained batch authorship starts.
 Verify that the tree stayed unchanged. Keep ignored capture removal, the handoff,
-verification, and landing with the coordinator. An implement-now writer may run
-while other reads continue. Route each implement-now writer through
-`craft-delegate` isolation and `craft-line` routing.
+verification, and landing with the coordinator. Retained implement-now work may run while other reads continue. Route its line through `craft-line` and keep its authorship under `.bench/BENCH.md`.
 
 If an implement-now item exists, create the batch worktree only after every such item lands green on `main`.
 If no implement-now item exists, create the batch worktree after all reads finish and the coordinator resolves duplicate incidents and reviewer decisions.
-If tracked changes remain, one later write delegate authors the complete tracked batch.
+If tracked changes remain, the retained drain session authors the complete tracked batch.
 
 ## Exit handoff
 
@@ -182,10 +180,7 @@ accused path. Without the real repro, dismiss the entry as unreproduced or
 re-park it. A re-parked entry names the missing repro as its graduation trigger.
 
 For a drained item that meets the light-path observables, build the item in this session ("implement now") by default.
-Write its one ticket file. Spawn a write-delegate charged with
-that ticket under `craft-delegate` isolation and `craft-line` routing. Then verify
-the returned diff in the main session against the ticket's acceptance rows and
-the gate. Open a `ROADMAP.md` row only when the reviewer declines.
+Write its one ticket file. Implement that ticket in the retained session under `craft-line`. Verify the diff against the ticket's acceptance rows and the gate. Open a `ROADMAP.md` row only when the reviewer declines.
 Items needing a reviewer decision, a new seam, or spec-level design
 still graduate to `ROADMAP.md`.
 
@@ -232,8 +227,7 @@ judgment, not global sorting.
 
 ## 8. Batch-propose, then commit once on green
 
-Follow `## Delegate the evidence`. If tracked changes remain, charge the one
-later write delegate to draft the complete tracked pass as one uncommitted batch diff.
+Follow `## Delegate the evidence`. If tracked changes remain, the retained drain session drafts the complete tracked pass as one uncommitted batch diff.
 If no tracked changes
 remain, start no batch writer.
 

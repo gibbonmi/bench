@@ -1,5 +1,5 @@
 ---
-description: Three-axis semantic review of a branch diff — Standards, Spec, and Coverage. Use after implementation and before the final landing. Advisory, not authoritative.
+description: Three-axis semantic review of a frozen implementation-chunk diff — Standards, Spec, and Coverage. Use after each planned chunk. Advisory, not authoritative.
 ---
 
 # /bench-review-implementation — the check the gate can't run
@@ -9,8 +9,7 @@ description: Three-axis semantic review of a branch diff — Standards, Spec, an
 This is the semantic review phase. It reviews the branch diff against three
 separate axes: documented standards, the approved spec, and coverage gaps. It
 produces findings the gate cannot see. It claims no authority over done-ness.
-A spec-backed review runs from the retained integration source and opens with
-`bench preflight review` in explicit-base mode; a red preflight stops the phase.
+A spec-backed review runs from the retained integration source after each planned chunk. It opens with `bench preflight review` in explicit-base mode; a red preflight stops the phase.
 
 ## Exit handoff
 
@@ -20,9 +19,7 @@ finding count per axis, and the de-duplicated repair-target count after you
 collapse findings that name the same fix. Volume and repair work are different
 numbers; never report one number where the reviewer asks for the other.
 
-Accepted findings become slim repair tickets with an advisory `Writes:` note,
-and they return to `/bench-implement-spec`. Findings that need a later fix pass
-use the pickup-file route in step 6. A clean review proceeds to `/bench-final-check`.
+Accepted findings return to the retained `/bench-implement-spec` session. Findings that need a fix pass use the pickup-file route in step 6. A clean review returns to the next chunk, or to final reconciliation after the last chunk.
 
 The gate is deterministic: it runs the phase table the project profile declares,
 and nothing else. Review supplies the semantic judgment that phase table cannot
@@ -30,22 +27,13 @@ perform. The gate decides done; the reviewer decides whether a green change ship
 
 ## Review modes
 
-Initial review blocks on the full `frozen-base..reviewed-tip` diff across
-Standards, Spec, and Coverage. It is the discovery pass described below.
+Each planned chunk takes one review across Standards, Spec, and Coverage. The axes read the whole approved spec and focus on the frozen `chunk-base..chunk-tip` delta.
 
-After you repair accepted findings, a repair-scoped re-review takes the
-accepted repair predicates and the prior reviewed tip. It uses the full
-`frozen-base..current-tip` diff only as context. Its blocking scope is the
-accepted repair predicates plus changes after the prior reviewed tip. This is
-checked for repair-induced Standards, Spec, and Coverage problems. A finding
-outside both is a non-blocking follow-on and cannot reopen the phase.
+After the retained author repairs accepted findings, current repair coverage closes those predicates. Repeat delegated review only for a later semantic delta or a cross-chunk concern that invalidates prior evidence. A repeated review uses the full chunk diff as context and blocks only on that later delta or named concern.
 
-The coordinator writes one repair ticket before the repair-scoped re-review,
-when accepted repairs amend the coverage map. The ticket records the
-accepted repairs, and it cites each amended row in `Covers:`.
+The coordinator writes one repair ticket when accepted repairs amend the coverage map. The ticket records the accepted repairs, and it cites each amended row in `Covers:`.
 
-The coordinator records every dogfood run in the spec before the
-repair-scoped re-review starts. An unrecorded run is a blocking finding.
+The coordinator records every dogfood run in the spec before repair coverage closes. An unrecorded run is a blocking finding.
 
 A diff that changes kit guidance takes a standing cross-harness
 falsification pass. The kit-guidance set is any file under `.agents/` or
@@ -53,9 +41,7 @@ the file `.bench/BENCH.md`. Each falsification finding takes one explicit
 outcome of accept, merge, or dismiss. An accepted falsification
 finding joins the review findings and takes the repair-routing disposition.
 
-Landing proceeds when the repair-scoped result is clean. A repair-induced fix
-triggers a new check. It stays scoped to that predicate and repair delta;
-it never restarts initial discovery over the original range.
+The successor chunk starts only after findings and repair coverage close. After the last chunk, the retained author reconciles overall acceptance and integration before landing.
 
 ## Process
 
@@ -74,7 +60,7 @@ it never restarts initial discovery over the original range.
    A historical review keeps `bench diff --full --commit <sha>` for the landed
    commit. A spec-less review keeps `bench diff --full` in explicit-base mode.
 
-   The frozen base is the `main` tip merged into the source before the landing, so the range holds the spec diff alone.
+   The first chunk base is the `main` tip merged into the source. Each later chunk base is the accepted predecessor tip, so the range holds only that chunk's delta.
 
 2. **Find the sources.** The spec source is `specs/<feature>/spec.md` for this
    work, or the path I give you. The standards sources are `AGENTS.md` and
@@ -194,15 +180,8 @@ it never restarts initial discovery over the original range.
    the same green fix commit that closes them, so resolved findings cannot
    resurface.
 
-7. **Hand off, don't repair.** This phase makes no fixes and runs no gate.
-   Accepted findings become slim repair tickets carrying an advisory `Writes:`
-   note and return to `/bench-implement-spec` on the same integration source.
-   A spec amendment commits to that same source on the finding cadence. The
-   landing publishes the source's spec bytes, so an amendment never routes
-   through a hand commit on the destination. A clean review hands its frozen
-   base and reviewed tip to `bench worktree land`; `/bench-final-check`
-   reports that landing's oracle.
+7. **Hand off, don't repair.** This phase makes no fixes and runs no gate. Accepted findings return to `/bench-implement-spec` on the same integration source. A spec amendment commits to that source on the finding cadence.
 
-   The review base is the fold commit that merged `main` into the source. The
-   landing base is that `main` tip itself. `bench worktree land --base` takes
-   the `main` tip, and it refuses the fold commit.
+   A clean chunk review hands its frozen pair back to the retained author. The author starts the successor or performs final reconciliation. Only the reconciled final source proceeds to `bench worktree land`; `/bench-final-check` reports that landing's oracle.
+
+   The landing base is the `main` tip merged before the first chunk. `bench worktree land --base` takes that `main` tip, not a later chunk base.

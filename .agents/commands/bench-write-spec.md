@@ -36,8 +36,7 @@ tree or multi-session fog to `$bench-shape-idea`.
 
 ## Who runs this phase
 
-The session holding the decision source authors the spec and tickets at whatever tier it runs. A fresh session
-builds after ticket approval. Spec authoring owns engineering seams, deep-versus-thin design, tests,
+The session holding the decision source authors the spec and tickets at whatever tier it runs. The approved implementation session starts after ticket approval and retains authorship through the build. Spec authoring owns engineering seams, deep-versus-thin design, tests,
 acceptance coverage, hostile-input attachment, and gate attachment; shaping sources constrain behavior, scope,
 compatibility, or a reviewer-chosen seam.
 

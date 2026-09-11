@@ -115,15 +115,17 @@ Three predicates ride with them:
 1. `/bench-shape-idea` for a multi-session unresolved decision tree.
 2. `/bench-write-spec` to lock stories, seams, and gate expectations, and slice the tickets.
 3. `/bench-implement-spec` to implement at the chosen seams.
-4. `/bench-review-implementation` for semantic review before the final landing.
+4. `/bench-review-implementation` for semantic review after each implementation chunk.
 5. `/bench-final-check` to gate, commit on green, and report the landing evidence.
 
-**Right-size the process; ask before deviating.** A few-line change does not
-need the full pipeline. You may propose a lighter path. A skip of a
-canonical step needs a standing approval or my explicit OK. The standing
-approvals are the table below, a size rule I have given you, and the
-fix-and-gate path for review findings. Behavior defects run focused
-regression checks, then the gate.
+**Retain implementation authorship through each approved spec.** The retained implementation session writes production changes, tests, probes, and repairs. A brief read-only diagnostic consultation can inspect evidence, but it receives no implementation or repair assignment. `craft-line` owns any user-directed change of implementation model or session.
+
+**Plan and review coherent chunks.** An implementation chunk is one coherent behavior outcome with acceptance rows, tests, and a review checkpoint. A ticket remains a serial green commit checkpoint. Each planned chunk names its stable ID, outcome, acceptance rows, and tests. A chunk can contain several tickets.
+
+After a chunk's ticket commits, freeze its delta and run Standards, Spec, and Coverage against the whole approved spec before starting its successor. Return findings to the retained author and obtain current repair coverage. After the last chunk, the retained author reconciles overall acceptance and integration. Repeat delegated review only for a later delta or a cross-chunk concern that invalidates prior evidence.
+
+**Right-size the process; ask before deviating.** A few-line change does not need the full pipeline. You may propose a lighter path. A skip of a canonical step needs a standing approval or my explicit OK.
+The standing approvals are the table below, a size rule I have given you, and the fix-and-gate path for review findings. Behavior defects run focused regression checks, then the gate.
 
 | Observable | Route |
 |---|---|
@@ -131,12 +133,8 @@ regression checks, then the gate.
 | Either observable is false | Normal full workflow. |
 
 **Every phase runs in a bench worktree and lands through `bench worktree land`.**
-`bench commit` enforces this boundary: it refuses the primary checkout and
-directs the user to create a Bench worktree. The landing is spec-less when the
-phase has no spec, and within Bench, `main` receives writes only through
-landings. Merge composition is the landing primitive because a rebase rewrites
-the reviewed tip, so the workflow rejects rebases. Editors and raw Git remain
-outside Bench's command boundary. `.bench/BENCH-reference.md` holds the landing
+`bench commit` enforces this boundary: it refuses the primary checkout and directs the user to create a Bench worktree. The landing is spec-less when the phase has no spec, and within Bench, `main` receives writes only through landings.
+Merge composition is the landing primitive because a rebase rewrites the reviewed tip, so the workflow rejects rebases. Editors and raw Git remain outside Bench's command boundary. `.bench/BENCH-reference.md` holds the landing
 shape.
 
 **Fix, don't park.** A small defect you find mid-work is not roadmap work: the

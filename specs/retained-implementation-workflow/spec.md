@@ -71,11 +71,11 @@ Deliver guidance with honest enforcement limits. Anchors detect missing or contr
 
 Implement these tickets in the retained session. Each ticket is one initial review chunk. Commit the ticket on its lane pass, run the three delegated axes, and repair findings before the next chunk. Review line: decision #13, resolved for this implementation as gpt-6-astra / high. Final acceptance reconciliation stays with the author.
 
-| chunk / ticket | blocked by | delivered outcome | harder chunk |
-| --- | --- | --- | --- |
-| 3.md — Bind the model tiers and review recommendation | none | Update GPT bindings and the checked project table | no |
-| 1.md — Retain the author through chunk review | 3.md | Apply the authorship and review cadence end to end, including the drain and field guide | yes |
-| 2.md — Permit logged within-scope plan expansion | 1.md | Apply standing authority to chunk amendments, Writes expectations, and gate additions | no |
+| chunk / ticket | blocked by | delivered outcome | acceptance rows | tests | harder chunk |
+| --- | --- | --- | --- | --- | --- |
+| 3.md — Bind the model tiers and review recommendation | none | Update GPT bindings and the checked project table | W12, W13, W14, W15, W22, W23 | `TestRetainedWorkflow`; line routing and guidance anchors | no |
+| 1.md — Retain the author through chunk review | 3.md | Apply the authorship and review cadence end to end, including the drain and field guide | W1, W2, W3, W4, W5, W6, W7, W16, W17, W18, W19, W20, W21 | `TestRetainedWorkflow`; review convergence, recurrence, and guidance anchors | yes |
+| 2.md — Permit logged within-scope plan expansion | 1.md | Apply standing authority to chunk amendments, Writes expectations, and gate additions | W8, W9, W10, W11 | `TestRetainedWorkflow`; guidance anchors | no |
 
 ## Testing decisions
 
@@ -147,6 +147,7 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `.agents/skills/bench-craft-line/SKILL.md`
 - `docs/field-guide.html`
 - `internal/anchors/registry_data.go`
+- `internal/anchors/registry_data_test.go`
 - `internal/anchors/registry_ft311_preparation.go`
 - `internal/anchors/registry_ft311_review_dispatch.go`
 - `internal/conformance/docs_workflow_helpers_test.go`

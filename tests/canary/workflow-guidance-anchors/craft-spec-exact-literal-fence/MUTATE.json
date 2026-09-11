@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/skills/bench-craft-spec/SKILL.md",
-    "old": "A fence entry is an exact repo-relative file or path prefix, never a glob\nor an implementation ticket.",
+    "old": "A fence entry is an exact repo-relative file or path prefix, never a glob or an implementation ticket.",
     "new": "A fence entry remains checkable at charge time."
   },
   {

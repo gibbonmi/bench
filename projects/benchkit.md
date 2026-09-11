@@ -36,9 +36,7 @@ works on any branch. This line only states the binding.)
   `bench repair` action. Automation opts into the same repair path with exactly
   `BENCH_REPAIR=1`, while `BENCH_OFFLINE=1` and `BENCH_NO_REPAIR` suppress it.
 
-  Reviewed spec-backed builds keep serial green ticket commits on one
-  retained integration source. Semantic review binds its frozen base and tip.
-  `bench worktree land` composes and gates that pair on the destination, and
+  Reviewed spec-backed builds keep serial green ticket commits on one retained integration source. Semantic review binds each chunk's predecessor and current tips before the next chunk starts. `bench worktree land` composes and gates the reconciled source on the destination, and
   its published commit owns the spec's `Status: implemented` flip. The landing
   destination permits the three exact ignored local-capture files without
   treating the broader `capture/` tree as disposable residue.

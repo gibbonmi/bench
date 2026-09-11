@@ -8,20 +8,11 @@ index: spawning a delegate / verifying a delegate's done-claim
 A delegate buys parallelism and isolates a heavy read-set. A misjudged delegate costs the thing that matters: the work happens unseen. `references/delegation-discipline.md` holds the rest of the
 discipline: the charge contents, the repair-charge template, the probe rules, and the landing checks.
 
-## Delegate or inline
+## Delegate or retain
 
-The coordinator scopes, routes, and verifies work; a write-delegate authors code. The inline allowance is exactly one source-line insertion, one source-line deletion, or one source-line replacement in code or tests. A replacement counts as one correction. This allowance spans the
-current reviewer request and does not reset when work is split into tasks, slices, delegates,
-or verification rounds. A no-spec change admitted by the lighter-path threshold in
-`.bench/BENCH.md` may also remain inline — the only other allowance. All other code authorship
-runs as a write-delegation in an isolated worktree; read-only coordination stays inline.
+`.bench/BENCH.md` owns retained implementation authorship. Delegation normally buys independent read-only review or brief diagnostic consultation. A diagnostic helper can inspect evidence, but it receives no implementation or repair assignment.
 
-Never delegate a decision the reviewer owns. This policy is capability- and posture-aware. A harness
-that cannot spawn a write subagent, or a reviewer who has prohibited delegation for this work, never
-falls inline beyond the allowances above. A spec-doc-only correction is not a silent exception to
-either stop. Either posture stops before editing and emits one executable resume handoff to a
-subagent-capable harness. The handoff names the repository path, the working branch or worktree, the
-spec or change name, the destination harness, and that harness's exact invocation.
+Never delegate a decision the reviewer owns. A change of implementation author or session requires user direction. When the user explicitly selects delegated authorship, the write delegate uses an isolated worktree and this skill's charge and verification rules. A harness limitation never changes authorship silently.
 
 Before you spawn a delegation that changes who performs the requested work, surface it.
 
@@ -44,7 +35,7 @@ Name exemplar files to mirror when one exists. A charge that extends an enumerat
 registry the family already appears in, traced from one existing sibling through the tree. A
 registry the charge does not name is one the delegate will miss. A cap-change charge's search list names the closest pinning package.
 
-A write-delegation from a spec carries its stories' coverage rows every time — behavior, seam, why
+A user-directed write-delegation from a spec carries its stories' coverage rows every time — behavior, seam, why
 it catches the failure. It requires the delegate to show each row red before the edit and green
 after. First compare each slice with `craft-spec`'s "Slicing a build for delegates".
 
@@ -112,10 +103,7 @@ and spot-check citations before folding a summary in. Resolve every named Red-mu
 
 Installed-lane repair and its post-landing rebuild are in `references/delegation-discipline.md`. Before retry coordination or aggregate grading, load the stopped-retry and quiet-grade rules from `references/delegation-discipline.md`.
 
-Report every verification round in one line: accepted, or what was missed and where the fix went. Repairs
-beyond the allowance under Delegate or inline continue the authoring delegate for its own slice when the harness
-can resume it. Otherwise a fresh charge in an isolated worktree carries the finding and a sentinel. The coordinator
-verifies the repair in the checkout that owns the diff.
+Report every verification round in one line: accepted, or what was missed and where the fix went. Repairs return to the retained implementation session. When the user selected delegated authorship, continue the same authoring delegate for its slice when the harness can resume it. Otherwise, ask before changing the implementation author. The coordinator verifies the repair in the checkout that owns the diff.
 
 Acceptance closes an independent worktree after its slice lands: the coordinator runs `bench worktree release --request <opaque-id> <path>` for it. A reviewed
 dependent chain remains retained through explicit source review; only

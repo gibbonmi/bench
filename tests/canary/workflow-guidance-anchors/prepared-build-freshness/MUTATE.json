@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/commands/bench-implement-spec.md",
-    "old": "Before delegate dispatch, revalidate prepared source identity and required source bytes. Regenerate a charge when either changes.",
+    "old": "Before each ticket, revalidate prepared source identity and required source bytes. Regenerate a charge when either changes.",
     "new": "A prepared charge can dispatch without another read."
   }
 ]

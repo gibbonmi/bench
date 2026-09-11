@@ -1008,8 +1008,8 @@ func TestRepairTicketOwnerAnchorsRedOnRemoval(t *testing.T) {
 			{
 				file:    file,
 				section: "Review modes",
-				needle:  "writes one repair ticket before the repair-scoped re-review",
-				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the repair ticket the coordinator writes before the repair-scoped re-review",
+				needle:  "writes one repair ticket when accepted repairs amend the coverage map",
+				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the repair ticket for coverage-map amendments",
 			},
 			{
 				file:    file,
@@ -1360,8 +1360,8 @@ func TestCensusChangelogAndReviewBaseAnchorsRedOnRemoval(t *testing.T) {
 			{
 				file:    ".agents/commands/bench-review-implementation.md",
 				section: "Process",
-				needle:  "The frozen base is the `main` tip merged into the source before the landing, so the range holds the spec diff alone.",
-				want:    ".agents/commands/bench-review-implementation.md Pin the diff dropped the merged `main` tip as the frozen review base",
+				needle:  "The first chunk base is the `main` tip merged into the source. Each later chunk base is the accepted predecessor tip, so the range holds only that chunk's delta.",
+				want:    ".agents/commands/bench-review-implementation.md Pin the diff dropped first-or-later chunk base selection",
 			},
 		},
 	}.check(t)
