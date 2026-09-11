@@ -52,6 +52,7 @@ func checkRetainedWorkflow(root string) []string {
 		"retained workflow: drain restored delegated batch authorship",
 		"retained workflow: field guide dropped retained chunk review",
 		"retained workflow: craft-spec dropped the canonical plan-expansion owner",
+		"retained workflow: operating guide dropped changed-chunk identity mapping",
 		"retained workflow: operating guide dropped plan-update timing or preserved guarantees",
 		"retained workflow: operating guide dropped expansion learning and drain ownership",
 		"retained workflow: implementation phase dropped plan-expansion timing",
@@ -125,6 +126,10 @@ func checkRetainedWorkflow(root string) []string {
 			file:    ".agents/skills/bench-craft-spec/SKILL.md",
 			section: "Slicing a build for delegates",
 			needle:  "During a build, `.bench/BENCH.md` owns approved in-scope plan expansion.",
+		},
+		"retained workflow: operating guide dropped changed-chunk identity mapping": {
+			file:   ".bench/BENCH.md",
+			needle: "When chunk boundaries change, record old-to-new stable IDs.",
 		},
 		"retained workflow: operating guide dropped plan-update timing or preserved guarantees": {
 			file:   ".bench/BENCH.md",
