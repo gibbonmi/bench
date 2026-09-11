@@ -255,8 +255,9 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 
 - `internal/reviewrecord` (new)
 - `internal/git/tree.go`
-- `internal/coverage/completion_rows.go`
 - `CHANGELOG.md`
+- `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
+- `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
 - `internal/preflight/review.go`
 - `internal/preflight/review_charge_test.go`
 - `.agents/commands/bench-review-implementation.md`
