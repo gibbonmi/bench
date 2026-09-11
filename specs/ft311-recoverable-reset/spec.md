@@ -6,7 +6,7 @@ Roadmap: FT311
 
 Decision source: specs/ft311-landing-completion/decisions/ft311-coordinator-work.md
 
-Verification log: 2 iteration(s) to accept — opus/high reviewed through the native agent surface. Iteration one returned 23 findings with 9 blocking, and the author folded 22 and recorded 1 as a reviewer-visible exception. Iteration two accepted the nine folds and returned 8 residuals with 1 blocking, which the author folded after the round. On 2026-09-11 the reviewer decided the ignored-path collision policy, and the repair added story 53 and rows RR70 through RR72. The same day, one Sol/high three-axis round returned 26 findings, and the reviewer decided the four open targets. That fold added stories 54 and 55 and rows RR73 through RR77.
+Verification log: 2 iteration(s) to accept — opus/high reviewed through the native agent surface. Iteration one returned 23 findings with 9 blocking, and the author folded 22 and recorded 1 as a reviewer-visible exception. Iteration two accepted the nine folds and returned 8 residuals with 1 blocking, which the author folded after the round. On 2026-09-11 the reviewer decided the ignored-path collision policy, and the repair added story 53 and rows RR70 through RR72. The same day, one Sol/high three-axis round returned 26 findings, and the reviewer decided the four open targets. That fold added stories 54 and 55 and rows RR73 through RR78.
 
 ## Problem
 
@@ -413,7 +413,8 @@ The round-trip recaptured both layers equal to the captured trees.
 | RR70 | 53 | Over a checkpoint that tracks a file, a file above an ignored directory, and a file below an ignored file, with the tip having removed and ignored all three, `--to <checkpoint>` refuses `ignored content would be overwritten` at exit 1 with the three ignored paths in the table and a non-colliding ignored path absent, the ignored bytes unchanged, the head unchanged, and no ref written. | New TestResetRefusesAnIgnoredCollision through resetWith | A move that keeps ignored files by omission still overwrites the one the checkpoint tracks, and a check over the exact path alone misses both directory directions. |
 | RR71 | 53 | After a tracked path in an envelope's working layer becomes ignored with new bytes, `--restore <ref>` refuses the same detail with that path in the table, the bytes unchanged, and the head and the branch unchanged. | New TestResetRestoreRefusesAnIgnoredCollision through resetWith | A restore that checks the checkpoint tree alone overwrites through the layer write. |
 | RR72 | 14 | A staged blob changed under equal status and working bytes changes the fingerprint, and an apply of the old fingerprint refuses `reset plan is stale` in both modes with the new staged bytes intact. | New TestResetFingerprintTracksTheIndex and TestResetRestoreRefusesAStaleIndex through resetWith | A fingerprint over the status and the working diff alone accepts a plan the staged layer outgrew. |
-| RR73 | 22 | Over a tip that added an ignore rule after the checkpoint, with an ignored file under that rule, the apply keeps the file's bytes, exits 3 with `preserved=<ref>` and the restore command, and leaves the checkout at the checkpoint with the file untracked; the named restore then applies at exit 0 with `preserved=<ref 2>`, whose working layer holds the file. | New TestResetApplyKeepsIgnoredBytesAcrossAnIgnoreRuleChange through resetWith | A clean that runs under the checkpoint's rules deletes the file, and no envelope holds it. |
+| RR73 | 22 | Over a tip that added an ignore rule after the checkpoint, with an ignored file under that rule, the apply keeps the file's bytes, exits 3 with `preserved=<ref>` and the restore command, and leaves the checkout at the checkpoint with the file untracked. | New TestResetApplyKeepsIgnoredBytesAcrossAnIgnoreRuleChange through resetWith | A clean that runs under the checkpoint's rules deletes the file, and no envelope holds it. |
+| RR78 | 39 | After the RR73 exit, the named restore applies at exit 0 with `preserved=<ref 2>`, and that envelope's working layer holds the drifted file. | New TestResetApplyKeepsIgnoredBytesAcrossAnIgnoreRuleChange through resetWith | A restore that cleans the drifted file without a second envelope loses it one hop after the record promised recovery. |
 | RR74 | 54 | An index entry marked assume-unchanged or skip-worktree refuses `index carries hidden flags` at exit 1 with the path in the table and the hidden edit intact. | New TestResetRefusesHiddenIndexFlags through resetWith | A plan that reads the status alone applies with `preserve=none` and loses the edit. |
 | RR75 | 55 | `--to HEAD` over a target one commit ahead of the primary plans `checkpoint=<target head>` and `action=none`. | New TestResetResolvesTheCheckpointInTheTarget through resetWith | A spelling resolved in the primary plans a rewind the operator never spelled. |
 | RR76 | 53 | A restore whose envelope tip tracks a path the working layer does not, with that path now ignored and present, refuses `ignored content would be overwritten` with the path in the table. | New TestResetRestoreRefusesACollisionWithTheEnvelopeTip through resetWith | A collision check over the working layer alone lets the move to the tip overwrite the path. |
@@ -431,7 +432,7 @@ Every behavior serves this repository and every repository that links the kit.
 | Already satisfied | A `none` plan carries no apply command and writes no envelope. | RR5, RR25 |
 | Errors | A non-commit, a foreign checkpoint, a conflicted index, a nested repository, and a live lease each refuse before any write. | RR7, RR9, RR12, RR13, RR15 |
 | Ordering | The envelope is written and verified before the move, and the lock is taken before the re-plan. | RR18, RR22, RR28 |
-| Repetition | A consumed fingerprint refuses, and a restore of a restore's envelope returns the intermediate state. | RR61, RR35 |
+| Repetition | A consumed fingerprint refuses, and a restore of a restore's envelope returns the intermediate state. | RR61, RR35, RR78 |
 | Interruption | A move fault and a silent move both exit 3 with the envelope named, and a fault with no envelope names the plan. | RR26, RR27, RR53, RR77 |
 | Process boundary | The reconcile reads the ledger and the refs from disk on every run, so a fresh process keeps a live assignment's refs and drops an orphaned one as the in-process seam does. | RR41, RR42 |
 | Output shape | The plan line precedes the paths table, and the `none` plan has no `next` cell. | RR2, RR5 |
@@ -685,7 +686,7 @@ The review pickup is created only for actionable findings.
 |---|---|
 | Stories and lines | Approve the six outcome groups and their bound model efforts. |
 | Seams | Approve the package-internal reset entry point, the seam-set move field, the shared capture, and the reconcile rule. |
-| Acceptance and edges | Approve RR1 through RR77 and the eight explicit exclusions. |
+| Acceptance and edges | Approve RR1 through RR78 and the eight explicit exclusions. |
 | Ownership fences | Approve the exact union above for implementation. |
 | Scope and tickets | Approve the five-ticket graph within the fourth FT311 capability. |
 | Branch move | Decide before ticket 3 dispatches whether a rewind moves the assignment branch, as recommended. |
