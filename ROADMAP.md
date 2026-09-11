@@ -37,7 +37,7 @@ findings in the owner details.
 
 **FT308 (MEDIUM, decision required) — the cleanup transaction's persistence lock leaves `.git` when its record is gone.**
 
-**FT311 (MEDIUM) — repeated coordinator chunks fold into Bench verbs and cheap-tier delegates.**
+**FT311 (MEDIUM, decision required) — coordinator chunks need one current orchestration contract.**
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
@@ -235,8 +235,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT311 recoverable-reset spec, the fourth of five from `specs/ft311-landing-completion/decisions/ft311-coordinator-work.md` — run `/bench-write-spec`.
-2. FT311 lower-tier-trials spec, the fifth of five — run `/bench-write-spec` after the recoverable-reset spec lands.
-3. FT312 cross-harness reviewer verb — run `/bench-write-spec`.
-4. FT300 ticket-slicing fence and refusal-state rules — a `craft-synthesis` kit edit to `craft-tickets`.
-5. FT172 roadmap row grammar — a reviewer decision, after the last FT311 stage.
+1. FT311 chunk-orchestration decisions — /bench-shape-idea
+2. FT312 cross-harness reviewer and review-axis creation verb — /bench-write-spec
+3. FT300 ticket-slicing verification passes — /bench-update-kit
