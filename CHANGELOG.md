@@ -8,6 +8,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added `bench worktree reset` with checkpoint and restore modes. Each mode plans
+  before its apply and preserves work under a reset envelope.
 - Added two `bench worktree land` effects after publication and source release: the
   broker refresh and the eligible-sibling cleanup. The landing prints one
   `effects[2]{effect,result}` row on stdout before the `landed{...}` record. A result

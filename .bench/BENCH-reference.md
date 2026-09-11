@@ -254,6 +254,26 @@ Its exit meanings follow the publication boundary:
   release, or a landing effect remains incomplete; the exit-3 record carries the
   `bench worktree land --resume` invocation you need
 
+`bench worktree reset --to <commit> <target>` plans a checkpoint reset, and
+`--restore <ref>` plans a restore; `--apply <fingerprint>` applies either plan.
+Before a destructive move, the verb verifies a reset envelope under
+`refs/bench/reset/<owner>/<assignment>/<n>` that preserves staged, unstaged, and untracked work.
+The restore returns HEAD, the index, and the working tree to the preserved state.
+The verb repairs a partial migration, a shift-branch checkout, a detached checkout, a drifted
+registration lock, and an unreconciled merge checkout.
+Its exit meanings follow the preservation boundary:
+
+- `0` — a plan, or an apply that landed
+- `1` — a refusal before any write
+- `2` — invalid command usage
+- `3` — a fault at or after the move; the record names the restore command when an
+  envelope was preserved, and the plan command otherwise
+
+If the move would overwrite an ignored path, the plan refuses before any write.
+The refusal names the colliding paths.
+Move the ignored content aside, then plan again.
+An index entry marked assume-unchanged or skip-worktree refuses the plan the same way.
+
 `bench handoff [--harness <name>] [--next <command>] [--state-file <path>]`
 rewrites the calling worktree's own section. `--state-file` names the file that
 holds the drafted State body. The verb refuses a path it cannot read as a

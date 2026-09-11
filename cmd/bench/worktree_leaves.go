@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/usage"
 	"github.com/gibbonmi/bench/internal/worktree"
@@ -53,6 +54,9 @@ var worktreeLeaves = []commandLeaf{
 	{Name: "merge", Grammar: usage.WorktreeMerge, Root: rootRequired, Run: func(c Command, root string, args []string) int {
 		return worktree.MergeCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
+	{Name: "reset", Grammar: usage.WorktreeReset, Root: rootRequired, Run: func(c Command, root string, args []string) int {
+		return worktree.ResetCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
+	}},
 	{Name: "land", Grammar: usage.WorktreeLand, Root: rootRequired, Run: func(c Command, root string, args []string) int {
 		return worktree.LandCommand(root, worktree.Home(), c.Executable, args, c.Stdout, c.Stderr)
 	}},
@@ -64,3 +68,7 @@ var worktreeLeaves = []commandLeaf{
 func worktreeCommand(c Command, args []string) int {
 	return dispatchLeafFamily(c, "bench worktree", usage.WorktreeUsage(), worktreeLeaves, args)
 }
+
+// worktreeSuffix derives a leaf's help suffix from its usage grammar, so the inventory
+// row and the grammar the verb refuses with have one source.
+func worktreeSuffix(grammar string) string { return strings.TrimPrefix(grammar, "bench worktree") }

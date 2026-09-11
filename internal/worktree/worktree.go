@@ -7,17 +7,14 @@ import (
 	"fmt"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
-	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	refreshop "github.com/gibbonmi/bench/internal/refresh"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
-	"go.opentelemetry.io/otel/attribute"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -215,7 +212,7 @@ func classifyNestedState(root string) (state nestedState, err error) {
 			return err
 		}
 		embedded := !strings.HasPrefix(tracked, "160000 ")
-		out, err := exec.Command("git", "--no-optional-locks", "-C", path, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignore-submodules=none").Output()
+		out, err := checkoutStatus(path)
 		if err != nil {
 			return err
 		}
@@ -731,44 +728,4 @@ func cleanupOutputValue(value string) string {
 		return value
 	}
 	return "sha256:" + textDigest(value)
-}
-
-// The worktree verbs' record. Each verb opens one span named for the verb, and the span
-// carries the assignment the verb acted on as its subject. The verbs share one span
-// boundary, so a new verb records the same shape rather than a second one.
-//
-// The landing keeps its own boundary in land.go: it carries measures no other verb has.
-const (
-	otelCreateSeam      = "worktree.create"
-	otelExecSeam        = "worktree.exec"
-	otelMergeSeam       = "worktree.merge"
-	otelReleaseSeam     = "worktree.release"
-	otelBuildSeam       = "worktree.build"
-	otelReauthorizeSeam = "worktree.reauthorize"
-)
-
-// otelVerbSeams is the set beginVerbSpan records, in registry order. The bulk verbs
-// (clean, reclaim) and the read-only verbs carry no span by the story 17 decision.
-var otelVerbSeams = []string{
-	otelCreateSeam,
-	otelExecSeam,
-	otelMergeSeam,
-	otelReleaseSeam,
-	otelBuildSeam,
-	otelReauthorizeSeam,
-}
-
-// beginVerbSpan starts one worktree verb's span and returns the closer that ends it. The
-// closer takes the assignment id, because a verb resolves its assignment inside the span
-// and a refusal before that resolution has none. The id passes through the encoder, which
-// escapes every control rune, so a hostile id forges no second record line.
-func beginVerbSpan(home, root, seam string) func(int, string) {
-	_, span, finish := otelrecord.Begin(home, root, seam)
-	return func(exit int, assignment string) {
-		if assignment != "" {
-			span.SetAttributes(attribute.String(otelrecord.AttrSubjectID, assignment))
-		}
-		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, otelrecord.PublishedExitOutcome(exit)))
-		finish()
-	}
 }
