@@ -176,6 +176,8 @@ Scope cut: a broad experimental runner could ship separately after this record a
 
 ## Ownership fences
 
+- `tests/canary/workflow-guidance-anchors/review-clean-terminal-result`
+
 These paths are the union of ticket expectations. A directory entry is an exact prefix for that existing owner or fixture family. Expansion follows decision #5, with the plan updated before use. It cannot weaken existing guarantees.
 
 - `internal/assessment` (new)
