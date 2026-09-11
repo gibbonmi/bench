@@ -938,13 +938,239 @@ Standards closed S1. Spec closed P3–P5. Coverage closed C2-C1–C2-C3.
 Each axis reports zero findings, no worst issue, and zero repair targets.
 The native excerpts remain below. These reviews grant no gate or publication authority.
 
+## Chunk 3 author evidence and review request
+
+The source is `55520083eb588b3d9aa17667d18a06b9c6a51c5c`, based on accepted chunk 2 at `06a589b935ce26fd9e27d18292f20985c81db487`.
+The required landing tests passed without skips. The landing-obligation omission bit all 11 refusal cases and restored.
+The ordinary lane passed. The full worktree suite passed with two socket capability skips.
+The actual dogfood shift and hook results are recorded in the spec.
+
+The final system run failed four existing landing fixtures before their gate barriers.
+Those producers need completion plans and retained fixture results. Their race and recovery assertions remain required.
+Final acceptance is not complete. Three fresh Sol/high review requests are retained below.
+
+The author walked every untouched consumer in the prepared table before axis dispatch.
+Ordinary callers retain the empty obligation. The existing landing tests with injected authorization still test their own publication seams.
+The shared fixture and moved census and telemetry declarations keep their consumers. The final whole-suite checks test those edges.
+
+```toon
+blast[189]{changed_symbol,file,line,touched}:
+  authorization.AuthorizeWithWriters,internal/gate/authorization/authorization.go,145,true
+  authorization.AuthorizeWithWriters,internal/gate/authorization/authorization_test.go,17,false
+  authorization.AuthorizeWithWriters,internal/landing/completion_evidence_test.go,117,true
+  authorization.AuthorizeWithWriters,internal/landing/completion_evidence_test.go,126,true
+  authorization.AuthorizeWithWriters,internal/landing/landing.go,120,true
+  gate.InspectTree,internal/gate/authorization/authorization.go,172,true
+  gate.InspectTree,internal/gate/prospective_owner_test.go,435,false
+  gate.InspectTreeContext,internal/gate/authorization/authorization.go,152,true
+  gate.InspectTreeContext,internal/gate/engine.go,32,true
+  gate.WithCompletion,internal/landing/landing.go,252,true
+  gate.WithCompletion,internal/worktree/land_journey_test.go,82,true
+  gate.beginGateSpan,internal/gate/engine.go,44,true
+  gate.beginGateSpan,internal/gate/gate.go,228,true
+  gate.beginGateSpan,internal/gate/gate.go,262,true
+  gate.checkpointEvaluation,internal/gate/engine.go,63,true
+  gate.checkpointEvaluation,internal/gate/engine.go,95,true
+  gate.checkpointEvaluation,internal/gate/gate.go,275,true
+  gate.checkpointEvaluation,internal/gate/gate.go,359,true
+  gate.checkpointEvaluation,internal/gate/gate.go,363,true
+  gate.completionSourceKey,internal/gate/checkpoint.go,30,true
+  gate.completionSourceKey,internal/gate/completion.go,19,true
+  gate.executeTreeWithOwner,internal/gate/engine.go,46,true
+  gate.executeTreeWithOwner,internal/gate/prospective_owner_test.go,292,false
+  gate.executeTreeWithOwner,internal/gate/prospective_owner_test.go,310,false
+  gate.executeTreeWithOwner,internal/gate/prospective_owner_test.go,343,false
+  gate.executeTreeWithOwner,internal/gate/prospective_owner_test.go,362,false
+  gate.gateEvaluation,internal/gate/checkpoint.go,28,true
+  gate.gateEvaluation,internal/gate/checkpoint.go,28,true
+  gate.gateEvaluation,internal/gate/checkpoint.go,86,true
+  gate.gateEvaluation,internal/gate/completion.go,22,true
+  gate.gateEvaluation,internal/gate/completion.go,68,true
+  gate.gateEvaluation,internal/gate/evaluation.go,31,true
+  gate.gateEvaluation,internal/gate/evaluation.go,32,true
+  gate.gateEvaluation,internal/gate/evaluation.go,50,true
+  gate.gateEvaluation,internal/gate/evaluation.go,51,true
+  gate.gateEvaluation,internal/gate/evaluation.go,75,true
+  gate.gateEvaluation,internal/gate/evaluation.go,89,true
+  gate.gateEvaluation,internal/gate/evaluation.go,99,true
+  gate.gateEvaluation,internal/gate/evaluation.go,112,true
+  gate.gateEvaluation.applyCheckpoint,internal/gate/evaluation.go,123,true
+  gate.gateEvaluation.completionTree,internal/gate/checkpoint.go,113,true
+  gate.inspectProspective,internal/gate/engine.go,37,true
+  gate.operational,internal/gate/run_transaction.go,45,false
+  gate.operational,internal/gate/run_transaction.go,57,false
+  gate.operational,internal/gate/run_transaction.go,68,false
+  gate.operational,internal/gate/run_transaction.go,73,false
+  gate.operational,internal/gate/run_transaction.go,94,false
+  gate.operational,internal/gate/run_transaction.go,98,false
+  gate.operational,internal/gate/run_transaction.go,124,false
+  gate.operational,internal/gate/run_transaction.go,142,false
+  gate.operational,internal/gate/run_transaction.go,165,false
+  gate.operational,internal/gate/run_transaction.go,176,false
+  gate.operational,internal/gate/run_transaction.go,181,false
+  gate.operational,internal/gate/run_transaction.go,207,false
+  gate.otelGateEnv,internal/gate/gate.go,167,true
+  gate.otelGateEnv,internal/gate/otel_env_test.go,21,false
+  gate.otelGatePhaseSeam,internal/gate/runner.go,572,false
+  gate.otelGateSeam,internal/gate/telemetry.go,34,true
+  gate.otelGateSeam,internal/gate/telemetry.go,34,true
+  gate.otelRecordRootKey,internal/gate/telemetry.go,35,true
+  gate.otelRecordRootKey,internal/gate/telemetry.go,53,true
+  gate.otelRootEnv,internal/gate/otel_env_test.go,14,false
+  gate.otelRootEnv,internal/gate/runner.go,556,false
+  gate.otelRootEnv,internal/gate/telemetry.go,24,true
+  gate.otelRootEnv,internal/gate/telemetry.go,57,true
+  gate.otelTraceparentEnv,internal/gate/otel_env_test.go,15,false
+  gate.otelTraceparentEnv,internal/gate/runner.go,562,false
+  gate.otelTraceparentEnv,internal/gate/telemetry.go,24,true
+  gate.otelTraceparentEnv,internal/gate/telemetry.go,61,true
+  gate.validateCompletionContext,internal/gate/checkpoint.go,87,true
+  gate.withGateSpanEnv,internal/gate/engine.go,237,true
+  landing.Owner.LandReviewed,internal/landing/completion_evidence_test.go,139,true
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,46,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,93,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,145,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,190,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,223,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,282,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,290,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,294,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,320,false
+  landing.Owner.LandReviewed,internal/landing/landing_reviewed_test.go,367,false
+  landing.Owner.LandReviewed,internal/landing/lane_test.go,75,false
+  landing.Owner.LandReviewed,internal/landing/state_test.go,307,false
+  landing.Owner.LandReviewed,internal/worktree/joins.go,94,false
+  landing.completionFixture,internal/landing/completion_evidence_test.go,22,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,43,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,46,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,68,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,70,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,71,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,75,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,80,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,84,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,89,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,93,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,97,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,101,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,106,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,110,true
+  landing.completionFixture,internal/landing/completion_evidence_test.go,120,true
+  landing.completionFixture.request,internal/landing/completion_evidence_test.go,138,true
+  landing.newCompletionFixture,internal/landing/completion_evidence_test.go,132,true
+  recordtest.AttachAt,cmd/bench/gate_route_test.go,70,false
+  recordtest.AttachAt,internal/reviewrecord/recordtest/fixture.go,29,true
+  recordtest.Fixture.AddChunk,cmd/bench/gate_route_test.go,76,false
+  recordtest.Fixture.AddChunk,internal/gate/review_checkpoint_test.go,18,false
+  recordtest.Fixture.AddChunk,internal/landing/completion_evidence_test.go,36,true
+  recordtest.Fixture.AddChunk,internal/landing/completion_evidence_test.go,39,true
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,18,false
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,21,false
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,73,false
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,129,false
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,187,false
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,219,false
+  recordtest.Fixture.AddChunk,internal/reviewrecord/source_test.go,238,false
+  recordtest.Fixture.RecordChunk,internal/reviewrecord/recordtest/fixture.go,79,true
+  recordtest.Fixture.RecordChunk,internal/reviewrecord/recordtest/fixture.go,149,true
+  recordtest.Fixture.loadPlan,internal/reviewrecord/recordtest/fixture.go,57,true
+  recordtest.Fixture.loadPlan,internal/reviewrecord/recordtest/fixture.go,75,true
+  recordtest.Prepare,internal/reviewrecord/recordtest/fixture.go,33,true
+  recordtest.Prepare,internal/worktree/land_fixtures_test.go,91,true
+  recordtest.RetainSingleChunk,internal/worktree/completion_fixture_test.go,13,true
+  reviewrecord.CheckTrees,internal/gate/checkpoint.go,118,true
+  reviewrecord.CheckTrees,internal/reviewrecord/check.go,10,true
+  worktree.brokerChangingLanding,internal/worktree/land_effects_test.go,73,true
+  worktree.brokerChangingLanding,internal/worktree/land_effects_test.go,95,true
+  worktree.brokerDestinationFixture,internal/worktree/land_effects_cleanup_test.go,211,true
+  worktree.brokerDestinationFixture,internal/worktree/land_effects_cleanup_test.go,269,true
+  worktree.brokerDestinationFixture,internal/worktree/land_effects_test.go,226,true
+  worktree.brokerDestinationFixture,internal/worktree/land_effects_test.go,248,true
+  worktree.brokerDestinationFixture,internal/worktree/land_effects_test.go,271,true
+  worktree.brokerDestinationFixture,internal/worktree/land_effects_test.go,308,true
+  worktree.brokerDestinationFixture,internal/worktree/land_effects_test.go,357,true
+  worktree.censusRecordPath,internal/worktree/land_census_test.go,49,true
+  worktree.censusRecordPath,internal/worktree/land_census_test.go,116,true
+  worktree.censusRecordPath,internal/worktree/land_resume_test.go,316,false
+  worktree.censusRecordPath,internal/worktree/worktree_test.go,573,false
+  worktree.censusRecordPath,internal/worktree/worktree_test.go,650,false
+  worktree.foldCompletionComposition,internal/worktree/land_surface_test.go,74,true
+  worktree.foldCompletionComposition,internal/worktree/land_surface_test.go,119,true
+  worktree.foldLandingSibling,internal/worktree/land_effects_cleanup_test.go,79,true
+  worktree.foldLandingSibling,internal/worktree/land_effects_cleanup_test.go,110,true
+  worktree.foldLandingSibling,internal/worktree/land_effects_cleanup_test.go,136,true
+  worktree.foldLandingSibling,internal/worktree/land_effects_cleanup_test.go,173,true
+  worktree.foldLandingSibling,internal/worktree/land_effects_cleanup_test.go,212,true
+  worktree.foldLandingSibling,internal/worktree/land_effects_cleanup_test.go,270,true
+  worktree.foldLandingSibling,internal/worktree/land_effects_test.go,272,true
+  worktree.landingFixtureAtHome,internal/worktree/land_fixtures_test.go,31,true
+  worktree.landingFixtureAtHome,internal/worktree/land_fixtures_test.go,40,true
+  worktree.landingSpecAmendment,internal/worktree/land_spec_amendment_test.go,39,true
+  worktree.landingSpecAmendment,internal/worktree/land_spec_amendment_test.go,64,true
+  worktree.recordRawCalls,internal/worktree/land_census_test.go,42,true
+  worktree.recordRawCalls,internal/worktree/land_census_test.go,107,true
+  worktree.recordRawCalls,internal/worktree/land_resume_test.go,308,false
+  worktree.recordRawCalls,internal/worktree/worktree_test.go,566,false
+  worktree.recordRawCalls,internal/worktree/worktree_test.go,636,false
+  worktree.recordRawCallsWithHead,internal/worktree/land_census_test.go,16,true
+  worktree.recordRawCallsWithHead,internal/worktree/land_census_test.go,75,true
+  worktree.recordRawCallsWithHead,internal/worktree/land_census_test.go,76,true
+  worktree.redProspectiveGateLanding,internal/worktree/land_freshness_test.go,171,true
+  worktree.redProspectiveGateLanding,internal/worktree/land_freshness_test.go,210,true
+  worktree.refreshLandingEvidence,internal/worktree/completion_fixture_test.go,25,true
+  worktree.refreshLandingEvidence,internal/worktree/land_effects_cleanup_test.go,33,true
+  worktree.refreshLandingEvidence,internal/worktree/land_effects_test.go,35,true
+  worktree.refreshLandingEvidence,internal/worktree/land_effects_test.go,38,true
+  worktree.refreshLandingEvidence,internal/worktree/land_effects_test.go,172,true
+  worktree.refreshLandingEvidence,internal/worktree/land_fixtures_test.go,95,true
+  worktree.refreshLandingEvidence,internal/worktree/land_freshness_test.go,36,true
+  worktree.refreshLandingEvidence,internal/worktree/land_freshness_test.go,69,true
+  worktree.refreshLandingEvidence,internal/worktree/land_freshness_test.go,106,true
+  worktree.refreshLandingEvidence,internal/worktree/land_freshness_test.go,142,true
+  worktree.refreshLandingEvidence,internal/worktree/land_freshness_test.go,308,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,45,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,129,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,167,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,191,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,220,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,230,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,332,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,382,true
+  worktree.refreshLandingEvidence,internal/worktree/land_journey_test.go,412,true
+  worktree.refreshLandingEvidence,internal/worktree/land_spec_amendment_test.go,30,true
+  worktree.refreshLandingEvidence,internal/worktree/land_surface_test.go,65,true
+  worktree.refreshLandingEvidence,internal/worktree/land_surface_test.go,99,true
+  worktree.refreshLandingEvidence,internal/worktree/land_surface_test.go,132,true
+  worktree.siblingReviewPath,internal/worktree/land_effects_cleanup_test.go,30,true
+  worktree.siblingReviewPath,internal/worktree/land_effects_cleanup_test.go,137,true
+  worktree.siblingReviewPath,internal/worktree/land_fixtures_test.go,90,true
+meta[1]{packages,files,matches,rows,truncated}:
+  266,34,67,189,false
+citation[1]{sha,state,version,cmd,hash}:
+  55520083eb588b3d9aa17667d18a06b9c6a51c5c,clean,0.2.0,bench consumers --changed --base 06a589b935ce26fd9e27d18292f20985c81db487 --source-tip 55520083eb588b3d9aa17667d18a06b9c6a51c5c --full,64bdeea3a6368cfa737395143af4101433179494f358f33171a33ba4dd694a9d
+help[13]{cmd,why}:
+  bench consumers authorization.AuthorizeWithWriters --full,walk the consumers outside the diff
+  bench consumers gate.InspectTree --full,walk the consumers outside the diff
+  bench consumers gate.executeTreeWithOwner --full,walk the consumers outside the diff
+  bench consumers gate.operational --full,walk the consumers outside the diff
+  bench consumers gate.otelGateEnv --full,walk the consumers outside the diff
+  bench consumers gate.otelGatePhaseSeam --full,walk the consumers outside the diff
+  bench consumers gate.otelRootEnv --full,walk the consumers outside the diff
+  bench consumers gate.otelTraceparentEnv --full,walk the consumers outside the diff
+  bench consumers landing.Owner.LandReviewed --full,walk the consumers outside the diff
+  bench consumers recordtest.AttachAt --full,walk the consumers outside the diff
+  bench consumers recordtest.Fixture.AddChunk --full,walk the consumers outside the diff
+  bench consumers worktree.censusRecordPath --full,walk the consumers outside the diff
+  bench consumers worktree.recordRawCalls --full,walk the consumers outside the diff
+```
+
 ## Machine record
 
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/completion-evidence/spec.md",
-  "plan_digest": "sha256:2dafdcc48cb42371008792230a53b6c03b9084f37d8ae5cac79d58ab919fe94f",
+  "plan_digest": "sha256:013da5369b1c20983a9334647a1662e26944f81926d81846258ef531f71fd2ed",
   "implementation_session": "/root",
   "chunks": [
     {
@@ -1652,14 +1878,143 @@ The native excerpts remain below. These reviews grant no gate or publication aut
           }
         }
       ]
+    },
+    {
+      "id": "3",
+      "base": "06a589b935ce26fd9e27d18292f20985c81db487",
+      "tip": "55520083eb588b3d9aa17667d18a06b9c6a51c5c",
+      "source_digest": "c9201fa276fabba32c215fa364122fd46a775776",
+      "plan_digest": "sha256:013da5369b1c20983a9334647a1662e26944f81926d81846258ef531f71fd2ed",
+      "acceptance_rows": [
+        "E15",
+        "E16",
+        "E17",
+        "E18",
+        "E33",
+        "E34",
+        "E35",
+        "E36"
+      ],
+      "verification": [
+        {
+          "id": "c3-landing-tests",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "c9201fa276fabba32c215fa364122fd46a775776",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:tool/1a8294",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/landing,pass,8304\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n",
+            "digest": "sha256:92083675a2d8d2a3a5ad8328fbb47f8176692d9827043302a988f27030ff71ed"
+          },
+          "requirement": "landing-tests",
+          "command": "bench test --package ./internal/landing --run TestLandingCompletionEvidence",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit landing completion obligation",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "codex:tool/4256ae",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/landing/landing.go,swap,failed,11,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/landing,TestLandingCompletionEvidence,passed,13\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/landing,fail,4890\n",
+              "digest": "sha256:7a3ea6fc1451a54df8ff92fd6e85e4dd964f45e4c925166b060948320065f80f"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "c3-standards-pending",
+          "performer": "/root/c3_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "c9201fa276fabba32c215fa364122fd46a775776",
+          "state": "pending",
+          "outcome": "",
+          "native_ref": {
+            "ref": "",
+            "excerpt": "",
+            "digest": ""
+          },
+          "axis": "Standards",
+          "base": "06a589b935ce26fd9e27d18292f20985c81db487",
+          "tip": "55520083eb588b3d9aa17667d18a06b9c6a51c5c",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c3-spec-pending",
+          "performer": "/root/c3_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "c9201fa276fabba32c215fa364122fd46a775776",
+          "state": "pending",
+          "outcome": "",
+          "native_ref": {
+            "ref": "",
+            "excerpt": "",
+            "digest": ""
+          },
+          "axis": "Spec",
+          "base": "06a589b935ce26fd9e27d18292f20985c81db487",
+          "tip": "55520083eb588b3d9aa17667d18a06b9c6a51c5c",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c3-coverage-pending",
+          "performer": "/root/c3_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "c9201fa276fabba32c215fa364122fd46a775776",
+          "state": "pending",
+          "outcome": "",
+          "native_ref": {
+            "ref": "",
+            "excerpt": "",
+            "digest": ""
+          },
+          "axis": "Coverage",
+          "base": "06a589b935ce26fd9e27d18292f20985c81db487",
+          "tip": "55520083eb588b3d9aa17667d18a06b9c6a51c5c",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
     "state": "pending",
-    "source_digest": "",
+    "source_digest": "c9201fa276fabba32c215fa364122fd46a775776",
     "performer": "/root",
     "reconciliation": {},
-    "verification": []
+    "verification": [
+      {
+        "id": "c3-integration-initial",
+        "performer": "/root",
+        "role": "author-verification",
+        "model": "gpt-6-astra",
+        "effort": "high",
+        "source_digest": "c9201fa276fabba32c215fa364122fd46a775776",
+        "state": "failed",
+        "outcome": "fail",
+        "native_ref": {
+          "ref": "codex:tool/87aeb6",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,41394\nfailures[4]{package,test,line}:\n",
+          "digest": "sha256:8ba34572134bc79e6b1c0843500e419f5a0aadc602fb89b60a8a830e0e4013f1"
+        },
+        "requirement": "integration",
+        "command": "bench test --check system",
+        "exit_code": 1
+      }
+    ]
   },
   "amendments": [
     {
@@ -1680,6 +2035,21 @@ The native excerpts remain below. These reviews grant no gate or publication aut
     {
       "from": "sha256:344ffe2a529e7043e5bd579bdd1bec47f28129f293c913f5d98a0e33cf8be4dc",
       "to": "sha256:2dafdcc48cb42371008792230a53b6c03b9084f37d8ae5cac79d58ab919fe94f",
+      "chunk_ids": {
+        "1": [
+          "1"
+        ],
+        "2": [
+          "2"
+        ],
+        "3": [
+          "3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:2dafdcc48cb42371008792230a53b6c03b9084f37d8ae5cac79d58ab919fe94f",
+      "to": "sha256:013da5369b1c20983a9334647a1662e26944f81926d81846258ef531f71fd2ed",
       "chunk_ids": {
         "1": [
           "1"
