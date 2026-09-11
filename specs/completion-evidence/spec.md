@@ -263,6 +263,8 @@ These paths are the union of ticket expectations. A directory entry is an exact 
 - `internal/preflight/review_charge_test.go`
 - `.agents/commands/bench-review-implementation.md`
 - `internal/anchors/registry_ft311_review_dispatch.go`
+- `internal/anchors/registry_data.go`
+- `tests/canary/workflow-guidance-anchors/review-clean-terminal-result`
 - `internal/conformance/registry/packages.go`
 - `internal/conformance/injected_ports_registry_test.go`
 - `internal/gate`
@@ -420,3 +422,6 @@ Reviewer amendment on 2026-09-11: apply decision #13 to the declared implementat
 Implementation plan repair: chunk 1 includes `r1.md` for the accepted review findings.
 The final acceptance command uses the existing changed-package selector from the pinned landing base.
 This repair changes test citations and ownership only; the approved behavior remains the same.
+
+Chunk 1 guard repair replaces the retired clean-review no-artifact requirement with a terminal-result requirement.
+The omission fixture retains the gate’s refusal behavior and the existing persistence constraints.

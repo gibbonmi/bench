@@ -173,7 +173,8 @@ The successor chunk starts only after findings and repair coverage close. After 
    A request is pending. A failed transport or skipped review remains failed or skipped.
    Completed results with zero findings are positive terminal results.
 
-   Commit the artifact before any repair edit. Append superseding occurrences and retain earlier findings.
+   Commit the artifact in the same session that writes it, before any repair edit lands.
+   Append superseding occurrences and retain earlier findings.
    Obtain a current result or reviewer-authored reaffirmation from every axis after a repair.
 
    Record validation checks occurrence and source coverage. It cannot prove judgment correctness or authenticate an invented transcript.
