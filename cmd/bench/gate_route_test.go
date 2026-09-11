@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
@@ -66,22 +67,27 @@ func TestShellWrapperRejectsUnknownGateShapes(t *testing.T) {
 }
 
 func TestGateCheckpointRoute(t *testing.T) {
-	f := recordtest.New(t, 1)
+	f := recordtest.AttachAt(t, gittest.RepoOnBranch(t, "main"), 1, "specs/example [*] space/spec.md")
 	f.Write(".bench/gate.sh", "#!/bin/sh\nexit 0\n")
 	if err := os.Chmod(filepath.Join(f.Root, ".bench/gate.sh"), 0755); err != nil {
 		t.Fatal(err)
 	}
 	f.Write(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n")
 	f.AddChunk()
+	f.Complete()
 	f.Save()
 	f.Commit("record evidence")
-	_, diagnostic, code := gateRoute(t, f.Root, "--checkpoint", recordtest.Spec, "--chunk", "1")
+	_, diagnostic, code := gateRoute(t, f.Root, "--checkpoint", f.Record.Spec, "--chunk", "1")
 	if code != 0 {
 		t.Fatalf("public chunk checkpoint: %d %s", code, diagnostic)
 	}
+	_, diagnostic, code = gateRoute(t, f.Root, "--checkpoint", f.Record.Spec, "--complete")
+	if code != 0 {
+		t.Fatalf("public complete checkpoint: %d %s", code, diagnostic)
+	}
 	f.Record.Chunks[0].Reviews = f.Record.Chunks[0].Reviews[:2]
 	f.Save()
-	_, diagnostic, code = gateRoute(t, f.Root, "--checkpoint", recordtest.Spec, "--chunk", "1")
+	_, diagnostic, code = gateRoute(t, f.Root, "--checkpoint", f.Record.Spec, "--chunk", "1")
 	if code == 0 || !strings.Contains(diagnostic, "missing Coverage") {
 		t.Fatalf("public wrapper lost checkpoint: %d %s", code, diagnostic)
 	}

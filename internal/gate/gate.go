@@ -3,8 +3,8 @@
 // the gate run from the repo root, and the verdict-cache record keyed to
 // git.TreeHash.
 //
-// Both the standalone `bench gate` (via the shell's one-glance run_gate →
-// `bench gate-run`) and the in-process shift loop read this package. So gate
+// Both the standalone `bench gate` (through Command) and the in-process shift
+// loop read this package. So gate
 // resolution and the cache-write format each live in exactly one place. A second live
 // resolver, or a second cache writer, is the worst class of bug in this kit. This kit's
 // premise is "the gate is the oracle".

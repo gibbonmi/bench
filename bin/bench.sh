@@ -5,7 +5,7 @@
 #
 # The worktree lifecycle, the gated loop, and the gate resolution and record all live
 # in the Go core now — internal/worktree, internal/shift, internal/gate. This wrapper
-# only routes, plus a one-glance run_gate adapter. internal/gate owns gate config
+# routes the public gate command to the Go owner. internal/gate owns gate config
 # resolution: first ./.bench/gate.sh, then $BENCH_GATE, then auto-detect.
 set -euo pipefail
 
@@ -17,18 +17,7 @@ set -euo pipefail
 # precedence is unchanged.
 export BENCH_HOME="${BENCH_HOME:-${HOME:?the Bench pool home needs BENCH_HOME set, or HOME set to derive it from}/.bench}"
 
-# ---- gate: the oracle -------------------------------------------------------
-# run_gate is the one-glance adapter over the Go core's `bench gate-run`. Resolution
-# of the gate — .bench/gate.sh, then $BENCH_GATE, then auto-detect — the run from the
-# repo root, and the verdict-cache record all live in internal/gate. So `bench gate`
-# and the Stop hook's `<wrapper> gate` path share exactly one resolver, never a
-# second live implementation.
-#
-# This function execs rather than runs: the gate case is terminal, and the binary
-# owns the exit code and the record. A missing binary exits 127 through
-# route_binary, which writes no forged verdict.
-run_gate() { route_porcelain gate-run "$@"; }
-
+# Public gate arguments reach gate.Command unchanged. The Go owner validates grammar.
 gate_command() {
   shift
   route_porcelain gate "$@"

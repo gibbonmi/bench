@@ -141,7 +141,8 @@ These fields preserve earlier evidence when a later reviewed delta changes the p
     {
       "id": "2",
       "tickets": [
-        "2.md"
+        "2.md",
+        "r2.md"
       ],
       "verification": [
         {
@@ -230,14 +231,14 @@ phase checkpoint / landing broker -> gate obligation -> publish or refuse
 | E23 | 23 | A continuous reviewed chain covers completed chunks | `internal/reviewrecord/source_test.go` (`TestReviewRecordSource`) | Cover two chunk deltas and then mutate the second base to create a gap. |
 | E24 | 24 | An unreviewed plan amendment makes completion stale | `internal/reviewrecord/source_test.go` (`TestReviewRecordPlanAmendment`) | Change chunk rows or dependency mappings after the last review. |
 
-| E25 | 25 | Missing required author verification blocks a checkpoint | New test: TestReviewCheckpointVerification in internal/gate/review_checkpoint_verification_test.go | Provide all review axes and omit one required test result. |
-| E26 | 26 | Pending author verification blocks a checkpoint | New test: TestReviewCheckpointVerification in internal/gate/review_checkpoint_verification_test.go | Provide a pending test with complete review axes. |
-| E27 | 27 | A nonzero required verification exit blocks a checkpoint | New test: TestReviewCheckpointVerification in internal/gate/review_checkpoint_verification_test.go | Set exit code one with an otherwise complete record. |
-| E28 | 28 | A stale verification source blocks a checkpoint | New test: TestReviewCheckpointVerification in internal/gate/review_checkpoint_verification_test.go | Bind the test to the pre-repair source. |
-| E29 | 29 | Missing verification performer blocks a checkpoint | New test: TestReviewCheckpointVerification in internal/gate/review_checkpoint_verification_test.go | Omit the performer from a passing command result. |
-| E30 | 30 | A missing required mutation result blocks a checkpoint | New test: TestReviewCheckpointVerification in internal/gate/review_checkpoint_verification_test.go | Keep tests green but omit the planned probe evidence. |
-| E31 | 31 | A failed required probe restore blocks a checkpoint | New test: TestReviewCheckpointVerification in internal/gate/review_checkpoint_verification_test.go | Record a biting mutation with failed restoration. |
-| E32 | 32 | Review evidence cannot substitute for author verification | New test: TestReviewCheckpointVerification in internal/gate/review_checkpoint_verification_test.go | Populate only review items for a required command. |
+| E25 | 25 | Missing required author verification blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Provide all review axes and omit one required test result. |
+| E26 | 26 | Pending author verification blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Provide a pending test with complete review axes. |
+| E27 | 27 | A nonzero required verification exit blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Set exit code one with an otherwise complete record. |
+| E28 | 28 | A stale verification source blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Bind the test to the pre-repair source. |
+| E29 | 29 | Missing verification performer blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Omit the performer from a passing command result. |
+| E30 | 30 | A missing required mutation result blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Keep tests green but omit the planned probe evidence. |
+| E31 | 31 | A failed required probe restore blocks a checkpoint | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Record a biting mutation with failed restoration. |
+| E32 | 32 | Review evidence cannot substitute for author verification | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpoint`) | Populate only review items for a required command. |
 | E33 | 33 | Missing final integration execution blocks completion | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Supply reconciliation prose with no final command result. |
 | E34 | 34 | Failed final integration execution blocks completion | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Record a final integration command with a nonzero exit. |
 | E35 | 35 | Stale final integration execution blocks completion | New test: TestLandingCompletionEvidence in internal/landing/completion_evidence_test.go | Change source after the final command ran. |
@@ -435,3 +436,6 @@ The omission fixture retains the gate’s refusal behavior and the existing pers
 
 Chunk 2 keeps public gate grammar in the Go gate owner. The shell forwards its arguments unchanged.
 The help inventory derives its suffix from that owner, and wrapper tests execute that same owner.
+
+Chunk 2 repair keeps verification cases in the shared checkpoint fixture.
+It adds partial-inventory, completion-purpose reuse, and hostile-path wrapper coverage before advancement.

@@ -37,6 +37,8 @@ func TestReviewCheckpoint(t *testing.T) {
 		{"failed transport", "failed", func(f *recordtest.Fixture) { f.Record.Chunks[0].Reviews[0].State = "failed" }},
 		{"skipped axis", "skipped", func(f *recordtest.Fixture) { f.Record.Chunks[0].Reviews[0].State = "skipped" }},
 		{"missing axis", "missing Coverage", func(f *recordtest.Fixture) { f.Record.Chunks[0].Reviews = f.Record.Chunks[0].Reviews[:2] }},
+		{"partial verification", "verification tests", func(f *recordtest.Fixture) { f.Record.Chunks[0].Verification = f.Record.Chunks[0].Verification[1:] }},
+		{"partial additional verification", "verification additional", func(f *recordtest.Fixture) { f.Record.Chunks[0].Verification = f.Record.Chunks[0].Verification[:1] }},
 		{"missing verification", "verification tests", func(f *recordtest.Fixture) { f.Record.Chunks[0].Verification = nil }},
 		{"pending verification", "verification tests", func(f *recordtest.Fixture) { f.Record.Chunks[0].Verification[0].State = "pending" }},
 		{"failed verification", "verification tests", func(f *recordtest.Fixture) { one := 1; f.Record.Chunks[0].Verification[0].ExitCode = &one }},
@@ -66,6 +68,9 @@ func TestReviewCheckpoint(t *testing.T) {
 
 func TestReviewCheckpointReuse(t *testing.T) {
 	f := checkpointFixture(t)
+	f.Complete()
+	f.Save()
+	f.Commit("retain complete evidence")
 	if result := Execute(context.Background(), f.Root, &bytes.Buffer{}, &bytes.Buffer{}); result.ActionExit != 0 {
 		t.Fatalf("ordinary: %+v", result)
 	}
@@ -77,6 +82,13 @@ func TestReviewCheckpointReuse(t *testing.T) {
 	}
 	if code, out := runCheckpoint(t, f); code != 0 || !strings.Contains(out, "reused") {
 		t.Fatalf("checkpoint reuse: %d %s", code, out)
+	}
+	var out, diagnostic bytes.Buffer
+	if code := RunCommand([]string{f.Root, "--checkpoint", f.Record.Spec, "--complete"}, &out, &diagnostic); code != 0 {
+		t.Fatalf("complete checkpoint: %d %s", code, diagnostic.String())
+	}
+	if got := outcomeRuns(t, f.Root); got != 3 {
+		t.Fatalf("chunk green satisfied complete purpose: %d runs", got)
 	}
 	f.Record.Chunks[0].Reviews = f.Record.Chunks[0].Reviews[:2]
 	f.Save()
@@ -93,7 +105,7 @@ func TestReviewCheckpointLaterSource(t *testing.T) {
 			if committed {
 				f.Commit("unreviewed repair")
 			}
-			if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "stale reviewed source") {
+			if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "chunk 1: stale reviewed source") {
 				t.Fatalf("uncovered delta accepted: %d %s", code, out)
 			}
 		})

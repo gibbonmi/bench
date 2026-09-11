@@ -26,30 +26,34 @@ type Fixture struct {
 func New(t testing.TB, count int) *Fixture { return Attach(t, gittest.RepoOnBranch(t, "main"), count) }
 
 func Attach(t testing.TB, root string, count int) *Fixture {
+	return AttachAt(t, root, count, Spec)
+}
+
+func AttachAt(t testing.TB, root string, count int, spec string) *Fixture {
 	t.Helper()
 	f := &Fixture{T: t, Root: root}
 	plan := rr.Plan{Version: 1, FinalVerification: []rr.Requirement{{ID: "acceptance", Command: "go test ./..."}, {ID: "integration", Command: "go test -tags=system ./..."}}}
 	for i := 1; i <= count; i++ {
 		id, ticket := fmt.Sprint(i), fmt.Sprintf("%d.md", i)
-		plan.Chunks = append(plan.Chunks, rr.PlannedChunk{ID: id, Tickets: []string{ticket}, Verification: []rr.Requirement{{ID: "tests", Command: "go test ./...", Probe: "omit source check"}}})
+		plan.Chunks = append(plan.Chunks, rr.PlannedChunk{ID: id, Tickets: []string{ticket}, Verification: []rr.Requirement{{ID: "tests", Command: "go test ./...", Probe: "omit source check"}, {ID: "additional", Command: "go test -race ./..."}}})
 		blocker := "none"
 		if i > 1 {
 			blocker = fmt.Sprintf("%d.md", i-1)
 		}
-		f.Write("specs/example/tickets/"+ticket, fmt.Sprintf("# Chunk %d\n\nBlocked by: %s\nWrites: source.txt\nCovers: E%d\n\n## What to build\n\nImplement the behavior.\n\n## Acceptance\n\n- [ ] E%d: The behavior works.\n", i, blocker, i, i))
+		f.Write(filepath.ToSlash(filepath.Join(filepath.Dir(spec), "tickets", ticket)), fmt.Sprintf("# Chunk %d\n\nBlocked by: %s\nWrites: source.txt\nCovers: E%d\n\n## What to build\n\nImplement the behavior.\n\n## Acceptance\n\n- [ ] E%d: The behavior works.\n", i, blocker, i, i))
 	}
 	data, err := json.Marshal(plan)
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.Write(Spec, "# Example\n\nStatus: staged\n\n```bench-completion-plan\n"+string(data)+"\n```\n")
+	f.Write(spec, "# Example\n\nStatus: staged\n\n```bench-completion-plan\n"+string(data)+"\n```\n")
 	f.Write("source.txt", "base\n")
 	f.Commit("fixture plan")
-	f.Plan, err = rr.ReadPlan(root, f.Tree(), Spec)
+	f.Plan, err = rr.ReadPlan(root, f.Tree(), spec)
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.Record = rr.Record{Version: 1, Spec: Spec, PlanDigest: f.Plan.Digest, ImplementationSession: "fixture-author"}
+	f.Record = rr.Record{Version: 1, Spec: spec, PlanDigest: f.Plan.Digest, ImplementationSession: "fixture-author"}
 	return f
 }
 
@@ -112,7 +116,7 @@ func (f *Fixture) AddChunk() {
 	base := f.Tip()
 	f.Write("source.txt", "implemented chunk "+planned.ID+"\n")
 	f.Commit("chunk " + planned.ID)
-	digest, err := rr.SourceDigest(f.Root, f.Tree(), Spec)
+	digest, err := rr.SourceDigest(f.Root, f.Tree(), f.Record.Spec)
 	if err != nil {
 		f.T.Fatal(err)
 	}
@@ -142,5 +146,9 @@ func (f *Fixture) Save() {
 	if err != nil {
 		f.T.Fatal(err)
 	}
-	f.Write("reviews/example.md", "# Review outcomes\n\n```bench-review-record\n"+string(data)+"\n```\n")
+	path, err := rr.RecordPath(f.Record.Spec)
+	if err != nil {
+		f.T.Fatal(err)
+	}
+	f.Write(path, "# Review outcomes\n\n```bench-review-record\n"+string(data)+"\n```\n")
 }

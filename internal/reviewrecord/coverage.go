@@ -110,7 +110,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 		return fmt.Errorf("missing chunk %s; record its completed evidence", chunkID)
 	}
 	if previous.SourceDigest != digest {
-		return errors.New("stale reviewed source; cover the later source or repair delta")
+		return fmt.Errorf("chunk %s: stale reviewed source; cover the later source or repair delta", previous.ID)
 	}
 	if complete {
 		for _, planned := range current.Chunks {
