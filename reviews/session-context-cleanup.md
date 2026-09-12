@@ -61,19 +61,19 @@ The retained continuation session re-ran verification at tip 4a1ca292. The close
 - `bench test --package ./cmd/bench`: pass, 8106 ms.
 - Mutation probe (completion plan CL-C1, clean-tests): bypassed the alias-collapse guard at `clean_set.go:139`. `TestCleanExplicitSetAliases` failed as expected; the probe bit. The revert used `git checkout -- internal/worktree/clean_set.go`. The test passed again in 671 ms, and the tree returned to clean.
 
-## Reaffirmation at 518910e5
+## Reaffirmation at 1b40ca08
 
 The retained author repaired all six findings in one commit on the integration source.
-The chunk pair is now base `4a1ca2928776035d04be0ca123010065d924b80c` and tip `518910e52c29fd5676eb7a0e703193f1c512c060`.
 The reviewer decided SPEC-1 and SPEC-2 before this repair. Keep the id-substitution behavior and fix the spec prose. Confirm silent target collapse and close the flagged addition.
 
-- ST1, ST2, ST3: closed. The coordinator read each cited line at the new tip. Each doc comment now states its scope or spelling accurately, with no behavior change.
+- ST1, ST2, ST3: closed. Each doc comment now states its scope or spelling accurately, with no behavior change.
 - COV-1: closed. `TestCleanSetDiscardModifiers` exists at clean_set_command_test.go and exercises both `--discard-branch` and `--discard-ignored` through an explicit-set apply, asserting the branch and the ignored residue. Its own mutation probe (guard `--discard-branch` out of `cleanupModifierFlags`) bit and was restored.
 - SPEC-1, SPEC-2: closed. spec.md:76 now names canonical assignment identity as the rendering rule, citing the apply command as the existing precedent, and does not redefine CL9. The "Flagged additions" section records the reviewer's 2026-09-12 confirmation.
 
-This round used a coordinator-verified reaffirmation, not a fresh three-axis redispatch. The six findings are mechanical — wording, one constant, one test — or already reviewer-decided. A second independent-review round would fold to the same result.
+The fresh Standards pass found one new nit: a doc comment the repair added narrated in past tense, the same register ST3 corrected. The retained author fixed the one word (`carried` to `carries`) in a follow-up commit, `1b40ca08`, on top of the repair commit `518910e5`.
+All three axes then re-read the chunk pair fresh, in the same independent venues, and each returned zero findings. The pair `4a1ca292`..`1b40ca08` is now the chunk's frozen tip.
 
-Author verification at the tip: `bench test --package ./internal/worktree --run TestClean` passes (5930 ms, the same pre-existing host-capability skip). `bench test --package ./cmd/bench` passes (8655 ms, 0 skips). `bench gate-prose` on the spec passes. `bench preflight review` reports all 13 checks green for the repair pair.
+Author verification at the tip: `bench test --package ./internal/worktree --run TestClean` passes (5930 ms, the same pre-existing host-capability skip). `bench test --package ./cmd/bench` passes (8655 ms, 0 skips). `bench test --package ./internal/worktree --run TestCleanSetDiscardModifiers` passes (348 ms, per the Coverage axis). `bench gate-prose` on the spec passes. `bench preflight review` reports all 13 checks green for the repair pair.
 
 ## Record
 ```bench-review-record
@@ -85,10 +85,10 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
   "chunks": [
     {
       "id": "CL-C1",
-      "base": "4e98e581083562e284ba20802d168dbc575fd321",
-      "tip": "518910e52c29fd5676eb7a0e703193f1c512c060",
+      "base": "4a1ca2928776035d04be0ca123010065d924b80c",
+      "tip": "1b40ca08c6c7b723b9b60882bd8cc4271f6f836d",
       "plan_digest": "sha256:7278553ceb910dd63f774eb9ae7513dc7f3236b9d07ec7e759d85b87f312c4af",
-      "source_digest": "0559c89ccdb90a6ac5ffa7044285dd19b3103d9a",
+      "source_digest": "7ce06d236a1c3e19c6f6b82eb195afb7c18c30aa",
       "acceptance_rows": [
         "CL1", "CL2", "CL3", "CL10", "CL11", "CL13", "CL14", "CL15", "CL16", "CL17"
       ],
@@ -156,8 +156,7 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
           },
           "requirement": "clean-tests",
           "command": "bench test --package ./internal/worktree --run TestClean",
-          "exit_code": 0,
-          "supersedes": ["cl-c1-clean-tests"]
+          "exit_code": 0
         },
         {
           "id": "cl-c1-repair-command-tests",
@@ -175,22 +174,9 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
           },
           "requirement": "command-tests",
           "command": "bench test --package ./cmd/bench",
-          "exit_code": 0,
-          "supersedes": ["cl-c1-command-tests"]
+          "exit_code": 0
         }
       ],
-      "closed_findings": {
-        "ST1": "auto-fix, repaired at 518910e5",
-        "ST2": "auto-fix, repaired at 518910e5",
-        "ST3": "auto-fix, repaired at 518910e5",
-        "COV-1": "auto-fix, repaired at 518910e5",
-        "SPEC-1": "ask-user, reviewer decided 2026-09-12 (keep code, fix spec prose), repaired at 518910e5",
-        "SPEC-2": "ask-user, reviewer decided 2026-09-12 (confirm silent collapse), repaired at 518910e5",
-        "ST4": "no-op, judgment",
-        "ST5": "no-op, judgment",
-        "SPEC-3": "no-op, vacuously satisfied",
-        "COV-2": "no-op, safe by construction"
-      },
       "reviews": [
         {
           "id": "cl-c1-standards-1",
@@ -213,6 +199,26 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
           "supersedes": []
         },
         {
+          "id": "cl-c1-standards-2",
+          "performer": "claude:opus-medium:standards-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ce06d236a1c3e19c6f6b82eb195afb7c18c30aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cl-c1-standards-2",
+            "digest": "sha256:2c707b09dd4e61eb30a1faa55fc8fa04141d645f4fa164129d31d85f4563a18d",
+            "excerpt": "result: completed; axis: Standards; findings: 0; worst: none; tip: 1b40ca08c6c7b723b9b60882bd8cc4271f6f836d"
+          },
+          "axis": "Standards",
+          "base": "4a1ca2928776035d04be0ca123010065d924b80c",
+          "tip": "1b40ca08c6c7b723b9b60882bd8cc4271f6f836d",
+          "finding_ids": [],
+          "supersedes": ["cl-c1-standards-1"]
+        },
+        {
           "id": "cl-c1-spec-1",
           "performer": "claude:opus-medium:spec-axis",
           "role": "independent-review",
@@ -233,6 +239,26 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
           "supersedes": []
         },
         {
+          "id": "cl-c1-spec-2",
+          "performer": "claude:opus-medium:spec-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ce06d236a1c3e19c6f6b82eb195afb7c18c30aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cl-c1-spec-2",
+            "digest": "sha256:c56778b5a3709529ee32d3c3e59a32ffbaa389c4215bad46eab5c11e0c48650f",
+            "excerpt": "result: completed; axis: Spec; findings: 0; worst: none; tip: 1b40ca08c6c7b723b9b60882bd8cc4271f6f836d"
+          },
+          "axis": "Spec",
+          "base": "4a1ca2928776035d04be0ca123010065d924b80c",
+          "tip": "1b40ca08c6c7b723b9b60882bd8cc4271f6f836d",
+          "finding_ids": [],
+          "supersedes": ["cl-c1-spec-1"]
+        },
+        {
           "id": "cl-c1-coverage-1",
           "performer": "claude:opus-medium:coverage-axis",
           "role": "independent-review",
@@ -251,6 +277,26 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
           "tip": "4a1ca2928776035d04be0ca123010065d924b80c",
           "finding_ids": ["COV-1", "COV-2"],
           "supersedes": []
+        },
+        {
+          "id": "cl-c1-coverage-2",
+          "performer": "claude:opus-medium:coverage-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ce06d236a1c3e19c6f6b82eb195afb7c18c30aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cl-c1-coverage-2",
+            "digest": "sha256:b556c96e50766b34ef6cec90b9feb59782dc73413efeac029942e02cd1943a45",
+            "excerpt": "result: completed; axis: Coverage; findings: 0; worst: none; tip: 1b40ca08c6c7b723b9b60882bd8cc4271f6f836d"
+          },
+          "axis": "Coverage",
+          "base": "4a1ca2928776035d04be0ca123010065d924b80c",
+          "tip": "1b40ca08c6c7b723b9b60882bd8cc4271f6f836d",
+          "finding_ids": [],
+          "supersedes": ["cl-c1-coverage-1"]
         }
       ]
     }
