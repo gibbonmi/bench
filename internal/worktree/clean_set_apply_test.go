@@ -257,31 +257,65 @@ func memberByID(t *testing.T, creations []Creation, assignment string) Creation 
 	return Creation{}
 }
 
+// retainedMemberFixture creates one landed clean member the plan marks removable and one
+// landed member whose ignored residue the plan retains without `--discard-ignored`. It is
+// the selection shape that proves what an apply does to a member it will not touch, and it
+// leaves one member resolvable after the removable one is gone.
+func retainedMemberFixture(t *testing.T) (string, string, Creation, Creation) {
+	t.Helper()
+	root := newWorktreeRepo(t)
+	home := filepath.Join(root, ".bench-home")
+	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored-*.txt\n"), 0o644)
+	gitRun(t, root, "add", ".gitignore")
+	gitRun(t, root, "commit", "-qm", "ignore retained residue")
+	removable := mustCreate(t, root, home, "set-retained-removable", "removable member")
+	retained := mustCreate(t, root, home, "set-retained-residue", "retained member")
+	landAssignment(t, root, removable, "removable.txt")
+	landAssignment(t, root, retained, "retained.txt")
+	mustWrite(t, filepath.Join(retained.Path, "ignored-one.txt"), []byte("residue\n"), 0o644)
+	return root, home, removable, retained
+}
+
 // TestCleanSetSpentPlan is CL12. A plan whose removals already completed cannot be applied
-// a second time, so a retry can neither repeat a completed side effect nor report one.
+// a second time, so a retry can neither repeat a completed side effect nor report one. The
+// retained member outlives the apply, which leaves a selection that still resolves under the
+// spent digest and therefore a refusal with a live source.
 func TestCleanSetSpentPlan(t *testing.T) {
 	t.Parallel()
-	root, home, creations := removableSetFixture(t, 2)
-	selectors := explicitTargetArguments(creations)
-	plan, planErr, planCode := runCleanup(t, root, home, selectors...)
+	root, home, removable, retained := retainedMemberFixture(t)
+	both := []string{"--target", removable.Assignment.ID, "--target", retained.Assignment.ID}
+	plan, planErr, planCode := runCleanup(t, root, home, both...)
 	if planCode != 0 || planErr != "" {
 		t.Fatalf("plan = (%d, %q, %q), want one applicable plan", planCode, plan, planErr)
 	}
-	fingerprint := cleanupRowFingerprint(t, plan)
-	applied, applyErr, applyCode := runCleanup(t, root, home, append(selectors, "--apply", fingerprint)...)
-	if applyCode != 0 || applyErr != "" || strings.Count(applied, ",removed,") != 2 {
-		t.Fatalf("apply = (%d, %q, %q), want two removals", applyCode, applied, applyErr)
+	digest := cleanupRowFingerprint(t, plan)
+	applied, applyErr, applyCode := runCleanup(t, root, home, append(both, "--apply", digest)...)
+	if applyCode != 0 || applyErr != "" || strings.Count(applied, ",removed,") != 1 {
+		t.Fatalf("apply = (%d, %q, %q), want exactly one removal", applyCode, applied, applyErr)
 	}
 	spent := repositoryState(t, root)
 
-	replay, replayErr, replayCode := runCleanup(t, root, home, append(selectors, "--apply", fingerprint)...)
+	replay, replayErr, replayCode := runCleanup(t, root, home, append(both, "--apply", digest)...)
 	if replayCode != 1 || replayErr != "" {
 		t.Fatalf("replay = (%d, %q, %q), want a refusal", replayCode, replay, replayErr)
 	}
 	if strings.Contains(replay, ",removed,") {
 		t.Fatalf("replay = %q, want no repeated completion claim", replay)
 	}
+
+	// The surviving member still resolves, so this replay reaches the digest comparison with
+	// an applicable plan of its own. The spent digest names a set of two, and this selection
+	// is a set of one, so the refusal here rests on the comparison rather than on a target
+	// that has ceased to exist.
+	narrowed := []string{"--target", retained.Assignment.ID, "--apply", digest}
+	stale, staleErr, staleCode := runCleanup(t, root, home, narrowed...)
+	if staleCode != 1 || staleErr != "" || !strings.Contains(stale, errStaleFingerprint.Error()) {
+		t.Fatalf("narrowed replay = (%d, %q, %q), want a stale refusal", staleCode, stale, staleErr)
+	}
+	if _, statErr := os.Stat(retained.Path); statErr != nil {
+		t.Fatalf("narrowed replay removed the retained member %s: %v", retained.Path, statErr)
+	}
 	if after := repositoryState(t, root); after != spent {
-		t.Fatalf("replay changed the repository: %q -> %q", spent, after)
+		t.Fatalf("replays changed the repository: %q -> %q", spent, after)
 	}
 }

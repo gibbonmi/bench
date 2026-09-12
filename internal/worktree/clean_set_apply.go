@@ -3,6 +3,7 @@
 // apply reports, and the refusal a stale plan renders all live here, so the explicit set,
 // the landed selector, and the unclaimed selector cannot answer the same question in three
 // different ways.
+
 package worktree
 
 import (
@@ -13,9 +14,11 @@ import (
 	"github.com/gibbonmi/bench/internal/axi"
 )
 
-// ActionNotAttempted is the outcome of a selected target a failed set apply never started.
-// It is an apply result and never a plan verdict, and it stays outside Removes(): the
-// target still stands exactly as the approved plan found it.
+// ActionNotAttempted is the outcome of a member a stopped set apply never started. It sits
+// here rather than in lifecyclepolicy, which owns the plan vocabulary, because this value is
+// never a planned removal claim: only an apply reports it, and it says what did not happen.
+// It therefore stays outside Removes(), since the member still stands exactly as the
+// approved plan found it and has no removal ahead of it.
 const ActionNotAttempted CleanupAction = "not-attempted"
 
 const notAttemptedDetail = "not attempted; an earlier target in this set did not complete"
@@ -27,6 +30,22 @@ func notAttemptedPlan(plan CleanupPlan) CleanupPlan {
 	plan.Ignored.Shown = 0
 	plan.Action, plan.ReasonCode, plan.Reason = ActionNotAttempted, "", notAttemptedDetail
 	return plan
+}
+
+// notAttemptedPlans appends one outcome per member a stopped apply never reached. Both
+// selection modes report this the same way; only the row type each one slices differs.
+//
+// A member the plan did not mark removable keeps the verdict the plan gave it. The apply was
+// never going to touch that member, so its retain or refusal authority is what happened to
+// it, and calling it unstarted would erase the reason it was spared.
+func notAttemptedPlans(plans, unreached []CleanupPlan) []CleanupPlan {
+	for _, plan := range unreached {
+		if plan.Action.Removes() {
+			plan = notAttemptedPlan(plan)
+		}
+		plans = append(plans, plan)
+	}
+	return plans
 }
 
 // faultedPlan names the target whose transaction did not finish. A fault can return before
@@ -95,13 +114,26 @@ func renderStale(stdout io.Writer, rows []CleanupPlan, replan []axi.InvocationAr
 	return err
 }
 
+// staleRows puts the row that names the rejected digest ahead of the rows the caller has.
+// The refusal before an apply and the refusal from inside one read the composition here, so
+// the two cannot describe the same repository differently.
+func staleRows(fingerprint string, rows []CleanupPlan) []CleanupPlan {
+	return append([]CleanupPlan{staleSetPlan(fingerprint)}, rows...)
+}
+
+// renderStaleSet is a stale refusal in full: the composed rows, then the exact command that
+// re-plans the same selection. Every mode's stale result renders through this one name.
+func renderStaleSet(stdout io.Writer, fingerprint string, rows []CleanupPlan, replan []axi.InvocationArgument) error {
+	return renderStale(stdout, staleRows(fingerprint, rows), replan)
+}
+
 // renderOutcomes prints one set apply's outcome rows. A stale refusal also names the digest
 // the apply rejected, so the reader sees which plan the repository no longer describes.
 func renderOutcomes(stdout io.Writer, fingerprint string, plans []CleanupPlan, err error, replan []axi.InvocationArgument) error {
 	if !errors.Is(err, errStaleFingerprint) {
 		return renderCleanups(stdout, plans)
 	}
-	return renderStale(stdout, append([]CleanupPlan{staleSetPlan(fingerprint)}, plans...), replan)
+	return renderStaleSet(stdout, fingerprint, plans, replan)
 }
 
 // preflightExplicitSet and preflightLandedSet requalify every removable member before their
@@ -114,12 +146,8 @@ func preflightExplicitSet(j joins, root string, set explicitCleanupSet, options 
 		if !planned.plan.Action.Removes() {
 			continue
 		}
-		current, err := planExplicitCleanupRow(j, root, planned.assignment, options)
-		if err != nil {
+		if _, err := requalifyExplicitRow(j, root, planned, options); err != nil {
 			return err
-		}
-		if !sameExplicitCleanupTuple(planned, current) {
-			return errStaleFingerprint
 		}
 	}
 	return nil

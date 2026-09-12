@@ -98,19 +98,26 @@ func staleUnclaimedPlans(set unclaimedAssignmentSet) []CleanupPlan {
 	return []CleanupPlan{{Target: "unknown", Action: ActionError, Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: set.fingerprint, Reason: errStaleFingerprint.Error()}}
 }
 
+// unclaimedOptions is the fixed option set this mode answers under. The grammar admits no
+// other modifier beside `--unclaimed`, so the plan, the apply, the status reader, and the
+// rendered re-plan all ask their question through this one value rather than through
+// literals that can drift apart.
+func unclaimedOptions() CleanupOptions {
+	return CleanupOptions{DiscardBranch: true, Unclaimed: true}
+}
+
 // renderUnclaimedOutcomes prints one unclaimed apply's rows and, on a stale refusal, the
 // exact command that re-plans the same branch selection. The rows carry this mode's own
 // refusal spelling, so the shared refusal row never reaches them.
 func renderUnclaimedOutcomes(stdout io.Writer, plans []CleanupPlan, err error) error {
-	replan := cleanArguments(CleanupOptions{DiscardBranch: true}, "--unclaimed")
 	if !errors.Is(err, errStaleFingerprint) {
 		return renderCleanups(stdout, plans)
 	}
-	return renderStale(stdout, plans, replan)
+	return renderStale(stdout, plans, cleanArguments(unclaimedOptions(), "--unclaimed"))
 }
 
 func applyUnclaimedAssignmentSet(root string, set unclaimedAssignmentSet) ([]CleanupPlan, error) {
-	current, err := planUnclaimedAssignmentSet(root, CleanupOptions{DiscardBranch: true, Unclaimed: true})
+	current, err := planUnclaimedAssignmentSet(root, unclaimedOptions())
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +140,7 @@ func applyUnclaimedAssignmentSet(root string, set unclaimedAssignmentSet) ([]Cle
 // UnclaimedAssignmentBranchRefs gives status the same sorted assignment-and-shift
 // selection used by clean.
 func UnclaimedAssignmentBranchRefs(root string) ([]string, error) {
-	set, err := planUnclaimedAssignmentSet(root, CleanupOptions{DiscardBranch: true, Unclaimed: true})
+	set, err := planUnclaimedAssignmentSet(root, unclaimedOptions())
 	if err != nil {
 		return nil, err
 	}

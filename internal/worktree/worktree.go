@@ -320,7 +320,7 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 			return cleanInvocationError(stdout)
 		}
 		if fingerprint != "" && !matchesFingerprint(set.fingerprint, fingerprint) {
-			_ = renderStale(stdout, append([]CleanupPlan{staleSetPlan(fingerprint)}, set.plans()...), landedReplan(options))
+			_ = renderStaleSet(stdout, fingerprint, set.plans(), landedReplan(options))
 			return 1
 		}
 		if fingerprint != "" {

@@ -1,8 +1,9 @@
-// What a stopped cleanup-set apply reports. The fixtures here drive an apply that does not
-// finish, then read the result: which member completed, which one failed, which ones were
-// never started, and the exact command a refusal offers as recovery. The sibling file
-// clean_set_apply_test.go owns the other half — when an apply refuses at all — and holds
-// the fixture helpers both halves share.
+// What a cleanup-set apply reports. Most fixtures here drive an apply that does not finish,
+// then read the result: which member completed, which one failed, which ones were never
+// started, and the exact command a refusal offers as recovery. The last one reads the rows
+// an apply reports for a member it will not touch at all. The sibling file
+// clean_set_apply_test.go owns the other half — when an apply refuses — and holds the
+// fixture helpers both halves share.
 package worktree
 
 import (
@@ -89,8 +90,10 @@ func TestCleanSetUnstartedOutcomes(t *testing.T) {
 	if len(rows) != len(creations) {
 		t.Fatalf("partial apply rows = %#v, want one row per selected target", rows)
 	}
+	// The literal is the agent-facing field label the spec pins. Reading the token back
+	// through its own constant would let a rename pass the gate and break the promised label.
 	unstarted := memberByID(t, creations, set.rows[2].assignment.ID)
-	if !strings.Contains(stdout, unstarted.Path+","+string(ActionNotAttempted)+",") {
+	if !strings.Contains(stdout, unstarted.Path+",not-attempted,") {
 		t.Fatalf("partial apply = %q, want %q reported as not attempted", stdout, unstarted.Path)
 	}
 	if _, statErr := os.Stat(unstarted.Path); statErr != nil {
@@ -177,4 +180,107 @@ func TestCleanSetUnclaimedStaleReplanAction(t *testing.T) {
 	if !git.OK("-C", root, "show-ref", "--verify", "--quiet", extra) {
 		t.Fatalf("stale unclaimed apply deleted %q", extra)
 	}
+}
+
+// rowForTarget returns the one rendered cleanup row that names target.
+func rowForTarget(t *testing.T, output, target string) string {
+	t.Helper()
+	for _, row := range cleanupRows(output) {
+		if cleanupRowFields(row)[0] == target {
+			return row
+		}
+	}
+	t.Fatalf("output = %q, want a row for %q", output, target)
+	return ""
+}
+
+// TestCleanSetRetainedMember is CL10 and CL11 inside a set apply. A member the plan retained
+// is a member the apply will not touch, so the apply neither qualifies it beforehand nor
+// rewrites the verdict the plan gave it.
+func TestCleanSetRetainedMember(t *testing.T) {
+	t.Parallel()
+	t.Run("keeps the planned verdict", func(t *testing.T) {
+		t.Parallel()
+		root, home, removable, retained := retainedMemberFixture(t)
+		targets := []string{"--target", removable.Assignment.ID, "--target", retained.Assignment.ID}
+		plan, planErr, planCode := runCleanup(t, root, home, targets...)
+		if planCode != 0 || planErr != "" {
+			t.Fatalf("plan = (%d, %q, %q), want one applicable plan", planCode, plan, planErr)
+		}
+		planned := rowForTarget(t, plan, retained.Path)
+		if !strings.Contains(planned, ",retain,") {
+			t.Fatalf("planned retained row = %q, want the ignored-residue refusal", planned)
+		}
+
+		applied, applyErr, applyCode := runCleanup(t, root, home, append(targets, "--apply", cleanupRowFingerprint(t, plan))...)
+		if applyCode != 0 || applyErr != "" || strings.Count(applied, ",removed,") != 1 {
+			t.Fatalf("apply = (%d, %q, %q), want exactly one removal", applyCode, applied, applyErr)
+		}
+		// The row passes through, so it still carries the set digest the plan answered under
+		// rather than a digest a transaction the apply never opened would have produced.
+		if got := rowForTarget(t, applied, retained.Path); got != planned {
+			t.Fatalf("applied retained row = %q, want the planned row %q", got, planned)
+		}
+		if _, statErr := os.Stat(retained.Path); statErr != nil {
+			t.Fatalf("apply removed the retained member %s: %v", retained.Path, statErr)
+		}
+		if _, statErr := os.Lstat(removable.Path); !os.IsNotExist(statErr) {
+			t.Fatalf("apply left the removable member %s: %v", removable.Path, statErr)
+		}
+	})
+	t.Run("preflight skips retentions", func(t *testing.T) {
+		t.Parallel()
+		root, _, removable, retained := retainedMemberFixture(t)
+		j := defaultJoins()
+		set := planExplicitSet(j, root, []string{removable.Assignment.ID, retained.Assignment.ID}, CleanupOptions{})
+		if set.fingerprint == "" || len(set.rows) != 2 {
+			t.Fatalf("explicit set = %#v, want two members", set)
+		}
+		// The retained member's own residue changes. The apply was never going to touch that
+		// member, so a preflight that qualified it would refuse a removal on evidence that
+		// decides nothing about the member being removed.
+		mustWrite(t, filepath.Join(retained.Path, "ignored-two.txt"), []byte("more residue\n"), 0o644)
+
+		plans, err := applyExplicitSet(j, root, set, CleanupOptions{})
+		if err != nil {
+			t.Fatalf("apply error = %v, want the retained member's drift to decide nothing", err)
+		}
+		if _, statErr := os.Lstat(removable.Path); !os.IsNotExist(statErr) {
+			t.Fatalf("the removable member %s survived: %v", removable.Path, statErr)
+		}
+		if _, statErr := os.Stat(retained.Path); statErr != nil {
+			t.Fatalf("apply removed the retained member %s: %v", retained.Path, statErr)
+		}
+		if len(plans) != 2 {
+			t.Fatalf("apply rows = %#v, want one row per member", plans)
+		}
+	})
+	t.Run("a refused apply keeps the retained verdict", func(t *testing.T) {
+		t.Parallel()
+		root, _, removable, retained := retainedMemberFixture(t)
+		j := defaultJoins()
+		set := planExplicitSet(j, root, []string{removable.Assignment.ID, retained.Assignment.ID}, CleanupOptions{})
+		if set.fingerprint == "" || len(set.rows) != 2 {
+			t.Fatalf("explicit set = %#v, want two members", set)
+		}
+		mustWrite(t, filepath.Join(removable.Path, "removable.txt"), []byte("drifted\n"), 0o644)
+
+		plans, err := applyExplicitSet(j, root, set, CleanupOptions{})
+		if !errors.Is(err, errStaleFingerprint) {
+			t.Fatalf("apply error = %v, want a preflight refusal", err)
+		}
+		requireMembersPresent(t, []Creation{removable, retained})
+		// The refused member was going to be removed and was not, which is what unstarted
+		// means. The retained member was never a removal, so calling it unstarted would erase
+		// the CL10 authority the plan spent on it.
+		for _, plan := range plans {
+			want := ActionNotAttempted
+			if plan.Target == retained.Path {
+				want = ActionRetain
+			}
+			if plan.Action != want {
+				t.Fatalf("refused row %q = %q, want %q", plan.Target, plan.Action, want)
+			}
+		}
+	})
 }

@@ -266,6 +266,29 @@ func renderExplicitSet(stdout io.Writer, set explicitCleanupSet, options Cleanup
 	return err
 }
 
+// requalifyExplicitRow re-plans one member against the repository as it stands now and
+// refuses a member the approved set no longer describes. The preflight and the apply loop
+// read the same proof, so neither can admit a member the other would refuse.
+func requalifyExplicitRow(j joins, root string, planned explicitCleanupRow, options CleanupOptions) (explicitCleanupRow, error) {
+	current, err := planExplicitCleanupRow(j, root, planned.assignment, options)
+	if err != nil {
+		return current, err
+	}
+	if !sameExplicitCleanupTuple(planned, current) {
+		return current, errStaleFingerprint
+	}
+	return current, nil
+}
+
+// explicitRowPlans is the plan each selected member carries, in selection order.
+func explicitRowPlans(rows []explicitCleanupRow) []CleanupPlan {
+	plans := make([]CleanupPlan, 0, len(rows))
+	for _, row := range rows {
+		plans = append(plans, row.plan)
+	}
+	return plans
+}
+
 // applyExplicitSet runs every removable member through the existing per-target locked
 // transaction, so each member keeps its own authority checks, receipt, and recovery. A
 // member the plan retained passes through as the plan reported it. Each member re-plans
@@ -274,31 +297,22 @@ func renderExplicitSet(stdout io.Writer, set explicitCleanupSet, options Cleanup
 // member the set never started reports its own unstarted outcome.
 func applyExplicitSet(j joins, root string, set explicitCleanupSet, options CleanupOptions) ([]CleanupPlan, error) {
 	plans := make([]CleanupPlan, 0, len(set.rows))
-	unstarted := func(rows []explicitCleanupRow) []CleanupPlan {
-		for _, row := range rows {
-			plans = append(plans, notAttemptedPlan(row.plan))
-		}
-		return plans
-	}
 	if err := preflightExplicitSet(j, root, set, options); err != nil {
-		return unstarted(set.rows), err
+		return notAttemptedPlans(plans, explicitRowPlans(set.rows)), err
 	}
 	for i, planned := range set.rows {
 		if !planned.plan.Action.Removes() {
 			plans = append(plans, planned.plan)
 			continue
 		}
-		current, err := planExplicitCleanupRow(j, root, planned.assignment, options)
-		if err == nil && !sameExplicitCleanupTuple(planned, current) {
-			err = errStaleFingerprint
-		}
+		current, err := requalifyExplicitRow(j, root, planned, options)
 		applied := current.plan
 		if err == nil {
 			applied, err = applyExplicitWith(j, root, current.plan.Target, current.targetFingerprint, options)
 		}
 		if err != nil {
 			plans = append(plans, faultedPlan(planned.plan, applied, err))
-			return unstarted(set.rows[i+1:]), err
+			return notAttemptedPlans(plans, explicitRowPlans(set.rows[i+1:])), err
 		}
 		plans = append(plans, applied)
 	}
@@ -319,16 +333,15 @@ func cleanExplicitSet(j joins, root string, selection cleanSelection, stdout, st
 		}
 		return 0
 	}
-	stale := append([]CleanupPlan{staleSetPlan(selection.fingerprint)}, set.plans()...)
 	// An unresolved selection has no scope to re-plan: the operands, not the digest, are
 	// what the caller has to correct, so that refusal renders no recovery command.
 	if set.fingerprint == "" {
-		_ = renderCleanups(stdout, stale)
+		_ = renderCleanups(stdout, staleRows(selection.fingerprint, set.plans()))
 		return 1
 	}
 	replan := cleanArguments(selection.options, set.targetSelectors()...)
 	if !matchesFingerprint(set.fingerprint, selection.fingerprint) {
-		_ = renderStale(stdout, stale, replan)
+		_ = renderStaleSet(stdout, selection.fingerprint, set.plans(), replan)
 		return 1
 	}
 	plans, applyErr := applyExplicitSet(j, root, set, selection.options)
