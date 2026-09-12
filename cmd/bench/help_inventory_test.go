@@ -62,7 +62,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench maps                 unresolved decision-map tickets as TOON (map, ticket, type, state)
   bench guards               every guard's deny surface as TOON (guard, boundary, denies)
   bench diff                 review base + changed files as TOON (--full appends log + diff body; --base freezes source)
-  bench harnesses [<harness>]  the harness record as TOON (harness, provider, phase_form, hooks, delegation_guard); one name prints that harness's cells
+  bench harnesses [<harness> [--record <path> --format <source-id>]]  the harness record as TOON; one name prints that harness's cells; both flags observe one named session record
   bench assessment list | show <run-id> | record --input <file> | compare --plan <file> --runs <id,...>  store and inspect local workflow cost and quality
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
   bench preflight review|build <slug>  phase-entry checks that a spec's artifacts agree with the tree, one verdict row per check

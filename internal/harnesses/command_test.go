@@ -108,8 +108,149 @@ func TestCommandRefusesTwoPositionals(t *testing.T) {
 func TestCommandAnswersEveryHelpSpelling(t *testing.T) {
 	for _, spelling := range []string{"--help", "-h", "help"} {
 		out, code := Command([]string{spelling})
-		if code != 0 || out != "usage: bench harnesses [<harness>]\n" {
+		if code != 0 || out != "usage: bench harnesses [<harness>] | bench harnesses <harness> --record <path> --format <source-id>\n" {
 			t.Fatalf("bench harnesses %s = %q exit %d, want the usage line and exit 0", spelling, out, code)
 		}
 	}
 }
+
+func TestCommandRefusesAHalfTypedRecordCall(t *testing.T) {
+	// Each flag alone leaves the view undecidable: a path with no mapping, or a mapping
+	// with no record. The refusal names the missing flag rather than falling back to the
+	// compiled view.
+	for _, args := range [][]string{
+		{"codex", "--record", "rollout.jsonl"},
+		{"codex", "--format", "codex-rollout-2026-09-11"},
+	} {
+		out, code := Command(args)
+		if code != 2 || !strings.HasPrefix(out, "usage: bench harnesses (missing argument: --") {
+			t.Fatalf("bench harnesses %v = %q exit %d, want the missing-flag usage line", args, out, code)
+		}
+	}
+	out, code := Command([]string{"--record", "rollout.jsonl", "--format", "codex-rollout-2026-09-11"})
+	if code != 2 || out != "usage: bench harnesses (missing argument: harness)\n" {
+		t.Fatalf("record view with no harness = %q exit %d, want the missing-harness usage line", out, code)
+	}
+}
+
+// TestCommandPreservesCompiledViews is ME11's differential. It compares a live run of each
+// compiled view against the bytes captured from the tree before the record view existed. The
+// baseline sits beside the other compiled-view tests, because those views are what it grades.
+func TestCommandPreservesCompiledViews(t *testing.T) {
+	views := strings.Split(compiledBaseline, "--- ")
+	if len(views) != len(Rows)+1 {
+		t.Fatalf("baseline holds %d views, want %d", len(views), len(Rows)+1)
+	}
+	if out, code := Command(nil); code != 0 || out != views[0] {
+		t.Fatalf("bench harnesses = %q exit %d, want the captured overview %q", out, code, views[0])
+	}
+	for i, row := range Rows {
+		want := strings.SplitN(views[i+1], "\n", 2)
+		if want[0] != row.Harness {
+			t.Fatalf("baseline view %d names %q, want %q", i+1, want[0], row.Harness)
+		}
+		if out, code := Command([]string{row.Harness}); code != 0 || out != want[1] {
+			t.Fatalf("bench harnesses %s = %q exit %d, want the captured view %q", row.Harness, out, code, want[1])
+		}
+	}
+}
+
+// compiledBaseline is the two compiled views captured before the record view existed, one
+// view per `--- <harness>` section after the overview, so an opt-in observation that alters a
+// compiled view turns red here.
+const compiledBaseline = `schema: 1
+harnesses[4]{harness,provider,phase_form,hooks,delegation_guard,headless,checked}:
+  codex,openai,$bench-,.codex/hooks.json,no,.bench/adapters/codex,2026-07-11
+  claude,anthropic,/bench-,.claude/settings.json,yes,.bench/adapters/claude,2026-08-26
+  opencode,any,"","",unknown,.bench/adapters/opencode,""
+  none,none,"","",no,"",2026-08-26
+help[0]{cmd,why}:
+--- codex
+schema: 1
+cells[13]{field,value,source,checked}:
+  steering during an active turn,unknown,"",""
+  structured user questions,unknown,"",""
+  tool-permission controls,unknown,"",""
+  hooks,yes,.codex/hooks.json,2026-08-26
+  MCP support,unknown,"",""
+  subagent support,unknown,"",""
+  subagent isolation,unknown,"",""
+  effort selection,unknown,"",""
+  persistent tasks,unknown,"",""
+  resume and recovery,unknown,"",""
+  structured output and exit status,unknown,"",""
+  headless execution,yes,.bench/adapters/codex,2026-08-26
+  delegation_guard,no,".bench/BENCH-reference.md Hook Layers, the agent-line bullet (Codex hooks docs)",2026-07-11
+measures[4]{measure,value,supplier}:
+  tokens,unknown,FT204 harness transcript reader
+  tool calls,unknown,FT204 harness transcript reader
+  Read paths,unknown,FT204 harness transcript reader
+  turns,unknown,FT204 harness transcript reader
+help[0]{cmd,why}:
+--- claude
+schema: 1
+cells[13]{field,value,source,checked}:
+  steering during an active turn,unknown,"",""
+  structured user questions,unknown,"",""
+  tool-permission controls,unknown,"",""
+  hooks,yes,.claude/settings.json,2026-08-26
+  MCP support,unknown,"",""
+  subagent support,unknown,"",""
+  subagent isolation,unknown,"",""
+  effort selection,unknown,"",""
+  persistent tasks,unknown,"",""
+  resume and recovery,unknown,"",""
+  structured output and exit status,unknown,"",""
+  headless execution,yes,.bench/adapters/claude,2026-08-26
+  delegation_guard,yes,.claude/settings.json PreToolUse Agent matcher runs .bench/hooks/check-agent-line.sh,2026-08-26
+measures[4]{measure,value,supplier}:
+  tokens,unknown,FT204 harness transcript reader
+  tool calls,unknown,FT204 harness transcript reader
+  Read paths,unknown,FT204 harness transcript reader
+  turns,unknown,FT204 harness transcript reader
+help[0]{cmd,why}:
+--- opencode
+schema: 1
+cells[13]{field,value,source,checked}:
+  steering during an active turn,unknown,"",""
+  structured user questions,unknown,"",""
+  tool-permission controls,unknown,"",""
+  hooks,unknown,"",""
+  MCP support,unknown,"",""
+  subagent support,unknown,"",""
+  subagent isolation,unknown,"",""
+  effort selection,unknown,"",""
+  persistent tasks,unknown,"",""
+  resume and recovery,unknown,"",""
+  structured output and exit status,unknown,"",""
+  headless execution,yes,.bench/adapters/opencode,2026-08-26
+  delegation_guard,unknown,"",""
+measures[4]{measure,value,supplier}:
+  tokens,unknown,FT204 harness transcript reader
+  tool calls,unknown,FT204 harness transcript reader
+  Read paths,unknown,FT204 harness transcript reader
+  turns,unknown,FT204 harness transcript reader
+help[0]{cmd,why}:
+--- none
+schema: 1
+cells[13]{field,value,source,checked}:
+  steering during an active turn,unknown,"",""
+  structured user questions,unknown,"",""
+  tool-permission controls,unknown,"",""
+  hooks,no,".bench/adapters/ names no none entry, and no config names none",2026-08-26
+  MCP support,unknown,"",""
+  subagent support,unknown,"",""
+  subagent isolation,unknown,"",""
+  effort selection,unknown,"",""
+  persistent tasks,unknown,"",""
+  resume and recovery,unknown,"",""
+  structured output and exit status,unknown,"",""
+  headless execution,no,.bench/adapters/ names no none entry,2026-08-26
+  delegation_guard,no,".bench/adapters/ names no none entry, so the model-free path runs no agent",2026-08-26
+measures[4]{measure,value,supplier}:
+  tokens,unknown,FT204 harness transcript reader
+  tool calls,unknown,FT204 harness transcript reader
+  Read paths,unknown,FT204 harness transcript reader
+  turns,unknown,FT204 harness transcript reader
+help[0]{cmd,why}:
+`
