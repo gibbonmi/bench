@@ -132,7 +132,7 @@ func TestChargeSnapshotMovement(t *testing.T) {
 	})
 	out, code = Command(args)
 	restore()
-	if code != 1 || calls != 2 || !strings.Contains(out, "spec not staged") || strings.Contains(out, "snapshot drift") || strings.Contains(out, "complete") {
+	if code != 1 || calls != 2 || !strings.Contains(out, "spec not staged") || strings.Contains(out, "snapshot drift") || strings.Contains(out, "complete,next}") {
 		t.Fatalf("movement then bootstrap failure = (%d, %d):\n%s", code, calls, out)
 	}
 }
@@ -369,32 +369,32 @@ func legacyBaseline(name string) (string, int) {
 	const build = "phase: build\nspec: specs/example/spec.md\n"
 	const review = "phase: review\nspec: specs/example/spec.md\n"
 	const source = "source[1]{base,tip}:\n  <base>,<tip>\n"
-	const checks = "  paths-authorized,green,\"\",\"\"\n  tickets-parse,green,\"\",\"\"\n  blockers-resolve,green,\"\",\"\"\n  writes-resolve,green,\"\",\"\"\n  fixture-closure,green,\"\",\"\"\n  registry-closure,green,\"\",\"\"\n  kit-pin,green,\"\",\"\"\n"
+	const checks = "  paths-authorized,green,\"\",\"\"\n  tickets-parse,green,\"\",\"\"\n  completion-plan,green,\"\",\"\"\n  blockers-resolve,green,\"\",\"\"\n  writes-resolve,green,\"\",\"\"\n  fixture-closure,green,\"\",\"\"\n  registry-closure,green,\"\",\"\"\n  kit-pin,green,\"\",\"\"\n"
 	const buildTail = "  binary-seal,not-applicable,\"\",\"\"\n  rows-owned,green,\"\",\"\"\n  rows-membership,green,\"\",\"\"\n  diff-nonempty,not-applicable,\"\",\"\"\n"
 	const reviewTail = "  rows-owned,green,\"\",\"\"\n  rows-membership,green,\"\",\"\"\n  diff-nonempty,green,\"\",\"\"\n"
-	greenBuild := build + "checks[12]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n" + checks + buildTail
-	greenReview := review + "checks[11]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n" + checks + reviewTail
+	greenBuild := build + "checks[13]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n" + checks + buildTail
+	greenReview := review + "checks[12]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n" + checks + reviewTail
 	switch name {
 	case "valid-build":
 		return greenBuild, 0
 	case "valid-review":
 		return greenReview, 0
 	case "absent-tickets":
-		return build + "checks[12]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n  paths-authorized,green,\"\",\"\"\n  tickets-parse,not-applicable,\"\",\"\"\n  blockers-resolve,not-applicable,\"\",\"\"\n  writes-resolve,not-applicable,\"\",\"\"\n  fixture-closure,not-applicable,\"\",\"\"\n  registry-closure,not-applicable,\"\",\"\"\n  kit-pin,not-applicable,\"\",\"\"\n  binary-seal,not-applicable,\"\",\"\"\n  rows-owned,not-applicable,\"\",\"\"\n  rows-membership,not-applicable,\"\",\"\"\n  diff-nonempty,not-applicable,\"\",\"\"\n", 0
+		return build + "checks[13]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n  paths-authorized,green,\"\",\"\"\n  tickets-parse,not-applicable,\"\",\"\"\n  completion-plan,not-applicable,\"\",\"\"\n  blockers-resolve,not-applicable,\"\",\"\"\n  writes-resolve,not-applicable,\"\",\"\"\n  fixture-closure,not-applicable,\"\",\"\"\n  registry-closure,not-applicable,\"\",\"\"\n  kit-pin,not-applicable,\"\",\"\"\n  binary-seal,not-applicable,\"\",\"\"\n  rows-owned,not-applicable,\"\",\"\"\n  rows-membership,not-applicable,\"\",\"\"\n  diff-nonempty,not-applicable,\"\",\"\"\n", 0
 	case "empty-tickets":
-		return build + "checks[12]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n" + checks + "  binary-seal,not-applicable,\"\",\"\"\n  rows-owned,red,\"declared row(s) cited by no ticket file: PF1, PF2\",\"\"\n  rows-membership,green,\"\",\"\"\n  diff-nonempty,not-applicable,\"\",\"\"\n", 1
+		return build + "checks[13]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n" + strings.Replace(checks, "  completion-plan,green,\"\",\"\"\n", "  completion-plan,red,\"spec carries no valid bench-completion-plan fence at <tip>: missing or nonregular tree file specs/example/tickets/one.md; see .bench/BENCH-reference.md, bench gate --checkpoint\",\"\"\n", 1) + "  binary-seal,not-applicable,\"\",\"\"\n  rows-owned,red,\"declared row(s) cited by no ticket file: PF1, PF2\",\"\"\n  rows-membership,green,\"\",\"\"\n  diff-nonempty,not-applicable,\"\",\"\"\n", 1
 	case "stale-base":
-		return build + "checks[12]{check,verdict,detail,next}:\n  base-current,red,default branch tip is not an ancestor of HEAD,bench worktree merge --from main <target>\n" + checks + buildTail, 1
+		return build + "checks[13]{check,verdict,detail,next}:\n  base-current,red,default branch tip is not an ancestor of HEAD,bench worktree merge --from main <target>\n" + checks + buildTail, 1
 	case "dirty-review":
 		return "error: source not clean — review source has uncommitted changes\n", 1
 	case "explicit-base-success":
 		return build + source + strings.TrimPrefix(greenBuild, build), 0
 	case "source-tip-mismatch":
-		return build + source + "checks[13]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n  tip-current,red,\"--source-tip <base> is not the derived source tip <tip>\",\"\"\n" + checks + buildTail, 1
+		return build + source + "checks[14]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n  tip-current,red,\"--source-tip <base> is not the derived source tip <tip>\",\"\"\n" + checks + buildTail, 1
 	case "invalid-invocation":
 		return "usage: bench preflight (unknown argument: unknown)\n", 2
 	case "empty-diff":
-		return review + "source[1]{base,tip}:\n  <base>,<base>\nchecks[11]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n" + checks + "  rows-owned,green,\"\",\"\"\n  rows-membership,green,\"\",\"\"\n  diff-nonempty,red,no changed files since the resolved review base,\"\"\n", 1
+		return review + "source[1]{base,tip}:\n  <base>,<base>\nchecks[12]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n" + checks + "  rows-owned,green,\"\",\"\"\n  rows-membership,green,\"\",\"\"\n  diff-nonempty,red,no changed files since the resolved review base,\"\"\n", 1
 	}
 	return "", 0
 }

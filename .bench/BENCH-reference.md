@@ -315,6 +315,9 @@ is no separate conformance phase, driver, or per-check evidence partition.
 `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>` checks the named chunk's
 source-bound author verification and three independent review results before advancement.
 Use `--complete` instead of `--chunk <id>` for final acceptance and integration evidence.
+The `bench-completion-plan` fence in `specs/<slug>/spec.md` declares version 1, the chunks
+with their tickets and verification requirements, and the final verification.
+The `bench-review-record` fence in `reviews/<slug>.md` holds the evidence the checkpoint grades.
 Checkpoint purpose and record bytes participate in the existing gate verdict identity.
 Ordinary lane checks remain available while implementation, review, or repair is in progress.
 

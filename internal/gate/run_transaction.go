@@ -42,7 +42,15 @@ func productionRunBinaryOwner() runBinaryOwner {
 func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode, evaluation executionEvaluation, owner runBinaryOwner, baseline string) Result {
 	plan, err := evaluation.acceptPre()
 	if err != nil {
-		return operational(storageRoot, 0, stderr, fmt.Sprintf("gate subject unavailable: %v", err))
+		refusal := operational(storageRoot, 0, stderr, fmt.Sprintf("gate subject unavailable: %v", err))
+		// The route prints under the reason, the shape every routed refusal uses.
+		// The spec-path grammar rejects a control byte, so the line needs no second
+		// sanitizer here.
+		var routed routeError
+		if errors.As(err, &routed) {
+			fmt.Fprintln(stderr, "next="+routed.next)
+		}
+		return refusal
 	}
 	var declaredPaths []string
 	if m, _, reason := loadManifest(runtimeRoot); reason == "" {

@@ -20,7 +20,14 @@ func TestPreflightReviewChargeUsesCurrentVersion(t *testing.T) {
 		"| row | story | behavior | seam | why it catches the failure |\n" +
 		"|---|---|---|---|---|\n" +
 		"| PF1 | 1 | evidence is complete | command | catches omitted evidence |\n\n" +
-		"## Ownership fences\n\n- `target/`\n- `outside/`\n- `reviews/example.md`\n"
+		"## Ownership fences\n\n- `target/`\n- `outside/`\n- `reviews/example.md`\n\n" +
+		// The review charge grades the completion plan the checkpoint later reads,
+		// so a staged spec states it.
+		"## Completion plan\n\n```bench-completion-plan\n" +
+		`{"version":1,"chunks":[{"id":"c1","tickets":["one.md"],` +
+		`"verification":[{"id":"tests","command":"go test ./..."}]}],` +
+		`"final_verification":[{"id":"acceptance","command":"go test ./..."}]}` +
+		"\n```\n"
 	writeAXIFixture(t, filepath.Join(root, "specs/example/spec.md"), spec)
 	writeAXIFixture(t, filepath.Join(root, "specs/example/tickets/one.md"), `# One
 
