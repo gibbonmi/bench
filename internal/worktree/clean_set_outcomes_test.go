@@ -96,8 +96,9 @@ func TestCleanSetUnstartedOutcomes(t *testing.T) {
 	// through its own constant would let a rename pass the gate and break the promised label.
 	// The row is read by field, so no fixture-generated path is spliced into an expectation.
 	unstarted := memberByID(t, creations, set.rows[2].assignment.ID)
-	if action := cleanupRowFields(rowForTarget(t, stdout, unstarted.Path))[1]; action != "not-attempted" {
-		t.Fatalf("row for %q = %q, want not-attempted", unstarted.Path, action)
+	row := cleanupRowFields(rowForTarget(t, stdout, unstarted.Path))
+	if row[1] != "not-attempted" || row[6] != "not attempted; an earlier target in this set did not complete" {
+		t.Fatalf("row for %q = %q/%q, want the unstarted label and detail", unstarted.Path, row[1], row[6])
 	}
 	if _, statErr := os.Stat(unstarted.Path); statErr != nil {
 		t.Fatalf("the unstarted member %s was removed: %v", unstarted.Path, statErr)

@@ -49,8 +49,10 @@ func TestCleanSetPreflightFaultNamesItsMember(t *testing.T) {
 	if plans[0].Reason == errStaleFingerprint.Error() {
 		t.Fatalf("offending row detail = %q, want the fault's own reason", plans[0].Reason)
 	}
-	if plans[1].Action != ActionNotAttempted || plans[1].Reason != notQualifiedDetail {
-		t.Fatalf("unstarted row = %q/%q, want %q", plans[1].Action, plans[1].Reason, notQualifiedDetail)
+	// The detail literals are agent-facing text these rows promise. Reading one back through
+	// the constant that produces it would let a rewrite pass the gate.
+	if plans[1].Action != ActionNotAttempted || plans[1].Reason != "not attempted; the set did not qualify before the first removal" {
+		t.Fatalf("unstarted row = %q/%q, want the unqualified detail", plans[1].Action, plans[1].Reason)
 	}
 }
 
@@ -106,7 +108,7 @@ func TestCleanSetMemberDriftAfterPreflight(t *testing.T) {
 		if !errors.Is(err, errStaleFingerprint) {
 			t.Fatalf("apply error = %v, want the member's own requalify to refuse", err)
 		}
-		if len(plans) != 2 || plans[1].Action != ActionNotAttempted || plans[1].Reason != driftedDetail {
+		if len(plans) != 2 || plans[1].Action != ActionNotAttempted || plans[1].Reason != "not attempted; this target no longer matches the approved plan" {
 			t.Fatalf("refused rows = %#v, want the drifted member reported as not attempted", plans)
 		}
 		requireMembersPresent(t, []Creation{drifted})
@@ -231,7 +233,7 @@ func TestCleanSetExplicitPreflightFaultOnLaterMember(t *testing.T) {
 	if len(plans) != 2 || plans[0].Action != ActionRetain {
 		t.Fatalf("refused rows = %#v, want the retained row ahead to keep its verdict", plans)
 	}
-	if plans[1].Action != ActionError || plans[1].Reason == "cleanup fingerprint is stale" {
+	if plans[1].Action != ActionError || plans[1].Reason == errStaleFingerprint.Error() {
 		t.Fatalf("offending row = %q/%q, want the fault named on the later member", plans[1].Action, plans[1].Reason)
 	}
 }
