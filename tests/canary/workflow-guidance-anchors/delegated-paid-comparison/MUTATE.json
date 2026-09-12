@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-final-check.md",
+    "old": "Delegated verification launches no paid comparison and changes no model default.",
+    "new": "Delegated verification can launch a paid comparison."
+  }
+]

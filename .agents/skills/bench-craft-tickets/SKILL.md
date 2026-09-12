@@ -95,4 +95,6 @@ demoable path from parsed record to rendered row, sized to a fresh context.
 
 Spec-backed builds work the unblocked frontier in one retained implementation session. Each ticket is one serial green commit checkpoint. The implementation plan groups tickets into coherent review chunks and names each chunk's outcome, acceptance rows, and tests. The retained author orders overlapping or dependent tickets explicitly.
 
+A delegated run keeps these serial green ticket checkpoints under the operating guide's delegated policy.
+
 Run focused checks during the ticket, not a standalone full gate. Commit tickets in `Blocked by:` order on one retained integration source, one lane per commit. After each chunk, review freezes its predecessor tip and current tip. `bench worktree land` composes and gates the reconciled source, and final-check reports the evidence.

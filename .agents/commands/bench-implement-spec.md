@@ -73,3 +73,7 @@ boundary it writes the phase reached into `capture/session-handoff.md` and refre
 the pin with `bench handoff`. Outside the kit-guidance set, a diff large enough to hide
 bugs pauses to ask the reviewer before escalating tier or adding a cross-harness
 falsification pass. Tier escalation is an offer; the review phase owns the standing pass.
+
+## `--delegate`
+
+`--delegate` extends a `--full` run with `.bench/BENCH.md`'s delegated authorship policy. It refuses without `--full`, an approved spec, or an approved ticket graph. Declare the configured model, effort, iteration cap, and author limit before the first dispatch. Record each assignment in the completion plan before you send that author's write charge. A resumed delegated run keeps the recorded identities, source pins, replacement history, and pending obligations.
