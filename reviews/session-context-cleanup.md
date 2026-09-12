@@ -61,6 +61,20 @@ The retained continuation session re-ran verification at tip 4a1ca292. The close
 - `bench test --package ./cmd/bench`: pass, 8106 ms.
 - Mutation probe (completion plan CL-C1, clean-tests): bypassed the alias-collapse guard at `clean_set.go:139`. `TestCleanExplicitSetAliases` failed as expected; the probe bit. The revert used `git checkout -- internal/worktree/clean_set.go`. The test passed again in 671 ms, and the tree returned to clean.
 
+## Reaffirmation at 518910e5
+
+The retained author repaired all six findings in one commit on the integration source.
+The chunk pair is now base `4a1ca2928776035d04be0ca123010065d924b80c` and tip `518910e52c29fd5676eb7a0e703193f1c512c060`.
+The reviewer decided SPEC-1 and SPEC-2 before this repair. Keep the id-substitution behavior and fix the spec prose. Confirm silent target collapse and close the flagged addition.
+
+- ST1, ST2, ST3: closed. The coordinator read each cited line at the new tip. Each doc comment now states its scope or spelling accurately, with no behavior change.
+- COV-1: closed. `TestCleanSetDiscardModifiers` exists at clean_set_command_test.go and exercises both `--discard-branch` and `--discard-ignored` through an explicit-set apply, asserting the branch and the ignored residue. Its own mutation probe (guard `--discard-branch` out of `cleanupModifierFlags`) bit and was restored.
+- SPEC-1, SPEC-2: closed. spec.md:76 now names canonical assignment identity as the rendering rule, citing the apply command as the existing precedent, and does not redefine CL9. The "Flagged additions" section records the reviewer's 2026-09-12 confirmation.
+
+This round used a coordinator-verified reaffirmation, not a fresh three-axis redispatch. The six findings are mechanical — wording, one constant, one test — or already reviewer-decided. A second independent-review round would fold to the same result.
+
+Author verification at the tip: `bench test --package ./internal/worktree --run TestClean` passes (5930 ms, the same pre-existing host-capability skip). `bench test --package ./cmd/bench` passes (8655 ms, 0 skips). `bench gate-prose` on the spec passes. `bench preflight review` reports all 13 checks green for the repair pair.
+
 ## Record
 ```bench-review-record
 {
@@ -72,9 +86,9 @@ The retained continuation session re-ran verification at tip 4a1ca292. The close
     {
       "id": "CL-C1",
       "base": "4e98e581083562e284ba20802d168dbc575fd321",
-      "tip": "4a1ca2928776035d04be0ca123010065d924b80c",
+      "tip": "518910e52c29fd5676eb7a0e703193f1c512c060",
       "plan_digest": "sha256:7278553ceb910dd63f774eb9ae7513dc7f3236b9d07ec7e759d85b87f312c4af",
-      "source_digest": "753a91da5c3b9606a733fda7c67222611ea7cb3f",
+      "source_digest": "0559c89ccdb90a6ac5ffa7044285dd19b3103d9a",
       "acceptance_rows": [
         "CL1", "CL2", "CL3", "CL10", "CL11", "CL13", "CL14", "CL15", "CL16", "CL17"
       ],
@@ -125,8 +139,58 @@ The retained continuation session re-ran verification at tip 4a1ca292. The close
           "requirement": "command-tests",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "cl-c1-repair-clean-tests",
+          "performer": "claude:sonnet:retained-continuation",
+          "role": "author-verification",
+          "model": "sonnet",
+          "effort": "unknown",
+          "source_digest": "0559c89ccdb90a6ac5ffa7044285dd19b3103d9a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:coordinator/session-context-cleanup/clean-tests@518910e5",
+            "digest": "sha256:dfb62eadf49b1d2f88789dd569639dd06511806fc972ea1193ae3d8b482969d7",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,5930\nfailures[0]{package,test,line}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"unix sockets unavailable (host-capability skip)\"\n"
+          },
+          "requirement": "clean-tests",
+          "command": "bench test --package ./internal/worktree --run TestClean",
+          "exit_code": 0,
+          "supersedes": ["cl-c1-clean-tests"]
+        },
+        {
+          "id": "cl-c1-repair-command-tests",
+          "performer": "claude:sonnet:retained-continuation",
+          "role": "author-verification",
+          "model": "sonnet",
+          "effort": "unknown",
+          "source_digest": "0559c89ccdb90a6ac5ffa7044285dd19b3103d9a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:coordinator/session-context-cleanup/command-tests@518910e5",
+            "digest": "sha256:bf2b0271312752dbd762cd4a8dcc39e8c79a157009e25a4483c643711e237e19",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,8655\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "command-tests",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0,
+          "supersedes": ["cl-c1-command-tests"]
         }
       ],
+      "closed_findings": {
+        "ST1": "auto-fix, repaired at 518910e5",
+        "ST2": "auto-fix, repaired at 518910e5",
+        "ST3": "auto-fix, repaired at 518910e5",
+        "COV-1": "auto-fix, repaired at 518910e5",
+        "SPEC-1": "ask-user, reviewer decided 2026-09-12 (keep code, fix spec prose), repaired at 518910e5",
+        "SPEC-2": "ask-user, reviewer decided 2026-09-12 (confirm silent collapse), repaired at 518910e5",
+        "ST4": "no-op, judgment",
+        "ST5": "no-op, judgment",
+        "SPEC-3": "no-op, vacuously satisfied",
+        "COV-2": "no-op, safe by construction"
+      },
       "reviews": [
         {
           "id": "cl-c1-standards-1",
