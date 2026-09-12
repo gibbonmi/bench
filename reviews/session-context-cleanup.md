@@ -350,3 +350,58 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
   ]
 }
 ```
+
+## Chunk CL-C2
+
+The frozen pair is base `12bbd56b349e55af711deb55cb075dadaf9c082e` and tip `0fa5fb2988b5c08b86051480cef4d234e1fee5cf`.
+Three Opus/medium axes ran on 2026-09-12. Each axis ran in a separate native context and a separate venue.
+Raw findings: Standards 6, Spec 4, Coverage 4.
+
+De-duplicated repair targets: 9 auto-fix (ST6, ST7, ST8, ST9, ST10, ST11, SPEC-4, COV-5, COV-6).
+One auto-fix target (COV-3) repairs the test, and its spec-row half stays ask-user.
+Two further findings (SPEC-5, COV-4) are ask-user. They await the reviewer's decision before any disposition.
+
+No axis returned a blocking finding. The Spec axis traced rows CL4 to CL9, CL12, CL18, and CL19 clean.
+The Spec axis also closed the CL-C1 flag SPEC-1. The reviewer amended spec line 76, and `targetSelectors` is now the one source both the apply action and the re-plan action read.
+The Spec axis confirms that both coordinator fence expansions stay inside the approved behavior.
+
+## Standards at 0fa5fb29
+
+Findings: 6. Worst issue: medium.
+
+- ST6 (medium, auto-fix): three call sites each compose the stale refusal by hand. `renderOutcomes` already owns that composition. The deleted `renderLandedStale` was the landed mode's named owner, and the delta inlined its body. Citations at tip 0fa5fb29: clean_set_apply.go:104; worktree.go:323; clean_set.go:322.
+- ST7 (auto-fix): explicit mode spells the row requalification twice. Landed mode collapses the same fact into `requalifyLandedRow`, and `preflightLandedSet` reuses it. Explicit mode has no symmetric owner. Citations at tip 0fa5fb29: clean_set_apply.go:117-122; clean_set.go:291-293; clean_landed.go:314-326.
+- ST8 (auto-fix): the `unstarted` closure is the same code in both modes. Only the row element type differs. Citations at tip 0fa5fb29: clean_set.go:277; clean_landed.go:333.
+- ST9 (auto-fix): the new file opens a second package doc comment for package `worktree`. No blank line separates it from the package clause. Citations at tip 0fa5fb29: clean_set_apply.go:1-5; worktree.go:1.
+- ST10 (auto-fix): `ActionNotAttempted` is declared outside the package that owns the action vocabulary. The `lifecyclepolicy` predicates cannot see this member. Citations at tip 0fa5fb29: clean_set_apply.go:19; lifecyclepolicy.go:24-51; classifier.go:146-147.
+- ST11 (auto-fix): the unclaimed mode holds a third copy of its fixed options, and the copy already differs from the other two. The same line also computes the re-plan before the guard that discards it. Citations at tip 0fa5fb29: clean_unclaimed.go:105; clean_unclaimed.go:113; clean_unclaimed.go:136.
+
+Judged correct on this axis: the shared-apply seam, the side-by-side preflight pair, the test split boundary, the comment register, and the `cleanArguments` collapse.
+
+## Spec at 0fa5fb29
+
+Findings: 4. Worst issue: low.
+
+- SPEC-4 (low, auto-fix): a preflight refusal marks every member not attempted. A member the plan retained or refused under CL10 loses its authority verdict. The apply loop already passes a non-removable row through untouched. Citations at tip 0fa5fb29: clean_set.go:283-289; clean_landed.go:336-341; clean_set_apply.go:22-30.
+- SPEC-5 (ask-user): a replay after a spent apply renders a refusal with no recovery command. The selection no longer resolves, so the branch has no digest to re-plan. CL9 names a stale result, and this result is an unresolved selection. An agent reaches this case often after a partial apply. Citations at tip 0fa5fb29: clean_set.go:322-327.
+- SPEC-6 (no-op, folds into ST11): the unclaimed re-plan reports a constant rather than the options the plan answered under. The rendered command is exact today, because the grammar forbids any other modifier on `--unclaimed`. Citation at tip 0fa5fb29: clean_unclaimed.go:101-108.
+- SPEC-7 (no-op): the action vocabulary now has two homes. The value stays outside `Removes()`, which is what the row requires. No external surface enumerates action tokens. Placement is the Standards call ST10. Citations at tip 0fa5fb29: clean_set_apply.go:19; lifecyclepolicy.go:56-58.
+
+## Coverage at 0fa5fb29
+
+Findings: 4. Worst issue: medium.
+
+- COV-3 (medium, auto-fix for the test, ask-user for the row): `TestCleanSetSpentPlan` survives three probed mutations. After the first apply the member checkouts are gone, so every refusal path exits 1 with no removed row. The test asserts a true observable that no mutation can turn red. Citations at tip 0fa5fb29: clean_set_apply_test.go:262; clean_set.go:281; clean_set.go:322; clean_set.go:330.
+- COV-4 (ask-user): CL4 bites the entry fingerprint check, not the new preflight. Under the entry mutation the apply removes the clean member, because the drifted member re-plans as non-removable and the preflight skips it. The row's rationale credits the preflight for a refusal the entry check delivers. Citations at tip 0fa5fb29: clean_set_apply_test.go:106; clean_set.go:330; clean_set_apply.go:114.
+- COV-5 (auto-fix): no fixture holds a retained member, so two mutations are silent across 984 tests. The retained pass-through and the preflight skip both have no test. Citations at tip 0fa5fb29: clean_set.go:287; clean_set_apply.go:114.
+- COV-6 (low, auto-fix): the `not-attempted` wire token is asserted only through its own constant. A rename of the agent-facing token passes the gate, and the spec's field label breaks. Citation at tip 0fa5fb29: clean_set_outcomes_test.go:93.
+
+Probe evidence returned with the axis. CL5 bit in both modes, CL7 bit, CL8 bit, and CL4 bit against the entry check. The axis did not probe CL6 and CL9, because each drives an injected fault or asserts an exact rendered command. CL18 and CL19 sit outside the delta as untouched regression anchors.
+
+## Coordinator verification at 0fa5fb29
+
+The coordinator ran the focused checks, the structure ratchet, and one independent probe before the commit.
+`bench probe internal/worktree/clean_set_apply.go --omit` on the `notAttemptedPlan` action assignment returned `verdict=bit` and `restored=yes` against `TestCleanSetUnstartedOutcomes`.
+`bench structure --growth HEAD` exits zero, and `.bench/structure-accept` holds no new grant.
+The coordinator granted two fence expansions inside the approved behavior, and `bench learning` records each one.
+The author reported `worktree.go` as unchanged. The coordinator read the diff and found five rewired call sites at an unchanged line count.
