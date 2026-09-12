@@ -85,7 +85,7 @@ func TestCleanSetApplyTimeStaleWiring(t *testing.T) {
 			}
 			j, raced := defaultJoins(), false
 			j.cleanupBoundary = func(step LifecycleStep) error {
-				if step == StepApplyLocked && !raced {
+				if step == StepUnlockedReplan && !raced {
 					raced = true
 					ref := intent.AssignmentBranchRef(strings.Repeat("d", 32), strings.Repeat("f", 32))
 					gitRun(t, root, "branch", strings.TrimPrefix(ref, "refs/heads/"))
