@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Exec child PWD
+
+- Fixed the exec child environment to contain one PWD assignment for its worktree.
+  Inherited values and `--env PWD=...` cannot replace it.
+
 ### Added
 
 - Added local workflow assessment records, native evidence collection, and pinned-plan comparison reports with explicit cost and quality limits.
