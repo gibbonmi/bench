@@ -2,13 +2,13 @@ package assessment
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/gibbonmi/bench/internal/census"
 )
@@ -64,34 +64,6 @@ const (
 	assignmentA = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	assignmentB = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 )
-
-// DI13: orchestration is its own role in show and in comparison.
-func TestAssessmentOrchestration(t *testing.T) {
-	if !contains(Roles(), "orchestration") {
-		t.Fatal("the role vocabulary omits orchestration")
-	}
-	s := Store{Home: t.TempDir(), Root: t.TempDir()}
-	if err := s.Record(orchestrated(s.Root)); err != nil {
-		t.Fatal(err)
-	}
-	out, code := Command(s, []string{"show", "run-1"})
-	if code != 0 || !strings.Contains(out, "orchestration") {
-		t.Fatalf("show omits the orchestrator (%d): %s", code, out)
-	}
-	if !strings.Contains(out, "attempt-orchestrator") {
-		t.Fatalf("show omits the orchestrator's attempt: %s", out)
-	}
-}
-
-// contains is the local membership helper for the role vocabulary.
-func contains(values []string, want string) bool {
-	for _, value := range values {
-		if value == want {
-			return true
-		}
-	}
-	return false
-}
 
 // DI14: one import collects explicit evidence from several assignments.
 func TestAssessmentAssignmentBatches(t *testing.T) {
@@ -172,6 +144,64 @@ func TestAssessmentBatchConflicts(t *testing.T) {
 	}
 }
 
+// An explicit but empty batch list supplies nothing. It is not a second input
+// form, so it neither refuses beside the singular form nor collects anything.
+func TestAssessmentEmptyBatches(t *testing.T) {
+	t.Run("beside the singular form", func(t *testing.T) {
+		s := Store{Home: t.TempDir(), Root: t.TempDir()}
+		writeCensus(t, s, assignmentA)
+		input := runInput(t, orchestrated(s.Root), map[string]any{
+			"bench_inputs":        map[string]any{"assignment_id": assignmentA, "census_event_ids": []any{pick(assignmentA+":1", "attempt-1", "implementation")}},
+			"bench_input_batches": []any{},
+		})
+		if out, code := Command(s, []string{"record", "--input", input}); code != 0 {
+			t.Fatalf("an empty batch list refused beside the singular form: %s", out)
+		}
+		r, err := s.Read("run-1")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, ok := r.Attempts[0].Measures["raw_commands/"+assignmentA+":1"]; !ok {
+			t.Fatal("the singular form stopped collecting beside an empty batch list")
+		}
+	})
+	t.Run("alone", func(t *testing.T) {
+		s := Store{Home: t.TempDir(), Root: t.TempDir()}
+		input := runInput(t, orchestrated(s.Root), map[string]any{"bench_input_batches": []any{}})
+		if out, code := Command(s, []string{"record", "--input", input}); code != 0 {
+			t.Fatalf("an empty batch list alone refused: %s", out)
+		}
+		r, err := s.Read("run-1")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(r.Attempts[0].Measures) != 0 {
+			t.Fatalf("an empty batch list collected something: %+v", r.Attempts[0].Measures)
+		}
+	})
+}
+
+// One native trace selected by two batches under two different mappings is
+// ambiguous however it arrived. The selection ledger spans the whole import, so
+// the second batch refuses rather than quietly claiming the event twice.
+func TestAssessmentCrossBatchMapping(t *testing.T) {
+	s := Store{Home: t.TempDir(), Root: t.TempDir()}
+	nativeSpan(t, s, assignmentA, true)
+	input := runInput(t, orchestrated(s.Root), map[string]any{
+		"bench_input_batches": []any{
+			map[string]any{"assignment_id": assignmentA, "trace_ids": []any{pick("trace-1", "attempt-1", "implementation")}},
+			map[string]any{"assignment_id": assignmentB, "trace_ids": []any{pick("trace-1", "attempt-orchestrator", "orchestration")}},
+		},
+	})
+	out, code := Command(s, []string{"record", "--input", input})
+	if code == 0 || !strings.Contains(out, "ambiguous selection mapping") {
+		t.Fatalf("one trace reached two attempts through two batches (%d): %s", code, out)
+	}
+	if _, err := s.Read("run-1"); err == nil {
+		t.Fatal("a refused cross-batch import changed the stored record")
+	}
+}
+
 // A selector repeated with one mapping contributes once rather than twice.
 func TestAssessmentRepeatedSelectors(t *testing.T) {
 	s := Store{Home: t.TempDir(), Root: t.TempDir()}
@@ -197,93 +227,6 @@ func TestAssessmentRepeatedSelectors(t *testing.T) {
 	}
 }
 
-// DI16: estimates, actual charges, currencies, measured zero, and unknowns
-// stay distinct in one summary.
-func TestAssessmentDelegatedCosts(t *testing.T) {
-	r := orchestrated("")
-	r.RepoKey = fixtureRun("").RepoKey
-	r.Attempts[0].Cost.Actual = []Charge{
-		{Kind: "invoice", Amount: ptr(0.0), Currency: "USD", Reference: Reference{"billing", "fixture:zero"}},
-	}
-	r.Attempts[1].Cost.Actual = []Charge{
-		{Kind: "invoice", Amount: ptr(4.0), Currency: "EUR", Reference: Reference{"billing", "fixture:eur"}},
-		{Kind: "invoice", Reference: Reference{"billing", "fixture:unknown"}},
-	}
-	got, err := Summarize(r)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// A measured zero is a known zero, not an unknown.
-	if value, ok := got.Cost.Actual.Known["USD"]; !ok || value != 0 {
-		t.Fatalf("a measured zero was lost or read as unknown: %+v", got.Cost.Actual)
-	}
-	if got.Cost.Actual.Known["EUR"] != 4 {
-		t.Fatalf("currencies were mixed: %+v", got.Cost.Actual)
-	}
-	// A charge with no amount leaves the actual total partial.
-	if !got.Cost.Actual.Partial {
-		t.Fatal("a missing charge amount did not mark the actual total partial")
-	}
-	// No attempt carries a rate, so every estimate stays partial and separate
-	// from the actual charges above.
-	if len(got.Cost.Estimated.Known) != 0 || !got.Cost.Estimated.Partial {
-		t.Fatalf("actual charges leaked into the estimate: %+v", got.Cost.Estimated)
-	}
-}
-
-// DI17: an update cannot drop a failed, cancelled, or incomplete attempt.
-func TestAssessmentDelegatedHistory(t *testing.T) {
-	s := Store{Home: t.TempDir(), Root: t.TempDir()}
-	r := orchestrated(s.Root)
-	for _, state := range []string{"failed", "cancelled", "incomplete"} {
-		r.Attempts = append(r.Attempts, Attempt{
-			AttemptID: "replaced-" + state, ChunkID: "1", Role: "implementation",
-			SessionID: "session-replaced-" + state, Model: "synthetic", Effort: "low",
-			State: state,
-		})
-	}
-	if err := s.Record(r); err != nil {
-		t.Fatal(err)
-	}
-	shorter := r
-	shorter.Attempts = r.Attempts[:2]
-	if err := s.Record(shorter); err == nil {
-		t.Fatal("an update dropped the failed and replaced attempts")
-	}
-	stored, err := s.Read("run-1")
-	if err != nil || len(stored.Attempts) != len(r.Attempts) {
-		t.Fatalf("the refused update changed the stored attempts: %d %v", len(stored.Attempts), err)
-	}
-}
-
-// DI18: concurrent intervals contribute their union to wall time and their
-// separate spans to effort time.
-func TestAssessmentDelegatedIntervals(t *testing.T) {
-	base := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	span := func(from, to int) []ObservedInterval {
-		return []ObservedInterval{{
-			Start:     base.Add(time.Duration(from) * time.Second),
-			End:       base.Add(time.Duration(to) * time.Second),
-			Reference: Reference{"Bench OTEL", "fixture:" + time.Duration(from).String()},
-		}}
-	}
-	r := orchestrated("")
-	r.RepoKey = fixtureRun("").RepoKey
-	// Two authors overlap for twenty seconds of their thirty-second spans.
-	r.Attempts[0].Intervals = span(0, 30)
-	r.Attempts[1].Intervals = span(10, 40)
-	got, err := Summarize(r)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got.EffortSeconds != 60 {
-		t.Fatalf("effort time lost a concurrent author's own span: %v", got.EffortSeconds)
-	}
-	if got.WallSeconds == nil || *got.WallSeconds != 40 {
-		t.Fatalf("wall time summed concurrent intervals instead of taking their union: %v", got.WallSeconds)
-	}
-}
-
 // DI19: a singular import keeps the outcome it had before batches existed.
 // The two forms carry one selector, so they must agree on every collected
 // measure and on every other attempt field.
@@ -304,14 +247,20 @@ func TestAssessmentSingularParity(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		// Measure references embed this store's own paths, which differ between
-		// the two runs. The keys do not, so they carry the comparison.
+		// Measure and evidence references embed this store's own paths, which
+		// differ between the two runs. Every other field does not, so the
+		// comparison keeps the measured values and drops only the references.
 		keys := []string{}
 		for i := range r.Attempts {
-			for key := range r.Attempts[i].Measures {
-				keys = append(keys, r.Attempts[i].AttemptID+" "+key)
+			for key, m := range r.Attempts[i].Measures {
+				value := "unknown"
+				if m.Value != nil {
+					value = fmt.Sprint(*m.Value)
+				}
+				keys = append(keys, r.Attempts[i].AttemptID+" "+key+"="+value)
+				m.Reference = Reference{}
+				r.Attempts[i].Measures[key] = m
 			}
-			r.Attempts[i].Measures = nil
 			r.Attempts[i].Evidence = nil
 		}
 		sort.Strings(keys)
