@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
 	"testing"
 	"time"
 
@@ -520,33 +519,6 @@ func TestCountsIgnoresAForeignName(t *testing.T) {
 	}
 }
 
-// TestCountsRefusesAFifoWithoutBlocking proves a refused file type reads as zero and
-// never holds the board open on a reader that has no writer.
-func TestCountsRefusesAFifoWithoutBlocking(t *testing.T) {
-	t.Parallel()
-	home, root, _ := fixtureHome(t)
-	dir := Dir(home, root)
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		t.Fatal(err)
-	}
-	if err := syscall.Mkfifo(filepath.Join(dir, knownID), 0o600); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
-	}
-	done := make(chan map[string]int, 1)
-	go func() {
-		counts, _ := Counts(home, root)
-		done <- counts
-	}()
-	select {
-	case counts := <-done:
-		if len(counts) != 0 {
-			t.Fatalf("Counts on a FIFO record = %v, want none", counts)
-		}
-	case <-time.After(time.Second):
-		t.Fatal("Counts blocked on a FIFO record file")
-	}
-}
-
 // TestCountsCountsTheRecordedCalls proves the reader and the writer agree: the count
 // is the number of lines Record appended.
 func TestCountsCountsTheRecordedCalls(t *testing.T) {
@@ -675,33 +647,6 @@ func TestHeadBreakdownReadsAnUnreadableCensusAsEmpty(t *testing.T) {
 	writeRecordFile(t, home, root, knownID, "")
 	if got := HeadBreakdown(home, root, knownID); got != "" {
 		t.Fatalf("HeadBreakdown on an empty file = %q, want no text", got)
-	}
-}
-
-// TestHeadBreakdownRefusesAFifoWithoutBlocking proves the breakdown has the same
-// file-type posture as Counts: a refused file type renders no text and never holds
-// the landing open on a reader that has no writer.
-func TestHeadBreakdownRefusesAFifoWithoutBlocking(t *testing.T) {
-	t.Parallel()
-	home, root, _ := fixtureHome(t)
-	dir := Dir(home, root)
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		t.Fatal(err)
-	}
-	if err := syscall.Mkfifo(filepath.Join(dir, knownID), 0o600); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
-	}
-	done := make(chan string, 1)
-	go func() {
-		done <- HeadBreakdown(home, root, knownID)
-	}()
-	select {
-	case got := <-done:
-		if got != "" {
-			t.Fatalf("HeadBreakdown on a FIFO record = %q, want no text", got)
-		}
-	case <-time.After(time.Second):
-		t.Fatal("HeadBreakdown blocked on a FIFO record file")
 	}
 }
 

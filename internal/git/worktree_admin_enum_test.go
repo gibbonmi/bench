@@ -192,8 +192,9 @@ func TestWorktreesBoundsEachChildAndPreservesStdout(t *testing.T) {
 		{"block-rev-parse", "rev-parse"},
 	} {
 		t.Run(tc.mode, func(t *testing.T) {
-			restore := SetWorktreeListTimeoutForTest(100 * time.Millisecond)
-			t.Cleanup(restore)
+			activeInnerBound := 100 * time.Millisecond
+			window := bounds.TestDeadline(activeInnerBound)
+			t.Cleanup(SetWorktreeListTimeoutForTest(activeInnerBound))
 			root := newRepo(t)
 			gittest.StubGit(t, root, tc.mode, filepath.Join(t.TempDir(), "argv"))
 			done := make(chan error, 1)
@@ -201,11 +202,11 @@ func TestWorktreesBoundsEachChildAndPreservesStdout(t *testing.T) {
 			select {
 			case err := <-done:
 				var typed *ResolutionError
-				if !errors.As(err, &typed) || !strings.Contains(err.Error(), tc.invocation) || !strings.Contains(err.Error(), "100ms") || !strings.Contains(err.Error(), "investigate the git failure") {
+				if !errors.As(err, &typed) || !strings.Contains(err.Error(), tc.invocation) || !strings.Contains(err.Error(), activeInnerBound.String()) || !strings.Contains(err.Error(), "investigate the git failure") {
 					t.Fatalf("timeout refusal = %v", err)
 				}
-			case <-time.After(time.Second):
-				t.Fatalf("%s did not return within the overridden bound", tc.mode)
+			case <-time.After(window):
+				t.Fatal(bounds.TestTimeoutVerdict(tc.mode+" to return under the overridden worktree-list bound", window))
 			}
 		})
 	}

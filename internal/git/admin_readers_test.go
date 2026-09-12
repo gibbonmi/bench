@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
@@ -256,8 +257,9 @@ func TestRelativeGitPathStubPassesThroughToRealGit(t *testing.T) {
 }
 
 func TestReadersTimeOutUnderTheWorktreeListBound(t *testing.T) {
-	restore := SetWorktreeListTimeoutForTest(50 * time.Millisecond)
-	t.Cleanup(restore)
+	activeInnerBound := 50 * time.Millisecond
+	window := bounds.TestDeadline(activeInnerBound)
+	t.Cleanup(SetWorktreeListTimeoutForTest(activeInnerBound))
 
 	for _, tc := range []struct {
 		name, mode string
@@ -278,8 +280,8 @@ func TestReadersTimeOutUnderTheWorktreeListBound(t *testing.T) {
 				if !errors.As(err, &typed) || !strings.Contains(err.Error(), "timed out") {
 					t.Fatalf("%s timeout = %v, want a typed timeout", tc.name, err)
 				}
-			case <-time.After(time.Second):
-				t.Fatalf("%s did not return within one second", tc.name)
+			case <-time.After(window):
+				t.Fatal(bounds.TestTimeoutVerdict(tc.name+" to return under the overridden worktree-list bound", window))
 			}
 		})
 	}
