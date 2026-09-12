@@ -87,3 +87,17 @@ Findings: 8. Worst issue: high.
 
 After the repair the coordinator probed the newly shared enumerator, a site neither earlier probe touched.
 The swap turned three tests red, one of them the older prose budget's own, so the collapse did not weaken the check it absorbed.
+
+## Final reconciliation
+
+The coverage map holds 30 rows, and 28 of them close at the landing tip.
+Every gate-reachable row grades through its named seam, and both new checks pass over the live tree through the built binary.
+
+Two rows stay open: DB10 and DB11, the observed boot cost of each agent type.
+Claude Code reads the adapter's agents directory when a session starts, so the implementation session cannot spawn a type its own start never saw.
+The coordinator proved this: a spawn of `bench-reviewer` returned "Agent type not found".
+The landing is therefore the step that makes the measurement possible.
+
+The reviewer decided on 2026-09-12 to land with these two rows open.
+The next session takes both numbers first, with one "ok" spawn per type and no tool use, and records each usage line in the retro.
+If a number misses its threshold, the agent file's tool list is the repair surface, and the spec does not reopen.
