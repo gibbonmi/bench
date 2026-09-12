@@ -80,14 +80,14 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
 {
   "version": 1,
   "spec": "specs/session-context-cleanup/spec.md",
-  "plan_digest": "sha256:7278553ceb910dd63f774eb9ae7513dc7f3236b9d07ec7e759d85b87f312c4af",
+  "plan_digest": "sha256:acdac92b1c935f8a91069e59869d663e6094070c148cddb0916a0c74cb86cf44",
   "implementation_session": "claude:opus-high:ticket-author",
   "chunks": [
     {
       "id": "CL-C1",
       "base": "4a1ca2928776035d04be0ca123010065d924b80c",
       "tip": "1b40ca08c6c7b723b9b60882bd8cc4271f6f836d",
-      "plan_digest": "sha256:7278553ceb910dd63f774eb9ae7513dc7f3236b9d07ec7e759d85b87f312c4af",
+      "plan_digest": "sha256:acdac92b1c935f8a91069e59869d663e6094070c148cddb0916a0c74cb86cf44",
       "source_digest": "7ce06d236a1c3e19c6f6b82eb195afb7c18c30aa",
       "acceptance_rows": [
         "CL1", "CL2", "CL3", "CL10", "CL11", "CL13", "CL14", "CL15", "CL16", "CL17"
