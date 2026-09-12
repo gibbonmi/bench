@@ -51,6 +51,38 @@ The three axes moved their venues to that tip and reaffirmed against the repair 
 
 Author verification at the tip: the three plan commands passed at 14 ms, 7 ms, and 11345 ms in-package. The ME1 probe bit and restored, and `bench structure --growth` is green. The coordinator's independent omission probe in `read.go` bit. The merge verb's whole-tree gate on this source is green in all six phases.
 
+## Chunk ME-C2
+
+The frozen pair is base `9ecc1d561d918a3270a0894e5313b9ad3aabb0f5` and tip `61b39fc41cb92620f64c41bd2a94319c8c9207bc`.
+The delta is the new budget-evidence report and the SPEC-5 sentence in the spec's edge inventory.
+Raw findings: Standards 3, Spec 2, Coverage 5. De-duplicated repair targets: 8, all auto-fix inside the report's evidence scope.
+The delta changes no Go symbol, so the consumers blast is empty.
+
+### Standards (ME-C2)
+
+Findings: 3. Worst issue: low.
+
+- S1 (low, auto-fix): case 3's baseline was measured on the post-SPEC-5 working file, not the declared source tip. Citations at tip 61b39fc4: assets/budget-evidence.md:5, :16, :34.
+- S2 (low, auto-fix): case 2's `git show 983df3ad` count does not reproduce; two axes measure 59,869 bytes against the recorded 59,044. Citations at tip 61b39fc4: assets/budget-evidence.md:33, :67.
+- S3 (low, auto-fix): the harness observations restate the spec's dogfood facts without naming that note as the record of record. Citations at tip 61b39fc4: assets/budget-evidence.md:89-108; spec.md:295-299.
+
+### Spec (ME-C2)
+
+Findings: 2. Worst issue: low. ME13, ME14, ME15, and ME16 are closed; cases 17 and 18 reproduced exactly.
+
+- SPEC-6 (low, auto-fix): case 19 has no verdicts row, while the spec requires a verdict and a recovery count for every case. Citations at tip 61b39fc4: assets/budget-evidence.md:64-83; spec.md:86.
+- SPEC-7 (low, auto-fix): cases 13 and 14 read the census and the clock, so the tip is not their input. Citations at tip 61b39fc4: assets/budget-evidence.md:44-45, :21-22.
+
+### Coverage (ME-C2)
+
+Findings: 5. Worst issue: medium. Every surface class and content class the spec names has a case.
+
+- C2-COV-1 (medium, auto-fix): case 19 carries no verdict and no recovery count. Shares SPEC-6's repair.
+- C2-COV-2 (medium, auto-fix): three candidate cells read `bounded today`, a value the method never defines. Citations at tip 61b39fc4: assets/budget-evidence.md:17-19, :37, :39, :40.
+- C2-COV-3 (medium, auto-fix): the raw-file proposal rests on one sectioned Markdown case, while the repo's largest reads have no sections. Repair: one non-Markdown large-file case and a precondition on the proposal row. Citations at tip 61b39fc4: assets/budget-evidence.md:68, :149.
+- C2-COV-4 (medium, auto-fix): the multibyte case informs no proposal row. Repair: attach case 18 to the Bench-query row and state that bounds are bytes. Citations at tip 61b39fc4: assets/budget-evidence.md:49, :149-155; spec.md:31.
+- C2-COV-5 (low, auto-fix): the same tip mismatch as S1. Shares S1's repair.
+
 ## Record
 
 ```bench-review-record
