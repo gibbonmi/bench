@@ -183,6 +183,20 @@ func TestCleanSetUnclaimedStaleReplanAction(t *testing.T) {
 	}
 }
 
+// requireStaleRefusalRow holds the refusal row to the digest the call rejected, reading each
+// field out of the rendered row rather than matching a spliced substring. The encoder quotes
+// a scalar that could read as a number, and a digest beginning with a zero and a digit is
+// one, so a substring built around a raw digest passes or fails by the run's random identity.
+func requireStaleRefusalRow(t *testing.T, output, tracked, ignored, fingerprint string) {
+	t.Helper()
+	fields := cleanupRowFields(rowForTarget(t, output, "unknown"))
+	got := []string{fields[1], fields[2], fields[3], fields[4], strings.Trim(fields[5], `"`), fields[6]}
+	want := []string{string(ActionError), tracked, ignored, "none", fingerprint, errStaleFingerprint.Error()}
+	if strings.Join(got, "|") != strings.Join(want, "|") {
+		t.Fatalf("refusal row = %#v, want %#v", got, want)
+	}
+}
+
 // rowForTarget returns the one rendered cleanup row that names target.
 func rowForTarget(t *testing.T, output, target string) string {
 	t.Helper()
@@ -325,9 +339,7 @@ func TestCleanSetApplyTimeStaleRefusal(t *testing.T) {
 		if code != 1 || stderr != "" {
 			t.Fatalf("late-drift apply = (%d, %q, %q), want a refusal", code, stdout, stderr)
 		}
-		if !strings.Contains(stdout, "unknown,error,unknown,unknown,none,"+digest+",cleanup fingerprint is stale") {
-			t.Fatalf("late-drift apply = %q, want the refusal row naming the rejected digest", stdout)
-		}
+		requireStaleRefusalRow(t, stdout, "unknown", "unknown", digest)
 		// The renderer names members in canonical identity order, which the fixture draws at
 		// random, so the expectation reads that order from the same source the renderer uses.
 		want := "bench worktree clean " + strings.Join(set.targetSelectors(), " ")
@@ -355,7 +367,8 @@ func TestCleanSetApplyTimeStaleRefusal(t *testing.T) {
 		extra := intent.AssignmentBranchRef(strings.Repeat("c", 32), strings.Repeat("f", 32))
 		gitRun(t, root, "branch", strings.TrimPrefix(extra, "refs/heads/"))
 
-		plans, applyErr := applyUnclaimedAssignmentSet(root, set)
+		options := unclaimedOptions()
+		plans, applyErr := applyUnclaimedAssignmentSet(root, set, options)
 		if !errors.Is(applyErr, errStaleFingerprint) {
 			t.Fatalf("apply error = %v, want the applier's own stale refusal", applyErr)
 		}
@@ -363,11 +376,9 @@ func TestCleanSetApplyTimeStaleRefusal(t *testing.T) {
 			t.Fatalf("stale apply rows = %#v, want none; the caller owns the refusal row", plans)
 		}
 		var stdout bytes.Buffer
-		mustNoError(t, applyOutcomes(&stdout, plans, staleUnclaimedPlans(set), applyErr, unclaimedReplan()))
+		mustNoError(t, applyOutcomes(&stdout, plans, staleUnclaimedPlans(set), applyErr, unclaimedReplan(options)))
 		rendered := stdout.String()
-		if !strings.Contains(rendered, "unknown,error,unclaimed,none,none,"+set.fingerprint+",cleanup fingerprint is stale") {
-			t.Fatalf("stale apply = %q, want this mode's own refusal row", rendered)
-		}
+		requireStaleRefusalRow(t, rendered, "unclaimed", "none", set.fingerprint)
 		if !strings.Contains(rendered, "bench worktree clean --discard-branch --unclaimed") {
 			t.Fatalf("stale apply = %q, want the selector-preserving re-plan command", rendered)
 		}

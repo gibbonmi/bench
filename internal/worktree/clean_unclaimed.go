@@ -98,25 +98,25 @@ func staleUnclaimedPlans(set unclaimedAssignmentSet) []CleanupPlan {
 	return []CleanupPlan{{Target: "unknown", Action: ActionError, Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: set.fingerprint, Reason: errStaleFingerprint.Error()}}
 }
 
-// unclaimedOptions is the fixed option set this mode answers under. The grammar admits no
-// other modifier beside `--unclaimed`, so the plan, the apply, the status reader, and the
-// rendered re-plan all ask their question through this one value rather than through
-// literals that can drift apart.
+// unclaimedOptions is what this mode's options are when no caller parsed any. The status
+// reader asks for the selection outside the clean grammar, so it has no invocation to read
+// them from. A caller that parsed an invocation passes its own options instead.
 func unclaimedOptions() CleanupOptions {
 	return CleanupOptions{DiscardBranch: true, Unclaimed: true}
 }
 
-// unclaimedReplan is this mode's own re-plan command, beside the landed selector's.
-func unclaimedReplan() []axi.InvocationArgument {
-	return cleanArguments(unclaimedOptions(), "--unclaimed")
+// unclaimedReplan is this mode's own re-plan command, beside the landed selector's. It reads
+// the modifiers the plan answered under, so the rendered command asks the same question.
+func unclaimedReplan(options CleanupOptions) []axi.InvocationArgument {
+	return cleanArguments(options, "--unclaimed")
 }
 
 // applyUnclaimedAssignmentSet deletes each planned branch at the exact object the plan
 // named. It reports the outcome rows alone. A stale refusal carries no rows, because the
 // refusal row is this command surface's own spelling and the caller renders it; a row
 // returned here would be a second derivation the caller discards.
-func applyUnclaimedAssignmentSet(root string, set unclaimedAssignmentSet) ([]CleanupPlan, error) {
-	current, err := planUnclaimedAssignmentSet(root, unclaimedOptions())
+func applyUnclaimedAssignmentSet(root string, set unclaimedAssignmentSet, options CleanupOptions) ([]CleanupPlan, error) {
+	current, err := planUnclaimedAssignmentSet(root, options)
 	if err != nil {
 		return nil, err
 	}
