@@ -244,17 +244,24 @@ func gitOpError(op string, err error) string {
 }
 
 // Touched runs the length/crowding rules over only the files changed between base and HEAD
-// (`git diff --diff-filter=ACMR base..HEAD`). It returns the report, the violation count,
+// (`git diff -z --diff-filter=ACMR base..HEAD`). It returns the report, the violation count,
 // and the git error if the diff query itself failed. It is the one diff call site. It is
 // also the one source of the touched-scope query. The `--since` subcommand and the shift
 // loop's refactor gate both read it. Command propagates the error (loud stderr + exit 1);
 // the shift gate tolerates it because its own gate run is that worktree's loud oracle.
 func Touched(root, base string) (report string, violations int, err error) {
-	out, err := git.Output("-C", root, "diff", "--name-only", "--diff-filter=ACMR", base+"..HEAD")
+	raw, err := git.Raw(
+		"-C", root,
+		"diff",
+		"--name-only",
+		"-z",
+		"--diff-filter=ACMR",
+		base+"..HEAD",
+	)
 	if err != nil {
 		return "", 0, err
 	}
-	report, violations = Check(root, strings.Split(out, "\n"), false)
+	report, violations = Check(root, strings.Split(string(raw), "\x00"), false)
 	return report, violations, nil
 }
 

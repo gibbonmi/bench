@@ -15,6 +15,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 - Fixed the exec child environment to contain one PWD assignment for its worktree.
   Inherited values and `--env PWD=...` cannot replace it.
 
+### Touched source paths
+
+- Fixed touched source paths to preserve their exact bytes from Git through the
+  structure check.
+
 ### Worktree landing help
 
 - Fixed `bench help` to show the landing and landing-resume grammar, and to name
