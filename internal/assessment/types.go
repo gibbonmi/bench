@@ -72,22 +72,26 @@ type Attempt struct {
 }
 
 type Run struct {
-	Trial         *Trial             `json:"trial,omitempty"`
-	BenchInputs   *BenchInputs       `json:"bench_inputs,omitempty"`
-	HarnessInputs []HarnessInput     `json:"harness_inputs,omitempty"`
-	Diagnostics   []Reference        `json:"diagnostics,omitempty"`
-	Version       int                `json:"version"`
-	RunID         string             `json:"run_id"`
-	RepoKey       string             `json:"repo_key"`
-	Source        string             `json:"source"`
-	Condition     string             `json:"condition"`
-	TaskID        string             `json:"task_id"`
-	Holdout       bool               `json:"holdout"`
-	TimeReference *Reference         `json:"time_reference,omitempty"`
-	StartedAt     *time.Time         `json:"started_at,omitempty"`
-	EndedAt       *time.Time         `json:"ended_at,omitempty"`
-	State         string             `json:"state"`
-	Attempts      []Attempt          `json:"attempts"`
-	Evidence      []Reference        `json:"evidence"`
-	Quality       map[string]Measure `json:"quality"`
+	Trial *Trial `json:"trial,omitempty"`
+	// BenchInputs selects from one assignment. BenchInputBatches selects from
+	// several in one import. The two forms carry the same selector type, and a
+	// run supplies one of them or neither.
+	BenchInputs       *BenchInputs       `json:"bench_inputs,omitempty"`
+	BenchInputBatches []BenchInputs      `json:"bench_input_batches,omitempty"`
+	HarnessInputs     []HarnessInput     `json:"harness_inputs,omitempty"`
+	Diagnostics       []Reference        `json:"diagnostics,omitempty"`
+	Version           int                `json:"version"`
+	RunID             string             `json:"run_id"`
+	RepoKey           string             `json:"repo_key"`
+	Source            string             `json:"source"`
+	Condition         string             `json:"condition"`
+	TaskID            string             `json:"task_id"`
+	Holdout           bool               `json:"holdout"`
+	TimeReference     *Reference         `json:"time_reference,omitempty"`
+	StartedAt         *time.Time         `json:"started_at,omitempty"`
+	EndedAt           *time.Time         `json:"ended_at,omitempty"`
+	State             string             `json:"state"`
+	Attempts          []Attempt          `json:"attempts"`
+	Evidence          []Reference        `json:"evidence"`
+	Quality           map[string]Measure `json:"quality"`
 }

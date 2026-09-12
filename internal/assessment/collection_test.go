@@ -10,24 +10,14 @@ import (
 	"testing"
 )
 
+// collectionInput is runInput over this package's own fixture run.
 func collectionInput(t *testing.T, s Store, extra map[string]any) string {
 	t.Helper()
-	data, _ := json.Marshal(fixtureRun(s.Root))
-	var object map[string]any
-	json.Unmarshal(data, &object)
-	for k, v := range extra {
-		object[k] = v
-	}
-	data, _ = json.Marshal(object)
-	path := filepath.Join(t.TempDir(), "input.json")
-	if err := os.WriteFile(path, data, 0600); err != nil {
-		t.Fatal(err)
-	}
-	return path
+	return runInput(t, fixtureRun(s.Root), extra)
 }
-func selection(id string) map[string]any {
-	return map[string]any{"id": id, "attempt_id": "attempt-1", "chunk_id": "1", "role": "implementation"}
-}
+
+// selection is pick over the fixture run's one attempt.
+func selection(id string) map[string]any { return pick(id, "attempt-1", "implementation") }
 func nativeSpan(t *testing.T, s Store, assignment string, finished bool, overrides ...map[string]any) {
 	t.Helper()
 	span := map[string]any{"name": "worktree.exec", "traceId": "trace-1", "spanId": "span-1", "startTimeUnixNano": "1000000000", "attributes": []any{map[string]any{"key": otelrecord.AttrSeam, "value": map[string]any{"stringValue": "worktree.exec"}}, map[string]any{"key": otelrecord.AttrSubjectID, "value": map[string]any{"stringValue": assignment}}}}

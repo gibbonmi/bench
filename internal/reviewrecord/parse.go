@@ -37,14 +37,20 @@ func Parse(data []byte) (Record, error) {
 	if err := decode(data, &record); err != nil {
 		return record, err
 	}
-	if record.Version != 1 {
+	if record.Version != 1 && record.Version != 2 {
 		return record, fmt.Errorf("unsupported version %d", record.Version)
 	}
 	if _, err := RecordPath(record.Spec); err != nil {
 		return record, err
 	}
-	if record.PlanDigest == "" || record.ImplementationSession == "" {
-		return record, errors.New("invalid plan digest or implementation session")
+	if record.PlanDigest == "" {
+		return record, errors.New("invalid plan digest")
+	}
+	// A version 2 record carries no editable identity of its own. It refers to
+	// the source-bound plan through the plan digest above, so an evidence-only
+	// edit cannot change who may verify or reconcile completion.
+	if (record.ImplementationSession == "") != (record.Version == 2) {
+		return record, errors.New("invalid implementation session; version 1 names one and version 2 defers to its plan")
 	}
 	ids := map[string]bool{}
 	chunks := map[string]bool{}
@@ -64,7 +70,7 @@ func Parse(data []byte) (Record, error) {
 			if err := validateEvidence(review.Evidence, ids); err != nil {
 				return record, err
 			}
-			if !contains(Axes(), review.Axis) || review.Role != "independent-review" || review.Performer == record.ImplementationSession {
+			if !contains(Axes(), review.Axis) || review.Role != "independent-review" || (record.Version == 1 && review.Performer == record.ImplementationSession) {
 				return record, fmt.Errorf("%s: invalid independent review axis or performer", review.ID)
 			}
 			if !objectID.MatchString(review.Base) || !objectID.MatchString(review.Tip) {
@@ -97,7 +103,9 @@ func validateVerification(items []Verification, ids map[string]bool) error {
 		if err := validateEvidence(item.Evidence, ids); err != nil {
 			return err
 		}
-		if item.Role != "author-verification" || item.Requirement == "" || item.Command == "" {
+		// Both verification roles parse here. checkVerification grades which
+		// role each obligation actually owes, so the grammar stays in one place.
+		if !contains(verificationRoles(), item.Role) || item.Requirement == "" || item.Command == "" {
 			return fmt.Errorf("%s: invalid author verification", item.ID)
 		}
 		if item.State != "pending" && item.ExitCode == nil {

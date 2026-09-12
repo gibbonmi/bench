@@ -62,14 +62,19 @@ func measure(a *Attempt, key string, v float64, ref Reference) error {
 	return nil
 }
 func Collect(s Store, r Run) (Run, error) {
-	if b := r.BenchInputs; b != nil {
-		if _, ok := poolkey.SplitAssignmentSegment(poolkey.AssignmentSegment(b.AssignmentID, b.AssignmentID)); !ok {
-			return r, fmt.Errorf("invalid expected assignment")
-		}
-		if err := collectSpans(s, &r, *b); err != nil {
+	batches, err := benchBatches(r)
+	if err != nil {
+		return r, err
+	}
+	// One selection ledger spans the whole import, not one batch. A native
+	// event that two batches map to two different attempts is ambiguous
+	// however it arrived, so that conflict must surface across assignments.
+	traces, events := map[string]Mapping{}, map[string]Mapping{}
+	for _, b := range batches {
+		if err := collectSpans(s, &r, b, traces); err != nil {
 			return r, err
 		}
-		if err := collectCensus(s, &r, *b); err != nil {
+		if err := collectCensus(s, &r, b, events); err != nil {
 			return r, err
 		}
 	}
@@ -80,7 +85,33 @@ func Collect(s Store, r Run) (Run, error) {
 	}
 	return r, nil
 }
-func collectCensus(s Store, r *Run, b BenchInputs) error {
+
+// benchBatches normalizes both Bench-input forms into one list, so collection
+// keeps a single path. An empty batch list supplies nothing and is not a second
+// form. The caller records only after this returns, so every refusal here
+// leaves the stored record unchanged.
+func benchBatches(r Run) ([]BenchInputs, error) {
+	batches := r.BenchInputBatches
+	if r.BenchInputs != nil {
+		if len(batches) != 0 {
+			return nil, fmt.Errorf("invalid duplicate bench input forms; supply bench_inputs or bench_input_batches")
+		}
+		batches = []BenchInputs{*r.BenchInputs}
+	}
+	seen := map[string]bool{}
+	for _, b := range batches {
+		if _, ok := poolkey.SplitAssignmentSegment(poolkey.AssignmentSegment(b.AssignmentID, b.AssignmentID)); !ok {
+			return nil, fmt.Errorf("invalid expected assignment")
+		}
+		if seen[b.AssignmentID] {
+			return nil, fmt.Errorf("duplicate assignment batch %s", b.AssignmentID)
+		}
+		seen[b.AssignmentID] = true
+	}
+	return batches, nil
+}
+
+func collectCensus(s Store, r *Run, b BenchInputs, selected map[string]Mapping) error {
 	if len(b.CensusEventIDs) == 0 {
 		return nil
 	}
@@ -95,7 +126,7 @@ func collectCensus(s Store, r *Run, b BenchInputs) error {
 	for _, problem := range problems {
 		diagnostic(r, "Bench census", path, problem)
 	}
-	selected := map[string]Mapping{}
+
 	for _, sel := range b.CensusEventIDs {
 		if !strings.HasPrefix(sel.ID, b.AssignmentID+":") {
 			return fmt.Errorf("foreign census assignment")
@@ -138,7 +169,7 @@ func appendReference(refs []Reference, ref Reference) []Reference {
 	return append(refs, ref)
 }
 
-func collectSpans(s Store, r *Run, b BenchInputs) error {
+func collectSpans(s Store, r *Run, b BenchInputs, selected map[string]Mapping) error {
 	if len(b.TraceIDs) == 0 {
 		return nil
 	}
@@ -157,7 +188,7 @@ func collectSpans(s Store, r *Run, b BenchInputs) error {
 	for _, problem := range problems {
 		diagnostic(r, "Bench OTEL", path, problem)
 	}
-	selected := map[string]Mapping{}
+
 	for _, sel := range b.TraceIDs {
 		a, err := mapped(r, sel.Mapping)
 		if err != nil {

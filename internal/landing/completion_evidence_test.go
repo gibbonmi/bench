@@ -20,8 +20,17 @@ type completionFixture struct {
 }
 
 func newCompletionFixture(t *testing.T) completionFixture {
+	return attachedCompletionFixture(t, recordtest.Attach)
+}
+
+// attachedCompletionFixture builds a two-chunk landing fixture from either
+// record form: the oracle, the ignore rule, the evidence worktree, and the
+// chunk sequence. The version 1 and delegated landings share this one
+// sequence, so a change to the oracle or the build order cannot drift between
+// them.
+func attachedCompletionFixture(t *testing.T, attach func(testing.TB, string, int) *recordtest.Fixture) completionFixture {
 	t.Helper()
-	f := recordtest.Attach(t, fixture(t), 2)
+	f := attach(t, fixture(t), 2)
 	f.Write(".gitignore", ".logs/\n")
 	f.Write(".bench/gate.sh", "#!/bin/sh\ngrep -q '^Status: implemented$' specs/example/spec.md\n")
 	if err := os.Chmod(filepath.Join(f.Root, ".bench/gate.sh"), 0755); err != nil {

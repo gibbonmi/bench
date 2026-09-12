@@ -160,6 +160,10 @@ func TestAssessmentRecordUnknownAndCharges(t *testing.T) {
 	t.Run("A24 every role and failure counts", func(t *testing.T) {
 		r := fixtureRun(t.TempDir())
 		r.Attempts = nil
+		// The case covers whatever the vocabulary holds, so it adds up the
+		// charges it gave rather than a total that must be edited whenever a
+		// role joins. A dropped role still lowers the sum below want.
+		want := 0.0
 		for i, role := range Roles() {
 			a := fixtureRun(t.TempDir()).Attempts[0]
 			a.AttemptID = fmt.Sprint("attempt-", i)
@@ -168,10 +172,11 @@ func TestAssessmentRecordUnknownAndCharges(t *testing.T) {
 				a.State = "cancelled"
 			}
 			a.Cost.Actual = []Charge{{Kind: "invoice", Amount: ptr(float64(i + 1)), Currency: "USD", Reference: Reference{"billing", "fixture:invoice" + fmt.Sprint(i)}}}
+			want += float64(i + 1)
 			r.Attempts = append(r.Attempts, a)
 		}
 		got, err := Summarize(r)
-		if err != nil || got.Cost.Actual.Known["USD"] != 15 || got.Cost.Actual.Partial {
+		if err != nil || got.Cost.Actual.Known["USD"] != want || got.Cost.Actual.Partial {
 			t.Fatalf("role costs lost: %+v %v", got, err)
 		}
 	})

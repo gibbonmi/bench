@@ -15,6 +15,7 @@ type Requirement struct {
 	ID      string `json:"id"`
 	Command string `json:"command"`
 	Probe   string `json:"probe,omitempty"`
+	Ticket  string `json:"ticket,omitempty"`
 }
 type PlannedChunk struct {
 	ID           string        `json:"id"`
@@ -24,6 +25,7 @@ type PlannedChunk struct {
 }
 type Plan struct {
 	Version           int            `json:"version"`
+	Execution         *Execution     `json:"execution,omitempty"`
 	Chunks            []PlannedChunk `json:"chunks"`
 	FinalVerification []Requirement  `json:"final_verification"`
 	Digest            string         `json:"-"`
@@ -48,8 +50,13 @@ func ReadPlan(root, tree, spec string) (Plan, error) {
 	if err := decode(payload, &plan); err != nil {
 		return plan, err
 	}
-	if plan.Version != 1 || len(plan.Chunks) == 0 {
+	if (plan.Version != 1 && plan.Version != 2) || len(plan.Chunks) == 0 {
 		return plan, errors.New("invalid completion plan version or empty chunks")
+	}
+	// The execution declaration decides which form the rest of the plan must
+	// take, so it is graded before the per-chunk shape it governs.
+	if err := validateExecution(plan); err != nil {
+		return plan, err
 	}
 	inputs := [][]byte{data}
 	names := []string{}
@@ -60,7 +67,7 @@ func ReadPlan(root, tree, spec string) (Plan, error) {
 			return plan, errors.New("invalid duplicate or empty plan chunk")
 		}
 		ids[chunk.ID] = true
-		if err := requirementsValid(chunk.Verification); err != nil {
+		if err := requirementsValid(chunk.Verification, chunk.Tickets, plan.Version == 2); err != nil {
 			return plan, fmt.Errorf("chunk %s: %w", chunk.ID, err)
 		}
 		for _, name := range chunk.Tickets {
@@ -74,7 +81,7 @@ func ReadPlan(root, tree, spec string) (Plan, error) {
 			owners[name] = i
 		}
 	}
-	if err := requirementsValid(plan.FinalVerification); err != nil {
+	if err := requirementsValid(plan.FinalVerification, nil, plan.Version == 2); err != nil {
 		return plan, fmt.Errorf("final verification: %w", err)
 	}
 	parsed := []tickets.Ticket{}
@@ -109,16 +116,36 @@ func ReadPlan(root, tree, spec string) (Plan, error) {
 	return plan, nil
 }
 
-func requirementsValid(items []Requirement) error {
+// requirementsValid grades one verification inventory. A nil owned list marks
+// the final inventory, which names no ticket in either version. A version 2
+// chunk inventory maps every obligation onto one of its own tickets, and leaves
+// no ticket uncovered.
+func requirementsValid(items []Requirement, owned []string, delegated bool) error {
 	if len(items) == 0 {
 		return errors.New("missing required verification inventory")
 	}
 	seen := map[string]bool{}
+	covered := map[string]bool{}
 	for _, item := range items {
 		if item.ID == "" || item.Command == "" || seen[item.ID] {
 			return errors.New("invalid verification requirement")
 		}
 		seen[item.ID] = true
+		if !delegated || owned == nil {
+			if item.Ticket != "" {
+				return fmt.Errorf("verification %s names a ticket; only a version 2 chunk obligation owns one", item.ID)
+			}
+			continue
+		}
+		if !contains(owned, item.Ticket) {
+			return fmt.Errorf("verification %s names ticket %q outside this chunk", item.ID, item.Ticket)
+		}
+		covered[item.Ticket] = true
+	}
+	for _, name := range owned {
+		if delegated && !covered[name] {
+			return fmt.Errorf("ticket %s has no verification requirement; every ticket owes one", name)
+		}
 	}
 	return nil
 }

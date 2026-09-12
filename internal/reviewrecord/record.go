@@ -73,7 +73,11 @@ type Record struct {
 	Amendments            []Amendment `json:"amendments,omitempty"`
 }
 
-func CheckReviews(chunk Chunk, session string) error {
+// CheckReviews grades a chunk's three axes. The excluded set holds every
+// identity that cannot supply independent review. Under distinct, one session
+// supplies at most one axis for the chunk.
+func CheckReviews(chunk Chunk, excluded []string, distinct bool) error {
+	axisOwners := map[string]string{}
 	for _, axis := range Axes() {
 		var current *Review
 		for i := range chunk.Reviews {
@@ -84,9 +88,13 @@ func CheckReviews(chunk Chunk, session string) error {
 		if current == nil {
 			return fmt.Errorf("chunk %s: missing %s; record the native review result", chunk.ID, axis)
 		}
-		if current.Role != "independent-review" || current.Performer == session || current.Performer == "" {
+		if current.Role != "independent-review" || contains(excluded, current.Performer) || current.Performer == "" {
 			return fmt.Errorf("chunk %s: invalid %s performer or role; obtain independent review", chunk.ID, axis)
 		}
+		if owned, taken := axisOwners[current.Performer]; distinct && taken {
+			return fmt.Errorf("chunk %s: %s reviewer already supplied %s; use three distinct review sessions", chunk.ID, axis, owned)
+		}
+		axisOwners[current.Performer] = axis
 		if current.State != "completed" || current.Outcome != "pass" || len(current.FindingIDs) != 0 {
 			return fmt.Errorf("chunk %s: %s %s; resolve findings and obtain a completed result", chunk.ID, current.State, axis)
 		}
