@@ -1,6 +1,7 @@
 package conformance
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/skillsindex"
 )
 
@@ -213,7 +215,7 @@ func TestClaudeAgentDefinitionsRefuseANonRegularSubject(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := os.Symlink(t.TempDir(), filepath.Join(root, ".claude", "agents")); err != nil {
-		t.Skipf("symbolic links unavailable: %v", err)
+		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
 	}
 	diagnostics := strings.Join(checkClaudeAgentDefinitions(root), "\n")
 	if !strings.Contains(diagnostics, "claude-agent subject refused: "+claudeAgentsDir+" is a symbolic link") {

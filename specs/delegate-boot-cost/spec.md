@@ -220,6 +220,7 @@ The Codex side records the measurement in this spec and ships nothing.
 - `.claude/README.md`
 - `.bench/consumer-payload.json`
 - `package.json`
+- `.bench/structure.budgets`
 - `internal/packagesurface/assets.go`
 - `internal/adopt/link_plan_test.go` (new)
 - `internal/lines/lines_agentline_test.go`
