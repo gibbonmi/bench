@@ -72,3 +72,12 @@ func worktreeCommand(c Command, args []string) int {
 // worktreeSuffix derives a leaf's help suffix from its usage grammar, so the inventory
 // row and the grammar the verb refuses with have one source.
 func worktreeSuffix(grammar string) string { return strings.TrimPrefix(grammar, "bench worktree") }
+
+// poolCommand supplies the resolved Bench home to the argv-only handler.
+func poolCommand(args []string) (string, int) {
+	return worktree.PoolCommand(worktree.Home(), args)
+}
+
+func resumeCleanCommand(c Command, args []string) int {
+	return worktree.ResumeCleanCommand(boundaryRoot(), worktree.Home(), args, c.Stdout, c.Stderr)
+}

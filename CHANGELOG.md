@@ -15,6 +15,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 - Fixed the exec child environment to contain one PWD assignment for its worktree.
   Inherited values and `--env PWD=...` cannot replace it.
 
+### Worktree landing help
+
+- Fixed `bench help` to show the landing and landing-resume grammar, and to name
+  `land` in the worktree help summary.
+
 ### Added
 
 - Added local workflow assessment records, native evidence collection, and pinned-plan comparison reports with explicit cost and quality limits.

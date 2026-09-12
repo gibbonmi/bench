@@ -123,7 +123,9 @@ var commandRegistry = []commandDefinition{
 		helpRow{Order: 35, Suffix: " reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>", Description: "replace one lost request token after identity proof"},
 		helpRow{Order: 36, Suffix: " merge --from <commit|target> <target>", Description: "merge a default-branch commit or a sibling's tip into an owned worktree"},
 		helpRow{Order: 36, Suffix: worktreeSuffix(usage.WorktreeReset), Description: "plan or apply a recoverable reset or restore"},
-		helpRow{Order: 37, Suffix: " --help", Description: "show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, and reset grammar"},
+		helpRow{Order: 36, Suffix: worktreeSuffix(usage.WorktreeLand), Description: "compose, gate, and publish one owned worktree"},
+		helpRow{Order: 36, Suffix: worktreeSuffix(usage.WorktreeLandResume), Description: "resume incomplete post-publication landing work"},
+		helpRow{Order: 37, Suffix: " --help", Description: "show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar"},
 	), Run: worktreeCommand},
 	{Name: "resume-clean", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: resumeCleanCommand},
 	{Name: "session-inspect", Hook: true, Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return sessioninspect.Command(args, c.Stdout, c.Stderr) }},
@@ -479,15 +481,6 @@ func boundaryRoot() string {
 		return ""
 	}
 	return root
-}
-
-// poolCommand supplies the resolved Bench home to the argv-only handler.
-func poolCommand(args []string) (string, int) {
-	return worktree.PoolCommand(worktree.Home(), args)
-}
-
-func resumeCleanCommand(c Command, args []string) int {
-	return worktree.ResumeCleanCommand(boundaryRoot(), worktree.Home(), args, c.Stdout, c.Stderr)
 }
 
 // versionLine renders the single line `bench version` prints. Kept as a pure
