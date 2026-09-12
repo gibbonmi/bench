@@ -283,12 +283,12 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 			return 1
 		}
 		if fingerprint != "" && (len(set.rows) == 0 || !matchesFingerprint(set.fingerprint, fingerprint)) {
-			_ = renderCleanups(stdout, staleUnclaimedPlans(set))
+			_ = renderUnclaimedOutcomes(stdout, staleUnclaimedPlans(set), errStaleFingerprint)
 			return 1
 		}
 		if fingerprint != "" {
 			plans, applyErr := applyUnclaimedAssignmentSet(root, set)
-			_ = renderCleanups(stdout, plans)
+			_ = renderUnclaimedOutcomes(stdout, plans, applyErr)
 			if applyErr != nil {
 				return 1
 			}
@@ -300,7 +300,7 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 		}
 		if applyCurrent {
 			plans, applyErr := applyUnclaimedAssignmentSet(root, set)
-			if renderErr := renderCleanups(stdout, plans); renderErr != nil {
+			if renderErr := renderUnclaimedOutcomes(stdout, plans, applyErr); renderErr != nil {
 				fmt.Fprintf(stderr, "bench worktree clean: %v\n", renderErr)
 				return 1
 			}
@@ -320,12 +320,12 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 			return cleanInvocationError(stdout)
 		}
 		if fingerprint != "" && !matchesFingerprint(set.fingerprint, fingerprint) {
-			_ = renderLandedStale(stdout, set, fingerprint)
+			_ = renderStale(stdout, append([]CleanupPlan{staleSetPlan(fingerprint)}, set.plans()...), landedReplan(options))
 			return 1
 		}
 		if fingerprint != "" {
 			plans, applyErr := applyLandedSet(j, root, set, options, "")
-			if renderErr := renderCleanups(stdout, plans); renderErr != nil {
+			if renderErr := renderOutcomes(stdout, fingerprint, plans, applyErr, landedReplan(options)); renderErr != nil {
 				fmt.Fprintf(stderr, "bench worktree clean: %v\n", renderErr)
 				return 1
 			}

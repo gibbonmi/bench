@@ -222,12 +222,17 @@ func fingerprintLandedSet(rows []landedCleanupRow, options CleanupOptions) strin
 	return fingerprintParts(parts...)
 }
 
-func renderLandedSet(stdout io.Writer, set landedCleanupSet, options CleanupOptions) error {
+// plans is every selected row's plan in selection order.
+func (set landedCleanupSet) plans() []CleanupPlan {
 	plans := make([]CleanupPlan, 0, len(set.rows))
 	for _, row := range set.rows {
 		plans = append(plans, row.plan)
 	}
-	if err := renderCleanups(stdout, plans); err != nil || len(set.rows) == 0 {
+	return plans
+}
+
+func renderLandedSet(stdout io.Writer, set landedCleanupSet, options CleanupOptions) error {
+	if err := renderCleanups(stdout, set.plans()); err != nil || len(set.rows) == 0 {
 		return err
 	}
 	actions := make([]axi.Action, 0, len(set.rows)+1)
@@ -267,13 +272,9 @@ func renderLandedSet(stdout io.Writer, set landedCleanupSet, options CleanupOpti
 	return err
 }
 
-func renderLandedStale(stdout io.Writer, set landedCleanupSet, fingerprint string) error {
-	plans := make([]CleanupPlan, 0, len(set.rows)+1)
-	plans = append(plans, staleSetPlan(fingerprint))
-	for _, row := range set.rows {
-		plans = append(plans, row.plan)
-	}
-	return renderCleanups(stdout, plans)
+// landedReplan is the landed selector's own re-plan command.
+func landedReplan(options CleanupOptions) []axi.InvocationArgument {
+	return cleanArguments(options, "--landed")
 }
 
 func sameLandedCleanupTuple(a, b landedCleanupRow) bool {
@@ -308,24 +309,45 @@ func replanLandedCleanupRow(j joins, root, assignmentID string, options CleanupO
 	return landedCleanupRow{}, false, nil
 }
 
+// requalifyLandedRow re-plans one member against the repository as it stands now and
+// refuses a member the approved set no longer describes.
+func requalifyLandedRow(j joins, root string, planned landedCleanupRow, options CleanupOptions, scope string) (landedCleanupRow, error) {
+	current, selected, err := replanLandedCleanupRow(j, root, planned.assignment.ID, options, scope)
+	if err != nil {
+		return planned, err
+	}
+	if !selected {
+		return planned, errStaleFingerprint
+	}
+	if !sameLandedCleanupTuple(planned, current) {
+		return current, errStaleFingerprint
+	}
+	return current, nil
+}
+
+// applyLandedSet removes every qualified member through its own locked transaction. The
+// first member that cannot finish stops the set, and every member the set never started
+// reports its own unstarted outcome.
 func applyLandedSet(j joins, root string, set landedCleanupSet, options CleanupOptions, scope string) ([]CleanupPlan, error) {
 	plans := make([]CleanupPlan, 0, len(set.rows))
-	for _, planned := range set.rows {
+	unstarted := func(rows []landedCleanupRow) []CleanupPlan {
+		for _, row := range rows {
+			plans = append(plans, notAttemptedPlan(row.plan))
+		}
+		return plans
+	}
+	if err := preflightLandedSet(j, root, set, options, scope); err != nil {
+		return unstarted(set.rows), err
+	}
+	for i, planned := range set.rows {
 		if !planned.plan.Action.Removes() {
 			plans = append(plans, planned.plan)
 			continue
 		}
-		current, selected, err := replanLandedCleanupRow(j, root, planned.assignment.ID, options, scope)
+		current, err := requalifyLandedRow(j, root, planned, options, scope)
 		if err != nil {
-			return append(plans, planned.plan), err
-		}
-		if !selected || !sameLandedCleanupTuple(planned, current) {
-			if selected {
-				plans = append(plans, current.plan)
-			} else {
-				plans = append(plans, planned.plan)
-			}
-			return plans, errStaleFingerprint
+			plans = append(plans, faultedPlan(planned.plan, current.plan, err))
+			return unstarted(set.rows[i+1:]), err
 		}
 		planner := func(string) (CleanupPlan, error) {
 			fresh, stillSelected, planErr := replanLandedCleanupRow(j, root, planned.assignment.ID, options, scope)
@@ -340,10 +362,11 @@ func applyLandedSet(j joins, root string, set landedCleanupSet, options CleanupO
 		// The terminal callback keeps the lifecycle's post-settlement fault boundary between
 		// completed rows, where a later-row drift must still stop the set apply.
 		applied, applyErr := applyCleanupTransaction(j, root, planned.assignment.Worktree, current.plan.Fingerprint, planner, nil, func(CleanupPlan) error { return nil })
-		plans = append(plans, applied)
 		if applyErr != nil {
-			return plans, applyErr
+			plans = append(plans, faultedPlan(current.plan, applied, applyErr))
+			return unstarted(set.rows[i+1:]), applyErr
 		}
+		plans = append(plans, applied)
 	}
 	return plans, nil
 }

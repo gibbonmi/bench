@@ -228,18 +228,21 @@ func (set explicitCleanupSet) plans() []CleanupPlan {
 	return append(plans, set.failures...)
 }
 
-// applyArguments renders the set's own apply invocation: the selection mode, every
-// modifier the plan answered under, and one canonical identity per member. The identity
-// replaces the operand the caller typed, so no operand text reaches a command line.
+// applyArguments renders the set's own apply invocation: everything its re-plan command
+// names, then the digest this plan authorizes.
 func (set explicitCleanupSet) applyArguments(options CleanupOptions) []axi.InvocationArgument {
-	arguments := []axi.InvocationArgument{axi.KnownArgument("worktree"), axi.KnownArgument("clean")}
-	for _, modifier := range cleanupModifierFlags(options) {
-		arguments = append(arguments, axi.KnownArgument(modifier))
-	}
-	for _, row := range set.rows {
-		arguments = append(arguments, axi.KnownArgument("--target"), axi.KnownArgument(row.assignment.ID))
-	}
+	arguments := cleanArguments(options, set.targetSelectors()...)
 	return append(arguments, axi.KnownArgument("--apply"), axi.KnownArgument(set.fingerprint))
+}
+
+// targetSelectors names each member by its canonical assignment identity. The identity
+// replaces the operand the caller typed, so no operand text reaches a command line.
+func (set explicitCleanupSet) targetSelectors() []string {
+	selectors := make([]string, 0, 2*len(set.rows))
+	for _, row := range set.rows {
+		selectors = append(selectors, "--target", row.assignment.ID)
+	}
+	return selectors
 }
 
 // renderExplicitSet prints one row per selection outcome and, when the set is applicable
@@ -266,27 +269,38 @@ func renderExplicitSet(stdout io.Writer, set explicitCleanupSet, options Cleanup
 // applyExplicitSet runs every removable member through the existing per-target locked
 // transaction, so each member keeps its own authority checks, receipt, and recovery. A
 // member the plan retained passes through as the plan reported it. Each member re-plans
-// immediately before its own transaction, which stops a removal the approved set no longer
-// describes and gives the transaction the digest the repository answers to now.
+// immediately before its own transaction, which gives that transaction the digest the
+// repository answers to now. The first member that cannot finish stops the set, and every
+// member the set never started reports its own unstarted outcome.
 func applyExplicitSet(j joins, root string, set explicitCleanupSet, options CleanupOptions) ([]CleanupPlan, error) {
 	plans := make([]CleanupPlan, 0, len(set.rows))
-	for _, planned := range set.rows {
+	unstarted := func(rows []explicitCleanupRow) []CleanupPlan {
+		for _, row := range rows {
+			plans = append(plans, notAttemptedPlan(row.plan))
+		}
+		return plans
+	}
+	if err := preflightExplicitSet(j, root, set, options); err != nil {
+		return unstarted(set.rows), err
+	}
+	for i, planned := range set.rows {
 		if !planned.plan.Action.Removes() {
 			plans = append(plans, planned.plan)
 			continue
 		}
 		current, err := planExplicitCleanupRow(j, root, planned.assignment, options)
+		if err == nil && !sameExplicitCleanupTuple(planned, current) {
+			err = errStaleFingerprint
+		}
+		applied := current.plan
+		if err == nil {
+			applied, err = applyExplicitWith(j, root, current.plan.Target, current.targetFingerprint, options)
+		}
 		if err != nil {
-			return append(plans, planned.plan), err
+			plans = append(plans, faultedPlan(planned.plan, applied, err))
+			return unstarted(set.rows[i+1:]), err
 		}
-		if !sameExplicitCleanupTuple(planned, current) {
-			return append(plans, current.plan), errStaleFingerprint
-		}
-		applied, applyErr := applyExplicitWith(j, root, current.plan.Target, current.targetFingerprint, options)
 		plans = append(plans, applied)
-		if applyErr != nil {
-			return plans, applyErr
-		}
 	}
 	return plans, nil
 }
@@ -305,12 +319,20 @@ func cleanExplicitSet(j joins, root string, selection cleanSelection, stdout, st
 		}
 		return 0
 	}
-	if set.fingerprint == "" || !matchesFingerprint(set.fingerprint, selection.fingerprint) {
-		_ = renderCleanups(stdout, append([]CleanupPlan{staleSetPlan(selection.fingerprint)}, set.plans()...))
+	stale := append([]CleanupPlan{staleSetPlan(selection.fingerprint)}, set.plans()...)
+	// An unresolved selection has no scope to re-plan: the operands, not the digest, are
+	// what the caller has to correct, so that refusal renders no recovery command.
+	if set.fingerprint == "" {
+		_ = renderCleanups(stdout, stale)
+		return 1
+	}
+	replan := cleanArguments(selection.options, set.targetSelectors()...)
+	if !matchesFingerprint(set.fingerprint, selection.fingerprint) {
+		_ = renderStale(stdout, stale, replan)
 		return 1
 	}
 	plans, applyErr := applyExplicitSet(j, root, set, selection.options)
-	if err := renderCleanups(stdout, plans); err != nil {
+	if err := renderOutcomes(stdout, selection.fingerprint, plans, applyErr, replan); err != nil {
 		fmt.Fprintf(stderr, "bench worktree clean: %v\n", err)
 		return 1
 	}
@@ -318,32 +340,4 @@ func cleanExplicitSet(j joins, root string, selection cleanSelection, stdout, st
 		return 1
 	}
 	return 0
-}
-
-// cleanupModifierFlags names the discard modifiers one invocation carried. Every rendered
-// re-plan command reads them from here, so no surface can advertise a command that asks a
-// different question than the plan answered.
-func cleanupModifierFlags(options CleanupOptions) []string {
-	var flags []string
-	if options.DiscardIgnored {
-		flags = append(flags, "--discard-ignored")
-	}
-	if options.DiscardBranch {
-		flags = append(flags, "--discard-branch")
-	}
-	if options.Full {
-		flags = append(flags, "--full")
-	}
-	return flags
-}
-
-// staleSetPlan is the refusal row a set apply prints when the plan it carries no longer
-// describes the repository. The landed set and the explicit set share it, so their two
-// stale refusals cannot drift apart. The unclaimed set builds its own row instead, because
-// it reports branch refs under that mode's own tracked and ignored spellings.
-func staleSetPlan(fingerprint string) CleanupPlan {
-	return CleanupPlan{
-		Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown",
-		Recovery: "none", Fingerprint: fingerprint, Reason: errStaleFingerprint.Error(),
-	}
 }

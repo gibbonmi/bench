@@ -1,6 +1,7 @@
 package worktree
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -95,6 +96,17 @@ func renderUnclaimedAssignmentSet(stdout io.Writer, set unclaimedAssignmentSet) 
 
 func staleUnclaimedPlans(set unclaimedAssignmentSet) []CleanupPlan {
 	return []CleanupPlan{{Target: "unknown", Action: ActionError, Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: set.fingerprint, Reason: errStaleFingerprint.Error()}}
+}
+
+// renderUnclaimedOutcomes prints one unclaimed apply's rows and, on a stale refusal, the
+// exact command that re-plans the same branch selection. The rows carry this mode's own
+// refusal spelling, so the shared refusal row never reaches them.
+func renderUnclaimedOutcomes(stdout io.Writer, plans []CleanupPlan, err error) error {
+	replan := cleanArguments(CleanupOptions{DiscardBranch: true}, "--unclaimed")
+	if !errors.Is(err, errStaleFingerprint) {
+		return renderCleanups(stdout, plans)
+	}
+	return renderStale(stdout, plans, replan)
 }
 
 func applyUnclaimedAssignmentSet(root string, set unclaimedAssignmentSet) ([]CleanupPlan, error) {
