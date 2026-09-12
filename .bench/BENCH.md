@@ -126,6 +126,10 @@ After a chunk's ticket commits, freeze its delta and run Standards, Spec, and Co
 
 **Expand an approved implementation plan in scope.** The retained author may split, combine, or reorder chunks and expand ticket `Writes:` expectations or gate coverage within the approved behavior. When chunk boundaries change, record old-to-new stable IDs. Before using a plan expansion, update the affected spec and tickets; preserve acceptance coverage, dependencies, review checkpoints, existing checks, pass criteria, and required behavior. Unrelated scope, a material acceptance change, or a weakened guarantee still requires my decision. Record every plan or gate expansion with `bench learning`, including what changed, why, and verification; `/bench-drain` owns its later disposition.
 
+**Delegate a full run only on my request.** `--delegate` applies only to an approved `$bench-implement-spec --full <spec>` run with an approved ticket graph. Without that flag, the retained authorship contract above stays in force. The orchestrator gives each ticket its own delegate session, integrates the source serially, and lands the run. Production repairs stay with the recorded ticket author. `craft-line` owns the delegated tiers, the author limit, and the review route; `craft-delegate` owns the author transfer triggers.
+
+Chunks author concurrently only when their prerequisites are accepted and their expected writes do not overlap. A ticket in a dependent chunk waits for every prerequisite chunk checkpoint. A same-chunk successor ticket starts after its predecessor ticket commits green. A pending or red predecessor commit stops that successor dispatch. Every ticket contribution reaches the integrated chunk tip before that chunk's review begins.
+
 **Right-size the process; ask before deviating.** A few-line change does not need the full pipeline. You may propose a lighter path. A skip of a canonical step needs a standing approval or my explicit OK.
 The standing approvals are the table below, a size rule I have given you, and the fix-and-gate path for review findings. Behavior defects run focused regression checks, then the gate.
 

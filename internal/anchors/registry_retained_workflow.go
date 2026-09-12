@@ -1,8 +1,13 @@
 package anchors
 
-// retainedWorkflowAnchors keep plan expansion within the approved behavior while
+// retainedWorkflowAnchors is the whole retained-workflow family: the default
+// contract below and the opt-in delegated exception that follows it. The
+// registry reads this one name, so both groups evaluate together.
+var retainedWorkflowAnchors = append(append([]Anchor{}, defaultWorkflowAnchors...), delegatedWorkflowAnchors...)
+
+// defaultWorkflowAnchors keep plan expansion within the approved behavior while
 // allowing the retained author to update the plan before new evidence is used.
-var retainedWorkflowAnchors = []Anchor{
+var defaultWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: RequireInSection, Section: "Slicing a build for delegates", Needle: "During a build, `.bench/BENCH.md` owns approved in-scope plan expansion.", Diagnostic: "retained workflow: craft-spec dropped the canonical plan-expansion owner"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "When chunk boundaries change, record old-to-new stable IDs.", Diagnostic: "retained workflow: operating guide dropped changed-chunk identity mapping"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "Before using a plan expansion, update the affected spec and tickets; preserve acceptance coverage, dependencies, review checkpoints, existing checks, pass criteria, and required behavior.", Diagnostic: "retained workflow: operating guide dropped plan-update timing or preserved guarantees"},
@@ -11,6 +16,38 @@ var retainedWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-gate/SKILL.md", Kind: Require, Needle: "An in-scope gate addition during implementation follows `.bench/BENCH.md`'s approved plan-expansion policy before the author uses it.", Diagnostic: "retained workflow: craft-gate dropped approved expansion timing"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-tickets/SKILL.md", Kind: Require, Needle: "`Writes:` predicts the touched paths; `.bench/BENCH.md` owns how the retained author updates that expectation before an approved in-scope expansion is used.", Diagnostic: "retained workflow: craft-tickets restored Writes as an approval boundary"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "In the charge", Needle: "A user-directed write delegate treats `Writes:` as an expectation.", Diagnostic: "retained workflow: delegation discipline restored Writes as a refusal boundary"},
+}
+
+// delegatedWorkflowAnchors pin the opt-in delegated exception. They join the
+// retained-workflow family because the same owners carry both contracts, and a
+// reader who loses one clause loses the boundary between them. Each needle is
+// the instruction's one source; no anchor claims to prove native dispatch.
+var delegatedWorkflowAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "`--delegate` applies only to an approved `$bench-implement-spec --full <spec>` run with an approved ticket graph.", Diagnostic: "retained workflow: operating guide dropped the delegated opt-in entry"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "A ticket in a dependent chunk waits for every prerequisite chunk checkpoint.", Diagnostic: "retained workflow: operating guide dropped the delegated prerequisite-checkpoint wait"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "A same-chunk successor ticket starts after its predecessor ticket commits green.", Diagnostic: "retained workflow: operating guide dropped the green predecessor dispatch rule"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "A pending or red predecessor commit stops that successor dispatch.", Diagnostic: "retained workflow: operating guide dropped the pending-or-red predecessor stop"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "Production repairs stay with the recorded ticket author.", Diagnostic: "retained workflow: operating guide dropped delegated ticket-author repair ownership"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "`--delegate` authorizes selection and eligible escalation through every configured tier, including top.", Diagnostic: "retained workflow: craft-line dropped the delegated tier authorization"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "An unavailable or unbound model stops that dispatch without a substitution.", Diagnostic: "retained workflow: craft-line dropped the unbound delegated model stop"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "The declared author limit counts concurrently active ticket writers, not retained idle author sessions.", Diagnostic: "retained workflow: craft-line dropped the active-writer author limit"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "Every delegated review axis uses the invoking harness's configured mid binding at high effort.", Diagnostic: "retained workflow: craft-line dropped the delegated mid review route"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Require, Needle: "A reviewer-approved delegated run gives each ticket its own retained author session.", Diagnostic: "retained workflow: craft-delegate dropped the delegated per-ticket author"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "Delegated author transfer", Needle: "Two completed attempts with no progress permit a replacement or a model change only after a recorded reassessment.", Diagnostic: "retained workflow: delegation discipline dropped the no-progress transfer trigger"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "Delegated author transfer", Needle: "A recorded terminal author failure permits a replacement or a model change.", Diagnostic: "retained workflow: delegation discipline dropped the terminal-failure transfer trigger"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "Delegated author transfer", Needle: "An exhausted declared author cap permits a replacement or a model change.", Diagnostic: "retained workflow: delegation discipline dropped the cap-exhaustion transfer trigger"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "Delegated author transfer", Needle: "A lost author session permits a replacement or a model change.", Diagnostic: "retained workflow: delegation discipline dropped the lost-session transfer trigger"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "Delegated author transfer", Needle: "Every author transfer waits for confirmed termination of the old writer.", Diagnostic: "retained workflow: delegation discipline dropped the confirmed writer termination"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "It refuses without `--full`, an approved spec, or an approved ticket graph.", Diagnostic: "retained workflow: implementation phase dropped the delegated entry refusals"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "Declare the configured model, effort, iteration cap, and author limit before the first dispatch.", Diagnostic: "retained workflow: implementation phase dropped the delegated dispatch declaration"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "A resumed delegated run keeps the recorded identities, source pins, replacement history, and pending obligations.", Diagnostic: "retained workflow: implementation phase dropped delegated resumption contents"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Require, Needle: "A delegated chunk review starts after every ticket of the chunk reaches the integrated chunk tip.", Diagnostic: "retained workflow: review phase dropped the integrated chunk-tip review fence"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Require, Needle: "Each delegated axis excludes the orchestrator and every current and former author of the run.", Diagnostic: "retained workflow: review phase dropped the delegated axis exclusions"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "A delegated exit reconciles every known invocation against the recorded assessment attempts.", Diagnostic: "retained workflow: final check dropped the delegated account reconciliation"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "That account carries failed dispatches, every author, every review axis, diagnostics, verification, and orchestration work.", Diagnostic: "retained workflow: final check dropped an account inventory member"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "Delegated verification launches no paid comparison and changes no model default.", Diagnostic: "retained workflow: final check dropped the no-paid-comparison boundary"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "The orchestrator performs the final verification on the final source before the landing.", Diagnostic: "retained workflow: final check dropped the orchestrator final verification"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-tickets/SKILL.md", Kind: Require, Needle: "A delegated run keeps these serial green ticket checkpoints under the operating guide's delegated policy.", Diagnostic: "retained workflow: craft-tickets dropped the delegated serial ticket checkpoint"},
 }
 
 var implementationContinuationAnchors = []Anchor{

@@ -60,6 +60,14 @@ The conditional review line uses high effort and ~1 iteration. A Codex mid imple
 Every other implementation sends each axis to the invoking harness's mid binding.
 A different implementation model or session requires user direction. The author can adjust effort in the retained session and reports the change.
 
+## Delegated author lines
+
+`--delegate` authorizes selection and eligible escalation through every configured tier, including top.
+An unavailable or unbound model stops that dispatch without a substitution.
+The declared author limit counts concurrently active ticket writers, not retained idle author sessions.
+Every delegated review axis uses the invoking harness's configured mid binding at high effort.
+That route applies to cheap, mid, and top authors alike. A no-flag run keeps the conditional review line above.
+
 ## Classify reds before the ladder moves
 
 Pin the inherited baseline at stage start. Classify every red before retry or escalation.

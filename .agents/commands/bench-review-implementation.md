@@ -41,6 +41,8 @@ the file `.bench/BENCH.md`. Each falsification finding takes one explicit
 outcome of accept, merge, or dismiss. An accepted falsification
 finding joins the review findings and takes the repair-routing disposition.
 
+A delegated chunk review starts after every ticket of the chunk reaches the integrated chunk tip. A per-ticket review does not replace that full-chunk review. Each delegated axis excludes the orchestrator and every current and former author of the run.
+
 The successor chunk starts only after findings and repair coverage close. After the last chunk, the retained author reconciles overall acceptance and integration before landing.
 
 ## Process
