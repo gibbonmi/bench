@@ -1,6 +1,6 @@
 ---
 name: craft-research
-description: The research discipline — the factual question graph, primary sources only, adaptive round-based fan-out, coordinator re-verification, and one cited durable output per run. Use whenever the work becomes factual reading legwork.
+description: The research discipline — the factual question graph, primary sources only, and one cited durable output per run. Use whenever the work becomes factual reading legwork in shaping, specification, diagnosis, assessment, or implementation.
 index: doing factual reading legwork / writing a cited research report
 ---
 

@@ -35,6 +35,9 @@ const (
 	// proseBudgetSkillFile is the one file per skill directory that the budget grades. A
 	// skill's references and assets stay outside the reviewed universe.
 	proseBudgetSkillFile = "SKILL.md"
+	// proseBudgetDiagPrefix opens every diagnostic this check emits. The shared listing
+	// enumerator takes it, so a refusal reads the same whichever check found it.
+	proseBudgetDiagPrefix = "prose-budget"
 )
 
 // proseBudgetPolicy is the profile's table. It holds exact subject rows and glob rows that
@@ -181,20 +184,13 @@ func proseBudgetSubjects(root string, policy proseBudgetPolicy) (subjects, diags
 	for subject := range policy.exact {
 		add(subject)
 	}
-	entries, rootDiag := proseBudgetSkillEntries(root)
-	if rootDiag != "" {
-		diags = append(diags, rootDiag)
-	}
+	entries, treeDiags := listingTreeEntries(root, proseBudgetSkillsDir, proseBudgetDiagPrefix)
+	diags = append(diags, treeDiags...)
 	for _, entry := range entries {
-		rel := path.Join(proseBudgetSkillsDir, entry.Name())
-		if entry.Type()&os.ModeSymlink != 0 {
-			diags = append(diags, "prose-budget subject refused: "+rel+" is a symbolic link, not a regular directory")
-			continue
-		}
 		if !entry.IsDir() {
 			continue
 		}
-		skill := path.Join(rel, proseBudgetSkillFile)
+		skill := path.Join(proseBudgetSkillsDir, entry.Name(), proseBudgetSkillFile)
 		// A skill directory with no SKILL.md is a fact for a different check. Only a
 		// subject the table names must exist.
 		if _, err := os.Lstat(filepath.Join(root, filepath.FromSlash(skill))); err == nil {
@@ -203,30 +199,6 @@ func proseBudgetSubjects(root string, policy proseBudgetPolicy) (subjects, diags
 	}
 	sort.Strings(subjects)
 	return subjects, diags
-}
-
-// proseBudgetSkillEntries classifies the skills root before anything reads through it. The
-// check classifies the root for the same reason it classifies each child. A linked
-// `.agents/skills` would enumerate whatever it points at under the canonical path. An absent
-// root yields no entries and no diagnostic, because only a subject the table names must
-// exist.
-func proseBudgetSkillEntries(root string) ([]os.DirEntry, string) {
-	dir := filepath.Join(root, filepath.FromSlash(proseBudgetSkillsDir))
-	info, err := os.Lstat(dir)
-	switch {
-	case err != nil:
-		return nil, ""
-	case info.Mode()&os.ModeSymlink != 0:
-		return nil, "prose-budget subject refused: " + proseBudgetSkillsDir + " is a symbolic link, not a regular directory"
-	case !info.IsDir():
-		return nil, "prose-budget subject refused: " + proseBudgetSkillsDir + " is not a directory"
-	}
-	// os.ReadDir sorts by filename, so the enumeration reports in one order run to run.
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return nil, "prose-budget subject unreadable: " + proseBudgetSkillsDir + ": " + err.Error()
-	}
-	return entries, ""
 }
 
 // proseBudgetLineCount counts lines the way a reader does, so a file ending with a newline
@@ -238,14 +210,10 @@ func proseBudgetLineCount(body []byte) int {
 	return bytes.Count(bytes.TrimSuffix(body, []byte("\n")), []byte("\n")) + 1
 }
 
-// proseBudgetTable renders the profile subsection that the checker parses. It takes the rows
-// verbatim, so a test case can corrupt the header or a cell without a second table author.
+// proseBudgetTable renders this check's profile subsection. The rendering itself belongs
+// to profileBudgetTable, which both budget checks share; only the section name differs.
 func proseBudgetTable(header string, rows ...string) string {
-	body := "# benchkit\n\n## Gate\n\n### " + proseBudgetSection + "\n\n" + header + "\n|---|---|\n"
-	for _, row := range rows {
-		body += row + "\n"
-	}
-	return body + "\n## Notes for cold sessions\n\ntail\n"
+	return profileBudgetTable(proseBudgetSection, header, rows...)
 }
 
 // proseBudgetHeader is the header row the parser anchors the table on.

@@ -1,6 +1,6 @@
 ---
 name: craft-domain
-description: The domain-modeling companion — canonical terms with Avoid lists, concrete scenarios at concept edges, producer-derived equivalence partitions, and code-versus-claim checks. Use whenever a term feels vague, overloaded, or contradicted by the code.
+description: The domain-modeling companion — canonical terms with Avoid lists, scenarios at concept edges, and code-versus-claim checks. Use during grilling, shaping, or spec authoring, or whenever a term feels vague, overloaded, or contradicted by the code.
 index: pinning domain terms / enumerating concept-edge scenarios
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: craft-spec
-description: The spec-authoring discipline — the acceptance-coverage-map row schema, the edges a spec must dispose of, how stories and scope cuts are sized, and how a build is sliced into review chunks. Use when you author or audit a spec, or write coverage rows.
+description: The spec-authoring discipline — the acceptance-coverage-map row schema, how stories and scope cuts are sized, and how a build is sliced into review chunks. Use when you author or audit a spec, write coverage rows, or decide an edge is a Won't handle.
 index: coverage-map rows, edge inventories, story sizing, and review-chunk slicing for a spec
 ---
 

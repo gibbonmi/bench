@@ -58,7 +58,10 @@ internal/conformance/registry/registry.go 403
 # precedent above: internal/conformance/ has no file-count headroom, so a split
 # trades a line breach for a directory breach. Granted 2026-09-11 under
 # delegate-boot-cost; the exact cap re-asks on the next line of growth.
-internal/conformance/skill_description_budgets_test.go 463
+# Re-asked 2026-09-11 after the C2 review round: the check gained the duplicate-row
+# guard, the shared listing enumerator, and one red-capable test per fail-closed
+# diagnostic.
+internal/conformance/skill_description_budgets_test.go 592
 internal/conformance/docs_workflow_checks_test.go 786
 internal/conformance/fixture_bite_test.go 826
 # Re-asked 2026-09-11 under delegate-boot-cost ticket 4: the live-tree

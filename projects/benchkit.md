@@ -514,16 +514,16 @@ refused unread.
 A skill or command description enters the harness listing that every turn pays for. This
 table is the one source for how long each description may be, and the
 `skill-description-budgets` check parses it rather than repeating its numbers. The check
-counts the rendered characters of the first value line. A description folded onto a
-second line is reported rather than counted short.
+counts the rendered characters of the first value line. The check reports a description
+folded onto a second line rather than counting it short.
 
 | subject | limit |
 |---|---|
 | `.agents/skills/*/SKILL.md` | 250 |
 | `.agents/commands/*.md` | 250 |
 
-A description the check cannot find is reported as missing. A symbolic link or a special
-file found where a subject belongs is refused unread.
+The check reports a description it cannot find as missing. It refuses a symbolic link or
+a special file unread where a subject belongs.
 
 ### Prose mechanics
 

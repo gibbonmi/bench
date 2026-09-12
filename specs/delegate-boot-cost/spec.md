@@ -194,7 +194,7 @@ The Codex side records the measurement in this spec and ships nothing.
 | DB22 | 22, 24 | Each trimmed description keeps the leading words its body repeats, and craft-skills names the profile table. | review-owned | A trim that drops a trigger word breaks invocation silently. |
 | DB23 | 23 | The invocation policy keeps every current row, so no command gains the disable key. | existing `skills-index-command-adapters` check, canary `command-invocation-disabled-against-policy`, through `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A flip reds the existing check. |
 | DB24 | 13 | Each new canary family has at least one fixture directory. | `conformance-canary-families` meta check, through `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | A check with no family is not registered. |
-| DB25 | 17 | A description with multibyte characters counts runes and not bytes. | new `TestSkillDescriptionBudgetCountsRunes` in the check's file | A byte count reds a correct description. |
+| DB25 | 17 | A description with multibyte characters counts runes and not bytes. | new `TestSkillDescriptionBudgetCountsCollapsedRunes` in the check's file | A byte count reds a correct description. |
 | DB26 | 25, 26 | The Further notes record the two Codex boot runs and their equal counts. | review-owned | The no-op rests on this record. |
 
 ### Edge inventory
@@ -230,6 +230,7 @@ The Codex side records the measurement in this spec and ships nothing.
 - `internal/conformance/registry/registry.go`
 - `internal/conformance/registry_test.go`
 - `internal/conformance/tier_test.go`
+- `internal/conformance/prose_budget_test.go`
 - `internal/gate/lane_select_test.go`
 - `projects/benchkit.md`
 - `tests/canary/claude-agent-definitions/` (new)
