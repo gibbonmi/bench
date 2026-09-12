@@ -237,6 +237,8 @@ The Codex side records the measurement in this spec and ships nothing.
 - `tests/canary/load-validity-metadata/`
 - `tests/canary/guidance-prose-budgets/`
 - `tests/canary/line-routing/`
+- `tests/canary/row-next-grammar/`
+- `tests/canary/skills-index-command-adapters/`
 - `.agents/skills/bench-craft-delegate/SKILL.md`
 - `.agents/skills/bench-craft-skills/SKILL.md`
 - `.agents/skills/bench-craft-spec/SKILL.md`
