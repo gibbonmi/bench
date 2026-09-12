@@ -1,5 +1,5 @@
 ---
-description: Upstream sync — pull Matt Pocock's skills + kunchenguid's tooling, diff against what Bench already incorporates, and propose what to adopt. Runs each candidate through the craft-synthesis discipline; records current decisions in the provenance table and notable user-facing changes in the changelog. Proposes, never auto-merges. Maintenance, not a workflow phase.
+description: Upstream sync — pull Matt Pocock's skills and kunchenguid's tooling, diff against what Bench already incorporates, and propose what to adopt. Each candidate runs through craft-synthesis. Proposes, never auto-merges. Maintenance, not a phase.
 disable-model-invocation: true
 ---
 

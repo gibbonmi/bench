@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/SKILL.md",
+    "old": "A review axis runs as `bench-reviewer`.",
+    "new": "A review axis runs as the reviewer type."
+  }
+]

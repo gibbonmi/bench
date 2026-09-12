@@ -1,6 +1,6 @@
 ---
 name: craft-review
-description: The three-axis review judgment — Standards, Spec, Coverage — and the citation standard a finding must meet. Use whenever reviewing a diff; the /bench-review-implementation phase, a delegate's returned work, a PR, or a self-review before commit all charge their review from here. Advisory, never the oracle.
+description: The three-axis review judgment — Standards, Spec, Coverage — and the citation standard a finding must meet. Use whenever you review a diff: the /bench-review-implementation phase, a delegate's work, a PR, or a self-review. Advisory, never the oracle.
 index: reviewing a diff / what a finding must cite
 ---
 

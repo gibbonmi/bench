@@ -1,6 +1,6 @@
 ---
 name: craft-adr
-description: How to write decision records and project docs for an agent or teammate with no memory of the project's history — document the resulting state, not the change. Use whenever someone says "write an ADR" or "document this decision", recording an architectural decision, updating project docs, writing a README, or capturing why something is the way it is.
+description: How to write decision records and project docs for an agent or teammate with no memory of the project's history — document the resulting state, not the change. Use whenever someone says "write an ADR" or "document this decision".
 index: recording a decision or writing docs
 ---
 

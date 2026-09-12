@@ -1,6 +1,6 @@
 ---
 name: craft-delegate
-description: The delegation discipline — when to spawn a subagent, how to charge and scope it, when it needs an isolated worktree, and how a done-claim is verified. Use whenever spawning any delegate (an axis review, a scoped build, a fan-out search) or accepting one's result. The model/effort half of the decision lives in craft-line.
+description: The delegation discipline — when to spawn a subagent, how to charge and scope it, when it needs an isolated worktree, and how a done-claim is verified. Use whenever you spawn any delegate or accept one's result. The line lives in craft-line.
 index: spawning a delegate / verifying a delegate's done-claim
 ---
 
@@ -17,6 +17,16 @@ During retained implementation, brief higher-tier diagnostic consultation is pre
 Never delegate a decision the reviewer owns. A change of implementation author or session requires user direction. When the user explicitly selects delegated authorship, the write delegate uses an isolated worktree and this skill's charge and verification rules. A harness limitation never changes authorship silently.
 
 Before you spawn a delegation that changes who performs the requested work, surface it.
+
+## The agent type
+
+Every Claude delegate runs as a Bench agent type, because the full tool set costs
+thousands of tokens before the delegate reads one line. A review axis and a
+diagnostic consultation run as `bench-reviewer`. A user-directed write
+delegation runs as `bench-writer`. The general-purpose type is not a Bench delegate
+type. A fork runs only for work that needs the parent's context, and its inherited
+boot is therefore a choice. Each type declares its own tools and no model, so the
+charge still names the resolved bound model id.
 
 ## The charge
 

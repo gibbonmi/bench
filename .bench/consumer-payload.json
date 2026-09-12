@@ -17,6 +17,7 @@
   { "source": ".bench/adapters", "mode": "0755", "tree": true, "audience": "consumer" },
   { "source": ".bench/hooks", "mode": "0755", "tree": true, "audience": "consumer" },
   { "source": ".bench/lib", "mode": "0644", "tree": true, "audience": "consumer" },
+  { "source": ".claude/agents", "mode": "0644", "tree": true, "audience": "consumer" },
   { "source": ".claude/README.md", "mode": "0644", "audience": "consumer" },
   { "source": ".claude/settings.json", "mode": "0644", "audience": "consumer" },
   { "source": ".codex/hooks.json", "mode": "0644", "audience": "consumer" }

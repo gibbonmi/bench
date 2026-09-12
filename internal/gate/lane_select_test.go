@@ -250,7 +250,7 @@ func TestSelectLaneByClass(t *testing.T) {
 		{
 			name:    "PL32 the kit profile",
 			changes: []ComposedChange{laneChange("projects/benchkit.md")},
-			checks:  []string{"prose", "guidance-prose-budgets", "profile-lane-table"},
+			checks:  []string{"prose", "guidance-prose-budgets", "skill-description-budgets", "profile-lane-table"},
 			classes: []string{"markdown", "benchkit-profile"},
 		},
 		{

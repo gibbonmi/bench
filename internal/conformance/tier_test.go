@@ -434,6 +434,7 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestFixtureBiteProofArchitecture":                             true,
 	"TestGuidanceProseBudgetCanaryFixtureBites":                    true,
 	"TestGuidanceProseBudgetsHoldOnTheLiveTree":                    true,
+	"TestSkillDescriptionBudgetsHoldOnTheLiveTree":                 true,
 	"TestPreparedReviewGuidanceHoldsOnTheLiveTree":                 true,
 	"TestProseMechanicsCanaryFixturesBite":                         true,
 	"TestProseMechanicsHoldsOnTheLiveTree":                         true,

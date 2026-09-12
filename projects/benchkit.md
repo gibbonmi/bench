@@ -357,6 +357,7 @@ a broken document reds at the commit.
 | `structure` | `bench structure --growth <base>` | go-source |
 | `decision-map-integrity` | `bench test --check decision-map-integrity` | decision-documents |
 | `guidance-prose-budgets` | `bench test --check guidance-prose-budgets` | benchkit-profile |
+| `skill-description-budgets` | `bench test --check skill-description-budgets` | benchkit-profile |
 | `profile-lane-table` | `bench test --check profile-lane-table` | benchkit-profile |
 | `roadmap-detail-integrity` | `bench test --check roadmap-detail-integrity` | roadmap-board |
 | `retro-improvement-markers` | `bench test --check retro-improvement-markers` | capture-retros |
@@ -439,6 +440,7 @@ current-state advertisement of its non-meta input bindings:
 | `decision-map-integrity` | `decision-documents` |
 | `injected-port-registry` | `go-source` |
 | `guidance-prose-budgets` | `benchkit-profile` |
+| `skill-description-budgets` | `benchkit-profile` |
 | `profile-lane-table` | `benchkit-profile` |
 | `roadmap-detail-integrity` | `roadmap-board` |
 | `structure-accept-currency` | `catch-all` |
@@ -448,6 +450,7 @@ current-state advertisement of its non-meta input bindings:
 | `entry-point-parity` | `catch-all` |
 | `harness-record` | `catch-all` |
 | `ticket-grammar` | `catch-all` |
+| `claude-agent-definitions` | `catch-all` |
 
 A green verdict records the exact whole subject and oracle. Reuse is allowed only for a
 current exact green; partial/component and reduced-scope records are legacy input classes
@@ -505,6 +508,22 @@ anybody editing the checker. Every other `.agents/commands/*.md` file stays outs
 reviewed universe. The `.claude/skills/*` adapter symlinks are distribution surfaces
 rather than subjects. A symbolic link or special file found where a subject belongs is
 refused unread.
+
+### Skill description budgets
+
+A skill or command description enters the harness listing that every turn pays for. This
+table is the one source for how long each description may be, and the
+`skill-description-budgets` check parses it rather than repeating its numbers. The check
+counts the rendered characters of the first value line. The check reports a description
+folded onto a second line rather than counting it short.
+
+| subject | limit |
+|---|---|
+| `.agents/skills/*/SKILL.md` | 250 |
+| `.agents/commands/*.md` | 250 |
+
+The check reports a description it cannot find as missing. It refuses a symbolic link or
+a special file unread where a subject belongs.
 
 ### Prose mechanics
 

@@ -1,5 +1,5 @@
 ---
-description: Periodic platform assessment — verify the previous assessment's backlog landed against the tree, fan out read-only area sweeps on the mid tier, synthesize adversarially on the top tier, and produce a dated ASSESSMENT.md that replaces its predecessor with a ranked, agent-time-sized backlog. Deliberately invoked on cadence or on ask; surfaces findings, never merges. Maintenance, not a workflow phase.
+description: Periodic platform assessment — verify the previous backlog against the tree, fan out read-only sweeps on the mid tier, synthesize adversarially on the top tier, and produce an ASSESSMENT.md. Surfaces findings, never merges. Maintenance, not a phase.
 disable-model-invocation: true
 ---
 

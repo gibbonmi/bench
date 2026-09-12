@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/SKILL.md",
+    "old": "A write delegation runs as `bench-writer`.",
+    "new": "A write delegation runs as `bench-writer`.\nAn audit runs as `bench-auditor`."
+  }
+]
