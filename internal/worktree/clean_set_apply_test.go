@@ -21,18 +21,22 @@ import (
 
 // removableSetFixture creates count landed, clean assignments. Every member of that
 // selection plans a removal, so a fault or a drift on one member is always a fault or a
-// drift the set reaches with earlier members already removable.
-func removableSetFixture(t *testing.T, count int) (string, string, []Creation) {
+// drift the set reaches with earlier members already removable. It also returns each
+// member's landed file by identity, so no caller re-spells the naming scheme it chose.
+func removableSetFixture(t *testing.T, count int) (string, string, []Creation, map[string]string) {
 	t.Helper()
 	root := newWorktreeRepo(t)
 	home := filepath.Join(root, ".bench-home")
 	creations := make([]Creation, 0, count)
+	files := make(map[string]string, count)
 	for i := 0; i < count; i++ {
 		creation := mustCreate(t, root, home, fmt.Sprintf("set-apply-%d", i), fmt.Sprintf("set apply %d", i))
-		landAssignment(t, root, creation, fmt.Sprintf("member-%d.txt", i))
+		name := fmt.Sprintf("member-%d.txt", i)
+		landAssignment(t, root, creation, name)
 		creations = append(creations, creation)
+		files[creation.Assignment.ID] = filepath.Join(creation.Path, name)
 	}
-	return root, home, creations
+	return root, home, creations, files
 }
 
 // explicitIdentities names every member of creations by its canonical identity.
@@ -51,16 +55,6 @@ func explicitTargetArguments(creations []Creation) []string {
 		arguments = append(arguments, "--target", identity)
 	}
 	return arguments
-}
-
-// landedFileByAssignment maps each member's identity to the landed file in its checkout.
-// A rewrite of that file is the tracked drift every fixture below uses.
-func landedFileByAssignment(creations []Creation, names ...string) map[string]string {
-	files := make(map[string]string, len(creations))
-	for i, creation := range creations {
-		files[creation.Assignment.ID] = filepath.Join(creation.Path, names[i])
-	}
-	return files
 }
 
 // driftTracked rewrites one member's landed file, which leaves that member's tracked state
@@ -101,8 +95,7 @@ func TestCleanSetPreexistingDrift(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			root, home, creations := removableSetFixture(t, 2)
-			files := landedFileByAssignment(creations, "member-0.txt", "member-1.txt")
+			root, home, creations, files := removableSetFixture(t, 2)
 			selectors := tc.selectors(creations)
 			plan, planErr, planCode := runCleanup(t, root, home, selectors...)
 			if planCode != 0 || planErr != "" {
@@ -138,8 +131,7 @@ func TestCleanSetPreflightAllRows(t *testing.T) {
 	t.Parallel()
 	t.Run("explicit", func(t *testing.T) {
 		t.Parallel()
-		root, _, creations := removableSetFixture(t, 2)
-		files := landedFileByAssignment(creations, "member-0.txt", "member-1.txt")
+		root, _, creations, files := removableSetFixture(t, 2)
 		j := defaultJoins()
 		set := planExplicitSet(j, root, explicitIdentities(creations), CleanupOptions{})
 		if set.fingerprint == "" || len(set.rows) != 2 {
@@ -156,8 +148,7 @@ func TestCleanSetPreflightAllRows(t *testing.T) {
 	})
 	t.Run("landed", func(t *testing.T) {
 		t.Parallel()
-		root, _, creations := removableSetFixture(t, 2)
-		files := landedFileByAssignment(creations, "member-0.txt", "member-1.txt")
+		root, _, creations, files := removableSetFixture(t, 2)
 		j := defaultJoins()
 		set, planErr := planLandedSet(j, root, CleanupOptions{}, "")
 		if planErr != nil || len(set.rows) != 2 {
@@ -194,25 +185,19 @@ func requireAllNotAttempted(t *testing.T, plans []CleanupPlan) {
 // member's removal stays completed.
 func TestCleanSetLateDrift(t *testing.T) {
 	t.Parallel()
-	root, _, creations := removableSetFixture(t, 2)
-	files := landedFileByAssignment(creations, "member-0.txt", "member-1.txt")
+	root, _, creations, files := removableSetFixture(t, 2)
 	j := defaultJoins()
 	set := planExplicitSet(j, root, explicitIdentities(creations), CleanupOptions{})
 	if set.fingerprint == "" || len(set.rows) != 2 {
 		t.Fatalf("explicit set = %#v, want two applicable members", set)
 	}
 	settled, drifted := memberByID(t, creations, set.rows[0].assignment.ID), memberByID(t, creations, set.rows[1].assignment.ID)
-	mutated, locks := false, 0
-	j.cleanupBoundary = func(step LifecycleStep) error {
-		if step == StepApplyLocked {
-			locks++
-		}
-		if locks == 2 && !mutated {
-			mutated = true
-			driftTracked(t, files, drifted.Assignment.ID)
-		}
+	mutated := false
+	j.cleanupBoundary = atSecondHit(StepApplyLocked, func() error {
+		mutated = true
+		driftTracked(t, files, drifted.Assignment.ID)
 		return nil
-	}
+	})
 
 	plans, err := applyExplicitSet(j, root, set, CleanupOptions{})
 	if !errors.Is(err, errStaleFingerprint) || !mutated {
@@ -346,4 +331,58 @@ func requireMembersPresent(t *testing.T, creations []Creation) {
 			t.Fatalf("refused apply removed %s: %v", creation.Path, err)
 		}
 	}
+}
+
+// atSecondHit returns a boundary that runs act once, the second time the lifecycle reaches
+// step. The second hit is the second member's turn, so act stands in the window after the
+// first member finished and before the second one proceeds. Every fixture that needs that
+// window counts it here, whether it drifts the repository or faults the transaction.
+func atSecondHit(step LifecycleStep, act func() error) Fault {
+	hits, spent := 0, false
+	return func(reached LifecycleStep) error {
+		if reached != step || spent {
+			return nil
+		}
+		if hits++; hits < 2 {
+			return nil
+		}
+		spent = true
+		return act()
+	}
+}
+
+// driftAtSecondRequalify runs change in the window before the second member requalifies.
+func driftAtSecondRequalify(t *testing.T, change func()) Fault {
+	t.Helper()
+	return atSecondHit(StepMemberRequalify, func() error { change(); return nil })
+}
+
+// breakLedger leaves the assignment ledger unreadable, so any re-plan that reads it faults
+// for a reason that is not drift. Every member stays exactly as its plan described.
+func breakLedger(t *testing.T, root string) {
+	t.Helper()
+	ledger, err := intent.Address(root)
+	mustNoError(t, err)
+	mustWrite(t, ledger, []byte("{not a ledger\n"), 0o644)
+}
+
+// unclaimedBranchFixture creates a repository holding one unclaimed assignment branch per
+// owner letter. Those refs are the selection the unclaimed mode plans over.
+func unclaimedBranchFixture(t *testing.T, owners ...string) (string, string) {
+	t.Helper()
+	root := newWorktreeRepo(t)
+	home := filepath.Join(root, ".bench-home")
+	for _, owner := range owners {
+		addUnclaimedBranch(t, root, owner)
+	}
+	return root, home
+}
+
+// addUnclaimedBranch creates one more unclaimed assignment branch, which changes the
+// selection any earlier plan described.
+func addUnclaimedBranch(t *testing.T, root, owner string) string {
+	t.Helper()
+	ref := intent.AssignmentBranchRef(strings.Repeat(owner, 32), strings.Repeat("f", 32))
+	gitRun(t, root, "branch", strings.TrimPrefix(ref, "refs/heads/"))
+	return ref
 }

@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/intent"
 )
 
 // TestCleanSetApplyTimeStaleWiring is COV-8. The renderer is proved elsewhere; this holds the
@@ -71,12 +70,7 @@ func TestCleanSetApplyTimeStaleWiring(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			root := newWorktreeRepo(t)
-			home := filepath.Join(root, ".bench-home")
-			for _, owner := range []string{"a", "b"} {
-				ref := intent.AssignmentBranchRef(strings.Repeat(owner, 32), strings.Repeat("f", 32))
-				gitRun(t, root, "branch", strings.TrimPrefix(ref, "refs/heads/"))
-			}
+			root, home := unclaimedBranchFixture(t, "a", "b")
 			set, err := planUnclaimedAssignmentSet(root, unclaimedOptions())
 			mustNoError(t, err)
 			if len(set.rows) != 2 {
@@ -86,8 +80,7 @@ func TestCleanSetApplyTimeStaleWiring(t *testing.T) {
 			j.cleanupBoundary = func(step LifecycleStep) error {
 				if step == StepUnlockedReplan && !raced {
 					raced = true
-					ref := intent.AssignmentBranchRef(strings.Repeat("d", 32), strings.Repeat("f", 32))
-					gitRun(t, root, "branch", strings.TrimPrefix(ref, "refs/heads/"))
+					addUnclaimedBranch(t, root, "d")
 				}
 				return nil
 			}

@@ -127,9 +127,7 @@ func staleSetPlan(fingerprint string) CleanupPlan {
 	}
 }
 
-// cleanupModifierFlags names the discard modifiers one invocation carried. Every rendered
-// command reads them from here, so no surface can advertise a command that asks a different
-// question than the plan answered.
+// cleanupModifierFlags names the discard modifiers one invocation carried.
 func cleanupModifierFlags(options CleanupOptions) []string {
 	var flags []string
 	if options.DiscardIgnored {

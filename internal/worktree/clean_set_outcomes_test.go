@@ -17,23 +17,12 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/intent"
 )
 
 // faultAtSecondLock stops the second target transaction before it takes its lock, which
 // leaves the first member completed and every later member unstarted.
 func faultAtSecondLock(j *joins, stop error) {
-	locks := 0
-	j.cleanupBoundary = func(step LifecycleStep) error {
-		if step != StepApplyLocked {
-			return nil
-		}
-		locks++
-		if locks == 2 {
-			return stop
-		}
-		return nil
-	}
+	j.cleanupBoundary = atSecondHit(StepApplyLocked, func() error { return stop })
 }
 
 // TestCleanSetPartialApply is CL7. A transaction fault after an earlier completed removal
@@ -41,7 +30,7 @@ func faultAtSecondLock(j *joins, stop error) {
 // claims no rollback, so the removed checkout stays removed.
 func TestCleanSetPartialApply(t *testing.T) {
 	t.Parallel()
-	root, _, creations := removableSetFixture(t, 3)
+	root, _, creations, _ := removableSetFixture(t, 3)
 	j := defaultJoins()
 	set := planExplicitSet(j, root, explicitIdentities(creations), CleanupOptions{})
 	if set.fingerprint == "" || len(set.rows) != 3 {
@@ -75,7 +64,7 @@ func TestCleanSetPartialApply(t *testing.T) {
 // out of the result.
 func TestCleanSetUnstartedOutcomes(t *testing.T) {
 	t.Parallel()
-	root, home, creations := removableSetFixture(t, 3)
+	root, home, creations, _ := removableSetFixture(t, 3)
 	j := defaultJoins()
 	set := planExplicitSet(j, root, explicitIdentities(creations), CleanupOptions{})
 	if set.fingerprint == "" || len(set.rows) != 3 {
@@ -132,8 +121,7 @@ func TestCleanSetStaleReplanAction(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			root, home, creations := removableSetFixture(t, 2)
-			files := landedFileByAssignment(creations, "member-0.txt", "member-1.txt")
+			root, home, creations, files := removableSetFixture(t, 2)
 			sorted := append([]Creation(nil), creations...)
 			sort.Slice(sorted, func(a, b int) bool { return sorted[a].Assignment.ID < sorted[b].Assignment.ID })
 			selectors := tc.selectors(sorted)
@@ -161,18 +149,12 @@ func TestCleanSetStaleReplanAction(t *testing.T) {
 // keeps its own tracked and ignored spellings and therefore its own refusal row.
 func TestCleanSetUnclaimedStaleReplanAction(t *testing.T) {
 	t.Parallel()
-	root := newWorktreeRepo(t)
-	home := filepath.Join(root, ".bench-home")
-	for _, owner := range []string{"a", "b"} {
-		branch := intent.AssignmentBranchRef(strings.Repeat(owner, 32), strings.Repeat("f", 32))
-		gitRun(t, root, "branch", strings.TrimPrefix(branch, "refs/heads/"))
-	}
+	root, home := unclaimedBranchFixture(t, "a", "b")
 	plan, planErr, planCode := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
 	if planCode != 0 || planErr != "" {
 		t.Fatalf("plan = (%d, %q, %q), want one applicable plan", planCode, plan, planErr)
 	}
-	extra := intent.AssignmentBranchRef(strings.Repeat("c", 32), strings.Repeat("f", 32))
-	gitRun(t, root, "branch", strings.TrimPrefix(extra, "refs/heads/"))
+	extra := addUnclaimedBranch(t, root, "c")
 
 	stdout, stderr, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed", "--apply", cleanupRowFingerprint(t, plan))
 	if code != 1 || stderr != "" {
@@ -314,8 +296,7 @@ func TestCleanSetApplyTimeStaleRefusal(t *testing.T) {
 	t.Parallel()
 	t.Run("explicit late drift through the command", func(t *testing.T) {
 		t.Parallel()
-		root, home, creations := removableSetFixture(t, 2)
-		files := landedFileByAssignment(creations, "member-0.txt", "member-1.txt")
+		root, home, creations, files := removableSetFixture(t, 2)
 		j := defaultJoins()
 		set := planExplicitSet(j, root, explicitIdentities(creations), CleanupOptions{})
 		if set.fingerprint == "" || len(set.rows) != 2 {
@@ -329,16 +310,10 @@ func TestCleanSetApplyTimeStaleRefusal(t *testing.T) {
 		// The drift lands inside the second member's locked transaction, so the command's
 		// entry check and the preflight both pass and the refusal comes from the apply.
 		drifted := memberByID(t, creations, set.rows[1].assignment.ID)
-		locks := 0
-		j.cleanupBoundary = func(step LifecycleStep) error {
-			if step == StepApplyLocked {
-				locks++
-			}
-			if locks == 2 {
-				driftTracked(t, files, drifted.Assignment.ID)
-			}
+		j.cleanupBoundary = atSecondHit(StepApplyLocked, func() error {
+			driftTracked(t, files, drifted.Assignment.ID)
 			return nil
-		}
+		})
 
 		digest := cleanupRowFingerprint(t, plan)
 		stdout, stderr, code := runCleanupWith(t, j, root, home, append(targets, "--apply", digest)...)
@@ -358,11 +333,7 @@ func TestCleanSetApplyTimeStaleRefusal(t *testing.T) {
 	})
 	t.Run("unclaimed applier re-plan mismatch", func(t *testing.T) {
 		t.Parallel()
-		root := newWorktreeRepo(t)
-		for _, owner := range []string{"a", "b"} {
-			branch := intent.AssignmentBranchRef(strings.Repeat(owner, 32), strings.Repeat("f", 32))
-			gitRun(t, root, "branch", strings.TrimPrefix(branch, "refs/heads/"))
-		}
+		root, _ := unclaimedBranchFixture(t, "a", "b")
 		set, err := planUnclaimedAssignmentSet(root, unclaimedOptions())
 		mustNoError(t, err)
 		if len(set.rows) != 2 {
@@ -371,8 +342,7 @@ func TestCleanSetApplyTimeStaleRefusal(t *testing.T) {
 		// A ref appears between the plan and the apply, which only the applier's own re-plan
 		// sees. The rendering of this refusal is covered end to end by the wiring test; what
 		// only a direct call can read is that the applier returns no rows of its own.
-		extra := intent.AssignmentBranchRef(strings.Repeat("c", 32), strings.Repeat("f", 32))
-		gitRun(t, root, "branch", strings.TrimPrefix(extra, "refs/heads/"))
+		extra := addUnclaimedBranch(t, root, "c")
 
 		plans, applyErr := applyUnclaimedAssignmentSet(defaultJoins(), root, set, unclaimedOptions())
 		if !errors.Is(applyErr, errStaleFingerprint) {

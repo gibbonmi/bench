@@ -22,7 +22,7 @@ import (
 // carries the reason, and the rest report only that the set never qualified.
 func TestCleanSetPreflightFaultNamesItsMember(t *testing.T) {
 	t.Parallel()
-	root, _, creations := removableSetFixture(t, 2)
+	root, _, creations, _ := removableSetFixture(t, 2)
 	j := defaultJoins()
 	set, planErr := planLandedSet(j, root, CleanupOptions{}, "")
 	mustNoError(t, planErr)
@@ -31,9 +31,7 @@ func TestCleanSetPreflightFaultNamesItsMember(t *testing.T) {
 	}
 	// The ledger the re-plan reads becomes unreadable after the plan. Every member is still
 	// exactly as approved, so no drift explains the refusal.
-	ledger, err := intent.Address(root)
-	mustNoError(t, err)
-	mustWrite(t, ledger, []byte("{not a ledger\n"), 0o644)
+	breakLedger(t, root)
 
 	plans, applyErr := applyLandedSet(j, root, set, CleanupOptions{}, "")
 	if applyErr == nil || errors.Is(applyErr, errStaleFingerprint) {
@@ -90,7 +88,7 @@ func TestCleanSetMemberDriftAfterPreflight(t *testing.T) {
 	})
 	t.Run("drifts while still removable", func(t *testing.T) {
 		t.Parallel()
-		root, _, creations := removableSetFixture(t, 2)
+		root, _, creations, _ := removableSetFixture(t, 2)
 		j := defaultJoins()
 		set, planErr := planLandedSet(j, root, CleanupOptions{}, "")
 		mustNoError(t, planErr)
@@ -115,7 +113,7 @@ func TestCleanSetMemberDriftAfterPreflight(t *testing.T) {
 	})
 	t.Run("faults while requalifying", func(t *testing.T) {
 		t.Parallel()
-		root, _, creations := removableSetFixture(t, 2)
+		root, _, creations, _ := removableSetFixture(t, 2)
 		j := defaultJoins()
 		set, planErr := planLandedSet(j, root, CleanupOptions{}, "")
 		mustNoError(t, planErr)
@@ -126,11 +124,7 @@ func TestCleanSetMemberDriftAfterPreflight(t *testing.T) {
 		// the ledger the next requalify reads break. That fault is not drift, so the row it
 		// belongs to carries its reason.
 		survivor := memberByID(t, creations, set.rows[1].assignment.ID)
-		j.cleanupBoundary = driftAtSecondRequalify(t, func() {
-			ledger, err := intent.Address(root)
-			mustNoError(t, err)
-			mustWrite(t, ledger, []byte("{not a ledger\n"), 0o644)
-		})
+		j.cleanupBoundary = driftAtSecondRequalify(t, func() { breakLedger(t, root) })
 
 		plans, err := applyLandedSet(j, root, set, CleanupOptions{}, "")
 		if err == nil || errors.Is(err, errStaleFingerprint) {
@@ -143,29 +137,12 @@ func TestCleanSetMemberDriftAfterPreflight(t *testing.T) {
 	})
 }
 
-// driftAtSecondRequalify runs change in the window before the second member requalifies, so
-// the first member's transaction has already completed when the drift lands.
-func driftAtSecondRequalify(t *testing.T, change func()) Fault {
-	t.Helper()
-	windows := 0
-	return func(step LifecycleStep) error {
-		if step != StepMemberRequalify {
-			return nil
-		}
-		windows++
-		if windows == 2 {
-			change()
-		}
-		return nil
-	}
-}
-
 // TestCleanSetPreflightFaultOnLaterMember is COV-13. The preflight skips a member the plan
 // retained, so the member whose requalification faults need not be the first row. The fault
 // belongs to the row that raised it, and the retained row ahead of it keeps its own verdict.
 func TestCleanSetPreflightFaultOnLaterMember(t *testing.T) {
 	t.Parallel()
-	root, _, creations := removableSetFixture(t, 2)
+	root, _, creations, files := removableSetFixture(t, 2)
 	j := defaultJoins()
 	ordered, planErr := planLandedSet(j, root, CleanupOptions{}, "")
 	mustNoError(t, planErr)
@@ -173,18 +150,15 @@ func TestCleanSetPreflightFaultOnLaterMember(t *testing.T) {
 		t.Fatalf("landed set = %#v, want two members", ordered.rows)
 	}
 	// The member the set reaches first becomes dirty, so the plan retains it and the preflight
-	// skips it. The fault then lands on the member at index one.
-	leading := memberByID(t, creations, ordered.rows[0].assignment.ID)
-	mustWrite(t, filepath.Join(leading.Path, "member-0.txt"), []byte("dirty\n"), 0o644)
-	mustWrite(t, filepath.Join(leading.Path, "member-1.txt"), []byte("dirty\n"), 0o644)
+	// skips it. The fault then lands on the member at index one. The drift names that member's
+	// own tracked file, so a rename of the fixture scheme cannot make this pass by accident.
+	driftTracked(t, files, ordered.rows[0].assignment.ID)
 	set, replanErr := planLandedSet(j, root, CleanupOptions{}, "")
 	mustNoError(t, replanErr)
 	if len(set.rows) != 2 || set.rows[0].plan.Action.Removes() || !set.rows[1].plan.Action.Removes() {
 		t.Fatalf("landed set = %#v, want a retained row ahead of a removable one", set.rows)
 	}
-	ledger, addressErr := intent.Address(root)
-	mustNoError(t, addressErr)
-	mustWrite(t, ledger, []byte("{not a ledger\n"), 0o644)
+	breakLedger(t, root)
 
 	plans, applyErr := applyLandedSet(j, root, set, CleanupOptions{}, "")
 	if applyErr == nil || errors.Is(applyErr, errStaleFingerprint) {
