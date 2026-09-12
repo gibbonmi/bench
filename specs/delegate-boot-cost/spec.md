@@ -128,7 +128,7 @@ The Codex side records the measurement in this spec and ships nothing.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| C1 / 1-ship-bench-agent-types.md, 2-pin-bench-agent-definitions.md | Claude delegates run on the two Bench agent types with the tool sets the check pins, shipped by link and package | DB1, DB2, DB3, DB4, DB5, DB6, DB7, DB8, DB9, DB10, DB11, DB12, DB13, DB27, DB28 | `bench test --check claude-agent-definitions`, `bench test --check package-shipped-surface`, `go test ./internal/adopt ./internal/lines ./internal/packagesurface` | no |
+| C1 / 1-ship-bench-agent-types.md, 2-pin-bench-agent-definitions.md | Claude delegates run on the two Bench agent types with the tool sets the check pins, shipped by link and package | DB1, DB2, DB3, DB4, DB5, DB6, DB7, DB8, DB9, DB10, DB11, DB12, DB13, DB27, DB28 | `bench test --check claude-agent-definitions`, `bench test --check package-shipped-surface`, `go test ./internal/conformance ./internal/adopt ./internal/lines ./internal/packagesurface` | no |
 | C2 / 3-trim-skill-descriptions.md, 4-grade-description-budgets.md | Every shipped description sits within a profile-owned budget that the gate grades | DB14, DB15, DB16, DB17, DB18, DB19, DB20, DB21, DB22, DB23, DB24, DB25, DB26, DB29, DB30 | `bench test --check skill-description-budgets`, `bench test --check conformance-canary-families`, `go test ./internal/gate ./internal/conformance` | yes |
 
 ## Completion plan

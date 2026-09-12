@@ -21,8 +21,8 @@ Before you spawn a delegation that changes who performs the requested work, surf
 ## The agent type
 
 Every Claude delegate runs as a Bench agent type, because the full tool set costs
-thousands of tokens before the delegate reads one line. A review axis, a fan-out
-search, and a diagnostic consultation run as `bench-reviewer`. A user-directed write
+thousands of tokens before the delegate reads one line. A review axis and a
+diagnostic consultation run as `bench-reviewer`. A user-directed write
 delegation runs as `bench-writer`. The general-purpose type is not a Bench delegate
 type. A fork runs only for work that needs the parent's context, and its inherited
 boot is therefore a choice. Each type declares its own tools and no model, so the

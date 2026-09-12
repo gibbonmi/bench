@@ -19,7 +19,7 @@ task-list surface.
 agent file declares its name, its description, and the tools it needs, and it
 declares no model. A charge names the agent type and passes the bound tier
 token, so the agent-line guard keeps its verdict. `bench-reviewer` runs a
-review axis, a fan-out search, or a diagnostic consultation. `bench-writer`
+review axis or a diagnostic consultation. `bench-writer`
 runs a user-directed write delegation. A consumer's own agent files sit beside
 them and stay ungraded.
 

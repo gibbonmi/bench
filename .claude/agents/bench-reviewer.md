@@ -1,6 +1,6 @@
 ---
 name: bench-reviewer
-description: The Bench read-only delegate. It runs a review axis, a fan-out search, or a brief diagnostic consultation. It reads, searches, and runs shell commands, and it writes no file.
+description: The Bench read-only delegate. It runs a review axis or a brief diagnostic consultation. It reads, searches, and runs shell commands, and it writes no file.
 tools: Read, Grep, Glob, Bash
 ---
 

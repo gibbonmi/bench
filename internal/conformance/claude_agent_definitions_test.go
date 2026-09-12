@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -39,12 +40,13 @@ var claudeAgentRequiredTools = []string{"Read", "Bash"}
 
 // claudeAgentSkillName matches a backticked agent basename in the routing rule. A Bench
 // agent basename carries no space, so the pattern separates a named type from the skill's
-// backticked commands and paths.
-var claudeAgentSkillName = regexp.MustCompile("`(bench-[a-z0-9]+(?:-[a-z0-9]+)*)`")
+// backticked commands and paths. The prefix comes from the constant the file filter also
+// reads, so the naming convention has one source.
+var claudeAgentSkillName = regexp.MustCompile("`(" + regexp.QuoteMeta(claudeAgentPrefix) + "[a-z0-9]+(?:-[a-z0-9]+)*)`")
 
-// checkClaudeAgentDefinitions grades every Bench agent file in the Claude adapter against
-// the shape a cheap delegate needs, and reconciles the shipped set with the routing rule
-// the delegate skill states.
+// checkClaudeAgentDefinitions grades every Bench agent file in the Claude adapter. It
+// grades each file against the shape a cheap delegate needs. It then reconciles the
+// shipped set with the routing rule the delegate skill states.
 func checkClaudeAgentDefinitions(root string) []string {
 	files, diags := claudeAgentFiles(root)
 	named := claudeAgentNamesInSkill(root)
@@ -64,8 +66,8 @@ func checkClaudeAgentDefinitions(root string) []string {
 }
 
 // claudeAgentFileDiagnostics grades one agent file. Each fault reports and the file keeps
-// going, because one file can carry more than one of them and a reader repairing it wants
-// the whole list.
+// going. One file can carry more than one fault, and a reader who repairs it wants the
+// whole list.
 func claudeAgentFileDiagnostics(root, rel string, named []string) []string {
 	base := strings.TrimSuffix(path.Base(rel), ".md")
 	full := filepath.Join(root, filepath.FromSlash(rel))
@@ -220,6 +222,87 @@ func TestClaudeAgentDefinitionsRefuseANonRegularSubject(t *testing.T) {
 	diagnostics := strings.Join(checkClaudeAgentDefinitions(root), "\n")
 	if !strings.Contains(diagnostics, "claude-agent subject refused: "+claudeAgentsDir+" is a symbolic link") {
 		t.Fatalf("diagnostics do not refuse a symlinked agents directory:\n%s", diagnostics)
+	}
+}
+
+// TestClaudeAgentDefinitionsGradeEveryPolicedTool drives every policed tool by an
+// independently authored name. The independence is load-bearing: a test that ranges over
+// the production slice passes after the slice loses a member, so a trim to {"Agent"} runs
+// silent and hands a cheap delegate the publish or block tool. The equality assertion
+// below is what turns that trim red.
+func TestClaudeAgentDefinitionsGradeEveryPolicedTool(t *testing.T) {
+	forbidden := []string{"Agent", "Artifact", "AskUserQuestion"}
+	required := []string{"Read", "Bash"}
+	if !slices.Equal(claudeAgentForbiddenTools, forbidden) {
+		t.Fatalf("claudeAgentForbiddenTools = %v, want %v", claudeAgentForbiddenTools, forbidden)
+	}
+	if !slices.Equal(claudeAgentRequiredTools, required) {
+		t.Fatalf("claudeAgentRequiredTools = %v, want %v", claudeAgentRequiredTools, required)
+	}
+	for _, tool := range forbidden {
+		t.Run("forbidden/"+tool, func(t *testing.T) {
+			root := t.TempDir()
+			writeClaudeAgentFixture(t, root, "bench-reviewer.md", "---\nname: bench-reviewer\ntools: Read, Bash, "+tool+"\n---\n")
+			writeClaudeAgentSkill(t, root, "The axis runs as `bench-reviewer`.\n")
+
+			want := "claude-agent tool refused: " + claudeAgentsDir + "/bench-reviewer.md lists '" + tool + "'"
+			if diagnostics := strings.Join(checkClaudeAgentDefinitions(root), "\n"); !strings.Contains(diagnostics, want) {
+				t.Fatalf("diagnostics missing %q:\n%s", want, diagnostics)
+			}
+		})
+	}
+	for _, tool := range required {
+		t.Run("required/"+tool, func(t *testing.T) {
+			root := t.TempDir()
+			var kept []string
+			for _, other := range required {
+				if other != tool {
+					kept = append(kept, other)
+				}
+			}
+			writeClaudeAgentFixture(t, root, "bench-reviewer.md", "---\nname: bench-reviewer\ntools: Glob, "+strings.Join(kept, ", ")+"\n---\n")
+			writeClaudeAgentSkill(t, root, "The axis runs as `bench-reviewer`.\n")
+
+			want := "claude-agent tool missing: " + claudeAgentsDir + "/bench-reviewer.md lists no '" + tool + "' tool"
+			if diagnostics := strings.Join(checkClaudeAgentDefinitions(root), "\n"); !strings.Contains(diagnostics, want) {
+				t.Fatalf("diagnostics missing %q:\n%s", want, diagnostics)
+			}
+		})
+	}
+}
+
+// TestClaudeAgentDefinitionsRefuseAnUnreadableAgentFile pins the per-file refusal. It is a
+// different code path from the directory refusal: a symbolic link at an agent file would
+// otherwise skip every other diagnostic for that file and report nothing.
+func TestClaudeAgentDefinitionsRefuseAnUnreadableAgentFile(t *testing.T) {
+	root := t.TempDir()
+	writeClaudeAgentFixture(t, root, "bench-writer.md", "---\nname: bench-writer\ntools: Read, Bash\n---\n")
+	link := filepath.Join(root, filepath.FromSlash(claudeAgentsDir), "bench-reviewer.md")
+	if err := os.Symlink(filepath.Join(root, "elsewhere.md"), link); err != nil {
+		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+	}
+	writeClaudeAgentSkill(t, root, "The axis runs as `bench-reviewer`, and the write runs as `bench-writer`.\n")
+
+	want := "claude-agent subject refused: " + claudeAgentsDir + "/bench-reviewer.md is not a readable regular file"
+	if diagnostics := strings.Join(checkClaudeAgentDefinitions(root), "\n"); !strings.Contains(diagnostics, want) {
+		t.Fatalf("diagnostics missing %q:\n%s", want, diagnostics)
+	}
+}
+
+// TestClaudeAgentDefinitionsRefuseAPlainFileWhereTheDirectoryBelongs pins the third subject
+// state. A regular file at the adapter's agents path is neither absent nor a link, and an
+// unrefused one would enumerate nothing and report a clean adapter.
+func TestClaudeAgentDefinitionsRefuseAPlainFileWhereTheDirectoryBelongs(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(claudeAgentsDir)), []byte("not a directory\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	want := "claude-agent subject refused: " + claudeAgentsDir + " is not a directory"
+	if diagnostics := strings.Join(checkClaudeAgentDefinitions(root), "\n"); !strings.Contains(diagnostics, want) {
+		t.Fatalf("diagnostics missing %q:\n%s", want, diagnostics)
 	}
 }
 
