@@ -77,6 +77,15 @@ type Facts struct {
 	// BlockerCycles holds one edge of each blocker cycle across the parsed set.
 	BlockerCycles []string
 
+	// CompletionPlanDigest is the digest the checkpoint's plan reader derived from
+	// the spec's bench-completion-plan fence at SourceTip, and CompletionPlanError
+	// is that reader's message, empty when the plan parses. The gatherer reads the
+	// fence once; whether an unreadable plan is a fault is Decide's. The review
+	// charge's completion table renders the same pair, so a packet and a verdict
+	// can never disagree about the plan.
+	CompletionPlanDigest string
+	CompletionPlanError  string
+
 	// WritesPathExists reports, for each `Writes:` entry declared across the parsed
 	// tickets, whether the path it names resolves in the tree. The gatherer owns the
 	// probe; whether an absent path is a fault is Decide's.
@@ -185,6 +194,7 @@ func Decide(f Facts) Verdict {
 	checks = append(checks,
 		pathsAuthorizedCheck(f),
 		ticketRow(f, "tickets-parse", ticketsParseCheck),
+		ticketRow(f, "completion-plan", completionPlanCheck),
 		ticketRow(f, "blockers-resolve", blockersResolveCheck),
 		ticketRow(f, "writes-resolve", writesResolveCheck),
 		ticketRow(f, "fixture-closure", fixtureClosureCheck),
@@ -219,7 +229,8 @@ func notApplicable(name string) CheckResult {
 // ticketRow gates one ticket-reading check by build-mode ticket-directory
 // applicability: not-applicable when build mode has no tickets/ directory at
 // all, real otherwise. Every row that reads a parsed ticket shares this one
-// gate, so no two of them can drift on when a fresh build is graded.
+// gate, so no two of them can drift on when a fresh build is graded. The
+// completion plan names tickets, so completion-plan shares the gate too.
 func ticketRow(f Facts, name string, check func(Facts) CheckResult) CheckResult {
 	if f.Mode == modeBuild && !f.TicketsDirExists {
 		return notApplicable(name)
@@ -443,28 +454,6 @@ func pathCovered(required string, owned []string) bool {
 		}
 	}
 	return false
-}
-
-// fixtureClosureCheck grades the red-capable fixture into the ticket. A ticket
-// that edits a fixture-pinned line without naming the owning fixture directory
-// leaves the proof outside the charge, and the bite breaks unnoticed.
-func fixtureClosureCheck(f Facts) CheckResult {
-	unnamed := closureMessages(missingClosures(f, fixtureClosure))
-	if len(unnamed) > 0 {
-		return red("fixture-closure", "Writes: entry names a fixture-pinned path without naming the fixture: "+strings.Join(unnamed, ", "))
-	}
-	return green("fixture-closure")
-}
-
-// registryClosureCheck grades the declared binding into the ticket. A ticket that
-// writes a bound package and omits a bound registry finds that registry mid-build
-// and pays a repair round.
-func registryClosureCheck(f Facts) CheckResult {
-	omitted := closureMessages(missingClosures(f, registryClosure))
-	if len(omitted) > 0 {
-		return red("registry-closure", "Writes: entry names a bound package without naming every bound file: "+strings.Join(omitted, ", "))
-	}
-	return green("registry-closure")
 }
 
 // kitPinCheck grades the kit pin into the ticket. A system-tagged test file reads

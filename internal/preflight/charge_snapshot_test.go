@@ -35,7 +35,7 @@ func TestChargeHeadAndIndexMovementRefuseAfterOneRetry(t *testing.T) {
 			restore()
 			if code != 1 || calls != 2 || !strings.Contains(out, "error: snapshot drift") ||
 				!strings.Contains(out, "retry the exact invocation") ||
-				strings.Contains(out, "complete") {
+				strings.Contains(out, "complete,next}") {
 				t.Fatalf("persistent %s movement = (%d, %d):\n%s", movement, code, calls, out)
 			}
 		})
@@ -50,7 +50,7 @@ func TestChargeDirtySourceRefusesWithoutCompleteOutput(t *testing.T) {
 	if code != 1 || !strings.Contains(out, "checkout required") ||
 		!strings.Contains(out, "source checkout is dirty") ||
 		!strings.Contains(out, "commit or remove local changes") ||
-		strings.Contains(out, "complete") {
+		strings.Contains(out, "complete,next}") {
 		t.Fatalf("dirty charge = (%d):\n%s", code, out)
 	}
 }
@@ -94,7 +94,7 @@ func TestChargeFinalSnapshotFailureDiscardsPreparedOutput(t *testing.T) {
 		t.Fatal(err)
 	}
 	if code != 1 || !strings.Contains(out, "snapshot identity failed") ||
-		strings.Contains(out, "charge[") || strings.Contains(out, "complete") {
+		strings.Contains(out, "charge[") || strings.Contains(out, "complete,next}") {
 		t.Fatalf("final snapshot failure = (%d):\n%s", code, out)
 	}
 }

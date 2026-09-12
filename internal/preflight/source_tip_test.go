@@ -11,9 +11,9 @@ import (
 // omits, so the count is per-mode rather than one literal.
 func bareRowCount(mode string) int {
 	if mode == modeBuild {
-		return 12
+		return 13
 	}
-	return 11
+	return 12
 }
 
 // rowHeader is the checks header for a given row count. The pinned form
