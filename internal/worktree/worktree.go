@@ -244,7 +244,7 @@ func inRepository(root string) bool {
 }
 
 func cleanInvocationError(stdout io.Writer) int {
-	_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: "none", Reason: "invalid invocation; run " + usage.WorktreeClean})
+	_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: unapplicableFingerprint, Reason: "invalid invocation; run " + usage.WorktreeClean})
 	return 2
 }
 

@@ -6,9 +6,83 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/usage"
 )
+
+// TestCleanSetDiscardModifiers holds the explicit-set path to the discard modifiers one
+// call carried. Each case reads its modifier back out of the rendered apply command, then
+// applies the set and checks the durable effect only that modifier authorizes.
+func TestCleanSetDiscardModifiers(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name     string
+		modifier string
+		fixture  func(*testing.T, string, string) Creation
+		effect   func(*testing.T, string, Creation)
+	}{
+		{
+			name:     "discard branch",
+			modifier: "--discard-branch",
+			fixture: func(t *testing.T, root, home string) Creation {
+				creation := mustCreate(t, root, home, "set-discard-branch", "discard branch")
+				landAssignment(t, root, creation, "branch.txt")
+				return creation
+			},
+			effect: func(t *testing.T, root string, creation Creation) {
+				if git.OK("-C", root, "show-ref", "--verify", "--quiet", creation.Assignment.Branch) {
+					t.Fatalf("set apply left branch %q", creation.Assignment.Branch)
+				}
+			},
+		},
+		{
+			name:     "discard ignored",
+			modifier: "--discard-ignored",
+			fixture: func(t *testing.T, root, home string) Creation {
+				mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
+				gitRun(t, root, "add", ".gitignore")
+				gitRun(t, root, "commit", "-qm", "ignore set residue")
+				creation := mustCreate(t, root, home, "set-discard-ignored", "discard ignored")
+				landAssignment(t, root, creation, "landed.txt")
+				mustWrite(t, filepath.Join(creation.Path, "ignored.txt"), []byte("residue\n"), 0o644)
+				bare, _, bareCode := runCleanup(t, root, home, "--target", creation.Assignment.ID)
+				if bareCode != 0 || !strings.Contains(bare, creation.Path+",retain,") ||
+					!strings.Contains(bare, "ignored residuals require --discard-ignored") {
+					t.Fatalf("bare set plan = (%d, %q), want the ignored residue retained", bareCode, bare)
+				}
+				return creation
+			},
+			effect: func(t *testing.T, _ string, creation Creation) {
+				if _, err := os.Lstat(filepath.Join(creation.Path, "ignored.txt")); !os.IsNotExist(err) {
+					t.Fatalf("set apply left the ignored residue in %s: %v", creation.Path, err)
+				}
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			root := newWorktreeRepo(t)
+			home := filepath.Join(root, ".bench-home")
+			creation := tc.fixture(t, root, home)
+			plan, planErr, planCode := runCleanup(t, root, home, tc.modifier, "--target", creation.Assignment.ID)
+			if planCode != 0 || planErr != "" {
+				t.Fatalf("%s plan = (%d, %q, %q), want one applicable plan", tc.name, planCode, plan, planErr)
+			}
+			if !strings.Contains(plan, "bench worktree clean "+tc.modifier+" --target ") {
+				t.Fatalf("%s plan = %q, want the modifier in the rendered apply command", tc.name, plan)
+			}
+			applied, applyErr, applyCode := runCleanup(t, root, home, tc.modifier, "--target", creation.Assignment.ID, "--apply", cleanupRowFingerprint(t, plan))
+			if applyCode != 0 || applyErr != "" || strings.Count(applied, ",removed,") != 1 {
+				t.Fatalf("%s apply = (%d, %q, %q), want one removal", tc.name, applyCode, applied, applyErr)
+			}
+			if _, err := os.Lstat(creation.Path); !os.IsNotExist(err) {
+				t.Fatalf("%s apply left %s: %v", tc.name, creation.Path, err)
+			}
+			tc.effect(t, root, creation)
+		})
+	}
+}
 
 func TestCleanSetGrammar(t *testing.T) {
 	t.Parallel()

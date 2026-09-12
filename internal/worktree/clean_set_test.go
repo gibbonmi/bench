@@ -262,9 +262,9 @@ func cleanupEffects(t *testing.T, root string, creations []Creation, stdout, std
 }
 
 // TestCleanSetCompatibility is the differential that holds every existing cleanup form to
-// the lifecycle effects it produced before explicit sets joined the command. The baseline
-// below was captured from the unedited tree, so a changed branch, receipt, or retention
-// verdict on any existing form turns this row red.
+// the lifecycle effects it produces without explicit sets. Each baseline below is that
+// pre-set effect, so a changed branch, receipt, or retention verdict on any existing form
+// turns this row red.
 func TestCleanSetCompatibility(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {

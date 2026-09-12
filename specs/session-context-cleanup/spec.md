@@ -73,7 +73,7 @@ Each remaining selected target reports `not-attempted`.
 The command returns nonzero and does not claim rollback of completed effects.
 
 A stale result preserves the selected mode and modifiers in its exact re-plan command.
-Explicit targets are safely quoted in that command.
+That command names each explicit member by its canonical assignment identity, which the apply command already renders in place of operand text.
 The command never substitutes a fresh fingerprint into the failed apply automatically.
 Existing `--apply-current` behavior remains limited to its existing unclaimed-branch mode.
 No new efficiency denial or numeric result cap is introduced.
@@ -283,7 +283,8 @@ The final ticket carries the cleanup package's complete-set invariant.
 
 ### Flagged additions
 
-Repeated explicit targets are a proposed scope clarification for reviewer sign-off.
-The earlier optional clarification has no recorded reviewer answer.
-CL1–CL3, CL14, and CL16 grade the proposed selection grammar.
-The existing selector improvements remain independently valuable if the reviewer declines explicit targets.
+The reviewer confirmed silent collapse of repeated explicit targets on 2026-09-12.
+This decision is closed.
+Repeated and aliased targets collapse by assignment identity, and the command reports no warning.
+Stories 1 and 2 require that behavior.
+CL1–CL3, CL14, and CL16 grade the selection grammar.

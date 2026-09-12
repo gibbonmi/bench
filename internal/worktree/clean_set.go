@@ -187,9 +187,9 @@ func sameExplicitCleanupTuple(a, b explicitCleanupRow) bool {
 		a.plan.branchOID == b.plan.branchOID
 }
 
-// unapplicableFingerprint is what a row carries when no apply can name the set. It is the
-// spelling the invalid-invocation row already uses, so one unapplicable plan reads the
-// same wherever the command produces it.
+// unapplicableFingerprint is what a row carries when no apply can name the set. The
+// invalid-invocation row reads it from here too, so one unapplicable plan carries the same
+// spelling wherever the command produces it.
 const unapplicableFingerprint = "none"
 
 // selectionFailurePlan reports one operand the resolver could not turn into exactly one
@@ -338,8 +338,9 @@ func cleanupModifierFlags(options CleanupOptions) []string {
 }
 
 // staleSetPlan is the refusal row a set apply prints when the plan it carries no longer
-// describes the repository. Every set mode shares it, so one stale refusal cannot drift
-// from another.
+// describes the repository. The landed set and the explicit set share it, so their two
+// stale refusals cannot drift apart. The unclaimed set builds its own row instead, because
+// it reports branch refs under that mode's own tracked and ignored spellings.
 func staleSetPlan(fingerprint string) CleanupPlan {
 	return CleanupPlan{
 		Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown",
