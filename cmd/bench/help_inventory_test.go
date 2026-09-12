@@ -86,7 +86,9 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench worktree reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>  replace one lost request token after identity proof
   bench worktree merge --from <commit|target> <target>  merge a default-branch commit or a sibling's tip into an owned worktree
   bench worktree reset (--to <commit> | --restore <ref>) <target> [--apply <fingerprint>]  plan or apply a recoverable reset or restore
-  bench worktree --help      show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, and reset grammar
+  bench worktree land --request <opaque-id> --base <commit> --source-tip <commit> [--spec <slug>] -m <message> <path>  compose, gate, and publish one owned worktree
+  bench worktree land --resume <published-commit> --request <opaque-id> --base <commit> --source-tip <commit> [--spec <slug>] <path>  resume incomplete post-publication landing work
+  bench worktree --help      show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar
   bench shift [--refresh] "<objective>" gated loop in a pooled worktree; commit on green
   bench commit -m <msg> <path>...  gate, then commit named paths on green
   bench spec retire <slug>   delete a merged spec + its review pickup (validated)
