@@ -1,12 +1,15 @@
 package roadmap
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/learnings"
+	"github.com/gibbonmi/bench/internal/prose"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
@@ -16,6 +19,90 @@ func journalPath(t *testing.T, root string) string {
 }
 
 var learningArgs = []string{"the", "gate", "hid", "a", "rule", "--what", "it failed twice", "--right", "read the map first"}
+
+// newProseGradedRepo is newRepo plus an empty exclusion policy, so the fixture's prose
+// grade runs against real content instead of the absent-policy diagnostic.
+func newProseGradedRepo(t *testing.T) string {
+	t.Helper()
+	root := newRepo(t)
+	full := filepath.Join(root, filepath.FromSlash(prose.ExclusionFile))
+	if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(full, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return root
+}
+
+// words returns an n-word sentence, plain tokens with no punctuation to count, closed
+// with a period so the grader reads it as one complete sentence.
+func words(n int) string {
+	list := make([]string, n)
+	for i := range list {
+		list[i] = fmt.Sprintf("w%d", i+1)
+	}
+	return strings.Join(list, " ") + "."
+}
+
+// TestLearningRefusesAnOverBoundSentenceAndWritesNothing covers story 9's writer half: a
+// --what sentence over the 25-word bound must not reach the journal the live-tree prose
+// sweep will grade later. The 26th word is what turns this red; the 25-word twin proves
+// the bound is honored at the boundary, not just past it. The composed bullet reads "-
+// **What happened:** <words>.": the list marker is stripped before grading, but the
+// two-word bold label joins the sentence the grader counts, so passing wantTotal-2 words
+// closes the sentence at exactly wantTotal words.
+func TestLearningRefusesAnOverBoundSentenceAndWritesNothing(t *testing.T) {
+	const label = 2
+	for _, tc := range []struct {
+		name       string
+		wantTotal  int
+		wantCode   int
+		wantWrites bool
+	}{
+		{"25 words writes", 25, 0, true},
+		{"26 words refuses", 26, 2, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := newProseGradedRepo(t)
+			args := append([]string{"a", "title"}, "--what", words(tc.wantTotal-label), "--right", "read the map first")
+			out, code := LearningCommand(args)
+			if code != tc.wantCode {
+				t.Fatalf("code = %d, want %d\n%s", code, tc.wantCode, out)
+			}
+			_, statErr := os.Stat(journalPath(t, root))
+			if wrote := statErr == nil; wrote != tc.wantWrites {
+				t.Fatalf("journal exists = %v, want %v", wrote, tc.wantWrites)
+			}
+			if tc.wantWrites {
+				return
+			}
+			if !strings.HasPrefix(out, learningGrammar.Help+"\n") {
+				t.Fatalf("out = %q, want it to start with the usage line", out)
+			}
+			if !strings.Contains(out, fmt.Sprintf("sentence of %d words is over the 25-word bound", tc.wantTotal)) {
+				t.Fatalf("out = %q, want the grader's own sentence diagnostic", out)
+			}
+		})
+	}
+}
+
+// TestLearningRefusalNamesTheOffendingEntryLine covers story 9's second half: the
+// refusal names which composed line is over bound, the --right bullet here, so the
+// author can shorten the right field without opening the file to find it.
+func TestLearningRefusalNamesTheOffendingEntryLine(t *testing.T) {
+	root := newProseGradedRepo(t)
+	out, code := LearningCommand([]string{"a", "title", "--what", "it happened", "--right", words(26)})
+	if code != 2 {
+		t.Fatalf("code = %d, want 2\n%s", code, out)
+	}
+	if !strings.Contains(out, "line 3") {
+		t.Fatalf("out = %q, want it to name line 3, the --right bullet", out)
+	}
+	if _, err := os.Stat(journalPath(t, root)); err == nil {
+		t.Fatal("journal should not have been created on refusal")
+	}
+}
 
 // TestLearningRoundTripsThroughParser is the verb's whole reason to exist: the entry it
 // appends is one the journal parser reads back as open, with no malformed record, and
