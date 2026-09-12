@@ -80,8 +80,8 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
 {
   "version": 1,
   "spec": "specs/session-context-cleanup/spec.md",
-  "plan_digest": "sha256:acdac92b1c935f8a91069e59869d663e6094070c148cddb0916a0c74cb86cf44",
-  "implementation_session": "claude:sonnet:retained-continuation",
+  "plan_digest": "sha256:03e9ea95ceea8da889c5c021867b3877b4d17e583f4ef9a915aba9e0a62fbce0",
+  "implementation_session": "claude:retained-continuation",
   "chunks": [
     {
       "id": "CL-C1",
@@ -90,12 +90,21 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
       "plan_digest": "sha256:acdac92b1c935f8a91069e59869d663e6094070c148cddb0916a0c74cb86cf44",
       "source_digest": "7ce06d236a1c3e19c6f6b82eb195afb7c18c30aa",
       "acceptance_rows": [
-        "CL1", "CL2", "CL3", "CL10", "CL11", "CL13", "CL14", "CL15", "CL16", "CL17"
+        "CL1",
+        "CL2",
+        "CL3",
+        "CL10",
+        "CL11",
+        "CL13",
+        "CL14",
+        "CL15",
+        "CL16",
+        "CL17"
       ],
       "verification": [
         {
           "id": "cl-c1-clean-tests",
-          "performer": "claude:sonnet:retained-continuation",
+          "performer": "claude:retained-continuation",
           "role": "author-verification",
           "model": "sonnet",
           "effort": "unknown",
@@ -124,7 +133,7 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
         },
         {
           "id": "cl-c1-command-tests",
-          "performer": "claude:sonnet:retained-continuation",
+          "performer": "claude:retained-continuation",
           "role": "author-verification",
           "model": "sonnet",
           "effort": "unknown",
@@ -142,7 +151,7 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
         },
         {
           "id": "cl-c1-repair-clean-tests",
-          "performer": "claude:sonnet:retained-continuation",
+          "performer": "claude:retained-continuation",
           "role": "author-verification",
           "model": "sonnet",
           "effort": "unknown",
@@ -160,7 +169,7 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
         },
         {
           "id": "cl-c1-repair-command-tests",
-          "performer": "claude:sonnet:retained-continuation",
+          "performer": "claude:retained-continuation",
           "role": "author-verification",
           "model": "sonnet",
           "effort": "unknown",
@@ -178,7 +187,7 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
         },
         {
           "id": "cl-c1-final-clean-tests",
-          "performer": "claude:sonnet:retained-continuation",
+          "performer": "claude:retained-continuation",
           "role": "author-verification",
           "model": "sonnet",
           "effort": "unknown",
@@ -207,7 +216,7 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
         },
         {
           "id": "cl-c1-final-command-tests",
-          "performer": "claude:sonnet:retained-continuation",
+          "performer": "claude:retained-continuation",
           "role": "author-verification",
           "model": "sonnet",
           "effort": "unknown",
@@ -242,7 +251,13 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
           "axis": "Standards",
           "base": "4e98e581083562e284ba20802d168dbc575fd321",
           "tip": "4a1ca2928776035d04be0ca123010065d924b80c",
-          "finding_ids": ["ST1", "ST2", "ST3", "ST4", "ST5"],
+          "finding_ids": [
+            "ST1",
+            "ST2",
+            "ST3",
+            "ST4",
+            "ST5"
+          ],
           "supersedes": []
         },
         {
@@ -263,7 +278,9 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
           "base": "4a1ca2928776035d04be0ca123010065d924b80c",
           "tip": "1b40ca08c6c7b723b9b60882bd8cc4271f6f836d",
           "finding_ids": [],
-          "supersedes": ["cl-c1-standards-1"]
+          "supersedes": [
+            "cl-c1-standards-1"
+          ]
         },
         {
           "id": "cl-c1-spec-1",
@@ -282,7 +299,11 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
           "axis": "Spec",
           "base": "4e98e581083562e284ba20802d168dbc575fd321",
           "tip": "4a1ca2928776035d04be0ca123010065d924b80c",
-          "finding_ids": ["SPEC-1", "SPEC-2", "SPEC-3"],
+          "finding_ids": [
+            "SPEC-1",
+            "SPEC-2",
+            "SPEC-3"
+          ],
           "supersedes": []
         },
         {
@@ -303,7 +324,9 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
           "base": "4a1ca2928776035d04be0ca123010065d924b80c",
           "tip": "1b40ca08c6c7b723b9b60882bd8cc4271f6f836d",
           "finding_ids": [],
-          "supersedes": ["cl-c1-spec-1"]
+          "supersedes": [
+            "cl-c1-spec-1"
+          ]
         },
         {
           "id": "cl-c1-coverage-1",
@@ -322,7 +345,10 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
           "axis": "Coverage",
           "base": "4e98e581083562e284ba20802d168dbc575fd321",
           "tip": "4a1ca2928776035d04be0ca123010065d924b80c",
-          "finding_ids": ["COV-1", "COV-2"],
+          "finding_ids": [
+            "COV-1",
+            "COV-2"
+          ],
           "supersedes": []
         },
         {
@@ -343,9 +369,168 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
           "base": "4a1ca2928776035d04be0ca123010065d924b80c",
           "tip": "1b40ca08c6c7b723b9b60882bd8cc4271f6f836d",
           "finding_ids": [],
-          "supersedes": ["cl-c1-coverage-1"]
+          "supersedes": [
+            "cl-c1-coverage-1"
+          ]
         }
       ]
+    },
+    {
+      "id": "CL-C2",
+      "base": "12bbd56b349e55af711deb55cb075dadaf9c082e",
+      "tip": "1a6f8a9db935abcc9bea1cab0ed94d204842616d",
+      "plan_digest": "sha256:03e9ea95ceea8da889c5c021867b3877b4d17e583f4ef9a915aba9e0a62fbce0",
+      "source_digest": "4fa22ada95fb033fc1bb73fe9de55c9c79d0476d",
+      "acceptance_rows": [
+        "CL4",
+        "CL5",
+        "CL6",
+        "CL7",
+        "CL8",
+        "CL9",
+        "CL12",
+        "CL18",
+        "CL19"
+      ],
+      "verification": [
+        {
+          "id": "cl-c2-clean-tests",
+          "performer": "claude:retained-continuation",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4fa22ada95fb033fc1bb73fe9de55c9c79d0476d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:author/session-context-cleanup/clean-tests@835bf1c3",
+            "digest": "sha256:59e4eee46fdb3a42175d5a1bd953e7204471e2f18a7a88d023e96ea2417e2601",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,5543\nfailures[0]{package,test,line}:\nskips[1]{package,test,reason}:\n"
+          },
+          "requirement": "clean-tests",
+          "command": "bench test --package ./internal/worktree --run TestClean",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit the complete-set preflight before the first transaction",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:author/session-context-cleanup/probe-cl-c2-explicit@835bf1c3",
+              "digest": "sha256:d24110d8ffb97b7b6682c40f3adb0267c77155cc0ccc86a72d14ecf7f4755035",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/clean_set.go,omit,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestClean,passed,104\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5633\n"
+            }
+          }
+        },
+        {
+          "id": "cl-c2-landing-tests",
+          "performer": "claude:retained-continuation",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4fa22ada95fb033fc1bb73fe9de55c9c79d0476d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:author/session-context-cleanup/landing-tests@835bf1c3",
+            "digest": "sha256:c8e2ef10ebd20b71b6917cf2ffd29b9f29dbcf22647b893ee32e9fb6f9974578",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,14303\nfailures[0]{package,test,line}:\nskips[1]{package,test,reason}:\n"
+          },
+          "requirement": "landing-tests",
+          "command": "bench test --package ./internal/worktree --run TestLand",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit the complete-set preflight before the first transaction",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:author/session-context-cleanup/probe-cl-c2-landed@835bf1c3",
+              "digest": "sha256:77de0c96a63a97b6aa51a12a0ec1aa4082fd594d0d91b3e51d7ef4f2b035c3ae",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/clean_landed.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestClean,passed,104\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5549\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
+    }
+  ],
+  "completion": {
+    "state": "completed",
+    "source_digest": "4fa22ada95fb033fc1bb73fe9de55c9c79d0476d",
+    "performer": "claude:retained-continuation",
+    "reconciliation": {
+      "CL1": "covered",
+      "CL2": "covered",
+      "CL3": "covered",
+      "CL4": "covered",
+      "CL5": "covered",
+      "CL6": "covered",
+      "CL7": "covered",
+      "CL8": "covered",
+      "CL9": "covered",
+      "CL10": "covered",
+      "CL11": "covered",
+      "CL12": "covered",
+      "CL13": "covered",
+      "CL14": "covered",
+      "CL15": "covered",
+      "CL16": "covered",
+      "CL17": "covered",
+      "CL18": "covered",
+      "CL19": "covered"
+    },
+    "verification": [
+      {
+        "id": "cl-c2-final-acceptance",
+        "performer": "claude:retained-continuation",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "4fa22ada95fb033fc1bb73fe9de55c9c79d0476d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:author/session-context-cleanup/acceptance@835bf1c3",
+          "digest": "sha256:5083fe1c019b5a95c6a35254738c307cf11b15e56195c8916ef2675b62a0f388",
+          "excerpt": "packages[99]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench,pass,2\n  github.com/gibbonmi/bench/cmd/bench,pass,11728\n  github.com/gibbonmi/bench/internal/worktree,pass,46897\nfailures[0]{package,test,line}:\n"
+        },
+        "requirement": "acceptance",
+        "command": "bench test --package ./...",
+        "exit_code": 0
+      },
+      {
+        "id": "cl-c2-final-integration",
+        "performer": "claude:retained-continuation",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "4fa22ada95fb033fc1bb73fe9de55c9c79d0476d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:author/session-context-cleanup/integration@835bf1c3",
+          "digest": "sha256:030f1eadef7210a12adb59c71068f87e3fa29f03d01b69ca76965f66a36a8719",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,27294\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "integration",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
+  },
+  "amendments": [
+    {
+      "from": "sha256:acdac92b1c935f8a91069e59869d663e6094070c148cddb0916a0c74cb86cf44",
+      "to": "sha256:03e9ea95ceea8da889c5c021867b3877b4d17e583f4ef9a915aba9e0a62fbce0",
+      "chunk_ids": {
+        "CL-C1": [
+          "CL-C1"
+        ],
+        "CL-C2": [
+          "CL-C2"
+        ]
+      }
     }
   ]
 }
