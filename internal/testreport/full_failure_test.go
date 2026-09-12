@@ -15,6 +15,7 @@ func TestFullFailureDiagnostics(t *testing.T) {
 		name      string
 		events    []event
 		fragments []string
+		escapes   []string
 		first     string
 		want      Outcome
 	}{
@@ -36,6 +37,7 @@ func TestFullFailureDiagnostics(t *testing.T) {
 				{Action: "fail", Package: "a"},
 			},
 			fragments: []string{"a,TestEmpty,", "no diagnostic emitted", "a,TestGroup/child,", "child first", "child center", "child last", "z,TestLater,", first, "middle", "last diagnostic"},
+			escapes:   []string{`child first\\nchild center\\nchild last`, `middle\\u001b[31m diagnostic\\nlast diagnostic`},
 			first:     first,
 			want:      Outcome{Kind: OutcomeFailed, FailedTests: 3, Ran: 4},
 		},
@@ -47,6 +49,7 @@ func TestFullFailureDiagnostics(t *testing.T) {
 				{Action: "build-fail", ImportPath: "compiler"},
 			},
 			fragments: []string{"first compiler diagnostic", "middle compiler diagnostic", "last compiler diagnostic"},
+			escapes:   []string{`first compiler diagnostic\\nmiddle compiler diagnostic\\nlast compiler diagnostic`},
 			first:     "first compiler diagnostic",
 			want:      Outcome{Kind: OutcomeBuildFailed},
 		},
@@ -83,6 +86,12 @@ func TestFullFailureDiagnostics(t *testing.T) {
 						t.Fatalf("default preview changed:\n%s", output)
 					}
 					continue
+				}
+				// These expectations pin escaped separators and controls at the command seam.
+				for _, escaped := range tc.escapes {
+					if !strings.Contains(output, escaped) {
+						t.Errorf("full output lost escaped diagnostic bytes %q:\n%s", escaped, output)
+					}
 				}
 				previous := -1
 				for _, fragment := range tc.fragments {

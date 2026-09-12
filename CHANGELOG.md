@@ -4,14 +4,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/2.0.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Full failure diagnostics
-
-### Fixed
-
-- `bench test --full` retains every failure diagnostic line in order within each result.
-  The default preview and distinct failing-test counts stay the same.
-
 ## [Unreleased]
+
+### Full failure diagnostics
+
+- Fixed `bench test --full` to retain every failure diagnostic line in order within each result.
+  The default preview and distinct failing-test counts stay the same.
 
 ### Filtered compile failures
 
