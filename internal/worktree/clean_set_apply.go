@@ -19,9 +19,8 @@ import (
 // It stays outside Removes() for that reason: the member still stands exactly as the
 // approved plan found it, and it has no removal ahead of it.
 //
-// Its placement is unsettled. lifecyclepolicy owns the other action values, and this one
-// sits here because moving it grows two files that are already over their size budget. The
-// reviewer holds that decision.
+// lifecyclepolicy owns the other action values. This one sits here because moving it grows
+// two files that are already over their size budget.
 const ActionNotAttempted CleanupAction = "not-attempted"
 
 const notAttemptedDetail = "not attempted; an earlier target in this set did not complete"

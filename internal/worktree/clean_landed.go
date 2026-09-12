@@ -231,11 +231,8 @@ func landedRowPlans(rows []landedCleanupRow) []CleanupPlan {
 	return plans
 }
 
-// plans is every selected row's plan in selection order.
-func (set landedCleanupSet) plans() []CleanupPlan { return landedRowPlans(set.rows) }
-
 func renderLandedSet(stdout io.Writer, set landedCleanupSet, options CleanupOptions) error {
-	if err := renderCleanups(stdout, set.plans()); err != nil || len(set.rows) == 0 {
+	if err := renderCleanups(stdout, landedRowPlans(set.rows)); err != nil || len(set.rows) == 0 {
 		return err
 	}
 	actions := make([]axi.Action, 0, len(set.rows)+1)
@@ -334,7 +331,7 @@ func requalifyLandedRow(j joins, root string, planned landedCleanupRow, options 
 func applyLandedSet(j joins, root string, set landedCleanupSet, options CleanupOptions, scope string) ([]CleanupPlan, error) {
 	plans := make([]CleanupPlan, 0, len(set.rows))
 	if err := preflightLandedSet(j, root, set, options, scope); err != nil {
-		return notAttemptedPlans(plans, set.plans()), err
+		return notAttemptedPlans(plans, landedRowPlans(set.rows)), err
 	}
 	for i, planned := range set.rows {
 		if !planned.plan.Action.Removes() {

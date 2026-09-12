@@ -111,18 +111,22 @@ func unclaimedReplan() []axi.InvocationArgument {
 	return cleanArguments(unclaimedOptions(), "--unclaimed")
 }
 
+// applyUnclaimedAssignmentSet deletes each planned branch at the exact object the plan
+// named. It reports the outcome rows alone. A stale refusal carries no rows, because the
+// refusal row is this command surface's own spelling and the caller renders it; a row
+// returned here would be a second derivation the caller discards.
 func applyUnclaimedAssignmentSet(root string, set unclaimedAssignmentSet) ([]CleanupPlan, error) {
 	current, err := planUnclaimedAssignmentSet(root, unclaimedOptions())
 	if err != nil {
 		return nil, err
 	}
 	if current.fingerprint != set.fingerprint || len(current.rows) != len(set.rows) {
-		return staleUnclaimedPlans(set), errStaleFingerprint
+		return nil, errStaleFingerprint
 	}
 	plans := make([]CleanupPlan, 0, len(set.rows))
 	for i, planned := range set.rows {
 		if current.rows[i] != planned {
-			return staleUnclaimedPlans(set), errStaleFingerprint
+			return nil, errStaleFingerprint
 		}
 		if err := git.DeleteBranchExact(root, planned.ref, planned.oid); err != nil {
 			return append(plans, CleanupPlan{Target: planned.ref, Action: ActionError, Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: set.fingerprint, Reason: err.Error()}), err

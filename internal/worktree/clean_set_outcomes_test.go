@@ -7,6 +7,7 @@
 package worktree
 
 import (
+	"bytes"
 	"errors"
 	"os"
 	"path/filepath"
@@ -280,6 +281,99 @@ func TestCleanSetRetainedMember(t *testing.T) {
 			}
 			if plan.Action != want {
 				t.Fatalf("refused row %q = %q, want %q", plan.Target, plan.Action, want)
+			}
+		}
+	})
+}
+
+// TestCleanSetApplyTimeStaleRefusal is COV-6. An apply can return a stale refusal from
+// inside itself, after the command's entry check already passed. That arm renders the
+// refusal form rather than the outcome rows, and it is the only place the agent learns the
+// plan died mid-apply. Each mode reaches it by its own route.
+func TestCleanSetApplyTimeStaleRefusal(t *testing.T) {
+	t.Parallel()
+	t.Run("explicit late drift through the command", func(t *testing.T) {
+		t.Parallel()
+		root, home, creations := removableSetFixture(t, 2)
+		files := landedFileByAssignment(creations, "member-0.txt", "member-1.txt")
+		j := defaultJoins()
+		set := planExplicitSet(j, root, explicitIdentities(creations), CleanupOptions{})
+		if set.fingerprint == "" || len(set.rows) != 2 {
+			t.Fatalf("explicit set = %#v, want two applicable members", set)
+		}
+		targets := explicitTargetArguments(creations)
+		plan, planErr, planCode := runCleanup(t, root, home, targets...)
+		if planCode != 0 || planErr != "" {
+			t.Fatalf("plan = (%d, %q, %q), want one applicable plan", planCode, plan, planErr)
+		}
+		// The drift lands inside the second member's locked transaction, so the command's
+		// entry check and the preflight both pass and the refusal comes from the apply.
+		drifted := memberByID(t, creations, set.rows[1].assignment.ID)
+		locks := 0
+		j.cleanupBoundary = func(step LifecycleStep) error {
+			if step == StepApplyLocked {
+				locks++
+			}
+			if locks == 2 {
+				driftTracked(t, files, drifted.Assignment.ID)
+			}
+			return nil
+		}
+
+		digest := cleanupRowFingerprint(t, plan)
+		stdout, stderr, code := runCleanupWith(t, j, root, home, append(targets, "--apply", digest)...)
+		if code != 1 || stderr != "" {
+			t.Fatalf("late-drift apply = (%d, %q, %q), want a refusal", code, stdout, stderr)
+		}
+		if !strings.Contains(stdout, "unknown,error,unknown,unknown,none,"+digest+",cleanup fingerprint is stale") {
+			t.Fatalf("late-drift apply = %q, want the refusal row naming the rejected digest", stdout)
+		}
+		// The renderer names members in canonical identity order, which the fixture draws at
+		// random, so the expectation reads that order from the same source the renderer uses.
+		want := "bench worktree clean " + strings.Join(set.targetSelectors(), " ")
+		if !strings.Contains(stdout, want) {
+			t.Fatalf("late-drift apply = %q, want the re-plan command %q", stdout, want)
+		}
+		if strings.Contains(stdout, "--apply") {
+			t.Fatalf("late-drift apply = %q, want no replay of the refused digest", stdout)
+		}
+	})
+	t.Run("unclaimed applier re-plan mismatch", func(t *testing.T) {
+		t.Parallel()
+		root := newWorktreeRepo(t)
+		for _, owner := range []string{"a", "b"} {
+			branch := intent.AssignmentBranchRef(strings.Repeat(owner, 32), strings.Repeat("f", 32))
+			gitRun(t, root, "branch", strings.TrimPrefix(branch, "refs/heads/"))
+		}
+		set, err := planUnclaimedAssignmentSet(root, unclaimedOptions())
+		mustNoError(t, err)
+		if len(set.rows) != 2 {
+			t.Fatalf("unclaimed set = %#v, want two selected refs", set.rows)
+		}
+		// A ref appears between the plan and the apply, which only the applier's own re-plan
+		// can see. The command's entry check reads one plan and cannot reach this.
+		extra := intent.AssignmentBranchRef(strings.Repeat("c", 32), strings.Repeat("f", 32))
+		gitRun(t, root, "branch", strings.TrimPrefix(extra, "refs/heads/"))
+
+		plans, applyErr := applyUnclaimedAssignmentSet(root, set)
+		if !errors.Is(applyErr, errStaleFingerprint) {
+			t.Fatalf("apply error = %v, want the applier's own stale refusal", applyErr)
+		}
+		if plans != nil {
+			t.Fatalf("stale apply rows = %#v, want none; the caller owns the refusal row", plans)
+		}
+		var stdout bytes.Buffer
+		mustNoError(t, applyOutcomes(&stdout, plans, staleUnclaimedPlans(set), applyErr, unclaimedReplan()))
+		rendered := stdout.String()
+		if !strings.Contains(rendered, "unknown,error,unclaimed,none,none,"+set.fingerprint+",cleanup fingerprint is stale") {
+			t.Fatalf("stale apply = %q, want this mode's own refusal row", rendered)
+		}
+		if !strings.Contains(rendered, "bench worktree clean --discard-branch --unclaimed") {
+			t.Fatalf("stale apply = %q, want the selector-preserving re-plan command", rendered)
+		}
+		for _, ref := range []string{set.rows[0].ref, set.rows[1].ref, extra} {
+			if !git.OK("-C", root, "show-ref", "--verify", "--quiet", ref) {
+				t.Fatalf("stale apply deleted %q", ref)
 			}
 		}
 	})
