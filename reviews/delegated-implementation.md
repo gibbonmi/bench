@@ -179,6 +179,115 @@
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "DI-C2",
+      "base": "01cff074a1bb5036e4ca4984508a24c161700c37",
+      "tip": "bcf10316828147def127bae6b0bb976f72fab7a3",
+      "plan_digest": "sha256:bf72ae69298dc32d8bdc46a16ef230f3cfc37040d8370b6d6f3d45bac48517b8",
+      "source_digest": "7b32596dcce60d70bf512e32e4083173af2af625",
+      "acceptance_rows": [
+        "DI13",
+        "DI14",
+        "DI15",
+        "DI16",
+        "DI17",
+        "DI18",
+        "DI19"
+      ],
+      "verification": [
+        {
+          "id": "di-c2-assessment",
+          "performer": "claude-code:session_01FbuJyQvU35i57XzAYcrniv",
+          "role": "author-verification",
+          "model": "claude-opus-5",
+          "effort": "high",
+          "source_digest": "7b32596dcce60d70bf512e32e4083173af2af625",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code:bash/di-c2-assessment",
+            "digest": "sha256:3d2d3f88837e3afe52a13d841a578fb600fc878236367d5c0233fb054ecde56c",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/assessment,pass,896\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "assessment",
+          "command": "bench test --package ./internal/assessment",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit a selected assignment batch",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-code:bash/probe-di-c2",
+              "digest": "sha256:b2f382024a30ef8a1cb9fe0b4f43e6354a923ad06c531fafb58cceb44a4e9830",
+              "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/assessment,fail,901\nfailures[2]{package,test,line}:\n  TestAssessmentAssignmentBatches lost the second batch measure.\n  TestAssessmentCrossBatchMapping accepted one trace through two batches.\nrestore: cp of the preserved file; git status --porcelain empty."
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "di-c2-Standards",
+          "performer": "claude-code:subagent/a87f363174e163ac7",
+          "role": "independent-review",
+          "model": "claude-sonnet-5",
+          "effort": "medium",
+          "source_digest": "7b32596dcce60d70bf512e32e4083173af2af625",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code:subagent/a87f363174e163ac7",
+            "digest": "sha256:0b2b80de15d365bac1a4d4a7fd7352710d522c8f2ffa47caca66d86201623c87",
+            "excerpt": "Verdict: findings. Three duplications: a hand-rolled membership loop the\npackage already composes as slices.Contains, and two test helpers that were\nsecond derivations of the selector schema and of the input-writing sequence.\nThe axis cleared benchBatches as a single normalization path and judged both\npre-existing test edits to preserve their assertions. Folded at bcf10316."
+          },
+          "axis": "Standards",
+          "base": "01cff074a1bb5036e4ca4984508a24c161700c37",
+          "tip": "bcf10316828147def127bae6b0bb976f72fab7a3",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "di-c2-Spec",
+          "performer": "claude-code:subagent/ae9537d9e988f5051",
+          "role": "independent-review",
+          "model": "claude-sonnet-5",
+          "effort": "medium",
+          "source_digest": "7b32596dcce60d70bf512e32e4083173af2af625",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code:subagent/ae9537d9e988f5051",
+            "digest": "sha256:9459b60535ab0602e5958adb6033795d4fe26979a6eab885eb26fd302e437f6b",
+            "excerpt": "Verdict: pass. Every Accounting sentence is delivered and all eight ticket\nacceptance bullets are met. The diff stays inside the ticket fence, and the\nuntouched registry files are correct because the CLI grammar did not change.\nThe axis named one coverage gap: no fixture drove the cross-batch mapping\nconflict. That gap is closed at bcf10316."
+          },
+          "axis": "Spec",
+          "base": "01cff074a1bb5036e4ca4984508a24c161700c37",
+          "tip": "bcf10316828147def127bae6b0bb976f72fab7a3",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "di-c2-Coverage",
+          "performer": "claude-code:subagent/a0127c3fc8b35f95f",
+          "role": "independent-review",
+          "model": "claude-sonnet-5",
+          "effort": "medium",
+          "source_digest": "7b32596dcce60d70bf512e32e4083173af2af625",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code:subagent/a0127c3fc8b35f95f",
+            "digest": "sha256:43ab8cd0859ee41efbe15d5c1d582e3f8e3ea6b170c4e24326c0bb326f6be303",
+            "excerpt": "Verdict: findings. Eleven mutations across six files. Two passed the whole\nsuite: a per-batch selection ledger, and an explicit empty batch list read as\na second input form. The axis also found the parity comparison decorative and\nthe comparison half of the orchestration row untested. All four are closed at\nbcf10316, and the author observed both proven mutations red. Tree restored."
+          },
+          "axis": "Coverage",
+          "base": "01cff074a1bb5036e4ca4984508a24c161700c37",
+          "tip": "bcf10316828147def127bae6b0bb976f72fab7a3",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
