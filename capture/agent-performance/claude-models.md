@@ -4,6 +4,8 @@ Last incorporated landing: `ft311-recoverable-reset` (`5201c9fc21f0dd85563edb704
 
 The Fable/high round returned 26 findings and 14 accepted targets over the candidate, including three behavior defects the candidate's own Terra/medium review had missed. The Opus/medium re-review verified every fold predicate, observed five mutations red, and returned 7 minor findings. No write delegate ran.
 
+Last incorporated phase: the `delegate-boot-cost` spec (worktree tip `99723abdb26fbea22db17d5d3875a0edaaeaffb0`, 2026-09-12). Fable authored the spec and tickets in its own context. One Opus/medium review round returned twelve findings, two of them blocking, and every finding held against the tree. Two Sonnet "ok" delegates measured the general-purpose boot at 38,430 tokens and the Explore boot at 8,834.
+
 Seventy-two completed landings are recorded. Routing follows the harness-to-tier binding.
 
 ## Current routing
@@ -13,7 +15,7 @@ Seventy-two completed landings are recorded. Routing follows the harness-to-tier
 | Fable / low–high | orchestrator, 34 landings + implementer, 10 charges + reviewer, 6 axes | On `ft311-recoverable-reset` it repaired the candidate in its own context, proved every new test red under a named mutation, and folded two review rounds. It paid two landing refusals before it learned that a sibling-created assignment lands through an integration assignment, and it let the landing retire the frozen sibling without stating that first. | Coordination of a parallel build and adversarial spec review; it implements only when the reviewer names it |
 | Fable / high | reviewer, 3 axes on 1 landing | On `ft311-recoverable-reset` the three axes found the below-path collision, the ignore-rule drift that deleted bytes, the hidden index flags, and the primary-side checkpoint resolution, each with an executed probe, and the Standards axis enumerated every one-source duplicate with its callers. | Review axes over a candidate another provider built, when the reviewer names the tier |
 | Opus / high | implementer, latest 10 guidance and Go-seam charges | On `ft311-landing-completion` it folded the reference, the final-check guidance, the working agreement, and the changelog first-pass with zero prose findings, moved the anchor with its fixture, and stopped at the fence when a second canary fixture anchored on the replaced sentence. | High for process lifecycle, cleanup authority, destructive commands, anchored guidance, and foundational Go seams. |
-| Opus / medium, low | implementer, orchestrator, and reviewer combined | On `ft311-recoverable-reset` three medium re-review axes verified every fold predicate with citations, ran five restored mutations, and found one real two-hop recovery gap that RR78 now pins. On `ft311-landing-completion` six medium tickets landed with biting self-probes. | Medium for gates, conformance, guidance, canaries, repair, Coverage, triage, and the repair-scoped re-review. Low for exact tickets and Standards or Spec review. |
+| Opus / medium, low | implementer, orchestrator, and reviewer combined | On the `delegate-boot-cost` spec one medium round read 19 enforcement files, found six over-budget command files the author's census had skipped, and named the hard-coded-limit degenerate that no row caught. All twelve findings held against the tree. | Medium for gates, conformance, guidance, canaries, repair, Coverage, triage, and the repair-scoped re-review. Low for exact tickets and Standards or Spec review. |
 | Sonnet / high | orchestrator, 3 landings | On `roadmap-light-path-fixes-2` it ran ten ticket charges and two review rounds (six axes) across two shared worktrees, caught a read-only delegate leaving the integration worktree dirty before the next commit, and routed two material acceptance shortfalls to the reviewer instead of silently resolving them. | Continues to hold at high effort; compare again after a fourth orchestrated build |
 | Sonnet / low–medium | implementer, latest 10 of 79 ticket-sized charges | On `ft311-diagnostics` one low charge landed after two corrections: its case-fold fixture was not red-capable for the row's named mutation, and its fixture left the fenced directory. On `craft-research-skill` one low review repair closed five findings first-pass with a biting omission probe. | Low for a prose or exact-spec repair at a known seam under a covering gate when the reviewer names it; the coordinator probes every return and runs the whole-tree gate before the landing |
 
@@ -21,6 +23,7 @@ Seventy-two completed landings are recorded. Routing follows the harness-to-tier
 
 | landing | model / effort / role | what it shows |
 | --- | --- | --- |
+| `delegate-boot-cost` spec review | Opus / medium / reviewer | The round measured every command description, found the six the author missed, and named the cheapest wrong implementation per chunk with the row that would catch it. |
 | `ft311-recoverable-reset` Coverage axis | Fable / high / reviewer | The axis built the tip, added an ignore rule after the checkpoint, ran the apply, and observed the ignored bytes deleted with no envelope, which no row had decided. |
 | `ft311-recoverable-reset` Coverage re-review | Opus / medium / reviewer | The axis followed the exit-3 record's own `next` command through its apply and found the drifted bytes one envelope away with no signal in the record. |
 | `ft311-landing-completion` Coverage axis | Opus / medium / reviewer | The axis probed a state file whose fence never closes with a scratch test, observed the next run refuse the document, and named the row that should exist. |
@@ -45,3 +48,5 @@ Seventy-two completed landings are recorded. Routing follows the harness-to-tier
 - Land a repair of a frozen sibling from an integration assignment created from main, and state before the landing that the landing retires the sibling.
 - Declare a self-ignoring capture directory in the build-outputs file before the first landing that meets it.
 - Create no sibling worktree while another session is inside a landing tail, or between a landing's publication and its effects.
+- Measure a delegate's boot with an "ok" charge and read its usage line before any tier, tool-set, or profile change.
+- Use Opus/medium for the one spec-and-tickets review round, and verify each finding against the tree before the fold.
