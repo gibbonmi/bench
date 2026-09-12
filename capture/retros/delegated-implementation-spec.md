@@ -2,20 +2,27 @@
 
 The phase stages one spec and three tickets for an opt-in delegated implementation mode.
 The reviewer confirmed the decision source after two grill rounds.
-Sol/high accepted the spec and tickets after two review iterations.
+Sol/high accepted the initial spec and tickets after two review iterations.
+A later user correction required ticket authors and mid-tier reviews.
+One focused review found limit and negative-case gaps; the author folded those findings.
 Product implementation and final spec approval remain pending.
 
 ## Gate-stage timings
 
 The scaffold named an unrelated main landing at 8aac4f9d.
 Those timings do not measure this spec phase.
-This capture precedes the phase commit, so its gate-stage timings remain unknown here.
+
+The later merge of current main passed the full gate before the ticket-author revision.
+Its observed stages were gofmt 137 ms, vet 1123 ms, test 144450 ms, race 3693 ms, and system 36335 ms.
+Shellcheck was skipped, and six capability-dependent tests were skipped.
+The revised source still requires its final verification.
 The commit and final verification retain their own execution evidence.
 
 ## Ticket-versus-spec-slice and delegate performance
 
 Astra retained spec authorship in the decision-source session.
-One Sol/high delegate reviewed the spec-and-ticket pair in two iterations.
+One Sol/high delegate supplied two initial reviews and one focused revision review.
+The final focused-review folds have no further delegate review.
 No implementation delegate or paid comparison trial ran.
 Author effort, token usage, estimated costs, and actual charges remain unknown.
 
@@ -31,9 +38,9 @@ Main advanced independently, and the proposal preserves that work.
 
 | ticket | rounds | causes |
 | --- | --- | --- |
-| 1-bind-delegated-evidence.md | 1 spec review repair | spec-row |
+| 1-bind-delegated-evidence.md | 2 spec review repairs | spec-row |
 | 2-account-for-participants.md | 0 | none |
-| 3-enable-delegated-full-runs.md | 1 spec review repair | spec-row |
+| 3-enable-delegated-full-runs.md | 2 spec review repairs | spec-row |
 
 These rows describe spec corrections, not implementation repair attempts.
 

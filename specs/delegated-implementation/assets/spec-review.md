@@ -31,3 +31,17 @@ The reviewer performed a read-only spec review.
 It ran no implementation, tests, gate, or paid comparison.
 Native resume capability, slot metadata, and disclosed-account completeness still require the implementation's documented harness checks.
 Provider usage, estimated charges, and actual charges for this review remain unknown.
+
+## Ticket-authorship revision
+
+The reviewer changed the approved draft direction to one delegate per ticket and mid-tier reviews.
+The author charged the same Sol/high delegate for one focused iteration.
+The delegate found an ambiguous author limit and missing refusal cases for shared ticket authors.
+It also required explicit early-dispatch and full-chunk review-fence cases.
+The delegate accepted the frozen ticket-owner qualifier, reviewer identities, and unchanged three-ticket graph.
+
+The author defined the limit as active writers and kept native session capacity explicit.
+DI41 requires refusal of one author across two tickets.
+DI42 refuses early same-chunk dispatch, and DI43 requires the full integrated chunk review.
+Ticket 3 now names a two-ticket chunk in its synthetic journey.
+These folds have coverage and prose checks, with no further delegate review.

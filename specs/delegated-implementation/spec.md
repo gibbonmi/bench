@@ -2,21 +2,22 @@
 
 Status: staged
 
-Decision source: Reviewer-confirmed conversation, 2026-09-12, including both grill rounds and the explicit confirmation to draft.
+Decision source: Reviewer-confirmed conversation, 2026-09-12, including both grill rounds, confirmation to draft, and the later ticket-authorship and mid-review correction.
 
-Verification log: 2 iteration(s) to accept — Sol/high accepted the corrected identity lifecycle, transfer predicates, and three-ticket graph.
+Verification log: 3 review iteration(s) — the initial proposal passed after two iterations. One focused review examined the later ticket-author correction. The author folded its limit, distinct-author, and chunk-fence findings; that final fold has no further delegate review.
 
 ## Problem
 
 The full workflow binds implementation, chunk verification, and final reconciliation to one session.
-A reviewer cannot opt into concurrent chunk authors without contradicting that contract.
-Completion evidence cannot distinguish a chunk author from an orchestrator.
+A reviewer cannot opt into concurrent ticket authors without contradicting that contract.
+Completion evidence cannot distinguish a ticket author from an orchestrator.
 
 ## Solution
 
 Add `--delegate` to `$bench-implement-spec --full <spec>` and its existing harness equivalents.
-The invoking session selects configured implementation tiers and orchestrates retained chunk authors.
-Independent authors work concurrently in separate Bench worktrees.
+The invoking session selects configured implementation tiers and orchestrates one retained delegate per ticket.
+The implementation chunk remains the review scope.
+Independent chunks can author concurrently through separate ticket worktrees.
 Integration, chunk acceptance, and landing remain serial.
 Without `--delegate`, the existing single-author workflow remains unchanged.
 
@@ -29,9 +30,9 @@ This recommendation applies to implementation of this proposal after approval.
 Its own build uses the existing single-author workflow until the proposed capability exists.
 
 1. As a reviewer, I want explicit opt-in, so that ordinary full runs retain their author.
-2. As an orchestrator, I want configured tier selection, so that each chunk receives an appropriate model and effort.
+2. As an orchestrator, I want configured tier selection, so that each ticket receives an appropriate model and effort.
 3. As an orchestrator, I want concurrent independent authors, so that independent work can proceed together.
-4. As a chunk author, I want retained ownership, so that tests, probes, and repairs stay with their implementation.
+4. As a ticket author, I want retained ownership, so that tests, probes, and repairs stay with their implementation.
 5. As a reviewer, I want controlled replacement, so that a failed author cannot block all useful progress.
 6. As an orchestrator, I want source-bound verification, so that branch-local success cannot certify an integrated change.
 7. As a reviewer, I want independent review sessions, so that an author cannot accept its own work.
@@ -56,12 +57,21 @@ The invoking harness resolves each tier through its existing binding.
 No new ceiling flag or default model change is required.
 An unavailable or unbound model stops that dispatch without substitution.
 The orchestrator declares an author limit within available harness slots and the user's budget before dispatch.
+The limit counts concurrently active ticket writers, not retained idle author sessions.
 
-Review retains the existing conditional tier route and high effort.
+Native session capacity remains a separate constraint.
+Only supported native pause and resume operations can free slots while preserving author identity.
+If the harness cannot preserve required authors within its capacity, dispatch stops and reports that limit.
+
+In delegated mode, every review axis uses the invoking harness's configured mid tier at high effort.
+This review route applies to cheap, mid, and top implementation tiers alike.
+A standing cross-harness review also uses that harness's configured mid tier at high effort.
+No-flag runs retain their existing conditional review route.
 User budgets, cancellation, and scope decisions retain their stop authority.
 
 The orchestrator owns the integration worktree, plan updates, evidence records, assessment imports, and landing.
-A chunk author owns its production changes, tests, mutation probes, and repairs through acceptance.
+Each ticket receives a distinct delegate session.
+That ticket author owns its production changes, tests, mutation probes, and repairs through its chunk's acceptance.
 Diagnostic helpers receive read-only work.
 Existing independent acceptance checks remain verification work and transfer no production authorship.
 The orchestrator routes production merge-conflict repairs and later cross-chunk repairs to the relevant author.
@@ -74,38 +84,49 @@ Shared contract changes also require a dependency before concurrent dispatch.
 A discovered overlap pauses the affected work until the orchestrator updates its order and charge.
 Unrelated worktrees and changes remain outside the run.
 
-Each chunk uses its own Bench assignment created from the accepted integration source.
-The orchestrator records its native session identity before sending a write charge.
-It folds a clean, committed author tip through the existing worktree merge owner.
-Only one contribution enters the integration source at a time.
-The retained author then verifies the chunk on that exact integrated source.
-It can use its own worktree after the orchestrator synchronizes that worktree to the integrated tip.
+Each ticket uses its own Bench assignment and recorded native delegate identity.
+A read-only preparation charge obtains that identity before write authority is granted.
+
+Within a chunk, tickets execute serially in dependency order.
+The first ticket starts from the accepted prerequisite source.
+A later ticket can start from its predecessor's committed green source before the chunk review.
+The orchestrator uses existing worktree create-from and merge operations to preserve that source.
+It records each delegate identity before sending its write charge.
+
+The orchestrator folds the chunk's clean, committed source through the existing merge owner.
+Only one chunk contribution enters the integration source at a time.
+Each retained ticket author then performs its required verification on that exact integrated source.
+Authors can use their own worktrees after the orchestrator synchronizes them to the integrated tip.
+The review covers the full chunk delta after all its tickets are integrated.
 
 Review freezes the predecessor checkpoint tip and the current integrated tip.
 The three axes review the whole approved spec and that complete delta.
 The existing chunk checkpoint closes acceptance before the next integration step.
-A dependent chunk starts only after every prerequisite chunk passes its checkpoint.
-Independent authors can continue while another chunk waits for acceptance.
+A ticket in a dependent chunk starts only after every prerequisite chunk passes its checkpoint.
+A same-chunk ticket dependency requires the predecessor ticket's green commit, not an intermediate chunk review.
+Authors of independent chunks can continue while another chunk waits for acceptance.
+
 Gate, merge, commit, and integration-check operations respect existing serialization and quiet-tree rules.
 
 Branch-local results remain historical evidence with their original source and performer.
 Relabeling their digest or performer cannot satisfy an integrated obligation.
 Repairs require current verification and each axis's current result or native reaffirmation.
-Authors and recoverable sources remain available for later repairs until the existing landing lifecycle releases them.
+All ticket authors and recoverable sources remain available for later repairs until the existing landing lifecycle releases them.
 
 ### Identity and evidence
 
 Extend the existing completion-plan and review-record owners with an explicit version 2 delegated form.
 Version 1 retains its `implementation_session` semantics and acceptance results.
 A version 2 plan owns one `execution` declaration with `mode: delegate` and one `run_id`.
-It names `orchestrator_session`, `author_limit`, and an ordered assignment history for each stable chunk ID.
-Undispatched chunks can have empty histories.
-A dispatched chunk or an acceptance occurrence requires an effective assignment.
+It names `orchestrator_session`, `author_limit`, and an ordered assignment history for each ticket basename.
+Undispatched tickets can have empty histories.
+A dispatched ticket or its verification occurrence requires an effective assignment.
 
 Each assignment names its native session, Bench assignment, selected model, effort, source, and native dispatch reference.
 Each replacement names its predecessor, trigger, stopped-writer evidence, and preserved source.
 It also includes the reassessment when that trigger requires one.
-The latest assignment supplies the chunk's effective author.
+The latest assignment supplies the ticket's effective author.
+One native author session cannot own two different tickets in the run.
 The orchestrator and author identities must differ.
 
 The plan is the sole identity authority for acceptance.
@@ -123,7 +144,11 @@ The current plan's full author history supplies the exclusion set for every revi
 An author selection cannot reuse a session that supplied independent review in this run.
 A record cannot downgrade a delegated plan to version 1 acceptance.
 
-Chunk verification requires the author from the chunk's frozen plan.
+Each version 2 chunk-verification requirement names its owning `ticket` in the source-bound plan.
+That ticket must belong to the chunk, and every ticket needs at least one verification requirement.
+The requirement resolves its author from the frozen plan's ticket assignment.
+Final requirements omit `ticket` and retain the orchestrator as verifier.
+
 Historical occurrences remain valid evidence of their original author and source.
 New post-replacement occurrences require the successor assignment and fresh verification.
 Historical results never satisfy a new source or successor obligation.
@@ -204,9 +229,9 @@ The first two capabilities have no data dependency, but this build accepts them 
 
 | chunk / ticket | blocked by | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- | --- |
-| DI-C1 / `1-bind-delegated-evidence.md` | none | Delegated identities through completion and landing | DI1, DI2, DI3, DI4, DI5, DI6, DI7, DI8, DI9, DI10, DI11, DI12, DI31, DI36 | Evidence and landing fixtures | yes |
+| DI-C1 / `1-bind-delegated-evidence.md` | none | Delegated identities through completion and landing | DI1, DI2, DI3, DI4, DI5, DI6, DI7, DI8, DI9, DI10, DI11, DI12, DI31, DI36, DI37, DI38, DI41 | Evidence and landing fixtures | yes |
 | DI-C2 / `2-account-for-participants.md` | none | Complete accounts across assignments | DI13, DI14, DI15, DI16, DI17, DI18, DI19 | Assessment command fixtures | no |
-| DI-C3 / `3-enable-delegated-full-runs.md` | 1-bind-delegated-evidence.md, 2-account-for-participants.md | Opt-in orchestration using both capabilities | DI20, DI21, DI22, DI23, DI24, DI25, DI26, DI27, DI28, DI29, DI30, DI32, DI33, DI34, DI35 | Workflow tripwires and synthetic journey | no |
+| DI-C3 / `3-enable-delegated-full-runs.md` | 1-bind-delegated-evidence.md, 2-account-for-participants.md | Opt-in orchestration using both capabilities | DI20, DI21, DI22, DI23, DI24, DI25, DI26, DI27, DI28, DI29, DI30, DI32, DI33, DI34, DI35, DI39, DI40, DI42, DI43 | Workflow tripwires and synthetic journey | no |
 
 The build uses this version 1 completion plan until the proposed workflow is delivered.
 
@@ -228,7 +253,7 @@ Synthetic events exercise command owners without launching models.
 ### Seam diagram
 
 ```text
-approved invocation -> existing preparation -> isolated chunk authors
+approved invocation -> existing preparation -> isolated ticket authors
  -> serial merge -> author verification + three independent reviews
  -> checkpoint -> orchestrator final verification -> prospective gate and landing
 all participants and attempts -> existing assessment record / show / compare
@@ -241,11 +266,11 @@ all participants and attempts -> existing assessment record / show / compare
 | DI1 | 1 | Version 1 acceptance matches baseline fixture outcomes | planned TestDelegatedLegacyParity in internal/reviewrecord | Differential success and refusal cases detect default identity drift |
 | DI2 | 6, 11 | Delegated verification ownership resolves from the source-bound plan | planned TestDelegatedIdentityAuthority in internal/reviewrecord | An evidence-only performer rewrite cannot change the required author |
 | DI3 | 6, 11 | An invalid delegated identity declaration refuses acceptance | planned TestDelegatedIdentityRefusals in internal/reviewrecord | Missing, duplicate, conflicting, and mixed-version fixtures cannot pass |
-| DI4 | 6 | A chunk checkpoint requires its assigned author's integrated-source verification | planned TestDelegatedChunkVerifier in internal/gate | Orchestrator, foreign-author, and branch-only passes fail the valid obligation |
-| DI5 | 7 | A current or former author cannot review any chunk | planned TestDelegatedAuthorReview in internal/gate | Replaced authors and another chunk's author each fail |
+| DI4 | 6 | A chunk checkpoint requires each ticket's assigned-author verification on the integrated source | planned TestDelegatedChunkVerifier in internal/gate | Orchestrator, foreign-author, and branch-only passes fail the valid obligation |
+| DI5 | 7 | A current or former author cannot review any chunk | planned TestDelegatedAuthorReview in internal/gate | Replaced authors and another ticket's author each fail |
 | DI6 | 7 | The orchestrator cannot supply independent review | planned TestDelegatedOrchestratorReview in internal/gate | A complete orchestrator-authored axis still refuses |
 | DI7 | 7 | One session cannot supply two axes for a chunk | planned TestDelegatedDistinctAxes in internal/gate | Repeated reviewer identities cannot satisfy the axis inventory |
-| DI8 | 8 | Final verification requires the orchestrator on the final source | planned TestDelegatedFinalVerifier in internal/landing | A chunk author or older source blocks publication |
+| DI8 | 8 | Final verification requires the orchestrator on the final source | planned TestDelegatedFinalVerifier in internal/landing | A ticket author or older source blocks publication |
 | DI9 | 8 | Missing reconciliation blocks delegated landing | planned TestDelegatedReconciliation in internal/landing | Omitting a required row leaves the destination ref unchanged |
 | DI10 | 8 | Unreviewed destination content blocks delegated landing | planned TestDelegatedDestinationDelta in internal/landing | Destination additions and deletions retain their refusal |
 | DI11 | 5, 11 | Replacement retains historical occurrences under their original frozen assignments | planned TestDelegatedReplacement in internal/reviewrecord | Comparing an older occurrence with the latest author would reject valid history |
@@ -259,21 +284,28 @@ all participants and attempts -> existing assessment record / show / compare
 | DI19 | 1 | Singular assessment imports retain baseline results | planned TestAssessmentSingularParity in internal/assessment | Differential fixtures detect legacy collection and cost drift |
 | DI20 | 1 | The phase delegates only an approved delegated full run | review-owned: grammar scenarios and workflow tripwires | No-flag, missing-spec, unapproved, and delegate-without-full cases prohibit dispatch |
 | DI21 | 2 | The orchestrator selects configured tiers without changing defaults | review-owned: routing scenarios and line-routing tripwires | Top works under opt-in while missing bindings prohibit substitution |
-| DI22 | 3 | Independent authors use separate assignments within the declared limit | review-owned: charges and synthetic journey | Two independent chunks expose a shared checkout or excess author |
+| DI22 | 3 | Authors of independent chunks use separate assignments within the declared limit | review-owned: charges and synthetic journey | Retained idle sessions cannot exhaust the active-writer limit; excess active writers cannot dispatch |
 | DI23 | 3, 6 | Concurrent authors reach acceptance through a serial integrated source chain | planned TestDelegatedIntegrationJourney in internal/worktree | A branch-only pass cannot close the second integrated chunk |
 | DI24 | 3 | A dependent author waits for every prerequisite checkpoint | review-owned: dispatch scenarios and workflow tripwires | A pending predecessor review prevents dependent dispatch |
-| DI25 | 4 | Repairs return to the retained chunk author | review-owned: repair and merge-conflict charge scenarios | An orchestrator production repair violates ownership |
+| DI25 | 4 | Repairs return to the retained ticket author | review-owned: repair and merge-conflict charge scenarios | An orchestrator production repair violates ownership |
 | DI26 | 5 | Two completed no-progress attempts permit replacement or model change only after reassessment | review-owned: replacement scenarios and workflow tripwires | One attempt or absent reassessment cannot trigger transfer |
 | DI27 | 9 | Phase exits reconcile known invocations against assessment attempts | review-owned: synthetic dispatch and attempt inventories | An omitted failure, diagnostic, review, or orchestrator interval prevents a complete-account claim |
 | DI28 | 11 | Resumption retains identities, source pins, and pending obligations | review-owned: handoff scenarios and workflow tripwires | Resumption cannot invent authors or accept pending evidence |
 | DI29 | 12 | Verification launches no paid comparison and changes no model default | review-owned: synthetic journey and complete diff | A trial launch or binding edit violates scope |
 | DI30 | 8, 11 | The existing landing owner alone publishes implemented status | planned TestDelegatedIntegrationJourney in internal/worktree | Final verification alone cannot publish completion or release unrelated work |
-| DI31 | 3, 11 | An undispatched future chunk accepts an empty assignment history | planned TestDelegatedPendingAssignments in internal/reviewrecord | Requiring all native sessions up front fails a bounded-author fixture |
+| DI31 | 3, 11 | An undispatched future ticket accepts an empty assignment history | planned TestDelegatedPendingAssignments in internal/reviewrecord | Requiring all native sessions up front fails a bounded-author fixture |
 | DI32 | 5 | A recorded terminal author failure permits replacement or model change | review-owned: terminal-failure scenario and workflow tripwire | An implementation that supports only no-progress retries would block this trigger |
 | DI33 | 5 | Exhausting the declared author cap permits replacement or model change | review-owned: cap-exhaustion scenario and workflow tripwire | Ignoring cap exhaustion would prevent authorized transfer |
 | DI34 | 5 | A lost author session permits replacement or model change | review-owned: lost-session scenario and workflow tripwire | Requiring another response from the lost session would block transfer |
 | DI35 | 5, 11 | Every author transfer requires confirmed termination of the old writer | review-owned: transfer scenarios and workflow tripwire | A valid trigger with an unconfirmed stop still prohibits successor writes |
 | DI36 | 5, 6 | Post-replacement acceptance requires the successor's fresh verification | planned TestDelegatedReplacementFreshness in internal/reviewrecord | Relabeling the predecessor pass cannot satisfy the successor obligation |
+| DI37 | 4, 6 | One chunk accepts verification from its distinct ticket authors under their own obligations | planned TestDelegatedTicketOwners in internal/reviewrecord | Requiring a single author for the whole chunk rejects a valid two-ticket fixture |
+| DI38 | 4, 6 | An invalid ticket-to-verification owner mapping refuses chunk acceptance | planned TestDelegatedTicketObligations in internal/reviewrecord | A foreign ticket, an uncovered ticket, or another ticket's performer cannot satisfy the map |
+| DI39 | 7 | Delegated review uses configured mid tier at high effort for every implementation tier | review-owned: cheap, mid, and top author scenarios plus routing tripwire | Retaining the mid-author-to-top-review branch violates the opt-in rule |
+| DI40 | 3, 4 | Same-chunk successor tickets can start after their predecessor's green commit | review-owned: two-ticket chunk scenario plus workflow tripwire | Waiting for an intermediate chunk checkpoint deadlocks the chunk |
+| DI41 | 4 | One native author session cannot own two ticket histories | planned TestDelegatedDistinctTicketAuthors in internal/reviewrecord | Assigning the same session to two tickets must refuse even with valid verification |
+| DI42 | 3, 4 | A same-chunk successor waits while its predecessor commit is pending or red | review-owned: two-ticket chunk scenario plus workflow tripwire | Early dispatch violates the green ticket dependency |
+| DI43 | 7 | Chunk acceptance review begins only after every ticket reaches the integrated chunk tip | review-owned: two-ticket chunk scenario plus workflow tripwire | Per-ticket review cannot substitute for the complete chunk review |
 
 ### Edge inventory
 
@@ -285,6 +317,7 @@ DI4 and DI12 cover missing verification, stale sources, unsuccessful probes, fai
 
 DI11, DI26, and DI31–DI36 cover pending assignments, replacements, exact transfer triggers, and unavailable stop proof.
 DI22–DI25 cover overlapping writes, shared contracts, dependency failure, and merge conflicts.
+DI37–DI43 cover ticket ownership, review tier, same-chunk dependencies, and the full-chunk review fence.
 
 DI14–DI19 cover empty batches, both input forms, duplicate selectors, foreign assignments, missing counters, and append conflicts.
 DI28 covers cancellation, interruption, stale handoffs, and unavailable native evidence.

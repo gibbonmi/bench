@@ -2,7 +2,7 @@
 
 Blocked by: none
 Writes: internal/reviewrecord, internal/gate/delegated_checkpoint_test.go (new), internal/landing/delegated_completion_test.go (new), internal/preflight/delegated_evidence_test.go (new)
-Covers: DI1, DI2, DI3, DI4, DI5, DI6, DI7, DI8, DI9, DI10, DI11, DI12, DI31, DI36
+Covers: DI1, DI2, DI3, DI4, DI5, DI6, DI7, DI8, DI9, DI10, DI11, DI12, DI31, DI36, DI37, DI38, DI41
 
 ## What to build
 
@@ -23,8 +23,11 @@ No separate identity registry or verification engine is introduced.
 - [ ] Identity edits outside the source-bound plan cannot change verification ownership.
 - [ ] All three reviewers exclude the orchestrator and every current or former author.
 - [ ] One session cannot satisfy two axes for a chunk.
-- [ ] Undispatched future chunks accept empty histories within a bounded author limit.
+- [ ] Undispatched future tickets accept empty histories within a bounded author limit.
 - [ ] Historical occurrences retain their original frozen assignments after replacement.
 - [ ] New post-replacement occurrences require the successor and fresh verification.
 - [ ] The existing source-chain, native-result, probe, reconciliation, and destination-delta refusals remain effective.
 - [ ] Preflight accepts and describes both valid record versions without weakening invalid-record diagnostics.
+- [ ] A two-ticket chunk accepts each distinct author for its own verification requirements.
+- [ ] Foreign, missing, and incorrectly performed ticket obligations refuse chunk acceptance.
+- [ ] Reusing one native author session across two ticket histories refuses acceptance.

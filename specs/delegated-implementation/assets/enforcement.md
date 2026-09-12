@@ -108,10 +108,10 @@ No new check registry or process seam is planned.
 | --- | --- |
 | No-flag runs retain the single author | DI1, DI19, DI20 |
 | The invoking session selects all configured tiers and effort | DI21 |
-| One delegate retains code, tests, probes, and repairs | DI4, DI11, DI25 |
+| Each ticket delegate retains code, tests, probes, and repairs | DI4, DI11, DI25, DI37, DI38, DI40, DI41 |
 | Independent chunks may author concurrently within a declared limit | DI22, DI23 |
-| Dependencies and integrated acceptance remain ordered | DI23, DI24 |
-| Three distinct independent axes exclude all authors and the orchestrator | DI5, DI6, DI7, DI12 |
+| Dependencies and integrated acceptance remain ordered | DI23, DI24, DI42, DI43 |
+| Three distinct mid-tier axes exclude all authors and the orchestrator | DI5, DI6, DI7, DI12, DI39 |
 | The orchestrator verifies, reconciles, integrates, and lands | DI8, DI9, DI10, DI30 |
 | Replacement follows agreed triggers after the old writer stops | DI11, DI26, DI31–DI36 |
 | Every participant, failed attempt, repair, review, verification, and diagnostic remains accounted for | DI13, DI14, DI15, DI17, DI27 |
@@ -127,7 +127,7 @@ Import edges: Shared recordtest is compiled fixture support. No private test hel
 
 Source-row clauses and occurrences: The table above covers the confirmed conversation. Default wording readers appear in the reader sweep.
 
-Promised field labels: execution, mode, run_id, orchestrator_session, author_limit, bench_input_batches, integration-verification.
+Promised field labels: execution, mode, run_id, orchestrator_session, author_limit, ticket, bench_input_batches, integration-verification.
 
 Changed-function callers: CheckTrees is called by Check and the gate checkpoint. CheckReviews is called by source coverage and record tests.
 
@@ -144,10 +144,10 @@ Future implementations must not infer transcript authenticity from a self-declar
 
 ## Proposed glossary additions
 
-Orchestrator: The invoking session that assigns chunk authors, integrates their source, reconciles acceptance, and lands the approved run.
-Avoid: implementation_session, chunk author.
+Orchestrator: The invoking session that assigns ticket authors, integrates their source, reconciles acceptance, and lands the approved run.
+Avoid: implementation_session, ticket author.
 
-Chunk author: The recorded session responsible for one chunk's production changes, tests, probes, repairs, and author verification.
+Ticket author: The recorded session responsible for one ticket's production changes, tests, probes, repairs, and author verification.
 Avoid: reviewer, orchestrator.
 
 Branch-local evidence: Results bound to an author branch before the contribution receives integrated acceptance.
@@ -163,3 +163,11 @@ Checkpoint refusals now name the preflight recovery route and the missing fence.
 The author inspected those changes and preserves them.
 They do not change the proposed identity or source-chain contract.
 Ticket 1 must exercise `internal/preflight/plan.go` through its build and review completion-plan checks as well.
+
+## Reviewer correction
+
+Each ticket receives its own retained delegate.
+The chunk remains the review scope.
+Delegated review always uses the configured mid tier at high effort.
+The source-bound requirement now names its owning ticket because one chunk can have several authors.
+Same-chunk ticket dependencies require green commits, while prerequisite chunks require accepted checkpoints.
