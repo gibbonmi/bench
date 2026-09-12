@@ -1,7 +1,7 @@
 # 4. Grade the description budgets from the profile
 
-Blocked by: 3-trim-skill-descriptions.md
-Writes: internal/conformance/skill_description_budgets_test.go (new), internal/conformance/checks_test.go, internal/conformance/registry/registry.go, internal/conformance/registry_test.go, internal/gate/lane_select_test.go, projects/benchkit.md, tests/canary/skill-description-budgets (new), .agents/skills/bench-craft-skills/SKILL.md
+Blocked by: 2-pin-bench-agent-definitions.md, 3-trim-skill-descriptions.md
+Writes: internal/conformance/skill_description_budgets_test.go (new), internal/conformance/checks_test.go, internal/conformance/registry/registry.go, internal/conformance/registry_test.go, internal/gate/lane_select_test.go, projects/benchkit.md, tests/canary/skill-description-budgets (new), .agents/skills/bench-craft-skills/SKILL.md, tests/canary/guidance-prose-budgets/over-budget-skill, tests/canary/line-routing/line-binding-prose-drift, tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading, tests/canary/workflow-guidance-anchors/benchkit-review-round-owner, tests/canary/workflow-guidance-anchors/benchkit-review-round-routing, tests/canary/workflow-guidance-anchors/benchkit-spec-ownership, tests/canary/workflow-guidance-anchors/benchkit-system-suite-route
 Covers: DB14, DB15, DB16, DB17, DB18, DB19, DB20, DB21, DB23, DB24, DB25, DB26
 
 ## What to build

@@ -221,6 +221,11 @@ The Codex side records the measurement in this spec and ships nothing.
 - `projects/benchkit.md`
 - `tests/canary/claude-agent-definitions/` (new)
 - `tests/canary/skill-description-budgets/` (new)
+- `tests/canary/workflow-guidance-anchors/`
+- `tests/canary/package-core-guard/`
+- `tests/canary/load-validity-metadata/`
+- `tests/canary/guidance-prose-budgets/`
+- `tests/canary/line-routing/`
 - `.agents/skills/bench-craft-delegate/SKILL.md`
 - `.agents/skills/bench-craft-skills/SKILL.md`
 - `.agents/skills/bench-craft-spec/SKILL.md`
@@ -241,7 +246,8 @@ The Codex side records the measurement in this spec and ships nothing.
 - `reviews/delegate-boot-cost.md`
 - `capture/retros/delegate-boot-cost.md` (new)
 
-The trim tickets edit only the description line of each listed skill file.
+The trim ticket edits only the description line of each listed skill file.
+The canary prefixes enter the fence because the preflight names each fixture that pins a touched path, and the tickets carry the fixture names.
 The delegate skill has ten lines of headroom under its budget, and the craft-skills skill has eight.
 
 ## Out of scope
