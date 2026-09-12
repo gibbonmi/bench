@@ -287,7 +287,7 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 			return 1
 		}
 		if fingerprint != "" {
-			plans, applyErr := applyUnclaimedAssignmentSet(root, set, options)
+			plans, applyErr := applyUnclaimedAssignmentSet(j, root, set, options)
 			_ = applyOutcomes(stdout, plans, staleUnclaimedPlans(set), applyErr, unclaimedReplan(options))
 			if applyErr != nil {
 				return 1
@@ -299,7 +299,7 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 			return 1
 		}
 		if applyCurrent {
-			plans, applyErr := applyUnclaimedAssignmentSet(root, set, options)
+			plans, applyErr := applyUnclaimedAssignmentSet(j, root, set, options)
 			if renderErr := applyOutcomes(stdout, plans, staleUnclaimedPlans(set), applyErr, unclaimedReplan(options)); renderErr != nil {
 				fmt.Fprintf(stderr, "bench worktree clean: %v\n", renderErr)
 				return 1

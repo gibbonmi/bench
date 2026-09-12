@@ -44,11 +44,11 @@ func runCleanupWith(t *testing.T, j joins, root, home string, args ...string) (s
 
 func cleanupRowFingerprint(t *testing.T, output string) string {
 	t.Helper()
-	match := regexp.MustCompile(`,\"?([0-9a-f]{64})\"?,`).FindStringSubmatch(output)
+	match := regexp.MustCompile(`,("?[0-9a-f]{64}"?),`).FindStringSubmatch(output)
 	if len(match) != 2 {
 		t.Fatalf("output has no row fingerprint: %q", output)
 	}
-	return match[1]
+	return cleanupRowValue(match[1])
 }
 
 func TestCleanLandedPlansRepositoryWideSet(t *testing.T) {

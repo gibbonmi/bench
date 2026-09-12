@@ -297,8 +297,8 @@ func explicitRowPlans(rows []explicitCleanupRow) []CleanupPlan {
 // member the set never started reports its own unstarted outcome.
 func applyExplicitSet(j joins, root string, set explicitCleanupSet, options CleanupOptions) ([]CleanupPlan, error) {
 	plans := make([]CleanupPlan, 0, len(set.rows))
-	if err := preflightExplicitSet(j, root, set, options); err != nil {
-		return notAttemptedPlans(plans, explicitRowPlans(set.rows)), err
+	if offender, err := preflightExplicitSet(j, root, set, options); err != nil {
+		return preflightOutcomes(plans, explicitRowPlans(set.rows), offender, err), err
 	}
 	for i, planned := range set.rows {
 		if !planned.plan.Action.Removes() {
@@ -312,7 +312,7 @@ func applyExplicitSet(j joins, root string, set explicitCleanupSet, options Clea
 		}
 		if err != nil {
 			plans = append(plans, faultedPlan(planned.plan, applied, err))
-			return notAttemptedPlans(plans, explicitRowPlans(set.rows[i+1:])), err
+			return notAttemptedPlans(plans, explicitRowPlans(set.rows[i+1:]), notAttemptedDetail), err
 		}
 		plans = append(plans, applied)
 	}

@@ -330,8 +330,8 @@ func requalifyLandedRow(j joins, root string, planned landedCleanupRow, options 
 // reports its own unstarted outcome.
 func applyLandedSet(j joins, root string, set landedCleanupSet, options CleanupOptions, scope string) ([]CleanupPlan, error) {
 	plans := make([]CleanupPlan, 0, len(set.rows))
-	if err := preflightLandedSet(j, root, set, options, scope); err != nil {
-		return notAttemptedPlans(plans, landedRowPlans(set.rows)), err
+	if offender, err := preflightLandedSet(j, root, set, options, scope); err != nil {
+		return preflightOutcomes(plans, landedRowPlans(set.rows), offender, err), err
 	}
 	for i, planned := range set.rows {
 		if !planned.plan.Action.Removes() {
@@ -341,7 +341,7 @@ func applyLandedSet(j joins, root string, set landedCleanupSet, options CleanupO
 		current, err := requalifyLandedRow(j, root, planned, options, scope)
 		if err != nil {
 			plans = append(plans, faultedPlan(planned.plan, current.plan, err))
-			return notAttemptedPlans(plans, landedRowPlans(set.rows[i+1:])), err
+			return notAttemptedPlans(plans, landedRowPlans(set.rows[i+1:]), notAttemptedDetail), err
 		}
 		planner := func(string) (CleanupPlan, error) {
 			fresh, stillSelected, planErr := replanLandedCleanupRow(j, root, planned.assignment.ID, options, scope)
@@ -358,7 +358,7 @@ func applyLandedSet(j joins, root string, set landedCleanupSet, options CleanupO
 		applied, applyErr := applyCleanupTransaction(j, root, planned.assignment.Worktree, current.plan.Fingerprint, planner, nil, func(CleanupPlan) error { return nil })
 		if applyErr != nil {
 			plans = append(plans, faultedPlan(current.plan, applied, applyErr))
-			return notAttemptedPlans(plans, landedRowPlans(set.rows[i+1:])), applyErr
+			return notAttemptedPlans(plans, landedRowPlans(set.rows[i+1:]), notAttemptedDetail), applyErr
 		}
 		plans = append(plans, applied)
 	}

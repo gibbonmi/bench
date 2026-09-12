@@ -105,8 +105,10 @@ func unclaimedOptions() CleanupOptions {
 	return CleanupOptions{DiscardBranch: true, Unclaimed: true}
 }
 
-// unclaimedReplan is this mode's own re-plan command, beside the landed selector's. It reads
-// the modifiers the plan answered under, so the rendered command asks the same question.
+// unclaimedReplan is this mode's own re-plan command, beside the landed selector's. It takes
+// the caller's options so a later grammar change cannot leave the rendered command behind.
+// Today the two are pinned equal: valid() requires --discard-branch and refuses the other
+// two modifiers under --unclaimed, so every valid invocation carries unclaimedOptions().
 func unclaimedReplan(options CleanupOptions) []axi.InvocationArgument {
 	return cleanArguments(options, "--unclaimed")
 }
@@ -115,7 +117,13 @@ func unclaimedReplan(options CleanupOptions) []axi.InvocationArgument {
 // named. It reports the outcome rows alone. A stale refusal carries no rows, because the
 // refusal row is this command surface's own spelling and the caller renders it; a row
 // returned here would be a second derivation the caller discards.
-func applyUnclaimedAssignmentSet(root string, set unclaimedAssignmentSet, options CleanupOptions) ([]CleanupPlan, error) {
+func applyUnclaimedAssignmentSet(j joins, root string, set unclaimedAssignmentSet, options CleanupOptions) ([]CleanupPlan, error) {
+	// The window that refusal exists for: a branch can enter or leave the namespace between
+	// the caller's plan read and this re-plan. The boundary is nil in production; it lets a
+	// test stand in that window, as the three checkout modes already do.
+	if err := hit(j.cleanupBoundary, StepApplyLocked); err != nil {
+		return nil, err
+	}
 	current, err := planUnclaimedAssignmentSet(root, options)
 	if err != nil {
 		return nil, err

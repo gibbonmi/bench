@@ -1,13 +1,13 @@
 // What a cleanup-set apply reports. Most fixtures here drive an apply that does not finish,
 // then read the result: which member completed, which one failed, which ones were never
-// started, and the exact command a refusal offers as recovery. The last one reads the rows
-// an apply reports for a member it will not touch at all. The sibling file
-// clean_set_apply_test.go owns the other half — when an apply refuses — and holds the
-// fixture helpers both halves share.
+// started, and the exact command a refusal offers as recovery. One reads the rows an apply
+// reports for a member it will not touch at all. The assertions that read a rendered row live
+// here too. Two sibling files own the rest: clean_set_apply_test.go owns when an apply
+// refuses and the fixture builders, and clean_set_wiring_test.go owns the command's wiring
+// to the refusal renderer.
 package worktree
 
 import (
-	"bytes"
 	"errors"
 	"os"
 	"path/filepath"
@@ -93,9 +93,10 @@ func TestCleanSetUnstartedOutcomes(t *testing.T) {
 	}
 	// The literal is the agent-facing field label the spec pins. Reading the token back
 	// through its own constant would let a rename pass the gate and break the promised label.
+	// The row is read by field, so no fixture-generated path is spliced into an expectation.
 	unstarted := memberByID(t, creations, set.rows[2].assignment.ID)
-	if !strings.Contains(stdout, unstarted.Path+",not-attempted,") {
-		t.Fatalf("partial apply = %q, want %q reported as not attempted", stdout, unstarted.Path)
+	if action := cleanupRowFields(rowForTarget(t, stdout, unstarted.Path))[1]; action != "not-attempted" {
+		t.Fatalf("row for %q = %q, want not-attempted", unstarted.Path, action)
 	}
 	if _, statErr := os.Stat(unstarted.Path); statErr != nil {
 		t.Fatalf("the unstarted member %s was removed: %v", unstarted.Path, statErr)
@@ -184,13 +185,13 @@ func TestCleanSetUnclaimedStaleReplanAction(t *testing.T) {
 }
 
 // requireStaleRefusalRow holds the refusal row to the digest the call rejected, reading each
-// field out of the rendered row rather than matching a spliced substring. The encoder quotes
-// a scalar that could read as a number, and a digest beginning with a zero and a digit is
-// one, so a substring built around a raw digest passes or fails by the run's random identity.
+// field out of the rendered row rather than matching a spliced substring. A substring built
+// around a raw digest passes or fails by the run's random identity, because the encoder
+// quotes a digest that could read as a number.
 func requireStaleRefusalRow(t *testing.T, output, tracked, ignored, fingerprint string) {
 	t.Helper()
 	fields := cleanupRowFields(rowForTarget(t, output, "unknown"))
-	got := []string{fields[1], fields[2], fields[3], fields[4], strings.Trim(fields[5], `"`), fields[6]}
+	got := []string{fields[1], fields[2], fields[3], fields[4], cleanupRowValue(fields[5]), fields[6]}
 	want := []string{string(ActionError), tracked, ignored, "none", fingerprint, errStaleFingerprint.Error()}
 	if strings.Join(got, "|") != strings.Join(want, "|") {
 		t.Fatalf("refusal row = %#v, want %#v", got, want)
@@ -363,24 +364,17 @@ func TestCleanSetApplyTimeStaleRefusal(t *testing.T) {
 			t.Fatalf("unclaimed set = %#v, want two selected refs", set.rows)
 		}
 		// A ref appears between the plan and the apply, which only the applier's own re-plan
-		// can see. The command's entry check reads one plan and cannot reach this.
+		// sees. The rendering of this refusal is covered end to end by the wiring test; what
+		// only a direct call can read is that the applier returns no rows of its own.
 		extra := intent.AssignmentBranchRef(strings.Repeat("c", 32), strings.Repeat("f", 32))
 		gitRun(t, root, "branch", strings.TrimPrefix(extra, "refs/heads/"))
 
-		options := unclaimedOptions()
-		plans, applyErr := applyUnclaimedAssignmentSet(root, set, options)
+		plans, applyErr := applyUnclaimedAssignmentSet(defaultJoins(), root, set, unclaimedOptions())
 		if !errors.Is(applyErr, errStaleFingerprint) {
 			t.Fatalf("apply error = %v, want the applier's own stale refusal", applyErr)
 		}
 		if plans != nil {
 			t.Fatalf("stale apply rows = %#v, want none; the caller owns the refusal row", plans)
-		}
-		var stdout bytes.Buffer
-		mustNoError(t, applyOutcomes(&stdout, plans, staleUnclaimedPlans(set), applyErr, unclaimedReplan(options)))
-		rendered := stdout.String()
-		requireStaleRefusalRow(t, rendered, "unclaimed", "none", set.fingerprint)
-		if !strings.Contains(rendered, "bench worktree clean --discard-branch --unclaimed") {
-			t.Fatalf("stale apply = %q, want the selector-preserving re-plan command", rendered)
 		}
 		for _, ref := range []string{set.rows[0].ref, set.rows[1].ref, extra} {
 			if !git.OK("-C", root, "show-ref", "--verify", "--quiet", ref) {

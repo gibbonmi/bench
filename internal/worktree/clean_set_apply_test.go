@@ -1,8 +1,9 @@
 // When a cleanup-set apply refuses, and when it does not. The fixtures here drive drift at
 // each window an apply passes through — before entry, before the first transaction, and
-// inside a later member's own lock — and check which members survive. The sibling file
-// clean_set_outcomes_test.go owns the other half: what a stopped apply reports. The fixture
-// helpers both halves share live here.
+// inside a later member's own lock — and check which members survive. Two sibling files own
+// the rest: clean_set_outcomes_test.go owns what a stopped apply reports, and
+// clean_set_wiring_test.go owns the command's wiring to the refusal renderer. The fixture
+// builders all three share live here.
 package worktree
 
 import (
@@ -71,33 +72,6 @@ func driftTracked(t *testing.T, files map[string]string, assignment string) {
 		t.Fatalf("assignment %q has no landed file in %#v", assignment, files)
 	}
 	mustWrite(t, path, []byte("drifted\n"), 0o644)
-}
-
-// repositoryState is the durable state a refused or replayed apply must not change: the
-// assignment ledger and the destination tip.
-func repositoryState(t *testing.T, root string) string {
-	t.Helper()
-	assignments, err := intent.Assignments(root)
-	mustNoError(t, err)
-	ids := make([]string, 0, len(assignments))
-	for _, assignment := range assignments {
-		ids = append(ids, assignment.ID)
-	}
-	sort.Strings(ids)
-	head, err := git.Output("-C", root, "rev-parse", "HEAD")
-	mustNoError(t, err)
-	return strings.Join(ids, ",") + "@" + head
-}
-
-// requireMembersPresent fails when any selected checkout is gone. A refusal that removes
-// nothing is the whole claim of the preflight rows, so the assertion names every member.
-func requireMembersPresent(t *testing.T, creations []Creation) {
-	t.Helper()
-	for _, creation := range creations {
-		if _, err := os.Stat(creation.Path); err != nil {
-			t.Fatalf("refused apply removed %s: %v", creation.Path, err)
-		}
-	}
 }
 
 // TestCleanSetPreexistingDrift is CL4. A member that is already dirty when the apply starts
@@ -317,5 +291,32 @@ func TestCleanSetSpentPlan(t *testing.T) {
 	}
 	if after := repositoryState(t, root); after != spent {
 		t.Fatalf("replays changed the repository: %q -> %q", spent, after)
+	}
+}
+
+// repositoryState is the durable state a refused or replayed apply must not change: the
+// assignment ledger and the destination tip.
+func repositoryState(t *testing.T, root string) string {
+	t.Helper()
+	assignments, err := intent.Assignments(root)
+	mustNoError(t, err)
+	ids := make([]string, 0, len(assignments))
+	for _, assignment := range assignments {
+		ids = append(ids, assignment.ID)
+	}
+	sort.Strings(ids)
+	head, err := git.Output("-C", root, "rev-parse", "HEAD")
+	mustNoError(t, err)
+	return strings.Join(ids, ",") + "@" + head
+}
+
+// requireMembersPresent fails when any selected checkout is gone. A refusal that removes
+// nothing is the whole claim of the preflight rows, so the assertion names every member.
+func requireMembersPresent(t *testing.T, creations []Creation) {
+	t.Helper()
+	for _, creation := range creations {
+		if _, err := os.Stat(creation.Path); err != nil {
+			t.Fatalf("refused apply removed %s: %v", creation.Path, err)
+		}
 	}
 }

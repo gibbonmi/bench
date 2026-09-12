@@ -1,8 +1,11 @@
 // Cleanup-set apply: what every selection mode shares once a caller asks to apply a plan.
-// The preflight each mode runs before its first transaction, the outcome rows a stopped
-// apply reports, and the refusal a stale plan renders all live here, so the explicit set,
-// the landed selector, and the unclaimed selector cannot answer the same question in three
-// different ways.
+// The outcome rows a stopped apply reports and the refusal a stale plan renders live here,
+// so the explicit set, the landed selector, and the unclaimed selector cannot answer the
+// same question in three different ways.
+//
+// The preflight that requalifies each member before the first transaction lives here for the
+// two set modes. The unclaimed selector has no per-member preflight: it re-plans the whole
+// branch selection inside applyUnclaimedAssignmentSet and refuses on any difference.
 
 package worktree
 
@@ -23,14 +26,20 @@ import (
 // two files that are already over their size budget.
 const ActionNotAttempted CleanupAction = "not-attempted"
 
-const notAttemptedDetail = "not attempted; an earlier target in this set did not complete"
+// The two reasons a selected member goes unstarted. A member the apply reached and stopped
+// short of names the earlier failure; a member refused before the first transaction names the
+// qualification, because at that point nothing had been attempted at all.
+const (
+	notAttemptedDetail = "not attempted; an earlier target in this set did not complete"
+	notQualifiedDetail = "not attempted; the set did not qualify before the first removal"
+)
 
 // notAttemptedPlan reports one selected target the apply never reached. The ignored preview
 // belongs to the plan that offered the removal, so an unstarted row keeps the count in its
 // summary and leaves the path table to that plan.
-func notAttemptedPlan(plan CleanupPlan) CleanupPlan {
+func notAttemptedPlan(plan CleanupPlan, detail string) CleanupPlan {
 	plan.Ignored.Shown = 0
-	plan.Action, plan.ReasonCode, plan.Reason = ActionNotAttempted, "", notAttemptedDetail
+	plan.Action, plan.ReasonCode, plan.Reason = ActionNotAttempted, "", detail
 	return plan
 }
 
@@ -40,12 +49,30 @@ func notAttemptedPlan(plan CleanupPlan) CleanupPlan {
 // A member the plan did not mark removable keeps the verdict the plan gave it. The apply was
 // never going to touch that member, so its retain or refusal authority is what happened to
 // it, and calling it unstarted would erase the reason it was spared.
-func notAttemptedPlans(plans, unreached []CleanupPlan) []CleanupPlan {
+func notAttemptedPlans(plans, unreached []CleanupPlan, detail string) []CleanupPlan {
 	for _, plan := range unreached {
 		if plan.Action.Removes() {
-			plan = notAttemptedPlan(plan)
+			plan = notAttemptedPlan(plan, detail)
 		}
 		plans = append(plans, plan)
+	}
+	return plans
+}
+
+// preflightOutcomes reports a selection the preflight refused before any transaction opened.
+// Drift refuses the whole approved set, so every member reads as unqualified. Any other
+// fault belongs to the member whose requalification raised it, and that member's row carries
+// the reason; without this the fault reaches neither a row nor stderr.
+func preflightOutcomes(plans, rows []CleanupPlan, offender int, err error) []CleanupPlan {
+	if errors.Is(err, errStaleFingerprint) {
+		return notAttemptedPlans(plans, rows, notQualifiedDetail)
+	}
+	for i, plan := range rows {
+		if i == offender {
+			plans = append(plans, faultedPlan(plan, CleanupPlan{}, err))
+			continue
+		}
+		plans = append(plans, notAttemptedPlan(plan, notQualifiedDetail))
 	}
 	return plans
 }
@@ -145,26 +172,29 @@ func applyOutcomes(stdout io.Writer, plans, stale []CleanupPlan, err error, repl
 // only runs when the set reaches that member, with the earlier members already gone. These
 // passes are what stop an avoidable removal when a later member has drifted before the apply
 // began. Each one reuses its mode's own single row proof, so neither derives drift twice.
-func preflightExplicitSet(j joins, root string, set explicitCleanupSet, options CleanupOptions) error {
-	for _, planned := range set.rows {
+//
+// Each returns the index of the member that refused, so a fault that is not drift can name
+// itself in that member's row instead of disappearing behind an unstarted detail.
+func preflightExplicitSet(j joins, root string, set explicitCleanupSet, options CleanupOptions) (int, error) {
+	for i, planned := range set.rows {
 		if !planned.plan.Action.Removes() {
 			continue
 		}
 		if _, err := requalifyExplicitRow(j, root, planned, options); err != nil {
-			return err
+			return i, err
 		}
 	}
-	return nil
+	return -1, nil
 }
 
-func preflightLandedSet(j joins, root string, set landedCleanupSet, options CleanupOptions, scope string) error {
-	for _, planned := range set.rows {
+func preflightLandedSet(j joins, root string, set landedCleanupSet, options CleanupOptions, scope string) (int, error) {
+	for i, planned := range set.rows {
 		if !planned.plan.Action.Removes() {
 			continue
 		}
 		if _, err := requalifyLandedRow(j, root, planned, options, scope); err != nil {
-			return err
+			return i, err
 		}
 	}
-	return nil
+	return -1, nil
 }

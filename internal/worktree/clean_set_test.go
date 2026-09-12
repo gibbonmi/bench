@@ -42,6 +42,11 @@ func cleanupRows(output string) []string {
 // comma-free, so the split addresses the same fields the table header names.
 func cleanupRowFields(row string) []string { return strings.Split(row, ",") }
 
+// cleanupRowValue reads one rendered field. The encoder quotes a scalar that could read as a
+// number, such as a digest that starts with a zero and a digit, so every reader takes the
+// quotes off here rather than deriving that rule a second time.
+func cleanupRowValue(field string) string { return strings.Trim(field, `"`) }
+
 func cleanupRowsField(t *testing.T, output string, index int) []string {
 	t.Helper()
 	rows := cleanupRows(output)
