@@ -355,14 +355,14 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 	if incomplete := report.incompletePackages(); len(incomplete) != 0 {
 		return refusedOutcome(toon.Errorf("go test reported incomplete packages", strings.Join(incomplete, ", "))+"\n", 1)
 	}
-	if request.run != "" && len(report.ranTests) == 0 {
+	outcome := report.outcome(request.full)
+	if request.run != "" && outcome.Kind == OutcomeNoTestRun {
 		return Outcome{Kind: OutcomeNoTestRun}, toon.Errorf("go test reported no test runs", "run pattern matched no tests") + "\n", 1
 	}
 	out, renderErr := report.render(request.full)
 	if renderErr != nil {
 		return refusedOutcome(toon.RenderError(renderErr)+"\n", 1)
 	}
-	outcome := report.outcome(request.full)
 	if waitErr != nil {
 		return outcome, out, 1
 	}
