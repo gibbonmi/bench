@@ -1,6 +1,6 @@
 ---
 name: craft-gate
-description: How to author the oracle — adding, editing, weakening, or removing a gate check, choosing its fail posture, and proving it bites. Use whenever touching .bench/gate.sh or any project gate, wiring an enforcement hook or guard, or scaffolding a gate in /bench-setup-repo. Reach for this before changing what decides "done".
+description: How to author the oracle — add, edit, weaken, or remove a gate check, choose its fail posture, and prove it bites. Use whenever you touch .bench/gate.sh or any project gate, wire an enforcement hook, or scaffold a gate in /bench-setup-repo.
 index: adding, weakening, or removing a gate check / authoring the oracle
 ---
 

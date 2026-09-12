@@ -1,6 +1,6 @@
 ---
 name: prototype
-description: Build a disposable prototype to answer one named question with running code. Use when the reviewer says "prototype this", "spike it", or "try an approach", or when a Prototype decision ticket from /bench-shape-idea needs a reviewer choice made concrete.
+description: Build a disposable prototype to answer one named question with running code. Use when the reviewer says "prototype this", "spike it", or "try an approach", or when a Prototype decision ticket from /bench-shape-idea needs a concrete choice.
 index: spiking a disposable prototype
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: craft-delegate
-description: The delegation discipline — when to spawn a subagent, how to charge and scope it, when it needs an isolated worktree, and how a done-claim is verified. Use whenever spawning any delegate (an axis review, a scoped build, a fan-out search) or accepting one's result. The model/effort half of the decision lives in craft-line.
+description: The delegation discipline — when to spawn a subagent, how to charge and scope it, when it needs an isolated worktree, and how a done-claim is verified. Use whenever you spawn any delegate or accept one's result. The line lives in craft-line.
 index: spawning a delegate / verifying a delegate's done-claim
 ---
 

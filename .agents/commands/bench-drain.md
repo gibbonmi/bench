@@ -1,5 +1,5 @@
 ---
-description: Roadmap maintenance — reconcile ROADMAP.md against the tree, drain capture/IDEAS.md, implementation retros, and the learnings journal into it, refresh the recommended sequence, and propose the whole pass as one batch diff for reviewer approval. The single exit for parked ideas, pending retros, and open learnings. Maintenance, not a workflow phase.
+description: Roadmap maintenance — reconcile ROADMAP.md against the tree, drain capture/IDEAS.md, the retros, and the learnings journal into it, and propose the pass as one batch diff. The single exit for parked ideas and open learnings. Maintenance, not a phase.
 disable-model-invocation: true
 ---
 

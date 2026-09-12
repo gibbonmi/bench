@@ -1,5 +1,5 @@
 ---
-description: Architecture-deepening survey — scan for shallow modules and present deepening candidates as a visual HTML report, then grill through whichever one the reviewer picks. Scopes from a named direction, the latest ASSESSMENT.md, or commit-history hot spots. Deliberately invoked; surfaces candidates, never refactors. Maintenance, not a workflow phase.
+description: Architecture-deepening survey — scan for shallow modules, present deepening candidates as a visual HTML report, then grill through the one the reviewer picks. Surfaces candidates, never refactors. Maintenance, not a workflow phase.
 disable-model-invocation: true
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: craft-tickets
-description: How to break a spec or small change into tracer-bullet tickets — complete vertical slices, demoable alone, one retained-session context window each — with explicit blockers and review-chunk membership. Use during spec authoring, when deriving tickets from stories and seams, when deciding what lands green next, or when a wide refactor needs an expand–contract sequence.
+description: How to break a spec or small change into tracer-bullet tickets — complete vertical slices, demoable alone, one retained-session context window each — with blockers and review-chunk membership. Use during spec authoring, or for a wide refactor.
 index: breaking a build into tracer-bullet tickets
 ---
 

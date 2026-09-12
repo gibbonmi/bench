@@ -1,6 +1,6 @@
 ---
 name: craft-research
-description: The research discipline — the factual question graph, primary sources only, adaptive round-based fan-out, coordinator re-verification, and one cited durable output per run. Use whenever work becomes factual reading legwork in shaping, specification, diagnosis, assessment, or implementation. Charge mechanics live in craft-delegate, and the line lives in craft-line.
+description: The research discipline — the factual question graph, primary sources only, adaptive round-based fan-out, coordinator re-verification, and one cited durable output per run. Use whenever the work becomes factual reading legwork.
 index: doing factual reading legwork / writing a cited research report
 ---
 

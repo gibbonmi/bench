@@ -1,6 +1,6 @@
 ---
 name: craft-grill
-description: Disciplined frontier-round elicitation to surface a decision or a spec — each numbered round asks every question whose prerequisites are settled, with a recommendation per question. Use during /bench-shape-idea decision tickets, before /bench-write-spec when requirements are fuzzy, or any time I say "grill me" or the work can't proceed until an open question is resolved.
+description: Disciplined frontier-round elicitation to surface a decision or a spec — each numbered round asks every question whose prerequisites are settled. Use during /bench-shape-idea decision tickets, before /bench-write-spec, or when I say "grill me".
 index: surfacing decisions in numbered frontier rounds
 ---
 

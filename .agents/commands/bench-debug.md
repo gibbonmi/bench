@@ -1,5 +1,5 @@
 ---
-description: The bug path. Build a tight, red-capable repro loop first, then fix against it. Use whenever something is broken, throwing, failing, or slow — instead of /bench-write-spec, which is the feature path. Reach for this the moment the work is "fix" rather than "build".
+description: The bug path. Build a tight, red-capable repro loop first, then fix against it. Use whenever something is broken, throwing, failing, or slow — instead of /bench-write-spec, the feature path. Reach for this when the work is "fix" rather than "build".
 ---
 
 # /bench-debug — the repro loop is the oracle
