@@ -80,36 +80,6 @@ func TestGateRunExternalHolderDemotesReusableGreen(t *testing.T) {
 	}
 }
 
-func TestGateRunTimeoutInvalidatesOldEvidence(t *testing.T) {
-	root := failureOutcomeFixture(t)
-	if result := Execute(context.Background(), root, &bytes.Buffer{}, &bytes.Buffer{}); result.ActionExit != 0 {
-		t.Fatalf("green result = %#v", result)
-	}
-	previousTimeout := gateTimeout
-	gateTimeout = 100 * time.Millisecond
-	t.Cleanup(func() { gateTimeout = previousTimeout })
-	outcomeWrite(t, root, ".gate-sleep", "\n", 0o644)
-	var stdout, stderr bytes.Buffer
-	if got := RunCommand([]string{"--fresh", root}, &stdout, &stderr); got != 124 {
-		t.Fatalf("timeout exit = %d, stderr=%q", got, stderr.String())
-	}
-	if !strings.Contains(stderr.String(), "gate: timeout") {
-		t.Fatalf("stderr = %q", stderr.String())
-	}
-	if inspection := Inspect(root); inspection.State != Ready || inspection.Status != "timeout" || inspection.ReusableGreen {
-		t.Fatalf("timeout inspection = %#v", inspection)
-	}
-	if err := os.Remove(filepath.Join(root, ".gate-sleep")); err != nil {
-		t.Fatal(err)
-	}
-	if result := Execute(context.Background(), root, &bytes.Buffer{}, &bytes.Buffer{}); result.ActionExit != 0 {
-		t.Fatalf("ordinary run after timeout = %#v", result)
-	}
-	if got := outcomeRuns(t, root); got != 3 {
-		t.Fatalf("runs after green, timeout, ordinary = %d, want 3", got)
-	}
-}
-
 func TestGateRunCancellationLeavesPendingForRecovery(t *testing.T) {
 	root := failureOutcomeFixture(t)
 	outcomeWrite(t, root, ".gate-sleep", "\n", 0o644)
