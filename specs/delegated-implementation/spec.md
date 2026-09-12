@@ -328,7 +328,9 @@ Records never discover input paths or execute reference text.
 
 - `internal/reviewrecord`
 - `internal/gate/delegated_checkpoint_test.go`
+- `internal/gate/review_checkpoint_test.go`
 - `internal/landing/delegated_completion_test.go`
+- `internal/landing/completion_evidence_test.go`
 - `internal/preflight/delegated_evidence_test.go`
 - `internal/assessment`
 - `.bench/BENCH.md`

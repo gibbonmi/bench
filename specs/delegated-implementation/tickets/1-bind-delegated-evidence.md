@@ -1,7 +1,7 @@
 # Bind delegated identities to completion evidence
 
 Blocked by: none
-Writes: internal/reviewrecord, internal/gate/delegated_checkpoint_test.go (new), internal/landing/delegated_completion_test.go (new), internal/preflight/delegated_evidence_test.go (new)
+Writes: internal/reviewrecord, internal/gate/delegated_checkpoint_test.go (new), internal/gate/review_checkpoint_test.go, internal/landing/delegated_completion_test.go (new), internal/landing/completion_evidence_test.go, internal/preflight/delegated_evidence_test.go (new)
 Covers: DI1, DI2, DI3, DI4, DI5, DI6, DI7, DI8, DI9, DI10, DI11, DI12, DI31, DI36, DI37, DI38, DI41
 
 ## What to build
