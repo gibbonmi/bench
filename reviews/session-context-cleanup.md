@@ -1,0 +1,195 @@
+# Session context cleanup review
+
+## Chunk CL-C1
+
+The frozen pair is base `4e98e581083562e284ba20802d168dbc575fd321` and tip `4a1ca2928776035d04be0ca123010065d924b80c`.
+Three Opus/medium axes ran on 2026-09-12. Each ran in a separate native context and a separate read-only venue.
+Raw findings: Standards 5, Spec 3, Coverage 2.
+
+De-duplicated repair targets: 4 auto-fix (ST1, ST2, ST3, COV-1).
+Two further findings (SPEC-1, SPEC-2) are ask-user. They await the reviewer's decision before any disposition.
+
+The blast walk found no unlisted-consumer defect. `resolveAssignment` is shared by `exec.go:87`, `build.go:86`, and `path.go:50`. Each of these reads the changed identity resolver unchanged.
+
+## Standards
+
+Findings: 5. Worst issue: medium.
+
+- ST1 (medium, auto-fix): `staleSetPlan`'s doc comment claims "every set mode shares it." `staleUnclaimedPlans` still builds its own refusal row, so the claim is false. Citations at tip 4a1ca292: clean_set.go:340-342; clean_unclaimed.go:96-98.
+- ST2 (auto-fix): the new constant `unapplicableFingerprint = "none"` claims to match the spelling the invalid-invocation row already uses. That row still writes the literal `"none"`, not the constant. Citations at tip 4a1ca292: clean_set.go:193; worktree.go:247.
+- ST3 (auto-fix): a test comment narrates provenance in past tense: "The baseline below was captured from the unedited tree." The comment-register rule requires timeless present. Citation at tip 4a1ca292: clean_set_test.go:263-266.
+- ST4 (no-op, judgment): `cleanupRows` and `cleanupRowFields` hand-parse the producer's own rendered table. They do not derive the expectation through the producer's own call. The fixtures are controlled, and the constraint is stated inline. Citation at tip 4a1ca292: clean_set_test.go:22-43.
+- ST5 (no-op, judgment): `cleanSelection` is destructured back into six locals right after parsing, at its one consumer. This is a Lazy Element smell baseline. Citation at tip 4a1ca292: worktree.go:270-271.
+
+## Spec
+
+Findings: 3. Worst issue: ask-user — a spec-prose versus code contradiction on a veto surface.
+
+- SPEC-1 (ask-user): the rendered apply command names members by canonical assignment id, not the typed operand (clean_set.go:313-322 appends `--target <row.assignment.ID>`). Spec line 76 promises the operand is safely quoted in that command, which reads as echoing the operand text. The code substitutes a safer value instead. `axi.KnownArgument` already shell-quotes independently, so no injection risk exists either way. This is a spec-prose mismatch, not a safety gap, and spec lines 75-76 actually describe the deferred CL9 re-plan action, not this apply command. Citations: spec.md:76; clean_set.go:313-322; internal/axi/action_test.go:101.
+- SPEC-2 (ask-user): the diff silently resolves an open reviewer question. The spec's "Flagged additions" section says repeated explicit targets are a proposed scope clarification, with no recorded reviewer answer. `clean_set.go:218-221` already collapses repeats silently, without that answer. Citations: spec.md, section "Flagged additions"; clean_set.go:218-221.
+- SPEC-3 (no-op): CL16's re-plan-output half is vacuously covered. A hostile operand can never resolve, so it never reaches a rendered command. The test asserts the action's absence, not neutralization of hostile text under render. Citation: clean_set_command_test.go:520.
+
+All 10 claimed rows are delivered:
+
+- CL1 `TestCleanExplicitSetPlan` (clean_set_test.go:601).
+- CL2 `TestCleanExplicitSetAliases` (:644).
+- CL3 `TestCleanExplicitSetSelectionFailure` (:682).
+- CL10 `TestCleanSetRetainsAuthority` (:726).
+- CL11 `TestCleanSetCompatibility` (:810).
+- CL13 `TestCleanSetPresentEmptyInventory` (:885).
+- CL14 `TestCleanSetGrammar` (clean_set_command_test.go:446).
+- CL15 is confirmed by inspection: clean_set.go:82-91 imports no budget or measurement package.
+- CL16 `TestCleanSetHostileOperand` (:493).
+- CL17 `TestCleanSetAbsentInventory` (:899).
+
+The fence is clean. All 7 changed files sit in the ticket's `Writes:` list and the spec's Ownership fences. No `Won't handle` line is violated.
+
+## Coverage
+
+Findings: 2. Worst issue: auto-fix — a modifier path has no biting assertion.
+
+- COV-1 (auto-fix): discard-modifier effects through the explicit-set path are untested. The spec's edge inventory puts branch- and ignored-preservation cases under CL10. The existing tests exercise only default options, not the discard modifiers. Concrete break: dropping `--discard-branch` from `cleanupModifierFlags` changes the rendered command and the set digest, yet every current test stays green. Missing rows: a set apply with `--discard-branch` asserting the branch is gone, and one with `--discard-ignored` asserting the ignored file is discarded. Citations: spec.md:203; clean_set.go:326-338; clean_set_command_test.go:55.
+- COV-2 (no-op): CL16's renderer clause is unreachable in its own test. Every hostile operand fails resolution before `renderExplicitSet` reaches the help block. The renderer is safe by construction: `applyArguments` emits `row.assignment.ID`, never operand text. The space case is independently covered through the alias test's own operands. Citations: clean_set.go:240-249; clean_set_test.go:105-107; clean_set_command_test.go:60-107.
+
+The suite is verified green. `bench test --package ./internal/worktree --run TestClean` passes in 5.1 seconds, with one unrelated host-capability skip. All nine promised tests exist: clean_set_test.go:59,102,140,184,268,343,357 and clean_set_command_test.go:13,60. The unscoped-call fixture in `TestCleanSetGrammar` was confirmed non-trivial. Relaxing its `modes == 0` guard to `modes > 1` lets each spelling fall through and lose its required exit-2 refusal.
+
+## Author verification
+
+The retained continuation session re-ran verification at tip 4a1ca292. The closed session's own pre-commit runs were not preserved.
+
+- `bench test --package ./internal/worktree --run TestClean`: pass, 5086 ms, one unrelated unix-socket host-capability skip.
+- `bench test --package ./cmd/bench`: pass, 8106 ms.
+- Mutation probe (completion plan CL-C1, clean-tests): bypassed the alias-collapse guard at `clean_set.go:139`. `TestCleanExplicitSetAliases` failed as expected; the probe bit. The revert used `git checkout -- internal/worktree/clean_set.go`. The test passed again in 671 ms, and the tree returned to clean.
+
+## Record
+```bench-review-record
+{
+  "version": 1,
+  "spec": "specs/session-context-cleanup/spec.md",
+  "plan_digest": "sha256:7278553ceb910dd63f774eb9ae7513dc7f3236b9d07ec7e759d85b87f312c4af",
+  "implementation_session": "claude:opus-high:ticket-author",
+  "chunks": [
+    {
+      "id": "CL-C1",
+      "base": "4e98e581083562e284ba20802d168dbc575fd321",
+      "tip": "4a1ca2928776035d04be0ca123010065d924b80c",
+      "plan_digest": "sha256:7278553ceb910dd63f774eb9ae7513dc7f3236b9d07ec7e759d85b87f312c4af",
+      "source_digest": "753a91da5c3b9606a733fda7c67222611ea7cb3f",
+      "acceptance_rows": [
+        "CL1", "CL2", "CL3", "CL10", "CL11", "CL13", "CL14", "CL15", "CL16", "CL17"
+      ],
+      "verification": [
+        {
+          "id": "cl-c1-clean-tests",
+          "performer": "claude:sonnet:retained-continuation",
+          "role": "author-verification",
+          "model": "sonnet",
+          "effort": "unknown",
+          "source_digest": "753a91da5c3b9606a733fda7c67222611ea7cb3f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:coordinator/session-context-cleanup/clean-tests@4a1ca292",
+            "digest": "sha256:acfd07e4b516de9d713682922eec6b725d5d03c3e9fb76869114764d9890b489",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,5086\nfailures[0]{package,test,line}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"unix sockets unavailable (host-capability skip)\"\n"
+          },
+          "requirement": "clean-tests",
+          "command": "bench test --package ./internal/worktree --run TestClean",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "bypass the alias-collapse guard (selected[assignment.ID]) in planExplicitSet, clean_set.go:139",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:coordinator/session-context-cleanup/probe-cl1@4a1ca292",
+              "digest": "sha256:91e2959c23ab7260cee8ede2da95b18b932039477264ee458110dd5f162c6c57",
+              "excerpt": "mutation: bypass the alias-collapse guard (selected[assignment.ID]) in planExplicitSet, clean_set.go:139\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,304\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanExplicitSetAliases,\"clean_set_test.go:115: alias plan rows duplicated\"\nrestore: git checkout -- internal/worktree/clean_set.go; TestCleanExplicitSetAliases pass, 671ms\n"
+            }
+          }
+        },
+        {
+          "id": "cl-c1-command-tests",
+          "performer": "claude:sonnet:retained-continuation",
+          "role": "author-verification",
+          "model": "sonnet",
+          "effort": "unknown",
+          "source_digest": "753a91da5c3b9606a733fda7c67222611ea7cb3f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:coordinator/session-context-cleanup/command-tests@4a1ca292",
+            "digest": "sha256:a15efd6d06a8d37b75e0276fd4dcae1e9913f1f07a667e4d589fadde1f3d51f6",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,8106\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "command-tests",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "cl-c1-standards-1",
+          "performer": "claude:opus-medium:standards-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "753a91da5c3b9606a733fda7c67222611ea7cb3f",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude:agent/cl-c1-standards-1",
+            "digest": "sha256:e59fabbec0dfa6f8c796974b75d172baaafe2bbc24979ea1e4feb3fa5978e72d",
+            "excerpt": "result: completed; axis: Standards; findings: 5; worst: medium (staleSetPlan doc comment false universal); tip: 4a1ca2928776035d04be0ca123010065d924b80c"
+          },
+          "axis": "Standards",
+          "base": "4e98e581083562e284ba20802d168dbc575fd321",
+          "tip": "4a1ca2928776035d04be0ca123010065d924b80c",
+          "finding_ids": ["ST1", "ST2", "ST3", "ST4", "ST5"],
+          "supersedes": []
+        },
+        {
+          "id": "cl-c1-spec-1",
+          "performer": "claude:opus-medium:spec-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "753a91da5c3b9606a733fda7c67222611ea7cb3f",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude:agent/cl-c1-spec-1",
+            "digest": "sha256:cec5a14fd6836fd946bb2639b823d91b19fca11456bdc18b18b5cb4df2bc826f",
+            "excerpt": "result: completed; axis: Spec; findings: 3; worst: ask-user (rendered apply command substitutes canonical id for typed operand); tip: 4a1ca2928776035d04be0ca123010065d924b80c"
+          },
+          "axis": "Spec",
+          "base": "4e98e581083562e284ba20802d168dbc575fd321",
+          "tip": "4a1ca2928776035d04be0ca123010065d924b80c",
+          "finding_ids": ["SPEC-1", "SPEC-2", "SPEC-3"],
+          "supersedes": []
+        },
+        {
+          "id": "cl-c1-coverage-1",
+          "performer": "claude:opus-medium:coverage-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "753a91da5c3b9606a733fda7c67222611ea7cb3f",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude:agent/cl-c1-coverage-1",
+            "digest": "sha256:32ab4af11f30e61a2ac6f9556ad5e452a5f09cd917d805d761a4b632c775a2a7",
+            "excerpt": "result: completed; axis: Coverage; findings: 2; worst: auto-fix (discard-modifier effects through the set path are untested); tip: 4a1ca2928776035d04be0ca123010065d924b80c"
+          },
+          "axis": "Coverage",
+          "base": "4e98e581083562e284ba20802d168dbc575fd321",
+          "tip": "4a1ca2928776035d04be0ca123010065d924b80c",
+          "finding_ids": ["COV-1", "COV-2"],
+          "supersedes": []
+        }
+      ]
+    }
+  ]
+}
+```
