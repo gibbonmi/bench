@@ -11,6 +11,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 - Fixed `bench test --full` to retain every failure diagnostic line in order within each result.
   The default preview and distinct failing-test counts stay the same.
 
+### Empty sibling cleanup
+
+- Fixed automatic landing cleanup to retain siblings with no proven commit after their start.
+
 ### Filtered compile failures
 
 - Fixed filtered test runs to report compiler diagnostics when a package cannot build.
@@ -19,6 +23,16 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Fixed the exec child environment to contain one PWD assignment for its worktree.
   Inherited values and `--env PWD=...` cannot replace it.
+
+### Touched source paths
+
+- Fixed touched source paths to preserve their exact bytes from Git through the
+  structure check.
+
+### Worktree landing help
+
+- Fixed `bench help` to show the landing and landing-resume grammar, and to name
+  `land` in the worktree help summary.
 
 ### Added
 

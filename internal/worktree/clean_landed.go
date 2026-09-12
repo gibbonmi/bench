@@ -77,6 +77,8 @@ func planLandedSet(j joins, root string, options CleanupOptions, scope string) (
 // both questions: the branch has to be landed in the destination as it stands now, and it
 // has to be unlanded at the destination base this landing composed against. An assignment
 // that was already landed before this landing belongs to no landing's own set.
+// Automatic cleanup also needs a commit after the assignment start. An empty
+// sibling created during the landing has no contribution for that landing to retire.
 func selectLandedCleanupRow(j joins, root string, assignment intent.Assignment, defaultRef, lease string, options CleanupOptions, scope string) (landedCleanupRow, bool) {
 	if assignment.State != intent.StateActive || assignment.Branch == "" {
 		return landedCleanupRow{}, false
@@ -105,6 +107,12 @@ func selectLandedCleanupRow(j joins, root string, assignment intent.Assignment, 
 	headOID, oidErr := git.Output("-C", root, "rev-parse", "--verify", assignment.Branch+"^{commit}")
 	if oidErr != nil {
 		return landedCleanupRow{}, false
+	}
+	if scope != "" {
+		startOID, startErr := git.Output("-C", root, "rev-parse", "--verify", assignment.Start+"^{commit}")
+		if startErr != nil || startOID == headOID || !git.OK("-C", root, "merge-base", "--is-ancestor", startOID, headOID) {
+			return landedCleanupRow{}, false
+		}
 	}
 	plan := planLandedAssignment(j, root, assignment, options)
 	plan.Assignment = assignment.ID
