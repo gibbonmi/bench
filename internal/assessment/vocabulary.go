@@ -1,8 +1,10 @@
 package assessment
 
-// Roles is the versioned performer-role vocabulary.
+// Roles is the versioned performer-role vocabulary. Orchestration is last, so
+// the existing roles keep their positions in every projection that indexes this
+// list.
 func Roles() []string {
-	return []string{"implementation", "repair", "verification", "review", "diagnostic"}
+	return []string{"implementation", "repair", "verification", "review", "diagnostic", "orchestration"}
 }
 
 // States is the versioned run and attempt state vocabulary.

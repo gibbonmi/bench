@@ -33,14 +33,24 @@ func TestAssessmentComparisonCostTotals(t *testing.T) {
 	for i := range runs {
 		base := runs[i].Attempts[0]
 		runs[i].Attempts = nil
-		for j, role := range Roles() {
+		// This fixture needs a spread of roles, states, and charges, not the
+		// whole vocabulary. It names its own pairs, so the expected totals
+		// below stay independent of how many roles Roles() holds.
+		for j, pair := range []struct{ role, state string }{
+			{"implementation", "failed"},
+			{"repair", "cancelled"},
+			{"verification", "succeeded"},
+			{"review", "incomplete"},
+			{"diagnostic", "running"},
+		} {
+			role := pair.role
 			a := base
 			a.AttemptID = fmt.Sprint("role-", j)
 			a.Role = role
 			a.SessionID = base.SessionID + role
 			a.Usage = append([]Event(nil), base.Usage...)
 			a.Usage[0].SessionID = a.SessionID
-			a.State = []string{"failed", "cancelled", "succeeded", "incomplete", "running"}[j]
+			a.State = pair.state
 			a.Cost.Actual = []Charge{{Kind: "billing", Amount: ptr(float64(j + 1)), Currency: "USD", Reference: Reference{"synthetic billing", "fixture"}}, {Kind: "billing", Amount: ptr(float64(j + 2)), Currency: "EUR", Reference: Reference{"synthetic billing", "fixture EUR"}}}
 			a.Cost.Other = []Charge{{Kind: "tool", Amount: ptr(float64(j + 3)), Currency: "EUR", Reference: Reference{"synthetic pricing", "fixture"}}}
 			if j == 0 && i%2 == 0 {
