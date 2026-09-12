@@ -28,10 +28,10 @@ func TestDecodeSkipsRunnerLines(t *testing.T) {
 		t.Fatal(err)
 	}
 	test := report.test("p", "TestA")
-	if test.first != "a_test.go:9: boom" || test.last != "a_test.go:9: boom" {
-		t.Errorf("test diagnostic = %q/%q, want the non-runner line only", test.first, test.last)
+	if !reflect.DeepEqual(test.lines, []string{"a_test.go:9: boom"}) {
+		t.Errorf("test diagnostics = %q, want the non-runner line only", test.lines)
 	}
-	if report.packageLog["p"] != "package diagnostic" {
+	if !reflect.DeepEqual(report.packageLog["p"], []string{"package diagnostic"}) {
 		t.Errorf("packageLog = %q, want the non-runner line only", report.packageLog["p"])
 	}
 }

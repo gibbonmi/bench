@@ -10,6 +10,15 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Fixed ticket guidance to name relocation destinations and verify source clauses and executable routes before ticket lock.
 
+### Full failure diagnostics
+
+- Fixed `bench test --full` to retain every failure diagnostic line in order within each result.
+  The default preview and distinct failing-test counts stay the same.
+
+### Empty sibling cleanup
+
+- Fixed automatic landing cleanup to retain siblings with no proven commit after their start.
+
 ### Filtered compile failures
 
 - Fixed filtered test runs to report compiler diagnostics when a package cannot build.

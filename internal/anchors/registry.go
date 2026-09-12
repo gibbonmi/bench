@@ -35,6 +35,10 @@ func Entries() []Anchor {
 
 // EvaluateGroup checks one ordered registry group against root.
 func EvaluateGroup(root string, group Group) []string {
+	return evaluateGroup(root, group, "")
+}
+
+func evaluateGroup(root string, group Group, subject string) []string {
 	var diagnostics []string
 	files := map[string]fileResult{}
 	sections := map[string]sectionResult{}
@@ -43,7 +47,7 @@ func EvaluateGroup(root string, group Group) []string {
 	// times.
 	reported := map[string]bool{}
 	for _, anchor := range registry {
-		if anchor.Group != group {
+		if anchor.Group != group || subject != "" && anchor.File != subject {
 			continue
 		}
 		file, loaded := files[anchor.File]
