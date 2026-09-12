@@ -431,3 +431,21 @@ A `--swap` of the digest comparison to `if false` against `TestCleanSetSpentPlan
 The focused checks pass across all seven packages. `bench structure --growth HEAD` exits zero with no new grant and no budget change.
 
 Open for the reviewer: ST10, SPEC-5, and COV-4.
+
+## Completion reconciliation at 835bf1c3
+
+The chunk CL-C2 checkpoint passes. `bench test --package ./internal/worktree --run TestClean` and `--run TestLand` both report zero failures.
+Two host skips remain. Each one reports that unix sockets are unavailable under `/tmp`, and neither touches an acceptance row.
+
+The plan's named probe bit in both selection modes. An omission of the explicit preflight call failed `TestCleanSetPreflightAllRows/explicit`, and an omission of the landed preflight call failed the landed subtest. Both files restored.
+
+The final verification passes. `bench test --package ./...` reports 99 packages green, and `bench test --check system` reports `internal/systemtest` green with zero skips.
+
+The author walked all 19 acceptance rows. Eighteen rows resolve to a named test that exists and passes.
+CL15 has no test by design, because the coverage map marks it review-owned for the ticket graph and the entry checks.
+The author verified the CL15 claim directly. No cleanup source file names a numeric output budget, and ticket 2 depends only on ticket 1.
+
+All 16 user stories are met by covered, passing rows. No material acceptance shortfall exists.
+
+Three items stay open for the reviewer, and none of them is an unmet acceptance row. ST10 is a placement call with no behavior in it.
+SPEC-5 asks whether CL9 extends to an unresolved selection. COV-4 asks whether CL4's stated reason should credit the entry check rather than the preflight.
