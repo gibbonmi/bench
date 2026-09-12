@@ -37,7 +37,7 @@ findings in the owner details.
 
 **FT308 (MEDIUM, decision required) — the cleanup transaction's persistence lock leaves `.git` when its record is gone.**
 
-**FT311 (MEDIUM, decision required) — benchmark workflow specs are staged; the landing cleanup selector remains open.**
+**FT311 (MEDIUM, decision required) — benchmark workflow outcomes are delivered; the landing cleanup selector remains open.**
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
