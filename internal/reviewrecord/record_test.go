@@ -8,7 +8,7 @@ import (
 
 func TestReviewRecord(t *testing.T) {
 	t.Run("missing clean axis", func(t *testing.T) {
-		if err := CheckReviews(Chunk{ID: "1"}, "author"); err == nil || !strings.Contains(err.Error(), "missing Standards") {
+		if err := CheckReviews(Chunk{ID: "1"}, []string{"author"}, false); err == nil || !strings.Contains(err.Error(), "missing Standards") {
 			t.Fatalf("missing clean review result: %v", err)
 		}
 	})

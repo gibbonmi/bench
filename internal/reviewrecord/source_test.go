@@ -91,7 +91,7 @@ func TestReviewRecordTerminal(t *testing.T) {
 		{"computed state stored", "occurrence state", func(r *rr.Record) { r.Chunks[0].Reviews[0].State = "current" }},
 		{"no embedded result", "native result", func(r *rr.Record) { r.Chunks[0].Reviews[0].NativeRef.Excerpt = "" }},
 		{"bad result digest", "native result", func(r *rr.Record) { r.Chunks[0].Reviews[0].NativeRef.Digest = "bad" }},
-		{"version before hostile reference", "unsupported version", func(r *rr.Record) { r.Version = 2; r.Chunks[0].Reviews[0].NativeRef.Ref = "../../unsafe" }},
+		{"version before hostile reference", "unsupported version", func(r *rr.Record) { r.Version = 99; r.Chunks[0].Reviews[0].NativeRef.Ref = "../../unsafe" }},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -118,7 +118,7 @@ func TestReviewRecordTerminal(t *testing.T) {
 	if len(loaded.Chunks[0].Reviews) != 4 || loaded.Chunks[0].Reviews[0].FindingIDs[0] != "S1" {
 		t.Fatal("supersession erased earlier findings")
 	}
-	if err := rr.CheckReviews(loaded.Chunks[0], loaded.ImplementationSession); err != nil {
+	if err := rr.CheckReviews(loaded.Chunks[0], []string{loaded.ImplementationSession}, false); err != nil {
 		t.Fatal(err)
 	}
 }

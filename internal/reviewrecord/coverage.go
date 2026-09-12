@@ -62,7 +62,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 			return fmt.Errorf("chunk %s: stale acceptance rows", chunk.ID)
 		}
 		if verification {
-			if err := checkVerification(chunk.Verification, planned.Verification, record.ImplementationSession, chunk.SourceDigest, "chunk "+chunk.ID); err != nil {
+			if err := checkVerification(chunk.Verification, planned.Verification, plan, record, chunk.SourceDigest, "chunk "+chunk.ID, false); err != nil {
 				return err
 			}
 		}
@@ -79,7 +79,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 				return fmt.Errorf("chunk %s: stale review chain gap; review the uncovered delta", chunk.ID)
 			}
 		}
-		if err := CheckReviews(*chunk, record.ImplementationSession); err != nil {
+		if err := CheckReviews(*chunk, reviewExclusions(plan, record), plan.Delegated()); err != nil {
 			return err
 		}
 		ids, err := mappedIDs(record, plan.Digest, current.Digest, chunk.ID)

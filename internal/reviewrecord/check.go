@@ -20,8 +20,16 @@ func CheckTrees(root, sourceTree, evidenceTree, tip, spec, chunk string, complet
 	return checkSource(root, sourceTree, tip, record, chunk, complete, true)
 }
 
-func checkVerification(items []Verification, requirements []Requirement, performer, source, scope string) error {
+// checkVerification grades retained occurrences against one requirement
+// inventory. The plan resolves each obligation's owed performer and role, so a
+// version 1 record keeps its one implementation session and a version 2 record
+// reads each obligation's owner from its own frozen plan.
+func checkVerification(items []Verification, requirements []Requirement, plan Plan, record Record, source, scope string, final bool) error {
 	for _, requirement := range requirements {
+		performer, role, err := verifier(plan, record, requirement, final)
+		if err != nil {
+			return fmt.Errorf("%s: %w", scope, err)
+		}
 		var current *Verification
 		for i := range items {
 			if items[i].Requirement == requirement.ID {
@@ -31,7 +39,7 @@ func checkVerification(items []Verification, requirements []Requirement, perform
 		if current == nil {
 			return fmt.Errorf("%s: missing verification %s; execute and retain %s", scope, requirement.ID, requirement.Command)
 		}
-		if current.Role != "author-verification" || current.Performer != performer || current.SourceDigest != source || current.Command != requirement.Command || current.State != "completed" || current.Outcome != "pass" || current.ExitCode == nil || *current.ExitCode != 0 {
+		if current.Role != role || current.Performer != performer || current.SourceDigest != source || current.Command != requirement.Command || current.State != "completed" || current.Outcome != "pass" || current.ExitCode == nil || *current.ExitCode != 0 {
 			return fmt.Errorf("%s: verification %s is incomplete, failed, or stale; execute and retain %s", scope, requirement.ID, requirement.Command)
 		}
 		if requirement.Probe != "" {
@@ -49,7 +57,11 @@ func checkVerification(items []Verification, requirements []Requirement, perform
 
 func checkCompletion(record Record, plan Plan, source string) error {
 	completion := record.Completion
-	if completion.State != "completed" || completion.SourceDigest != source || completion.Performer != record.ImplementationSession {
+	reconciler := record.ImplementationSession
+	if plan.Delegated() {
+		reconciler = plan.Execution.OrchestratorSession
+	}
+	if completion.State != "completed" || completion.SourceDigest != source || completion.Performer != reconciler {
 		return errors.New("completion is incomplete or stale; execute final verification and reconcile acceptance")
 	}
 	for _, chunk := range plan.Chunks {
@@ -59,5 +71,5 @@ func checkCompletion(record Record, plan Plan, source string) error {
 			}
 		}
 	}
-	return checkVerification(completion.Verification, plan.FinalVerification, record.ImplementationSession, source, "completion")
+	return checkVerification(completion.Verification, plan.FinalVerification, plan, record, source, "completion", true)
 }
