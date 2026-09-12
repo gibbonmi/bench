@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-tickets/SKILL.md",
+    "old": "A delegated run keeps these serial green ticket checkpoints under the operating guide's delegated policy.",
+    "new": "A delegated run replaces these checkpoints with one chunk commit."
+  }
+]

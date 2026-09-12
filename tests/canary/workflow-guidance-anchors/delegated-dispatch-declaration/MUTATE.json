@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-implement-spec.md",
+    "old": "Declare the configured model, effort, iteration cap, and author limit before the first dispatch.",
+    "new": "Declare the line before the first dispatch."
+  }
+]

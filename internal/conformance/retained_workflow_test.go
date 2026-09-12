@@ -80,6 +80,7 @@ func checkRetainedWorkflow(root string) []string {
 		"retained workflow: review phase dropped the integrated chunk-tip review fence",
 		"retained workflow: review phase dropped the delegated axis exclusions",
 		"retained workflow: final check dropped the delegated account reconciliation",
+		"retained workflow: final check dropped an account inventory member",
 		"retained workflow: final check dropped the no-paid-comparison boundary",
 		"retained workflow: final check dropped the orchestrator final verification",
 		"retained workflow: craft-tickets dropped the delegated serial ticket checkpoint",

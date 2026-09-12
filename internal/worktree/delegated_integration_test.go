@@ -119,6 +119,31 @@ func (d *delegatedJourney) record(t *testing.T, base string) {
 	d.fixture.Commit("retain delegated chunk evidence")
 }
 
+// assign rewrites one ticket's assignment history and commits the amended plan.
+// The first dispatch always stays at the head, so a successor never erases the
+// attempt it replaces.
+func (d *delegatedJourney) assign(t *testing.T, ticket string, successors ...rr.Assignment) {
+	t.Helper()
+	d.fixture.Plan.Execution.Assignments[ticket] = append([]rr.Assignment{recordtest.Assign(ticket)}, successors...)
+	d.fixture.WritePlan()
+	d.fixture.Commit("amend the ticket " + ticket + " assignment history")
+}
+
+func (d *delegatedJourney) tree(t *testing.T) string {
+	t.Helper()
+	return gitOutput(t, d.integration.Path, "rev-parse", "HEAD^{tree}")
+}
+
+// replacement is one successor assignment after the named transfer trigger. The
+// caller clears a field to express the transfer that must be refused.
+func replacement(ticket, trigger string) rr.Assignment {
+	item := recordtest.Assign(ticket)
+	item.Session, item.Assignment = "successor-"+ticket, "successor-assignment-"+ticket
+	item.Predecessor, item.Trigger = recordtest.Author(ticket), trigger
+	item.Stopped, item.Preserved = "native:author-session-terminated", "fixture-source"
+	return item
+}
+
 func (d *delegatedJourney) checkpoint(t *testing.T, chunk string) (int, string) {
 	t.Helper()
 	var out, err bytes.Buffer
@@ -232,6 +257,85 @@ func TestDelegatedIntegrationJourney(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(d.unrelated.Path, "unrelated.txt")); err != nil {
 		t.Fatalf("the landing disturbed the unrelated assignment: %v", err)
+	}
+}
+
+// The replacement leg of the same synthetic run: a ticket author reaches a
+// terminal failure, its successor takes the ticket only after confirmed
+// termination, the recorded author repairs the review finding, and the account
+// retains every attempt. It launches no model and pays for no comparison.
+func TestDelegatedReplacementJourney(t *testing.T) {
+	t.Parallel()
+	d := delegatedJourneyFixture(t)
+	failed, successor := recordtest.Author("1.md"), replacement("1.md", "terminal-failure")
+
+	// The old writer's termination is unconfirmed, so the transfer is refused.
+	unconfirmed := successor
+	unconfirmed.Stopped = ""
+	d.assign(t, "1.md", unconfirmed)
+	if _, err := rr.ReadPlan(d.integration.Path, d.tree(t), delegatedJourneySpec); err == nil || !strings.Contains(err.Error(), "stopped-writer evidence") {
+		t.Fatalf("a transfer without confirmed termination was accepted: %v", err)
+	}
+
+	d.assign(t, "1.md", successor)
+	d.fixture.Reload()
+	// The amendment moves the plan digest, so later evidence names the amended plan.
+	d.fixture.Record.PlanDigest = d.fixture.Plan.Digest
+	if author, dispatched := d.fixture.Plan.Author("1.md"); !dispatched || author != successor.Session {
+		t.Fatalf("effective author = %q, want the successor %q", author, successor.Session)
+	}
+	history := d.fixture.Plan.Execution.Assignments["1.md"]
+	if len(history) != 2 || history[0].Session != failed || history[1].Predecessor != failed || history[1].Trigger != "terminal-failure" {
+		t.Fatalf("assignment history = %#v, want the failed attempt kept under its successor", history)
+	}
+	if participants := d.fixture.Plan.Participants(); !contains(participants, failed) || !contains(participants, successor.Session) {
+		t.Fatalf("participants = %q, want both attempts accounted for", participants)
+	}
+
+	// The successor receives the preserved source in its own assignment and takes
+	// the ticket to a green commit.
+	author := mustCreate(t, d.root, d.home, "delegated-author-1-successor", "author-1-successor")
+	commitInWorktree(t, author.Path, "ticket-1.txt", "ticket one\n", "successor ticket 1 work")
+	commitInWorktree(t, d.authors["2.md"].Path, "ticket-2.txt", "ticket two\n", "ticket 2 work")
+	chunkABase := gitOutput(t, d.root, "rev-parse", d.integration.Assignment.Branch)
+	d.fold(t, d.integration, author.Assignment.Label)
+	d.fold(t, d.integration, d.authors["2.md"].Assignment.Label)
+	d.record(t, chunkABase)
+	if got := d.fixture.Record.Chunks[0].Verification[0].Performer; got != successor.Session {
+		t.Fatalf("chunk verification performer = %q, want the successor %q", got, successor.Session)
+	}
+	if code, out := d.checkpoint(t, "A"); code != 0 {
+		t.Fatalf("the post-replacement chunk A checkpoint refused: %d %s", code, out)
+	}
+
+	// Relabeling the failed author onto the successor's obligation cannot close it.
+	d.fixture.Record.Chunks[0].Verification[0].Performer = failed
+	d.fixture.Save()
+	d.fixture.Commit("relabel the chunk onto the failed author")
+	if code, out := d.checkpoint(t, "A"); code == 0 || !strings.Contains(out, "verification first") {
+		t.Fatalf("the failed author closed the successor's obligation: %d %s", code, out)
+	}
+	d.fixture.Record.Chunks[0].Verification[0].Performer = successor.Session
+	d.fixture.Save()
+	d.fixture.Commit("restore the successor's verification")
+	if code, out := d.checkpoint(t, "A"); code != 0 {
+		t.Fatalf("the restored chunk A checkpoint refused: %d %s", code, out)
+	}
+
+	// The accepted review finding returns to the recorded ticket author. Its repair
+	// moves the integrated source, so the chunk needs that author's current results.
+	commitInWorktree(t, author.Path, "ticket-1.txt", "ticket one repaired\n", "repair the review finding")
+	d.fold(t, d.integration, author.Assignment.Label)
+	if code, out := d.checkpoint(t, "A"); code == 0 {
+		t.Fatalf("evidence that predates the repair closed chunk A: %d %s", code, out)
+	}
+	d.fixture.Record.Chunks = d.fixture.Record.Chunks[:0]
+	d.record(t, chunkABase)
+	if got := d.fixture.Record.Chunks[0].Verification[0].Performer; got != successor.Session {
+		t.Fatalf("repair verification performer = %q, want the recorded ticket author", got)
+	}
+	if code, out := d.checkpoint(t, "A"); code != 0 {
+		t.Fatalf("the repaired chunk A checkpoint refused: %d %s", code, out)
 	}
 }
 

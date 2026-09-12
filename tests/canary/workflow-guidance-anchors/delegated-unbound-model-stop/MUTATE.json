@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-line/SKILL.md",
+    "old": "An unavailable or unbound model stops that dispatch without a substitution.",
+    "new": "An unavailable model takes the nearest available binding."
+  }
+]

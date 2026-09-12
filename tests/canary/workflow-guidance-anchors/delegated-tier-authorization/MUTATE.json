@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-line/SKILL.md",
+    "old": "authorizes selection and eligible escalation through every configured tier, including top.",
+    "new": "authorizes selection below the top tier."
+  }
+]

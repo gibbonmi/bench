@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-implement-spec.md",
+    "old": "It refuses without `--full`, an approved spec, or an approved ticket graph.",
+    "new": "It runs whenever the reviewer names a spec."
+  }
+]

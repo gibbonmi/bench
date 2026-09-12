@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".bench/BENCH.md",
+    "old": "Production repairs stay with the recorded ticket author.",
+    "new": "The orchestrator can repair any ticket."
+  }
+]
