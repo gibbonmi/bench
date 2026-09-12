@@ -14,11 +14,14 @@ import (
 	"github.com/gibbonmi/bench/internal/axi"
 )
 
-// ActionNotAttempted is the outcome of a member a stopped set apply never started. It sits
-// here rather than in lifecyclepolicy, which owns the plan vocabulary, because this value is
-// never a planned removal claim: only an apply reports it, and it says what did not happen.
-// It therefore stays outside Removes(), since the member still stands exactly as the
-// approved plan found it and has no removal ahead of it.
+// ActionNotAttempted is the outcome of a member a stopped set apply never started. Only an
+// apply reports it, and it says what did not happen, so it is never a planned removal claim.
+// It stays outside Removes() for that reason: the member still stands exactly as the
+// approved plan found it, and it has no removal ahead of it.
+//
+// Its placement is unsettled. lifecyclepolicy owns the other action values, and this one
+// sits here because moving it grows two files that are already over their size budget. The
+// reviewer holds that decision.
 const ActionNotAttempted CleanupAction = "not-attempted"
 
 const notAttemptedDetail = "not attempted; an earlier target in this set did not complete"
@@ -127,13 +130,15 @@ func renderStaleSet(stdout io.Writer, fingerprint string, rows []CleanupPlan, re
 	return renderStale(stdout, staleRows(fingerprint, rows), replan)
 }
 
-// renderOutcomes prints one set apply's outcome rows. A stale refusal also names the digest
-// the apply rejected, so the reader sees which plan the repository no longer describes.
-func renderOutcomes(stdout io.Writer, fingerprint string, plans []CleanupPlan, err error, replan []axi.InvocationArgument) error {
+// applyOutcomes prints what one apply produced. A stale refusal replaces the outcome rows
+// with the refusal form, so the reader sees which plan the repository no longer describes
+// and the command that re-plans the same selection. Every selection mode reads that switch
+// here, and each supplies the refusal rows its own surface spells.
+func applyOutcomes(stdout io.Writer, plans, stale []CleanupPlan, err error, replan []axi.InvocationArgument) error {
 	if !errors.Is(err, errStaleFingerprint) {
 		return renderCleanups(stdout, plans)
 	}
-	return renderStaleSet(stdout, fingerprint, plans, replan)
+	return renderStale(stdout, stale, replan)
 }
 
 // preflightExplicitSet and preflightLandedSet requalify every removable member before their

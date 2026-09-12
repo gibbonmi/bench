@@ -26,7 +26,7 @@ func TestPlanUnclaimedAssignmentSetExcludesClaimedCheckedOutAndForeignRefs(t *te
 	gitRun(t, root, "branch", "bench/foreign/kept")
 	claimed := mustCreate(t, root, home, "claimed-assignment-ref", "claimed")
 
-	set, err := planUnclaimedAssignmentSet(root, CleanupOptions{DiscardBranch: true, Unclaimed: true})
+	set, err := planUnclaimedAssignmentSet(root, unclaimedOptions())
 	if err != nil || len(set.rows) != 1 || set.rows[0].ref != orphan {
 		t.Fatalf("plan = %#v, err=%v; want only %q", set, err, orphan)
 	}
@@ -52,7 +52,7 @@ func TestPlanUnclaimedShiftResidueBranch(t *testing.T) {
 	gitRun(t, root, "worktree", "add", "-q", filepath.Join(t.TempDir(), "checked-out"), checkedOut)
 	gitRun(t, root, "branch", "archive/x")
 
-	set, err := planUnclaimedAssignmentSet(root, CleanupOptions{DiscardBranch: true, Unclaimed: true})
+	set, err := planUnclaimedAssignmentSet(root, unclaimedOptions())
 	if err != nil || len(set.rows) != 1 || set.rows[0].ref != "refs/heads/"+residue {
 		t.Fatalf("plan = %#v, err=%v; want only %q", set, err, residue)
 	}
@@ -85,7 +85,7 @@ func TestPlanUnclaimedAssignmentSetExcludesDefaultBranchInAssignmentNamespace(t 
 	gitRun(t, root, "branch", "-m", defaultBranch)
 	gitRun(t, root, "checkout", "--detach", "-q")
 
-	set, err := planUnclaimedAssignmentSet(root, CleanupOptions{DiscardBranch: true, Unclaimed: true})
+	set, err := planUnclaimedAssignmentSet(root, unclaimedOptions())
 	if err != nil || len(set.rows) != 0 {
 		t.Fatalf("plan = %#v, err=%v; want configured default branch excluded", set, err)
 	}

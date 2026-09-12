@@ -345,7 +345,7 @@ func cleanExplicitSet(j joins, root string, selection cleanSelection, stdout, st
 		return 1
 	}
 	plans, applyErr := applyExplicitSet(j, root, set, selection.options)
-	if err := renderOutcomes(stdout, selection.fingerprint, plans, applyErr, replan); err != nil {
+	if err := applyOutcomes(stdout, plans, staleRows(selection.fingerprint, plans), applyErr, replan); err != nil {
 		fmt.Fprintf(stderr, "bench worktree clean: %v\n", err)
 		return 1
 	}

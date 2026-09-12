@@ -1,12 +1,12 @@
 package worktree
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"sort"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 )
@@ -106,14 +106,9 @@ func unclaimedOptions() CleanupOptions {
 	return CleanupOptions{DiscardBranch: true, Unclaimed: true}
 }
 
-// renderUnclaimedOutcomes prints one unclaimed apply's rows and, on a stale refusal, the
-// exact command that re-plans the same branch selection. The rows carry this mode's own
-// refusal spelling, so the shared refusal row never reaches them.
-func renderUnclaimedOutcomes(stdout io.Writer, plans []CleanupPlan, err error) error {
-	if !errors.Is(err, errStaleFingerprint) {
-		return renderCleanups(stdout, plans)
-	}
-	return renderStale(stdout, plans, cleanArguments(unclaimedOptions(), "--unclaimed"))
+// unclaimedReplan is this mode's own re-plan command, beside the landed selector's.
+func unclaimedReplan() []axi.InvocationArgument {
+	return cleanArguments(unclaimedOptions(), "--unclaimed")
 }
 
 func applyUnclaimedAssignmentSet(root string, set unclaimedAssignmentSet) ([]CleanupPlan, error) {
