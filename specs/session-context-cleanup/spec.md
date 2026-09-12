@@ -68,7 +68,9 @@ Preflight does not promise an atomic filesystem snapshot across later concurrent
 
 Each target transaction keeps the existing receipt, recovery, branch, assignment, census, and handoff behavior.
 If a race or failure occurs after an earlier removal, the earlier result remains completed.
-The failing target reports its actual retained or failed outcome.
+The failing target reports its actual outcome.
+
+A target that failed reports the failure. A target the plan retained keeps that verdict. A target no transaction touched reports `not-attempted`.
 Each remaining selected target reports `not-attempted`.
 The command returns nonzero and does not claim rollback of completed effects.
 

@@ -1,10 +1,9 @@
 // When a cleanup-set apply refuses, and when it does not. The fixtures here drive drift at
 // each window an apply passes through — before entry, before the first transaction, and
-// inside a later member's own lock — and check which members survive. Three sibling files own
-// the rest: clean_set_outcomes_test.go owns what a stopped apply reports,
-// clean_set_refusal_test.go owns which member a refusal names, and clean_set_wiring_test.go
-// owns the command's wiring to the refusal renderer. The fixture builders all four share live
-// here.
+// inside a later member's own lock — and check which members survive. The fixture builders
+// every clean_set_*_test.go file shares live here.
+//
+// Those files split by the question each answers; this one answers which window.
 package worktree
 
 import (
@@ -66,11 +65,18 @@ func landedFileByAssignment(creations []Creation, names ...string) map[string]st
 
 // driftTracked rewrites one member's landed file, which leaves that member's tracked state
 // dirty and takes its planned removal away.
+//
+// The file has to be there already. Writing a path that does not exist would create untracked
+// residue instead, and every caller here means dirty tracked state, which is the condition
+// CL4 names and a distinct one from untracked residue.
 func driftTracked(t *testing.T, files map[string]string, assignment string) {
 	t.Helper()
 	path, known := files[assignment]
 	if !known {
 		t.Fatalf("assignment %q has no landed file in %#v", assignment, files)
+	}
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("landed file %q is not present to drift: %v", path, err)
 	}
 	mustWrite(t, path, []byte("drifted\n"), 0o644)
 }

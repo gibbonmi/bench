@@ -1,10 +1,9 @@
-// How the clean command wires each selection mode to the refusal renderer. Three sibling
-// files own the rest: clean_set_outcomes_test.go owns what a stopped apply reports and proves
-// the renderer itself, clean_set_apply_test.go owns which window an apply can refuse in and
-// the fixture builders, and clean_set_refusal_test.go owns which member a refusal names. What
-// is left, and what lives here, is the wiring between them: every route that can return a
-// stale refusal from inside an apply reaches the refusal form through the command, so a call
-// site that reverted to the plain outcome rows turns red.
+// How the clean command wires each selection mode to the refusal renderer. Every route that
+// can return a stale refusal from inside an apply has to reach the refusal form through the
+// command, so a call site that reverted to the plain outcome rows turns red.
+//
+// The clean_set_*_test.go files split by the question each answers; this one answers how the
+// command reaches the renderer.
 package worktree
 
 import (

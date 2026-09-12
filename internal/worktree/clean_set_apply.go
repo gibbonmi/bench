@@ -144,9 +144,10 @@ func cleanupModifierFlags(options CleanupOptions) []string {
 	return flags
 }
 
-// cleanArguments is the head of every clean command this package renders: the verb, the
-// modifiers the plan answered under, then the mode's own selectors. It is also the exact
-// re-plan command a refusal offers, so recovery keeps the scope the plan was asked for.
+// cleanArguments is the head of every clean command this package renders that carries the
+// caller's modifiers: the verb, those modifiers, then the mode's own selectors. It is also the
+// exact re-plan command a refusal offers, so recovery keeps the scope the plan was asked for.
+// A command that resolves one named path answers no modifiers and builds its own operands.
 func cleanArguments(options CleanupOptions, selectors ...string) []axi.InvocationArgument {
 	arguments := []axi.InvocationArgument{axi.KnownArgument("worktree"), axi.KnownArgument("clean")}
 	for _, selector := range append(cleanupModifierFlags(options), selectors...) {

@@ -238,11 +238,8 @@ func renderLandedSet(stdout io.Writer, set landedCleanupSet, options CleanupOpti
 	actions := make([]axi.Action, 0, len(set.rows)+1)
 	for _, row := range set.rows {
 		if row.plan.Action.Removes() {
-			arguments := []axi.InvocationArgument{axi.KnownArgument("worktree"), axi.KnownArgument("clean")}
-			for _, modifier := range cleanupModifierFlags(options) {
-				arguments = append(arguments, axi.KnownArgument(modifier))
-			}
-			arguments = append(arguments, axi.KnownArgument("--landed"), axi.KnownArgument("--apply"), axi.KnownArgument(set.fingerprint))
+			// The apply command is the re-plan command plus the digest this plan authorizes.
+			arguments := append(landedReplan(options), axi.KnownArgument("--apply"), axi.KnownArgument(set.fingerprint))
 			actions = append(actions, axi.ExecutableInvocation("apply the landed worktree plan", arguments...))
 			break
 		}

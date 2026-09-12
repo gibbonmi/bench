@@ -2,9 +2,10 @@
 // then read the result: which member completed, which one failed, which ones were never
 // started, and the exact command a refusal offers as recovery. One reads the rows an apply
 // reports for a member it will not touch at all. The assertions that read a rendered row live
-// here too. Three sibling files own the rest: clean_set_apply_test.go owns when an apply
-// refuses and the fixture builders, clean_set_refusal_test.go owns which member a refusal
-// names, and clean_set_wiring_test.go owns the command's wiring to the refusal renderer.
+// here too.
+//
+// The clean_set_*_test.go files split by the question each answers; this one answers what the
+// apply reports.
 package worktree
 
 import (

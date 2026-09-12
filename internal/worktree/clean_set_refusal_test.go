@@ -1,10 +1,10 @@
 // Which member a refused apply names, and what that member's row says. A refusal has to land
 // on the member that caused it and report what that member is now: a fault names the row whose
 // requalification raised it, a member that drifted to retained still reports retained, and one
-// still marked removable reports that its removal never started. Three sibling files own the
-// rest: clean_set_apply_test.go owns which window a drift lands in and the fixture builders,
-// clean_set_outcomes_test.go owns what a stopped apply reports and how a rendered row is read,
-// and clean_set_wiring_test.go owns the command's wiring to the refusal renderer.
+// still marked removable reports that its removal never started.
+//
+// The clean_set_*_test.go files split by the question each answers; this one answers which
+// member.
 package worktree
 
 import (
