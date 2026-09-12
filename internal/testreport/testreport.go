@@ -27,10 +27,9 @@ type event struct {
 type testResult struct {
 	packageName string
 	test        string
-	first       string
+	lines       []string
 	failed      bool
 	skipped     bool
-	last        string
 	structured  string
 }
 
@@ -39,15 +38,19 @@ type report struct {
 	elapsedMS  map[string]int64
 	seen       map[string]bool
 	tests      map[string]*testResult
-	packageLog map[string]string
+	packageLog map[string][]string
 	terminal   bool
 	// ranTests holds one key for each test that emitted a run event, so the count of
 	// tests that ran and the fact that any ran are one observation.
 	ranTests map[string]bool
 }
 
+func newReport() *report {
+	return &report{statuses: map[string]string{}, elapsedMS: map[string]int64{}, seen: map[string]bool{}, tests: map[string]*testResult{}, packageLog: map[string][]string{}, ranTests: map[string]bool{}}
+}
+
 func decode(stream io.Reader) (*report, error) {
-	report := &report{statuses: map[string]string{}, elapsedMS: map[string]int64{}, seen: map[string]bool{}, tests: map[string]*testResult{}, packageLog: map[string]string{}, ranTests: map[string]bool{}}
+	report := newReport()
 	decoder := json.NewDecoder(stream)
 	for {
 		var e event
@@ -108,16 +111,11 @@ func decode(stream io.Reader) (*report, error) {
 				continue
 			}
 			if e.Test == "" {
-				if report.packageLog[e.Package] == "" {
-					report.packageLog[e.Package] = line
-				}
+				report.packageLog[e.Package] = append(report.packageLog[e.Package], line)
 				continue
 			}
 			test := report.test(e.Package, e.Test)
-			if test.first == "" {
-				test.first = line
-			}
-			test.last = line
+			test.lines = append(test.lines, line)
 		}
 	}
 }
@@ -204,8 +202,8 @@ func (r *report) skips(full bool) [][]string {
 			continue
 		}
 		reason := test.structured
-		if reason == "" {
-			reason = test.last
+		if reason == "" && len(test.lines) != 0 {
+			reason = test.lines[len(test.lines)-1]
 		}
 		if reason == "" || goLocationOnly(reason) {
 			reason = "reason not emitted"
@@ -240,28 +238,30 @@ func goLocationOnly(reason string) bool {
 func (r *report) failures(full bool) [][]string {
 	rows := make([][]string, 0)
 	for _, test := range r.tests {
-		if !test.failed || r.failedDescendant(test) && test.first == "" {
+		if !test.failed || r.failedDescendant(test) && len(test.lines) == 0 {
 			continue
 		}
-		line := test.first
-		if line == "" {
-			line = "no diagnostic emitted"
-		}
-		rows = append(rows, []string{test.packageName, test.test, diagnosticCell(line, full)})
+		rows = append(rows, []string{test.packageName, test.test, failureCell(test.lines, full)})
 	}
 	for pkg, status := range r.statuses {
 		if status == "fail" && r.packageFailure(pkg) {
-			line := r.packageLog[pkg]
-			if line == "" {
-				line = "no diagnostic emitted"
-			}
-			rows = append(rows, []string{pkg, "", diagnosticCell(line, full)})
+			rows = append(rows, []string{pkg, "", failureCell(r.packageLog[pkg], full)})
 		}
 	}
 	sort.Slice(rows, func(i, j int) bool {
 		return rows[i][0] < rows[j][0] || rows[i][0] == rows[j][0] && rows[i][1] < rows[j][1]
 	})
 	return rows
+}
+
+func failureCell(lines []string, full bool) string {
+	if len(lines) == 0 {
+		return "no diagnostic emitted"
+	}
+	if full {
+		return diagnosticCell(strings.Join(lines, "\n"), true)
+	}
+	return diagnosticCell(lines[0], false)
 }
 
 func diagnosticCell(line string, full bool) string {

@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Full failure diagnostics
+
+- Fixed `bench test --full` to retain every failure diagnostic line in order within each result.
+  The default preview and distinct failing-test counts stay the same.
+
 ### Empty sibling cleanup
 
 - Fixed automatic landing cleanup to retain siblings with no proven commit after their start.
