@@ -52,7 +52,7 @@ empty output, a failed command, and a file with no sections.
 | 17 | Bench packet | Report the review phase-entry checks | tip `9ecc1d56` | 547 | 547 |
 | 18 | Multibyte read | Observe one 12.8 MB session record | `3b40464b` | 3,432 | 3,432 |
 | 19 | Wrapper result | Return a bounded oversized tool result | none | unavailable | unavailable |
-| 20 | Raw file read | Read one Go file with no sections | `registry_data.go` blob at tip `9ecc1d56` | 146,885 | unavailable |
+| 20 | Raw file read | Read one Go file with no sections | `internal/anchors/registry_data.go` blob at tip `9ecc1d56` | 146,885 | unavailable |
 
 Case 16 is unavailable for one recorded reason. `bench preflight review --charge
 --full` refuses a dirty checkout, and the checkout carried the coordinator's
