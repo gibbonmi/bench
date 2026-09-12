@@ -44,11 +44,11 @@ func runCleanupWith(t *testing.T, j joins, root, home string, args ...string) (s
 
 func cleanupRowFingerprint(t *testing.T, output string) string {
 	t.Helper()
-	match := regexp.MustCompile(`,\"?([0-9a-f]{64})\"?,`).FindStringSubmatch(output)
+	match := regexp.MustCompile(`,("?[0-9a-f]{64}"?),`).FindStringSubmatch(output)
 	if len(match) != 2 {
 		t.Fatalf("output has no row fingerprint: %q", output)
 	}
-	return match[1]
+	return cleanupRowValue(match[1])
 }
 
 func TestCleanLandedPlansRepositoryWideSet(t *testing.T) {
@@ -214,5 +214,24 @@ func TestCleanLandedSelectorPartition(t *testing.T) {
 		if strings.Contains(stdout, excluded.Path) {
 			t.Fatalf("output=%q, unexpectedly selected %s", stdout, excluded.Path)
 		}
+	}
+}
+
+// TestCleanLandedPlanApplyCarriesModifiers holds the advertised apply command to the
+// modifiers the plan answered under. The re-plan a refusal renders reads them from the same
+// source; without this case only the modifier-free spelling of that head is pinned.
+func TestCleanLandedPlanApplyCarriesModifiers(t *testing.T) {
+	t.Parallel()
+	root, home := ignoringRepo(t)
+	creation := landedMember(t, root, home, "landed-apply-modifiers", "landed.txt")
+	mustWrite(t, filepath.Join(creation.Path, "ignored-one.txt"), []byte("residue\n"), 0o644)
+
+	stdout, stderr, code := runCleanup(t, root, home, "--discard-ignored", "--full", "--landed")
+	if code != 0 || stderr != "" {
+		t.Fatalf("plan = (%d, %q, %q), want one applicable plan", code, stdout, stderr)
+	}
+	want := "bench worktree clean --discard-ignored --full --landed --apply " + cleanupRowFingerprint(t, stdout)
+	if !strings.Contains(stdout, want) {
+		t.Fatalf("plan = %q, want the advertised apply command %q", stdout, want)
 	}
 }

@@ -6,11 +6,19 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
 const unclaimedAssignmentFingerprintVersion = "bench-unclaimed-assignment-branches/v1"
+
+// StepUnlockedReplan is the re-plan this selector runs before it deletes anything. Every
+// StepApplyLocked site sits inside the registration lock a checkout holds, and this mode
+// locks no checkout: it compares refs, so it detects a concurrent writer instead of
+// excluding one. The token stays here, beside its only site, because ownership.go is over
+// its size budget.
+const StepUnlockedReplan LifecycleStep = "unlocked-replan"
 
 type unclaimedAssignmentBranch struct{ ref, oid, reason string }
 type unclaimedAssignmentSet struct {
@@ -97,18 +105,44 @@ func staleUnclaimedPlans(set unclaimedAssignmentSet) []CleanupPlan {
 	return []CleanupPlan{{Target: "unknown", Action: ActionError, Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: set.fingerprint, Reason: errStaleFingerprint.Error()}}
 }
 
-func applyUnclaimedAssignmentSet(root string, set unclaimedAssignmentSet) ([]CleanupPlan, error) {
-	current, err := planUnclaimedAssignmentSet(root, CleanupOptions{DiscardBranch: true, Unclaimed: true})
+// unclaimedOptions is what this mode's options are when no caller parsed any. The status
+// reader asks for the selection outside the clean grammar, so it has no invocation to read
+// them from. A caller that parsed an invocation passes its own options instead.
+func unclaimedOptions() CleanupOptions {
+	return CleanupOptions{DiscardBranch: true, Unclaimed: true}
+}
+
+// unclaimedReplan is this mode's own re-plan command, beside the landed selector's. It takes
+// the caller's options so a later grammar change cannot leave the rendered command behind.
+// Today the two are pinned equal: valid() requires --discard-branch and refuses the other
+// two modifiers under --unclaimed, so every valid invocation carries unclaimedOptions().
+func unclaimedReplan(options CleanupOptions) []axi.InvocationArgument {
+	return cleanArguments(options, "--unclaimed")
+}
+
+// applyUnclaimedAssignmentSet deletes each planned branch at the exact object the plan
+// named. It reports the outcome rows alone. A stale refusal carries no rows, because the
+// refusal row is this command surface's own spelling and the caller renders it; a row
+// returned here would be a second derivation the caller discards.
+func applyUnclaimedAssignmentSet(j joins, root string, set unclaimedAssignmentSet, options CleanupOptions) ([]CleanupPlan, error) {
+	// The window that refusal exists for: a branch can enter or leave the namespace between
+	// the caller's plan read and this re-plan. The boundary is nil in production; it lets a
+	// test stand in that window. This mode holds no lock across the window, so a concurrent
+	// writer is refused after the fact rather than excluded, and the step token says so.
+	if err := hit(j.cleanupBoundary, StepUnlockedReplan); err != nil {
+		return nil, err
+	}
+	current, err := planUnclaimedAssignmentSet(root, options)
 	if err != nil {
 		return nil, err
 	}
 	if current.fingerprint != set.fingerprint || len(current.rows) != len(set.rows) {
-		return staleUnclaimedPlans(set), errStaleFingerprint
+		return nil, errStaleFingerprint
 	}
 	plans := make([]CleanupPlan, 0, len(set.rows))
 	for i, planned := range set.rows {
 		if current.rows[i] != planned {
-			return staleUnclaimedPlans(set), errStaleFingerprint
+			return nil, errStaleFingerprint
 		}
 		if err := git.DeleteBranchExact(root, planned.ref, planned.oid); err != nil {
 			return append(plans, CleanupPlan{Target: planned.ref, Action: ActionError, Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: set.fingerprint, Reason: err.Error()}), err
@@ -121,7 +155,7 @@ func applyUnclaimedAssignmentSet(root string, set unclaimedAssignmentSet) ([]Cle
 // UnclaimedAssignmentBranchRefs gives status the same sorted assignment-and-shift
 // selection used by clean.
 func UnclaimedAssignmentBranchRefs(root string) ([]string, error) {
-	set, err := planUnclaimedAssignmentSet(root, CleanupOptions{DiscardBranch: true, Unclaimed: true})
+	set, err := planUnclaimedAssignmentSet(root, unclaimedOptions())
 	if err != nil {
 		return nil, err
 	}

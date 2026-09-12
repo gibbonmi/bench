@@ -244,7 +244,7 @@ func inRepository(root string) bool {
 }
 
 func cleanInvocationError(stdout io.Writer) int {
-	_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: "none", Reason: "invalid invocation; run " + usage.WorktreeClean})
+	_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: unapplicableFingerprint, Reason: "invalid invocation; run " + usage.WorktreeClean})
 	return 2
 }
 
@@ -263,63 +263,12 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 		fmt.Fprintln(stdout, "usage: "+usage.WorktreeClean)
 		return 0
 	}
-	options := CleanupOptions{}
-	target, fingerprint := "", ""
-	landed, unclaimed, applyCurrent := false, false, false
-	for i := 0; i < len(args); i++ {
-		switch args[i] {
-		case "--discard-ignored":
-			options.DiscardIgnored = true
-		case "--discard-branch":
-			options.DiscardBranch = true
-		case "--full":
-			options.Full = true
-		case "--unclaimed":
-			if unclaimed {
-				return cleanInvocationError(stdout)
-			}
-			unclaimed, options.Unclaimed = true, true
-		case "--landed":
-			if landed {
-				return cleanInvocationError(stdout)
-			}
-			landed = true
-		case "--apply":
-			if i+1 >= len(args) || fingerprint != "" {
-				return cleanInvocationError(stdout)
-			}
-			i++
-			fingerprint = args[i]
-		case "--apply-current":
-			if applyCurrent {
-				return cleanInvocationError(stdout)
-			}
-			applyCurrent = true
-		case "--":
-			if i+1 >= len(args) || target != "" {
-				return cleanInvocationError(stdout)
-			}
-			i++
-			target = args[i]
-		default:
-			if target != "" || strings.HasPrefix(args[i], "-") {
-				return cleanInvocationError(stdout)
-			}
-			target = args[i]
-		}
-	}
-	if target == "" && !landed && !unclaimed || target != "" && (landed || unclaimed) || landed && unclaimed {
+	selection, valid := parseCleanSelection(args)
+	if !valid {
 		return cleanInvocationError(stdout)
 	}
-	if unclaimed && (!options.DiscardBranch || options.DiscardIgnored || options.Full) {
-		return cleanInvocationError(stdout)
-	}
-	if applyCurrent && (!unclaimed || fingerprint != "") {
-		return cleanInvocationError(stdout)
-	}
-	if fingerprint != "" && !wellFormedFingerprintOrPrefix(fingerprint) {
-		return cleanInvocationError(stdout)
-	}
+	options, target, fingerprint := selection.options, selection.target, selection.fingerprint
+	landed, unclaimed, applyCurrent := selection.landed, selection.unclaimed, selection.applyCurrent
 	if !inRepository(root) {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
@@ -334,12 +283,12 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 			return 1
 		}
 		if fingerprint != "" && (len(set.rows) == 0 || !matchesFingerprint(set.fingerprint, fingerprint)) {
-			_ = renderCleanups(stdout, staleUnclaimedPlans(set))
+			_ = renderStale(stdout, staleUnclaimedPlans(set), unclaimedReplan(options))
 			return 1
 		}
 		if fingerprint != "" {
-			plans, applyErr := applyUnclaimedAssignmentSet(root, set)
-			_ = renderCleanups(stdout, plans)
+			plans, applyErr := applyUnclaimedAssignmentSet(j, root, set, options)
+			_ = applyOutcomes(stdout, plans, staleUnclaimedPlans(set), applyErr, unclaimedReplan(options))
 			if applyErr != nil {
 				return 1
 			}
@@ -350,8 +299,8 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 			return 1
 		}
 		if applyCurrent {
-			plans, applyErr := applyUnclaimedAssignmentSet(root, set)
-			if renderErr := renderCleanups(stdout, plans); renderErr != nil {
+			plans, applyErr := applyUnclaimedAssignmentSet(j, root, set, options)
+			if renderErr := applyOutcomes(stdout, plans, staleUnclaimedPlans(set), applyErr, unclaimedReplan(options)); renderErr != nil {
 				fmt.Fprintf(stderr, "bench worktree clean: %v\n", renderErr)
 				return 1
 			}
@@ -371,12 +320,12 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 			return cleanInvocationError(stdout)
 		}
 		if fingerprint != "" && !matchesFingerprint(set.fingerprint, fingerprint) {
-			_ = renderLandedStale(stdout, set, fingerprint)
+			_ = renderStaleSet(stdout, fingerprint, landedRowPlans(set.rows), landedReplan(options))
 			return 1
 		}
 		if fingerprint != "" {
 			plans, applyErr := applyLandedSet(j, root, set, options, "")
-			if renderErr := renderCleanups(stdout, plans); renderErr != nil {
+			if renderErr := applyOutcomes(stdout, plans, staleRows(fingerprint, plans), applyErr, landedReplan(options)); renderErr != nil {
 				fmt.Fprintf(stderr, "bench worktree clean: %v\n", renderErr)
 				return 1
 			}
@@ -390,6 +339,9 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 			return 1
 		}
 		return 0
+	}
+	if len(selection.targets) > 0 {
+		return cleanExplicitSet(j, root, selection, stdout, stderr)
 	}
 	plan, err := planExplicitWith(j, root, target, options)
 	if err == nil && fingerprint != "" {

@@ -68,12 +68,11 @@ Preflight does not promise an atomic filesystem snapshot across later concurrent
 
 Each target transaction keeps the existing receipt, recovery, branch, assignment, census, and handoff behavior.
 If a race or failure occurs after an earlier removal, the earlier result remains completed.
-The failing target reports its actual retained or failed outcome.
-Each remaining selected target reports `not-attempted`.
+A target that failed reports the failure. A target the plan retained keeps that verdict. A target no transaction touched reports `not-attempted`.
 The command returns nonzero and does not claim rollback of completed effects.
 
 A stale result preserves the selected mode and modifiers in its exact re-plan command.
-Explicit targets are safely quoted in that command.
+That command names each explicit member by its canonical assignment identity, which the apply command already renders in place of operand text.
 The command never substitutes a fresh fingerprint into the failed apply automatically.
 Existing `--apply-current` behavior remains limited to its existing unclaimed-branch mode.
 No new efficiency denial or numeric result cap is introduced.
@@ -102,6 +101,59 @@ The final reconciliation checks every acceptance row and the integrated result.
 The existing evidence checkpoints continue to block their implementation chunks.
 Execution-plan changes follow `.bench/BENCH.md`.
 
+## Completion plan
+
+The fenced plan names the commands and probes each chunk retains before its checkpoint.
+The final verification runs after chunk CL-C2 and before the landing.
+
+```bench-completion-plan
+{
+  "version": 1,
+  "chunks": [
+    {
+      "id": "CL-C1",
+      "tickets": ["1-plan-explicit-sets.md"],
+      "verification": [
+        {
+          "id": "clean-tests",
+          "command": "bench test --package ./internal/worktree --run TestClean",
+          "probe": "omit the alias collapse so a repeated identity plans twice"
+        },
+        {
+          "id": "command-tests",
+          "command": "bench test --package ./cmd/bench"
+        }
+      ]
+    },
+    {
+      "id": "CL-C2",
+      "tickets": ["2-complete-preflight-outcomes.md"],
+      "verification": [
+        {
+          "id": "clean-tests",
+          "command": "bench test --package ./internal/worktree --run TestClean",
+          "probe": "omit the complete-set preflight before the first transaction"
+        },
+        {
+          "id": "landing-tests",
+          "command": "bench test --package ./internal/worktree --run TestLand"
+        }
+      ]
+    }
+  ],
+  "final_verification": [
+    {
+      "id": "acceptance",
+      "command": "bench test --package ./..."
+    },
+    {
+      "id": "integration",
+      "command": "bench test --check system"
+    }
+  ]
+}
+```
+
 ## Testing decisions
 
 Tests drive the production owner through controlled inputs and its existing injected boundaries.
@@ -129,7 +181,7 @@ caller -> domain entrypoint -> verification -> existing operation -> complete re
 | CL5 | 5 | Every removable row is requalified before the first transaction begins | planned TestCleanSetPreflightAllRows in internal/worktree | A row-by-row-only preflight lets an early target disappear before known later drift |
 | CL6 | 6 | Each target retains the existing under-lock lifecycle recheck | planned TestCleanSetLateDrift in internal/worktree | A race after preflight cannot use an obsolete removal plan |
 | CL7 | 7 | A partial apply reports completed outcomes without claiming rollback | planned TestCleanSetPartialApply in internal/worktree | A failed later transaction cannot erase the earlier completed result |
-| CL8 | 8 | A partial apply reports every unstarted target as not attempted | planned TestCleanSetUnstartedOutcomes in internal/worktree | Omitting remaining rows hides part of the selected intent |
+| CL8 | 8 | A partial apply reports every unstarted removable target as not attempted | planned TestCleanSetUnstartedOutcomes in internal/worktree | Omitting remaining rows hides part of the selected intent |
 | CL9 | 9 | A stale result names the exact selector-preserving re-plan command | planned TestCleanSetStaleReplanAction in internal/worktree | A generic clean command loses the selection or discard modifiers |
 | CL10 | 10 | Active or unsafe targets retain the existing cleanup refusal | planned TestCleanSetRetainsAuthority in internal/worktree | Set selection cannot widen deletion authority |
 | CL11 | 11 | Existing single-target and selector success cases match the baseline lifecycle effects | planned TestCleanSetCompatibility in internal/worktree | A differential state comparison catches changed branch or receipt behavior |
@@ -168,10 +220,15 @@ Won't handle: automatic stale-plan approval — the agent runs the rendered re-p
 - `internal/usage/worktree.go`
 - `internal/worktree/clean_landed.go`
 - `internal/worktree/clean_landed_apply_test.go`
+- `internal/worktree/clean_landed_test.go`
 - `internal/worktree/clean_set.go`
+- `internal/worktree/clean_set_apply.go`
 - `internal/worktree/clean_set_apply_test.go`
 - `internal/worktree/clean_set_command_test.go`
+- `internal/worktree/clean_set_outcomes_test.go`
+- `internal/worktree/clean_set_refusal_test.go`
 - `internal/worktree/clean_set_test.go`
+- `internal/worktree/clean_set_wiring_test.go`
 - `internal/worktree/clean_unclaimed.go`
 - `internal/worktree/clean_unclaimed_test.go`
 - `internal/worktree/land_effects.go`
@@ -230,7 +287,8 @@ The final ticket carries the cleanup package's complete-set invariant.
 
 ### Flagged additions
 
-Repeated explicit targets are a proposed scope clarification for reviewer sign-off.
-The earlier optional clarification has no recorded reviewer answer.
-CL1–CL3, CL14, and CL16 grade the proposed selection grammar.
-The existing selector improvements remain independently valuable if the reviewer declines explicit targets.
+The reviewer confirmed silent collapse of repeated explicit targets on 2026-09-12.
+This decision is closed.
+Repeated and aliased targets collapse by assignment identity, and the command reports no warning.
+Stories 1 and 2 require that behavior.
+CL1–CL3, CL14, and CL16 grade the selection grammar.
