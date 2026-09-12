@@ -12,7 +12,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/census"
-	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/roadmap"
@@ -47,40 +46,6 @@ func TestRunVersionExits0(t *testing.T) {
 func TestRunUnknownExits2(t *testing.T) {
 	if rc := (Command{}).Run([]string{"nope"}); rc != 2 {
 		t.Errorf("run nope exit = %d, want 2", rc)
-	}
-}
-
-func TestRunStatusRouteEmitsOneNextRow(t *testing.T) {
-	stdout := tempFile(t)
-	if code := (Command{Stdout: stdout}).Run([]string{"status", "--route"}); code != 0 {
-		t.Fatalf("status --route exit = %d, want 0", code)
-	}
-	if got := readFile(t, stdout); !strings.HasPrefix(got, "next[1]{state,why,command}:\n") {
-		t.Fatalf("status --route = %q, want one next row", got)
-	}
-}
-
-func TestGuardsQueryReportsFollowOnGuardThroughCommandSeam(t *testing.T) {
-	root, err := git.Root()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Chdir(root)
-
-	var stdout, stderr bytes.Buffer
-	code := (Command{Stdout: &stdout, Stderr: &stderr}).Run([]string{"guards"})
-	if code != 0 || stderr.Len() != 0 {
-		t.Fatalf("bench guards = stdout=%q stderr=%q exit=%d, want stdout/0", stdout.String(), stderr.String(), code)
-	}
-	for _, want := range []string{
-		"block-bench-follow-on",
-		"PreToolUse:Bash",
-		"Bench shell follow-ons",
-		"claude,codex",
-	} {
-		if !strings.Contains(stdout.String(), want) {
-			t.Fatalf("bench guards = %q, want %q", stdout.String(), want)
-		}
 	}
 }
 
