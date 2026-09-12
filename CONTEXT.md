@@ -327,8 +327,21 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   index, and working tree under its reset namespace. Not "stash", not "recovery ref"
   — reset envelope.
 
+- **orchestrator** — the invoking session of a delegated run. It assigns ticket authors,
+  integrates their source, reconciles acceptance, and lands the approved run. Not
+  "implementation_session", not "ticket author" — orchestrator.
+- **ticket author** — the recorded session that owns one ticket's production changes,
+  tests, probes, repairs, and author verification. Not "reviewer", not "orchestrator" —
+  ticket author.
+- **branch-local evidence** — a result bound to an author branch before that contribution
+  receives integrated acceptance. Not "accepted checkpoint", not "final verification" —
+  branch-local evidence.
+
 ## Avoid
 
+- "implementation_session" / "ticket author" when you mean the **orchestrator**.
+- "reviewer" / "orchestrator" when you mean a **ticket author**.
+- "accepted checkpoint" / "final verification" when you mean **branch-local evidence**.
 - "CI" / "the build" when you mean **the gate**.
 - "mini gate" / "reduced gate" when you mean the **fast lane**.
 - "lane verdict" / "lane evidence" when you mean a **lane record**.

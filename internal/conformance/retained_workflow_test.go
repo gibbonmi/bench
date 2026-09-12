@@ -59,6 +59,30 @@ func checkRetainedWorkflow(root string) []string {
 		"retained workflow: craft-gate dropped approved expansion timing",
 		"retained workflow: craft-tickets restored Writes as an approval boundary",
 		"retained workflow: delegation discipline restored Writes as a refusal boundary",
+		"retained workflow: operating guide dropped the delegated opt-in entry",
+		"retained workflow: operating guide dropped the delegated prerequisite-checkpoint wait",
+		"retained workflow: operating guide dropped the green predecessor dispatch rule",
+		"retained workflow: operating guide dropped the pending-or-red predecessor stop",
+		"retained workflow: operating guide dropped delegated ticket-author repair ownership",
+		"retained workflow: craft-line dropped the delegated tier authorization",
+		"retained workflow: craft-line dropped the unbound delegated model stop",
+		"retained workflow: craft-line dropped the active-writer author limit",
+		"retained workflow: craft-line dropped the delegated mid review route",
+		"retained workflow: craft-delegate dropped the delegated per-ticket author",
+		"retained workflow: delegation discipline dropped the no-progress transfer trigger",
+		"retained workflow: delegation discipline dropped the terminal-failure transfer trigger",
+		"retained workflow: delegation discipline dropped the cap-exhaustion transfer trigger",
+		"retained workflow: delegation discipline dropped the lost-session transfer trigger",
+		"retained workflow: delegation discipline dropped the confirmed writer termination",
+		"retained workflow: implementation phase dropped the delegated entry refusals",
+		"retained workflow: implementation phase dropped the delegated dispatch declaration",
+		"retained workflow: implementation phase dropped delegated resumption contents",
+		"retained workflow: review phase dropped the integrated chunk-tip review fence",
+		"retained workflow: review phase dropped the delegated axis exclusions",
+		"retained workflow: final check dropped the delegated account reconciliation",
+		"retained workflow: final check dropped the no-paid-comparison boundary",
+		"retained workflow: final check dropped the orchestrator final verification",
+		"retained workflow: craft-tickets dropped the delegated serial ticket checkpoint",
 	}
 	wantPredicates := map[string]struct {
 		file    string
@@ -155,6 +179,35 @@ func checkRetainedWorkflow(root string) []string {
 			file:    ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
 			section: "In the charge",
 			needle:  "A user-directed write delegate treats `Writes:` as an expectation.",
+		},
+		"retained workflow: operating guide dropped the delegated opt-in entry": {
+			file:   ".bench/BENCH.md",
+			needle: "`--delegate` applies only to an approved `$bench-implement-spec --full <spec>` run with an approved ticket graph.",
+		},
+		"retained workflow: operating guide dropped the delegated prerequisite-checkpoint wait": {
+			file:   ".bench/BENCH.md",
+			needle: "A ticket in a dependent chunk waits for every prerequisite chunk checkpoint.",
+		},
+		"retained workflow: operating guide dropped the green predecessor dispatch rule": {
+			file:   ".bench/BENCH.md",
+			needle: "A same-chunk successor ticket starts after its predecessor ticket commits green.",
+		},
+		"retained workflow: operating guide dropped the pending-or-red predecessor stop": {
+			file:   ".bench/BENCH.md",
+			needle: "A pending or red predecessor commit stops that successor dispatch.",
+		},
+		"retained workflow: review phase dropped the integrated chunk-tip review fence": {
+			file:   ".agents/commands/bench-review-implementation.md",
+			needle: "A delegated chunk review starts after every ticket of the chunk reaches the integrated chunk tip.",
+		},
+		"retained workflow: craft-line dropped the delegated mid review route": {
+			file:   ".agents/skills/bench-craft-line/SKILL.md",
+			needle: "Every delegated review axis uses the invoking harness's configured mid binding at high effort.",
+		},
+		"retained workflow: delegation discipline dropped the confirmed writer termination": {
+			file:    ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+			section: "Delegated author transfer",
+			needle:  "Every author transfer waits for confirmed termination of the old writer.",
 		},
 	}
 	family := anchorsWithDiagnosticPrefix("retained workflow: ")

@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "A delegated chunk review starts after every ticket of the chunk reaches the integrated chunk tip.",
+    "new": "A per-ticket review closes the chunk."
+  }
+]

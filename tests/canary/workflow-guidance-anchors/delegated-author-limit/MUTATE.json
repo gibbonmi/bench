@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-line/SKILL.md",
+    "old": "The declared author limit counts concurrently active ticket writers, not retained idle author sessions.",
+    "new": "The declared author limit counts every retained author session."
+  }
+]

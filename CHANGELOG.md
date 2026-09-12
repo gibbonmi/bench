@@ -10,6 +10,13 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Added local workflow assessment records, native evidence collection, and pinned-plan comparison reports with explicit cost and quality limits.
 
+- Added the opt-in delegated implementation run. `--delegate` applies only to an approved
+  `--full` run with an approved ticket graph. The invoking session orchestrates one
+  retained author per ticket, integrates their source serially, and lands the result. The
+  implementation chunk remains the review scope, and every delegated review axis uses the
+  invoking harness's configured mid tier at high effort. A run without the flag keeps the
+  existing single-author workflow.
+
 - Added source-bound verification and review evidence at explicit completion checkpoints.
 
 - Added `bench worktree reset` with checkpoint and restore modes. Each mode plans

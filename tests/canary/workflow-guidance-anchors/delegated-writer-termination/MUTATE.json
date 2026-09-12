@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+    "old": "Every author transfer waits for confirmed termination of the old writer.",
+    "new": "An author transfer starts as soon as the trigger holds."
+  }
+]

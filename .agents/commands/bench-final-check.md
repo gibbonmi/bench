@@ -24,6 +24,8 @@ the exact broker-owned status transform and this spec's review-record delta.
 If destination composition adds another change, include that change in the
 source and complete its review and verification before retrying landing.
 
+The orchestrator performs the final verification on the final source before the landing. A delegated exit reconciles every known invocation against the recorded assessment attempts. That account carries failed dispatches, every author, every review axis, diagnostics, and orchestration work. Delegated verification launches no paid comparison and changes no model default.
+
 ## Exit handoff
 
 Close by reporting the applicable oracle result plainly. A reviewed spec's

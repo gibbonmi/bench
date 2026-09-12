@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".bench/BENCH.md",
+    "old": "`--delegate` applies only to an approved",
+    "new": "Delegation applies to an approved"
+  }
+]
