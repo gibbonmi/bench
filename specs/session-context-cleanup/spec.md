@@ -222,8 +222,10 @@ Won't handle: automatic stale-plan approval — the agent runs the rendered re-p
 - `internal/worktree/clean_landed.go`
 - `internal/worktree/clean_landed_apply_test.go`
 - `internal/worktree/clean_set.go`
+- `internal/worktree/clean_set_apply.go`
 - `internal/worktree/clean_set_apply_test.go`
 - `internal/worktree/clean_set_command_test.go`
+- `internal/worktree/clean_set_outcomes_test.go`
 - `internal/worktree/clean_set_test.go`
 - `internal/worktree/clean_unclaimed.go`
 - `internal/worktree/clean_unclaimed_test.go`
