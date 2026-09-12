@@ -108,8 +108,27 @@ func TestCommandRefusesTwoPositionals(t *testing.T) {
 func TestCommandAnswersEveryHelpSpelling(t *testing.T) {
 	for _, spelling := range []string{"--help", "-h", "help"} {
 		out, code := Command([]string{spelling})
-		if code != 0 || out != "usage: bench harnesses [<harness>]\n" {
+		if code != 0 || out != "usage: bench harnesses [<harness>] | bench harnesses <harness> --record <path> --format <source-id>\n" {
 			t.Fatalf("bench harnesses %s = %q exit %d, want the usage line and exit 0", spelling, out, code)
 		}
+	}
+}
+
+func TestCommandRefusesAHalfTypedRecordCall(t *testing.T) {
+	// Each flag alone leaves the view undecidable: a path with no mapping, or a mapping
+	// with no record. The refusal names the missing flag rather than falling back to the
+	// compiled view.
+	for _, args := range [][]string{
+		{"codex", "--record", "rollout.jsonl"},
+		{"codex", "--format", "codex-rollout-2026-09-11"},
+	} {
+		out, code := Command(args)
+		if code != 2 || !strings.HasPrefix(out, "usage: bench harnesses (missing argument: --") {
+			t.Fatalf("bench harnesses %v = %q exit %d, want the missing-flag usage line", args, out, code)
+		}
+	}
+	out, code := Command([]string{"--record", "rollout.jsonl", "--format", "codex-rollout-2026-09-11"})
+	if code != 2 || out != "usage: bench harnesses (missing argument: harness)\n" {
+		t.Fatalf("record view with no harness = %q exit %d, want the missing-harness usage line", out, code)
 	}
 }
