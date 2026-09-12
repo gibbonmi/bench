@@ -229,6 +229,7 @@ The Codex side records the measurement in this spec and ships nothing.
 - `internal/conformance/checks_test.go`
 - `internal/conformance/registry/registry.go`
 - `internal/conformance/registry_test.go`
+- `internal/conformance/tier_test.go`
 - `internal/gate/lane_select_test.go`
 - `projects/benchkit.md`
 - `tests/canary/claude-agent-definitions/` (new)

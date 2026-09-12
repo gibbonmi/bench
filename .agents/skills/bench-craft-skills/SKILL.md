@@ -27,6 +27,9 @@ the point.
 
 Pick model-invocation only when the agent or another skill must reach it on its own.
 
+The `Skill description budgets` table in `projects/benchkit.md` owns the length a
+description may reach, and the `skill-description-budgets` check grades it there.
+
 ## Leading words
 
 A **leading word** is a compact concept already in the model's pretraining that

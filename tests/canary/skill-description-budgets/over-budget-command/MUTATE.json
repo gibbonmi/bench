@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-fixture.md",
+    "old": "A fixture command in budget.",
+    "new": "A fixture command description that the mutation carries past the budget its profile publishes."
+  }
+]

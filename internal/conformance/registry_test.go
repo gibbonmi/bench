@@ -204,6 +204,10 @@ var canaryFixtureFamilyRegistry = map[string]fixtureRegistration{
 		"internal/conformance/prose_budget_test.go",
 		"internal/conformance/checks_test.go",
 	),
+	"skill-description-budgets": conformanceGoFixture(
+		"internal/conformance/skill_description_budgets_test.go",
+		"internal/conformance/checks_test.go",
+	),
 	"skills-index-command-adapters": conformanceGoFixture(
 		"internal/conformance/skills_index_checks_test.go",
 		"internal/conformance/checks_test.go",
