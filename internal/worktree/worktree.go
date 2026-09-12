@@ -263,63 +263,12 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 		fmt.Fprintln(stdout, "usage: "+usage.WorktreeClean)
 		return 0
 	}
-	options := CleanupOptions{}
-	target, fingerprint := "", ""
-	landed, unclaimed, applyCurrent := false, false, false
-	for i := 0; i < len(args); i++ {
-		switch args[i] {
-		case "--discard-ignored":
-			options.DiscardIgnored = true
-		case "--discard-branch":
-			options.DiscardBranch = true
-		case "--full":
-			options.Full = true
-		case "--unclaimed":
-			if unclaimed {
-				return cleanInvocationError(stdout)
-			}
-			unclaimed, options.Unclaimed = true, true
-		case "--landed":
-			if landed {
-				return cleanInvocationError(stdout)
-			}
-			landed = true
-		case "--apply":
-			if i+1 >= len(args) || fingerprint != "" {
-				return cleanInvocationError(stdout)
-			}
-			i++
-			fingerprint = args[i]
-		case "--apply-current":
-			if applyCurrent {
-				return cleanInvocationError(stdout)
-			}
-			applyCurrent = true
-		case "--":
-			if i+1 >= len(args) || target != "" {
-				return cleanInvocationError(stdout)
-			}
-			i++
-			target = args[i]
-		default:
-			if target != "" || strings.HasPrefix(args[i], "-") {
-				return cleanInvocationError(stdout)
-			}
-			target = args[i]
-		}
-	}
-	if target == "" && !landed && !unclaimed || target != "" && (landed || unclaimed) || landed && unclaimed {
+	selection, valid := parseCleanSelection(args)
+	if !valid {
 		return cleanInvocationError(stdout)
 	}
-	if unclaimed && (!options.DiscardBranch || options.DiscardIgnored || options.Full) {
-		return cleanInvocationError(stdout)
-	}
-	if applyCurrent && (!unclaimed || fingerprint != "") {
-		return cleanInvocationError(stdout)
-	}
-	if fingerprint != "" && !wellFormedFingerprintOrPrefix(fingerprint) {
-		return cleanInvocationError(stdout)
-	}
+	options, target, fingerprint := selection.options, selection.target, selection.fingerprint
+	landed, unclaimed, applyCurrent := selection.landed, selection.unclaimed, selection.applyCurrent
 	if !inRepository(root) {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
@@ -390,6 +339,9 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 			return 1
 		}
 		return 0
+	}
+	if len(selection.targets) > 0 {
+		return cleanExplicitSet(j, root, selection, stdout, stderr)
 	}
 	plan, err := planExplicitWith(j, root, target, options)
 	if err == nil && fingerprint != "" {

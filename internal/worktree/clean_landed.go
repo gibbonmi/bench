@@ -234,14 +234,8 @@ func renderLandedSet(stdout io.Writer, set landedCleanupSet, options CleanupOpti
 	for _, row := range set.rows {
 		if row.plan.Action.Removes() {
 			arguments := []axi.InvocationArgument{axi.KnownArgument("worktree"), axi.KnownArgument("clean")}
-			if options.DiscardIgnored {
-				arguments = append(arguments, axi.KnownArgument("--discard-ignored"))
-			}
-			if options.DiscardBranch {
-				arguments = append(arguments, axi.KnownArgument("--discard-branch"))
-			}
-			if options.Full {
-				arguments = append(arguments, axi.KnownArgument("--full"))
+			for _, modifier := range cleanupModifierFlags(options) {
+				arguments = append(arguments, axi.KnownArgument(modifier))
 			}
 			arguments = append(arguments, axi.KnownArgument("--landed"), axi.KnownArgument("--apply"), axi.KnownArgument(set.fingerprint))
 			actions = append(actions, axi.ExecutableInvocation("apply the landed worktree plan", arguments...))
@@ -275,9 +269,7 @@ func renderLandedSet(stdout io.Writer, set landedCleanupSet, options CleanupOpti
 
 func renderLandedStale(stdout io.Writer, set landedCleanupSet, fingerprint string) error {
 	plans := make([]CleanupPlan, 0, len(set.rows)+1)
-	plans = append(plans, CleanupPlan{
-		Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: fingerprint, Reason: errStaleFingerprint.Error(),
-	})
+	plans = append(plans, staleSetPlan(fingerprint))
 	for _, row := range set.rows {
 		plans = append(plans, row.plan)
 	}
