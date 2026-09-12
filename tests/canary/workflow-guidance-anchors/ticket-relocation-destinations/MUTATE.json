@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-tickets/SKILL.md",
+    "old": "A ticket names every relocation destination in `Writes:`, including destinations for snapshots and registry rows.",
+    "new": ""
+  }
+]

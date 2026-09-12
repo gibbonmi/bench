@@ -6,9 +6,8 @@ index: breaking a build into tracer-bullet tickets
 
 # Tickets: what lands green next
 
-Break a spec into **tracer-bullet** tickets. Each ticket cuts a narrow but COMPLETE
-vertical path through every layer: schema, command, output, and tests. Each ticket is
-demoable or verifiable on its own, and is sized to one retained-session context window.
+Each **tracer-bullet** ticket cuts a complete path through schema, command, output, and tests.
+It is independently verifiable and sized to one retained-session context window.
 A horizontal layer, tests without behavior, or behavior without its tests is
 not a ticket. A coverage row that only adds a test to a seam its parent slice
 already opened is that slice's acceptance row. Its green integration-source
@@ -20,17 +19,19 @@ Gather context: the spec, or the conversation. Explore the codebase if you have 
 
 A ticket that implements a roadmap row's decided fix first verifies the row's premise against the code. A premise the code contradicts is a reviewer decision, not a fix to implement as written. The check reads the definition of every kind, state, or error the row names. A ticket that adds a line to a file over its line budget moves that file's headroom in the same ticket. The lane grades growth against the current tip, so a later ticket cannot pay the debt.
 
-Name every real blocker by sibling ticket file basename. A ticket with all blockers
-landed is on the **frontier**, and blockers order before consumers. A wide mechanical
-refactor can break every ordinary tracer ticket. It instead
+Name every real blocker by sibling ticket file basename; blockers precede consumers.
+A ticket joins the **frontier** when its blockers land.
+A wide refactor
 sequences as expand (new form beside the old), migrate (move callers
-in green batches), then contract. Contract removes the old form once every migrate
-ticket lands, `Blocked by:` naming them all.
+in green batches), then contract. Contract removes the old form after every migrate ticket lands, `Blocked by:` naming them all.
 
-**Reviewer-approved breakdown**: before the coordinator assigns a spec-backed ticket, it
-presents the reviewer a numbered list — title, `Blocked by:`, and delivered outcome — for
-every ticket. The coordinator asks about the granularity, the blocking edges, and any
-merge or split. Iterate until the reviewer approves, and record approval.
+Before ticket lock, run a source-clause pass and an executable-route pass.
+Assign each applicable source clause to a ticket or an explicit scope cut.
+Trace each claimed operation through its executable owner, using the [map-discipline proof rules](../bench-craft-spec/references/map-discipline.md#before-the-map-locks).
+
+**Reviewer-approved breakdown**: before assigning spec-backed tickets, the coordinator
+presents the reviewer a numbered list — title, `Blocked by:`, and delivered outcome — for every ticket.
+Ask the reviewer about granularity, dependencies, and merges or splits. Iterate and record approval.
 For spec-backed builds, this is the only route onto the frontier; the batch-approval AFK carve-out in `.bench/BENCH.md` is the sole no-round-trip exception.
 The light path is the exception: `.bench/BENCH.md`'s right-size table is the one ticket's standing approval, and the main session implements it inline.
 
@@ -55,16 +56,15 @@ Covers: <coverage row ids this ticket owns, or none>
 - [ ] <observable behavioral criterion>
 ```
 
-Write the prose in ASD-STE100 per `craft-spec`'s `references/ste-prose.md`. `What to
-build` states the end-to-end behavior. It also states any contract shared with a
-sibling: the crossing lives in this prose and in `Acceptance`, never in a separate
-schema field. Review re-derives the crossing from the tree.
+Use ASD-STE100 per `craft-spec`'s `references/ste-prose.md`. `What to build` states the end-to-end behavior. State shared contracts in that prose and in `Acceptance`, never in a separate schema field. Review re-derives each crossing from the tree.
 
 The parser enforces these rules. `Blocked by:` holds `none` or sibling ticket file
 basenames; a basename survives a retitle, and `--ticket` already names it. Each
 `Writes:` path exists in the tree or carries the `(new)` marker. A fixture-pinned path
 also names its fixture, and a bound package also names its registries. `Covers:` holds
 `none` or declared row ids, cited in full because preflight reads ids, not ranges.
+
+A ticket names every relocation destination in `Writes:`, including destinations for snapshots and registry rows.
 
 `Writes:` predicts the touched paths; `.bench/BENCH.md` owns how the retained author updates that expectation before an approved in-scope expansion is used.
 `Acceptance` rows are observable behavioral criteria, not a project-gate checkbox.
