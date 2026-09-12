@@ -383,7 +383,7 @@ func drainGoProcessGroup(pgid int) {
 }
 
 func emptyReport(full bool) (Outcome, string, int) {
-	empty := &report{statuses: map[string]string{}, seen: map[string]bool{}, tests: map[string]*testResult{}, packageLog: map[string]string{}}
+	empty := newReport()
 	out, err := empty.render(full)
 	if err != nil {
 		return refusedOutcome(toon.RenderError(err)+"\n", 1)
