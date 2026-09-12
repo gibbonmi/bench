@@ -65,7 +65,7 @@ findings in the owner details.
 
 **FT293 (MEDIUM, decision required) — preflight-closed ticket Writes determine registry pins and blocker edges.**
 
-**FT300 (MEDIUM) — ticket slicing fences the file a ticket's own change moves and names the fixture that reaches a refusal state.**
+**FT300 (MEDIUM) — ticket slicing verifies relocation destinations and executable routes.**
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
