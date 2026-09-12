@@ -1,9 +1,11 @@
 # OpenAI model scorecard
 
-Last incorporated landing: `workflow-assessment` (`15a48d99c0d240c41fd69b35a9fe0c0fb72500cd`, 2026-09-11).
-Astra/medium retained all authorship across three chunks. Sol/high supplied 30 native axis returns.
-Native author counters are retained locally; reviewer usage, estimated costs, and actual charges remain unknown.
-The latest spec-stage observation is delegated-implementation, which remains unimplemented and awaits approval.
+Last incorporated landing: `roadmap-light-path-20260912` (`0566db59a118d2990fbb9ceda18c20818f1256fb`, 2026-09-12).
+Astra/high implemented one fix, and Sol/high implemented five bounded fixes.
+The main session retained five fixes after the user changed the author policy; its native model and effort were unavailable.
+One Sol/high delegate performed all three review axes for each of the ten original fixes.
+The user stopped further reviews before the timeout repair received a result.
+Native token counts, provider costs, and comparative review latency remain unknown.
 
 ## Cost assumptions
 
@@ -13,31 +15,31 @@ The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches dol
 
 | model / effort | role and sample | observed quality | current use |
 | --- | --- | --- | --- |
-| Astra / high, medium | retained implementer and orchestrator, 6 chunks on 2 landings | On `workflow-assessment`, Astra/medium completed all 39 rows across seven tickets. Author misses in boundaries, reporting, declarations, and evidence caused repeated repairs before all final gates passed. | Retained implementation only on the user-approved model and effort. |
+| Astra / high, medium | retained implementation, two prior landings and one bounded fix | Astra/high completed the child-PWD fix with focused evidence and a biting omission probe. The user moved remaining substantive work to the main session before another Astra source edit. | Retained implementation on the user-approved model and effort. |
 | Terra / medium, high | implementation, latest 10 bounded tickets and repairs | Terra/high implemented FT311 ticket 4 with live evidence open. Review found the missing triage input contract, and repair added its five inputs. | Medium for exact one-seam tickets under coordinator mutation. High when one fact crosses multiple policy consumers. |
 | Terra / high, medium, low | research and seam inspection, latest 5 assignments; semantic review, latest 10 axis passes | On `implementation-continuation`, eight Terra/high review passes found two Coverage gaps. One gap protected continued progress, and one required an available diagnostic fallback; both second passes accepted the repairs. | Standards, Spec, and Coverage review in separate contexts; independently census production callers |
 | Luna / max, medium | implementation, 7 bounded tickets/repairs + reviewer, 4 axis passes on `stable-owner-landing` | Implementation: 2/7 first-pass with all terminal gates green. Review: three initial axes returned 9 raw findings and 8 de-duplicated targets with the citation standard held, and the repair-scoped re-review verified all seven predicates. | Low-cost writer for narrow slices under mandatory inspection |
-| Sol / low | implementation, bounded tickets and repairs on 1 landing | The delegates returned focused tests and mutation probes. The retirement repair reproduced the FT94 ledger red, changed one owner, proved that restoring the old value made the test red, and restored green. | Exact ticket seams and small repairs under coordinator verification |
-| Sol / high | independent review, latest 10 axis returns; one spec pair reviewed three times | On the delegated-implementation spec, Sol/high found pending-assignment, historical-author, and transfer-predicate gaps. Its second review accepted that graph. A focused user-revision review found limit and negative-case gaps; the author folded them without another delegate review. | Separate Standards, Spec, and Coverage contexts under the approved line. |
+| Sol / high | bounded implementation, latest five fixes | Five fixes reached green landings under coordinator mutation. One filename repair added modified, copied, and renamed inputs after review exposed their absence. | Small fixes with a named owner, complete input enumeration, and independent coordinator verification. |
+| Sol / high | combined Standards, Spec, and Coverage review, latest ten fixes | The filename and full-output reviews found two coverage gaps and one changelog defect. All final reviews were clear after the retained authors repaired accepted findings. | One reviewer per fix for the user-requested trial, with separate axis reports. |
 
 ## Representative evidence
 
 | task | result | attribution | routing signal |
 | --- | --- | --- | --- |
-| FT311 recoverable-reset candidate | Astra/medium built five tickets green under Sol/high; a Fable/high round then found three behavior defects the Terra/medium review missed. | delegate and reviewer | A same-provider medium review of a medium build needs one higher-tier round before a landing. |
-| FT311 ticket 2 repair | Sol/high unified charge and proposal orchestration and completed every DP10-DP14 partition. Exact-baseline tests and two restored mutations bit. | delegate | Use Sol/high when bounded repair crosses command retry, authority, and graph semantics. |
-| Workflow assessment | Astra/medium retained all authorship; Sol/high reviewed three chunks, and all 39 rows passed final reconciliation and landing. | orchestrator | Complete boundary fixtures before review; retain failed work and unknown costs in the assessment. |
-| Completion evidence | Astra/high implemented three chunks; Sol/high returned 19 initial findings and nine clean repair results. All 38 rows and both final gates passed. | implementer, reviewer, and orchestrator | Use current evidence at chunk boundaries and independently enumerate binary-driven consumers. |
-| Implementation continuation | Sol/high implemented two retained chunks, and Terra/high found one Coverage gap in each chunk. Both repairs gained live omission consequences before the green landing. | orchestrator and reviewer | Keep one retained author, and use independent Coverage review to test prose consequences. |
+| Roadmap filename fix | The combined reviewer found missing modified, copied, and renamed cases; the author added real Git statuses and a biting filter mutation. | delegate and reviewer | Enumerate the producer's input family before accepting a bounded fix. |
+| Complete failure output | The combined reviewer found assertions that accepted stripped controls; the retained author added escaped-output expectations and a biting strip mutation. | implementer and reviewer | Distinct axes can find useful gaps in one context, but this does not establish equivalence with separate reviewers. |
+| FT311 recoverable-reset candidate | A Fable/high round found three behavior defects after the candidate's medium-tier review. | delegate and reviewer | Keep independent adversarial verification when authority or destructive behavior crosses boundaries. |
+| Workflow assessment | Astra/medium retained all authorship; Sol/high reviewed three chunks, and all 39 rows passed reconciliation and landing. | orchestrator | Preserve failed attempts and unknown measurements in the assessment. |
+| Implementation continuation | Sol/high implemented two retained chunks; Terra/high found a Coverage gap in each, and both repairs gained biting omission checks. | orchestrator and reviewer | Keep repairs with the retained author and test the claimed consequence. |
 
 ## Current decisions
 
-- Keep implementation, tests, probes, and repairs in the user-approved retained session.
-- Use Sol/high for the separately approved Standards, Spec, and Coverage reviews.
-- Apply the conditional review line from `craft-line` when the user has not overridden it.
-- Bind reviews and verification to the source each performer examined.
-- Require current coverage from every axis after a source repair.
-- Exercise real evidence producers and incomplete records before freezing review.
-- Refresh generated broker metadata after rebuilding the binary it names.
-- Preserve unknown reviewer usage and billing separately from measured author tokens.
-- Change general routing only after two comparable runs, one controlled comparison, or explicit reviewer direction.
+- Keep implementation, tests, probes, and repairs in the user-approved author session.
+- Continue one Sol/high reviewer per fix for this user's experiment, with separate Standards, Spec, and Coverage reports.
+- Keep the conditional review line from `craft-line` when the user has not overridden it.
+- Bind every accepted review to the examined source and verify the tree stayed unchanged.
+- Give coordinator mutations a different kind and site from the delegated author's probe.
+- Return accepted findings to the original author and refresh all three axes after repair.
+- Preserve unknown model identity, token counts, costs, and comparative latency as unknown.
+- End completed author turns before allocating fresh reviewer contexts.
+- Change general routing only after two comparable runs, one controlled comparison, or explicit user direction.

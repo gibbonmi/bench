@@ -37,8 +37,6 @@ findings in the owner details.
 
 **FT308 (MEDIUM, decision required) — the cleanup transaction's persistence lock leaves `.git` when its record is gone.**
 
-**FT311 (MEDIUM, decision required) — benchmark workflow outcomes are delivered; the landing cleanup selector remains open.**
-
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
 **FT312 (MEDIUM) — a native `bench` verb codifies the cross-harness reviewer invocation.**
@@ -65,7 +63,7 @@ findings in the owner details.
 
 **FT293 (MEDIUM, decision required) — preflight-closed ticket Writes determine registry pins and blocker edges.**
 
-**FT300 (MEDIUM) — ticket slicing verifies relocation destinations and executable routes.**
+**FT300 (MEDIUM) — ticket slicing verifies fixture ownership and executable evidence.**
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
@@ -101,7 +99,7 @@ findings in the owner details.
 
 **FT243 (LOW, decision required) — a recurring factory-maintenance policy selects useful structural, deepening, and CLI work.**
 
-**FT307 (MEDIUM, decision required) — `bench structure` diff queries read NUL-framed names and grade the working tree.**
+**FT307 (MEDIUM, decision required) — `bench structure` grades working-tree changes and projects scoped headroom.**
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
 
@@ -119,7 +117,7 @@ findings in the owner details.
 
 **FT232 (EXPERIMENT, decision required) — repair-loop tripwire: an advisory signal from gate records.**
 
-**FT290 (MEDIUM) — `bench test` projects a check's fixture family, a full failure body, a no-match attribution, and a widened-set explanation.**
+**FT290 (MEDIUM) — `bench test` projects a check's fixture family, a widened-set explanation, and a check inventory.**
 
 **FT168 (LOW) — focused iteration evidence through registered check owners.**
 
@@ -217,7 +215,6 @@ recommended table is sequencing advice.
 | FT240 | FT231 | The experiment keeps its approved three-arm comparison. |
 | FT304 | FT172 | The view needs the identity contract. |
 | FT306 | FT305, FT71 | Adoption follows durable execution and the held local evidence. |
-| FT172 | FT311 | The stage-list grammar lands after the last staged row it grades. |
 
 ### Recommended
 
@@ -236,5 +233,5 @@ recommended table is sequencing advice.
 ## Recommended sequence
 
 1. FT312 cross-harness reviewer and review-axis creation verb — /bench-write-spec
-2. FT300 ticket-slicing verification passes — /bench-update-kit
+2. FT300 fixture ownership and verifier evidence — /bench-update-kit
 3. FT313 acceptance evidence in write and repair charges — /bench-update-kit
