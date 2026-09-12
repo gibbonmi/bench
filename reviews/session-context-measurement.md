@@ -96,6 +96,14 @@ The chunk pair is base `9ecc1d561d918a3270a0894e5313b9ad3aabb0f5` and tip `d2a17
 Author verification: `bench coverage --check specs/session-context-measurement/spec.md` reports 25 valid rows at the tip.
 The merge verb's whole-tree gate on this source is green in all six phases at d2a172cb.
 
+## Completion
+
+The retained author reconciled all 25 acceptance rows at tip `04b41a72a1f5b20b0b570156132f70365385af86`.
+Each of the 21 executable rows names a test that exists at the tip and passed by name.
+ME13 to ME16 cite the ME-C2 review sections and the budget-evidence report.
+The final verification passed: `bench test --package ./...` over 99 packages with 0 failures and 10 inherited host-capability skips, and `bench test --check system` with 0 failures and 0 skips.
+Both compiled views stay byte-identical, the record view reproduces the Dogfood runs note, and the report approves no default.
+
 ## Record
 ```bench-review-record
 {
@@ -636,11 +644,74 @@ The merge verb's whole-tree gate on this source is green in all six phases at d2
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "de19ff6d2dbeb24ab41f78e54efbe7ea38ede230",
+    "performer": "claude:opus-high:ticket-author",
+    "reconciliation": {
+      "ME1": "covered",
+      "ME2": "covered",
+      "ME3": "covered",
+      "ME4": "covered",
+      "ME5": "covered",
+      "ME6": "covered",
+      "ME7": "covered",
+      "ME8": "covered",
+      "ME9": "covered",
+      "ME10": "covered",
+      "ME11": "covered",
+      "ME12": "covered",
+      "ME17": "covered",
+      "ME18": "covered",
+      "ME19": "covered",
+      "ME20": "covered",
+      "ME21": "covered",
+      "ME22": "covered",
+      "ME23": "covered",
+      "ME24": "covered",
+      "ME25": "covered",
+      "ME13": "covered",
+      "ME14": "covered",
+      "ME15": "covered",
+      "ME16": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-acceptance",
+        "performer": "claude:opus-high:ticket-author",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "de19ff6d2dbeb24ab41f78e54efbe7ea38ede230",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:agent/ticket-author/acceptance@04b41a72",
+          "digest": "sha256:922c61691e48ddacbe464bfb869e8af9038dbb93924dc770d027f3db1ddfc9ec",
+          "excerpt": "packages: 99 pass, 0 fail; failures[0]{package,test,line}:\nskips[10]{package,test,reason}: capability fifo x2, subject root has no bin/bench.sh, conformance socket capability, conformance character device privilege, TestRootConformance environment BENCH_CONFORMANCE_ROOT not set, landing character device privilege x2, worktree unix sockets unavailable x2\nroot_conformance[1]{package,status,route}:\n  github.com/gibbonmi/bench/internal/conformance,skipped,bench test --check <name>\n"
+        },
+        "requirement": "acceptance",
+        "command": "bench test --package ./...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-integration",
+        "performer": "claude:opus-high:ticket-author",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "de19ff6d2dbeb24ab41f78e54efbe7ea38ede230",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:agent/ticket-author/integration@04b41a72",
+          "digest": "sha256:a9e88e5ca49c903ffaa7bde387b4ede7dc4a354cb2de4fc496205b1a9594267b",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,45504\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "integration",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
