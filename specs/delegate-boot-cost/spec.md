@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: reviewer-confirmed conversation, 2026-09-11. The reviewer closed two forks that day. The Codex side closes as a measured no-op. Every phase stays model-invocable, the descriptions are trimmed, and a length check grades them.
 
-Verification log: 0 iteration(s) to accept — review round pending.
+Verification log: 1 iteration(s) — the opus/medium round returned BLOCK with two blocking and ten fold findings. The author folded all twelve, and reviewer sign-off is pending.
 
 ## Problem
 
@@ -15,7 +15,8 @@ The gap is the tool schemas and the system prompt that the full tool set brings.
 Bench runs every review axis and every diagnostic consultation on the full set.
 
 The main session also pays for the skill listing on every turn.
-The 31 shipped descriptions total 7,702 characters, and the longest is 377.
+The 31 shipped skill descriptions total 7,631 collapsed characters, and the longest is 377.
+Six of the 13 command descriptions also exceed 250 characters, and the longest is 404.
 No budget bounds a description, so the listing grows with every skill edit.
 
 Codex exec has no boot problem. One `codex exec` that replies "ok" reports 7,258 tokens.
@@ -63,7 +64,7 @@ Lean skill listing
 15. As an agent, I want each command description within its budget, so that the phase entries cost fewer tokens on every turn.
 16. As a reviewer, I want a missing description reported, so that an unlisted skill cannot pass as lean.
 17. As a reviewer, I want an over-budget description named with its count, so that the repair names the file and the excess.
-18. As a reviewer, I want the count taken on the collapsed text, so that a folded value does not count its indentation.
+18. As a reviewer, I want a folded description reported, so that the count always reads one value line.
 19. As a reviewer, I want a symlinked or special subject refused unread, so that the check reads only regular files.
 20. As a reviewer, I want a broken budget table to fail closed, so that a parse fault cannot report a clean tree.
 21. As a reviewer, I want a profile edit to run the check in the lane, so that a raised budget grades in the same commit.
@@ -106,7 +107,11 @@ The project profile gains a `Skill description budgets` section with a subject-a
 The table has two glob rows: one for every skill file and one for every command file, at 250 characters each.
 
 The `skill-description-budgets` check parses that section with the profile-section and markdown-row helpers the prose budget check uses.
-It counts the runes of the description after it collapses every run of Unicode white space to one space.
+It reads the value through the skills index frontmatter reader, which returns the first value line only.
+A description that continues on an indented second line therefore reports as folded, and no second frontmatter parser appears.
+It counts the runes of the value after it collapses every run of Unicode white space to one space.
+The limit comes only from the table, so a lowered cell lowers the limit the diagnostic reports.
+
 It reports a file with no description key.
 It reports a description over its limit, with the count and the limit.
 It reports a subject that is a symlink or a special file.
@@ -115,7 +120,7 @@ A missing heading or a malformed row returns diagnostics and no policy.
 The check joins the benchkit-profile input, so the lane runs it on a profile edit.
 
 The invocation policy keeps every current row.
-The description trim edits fourteen files and no other text.
+The description trim edits fourteen skill files and six command files, and no other text.
 
 The Codex side records the measurement in this spec and ships nothing.
 
@@ -123,8 +128,8 @@ The Codex side records the measurement in this spec and ships nothing.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| C1 / 1-ship-bench-agent-types.md, 2-pin-bench-agent-definitions.md | Claude delegates run on the two Bench agent types with the tool sets the check pins, shipped by link and package | DB1, DB2, DB3, DB4, DB5, DB6, DB7, DB8, DB9, DB10, DB11, DB12, DB13 | `bench test --check claude-agent-definitions`, `bench test --check package-shipped-surface`, `go test ./internal/adopt ./internal/lines ./internal/packagesurface` | no |
-| C2 / 3-trim-skill-descriptions.md, 4-grade-description-budgets.md | Every shipped description sits within a profile-owned budget that the gate grades | DB14, DB15, DB16, DB17, DB18, DB19, DB20, DB21, DB22, DB23, DB24, DB25, DB26 | `bench test --check skill-description-budgets`, `bench test --check conformance-canary-families`, `go test ./internal/gate ./internal/conformance` | yes |
+| C1 / 1-ship-bench-agent-types.md, 2-pin-bench-agent-definitions.md | Claude delegates run on the two Bench agent types with the tool sets the check pins, shipped by link and package | DB1, DB2, DB3, DB4, DB5, DB6, DB7, DB8, DB9, DB10, DB11, DB12, DB13, DB27, DB28 | `bench test --check claude-agent-definitions`, `bench test --check package-shipped-surface`, `go test ./internal/adopt ./internal/lines ./internal/packagesurface` | no |
+| C2 / 3-trim-skill-descriptions.md, 4-grade-description-budgets.md | Every shipped description sits within a profile-owned budget that the gate grades | DB14, DB15, DB16, DB17, DB18, DB19, DB20, DB21, DB22, DB23, DB24, DB25, DB26, DB29, DB30 | `bench test --check skill-description-budgets`, `bench test --check conformance-canary-families`, `go test ./internal/gate ./internal/conformance` | yes |
 
 ## Completion plan
 
@@ -165,27 +170,31 @@ The Codex side records the measurement in this spec and ships nothing.
 | DB2 | 4 | The check reports a Bench agent file with no tool list or an empty one. | canary `tools-absent`, through `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | An absent list inherits every tool, which is the cost this spec removes. |
 | DB3 | 3 | The check reports a Bench agent file that declares a model key. | canary `model-declared`, through `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A frontmatter model invites a charge with no model field, and the guard denies that charge. |
 | DB4 | 5 | The check reports a Bench agent file whose tools include the Agent, Artifact, or AskUserQuestion tool. | canary `spawning-tool`, through `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Those schemas are the boot cost. |
-| DB5 | 5 | The check reports a Bench agent file whose tools omit Read or Bash. | canary `shell-tool-absent`, through `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A delegate without the shell tool cannot run a worktree exec review. |
-| DB6 | 6, 7 | The payload carries the agents tree row, the package files list mirrors it, and the census names both agent files. | `internal/conformance/package_shipped_surface_test.go` (`TestAllowlistSourceExists`) as precedent, `internal/packagesurface/assets_test.go` (`TestRequiredPackAssetsIncludeFollowOnGuard`) as precedent | The link plan and the tarball derive from these rows, so a missing row ships no agents. |
-| DB7 | 6 | The link plan for a fixture kit holds the reviewer agent file as a file entry at its adapter path. | Go test in the adopt package over `buildLinkPlan` | The plan is the only path from payload row to linked repo. |
+| DB5 | 4 | The check reports a Bench agent file whose tools omit Read or Bash. | canary `shell-tool-absent`, through `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A delegate without the shell tool cannot run a worktree exec review. |
+| DB6 | 6, 7 | The payload carries the agents tree row, and the package files list mirrors it. | `internal/conformance/package_shipped_surface_test.go` (`TestAllowlistSourceExists`) as precedent | The link plan and the tarball derive from these rows, so a missing row ships no agents. |
+| DB27 | 7 | The required-assets census names both agent files, and the pack census reds a tarball without them. | `internal/conformance/package_core_checks_test.go` (`checkNpmPackAssets`) over `RequiredPackAssets`, with `internal/packagesurface/assets_test.go` (`TestRequiredPackAssetsIncludeFollowOnGuard`) as precedent | The shipped-surface check derives files entries only for kit-only rows, so the pack census is the seam that reds a missing agent file. |
+| DB7 | 6 | The link plan for a fixture kit holds the reviewer agent file as a file entry at its adapter path. | new `TestLinkPlanShipsClaudeAgents` in the adopt package over `buildLinkPlan`, which no adopt test calls today | The plan is the only path from payload row to linked repo. |
 | DB8 | 8 | The check reports a graded agent basename that the delegate skill never names. | canary `agent-unnamed-in-skill`, through `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | An agent nobody is told to use is dead weight. |
 | DB9 | 8 | The check reports a `bench-` agent named in the delegate skill that has no file. | canary `skill-names-missing-agent`, through `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A rule that names a missing type sends the charge back to the general-purpose type. |
 | DB10 | 9 | A reviewer-type delegate that replies "ok" with no tool use reports under 15,000 tokens on its usage line. | review-owned, recorded in the retro | The whole item exists for this number. |
 | DB11 | 9 | A writer-type delegate that replies "ok" with no tool use reports under 16,000 tokens on its usage line. | review-owned, recorded in the retro | The writer keeps two more schemas and must stay near the reviewer. |
-| DB12 | 11 | An envelope with the reviewer subagent type and a bound tier token returns a silent allow, and the same envelope with no model returns the missing-model deny. | `internal/lines/lines_agentline_test.go` (`TestSubagentTypeNeverImpersonatesAFork`) extended with both Bench basenames | The row pins the unchanged verdict, so a guard edit shows as a second enforcement. |
-| DB13 | 10, 12 | The delegate skill states the fork rule, and the Claude README describes the agents directory. | review-owned | Prose with no reader is not a rule. |
+| DB12 | 11 | The diff under the lines package touches only the subagent-type test table, which gains both Bench basenames. | review-owned, with `internal/lines/lines_agentline_test.go` (`TestSubagentTypeNeverImpersonatesAFork`) as the table | The verdict treats every non-fork type alike, so a production edit there is a second enforcement. |
+| DB13 | 10 | The delegate skill states the fork rule. | review-owned | Prose with no reader is not a rule. |
+| DB28 | 12 | The Claude README describes the agents directory. | review-owned | A cold reader finds the surface through the README alone. |
 | DB14 | 13, 20 | The check reports a profile with no `Skill description budgets` heading and returns no policy. | `skill-description-budgets` check, canary `budget-table-missing`, through `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | An unparsed policy would grade a clean tree. |
 | DB15 | 14, 17 | The check reports a skill file whose description exceeds its limit, with the file, the count, and the limit. | canary `over-budget-description`, through `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | The diagnostic is the repair instruction. |
 | DB16 | 15 | The check reports a command file whose description exceeds its limit. | canary `over-budget-command`, through `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Commands are half the listing. |
 | DB17 | 16 | The check reports a graded file with no description key. | canary `description-missing`, through `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | An absent description is not a lean one. |
-| DB18 | 18 | A folded multi-line description counts its collapsed text. | Go test in the check's file | A raw count charges the indentation. |
-| DB19 | 19 | A symlinked skill directory and a special file at a subject each return a refusal diagnostic and no count. | Go test with `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetRefusesASymlinkedSkillDirectory`) as precedent | The check must not follow a link out of the tree. |
+| DB18 | 18 | A description that continues on an indented second line reports a one-line diagnostic. | canary `description-folded`, through `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | The frontmatter reader returns the first line, so a silent count would understate a folded value. |
+| DB19 | 19 | A symlinked skill directory returns a refusal diagnostic and no count. | Go test with `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetRefusesASymlinkedSkillDirectory`) as precedent | The check must not follow a link out of the tree. |
+| DB29 | 19 | A special file at a subject returns a refusal diagnostic and no count. | Go test with `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetRefusesNonRegularSubjects`) as precedent | A FIFO at a subject would block the gate in open. |
+| DB30 | 13 | A lowered budget cell lowers the limit the diagnostic reports. | Go test with `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetsComeFromTheProfileTable`) as precedent | A hard-coded 250 beside a heading probe passes every other row. |
 | DB20 | 21 | The benchkit-profile lane selects the new check beside the prose budget check. | `internal/gate/lane_select_test.go` (`TestSelectLaneByClass`) case PL32 | Without it a raised budget grades only at the next full gate. |
 | DB21 | 14, 15 | The live tree passes the check with every description at or under 250 characters. | `bench test --check skill-description-budgets` over the kit root, through `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | This row is the trim itself. |
 | DB22 | 22, 24 | Each trimmed description keeps the leading words its body repeats, and craft-skills names the profile table. | review-owned | A trim that drops a trigger word breaks invocation silently. |
 | DB23 | 23 | The invocation policy keeps every current row, so no command gains the disable key. | existing `skills-index-command-adapters` check, canary `command-invocation-disabled-against-policy`, through `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A flip reds the existing check. |
-| DB24 | 13 | The canary family for the new check has at least one fixture directory. | `conformance-canary-families` meta check, through `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | A check with no family is not registered. |
-| DB25 | 18 | A description with multibyte characters counts runes and not bytes. | Go test in the check's file | A byte count reds a correct description. |
+| DB24 | 13 | Each new canary family has at least one fixture directory. | `conformance-canary-families` meta check, through `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | A check with no family is not registered. |
+| DB25 | 17 | A description with multibyte characters counts runes and not bytes. | new `TestSkillDescriptionBudgetCountsRunes` in the check's file | A byte count reds a correct description. |
 | DB26 | 25, 26 | The Further notes record the two Codex boot runs and their equal counts. | review-owned | The no-op rests on this record. |
 
 ### Edge inventory
@@ -201,6 +210,8 @@ The Codex side records the measurement in this spec and ships nothing.
 - **Won't handle** the memory index prune — the index is outside the repo.
 - **Won't handle** an unterminated frontmatter block — the frontmatter reader returns no value, and DB17 reports the missing description.
 - **Won't handle** a description key with an empty value — DB17 reports it as missing.
+- **Won't handle** an absent agents directory — the delegate skill names both agents, so DB9 reports each as missing.
+- **Won't handle** an empty agents directory — the same DB9 reports each named agent as missing.
 
 ## Ownership fences
 
@@ -240,13 +251,18 @@ The Codex side records the measurement in this spec and ships nothing.
 - `.agents/skills/bench-craft-cli/SKILL.md`
 - `.agents/skills/bench-craft-review/SKILL.md`
 - `.agents/skills/bench-craft-line/SKILL.md`
-- `.agents/skills/bench-craft-tdd/SKILL.md`
 - `.agents/skills/prototype/SKILL.md`
+- `.agents/commands/bench-implement-spec.md`
+- `.agents/commands/bench-assess.md`
+- `.agents/commands/bench-update-kit.md`
+- `.agents/commands/bench-drain.md`
+- `.agents/commands/bench-deepen.md`
+- `.agents/commands/bench-debug.md`
 - `specs/delegate-boot-cost/`
 - `reviews/delegate-boot-cost.md`
 - `capture/retros/delegate-boot-cost.md` (new)
 
-The trim ticket edits only the description line of each listed skill file.
+The trim ticket edits only the description line of each listed skill and command file.
 The canary prefixes enter the fence because the preflight names each fixture that pins a touched path, and the tickets carry the fixture names.
 The delegate skill has ten lines of headroom under its budget, and the craft-skills skill has eight.
 
@@ -270,7 +286,7 @@ Measurements on 2026-09-11, each a delegate or exec child that replied "ok" with
 
 Closed decisions, 2026-09-11: the Codex side closes as a measured no-op. Every phase stays model-invocable. The listing item trims the descriptions and adds a length check. The budget of 250 characters is a proposal for reviewer veto; the trim lands under it.
 
-Flagged additions beyond the decision source: DB17 reports a missing description, DB25 counts runes, and DB5 requires the read tool and the shell tool.
+Flagged additions beyond the decision source: DB10 and DB11 set the thresholds at 15,000 and 16,000 tokens, where the source said "a third". DB17 reports a missing description, and DB18 reports a folded one. DB25 counts runes, DB30 pins the limit to the table, and DB5 requires the read tool and the shell tool.
 
 Source-sentence-to-row table:
 
@@ -279,9 +295,9 @@ Source-sentence-to-row table:
 | A custom agent with a tools list cuts the boot by a third. | DB1, DB2, DB4, DB5, DB10, DB11 |
 | Never use fork for a cheap delegate. | DB13 |
 | A custom agent that binds its own model may arrive with no model in the call. | DB3, DB12 |
-| The consumer payload must ship a new agents tree. | DB6, DB7 |
-| The delegate skill must name the new agent types as the required surface. | DB8, DB9 |
-| Trim the descriptions and add a length check. | DB14 to DB22, DB24, DB25 |
+| The consumer payload must ship a new agents tree. | DB6, DB7, DB27 |
+| The delegate skill must name the new agent types as the required surface. | DB8, DB9, DB28 |
+| Trim the descriptions and add a length check. | DB14 to DB22, DB24, DB25, DB29, DB30 |
 | Those will need to be invoked by the model at some point. | DB23 |
 | Codex exec boots at 7,258 tokens with and without the docs MCP server. | DB26 |
 

@@ -2,7 +2,7 @@
 
 Blocked by: 2-pin-bench-agent-definitions.md, 3-trim-skill-descriptions.md
 Writes: internal/conformance/skill_description_budgets_test.go (new), internal/conformance/checks_test.go, internal/conformance/registry/registry.go, internal/conformance/registry_test.go, internal/gate/lane_select_test.go, projects/benchkit.md, tests/canary/skill-description-budgets (new), .agents/skills/bench-craft-skills/SKILL.md, tests/canary/guidance-prose-budgets/over-budget-skill, tests/canary/line-routing/line-binding-prose-drift, tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading, tests/canary/workflow-guidance-anchors/benchkit-review-round-owner, tests/canary/workflow-guidance-anchors/benchkit-review-round-routing, tests/canary/workflow-guidance-anchors/benchkit-spec-ownership, tests/canary/workflow-guidance-anchors/benchkit-system-suite-route
-Covers: DB14, DB15, DB16, DB17, DB18, DB19, DB20, DB21, DB23, DB24, DB25, DB26
+Covers: DB14, DB15, DB16, DB17, DB18, DB19, DB20, DB21, DB23, DB24, DB25, DB26, DB29, DB30
 
 ## What to build
 
@@ -16,7 +16,9 @@ Add one sentence to the craft-skills skill that names the profile table as the b
 
 - [ ] The live tree passes the check through `bench test --check skill-description-budgets`.
 - [ ] Each canary fixture turns the check red with its expected diagnostic text.
-- [ ] A folded description and a multibyte description each count their collapsed runes.
+- [ ] A description that continues on a second line reports a one-line diagnostic.
+- [ ] A multibyte description counts its collapsed runes.
+- [ ] A lowered profile cell lowers the limit in the diagnostic.
 - [ ] A symlinked skill directory and a special file each return a refusal diagnostic.
 - [ ] The benchkit-profile lane expectation lists the new check.
 - [ ] The invocation policy rows are unchanged and the existing adapter canary stays red on a flip.
