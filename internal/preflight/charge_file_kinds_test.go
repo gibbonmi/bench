@@ -17,7 +17,7 @@ func TestChargeRefusesLinkedSpecAndTicketInputs(t *testing.T) {
 			if code != 1 || !strings.Contains(out, "source required") ||
 				!strings.Contains(out, "wrong-type") ||
 				!strings.Contains(out, "restore the named canonical source") ||
-				strings.Contains(out, "complete") {
+				strings.Contains(out, "complete,next}") {
 				t.Fatalf("linked %s = (%d):\n%s", input, code, out)
 			}
 		})
@@ -99,7 +99,7 @@ func TestChargeRefusesSpecialTicketBeforeRead(t *testing.T) {
 			out, code := Command(chargeArgs(t, root, slug, false))
 			if code != 1 || !strings.Contains(out, "ticket file not readable") ||
 				!strings.Contains(out, "one.md") ||
-				strings.Contains(out, "tickets-parse") || strings.Contains(out, "complete") {
+				strings.Contains(out, "tickets-parse") || strings.Contains(out, "complete,next}") {
 				t.Fatalf("%s ticket = (%d):\n%s", kind, code, out)
 			}
 		})

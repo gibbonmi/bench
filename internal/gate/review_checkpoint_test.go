@@ -174,6 +174,46 @@ func TestReviewCheckpointMissingRecord(t *testing.T) {
 	}
 }
 
+// TestReviewCheckpointRefusalRoute grades the one refusal a single read answers.
+// The checkpoint cannot show what the completion evidence lacks, and `bench
+// preflight review <slug>` reports the plan row and the record state. So that
+// refusal names the read. Every other refusal, and an accepted checkpoint, carry
+// no route, because a route that names no state-derived action is a false path.
+func TestReviewCheckpointRefusalRoute(t *testing.T) {
+	const route = "next=bench preflight review example"
+	for _, tc := range []struct {
+		name, reason string
+		change       func(*recordtest.Fixture)
+	}{
+		{"missing record", "retain a valid native result record", func(f *recordtest.Fixture) {
+			if err := os.Remove(filepath.Join(f.Root, "reviews/example.md")); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{"missing plan", "completion evidence", func(f *recordtest.Fixture) {
+			f.Write(recordtest.Spec, "# Example\n\nStatus: staged\n")
+			f.Commit("drop the completion plan")
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := checkpointFixture(t)
+			tc.change(f)
+			code, out := runCheckpoint(t, f)
+			if code == 0 || !strings.Contains(out, tc.reason) || !strings.Contains(out, route+"\n") {
+				t.Fatalf("refusal lost its reason or its route: %d %s", code, out)
+			}
+		})
+	}
+
+	t.Run("accepted", func(t *testing.T) {
+		f := checkpointFixture(t)
+		code, out := runCheckpoint(t, f)
+		if code != 0 || strings.Contains(out, "next=") {
+			t.Fatalf("accepted checkpoint carried a route: %d %s", code, out)
+		}
+	})
+}
+
 func TestReviewCheckpointFindingAndReviewIdentity(t *testing.T) {
 	for _, kind := range []string{"findings", "source", "pair"} {
 		t.Run(kind, func(t *testing.T) {

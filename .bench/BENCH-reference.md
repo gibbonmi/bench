@@ -315,6 +315,9 @@ is no separate conformance phase, driver, or per-check evidence partition.
 `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>` checks the named chunk's
 source-bound author verification and three independent review results before advancement.
 Use `--complete` instead of `--chunk <id>` for final acceptance and integration evidence.
+The `bench-completion-plan` fence in `specs/<slug>/spec.md` declares version 1, the chunks
+with their tickets and verification requirements, and the final verification.
+The `bench-review-record` fence in `reviews/<slug>.md` holds the evidence the checkpoint grades.
 Checkpoint purpose and record bytes participate in the existing gate verdict identity.
 Ordinary lane checks remain available while implementation, review, or repair is in progress.
 
@@ -450,3 +453,13 @@ Bench layers git safety:
 
 Harness hooks improve ergonomics, but the git hook and the gate remain the
 harness-independent backstops.
+
+## Assessment records
+
+Use `bench assessment` to store, compare, and inspect local workflow cost and quality.
+The [record schema](../internal/assessment/README.md) defines the normalized input and unknown-value rules.
+Assessment never launches a paid trial or changes a model default.
+
+Ordinary workflow assessment uses the normalized input documented in `internal/assessment/README.md`.
+Select only the current work's native evidence. Include every attempt role, failed work, and unavailable measurements.
+Keep provider charges separate from estimates. A local record update grants no paid-trial or model-default authorization.

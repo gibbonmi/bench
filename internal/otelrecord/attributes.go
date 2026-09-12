@@ -16,6 +16,9 @@ const (
 	// AttrSubjectID carries the subject digest: a composed tree id or a commit id.
 	AttrSubjectID = "bench.subject.id"
 
+	// AttrAssignmentID identifies the worktree assignment independently of a published subject.
+	AttrAssignmentID = "bench.assignment.id"
+
 	// AttrOutcome carries the seam's exit, such as "green", "red", or "skipped".
 	AttrOutcome = "bench.outcome"
 
@@ -47,6 +50,7 @@ const RecordStart = "start"
 var DeclaredAttributes = []string{
 	AttrSeam,
 	AttrSubjectID,
+	AttrAssignmentID,
 	AttrOutcome,
 	AttrOutcomeCheck,
 	AttrOutcomeDiagnostic,

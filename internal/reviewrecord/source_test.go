@@ -2,6 +2,7 @@ package reviewrecord_test
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -173,6 +174,40 @@ func TestReviewRecordPaths(t *testing.T) {
 		if _, err := rr.RecordPath(spec); err == nil {
 			t.Fatalf("unsafe path %q accepted", spec)
 		}
+	}
+}
+
+// TestReviewRecordSlug grades the checkpoint spec grammar's one reader. The
+// record path and the checkpoint's refusal route both read it, so a valid path
+// yields the slug, and a shape RecordPath refuses is refused here too.
+func TestReviewRecordSlug(t *testing.T) {
+	slug, err := rr.Slug(recordtest.Spec)
+	if err != nil || slug != "example" {
+		t.Fatalf("Slug(%q) = (%q, %v), want example", recordtest.Spec, slug, err)
+	}
+	for _, spec := range []string{"specs/../spec.md", "reviews"} {
+		if _, err := rr.Slug(spec); err == nil {
+			t.Errorf("unsafe path %q accepted", spec)
+		}
+	}
+}
+
+// TestReviewRecordMissingFenceNamesTheFence grades the absent-fence wording. One
+// sentinel answers every fence, so the message must name the fence that is
+// absent. A missing completion plan that reads as a missing review record sends
+// the operator to the wrong file. The sentinel stays testable with errors.Is.
+func TestReviewRecordMissingFenceNamesTheFence(t *testing.T) {
+	f := recordtest.New(t, 1)
+	f.Write(recordtest.Spec, "# Example\n\nStatus: staged\n")
+	f.Commit("drop the completion plan")
+	_, err := rr.ReadPlan(f.Root, f.Tree(), recordtest.Spec)
+	if !errors.Is(err, rr.ErrMissing) || !strings.Contains(err.Error(), "missing bench-completion-plan fence") {
+		t.Fatalf("plan error = %v, want the completion-plan fence named", err)
+	}
+	f.Write("reviews/example.md", "# Review outcomes\n\nNo fence here.\n")
+	_, err = rr.Read(f.Root, recordtest.Spec)
+	if !errors.Is(err, rr.ErrMissing) || !strings.Contains(err.Error(), "missing bench-review-record fence") {
+		t.Fatalf("record error = %v, want the review-record fence named", err)
 	}
 }
 

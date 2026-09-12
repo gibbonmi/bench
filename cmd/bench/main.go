@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/assessment"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/commit"
 	"github.com/gibbonmi/bench/internal/consumers"
@@ -54,10 +55,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-// version is stamped at build time via -ldflags "-X main.version=<pkg.json version>";
-// scripts/go-build.sh is the one source of build flags. An unstamped build prints "dev",
-// which tells the reader that the binary did not come from the gate or the release
-// workflow.
+// scripts/go-build.sh stamps the version. Unstamped builds report "dev".
 var version = "dev"
 
 func main() {
@@ -72,6 +70,9 @@ func main() {
 }
 
 var commandRegistry = []commandDefinition{
+	{Name: "assessment", AXI: axiApprovedChildren("list", "show", "compare"), Inventory: publicInventory(helpRow{Order: 20, Suffix: " list | show <run-id> | record --input <file> | compare --plan <file> --runs <id,...>", Description: "store and inspect local workflow cost and quality"}), Run: outputCommand(func(args []string) (string, int) {
+		return assessment.Command(assessment.Store{Home: worktree.Home(), Root: boundaryRoot()}, args)
+	})},
 	{Name: "anchors", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 15, Suffix: " <path>", Description: "anchors pinning a repo-relative path as TOON (kind, section, needle, line)"}), Run: outputCommand(anchorsCommand)},
 	{Name: "learnings", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 16, Description: "open journal entries as a TOON table (date, title)"}), Run: outputCommand(learnings.Command)},
 	{Name: "maps", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 17, Description: "unresolved decision-map tickets as TOON (map, ticket, type, state)"}), Run: outputCommand(maps.Command)},
@@ -480,9 +481,7 @@ func boundaryRoot() string {
 	return root
 }
 
-// poolCommand resolves the Bench home at this command boundary, in the shape of
-// boundaryRoot. The registry entry takes an argv-only handler, so the resolution sits
-// here rather than in the entry.
+// poolCommand supplies the resolved Bench home to the argv-only handler.
 func poolCommand(args []string) (string, int) {
 	return worktree.PoolCommand(worktree.Home(), args)
 }

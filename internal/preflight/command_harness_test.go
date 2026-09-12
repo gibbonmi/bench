@@ -38,7 +38,9 @@ func mustWriteFile(t *testing.T, path, body string) {
 // specBody renders a bootstrap-conformant spec for slug. It has staged
 // status, a valid opted-in coverage map declaring row PF1 and PF2, and
 // two backticked fence entries: one authorizing internal/<slug>/, and the
-// review pickup the coverage check requires of a fenced folder spec.
+// review pickup the coverage check requires of a fenced folder spec. It
+// closes with the completion plan the landing's checkpoint reads, over the
+// tickets/one.md every conformant seed writes.
 func specBody(slug string, extraFenceLines ...string) string {
 	var b strings.Builder
 	b.WriteString("# " + slug + "\n\nStatus: staged\n\n")
@@ -56,6 +58,7 @@ func specBody(slug string, extraFenceLines ...string) string {
 	for _, line := range extraFenceLines {
 		b.WriteString(line + "\n")
 	}
+	b.WriteString(planFence("one.md"))
 	return b.String()
 }
 

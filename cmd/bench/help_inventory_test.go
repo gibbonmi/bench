@@ -2,6 +2,11 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
+	"github.com/gibbonmi/bench/internal/assessment"
+	"github.com/gibbonmi/bench/internal/poolkey"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -58,6 +63,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench guards               every guard's deny surface as TOON (guard, boundary, denies)
   bench diff                 review base + changed files as TOON (--full appends log + diff body; --base freezes source)
   bench harnesses [<harness>] [--record <path> --format <source-id>]  the harness record as TOON; one name prints that harness's cells; both flags observe one named session record
+  bench assessment list | show <run-id> | record --input <file> | compare --plan <file> --runs <id,...>  store and inspect local workflow cost and quality
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
   bench preflight review|build <slug>  phase-entry checks that a spec's artifacts agree with the tree, one verdict row per check
   bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>  run focused Go-test or named-check evidence as TOON; no gate verdict
@@ -94,5 +100,36 @@ func TestHelpInventoryIsComplete(t *testing.T) {
 	}
 	if stdout.String() != want {
 		t.Fatalf("help inventory:\n%s\nwant complete public inventory:\n%s", stdout.String(), want)
+	}
+}
+
+func assessmentEnvelopeCases() map[string]axiEnvelopeCase {
+	return map[string]axiEnvelopeCase{
+		"assessment compare": {route: []string{"assessment", "compare"}, successArgv: []string{"assessment", "compare", "--plan", "comparison.json", "--runs", "fixture"}, deepSuccessArgv: []string{"assessment", "compare", "--plan", "../../comparison.json", "--runs", "fixture"}, emptyArgv: []string{"assessment", "compare", "--plan", "comparison.json", "--runs", ""}, blocks: []string{"comparison", "runs", "outcomes", "roles", "usage", "costs", "conditions", "variation", "reasons", "help"}, successMarker: "runs[1]", emptyMarker: "runs[0]", usage: "usage: bench assessment", setupSuccess: setupAssessmentComparison, setupEmpty: setupAssessmentComparison},
+		"assessment list":    {route: []string{"assessment", "list"}, successArgv: []string{"assessment", "list"}, emptyArgv: []string{"assessment", "list"}, blocks: []string{"runs", "help"}, successMarker: "runs[1]", emptyMarker: "runs[0]", usage: "usage: bench assessment", setupSuccess: setupAssessment, setupEmpty: func(t *testing.T, _ string) { t.Setenv("BENCH_HOME", t.TempDir()) }},
+		"assessment show":    {route: []string{"assessment", "show"}, successArgv: []string{"assessment", "show", "fixture"}, blocks: []string{"attempts", "summary", "record", "help"}, successMarker: "record[", usage: "usage: bench assessment", setupSuccess: setupAssessment, recordBacked: true},
+	}
+}
+func setupAssessment(t *testing.T, root string) {
+	t.Helper()
+	home := t.TempDir()
+	t.Setenv("BENCH_HOME", home)
+	r := assessment.Run{Version: 1, RunID: "fixture", RepoKey: poolkey.Key(root), Source: "synthetic", Condition: "bench", TaskID: "fixture", State: "running"}
+	if err := (assessment.Store{Home: home, Root: root}).Record(r); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func setupAssessmentComparison(t *testing.T, root string) {
+	t.Helper()
+	setupAssessment(t, root)
+	zero := 0.0
+	p := assessment.Plan{Version: 1, ID: "fixture-plan", Purpose: "descriptive", Approval: assessment.Reference{Producer: "synthetic", Native: "fixture approval"}, Budget: assessment.Budget{Amount: &zero, Currency: "USD"}, Tasks: []assessment.PlanTask{{ID: "fixture", Repetitions: 1}}, Variable: "capability", QualityTolerance: &assessment.Tolerance{MaxFailureRate: &zero}, Conditions: []assessment.Condition{{ID: "bench", Revision: "synthetic", Harness: "fixture-v1", Lines: map[string]assessment.Line{"implementation": {Model: "synthetic", Effort: "high"}}, Limits: map[string]string{"iterations": "1"}}}}
+	data, err := json.Marshal(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(filepath.Join(root, "comparison.json"), data, 0600); err != nil {
+		t.Fatal(err)
 	}
 }

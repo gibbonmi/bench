@@ -12,9 +12,12 @@ type proposalTicketSpec struct {
 
 func setProposalGraph(t *testing.T, slug string, specs ...proposalTicketSpec) {
 	t.Helper()
+	names := make([]string, 0, len(specs))
 	for _, spec := range specs {
 		writeProposalTicket(t, slug, spec.name, strings.TrimSuffix(spec.name, ".md"), spec.blockers, spec.writes)
+		names = append(names, spec.name)
 	}
+	replanSpec(t, slug, names...)
 	runGit(t, "add", "specs/"+slug)
 	runGit(t, "commit", "-q", "-m", "set proposal graph")
 }

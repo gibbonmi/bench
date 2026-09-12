@@ -15,11 +15,22 @@ import (
 )
 
 func RecordPath(spec string) (string, error) {
+	slug, err := Slug(spec)
+	if err != nil {
+		return "", err
+	}
+	return "reviews/" + slug + ".md", nil
+}
+
+// Slug is the <slug> of a checkpoint spec path. The record path and the
+// checkpoint's refusal route both read this one grammar, so the file the
+// checkpoint opens and the spec its route names can never disagree.
+func Slug(spec string) (string, error) {
 	parts := strings.Split(spec, "/")
 	if !safeRelative(spec) || len(parts) != 3 || parts[0] != "specs" || parts[2] != "spec.md" {
 		return "", errors.New("invalid checkpoint spec path; use specs/<slug>/spec.md")
 	}
-	return "reviews/" + parts[1] + ".md", nil
+	return parts[1], nil
 }
 
 func safeRelative(path string) bool {

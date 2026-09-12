@@ -57,7 +57,7 @@ func TestDecideAllGreen(t *testing.T) {
 
 	wantChecks := []string{
 		"base-current", "paths-authorized",
-		"tickets-parse", "blockers-resolve", "writes-resolve",
+		"tickets-parse", "completion-plan", "blockers-resolve", "writes-resolve",
 		"fixture-closure", "registry-closure", "kit-pin",
 		"rows-owned", "rows-membership", "diff-nonempty",
 	}
@@ -101,8 +101,8 @@ func TestDecideAllGreen(t *testing.T) {
 	}
 	// Every row that reads a parsed ticket, plus diff-nonempty, is
 	// not-applicable in a build with no tickets/ directory at all.
-	if naSeen != 9 {
-		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 9", naSeen)
+	if naSeen != 10 {
+		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 10", naSeen)
 	}
 }
 
@@ -787,16 +787,16 @@ func rowIndex(v Verdict, name string) int {
 	return -1
 }
 
-// TestSixRowsNotApplicableWithoutTickets covers TG39. In build mode with no
-// tickets/ directory, the six grammar rows render not-applicable, in order.
-func TestSixRowsNotApplicableWithoutTickets(t *testing.T) {
+// TestTicketGatedRowsNotApplicableWithoutTickets covers TG39. In build mode with
+// no tickets/ directory, the ticket-gated rows render not-applicable, in order.
+func TestTicketGatedRowsNotApplicableWithoutTickets(t *testing.T) {
 	f := baseFacts()
 	f.Mode = modeBuild
 	f.TicketsDirExists = false
 	v := Decide(f)
 
 	want := []string{
-		"tickets-parse", "blockers-resolve", "writes-resolve",
+		"tickets-parse", "completion-plan", "blockers-resolve", "writes-resolve",
 		"fixture-closure", "registry-closure", "kit-pin",
 	}
 	at := -1
@@ -807,15 +807,15 @@ func TestSixRowsNotApplicableWithoutTickets(t *testing.T) {
 		}
 	}
 	if at < 0 || at+len(want) > len(v.Checks) {
-		t.Fatalf("Checks = %#v, want the six grammar rows", v.Checks)
+		t.Fatalf("Checks = %#v, want the ticket-gated rows", v.Checks)
 	}
 	for i, name := range want {
 		row := v.Checks[at+i]
 		if row.Check != name || row.Verdict != verdictNA || row.Detail != "" {
-			t.Errorf("grammar row %d = %+v, want %s not-applicable with no detail", i, row, name)
+			t.Errorf("ticket-gated row %d = %+v, want %s not-applicable with no detail", i, row, name)
 		}
 	}
 	if v.Red {
-		t.Errorf("Verdict.Red = true, want false when every grammar row is not-applicable")
+		t.Errorf("Verdict.Red = true, want false when every ticket-gated row is not-applicable")
 	}
 }

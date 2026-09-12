@@ -55,6 +55,8 @@ After a repair, append current results or native reaffirmations from every axis 
 
 After the last chunk, reconcile every acceptance row and the integrated behavior. Repeat delegated review only when a later delta or cross-chunk concern invalidates prior evidence. From the clean destination, hand the accepted source to `bench worktree land`; it composes, gates, publishes `Status: implemented`, and releases the source. Then run `/bench-final-check`.
 
+The review and final-check phases own ordinary assessment updates. Keep the retained run identity available for those phase boundaries.
+
 ## When the build stops short
 
 Report the state: what is done, what remains, the coverage table, and what
@@ -66,8 +68,7 @@ consumed the cap. Keep landed work landed. Then route by cause:
 
 ## `--full <spec>`
 
-This command orchestrates retained implementation, chunk reviews, the final landing,
-and `/bench-final-check`. It refuses on a missing or unnamed spec. At every phase
+This command orchestrates retained implementation, chunk reviews, the final landing, and `/bench-final-check`. It refuses on a missing or unnamed spec. At every phase
 boundary it writes the phase reached into `capture/session-handoff.md` and refreshes
 the pin with `bench handoff`. Outside the kit-guidance set, a diff large enough to hide
 bugs pauses to ask the reviewer before escalating tier or adding a cross-harness
