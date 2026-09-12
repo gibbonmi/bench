@@ -79,7 +79,11 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 				return fmt.Errorf("chunk %s: stale review chain gap; review the uncovered delta", chunk.ID)
 			}
 		}
-		if err := CheckReviews(*chunk, reviewExclusions(plan, record), plan.Delegated()); err != nil {
+		// Verification ownership reads the frozen plan above, so a historical
+		// occurrence keeps its own author. Review exclusion reads the current
+		// plan instead: a session that reviewed an early chunk and later became
+		// an author must not keep that review.
+		if err := CheckReviews(*chunk, reviewExclusions(current, record), current.Delegated()); err != nil {
 			return err
 		}
 		ids, err := mappedIDs(record, plan.Digest, current.Digest, chunk.ID)

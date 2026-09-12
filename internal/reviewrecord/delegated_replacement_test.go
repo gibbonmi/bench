@@ -74,3 +74,39 @@ func TestDelegatedReplacementFreshness(t *testing.T) {
 		t.Fatalf("a relabelled predecessor pass satisfied a successor obligation: %v", err)
 	}
 }
+
+// A session that reviewed an earlier chunk cannot later become an author in
+// the same run. The exclusion set comes from the current plan's full author
+// history, so a later dispatch invalidates that earlier review.
+func TestDelegatedReviewerBecomesAuthor(t *testing.T) {
+	f := recordtest.NewDelegated(t, 2)
+	f.AddChunk()
+	before := f.Plan.Digest
+	reviewer := f.Record.Chunks[0].Reviews[0].Performer
+	if reviewer == "" {
+		t.Fatal("the first chunk recorded no reviewer")
+	}
+
+	// Dispatch the second ticket to the session that already reviewed chunk 1.
+	successor := f.Plan.Execution.Assignments["2.md"][0]
+	successor.Session = reviewer
+	f.Plan.Execution.Assignments["2.md"] = []rr.Assignment{successor}
+	f.WritePlan()
+	base := f.Tip()
+	f.Write("source.txt", "implemented chunk 2\n")
+	f.Commit("dispatch chunk 2 to the earlier reviewer")
+	f.Reload()
+	f.Record.Amendments = append(f.Record.Amendments, rr.Amendment{
+		From: before, To: f.Plan.Digest,
+		ChunkIDs: map[string][]string{"1": {"1"}, "2": {"2"}},
+	})
+	f.Record.PlanDigest = f.Plan.Digest
+	f.RecordChunk(base)
+	f.Complete()
+	f.Save()
+	f.Commit("retain evidence after the reviewer became an author")
+
+	if err := accept(f); err == nil || !strings.Contains(err.Error(), "invalid Standards performer") {
+		t.Fatalf("an earlier chunk kept a review from a session that now authors: %v", err)
+	}
+}

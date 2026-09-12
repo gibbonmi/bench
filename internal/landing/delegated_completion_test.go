@@ -2,8 +2,6 @@ package landing
 
 import (
 	"bytes"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -11,31 +9,11 @@ import (
 	"github.com/gibbonmi/bench/internal/spec"
 )
 
-// newDelegatedFixture mirrors newCompletionFixture in the version 2 delegated
-// form. Two chunks give the run two distinct ticket authors, and the
-// orchestrator owns the final obligations.
+// newDelegatedFixture is the landing fixture in the version 2 delegated form.
+// Two chunks give the run two distinct ticket authors, and the orchestrator
+// owns the final obligations.
 func newDelegatedFixture(t *testing.T) completionFixture {
-	t.Helper()
-	f := recordtest.AttachDelegated(t, fixture(t), 2)
-	f.Write(".gitignore", ".logs/\n")
-	f.Write(".bench/gate.sh", "#!/bin/sh\ngrep -q '^Status: implemented$' specs/example/spec.md\n")
-	if err := os.Chmod(filepath.Join(f.Root, ".bench/gate.sh"), 0755); err != nil {
-		t.Fatal(err)
-	}
-	f.Write(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n")
-	f.Commit("landing oracle")
-	root, base := f.Root, f.Tip()
-	source := filepath.Join(t.TempDir(), "source")
-	f.Git("worktree", "add", "-qb", "evidence-source", source, base)
-	f.Root = source
-	f.AddChunk()
-	f.Save()
-	f.Commit("retain first chunk")
-	f.AddChunk()
-	f.Complete()
-	f.Save()
-	f.Commit("retain completion")
-	return completionFixture{f, root, base}
+	return attachedCompletionFixture(t, recordtest.AttachDelegated)
 }
 
 // DI8, DI9, DI10: delegated landing needs the orchestrator's final verification

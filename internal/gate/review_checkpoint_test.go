@@ -13,8 +13,15 @@ import (
 )
 
 func checkpointFixture(t *testing.T) *recordtest.Fixture {
+	return attachedCheckpointFixture(t, recordtest.Attach)
+}
+
+// attachedCheckpointFixture builds one recorded chunk from either record form.
+// The version 1 and delegated checkpoints share this one build sequence, so a
+// change to it cannot drift between them.
+func attachedCheckpointFixture(t *testing.T, attach func(testing.TB, string, int) *recordtest.Fixture) *recordtest.Fixture {
 	t.Helper()
-	f := recordtest.Attach(t, outcomeFixture(t), 1)
+	f := attach(t, outcomeFixture(t), 1)
 	f.AddChunk()
 	f.Save()
 	f.Commit("retain review evidence")

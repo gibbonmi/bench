@@ -7,14 +7,10 @@ import (
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 )
 
-// delegatedCheckpointFixture is one recorded delegated chunk on a committed source.
+// delegatedCheckpointFixture is one recorded delegated chunk on a committed
+// source. It reuses the version 1 build sequence through its attach function.
 func delegatedCheckpointFixture(t *testing.T) *recordtest.Fixture {
-	t.Helper()
-	f := recordtest.AttachDelegated(t, outcomeFixture(t), 1)
-	f.AddChunk()
-	f.Save()
-	f.Commit("retain delegated review evidence")
-	return f
+	return attachedCheckpointFixture(t, recordtest.AttachDelegated)
 }
 
 // resave writes the mutated record and commits it, so the checkpoint grades the

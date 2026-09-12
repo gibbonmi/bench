@@ -38,7 +38,7 @@ func TestDelegatedEvidenceProjection(t *testing.T) {
 		{"unknown version", "unsupported version", func(t *testing.T) string {
 			return recordFence(t, reviewrecord.Record{Version: 9, Spec: "specs/example/spec.md", PlanDigest: "sha256:x", ImplementationSession: "author"})
 		}},
-		{"unterminated fence", "invalid", func(*testing.T) string {
+		{"unterminated fence", "invalid unterminated bench-review-record fence", func(*testing.T) string {
 			return "# Review outcomes\n\n```bench-review-record\n{\n"
 		}},
 	}
