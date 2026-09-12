@@ -1,9 +1,10 @@
 // When a cleanup-set apply refuses, and when it does not. The fixtures here drive drift at
 // each window an apply passes through — before entry, before the first transaction, and
-// inside a later member's own lock — and check which members survive. Two sibling files own
-// the rest: clean_set_outcomes_test.go owns what a stopped apply reports, and
-// clean_set_wiring_test.go owns the command's wiring to the refusal renderer. The fixture
-// builders all three share live here.
+// inside a later member's own lock — and check which members survive. Three sibling files own
+// the rest: clean_set_outcomes_test.go owns what a stopped apply reports,
+// clean_set_refusal_test.go owns which member a refusal names, and clean_set_wiring_test.go
+// owns the command's wiring to the refusal renderer. The fixture builders all four share live
+// here.
 package worktree
 
 import (
@@ -237,17 +238,31 @@ func memberByID(t *testing.T, creations []Creation, assignment string) Creation 
 // leaves one member resolvable after the removable one is gone.
 func retainedMemberFixture(t *testing.T) (string, string, Creation, Creation) {
 	t.Helper()
+	root, home := ignoringRepo(t)
+	removable := landedMember(t, root, home, "set-retained-removable", "removable.txt")
+	retained := landedMember(t, root, home, "set-retained-residue", "retained.txt")
+	mustWrite(t, filepath.Join(retained.Path, "ignored-one.txt"), []byte("residue\n"), 0o644)
+	return root, home, removable, retained
+}
+
+// ignoringRepo is a repository whose .gitignore names the residue these fixtures drop, so a
+// member can drift from removable to retained without any tracked change.
+func ignoringRepo(t *testing.T) (string, string) {
+	t.Helper()
 	root := newWorktreeRepo(t)
 	home := filepath.Join(root, ".bench-home")
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored-*.txt\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
-	gitRun(t, root, "commit", "-qm", "ignore retained residue")
-	removable := mustCreate(t, root, home, "set-retained-removable", "removable member")
-	retained := mustCreate(t, root, home, "set-retained-residue", "retained member")
-	landAssignment(t, root, removable, "removable.txt")
-	landAssignment(t, root, retained, "retained.txt")
-	mustWrite(t, filepath.Join(retained.Path, "ignored-one.txt"), []byte("residue\n"), 0o644)
-	return root, home, removable, retained
+	gitRun(t, root, "commit", "-qm", "ignore fixture residue")
+	return root, home
+}
+
+// landedMember creates one landed, clean assignment the plan marks removable.
+func landedMember(t *testing.T, root, home, request, file string) Creation {
+	t.Helper()
+	creation := mustCreate(t, root, home, request, request)
+	landAssignment(t, root, creation, file)
+	return creation
 }
 
 // TestCleanSetSpentPlan is CL12. A plan whose removals already completed cannot be applied
@@ -318,43 +333,5 @@ func requireMembersPresent(t *testing.T, creations []Creation) {
 		if _, err := os.Stat(creation.Path); err != nil {
 			t.Fatalf("refused apply removed %s: %v", creation.Path, err)
 		}
-	}
-}
-
-// TestCleanSetPreflightFaultNamesItsMember is COV-11. A requalify can fail for a reason that
-// is not drift, when a repository read the re-plan depends on breaks under it. That fault is
-// not a property of the approved set, so it belongs to the member that raised it: that row
-// carries the reason, and the rest report only that the set never qualified.
-func TestCleanSetPreflightFaultNamesItsMember(t *testing.T) {
-	t.Parallel()
-	root, _, creations := removableSetFixture(t, 2)
-	j := defaultJoins()
-	set, planErr := planLandedSet(j, root, CleanupOptions{}, "")
-	mustNoError(t, planErr)
-	if len(set.rows) != 2 {
-		t.Fatalf("landed set = %#v, want two applicable members", set.rows)
-	}
-	// The ledger the re-plan reads becomes unreadable after the plan. Every member is still
-	// exactly as approved, so no drift explains the refusal.
-	ledger, err := intent.Address(root)
-	mustNoError(t, err)
-	mustWrite(t, ledger, []byte("{not a ledger\n"), 0o644)
-
-	plans, applyErr := applyLandedSet(j, root, set, CleanupOptions{}, "")
-	if applyErr == nil || errors.Is(applyErr, errStaleFingerprint) {
-		t.Fatalf("apply error = %v, want a requalify fault that is not drift", applyErr)
-	}
-	requireMembersPresent(t, creations)
-	if len(plans) != 2 {
-		t.Fatalf("refused rows = %#v, want one row per member", plans)
-	}
-	if plans[0].Action != ActionError || plans[0].Reason == "" {
-		t.Fatalf("offending row = %q/%q, want the fault named on its own member", plans[0].Action, plans[0].Reason)
-	}
-	if plans[0].Reason == errStaleFingerprint.Error() {
-		t.Fatalf("offending row detail = %q, want the fault's own reason", plans[0].Reason)
-	}
-	if plans[1].Action != ActionNotAttempted || plans[1].Reason != notQualifiedDetail {
-		t.Fatalf("unstarted row = %q/%q, want %q", plans[1].Action, plans[1].Reason, notQualifiedDetail)
 	}
 }

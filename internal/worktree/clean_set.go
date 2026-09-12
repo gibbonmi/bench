@@ -306,6 +306,10 @@ func applyExplicitSet(j joins, root string, set explicitCleanupSet, options Clea
 			continue
 		}
 		unreached := func() []CleanupPlan { return explicitRowPlans(set.rows[i+1:]) }
+		if err := hit(j.cleanupBoundary, StepMemberRequalify); err != nil {
+			plans = append(plans, faultedPlan(planned.plan, CleanupPlan{}, err))
+			return notAttemptedPlans(plans, unreached(), notAttemptedDetail), err
+		}
 		current, err := requalifyExplicitRow(j, root, planned, options)
 		if err != nil {
 			plans = append(plans, requalifiedOutcome(planned.plan, current.plan, err))

@@ -16,8 +16,8 @@ const unclaimedAssignmentFingerprintVersion = "bench-unclaimed-assignment-branch
 // StepUnlockedReplan is the re-plan this selector runs before it deletes anything. Every
 // StepApplyLocked site sits inside the registration lock a checkout holds, and this mode
 // locks no checkout: it compares refs, so it detects a concurrent writer instead of
-// excluding one. The token stays here, beside its only site, because the shared step list
-// describes the locked lifecycle and this window is not part of it.
+// excluding one. The token stays here, beside its only site, because ownership.go is over
+// its size budget and outside this spec's ownership fence.
 const StepUnlockedReplan LifecycleStep = "unlocked-replan"
 
 type unclaimedAssignmentBranch struct{ ref, oid, reason string }

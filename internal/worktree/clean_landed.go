@@ -338,6 +338,10 @@ func applyLandedSet(j joins, root string, set landedCleanupSet, options CleanupO
 			plans = append(plans, planned.plan)
 			continue
 		}
+		if err := hit(j.cleanupBoundary, StepMemberRequalify); err != nil {
+			plans = append(plans, faultedPlan(planned.plan, CleanupPlan{}, err))
+			return notAttemptedPlans(plans, landedRowPlans(set.rows[i+1:]), notAttemptedDetail), err
+		}
 		current, err := requalifyLandedRow(j, root, planned, options, scope)
 		if err != nil {
 			plans = append(plans, requalifiedOutcome(planned.plan, current.plan, err))

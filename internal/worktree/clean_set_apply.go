@@ -26,12 +26,14 @@ import (
 // two files that are already over their size budget.
 const ActionNotAttempted CleanupAction = "not-attempted"
 
-// The two reasons a selected member goes unstarted. A member the apply reached and stopped
+// The three reasons a selected member goes unstarted. A member the apply reached and stopped
 // short of names the earlier failure; a member refused before the first transaction names the
-// qualification, because at that point nothing had been attempted at all.
+// qualification, because at that point nothing had been attempted at all; and a member whose
+// own requalification refused it names that, because nothing before it failed.
 const (
 	notAttemptedDetail = "not attempted; an earlier target in this set did not complete"
 	notQualifiedDetail = "not attempted; the set did not qualify before the first removal"
+	driftedDetail      = "not attempted; this target no longer matches the approved plan"
 )
 
 // notAttemptedPlan reports one selected target the apply never reached. The ignored preview
@@ -43,18 +45,31 @@ func notAttemptedPlan(plan CleanupPlan, detail string) CleanupPlan {
 	return plan
 }
 
+// StepMemberRequalify is the window between the set preflight and one member's own
+// requalification. Earlier members' transactions have already run by then, so a concurrent
+// writer has had real time to change a later member since the preflight cleared it. That is
+// the race each member's own recheck exists for, and a test stands in this window to open it.
+// The token sits here rather than in ownership.go, which is over its size budget and outside
+// this spec's ownership fence.
+const StepMemberRequalify LifecycleStep = "member-requalify"
+
+// unstartedPlan is the outcome of one selected member no transaction touched. A member the
+// plan marked removable reports that the removal never started. A member the plan did not
+// mark removable keeps the verdict it has: the apply was never going to touch it, so its
+// retain or refusal authority is what happened to it, and calling it unstarted would erase
+// the reason it was spared. Every unstarted row in this package reads that rule here.
+func unstartedPlan(plan CleanupPlan, detail string) CleanupPlan {
+	if plan.Action.Removes() {
+		return notAttemptedPlan(plan, detail)
+	}
+	return plan
+}
+
 // notAttemptedPlans appends one outcome per member a stopped apply never reached. Both
 // selection modes report this the same way; only the row type each one slices differs.
-//
-// A member the plan did not mark removable keeps the verdict the plan gave it. The apply was
-// never going to touch that member, so its retain or refusal authority is what happened to
-// it, and calling it unstarted would erase the reason it was spared.
 func notAttemptedPlans(plans, unreached []CleanupPlan, detail string) []CleanupPlan {
 	for _, plan := range unreached {
-		if plan.Action.Removes() {
-			plan = notAttemptedPlan(plan, detail)
-		}
-		plans = append(plans, plan)
+		plans = append(plans, unstartedPlan(plan, detail))
 	}
 	return plans
 }
@@ -72,7 +87,7 @@ func preflightOutcomes(plans, rows []CleanupPlan, offender int, err error) []Cle
 			plans = append(plans, faultedPlan(plan, CleanupPlan{}, err))
 			continue
 		}
-		plans = append(plans, notAttemptedPlan(plan, notQualifiedDetail))
+		plans = append(plans, unstartedPlan(plan, notQualifiedDetail))
 	}
 	return plans
 }
@@ -89,12 +104,14 @@ func faultedPlan(planned, applied CleanupPlan, err error) CleanupPlan {
 }
 
 // requalifiedOutcome is the row for a member its own requalify refused, after the preflight
-// had already passed. Drift is not a fault: the member re-planned to a different verdict, and
-// that verdict is what happened to it, so a member that drifted to retained reports retained.
+// had already passed. Drift is not a fault: the member re-planned, and the fresh verdict is
+// what it is now. No transaction opened on it either way, so the fresh row goes through the
+// same unstarted rule as any other member the apply did not touch — a member that drifted to
+// retained reports retained, and one still marked removable reports that it never started.
 // Any other error is a fault, and the row carries its reason instead.
 func requalifiedOutcome(planned, current CleanupPlan, err error) CleanupPlan {
 	if errors.Is(err, errStaleFingerprint) {
-		return current
+		return unstartedPlan(current, driftedDetail)
 	}
 	return faultedPlan(planned, current, err)
 }
@@ -162,7 +179,9 @@ func staleRows(fingerprint string, rows []CleanupPlan) []CleanupPlan {
 }
 
 // renderStaleSet is a stale refusal in full: the composed rows, then the exact command that
-// re-plans the same selection. Every mode's stale result renders through this one name.
+// re-plans the same selection. It serves the two refusals a mode raises before it applies;
+// an apply-time refusal composes the same rows through staleRows and renders them through
+// applyOutcomes. The composition itself is single-sourced in staleRows either way.
 func renderStaleSet(stdout io.Writer, fingerprint string, rows []CleanupPlan, replan []axi.InvocationArgument) error {
 	return renderStale(stdout, staleRows(fingerprint, rows), replan)
 }
