@@ -3,6 +3,7 @@
 Last incorporated landing: `workflow-assessment` (`15a48d99c0d240c41fd69b35a9fe0c0fb72500cd`, 2026-09-11).
 Astra/medium retained all authorship across three chunks. Sol/high supplied 30 native axis returns.
 Native author counters are retained locally; reviewer usage, estimated costs, and actual charges remain unknown.
+The latest spec-stage observation is delegated-implementation, which remains unimplemented and awaits approval.
 
 ## Cost assumptions
 
@@ -17,7 +18,7 @@ The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches dol
 | Terra / high, medium, low | research and seam inspection, latest 5 assignments; semantic review, latest 10 axis passes | On `implementation-continuation`, eight Terra/high review passes found two Coverage gaps. One gap protected continued progress, and one required an available diagnostic fallback; both second passes accepted the repairs. | Standards, Spec, and Coverage review in separate contexts; independently census production callers |
 | Luna / max, medium | implementation, 7 bounded tickets/repairs + reviewer, 4 axis passes on `stable-owner-landing` | Implementation: 2/7 first-pass with all terminal gates green. Review: three initial axes returned 9 raw findings and 8 de-duplicated targets with the citation standard held, and the repair-scoped re-review verified all seven predicates. | Low-cost writer for narrow slices under mandatory inspection |
 | Sol / low | implementation, bounded tickets and repairs on 1 landing | The delegates returned focused tests and mutation probes. The retirement repair reproduced the FT94 ledger red, changed one owner, proved that restoring the old value made the test red, and restored green. | Exact ticket seams and small repairs under coordinator verification |
-| Sol / high | independent review, latest 10 axis returns; 30 returns on this landing | On `workflow-assessment`, Sol found accounting, provenance, eligibility, output, and coverage defects. All nine final chunk-axis returns accepted the repaired source. | Separate Standards, Spec, and Coverage contexts under the approved line. |
+| Sol / high | independent review, latest 10 axis returns; one spec pair reviewed twice | On the delegated-implementation spec, Sol/high found pending-assignment, historical-author, and transfer-predicate gaps. Its second review accepted the corrected spec and ticket graph. | Separate Standards, Spec, and Coverage contexts under the approved line. |
 
 ## Representative evidence
 
