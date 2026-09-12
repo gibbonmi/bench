@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".bench/BENCH.md",
+    "old": "A same-chunk successor ticket starts after its predecessor ticket commits green.",
+    "new": "A same-chunk successor ticket starts after its chunk review."
+  }
+]

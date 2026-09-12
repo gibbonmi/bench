@@ -491,13 +491,14 @@ also matches, so raising or lowering a budget is an edit here and nowhere else.
 
 | subject | limit |
 |---|---|
-| `.bench/BENCH.md` | 180 |
-| `.agents/commands/bench-implement-spec.md` | 75 |
+| `.bench/BENCH.md` | 185 |
+| `.agents/commands/bench-implement-spec.md` | 80 |
 | `.agents/commands/bench-write-spec.md` | 73 |
 | `.agents/commands/bench-debug.md` | 170 |
 | `.agents/skills/bench-craft-tickets/SKILL.md` | 100 |
 | `.agents/skills/bench-craft-spec/SKILL.md` | 155 |
-| `.agents/skills/bench-craft-delegate/SKILL.md` | 122 |
+| `.agents/skills/bench-craft-delegate/SKILL.md` | 126 |
+| `.agents/skills/bench-craft-line/SKILL.md` | 130 |
 | `.agents/skills/bench-craft-tdd/SKILL.md` | 122 |
 | `.agents/skills/bench-craft-review/SKILL.md` | 122 |
 | `.agents/skills/bench-craft-research/SKILL.md` | 122 |

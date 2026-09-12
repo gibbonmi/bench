@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-implement-spec.md",
+    "old": "A resumed delegated run keeps the recorded identities, source pins, replacement history, and pending obligations.",
+    "new": "A resumed delegated run reads the handoff."
+  }
+]

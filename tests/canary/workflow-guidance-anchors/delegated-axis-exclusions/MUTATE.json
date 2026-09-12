@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "Each delegated axis excludes the orchestrator and every current and former author of the run.",
+    "new": "Each delegated axis excludes the current author."
+  }
+]

@@ -85,6 +85,15 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A charge names each fenced path that must still exist on return, so a fixture
   directory that the fence names stays in the tree.
 
+## Delegated author transfer
+
+- Two completed attempts with no progress permit a replacement or a model change only after a recorded reassessment.
+- A recorded terminal author failure permits a replacement or a model change.
+- An exhausted declared author cap permits a replacement or a model change.
+- A lost author session permits a replacement or a model change.
+- Every author transfer waits for confirmed termination of the old writer.
+- The successor receives the preserved source and performs fresh verification. Earlier evidence keeps its own author and source.
+
 ## Isolation and end of life
 
 - Release is the creating request's default end of life for a delegate worktree.

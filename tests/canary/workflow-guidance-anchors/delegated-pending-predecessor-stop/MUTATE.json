@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".bench/BENCH.md",
+    "old": "A pending or red predecessor commit stops that successor dispatch.",
+    "new": "A red predecessor commit is a report, not a stop."
+  }
+]

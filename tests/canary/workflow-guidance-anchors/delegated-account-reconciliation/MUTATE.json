@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-final-check.md",
+    "old": "A delegated exit reconciles every known invocation against the recorded assessment attempts.",
+    "new": "A delegated exit reports the invocations it remembers."
+  }
+]

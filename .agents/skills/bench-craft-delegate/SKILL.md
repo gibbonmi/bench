@@ -16,6 +16,8 @@ During retained implementation, brief higher-tier diagnostic consultation is pre
 
 Never delegate a decision the reviewer owns. A change of implementation author or session requires user direction. When the user explicitly selects delegated authorship, the write delegate uses an isolated worktree and this skill's charge and verification rules. A harness limitation never changes authorship silently.
 
+A reviewer-approved delegated run gives each ticket its own retained author session. `references/delegation-discipline.md` owns the author transfer triggers under `Delegated author transfer`.
+
 Before you spawn a delegation that changes who performs the requested work, surface it.
 
 ## The agent type

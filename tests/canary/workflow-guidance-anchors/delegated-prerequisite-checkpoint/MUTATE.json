@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".bench/BENCH.md",
+    "old": "A ticket in a dependent chunk waits for every prerequisite chunk checkpoint.",
+    "new": "A dependent ticket starts when the orchestrator is ready."
+  }
+]
