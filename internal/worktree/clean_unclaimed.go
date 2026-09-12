@@ -13,6 +13,13 @@ import (
 
 const unclaimedAssignmentFingerprintVersion = "bench-unclaimed-assignment-branches/v1"
 
+// StepUnlockedReplan is the re-plan this selector runs before it deletes anything. Every
+// StepApplyLocked site sits inside the registration lock a checkout holds, and this mode
+// locks no checkout: it compares refs, so it detects a concurrent writer instead of
+// excluding one. The token stays here, beside its only site, because the shared step list
+// describes the locked lifecycle and this window is not part of it.
+const StepUnlockedReplan LifecycleStep = "unlocked-replan"
+
 type unclaimedAssignmentBranch struct{ ref, oid, reason string }
 type unclaimedAssignmentSet struct {
 	rows        []unclaimedAssignmentBranch
@@ -120,8 +127,9 @@ func unclaimedReplan(options CleanupOptions) []axi.InvocationArgument {
 func applyUnclaimedAssignmentSet(j joins, root string, set unclaimedAssignmentSet, options CleanupOptions) ([]CleanupPlan, error) {
 	// The window that refusal exists for: a branch can enter or leave the namespace between
 	// the caller's plan read and this re-plan. The boundary is nil in production; it lets a
-	// test stand in that window, as the three checkout modes already do.
-	if err := hit(j.cleanupBoundary, StepApplyLocked); err != nil {
+	// test stand in that window. This mode holds no lock across the window, so a concurrent
+	// writer is refused after the fact rather than excluded, and the step token says so.
+	if err := hit(j.cleanupBoundary, StepUnlockedReplan); err != nil {
 		return nil, err
 	}
 	current, err := planUnclaimedAssignmentSet(root, options)

@@ -320,3 +320,41 @@ func requireMembersPresent(t *testing.T, creations []Creation) {
 		}
 	}
 }
+
+// TestCleanSetPreflightFaultNamesItsMember is COV-11. A requalify can fail for a reason that
+// is not drift, when a repository read the re-plan depends on breaks under it. That fault is
+// not a property of the approved set, so it belongs to the member that raised it: that row
+// carries the reason, and the rest report only that the set never qualified.
+func TestCleanSetPreflightFaultNamesItsMember(t *testing.T) {
+	t.Parallel()
+	root, _, creations := removableSetFixture(t, 2)
+	j := defaultJoins()
+	set, planErr := planLandedSet(j, root, CleanupOptions{}, "")
+	mustNoError(t, planErr)
+	if len(set.rows) != 2 {
+		t.Fatalf("landed set = %#v, want two applicable members", set.rows)
+	}
+	// The ledger the re-plan reads becomes unreadable after the plan. Every member is still
+	// exactly as approved, so no drift explains the refusal.
+	ledger, err := intent.Address(root)
+	mustNoError(t, err)
+	mustWrite(t, ledger, []byte("{not a ledger\n"), 0o644)
+
+	plans, applyErr := applyLandedSet(j, root, set, CleanupOptions{}, "")
+	if applyErr == nil || errors.Is(applyErr, errStaleFingerprint) {
+		t.Fatalf("apply error = %v, want a requalify fault that is not drift", applyErr)
+	}
+	requireMembersPresent(t, creations)
+	if len(plans) != 2 {
+		t.Fatalf("refused rows = %#v, want one row per member", plans)
+	}
+	if plans[0].Action != ActionError || plans[0].Reason == "" {
+		t.Fatalf("offending row = %q/%q, want the fault named on its own member", plans[0].Action, plans[0].Reason)
+	}
+	if plans[0].Reason == errStaleFingerprint.Error() {
+		t.Fatalf("offending row detail = %q, want the fault's own reason", plans[0].Reason)
+	}
+	if plans[1].Action != ActionNotAttempted || plans[1].Reason != notQualifiedDetail {
+		t.Fatalf("unstarted row = %q/%q, want %q", plans[1].Action, plans[1].Reason, notQualifiedDetail)
+	}
+}

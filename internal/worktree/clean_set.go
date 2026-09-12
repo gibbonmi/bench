@@ -305,14 +305,16 @@ func applyExplicitSet(j joins, root string, set explicitCleanupSet, options Clea
 			plans = append(plans, planned.plan)
 			continue
 		}
+		unreached := func() []CleanupPlan { return explicitRowPlans(set.rows[i+1:]) }
 		current, err := requalifyExplicitRow(j, root, planned, options)
-		applied := current.plan
-		if err == nil {
-			applied, err = applyExplicitWith(j, root, current.plan.Target, current.targetFingerprint, options)
-		}
 		if err != nil {
-			plans = append(plans, faultedPlan(planned.plan, applied, err))
-			return notAttemptedPlans(plans, explicitRowPlans(set.rows[i+1:]), notAttemptedDetail), err
+			plans = append(plans, requalifiedOutcome(planned.plan, current.plan, err))
+			return notAttemptedPlans(plans, unreached(), notAttemptedDetail), err
+		}
+		applied, applyErr := applyExplicitWith(j, root, current.plan.Target, current.targetFingerprint, options)
+		if applyErr != nil {
+			plans = append(plans, faultedPlan(current.plan, applied, applyErr))
+			return notAttemptedPlans(plans, unreached(), notAttemptedDetail), applyErr
 		}
 		plans = append(plans, applied)
 	}

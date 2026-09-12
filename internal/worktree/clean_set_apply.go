@@ -88,6 +88,17 @@ func faultedPlan(planned, applied CleanupPlan, err error) CleanupPlan {
 	return applied
 }
 
+// requalifiedOutcome is the row for a member its own requalify refused, after the preflight
+// had already passed. Drift is not a fault: the member re-planned to a different verdict, and
+// that verdict is what happened to it, so a member that drifted to retained reports retained.
+// Any other error is a fault, and the row carries its reason instead.
+func requalifiedOutcome(planned, current CleanupPlan, err error) CleanupPlan {
+	if errors.Is(err, errStaleFingerprint) {
+		return current
+	}
+	return faultedPlan(planned, current, err)
+}
+
 // staleSetPlan is the refusal row a set apply prints when the plan it carries no longer
 // describes the repository. The landed set and the explicit set share it, so their two
 // stale refusals cannot drift apart. The unclaimed set builds its own row instead, because

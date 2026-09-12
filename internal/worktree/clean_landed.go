@@ -340,7 +340,7 @@ func applyLandedSet(j joins, root string, set landedCleanupSet, options CleanupO
 		}
 		current, err := requalifyLandedRow(j, root, planned, options, scope)
 		if err != nil {
-			plans = append(plans, faultedPlan(planned.plan, current.plan, err))
+			plans = append(plans, requalifiedOutcome(planned.plan, current.plan, err))
 			return notAttemptedPlans(plans, landedRowPlans(set.rows[i+1:]), notAttemptedDetail), err
 		}
 		planner := func(string) (CleanupPlan, error) {
