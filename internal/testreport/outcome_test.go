@@ -129,6 +129,15 @@ func TestExecuteClassifiesTheOutcome(t *testing.T) {
 		})
 	}
 
+	t.Run("build failure through the run pattern", func(t *testing.T) {
+		installCannedGo(t, cannedSetNamed(t, "build-fail"))
+		installCannedSelection(t)
+		outcome := executeSelection(t, t.TempDir(), []string{"--package", "./...", "--run", "^TestCanned$"})
+		if want := (Outcome{Kind: OutcomeBuildFailed}); outcome != want {
+			t.Fatalf("outcome = %+v, want %+v", outcome, want)
+		}
+	})
+
 	t.Run("no-test-run through the run pattern", func(t *testing.T) {
 		installCannedGo(t, cannedSetNamed(t, "no-run"))
 		installCannedSelection(t)
@@ -251,7 +260,7 @@ var baseGoldens = map[string]struct {
 		code:   1,
 	},
 	"build-fail/run": {
-		output: "error: go test reported no test runs — run pattern matched no tests\n",
+		output: "packages[1]{package,status,elapsed_ms}:\n  canned,fail,0\nfailures[1]{package,test,line}:\n  canned,\"\",\"./canned.go:3:1: syntax error: unexpected }\"\nskips[0]{package,test,reason}:\n",
 		code:   1,
 	},
 	"no-run/package": {
@@ -264,8 +273,7 @@ var baseGoldens = map[string]struct {
 	},
 }
 
-// TestCommandKeepsItsBaseOutput holds `bench test`'s contract across the split: the
-// caller reads the same bytes and the same exit it read at the base commit.
+// TestCommandKeepsItsBaseOutput pins the command output and exit for each selection.
 func TestCommandKeepsItsBaseOutput(t *testing.T) {
 	for _, set := range cannedSets() {
 		for _, selection := range cannedSelections() {
@@ -280,7 +288,7 @@ func TestCommandKeepsItsBaseOutput(t *testing.T) {
 
 				output, code := Command(t.TempDir(), selection.args)
 				if output != golden.output || code != golden.code {
-					t.Fatalf("Command = (%d, %q), want the base commit's (%d, %q)", code, output, golden.code, golden.output)
+					t.Fatalf("Command = (%d, %q), want the command contract (%d, %q)", code, output, golden.code, golden.output)
 				}
 			})
 		}
