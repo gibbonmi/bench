@@ -12,7 +12,7 @@ import (
 )
 
 // TestCleanSetDiscardModifiers holds the explicit-set path to the discard modifiers one
-// call carried. Each case reads its modifier back out of the rendered apply command, then
+// call carries. Each case reads its modifier back out of the rendered apply command, then
 // applies the set and checks the durable effect only that modifier authorizes.
 func TestCleanSetDiscardModifiers(t *testing.T) {
 	t.Parallel()
