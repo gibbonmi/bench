@@ -216,3 +216,27 @@ func TestCleanLandedSelectorPartition(t *testing.T) {
 		}
 	}
 }
+
+// TestCleanLandedPlanApplyCarriesModifiers holds the advertised apply command to the
+// modifiers the plan answered under. The re-plan a refusal renders reads them from the same
+// source; without this case only the modifier-free spelling of that head is pinned.
+func TestCleanLandedPlanApplyCarriesModifiers(t *testing.T) {
+	t.Parallel()
+	root := newWorktreeRepo(t)
+	home := filepath.Join(root, ".bench-home")
+	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
+	gitRun(t, root, "add", ".gitignore")
+	gitRun(t, root, "commit", "-qm", "ignore modifier residue")
+	creation := mustCreate(t, root, home, "landed-apply-modifiers", "apply modifiers")
+	landAssignment(t, root, creation, "landed.txt")
+	mustWrite(t, filepath.Join(creation.Path, "ignored.txt"), []byte("residue\n"), 0o644)
+
+	stdout, stderr, code := runCleanup(t, root, home, "--discard-ignored", "--full", "--landed")
+	if code != 0 || stderr != "" {
+		t.Fatalf("plan = (%d, %q, %q), want one applicable plan", code, stdout, stderr)
+	}
+	want := "bench worktree clean --discard-ignored --full --landed --apply " + cleanupRowFingerprint(t, stdout)
+	if !strings.Contains(stdout, want) {
+		t.Fatalf("plan = %q, want the advertised apply command %q", stdout, want)
+	}
+}

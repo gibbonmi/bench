@@ -49,8 +49,7 @@ func notAttemptedPlan(plan CleanupPlan, detail string) CleanupPlan {
 // requalification. Earlier members' transactions have already run by then, so a concurrent
 // writer has had real time to change a later member since the preflight cleared it. That is
 // the race each member's own recheck exists for, and a test stands in this window to open it.
-// The token sits here rather than in ownership.go, which is over its size budget and outside
-// this spec's ownership fence.
+// The token sits here rather than in ownership.go, which is over its size budget.
 const StepMemberRequalify LifecycleStep = "member-requalify"
 
 // unstartedPlan is the outcome of one selected member no transaction touched. A member the

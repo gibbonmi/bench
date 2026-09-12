@@ -196,3 +196,42 @@ func TestCleanSetPreflightFaultOnLaterMember(t *testing.T) {
 		t.Fatalf("offending row = %q/%q, want the fault named on the later member", plans[1].Action, plans[1].Reason)
 	}
 }
+
+// TestCleanSetExplicitPreflightFaultOnLaterMember is COV-17. The explicit mode's preflight
+// carries its own offender index, and it skips a member the plan retained, so the member that
+// faults need not be the first row. The landed mode's index is covered above; this holds the
+// explicit one.
+func TestCleanSetExplicitPreflightFaultOnLaterMember(t *testing.T) {
+	t.Parallel()
+	root, home := ignoringRepo(t)
+	first := landedMember(t, root, home, "explicit-fault-first", "first.txt")
+	second := landedMember(t, root, home, "explicit-fault-second", "second.txt")
+	members := []Creation{first, second}
+	j := defaultJoins()
+	ordered := planExplicitSet(j, root, explicitIdentities(members), CleanupOptions{})
+	if len(ordered.rows) != 2 {
+		t.Fatalf("explicit set = %#v, want two members", ordered.rows)
+	}
+	// The member the set reaches first gains ignored residue, so the plan retains it and the
+	// preflight skips it. The fault then lands on the member at index one.
+	leading := memberByID(t, members, ordered.rows[0].assignment.ID)
+	mustWrite(t, filepath.Join(leading.Path, "ignored-one.txt"), []byte("residue\n"), 0o644)
+	set := planExplicitSet(j, root, explicitIdentities(members), CleanupOptions{})
+	if set.fingerprint == "" || set.rows[0].plan.Action.Removes() || !set.rows[1].plan.Action.Removes() {
+		t.Fatalf("explicit set = %#v, want a retained row ahead of a removable one", set.rows)
+	}
+	// The repository the re-plan reads goes away, so the requalify faults for a reason that is
+	// not drift. Every member is still exactly as approved.
+	mustNoError(t, os.RemoveAll(filepath.Join(root, ".git")))
+
+	plans, applyErr := applyExplicitSet(j, root, set, CleanupOptions{})
+	if applyErr == nil || errors.Is(applyErr, errStaleFingerprint) {
+		t.Fatalf("apply error = %v, want a requalify fault that is not drift", applyErr)
+	}
+	if len(plans) != 2 || plans[0].Action != ActionRetain {
+		t.Fatalf("refused rows = %#v, want the retained row ahead to keep its verdict", plans)
+	}
+	if plans[1].Action != ActionError || plans[1].Reason == "cleanup fingerprint is stale" {
+		t.Fatalf("offending row = %q/%q, want the fault named on the later member", plans[1].Action, plans[1].Reason)
+	}
+}

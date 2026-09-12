@@ -17,7 +17,7 @@ const unclaimedAssignmentFingerprintVersion = "bench-unclaimed-assignment-branch
 // StepApplyLocked site sits inside the registration lock a checkout holds, and this mode
 // locks no checkout: it compares refs, so it detects a concurrent writer instead of
 // excluding one. The token stays here, beside its only site, because ownership.go is over
-// its size budget and outside this spec's ownership fence.
+// its size budget.
 const StepUnlockedReplan LifecycleStep = "unlocked-replan"
 
 type unclaimedAssignmentBranch struct{ ref, oid, reason string }

@@ -189,11 +189,14 @@ func TestCleanSetUnclaimedStaleReplanAction(t *testing.T) {
 // field out of the rendered row rather than matching a spliced substring. A substring built
 // around a raw digest passes or fails by the run's random identity, because the encoder
 // quotes a digest that could read as a number.
+//
+// The action and the detail are literals. Both are agent-facing text this row promises, and
+// reading either back through the value that produces it would let a rename pass the gate.
 func requireStaleRefusalRow(t *testing.T, output, tracked, ignored, fingerprint string) {
 	t.Helper()
 	fields := cleanupRowFields(rowForTarget(t, output, "unknown"))
 	got := []string{fields[1], fields[2], fields[3], fields[4], cleanupRowValue(fields[5]), fields[6]}
-	want := []string{string(ActionError), tracked, ignored, "none", fingerprint, errStaleFingerprint.Error()}
+	want := []string{"error", tracked, ignored, "none", fingerprint, "cleanup fingerprint is stale"}
 	if strings.Join(got, "|") != strings.Join(want, "|") {
 		t.Fatalf("refusal row = %#v, want %#v", got, want)
 	}

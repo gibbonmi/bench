@@ -66,19 +66,25 @@ func landedFileByAssignment(creations []Creation, names ...string) map[string]st
 // driftTracked rewrites one member's landed file, which leaves that member's tracked state
 // dirty and takes its planned removal away.
 //
-// The file has to be there already. Writing a path that does not exist would create untracked
-// residue instead, and every caller here means dirty tracked state, which is the condition
-// CL4 names and a distinct one from untracked residue.
+// It proves that rather than assuming it. The target has to be tracked before the write, and
+// git has to report that same path modified after it. Untracked residue beside the file is a
+// different condition, and CL4 names the tracked one.
 func driftTracked(t *testing.T, files map[string]string, assignment string) {
 	t.Helper()
 	path, known := files[assignment]
 	if !known {
 		t.Fatalf("assignment %q has no landed file in %#v", assignment, files)
 	}
-	if _, err := os.Stat(path); err != nil {
-		t.Fatalf("landed file %q is not present to drift: %v", path, err)
+	checkout, name := filepath.Dir(path), filepath.Base(path)
+	if _, err := git.Output("-C", checkout, "ls-files", "--error-unmatch", name); err != nil {
+		t.Fatalf("drift target %q is not tracked: %v", path, err)
 	}
 	mustWrite(t, path, []byte("drifted\n"), 0o644)
+	changed, err := git.Output("-C", checkout, "diff", "--name-only", "--", name)
+	mustNoError(t, err)
+	if changed != name {
+		t.Fatalf("drift of %q left git reporting %q modified, want the tracked file itself", path, changed)
+	}
 }
 
 // TestCleanSetPreexistingDrift is CL4. A member that is already dirty when the apply starts

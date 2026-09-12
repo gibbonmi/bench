@@ -68,10 +68,7 @@ Preflight does not promise an atomic filesystem snapshot across later concurrent
 
 Each target transaction keeps the existing receipt, recovery, branch, assignment, census, and handoff behavior.
 If a race or failure occurs after an earlier removal, the earlier result remains completed.
-The failing target reports its actual outcome.
-
 A target that failed reports the failure. A target the plan retained keeps that verdict. A target no transaction touched reports `not-attempted`.
-Each remaining selected target reports `not-attempted`.
 The command returns nonzero and does not claim rollback of completed effects.
 
 A stale result preserves the selected mode and modifiers in its exact re-plan command.
@@ -184,7 +181,7 @@ caller -> domain entrypoint -> verification -> existing operation -> complete re
 | CL5 | 5 | Every removable row is requalified before the first transaction begins | planned TestCleanSetPreflightAllRows in internal/worktree | A row-by-row-only preflight lets an early target disappear before known later drift |
 | CL6 | 6 | Each target retains the existing under-lock lifecycle recheck | planned TestCleanSetLateDrift in internal/worktree | A race after preflight cannot use an obsolete removal plan |
 | CL7 | 7 | A partial apply reports completed outcomes without claiming rollback | planned TestCleanSetPartialApply in internal/worktree | A failed later transaction cannot erase the earlier completed result |
-| CL8 | 8 | A partial apply reports every unstarted target as not attempted | planned TestCleanSetUnstartedOutcomes in internal/worktree | Omitting remaining rows hides part of the selected intent |
+| CL8 | 8 | A partial apply reports every unstarted removable target as not attempted | planned TestCleanSetUnstartedOutcomes in internal/worktree | Omitting remaining rows hides part of the selected intent |
 | CL9 | 9 | A stale result names the exact selector-preserving re-plan command | planned TestCleanSetStaleReplanAction in internal/worktree | A generic clean command loses the selection or discard modifiers |
 | CL10 | 10 | Active or unsafe targets retain the existing cleanup refusal | planned TestCleanSetRetainsAuthority in internal/worktree | Set selection cannot widen deletion authority |
 | CL11 | 11 | Existing single-target and selector success cases match the baseline lifecycle effects | planned TestCleanSetCompatibility in internal/worktree | A differential state comparison catches changed branch or receipt behavior |
@@ -223,6 +220,7 @@ Won't handle: automatic stale-plan approval — the agent runs the rendered re-p
 - `internal/usage/worktree.go`
 - `internal/worktree/clean_landed.go`
 - `internal/worktree/clean_landed_apply_test.go`
+- `internal/worktree/clean_landed_test.go`
 - `internal/worktree/clean_set.go`
 - `internal/worktree/clean_set_apply.go`
 - `internal/worktree/clean_set_apply_test.go`
