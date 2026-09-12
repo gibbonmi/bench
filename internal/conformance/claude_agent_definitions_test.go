@@ -9,6 +9,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -27,6 +28,9 @@ const (
 	// neither a shipped agent nobody is told to use nor a rule naming a missing type can
 	// pass.
 	claudeAgentSkill = ".agents/skills/bench-craft-delegate/SKILL.md"
+	// claudeAgentDiagPrefix opens every diagnostic this check emits. The shared listing
+	// enumerator takes it, so a refused tree reads the same whichever check found it.
+	claudeAgentDiagPrefix = "claude-agent"
 )
 
 // claudeAgentForbiddenTools are the tool schemas whose absence is the whole point of a
@@ -111,24 +115,13 @@ func claudeAgentFileDiagnostics(root, rel string, named []string) []string {
 	return diags
 }
 
-// claudeAgentFiles lists the Bench agent files in stable order. An absent agents directory
+// claudeAgentFiles lists the Bench agent files in stable order. The shared listing
+// enumerator owns the root classification and the linked-child refusal, so the two budget
+// checks and this one report a refused tree the same way. An absent agents directory
 // yields no files and no diagnostic of its own: the routing rule names both types, so the
 // missing-agent reconciliation reports each one by name instead.
 func claudeAgentFiles(root string) (files, diags []string) {
-	dir := filepath.Join(root, filepath.FromSlash(claudeAgentsDir))
-	info, err := os.Lstat(dir)
-	switch {
-	case err != nil:
-		return nil, nil
-	case info.Mode()&os.ModeSymlink != 0:
-		return nil, []string{"claude-agent subject refused: " + claudeAgentsDir + " is a symbolic link, not a regular directory"}
-	case !info.IsDir():
-		return nil, []string{"claude-agent subject refused: " + claudeAgentsDir + " is not a directory"}
-	}
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return nil, []string{"claude-agent subject unreadable: " + claudeAgentsDir + ": " + err.Error()}
-	}
+	entries, diags := listingTreeEntries(root, claudeAgentsDir, claudeAgentDiagPrefix)
 	for _, entry := range entries {
 		name := entry.Name()
 		if !strings.HasPrefix(name, claudeAgentPrefix) || !strings.HasSuffix(name, ".md") {
@@ -137,7 +130,7 @@ func claudeAgentFiles(root string) (files, diags []string) {
 		files = append(files, path.Join(claudeAgentsDir, name))
 	}
 	sort.Strings(files)
-	return files, nil
+	return files, diags
 }
 
 // claudeAgentNamesInSkill reads the routing rule's backticked agent basenames in sorted
@@ -271,15 +264,33 @@ func TestClaudeAgentDefinitionsGradeEveryPolicedTool(t *testing.T) {
 	}
 }
 
-// TestClaudeAgentDefinitionsRefuseAnUnreadableAgentFile pins the per-file refusal. It is a
-// different code path from the directory refusal: a symbolic link at an agent file would
-// otherwise skip every other diagnostic for that file and report nothing.
-func TestClaudeAgentDefinitionsRefuseAnUnreadableAgentFile(t *testing.T) {
+// TestClaudeAgentDefinitionsRefuseALinkedAgentFile pins the linked-child refusal. The
+// shared enumerator refuses the link before the per-file classifier opens it, so a link
+// planted at an agent path cannot stand in for a graded file.
+func TestClaudeAgentDefinitionsRefuseALinkedAgentFile(t *testing.T) {
 	root := t.TempDir()
 	writeClaudeAgentFixture(t, root, "bench-writer.md", "---\nname: bench-writer\ntools: Read, Bash\n---\n")
 	link := filepath.Join(root, filepath.FromSlash(claudeAgentsDir), "bench-reviewer.md")
 	if err := os.Symlink(filepath.Join(root, "elsewhere.md"), link); err != nil {
 		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+	}
+	writeClaudeAgentSkill(t, root, "The axis runs as `bench-reviewer`, and the write runs as `bench-writer`.\n")
+
+	want := "claude-agent subject refused: " + claudeAgentsDir + "/bench-reviewer.md is a symbolic link"
+	if diagnostics := strings.Join(checkClaudeAgentDefinitions(root), "\n"); !strings.Contains(diagnostics, want) {
+		t.Fatalf("diagnostics missing %q:\n%s", want, diagnostics)
+	}
+}
+
+// TestClaudeAgentDefinitionsRefuseASpecialAgentFile pins the per-file classifier. The
+// shared enumerator refuses a link, so a FIFO is what still reaches this branch. An
+// unrefused one would block the gate in open, or skip every other diagnostic for that file.
+func TestClaudeAgentDefinitionsRefuseASpecialAgentFile(t *testing.T) {
+	root := t.TempDir()
+	writeClaudeAgentFixture(t, root, "bench-writer.md", "---\nname: bench-writer\ntools: Read, Bash\n---\n")
+	fifo := filepath.Join(root, filepath.FromSlash(claudeAgentsDir), "bench-reviewer.md")
+	if err := syscall.Mkfifo(fifo, 0o644); err != nil {
+		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
 	}
 	writeClaudeAgentSkill(t, root, "The axis runs as `bench-reviewer`, and the write runs as `bench-writer`.\n")
 

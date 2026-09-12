@@ -101,3 +101,16 @@ The landing is therefore the step that makes the measurement possible.
 The reviewer decided on 2026-09-12 to land with these two rows open.
 The next session takes both numbers first, with one "ok" spawn per type and no tool use, and records each usage line in the retro.
 If a number misses its threshold, the agent file's tool list is the repair surface, and the spec does not reopen.
+
+## Reaffirmation round
+
+The three axes read the repaired source at tip `29f37ff67597b23e6c4408d9e514c4f5c921c123`.
+Spec returned pass with no findings, and it counted the six restored descriptions independently.
+Standards and Coverage each returned one finding, and both named the same site.
+
+- ST9 (medium, auto-fix): `claudeAgentFiles` kept a third inline copy of the root-classification refusal ladder that `listingTreeEntries` now owns for the two budget checks. Citations at tip 29f37ff6: internal/conformance/claude_agent_definitions_test.go:118-131.
+- COV9 (medium, auto-fix): that copy's unreadable-directory branch reached no test, so its deletion left the package green. A permission fault would then report every agent as missing and hide the real cause. Citations at tip 29f37ff6: internal/conformance/claude_agent_definitions_test.go:130.
+
+One repair closes both findings: the agent check now calls the shared enumerator.
+The shared helper's own tests cover the unreadable root, and a new FIFO test keeps the per-file classifier covered.
+The coordinator probed the migration by dropping the propagated diagnostics, and three tests turned red.
