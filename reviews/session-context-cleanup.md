@@ -81,7 +81,7 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
   "version": 1,
   "spec": "specs/session-context-cleanup/spec.md",
   "plan_digest": "sha256:acdac92b1c935f8a91069e59869d663e6094070c148cddb0916a0c74cb86cf44",
-  "implementation_session": "claude:opus-high:ticket-author",
+  "implementation_session": "claude:sonnet:retained-continuation",
   "chunks": [
     {
       "id": "CL-C1",
@@ -187,12 +187,23 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
           "outcome": "pass",
           "native_ref": {
             "ref": "claude:coordinator/session-context-cleanup/clean-tests@1b40ca08",
-            "digest": "sha256:85e648a56eb598d8404a448b5568b2cbef8d078369430f0cedd6ee7b86e83620",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,5065\nfailures[0]{package,test,line}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"unix sockets unavailable (host-capability skip)\"\n"
+            "digest": "sha256:6b6896b616de396d2b2c3eef9e94a9b3850af4c676b63e73fd142731484c2cd9",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,5039\nfailures[0]{package,test,line}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"unix sockets unavailable (host-capability skip)\"\n"
           },
           "requirement": "clean-tests",
           "command": "bench test --package ./internal/worktree --run TestClean",
-          "exit_code": 0
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit the alias collapse so a repeated identity plans twice",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:coordinator/session-context-cleanup/probe-cl1@1b40ca08",
+              "digest": "sha256:929016aaa1debccc5dccb254769d0e2dd2bbefbc18c57dc45d56cf328ae065d5",
+              "excerpt": "mutation: bypass the alias-collapse guard (selected[assignment.ID]) in planExplicitSet, clean_set.go:139\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,4723\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanExplicitSetAliases,\"clean_set_test.go:115: alias plan rows duplicated\"\nrestore: git checkout -- internal/worktree/clean_set.go; TestClean pass, 5039ms\n"
+            }
+          }
         },
         {
           "id": "cl-c1-final-command-tests",
