@@ -138,7 +138,8 @@ func nameWorktree(stderr io.Writer, dir string, code int) int {
 // The child runs in a different tree than the wrapper that reached this call, so it has
 // to resolve its own kit. An inherited BENCH_KIT would name the caller's checkout instead.
 // The selected executable goes with them for the same reason — it was built for the
-// caller's run, not this child's. Everything else the operator set stays.
+// caller's run, not this child's. PWD comes from the child's directory.
+// Every unrelated variable the operator set stays.
 //
 // Stripping both routing variables would leave the child's gate with no owner for its
 // run. It would then never select a binary, and it would refuse at the gate entry.
@@ -164,7 +165,8 @@ func nameWorktree(stderr io.Writer, dir string, code int) int {
 // verb owns. A named routing variable therefore meets the same strip an inherited one
 // meets, and --env cannot repoint the child's pool or its kit.
 func execEnv(dir, home string, extra []string) []string {
-	base := withHome(env.WithoutWrapperRouting(append(os.Environ(), extra...), runbinary.Env), home)
+	base := withHome(env.WithoutWrapperRouting(append(os.Environ(), extra...), runbinary.Env, "PWD"), home)
+	base = append(base, "PWD="+dir)
 	wrapper := filepath.Join(dir, "bin", "bench.sh")
 	if !isRegularFile(wrapper) {
 		return base
