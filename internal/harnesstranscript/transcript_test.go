@@ -1,6 +1,7 @@
 package harnesstranscript
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -114,6 +115,58 @@ func TestCodexFixtureIdentifiesItsBytes(t *testing.T) {
 	}
 	if record.Interval != "2026-09-11T09:00:11.841Z/2026-09-11T09:00:21.000Z" {
 		t.Fatalf("interval = %q, want the first and last record timestamps", record.Interval)
+	}
+}
+
+func TestProvenanceNamesTheShapeTheReaderReaches(t *testing.T) {
+	record := fixture(t)
+	// A source cell sends the next reader to the bytes. It therefore names every field this
+	// reader decodes, or the shape the reader declines to parse, or says the source pins no
+	// shape at all. A cell that names a shape the reader never reaches misdirects that read.
+	for metric, want := range map[string]string{
+		MetricResultBytes: "response_item/custom_tool_call_output.output[].text and response_item/function_call_output.output",
+		MetricNestedCalls: "no pinned shape in this source",
+		MetricReadPaths:   "event_msg/item_completed item CommandExecution.command",
+	} {
+		if got := observation(t, record, metric).Source; got != want {
+			t.Fatalf("%s names source %q, want %q", metric, got, want)
+		}
+	}
+}
+
+func TestOversizedLineIsOneSkippedEvent(t *testing.T) {
+	previous := maxRecordLine
+	maxRecordLine = 160
+	t.Cleanup(func() { maxRecordLine = previous })
+	path := filepath.Join(t.TempDir(), "rollout.jsonl")
+	lines := []string{
+		`{"timestamp":"2026-09-11T09:00:01.000Z","type":"event_msg","payload":{"type":"task_started","turn_id":"a"}}`,
+		`{"timestamp":"2026-09-11T09:00:02.000Z","type":"response_item","payload":{"type":"custom_tool_call_output","call_id":"c1","output":[{"type":"input_text","text":"` + strings.Repeat("x", 400) + `"}]}}`,
+		`{"timestamp":"2026-09-11T09:00:03.000Z","type":"event_msg","payload":{"type":"task_started","turn_id":"b"}}`,
+		`{"timestamp":"2026-09-11T09:00:04.000Z","type":"compacted","payload":{"window_number":1}}`,
+	}
+	if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0o600); err != nil {
+		t.Fatalf("write record: %v", err)
+	}
+	record, failure := Read(path, SourceCodexRollout)
+	if failure.State != "" {
+		t.Fatalf("read record: %s (%s)", failure.State, failure.Reason)
+	}
+	// The oversized line is one malformed event. The reader keeps its place, so the later
+	// turn, the compaction, and the closing timestamp all survive it.
+	turns := observation(t, record, MetricTurns)
+	if turns.Count != 2 || turns.Availability != Incomplete {
+		t.Fatalf("turns = %d (%s), want 2 incomplete", turns.Count, turns.Availability)
+	}
+	// The discarded line's 400 result bytes are not read, so they are not counted either.
+	if bytes := observation(t, record, MetricResultBytes); bytes.Count != 0 || bytes.Availability != Incomplete {
+		t.Fatalf("result-text bytes = %d (%s), want 0 incomplete", bytes.Count, bytes.Availability)
+	}
+	if got := observation(t, record, MetricCompactions).Count; got != 1 {
+		t.Fatalf("compactions = %d, want 1", got)
+	}
+	if !strings.HasSuffix(record.Interval, "/2026-09-11T09:00:04.000Z") {
+		t.Fatalf("interval = %q, want it to close at the last record timestamp", record.Interval)
 	}
 }
 

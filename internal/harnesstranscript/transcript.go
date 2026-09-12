@@ -12,9 +12,12 @@
 // otherwise read as complete. Unknown means the source records no shape for the dimension,
 // and an unknown measure renders no number, so a missing fact can never look like a zero.
 //
-// The package imports the standard library only, so the harness record's consumers compose
-// it with no new import edge of their own.
+// The package reads its own bytes, because a session record outgrows the whole-file control
+// bound. It still reports a failed read in the shared control-record vocabulary, so one
+// record error reads the same on every Bench surface.
 package harnesstranscript
+
+import "github.com/gibbonmi/bench/internal/bounds"
 
 // Availability is the closed set of answers one measure can give about its own evidence.
 type Availability string
@@ -23,16 +26,6 @@ const (
 	Observed   Availability = "observed"
 	Incomplete Availability = "incomplete"
 	Unknown    Availability = "unknown"
-)
-
-// The record states a failed read reports. The spellings are the shared control-record
-// vocabulary, and the consumer renders them through the one AXI record-error line. This
-// package stays standard-library-only, so it names the spellings rather than importing the
-// classifier that owns them.
-const (
-	StateAbsent     = "absent"
-	StateUnreadable = "unreadable"
-	StateWrongType  = "wrong-type"
 )
 
 // The metric names. Each name is one row of every rendered record view.
@@ -125,10 +118,12 @@ type Record struct {
 	Observations []Observation
 }
 
-// Failure is a read that yielded nothing a consumer may trust. State is empty exactly when
-// the read succeeded.
+// Failure is a read that yielded nothing a consumer may trust. State is the shared
+// control-record vocabulary, so the consumer renders it through the one AXI record-error line
+// and the phrasing an agent parses cannot drift from every other Bench surface. State is
+// empty exactly when the read succeeded.
 type Failure struct {
-	State  string
+	State  bounds.FileState
 	Reason string
 }
 

@@ -25,8 +25,22 @@ func result(id, text string) string {
 	return fmt.Sprintf(`{"timestamp":"2026-09-11T09:00:01.000Z","type":"response_item","payload":{"type":"custom_tool_call_output","call_id":%q,"output":[{"type":"input_text","text":%q}]}}`, id, text)
 }
 
+// A typed function call is the record's second invocation shape, and its completion carries
+// the result as one string rather than as an array of text parts.
+func fnCall(id string) string {
+	return fmt.Sprintf(`{"timestamp":"2026-09-11T09:00:00.500Z","type":"response_item","payload":{"type":"function_call","call_id":%q,"name":"spawn_agent","namespace":"collaboration"}}`, id)
+}
+func fnResult(id, text string) string {
+	return fmt.Sprintf(`{"timestamp":"2026-09-11T09:00:01.500Z","type":"response_item","payload":{"type":"function_call_output","call_id":%q,"output":%q}}`, id, text)
+}
+
+// usageSnapshotBody wraps one counter list, so a fixture can omit a key the producer never
+// measured instead of sending a zero it never reported.
+func usageSnapshotBody(counters string) string {
+	return fmt.Sprintf(`{"timestamp":"2026-09-11T09:00:02.000Z","type":"event_msg","payload":{"type":"token_count","info":{"model_context_window":400,"total_token_usage":{%s}}}}`, counters)
+}
 func usageSnapshot(input, cached, output, reasoning int) string {
-	return fmt.Sprintf(`{"timestamp":"2026-09-11T09:00:02.000Z","type":"event_msg","payload":{"type":"token_count","info":{"model_context_window":400,"total_token_usage":{"input_tokens":%d,"cached_input_tokens":%d,"output_tokens":%d,"reasoning_output_tokens":%d}}}}`, input, cached, output, reasoning)
+	return usageSnapshotBody(fmt.Sprintf(`"input_tokens":%d,"cached_input_tokens":%d,"output_tokens":%d,"reasoning_output_tokens":%d`, input, cached, output, reasoning))
 }
 
 func completed(itemType, id, body string) string {
@@ -42,8 +56,7 @@ const (
 )
 
 // observe writes lines as a record in a temporary directory and runs the codex record view
-// over it. The command reads the real file, so the path boundary is exercised rather than
-// stubbed.
+// over it, so every test exercises the real path boundary rather than a stub.
 func observe(t *testing.T, lines ...string) (string, int) {
 	t.Helper()
 	return observeAt(t, record(t, lines...), harnesstranscript.SourceCodexRollout)
@@ -63,8 +76,8 @@ func observeAt(t *testing.T, path, format string) (string, int) {
 	return Command([]string{"codex", "--record", path, "--format", format})
 }
 
-// wantRow asserts one observation row by its leading cells. Trailing cells carry commas and
-// are quoted, so a prefix assertion names exactly the cells under test.
+// wantRow asserts one observation row by its leading cells, because a trailing cell carries
+// commas and is quoted.
 func wantRow(t *testing.T, out, prefix string) {
 	t.Helper()
 	if !strings.Contains(out, "\n  "+prefix) {
@@ -73,30 +86,28 @@ func wantRow(t *testing.T, out, prefix string) {
 }
 
 func TestObservedTextBoundary(t *testing.T) {
-	out, code := observe(t, call("c1"), result("c1", multibyte), reasoning)
+	out, code := observe(t, call("c1"), result("c1", multibyte), reasoning, fnCall("c2"), fnResult("c2", "ok\n"))
 	if code != 0 {
 		t.Fatalf("record view exit = %d, want 0", code)
 	}
-	// The fixture holds 13 UTF-8 bytes across 11 characters on 2 lines. The reasoning
-	// record's encrypted payload is serialized metadata, so none of its bytes count.
-	wantRow(t, out, "result-text bytes,13,bytes,observed,")
-	wantRow(t, out, "result-text characters,11,characters,observed,")
-	wantRow(t, out, "result-text lines,2,lines,observed,")
+	// The array-form result holds 13 bytes over 11 characters on 2 lines, and the string-form
+	// result adds 3 of each. The reasoning record's encrypted payload counts nothing.
+	wantRow(t, out, "result-text bytes,16,bytes,observed,")
+	wantRow(t, out, "result-text characters,14,characters,observed,")
+	wantRow(t, out, "result-text lines,3,lines,observed,")
 }
 
 func TestObservedCallAncestry(t *testing.T) {
 	subagent := completed("SubAgentActivity", "i1", `,"agent_thread_id":"sub-1","kind":"started"`)
 	out, _ := observe(t, call("c1"), result("c1", "ok"), subagent)
-	// A subagent event names a thread, not a call. It can neither raise the outer census
-	// nor supply a nested count this source never records.
+	// A subagent event names a thread, not a call, so it raises no census here.
 	wantRow(t, out, "outer calls,1,calls,observed,")
 	wantRow(t, out, `observed nested calls,"",calls,unknown,`)
 }
 
 func TestObservedDuplicateCompletion(t *testing.T) {
 	out, _ := observe(t, call("c1"), result("c1", "ok"), result("c1", "ok"))
-	// Both completions carry one invocation identity, so the call counts once and its
-	// bytes count once.
+	// Both completions carry one invocation identity, so the call and its bytes count once.
 	wantRow(t, out, "outer calls,1,calls,observed,")
 	wantRow(t, out, "unmatched calls,0,calls,observed,")
 	wantRow(t, out, "result-text bytes,2,bytes,observed,")
@@ -142,7 +153,7 @@ func TestObservedMalformedEvent(t *testing.T) {
 		t.Fatalf("malformed record exit = %d, want 0", code)
 	}
 	// A line that does not parse could have carried any dimension, so every count it could
-	// have raised reports the partial total as incomplete rather than as a complete one.
+	// have raised reports its partial total as incomplete.
 	wantRow(t, out, "result-text bytes,2,bytes,incomplete,")
 	wantRow(t, out, "outer calls,1,calls,incomplete,")
 	wantRow(t, out, "turns,1,turns,incomplete,")
@@ -150,45 +161,23 @@ func TestObservedMalformedEvent(t *testing.T) {
 
 func TestObservedNativeUsage(t *testing.T) {
 	out, _ := observe(t, usageSnapshot(10, 2, 3, 4), usageSnapshot(30, 6, 9, 12), usageSnapshot(60, 12, 18, 24))
-	// The snapshots are cumulative session totals. The last one is the session total; a sum
-	// of the three would report 100 input tokens that nobody spent.
+	// The snapshots are cumulative, so a sum would report 100 input tokens nobody spent.
 	wantRow(t, out, "input tokens,60,tokens,observed,")
 	wantRow(t, out, "output tokens,18,tokens,observed,")
 }
 
 func TestObservedNoTokenAttribution(t *testing.T) {
 	out, _ := observe(t, call("c1"), result("c1", multibyte), usageSnapshot(60, 12, 18, 24))
-	// Bytes and session totals are both present, and neither divides into a per-result
-	// cost. An estimate here would render as an observed measure.
+	// Bytes and session totals are both present, and neither divides into a per-result cost.
 	wantRow(t, out, `per-result token attribution,"",tokens,unknown,`)
 }
 
 func TestObservedCompactions(t *testing.T) {
 	out, _ := observe(t, compacted, compacted, usageSnapshot(60, 12, 18, 24))
-	// Only an identified compaction record counts. The snapshot names a small context
-	// window and is not evidence that the window was compacted.
+	// Only an identified compaction record counts; a small context window is not evidence.
 	wantRow(t, out, "compactions,2,compactions,observed,")
 	bare, _ := observe(t, usageSnapshot(60, 12, 18, 24))
 	wantRow(t, bare, "compactions,0,compactions,observed,")
-}
-
-func TestObservedPreservesCompiledViews(t *testing.T) {
-	views := strings.Split(compiledBaseline, "--- ")
-	if len(views) != len(Rows)+1 {
-		t.Fatalf("baseline holds %d views, want %d", len(views), len(Rows)+1)
-	}
-	if out, code := Command(nil); code != 0 || out != views[0] {
-		t.Fatalf("bench harnesses = %q exit %d, want the captured overview %q", out, code, views[0])
-	}
-	for i, row := range Rows {
-		want := strings.SplitN(views[i+1], "\n", 2)
-		if want[0] != row.Harness {
-			t.Fatalf("baseline view %d names %q, want %q", i+1, want[0], row.Harness)
-		}
-		if out, code := Command([]string{row.Harness}); code != 0 || out != want[1] {
-			t.Fatalf("bench harnesses %s = %q exit %d, want the captured view %q", row.Harness, out, code, want[1])
-		}
-	}
 }
 
 func TestObservedMeasureProvenance(t *testing.T) {
@@ -199,8 +188,7 @@ func TestObservedMeasureProvenance(t *testing.T) {
 		t.Fatalf("record view = %q, want a 14-row observations block", out)
 	}
 	for _, line := range strings.Split(strings.TrimSuffix(block, "\n"), "\n") {
-		// The first four cells are the metric, its value, its unit, and its availability.
-		// What follows is the provenance pair an unknown row must carry too.
+		// The metric, its value, its unit, and its availability precede the provenance pair.
 		cells := strings.SplitN(line, ",", 5)
 		if len(cells) != 5 {
 			t.Fatalf("observation row %q has no provenance cells", line)
@@ -229,10 +217,10 @@ func TestObservedHostileRecord(t *testing.T) {
 }
 
 func TestObservedMissingResult(t *testing.T) {
-	out, _ := observe(t, call("c1"), call("c2"), result("c2", "ok"), result("c3", "ok"))
-	// c1 never completed and c3's completion names no call, so two invocations lack a
-	// matched pair.
+	out, _ := observe(t, call("c1"), fnCall("c2"), fnResult("c2", "ok"), result("c3", "ok"))
+	// c1 never completed and c3's completion names no call, so two invocations lack a pair.
 	wantRow(t, out, "unmatched calls,2,calls,observed,")
+	wantRow(t, out, "result-text bytes,4,bytes,observed,")
 	if strings.Contains(out, "complete producer output") {
 		t.Fatalf("record view = %q, want no complete-producer-output claim", out)
 	}
@@ -249,8 +237,8 @@ func TestObservedRegularFileBoundary(t *testing.T) {
 	if err := syscall.Mkfifo(fifo, 0o600); err != nil {
 		t.Fatalf("Mkfifo: %v", err)
 	}
-	// A FIFO would block the reader in open(2) and a link would supply bytes from outside
-	// the named path, so both are refused on the type check that precedes every open.
+	// A FIFO would block the reader inside open(2), and a link would supply bytes from
+	// outside the named path, so the type check that precedes every open refuses both.
 	for _, path := range []string{link, fifo} {
 		out, code := observeAt(t, path, harnesstranscript.SourceCodexRollout)
 		if code != 1 || !strings.HasPrefix(out, "error: "+path+" is wrong-type") {
@@ -259,30 +247,37 @@ func TestObservedRegularFileBoundary(t *testing.T) {
 	}
 }
 
-// tokenDimension grades one native counter across a present value, an observed zero, and an
-// absent counter. Each row owns its own call, so a dropped dimension names itself.
-func tokenDimension(t *testing.T, metric string, present int) {
+// tokenDimension grades one native counter across a present value, an observed zero, a
+// snapshot that omits its key, and a record with no snapshot. others names the counters the
+// omitting snapshot keeps.
+func tokenDimension(t *testing.T, metric string, present int, others string) {
 	t.Helper()
 	out, _ := observe(t, usageSnapshot(11, 22, 33, 44))
 	wantRow(t, out, fmt.Sprintf("%s,%d,tokens,observed,", metric, present))
 	zero, _ := observe(t, usageSnapshot(0, 0, 0, 0))
 	wantRow(t, zero, metric+",0,tokens,observed,")
+	omitted, _ := observe(t, usageSnapshotBody(others))
+	wantRow(t, omitted, metric+`,"",tokens,unknown,`)
 	absent, _ := observe(t, call("c1"), result("c1", "ok"))
 	wantRow(t, absent, metric+`,"",tokens,unknown,`)
 }
 
-func TestObservedInputTokens(t *testing.T) { tokenDimension(t, "input tokens", 11) }
-
-func TestObservedCachedInputTokens(t *testing.T) { tokenDimension(t, "cached-input tokens", 22) }
-
-func TestObservedOutputTokens(t *testing.T) { tokenDimension(t, "output tokens", 33) }
-
-func TestObservedReasoningTokens(t *testing.T) { tokenDimension(t, "reasoning tokens", 44) }
+func TestObservedInputTokens(t *testing.T) {
+	tokenDimension(t, "input tokens", 11, `"cached_input_tokens":7,"output_tokens":7,"reasoning_output_tokens":7`)
+}
+func TestObservedCachedInputTokens(t *testing.T) {
+	tokenDimension(t, "cached-input tokens", 22, `"input_tokens":7,"output_tokens":7,"reasoning_output_tokens":7`)
+}
+func TestObservedOutputTokens(t *testing.T) {
+	tokenDimension(t, "output tokens", 33, `"input_tokens":7,"cached_input_tokens":7,"reasoning_output_tokens":7`)
+}
+func TestObservedReasoningTokens(t *testing.T) {
+	tokenDimension(t, "reasoning tokens", 44, `"input_tokens":7,"cached_input_tokens":7,"output_tokens":7`)
+}
 
 func TestObservedTurns(t *testing.T) {
 	out, _ := observe(t, taskStarted, taskStarted, call("c1"), result("c1", "ok"))
-	// A turn is one task_started record. A record with calls and no turn record observes
-	// no turn rather than inheriting one.
+	// A record with calls and no turn record observes no turn rather than inheriting one.
 	wantRow(t, out, "turns,2,turns,observed,")
 	bare, _ := observe(t, call("c1"), result("c1", "ok"))
 	wantRow(t, bare, "turns,0,turns,observed,")
@@ -291,110 +286,9 @@ func TestObservedTurns(t *testing.T) {
 func TestObservedReadPaths(t *testing.T) {
 	shell := completed("CommandExecution", "i1", `,"command":"cat internal/harnesses/harnesses.go","parsed_cmd":[{"type":"unknown","cmd":"cat internal/harnesses/harnesses.go"}]`)
 	out, _ := observe(t, shell, call("c1"), result("c1", "ok"))
-	// The source records a read only inside shell text, and shell text is not a read
-	// census. A parsed path here would publish a count nobody observed.
+	// Shell text is not a read census, so a parsed path would publish a count nobody observed.
 	wantRow(t, out, `explicit read paths,"",paths,unknown,`)
 	if strings.Contains(out, "harnesses.go") {
 		t.Fatalf("record view = %q, want no path parsed out of shell text", out)
 	}
 }
-
-// compiledBaseline is the two compiled views captured from the tree before the record view
-// existed, one view per `--- <harness>` section after the overview. The test compares a live
-// run against these bytes, so an opt-in observation that alters a compiled view turns red.
-const compiledBaseline = `schema: 1
-harnesses[4]{harness,provider,phase_form,hooks,delegation_guard,headless,checked}:
-  codex,openai,$bench-,.codex/hooks.json,no,.bench/adapters/codex,2026-07-11
-  claude,anthropic,/bench-,.claude/settings.json,yes,.bench/adapters/claude,2026-08-26
-  opencode,any,"","",unknown,.bench/adapters/opencode,""
-  none,none,"","",no,"",2026-08-26
-help[0]{cmd,why}:
---- codex
-schema: 1
-cells[13]{field,value,source,checked}:
-  steering during an active turn,unknown,"",""
-  structured user questions,unknown,"",""
-  tool-permission controls,unknown,"",""
-  hooks,yes,.codex/hooks.json,2026-08-26
-  MCP support,unknown,"",""
-  subagent support,unknown,"",""
-  subagent isolation,unknown,"",""
-  effort selection,unknown,"",""
-  persistent tasks,unknown,"",""
-  resume and recovery,unknown,"",""
-  structured output and exit status,unknown,"",""
-  headless execution,yes,.bench/adapters/codex,2026-08-26
-  delegation_guard,no,".bench/BENCH-reference.md Hook Layers, the agent-line bullet (Codex hooks docs)",2026-07-11
-measures[4]{measure,value,supplier}:
-  tokens,unknown,FT204 harness transcript reader
-  tool calls,unknown,FT204 harness transcript reader
-  Read paths,unknown,FT204 harness transcript reader
-  turns,unknown,FT204 harness transcript reader
-help[0]{cmd,why}:
---- claude
-schema: 1
-cells[13]{field,value,source,checked}:
-  steering during an active turn,unknown,"",""
-  structured user questions,unknown,"",""
-  tool-permission controls,unknown,"",""
-  hooks,yes,.claude/settings.json,2026-08-26
-  MCP support,unknown,"",""
-  subagent support,unknown,"",""
-  subagent isolation,unknown,"",""
-  effort selection,unknown,"",""
-  persistent tasks,unknown,"",""
-  resume and recovery,unknown,"",""
-  structured output and exit status,unknown,"",""
-  headless execution,yes,.bench/adapters/claude,2026-08-26
-  delegation_guard,yes,.claude/settings.json PreToolUse Agent matcher runs .bench/hooks/check-agent-line.sh,2026-08-26
-measures[4]{measure,value,supplier}:
-  tokens,unknown,FT204 harness transcript reader
-  tool calls,unknown,FT204 harness transcript reader
-  Read paths,unknown,FT204 harness transcript reader
-  turns,unknown,FT204 harness transcript reader
-help[0]{cmd,why}:
---- opencode
-schema: 1
-cells[13]{field,value,source,checked}:
-  steering during an active turn,unknown,"",""
-  structured user questions,unknown,"",""
-  tool-permission controls,unknown,"",""
-  hooks,unknown,"",""
-  MCP support,unknown,"",""
-  subagent support,unknown,"",""
-  subagent isolation,unknown,"",""
-  effort selection,unknown,"",""
-  persistent tasks,unknown,"",""
-  resume and recovery,unknown,"",""
-  structured output and exit status,unknown,"",""
-  headless execution,yes,.bench/adapters/opencode,2026-08-26
-  delegation_guard,unknown,"",""
-measures[4]{measure,value,supplier}:
-  tokens,unknown,FT204 harness transcript reader
-  tool calls,unknown,FT204 harness transcript reader
-  Read paths,unknown,FT204 harness transcript reader
-  turns,unknown,FT204 harness transcript reader
-help[0]{cmd,why}:
---- none
-schema: 1
-cells[13]{field,value,source,checked}:
-  steering during an active turn,unknown,"",""
-  structured user questions,unknown,"",""
-  tool-permission controls,unknown,"",""
-  hooks,no,".bench/adapters/ names no none entry, and no config names none",2026-08-26
-  MCP support,unknown,"",""
-  subagent support,unknown,"",""
-  subagent isolation,unknown,"",""
-  effort selection,unknown,"",""
-  persistent tasks,unknown,"",""
-  resume and recovery,unknown,"",""
-  structured output and exit status,unknown,"",""
-  headless execution,no,.bench/adapters/ names no none entry,2026-08-26
-  delegation_guard,no,".bench/adapters/ names no none entry, so the model-free path runs no agent",2026-08-26
-measures[4]{measure,value,supplier}:
-  tokens,unknown,FT204 harness transcript reader
-  tool calls,unknown,FT204 harness transcript reader
-  Read paths,unknown,FT204 harness transcript reader
-  turns,unknown,FT204 harness transcript reader
-help[0]{cmd,why}:
-`

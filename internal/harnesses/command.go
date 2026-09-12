@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/gibbonmi/bench/internal/axi"
-	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/harnesstranscript"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -118,7 +117,7 @@ func commandRecord(positionals []string, path, format string) (string, int) {
 	}
 	observed, failure := harnesstranscript.Read(path, format)
 	if failure.State != "" {
-		return toon.RecordError(path, bounds.FileState(failure.State), failure.Reason) + "\n", 1
+		return toon.RecordError(path, failure.State, failure.Reason) + "\n", 1
 	}
 	return renderRecord(row, observed, 0)
 }

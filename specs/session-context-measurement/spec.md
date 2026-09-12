@@ -178,31 +178,31 @@ named input -> existing command owner -> typed producer -> projected result
 
 | row | story | behavior | seam | why it catches the failure |
 | --- | --- | --- | --- | --- |
-| ME1 | 1, 2 | The record view counts UTF-8 bytes from model-visible text fields only | planned TestObservedTextBoundary in internal/harnesses | Counting serialized metadata or character length changes the multibyte fixture total |
-| ME2 | 3 | The report separates outer calls from observed nested calls | planned TestObservedCallAncestry in internal/harnesses | A nested-only event cannot increase the outer-call count |
-| ME3 | 3 | A repeated completion event contributes once per invocation identity | planned TestObservedDuplicateCompletion in internal/harnesses | Counting polling completions twice changes the known invocation total |
-| ME4 | 4 | Unsupported source formats report unknown measures at exit 1 | planned TestObservedUnsupportedFormat in internal/harnesses | Guessing a parser produces unsupported numeric facts |
-| ME5 | 4 | A valid empty record reports zero observed calls and bytes | planned TestObservedEmptyRecord in internal/harnesses | Conflating empty with absent hides the known empty observation |
-| ME6 | 4 | An absent record reports a read error at exit 1 | planned TestObservedAbsentRecord in internal/harnesses | An empty success would falsely certify a missing input |
-| ME7 | 5 | Malformed relevant events mark affected measures incomplete | planned TestObservedMalformedEvent in internal/harnesses | Silently skipped events would certify an understated complete total |
-| ME8 | 6 | Provider counters retain their source semantics and availability | planned TestObservedNativeUsage in internal/harnesses | Summing cumulative snapshots inflates the canned token total |
-| ME9 | 7 | The report leaves per-result token attribution unknown | planned TestObservedNoTokenAttribution in internal/harnesses | A bytes-to-token estimate would appear as an observed measure |
-| ME10 | 8 | Compaction counts come only from identified compaction events | planned TestObservedCompactions in internal/harnesses | A short context window alone cannot increment the count |
-| ME11 | 9 | Existing compiled harness views match the baseline for every registered harness | planned TestObservedPreservesCompiledViews in internal/harnesses | A differential run catches changes to the current terminal views |
-| ME12 | 10 | Each reported measure includes its source boundary and availability | planned TestObservedMeasureProvenance in internal/harnesses | An omitted provenance cell makes unknown and observed facts indistinguishable |
+| ME1 | 1, 2 | The record view counts UTF-8 bytes from model-visible text fields only | `internal/harnesses/observed_test.go` (`TestObservedTextBoundary`) | Counting serialized metadata or character length changes the multibyte fixture total |
+| ME2 | 3 | The report separates outer calls from observed nested calls | `internal/harnesses/observed_test.go` (`TestObservedCallAncestry`) | A nested-only event cannot increase the outer-call count |
+| ME3 | 3 | A repeated completion event contributes once per invocation identity | `internal/harnesses/observed_test.go` (`TestObservedDuplicateCompletion`) | Counting polling completions twice changes the known invocation total |
+| ME4 | 4 | Unsupported source formats report unknown measures at exit 1 | `internal/harnesses/observed_test.go` (`TestObservedUnsupportedFormat`) | Guessing a parser produces unsupported numeric facts |
+| ME5 | 4 | A valid empty record reports zero observed calls and bytes | `internal/harnesses/observed_test.go` (`TestObservedEmptyRecord`) | Conflating empty with absent hides the known empty observation |
+| ME6 | 4 | An absent record reports a read error at exit 1 | `internal/harnesses/observed_test.go` (`TestObservedAbsentRecord`) | An empty success would falsely certify a missing input |
+| ME7 | 5 | Malformed relevant events mark affected measures incomplete | `internal/harnesses/observed_test.go` (`TestObservedMalformedEvent`) | Silently skipped events would certify an understated complete total |
+| ME8 | 6 | Provider counters retain their source semantics and availability | `internal/harnesses/observed_test.go` (`TestObservedNativeUsage`) | Summing cumulative snapshots inflates the canned token total |
+| ME9 | 7 | The report leaves per-result token attribution unknown | `internal/harnesses/observed_test.go` (`TestObservedNoTokenAttribution`) | A bytes-to-token estimate would appear as an observed measure |
+| ME10 | 8 | Compaction counts come only from identified compaction events | `internal/harnesses/observed_test.go` (`TestObservedCompactions`) | A short context window alone cannot increment the count |
+| ME11 | 9 | Existing compiled harness views match the baseline for every registered harness | `internal/harnesses/command_test.go` (`TestCommandPreservesCompiledViews`) | A differential run catches changes to the current terminal views |
+| ME12 | 10 | Each reported measure includes its source boundary and availability | `internal/harnesses/observed_test.go` (`TestObservedMeasureProvenance`) | An omitted provenance cell makes unknown and observed facts indistinguishable |
 | ME13 | 11 | The budget report compares task success on matched representative cases | review-owned: Spec axis checks budget-evidence.md against the case records | Smaller output alone cannot satisfy a failed task case |
 | ME14 | 11 | The budget report counts full-detail recovery calls for each candidate | review-owned: Spec axis checks recorded follow-on invocations | A candidate that hides required detail cannot conceal its recovery cost |
 | ME15 | 12 | The budget report proposes per-surface bytes without approving any default | review-owned: budget evidence and reviewer decision record | Treating the historical diagnostic cut as policy fails the approval boundary |
 | ME16 | 13 | Bench-owned elapsed and census facts remain separately sourced | review-owned: evidence provenance inspection | Parsing harness text as a replacement Bench metric creates a second owner |
-| ME17 | 14 | Record contents never execute as shell commands | planned TestObservedHostileRecord in internal/harnesses | A command-shaped string produces data without creating its sentinel file |
-| ME18 | 15 | The report identifies unobserved tool results without claiming complete producer output | planned TestObservedMissingResult in internal/harnesses | An unmatched call or upstream truncation cannot become a complete-byte claim |
-| ME19 | 14 | Non-regular or symlink record inputs refuse before the first content read | planned TestObservedRegularFileBoundary in internal/harnesses | A FIFO or linked record cannot block the reader or supply unowned bytes |
-| ME20 | 6 | Input-token observations match the pinned source field availability and value | planned TestObservedInputTokens in internal/harnesses | Always returning unknown fails a fixture with an explicit input counter |
-| ME21 | 6 | Cached-input-token observations match the pinned source field availability and value | planned TestObservedCachedInputTokens in internal/harnesses | Omitting cache usage fails a fixture with an explicit cached-input counter |
-| ME22 | 6 | Output-token observations match the pinned source field availability and value | planned TestObservedOutputTokens in internal/harnesses | Omitting output usage fails a fixture with an explicit output counter |
-| ME23 | 6 | Reasoning-token observations match the pinned source field availability and value | planned TestObservedReasoningTokens in internal/harnesses | Treating reasoning as universally absent fails a source that supplies it |
-| ME24 | 16 | Turn observations match the pinned source field availability and value | planned TestObservedTurns in internal/harnesses | Omitting turn availability fails the pinned event inventory |
-| ME25 | 17 | Explicit read-path observations match the pinned source field availability and value | planned TestObservedReadPaths in internal/harnesses | Inferring shell paths or dropping observed read paths fails the pinned tool inventory |
+| ME17 | 14 | Record contents never execute as shell commands | `internal/harnesses/observed_test.go` (`TestObservedHostileRecord`) | A command-shaped string produces data without creating its sentinel file |
+| ME18 | 15 | The report identifies unobserved tool results without claiming complete producer output | `internal/harnesses/observed_test.go` (`TestObservedMissingResult`) | An unmatched call or upstream truncation cannot become a complete-byte claim |
+| ME19 | 14 | Non-regular or symlink record inputs refuse before the first content read | `internal/harnesses/observed_test.go` (`TestObservedRegularFileBoundary`) | A FIFO or linked record cannot block the reader or supply unowned bytes |
+| ME20 | 6 | Input-token observations match the pinned source field availability and value | `internal/harnesses/observed_test.go` (`TestObservedInputTokens`) | Always returning unknown fails a fixture with an explicit input counter |
+| ME21 | 6 | Cached-input-token observations match the pinned source field availability and value | `internal/harnesses/observed_test.go` (`TestObservedCachedInputTokens`) | Omitting cache usage fails a fixture with an explicit cached-input counter |
+| ME22 | 6 | Output-token observations match the pinned source field availability and value | `internal/harnesses/observed_test.go` (`TestObservedOutputTokens`) | Omitting output usage fails a fixture with an explicit output counter |
+| ME23 | 6 | Reasoning-token observations match the pinned source field availability and value | `internal/harnesses/observed_test.go` (`TestObservedReasoningTokens`) | Treating reasoning as universally absent fails a source that supplies it |
+| ME24 | 16 | Turn observations match the pinned source field availability and value | `internal/harnesses/observed_test.go` (`TestObservedTurns`) | Omitting turn availability fails the pinned event inventory |
+| ME25 | 17 | Explicit read-path observations match the pinned source field availability and value | `internal/harnesses/observed_test.go` (`TestObservedReadPaths`) | Inferring shell paths or dropping observed read paths fails the pinned tool inventory |
 
 ### Edge inventory
 

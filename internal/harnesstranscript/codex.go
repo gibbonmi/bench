@@ -1,12 +1,7 @@
 package harnesstranscript
 
 import (
-	"bufio"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
-	"io"
-	"os"
 	"strings"
 	"unicode/utf8"
 )
@@ -37,21 +32,20 @@ const (
 	payloadTokenCount       = "token_count"
 )
 
-// maxRecordLine bounds one line of the record. A rollout line holds a whole tool result, so
-// the bound sits far above an ordinary line and only a line no reader could use reaches it.
-// A line past the bound is a malformed event rather than a silent truncation.
-const maxRecordLine = 16 << 20
-
 // The shapes each measure reads. A source cell names the field path, so another reader can
 // reach the same bytes. No cell holds a comma, because the rendered row separates its
 // provenance pair on one.
 const (
-	srcResultText  = "response_item/custom_tool_call_output.output[].text"
-	srcCallID      = "response_item/custom_tool_call.call_id"
-	srcSubAgent    = "event_msg/item_completed item SubAgentActivity"
-	srcPairing     = "response_item call and output identities"
-	srcTokenCount  = "event_msg/token_count info.total_token_usage"
-	srcCompacted   = "compacted record"
+	// Both completion shapes hold result text, so the cell names both rather than sending a
+	// reader to one field for bytes the other supplied.
+	srcResultText = "response_item/custom_tool_call_output.output[].text and response_item/function_call_output.output"
+	srcCallID     = "response_item/custom_tool_call.call_id"
+	srcPairing    = "response_item call and output identities"
+	srcTokenCount = "event_msg/token_count info.total_token_usage"
+	srcCompacted  = "compacted record"
+	// srcShellText names the one place this source could hold a read. The reader declines to
+	// parse it, and the boundary beside the cell says so.
+	srcShellText   = "event_msg/item_completed item CommandExecution.command"
 	srcTaskStarted = "event_msg/task_started"
 	srcNoShape     = "no pinned shape in this source"
 )
@@ -63,16 +57,17 @@ const (
 	boundaryChars       = "Counts the code points of the same text the byte measure reads, so a multibyte result reports fewer characters than bytes."
 	boundaryLines       = "Counts the lines of the same text. A result with no final newline still counts its last line."
 	boundaryOuterCalls  = "Counts one call for each distinct call identity in this thread. A repeated record of one identity counts once."
-	boundaryNestedCalls = "This source names a subagent by thread identity alone. The subagent's own calls belong to a separate record, so this reader observed none of them."
+	boundaryNestedCalls = "This source names a subagent by thread identity alone, and this reader decodes no subagent event. The subagent's own calls belong to a separate record, so none was observed here."
 	boundaryUnmatched   = "Counts a call with no recorded result, and a result with no recorded call. A transcript shows what it recorded, so the byte measure beside it is never a claim about every result the producer wrote."
 	boundaryTokens      = "The source reports a cumulative total at each snapshot. The value is the last snapshot in the interval, never a sum of the snapshots."
 	boundaryCompactions = "Counts one identified compaction record for each compaction. A small context window is not evidence of one."
 	boundaryTurns       = "Counts one task-start record for each turn."
 	boundaryReadPaths   = "This source records a file read inside shell command text alone. Shell text is not a read census, so this reader parses no path out of it."
 	boundaryAttribution = "The source reports tokens for the session and for the turn, never for one result. This reader makes no estimate from byte counts."
-	// partialBoundary joins a boundary when an event did not parse. An incomplete measure
-	// keeps its partial number, because a count that reads complete is the worse error.
-	partialBoundary = "One or more events did not parse, so this count is partial."
+	// partialBoundary joins a boundary when an event did not parse or was too long to read.
+	// An incomplete measure keeps its partial number, because a count that reads complete is
+	// the worse error.
+	partialBoundary = "One or more events were skipped, so this count is partial."
 )
 
 // codexRecord is one line of the rollout. Payload stays raw until the record type selects
@@ -96,11 +91,24 @@ type codexInfo struct {
 
 // codexUsage is one usage snapshot. The producer writes a running session total here, so a
 // later snapshot supersedes an earlier one.
+//
+// Each counter is a pointer, because a snapshot that omits a key reported no value for that
+// dimension. A plain integer would decode the absent key as zero and publish a total nobody
+// measured.
 type codexUsage struct {
-	Input     int64 `json:"input_tokens"`
-	Cached    int64 `json:"cached_input_tokens"`
-	Output    int64 `json:"output_tokens"`
-	Reasoning int64 `json:"reasoning_output_tokens"`
+	Input     *int64 `json:"input_tokens"`
+	Cached    *int64 `json:"cached_input_tokens"`
+	Output    *int64 `json:"output_tokens"`
+	Reasoning *int64 `json:"reasoning_output_tokens"`
+}
+
+// counter reads one snapshot counter. The second result is false for a key the snapshot
+// omits, which leaves that dimension unknown.
+func counter(value *int64) (int64, bool) {
+	if value == nil {
+		return 0, false
+	}
+	return *value, true
 }
 
 type codexTextPart struct {
@@ -123,50 +131,19 @@ type codexTally struct {
 	malformed   bool
 }
 
-// readCodex reads the record at path once and reports its observations.
-//
-// The path is typed before it is opened. A FIFO would block the reader inside open(2), and a
-// link would supply bytes from somewhere other than the path the agent named, so both are
-// refused on the stat that precedes every open. The record is then streamed a line at a time:
-// a session record outgrows any whole-file bound, and the digest is taken from the same pass,
-// so the identity names exactly the bytes the counts came from.
-//
-// Record contents are data throughout. The reader decodes JSON, counts, and renders numbers.
-// It never executes a field, resolves a path out of one, or copies record text into output.
+// readCodex reads the record at path and reports its observations under this mapping.
 func readCodex(path string) (Record, Failure) {
-	info, err := os.Lstat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return Record{}, Failure{State: StateAbsent, Reason: "no record at the named path"}
-		}
-		return Record{}, Failure{State: StateUnreadable, Reason: err.Error()}
-	}
-	if !info.Mode().IsRegular() {
-		return Record{}, Failure{State: StateWrongType, Reason: "not a regular file: " + info.Mode().Type().String()}
-	}
-	file, err := os.Open(path)
-	if err != nil {
-		return Record{}, Failure{State: StateUnreadable, Reason: err.Error()}
-	}
-	defer file.Close()
-
-	digest := sha256.New()
 	tally := codexTally{calls: map[string]bool{}, outputs: map[string]bool{}}
-	scanner := bufio.NewScanner(io.TeeReader(file, digest))
-	scanner.Buffer(make([]byte, 0, 64<<10), maxRecordLine)
-	for scanner.Scan() {
-		tally.line(scanner.Bytes())
+	digest, failure := readRecord(path, &tally)
+	if failure.State != "" {
+		return Record{}, failure
 	}
-	if scanner.Err() != nil {
-		// The scan stopped early, so the counts are partial and the digest still has to
-		// name the whole file the agent pointed at.
-		tally.malformed = true
-		if _, err := io.Copy(digest, file); err != nil {
-			return Record{}, Failure{State: StateUnreadable, Reason: err.Error()}
-		}
-	}
-	return tally.record("sha256:" + hex.EncodeToString(digest.Sum(nil))), Failure{}
+	return tally.record(digest), Failure{}
 }
+
+// skipped marks a line the reader could not take. Its relevance cannot be read, so every
+// count it could have raised loses its claim to be complete.
+func (t *codexTally) skipped() { t.malformed = true }
 
 // line reads one record line into the tally. A line that does not parse marks the tally
 // malformed: its relevance cannot be read, so every count it could have raised loses its
@@ -305,10 +282,10 @@ type codexMeasure struct {
 // measures maps the tally onto the metric inventory. A dimension the source cannot answer
 // stays unknown here rather than reporting the zero its counter happens to hold.
 func (t *codexTally) measures() map[string]codexMeasure {
-	token := func(pick func(codexUsage) int64) codexMeasure {
+	token := func(pick func(codexUsage) *int64) codexMeasure {
 		measure := codexMeasure{source: srcTokenCount, boundary: boundaryTokens}
 		if t.usage != nil {
-			measure.known, measure.count = true, pick(*t.usage)
+			measure.count, measure.known = counter(pick(*t.usage))
 		}
 		return measure
 	}
@@ -317,15 +294,15 @@ func (t *codexTally) measures() map[string]codexMeasure {
 		MetricResultChars:      {count: t.chars, known: true, source: srcResultText, boundary: boundaryChars},
 		MetricResultLines:      {count: t.lines, known: true, source: srcResultText, boundary: boundaryLines},
 		MetricOuterCalls:       {count: int64(len(t.calls)), known: true, source: srcCallID, boundary: boundaryOuterCalls},
-		MetricNestedCalls:      {source: srcSubAgent, boundary: boundaryNestedCalls},
+		MetricNestedCalls:      {source: srcNoShape, boundary: boundaryNestedCalls},
 		MetricUnmatchedCalls:   {count: t.unmatched(), known: true, source: srcPairing, boundary: boundaryUnmatched},
-		MetricInputTokens:      token(func(u codexUsage) int64 { return u.Input }),
-		MetricCachedTokens:     token(func(u codexUsage) int64 { return u.Cached }),
-		MetricOutputTokens:     token(func(u codexUsage) int64 { return u.Output }),
-		MetricReasoningTokens:  token(func(u codexUsage) int64 { return u.Reasoning }),
+		MetricInputTokens:      token(func(u codexUsage) *int64 { return u.Input }),
+		MetricCachedTokens:     token(func(u codexUsage) *int64 { return u.Cached }),
+		MetricOutputTokens:     token(func(u codexUsage) *int64 { return u.Output }),
+		MetricReasoningTokens:  token(func(u codexUsage) *int64 { return u.Reasoning }),
 		MetricCompactions:      {count: t.compactions, known: true, source: srcCompacted, boundary: boundaryCompactions},
 		MetricTurns:            {count: t.turns, known: true, source: srcTaskStarted, boundary: boundaryTurns},
-		MetricReadPaths:        {source: srcNoShape, boundary: boundaryReadPaths},
+		MetricReadPaths:        {source: srcShellText, boundary: boundaryReadPaths},
 		MetricTokenAttribution: {source: srcNoShape, boundary: boundaryAttribution},
 	}
 }
