@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Empty sibling cleanup
+
+- Fixed automatic landing cleanup to retain siblings with no proven commit after their start.
+
 ### Exec child PWD
 
 - Fixed the exec child environment to contain one PWD assignment for its worktree.
