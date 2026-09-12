@@ -39,24 +39,55 @@ Findings: 4. Worst issue: medium.
 - COV-3 (low, auto-fix): the result-text provenance cell names only the array field. It shares COV-1's repair. Citations at tip eb51bc6f: internal/harnesstranscript/codex.go:49, :316-318.
 - COV-4 (low, no-op as a separate target): a snapshot missing one counter key reads as observed 0. SPEC-2's repair covers it. Citations at tip eb51bc6f: internal/harnesstranscript/codex.go:308-314; internal/harnesstranscript/transcript.go:13.
 
+## Reaffirmation at 983df3ad
+
+The retained author repaired ST1, ST2, SPEC-2, SPEC-4, COV-1, COV-2, and COV-3 in one commit on the integration source.
+The chunk pair is now base `8aac4f9d6f40232ed14803b336501f948ebf905f` and tip `983df3ad2355e492918d9a33ae347e280eb7a417`.
+The three axes moved their venues to that tip and reaffirmed against the repair delta.
+
+- Standards: ST1 and ST2 closed. A new finding, ST5 (medium), said the spec citation edit was outside ticket 1's `Writes:`. The coordinator disposed it no-op, because the review phase's step 7 makes a spec amendment the coordinator's own write on the finding cadence. The axis read that rule and withdrew ST5. Final result: 0 findings.
+- Spec: SPEC-1, SPEC-2, and SPEC-4 closed. A new finding, SPEC-5 (low, auto-fix), said one edge-inventory sentence contradicts the delivered `incomplete` availability. The coordinator accepted it and deferred it to chunk ME-C2's spec delta. The replacement sentence reads: "The later counts survive the skipped line, and the interval still closes at the last record timestamp." Final result: 0 open findings.
+- Coverage: COV-1, COV-2, and COV-3 closed at the production 16 MiB bound through the real command. Final result: 0 findings.
+
+Author verification at the tip: the three plan commands passed at 14 ms, 7 ms, and 11345 ms in-package. The ME1 probe bit and restored, and `bench structure --growth` is green. The coordinator's independent omission probe in `read.go` bit. The merge verb's whole-tree gate on this source is green in all six phases.
+
 ## Record
 
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/session-context-measurement/spec.md",
-  "plan_digest": "sha256:13883eacbdd6a65cd0df63f6e087ce509ad0be8584aec32c285d5cf8fc3dc748",
+  "plan_digest": "sha256:8d87f8b154262004cc1d1f2fcd55d91b4c7ab67ae093af9f2fc3cdd08e965f32",
   "implementation_session": "claude:opus-high:ticket-author",
   "chunks": [
     {
       "id": "ME-C1",
       "base": "8aac4f9d6f40232ed14803b336501f948ebf905f",
-      "tip": "6d981dca4d04045634da730482ac8f0cd80c50fc",
-      "plan_digest": "sha256:13883eacbdd6a65cd0df63f6e087ce509ad0be8584aec32c285d5cf8fc3dc748",
-      "source_digest": "48d86d061fd95c6a09fb77a7fd5f19e9a00cde01",
+      "tip": "983df3ad2355e492918d9a33ae347e280eb7a417",
+      "plan_digest": "sha256:8d87f8b154262004cc1d1f2fcd55d91b4c7ab67ae093af9f2fc3cdd08e965f32",
+      "source_digest": "4ef5fe52a6fce58cd7907dda98a27b79dde210d9",
       "acceptance_rows": [
-        "ME1", "ME2", "ME3", "ME4", "ME5", "ME6", "ME7", "ME8", "ME9", "ME10", "ME11", "ME12",
-        "ME17", "ME18", "ME19", "ME20", "ME21", "ME22", "ME23", "ME24", "ME25"
+        "ME1",
+        "ME2",
+        "ME3",
+        "ME4",
+        "ME5",
+        "ME6",
+        "ME7",
+        "ME8",
+        "ME9",
+        "ME10",
+        "ME11",
+        "ME12",
+        "ME17",
+        "ME18",
+        "ME19",
+        "ME20",
+        "ME21",
+        "ME22",
+        "ME23",
+        "ME24",
+        "ME25"
       ],
       "verification": [
         {
@@ -65,13 +96,28 @@ Findings: 4. Worst issue: medium.
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "",
-          "state": "pending",
-          "outcome": "",
-          "native_ref": {"ref": "", "digest": "", "excerpt": ""},
+          "source_digest": "4ef5fe52a6fce58cd7907dda98a27b79dde210d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ticket-author/harness-tests@983df3ad",
+            "digest": "sha256:b83395df72b0d5aaef0e1c1ffcf25a77f419d8928e071e16091bffbb3e86caaa",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/harnesses,pass,14\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
           "requirement": "harness-tests",
           "command": "bench test --package ./internal/harnesses",
-          "exit_code": null
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap the result-text byte count for a rune count",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/ticket-author/probe-me1@983df3ad",
+              "digest": "sha256:39244d98d9a36619c6315eb3a404d4cf4c0693bd314f4ca5fb02e6ff5f1478d6",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/harnesstranscript/codex.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/harnesses,TestObservedTextBoundary,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/harnesses,fail,3\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/harnesses,TestObservedTextBoundary,\"observed_test.go:95: record view = ... (1020 bytes)\"\nskips[0]{package,test,reason}:\n"
+            }
+          }
         },
         {
           "id": "me-c1-reader-tests",
@@ -79,13 +125,17 @@ Findings: 4. Worst issue: medium.
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "",
-          "state": "pending",
-          "outcome": "",
-          "native_ref": {"ref": "", "digest": "", "excerpt": ""},
+          "source_digest": "4ef5fe52a6fce58cd7907dda98a27b79dde210d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ticket-author/reader-tests@983df3ad",
+            "digest": "sha256:bc4e9479aee43c62df5f7b745aa89dc512956ce0bcd58226f50abb44c4e0b622",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/harnesstranscript,pass,7\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
           "requirement": "reader-tests",
           "command": "bench test --package ./internal/harnesstranscript",
-          "exit_code": null
+          "exit_code": 0
         },
         {
           "id": "me-c1-command-tests",
@@ -93,13 +143,17 @@ Findings: 4. Worst issue: medium.
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "",
-          "state": "pending",
-          "outcome": "",
-          "native_ref": {"ref": "", "digest": "", "excerpt": ""},
+          "source_digest": "4ef5fe52a6fce58cd7907dda98a27b79dde210d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ticket-author/command-tests@983df3ad",
+            "digest": "sha256:9d16fb984ba42776ddaaa5e2754d48fb692df5fd727360f49180c7078291113f",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,11345\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
           "requirement": "command-tests",
           "command": "bench test --package ./cmd/bench",
-          "exit_code": null
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -120,8 +174,59 @@ Findings: 4. Worst issue: medium.
           "axis": "Standards",
           "base": "48da9cdf0aabebe39eac7131122ff9d4448b8167",
           "tip": "eb51bc6fd4545c4b0da7b3f294e755d35be0a6f2",
-          "finding_ids": ["ST1", "ST2", "ST3", "ST4"],
+          "finding_ids": [
+            "ST1",
+            "ST2",
+            "ST3",
+            "ST4"
+          ],
           "supersedes": []
+        },
+        {
+          "id": "me-c1-standards-2",
+          "performer": "claude:opus-medium:standards-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4ef5fe52a6fce58cd7907dda98a27b79dde210d9",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude:agent/me-c1-standards-2",
+            "digest": "sha256:04d2e444f17eb1827f611b12b17e4472d303852ed3a5b3d44849211eb763f859",
+            "excerpt": "result: completed; axis: Standards; findings: 1; worst: medium; tip: 983df3ad2355e492918d9a33ae347e280eb7a417"
+          },
+          "axis": "Standards",
+          "base": "8aac4f9d6f40232ed14803b336501f948ebf905f",
+          "tip": "983df3ad2355e492918d9a33ae347e280eb7a417",
+          "finding_ids": [
+            "ST5"
+          ],
+          "supersedes": [
+            "me-c1-standards-1"
+          ]
+        },
+        {
+          "id": "me-c1-standards-3",
+          "performer": "claude:opus-medium:standards-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4ef5fe52a6fce58cd7907dda98a27b79dde210d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/me-c1-standards-3",
+            "digest": "sha256:a7349e3d76076ae96238a9d3ef14688d08a437ce36769a96fb0abc3652c32d17",
+            "excerpt": "result: completed; axis: Standards; findings: 0; worst: none; tip: 983df3ad2355e492918d9a33ae347e280eb7a417"
+          },
+          "axis": "Standards",
+          "base": "8aac4f9d6f40232ed14803b336501f948ebf905f",
+          "tip": "983df3ad2355e492918d9a33ae347e280eb7a417",
+          "finding_ids": [],
+          "supersedes": [
+            "me-c1-standards-2"
+          ]
         },
         {
           "id": "me-c1-spec-1",
@@ -140,8 +245,59 @@ Findings: 4. Worst issue: medium.
           "axis": "Spec",
           "base": "48da9cdf0aabebe39eac7131122ff9d4448b8167",
           "tip": "eb51bc6fd4545c4b0da7b3f294e755d35be0a6f2",
-          "finding_ids": ["SPEC-1", "SPEC-2", "SPEC-3", "SPEC-4"],
+          "finding_ids": [
+            "SPEC-1",
+            "SPEC-2",
+            "SPEC-3",
+            "SPEC-4"
+          ],
           "supersedes": []
+        },
+        {
+          "id": "me-c1-spec-2",
+          "performer": "claude:opus-medium:spec-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4ef5fe52a6fce58cd7907dda98a27b79dde210d9",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude:agent/me-c1-spec-2",
+            "digest": "sha256:e58281175709e116b04b09fe802fe7b049c45361ebfc90dfe1ded3e9719837f6",
+            "excerpt": "result: completed; axis: Spec; findings: 1; worst: low; tip: 983df3ad2355e492918d9a33ae347e280eb7a417"
+          },
+          "axis": "Spec",
+          "base": "8aac4f9d6f40232ed14803b336501f948ebf905f",
+          "tip": "983df3ad2355e492918d9a33ae347e280eb7a417",
+          "finding_ids": [
+            "SPEC-5"
+          ],
+          "supersedes": [
+            "me-c1-spec-1"
+          ]
+        },
+        {
+          "id": "me-c1-spec-3",
+          "performer": "claude:opus-medium:spec-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4ef5fe52a6fce58cd7907dda98a27b79dde210d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/me-c1-spec-3",
+            "digest": "sha256:badf6e31777af06c38ca6e223018831029ae0cd6943e4b3f1bf0164f39058ec7",
+            "excerpt": "result: completed; axis: Spec; findings: 0; worst: none; tip: 983df3ad2355e492918d9a33ae347e280eb7a417"
+          },
+          "axis": "Spec",
+          "base": "8aac4f9d6f40232ed14803b336501f948ebf905f",
+          "tip": "983df3ad2355e492918d9a33ae347e280eb7a417",
+          "finding_ids": [],
+          "supersedes": [
+            "me-c1-spec-2"
+          ]
         },
         {
           "id": "me-c1-coverage-1",
@@ -160,8 +316,35 @@ Findings: 4. Worst issue: medium.
           "axis": "Coverage",
           "base": "48da9cdf0aabebe39eac7131122ff9d4448b8167",
           "tip": "eb51bc6fd4545c4b0da7b3f294e755d35be0a6f2",
-          "finding_ids": ["COV-1", "COV-2", "COV-3", "COV-4"],
+          "finding_ids": [
+            "COV-1",
+            "COV-2",
+            "COV-3",
+            "COV-4"
+          ],
           "supersedes": []
+        },
+        {
+          "id": "me-c1-coverage-2",
+          "performer": "claude:opus-medium:coverage-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4ef5fe52a6fce58cd7907dda98a27b79dde210d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/me-c1-coverage-2",
+            "digest": "sha256:e7e2c3306e2c4ac601cea87f951525f647a94ca5f8ad7a09069333a30622a19b",
+            "excerpt": "result: completed; axis: Coverage; findings: 0; worst: none; tip: 983df3ad2355e492918d9a33ae347e280eb7a417"
+          },
+          "axis": "Coverage",
+          "base": "8aac4f9d6f40232ed14803b336501f948ebf905f",
+          "tip": "983df3ad2355e492918d9a33ae347e280eb7a417",
+          "finding_ids": [],
+          "supersedes": [
+            "me-c1-coverage-1"
+          ]
         }
       ]
     }
