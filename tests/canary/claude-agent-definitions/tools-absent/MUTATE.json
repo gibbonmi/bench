@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".claude/agents/bench-reviewer.md",
+    "old": "tools: Read, Grep, Glob, Bash\n",
+    "new": ""
+  }
+]

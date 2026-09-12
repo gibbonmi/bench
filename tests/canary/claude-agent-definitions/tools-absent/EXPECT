@@ -1,0 +1,1 @@
+claude-agent tools absent: .claude/agents/bench-reviewer.md declares no tools, so it inherits the full tool set

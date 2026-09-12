@@ -87,6 +87,7 @@ func init() {
 		"entry-point-parity":            {checkEntryPointParity, registry.Dev, registry.SubjectRoot},
 		"harness-record":                {checkHarnessRecord, registry.Dev, registry.SubjectRoot},
 		"ticket-grammar":                {checkTicketGrammar, registry.Dev, registry.SubjectRoot},
+		"claude-agent-definitions":      {checkClaudeAgentDefinitions, registry.Dev, registry.SubjectRoot},
 	}
 }
 

@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".claude/agents/bench-reviewer.md",
+    "old": "name: bench-reviewer",
+    "new": "name: bench-review"
+  }
+]

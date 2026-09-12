@@ -42,8 +42,16 @@ internal/conformance/docs_workflow_helpers_test.go 660
 # exact cap re-asks on the next line of growth.
 # checks_test.go re-asked 2026-09-06 under seam-record-test-refusal (FT310): the
 # line-repo fixture's one environment-composition seam now scrubs an inherited
-# BENCH_HOME and injects a private one.
-internal/conformance/checks_test.go 707
+# BENCH_HOME and injects a private one. Re-asked 2026-09-11 under
+# delegate-boot-cost: the binding map gains the claude-agent-definitions row.
+internal/conformance/checks_test.go 708
+
+# The check registry is one enumerated table plus its canary family bindings. A
+# split trades a line breach for a directory breach in a package the profile
+# already calls headroom-free. Granted 2026-09-11 under delegate-boot-cost, when
+# the claude-agent-definitions rows carried it one line over; the exact cap
+# re-asks on the next line of growth.
+internal/conformance/registry/registry.go 401
 internal/conformance/docs_workflow_checks_test.go 786
 internal/conformance/fixture_bite_test.go 826
 internal/conformance/tier_test.go 972
