@@ -18,6 +18,16 @@ Never delegate a decision the reviewer owns. A change of implementation author o
 
 Before you spawn a delegation that changes who performs the requested work, surface it.
 
+## The agent type
+
+Every Claude delegate runs as a Bench agent type, because the full tool set costs
+thousands of tokens before the delegate reads one line. A review axis, a fan-out
+search, and a diagnostic consultation run as `bench-reviewer`. A user-directed write
+delegation runs as `bench-writer`. The general-purpose type is not a Bench delegate
+type. A fork runs only for work that needs the parent's context, and its inherited
+boot is therefore a choice. Each type declares its own tools and no model, so the
+charge still names the resolved bound model id.
+
 ## The charge
 
 A delegate has no conversation memory: everything it needs is in the prompt — objective, inputs by

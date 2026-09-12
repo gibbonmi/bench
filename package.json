@@ -38,6 +38,7 @@
     ".bench/adapters/",
     ".bench/hooks/",
     ".bench/lib/",
+    ".claude/agents/",
     ".claude/README.md",
     ".claude/settings.json",
     ".codex/hooks.json",

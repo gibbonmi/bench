@@ -206,6 +206,7 @@ func TestSubagentTypeNeverImpersonatesAFork(t *testing.T) {
 	for _, subagentType := range []string{
 		``, `""`, `5`, `{}`, `[]`, `null`, `true`,
 		`" fork"`, `"fork "`, `"fork\n"`, `"Fork"`, `"FORK"`, `"forked"`, `"my-fork"`, `"general-purpose"`,
+		`"bench-reviewer"`, `"bench-writer"`,
 	} {
 		t.Run(subagentType, func(t *testing.T) {
 			if exit, stderr := AgentLineVerdict(agentEnvelope(subagentType, `"opus-4-8"`), "claude", bound(fullBinding)); exit != 0 || stderr != "" {

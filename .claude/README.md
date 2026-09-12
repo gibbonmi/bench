@@ -15,5 +15,13 @@ In Claude Code, `/bench-implement-spec` seeds the `TodoWrite` list from
 recorded here because the neutral command file names only the generic
 task-list surface.
 
+`.claude/agents/` holds the Bench agent types, one real file each. A Bench
+agent file declares its name, its description, and the tools it needs, and it
+declares no model. A charge names the agent type and passes the bound tier
+token, so the agent-line guard keeps its verdict. `bench-reviewer` runs a
+review axis, a fan-out search, or a diagnostic consultation. `bench-writer`
+runs a user-directed write delegation. A consumer's own agent files sit beside
+them and stay ungraded.
+
 Hook config in `.claude/settings.json` points to shared scripts in
 `.bench/hooks/`.

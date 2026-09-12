@@ -221,7 +221,7 @@ The Codex side records the measurement in this spec and ships nothing.
 - `.bench/consumer-payload.json`
 - `package.json`
 - `internal/packagesurface/assets.go`
-- `internal/adopt/adopt_test.go`
+- `internal/adopt/link_plan_test.go` (new)
 - `internal/lines/lines_agentline_test.go`
 - `internal/conformance/claude_agent_definitions_test.go` (new)
 - `internal/conformance/skill_description_budgets_test.go` (new)
