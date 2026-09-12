@@ -6,16 +6,26 @@ import (
 )
 
 func TestTouchedPreservesPathBytesAndScope(t *testing.T) {
+	const (
+		modified   = "modified.go"
+		copySource = "copy-source.go"
+		copied     = "copied.go"
+		moved      = "moved.go"
+		copyBody   = "copy source one\ncopy source two\n"
+	)
 	t.Setenv("BENCH_MAX_LINES", "1")
 	t.Setenv("BENCH_MAX_DIR_FILES", "100")
 	root := initRepo(t)
 	run(t, root, "config", "core.quotePath", "true")
+	run(t, root, "config", "diff.renames", "copies")
 	write(t, root, "unchanged.go", lines(2))
-	write(t, root, "deleted.go", lines(2))
+	write(t, root, "deleted.go", "deleted one\ndeleted two\n")
+	write(t, root, modified, "modified one\nmodified two\n")
+	write(t, root, copySource, copyBody)
 	commit(t, root, "base")
 	base := headSha(t, root)
 
-	wants := []string{
+	added := []string{
 		"café.go",
 		"line\nbreak.go",
 		"quote\"name.go",
@@ -23,12 +33,26 @@ func TestTouchedPreservesPathBytesAndScope(t *testing.T) {
 		"tab\tname.go",
 		"before \t.go",
 	}
-	for _, path := range wants {
+	wants := append(append([]string(nil), added...), modified, copied, moved)
+	for _, path := range added {
 		write(t, root, path, lines(2))
 	}
+	write(t, root, modified, "modified one\nmodified two\nmodified three\n")
+	write(t, root, copied, copyBody)
+	run(t, root, "mv", copySource, moved)
 	write(t, root, "after.go ", lines(2))
 	run(t, root, "rm", "deleted.go")
 	commit(t, root, "hostile source paths")
+	statuses := run(t, root, "diff", "--name-status", "-z", "--diff-filter=ACMR", base+"..HEAD")
+	for _, status := range []string{
+		"M\x00" + modified + "\x00",
+		"C100\x00" + copySource + "\x00" + copied + "\x00",
+		"R100\x00" + copySource + "\x00" + moved + "\x00",
+	} {
+		if !strings.Contains(statuses, status) {
+			t.Fatalf("missing committed status %q in %q", status, statuses)
+		}
+	}
 
 	write(t, root, "café.go", lines(3))
 	write(t, root, "uncommitted.go", lines(2))
