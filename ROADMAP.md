@@ -232,6 +232,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT312 cross-harness reviewer and review-axis creation verb — /bench-write-spec
-2. FT300 fixture ownership and verifier evidence — /bench-update-kit
-3. FT313 acceptance evidence in write and repair charges — /bench-update-kit
+1. FT232 bounded repair-loop policy and tripwire — reviewer decision
+2. FT312 cross-harness reviewer and review-axis creation verb — /bench-write-spec
+3. FT300 fixture ownership and verifier evidence — /bench-update-kit
