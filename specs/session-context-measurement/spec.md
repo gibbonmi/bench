@@ -106,6 +106,58 @@ The final reconciliation checks every acceptance row and the integrated result.
 The existing evidence checkpoints continue to block their implementation chunks.
 Execution-plan changes follow `.bench/BENCH.md`.
 
+## Completion plan
+
+The fenced plan names the commands and probes each chunk retains before its checkpoint.
+The final verification runs after chunk ME-C2 and before the landing.
+
+```bench-completion-plan
+{
+  "version": 1,
+  "chunks": [
+    {
+      "id": "ME-C1",
+      "tickets": ["1-inspect-record.md"],
+      "verification": [
+        {
+          "id": "harness-tests",
+          "command": "bench test --package ./internal/harnesses",
+          "probe": "swap the result-text byte count for a rune count"
+        },
+        {
+          "id": "reader-tests",
+          "command": "bench test --package ./internal/harnesstranscript"
+        },
+        {
+          "id": "command-tests",
+          "command": "bench test --package ./cmd/bench"
+        }
+      ]
+    },
+    {
+      "id": "ME-C2",
+      "tickets": ["2-compare-budget-cases.md"],
+      "verification": [
+        {
+          "id": "coverage-check",
+          "command": "bench coverage --check specs/session-context-measurement/spec.md"
+        }
+      ]
+    }
+  ],
+  "final_verification": [
+    {
+      "id": "acceptance",
+      "command": "bench test --package ./..."
+    },
+    {
+      "id": "integration",
+      "command": "bench test --check system"
+    }
+  ]
+}
+```
+
 ## Testing decisions
 
 The command tests exercise the real owner with controlled files and records.
@@ -160,6 +212,11 @@ ME2, ME3, and ME18 cover nested calls, repeated polls, unmatched events, and ups
 ME8 covers repeated snapshots, missing counters, and source resets within the observed interval.
 ME17 covers control-bearing paths and command-shaped record fields as inert data.
 The command uses no package-variable substitution across a subprocess boundary.
+
+A line past the reader's line bound is one malformed event.
+The reader skips that line, marks the affected measures incomplete, and reads the later lines.
+The interval and the later counts stay observed.
+The ME-C1 review decided this rule on 2026-09-11.
 
 Won't handle: automatic session discovery — the agent supplies the explicit record path.
 Won't handle: unsupported harness decoding — the record view reports unknown until a pinned adapter has reviewed evidence.
@@ -232,3 +289,12 @@ The opt-in `harnesses` grammar is a proposed command-owner extension for spec ap
 It preserves the existing compiled views and does not replace FT173 policy.
 ME1–ME12, ME17–ME25 grade the new mode.
 The evidence ticket is an independent, review-owned deliverable after the reader ships.
+
+### Dogfood runs
+
+On 2026-09-11 the ticket 1 binary read the pinned assessment record with `bench harnesses codex --record <path> --format codex-rollout-2026-09-11`.
+The record digest is `sha256:3b40464b598e2a977fddb4f249ff01ff6ec9881e6e7435d6f22ffe1613a60468`, and the observed interval is `2026-09-11T09:00:11.841Z/2026-09-11T12:08:59.066Z`.
+The run reported 1374543 result-text bytes, 1371945 characters, 16071 lines, 403 outer calls, 0 unmatched calls, 5 turns, and 2 compactions.
+The last cumulative snapshot reported 52339083 input, 51375872 cached-input, 135788 output, and 58203 reasoning tokens.
+Nested calls, explicit read paths, and per-result token attribution stayed unknown with their boundary sentences.
+An independent Python census of the same file matched the byte, call, turn, and compaction counts.
