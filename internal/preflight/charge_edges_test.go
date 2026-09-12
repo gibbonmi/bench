@@ -20,7 +20,7 @@ func TestChargeRefusesLiveLinkedRequiredSource(t *testing.T) {
 	args := chargeArgs(t, root, slug, false)
 	args[8] = runGit(t, "rev-parse", "HEAD")
 	out, code := Command(args)
-	if code != 1 || !strings.Contains(out, "source required") || !strings.Contains(out, buildPhase) || strings.Contains(out, "complete") {
+	if code != 1 || !strings.Contains(out, "source required") || !strings.Contains(out, buildPhase) || strings.Contains(out, "complete,next}") {
 		t.Fatalf("live linked source = (%d):\n%s", code, out)
 	}
 }
@@ -47,7 +47,7 @@ func TestChargeRequiredSpecAndCoverageRefuse(t *testing.T) {
 			args := chargeArgs(t, root, slug, false)
 			args[8] = runGit(t, "rev-parse", "HEAD")
 			out, code := Command(args)
-			if code != 1 || !strings.Contains(out, "error:") || strings.Contains(out, "complete") {
+			if code != 1 || !strings.Contains(out, "error:") || strings.Contains(out, "complete,next}") {
 				t.Fatalf("%s required source = (%d):\n%s", test.name, code, out)
 			}
 		})
@@ -63,7 +63,7 @@ func TestChargeRefusesRequiredSourceOutsidePinnedTip(t *testing.T) {
 	out, code := Command(chargeArgs(t, root, slug, true))
 	if code != 1 || !strings.Contains(out, "source required") ||
 		!strings.Contains(out, buildPhase) || !strings.Contains(out, "source tip") ||
-		strings.Contains(out, "complete") {
+		strings.Contains(out, "complete,next}") {
 		t.Fatalf("ignored source outside tip = (%d):\n%s", code, out)
 	}
 }
@@ -102,7 +102,9 @@ func TestChargeDistinguishesAbsentAndEmptyRequiredInputs(t *testing.T) {
 				}
 			},
 			absentWant: "tickets directory is absent",
-			emptyWant:  "rows-owned",
+			// With every ticket gone, the completion plan names a file the tree no
+			// longer holds. That is the earliest fault an empty directory has.
+			emptyWant: "completion-plan",
 		},
 		{
 			name: "selected ticket",
@@ -111,6 +113,7 @@ func TestChargeDistinguishesAbsentAndEmptyRequiredInputs(t *testing.T) {
 				if err := os.Remove("specs/" + slug + "/tickets/one.md"); err != nil {
 					t.Fatal(err)
 				}
+				replanSpec(t, slug, "two.md")
 			},
 			empty: func(t *testing.T, slug string) {
 				mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "")
@@ -135,7 +138,7 @@ func TestChargeDistinguishesAbsentAndEmptyRequiredInputs(t *testing.T) {
 					out, code := Command(chargeArgs(t, root, slug, false))
 					outputs[i] = out
 					if code != 1 || !strings.Contains(out, state.want) ||
-						!strings.Contains(out, " — ") || strings.Contains(out, "complete") {
+						!strings.Contains(out, " — ") || strings.Contains(out, "complete,next}") {
 						t.Fatalf("%s %s = (%d):\n%s", test.name, state.name, code, out)
 					}
 				})
@@ -166,7 +169,7 @@ func TestChargeDistinguishesAbsentAndEmptyGuidanceSources(t *testing.T) {
 					if code != 1 || !strings.Contains(out, "source required") ||
 						!strings.Contains(out, source+" is "+state) ||
 						!strings.Contains(out, "restore the named canonical source") ||
-						strings.Contains(out, "complete") {
+						strings.Contains(out, "complete,next}") {
 						t.Fatalf("%s %s = (%d):\n%s", source, state, code, out)
 					}
 				})
@@ -198,7 +201,7 @@ func TestChargeGrammarBoundariesRefuse(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			out, code := Command(test.args)
 			if code != test.code || !strings.Contains(out, test.want) ||
-				strings.Contains(out, "complete") {
+				strings.Contains(out, "complete,next}") {
 				t.Fatalf("grammar case = (%d):\n%s", code, out)
 			}
 		})

@@ -207,7 +207,6 @@ func completionEvidenceTable(root string, facts Facts) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	plan, planErr := reviewrecord.ReadPlan(root, tree, facts.SpecPath)
 	state, detail := "parsed", ""
 	_, readErr := reviewrecord.Read(root, facts.SpecPath)
 	if errors.Is(readErr, reviewrecord.ErrMissing) {
@@ -215,8 +214,10 @@ func completionEvidenceTable(root string, facts Facts) (string, error) {
 	} else if readErr != nil {
 		state, detail = "invalid", readErr.Error()
 	}
-	if planErr != nil {
-		detail = "completion plan unavailable: " + planErr.Error()
+	// The gatherer already read the plan for the completion-plan row. The packet
+	// renders that one answer rather than parsing the fence a second time.
+	if facts.CompletionPlanError != "" {
+		detail = "completion plan unavailable: " + facts.CompletionPlanError
 	}
-	return toon.Table("completion_evidence", []string{"record", "source_digest", "plan_digest", "record_state", "detail"}, [][]string{{path, source, plan.Digest, state, detail}})
+	return toon.Table("completion_evidence", []string{"record", "source_digest", "plan_digest", "record_state", "detail"}, [][]string{{path, source, facts.CompletionPlanDigest, state, detail}})
 }

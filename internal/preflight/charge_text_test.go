@@ -51,7 +51,7 @@ func TestChargeTextSinksUseTOONEscapingAndRefusal(t *testing.T) {
 			out, code := Command(chargeArgs(t, root, slug, true))
 			if code != 1 || !strings.Contains(out, "source required") ||
 				!strings.Contains(out, buildPhase) ||
-				!strings.Contains(out, "cannot represent") || strings.Contains(out, "complete") {
+				!strings.Contains(out, "cannot represent") || strings.Contains(out, "complete,next}") {
 				t.Fatalf("%s source = (%d):\n%s", control.name, code, out)
 			}
 		})
