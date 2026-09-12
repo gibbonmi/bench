@@ -8,6 +8,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/learnings"
+	"github.com/gibbonmi/bench/internal/prose"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -50,6 +51,10 @@ func LearningCommand(args []string) (string, int) {
 	if refusal != "" {
 		return refusal, code
 	}
+	entry := learnings.FormatEntry(time.Now().Format("2006-01-02"), title, what, right, parsed.Flags["--rule"])
+	if diagnostics := proseRefusals(root, entry); len(diagnostics) > 0 {
+		return learningGrammar.Help + "\n" + strings.Join(diagnostics, "\n") + "\n", 2
+	}
 	file := filepath.Join(root, learnings.JournalPath)
 	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
 		return cannotWrite(learnings.JournalPath, err), 1
@@ -59,7 +64,6 @@ func LearningCommand(args []string) (string, int) {
 		return cannotWrite(learnings.JournalPath, err), 1
 	}
 	defer f.Close()
-	entry := learnings.FormatEntry(time.Now().Format("2006-01-02"), title, what, right, parsed.Flags["--rule"])
 	// A blank line separates the new heading from whatever ends the file; the missing
 	// trailing newline case folds into the same single write as the idea verb's.
 	switch {
@@ -103,4 +107,28 @@ func inboxRoot(relPath string) (root, refusal string, code int) {
 
 func cannotWrite(relPath string, err error) string {
 	return toon.Errorf("cannot write "+relPath, err.Error()) + "\n"
+}
+
+// proseRefusals grades entry, composed exactly as it will be written, against the same
+// rule the live-tree prose sweep applies once the journal is on disk. It returns each
+// finding in the grader's own wording (RenderNamedResult), the one source, with line
+// numbers relative to entry rather than to the file it will land in, so a refusal names
+// the offending bullet the author can shorten without opening the journal. A policy this
+// helper cannot load, an absent or broken exclusion file, is not this verb's failure to
+// diagnose, so it grades nothing and lets the write proceed; the tree-wide sweep still
+// owns that refusal.
+func proseRefusals(root, entry string) []string {
+	grader, diags := prose.NewGrader(root)
+	if len(diags) > 0 {
+		return nil
+	}
+	results := grader.GradeBytes(learnings.JournalPath, []byte(entry))
+	if len(results) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(results))
+	for _, result := range results {
+		out = append(out, prose.RenderNamedResult(result))
+	}
+	return out
 }
