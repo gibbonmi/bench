@@ -102,6 +102,59 @@ The final reconciliation checks every acceptance row and the integrated result.
 The existing evidence checkpoints continue to block their implementation chunks.
 Execution-plan changes follow `.bench/BENCH.md`.
 
+## Completion plan
+
+The fenced plan names the commands and probes each chunk retains before its checkpoint.
+The final verification runs after chunk CL-C2 and before the landing.
+
+```bench-completion-plan
+{
+  "version": 1,
+  "chunks": [
+    {
+      "id": "CL-C1",
+      "tickets": ["1-plan-explicit-sets.md"],
+      "verification": [
+        {
+          "id": "clean-tests",
+          "command": "bench test --package ./internal/worktree --run TestClean",
+          "probe": "omit the alias collapse so a repeated identity plans twice"
+        },
+        {
+          "id": "command-tests",
+          "command": "bench test --package ./cmd/bench"
+        }
+      ]
+    },
+    {
+      "id": "CL-C2",
+      "tickets": ["2-complete-preflight-outcomes.md"],
+      "verification": [
+        {
+          "id": "clean-tests",
+          "command": "bench test --package ./internal/worktree --run TestClean",
+          "probe": "omit the complete-set preflight before the first transaction"
+        },
+        {
+          "id": "landing-tests",
+          "command": "bench test --package ./internal/worktree --run TestLand"
+        }
+      ]
+    }
+  ],
+  "final_verification": [
+    {
+      "id": "acceptance",
+      "command": "bench test --package ./..."
+    },
+    {
+      "id": "integration",
+      "command": "bench test --check system"
+    }
+  ]
+}
+```
+
 ## Testing decisions
 
 Tests drive the production owner through controlled inputs and its existing injected boundaries.
