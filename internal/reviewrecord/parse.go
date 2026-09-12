@@ -17,6 +17,16 @@ import (
 var objectID = regexp.MustCompile(`^(?:[0-9a-f]{40}|[0-9a-f]{64})$`)
 var ErrMissing = errors.New("missing review record")
 
+// missingFence is the absent-fence answer. One sentinel answers every fence, so
+// the message names the fence that is absent: a missing completion plan that
+// reads as a missing review record sends the reader to the wrong file. The
+// sentinel stays reachable through Unwrap, so a caller still tests the
+// condition with errors.Is.
+type missingFence struct{ name string }
+
+func (e missingFence) Error() string { return "missing " + e.name + " fence" }
+func (e missingFence) Unwrap() error { return ErrMissing }
+
 func Digest(data []byte) string {
 	sum := sha256.Sum256(data)
 	return "sha256:" + hex.EncodeToString(sum[:])
@@ -214,7 +224,7 @@ func fenced(data []byte, name string) ([]byte, error) {
 		return nil, fmt.Errorf("invalid unterminated %s fence", name)
 	}
 	if !found {
-		return nil, ErrMissing
+		return nil, missingFence{name}
 	}
 	return []byte(strings.Join(payload, "\n")), nil
 }

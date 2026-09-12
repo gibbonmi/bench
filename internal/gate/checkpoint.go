@@ -83,6 +83,30 @@ func parseGateArgs(args []string, plumbing bool) (string, runMode, Checkpoint, e
 	return root, mode, checkpoint, checkpoint.validate()
 }
 
+// routeError is a refusal that carries the harness-native read which answers it.
+// The refusal printer adds that route under the reason. Only the completion-
+// evidence refusal builds one: the checkpoint cannot show what the evidence
+// lacks, and one read reports it.
+type routeError struct {
+	next string
+	err  error
+}
+
+func (e routeError) Error() string { return e.err.Error() }
+func (e routeError) Unwrap() error { return e.err }
+
+// routedRefusal routes the completion-evidence refusal to the preflight review
+// read. The slug comes from the spec-path grammar's one owner, so the route can
+// never name a spec the checkpoint did not open. A spec whose slug does not
+// resolve carries no route; validate already refused that path upstream.
+func routedRefusal(spec string, err error) error {
+	slug, slugErr := reviewrecord.Slug(spec)
+	if slugErr != nil {
+		return err
+	}
+	return routeError{next: "bench preflight review " + slug, err: err}
+}
+
 func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subject) (subject, error) {
 	if err := validateCompletionContext(e); err != nil {
 		return subject{}, err
@@ -116,7 +140,7 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 		}
 	}
 	if err := reviewrecord.CheckTrees(e.identityRoot, sourceTree, generation.tree, tip, e.checkpoint.Spec, e.checkpoint.Chunk, e.checkpoint.Complete); err != nil {
-		return subject{}, fmt.Errorf("completion evidence: %w", err)
+		return subject{}, routedRefusal(e.checkpoint.Spec, fmt.Errorf("completion evidence: %w", err))
 	}
 	purpose, _ := json.Marshal(e.checkpoint)
 	hash := sha256.New()
