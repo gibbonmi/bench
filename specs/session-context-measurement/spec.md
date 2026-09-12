@@ -215,7 +215,7 @@ The command uses no package-variable substitution across a subprocess boundary.
 
 A line past the reader's line bound is one malformed event.
 The reader skips that line, marks the affected measures incomplete, and reads the later lines.
-The interval and the later counts stay observed.
+The later counts survive the skipped line, and the interval still closes at the last record timestamp.
 The ME-C1 review decided this rule on 2026-09-11.
 
 Won't handle: automatic session discovery — the agent supplies the explicit record path.
