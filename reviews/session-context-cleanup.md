@@ -405,3 +405,29 @@ The coordinator ran the focused checks, the structure ratchet, and one independe
 `bench structure --growth HEAD` exits zero, and `.bench/structure-accept` holds no new grant.
 The coordinator granted two fence expansions inside the approved behavior, and `bench learning` records each one.
 The author reported `worktree.go` as unchanged. The coordinator read the diff and found five rewired call sites at an unchanged line count.
+
+## CL-C2 repair at 52734949
+
+The retained author repaired nine auto-fix targets. These are ST6, ST7, ST8, ST9, ST11 with SPEC-6, SPEC-4, COV-5, COV-6, and the test half of COV-3.
+
+`staleRows` and `renderStaleSet` now own the stale refusal. `requalifyExplicitRow` gives explicit mode the owner landed mode already had.
+`notAttemptedPlans` owns the unreached tail for both modes, and it passes a non-removable row through untouched.
+`unclaimedOptions` is the one source of the unclaimed fixed options. The re-plan is computed inside the branch that uses it.
+
+`retainedMemberFixture` holds one removable member and one retained member.
+`TestCleanSetRetainedMember` covers the pass-through and the preflight skip.
+`TestCleanSetSpentPlan` now uses that fixture. One member still resolves after the apply, so the refusal has a live source.
+
+ST10 is reverted and stays open. The move of `ActionNotAttempted` into `lifecyclepolicy` reds the ratchet on two files.
+`classifier.go` is 510 lines and `lifecyclepolicy.go` is 562 lines, against a 400 budget.
+The only path through is a cap raise in `.bench/structure.budgets`, which is a reviewer-owned file.
+The coordinator refused the raise. A cap loosens the ratchet for every later change to those two files.
+
+The value keeps its declaration in `clean_set_apply.go`. Its doc comment now states why it sits outside the plan vocabulary.
+The reviewer owns the disposition. A split of both files is the alternative to a cap.
+
+The author reported five biting probes. The coordinator re-ran the COV-3 probe independently.
+A `--swap` of the digest comparison to `if false` against `TestCleanSetSpentPlan` returned `verdict=bit` and `restored=yes`.
+The focused checks pass across all seven packages. `bench structure --growth HEAD` exits zero with no new grant and no budget change.
+
+Open for the reviewer: ST10, SPEC-5, and COV-4.
