@@ -114,3 +114,359 @@ Standards and Coverage each returned one finding, and both named the same site.
 One repair closes both findings: the agent check now calls the shared enumerator.
 The shared helper's own tests cover the unreadable root, and a new FIFO test keeps the per-file classifier covered.
 The coordinator probed the migration by dropping the propagated diagnostics, and three tests turned red.
+
+```bench-review-record
+{
+  "version": 1,
+  "spec": "specs/delegate-boot-cost/spec.md",
+  "plan_digest": "sha256:6e1578955b1c9f992106db91ee61115b549571facde9b1d9bc763ab5be46faf9",
+  "implementation_session": "claude:opus-high:retained-author",
+  "chunks": [
+    {
+      "id": "C1",
+      "base": "347b5cfff016e2992a43c9d8045ee7c6abf27712",
+      "tip": "24f6cd97a2f3d97e28558ceba62cea2fae1ec60f",
+      "plan_digest": "sha256:6e1578955b1c9f992106db91ee61115b549571facde9b1d9bc763ab5be46faf9",
+      "source_digest": "a31303b2a7b0059537532535ec4e8740929c07ba",
+      "acceptance_rows": [
+        "DB1",
+        "DB2",
+        "DB3",
+        "DB4",
+        "DB5",
+        "DB6",
+        "DB7",
+        "DB8",
+        "DB9",
+        "DB10",
+        "DB11",
+        "DB12",
+        "DB13",
+        "DB27",
+        "DB28"
+      ],
+      "verification": [
+        {
+          "id": "c1-tests",
+          "performer": "claude:opus-high:retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a31303b2a7b0059537532535ec4e8740929c07ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:session/retained-author/c1-tests@24f6cd97a2f3d97e28558ceba62cea2fae1ec60f",
+            "digest": "sha256:5600f960fb2cac0d869cec4e37f9602150b010d0d3f5bc7139a931a3a4f9dfc9",
+            "excerpt": "ok  \tgithub.com/gibbonmi/bench/internal/adopt\t10.068s\nok  \tgithub.com/gibbonmi/bench/internal/lines\t(cached)\nok  \tgithub.com/gibbonmi/bench/internal/packagesurface\t(cached)\nok  \tgithub.com/gibbonmi/bench/internal/conformance\t13.707s\n"
+          },
+          "requirement": "tests",
+          "command": "go test ./internal/adopt ./internal/lines ./internal/packagesurface ./internal/conformance",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit the model-declared diagnostic in the check",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:session/retained-author/probe-c1@24f6cd97a2f3d97e28558ceba62cea2fae1ec60f",
+              "digest": "sha256:2be2b25287c059f9a642e9fd8e19273bcf42fb0d779220e3c0d4088eb9354ec5",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/conformance/claude_agent_definitions_test.go,omit,failed,2,yes\nfailures[2]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestEveryRetainedFixtureBitesThroughRegisteredOwner/model-declared,\"model-declared did not bite through owner claude-agent-definitions\"\n"
+            }
+          }
+        },
+        {
+          "id": "c1-checks",
+          "performer": "claude:opus-high:retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a31303b2a7b0059537532535ec4e8740929c07ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:session/retained-author/c1-checks@24f6cd97a2f3d97e28558ceba62cea2fae1ec60f",
+            "digest": "sha256:3dbcbda9d319f8709d4842f8a33b45a8f7eccd2400c68d4a9d0e378b926d0d7a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "checks",
+          "command": "bench test --check claude-agent-definitions",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "c1-standards-2",
+          "performer": "claude:sonnet-high:standards-axis",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a31303b2a7b0059537532535ec4e8740929c07ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/c1-standards-2",
+            "digest": "sha256:474aec0d39484836f55f37265615f3523fff2ce299fd2b96b636fcb292c2ca04",
+            "excerpt": "result: completed; axis: Standards; findings: 0; worst: none; tip: 24f6cd97a2f3d97e28558ceba62cea2fae1ec60f"
+          },
+          "axis": "Standards",
+          "base": "347b5cfff016e2992a43c9d8045ee7c6abf27712",
+          "tip": "24f6cd97a2f3d97e28558ceba62cea2fae1ec60f",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c1-spec-2",
+          "performer": "claude:sonnet-high:spec-axis",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a31303b2a7b0059537532535ec4e8740929c07ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/c1-spec-2",
+            "digest": "sha256:a1386637f36f61269105ef481b5f5b67cf52e86a779d12bdef7d4e9a358f81e6",
+            "excerpt": "result: completed; axis: Spec; findings: 0; worst: none; tip: 24f6cd97a2f3d97e28558ceba62cea2fae1ec60f"
+          },
+          "axis": "Spec",
+          "base": "347b5cfff016e2992a43c9d8045ee7c6abf27712",
+          "tip": "24f6cd97a2f3d97e28558ceba62cea2fae1ec60f",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c1-coverage-2",
+          "performer": "claude:sonnet-high:coverage-axis",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a31303b2a7b0059537532535ec4e8740929c07ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/c1-coverage-2",
+            "digest": "sha256:9b34763f5817f3d766a23fe4fa290a4d8122bd8a35a80f728b92ecb828e571f6",
+            "excerpt": "result: completed; axis: Coverage; findings: 0; worst: none; tip: 24f6cd97a2f3d97e28558ceba62cea2fae1ec60f"
+          },
+          "axis": "Coverage",
+          "base": "347b5cfff016e2992a43c9d8045ee7c6abf27712",
+          "tip": "24f6cd97a2f3d97e28558ceba62cea2fae1ec60f",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
+    },
+    {
+      "id": "C2",
+      "base": "458f72e067dd5ad4695dfd0ea007503d95fe0fac",
+      "tip": "24f6cd97a2f3d97e28558ceba62cea2fae1ec60f",
+      "plan_digest": "sha256:6e1578955b1c9f992106db91ee61115b549571facde9b1d9bc763ab5be46faf9",
+      "source_digest": "a31303b2a7b0059537532535ec4e8740929c07ba",
+      "acceptance_rows": [
+        "DB14",
+        "DB15",
+        "DB16",
+        "DB17",
+        "DB18",
+        "DB19",
+        "DB20",
+        "DB21",
+        "DB22",
+        "DB23",
+        "DB24",
+        "DB25",
+        "DB26",
+        "DB29",
+        "DB30"
+      ],
+      "verification": [
+        {
+          "id": "c2-tests",
+          "performer": "claude:opus-high:retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a31303b2a7b0059537532535ec4e8740929c07ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:session/retained-author/c2-tests@24f6cd97a2f3d97e28558ceba62cea2fae1ec60f",
+            "digest": "sha256:686fdbd9629817929026e81ea1d4e4ca3bda19c9e4de75e138ae0478efca29c2",
+            "excerpt": "ok  \tgithub.com/gibbonmi/bench/internal/gate\t8.482s\nok  \tgithub.com/gibbonmi/bench/internal/conformance\t(cached)\n"
+          },
+          "requirement": "tests",
+          "command": "go test ./internal/gate ./internal/conformance",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit the white-space collapse before the rune count",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:session/retained-author/probe-c2@24f6cd97a2f3d97e28558ceba62cea2fae1ec60f",
+              "digest": "sha256:27db73f54e00a89f2be5dc7aa12fa1c5268e610de0e6d375242fa836f1929e35",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/conformance/skill_description_budgets_test.go,omit,failed,1,yes\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetCountsCollapsedRunes,\"white space runs were counted instead of collapsed\"\n"
+            }
+          }
+        },
+        {
+          "id": "c2-checks",
+          "performer": "claude:opus-high:retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a31303b2a7b0059537532535ec4e8740929c07ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:session/retained-author/c2-checks@24f6cd97a2f3d97e28558ceba62cea2fae1ec60f",
+            "digest": "sha256:907451be9411629d3b2882c5ac073527bb4fe7f8db4e4c3d53f4cfe254a1653c",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "checks",
+          "command": "bench test --check skill-description-budgets",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "c2-standards-2",
+          "performer": "claude:sonnet-high:standards-axis",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a31303b2a7b0059537532535ec4e8740929c07ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/c2-standards-2",
+            "digest": "sha256:474aec0d39484836f55f37265615f3523fff2ce299fd2b96b636fcb292c2ca04",
+            "excerpt": "result: completed; axis: Standards; findings: 0; worst: none; tip: 24f6cd97a2f3d97e28558ceba62cea2fae1ec60f"
+          },
+          "axis": "Standards",
+          "base": "458f72e067dd5ad4695dfd0ea007503d95fe0fac",
+          "tip": "24f6cd97a2f3d97e28558ceba62cea2fae1ec60f",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c2-spec-2",
+          "performer": "claude:sonnet-high:spec-axis",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a31303b2a7b0059537532535ec4e8740929c07ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/c2-spec-2",
+            "digest": "sha256:a1386637f36f61269105ef481b5f5b67cf52e86a779d12bdef7d4e9a358f81e6",
+            "excerpt": "result: completed; axis: Spec; findings: 0; worst: none; tip: 24f6cd97a2f3d97e28558ceba62cea2fae1ec60f"
+          },
+          "axis": "Spec",
+          "base": "458f72e067dd5ad4695dfd0ea007503d95fe0fac",
+          "tip": "24f6cd97a2f3d97e28558ceba62cea2fae1ec60f",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c2-coverage-2",
+          "performer": "claude:sonnet-high:coverage-axis",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a31303b2a7b0059537532535ec4e8740929c07ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/c2-coverage-2",
+            "digest": "sha256:9b34763f5817f3d766a23fe4fa290a4d8122bd8a35a80f728b92ecb828e571f6",
+            "excerpt": "result: completed; axis: Coverage; findings: 0; worst: none; tip: 24f6cd97a2f3d97e28558ceba62cea2fae1ec60f"
+          },
+          "axis": "Coverage",
+          "base": "458f72e067dd5ad4695dfd0ea007503d95fe0fac",
+          "tip": "24f6cd97a2f3d97e28558ceba62cea2fae1ec60f",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
+    }
+  ],
+  "completion": {
+    "state": "completed",
+    "source_digest": "9a94dc2a838fd01c265a1d3d00e4b177eeb98ab0",
+    "performer": "claude:opus-high:retained-author",
+    "reconciliation": {
+      "DB1": "covered",
+      "DB2": "covered",
+      "DB3": "covered",
+      "DB4": "covered",
+      "DB5": "covered",
+      "DB6": "covered",
+      "DB7": "covered",
+      "DB8": "covered",
+      "DB9": "covered",
+      "DB10": "covered",
+      "DB11": "covered",
+      "DB12": "covered",
+      "DB13": "covered",
+      "DB27": "covered",
+      "DB28": "covered",
+      "DB14": "covered",
+      "DB15": "covered",
+      "DB16": "covered",
+      "DB17": "covered",
+      "DB18": "covered",
+      "DB19": "covered",
+      "DB20": "covered",
+      "DB21": "covered",
+      "DB22": "covered",
+      "DB23": "covered",
+      "DB24": "covered",
+      "DB25": "covered",
+      "DB26": "covered",
+      "DB29": "covered",
+      "DB30": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-acceptance",
+        "performer": "claude:opus-high:retained-author",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "9a94dc2a838fd01c265a1d3d00e4b177eeb98ab0",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session/retained-author/gate@7566fb54257bfcb8d6f33a321e3ed0b062194f37",
+          "digest": "sha256:56f451c0e10f72520d09b2cfe1269ae85cae602999c19a36c709e5d9a3ea78a1",
+          "excerpt": "phases[6]{phase,verdict,elapsed_ms}:\n  gofmt,green,112\n  vet,green,1124\n  test,green,127802\n  race,green,4372\n  system,green,58813\n  shellcheck,green,684\ngate: green\n"
+        },
+        "requirement": "acceptance",
+        "command": "bench gate",
+        "exit_code": 0
+      },
+      {
+        "id": "final-integration",
+        "performer": "claude:opus-high:retained-author",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "9a94dc2a838fd01c265a1d3d00e4b177eeb98ab0",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session/retained-author/system@7566fb54257bfcb8d6f33a321e3ed0b062194f37",
+          "digest": "sha256:8f1bd1f42c36a14bc907184f6ea9d9188203541efe6e1523f9538025fee848fd",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,42975\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "integration",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
+  }
+}
+```
