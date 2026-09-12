@@ -83,13 +83,25 @@ Findings: 5. Worst issue: medium. Every surface class and content class the spec
 - C2-COV-4 (medium, auto-fix): the multibyte case informs no proposal row. Repair: attach case 18 to the Bench-query row and state that bounds are bytes. Citations at tip 61b39fc4: assets/budget-evidence.md:49, :149-155; spec.md:31.
 - C2-COV-5 (low, auto-fix): the same tip mismatch as S1. Shares S1's repair.
 
-## Record
+## Reaffirmation at d2a172cb (ME-C2)
 
+The retained author repaired the eight targets in one commit and the SPEC-8 path cell in a second.
+Main `244a8acb` merged into the source between them, with no fenced path in its delta.
+The chunk pair is base `9ecc1d561d918a3270a0894e5313b9ad3aabb0f5` and tip `d2a172cbc1969549c8cffda17bfd0dd6ef2061c3`.
+
+- Standards: S1, S2, and S3 closed at f64214f3; the final result at d2a172cb has 0 findings.
+- Spec: SPEC-6 and SPEC-7 closed at f64214f3, where SPEC-8 (low) asked for case 20's full path; SPEC-8 closed at d2a172cb with 0 findings. ME13 to ME16 stay closed.
+- Coverage: C2-COV-1 to C2-COV-5 closed at f64214f3; the final result at d2a172cb has 0 findings, and the merge changes no measured case.
+
+Author verification: `bench coverage --check specs/session-context-measurement/spec.md` reports 25 valid rows at the tip.
+The merge verb's whole-tree gate on this source is green in all six phases at d2a172cb.
+
+## Record
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/session-context-measurement/spec.md",
-  "plan_digest": "sha256:8d87f8b154262004cc1d1f2fcd55d91b4c7ab67ae093af9f2fc3cdd08e965f32",
+  "plan_digest": "sha256:4411f403c96f6db2f182c9fc540ea7d0b8c8ae7c8cd4758523cae4dc6cc74e58",
   "implementation_session": "claude:opus-high:ticket-author",
   "chunks": [
     {
@@ -379,6 +391,248 @@ Findings: 5. Worst issue: medium. Every surface class and content class the spec
           ]
         }
       ]
+    },
+    {
+      "id": "ME-C2",
+      "base": "9ecc1d561d918a3270a0894e5313b9ad3aabb0f5",
+      "tip": "d2a172cbc1969549c8cffda17bfd0dd6ef2061c3",
+      "plan_digest": "sha256:4411f403c96f6db2f182c9fc540ea7d0b8c8ae7c8cd4758523cae4dc6cc74e58",
+      "source_digest": "de19ff6d2dbeb24ab41f78e54efbe7ea38ede230",
+      "acceptance_rows": [
+        "ME13",
+        "ME14",
+        "ME15",
+        "ME16"
+      ],
+      "verification": [
+        {
+          "id": "me-c2-coverage-check",
+          "performer": "claude:opus-high:ticket-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "de19ff6d2dbeb24ab41f78e54efbe7ea38ede230",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ticket-author/coverage-check@d2a172cb",
+            "digest": "sha256:c7b29e04601c679dede1be6cc5d6a5e40f68054ee7bf975f3c0478f11a8e84ab",
+            "excerpt": "ok: coverage map valid \u2014 25 row(s)\n"
+          },
+          "requirement": "coverage-check",
+          "command": "bench coverage --check specs/session-context-measurement/spec.md",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "me-c2-standards-1",
+          "performer": "claude:opus-medium:standards-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "21fae2e0be4f1c6858c7aaf1e43f9c4210089dcf",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude:agent/me-c2-standards-1",
+            "digest": "sha256:48f249f1d7de8672352027b816bab13fb7903bade88da0cbb6d14b2e603ec358",
+            "excerpt": "result: completed; axis: Standards; findings: 3; worst: low; tip: 61b39fc41cb92620f64c41bd2a94319c8c9207bc"
+          },
+          "axis": "Standards",
+          "base": "9ecc1d561d918a3270a0894e5313b9ad3aabb0f5",
+          "tip": "61b39fc41cb92620f64c41bd2a94319c8c9207bc",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "me-c2-standards-2",
+          "performer": "claude:opus-medium:standards-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "394814212098568708e6cd814c78a1a8df39bd2b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/me-c2-standards-2",
+            "digest": "sha256:60fa234e61f693d151b43b71f21d42ee04037ccd32d8dc14b820582fa48f0597",
+            "excerpt": "result: completed; axis: Standards; findings: 0; worst: none; tip: f64214f3656a926c24f474f7094e9967ebce66f1"
+          },
+          "axis": "Standards",
+          "base": "9ecc1d561d918a3270a0894e5313b9ad3aabb0f5",
+          "tip": "f64214f3656a926c24f474f7094e9967ebce66f1",
+          "finding_ids": [],
+          "supersedes": [
+            "me-c2-standards-1"
+          ]
+        },
+        {
+          "id": "me-c2-standards-3",
+          "performer": "claude:opus-medium:standards-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "de19ff6d2dbeb24ab41f78e54efbe7ea38ede230",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/me-c2-standards-3",
+            "digest": "sha256:e722d887b7bc6ad633b9a7b50bba2de4d8c882413195395d11c6e4262ffdaa43",
+            "excerpt": "result: completed; axis: Standards; findings: 0; worst: none; tip: d2a172cbc1969549c8cffda17bfd0dd6ef2061c3"
+          },
+          "axis": "Standards",
+          "base": "9ecc1d561d918a3270a0894e5313b9ad3aabb0f5",
+          "tip": "d2a172cbc1969549c8cffda17bfd0dd6ef2061c3",
+          "finding_ids": [],
+          "supersedes": [
+            "me-c2-standards-2"
+          ]
+        },
+        {
+          "id": "me-c2-spec-1",
+          "performer": "claude:opus-medium:spec-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "21fae2e0be4f1c6858c7aaf1e43f9c4210089dcf",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude:agent/me-c2-spec-1",
+            "digest": "sha256:051a586fe91d9e85452a3fdabd0e3040f83b93b2bad2d3170cfc7011257058c6",
+            "excerpt": "result: completed; axis: Spec; findings: 2; worst: low; tip: 61b39fc41cb92620f64c41bd2a94319c8c9207bc"
+          },
+          "axis": "Spec",
+          "base": "9ecc1d561d918a3270a0894e5313b9ad3aabb0f5",
+          "tip": "61b39fc41cb92620f64c41bd2a94319c8c9207bc",
+          "finding_ids": [
+            "SPEC-6",
+            "SPEC-7"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "me-c2-spec-2",
+          "performer": "claude:opus-medium:spec-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "394814212098568708e6cd814c78a1a8df39bd2b",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude:agent/me-c2-spec-2",
+            "digest": "sha256:91acb01849de7b6cf5bdbd301d716f91e6f5090bb55d0fadb743e67b6ef5b0c8",
+            "excerpt": "result: completed; axis: Spec; findings: 1; worst: low; tip: f64214f3656a926c24f474f7094e9967ebce66f1"
+          },
+          "axis": "Spec",
+          "base": "9ecc1d561d918a3270a0894e5313b9ad3aabb0f5",
+          "tip": "f64214f3656a926c24f474f7094e9967ebce66f1",
+          "finding_ids": [
+            "SPEC-8"
+          ],
+          "supersedes": [
+            "me-c2-spec-1"
+          ]
+        },
+        {
+          "id": "me-c2-spec-3",
+          "performer": "claude:opus-medium:spec-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "de19ff6d2dbeb24ab41f78e54efbe7ea38ede230",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/me-c2-spec-3",
+            "digest": "sha256:83410183bd612357924eb4c1dbe212d09595308ac74f09022047aff0d162e0fb",
+            "excerpt": "result: completed; axis: Spec; findings: 0; worst: none; tip: d2a172cbc1969549c8cffda17bfd0dd6ef2061c3"
+          },
+          "axis": "Spec",
+          "base": "9ecc1d561d918a3270a0894e5313b9ad3aabb0f5",
+          "tip": "d2a172cbc1969549c8cffda17bfd0dd6ef2061c3",
+          "finding_ids": [],
+          "supersedes": [
+            "me-c2-spec-2"
+          ]
+        },
+        {
+          "id": "me-c2-coverage-1",
+          "performer": "claude:opus-medium:coverage-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "21fae2e0be4f1c6858c7aaf1e43f9c4210089dcf",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude:agent/me-c2-coverage-1",
+            "digest": "sha256:4fda068fab1762522aff3c9d40c90768f49037724f01bc3d8bc54ac187fde157",
+            "excerpt": "result: completed; axis: Coverage; findings: 5; worst: medium; tip: 61b39fc41cb92620f64c41bd2a94319c8c9207bc"
+          },
+          "axis": "Coverage",
+          "base": "9ecc1d561d918a3270a0894e5313b9ad3aabb0f5",
+          "tip": "61b39fc41cb92620f64c41bd2a94319c8c9207bc",
+          "finding_ids": [
+            "C2-COV-1",
+            "C2-COV-2",
+            "C2-COV-3",
+            "C2-COV-4",
+            "C2-COV-5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "me-c2-coverage-2",
+          "performer": "claude:opus-medium:coverage-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "394814212098568708e6cd814c78a1a8df39bd2b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/me-c2-coverage-2",
+            "digest": "sha256:65e8a3a4e31d50cc92ec4941dd94cd4bd182879b87f7452f608b035df1515e13",
+            "excerpt": "result: completed; axis: Coverage; findings: 0; worst: none; tip: f64214f3656a926c24f474f7094e9967ebce66f1"
+          },
+          "axis": "Coverage",
+          "base": "9ecc1d561d918a3270a0894e5313b9ad3aabb0f5",
+          "tip": "f64214f3656a926c24f474f7094e9967ebce66f1",
+          "finding_ids": [],
+          "supersedes": [
+            "me-c2-coverage-1"
+          ]
+        },
+        {
+          "id": "me-c2-coverage-3",
+          "performer": "claude:opus-medium:coverage-axis",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "de19ff6d2dbeb24ab41f78e54efbe7ea38ede230",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/me-c2-coverage-3",
+            "digest": "sha256:7da50acbf1762b773299c21b23080989ce96197afcd559b48aee62a95b4cbb26",
+            "excerpt": "result: completed; axis: Coverage; findings: 0; worst: none; tip: d2a172cbc1969549c8cffda17bfd0dd6ef2061c3"
+          },
+          "axis": "Coverage",
+          "base": "9ecc1d561d918a3270a0894e5313b9ad3aabb0f5",
+          "tip": "d2a172cbc1969549c8cffda17bfd0dd6ef2061c3",
+          "finding_ids": [],
+          "supersedes": [
+            "me-c2-coverage-2"
+          ]
+        }
+      ]
     }
   ],
   "completion": {
@@ -387,6 +641,20 @@ Findings: 5. Worst issue: medium. Every surface class and content class the spec
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:8d87f8b154262004cc1d1f2fcd55d91b4c7ab67ae093af9f2fc3cdd08e965f32",
+      "to": "sha256:4411f403c96f6db2f182c9fc540ea7d0b8c8ae7c8cd4758523cae4dc6cc74e58",
+      "chunk_ids": {
+        "ME-C1": [
+          "ME-C1"
+        ],
+        "ME-C2": [
+          "ME-C2"
+        ]
+      }
+    }
+  ]
 }
 ```
