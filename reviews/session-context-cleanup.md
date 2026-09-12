@@ -175,6 +175,42 @@ Author verification at the tip: `bench test --package ./internal/worktree --run 
           "requirement": "command-tests",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "cl-c1-final-clean-tests",
+          "performer": "claude:sonnet:retained-continuation",
+          "role": "author-verification",
+          "model": "sonnet",
+          "effort": "unknown",
+          "source_digest": "7ce06d236a1c3e19c6f6b82eb195afb7c18c30aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:coordinator/session-context-cleanup/clean-tests@1b40ca08",
+            "digest": "sha256:85e648a56eb598d8404a448b5568b2cbef8d078369430f0cedd6ee7b86e83620",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,5065\nfailures[0]{package,test,line}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"unix sockets unavailable (host-capability skip)\"\n"
+          },
+          "requirement": "clean-tests",
+          "command": "bench test --package ./internal/worktree --run TestClean",
+          "exit_code": 0
+        },
+        {
+          "id": "cl-c1-final-command-tests",
+          "performer": "claude:sonnet:retained-continuation",
+          "role": "author-verification",
+          "model": "sonnet",
+          "effort": "unknown",
+          "source_digest": "7ce06d236a1c3e19c6f6b82eb195afb7c18c30aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:coordinator/session-context-cleanup/command-tests@1b40ca08",
+            "digest": "sha256:64d2e145a263f94c40c406a53c652c5201bfa12fe36eb02de8bff25766b85430",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,9393\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "command-tests",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": [
