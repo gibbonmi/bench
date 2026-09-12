@@ -23,7 +23,7 @@ const (
 
 // registry is the ordered anchor registry every evaluation reads. It appends onto a
 // fresh slice, so no source slice below or in a sibling registry file is ever aliased.
-var registry = append(append(append(append(append(append(append([]Anchor{}, generalAnchors...), decisionMapAnchors...), craftResearchAnchors...), ft311PreparationAnchors...), ft311ReviewDispatchAnchors...), retainedWorkflowAnchors...), implementationContinuationAnchors...)
+var registry = append(append(append(append(append(append(append(append([]Anchor{}, generalAnchors...), decisionMapAnchors...), craftResearchAnchors...), ft311PreparationAnchors...), ft311ReviewDispatchAnchors...), retainedWorkflowAnchors...), implementationContinuationAnchors...), ticketSlicingAnchors...)
 
 var generalAnchors = []Anchor{
 	{File: ".agents/commands/bench-write-spec.md", Kind: Require, Section: "", Needle: "acceptance coverage map", Diagnostic: ".agents/commands/bench-write-spec.md missing acceptance coverage anchor: acceptance coverage map"},

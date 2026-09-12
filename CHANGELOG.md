@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Ticket slicing checks
+
+- Fixed ticket guidance to name relocation destinations and verify source clauses and executable routes before ticket lock.
+
 ### Full failure diagnostics
 
 - Fixed `bench test --full` to retain every failure diagnostic line in order within each result.

@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-tickets/SKILL.md",
+    "old": "Trace each claimed operation through its executable owner, using the [map-discipline proof rules](../bench-craft-spec/references/map-discipline.md#before-the-map-locks).",
+    "new": ""
+  }
+]
