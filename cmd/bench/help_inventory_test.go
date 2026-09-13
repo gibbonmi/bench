@@ -7,6 +7,7 @@ import (
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -66,6 +67,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench assessment list | show <run-id> | record --input <file> | compare --plan <file> --runs <id,...>  store and inspect local workflow cost and quality
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
   bench preflight review|build <slug>  phase-entry checks that a spec's artifacts agree with the tree, one verdict row per check
+  bench repair-pilot activate | report [--full]  collect and report attributed repair evidence for an explicit local pilot
   bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>  run focused Go-test or named-check evidence as TOON; no gate verdict
   bench probe <file> (--swap <old> --with <new> | --omit <old>) (--package <expr> [--run <go-regex>] | --check <name>) [--full]  mutate one file once, run one focused test or check, restore the file, and report bit, silent, invalid, or restore-failed
   bench outline [path] [--full]  top-level directory symbol counts as TOON; a path or --full locates candidate seams (file:line), never the project's blessed seams
@@ -103,6 +105,27 @@ func TestHelpInventoryIsComplete(t *testing.T) {
 	if stdout.String() != want {
 		t.Fatalf("help inventory:\n%s\nwant complete public inventory:\n%s", stdout.String(), want)
 	}
+}
+
+func TestRepairPilotRoute(t *testing.T) {
+	t.Run("dispatch", func(t *testing.T) {
+		root := newAXIEnvelopeRepo(t)
+		t.Setenv("BENCH_HOME", t.TempDir())
+		t.Setenv("BENCH_KIT", root)
+		for _, row := range []struct {
+			argv []string
+			want string
+		}{
+			{argv: []string{"repair-pilot", "report"}, want: "inactive"},
+			{argv: []string{"repair-pilot", "activate"}, want: "active"},
+			{argv: []string{"assessment", "--help"}, want: "usage: bench assessment"},
+		} {
+			result := runAXICommandAt(t, root, row.argv)
+			if result.code != 0 || !strings.Contains(result.stdout, row.want) {
+				t.Fatalf("%v = stdout %q, stderr %q, exit %d; want %q at exit 0", row.argv, result.stdout, result.stderr, result.code, row.want)
+			}
+		}
+	})
 }
 
 func assessmentEnvelopeCases() map[string]axiEnvelopeCase {

@@ -140,6 +140,11 @@ rather than reported as a stray entry. A gate-side need is declared in
   record, and it stays on the local machine. A line carries the seam name, the
   subject digest, the outcome, and the measures. It carries no objective text,
   no commit subject, and no environment value, and Bench sends it nowhere.
+- **Repair pilot document (`pilot.json`, mode 0600).** Explicit activation
+  creates this document below `<Bench home>/repair-pilot/<repository key>/`.
+  The private directory has mode 0700. The document contains attributed repair
+  observations, diagnostics, labels, audits, and native evidence references.
+  Bench keeps these values on the local machine and does not resolve the references.
 - **`.bench/env.allow` and `.bench/gate-inputs.json`.** Committed, reviewable
   declarations of passlist and gate-subject widenings. They carry variable
   *names*, never values.
@@ -204,3 +209,5 @@ object store holds commit subjects as ordinary repository history.
   ledger.
 - **Environment values** are never written to durable Bench state; they exist
   only in the launched subprocess's memory for the duration of that process.
+- **Repair pilot evidence** persists until the operator removes its named
+  document. Worktree release and the pilot cutoff do not remove this evidence.

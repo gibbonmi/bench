@@ -81,6 +81,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "harnesses", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 19, Suffix: " [<harness> [--record <path> --format <source-id>]]", Description: "the harness record as TOON; one name prints that harness's cells; both flags observe one named session record"}), Run: outputCommand(harnesses.Command)},
 	{Name: "preflight", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 21, Suffix: " review|build <slug>", Description: "phase-entry checks that a spec's artifacts agree with the tree, one verdict row per check"}), Run: outputCommand(preflight.CommandWithVersion(version))},
 	{Name: "coverage", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 20, Suffix: " <spec>", Description: "acceptance-coverage state and rows as TOON (--check to validate)"}), Run: outputCommand(coverage.Command)},
+	{Name: "repair-pilot", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 21, Suffix: " activate | report [--full]", Description: "collect and report attributed repair evidence for an explicit local pilot"}), Run: repairPilotCommand},
 	{Name: "status", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 10, Description: "ambient dashboard: what needs attention + the next action"}), Run: outputCommand(status.Command)},
 	{Name: "handoff", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 11, Suffix: " [--harness <name>] [--next <command>] [--state-file <path>]", Description: "print the cold-start pin block and rewrite capture/session-handoff.md"}), Run: outputCommand(handoff.Command)},
 	{Name: "commands", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 12, Suffix: " --brief", Description: "print the direct, read-only command probe"}), Run: outputCommand(commandsCommand)},
@@ -470,17 +471,6 @@ func treeHash(args []string) (string, int) {
 		root = r
 	}
 	return git.TreeHash(root) + "\n", 0
-}
-
-// boundaryRoot resolves the repository root once for a verb that receives one. Outside a
-// repository it answers the empty string, and the verb prints its own refusal after it
-// reads its grammar. This keeps a help or usage answer available outside a repository.
-func boundaryRoot() string {
-	root, err := git.Root()
-	if err != nil {
-		return ""
-	}
-	return root
 }
 
 // versionLine renders the single line `bench version` prints. Kept as a pure
