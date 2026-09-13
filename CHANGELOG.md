@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Bounded review repairs
+
+- Changed implementation guidance to bound post-review repairs through one shared policy.
+  Required work stays blocking, and optional advice stays outside finding totals.
+
 ### Gate subject recovery
 
 - Added an exact retry helper when `bench gate` cannot construct its subject.

@@ -126,6 +126,151 @@ func TestImplementationContinuation(t *testing.T) {
 			file: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", section: "Read-only returns",
 			needle: "If the selected model is unavailable, report the failure and use an available authorized diagnostic route without an undeclared model substitution.",
 		},
+
+		"implementation continuation: bounded repair dropped fixed allowance": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Scope and allowance",
+			needle: "Each implementation chunk permits at most two repair cycles after its initial review.",
+		},
+		"implementation continuation: bounded repair dropped mode census": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Scope and allowance",
+			needle: "This allowance applies to retained, full, delegated, unattended, and light-path implementation runs.",
+		},
+		"implementation continuation: bounded repair dropped light-path chunk": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Scope and allowance",
+			needle: "Light-path work counts as one chunk when it receives review findings.",
+		},
+		"implementation continuation: bounded repair dropped initial-work exclusion": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Scope and allowance",
+			needle: "Initial implementation, pre-review checks, and the first review consume no repair cycles.",
+		},
+		"implementation continuation: bounded repair dropped cycle unit": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Scope and allowance",
+			needle: "Count one repair attempt and verification of its affected findings as one cycle, even when it addresses several findings.",
+		},
+		"implementation continuation: bounded repair dropped verification-only exclusion": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Scope and allowance",
+			needle: "Individual tool calls and unchanged verification reruns consume no additional repair cycles.",
+		},
+		"implementation continuation: bounded repair dropped progress precedence": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Scope and allowance",
+			needle: "The allowance takes precedence over continuation while progress holds after initial review.",
+		},
+		"implementation continuation: bounded repair dropped progress and review continuity": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Scope and allowance",
+			needle: "Progress does not extend the allowance. A fresh review does not reset the same chunk's count.",
+		},
+		"implementation continuation: bounded repair dropped uncapped-line boundary": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Scope and allowance",
+			needle: "An uncapped implementation line does not remove this allowance.",
+		},
+		"implementation continuation: bounded repair dropped reviewer extension": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Scope and allowance",
+			needle: "Only an explicit reviewer decision extends the allowance; record the additional work it permits.",
+		},
+		"implementation continuation: bounded repair dropped blocker evidence": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "Before accepting a blocker, cite its binding requirement or concrete defect evidence.",
+		},
+		"implementation continuation: bounded repair dropped exhaustion classification": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "The following unresolved conditions remain blocking, including at exhaustion:",
+		},
+		"implementation continuation: bounded repair dropped required checks": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "A required check fails.",
+		},
+		"implementation continuation: bounded repair dropped acceptance failures": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "An approved acceptance requirement fails.",
+		},
+		"implementation continuation: bounded repair dropped correctness defects": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "A concrete correctness defect remains, even with a green gate.",
+		},
+		"implementation continuation: bounded repair dropped safety defects": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "A concrete safety defect remains, even with a green gate.",
+		},
+		"implementation continuation: bounded repair dropped mandatory standards": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "A documented mandatory standard fails, even without an automated check.",
+		},
+		"implementation continuation: bounded repair dropped optional classification": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "A preference without a binding requirement or concrete defect remains optional advice.",
+		},
+		"implementation continuation: bounded repair dropped optional census": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "Give optional advice no disposition or finding ID, and exclude it from finding totals.",
+		},
+		"implementation continuation: bounded repair dropped optional retention": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "Retain optional advice in a separate advice section of the native excerpt and the review pickup.",
+		},
+		"implementation continuation: bounded repair dropped optional pass": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "A native review can pass with no finding IDs while its prose retains optional advice.",
+		},
+		"implementation continuation: bounded repair dropped current review evidence": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "After repairs, obtain current results or permitted native reaffirmations from every review axis.",
+		},
+		"implementation continuation: bounded repair dropped completion safeguards": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "Unresolved findings, stale source identity, missing axes, and incomplete verification still block completion.",
+		},
+		"implementation continuation: bounded repair dropped pickup state": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "State and handoff",
+			needle: "Retain the consumed count and any explicit reviewer extension in the existing review pickup.",
+		},
+		"implementation continuation: bounded repair dropped light-path state": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "State and handoff",
+			needle: "For light-path work without a pickup, retain that state in the existing session handoff.",
+		},
+		"implementation continuation: bounded repair dropped resume state": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "State and handoff",
+			needle: "Before a resumed session starts another repair cycle, read the retained state.",
+		},
+		"implementation continuation: bounded repair dropped missing-count reconstruction": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "State and handoff",
+			needle: "If the count is missing, reconstruct it from available evidence; never assume zero.",
+		},
+		"implementation continuation: bounded repair dropped unknown-count stop": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "State and handoff",
+			needle: "If evidence cannot establish the remaining allowance, return that uncertainty to the reviewer before another repair cycle.",
+		},
+		"implementation continuation: bounded repair dropped exhaustion report": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "State and handoff",
+			needle: "At exhaustion with blockers, report the consumed allowance, completed repairs, remaining blockers, and the needed reviewer decision.",
+		},
+		"implementation continuation: bounded repair dropped dependent-work stop": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "State and handoff",
+			needle: "While that decision is pending, stop further repair cycles and dependent chunks.",
+		},
+		"implementation continuation: bounded repair dropped early completion": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "State and handoff",
+			needle: "The allowance is a maximum, not a target.",
+		},
+		"implementation continuation: craft-line dropped the bounded-repair owner": {
+			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
+			needle: "At initial review, read [the bounded repair policy](references/bounded-repair-policy.md).",
+		},
+		"implementation continuation: implementation phase dropped bounded repairs": {
+			file: ".agents/commands/bench-implement-spec.md", section: "Build",
+			needle: "At initial review, read [the bounded repair policy](../skills/bench-craft-line/references/bounded-repair-policy.md).",
+		},
+		"implementation continuation: craft-review dropped bounded repairs": {
+			file: ".agents/skills/bench-craft-review/SKILL.md", section: "",
+			needle: "Before classifying repairs, read [the bounded repair policy](../bench-craft-line/references/bounded-repair-policy.md).",
+		},
+		"implementation continuation: review phase dropped bounded repairs": {
+			file: ".agents/commands/bench-review-implementation.md", section: "Review modes",
+			needle: "Before classifying repairs, read [the bounded repair policy](../skills/bench-craft-line/references/bounded-repair-policy.md).",
+		},
+		"implementation continuation: review progression counted optional advice": {
+			file: ".agents/commands/bench-review-implementation.md", section: "Review modes",
+			needle: "Here, findings that prevent progression are unresolved blockers; retain optional advice separately under the policy.",
+		},
 	}
 	family := anchorsWithDiagnosticPrefix("implementation continuation: ")
 	for diagnostic, predicate := range wantPredicates {

@@ -105,6 +105,8 @@ Declare fan-out for visibility before spend. Report an overrun like a ladder mov
 
 ## Retained implementation continuation
 
+At initial review, read [the bounded repair policy](references/bounded-repair-policy.md). It governs post-review repairs in every implementation mode.
+The continuation rules below govern pre-review work; the policy governs their use after initial review.
 A verified acceptance improvement is progress. New useful evidence is progress when it changes the next action.
 Continue while progress holds inside the approved scope.
 
