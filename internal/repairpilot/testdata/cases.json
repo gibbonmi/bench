@@ -8,6 +8,9 @@
       "sources",
       "stages",
       "missing",
+      "unsafe-id",
+      "numeric-id",
+      "reference",
       "retry",
       "conflict",
       "nonblocking-start",
@@ -19,9 +22,21 @@
     ],
     "failures": ["repeated", "partial", "generic", "rerun", "vocabulary"],
     "endpoints": ["unverified", "closed", "handoff"],
-    "cutoff": ["count", "deadline", "earlier", "late-import", "audit", "before-activation", "future"],
+    "cutoff": [
+      "count",
+      "deadline",
+      "earlier",
+      "late-import",
+      "audit",
+      "before-activation/observed-at",
+      "before-activation/started-at",
+      "before-activation/ended-at",
+      "future/observed-at",
+      "future/started-at",
+      "future/ended-at"
+    ],
     "audit": ["no-repair", "proposal", "supported", "conflicting"],
-    "grammar": ["hostile"],
+    "grammar": ["hostile", "path-shape"],
     "storage": ["record-stored-hostile"]
   }
 }

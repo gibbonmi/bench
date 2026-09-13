@@ -3,6 +3,7 @@ package assessment
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 	"os"
@@ -67,7 +68,7 @@ func Command(s Store, args []string) (string, int) {
 		}
 		return detail(r)
 	default:
-		if err := noLinks(s.Dir()); err != nil {
+		if err := bounds.RefuseLinks(s.Dir()); err != nil {
 			return fail(err)
 		}
 		entries, err := os.ReadDir(s.Dir())

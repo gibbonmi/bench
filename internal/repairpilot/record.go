@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/assessment"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/jsonfile"
 )
@@ -41,16 +42,15 @@ func record(options Options, path string) (string, int) {
 }
 
 func readRecordInput(path string) (recordInput, error) {
+	if err := bounds.RefuseLinks(path); err != nil {
+		return recordInput{}, fmt.Errorf("record input path is unsafe: %w", err)
+	}
 	classified := bounds.ClassifyNoFollow(path)
 	if classified.State != bounds.StateParsed {
 		return recordInput{}, fmt.Errorf("record input is %s", classified.State)
 	}
-	data := classified.Data
-	if len(data) != 0 && data[len(data)-1] != '\n' {
-		data = append(append([]byte{}, data...), '\n')
-	}
 	var input recordInput
-	if err := jsonfile.Decode(data, &input); err != nil {
+	if err := jsonfile.DecodeDocument(classified.Data, &input); err != nil {
 		return recordInput{}, fmt.Errorf("record input is malformed: %w", err)
 	}
 	if input.Version != 1 || (input.Observation == nil) == (input.Audit == nil) {
@@ -92,13 +92,13 @@ func appendObservation(document *Document, candidate observation, now time.Time)
 }
 
 func validateObservation(document Document, candidate observation, now, deadline time.Time) error {
-	if candidate.ID == "" || candidate.Sequence.Source == "" || candidate.Sequence.Spec == "" || candidate.Sequence.Chunk == "" || candidate.AssignmentID == "" || candidate.SessionID == "" || candidate.SourceRevision == "" {
+	if !assessment.ValidID(candidate.ID) || !assessment.ValidID(candidate.Sequence.Source) || !assessment.ValidID(candidate.Sequence.Spec) || !assessment.ValidID(candidate.Sequence.Chunk) || !assessment.ValidID(candidate.AssignmentID) || !assessment.ValidID(candidate.SessionID) || !assessment.ValidID(candidate.SourceRevision) {
 		return errors.New("observation is missing identity or attribution evidence")
 	}
 	if candidate.Stage != "pre-review" && candidate.Stage != "post-review" {
 		return errors.New("observation has unsupported work stage")
 	}
-	if len(candidate.References) == 0 || hasEmpty(candidate.References) {
+	if !validReferences(candidate.References) {
 		return errors.New("observation requires native evidence references")
 	}
 	for _, stamp := range []*time.Time{&candidate.ObservedAt, candidate.StartedAt, candidate.EndedAt} {
@@ -111,6 +111,12 @@ func validateObservation(document Document, candidate observation, now, deadline
 	}
 	if candidate.StartedAt != nil && candidate.EndedAt != nil && candidate.EndedAt.Before(*candidate.StartedAt) {
 		return errors.New("observation interval ends before it starts")
+	}
+	if (candidate.StartedAt != nil || candidate.EndedAt != nil) && (candidate.IntervalReference == nil || !assessment.ValidReference(*candidate.IntervalReference)) {
+		return errors.New("observation interval requires native evidence")
+	}
+	if candidate.IntervalReference != nil && !assessment.ValidReference(*candidate.IntervalReference) {
+		return errors.New("observation interval has invalid evidence")
 	}
 	if err := validateObservationKind(candidate); err != nil {
 		return err
@@ -136,7 +142,7 @@ func validateObservationKind(candidate observation) error {
 			return errors.New("failure set has unsupported completeness")
 		}
 		for _, item := range candidate.Failures {
-			if item.Check == "" || item.Diagnostic == "" || item.Reference == "" || !validOwnership(item.Ownership) {
+			if item.Check == "" || item.Diagnostic == "" || item.Identity != "" && !assessment.ValidID(item.Identity) || !assessment.ValidReference(item.Reference) || !validOwnership(item.Ownership) {
 				return errors.New("failure is missing its check, diagnostic, ownership, or reference")
 			}
 		}
@@ -147,11 +153,11 @@ func validateObservationKind(candidate observation) error {
 			return errors.New("failure observation has an invalid payload")
 		}
 	case "repair":
-		if candidate.Repair == nil || candidate.Rerun != nil || candidate.Repair.Hypothesis == "" || candidate.Repair.IntendedChange == "" || candidate.Repair.VerificationReference == "" {
+		if candidate.Repair == nil || candidate.Rerun != nil || candidate.Repair.Hypothesis == "" || candidate.Repair.IntendedChange == "" || !assessment.ValidReference(candidate.Repair.VerificationReference) {
 			return errors.New("repair observation requires its hypothesis, intended change, and verification reference")
 		}
 	case "rerun":
-		if candidate.Rerun == nil || candidate.Repair != nil || candidate.Rerun.VerificationReference == "" {
+		if candidate.Rerun == nil || candidate.Repair != nil || !assessment.ValidReference(candidate.Rerun.VerificationReference) {
 			return errors.New("rerun observation requires a verification reference")
 		}
 	default:
@@ -165,14 +171,14 @@ func validateObservationKind(candidate observation) error {
 
 func validateEndpoint(prior []observation, candidate observation) error {
 	value := candidate.Endpoint
-	if value.Reference == "" {
+	if !assessment.ValidReference(value.Reference) || len(value.CoveredBlockerRefs) != 0 && !validReferences(value.CoveredBlockerRefs) {
 		return errors.New("sequence endpoint requires evidence")
 	}
 	switch value.Kind {
 	case "reviewer-handoff":
 		return nil
 	case "verified-closure":
-		covered := stringSet(value.CoveredBlockerRefs)
+		covered := referenceSet(value.CoveredBlockerRefs)
 		for _, item := range append(append([]observation{}, prior...), candidate) {
 			for _, blocker := range item.Failures {
 				if blocker.Blocking && !covered[blocker.Reference] {
@@ -196,7 +202,7 @@ func appendAudit(document *Document, candidate audit) (bool, error) {
 		}
 		return false, fmt.Errorf("audit id %q conflicts with retained evidence", candidate.ID)
 	}
-	if candidate.ID == "" || candidate.ObservationID == "" || candidate.Auditor == "" || candidate.Reason == "" || len(candidate.EvidenceReferences) == 0 || hasEmpty(candidate.EvidenceReferences) {
+	if !assessment.ValidID(candidate.ID) || !assessment.ValidID(candidate.ObservationID) || !assessment.ValidID(candidate.Auditor) || candidate.Reason == "" || !validReferences(candidate.EvidenceReferences) || !validIDs(candidate.ResolvesAuditIDs) {
 		return false, errors.New("audit is missing identity, auditor, reason, or evidence references")
 	}
 	if observationByID(*document, candidate.ObservationID) == nil {
@@ -232,7 +238,8 @@ func effectiveProgressLabel(document Document, observationID string) string {
 			continue
 		}
 		if len(item.ResolvesAuditIDs) >= 2 {
-			return item.Conclusion.Label
+			labels = map[string]bool{item.Conclusion.Label: true}
+			continue
 		}
 		labels[item.Conclusion.Label] = true
 	}
@@ -246,11 +253,16 @@ func effectiveProgressLabel(document Document, observationID string) string {
 }
 
 func supportedConclusion(value progressConclusion) bool {
-	return validProgressLabel(value.Label) && value.RepairedTarget != "" && value.VerificationReference != ""
+	return validProgressLabel(value.Label) && value.RepairedTarget != "" && assessment.ValidReference(value.VerificationReference)
 }
 
 func validProgressLabel(value string) bool {
-	return value == "productive" || value == "stalled" || value == "unchanged"
+	for _, label := range progressLabels {
+		if value == label {
+			return true
+		}
+	}
+	return false
 }
 
 func validOwnership(value string) bool {
@@ -312,17 +324,29 @@ func hasBlockingFailure(value observation) bool {
 	return false
 }
 
-func hasEmpty(values []string) bool {
+func validReferences(values []assessment.Reference) bool {
+	if len(values) == 0 {
+		return false
+	}
 	for _, value := range values {
-		if value == "" {
-			return true
+		if !assessment.ValidReference(value) {
+			return false
 		}
 	}
-	return false
+	return true
 }
 
-func stringSet(values []string) map[string]bool {
-	result := map[string]bool{}
+func validIDs(values []string) bool {
+	for _, value := range values {
+		if !assessment.ValidID(value) {
+			return false
+		}
+	}
+	return true
+}
+
+func referenceSet(values []assessment.Reference) map[assessment.Reference]bool {
+	result := map[assessment.Reference]bool{}
 	for _, value := range values {
 		result[value] = true
 	}

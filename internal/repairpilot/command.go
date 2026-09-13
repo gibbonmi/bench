@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -173,7 +174,7 @@ func report(options Options) (string, int) {
 		return refusal(err.Error())
 	}
 	if state == bounds.StateAbsent {
-		return renderStatus("inactive", "", "")
+		return renderStatus("inactive", "", "", pilotSummary{})
 	}
 	return renderDocumentStatus(document, options.Now)
 }
@@ -303,7 +304,7 @@ func renderDocumentStatus(document Document, now time.Time) (string, int) {
 	if !now.Before(deadline) || document.CutoffAt != nil {
 		state = "stopped"
 	}
-	return renderStatus(state, document.ActivatedAt.UTC().Format(time.RFC3339), deadline.Format(time.RFC3339))
+	return renderStatus(state, document.ActivatedAt.UTC().Format(time.RFC3339), deadline.Format(time.RFC3339), summarizeDocument(document))
 }
 
 func familyUsage(grammars ...usage.Grammar) string {
@@ -322,8 +323,37 @@ func refusal(detail string) (string, int) {
 	return toon.Errorf("repair pilot refused", detail) + "\n", 1
 }
 
-func renderStatus(state, activated, deadline string) (string, int) {
-	out, err := toon.Table("repair_pilot", []string{"state", "activated_at", "deadline"}, [][]string{{state, activated, deadline}})
+type pilotSummary struct {
+	ComparableRepeats int
+	Progress          map[string]int
+}
+
+func summarizeDocument(document Document) pilotSummary {
+	summary := pilotSummary{Progress: map[string]int{}}
+	prior := map[sequence][]failure{}
+	for _, item := range document.Observations {
+		for _, current := range item.Failures {
+			for _, earlier := range prior[item.Sequence] {
+				if comparableFailure(earlier, current) {
+					summary.ComparableRepeats++
+					break
+				}
+			}
+		}
+		prior[item.Sequence] = append(prior[item.Sequence], item.Failures...)
+		summary.Progress[effectiveProgressLabel(document, item.ID)]++
+	}
+	return summary
+}
+
+func renderStatus(state, activated, deadline string, summary pilotSummary) (string, int) {
+	columns := []string{"state", "activated_at", "deadline", "comparable_repeats"}
+	row := []string{state, activated, deadline, strconv.Itoa(summary.ComparableRepeats)}
+	for _, label := range append(append([]string{}, progressLabels...), "unknown") {
+		columns = append(columns, "progress_"+label)
+		row = append(row, strconv.Itoa(summary.Progress[label]))
+	}
+	out, err := toon.Table("repair_pilot", columns, [][]string{row})
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}

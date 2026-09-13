@@ -68,18 +68,20 @@ func checkCost(cost CostSummary) error {
 func finite(v float64) bool { return !math.IsNaN(v) && !math.IsInf(v, 0) }
 func charges(m *Money, list []Charge) error {
 	for _, c := range list {
-		if c.Kind == "" || !validReference(c.Reference) {
+		if c.Kind == "" || !ValidReference(c.Reference) {
 			return fmt.Errorf("charge kind or provenance missing")
 		}
 		if c.Amount == nil {
 			m.Partial = true
 			continue
 		}
-		if c.Currency == "" || !validReference(c.Reference) || !finite(*c.Amount) || *c.Amount < 0 {
+		if c.Currency == "" || !ValidReference(c.Reference) || !finite(*c.Amount) || *c.Amount < 0 {
 			return fmt.Errorf("invalid charge or missing authoritative reference")
 		}
 		m.Known[c.Currency] += *c.Amount
 	}
 	return nil
 }
-func validReference(r Reference) bool { return r.Producer != "" && r.Native != "" }
+
+// ValidReference reports whether evidence declares both its producer and native location.
+func ValidReference(r Reference) bool { return r.Producer != "" && r.Native != "" }

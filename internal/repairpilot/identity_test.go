@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/assessment"
 )
 
 func TestRepairPilotIdentity(t *testing.T) {
@@ -29,12 +31,12 @@ func TestRepairPilotIdentity(t *testing.T) {
 		first.Observation.AssignmentID = "assignment-a"
 		first.Observation.StartedAt = timestamp("2026-09-02T09:00:00Z")
 		first.Observation.EndedAt = timestamp("2026-09-02T11:00:00Z")
-		first.Observation.IntervalReference = "native:interval-a"
+		first.Observation.IntervalReference = nativeReference("native:interval-a")
 		second := failureInput("assignment-second", first.Observation.Sequence)
 		second.Observation.AssignmentID = "assignment-b"
 		second.Observation.StartedAt = timestamp("2026-09-02T10:00:00Z")
 		second.Observation.EndedAt = timestamp("2026-09-02T12:00:00Z")
-		second.Observation.IntervalReference = "native:interval-b"
+		second.Observation.IntervalReference = nativeReference("native:interval-b")
 		h.accept(t, first)
 		h.accept(t, second)
 		document := h.document(t)
@@ -89,6 +91,56 @@ func TestRepairPilotIdentity(t *testing.T) {
 			if len(h.document(t).Observations) != 0 {
 				t.Fatal("missing attribution changed the document")
 			}
+		}
+	})
+
+	t.Run("unsafe-id", func(t *testing.T) {
+		for _, id := range []string{"unsafe\u2003id", "escape\x1b", "bell\a", "tab\tid", "line\nid"} {
+			h := newRecordHarness(t)
+			h.refuse(t, failureInput(id, sequenceKey("source-a", "spec-a", "chunk-a")))
+			if len(h.document(t).Observations) != 0 {
+				t.Fatalf("unsafe ID %q changed the document", id)
+			}
+		}
+		for _, mutate := range []func(*observation){
+			func(value *observation) { value.Sequence.Source = "unsafe\u2003source" },
+			func(value *observation) { value.Sequence.Spec = "unsafe\u2003spec" },
+			func(value *observation) { value.Sequence.Chunk = "unsafe\u2003chunk" },
+			func(value *observation) { value.AssignmentID = "unsafe\u2003assignment" },
+			func(value *observation) { value.SessionID = "unsafe\u2003session" },
+			func(value *observation) { value.SourceRevision = "unsafe\u2003revision" },
+			func(value *observation) { value.Failures[0].Identity = "unsafe\u2003failure" },
+		} {
+			h := newRecordHarness(t)
+			input := failureInput("unsafe-field", sequenceKey("source-a", "spec-a", "chunk-a"))
+			mutate(input.Observation)
+			h.refuse(t, input)
+		}
+	})
+
+	t.Run("numeric-id", func(t *testing.T) {
+		h := newRecordHarness(t)
+		h.accept(t, failureInput("123", sequenceKey("source-a", "spec-a", "chunk-a")))
+		if got := h.document(t).Observations[0].ID; got != "123" {
+			t.Fatalf("numeric-looking ID = %q", got)
+		}
+	})
+
+	t.Run("reference", func(t *testing.T) {
+		h := newRecordHarness(t)
+		input := failureInput("blank-reference", sequenceKey("source-a", "spec-a", "chunk-a"))
+		input.Observation.References[0] = assessment.Reference{Native: " "}
+		input.Observation.Failures[0].Reference = assessment.Reference{Native: " "}
+		h.refuse(t, input)
+		if len(h.document(t).Observations) != 0 {
+			t.Fatal("unlocated evidence changed the document")
+		}
+		located := newRecordHarness(t)
+		input = failureInput("multiline-reference", sequenceKey("source-a", "spec-a", "chunk-a"))
+		input.Observation.References[0].Native = "review output\nline 2"
+		located.accept(t, input)
+		if got := located.document(t).Observations[0].References[0]; got != input.Observation.References[0] {
+			t.Fatalf("multiline native reference = %+v", got)
 		}
 	})
 
@@ -156,10 +208,10 @@ func TestRepairPilotIdentity(t *testing.T) {
 		input := failureInput("interval", sequenceKey("source-a", "spec-a", "chunk-a"))
 		input.Observation.StartedAt = timestamp("2026-09-02T09:00:00Z")
 		input.Observation.EndedAt = timestamp("2026-09-02T11:00:00Z")
-		input.Observation.IntervalReference = "native:interval"
+		input.Observation.IntervalReference = nativeReference("native:interval")
 		h.accept(t, input)
 		stored := h.document(t).Observations[0]
-		if !stored.StartedAt.Equal(*input.Observation.StartedAt) || !stored.EndedAt.Equal(*input.Observation.EndedAt) || stored.IntervalReference != "native:interval" {
+		if !stored.StartedAt.Equal(*input.Observation.StartedAt) || !stored.EndedAt.Equal(*input.Observation.EndedAt) || !reflect.DeepEqual(stored.IntervalReference, nativeReference("native:interval")) {
 			t.Fatalf("interval changed: %+v", stored)
 		}
 	})
@@ -182,7 +234,7 @@ func TestRepairPilotIdentity(t *testing.T) {
 		input := failureInput("reversed", sequenceKey("source-a", "spec-a", "chunk-a"))
 		input.Observation.StartedAt = timestamp("2026-09-02T11:00:00Z")
 		input.Observation.EndedAt = timestamp("2026-09-02T09:00:00Z")
-		input.Observation.IntervalReference = "native:interval"
+		input.Observation.IntervalReference = nativeReference("native:interval")
 		h.refuse(t, input)
 		if len(h.document(t).Observations) != 0 {
 			t.Fatal("reversed interval changed the document")
@@ -206,12 +258,13 @@ func newRecordHarness(t *testing.T) *recordHarness {
 	return &recordHarness{t: t, options: options}
 }
 
-func (h *recordHarness) accept(t *testing.T, input recordInput) {
+func (h *recordHarness) accept(t *testing.T, input recordInput) string {
 	t.Helper()
 	out, code := h.run(t, input)
 	if code != 0 || (!strings.Contains(out, "active") && !strings.Contains(out, "stopped")) {
 		t.Fatalf("record = output %q, exit %d", out, code)
 	}
+	return out
 }
 
 func (h *recordHarness) refuse(t *testing.T, input recordInput) {
@@ -258,18 +311,22 @@ func failureInput(id string, sequence sequence) recordInput {
 		AssignmentID: "assignment-a", SessionID: "session-a", SourceRevision: "revision-a",
 		Stage: "pre-review", Kind: "failure", FailureCompleteness: "complete",
 		Failures:   []failure{makeFailure("unit", "REQ-1", "first blocker", "diff-owned", true, "native:failure-1")},
-		References: []string{"native:observation-" + id},
+		References: []assessment.Reference{*nativeReference("native:observation-" + id)},
 	}}
 }
 
 func endpointInput(id string, key sequence) recordInput {
 	input := failureInput(id, key)
-	input.Observation.Endpoint = &endpoint{Kind: "reviewer-handoff", Reference: "native:handoff-" + id}
+	input.Observation.Endpoint = &endpoint{Kind: "reviewer-handoff", Reference: *nativeReference("native:handoff-" + id)}
 	return input
 }
 
 func makeFailure(check, identity, diagnostic, ownership string, blocking bool, reference string) failure {
-	return failure{Check: check, Identity: identity, Diagnostic: diagnostic, Ownership: ownership, Blocking: blocking, Reference: reference}
+	return failure{Check: check, Identity: identity, Diagnostic: diagnostic, Ownership: ownership, Blocking: blocking, Reference: *nativeReference(reference)}
+}
+
+func nativeReference(native string) *assessment.Reference {
+	return &assessment.Reference{Producer: "repair-pilot-test", Native: native}
 }
 
 func sequenceKey(source, spec, chunk string) sequence {

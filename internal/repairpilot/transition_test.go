@@ -7,21 +7,27 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/assessment"
 )
 
 func TestRepairPilotFailures(t *testing.T) {
 	t.Run("repeated", func(t *testing.T) {
 		h := newRecordHarness(t)
 		first := failureInput("failure-first", sequenceKey("source-a", "spec-a", "chunk-a"))
+		first.Observation.Failures = append(first.Observation.Failures,
+			makeFailure("lint", "REQ-2", "second blocker", "inherited", false, "native:failure-2"))
 		second := failureInput("failure-repeat", first.Observation.Sequence)
+		second.Observation.Failures = append([]failure(nil), first.Observation.Failures...)
+		want := append([]failure(nil), first.Observation.Failures...)
 		h.accept(t, first)
 		h.accept(t, second)
 		document := h.document(t)
-		if !reflect.DeepEqual(document.Observations[0].Failures[0], document.Observations[1].Failures[0]) {
+		if !reflect.DeepEqual(document.Observations[0].Failures, want) || !reflect.DeepEqual(document.Observations[1].Failures, want) {
 			t.Fatalf("repeated blocker changed: %+v", document.Observations)
 		}
+		assertSummaryValue(t, h.report(t), "comparable_repeats", "2")
 	})
 
 	t.Run("partial", func(t *testing.T) {
@@ -48,6 +54,7 @@ func TestRepairPilotFailures(t *testing.T) {
 		if comparableFailure(failures[0].Failures[0], failures[1].Failures[0]) {
 			t.Fatal("generic diagnostics became comparable without defect identity")
 		}
+		assertSummaryValue(t, h.report(t), "comparable_repeats", "0")
 	})
 
 	t.Run("rerun", func(t *testing.T) {
@@ -90,7 +97,7 @@ func TestRepairPilotEndpoints(t *testing.T) {
 		h.accept(t, first)
 		before := h.bytes(t)
 		closing := repairInput("closure-partial", key)
-		closing.Observation.Endpoint = &endpoint{Kind: "verified-closure", Reference: "native:closure", CoveredBlockerRefs: []string{"native:failure-1"}}
+		closing.Observation.Endpoint = &endpoint{Kind: "verified-closure", Reference: *nativeReference("native:closure"), CoveredBlockerRefs: []assessment.Reference{*nativeReference("native:failure-1")}}
 		h.refuse(t, closing)
 		if got := h.bytes(t); !reflect.DeepEqual(got, before) {
 			t.Fatal("partial closure changed prior evidence")
@@ -104,7 +111,7 @@ func TestRepairPilotEndpoints(t *testing.T) {
 		first.Observation.Failures = append(first.Observation.Failures, makeFailure("lint", "REQ-2", "second blocker", "inherited", true, "native:failure-2"))
 		h.accept(t, first)
 		closing := repairInput("closed-endpoint", key)
-		closing.Observation.Endpoint = &endpoint{Kind: "verified-closure", Reference: "native:closure", CoveredBlockerRefs: []string{"native:failure-1", "native:failure-2"}}
+		closing.Observation.Endpoint = &endpoint{Kind: "verified-closure", Reference: *nativeReference("native:closure"), CoveredBlockerRefs: []assessment.Reference{*nativeReference("native:failure-1"), *nativeReference("native:failure-2")}}
 		h.accept(t, closing)
 		document := h.document(t)
 		if completedSequenceCount(document) != 1 || document.Observations[1].Endpoint.Kind != "verified-closure" {
@@ -117,7 +124,7 @@ func TestRepairPilotEndpoints(t *testing.T) {
 		key := sequenceKey("source-a", "spec-a", "chunk-a")
 		h.accept(t, failureInput("handoff-first", key))
 		handoff := failureInput("handoff-endpoint", key)
-		handoff.Observation.Endpoint = &endpoint{Kind: "reviewer-handoff", Reference: "native:review-handoff"}
+		handoff.Observation.Endpoint = &endpoint{Kind: "reviewer-handoff", Reference: *nativeReference("native:review-handoff")}
 		h.accept(t, handoff)
 		document := h.document(t)
 		if completedSequenceCount(document) != 1 || document.Observations[1].Endpoint.Kind != "reviewer-handoff" || len(document.Observations[1].Failures) == 0 {
@@ -179,27 +186,34 @@ func TestRepairPilotCutoff(t *testing.T) {
 		}
 	})
 
-	t.Run("before-activation", func(t *testing.T) {
-		h := newRecordHarness(t)
-		input := failureInput("before-activation", sequenceKey("source-a", "spec-a", "chunk-a"))
-		input.Observation.ObservedAt = parseTime("2026-08-31T12:00:00Z")
-		before := h.bytes(t)
-		h.refuse(t, input)
-		if !reflect.DeepEqual(h.bytes(t), before) {
-			t.Fatal("pre-activation observation changed the document")
+	for _, boundary := range []struct {
+		name  string
+		stamp string
+	}{
+		{name: "before-activation", stamp: "2026-08-31T12:00:00Z"},
+		{name: "future", stamp: "2026-09-11T12:00:00Z"},
+	} {
+		for _, field := range []struct {
+			name   string
+			assign func(*observation, *time.Time)
+		}{
+			{name: "observed-at", assign: func(value *observation, stamp *time.Time) { value.ObservedAt = *stamp }},
+			{name: "started-at", assign: func(value *observation, stamp *time.Time) { value.StartedAt = stamp }},
+			{name: "ended-at", assign: func(value *observation, stamp *time.Time) { value.EndedAt = stamp }},
+		} {
+			t.Run(boundary.name+"/"+field.name, func(t *testing.T) {
+				h := newRecordHarness(t)
+				input := failureInput(boundary.name+"-"+field.name, sequenceKey("source-a", "spec-a", "chunk-a"))
+				stamp := parseTime(boundary.stamp)
+				field.assign(input.Observation, &stamp)
+				before := h.bytes(t)
+				h.refuse(t, input)
+				if !reflect.DeepEqual(h.bytes(t), before) {
+					t.Fatal("out-of-window observation changed the document")
+				}
+			})
 		}
-	})
-
-	t.Run("future", func(t *testing.T) {
-		h := newRecordHarness(t)
-		input := failureInput("future", sequenceKey("source-a", "spec-a", "chunk-a"))
-		input.Observation.ObservedAt = parseTime("2026-09-11T12:00:00Z")
-		before := h.bytes(t)
-		h.refuse(t, input)
-		if !reflect.DeepEqual(h.bytes(t), before) {
-			t.Fatal("future observation changed the document")
-		}
-	})
+	}
 }
 
 func TestRepairPilotAudit(t *testing.T) {
@@ -208,32 +222,35 @@ func TestRepairPilotAudit(t *testing.T) {
 		h.accept(t, failureInput("audit-target", sequenceKey("source-a", "spec-a", "chunk-a")))
 		input := auditInput("no-repair", "audit-target", "productive")
 		input.Audit.Conclusion.RepairedTarget = ""
-		h.accept(t, input)
+		out := h.accept(t, input)
 		if got := effectiveProgressLabel(h.document(t), "audit-target"); got != "unknown" {
 			t.Fatalf("unsupported progress label = %q", got)
 		}
+		assertSummaryValue(t, out, "progress_unknown", "1")
 	})
 
 	t.Run("proposal", func(t *testing.T) {
 		h := newRecordHarness(t)
 		input := failureInput("proposal-target", sequenceKey("source-a", "spec-a", "chunk-a"))
 		input.Observation.ProgressProposal = &progressProposal{Label: "productive", Reason: "author believes the repair worked"}
-		h.accept(t, input)
+		out := h.accept(t, input)
 		document := h.document(t)
 		if document.Observations[0].ProgressProposal == nil || effectiveProgressLabel(document, "proposal-target") != "unknown" {
 			t.Fatalf("proposal became an accepted label: %+v", document)
 		}
+		assertSummaryValue(t, out, "progress_unknown", "1")
 	})
 
 	t.Run("supported", func(t *testing.T) {
 		h := newRecordHarness(t)
 		h.accept(t, failureInput("supported-target", sequenceKey("source-a", "spec-a", "chunk-a")))
 		input := auditInput("supported-audit", "supported-target", "productive")
-		h.accept(t, input)
+		out := h.accept(t, input)
 		document := h.document(t)
-		if effectiveProgressLabel(document, "supported-target") != "productive" || document.Audits[0].Conclusion.RepairedTarget != "REQ-1" || document.Audits[0].Conclusion.VerificationReference == "" {
+		if effectiveProgressLabel(document, "supported-target") != "productive" || document.Audits[0].Conclusion.RepairedTarget != "REQ-1" || !assessment.ValidReference(document.Audits[0].Conclusion.VerificationReference) {
 			t.Fatalf("supported audit lost proof: %+v", document.Audits[0])
 		}
+		assertSummaryValue(t, out, "progress_productive", "1")
 	})
 
 	t.Run("conflicting", func(t *testing.T) {
@@ -259,6 +276,12 @@ func TestRepairPilotAudit(t *testing.T) {
 		if effectiveProgressLabel(document, "conflict-target") != "productive" || len(document.Audits) != 3 {
 			t.Fatalf("resolution did not retain and resolve both audits: %+v", document.Audits)
 		}
+		later := auditInput("later-stalled-audit", "conflict-target", "stalled")
+		out := h.accept(t, later)
+		if got := effectiveProgressLabel(h.document(t), "conflict-target"); got != "unknown" {
+			t.Fatalf("later contradiction label = %q, want unknown", got)
+		}
+		assertSummaryValue(t, out, "progress_unknown", "1")
 	})
 }
 
@@ -278,35 +301,7 @@ func TestRepairPilotGrammar(t *testing.T) {
 	})
 	t.Run("hostile", func(t *testing.T) {
 		requireFixtureCase(t)
-		fixtures := []storedHostileFixture{
-			{name: "empty", make: func(t *testing.T, path string, _ Options) { writeFixture(t, path, nil) }},
-			{name: "malformed", make: func(t *testing.T, path string, _ Options) { writeFixture(t, path, []byte("{\n")) }},
-			{name: "duplicate-key", make: func(t *testing.T, path string, _ Options) {
-				writeFixture(t, path, []byte("{\"version\":1,\"version\":1}\n"))
-			}},
-			{name: "unknown-field", make: func(t *testing.T, path string, _ Options) {
-				writeFixture(t, path, []byte("{\"version\":1,\"extra\":true}\n"))
-			}},
-			{name: "unsupported-version", make: func(t *testing.T, path string, _ Options) { writeFixture(t, path, []byte("{\"version\":2}\n")) }},
-			{name: "both-payloads", make: func(t *testing.T, path string, _ Options) {
-				writeFixture(t, path, []byte("{\"version\":1,\"observation\":{},\"audit\":{}}\n"))
-			}},
-			{name: "oversized", make: func(t *testing.T, path string, _ Options) {
-				writeFixture(t, path, []byte(strings.Repeat("x", int(bounds.ControlRecordLimit)+1)))
-			}},
-			{name: "directory", make: func(t *testing.T, path string, _ Options) {
-				if err := os.Mkdir(path, 0o700); err != nil {
-					t.Fatal(err)
-				}
-			}},
-			{name: "symlink", make: func(t *testing.T, path string, _ Options) {
-				if err := os.Symlink("missing", path); err != nil {
-					t.Fatal(err)
-				}
-			}},
-		}
-		fixtures = append(fixtures, platformStoredHostileFixtures()...)
-		for _, fixture := range fixtures {
+		for _, fixture := range recordInputHostileFixtures(t) {
 			t.Run(fixture.name, func(t *testing.T) {
 				options := testOptions(t.TempDir())
 				if out, code := Command(options, []string{"activate"}); code != 0 {
@@ -324,6 +319,19 @@ func TestRepairPilotGrammar(t *testing.T) {
 				}
 				assertDocumentBytes(t, documentPath(options), before)
 			})
+		}
+	})
+	t.Run("path-shape", func(t *testing.T) {
+		requireFixtureCase(t)
+		options := testOptions(t.TempDir())
+		if out, code := Command(options, []string{"activate"}); code != 0 {
+			t.Fatalf("activate = output %q, exit %d", out, code)
+		}
+		options.Now = parseTime("2026-09-10T12:00:00Z")
+		path := filepath.Join(t.TempDir(), "input [*].json")
+		writeFixture(t, path, recordInputBytes(t, failureInput("path-shape", sequenceKey("source-a", "spec-a", "chunk-a"))))
+		if out, code := Command(options, []string{"record", "--input", path}); code != 0 {
+			t.Fatalf("record path shape = output %q, exit %d", out, code)
 		}
 	})
 	t.Run("no-final-newline", func(t *testing.T) {
@@ -348,8 +356,8 @@ func repairInput(id string, key sequence) recordInput {
 	return recordInput{Version: 1, Observation: &observation{
 		ID: id, ObservedAt: parseTime("2026-09-03T12:00:00Z"), Sequence: key,
 		AssignmentID: "assignment-a", SessionID: "session-a", SourceRevision: "revision-b",
-		Stage: "post-review", Kind: "repair", References: []string{"native:observation-" + id},
-		Repair: &repair{Hypothesis: "the guard is missing", IntendedChange: "add the guard", VerificationReference: "native:verification-" + id},
+		Stage: "post-review", Kind: "repair", References: []assessment.Reference{*nativeReference("native:observation-" + id)},
+		Repair: &repair{Hypothesis: "the guard is missing", IntendedChange: "add the guard", VerificationReference: *nativeReference("native:verification-" + id)},
 	}}
 }
 
@@ -357,8 +365,8 @@ func rerunInput(id string, key sequence) recordInput {
 	return recordInput{Version: 1, Observation: &observation{
 		ID: id, ObservedAt: parseTime("2026-09-03T12:00:00Z"), Sequence: key,
 		AssignmentID: "assignment-a", SessionID: "session-a", SourceRevision: "revision-a",
-		Stage: "pre-review", Kind: "rerun", References: []string{"native:observation-" + id},
-		Rerun: &rerun{VerificationReference: "native:verification-" + id, UnchangedContent: true},
+		Stage: "pre-review", Kind: "rerun", References: []assessment.Reference{*nativeReference("native:observation-" + id)},
+		Rerun: &rerun{VerificationReference: *nativeReference("native:verification-" + id), UnchangedContent: true},
 	}}
 }
 
@@ -376,18 +384,13 @@ func completeSequences(t *testing.T, h *recordHarness, count int) {
 func auditInput(id, observationID, label string) recordInput {
 	return recordInput{Version: 1, Audit: &audit{
 		ID: id, ObservationID: observationID, Auditor: "reviewer-session",
-		EvidenceReferences: []string{"native:evidence-" + id}, Reason: "reviewed native evidence",
-		Conclusion: &progressConclusion{Label: label, RepairedTarget: "REQ-1", VerificationReference: "native:verification-" + id},
+		EvidenceReferences: []assessment.Reference{*nativeReference("native:evidence-" + id)}, Reason: "reviewed native evidence",
+		Conclusion: &progressConclusion{Label: label, RepairedTarget: "REQ-1", VerificationReference: *nativeReference("native:verification-" + id)},
 	}}
 }
 
 type shortWriteFile struct {
 	*os.File
-}
-
-type storedHostileFixture struct {
-	name string
-	make func(*testing.T, string, Options)
 }
 
 func (file shortWriteFile) Write(data []byte) (int, error) {

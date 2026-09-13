@@ -12,13 +12,13 @@ func Validate(r Run) error {
 	if !safeText(reflect.ValueOf(r)) {
 		return fmt.Errorf("control characters in assessment record")
 	}
-	if r.Trial != nil && (!validReference(r.Trial.Reference) || r.Trial.PlanID == "" || (r.Trial.Repetition != nil && *r.Trial.Repetition < 1)) {
+	if r.Trial != nil && (!ValidReference(r.Trial.Reference) || r.Trial.PlanID == "" || (r.Trial.Repetition != nil && *r.Trial.Repetition < 1)) {
 		return fmt.Errorf("invalid trial provenance or identity")
 	}
 	if r.Version != 1 {
 		return fmt.Errorf("unsupported assessment version")
 	}
-	if !safeID.MatchString(r.RunID) || r.RepoKey == "" || r.Source == "" || r.TaskID == "" || r.Condition == "" || !state(r.State) {
+	if !ValidID(r.RunID) || r.RepoKey == "" || r.Source == "" || r.TaskID == "" || r.Condition == "" || !state(r.State) {
 		return fmt.Errorf("invalid run identity or state")
 	}
 	if err := interval(r.StartedAt, r.EndedAt, r.TimeReference); err != nil {
@@ -27,7 +27,7 @@ func Validate(r Run) error {
 	ids := map[string]bool{}
 	events := map[string]string{}
 	for _, a := range r.Attempts {
-		if !safeID.MatchString(a.AttemptID) || ids[a.AttemptID] {
+		if !ValidID(a.AttemptID) || ids[a.AttemptID] {
 			return fmt.Errorf("invalid or duplicate attempt ID")
 		}
 		ids[a.AttemptID] = true
@@ -46,7 +46,7 @@ func Validate(r Run) error {
 			}
 		}
 		for _, e := range a.Usage {
-			if e.EventID == "" || e.SessionID != a.SessionID || e.Epoch < 0 || e.Sequence < 0 || e.Counter == "" || !validReference(e.Reference) {
+			if e.EventID == "" || e.SessionID != a.SessionID || e.Epoch < 0 || e.Sequence < 0 || e.Counter == "" || !ValidReference(e.Reference) {
 				return fmt.Errorf("missing native usage provenance")
 			}
 			key := e.SessionID + "/" + e.EventID
@@ -59,28 +59,28 @@ func Validate(r Run) error {
 			return err
 		}
 		for _, v := range a.Measures {
-			if !validReference(v.Reference) || (v.Value != nil && (!finite(*v.Value) || *v.Value < 0)) {
+			if !ValidReference(v.Reference) || (v.Value != nil && (!finite(*v.Value) || *v.Value < 0)) {
 				return fmt.Errorf("invalid collected measure or provenance")
 			}
 		}
 		for _, ref := range a.Evidence {
-			if !validReference(ref) {
+			if !ValidReference(ref) {
 				return fmt.Errorf("missing evidence provenance")
 			}
 		}
 	}
 	for _, ref := range r.Diagnostics {
-		if !validReference(ref) {
+		if !ValidReference(ref) {
 			return fmt.Errorf("invalid diagnostic provenance")
 		}
 	}
 	for _, ref := range r.Evidence {
-		if !validReference(ref) {
+		if !ValidReference(ref) {
 			return fmt.Errorf("missing evidence provenance")
 		}
 	}
 	for _, v := range r.Quality {
-		if !validReference(v.Reference) || (v.Value != nil && (!finite(*v.Value) || *v.Value < 0)) {
+		if !ValidReference(v.Reference) || (v.Value != nil && (!finite(*v.Value) || *v.Value < 0)) {
 			return fmt.Errorf("invalid quality measure")
 		}
 	}
@@ -88,10 +88,10 @@ func Validate(r Run) error {
 }
 func state(s string) bool { return slices.Contains(States(), s) }
 func interval(start, end *time.Time, ref *Reference) error {
-	if (start != nil || end != nil) && (ref == nil || !validReference(*ref)) {
+	if (start != nil || end != nil) && (ref == nil || !ValidReference(*ref)) {
 		return fmt.Errorf("missing time provenance")
 	}
-	if ref != nil && !validReference(*ref) {
+	if ref != nil && !ValidReference(*ref) {
 		return fmt.Errorf("invalid time provenance")
 	}
 	if start != nil && start.IsZero() || end != nil && end.IsZero() {

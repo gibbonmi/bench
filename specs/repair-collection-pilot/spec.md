@@ -354,7 +354,7 @@ A probe that does not compile or execute proves nothing.
 | RP42 | 28 | Any missing required class makes the terminal report inconclusive. | TestRepairPilotReport/missing-class | Three classes pass a four-class requirement. |
 | RP43 | 29 | The full report exposes every retained observation, audit, unknown label, and evidence gap. | TestRepairPilotReport/full | A missing record passes a summary-only assertion. |
 | RP44 | 31 | Reporting reads the pilot without changing its stored bytes. | TestRepairPilotIsolation/read-only | A report mutates its own evidence. |
-| RP45 | 5 | Invalid record files refuse before state mutation. | `internal/repairpilot/transition_test.go` (`TestRepairPilotGrammar/hostile`) | A permissive decoder admits the hostile fixture inventory. |
+| RP45 | 5 | Invalid record files refuse before state mutation. | `internal/repairpilot/transition_test.go` (`TestRepairPilotGrammar/hostile`, `TestRepairPilotGrammar/path-shape`); `internal/repairpilot/identity_test.go` (`TestRepairPilotIdentity/unsafe-id`, `TestRepairPilotIdentity/numeric-id`, `TestRepairPilotIdentity/reference`) | A permissive decoder admits the hostile fixture inventory. |
 | RP46 | 2, 30 | The public dispatcher reaches the pilot owner while assessment routes retain their behavior. | `cmd/bench/help_inventory_test.go` (`TestRepairPilotRoute/dispatch`) | A test-only route or hijacked assessment route fails. |
 | RP47 | 31 | Pilot integration introduces no gate, warning, or model-routing effect. | Review-owned integration inspection | An automatic hook or routing write violates the declared fence. |
 | RP48 | 12 | Failure ownership and completeness retain each producer-supplied vocabulary value. | `internal/repairpilot/transition_test.go` (`TestRepairPilotFailures/vocabulary`) | A default coercion turns unknown ownership into diff-owned. |
@@ -431,6 +431,13 @@ Reviewer disposition: proposed for the spec-and-ticket sign-off
 - `tests/canary/workflow-guidance-anchors/context-reader-sweep-term`
 - `tests/canary/workflow-guidance-anchors/context-ticket-vocabulary`
 - `internal/repairpilot/` (new)
+- `internal/assessment/command.go`
+- `internal/assessment/cost.go`
+- `internal/assessment/harness.go`
+- `internal/assessment/plan_validate.go`
+- `internal/assessment/store.go`
+- `internal/assessment/validate.go`
+- `internal/bounds/classify.go`
 - `cmd/bench/main.go`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`

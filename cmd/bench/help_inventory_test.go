@@ -133,8 +133,9 @@ func TestRepairPilotRoute(t *testing.T) {
 				"sequence":      map[string]string{"source": "public-source", "spec": "public-spec", "chunk": "public-chunk"},
 				"assignment_id": "public-assignment", "session_id": "public-session", "source_revision": "public-revision",
 				"stage": "pre-review", "kind": "failure", "failure_completeness": "complete",
-				"failures":   []map[string]any{{"check": "unit", "identity": "REQ-1", "diagnostic": "fixture blocker", "ownership": "diff-owned", "blocking": true, "reference": "native:public-failure"}},
-				"references": []string{"native:public-observation"},
+				"failures": []map[string]any{{"check": "unit", "identity": "REQ-1", "diagnostic": "fixture blocker", "ownership": "diff-owned", "blocking": true,
+					"reference": map[string]string{"producer": "public-route-test", "native": "native:public-failure"}}},
+				"references": []map[string]string{{"producer": "public-route-test", "native": "native:public-observation"}},
 			},
 		}
 		data, err := json.Marshal(input)

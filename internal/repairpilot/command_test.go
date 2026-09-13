@@ -3,15 +3,12 @@ package repairpilot
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 func TestRepairPilotActivation(t *testing.T) {
@@ -238,60 +235,6 @@ func TestRepairPilotStorage(t *testing.T) {
 			})
 		}
 	})
-}
-
-func storedHostileFixtures() []storedHostileFixture {
-	fixtures := []storedHostileFixture{
-		{name: "empty", make: func(t *testing.T, path string, _ Options) { writeFixture(t, path, nil) }},
-		{name: "malformed", make: func(t *testing.T, path string, _ Options) { writeFixture(t, path, []byte("{\n")) }},
-		{name: "no-final-newline", make: func(t *testing.T, path string, options Options) {
-			writeFixture(t, path, []byte(fmt.Sprintf(`{"version":1,"repository_key":%q,"activated_at":"2026-09-01T12:00:00Z","observations":[],"audits":[]}`, options.RepoKey)))
-		}},
-		{name: "unsupported-version", make: func(t *testing.T, path string, options Options) {
-			writeFixture(t, path, []byte(fmt.Sprintf("{\"version\":2,\"repository_key\":%q,\"activated_at\":\"2026-09-01T12:00:00Z\",\"observations\":[],\"audits\":[]}\n", options.RepoKey)))
-		}},
-		{name: "foreign-repository", make: func(t *testing.T, path string, _ Options) {
-			writeFixture(t, path, []byte("{\"version\":1,\"repository_key\":\"other-123\",\"activated_at\":\"2026-09-01T12:00:00Z\",\"observations\":[],\"audits\":[]}\n"))
-		}},
-		{name: "duplicate-key", make: func(t *testing.T, path string, options Options) {
-			writeFixture(t, path, []byte(fmt.Sprintf("{\"version\":1,\"version\":1,\"repository_key\":%q,\"activated_at\":\"2026-09-01T12:00:00Z\",\"observations\":[],\"audits\":[]}\n", options.RepoKey)))
-		}},
-		{name: "unknown-field", make: func(t *testing.T, path string, options Options) {
-			writeFixture(t, path, []byte(fmt.Sprintf("{\"version\":1,\"repository_key\":%q,\"activated_at\":\"2026-09-01T12:00:00Z\",\"observations\":[],\"audits\":[],\"extra\":true}\n", options.RepoKey)))
-		}},
-		{name: "oversized", make: func(t *testing.T, path string, _ Options) {
-			writeFixture(t, path, []byte(strings.Repeat("x", int(bounds.ControlRecordLimit)+1)))
-		}},
-		{name: "directory", make: func(t *testing.T, path string, _ Options) {
-			if err := os.Mkdir(path, 0o700); err != nil {
-				t.Fatal(err)
-			}
-		}},
-		{name: "live-symlink", make: func(t *testing.T, path string, _ Options) {
-			target := filepath.Join(t.TempDir(), "target")
-			writeFixture(t, target, []byte("outside\n"))
-			if err := os.Symlink(target, path); err != nil {
-				t.Fatal(err)
-			}
-		}},
-		{name: "dangling-symlink", make: func(t *testing.T, path string, _ Options) {
-			if err := os.Symlink("missing", path); err != nil {
-				t.Fatal(err)
-			}
-		}},
-		{name: "linked-parent", make: func(t *testing.T, path string, options Options) {
-			parent := filepath.Dir(path)
-			if err := os.Remove(parent); err != nil {
-				t.Fatal(err)
-			}
-			target := t.TempDir()
-			writeFixture(t, filepath.Join(target, "pilot.json"), validDocumentBytes(t, options))
-			if err := os.Symlink(target, parent); err != nil {
-				t.Fatal(err)
-			}
-		}},
-	}
-	return append(fixtures, platformStoredHostileFixtures()...)
 }
 
 func assertStoredHostileRefusal(t *testing.T, operation string, fixture storedHostileFixture) {

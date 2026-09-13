@@ -8,14 +8,14 @@ import (
 )
 
 func ValidatePlan(p Plan) error {
-	if !safeText(reflect.ValueOf(p)) || p.Version != 1 || !safeID.MatchString(p.ID) {
+	if !safeText(reflect.ValueOf(p)) || p.Version != 1 || !ValidID(p.ID) {
 		return fmt.Errorf("invalid comparison plan identity")
 	}
 	policy, ok := purpose(p.Purpose)
 	if !ok {
 		return fmt.Errorf("unknown comparison purpose")
 	}
-	if !validReference(p.Approval) || p.Budget.Amount == nil || !finite(*p.Budget.Amount) || *p.Budget.Amount < 0 || p.Budget.Currency == "" {
+	if !ValidReference(p.Approval) || p.Budget.Amount == nil || !finite(*p.Budget.Amount) || *p.Budget.Amount < 0 || p.Budget.Currency == "" {
 		return fmt.Errorf("plan requires approval reference and budget")
 	}
 	if _, ok := variableProjection(p.Variable); !ok {
@@ -50,7 +50,7 @@ func ValidatePlan(p Plan) error {
 	}
 	conditions := map[string]bool{}
 	for _, c := range p.Conditions {
-		if !safeID.MatchString(c.ID) || conditions[c.ID] || c.Revision == "" || c.Harness == "" || len(c.Lines) == 0 || len(c.Limits) == 0 {
+		if !ValidID(c.ID) || conditions[c.ID] || c.Revision == "" || c.Harness == "" || len(c.Lines) == 0 || len(c.Limits) == 0 {
 			return fmt.Errorf("incomplete or duplicate condition")
 		}
 		conditions[c.ID] = true
