@@ -200,26 +200,30 @@ func TestHarnessDefaultsToCurrentGitRoot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	outsideGit := t.TempDir()
+	writeFixtureFile(t, filepath.Join(outsideGit, "go.mod"), "module fixture\n")
 	for _, tc := range []struct {
 		name string
+		dir  string
 		env  []string
-		red  bool
+		want string
 	}{
-		{name: "unset", red: true},
-		{name: "empty", env: []string{registry.ConformanceRootEnv + "="}, red: true},
-		{name: "explicit", env: []string{registry.ConformanceRootEnv + "=" + t.TempDir()}},
+		{name: "unset", dir: nested, want: ".bench/gate.sh missing"},
+		{name: "empty", dir: nested, env: []string{registry.ConformanceRootEnv + "="}, want: ".bench/gate.sh missing"},
+		{name: "explicit", dir: nested, env: []string{registry.ConformanceRootEnv + "=" + t.TempDir()}},
+		{name: "outside_git", dir: outsideGit, want: "resolve graded root: git rev-parse --show-toplevel:"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			env := capability.WithoutEnvironment(conformanceSubprocessEnv(), registry.ConformanceScopeEnv)
 			env = append(env, registry.ConformanceScopeEnv+"=gate-entry-contract")
 			env = append(env, tc.env...)
-			probe := runAtEnv(nested, env, executable, "-test.run=^"+registry.RootConformanceTest+"$", "-test.v")
+			probe := runAtEnv(tc.dir, env, executable, "-test.run=^"+registry.RootConformanceTest+"$", "-test.v")
 			output := probe.Stdout + probe.Stderr
-			if (probe.ExitCode != 0) != tc.red || strings.Contains(output, "--- SKIP:") {
-				t.Fatalf("root conformance exit = %d, want red=%t without skips:\n%s", probe.ExitCode, tc.red, output)
+			if (probe.ExitCode != 0) != (tc.want != "") || strings.Contains(output, "--- SKIP:") {
+				t.Fatalf("root conformance exit = %d, want red=%t without skips:\n%s", probe.ExitCode, tc.want != "", output)
 			}
-			if tc.red {
-				RequireSubstring(t, output, ".bench/gate.sh missing", "current root defect")
+			if tc.want != "" {
+				RequireSubstring(t, output, tc.want, "root conformance refusal")
 			}
 		})
 	}
