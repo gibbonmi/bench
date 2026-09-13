@@ -2,7 +2,7 @@
 
 Blocked by: 2-collect-repair-evidence.md
 Writes: internal/repairpilot (new), docs/repair-collection-pilot.md (new), specs/repair-collection-pilot, reviews/repair-collection-pilot.md (new)
-Covers: RP31, RP38, RP39, RP40, RP41, RP42, RP43, RP44, RP47, RP49, RP50, RP55, RP56, RP58, RP59, RP61
+Covers: RP31, RP38, RP39, RP40, RP41, RP42, RP43, RP44, RP47, RP49, RP50, RP55, RP56, RP58, RP59, RP61, RP66
 
 ## What to build
 
@@ -14,6 +14,7 @@ A missing required class makes the terminal result inconclusive.
 The full report retains every observation, unknown label, audit, and evidence gap.
 The full report lists incomplete sequences, and the default report gives their count.
 Reports before cutoff identify the sample as provisional.
+An interval without its evidence reference cannot supply an overlap example.
 
 Write the repository-only operating guide with the exact activation, record, and report commands.
 Require a separate native-evidence audit before the operator counts a proposed progress label.

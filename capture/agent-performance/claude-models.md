@@ -5,6 +5,9 @@ Opus/high supplied the standing cross-harness review in a fresh Claude session.
 It found two policy defects after the three native axes passed, then verified both repairs in another fresh session.
 Token counts, provider costs, and comparative latency remain unknown.
 
+Latest spec observation: `repair-collection-pilot` used no Claude model.
+This phase contributes no new Claude routing evidence.
+
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use |

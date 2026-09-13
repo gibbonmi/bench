@@ -5,6 +5,10 @@ The user approved Astra/high for implementation and orchestration in this sessio
 Three Terra/high contexts reviewed Standards, Spec, and Coverage before and after repair.
 Token counts, provider costs, and comparative latency remain unknown.
 
+Latest spec observation: `repair-collection-pilot` used Astra/high authorship and two Sol/high review passes.
+Sol found missing collection and report contracts, then narrowed the remaining targets to storage and interval evidence.
+The final author fold remains outside independent review; the spec needs reviewer sign-off.
+
 ## Cost assumptions
 
 The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches dollar break-even near 5x Terra's token use. The FT311 benchmark arm recorded 99 million input tokens with 98 percent cached and no dollar figure.
