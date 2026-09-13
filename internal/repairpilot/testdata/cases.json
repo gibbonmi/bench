@@ -37,6 +37,22 @@
     ],
     "audit": ["no-repair", "proposal", "supported", "conflicting"],
     "grammar": ["hostile", "path-shape"],
-    "storage": ["record-stored-hostile"]
+    "storage": ["record-stored-hostile"],
+    "report": [
+      "stalled",
+      "productive",
+      "unchanged",
+      "overlap",
+      "incomplete",
+      "missing-class",
+      "full",
+      "default",
+      "provisional",
+      "partial-interval",
+      "interval-edge",
+      "interval-provenance",
+      "order"
+    ],
+    "isolation": ["read-only"]
   }
 }

@@ -189,8 +189,8 @@ func assertSummaryValue(t *testing.T, out, field, value string) {
 	t.Helper()
 	lines := strings.Split(strings.TrimSpace(out), "\n")
 	parts := strings.SplitN(lines[0], "{", 2)
-	if len(lines) != 2 || len(parts) != 2 {
-		t.Fatalf("summary = %q, want one table row", out)
+	if len(lines) < 2 || len(parts) != 2 {
+		t.Fatalf("summary = %q, want a leading table row", out)
 	}
 	columns := strings.Split(strings.TrimSuffix(strings.TrimSuffix(parts[1], ":"), "}"), ",")
 	values := strings.Split(strings.TrimSpace(lines[1]), ",")

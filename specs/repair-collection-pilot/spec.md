@@ -285,7 +285,7 @@ Command dispatch tests call `cmd/bench.Command.Run` through the existing fixture
 The gate's ordinary `go test -trimpath -count=1 ./...` phase executes the new tests.
 No new gate phase or conformance check is necessary.
 
-All test names in the coverage map are planned additions.
+Test names introduced by this spec cite their implemented source files in the coverage map.
 The fixture inventory lives at `internal/repairpilot/testdata/cases.json`.
 Each coverage row names a fixture case by its suffix after the test name.
 A fixture can contribute to several cases without copied harness code.
@@ -340,20 +340,20 @@ A probe that does not compile or execute proves nothing.
 | RP28 | 17 | The tenth accepted sequence endpoint closes collection. | `internal/repairpilot/transition_test.go` (`TestRepairPilotCutoff/count`) | An eleventh endpoint can enlarge the sample. |
 | RP29 | 18 | The deadline itself refuses a new observation. | `internal/repairpilot/transition_test.go` (`TestRepairPilotCutoff/deadline`) | A greater-than comparison accepts a boundary observation. |
 | RP30 | 17, 18 | Collection uses the earlier endpoint when count and time compete. | `internal/repairpilot/transition_test.go` (`TestRepairPilotCutoff/earlier`) | A later limit extends the window. |
-| RP31 | 19 | The terminal full report lists every sequence open at cutoff as incomplete. | TestRepairPilotReport/incomplete | Deadline handling hides or completes unfinished sequences. |
+| RP31 | 19 | The terminal full report lists every sequence open at cutoff as incomplete. | `internal/repairpilot/report_test.go` (`TestRepairPilotReport/incomplete`) | Deadline handling hides or completes unfinished sequences. |
 | RP32 | 18 | A stopped pilot refuses a backdated new observation. | `internal/repairpilot/transition_test.go` (`TestRepairPilotCutoff/late-import`) | Backdating changes the frozen sample. |
 | RP33 | 23 | A stopped pilot accepts an audit of an existing observation. | `internal/repairpilot/transition_test.go` (`TestRepairPilotCutoff/audit`) | A blanket freeze prevents evidence assessment. |
 | RP34 | 20 | Progress without a verified repaired requirement or defect remains unknown. | `internal/repairpilot/transition_test.go` (`TestRepairPilotAudit/no-repair`) | A green check alone establishes progress. |
 | RP35 | 21 | An author proposal without an evidence audit remains unknown. | `internal/repairpilot/transition_test.go` (`TestRepairPilotAudit/proposal`) | Self-labeling becomes an accepted conclusion. |
 | RP36 | 21 | A supported audit exposes its repaired target and verification references. | `internal/repairpilot/transition_test.go` (`TestRepairPilotAudit/supported`) | A label-only report hides its proof. |
 | RP37 | 22 | Conflicting audits retain unknown status until an explicit resolution cites both. | `internal/repairpilot/transition_test.go` (`TestRepairPilotAudit/conflicting`) | The latest label silently wins. |
-| RP38 | 24 | A stalled class requires an audited repair attempt with no verified improvement. | TestRepairPilotReport/stalled | Repetition alone supplies a stalled example. |
-| RP39 | 25 | A verified repair supplies a productive example despite its repeated first failure. | TestRepairPilotReport/productive | First-red equality overrides verified progress. |
-| RP40 | 26 | An unchanged rerun supplies only its evidenced rerun classification. | TestRepairPilotReport/unchanged | A rerun is mislabeled as a stalled repair. |
-| RP41 | 27 | Explicitly attributed intersecting assignment intervals supply an overlap example. | TestRepairPilotReport/overlap | Timestamp-only grouping passes a falsely attributed example. |
-| RP42 | 28 | Any missing required class makes the terminal report inconclusive. | TestRepairPilotReport/missing-class | Three classes pass a four-class requirement. |
-| RP43 | 29 | The full report exposes every retained observation, audit, unknown label, and evidence gap. | TestRepairPilotReport/full | A missing record passes a summary-only assertion. |
-| RP44 | 31 | Reporting reads the pilot without changing its stored bytes. | TestRepairPilotIsolation/read-only | A report mutates its own evidence. |
+| RP38 | 24 | A stalled class requires an audited repair attempt with no verified improvement. | `internal/repairpilot/report_test.go` (`TestRepairPilotReport/stalled`) | Repetition alone supplies a stalled example. |
+| RP39 | 25 | A verified repair supplies a productive example despite its repeated first failure. | `internal/repairpilot/report_test.go` (`TestRepairPilotReport/productive`) | First-red equality overrides verified progress. |
+| RP40 | 26 | An unchanged rerun supplies only its evidenced rerun classification. | `internal/repairpilot/report_test.go` (`TestRepairPilotReport/unchanged`) | A rerun is mislabeled as a stalled repair. |
+| RP41 | 27 | Explicitly attributed intersecting assignment intervals supply an overlap example. | `internal/repairpilot/report_test.go` (`TestRepairPilotReport/overlap`) | Timestamp-only grouping passes a falsely attributed example. |
+| RP42 | 28 | Any missing required class makes the terminal report inconclusive. | `internal/repairpilot/report_test.go` (`TestRepairPilotReport/missing-class`) | Three classes pass a four-class requirement. |
+| RP43 | 29 | The full report exposes every retained observation, audit, unknown label, and evidence gap. | `internal/repairpilot/report_test.go` (`TestRepairPilotReport/full`) | A missing record passes a summary-only assertion. |
+| RP44 | 31 | Reporting reads the pilot without changing its stored bytes. | `internal/repairpilot/report_test.go` (`TestRepairPilotIsolation/read-only`) | A report mutates its own evidence. |
 | RP45 | 5 | Invalid record files refuse before state mutation. | `internal/repairpilot/fixtures_test.go` (`TestRepairPilotGrammar/hostile`, `TestRepairPilotGrammar/path-shape`); `internal/repairpilot/identity_test.go` (`TestRepairPilotIdentity/unsafe-id`, `TestRepairPilotIdentity/numeric-id`, `TestRepairPilotIdentity/reference`) | A permissive decoder admits the hostile fixture inventory. |
 | RP46 | 2, 30 | The public dispatcher reaches the pilot owner while assessment routes retain their behavior. | `cmd/bench/help_inventory_test.go` (`TestRepairPilotRoute/dispatch`) | A test-only route or hijacked assessment route fails. |
 | RP47 | 31 | Pilot integration introduces no gate, warning, or model-routing effect. | Review-owned integration inspection | An automatic hook or routing write violates the declared fence. |
@@ -364,18 +364,18 @@ A probe that does not compile or execute proves nothing.
 | RP52 | 7 | The first blocking failure fixes the sequence start without counting a repair attempt. | `internal/repairpilot/identity_test.go` (`TestRepairPilotIdentity/first-blocker`) | A failure-only start otherwise becomes a fabricated repair. |
 | RP53 | 7 | Equal source and chunk IDs under different spec identities remain distinct sequences. | `internal/repairpilot/identity_test.go` (`TestRepairPilotIdentity/specs`) | Omitting the spec identity conflates unrelated chunks. |
 | RP54 | 8, 27 | The stored document retains an imported interval's explicit bounds and provenance unchanged. | `internal/repairpilot/identity_test.go` (`TestRepairPilotIdentity/interval`) | A point timestamp cannot establish overlap. |
-| RP55 | 29 | The default report exposes state, cutoff, completion counts, class coverage, unknown labels, and evidence-gap counts. | TestRepairPilotReport/default | A summary that omits a required field fails its field inventory. |
-| RP56 | 28 | A report before cutoff marks the sample provisional. | TestRepairPilotReport/provisional | Early class coverage falsely becomes a terminal result. |
+| RP55 | 29 | The default report exposes state, cutoff, completion counts, class coverage, unknown labels, and evidence-gap counts. | `internal/repairpilot/report_test.go` (`TestRepairPilotReport/default`) | A summary that omits a required field fails its field inventory. |
+| RP56 | 28 | A report before cutoff marks the sample provisional. | `internal/repairpilot/report_test.go` (`TestRepairPilotReport/provisional`) | Early class coverage falsely becomes a terminal result. |
 | RP57 | 5 | Invalid stored pilot documents refuse through activate and report without changing the stored bytes. | `internal/repairpilot/command_test.go` (`TestRepairPilotStorage/stored-hostile`) | Input-only guards otherwise treat corrupted storage as authoritative. |
-| RP58 | 27 | A partial interval remains unknown instead of supplying an overlap example. | TestRepairPilotReport/partial-interval | A missing endpoint becomes an invented interval. |
-| RP59 | 27 | Adjacent or zero-length intervals supply no overlap example. | TestRepairPilotReport/interval-edge | Inclusive endpoints invent overlapping work. |
+| RP58 | 27 | A partial interval remains unknown instead of supplying an overlap example. | `internal/repairpilot/report_test.go` (`TestRepairPilotReport/partial-interval`) | A missing endpoint becomes an invented interval. |
+| RP59 | 27 | Adjacent or zero-length intervals supply no overlap example. | `internal/repairpilot/report_test.go` (`TestRepairPilotReport/interval-edge`) | Inclusive endpoints invent overlapping work. |
 | RP60 | 7, 8 | Different contributor assignments retain one sequence for the same source, spec, and chunk. | `internal/repairpilot/identity_test.go` (`TestRepairPilotIdentity/contributors`) | Assignment-based grouping splits one chunk. |
-| RP61 | 29 | Repeated full reports use the declared stable order over canned observations and audits. | TestRepairPilotReport/order | Map iteration or import-order dependence changes the report. |
+| RP61 | 29 | Repeated full reports use the declared stable order over canned observations and audits. | `internal/repairpilot/report_test.go` (`TestRepairPilotReport/order`) | Map iteration or import-order dependence changes the report. |
 | RP62 | 18 | A supplied activity timestamp before activation refuses without changing the document. | `internal/repairpilot/transition_test.go` (`TestRepairPilotCutoff/before-activation`) | Old work enlarges the bounded sample. |
 | RP63 | 18 | A supplied activity timestamp after the current time refuses without changing the document. | `internal/repairpilot/transition_test.go` (`TestRepairPilotCutoff/future`) | Future evidence can fabricate an endpoint. |
 | RP64 | 5, 27 | A complete interval whose end precedes its start refuses without changing evidence. | `internal/repairpilot/identity_test.go` (`TestRepairPilotIdentity/reversed-interval`) | Invalid endpoints otherwise create apparent overlap. |
 | RP65 | 5 | Record import refuses the stored hostile-state inventory without changing the stored bytes. | `internal/repairpilot/command_test.go` (`TestRepairPilotStorage/record-stored-hostile`) | A later record route can otherwise bypass the activation guard. |
-| RP66 | 27 | An interval without provenance remains unknown and supplies no overlap example. | TestRepairPilotReport/interval-provenance | Bounds alone otherwise become verified overlap evidence. |
+| RP66 | 27 | An interval without provenance remains unknown and supplies no overlap example. | `internal/repairpilot/report_test.go` (`TestRepairPilotReport/interval-provenance`) | Bounds alone otherwise become verified overlap evidence. |
 
 ### Edge inventory
 

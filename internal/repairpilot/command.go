@@ -99,10 +99,12 @@ func Command(options Options, args []string) (string, int) {
 		}
 		return activate(options)
 	case "report":
-		if _, line, code := usage.Parse(reportGrammar, args[1:]); line != "" {
+		parsed, line, code := usage.Parse(reportGrammar, args[1:])
+		if line != "" {
 			return line + "\n", code
 		}
-		return report(options)
+		_, full := parsed.Flags["--full"]
+		return report(options, full)
 	case "record":
 		parsed, line, code := usage.Parse(recordGrammar, args[1:])
 		if line != "" {
@@ -168,15 +170,15 @@ func withPilotLock(options Options, create bool, update func(FileOps) error) err
 	return update(files)
 }
 
-func report(options Options) (string, int) {
+func report(options Options, full bool) (string, int) {
 	document, state, err := load(options)
 	if err != nil {
 		return refusal(err.Error())
 	}
 	if state == bounds.StateAbsent {
-		return renderStatus("inactive", "", "", pilotSummary{})
+		return renderPilotReport(Document{}, options.Now, full)
 	}
-	return renderDocumentStatus(document, options.Now)
+	return renderPilotReport(document, options.Now, full)
 }
 
 func documentPath(options Options) string {
