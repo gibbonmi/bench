@@ -33,21 +33,49 @@ func Entries() []Anchor {
 	return append([]Anchor(nil), registry...)
 }
 
+// Location pairs a registered anchor with its first physical match line.
+type Location struct {
+	Anchor
+	Line int
+}
+
+// PathEvaluation reports one classified path's locations and registry diagnostics.
+type PathEvaluation struct {
+	Locations   []Location
+	Diagnostics []string
+	State       bounds.FileState
+	Reason      string
+}
+
+// EvaluatePath evaluates every registered anchor for one repository-relative path.
+func EvaluatePath(root, path string) PathEvaluation {
+	return evaluate(root, nil, path)
+}
+
 // EvaluateGroup checks one ordered registry group against root.
 func EvaluateGroup(root string, group Group) []string {
 	return evaluateGroup(root, group, "")
 }
 
 func evaluateGroup(root string, group Group, subject string) []string {
-	var diagnostics []string
+	return evaluate(root, &group, subject).Diagnostics
+}
+
+func evaluate(root string, group *Group, subject string) PathEvaluation {
+	var result PathEvaluation
 	files := map[string]fileResult{}
+	if subject != "" {
+		file := read(filepath.Join(root, filepath.FromSlash(subject)), subject)
+		files[subject] = file
+		result.State, result.Reason = file.classified.State, file.classified.Reason
+	}
 	sections := map[string]sectionResult{}
 	// The evaluator reports one refusal per file, not one per anchor. A refused file
 	// fails every anchor it owns, so the report does not repeat the same repair many
 	// times.
 	reported := map[string]bool{}
 	for _, anchor := range registry {
-		if anchor.Group != group || subject != "" && anchor.File != subject {
+		if group != nil && anchor.Group != *group || subject != "" && anchor.File != subject {
 			continue
 		}
 		file, loaded := files[anchor.File]
@@ -55,26 +83,27 @@ func evaluateGroup(root string, group Group, subject string) []string {
 			file = read(filepath.Join(root, filepath.FromSlash(anchor.File)), anchor.File)
 			files[anchor.File] = file
 		}
+		result.Locations = append(result.Locations, Location{Anchor: anchor, Line: Locate(anchor.Kind, anchor.Section, anchor.Needle, string(file.classified.Data))})
 		if file.refusal != "" {
 			if !reported[anchor.File] {
 				reported[anchor.File] = true
-				diagnostics = append(diagnostics, file.refusal)
+				result.Diagnostics = append(result.Diagnostics, file.refusal)
 			}
 			continue
 		}
 		if anchor.Kind == Require {
 			if !file.exists {
-				diagnostics = append(diagnostics, "acceptance coverage anchor file missing: "+anchor.File)
+				result.Diagnostics = append(result.Diagnostics, "acceptance coverage anchor file missing: "+anchor.File)
 				continue
 			}
 			if !Satisfied(anchor.Kind, file.active, anchor.Needle) {
-				diagnostics = append(diagnostics, anchor.Diagnostic)
+				result.Diagnostics = append(result.Diagnostics, anchor.Diagnostic)
 			}
 			continue
 		}
 		if anchor.Kind == Forbid {
 			if !Satisfied(anchor.Kind, file.active, anchor.Needle) {
-				diagnostics = append(diagnostics, anchor.Diagnostic)
+				result.Diagnostics = append(result.Diagnostics, anchor.Diagnostic)
 			}
 			continue
 		}
@@ -84,19 +113,20 @@ func evaluateGroup(root string, group Group, subject string) []string {
 			section = resolveSection(anchor.File, anchor.Section, file.active, file.exists)
 			sections[key] = section
 			if section.diagnostic != "" {
-				diagnostics = append(diagnostics, section.diagnostic)
+				result.Diagnostics = append(result.Diagnostics, section.diagnostic)
 			}
 		}
 		if section.diagnostic == "" && !Satisfied(anchor.Kind, section.body, anchor.Needle) {
-			diagnostics = append(diagnostics, anchor.Diagnostic)
+			result.Diagnostics = append(result.Diagnostics, anchor.Diagnostic)
 		}
 	}
-	return diagnostics
+	return result
 }
 
 type fileResult struct {
-	active string
-	exists bool
+	classified bounds.Classified
+	active     string
+	exists     bool
 	// refusal is set when the path exists but its bytes are untrustworthy. This field
 	// stays separate from exists. A missing anchor file tells the reader to write one.
 	// A link or a special file at that path needs a different repair.
@@ -132,13 +162,16 @@ const RefusalPrefix = "acceptance coverage anchor file refused: "
 // cannot block the gate in open(2).
 func read(path, rel string) fileResult {
 	classified := bounds.ClassifyNoFollow(path)
+	file := fileResult{classified: classified, exists: classified.State != bounds.StateAbsent}
 	switch {
 	case classified.State == bounds.StateAbsent:
-		return fileResult{}
+		return file
 	case classified.State.Failed():
-		return fileResult{exists: true, refusal: fmt.Sprintf("%s%s (%s)", RefusalPrefix, rel, classified.Reason)}
+		file.refusal = fmt.Sprintf("%s%s (%s)", RefusalPrefix, rel, classified.Reason)
+	default:
+		file.active = StripHTMLComments(string(classified.Data))
 	}
-	return fileResult{active: StripHTMLComments(string(classified.Data)), exists: true}
+	return file
 }
 
 // StripHTMLComments removes complete comments and truncates at an unterminated comment.

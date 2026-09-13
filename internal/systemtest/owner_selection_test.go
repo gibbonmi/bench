@@ -3,13 +3,177 @@
 package systemtest
 
 import (
+	"errors"
 	"fmt"
-	"github.com/gibbonmi/bench/internal/canary"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/canary"
 )
+
+func TestFocusedRunUsesSelectedVerdict(t *testing.T) {
+	for _, args := range [][]string{
+		{"-test.run=^TestOwnerSelectionChild$"},
+		{"-test.run", "^TestOwnerSelectionChild$"},
+		{"--test.run=^TestOwnerSelectionChild$"},
+		{"-test.run=", "-test.run=^TestOwnerSelectionChild$"},
+	} {
+		for _, verdict := range []string{"pass", "fail"} {
+			t.Run(strings.Join(args, " ")+"/"+verdict, func(t *testing.T) {
+				result, _ := runOwnerSelectionChild(t, verdict, args...)
+				wantCode := 0
+				if verdict == "fail" {
+					wantCode = 1
+					if !strings.Contains(result.stdout, "selected failure diagnostic") {
+						t.Fatalf("selected failure lost: %q", result.stdout)
+					}
+				}
+				if result.code != wantCode || !strings.Contains(result.stdout, "selected test ran") || strings.Contains(result.stderr, "system owner verification:") {
+					t.Fatalf("focused verdict = (%d, %q, %q)", result.code, result.stdout, result.stderr)
+				}
+			})
+		}
+	}
+}
+
+func TestFocusedRunStillCleansOwnerRoot(t *testing.T) {
+	for _, verdict := range []string{"pass", "fail", "cleanup-failure"} {
+		t.Run(verdict, func(t *testing.T) {
+			result, root := runOwnerSelectionChild(t, verdict, "-test.run=^TestOwnerSelectionChild$")
+			if verdict == "cleanup-failure" {
+				if result.code == 0 || !strings.Contains(result.stderr, "system owner cleanup:") {
+					t.Fatalf("cleanup failure = (%d, %q)", result.code, result.stderr)
+				}
+				return
+			}
+			assertOwnerRootRemoved(t, root)
+		})
+	}
+}
+
+func TestUnfilteredRunVerifiesLedger(t *testing.T) {
+	// Go lists the live test inventory. Exclude each other test with test.skip
+	// so the child reaches TestMain without a non-empty test.run value.
+	listed := owner.runAt(owner.root, []string{"BENCH_KIT=" + owner.kit}, os.Args[0], "-test.list=.")
+	if listed.code != 1 || !strings.Contains(listed.stderr, "system owner verification: no selected executable observations recorded") {
+		t.Fatalf("unfiltered list baseline = (%d, %q, %q)", listed.code, listed.stdout, listed.stderr)
+	}
+	var excluded []string
+	for _, name := range strings.Fields(listed.stdout) {
+		if strings.HasPrefix(name, "Test") && name != "TestOwnerSelectionChild" {
+			excluded = append(excluded, regexp.QuoteMeta(name))
+		}
+	}
+	if len(excluded) == 0 {
+		t.Fatal("the child listed no tests to exclude")
+	}
+	args := []string{"-test.skip=^(" + strings.Join(excluded, "|") + ")$"}
+	for _, tc := range []struct {
+		role, diagnostic string
+	}{
+		{"repositories", "repository count = 0, want 3"},
+		{"processes", "no owned process starts recorded"},
+		{"executable", "no selected executable observations recorded"},
+		{"identity", "selected executable identity ledger diverged"},
+		{"green", `terminal outcome "green" was not observed`},
+		{"red", `terminal outcome "red" was not observed`},
+		{"interrupt", `terminal outcome "interrupt" was not observed`},
+		{"timeout", `terminal outcome "timeout" was not observed`},
+		{"complete", ""},
+		{"cleanup-failure", "system owner cleanup:"},
+	} {
+		t.Run(tc.role, func(t *testing.T) {
+			result, root := runOwnerSelectionChild(t, tc.role, args...)
+			wantCode := 1
+			if tc.diagnostic == "" {
+				wantCode = 0
+			}
+			if result.code != wantCode || !strings.Contains(result.stdout, "selected test ran") || !strings.Contains(result.stderr, tc.diagnostic) {
+				t.Fatalf("unfiltered verdict = (%d, %q, %q), want (%d, %q)", result.code, result.stdout, result.stderr, wantCode, tc.diagnostic)
+			}
+			if tc.role != "cleanup-failure" {
+				assertOwnerRootRemoved(t, root)
+			}
+		})
+	}
+	// An explicit empty value still requires the full ledger, even when a
+	// preceding occurrence names a selection.
+	result, root := runOwnerSelectionChild(t, "executable", append(args, "-test.run=^$", "-test.run=")...)
+	if result.code != 1 || !strings.Contains(result.stderr, "system owner verification: no selected executable observations recorded") {
+		t.Fatalf("empty selection = (%d, %q)", result.code, result.stderr)
+	}
+	assertOwnerRootRemoved(t, root)
+}
+
+func runOwnerSelectionChild(t *testing.T, role string, args ...string) (processResult, string) {
+	t.Helper()
+	report := filepath.Join(t.TempDir(), "owner-root")
+	result := owner.runAt(owner.root, []string{
+		"BENCH_KIT=" + owner.kit,
+		"BENCH_SYSTEM_SELECTION_CHILD=" + role,
+		"BENCH_SYSTEM_SELECTION_REPORT=" + report,
+	}, os.Args[0], append([]string{"-test.v"}, args...)...)
+	data, err := os.ReadFile(report)
+	if err != nil {
+		t.Fatalf("child root report: %v; child = (%d, %q, %q)", err, result.code, result.stdout, result.stderr)
+	}
+	root := string(data)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(root); err != nil {
+			t.Error(err)
+		}
+	})
+	return result, root
+}
+
+func assertOwnerRootRemoved(t *testing.T, root string) {
+	t.Helper()
+	if _, err := os.Stat(root); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("owner root remains after TestMain: %q: %v", root, err)
+	}
+}
+
+func TestOwnerSelectionChild(t *testing.T) {
+	role := os.Getenv("BENCH_SYSTEM_SELECTION_CHILD")
+	if role == "" {
+		return
+	}
+	if err := os.WriteFile(os.Getenv("BENCH_SYSTEM_SELECTION_REPORT"), []byte(owner.root), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Log("selected test ran")
+	switch role {
+	case "pass":
+		return
+	case "fail":
+		t.Fatal("selected failure diagnostic")
+	case "repositories":
+		owner.repos = nil
+	case "processes":
+		owner.starts = 0
+	case "executable":
+		return
+	case "cleanup-failure":
+		// A NUL makes removal fail on every host, including a root process.
+		// The parent retains the valid root path and removes it afterward.
+		owner.root += "\x00"
+	}
+	if err := owner.observeSelected(); err != nil {
+		t.Fatal(err)
+	}
+	if role == "identity" {
+		owner.seen[0].inode++
+	}
+	for _, outcome := range []string{"green", "red", "interrupt", "timeout"} {
+		if role != outcome {
+			owner.markTerminal(outcome)
+		}
+	}
+}
 
 func TestSelectedExecutableComposition(t *testing.T) {
 	var first string
@@ -28,6 +192,35 @@ func TestSelectedExecutableComposition(t *testing.T) {
 		}
 	}
 	owner.markTerminal("green")
+}
+
+// TestChildEnvironmentDefaultsBenchHomeWhenUnnamed checks that overrides
+// without BENCH_HOME use the owner's private home, never the operator's home.
+func TestChildEnvironmentDefaultsBenchHomeWhenUnnamed(t *testing.T) {
+	env := owner.childEnvironment([]string{"BENCH_COMMAND_OBSERVE=1"})
+	if got := envValue(env, benchhome.Env); got != owner.home {
+		t.Fatalf("BENCH_HOME = %q, want the owner's private home %q", got, owner.home)
+	}
+}
+
+// TestChildEnvironmentKeepsAnExplicitBenchHome checks the exception: a caller
+// that names its own BENCH_HOME keeps it instead of the owner's private home.
+func TestChildEnvironmentKeepsAnExplicitBenchHome(t *testing.T) {
+	want := t.TempDir()
+	env := owner.childEnvironment([]string{benchhome.Env + "=" + want})
+	if got := envValue(env, benchhome.Env); got != want {
+		t.Fatalf("BENCH_HOME = %q, want the caller's own home %q", got, want)
+	}
+}
+
+// envValue returns the value entries assigns key, or "" when entries never names it.
+func envValue(entries []string, key string) string {
+	for _, entry := range entries {
+		if entryKey, value, found := strings.Cut(entry, "="); found && entryKey == key {
+			return value
+		}
+	}
+	return ""
 }
 
 func TestWrapperInstallFreshnessAndReloadJourneys(t *testing.T) {

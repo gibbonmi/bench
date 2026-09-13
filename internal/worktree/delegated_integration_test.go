@@ -15,6 +15,7 @@ import (
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/sanitize"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 const delegatedJourneySpec = "specs/x/spec.md"
@@ -65,9 +66,10 @@ func delegatedJourneyFixture(t *testing.T) *delegatedJourney {
 	// The ordinary gate runs at every chunk checkpoint, before any status
 	// transform exists. Only the prospective gate asserts the published
 	// transition, so it is the script the landing must run. Both stay POSIX.
-	mustWrite(t, filepath.Join(root, ".bench", "gate.sh"), []byte("#!/bin/sh\nset -eu\n[ -f tracked.txt ]\n"), 0o755)
-	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nset -eu\nruntime=$1\ngrep -q '^Status: implemented$' "+delegatedJourneySpec+"\n"), 0o755)
-	mustWrite(t, filepath.Join(root, ".bench", "gate-inputs.json"), []byte("{\"schema\":1,\"closure\":\"local\",\"environment\":[],\"paths\":[],\"tools\":[]}\n"), 0o644)
+	f := testrepo.NewGateFixture(t.TempDir())
+	if err := f.Write(root, "set -eu\n[ -f tracked.txt ]\n", "set -eu\nruntime=$1\n"+f.Command("grep")+" -q '^Status: implemented$' "+delegatedJourneySpec+"\n"); err != nil {
+		t.Fatal(err)
+	}
 	gitRun(t, root, "add", ".bench")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare the journey gate")
 

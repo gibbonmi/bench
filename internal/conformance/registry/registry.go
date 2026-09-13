@@ -36,9 +36,8 @@ func (source InputSource) Valid() bool {
 	}
 }
 
-// ConformanceRootEnv names the tree the explicit conformance entry point grades. It is
-// the only way that entry point learns a root. A surface that means to grade a root must
-// set it; unset, the entry point skips.
+// ConformanceRootEnv overrides the tree the conformance entry point grades.
+// An unset or empty value selects the harness's current Git repository root.
 const ConformanceRootEnv = "BENCH_CONFORMANCE_ROOT"
 
 // ConformanceTierEnv selects the tier the explicit conformance entry point runs at. When

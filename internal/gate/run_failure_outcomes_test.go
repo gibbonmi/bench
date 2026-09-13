@@ -16,6 +16,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/gocache/cleanprobe"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 const (
@@ -232,18 +233,6 @@ func TestGateRunPreservesPendingWhenTerminalReplaceFails(t *testing.T) {
 	}
 }
 
-func failureOutcomeFixture(t *testing.T) string {
-	t.Helper()
-	return outcomeFixture(t, `if [ -e .gate-wait ]; then
-  : > .gate-running
-  while [ ! -e .gate-release ]; do sleep 0.01; done
-fi
-if [ -e .gate-sleep ]; then sleep 5; fi
-if [ -e .gate-evidence-0500 ] || [ -e .gate-evidence-unwritable ]; then chmod 500 "$gitdir/bench-gate-evidence"; fi
-if [ -e .gate-gitdir-0500 ]; then chmod 500 "$gitdir"; fi
-`)
-}
-
 type gateLockHolder struct {
 	releasePath string
 	done        <-chan processGroupResult
@@ -406,13 +395,13 @@ func TestGateRunHoldsTheCacheLockAcrossItsPhases(t *testing.T) {
 	t.Setenv("HOME", home)
 	answerPath := filepath.Join(t.TempDir(), "clean-answer")
 	argv := probeArgv(t)
-	root := outcomeFixture(t, "HOME="+home+" "+cleanprobe.Env+"="+answerPath+
-		" "+argv[0]+" "+argv[1]+" >/dev/null 2>&1\n")
 	// The holder derives its directory from the closure's HOME, so the closure has to
 	// declare that name. A closure without it locks nothing.
-	outcomeWrite(t, root, ".bench/gate-inputs.json",
-		`{"schema":1,"closure":"local","environment":["HOME"],"paths":[],"tools":[]}`+"\n", 0o644)
-	outcomeCommit(t, root, "declare HOME")
+	root := outcomeFixture(t, func(f *testrepo.GateFixture, body string) string {
+		f.Environment = []string{"HOME"}
+		return body + "HOME=" + home + " " + cleanprobe.Env + "=" + answerPath +
+			" " + argv[0] + " " + argv[1] + " >/dev/null 2>&1\n"
+	})
 
 	var stdout, stderr bytes.Buffer
 	if result := Execute(context.Background(), root, &stdout, &stderr); result.ActionExit != 0 {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 	"testing"
@@ -78,8 +79,8 @@ func TestAnchorsReportsAbsentNeedles(t *testing.T) {
 	writeAXIFixture(t, filepath.Join(root, "AGENTS.md"), body)
 
 	result := runAXICommandAt(t, root, []string{"anchors", "AGENTS.md"})
-	if result.code != 0 || result.stderr != "" {
-		t.Fatalf("anchors AGENTS.md = %#v, want exit 0 and no stderr", result)
+	if result.code != 1 || result.stderr != "" {
+		t.Fatalf("anchors AGENTS.md = %#v, want exit 1 and no stderr", result)
 	}
 	kept := make([][]any, len(needles))
 	line := 3
@@ -95,6 +96,11 @@ func TestAnchorsReportsAbsentNeedles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	for _, anchor := range anchors.Entries() {
+		if anchor.File == "AGENTS.md" && slices.Contains(drop, anchor.Needle) {
+			want += toon.Errorf("anchor", anchor.Diagnostic) + "\n"
+		}
+	}
 	want += "help[0]{cmd,why}:\n"
 	if result.stdout != want {
 		t.Fatalf("anchors AGENTS.md stdout = %q, want %q", result.stdout, want)
@@ -103,8 +109,8 @@ func TestAnchorsReportsAbsentNeedles(t *testing.T) {
 	// An absent file gives 0 on every row, siblings included.
 	empty := newAXIEnvelopeRepo(t)
 	result = runAXICommandAt(t, empty, []string{"anchors", "AGENTS.md"})
-	if result.code != 0 || result.stderr != "" {
-		t.Fatalf("anchors AGENTS.md (absent file) = %#v, want exit 0 and no stderr", result)
+	if result.code != 1 || result.stderr != "" {
+		t.Fatalf("anchors AGENTS.md (absent file) = %#v, want exit 1 and no stderr", result)
 	}
 	rows := make([][]any, len(needles))
 	for i, needle := range needles {
@@ -114,9 +120,35 @@ func TestAnchorsReportsAbsentNeedles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	want += strings.Repeat(toon.Errorf("anchor", "acceptance coverage anchor file missing: AGENTS.md")+"\n", len(needles))
 	want += "help[0]{cmd,why}:\n"
 	if result.stdout != want {
 		t.Fatalf("anchors AGENTS.md (absent file) stdout = %q, want %q", result.stdout, want)
+	}
+}
+
+func TestAnchorsReportsForbiddenNeedles(t *testing.T) {
+	for _, anchor := range anchors.Entries() {
+		if anchor.Kind != anchors.Forbid {
+			continue
+		}
+		root := newAXIEnvelopeRepo(t)
+		writeAXIFixture(t, filepath.Join(root, filepath.FromSlash(anchor.File)), anchor.Needle+"\n")
+		result := runAXICommandAt(t, root, []string{"anchors", anchor.File})
+		if result.code != 1 || result.stderr != "" || !strings.Contains(result.stdout, toon.Errorf("anchor", anchor.Diagnostic)+"\n") {
+			t.Fatalf("forbidden anchor = %#v, want exit 1 and %q", result, anchor.Diagnostic)
+		}
+		return
+	}
+	t.Fatal("registry has no forbidden anchor")
+}
+
+func TestAnchorsLeavesUnregisteredPathEmpty(t *testing.T) {
+	root := newAXIEnvelopeRepo(t)
+	writeAXIFixture(t, filepath.Join(root, "unregistered.md"), "# An ordinary file\n")
+	result := runAXICommandAt(t, root, []string{"anchors", "unregistered.md"})
+	if result.code != 0 || result.stderr != "" || result.stdout != "anchors[0]{kind,section,needle,line}:\nhelp[0]{cmd,why}:\n" {
+		t.Fatalf("unregistered path = %#v, want an empty successful query", result)
 	}
 }
 

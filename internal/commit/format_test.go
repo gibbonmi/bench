@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 const malformedSpacing = "package sample\n\nfunc Value( )int{return 1}\n"
@@ -15,7 +17,10 @@ const formattedChange = "package sample\n\nfunc Value() int { return 2 }\n"
 func TestCommandFormatsNamedGoFileBeforeAuthorization(t *testing.T) {
 	root, _ := landingRepo(t, 0, func(t *testing.T, root string) {
 		mustWrite(t, filepath.Join(root, "named.go"), formattedSpacing, 0o644)
-		mustWrite(t, filepath.Join(root, ".bench", "gate.sh"), "#!/bin/sh\nset -eu\n[ \"$(sed -n '3p' named.go)\" = 'func Value() int { return 2 }' ]\n", 0o755)
+		f := testrepo.NewGateFixture(t.TempDir())
+		if err := f.Write(root, "set -eu\n[ \"$("+f.Command("sed")+" -n '3p' named.go)\" = 'func Value() int { return 2 }' ]\n", ""); err != nil {
+			t.Fatal(err)
+		}
 	})
 	mustWrite(t, filepath.Join(root, "named.go"), malformedChange, 0o644)
 

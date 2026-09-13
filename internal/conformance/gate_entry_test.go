@@ -14,10 +14,6 @@ import (
 )
 
 func TestRootConformance(t *testing.T) {
-	root := os.Getenv(registry.ConformanceRootEnv)
-	if root == "" {
-		capability.Environment(t, registry.ConformanceRootEnv+" not set")
-	}
 	h := NewHarness(t)
 	selected, selectedSet := os.LookupEnv(registry.ConformanceChecksEnv)
 	var selectedValue *string
@@ -29,7 +25,7 @@ func TestRootConformance(t *testing.T) {
 	if inheritedSet {
 		inheritedValue = &inherited
 	}
-	for _, diag := range RunConformanceSelection(root, h.KitRoot, registry.TierFor(os.Getenv(registry.ConformanceTierEnv)), os.Getenv(registry.ConformanceScopeEnv), selectedValue, inheritedValue) {
+	for _, diag := range RunConformanceSelection(h.Root, h.KitRoot, registry.TierFor(os.Getenv(registry.ConformanceTierEnv)), os.Getenv(registry.ConformanceScopeEnv), selectedValue, inheritedValue) {
 		t.Errorf("gate: %s", diag)
 	}
 }

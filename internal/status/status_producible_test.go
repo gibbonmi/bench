@@ -22,6 +22,7 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/testrepo"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
@@ -64,8 +65,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 	readyGate := func(t *testing.T, status string) string {
 		t.Helper()
 		root := cleanRepo(t)
-		write(t, root, ".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n", 0o644)
-		write(t, root, ".bench/gate.sh", "#!/bin/sh\nexit 0\n", 0o755)
+		testrepo.NewGateFixture(t.TempDir()).MustWrite(t, root, "exit 0\n", "")
 		commit(t, root)
 		if result := gate.Execute(context.Background(), root, io.Discard, io.Discard); result.ActionExit != 0 {
 			t.Fatalf("seed gate exit = %d", result.ActionExit)
@@ -144,8 +144,8 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 		{name: "gate locked", signal: "gate", detail: "locked-pending", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			started, release := filepath.Join(t.TempDir(), "started"), filepath.Join(t.TempDir(), "release")
-			write(t, root, ".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n", 0o644)
-			write(t, root, ".bench/gate.sh", fmt.Sprintf("#!/bin/sh\nset -eu\n: > %q\nwhile [ ! -e %q ]; do sleep 0.01; done\n", started, release), 0o755)
+			f := testrepo.NewGateFixture(t.TempDir())
+			f.MustWrite(t, root, fmt.Sprintf("set -eu\n: > %q\nwhile [ ! -e %q ]; do %s 0.01; done\n", started, release, f.Command("sleep")), "")
 			commit(t, root)
 			done := make(chan struct{})
 			go func() {

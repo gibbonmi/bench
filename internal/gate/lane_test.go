@@ -38,9 +38,9 @@ func TestBenchkitLaneTable(t *testing.T) {
 	}
 }
 
-// TestBenchkitLaneDocumentRowsFollowTheRegistry is PL28. The expectation is enumerated
-// from registry.Checks, so a hand-written row list that misses a check the registry adds,
-// or that carries one the registry binds to no document family, reds here.
+// TestBenchkitLaneDocumentRowsFollowTheRegistry is PL28 and HP9. The expectation
+// follows the registry's document families and the anchor class's docs check. An
+// omitted row or an unrelated registry check makes the lane declaration fail.
 func TestBenchkitLaneDocumentRowsFollowTheRegistry(t *testing.T) {
 	documents := map[registry.InputSource]bool{
 		registry.InputRoadmapBoard:      true,
@@ -50,7 +50,7 @@ func TestBenchkitLaneDocumentRowsFollowTheRegistry(t *testing.T) {
 	}
 	var want []Phase
 	for _, check := range registry.Checks {
-		if documents[check.Inputs] && check.RunsAt(registry.Dev) {
+		if (documents[check.Inputs] || check.Name == "docs-currency-workflow") && check.RunsAt(registry.Dev) {
 			want = append(want, Phase{Name: check.Name, Argv: []string{runBinaryArgvToken, "test", "--check", check.Name}})
 		}
 	}

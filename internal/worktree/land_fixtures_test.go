@@ -14,7 +14,13 @@ import (
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/sanitize"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
+
+func landingGateFixture(t *testing.T, environment ...string) *testrepo.GateFixture {
+	t.Helper()
+	return testrepo.NewGateFixture(t.TempDir(), environment...)
+}
 
 // publicLandingFixture mints one private Bench home and returns it last. The caller
 // hands that home to every verb it runs, so the fixture binds no process environment
@@ -62,11 +68,12 @@ func foldedLandingFixture(t *testing.T, request string) (string, Creation, strin
 func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home string, gradeSpec bool) (string, Creation, string, string, string) {
 	t.Helper()
 	gateSpec, prospectiveSpec := "", ""
+	f := landingGateFixture(t)
 	if gradeSpec {
 		gateSpec = "IFS= read -r status < specs/x/spec.md\n[ \"$status\" = \"Status: implemented\" ]\n"
 		// The two scripts assert the same status by different means, so a landing that ran
 		// the wrong one goes red. Both means stay POSIX, because a bare runner has no rg.
-		prospectiveSpec = "grep -q '^Status: implemented$' specs/x/spec.md\n"
+		prospectiveSpec = f.Command("grep") + " -q '^Status: implemented$' specs/x/spec.md\n"
 	}
 	root := newWorktreeRepo(t)
 	common := gitOutput(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir")
@@ -75,10 +82,7 @@ func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home stri
 	// into the process environment and declares an empty gate environment. A gate that
 	// read the path from an exported name would make every caller serial.
 	count := "printf g >> '" + tally + "'\n"
-	mustMkdirAll(t, filepath.Join(root, ".bench"), 0o755)
-	mustWrite(t, filepath.Join(root, ".bench", "gate.sh"), []byte("#!/bin/sh\nset -eu\n"+gateSpec+"[ -f owned.txt ]\n"+count), 0o755)
-	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nset -eu\nruntime=$1\n"+prospectiveSpec+"[ -f owned.txt ]\n"+count), 0o755)
-	mustWrite(t, filepath.Join(root, ".bench", "gate-inputs.json"), []byte("{\"schema\":1,\"closure\":\"local\",\"environment\":[],\"paths\":[],\"tools\":[]}\n"), 0o644)
+	f.MustWrite(t, root, "set -eu\n"+gateSpec+"[ -f owned.txt ]\n"+count, "set -eu\nruntime=$1\n"+prospectiveSpec+"[ -f owned.txt ]\n"+count)
 	if declaration != "" {
 		mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[\""+declaration+"\"]}\n"), 0o644)
 	}

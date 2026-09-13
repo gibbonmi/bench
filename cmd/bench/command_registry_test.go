@@ -244,7 +244,7 @@ func axiEnvelopeCases() map[string]axiEnvelopeCase {
 	noSetup := func(*testing.T, string) {}
 	cases := map[string]axiEnvelopeCase{
 		"anchors": {
-			route: []string{"anchors"}, successArgv: []string{"anchors", ".bench/BENCH.md"}, deepSuccessArgv: []string{"anchors", "../../.bench/BENCH.md"}, emptyArgv: []string{"anchors", "unregistered.md"},
+			route: []string{"anchors"}, successArgv: []string{"anchors", "AGENTS.md"}, deepSuccessArgv: []string{"anchors", "../../AGENTS.md"}, emptyArgv: []string{"anchors", "unregistered.md"},
 			blocks:        []string{"anchors", "help"},
 			successMarker: "anchors[", emptyMarker: "anchors[0]{kind,section,needle,line}:\n", usage: "usage: bench anchors", setupSuccess: setupAXIAnchors, setupEmpty: noSetup,
 		},
@@ -323,7 +323,7 @@ func newAXIEnvelopeRepo(t *testing.T) string {
 }
 
 func setupAXIAnchors(t *testing.T, root string) {
-	writeAXIFixture(t, filepath.Join(root, ".bench", "BENCH.md"), "# Fixture\n")
+	writeAXIFixture(t, filepath.Join(root, "AGENTS.md"), readAnchorsFixture(t, "AGENTS.md"))
 }
 
 func setupAXILearnings(t *testing.T, root string) {

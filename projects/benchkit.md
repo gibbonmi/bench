@@ -355,6 +355,7 @@ a broken document reds at the commit.
 | `vet` | `go vet -trimpath ./...` | go-source, go-build-input |
 | `build` | `go build -trimpath -buildvcs=false ./...` | go-source, go-build-input |
 | `structure` | `bench structure --growth <base>` | go-source |
+| `docs-currency-workflow` | `bench test --check docs-currency-workflow` | anchor-registry |
 | `decision-map-integrity` | `bench test --check decision-map-integrity` | decision-documents |
 | `guidance-prose-budgets` | `bench test --check guidance-prose-budgets` | benchkit-profile |
 | `skill-description-budgets` | `bench test --check skill-description-budgets` | benchkit-profile |

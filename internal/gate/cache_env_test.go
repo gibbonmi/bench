@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gocache"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 // cacheClosureFixture is an outcome fixture whose manifest declares HOME, which is the
@@ -15,10 +16,10 @@ import (
 // entry from that declared value.
 func cacheClosureFixture(t *testing.T) string {
 	t.Helper()
-	root := outcomeFixture(t)
-	outcomeWrite(t, root, ".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":["HOME"],"paths":[],"tools":[]}`+"\n", 0o644)
-	outcomeCommit(t, root, "declare HOME")
-	return root
+	return outcomeFixture(t, func(f *testrepo.GateFixture, body string) string {
+		f.Environment = []string{"HOME"}
+		return body
+	})
 }
 
 // C06: the closed oracle env carries the entry derived from the closure's own HOME.

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/packagesurface"
@@ -179,9 +180,9 @@ type PathClass struct {
 	Checks []string
 }
 
-// laneClasses is the path-class table in table order: the four content classes, then the
-// document families the registry binds. It is the one source for what a composed change
-// selects, and the profile's `selected by` column renders from it.
+// laneClasses orders the content classes, the anchor class, and the document families.
+// It is the one source for what a composed change selects, and the profile's
+// `selected by` column renders from it.
 var laneClasses = append([]PathClass{
 	{
 		Name:   "go-source",
@@ -205,7 +206,20 @@ var laneClasses = append([]PathClass{
 		Match:  func(path string, _ []string) bool { return path == prose.ExclusionFile },
 		Checks: []string{"prose"},
 	},
+	anchorRegistryClass(),
 }, documentClasses()...)
+
+func anchorRegistryClass() PathClass {
+	files := map[string]bool{}
+	for _, anchor := range anchors.Entries() {
+		files[anchor.File] = true
+	}
+	return PathClass{
+		Name:   "anchor-registry",
+		Match:  func(path string, _ []string) bool { return files[path] },
+		Checks: []string{"docs-currency-workflow"},
+	}
+}
 
 // documentFamilies binds each document class to the paths it claims. A row's name is the
 // registry input source itself, so the lane and the registry cannot spell one family two
@@ -255,10 +269,8 @@ func documentClasses() []PathClass {
 	return classes
 }
 
-// documentRegistryChecks names the dev-tier registry checks bound to any of the given
-// input sources, in registry order. It is the one derivation of the family-to-check fact:
-// a class row reads it for its own source, and the kit lane declares its document rows
-// from the whole set. A check the registry adds therefore joins both with no second list.
+// documentRegistryChecks names the dev-tier checks bound to these input sources, in
+// registry order. Document classes derive their checks from these bindings.
 func documentRegistryChecks(sources ...registry.InputSource) []string {
 	var names []string
 	for _, check := range registry.Checks {
@@ -270,19 +282,17 @@ func documentRegistryChecks(sources ...registry.InputSource) []string {
 	return names
 }
 
-// documentLaneChecks is the kit lane's document half: one check per dev-tier registry
-// check a document family binds, in registry order. Each runs through the lane's own run
-// binary, so the lane builds no second executable and the check grades the composed
-// checkout that binary was built from.
+// documentLaneChecks declares the registry checks that path classes select, in registry
+// order. Each check uses the lane's run binary to grade the composed checkout.
 func documentLaneChecks() []Phase {
-	sources := make([]registry.InputSource, 0, len(documentFamilies))
-	for _, family := range documentFamilies {
-		sources = append(sources, family.source)
-	}
-	names := documentRegistryChecks(sources...)
-	checks := make([]Phase, 0, len(names))
-	for _, name := range names {
-		checks = append(checks, Phase{Name: name, Argv: []string{runBinaryArgvToken, "test", "--check", name}})
+	var checks []Phase
+	for _, check := range registry.Checks {
+		for _, class := range laneClasses {
+			if check.RunsAt(registry.Dev) && slices.Contains(class.Checks, check.Name) {
+				checks = append(checks, Phase{Name: check.Name, Argv: []string{runBinaryArgvToken, "test", "--check", check.Name}})
+				break
+			}
+		}
 	}
 	return checks
 }
