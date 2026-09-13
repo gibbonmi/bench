@@ -612,11 +612,86 @@ findings in the single permitted review round.
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "d0674277f21e4b56416d22e75bb1679dbabfc8f2",
+    "performer": "/root",
+    "reconciliation": {
+      "HP1": "covered",
+      "HP2": "covered",
+      "HP3": "covered",
+      "HP4": "covered",
+      "HP5": "covered",
+      "HP6": "covered",
+      "HP7": "covered",
+      "HP8": "covered",
+      "HP9": "covered",
+      "HP10": "covered",
+      "HP11": "covered",
+      "HP12": "covered",
+      "HP13": "covered",
+      "HP14": "covered",
+      "HP15": "covered",
+      "HP16": "covered",
+      "HP17": "covered",
+      "HP18": "covered",
+      "HP19": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-coverage",
+        "performer": "/root",
+        "role": "integration-verification",
+        "model": "gpt-6-astra",
+        "effort": "high",
+        "source_digest": "d0674277f21e4b56416d22e75bb1679dbabfc8f2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "collaboration:/root",
+          "digest": "sha256:5a582c8d7c730e8d1a408bf658e2b934c68d769624835029c22ec0cfe88244b1",
+          "excerpt": "ok: coverage map valid — 19 row(s)"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check harness-proof-closure",
+        "exit_code": 0
+      },
+      {
+        "id": "final-acceptance",
+        "performer": "/root",
+        "role": "integration-verification",
+        "model": "gpt-6-astra",
+        "effort": "high",
+        "source_digest": "d0674277f21e4b56416d22e75bb1679dbabfc8f2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "collaboration:/root",
+          "digest": "sha256:630916587d4805a4922c4e59d93e82875aaa596c269c2ed39837493195eef1af",
+          "excerpt": "failures[0]{package,test,line}:"
+        },
+        "requirement": "acceptance",
+        "command": "bench test --package ./...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-integration",
+        "performer": "/root",
+        "role": "integration-verification",
+        "model": "gpt-6-astra",
+        "effort": "high",
+        "source_digest": "d0674277f21e4b56416d22e75bb1679dbabfc8f2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "collaboration:/root",
+          "digest": "sha256:0f4a43b9e132114849fb2dfd88ffdbf7f4942189a5e055f5043fdcf130bd6c70",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,35300\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "integration",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
