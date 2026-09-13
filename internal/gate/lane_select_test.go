@@ -11,6 +11,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	benchgit "github.com/gibbonmi/bench/internal/git"
@@ -181,6 +182,18 @@ func TestSelectLaneByClass(t *testing.T) {
 			classes: []string{"prose-policy"},
 		},
 		{
+			name:    "modified registered anchor path",
+			changes: []ComposedChange{laneChange("AGENTS.md")},
+			checks:  []string{"prose", "docs-currency-workflow"},
+			classes: []string{"markdown", "anchor-registry"},
+		},
+		{
+			name:    "deleted registered anchor path",
+			changes: []ComposedChange{laneDeletion(".bench/BENCH.md")},
+			checks:  []string{"prose", "docs-currency-workflow"},
+			classes: []string{"markdown", "anchor-registry"},
+		},
+		{
 			name:    "PL15 two classes take the union in declared order",
 			changes: []ComposedChange{laneChange("a.go"), laneChange("b.md")},
 			checks:  []string{"gofmt", "prose", "vet", "build", "structure"},
@@ -250,8 +263,8 @@ func TestSelectLaneByClass(t *testing.T) {
 		{
 			name:    "PL32 the kit profile",
 			changes: []ComposedChange{laneChange("projects/benchkit.md")},
-			checks:  []string{"prose", "guidance-prose-budgets", "skill-description-budgets", "profile-lane-table"},
-			classes: []string{"markdown", "benchkit-profile"},
+			checks:  []string{"prose", "docs-currency-workflow", "guidance-prose-budgets", "skill-description-budgets", "profile-lane-table"},
+			classes: []string{"markdown", "anchor-registry", "benchkit-profile"},
 		},
 		{
 			name:    "PL47 a deleted embed target",
@@ -300,6 +313,14 @@ func TestSelectLaneByClass(t *testing.T) {
 				t.Errorf("classes = %v, want %v", classes, tc.classes)
 			}
 		})
+	}
+	for _, anchor := range anchors.Entries() {
+		for _, change := range []ComposedChange{laneChange(anchor.File), laneDeletion(anchor.File)} {
+			selected, classes := SelectLane(BenchkitLane("/repo", "/repo"), []ComposedChange{change}, nil)
+			if !slices.Contains(classes, "anchor-registry") || !slices.Contains(laneCheckNames(selected), "docs-currency-workflow") {
+				t.Errorf("registered change %+v selects %v with classes %v", change, laneCheckNames(selected), classes)
+			}
+		}
 	}
 }
 

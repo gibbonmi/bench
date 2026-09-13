@@ -11,6 +11,97 @@ import (
 
 type anchorErrors []string
 
+func TestEvaluatePathReportsRegistryDiagnostics(t *testing.T) {
+	for _, anchor := range Entries() {
+		if anchor.File != "AGENTS.md" || anchor.Kind != Require {
+			continue
+		}
+		h := anchorHarness{rules: []anchorRule{{file: anchor.File, needle: anchor.Needle}}}
+		result := EvaluatePath(h.write(t, 0), anchor.File)
+		if !slices.Contains(result.Diagnostics, anchor.Diagnostic) {
+			t.Fatalf("path diagnostics = %v, want missing-anchor diagnostic %q", result.Diagnostics, anchor.Diagnostic)
+		}
+		return
+	}
+	t.Fatal("registry has no required AGENTS.md anchor")
+}
+
+func TestEvaluatePathAnchorKinds(t *testing.T) {
+	for _, tc := range []struct {
+		kind      Kind
+		forbidden bool
+	}{
+		{Require, false}, {Forbid, true},
+		{RequireInSection, false}, {ForbidInSection, true},
+	} {
+		t.Run(fmt.Sprint(tc.kind), func(t *testing.T) {
+			anchor := pathTestAnchor(t, tc.kind)
+			h := anchorHarness{rules: []anchorRule{{file: anchor.File, section: anchor.Section, needle: anchor.Needle, forbidden: tc.forbidden}}}
+			for _, broken := range []int{-1, 0} {
+				result := EvaluatePath(h.write(t, broken), anchor.File)
+				if got := slices.Contains(result.Diagnostics, anchor.Diagnostic); got != (broken == 0) {
+					t.Fatalf("broken=%d diagnostics = %v, want violation=%t for %q", broken, result.Diagnostics, broken == 0, anchor.Diagnostic)
+				}
+				index := slices.IndexFunc(result.Locations, func(location Location) bool { return location.Anchor == anchor })
+				if index < 0 || (result.Locations[index].Line > 0) != ((broken == 0) == tc.forbidden) {
+					t.Fatalf("broken=%d locations = %v, want the registered anchor's presence", broken, result.Locations)
+				}
+			}
+		})
+	}
+}
+
+func TestEvaluatePathRefusesInvalidSubjects(t *testing.T) {
+	anchor := pathTestAnchor(t, RequireInSection)
+	for _, tc := range []struct {
+		name string
+		body string
+		want string
+	}{
+		{"missing", "", "section-scoped anchor file missing: " + anchor.File},
+		{"empty", "", fmt.Sprintf("%s is missing the %q section that owns a scoped anchor", anchor.File, anchor.Section)},
+		{"duplicated", strings.Repeat("## "+anchor.Section+"\n\n"+anchor.Needle+"\n", 2), fmt.Sprintf("%s carries 2 %q sections; a scoped anchor needs exactly one owning section", anchor.File, anchor.Section)},
+		{"directory", "", RefusalPrefix + anchor.File},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			path := filepath.Join(root, filepath.FromSlash(anchor.File))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if tc.name == "directory" {
+				if err := os.Mkdir(path, 0o755); err != nil {
+					t.Fatal(err)
+				}
+			} else if tc.name != "missing" {
+				if err := os.WriteFile(path, []byte(tc.body), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			result := EvaluatePath(root, anchor.File)
+			if !strings.Contains(strings.Join(result.Diagnostics, "\n"), tc.want) {
+				t.Fatalf("diagnostics = %v, want %q", result.Diagnostics, tc.want)
+			}
+		})
+	}
+}
+
+func pathTestAnchor(t *testing.T, kind Kind) Anchor {
+	t.Helper()
+	entries := Entries()
+	counts := map[string]int{}
+	for _, anchor := range entries {
+		counts[anchor.Diagnostic]++
+	}
+	for _, anchor := range entries {
+		if anchor.Kind == kind && counts[anchor.Diagnostic] == 1 {
+			return anchor
+		}
+	}
+	t.Fatalf("registry has no anchor of kind %d", kind)
+	return Anchor{}
+}
+
 func (*anchorErrors) Helper() {}
 func (e *anchorErrors) Errorf(format string, args ...any) {
 	*e = append(*e, fmt.Sprintf(format, args...))
