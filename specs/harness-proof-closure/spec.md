@@ -160,7 +160,20 @@ red. Final verification follows HP-C5 and precedes landing.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft120-20260912-01",
+    "orchestrator_session": "/root",
+    "author_limit": 3,
+    "assignments": {
+      "1-own-gate-fixture-inputs.md": [],
+      "2-run-root-conformance-by-default.md": [],
+      "3-evaluate-anchor-paths.md": [],
+      "4-preserve-focused-system-verdicts.md": [],
+      "5-serialize-freshness-publication.md": []
+    }
+  },
   "chunks": [
     {
       "id": "HP-C1",
@@ -169,11 +182,13 @@ red. Final verification follows HP-C5 and precedes landing.
         {
           "id": "fixture-owner",
           "command": "bench test --package ./internal/testrepo",
-          "probe": "write an ambient command token without recording it in the manifest"
+          "probe": "write an ambient command token without recording it in the manifest",
+          "ticket": "1-own-gate-fixture-inputs.md"
         },
         {
           "id": "fixture-consumers",
-          "command": "bench test --package ./internal/..."
+          "command": "bench test --package ./internal/...",
+          "ticket": "1-own-gate-fixture-inputs.md"
         }
       ]
     },
@@ -184,7 +199,8 @@ red. Final verification follows HP-C5 and precedes landing.
         {
           "id": "root-entry",
           "command": "bench test --package ./internal/conformance --run 'TestRootConformance|TestHarnessDefaultsToCurrentGitRoot'",
-          "probe": "restore the unset-root environment skip"
+          "probe": "restore the unset-root environment skip",
+          "ticket": "2-run-root-conformance-by-default.md"
         }
       ]
     },
@@ -195,19 +211,23 @@ red. Final verification follows HP-C5 and precedes landing.
         {
           "id": "anchor-owner",
           "command": "bench test --package ./internal/anchors",
-          "probe": "return locations without the path's registry diagnostics"
+          "probe": "return locations without the path's registry diagnostics",
+          "ticket": "3-evaluate-anchor-paths.md"
         },
         {
           "id": "anchor-command",
-          "command": "bench test --package ./cmd/bench --run TestAnchors"
+          "command": "bench test --package ./cmd/bench --run TestAnchors",
+          "ticket": "3-evaluate-anchor-paths.md"
         },
         {
           "id": "anchor-lane",
-          "command": "bench test --package ./internal/gate --run TestSelectLaneByClass"
+          "command": "bench test --package ./internal/gate --run TestSelectLaneByClass",
+          "ticket": "3-evaluate-anchor-paths.md"
         },
         {
           "id": "docs-check",
-          "command": "bench test --check docs-currency-workflow"
+          "command": "bench test --check docs-currency-workflow",
+          "ticket": "3-evaluate-anchor-paths.md"
         }
       ]
     },
@@ -218,11 +238,13 @@ red. Final verification follows HP-C5 and precedes landing.
         {
           "id": "focused-system",
           "command": "go test -trimpath -count=1 -tags=system ./internal/systemtest -run '^TestFocusedRun'",
-          "probe": "call the whole-suite ledger verifier after a focused passing child"
+          "probe": "call the whole-suite ledger verifier after a focused passing child",
+          "ticket": "4-preserve-focused-system-verdicts.md"
         },
         {
           "id": "full-system",
-          "command": "bench test --check system"
+          "command": "bench test --check system",
+          "ticket": "4-preserve-focused-system-verdicts.md"
         }
       ]
     },
@@ -233,7 +255,8 @@ red. Final verification follows HP-C5 and precedes landing.
         {
           "id": "publication",
           "command": "bench test --package ./internal/freshness",
-          "probe": "release the directory lock before rollback and temporary cleanup finish"
+          "probe": "release the directory lock before rollback and temporary cleanup finish",
+          "ticket": "5-serialize-freshness-publication.md"
         }
       ]
     }
@@ -353,6 +376,11 @@ Won't handle: a portable non-Unix publication lock — the publisher and its exi
 - `internal/conformance/gate_entry_test.go`
 - `internal/conformance/harness_test.go`
 - `internal/conformance/registry/registry.go`
+- `cmd/bench/command_registry.go`
+- `cmd/bench/command_registry_test.go`
+- `cmd/bench/help_inventory_test.go`
+- `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
 - `internal/anchors/registry.go`
 - `internal/anchors/anchor_harness_diagnostics_test.go`
 - `cmd/bench/anchors_command.go`
@@ -360,6 +388,18 @@ Won't handle: a portable non-Unix publication lock — the publisher and its exi
 - `internal/gate/lane_select.go`
 - `internal/gate/lane_select_test.go`
 - `projects/benchkit.md`
+- `tests/canary/guidance-prose-budgets/over-budget-skill/`
+- `tests/canary/line-routing/line-binding-prose-drift/`
+- `tests/canary/skill-description-budgets/budget-table-missing/`
+- `tests/canary/skill-description-budgets/description-folded/`
+- `tests/canary/skill-description-budgets/description-missing/`
+- `tests/canary/skill-description-budgets/over-budget-command/`
+- `tests/canary/skill-description-budgets/over-budget-description/`
+- `tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading/`
+- `tests/canary/workflow-guidance-anchors/benchkit-review-round-owner/`
+- `tests/canary/workflow-guidance-anchors/benchkit-review-round-routing/`
+- `tests/canary/workflow-guidance-anchors/benchkit-spec-ownership/`
+- `tests/canary/workflow-guidance-anchors/benchkit-system-suite-route/`
 - `internal/systemtest/owner_test.go`
 - `internal/systemtest/owner_selection_test.go`
 - `internal/freshness/freshness_publish.go`

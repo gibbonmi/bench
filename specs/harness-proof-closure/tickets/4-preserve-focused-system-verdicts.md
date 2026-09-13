@@ -11,6 +11,8 @@ with Go's parsed `test.run` flag. A focused run returns the selected tests'
 verdict after the normal owner cleanup and does not apply the full-suite ledger
 verification. An unfiltered run keeps the current ledger verification and its
 failure diagnostics.
+Bind `BENCH_KIT` to the assignment worktree for every focused and unfiltered
+system-suite invocation.
 
 ## Acceptance
 

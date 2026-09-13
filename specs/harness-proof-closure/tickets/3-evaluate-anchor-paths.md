@@ -1,7 +1,7 @@
 # Evaluate anchor paths
 
 Blocked by: none
-Writes: internal/anchors/registry.go, internal/anchors/anchor_harness_diagnostics_test.go, cmd/bench/anchors_command.go, cmd/bench/anchor_help_test.go, internal/gate/lane_select.go, internal/gate/lane_select_test.go, projects/benchkit.md
+Writes: internal/anchors/registry.go, internal/anchors/anchor_harness_diagnostics_test.go, cmd/bench/anchors_command.go, cmd/bench/anchor_help_test.go, internal/gate/lane_select.go, internal/gate/lane_select_test.go, projects/benchkit.md, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/guidance-prose-budgets/over-budget-skill, tests/canary/line-routing/line-binding-prose-drift, tests/canary/skill-description-budgets/budget-table-missing, tests/canary/skill-description-budgets/description-folded, tests/canary/skill-description-budgets/description-missing, tests/canary/skill-description-budgets/over-budget-command, tests/canary/skill-description-budgets/over-budget-description, tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading, tests/canary/workflow-guidance-anchors/benchkit-review-round-owner, tests/canary/workflow-guidance-anchors/benchkit-review-round-routing, tests/canary/workflow-guidance-anchors/benchkit-spec-ownership, tests/canary/workflow-guidance-anchors/benchkit-system-suite-route
 Covers: HP6, HP7, HP8, HP9, HP10
 
 ## What to build
