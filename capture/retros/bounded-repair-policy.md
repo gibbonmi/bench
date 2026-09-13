@@ -13,7 +13,7 @@ The complete native record remains in that commit at `reviews/bounded-repair-pol
 Its current reviews and complete checkpoint passed before landing.
 
 The completed spec was retired after all sixteen compiled decision files were copied and verified.
-The preserved map at `decisions/ft232-repair-loop.md` retains the unconsumed pilot decisions.
+The preserved map at `specs/repair-collection-pilot/decisions/ft232-repair-loop.md` retains the unconsumed pilot decisions.
 The collection pilot, detector, and warning surface remain outside this delivery.
 FT232 remains open for that separate work.
 
