@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: `specs/bounded-repair-policy/decisions/ft232-repair-loop.md` (ready compiled map; policy outcome confirmed by ticket #14).
 
-Verification log: 1 iteration(s) to accept — Sol/high spec findings are folded. The single Astra/high slice review follows slicing.
+Verification log: 1 iteration(s) to accept — Sol/high reviewed the spec once, and root reviewed the slices once. Both finding sets are folded without re-review.
 
 ## Problem
 
@@ -143,11 +143,16 @@ Use the focused policy reference to avoid expanding the line skill into a second
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| BP-C1 / pending Sol slicing | All implementation modes apply one bounded repair policy with current completion evidence | BP1 through BP21 | docs-currency-workflow, TestImplementationContinuation, review-owned scenario replay | yes |
+| BP-C1 / 1-enforce-bounded-repair-policy.md | All implementation modes apply one bounded repair policy with current completion evidence | BP1 through BP21 | `bench test --check docs-currency-workflow`, `TestImplementationContinuation`, `TestReviewConvergenceContractCurrentDocs`, `TestReviewCheckpointFindingAndReviewIdentity`, review-owned scenario replay | yes |
 
-The slicer confirms ticket membership and ownership fences after the spec review.
 A split cannot land a numeric allowance without its blocker classification and completion safeguards.
 Each chunk receives its normal review checkpoint before a successor starts.
+
+## Completion plan
+
+```bench-completion-plan
+{"version":1,"chunks":[{"id":"BP-C1","tickets":["1-enforce-bounded-repair-policy.md"],"verification":[{"id":"workflow-contract","command":"bench test --check docs-currency-workflow"},{"id":"continuation-tests","command":"bench test --package ./internal/conformance --run 'TestImplementationContinuation|TestReviewConvergenceContractCurrentDocs'","probe":"remove one production policy anchor while retaining its TestImplementationContinuation expectation"},{"id":"checkpoint-regression","command":"bench test --package ./internal/gate --run TestReviewCheckpointFindingAndReviewIdentity"},{"id":"guidance-budget","command":"bench test --check guidance-prose-budgets"}]}],"final_verification":[{"id":"acceptance","command":"bench test --check docs-currency-workflow"},{"id":"system","command":"bench test --check system"}]}
+```
 
 ## Testing decisions
 
@@ -232,8 +237,7 @@ Won't handle: a mechanical proof that an agent obeys instructions — scenario r
 
 ## Ownership fences
 
-These provisional fences describe the complete behavior change.
-Sol confirms them against the ticket union during slicing.
+The ticket's `Writes:` field supplies this exact union.
 
 - `.agents/skills/bench-craft-line/SKILL.md`
 - `.agents/skills/bench-craft-line/references/bounded-repair-policy.md`
@@ -242,9 +246,9 @@ Sol confirms them against the ticket union during slicing.
 - `.agents/commands/bench-review-implementation.md`
 - `internal/anchors/registry_retained_workflow.go`
 - `internal/conformance/implementation_continuation_test.go`
+- `tests/canary/workflow-guidance-anchors`
 - `CHANGELOG.md`
-- `reviews/bounded-repair-policy.md`
-- `specs/bounded-repair-policy/spec.md`
+- `reviews/bounded-repair-policy.md` (new)
 
 The implementation owns only the named product files and its ordinary verification artifacts.
 The compiled map remains settled provenance.
@@ -263,6 +267,7 @@ Neither estimate authorizes those capabilities.
 This change does not add a CLI flag, modify the native review schema, or weaken a completion validator.
 It does not alter the pre-review continuation policy, default implementation authorship, or model routing.
 FT232 remains on the roadmap while its separately approved collection work remains open.
+Before this spec retires, promotion preserves the compiled map's unconsumed pilot decisions.
 
 ## Further notes
 
@@ -328,3 +333,13 @@ The exact source table, durable scenario evidence, and headroom constraints inco
 
 The reviewer pre-approves this phase's landing.
 This specification phase does not start the implementation or activate the collection pilot.
+
+### Ticket approval table
+
+| # | title | Blocked by | delivered outcome |
+| --- | --- | --- | --- |
+| 1 | Enforce the bounded repair policy | none | Every implementation mode applies one bounded post-review allowance while current completion evidence remains mandatory. |
+
+The single ticket stays atomic because the allowance cannot land without its classification and completion safeguards.
+The root slice review accepted the graph and required these completion-plan corrections.
+The author folded those corrections without a second slice review.
