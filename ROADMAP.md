@@ -121,8 +121,6 @@ findings in the owner details.
 
 **FT168 (LOW) — focused iteration evidence through registered check owners.**
 
-**FT120 (LOW) — gate, canary, and contract test-harness defects nothing asserts.**
-
 **FT115 (LOW) — load-robust test and phase deadlines derived from bounds.**
 
 **FT246 (MEDIUM) — other binary-building test packages select the gate executable once.**
