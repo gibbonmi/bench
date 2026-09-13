@@ -279,9 +279,7 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **repair sequence** — one implementation chunk's related repair attempts.
   A sequence can include several findings and repair cycles.
   Not an individual finding, one review, or a fresh process — repair sequence.
-- **repair cycle** — one repair attempt and verification of its affected findings.
-  A cycle can address several findings. Not a tool call, an individual finding,
-  or a fresh review alone — repair cycle.
+- **repair cycle** — see the canonical definition in the [bounded repair policy](.agents/skills/bench-craft-line/references/bounded-repair-policy.md#scope-and-allowance).
 - **disposition** — the exactly-one next-action label a review finding carries.
   `no-op` means the concern is refuted and no repair target remains. `auto-fix`
   means a deterministic rule or exact spec predicate, repairable in

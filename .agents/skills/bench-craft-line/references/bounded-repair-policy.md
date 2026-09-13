@@ -8,8 +8,8 @@ Light-path work counts as one chunk when it receives review findings.
 This policy adds no mandatory initial review for light-path work.
 Initial implementation, pre-review checks, and the first review consume no repair cycles.
 
-Use the repair-cycle definition in [the glossary](../../../../CONTEXT.md).
-Count one repair attempt and verification of its affected findings as one cycle, even when it addresses several findings.
+A repair cycle is one repair attempt and verification of its affected findings. It can address several findings.
+Avoid: tool call, individual finding, fresh review alone.
 Individual tool calls and unchanged verification reruns consume no additional repair cycles.
 
 The allowance takes precedence over continuation while progress holds after initial review.

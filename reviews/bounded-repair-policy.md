@@ -4,8 +4,13 @@
 
 The implementation has one ticket and one chunk, BP-C1.
 The initial Terra reviews passed; cross-harness falsification found two blockers.
-No post-review repair cycle is complete. No reviewer extension exists.
-The retained author will address both blockers in the first repair cycle.
+Two post-review repair cycles are consumed. No reviewer extension exists.
+
+The retained author changed both entry triggers and moved the definition to the shipped policy.
+Focused verification and both omission probes pass. Current native repair coverage remains pending.
+
+The first cycle repaired the entry trigger and glossary source.
+The second cycle corrected the review record paragraph that the required prose check rejected.
 
 ## Standards
 

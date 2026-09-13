@@ -145,7 +145,7 @@ func TestImplementationContinuation(t *testing.T) {
 		},
 		"implementation continuation: bounded repair dropped cycle unit": {
 			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Scope and allowance",
-			needle: "Count one repair attempt and verification of its affected findings as one cycle, even when it addresses several findings.",
+			needle: "A repair cycle is one repair attempt and verification of its affected findings. It can address several findings.",
 		},
 		"implementation continuation: bounded repair dropped verification-only exclusion": {
 			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Scope and allowance",
@@ -253,11 +253,11 @@ func TestImplementationContinuation(t *testing.T) {
 		},
 		"implementation continuation: craft-line dropped the bounded-repair owner": {
 			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
-			needle: "At initial review, read [the bounded repair policy](references/bounded-repair-policy.md).",
+			needle: "At initial review or before post-review repairs, including resumed work, read [the bounded repair policy](references/bounded-repair-policy.md).",
 		},
 		"implementation continuation: implementation phase dropped bounded repairs": {
 			file: ".agents/commands/bench-implement-spec.md", section: "Build",
-			needle: "At initial review, read [the bounded repair policy](../skills/bench-craft-line/references/bounded-repair-policy.md).",
+			needle: "At initial review or before post-review repairs, including resumed work, read [the bounded repair policy](../skills/bench-craft-line/references/bounded-repair-policy.md).",
 		},
 		"implementation continuation: craft-review dropped bounded repairs": {
 			file: ".agents/skills/bench-craft-review/SKILL.md", section: "",
