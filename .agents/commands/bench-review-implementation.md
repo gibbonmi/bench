@@ -27,6 +27,7 @@ perform. The gate decides done; the reviewer decides whether a green change ship
 
 ## Review modes
 
+Before classifying repairs, read [the bounded repair policy](../skills/bench-craft-line/references/bounded-repair-policy.md). Apply its allowance and retained-state rules.
 Each planned chunk takes one review across Standards, Spec, and Coverage. The axes read the whole approved spec and focus on the frozen `chunk-base..chunk-tip` delta.
 
 After the retained author repairs accepted findings, current repair coverage closes those predicates. Repeat delegated review only for a later semantic delta or a cross-chunk concern that invalidates prior evidence. A repeated review uses the full chunk diff as context and blocks only on that later delta or named concern.
@@ -43,7 +44,7 @@ finding joins the review findings and takes the repair-routing disposition.
 
 A delegated chunk review starts after every ticket of the chunk reaches the integrated chunk tip. A per-ticket review does not replace that full-chunk review. Each delegated axis excludes the orchestrator and every current and former author of the run.
 
-The successor chunk starts only after findings and repair coverage close. After the last chunk, the retained author reconciles overall acceptance and integration before landing.
+Here, findings that prevent progression are unresolved blockers; retain optional advice separately under the policy. The successor chunk starts only after findings and repair coverage close. After the last chunk, the retained author reconciles overall acceptance and integration before landing.
 
 ## Process
 

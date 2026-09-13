@@ -37,7 +37,7 @@ Work approved tickets in dependency order inside their planned chunks. Use TDD o
 harness's native task list from `bench coverage <spec>`, whose
 `rows[N]{story,behavior,seam}` projection is one task per row.
 
-Apply `craft-line`'s retained implementation continuation policy throughout the ticket graph.
+Apply `craft-line`'s retained implementation continuation policy throughout the ticket graph. At initial review or before post-review repairs, including resumed work, read [the bounded repair policy](../skills/bench-craft-line/references/bounded-repair-policy.md).
 
 Before each ticket, revalidate prepared source identity and required source bytes. Regenerate a charge when either changes. The retained author runs focused checks and the required mutation probe, then commits the ticket on a green lane. After the last ticket in a chunk, freeze the chunk delta and run the three review axes before advancing.
 

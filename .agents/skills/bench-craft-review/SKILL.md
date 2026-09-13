@@ -5,13 +5,13 @@ index: reviewing a diff / what a finding must cite
 ---
 
 # Reviewing on three axes
-
 Review catches what the gate can't see, and it is advisory. Review says whether the
 work is *good*, the gate says whether it is *done*, and the reviewer decides whether
 it ships. A finding never overrides the gate, and a clean review never substitutes
 for a green one. Every finding also carries exactly one repair-routing
 disposition — `no-op`, `auto-fix`, or `ask-user` — defined and enforced by
 `/bench-review-implementation`.
+Before classifying repairs, read [the bounded repair policy](../bench-craft-line/references/bounded-repair-policy.md).
 
 ## Re-derive, then compare
 

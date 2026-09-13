@@ -1,6 +1,6 @@
 # Bounded repair policy
 
-Status: staged
+Status: implemented
 
 Decision source: `specs/bounded-repair-policy/decisions/ft232-repair-loop.md` (ready compiled map; policy outcome confirmed by ticket #14).
 
@@ -69,7 +69,8 @@ The line skill owns the allowance through a focused reference, `references/bound
 The line skill links and charges that reference when implementation reaches its initial review.
 The implementation phase, review phase, and review craft skill consume that same owner.
 They do not restate the numeric limit or independently define a repair cycle.
-The existing glossary remains the definition source for a repair cycle.
+The shipped policy reference owns the repair-cycle definition.
+The project glossary points to that definition because linked consumers do not receive the project glossary.
 
 The reference applies to retained, full, delegated, unattended, and light-path implementation work.
 A light-path run counts as one chunk when it receives review findings.
@@ -153,6 +154,18 @@ Each chunk receives its normal review checkpoint before a successor starts.
 ```bench-completion-plan
 {"version":1,"chunks":[{"id":"BP-C1","tickets":["1-enforce-bounded-repair-policy.md"],"verification":[{"id":"workflow-contract","command":"bench test --check docs-currency-workflow"},{"id":"continuation-tests","command":"bench test --package ./internal/conformance --run 'TestImplementationContinuation|TestReviewConvergenceContractCurrentDocs'","probe":"remove one production policy anchor while retaining its TestImplementationContinuation expectation"},{"id":"checkpoint-regression","command":"bench test --package ./internal/gate --run TestReviewCheckpointFindingAndReviewIdentity"},{"id":"guidance-budget","command":"bench test --check guidance-prose-budgets"}]}],"final_verification":[{"id":"acceptance","command":"bench test --check docs-currency-workflow"},{"id":"system","command":"bench test --check system"}]}
 ```
+
+## Dogfood evidence
+
+The retained author ran the candidate binary through `bench shift` in a disposable repository.
+A deterministic adapter replayed the exhausted-allowance handoff scenario with the changed guidance present.
+The first invocation refused the missing adapter before any iteration.
+The configured run returned `complete` at exit 0 with one commit and a clean no-op second iteration.
+The fixture gate passed, and its pre-commit hook recorded execution.
+
+This transport check does not prove live-agent compliance; the independent scenario review supplies the policy judgment.
+The candidate system suite also passed without skips.
+Native evidence and the BP1 through BP21 scenario results remain in `reviews/bounded-repair-policy.md`.
 
 ## Testing decisions
 
@@ -239,6 +252,8 @@ Won't handle: a mechanical proof that an agent obeys instructions — scenario r
 
 The ticket's `Writes:` field supplies this exact union.
 
+- `CONTEXT.md`
+- `tests/canary/docs-currency-token-diet/signal-vocabulary-drift`
 - `.agents/skills/bench-craft-line/SKILL.md`
 - `.agents/skills/bench-craft-line/references/bounded-repair-policy.md`
 - `.agents/skills/bench-craft-review/SKILL.md`
@@ -322,6 +337,10 @@ No outside source was required for this policy specification.
 - Bootstrap authority before execution: no new executable hop or authority claim.
 
 ### Flagged additions and implementation choices
+
+The repair moves the glossary definition to the shipped policy reference and adds `CONTEXT.md` to the ownership fence.
+This non-behavioral source-location correction preserves the cycle unit and all acceptance rows.
+The author records it for reviewer veto under the operating guide's spec-contradiction rule.
 
 The focused reference, ordinary-prose repair state, and optional-advice placement are implementation choices for the approved behavior.
 They add no data-collection service, new denial surface, or native record field.
