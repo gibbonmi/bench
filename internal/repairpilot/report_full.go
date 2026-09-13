@@ -58,13 +58,7 @@ func sequenceReportTable(items []observation) reportTable {
 		keys = append(keys, key)
 	}
 	sort.Slice(keys, func(i, j int) bool {
-		if keys[i].Source != keys[j].Source {
-			return keys[i].Source < keys[j].Source
-		}
-		if keys[i].Spec != keys[j].Spec {
-			return keys[i].Spec < keys[j].Spec
-		}
-		return keys[i].Chunk < keys[j].Chunk
+		return compareSequences(keys[i], keys[j]) < 0
 	})
 	rows := make([][]string, 0, len(keys))
 	for _, key := range keys {
@@ -188,26 +182,33 @@ func auditReferenceReportTable(items []audit) reportTable {
 func intervalReportTable(items []observation) reportTable {
 	rows := [][]string{}
 	for _, item := range items {
-		if item.StartedAt == nil && item.EndedAt == nil {
+		if item.StartedAt == nil && item.EndedAt == nil && item.IntervalReference == nil {
 			continue
 		}
 		producer, native := referenceFields(item.IntervalReference)
-		rows = append(rows, []string{item.ID, item.AssignmentID, formatReportTime(item.StartedAt), formatReportTime(item.EndedAt), producer, native})
+		status := "complete"
+		if item.StartedAt == nil && item.EndedAt == nil {
+			status = "unbounded"
+		} else if item.StartedAt == nil || item.EndedAt == nil {
+			status = "partial"
+		} else if item.IntervalReference == nil || !assessment.ValidReference(*item.IntervalReference) {
+			status = "unproven"
+		}
+		rows = append(rows, []string{item.ID, item.AssignmentID, formatReportTime(item.StartedAt), formatReportTime(item.EndedAt), status, producer, native})
 	}
-	return reportTable{"intervals", []string{"observation_id", "assignment_id", "started_at", "ended_at", "producer", "native"}, rows}
+	return reportTable{"intervals", []string{"observation_id", "assignment_id", "started_at", "ended_at", "status", "producer", "native"}, rows}
 }
 
 func comparisonReportTable(items []observation) reportTable {
 	rows := [][]string{}
 	for i, left := range items {
 		for _, right := range items[i+1:] {
-			if left.AssignmentID == right.AssignmentID || left.StartedAt == nil || left.EndedAt == nil || right.StartedAt == nil || right.EndedAt == nil {
-				continue
+			if status, comparable := intervalComparisonStatus(left, right); comparable {
+				rows = append(rows, []string{left.ID, right.ID, status})
 			}
-			rows = append(rows, []string{left.ID, right.ID, strconv.FormatBool(intervalsOverlap(left, right))})
 		}
 	}
-	return reportTable{"interval_comparisons", []string{"left_observation_id", "right_observation_id", "overlap"}, rows}
+	return reportTable{"interval_comparisons", []string{"left_observation_id", "right_observation_id", "status"}, rows}
 }
 
 func gapReportTable(gaps []evidenceGap) reportTable {

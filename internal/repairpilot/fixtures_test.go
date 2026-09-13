@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/bounds"
 )
 
@@ -187,17 +188,92 @@ func (h *recordHarness) report(t *testing.T) string {
 
 func assertSummaryValue(t *testing.T, out, field, value string) {
 	t.Helper()
-	lines := strings.Split(strings.TrimSpace(out), "\n")
-	parts := strings.SplitN(lines[0], "{", 2)
-	if len(lines) < 2 || len(parts) != 2 {
-		t.Fatalf("summary = %q, want a leading table row", out)
+	rows := reportRows(t, out, "repair_pilot")
+	if len(rows) != 1 || fmt.Sprint(rows[0][field]) != value {
+		t.Fatalf("summary field %s = %#v, want %q", field, rows, value)
 	}
-	columns := strings.Split(strings.TrimSuffix(strings.TrimSuffix(parts[1], ":"), "}"), ",")
-	values := strings.Split(strings.TrimSpace(lines[1]), ",")
-	for i, column := range columns {
-		if column == field && i < len(values) && strings.Trim(values[i], "\"") == value {
+}
+
+func reportRows(t *testing.T, out, block string) []map[string]any {
+	t.Helper()
+	document, err := axitest.DecodeDocument(out)
+	if err != nil {
+		t.Fatalf("decode report: %v\n%s", err, out)
+	}
+	decoded, err := document.Rows(block)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows := make([]map[string]any, len(decoded))
+	for index, value := range decoded {
+		row, ok := value.(map[string]any)
+		if !ok {
+			t.Fatalf("%s row %d = %T, want an object", block, index, value)
+		}
+		rows[index] = row
+	}
+	return rows
+}
+
+func assertReportClass(t *testing.T, out, class, status string) {
+	t.Helper()
+	assertRowsContain(t, out, "required_classes", map[string]string{"class": class, "status": status})
+}
+
+func assertRowsContain(t *testing.T, out, block string, fields map[string]string) {
+	t.Helper()
+	rows := reportRows(t, out, block)
+	for _, row := range rows {
+		matches := true
+		for field, want := range fields {
+			if fmt.Sprint(row[field]) != want {
+				matches = false
+				break
+			}
+		}
+		if matches {
 			return
 		}
 	}
-	t.Fatalf("summary field %s = output %q, want %q", field, out, value)
+	t.Fatalf("%s has no row matching %#v: %#v", block, fields, rows)
+}
+
+func rowField(rows []map[string]any, field string) []string {
+	values := make([]string, len(rows))
+	for index, row := range rows {
+		values[index] = fmt.Sprint(row[field])
+	}
+	return values
+}
+
+func rowFields(rows []map[string]any, fields ...string) [][]string {
+	values := make([][]string, len(rows))
+	for index, row := range rows {
+		values[index] = make([]string, len(fields))
+		for fieldIndex, field := range fields {
+			values[index][fieldIndex] = fmt.Sprint(row[field])
+		}
+	}
+	return values
+}
+
+func assertReportValue(t *testing.T, out, column, value string) {
+	t.Helper()
+	assertSummaryValue(t, out, column, value)
+}
+
+func reverseObservations(items []observation) []observation {
+	result := append([]observation{}, items...)
+	for left, right := 0, len(result)-1; left < right; left, right = left+1, right-1 {
+		result[left], result[right] = result[right], result[left]
+	}
+	return result
+}
+
+func reverseAudits(items []audit) []audit {
+	result := append([]audit{}, items...)
+	for left, right := 0, len(result)-1; left < right; left, right = left+1, right-1 {
+		result[left], result[right] = result[right], result[left]
+	}
+	return result
 }

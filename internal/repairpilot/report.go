@@ -31,6 +31,12 @@ type evidenceGap struct {
 	Detail        string
 }
 
+type collectionState struct {
+	Name     string
+	Deadline time.Time
+	Cutoff   *time.Time
+}
+
 func renderPilotReport(document Document, now time.Time, full bool) (string, int) {
 	summary := summarizeReport(document, now)
 	columns := []string{"state", "activated_at", "collection_ends_at", "cutoff_at", "sample", "completed_sequences", "incomplete_sequences", "unknown_labels", "evidence_gaps", "comparable_repeats"}
@@ -70,25 +76,16 @@ func summarizeReport(document Document, now time.Time) reportSummary {
 	if document.Version == 0 {
 		return reportSummary{State: "inactive", Sample: "inconclusive", Classes: map[string]bool{}}
 	}
-	deadline := collectionDeadline(document)
+	state := deriveCollectionState(document, now)
+	legacy := summarizeDocument(document)
 	summary := reportSummary{
-		State: "active", Sample: "provisional", ActivatedAt: formatReportTime(&document.ActivatedAt), EndsAt: formatReportTime(&deadline),
-		Classes: map[string]bool{}, Gaps: reportEvidenceGaps(document), Completed: completedSequenceCount(document), Legacy: summarizeDocument(document),
-	}
-	if document.CutoffAt != nil {
-		summary.State = "stopped"
-		summary.CutoffAt = formatReportTime(document.CutoffAt)
-	} else if !now.Before(deadline) {
-		summary.State = "stopped"
-		summary.CutoffAt = formatReportTime(&deadline)
+		State: state.Name, Sample: "provisional", ActivatedAt: formatReportTime(&document.ActivatedAt), EndsAt: formatReportTime(&state.Deadline), CutoffAt: formatReportTime(state.Cutoff),
+		Classes: map[string]bool{}, Gaps: reportEvidenceGaps(document), Completed: completedSequenceCount(document), Unknown: legacy.Progress["unknown"], Legacy: legacy,
 	}
 	sequences := map[sequence]bool{}
 	for _, item := range document.Observations {
 		sequences[item.Sequence] = true
 		label := effectiveProgressLabel(document, item.ID)
-		if label == "unknown" {
-			summary.Unknown++
-		}
 		if item.Kind == "repair" && (label == "productive" || label == "stalled") {
 			summary.Classes[label] = true
 		}
@@ -116,6 +113,8 @@ func reportEvidenceGaps(document Document) []evidenceGap {
 		hasStart := item.StartedAt != nil
 		hasEnd := item.EndedAt != nil
 		switch {
+		case !hasStart && !hasEnd && item.IntervalReference != nil:
+			gaps = append(gaps, evidenceGap{item.ID, "unbounded-interval", "interval provenance has no activity bounds"})
 		case hasStart != hasEnd:
 			gaps = append(gaps, evidenceGap{item.ID, "partial-interval", "both interval bounds are required for comparison"})
 		case (hasStart || hasEnd) && (item.IntervalReference == nil || !assessment.ValidReference(*item.IntervalReference)):
@@ -135,7 +134,7 @@ func hasAssignmentOverlap(items []observation) bool {
 	ordered := sortedObservations(items)
 	for i, left := range ordered {
 		for _, right := range ordered[i+1:] {
-			if intervalsOverlap(left, right) {
+			if status, comparable := intervalComparisonStatus(left, right); comparable && status == "true" {
 				return true
 			}
 		}
@@ -143,31 +142,33 @@ func hasAssignmentOverlap(items []observation) bool {
 	return false
 }
 
-func intervalsOverlap(left, right observation) bool {
-	if left.AssignmentID == right.AssignmentID || left.StartedAt == nil || left.EndedAt == nil || right.StartedAt == nil || right.EndedAt == nil {
-		return false
+func intervalComparisonStatus(left, right observation) (string, bool) {
+	if left.AssignmentID == right.AssignmentID || left.Sequence != right.Sequence {
+		return "", false
+	}
+	leftHasInterval := left.StartedAt != nil || left.EndedAt != nil || left.IntervalReference != nil
+	rightHasInterval := right.StartedAt != nil || right.EndedAt != nil || right.IntervalReference != nil
+	if !leftHasInterval || !rightHasInterval {
+		return "", false
+	}
+	if left.StartedAt == nil || left.EndedAt == nil || right.StartedAt == nil || right.EndedAt == nil {
+		return "unknown", true
 	}
 	if left.IntervalReference == nil || right.IntervalReference == nil || !assessment.ValidReference(*left.IntervalReference) || !assessment.ValidReference(*right.IntervalReference) {
-		return false
+		return "unknown", true
 	}
 	if !left.StartedAt.Before(*left.EndedAt) || !right.StartedAt.Before(*right.EndedAt) {
-		return false
+		return "false", true
 	}
-	return left.StartedAt.Before(*right.EndedAt) && right.StartedAt.Before(*left.EndedAt)
+	return strconv.FormatBool(left.StartedAt.Before(*right.EndedAt) && right.StartedAt.Before(*left.EndedAt)), true
 }
 
 func sortedObservations(items []observation) []observation {
 	ordered := append([]observation{}, items...)
 	sort.SliceStable(ordered, func(i, j int) bool {
 		left, right := ordered[i], ordered[j]
-		if left.Sequence.Source != right.Sequence.Source {
-			return left.Sequence.Source < right.Sequence.Source
-		}
-		if left.Sequence.Spec != right.Sequence.Spec {
-			return left.Sequence.Spec < right.Sequence.Spec
-		}
-		if left.Sequence.Chunk != right.Sequence.Chunk {
-			return left.Sequence.Chunk < right.Sequence.Chunk
+		if comparison := compareSequences(left.Sequence, right.Sequence); comparison != 0 {
+			return comparison < 0
 		}
 		if !left.ObservedAt.Equal(right.ObservedAt) {
 			return left.ObservedAt.Before(right.ObservedAt)
@@ -175,6 +176,30 @@ func sortedObservations(items []observation) []observation {
 		return left.ID < right.ID
 	})
 	return ordered
+}
+
+func compareSequences(left, right sequence) int {
+	for _, pair := range [][2]string{{left.Source, right.Source}, {left.Spec, right.Spec}, {left.Chunk, right.Chunk}} {
+		if pair[0] < pair[1] {
+			return -1
+		}
+		if pair[0] > pair[1] {
+			return 1
+		}
+	}
+	return 0
+}
+
+func deriveCollectionState(document Document, now time.Time) collectionState {
+	deadline := collectionDeadline(document)
+	state := collectionState{Name: "active", Deadline: deadline}
+	if document.CutoffAt != nil {
+		state.Name, state.Cutoff = "stopped", document.CutoffAt
+	} else if !now.Before(deadline) {
+		cutoff := deadline
+		state.Name, state.Cutoff = "stopped", &cutoff
+	}
+	return state
 }
 
 func formatReportTime(value *time.Time) string {

@@ -1,9 +1,9 @@
 package repairpilot
 
 import (
-	"encoding/csv"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -20,15 +20,27 @@ func TestRepairPilotReport(t *testing.T) {
 		out := runReport(t, document, false)
 		assertReportClass(t, out, "stalled", "present")
 		assertReportClass(t, out, "productive", "missing")
+		unaudited := reportFixture()
+		unaudited.Observations = []observation{reportRepair("unaudited-stalled", "stalled")}
+		assertReportClass(t, runReport(t, unaudited, false), "stalled", "missing")
 	})
 
 	t.Run("productive", func(t *testing.T) {
 		requireFixtureCase(t)
 		document := reportFixture()
-		document.Observations = []observation{reportRepair("repair-productive", "productive")}
+		key := sequenceKey("source-productive", "spec-a", "chunk-a")
+		first := reportFailure("productive-first", "assignment-a", "", "")
+		first.Sequence = key
+		repeated := reportFailure("productive-repeat", "assignment-a", "", "")
+		repeated.Sequence = key
+		repeated.ObservedAt = parseTime("2026-09-03T11:00:00Z")
+		repair := reportRepair("repair-productive", "productive")
+		repair.Sequence = key
+		document.Observations = []observation{first, repeated, repair}
 		document.Audits = []audit{reportAudit("audit-productive", "repair-productive", "productive")}
 		out := runReport(t, document, false)
 		assertReportClass(t, out, "productive", "present")
+		assertReportValue(t, out, "comparable_repeats", "1")
 	})
 
 	t.Run("unchanged", func(t *testing.T) {
@@ -37,6 +49,12 @@ func TestRepairPilotReport(t *testing.T) {
 		document.Observations = []observation{reportRerun("rerun-unchanged")}
 		out := runReport(t, document, false)
 		assertReportClass(t, out, "unchanged", "present")
+		assertReportClass(t, out, "stalled", "missing")
+		assertReportClass(t, out, "productive", "missing")
+		invalid := reportRerun("rerun-changed")
+		invalid.Rerun.UnchangedContent = false
+		document.Observations = []observation{invalid}
+		assertReportClass(t, runReport(t, document, false), "unchanged", "missing")
 	})
 
 	t.Run("overlap", func(t *testing.T) {
@@ -44,9 +62,17 @@ func TestRepairPilotReport(t *testing.T) {
 		document := reportFixture()
 		first := reportFailure("overlap-a", "assignment-a", "2026-09-02T09:00:00Z", "2026-09-02T11:00:00Z")
 		second := reportFailure("overlap-b", "assignment-b", "2026-09-02T10:00:00Z", "2026-09-02T12:00:00Z")
+		second.Sequence = first.Sequence
 		document.Observations = []observation{first, second}
 		out := runReport(t, document, false)
 		assertReportClass(t, out, "overlap", "present")
+		second.AssignmentID = first.AssignmentID
+		document.Observations = []observation{first, second}
+		assertReportClass(t, runReport(t, document, false), "overlap", "missing")
+		second.AssignmentID = "assignment-b"
+		second.Sequence = sequenceKey("other-source", "spec-a", "chunk-a")
+		document.Observations = []observation{first, second}
+		assertReportClass(t, runReport(t, document, false), "overlap", "missing")
 	})
 
 	t.Run("incomplete", func(t *testing.T) {
@@ -57,18 +83,25 @@ func TestRepairPilotReport(t *testing.T) {
 		incomplete := reportFailure("incomplete", "assignment-b", "", "")
 		incomplete.Sequence = sequenceKey("source-b", "spec-a", "chunk-b")
 		document.Observations = []observation{complete, incomplete}
-		out := runReport(t, document, false)
+		out := runReport(t, document, true)
 		assertReportValue(t, out, "completed_sequences", "1")
 		assertReportValue(t, out, "incomplete_sequences", "1")
+		rows := reportRows(t, out, "sequences")
+		if !reflect.DeepEqual(rowFields(rows, "source", "state"), [][]string{{"source-b", "incomplete"}, {"source-complete", "complete"}}) {
+			t.Fatalf("sequence rows = %#v", rows)
+		}
 	})
 
 	t.Run("missing-class", func(t *testing.T) {
 		requireFixtureCase(t)
-		document := completeReportFixture()
-		document.Observations = document.Observations[:len(document.Observations)-1]
-		out := runReport(t, document, false)
-		assertReportValue(t, out, "sample", "inconclusive")
-		assertReportClass(t, out, "overlap", "missing")
+		for _, class := range requiredReportClasses {
+			document := fixtureMissingClass(class)
+			out := runReport(t, document, false)
+			assertReportValue(t, out, "sample", "inconclusive")
+			assertReportClass(t, out, class, "missing")
+		}
+		complete := runReport(t, completeReportFixture(), false)
+		assertReportValue(t, complete, "sample", "coverage-complete")
 	})
 
 	t.Run("full", func(t *testing.T) {
@@ -76,11 +109,20 @@ func TestRepairPilotReport(t *testing.T) {
 		document := completeReportFixture()
 		unknown := reportFailure("unknown-evidence", "assignment-c", "2026-09-02T09:30:00Z", "")
 		document.Observations = append(document.Observations, unknown)
-		document.Observations[2].Endpoint = &endpoint{Kind: "reviewer-handoff", Reference: *nativeReference("native:full-endpoint")}
+		document.Observations[2].Endpoint = &endpoint{
+			Kind: "reviewer-handoff", Reference: *nativeReference("native:full-endpoint"),
+			CoveredBlockerRefs: []assessment.Reference{*nativeReference("native:covered-blocker")},
+		}
 		out := runReport(t, document, true)
-		for _, table := range []string{"sequences[", "observations[", "failures[", "observation_refs[", "repairs[", "reruns[", "endpoints[", "audits[", "audit_refs[", "intervals[", "interval_comparisons[", "evidence_gaps["} {
-			if !strings.Contains(out, table) {
-				t.Errorf("full report missing table %q:\n%s", table, out)
+		for _, table := range []string{"sequences", "observations", "failures", "observation_refs", "repairs", "reruns", "endpoints", "audits", "audit_refs", "intervals", "interval_comparisons", "evidence_gaps"} {
+			reportRows(t, out, table)
+		}
+		for table, count := range map[string]int{
+			"sequences": 5, "observations": 6, "failures": 3, "observation_refs": 6, "repairs": 2, "reruns": 1,
+			"endpoints": 1, "endpoint_blocker_refs": 1, "audits": 2, "audit_refs": 2, "intervals": 3, "interval_comparisons": 1, "evidence_gaps": 1,
+		} {
+			if rows := reportRows(t, out, table); len(rows) != count {
+				t.Errorf("%s rows = %d, want %d", table, len(rows), count)
 			}
 		}
 		for _, value := range []string{"the target guard is missing", "add the target guard", "reviewed native evidence", "native:verification-repair-productive", "unknown-evidence", "partial-interval", "reviewer-handoff"} {
@@ -88,13 +130,35 @@ func TestRepairPilotReport(t *testing.T) {
 				t.Errorf("full report missing retained value %q", value)
 			}
 		}
+		assertRowsContain(t, out, "sequences", map[string]string{"source": "source-unknown-evidence", "state": "incomplete"})
+		assertRowsContain(t, out, "observations", map[string]string{"id": "repair-productive", "proposal_label": "productive", "effective_label": "productive"})
+		assertRowsContain(t, out, "audits", map[string]string{"audit_id": "audit-stalled", "conclusion": "stalled", "verification_native": "native:verification-audit-stalled"})
+		assertRowsContain(t, out, "observation_refs", map[string]string{"observation_id": "unknown-evidence", "native": "native:observation-unknown-evidence"})
+		assertRowsContain(t, out, "endpoint_blocker_refs", map[string]string{"observation_id": "rerun-unchanged", "native": "native:covered-blocker"})
+		assertRowsContain(t, out, "evidence_gaps", map[string]string{"observation_id": "unknown-evidence", "kind": "partial-interval"})
+		if got := rowField(reportRows(t, out, "observations"), "id"); !reflect.DeepEqual(got, []string{"overlap-a", "overlap-b", "repair-productive", "repair-stalled", "rerun-unchanged", "unknown-evidence"}) {
+			t.Fatalf("full observation inventory = %v", got)
+		}
 	})
 
 	t.Run("default", func(t *testing.T) {
 		requireFixtureCase(t)
-		out := runReport(t, completeReportFixture(), false)
+		document := completeReportFixture()
+		document.Observations[2].Endpoint = &endpoint{Kind: "reviewer-handoff", Reference: *nativeReference("native:default-endpoint")}
+		partial := reportFailure("default-gap", "assignment-c", "2026-09-02T09:30:00Z", "")
+		document.Observations = append(document.Observations, partial)
+		out := runReport(t, document, false)
 		if strings.Contains(out, "observations[") || !strings.Contains(out, "required_classes[") {
 			t.Fatalf("default report has wrong detail shape:\n%s", out)
+		}
+		for field, value := range map[string]string{
+			"state": "stopped", "activated_at": "2026-09-02T12:00:00Z", "collection_ends_at": "2026-09-16T12:00:00Z", "cutoff_at": "2026-09-09T12:00:00Z",
+			"sample": "coverage-complete", "completed_sequences": "1", "incomplete_sequences": "4", "unknown_labels": "4", "evidence_gaps": "1",
+		} {
+			assertReportValue(t, out, field, value)
+		}
+		for _, class := range requiredReportClasses {
+			assertReportClass(t, out, class, "present")
 		}
 	})
 
@@ -111,6 +175,7 @@ func TestRepairPilotReport(t *testing.T) {
 		document := reportFixture()
 		first := reportFailure("partial-a", "assignment-a", "2026-09-02T09:00:00Z", "")
 		second := reportFailure("partial-b", "assignment-b", "2026-09-02T10:00:00Z", "2026-09-02T12:00:00Z")
+		second.Sequence = first.Sequence
 		document.Observations = []observation{first, second}
 		out := runReport(t, document, false)
 		assertReportClass(t, out, "overlap", "missing")
@@ -124,10 +189,10 @@ func TestRepairPilotReport(t *testing.T) {
 			{"2026-09-02T09:00:00Z", "2026-09-02T09:00:00Z", "2026-09-02T08:00:00Z", "2026-09-02T10:00:00Z"},
 		} {
 			document := reportFixture()
-			document.Observations = []observation{
-				reportFailure("edge-a", "assignment-a", pair[0], pair[1]),
-				reportFailure("edge-b", "assignment-b", pair[2], pair[3]),
-			}
+			first := reportFailure("edge-a", "assignment-a", pair[0], pair[1])
+			second := reportFailure("edge-b", "assignment-b", pair[2], pair[3])
+			second.Sequence = first.Sequence
+			document.Observations = []observation{first, second}
 			assertReportClass(t, runReport(t, document, false), "overlap", "missing")
 		}
 	})
@@ -138,26 +203,39 @@ func TestRepairPilotReport(t *testing.T) {
 		first := reportFailure("unproven-a", "assignment-a", "2026-09-02T09:00:00Z", "2026-09-02T11:00:00Z")
 		first.IntervalReference = nil
 		second := reportFailure("unproven-b", "assignment-b", "2026-09-02T10:00:00Z", "2026-09-02T12:00:00Z")
+		second.Sequence = first.Sequence
 		document.Observations = []observation{first, second}
-		out := runReport(t, document, false)
+		out := runReport(t, document, true)
 		assertReportClass(t, out, "overlap", "missing")
 		assertReportValue(t, out, "evidence_gaps", "1")
+		assertRowsContain(t, out, "interval_comparisons", map[string]string{"left_observation_id": "unproven-a", "right_observation_id": "unproven-b", "status": "unknown"})
+
+		unbounded := reportFailure("unbounded", "assignment-c", "", "")
+		unbounded.Sequence = first.Sequence
+		unbounded.IntervalReference = nativeReference("native:unbounded-interval")
+		document.Observations = []observation{unbounded}
+		out = runReport(t, document, true)
+		assertRowsContain(t, out, "intervals", map[string]string{"observation_id": "unbounded", "status": "unbounded", "native": "native:unbounded-interval"})
+		assertRowsContain(t, out, "evidence_gaps", map[string]string{"observation_id": "unbounded", "kind": "unbounded-interval"})
 	})
 
 	t.Run("order", func(t *testing.T) {
 		requireFixtureCase(t)
-		document := completeReportFixture()
-		document.Observations[0], document.Observations[1] = document.Observations[1], document.Observations[0]
-		document.Audits[0], document.Audits[1] = document.Audits[1], document.Audits[0]
+		document := orderingFixture()
 		out := runReport(t, document, true)
-		if repeated := runReport(t, document, true); repeated != out {
-			t.Fatal("repeated full report changed with the same document and clock")
+		reordered := document
+		reordered.Observations = reverseObservations(document.Observations)
+		reordered.Audits = reverseAudits(document.Audits)
+		if repeated := runReport(t, reordered, true); repeated != out {
+			t.Fatal("full report changed with import order")
 		}
-		if strings.Index(out, "repair-productive") > strings.Index(out, "repair-stalled") {
-			t.Fatalf("observations are not in sequence/time/id order:\n%s", out)
+		observationRows := reportRows(t, out, "observations")
+		if got := rowField(observationRows, "id"); !reflect.DeepEqual(got, []string{"sequence-first", "time-first", "id-a", "id-b"}) {
+			t.Fatalf("observation order = %v", got)
 		}
-		if strings.Index(out, "audit-productive") > strings.Index(out, "audit-stalled") {
-			t.Fatalf("audits are not in observation/id order:\n%s", out)
+		auditRows := reportRows(t, out, "audits")
+		if got := rowField(auditRows, "audit_id"); !reflect.DeepEqual(got, []string{"audit-a", "audit-z", "audit-other"}) {
+			t.Fatalf("audit order = %v", got)
 		}
 	})
 }
@@ -189,6 +267,26 @@ func reportFixture() Document {
 	return Document{Version: 1, RepositoryKey: "bench-123", ActivatedAt: parseTime("2026-09-02T12:00:00Z"), CutoffAt: &cutoff, Observations: []observation{}, Audits: []audit{}}
 }
 
+func fixtureMissingClass(class string) Document {
+	document := completeReportFixture()
+	removeID := map[string]string{"productive": "repair-productive", "stalled": "repair-stalled", "unchanged": "rerun-unchanged", "overlap": "overlap-b"}[class]
+	observations := []observation{}
+	for _, item := range document.Observations {
+		if item.ID != removeID {
+			observations = append(observations, item)
+		}
+	}
+	document.Observations = observations
+	audits := []audit{}
+	for _, item := range document.Audits {
+		if item.ObservationID != removeID {
+			audits = append(audits, item)
+		}
+	}
+	document.Audits = audits
+	return document
+}
+
 func completeReportFixture() Document {
 	document := reportFixture()
 	productive := reportRepair("repair-productive", "productive")
@@ -196,10 +294,36 @@ func completeReportFixture() Document {
 	unchanged := reportRerun("rerun-unchanged")
 	overlapA := reportFailure("overlap-a", "assignment-a", "2026-09-02T09:00:00Z", "2026-09-02T11:00:00Z")
 	overlapB := reportFailure("overlap-b", "assignment-b", "2026-09-02T10:00:00Z", "2026-09-02T12:00:00Z")
+	overlapB.Sequence = overlapA.Sequence
 	document.Observations = []observation{productive, stalled, unchanged, overlapA, overlapB}
 	document.Audits = []audit{
 		reportAudit("audit-productive", productive.ID, "productive"),
 		reportAudit("audit-stalled", stalled.ID, "stalled"),
+	}
+	return document
+}
+
+func orderingFixture() Document {
+	document := reportFixture()
+	firstSequence := sequenceKey("source-a", "spec-a", "chunk-a")
+	secondSequence := sequenceKey("source-b", "spec-a", "chunk-a")
+	sequenceFirst := reportFailure("sequence-first", "assignment-a", "", "")
+	sequenceFirst.Sequence = firstSequence
+	sequenceFirst.ObservedAt = parseTime("2026-09-05T12:00:00Z")
+	timeFirst := reportFailure("time-first", "assignment-a", "", "")
+	timeFirst.Sequence = secondSequence
+	timeFirst.ObservedAt = parseTime("2026-09-03T10:00:00Z")
+	idB := reportFailure("id-b", "assignment-a", "", "")
+	idB.Sequence = secondSequence
+	idB.ObservedAt = parseTime("2026-09-03T11:00:00Z")
+	idA := reportFailure("id-a", "assignment-a", "", "")
+	idA.Sequence = secondSequence
+	idA.ObservedAt = idB.ObservedAt
+	document.Observations = []observation{idB, sequenceFirst, idA, timeFirst}
+	document.Audits = []audit{
+		reportAudit("audit-z", "id-a", "stalled"),
+		reportAudit("audit-other", "id-b", "stalled"),
+		reportAudit("audit-a", "id-a", "productive"),
 	}
 	return document
 }
@@ -270,32 +394,4 @@ func runReportAt(t *testing.T, document Document, full bool, now time.Time) stri
 		t.Fatalf("report = output %q, exit %d", out, code)
 	}
 	return out
-}
-
-func assertReportClass(t *testing.T, out, class, status string) {
-	t.Helper()
-	if !strings.Contains(out, "  "+class+","+status+"\n") {
-		t.Fatalf("class %s = want %s:\n%s", class, status, out)
-	}
-}
-
-func assertReportValue(t *testing.T, out, column, value string) {
-	t.Helper()
-	lines := strings.Split(out, "\n")
-	open := strings.Index(lines[0], "{")
-	close := strings.LastIndex(lines[0], "}")
-	if open < 0 || close < open || len(lines) < 2 {
-		t.Fatalf("report summary is malformed:\n%s", out)
-	}
-	columns := strings.Split(lines[0][open+1:close], ",")
-	values, err := csv.NewReader(strings.NewReader(strings.TrimSpace(lines[1]))).Read()
-	if err != nil {
-		t.Fatalf("parse report summary: %v\n%s", err, out)
-	}
-	for index, candidate := range columns {
-		if candidate == column && index < len(values) && values[index] == value {
-			return
-		}
-	}
-	t.Fatalf("report %s = want %s:\n%s", column, value, out)
 }

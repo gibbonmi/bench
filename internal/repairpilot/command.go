@@ -301,12 +301,8 @@ func writeDocument(files FileOps, path string, document Document) error {
 }
 
 func renderDocumentStatus(document Document, now time.Time) (string, int) {
-	deadline := collectionDeadline(document)
-	state := "active"
-	if !now.Before(deadline) || document.CutoffAt != nil {
-		state = "stopped"
-	}
-	return renderStatus(state, document.ActivatedAt.UTC().Format(time.RFC3339), deadline.Format(time.RFC3339), summarizeDocument(document))
+	state := deriveCollectionState(document, now)
+	return renderStatus(state.Name, document.ActivatedAt.UTC().Format(time.RFC3339), state.Deadline.Format(time.RFC3339), summarizeDocument(document))
 }
 
 func familyUsage(grammars ...usage.Grammar) string {
