@@ -11,6 +11,14 @@ import (
 
 var requiredReportClasses = []string{"stalled", "productive", "unchanged", "overlap"}
 
+const (
+	intervalAbsent    = "absent"
+	intervalComplete  = "complete"
+	intervalPartial   = "partial"
+	intervalUnbounded = "unbounded"
+	intervalUnproven  = "unproven"
+)
+
 type reportSummary struct {
 	State       string
 	Sample      string
@@ -110,14 +118,12 @@ func summarizeReport(document Document, now time.Time) reportSummary {
 func reportEvidenceGaps(document Document) []evidenceGap {
 	gaps := []evidenceGap{}
 	for _, item := range document.Observations {
-		hasStart := item.StartedAt != nil
-		hasEnd := item.EndedAt != nil
-		switch {
-		case !hasStart && !hasEnd && item.IntervalReference != nil:
+		switch classifyIntervalEvidence(item) {
+		case intervalUnbounded:
 			gaps = append(gaps, evidenceGap{item.ID, "unbounded-interval", "interval provenance has no activity bounds"})
-		case hasStart != hasEnd:
+		case intervalPartial:
 			gaps = append(gaps, evidenceGap{item.ID, "partial-interval", "both interval bounds are required for comparison"})
-		case (hasStart || hasEnd) && (item.IntervalReference == nil || !assessment.ValidReference(*item.IntervalReference)):
+		case intervalUnproven:
 			gaps = append(gaps, evidenceGap{item.ID, "unproven-interval", "interval provenance is required for comparison"})
 		}
 	}
@@ -146,21 +152,35 @@ func intervalComparisonStatus(left, right observation) (string, bool) {
 	if left.AssignmentID == right.AssignmentID || left.Sequence != right.Sequence {
 		return "", false
 	}
-	leftHasInterval := left.StartedAt != nil || left.EndedAt != nil || left.IntervalReference != nil
-	rightHasInterval := right.StartedAt != nil || right.EndedAt != nil || right.IntervalReference != nil
-	if !leftHasInterval || !rightHasInterval {
+	leftStatus := classifyIntervalEvidence(left)
+	rightStatus := classifyIntervalEvidence(right)
+	if leftStatus == intervalAbsent || rightStatus == intervalAbsent {
 		return "", false
 	}
-	if left.StartedAt == nil || left.EndedAt == nil || right.StartedAt == nil || right.EndedAt == nil {
-		return "unknown", true
-	}
-	if left.IntervalReference == nil || right.IntervalReference == nil || !assessment.ValidReference(*left.IntervalReference) || !assessment.ValidReference(*right.IntervalReference) {
+	if leftStatus != intervalComplete || rightStatus != intervalComplete {
 		return "unknown", true
 	}
 	if !left.StartedAt.Before(*left.EndedAt) || !right.StartedAt.Before(*right.EndedAt) {
 		return "false", true
 	}
 	return strconv.FormatBool(left.StartedAt.Before(*right.EndedAt) && right.StartedAt.Before(*left.EndedAt)), true
+}
+
+func classifyIntervalEvidence(item observation) string {
+	hasStart := item.StartedAt != nil
+	hasEnd := item.EndedAt != nil
+	switch {
+	case !hasStart && !hasEnd && item.IntervalReference == nil:
+		return intervalAbsent
+	case !hasStart && !hasEnd:
+		return intervalUnbounded
+	case hasStart != hasEnd:
+		return intervalPartial
+	case item.IntervalReference == nil || !assessment.ValidReference(*item.IntervalReference):
+		return intervalUnproven
+	default:
+		return intervalComplete
+	}
 }
 
 func sortedObservations(items []observation) []observation {

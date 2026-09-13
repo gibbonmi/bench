@@ -182,18 +182,11 @@ func auditReferenceReportTable(items []audit) reportTable {
 func intervalReportTable(items []observation) reportTable {
 	rows := [][]string{}
 	for _, item := range items {
-		if item.StartedAt == nil && item.EndedAt == nil && item.IntervalReference == nil {
+		status := classifyIntervalEvidence(item)
+		if status == intervalAbsent {
 			continue
 		}
 		producer, native := referenceFields(item.IntervalReference)
-		status := "complete"
-		if item.StartedAt == nil && item.EndedAt == nil {
-			status = "unbounded"
-		} else if item.StartedAt == nil || item.EndedAt == nil {
-			status = "partial"
-		} else if item.IntervalReference == nil || !assessment.ValidReference(*item.IntervalReference) {
-			status = "unproven"
-		}
 		rows = append(rows, []string{item.ID, item.AssignmentID, formatReportTime(item.StartedAt), formatReportTime(item.EndedAt), status, producer, native})
 	}
 	return reportTable{"intervals", []string{"observation_id", "assignment_id", "started_at", "ended_at", "status", "producer", "native"}, rows}
