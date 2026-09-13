@@ -1,1 +1,1 @@
-[{"path": ".agents/commands/bench-write-spec.md", "old": "One review round covers the spec-and-tickets pair with the reviewer-named model, and", "new": "The falsification review runs at the mid tier for one iteration in a fresh read-only delegate. Then"}]
+[{"path": ".agents/commands/bench-write-spec.md", "old": "One independent review round covers the spec-and-tickets pair at reviewer\n   sign-off.", "new": "The falsification review runs at the mid tier for one iteration in a fresh read-only delegate."}]
