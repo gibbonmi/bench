@@ -44,6 +44,13 @@ func Publish(root, staged, executable, manifestDir, version string) error {
 	if manifestDir == "" {
 		return fmt.Errorf("publish executable %q: no directory to publish the broker manifest in", executable)
 	}
+	lock, err := lockPublicationDirectory(manifestDir)
+	if err != nil {
+		return fmt.Errorf("lock broker manifest directory %q: %w", manifestDir, err)
+	}
+	// Close the directory only after the transaction stops its signal handler
+	// and removes its temporary files. Closing the handle releases the lock.
+	defer lock.Close()
 	manifest := brokerManifestPath(manifestDir)
 	if err := publicationTarget(executable); err != nil {
 		return fmt.Errorf("publish executable %q: %w", executable, err)
@@ -122,9 +129,10 @@ type publication struct {
 	hadBroker     bool
 	// step serializes the two renames against the termination restore, so a signal lands
 	// strictly between steps rather than inside one.
-	step     sync.Mutex
-	resolved atomic.Bool
-	signals  chan os.Signal
+	step        sync.Mutex
+	resolved    atomic.Bool
+	signals     chan os.Signal
+	signalsDone chan struct{}
 	// sealTemporary holds the staging file of a seal write that has not yet landed. The
 	// termination handler reads it while that write is still in flight. The name lives on
 	// the transaction rather than only in the writer's own frame.
@@ -161,8 +169,10 @@ func beginPublication(executable, manifest string) (*publication, error) {
 // convention for the signal it received.
 func (p *publication) watch() {
 	p.signals = make(chan os.Signal, 1)
+	p.signalsDone = make(chan struct{})
 	signal.Notify(p.signals, subprocess.CancelSignals...)
 	go func() {
+		defer close(p.signalsDone)
 		received, delivered := <-p.signals
 		if !delivered {
 			return
@@ -242,6 +252,7 @@ func (p *publication) restore() error {
 func (p *publication) close() {
 	signal.Stop(p.signals)
 	close(p.signals)
+	<-p.signalsDone
 	p.removeTemporaries()
 }
 
