@@ -410,6 +410,9 @@ Won't handle: a portable non-Unix publication lock — the publisher and its exi
 - `internal/testrepo/gate_fixture_test.go` (new)
 - `internal/commit/format_test.go`
 - `internal/gate/run_outcomes_test.go`
+- `internal/gate/run_failure_outcomes_test.go`
+- `internal/gate/cache_env_test.go`
+- `internal/gate/timeout_recovery_count_test.go`
 - `internal/landing/completion_evidence_test.go`
 - `internal/shift/fault_test.go`
 - `internal/shift/shift_test.go`
@@ -418,6 +421,7 @@ Won't handle: a portable non-Unix publication lock — the publisher and its exi
 - `internal/worktree/delegated_integration_test.go`
 - `internal/worktree/land_fixtures_test.go`
 - `internal/worktree/land_journey_test.go`
+- `internal/worktree/parallel_census_test.go`
 - `internal/conformance/gate_entry_test.go`
 - `internal/conformance/harness_test.go`
 - `internal/conformance/registry/registry.go`

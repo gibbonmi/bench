@@ -1,7 +1,7 @@
 # Own gate fixture inputs
 
 Blocked by: none
-Writes: internal/testrepo/gate_fixture.go (new), internal/testrepo/gate_fixture_test.go (new), internal/commit/format_test.go, internal/gate/run_outcomes_test.go, internal/landing/completion_evidence_test.go, internal/shift/fault_test.go, internal/shift/shift_test.go, internal/status/status_producible_test.go, internal/systemtest/owner_landing_fixture_test.go, internal/worktree/delegated_integration_test.go, internal/worktree/land_fixtures_test.go, internal/worktree/land_journey_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/testrepo/gate_fixture.go (new), internal/testrepo/gate_fixture_test.go (new), internal/commit/format_test.go, internal/gate/run_outcomes_test.go, internal/gate/run_failure_outcomes_test.go, internal/gate/cache_env_test.go, internal/gate/timeout_recovery_count_test.go, internal/landing/completion_evidence_test.go, internal/shift/fault_test.go, internal/shift/shift_test.go, internal/status/status_producible_test.go, internal/systemtest/owner_landing_fixture_test.go, internal/worktree/delegated_integration_test.go, internal/worktree/land_fixtures_test.go, internal/worktree/land_journey_test.go, internal/worktree/parallel_census_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: HP1, HP2, HP3
 
 ## What to build
