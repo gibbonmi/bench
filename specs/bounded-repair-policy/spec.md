@@ -154,6 +154,18 @@ Each chunk receives its normal review checkpoint before a successor starts.
 {"version":1,"chunks":[{"id":"BP-C1","tickets":["1-enforce-bounded-repair-policy.md"],"verification":[{"id":"workflow-contract","command":"bench test --check docs-currency-workflow"},{"id":"continuation-tests","command":"bench test --package ./internal/conformance --run 'TestImplementationContinuation|TestReviewConvergenceContractCurrentDocs'","probe":"remove one production policy anchor while retaining its TestImplementationContinuation expectation"},{"id":"checkpoint-regression","command":"bench test --package ./internal/gate --run TestReviewCheckpointFindingAndReviewIdentity"},{"id":"guidance-budget","command":"bench test --check guidance-prose-budgets"}]}],"final_verification":[{"id":"acceptance","command":"bench test --check docs-currency-workflow"},{"id":"system","command":"bench test --check system"}]}
 ```
 
+## Dogfood evidence
+
+The retained author ran the candidate binary through `bench shift` in a disposable repository.
+A deterministic adapter replayed the exhausted-allowance handoff scenario with the changed guidance present.
+The first invocation refused the missing adapter before any iteration.
+The configured run returned `complete` at exit 0 with one commit and a clean no-op second iteration.
+The fixture gate passed, and its pre-commit hook recorded execution.
+
+This transport check does not prove live-agent compliance; the independent scenario review supplies the policy judgment.
+The candidate system suite also passed without skips.
+Native evidence and the BP1 through BP21 scenario results remain in `reviews/bounded-repair-policy.md`.
+
 ## Testing decisions
 
 The existing workflow guidance seam is the product surface.
