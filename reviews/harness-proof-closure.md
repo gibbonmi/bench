@@ -508,6 +508,107 @@ findings in the single permitted review round.
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "HP-C5",
+      "base": "5ee9572309855e9cf9aad88950728969935eee42",
+      "tip": "6cabf68a016469554ac54eb19c6f6df10dc18f14",
+      "plan_digest": "sha256:5386adf22ec42126210eac16c632653aec0980a91e5f4205a91daa6b0d1dcfdd",
+      "source_digest": "d0674277f21e4b56416d22e75bb1679dbabfc8f2",
+      "acceptance_rows": ["HP14", "HP15", "HP16", "HP17", "HP18"],
+      "verification": [
+        {
+          "id": "hp-c5-publication",
+          "performer": "/root/ft120_c5",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "d0674277f21e4b56416d22e75bb1679dbabfc8f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/ft120_c5",
+            "digest": "sha256:c7d898500b78136eeeca139282de5fbdfd24b7c2ae8ee7664d4693ec7a1c2ccc",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/freshness,pass,8638\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "publication",
+          "command": "bench test --package ./internal/freshness",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "release the publication lock before rollback and residue cleanup",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "collaboration:/root/ft120_c5",
+              "digest": "sha256:2e9e01363073ead440fe47323061f577d3366182af101267dc4623c9f3b87d58",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/freshness/freshness_publish.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/freshness,^TestPublishWaiterSeesRestoredTripleAfterInterruption$,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/freshness,fail,164\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/freshness,TestPublishWaiterSeesRestoredTripleAfterInterruption,\"publication_lock_test.go:107: publication event = \\"mutation\\", want \\"contended\\"\"\nskips[0]{package,test,reason}:"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "hp-c5-standards-1",
+          "performer": "/root/hpc2_standards_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-terra",
+          "effort": "high",
+          "source_digest": "d0674277f21e4b56416d22e75bb1679dbabfc8f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/hpc2_standards_review",
+            "digest": "sha256:93000a614823817aae0ecd76934427e9cba2ea05a8006f63af9faae982dd7f23",
+            "excerpt": "Standards PASS — HP-C5 at tip `6cabf68a016469554ac54eb19c6f6df10dc18f14`. One lock owner serializes the manifest-directory transaction through rollback, signal teardown, and cleanup; the exact three-file fence holds. Cross-process tests use actual kernel-lock contention with bounded cleanup, comments carry durable constraints, and charged preflight, whitespace, and freshness-package evidence pass."
+          },
+          "axis": "Standards",
+          "base": "5ee9572309855e9cf9aad88950728969935eee42",
+          "tip": "6cabf68a016469554ac54eb19c6f6df10dc18f14",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "hp-c5-spec-1",
+          "performer": "/root/hpc2_spec_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-terra",
+          "effort": "high",
+          "source_digest": "d0674277f21e4b56416d22e75bb1679dbabfc8f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/hpc2_spec_review",
+            "digest": "sha256:2cd3d30d8055acafdd38d070f493d36d873d4a5fd4aa1cf8c43798c688c48852",
+            "excerpt": "result: completed; axis: Spec; findings: 0; tip: 6cabf68a016469554ac54eb19c6f6df10dc18f14"
+          },
+          "axis": "Spec",
+          "base": "5ee9572309855e9cf9aad88950728969935eee42",
+          "tip": "6cabf68a016469554ac54eb19c6f6df10dc18f14",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "hp-c5-coverage-1",
+          "performer": "/root/hpc1_spec_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-terra",
+          "effort": "high",
+          "source_digest": "d0674277f21e4b56416d22e75bb1679dbabfc8f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/hpc1_spec_review",
+            "digest": "sha256:161b819882b4aaaa912cd7d71b34b99ff7916dce31f4885a775265b8a64dd120",
+            "excerpt": "ok  \tgithub.com/gibbonmi/bench/internal/freshness\t3.015s"
+          },
+          "axis": "Coverage",
+          "base": "5ee9572309855e9cf9aad88950728969935eee42",
+          "tip": "6cabf68a016469554ac54eb19c6f6df10dc18f14",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
