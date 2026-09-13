@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: `specs/bounded-repair-policy/decisions/ft232-repair-loop.md` (ready compiled map; policy outcome confirmed by ticket #14).
 
-Verification log: 0 iteration(s) to accept — draft awaits one Sol/high spec review and one Astra/high slice review.
+Verification log: 1 iteration(s) to accept — Sol/high spec findings are folded. The single Astra/high slice review follows slicing.
 
 ## Problem
 
@@ -58,6 +58,8 @@ Harder chunks: BP-C1.
 15. As an author, I want one policy source and retained repair state, so that a resumed session applies the same allowance.
 16. As a reviewer, I want policy conformance checks to detect omissions, so that a later prose edit cannot silently remove the allowance.
 17. As a reviewer, I want the collection pilot kept separate, so that this policy does not authorize a detector or new data collection.
+18. As a reviewer, I want mandatory standards to remain blocking without automated checks, so that semantic requirements cannot become optional preferences.
+19. As a reviewer, I want optional advice retained separately, so that suggestions stay visible without inflating finding totals.
 
 ## Implementation decisions
 
@@ -89,7 +91,10 @@ A style preference with no binding requirement and no concrete defect remains op
 A documented mandatory standard is a requirement, even when its subject is prose.
 The cap does not downgrade a required rule to advice.
 
-Keep optional advice visible in the review's prose, separate from unresolved blocking finding IDs.
+Optional advice is not a finding or a repair target.
+It receives no repair-routing disposition or finding ID and does not enter finding totals.
+Retain it in a separate advice section of the native excerpt and the review pickup.
+
 Preserve the existing `no-op`, `auto-fix`, and `ask-user` repair-routing meanings for actionable findings.
 Do not invent a fourth routing disposition or label an unrefuted suggestion as `no-op` merely to obtain a pass.
 The current native review result may pass with no blocking findings while its accompanying prose retains optional advice.
@@ -100,7 +105,7 @@ Current results or permitted native reaffirmations remain required after repairs
 Repeat independent review only for a later semantic change or a named cross-chunk concern that invalidates earlier evidence.
 Such a review does not reset the repair count.
 The existing checks still reject unresolved findings, stale source identity, missing axes, and incomplete verification.
-These instructions implement BP8 through BP13 and BP16 below.
+These instructions implement BP8 through BP13, BP16, BP20, and BP21 below.
 
 ### State and handoff
 
@@ -127,14 +132,18 @@ Do not add a second production limit constant, policy parser, fixture harness, o
 Preserve the existing review-convergence anchors and tests.
 Clarify that progression rules about findings concern unresolved blockers, with optional advice recorded separately.
 Do not remove or weaken their requirement for current repair coverage.
+
 The implementation must stay within current guidance and structure budgets.
+At the reviewed tip, craft-line uses 128 of 130 physical lines, craft-review uses 122 of 122, and bench-implement-spec uses 79 of 80.
+Consumer edits replace or condense existing prose rather than increasing a budget.
+The ownership fence grants no budget change.
 Use the focused policy reference to avoid expanding the line skill into a second long policy document.
 
 ## Implementation chunks
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| BP-C1 / pending Sol slicing | All implementation modes apply one bounded repair policy with current completion evidence | BP1 through BP19 | docs-currency-workflow, TestImplementationContinuation, review-owned scenario replay | yes |
+| BP-C1 / pending Sol slicing | All implementation modes apply one bounded repair policy with current completion evidence | BP1 through BP21 | docs-currency-workflow, TestImplementationContinuation, review-owned scenario replay | yes |
 
 The slicer confirms ticket membership and ownership fences after the spec review.
 A split cannot land a numeric allowance without its blocker classification and completion safeguards.
@@ -176,32 +185,34 @@ The implementation adds its policy anchors to `TestImplementationContinuation` a
 
 | row | story | behavior | seam | why it catches the failure |
 | --- | --- | --- | --- | --- |
-| BP1 | 1 | Guidance stops a third repair cycle after two cycles made progress but left a blocker | review-owned: scenario decision with docs-currency-workflow instruction checks | Removing the fixed limit or allowing progress to extend it fails the anchor and scenario |
-| BP2 | 2 | Guidance counts one attempt with verification as one cycle | review-owned: scenario decision with docs-currency-workflow instruction checks | Counting three tool calls as three cycles contradicts the cycle definition |
-| BP3 | 3, 15 | A fresh review preserves the same chunk's consumed allowance | review-owned: scenario decision with docs-currency-workflow instruction checks | Restarting the review after two cycles cannot authorize a third cycle |
-| BP4 | 4 | An explicit reviewer extension permits the specified additional repair work | review-owned: scenario decision with docs-currency-workflow instruction checks | Ignoring an explicit extension incorrectly stops authorized work |
-| BP5 | 4 | An author cannot extend its own exhausted allowance | review-owned: scenario decision with docs-currency-workflow instruction checks | An author declaration of uncapped work cannot substitute for reviewer authority |
-| BP6 | 5 | The policy applies to retained, full, delegated, and unattended implementation runs | review-owned: mode census with docs-currency-workflow instruction checks | Omitting any enumerated entry route leaves an approved implementation mode outside the policy |
-| BP7 | 6 | Light-path review repairs use one chunk's allowance | review-owned: scenario decision with docs-currency-workflow instruction checks | The absence of a spec cannot create an unlimited repair path |
-| BP8 | 7 | An unresolved required check remains blocking at exhaustion | review-owned: scenario decision with docs-currency-workflow instruction checks | A red required check cannot become optional because the allowance is spent |
-| BP9 | 8 | An unresolved approved acceptance failure remains blocking at exhaustion | review-owned: scenario decision with docs-currency-workflow instruction checks | A partial implementation cannot become complete because its repair allowance is spent |
-| BP10 | 9 | A concrete correctness defect remains blocking despite a green gate | review-owned: scenario decision with docs-currency-workflow instruction checks | A green gate cannot dismiss cited evidence of incorrect behavior |
-| BP11 | 9 | A concrete safety defect remains blocking despite a green gate | review-owned: scenario decision with docs-currency-workflow instruction checks | A green gate cannot dismiss cited evidence of unsafe behavior |
-| BP12 | 11 | Exhaustion with blockers produces a reviewer handoff before dependent work advances | review-owned: scenario decision with docs-currency-workflow instruction checks | A third repair attempt or successor chunk violates the bounded stop |
-| BP13 | 10, 12 | Optional advice alone does not require another repair cycle | review-owned: scenario decision with docs-currency-workflow instruction checks | A cosmetic suggestion without a requirement cannot block otherwise verified completion |
-| BP14 | 13 | Pre-review implementation retains its existing continuation rules | `internal/conformance/implementation_continuation_test.go` (`TestImplementationContinuation`), review-owned: scenario decision | Applying the new numeric limit to initial implementation contradicts the approved scope |
-| BP15 | 15 | A resumed author retains the consumed allowance and reviewer extension evidence | review-owned: resume scenario with docs-currency-workflow instruction checks | Treating missing or resumed state as a fresh allowance bypasses the same-chunk cap |
-| BP16 | 14 | The allowance does not waive current review and verification evidence | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointFindingAndReviewIdentity`), review-owned: scenario decision | Unresolved findings and stale review identity still fail the existing checkpoint |
-| BP17 | 15 | Consumer guidance points to one policy owner without copying the numeric limit | review-owned: source census with docs-currency-workflow instruction checks | A missing pointer or a second policy definition creates drift between implementation modes |
+| BP1 | 1 | Guidance stops a third repair cycle after two cycles made progress but left a blocker | review-owned: scenario decision with docs-currency-workflow instruction checks; evidence in `reviews/bounded-repair-policy.md` | Removing the fixed limit or allowing progress to extend it fails the anchor and scenario |
+| BP2 | 2 | Guidance counts one attempt with verification as one cycle | review-owned: scenario decision with docs-currency-workflow instruction checks; evidence in `reviews/bounded-repair-policy.md` | Counting three tool calls as three cycles contradicts the cycle definition |
+| BP3 | 3, 15 | A fresh review preserves the same chunk's consumed allowance | review-owned: scenario decision with docs-currency-workflow instruction checks; evidence in `reviews/bounded-repair-policy.md` | Restarting the review after two cycles cannot authorize a third cycle |
+| BP4 | 4 | An explicit reviewer extension permits the specified additional repair work | review-owned: scenario decision with docs-currency-workflow instruction checks; evidence in `reviews/bounded-repair-policy.md` | Ignoring an explicit extension incorrectly stops authorized work |
+| BP5 | 4 | An author cannot extend its own exhausted allowance | review-owned: scenario decision with docs-currency-workflow instruction checks; evidence in `reviews/bounded-repair-policy.md` | An author declaration of uncapped work cannot substitute for reviewer authority |
+| BP6 | 5 | The policy applies to retained, full, delegated, and unattended implementation runs | review-owned: mode census with docs-currency-workflow instruction checks; evidence in `reviews/bounded-repair-policy.md` | Omitting any enumerated entry route leaves an approved implementation mode outside the policy |
+| BP7 | 6 | Light-path review repairs use one chunk's allowance | review-owned: scenario decision with docs-currency-workflow instruction checks; evidence in `reviews/bounded-repair-policy.md` | The absence of a spec cannot create an unlimited repair path |
+| BP8 | 7 | An unresolved required check remains blocking at exhaustion | review-owned: scenario decision with docs-currency-workflow instruction checks; evidence in `reviews/bounded-repair-policy.md` | A red required check cannot become optional because the allowance is spent |
+| BP9 | 8 | An unresolved approved acceptance failure remains blocking at exhaustion | review-owned: scenario decision with docs-currency-workflow instruction checks; evidence in `reviews/bounded-repair-policy.md` | A partial implementation cannot become complete because its repair allowance is spent |
+| BP10 | 9 | A concrete correctness defect remains blocking despite a green gate | review-owned: scenario decision with docs-currency-workflow instruction checks; evidence in `reviews/bounded-repair-policy.md` | A green gate cannot dismiss cited evidence of incorrect behavior |
+| BP11 | 9 | A concrete safety defect remains blocking despite a green gate | review-owned: scenario decision with docs-currency-workflow instruction checks; evidence in `reviews/bounded-repair-policy.md` | A green gate cannot dismiss cited evidence of unsafe behavior |
+| BP12 | 11 | Exhaustion with blockers produces a reviewer handoff before dependent work advances | review-owned: scenario decision with docs-currency-workflow instruction checks; evidence in `reviews/bounded-repair-policy.md` | A third repair attempt or successor chunk violates the bounded stop |
+| BP13 | 10, 12 | A native review containing only optional advice passes with no finding IDs | review-owned: scenario decision with docs-currency-workflow instruction checks; evidence in `reviews/bounded-repair-policy.md` | A cosmetic preference cannot produce a blocking finding ID or require another repair cycle |
+| BP14 | 13 | Pre-review implementation retains its existing continuation rules | `internal/conformance/implementation_continuation_test.go` (`TestImplementationContinuation`), review-owned: scenario decision; evidence in `reviews/bounded-repair-policy.md` | Applying the new numeric limit to initial implementation contradicts the approved scope |
+| BP15 | 15 | A resumed author retains the consumed allowance and reviewer extension evidence | review-owned: resume scenario with docs-currency-workflow instruction checks; evidence in `reviews/bounded-repair-policy.md` | Treating missing or resumed state as a fresh allowance bypasses the same-chunk cap |
+| BP16 | 14 | The allowance does not waive current review and verification evidence | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointFindingAndReviewIdentity`), review-owned: scenario decision; evidence in `reviews/bounded-repair-policy.md` | Unresolved findings and stale review identity still fail the existing checkpoint |
+| BP17 | 15 | Consumer guidance points to one policy owner without copying the numeric limit | review-owned: source census with docs-currency-workflow instruction checks; evidence in `reviews/bounded-repair-policy.md` | A missing pointer or a second policy definition creates drift between implementation modes |
 | BP18 | 16 | Removing a required production policy anchor fails an independent expectation | `internal/conformance/implementation_continuation_test.go` (`TestImplementationContinuation`) | Removing both the instruction and its registry entry cannot define its own green result |
-| BP19 | 17 | The policy change introduces neither pilot collection nor detector warnings | review-owned: scope and changed-path inspection | A telemetry producer or advisory renderer change exceeds this specification |
+| BP19 | 17 | The policy change introduces neither pilot collection nor detector warnings | review-owned: scope and changed-path inspection; evidence in `reviews/bounded-repair-policy.md` | A telemetry producer or advisory renderer change exceeds this specification |
+| BP20 | 18 | A documented mandatory standard violation remains blocking without an automated check | review-owned: mandatory-standard scenario; evidence in `reviews/bounded-repair-policy.md` | Treating a cited required prose rule as a preference would permit a false pass |
+| BP21 | 19 | Optional advice is retained outside the finding and repair-target census | review-owned: native excerpt and pickup inspection; evidence in `reviews/bounded-repair-policy.md` | Dropping advice loses its record, while counting it as a finding invents a blocker |
 
 ### Edge inventory
 
 The audience is every repository that receives the linked workflow, including this kit.
 The mode census is retained, full, delegated, unattended, and light-path implementation.
-The finding census is required checks, acceptance failures, correctness defects, safety defects, and optional advice.
-Each mode and finding class attaches to BP6 through BP11 and BP13.
+The classification census includes required checks, acceptance failures, correctness defects, safety defects, mandatory standards, and optional advice.
+Each mode and classification attaches to BP6 through BP11, BP13, BP20, and BP21.
 
 A cycle that addresses several findings still consumes one cycle: BP2.
 An unchanged rerun without a repair attempt is verification, not another completed repair cycle: BP2.
@@ -210,7 +221,8 @@ A new reviewer result on the same chunk retains its count: BP3.
 
 Missing or ambiguous count evidence does not mean zero: BP15.
 Earlier user-budget and cancellation stops still apply: BP14 and BP16.
-Mandatory prose standards remain requirements: BP8 and BP13.
+Mandatory prose standards remain requirements even without a check: BP20.
+Contrast that case with an otherwise similar nonbinding preference: BP13.
 A genuine optional improvement remains advisory even if a reviewer mentions it: BP13.
 
 Won't handle: a new repair-counter file parser — the existing review pickup and handoff remain the callers.
@@ -256,22 +268,29 @@ FT232 remains on the roadmap while its separately approved collection work remai
 
 ### Source clauses and readers
 
-| Source | Policy clause | Coverage |
+| Source occurrence | Exact source clause | Coverage |
 | --- | --- | --- |
-| Decision #1 and #14 | Separate policy and collection outcomes | BP19 |
-| Decision #2 | Required checks remain blocking | BP8 |
-| Decision #2 | Approved acceptance failures remain blocking | BP9 |
-| Decision #2 | Correctness and safety defects remain blocking | BP10, BP11 |
-| Decision #2 | Optional improvements remain advisory | BP13 |
-| Decision #3 | Two cycles after initial review, despite progress | BP1, BP2, BP14 |
-| Decision #3 | Fresh review does not reset the count | BP3, BP15 |
-| Decision #3 | Exhausted blockers return to the reviewer | BP12 |
-| Decision #4 | All implementation modes and light-path chunk | BP6, BP7 |
-| Decision #4 | Explicit reviewer extension only | BP4, BP5 |
-| Decision #7 | Preserve pre-review progress rules | BP14 |
-| Decision #8 and #14 | Required checks and review evidence still apply | BP16 |
-| Decision #5, #6, and #9 through #14 | Collection and detector decisions | Separate capability; BP19 protects the scope |
-| Working agreement | One source per fact and demonstrated independent expectations | BP17, BP18 |
+| Ticket #1, Answer | Shape both outcomes under this map and specify them separately. | BP19 |
+| Ticket #2, Answer | Required checks, approved acceptance failures, and concrete correctness or safety defects remain blocking. | BP8, BP9, BP10, BP11, BP20 |
+| Ticket #2, Answer | Optional improvements remain advisory. | BP13, BP21 |
+| Ticket #2, Answer | At the allowance limit, the agent stops and reports unresolved blockers to the reviewer. | BP12 |
+| Ticket #3, Answer | Each implementation chunk permits at most two repair cycles after its initial review. | BP1, BP2, BP14 |
+| Ticket #3, Answer | Progress does not extend this allowance. | BP1 |
+| Ticket #3, Answer | A fresh review does not reset the count. | BP3, BP15 |
+| Ticket #3, Answer | At the cap, unresolved blockers return to the reviewer. | BP12 |
+| Ticket #4, Answer | The default allowance applies to all implementation runs. | BP6 |
+| Ticket #4, Answer | Light-path work counts as one implementation chunk. | BP7 |
+| Ticket #4, Answer | Only an explicit reviewer decision extends the allowance. | BP4, BP5 |
+| Ticket #7, Answer | The fixed allowance applies only to repairs after initial review. | BP14 |
+| Ticket #7, Answer | Pre-review implementation keeps the existing progress and no-progress rules. | BP14 |
+| Ticket #8, Answer | Required checks and review evidence still apply. | BP16 |
+| Ticket #14, Answer | The first implements the bounded repair policy. | BP1 through BP18, BP20, BP21 |
+| Ticket #14, Answer | A detector and any warning remain outside both specifications. | BP19 |
+
+The ticket paths are under `decisions/ft232-repair-loop/tickets/` beside this spec.
+These are the authoritative policy-clause occurrences; the compiled index only links their gists.
+Tickets #5, #6, and #9 through #13 retain collection evidence and scope for the separate pilot specification.
+The working agreement supplies the one-source and independent-expectation rules for BP17 and BP18.
 
 Read the [enforcement evidence](assets/enforcement.md) for current source locations and the complete named reader sweep.
 The map's structured sources were reread in this session.
@@ -297,10 +316,15 @@ They add no data-collection service, new denial surface, or native record field.
 The mode census includes existing routes and does not introduce a new initial-review requirement for light-path work.
 Missing count evidence returns to the reviewer because inventing a fresh allowance would violate the approved cap.
 The scenario review remains explicit where a deterministic check cannot establish semantic compliance.
+Its durable evidence belongs in `reviews/bounded-repair-policy.md`, not only in an ephemeral delegate return.
 
 ### Review and approval protocol
 
 The reviewer directs one Sol/high spec review, then Sol/high ticket slicing, then one Astra/high slice review.
 Accepted findings are folded without a second review round.
+The Sol/high review found the optional-advice representation gap and missing mandatory-standard coverage.
+BP13, BP20, and BP21 carry those repairs.
+The exact source table, durable scenario evidence, and headroom constraints incorporate the nonblocking corrections.
+
 The reviewer pre-approves this phase's landing.
 This specification phase does not start the implementation or activate the collection pilot.
