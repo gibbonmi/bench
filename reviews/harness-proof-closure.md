@@ -133,6 +133,107 @@ findings in the single permitted review round.
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "HP-C2",
+      "base": "4dd18eeca9d43048d35be82dcc0eb87ef1360bfe",
+      "tip": "0362040e173b37e371e0cb8f45cd324382a076fb",
+      "plan_digest": "sha256:9d9dfa2e2789cc8782246b8fc697718828baca8a3a3fd2a7d1e722a77e65052a",
+      "source_digest": "fcb28ac247a76bd20af6b9130b3610c3246e5377",
+      "acceptance_rows": ["HP4", "HP5"],
+      "verification": [
+        {
+          "id": "hp-c2-root-entry",
+          "performer": "/root/ft120_c2",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "fcb28ac247a76bd20af6b9130b3610c3246e5377",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/ft120_c2",
+            "digest": "sha256:f01117bd505732ea02611da315f27513c555f8577cfc0a4ba892d6397e9595a1",
+            "excerpt": "pass: bench test --package ./internal/conformance --run 'TestRootConformance|TestHarnessDefaultsToCurrentGitRoot'; 0 failures, 0 skips"
+          },
+          "requirement": "root-entry",
+          "command": "bench test --package ./internal/conformance --run 'TestRootConformance|TestHarnessDefaultsToCurrentGitRoot'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "restore the unset-root environment skip",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "collaboration:/root/ft120_c2",
+              "digest": "sha256:9d7d99b49fb8be1b617f618d72dae8203e2aa9c68ab1305a9eb40608f9cdda85",
+              "excerpt": "bit: restored unset-root skip caused 2 failures; source restored and focused selection passed"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "hp-c2-standards-1",
+          "performer": "/root/hpc2_standards_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-terra",
+          "effort": "high",
+          "source_digest": "fcb28ac247a76bd20af6b9130b3610c3246e5377",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/hpc2_standards_review",
+            "digest": "sha256:db92fff372745b6208821a844ec64283805e0f9bc4d22d80b1b5cb3c376f3364",
+            "excerpt": "result: completed; axis: Standards; findings: 0; tip: 0362040e173b37e371e0cb8f45cd324382a076fb"
+          },
+          "axis": "Standards",
+          "base": "4dd18eeca9d43048d35be82dcc0eb87ef1360bfe",
+          "tip": "0362040e173b37e371e0cb8f45cd324382a076fb",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "hp-c2-spec-1",
+          "performer": "/root/hpc2_spec_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-terra",
+          "effort": "high",
+          "source_digest": "fcb28ac247a76bd20af6b9130b3610c3246e5377",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/hpc2_spec_review",
+            "digest": "sha256:5f8863fc67e16615c34a7391d81ade7f90a949fd52a4317c8f0ba5ab74b102ac",
+            "excerpt": "result: completed; axis: Spec; findings: 0; tip: 0362040e173b37e371e0cb8f45cd324382a076fb"
+          },
+          "axis": "Spec",
+          "base": "4dd18eeca9d43048d35be82dcc0eb87ef1360bfe",
+          "tip": "0362040e173b37e371e0cb8f45cd324382a076fb",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "hp-c2-coverage-1",
+          "performer": "/root/hpc1_spec_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-terra",
+          "effort": "high",
+          "source_digest": "fcb28ac247a76bd20af6b9130b3610c3246e5377",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/hpc1_spec_review",
+            "digest": "sha256:d19ab2cffbd6d14587a601994938b4578cc61f07e970d3345acef84ebea29a1d",
+            "excerpt": "source_tip: 0362040e173b37e371e0cb8f45cd324382a076fb\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,30\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "axis": "Coverage",
+          "base": "4dd18eeca9d43048d35be82dcc0eb87ef1360bfe",
+          "tip": "0362040e173b37e371e0cb8f45cd324382a076fb",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
