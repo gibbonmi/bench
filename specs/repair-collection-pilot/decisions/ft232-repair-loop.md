@@ -5,7 +5,7 @@ Status: ready
 ## Destination
 
 The bounded repair policy landed in `c89922c93d75d34840863ca1a4d58cb217c3b6e4`.
-Its canonical guidance is [the bounded repair policy](../.agents/skills/bench-craft-line/references/bounded-repair-policy.md).
+Its canonical guidance is [the bounded repair policy](../../../.agents/skills/bench-craft-line/references/bounded-repair-policy.md).
 Specify the remaining bounded collection pilot and evidence report under ticket #14.
 The pilot supports a later decision about a repair-loop detector.
 
@@ -54,6 +54,6 @@ The record signal report holds the existing evidence and its limits.
   Supports: The distinction between the lane span and the lane record.
   Drift: The lane changes the fields it retains or the record it writes.
 
-- Path: `decisions/ft232-repair-loop/assets/record-signal-evidence.md`
+- Path: `specs/repair-collection-pilot/decisions/ft232-repair-loop/assets/record-signal-evidence.md`
   Supports: Tickets #6 and #9; existing record limits and the collection decision.
   Drift: Record producers change or new labeled repair sequences become available.
