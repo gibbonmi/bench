@@ -167,11 +167,56 @@ red. Final verification follows HP-C5 and precedes landing.
     "orchestrator_session": "/root",
     "author_limit": 3,
     "assignments": {
-      "1-own-gate-fixture-inputs.md": [],
-      "2-run-root-conformance-by-default.md": [],
-      "3-evaluate-anchor-paths.md": [],
-      "4-preserve-focused-system-verdicts.md": [],
-      "5-serialize-freshness-publication.md": []
+      "1-own-gate-fixture-inputs.md": [
+        {
+          "session": "/root/ft120_c1",
+          "assignment": "322e8f5a65d7e6587716301507c563f7",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source": "8c6f68da3e159e93d6af733938373222dda3fd32",
+          "native_ref": "collaboration:/root/ft120_c1"
+        }
+      ],
+      "2-run-root-conformance-by-default.md": [
+        {
+          "session": "/root/ft120_c2",
+          "assignment": "cf3bf7ea402a0409197271434d1d6eb5",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source": "8c6f68da3e159e93d6af733938373222dda3fd32",
+          "native_ref": "collaboration:/root/ft120_c2"
+        }
+      ],
+      "3-evaluate-anchor-paths.md": [
+        {
+          "session": "/root/ft120_c3",
+          "assignment": "cd1dc7c8eded6027ea11742134e06957",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source": "8c6f68da3e159e93d6af733938373222dda3fd32",
+          "native_ref": "collaboration:/root/ft120_c3"
+        }
+      ],
+      "4-preserve-focused-system-verdicts.md": [
+        {
+          "session": "/root/ft120_c4",
+          "assignment": "2705b151c3e164ab416e30dcd65e7217",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source": "8c6f68da3e159e93d6af733938373222dda3fd32",
+          "native_ref": "collaboration:/root/ft120_c4"
+        }
+      ],
+      "5-serialize-freshness-publication.md": [
+        {
+          "session": "/root/ft120_c5",
+          "assignment": "6c03260aa82b132c1e986acf9d24c5ad",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source": "8c6f68da3e159e93d6af733938373222dda3fd32",
+          "native_ref": "collaboration:/root/ft120_c5"
+        }
+      ]
     }
   },
   "chunks": [
