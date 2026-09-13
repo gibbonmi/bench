@@ -16,6 +16,14 @@ The second bounded repair and citation correction produced `3dc69447a36cb006f4dc
 
 Author verification passed for the repair-pilot package. The required inclusive-deadline mutation bit and restored. Additional restore-safe mutations bit for audit resolution, every interval timestamp, unknown fields, duplicate keys, unsupported versions, ID and reference validation, and linked-parent refusal. The prospective repository gate passed formatting, vet, tests, race, and system phases.
 
+## Chunk RP-C3
+
+The first RP-C3 review at `d0f4affb36c4ab107e01871803ee4166bbf39d03` returned Standards S1-S3, Spec P1-P2, and Coverage C1-C4. The first bounded repair at `e684fe4dfe1fab4b35c09273f686e5b0900e0750` resolved those findings. Its re-review found one remaining Standards duplication, while Spec and Coverage passed.
+
+The second bounded repair produced `9f55cc9b5ceb9df1a56a765e570396148c572775`. Three independent Astra/medium reviewers re-read the complete RP-C3 chunk in separate native contexts and read-only worktrees. Standards, Spec, and Coverage each returned a completed pass with zero blocking findings.
+
+Author verification passed for the package and public command route. The required missing-class mutation bit and restored. The operating guide walkthrough passed for the integration fence, native audit protocol, and exact command inventory. The prospective repository gate passed formatting, vet, tests, race, and system phases.
+
 ## Record
 
 ```bench-review-record
@@ -442,6 +450,248 @@ Author verification passed for the repair-pilot package. The required inclusive-
           "tip": "3dc69447a36cb006f4dc4974d9da326e294a6cad",
           "finding_ids": [],
           "supersedes": ["rp-c2-coverage-2"]
+        }
+      ]
+    },
+    {
+      "id": "RP-C3",
+      "base": "2b9cd7188a789fc24eab2d7dda3be3e0070bd970",
+      "tip": "9f55cc9b5ceb9df1a56a765e570396148c572775",
+      "plan_digest": "sha256:eb2b19db7c66f048e9759263d1e8164397297153b8a629d214521872045b2044",
+      "source_digest": "6f183380be4052add4ecdc23614dda0b3f029ff9",
+      "acceptance_rows": [
+        "RP31", "RP38", "RP39", "RP40", "RP41", "RP42", "RP43", "RP44", "RP47",
+        "RP49", "RP50", "RP55", "RP56", "RP58", "RP59", "RP61", "RP66"
+      ],
+      "verification": [
+        {
+          "id": "rp-c3-report",
+          "performer": "codex:root/repair-collection-pilot",
+          "role": "author-verification",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "6f183380be4052add4ecdc23614dda0b3f029ff9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:root/rp-c3/report@9f55cc9b",
+            "digest": "sha256:5b50e8f863b21fb2d5b7a8d2a1011643f77ef1a645736824b240726271d11bd1",
+            "excerpt": "Repair-pilot package and dispatcher tests passed; the required missing-class mutation bit and restored."
+          },
+          "requirement": "report",
+          "command": "bench test --package ./internal/repairpilot",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit one required example class from completeness",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "codex:root/rp-c3/probe@9f55cc9b",
+              "digest": "sha256:5b50e8f863b21fb2d5b7a8d2a1011643f77ef1a645736824b240726271d11bd1",
+              "excerpt": "Omitting overlap from terminal completeness failed TestRepairPilotReport/missing-class, then restored the source."
+            }
+          }
+        },
+        {
+          "id": "rp-c3-protocol",
+          "performer": "codex:root/repair-collection-pilot",
+          "role": "author-verification",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "6f183380be4052add4ecdc23614dda0b3f029ff9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:root/rp-c3/protocol@9f55cc9b",
+            "digest": "sha256:5b50e8f863b21fb2d5b7a8d2a1011643f77ef1a645736824b240726271d11bd1",
+            "excerpt": "The guide requires separate native audit, marks synthetic data, preserves the integration fence, and names exact commands."
+          },
+          "requirement": "protocol",
+          "command": "review RP47, RP49, and RP50 against the operating guide and final integration diff",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "rp-c3-standards-1",
+          "performer": "codex:agent/rp-c1-standards",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "34644b0d22af4d18081713a4a251e217623a1401",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "codex:agent/rp-c1-standards/rp-c3-review-1",
+            "digest": "sha256:ca7e95ca31a2f72a64695ca84b7b7e580835fa619bd3c5a4c0dd1aff07eb07b9",
+            "excerpt": "Standards review at d0f4affb found S1-S3: duplicated status, ordering, and TOON parsing knowledge."
+          },
+          "axis": "Standards",
+          "base": "2b9cd7188a789fc24eab2d7dda3be3e0070bd970",
+          "tip": "d0f4affb36c4ab107e01871803ee4166bbf39d03",
+          "finding_ids": ["S1", "S2", "S3"],
+          "supersedes": []
+        },
+        {
+          "id": "rp-c3-standards-2",
+          "performer": "codex:agent/rp-c1-standards",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "00832ffab9b4d894a6a64111be1612cd8c0234f9",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "codex:agent/rp-c1-standards/rp-c3-review-2",
+            "digest": "sha256:54c12ad498d3bc67381356aa745979e1632d936986eb13e3a2b7e08f9d357ec8",
+            "excerpt": "Standards re-review at e684fe4d found S4: interval evidence status was classified twice."
+          },
+          "axis": "Standards",
+          "base": "2b9cd7188a789fc24eab2d7dda3be3e0070bd970",
+          "tip": "e684fe4dfe1fab4b35c09273f686e5b0900e0750",
+          "finding_ids": ["S4"],
+          "supersedes": ["rp-c3-standards-1"]
+        },
+        {
+          "id": "rp-c3-standards-3",
+          "performer": "codex:agent/rp-c1-standards",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "6f183380be4052add4ecdc23614dda0b3f029ff9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:agent/rp-c1-standards/rp-c3-review-3",
+            "digest": "sha256:8ff8757a555bc9d7164281d7db9fafc85e505df6102bbd5fd3f75f8b656dfb9e",
+            "excerpt": "Standards PASS at 9f55cc9b; S1-S4 resolved; current blocking findings: 0."
+          },
+          "axis": "Standards",
+          "base": "2b9cd7188a789fc24eab2d7dda3be3e0070bd970",
+          "tip": "9f55cc9b5ceb9df1a56a765e570396148c572775",
+          "finding_ids": [],
+          "supersedes": ["rp-c3-standards-2"]
+        },
+        {
+          "id": "rp-c3-spec-1",
+          "performer": "codex:agent/rp-c1-spec",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "34644b0d22af4d18081713a4a251e217623a1401",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "codex:agent/rp-c1-spec/rp-c3-review-1",
+            "digest": "sha256:ca7e95ca31a2f72a64695ca84b7b7e580835fa619bd3c5a4c0dd1aff07eb07b9",
+            "excerpt": "Spec review at d0f4affb found P1-P2: unknown overlap became false and unbounded interval citations disappeared."
+          },
+          "axis": "Spec",
+          "base": "2b9cd7188a789fc24eab2d7dda3be3e0070bd970",
+          "tip": "d0f4affb36c4ab107e01871803ee4166bbf39d03",
+          "finding_ids": ["P1", "P2"],
+          "supersedes": []
+        },
+        {
+          "id": "rp-c3-spec-2",
+          "performer": "codex:agent/rp-c1-spec",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "00832ffab9b4d894a6a64111be1612cd8c0234f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:agent/rp-c1-spec/rp-c3-review-2",
+            "digest": "sha256:54c12ad498d3bc67381356aa745979e1632d936986eb13e3a2b7e08f9d357ec8",
+            "excerpt": "Spec PASS at e684fe4d; P1-P2 resolved; current blocking findings: 0."
+          },
+          "axis": "Spec",
+          "base": "2b9cd7188a789fc24eab2d7dda3be3e0070bd970",
+          "tip": "e684fe4dfe1fab4b35c09273f686e5b0900e0750",
+          "finding_ids": [],
+          "supersedes": ["rp-c3-spec-1"]
+        },
+        {
+          "id": "rp-c3-spec-3",
+          "performer": "codex:agent/rp-c1-spec",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "6f183380be4052add4ecdc23614dda0b3f029ff9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:agent/rp-c1-spec/rp-c3-review-3",
+            "digest": "sha256:8ff8757a555bc9d7164281d7db9fafc85e505df6102bbd5fd3f75f8b656dfb9e",
+            "excerpt": "Spec PASS at 9f55cc9b; interval classifier refactor preserved all RP-C3 semantics."
+          },
+          "axis": "Spec",
+          "base": "2b9cd7188a789fc24eab2d7dda3be3e0070bd970",
+          "tip": "9f55cc9b5ceb9df1a56a765e570396148c572775",
+          "finding_ids": [],
+          "supersedes": ["rp-c3-spec-2"]
+        },
+        {
+          "id": "rp-c3-coverage-1",
+          "performer": "codex:agent/rp-c1-coverage",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "34644b0d22af4d18081713a4a251e217623a1401",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "codex:agent/rp-c1-coverage/rp-c3-review-1",
+            "digest": "sha256:ca7e95ca31a2f72a64695ca84b7b7e580835fa619bd3c5a4c0dd1aff07eb07b9",
+            "excerpt": "Coverage review at d0f4affb found C1-C4: weak full inventory, default fields, class controls, and order assertions."
+          },
+          "axis": "Coverage",
+          "base": "2b9cd7188a789fc24eab2d7dda3be3e0070bd970",
+          "tip": "d0f4affb36c4ab107e01871803ee4166bbf39d03",
+          "finding_ids": ["C1", "C2", "C3", "C4"],
+          "supersedes": []
+        },
+        {
+          "id": "rp-c3-coverage-2",
+          "performer": "codex:agent/rp-c1-coverage",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "00832ffab9b4d894a6a64111be1612cd8c0234f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:agent/rp-c1-coverage/rp-c3-review-2",
+            "digest": "sha256:54c12ad498d3bc67381356aa745979e1632d936986eb13e3a2b7e08f9d357ec8",
+            "excerpt": "Coverage PASS at e684fe4d; C1-C4 resolved; focused tests pass with zero skips."
+          },
+          "axis": "Coverage",
+          "base": "2b9cd7188a789fc24eab2d7dda3be3e0070bd970",
+          "tip": "e684fe4dfe1fab4b35c09273f686e5b0900e0750",
+          "finding_ids": [],
+          "supersedes": ["rp-c3-coverage-1"]
+        },
+        {
+          "id": "rp-c3-coverage-3",
+          "performer": "codex:agent/rp-c1-coverage",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "6f183380be4052add4ecdc23614dda0b3f029ff9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:agent/rp-c1-coverage/rp-c3-review-3",
+            "digest": "sha256:8ff8757a555bc9d7164281d7db9fafc85e505df6102bbd5fd3f75f8b656dfb9e",
+            "excerpt": "Coverage PASS at 9f55cc9b; interval refactor preserved the complete mapped test evidence."
+          },
+          "axis": "Coverage",
+          "base": "2b9cd7188a789fc24eab2d7dda3be3e0070bd970",
+          "tip": "9f55cc9b5ceb9df1a56a765e570396148c572775",
+          "finding_ids": [],
+          "supersedes": ["rp-c3-coverage-2"]
         }
       ]
     }
