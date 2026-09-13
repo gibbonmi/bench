@@ -15,6 +15,7 @@ import (
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 type failedAcceptEvaluation struct {
@@ -146,8 +147,10 @@ func TestGateRunRefusesMovedSubject(t *testing.T) {
 }
 
 func TestGateRunRefusesMovedDeclaredInput(t *testing.T) {
-	root := outcomeFixture(t, "printf 'moved\\n' >> declared.txt\nprintf '%s\\n' '{\"schema\":1,\"closure\":\"local\",\"environment\":[],\"paths\":[],\"tools\":[]}' > .bench/gate-inputs.json\n")
-	outcomeWrite(t, root, ".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":["declared.txt"],"tools":[]}`+"\n", 0o644)
+	root := outcomeFixture(t, func(f *testrepo.GateFixture, body string) string {
+		f.Paths = []string{"declared.txt"}
+		return body + "printf 'moved\\n' >> declared.txt\nprintf '%s\\n' '{\"schema\":1,\"closure\":\"local\",\"environment\":[],\"paths\":[],\"tools\":[]}' > .bench/gate-inputs.json\n"
+	})
 	outcomeWrite(t, root, "declared.txt", "declared\n", 0o644)
 	outcomeCommit(t, root, "declare input")
 
@@ -215,32 +218,45 @@ func TestGateRunReloadsDeadOwnerPendingRecord(t *testing.T) {
 	}
 }
 
-func outcomeFixture(t *testing.T, extraGateScript ...string) string {
+func outcomeFixture(t *testing.T, configure ...func(*testrepo.GateFixture, string) string) string {
 	t.Helper()
 	root := gittest.RepoOnBranch(t, "main")
 	outcomeWrite(t, root, ".gitignore", ".gate-*\n", 0o644)
-	outcomeWrite(t, root, ".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n", 0o644)
-	gateScript := `#!/bin/sh
-set -eu
+	f := testrepo.NewGateFixture(t.TempDir())
+	gateScript := `set -eu
 count=0
-if [ -f .gate-run-count ]; then count=$(cat .gate-run-count); fi
+if [ -f .gate-run-count ]; then count=$(` + f.Command("cat") + ` .gate-run-count); fi
 printf '%s' "$((count + 1))" > .gate-run-count
-gitdir=$(git rev-parse --absolute-git-dir)
-cp "$gitdir/bench-last-gate" .gate-record-during
+gitdir=$(` + f.Command("git") + ` rev-parse --absolute-git-dir)
+` + f.Command("cp") + ` "$gitdir/bench-last-gate" .gate-record-during
 `
-	if len(extraGateScript) > 1 {
-		t.Fatalf("outcome fixture received %d extra gate scripts, want at most 1", len(extraGateScript))
-	}
-	if len(extraGateScript) == 1 {
-		gateScript += extraGateScript[0]
+	for _, configure := range configure {
+		gateScript = configure(f, gateScript)
 	}
 	gateScript += `if [ -e .gate-red ]; then exit 7; fi
 if [ -e .gate-drift ]; then printf 'moved\n' >> tracked.txt; fi
 `
-	outcomeWrite(t, root, ".bench/gate.sh", gateScript, 0o755)
+	if err := f.Write(root, gateScript, ""); err != nil {
+		t.Fatal(err)
+	}
 	outcomeWrite(t, root, "tracked.txt", "tracked\n", 0o644)
 	outcomeCommit(t, root, "fixture")
 	return root
+}
+
+func failureOutcomeFixture(t *testing.T) string {
+	t.Helper()
+	return outcomeFixture(t, func(f *testrepo.GateFixture, body string) string {
+		sleep, chmod := f.Command("sleep"), f.Command("chmod")
+		return body + `if [ -e .gate-wait ]; then
+  : > .gate-running
+  while [ ! -e .gate-release ]; do ` + sleep + ` 0.01; done
+fi
+if [ -e .gate-sleep ]; then ` + sleep + ` 5; fi
+if [ -e .gate-evidence-0500 ] || [ -e .gate-evidence-unwritable ]; then ` + chmod + ` 500 "$gitdir/bench-gate-evidence"; fi
+if [ -e .gate-gitdir-0500 ]; then ` + chmod + ` 500 "$gitdir"; fi
+`
+	})
 }
 
 func outcomeCommit(t *testing.T, root, message string) {

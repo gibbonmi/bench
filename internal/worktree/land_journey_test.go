@@ -158,8 +158,8 @@ func TestLandCommandRefusesPostGateUnknownIgnoredMutation(t *testing.T) {
 	binary := testRunBinary(t)
 	request := "public-land-post-gate-ignored"
 	root, creation, _, _, tally, _ := publicLandingFixture(t, request, "foreign-generated/output", "")
-	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nset -eu\nruntime=$1\ngrep -q '^Status: implemented$' specs/x/spec.md\n[ -f owned.txt ]\nprintf g >> '"+tally+"'\nmkdir -p \"$LAND_DESTINATION/foreign-generated\"\nprintf injected > \"$LAND_DESTINATION/foreign-generated/output\"\n"), 0o755)
-	mustWrite(t, filepath.Join(root, ".bench", "gate-inputs.json"), []byte("{\"schema\":1,\"closure\":\"local\",\"environment\":[\"LAND_DESTINATION\"],\"paths\":[],\"tools\":[]}\n"), 0o644)
+	f := landingGateFixture(t, "LAND_DESTINATION")
+	f.MustWrite(t, root, "", "set -eu\nruntime=$1\n"+f.Command("grep")+" -q '^Status: implemented$' specs/x/spec.md\n[ -f owned.txt ]\nprintf g >> '"+tally+"'\n"+f.Command("mkdir")+" -p \"$LAND_DESTINATION/foreign-generated\"\nprintf injected > \"$LAND_DESTINATION/foreign-generated/output\"\n")
 	gitRun(t, root, "add", ".bench/gate-prospective.sh", ".bench/gate-inputs.json")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "inject post-gate ignored mutation")
 	base := gitOutput(t, root, "rev-parse", "HEAD")

@@ -12,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/spec"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 type completionFixture struct {
@@ -32,11 +33,10 @@ func attachedCompletionFixture(t *testing.T, attach func(testing.TB, string, int
 	t.Helper()
 	f := attach(t, fixture(t), 2)
 	f.Write(".gitignore", ".logs/\n")
-	f.Write(".bench/gate.sh", "#!/bin/sh\ngrep -q '^Status: implemented$' specs/example/spec.md\n")
-	if err := os.Chmod(filepath.Join(f.Root, ".bench/gate.sh"), 0755); err != nil {
+	g := testrepo.NewGateFixture(t.TempDir())
+	if err := g.Write(f.Root, g.Command("grep")+" -q '^Status: implemented$' specs/example/spec.md\n", ""); err != nil {
 		t.Fatal(err)
 	}
-	f.Write(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n")
 	f.Commit("landing oracle")
 	root, base := f.Root, f.Tip()
 	source := filepath.Join(t.TempDir(), "source")

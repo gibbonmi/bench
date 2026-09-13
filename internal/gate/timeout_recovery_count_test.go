@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 func TestGateRunTimeoutInvalidatesOldEvidence(t *testing.T) {
@@ -56,14 +58,7 @@ func TestGateRunTimeoutInvalidatesOldEvidence(t *testing.T) {
 
 func delayedCounterOutcomeFixture(t *testing.T) string {
 	t.Helper()
-	root := outcomeFixture(t)
-	path := filepath.Join(root, ".bench/gate.sh")
-	script := string(outcomeRead(t, path))
-	delayed := strings.Replace(script, "count=0\n", "if [ -e .gate-sleep ]; then sleep 5; fi\ncount=0\n", 1)
-	if delayed == script {
-		t.Fatal("gate fixture has no counter initialization")
-	}
-	outcomeWrite(t, root, ".bench/gate.sh", delayed, 0o755)
-	outcomeCommit(t, root, "delay counter")
-	return root
+	return outcomeFixture(t, func(f *testrepo.GateFixture, body string) string {
+		return "if [ -e .gate-sleep ]; then " + f.Command("sleep") + " 5; fi\n" + body
+	})
 }

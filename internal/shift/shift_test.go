@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 // rec builds one NUL-terminated porcelain -z record: two status chars, a space, the
@@ -120,11 +121,8 @@ func shiftCollisionFixture(t *testing.T, preExisting ...string) (tmp, baseBranch
 		}
 	}
 	runGit("init", "-q")
-	if err := os.Mkdir(filepath.Join(tmp, ".bench"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	gatePath := filepath.Join(tmp, ".bench", "gate.sh")
-	if err := os.WriteFile(gatePath, []byte("#!/usr/bin/env bash\nexit 0\n"), 0o755); err != nil {
+	f := testrepo.NewGateFixture(t.TempDir())
+	if err := f.Write(tmp, f.Command("bash")+" -c 'exit 0'\n", ""); err != nil {
 		t.Fatal(err)
 	}
 	agentPath := filepath.Join(tmp, "agent")
@@ -250,13 +248,8 @@ func TestRunGateReportsRed(t *testing.T) {
 		}
 	}
 	gitCmd("init", "-q")
-	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, ".bench", "gate.sh"), []byte("#!/usr/bin/env bash\nexit 23\n"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, ".bench", "gate-inputs.json"), []byte(`{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`), 0o644); err != nil {
+	f := testrepo.NewGateFixture(t.TempDir())
+	if err := f.Write(root, f.Command("bash")+" -c 'exit 23'\n", ""); err != nil {
 		t.Fatal(err)
 	}
 	gitCmd("add", "-A")

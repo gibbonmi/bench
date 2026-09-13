@@ -9,6 +9,9 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/sanitize"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 // shiftBranchName extracts the branch a Loop run started, from its "▶ shift on <branch>"
@@ -91,13 +94,8 @@ func faultFixtureCore(t *testing.T, gateScript string, extra func(root string)) 
 	// repository config. A per-command -c leaves the product's commit without an author.
 	runGit("config", "user.email", "bench@local")
 	runGit("config", "user.name", "bench")
-	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, ".bench", "gate.sh"), []byte(gateScript), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, ".bench", "gate-inputs.json"), []byte(`{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`), 0o644); err != nil {
+	f := testrepo.NewGateFixture(t.TempDir())
+	if err := f.Write(root, f.Command("bash")+" -c "+sanitize.ShellQuote(gateScript), ""); err != nil {
 		t.Fatal(err)
 	}
 	if extra != nil {
