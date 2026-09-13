@@ -276,6 +276,9 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **frontier round** — one numbered round of `craft-grill`: every question whose
   prerequisites are already settled, asked together with a recommendation. The
   skill then waits and recomputes the next round. Not "one question at a time".
+- **repair cycle** — one repair attempt and verification of its affected findings.
+  A cycle can address several findings. Not a tool call, an individual finding,
+  or a fresh review alone — repair cycle.
 - **disposition** — the exactly-one next-action label a review finding carries.
   `no-op` means the concern is refuted and no repair target remains. `auto-fix`
   means a deterministic rule or exact spec predicate, repairable in
