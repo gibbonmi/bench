@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Gate subject recovery
+
+- Added an exact retry helper when `bench gate` cannot construct its subject.
+
 ### Cleanup-pending worktrees
 
 - Fixed `bench worktree list` to print exact release actions for cleanup-pending
