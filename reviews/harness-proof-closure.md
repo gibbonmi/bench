@@ -389,6 +389,125 @@ findings in the single permitted review round.
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "HP-C4",
+      "base": "cec921d5af8417f2a64ad274fdcb8ce97c391541",
+      "tip": "7b61c9288cfa607aa09352b1dcc9ac69c9a58f9a",
+      "plan_digest": "sha256:5386adf22ec42126210eac16c632653aec0980a91e5f4205a91daa6b0d1dcfdd",
+      "source_digest": "926338c0477a1b9aafb54ad86f060af5127d6191",
+      "acceptance_rows": ["HP11", "HP12", "HP13", "HP19"],
+      "verification": [
+        {
+          "id": "hp-c4-focused-system",
+          "performer": "/root/ft120_c4",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "926338c0477a1b9aafb54ad86f060af5127d6191",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/ft120_c4",
+            "digest": "sha256:2c96634f236a56772fe3aeeed274b52776df19d05f058e47eb7ed4c2d68caeb1",
+            "excerpt": "pass: go test -trimpath -count=1 -tags=system ./internal/systemtest -run ^TestFocusedRun; 0 failures, 0 skips"
+          },
+          "requirement": "focused-system",
+          "command": "go test -trimpath -count=1 -tags=system ./internal/systemtest -run '^TestFocusedRun'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "call the whole-suite ledger verifier after a focused passing child",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "collaboration:/root/ft120_c4",
+              "digest": "sha256:63c0ff7e9cf2f37c9afbae249fcb0632508071e22474f48fdd4de6230ca2c4cf",
+              "excerpt": "bit: whole-suite verifier after focused passing child failed 8 tests; restored yes; 0 skips"
+            }
+          }
+        },
+        {
+          "id": "hp-c4-full-system",
+          "performer": "/root/ft120_c4",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "926338c0477a1b9aafb54ad86f060af5127d6191",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/ft120_c4",
+            "digest": "sha256:398343beef71bbbfc72511b50959e359715369b3291f9ca815fb3cb252bcfab4",
+            "excerpt": "pass: bench test --check system; 0 failures, 0 skips"
+          },
+          "requirement": "full-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "hp-c4-standards-1",
+          "performer": "/root/hpc2_standards_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-terra",
+          "effort": "high",
+          "source_digest": "926338c0477a1b9aafb54ad86f060af5127d6191",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/hpc2_standards_review",
+            "digest": "sha256:2e60b114f07a0fa2bbb32fbe84496df54cdfcf1e6f271030b219a362b7ac5700",
+            "excerpt": "Standards PASS — HP-C4 at tip `7b61c9288cfa607aa09352b1dcc9ac69c9a58f9a`. The parsed `test.run` registry value is the single selection source; focused runs preserve their selected verdict while all paths retain cleanup. The exact two-file ticket fence holds, comments state durable invariants, and the charged packet, whitespace check, and system suite pass."
+          },
+          "axis": "Standards",
+          "base": "cec921d5af8417f2a64ad274fdcb8ce97c391541",
+          "tip": "7b61c9288cfa607aa09352b1dcc9ac69c9a58f9a",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "hp-c4-spec-1",
+          "performer": "/root/hpc2_spec_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-terra",
+          "effort": "high",
+          "source_digest": "926338c0477a1b9aafb54ad86f060af5127d6191",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/hpc2_spec_review",
+            "digest": "sha256:1ed897cd4639838379d0e4ce54ebc9bbe3b4879a7c4aef7be92e82cc41865e1d",
+            "excerpt": "result: completed; axis: Spec; findings: 0; tip: 7b61c9288cfa607aa09352b1dcc9ac69c9a58f9a"
+          },
+          "axis": "Spec",
+          "base": "cec921d5af8417f2a64ad274fdcb8ce97c391541",
+          "tip": "7b61c9288cfa607aa09352b1dcc9ac69c9a58f9a",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "hp-c4-coverage-1",
+          "performer": "/root/hpc1_spec_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-terra",
+          "effort": "high",
+          "source_digest": "926338c0477a1b9aafb54ad86f060af5127d6191",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/hpc1_spec_review",
+            "digest": "sha256:871690bbfb6a851f2b875116364bda35b02e79742c9eb192a4fe69bfa5925a38",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,37540\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "axis": "Coverage",
+          "base": "cec921d5af8417f2a64ad274fdcb8ce97c391541",
+          "tip": "7b61c9288cfa607aa09352b1dcc9ac69c9a58f9a",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
