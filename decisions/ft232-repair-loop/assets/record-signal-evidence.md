@@ -6,7 +6,7 @@ Obtain better evidence before specifying a repair-loop detector.
 Existing records do not demonstrate the distinction required by decision ticket #5.
 This report examines the Bench repository only, on 2026-09-13.
 
-Consumed by: specs/bounded-repair-policy/decisions/ft232-repair-loop/tickets/9.md
+Consumed by: decisions/ft232-repair-loop/tickets/9.md
 Drift: Record producers change, or new labeled repair sequences become available.
 Retire when: The advisory decision rejects the detector or replaces this evidence with a validated experiment.
 Code revision: be006142df15380e8a9eb9f344f07b2ddffec42f
