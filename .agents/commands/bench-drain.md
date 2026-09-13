@@ -39,6 +39,19 @@ snapshot. When it is false, stop before any batch mutation. Report every
 structural evidence remains visible for reviewer diagnosis. Do not infer a
 ledger or a sequence from partial sources.
 
+## Worktree closure
+
+Run `bench worktree list` before any batch mutation, after the snapshot passes
+its trust check. An orphaned worktree has no live lease and no active work,
+while its work is landed.
+
+If the inventory contains an orphaned worktree, invoke `/bench-debug` and assess its root cause before cleanup.
+The drain owns removal of every orphaned worktree. Use the recovery command
+that `bench worktree list` gives for each row.
+
+After cleanup, run `bench worktree list` again and require zero orphaned rows.
+If cleanup cannot reach zero, stop before batch mutation and report the retained rows.
+
 ## Delegate the evidence
 
 Use at most three read-only delegates after the snapshot passes its trust check.

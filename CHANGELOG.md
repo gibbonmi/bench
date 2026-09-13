@@ -6,6 +6,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Cleanup-pending worktrees
+
+- Fixed `bench worktree list` to print exact release actions for cleanup-pending
+  assignments. `/bench-drain` now diagnoses and removes orphaned worktrees
+  before batch mutation.
+
 ### Spec review ownership
 
 - Changed `/bench-write-spec` so the author retains all writes and the reviewer
