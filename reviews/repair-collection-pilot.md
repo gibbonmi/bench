@@ -24,6 +24,8 @@ The second bounded repair produced `9f55cc9b5ceb9df1a56a765e570396148c572775`. T
 
 The reviewers confirmed those passes at `8c51cb7330deffcf9efb759cfea059a9fe2ddc8e` after ticket metadata named the two fixtures required by preflight closure.
 
+Main advanced before landing. The retained source merged `d524f1faae9c0b204435385f00e8ff1887132624` and preserved both changelog entries. It repeated author verification and the required probe. All three Astra/medium axes passed at `39b7cefff0ec1377b59a842827a6b4fcb9b6e90b`.
+
 Author verification passed for the package and public command route. The required missing-class mutation bit and restored. The operating guide walkthrough passed for the integration fence, native audit protocol, and exact command inventory. The prospective repository gate passed formatting, vet, tests, race, and system phases.
 
 ## Record
@@ -458,9 +460,9 @@ Author verification passed for the package and public command route. The require
     {
       "id": "RP-C3",
       "base": "2b9cd7188a789fc24eab2d7dda3be3e0070bd970",
-      "tip": "8c51cb7330deffcf9efb759cfea059a9fe2ddc8e",
+      "tip": "39b7cefff0ec1377b59a842827a6b4fcb9b6e90b",
       "plan_digest": "sha256:ed2e624b9303f6183a79e61039f819bb8623dc93572b63d77cb0f300054ee915",
-      "source_digest": "87b8f73c1a25b4c5dab86c746666e7cb55cccec7",
+      "source_digest": "71921fe98e30f4ad0680d11917584941f132eb1d",
       "acceptance_rows": [
         "RP31", "RP38", "RP39", "RP40", "RP41", "RP42", "RP43", "RP44", "RP47",
         "RP49", "RP50", "RP55", "RP56", "RP58", "RP59", "RP61", "RP66"
@@ -472,11 +474,11 @@ Author verification passed for the package and public command route. The require
           "role": "author-verification",
           "model": "gpt-5.6-sol",
           "effort": "high",
-          "source_digest": "87b8f73c1a25b4c5dab86c746666e7cb55cccec7",
+          "source_digest": "71921fe98e30f4ad0680d11917584941f132eb1d",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "codex:root/rp-c3/report@8c51cb73",
+            "ref": "codex:root/rp-c3/report@39b7ceff",
             "digest": "sha256:8d298949374d9110f58438cb43a66fe337109b705eaec2564688ed08e274cd2a",
             "excerpt": "Repair-pilot package and dispatcher tests passed; the required missing-class mutation bit and restored."
           },
@@ -489,7 +491,7 @@ Author verification passed for the package and public command route. The require
             "exit_code": 1,
             "restore": "pass",
             "native_ref": {
-              "ref": "codex:root/rp-c3/probe@8c51cb73",
+              "ref": "codex:root/rp-c3/probe@39b7ceff",
               "digest": "sha256:d5ff90ca3bae1ac299476a8bf6e011707199654e8f3b803592529d258a629e67",
               "excerpt": "Omitting overlap from terminal completeness failed TestRepairPilotReport/missing-class, then restored the source."
             }
@@ -501,11 +503,11 @@ Author verification passed for the package and public command route. The require
           "role": "author-verification",
           "model": "gpt-5.6-sol",
           "effort": "high",
-          "source_digest": "87b8f73c1a25b4c5dab86c746666e7cb55cccec7",
+          "source_digest": "71921fe98e30f4ad0680d11917584941f132eb1d",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "codex:root/rp-c3/protocol@8c51cb73",
+            "ref": "codex:root/rp-c3/protocol@39b7ceff",
             "digest": "sha256:a108c5341c21f5505552f1831656633585007d0a6fd71dfd2036af907f5986b0",
             "excerpt": "The guide requires separate native audit, marks synthetic data, preserves the integration fence, and names exact commands."
           },
@@ -596,6 +598,26 @@ Author verification passed for the package and public command route. The require
           "supersedes": ["rp-c3-standards-3"]
         },
         {
+          "id": "rp-c3-standards-5",
+          "performer": "codex:agent/rp-c1-standards",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "71921fe98e30f4ad0680d11917584941f132eb1d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:agent/rp-c1-standards/rp-c3-review-5",
+            "digest": "sha256:cef70e6ee4789be3e473888e6f340e291f1605c7f0e90b2c7de48abd5a078d8e",
+            "excerpt": "Standards PASS at 39b7cefff0ec1377b59a842827a6b4fcb9b6e90b: full composition preserves S1–S4 closure and introduces no documented-standard or one-source violations."
+          },
+          "axis": "Standards",
+          "base": "2b9cd7188a789fc24eab2d7dda3be3e0070bd970",
+          "tip": "39b7cefff0ec1377b59a842827a6b4fcb9b6e90b",
+          "finding_ids": [],
+          "supersedes": ["rp-c3-standards-4"]
+        },
+        {
           "id": "rp-c3-spec-1",
           "performer": "codex:agent/rp-c1-spec",
           "role": "independent-review",
@@ -676,6 +698,26 @@ Author verification passed for the package and public command route. The require
           "supersedes": ["rp-c3-spec-3"]
         },
         {
+          "id": "rp-c3-spec-5",
+          "performer": "codex:agent/rp-c1-spec",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "71921fe98e30f4ad0680d11917584941f132eb1d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:agent/rp-c1-spec/rp-c3-review-5",
+            "digest": "sha256:4eb245265c7355268695bfe5a5b139dd6bb154d7774a4457fb37d1c9703f40ea",
+            "excerpt": "Spec PASS at 39b7ceff. The composition preserves repair-pilot implementation, acceptance, and operating guidance. The changelog retains both entries; merged advisory scorecard guidance introduces no pilot-controlled routing effect. Zero blocking findings."
+          },
+          "axis": "Spec",
+          "base": "2b9cd7188a789fc24eab2d7dda3be3e0070bd970",
+          "tip": "39b7cefff0ec1377b59a842827a6b4fcb9b6e90b",
+          "finding_ids": [],
+          "supersedes": ["rp-c3-spec-4"]
+        },
+        {
           "id": "rp-c3-coverage-1",
           "performer": "codex:agent/rp-c1-coverage",
           "role": "independent-review",
@@ -754,13 +796,33 @@ Author verification passed for the package and public command route. The require
           "tip": "8c51cb7330deffcf9efb759cfea059a9fe2ddc8e",
           "finding_ids": [],
           "supersedes": ["rp-c3-coverage-3"]
+        },
+        {
+          "id": "rp-c3-coverage-5",
+          "performer": "codex:agent/rp-c1-coverage",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "71921fe98e30f4ad0680d11917584941f132eb1d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:agent/rp-c1-coverage/rp-c3-review-5",
+            "digest": "sha256:ca1ad1b402f5e2f567f52438d384fb681a243a9801801825e15e026524b8c834",
+            "excerpt": "Coverage PASS at 39b7ceff; composition preserves approved RP-C3 coverage and fixture ownership. Zero blocking findings."
+          },
+          "axis": "Coverage",
+          "base": "2b9cd7188a789fc24eab2d7dda3be3e0070bd970",
+          "tip": "39b7cefff0ec1377b59a842827a6b4fcb9b6e90b",
+          "finding_ids": [],
+          "supersedes": ["rp-c3-coverage-4"]
         }
       ]
     }
   ],
   "completion": {
     "state": "completed",
-    "source_digest": "87b8f73c1a25b4c5dab86c746666e7cb55cccec7",
+    "source_digest": "71921fe98e30f4ad0680d11917584941f132eb1d",
     "performer": "codex:root/repair-collection-pilot",
     "reconciliation": {
       "RP1": "covered", "RP2": "covered", "RP3": "covered", "RP4": "covered",
@@ -788,11 +850,11 @@ Author verification passed for the package and public command route. The require
         "role": "author-verification",
         "model": "gpt-5.6-sol",
         "effort": "high",
-        "source_digest": "87b8f73c1a25b4c5dab86c746666e7cb55cccec7",
+        "source_digest": "71921fe98e30f4ad0680d11917584941f132eb1d",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "codex:root/final-acceptance@19fd528f",
+          "ref": "codex:root/final-acceptance@39b7ceff",
           "digest": "sha256:77867f0b79d4547dfea744ab2a685bff97ca900940d7abde75acb591cc964a93",
           "excerpt": "bench test --package ./internal/repairpilot passed: 1 package, 0 failures, 0 skips."
         },
@@ -806,11 +868,11 @@ Author verification passed for the package and public command route. The require
         "role": "author-verification",
         "model": "gpt-5.6-sol",
         "effort": "high",
-        "source_digest": "87b8f73c1a25b4c5dab86c746666e7cb55cccec7",
+        "source_digest": "71921fe98e30f4ad0680d11917584941f132eb1d",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "codex:root/final-integration@19fd528f",
+          "ref": "codex:root/final-integration@39b7ceff",
           "digest": "sha256:3e16c02323666359659935e1904026f921581aac1ecb84d2ea0510cfdf12e820",
           "excerpt": "bench test --package ./cmd/bench --run RepairPilot passed: 1 package, 0 failures, 0 skips."
         },
