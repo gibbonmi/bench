@@ -21,11 +21,13 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 	}
 
 	entry, entryCount := markdownH2Sections(text, "Entry orientation")
+	worktrees, worktreeCount := markdownH2Sections(text, "Worktree closure")
 	delegation, delegationCount := markdownH2Sections(text, "Delegate the evidence")
 	occurrences, occurrenceCount := markdownH2Sections(text, "2. Drain occurrence evidence")
 	sequence, sequenceCount := markdownH2Sections(text, "7. Refresh the sequence")
 	batch, batchCount := markdownH2Sections(text, "8. Batch-propose, then commit once on green")
 	entry = collapseSpace(entry)
+	worktrees = collapseSpace(worktrees)
 	delegation = collapseSpace(delegation)
 	occurrences = collapseSpace(occurrences)
 	sequence = collapseSpace(sequence)
@@ -50,6 +52,14 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 	}
 	if entryCount != 1 || trustAt <= schemaAt || !strings.Contains(entry, "`occurrence_discrepancies` row together with the complete index snapshot") {
 		diags = append(diags, "bench-drain does not preserve complete index evidence before reconciliation")
+	}
+	if worktreeCount != 1 || !strings.Contains(worktrees, "Run `bench worktree list` before any batch mutation") ||
+		!strings.Contains(worktrees, "The drain owns removal of every orphaned worktree") ||
+		!strings.Contains(worktrees, "require zero orphaned rows") {
+		diags = append(diags, "bench-drain does not own orphaned worktree closure")
+	}
+	if worktreeCount != 1 || !strings.Contains(worktrees, "invoke `/bench-debug` and assess its root cause before cleanup") {
+		diags = append(diags, "bench-drain does not route orphaned worktrees through root-cause diagnosis")
 	}
 	parallelRead := "Use at most three read-only delegates after the snapshot passes its trust check."
 	readScopes := "Assign at most one delegate to each scope: roadmap reconcile, idea and journal mapping, and retro analysis."
@@ -212,6 +222,10 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 		{"trust polarity", "snapshot. When it is false, stop before any batch mutation", "snapshot. When it is true, stop before any batch mutation", "bench-drain does not stop untrusted recurrence evidence before reconciliation"},
 		{"trust stop", "stop before any batch mutation", "continue into batch mutation", "bench-drain does not stop untrusted recurrence evidence before reconciliation"},
 		{"context evidence", "`occurrence_discrepancies` row together with the complete index snapshot", "`occurrence_discrepancies` row", "bench-drain does not preserve complete index evidence before reconciliation"},
+		{"orphan inventory", "Run `bench worktree list` before any batch mutation", "Run `bench worktree list` after the batch mutation", "bench-drain does not own orphaned worktree closure"},
+		{"orphan owner", "The drain owns removal of every orphaned worktree", "The active phase owns removal of its own worktree", "bench-drain does not own orphaned worktree closure"},
+		{"orphan completion", "require zero orphaned rows", "report the remaining orphaned rows", "bench-drain does not own orphaned worktree closure"},
+		{"orphan diagnosis", "invoke `/bench-debug` and assess its root cause before cleanup", "clean it without diagnosis", "bench-drain does not route orphaned worktrees through root-cause diagnosis"},
 		{"bounded parallel reads", "Use at most three read-only delegates after the snapshot passes its trust check.", "Use unlimited read-only delegates after the snapshot passes its trust check.", "bench-drain does not retain the bounded parallel-read contract"},
 		{"read scopes", "Assign at most one delegate to each scope: roadmap reconcile, idea and journal mapping, and retro analysis.", "Assign one delegate to roadmap reconcile only.", "bench-drain does not assign the three independent read scopes"},
 		{"skip empty scope", "Skip a scope when its indexed source set is empty.", "Run every scope even when its indexed source set is empty.", "bench-drain does not skip empty indexed read scopes"},

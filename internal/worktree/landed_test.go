@@ -248,6 +248,11 @@ func TestLandedClassifierOnlyActiveStateQualifies(t *testing.T) {
 	complete.Assignment.State = intent.StateComplete
 	mustNoError(t, intent.PutAssignment(root, complete.Assignment))
 
+	before, code := ListCommand(root, home, nil)
+	if code != 0 || !strings.Contains(before, cleanupPending.Path) || !strings.Contains(before, "resume the cleanup-pending assignment") {
+		t.Fatalf("ListCommand = (%d, %q), want the cleanup-pending release action", code, before)
+	}
+
 	var stdout, stderr bytes.Buffer
 	if code := ResumeCleanCommand(root, home, nil, &stdout, &stderr); code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())

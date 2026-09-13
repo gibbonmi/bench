@@ -107,6 +107,18 @@ func actionsForRows(rows []listRow) []axi.Action {
 		if len(row.values) < 4 {
 			continue
 		}
+		if row.values[3] == string(intent.StateCleanupPending) {
+			request, _ := row.values[listRequestCell].(string)
+			if request == "" || row.assignmentPath == "" {
+				continue
+			}
+			actions = append(actions, axi.ExecutableInvocation(
+				"resume the cleanup-pending assignment",
+				axi.KnownArgument("worktree"), axi.KnownArgument("release"),
+				axi.KnownArgument("--request"), axi.KnownArgument(request), axi.KnownArgument(row.assignmentPath),
+			))
+			continue
+		}
 		if row.values[3] == string(intent.StateActive) {
 			id, ok := row.values[0].(string)
 			if !ok || id == "" {
