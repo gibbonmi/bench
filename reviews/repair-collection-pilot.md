@@ -759,11 +759,66 @@ Author verification passed for the package and public command route. The require
     }
   ],
   "completion": {
-    "state": "",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": null,
-    "verification": null
+    "state": "completed",
+    "source_digest": "87b8f73c1a25b4c5dab86c746666e7cb55cccec7",
+    "performer": "codex:root/repair-collection-pilot",
+    "reconciliation": {
+      "RP1": "covered", "RP2": "covered", "RP3": "covered", "RP4": "covered",
+      "RP5": "covered", "RP6": "covered", "RP7": "covered", "RP8": "covered",
+      "RP9": "covered", "RP10": "covered", "RP11": "covered", "RP12": "covered",
+      "RP13": "covered", "RP14": "covered", "RP15": "covered", "RP16": "covered",
+      "RP17": "covered", "RP18": "covered", "RP19": "covered", "RP20": "covered",
+      "RP21": "covered", "RP22": "covered", "RP23": "covered", "RP24": "covered",
+      "RP25": "covered", "RP26": "covered", "RP27": "covered", "RP28": "covered",
+      "RP29": "covered", "RP30": "covered", "RP31": "covered", "RP32": "covered",
+      "RP33": "covered", "RP34": "covered", "RP35": "covered", "RP36": "covered",
+      "RP37": "covered", "RP38": "covered", "RP39": "covered", "RP40": "covered",
+      "RP41": "covered", "RP42": "covered", "RP43": "covered", "RP44": "covered",
+      "RP45": "covered", "RP46": "covered", "RP47": "covered", "RP48": "covered",
+      "RP49": "covered", "RP50": "covered", "RP51": "covered", "RP52": "covered",
+      "RP53": "covered", "RP54": "covered", "RP55": "covered", "RP56": "covered",
+      "RP57": "covered", "RP58": "covered", "RP59": "covered", "RP60": "covered",
+      "RP61": "covered", "RP62": "covered", "RP63": "covered", "RP64": "covered",
+      "RP65": "covered", "RP66": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-acceptance",
+        "performer": "codex:root/repair-collection-pilot",
+        "role": "author-verification",
+        "model": "gpt-5.6-sol",
+        "effort": "high",
+        "source_digest": "87b8f73c1a25b4c5dab86c746666e7cb55cccec7",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "codex:root/final-acceptance@19fd528f",
+          "digest": "sha256:77867f0b79d4547dfea744ab2a685bff97ca900940d7abde75acb591cc964a93",
+          "excerpt": "bench test --package ./internal/repairpilot passed: 1 package, 0 failures, 0 skips."
+        },
+        "requirement": "acceptance",
+        "command": "bench test --package ./internal/repairpilot",
+        "exit_code": 0
+      },
+      {
+        "id": "final-integration",
+        "performer": "codex:root/repair-collection-pilot",
+        "role": "author-verification",
+        "model": "gpt-5.6-sol",
+        "effort": "high",
+        "source_digest": "87b8f73c1a25b4c5dab86c746666e7cb55cccec7",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "codex:root/final-integration@19fd528f",
+          "digest": "sha256:3e16c02323666359659935e1904026f921581aac1ecb84d2ea0510cfdf12e820",
+          "excerpt": "bench test --package ./cmd/bench --run RepairPilot passed: 1 package, 0 failures, 0 skips."
+        },
+        "requirement": "integration",
+        "command": "bench test --package ./cmd/bench --run RepairPilot",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
