@@ -436,6 +436,7 @@ Won't handle: a portable non-Unix publication lock — the publisher and its exi
 - `cmd/bench/anchor_help_test.go`
 - `internal/gate/lane_select.go`
 - `internal/gate/lane_select_test.go`
+- `internal/gate/lane_test.go`
 - `projects/benchkit.md`
 - `tests/canary/guidance-prose-budgets/over-budget-skill/`
 - `tests/canary/line-routing/line-binding-prose-drift/`
