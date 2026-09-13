@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "groups": {
+    "identity": [
+      "session",
+      "assignment",
+      "findings",
+      "sources",
+      "stages",
+      "missing",
+      "retry",
+      "conflict",
+      "nonblocking-start",
+      "first-blocker",
+      "specs",
+      "interval",
+      "contributors",
+      "reversed-interval"
+    ],
+    "failures": ["repeated", "partial", "generic", "rerun", "vocabulary"],
+    "endpoints": ["unverified", "closed", "handoff"],
+    "cutoff": ["count", "deadline", "earlier", "late-import", "audit", "before-activation", "future"],
+    "audit": ["no-repair", "proposal", "supported", "conflicting"],
+    "grammar": ["hostile"],
+    "storage": ["record-stored-hostile"]
+  }
+}

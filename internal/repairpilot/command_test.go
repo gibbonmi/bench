@@ -62,8 +62,8 @@ func TestRepairPilotActivation(t *testing.T) {
 			Version:       1,
 			RepositoryKey: options.RepoKey,
 			ActivatedAt:   options.Now,
-			Observations:  []json.RawMessage{json.RawMessage(`{"id":"kept"}`)},
-			Audits:        []json.RawMessage{},
+			Observations:  []observation{{ID: "kept"}},
+			Audits:        []audit{},
 		}
 		writeTestDocument(t, documentPath(options), document)
 		before, err := os.ReadFile(documentPath(options))
@@ -222,115 +222,112 @@ func TestRepairPilotStorage(t *testing.T) {
 		}
 	})
 	t.Run("stored-hostile", func(t *testing.T) {
-		fixtures := []storedHostileFixture{
-			{name: "empty", make: func(t *testing.T, path string, _ Options) { writeFixture(t, path, nil) }},
-			{name: "malformed", make: func(t *testing.T, path string, _ Options) { writeFixture(t, path, []byte("{\n")) }},
-			{name: "no-final-newline", make: func(t *testing.T, path string, options Options) {
-				writeFixture(t, path, []byte(fmt.Sprintf(`{"version":1,"repository_key":%q,"activated_at":"2026-09-01T12:00:00Z","observations":[],"audits":[]}`, options.RepoKey)))
-			}},
-			{name: "unsupported-version", make: func(t *testing.T, path string, options Options) {
-				writeFixture(t, path, []byte(fmt.Sprintf("{\"version\":2,\"repository_key\":%q,\"activated_at\":\"2026-09-01T12:00:00Z\",\"observations\":[],\"audits\":[]}\n", options.RepoKey)))
-			}},
-			{name: "foreign-repository", make: func(t *testing.T, path string, _ Options) {
-				writeFixture(t, path, []byte("{\"version\":1,\"repository_key\":\"other-123\",\"activated_at\":\"2026-09-01T12:00:00Z\",\"observations\":[],\"audits\":[]}\n"))
-			}},
-			{name: "duplicate-key", make: func(t *testing.T, path string, options Options) {
-				writeFixture(t, path, []byte(fmt.Sprintf("{\"version\":1,\"version\":1,\"repository_key\":%q,\"activated_at\":\"2026-09-01T12:00:00Z\",\"observations\":[],\"audits\":[]}\n", options.RepoKey)))
-			}},
-			{name: "unknown-field", make: func(t *testing.T, path string, options Options) {
-				writeFixture(t, path, []byte(fmt.Sprintf("{\"version\":1,\"repository_key\":%q,\"activated_at\":\"2026-09-01T12:00:00Z\",\"observations\":[],\"audits\":[],\"extra\":true}\n", options.RepoKey)))
-			}},
-			{name: "oversized", make: func(t *testing.T, path string, _ Options) {
-				writeFixture(t, path, []byte(strings.Repeat("x", int(bounds.ControlRecordLimit)+1)))
-			}},
-			{name: "directory", make: func(t *testing.T, path string, _ Options) {
-				if err := os.Mkdir(path, 0o700); err != nil {
-					t.Fatal(err)
-				}
-			}},
-			{name: "live-symlink", make: func(t *testing.T, path string, _ Options) {
-				target := filepath.Join(t.TempDir(), "target")
-				writeFixture(t, target, []byte("outside\n"))
-				if err := os.Symlink(target, path); err != nil {
-					t.Fatal(err)
-				}
-			}},
-			{name: "dangling-symlink", make: func(t *testing.T, path string, _ Options) {
-				if err := os.Symlink("missing", path); err != nil {
-					t.Fatal(err)
-				}
-			}},
-			{name: "linked-parent", make: func(t *testing.T, path string, options Options) {
-				parent := filepath.Dir(path)
-				if err := os.Remove(parent); err != nil {
-					t.Fatal(err)
-				}
-				target := t.TempDir()
-				writeFixture(t, filepath.Join(target, "pilot.json"), validDocumentBytes(t, options))
-				if err := os.Symlink(target, parent); err != nil {
-					t.Fatal(err)
-				}
-			}},
-		}
-		fixtures = append(fixtures, platformStoredHostileFixtures()...)
 		for _, operation := range []string{"activate", "report"} {
-			for _, fixture := range fixtures {
+			for _, fixture := range storedHostileFixtures() {
 				t.Run(operation+"/"+fixture.name, func(t *testing.T) {
-					options := testOptions(t.TempDir())
-					path := documentPath(options)
-					if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-						t.Fatal(err)
-					}
-					fixture.make(t, path, options)
-					infoBefore, err := os.Lstat(path)
-					if err != nil {
-						t.Fatal(err)
-					}
-					out, code := Command(options, []string{operation})
-					if code != 1 || !strings.Contains(out, "repair pilot refused") {
-						t.Fatalf("%s hostile %s = output %q, exit %d; want refusal", operation, fixture.name, out, code)
-					}
-					infoAfter, err := os.Lstat(path)
-					if err != nil {
-						t.Fatal(err)
-					}
-					if infoAfter.Mode() != infoBefore.Mode() || infoAfter.Size() != infoBefore.Size() {
-						t.Fatalf("%s hostile %s changed stored object", operation, fixture.name)
-					}
+					assertStoredHostileRefusal(t, operation, fixture)
 				})
 			}
 		}
 	})
-}
-
-type storedHostileFixture struct {
-	name string
-	make func(*testing.T, string, Options)
-}
-
-type shortWriteFile struct {
-	*os.File
-}
-
-func (file shortWriteFile) Write(data []byte) (int, error) {
-	return file.File.Write(data[:len(data)/2])
-}
-
-func TestRepairPilotGrammar(t *testing.T) {
-	t.Run("usage", func(t *testing.T) {
-		home := t.TempDir()
-		options := testOptions(home)
-		if err := os.MkdirAll(filepath.Dir(documentPath(options)), 0o700); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.Symlink("missing-target", documentPath(options)); err != nil {
-			t.Fatal(err)
-		}
-		out, code := Command(options, []string{"bogus"})
-		if code != 2 || !strings.Contains(out, "unknown argument: bogus") {
-			t.Fatalf("bogus operation = output %q, exit %d; want usage at exit 2", out, code)
+	t.Run("record-stored-hostile", func(t *testing.T) {
+		requireFixtureCase(t)
+		for _, fixture := range storedHostileFixtures() {
+			t.Run(fixture.name, func(t *testing.T) {
+				assertStoredHostileRefusal(t, "record", fixture)
+			})
 		}
 	})
+}
+
+func storedHostileFixtures() []storedHostileFixture {
+	fixtures := []storedHostileFixture{
+		{name: "empty", make: func(t *testing.T, path string, _ Options) { writeFixture(t, path, nil) }},
+		{name: "malformed", make: func(t *testing.T, path string, _ Options) { writeFixture(t, path, []byte("{\n")) }},
+		{name: "no-final-newline", make: func(t *testing.T, path string, options Options) {
+			writeFixture(t, path, []byte(fmt.Sprintf(`{"version":1,"repository_key":%q,"activated_at":"2026-09-01T12:00:00Z","observations":[],"audits":[]}`, options.RepoKey)))
+		}},
+		{name: "unsupported-version", make: func(t *testing.T, path string, options Options) {
+			writeFixture(t, path, []byte(fmt.Sprintf("{\"version\":2,\"repository_key\":%q,\"activated_at\":\"2026-09-01T12:00:00Z\",\"observations\":[],\"audits\":[]}\n", options.RepoKey)))
+		}},
+		{name: "foreign-repository", make: func(t *testing.T, path string, _ Options) {
+			writeFixture(t, path, []byte("{\"version\":1,\"repository_key\":\"other-123\",\"activated_at\":\"2026-09-01T12:00:00Z\",\"observations\":[],\"audits\":[]}\n"))
+		}},
+		{name: "duplicate-key", make: func(t *testing.T, path string, options Options) {
+			writeFixture(t, path, []byte(fmt.Sprintf("{\"version\":1,\"version\":1,\"repository_key\":%q,\"activated_at\":\"2026-09-01T12:00:00Z\",\"observations\":[],\"audits\":[]}\n", options.RepoKey)))
+		}},
+		{name: "unknown-field", make: func(t *testing.T, path string, options Options) {
+			writeFixture(t, path, []byte(fmt.Sprintf("{\"version\":1,\"repository_key\":%q,\"activated_at\":\"2026-09-01T12:00:00Z\",\"observations\":[],\"audits\":[],\"extra\":true}\n", options.RepoKey)))
+		}},
+		{name: "oversized", make: func(t *testing.T, path string, _ Options) {
+			writeFixture(t, path, []byte(strings.Repeat("x", int(bounds.ControlRecordLimit)+1)))
+		}},
+		{name: "directory", make: func(t *testing.T, path string, _ Options) {
+			if err := os.Mkdir(path, 0o700); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{name: "live-symlink", make: func(t *testing.T, path string, _ Options) {
+			target := filepath.Join(t.TempDir(), "target")
+			writeFixture(t, target, []byte("outside\n"))
+			if err := os.Symlink(target, path); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{name: "dangling-symlink", make: func(t *testing.T, path string, _ Options) {
+			if err := os.Symlink("missing", path); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{name: "linked-parent", make: func(t *testing.T, path string, options Options) {
+			parent := filepath.Dir(path)
+			if err := os.Remove(parent); err != nil {
+				t.Fatal(err)
+			}
+			target := t.TempDir()
+			writeFixture(t, filepath.Join(target, "pilot.json"), validDocumentBytes(t, options))
+			if err := os.Symlink(target, parent); err != nil {
+				t.Fatal(err)
+			}
+		}},
+	}
+	return append(fixtures, platformStoredHostileFixtures()...)
+}
+
+func assertStoredHostileRefusal(t *testing.T, operation string, fixture storedHostileFixture) {
+	t.Helper()
+	options := testOptions(t.TempDir())
+	path := documentPath(options)
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	fixture.make(t, path, options)
+	infoBefore, err := os.Lstat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	argv := []string{operation}
+	if operation == "record" {
+		input := failureInput("stored-hostile", sequenceKey("source-a", "spec-a", "chunk-a"))
+		data, err := json.Marshal(input)
+		if err != nil {
+			t.Fatal(err)
+		}
+		inputPath := filepath.Join(t.TempDir(), "input.json")
+		writeFixture(t, inputPath, append(data, '\n'))
+		argv = []string{"record", "--input", inputPath}
+	}
+	out, code := Command(options, argv)
+	if code != 1 || !strings.Contains(out, "repair pilot refused") {
+		t.Fatalf("%s hostile %s = output %q, exit %d; want refusal", operation, fixture.name, out, code)
+	}
+	infoAfter, err := os.Lstat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if infoAfter.Mode() != infoBefore.Mode() || infoAfter.Size() != infoBefore.Size() {
+		t.Fatalf("%s hostile %s changed stored object", operation, fixture.name)
+	}
 }
 
 func writeTestDocument(t *testing.T, path string, document Document) {
@@ -347,7 +344,7 @@ func writeFixture(t *testing.T, path string, data []byte) {
 
 func validDocumentBytes(t *testing.T, options Options) []byte {
 	t.Helper()
-	document := Document{Version: 1, RepositoryKey: options.RepoKey, ActivatedAt: options.Now, Observations: []json.RawMessage{}, Audits: []json.RawMessage{}}
+	document := Document{Version: 1, RepositoryKey: options.RepoKey, ActivatedAt: options.Now, Observations: []observation{}, Audits: []audit{}}
 	return documentBytes(t, document)
 }
 
@@ -367,14 +364,14 @@ func replacementFixture(t *testing.T) (Options, Document, []byte) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	original := Document{Version: 1, RepositoryKey: options.RepoKey, ActivatedAt: options.Now, Observations: []json.RawMessage{json.RawMessage(`{"id":"prior"}`)}, Audits: []json.RawMessage{}}
+	original := Document{Version: 1, RepositoryKey: options.RepoKey, ActivatedAt: options.Now, Observations: []observation{{ID: "prior"}}, Audits: []audit{}}
 	writeTestDocument(t, path, original)
 	before, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 	replacement := original
-	replacement.Observations = []json.RawMessage{json.RawMessage(`{"id":"replacement"}`)}
+	replacement.Observations = []observation{{ID: "replacement"}}
 	return options, replacement, before
 }
 

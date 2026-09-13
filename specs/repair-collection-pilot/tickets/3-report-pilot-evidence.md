@@ -1,7 +1,7 @@
 # Report audited pilot evidence
 
 Blocked by: 2-collect-repair-evidence.md
-Writes: internal/repairpilot (new), docs/repair-collection-pilot.md (new), specs/repair-collection-pilot, reviews/repair-collection-pilot.md (new)
+Writes: internal/repairpilot (new), docs/repair-collection-pilot.md (new), specs/repair-collection-pilot, reviews/repair-collection-pilot.md (new), CHANGELOG.md
 Covers: RP31, RP38, RP39, RP40, RP41, RP42, RP43, RP44, RP47, RP49, RP50, RP55, RP56, RP58, RP59, RP61, RP66
 
 ## What to build

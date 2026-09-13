@@ -43,12 +43,12 @@ type FileOps struct {
 }
 
 type Document struct {
-	Version       int               `json:"version"`
-	RepositoryKey string            `json:"repository_key"`
-	ActivatedAt   time.Time         `json:"activated_at"`
-	CutoffAt      *time.Time        `json:"cutoff_at,omitempty"`
-	Observations  []json.RawMessage `json:"observations"`
-	Audits        []json.RawMessage `json:"audits"`
+	Version       int           `json:"version"`
+	RepositoryKey string        `json:"repository_key"`
+	ActivatedAt   time.Time     `json:"activated_at"`
+	CutoffAt      *time.Time    `json:"cutoff_at,omitempty"`
+	Observations  []observation `json:"observations"`
+	Audits        []audit       `json:"audits"`
 }
 
 // Store owns atomic replacement for one pilot document.
@@ -75,7 +75,14 @@ var reportGrammar = usage.Grammar{
 	MaxArgs: 0,
 }
 
-var FamilyUsage = activateGrammar.Help + "\n       " + strings.TrimPrefix(reportGrammar.Help, "usage: ") + "\n"
+var recordGrammar = usage.Grammar{
+	Cmd:     "bench repair-pilot record",
+	Help:    "usage: bench repair-pilot record --input <file>",
+	Flags:   []usage.Flag{{Name: "--input", HasValue: true, NoEmptyValue: true, Required: true}},
+	MaxArgs: 0,
+}
+
+var FamilyUsage = familyUsage(activateGrammar, recordGrammar, reportGrammar)
 
 func Command(options Options, args []string) (string, int) {
 	if len(args) == 0 {
@@ -95,6 +102,12 @@ func Command(options Options, args []string) (string, int) {
 			return line + "\n", code
 		}
 		return report(options)
+	case "record":
+		parsed, line, code := usage.Parse(recordGrammar, args[1:])
+		if line != "" {
+			return line + "\n", code
+		}
+		return record(options, parsed.Flags["--input"])
 	default:
 		return toon.Usage("bench repair-pilot", args[0]) + "\n", 2
 	}
@@ -104,45 +117,54 @@ func activate(options Options) (string, int) {
 	if !options.KitSource {
 		return refusal("activation is limited to the Bench kit repository")
 	}
+	var document Document
+	err := withPilotLock(options, true, func(files FileOps) error {
+		loaded, state, loadErr := load(options)
+		if loadErr != nil {
+			return loadErr
+		}
+		document = loaded
+		if state != bounds.StateAbsent {
+			return nil
+		}
+		document = Document{Version: 1, RepositoryKey: options.RepoKey, ActivatedAt: options.Now.UTC(), Observations: []observation{}, Audits: []audit{}}
+		return (Store{Path: documentPath(options), Files: files}).Replace(document)
+	})
+	if err != nil {
+		return refusal(err.Error())
+	}
+	return renderDocumentStatus(document, options.Now)
+}
+
+func withPilotLock(options Options, create bool, update func(FileOps) error) error {
 	files := options.Files.withDefaults()
 	directory := filepath.Dir(documentPath(options))
-	if _, err := classifyDocumentParents(options); err != nil {
-		return refusal(err.Error())
+	parentState, err := classifyDocumentParents(options)
+	if err != nil {
+		return err
 	}
-	if err := files.MkdirAll(directory, 0o700); err != nil {
-		return refusal(err.Error())
+	if parentState == bounds.StateAbsent && !create {
+		return errors.New("repair pilot is inactive; activate it before recording evidence")
 	}
-	if err := files.Chmod(directory, 0o700); err != nil {
-		return refusal(err.Error())
+	if create {
+		if err := files.MkdirAll(directory, 0o700); err != nil {
+			return err
+		}
+		if err := files.Chmod(directory, 0o700); err != nil {
+			return err
+		}
 	}
 	lockPath := filepath.Join(directory, "pilot.lock")
 	lock, err := files.OpenFile(lockPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
 	if err != nil {
-		return refusal("pilot update is locked; retry after the active writer completes")
+		return errors.New("pilot update is locked; retry after the active writer completes")
 	}
 	if err := lock.Close(); err != nil {
 		files.Remove(lockPath)
-		return refusal(err.Error())
+		return err
 	}
 	defer files.Remove(lockPath)
-
-	document, state, err := load(options)
-	if err != nil {
-		return refusal(err.Error())
-	}
-	if state == bounds.StateAbsent {
-		document = Document{
-			Version:       1,
-			RepositoryKey: options.RepoKey,
-			ActivatedAt:   options.Now.UTC(),
-			Observations:  []json.RawMessage{},
-			Audits:        []json.RawMessage{},
-		}
-		if err := (Store{Path: documentPath(options), Files: files}).Replace(document); err != nil {
-			return refusal(err.Error())
-		}
-	}
-	return renderDocumentStatus(document, options.Now)
+	return update(files)
 }
 
 func report(options Options) (string, int) {
@@ -276,12 +298,24 @@ func writeDocument(files FileOps, path string, document Document) error {
 }
 
 func renderDocumentStatus(document Document, now time.Time) (string, int) {
-	deadline := document.ActivatedAt.UTC().AddDate(0, 0, 14)
+	deadline := collectionDeadline(document)
 	state := "active"
 	if !now.Before(deadline) || document.CutoffAt != nil {
 		state = "stopped"
 	}
 	return renderStatus(state, document.ActivatedAt.UTC().Format(time.RFC3339), deadline.Format(time.RFC3339))
+}
+
+func familyUsage(grammars ...usage.Grammar) string {
+	lines := make([]string, 0, len(grammars))
+	for i, grammar := range grammars {
+		line := grammar.Help
+		if i != 0 {
+			line = "       " + strings.TrimPrefix(line, "usage: ")
+		}
+		lines = append(lines, line)
+	}
+	return strings.Join(lines, "\n") + "\n"
 }
 
 func refusal(detail string) (string, int) {

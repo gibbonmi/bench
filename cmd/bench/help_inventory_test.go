@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestHelpRendersPublicCommandRegistryRows(t *testing.T) {
@@ -124,6 +125,29 @@ func TestRepairPilotRoute(t *testing.T) {
 			if result.code != 0 || !strings.Contains(result.stdout, row.want) {
 				t.Fatalf("%v = stdout %q, stderr %q, exit %d; want %q at exit 0", row.argv, result.stdout, result.stderr, result.code, row.want)
 			}
+		}
+		input := map[string]any{
+			"version": 1,
+			"observation": map[string]any{
+				"id": "public-route", "observed_at": time.Now().UTC().Format(time.RFC3339Nano),
+				"sequence":      map[string]string{"source": "public-source", "spec": "public-spec", "chunk": "public-chunk"},
+				"assignment_id": "public-assignment", "session_id": "public-session", "source_revision": "public-revision",
+				"stage": "pre-review", "kind": "failure", "failure_completeness": "complete",
+				"failures":   []map[string]any{{"check": "unit", "identity": "REQ-1", "diagnostic": "fixture blocker", "ownership": "diff-owned", "blocking": true, "reference": "native:public-failure"}},
+				"references": []string{"native:public-observation"},
+			},
+		}
+		data, err := json.Marshal(input)
+		if err != nil {
+			t.Fatal(err)
+		}
+		inputPath := filepath.Join(t.TempDir(), "record.json")
+		if err := os.WriteFile(inputPath, append(data, '\n'), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		result := runAXICommandAt(t, root, []string{"repair-pilot", "record", "--input", inputPath})
+		if result.code != 0 || !strings.Contains(result.stdout, "active") {
+			t.Fatalf("public record route = stdout %q, stderr %q, exit %d", result.stdout, result.stderr, result.code)
 		}
 	})
 	t.Run("worktrees", func(t *testing.T) {
