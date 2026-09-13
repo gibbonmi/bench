@@ -1,1 +1,1 @@
-[{"path": "projects/benchkit.md", "old": "It reviews the spec and its ticket breakdown together against `craft-tickets`", "new": "It reviews the spec alone before slicing, then the ticket breakdown alone"}]
+[{"path": "projects/benchkit.md", "old": "The reviewer applies `craft-tickets` and `craft-spec` to the spec and its ticket\n  breakdown", "new": "The reviewer reads the spec without its ticket breakdown"}]
