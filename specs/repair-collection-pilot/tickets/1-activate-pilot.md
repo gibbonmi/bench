@@ -2,7 +2,7 @@
 
 Blocked by: none
 Writes: tests/canary/package-core-guard/unrouted-subcommand, tests/canary/data-handling-derivation/undocumented-passlist-var, tests/canary/docs-currency-token-diet/signal-vocabulary-drift, tests/canary/workflow-guidance-anchors/context-acceptance-row-vocabulary, tests/canary/workflow-guidance-anchors/context-coverage-map-term, tests/canary/workflow-guidance-anchors/context-coverage-row-parts, tests/canary/workflow-guidance-anchors/context-coverage-row-vocabulary, tests/canary/workflow-guidance-anchors/context-decision-map-term, tests/canary/workflow-guidance-anchors/context-reader-sweep-term, tests/canary/workflow-guidance-anchors/context-ticket-vocabulary, internal/repairpilot (new), cmd/bench/main.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, DATA_HANDLING.md, CONTEXT.md, specs/repair-collection-pilot, reviews/repair-collection-pilot.md (new)
-Covers: RP1, RP2, RP3, RP4, RP5, RP6, RP7, RP8, RP9, RP10, RP11, RP12, RP45, RP46
+Covers: RP1, RP2, RP3, RP4, RP5, RP6, RP7, RP8, RP9, RP10, RP11, RP12, RP46, RP57
 
 ## What to build
 
@@ -11,7 +11,9 @@ Use the shared kit and repository identity owners to keep activation inside the 
 Create a private, versioned pilot document outside the disposable pool.
 Implement the lock and atomic replacement contract, including hostile-input refusals.
 A stopped document cannot restart through activation.
-The command's initial record route validates input and reports the absent collection capability without claiming to collect evidence.
+
+Advertise only activation and report operations in this slice.
+RP-C2 introduces the record operation together with its complete collection path.
 
 Move `boundaryRoot` beside the registry's root-resolution helpers before adding the pilot route.
 This move pays the new route's headroom in the same commit.
@@ -29,5 +31,5 @@ The final report fields for later capabilities remain absent until their produce
 - [ ] Inactive report and linked-repository refusal write no pilot state.
 - [ ] Repeat activation retains the original document.
 - [ ] Lock and persistence failures preserve the previous document.
-- [ ] The newly introduced command rejects the hostile input inventory before mutation.
+- [ ] Activation and report reject hostile stored documents before mutation.
 - [ ] The public dispatcher reaches the real pilot owner and preserves assessment routes.

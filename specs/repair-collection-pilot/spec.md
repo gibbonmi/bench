@@ -116,6 +116,11 @@ Write and replacement failures retain the previous document.
 A stale lock requires an operator decision after inspection, not automatic deletion.
 RP9 through RP12 cover these failure positions.
 
+Report and mutation commands classify the stored document before decoding it.
+A malformed, empty, oversized, linked, special, or unsupported stored document refuses.
+A missing document remains the only inactive state.
+RP57 drives these states through the report and mutation commands.
+
 No background worker, hook, timer, or ambient dashboard signal participates.
 The next command evaluates elapsed time, but the cutoff remains the original deadline even if no command runs then.
 The command never launches checks, models, evidence references, or network requests.
@@ -127,17 +132,32 @@ Use one sequence key composed from the implementation source identity, spec iden
 A source identity names the retained integration source across ticket commits and process changes.
 Assignment IDs and session IDs identify contributors, not new sequences.
 Several contributors can belong to one sequence when the chunk retains that identity.
-RP13 through RP17 exercise these distinctions.
+RP13 through RP17, RP53, and RP60 exercise these distinctions.
 
 The first blocking observation starts a sequence.
+Each failure carries an explicit blocking flag, using the existing blocker policy.
+A first observation without a blocking failure refuses instead of creating a sequence.
+A first accepted blocker fixes the sequence start at that observation's time.
+RP51 and RP52 exercise those two inputs.
+
 A record retains the observed time, observation ID, sequence key, assignment ID, session ID, and source revision or tree.
 It also retains the work stage, observation kind, known failures, and native evidence references.
 
 The supported work stages are pre-review and post-review; RP17 exercises each stage.
-The supported observation kinds are repair and rerun.
+The supported observation kinds are failure, repair, and rerun.
+A failure observation retains the initial blocker without inventing an earlier repair attempt.
+RP52, RP38, and RP22 exercise the three kinds respectively.
+
 A repair observation names its hypothesis, intended change, and verification reference.
 A rerun records verification without claiming an implementation attempt.
 RP17, RP18, and RP22 cover these producer-derived shapes.
+
+An observation can carry `started_at` and `ended_at` with an interval evidence reference.
+These UTC fields describe the observed activity, independently of the import and verification times.
+A complete interval requires both fields and an end no earlier than its start.
+Missing endpoints remain unknown and cannot supply the overlap class.
+RP54 and RP58 cover complete and partial intervals.
+RP64 refuses a reversed interval.
 
 A failure names its check, defect or requirement identity when known, diagnostic, and ownership.
 Ownership is diff-owned, inherited, spec-predicted, or unknown.
@@ -162,17 +182,20 @@ RP26 and RP27 cover retry behavior.
 ### Collection cutoff
 
 The deadline is activation plus fourteen calendar days in UTC.
-The cutoff is the earlier of that deadline and the accepted endpoint of the tenth completed sequence.
+The cutoff is the earlier of that deadline and the time the command accepts the tenth completed sequence endpoint.
 The command accepts the observation that completes sequence ten, then closes collection.
 At the deadline itself, the command accepts no new observations.
+
 Open sequences at the cutoff remain incomplete, including when the count limit stops collection.
-RP28 through RP31 cover both bounds and their intersection.
+RP28 through RP30 cover the bounds.
+RP31 covers incomplete sequences in the final report.
 
 Records must describe work within the active collection window and cannot carry future observed times.
 After the cutoff, a record can append audits of existing observations but cannot append observations, even with earlier claimed times.
 This rule prevents a delayed import from changing the frozen sample.
 The report retains known collection gaps rather than treating missing observations as zero attempts.
 RP32 and RP33 cover this distinction.
+RP62 and RP63 cover observations outside the valid time window.
 
 ### Progress and example audit
 
@@ -197,6 +220,9 @@ A stalled example needs an actual repair attempt and audited evidence that its t
 A productive example needs an audited, verified repair even when the first failure repeats.
 An unchanged rerun needs identical source content without a repair attempt.
 An overlapping example needs explicit distinct assignment identities with intersecting observed intervals.
+
+Use half-open intervals; adjacent or zero-length intervals do not establish overlap.
+RP59 covers those limits.
 Neither overlap nor a repeated first failure determines progress.
 RP38 through RP41 cover each class separately.
 
@@ -205,8 +231,12 @@ RP38 through RP41 cover each class separately.
 The default report gives the pilot state, cutoff, completed and incomplete counts, and required-class coverage.
 It also reports the count of unknown labels and unresolved evidence gaps.
 The full report lists the retained observations, proposals, audits, citations, and comparison intervals in stable order.
+
+Order observations by sequence key, observed time, and observation ID.
+Order audits by observation ID and audit ID.
+RP61 checks that order over canned input independent of import order.
 Both forms derive from the same validated document.
-RP42 and RP43 cover complete reporting over canned observations.
+RP42, RP43, RP55, and RP56 cover complete reporting over canned observations.
 
 Before cutoff, the report marks the evidence provisional.
 At cutoff, any missing required example class makes the result inconclusive.
@@ -224,9 +254,9 @@ RP50 covers this guide and the later evidence report at `capture/reports/repair-
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| RP-C1 / 1-activate-pilot.md | Explicit kit-only activation and durable storage | RP1-RP12, RP45-RP46 | TestRepairPilotActivation, TestRepairPilotStorage, TestRepairPilotGrammar, TestRepairPilotRoute | no |
-| RP-C2 / 2-collect-repair-evidence.md | Attributed bounded repair evidence with audit inputs | RP13-RP37, RP48 | TestRepairPilotIdentity, TestRepairPilotFailures, TestRepairPilotEndpoints, TestRepairPilotCutoff, TestRepairPilotAudit | yes |
-| RP-C3 / 3-report-pilot-evidence.md | Evidence report and real-pilot operating protocol | RP38-RP44, RP47, RP49-RP50 | TestRepairPilotReport, TestRepairPilotIsolation, protocol review | no |
+| RP-C1 / 1-activate-pilot.md | Explicit kit-only activation and durable storage | RP1-RP12, RP46, RP57 | TestRepairPilotActivation, TestRepairPilotStorage, TestRepairPilotGrammar, TestRepairPilotRoute | no |
+| RP-C2 / 2-collect-repair-evidence.md | Attributed bounded repair evidence with audit inputs | RP13-RP30, RP32-RP37, RP45, RP48, RP51-RP54, RP60, RP62-RP64 | TestRepairPilotIdentity, TestRepairPilotFailures, TestRepairPilotEndpoints, TestRepairPilotCutoff, TestRepairPilotAudit | yes |
+| RP-C3 / 3-report-pilot-evidence.md | Evidence report and real-pilot operating protocol | RP31, RP38-RP44, RP47, RP49-RP50, RP55-RP56, RP58-RP59, RP61 | TestRepairPilotReport, TestRepairPilotIsolation, protocol review | no |
 
 Each ticket is one serial commit checkpoint on the retained integration source.
 After each chunk, freeze its predecessor and current tips for Standards, Spec, and Coverage review.
@@ -306,7 +336,7 @@ A probe that does not compile or execute proves nothing.
 | RP28 | 17 | The tenth accepted sequence endpoint closes collection. | TestRepairPilotCutoff/count | An eleventh endpoint can enlarge the sample. |
 | RP29 | 18 | The deadline itself refuses a new observation. | TestRepairPilotCutoff/deadline | A greater-than comparison accepts a boundary observation. |
 | RP30 | 17, 18 | Collection uses the earlier endpoint when count and time compete. | TestRepairPilotCutoff/earlier | A later limit extends the window. |
-| RP31 | 19 | A sequence open at cutoff remains incomplete. | TestRepairPilotCutoff/incomplete | Deadline handling manufactures a successful endpoint. |
+| RP31 | 19 | The terminal full report lists every sequence open at cutoff as incomplete. | TestRepairPilotReport/incomplete | Deadline handling hides or completes unfinished sequences. |
 | RP32 | 18 | A stopped pilot refuses a backdated new observation. | TestRepairPilotCutoff/late-import | Backdating changes the frozen sample. |
 | RP33 | 23 | A stopped pilot accepts an audit of an existing observation. | TestRepairPilotCutoff/audit | A blanket freeze prevents evidence assessment. |
 | RP34 | 20 | Progress without a verified repaired requirement or defect remains unknown. | TestRepairPilotAudit/no-repair | A green check alone establishes progress. |
@@ -326,6 +356,23 @@ A probe that does not compile or execute proves nothing.
 | RP48 | 12 | Failure ownership and completeness retain each producer-supplied vocabulary value. | TestRepairPilotFailures/vocabulary | A default coercion turns unknown ownership into diff-owned. |
 | RP49 | 20, 21 | The operating protocol requires a separate native-evidence audit for each accepted progress label. | Review-owned protocol walkthrough | Structural validation alone cannot establish semantic truth. |
 | RP50 | 30 | The operating guide gives activation, collection, audit, cutoff, and report steps with exact commands. | Review-owned protocol walkthrough | A command inventory alone leaves the pilot without an operator procedure. |
+
+| RP51 | 7 | An initial observation without a blocking failure refuses without creating a sequence. | TestRepairPilotIdentity/nonblocking-start | Any observation can otherwise create a sequence. |
+| RP52 | 7 | The first blocking failure fixes the sequence start without counting a repair attempt. | TestRepairPilotIdentity/first-blocker | A failure-only start otherwise becomes a fabricated repair. |
+| RP53 | 7 | Equal source and chunk IDs under different spec identities remain distinct sequences. | TestRepairPilotIdentity/specs | Omitting the spec identity conflates unrelated chunks. |
+| RP54 | 8, 27 | The stored document retains an imported interval's explicit bounds and provenance unchanged. | TestRepairPilotIdentity/interval | A point timestamp cannot establish overlap. |
+| RP55 | 29 | The default report exposes state, cutoff, completion counts, class coverage, unknown labels, and evidence-gap counts. | TestRepairPilotReport/default | A summary that omits a required field fails its field inventory. |
+| RP56 | 28 | A report before cutoff marks the sample provisional. | TestRepairPilotReport/provisional | Early class coverage falsely becomes a terminal result. |
+| RP57 | 5 | Invalid stored pilot documents refuse through report and mutation commands without changing the stored bytes. | TestRepairPilotStorage/stored-hostile | Input-only guards otherwise treat corrupted storage as authoritative. |
+| RP58 | 27 | A partial interval remains unknown instead of supplying an overlap example. | TestRepairPilotReport/partial-interval | A missing endpoint becomes an invented interval. |
+| RP59 | 27 | Adjacent or zero-length intervals supply no overlap example. | TestRepairPilotReport/interval-edge | Inclusive endpoints invent overlapping work. |
+
+| RP60 | 7, 8 | Different contributor assignments retain one sequence for the same source, spec, and chunk. | TestRepairPilotIdentity/contributors | Assignment-based grouping splits one chunk. |
+| RP61 | 29 | Repeated full reports use the declared stable order over canned observations and audits. | TestRepairPilotReport/order | Map iteration or import-order dependence changes the report. |
+| RP62 | 18 | An observation before activation refuses without changing the document. | TestRepairPilotCutoff/before-activation | Old work enlarges the bounded sample. |
+| RP63 | 18 | An observation after the supplied current time refuses without changing the document. | TestRepairPilotCutoff/future | Future evidence can fabricate an endpoint. |
+
+| RP64 | 5, 27 | A complete interval whose end precedes its start refuses without changing evidence. | TestRepairPilotIdentity/reversed-interval | Invalid endpoints otherwise create apparent overlap. |
 
 ### Edge inventory
 
@@ -390,14 +437,13 @@ Reviewer disposition: proposed for the spec-and-ticket sign-off
 - `DATA_HANDLING.md`
 - `CONTEXT.md`
 - `docs/repair-collection-pilot.md` (new)
-- `capture/reports/repair-collection-pilot.md` (new)
 - `specs/repair-collection-pilot/`
 - `reviews/repair-collection-pilot.md` (new)
 
 The command and AXI registry fences include required co-named consumers.
 The approved AXI query set stays unchanged because the pilot has its own operational output contract.
 Co-naming those registries does not require edits to unchanged facts.
-The report artifact fence supports the later real-pilot report, not fabricated implementation evidence.
+The later empirical report needs separate authorization when the reviewer activates the real pilot.
 
 ## Out of scope
 
@@ -466,16 +512,16 @@ The compiled command is available in the binary, but its activation scope exclud
 | Ticket #11: "The agent may propose the label, but the experiment audits that label against its evidence." | RP35-RP37, RP49 |
 | Ticket #11: "Check outcomes alone, changed files, and unsupported author claims do not establish progress." | RP34-RP35 |
 | Ticket #11: "Unsupported labels remain unknown." | RP34-RP37, RP43 |
-| Ticket #12: "Stop the pilot at ten completed repair sequences or fourteen calendar days after activation, whichever occurs first." | RP28-RP33 |
-| Ticket #12: "The report must cover stalled repairs, productive repairs, unchanged reruns, and overlapping assignments." | RP38-RP41 |
-| Ticket #12: "If a required example class is absent, report that gap and an inconclusive result." | RP42-RP43 |
-| Ticket #13: "One repair sequence covers one implementation chunk." | RP13-RP17 |
-| Ticket #13: "It starts at that chunk's first blocking failure." | RP13, RP18 |
+| Ticket #12: "Stop the pilot at ten completed repair sequences or fourteen calendar days after activation, whichever occurs first." | RP28-RP33, RP56, RP62-RP63 |
+| Ticket #12: "The report must cover stalled repairs, productive repairs, unchanged reruns, and overlapping assignments." | RP38-RP41, RP54, RP58-RP59 |
+| Ticket #12: "If a required example class is absent, report that gap and an inconclusive result." | RP42-RP43, RP55 |
+| Ticket #13: "One repair sequence covers one implementation chunk." | RP13-RP17, RP53, RP60 |
+| Ticket #13: "It starts at that chunk's first blocking failure." | RP51-RP52 |
 | Ticket #13: "It ends when verification closes all its blockers or work stops for reviewer handoff." | RP23-RP25 |
 | Ticket #13: "The sequence can include several findings and both pre-review and post-review repairs." | RP15, RP17 |
 | Ticket #13: "A fresh process or review does not create a new sequence." | RP13, RP17 |
 | Ticket #13: "Report sequences still open at the deadline as incomplete." | RP31 |
-| Ticket #14: "The second implements the explicitly enabled Bench collection pilot and its evidence report." | RP1-RP50 |
+| Ticket #14: "The second implements the explicitly enabled Bench collection pilot and its evidence report." | RP1-RP64 |
 | Ticket #14: "A detector and any warning remain outside both specifications." | RP47 and Out of scope |
 
 Policy-only decisions #1-#4, #7, and #8 remain consumed by the landed policy.
@@ -484,7 +530,7 @@ They authorize no additional detector behavior.
 
 ### Flagged additions
 
-- A local operational command and versioned document implement the collection capability: RP1-RP12, RP45-RP46.
+- A local operational command and versioned document implement the collection capability: RP1-RP12, RP45-RP46, RP57.
 - UTC defines the calendar-day calculation: RP29-RP30.
 - Frozen observations allow later audits but refuse delayed imports: RP32-RP33.
 - Structured audit references support a separate semantic audit: RP34-RP37, RP49.
@@ -498,10 +544,12 @@ These are engineering choices proposed for this sign-off, not additional detecto
 - Cited symbols: `assessment.Command`, `Store.Record`, `poolkey.Key`, `poolkey.Canonical`, `gate.KitSourceCheckout`, `bounds.ClassifyNoFollow`, `jsonfile.DecodeDocument`, `usage.Grammar`, and `toon.Table` resolve in the tree.
 - Import edges: the new module consumes shared bounds, JSON, identity, and rendering owners without changing their APIs.
 - Source-row clauses and occurrences: the table above quotes the applicable clauses from tickets #9-#14, once per canonical answer.
-- Promised field labels: version, repository key, activation time, observation ID, sequence key, assignment ID, session ID, source identity, stage, kind, failures, references, proposals, and audits.
+- Promised field labels: version, repository key, activation time, observation ID, sequence key, assignment ID, session ID, and source identity.
+  Other labels name stage, kind, failures, references, proposals, audits, `started_at`, `ended_at`, and the interval evidence reference.
 - Changed-function callers: only the command registry gains a route; the three existing `boundaryRoot` callers keep the same function.
 - Copy survival: no production owner replaces copied behavior; the compiled decision map moves as one unit.
 
+RP45 and RP57 separate imported input from the stored document.
 RP45's hostile inventory must run through the new command before its implementation ticket closes.
 RP12 has an explicit temporary-file omission case, so cleanup cannot pass by checking only the final document.
 No coverage row cites a test-only helper across a package seam.

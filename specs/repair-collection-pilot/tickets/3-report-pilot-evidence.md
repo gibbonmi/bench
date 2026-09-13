@@ -1,8 +1,8 @@
 # Report audited pilot evidence
 
 Blocked by: 2-collect-repair-evidence.md
-Writes: internal/repairpilot (new), docs/repair-collection-pilot.md (new), capture/reports/repair-collection-pilot.md (new), specs/repair-collection-pilot, reviews/repair-collection-pilot.md (new)
-Covers: RP38, RP39, RP40, RP41, RP42, RP43, RP44, RP47, RP49, RP50
+Writes: internal/repairpilot (new), docs/repair-collection-pilot.md (new), specs/repair-collection-pilot, reviews/repair-collection-pilot.md (new)
+Covers: RP31, RP38, RP39, RP40, RP41, RP42, RP43, RP44, RP47, RP49, RP50, RP55, RP56, RP58, RP59, RP61
 
 ## What to build
 
@@ -10,7 +10,10 @@ Deliver the default and full report from RP-C2's stored observations and audits.
 Keep the required example classes distinct from progress conclusions and sequence counts.
 A sequence can supply more than one interval class.
 A missing required class makes the terminal result inconclusive.
+
 The full report retains every observation, unknown label, audit, and evidence gap.
+The full report lists incomplete sequences, and the default report gives their count.
+Reports before cutoff identify the sample as provisional.
 
 Write the repository-only operating guide with the exact activation, record, and report commands.
 Require a separate native-evidence audit before the operator counts a proposed progress label.

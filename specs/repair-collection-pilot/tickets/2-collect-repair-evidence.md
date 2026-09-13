@@ -1,15 +1,19 @@
 # Collect attributed repair evidence
 
 Blocked by: 1-activate-pilot.md
-Writes: internal/repairpilot (new), specs/repair-collection-pilot, reviews/repair-collection-pilot.md (new)
-Covers: RP13, RP14, RP15, RP16, RP17, RP18, RP19, RP20, RP21, RP22, RP23, RP24, RP25, RP26, RP27, RP28, RP29, RP30, RP31, RP32, RP33, RP34, RP35, RP36, RP37, RP48
+Writes: internal/repairpilot (new), specs/repair-collection-pilot, reviews/repair-collection-pilot.md (new), cmd/bench/main.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/package-core-guard/unrouted-subcommand
+Covers: RP13, RP14, RP15, RP16, RP17, RP18, RP19, RP20, RP21, RP22, RP23, RP24, RP25, RP26, RP27, RP28, RP29, RP30, RP32, RP33, RP34, RP35, RP36, RP37, RP45, RP48, RP51, RP52, RP53, RP54, RP60, RP62, RP63, RP64
 
 ## What to build
 
+Introduce `bench repair-pilot record --input <file>` together with its help and production route.
 Extend the active pilot with explicitly imported observations, endpoints, proposals, and audits.
 Preserve one sequence across assignments, sessions, findings, and review stages when the implementation source and chunk match.
 Retain comparable failures, their ownership, and the failure set's completeness.
 Do not infer assignment identity from overlapping timestamps.
+
+Retain explicit activity interval bounds and provenance for the later overlap report.
+An initial nonblocking observation cannot start a sequence.
 
 Use RP-C1's document owner and update protocol for every import.
 The command accepts the tenth sequence endpoint, then refuses later observations.
