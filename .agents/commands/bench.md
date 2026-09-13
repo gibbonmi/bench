@@ -21,5 +21,8 @@ command.
 
 ## Exit handoff
 
-Report the exact command's result. When `command` is empty, report the row's state.
-Stop.
+If the routed command fails, continue with `.agents/commands/bench-debug.md` as the active phase.
+Read that file completely before you take the next action.
+
+When `command` is empty, report the row's state and stop. Otherwise, report the exact
+command's successful result and stop.

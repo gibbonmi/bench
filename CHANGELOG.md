@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Front-door failure continuation
+
+- Fixed `$bench` to enter the bug path when a routed command fails. A successful
+  command or an empty route remains terminal.
+
 ### Ticket slicing checks
 
 - Fixed ticket guidance to name relocation destinations and verify source clauses and executable routes before ticket lock.
