@@ -535,7 +535,7 @@ findings in the single permitted review round.
           "command": "bench test --package ./internal/freshness",
           "exit_code": 0,
           "probe": {
-            "mutation": "release the publication lock before rollback and residue cleanup",
+            "mutation": "release the directory lock before rollback and temporary cleanup finish",
             "outcome": "bit",
             "exit_code": 1,
             "restore": "pass",
