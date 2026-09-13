@@ -247,10 +247,17 @@ The ticket's `Writes:` field supplies this exact union.
 - `internal/anchors/registry_retained_workflow.go`
 - `internal/conformance/implementation_continuation_test.go`
 - `tests/canary/workflow-guidance-anchors`
+- `cmd/bench/command_registry.go`
+- `cmd/bench/command_registry_test.go`
+- `cmd/bench/help_inventory_test.go`
+- `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
 - `CHANGELOG.md`
 - `reviews/bounded-repair-policy.md` (new)
 
 The implementation owns only the named product files and its ordinary verification artifacts.
+The five command registry files close the bound `internal/anchors` package ownership.
+They authorize no new command or CLI behavior.
 The compiled map remains settled provenance.
 No build-wide rewrite may change unrelated specs or their tickets.
 

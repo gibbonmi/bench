@@ -26,7 +26,9 @@ Sol/high found two blocking gaps in the draft: optional-advice representation an
 The retained author folded both findings before slicing.
 Sol then kept all 21 rows in one ticket because the allowance needs its classification and completion safeguards.
 Astra accepted that granularity and returned one probe attachment defect and one gate-cost correction.
-The same Sol agent owns those slice repairs.
+Native build preflight then found missing bound-registry ownership paths.
+The same Sol agent owns both slice repair passes.
+
 Token counts, provider cost, and comparative model latency remain unknown.
 
 ## Coordinator catches
@@ -37,11 +39,14 @@ The independent continuation test owns the required omission failure.
 The final plan also requested a standalone full gate before the landing gate.
 The review requested focused final acceptance checks instead.
 
+Native build preflight found five required registry paths absent from the ticket fence.
+The source plan parsed, but the ownership closure needed correction before build entry.
+
 ## Repair attribution
 
 | ticket | rounds | causes |
 | --- | --- | --- |
-| 1-enforce-bounded-repair-policy.md | 1 slice repair pass | delegate: probe attached to the wrong check and redundant full gating |
+| 1-enforce-bounded-repair-policy.md | 2 slice repair passes in one review round | spec/ticket and delegate: probe attachment, redundant gating, and incomplete registry ownership |
 
 The spec draft required one author fold after the Sol review.
 Those omissions belong to spec authoring, not the implementation ticket.

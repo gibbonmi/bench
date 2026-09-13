@@ -1,7 +1,7 @@
 # Enforce the bounded repair policy
 
 Blocked by: none
-Writes: .agents/skills/bench-craft-line/SKILL.md, .agents/skills/bench-craft-line/references/bounded-repair-policy.md (new), .agents/skills/bench-craft-review/SKILL.md, .agents/commands/bench-implement-spec.md, .agents/commands/bench-review-implementation.md, internal/anchors/registry_retained_workflow.go, internal/conformance/implementation_continuation_test.go, tests/canary/workflow-guidance-anchors, CHANGELOG.md, reviews/bounded-repair-policy.md (new)
+Writes: .agents/skills/bench-craft-line/SKILL.md, .agents/skills/bench-craft-line/references/bounded-repair-policy.md (new), .agents/skills/bench-craft-review/SKILL.md, .agents/commands/bench-implement-spec.md, .agents/commands/bench-review-implementation.md, internal/anchors/registry_retained_workflow.go, internal/conformance/implementation_continuation_test.go, tests/canary/workflow-guidance-anchors, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, CHANGELOG.md, reviews/bounded-repair-policy.md (new)
 Covers: BP1, BP2, BP3, BP4, BP5, BP6, BP7, BP8, BP9, BP10, BP11, BP12, BP13, BP14, BP15, BP16, BP17, BP18, BP19, BP20, BP21
 
 ## What to build

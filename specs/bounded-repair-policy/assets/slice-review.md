@@ -19,3 +19,12 @@ The system requirement stays in the plan, and the landing retains the full gate.
 
 The review accepts the one-ticket graph, full Covers list, exact fence, new-path markers, and separate pilot scope.
 The author folded both corrections without a second slice review.
+
+## Post-commit preflight correction
+
+Source tip: f5fa22f42f6a8e4a5b8c5eadb3d69449f0f4902f plus the uncommitted metadata repair
+
+The build preflight required the five command registry files bound to `internal/anchors`.
+The ticket and exact fence now name that ownership closure.
+Those paths authorize no new command or CLI behavior.
+The preflight also reported staging deletions from main, which remain outside the implementation fence.
