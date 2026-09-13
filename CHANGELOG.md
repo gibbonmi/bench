@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Repair evidence pilot
+
+- Added repository-only repair-pilot reports with explicit example-class coverage, provisional and inconclusive states, stable full evidence output, and an operating guide for a later audited pilot.
+
 ### Scorecard-guided line routing
 
 - Changed `craft-line` to consult available provider scorecards as advisory routing evidence.

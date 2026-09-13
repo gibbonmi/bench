@@ -7,7 +7,9 @@ import (
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 )
 
 func TestHelpRendersPublicCommandRegistryRows(t *testing.T) {
@@ -66,6 +68,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench assessment list | show <run-id> | record --input <file> | compare --plan <file> --runs <id,...>  store and inspect local workflow cost and quality
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
   bench preflight review|build <slug>  phase-entry checks that a spec's artifacts agree with the tree, one verdict row per check
+  bench repair-pilot activate | report [--full]  collect and report attributed repair evidence for an explicit local pilot
   bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>  run focused Go-test or named-check evidence as TOON; no gate verdict
   bench probe <file> (--swap <old> --with <new> | --omit <old>) (--package <expr> [--run <go-regex>] | --check <name>) [--full]  mutate one file once, run one focused test or check, restore the file, and report bit, silent, invalid, or restore-failed
   bench outline [path] [--full]  top-level directory symbol counts as TOON; a path or --full locates candidate seams (file:line), never the project's blessed seams
@@ -103,6 +106,72 @@ func TestHelpInventoryIsComplete(t *testing.T) {
 	if stdout.String() != want {
 		t.Fatalf("help inventory:\n%s\nwant complete public inventory:\n%s", stdout.String(), want)
 	}
+}
+
+func TestRepairPilotRoute(t *testing.T) {
+	t.Run("dispatch", func(t *testing.T) {
+		root := newAXIEnvelopeRepo(t)
+		t.Setenv("BENCH_HOME", t.TempDir())
+		t.Setenv("BENCH_KIT", root)
+		for _, row := range []struct {
+			argv []string
+			want string
+		}{
+			{argv: []string{"repair-pilot", "report"}, want: "inactive"},
+			{argv: []string{"repair-pilot", "activate"}, want: "active"},
+			{argv: []string{"assessment", "--help"}, want: "usage: bench assessment"},
+		} {
+			result := runAXICommandAt(t, root, row.argv)
+			if result.code != 0 || !strings.Contains(result.stdout, row.want) {
+				t.Fatalf("%v = stdout %q, stderr %q, exit %d; want %q at exit 0", row.argv, result.stdout, result.stderr, result.code, row.want)
+			}
+		}
+		input := map[string]any{
+			"version": 1,
+			"observation": map[string]any{
+				"id": "public-route", "observed_at": time.Now().UTC().Format(time.RFC3339Nano),
+				"sequence":      map[string]string{"source": "public-source", "spec": "public-spec", "chunk": "public-chunk"},
+				"assignment_id": "public-assignment", "session_id": "public-session", "source_revision": "public-revision",
+				"stage": "pre-review", "kind": "failure", "failure_completeness": "complete",
+				"failures": []map[string]any{{"check": "unit", "identity": "REQ-1", "diagnostic": "fixture blocker", "ownership": "diff-owned", "blocking": true,
+					"reference": map[string]string{"producer": "public-route-test", "native": "native:public-failure"}}},
+				"references": []map[string]string{{"producer": "public-route-test", "native": "native:public-observation"}},
+			},
+		}
+		data, err := json.Marshal(input)
+		if err != nil {
+			t.Fatal(err)
+		}
+		inputPath := filepath.Join(t.TempDir(), "record.json")
+		if err := os.WriteFile(inputPath, append(data, '\n'), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		result := runAXICommandAt(t, root, []string{"repair-pilot", "record", "--input", inputPath})
+		if result.code != 0 || !strings.Contains(result.stdout, "active") {
+			t.Fatalf("public record route = stdout %q, stderr %q, exit %d", result.stdout, result.stderr, result.code)
+		}
+	})
+	t.Run("worktrees", func(t *testing.T) {
+		root := newAXIEnvelopeRepo(t)
+		linked := filepath.Join(t.TempDir(), "linked")
+		runAXIGit(t, "-C", root, "worktree", "add", "-q", "-b", "repair-pilot-linked", linked)
+		home := t.TempDir()
+		t.Setenv("BENCH_HOME", home)
+		t.Setenv("BENCH_KIT", linked)
+		activated := runAXICommandAt(t, linked, []string{"repair-pilot", "activate"})
+		if activated.code != 0 || !strings.Contains(activated.stdout, "active") {
+			t.Fatalf("worktree activation = stdout %q, stderr %q, exit %d", activated.stdout, activated.stderr, activated.code)
+		}
+		t.Setenv("BENCH_KIT", root)
+		reported := runAXICommandAt(t, root, []string{"repair-pilot", "report"})
+		if reported.code != 0 || !strings.Contains(reported.stdout, "active") {
+			t.Fatalf("primary report = stdout %q, stderr %q, exit %d", reported.stdout, reported.stderr, reported.code)
+		}
+		pilot := filepath.Join(home, "repair-pilot", poolkey.Key(root), "pilot.json")
+		if _, err := os.Stat(pilot); err != nil {
+			t.Fatalf("canonical pilot document: %v", err)
+		}
+	})
 }
 
 func assessmentEnvelopeCases() map[string]axiEnvelopeCase {

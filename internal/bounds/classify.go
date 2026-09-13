@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"unicode/utf8"
 )
 
@@ -136,6 +137,28 @@ func ClassifyNoFollow(path string) Classified {
 		return Classified{State: state, Reason: reason}
 	}
 	return gradeBytes(path, info, ControlRecordLimit)
+}
+
+// RefuseLinks checks the complete path without resolving a linked component.
+func RefuseLinks(path string) error {
+	path, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	for {
+		info, err := os.Lstat(path)
+		if err != nil && !os.IsNotExist(err) {
+			return err
+		}
+		if err == nil && info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("symlink refused: %s", path)
+		}
+		parent := filepath.Dir(path)
+		if parent == path {
+			return nil
+		}
+		path = parent
+	}
 }
 
 func resolveNoFollow(path string) (fs.FileInfo, FileState, string) {

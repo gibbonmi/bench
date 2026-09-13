@@ -78,7 +78,7 @@ func collectHarness(r *Run, input HarnessInput) error {
 	return nil
 }
 func regularInput(path string) error {
-	if err := noLinks(path); err != nil {
+	if err := bounds.RefuseLinks(path); err != nil {
 		return err
 	}
 	info, err := os.Lstat(path)

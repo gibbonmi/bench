@@ -28,31 +28,10 @@ var safeID = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
 
 func (s Store) Dir() string { return filepath.Join(s.Home, "assessment", poolkey.Key(s.Root)) }
 func (s Store) path(id string) (string, error) {
-	if !safeID.MatchString(id) {
+	if !ValidID(id) {
 		return "", fmt.Errorf("unsafe run ID")
 	}
 	return filepath.Join(s.Dir(), id+".json"), nil
-}
-
-func noLinks(path string) error {
-	path, err := filepath.Abs(path)
-	if err != nil {
-		return err
-	}
-	for {
-		info, err := os.Lstat(path)
-		if err != nil && !os.IsNotExist(err) {
-			return err
-		}
-		if err == nil && info.Mode()&os.ModeSymlink != 0 {
-			return fmt.Errorf("symlink refused: %s", path)
-		}
-		parent := filepath.Dir(path)
-		if parent == path {
-			return nil
-		}
-		path = parent
-	}
 }
 
 func readJSON(path string, target any) error {
@@ -60,7 +39,7 @@ func readJSON(path string, target any) error {
 }
 
 func decodeFile(path string, target any, decode func([]byte, any) error) error {
-	if err := noLinks(path); err != nil {
+	if err := bounds.RefuseLinks(path); err != nil {
 		return err
 	}
 	read := bounds.ClassifyNoFollow(path)
@@ -72,6 +51,9 @@ func decodeFile(path string, target any, decode func([]byte, any) error) error {
 	}
 	return decode(read.Data, target)
 }
+
+// ValidID reports whether value uses the bounded portable identity grammar.
+func ValidID(value string) bool { return safeID.MatchString(value) }
 
 func (s Store) Read(id string) (Run, error) {
 	var r Run
@@ -99,7 +81,7 @@ func (s Store) Record(r Run) error {
 	if r.RepoKey != poolkey.Key(s.Root) {
 		return fmt.Errorf("foreign repository")
 	}
-	if err = noLinks(path); err != nil {
+	if err = bounds.RefuseLinks(path); err != nil {
 		return err
 	}
 	if err = os.MkdirAll(s.Dir(), 0700); err != nil {

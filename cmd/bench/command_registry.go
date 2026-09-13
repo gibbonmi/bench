@@ -5,10 +5,15 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/adopt"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/repairpilot"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 type processAttachment string
@@ -187,6 +192,32 @@ func leafRoot(c Command, need leafRootNeed) (string, bool) {
 	default:
 		return "", true
 	}
+}
+
+// boundaryRoot resolves the repository root once for a verb that receives one. Outside a
+// repository it answers the empty string, and the verb prints its own refusal after it
+// reads its grammar. This keeps a help or usage answer available outside a repository.
+func boundaryRoot() string {
+	root, err := git.Root()
+	if err != nil {
+		return ""
+	}
+	return root
+}
+
+func repairPilotCommand(c Command, args []string) int {
+	root := boundaryRoot()
+	canonical := poolkey.Canonical(root)
+	kitCanonical := poolkey.Canonical(gate.KitDir())
+	out, code := repairpilot.Command(repairpilot.Options{
+		Home:      worktree.Home(),
+		Root:      canonical,
+		RepoKey:   poolkey.Key(canonical),
+		KitSource: gate.KitSourceCheckout(root) || canonical != "" && canonical == kitCanonical,
+		Now:       time.Now().UTC(),
+	}, args)
+	fmt.Fprint(c.Stdout, out)
+	return code
 }
 
 // Command is the in-process production entry for ordinary command behavior.
