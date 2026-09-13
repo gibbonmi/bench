@@ -208,11 +208,12 @@ func boundaryRoot() string {
 func repairPilotCommand(c Command, args []string) int {
 	root := boundaryRoot()
 	canonical := poolkey.Canonical(root)
+	kitCanonical := poolkey.Canonical(gate.KitDir())
 	out, code := repairpilot.Command(repairpilot.Options{
 		Home:      worktree.Home(),
 		Root:      canonical,
 		RepoKey:   poolkey.Key(canonical),
-		KitSource: gate.KitSourceCheckout(canonical),
+		KitSource: gate.KitSourceCheckout(root) || canonical != "" && canonical == kitCanonical,
 		Now:       time.Now().UTC(),
 	}, args)
 	fmt.Fprint(c.Stdout, out)

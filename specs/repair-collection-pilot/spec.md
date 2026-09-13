@@ -312,7 +312,7 @@ A probe that does not compile or execute proves nothing.
 |---|---|---|---|---|
 | RP1 | 1 | A missing pilot report returns inactive without creating a document. | `internal/repairpilot/command_test.go` (`TestRepairPilotActivation/inactive`) | Automatic activation creates forbidden state. |
 | RP2 | 1 | Explicit activation creates a pilot at the supplied current time. | `internal/repairpilot/command_test.go` (`TestRepairPilotActivation/activate`) | A no-op has no stored activation. |
-| RP3 | 3 | Two worktree contexts share the canonical repository's pilot document. | `internal/repairpilot/command_test.go` (`TestRepairPilotStorage/worktrees`) | Worktree-local storage produces two pilots. |
+| RP3 | 3 | Two worktree contexts share the canonical repository's pilot document. | `cmd/bench/help_inventory_test.go` (`TestRepairPilotRoute/worktrees`) | Worktree-local storage produces two pilots. |
 | RP4 | 3 | The stored pilot uses private permissions outside the disposable pool. | `internal/repairpilot/command_test.go` (`TestRepairPilotStorage/custody`) | A pool-local record fails the path assertion. |
 | RP5 | 2 | A linked repository refuses activation without writing state. | `internal/repairpilot/command_test.go` (`TestRepairPilotActivation/linked`) | Unrestricted activation creates a foreign pilot. |
 | RP6 | 5 | A malformed operation exits 2 before reading pilot state. | `internal/repairpilot/command_test.go` (`TestRepairPilotGrammar/usage`) | Eager storage access masks the grammar refusal. |

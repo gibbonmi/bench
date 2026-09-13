@@ -126,6 +126,27 @@ func TestRepairPilotRoute(t *testing.T) {
 			}
 		}
 	})
+	t.Run("worktrees", func(t *testing.T) {
+		root := newAXIEnvelopeRepo(t)
+		linked := filepath.Join(t.TempDir(), "linked")
+		runAXIGit(t, "-C", root, "worktree", "add", "-q", "-b", "repair-pilot-linked", linked)
+		home := t.TempDir()
+		t.Setenv("BENCH_HOME", home)
+		t.Setenv("BENCH_KIT", linked)
+		activated := runAXICommandAt(t, linked, []string{"repair-pilot", "activate"})
+		if activated.code != 0 || !strings.Contains(activated.stdout, "active") {
+			t.Fatalf("worktree activation = stdout %q, stderr %q, exit %d", activated.stdout, activated.stderr, activated.code)
+		}
+		t.Setenv("BENCH_KIT", root)
+		reported := runAXICommandAt(t, root, []string{"repair-pilot", "report"})
+		if reported.code != 0 || !strings.Contains(reported.stdout, "active") {
+			t.Fatalf("primary report = stdout %q, stderr %q, exit %d", reported.stdout, reported.stderr, reported.code)
+		}
+		pilot := filepath.Join(home, "repair-pilot", poolkey.Key(root), "pilot.json")
+		if _, err := os.Stat(pilot); err != nil {
+			t.Fatalf("canonical pilot document: %v", err)
+		}
+	})
 }
 
 func assessmentEnvelopeCases() map[string]axiEnvelopeCase {

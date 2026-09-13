@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -50,7 +51,16 @@ type Document struct {
 	Audits        []json.RawMessage `json:"audits"`
 }
 
-const FamilyUsage = "usage: bench repair-pilot activate\n       bench repair-pilot report [--full]\n"
+// Store owns atomic replacement for one pilot document.
+type Store struct {
+	Path  string
+	Files FileOps
+}
+
+// Replace preserves the prior document unless the final rename succeeds.
+func (store Store) Replace(document Document) error {
+	return writeDocument(store.Files.withDefaults(), store.Path, document)
+}
 
 var activateGrammar = usage.Grammar{
 	Cmd:     "bench repair-pilot activate",
@@ -64,6 +74,8 @@ var reportGrammar = usage.Grammar{
 	Flags:   []usage.Flag{{Name: "--full"}},
 	MaxArgs: 0,
 }
+
+var FamilyUsage = activateGrammar.Help + "\n       " + strings.TrimPrefix(reportGrammar.Help, "usage: ") + "\n"
 
 func Command(options Options, args []string) (string, int) {
 	if len(args) == 0 {
@@ -126,7 +138,7 @@ func activate(options Options) (string, int) {
 			Observations:  []json.RawMessage{},
 			Audits:        []json.RawMessage{},
 		}
-		if err := writeDocument(files, documentPath(options), document); err != nil {
+		if err := (Store{Path: documentPath(options), Files: files}).Replace(document); err != nil {
 			return refusal(err.Error())
 		}
 	}
