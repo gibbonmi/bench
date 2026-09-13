@@ -112,9 +112,6 @@ func validateObservation(document Document, candidate observation, now, deadline
 	if candidate.StartedAt != nil && candidate.EndedAt != nil && candidate.EndedAt.Before(*candidate.StartedAt) {
 		return errors.New("observation interval ends before it starts")
 	}
-	if (candidate.StartedAt != nil || candidate.EndedAt != nil) && (candidate.IntervalReference == nil || !assessment.ValidReference(*candidate.IntervalReference)) {
-		return errors.New("observation interval requires native evidence")
-	}
 	if candidate.IntervalReference != nil && !assessment.ValidReference(*candidate.IntervalReference) {
 		return errors.New("observation interval has invalid evidence")
 	}
@@ -232,16 +229,19 @@ func appendAudit(document *Document, candidate audit) (bool, error) {
 }
 
 func effectiveProgressLabel(document Document, observationID string) string {
-	labels := map[string]bool{}
+	active := map[string]string{}
 	for _, item := range document.Audits {
 		if item.ObservationID != observationID || item.Conclusion == nil || !supportedConclusion(*item.Conclusion) {
 			continue
 		}
-		if len(item.ResolvesAuditIDs) >= 2 {
-			labels = map[string]bool{item.Conclusion.Label: true}
-			continue
+		for _, resolved := range item.ResolvesAuditIDs {
+			delete(active, resolved)
 		}
-		labels[item.Conclusion.Label] = true
+		active[item.ID] = item.Conclusion.Label
+	}
+	labels := map[string]bool{}
+	for _, label := range active {
+		labels[label] = true
 	}
 	if len(labels) != 1 {
 		return "unknown"

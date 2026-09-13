@@ -214,6 +214,13 @@ func TestRepairPilotIdentity(t *testing.T) {
 		if !stored.StartedAt.Equal(*input.Observation.StartedAt) || !stored.EndedAt.Equal(*input.Observation.EndedAt) || !reflect.DeepEqual(stored.IntervalReference, nativeReference("native:interval")) {
 			t.Fatalf("interval changed: %+v", stored)
 		}
+		partial := failureInput("partial-interval", input.Observation.Sequence)
+		partial.Observation.StartedAt = timestamp("2026-09-02T10:00:00Z")
+		h.accept(t, partial)
+		stored = h.document(t).Observations[1]
+		if stored.StartedAt == nil || stored.EndedAt != nil || stored.IntervalReference != nil {
+			t.Fatalf("unknown partial interval changed: %+v", stored)
+		}
 	})
 
 	t.Run("contributors", func(t *testing.T) {
@@ -276,14 +283,8 @@ func (h *recordHarness) refuse(t *testing.T, input recordInput) {
 
 func (h *recordHarness) run(t *testing.T, input recordInput) (string, int) {
 	t.Helper()
-	data, err := json.MarshalIndent(input, "", "  ")
-	if err != nil {
-		t.Fatal(err)
-	}
 	path := filepath.Join(t.TempDir(), "input.json")
-	if err := os.WriteFile(path, append(data, '\n'), 0o600); err != nil {
-		t.Fatal(err)
-	}
+	writeFixture(t, path, recordInputBytes(t, input))
 	return Command(h.options, []string{"record", "--input", path})
 }
 

@@ -1,11 +1,8 @@
 package repairpilot
 
 import (
-	"encoding/json"
 	"os"
-	"path/filepath"
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 
@@ -206,6 +203,9 @@ func TestRepairPilotCutoff(t *testing.T) {
 				input := failureInput(boundary.name+"-"+field.name, sequenceKey("source-a", "spec-a", "chunk-a"))
 				stamp := parseTime(boundary.stamp)
 				field.assign(input.Observation, &stamp)
+				if field.name != "observed-at" {
+					input.Observation.IntervalReference = nativeReference("native:interval-window")
+				}
 				before := h.bytes(t)
 				h.refuse(t, input)
 				if !reflect.DeepEqual(h.bytes(t), before) {
@@ -282,73 +282,16 @@ func TestRepairPilotAudit(t *testing.T) {
 			t.Fatalf("later contradiction label = %q, want unknown", got)
 		}
 		assertSummaryValue(t, out, "progress_unknown", "1")
-	})
-}
 
-func TestRepairPilotGrammar(t *testing.T) {
-	t.Run("usage", func(t *testing.T) {
-		options := testOptions(t.TempDir())
-		if err := os.MkdirAll(filepath.Dir(documentPath(options)), 0o700); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.Symlink("missing-target", documentPath(options)); err != nil {
-			t.Fatal(err)
-		}
-		out, code := Command(options, []string{"bogus"})
-		if code != 2 || !strings.Contains(out, "unknown argument: bogus") {
-			t.Fatalf("bogus operation = output %q, exit %d; want usage at exit 2", out, code)
-		}
-	})
-	t.Run("hostile", func(t *testing.T) {
-		requireFixtureCase(t)
-		for _, fixture := range recordInputHostileFixtures(t) {
-			t.Run(fixture.name, func(t *testing.T) {
-				options := testOptions(t.TempDir())
-				if out, code := Command(options, []string{"activate"}); code != 0 {
-					t.Fatalf("activate = output %q, exit %d", out, code)
-				}
-				before, err := os.ReadFile(documentPath(options))
-				if err != nil {
-					t.Fatal(err)
-				}
-				inputPath := filepath.Join(t.TempDir(), "input.json")
-				fixture.make(t, inputPath, options)
-				out, code := Command(options, []string{"record", "--input", inputPath})
-				if code != 1 || !strings.Contains(out, "refused") {
-					t.Fatalf("hostile input %s = output %q, exit %d", fixture.name, out, code)
-				}
-				assertDocumentBytes(t, documentPath(options), before)
-			})
-		}
-	})
-	t.Run("path-shape", func(t *testing.T) {
-		requireFixtureCase(t)
-		options := testOptions(t.TempDir())
-		if out, code := Command(options, []string{"activate"}); code != 0 {
-			t.Fatalf("activate = output %q, exit %d", out, code)
-		}
-		options.Now = parseTime("2026-09-10T12:00:00Z")
-		path := filepath.Join(t.TempDir(), "input [*].json")
-		writeFixture(t, path, recordInputBytes(t, failureInput("path-shape", sequenceKey("source-a", "spec-a", "chunk-a"))))
-		if out, code := Command(options, []string{"record", "--input", path}); code != 0 {
-			t.Fatalf("record path shape = output %q, exit %d", out, code)
-		}
-	})
-	t.Run("no-final-newline", func(t *testing.T) {
-		options := testOptions(t.TempDir())
-		if out, code := Command(options, []string{"activate"}); code != 0 {
-			t.Fatalf("activate = output %q, exit %d", out, code)
-		}
-		options.Now = parseTime("2026-09-10T12:00:00Z")
-		data, err := json.Marshal(failureInput("no-newline", sequenceKey("source-a", "spec-a", "chunk-a")))
-		if err != nil {
-			t.Fatal(err)
-		}
-		path := filepath.Join(t.TempDir(), "input.json")
-		writeFixture(t, path, data)
-		if out, code := Command(options, []string{"record", "--input", path}); code != 0 {
-			t.Fatalf("record without final newline = output %q, exit %d", out, code)
-		}
+		uncited := newRecordHarness(t)
+		uncited.accept(t, failureInput("uncited-target", sequenceKey("source-c", "spec-a", "chunk-c")))
+		uncited.accept(t, auditInput("uncited-productive", "uncited-target", "productive"))
+		uncited.accept(t, auditInput("uncited-stalled", "uncited-target", "stalled"))
+		uncited.accept(t, auditInput("uncited-unchanged", "uncited-target", "unchanged"))
+		resolution = auditInput("partial-resolution", "uncited-target", "productive")
+		resolution.Audit.ResolvesAuditIDs = []string{"uncited-productive", "uncited-stalled"}
+		out = uncited.accept(t, resolution)
+		assertSummaryValue(t, out, "progress_unknown", "1")
 	})
 }
 

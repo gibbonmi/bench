@@ -17,6 +17,72 @@ type storedHostileFixture struct {
 	make func(*testing.T, string, Options)
 }
 
+func TestRepairPilotGrammar(t *testing.T) {
+	t.Run("usage", func(t *testing.T) {
+		options := testOptions(t.TempDir())
+		if err := os.MkdirAll(filepath.Dir(documentPath(options)), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Symlink("missing-target", documentPath(options)); err != nil {
+			t.Fatal(err)
+		}
+		out, code := Command(options, []string{"bogus"})
+		if code != 2 || !strings.Contains(out, "unknown argument: bogus") {
+			t.Fatalf("bogus operation = output %q, exit %d; want usage at exit 2", out, code)
+		}
+	})
+	t.Run("hostile", func(t *testing.T) {
+		requireFixtureCase(t)
+		newRecordHarness(t).accept(t, failureInput("hostile-control", sequenceKey("source-a", "spec-a", "chunk-a")))
+		for _, fixture := range recordInputHostileFixtures(t) {
+			t.Run(fixture.name, func(t *testing.T) {
+				options := testOptions(t.TempDir())
+				if out, code := Command(options, []string{"activate"}); code != 0 {
+					t.Fatalf("activate = output %q, exit %d", out, code)
+				}
+				options.Now = parseTime("2026-09-10T12:00:00Z")
+				before, err := os.ReadFile(documentPath(options))
+				if err != nil {
+					t.Fatal(err)
+				}
+				inputPath := filepath.Join(t.TempDir(), "input.json")
+				fixture.make(t, inputPath, options)
+				out, code := Command(options, []string{"record", "--input", inputPath})
+				if code != 1 || !strings.Contains(out, "refused") {
+					t.Fatalf("hostile input %s = output %q, exit %d", fixture.name, out, code)
+				}
+				assertDocumentBytes(t, documentPath(options), before)
+			})
+		}
+	})
+	t.Run("path-shape", func(t *testing.T) {
+		requireFixtureCase(t)
+		options := testOptions(t.TempDir())
+		if out, code := Command(options, []string{"activate"}); code != 0 {
+			t.Fatalf("activate = output %q, exit %d", out, code)
+		}
+		options.Now = parseTime("2026-09-10T12:00:00Z")
+		path := filepath.Join(t.TempDir(), "input [*].json")
+		writeFixture(t, path, recordInputBytes(t, failureInput("path-shape", sequenceKey("source-a", "spec-a", "chunk-a"))))
+		if out, code := Command(options, []string{"record", "--input", path}); code != 0 {
+			t.Fatalf("record path shape = output %q, exit %d", out, code)
+		}
+	})
+	t.Run("no-final-newline", func(t *testing.T) {
+		options := testOptions(t.TempDir())
+		if out, code := Command(options, []string{"activate"}); code != 0 {
+			t.Fatalf("activate = output %q, exit %d", out, code)
+		}
+		options.Now = parseTime("2026-09-10T12:00:00Z")
+		data := recordInputBytes(t, failureInput("no-newline", sequenceKey("source-a", "spec-a", "chunk-a")))
+		path := filepath.Join(t.TempDir(), "input.json")
+		writeFixture(t, path, data[:len(data)-1])
+		if out, code := Command(options, []string{"record", "--input", path}); code != 0 {
+			t.Fatalf("record without final newline = output %q, exit %d", out, code)
+		}
+	})
+}
+
 func commonHostileFixtures(valid func(*testing.T, Options) []byte) []storedHostileFixture {
 	return []storedHostileFixture{
 		{name: "empty", make: func(t *testing.T, path string, _ Options) { writeFixture(t, path, nil) }},
