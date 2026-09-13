@@ -542,7 +542,7 @@ findings in the single permitted review round.
             "native_ref": {
               "ref": "collaboration:/root/ft120_c5",
               "digest": "sha256:2e9e01363073ead440fe47323061f577d3366182af101267dc4623c9f3b87d58",
-              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/freshness/freshness_publish.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/freshness,^TestPublishWaiterSeesRestoredTripleAfterInterruption$,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/freshness,fail,164\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/freshness,TestPublishWaiterSeesRestoredTripleAfterInterruption,\"publication_lock_test.go:107: publication event = \\"mutation\\", want \\"contended\\"\"\nskips[0]{package,test,reason}:"
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/freshness/freshness_publish.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/freshness,^TestPublishWaiterSeesRestoredTripleAfterInterruption$,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/freshness,fail,164\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/freshness,TestPublishWaiterSeesRestoredTripleAfterInterruption,\"publication_lock_test.go:107: publication event = \\\"mutation\\\", want \\\"contended\\\"\"\nskips[0]{package,test,reason}:"
             }
           }
         }
