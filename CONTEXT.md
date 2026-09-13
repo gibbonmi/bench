@@ -276,6 +276,9 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **frontier round** — one numbered round of `craft-grill`: every question whose
   prerequisites are already settled, asked together with a recommendation. The
   skill then waits and recomputes the next round. Not "one question at a time".
+- **repair sequence** — one implementation chunk's related repair attempts.
+  A sequence can include several findings and repair cycles.
+  Not an individual finding, one review, or a fresh process — repair sequence.
 - **repair cycle** — one repair attempt and verification of its affected findings.
   A cycle can address several findings. Not a tool call, an individual finding,
   or a fresh review alone — repair cycle.
