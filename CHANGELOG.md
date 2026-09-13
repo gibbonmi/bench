@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Scorecard-guided line routing
+
+- Changed `craft-line` to consult available provider scorecards as advisory routing evidence.
+  Scorecards can suggest or validate a choice, but they do not indicate the task outcome.
+
 ### Bounded review repairs
 
 - Changed implementation guidance to bound post-review repairs through one shared policy.
