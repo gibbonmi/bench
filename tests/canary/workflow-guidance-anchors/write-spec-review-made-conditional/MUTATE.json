@@ -1,1 +1,1 @@
-[{"path": ".agents/commands/bench-write-spec.md", "old": "One review round covers the spec-and-tickets pair with the reviewer-named model", "new": "Two review rounds, spec then tickets, run with the reviewer-named model"}]
+[{"path": ".agents/commands/bench-write-spec.md", "old": "One independent review round covers the spec-and-tickets pair at reviewer\n   sign-off.", "new": "Two review rounds cover the spec and tickets separately."}]
