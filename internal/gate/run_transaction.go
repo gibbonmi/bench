@@ -43,6 +43,10 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 	plan, err := evaluation.acceptPre()
 	if err != nil {
 		refusal := operational(storageRoot, 0, stderr, fmt.Sprintf("gate subject unavailable: %v", err))
+		help, helpErr := subjectUnavailableHelp()
+		if helpErr == nil {
+			fmt.Fprint(stdout, help)
+		}
 		// The route prints under the reason, the shape every routed refusal uses.
 		// The spec-path grammar rejects a control byte, so the line needs no second
 		// sanitizer here.

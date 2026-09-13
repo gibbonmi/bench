@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/env"
@@ -369,4 +370,11 @@ func operational(root string, gateExit int, stderr io.Writer, msg string) Result
 	inspection.ReusableGreen = false
 	inspection.Reason = msg
 	return Result{GateExit: gateExit, ActionExit: 1, Inspection: inspection}
+}
+
+func subjectUnavailableHelp() (string, error) {
+	return axi.RenderHelp([]axi.Action{axi.ExecutableInvocation(
+		"retry after restoring repository write access",
+		axi.KnownArgument("gate"), axi.KnownArgument("--fresh"),
+	)})
 }

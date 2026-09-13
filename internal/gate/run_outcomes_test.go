@@ -191,6 +191,10 @@ func TestGateRunRetainsSubjectConstructionCause(t *testing.T) {
 	if got := stderr.String(); !strings.Contains(got, "gate subject unavailable") || !strings.Contains(got, cause.Error()) {
 		t.Fatalf("stderr = %q, want the subject diagnostic and cause %q", got, cause)
 	}
+	want := "help[1]{cmd,why}:\n  bench gate --fresh,retry after restoring repository write access\n"
+	if got := stdout.String(); got != want {
+		t.Fatalf("stdout = %q, want %q", got, want)
+	}
 }
 
 func TestGateRunReloadsDeadOwnerPendingRecord(t *testing.T) {
