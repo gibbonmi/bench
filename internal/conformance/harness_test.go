@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
@@ -105,7 +107,7 @@ func RequireSubstring(t testing.TB, got, want, label string) {
 }
 
 func resolveGradedRoot() (string, error) {
-	if root := os.Getenv("BENCH_CONFORMANCE_ROOT"); root != "" {
+	if root := os.Getenv(registry.ConformanceRootEnv); root != "" {
 		return filepath.Abs(root)
 	}
 	root, err := git.Root()
@@ -190,6 +192,36 @@ func TestHarnessDefaultsToCurrentGitRoot(t *testing.T) {
 	}
 	if h.KitRoot == "" || h.KitRoot == h.Root {
 		t.Fatalf("KitRoot = %q, Root = %q; want distinct kit and graded roots", h.KitRoot, h.Root)
+	}
+
+	writeFixtureFile(t, filepath.Join(root, "go.mod"), "module fixture\n")
+	writeFixtureFile(t, filepath.Join(root, ".bench", "gate.sh"), "#!/bin/sh\nexit 0\n")
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name string
+		env  []string
+		red  bool
+	}{
+		{name: "unset", red: true},
+		{name: "empty", env: []string{registry.ConformanceRootEnv + "="}, red: true},
+		{name: "explicit", env: []string{registry.ConformanceRootEnv + "=" + t.TempDir()}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			env := capability.WithoutEnvironment(conformanceSubprocessEnv(), registry.ConformanceScopeEnv)
+			env = append(env, registry.ConformanceScopeEnv+"=gate-entry-contract")
+			env = append(env, tc.env...)
+			probe := runAtEnv(nested, env, executable, "-test.run=^"+registry.RootConformanceTest+"$", "-test.v")
+			output := probe.Stdout + probe.Stderr
+			if (probe.ExitCode != 0) != tc.red || strings.Contains(output, "--- SKIP:") {
+				t.Fatalf("root conformance exit = %d, want red=%t without skips:\n%s", probe.ExitCode, tc.red, output)
+			}
+			if tc.red {
+				RequireSubstring(t, output, ".bench/gate.sh missing", "current root defect")
+			}
+		})
 	}
 }
 
