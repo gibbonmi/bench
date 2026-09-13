@@ -6,6 +6,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Spec review ownership
+
+- Changed `/bench-write-spec` so the author retains all writes and the reviewer
+  reviews the completed spec and tickets at sign-off. The phase no longer
+  dispatches a separate review agent.
+
 ### Front-door failure continuation
 
 - Fixed `$bench` to enter the bug path when a routed command fails. A successful

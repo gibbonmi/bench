@@ -59,12 +59,12 @@ compatibility, or a reviewer-chosen seam.
    its numbered title, `Blocked by:`, and delivered outcome list into the approval table. The spec and tickets
    receive one sign-off.
 
-   One review round covers the spec-and-tickets pair with the reviewer-named model, and `craft-tickets`' granularity/edges/merge-split quiz is its approval step. The round applies `craft-spec`'s review rubric.
+   One independent review round covers the spec-and-tickets pair at reviewer
+   sign-off. The reviewer applies `craft-tickets`' granularity, edge, and
+   merge-or-split quiz and `craft-spec`'s review rubric.
 
-   The round declares its iteration cap before the first charge. The author folds partials left after the round and names them in the verification log.
-   `--reviewer <tier> [effort]` overrides the round's delegate. The tier resolves through the invoking harness's
-   own `.bench/lines.env` column and runs same-family through its native agent surface. For example,
-   `--reviewer top high` under Codex resolves `BENCH_CODEX_TOP` at high. A model id is an invocation error.
+   The round declares its iteration cap before the first charge. The author folds
+   findings from the round and names them in the verification log.
 
    At close, write `Verification log: <n> iteration(s) to accept — <note>` into the spec. When the round takes more
    than one iteration to accept, append one `capture/learnings.md` entry. The entry names the stage that missed,

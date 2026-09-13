@@ -589,11 +589,10 @@ escalation.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more
   than speed. A wrong gate is the worst class of bug in a kit whose whole premise is
   "the gate is the oracle."
-- **Spec-and-tickets review round** (`/bench-write-spec`) → **mid model, high
-  effort**, read-only and same-family through the harness's native agent surface.
-  It reviews the spec and its ticket breakdown together against `craft-tickets`
-  after `/bench-write-spec` slices it; `/bench-write-spec` owns the round's
-  operating protocol.
+- **Spec-and-tickets review round** (`/bench-write-spec`) → **reviewer sign-off**.
+  The reviewer applies `craft-tickets` and `craft-spec` to the spec and its ticket
+  breakdown after the author slices it. `/bench-write-spec` owns the round's
+  operating protocol, and the author retains all writes.
 - **Review-axis delegate** (`/bench-review-implementation`, one per axis) → the
   conditional review line in `craft-line`, at high effort and **~1 iteration each**.
   Three axes can run in parallel with the full diff and their axis sources.
