@@ -1,1 +1,1 @@
-[{"path":"projects/benchkit.md","old":"**Spec and ticket authoring** → **the session holding the decision source, at\n  whatever tier it runs**","new":"**Spec and ticket authoring** → **a fresh mid-tier session**"}]
+[{"path":"projects/benchkit.md","old":"**Spec and ticket authoring** → **a fork of the current conversation**","new":"**Spec and ticket authoring** → **the invoking session**"}]
