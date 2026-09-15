@@ -4,7 +4,7 @@ Status: ready
 
 ## Destination
 
-Decide how debug structure can guide spec writing, implementation, and semantic review.
+Decide how debug structure can guide spec writing, ticket slicing, implementation, and semantic review.
 One replacement spec covers the debug authorship repair and phase-specific guidance adaptations.
 
 ## Notes
@@ -22,6 +22,8 @@ The current conversation excludes trial flags and comparative performance claims
 - [What structure should each phase adopt?](debug-loop-guidance/tickets/2.md): Preserve debug locally and adapt each of the three phases.
 
 - [What scope and adoption evidence belong in the replacement?](debug-loop-guidance/tickets/3.md): One replacement spec includes separate reviewable outcomes.
+
+- [How should ticket slicing apply the structure?](debug-loop-guidance/tickets/4.md): Add the sequence at the existing craft-tickets owner.
 
 ## Not yet specified
 
