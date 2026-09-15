@@ -3,7 +3,7 @@
 Recommendation: Preserve debug's local procedure and adapt its action, evidence, and stop sequence to the three build phases.
 Scope: Spec writing, implementation, semantic review, and the already-requested debug authorship repair.
 Evidence status: Source reads support the structural comparison. No Bench timing experiment establishes a speed gain.
-Consumed by: decisions/debug-loop-guidance.md
+Consumed by: specs/debug-loop-guidance/decisions/debug-loop-guidance.md
 Drift: Refresh after the cited guidance, proposed scope, or published research changes.
 Retire when: The replacement spec compiles this map and preserves its evidence.
 
