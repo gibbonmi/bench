@@ -577,12 +577,15 @@ escalation.
   session that loads it, so the effort is high. The top tier implements
   nothing, code or prose, unless the reviewer names it for the run (reviewer
   direction, 2026-08-26). The `craft-skills` and `craft-adr` skills apply.
-- **Spec and ticket authoring** → **the session holding the decision source, at
-  whatever tier it runs**.
+- **Spec and ticket authoring** → **a fork of the current conversation**.
   `/bench-write-spec` accepts exactly one of three sources: a ready compiled
   map, a reviewer-confirmed current conversation, or a named reviewed artifact.
-  It authors the spec and tickets from that source and the current tree. Top +
-  high remains a reviewer-approved escalation. After ticket approval, one
+  The invoking session forks before authoring, and that context-inheriting fork
+  authors the spec and slices the tickets from the source and the current tree.
+  The fork inherits the invoking session's line, with no model override.
+
+  Top +
+  high remains a reviewer-approved escalation before the fork. After ticket approval, one
   session on the approved implementation line retains the build. Distinct from the doc-authoring leverage
   override above: that spends high effort on the kit's guidance prose.
 - **`bench` CLI shell plumbing** → cheap model, low–medium effort at the known seam.
@@ -593,7 +596,7 @@ escalation.
 - **Spec-and-tickets review round** (`/bench-write-spec`) → **reviewer sign-off**.
   The reviewer applies `craft-tickets` and `craft-spec` to the spec and its ticket
   breakdown after the author slices it. `/bench-write-spec` owns the round's
-  operating protocol, and the author retains all writes.
+  operating protocol, and the fork retains all writes.
 - **Review-axis delegate** (`/bench-review-implementation`, one per axis) → the
   conditional review line in `craft-line`, at high effort and **~1 iteration each**.
   Three axes can run in parallel with the full diff and their axis sources.

@@ -1,0 +1,1 @@
+[{"path":".agents/commands/bench-write-spec.md","old":"The invoking session immediately forks the current conversation and charges that fork to author the spec and slice its tickets.","new":"The invoking session authors the spec and tickets directly."}]

@@ -36,7 +36,9 @@ tree or multi-session fog to `$bench-shape-idea`.
 
 ## Who runs this phase
 
-The session holding the decision source authors the spec and tickets at whatever tier it runs. The approved implementation session starts after ticket approval and retains authorship through the build. Spec authoring owns engineering seams, deep-versus-thin design, tests,
+The invoking session immediately forks the current conversation and charges that fork to author the spec and slice its tickets. The fork inherits the invoking session's line. Omit a model override. Keep all spec-and-ticket writes in the phase worktree. The invoking session coordinates the phase and presents the fork's completed approval table to the reviewer.
+
+The approved implementation session starts after ticket approval and retains authorship through the build. Spec authoring owns engineering seams, deep-versus-thin design, tests,
 acceptance coverage, hostile-input attachment, and gate attachment; shaping sources constrain behavior, scope,
 compatibility, or a reviewer-chosen seam.
 
