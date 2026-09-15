@@ -12,12 +12,20 @@ Consume the accepted DG-C3 tip and its verified shared registry before editing.
 The predecessor supplies a green integration base and complete evidence for its own phase.
 
 Shared writes require this order but do not merge the independent phase outcomes.
-Use the spec's quoted rule predicates and existing conformance seam.
-Add each owned omission fixture and prove its mutation red before restoration.
+Use the spec's acceptance predicates and existing conformance seam.
+Reuse sufficient existing owner checks instead of adding duplicate policy sentences.
+Add a missing rule or reference fixture and prove its mutation red before restoration.
 Keep command registry changes limited to mechanical closure of existing inventories.
 
 Reference craft-tdd for minimal declarations and the two row classifications.
+Do not restate those rules in the implementation command.
+DG27 and DG28 require observed adoption evidence, not new copies protected by anchors.
 Keep the approved spec target, existing stop-short route, retained author, and repair allowance.
+
+Use the spec's compiled task with two material actions.
+Retain a focused result after each action.
+Exercise minimal setup, an observed passing row, and an unavailable initial signal with its reason.
+Use a separate contradictory-target variant to exercise the existing wrong-spec exit.
 
 Run the matching fresh-session task from the spec before this chunk closes.
 Retain its native evidence under this chunk in `reviews/debug-loop-guidance.md`.
@@ -33,7 +41,8 @@ Leave absent or failed adoption evidence open.
 - [ ] After each material implementation action, rerun its focused evidence and inspect the result.
 - [ ] An implementation action can contain several related edits before its focused rerun.
 - [ ] When evidence contradicts the approved behavior or seam, use the existing stop-short route.
-- [ ] A fresh-session implementation task records focused evidence after each material action through completion or the existing stop.
+- [ ] A fresh-session implementation task records a focused result after each of two material actions.
+- [ ] The contradictory-target variant uses the existing wrong-spec exit before dependent work continues.
 - [ ] Each owned omission fixture turns its registered check red and restores to green.
 - [ ] The focused output shows executed fixture tests with no environment skip.
 - [ ] The fresh-session evidence names this ticket's source tip and observable result.

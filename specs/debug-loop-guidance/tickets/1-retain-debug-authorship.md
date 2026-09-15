@@ -10,13 +10,18 @@ Implement DG-C1 at `.agents/commands/bench-debug.md`.
 Keep the guidance, anchors, fixtures, and fresh-session adoption task in this complete ticket.
 
 Shared writes require this order but do not merge the independent phase outcomes.
-Use the spec's quoted rule predicates and existing conformance seam.
-Add each owned omission fixture and prove its mutation red before restoration.
+Use the spec's acceptance predicates and existing conformance seam.
+Reuse sufficient existing owner checks instead of adding duplicate policy sentences.
+Add a missing rule or reference fixture and prove its mutation red before restoration.
 Keep command registry changes limited to mechanical closure of existing inventories.
 
 Replace the obsolete scoped-fix and never-charges-debug routes in the debug integration section.
 Point craft-delegate to that section for the diagnostic report contract.
 Keep debug Phases 1 through 6 and loop-constructions local.
+
+Use the spec's fenced empty-list defect for the repair case.
+Use its separate out-of-fence cause for the diagnostic case.
+Retain the original reproduction and evidence that the delegate preserves dirty work without unauthorized edits.
 
 Run the matching fresh-session task from the spec before this chunk closes.
 Retain its native evidence under this chunk in `reviews/debug-loop-guidance.md`.

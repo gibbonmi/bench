@@ -12,9 +12,15 @@ Consume the accepted DG-C2 tip and its verified shared registry before editing.
 The predecessor supplies a green integration base and complete evidence for its own phase.
 
 Shared writes require this order but do not merge the independent phase outcomes.
-Use the spec's quoted rule predicates and existing conformance seam.
-Add each owned omission fixture and prove its mutation red before restoration.
+Use the spec's acceptance predicates and existing conformance seam.
+Reuse sufficient existing owner checks instead of adding duplicate policy sentences.
+Add a missing rule or reference fixture and prove its mutation red before restoration.
 Keep command registry changes limited to mechanical closure of existing inventories.
+
+Use the spec's independent summary and export outcomes with a shared formatter.
+Retain two complete serial tickets and checks usable before successors exist.
+Merge the supplied test-only fragment into its complete behavior slice.
+Do not implement the feature during this task.
 
 Run the matching fresh-session task from the spec before this chunk closes.
 Retain its native evidence under this chunk in `reviews/debug-loop-guidance.md`.

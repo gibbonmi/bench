@@ -34,6 +34,17 @@ They supplement the resolved tickets in this one compiled decision source.
 - Use a sufficient existing seam before exploring alternatives.
   Explore alternatives only when current-source evidence leaves the seam unresolved.
 
+#### Consolidated specification, 2026-09-15
+
+The reviewer selected the pattern draft as the base and authorized consolidation and commit.
+Retain five tickets and the accepted behavior.
+Use concrete adoption tasks for both debug fences, new-feature ambiguity, shared writes, two material actions, and both review evidence routes.
+
+Craft-review owns the review sequence and refers to finding-discipline for the evidence distinction.
+Keep existing TDD, repair, and uncertain-seam policies at their current owners.
+Reuse sufficient checks instead of adding duplicate guidance predicates.
+This authorization covers spec artifacts only, without implementation or delegated review.
+
 #### Retained debug decisions
 
 The loop-owning session writes the in-scope repair.
