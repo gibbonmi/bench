@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Cross-harness review opt-in
+
+- Changed implementation review to run cross-harness falsification only when the reviewer requests it.
+
 ### Repair evidence pilot
 
 - Added repository-only repair-pilot reports with explicit example-class coverage, provisional and inconclusive states, stable full evidence output, and an operating guide for a later audited pilot.

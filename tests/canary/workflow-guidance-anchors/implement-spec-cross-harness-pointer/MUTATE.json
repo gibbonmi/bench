@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-implement-spec.md",
+    "old": "The review phase owns cross-harness review opt-in.",
+    "new": "The review phase owns review completion."
+  }
+]

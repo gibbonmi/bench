@@ -70,9 +70,8 @@ consumed the cap. Keep landed work landed. Then route by cause:
 
 This command orchestrates retained implementation, chunk reviews, the final landing, and `/bench-final-check`. It refuses on a missing or unnamed spec. At every phase
 boundary it writes the phase reached into `capture/session-handoff.md` and refreshes
-the pin with `bench handoff`. Outside the kit-guidance set, a diff large enough to hide
-bugs pauses to ask the reviewer before escalating tier or adding a cross-harness
-falsification pass. Tier escalation is an offer; the review phase owns the standing pass.
+the pin with `bench handoff`. A diff large enough to hide bugs pauses to ask the reviewer
+before escalating tier. The review phase owns cross-harness review opt-in.
 
 ## `--delegate`
 
