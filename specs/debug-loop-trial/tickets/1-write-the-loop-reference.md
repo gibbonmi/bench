@@ -2,7 +2,7 @@
 
 Blocked by: none
 Writes: .agents/skills/bench-craft-tdd/references/loop.md (new), .agents/skills/bench-craft-tdd/SKILL.md, .agents/commands/bench-debug.md, CONTEXT.md, projects/benchkit.md, CHANGELOG.md, internal/anchors/registry_debug_loop.go (new), internal/anchors/registry_data.go, internal/conformance/registry_test.go, tests/canary/workflow-guidance-anchors, tests/canary/skills-index-command-adapters/debug-implicit-invocation-reverted, tests/canary/docs-currency-token-diet/signal-vocabulary-drift, tests/canary/guidance-prose-budgets/over-budget-skill, tests/canary/line-routing/line-binding-prose-drift, tests/canary/skill-description-budgets, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: DL1, DL2, DL3, DL4, DL22
+Covers: DL1, DL2, DL3, DL4, DL5, DL6, DL7, DL38, DL39
 
 ## What to build
 
@@ -12,7 +12,7 @@ Add the **loop** entry to `CONTEXT.md`. Create the new anchor registry file, app
 
 ## Acceptance
 
-- [ ] `loop.md` states the four moves in order, and a fixture that drops the first move reds `docs-currency-workflow`.
+- [ ] `loop.md` states the four moves in order, one sentence each, and a fixture that drops any one move reds `docs-currency-workflow`.
 - [ ] `loop.md` carries the checkbox list, and a fixture that restores the list to `bench-debug.md` reds the check.
 - [ ] `bench-debug.md` Phase 1 names `references/loop.md`, and a fixture that drops the pointer reds the check.
 - [ ] `CONTEXT.md` defines **loop**, and a fixture that drops the entry reds the check.
