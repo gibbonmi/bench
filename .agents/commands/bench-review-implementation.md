@@ -36,11 +36,10 @@ The coordinator writes one repair ticket when accepted repairs amend the coverag
 
 The coordinator records every dogfood run in the spec before repair coverage closes. An unrecorded run is a blocking finding.
 
-A diff that changes kit guidance takes a standing cross-harness
-falsification pass. The kit-guidance set is any file under `.agents/` or
-the file `.bench/BENCH.md`. Each falsification finding takes one explicit
-outcome of accept, merge, or dismiss. An accepted falsification
-finding joins the review findings and takes the repair-routing disposition.
+A cross-harness falsification pass runs only when the reviewer requests it.
+Each falsification finding takes one explicit outcome of accept, merge, or
+dismiss. An accepted falsification finding joins the review findings and takes
+the repair-routing disposition.
 
 A delegated chunk review starts after every ticket of the chunk reaches the integrated chunk tip. A per-ticket review does not replace that full-chunk review. Each delegated axis excludes the orchestrator and every current and former author of the run.
 
@@ -128,9 +127,8 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    capable-harness handoff. The handoff names the repository, the assignment,
    the frozen pair, the charge inputs, the destination harness, and that
    harness's exact native continuation command. Substitute no same-family CLI
-   launcher, and collect no axis into coordinator context. The standing
-   cross-harness falsification pass keeps its separate route and its existing
-   trigger.
+   launcher, and collect no axis into coordinator context. An explicitly
+   requested cross-harness falsification pass keeps its separate route.
 
    A historical review and a spec-less review keep their existing preparation
    entry points under this same native authority rule.

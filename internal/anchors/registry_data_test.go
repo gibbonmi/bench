@@ -896,14 +896,11 @@ func TestRepairTicketOwnerAnchorsRedOnRemoval(t *testing.T) {
 	}.check(t)
 }
 
-// TestStandingFalsificationAnchorsRedOnRemoval holds the rules that make a second
-// harness read every kit-guidance diff. The review phase file states the standing pass
-// and names the set by path. It gives a falsification finding its three labels, and it
-// bridges an accepted one to the repair-routing label. The recipes name the exec form the
-// guard allows, and the build phase file scopes its ask-before-adding rule and keeps the
-// retired offer sentence out. Each section, needle, and diagnostic is written here
-// independently of the registry.
-func TestStandingFalsificationAnchorsRedOnRemoval(t *testing.T) {
+// TestCrossHarnessFalsificationAnchorsRedOnRemoval holds the opt-in boundary for a
+// cross-harness pass and the disposition rules that apply when the pass runs. The
+// recipes name the exec form the guard permits. The build phase points to the review
+// phase as the owner. Each section, needle, and diagnostic is independent of the registry.
+func TestCrossHarnessFalsificationAnchorsRedOnRemoval(t *testing.T) {
 	const (
 		review   = ".agents/commands/bench-review-implementation.md"
 		recipes  = ".agents/skills/bench-craft-delegate/references/cross-harness-reviewers.md"
@@ -915,14 +912,14 @@ func TestStandingFalsificationAnchorsRedOnRemoval(t *testing.T) {
 			{
 				file:    review,
 				section: "Review modes",
-				needle:  "A diff that changes kit guidance takes a standing cross-harness falsification pass.",
-				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the standing cross-harness falsification pass for a kit-guidance diff",
+				needle:  "A cross-harness falsification pass runs only when the reviewer requests it.",
+				want:    ".agents/commands/bench-review-implementation.md Review modes dropped reviewer opt-in for a cross-harness falsification pass",
 			},
 			{
-				file:    review,
-				section: "Review modes",
-				needle:  "The kit-guidance set is any file under `.agents/` or the file `.bench/BENCH.md`.",
-				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the kit-guidance set of any file under `.agents/` plus the file `.bench/BENCH.md`",
+				file:      review,
+				needle:    "standing cross-harness",
+				want:      ".agents/commands/bench-review-implementation.md restored a standing cross-harness falsification pass",
+				forbidden: true,
 			},
 			{
 				file:    review,
@@ -944,14 +941,8 @@ func TestStandingFalsificationAnchorsRedOnRemoval(t *testing.T) {
 			{
 				file:    fullSpec,
 				section: "`--full <spec>`",
-				needle:  "Outside the kit-guidance set, a diff large enough to hide bugs",
-				want:    ".agents/commands/bench-implement-spec.md `--full` section dropped the kit-guidance-set scope on the ask-before-adding rule",
-			},
-			{
-				file:      fullSpec,
-				needle:    "Both are offers; the command never applies them silently.",
-				want:      ".agents/commands/bench-implement-spec.md retained the retired sentence that calls the tier escalation and the falsification pass both offers",
-				forbidden: true,
+				needle:  "The review phase owns cross-harness review opt-in.",
+				want:    ".agents/commands/bench-implement-spec.md `--full` section dropped the cross-harness review opt-in pointer",
 			},
 		},
 	}.check(t)

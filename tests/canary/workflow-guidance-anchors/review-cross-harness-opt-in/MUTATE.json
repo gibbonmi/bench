@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "runs only when the reviewer requests it",
+    "new": "runs when the coordinator selects it"
+  }
+]
