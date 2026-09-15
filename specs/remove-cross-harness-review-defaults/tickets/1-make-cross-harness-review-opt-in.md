@@ -1,7 +1,7 @@
 # Make cross-harness review opt-in
 
 Blocked by: none
-Writes: .agents/commands/bench-implement-spec.md, .agents/commands/bench-review-implementation.md, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, tests/canary/workflow-guidance-anchors/review-cross-harness-opt-in (new), tests/canary/workflow-guidance-anchors/review-standing-falsification, tests/canary/workflow-guidance-anchors/implement-spec-cross-harness-pointer (new), tests/canary/workflow-guidance-anchors/implement-spec-offer-scope, tests/canary/workflow-guidance-anchors/review-kit-guidance-set, CHANGELOG.md, specs/remove-cross-harness-review-defaults/tickets/1-make-cross-harness-review-opt-in.md (new)
+Writes: .agents/commands/bench-implement-spec.md, .agents/commands/bench-review-implementation.md, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, tests/canary/workflow-guidance-anchors/review-cross-harness-opt-in (new), tests/canary/workflow-guidance-anchors/review-standing-falsification, tests/canary/workflow-guidance-anchors/review-falsification-dispositions, tests/canary/workflow-guidance-anchors/review-falsification-accept-routing, tests/canary/workflow-guidance-anchors/implement-spec-cross-harness-pointer (new), tests/canary/workflow-guidance-anchors/implement-spec-offer-scope, tests/canary/workflow-guidance-anchors/review-kit-guidance-set, CHANGELOG.md, specs/remove-cross-harness-review-defaults/tickets/1-make-cross-harness-review-opt-in.md (new)
 Covers: none
 
 ## What to build

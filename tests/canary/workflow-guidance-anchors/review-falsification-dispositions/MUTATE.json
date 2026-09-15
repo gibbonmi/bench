@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/commands/bench-review-implementation.md",
-    "old": "outcome of accept, merge, or dismiss.",
-    "new": "outcome."
+    "old": "Each falsification finding takes one explicit outcome of accept, merge, or",
+    "new": "Each falsification finding takes one explicit outcome of"
   }
 ]
