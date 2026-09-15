@@ -2,7 +2,7 @@
 
 Blocked by: 1-write-the-loop-reference.md
 Writes: .agents/commands/bench-debug.md, .agents/skills/bench-craft-delegate/SKILL.md, CHANGELOG.md, internal/anchors/registry_debug_loop.go (new), tests/canary/workflow-guidance-anchors, tests/canary/skills-index-command-adapters/debug-implicit-invocation-reverted, tests/canary/claude-agent-definitions, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: DL8, DL9, DL10, DL11, DL12, DL13
+Covers: DL8, DL9, DL10, DL11, DL12, DL13, DL45, DL46
 
 ## What to build
 
@@ -18,6 +18,7 @@ Replace `craft-delegate`'s blocked-delegate sentence with one that names the thr
 
 - [ ] A fixture that restores the `craft-delegate` fix route to `bench-debug.md` reds `docs-currency-workflow`.
 - [ ] A fixture that drops the loop-session-writes-the-fix sentence reds the check.
+- [ ] A fixture that drops the read-only-search sentence or the loop-command-in-report sentence reds the check.
 - [ ] A fixture that restores the words "a scoped fix" to `bench-debug.md` reds the check.
 - [ ] A fixture that drops the in-fence permission reds the check.
 - [ ] A fixture that drops the out-of-fence limit or the loop command from the blocked report reds the check.
