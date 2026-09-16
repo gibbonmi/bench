@@ -33,6 +33,7 @@ func TestEvaluatePathAnchorKinds(t *testing.T) {
 	}{
 		{Require, false}, {Forbid, true},
 		{RequireInSection, false}, {ForbidInSection, true},
+		{ForbidCaseFoldedEmphasis, true},
 	} {
 		t.Run(fmt.Sprint(tc.kind), func(t *testing.T) {
 			anchor := pathTestAnchor(t, tc.kind)
@@ -48,6 +49,27 @@ func TestEvaluatePathAnchorKinds(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestEvaluatePathIgnoresCaseFoldedEmphasisInsideHTMLComment(t *testing.T) {
+	anchor := pathTestAnchor(t, ForbidCaseFoldedEmphasis)
+	root := t.TempDir()
+	path := filepath.Join(root, filepath.FromSlash(anchor.File))
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte("<!-- An executable **red** is mandatory. -->\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	result := EvaluatePath(root, anchor.File)
+	if slices.Contains(result.Diagnostics, anchor.Diagnostic) {
+		t.Fatalf("comment-only phrase raised %q", anchor.Diagnostic)
+	}
+	for _, location := range result.Locations {
+		if location.Anchor == anchor && location.Line != 0 {
+			t.Fatalf("comment-only phrase located at line %d, want 0", location.Line)
+		}
 	}
 }
 

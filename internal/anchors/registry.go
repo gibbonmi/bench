@@ -101,7 +101,7 @@ func evaluate(root string, group *Group, subject string) PathEvaluation {
 			}
 			continue
 		}
-		if anchor.Kind == Forbid {
+		if anchor.Kind == Forbid || anchor.Kind == ForbidCaseFoldedEmphasis {
 			if !Satisfied(anchor.Kind, file.active, anchor.Needle) {
 				result.Diagnostics = append(result.Diagnostics, anchor.Diagnostic)
 			}

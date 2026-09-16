@@ -27,6 +27,45 @@ func TestSatisfiedNormalizesByKind(t *testing.T) {
 	}
 }
 
+func TestForbidCaseFoldedEmphasisMatchesBoundedForms(t *testing.T) {
+	const needle = "executable red is mandatory"
+	for _, test := range []struct {
+		name string
+		text string
+	}{
+		{"bold", "An executable **red** is mandatory before specification."},
+		{"asterisk italic", "An executable *red* is mandatory before specification."},
+		{"underscore bold", "An executable __red__ is mandatory before specification."},
+		{"underscore italic", "An executable _red_ is mandatory before specification."},
+		{"nested asterisks", "An executable ***red*** is mandatory before specification."},
+		{"uppercase", "An EXECUTABLE **RED** IS MANDATORY before specification."},
+		{"inline code stays searchable", "`An executable red is mandatory before specification.`"},
+		{"fenced code stays searchable", "```markdown\nAn executable red is mandatory before specification.\n```"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if Satisfied(ForbidCaseFoldedEmphasis, test.text, needle) {
+				t.Errorf("Satisfied(ForbidCaseFoldedEmphasis, %q, %q) = true, want false", test.text, needle)
+			}
+		})
+	}
+	for _, test := range []struct {
+		name string
+		text string
+	}{
+		{"legitimate negative", "An executable red is not mandatory before specification."},
+		{"escaped opening", `An executable \**red** is mandatory before specification.`},
+		{"escaped closing", `An executable **red\** is mandatory before specification.`},
+		{"unpaired", "An executable **red is mandatory before specification."},
+		{"intraword underscore", "An executable r_ed_ is mandatory before specification."},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if !Satisfied(ForbidCaseFoldedEmphasis, test.text, needle) {
+				t.Errorf("Satisfied(ForbidCaseFoldedEmphasis, %q, %q) = false, want true", test.text, needle)
+			}
+		})
+	}
+}
+
 func TestStripHTMLComments(t *testing.T) {
 	tests := []struct {
 		name string

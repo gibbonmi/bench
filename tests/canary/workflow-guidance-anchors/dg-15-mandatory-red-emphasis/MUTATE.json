@@ -1,0 +1,1 @@
+[{"path":".agents/skills/bench-craft-spec/SKILL.md","old":"## The acceptance coverage map\n\nEach row ties a story to one observable behavior at a seam:","new":"## The acceptance coverage map\n\nAn executable **red** is mandatory before a new feature is specified.\nEach row ties a story to one observable behavior at a seam:"}]

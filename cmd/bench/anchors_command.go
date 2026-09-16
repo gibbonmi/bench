@@ -78,6 +78,8 @@ func anchorKindName(kind anchors.Kind) string {
 		return "require-in-section"
 	case anchors.ForbidInSection:
 		return "forbid-in-section"
+	case anchors.ForbidCaseFoldedEmphasis:
+		return "forbid-case-folded-emphasis"
 	default:
 		return "unknown"
 	}

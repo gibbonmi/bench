@@ -143,6 +143,37 @@ func TestAnchorsReportsForbiddenNeedles(t *testing.T) {
 	t.Fatal("registry has no forbidden anchor")
 }
 
+func TestAnchorsReportsCaseFoldedEmphasisViolation(t *testing.T) {
+	var target anchors.Anchor
+	for _, anchor := range anchors.Entries() {
+		if anchor.Kind == anchors.ForbidCaseFoldedEmphasis {
+			target = anchor
+			break
+		}
+	}
+	if target.File == "" {
+		t.Fatal("registry has no case-folded emphasis anchor")
+	}
+	root := newAXIEnvelopeRepo(t)
+	body := "<!-- hidden violation -->\nKELVIN before the match\nAn EXECUTABLE **RED** IS MANDATORY before specification.\n"
+	writeAXIFixture(t, filepath.Join(root, filepath.FromSlash(target.File)), body)
+	result := runAXICommandAt(t, root, []string{"anchors", target.File})
+	if result.code != 1 || result.stderr != "" {
+		t.Fatalf("anchors emphasized violation = %#v, want exit 1 and no stderr", result)
+	}
+	if !strings.Contains(result.stdout, toon.Errorf("anchor", target.Diagnostic)+"\n") {
+		t.Fatalf("anchors emphasized violation stdout = %q, want diagnostic %q", result.stdout, target.Diagnostic)
+	}
+	want, err := toon.TableTyped("anchors", []string{"kind", "section", "needle", "line"}, [][]any{{"forbid-case-folded-emphasis", "", target.Needle, 3}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantRow := strings.Split(want, "\n")[1]
+	if !strings.Contains(result.stdout, wantRow+"\n") {
+		t.Fatalf("anchors emphasized violation stdout = %q, want row %q", result.stdout, wantRow)
+	}
+}
+
 func TestAnchorsLeavesUnregisteredPathEmpty(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
 	writeAXIFixture(t, filepath.Join(root, "unregistered.md"), "# An ordinary file\n")

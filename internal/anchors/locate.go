@@ -20,7 +20,7 @@ import (
 func Locate(kind Kind, section, needle, data string) int {
 	stripped, origin := stripCommentsMapped(data)
 	text, textOrigin := stripped, origin
-	if kind == RequireInSection || kind == ForbidInSection {
+	if kind.sectionScoped() {
 		body, bodyOrigin, count := sectionRunesMapped(stripped, origin, section)
 		// An absent section and a duplicated one both refuse: the evaluator resolves a
 		// scoped anchor against exactly one owning heading.
@@ -29,18 +29,14 @@ func Locate(kind Kind, section, needle, data string) int {
 		}
 		text, textOrigin = body, bodyOrigin
 	}
-	collapsed, collapsedOrigin := collapseSpaceMapped(text, textOrigin)
-	searchText := collapsed
-	searchNeedle := []rune(CollapseSpace(needle))
-	if kind == RequireInSection || kind == ForbidInSection {
-		searchText = toLowerRunes(collapsed)
-		searchNeedle = toLowerRunes(searchNeedle)
-	}
+	searchText, searchOrigin := normalizeMatchMapped(kind, text, textOrigin)
+	searchNeedleRunes := []rune(needle)
+	searchNeedle, _ := normalizeMatchMapped(kind, searchNeedleRunes, identityOrigin(len(searchNeedleRunes)))
 	at := indexRunes(searchText, searchNeedle)
-	if at < 0 || at >= len(collapsedOrigin) {
+	if at < 0 || at >= len(searchOrigin) {
 		return 0
 	}
-	return lineAtRune(data, collapsedOrigin[at])
+	return lineAtRune(data, searchOrigin[at])
 }
 
 // commentOpen and commentClose delimit an HTML comment, fenceMark opens a fenced block,
@@ -153,6 +149,92 @@ func collapseSpaceMapped(runes []rune, origin []int) (out []rune, outOrigin []in
 		inField = true
 	}
 	return out, outOrigin
+}
+
+func normalizeMatchMapped(kind Kind, runes []rune, origin []int) ([]rune, []int) {
+	if kind == ForbidCaseFoldedEmphasis {
+		runes, origin = stripMarkdownEmphasisMapped(runes, origin)
+	}
+	runes, origin = collapseSpaceMapped(runes, origin)
+	if kind.sectionScoped() || kind == ForbidCaseFoldedEmphasis {
+		runes = toLowerRunes(runes)
+	}
+	return runes, origin
+}
+
+// stripMarkdownEmphasisMapped removes paired emphasis markers at word boundaries.
+// Intraword underscores remain visible, so identifiers keep their exact spelling.
+func stripMarkdownEmphasisMapped(runes []rune, origin []int) (out []rune, outOrigin []int) {
+	for i := 0; i < len(runes); {
+		width := emphasisMarkerWidth(runes, i)
+		if width == 0 || !emphasisCanOpen(runes, i, width) {
+			out = append(out, runes[i])
+			outOrigin = append(outOrigin, origin[i])
+			i++
+			continue
+		}
+		close := emphasisClose(runes, i+width, runes[i], width)
+		if close < 0 {
+			out = append(out, runes[i:i+width]...)
+			outOrigin = append(outOrigin, origin[i:i+width]...)
+			i += width
+			continue
+		}
+		out = append(out, runes[i+width:close]...)
+		outOrigin = append(outOrigin, origin[i+width:close]...)
+		i = close + width
+	}
+	return out, outOrigin
+}
+
+func emphasisMarkerWidth(runes []rune, at int) int {
+	if at >= len(runes) || runes[at] != '*' && runes[at] != '_' {
+		return 0
+	}
+	if escapedAt(runes, at) {
+		return 0
+	}
+	if at > 0 && runes[at-1] == runes[at] {
+		return 0
+	}
+	end := at
+	for end < len(runes) && runes[end] == runes[at] {
+		end++
+	}
+	if width := end - at; width >= 1 && width <= 3 {
+		return width
+	}
+	return 0
+}
+
+func escapedAt(runes []rune, at int) bool {
+	backslashes := 0
+	for i := at - 1; i >= 0 && runes[i] == '\\'; i-- {
+		backslashes++
+	}
+	return backslashes%2 == 1
+}
+
+func emphasisCanOpen(runes []rune, at, width int) bool {
+	if at+width >= len(runes) || unicode.IsSpace(runes[at+width]) {
+		return false
+	}
+	return at == 0 || unicode.IsSpace(runes[at-1]) || unicode.IsPunct(runes[at-1])
+}
+
+func emphasisClose(runes []rune, from int, marker rune, width int) int {
+	for at := from; at < len(runes); at++ {
+		if runes[at] != marker || emphasisMarkerWidth(runes, at) != width {
+			continue
+		}
+		if at == from || unicode.IsSpace(runes[at-1]) {
+			continue
+		}
+		if at+width == len(runes) || unicode.IsSpace(runes[at+width]) || unicode.IsPunct(runes[at+width]) {
+			return at
+		}
+	}
+	return -1
 }
 
 // identityOrigin answers the origin map of a rune slice that has had nothing removed yet:

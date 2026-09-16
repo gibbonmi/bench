@@ -3,8 +3,6 @@
 // same semantics without importing the conformance suite.
 package anchors
 
-import "strings"
-
 // Kind selects an anchor's normalization and presence requirement.
 type Kind uint8
 
@@ -17,29 +15,30 @@ const (
 	RequireInSection
 	// ForbidInSection forbids text inside an H2 section.
 	ForbidInSection
+	// ForbidCaseFoldedEmphasis forbids case-folded text after ordinary emphasis normalization.
+	ForbidCaseFoldedEmphasis
 )
 
 // Satisfied reports whether text satisfies kind's presence requirement after
 // applying its normalization rules.
 func Satisfied(kind Kind, text, needle string) bool {
-	text = CollapseSpace(text)
-	needle = CollapseSpace(needle)
+	textRunes := []rune(text)
+	needleRunes := []rune(needle)
+	textRunes, _ = normalizeMatchMapped(kind, textRunes, identityOrigin(len(textRunes)))
+	needleRunes, _ = normalizeMatchMapped(kind, needleRunes, identityOrigin(len(needleRunes)))
+	found := indexRunes(textRunes, needleRunes) >= 0
 	switch kind {
-	case Require:
-		return strings.Contains(text, needle)
-	case Forbid:
-		return !strings.Contains(text, needle)
-	case RequireInSection:
-		text = strings.ToLower(text)
-		needle = strings.ToLower(needle)
-		return strings.Contains(text, needle)
-	case ForbidInSection:
-		text = strings.ToLower(text)
-		needle = strings.ToLower(needle)
-		return !strings.Contains(text, needle)
+	case Require, RequireInSection:
+		return found
+	case Forbid, ForbidInSection, ForbidCaseFoldedEmphasis:
+		return !found
 	default:
 		return false
 	}
+}
+
+func (kind Kind) sectionScoped() bool {
+	return kind == RequireInSection || kind == ForbidInSection
 }
 
 // MarkdownH2Section returns the first matching H2 section body.
