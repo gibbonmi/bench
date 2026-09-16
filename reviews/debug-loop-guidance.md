@@ -1375,6 +1375,15 @@ Every verification run reported no skips.
 | `bench test --check system` | pass | 33,794 ms |
 | `git diff --check` | pass | 0.2 s wall time |
 
+Runtime token counters were unavailable for the final Standards, Spec, and Coverage sessions.
+
+The reviewer explicitly authorized retention of the green post-limit DG-C2 repairs and closed this extension.
+Future tickets hard-stop after two post-review repair cycles.
+Before repair, an independent `gpt-6-astra / medium` session validates each suspected defect.
+Starting with DG-C3, Standards and Spec use separate `gpt-5.6-sol / high` sessions, while Coverage uses `gpt-6-astra / medium`.
+After acceptance reconciliation, one independent `gpt-6-astra / medium` whole-implementation bug hunt runs before landing.
+That hunt is advisory and replaces neither the three standard axes nor the gate.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1658,9 +1667,9 @@ Every verification run reported no skips.
     {
       "id": "DG-C2",
       "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
-      "tip": "20f64f51e4babbc8e515695bf3fe894bea4d764d",
-      "plan_digest": "sha256:77df9dce6661c721b25516c283dcf95bf125035eb510e3ffc04627b0cdf9feb8",
-      "source_digest": "0cf9944d04a327b9b2c81a3adff1a29bc41d2614",
+      "tip": "1bbbe3b0c995ccb06d5e3682923cd13478312055",
+      "plan_digest": "sha256:cb4c67ecf1bfedac4660be97cc3a9dece0217caff0502090a7280f2868c83006",
+      "source_digest": "c58697df7b0c3a6802c9d3ec28426567916de7f4",
       "acceptance_rows": ["DG9", "DG10", "DG11", "DG12", "DG13", "DG14", "DG15", "DG16"],
       "verification": [
         {
@@ -1669,13 +1678,13 @@ Every verification run reported no skips.
           "role": "author-verification",
           "model": "gpt-5.6-sol",
           "effort": "medium",
-          "source_digest": "0cf9944d04a327b9b2c81a3adff1a29bc41d2614",
+          "source_digest": "c58697df7b0c3a6802c9d3ec28426567916de7f4",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "codex:session/dgc2_author/dg-c2-anchors@20f64f51",
-            "digest": "sha256:fc95903ad829a6cebd5acf2b474255f2e43ba8cb6fca5f811666a05c73b866ac",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,2041\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "codex:session/dgc2_author/dg-c2-anchors@1bbbe3b0",
+            "digest": "sha256:83a6509dcadef4a9a2a8a8bd19fd881c9bbd21ed528b765713a4e71176d892db",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1421\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "anchors",
           "command": "bench test --check docs-currency-workflow",
@@ -1686,9 +1695,9 @@ Every verification run reported no skips.
             "exit_code": 1,
             "restore": "pass",
             "native_ref": {
-              "ref": "codex:session/dgc2_author/dg-c2-executable-red-probe@20f64f51",
-              "digest": "sha256:7610eb023229e97f5258709d09057fd72586eec8e09ddacdc2d53d33bcb1750f",
-              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/skills/bench-craft-spec/SKILL.md,swap,failed,1,yes\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: debug loop: DG15 forbids an executable red requirement for new-feature specification\"\nskips[0]{package,test,reason}:"
+              "ref": "codex:session/dgc2_author/dg-c2-executable-red-probe@1bbbe3b0",
+              "digest": "sha256:67d8c7c86d5b77b396649527cc654f29b2bc687cbd0592eea37311c96ff4dea3",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/skills/bench-craft-spec/SKILL.md,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,TestRootConformance,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,10072\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: debug loop: DG15 forbids an executable red requirement for new-feature specification\"\nskips[0]{package,test,reason}:"
             }
           }
         },
@@ -1698,13 +1707,13 @@ Every verification run reported no skips.
           "role": "author-verification",
           "model": "gpt-5.6-sol",
           "effort": "medium",
-          "source_digest": "0cf9944d04a327b9b2c81a3adff1a29bc41d2614",
+          "source_digest": "c58697df7b0c3a6802c9d3ec28426567916de7f4",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "codex:session/dgc2_author/dg-c2-bite@20f64f51",
-            "digest": "sha256:7acd9fc2db45edab5e1d8b25d55d927d5f17bfcac1e1068a58606d3c0024104f",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,10292\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "codex:session/dgc2_author/dg-c2-bite@1bbbe3b0",
+            "digest": "sha256:d5d2917e218f9daff4ef41c3b5b4bbcd7d544e673c5fb0150c48a0c76cac3874",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,9233\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "bite",
           "command": "bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner",
@@ -1716,13 +1725,13 @@ Every verification run reported no skips.
           "role": "author-verification",
           "model": "gpt-5.6-sol",
           "effort": "medium",
-          "source_digest": "0cf9944d04a327b9b2c81a3adff1a29bc41d2614",
+          "source_digest": "c58697df7b0c3a6802c9d3ec28426567916de7f4",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "codex:session/dgc2_author/dg-c2-budgets@20f64f51",
-            "digest": "sha256:c224ae6aff6b0057319e254320ee168971646da0b2de6eae4c92751c0643cf54",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "codex:session/dgc2_author/dg-c2-budgets@1bbbe3b0",
+            "digest": "sha256:195c58a46ff053795736e21abc37c5e1cd2949710ba2071a87e150719c5a0552",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "budgets",
           "command": "bench test --check guidance-prose-budgets",
@@ -1829,6 +1838,126 @@ Every verification run reported no skips.
           "tip": "20f64f51e4babbc8e515695bf3fe894bea4d764d",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "dg-c2-standards-final2-initial",
+          "performer": "/root/dgc2_final2_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "d36678d817c00e3af1e8fb117ce94eb4e6f5273c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "codex:collaboration/spawn_agent/dgc2_final2_standards",
+            "digest": "sha256:f7e33871f82a77a8096025807191ec0f18a20cd78709a49a4dada18d97277028",
+            "excerpt": "Standards: FAIL — 3 actionable findings; worst P2.\nDG-C2-S3 [P2] [ask-user] The repair duplicates user-directed transfer authority. craft-line:61 and BENCH.md:121 own the authority; delegation-discipline.md:90 re-derives it, while reviewrecord.Triggers owns the schema token. Keep authority in craft-line, token acceptance in the validator, and replace the added policy sentence with references to those owners.\nDG-C2-S4 [P2] [ask-user] craft-spec/SKILL.md:18 and :29 each place two imperative actions in one sentence, contrary to ste-prose.md:19-20. Split each coordinated imperative.\nDG-C2-S5 [P2] [ask-user] locate.go:12-19 still says only section kinds case-fold and omits emphasis normalization, but normalizeMatchMapped at :154-161 now applies both to ForbidCaseFoldedEmphasis. Update the edited contract comment.\nCheckpoint condition, not a finding: the existing DG-C2 record truthfully remains scoped to 20f64f51/0cf9944d. Before closure, append current source-bound author verification and all three current axes for the post-review repair source.\nSource: 8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc..dc2fe2551b99c237d0b2ee79c493257ad1971238.\nChecks: git diff --check passed; worktree clean.\nElapsed and runtime token counters: unavailable."
+          },
+          "axis": "Standards",
+          "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
+          "tip": "dc2fe2551b99c237d0b2ee79c493257ad1971238",
+          "finding_ids": ["DG-C2-S3", "DG-C2-S4", "DG-C2-S5"],
+          "supersedes": ["dg-c2-standards-final"]
+        },
+        {
+          "id": "dg-c2-standards-final2-pass",
+          "performer": "/root/dgc2_final2_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "c58697df7b0c3a6802c9d3ec28426567916de7f4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/followup_task/dgc2_final2_standards@6a2d3d51",
+            "digest": "sha256:5df85be6bbc805761541138bfc5dd42ce4a67b723435f2b28090fdcfa2db29aa",
+            "excerpt": "Standards: PASS — 0 actionable findings; worst issue: none. At frozen source 6a2d3d5196de587605ee327fcbed398b8291978b / source digest c58697df7b0c3a6802c9d3ec28426567916de7f4, DG-C2-S3, DG-C2-S4, DG-C2-S5, and DG-C2-COV1 are closed. Transfer direction and trigger tokens have single owners; revised procedural prose carries one instruction per sentence; Locate's contract matches its normalization; and the independent preserved-source expectation has a recorded production-omission red. No new Standards defect appears in the final provenance. The structured record remains intentionally pending coordinator finalization."
+          },
+          "axis": "Standards",
+          "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
+          "tip": "1bbbe3b0c995ccb06d5e3682923cd13478312055",
+          "finding_ids": [],
+          "supersedes": ["dg-c2-standards-final2-initial"]
+        },
+        {
+          "id": "dg-c2-spec-final2-initial",
+          "performer": "/root/dgc2_final2_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "d36678d817c00e3af1e8fb117ce94eb4e6f5273c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/spawn_agent/dgc2_final2_spec",
+            "digest": "sha256:609060d4ba42e937c5cc2b4ab2adff48331103c3ed0983092f1f21d49b7f8208",
+            "excerpt": "Spec axis: PASS — 0 actionable findings; worst issue: none.\nFrozen range 8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc..dc2fe2551b99c237d0b2ee79c493257ad1971238.\nDG9–DG16 match their approved predicates and final craft-spec guidance. DG16 adoption remains current against unchanged owner hash 16259b21a31431399fff3f7bd6cb0656e47d125272bc1eeff10b76e30aab45db. The approved user-directed transfer path records stopped predecessors and preserved sources, accepts only the closed user-directed trigger, retains stop/preservation checks, and enforces post-owner-change adoption freshness. All focused checks and system passed with zero skips."
+          },
+          "axis": "Spec",
+          "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
+          "tip": "dc2fe2551b99c237d0b2ee79c493257ad1971238",
+          "finding_ids": [],
+          "supersedes": ["dg-c2-spec-final"]
+        },
+        {
+          "id": "dg-c2-spec-final2-reaffirm",
+          "performer": "/root/dgc2_final2_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "c58697df7b0c3a6802c9d3ec28426567916de7f4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/followup_task/dgc2_final2_spec@6a2d3d51",
+            "digest": "sha256:bb55c2159250b3f1199c0fa58d1dfd6e0c45b52cd6de4ee010c65d9fd049193e",
+            "excerpt": "Spec axis reaffirmation: PASS — 0 actionable blocking findings; worst issue: none.\nFrozen range 8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc..6a2d3d5196de587605ee327fcbed398b8291978b.\nDG9–DG16 remain satisfied. DG13 preserves its bounded-action and inspected-result predicate through the revised owner text, matching anchor, and biting fixture. DG-C2-COV1 is closed by an independent preserved-source refusal test with a demonstrated production omission. The user-directed transfer plan retains stopped-predecessor and preserved-source evidence. Final DG16 adoption loaded the current craft-spec hash e6f4a86c177150e8d77fb68d03eed56d34c884b172c965eb59cc57e42c28ba61. No scope drift was found. All focused checks and the system suite passed with zero skips."
+          },
+          "axis": "Spec",
+          "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
+          "tip": "1bbbe3b0c995ccb06d5e3682923cd13478312055",
+          "finding_ids": [],
+          "supersedes": ["dg-c2-spec-final2-initial"]
+        },
+        {
+          "id": "dg-c2-coverage-final2-initial",
+          "performer": "/root/dgc2_final2_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "d36678d817c00e3af1e8fb117ce94eb4e6f5273c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "codex:collaboration/spawn_agent/dgc2_final2_coverage",
+            "digest": "sha256:57ed4ce9f3e47969321ef2d7597ac91abe277e548978e3498ef772a167e506c9",
+            "excerpt": "Coverage: fail — 1 actionable finding; worst issue: DG-C2-COV1.\n\nDG-C2-COV1 [auto-fix]: A valid replacement with trigger \"user-directed\", non-empty stopped evidence, and empty preserved source has no red-capable refusal test. The preserved-source requirement is binding at delegation-discipline.md:95-96 and spec.md:158-160, and production refuses it at internal/reviewrecord/delegated.go:184-185. TestDelegatedIdentityRefusals covers missing/unknown trigger, missing stop, and missing reassessment at delegated_test.go:103-118, while every replacement fixture populates Preserved. Add a missing-preserved-source case that clears history[1].Preserved and requires \"missing preserved source\"."
+          },
+          "axis": "Coverage",
+          "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
+          "tip": "dc2fe2551b99c237d0b2ee79c493257ad1971238",
+          "finding_ids": ["DG-C2-COV1"],
+          "supersedes": ["dg-c2-coverage-final"]
+        },
+        {
+          "id": "dg-c2-coverage-final2-pass",
+          "performer": "/root/dgc2_final2_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "c58697df7b0c3a6802c9d3ec28426567916de7f4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/followup_task/dgc2_final2_coverage@6a2d3d51",
+            "digest": "sha256:ba17ea305a3a2a0089ebba067ed023d106dde32828e1e83dc137776d2fb232f1",
+            "excerpt": "Coverage: pass. No actionable Coverage findings in frozen range 8b2073e3..6a2d3d51; count 0, worst issue none. DG-C2-COV1 is closed by the valid user-directed replacement case that clears only Preserved, plus the recorded production-guard omission probe that bit and restored with one intended failure and zero skips. The DG13 split anchor and fixture bite, the five-value transfer family retains its acceptance/refusal states, matcher/evaluator/locator/CLI edges pass, and final DG16 adoption matches the frozen craft-spec SHA-256 e6f4a86c177150e8d77fb68d03eed56d34c884b172c965eb59cc57e42c28ba61. Focused and system checks passed with zero skips."
+          },
+          "axis": "Coverage",
+          "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
+          "tip": "1bbbe3b0c995ccb06d5e3682923cd13478312055",
+          "finding_ids": [],
+          "supersedes": ["dg-c2-coverage-final2-initial"]
         }
       ]
     }
