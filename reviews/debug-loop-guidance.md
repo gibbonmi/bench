@@ -1796,7 +1796,10 @@ A redundant filtered invocation selected five fixtures and failed the universe-c
 That invocation supplies no suite pass; the complete invocation above supplies the required proof.
 
 Repair cycle 1 of 2 contains the source repair and adoption refresh below.
-Author verification is complete; independent re-review remains pending.
+Author verification and all three independent re-reviews passed.
+The re-reviews close all initial DG-C4 findings at frozen tip `82553bb01ebaec1bbdc72fc0d06f197e9a5d35e1`.
+Repair cycle 1 of 2 is closed.
+The completion checkpoint remains pending.
 DG-C5 remains unbuilt.
 
 ### Cycle 1 fresh adoption source
@@ -2657,9 +2660,9 @@ Both owner hashes remain those in the cycle-1 source table.
     {
       "id": "DG-C4",
       "base": "e6e32ddd27c85773f2b036e9b5fb9d6258ca1824",
-      "tip": "f08434a2957d6f6da44db31a6cd9abc2cd39ab27",
-      "plan_digest": "sha256:0bbd4ad24ba35bc16d72235ece0cb3efc195c1e3588ce41822c67e3d577e127c",
-      "source_digest": "14a5b666bd80e817814d56444c6b7bc40d5b0cfc",
+      "tip": "82553bb01ebaec1bbdc72fc0d06f197e9a5d35e1",
+      "plan_digest": "sha256:d522c7f3bb8f231a758986209286da90692048a775f1296fe1e7b3671b1de32d",
+      "source_digest": "e365f4297c5764639fcc9e777c7d8470d124fe35",
       "acceptance_rows": [
         "DG25",
         "DG26",
@@ -2738,6 +2741,72 @@ Both owner hashes remain those in the cycle-1 source table.
             "DG-C4-COV-1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dg-c4-standards-cycle1",
+          "performer": "/root/dgc4_standards_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "e365f4297c5764639fcc9e777c7d8470d124fe35",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/root/dgc4_standards_review",
+            "digest": "sha256:260642552d56a97535b13ef9396e4a1934198e4fa20ff292c4159d311169979b",
+            "excerpt": "Standards repair-cycle-1 re-review: PASS — 0 actionable findings; worst issue: none. DG-C4-S1 is closed: fresh source-bound DG7/DG8, DG16, DG24, and DG27/DG28/DG32 evidence used committed source `a508610d…`; recorded owner hashes match the frozen tip, with no later owner-byte changes. DG-C4-S2 is closed: the material-action and contradiction instructions now use one imperative per sentence, and their exact anchors and retained fixtures align and bite. Transfer provenance and fresh-session evidence are durable. Review-record, conformance, prose, budget, ticket, coverage, and whitespace checks passed."
+          },
+          "axis": "Standards",
+          "base": "e6e32ddd27c85773f2b036e9b5fb9d6258ca1824",
+          "tip": "82553bb01ebaec1bbdc72fc0d06f197e9a5d35e1",
+          "finding_ids": [],
+          "supersedes": [
+            "dg-c4-standards-initial"
+          ]
+        },
+        {
+          "id": "dg-c4-spec-cycle1",
+          "performer": "/root/dgc4_spec_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "e365f4297c5764639fcc9e777c7d8470d124fe35",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/root/dgc4_spec_review",
+            "digest": "sha256:05c07600f222f082a2eb04f1e156d6b9770fa35e32a62f0fb120a24936fdff1a",
+            "excerpt": "Spec reaffirmation: PASS — 0 findings; worst issue: none. Frozen range `e6e32ddd27c85773f2b036e9b5fb9d6258ca1824..82553bb01ebaec1bbdc72fc0d06f197e9a5d35e1`. DG-C4-SPEC-1 is closed: the material-action definition now includes changes to `a verification target`, its exact registered anchor matches the owner, and the biting fixture replaces that clause with the rejected route wording. Fresh owner and complete fixture-bite checks passed with zero skips. DG25–DG32 remain satisfied. Current adoption evidence records minimal compiled setup, `already covered` and `not TDD-able` classifications, focused results after both material actions, and a separate wrong-spec exit before dependent work. The adoption owner hashes match source `a508610d`, and those owner bytes are unchanged through the frozen tip."
+          },
+          "axis": "Spec",
+          "base": "e6e32ddd27c85773f2b036e9b5fb9d6258ca1824",
+          "tip": "82553bb01ebaec1bbdc72fc0d06f197e9a5d35e1",
+          "finding_ids": [],
+          "supersedes": [
+            "dg-c4-spec-initial"
+          ]
+        },
+        {
+          "id": "dg-c4-coverage-cycle1",
+          "performer": "/root/dgc4_coverage_review",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "e365f4297c5764639fcc9e777c7d8470d124fe35",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/root/dgc4_coverage_review",
+            "digest": "sha256:b15358dfed4548ba75eedade3a2ae15f5fd0572f2fbb166ee774cd4127808cf6",
+            "excerpt": "Coverage cycle 1: PASS. Frozen range e6e32ddd27c85773f2b036e9b5fb9d6258ca1824..82553bb01ebaec1bbdc72fc0d06f197e9a5d35e1. DG-C4-COV-1 is closed by fresh adoption against committed source a508610de1a1195ccc3c84f9a6dccfca9e94420c. All five owner hashes match the reviewed tip. The inspected artifacts cover DG7/DG8, DG16, DG24, and DG27/DG28/DG32, including their required alternate cases. DG29 target narrowing and rerun omission, plus both DG31 omissions, have current biting fixtures. Workflow guidance and the complete retained-fixture suite passed with zero failures or skips. No additional Coverage findings."
+          },
+          "axis": "Coverage",
+          "base": "e6e32ddd27c85773f2b036e9b5fb9d6258ca1824",
+          "tip": "82553bb01ebaec1bbdc72fc0d06f197e9a5d35e1",
+          "finding_ids": [],
+          "supersedes": [
+            "dg-c4-coverage-initial"
+          ]
         }
       ]
     }
