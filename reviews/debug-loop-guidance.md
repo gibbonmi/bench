@@ -1672,7 +1672,7 @@ It used the known Linux Go binary with a repository-local ignored cache.
 It did not classify these setup failures as behavioral reds.
 The retained Bench assignment remained read-only during adoption, and DG-C5 remains unbuilt.
 
-### Current DG32 native adoption
+### Historical DG32 committed adoption
 
 Session: `/root/dgc4_astra_integrator/dg32_committed_adoption`, fresh context
 Native ref: `codex:collaboration/spawn_agent/dg32_committed_adoption`
@@ -1729,8 +1729,229 @@ The handoff quotes the contradiction and names `$bench-write-spec /tmp/dg-c4-wro
 The final source check reproduced both committed owner hashes.
 The adoption session changed no Bench file.
 The integrating author inspected the native logs, source files, handoffs, and clean repository states.
-This adoption closes DG27, DG28, and DG32 at the final committed owner bytes.
-DG-C5 remains unbuilt, and the formal DG-C4 review has not started.
+This adoption closed DG27, DG28, and DG32 at that source.
+The DG-C4 repair below changes its owner bytes, so this evidence is historical.
+
+## DG-C4 initial review and repair cycle 1
+
+The three initial axes reviewed `e6e32ddd27c85773f2b036e9b5fb9d6258ca1824..f08434a2957d6f6da44db31a6cd9abc2cd39ab27`.
+The coordinator supplied these concise finding excerpts from the native tasks.
+These excerpts retain the findings and citations; they are not complete native transcripts.
+
+The structured native-reference digests hash these exact record excerpts, not the complete native messages.
+The helper at `/tmp/dgc4-digest-helper/main.go` calls `reviewrecord.ReadPlan` and `reviewrecord.SourceDigest` on the frozen initial tip.
+It produced plan digest `sha256:0bbd4ad24ba35bc16d72235ece0cb3efc195c1e3588ce41822c67e3d577e127c`.
+It produced source digest `14a5b666bd80e817814d56444c6b7bc40d5b0cfc`.
+
+| Axis | Native task reference | Line | Result |
+| --- | --- | --- | --- |
+| Standards | `/root/dgc4_standards_review` | `gpt-5.6-sol / high` | Fail: DG-C4-S1 and DG-C4-S2 |
+| Spec | `/root/dgc4_spec_review` | `gpt-5.6-sol / high` | Fail: DG-C4-SPEC-1 |
+| Coverage | `/root/dgc4_coverage_review` | `gpt-6-astra / medium` | Fail: DG-C4-COV-1 |
+
+DG-C4-S1, P1: Accepted prose changed the debug, craft-spec, and craft-tickets owners.
+The affected lines were `bench-debug.md:141`, `bench-craft-spec/SKILL.md:11`, and `bench-craft-tickets/SKILL.md:30`.
+The freshness rule at `bench-implement-spec.md:41` requires fresh adoption after an owner-byte change.
+DG7, DG8, DG16, and DG24 therefore require new observations against the final source.
+
+DG-C4-S2, P2: The implementation command combined rerun with inspect and stop with route in single imperative sentences.
+The binding rule at `ste-prose.md:19–20` requires one imperative instruction per sentence.
+The repair must preserve both instructions, reconcile their anchors and fixtures, and refresh DG-C4 adoption.
+
+DG-C4-SPEC-1, P1: The command at line 32 defined a material action through `its verification route`.
+The approved definition at `spec.md:122` instead includes changes to `a verification target`.
+The repair must restore that clause and protect it with a biting fixture.
+
+DG-C4-COV-1, P2: The earlier owner changes made their adoption evidence stale.
+This finding duplicates DG-C4-S1.
+Coverage found DG25–DG32 otherwise covered.
+All four findings have the `auto-fix` disposition.
+They remain subject to independent verification after this repair.
+
+The user directed the remaining coding delegates to `gpt-6-astra / low`.
+The completion plan records the transfer from Luna to `/root/dgc4_repair_astra`.
+This author preserved Luna's two sentence splits.
+The source repair restored `a verification target` and reconciled the DG29 and DG31 exact needles.
+
+The new `dg-29-verification-target` fixture replaces that clause with the rejected route wording.
+Its required diagnostic is `debug loop: DG29 requires material actions to include verification targets`.
+The author committed these source changes as `a508610de1a1195ccc3c84f9a6dccfca9e94420c` after a green lane.
+
+| Focused check | Result | Elapsed |
+| --- | --- | --- |
+| `docs-currency-workflow` | Pass; zero skips | 1,653 ms |
+| `TestEveryRetainedFixtureBitesThroughRegisteredOwner` | Pass; zero skips | 13,566 ms |
+| `guidance-prose-budgets` | Pass; zero skips | 7 ms |
+| `prose-mechanics` | Pass; zero skips | 238 ms |
+| `ticket-grammar` | Pass; zero skips | 1,413 ms |
+| `git diff --check` | Pass | Not timed |
+
+The complete fixture proof observed each planted diagnostic and its disappearance after restoration.
+An independent `bench probe` swapped the final DG29 definition back to the route wording.
+The owner returned the target-definition diagnostic at exit 1 in 1,382 ms.
+The probe reported `bit`, one failed test, zero skips, and a successful restoration.
+
+It covered DG2's additive contradiction, DG29's target narrowing and rerun omission, and both DG31 omissions.
+A redundant filtered invocation selected five fixtures and failed the universe-completeness assertion against 516 fixtures.
+That invocation supplies no suite pass; the complete invocation above supplies the required proof.
+
+Repair cycle 1 of 2 contains the source repair and adoption refresh below.
+Author verification is complete; independent re-review remains pending.
+DG-C5 remains unbuilt.
+
+### Cycle 1 fresh adoption source
+
+Every session below started with a fresh context against committed source `a508610de1a1195ccc3c84f9a6dccfca9e94420c`.
+The user-directed line was `gpt-6-astra / low`.
+Each session read its final owner before it created the disposable task.
+The sessions made no Bench changes.
+The parent edited only this pickup while adoption ran.
+
+| Owner | SHA256 |
+| --- | --- |
+| `bench-debug.md` | `4f051ab78fd8f560ff1621f6fee68a253c7a37f7d57d46a89d26a7115d1a4b65` |
+| `bench-craft-spec/SKILL.md` | `32fb1531a2260de5cf22d0c0d11b0d59661cc52b28d71acab7790461f5b04beb` |
+| `bench-craft-tickets/SKILL.md` | `23778d9745efbc4445fe9015933d84dac7ead1ffbd288bb8a0aebf2e902e8789` |
+| `bench-implement-spec.md` | `7f40f50274ec5712546eaa849e18ec79b96063383125927dc1f449c8dd2d1367` |
+| `bench-craft-tdd/SKILL.md` | `95537a40ced9e06899acdf299d73cb4abb2c2f03c453558a3b050aa2bffa7a17` |
+
+### Current DG7 and DG8 adoption
+
+Session: `/root/dgc4_repair_astra/debug_adoption`
+Native ref: `codex:collaboration/spawn_agent/debug_adoption`
+Evidence: `/tmp/debug-adoption-HsNvHg/task.md`, `report.md`, and `commands.jsonl`
+Line: `gpt-6-astra / low`, cap three coherent attempts
+
+The session first resolved the assigned source and read the debug owner.
+It then built the two disposable fixtures before their adoption tasks.
+The successful variant fenced `total.py` and `test_total.py`.
+The original empty-list call failed twice with the same reduction error.
+The native durations were 119.921 ms and 79.557 ms.
+
+The session ranked hypotheses before it confirmed the missing initial value at `total.py:4`.
+Its regression failed on the empty input while the nonempty test passed.
+The same session supplied zero as the initial value.
+Both tests then passed in 28.183 ms, and the original reproduction passed in 12.229 ms.
+
+The repository `/tmp/debug-adoption-HsNvHg/inside` is clean at `1a771ab7f8324b80106ac91f5900accf2aea42fb`.
+The integrating author independently reran its two tests and observed both pass.
+
+The alternate fenced only `api.py` and `notes.txt`.
+Its empty-list call failed twice in 89.827 ms and 78.802 ms.
+The session retained the reproduction, ranked hypotheses, direct-helper probe, owner trace, and blocked report.
+The cause was `shared.py:4`, outside the fence.
+The session stopped after Phases 1–3 and made no repair.
+
+The repository `/tmp/debug-adoption-HsNvHg/outside` remains at `678f7637f59cca53e2ae8ffbfa8e014b10678516`.
+Its sole dirty path is the pre-existing `notes.txt`.
+The note retained SHA256 `12fca34c4c9c5a87c499bc56ed90289ddeb61a62e79401a74ca4f22c827598b7`.
+The helper retained SHA256 `dbc4f0d815ede6ab3340c9560a1b599212d16c9cb3b7d9a5003617f56d9ecb25`.
+The handoff keeps the expanded-fence decision pending.
+
+### Current DG16 adoption
+
+Session: `/root/dgc4_repair_astra/spec_adoption`
+Native ref: `codex:collaboration/spawn_agent/spec_adoption`
+Evidence: `/tmp/dg16-spec-adoption-enzwUx/handoff.md` and `commands.jsonl`
+Line: `gpt-6-astra / low`, cap three coherent attempts
+
+The session inspected `lists.py:list_values`, the existing unittest precedent, current outputs, and readers before its first authoring action.
+No summary producer or executable summary check existed.
+The successful request specified `[2,3,4]` as count 3 and total 9.
+It specified the empty input as count 0 and total 0.
+
+The session wrote exact future checks at the existing module boundary.
+It inspected the resulting plan at `2026-09-16T18:38:54.037Z`.
+The planned tests remain future evidence; the session claimed no observed summary red.
+The repository `/tmp/dg16-spec-adoption-enzwUx/v1` is clean at `8287969da81fc68df0fd974f7859cd635f6446ea`.
+
+The alternate left the empty-list result unspecified.
+After the same owner exploration, the session wrote a decision request and inspected it at `2026-09-16T18:38:54.302Z`.
+The request asks the reviewer to specify the summary result for an empty list.
+The session stopped dependent design without borrowing the successful variant's answer.
+
+The repository `/tmp/dg16-spec-adoption-enzwUx/v2` is clean at `396bde46ba92874db1b43504163b8276b46c4caf`.
+Each repository's two baseline tests passed; neither owner nor test file changed.
+The handoff preserves the pending seam confirmation and the separate missing-behavior decision.
+The integrating author inspected both complete artifacts.
+
+### Current DG24 adoption
+
+Session: `/root/dgc4_repair_astra/tickets_adoption`
+Native ref: `codex:collaboration/spawn_agent/tickets_adoption`
+Evidence: `/tmp/dg24-tickets-YdnEoj/EVIDENCE.md`, `PLAN.md`, and `HANDOFF.md`
+Line: `gpt-6-astra / low`, cap three coherent attempts
+
+The session inspected the existing formatter and CLI before authoring tickets.
+Its baseline inspection took 89.836 ms at exit 0.
+The successful variant retains separate summary and CSV outcomes.
+Both tickets necessarily write `app/formatter.py`.
+The summary establishes field presentation and a usable CLI result.
+The CSV successor adds quoting and consumes the predecessor's field order and regression tests.
+
+The successor names `render-summary.md` in its `Blocked by:` field.
+Each ticket owns behavior, tests, and integration.
+Each names a test command usable before any successor exists.
+The alternate merges the supplied test-only missing-value fragment into a complete rendering ticket.
+It preserves an independent baseline variant with direct formatter and CLI evidence.
+The session implemented neither feature nor executable test.
+
+The plan commit is `c8fe3a937589cbfd772975d12331d02acf428b2f`.
+The final artifact commit is `43a445c89a3b7b1bb72a679d1cd63118c98efcba` on branch `adoption`.
+The final status was clean at exit 0 in 51.991 ms.
+The handoff pins the plan commit and retains approval as pending.
+The integrating author read all three tickets and verified the empty production diff.
+The current artifacts supply DG24's shared-write split and fragment-merger observations.
+
+### Current DG27, DG28, and DG32 adoption
+
+Session: `/root/dgc4_repair_astra/implementation_adoption`
+Native ref: `codex:collaboration/spawn_agent/implementation_adoption`
+Evidence: `/tmp/dgc4-adoption-implementation-eEYGxn/evidence.md`
+Line: `gpt-6-astra / low`, cap four coherent attempts
+
+The session first resolved the committed source and read both final owners.
+It created a Go repository with the approved `summary.Summarize([]int) Summary` seam.
+The target required Count 3 and Total 9 for `[2,3,4]`, with a zero summary for nil.
+Its first test edit omitted the declaration.
+Minimal declarations then exposed the behavioral red without implementing either requested behavior.
+
+| Step | Native result | Exit | Wall duration |
+| --- | --- | --- | --- |
+| Missing declaration | `undefined: Summarize`; compile failure | 1 | 3,637.413 ms |
+| Minimal setup | `Count = 0, want 3`; behavioral red | 1 | 225.959 ms |
+| Already covered | `TestNil` passed against the zero stub | 0 | 231.846 ms |
+| Count pre-slice check | `Count = 0, want 3` | 1 | 238.958 ms |
+| Material action 1 | Count and nil passed immediately after the Count edit | 0 | 249.894 ms |
+| Total red | `Total = 0, want 9` | 1 | 193.397 ms |
+| Material action 2 | Nil, Count, and Total passed immediately after the Total edit | 0 | 176.678 ms |
+
+Each result preceded the next material edit.
+The session used two implementation attempts.
+It classified the initial compile failure separately from the expected behavioral reds.
+The Windows named-pipe signal was not TDD-able because `uname -s` returned Linux.
+That row stays open; neither a skipped test nor a substitute claims its coverage.
+The green Go suite therefore does not claim complete product acceptance.
+
+The initial artifact commit was `cbf3ed7b93842d093976658eb89521780c7322a7`.
+The final provenance commit is `8cf0498c48397e3b809faf027986d40ca4d7df34`, with a clean checkout.
+The later commit changes only evidence and handoff prose.
+The integrating author inspected the implementation and tests.
+Its independent Go invocation returned all three tests passing from the test cache.
+The native first-run timings above supply the executed adoption observations.
+
+The separate wrong-spec repository is `/tmp/dgc4-adoption-wrong-spec-Zp82Q7`.
+The approved source required `Text("MiXeD")` to return `"MiXeD"`; the supplied target required `"MIXED"`.
+The session inspected the source and target at exit 0 in 97.141 ms.
+The supplied acceptance test failed at exit 1 in 254.138 ms with the expected case contradiction.
+The session chose the wrong-spec route before any dependent implementation or test change.
+
+The intentionally red fixture and handoff are committed at `93787e7740d5fdd02b662d1764f1c842d95e7727`.
+Its checkout is clean.
+The handoff quotes the contradiction and preserves the approved source.
+Its next command is `$bench-write-spec /tmp/dgc4-adoption-wrong-spec-Zp82Q7/approved.md`.
+This artifact commit retains diagnostic evidence; it does not claim a green product result.
+Both owner hashes remain those in the cycle-1 source table.
 
 ```bench-review-record
 {
@@ -2431,6 +2652,93 @@ DG-C5 remains unbuilt, and the formal DG-C4 review has not started.
         {"id":"dg-c3-standards-final","performer":"/root/dgc3_standards","role":"independent-review","model":"gpt-5.6-sol","effort":"high","source_digest":"960951a05fe38a4549119a18d639265d3dd4ae96","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc3_standards","digest":"sha256:c9db039af9309f4b69261e6fe70a98a8b3a15e14fab0b14bf011e95cb18c26c8","excerpt":"Standards final reaffirmation: PASS — 0 actionable blocking findings; worst issue: none.\nFrozen range c1ec1e3145ac98d5ed5a07b4ebaf01dbe380924c..7b50030ef0bedfce1fc732e801d8f78eb0197f04.\n\nDG-C3-S1, DG-C3-S2, and DG-C3-S3 are closed. The current DG22 owner text contains separate split and merge instructions. Its exact registered anchor and omission fixture agree with that owner. The tracked evidence uses active STE prose and retains the requested/native model provenance.\n\nThe repaired successful adoption tip is e7b010490e31c28e012abd083dc8843ed01e0fcb. Its handoff pins repaired plan commit 8dcad28. The repaired alternate adoption tip is 9288e8d6fea82c3cf918046e318972fb49ee7520. Its handoff pins repaired plan commit 7e6621d. Both repositories are clean, and all three ticket artifacts use one imperative instruction per sentence.\n\nThe review record honestly states that the original fresh-session adoption remains historical and that repair cycle 2 made only the bounded editorial artifact repair without rerunning adoption. No owner bytes, behavior decisions, shared-write facts, predecessor values, checks, or fragment-merger facts changed. One-source ownership and transfer provenance remain intact. Fresh prose-mechanics and whitespace checks passed."},"axis":"Standards","base":"c1ec1e3145ac98d5ed5a07b4ebaf01dbe380924c","tip":"7b50030ef0bedfce1fc732e801d8f78eb0197f04","finding_ids":[],"supersedes":["dg-c3-standards-cycle1"]},
         {"id":"dg-c3-spec-final","performer":"/root/dgc3_spec","role":"independent-review","model":"gpt-5.6-sol","effort":"high","source_digest":"960951a05fe38a4549119a18d639265d3dd4ae96","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc3_spec","digest":"sha256:c979ad1d16f8f763450c5d700fdb3fb04322b950e2e34663bbeb671ab5e137d8","excerpt":"## Spec\n\nFinal Spec reaffirmation: PASS — 0 concrete mandatory blockers; worst issue: none.\n\nFrozen range: c1ec1e3145ac98d5ed5a07b4ebaf01dbe380924c..7b50030ef0bedfce1fc732e801d8f78eb0197f04.\n\nDG17–DG23 remain satisfied by the current owner at bench-craft-tickets/SKILL.md:30-32, with matching anchors and biting fixtures. Cycle 2 changes no owner bytes.\n\nDG24 remains satisfied at repaired artifact tips e7b010490e31c28e012abd083dc8843ed01e0fcb and 9288e8d6fea82c3cf918046e318972fb49ee7520. The successful plan retains two independently useful serial outcomes, their necessary shared write to internal/records/format.go, the formatter contract and green command path supplied by ticket 1, and checks usable before successors (1-render-readable-summary.md:3-21; 2-export-stable-csv.md:3-22). The alternate plan still merges the test-only missing-value fragment into formatter behavior, focused tests, and command integration because it has no standalone user result (1-render-null-json-detail.md:3-21).\n\nThe cycle-2 edits only split three combined instructions into separate sentences. They preserve behavior, tests, integration, dependency value, and scope. The handoffs now pin editorial plan commits 8dcad28 and 7e6621d and retain the exact implementation commands. Both artifact repositories and the Bench worktree are clean.\n\nFreshness and provenance remain valid: the current owner is still fe09eaf4f27259b133303c883823a5846e99fb65 with ticket-skill SHA-256 23e0a8ef4e78c50512c2a02c79d8a06c3c9cc5741518195adfef87f821b01bdb; the native adoption commits remain reachable predecessors of the editorial tips. reviews/debug-loop-guidance.md:1552-1574 records the bounded edits, both final tips, clean inventories, and exhausted 2-of-2 allowance. No scope drift or stale provenance was found."},"axis":"Spec","base":"c1ec1e3145ac98d5ed5a07b4ebaf01dbe380924c","tip":"7b50030ef0bedfce1fc732e801d8f78eb0197f04","finding_ids":[],"supersedes":["dg-c3-spec-cycle1"]},
         {"id":"dg-c3-coverage-final","performer":"/root/dgc3_coverage_astra","role":"independent-review","model":"gpt-6-astra","effort":"medium","source_digest":"960951a05fe38a4549119a18d639265d3dd4ae96","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc3_coverage_astra","digest":"sha256:942bdaaec1580fa7a4013c917d0144e3524c7f542e1644994c84e8538d437669","excerpt":"Coverage reaffirmation: PASS. Frozen range `c1ec1e3145ac98d5ed5a07b4ebaf01dbe380924c..7b50030ef0bedfce1fc732e801d8f78eb0197f04`. DG-C3-COV-1 remains closed. Successful artifact `e7b010490e31c28e012abd083dc8843ed01e0fcb` retains necessary intersecting formatter writes, separate useful outcomes, explicit predecessor value/order, and checks usable before successors. Alternate artifact `9288e8d6fea82c3cf918046e318972fb49ee7520` retains the test-fragment merger into complete behavior, tests, and integration. Artifact changes are sentence splits, one trailing blank-line removal, and handoff commit updates. Both repositories are clean, whitespace checks pass, and complete tracked inventories contain only planning documents. Bench owner, anchors, and fixtures remain unchanged from the prior reviewed tip. The evidence accurately distinguishes historical native adoption from the subsequent editorial repair. No further repair is required by Coverage."},"axis":"Coverage","base":"c1ec1e3145ac98d5ed5a07b4ebaf01dbe380924c","tip":"7b50030ef0bedfce1fc732e801d8f78eb0197f04","finding_ids":[],"supersedes":["dg-c3-coverage-cycle1"]}
+      ]
+    },
+    {
+      "id": "DG-C4",
+      "base": "e6e32ddd27c85773f2b036e9b5fb9d6258ca1824",
+      "tip": "f08434a2957d6f6da44db31a6cd9abc2cd39ab27",
+      "plan_digest": "sha256:0bbd4ad24ba35bc16d72235ece0cb3efc195c1e3588ce41822c67e3d577e127c",
+      "source_digest": "14a5b666bd80e817814d56444c6b7bc40d5b0cfc",
+      "acceptance_rows": [
+        "DG25",
+        "DG26",
+        "DG27",
+        "DG28",
+        "DG29",
+        "DG30",
+        "DG31",
+        "DG32"
+      ],
+      "verification": [],
+      "reviews": [
+        {
+          "id": "dg-c4-standards-initial",
+          "performer": "/root/dgc4_standards_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "14a5b666bd80e817814d56444c6b7bc40d5b0cfc",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "/root/dgc4_standards_review",
+            "digest": "sha256:3bc1d8ef7f88dd81f818f4b6e40e6c8254ae57dbed63b1a3031227d65f5e41be",
+            "excerpt": "Standards: FAIL. DG-C4-S1 (P1, auto-fix): Changed owner bytes at .agents/commands/bench-debug.md:141, .agents/skills/bench-craft-spec/SKILL.md:11, and .agents/skills/bench-craft-tickets/SKILL.md:30 invalidate DG7/DG8/DG16/DG24 adoption under .agents/commands/bench-implement-spec.md:41. Rerun those variants on final committed bytes. DG-C4-S2 (P2, auto-fix): The implementation command combines rerun with inspect and stop with route. The rule at .agents/skills/bench-craft-spec/references/ste-prose.md:19-20 requires one imperative instruction per sentence. Split the sentences, reconcile anchors and fixtures, and rerun DG-C4 adoption."
+          },
+          "axis": "Standards",
+          "base": "e6e32ddd27c85773f2b036e9b5fb9d6258ca1824",
+          "tip": "f08434a2957d6f6da44db31a6cd9abc2cd39ab27",
+          "finding_ids": [
+            "DG-C4-S1",
+            "DG-C4-S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dg-c4-spec-initial",
+          "performer": "/root/dgc4_spec_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "14a5b666bd80e817814d56444c6b7bc40d5b0cfc",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "/root/dgc4_spec_review",
+            "digest": "sha256:e00299aa81f50c6a544dcb97d69b0e976eb1a57521739862cb694181fdf1d405",
+            "excerpt": "Spec: FAIL. DG-C4-SPEC-1 (P1, auto-fix): .agents/commands/bench-implement-spec.md:32 uses `its verification route` in the material-action definition. specs/debug-loop-guidance/spec.md:122 requires `a verification target`. Restore that clause and protect it with a biting fixture."
+          },
+          "axis": "Spec",
+          "base": "e6e32ddd27c85773f2b036e9b5fb9d6258ca1824",
+          "tip": "f08434a2957d6f6da44db31a6cd9abc2cd39ab27",
+          "finding_ids": [
+            "DG-C4-SPEC-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dg-c4-coverage-initial",
+          "performer": "/root/dgc4_coverage_review",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "14a5b666bd80e817814d56444c6b7bc40d5b0cfc",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "/root/dgc4_coverage_review",
+            "digest": "sha256:b00a44b09872a4ec1ec120273bb2e40c184143f465471b825d6c34ee5eca923b",
+            "excerpt": "Coverage: FAIL. DG-C4-COV-1 (P2, auto-fix): Changed owner bytes at .agents/commands/bench-debug.md:141, .agents/skills/bench-craft-spec/SKILL.md:11, and .agents/skills/bench-craft-tickets/SKILL.md:30 invalidate earlier adoption under .agents/commands/bench-implement-spec.md:41. This finding duplicates DG-C4-S1. DG25-DG32 are otherwise covered."
+          },
+          "axis": "Coverage",
+          "base": "e6e32ddd27c85773f2b036e9b5fb9d6258ca1824",
+          "tip": "f08434a2957d6f6da44db31a6cd9abc2cd39ab27",
+          "finding_ids": [
+            "DG-C4-COV-1"
+          ],
+          "supersedes": []
+        }
       ]
     }
   ],
