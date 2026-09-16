@@ -716,7 +716,7 @@ budget increased.
 {
   "version": 2,
   "spec": "specs/debug-loop-guidance/spec.md",
-  "plan_digest": "sha256:c5802c2b7a578453a0f4f2eb830730b634a0e7dd86fda030da5362e90ed691f5",
+  "plan_digest": "sha256:273ac42c953225da2c4f9e99eb38b3818b41131de439bcfeaaf1e6944aed0a60",
   "chunks": [
     {
       "id": "DG-C1",
@@ -884,6 +884,18 @@ budget increased.
     {
       "from": "sha256:20b1b2d8b6b946adb788b40ba24972887777cad57271c375a4cd6bd9979bffda",
       "to": "sha256:c5802c2b7a578453a0f4f2eb830730b634a0e7dd86fda030da5362e90ed691f5",
+      "chunk_ids": {
+        "DG-C1": ["DG-C1"],
+        "DG-CR": ["DG-CR"],
+        "DG-C2": ["DG-C2"],
+        "DG-C3": ["DG-C3"],
+        "DG-C4": ["DG-C4"],
+        "DG-C5": ["DG-C5"]
+      }
+    },
+    {
+      "from": "sha256:c5802c2b7a578453a0f4f2eb830730b634a0e7dd86fda030da5362e90ed691f5",
+      "to": "sha256:273ac42c953225da2c4f9e99eb38b3818b41131de439bcfeaaf1e6944aed0a60",
       "chunk_ids": {
         "DG-C1": ["DG-C1"],
         "DG-CR": ["DG-CR"],
