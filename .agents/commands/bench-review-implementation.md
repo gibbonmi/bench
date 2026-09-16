@@ -43,13 +43,16 @@ the repair-routing disposition.
 
 A delegated chunk review starts after every ticket of the chunk reaches the integrated chunk tip. A per-ticket review does not replace that full-chunk review. Each delegated axis excludes the orchestrator and every current and former author of the run.
 
-By default, use a different independent session for each axis. A version 2
-completion plan can set `execution.review_mode` to `unified`. This mode assigns
-one independent session to all three axes. The session must derive and report
-Standards, Spec, and Coverage separately. For each issue or review miss, it must
-also state whether the implementation command contributed to the issue. When it
-did, name the exact improvement to `.agents/commands/bench-implement-spec.md`; otherwise,
-state that no command change is necessary.
+By default, an authorized review dispatches every prepared axis through the
+native agent surface without a second approval. Each axis uses a different
+independent session, an isolated read-only venue, and its own source derivation.
+A version 2 completion plan can set `execution.review_mode` to `unified` as the
+sole exception. One independent session re-derives Standards, Spec, and Coverage
+separately, then reports each axis separately.
+
+For each issue or review miss, it states whether the implementation command
+contributed. When it did, it names the exact improvement. Otherwise, it states
+that no command change is necessary.
 
 Here, findings that prevent progression are unresolved blockers; retain optional advice separately under the policy. The successor chunk starts only after findings and repair coverage close. After the last chunk, the retained author reconciles overall acceptance and integration before landing.
 
@@ -105,11 +108,6 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    (`.agents/skills/bench-craft-review/SKILL.md`).
 
    Resolve every axis through `craft-line`'s conditional review line from the implementation model.
-
-   An authorized review dispatches every prepared axis through the native agent
-   surface. It asks no second approval turn inside that authorization. Each axis
-   keeps its own context, its own isolated read-only venue, and its own
-   independent source derivation.
 
    Collect every axis return before you accept a finding. A missing or failed
    axis return leaves the review incomplete. It is never a clean finding set.

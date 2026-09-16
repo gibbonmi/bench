@@ -14,18 +14,14 @@ func delegatedCheckpointFixture(t *testing.T) *recordtest.Fixture {
 }
 
 func unifiedCheckpointFixture(t *testing.T) *recordtest.Fixture {
-	t.Helper()
-	f := recordtest.AttachDelegated(t, outcomeFixture(t), 1)
-	f.Plan.Execution.RunID = "fixture-unified-review"
-	f.Plan.Execution.ReviewMode = "unified"
-	f.WritePlan()
-	f.Commit("select unified review")
-	f.Reload()
-	f.Record.PlanDigest = f.Plan.Digest
-	f.AddChunk()
-	f.Save()
-	f.Commit("retain review evidence")
-	return f
+	return attachedCheckpointFixture(t, recordtest.AttachDelegated, func(f *recordtest.Fixture) {
+		f.Plan.Execution.RunID = "fixture-unified-review"
+		f.Plan.Execution.ReviewMode = "unified"
+		f.WritePlan()
+		f.Commit("select unified review")
+		f.Reload()
+		f.Record.PlanDigest = f.Plan.Digest
+	})
 }
 
 // resave writes the mutated record and commits it, so the checkpoint grades the
@@ -127,6 +123,17 @@ func TestDelegatedDistinctAxes(t *testing.T) {
 		f.Commit("retain unified review evidence")
 		if code, out := runCheckpoint(t, f); code != 0 {
 			t.Fatalf("one independent session could not supply separate axes: %d %s", code, out)
+		}
+	})
+
+	t.Run("unified mode refuses mixed reviewers", func(t *testing.T) {
+		f := unifiedCheckpointFixture(t)
+		f.Record.Chunks[0].Reviews[0].Performer = "fixture-reviewer-a"
+		f.Record.Chunks[0].Reviews[1].Performer = "fixture-reviewer-b"
+		f.Record.Chunks[0].Reviews[2].Performer = "fixture-reviewer-a"
+		resave(t, f, "mix unified review performers")
+		if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "one reviewer for all three axes") {
+			t.Fatalf("mixed performers satisfied unified review: %d %s", code, out)
 		}
 	})
 }

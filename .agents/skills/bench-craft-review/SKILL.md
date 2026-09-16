@@ -15,14 +15,14 @@ Before classifying repairs, read [the bounded repair policy](../bench-craft-line
 
 ## Re-derive, then compare
 
-Every axis derives its facts from the current primary source *before* it compares
-the candidate against them. A declaration-only confirmation, trusting the ticket or
-commit message, is incomplete. An axis that never re-reads its source cannot catch a
-claim the source refutes, and every finding cites its derivation, not a recollection
-of it. The three axes run in parallel fresh contexts so one axis's derivation cannot
-seed another's. Before any candidate-controlled execution (a script, a test, a tool
-the diff itself introduces), ask what authenticates the verifier. A candidate's own
-proof of correctness is not evidence until something outside it confirms it.
+Every axis derives its facts from the current primary source *before* it compares the candidate against them. A declaration-only confirmation, trusting the ticket or
+commit message, is incomplete. An axis that never re-reads its source cannot catch a claim the source refutes, and every finding cites its derivation, not a recollection
+of it. By default, the three axes run in parallel fresh contexts so one cannot seed
+another. Explicit unified mode is the sole exception: one independent session
+re-derives and reports each axis separately.
+
+Before relying on candidate-controlled execution, ask what authenticates the verifier. A candidate's own proof of correctness
+is not evidence until something outside it confirms it.
 
 Review also treats a compiled map's defaulted decisions as authoritative unless the
 spec explicitly overrides them. Grade a claimed repair against both its

@@ -672,6 +672,46 @@ exact planned probe and a plan amendment when that probe cannot run. Two
 paragraph-length failures were prose-only. The coordinator routed their splits
 to Luna; the final prose check passed without a semantic change.
 
+### DG-CR repair cycle 1
+
+The accepted review found that unified mode permitted an A/B/A reviewer mix.
+The new checkpoint case failed before the repair because that mix returned exit
+zero. The repaired policy requires exactly one performer in unified mode and
+exactly three in the omitted mode. The same participant exclusions apply in
+both modes.
+
+One review-cardinality function now owns accepted mode values and performer
+counts. The checkpoint fixtures share one attach, prepare, add, save, and commit
+sequence. The review command, review skill, project profile, and anchor now keep
+fresh per-axis contexts as the default and name unified mode as the sole
+exception.
+
+The exported boolean `CheckReviews` contract remains unchanged for legacy
+callers. Delegated coverage passes the centralized count to an unexported
+helper. `record_test.go` and `source_test.go` match the repair base byte for
+byte.
+
+The independent production probe changed the unified reviewer count branch
+from `reviewerCount == 1` to `reviewerCount == -1`. The A/B/A case then returned
+exit zero and failed `TestDelegatedDistinctAxes`. `bench probe` reported
+`restored=yes`; the restored baseline passed all four selected tests.
+
+| Repair check | Result | Elapsed |
+| --- | --- | --- |
+| `bench test --package ./internal/reviewrecord` | pass, no skips | 3,900 ms |
+| `bench test --package ./internal/gate` | pass, no skips | 19,381 ms |
+| `bench test --check docs-currency-workflow` | pass, no skips | 1,851 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass, no skips | 10,320 ms |
+| `bench test --check prose-mechanics` | pass, no skips | 206 ms |
+| `bench test --check guidance-prose-budgets` | pass, no skips | 7 ms |
+| `bench test --check skill-description-budgets` | pass, no skips | 9 ms |
+| `bench test --check line-routing` | pass, no skips | 1,999 ms |
+| `bench test --check ticket-grammar` | pass, no skips | 1,469 ms |
+
+Terra made only the three coordinator-routed mechanical prose repairs. The
+implementation command is 80 lines, and the review skill is 122 lines. No prose
+budget increased.
+
 ```bench-review-record
 {
   "version": 2,

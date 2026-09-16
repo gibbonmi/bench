@@ -48,10 +48,20 @@ func Triggers() []string {
 // Delegated reports whether the plan carries the version 2 delegated form.
 func (p Plan) Delegated() bool { return p.Version == 2 && p.Execution != nil }
 
-// DistinctReviewers reports whether each review axis requires its own session.
-// The unified mode changes reviewer cardinality only for a delegated plan.
-func (p Plan) DistinctReviewers() bool {
-	return p.Delegated() && p.Execution.ReviewMode != "unified"
+// reviewCardinality returns the required number of reviewers for one chunk.
+// Version 1 has no cardinality rule. Delegated modes fail closed here.
+func (p Plan) reviewCardinality() (int, error) {
+	if !p.Delegated() {
+		return 0, nil
+	}
+	switch p.Execution.ReviewMode {
+	case "":
+		return 3, nil
+	case "unified":
+		return 1, nil
+	default:
+		return 0, fmt.Errorf("invalid review mode %q; omit it or use unified", p.Execution.ReviewMode)
+	}
 }
 
 // Author is a ticket's effective author. An undispatched ticket has none.
@@ -111,8 +121,8 @@ func validateExecution(plan Plan) error {
 	if execution.Mode != "delegate" {
 		return fmt.Errorf("invalid execution mode %q; use delegate", execution.Mode)
 	}
-	if execution.ReviewMode != "" && execution.ReviewMode != "unified" {
-		return fmt.Errorf("invalid review mode %q; omit it or use unified", execution.ReviewMode)
+	if _, err := plan.reviewCardinality(); err != nil {
+		return err
 	}
 	if execution.RunID == "" || execution.OrchestratorSession == "" {
 		return errors.New("missing run id or orchestrator session")

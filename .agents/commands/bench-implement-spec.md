@@ -21,10 +21,8 @@ to `/bench-final-check`. A build that stops short exits through "When the build 
 short" below, which recommends its one durable next action.
 ## Declare the line, validate the tickets, route the venue
 
-Declare the line before you touch code. `craft-line` owns the template, the tier decision,
-and the escalation ladder. After the write-spec-phase approval,
-create or retain one integration worktree at the reviewed graph commit; that
-commit is its frozen review base. Enter it and run `bench preflight build <slug>`
+Declare the line before you touch code. `craft-line` owns the template, the tier decision, and the escalation ladder. After the write-spec-phase approval,
+create or retain one integration worktree at the reviewed graph commit; that commit is its frozen review base. Enter it and run `bench preflight build <slug>`
 before the first edit; a red preflight stops the phase.
 
 After reviewer approval of the selected spec and ticket, run `bench preflight build <slug> --charge --ticket <ticket> --base <base> --source-tip <tip> --full` and retrieve its complete mechanical inputs. Require a complete task-specific supplement. A generated charge or staged artifact does not supply approval. The supplement names selectors, model, effort, cap, and mutation. Verify the fence, dependency completion, and expected source tip before the retained author starts the ticket.
