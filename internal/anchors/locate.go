@@ -9,14 +9,14 @@ import (
 // character of an anchor's first match, or 0 when the needle has no match,
 // the section is absent or duplicated, or data is empty.
 //
-// The evaluator resolves an anchor's presence over comment-stripped,
-// whitespace-collapsed, and (for a section kind) case-folded text; Locate
-// answers a position over that same resolution, so the two stay in lock
-// step. It maps a match in the transformed text back to data by rune index,
-// not by byte offset, so a case fold that changes a rune's byte length
-// cannot shift the reported line. A forbid kind is located the same way as
-// a require kind: a non-zero line locates the violation, the presence of
-// the forbidden needle.
+// The evaluator resolves an anchor's presence over comment-stripped and
+// whitespace-collapsed text. For ForbidCaseFoldedEmphasis, it also removes
+// ordinary emphasis and case-folds whole-file text. Locate uses that same
+// resolution, so the two stay in lock step. It maps a match in the transformed
+// text back to data by rune index, not by byte offset. A case fold that changes
+// a rune's byte length cannot shift the reported line. A forbid kind is located
+// the same way as a require kind: a non-zero line locates the violation, the
+// presence of the forbidden needle.
 func Locate(kind Kind, section, needle, data string) int {
 	stripped, origin := stripCommentsMapped(data)
 	text, textOrigin := stripped, origin

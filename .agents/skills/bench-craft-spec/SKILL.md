@@ -15,7 +15,9 @@ Inspect the current behavior and its relevant owner before you choose the next a
 Name evidence that fails on the cheapest wrong result for the scenario.
 Use a sufficient existing seam before you explore alternatives.
 If the evidence leaves the seam unresolved, use `craft-seams` to compare alternatives.
-Choose one bounded authoring action, and inspect its result before you choose the next action.
+
+Choose one bounded authoring action.
+Inspect its result before you choose the next action.
 
 If intended behavior remains unresolved, return it to the reviewer before dependent authoring continues.
 For a new feature without an executable check, plan future evidence from exact inputs and expected outputs.
@@ -26,9 +28,8 @@ Do not implement the feature only to obtain a red during specification.
    - Read one existing precedent for each named seam.
    - Sweep the whole tree for each reader of a count, a schema field, or an artifact path the spec changes.
      This reader sweep includes `.mjs` scripts and workflow files, and `references/map-discipline.md` states its rules. Each reader takes a row or a named exclusion.
-2. **Place the seam**: Apply [Evidence-led authoring](#evidence-led-authoring). If its exception applies, follow `craft-seams` and confirm the selected seam with the reviewer.
+2. **Place the seam**: Apply [Evidence-led authoring](#evidence-led-authoring). If its exception applies, follow `craft-seams`. Confirm the selected seam with the reviewer.
 3. **Write the spec** from the template below, in ASD-STE100 prose per `references/ste-prose.md`, and run `bench coverage --check`. The spec file is the published artifact.
-
 ## User stories
 
 Write a long, numbered list grouped by outcome, with an extensive breadth floor. One story per actor-want-benefit — `As an <actor>, I want <feature>, so that <benefit>` — covers every behavior, edge, and reviewed exclusion the source promises.
@@ -51,7 +52,6 @@ Cite no test-only helper across a package boundary, because such a row has no se
 
 `craft-tdd` walks the canonical edge classes at the seam. Attach the profile's hostile-input checklist to that walk.
 Give each edge the reviewer deliberately excludes a one-line **Won't handle** with a surviving in-scope caller.
-
 ## Bootstrap authority before execution
 
 A trusted-execution or refusal-before-execution claim traces every executable hop, naming how each validator authenticates the next executable before launching the next executable. A path, record, digest, or executable cannot authenticate itself. Without an independent trust root the design is incomplete; see `references/bootstrap-authority.md`.
