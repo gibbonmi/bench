@@ -42,7 +42,7 @@ func verificationRoles() []string {
 
 // Triggers is the closed set of author-transfer reasons.
 func Triggers() []string {
-	return []string{"no-progress", "terminal-failure", "cap-exhausted", "session-lost"}
+	return []string{"no-progress", "terminal-failure", "cap-exhausted", "session-lost", "user-directed"}
 }
 
 // Delegated reports whether the plan carries the version 2 delegated form.

@@ -103,6 +103,9 @@ func TestDelegatedIdentityRefusals(t *testing.T) {
 		{"replacement without a trigger", "invalid replacement trigger", func(p *rr.Plan) {
 			p.Execution.Assignments["1.md"] = replaced(p.Execution.Assignments["1.md"][0], "")
 		}},
+		{"replacement with an unknown trigger", "invalid replacement trigger", func(p *rr.Plan) {
+			p.Execution.Assignments["1.md"] = replaced(p.Execution.Assignments["1.md"][0], "operator-convenience")
+		}},
 		{"replacement without stop proof", "stopped-writer evidence", func(p *rr.Plan) {
 			history := replaced(p.Execution.Assignments["1.md"][0], "session-lost")
 			history[1].Stopped = ""
@@ -133,6 +136,15 @@ func TestDelegatedReviewModes(t *testing.T) {
 	f = planFixture(t, 1, func(p *rr.Plan) { p.Execution.ReviewMode = "combined" })
 	if _, err := rr.ReadPlan(f.Root, f.Tree(), recordtest.Spec); err == nil || !strings.Contains(err.Error(), "invalid review mode") {
 		t.Fatalf("unknown review mode was accepted or lost its reason: %v", err)
+	}
+}
+
+func TestDelegatedUserDirectedTransfer(t *testing.T) {
+	f := planFixture(t, 1, func(p *rr.Plan) {
+		p.Execution.Assignments["1.md"] = replaced(p.Execution.Assignments["1.md"][0], "user-directed")
+	})
+	if _, err := rr.ReadPlan(f.Root, f.Tree(), recordtest.Spec); err != nil {
+		t.Fatalf("a user-directed author transfer was refused: %v", err)
 	}
 }
 

@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Delegated author transfer
+
+- Added explicit user direction as a valid reason to transfer a delegated author.
+
 ### Unified implementation review
 
 - Added an explicit delegated-plan mode that lets one independent reviewer

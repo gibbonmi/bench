@@ -1192,9 +1192,31 @@ The user explicitly extended the repair to make the workflow executable now.
 
 The amended plan records every DG-C2 writer transition, the stopped predecessor,
 and the preserved source. The retained Sol author owns the enforcement repair.
-The change must add `user-directed` to the closed trigger set, prove that exact
-trigger green, keep an unrecognized trigger red, and update the canonical
-delegation rule without weakening stop or preservation evidence.
+The change must add `user-directed` to the closed trigger set and prove that
+exact trigger green. It must keep an unrecognized trigger red and update the
+canonical rule without weakening stop or preservation evidence.
+
+The repair ran from source `aca957cd00d02af70813f5a3dcf5e34a99891798`.
+The retained author was `/root/dgc2_author` on `gpt-5.6-sol` at medium effort.
+`TestDelegatedUserDirectedTransfer` failed twice before the production edit.
+Both failures named the invalid `user-directed` trigger and reported no skips.
+The same test passed in 37 ms after the closed trigger set accepted the reason.
+
+The author ran this omission probe after the fix:
+
+`bench probe internal/reviewrecord/delegated.go --omit ', "user-directed"' --package ./internal/reviewrecord --run TestDelegatedUserDirectedTransfer`
+
+The probe reported `bit`, one failed test, and `restored=yes`.
+The mutated package took 31 ms and reported no skips.
+The failure again named the invalid `user-directed` replacement trigger.
+This result confirms that the closed trigger set owns the repaired behavior.
+
+The required prose check then reported this inherited red:
+
+`specs/debug-loop-guidance/spec.md line 157: sentence of 29 words is over the 25-word bound`
+
+The sentence is identical at base `aca957cd` and is outside the repair fence.
+Root confirmed ownership of that prose repair, so this author did not edit the spec.
 
 ```bench-review-record
 {
