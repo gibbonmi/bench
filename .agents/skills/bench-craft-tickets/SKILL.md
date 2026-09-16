@@ -29,7 +29,7 @@ Trace each claimed operation through its executable owner, using the [map-discip
 
 Start with each ticket's delivered outcome and its smallest complete behavior, tests, and integration. State a concrete acceptance scenario before you lock the ticket. Name checks that prove completion while successor tickets remain unbuilt. Record each real dependency and the value that its predecessor supplies.
 
-Shared writes determine serial order, but they do not merge independently useful outcomes. Split independently useful outcomes, and merge a fragment that cannot deliver or verify a result alone. Plan the ticket evidence without implementing the feature or requiring an existing executable red.
+Shared writes determine serial order, but they do not merge independently useful outcomes. Split independently useful outcomes. Merge a fragment that cannot deliver or verify a result alone. Plan the ticket evidence without implementing the feature or requiring an existing executable red.
 
 **Reviewer-approved breakdown**: before assigning spec-backed tickets, the coordinator presents the reviewer a numbered list — title, `Blocked by:`, and delivered outcome — for every ticket.
 Ask the reviewer about granularity, dependencies, and merges or splits. Iterate and record approval.
