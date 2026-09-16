@@ -329,11 +329,13 @@ Audience: The guidance serves each repository that links the kit. The conformanc
 | Evidence is missing or contradictory | DG37 preserves uncertainty. |
 | Adoption evidence is missing, stale, or failed | DG7, DG8, DG16, DG24, DG32, DG39, and DG40 remain open. |
 
-No new parser, directory reader, executable hop, environment variable, or package-variable substitution enters this build.
+The critical debug repair adds one opt-in anchor normalization for case and ordinary Markdown emphasis.
+It is not a general Markdown parser.
+No new directory reader, executable hop, environment variable, or package-variable substitution enters this build.
 The hostile-input checklist therefore adds no path, empty-directory, symlink, process, or external-service behavior.
 The existing gate and fixture readers retain those contracts.
 
-Won't handle: New parser edge behavior — the existing conformance and ticket readers remain the in-scope callers.
+Won't handle: Full Markdown parsing, links, entities, HTML formatting, code-span interpretation, or semantic paraphrase detection.
 Won't handle: Debug phase redesign — retain "No red-capable command, no Phase 2" and "Do not proceed until you have reproduced and minimised".
 Won't handle: Trial comparison — ordinary review evidence remains the in-scope adoption record.
 
@@ -350,10 +352,14 @@ Won't handle: Trial comparison — ordinary review evidence remains the in-scope
 - `CHANGELOG.md`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
+- `cmd/bench/anchors_command.go`
+- `cmd/bench/anchor_help_test.go`
 - `cmd/bench/help_inventory_test.go`
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
 - `internal/anchors/registry_debug_loop.go`
+- `internal/anchors/registry.go`
+- `internal/anchors/anchor_harness_diagnostics_test.go`
 - `internal/anchors/match.go`
 - `internal/anchors/match_test.go`
 - `internal/anchors/locate.go`
