@@ -1429,7 +1429,12 @@ The final owner check passed, and all 509 retained fixtures bit through their re
 The author omitted the DG22 split-and-merge sentence through `bench probe`.
 The baseline passed, and the mutation produced the DG22 diagnostic in 1,184 ms.
 The probe reported `bit`, one failed test, `restored=yes`, and zero skips.
-This omission differs from the coordinator's planned DG21 shared-write probe.
+This omission differs from the coordinator's DG21 shared-write probe.
+
+The coordinator swapped `Shared writes determine serial order, but they do not merge independently useful outcomes.` with `Merge independently useful outcomes when their writes overlap.`
+The `docs-currency-workflow` baseline passed.
+The mutation produced one intended DG21 failure in 1,152 ms.
+The probe reported `bit`, `restored=yes`, and zero skips.
 
 ### DG24 native adoption
 
@@ -1439,6 +1444,8 @@ Its repositories remain historical evidence and do not close DG24.
 Session: `/root/dgc3_author/dg24_final_adoption`, fresh context.
 Requested line: `gpt-5.6-sol / medium`.
 Native return label: `gpt-6-astra / high`.
+This difference is a harness routing mismatch.
+The evidence retains both labels and does not relabel the native result.
 
 The exact first shell action was `git rev-parse HEAD && sha256sum .agents/skills/bench-craft-tickets/SKILL.md`.
 It confirmed the production commit and skill hash above.
