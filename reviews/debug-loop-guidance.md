@@ -2161,7 +2161,7 @@ The complete fixture suite proved the revised omission and every retained fixtur
 | Ticket grammar | Pass; zero skips | 1,072 ms |
 | Review-record package | Pass; zero skips | 2,901 ms |
 | Coverage map | Pass; 45 rows; existing uncited DG45 cell | Not timed |
-| Review preflight | Pass; all 13 checks | Not timed |
+| Review preflight | Pass; all 12 checks | Not timed |
 | Source commit lane | Pass | Not timed |
 
 The source commit precedes the fresh review adoption below.
@@ -2171,7 +2171,7 @@ Their hashes remain those in the cycle-1 source table.
 The author confirmed the four earlier artifact paths still exist.
 Debug, specification, ticket, and implementation adoption therefore remain current.
 
-### Current DG39 and DG43 repair adoption
+### Historical cycle-1 DG39 and DG43 repair adoption
 
 Session: `/root/dgc5_ste_repair_astra/dg39_repair_adoption`, fresh context
 Native ref: `codex:collaboration/spawn_agent/dg39_repair_adoption`
@@ -2188,7 +2188,8 @@ Artifacts: `report.md`, `commands.jsonl`, and `independent-policy.md`
 | `finding-discipline.md` | `3a5018f08eafc9d6a1e6f86431a5cd721d8b40f79878c64c8fb797c9f4ea436c` |
 | `bounded-repair-policy.md` | `c1b74aa2d16b73c35b449919ef8d485c65fa1313ea3fac5e77a95213e161ea48` |
 
-The fresh session read the committed owners before the disposable subject.
+The cycle-1 report claimed the session read the committed owners before the disposable subject.
+The ordered command evidence contradicted that claim, so this adoption is historical.
 Its later logged owner reads first failed from the disposable directory.
 The repeated reads succeeded from the Bench checkout.
 The report retains these failures and an unavailable `python` invocation.
@@ -2237,15 +2238,150 @@ Git comparison confirmed unchanged bytes for all eight subject files.
 The artifact repository is clean.
 The current owner hashes match the table above.
 
-All five adoption families are current at source `c264a3f414b32614b321306740e280b76e05660f`.
+The cycle-1 record claimed all five adoption families were current at source `c264a3f414b32614b321306740e280b76e05660f`.
 The four earlier families retain their original native provenance.
 The review family uses this fresh repair adoption.
-Independent formal re-review remains pending.
+The cycle-1 Standards review rejected the review adoption's initial owner-read order.
 
 The first evidence prose check found one paragraph with seven sentences.
 The first split affected a different paragraph, so the repeated check and prospective commit remained red.
 The author then split the cited excerpt without changing its claims.
 The canonical review-record parser accepted all six chunk records.
+
+### DG-C5 formal repair cycle 2
+
+Consumed allowance: Two of two formal repair cycles; exhausted
+Repair author: `/root/dgc5_ste_repair_astra`, `gpt-6-astra / low`
+Repair base: `9a983a2dbf28e01daef0f3e0f2825b60c66e5afc`
+Scope: Adoption and evidence only
+
+The cycle-1 Standards review closed `DG-C5-S1` and `DG-C5-S2`.
+It retained `DG-C5-S3` for adoption order and `DG-C5-S4` for the preflight count.
+The cycle-1 Spec and Coverage reviews passed.
+The structured records preserve their exact native excerpts, digests, and supersession links.
+
+This repair changes no production guidance, owner, anchor, or fixture.
+It replaces the rejected review adoption with the fresh session below.
+It corrects the preflight count to 12.
+The author reran this exact command at the repair base:
+
+```text
+bench worktree exec debug-loop-candidate-a -- bench preflight review debug-loop-guidance --base 414c5697d71093df835f3701c26f602a028354b3
+phase: review
+spec: specs/debug-loop-guidance/spec.md
+source[1]{base,tip}:
+  414c5697d71093df835f3701c26f602a028354b3,9a983a2dbf28e01daef0f3e0f2825b60c66e5afc
+checks[12]{check,verdict,detail,next}:
+  base-current,green,"",""
+  paths-authorized,green,"",""
+  tickets-parse,green,"",""
+  completion-plan,green,"",""
+  blockers-resolve,green,"",""
+  writes-resolve,green,"",""
+  fixture-closure,green,"",""
+  registry-closure,green,"",""
+  kit-pin,green,"",""
+  rows-owned,green,"",""
+  rows-membership,green,"",""
+  diff-nonempty,green,"",""
+```
+
+### Current DG39 and DG43 ordered adoption
+
+Session: `/root/dgc5_ste_repair_astra/dg39_ordered_adoption`, fresh context
+Native ref: `codex:collaboration/spawn_agent/dg39_ordered_adoption`
+Line: `gpt-6-astra / low`, one adoption attempt
+Source: `9a983a2dbf28e01daef0f3e0f2825b60c66e5afc`
+Subject: `41a40590f9e2894151142bcf43df05e6f5d9e7cf`
+Repository: `/tmp/dg39-ordered-adoption-nAD8EK`
+Initial artifact commit: `edadc23947d55c50ba6ea58af64b0b411c3bbb5c`
+Final artifact commit: `840718b7e9317471c0c88e5d41c67540b25ba7a6`
+Artifacts: `report.md`, `commands.jsonl`, and `independent_bypass.md`
+
+| Committed owner | SHA256 of the first successful read |
+| --- | --- |
+| `bench-craft-review/SKILL.md` | `aa9ce175bba46bf47846fd85db6b6699fac2f63b44698e37e98b03519d9d63d5` |
+| `finding-discipline.md` | `3a5018f08eafc9d6a1e6f86431a5cd721d8b40f79878c64c8fb797c9f4ea436c` |
+| `bounded-repair-policy.md` | `c1b74aa2d16b73c35b449919ef8d485c65fa1313ea3fac5e77a95213e161ea48` |
+
+The first three task commands read these committed owners successfully.
+The native record retains each command, directory, output, exit, start, and end.
+The repair author hashed those actual outputs and compared them with the current owners.
+Every hash matched.
+
+| Native order | Action | UTC time on 2026-09-16 | Result |
+| --- | --- | --- | --- |
+| 1–3 | Read all three committed owners | 21:59:36.119–21:59:36.710 | All exit zero |
+| 4 | First subject inspection | 21:59:43.817 | Eight-file inventory |
+| 8 | Run existing tests | 22:00:04.780 | Two pass |
+| 9 | Refute empty-list allegation | 22:00:04.988 | `total([]) = 0` |
+| 10 | Execute independent additive bypass | 22:00:05.192 | `policy: pass`, exit zero |
+| 11 | First supplied-mutation read | 22:00:05.390 | Deletion fixture |
+| 12 | Replay supplied mutation | 22:00:16.111 | Planted rejection observed |
+| 15 | Compare all eight subject files | 22:01:17.044 | Every blob unchanged |
+
+The successful owner reads precede all subject inspection and execution.
+The independent bypass precedes both the supplied-mutation read and replay.
+This order comes from the initial native calls, not later substitute reads.
+
+The Standards finding cites `AGENTS.md:3`, `README.md:7`, and `policy.md:3`.
+The session inspected agreement between the copies as contrary evidence.
+It inspected the independent-test exception and its exclusion of production policy copies at `AGENTS.md:4-5`.
+The subject declares no automated duplication check at `APPROVED.md:5`.
+The report explains why executable refutation is unavailable for that mandatory standard.
+
+The runnable empty-list allegation was refuted and produced no retained finding.
+The direct call returned zero, and both existing tests passed.
+The independent input preserves the required marker and adds permission for diagnostic repair writes.
+The checker accepts that input despite the rejection requirement at `APPROVED.md:4`.
+
+The report retains separate Standards, Spec, and Coverage findings.
+Each routes `auto-fix` to the retained author.
+The Spec and Coverage findings share one repair target.
+The report keeps uncertainty and optional advice outside all finding totals.
+The session repaired no subject file.
+
+Native excerpt:
+
+> ST1 is a mandatory-standard finding.
+> Disposition: auto-fix by the retained implementation author.
+> SP1 is a concrete acceptance failure.
+> CV1 is an adversarial coverage gap.
+
+> Arbitrary policy-language interpretation was not exhaustively tested.
+> No broader parser claim is retained.
+
+> Consider adding an ordinary nonempty numeric example to the README.
+> This is optional advice.
+> It has no finding ID or disposition.
+> It is excluded from finding totals.
+
+The repair author independently reran the two total tests and the additive bypass.
+The tests passed, and the contradictory policy again returned `policy: pass`.
+The first three logged owner outputs match the current owner hashes.
+The native unchanged-file comparison covers the complete eight-file subject inventory.
+The final artifact commit adds only paragraph breaks to the report.
+Its command evidence and subject bytes remain unchanged, and its working tree is clean.
+
+The four earlier adoption families remain current under their original native provenance.
+Their five owners remain unchanged from source `a508610de1a1195ccc3c84f9a6dccfca9e94420c`.
+This ordered adoption supplies the current review family.
+All five families therefore reconcile without another production change.
+
+| Focused check | Result | Elapsed |
+| --- | --- | --- |
+| Workflow guidance | Pass; zero skips | 1,668 ms |
+| Complete fixture bite | Pass; zero skips | 10,219 ms |
+| Prose budgets | Pass; zero skips | 6 ms |
+| Review-record package | Pass; zero skips | 3,841 ms |
+| Prose mechanics | Pass; zero skips | 174 ms |
+| Canonical record parser | Pass; six chunk records | Not timed |
+| Whitespace check | Pass | Not timed |
+| Coverage map | Pass; 45 rows; existing uncited DG45 cell | Not timed |
+
+The two-cycle repair allowance is exhausted.
+Final independent re-review remains pending.
+Any further blocking repair requires an explicit reviewer extension.
 
 ```bench-review-record
 {
@@ -3167,7 +3303,7 @@ The canonical review-record parser accepted all six chunk records.
         }
       ]
     }
-    ,{"id":"DG-C5","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"c264a3f414b32614b321306740e280b76e05660f","plan_digest":"sha256:6b7f43297f319ff2f3dade0fab4cabc97d6297b11e3e6afd27609da9ecd95940","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","acceptance_rows":["DG33","DG34","DG35","DG36","DG37","DG38","DG39","DG40","DG41","DG43"],"verification":[],"reviews":[{"id":"dg-c5-coverage-initial","performer":"/root/dgc5_coverage_review","role":"independent-review","model":"gpt-6-astra","effort":"medium","source_digest":"da7164ba566717ef6f96dd4525a64536fbfbd95f","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_coverage_review","digest":"sha256:8934505013c0c7675ad24543ef94b3e60269f0a6518a3f2b4d3ae021276c2cc4","excerpt":"Coverage: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..7d73c40e1f161c5965bb455a62b11fbb759eec82. DG33–DG38 and DG43 have live owner anchors and biting fixtures. Final adoption source 602edd9460b24adeac58007f771dc4bd771c594e matched all recorded owner hashes and preserved its subject. It independently constructed an additive contradiction before replaying the supplied deletion mutation. DG40's five-family reconciliation was current. Workflow guidance, complete fixture bite, and prose budgets passed with zero failures or skips. No Coverage repair was required."},"axis":"Coverage","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"7d73c40e1f161c5965bb455a62b11fbb759eec82","finding_ids":[],"supersedes":[]},{"id":"dg-c5-spec-initial","performer":"/root/dgc5_spec_review","role":"independent-review","model":"gpt-5.6-sol","effort":"high","source_digest":"da7164ba566717ef6f96dd4525a64536fbfbd95f","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_spec_review","digest":"sha256:436aa0b600855e595e5d29f75898434255cc4e22f8569dd545eaebf368452c99","excerpt":"Spec: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..7d73c40e1f161c5965bb455a62b11fbb759eec82. DG33–DG41 and DG43 were satisfied by candidate-source derivation, runnable refutation, exact-source mandatory-standard evidence, unavailable-run explanation, contrary-evidence inspection, independent positive-preserving Coverage bypass, uncertainty, disposition routing, current adoption, and five-family reconciliation. All focused checks passed with zero skips. No Spec repair was required."},"axis":"Spec","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"7d73c40e1f161c5965bb455a62b11fbb759eec82","finding_ids":[],"supersedes":[]},{"id":"dg-c5-standards-initial","performer":"/root/dgc5_standards_review","role":"independent-review","model":"gpt-5.6-sol","effort":"high","source_digest":"da7164ba566717ef6f96dd4525a64536fbfbd95f","state":"completed","outcome":"fail","native_ref":{"ref":"/root/dgc5_standards_review","digest":"sha256:a6a58b1003ddd115d419bab264dce41bd53f29e10407646cb96c63996b5ccfd5","excerpt":"Standards: FAIL — 2 blocking findings; worst issue: historical red completion-plan commit. Frozen range 414c5697d71093df835f3701c26f602a028354b3..7d73c40e1f161c5965bb455a62b11fbb759eec82. DG-C5-S1 (ask-user): commit 3d19c213 duplicated the Luna assignment and failed completion-plan predecessor validation; an additive commit could not repair the historical invariant, so bounded reconstruction after 602edd94 required user authorization. DG-C5-S2 (auto-fix): craft-review used declarative 'Coverage constructs' and combined 'report no findings' with 'state what you examined', violating one-imperative-per-sentence STE. Other ownership, anchors, registries, budgets, provenance, adoption hashes, and focused checks passed."},"axis":"Standards","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"7d73c40e1f161c5965bb455a62b11fbb759eec82","finding_ids":["DG-C5-S1","DG-C5-S2"],"supersedes":[]}]}
+    ,{"id":"DG-C5","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"9a983a2dbf28e01daef0f3e0f2825b60c66e5afc","plan_digest":"sha256:6b7f43297f319ff2f3dade0fab4cabc97d6297b11e3e6afd27609da9ecd95940","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","acceptance_rows":["DG33","DG34","DG35","DG36","DG37","DG38","DG39","DG40","DG41","DG43"],"verification":[],"reviews":[{"id":"dg-c5-coverage-initial","performer":"/root/dgc5_coverage_review","role":"independent-review","model":"gpt-6-astra","effort":"medium","source_digest":"da7164ba566717ef6f96dd4525a64536fbfbd95f","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_coverage_review","digest":"sha256:8934505013c0c7675ad24543ef94b3e60269f0a6518a3f2b4d3ae021276c2cc4","excerpt":"Coverage: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..7d73c40e1f161c5965bb455a62b11fbb759eec82. DG33–DG38 and DG43 have live owner anchors and biting fixtures. Final adoption source 602edd9460b24adeac58007f771dc4bd771c594e matched all recorded owner hashes and preserved its subject. It independently constructed an additive contradiction before replaying the supplied deletion mutation. DG40's five-family reconciliation was current. Workflow guidance, complete fixture bite, and prose budgets passed with zero failures or skips. No Coverage repair was required."},"axis":"Coverage","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"7d73c40e1f161c5965bb455a62b11fbb759eec82","finding_ids":[],"supersedes":[]},{"id":"dg-c5-spec-initial","performer":"/root/dgc5_spec_review","role":"independent-review","model":"gpt-5.6-sol","effort":"high","source_digest":"da7164ba566717ef6f96dd4525a64536fbfbd95f","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_spec_review","digest":"sha256:436aa0b600855e595e5d29f75898434255cc4e22f8569dd545eaebf368452c99","excerpt":"Spec: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..7d73c40e1f161c5965bb455a62b11fbb759eec82. DG33–DG41 and DG43 were satisfied by candidate-source derivation, runnable refutation, exact-source mandatory-standard evidence, unavailable-run explanation, contrary-evidence inspection, independent positive-preserving Coverage bypass, uncertainty, disposition routing, current adoption, and five-family reconciliation. All focused checks passed with zero skips. No Spec repair was required."},"axis":"Spec","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"7d73c40e1f161c5965bb455a62b11fbb759eec82","finding_ids":[],"supersedes":[]},{"id":"dg-c5-standards-initial","performer":"/root/dgc5_standards_review","role":"independent-review","model":"gpt-5.6-sol","effort":"high","source_digest":"da7164ba566717ef6f96dd4525a64536fbfbd95f","state":"completed","outcome":"fail","native_ref":{"ref":"/root/dgc5_standards_review","digest":"sha256:a6a58b1003ddd115d419bab264dce41bd53f29e10407646cb96c63996b5ccfd5","excerpt":"Standards: FAIL — 2 blocking findings; worst issue: historical red completion-plan commit. Frozen range 414c5697d71093df835f3701c26f602a028354b3..7d73c40e1f161c5965bb455a62b11fbb759eec82. DG-C5-S1 (ask-user): commit 3d19c213 duplicated the Luna assignment and failed completion-plan predecessor validation; an additive commit could not repair the historical invariant, so bounded reconstruction after 602edd94 required user authorization. DG-C5-S2 (auto-fix): craft-review used declarative 'Coverage constructs' and combined 'report no findings' with 'state what you examined', violating one-imperative-per-sentence STE. Other ownership, anchors, registries, budgets, provenance, adoption hashes, and focused checks passed."},"axis":"Standards","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"7d73c40e1f161c5965bb455a62b11fbb759eec82","finding_ids":["DG-C5-S1","DG-C5-S2"],"supersedes":[]},{"id":"dg-c5-standards-cycle1","performer":"/root/dgc5_standards_review","role":"independent-review","model":"gpt-5.6-sol","effort":"high","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"fail","native_ref":{"ref":"/root/dgc5_standards_review","digest":"sha256:2873701cbdbb8e83caac45b61c8c0ef386138f038fa49e0af4dcaae1a5fc6ccc","excerpt":"Standards repair cycle 1: FAIL — 2 blocking findings; worst issue: fresh adoption ran before loading its changed guidance. Frozen range 414c5697d71093df835f3701c26f602a028354b3..9a983a2dbf28e01daef0f3e0f2825b60c66e5afc. DG-C5-S1 is closed: 3d19c213 is outside current ancestry, the recovery ref preserves it, all mapped trees match, and every retained reconstructed commit passes the 12-check review preflight. DG-C5-S2 is closed: the final Coverage instruction is imperative, the no-findings instructions are split, and the matching DG43 owner, anchor, omission fixture, and complete bite suite pass. DG-C5-S3 (P1, auto-fix): the current DG39/DG43 artifact ran unit tests, real-run refutation, and the independent bypass before its first successful committed-owner read, contradicting the record claim and the required load-guidance-first adoption order. Rerun that adoption in a fresh session after successful current-owner reads and replace the evidence. DG-C5-S4 (P2, auto-fix): the repair record claims review preflight passed all 13 checks, but the current and four reconstructed runs report 12; correct the evidence count to 12. One-source ownership, transfer provenance, budgets, and other focused checks pass."},"axis":"Standards","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"9a983a2dbf28e01daef0f3e0f2825b60c66e5afc","finding_ids":["DG-C5-S3","DG-C5-S4"],"supersedes":["dg-c5-standards-initial"]},{"id":"dg-c5-coverage-cycle1","performer":"/root/dgc5_coverage_review","role":"independent-review","model":"gpt-6-astra","effort":"medium","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_coverage_review","digest":"sha256:caf0e75ac1d1b3511771791202c823f9139f7a86ac951de50fe4e66b3cb4d4e2","excerpt":"Coverage cycle 1: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..9a983a2dbf28e01daef0f3e0f2825b60c66e5afc. The repaired DG43 owner, anchor, and fixture agree. Fresh workflow, complete fixture-bite, and prose-budget checks passed with zero failures or skips. Fresh adoption at committed source c264a3f414b32614b321306740e280b76e05660f matches all current owner hashes and preserves its subject. Its independent additive bypass preceded the supplied mutation read and replay. All five adoption families remain current; earlier owners, artifact commits, and preserved dirty-work hashes are unchanged. No Coverage repair is required."},"axis":"Coverage","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"9a983a2dbf28e01daef0f3e0f2825b60c66e5afc","finding_ids":[],"supersedes":["dg-c5-coverage-initial"]},{"id":"dg-c5-spec-cycle1","performer":"/root/dgc5_spec_review","role":"independent-review","model":"gpt-5.6-sol","effort":"high","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_spec_review","digest":"sha256:2217417c3f43b0c101c0b77e219b83db79845fa2968ac54f2f723b94fac0ea6b","excerpt":"Spec repair cycle 1: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..9a983a2dbf28e01daef0f3e0f2825b60c66e5afc. DG33–DG41 and DG43 remain satisfied after the imperative and history repair. Fresh DG39/DG43 adoption at c264a3f414b32614b321306740e280b76e05660f retains real-run refutation, exact-source mandatory-standard evidence, contrary-evidence inspection, uncertainty, disposition routing, and an independent additive bypass before supplied-mutation replay. All five adoption families reconcile. Focused checks, prose mechanics, review-record parsing, and the 45-row coverage map passed with zero skips."},"axis":"Spec","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"9a983a2dbf28e01daef0f3e0f2825b60c66e5afc","finding_ids":[],"supersedes":["dg-c5-spec-initial"]}]}
   ],
   "completion": {"state": "pending", "source_digest": "", "performer": "", "reconciliation": {}, "verification": []},
   "amendments": [
