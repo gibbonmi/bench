@@ -26,7 +26,7 @@ Do not implement the feature only to obtain a red during specification.
    - Read one existing precedent for each named seam.
    - Sweep the whole tree for each reader of a count, a schema field, or an artifact path the spec changes.
      This reader sweep includes `.mjs` scripts and workflow files, and `references/map-discipline.md` states its rules. Each reader takes a row or a named exclusion.
-2. **Sketch the seams** (`craft-seams`): existing over new, the highest that still shows the failure, ideally one; confirm them with the reviewer first.
+2. **Place the seam**: Apply [Evidence-led authoring](#evidence-led-authoring). If its exception applies, follow `craft-seams` and confirm the selected seam with the reviewer.
 3. **Write the spec** from the template below, in ASD-STE100 prose per `references/ste-prose.md`, and run `bench coverage --check`. The spec file is the published artifact.
 
 ## User stories
@@ -40,7 +40,7 @@ Recommend one implementation line for the complete build. Explain it from the ha
 
 Each row ties a story to one observable behavior at a seam: `story`, `behavior`, `seam`, `why it catches the failure`. An optional leading `row` column opts the spec into ticket covers traceability (new specs default to it).
 `bench coverage --check` refuses a row that references more than four stories, and it refuses a row that states two predicates (`;`). It also refuses a declared story that no row references, unless a `Not covered: story <n> — <reason>` line sits under the map.
-Name the cheapest wrong implementation per story. Name the row that goes red on it, across fences and through the composition degenerate to the real producer.
+Connect each story's [Evidence-led authoring](#evidence-led-authoring) result to the row that goes red across fences and through composition to the real producer.
 
 Enumerate every quantifier; every source behavior becomes a row or an exception. `references/map-discipline.md` states the rule each row must satisfy; open that reference before you lock the rows.
 
