@@ -1,1 +1,1 @@
-[{"path":".agents/commands/bench-implement-spec.md","old":"If a result contradicts the approved behavior or seam, stop and use the wrong-spec route under \"When the build stops short.\"","new":""}]
+[{"path":".agents/commands/bench-implement-spec.md","old":"If a result contradicts the approved behavior or seam, stop. Route it through the wrong-spec path under \"When the build stops short.\"","new":""}]
