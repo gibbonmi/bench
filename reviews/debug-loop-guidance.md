@@ -1960,7 +1960,7 @@ Both owner hashes remain those in the cycle-1 source table.
 {
   "version": 2,
   "spec": "specs/debug-loop-guidance/spec.md",
-  "plan_digest": "sha256:4cb98420d88972f69fc60aff1163b215750898e260bd483cb9134840efb97799",
+  "plan_digest": "sha256:d522c7f3bb8f231a758986209286da90692048a775f1296fe1e7b3671b1de32d",
   "chunks": [
     {
       "id": "DG-C1",
@@ -2673,7 +2673,73 @@ Both owner hashes remain those in the cycle-1 source table.
         "DG31",
         "DG32"
       ],
-      "verification": [],
+      "verification": [
+        {
+          "id": "dg-c4-anchors-cycle1",
+          "performer": "/root/dgc4_repair_astra",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "low",
+          "source_digest": "e365f4297c5764639fcc9e777c7d8470d124fe35",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/dgc4_repair_astra/dg-c4-anchors@42d9fe64",
+            "digest": "sha256:06cab5b87723f9803f06001ed35b579e9c8bbe56864bec3842bd8d684cc3aee3",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1877\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "anchors",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "remove the focused rerun after each material action",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "codex:session/dgc4_repair_astra/dg-c4-rerun-probe@42d9fe64",
+              "digest": "sha256:3f16d347ee11d9698f5ca9aa688506f144abbb3f7811a4de53ca77d5bd895622",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/commands/bench-implement-spec.md,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,1739\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: debug loop: DG29 requires a focused rerun after each material action\"\nskips[0]{package,test,reason}:"
+            }
+          }
+        },
+        {
+          "id": "dg-c4-bite-cycle1",
+          "performer": "/root/dgc4_repair_astra",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "low",
+          "source_digest": "e365f4297c5764639fcc9e777c7d8470d124fe35",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/dgc4_repair_astra/dg-c4-bite@42d9fe64",
+            "digest": "sha256:6b73e092dce3e9f14d7ea797e5eae5efbd420f9e41f825831800e3ca0b63136a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,10414\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "bite",
+          "command": "bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner",
+          "exit_code": 0
+        },
+        {
+          "id": "dg-c4-budgets-cycle1",
+          "performer": "/root/dgc4_repair_astra",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "low",
+          "source_digest": "e365f4297c5764639fcc9e777c7d8470d124fe35",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/dgc4_repair_astra/dg-c4-budgets@42d9fe64",
+            "digest": "sha256:6f72c99a424331a3381e284e55ffa703b490f81e19b498e848e8bfc5d9ca25ed",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        }
+      ],
       "reviews": [
         {
           "id": "dg-c4-standards-initial",
@@ -2983,6 +3049,18 @@ Both owner hashes remain those in the cycle-1 source table.
     {
       "from": "sha256:a77923bb061523566f92d3e4926b03b0195149e7e0ecf43d9eb203423de9c7a5",
       "to": "sha256:4cb98420d88972f69fc60aff1163b215750898e260bd483cb9134840efb97799",
+      "chunk_ids": {
+        "DG-C1": ["DG-C1"],
+        "DG-CR": ["DG-CR"],
+        "DG-C2": ["DG-C2"],
+        "DG-C3": ["DG-C3"],
+        "DG-C4": ["DG-C4"],
+        "DG-C5": ["DG-C5"]
+      }
+    },
+    {
+      "from": "sha256:4cb98420d88972f69fc60aff1163b215750898e260bd483cb9134840efb97799",
+      "to": "sha256:d522c7f3bb8f231a758986209286da90692048a775f1296fe1e7b3671b1de32d",
       "chunk_ids": {
         "DG-C1": ["DG-C1"],
         "DG-CR": ["DG-CR"],
