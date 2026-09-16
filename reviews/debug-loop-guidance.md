@@ -7,7 +7,7 @@ The DG1–DG5 presence anchors accepted their required instructions together wit
 The initial Coverage review missed this case.
 Its historical zero-finding return below does not establish contradiction coverage.
 
-The coordinator explicitly authorized this substantive extension after the two earlier review repair cycles.
+The reviewer explicitly extended the allowance by replying "then continue" after the coordinator named this shared blocking defect and the required Candidate A repair.
 The same author, `/root/candidate_a`, retained the repair at `gpt-6-astra / high`.
 The repair began at clean source tip `00b631ec52caa59f9670fc48b3d704dfb5f4cb57`.
 The author changed only the existing debug anchor registry, six new fixture directories, and this pickup.
@@ -89,7 +89,7 @@ The author compared all three files directly against `git show` with `cmp`; ever
 Their SHA256 values still match the S1 source-proof table below.
 DG42 and all adopted instruction bytes therefore remain unchanged.
 
-No Go file was added under `tests/canary`, so the conditional vet requirement does not apply.
+The author added no Go file under `tests/canary`, so the conditional vet requirement does not apply.
 The existing fixture-family registration includes the changed owner; no inventory or parser needed modification.
 No guidance budget or acceptance instruction changed.
 The pickup passed prose mechanics and `git diff --check` before the authorized commit.
@@ -388,7 +388,7 @@ Every recorded test run reported zero skips.
 
 The fixtures invoke the existing registered owner and require their specific diagnostic to disappear after restoration.
 The independent expectations detect the named owner omissions and justify their separate literals.
-No new test runner, parser, CLI command, or live-tree test was added.
+The author added no new test runner, parser, CLI command, or live-tree test.
 The existing root check evaluates every new anchor.
 
 ### Native adoption: in-fence variant
@@ -569,7 +569,7 @@ The final prose changes preserved the probed instruction bytes.
 Bench tests yielded native command sessions during compilation and execution.
 The author waited for each required result before the next dependent edit.
 The tables report test-package time; they do not claim complete command wall time.
-No Go file was added under `tests/canary`, so the charge's conditional vet requirement did not apply.
+The author added no Go file under `tests/canary`, so the charge's conditional vet requirement did not apply.
 The command inventories needed no mechanical change; ticket grammar confirmed their existing closure.
 
 ### Action, evidence, and stop log
