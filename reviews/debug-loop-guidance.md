@@ -740,6 +740,105 @@ it does not present those estimates as Codex subscription charges. Luna or
 Terra handled every mechanical prose-only repair in the trial. The retained Sol
 author owned the substantive enforcement and policy repairs.
 
+## DG-C2 author verification
+
+The author started from prepared source tip
+`1c70037d3a20d61b71b4c0873bf44850e5fa9816`. The accepted predecessor was
+`8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc`.
+
+DG9 through DG15 each produced its named `docs-currency-workflow` red before
+its owner sentence made the next row visible. The final guidance states the
+scenario, current owner, cheapest-wrong evidence, sufficient seam, bounded
+action, reviewer stop, and new-feature evidence rule in one section.
+
+| Row | Observed initial diagnostic | Retained fixture |
+| --- | --- | --- |
+| DG9 | `DG9 requires a concrete scenario before seam selection` | `dg-9` |
+| DG10 | `DG10 requires current behavior and owner evidence` | `dg-10` |
+| DG11 | `DG11 requires cheapest-wrong evidence` | `dg-11` |
+| DG12 | `DG12 requires the sufficient existing seam first` | `dg-12` |
+| DG13 | `DG13 requires a bounded action and inspected result` | `dg-13` |
+| DG14 | `DG14 requires a reviewer stop for unresolved behavior` | `dg-14` |
+| DG15 | `DG15 permits planned evidence without an executable red` | `dg-15` |
+| DG15 contradiction | `DG15 forbids an executable red requirement for new-feature specification` | `dg-15-executable-red` |
+
+The exact planned probe swapped the DG15 evidence-plan sentence with
+`Require an executable red before you specify a new feature.` The root check
+failed on the DG15 planned-evidence diagnostic. `bench probe` reported one
+failed test and `restored=yes`.
+
+### DG16 native adoption
+
+Session: `/root/dgc2_author/dgc2_adoption`, fresh context.
+Charge line: `gpt-5.6-sol / high / 2 attempts`.
+Native model label: `Codex GPT-5 / high`.
+Observed interval: `2026-09-16 10:59:42–11:02:25 UTC`, 163 seconds.
+
+The session loaded the complete changed skill at hash
+`7ee5236cb6eb2f9116498c83757be0b8199627b0fbcec730a08ef6c39adfd87e`.
+Luna later restored two physical fixture anchors without a semantic change.
+The final skill hash is
+`b843e21f5161820b082321dc96b3ca0b570ec8e66923a934b165632377f47aad`.
+
+The specified repository was
+`/tmp/dgc2-adoption.eVcekzx9/specified` at
+`52630252ffbd3491d5638e42b7991567505d91d4`. Its first repository action was
+`git rev-parse HEAD`. The session then read `TASK.md`, `README.md`, and
+`list_tools.py` before it wrote `SPEC_EVIDENCE.md`.
+
+The task fixed these scenarios:
+
+- `summarize(["red", "blue"])` returns `"2 items: red, blue"`.
+- `summarize(["solo"])` returns `"1 item: solo"`.
+- `summarize([])` returns `"0 items"`.
+
+The README named `join_items` as the current list-rendering owner.
+`list_tools.py` confirmed that the owner joins values with a comma and a
+space. The repository had no summary implementation or executable summary
+check.
+
+The inspected artifact used the module function as the sufficient seam. It
+named a generic count-and-join format as the cheapest wrong result. The
+planned one-item and empty-list assertions fail on `"1 items: solo"` and
+`"0 items: "`. The session created no implementation or executable check.
+
+The unspecified repository was
+`/tmp/dgc2-adoption.eVcekzx9/unspecified` at
+`133cecca93584887f2c62d24ef59b94f61bd46a0`. Its first repository action was
+also `git rev-parse HEAD`. The same owner reads showed that the empty-list
+result remained unresolved.
+
+The session wrote only `DECISION_REQUEST.md`. It asked which exact string
+`summarize([])` must return, and it stopped before seam or evidence-plan
+design. `test ! -e SPEC_EVIDENCE.md` exited zero. The handoff requires the
+reviewer to supply that string before specification work continues.
+
+The author independently verified both baseline tips, both untracked
+artifacts, the decision-stop absence check, and the Bench worktree boundary.
+The adoption session changed no Bench source. It reported no Bench CLI
+observations.
+
+### Prose-only transfer
+
+Root directed `/root/dgc2_prose_luna` to compact only
+`.agents/skills/bench-craft-spec/SKILL.md`. Luna reduced the file from 165 to
+155 lines and retained all DG9 through DG15 sentences.
+
+The first compaction joined two existing fixture anchors. The exact fixture
+proof found both failures. Luna restored those physical anchors within the
+same 155-line budget. The Sol author retained all semantic guidance,
+anchors, fixtures, adoption evidence, and verification.
+
+### Final focused checks
+
+| Check | Result | Elapsed |
+| --- | --- | --- |
+| `bench test --check docs-currency-workflow` | pass, no skips | 2,359 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass, no skips | 12,072 ms |
+| `bench test --check guidance-prose-budgets` | pass, no skips | 10 ms |
+| `bench test --check ticket-grammar` | pass, no skips | 1,622 ms |
+| `bench test --check prose-mechanics` | pass, no skips | 253 ms |
+
 ```bench-review-record
 {
   "version": 2,

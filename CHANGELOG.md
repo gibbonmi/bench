@@ -16,6 +16,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Changed debug to retain repair authorship and give write delegates an evidence-based handoff at the ticket fence.
 
+### Spec evidence guidance
+
+- Changed spec authoring to inspect concrete scenarios, current owners, sufficient seams, and cheapest-wrong evidence before dependent design.
+- New-feature specifications plan future evidence without implementing code only to obtain an executable red.
+
 ### Cross-harness review opt-in
 
 - Changed implementation review to run cross-harness falsification only when the reviewer requests it.
