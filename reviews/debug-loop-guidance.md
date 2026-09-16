@@ -1956,6 +1956,166 @@ Its next command is `$bench-write-spec /tmp/dgc4-adoption-wrong-spec-Zp82Q7/appr
 This artifact commit retains diagnostic evidence; it does not claim a green product result.
 Both owner hashes remain those in the cycle-1 source table.
 
+## DG-C5 author verification
+
+Author: `/root/dgc5_author`
+Line: `gpt-6-astra / low`, cap eight coherent attempts
+Base: `c6a3c4f4ed271429311c60563e878d8d42221b34`
+Source: `602edd9460b24adeac58007f771dc4bd771c594e`
+
+Craft-review owns candidate selection, uncertainty, the independent Coverage bypass, and disposition routing.
+Finding-discipline owns the distinction between runnable claims and mandatory standards without automated checks.
+The existing repair owner and allowance remain unchanged.
+
+| Row | Retained evidence |
+| --- | --- |
+| DG33 | `dg-33` removes candidate selection; `dg-33-reference` removes the evidence-owner reference |
+| DG34 | Updated `review-strong-finding-run` reverses the runnable real-run requirement |
+| DG35 | `dg-35` removes exact-source evidence; `dg-35-unavailable` removes the unavailable-refutation reason |
+| DG36 | `dg-36` removes contrary-evidence and exception inspection |
+| DG37 | `dg-37` removes uncertainty; the existing bounded repair policy owns advice separation |
+| DG38 | `dg-38` removes the existing disposition route |
+| DG39 | The fresh native adoption below exercises both evidence routes |
+| DG40 | The final reconciliation below cites all five adoption families |
+| DG41 | The unchanged prose-budget check passes at the existing limits |
+| DG43 | `dg-43` removes the independent bypass; `dg-43-replay` removes the replay exclusion |
+
+The existing workflow fixture family owns every new fixture.
+The existing registry append includes the added anchors.
+No command surface or inventory membership changed, so the command inventories need no edits.
+DG34 reuses its sufficient existing fixture instead of adding a duplicate `dg-34` fixture.
+
+| Check | Result | Elapsed |
+| --- | --- | --- |
+| `docs-currency-workflow` | Pass after the final owner edit; zero skips | 1,592 ms |
+| `TestEveryRetainedFixtureBitesThroughRegisteredOwner` | Pass after the final owner edit; zero skips | 9,722 ms |
+| `guidance-prose-budgets` | Pass after the line-wrap correction; zero skips | 5 ms |
+| `ticket-grammar` | Pass after the final source edit; zero skips | 899 ms |
+| `prose-mechanics` | Pass after the final source edit; zero skips | 177 ms |
+| `bench test --package ./internal/anchors` | Pass; zero skips | 395 ms |
+| `git diff --check` | Pass | Not timed |
+
+The fixture suite observed each planted diagnostic and its disappearance after restoration.
+This proof justifies the independent expectations under the project standard.
+The first budget run reported three excess lines in craft-review.
+The author compacted existing line wraps without removing guidance or changing the budget.
+The source commit passed its complete lane before the fresh adoption task began.
+
+The first source commit was `27ef10d71177b5f2f88a07c61d4e788c1f66af6e`.
+The author then removed an optional-advice instruction that duplicated the bounded repair policy.
+Commit `602edd9460b24adeac58007f771dc4bd771c594e` contains that final owner edit and its matching fixture.
+The workflow, fixture-bite, and budget checks passed again, followed by the complete commit lane.
+No formal review or post-review repair cycle has started.
+
+### Historical DG39 adoption
+
+Session: `/root/dgc5_author/dg39_adoption`
+Source: `27ef10d71177b5f2f88a07c61d4e788c1f66af6e`
+Artifact: `/tmp/dgc5-review-adoption-ZrGSoS/report.md`
+Artifact commit: `efc934eca7545d090138065891effb9e2dcc41d5`
+
+This session refuted the runnable allegation and retained the mandatory-standard violation.
+It independently demonstrated an additive policy bypass.
+The later owner edit makes this evidence historical; the final adoption below supplies current evidence.
+
+The named probe restored the unconditional real-run sentence at finding-discipline.
+`bench probe` reported `bit`, one failed root test, and `restored=yes`.
+At final source `602edd94`, its baseline passed and its mutated check failed in 1,396 ms.
+No test skipped.
+The diagnostic was `finding-discipline.md Where an axis under-reads dropped the real run that refutes a strong finding before the report`.
+The restored source retains the runnable-only requirement and the mandatory-standard evidence route.
+
+`bench coverage --check` validated all 45 map rows.
+It reported the existing uncited DG45 seam cell without failing the map.
+
+### Final adoption reconciliation
+
+The four earlier adoption families use committed source `a508610de1a1195ccc3c84f9a6dccfca9e94420c`.
+Their current excerpts appear under the four `Current` adoption headings above.
+At DG-C5 source `602edd94`, a Git comparison found no changes to those five owner files.
+The current SHA256 values match the cycle-1 source table above.
+The cited local evidence artifacts still exist.
+
+| Family | Rows | Current native session | Retained outcome |
+| --- | --- | --- | --- |
+| Debug | DG7, DG8 | `/root/dgc4_repair_astra/debug_adoption` | Same-author repair and preserved out-of-fence dirty work |
+| Specification | DG16 | `/root/dgc4_repair_astra/spec_adoption` | Future checks and a separate unresolved-behavior stop |
+| Ticket slicing | DG24 | `/root/dgc4_repair_astra/tickets_adoption` | Shared-write outcome split and test-fragment merger |
+| Implementation | DG27, DG28, DG32 | `/root/dgc4_repair_astra/implementation_adoption` | Setup, classifications, two immediate focused results, and wrong-spec exit |
+| Review | DG39, DG43 | `/root/dgc5_author/dg39_final_adoption` | Native result recorded below |
+
+This reconciliation retains the earlier observations rather than rerunning their tasks in Ticket 5.
+The implementation adoption's unavailable Windows row remains explicitly unavailable within its disposable scenario.
+That classification supplies DG28 evidence and does not claim a passing Windows behavior test.
+
+### Current DG39 and DG43 adoption
+
+Session: `/root/dgc5_author/dg39_final_adoption`, fresh context
+Native ref: `codex:collaboration/spawn_agent/dg39_final_adoption`
+Line: `gpt-6-astra / low`, cap three coherent attempts
+Source: `602edd9460b24adeac58007f771dc4bd771c594e`
+Repository: `/tmp/dgc5-final-review-adoption-kBBEUx`, branch `adoption`
+Subject commit: `41a40590f9e2894151142bcf43df05e6f5d9e7cf`
+Artifact commit: `10cf8f0cc2fe7eaa764e8550a13d5f101e4ee71b`
+Artifacts: `report.md`, `commands.jsonl`, and `bypass-policy.md` in that repository
+
+| Owner | SHA256 |
+| --- | --- |
+| `bench-craft-review/SKILL.md` | `8370be95f46089e7f2eb49a33155606b6cf603223b5192137362bb01b43f46b0` |
+| `finding-discipline.md` | `3a5018f08eafc9d6a1e6f86431a5cd721d8b40f79878c64c8fb797c9f4ea436c` |
+| `bounded-repair-policy.md` | `c1b74aa2d16b73c35b449919ef8d485c65fa1313ea3fac5e77a95213e161ea48` |
+
+The first action read the committed craft-review owner through `bench worktree exec`.
+Two later owner reads failed because the disposable directory could not resolve the Bench assignment.
+The session repeated those reads successfully from the Bench checkout before classifying findings.
+The command record preserves the actual failures and successful executions.
+
+| Observation | Native result | Exit | Wall duration |
+| --- | --- | --- | --- |
+| Empty-list allegation | `total([]) = 0` | 0 | 24.186 ms |
+| Existing total tests | Both tests passed | 0 | 27.075 ms |
+| Baseline policy | `policy: pass` | 0 | 38.393 ms |
+| Independent additive bypass | `policy: pass` despite explicit repair permission | 0 | 82.125 ms |
+| Supplied deletion mutation | `supplied deletion: red with planted diagnostic` | 0 | 13.169 ms |
+
+The session derived the mandatory standard from `AGENTS.md:3` and inspected its exception at lines 4 and 5.
+The policy instructions at `README.md:7` and `policy.md:3` violated that standard.
+The independent-test exception excluded production policy copies.
+The repository had no automated duplication check, so executable refutation was unavailable for that standard.
+The session retained the exact-source finding without treating a passing substring check as contrary evidence.
+
+The session authored `bypass-policy.md` independently before replaying the supplied deletion mutation.
+The new file retained the positive marker and added `Exception: diagnostic delegates may write repairs.`
+The checker accepted it despite the rejection requirement at `APPROVED.md:4`.
+This observation supplies the independent bypass evidence; the supplied deletion result does not substitute for it.
+
+The memory concern remained uncertain because no reproducer, measurement, or binding memory limit supported it.
+The usage-example suggestion remained optional advice outside all finding and repair totals.
+The session made no repair and returned both repair targets to the retained author.
+Its handoff stopped at evidence delivery and claimed no formal Bench review, gate, or landing.
+
+Native excerpt:
+
+> Standards: 1 accepted finding; worst issue S1; auto-fix.
+> Spec: 1 accepted finding; worst issue SP1; auto-fix.
+> Coverage: 1 accepted finding; worst issue C1; auto-fix.
+> The empty-list candidate is refuted with no-op.
+> The memory concern remains uncertain.
+> Optional advice: add a worked usage example.
+
+> Raw accepted findings: 3.
+> Distinct repair targets: 2.
+> SP1 and C1 share the policy-check repair target.
+
+These findings belong to the deliberately defective disposable subject, not the Bench chunk.
+The author inspected the report, command record, and independent bypass.
+An independent rerun confirmed both passing total tests and the accepted contradictory policy.
+A comparison confirmed unchanged bytes for all eight original subject files.
+
+The artifact repository was clean, and both final Bench owner hashes matched the source table.
+DG39, DG40, and DG43 therefore have current adoption evidence.
+Formal three-axis review remains pending.
+
 ```bench-review-record
 {
   "version": 2,
