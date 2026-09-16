@@ -21,8 +21,11 @@ baseline, and the universal-claim rule.
 
 - A test-deleting Standards finding names the surviving assertion or file as coverage.
   A deletion with no named survivor is an open coverage hole.
-- An axis refutes a strong finding with a real run before the axis reports the finding.
+- For a runnable defect claim, attempt refutation with a real run before reporting a strong finding.
   A strong finding is one that names a defect, a gap, or a violation without a hedge.
+- For a mandatory standard without an automated check, cite the exact requirement and the violating source.
+  State why executable refutation is unavailable.
+  Inspect contrary source evidence and applicable exceptions before retaining the finding.
 - An environment-variable Coverage finding cites the producer before it claims absence.
   The consumer alone does not show which producer binds the variable.
 - The Coverage axis probes a test's fixture source, not only its assertion. A fixture

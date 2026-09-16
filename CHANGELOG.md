@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Semantic review evidence
+
+- Changed review guidance to distinguish runnable claims from mandatory standards and require independent Coverage bypass attempts.
+
 ### Focused implementation evidence
 
 - Changed implementation guidance to identify each slice's acceptance target and inspect focused evidence after every material action.

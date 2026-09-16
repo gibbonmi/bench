@@ -1052,7 +1052,7 @@ func TestCraftReviewFindingDisciplineAnchorsRedOnRemoval(t *testing.T) {
 			{
 				file:    reference,
 				section: underRead,
-				needle:  "An axis refutes a strong finding with a real run before the axis reports the finding.",
+				needle:  "For a runnable defect claim, attempt refutation with a real run before reporting a strong finding.",
 				want:    "finding-discipline.md Where an axis under-reads dropped the real run that refutes a strong finding before the report",
 			},
 			{
