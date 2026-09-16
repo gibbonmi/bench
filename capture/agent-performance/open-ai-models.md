@@ -5,9 +5,10 @@ The user approved Sol/high for retained implementation and Astra/medium for nati
 The user excluded cross-harness review.
 Token counts, provider costs, and comparative latency remain unknown.
 
-Latest spec observation: `repair-collection-pilot` used Sol/high authorship and Astra/medium review across three chunks.
-Astra found blocking gaps in each chunk. Sol closed them in one, two, and two repair rounds.
-All 66 rows and the final landing gate passed.
+Latest shaping observation: `debug-loop-guidance` dispatched Sol/high for one primary-source research question.
+The coordinator reopened all three papers and retained their transfer limits.
+The return misidentified its inherited model; runtime identity remains unknown beyond the explicit dispatch setting.
+This research observation supplies no implementation or review-quality result and changes no routing decision.
 
 ## Cost assumptions
 
