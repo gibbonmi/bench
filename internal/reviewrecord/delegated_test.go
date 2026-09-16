@@ -111,6 +111,11 @@ func TestDelegatedIdentityRefusals(t *testing.T) {
 			history[1].Stopped = ""
 			p.Execution.Assignments["1.md"] = history
 		}},
+		{"replacement without preserved source", "missing preserved source", func(p *rr.Plan) {
+			history := replaced(p.Execution.Assignments["1.md"][0], "user-directed")
+			history[1].Preserved = ""
+			p.Execution.Assignments["1.md"] = history
+		}},
 		{"no-progress without reassessment", "requires a reassessment", func(p *rr.Plan) {
 			history := replaced(p.Execution.Assignments["1.md"][0], "no-progress")
 			history[1].Reassessment = ""
