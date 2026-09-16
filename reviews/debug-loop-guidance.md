@@ -712,6 +712,34 @@ Terra made only the three coordinator-routed mechanical prose repairs. The
 implementation command is 80 lines, and the review skill is 122 lines. No prose
 budget increased.
 
+## DG-CR review trial
+
+Round 1 reviewed `885a8c10..148048e1`. The single Astra/high reviewer completed
+all three axes in 376.141 seconds and found the prose-budget failure and the
+duplicated checkpoint fixture harness. The three Sol/high reviewers completed
+their axes in parallel in 411.128 seconds. Their union found those two defects,
+the mixed-reviewer bypass, the duplicated mode policy, and the inconsistent
+binding review sources.
+
+The Astra Coverage pass independently rejected failed-axis, former-author, and
+missing-axis variants, but it missed the A/B/A mixed-reviewer state. The Sol
+Coverage and Spec reviewers both constructed that state and proved the
+checkpoint accepted it. The accepted repair set was the evidence-backed union;
+review latency, reviewer misses, reaffirmations, and ledger size were not
+charged to the author.
+
+The three Sol/high repair re-reviews completed in 609.118 seconds and returned
+zero findings at `885a8c10..9cc976aa`. The user then ended the comparative trial
+and selected three Sol/high reviewers for the remaining implementation. Their
+final plan-delta review completed in 414.275 seconds and returned zero findings
+at `885a8c10..a321ba6a`.
+
+Delegate token counters were unavailable. The final implementation report uses
+estimated prompt, source, and response sizes for an API-equivalent comparison;
+it does not present those estimates as Codex subscription charges. Luna or
+Terra handled every mechanical prose-only repair in the trial. The retained Sol
+author owned the substantive enforcement and policy repairs.
+
 ```bench-review-record
 {
   "version": 2,
@@ -850,6 +878,143 @@ budget increased.
           "axis": "Coverage",
           "base": "2f7db79a3d910ac700da42ee0dd92560a7ff7c46",
           "tip": "885a8c10fb63cf0be81e310bcf537f303772d3cd",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
+    },
+    {
+      "id": "DG-CR",
+      "base": "885a8c10fb63cf0be81e310bcf537f303772d3cd",
+      "tip": "a321ba6a6817e5eac1e020f1c7c93e6a2e2eac6c",
+      "plan_digest": "sha256:273ac42c953225da2c4f9e99eb38b3818b41131de439bcfeaaf1e6944aed0a60",
+      "source_digest": "9a2164bee8b69c3706ee5cbe460c4bc7ef6d2f6f",
+      "acceptance_rows": ["DG44", "DG45"],
+      "verification": [
+        {
+          "id": "dg-cr-reviewrecord",
+          "performer": "/root/unified_review_author",
+          "role": "author-verification",
+          "model": "gpt-5.6-sol",
+          "effort": "medium",
+          "source_digest": "9a2164bee8b69c3706ee5cbe460c4bc7ef6d2f6f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/unified_review_author/dg-cr-reviewrecord@a321ba6a",
+            "digest": "sha256:cb1e4419de0ff8484801cf6334007eca73ce28c5363049c66cb7ccf1135ae850",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,268\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord --run 'TestDelegated.*Review'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit the explicit unified-review mode while reusing one reviewer",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "codex:session/unified_review_author/dg-cr-mode-probe@a321ba6a",
+              "digest": "sha256:97e4e68e6a5e3f26e07cc2b5a1563c9db0979da3f2059806b470a12cd4e35404",
+              "excerpt": "mutation: omit the explicit unified-review mode while reusing one reviewer\noutcome: bit; completion evidence: chunk 1: use three distinct review sessions\nmutated: internal/gate,fail,482 ms; failed_tests=2\nrestore: pass"
+            }
+          }
+        },
+        {
+          "id": "dg-cr-checkpoint",
+          "performer": "/root/unified_review_author",
+          "role": "author-verification",
+          "model": "gpt-5.6-sol",
+          "effort": "medium",
+          "source_digest": "9a2164bee8b69c3706ee5cbe460c4bc7ef6d2f6f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/unified_review_author/dg-cr-checkpoint@a321ba6a",
+            "digest": "sha256:7d9653a4d6773374f7de1cc3cf7e008e8bdff1e7ef3fe2cd9132cffd9a54642b",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,608\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "checkpoint",
+          "command": "bench test --package ./internal/gate --run TestDelegatedDistinctAxes",
+          "exit_code": 0
+        },
+        {
+          "id": "dg-cr-prose",
+          "performer": "/root/unified_review_author",
+          "role": "author-verification",
+          "model": "gpt-5.6-sol",
+          "effort": "medium",
+          "source_digest": "9a2164bee8b69c3706ee5cbe460c4bc7ef6d2f6f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/unified_review_author/dg-cr-prose@a321ba6a",
+            "digest": "sha256:7c3202403fd632a2e51e640b53c0168b97603ee48c251d0eb06079ffc7df1f2f",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,213\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "prose",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "dg-cr-standards-final",
+          "performer": "/root/dgcr_r1_sol_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "9a2164bee8b69c3706ee5cbe460c4bc7ef6d2f6f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/dgcr_r1_sol_standards@a321ba6a",
+            "digest": "sha256:8b19caf2f5d5ba5ff0bd7f1480edde344fe2b9901ae8ef38d867e8d2e3595968",
+            "excerpt": "Verdict: pass. No Standards findings at 885a8c10..a321ba6a. The active plan requires three distinct reviewers; amendment identities and prior repairs remain current."
+          },
+          "axis": "Standards",
+          "base": "885a8c10fb63cf0be81e310bcf537f303772d3cd",
+          "tip": "a321ba6a6817e5eac1e020f1c7c93e6a2e2eac6c",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dg-cr-spec-final",
+          "performer": "/root/dgcr_r1_sol_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "9a2164bee8b69c3706ee5cbe460c4bc7ef6d2f6f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/dgcr_r1_sol_spec@a321ba6a",
+            "digest": "sha256:d3aaca883422e622fa87f707f874608b64984295ccceb6e28a475a32cd83fedf",
+            "excerpt": "Verdict: pass. No Spec findings at 885a8c10..a321ba6a. The run uses default distinct review; DG44 unified opt-in remains implemented, exact, and participant-safe."
+          },
+          "axis": "Spec",
+          "base": "885a8c10fb63cf0be81e310bcf537f303772d3cd",
+          "tip": "a321ba6a6817e5eac1e020f1c7c93e6a2e2eac6c",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dg-cr-coverage-final",
+          "performer": "/root/dgcr_r1_sol_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "9a2164bee8b69c3706ee5cbe460c4bc7ef6d2f6f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/dgcr_r1_sol_coverage@a321ba6a",
+            "digest": "sha256:2200f96573a8b9fdb0142c6b1a6c85d10b1eb44f4b060378ea376986a215b1f0",
+            "excerpt": "Verdict: pass. No Coverage findings at 885a8c10..a321ba6a. Default A/B/A refusal, unified cardinality, participant exclusions, and amendment refusal paths all bite."
+          },
+          "axis": "Coverage",
+          "base": "885a8c10fb63cf0be81e310bcf537f303772d3cd",
+          "tip": "a321ba6a6817e5eac1e020f1c7c93e6a2e2eac6c",
           "finding_ids": [],
           "supersedes": []
         }
