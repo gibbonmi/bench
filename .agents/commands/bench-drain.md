@@ -18,8 +18,14 @@ still takes writes only through a landing. Implement-now writers use their
 own bench worktrees. Create the batch worktree only when the protocol below
 allows it, and close it through `bench worktree land`.
 
-At entry, invoke `bench roadmap --context` exactly once. Its successful schema-4
-index is the complete local inventory for every step below. It covers every
+At entry, invoke `bench capture drain` once and retain its drain ID. The command
+seals the current idea and learning sources, then opens fresh live sources under
+the shared capture lock. A post-snapshot capture belongs to the next drain and
+does not invalidate this one.
+
+Then invoke `bench roadmap --context` exactly once. While a drain is open, the
+command reads the sealed generation. Its successful schema-4 index is the complete
+local inventory for every step below. It covers every
 roadmap row and capture unit, each capture path, every true body byte count,
 and all cross-check blocks. Accept only `context.schema = 4`; every other
 schema stops the phase before any batch mutation.
@@ -63,7 +69,7 @@ Read delegates edit nothing, take no new inventory, and use only the snapshot an
 Each read delegate returns these fields: proposed owner, classification, occurrence, evidence, and reviewer decision.
 
 Resolve duplicate incidents and reviewer decisions before retained batch authorship starts.
-Verify that the tree stayed unchanged. Keep ignored capture removal, the handoff,
+Verify that the tree stayed unchanged. Keep sealed capture retirement, the handoff,
 verification, and landing with the coordinator. Retained implement-now work may run while other reads continue. Route its line through `craft-line` and keep its authorship under `.bench/BENCH.md`.
 
 If an implement-now item exists, create the batch worktree only after every such item lands green on `main`.
@@ -126,11 +132,12 @@ them.
 
 ## 3. Drain the inbox
 
-`capture/IDEAS.md` is a pure inbox: every run empties to zero. Each parked line gets one
+The sealed `capture/IDEAS.md` generation is a pure inbox: every unit in that
+generation receives a disposition. Each parked line gets one
 disposition in the roadmap: a new prioritized row, a merge into the row that
 already covers it, or a drop as already-triaged. The parked-pending-evidence
-tier is a valid destination for items awaiting a real trigger. No line stays
-parked in the inbox. A partial drain would kill the empty-state trigger.
+tier is a valid destination for items awaiting a real trigger. No sealed line
+stays unresolved. New live lines remain queued for the next drain.
 
 A new row needs a `Next:` token and a class before it opens. Write the token as
 the row's `Next:` line in `roadmap/FT<n>.md`. Step 6 gives the class. Each
@@ -226,7 +233,7 @@ diff. That obligation does not wait for `--restructure`.
 
 Rewrite the `## Recommended sequence` section: two or three numbered lines, each
 naming the item and the phase command to run. This is the format contract
-`bench roadmap` extracts verbatim once all capture sources are empty. The CLI
+`bench roadmap` extracts verbatim once the sealed capture generation is resolved. The CLI
 does no judgment, so this section is where the judgment lands. Rank rows by
 severity. Within an equal-severity class, choose actionable work over blocked
 work.
@@ -244,7 +251,7 @@ Follow `## Delegate the evidence`. If tracked changes remain, the retained drain
 If no tracked changes
 remain, start no batch writer.
 
-The reviewer batch contains the tracked diff, proposed ignored-source removals,
+The reviewer batch contains the tracked diff, the sealed-generation retirement,
 and every journal verdict. The tracked diff contains roadmap dispositions, retro removals, earned `bench spec retire` work, and provider scorecards.
 `/bench-final-check` refreshes those scorecards with landing evidence. Unlike
 per-spec retros, scorecards persist after this batch.
@@ -280,8 +287,13 @@ or more specs takes one extra commit per additional slug. The exit says so.
 That is rare, and correctness of the history query outranks the saved
 gate.
 
-After approval, the coordinator empties ignored inbox and journal sources. It
-writes ignored `capture/session-handoff.md` last. Its pin block names the
+After approval and the tracked landing, the coordinator runs
+`bench capture drain commit <drain-id>`. This retires only the sealed generation; post-snapshot
+captures stay in the live inboxes. If the batch is abandoned, run `bench capture
+drain abort <drain-id>` to restore the sealed generation before the live entries.
+The coordinator writes ignored `capture/session-handoff.md` last.
+
+Its pin block names the
 pre-commit HEAD by construction, which is correct rather than stale. `bench
 status` dates the ignored handoff by its write time. The tree wins wherever the
 two disagree.

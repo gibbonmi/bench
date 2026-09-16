@@ -50,6 +50,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench cache                report the Bench Go build cache footprint (bytes, files, last trim)
   bench cache clean          take the cache lock and empty the Bench Go build cache (refuses under a live run)
   bench skills-index [--check|--write]  print skills-index drift (default) or regenerate it
+  bench capture drain [show|commit|abort] [<drain-id>]  seal or finish one concurrent-safe capture drain
   bench idea "<text>"        park an out-of-scope idea in capture/IDEAS.md (commit to nothing)
   bench learning "<title>" --what --right [--rule]  append one open entry to capture/learnings.md (the drain verdicts it)
   bench retro <slug> (--body <markdown> | --scaffold)  draft, or validate and create, one primary-local implementation retrospective

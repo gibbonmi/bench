@@ -1,11 +1,11 @@
 package roadmap
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/capturetx"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/prose"
@@ -56,23 +56,14 @@ func LearningCommand(args []string) (string, int) {
 		return learningGrammar.Help + "\n" + strings.Join(diagnostics, "\n") + "\n", 2
 	}
 	file := filepath.Join(root, learnings.JournalPath)
-	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
-		return cannotWrite(learnings.JournalPath, err), 1
-	}
-	f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	err := capturetx.Append(root, capturetx.Source{Name: learnings.JournalPath, Path: file}, func(current []byte) ([]byte, error) {
+		separator := "\n"
+		if needsNewline(current) {
+			separator = "\n\n"
+		}
+		return append(append([]byte(nil), current...), separator+entry...), nil
+	})
 	if err != nil {
-		return cannotWrite(learnings.JournalPath, err), 1
-	}
-	defer f.Close()
-	// A blank line separates the new heading from whatever ends the file; the missing
-	// trailing newline case folds into the same single write as the idea verb's.
-	switch {
-	case needsNewline(file):
-		entry = "\n\n" + entry
-	default:
-		entry = "\n" + entry
-	}
-	if _, err := f.WriteString(entry); err != nil {
 		return cannotWrite(learnings.JournalPath, err), 1
 	}
 	return "captured: " + title + "\n", 0

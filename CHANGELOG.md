@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Concurrent capture drains
+
+- Added `bench capture drain` transactions. A drain now seals the reviewed idea
+  and learning generation while later captures continue in fresh live inboxes.
+
 ### Cross-harness review opt-in
 
 - Changed implementation review to run cross-harness falsification only when the reviewer requests it.

@@ -88,7 +88,7 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 
 	decisionsBeforeWriter := "Resolve duplicate incidents and reviewer decisions before retained batch authorship starts."
 	treeVerification := "Verify that the tree stayed unchanged."
-	coordinatorOwnership := "Keep ignored capture removal, the handoff, verification, and landing with the coordinator."
+	coordinatorOwnership := "Keep sealed capture retirement, the handoff, verification, and landing with the coordinator."
 	implementOverlap := "Retained implement-now work may run while other reads continue."
 	implementRouting := "Route its line through `craft-line` and keep its authorship under `.bench/BENCH.md`."
 	withImplementTiming := "If an implement-now item exists, create the batch worktree only after every such item lands green on `main`."
@@ -122,9 +122,9 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 	}
 
 	noTrackedWriter := "If no tracked changes remain, start no batch writer."
-	ignoredAfterApproval := "After approval, the coordinator empties ignored inbox and journal sources."
-	ignoredHandoff := "It writes ignored `capture/session-handoff.md` last."
-	reviewerBatch := "The reviewer batch contains the tracked diff, proposed ignored-source removals, and every journal verdict."
+	sealedAfterApproval := "After approval and the tracked landing, the coordinator runs `bench capture drain commit <drain-id>`."
+	ignoredHandoff := "The coordinator writes ignored `capture/session-handoff.md` last."
+	reviewerBatch := "The reviewer batch contains the tracked diff, the sealed-generation retirement, and every journal verdict."
 	trackedDiff := "The tracked diff contains roadmap dispositions, retro removals, earned `bench spec retire` work, and provider scorecards."
 	ignoredNotTracked := "Ignored local changes do not enter that diff or commit."
 	handoffWriteTime := "`bench status` dates the ignored handoff by its write time."
@@ -132,8 +132,8 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 	if batchCount != 1 || !strings.Contains(batch, noTrackedWriter) {
 		diags = append(diags, "bench-drain does not suppress the batch writer when no tracked changes remain")
 	}
-	if !strings.Contains(all, ignoredAfterApproval) {
-		diags = append(diags, "bench-drain does not delay ignored-source removal until approval")
+	if !strings.Contains(all, sealedAfterApproval) {
+		diags = append(diags, "bench-drain does not delay sealed-generation retirement until approval and landing")
 	}
 	if !strings.Contains(all, ignoredHandoff) {
 		diags = append(diags, "bench-drain does not keep the ignored handoff last")
@@ -215,7 +215,7 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 	}{
 		{"schema", "`context.schema = 4`", "`context.schema = 3`", "bench-drain does not require schema 4 before recurrence maintenance"},
 		{"schema guessing", "Do not guess recurrence facts from an older schema.", "Infer recurrence facts from an older schema.", "bench-drain does not require schema 4 before recurrence maintenance"},
-		{"index inventory", "schema-4\nindex is the complete local inventory", "schema-4\nindex is a partial inventory", "bench-drain does not use index-first evidence for recurrence maintenance"},
+		{"index inventory", "schema-4 index is the complete\nlocal inventory", "schema-4 index is a partial\nlocal inventory", "bench-drain does not use index-first evidence for recurrence maintenance"},
 		{"targeted detail", "Fetch complete roadmap detail only for rows the reconcile touches", "Fetch complete roadmap detail for every row", "bench-drain does not use index-first evidence for recurrence maintenance"},
 		{"named capture bodies", "Read idea, learning, and retro bodies\nfrom the paths the index names", "Read capture bodies from a directory sweep", "bench-drain does not use index-first evidence for recurrence maintenance"},
 		{"trust after reconcile", "Before beginning `## 1. Reconcile first`, read `context.sequence_trusted` from that\nsnapshot.", "After `## 1. Reconcile first`, read `context.sequence_trusted` from that\nsnapshot.", "bench-drain does not stop untrusted recurrence evidence before reconciliation"},
@@ -234,16 +234,16 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 		{"return shape", "Each read delegate returns these fields: proposed owner, classification, occurrence, evidence, and reviewer decision.", "Each read delegate returns a summary.", "bench-drain does not require the fixed read-delegate return shape"},
 		{"decisions before writer", "Resolve duplicate incidents and reviewer decisions before retained batch authorship starts.", "Resolve duplicate incidents after retained batch authorship starts.", "bench-drain does not resolve cross-source decisions before batch writing"},
 		{"tree verification", "Verify that the tree stayed unchanged.", "Assume that the tree stayed unchanged.", "bench-drain does not verify the tree stayed unchanged after reading"},
-		{"coordinator ownership", "Keep ignored capture removal, the handoff,\nverification, and landing with the coordinator.", "Delegate ignored capture removal and landing.", "bench-drain does not retain coordinator ownership of local and landing work"},
+		{"coordinator ownership", "Keep sealed capture retirement, the handoff,\nverification, and landing with the coordinator.", "Delegate sealed capture retirement and landing.", "bench-drain does not retain coordinator ownership of local and landing work"},
 		{"implement-now overlap", "Retained implement-now work may run while other reads continue.", "Start implement-now work after every read finishes.", "bench-drain does not allow implement-now work to overlap remaining reads"},
 		{"implement-now routing", "Route its line through `craft-line` and keep its authorship under `.bench/BENCH.md`.", "Route implement-now work without craft-line or retained authorship.", "bench-drain does not route implement-now work through craft-line and retained authorship"},
 		{"implement-now landing timing", "If an implement-now item exists, create the batch worktree only after every such item lands green on `main`.", "Create the batch worktree before implement-now items land.", "bench-drain does not wait for every implement-now landing before batch creation"},
 		{"no-implement-now timing", "If no implement-now item exists, create the batch worktree after all reads finish and the coordinator resolves duplicate incidents and reviewer decisions.", "If no implement-now item exists, never create the batch worktree.", "bench-drain does not create the batch after reads when no implement-now item exists"},
 		{"single batch writer", "If tracked changes remain, the retained drain session authors the complete tracked batch.", "A later write delegate authors the complete tracked batch.", "bench-drain does not retain one conditional tracked batch author"},
 		{"no tracked writer", "If no tracked changes\nremain, start no batch writer.", "If no tracked changes remain, start a batch writer.", "bench-drain does not suppress the batch writer when no tracked changes remain"},
-		{"ignored removal after approval", "After approval, the coordinator empties ignored inbox and journal sources.", "Before approval, remove ignored sources.", "bench-drain does not delay ignored-source removal until approval"},
-		{"ignored handoff last", "It\nwrites ignored `capture/session-handoff.md` last.", "It writes the ignored handoff first.", "bench-drain does not keep the ignored handoff last"},
-		{"reviewer batch boundary", "The reviewer batch contains the tracked diff, proposed ignored-source removals,\nand every journal verdict.", "The tracked diff contains every journal verdict.", "bench-drain does not preserve the tracked-versus-ignored reviewer batch boundary"},
+		{"sealed retirement after approval", "After approval and the tracked landing, the coordinator runs\n`bench capture drain commit <drain-id>`.", "Before approval, retire the sealed generation.", "bench-drain does not delay sealed-generation retirement until approval and landing"},
+		{"ignored handoff last", "The coordinator writes ignored `capture/session-handoff.md` last.", "The coordinator writes the ignored handoff first.", "bench-drain does not keep the ignored handoff last"},
+		{"reviewer batch boundary", "The reviewer batch contains the tracked diff, the sealed-generation retirement,\nand every journal verdict.", "The tracked diff contains every journal verdict.", "bench-drain does not preserve the tracked-versus-ignored reviewer batch boundary"},
 		{"tracked diff contents", "The tracked diff contains roadmap dispositions, retro removals, earned `bench spec retire` work, and provider scorecards.", "The tracked diff contains journal verdicts.", "bench-drain does not constrain the tracked diff contents"},
 		{"ignored changes excluded", "Ignored local\nchanges do not enter that diff or commit.", "Ignored local changes enter the tracked diff.", "bench-drain does not exclude ignored local changes from the tracked diff and commit"},
 		{"ignored handoff write time", "`bench\nstatus` dates the ignored handoff by its write time.", "`bench status` dates the ignored handoff by its commit time.", "bench-drain does not date the ignored handoff by write time"},
