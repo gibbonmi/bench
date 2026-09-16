@@ -5,8 +5,8 @@
 Finding: S1 requires adoption evidence from the committed guidance source.
 Source tip: `bc51aeacc5209c4ad772e70c21c7772d1fe7dd62`
 Author: `/root/candidate_a`, `gpt-6-astra / high`
-Repair allowance: Cycle 1 of 2 is consumed; one rerun-and-record attempt.
-Repair fence: This pickup only; adoption repositories remain disposable under `/tmp`.
+The author consumed repair cycle 1 of 2 with one attempt to rerun the tasks and record the evidence.
+The repair changes only this pickup; the adoption repositories remain disposable under `/tmp`.
 
 Both fresh variants loaded this exact committed source and returned the native evidence below.
 The author verified DG7 and DG8; coordinator acceptance of S1 remains pending.
@@ -215,7 +215,7 @@ Initial finding count: 1; worst issue: S1
 S1 disposition: `auto-fix`
 Requirement citation: `specs/debug-loop-guidance/spec.md:174` and `specs/debug-loop-guidance/tickets/1-retain-debug-authorship.md:43`
 Affected evidence: The initial adoption excerpts named the earlier source tip and loaded uncommitted guidance snapshots.
-Required repair: Bind DG7 and DG8 to the committed source tip and load its exact guidance.
+The author must bind DG7 and DG8 to the committed source tip and load its exact guidance.
 
 The coordinator supplied this terminal-result summary.
 The native return remains with the coordinator under `/root/a_spec`.
