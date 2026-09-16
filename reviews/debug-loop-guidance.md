@@ -1218,6 +1218,35 @@ The required prose check then reported this inherited red:
 The sentence is identical at base `aca957cd` and is outside the repair fence.
 Root confirmed ownership of that prose repair, so this author did not edit the spec.
 
+### DG-C2 transfer prose repair
+
+Root explicitly selected Terra as the effective successor author for this prose-only repair.
+Terra used `gpt-5.6-terra / medium` with one attempt.
+
+The predecessor was `/root/dgc2_author` after the validator repair.
+Root recorded that author as stopped and preserved source `20f0796bb3ccc5cbe395fb70900adfa1deae86df`.
+The successor started at `e8c5d46bb5e7a9dc6cd060de851aa8ae141f7b72`.
+
+Before the edit, `bench test --check prose-mechanics` failed at spec line 157.
+It found 29 words against the 25-word bound, with zero skips.
+After the edit, the same check passed in 152 ms, with zero skips.
+
+The spec and plan repair committed as `76b43d19c2e51f94b1790b7ea316d2aa17991068`.
+It changed the plan digest to `sha256:be9ffbb820cd3cee166f9b3910256d286c9396bce8b947f5e206fe5d9aa5139d`.
+The source digest excluding this review is `d36678d817c00e3af1e8fb117ce94eb4e6f5273c`.
+
+Fresh DG-C2 verification ran on the committed repair tip.
+No check reported a skip.
+
+| Check | Result | Elapsed |
+| --- | --- | --- |
+| `bench test --check docs-currency-workflow` | pass | 1,177 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 8,725 ms |
+| `bench test --check guidance-prose-budgets` | pass | 5 ms |
+| `bench test --package ./internal/reviewrecord` | pass | 2,518 ms |
+| `bench test --check system` | pass | 37.2 s wall time |
+| `git diff --check` | pass | 0.2 s wall time |
+
 ```bench-review-record
 {
   "version": 2,
