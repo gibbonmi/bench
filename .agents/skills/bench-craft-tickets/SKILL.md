@@ -8,8 +8,10 @@ index: breaking a build into tracer-bullet tickets
 
 Each **tracer-bullet** ticket cuts a complete path through schema, command, output, and tests.
 It is independently verifiable and sized to one retained-session context window.
-A horizontal layer, tests without behavior, or behavior without its tests is not a ticket. A coverage row that only adds a test to a seam its parent slice already opened is that slice's acceptance row.
-Its green integration-source commit is the grading rule.
+A horizontal layer, tests without behavior, or behavior without its tests is
+not a ticket. A coverage row that only adds a test to a seam its parent slice
+already opened is that slice's acceptance row. Its green integration-source
+commit is the grading rule.
 
 ## Draft the breakdown
 
@@ -29,8 +31,7 @@ Start with each ticket's delivered outcome and its smallest complete behavior, t
 
 Shared writes determine serial order, but they do not merge independently useful outcomes. Split independently useful outcomes, and merge a fragment that cannot deliver or verify a result alone. Plan the ticket evidence without implementing the feature or requiring an existing executable red.
 
-**Reviewer-approved breakdown**: before assigning spec-backed tickets, the coordinator
-presents the reviewer a numbered list — title, `Blocked by:`, and delivered outcome — for every ticket.
+**Reviewer-approved breakdown**: before assigning spec-backed tickets, the coordinator presents the reviewer a numbered list — title, `Blocked by:`, and delivered outcome — for every ticket.
 Ask the reviewer about granularity, dependencies, and merges or splits. Iterate and record approval.
 For spec-backed builds, this is the only route onto the frontier; the batch-approval AFK carve-out in `.bench/BENCH.md` is the sole no-round-trip exception.
 The light path is the exception: `.bench/BENCH.md`'s right-size table is the one ticket's standing approval, and the main session implements it inline.
@@ -80,8 +81,7 @@ Covers: CJ1, CJ2
 
 ## What to build
 
-Users see a cancelled row, its reason, and the next recovery action — one
-demoable path from parsed record to rendered row, sized to a fresh context.
+Users see a cancelled row, its reason, and the next recovery action — one demoable path from parsed record to rendered row, sized to a fresh context.
 
 ## Acceptance
 
