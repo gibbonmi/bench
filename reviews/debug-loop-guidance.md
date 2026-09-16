@@ -676,7 +676,7 @@ to Luna; the final prose check passed without a semantic change.
 {
   "version": 2,
   "spec": "specs/debug-loop-guidance/spec.md",
-  "plan_digest": "sha256:5bf67838e7c2c0f59f8bd20104f2066c592bb3f6374bccc41a7005ab72cd0df8",
+  "plan_digest": "sha256:20b1b2d8b6b946adb788b40ba24972887777cad57271c375a4cd6bd9979bffda",
   "chunks": [
     {
       "id": "DG-C1",
@@ -823,6 +823,18 @@ to Luna; the final prose check passed without a semantic change.
       "to": "sha256:5bf67838e7c2c0f59f8bd20104f2066c592bb3f6374bccc41a7005ab72cd0df8",
       "chunk_ids": {
         "DG-C1": ["DG-C1"],
+        "DG-C2": ["DG-C2"],
+        "DG-C3": ["DG-C3"],
+        "DG-C4": ["DG-C4"],
+        "DG-C5": ["DG-C5"]
+      }
+    },
+    {
+      "from": "sha256:5bf67838e7c2c0f59f8bd20104f2066c592bb3f6374bccc41a7005ab72cd0df8",
+      "to": "sha256:20b1b2d8b6b946adb788b40ba24972887777cad57271c375a4cd6bd9979bffda",
+      "chunk_ids": {
+        "DG-C1": ["DG-C1"],
+        "DG-CR": ["DG-CR"],
         "DG-C2": ["DG-C2"],
         "DG-C3": ["DG-C3"],
         "DG-C4": ["DG-C4"],
