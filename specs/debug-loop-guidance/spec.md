@@ -354,6 +354,10 @@ Won't handle: Trial comparison — ordinary review evidence remains the in-scope
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
 - `internal/anchors/registry_debug_loop.go`
+- `internal/anchors/match.go`
+- `internal/anchors/match_test.go`
+- `internal/anchors/locate.go`
+- `internal/anchors/locate_test.go`
 - `internal/anchors/registry_ft311_review_dispatch.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/registry_test.go`

@@ -1,7 +1,7 @@
 # Guide spec authoring with concrete evidence
 
 Blocked by: 1a-enable-unified-review-trial.md
-Writes: .agents/skills/bench-craft-spec/SKILL.md, internal/anchors/registry_debug_loop.go (new), internal/anchors/registry_data.go, internal/conformance/registry_test.go, tests/canary/workflow-guidance-anchors, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, reviews/debug-loop-guidance.md (new), CHANGELOG.md
+Writes: .agents/skills/bench-craft-spec/SKILL.md, .agents/commands/bench-implement-spec.md, internal/anchors/registry_debug_loop.go (new), internal/anchors/registry_data.go, internal/anchors/match.go, internal/anchors/match_test.go, internal/anchors/locate.go, internal/anchors/locate_test.go, internal/conformance/registry_test.go, tests/canary/workflow-guidance-anchors, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, reviews/debug-loop-guidance.md (new), CHANGELOG.md
 Covers: DG9, DG10, DG11, DG12, DG13, DG14, DG15, DG16
 
 ## What to build

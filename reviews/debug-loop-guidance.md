@@ -1447,6 +1447,18 @@ future owner-byte freshness explicit before DG-C4 adoption and review.
         "DG-C4": ["DG-C4"],
         "DG-C5": ["DG-C5"]
       }
+    },
+    {
+      "from": "sha256:6ebbf7612dc3ebc379df3941114ef53c94eafee3b278046bcdfec4efb4c3fef7",
+      "to": "sha256:d114cdb7fa1676460d3da96ad0a35443a9d574ed8fce0ac445404a073a7bc7f4",
+      "chunk_ids": {
+        "DG-C1": ["DG-C1"],
+        "DG-CR": ["DG-CR"],
+        "DG-C2": ["DG-C2"],
+        "DG-C3": ["DG-C3"],
+        "DG-C4": ["DG-C4"],
+        "DG-C5": ["DG-C5"]
+      }
     }
   ]
 }
