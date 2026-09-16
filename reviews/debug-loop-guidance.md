@@ -1,5 +1,122 @@
 # Debug loop guidance
 
+## DG-C1 substantive contradiction repair
+
+The coordinator found a blocking acceptance and coverage defect after the initial reviews.
+The DG1–DG5 presence anchors accepted their required instructions together with explicit opposite instructions.
+The initial Coverage review missed this case.
+Its historical zero-finding return below does not establish contradiction coverage.
+
+The coordinator explicitly authorized this substantive extension after the two earlier review repair cycles.
+The same author, `/root/candidate_a`, retained the repair at `gpt-6-astra / high`.
+The repair began at clean source tip `00b631ec52caa59f9670fc48b3d704dfb5f4cb57`.
+The author changed only the existing debug anchor registry, six new fixture directories, and this pickup.
+
+The production repair adds six section-scoped prohibitions at the existing workflow owner.
+Each independent fixture retains the exact required sentence and appends its direct opposite.
+Each mutation therefore tests contradictory guidance, not an omitted requirement.
+The author added and verified one fixture before adding its production prohibition.
+
+### Additive clauses and row evidence
+
+Every fixture targets `.agents/commands/bench-debug.md`, within its debug integration section.
+Each `MUTATE.json` records the exact retained sentence and the additive replacement.
+The fixture materializer requires exactly one original match.
+The following table records the entire added instruction for each case.
+
+| Fixture under `tests/canary/workflow-guidance-anchors/` | Added opposite instruction |
+| --- | --- |
+| `dg-1-contradiction` | The session that owns the debug loop delegates its in-scope repair. |
+| `dg-2-contradiction` | Delegate implementation and repair work. |
+| `dg-3-contradiction` | For an in-fence defect, the write delegate must not run debug through Phase 6. |
+| `dg-4-contradiction` | For an out-of-fence defect, hand off before running Phases 1 through 3. |
+| `dg-5-contradiction` | When a repro proves an out-of-fence cause, the delegate continues implementation edits. |
+| `dg-5-dirty-contradiction` | It discards its in-fence work from its owned worktree. |
+
+Every red run used `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner`.
+The new fixture lacked its expected diagnostic through `docs-currency-workflow`; the other fixture proofs completed.
+The resulting inventory shortfall named that one incomplete proof.
+No run failed from compilation, ambiguous mutation bytes, or an unrelated fixture.
+
+| Row | Pre-owner red elapsed_ms | Completed proofs before repair | Post-owner green elapsed_ms | Completed proofs after repair |
+| --- | --- | --- | --- | --- |
+| DG1 | 11330 | 482 of 483 | 9972 | 483 |
+| DG2 | 14130 | 483 of 484 | 11687 | 484 |
+| DG3 | 11961 | 484 of 485 | 11090 | 485 |
+| DG4 | 10379 | 485 of 486 | 9443 | 486 |
+| DG5 | 9978 | 486 of 487 | 9565 | 487 |
+| DG5-dirty | 9906 | 487 of 488 | 9934 | 488 |
+
+Each green run proved that its fixture bit through the registered production owner and restored.
+These observed reds justify the independently maintained fixture expectations.
+All twelve runs reported zero skips.
+The checks reject the named explicit contradictions; they do not claim unrestricted semantic analysis of paraphrases.
+
+### Six live-tree probes
+
+The author rebuilt the assignment with `bench worktree build debug-loop-candidate-a` in 0.873 seconds.
+Each probe used `bench probe .agents/commands/bench-debug.md --swap <required> --with <required-plus-opposite> --check docs-currency-workflow`.
+The exact swap operands are the matching fixture's `old` and `new` fields.
+Each replacement preserved the required sentence and added only the table's opposite instruction.
+
+Every probe reported `mutation: swap`, `baseline: passed`, `ran: 1`, `verdict: bit`, and `restored: yes`.
+Each run produced one production-owner failure and zero skips.
+The following table records its exact diagnostic and mutated package time.
+
+| Row | Production diagnostic | Elapsed_ms |
+| --- | --- | --- |
+| DG1 | `debug loop: DG1 forbids transferred repair authorship` | 1102 |
+| DG2 | `debug loop: DG2 forbids diagnostic write delegation` | 1033 |
+| DG3 | `debug loop: DG3 forbids refusal of in-fence Phase 6` | 1023 |
+| DG4 | `debug loop: DG4 forbids handoff before Phases 1 through 3` | 1020 |
+| DG5 | `debug loop: DG5 forbids continued out-of-fence implementation` | 1011 |
+| DG5-dirty | `debug loop: DG5 forbids discarded dirty work` | 1321 |
+
+### Final source verification and preservation
+
+| Command | Result | Elapsed_ms | Skips |
+| --- | --- | --- | --- |
+| `bench test --check docs-currency-workflow` | Restored live tree passed | 1602 | 0 |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | All 488 fixtures passed | 9679 | 0 |
+| `bench test --check prose-mechanics` | Pickup passed after the evidence addition | 151 | 0 |
+| `bench test --check guidance-prose-budgets` | Passed | 9 | 0 |
+| `bench test --check ticket-grammar` | Passed | 1027 | 0 |
+| `bench test --package ./internal/anchors` | Passed | 625 | 0 |
+| `bench test --package ./internal/conformance --run TestCanaryFixtureRegistry` | Passed | 22 | 0 |
+
+The debug command, delegate skill, and local loop reference remain byte-identical to adoption source `bc51aeacc5209c4ad772e70c21c7772d1fe7dd62`.
+The author compared all three files directly against `git show` with `cmp`; every comparison returned 0.
+Their SHA256 values still match the S1 source-proof table below.
+DG42 and all adopted instruction bytes therefore remain unchanged.
+
+No Go file was added under `tests/canary`, so the conditional vet requirement does not apply.
+The existing fixture-family registration includes the changed owner; no inventory or parser needed modification.
+No guidance budget or acceptance instruction changed.
+The pickup passed prose mechanics and `git diff --check` before the authorized commit.
+
+### Action, time, and authorship record
+
+| Action | Bounded action | Expected evidence | Observed evidence and stop condition |
+| --- | --- | --- | --- |
+| C1–C12 | Add one fixture, then its missing prohibition | One named behavioral red, then complete green | All six slices met that condition; no unrelated red occurred |
+| C13 | Build and run six additive probes | Own production diagnostic and exact restoration | All six bit and restored; no invalid probe occurred |
+| C14 | Run focused checks and compare adoption guidance | Zero skips and byte equality | All checks passed; all three files matched |
+| C15 | Record this evidence without production edits | Complete trace and valid pickup prose | Final pickup checks precede commit |
+| C16 | Commit only the scoped repair after verification | Green lane and clean resulting tip | The native author return records the commit result |
+
+The substantive repair timer began at `2026-09-16 01:27:30 UTC`.
+The final source-check launch occurred at `01:41:16 UTC`, 826 seconds later.
+The pickup verification completed at `01:43:06 UTC`, 936 seconds after the timer began.
+The native return records the complete interval through final verification and commit.
+The gross interval includes tool waits, approval latency, the coordinator interruption, and final evidence formatting.
+No part of this substantive repair receives a speed exclusion.
+
+The author used yielded shell sessions and awaited each dependent test before the next edit.
+The coordinator interrupted the DG2 green run; the author resumed that same session and inspected its successful completion.
+The author started no additional agent and used no other candidate's artifacts or evidence.
+This extension contains one coherent repair attempt, six row-local production additions, and no failed repair retry.
+The independent coordinator review remains responsible for acceptance.
+
 ## DG-C1 post-review repair cycle 1
 
 Finding: S1 requires adoption evidence from the committed guidance source.

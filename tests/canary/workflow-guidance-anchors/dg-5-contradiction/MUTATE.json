@@ -1,0 +1,1 @@
+[{"path":".agents/commands/bench-debug.md","old":"When a repro proves an out-of-fence cause, the delegate stops implementation edits.","new":"When a repro proves an out-of-fence cause, the delegate stops implementation edits.\nWhen a repro proves an out-of-fence cause, the delegate continues implementation edits."}]
