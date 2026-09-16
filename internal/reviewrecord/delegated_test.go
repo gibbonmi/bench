@@ -124,6 +124,18 @@ func TestDelegatedIdentityRefusals(t *testing.T) {
 	}
 }
 
+func TestDelegatedReviewModes(t *testing.T) {
+	f := planFixture(t, 1, func(p *rr.Plan) { p.Execution.ReviewMode = "unified" })
+	if _, err := rr.ReadPlan(f.Root, f.Tree(), recordtest.Spec); err != nil {
+		t.Fatalf("unified review mode refused: %v", err)
+	}
+
+	f = planFixture(t, 1, func(p *rr.Plan) { p.Execution.ReviewMode = "combined" })
+	if _, err := rr.ReadPlan(f.Root, f.Tree(), recordtest.Spec); err == nil || !strings.Contains(err.Error(), "invalid review mode") {
+		t.Fatalf("unknown review mode was accepted or lost its reason: %v", err)
+	}
+}
+
 // replaced appends a successor assignment to one first dispatch.
 func replaced(first rr.Assignment, trigger string) []rr.Assignment {
 	successor := recordtest.Assign("successor")

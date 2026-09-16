@@ -6,6 +6,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Unified implementation review
+
+- Added an explicit delegated-plan mode that lets one independent reviewer
+  report Standards, Spec, and Coverage without changing the distinct-session
+  default.
+
 ### Debug repair authorship
 
 - Changed debug to retain repair authorship and give write delegates an evidence-based handoff at the ticket fence.

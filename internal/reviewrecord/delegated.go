@@ -26,6 +26,7 @@ type Assignment struct {
 // Execution declares the delegated run. A version 2 plan owns exactly one.
 type Execution struct {
 	Mode                string                  `json:"mode"`
+	ReviewMode          string                  `json:"review_mode,omitempty"`
 	RunID               string                  `json:"run_id"`
 	OrchestratorSession string                  `json:"orchestrator_session"`
 	AuthorLimit         int                     `json:"author_limit"`
@@ -46,6 +47,12 @@ func Triggers() []string {
 
 // Delegated reports whether the plan carries the version 2 delegated form.
 func (p Plan) Delegated() bool { return p.Version == 2 && p.Execution != nil }
+
+// DistinctReviewers reports whether each review axis requires its own session.
+// The unified mode changes reviewer cardinality only for a delegated plan.
+func (p Plan) DistinctReviewers() bool {
+	return p.Delegated() && p.Execution.ReviewMode != "unified"
+}
 
 // Author is a ticket's effective author. An undispatched ticket has none.
 func (p Plan) Author(ticket string) (string, bool) {
@@ -103,6 +110,9 @@ func validateExecution(plan Plan) error {
 	}
 	if execution.Mode != "delegate" {
 		return fmt.Errorf("invalid execution mode %q; use delegate", execution.Mode)
+	}
+	if execution.ReviewMode != "" && execution.ReviewMode != "unified" {
+		return fmt.Errorf("invalid review mode %q; omit it or use unified", execution.ReviewMode)
 	}
 	if execution.RunID == "" || execution.OrchestratorSession == "" {
 		return errors.New("missing run id or orchestrator session")

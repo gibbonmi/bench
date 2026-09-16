@@ -43,6 +43,14 @@ the repair-routing disposition.
 
 A delegated chunk review starts after every ticket of the chunk reaches the integrated chunk tip. A per-ticket review does not replace that full-chunk review. Each delegated axis excludes the orchestrator and every current and former author of the run.
 
+By default, use a different independent session for each axis. A version 2
+completion plan can set `execution.review_mode` to `unified`. This mode assigns
+one independent session to all three axes. The session must derive and report
+Standards, Spec, and Coverage separately. For each issue or review miss, it must
+also state whether the implementation command contributed to the issue. When it
+did, name the exact improvement to `.agents/commands/bench-implement-spec.md`; otherwise,
+state that no command change is necessary.
+
 Here, findings that prevent progression are unresolved blockers; retain optional advice separately under the policy. The successor chunk starts only after findings and repair coverage close. After the last chunk, the retained author reconciles overall acceptance and integration before landing.
 
 ## Process
@@ -83,13 +91,16 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    - Walk a `blast_deleted` row as a deletion whose consumers the tip already edited.
    - A blast refusal stops the review, as a red preflight does.
 
-4. **Spawn the axes in parallel sub-agents.** This isolation keeps one axis's
+4. **Dispatch the review sessions.** In the default mode, spawn the axes in
+   parallel sub-agents. This isolation keeps one axis's
    derivation from polluting another's context, and stops one axis from seeding
    another's findings. Spawn one delegate per axis — Standards, Spec, and the
    Coverage axis — each under ~400 words. Charge and verify each delegate per
    the `craft-delegate` skill; these are read-only delegations. Each delegate
    re-derives its own facts from its primary source before it compares the
-   candidate — see `craft-review`. Give each delegate the diff, the sources for
+   candidate — see `craft-review`.
+
+   Give each delegate the diff, the sources for
    its axis, and its charge from the `craft-review` skill
    (`.agents/skills/bench-craft-review/SKILL.md`).
 
@@ -102,6 +113,11 @@ Here, findings that prevent progression are unresolved blockers; retain optional
 
    Collect every axis return before you accept a finding. A missing or failed
    axis return leaves the review incomplete. It is never a clean finding set.
+
+   In the explicit unified mode, dispatch one independent reviewer with all
+   three prepared charges. Require three separate axis returns from that one
+   session. Apply the same source derivation, finding, and completion rules to
+   each return.
 
    That skill is the one source
    for what each axis hunts and what a finding must cite; do not restate the

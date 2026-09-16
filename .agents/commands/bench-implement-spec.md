@@ -41,7 +41,9 @@ The spec and the ticket are final. Do not evaluate other approaches. Implement t
 
 Apply `craft-line`'s retained implementation continuation policy throughout the ticket graph. At initial review or before post-review repairs, including resumed work, read [the bounded repair policy](../skills/bench-craft-line/references/bounded-repair-policy.md).
 
-Before each ticket, revalidate prepared source identity and required source bytes. Regenerate a charge when either changes. The retained author runs focused checks and the required mutation probe, then commits the ticket on a green lane. After the last ticket in a chunk, freeze the chunk delta and run the three review axes before advancing.
+Before each ticket, revalidate prepared source identity and required source bytes. Regenerate a charge when either changes. The retained author runs focused checks and the required mutation probe, then commits the ticket on a green lane. Run the plan's named probe exactly. Do not replace it with a similar mutation. If the named probe cannot run, stop and amend the plan before verification.
+
+After the last ticket in a chunk, freeze the chunk delta and run the three review axes before advancing.
 
 When evidence requires an in-scope plan, `Writes:`, or gate expansion, apply `.bench/BENCH.md`'s approved plan-expansion policy before using it.
 

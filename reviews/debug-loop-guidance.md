@@ -642,6 +642,36 @@ planned blanket-ban mutation. The frozen chunk pair is
 `2f7db79a3d910ac700da42ee0dd92560a7ff7c46` through
 `885a8c10fb63cf0be81e310bcf537f303772d3cd`.
 
+## DG-CR author verification
+
+The author started from source tip
+`72dbf52cb0aefa8221b6186a1cf3acafeeb01122`. The first unified checkpoint
+test failed because the delegated plan still required three distinct review
+sessions. After the implementation, the explicit unified mode passed while
+the omitted mode retained the existing refusal. The parser also refused an
+unknown review mode.
+
+The exact planned probe omitted
+`f.Plan.Execution.ReviewMode = "unified"` while the fixture reused one reviewer
+for all three axes. It bit with `Spec reviewer already supplied Standards; use
+three distinct review sessions`. `bench probe` reported `restored=yes`, and the
+restored baseline passed all three selected tests.
+
+| Check | Result | Elapsed |
+| --- | --- | --- |
+| `bench test --package ./internal/reviewrecord --run 'TestDelegated.*Review'` | pass, no skips | 587 ms |
+| `bench test --package ./internal/gate --run TestDelegatedDistinctAxes` | pass, no skips | 1,093 ms |
+| `bench test --check prose-mechanics` | pass, no skips | 348 ms |
+| `bench test --check ticket-grammar` | pass, no skips | 2,365 ms |
+| `bench test --package ./internal/reviewrecord` | pass, no skips | 7,130 ms |
+| `bench test --package ./internal/gate` | pass, no skips | 25,149 ms |
+
+The DG-C1 miss exposed an implementation-command gap: a similar mutation had
+replaced the plan's named probe. The implementation command now requires the
+exact planned probe and a plan amendment when that probe cannot run. Two
+paragraph-length failures were prose-only. The coordinator routed their splits
+to Luna; the final prose check passed without a semantic change.
+
 ```bench-review-record
 {
   "version": 2,
