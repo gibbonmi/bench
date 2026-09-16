@@ -1222,7 +1222,7 @@ Root confirmed ownership of that prose repair, so this author did not edit the s
 {
   "version": 2,
   "spec": "specs/debug-loop-guidance/spec.md",
-  "plan_digest": "sha256:944af963efc454be48e5ceb4fc654e0bf7f033a52bb01a23d7fefce4e0b78e73",
+  "plan_digest": "sha256:b954217d5842a37aaa5ad0837b8b0f9f8fff84c45c58a8af82a53bfb92e54941",
   "chunks": [
     {
       "id": "DG-C1",
@@ -1788,6 +1788,18 @@ Root confirmed ownership of that prose repair, so this author did not edit the s
     {
       "from": "sha256:77df9dce6661c721b25516c283dcf95bf125035eb510e3ffc04627b0cdf9feb8",
       "to": "sha256:944af963efc454be48e5ceb4fc654e0bf7f033a52bb01a23d7fefce4e0b78e73",
+      "chunk_ids": {
+        "DG-C1": ["DG-C1"],
+        "DG-CR": ["DG-CR"],
+        "DG-C2": ["DG-C2"],
+        "DG-C3": ["DG-C3"],
+        "DG-C4": ["DG-C4"],
+        "DG-C5": ["DG-C5"]
+      }
+    },
+    {
+      "from": "sha256:944af963efc454be48e5ceb4fc654e0bf7f033a52bb01a23d7fefce4e0b78e73",
+      "to": "sha256:b954217d5842a37aaa5ad0837b8b0f9f8fff84c45c58a8af82a53bfb92e54941",
       "chunk_ids": {
         "DG-C1": ["DG-C1"],
         "DG-CR": ["DG-CR"],
