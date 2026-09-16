@@ -180,8 +180,9 @@ func stripMarkdownEmphasisMapped(runes []rune, origin []int) (out []rune, outOri
 			i += width
 			continue
 		}
-		out = append(out, runes[i+width:close]...)
-		outOrigin = append(outOrigin, origin[i+width:close]...)
+		inner, innerOrigin := stripMarkdownEmphasisMapped(runes[i+width:close], origin[i+width:close])
+		out = append(out, inner...)
+		outOrigin = append(outOrigin, innerOrigin...)
 		i = close + width
 	}
 	return out, outOrigin

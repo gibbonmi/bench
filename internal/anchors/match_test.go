@@ -1,9 +1,42 @@
 package anchors
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
+
+func TestEvaluatePathRejectsMixedNestedEmphasis(t *testing.T) {
+	const file = ".agents/skills/bench-craft-spec/SKILL.md"
+	const diagnostic = "debug loop: DG15 forbids mandatory executable-red variants"
+	for _, test := range []struct {
+		name string
+		text string
+		line int
+	}{
+		{"bold around italic", "An executable **_red_** is mandatory before specification.", 3},
+		{"italic around bold", "An executable _**red**_ is mandatory before specification.", 3},
+		{"triple around bold", "An executable ***__red__*** is mandatory before specification.", 3},
+		{"mapped multiline", "intro\nAn **_EXECUTABLE\nRED_** IS MANDATORY before specification.", 4},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			h := anchorHarness{rules: []anchorRule{{file: file, needle: test.text}}}
+			result := EvaluatePath(h.write(t, -1), file)
+			if !slices.Contains(result.Diagnostics, diagnostic) {
+				t.Errorf("diagnostics = %v, want %q", result.Diagnostics, diagnostic)
+			}
+			for _, location := range result.Locations {
+				if location.Diagnostic == diagnostic {
+					if location.Line != test.line {
+						t.Errorf("violation line = %d, want %d", location.Line, test.line)
+					}
+					return
+				}
+			}
+			t.Fatal("registered DG15 location missing")
+		})
+	}
+}
 
 func TestSatisfiedNormalizesByKind(t *testing.T) {
 	tests := []struct {
@@ -57,6 +90,8 @@ func TestForbidCaseFoldedEmphasisMatchesBoundedForms(t *testing.T) {
 		{"escaped closing", `An executable **red\** is mandatory before specification.`},
 		{"unpaired", "An executable **red is mandatory before specification."},
 		{"intraword underscore", "An executable r_ed_ is mandatory before specification."},
+		{"escaped inner opening", `An executable **\_red_** is mandatory before specification.`},
+		{"unpaired inner", "An executable **_red** is mandatory before specification."},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			if !Satisfied(ForbidCaseFoldedEmphasis, test.text, needle) {
