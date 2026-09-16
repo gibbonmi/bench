@@ -1181,11 +1181,13 @@ CLI regression fails when its production kind rendering disappears. The
 Standards finding is resolved by native evidence only; production commit
 `20f64f51e4babbc8e515695bf3fe894bea4d764d` remains unchanged.
 
+Runtime token counters were unavailable for the final DG-C2 review sessions.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/debug-loop-guidance/spec.md",
-  "plan_digest": "sha256:273ac42c953225da2c4f9e99eb38b3818b41131de439bcfeaaf1e6944aed0a60",
+  "plan_digest": "sha256:77df9dce6661c721b25516c283dcf95bf125035eb510e3ffc04627b0cdf9feb8",
   "chunks": [
     {
       "id": "DG-C1",
@@ -1456,6 +1458,183 @@ Standards finding is resolved by native evidence only; production commit
           "axis": "Coverage",
           "base": "885a8c10fb63cf0be81e310bcf537f303772d3cd",
           "tip": "a321ba6a6817e5eac1e020f1c7c93e6a2e2eac6c",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
+    },
+    {
+      "id": "DG-C2",
+      "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
+      "tip": "20f64f51e4babbc8e515695bf3fe894bea4d764d",
+      "plan_digest": "sha256:77df9dce6661c721b25516c283dcf95bf125035eb510e3ffc04627b0cdf9feb8",
+      "source_digest": "0cf9944d04a327b9b2c81a3adff1a29bc41d2614",
+      "acceptance_rows": ["DG9", "DG10", "DG11", "DG12", "DG13", "DG14", "DG15", "DG16"],
+      "verification": [
+        {
+          "id": "dg-c2-anchors",
+          "performer": "/root/dgc2_author",
+          "role": "author-verification",
+          "model": "gpt-5.6-sol",
+          "effort": "medium",
+          "source_digest": "0cf9944d04a327b9b2c81a3adff1a29bc41d2614",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/dgc2_author/dg-c2-anchors@20f64f51",
+            "digest": "sha256:fc95903ad829a6cebd5acf2b474255f2e43ba8cb6fca5f811666a05c73b866ac",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,2041\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "anchors",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "require an executable red for a new-feature specification",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "codex:session/dgc2_author/dg-c2-executable-red-probe@20f64f51",
+              "digest": "sha256:7610eb023229e97f5258709d09057fd72586eec8e09ddacdc2d53d33bcb1750f",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/skills/bench-craft-spec/SKILL.md,swap,failed,1,yes\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: debug loop: DG15 forbids an executable red requirement for new-feature specification\"\nskips[0]{package,test,reason}:"
+            }
+          }
+        },
+        {
+          "id": "dg-c2-bite",
+          "performer": "/root/dgc2_author",
+          "role": "author-verification",
+          "model": "gpt-5.6-sol",
+          "effort": "medium",
+          "source_digest": "0cf9944d04a327b9b2c81a3adff1a29bc41d2614",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/dgc2_author/dg-c2-bite@20f64f51",
+            "digest": "sha256:7acd9fc2db45edab5e1d8b25d55d927d5f17bfcac1e1068a58606d3c0024104f",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,10292\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "bite",
+          "command": "bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner",
+          "exit_code": 0
+        },
+        {
+          "id": "dg-c2-budgets",
+          "performer": "/root/dgc2_author",
+          "role": "author-verification",
+          "model": "gpt-5.6-sol",
+          "effort": "medium",
+          "source_digest": "0cf9944d04a327b9b2c81a3adff1a29bc41d2614",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/dgc2_author/dg-c2-budgets@20f64f51",
+            "digest": "sha256:c224ae6aff6b0057319e254320ee168971646da0b2de6eae4c92751c0643cf54",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "dg-c2-standards-initial",
+          "performer": "/root/dgc2_sol_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "417e9783632e1bcfd92e6670fe76a05d0adcd031",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "codex:collaboration/spawn_agent/dgc2_sol_standards",
+            "digest": "sha256:8d6b228d27a5bde1125b5970c14ba7dba6468c544c9da97ee2cef7f1d953a260",
+            "excerpt": "Verdict: fail. DG-C2-S1 at 8b2073e3..1b455ae4: craft-spec duplicates the DG11 and DG12 predicates outside the canonical Evidence-led authoring sequence."
+          },
+          "axis": "Standards",
+          "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
+          "tip": "1b455ae41f43138261036624283e2b0ba4157d4e",
+          "finding_ids": ["DG-C2-S1"],
+          "supersedes": []
+        },
+        {
+          "id": "dg-c2-standards-cli-initial",
+          "performer": "/root/dgc2_sol_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "0cf9944d04a327b9b2c81a3adff1a29bc41d2614",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "codex:collaboration/spawn_agent/dgc2_sol_standards",
+            "digest": "sha256:6ccca4d1fd214344a08325f6a39db97643946edde43be5beb18336f6c699aab9",
+            "excerpt": "[P1] The new CLI kind-name expectation lacks the mandatory demonstrated red — `auto-fix`."
+          },
+          "axis": "Standards",
+          "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
+          "tip": "20f64f51e4babbc8e515695bf3fe894bea4d764d",
+          "finding_ids": ["DG-C2-S2"],
+          "supersedes": ["dg-c2-standards-initial"]
+        },
+        {
+          "id": "dg-c2-standards-final",
+          "performer": "/root/dgc2_sol_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "0cf9944d04a327b9b2c81a3adff1a29bc41d2614",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/followup_task/dgc2_sol_standards@48574d52",
+            "digest": "sha256:042bc0eeabbf37e66e6c2d36a52910c061a890253ad2f0fc622ab4320b513a14",
+            "excerpt": "Standards: PASS — sole finding closed under the evidence-only confirmation.\nCommit 48574d52 changes only reviews/debug-loop-guidance.md; the exact CLI omission probe bit, restored=yes, one failed test, zero skips.\nNo production/source bytes changed."
+          },
+          "axis": "Standards",
+          "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
+          "tip": "20f64f51e4babbc8e515695bf3fe894bea4d764d",
+          "finding_ids": [],
+          "supersedes": ["dg-c2-standards-cli-initial"]
+        },
+        {
+          "id": "dg-c2-spec-final",
+          "performer": "/root/dgc2_sol_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "0cf9944d04a327b9b2c81a3adff1a29bc41d2614",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/followup_task/dgc2_sol_spec@279fc50e",
+            "digest": "sha256:13e40bb1d58968bb56d271bbdce533f78b9fdae638a8d550b561be0b643d8a48",
+            "excerpt": "Spec axis: pass — 0 actionable violations.\nDG9–DG16 remain satisfied. The expanded debug fence is accurately bounded as opt-in case and ordinary-emphasis normalization.\nAll focused checks and system passed with zero skips."
+          },
+          "axis": "Spec",
+          "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
+          "tip": "20f64f51e4babbc8e515695bf3fe894bea4d764d",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dg-c2-coverage-final",
+          "performer": "/root/dgc2_final_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "0cf9944d04a327b9b2c81a3adff1a29bc41d2614",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/spawn_agent/dgc2_final_coverage@279fc50e",
+            "digest": "sha256:468b9bdddeea0e745a6c126f2dc2530488017e54681251e4353f1a9caf468af8",
+            "excerpt": "Coverage: pass. No Coverage findings in frozen range 8b2073e3..279fc50e; worst issue: none.\nThe bounded matcher, evaluator, locator, CLI, retained fixtures, workflow rules, and DG16 adoption evidence passed with zero skips."
+          },
+          "axis": "Coverage",
+          "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
+          "tip": "20f64f51e4babbc8e515695bf3fe894bea4d764d",
           "finding_ids": [],
           "supersedes": []
         }
