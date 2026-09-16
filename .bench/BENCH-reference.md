@@ -39,9 +39,9 @@ assignments; the file map, adapter contracts, and hook layers live below.
   The `census` signal counts raw calls per assignment from `$BENCH_HOME/census/<repo-key>/`.
 - `projects/<name>.md` holds the project's seams, gate shape, and line bindings.
 - `capture/learnings.md` is the usage journal for process learnings.
-- `capture/IDEAS.md` is the parked-idea sink `bench idea` writes. If
-  `bench` isn't on PATH, append the dated line (`- YYYY-MM-DD  <text>`) to
-  `capture/IDEAS.md` yourself.
+- `capture/IDEAS.md` is the parked-idea sink `bench idea` writes. Run the verb
+  from a login shell when `bench` is not on the current PATH. Do not append to
+  the file directly; the verb participates in the capture-drain lock.
 - `capture/retros/` holds one retro per spec: `/bench-final-check` writes
   `capture/retros/<spec-slug>.md` and refreshes affected
   `capture/agent-performance/` scorecards, and `/bench-drain` owns their

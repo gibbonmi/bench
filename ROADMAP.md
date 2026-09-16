@@ -115,7 +115,9 @@ findings in the owner details.
 
 **FT275 (MEDIUM) — code built under Bench traces its declared seams with OpenTelemetry.**
 
-**FT232 (EXPERIMENT, decision required) — repair-loop tripwire: an advisory signal from gate records.**
+**FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
+
+**FT314 (MEDIUM, decision required) — an unchanged landing composition reuses gate evidence only under a complete authorization key.**
 
 **FT290 (MEDIUM) — `bench test` projects a check's fixture family, a widened-set explanation, and a check inventory.**
 
@@ -230,6 +232,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT232 bounded repair-loop policy and tripwire — reviewer decision
-2. FT312 cross-harness reviewer and review-axis creation verb — /bench-write-spec
-3. FT300 fixture ownership and verifier evidence — /bench-update-kit
+1. FT300 fixture ownership and verifier evidence — /bench-update-kit
+2. FT313 bounded charge and repair evidence — /bench-update-kit
+3. FT312 cross-harness reviewer and review-axis creation verb — /bench-write-spec

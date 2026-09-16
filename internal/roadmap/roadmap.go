@@ -4,13 +4,13 @@ package roadmap
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/capturetx"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/retros"
@@ -95,25 +95,14 @@ func IdeaCommand(args []string) (string, int) {
 		text += " [occurrence:" + owner + "/" + incident + "]"
 	}
 	file := filepath.Join(root, IdeasFile)
-	// The inbox lives in a directory a fresh repo may not have yet. A parked idea is often
-	// the first thing to touch this directory.
-	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
-		return cannotWriteIdeas(err), 1
-	}
-
-	f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-	if err != nil {
-		return cannotWriteIdeas(err), 1
-	}
-	defer f.Close()
-
 	entry := "- " + time.Now().Format("2006-01-02") + "  " + text + "\n"
-	if needsNewline(file) {
-		// This code performs one write, not two. An interrupt between two separate writes would
-		// leave a bare blank line with no entry behind it.
-		entry = "\n" + entry
-	}
-	if _, err := f.WriteString(entry); err != nil {
+	err := capturetx.Append(root, capturetx.Source{Name: IdeasFile, Path: file}, func(current []byte) ([]byte, error) {
+		if needsNewline(current) {
+			entry = "\n" + entry
+		}
+		return append(append([]byte(nil), current...), entry...), nil
+	})
+	if err != nil {
 		return cannotWriteIdeas(err), 1
 	}
 	return "parked: " + displayText + "\n", 0
@@ -141,16 +130,8 @@ func cannotWriteIdeas(err error) string { return cannotWrite(IdeasFile, err) }
 
 // needsNewline reports whether the file is non-empty and its last byte is not a newline.
 // In that case, an appended line would merge onto a hand-edited last line.
-func needsNewline(file string) bool {
-	info, err := os.Stat(file)
-	if err != nil || info.Size() == 0 {
-		return false
-	}
-	data, err := os.ReadFile(file)
-	if err != nil || len(data) == 0 {
-		return false
-	}
-	return data[len(data)-1] != '\n'
+func needsNewline(data []byte) bool {
+	return len(data) > 0 && data[len(data)-1] != '\n'
 }
 
 // RoadmapCommand implements the bounded top-of-board projection for `bench roadmap`.
