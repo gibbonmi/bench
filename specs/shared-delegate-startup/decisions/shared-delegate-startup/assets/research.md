@@ -222,3 +222,44 @@ Source: `internal/harnesses/harnesses.go:217` and `internal/harnesses/command.go
 6. Preserve unknown telemetry and separate estimated charges from actual charges.
 7. Evaluate review quality and repair work alongside startup time.
 8. Require separate evidence and reviewer approval before changing the default route.
+
+## Q5. Can parent wait loops distort a fork cost comparison?
+
+### Recommendation and scope
+
+Treat repeated parent inference during quiet waits as a separate possible source of cost.
+Do not attribute that cost to conversation forks without bounded telemetry.
+This follow-up supports the spec's evidence limits; it authorizes no Codex configuration change or new benchmark.
+
+### Source-backed reports
+
+[Codex issue 35259](https://github.com/openai/codex/issues/35259) reports repeated model calls during agent and terminal waits.
+Its author separates genuine usage deltas from copied history and unchanged snapshots.
+The report distinguishes raw tokens and rate-card estimates from subscription usage.
+Retrieved: 2026-09-16.
+
+[Codex issue 37090](https://github.com/openai/codex/issues/37090) reports repeated compaction, source rereads, and status messages without corresponding progress.
+Its author could not establish the account's token breakdown or the cause.
+Retrieved: 2026-09-16.
+
+These are first-person issue reports, not maintainer-confirmed diagnoses of this Bench run.
+The linked comment was not available in the fetched issue page.
+The user supplied its text, including a reported 25-minute wait workaround and separate rollout measurements.
+The local installation's support for those settings remains unverified.
+No fixed cache lifetime follows from these reports.
+
+### Observations and inference
+
+Several waits in this Bench session returned no new agent update.
+That observation establishes repeated waits, not their billed token count or cause.
+The user reports that the overall phase felt faster.
+Scope, the review cap, inherited context, and wait behavior can each affect that impression.
+Their separate contributions remain unknown.
+
+### Validation boundary
+
+No raw rollout telemetry or billing ledger was inspected for this follow-up.
+No configuration change or live comparison ran.
+Refresh this note when the issues, active runtime, or bounded local telemetry provide new evidence.
+A future comparison should account for genuine parent usage deltas and child usage without copied-history duplication.
+It should identify timeout-only turns separately and keep token totals distinct from subscription quota.

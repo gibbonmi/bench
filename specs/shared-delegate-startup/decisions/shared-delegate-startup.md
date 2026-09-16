@@ -14,6 +14,7 @@ The [research report](shared-delegate-startup/assets/research.md) owns factual e
 The phase uses craft-domain, craft-research, craft-grill, craft-line, craft-delegate, and craft-synthesis.
 The reviewer confirmed all remaining recommendations on 2026-09-16.
 Ticket 6 records the complete scope confirmation.
+The reviewer amended ticket 5 on 2026-09-16 to permit the invoking agent to select sequential spec and ticket forks.
 
 ## Decisions so far
 
@@ -21,7 +22,7 @@ Ticket 6 records the complete scope confirmation.
 - [What adoption scope should this work use?](shared-delegate-startup/tickets/2.md): One combined optional workflow precedes any default-change comparison.
 - [What evidence permits a different model line?](shared-delegate-startup/tickets/3.md): A documented lower total-cost estimate permits a different line; unknown required inputs preserve the existing line.
 - [How does the reviewer activate shared preparation?](shared-delegate-startup/tickets/4.md): One explicit instruction covers an approved run and its reviews, without a new command or flag.
-- [How should spec authorship join the optional workflow?](shared-delegate-startup/tickets/5.md): Preserve the existing approved-context fork and align preparation and cost accounting.
+- [How should spec authorship join the optional workflow?](shared-delegate-startup/tickets/5.md): Keep the existing author by default; permit sequential spec and ticket forks with shared cost accounting.
 - [What context should implementation delegates inherit?](shared-delegate-startup/tickets/7.md): Use fresh common preparation, validate current source, refresh changed material, and retain repair authors.
 - [What context should review delegates inherit?](shared-delegate-startup/tickets/8.md): Share neutral raw material while each axis independently derives its findings.
 - [What happens when a suitable fork is unavailable?](shared-delegate-startup/tickets/9.md): Report fresh-delegate fallback for builds and reviews; preserve spec fork authority through a capable-session handoff.

@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: ready compiled map `specs/shared-delegate-startup/decisions/shared-delegate-startup.md`, confirmed 2026-09-16.
 
-Verification log: 2 iteration(s) to accept — one Sol/high review found two blockers. One author repair pass closed both under coordinator verification.
+Verification log: 2 iteration(s) to accept — one Sol/high review found two blockers. One author repair pass closed both under coordinator verification. The later user-authorized option amendment passed coordinator verification without another Sol review.
 
 ## Problem
 
@@ -52,7 +52,7 @@ Harder chunks: SP1.
 ### Spec authorship
 
 11. As a spec author, I want the existing approved-context fork, so that shared preparation preserves the authorized decision source.
-12. As a reviewer, I want one normal spec author, so that the optional workflow adds no preparation session or authorship split.
+12. As a reviewer, I want one default spec author, so that a second author remains optional without another preparation session.
 
 ### Delegated implementation
 
@@ -80,6 +80,14 @@ Harder chunks: SP1.
 28. As a maintainer, I want one owner per rule, so that shared guidance remains consistent within existing budgets.
 29. As a maintainer, I want existing validation intact, so that the optional workflow cannot weaken verification.
 30. As a reviewer, I want compatibility claims tied to observed evidence, so that documentation does not imply an untested live capability.
+
+### Optional sequential spec authors
+
+31. As an invoking agent, I want an optional ticket fork, so that substantial spec and ticket work can use distinct authors.
+32. As a ticket author, I want the completed spec and approved source after the first author stops, so that my assignment starts clearly.
+33. As a reviewer, I want both authors in the cost estimate, so that the option does not hide its added work.
+34. As an invoking agent, I want the original author as the fallback, so that an unavailable second fork cannot block tickets.
+35. As a reviewer, I want one review of the completed pair, so that the authors' combined result receives independent judgment.
 
 ## Implementation decisions
 
@@ -137,15 +145,22 @@ The fresh fallback never substitutes a same-family CLI or coordinator review.
 ### Spec author
 
 Preserve the approved-source author fork and its inherited line (SP18).
-Apply common cost accounting to that existing fork (SP10, SP35).
-Add no preparation session or split authorship to the normal spec phase (SP19).
-When the mandatory spec fork is unavailable, hand off to a capable session (SP20).
+By default, that author writes the spec and its tickets (SP19).
+When the mandatory initial fork is unavailable, hand off to a capable session (SP20).
 Do not replace the authorized source with an unreviewed summary.
 
-The user's two-author sequence is an explicit experiment for this specification phase.
-It does not change the approved product behavior in SP19.
-The coordinator first forks a spec author, then forks a ticket author after the spec return.
-The user selects one Sol/high review pass over the completed pair.
+The invoking agent may choose a separate ticket fork when design and ticket work are substantial distinct jobs (SP45).
+It states its reason without another user permission step.
+This option adds no preparation session (SP52).
+The second fork starts after the completed spec returns and the first author stops writing (SP46).
+It receives the completed spec and approved decision source (SP47).
+It inherits the invoking parent's line under SP8 and keeps the existing assignment isolation (SP48).
+
+One independent review covers the completed pair (SP51).
+The estimate includes both authors, preparation, output, and expected repairs under the existing cost rules (SP49).
+If the second fork is unsuitable or unavailable, report the fallback and resume the original author for tickets (SP50).
+The mandatory initial fork remains required.
+No successful dispatch establishes cache, speed, or cost savings.
 
 ### Implementation authors
 
@@ -199,7 +214,7 @@ No paid comparison is required or authorized by this specification.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| SP1 / `1-align-spec-preparation.md`, `2-prepare-implementation-delegates.md`, `3-preserve-neutral-review.md` | One optional workflow across spec authorship, delegated implementation, and review. | SP1–SP44 | Existing workflow, guidance-budget, and prose checks, plus the semantic cases below. | yes |
+| SP1 / `1-align-spec-preparation.md`, `2-prepare-implementation-delegates.md`, `3-preserve-neutral-review.md` | One optional workflow across spec authorship, delegated implementation, and review. | SP1–SP52 | Existing workflow, guidance-budget, and prose checks, plus the semantic cases below. | yes |
 
 Use one chunk because activation, fallback, and phase consumers form one adoption decision.
 Each ticket commits a complete guidance route and its evidence before the next ticket starts.
@@ -210,12 +225,12 @@ Review the integrated SP1 delta across Standards, Spec, and Coverage before comp
 
 | ticket | Blocked by | delivered outcome | owned rows |
 | --- | --- | --- | --- |
-| `1-align-spec-preparation.md` | none | Existing spec fork gains shared eligibility, line, and cost rules. | SP2, SP3, SP4, SP5, SP6, SP7, SP8, SP9, SP10, SP11, SP12, SP13, SP16, SP18, SP19, SP20, SP35, SP36, SP37, SP38, SP39, SP42 |
+| `1-align-spec-preparation.md` | none | Existing spec fork gains shared eligibility, line, and cost rules. | SP2, SP3, SP4, SP5, SP6, SP7, SP8, SP9, SP10, SP11, SP12, SP13, SP16, SP18, SP19, SP20, SP35, SP36, SP37, SP38, SP39, SP42, SP45, SP46, SP47, SP48, SP49, SP50, SP51, SP52 |
 | `2-prepare-implementation-delegates.md` | `1-align-spec-preparation.md` | Approved implementation delegates receive fresh preparation and current assignments. | SP14, SP21, SP22, SP23, SP24, SP25, SP26, SP27, SP28, SP29 |
 | `3-preserve-neutral-review.md` | `2-prepare-implementation-delegates.md` | Independent review receives neutral material and closes combined adoption. | SP1, SP15, SP17, SP30, SP31, SP32, SP33, SP34, SP40, SP41, SP43, SP44 |
 
 Each row owner writes the guidance seam named in its ticket.
-The first ticket owns spec activation, shared eligibility, spec authority, line selection, and cost evidence.
+The first ticket owns the spec routes, shared eligibility, spec authority, line selection, and cost evidence.
 The second owns implementation duties and the build fallback.
 The last owns combined activation, review duties, review fallback, and integrated ownership and preservation checks.
 
@@ -285,7 +300,7 @@ explicit instruction + approved phase source
 | SP16 | 10 | The coordinator reports a fresh-delegate fallback. | Review-owned: permitted fallback report. | A silent route change fails the report. |
 | SP17 | 24 | An unavailable native review surface retains the capable-harness handoff. | Review-owned: no native review tool. | A same-family CLI or inline axis fails the route. |
 | SP18 | 11 | Spec authorship retains its approved-context fork. | Review-owned: each authorized spec-source kind. | A fresh author or unreviewed replacement summary fails the route. |
-| SP19 | 12 | The normal spec phase adds no preparation session or authorship split. | Review-owned: optional spec activation. | Requiring another preparer or ticket author fails the route. |
+| SP19 | 12 | The default spec phase retains one author for the spec and tickets. | Review-owned: no sequential-author selection. | Requiring a second author by default fails the route. |
 | SP20 | 10, 11 | An unavailable spec fork requires a capable-session handoff. | Review-owned: spec dispatch without a suitable native fork. | A fresh-author substitute fails the mandatory fork contract. |
 | SP21 | 13 | Implementation common preparation starts in a fresh implementation session. | Review-owned: proposed planning-history parent. | Reusing that history as the common baseline fails the case. |
 | SP22 | 14 | Each ticket assignment follows the common preparation. | Review-owned: sibling ticket assignments. | Putting one ticket's assignment into the shared baseline fails the case. |
@@ -311,6 +326,14 @@ explicit instruction + approved phase source
 | SP42 | 30 | A live compatibility claim cites observed context, line, and assignment evidence. | Review-owned: documentation-only compatibility claim. | A source citation alone fails the live-evidence claim. |
 | SP43 | 28 | Each shared rule has one guidance owner within the existing budgets. | Review-owned owner sweep plus guidance-prose-budgets. | A competing rule copy or excess subject length fails validation. |
 | SP44 | 28, 29 | Existing pinned guidance and prose checks remain green. | docs-currency-workflow and prose-mechanics. | A removed pinned duty or invalid prose turns its existing check red. |
+| SP45 | 31 | The invoking agent can select the sequential option with a reason when design and ticket work are substantial distinct jobs. | Review-owned: substantial separate jobs with a stated reason. | Requiring another permission turn fails the route. |
+| SP46 | 32 | The ticket fork starts after the completed spec returns and the first author stops writing. | Review-owned: first author still writes after its return. | Starting the second writer before that stop fails the sequence. |
+| SP47 | 32 | The ticket fork receives the completed spec and approved decision source. | Review-owned: omit either required input. | A summary alone cannot replace either input. |
+| SP48 | 32 | The ticket fork keeps the existing assignment isolation. | Review-owned: inherited parent checkout presented as write authority. | Writing outside the ticket author's assigned worktree fails the case. |
+| SP49 | 33 | The estimate includes both authors, preparation, output, and expected repairs. | Review-owned: estimate omits the second author. | Pricing only the first author understates the selected route. |
+| SP50 | 34 | An unsuitable or unavailable second fork returns ticket work to the original author with a fallback report. | Review-owned: failed second-fork eligibility. | Silent replacement authorship or abandoned tickets fails the route. |
+| SP51 | 35 | One independent review covers the completed spec and ticket pair. | Review-owned: review before the ticket fork returns. | Accepting the incomplete pair fails the review boundary. |
+| SP52 | 12, 31 | Neither spec route adds a preparation session. | Review-owned: a proposed preparer before either author route. | Requiring that extra session fails the route. |
 
 ### Edge inventory
 
@@ -573,9 +596,9 @@ The quoted clauses identify the canonical source occurrences.
 | 3.md, Answer 2 | “The estimate covers preparation, all delegates, output, and expected repairs.” | SP10 |
 | 3.md, Answer 3 | “Unknown required cost inputs retain the existing line.” | SP11 |
 | 3.md, Answer 4–5 | “Actual results remain separate from estimates.” | SP8, SP35 |
-| 5.md, Answer 1 | “Preserve the existing approved-context spec-author fork.” | SP18 |
-| 5.md, Answer 2 | “Apply the shared preparation and cost-accounting rules without an extra preparation session or split authorship.” | SP10, SP19 |
-| 5.md, Answer 3–4 | “The optional workflow does not relax the phase's existing fork requirement.” | SP8, SP18, SP20 |
+| 5.md, Answer paragraph 1 | “By default, that author writes the spec and its tickets.” | SP18, SP19, SP45, SP52 |
+| 5.md, Answer paragraph 2 | “The second fork starts after the first author returns the completed spec and stops writing.” | SP8, SP46–SP49, SP51 |
+| 5.md, Answer paragraph 3 | “If the second fork is unsuitable or unavailable, report the fallback and resume the original author for tickets.” | SP20, SP50 |
 | 7.md, Answer 1 | “Implementation delegates inherit common preparation from a fresh implementation session.” | SP21 |
 | 7.md, Answer 2 | “Each delegate receives its ticket assignment after that preparation.” | SP22 |
 | 7.md, Answer 3 | “Each author validates its current source and assignment before action.” | SP24–SP26, SP29 |
@@ -644,3 +667,19 @@ The coordinator verified the corrections without a second independent review.
 The commit lane and committed-source build preflight pass.
 The scope and ownership fences still await the user's implementation sign-off.
 Successful author dispatches establish no measured cache or cost benefit.
+
+### Later authorized amendment
+
+On 2026-09-16, the user authorized the invoking agent to select the sequential spec and ticket option.
+The compiled decision source now records that option in ticket 5.
+The earlier Sol/high pass did not examine this amendment.
+The amendment passed focused checks and coordinator verification without another independent review.
+The coordinator checked the user instruction, row ownership, unchanged fences, and unchanged dependency graph.
+The default route and implementation-review independence remain unchanged.
+
+### Timing evidence
+
+The research report's Q5 records reported Codex wait loops and their evidence limits.
+Repeated parent inference can affect a cost comparison even when most input tokens are cached.
+This run has no measured attribution for those waits or the user's perceived speed improvement.
+The reported configuration workaround remains unverified for the local installation.
