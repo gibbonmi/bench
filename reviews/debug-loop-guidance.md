@@ -1281,7 +1281,7 @@ No check reported a skip.
 {
   "version": 2,
   "spec": "specs/debug-loop-guidance/spec.md",
-  "plan_digest": "sha256:be9ffbb820cd3cee166f9b3910256d286c9396bce8b947f5e206fe5d9aa5139d",
+  "plan_digest": "sha256:cb4c67ecf1bfedac4660be97cc3a9dece0217caff0502090a7280f2868c83006",
   "chunks": [
     {
       "id": "DG-C1",
@@ -1871,6 +1871,18 @@ No check reported a skip.
     {
       "from": "sha256:b954217d5842a37aaa5ad0837b8b0f9f8fff84c45c58a8af82a53bfb92e54941",
       "to": "sha256:be9ffbb820cd3cee166f9b3910256d286c9396bce8b947f5e206fe5d9aa5139d",
+      "chunk_ids": {
+        "DG-C1": ["DG-C1"],
+        "DG-CR": ["DG-CR"],
+        "DG-C2": ["DG-C2"],
+        "DG-C3": ["DG-C3"],
+        "DG-C4": ["DG-C4"],
+        "DG-C5": ["DG-C5"]
+      }
+    },
+    {
+      "from": "sha256:be9ffbb820cd3cee166f9b3910256d286c9396bce8b947f5e206fe5d9aa5139d",
+      "to": "sha256:cb4c67ecf1bfedac4660be97cc3a9dece0217caff0502090a7280f2868c83006",
       "chunk_ids": {
         "DG-C1": ["DG-C1"],
         "DG-CR": ["DG-CR"],
