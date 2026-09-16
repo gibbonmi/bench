@@ -646,7 +646,7 @@ planned blanket-ban mutation. The frozen chunk pair is
 {
   "version": 2,
   "spec": "specs/debug-loop-guidance/spec.md",
-  "plan_digest": "sha256:1fe49b1a3f575aa482643283599862988bf7131c042f5d70c80d249afe820da1",
+  "plan_digest": "sha256:5bf67838e7c2c0f59f8bd20104f2066c592bb3f6374bccc41a7005ab72cd0df8",
   "chunks": [
     {
       "id": "DG-C1",
@@ -786,6 +786,19 @@ planned blanket-ban mutation. The frozen chunk pair is
       ]
     }
   ],
-  "completion": {"state": "pending", "source_digest": "", "performer": "", "reconciliation": {}, "verification": []}
+  "completion": {"state": "pending", "source_digest": "", "performer": "", "reconciliation": {}, "verification": []},
+  "amendments": [
+    {
+      "from": "sha256:1fe49b1a3f575aa482643283599862988bf7131c042f5d70c80d249afe820da1",
+      "to": "sha256:5bf67838e7c2c0f59f8bd20104f2066c592bb3f6374bccc41a7005ab72cd0df8",
+      "chunk_ids": {
+        "DG-C1": ["DG-C1"],
+        "DG-C2": ["DG-C2"],
+        "DG-C3": ["DG-C3"],
+        "DG-C4": ["DG-C4"],
+        "DG-C5": ["DG-C5"]
+      }
+    }
+  ]
 }
 ```
