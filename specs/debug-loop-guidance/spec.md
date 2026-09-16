@@ -133,6 +133,7 @@ Replaying only the author's supplied mutations does not satisfy this refutation 
 The completion plan may opt into one independent reviewer for all three axes.
 The omitted mode keeps the existing three-distinct-session rule.
 The unified reviewer still returns three separately attributable axis results and cannot be the orchestrator or an implementation author.
+It re-derives each axis from its primary source within one session; separate fresh contexts remain the default outside this explicit mode.
 Each unified result also states whether the issue or miss exposes an improvement to `.agents/commands/bench-implement-spec.md`.
 
 For the exception, cite the binding rule and violating source.
@@ -353,17 +354,23 @@ Won't handle: Trial comparison — ordinary review evidence remains the in-scope
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
 - `internal/anchors/registry_debug_loop.go`
+- `internal/anchors/registry_ft311_review_dispatch.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/gate/delegated_checkpoint_test.go`
+- `internal/gate/review_checkpoint_test.go`
 - `internal/reviewrecord/coverage.go`
 - `internal/reviewrecord/delegated.go`
 - `internal/reviewrecord/delegated_test.go`
 - `internal/reviewrecord/plan.go`
 - `internal/reviewrecord/record.go`
+- `projects/benchkit.md`
 - `reviews/debug-loop-guidance.md`
 - `tests/canary/claude-agent-definitions`
+- `tests/canary/guidance-prose-budgets`
+- `tests/canary/line-routing`
+- `tests/canary/skill-description-budgets`
 - `tests/canary/skills-index-command-adapters/debug-implicit-invocation-reverted`
 - `tests/canary/workflow-guidance-anchors`
 
