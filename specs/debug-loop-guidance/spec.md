@@ -83,6 +83,7 @@ Harder chunks: DG-C5.
 40. As a reviewer, I want reconciled adoption evidence, so that each phase closes its own evidence obligation.
 41. As a maintainer, I want unchanged prose budgets, so that the guidance stays within its approved size.
 42. As a debug author, I want the local six-phase procedure, so that concrete reproduction guidance remains available.
+43. As a Coverage reviewer, I want an independent bypass attempt, so that supplied positive checks do not hide a violating state.
 
 ## Implementation decisions
 
@@ -120,6 +121,8 @@ The review skill owns candidate selection, source derivation, evidence inspectio
 It points to finding-discipline for the runnable-versus-source evidence distinction.
 The reference owns that distinction, including the mandatory-standard exception.
 Replace its unconditional real-run sentence and reconcile its existing anchor, unit expectation, and mutation fixture.
+When a claimed enforcement can admit a bypass, Coverage constructs an independent counterexample that keeps the claimed positive evidence satisfied while violating the requirement.
+Replaying only the author's supplied mutations does not satisfy this refutation step.
 
 For the exception, cite the binding rule and violating source.
 Inspect applicable exceptions and contrary evidence before retaining the finding.
@@ -157,7 +160,7 @@ Each chunk receives the existing three-axis checkpoint before its successor.
 | DG-C2 / `2-guide-spec-evidence.md` | Guide spec authoring with concrete evidence with its adoption evidence | DG9, DG10, DG11, DG12, DG13, DG14, DG15, DG16 | workflow anchors, fixture bite, prose budgets, owning adoption task | no |
 | DG-C3 / `3-slice-complete-outcomes.md` | Slice independently verifiable outcomes with its adoption evidence | DG17, DG18, DG19, DG20, DG21, DG22, DG23, DG24 | workflow anchors, fixture bite, prose budgets, owning adoption task | no |
 | DG-C4 / `4-drive-implementation-evidence.md` | Drive implementation with focused evidence with its adoption evidence | DG25, DG26, DG27, DG28, DG29, DG30, DG31, DG32 | workflow anchors, fixture bite, prose budgets, owning adoption task | no |
-| DG-C5 / `5-ground-semantic-findings.md` | Ground semantic findings in appropriate evidence with its adoption evidence | DG33, DG34, DG35, DG36, DG37, DG38, DG39, DG40, DG41 | workflow anchors, fixture bite, prose budgets, owning adoption task | yes |
+| DG-C5 / `5-ground-semantic-findings.md` | Ground semantic findings in appropriate evidence with its adoption evidence | DG33, DG34, DG35, DG36, DG37, DG38, DG39, DG40, DG41, DG43 | workflow anchors, fixture bite, prose budgets, owning adoption task | yes |
 
 ```bench-completion-plan
 {"version":1,"chunks":[{"id":"DG-C1","tickets":["1-retain-debug-authorship.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"restore the blanket write-delegate debug ban"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"}]},{"id":"DG-C2","tickets":["2-guide-spec-evidence.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"require an executable red for a new-feature specification"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"}]},{"id":"DG-C3","tickets":["3-slice-complete-outcomes.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"merge useful outcomes solely because their writes overlap"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"}]},{"id":"DG-C4","tickets":["4-drive-implementation-evidence.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"remove the focused rerun after each material action"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"}]},{"id":"DG-C5","tickets":["5-ground-semantic-findings.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"restore unconditional real-run evidence for mandatory standards"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"}]}],"final_verification":[{"id":"acceptance","command":"bench coverage --check specs/debug-loop-guidance/spec.md"},{"id":"integration","command":"bench test --check docs-currency-workflow"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"}]}
@@ -258,6 +261,7 @@ Review-owned rows test real behavior and do not infer it from prose presence.
 | DG40 | 40 | Final reconciliation cites the completed adoption evidence from all five owning tickets. | review-owned: `reviews/debug-loop-guidance.md`, DG-C5 adoption evidence | The last ticket silently absorbs unfinished earlier adoption work. |
 | DG41 | 41 | The changed guidance preserves the existing prose budgets. | `guidance-prose-budgets`: `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetsHoldOnTheLiveTree`) | A budget increase pays for unnecessary guidance growth. |
 | DG42 | 42 | Debug keeps its Phase 1 through Phase 6 procedure and local loop-constructions reference. | review-owned: `reviews/debug-loop-guidance.md`, DG-C1 preservation evidence | A universal loop replaces the concrete local procedure. |
+| DG43 | 43 | Coverage constructs an independent bypass that preserves claimed positive evidence while violating the requirement when such a state is possible. | `docs-currency-workflow`, canary `dg-43` at `.agents/skills/bench-craft-review/SKILL.md`  `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | The axis replays supplied mutations and misses a contradictory state that still satisfies the positive check. |
 
 ### Fresh-session adoption tasks
 
@@ -273,7 +277,7 @@ Use separate variants when a required stop prevents the successful path.
 | 2 | Request a new list-summary feature with no executable check. Retain exact inputs, expected output, current-owner evidence, a sufficient seam, and the inspected authoring result. | Leave the empty-list result unspecified in a variant. Retain the reviewer decision request before dependent design continues. |
 | 3 | Supply independently useful summary and export outcomes that share a formatter. Retain separate complete tickets, predecessor value, and checks usable before successors exist. | Supply a test-only fragment. Retain its merger into the behavior slice that makes it useful. Do not implement either feature. |
 | 4 | Supply two approved behavior changes at one compiled seam. Retain one focused result after each material action, with several related edits allowed within an action. | Omit a declaration, supply one passing row, and supply one row that cannot execute first. Retain setup, a behavioral red, both classifications, and the unavailable-row reason. |
-| 5 | Supply a runnable defect claim that a check refutes and duplicated policy that violates the mandatory one-source standard. Retain the real run and exact rule/source evidence. | Include an unsupported concern and optional advice. Retain uncertainty, applicable-exception checks, and advice outside finding totals. |
+| 5 | Supply a runnable defect claim that a check refutes, duplicated policy that violates the mandatory one-source standard, and enforcement whose supplied deletion mutation misses an additive contradiction. Retain the real run, exact rule/source evidence, and an independently constructed additive bypass. | Include an unsupported concern and optional advice. Retain uncertainty, applicable-exception checks, and advice outside finding totals. |
 
 The implementation task also has a variant whose acceptance target contradicts the approved source.
 Retain its existing wrong-spec exit before dependent work continues.
@@ -284,6 +288,7 @@ DG7 and DG8 own the debug cases, and DG16 owns the spec cases.
 DG24 owns the slicing cases.
 DG27, DG28, and DG32 own setup, classifications, and the two material-action results.
 DG39 owns both review evidence routes and their dispositions.
+DG43 owns the independent bypass attempt within the review task.
 Missing observations leave their matching row open.
 
 The last ticket reconciles these existing excerpts rather than performing earlier tickets' adoption work.
@@ -368,14 +373,14 @@ Budget increases, changed authority, and causal speed claims are prohibited rath
 | Source clause | Rows |
 | --- | --- |
 | Ticket 2: "Preserve debug's core instructions in place." | DG42 |
-| Ticket 2: "Give spec writing, implementation, and semantic review their own explicit action, evidence, and stop sequence." | DG9–DG16, DG25–DG39 |
+| Ticket 2: "Give spec writing, implementation, and semantic review their own explicit action, evidence, and stop sequence." | DG9–DG16, DG25–DG39, DG43 |
 | Ticket 3: "Preserve the already-approved diagnostic handoff at the delegate fence." | DG1–DG8 |
 | Ticket 3: "Use fresh-session task evidence for adoption, without trial flags or a comparative speed claim." | DG7, DG8, DG16, DG24, DG32, DG39, DG40 |
 | Ticket 4: "Start with the delivered outcome and identify its smallest complete vertical slice." | DG17–DG19 |
 | Ticket 4: "Record real dependencies and the value each predecessor supplies." | DG20 |
 | Ticket 4: "Use shared writes to determine order, without treating them as automatic grounds to merge tickets." | DG21, DG22, DG24 |
 | Ticket 4: "Do not require implementation during slicing." | DG23 |
-| Reviewer refinements: existing finding owner and retained runnable refutation | DG33–DG39 |
+| Reviewer refinements: existing finding owner, retained runnable refutation, and independent bypass construction | DG33–DG39, DG43 |
 | Reviewer refinements: material-action reruns without one-edit-per-run | DG29, DG30, DG32 |
 | Reviewer refinements: prefer a sufficient existing seam | DG12 |
 | Research: minimal compiled setup and existing row classifications | DG26–DG28 |

@@ -176,7 +176,7 @@ Here, findings that prevent progression are unresolved blockers; retain optional
 
    Commit the artifact in the same session that writes it, before any repair edit lands.
    Append superseding occurrences and retain earlier findings.
-   Obtain a current result or reviewer-authored reaffirmation from every axis after a repair.
+   Apply the bounded repair policy's current-evidence rule and its narrow evidence-only exception after a repair.
 
    Record validation checks occurrence and source coverage. It cannot prove judgment correctness or authenticate an invented transcript.
 

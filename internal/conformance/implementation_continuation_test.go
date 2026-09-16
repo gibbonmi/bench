@@ -213,7 +213,23 @@ func TestImplementationContinuation(t *testing.T) {
 		},
 		"implementation continuation: bounded repair dropped current review evidence": {
 			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
-			needle: "After repairs, obtain current results or permitted native reaffirmations from every review axis.",
+			needle: "After substantive repairs, obtain current results or permitted native reaffirmations from every review axis.",
+		},
+		"implementation continuation: bounded repair dropped evidence-only definition": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "A review-record prose correction is evidence-only only when it changes no finding, source identity, observation, disposition, or verification claim.",
+		},
+		"implementation continuation: bounded repair counted evidence-only prose": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "Evidence-only corrections consume no repair cycle. Batch all cited corrections before verification.",
+		},
+		"implementation continuation: bounded repair widened prose reaffirmation": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "Only the issuing axis reaffirms an evidence-only correction unless it invalidates another axis's evidence.",
+		},
+		"implementation continuation: bounded repair started gate before evidence freeze": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "The coordinator commits the final review record before starting the whole-project gate. It does not edit the gate subject while the gate runs.",
 		},
 		"implementation continuation: bounded repair dropped completion safeguards": {
 			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
