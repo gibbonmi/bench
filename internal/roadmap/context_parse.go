@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/capturetx"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/retros"
@@ -120,6 +121,10 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 	}
 	labels := []string{IdeasFile, learnings.JournalPath, ".bench/structure.budgets", ".bench/structure-accept", "specs/"}
 	data := map[string][]byte{}
+	sealedCapture, sealed, err := capturetx.Sources(root, []string{IdeasFile, learnings.JournalPath})
+	if err != nil {
+		return s, err
+	}
 	for _, label := range labels {
 		if label == "specs/" {
 			cd := bounds.ClassifyDir(sourcePath(root, label))
@@ -128,6 +133,13 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 				s.Failures = append(s.Failures, ParseFailure{label, string(cd.State) + ": " + cd.Reason, "", 0})
 			}
 			continue
+		}
+		if sealed && (label == IdeasFile || label == learnings.JournalPath) {
+			if body, present := sealedCapture[label]; present {
+				data[label] = body
+				s.Sources = append(s.Sources, SourceFact{label, string(bounds.StateParsed), len(body)})
+				continue
+			}
 		}
 		c := bounds.Classify(sourcePath(root, label), bounds.ControlRecordLimit)
 		if c.State == bounds.StateParsed {

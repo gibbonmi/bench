@@ -16,6 +16,7 @@ var subcommandRouting = map[string]routingEntry{
 	// The `clean` child is dispatched inside the module, whose one grammar declares both
 	// the bare verb and the child. So the verb stays routed rather than nested-exempt.
 	"cache":        routed("internal/gocache"),
+	"capture":      exempt(whyNested),
 	"commands":     routed("cmd/bench"),
 	"consumers":    routed("internal/consumers"),
 	"commit":       routed("internal/commit"),
