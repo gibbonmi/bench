@@ -220,7 +220,8 @@ The author must bind DG7 and DG8 to the committed source tip and load its exact 
 The coordinator supplied this terminal-result summary.
 The native return remains with the coordinator under `/root/a_spec`.
 Its exact digest is unavailable to this author, so the formal record remains pending reaffirmation.
-Repair cycle 1 is consumed; the replacement evidence above awaits reviewer acceptance.
+The author consumed repair cycle 1; the replacement evidence above awaits reviewer acceptance.
+The reviewer permits passive-sentence corrections without a cycle limit.
 
 ## Coverage
 
