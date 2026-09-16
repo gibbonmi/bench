@@ -7,8 +7,7 @@ import (
 )
 
 func TestEvaluatePathRejectsMixedNestedEmphasis(t *testing.T) {
-	const file = ".agents/skills/bench-craft-spec/SKILL.md"
-	const diagnostic = "debug loop: DG15 forbids mandatory executable-red variants"
+	anchor := pathTestAnchor(t, ForbidCaseFoldedEmphasis)
 	for _, test := range []struct {
 		name string
 		text string
@@ -18,15 +17,21 @@ func TestEvaluatePathRejectsMixedNestedEmphasis(t *testing.T) {
 		{"italic around bold", "An executable _**red**_ is mandatory before specification.", 3},
 		{"triple around bold", "An executable ***__red__*** is mandatory before specification.", 3},
 		{"mapped multiline", "intro\nAn **_EXECUTABLE\nRED_** IS MANDATORY before specification.", 4},
+		{"repeated bold", "**An _executable **red** is mandatory_ before specification.**", 3},
+		{"repeated italic", "*An _executable *red* is mandatory_ before specification.*", 3},
+		{"repeated triple", "***An _executable ***red*** is mandatory_ before specification.***", 3},
+		{"repeated underscore bold", "__An *executable __red__ is mandatory* before specification.__", 3},
+		{"repeated underscore italic", "_An *executable _red_ is mandatory* before specification._", 3},
+		{"repeated underscore triple", "___An *executable ___red___ is mandatory* before specification.___", 3},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			h := anchorHarness{rules: []anchorRule{{file: file, needle: test.text}}}
-			result := EvaluatePath(h.write(t, -1), file)
-			if !slices.Contains(result.Diagnostics, diagnostic) {
-				t.Errorf("diagnostics = %v, want %q", result.Diagnostics, diagnostic)
+			h := anchorHarness{rules: []anchorRule{{file: anchor.File, needle: test.text}}}
+			result := EvaluatePath(h.write(t, -1), anchor.File)
+			if !slices.Contains(result.Diagnostics, anchor.Diagnostic) {
+				t.Errorf("missing %q for %q", anchor.Diagnostic, test.text)
 			}
 			for _, location := range result.Locations {
-				if location.Diagnostic == diagnostic {
+				if location.Anchor == anchor {
 					if location.Line != test.line {
 						t.Errorf("violation line = %d, want %d", location.Line, test.line)
 					}

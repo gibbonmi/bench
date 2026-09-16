@@ -225,14 +225,19 @@ func emphasisCanOpen(runes []rune, at, width int) bool {
 
 func emphasisClose(runes []rune, from int, marker rune, width int) int {
 	for at := from; at < len(runes); at++ {
-		if runes[at] != marker || emphasisMarkerWidth(runes, at) != width {
+		nestedWidth := emphasisMarkerWidth(runes, at)
+		if nestedWidth == 0 {
 			continue
 		}
-		if at == from || unicode.IsSpace(runes[at-1]) {
-			continue
+		if runes[at] == marker && nestedWidth == width && at > from && !unicode.IsSpace(runes[at-1]) {
+			if at+width == len(runes) || unicode.IsSpace(runes[at+width]) || unicode.IsPunct(runes[at+width]) {
+				return at
+			}
 		}
-		if at+width == len(runes) || unicode.IsSpace(runes[at+width]) || unicode.IsPunct(runes[at+width]) {
-			return at
+		if emphasisCanOpen(runes, at, nestedWidth) {
+			if close := emphasisClose(runes, at+nestedWidth, runes[at], nestedWidth); close >= 0 {
+				at = close + nestedWidth - 1
+			}
 		}
 	}
 	return -1
