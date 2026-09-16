@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Focused implementation evidence
+
+- Changed implementation guidance to identify each slice's acceptance target and inspect focused evidence after every material action.
+
 ### Complete outcome slices
 
 - Changed ticket guidance to split independently useful outcomes and merge fragments that have no standalone result.

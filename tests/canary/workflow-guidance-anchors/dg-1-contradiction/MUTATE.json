@@ -1,1 +1,1 @@
-[{"path":".agents/commands/bench-debug.md","old":"The session that owns the debug loop writes its in-scope repair.","new":"The session that owns the debug loop writes its in-scope repair.\nThe session that owns the debug loop delegates its in-scope repair."}]
+[{"path":".agents/commands/bench-debug.md","old":"The current ticket author owns the debug loop and writes its in-scope repair.","new":"The current ticket author owns the debug loop and writes its in-scope repair.\nThe session that owns the debug loop delegates its in-scope repair."}]

@@ -138,14 +138,14 @@ commands above.
 
 ## How it meets the rest of Bench
 
-The session that owns the debug loop writes its in-scope repair.
-Delegate only read-only diagnostic work.
+The current ticket author owns the debug loop and writes its in-scope repair.
+Additional delegates perform read-only diagnostic work only.
 
-For an in-fence defect, the write delegate runs debug through Phase 6.
-For an out-of-fence defect, run Phases 1 through 3 before the diagnostic handoff.
-When a repro proves an out-of-fence cause, the delegate stops implementation edits.
-It keeps its in-fence work dirty in its owned worktree.
-The delegate returns a bounded blocked report with these fields:
+For an in-fence defect, that author runs debug through Phase 6.
+For an out-of-fence defect, that author runs Phases 1 through 3 before the diagnostic handoff.
+When a repro proves an out-of-fence cause, the author stops implementation edits.
+The author keeps its in-fence work dirty in its owned worktree.
+The author returns a bounded blocked report with these fields:
 
 - the repro command
 - the red output digest

@@ -27,7 +27,7 @@ in green batches), then contract. Contract removes the old form after every migr
 Before ticket lock, run a source-clause pass and an executable-route pass. Assign each applicable source clause to a ticket or an explicit scope cut.
 Trace each claimed operation through its executable owner, using the [map-discipline proof rules](../bench-craft-spec/references/map-discipline.md#before-the-map-locks).
 
-Start with each ticket's delivered outcome and its smallest complete behavior, tests, and integration. State a concrete acceptance scenario before you lock the ticket. Name checks that prove completion while successor tickets remain unbuilt. Record each real dependency and the value that its predecessor supplies.
+Start with each ticket's delivered outcome and its smallest complete slice of behavior, tests, and integration. State a concrete acceptance scenario before you lock the ticket. Name checks that prove completion while successor tickets remain unbuilt. Record each real dependency and the value that its predecessor supplies.
 
 Shared writes determine serial order, but they do not merge independently useful outcomes. Split independently useful outcomes. Merge a fragment that cannot deliver or verify a result alone. Plan the ticket evidence without implementing the feature or requiring an existing executable red.
 

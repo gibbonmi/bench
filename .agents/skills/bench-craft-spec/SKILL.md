@@ -8,6 +8,15 @@ index: coverage-map rows, edge inventories, story sizing, and review-chunk slici
 
 Turn the authorized decision source and what you know of the codebase into `specs/<slug>/spec.md` — synthesize, with at most two late questions.
 
+## Authoring process
+
+1. **Explore the repo**; use the glossary's terms and respect the area's ADRs. Before the coverage map locks, do three reads.
+   - Open every enforcement file a row or a fence names. These files are the conformance checks, the contract tests, the wrapper help, the injected-port registry, and the grammar files. Cite each read.
+   - Read one existing precedent for each named seam.
+   - Sweep the whole tree for each reader of a count, a schema field, or an artifact path the spec changes. This reader sweep includes `.mjs` scripts and workflow files, and `references/map-discipline.md` states its rules. Each reader takes a row or a named exclusion.
+2. **Place the seam**: After step 1, apply [Evidence-led authoring](#evidence-led-authoring). If its exception applies, follow `craft-seams`. Confirm the selected seam with the reviewer.
+3. **Write the spec** from the template below, in ASD-STE100 prose per `references/ste-prose.md`, and run `bench coverage --check`. The spec file is the published artifact.
+
 ## Evidence-led authoring
 
 For each approved outcome, state a concrete scenario before you select its verification seam.
@@ -23,13 +32,6 @@ If intended behavior remains unresolved, return it to the reviewer before depend
 For a new feature without an executable check, plan future evidence from exact inputs and expected outputs.
 Do not implement the feature only to obtain a red during specification.
 
-1. **Explore the repo**; use the glossary's terms and respect the area's ADRs. Before the coverage map locks, do three reads.
-   - Open every enforcement file a row or a fence names. These files are the conformance checks, the contract tests, the wrapper help, the injected-port registry, and the grammar files. Cite each read.
-   - Read one existing precedent for each named seam.
-   - Sweep the whole tree for each reader of a count, a schema field, or an artifact path the spec changes.
-     This reader sweep includes `.mjs` scripts and workflow files, and `references/map-discipline.md` states its rules. Each reader takes a row or a named exclusion.
-2. **Place the seam**: Apply [Evidence-led authoring](#evidence-led-authoring). If its exception applies, follow `craft-seams`. Confirm the selected seam with the reviewer.
-3. **Write the spec** from the template below, in ASD-STE100 prose per `references/ste-prose.md`, and run `bench coverage --check`. The spec file is the published artifact.
 ## User stories
 
 Write a long, numbered list grouped by outcome, with an extensive breadth floor. One story per actor-want-benefit — `As an <actor>, I want <feature>, so that <benefit>` — covers every behavior, edge, and reviewed exclusion the source promises.
@@ -45,8 +47,7 @@ Connect each story's [Evidence-led authoring](#evidence-led-authoring) result to
 
 Enumerate every quantifier; every source behavior becomes a row or an exception. `references/map-discipline.md` states the rule each row must satisfy; open that reference before you lock the rows.
 
-Three checks run before the first review charge. Walk each restore or copy promise for a deterministic omission case. A restore comparison without an omission row is green by construction.
-Cite no test-only helper across a package boundary, because such a row has no seam in the graded package. Use canned events for any row that compares two rendered reports, because two real runs differ in their elapsed times.
+Three checks run before the first review charge. Walk each restore or copy promise for a deterministic omission case. A restore comparison without an omission row is green by construction. Cite no test-only helper across a package boundary, because such a row has no seam in the graded package. Use canned events for any row that compares two rendered reports, because two real runs differ in their elapsed times.
 
 ## The edge inventory
 
@@ -151,5 +152,4 @@ Each genuine separate capability includes its derived `<n> edits, <n> gate runs`
 ## Further notes
 ```
 
-Before a build starts, emit a scannable approval table. The table covers stories and their lines, seam diagrams, acceptance coverage including edge dispositions, ownership fences with an explicit reviewer disposition, and out
-of scope. Pause for sign-off. The user stories set breadth, engineering seams place tests, and the gate defines done.
+Before a build starts, emit a scannable approval table. The table covers stories and their lines, seam diagrams, acceptance coverage including edge dispositions, ownership fences with an explicit reviewer disposition, and out of scope. Pause for sign-off. The user stories set breadth, engineering seams place tests, and the gate defines done.

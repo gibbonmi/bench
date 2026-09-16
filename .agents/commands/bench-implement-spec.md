@@ -8,22 +8,18 @@ description: Implement a spec (or a clearly-scoped change) at the pre-agreed sea
 This is the implementation phase. It starts from an approved spec, or from a change
 small enough for the lighter-path threshold. It declares the line and works vertical
 slices at the pre-agreed seams. If there is no spec, the change must fall under that
-threshold in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not
-fall under that threshold, route to `/bench-write-spec` first.
+threshold in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not fall under that threshold, route to `/bench-write-spec` first.
 
-If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no
-ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there.
+If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there.
 ## Exit handoff
 
 Close by reporting the implemented stories, each acceptance row's coverage status, and
 the landed commits. A reviewed spec-backed build closes after its chunk reviews and final reconciliation through `bench worktree land`, then `/bench-final-check`. A light-path build goes straight
-to `/bench-final-check`. A build that stops short exits through "When the build stops
-short" below, which recommends its one durable next action.
+to `/bench-final-check`. A build that stops short exits through "When the build stops short" below, which recommends its one durable next action.
 ## Declare the line, validate the tickets, route the venue
 
 Declare the line before you touch code. `craft-line` owns the template, the tier decision, and the escalation ladder. After the write-spec-phase approval,
-create or retain one integration worktree at the reviewed graph commit; that commit is its frozen review base. Enter it and run `bench preflight build <slug>`
-before the first edit; a red preflight stops the phase.
+create or retain one integration worktree at the reviewed graph commit; that commit is its frozen review base. Enter it and run `bench preflight build <slug>` before the first edit; a red preflight stops the phase.
 
 After reviewer approval of the selected spec and ticket, run `bench preflight build <slug> --charge --ticket <ticket> --base <base> --source-tip <tip> --full` and retrieve its complete mechanical inputs. Require a complete task-specific supplement. A generated charge or staged artifact does not supply approval. The supplement names selectors, model, effort, cap, and mutation. Verify the fence, dependency completion, and expected source tip before the retained author starts the ticket.
 
@@ -31,9 +27,13 @@ Follow `.bench/BENCH.md`'s retained implementation and chunk-review policy. `cra
 
 ## Build
 
+Before each approved slice, identify its acceptance target and existing verification route.
+At an approved TDD seam, follow `craft-tdd` for its behavioral-red sequence, minimal compiled setup, and row classifications.
+A material action changes behavior, its verification route, or a premise that determines the next action. After each material action, rerun that route and inspect the result before continuing.
+One material action can contain several related edits before the rerun. If a result contradicts the approved behavior or seam, stop and use the wrong-spec route under "When the build stops short."
+
 Work approved tickets in dependency order inside their planned chunks. Use TDD only where `craft-tdd` marks the seam. When the spec carries a coverage map, seed the
-harness's native task list from `bench coverage <spec>`, whose
-`rows[N]{story,behavior,seam}` projection is one task per row.
+harness's native task list from `bench coverage <spec>`, whose `rows[N]{story,behavior,seam}` projection is one task per row.
 The spec and the ticket are final. Do not evaluate other approaches. Implement the ticket as written, run its focused checks, and stop.
 
 Apply `craft-line`'s retained implementation continuation policy throughout the ticket graph. At initial review or before post-review repairs, including resumed work, read [the bounded repair policy](../skills/bench-craft-line/references/bounded-repair-policy.md).
