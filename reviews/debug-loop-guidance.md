@@ -1405,8 +1405,7 @@ Its mutated package took 10,442 ms and reported no skips.
 
 ## DG-C3 author verification
 
-The production guidance and fixtures committed as
-`5a91bf8be24ea0bd92cf468796353a149a3d94d5`.
+The DG-C3 author committed the production guidance and fixtures as `5a91bf8be24ea0bd92cf468796353a149a3d94d5`.
 Commit `16ecc757161531b2e6e17b34c93c4d1072809043` restored an existing fixture's physical anchor.
 The final committed ticket skill has SHA256
 `9afff2861211abdb6b1d8c9951ca01817e414116082ee2c729552f3b3cc2fe6b`.
@@ -1441,9 +1440,9 @@ The probe reported `bit`, `restored=yes`, and zero skips.
 The first adoption became stale after the physical-anchor restoration changed owner bytes.
 Its repositories remain historical evidence and do not close DG24.
 
-Session: `/root/dgc3_author/dg24_final_adoption`, fresh context.
-Requested line: `gpt-5.6-sol / medium`.
-Native return label: `gpt-6-astra / high`.
+The DG-C3 author used `/root/dgc3_author/dg24_final_adoption` in a fresh context.
+The coordinator requested `gpt-5.6-sol / medium`.
+The historical native return identifies `gpt-6-astra / high`.
 This difference is a harness routing mismatch.
 The evidence retains both labels and does not relabel the native result.
 
@@ -1490,6 +1489,65 @@ The cold-session handoff pins both repository paths, `main` branches, commits, a
 It keeps the split and merge decisions closed.
 Its next action is to inspect each committed plan.
 It forbids implementation until the reviewer explicitly starts it.
+
+### DG-C3 post-review repair cycle 1
+
+An Astra/medium consultation validated DG-C3-S1, DG-C3-S2, and one shared Spec/Coverage adoption defect.
+It refuted the claimed Sol/high identity defect.
+The Terra author consumed repair cycle 1 of 2 with one coherent repair attempt.
+
+The author split the DG22 guidance into two instructions.
+The author updated its one-line registered needle and exact fixture mutation.
+The author committed the owner, anchor, and fixture repair as `fe09eaf4f27259b133303c883823a5846e99fb65` before adoption.
+The final ticket-skill SHA-256 is `23e0a8ef4e78c50512c2a02c79d8a06c3c9cc5741518195adfef87f821b01bdb`.
+
+Before the repair, a split-text swap proved that the old exact fixture needle was stale.
+The mutation bit with the DG22 diagnostic, one failed test, `restored=yes`, and zero skips.
+After the repair, omitting `Split independently useful outcomes.` bit with the same diagnostic, one failed test, `restored=yes`, and zero skips.
+The author then ran the owner check and the retained-fixture bite check.
+Both checks passed with zero skips.
+
+### DG24 repaired native adoption
+
+The earlier adoption remains historical failed evidence because its useful tickets did not share a formatter write.
+The repair child received `gpt-5.6-sol / medium` and reported native `gpt-5.6-sol`.
+Its first source action was `git rev-parse HEAD && sha256sum .agents/skills/bench-craft-tickets/SKILL.md`.
+It verified the committed owner tip and final ticket-skill digest before it created the repositories.
+
+The successful repository is `/tmp/dg24-shared-writes-success.i8MQtZ` at `48c32fe1c937273ef9cb5d37dc65bdbb615fc91e`.
+Its spec is `specs/summary-export/spec.md`.
+Its serial tickets are `1-render-readable-summary.md` and `2-export-stable-csv.md`.
+Each ticket writes `internal/records/format.go (new)` for a necessary, distinct formatter operation.
+
+The first ticket supplies the formatter contract and green summary command path to the second ticket.
+Its summary check works before the export ticket exists.
+The second ticket supplies stable CSV output and uses the predecessor contract.
+Its export check runs after the predecessor and without a later successor.
+
+The alternate repository is `/tmp/dg24-test-fragment-merge.AgP1lh` at `380afcfc705ae6d6f7e19407f3f85c8d7c7ebfa8`.
+Its spec is `specs/json-detail/spec.md`.
+Its sole ticket is `1-render-null-json-detail.md`.
+The ticket merges the supplied test-only fragment into the formatter behavior, focused tests, and command integration.
+The fragment has no independent user result.
+
+Both repositories have clean status, passing whitespace checks, complete tracked inventories, and cold-session handoffs.
+The child created no feature or executable test, and it ran no executable test.
+It stopped after it committed the plan artifacts and handoffs.
+The successful handoff starts `$bench-implement-spec --full specs/summary-export/spec.md`.
+The alternate handoff starts `$bench-implement-spec --full specs/json-detail/spec.md`.
+The structured DG-C3 record remains unpopulated pending current review axes.
+
+| Check | Result | Elapsed |
+| --- | --- | --- |
+| Pre-repair DG22 split-text probe | bit; one failed test; restored; zero skips | 1,181 ms |
+| Post-repair DG22 omission probe | bit; one failed test; restored; zero skips | 1,139 ms |
+| `bench test --check docs-currency-workflow` | pass; zero skips | 1,702 ms |
+| Retained-fixture bite check | pass; zero skips | 9,609 ms |
+| `bench test --check guidance-prose-budgets` | pass; zero skips | 5 ms |
+| `bench test --check ticket-grammar` | pass; zero skips | 1,343 ms |
+| `bench test --check prose-mechanics` | pass; zero skips | 156 ms |
+| `bench test --check system` | pass; zero skips | 33,107 ms |
+| `git diff --check` | pass | less than 1 ms |
 
 ```bench-review-record
 {
