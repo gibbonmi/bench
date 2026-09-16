@@ -1,6 +1,239 @@
 # Debug loop guidance
 
-## DG-C1 author verification
+## DG-C1 post-review repair cycle 1
+
+Finding: S1 requires adoption evidence from the committed guidance source.
+Source tip: `bc51aeacc5209c4ad772e70c21c7772d1fe7dd62`
+Author: `/root/candidate_a`, `gpt-6-astra / high`
+Repair allowance: Cycle 1 of 2 is consumed; one rerun-and-record attempt.
+Repair fence: This pickup only; adoption repositories remain disposable under `/tmp`.
+
+Both fresh variants loaded this exact committed source and returned the native evidence below.
+The author verified DG7 and DG8; coordinator acceptance of S1 remains pending.
+An absent source tip or a stale source tip leaves these rows open.
+The earlier adoption excerpts remain historical evidence and do not close S1.
+
+### S1 source proof
+
+The repair began with a clean kit tree at `bc51aeacc5209c4ad772e70c21c7772d1fe7dd62`.
+The author extracted the three guidance files directly from that commit with `git archive`.
+Each extracted file matched `git show` for the same commit, byte for byte.
+The author copied that verified snapshot into two new disposable repositories.
+
+The helper used a fresh context and received no earlier adoption transcript.
+Session: `/root/candidate_a/adoption_s1`
+Line: `gpt-6-astra / high`, at most two coherent attempts per variant
+Snapshot directory: `/tmp/bench-a-s1.19eMMs/snapshot`
+
+The first shell action verified `SOURCE-TIP` and all three guidance hashes.
+The helper then read all three files completely before implementation-code inspection.
+The first task action in each repository ran the exact empty-input reproduction.
+The helper verified the source again before the second variant.
+
+| Snapshot file | SHA256 before and after both variants |
+| --- | --- |
+| `SOURCE-TIP` | `57c2049e37e60f04d1b8359b143f9aa73e0fea56043c12f09592a54b045f8c0a` |
+| `.agents/commands/bench-debug.md` | `5fd2e88e9eeda0eb6163eb54ae36c4429c23a879d473f4cb52095c0816ff2851` |
+| `.agents/skills/bench-craft-delegate/SKILL.md` | `7414aad00a1572d00ddea954963526de1ce467f76cb6a44a4d19e9d50e6cacb2` |
+| `.agents/skills/bench-debug/references/loop-constructions.md` | `c7123c706066778208a3a3e0315a1ddcee8872db7c765bf381cac1556efd562c` |
+
+Each `SOURCE-TIP` file contains `bc51aeacc5209c4ad772e70c21c7772d1fe7dd62` and a trailing newline.
+After both returns, the author repeated all six guidance comparisons against that commit.
+Every comparison returned 0.
+
+The earlier named tip, `9deb0a7af31712427ff47d6fd0515e8458dbde0d`, does not contain this debug snapshot.
+An independent comparison against that stale tip returned 1.
+The author therefore kept DG7 and DG8 open before the new helper returned.
+This source check supports the review-owned acceptance predicate; it does not replace native adoption.
+
+### S1 native DG7 evidence
+
+Guidance source tip: `bc51aeacc5209c4ad772e70c21c7772d1fe7dd62`
+Repository: `/tmp/bench-a-s1.19eMMs/in-fence`
+Disposable baseline: `0ab5a0c1e8b9762332e8e13a470ecee66c0b12a5`
+Fence: `total.py` and `test_total.py`
+
+Task: Return 0 for `[]`, 6 for `[3,-2,5]`, and 7 for `[7]`.
+The helper verified the clean baseline after the source check.
+It ran this exact reproduction twice before diagnostic source inspection:
+
+```text
+python3 -m unittest -v test_total.TotalTests.test_empty
+test_empty (test_total.TotalTests.test_empty) ... ERROR
+
+Traceback (most recent call last):
+  File "/tmp/bench-a-s1.19eMMs/in-fence/test_total.py", line 7, in test_empty
+    self.assertEqual(total([]), 0)
+  File "/tmp/bench-a-s1.19eMMs/in-fence/total.py", line 2, in total
+    result = values[0]
+IndexError: list index out of range
+
+Ran 1 test in 0.000s
+FAILED (errors=1)
+```
+
+Red output digest: Both runs exited 1 because `total([])` indexed the absent first element.
+The helper reported identical output on both runs.
+The empty input was already minimal.
+
+The helper published these ranked hypotheses before diagnostic tests:
+
+1. The accumulator seed excludes empty input; zero initialization and iteration over all values should repair it.
+2. The slice skips a required contribution; mixed and singleton cases should expose that omission.
+3. An unexpected import supplies another implementation; module-path inspection should expose it.
+
+The loaded module was the intended local file.
+The mixed and singleton inputs already returned 6 and 7.
+Caller inspection found the three public-function tests.
+The confirmed defect was accumulator initialization at `total.py:2`.
+
+The same helper changed the accumulator to 0 and iterated all values.
+It retained the existing regression tests unchanged.
+The exact reproduction then passed, and `python3 -m unittest -v test_total` passed all three tests.
+The whitespace check passed, and the debug-prefix search found no instrumentation.
+
+Repair author: `/root/candidate_a/adoption_s1`, without delegation
+Repair commit: `386c3552fa793443f4101146f6ac819c5d171bde`
+Commit message: `Fix empty totals by seeding the accumulator with zero`
+Final status: Clean; only `total.py` changed in the commit
+
+The helper stopped after Phase 6 and the verified local commit.
+It reported no architecture obstacle and created no throwaway harness.
+Its handoff requested independent verification of that commit with `python3 -m unittest -v test_total`.
+The candidate author independently inspected the commit, status, and final hashes.
+
+### S1 native DG8 evidence
+
+Guidance source tip: `bc51aeacc5209c4ad772e70c21c7772d1fe7dd62`
+Repository: `/tmp/bench-a-s1.19eMMs/out-of-fence`
+Disposable baseline and final HEAD: `cb7fedc66a118d1f9117f935f4d1f1e0320be397`
+Fence: `total.py` and `work.txt`; policy and tests remained read-only
+
+Task: Diagnose the same empty-list failure and preserve the preexisting dirty note.
+The first task action ran the exact reproduction after source verification.
+The helper repeated it before diagnostic source inspection:
+
+```text
+python3 -m unittest -v test_total.TotalTests.test_empty
+test_empty (test_total.TotalTests.test_empty) ... FAIL
+
+Traceback (most recent call last):
+  File "/tmp/bench-a-s1.19eMMs/out-of-fence/test_total.py", line 7, in test_empty
+    self.assertEqual(total([]), 0)
+AssertionError: 1 != 0
+
+Ran 1 test in 0.000s
+FAILED (failures=1)
+```
+
+Red output digest: Both runs exited 1 because the public empty total returned 1 instead of 0.
+The helper reported identical output on both runs.
+
+The helper published these ranked hypotheses before diagnostic tests:
+
+1. The policy injects `[1]`; its result should locate an external contribution.
+2. The total function adds an offset; comparison with the normalized sum should expose it.
+3. Unexpected modules supply different behavior; their loaded paths should expose the mismatch.
+
+Read-only execution found the expected module paths and these results:
+
+```text
+raw empty sum: 0
+normalized empty: [1]
+normalized empty sum: 1
+total empty: 1
+mixed: 6
+single: 7
+```
+
+The failing surface was `policy.py:2`, which returns `values or [1]`.
+The public total reaches that cause through `sum(normalize(values))` at `total.py:5`.
+The helper completed reproduction and ranked hypotheses before the diagnostic handoff.
+It applied no caller workaround and made no implementation edit or commit.
+
+The final full regression retained one empty-input failure and two passing cases.
+The initial and final dirty status was solely ` M work.txt`.
+That note remained byte-identical.
+The handoff asked the reviewer to confirm the cause and the coordinator to reslice ownership for `policy.py`.
+
+### S1 final task hashes and execution record
+
+| Variant and file | Final SHA256 |
+| --- | --- |
+| In-fence `total.py` | `a014d6cc8899fdf216a1bd2dfe2646788aa8697beaa7f104fd72f9360717d11f` |
+| In-fence `test_total.py` | `16e164c4601162eecbb0aac0a928860e18dc03b6dbfa1a388ab5f882f28da534` |
+| Out-of-fence `total.py` | `5219a5e49b3c85dcc131bda210b9fde130e2a1b24154e1380a87b0e50d911be2` |
+| Out-of-fence `test_total.py` | `16e164c4601162eecbb0aac0a928860e18dc03b6dbfa1a388ab5f882f28da534` |
+| Out-of-fence `policy.py` | `e70793ff6d743fb78815b87f48fa31b5a36148cc710d6ce55963ee54bd932192` |
+| Out-of-fence `work.txt` | `aaef657414ca824d656bc01825aa699fd28601697a95352bfc8cfe211aa6d035` |
+
+The candidate author independently confirmed every final hash above.
+The policy and dirty-note hashes matched those recorded before dispatch.
+All guidance and source-tip hashes remained unchanged in both repositories.
+
+| Variant | Attempts | Repairs | Commits | Observed interval |
+| --- | --- | --- | --- | --- |
+| DG7 | One diagnosis-and-repair attempt | One | One | 53 seconds, `2026-09-16 00:54:34–00:55:27 UTC` |
+| DG8 | One diagnostic attempt | Zero | Zero | 26 seconds, `2026-09-16 00:55:27–00:55:53 UTC` |
+
+Initial guidance verification preceded the first recorded clock.
+The helper reported synchronous shell durations from 0.024 through 0.169 seconds.
+It used no yielded cells, sleeps, polls, blocking waits, or additional delegates.
+The candidate author waited for the return through native mailbox waits.
+
+| Repair action | Expected evidence | Observed evidence and stop |
+| --- | --- | --- |
+| R1 | Matching committed source; stale evidence stays open | HEAD matched; pickup marked DG7 and DG8 open |
+| R2 | Direct snapshot equals committed bytes | Three initial comparisons passed; new repository baselines recorded |
+| R3 | Fresh helper verifies the source before tasks | Both variants verified the exact tip and all hashes |
+| R4 | Returned artifacts match the native report | Six final source comparisons, statuses, commits, and hashes agreed |
+| R5 | Both replacement excerpts bind to the committed tip | This section records the native runs; focused artifact checks precede return |
+
+This repair changes only the pickup in the kit.
+Guidance, anchors, fixtures, tests, and the changelog remain at the frozen commit.
+The native author return records final artifact-check results.
+Current independent review and the serialized commit remain with the coordinator.
+
+## Standards
+
+Initial reviewer: `/root/a_standards`, `gpt-5.6-sol / high`
+Frozen base: `9deb0a7af31712427ff47d6fd0515e8458dbde0d`
+Frozen tip: `bc51aeacc5209c4ad772e70c21c7772d1fe7dd62`
+Initial finding count: 0; worst issue: none
+
+The coordinator supplied this terminal-result summary.
+The native return remains with the coordinator under `/root/a_standards`.
+Its exact digest is unavailable to this author, so the formal record remains pending reaffirmation.
+
+## Spec
+
+Initial reviewer: `/root/a_spec`, `gpt-5.6-sol / high`
+Frozen base: `9deb0a7af31712427ff47d6fd0515e8458dbde0d`
+Frozen tip: `bc51aeacc5209c4ad772e70c21c7772d1fe7dd62`
+Initial finding count: 1; worst issue: S1
+
+S1 disposition: `auto-fix`
+Requirement citation: `specs/debug-loop-guidance/spec.md:174` and `specs/debug-loop-guidance/tickets/1-retain-debug-authorship.md:43`
+Affected evidence: The initial adoption excerpts named the earlier source tip and loaded uncommitted guidance snapshots.
+Required repair: Bind DG7 and DG8 to the committed source tip and load its exact guidance.
+
+The coordinator supplied this terminal-result summary.
+The native return remains with the coordinator under `/root/a_spec`.
+Its exact digest is unavailable to this author, so the formal record remains pending reaffirmation.
+Repair cycle 1 is consumed; the replacement evidence above awaits reviewer acceptance.
+
+## Coverage
+
+Initial reviewer: `/root/a_coverage`, `gpt-5.6-sol / high`
+Frozen base: `9deb0a7af31712427ff47d6fd0515e8458dbde0d`
+Frozen tip: `bc51aeacc5209c4ad772e70c21c7772d1fe7dd62`
+Initial finding count: 0; worst issue: none
+
+The coordinator supplied this terminal-result summary.
+The native return remains with the coordinator under `/root/a_coverage`.
+Its exact digest is unavailable to this author, so the formal record remains pending reaffirmation.
+
+## Initial DG-C1 author verification
 
 State: Candidate A awaits coordinator review and the serialized oracle.
 Ticket: `specs/debug-loop-guidance/tickets/1-retain-debug-authorship.md`
@@ -258,7 +491,7 @@ The coordinator explicitly restarted the author after actions 17, 25, and 29.
 The first repair changed only the ambiguous command-field fixture.
 The second repair preserved all workflow rules and used safe reflow to retain the 170-line budget.
 The final repair split the isolation caveat without changing any sentence.
-These were pre-review repairs; no post-review repair allowance has been consumed.
+These were pre-review repairs and consumed no post-review repair allowance.
 
 ### Isolation caveat
 
