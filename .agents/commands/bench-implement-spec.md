@@ -53,7 +53,7 @@ Retain author verification and all three native review results in `reviews/<slug
 Commit the artifact on its ordinary lane, then run `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>` before the successor.
 
 An ordinary lane pass or ordinary green cannot replace this checkpoint. Follow its named record or review action when evidence fails.
-After a repair, append current results or native reaffirmations from every axis before retrying.
+After a repair, apply the bounded repair policy's current-evidence rule and its narrow evidence-only exception before retrying.
 
 After the last chunk, reconcile every acceptance row and the integrated behavior. Repeat delegated review only when a later delta or cross-chunk concern invalidates prior evidence. From the clean destination, hand the accepted source to `bench worktree land`; it composes, gates, publishes `Status: implemented`, and releases the source. Then run `/bench-final-check`.
 

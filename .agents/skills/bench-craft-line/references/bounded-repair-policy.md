@@ -38,10 +38,15 @@ Use the existing review phase's dispositions for findings; preserve earlier find
 Do not label an unrefuted suggestion as `no-op` to obtain a pass.
 A native review can pass with no finding IDs while its prose retains optional advice.
 
-After repairs, obtain current results or permitted native reaffirmations from every review axis.
+A review-record prose correction is evidence-only only when it changes no finding, source identity, observation, disposition, or verification claim.
+Evidence-only corrections consume no repair cycle. Batch all cited corrections before verification.
+Only the issuing axis reaffirms an evidence-only correction unless it invalidates another axis's evidence.
+
+After substantive repairs, obtain current results or permitted native reaffirmations from every review axis.
 Required verification, acceptance reconciliation, and completion checkpoints remain mandatory.
 Unresolved findings, stale source identity, missing axes, and incomplete verification still block completion.
 Repeat independent review only for a later semantic change or a cross-chunk concern that invalidates earlier evidence.
+The coordinator commits the final review record before starting the whole-project gate. It does not edit the gate subject while the gate runs.
 
 ## State and handoff
 
