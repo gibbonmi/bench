@@ -1069,6 +1069,18 @@ author owned the substantive enforcement and policy repairs.
         "DG-C4": ["DG-C4"],
         "DG-C5": ["DG-C5"]
       }
+    },
+    {
+      "from": "sha256:273ac42c953225da2c4f9e99eb38b3818b41131de439bcfeaaf1e6944aed0a60",
+      "to": "sha256:8e409c1b2709234549cc31cbf4fbdd8e1902d7bd1273211e462793f40495b63b",
+      "chunk_ids": {
+        "DG-C1": ["DG-C1"],
+        "DG-CR": ["DG-CR"],
+        "DG-C2": ["DG-C2"],
+        "DG-C3": ["DG-C3"],
+        "DG-C4": ["DG-C4"],
+        "DG-C5": ["DG-C5"]
+      }
     }
   ]
 }
