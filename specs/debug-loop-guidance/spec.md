@@ -85,6 +85,11 @@ Harder chunks: DG-C5.
 42. As a debug author, I want the local six-phase procedure, so that concrete reproduction guidance remains available.
 43. As a Coverage reviewer, I want an independent bypass attempt, so that supplied positive checks do not hide a violating state.
 
+### Trial one reviewer across all three axes
+
+44. As a coordinator, I want an explicit unified-review mode, so that one independent reviewer can own all three axes without weakening the default.
+45. As an implementation maintainer, I want review misses tied back to the implementation command. I want the workflow prose to improve when it contributed to an issue.
+
 ## Implementation decisions
 
 ### Existing owners
@@ -96,6 +101,7 @@ Harder chunks: DG-C5.
 | Slice independently verifiable outcomes | `.agents/skills/bench-craft-tickets/SKILL.md` | Its ticket supplies guidance, checks, and adoption evidence before its successor |
 | Drive implementation with focused evidence | `.agents/commands/bench-implement-spec.md` | Its ticket supplies guidance, checks, and adoption evidence before its successor |
 | Ground semantic findings in appropriate evidence | `.agents/skills/bench-craft-review/SKILL.md` | Its ticket supplies guidance, checks, and adoption evidence before its successor |
+| Trial one reviewer across all three axes | `.agents/commands/bench-review-implementation.md` and `internal/reviewrecord` | An explicit plan mode changes reviewer cardinality while retaining axis evidence and participant exclusions |
 
 The debug integration section owns its revised author and fence rules.
 The delegate skill points to that section instead of repeating the report contract.
@@ -123,6 +129,11 @@ The reference owns that distinction, including the mandatory-standard exception.
 Replace its unconditional real-run sentence and reconcile its existing anchor, unit expectation, and mutation fixture.
 When a claimed enforcement can admit a bypass, Coverage constructs an independent counterexample that keeps the claimed positive evidence satisfied while violating the requirement.
 Replaying only the author's supplied mutations does not satisfy this refutation step.
+
+The completion plan may opt into one independent reviewer for all three axes.
+The omitted mode keeps the existing three-distinct-session rule.
+The unified reviewer still returns three separately attributable axis results and cannot be the orchestrator or an implementation author.
+Each unified result also states whether the issue or miss exposes an improvement to `.agents/commands/bench-implement-spec.md`.
 
 For the exception, cite the binding rule and violating source.
 Inspect applicable exceptions and contrary evidence before retaining the finding.
@@ -157,13 +168,14 @@ Each chunk receives the existing three-axis checkpoint before its successor.
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | DG-C1 / `1-retain-debug-authorship.md` | Retain debug repair authorship with its adoption evidence | DG1, DG2, DG3, DG4, DG5, DG6, DG7, DG8, DG42 | workflow anchors, fixture bite, prose budgets, owning adoption task | no |
+| DG-CR / `1a-enable-unified-review-trial.md` | Enable an opt-in unified reviewer without changing the default | DG44, DG45 | review-record and delegated-checkpoint tests, prose mechanics | no |
 | DG-C2 / `2-guide-spec-evidence.md` | Guide spec authoring with concrete evidence with its adoption evidence | DG9, DG10, DG11, DG12, DG13, DG14, DG15, DG16 | workflow anchors, fixture bite, prose budgets, owning adoption task | no |
 | DG-C3 / `3-slice-complete-outcomes.md` | Slice independently verifiable outcomes with its adoption evidence | DG17, DG18, DG19, DG20, DG21, DG22, DG23, DG24 | workflow anchors, fixture bite, prose budgets, owning adoption task | no |
 | DG-C4 / `4-drive-implementation-evidence.md` | Drive implementation with focused evidence with its adoption evidence | DG25, DG26, DG27, DG28, DG29, DG30, DG31, DG32 | workflow anchors, fixture bite, prose budgets, owning adoption task | no |
 | DG-C5 / `5-ground-semantic-findings.md` | Ground semantic findings in appropriate evidence with its adoption evidence | DG33, DG34, DG35, DG36, DG37, DG38, DG39, DG40, DG41, DG43 | workflow anchors, fixture bite, prose budgets, owning adoption task | yes |
 
 ```bench-completion-plan
-{"version":2,"execution":{"mode":"delegate","run_id":"debug-loop-guidance-full-20260916","orchestrator_session":"/root","author_limit":1,"assignments":{"1-retain-debug-authorship.md":[{"session":"/root/candidate_a","assignment":"debug-loop-candidate-a","model":"gpt-6-astra","effort":"high","source":"9deb0a7af31712427ff47d6fd0515e8458dbde0d","native_ref":"codex:session/candidate_a@ae21e4a538d7713b147a8a888221063c2ba2ba02"}],"2-guide-spec-evidence.md":[],"3-slice-complete-outcomes.md":[],"4-drive-implementation-evidence.md":[],"5-ground-semantic-findings.md":[]}},"chunks":[{"id":"DG-C1","tickets":["1-retain-debug-authorship.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"restore the blanket write-delegate debug ban","ticket":"1-retain-debug-authorship.md"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner","ticket":"1-retain-debug-authorship.md"},{"id":"budgets","command":"bench test --check guidance-prose-budgets","ticket":"1-retain-debug-authorship.md"}]},{"id":"DG-C2","tickets":["2-guide-spec-evidence.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"require an executable red for a new-feature specification","ticket":"2-guide-spec-evidence.md"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner","ticket":"2-guide-spec-evidence.md"},{"id":"budgets","command":"bench test --check guidance-prose-budgets","ticket":"2-guide-spec-evidence.md"}]},{"id":"DG-C3","tickets":["3-slice-complete-outcomes.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"merge useful outcomes solely because their writes overlap","ticket":"3-slice-complete-outcomes.md"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner","ticket":"3-slice-complete-outcomes.md"},{"id":"budgets","command":"bench test --check guidance-prose-budgets","ticket":"3-slice-complete-outcomes.md"}]},{"id":"DG-C4","tickets":["4-drive-implementation-evidence.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"remove the focused rerun after each material action","ticket":"4-drive-implementation-evidence.md"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner","ticket":"4-drive-implementation-evidence.md"},{"id":"budgets","command":"bench test --check guidance-prose-budgets","ticket":"4-drive-implementation-evidence.md"}]},{"id":"DG-C5","tickets":["5-ground-semantic-findings.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"restore unconditional real-run evidence for mandatory standards","ticket":"5-ground-semantic-findings.md"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner","ticket":"5-ground-semantic-findings.md"},{"id":"budgets","command":"bench test --check guidance-prose-budgets","ticket":"5-ground-semantic-findings.md"}]}],"final_verification":[{"id":"acceptance","command":"bench coverage --check specs/debug-loop-guidance/spec.md"},{"id":"integration","command":"bench test --check docs-currency-workflow"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"}]}
+{"version":2,"execution":{"mode":"delegate","run_id":"debug-loop-guidance-full-20260916","orchestrator_session":"/root","author_limit":1,"assignments":{"1-retain-debug-authorship.md":[{"session":"/root/candidate_a","assignment":"debug-loop-candidate-a","model":"gpt-6-astra","effort":"high","source":"9deb0a7af31712427ff47d6fd0515e8458dbde0d","native_ref":"codex:session/candidate_a@ae21e4a538d7713b147a8a888221063c2ba2ba02"}],"1a-enable-unified-review-trial.md":[{"session":"/root/unified_review_author","assignment":"debug-loop-unified-review-trial","model":"gpt-5.6-sol","effort":"medium","source":"f68d62773d77e7138d8c92ef9a88f5dcaeb3e732","native_ref":"codex:collaboration/spawn_agent/unified_review_author"}],"2-guide-spec-evidence.md":[],"3-slice-complete-outcomes.md":[],"4-drive-implementation-evidence.md":[],"5-ground-semantic-findings.md":[]}},"chunks":[{"id":"DG-C1","tickets":["1-retain-debug-authorship.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"restore the blanket write-delegate debug ban","ticket":"1-retain-debug-authorship.md"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner","ticket":"1-retain-debug-authorship.md"},{"id":"budgets","command":"bench test --check guidance-prose-budgets","ticket":"1-retain-debug-authorship.md"}]},{"id":"DG-CR","tickets":["1a-enable-unified-review-trial.md"],"verification":[{"id":"reviewrecord","command":"bench test --package ./internal/reviewrecord --run 'TestDelegated.*Review'","probe":"omit the explicit unified-review mode while reusing one reviewer","ticket":"1a-enable-unified-review-trial.md"},{"id":"checkpoint","command":"bench test --package ./internal/gate --run TestDelegatedDistinctAxes","ticket":"1a-enable-unified-review-trial.md"},{"id":"prose","command":"bench test --check prose-mechanics","ticket":"1a-enable-unified-review-trial.md"}]},{"id":"DG-C2","tickets":["2-guide-spec-evidence.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"require an executable red for a new-feature specification","ticket":"2-guide-spec-evidence.md"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner","ticket":"2-guide-spec-evidence.md"},{"id":"budgets","command":"bench test --check guidance-prose-budgets","ticket":"2-guide-spec-evidence.md"}]},{"id":"DG-C3","tickets":["3-slice-complete-outcomes.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"merge useful outcomes solely because their writes overlap","ticket":"3-slice-complete-outcomes.md"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner","ticket":"3-slice-complete-outcomes.md"},{"id":"budgets","command":"bench test --check guidance-prose-budgets","ticket":"3-slice-complete-outcomes.md"}]},{"id":"DG-C4","tickets":["4-drive-implementation-evidence.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"remove the focused rerun after each material action","ticket":"4-drive-implementation-evidence.md"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner","ticket":"4-drive-implementation-evidence.md"},{"id":"budgets","command":"bench test --check guidance-prose-budgets","ticket":"4-drive-implementation-evidence.md"}]},{"id":"DG-C5","tickets":["5-ground-semantic-findings.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"restore unconditional real-run evidence for mandatory standards","ticket":"5-ground-semantic-findings.md"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner","ticket":"5-ground-semantic-findings.md"},{"id":"budgets","command":"bench test --check guidance-prose-budgets","ticket":"5-ground-semantic-findings.md"}]}],"final_verification":[{"id":"acceptance","command":"bench coverage --check specs/debug-loop-guidance/spec.md"},{"id":"integration","command":"bench test --check docs-currency-workflow"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"}]}
 ```
 
 ## Testing decisions
@@ -262,6 +274,8 @@ Review-owned rows test real behavior and do not infer it from prose presence.
 | DG41 | 41 | The changed guidance preserves the existing prose budgets. | `guidance-prose-budgets`: `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetsHoldOnTheLiveTree`) | A budget increase pays for unnecessary guidance growth. |
 | DG42 | 42 | Debug keeps its Phase 1 through Phase 6 procedure and local loop-constructions reference. | review-owned: `reviews/debug-loop-guidance.md`, DG-C1 preservation evidence | A universal loop replaces the concrete local procedure. |
 | DG43 | 43 | Coverage constructs an independent bypass that preserves claimed positive evidence while violating the requirement when such a state is possible. | `docs-currency-workflow`, canary `dg-43` at `.agents/skills/bench-craft-review/SKILL.md`  `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | The axis replays supplied mutations and misses a contradictory state that still satisfies the positive check. |
+| DG44 | 44 | An explicit plan mode permits one independent reviewer to supply all three separately recorded axes while the omitted mode retains distinct sessions. | `internal/reviewrecord/delegated_test.go` (`TestDelegatedRecordVersions`), `internal/gate/delegated_checkpoint_test.go` (`TestDelegatedDistinctAxes`) | The opt-in weakens the default, accepts a participant, or collapses the axes into one result. |
+| DG45 | 45 | A unified review reports whether an issue or miss exposes an improvement to the implementation-command prose. | `prose-mechanics`, review-owned: `reviews/debug-loop-guidance.md`, DG-CR trial evidence | A review identifies a workflow-caused miss without evaluating the command that directed the implementation. |
 
 ### Fresh-session adoption tasks
 
@@ -326,6 +340,7 @@ Won't handle: Trial comparison — ordinary review evidence remains the in-scope
 
 - `.agents/commands/bench-debug.md`
 - `.agents/commands/bench-implement-spec.md`
+- `.agents/commands/bench-review-implementation.md`
 - `.agents/skills/bench-craft-delegate/SKILL.md`
 - `.agents/skills/bench-craft-review/SKILL.md`
 - `.agents/skills/bench-craft-review/references/finding-discipline.md`
@@ -341,16 +356,27 @@ Won't handle: Trial comparison — ordinary review evidence remains the in-scope
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
+- `internal/gate/delegated_checkpoint_test.go`
+- `internal/reviewrecord/coverage.go`
+- `internal/reviewrecord/delegated.go`
+- `internal/reviewrecord/delegated_test.go`
+- `internal/reviewrecord/plan.go`
+- `internal/reviewrecord/record.go`
 - `reviews/debug-loop-guidance.md`
 - `tests/canary/claude-agent-definitions`
 - `tests/canary/skills-index-command-adapters/debug-implicit-invocation-reverted`
 - `tests/canary/workflow-guidance-anchors`
 
 These fences are the union of the five ticket Writes fields.
+
 The command registry paths close the current `internal/tickets/registry_data.go` binding for the anchors package.
 Their inclusion does not authorize a new CLI command or a product change.
 Keep each unchanged unless its existing inventory requires a mechanical update.
+
 The fixture directories close the current pinning rules for guidance owners.
+
+The review-record paths implement only the explicit unified-review opt-in and retain the distinct-session default.
+
 Build-time guidance rewrites exclude `specs/*/spec.md` and `specs/*/tickets/` by name.
 
 ## Out of scope
