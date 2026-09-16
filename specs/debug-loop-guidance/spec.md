@@ -154,9 +154,11 @@ Keep existing checks and prove each changed fixture still catches its named muta
 Keep the debug phases and loop-constructions reference at their existing locations.
 Do not add a universal loop owner, trial flag, metric schema, or comparative speed claim.
 Do not change gate authority, authorship authority, or the repair allowance.
-Represent an explicit user-directed author transfer in the completion plan,
-including the stopped predecessor and preserved source, so a requested prose
+
+Represent an explicit user-directed author transfer in the completion plan.
+Include the stopped predecessor and preserved source, so a requested prose
 specialist can write without inventing a failure trigger.
+
 Use the current prose budgets through concise replacement text.
 The compiled decision map contains the reviewer refinements and retained debug decisions.
 The old trial artifacts retire only after that preservation step.
