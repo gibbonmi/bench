@@ -1384,6 +1384,25 @@ Starting with DG-C3, Standards and Spec use separate `gpt-5.6-sol / high` sessio
 After acceptance reconciliation, one independent `gpt-6-astra / medium` whole-implementation bug hunt runs before landing.
 That hunt is advisory and replaces neither the three standard axes nor the gate.
 
+### DG-C2 integration finalization
+
+The composed source tip is `b8855c5d5fcd39d6f36a86a40965ff262f24ea23`.
+Its source digest excluding this review is `893310083020ddabbbbab4fb63056fef73b42ff1`.
+The main composition changed no DG-C2 production owner.
+The read-only Standards, Spec, and Coverage reaffirmations consumed no repair cycle.
+
+The required executable-red probe reported `bit`, one failed test, and `restored=yes`.
+Its mutated package took 10,442 ms and reported no skips.
+
+| Check | Result | Elapsed |
+| --- | --- | --- |
+| `bench test --package ./internal/reviewrecord` | pass | 3,157 ms |
+| `bench test --check docs-currency-workflow` | pass | 1,528 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 9,678 ms |
+| `bench test --check guidance-prose-budgets` | pass | 5 ms |
+| `bench test --check system` | pass | 33,094 ms |
+| `git diff --check` | pass | less than 1 ms |
+
 ```bench-review-record
 {
   "version": 2,
@@ -1667,9 +1686,9 @@ That hunt is advisory and replaces neither the three standard axes nor the gate.
     {
       "id": "DG-C2",
       "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
-      "tip": "1bbbe3b0c995ccb06d5e3682923cd13478312055",
+      "tip": "b8855c5d5fcd39d6f36a86a40965ff262f24ea23",
       "plan_digest": "sha256:cb4c67ecf1bfedac4660be97cc3a9dece0217caff0502090a7280f2868c83006",
-      "source_digest": "c58697df7b0c3a6802c9d3ec28426567916de7f4",
+      "source_digest": "893310083020ddabbbbab4fb63056fef73b42ff1",
       "acceptance_rows": ["DG9", "DG10", "DG11", "DG12", "DG13", "DG14", "DG15", "DG16"],
       "verification": [
         {
@@ -1678,13 +1697,13 @@ That hunt is advisory and replaces neither the three standard axes nor the gate.
           "role": "author-verification",
           "model": "gpt-5.6-sol",
           "effort": "medium",
-          "source_digest": "c58697df7b0c3a6802c9d3ec28426567916de7f4",
+          "source_digest": "893310083020ddabbbbab4fb63056fef73b42ff1",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "codex:session/dgc2_author/dg-c2-anchors@1bbbe3b0",
-            "digest": "sha256:83a6509dcadef4a9a2a8a8bd19fd881c9bbd21ed528b765713a4e71176d892db",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1421\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "codex:session/dgc2_author/dg-c2-anchors@b8855c5d",
+            "digest": "sha256:f322adbff224b9507c0c36675f21b82366a1241fa7dada5b71c603e22eb133da",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1528\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "anchors",
           "command": "bench test --check docs-currency-workflow",
@@ -1695,9 +1714,9 @@ That hunt is advisory and replaces neither the three standard axes nor the gate.
             "exit_code": 1,
             "restore": "pass",
             "native_ref": {
-              "ref": "codex:session/dgc2_author/dg-c2-executable-red-probe@1bbbe3b0",
-              "digest": "sha256:67d8c7c86d5b77b396649527cc654f29b2bc687cbd0592eea37311c96ff4dea3",
-              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/skills/bench-craft-spec/SKILL.md,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,TestRootConformance,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,10072\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: debug loop: DG15 forbids an executable red requirement for new-feature specification\"\nskips[0]{package,test,reason}:"
+              "ref": "codex:session/dgc2_author/dg-c2-executable-red-probe@b8855c5d",
+              "digest": "sha256:34182d640a292b444215e15f140edd4674c8626178cb535cd68e82e9ce2c76e1",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/skills/bench-craft-spec/SKILL.md,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,TestRootConformance,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,10442\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: debug loop: DG15 forbids an executable red requirement for new-feature specification\"\nskips[0]{package,test,reason}:"
             }
           }
         },
@@ -1707,13 +1726,13 @@ That hunt is advisory and replaces neither the three standard axes nor the gate.
           "role": "author-verification",
           "model": "gpt-5.6-sol",
           "effort": "medium",
-          "source_digest": "c58697df7b0c3a6802c9d3ec28426567916de7f4",
+          "source_digest": "893310083020ddabbbbab4fb63056fef73b42ff1",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "codex:session/dgc2_author/dg-c2-bite@1bbbe3b0",
-            "digest": "sha256:d5d2917e218f9daff4ef41c3b5b4bbcd7d544e673c5fb0150c48a0c76cac3874",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,9233\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "codex:session/dgc2_author/dg-c2-bite@b8855c5d",
+            "digest": "sha256:ed15ec7950c0973d29f0a763cff04579ca8e61adfe9fbc383289b33944805300",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,9678\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "bite",
           "command": "bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner",
@@ -1725,13 +1744,13 @@ That hunt is advisory and replaces neither the three standard axes nor the gate.
           "role": "author-verification",
           "model": "gpt-5.6-sol",
           "effort": "medium",
-          "source_digest": "c58697df7b0c3a6802c9d3ec28426567916de7f4",
+          "source_digest": "893310083020ddabbbbab4fb63056fef73b42ff1",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "codex:session/dgc2_author/dg-c2-budgets@1bbbe3b0",
-            "digest": "sha256:195c58a46ff053795736e21abc37c5e1cd2949710ba2071a87e150719c5a0552",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "codex:session/dgc2_author/dg-c2-budgets@b8855c5d",
+            "digest": "sha256:6f72c99a424331a3381e284e55ffa703b490f81e19b498e848e8bfc5d9ca25ed",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "budgets",
           "command": "bench test --check guidance-prose-budgets",
@@ -1958,6 +1977,66 @@ That hunt is advisory and replaces neither the three standard axes nor the gate.
           "tip": "1bbbe3b0c995ccb06d5e3682923cd13478312055",
           "finding_ids": [],
           "supersedes": ["dg-c2-coverage-final2-initial"]
+        },
+        {
+          "id": "dg-c2-standards-integration",
+          "performer": "/root/dgc2_final2_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "893310083020ddabbbbab4fb63056fef73b42ff1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/followup_task/dgc2_final2_standards@b8855c5d",
+            "digest": "sha256:7d26a8e3dab875e4d7bbe90f6e9ac74dcc1eaa1cffdb8417207c5e0de420d157",
+            "excerpt": "Standards integration-delta reaffirmation: PASS — 0 actionable findings; worst issue: none. At composed tip b8855c5d5fcd39d6f36a86a40965ff262f24ea23 / source digest 893310083020ddabbbbab4fb63056fef73b42ff1, the current-main composition does not invalidate the DG-C2 Standards result. CHANGELOG.md preserves both histories without duplication; internal/anchors/registry_data.go composes the incoming-main general anchors and the single debugLoopAnchors owner; the completion plan is unchanged; the historical DG-C2 review identity remains truthful; and the two-parent merge preserves both parents with no residual conflict markers or whitespace errors. Record this integration reaffirmation against the composed source before completion."
+          },
+          "axis": "Standards",
+          "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
+          "tip": "b8855c5d5fcd39d6f36a86a40965ff262f24ea23",
+          "finding_ids": [],
+          "supersedes": ["dg-c2-standards-final2-pass"]
+        },
+        {
+          "id": "dg-c2-spec-integration",
+          "performer": "/root/dgc2_final2_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "893310083020ddabbbbab4fb63056fef73b42ff1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/followup_task/dgc2_final2_spec@b8855c5d",
+            "digest": "sha256:87129f2ca4f3ae7003896afc880d5f83bebffdddec0298d11c604e6a947949e2",
+            "excerpt": "Spec integration reaffirmation: PASS — 0 actionable blocking findings; worst issue: none.\nFrozen integration range 6a2d3d5196de587605ee327fcbed398b8291978b..b8855c5d5fcd39d6f36a86a40965ff262f24ea23.\nCurrent source digest excluding reviews/debug-loop-guidance.md: 893310083020ddabbbbab4fb63056fef73b42ff1.\nThe composed main delta changes none of the DG9–DG16 owner, transfer, validator, plan, ticket, or adoption-owner files. Its registry_data.go edits are unrelated, and debugLoopAnchors remains in the composed registry. Final DG16 adoption still matches craft-spec SHA-256 e6f4a86c177150e8d77fb68d03eed56d34c884b172c965eb59cc57e42c28ba61. No scope drift or composition invalidation was found. Focused checks and the system suite passed with zero skips."
+          },
+          "axis": "Spec",
+          "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
+          "tip": "b8855c5d5fcd39d6f36a86a40965ff262f24ea23",
+          "finding_ids": [],
+          "supersedes": ["dg-c2-spec-final2-reaffirm"]
+        },
+        {
+          "id": "dg-c2-coverage-integration",
+          "performer": "/root/dgc2_integration_coverage_astra",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "893310083020ddabbbbab4fb63056fef73b42ff1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/spawn_agent/dgc2_integration_coverage_astra@b8855c5d",
+            "digest": "sha256:1ceb9a96e0c6c86dc1cb920a73d096e0213e8ee9c5581f4711dedff0ee924724",
+            "excerpt": "Coverage integration reaffirmation: PASS — 0 actionable findings; worst issue: none. Frozen composed tip b8855c5d5fcd39d6f36a86a40965ff262f24ea23 preserves DG9–DG16 coverage, transfer refusals, matcher/evaluator/locator/CLI edges, and final DG16 adoption freshness. Incoming shared-registry changes affect only drain/capture anchors. Fresh docs-currency-workflow and every-retained-fixture checks passed with zero failures and skips. The craft-spec SHA-256 remains e6f4a86c177150e8d77fb68d03eed56d34c884b172c965eb59cc57e42c28ba61. This read-only reaffirmation consumes no repair cycle."
+          },
+          "axis": "Coverage",
+          "base": "8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc",
+          "tip": "b8855c5d5fcd39d6f36a86a40965ff262f24ea23",
+          "finding_ids": [],
+          "supersedes": ["dg-c2-coverage-final2-pass"]
         }
       ]
     }
