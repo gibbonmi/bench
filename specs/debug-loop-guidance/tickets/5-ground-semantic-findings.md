@@ -2,7 +2,7 @@
 
 Blocked by: 4-drive-implementation-evidence.md
 Writes: .agents/skills/bench-craft-review/references/finding-discipline.md, .agents/skills/bench-craft-review/SKILL.md, internal/anchors/registry_data_test.go, internal/anchors/registry_debug_loop.go (new), internal/anchors/registry_data.go, internal/conformance/registry_test.go, tests/canary/workflow-guidance-anchors, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, reviews/debug-loop-guidance.md (new), CHANGELOG.md
-Covers: DG33, DG34, DG35, DG36, DG37, DG38, DG39, DG40, DG41
+Covers: DG33, DG34, DG35, DG36, DG37, DG38, DG39, DG40, DG41, DG43
 
 ## What to build
 
@@ -25,7 +25,10 @@ Update its existing registry entry, unit expectation, and review-strong-finding-
 Keep real-run refutation for runnable claims and exact-source evidence for mandatory standards without automated checks.
 State why executable refutation is unavailable and inspect applicable exceptions before retaining a mandatory-standard finding.
 
-Use the spec's refutable runnable claim and duplicate-policy violation.
+Require Coverage to construct an independent bypass that preserves claimed positive evidence while violating the requirement when such a state is possible.
+Do not count replaying the author's supplied mutations as that bypass attempt.
+
+Use the spec's refutable runnable claim, duplicate-policy violation, and enforcement with an additive contradiction that its supplied deletion mutation misses.
 Include an unsupported concern and optional advice.
 Keep repair authority at its existing owner.
 Reconcile the complete anchor family and the earlier adoption excerpts after this ticket's own adoption task.
@@ -46,6 +49,8 @@ Leave absent or failed adoption evidence open.
 - [ ] Craft-review owns the sequence and references the evidence distinction at finding-discipline.
 - [ ] The mandatory-standard finding states why executable refutation is unavailable.
 - [ ] A fresh-session review task retains a source-proven mandatory-standard finding and refutes a runnable claim with a real run.
+- [ ] Coverage independently constructs an additive bypass that preserves the claimed positive check while violating its requirement.
+- [ ] Replaying only the author's supplied mutations does not satisfy the bypass attempt.
 - [ ] Final reconciliation cites the completed adoption evidence from all five owning tickets.
 - [ ] The changed guidance preserves the existing prose budgets.
 - [ ] Each owned omission fixture turns its registered check red and restores to green.
