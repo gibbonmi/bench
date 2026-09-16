@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: ready compiled map `specs/shared-delegate-startup/decisions/shared-delegate-startup.md`, confirmed 2026-09-16.
 
-Verification log: 0 iteration(s) to accept — the spec and tickets await the user-selected Sol/high review.
+Verification log: 2 iteration(s) to accept — one Sol/high review found two blockers. One author repair pass closed both under coordinator verification.
 
 ## Problem
 
@@ -210,14 +210,14 @@ Review the integrated SP1 delta across Standards, Spec, and Coverage before comp
 
 | ticket | Blocked by | delivered outcome | owned rows |
 | --- | --- | --- | --- |
-| `1-align-spec-preparation.md` | none | Existing spec fork gains shared eligibility, line, and cost rules. | SP1, SP2, SP3, SP4, SP5, SP6, SP7, SP8, SP9, SP10, SP11, SP12, SP13, SP16, SP18, SP19, SP20, SP35, SP36, SP37, SP38, SP39, SP42 |
+| `1-align-spec-preparation.md` | none | Existing spec fork gains shared eligibility, line, and cost rules. | SP2, SP3, SP4, SP5, SP6, SP7, SP8, SP9, SP10, SP11, SP12, SP13, SP16, SP18, SP19, SP20, SP35, SP36, SP37, SP38, SP39, SP42 |
 | `2-prepare-implementation-delegates.md` | `1-align-spec-preparation.md` | Approved implementation delegates receive fresh preparation and current assignments. | SP14, SP21, SP22, SP23, SP24, SP25, SP26, SP27, SP28, SP29 |
-| `3-preserve-neutral-review.md` | `2-prepare-implementation-delegates.md` | Independent review receives neutral material and closes combined adoption. | SP15, SP17, SP30, SP31, SP32, SP33, SP34, SP40, SP41, SP43, SP44 |
+| `3-preserve-neutral-review.md` | `2-prepare-implementation-delegates.md` | Independent review receives neutral material and closes combined adoption. | SP1, SP15, SP17, SP30, SP31, SP32, SP33, SP34, SP40, SP41, SP43, SP44 |
 
 Each row owner writes the guidance seam named in its ticket.
-The first ticket owns shared activation, eligibility, spec authority, line selection, and cost evidence.
+The first ticket owns spec activation, shared eligibility, spec authority, line selection, and cost evidence.
 The second owns implementation duties and the build fallback.
-The last owns review duties, review fallback, and integrated ownership and preservation checks.
+The last owns combined activation, review duties, review fallback, and integrated ownership and preservation checks.
 
 ## Testing decisions
 
@@ -492,12 +492,14 @@ Preflight-required fixture closure:
 - `tests/canary/workflow-guidance-anchors/write-spec-verification-log`
 
 No change to budget limits, default tier bindings, Go sources, CLI grammar, hooks, or adapters is planned.
-The build-time scope excludes `specs/*/spec.md` and `specs/*/tickets/`, apart from this spec's verification record.
 The spec's own fence permits verification records within the approved behavior.
 Spec amendments use the existing plan-expansion policy.
 Reviewer disposition: pending the completed spec-and-tickets sign-off.
 
 ## Out of scope
+
+The build excludes other staged specs and all implementation ticket files.
+Only this spec's own verification record remains within its documentation fence.
 
 - A controlled default-change comparison: 4 authored artifacts, 2 gate runs. A plan, trial evidence, assessment, and adoption decision form a separate capability.
 - A new native telemetry importer: 6 code or test edits, 2 gate runs. Provider parsing, attribution, validation, and projection require their own spec.
@@ -625,3 +627,20 @@ No implementation or native benchmark ran during this specification phase.
 ```bench-completion-plan
 {"version":1,"chunks":[{"id":"SP1","tickets":["1-align-spec-preparation.md","2-prepare-implementation-delegates.md","3-preserve-neutral-review.md"],"verification":[{"id":"workflow","command":"bench test --check docs-currency-workflow"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"},{"id":"prose","command":"bench test --check prose-mechanics"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/shared-delegate-startup/spec.md"},{"id":"workflow","command":"bench test --check docs-currency-workflow"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"},{"id":"prose","command":"bench test --check prose-mechanics"}]}
 ```
+
+### Specification verification
+
+The user selected one independent Sol/high pass over the completed spec and tickets.
+The reviewer examined commit 194128673b7dbf71cb6609691f1b19422749b52c against base 478e5c079c36ca3c11233f638ac95d0c7c572545.
+The pass found two blockers and no source-fidelity finding.
+The ticket author corrected both in one returned pass.
+The coordinator verified the corrections without a second independent review.
+
+| finding | correction | coordinator evidence | disposition |
+| --- | --- | --- | --- |
+| Exclusion tokens entered parsed write authority. | Exclusion prose moved outside Ownership fences. | The production FenceTokens function returns exactly the unique ticket Writes union. | closed |
+| The first ticket owned combined activation before both consumers existed. | The final consumer ticket owns SP1 and its combined-route acceptance. | Each row has one owner, and only the final ticket owns SP1. | closed |
+
+The commit lane and committed-source build preflight pass.
+The scope and ownership fences still await the user's implementation sign-off.
+Successful author dispatches establish no measured cache or cost benefit.

@@ -2,7 +2,7 @@
 
 Blocked by: 2-prepare-implementation-delegates.md
 Writes: .agents/skills/bench-craft-delegate/references/shared-preparation.md (new), .agents/skills/bench-craft-review/SKILL.md, .agents/commands/bench-review-implementation.md, CHANGELOG.md, reviews/shared-delegate-startup.md (new), specs/shared-delegate-startup/spec.md, tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns, tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary, tests/canary/workflow-guidance-anchors/craft-review-coverage-row-projection, tests/canary/workflow-guidance-anchors/delegated-axis-exclusions, tests/canary/workflow-guidance-anchors/delegated-chunk-tip-review, tests/canary/workflow-guidance-anchors/prepared-review-axis-returns, tests/canary/workflow-guidance-anchors/prepared-review-blast-evidence, tests/canary/workflow-guidance-anchors/prepared-review-capable-handoff, tests/canary/workflow-guidance-anchors/prepared-review-inline-axis-route, tests/canary/workflow-guidance-anchors/prepared-review-legacy-entry-points, tests/canary/workflow-guidance-anchors/prepared-review-native-dispatch, tests/canary/workflow-guidance-anchors/prepared-review-runtime-capability, tests/canary/workflow-guidance-anchors/prepared-review-shared-evidence, tests/canary/workflow-guidance-anchors/review-base-merged-main-tip, tests/canary/workflow-guidance-anchors/review-clean-terminal-result, tests/canary/workflow-guidance-anchors/review-cross-harness-opt-in, tests/canary/workflow-guidance-anchors/review-falsification-accept-routing, tests/canary/workflow-guidance-anchors/review-falsification-dispositions, tests/canary/workflow-guidance-anchors/review-finding-discipline-pointer, tests/canary/workflow-guidance-anchors/review-repair-ticket-covers, tests/canary/workflow-guidance-anchors/review-repair-ticket-owner, tests/canary/workflow-guidance-anchors/review-standing-falsification, tests/canary/workflow-guidance-anchors/coverage-axis-anchor, tests/canary/workflow-guidance-anchors/review-persistence-anchor, tests/canary/workflow-guidance-anchors/review-preflight-explicit-base, tests/canary/workflow-guidance-anchors/review-universal-claim-bar
-Covers: SP15, SP17, SP30, SP31, SP32, SP33, SP34, SP40, SP41, SP43, SP44
+Covers: SP1, SP15, SP17, SP30, SP31, SP32, SP33, SP34, SP40, SP41, SP43, SP44
 
 ## What to build
 
@@ -33,6 +33,7 @@ Keep the normal single spec-author route distinct from this specification phase'
 
 ## Acceptance
 
+- [ ] One explicit instruction covers the approved delegated run and its reviews, without another activation at review.
 - [ ] The review baseline includes the frozen pair, raw diff, current primary sources, and existing evidence identities.
 - [ ] An author-history parent with a neutral final prompt is ineligible to supply review forks.
 - [ ] An axis return cannot enter the parent before that parent forks its remaining sibling axes.
