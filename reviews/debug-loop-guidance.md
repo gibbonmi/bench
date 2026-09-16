@@ -962,6 +962,51 @@ obligation stays open for ticket 4.
 | `bench test --check prose-mechanics` | pass, no skips | 204 ms |
 | `bench test --check line-routing` | pass, no skips | 2,362 ms |
 
+### DG-C2 repair cycle 2
+
+Coverage found that the file-wide DG15 prohibition still recognized only the
+exact original sentence. Under `The edge inventory`, this contradiction
+preserved all positive anchors without a DG15 diagnostic:
+`Before a new feature is specified, an executable red is mandatory.`
+
+The retained `dg-15-mandatory-red` fixture reproduces that placement. Before
+the registry repair, the universal fixture proof failed because the fixture
+did not bite and reported 497 completed proofs for 498 fixtures. Production
+commit `5e64cee9dd74034ee12643a8ef9ec6b4cd4d244a` adds a file-wide forbidden
+fragment. The fragment is `an executable red is mandatory`. It catches the reviewed
+paraphrase while leaving legitimate negative guidance distinct because an
+intervening negation does not contain that fragment.
+
+After the repair, the new fixture and all retained fixtures passed. The exact
+planned probe still inserted `Require an executable red before you specify a
+new feature.` under `User stories`. It produced the original DG15 diagnostic,
+one failed test, and `restored=yes`. A second probe inserted the reviewed
+paraphrase under `The edge inventory`; it produced
+`DG15 forbids mandatory executable-red variants`, one failed test, and
+`restored=yes`.
+
+The craft-spec bytes did not change. Its SHA-256 remains
+`16259b21a31431399fff3f7bd6cb0656e47d125272bc1eeff10b76e30aab45db`.
+The current DG16 adoption at Bench tip `902074b3` and that exact owner hash
+therefore remains current; this cycle required no new adoption run.
+
+| Check | Result | Elapsed |
+| --- | --- | --- |
+| Pre-repair `dg-15-mandatory-red` fixture proof | expected red: did not bite; 497/498 proofs, no skips | 9,347 ms |
+| Post-repair universal fixture proof | pass, no skips | 9,567 ms |
+| Exact DG15 planned probe | bit and restored, no skips | 1,253 ms |
+| DG15 mandatory-red variant probe | bit and restored, no skips | 1,267 ms |
+| `bench test --check docs-currency-workflow` | pass, no skips | 1,604 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass, no skips | 10,543 ms |
+| `bench test --check guidance-prose-budgets` | pass, no skips | 6 ms |
+| `bench test --check ticket-grammar` | pass, no skips | 1,257 ms |
+| `bench test --check prose-mechanics` | pass, no skips | 179 ms |
+| `bench test --check line-routing` | pass, no skips | 1,702 ms |
+
+This finding adds no implement-spec feedback. It concerned anchor matching
+breadth, not implementation-command direction. The earlier DG-C4 forward
+obligation remains unchanged. Repair cycle 2 of 2 is consumed and closed.
+
 ```bench-review-record
 {
   "version": 2,
