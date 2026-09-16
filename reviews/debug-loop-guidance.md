@@ -1082,6 +1082,89 @@ The craft-spec bytes did not change. Its SHA-256 remains
 so the current DG16 adoption remains valid. The new implementation rules make
 future owner-byte freshness explicit before DG-C4 adoption and review.
 
+### DG-C2 emphasis debug repair
+
+Root reproduced the next bypass before implementation. Inserting
+`An executable **red** is mandatory before a new feature is specified.` under
+`Scope cuts` made `bench probe` report `silent` and `restored=yes`.
+
+The TDD package run then failed on the new bounded kind. Legitimate negative
+guidance returned the wrong result, and `Locate` returned line zero for an
+emphasized violation. The retained `dg-15-mandatory-red-emphasis` fixture also
+failed to bite, with 501 completed proofs for 502 fixtures.
+
+#### Astra consumer census
+
+Read-only consultation session `/root/dgcrit_astra_consult` used
+`gpt-6-astra / high`. It reviewed source
+`f902a3e841686cc2c0ae0016090c7b5960eac694`. Its native reference is
+`codex:collaboration/spawn_agent/dgcrit_astra_consult`. Token counters were
+unavailable.
+
+Astra found two consumers beyond matching and location. `registry.go` handled
+only ordinary `Forbid` as whole-file. A new kind would otherwise enter section
+resolution. `anchors_command.go` would render that kind as `unknown`.
+
+Astra required evaluator dispatch, meaningful CLI rendering, kind integration,
+and a command-level diagnostic, kind, and physical-line regression. It also
+required bounded edge cases and a shared mapped transform for `Satisfied` and
+`Locate`.
+
+#### Bounded contract and fix
+
+Production commit `20f64f51e4babbc8e515695bf3fe894bea4d764d`
+adds the appended kind `ForbidCaseFoldedEmphasis`. It is opt-in. Existing
+anchor kinds retain their normalization and presence semantics.
+
+The new kind case-folds and removes balanced ordinary emphasis delimiters. It
+supports `**red**`, `*red*`, `__red__`, `_red_`, and `***red***`. Escaped,
+unpaired, and intraword markers stay distinct. Negative guidance containing
+`red is not mandatory` remains allowed.
+
+One mapped transform owns evaluator and location normalization. Origin indexes
+survive comment removal, emphasis removal, whitespace collapse, and case
+folding. A combined test places an HTML comment and a multi-byte uppercase rune
+before two violations. The first emphasized violation maps to physical line 3.
+
+The CLI regression observes the DG15 diagnostic, kind
+`forbid-case-folded-emphasis`, and line 3 from emphasized input. The evaluator
+also ignores a phrase that exists only inside an HTML comment.
+
+This is not full Markdown parsing. Links, entities, HTML formatting, code-span
+interpretation, and semantic paraphrase detection remain deferred. Inline and
+fenced code keep the existing whole-file behavior: their plain text remains
+searchable instead of being silently discarded.
+
+| Evidence | Result | Elapsed |
+| --- | --- | --- |
+| New kind and mapped-location unit tests before implementation | expected red: negative guidance and emphasized location failed, no skips | 3 ms |
+| Retained emphasis fixture before implementation | expected red: did not bite; 501/502 proofs, no skips | 9,442 ms |
+| `bench test --package ./internal/anchors` | pass, no skips | 375 ms |
+| CLI-focused anchor tests | pass, no skips | 85 ms |
+| Initial green universal fixture proof | pass, no skips | 8,671 ms |
+| Bold live probe | bit once and restored, no skips | 1,298 ms |
+| Italic live probe | bit once and restored, no skips | 1,300 ms |
+| Plain sentence-start live probe | bit once and restored, no skips | 1,379 ms |
+| Lowercase live probe | bit once and restored, no skips | 1,235 ms |
+| Exact planned-sentence probe | bit once and restored, no skips | 1,340 ms |
+| Legitimate-negative probe | expected silent; check passed and restored, no skips | 1,258 ms |
+| `bench test --check docs-currency-workflow` | pass, no skips | 2,041 ms |
+| Final universal fixture proof | pass, no skips | 10,292 ms |
+| `bench test --check guidance-prose-budgets` | pass, no skips | 7 ms |
+| `bench test --check ticket-grammar` | pass, no skips | 1,481 ms |
+| `bench test --check prose-mechanics` | pass, no skips | 240 ms |
+| `bench test --check line-routing` | pass, no skips | 1,542 ms |
+| `bench test --check system` | pass, no skips | 36,488 ms |
+
+The production composition lane passed formatting, vet, build, structure, and
+every reported conformance check. No debug instrumentation remains.
+
+After the production commit, the author computed the actual craft-spec SHA-256:
+`16259b21a31431399fff3f7bd6cb0656e47d125272bc1eeff10b76e30aab45db`.
+It equals the owner hash loaded by the accepted DG16 adoption at Bench tip
+`902074b328434d0f3f182bae5d272ea771656e63`. The repair changed no craft-spec
+bytes, so that adoption remains current.
+
 ```bench-review-record
 {
   "version": 2,
