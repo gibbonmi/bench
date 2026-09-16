@@ -1253,6 +1253,30 @@ failure at `delegated_test.go:147`, a 32 ms package run, `restored=yes`, and no
 skips. This probes the caller input rather than the author's trigger-registry
 omission site.
 
+### DG-C2 final prose and comment repair
+
+Root selected Terra for this one-attempt `gpt-5.6-terra / medium` repair.
+Commit `3dcf630e40dc9ff4f49501a88b7842c9b45a3cba` closes DG-C2-S3 through DG-C2-S5.
+
+The transfer rule now points to `craft-line` and `reviewrecord.Triggers`.
+It retains termination, preserved-source, and fresh-verification rules.
+The spec skill now uses one imperative per revised sentence.
+The DG13 anchor and fixture retain the same predicate and diagnostic.
+Locate now documents its kind-specific whole-file case-fold and ordinary-emphasis normalization.
+
+DG-C2-COV1 remains unimplemented here and returns to Sol.
+No adoption ran because a later Sol repair must precede final owner-byte adoption.
+No check reported a skip.
+
+| Check | Result | Elapsed |
+| --- | --- | --- |
+| `bench test --check prose-mechanics` | pass | 155 ms |
+| `bench test --check docs-currency-workflow` | pass | 1,168 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 8,746 ms |
+| `bench test --check guidance-prose-budgets` | pass | 4 ms |
+| `bench test --package ./internal/anchors` | pass | 336 ms |
+| `git diff --check` | pass | 0.2 s wall time |
+
 ```bench-review-record
 {
   "version": 2,
