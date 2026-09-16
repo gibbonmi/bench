@@ -1183,11 +1183,24 @@ Standards finding is resolved by native evidence only; production commit
 
 Runtime token counters were unavailable for the final DG-C2 review sessions.
 
+#### User-directed transfer schema repair
+
+The DG-C2 checkpoint exposed a mismatch in the workflow fix. The implementation
+command required a recorded user-directed transfer for a prose-only owner edit,
+but the completion-plan validator accepted only failure-triggered replacements.
+The user explicitly extended the repair to make the workflow executable now.
+
+The amended plan records every DG-C2 writer transition, the stopped predecessor,
+and the preserved source. The retained Sol author owns the enforcement repair.
+The change must add `user-directed` to the closed trigger set, prove that exact
+trigger green, keep an unrecognized trigger red, and update the canonical
+delegation rule without weakening stop or preservation evidence.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/debug-loop-guidance/spec.md",
-  "plan_digest": "sha256:77df9dce6661c721b25516c283dcf95bf125035eb510e3ffc04627b0cdf9feb8",
+  "plan_digest": "sha256:944af963efc454be48e5ceb4fc654e0bf7f033a52bb01a23d7fefce4e0b78e73",
   "chunks": [
     {
       "id": "DG-C1",
@@ -1741,6 +1754,18 @@ Runtime token counters were unavailable for the final DG-C2 review sessions.
     {
       "from": "sha256:d114cdb7fa1676460d3da96ad0a35443a9d574ed8fce0ac445404a073a7bc7f4",
       "to": "sha256:77df9dce6661c721b25516c283dcf95bf125035eb510e3ffc04627b0cdf9feb8",
+      "chunk_ids": {
+        "DG-C1": ["DG-C1"],
+        "DG-CR": ["DG-CR"],
+        "DG-C2": ["DG-C2"],
+        "DG-C3": ["DG-C3"],
+        "DG-C4": ["DG-C4"],
+        "DG-C5": ["DG-C5"]
+      }
+    },
+    {
+      "from": "sha256:77df9dce6661c721b25516c283dcf95bf125035eb510e3ffc04627b0cdf9feb8",
+      "to": "sha256:944af963efc454be48e5ceb4fc654e0bf7f033a52bb01a23d7fefce4e0b78e73",
       "chunk_ids": {
         "DG-C1": ["DG-C1"],
         "DG-CR": ["DG-CR"],
