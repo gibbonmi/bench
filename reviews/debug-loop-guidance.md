@@ -1360,6 +1360,18 @@ obligation remains unchanged. Repair cycle 2 of 2 is consumed and closed.
         "DG-C4": ["DG-C4"],
         "DG-C5": ["DG-C5"]
       }
+    },
+    {
+      "from": "sha256:9c6e753da7a036f33fc6c87dd65c90dde736ed504a3cebb2313c3206badf5880",
+      "to": "sha256:6ebbf7612dc3ebc379df3941114ef53c94eafee3b278046bcdfec4efb4c3fef7",
+      "chunk_ids": {
+        "DG-C1": ["DG-C1"],
+        "DG-CR": ["DG-CR"],
+        "DG-C2": ["DG-C2"],
+        "DG-C3": ["DG-C3"],
+        "DG-C4": ["DG-C4"],
+        "DG-C5": ["DG-C5"]
+      }
     }
   ]
 }
