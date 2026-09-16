@@ -1247,6 +1247,12 @@ No check reported a skip.
 | `bench test --check system` | pass | 37.2 s wall time |
 | `git diff --check` | pass | 0.2 s wall time |
 
+Root independently swapped the focused test's `user-directed` input for
+`operator-convenience`. The baseline passed. The mutation reported `bit`, one
+failure at `delegated_test.go:147`, a 32 ms package run, `restored=yes`, and no
+skips. This probes the caller input rather than the author's trigger-registry
+omission site.
+
 ```bench-review-record
 {
   "version": 2,
