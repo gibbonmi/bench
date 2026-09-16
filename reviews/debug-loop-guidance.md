@@ -1549,6 +1549,30 @@ The structured DG-C3 record remains unpopulated pending current review axes.
 | `bench test --check system` | pass; zero skips | 33,107 ms |
 | `git diff --check` | pass | less than 1 ms |
 
+### DG-C3 post-review repair cycle 2
+
+The Astra/medium validation at `/root/dgc3_s3_validation_astra` accepted DG-C3-S3.
+It bounded the repair to the three combined ticket instructions.
+The Terra author consumed repair cycle 2 of 2 with one editorial artifact repair.
+
+The author changed each `, and connect` construction into two instructions.
+The author preserved every DG24 behavior, shared write, predecessor value, and usable check.
+The original native adoption remains historical at `48c32fe1c937273ef9cb5d37dc65bdbb615fc91e` and `380afcfc705ae6d6f7e19407f3f85c8d7c7ebfa8`.
+This editorial repair did not run a fresh adoption task.
+
+| Artifact | Before | After |
+| --- | --- | --- |
+| `1-render-readable-summary.md` | `Add focused formatter and summary tests, and connect the behavior through the report command.` | `Add focused formatter and summary tests. Connect the behavior through the report command.` |
+| `2-export-stable-csv.md` | `Add focused formatter and export tests, and connect the behavior through the report command.` | `Add focused formatter and export tests. Connect the behavior through the report command.` |
+| `1-render-null-json-detail.md` | `Add the supplied missing-value case to the focused behavior test, and connect the behavior through the report command.` | `Add the supplied missing-value case to the focused behavior test. Connect the behavior through the report command.` |
+
+The successful artifact repair committed as `8dcad28`, and its handoff update committed as `e7b010490e31c28e012abd083dc8843ed01e0fcb`.
+The alternate artifact repair committed as `7e6621d`, and its handoff update committed as `9288e8d6fea82c3cf918046e318972fb49ee7520`.
+Both repositories are clean, and both tracked inventories remain complete.
+The author manually verified ticket grammar, STE prose, shared formatter writes, predecessor value, usable checks, and fragment merger.
+The whitespace check passed in both repositories.
+The repair allowance is exhausted, and no further DG-C3 repair cycle is available.
+
 ```bench-review-record
 {
   "version": 2,
