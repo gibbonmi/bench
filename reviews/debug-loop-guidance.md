@@ -1403,6 +1403,87 @@ Its mutated package took 10,442 ms and reported no skips.
 | `bench test --check system` | pass | 33,094 ms |
 | `git diff --check` | pass | less than 1 ms |
 
+## DG-C3 author verification
+
+The production guidance and fixtures committed as
+`5a91bf8be24ea0bd92cf468796353a149a3d94d5`.
+Commit `16ecc757161531b2e6e17b34c93c4d1072809043` restored an existing fixture's physical anchor.
+The final committed ticket skill has SHA256
+`9afff2861211abdb6b1d8c9951ca01817e414116082ee2c729552f3b3cc2fe6b`.
+
+DG17 through DG23 each produced its named `docs-currency-workflow` red.
+The author added the next guidance sentence only after the prior row failed.
+Every red reported one named failure and zero skips.
+The final owner check passed, and all 509 retained fixtures bit through their registered owner.
+
+| Row | Observed diagnostic | Retained fixture |
+| --- | --- | --- |
+| DG17 | `DG17 requires a complete outcome slice` | `dg-17` |
+| DG18 | `DG18 requires a concrete acceptance scenario` | `dg-18` |
+| DG19 | `DG19 requires checks usable before successors` | `dg-19` |
+| DG20 | `DG20 requires predecessor value` | `dg-20` |
+| DG21 | `DG21 forbids merger from shared writes alone` | `dg-21` |
+| DG22 | `DG22 requires outcome split and fragment merger` | `dg-22` |
+| DG23 | `DG23 permits planned ticket evidence` | `dg-23` |
+
+The author omitted the DG22 split-and-merge sentence through `bench probe`.
+The baseline passed, and the mutation produced the DG22 diagnostic in 1,184 ms.
+The probe reported `bit`, one failed test, `restored=yes`, and zero skips.
+This omission differs from the coordinator's planned DG21 shared-write probe.
+
+### DG24 native adoption
+
+The first adoption became stale after the physical-anchor restoration changed owner bytes.
+Its repositories remain historical evidence and do not close DG24.
+
+Session: `/root/dgc3_author/dg24_final_adoption`, fresh context.
+Requested line: `gpt-5.6-sol / medium`.
+Native return label: `gpt-6-astra / high`.
+
+The exact first shell action was `git rev-parse HEAD && sha256sum .agents/skills/bench-craft-tickets/SKILL.md`.
+It confirmed the production commit and skill hash above.
+The exact first task action was:
+
+```text
+wc -l AGENTS.md .bench/BENCH.md projects/benchkit.md .agents/skills/bench-craft-tickets/SKILL.md && rg -n '^' AGENTS.md && rg -n '^' .bench/BENCH.md && rg -n '^' projects/benchkit.md && rg -n '^' .agents/skills/bench-craft-tickets/SKILL.md
+```
+
+The session completed the truncated reads in bounded ranges before it created the repositories.
+
+The successful repository is `/tmp/dg24-success-ZnFxcV` at
+`17f92c14e1739fc55e19c82f48a4fcbca6c0ef2c`.
+It contains one spec and these two complete serial tickets:
+
+- `render-record-summary.md` delivers the summary and the shared normalized record contract.
+- `export-records-as-csv.md` delivers CSV through that predecessor contract.
+
+| Artifact | Check usable before successors |
+| --- | --- |
+| `specs/record-output/tickets/render-record-summary.md` | `go test ./internal/records -run 'TestNormalize\|TestRenderSummary'`; `go test ./cmd/records -run TestSummaryCommand` |
+| `specs/record-output/tickets/export-records-as-csv.md` | `go test ./internal/records -run 'TestNormalize\|TestRenderSummary\|TestExportCSV'`; `go test ./cmd/records -run 'TestSummaryCommand\|TestCSVCommand'` |
+
+The predecessor supplies the stable normalized values, field order, and green summary feature.
+Its two focused checks run before CSV export exists.
+The CSV checks include the normalizer and retain the green summary checks.
+Shared writes determine order, but the two useful outcomes remain separate.
+
+The alternate repository is `/tmp/dg24-alternate-9wViKy` at
+`66334f203e12723477089013d646acff39b6343b`.
+Its `handle-empty-record-input.md` ticket delivers the empty result and its regression checks together.
+The session merged the proposed test-only fragment because it had no standalone result.
+Its artifact is `specs/empty-input/tickets/handle-empty-record-input.md`.
+
+Both repositories are clean and contain only README, spec, and ticket-plan files.
+The tracked-file scan found no implementation file.
+The session ran no implementation check because the planned implementation paths do not exist.
+It stopped after it committed and verified the plan artifacts.
+It changed no Bench source and reported no ambiguity or operational failure.
+
+The cold-session handoff pins both repository paths, `main` branches, commits, and spec paths.
+It keeps the split and merge decisions closed.
+Its next action is to inspect each committed plan.
+It forbids implementation until the reviewer explicitly starts it.
+
 ```bench-review-record
 {
   "version": 2,
