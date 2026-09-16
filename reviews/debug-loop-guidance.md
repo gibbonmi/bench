@@ -1575,6 +1575,163 @@ The repair allowance is exhausted, and no further DG-C3 repair cycle is availabl
 
 The reviewer authorized one evidence-record-only extension to correct the DG-C3 chunk tip and the 13 native-excerpt digests before rerunning the checkpoint.
 
+## DG-C4 author verification
+
+The retained author implemented DG25, DG26, DG29, and DG30 one row at a time.
+Each new anchor first produced its named `docs-currency-workflow` red.
+The matching owner sentence and omission fixture then returned the root check to green.
+DG31 anchors both the contradiction trigger and the existing wrong-spec exit.
+Each anchor has its own omission fixture.
+
+| Row | Pre-owner or existing red-capable evidence | Retained fixture |
+| --- | --- | --- |
+| DG25 | `DG25 requires an acceptance target and existing verification route` | `dg-25` |
+| DG26 | `DG26 requires the craft-tdd behavioral-red sequence` | `dg-26` |
+| DG27 | Fresh adoption added minimal declarations before the behavioral red. | Review-owned |
+| DG28 | Fresh adoption observed `already covered` and `not TDD-able`. | Review-owned |
+| DG29 | `DG29 requires a focused rerun after each material action` | `dg-29` |
+| DG30 | `DG30 permits several related edits in one material action` | `dg-30` |
+| DG31 | The trigger and existing exit each have a biting omission. | `dg-31-contradiction-trigger`, `dg-31` |
+| DG32 | Fresh adoption retained two immediate focused results. | Review-owned |
+
+The historical author probe omitted `After each material implementation action, rerun its focused evidence and inspect the result before the next action.`
+The `docs-currency-workflow` baseline passed.
+The omission produced one DG29 failure in 1,238 ms.
+The probe reported `bit`, `failed_tests=1`, `restored=yes`, and zero skips.
+The restored command owner retained SHA-256 `8ee44b1936719a460e371745d0c5a58e78d91fde278f6edf128991c0bf4dea3e`.
+
+### Final source verification
+
+Author: `/root/dgc4_astra_integrator`, `gpt-6-astra / low`
+Source: `9ee49955724b26b708baeb0b31e50581e918ba04`
+Command SHA-256: `f9cddaf16bc83d39d0284d8446eaeba735d19cd0d5ffafa6da80689a67290871`
+TDD skill SHA-256: `95537a40ced9e06899acdf299d73cb4abb2c2f03c453558a3b050aa2bffa7a17`
+
+The final integration preserved the user-approved prose pass and the Ticket 4 implementation.
+The `write-spec-fence-approval` mutation now matches the compacted physical line.
+The DG2 contradiction mutation retains the required permission and adds the exact forbidden implementation-delegation sentence.
+The retained fixture test observed its required red.
+The DG31 trigger and exit each have a separate biting fixture.
+
+| Command | Result | Elapsed |
+| --- | --- | --- |
+| `bench test --check docs-currency-workflow` | Pass; zero failures or skips | 1,833 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | Pass; zero failures or skips | 11,859 ms |
+| `bench test --check guidance-prose-budgets` | Pass; zero failures or skips | 8 ms |
+| `bench test --check prose-mechanics` | Pass; zero failures or skips | 237 ms |
+| `bench test --check ticket-grammar` | Pass; zero failures or skips | 1,128 ms |
+| `git diff --check` | Pass | Not retained |
+
+The source commit passed its ordinary lane.
+The final author probe omitted `After each material action, rerun that route and inspect the result before continuing.`
+The probe used the source-built executable and the `docs-currency-workflow` check.
+Its baseline passed, and its omission produced the expected DG29 diagnostic in 1,602 ms.
+The result reported `bit`, one failed test, zero skips, and `restored=yes`.
+
+### Historical DG32 native adoption
+
+The first fresh adoption became stale when the craft-tdd reference gained its final owner text.
+The session `/root/dgc4_author/dg32_final_adoption` ran at `gpt-5.6-sol / high`.
+Its first shell action verified source tip `c1c7b63c62bc9a92fa79447730d8b8a174fdf902` and the command-owner hash above.
+The session loaded the uncommitted implementation command before it created either disposable repository.
+The later prose pass changed the owner bytes, so this adoption no longer closes DG27, DG28, or DG32.
+
+The successful repository is `/tmp/dg-c4-success.fKQO54` on `adoption/dg-c4` at `8f0dcd98581b7160d73a63fb3b1539107340f107`.
+Its approved task adds observable `Count` and `Total` behavior at `summary.Summarize([]int) Summary`.
+The approved source named focused Go selectors and `go test ./...` as the existing verification routes before the first edit.
+
+The first compiled signal failed because `summary.Summarize` was undefined.
+The session classified that signal as compilation setup, not a behavioral red.
+It added only `Summary`, its fields, and a zero-value `Summarize` body.
+The next run observed `Count = 0, want 3` in 0.48 seconds.
+
+| Row or action | Observed result | Duration and skip evidence |
+| --- | --- | --- |
+| Nil-input classification | `TestSummarizeNilIsZeroValue` passed; `already covered`; no red was manufactured. | 0.14 seconds; one executed pass and no skip event. |
+| Named-pipe classification | `not TDD-able` on Linux because its acceptance signal requires Windows named pipes. | 0.14 seconds; the retained output explicitly reports one environment skip. |
+| Action 1 | The action implemented `Count`. `TestSummarizeReportsCount` passed immediately before any Action 2 edit. | 0.13 seconds; one executed pass and no skip event. |
+| Action 2 | The session first observed `Total = 0, want 9`, then implemented `Total`. `TestSummarizeReportsTotal` passed immediately afterward. | Red: 0.14 seconds. Green: 0.13 seconds with one executed pass and no skip event. |
+| Integration | Count, Total, and nil-input passed; the classified Windows row skipped. | 0.12 seconds; this all-row run is not skip-free. An independent three-row rerun passed with no skip. |
+
+The successful repository is clean.
+Its handoff pins the repository, `adoption/dg-c4`, the final commit, and `APPROVED.md`.
+It retains the closed seam and classification decisions.
+Its next command routes the unavailable Windows row to `/bench-write-spec`.
+
+The separate wrong-spec repository is `/tmp/dg-c4-wrong-spec.gtH6Dq` on `adoption/wrong-spec` at `53d53c82364537734b2469a689784bc6a92c02ba`.
+Its approved source requires `Label` to preserve letter case.
+The request instead requires uppercase conversion.
+The session quoted that contradiction, selected `Wrong spec`, and routed it to `/bench-write-spec` before behavior, test, or dependent-work edits.
+The baseline-to-final diff contains only the request, evidence, run context, and ignored-cache declaration.
+
+The repository is clean.
+Its handoff pins the stopped state and the exact `/bench-write-spec` continuation.
+
+The adoption session observed an unavailable ambient Go command, a Windows module-lock failure on WSL `/tmp`, and a read-only default cache.
+It used the known Linux Go binary with a repository-local ignored cache.
+It did not classify these setup failures as behavioral reds.
+The retained Bench assignment remained read-only during adoption, and DG-C5 remains unbuilt.
+
+### Current DG32 native adoption
+
+Session: `/root/dgc4_astra_integrator/dg32_committed_adoption`, fresh context
+Native ref: `codex:collaboration/spawn_agent/dg32_committed_adoption`
+Line: `gpt-6-astra / low`, user-directed, cap four coherent attempts
+Source: `9ee49955724b26b708baeb0b31e50581e918ba04`
+
+The session first verified the committed source and both hashes from Final source verification.
+It loaded the final implementation command and TDD skill before the disposable task.
+The approved seam was `summary.Summarize([]int) Summary`.
+The approved example `[2,3,4]` required Count 3 and Total 9.
+The approved nil input required the zero Summary.
+The session recorded the acceptance target and focused selectors before its first edit.
+
+Repository: `/tmp/dg-c4-adoption-Hm5glt`, branch `adoption`
+Implementation commit: `14f7bb97b29f30fb096cebca2f0f4328f9afb988`
+Final artifact commit: `80154d9f376dc74439d16c561c7a6682a940e227`
+Evidence: `evidence/03-missing.log` through `evidence/11-final.log`
+Approved source: `acceptance.md`
+
+The initial Go installation lacked its standard library, and the default cache refused writes.
+The session retained those setup failures separately from behavioral reds.
+Its subsequent commands used the Linux Go 1.26.8 toolchain and a writable disposable cache.
+The native logs retain exact commands, UTC times, exits, source commits, and dirty paths.
+
+| Row or action | Native observation | Wall duration |
+| --- | --- | --- |
+| Missing declaration | `undefined: summary.Summarize`; compile failure, not behavioral red | 3.254 seconds |
+| Minimal setup | Only the declarations and zero body preceded `Count = 0, want 3` | 0.210 seconds |
+| Action 1 | Count implementation immediately followed by `TestCount` pass | 0.209 seconds |
+| Already covered | `TestNil` passed before any nil-specific implementation | 0.167 seconds |
+| Not TDD-able | `TestWindowsNamedPipe` skipped: Linux cannot execute the Windows signal | 0.172 seconds |
+| Action 2 red | `TestTotal` reported `Total = 0, want 9` | 0.202 seconds |
+| Action 2 green | Total implementation immediately followed by `TestTotal` pass | 0.200 seconds |
+| Integration | Count, nil, and Total passed; the Windows row skipped | 0.194 seconds |
+
+The session completed two behavior actions within its cap.
+Each focused result preceded the next material edit.
+The unavailable row remains explicit, so the integration result does not claim complete product acceptance or zero skips.
+The final repository is clean.
+Its handoff retains the closed decisions and `$bench-write-spec /tmp/dg-c4-adoption-Hm5glt/acceptance.md` for the unavailable signal.
+
+Wrong-spec repository: `/tmp/dg-c4-wrong-spec-O579me`, branch `adoption`
+Baseline commit: `181afadfbc10871659af22aeb2d2649031b08376`
+Final artifact commit: `8151471dc63373ced8170b90d2ecc9c841110607`
+Evidence: `evidence/01-observe.log`, `evidence/02-existing-tests.log`, and `handoff.md`
+
+The approved source required case preservation, while the supplied acceptance target required uppercase output.
+The native observation returned `Label(MiXeD) = "MiXeD"` in 0.107 seconds.
+The existing `TestPreservesCase` passed in 0.142 seconds.
+The session selected the wrong-spec exit before dependent behavior or test edits.
+Only `handoff.md` differs from the baseline, and the final repository is clean.
+The handoff quotes the contradiction and names `$bench-write-spec /tmp/dg-c4-wrong-spec-O579me/approved.md`.
+
+The final source check reproduced both committed owner hashes.
+The adoption session changed no Bench file.
+The integrating author inspected the native logs, source files, handoffs, and clean repository states.
+This adoption closes DG27, DG28, and DG32 at the final committed owner bytes.
+DG-C5 remains unbuilt, and the formal DG-C4 review has not started.
+
 ```bench-review-record
 {
   "version": 2,
