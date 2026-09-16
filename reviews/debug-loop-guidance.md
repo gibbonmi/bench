@@ -1495,7 +1495,7 @@ It forbids implementation until the reviewer explicitly starts it.
 {
   "version": 2,
   "spec": "specs/debug-loop-guidance/spec.md",
-  "plan_digest": "sha256:a77923bb061523566f92d3e4926b03b0195149e7e0ecf43d9eb203423de9c7a5",
+  "plan_digest": "sha256:4cb98420d88972f69fc60aff1163b215750898e260bd483cb9134840efb97799",
   "chunks": [
     {
       "id": "DG-C1",
@@ -2289,6 +2289,18 @@ It forbids implementation until the reviewer explicitly starts it.
     {
       "from": "sha256:cb4c67ecf1bfedac4660be97cc3a9dece0217caff0502090a7280f2868c83006",
       "to": "sha256:a77923bb061523566f92d3e4926b03b0195149e7e0ecf43d9eb203423de9c7a5",
+      "chunk_ids": {
+        "DG-C1": ["DG-C1"],
+        "DG-CR": ["DG-CR"],
+        "DG-C2": ["DG-C2"],
+        "DG-C3": ["DG-C3"],
+        "DG-C4": ["DG-C4"],
+        "DG-C5": ["DG-C5"]
+      }
+    },
+    {
+      "from": "sha256:a77923bb061523566f92d3e4926b03b0195149e7e0ecf43d9eb203423de9c7a5",
+      "to": "sha256:4cb98420d88972f69fc60aff1163b215750898e260bd483cb9134840efb97799",
       "chunk_ids": {
         "DG-C1": ["DG-C1"],
         "DG-CR": ["DG-CR"],
