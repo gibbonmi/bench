@@ -9,7 +9,7 @@ Prompt-cache savings remain unmeasured for Bench.
 
 Evidence date: 2026-09-16.
 Source baseline: `40d7f0d087047c44b11777cc96b71b549a2397f7`.
-Consumed by: decisions/shared-delegate-startup.md and its subsequent approved specification.
+Consumed by: specs/shared-delegate-startup/decisions/shared-delegate-startup.md and its subsequent approved specification.
 Drift: the cited workflow, charge, line, assessment, or native fork contracts change.
 Retire when: the approved specification consumes these findings, or replacement research invalidates them.
 

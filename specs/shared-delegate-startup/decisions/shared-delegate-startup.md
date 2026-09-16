@@ -39,7 +39,7 @@ Ticket 6 records the complete scope confirmation.
 
 ## Sources
 
-- Path: `decisions/shared-delegate-startup/assets/research.md`
+- Path: `specs/shared-delegate-startup/decisions/shared-delegate-startup/assets/research.md`
   Supports: workflow opportunities, harness constraints, evidence limits, and candidate comparison.
   Drift: a cited source changes or a native probe supplies contradictory evidence.
 - Path: `.agents/commands/bench-write-spec.md`
