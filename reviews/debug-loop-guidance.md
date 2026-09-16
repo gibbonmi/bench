@@ -1165,6 +1165,22 @@ It equals the owner hash loaded by the accepted DG16 adoption at Bench tip
 `902074b328434d0f3f182bae5d272ea771656e63`. The repair changed no craft-spec
 bytes, so that adoption remains current.
 
+#### Standards closure
+
+Standards found that the independently authored CLI kind-name expectation had
+no recorded red. Root ran this exact production omission:
+
+`bench probe cmd/bench/anchors_command.go --omit <ForbidCaseFoldedEmphasis case and return> --package ./cmd/bench --run TestAnchorsReportsCaseFoldedEmphasisViolation`
+
+The baseline passed. The probe reported `bit`, one failed test,
+`restored=yes`, and no skips. The mutated package took 24 ms. The failure was
+at `anchor_help_test.go:173`: command output rendered the wrong row and kind.
+
+This result demonstrates the required independent-expectation exception. The
+CLI regression fails when its production kind rendering disappears. The
+Standards finding is resolved by native evidence only; production commit
+`20f64f51e4babbc8e515695bf3fe894bea4d764d` remains unchanged.
+
 ```bench-review-record
 {
   "version": 2,
