@@ -1277,6 +1277,104 @@ No check reported a skip.
 | `bench test --package ./internal/anchors` | pass | 336 ms |
 | `git diff --check` | pass | 0.2 s wall time |
 
+### DG-C2-COV1 closure
+
+The final Sol author resumed from exact source
+`7944fad0cd339eda04ad0f11eda1fba192d4e198`.
+The repair used `gpt-5.6-sol / medium` with one attempt.
+
+The accepted finding identified a missing independent preserved-source case.
+The production validator already refused an empty preserved-source field.
+The author added `replacement without preserved source` to
+`TestDelegatedIdentityRefusals` and used a valid `user-directed` replacement.
+The case clears only the successor's `Preserved` field.
+It requires the `missing preserved source` diagnostic.
+
+The focused case passed in 32 ms with no skips.
+The full review-record package passed in 2,254 ms before commit.
+Commit `1bbbe3b0c995ccb06d5e3682923cd13478312055` contains only the test repair.
+
+The author ran this required production omission:
+
+```text
+bench probe internal/reviewrecord/delegated.go --omit $'\tif item.Preserved == "" {\n\t\treturn errors.New("missing preserved source")\n\t}' --package ./internal/reviewrecord --run 'TestDelegatedIdentityRefusals/replacement_without_preserved_source'
+```
+
+The baseline passed, and the probe reported `bit` and `restored=yes`.
+The mutated package took 36 ms and reported one failed test with no skips.
+The failure said that the invalid plan was accepted with a nil error.
+This evidence resolves DG-C2-COV1 without a production change.
+
+### Final DG16 adoption
+
+Session: `/root/dgc2_author/dgc2_final_adoption`, fresh context.
+Native ref: `codex:collaboration/spawn_agent/dgc2_final_adoption`.
+Dispatch line: `gpt-5.6-sol / medium / 1 attempt`.
+The native session reported `GPT-5 Codex` at medium effort.
+Elapsed time and token counters were not instrumented.
+
+The session first verified Bench tip
+`1bbbe3b0c995ccb06d5e3682923cd13478312055` and craft-spec SHA-256
+`e6f4a86c177150e8d77fb68d03eed56d34c884b172c965eb59cc57e42c28ba61`.
+It read the complete skill, STE reference, and map-discipline reference.
+
+The specified repository was
+`/tmp/dgc2-final-adoption.83i8bV/specified` at
+`b35302befc30255abb9847dfc6581c2770b7c706`.
+Its initial status was clean.
+The session first read `TASK.md`, `README.md`, and `list_tools.py`.
+
+The session wrote and inspected `EVIDENCE_PLAN.md`.
+Its SHA-256 is
+`20e3d93d33826483f694305f4d39af256915c8eb4080af48decb2bcf33907dc0`.
+The plan uses the input length as the count.
+It uses `item` for one and `items` for zero or two.
+It reuses `join_items(items)` for nonempty rendering.
+The empty result is exactly `"0 items"` without a separator or value list.
+
+The future evidence calls `summarize(items)` with all three specified inputs.
+It compares each complete result with its exact expected string.
+The session made no decision for other input types or values.
+It stopped without implementation or an executable check.
+The repository tip stayed unchanged, with only `EVIDENCE_PLAN.md` untracked.
+
+The unspecified repository was
+`/tmp/dgc2-final-adoption.83i8bV/unspecified` at
+`a6417ce2bf2e83137dc1162e89101c7e470febb8`.
+Its initial status was clean.
+The session first read `TASK.md`, `README.md`, and `list_tools.py`.
+
+The session wrote and inspected `REVIEW_DECISION.md`.
+Its SHA-256 is
+`f438c5becf5e4e6f2b48db45a79faec489f92d4b07c338fdd206be3658e8493e`.
+The artifact preserves both specified nonempty results.
+It asks the reviewer to approve the exact `summarize([])` string.
+It does not infer the empty-list result.
+
+The session stopped before seam selection and dependent evidence-plan design.
+It created no implementation or executable check.
+The repository tip stayed unchanged, with only `REVIEW_DECISION.md` untracked.
+The Bench source stayed clean throughout adoption.
+The session reported no Bench CLI observations.
+
+### Final DG-C2 author verification
+
+The final source digest excluding this review is
+`c58697df7b0c3a6802c9d3ec28426567916de7f4`.
+Every verification run reported no skips.
+
+| Check | Result | Elapsed |
+| --- | --- | --- |
+| `bench test --package ./internal/reviewrecord` | pass | 3,340 ms |
+| `bench test --check docs-currency-workflow` | pass | 1,421 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 9,233 ms |
+| `bench test --check guidance-prose-budgets` | pass | 6 ms |
+| `bench test --check prose-mechanics` | pass | 167 ms |
+| `bench test --check ticket-grammar` | pass | 947 ms |
+| `bench test --check line-routing` | pass | 1,428 ms |
+| `bench test --check system` | pass | 33,794 ms |
+| `git diff --check` | pass | 0.2 s wall time |
+
 ```bench-review-record
 {
   "version": 2,
