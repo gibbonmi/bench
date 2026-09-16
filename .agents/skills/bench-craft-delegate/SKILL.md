@@ -60,7 +60,7 @@ that fails to compile proves nothing, and a probe of provably redundant code pas
 construction. Ask the delegate for zero to two Bench CLI improvements derived from its own calls,
 and fold them into the landing's census entry.
 
-A delegate blocked by a defect outside its fence stops and reports rather than fixing out of fence.
+For a defect outside its fence, a delegate follows [debug integration](../../commands/bench-debug.md#how-it-meets-the-rest-of-bench) for the diagnostic handoff.
 A new worktree charge starts after the coordinator runs `git rev-parse HEAD main`.
 If the refs differ, only the coordinator runs `bench worktree merge --from main <target>` and verifies equality before the delegate starts. Dependent tickets in a reviewed spec chain share the retained integration source and verify its expected tip.
 A fix-pass charge names a commit-specific sentinel.

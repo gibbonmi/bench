@@ -1,0 +1,16 @@
+package anchors
+
+var debugLoopAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: RequireInSection, Section: "The charge", Needle: "[debug integration](../../commands/bench-debug.md#how-it-meets-the-rest-of-bench)", Diagnostic: "debug loop: delegation requires the debug integration reference"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: RequireInSection, Section: "How it meets the rest of Bench", Needle: "the repro command", Diagnostic: "debug loop: DG6 requires the repro command"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: RequireInSection, Section: "How it meets the rest of Bench", Needle: "the red output digest", Diagnostic: "debug loop: DG6 requires the red output digest"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: RequireInSection, Section: "How it meets the rest of Bench", Needle: "the ranked hypotheses", Diagnostic: "debug loop: DG6 requires the ranked hypotheses"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: RequireInSection, Section: "How it meets the rest of Bench", Needle: "the failing surface", Diagnostic: "debug loop: DG6 requires the failing surface"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: RequireInSection, Section: "How it meets the rest of Bench", Needle: "its in-fence dirty paths", Diagnostic: "debug loop: DG6 requires the in-fence dirty paths"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: RequireInSection, Section: "How it meets the rest of Bench", Needle: "the delegate stops implementation edits", Diagnostic: "debug loop: DG5 requires the fence edit stop"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: RequireInSection, Section: "How it meets the rest of Bench", Needle: "It keeps its in-fence work dirty in its owned worktree.", Diagnostic: "debug loop: DG5 requires preserved dirty work"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: RequireInSection, Section: "How it meets the rest of Bench", Needle: "For an out-of-fence defect, run Phases 1 through 3 before the diagnostic handoff.", Diagnostic: "debug loop: DG4 requires Phases 1 through 3 before handoff"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: RequireInSection, Section: "How it meets the rest of Bench", Needle: "For an in-fence defect, the write delegate runs debug through Phase 6.", Diagnostic: "debug loop: DG3 requires in-fence debug through Phase 6"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: RequireInSection, Section: "How it meets the rest of Bench", Needle: "Delegate only read-only diagnostic work.", Diagnostic: "debug loop: DG2 requires read-only diagnostic delegation"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: RequireInSection, Section: "How it meets the rest of Bench", Needle: "The session that owns the debug loop writes its in-scope repair.", Diagnostic: "debug loop: DG1 requires retained repair authorship"},
+}

@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Debug repair authorship
+
+- Changed debug to retain repair authorship and give write delegates an evidence-based handoff at the ticket fence.
+
 ### Cross-harness review opt-in
 
 - Changed implementation review to run cross-harness falsification only when the reviewer requests it.

@@ -1,0 +1,282 @@
+# Debug loop guidance
+
+## DG-C1 author verification
+
+State: Candidate A awaits coordinator review and the serialized oracle.
+Ticket: `specs/debug-loop-guidance/tickets/1-retain-debug-authorship.md`
+Source and base: `9deb0a7af31712427ff47d6fd0515e8458dbde0d`
+Assignment: `1b0b72d4e83b2a8995c668e1bc78e4c7`
+Label: `debug-loop-candidate-a`
+Author: `/root/candidate_a`
+Line: `gpt-6-astra / high / uncapped while verified progress holds`
+
+The author verified HEAD and ran the complete ticket charge preflight before edits.
+The preflight returned complete with the expected assignment, source identities, fence, and nine coverage rows.
+The ticket has no blockers.
+Every source edit stays inside its Writes list.
+No Bench commit or whole-project gate ran.
+
+### Row evidence
+
+All times below are native package elapsed milliseconds.
+Each named root run used `bench test --check docs-currency-workflow`.
+Every recorded test run reported zero skips.
+
+| Row | Classification and red evidence | Green evidence and retained fixture |
+| --- | --- | --- |
+| DG1 | New owner assertion: missing retained authorship, 1154 ms | Root green, 1089 ms; `dg-1` |
+| DG2 | New owner assertion: missing read-only diagnostic delegation, 1476 ms | Root green, 1075 ms; `dg-2` |
+| DG3 | New owner assertion: missing in-fence Phase 6 route, 1069 ms | Root green, 1213 ms; `dg-3` |
+| DG4 | New owner assertion: missing Phases 1–3 before handoff, 1378 ms | Root green, 1418 ms; `dg-4` |
+| DG5 | Already covered behavior: the existing text stops edits and preserves dirty work | Added the missing guards; `dg-5` and `dg-5-dirty` independently bite and restore |
+| DG6 | Missing ranked hypotheses, 1194 ms; four existing fields already passed | Root green, 1116 ms; `dg-6`, `dg-6-command`, `dg-6-digest`, `dg-6-surface`, `dg-6-dirty` |
+| DG6 owner reference | Missing debug integration link, 1164 ms | Root green, 1106 ms; `dg-6-owner-reference` |
+| DG7 | Not TDD-able: native adoption requires the changed guidance | The fresh author reproduced, repaired, verified, and committed the fenced defect |
+| DG8 | Not TDD-able: native adoption requires the changed guidance | The fresh author returned the complete bounded report and preserved dirty work |
+| DG42 | Already present; review-owned preservation comparison | Both byte comparisons returned equal; details below |
+
+The fixtures invoke the existing registered owner and require their specific diagnostic to disappear after restoration.
+The independent expectations detect the named owner omissions and justify their separate literals.
+No new test runner, parser, CLI command, or live-tree test was added.
+The existing root check evaluates every new anchor.
+
+### Native adoption: in-fence variant
+
+Session: `/root/candidate_a/adoption`, fresh context, `gpt-6-astra / high`
+Repository: `/tmp/bench-candidate-a.B8tcWu/adoption/in-fence`
+Baseline: `9a0212379374539af563410e70a8f0ba0b097d8c`
+Fence: `total.py`, `test_total.py`
+Task: Return 0 for `[]`, 6 for `[3,-2,5]`, and 7 for `[7]`.
+
+The first action identified the repository, hashed the debug guidance, and read the three supplied guidance files completely.
+The files supplied the debug command, its local loop constructions, and craft-delegate.
+The initial tree was clean.
+The author ran the exact reproduction twice before source inspection.
+
+```text
+python3 -m unittest -v test_total.TotalTests.test_empty
+test_empty (test_total.TotalTests.test_empty) ... ERROR
+
+Traceback (most recent call last):
+  File "/tmp/bench-candidate-a.B8tcWu/adoption/in-fence/test_total.py", line 7, in test_empty
+    self.assertEqual(total([]), 0)
+  File "/tmp/bench-candidate-a.B8tcWu/adoption/in-fence/total.py", line 2, in total
+    result = values[0]
+IndexError: list index out of range
+
+Ran 1 test in 0.000s
+FAILED (errors=1)
+```
+
+Both runs exited 1 with identical captured output.
+Red digest: `09cc704273cb8c520cfc0312e5867e4b5c9f2ca97d971d2f4da7ac6ea41aaf0d`
+Observed durations: approximately 0.032 and 0.034 seconds.
+
+The author published these ranked hypotheses before testing them:
+
+1. The accumulator indexes the first element; the additive identity should repair all cases.
+2. An empty-input branch falls through; an explicit return should remove the error.
+3. The import selects another implementation; module resolution should expose that path.
+
+Source inspection confirmed the first hypothesis at `total.py:2`.
+The two nonempty cases already returned their expected values.
+The public empty-input test already provided the regression seam.
+The same author initialized the accumulator to 0 and visited every element.
+
+The original reproduction passed after that repair.
+`python3 -m unittest -v test_total` passed all three tests.
+The whitespace check passed, and the debug-log search found no instrumentation.
+The author reported no architecture obstacle and no throwaway artifacts.
+
+Repair commit: `e4e9959cad6190ec1197ac21e41dcc640d6b09a2`
+Commit message: `Fix empty total caused by indexing the first element`
+Authorship: The same native session wrote and committed the repair without delegation.
+Final dirty paths: None.
+Attempts and repairs: One implementation attempt; one repair.
+Observed interval: `2026-09-16 00:25:31–00:26:10 UTC`, 39 seconds; initial guidance reads preceded this interval.
+
+The author stopped after verified repair and the local commit.
+The handoff pinned branch `master`, that commit, the closed behavior, and the original fence.
+Its next command was `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_total`.
+The Candidate A author independently inspected the commit, repaired file, and clean status.
+
+### Native adoption: out-of-fence variant
+
+Session: The same fresh adoption session ran this separate variant after the first task.
+Repository: `/tmp/bench-candidate-a.B8tcWu/adoption/out-of-fence`
+Baseline and final HEAD: `b8889b86bcb661ddf3ab5ea10b1bbd8f3aed2a25`
+Fence: `total.py`, `work.txt`; the test and policy files were read-only.
+Task: Diagnose the empty-list failure and preserve the existing dirty note.
+
+The first action recorded the time, guidance hash, HEAD, status, and file hashes.
+The author ran the reproduction twice before inspecting the implementation.
+
+```text
+python3 -m unittest -v test_total.TotalTests.test_empty
+test_empty (test_total.TotalTests.test_empty) ... FAIL
+
+Traceback (most recent call last):
+  File "/tmp/bench-candidate-a.B8tcWu/adoption/out-of-fence/test_total.py", line 7, in test_empty
+    self.assertEqual(total([]), 0)
+AssertionError: 1 != 0
+
+Ran 1 test in 0.000s
+FAILED (failures=1)
+```
+
+Both runs exited 1 with identical captured output.
+Red digest: `63c54889229d4b464cfd0ca1a1c3b01c4d9aa68c96e17b4bc286e08ed610d141`
+Observed durations: approximately 0.036 and 0.038 seconds.
+
+The author published these ranked hypotheses before testing them:
+
+1. The imported policy supplies a nonzero empty-input identity; a trace should reveal an external value of 1.
+2. The total function hardcodes an incorrect initial value; source inspection should identify an owned defect.
+3. The test or import selects unexpected behavior; resolution should expose the mismatch.
+
+Read-only execution confirmed that `normalize([])` returns `[1]` and `total([])` returns 1.
+The nonempty cases returned 6 and 7.
+The public function computes `sum(normalize(values))`; `policy.py:2` returns `values or [1]`.
+Both imports resolved to the intended repository.
+
+Failing surface: Public `total([])`.
+External cause: `policy.py:2`.
+Dirty path: `work.txt`, before and after diagnosis.
+Stop: No implementation edit, workaround, commit, or additional delegation.
+
+Handoff: Validate the reproduction and policy evidence, then reslice repair ownership through the existing implementation route.
+Final regression: One empty-input failure and two passing tests.
+Attempts and repairs: One diagnostic pass; zero implementation attempts or repairs.
+Observed interval: `2026-09-16 00:26:21–00:26:46 UTC`, 25 seconds.
+
+| Preserved path | Before and after SHA256 |
+| --- | --- |
+| `total.py` | `5219a5e49b3c85dcc131bda210b9fde130e2a1b24154e1380a87b0e50d911be2` |
+| `test_total.py` | `16e164c4601162eecbb0aac0a928860e18dc03b6dbfa1a388ab5f882f28da534` |
+| `policy.py` | `e70793ff6d743fb78815b87f48fa31b5a36148cc710d6ce55963ee54bd932192` |
+| `work.txt` | `aaef657414ca824d656bc01825aa699fd28601697a95352bfc8cfe211aa6d035` |
+
+The Candidate A author independently checked the final dirty path and the policy and note hashes.
+All adoption calls completed synchronously.
+The helper reported no waits, sleeps, approval waits, retries, or yielded cells.
+
+### Guidance identity and preservation
+
+Original debug SHA256: `3f5d38a36bada2d5e3b749e3797cf2649714a03c660385c8848b1483d673ed1c`
+Adopted debug SHA256: `39f733144ed299c9adc538a40b19d1b569563470ac1a3be011c152fd05496859`
+Final debug SHA256: `5fd2e88e9eeda0eb6163eb54ae36c4429c23a879d473f4cb52095c0816ff2851`
+Adopted and final craft-delegate SHA256: `7414aad00a1572d00ddea954963526de1ce467f76cb6a44a4d19e9d50e6cacb2`
+Original and final loop-constructions SHA256: `c7123c706066778208a3a3e0315a1ddcee8872db7c765bf381cac1556efd562c`
+
+Baseline copies were captured before the first edit under `/tmp/bench-candidate-a.B8tcWu/`.
+The Phase 1–6 slice comparison used both files from the Phase 1 heading through the following retired-spec heading.
+The comparison returned equal, including the local reference pointer.
+The complete loop-constructions file comparison also returned equal.
+
+The final prose repair added paragraph and list separators and reflowed the unchanged reviewer/coordinator sentences.
+It also combined the quarantine explanation without changing its requirements.
+The adopted text said: "Use a quarantine marker naming the bug."
+Its next sentence said: "This form keeps the tree green and preserves the repro across shift rollback."
+The final sentence says: "A quarantine marker naming the bug preserves the repro across shift rollback and keeps the tree green."
+
+Every DG1–DG6 instruction line retained its exact bytes.
+The comparison selected the retained-author sentence through the final report bullet and excluded blank separator lines only.
+`cmp` returned 0; no instruction text or wrapping changed within that selection.
+Debug uses 170 of 170 permitted lines; craft-delegate uses 124 of 126.
+The profile budgets remain unchanged.
+
+### Self-probe and focused checks
+
+The author built the assignment through `bench worktree build debug-loop-candidate-a` before the named-check probe.
+The build completed in 0.978 seconds.
+
+```text
+bench probe .agents/commands/bench-debug.md --omit 'The session that owns the debug loop writes its in-scope repair.' --check docs-currency-workflow
+verdict: bit
+mutation: omit
+baseline: passed
+failed_tests: 1
+restored: yes
+diagnostic: debug loop: DG1 requires retained repair authorship
+mutated package elapsed_ms: 1144
+```
+
+The subsequent root check passed in 1174 ms.
+The restored guidance hash matched the adopted snapshot.
+The final prose changes preserved the probed instruction bytes.
+
+| Command | Result | Native elapsed_ms | Skips |
+| --- | --- | --- | --- |
+| `bench test --check docs-currency-workflow` | Final source and pickup green | 1516 | 0 |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | All 482 final fixtures passed | 9947 | 0 |
+| `bench test --check guidance-prose-budgets` | Final guidance green | 8 | 0 |
+| `bench test --check ticket-grammar` | Final source and pickup green | 1034 | 0 |
+| `bench test --package ./internal/anchors` | Green | 594 | 0 |
+| `bench test --package ./internal/conformance --run TestCanaryFixtureRegistry` | Green | 18 | 0 |
+| `bench test --check prose-mechanics` | Final guidance green before this pickup | 198 | 0 |
+
+Bench tests yielded native command sessions during compilation and execution.
+The author waited for each required result before the next dependent edit.
+The tables report test-package time; they do not claim complete command wall time.
+No Go file was added under `tests/canary`, so the charge's conditional vet requirement did not apply.
+The command inventories needed no mechanical change; ticket grammar confirmed their existing closure.
+
+### Action, evidence, and stop log
+
+Each action had an explicit target, expected evidence, and stop condition before execution.
+Actions 2–15 stopped on an unexpected row diagnostic, fence change, or invalid proof.
+Actions 16–27 also required preservation, budget, and native-evidence agreement.
+
+| Action | Bounded action | Expected and observed evidence | Stop or next choice |
+| --- | --- | --- | --- |
+| 1 | Validate source and read charge | Matching HEAD and complete preflight | Continued inside the ticket fence |
+| 2 | Capture baseline and add DG1 guard | Baseline root green; missing-owner red | Sandbox refused the first patch; exact escalation succeeded |
+| 3 | Implement DG1 and its fixture | Root green | Continued to DG2 |
+| 4–5 | Add DG2 guard, then replace scoped-fix delegation | Own red, then root green | Continued to DG3 |
+| 6–7 | Add DG3 guard, then replace the blanket ban | Own red, then root green | Continued to DG4 |
+| 8–9 | Add DG4 guard, then the diagnostic route | Own red, then root green | Continued to existing DG5 behavior |
+| 10 | Guard existing DG5 clauses | Filtered fixture run rejected partial inventory, 49 ms | Corrected the command without changing production |
+| 11 | Run the complete fixture suite | All 476 fixtures passed, 9967 ms | Continued to DG6 |
+| 12–13 | Guard five report fields, then add hypotheses | Only hypotheses absent; root green after edit | Continued to the owner reference |
+| 14–15 | Guard and add the owner reference | Own red, then root green | Continued to prose integration |
+| 16 | Compress integration prose and preserve phase bytes | Root green, 1072 ms; both comparisons equal | Continued to full fixture proof |
+| 17 | Format report and run all fixtures | DG6 command mutation matched two locations; 9486 ms | Stopped for invalid mutation |
+| 18 | Authorized repair of the one command fixture | Unique bullet; 482 fixtures green, 9812 ms; root green, 1110 ms | Coordinator authorized continuation |
+| 19 | Prepare disposable task repositories | Baseline commits and dirty-note hash recorded | Kept both tasks isolated |
+| 20 | Launch the fresh adoption helper | Exact guidance loaded; original red reproduced twice | Helper retained both task variants |
+| 21–22 | Build and run the author-omission probe | Valid bite, exact restore, root green | Continued to final checks |
+| 23 | Run focused inventory and budget checks | All passed with zero skips | Continued to native artifact inspection |
+| 24 | Inspect adoption and final prose | Adoption agreed; prose found seven sentences, 158 ms | Prepared one paragraph repair |
+| 25 | Split the first paragraph and format its list | Root and budget green; another paragraph remained red, 166 ms | Stopped on the unchanged reported red count |
+| 26 | Authorized unchanged-text reflow and final paragraph split | Prose, root, and budget green; instruction bytes equal | Continued to this pickup |
+| 27 | Record native evidence and limitations | Every result cites this candidate's own run | Final artifact checks follow |
+| 28 | Run final checks and inspect formatting | All 482 fixtures green; pickup metadata paragraph red, 183 ms | Split that evidence paragraph |
+| 29 | Split the metadata paragraph and record final timings | Only evidence formatting changed | Require the final prose result before return |
+| 30 | Authorized split of the isolation caveat | Preserve every sentence and source byte | Return after prose and whitespace checks |
+
+The coordinator explicitly restarted the author after actions 17, 25, and 29.
+The first repair changed only the ambiguous command-field fixture.
+The second repair preserved all workflow rules and used safe reflow to retain the 170-line budget.
+The final repair split the isolation caveat without changing any sentence.
+These were pre-review repairs; no post-review repair allowance has been consumed.
+
+### Isolation caveat
+
+After preparing both disposable tasks, the author called `collaboration.list_agents` to inspect available capacity.
+The tool unexpectedly included the other candidate's completed helper response.
+The author immediately disclosed the exposure to the coordinator.
+
+No other candidate tree, branch, or file was opened.
+No value or evidence from that response supplied this candidate's implementation or adoption record.
+The production guidance and disposable task definitions existed before the exposure.
+The coordinator authorized the prepared fresh helper run with this caveat retained.
+
+### CLI observations and remaining authority
+
+The complete charge exceeded the initial tool-output budget and required source rereads.
+A charge projection with retrievable complete sections would reduce that repeated work.
+The fixture runner rejects filtered subtests through its complete-inventory assertion.
+A selector diagnostic before execution could identify that restriction earlier.
+
+No acceptance row remains intentionally open in this candidate return.
+The coordinator still owns independent verification, semantic review, serialized oracle operations, and the landing decision.
