@@ -29,7 +29,7 @@ The review pickup remains absent until a real proof or review record exists.
 
 Preserve every co-named fixture pin without changing its planted diagnostic.
 No executable check, fixture, budget, default, or model binding changes.
-Keep the normal single spec-author route distinct from this specification phase's user-authorized experiment.
+Keep the default spec-author route and optional sequential ticket fork within the spec phase's approved boundaries.
 
 ## Acceptance
 

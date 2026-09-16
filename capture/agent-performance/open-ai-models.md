@@ -1,10 +1,14 @@
 # OpenAI model scorecard
 
-Last incorporated phase: `shared-delegate-startup` specification (2026-09-16 UTC).
+Last incorporated phase: `shared-delegate-startup` specification and optional-author amendment (2026-09-16 UTC).
 Two sequential author forks inherit the invoking line; the user selects Sol/high for one independent review.
 The ticket author closes two blockers in one returned correction pass, and the coordinator verifies both.
 This phase supplies no production implementation result.
 Token counts, cache benefit, provider costs, and comparative latency remain unknown.
+
+The research report records two user-supplied Codex issue reports about repeated waits and context work.
+The cause and quota effect in this run remain unverified.
+Do not attribute those repeated checks to the fork workflow without separate evidence.
 
 Latest shaping observation: `debug-loop-guidance` dispatched Sol/high for one primary-source research question.
 The coordinator reopened all three papers and retained their transfer limits.
@@ -51,4 +55,5 @@ The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches dol
 - Serialize gate operations and re-run author verification when integration changes the source digest.
 - Run preflight after ticket metadata changes, including fixture and registry closure checks.
 - Preserve unknown model identity, token counts, cache benefit, costs, and comparative latency as unknown.
+- The invoking agent may select sequential spec and ticket forks under the user-approved staged specification.
 - Change general routing only after two comparable runs, one controlled comparison, or explicit user direction.
