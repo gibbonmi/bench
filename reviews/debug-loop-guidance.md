@@ -631,3 +631,161 @@ A selector diagnostic before execution could identify that restriction earlier.
 
 No acceptance row remains intentionally open in this candidate return.
 The coordinator still owns independent verification, semantic review, serialized oracle operations, and the landing decision.
+
+## DG-C1 completion checkpoint
+
+The coordinator selected Candidate A under the corrected comparison rule. The
+comparison did not count reviewer misses, review latency, repeated
+reaffirmations, or evidence-ledger size against either author. Candidate A won
+on exact-commit adoption provenance and its author-controlled repair of the
+planned blanket-ban mutation. The frozen chunk pair is
+`2f7db79a3d910ac700da42ee0dd92560a7ff7c46` through
+`885a8c10fb63cf0be81e310bcf537f303772d3cd`.
+
+```bench-review-record
+{
+  "version": 2,
+  "spec": "specs/debug-loop-guidance/spec.md",
+  "plan_digest": "sha256:1fe49b1a3f575aa482643283599862988bf7131c042f5d70c80d249afe820da1",
+  "chunks": [
+    {
+      "id": "DG-C1",
+      "base": "2f7db79a3d910ac700da42ee0dd92560a7ff7c46",
+      "tip": "885a8c10fb63cf0be81e310bcf537f303772d3cd",
+      "plan_digest": "sha256:1fe49b1a3f575aa482643283599862988bf7131c042f5d70c80d249afe820da1",
+      "source_digest": "e27aee1fdab9716656c5cbb6ae6095f7f1e6b6e5",
+      "acceptance_rows": ["DG1", "DG2", "DG3", "DG4", "DG5", "DG6", "DG7", "DG8", "DG42"],
+      "verification": [
+        {
+          "id": "dg-c1-anchors",
+          "performer": "/root/candidate_a",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "e27aee1fdab9716656c5cbb6ae6095f7f1e6b6e5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/candidate_a/dg-c1-anchors@885a8c10",
+            "digest": "sha256:3914bc2fa9fe41efb5c9bf9ee8b5e58dbd98e741141c97a45f15f5192571023f",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1516\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "anchors",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "restore the blanket write-delegate debug ban",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "codex:session/candidate_a/dg-c1-blanket-ban-probe@885a8c10",
+              "digest": "sha256:29c2370a0fdaea9d7de05d0d76c2fb97f1ffa110a8ab02e2eb196f7718ce5a1f",
+              "excerpt": "mutation: restore the retired blanket write-delegate debug ban\noutcome: docs-currency-workflow failed on dg-3-blanket-ban\nrestore: pass"
+            }
+          }
+        },
+        {
+          "id": "dg-c1-bite",
+          "performer": "/root/candidate_a",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "e27aee1fdab9716656c5cbb6ae6095f7f1e6b6e5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/candidate_a/dg-c1-bite@885a8c10",
+            "digest": "sha256:d4c72fe9a449edc83c837fd26acddf81e4ee2e2a8e85bc94228f9beaf534c772",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,9947\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "bite",
+          "command": "bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner",
+          "exit_code": 0
+        },
+        {
+          "id": "dg-c1-budgets",
+          "performer": "/root/candidate_a",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "e27aee1fdab9716656c5cbb6ae6095f7f1e6b6e5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/candidate_a/dg-c1-budgets@885a8c10",
+            "digest": "sha256:472a895b89509a549a8f828fa577306a5abcfe1b30784015367f032941f50b4c",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,8\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "dg-c1-standards",
+          "performer": "/root/c1_standards_record",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "e27aee1fdab9716656c5cbb6ae6095f7f1e6b6e5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/c1_standards_record@885a8c10",
+            "digest": "sha256:75e421d6eb4c440908e014e0a00f129e026b5f135106455a831bc6738fd1d833",
+            "excerpt": "Verdict: pass. No Standards findings at 2f7db79a..885a8c10. The guidance, exact retired-ban guard, fixtures, and evidence comply with repository standards."
+          },
+          "axis": "Standards",
+          "base": "2f7db79a3d910ac700da42ee0dd92560a7ff7c46",
+          "tip": "885a8c10fb63cf0be81e310bcf537f303772d3cd",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dg-c1-spec",
+          "performer": "/root/c1_spec_record",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "e27aee1fdab9716656c5cbb6ae6095f7f1e6b6e5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/c1_spec_record@885a8c10",
+            "digest": "sha256:356ffbec0dfa98aca9021c92e65886880c049f132f1af570042fdc82ba099c64",
+            "excerpt": "Verdict: pass. No Spec findings at 2f7db79a..885a8c10. DG-C1 satisfies DG1-DG8 and DG42, including the exact planned mutation."
+          },
+          "axis": "Spec",
+          "base": "2f7db79a3d910ac700da42ee0dd92560a7ff7c46",
+          "tip": "885a8c10fb63cf0be81e310bcf537f303772d3cd",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dg-c1-coverage",
+          "performer": "/root/c1_coverage_record",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "e27aee1fdab9716656c5cbb6ae6095f7f1e6b6e5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/c1_coverage_record@885a8c10",
+            "digest": "sha256:1e05b096f42fb285f5c9f636f583e7828e9560d3dd919ad602b31bb5d80964ef",
+            "excerpt": "Verdict: pass. No Coverage findings at 2f7db79a..885a8c10. The independent exact-ban fixture bites and restores; the focused checks pass."
+          },
+          "axis": "Coverage",
+          "base": "2f7db79a3d910ac700da42ee0dd92560a7ff7c46",
+          "tip": "885a8c10fb63cf0be81e310bcf537f303772d3cd",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
+    }
+  ],
+  "completion": {"state": "pending", "source_digest": "", "performer": "", "reconciliation": {}, "verification": []}
+}
+```
