@@ -23,6 +23,10 @@ func TestEvaluatePathRejectsMixedNestedEmphasis(t *testing.T) {
 		{"repeated underscore bold", "__An *executable __red__ is mandatory* before specification.__", 3},
 		{"repeated underscore italic", "_An *executable _red_ is mandatory* before specification._", 3},
 		{"repeated underscore triple", "___An *executable ___red___ is mandatory* before specification.___", 3},
+		{"shared star two then one", "An ***executable** red is mandatory* before specification.", 3},
+		{"shared star one then two", "An ***executable* red is mandatory** before specification.", 3},
+		{"shared underscore two then one", "An ___executable__ red is mandatory_ before specification.", 3},
+		{"shared underscore one then two", "An ___executable_ red is mandatory__ before specification.", 3},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			h := anchorHarness{rules: []anchorRule{{file: anchor.File, needle: test.text}}}
@@ -39,6 +43,20 @@ func TestEvaluatePathRejectsMixedNestedEmphasis(t *testing.T) {
 				}
 			}
 			t.Fatal("registered DG15 location missing")
+		})
+	}
+}
+
+func TestUnpairedEmphasisRunsStayVisible(t *testing.T) {
+	for _, marker := range []string{"*", "_", "**", "__", "***", "___"} {
+		t.Run(marker, func(t *testing.T) {
+			text := strings.Repeat(marker+"a ", 4096)
+			if !Satisfied(ForbidCaseFoldedEmphasis, text, "a a") {
+				t.Error("unpaired markers disappeared between words")
+			}
+			if Satisfied(ForbidCaseFoldedEmphasis, text, marker+"a") {
+				t.Error("unpaired marker is no longer searchable")
+			}
 		})
 	}
 }

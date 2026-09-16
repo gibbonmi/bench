@@ -164,26 +164,59 @@ func normalizeMatchMapped(kind Kind, runes []rune, origin []int) ([]rune, []int)
 
 // stripMarkdownEmphasisMapped removes paired emphasis markers at word boundaries.
 // Intraword underscores remain visible, so identifiers keep their exact spelling.
+// Each delimiter run enters and leaves the stack at most once.
 func stripMarkdownEmphasisMapped(runes []rune, origin []int) (out []rune, outOrigin []int) {
+	type opener struct {
+		at, width, marker, previous int
+	}
+	var stack []opener
+	top := [2]int{-1, -1}
+	removed := make([]bool, len(runes))
+	pop := func() {
+		last := stack[len(stack)-1]
+		top[last.marker] = last.previous
+		stack = stack[:len(stack)-1]
+	}
 	for i := 0; i < len(runes); {
 		width := emphasisMarkerWidth(runes, i)
-		if width == 0 || !emphasisCanOpen(runes, i, width) {
-			out = append(out, runes[i])
-			outOrigin = append(outOrigin, origin[i])
+		if width == 0 {
 			i++
 			continue
 		}
-		close := emphasisClose(runes, i+width, runes[i], width)
-		if close < 0 {
-			out = append(out, runes[i:i+width]...)
-			outOrigin = append(outOrigin, origin[i:i+width]...)
-			i += width
-			continue
+		marker := 0
+		if runes[i] == '_' {
+			marker = 1
 		}
-		inner, innerOrigin := stripMarkdownEmphasisMapped(runes[i+width:close], origin[i+width:close])
-		out = append(out, inner...)
-		outOrigin = append(outOrigin, innerOrigin...)
-		i = close + width
+		remaining := width
+		canClose := i > 0 && !unicode.IsSpace(runes[i-1]) &&
+			(i+width == len(runes) || unicode.IsSpace(runes[i+width]) || unicode.IsPunct(runes[i+width]))
+		for canClose && remaining > 0 && top[marker] >= 0 {
+			open := top[marker]
+			for len(stack)-1 > open {
+				pop()
+			}
+			paired := min(remaining, stack[open].width)
+			for offset := 0; offset < paired; offset++ {
+				removed[stack[open].at+stack[open].width-1-offset] = true
+				removed[i+width-remaining+offset] = true
+			}
+			stack[open].width -= paired
+			remaining -= paired
+			if stack[open].width == 0 {
+				pop()
+			}
+		}
+		if remaining > 0 && emphasisCanOpen(runes, i, width) {
+			stack = append(stack, opener{i + width - remaining, remaining, marker, top[marker]})
+			top[marker] = len(stack) - 1
+		}
+		i += width
+	}
+	for i, r := range runes {
+		if !removed[i] {
+			out = append(out, r)
+			outOrigin = append(outOrigin, origin[i])
+		}
 	}
 	return out, outOrigin
 }
@@ -221,26 +254,6 @@ func emphasisCanOpen(runes []rune, at, width int) bool {
 		return false
 	}
 	return at == 0 || unicode.IsSpace(runes[at-1]) || unicode.IsPunct(runes[at-1])
-}
-
-func emphasisClose(runes []rune, from int, marker rune, width int) int {
-	for at := from; at < len(runes); at++ {
-		nestedWidth := emphasisMarkerWidth(runes, at)
-		if nestedWidth == 0 {
-			continue
-		}
-		if runes[at] == marker && nestedWidth == width && at > from && !unicode.IsSpace(runes[at-1]) {
-			if at+width == len(runes) || unicode.IsSpace(runes[at+width]) || unicode.IsPunct(runes[at+width]) {
-				return at
-			}
-		}
-		if emphasisCanOpen(runes, at, nestedWidth) {
-			if close := emphasisClose(runes, at+nestedWidth, runes[at], nestedWidth); close >= 0 {
-				at = close + nestedWidth - 1
-			}
-		}
-	}
-	return -1
 }
 
 // identityOrigin answers the origin map of a rune slice that has had nothing removed yet:
