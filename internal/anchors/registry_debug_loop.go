@@ -1,6 +1,7 @@
 package anchors
 
 var debugLoopAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: ForbidInSection, Section: "How it meets the rest of Bench", Needle: "The reviewer invokes this phase; a write delegate never charges it.", Diagnostic: "debug loop: DG3 forbids the blanket write-delegate debug ban"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: ForbidInSection, Section: "How it meets the rest of Bench", Needle: "It discards its in-fence work from its owned worktree.", Diagnostic: "debug loop: DG5 forbids discarded dirty work"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: ForbidInSection, Section: "How it meets the rest of Bench", Needle: "When a repro proves an out-of-fence cause, the delegate continues implementation edits.", Diagnostic: "debug loop: DG5 forbids continued out-of-fence implementation"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: ForbidInSection, Section: "How it meets the rest of Bench", Needle: "For an out-of-fence defect, hand off before running Phases 1 through 3.", Diagnostic: "debug loop: DG4 forbids handoff before Phases 1 through 3"},
