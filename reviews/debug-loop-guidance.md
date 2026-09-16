@@ -2048,7 +2048,7 @@ This reconciliation retains the earlier observations rather than rerunning their
 The implementation adoption's unavailable Windows row remains explicitly unavailable within its disposable scenario.
 That classification supplies DG28 evidence and does not claim a passing Windows behavior test.
 
-### Current DG39 and DG43 adoption
+### Historical pre-repair DG39 and DG43 adoption
 
 Session: `/root/dgc5_author/dg39_final_adoption`, fresh context
 Native ref: `codex:collaboration/spawn_agent/dg39_final_adoption`
@@ -2116,11 +2116,142 @@ The artifact repository was clean, and both final Bench owner hashes matched the
 DG39, DG40, and DG43 therefore have current adoption evidence.
 Formal three-axis review remains pending.
 
+### DG-C5 formal repair cycle 1
+
+Initial review range: `414c5697d71093df835f3701c26f602a028354b3..7d73c40e1f161c5965bb455a62b11fbb759eec82`
+Consumed allowance: One of two formal repair cycles
+Repair author: `/root/dgc5_ste_repair_astra`, `gpt-6-astra / low`
+Source commit: `c264a3f414b32614b321306740e280b76e05660f`
+
+The initial Coverage and Spec reviews passed.
+The initial Standards review retained two blockers.
+The structured records below preserve the actual reviewers, models, efforts, excerpts, source, and findings.
+The original frozen range remains historical after the authorized rewrite.
+
+`DG-C5-S1` required user authorization for a bounded rewrite after `602edd9460b24adeac58007f771dc4bd771c594e`.
+The user approved that rewrite.
+The recovery ref `refs/heads/codex/dgc5-pre-rewrite-20260916` preserves the original history.
+The reconstruction omitted only the historical red commit.
+
+| Original commit | Reconstructed commit |
+| --- | --- |
+| `e9149df3` | Unchanged |
+| `3d19c2139cf7417debb5e544d4ec4b56f813545f` | Omitted |
+| `289003357b0f31b8eabe9307eff3ecd086094dcb` | `3b5cf77b30930fa505d331bb7a40f4bebb465971` |
+| `7d73c40e1f161c5965bb455a62b11fbb759eec82` | `141a7d8d1fd2206e2381ee06d966c67fa3fcbf41` |
+| `2e0c452b2a9d9c5565f0e47986d7fd106b93c69f` | `6c0cd955a5962851debbcfa8f37c7982fa41a2e3` |
+
+Both final tips resolve to tree `9ca64fdf711abee6a9ac39327dab7984494cc817`.
+The repair author independently confirmed that equality.
+The coordinator reported passing preflight checks for every retained post-base commit.
+
+For `DG-C5-S2`, Luna changed the Coverage instruction to the imperative and split the final combined instruction.
+The Astra repair preserved those owner bytes.
+It changed the DG43 exact anchor and omission fixture to match.
+A hidden-file search found no exact anchor or fixture for the split no-findings sentence.
+The complete fixture suite proved the revised omission and every retained fixture, including restoration.
+
+| Verification | Result | Elapsed |
+| --- | --- | --- |
+| Workflow guidance | Pass; zero skips | 1,358 ms |
+| Complete fixture bite | Pass; zero skips | 9,509 ms |
+| Anchors package | Pass; zero skips | 443 ms |
+| Prose budgets | Pass; zero skips | 5 ms |
+| Prose mechanics | Pass; zero skips | 182 ms |
+| Ticket grammar | Pass; zero skips | 1,072 ms |
+| Review-record package | Pass; zero skips | 2,901 ms |
+| Coverage map | Pass; 45 rows; existing uncited DG45 cell | Not timed |
+| Review preflight | Pass; all 13 checks | Not timed |
+| Source commit lane | Pass | Not timed |
+
+The source commit precedes the fresh review adoption below.
+The earlier DG39/DG43 adoption remains historical because the owner bytes changed.
+The five earlier owner files remain byte-identical to source `a508610de1a1195ccc3c84f9a6dccfca9e94420c`.
+Their hashes remain those in the cycle-1 source table.
+The author confirmed the four earlier artifact paths still exist.
+Debug, specification, ticket, and implementation adoption therefore remain current.
+
+### Current DG39 and DG43 repair adoption
+
+Session: `/root/dgc5_ste_repair_astra/dg39_repair_adoption`, fresh context
+Native ref: `codex:collaboration/spawn_agent/dg39_repair_adoption`
+Line: `gpt-6-astra / low`, one of three permitted attempts
+Source: `c264a3f414b32614b321306740e280b76e05660f`
+Repository: `/tmp/dgc5-fresh-review-HJBEHF`
+Subject-copy commit: `916a54c997facc8278c7b2de74f4a33a749f708f`
+Artifact commit: `fc8107277a3e1c336edd73a797fe2421f00ae04f`
+Artifacts: `report.md`, `commands.jsonl`, and `independent-policy.md`
+
+| Owner | SHA256 |
+| --- | --- |
+| `bench-craft-review/SKILL.md` | `aa9ce175bba46bf47846fd85db6b6699fac2f63b44698e37e98b03519d9d63d5` |
+| `finding-discipline.md` | `3a5018f08eafc9d6a1e6f86431a5cd721d8b40f79878c64c8fb797c9f4ea436c` |
+| `bounded-repair-policy.md` | `c1b74aa2d16b73c35b449919ef8d485c65fa1313ea3fac5e77a95213e161ea48` |
+
+The fresh session read the committed owners before the disposable subject.
+Its later logged owner reads first failed from the disposable directory.
+The repeated reads succeeded from the Bench checkout.
+The report retains these failures and an unavailable `python` invocation.
+The actual tests used `python3`.
+
+| Observation | Result | Exit | Duration |
+| --- | --- | --- | --- |
+| Empty-list refutation | Returned zero | 0 | 12.554 ms |
+| Existing total tests | Two passed | 0 | 40.967 ms |
+| Baseline policy | `policy: pass` | 0 | 16.756 ms |
+| Independent additive bypass | `policy: pass` despite repair permission | 0 | 16.912 ms |
+| Supplied deletion mutation | Planted rejection observed | 0 | 42.202 ms |
+
+The mandatory-standard finding cites `AGENTS.md:3`, `README.md:7`, and `policy.md:3`.
+The session inspected contrary evidence and the exception at `AGENTS.md:4-5`.
+The exception excludes production policy copies.
+The subject has no automated duplication check, so the report explains why executable refutation is unavailable.
+The passing sentence-presence checker does not refute that source evidence.
+
+The session independently constructed `independent-policy.md` before it read or replayed the supplied deletion mutation.
+The additive instruction permits diagnostic repair writes while retaining the required positive sentence.
+The checker accepted that contradictory state.
+The native timestamps place the bypass before both the supplied mutation read and its replay.
+
+The report keeps untested input concerns uncertain.
+It separates a usage-example suggestion as optional advice without a finding ID, disposition, or repair target.
+The disposable subject has three accepted axis findings and two distinct repair targets.
+The session made no repair.
+
+Native excerpt:
+
+> Standards: S1, auto-fix; one mandatory production-policy duplication finding.
+> Spec: P1, auto-fix; the checker accepts forbidden repair permission.
+> Coverage: C1, auto-fix; additive permission preserves the positive marker and escapes the check.
+> P1 and C1 share one repair target.
+> The empty-list allegation is refuted.
+> Untested input concerns remain uncertain.
+
+> Optional advice: consider a usage example.
+
+These findings concern the deliberately defective disposable subject, not the Bench chunk.
+The repair author read the report, command record, and independent bypass.
+Independent reruns confirmed both total tests pass and the contradictory policy returns `policy: pass`.
+Git comparison confirmed unchanged bytes for all eight subject files.
+
+The artifact repository is clean.
+The current owner hashes match the table above.
+
+All five adoption families are current at source `c264a3f414b32614b321306740e280b76e05660f`.
+The four earlier families retain their original native provenance.
+The review family uses this fresh repair adoption.
+Independent formal re-review remains pending.
+
+The first evidence prose check found one paragraph with seven sentences.
+The first split affected a different paragraph, so the repeated check and prospective commit remained red.
+The author then split the cited excerpt without changing its claims.
+The canonical review-record parser accepted all six chunk records.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/debug-loop-guidance/spec.md",
-  "plan_digest": "sha256:d522c7f3bb8f231a758986209286da90692048a775f1296fe1e7b3671b1de32d",
+  "plan_digest": "sha256:6b7f43297f319ff2f3dade0fab4cabc97d6297b11e3e6afd27609da9ecd95940",
   "chunks": [
     {
       "id": "DG-C1",
@@ -3036,9 +3167,11 @@ Formal three-axis review remains pending.
         }
       ]
     }
+    ,{"id":"DG-C5","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"c264a3f414b32614b321306740e280b76e05660f","plan_digest":"sha256:6b7f43297f319ff2f3dade0fab4cabc97d6297b11e3e6afd27609da9ecd95940","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","acceptance_rows":["DG33","DG34","DG35","DG36","DG37","DG38","DG39","DG40","DG41","DG43"],"verification":[],"reviews":[{"id":"dg-c5-coverage-initial","performer":"/root/dgc5_coverage_review","role":"independent-review","model":"gpt-6-astra","effort":"medium","source_digest":"da7164ba566717ef6f96dd4525a64536fbfbd95f","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_coverage_review","digest":"sha256:8934505013c0c7675ad24543ef94b3e60269f0a6518a3f2b4d3ae021276c2cc4","excerpt":"Coverage: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..7d73c40e1f161c5965bb455a62b11fbb759eec82. DG33–DG38 and DG43 have live owner anchors and biting fixtures. Final adoption source 602edd9460b24adeac58007f771dc4bd771c594e matched all recorded owner hashes and preserved its subject. It independently constructed an additive contradiction before replaying the supplied deletion mutation. DG40's five-family reconciliation was current. Workflow guidance, complete fixture bite, and prose budgets passed with zero failures or skips. No Coverage repair was required."},"axis":"Coverage","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"7d73c40e1f161c5965bb455a62b11fbb759eec82","finding_ids":[],"supersedes":[]},{"id":"dg-c5-spec-initial","performer":"/root/dgc5_spec_review","role":"independent-review","model":"gpt-5.6-sol","effort":"high","source_digest":"da7164ba566717ef6f96dd4525a64536fbfbd95f","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_spec_review","digest":"sha256:436aa0b600855e595e5d29f75898434255cc4e22f8569dd545eaebf368452c99","excerpt":"Spec: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..7d73c40e1f161c5965bb455a62b11fbb759eec82. DG33–DG41 and DG43 were satisfied by candidate-source derivation, runnable refutation, exact-source mandatory-standard evidence, unavailable-run explanation, contrary-evidence inspection, independent positive-preserving Coverage bypass, uncertainty, disposition routing, current adoption, and five-family reconciliation. All focused checks passed with zero skips. No Spec repair was required."},"axis":"Spec","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"7d73c40e1f161c5965bb455a62b11fbb759eec82","finding_ids":[],"supersedes":[]},{"id":"dg-c5-standards-initial","performer":"/root/dgc5_standards_review","role":"independent-review","model":"gpt-5.6-sol","effort":"high","source_digest":"da7164ba566717ef6f96dd4525a64536fbfbd95f","state":"completed","outcome":"fail","native_ref":{"ref":"/root/dgc5_standards_review","digest":"sha256:a6a58b1003ddd115d419bab264dce41bd53f29e10407646cb96c63996b5ccfd5","excerpt":"Standards: FAIL — 2 blocking findings; worst issue: historical red completion-plan commit. Frozen range 414c5697d71093df835f3701c26f602a028354b3..7d73c40e1f161c5965bb455a62b11fbb759eec82. DG-C5-S1 (ask-user): commit 3d19c213 duplicated the Luna assignment and failed completion-plan predecessor validation; an additive commit could not repair the historical invariant, so bounded reconstruction after 602edd94 required user authorization. DG-C5-S2 (auto-fix): craft-review used declarative 'Coverage constructs' and combined 'report no findings' with 'state what you examined', violating one-imperative-per-sentence STE. Other ownership, anchors, registries, budgets, provenance, adoption hashes, and focused checks passed."},"axis":"Standards","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"7d73c40e1f161c5965bb455a62b11fbb759eec82","finding_ids":["DG-C5-S1","DG-C5-S2"],"supersedes":[]}]}
   ],
   "completion": {"state": "pending", "source_digest": "", "performer": "", "reconciliation": {}, "verification": []},
   "amendments": [
+    {"from":"sha256:d522c7f3bb8f231a758986209286da90692048a775f1296fe1e7b3671b1de32d","to":"sha256:6b7f43297f319ff2f3dade0fab4cabc97d6297b11e3e6afd27609da9ecd95940","chunk_ids":{"DG-C1":["DG-C1"],"DG-CR":["DG-CR"],"DG-C2":["DG-C2"],"DG-C3":["DG-C3"],"DG-C4":["DG-C4"],"DG-C5":["DG-C5"]}},
     {
       "from": "sha256:1fe49b1a3f575aa482643283599862988bf7131c042f5d70c80d249afe820da1",
       "to": "sha256:5bf67838e7c2c0f59f8bd20104f2066c592bb3f6374bccc41a7005ab72cd0df8",
