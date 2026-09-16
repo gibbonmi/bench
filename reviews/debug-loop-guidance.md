@@ -839,6 +839,129 @@ anchors, fixtures, adoption evidence, and verification.
 | `bench test --check ticket-grammar` | pass, no skips | 1,622 ms |
 | `bench test --check prose-mechanics` | pass, no skips | 253 ms |
 
+### DG-C2 repair cycle 1
+
+The first review accepted three blockers. Standards found duplicate DG11 and
+DG12 predicates outside the new canonical sequence. Coverage found that the
+DG15 prohibition covered only that sequence. Spec found that DG16 observed
+transient owner bytes instead of the final committed skill.
+
+The production repair committed as
+`902074b328434d0f3f182bae5d272ea771656e63`. The committed skill hash is
+`16259b21a31431399fff3f7bd6cb0656e47d125272bc1eeff10b76e30aab45db`.
+
+The older seam step now points to `Evidence-led authoring` and `craft-seams`.
+The coverage-map section connects each story to the canonical sequence result.
+Neither section restates the DG11 or DG12 predicate.
+
+The DG15 anchor now forbids the executable-red sentence across the complete
+skill. Its fixture inserts the exact sentence under `User stories`, outside
+the canonical section. Before the owner repair, that fixture failed to bite.
+After the repair, the universal fixture proof passed all fixtures.
+
+The exact planned probe inserted this sentence under `User stories`:
+`Require an executable red before you specify a new feature.` The root check
+failed with the DG15 forbidden-requirement diagnostic. `bench probe` reported
+one failed test and `restored=yes`.
+
+#### Current DG16 adoption
+
+The earlier DG16 observation remains as historical provenance. It is stale
+for acceptance because it loaded hash `7ee5236c`. This repair does not relabel
+or delete that evidence.
+
+Session: `/root/dgc2_author/dgc2_repair_adoption`, fresh context.
+Orchestrator charge: `gpt-5.6-sol / high / 2 attempts`.
+Native request report: inherited model with no override.
+Native model label: `GPT-5`.
+Observed duration: 107 seconds.
+
+The session first verified Bench tip
+`902074b328434d0f3f182bae5d272ea771656e63` and skill hash
+`16259b21a31431399fff3f7bd6cb0656e47d125272bc1eeff10b76e30aab45db`.
+It then read the complete skill and STE reference.
+
+The specified repository was
+`/tmp/dgc2-repair-adoption.8X3NGXtH/specified` at
+`f64314e066458243c3cf06d29c4726b9e07c2c06`. Its initial status was clean.
+The session read `TASK.md`, `README.md`, and `list_tools.py` before its first
+authoring action.
+
+The task fixed these scenarios:
+
+- `summarize(["red", "blue"])` returns `"2 items: red, blue"`.
+- `summarize(["solo"])` returns `"1 item: solo"`.
+- `summarize([])` returns `"0 items"`.
+
+The README named `join_items` as the list-rendering owner. The module confirmed
+the comma-and-space behavior. The repository had no summary implementation or
+executable summary check.
+
+The session wrote and inspected `SPEC_EVIDENCE.md`. It used the module function
+boundary as the sufficient seam. It named plural-only formatting as the
+cheapest wrong result.
+
+The planned single-item comparison fails on `"1 items: solo"`. The session
+ran `git diff --check` and stopped after inspection. Its handoff asks the
+reviewer to inspect the evidence plan.
+
+The unspecified repository was
+`/tmp/dgc2-repair-adoption.8X3NGXtH/unspecified` at
+`59d70a38313529ae5d00452c4ec06439cb8c56bc`. Its initial status was clean.
+The task fixed only the two nonempty results.
+
+The session wrote only `DECISION_REQUEST.md`. It asked for the exact
+`summarize([])` string. It stopped before seam selection or evidence-plan
+design, and `SPEC_EVIDENCE.md` remained absent.
+
+The handoff requires that reviewer decision before specification continues.
+The session created no implementation or executable check. It reported no
+Bench CLI observations.
+
+The retained author verified both repository tips, both artifact bytes, the
+absence check, the Bench tip, and the skill hash. The Bench worktree stayed
+clean during the adoption run.
+
+#### User authority and forward obligation
+
+The user requested `gpt-5.6-sol / medium` for the root execution and
+implementation line. The user also required Luna or Terra to make all
+prose-only and ASD-STE100 changes.
+
+Those instructions authorized the recorded author binding and prose transfer.
+The Standards transfer and binding objections require no reconstruction.
+This repair keeps the original provenance labels.
+
+DG-C4 owns one implementation-command follow-up. It must require a fresh
+adoption run after any later owner-byte change. It must also classify
+prose-only edits as implementation writes.
+
+DG-C2 does not edit `.agents/commands/bench-implement-spec.md`. The forward
+obligation stays open for ticket 4.
+
+#### Production repair verification
+
+| Check | Result | Elapsed |
+| --- | --- | --- |
+| `bench test --check docs-currency-workflow` | pass, no skips | 2,103 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass, no skips | 10,704 ms |
+| `bench test --check guidance-prose-budgets` | pass, no skips | 6 ms |
+| `bench test --check ticket-grammar` | pass, no skips | 1,281 ms |
+| `bench test --check prose-mechanics` | pass, no skips | 316 ms |
+| `bench test --check line-routing` | pass, no skips | 2,382 ms |
+
+#### Evidence record verification
+
+| Check | Result | Elapsed |
+| --- | --- | --- |
+| Exact DG15 outside-section probe | bit and restored, no skips | 1,510 ms |
+| `bench test --check docs-currency-workflow` | pass, no skips | 1,757 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass, no skips | 10,162 ms |
+| `bench test --check guidance-prose-budgets` | pass, no skips | 7 ms |
+| `bench test --check ticket-grammar` | pass, no skips | 1,528 ms |
+| `bench test --check prose-mechanics` | pass, no skips | 204 ms |
+| `bench test --check line-routing` | pass, no skips | 2,362 ms |
+
 ```bench-review-record
 {
   "version": 2,
