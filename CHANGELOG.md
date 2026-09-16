@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Complete outcome slices
+
+- Changed ticket guidance to split independently useful outcomes and merge fragments that have no standalone result.
+
 ### Delegated author transfer
 
 - Added explicit user direction as a valid reason to transfer a delegated author.
