@@ -1007,6 +1007,81 @@ This finding adds no implement-spec feedback. It concerned anchor matching
 breadth, not implementation-command direction. The earlier DG-C4 forward
 obligation remains unchanged. Repair cycle 2 of 2 is consumed and closed.
 
+### DG-C2 critical debug repair
+
+The user authorized this repair beyond the ordinary cycle cap. Root first
+reproduced a case-sensitive hole. `An executable red is mandatory...` was
+silent at sentence start, while the lowercase control bit.
+
+#### Debug phases
+
+Phase 1 used the retained fixture seam as the loop:
+`bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner`.
+The new `dg-15-mandatory-red-capitalized` fixture inserts the sentence under
+`Review rubric`.
+
+Phase 2 reproduced the exact symptom. The fixture failed to bite and produced
+498 completed proofs for 499 fixtures. The same location with lowercase
+`an` remained the biting control.
+
+Phase 3 confirmed the cause from the minimized pair. The forbidden needle
+included the lowercase article, so its literal match missed sentence-start
+capitalization. The working group and file-wide location were not the cause.
+
+Phase 4 changed one variable. The needle became
+`executable red is mandatory`, which is stable after either article form.
+
+Phase 5 kept the regression at the workflow-anchor seam. The capitalization
+fixture went green. The lowercase variant, sentence-start variant, and exact
+planned sentence each retained their intended diagnostic.
+
+The debug run also locked two workflow findings from the earlier repair.
+Before production prose changed, each new implement-spec anchor was observed
+red independently:
+
+- `debug loop: implementation phase dropped prose-only owner-edit transfer`
+- `debug loop: implementation phase dropped post-owner-change adoption freshness`
+
+The user directed Terra to make the command-prose change. Assignment
+`/root/dgc2_workflow_terra` used `gpt-5.6-terra / medium` from source
+`848f8014dac2efec258433c3a755293bdd846ab6`. Its native reference is
+`codex:collaboration/spawn_agent/dgc2_workflow_terra`.
+
+Terra added only the two exact `Build` rules. The command remains 80 lines.
+The retained Sol author owned the anchors, fixtures, probes, verification, and
+composition. Production commit
+`734cc8e8f052df665bde4cff353776b8ac159712` contains the green repair.
+
+Phase 6 closed with no debug instrumentation to remove. The focused suite and
+all three final probes passed. Each probe reported one intended failure,
+`restored=yes`, and no skips.
+
+| Evidence | Result | Elapsed |
+| --- | --- | --- |
+| Capitalization fixture before the fix | expected red: did not bite; 498/499 proofs, no skips | 9,114 ms |
+| Universal fixture proof after the DG15 fix | pass, no skips | 10,164 ms |
+| Prose-only owner rule before prose | expected red: missing transfer rule, no skips | 1,329 ms |
+| Adoption-freshness rule before prose | expected red: missing freshness rule, no skips | 1,255 ms |
+| Sentence-start DG15 probe after all fixes | bit and restored, no skips | 1,279 ms |
+| Prose-only downgrade probe | bit and restored, no skips | 1,255 ms |
+| Adoption weakening probe | bit and restored, no skips | 1,257 ms |
+| `bench test --check docs-currency-workflow` | pass, no skips | 1,909 ms |
+| Universal retained fixture proof | pass, no skips | 11,034 ms |
+| `bench test --check guidance-prose-budgets` | pass, no skips | 9 ms |
+| `bench test --check ticket-grammar` | pass, no skips | 1,156 ms |
+| `bench test --check prose-mechanics` | pass, no skips | 241 ms |
+| `bench test --check line-routing` | pass, no skips | 1,798 ms |
+
+The architecture finding is bounded. Literal forbidden anchors do not
+normalize sentence case, so an article-prefixed semantic fragment is fragile.
+A case-stable fragment plus fixtures at distinct locations prevents this defect
+without broadening the prohibition to legitimate negative guidance.
+
+The craft-spec bytes did not change. Its SHA-256 remains
+`16259b21a31431399fff3f7bd6cb0656e47d125272bc1eeff10b76e30aab45db`,
+so the current DG16 adoption remains valid. The new implementation rules make
+future owner-byte freshness explicit before DG-C4 adoption and review.
+
 ```bench-review-record
 {
   "version": 2,
