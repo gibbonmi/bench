@@ -114,9 +114,9 @@ no citation and no object, so nothing can be checked or fixed.
 
 1. Select one candidate finding from the axis's current binding source and the frozen implementation.
 2. Apply the evidence rule in `references/finding-discipline.md` before you retain the candidate.
-3. If possible, Coverage constructs an independent bypass that preserves claimed positive evidence while violating the requirement.
+3. If possible, construct an independent Coverage bypass that preserves claimed positive evidence while violating the requirement.
    Replaying only the author's supplied mutations does not satisfy this attempt.
 4. Keep an unsupported concern uncertain.
 5. Route accepted findings through the existing repair disposition at `/bench-review-implementation`.
 
-If no candidate survives, report no findings and state what you examined.
+If no candidate survives, report no findings. State what you examined.

@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/skills/bench-craft-review/SKILL.md",
-    "old": "If possible, Coverage constructs an independent bypass that preserves claimed positive evidence while violating the requirement.",
+    "old": "If possible, construct an independent Coverage bypass that preserves claimed positive evidence while violating the requirement.",
     "new": ""
   }
 ]
