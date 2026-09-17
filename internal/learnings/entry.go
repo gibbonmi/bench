@@ -22,10 +22,33 @@ func FormatEntry(date, title, what, right, rule string) string {
 	if rule == "" {
 		rule = "none"
 	}
-	return "## " + date + " — " + title + "  [open]\n" +
-		"- **What happened:** " + what + "\n" +
-		"- **Right behavior:** " + right + "\n" +
-		"- **Proposed rule change:** " + rule + "\n"
+	values := []string{what, right, rule}
+	out := "## " + date + " — " + title + "  [open]\n"
+	for i, bullet := range entryBullets {
+		out += "- **" + bullet.label + ":** " + values[i] + "\n"
+	}
+	return out
+}
+
+// entryBullets is the body order FormatEntry renders, so EntryField reads the same order
+// the writer uses.
+var entryBullets = []struct{ field, label string }{
+	{"what", "What happened"},
+	{"right", "Right behavior"},
+	{"rule", "Proposed rule change"},
+}
+
+// EntryField names the FormatEntry argument rendered on the entry's 1-based line:
+// "title" for the heading, then "what", "right", or "rule". It returns "" for any other
+// line.
+func EntryField(line int) string {
+	if line == 1 {
+		return "title"
+	}
+	if i := line - 2; i >= 0 && i < len(entryBullets) {
+		return entryBullets[i].field
+	}
+	return ""
 }
 
 // sanitizeField collapses every control byte in s, a newline, a carriage return, a tab,
