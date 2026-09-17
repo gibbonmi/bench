@@ -105,6 +105,27 @@ func TestMarkdownH2SectionExcludesItsHeading(t *testing.T) {
 	}
 }
 
+// TestMarkdownNumberedStepsIncludesItsOpener pins the step body's open boundary, which the
+// section body's boundary inverts. A step's own first words sit on its opener line, so a
+// body that started under that line would lose them. The body still stops at the next
+// opener, so the two boundaries are graded together.
+func TestMarkdownNumberedStepsIncludesItsOpener(t *testing.T) {
+	const section = "1. the first step opens here\n   a continuation line\n2. the second step opens here\n   another continuation\n"
+	body, count := MarkdownNumberedSteps(section, 1)
+	if count != 1 {
+		t.Fatalf("MarkdownNumberedSteps(1) counted %d owning openers, want 1", count)
+	}
+	if !strings.HasPrefix(body, "1. the first step opens here") {
+		t.Fatalf("step body = %q, want it to start with its own opener line", body)
+	}
+	if !Satisfied(RequireInStep, body, "the first step opens here") {
+		t.Fatalf("step body = %q, want a needle on the opener line to satisfy the step-scoped kind", body)
+	}
+	if strings.Contains(body, "the second step opens here") {
+		t.Fatalf("step body = %q, want it to stop at the next opener", body)
+	}
+}
+
 func TestSatisfiedNormalizesByKind(t *testing.T) {
 	tests := []struct {
 		name   string
