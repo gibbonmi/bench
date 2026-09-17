@@ -81,13 +81,25 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 func prepareEvidenceCommand(root, slug, base, sourceTip, name string, quota uint64, args []string) (string, int) {
 	return evidencecmd.Prepare(root, quota, func(stage func(*chargeevidence.Pack, string, string) string) (string, int) {
 		return preparedAttempts(root, modeBuild, slug, base, sourceTip, "charge", args, func(facts Facts) (string, int) {
-			pack, refusal := buildChargePack(root, facts, Decide(facts), name, buildSourcePolicy())
+			pack, refusal := buildChargePack(root, facts, boundedVerdict(Decide(facts)), name, buildSourcePolicy())
 			if refusal = stage(pack, facts.AssignmentTarget, refusal); refusal != "" {
 				return refusal, 1
 			}
 			return "", 0
 		})
 	})
+}
+
+// boundedVerdict identifies each check detail too long for a bounded response by type,
+// length, and digest. The check names, verdicts, and remedies stay unchanged.
+func boundedVerdict(verdict Verdict) Verdict {
+	checks := make([]CheckResult, len(verdict.Checks))
+	for i, check := range verdict.Checks {
+		check.Detail = evidencecmd.BoundedDiagnostic("detail", check.Detail)
+		checks[i] = check
+	}
+	verdict.Checks = checks
+	return verdict
 }
 
 func verdictCommand(root, mode, slug, base, sourceTip string, args []string) (string, int) {

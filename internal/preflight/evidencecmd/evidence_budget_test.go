@@ -8,6 +8,7 @@ import (
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/preflight"
+	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
@@ -64,6 +65,37 @@ func TestEvidenceResponseBudget(t *testing.T) {
 		if len(out) > preflighttest.ResponseBudget || len(out) == 0 {
 			t.Errorf("%s holds %d encoded bytes, want 1 to %d", name, len(out), preflighttest.ResponseBudget)
 		}
+	}
+}
+
+// TestEvidenceResponseBound is the guard half of CE13, CE131, CE132, CE138, and CE139. Under
+// a lowered in-process limit, every bounded path's response becomes the bounded defect
+// refusal, so a path that skips the shared guard turns its case red.
+func TestEvidenceResponseBound(t *testing.T) {
+	root, slug := preflighttest.SeedConformant(t)
+	args := preflighttest.ChargeArgs(t, root, slug, false)
+	identity, _, _ := prepareEvidence(t, args)
+	source := "v1." + strings.TrimPrefix(identity, "sha256:") + ".s.1.0"
+	restore := evidencecmd.SetResponseLimitForTest(16)
+	defer restore()
+	for _, test := range []struct {
+		name string
+		args []string
+	}{
+		{"CE13 build preparation", args},
+		{"CE131 manifest read", []string{"evidence", identity}},
+		{"CE132 source read", []string{"evidence", identity, "--cursor", source}},
+		{"CE138 oversized operand usage", []string{"build", strings.Repeat("s", 2000)}},
+		{"CE138 grammar usage", []string{"build", slug, "--unknown"}},
+		{"CE138 operation usage", []string{"build", slug, "--full"}},
+		{"CE139 operational refusal", []string{"evidence", "sha256:" + strings.Repeat("0", 64)}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			out, code := preflight.Command(test.args)
+			if code != 1 || !strings.HasPrefix(out, "error: response bound exceeded — ") || strings.Count(out, "\n") != 1 {
+				t.Fatalf("%s under a 16-byte limit = (%d):\n%.300s", test.name, code, out)
+			}
+		})
 	}
 }
 

@@ -62,6 +62,27 @@ func TestEvidenceDefaultQuota(t *testing.T) {
 	}
 }
 
+// TestEvidenceLargePreparationRefusal proves that a preparation refusal with a check detail
+// too long for one response names the check, identifies the detail by type, length, and
+// digest, and keeps its recovery action.
+func TestEvidenceLargePreparationRefusal(t *testing.T) {
+	root, slug := preflighttest.SeedConformant(t)
+	var paths []string
+	for i := 0; i < 2000; i++ {
+		path := fmt.Sprintf("unfenced/%04d-%s.go", i, strings.Repeat("p", 40))
+		paths = append(paths, path)
+		preflighttest.MustWriteFile(t, path, "package p\n")
+	}
+	args := preflighttest.LegacyCommitted(t, root, slug, "unauthorized paths", false)
+	out, code := preflight.Command(args)
+	detail := "not authorized by any ownership fence: " + strings.Join(paths, ", ")
+	want := fmt.Sprintf("error: preflight required: paths-authorized: detail bytes=%d sha256=%s — repair paths-authorized and rerun the exact charge\n", len(detail), sha(detail))
+	if code != 1 || out != want || len(out) > preflighttest.ResponseBudget {
+		t.Fatalf("large preparation refusal = (%d, %.300q), want %q", code, out, want)
+	}
+	preflighttest.AssertNothingPublished(t, root)
+}
+
 var retryQuota = regexp.MustCompile(` — retry with --max-store-bytes ([0-9]+)\n$`)
 
 // capacityRequired runs one preparation under quota and returns the required byte count
