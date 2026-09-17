@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: ready compiled map `specs/calibrated-decisions/decisions/calibrated-decisions.md`, confirmed 2026-09-17.
 
-Verification log: 0 iteration(s) to accept — pending review
+Verification log: 2 iteration(s) to accept — one opus/high round found six blocking findings. They were on anchor bytes, the fence union, a conditional row, a section order, a missing definition row, and an unverifiable retro row. One author fold closed all six and nine advisories under coordinator verification.
 
 ## Problem
 
@@ -33,7 +33,6 @@ Harder chunks: CD3, CD4.
 5. As a delegate, I want the charge to name the three status values and the integer range, so that I return the exact shape.
 6. As a coordinator, I want my tree probe to label each row `held` or `refuted`, so that the author never labels its own claim.
 7. As a coordinator, I want a `verified` row to receive my probe's label too, so that a red-to-green log does not label itself.
-8. As a coordinator, I want a malformed row returned to the author before any label, so that the retro receives only scorable pairs.
 9. As a delegate, I want to return a row `abstained` when I cannot state a confidence, so that honest withholding is not a guess.
 
 ### Confidence on a review finding
@@ -92,31 +91,57 @@ Harder chunks: CD3, CD4.
 40. As a reviewer, I want no numeric routing threshold in this spec, so that the threshold decision waits for ten pairs.
 41. As a reviewer, I want no model training, so that Bench steers only routing and prose.
 42. As a guidance author, I want every changed Markdown file to pass the prose lane, so that the kit's prose contract holds.
+43. As a coordinator, I want `verified` and `claimed` defined by whether the author ran the named check, so that a status means one thing.
+44. As a maintainer, I want the calibration header spelled once in the retros package, so that the renderer cannot drift from the parser.
 
 ## Implementation decisions
 
 - The claim schema has three fields and no others. `status` is one of `verified`, `claimed`, or `abstained`. `confidence` is an integer from 0 to 10, and it is absent when abstained. `label` is `held` or `refuted`, and only a label source writes it. The glossary terms **claim**, **stated confidence**, **outcome label**, **label source**, **calibration score**, and **abstention** already exist and are used exactly.
-- The delegation discipline reference gains one `Claim schema` section that owns the schema, the malformed-row rule, the abstention rule, and the coordinator-label rule. The delegate skill gains one pointer sentence inside its two lines of headroom.
-- A malformed row has one of three shapes. The first has no status. The second has a confidence outside 0 to 10 or not an integer. The third is an `abstained` row with a confidence. The coordinator returns it to the author before any label.
-- The finding discipline reference owns the finding confidence rule, the disposition-to-label mapping, and the no-confidence rule for optional advice. The review skill extends its existing pointer sentence in place, with no line growth. The review-implementation command's pickup step states that each actionable finding line carries its confidence.
+- The delegation discipline reference gains one `Claim schema` section that owns the schema, the status definitions, the abstention rules, and the coordinator-label rule. The delegate skill gains one pointer sentence inside its two lines of headroom.
+- The finding discipline reference owns the finding confidence rule, the disposition-to-label mapping, and the no-confidence rule for optional advice. The review skill keeps its existing pointer sentence byte for byte, period included. It adds one second sentence on the same line, so the file grows by zero lines. The new sentence is anchored on its own words. The review-implementation command's pickup step states that each actionable finding line carries its confidence.
 - The disposition-to-label mapping is fixed: `auto-fix` and `ask-user` label a finding `held`, and `no-op` labels it `refuted`.
 - The review record JSON types in `internal/reviewrecord` do not change. The confidence rides on the finding line in the pickup and in the retro table.
-- The line skill gains one reference file that owns the calibration score rule, the label-source rule, the abstention scoring rule, and the expectation label rule. The declaration block in the line skill gains one `Expected repair rounds:` line, and the skill reclaims that line elsewhere so its budget holds.
+- The line skill gains one reference file that owns the calibration score rule, the label-source rule, the abstention scoring rule, and the expectation label rule. The declaration block in the line skill gains one `Expected repair rounds:` line. The pointer to the reference rides inside that line, so the net growth is one line. The skill reclaims one line to hold its budget: the unanchored fan-out clause line in the declaration section is the candidate.
 - The expectation label rule is fixed. The actual round count in the repair-attribution table labels the expectation `held` when it equals the expected count, and `refuted` otherwise.
 - The retro keeps its nine required headings. The calibration table renders under the existing delegate-performance heading. A new required heading would red every retro authored before this spec in this repository and in every linked repository.
-- The retros package owns the calibration table header as one exported constant beside the two derived-section headings. The scaffold renders that header and one `unknown` row as a third derived section. No second spelling of the header exists in the renderer.
+- The retros package owns the calibration table header as one exported constant beside the two derived-section headings. The scaffold renders that header and one `unknown` row as a third case in `scaffoldSection`, under the delegate-performance heading that precedes the repair table. No second spelling of the header exists in the renderer, and CR35 grades that promise.
 - The scorecard README's Measures table gains one `calibration` row that defines the Brier mean, the pair count, and the abstention count. Its update contract states the `unknown` cell rule, the ten-assignment cap, and the two-run routing rule with calibration as one input. Each provider routing table gains a `calibration` column, and this build writes `unknown` in every cell.
-- Every new guidance sentence a row cites is a registry anchor with its own omission canary fixture. The anchors live in a new registry file beside the ticket-passes precedent.
+- Every new guidance sentence a row cites is a registry anchor with its own omission canary fixture. The anchors live in a new registry file beside the ticket-passes precedent. Its group joins the existing composition line in the registry data file with no added line.
+- Each anchor needle below is a pasted operand. The build writes these bytes and the fixtures mutate them.
+  - CR1: A done-claim row carries a `status` of `verified`, `claimed`, or `abstained` and a stated confidence as an integer from 0 to 10.
+  - CR34: `verified` means the author ran the named check and returns its red-to-green log, and `claimed` means an assertion with no executed check.
+  - CR2: A delegate that cannot state a confidence returns the row `abstained` with no confidence.
+  - CR37: No later probe turns an abstention into a refuted claim.
+  - CR3: The coordinator's probe of the exact tree labels a done-claim row `held` or `refuted`, whatever its status.
+  - CR32: A claim carries no free-text field.
+  - CR13: The charge names the `Claim schema` section of `references/delegation-discipline.md` as the return shape.
+  - CR4: A finding carries a stated confidence as an integer from 0 to 10.
+  - CR5: The confidence never changes whether a finding blocks.
+  - CR6: `auto-fix` and `ask-user` label a finding `held`, and `no-op` labels it `refuted`.
+  - CR30: Optional advice carries no confidence.
+  - CR15: A finding also states its confidence as an integer from 0 to 10.
+  - CR22: Each actionable finding line carries its stated confidence.
+  - CR7: The line declaration states the expected repair-round count and a stated confidence as an integer from 0 to 10.
+  - CR8: One claim's calibration score is `(p - label)^2`, with `p = n / 10` and label 1 for `held` or 0 for `refuted`.
+  - CR9: An abstention scores 0, stays out of the Brier mean, and is counted apart.
+  - CR10: A label source is the gate, the coordinator's probe of the exact tree, or the reviewer's disposition.
+  - CR36: A model judgment is never a label source.
+  - CR31: The repair-attribution table's actual round count labels the expectation `held` when it equals the expected count and `refuted` otherwise.
+  - CR11: Expected repair rounds: <count> / confidence <0-10>. `references/calibration-score.md` owns the score.
+  - CR20: The retro fills the calibration table with one row per labeled claim: surface, claim, status, confidence, label, and model, effort, and role.
+  - CR21: The retro states the Brier mean, the pair count, and the abstention count below the table, with `unknown` for a mean over zero pairs.
+  - CR24: | calibration | the Brier mean over labeled pairs, the pair count, and the abstention count |
+  - CR26: The calibration measure is one input to the two-run routing rule, obeys the ten-assignment cap, and never moves a tier on its own.
 - The Bootstrap authority rule does not apply. This spec makes no trusted-execution or refusal-before-execution claim.
 
 ## Implementation chunks
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| CD1 / 1-state-claim-schema-on-delegate-return.md | A delegate return carries the claim schema, the coordinator labels each row by probe, and a malformed or abstained row follows its rule | CR1, CR2, CR3, CR13, CR14, CR29, CR32 | docs-currency-workflow anchors with omission canaries, guidance-prose-budgets, prose lane | no |
+| CD1 / 1-state-claim-schema-on-delegate-return.md | A delegate return carries the claim schema with its status definitions, the coordinator labels each row by probe, and an abstained row follows its rule | CR1, CR2, CR3, CR13, CR14, CR32, CR34, CR37 | docs-currency-workflow anchors with omission canaries, guidance-prose-budgets, prose lane | no |
 | CD2 / 2-state-finding-confidence-in-review.md | A review finding carries a confidence that the reviewer's disposition labels and that never changes blocking | CR4, CR5, CR6, CR15, CR16, CR22, CR23, CR30 | docs-currency-workflow anchors with omission canaries, guidance-prose-budgets, prose lane, review-owned schema check | no |
-| CD3 / 3-declare-expected-repair-rounds-with-score.md | A line declaration states expected repair rounds with a confidence, and one reference owns the score, label-source, abstention, and expectation-label rules | CR7, CR8, CR9, CR10, CR11, CR12, CR31 | docs-currency-workflow anchors with omission canaries, guidance-prose-budgets, prose lane | yes |
-| CD4 / 4-render-calibration-table-in-retro-scaffold.md, 5-define-calibration-measure-in-scorecard.md | The retro scaffold renders the calibration table, the final-check guidance names the retro duty, and the scorecard defines and carries the measure | CR17, CR18, CR19, CR20, CR21, CR24, CR25, CR26, CR28 | internal/roadmap scaffold test, internal/retros parse tests, docs-currency-workflow anchors with omission canaries, prose lane, review-owned data check | yes |
+| CD3 / 3-declare-expected-repair-rounds-with-score.md | A line declaration states expected repair rounds with a confidence, and one reference owns the score, label-source, abstention, and expectation-label rules | CR7, CR8, CR9, CR10, CR11, CR12, CR31, CR36 | docs-currency-workflow anchors with omission canaries, guidance-prose-budgets, prose lane | yes |
+| CD4 / 4-render-calibration-table-in-retro-scaffold.md, 5-define-calibration-measure-in-scorecard.md | The retro scaffold renders the calibration table, the final-check guidance names the retro duty, and the scorecard defines and carries the measure | CR17, CR18, CR19, CR20, CR21, CR24, CR25, CR26, CR28, CR35 | internal/roadmap scaffold test, internal/retros parse tests, docs-currency-workflow anchors with omission canaries, prose lane, review-owned data check | yes |
 | CD5 / 6-record-first-pairs-in-own-retro.md | The build that lands this spec records the first pairs in its own retro and every edited Markdown file passes the prose lane | CR27, CR33 | review-owned at final reconciliation, prose lane | no |
 
 ## Testing decisions
@@ -126,7 +151,7 @@ Harder chunks: CD3, CD4.
 - The heading invariant is held by the existing `internal/retros` parse tests over `testdata/eligible.md`, which spell the nine headings independently of the renderer.
 - The guidance-prose-budgets check observes the three skill files that sit at or near budget.
 - The docs-currency-workflow check is the gate seam for every anchor. The fixture-bite test proves each canary bites through its registered owner.
-- The semantic rules, the disposition mapping, and the provider-file data edits are review-owned, because no parser reads them.
+- The semantic rules, the disposition mapping, the provider-file data edits, and the one-source header promise are review-owned, because no parser reads them.
 
 ### Seam diagram
 
@@ -143,7 +168,7 @@ Harder chunks: CD3, CD4.
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
 | CR1 | 1, 2, 5 | The delegation discipline reference carries, in a `Claim schema` section, the sentence that a done-claim row carries a `status` of `verified`, `claimed`, or `abstained` and a stated confidence as an integer from 0 to 10 | anchor `require-in-section` plus canary `calibration-claim-schema` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | An omitted or reworded sentence fails the fixture bite and the root anchor check |
-| CR2 | 3, 9, 22 | The same section carries the sentence that a delegate that cannot state a confidence returns the row `abstained` with no confidence, and no later probe turns an abstention into a refuted claim | anchor plus canary `calibration-abstained-row` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Dropping the sentence leaves abstention undefined and reds the fixture bite |
+| CR2 | 3, 9 | The same section carries the sentence that a delegate that cannot state a confidence returns the row `abstained` with no confidence | anchor plus canary `calibration-abstained-row` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Dropping the sentence leaves abstention undefined and reds the fixture bite |
 | CR3 | 6, 7 | The same section carries the sentence that the coordinator's probe of the exact tree labels a done-claim row `held` or `refuted` whatever its status | anchor plus canary `calibration-coordinator-label` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A version that lets a verified row label itself omits the sentence and reds the fixture bite |
 | CR4 | 10 | The finding discipline reference carries the sentence that a finding carries a stated confidence as an integer from 0 to 10 | anchor plus canary `calibration-finding-confidence` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Omission reds the fixture bite |
 | CR5 | 12 | The finding discipline reference carries the sentence that the confidence never changes whether a finding blocks | anchor plus canary `calibration-finding-blocking` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A version that demotes a low-confidence finding drops the sentence and reds the fixture bite |
@@ -151,15 +176,15 @@ Harder chunks: CD3, CD4.
 | CR7 | 15 | The line skill's calibration reference carries the sentence that the line declaration states the expected repair-round count and a stated confidence as an integer from 0 to 10 | anchor plus canary `calibration-line-expected-rounds` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Omission reds the fixture bite |
 | CR8 | 17 | The same reference carries the sentence that the calibration score of one claim is `(p - label)^2`, where `p = n / 10` and the label is 1 for `held` and 0 for `refuted` | anchor plus canary `calibration-brier-rule` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A log-rule or a real-number rewrite changes the bytes and reds the fixture bite |
 | CR9 | 20, 21 | The same reference carries the sentence that an abstention scores 0, stays out of the Brier mean, and is counted apart | anchor plus canary `calibration-abstention-score` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A version that folds abstentions into the mean drops the sentence and reds the fixture bite |
-| CR10 | 23, 24 | The same reference carries the sentence that a label source is the gate, the coordinator's probe of the exact tree, or the reviewer's disposition, and a model judgment is never a label source | anchor plus canary `calibration-label-sources` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A version that admits a model label drops the sentence and reds the fixture bite |
+| CR10 | 23 | The same reference carries the sentence that a label source is the gate, the coordinator's probe of the exact tree, or the reviewer's disposition | anchor plus canary `calibration-label-sources` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A version that admits a model label drops the sentence and reds the fixture bite |
 | CR11 | 15 | The line skill's declaration block carries the `Expected repair rounds:` line | anchor `require-in-section` on `The declaration` plus canary `calibration-declaration-line` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A declaration without the line reds the fixture bite |
 | CR12 | 15 | The line skill file holds at most 130 lines after the edit | `guidance-prose-budgets` check over the profile's budget table | Adding the line without reclaiming one reds the budget check |
 | CR13 | 5 | The delegate skill carries one sentence that points the charge at the claim schema in the delegation discipline reference | anchor plus canary `calibration-delegate-pointer` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Omission reds the fixture bite |
 | CR14 | 5 | The delegate skill file holds at most 126 lines after the edit | `guidance-prose-budgets` check | Growth past the two lines of headroom reds the budget check |
-| CR15 | 10 | The review skill's existing pointer sentence to the finding discipline reference ends with the words that name the stated confidence a finding carries | anchor plus canary `calibration-review-pointer` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Omission reds the fixture bite while the existing needle stays intact |
+| CR15 | 10 | The review skill's pointer line keeps the existing needle's bytes and period and carries the second sentence that a finding also states its confidence as an integer from 0 to 10 | anchor plus canary `calibration-review-pointer` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Omission of the new sentence reds the fixture bite while the existing needle's three pins stay intact |
 | CR16 | 10 | The review skill file holds at most 122 lines after the edit | `guidance-prose-budgets` check | Any line growth reds the budget check |
-| CR17 | 25, 30 | `bench retro <slug> --scaffold` renders the calibration table header row under the delegate-performance heading in a repository with no `capture/agent-performance` directory | a new scaffold test in internal/roadmap, `TestRetroScaffoldRendersCalibrationTable`, in a `newScaffoldRepo` temp repository, reading the section through `sectionOf` | A scaffold without the header fails the assertion |
-| CR18 | 26 | The same scaffold renders exactly one row of six `unknown` cells beneath the header when the slug has tickets | the same new scaffold test, `TestRetroScaffoldRendersCalibrationTable` | A scaffold that renders no row or a derived value fails the assertion |
+| CR17 | 25, 30 | `bench retro <slug> --scaffold` renders the calibration table header row under the delegate-performance heading in a repository with no `capture/agent-performance` directory | a new scaffold test in internal/roadmap, `TestRetroScaffoldRendersCalibrationTable`, in a `newScaffoldRepo` temp repository, reading the section through `sectionOf`, beside `internal/roadmap/retro_scaffold_test.go` (`TestRetroScaffoldParses`) | A scaffold without the header fails the assertion |
+| CR18 | 26 | The same scaffold renders exactly one row of six `unknown` cells beneath the header | the same new scaffold test, `TestRetroScaffoldRendersCalibrationTable` | A scaffold that renders no row or a derived value fails the assertion |
 | CR19 | 29 | `retros.Parse` accepts the nine-heading body in `testdata/eligible.md` after the change | `internal/retros/retros_test.go` (`TestParseAcceptsCanonicalRetro`, `TestEligibleFixtureKeepsRequiredHeadings`) | A new required heading makes the old body fail to parse |
 | CR20 | 27, 31 | The final-check command carries the sentence that the retro fills the calibration table with one row per labeled claim holding its surface, claim, status, confidence, label, and model, effort, and role | anchor plus canary `calibration-retro-table-duty` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Omission reds the fixture bite |
 | CR21 | 28 | The final-check command carries the sentence that the retro states the Brier mean, the pair count, and the abstention count below the table, with `unknown` for a mean over zero pairs | anchor plus canary `calibration-retro-aggregate-duty` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Omission reds the fixture bite |
@@ -168,13 +193,16 @@ Harder chunks: CD3, CD4.
 | CR24 | 32 | The scorecard README's Measures table carries a `calibration` row that defines the Brier mean, the pair count, and the abstention count | anchor plus canary `calibration-scorecard-measure` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Omission reds the fixture bite |
 | CR25 | 33, 34 | Each provider routing table carries a `calibration` column and every cell reads `unknown` | review-owned: the Spec axis reads both provider files | A missing column or an invented number appears in the diff |
 | CR26 | 35, 36 | The scorecard README's update contract carries the sentence that the calibration measure is one input to the two-run routing rule, obeys the ten-assignment cap, and never moves a tier on its own | anchor plus canary `calibration-routing-input` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A version that adds a threshold drops the sentence and reds the fixture bite |
-| CR27 | 37, 38 | This spec's own retro holds at least one labeled row for each of the three surfaces and states the pair count per role | review-owned at final reconciliation | A retro without the rows fails the final acceptance reconciliation |
+| CR27 | 37, 38 | The review pickup `reviews/calibrated-decisions.md` holds at least one labeled row for each of the three surfaces and states the pair count per role | review-owned at final reconciliation: the Spec axis reads the pickup at the final tip | A pickup without the rows fails the final acceptance reconciliation, and the retro copy is the final-check duty CR20 and CR21 pin |
 | CR28 | 30 | The scaffold test repository holds no `capture/agent-performance` directory when the table renders | the same new scaffold test, `TestRetroScaffoldRendersCalibrationTable`, asserts the directory is absent | A test that seeds a scorecard proves nothing about a linked repository |
-| CR29 | 8 | The delegation discipline reference carries the sentence that a row without a status, a confidence outside 0 to 10 or not an integer, or an `abstained` row with a confidence returns to the author as malformed before any label | anchor plus canary `calibration-malformed-row` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Omission reds the fixture bite |
 | CR30 | 14 | The finding discipline reference carries the sentence that optional advice carries no confidence | anchor plus canary `calibration-advice-no-confidence` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Omission reds the fixture bite |
 | CR31 | 16 | The line skill's calibration reference carries the sentence that the repair-attribution table's actual round count labels the expectation `held` when it equals the expected count and `refuted` otherwise | anchor plus canary `calibration-expectation-label` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Omission reds the fixture bite |
 | CR32 | 4 | The delegation discipline reference carries the sentence that a claim carries no free-text field | anchor plus canary `calibration-no-free-text` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Omission reds the fixture bite |
 | CR33 | 42 | Every Markdown file the build edits passes `bench gate-prose` | the prose lane at each `bench commit` | A sentence over the bound or a long paragraph reds the lane |
+| CR34 | 43 | The `Claim schema` section carries the sentence that `verified` means the author ran the named check and returns its red-to-green log, and `claimed` means an assertion with no executed check | anchor plus canary `calibration-status-definitions` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Without the definitions a status is a label with no meaning, and omission reds the fixture bite |
+| CR35 | 44 | The renderer holds no second spelling of the calibration header, and the rendered header equals the exported retros constant | review-owned: the Standards axis greps the header text across `internal/roadmap`, and `TestRetroScaffoldRendersCalibrationTable` compares the rendered header with the constant | A second spelling appears in the grep, because a byte-equal copy passes the test alone |
+| CR36 | 24 | The line skill's calibration reference carries the sentence that a model judgment is never a label source | anchor plus canary `calibration-model-judgment` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A version that admits a model label drops the sentence and reds the fixture bite |
+| CR37 | 22 | The `Claim schema` section carries the sentence that no later probe turns an abstention into a refuted claim | anchor plus canary `calibration-abstention-final` under docs-currency-workflow, bitten by `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A version that punishes abstention drops the sentence and reds the fixture bite |
 
 Not covered: story 18 — the exclusion is a Won't handle; CR8 pins the Brier bytes.
 Not covered: story 19 — the exclusion is a Won't handle; CR8 pins the integer normalization.
@@ -186,7 +214,6 @@ Not covered: story 41 — the exclusion is recorded under Out of scope, and no r
 
 In-scope edges, each with a row:
 
-- a malformed confidence, a confidence on an abstained row, and a row without a status (CR29)
 - a retro with zero pairs (CR18, CR21)
 - a repository with no scorecard (CR28)
 - a retro authored before this spec (CR19)
@@ -194,6 +221,7 @@ In-scope edges, each with a row:
 - a low-confidence finding whose kind blocks (CR5)
 - optional advice (CR30)
 
+- **Won't handle** a malformed row with no status or an out-of-range confidence — CR1 and CR2 define the shape, and ordinary done-claim verification returns it.
 - **Won't handle** a log-rule score — the Brier rule in CR8 is the one surviving rule for every caller.
 - **Won't handle** a real-number confidence — the integer 0 to 10 in CR1 and CR8 is the one surviving scale.
 - **Won't handle** a model judgment offered as a label — CR10 keeps the three label sources for every surface.
@@ -203,7 +231,6 @@ In-scope edges, each with a row:
 - **Won't handle** a provider row over the ten-assignment cap — the README's existing cap rule aggregates the latest ten, and CR26 restates it.
 - **Won't handle** a claim cell that contains a `|` character — the retro author rewords the claim, and the surviving caller is the Markdown reader.
 - **Won't handle** control bytes, numeric-looking cells, and Unicode separators from the hostile-input checklist — the prose lane reads every hand-written table, and no TOON sink exists.
-- **Won't handle** an absent versus empty tickets directory — the existing `scaffoldTickets` rule renders one `unknown` row for both, and CR18 covers the present case.
 - **Won't handle** a dangling or live symlink at a guidance path — the existing checks refuse special files unread, and this spec adds no reader.
 - **Won't handle** the anchored sentence "Known-flaky retry stops are in `craft-delegate`'s delegation discipline." and every other current anchor — the build keeps their bytes, and a reflow runs the fixture-bite check.
 
@@ -229,8 +256,9 @@ In-scope edges, each with a row:
 - `tests/canary/workflow-guidance-anchors/calibration-claim-schema`
 - `tests/canary/workflow-guidance-anchors/calibration-abstained-row`
 - `tests/canary/workflow-guidance-anchors/calibration-coordinator-label`
-- `tests/canary/workflow-guidance-anchors/calibration-malformed-row`
 - `tests/canary/workflow-guidance-anchors/calibration-no-free-text`
+- `tests/canary/workflow-guidance-anchors/calibration-status-definitions`
+- `tests/canary/workflow-guidance-anchors/calibration-abstention-final`
 - `tests/canary/workflow-guidance-anchors/calibration-delegate-pointer`
 - `tests/canary/workflow-guidance-anchors/calibration-finding-confidence`
 - `tests/canary/workflow-guidance-anchors/calibration-finding-blocking`
@@ -242,6 +270,7 @@ In-scope edges, each with a row:
 - `tests/canary/workflow-guidance-anchors/calibration-brier-rule`
 - `tests/canary/workflow-guidance-anchors/calibration-abstention-score`
 - `tests/canary/workflow-guidance-anchors/calibration-label-sources`
+- `tests/canary/workflow-guidance-anchors/calibration-model-judgment`
 - `tests/canary/workflow-guidance-anchors/calibration-expectation-label`
 - `tests/canary/workflow-guidance-anchors/calibration-declaration-line`
 - `tests/canary/workflow-guidance-anchors/calibration-retro-table-duty`
@@ -250,7 +279,21 @@ In-scope edges, each with a row:
 - `tests/canary/workflow-guidance-anchors/calibration-routing-input`
 - `tests/canary/claude-agent-definitions/agent-unnamed-in-skill`
 - `tests/canary/claude-agent-definitions/skill-names-missing-agent`
-- `tests/canary/workflow-guidance-anchors/` fixtures that pin an edited guidance file, each named in its ticket's `Writes:` line
+- `tests/canary/claude-agent-definitions/model-declared`
+- `tests/canary/claude-agent-definitions/name-mismatch`
+- `tests/canary/claude-agent-definitions/shell-tool-absent`
+- `tests/canary/claude-agent-definitions/spawning-tool`
+- `tests/canary/claude-agent-definitions/tools-absent`
+- `tests/canary/docs-currency-token-diet/introduces-undeclared-command`
+- `tests/canary/docs-currency-token-diet/stale-command-reference`
+- `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
+- `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
+- `cmd/bench/command_registry.go`
+- `cmd/bench/command_registry_test.go`
+- `cmd/bench/help_inventory_test.go`
+- `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
+- `tests/canary/` every canary fixture, in any family, that a ticket's `Writes:` line co-names because it pins an edited file
 - `reviews/calibrated-decisions.md`
 - `CHANGELOG.md`
 - `specs/calibrated-decisions/spec.md`
@@ -268,9 +311,9 @@ In-scope edges, each with a row:
 
 ### Flagged additions
 
-Four edge dispositions go beyond the decision source. Each has a row, and the review round may remove any of them.
+Four edge dispositions went beyond the decision source. The review round removed the first, and each of the other three keeps its row.
 
-1. The malformed-row rule (CR29): the map defines the schema and never says what a coordinator does with a row that breaks it.
+1. The malformed-row rule was removed. Its story, its row CR29, its anchor, and its fixture are gone. A malformed row is a Won't handle under ordinary done-claim verification.
 2. The disposition-to-label mapping (CR6): the map names the reviewer's disposition as the label source and never maps the three dispositions to `held` and `refuted`.
 3. The expectation label rule (CR31): the map names the expected repair rounds as a surface and never says what labels it.
 4. The omission of an unlabeled claim from the table at retro time (Won't handle line).
@@ -285,18 +328,19 @@ Four edge dispositions go beyond the decision source. Each has a row, and the re
 | ticket 2 | An acceptance row itself and a ticket `Writes:` path set carry none | Won't handle by omission; no row adds one |
 | ticket 3 | An integer from 0 to 10, normalized to `p = n / 10`, scored by `(p - label)^2` | CR8 |
 | ticket 3 | The log rule is excluded | CR8, story 18 |
-| ticket 4 | The gate, the coordinator's probe, and the reviewer's disposition are the only label sources | CR3, CR6, CR10 |
+| ticket 4 | The gate, the coordinator's probe, and the reviewer's disposition are the only label sources | CR3, CR6, CR10, CR36 |
 | ticket 5 | An abstention scores 0, stays out of the Brier mean, and is counted apart | CR9, CR21 |
-| ticket 5 | No later probe turns an abstention into a refuted claim | CR2 |
+| ticket 5 | No later probe turns an abstention into a refuted claim | CR37 |
 | ticket 6 | `status`, `confidence`, `label`, and no free text | CR1, CR32 |
-| ticket 6 | `verified` means the author ran the named check and returns its red-to-green log | CR1 |
-| ticket 7 | Each retro gains one calibration table with the six fields | CR17, CR18, CR20 |
+| ticket 6 | `verified` means the author ran the named check and returns its red-to-green log; `claimed` means an assertion with no executed check | CR34 |
+| ticket 7 | Each retro gains one calibration table with the six fields | CR17, CR18, CR20, CR35 |
 | ticket 7 | The scorecard README gains the measure and each provider row carries it | CR24, CR25 |
 | ticket 8 | One input to the two-run rule and no threshold | CR26 |
 | ticket 9 | A confidence never changes whether a finding blocks | CR5 |
 | ticket 10 | Guidance-only, the Brier mean by hand | CR21, Out of scope |
 | ticket 11 | This build records the first pairs in its own retro | CR27 |
 | map Out of scope | No model training, no reference-model label, no verb, no threshold | stories 39 to 41, CR10, CR26 |
+| map Out of scope | The Jev type-safety guarantee is not a Bench claim | covered by omission: no story, row, or decision claims a schema guarantee |
 
 ### Pre-review proof checklist
 
@@ -305,7 +349,7 @@ Four edge dispositions go beyond the decision source. Each has a row, and the re
 - Source-row clauses and occurrences: the table above quotes each clause once, and each clause occurs once in its ticket file.
 - Promised field labels: `status`, `confidence`, `label`, `verified`, `claimed`, `abstained`, `held`, `refuted`, `Expected repair rounds:`, and the table header cells `surface`, `claim`, `status`, `confidence`, `label`, `model / effort / role`.
 - Changed-function callers: `scaffoldSection` has one caller, `scaffoldBody`. `retros.RequiredHeadings` keeps its callers `scaffoldBody` and the retros tests unchanged.
-- Copy survival: none.
+- Copy survival: the header replaces no copy. CR35 is review-owned, because a byte-equal second spelling passes the equality test alone.
 
 ### Enforcement reads
 

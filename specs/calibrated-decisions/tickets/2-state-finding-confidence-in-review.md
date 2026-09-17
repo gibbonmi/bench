@@ -15,8 +15,9 @@ It states that the confidence never changes whether a finding blocks.
 It states the fixed mapping: `auto-fix` and `ask-user` label a finding `held`, and `no-op` labels it `refuted`.
 It states that optional advice carries no confidence.
 
-Extend the review skill's existing pointer sentence to the finding discipline reference in place.
-The sentence ends with the words that name the stated confidence a finding carries, and the file grows by zero lines.
+Keep the review skill's existing pointer sentence byte for byte, period included. Three pins hold it: the registry row, its harness test, and the pointer fixture.
+Add one second sentence on the same line: "A finding also states its confidence as an integer from 0 to 10."
+Anchor the new sentence on its own words, and keep the file at zero net growth.
 In the review-implementation command, the pickup step states that each actionable finding line carries its stated confidence.
 The review record JSON types in `internal/reviewrecord` do not change; the confidence rides on the pickup line.
 
@@ -26,14 +27,14 @@ The reviewer disposes it `no-op`, and the pickup labels it `refuted`.
 
 Append six anchors to the calibration registry file and its harness test.
 Each rule sentence takes one omission canary fixture in the `BASE`, `EXPECT`, `MUTATE.json` shape.
-The review-pointer fixture removes only the new words and leaves the existing needle intact.
+The review-pointer fixture removes only the new sentence and leaves the existing needle and its period intact.
 
 Preserve every co-named fixture pin without changing its planted diagnostic.
 
 ## Acceptance
 
 - [ ] The finding discipline reference carries the confidence, blocking, disposition-mapping, and advice sentences.
-- [ ] The review skill's pointer sentence names the stated confidence, and the file holds at most 122 lines.
+- [ ] The review skill's pointer line keeps the existing needle's bytes, carries the new confidence sentence, and the file holds at most 122 lines.
 - [ ] The review-implementation pickup step states that each actionable finding line carries its stated confidence.
 - [ ] The exported types in `internal/reviewrecord` are byte-identical to the base commit.
 - [ ] Each of the six new sentences is a registry anchor, and its omission canary fails the fixture-bite test when the sentence is absent.

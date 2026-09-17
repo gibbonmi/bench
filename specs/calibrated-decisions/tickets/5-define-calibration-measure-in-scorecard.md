@@ -23,6 +23,7 @@ A later retro replaces one cell with a Brier mean, a pair count, and an abstenti
 
 Append two anchors to the calibration registry file and its harness test, each with one omission canary fixture.
 The README has no existing anchor, so these are its first two.
+`docs-currency-workflow` is a Dev-tier check, so a repo-only anchor path under `capture/` follows the `projects/benchkit.md` precedent.
 
 ## Acceptance
 

@@ -17,8 +17,9 @@ Write one concise typed changelog entry under `[Unreleased]` for the calibration
 Claim no measured routing change.
 Record the completion evidence in the spec's completion record.
 
-Scenario: the review pickup lists at least one labeled row for each of the three surfaces.
-The final-check retro copies those rows into the calibration table and states `unknown` or the hand-computed Brier mean below it.
+Scenario: the review pickup lists at least one labeled row for each of the three surfaces and the pair count per role.
+The Spec axis reads the pickup at the final tip, because no ticket writes a retro and the tree tracks none.
+The final-check retro copies those rows into the calibration table after the landing and states `unknown` or the hand-computed Brier mean below it.
 
 This is the last ticket, so it carries the integrated invariant: every Markdown file the build edited passes the prose lane.
 
@@ -26,7 +27,7 @@ Preserve the two co-named changelog fixture pins without changing their planted 
 
 ## Acceptance
 
-- [ ] The review pickup holds at least one labeled row for each of the three surfaces, with its confidence and label.
+- [ ] The review pickup `reviews/calibrated-decisions.md` holds at least one labeled row for each of the three surfaces, with its confidence and label.
 - [ ] The review pickup states the pair count per role and the abstention count.
 - [ ] The changelog entry describes the guidance, the scaffold table, and the measure without a measured routing claim.
 - [ ] Every Markdown file the build edited passes `bench gate-prose`.
