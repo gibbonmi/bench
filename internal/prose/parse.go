@@ -220,16 +220,17 @@ func fenceMarker(trimmed string) string {
 	return trimmed[:n]
 }
 
-// gradeBlocks splits the remaining lines into paragraphs and grades each one. A blank
-// line, a skipped line, a list marker, and a field line each start a new paragraph.
-func gradeBlocks(lines []string) []Finding {
-	var out []Finding
+// walkParagraphs splits the remaining lines into paragraphs and calls visit with each
+// paragraph's first physical line and its tokens. A blank line, a skipped line, a list
+// marker, and a field line each start a new paragraph. The grade and the exported
+// projection both walk here, so one paragraph rule serves both.
+func walkParagraphs(lines []string, visit func(start int, toks []token)) {
 	var current []token
 	start := 0
 
 	flush := func() {
 		if len(current) > 0 {
-			out = append(out, gradeParagraph(start, current)...)
+			visit(start, current)
 		}
 		current, start = nil, 0
 	}
@@ -294,7 +295,6 @@ func gradeBlocks(lines []string) []Finding {
 		add(content, number, spans)
 	}
 	flush()
-	return out
 }
 
 // isSkippedLine reports the line classes that carry no prose: a heading, a table row, a

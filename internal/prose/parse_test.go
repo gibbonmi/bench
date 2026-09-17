@@ -257,6 +257,37 @@ func TestParagraphSentenceStarts(t *testing.T) {
 	}
 }
 
+// TestParagraphsProjectsTheGradedSplit grades the exported projection: one entry per graded
+// paragraph, one sentence per graded sentence, and one space for every whitespace run. A
+// wrapped sentence, a code span, and a heading between two paragraphs each state one half of
+// that contract.
+func TestParagraphsProjectsTheGradedSplit(t *testing.T) {
+	doc := "One two.\nthree four. Five six.\n\n## Heading\n\nRun `foo  bar` now.\n"
+
+	want := [][]string{
+		{"One two.", "three four.", "Five six."},
+		{"Run `foo  bar` now."},
+	}
+	got := Paragraphs(doc)
+	if len(got) != len(want) {
+		t.Fatalf("Paragraphs() = %q, want %q", got, want)
+	}
+	for i := range want {
+		if strings.Join(got[i], "|") != strings.Join(want[i], "|") {
+			t.Errorf("paragraph %d = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
+// TestParagraphsRefusesAnUnterminatedDelimiter is the fail-closed half: a document the grade
+// stops reading projects no paragraph, so a caller that pins prose cannot read a truncated
+// document as a complete one.
+func TestParagraphsRefusesAnUnterminatedDelimiter(t *testing.T) {
+	if got := Paragraphs("```text\nOne two.\n"); got != nil {
+		t.Errorf("Paragraphs() = %q, want none", got)
+	}
+}
+
 // steProseRulePath is the rule file that names the closed template-field set for an author.
 // The test reads it by a relative path, as internal/tickets/example_test.go reads its own
 // rule file.
