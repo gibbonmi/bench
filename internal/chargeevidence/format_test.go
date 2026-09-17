@@ -6,9 +6,12 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -158,12 +161,15 @@ func TestEvidenceSchemaRegistry(t *testing.T) {
 		"returns":             "source:string",
 		"shared_evidence":     "kind:string,source:string",
 		"completion_evidence": "record:string,source_digest:string,plan_digest:string,record_state:string,detail:string",
+		"prepared":            "evidence:string,mode:string,base:string,source_tip:string,assignment:string,selection:string,metadata:string,sources:integer,pages:integer,manifest_bytes:integer,response_complete:boolean,delivery:string,next:string",
+		"page":                "evidence:string,stream:string,source:string,index:integer,offset:integer,bytes:integer,total:integer,sha256:string,content:string,response_complete:boolean,stream_end:boolean,next:string",
 	}
 	order := map[string][]string{
 		"manifest": {"profile", "selection", "sources", "pages", "producers", "arguments"},
 		"metadata": {"charge", "fence", "writes", "coverage", "checks", "returns", "shared_evidence", "completion_evidence"},
+		"response": {"prepared", "page"},
 	}
-	for family, blocks := range map[string][]ce.Block{"manifest": ce.ManifestBlocks, "metadata": ce.MetadataBlocks} {
+	for family, blocks := range map[string][]ce.Block{"manifest": ce.ManifestBlocks, "metadata": ce.MetadataBlocks, "response": ce.ResponseBlocks} {
 		var names []string
 		for _, block := range blocks {
 			names = append(names, block.Name)
@@ -278,8 +284,23 @@ func TestEvidenceCandidateRefusals(t *testing.T) {
 }
 
 // TestEvidenceEncoderModuleRequired ties the reference's named encoder module to the
-// module that the repository go.mod requires.
+// encoder the shared TOON adapter actually imports, and to the go.mod requirement that
+// pins its version.
 func TestEvidenceEncoderModuleRequired(t *testing.T) {
+	adapter := filepath.Join("..", "toon", "toon.go")
+	file, err := parser.ParseFile(token.NewFileSet(), adapter, nil, parser.ImportsOnly)
+	if err != nil {
+		t.Fatalf("parse %s: %v", adapter, err)
+	}
+	imported := false
+	for _, spec := range file.Imports {
+		if path, _ := strconv.Unquote(spec.Path.Value); path == ce.EncoderModule {
+			imported = true
+		}
+	}
+	if !imported {
+		t.Fatalf("the shared TOON adapter does not import encoder module %s", ce.EncoderModule)
+	}
 	path := filepath.Join("..", "..", "go.mod")
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -311,7 +332,7 @@ func TestEvidenceFormatProjection(t *testing.T) {
 		t.Fatalf("shipped %s differs from the registry projection:\n%s", ce.ReferencePath, generated)
 	}
 	lines := strings.Split(generated, "\n")
-	for _, block := range append(append([]ce.Block{}, ce.ManifestBlocks...), ce.MetadataBlocks...) {
+	for _, block := range append(append(append([]ce.Block{}, ce.ManifestBlocks...), ce.MetadataBlocks...), ce.ResponseBlocks...) {
 		prefix := "| `" + block.Name + "` |"
 		var row string
 		count := 0

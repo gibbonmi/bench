@@ -156,6 +156,35 @@ var ManifestBlocks = []Block{
 		"Source order, then argument index."},
 }
 
+// Response facts. Every public evidence response, including a usage or operational
+// refusal, holds at most ResponseLimit encoded stdout bytes.
+const (
+	ResponseLimit      = 48000
+	DefaultQuota       = 1 << 30
+	StoreName          = "bench-charge-evidence"
+	DeliveryUnverified = "unverified"
+	SelectionReference = "manifest:" + blockSelection
+	StreamManifest     = "manifest"
+	StreamSource       = "source"
+)
+
+// Response block names.
+const (
+	blockPrepared = "prepared"
+	blockPage     = "page"
+)
+
+// ResponseBlocks is the registered schema of every implemented evidence response.
+var ResponseBlocks = []Block{
+	{blockPrepared, []Field{str("evidence"), str("mode"), str("base"), str("source_tip"), str("assignment"),
+		str("selection"), str("metadata"), num("sources"), num("pages"), num("manifest_bytes"),
+		flag("response_complete"), str("delivery"), str("next")},
+		fmt.Sprintf("One row. Selection is `%s`, metadata is the first source, and delivery is `%s`.", SelectionReference, DeliveryUnverified)},
+	{blockPage, []Field{str("evidence"), str("stream"), str("source"), num("index"), num("offset"), num("bytes"),
+		num("total"), str("sha256"), str("content"), flag("response_complete"), flag("stream_end"), str("next")},
+		fmt.Sprintf("One fragment. A `%s` fragment has an empty source; a `%s` page names its source.", StreamManifest, StreamSource)},
+}
+
 // Metadata block names in their canonical order.
 const (
 	blockCharge     = "charge"

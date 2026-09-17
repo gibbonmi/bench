@@ -177,47 +177,13 @@ func Read(data []byte, expected string) (*Pack, error) {
 	if len(data) < HeaderBytes {
 		return nil, refuse(RefuseTruncated, "pack holds %d bytes, fewer than the %d-byte header", len(data), HeaderBytes)
 	}
-	markerStart, markerEnd := HeaderRange(headerMarkerField)
-	if string(data[markerStart:markerEnd]) != HeaderMarker {
-		return nil, refuse(RefuseMarker, "header marker is not %s", HeaderMarkerASCII)
-	}
-	versionStart, versionEnd := HeaderRange(headerVersionField)
-	if version := binary.LittleEndian.Uint32(data[versionStart:versionEnd]); version != ContainerVersion {
-		return nil, refuse(RefuseContainerVersion, "container version %d is not supported", version)
-	}
-	reservedStart, reservedEnd := HeaderRange(headerReservedField)
-	if reserved := binary.LittleEndian.Uint32(data[reservedStart:reservedEnd]); reserved != ReservedHeaderValue {
-		return nil, refuse(RefuseReserved, "reserved header value is %d", reserved)
-	}
-	lengthStart, lengthEnd := HeaderRange(headerLengthField)
-	length := binary.LittleEndian.Uint64(data[lengthStart:lengthEnd])
-	if length > math.MaxUint64-HeaderBytes {
-		return nil, refuse(RefuseOverflow, "manifest length %d overflows the pack offset", length)
-	}
-	end := HeaderBytes + length
-	if end > uint64(len(data)) {
-		return nil, refuse(RefuseTruncated, "manifest ends at %d beyond the %d-byte pack", end, len(data))
-	}
-	manifestBytes := data[HeaderBytes:end]
-	if Identity(manifestBytes) != expected {
-		return nil, refuse(RefuseIdentity, "manifest digest differs from the expected identity")
-	}
-	m, err := decodeManifest(manifestBytes)
+	end, err := headerEnd(data[:HeaderBytes], uint64(len(data)))
 	if err != nil {
 		return nil, err
 	}
-	total := end
-	for _, s := range m.Sources {
-		if uint64(s.Bytes) > math.MaxUint64-total {
-			return nil, refuse(RefuseOverflow, "source %s length overflows the pack length", s.ID)
-		}
-		total += uint64(s.Bytes)
-	}
-	if total > uint64(len(data)) {
-		return nil, refuse(RefuseTruncated, "sources end at %d beyond the %d-byte pack", total, len(data))
-	}
-	if total < uint64(len(data)) {
-		return nil, refuse(RefuseTrailing, "pack holds %d bytes after its declared end %d", uint64(len(data))-total, total)
+	m, err := manifestAt(data[HeaderBytes:end], expected, end, uint64(len(data)))
+	if err != nil {
+		return nil, err
 	}
 	bodies, err := readBodies(data[end:len(data):len(data)], m)
 	if err != nil {
@@ -233,6 +199,59 @@ func Read(data []byte, expected string) (*Pack, error) {
 		}
 	}
 	return &Pack{identity: expected, data: bytes.Clone(data), manifest: m, metadata: metadata, bodies: bodies}, nil
+}
+
+// headerEnd validates the fixed header of a pack of size bytes and returns the offset at
+// which the manifest ends.
+func headerEnd(header []byte, size uint64) (uint64, error) {
+	markerStart, markerEnd := HeaderRange(headerMarkerField)
+	if string(header[markerStart:markerEnd]) != HeaderMarker {
+		return 0, refuse(RefuseMarker, "header marker is not %s", HeaderMarkerASCII)
+	}
+	versionStart, versionEnd := HeaderRange(headerVersionField)
+	if version := binary.LittleEndian.Uint32(header[versionStart:versionEnd]); version != ContainerVersion {
+		return 0, refuse(RefuseContainerVersion, "container version %d is not supported", version)
+	}
+	reservedStart, reservedEnd := HeaderRange(headerReservedField)
+	if reserved := binary.LittleEndian.Uint32(header[reservedStart:reservedEnd]); reserved != ReservedHeaderValue {
+		return 0, refuse(RefuseReserved, "reserved header value is %d", reserved)
+	}
+	lengthStart, lengthEnd := HeaderRange(headerLengthField)
+	length := binary.LittleEndian.Uint64(header[lengthStart:lengthEnd])
+	if length > math.MaxUint64-HeaderBytes {
+		return 0, refuse(RefuseOverflow, "manifest length %d overflows the pack offset", length)
+	}
+	end := HeaderBytes + length
+	if end > size {
+		return 0, refuse(RefuseTruncated, "manifest ends at %d beyond the %d-byte pack", end, size)
+	}
+	return end, nil
+}
+
+// manifestAt validates manifest bytes against the trusted identity and proves that the
+// declared source lengths end exactly at the pack size.
+func manifestAt(manifest []byte, expected string, end, size uint64) (Manifest, error) {
+	if Identity(manifest) != expected {
+		return Manifest{}, refuse(RefuseIdentity, "manifest digest differs from the expected identity")
+	}
+	m, err := decodeManifest(manifest)
+	if err != nil {
+		return Manifest{}, err
+	}
+	total := end
+	for _, s := range m.Sources {
+		if uint64(s.Bytes) > math.MaxUint64-total {
+			return Manifest{}, refuse(RefuseOverflow, "source %s length overflows the pack length", s.ID)
+		}
+		total += uint64(s.Bytes)
+	}
+	if total > size {
+		return Manifest{}, refuse(RefuseTruncated, "sources end at %d beyond the %d-byte pack", total, size)
+	}
+	if total < size {
+		return Manifest{}, refuse(RefuseTrailing, "pack holds %d bytes after its declared end %d", size-total, total)
+	}
+	return m, nil
 }
 
 func readBodies(region []byte, m Manifest) (map[string][]byte, error) {

@@ -70,3 +70,21 @@ A review charge row uses access `read-only` and names the spec source in its tic
 | `returns` | `source` (string) | Existing return-source order. |
 | `shared_evidence` | `kind` (string), `source` (string) | Diff, consumers, coverage order. Build has zero rows. |
 | `completion_evidence` | `record` (string), `source_digest` (string), `plan_digest` (string), `record_state` (string), `detail` (string) | Existing completion facts. Build has zero rows. |
+
+## Responses
+
+Every response holds at most 48000 encoded bytes.
+A manifest fragment holds at most 8192 raw bytes and is the longest UTF-8 prefix within that limit.
+The `total` field holds the byte length of the complete stream.
+A manifest fragment is trustworthy only after the complete manifest matches the expected identity.
+
+A cursor has the form `v1.<hex-id>.<m|s>.<source-ordinal>.<page-index>`.
+The manifest stream uses source ordinal zero, and every number is a canonical unsigned decimal.
+The default stream returns the manifest, then every source page in manifest order.
+Each response names its exact successor command, and the last response has an empty successor.
+A final response does not prove that the consumer received the earlier responses.
+
+| Response | Ordered fields | Rows |
+| --- | --- | --- |
+| `prepared` | `evidence` (string), `mode` (string), `base` (string), `source_tip` (string), `assignment` (string), `selection` (string), `metadata` (string), `sources` (integer), `pages` (integer), `manifest_bytes` (integer), `response_complete` (boolean), `delivery` (string), `next` (string) | One row. Selection is `manifest:selection`, metadata is the first source, and delivery is `unverified`. |
+| `page` | `evidence` (string), `stream` (string), `source` (string), `index` (integer), `offset` (integer), `bytes` (integer), `total` (integer), `sha256` (string), `content` (string), `response_complete` (boolean), `stream_end` (boolean), `next` (string) | One fragment. A `manifest` fragment has an empty source; a `source` page names its source. |

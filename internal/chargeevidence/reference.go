@@ -61,6 +61,18 @@ func FormatReference() string {
 	fmt.Fprintf(&b, "A build charge row uses access `%s` and names the selected ticket source in its ticket cell.\n", AccessBuild)
 	fmt.Fprintf(&b, "A review charge row uses access `%s` and names the spec source in its ticket cell.\n\n", AccessReview)
 	writeBlocks(&b, "Table", MetadataBlocks)
+
+	b.WriteString("\n## Responses\n\n")
+	fmt.Fprintf(&b, "Every response holds at most %d encoded bytes.\n", ResponseLimit)
+	fmt.Fprintf(&b, "A manifest fragment holds at most %d raw bytes and is the longest UTF-8 prefix within that limit.\n", PageBytes)
+	b.WriteString("The `total` field holds the byte length of the complete stream.\n")
+	b.WriteString("A manifest fragment is trustworthy only after the complete manifest matches the expected identity.\n\n")
+	fmt.Fprintf(&b, "A cursor has the form `%s.<hex-id>.<%s|%s>.<source-ordinal>.<page-index>`.\n", CursorVersion, cursorManifest, cursorSource)
+	b.WriteString("The manifest stream uses source ordinal zero, and every number is a canonical unsigned decimal.\n")
+	b.WriteString("The default stream returns the manifest, then every source page in manifest order.\n")
+	b.WriteString("Each response names its exact successor command, and the last response has an empty successor.\n")
+	b.WriteString("A final response does not prove that the consumer received the earlier responses.\n\n")
+	writeBlocks(&b, "Response", ResponseBlocks)
 	return b.String()
 }
 
