@@ -259,6 +259,7 @@ In-scope edges, each with a row:
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry.go`
 - `internal/anchors/match.go`
+- `internal/anchors/match_test.go`
 - `internal/anchors/locate.go`
 - `internal/anchors/anchor_harness_test.go`
 - `internal/anchors/anchor_harness_diagnostics_test.go`

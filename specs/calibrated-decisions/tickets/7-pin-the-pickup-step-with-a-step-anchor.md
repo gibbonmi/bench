@@ -1,7 +1,7 @@
 # Pin the pickup step with a step-scoped anchor kind
 
 Blocked by: 2-state-finding-confidence-in-review.md
-Writes: internal/anchors/registry.go, internal/anchors/match.go, internal/anchors/locate.go, internal/anchors/anchor_harness_test.go, internal/anchors/anchor_harness_diagnostics_test.go, internal/anchors/registry_data_test.go, internal/anchors/registry_calibration.go, internal/anchors/registry_calibration_test.go, cmd/bench/anchors_command.go, cmd/bench/anchor_help_test.go, reviews/calibrated-decisions.md, tests/canary/workflow-guidance-anchors/calibration-pickup-step-move (new), tests/canary/workflow-guidance-anchors/calibration-pickup-confidence, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/anchors/registry.go, internal/anchors/match.go, internal/anchors/match_test.go, internal/anchors/locate.go, internal/anchors/anchor_harness_test.go, internal/anchors/anchor_harness_diagnostics_test.go, internal/anchors/registry_data_test.go, internal/anchors/registry_calibration.go, internal/anchors/registry_calibration_test.go, cmd/bench/anchors_command.go, cmd/bench/anchor_help_test.go, reviews/calibrated-decisions.md, tests/canary/workflow-guidance-anchors/calibration-pickup-step-move (new), tests/canary/workflow-guidance-anchors/calibration-pickup-confidence, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: CR22, CR38
 
 Chunk: CD2b.
