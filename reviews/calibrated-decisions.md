@@ -247,18 +247,18 @@ The skill sits at its 130-line budget, so the edit reclaims one line. The reclai
 
 ### Done-claim table
 
-The author wrote no label cell. Each status is `verified`, because the author ran the named check and kept its red-then-green log.
+The author wrote no label cell. Each status is `verified`, because the author ran the named check and kept its red-then-green log. The coordinator wrote each label. The label source is the gate lane at the merge, green at tip 7c3ef892. One independent swap probe on the declaration line's range also bit.
 
 | row | status | confidence | label |
 | --- | --- | --- | --- |
-| CR7 | verified | 9 |  |
-| CR8 | verified | 9 |  |
-| CR9 | verified | 9 |  |
-| CR10 | verified | 9 |  |
-| CR11 | verified | 9 |  |
-| CR12 | verified | 9 |  |
-| CR31 | verified | 9 |  |
-| CR36 | verified | 9 |  |
+| CR7 | verified | 9 | held |
+| CR8 | verified | 9 | held |
+| CR9 | verified | 9 | held |
+| CR10 | verified | 9 | held |
+| CR11 | verified | 9 | held |
+| CR12 | verified | 9 | held |
+| CR31 | verified | 9 | held |
+| CR36 | verified | 9 | held |
 
 ### Red-then-green log
 
@@ -447,6 +447,53 @@ After repair cycle 1, one sonnet / xhigh later pass per axis ran at tip da019659
 
 After repair cycle 2, each axis reaffirmed at tip d4ddc088 in its own worktree. The new test bites both the shared-walk branch and its call-site value. No finding remains open on CD2b.
 
+## CD3 review
+
+The frozen pair is base `b47edde2c7a5bc4f00a77ea94e77ac09a6df24ea` and tip `7c3ef89216a5797de657e77ff26670f638260d2a`. The reviewer changed the review line before this chunk. The first pass now runs opus / medium, and every later pass runs sonnet / high. Each axis ran in its own read-only worktree.
+
+The raw finding count is 3. The de-duplicated repair target count is 0. CD3 consumed 0 repair cycles. The author's fold of the fan-out sentences onto the anchored iteration-policy line stays open for the reviewer's veto.
+
+### Standards
+
+Finding count: 2 judgment calls, 0 hard violations. Worst issue: the reference pointer sits inside the copy-paste declaration template line.
+
+| id | finding | citation | confidence | disposition | label |
+| --- | --- | --- | --- | --- | --- |
+| CD3-S1 | The `Expected repair rounds:` template line carries the reference pointer as a second sentence. | ste-prose, one instruction per sentence; the spec's Implementation decisions fix the needle bytes and state that the pointer rides inside that line. | 6 | no-op | refuted |
+| CD3-S2 | The folded line carries four sentences on one physical line against the file's one-sentence-per-line convention. | File style; paragraph structure and sentence lengths hold. | 5 | no-op | refuted |
+
+CD3-S1 contradicts a spec keep decision, so it is `no-op`. The axis enumerated the score rule, the label-source list, and the abstention rule across the guidance tree and found no second operative spelling.
+
+### Spec
+
+The finding count is 0, and there is no worst issue. Every CD3 row held. The fold is within the spec's decision, which names the fan-out line as the candidate and does not require deletion. The pickup holds this build's declaration as a `claimed` row at confidence 6.
+
+### Coverage
+
+Finding count: 0 blocking. Worst issue: none. The axis ran eight probes: five bit, and three stayed silent.
+
+| id | finding | citation | confidence | disposition | label |
+| --- | --- | --- | --- | --- | --- |
+| CD3-C1 | A fourth label source appended after the CR10 sentence stays green. | Spec Won't-handle line for a model judgment offered as a label; CR10's require anchor is the whole defense. | 3 | no-op | refuted |
+
+The axis gave one item of optional advice with no confidence. A needle demoted into a code fence keeps its anchor green, which is a matcher-wide property that predates this chunk.
+
+### Pairs recorded for CD5
+
+| surface | claim | status | confidence | label | model / effort / role |
+| --- | --- | --- | --- | --- | --- |
+| delegate return | CR7 | verified | 9 | held | opus / high / author |
+| delegate return | CR8 | verified | 9 | held | opus / high / author |
+| delegate return | CR9 | verified | 9 | held | opus / high / author |
+| delegate return | CR10 | verified | 9 | held | opus / high / author |
+| delegate return | CR11 | verified | 9 | held | opus / high / author |
+| delegate return | CR12 | verified | 9 | held | opus / high / author |
+| delegate return | CR31 | verified | 9 | held | opus / high / author |
+| delegate return | CR36 | verified | 9 | held | opus / high / author |
+| review finding | CD3-S1 | claimed | 6 | refuted | opus / medium / Standards |
+| review finding | CD3-S2 | claimed | 5 | refuted | opus / medium / Standards |
+| review finding | CD3-C1 | claimed | 3 | refuted | opus / medium / Coverage |
+
 The axis gave two items of optional advice with no confidence. The step cache key drops the step number, which one registered step anchor cannot expose. A `06.` opener parses as step 6, and the ticket's literal-digits rule leaves leading zeros undecided.
 
 ### Pairs recorded for CD5
@@ -470,9 +517,10 @@ The fenced payload below retains every terminal return for the checkpoint. The f
 {
   "version": 2,
   "spec": "specs/calibrated-decisions/spec.md",
-  "plan_digest": "sha256:37ef0eb88a3496e3fc048c85e66bd6b4db2ac676d1dca36243cb5e160430ffe7",
+  "plan_digest": "sha256:b76aff6080777f4bd95ef7ea7be9b075fb5fd511e8f54b14c92681be2ccbb6a9",
   "implementation_session": "",
   "amendments": [
+    {"from": "sha256:37ef0eb88a3496e3fc048c85e66bd6b4db2ac676d1dca36243cb5e160430ffe7", "to": "sha256:b76aff6080777f4bd95ef7ea7be9b075fb5fd511e8f54b14c92681be2ccbb6a9", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD2b": ["CD2b"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
     {"from": "sha256:2a20907b4162c42f8fdc101392a17e0be6300188b009aaabf0ad40dd64f0a105", "to": "sha256:37ef0eb88a3496e3fc048c85e66bd6b4db2ac676d1dca36243cb5e160430ffe7", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD2b": ["CD2b"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
     {"from": "sha256:9a5079a914a8c51fea3eccf16a76b5dbb9a687c7eebec78a9bb84c36bfc6ff94", "to": "sha256:bd4a4ea1b9ec05c6aa378023c9c43ff8fae6021cf41f88949e8359bda3f6f601", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
     {"from": "sha256:bd4a4ea1b9ec05c6aa378023c9c43ff8fae6021cf41f88949e8359bda3f6f601", "to": "sha256:ba0c975ed0afb1fb695519ebdcbedb9b0335d30f4c276c1573643285ee9f9588", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
@@ -1103,6 +1151,132 @@ The fenced payload below retains every terminal return for the checkpoint. The f
           "tip": "d4ddc08852af81003cd5b5403d67240cb024f603",
           "finding_ids": [],
           "supersedes": ["cd2b-coverage-r2"]
+        }
+      ]
+    },
+    {
+      "id": "CD3",
+      "base": "b47edde2c7a5bc4f00a77ea94e77ac09a6df24ea",
+      "tip": "7c3ef89216a5797de657e77ff26670f638260d2a",
+      "plan_digest": "sha256:b76aff6080777f4bd95ef7ea7be9b075fb5fd511e8f54b14c92681be2ccbb6a9",
+      "source_digest": "4552813d704f9ca1c4506ce0bb1cbb31b2c71e2c",
+      "acceptance_rows": ["CR7", "CR8", "CR9", "CR10", "CR11", "CR12", "CR31", "CR36"],
+      "verification": [
+        {
+          "id": "cd3-workflow",
+          "performer": "claude:bench-writer/cd-t3-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4552813d704f9ca1c4506ce0bb1cbb31b2c71e2c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t3-author-20260917/cd3-workflow@7c3ef892",
+            "digest": "sha256:4c0a9e0f2dc8cbfc69e6fc6a0c35605171628e1c8ffaed57583a2d3697e29494",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1019\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "cd3-budgets",
+          "performer": "claude:bench-writer/cd-t3-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4552813d704f9ca1c4506ce0bb1cbb31b2c71e2c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t3-author-20260917/cd3-budgets@7c3ef892",
+            "digest": "sha256:6f72c99a424331a3381e284e55ffa703b490f81e19b498e848e8bfc5d9ca25ed",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "cd3-prose",
+          "performer": "claude:bench-writer/cd-t3-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4552813d704f9ca1c4506ce0bb1cbb31b2c71e2c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t3-author-20260917/cd3-prose@7c3ef892",
+            "digest": "sha256:e5d1227f4d01a10308bf558fe195080d0e0062d4e541dea2c214e52b944ab24d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,160\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "prose",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "cd3-standards",
+          "performer": "claude:bench-reviewer/cd-c3-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4552813d704f9ca1c4506ce0bb1cbb31b2c71e2c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c3-standards-20260917@7c3ef892",
+            "digest": "sha256:34e2da718790a0e2c14e43ce73b0e9cde19ee037a875ea0b57e305bba6753649",
+            "excerpt": "Findings: 2 judgment calls. CD3-S1 the reference pointer sits inside the declaration template line, confidence 6, decided by the spec's pasted needle, no-op. CD3-S2 the folded line carries four sentences, confidence 5, no-op. One source per fact holds."
+          },
+          "axis": "Standards",
+          "base": "b47edde2c7a5bc4f00a77ea94e77ac09a6df24ea",
+          "tip": "7c3ef89216a5797de657e77ff26670f638260d2a",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "cd3-spec",
+          "performer": "claude:bench-reviewer/cd-c3-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4552813d704f9ca1c4506ce0bb1cbb31b2c71e2c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c3-spec-20260917@7c3ef892",
+            "digest": "sha256:0abc90453e415b789e3ec01c30296d157de6a761ec27cbaf6b8a027799098e47",
+            "excerpt": "Finding count: 0. Every CD3 row held: CR7, CR8, CR9, CR10, CR11, CR12, CR31, CR36. The fold of the fan-out line is within the spec's decision."
+          },
+          "axis": "Spec",
+          "base": "b47edde2c7a5bc4f00a77ea94e77ac09a6df24ea",
+          "tip": "7c3ef89216a5797de657e77ff26670f638260d2a",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "cd3-coverage",
+          "performer": "claude:bench-reviewer/cd-c3-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4552813d704f9ca1c4506ce0bb1cbb31b2c71e2c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c3-coverage-20260917@7c3ef892",
+            "digest": "sha256:32034e96dc99643e8ec3337a929881087a78b9ea2706b841da8482109745e6fb",
+            "excerpt": "Finding count: 0 blocking. CD3-C1 an appended fourth label source stays green, confidence 3, Won't handle per the spec, no-op. Eight probes: five bit, three silent on matcher-wide semantics."
+          },
+          "axis": "Coverage",
+          "base": "b47edde2c7a5bc4f00a77ea94e77ac09a6df24ea",
+          "tip": "7c3ef89216a5797de657e77ff26670f638260d2a",
+          "finding_ids": [],
+          "supersedes": []
         }
       ]
     }
