@@ -52,8 +52,10 @@ func LearningCommand(args []string) (string, int) {
 		return refusal, code
 	}
 	entry := learnings.FormatEntry(time.Now().Format("2006-01-02"), title, what, right, parsed.Flags["--rule"])
+	// A prose refusal is a content error with correct grammar, so it exits 1 and prints
+	// no usage line.
 	if diagnostics := proseRefusals(root, entry); len(diagnostics) > 0 {
-		return learningGrammar.Help + "\n" + strings.Join(diagnostics, "\n") + "\n", 2
+		return strings.Join(diagnostics, "\n") + "\n", 1
 	}
 	file := filepath.Join(root, learnings.JournalPath)
 	err := capturetx.Append(root, capturetx.Source{Name: learnings.JournalPath, Path: file}, func(current []byte) ([]byte, error) {
@@ -104,10 +106,11 @@ func cannotWrite(relPath string, err error) string {
 // rule the live-tree prose sweep applies once the journal is on disk. It returns each
 // finding in the grader's own wording (RenderNamedResult), the one source, with line
 // numbers relative to entry rather than to the file it will land in, so a refusal names
-// the offending bullet the author can shorten without opening the journal. A policy this
-// helper cannot load, an absent or broken exclusion file, is not this verb's failure to
-// diagnose, so it grades nothing and lets the write proceed; the tree-wide sweep still
-// owns that refusal.
+// the offending bullet the author can shorten without opening the journal. Each finding
+// leads with the argument that supplied its line, so the author knows which flag to
+// shorten. A policy this helper cannot load, an absent or broken exclusion file, is not
+// this verb's failure to diagnose, so it grades nothing and lets the write proceed; the
+// tree-wide sweep still owns that refusal.
 func proseRefusals(root, entry string) []string {
 	grader, diags := prose.NewGrader(root)
 	if len(diags) > 0 {
@@ -119,7 +122,20 @@ func proseRefusals(root, entry string) []string {
 	}
 	out := make([]string, 0, len(results))
 	for _, result := range results {
-		out = append(out, prose.RenderNamedResult(result))
+		out = append(out, "refused "+entryArgument(learnings.EntryField(result.Line))+": "+prose.RenderNamedResult(result))
 	}
 	return out
+}
+
+// entryArgument spells an entry field the way the caller typed it: the positional title,
+// or the flag that carries a body bullet. A finding with no field line names the entry.
+func entryArgument(field string) string {
+	switch field {
+	case "title":
+		return "title"
+	case "":
+		return "entry"
+	default:
+		return "--" + field
+	}
 }
