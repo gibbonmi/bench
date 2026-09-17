@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+    "old": "- A delegate that cannot state a confidence returns the row `abstained` with no\n  confidence.\n",
+    "new": ""
+  }
+]
