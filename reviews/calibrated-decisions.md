@@ -223,6 +223,79 @@ Each run reports no skip. The elapsed time is the package time the verb reports.
 
 `internal/anchors/locate.go` first grew to 452 lines, over its 400-line budget. One narrowing walk now serves both the section resolution and the step resolution, and the file reads 400 lines.
 
+## CD3 ticket 3 author evidence
+
+The ticket adds `references/calibration-score.md` under the line skill. The reference owns the score rule, the abstention rule, the label sources, and the expectation label. The declaration block in `.agents/skills/bench-craft-line/SKILL.md` gains one `Expected repair rounds:` line, and the pointer to the reference rides inside it. Seven anchors and seven omission canaries pin the new sentences.
+
+### This build's line declaration
+
+The coordinator declared `Expected repair rounds: 1 / confidence 6` for this run. That declaration is the calibration surface of this ticket, and the retro scores it later.
+
+| surface | claim | status | confidence | label |
+| --- | --- | --- | --- | --- |
+| line declaration | one repair round after the initial review | claimed | 6 |  |
+
+The status is `claimed`, because no check labels an expected round count. The repair-attribution table of this build supplies the label.
+
+### The reclaimed line
+
+The skill sits at its 130-line budget, so the edit reclaims one line. The reclaimed line is the unanchored fan-out clause line:
+
+`Declare fan-out for visibility before spend. Report an overrun like a ladder move. Derive a numeric cap from expected cycles plus one red. Price a likely shift repair higher.`
+
+`bench anchors .agents/skills/bench-craft-line/SKILL.md` listed no needle on that line. Its four sentences now follow the anchored iteration-policy sentence on one line, so no rule and no anchored byte is lost. The file reads 130 lines.
+
+### Done-claim table
+
+The author wrote no label cell. Each status is `verified`, because the author ran the named check and kept its red-then-green log.
+
+| row | status | confidence | label |
+| --- | --- | --- | --- |
+| CR7 | verified | 9 |  |
+| CR8 | verified | 9 |  |
+| CR9 | verified | 9 |  |
+| CR10 | verified | 9 |  |
+| CR11 | verified | 9 |  |
+| CR12 | verified | 9 |  |
+| CR31 | verified | 9 |  |
+| CR36 | verified | 9 |  |
+
+### Red-then-green log
+
+Each anchored row ran `bench probe <file> --omit "<the sentence>" --check docs-currency-workflow`. Each baseline passed, and each omission failed the check with the row's own diagnostic. The probe restored every subject.
+
+| row | omitted sentence owner | verdict | diagnostic |
+| --- | --- | --- | --- |
+| CR7 | `references/calibration-score.md` | `bit,...,omit,failed,1,yes` | calibration: the line declaration needs its expected rounds and stated confidence |
+| CR8 | `references/calibration-score.md` | `bit,...,omit,failed,1,yes` | calibration: the Brier rule needs its score expression |
+| CR9 | `references/calibration-score.md` | `bit,...,omit,failed,1,yes` | calibration: an abstention needs its own scoring rule |
+| CR10 | `references/calibration-score.md` | `bit,...,omit,failed,1,yes` | calibration: the three label sources must stay named |
+| CR36 | `references/calibration-score.md` | `bit,...,omit,failed,1,yes` | calibration: a model judgment must never label a claim |
+| CR31 | `references/calibration-score.md` | `bit,...,omit,failed,1,yes` | calibration: the round count must label the expectation |
+| CR11 | `SKILL.md` | `bit,...,omit,failed,1,yes` | calibration: the declaration must state expected repair rounds |
+
+CR12 ran a line-growth swap against `guidance-prose-budgets`. The swap splits the joined line back into two lines. The verdict line reads `bit,.agents/skills/bench-craft-line/SKILL.md,swap,failed,1,yes`, and the check reported `prose-budget exceeded: .agents/skills/bench-craft-line/SKILL.md is 131 lines, over its 130-line budget`.
+
+`TestEveryRetainedFixtureBitesThroughRegisteredOwner` passed with the seven new canaries. Every pre-existing fixture that pins the line skill still plants its diagnostic.
+
+### Probe verdict
+
+The self-probe swaps the Brier sentence for the same sentence with the log rule. The verdict line reads `bit,.agents/skills/bench-craft-line/references/calibration-score.md,swap,failed,1,yes`. The failed test is `TestRootConformance`, and it reported `calibration: the Brier rule needs its score expression`.
+
+### Verification table
+
+Each run reports no skip. The elapsed time is the package time the verb reports.
+
+| check | verdict | elapsed |
+| --- | --- | --- |
+| `bench test --check docs-currency-workflow` | pass | 1095 ms |
+| `bench test --check guidance-prose-budgets` | pass | 4 ms |
+| `bench test --package ./internal/anchors/... --run 'TestCalibration'` | pass | 34 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 9261 ms |
+| `go vet ./...` | pass | no output |
+| `bench gate-prose . -- three Markdown files` | pass | see below |
+| `wc -l .agents/skills/bench-craft-line/SKILL.md` | 130 | no output |
+
 ## CD1 review
 
 The frozen pair is base `9148850200714f000eec2fbf44cddea6182f95c7` and tip `09f26779f65b7938f313cff9ec877fabe9d009f5`. The reviewer directed the review line. The first pass of every chunk review runs fable / medium. Every later pass on the same chunk runs sonnet / xhigh. Each axis ran in its own read-only worktree.

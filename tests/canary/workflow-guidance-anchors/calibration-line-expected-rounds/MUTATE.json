@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-line/references/calibration-score.md",
+    "old": "The line declaration states the expected repair-round count and a stated confidence as an integer from 0 to 10.\n",
+    "new": ""
+  }
+]
