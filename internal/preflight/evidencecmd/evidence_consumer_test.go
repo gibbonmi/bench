@@ -89,9 +89,12 @@ func reconstruct(document map[string][]map[string]any, pages []map[string]any) e
 	}
 	for _, source := range document["sources"] {
 		id := source["id"].(string)
-		if number(source["bytes"]) != len(bodies[id]) || sha(bodies[id]) != source["sha256"] {
-			return fmt.Errorf("source %s reconstructs %d of %d declared bytes and not its declared digest",
+		switch {
+		case number(source["bytes"]) != len(bodies[id]):
+			return fmt.Errorf("source %s reconstructs %d of %d declared bytes",
 				id, len(bodies[id]), number(source["bytes"]))
+		case sha(bodies[id]) != source["sha256"]:
+			return fmt.Errorf("source %s does not reconstruct its declared digest", id)
 		}
 	}
 	return nil
@@ -132,36 +135,62 @@ func number(value any) int {
 	return int(count)
 }
 
-// sourceIndexes lists the positions at which the pages of source id arrived.
-func sourceIndexes(pages []map[string]any, id string) []int {
+// sourceIndexes lists the positions at which the pages of source id arrived. It fails the test
+// when fewer than count pages arrived, so a caller never indexes past the delivery.
+func sourceIndexes(t *testing.T, pages []map[string]any, id string, count int) []int {
+	t.Helper()
 	var found []int
 	for i, page := range pages {
 		if page["stream"] == "source" && page["source"] == id {
 			found = append(found, i)
 		}
 	}
+	if len(found) < count {
+		t.Fatalf("source %s delivered %d pages, want at least %d", id, len(found), count)
+	}
 	return found
 }
 
+// restated copies the page at position at, so a caller changes one row and leaves the delivery
+// the consumer received untouched.
+func restated(pages []map[string]any, at int) map[string]any {
+	copied := map[string]any{}
+	for name, value := range pages[at] {
+		copied[name] = value
+	}
+	return copied
+}
+
 // reordered exchanges the first two pages of source id, so that source arrives out of order.
-func reordered(pages []map[string]any, id string) []map[string]any {
+func reordered(t *testing.T, pages []map[string]any, id string) []map[string]any {
+	t.Helper()
 	changed := append([]map[string]any{}, pages...)
-	at := sourceIndexes(changed, id)
+	at := sourceIndexes(t, changed, id, 2)
 	changed[at[0]], changed[at[1]] = changed[at[1]], changed[at[0]]
 	return changed
 }
 
 // overlapped restates the second page of source id at the first page's offset, so the two
 // declared ranges overlap.
-func overlapped(pages []map[string]any, id string) []map[string]any {
+func overlapped(t *testing.T, pages []map[string]any, id string) []map[string]any {
+	t.Helper()
 	changed := append([]map[string]any{}, pages...)
-	at := sourceIndexes(changed, id)
-	moved := map[string]any{}
-	for name, value := range changed[at[1]] {
-		moved[name] = value
-	}
+	at := sourceIndexes(t, changed, id, 2)
+	moved := restated(changed, at[1])
 	moved["offset"] = changed[at[0]]["offset"]
 	changed[at[1]] = moved
+	return changed
+}
+
+// shortened understates the first page of source id by one byte, so that page declares a length
+// the content it carries does not hold. The page keeps its content and its digest.
+func shortened(t *testing.T, pages []map[string]any, id string) []map[string]any {
+	t.Helper()
+	changed := append([]map[string]any{}, pages...)
+	at := sourceIndexes(t, changed, id, 1)
+	trimmed := restated(changed, at[0])
+	trimmed["bytes"] = float64(number(trimmed["bytes"]) - 1)
+	changed[at[0]] = trimmed
 	return changed
 }
 
@@ -232,6 +261,8 @@ func TestEvidenceDeliveryCoverage(t *testing.T) {
 	if sourcePages < 3 {
 		t.Fatalf("delivery fixture held %d source pages, want at least 3", sourcePages)
 	}
+	short := shortened(t, received.pages, "s2")
+	held := len(short[sourceIndexes(t, short, "s2", 1)[0]]["content"].(string))
 	for _, test := range []struct {
 		name, want string
 		pages      []map[string]any
@@ -239,8 +270,9 @@ func TestEvidenceDeliveryCoverage(t *testing.T) {
 		{"missing page", "never arrived", received.pages[:len(received.pages)-1]},
 		{"duplicate page", "arrived twice", append(append([]map[string]any{}, received.pages...), received.pages[len(received.pages)-1])},
 		{"final page only", "never arrived", received.pages[len(received.pages)-1:]},
-		{"out-of-order pages", "not where source s2 stands", reordered(received.pages, "s2")},
-		{"overlapping pages", "not where source s2 stands", overlapped(received.pages, "s2")},
+		{"out-of-order pages", "not where source s2 stands", reordered(t, received.pages, "s2")},
+		{"overlapping pages", "not where source s2 stands", overlapped(t, received.pages, "s2")},
+		{"page shorter than it declares", fmt.Sprintf("declares %d bytes and holds %d", held-1, held), short},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			if err := consume(identity, delivery{manifest: received.manifest, pages: test.pages}); err == nil ||
@@ -257,7 +289,7 @@ func TestEvidenceDeliveryCoverage(t *testing.T) {
 			t.Fatalf("manifest holds no digest of the %d-byte ticket", len(ticket))
 		}
 		err := consume("sha256:"+sha(crafted), delivery{manifest: crafted, pages: received.pages})
-		if err == nil || !strings.Contains(err.Error(), "not its declared digest") {
+		if err == nil || !strings.Contains(err.Error(), "does not reconstruct its declared digest") {
 			t.Fatalf("crafted source digest = %v, want a reconstruction rejection", err)
 		}
 	})
