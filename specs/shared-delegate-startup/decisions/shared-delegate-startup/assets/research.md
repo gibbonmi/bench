@@ -112,7 +112,7 @@ Drift: OpenAI changes caching or the selected model's request behavior.
 Earlier Bench boot research measured empty Claude delegates and Codex exec sessions.
 It did not compare prepared sibling forks with fresh native delegates.
 Its Codex no-op decision concerns the tested exec profile change.
-Source: `specs/delegate-boot-cost/spec.md:11`, `specs/delegate-boot-cost/spec.md:22`, and `specs/delegate-boot-cost/spec.md:283`.
+Source: `2831e430:specs/delegate-boot-cost/spec.md`, lines 11, 22, and 283.
 
 Assessment records distinguish sessions, attempts, estimated cost, actual charges, and unknown measurements.
 The native Codex importer recognizes input, cached input, and output counters.

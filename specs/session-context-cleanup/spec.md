@@ -1,6 +1,6 @@
 # Plan and apply one complete cleanup target set
 
-Status: staged
+Status: implemented
 
 Decision source: `specs/session-context-efficiency/decisions/session-context-efficiency.md` (ready compiled map).
 

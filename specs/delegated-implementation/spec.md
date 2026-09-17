@@ -1,6 +1,6 @@
 # Opt-in delegated implementation
 
-Status: staged
+Status: implemented
 
 Decision source: Reviewer-confirmed conversation, 2026-09-12, including both grill rounds, confirmation to draft, and the later ticket-authorship and mid-review correction.
 

@@ -577,7 +577,9 @@ The map's relative ticket links and research backlink remain valid after the uni
 The sweep included dot-directories, scripts, workflows, fixtures, and conformance sources.
 No executable reader names the old topic path.
 
-Existing staged `delegate-boot-cost`, `delegated-implementation`, and `bounded-charge-evidence` artifacts are reference material, not editable implementation consumers.
+The shipped `delegate-boot-cost` (`2831e430`) and `delegated-implementation`
+(`fd2b5de9`) sources, plus the staged `bounded-charge-evidence` artifact, are
+reference material, not editable implementation consumers.
 The last proposes another charge transport; this spec consumes the current canonical owner and creates no competing transport.
 No count, serialized field, command token, or runtime function changes.
 The shipped claim is optional workflow guidance for linked repositories.

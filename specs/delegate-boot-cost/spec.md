@@ -1,6 +1,6 @@
 # Cut the delegate boot cost
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed conversation, 2026-09-11. The reviewer closed two forks that day. The Codex side closes as a measured no-op. Every phase stays model-invocable, the descriptions are trimmed, and a length check grades them.
 
