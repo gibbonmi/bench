@@ -8,6 +8,10 @@ import (
 // ReferencePath is the shipped format reference that FormatReference generates.
 const ReferencePath = ".agents/skills/bench-craft-delegate/references/charge-evidence-format.md"
 
+// EncoderModule is the upstream Go module whose TOON encoder owns string quoting and
+// escaping. The repository go.mod must require this module path.
+const EncoderModule = "github.com/toon-format/toon-go"
+
 // FormatReference renders the shipped format reference from the registry. The shipped
 // file must equal this projection byte for byte.
 func FormatReference() string {
@@ -46,9 +50,8 @@ func FormatReference() string {
 	b.WriteString("A page index and an argument index both start at zero.\n")
 
 	b.WriteString("\n## Canonical string quoting\n\n")
-	b.WriteString("The pinned shared TOON encoder owns every string quoting and escaping rule.\n")
-	b.WriteString("`internal/toon/toon_test.go`'s `TestTableCellEscaping` pins its complete trigger inventory.\n")
-	b.WriteString("This reference does not restate a partial trigger list.\n")
+	fmt.Fprintf(&b, "The TOON encoder in the Go module `%s` owns every string quoting and escaping rule.\n", EncoderModule)
+	b.WriteString("Use the module version that the `go.mod` file of the Bench repository pins.\n")
 
 	b.WriteString("\n## Metadata source\n\n")
 	fmt.Fprintf(&b, "The first source has the role `%s`, the kind `%s`, and an empty path.\n", RoleMetadata, KindDerived)

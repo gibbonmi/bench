@@ -48,9 +48,8 @@ A page index and an argument index both start at zero.
 
 ## Canonical string quoting
 
-The pinned shared TOON encoder owns every string quoting and escaping rule.
-`internal/toon/toon_test.go`'s `TestTableCellEscaping` pins its complete trigger inventory.
-This reference does not restate a partial trigger list.
+The TOON encoder in the Go module `github.com/toon-format/toon-go` owns every string quoting and escaping rule.
+Use the module version that the `go.mod` file of the Bench repository pins.
 
 ## Metadata source
 

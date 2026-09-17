@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	ce "github.com/gibbonmi/bench/internal/chargeevidence"
+	"golang.org/x/mod/modfile"
 )
 
 // The expectations below are written from the spec's format tables, not read from the
@@ -95,8 +96,7 @@ func TestEvidenceIdentityInputs(t *testing.T) {
 
 // TestEvidenceCanonicalProfile pins the exact canonical bytes. The mutated ticket role
 // and spec path add a comma-bearing and a colon-bearing string value, so the pinned
-// bytes also fix their quoted forms; internal/toon/toon_test.go owns the quoting rule
-// itself.
+// bytes also fix their quoted forms; the encoder module owns the quoting rule itself.
 func TestEvidenceCanonicalProfile(t *testing.T) {
 	const ticket, spec = "# One\n", "# Spec\n"
 	const role, path = "ticket, primary", "specs/example/spec.md:pinned"
@@ -275,6 +275,26 @@ func TestEvidenceCandidateRefusals(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestEvidenceEncoderModuleRequired ties the reference's named encoder module to the
+// module that the repository go.mod requires.
+func TestEvidenceEncoderModuleRequired(t *testing.T) {
+	path := filepath.Join("..", "..", "go.mod")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read go.mod: %v", err)
+	}
+	parsed, err := modfile.Parse(path, data, nil)
+	if err != nil {
+		t.Fatalf("parse go.mod: %v", err)
+	}
+	for _, req := range parsed.Require {
+		if req.Mod.Path == ce.EncoderModule {
+			return
+		}
+	}
+	t.Fatalf("go.mod has no require for encoder module %s", ce.EncoderModule)
 }
 
 // TestEvidenceFormatProjection is CE148: the shipped reference equals the registry
