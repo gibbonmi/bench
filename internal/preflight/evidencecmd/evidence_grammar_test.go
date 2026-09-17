@@ -147,6 +147,10 @@ func TestEvidenceBuildGrammar(t *testing.T) {
 		{"padded quota", append(append([]string{}, valid...), "--max-store-bytes", "05"), "needs a positive decimal byte count"},
 		{"overflowing quota", append(append([]string{}, valid...), "--max-store-bytes", "18446744073709551616"), "needs a positive decimal byte count"},
 		{"missing quota value", append(append([]string{}, valid...), "--max-store-bytes"), "missing argument: --max-store-bytes"},
+		// CE173. The build guidance migration retires the legacy full charge, so the exact
+		// form the phase used to run now refuses through the bounded usage path.
+		{"CE173 build charge full", append(append([]string{}, valid...), "--full"), "--charge and --full requires review"},
+		{"CE173 build full alone", []string{"build", slug, "--full"}, "--full requires"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			if out, code := preflight.Command(test.args); code != 2 || !strings.Contains(out, test.want) {

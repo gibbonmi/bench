@@ -59,7 +59,7 @@ func TestChargeDirtySourceRefusesWithoutCompleteOutput(t *testing.T) {
 
 func TestChargeRepeatedPinnedInputsAreIdentical(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	args := preflighttest.ChargeArgs(t, root, slug, true)
+	args := preflighttest.ChargeArgs(t, root, slug, false)
 	first, firstCode := Command(args)
 	second, secondCode := Command(args)
 	if firstCode != 0 || secondCode != 0 || first != second {
@@ -79,12 +79,12 @@ func TestChargeFinalSnapshotFailureDiscardsPreparedOutput(t *testing.T) {
 	})
 	defer restoreSeam()
 
-	out, code := Command(preflighttest.ChargeArgs(t, root, slug, true))
+	out, code := Command(preflighttest.ChargeArgs(t, root, slug, false))
 	if err := os.Rename(moved, head); err != nil {
 		t.Fatal(err)
 	}
 	if code != 1 || !strings.Contains(out, "snapshot identity failed") ||
-		strings.Contains(out, "charge[") || strings.Contains(out, "complete,next}") {
+		strings.Contains(out, "prepared[") || strings.Contains(out, "charge[") {
 		t.Fatalf("final snapshot failure = (%d):\n%s", code, out)
 	}
 }

@@ -127,12 +127,13 @@ func failGitRead(t *testing.T, object string) {
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 }
 
-// chargeRoutes are the two build charge routes that share the refusal pipeline: the legacy
-// full projection and the evidence preparation.
+// chargeRoutes are the build charge routes that share the refusal pipeline. The build
+// guidance migration retired the legacy full projection, so evidence preparation is the
+// one surviving route.
 var chargeRoutes = []struct {
 	name string
 	full bool
-}{{"legacy full", true}, {"preparation", false}}
+}{{"preparation", false}}
 
 func preparationRefusals(t *testing.T, full bool) {
 	for _, test := range []struct {
@@ -186,7 +187,7 @@ func preparationRefusals(t *testing.T, full bool) {
 func preparedFixtureBuild(t *testing.T) (root string, facts Facts, entry *tickets.Entry, parsed *tickets.Ticket, args []string) {
 	t.Helper()
 	root, slug := preflighttest.SeedConformant(t)
-	args = preflighttest.ChargeArgs(t, root, slug, true)
+	args = preflighttest.ChargeArgs(t, root, slug, false)
 	facts, failure := gatherPinned(root, modeBuild, slug, args[6], args[8], true)
 	if failure != nil {
 		t.Fatalf("gather: %v", failure)
@@ -233,9 +234,13 @@ func TestEvidenceSourcePolicy(t *testing.T) {
 	if failure != "" || err != nil || len(pack.Manifest().Sources) != len(want)-1 {
 		t.Fatalf("reduced prepare = (%q, %v)", failure, err)
 	}
-	out, code := renderChargeWithPolicy(root, facts, Decide(facts), "one.md", true, reduced)
-	if code != 0 || strings.Contains(out, chargesource.DelegateProcedure) || !strings.Contains(out, "sources[4]{path,identity}") {
-		t.Fatalf("reduced policy charge still lists the omitted source (%d):\n%s", code, out)
+	for _, source := range pack.Manifest().Sources {
+		if source.Path == chargesource.DelegateProcedure {
+			t.Fatalf("reduced policy still prepares the omitted source: %+v", source)
+		}
+	}
+	if reduced := pack.Metadata(); strings.Join(reduced.Returns, ",") != "s4" {
+		t.Fatalf("reduced policy returns column = %v, want only s4", reduced.Returns)
 	}
 }
 

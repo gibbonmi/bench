@@ -13,59 +13,6 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-func TestChargeIdentity(t *testing.T) {
-	root, slug := preflighttest.SeedConformant(t)
-	args := preflighttest.ChargeArgs(t, root, slug, true)
-	const assignment = "00000000000000000000000000000001"
-	out, code := Command(args)
-	if code != 0 {
-		t.Fatalf("charge exit = %d:\n%s", code, out)
-	}
-	for _, want := range []string{
-		"charge[1]{assignment,checkout,base,source_tip,fence,ticket,writes,evidence,checks,return,complete,next}",
-		"sources[5]{path,identity}", "specs/example/tickets/one.md", args[6], args[8], "specs/example/spec.md", "\"" + assignment + "\"", "," + root + ",", ",specs,", "\"true\"",
-	} {
-		if !strings.Contains(out, want) {
-			t.Errorf("charge omitted %q:\n%s", want, out)
-		}
-	}
-}
-
-func TestChargeTicketEvidence(t *testing.T) {
-	root, slug := preflighttest.SeedConformant(t)
-	out, code := Command(preflighttest.ChargeArgs(t, root, slug, true))
-	if code != 0 {
-		t.Fatalf("full charge = (%d):\n%s", code, out)
-	}
-	for _, want := range []string{"Writes: specs", "Covers: PF1, PF2", "coverage[2]{row}", "  PF1", "  PF2", "## Acceptance"} {
-		if !strings.Contains(out, want) {
-			t.Errorf("full evidence omitted %q:\n%s", want, out)
-		}
-	}
-}
-
-func TestChargeCanonicalRequirements(t *testing.T) {
-	for _, source := range []string{chargesource.DelegateSkill, chargesource.DelegateProcedure, chargesource.BuildPhase} {
-		t.Run(source, func(t *testing.T) {
-			root, slug := preflighttest.SeedConformant(t)
-			before, code := Command(preflighttest.ChargeArgs(t, root, slug, true))
-			if code != 0 {
-				t.Fatalf("initial full charge = (%d):\n%s", code, before)
-			}
-			changed := "# Changed canonical source\n\n" + source + " changed.\n"
-			preflighttest.MustWriteFile(t, source, changed)
-			preflighttest.RunGit(t, "add", source)
-			preflighttest.RunGit(t, "commit", "-q", "-m", "change canonical source")
-			args := preflighttest.ChargeArgs(t, root, slug, true)
-			args[8] = preflighttest.RunGit(t, "rev-parse", "HEAD")
-			after, code := Command(args)
-			if code != 0 || !strings.Contains(after, strings.ReplaceAll(changed, "\n", "\\n")) || !strings.Contains(after, (chargeSource{path: source, data: []byte(changed)}).identity()) || after == before {
-				t.Fatalf("changed canonical source = (%d):\n%s", code, after)
-			}
-		})
-	}
-}
-
 func TestChargeRequiredInputs(t *testing.T) {
 	_, slug := preflighttest.SeedConformant(t)
 	out, code := Command([]string{"build", slug, "--charge", "--ticket", "one.md"})
@@ -126,16 +73,6 @@ func TestChargeSnapshotMovement(t *testing.T) {
 	restore()
 	if code != 1 || calls != 2 || !strings.Contains(out, "spec not staged") || strings.Contains(out, "snapshot drift") || strings.Contains(out, "complete,next}") {
 		t.Fatalf("movement then bootstrap failure = (%d, %d):\n%s", code, calls, out)
-	}
-}
-
-// TestChargeProjectionAndFullRetrieval covers the legacy --full projection that the build
-// phase reads.
-func TestChargeProjectionAndFullRetrieval(t *testing.T) {
-	root, slug := preflighttest.SeedConformant(t)
-	full, code := Command(preflighttest.ChargeArgs(t, root, slug, true))
-	if code != 0 || !strings.Contains(full, "\"true\"") || !strings.Contains(full, "evidence[5]{source,content}") || !strings.Contains(full, "## Acceptance") || !strings.Contains(full, "Status: staged") || !strings.Contains(full, "Delegation skill") || !strings.Contains(full, "Build phase") || !strings.Contains(full, "Focused suite:") {
-		t.Fatalf("full charge = (%d):\n%s", code, full)
 	}
 }
 

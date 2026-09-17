@@ -129,18 +129,6 @@ func chargeFenceCell(fence []string) string {
 	return strings.Join(fence, ", ")
 }
 
-func renderCharge(root string, facts Facts, verdict Verdict, name string, full bool) (string, int) {
-	return renderChargeWithPolicy(root, facts, verdict, name, full, buildSourcePolicy())
-}
-
-func renderChargeWithPolicy(root string, facts Facts, verdict Verdict, name string, full bool, policy []buildSourceDescriptor) (string, int) {
-	pack, refusal := buildChargePack(root, facts, verdict, name, policy)
-	if refusal != "" {
-		return refusal, 1
-	}
-	return renderLegacyBuildPacket(root, facts, pack, name, full)
-}
-
 // buildChargePack applies every build charge refusal in its fixed order and returns the
 // validated in-memory pack, or the refusal that stopped it.
 func buildChargePack(root string, facts Facts, verdict Verdict, name string, policy []buildSourceDescriptor) (*chargeevidence.Pack, string) {

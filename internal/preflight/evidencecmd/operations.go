@@ -93,8 +93,6 @@ var operations = []Operation{
 		description: "build-entry checks that a spec's artifacts agree with the tree, one verdict row per check"},
 	{Mode: ModeBuild, selectors: []string{flagCharge}, required: []string{FlagTicket, FlagBase, FlagTip}, optional: []string{flagQuota}, Kind: KindPrepareEvidence, Bounded: true,
 		description: "prepare one immutable build evidence artifact and print its bounded orientation"},
-	{Mode: ModeBuild, selectors: []string{flagCharge, FlagFull}, required: []string{FlagTicket, FlagBase, FlagTip}, Kind: KindLegacyCharge,
-		description: "legacy build charge that inlines every source"},
 	{Mode: ModeBuild, selectors: []string{flagPropose}, required: []string{FlagTicket, FlagBase, FlagTip}, Kind: KindProposal,
 		description: "propose one ticket's Writes: entries from the pinned source"},
 	{Mode: modeEvidence, optional: []string{flagCursor}, Kind: KindReadEvidence, Bounded: true,

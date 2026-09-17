@@ -359,6 +359,19 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   receives integrated acceptance. Not "accepted checkpoint", not "final verification" —
   branch-local evidence.
 
+- **prepared evidence set** — the required inventory, descriptors, metadata, and exact
+  captures from one successful preparation. Not "complete response", not "prompt bundle" —
+  prepared evidence set.
+- **evidence identity** — the SHA-256 of the canonical manifest bytes. Not "assignment
+  identity", not "approval" — evidence identity.
+- **source identity** — the SHA-256 of one exact source body. Not "role identity", not
+  "permission" — source identity.
+- **delivery coverage** — the actual verified byte ranges available to one consumer. Not
+  "final cursor", not "comprehension" — delivery coverage.
+- **current-action binding** — a verified current assignment and source pair associated
+  with an evidence identity. Not "artifact lifetime", not "origin location" —
+  current-action binding.
+
 ## Avoid
 
 - "implementation_session" / "ticket author" when you mean the **orchestrator**.

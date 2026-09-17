@@ -30,11 +30,8 @@ func preparedCommand(
 		action = "proposal"
 	}
 	return preparedAttempts(root, mode, slug, base, sourceTip, action, args, func(facts Facts) (string, int) {
-		switch {
-		case form == proposalPreparation:
+		if form == proposalPreparation {
 			return renderWritesProposal(root, facts, name)
-		case mode == modeBuild:
-			return renderCharge(root, facts, Decide(facts), name, full)
 		}
 		return renderReviewCharge(root, facts, Decide(facts), full, version)
 	})

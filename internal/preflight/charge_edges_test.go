@@ -63,10 +63,10 @@ func TestChargeRefusesRequiredSourceOutsidePinnedTip(t *testing.T) {
 	preflighttest.MustWriteFile(t, filepath.Join(root, ".git/info/exclude"), chargesource.BuildPhase+"\n")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "remove required source from tip")
 
-	out, code := Command(preflighttest.ChargeArgs(t, root, slug, true))
+	out, code := Command(preflighttest.ChargeArgs(t, root, slug, false))
 	if code != 1 || !strings.Contains(out, "source required") ||
 		!strings.Contains(out, chargesource.BuildPhase) || !strings.Contains(out, "source tip") ||
-		strings.Contains(out, "complete,next}") {
+		strings.Contains(out, "prepared[") {
 		t.Fatalf("ignored source outside tip = (%d):\n%s", code, out)
 	}
 }

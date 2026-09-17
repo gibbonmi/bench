@@ -5,14 +5,12 @@ description: Implement a spec (or a clearly-scoped change) at the pre-agreed sea
 # /bench-implement-spec — do the work at the seams
 
 ## Entry orientation
-This is the implementation phase. It starts from an approved spec, or from a change small enough for the lighter-path threshold. It declares the line and works vertical slices at the pre-agreed seams. If there is no spec, the change must fall under that
-threshold in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not fall under that threshold, route to `/bench-write-spec` first.
+This is the implementation phase. It starts from an approved spec, or from a change small enough for the lighter-path threshold. It declares the line and works vertical slices at the pre-agreed seams. If there is no spec, the change must fall under that threshold in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not fall under that threshold, route to `/bench-write-spec` first.
 If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there.
 
 ## Exit handoff
 
-Close by reporting the implemented stories, each acceptance row's coverage status, and the landed commits. A reviewed spec-backed build closes through the "Land" section below. A light-path build goes straight
-to `/bench-final-check`. A build that stops short exits through "When the build stops short" below, which recommends its one durable next action.
+Close by reporting the implemented stories, each acceptance row's coverage status, and the landed commits. A reviewed spec-backed build closes through the "Land" section below. A light-path build goes straight to `/bench-final-check`. A build that stops short exits through "When the build stops short" below, which recommends its one durable next action.
 
 ## Declare the line, validate the tickets, route the venue
 
@@ -21,7 +19,9 @@ create or retain one integration worktree at the reviewed graph commit; that com
 
 The reviewer approves the spec and the whole ticket graph once, in `/bench-write-spec`. A ticket inside that approved graph starts without a new approval stop. The verb below returns mechanical inputs only, so this session writes the supplement.
 
-After reviewer approval of the selected spec and ticket, run `bench preflight build <slug> --charge --ticket <ticket> --base <base> --source-tip <tip> --full` and retrieve its complete mechanical inputs. Require a complete task-specific supplement. A generated charge or staged artifact does not supply approval. The supplement names selectors, model, effort, cap, and mutation. Verify the fence, dependency completion, and expected source tip before the retained author starts the ticket.
+Run `bench preflight build <slug> --charge --ticket <ticket> --base <base> --source-tip <tip>` and read the prepared evidence identity it returns. Retrieve every required source with `bench preflight evidence <id>`, and follow each exact successor command until the stream ends. Verify the fence, dependency completion, and expected source tip before the retained author starts the ticket.
+
+Build action requires verified delivery: act only after `bench preflight evidence <id> --verify` reports every stored page and source digest verified. Build action requires available required context: a retrieval receipt, a terminal cursor, or another consumer's delivery never replaces the required bytes this session holds. Build action requires a current-action binding: act only after `bench preflight evidence <id> --check-current` binds the artifact to the current assignment and source pair. Build action requires reviewer approval, which a generated charge, a staged artifact, or a verified artifact never supplies. Build action requires the complete task supplement. The supplement names selectors, model, effort, cap, and mutation, and verified evidence never supplies it.
 
 Follow `.bench/BENCH.md`'s retained implementation and chunk-review policy. `craft-delegate` governs independent review and brief read-only diagnostic consultation. Neither role receives implementation or repair authorship.
 

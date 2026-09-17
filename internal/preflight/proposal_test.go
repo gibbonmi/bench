@@ -92,7 +92,7 @@ func TestWritesProposalClosure(t *testing.T) {
 
 	root, slug := seedProposal(t)
 	preflighttest.ActiveAssignment(t, root, root)
-	charge := append([]string{"build", slug, "--charge", "--ticket", "one.md", "--base", preflighttest.RunGit(t, "rev-parse", "main"), "--source-tip", preflighttest.RunGit(t, "rev-parse", "HEAD")}, "--full")
+	charge := []string{"build", slug, "--charge", "--ticket", "one.md", "--base", preflighttest.RunGit(t, "rev-parse", "main"), "--source-tip", preflighttest.RunGit(t, "rev-parse", "HEAD")}
 	if chargeOut, chargeCode := Command(charge); chargeCode != 1 || !strings.Contains(chargeOut, "fixture-closure") {
 		t.Errorf("charge after proposal = (%d):\n%s", chargeCode, chargeOut)
 	}
@@ -127,8 +127,8 @@ func TestWritesProposalAlreadyCovered(t *testing.T) {
 			if repeatCode != 0 || repeat != out {
 				t.Fatalf("repeat covered closure = (%d, equal=%t):\n%s", repeatCode, repeat == out, repeat)
 			}
-			charge := []string{"build", slug, "--charge", "--ticket", "one.md", "--base", preflighttest.RunGit(t, "rev-parse", "main"), "--source-tip", preflighttest.RunGit(t, "rev-parse", "HEAD"), "--full"}
-			if chargeOut, chargeCode := Command(charge); chargeCode != 0 || !strings.Contains(chargeOut, "\"true\"") {
+			charge := []string{"build", slug, "--charge", "--ticket", "one.md", "--base", preflighttest.RunGit(t, "rev-parse", "main"), "--source-tip", preflighttest.RunGit(t, "rev-parse", "HEAD")}
+			if chargeOut, chargeCode := Command(charge); chargeCode != 0 || !strings.HasPrefix(chargeOut, "prepared[1]") {
 				t.Fatalf("approved charge = (%d):\n%s", chargeCode, chargeOut)
 			}
 		})

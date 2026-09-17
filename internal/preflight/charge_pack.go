@@ -2,7 +2,6 @@ package preflight
 
 import (
 	"path/filepath"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
@@ -90,46 +89,6 @@ func prepareBuildPack(root string, facts Facts, selected *tickets.Entry, parsed 
 		Sources:  inputs,
 	})
 	return pack, "", err
-}
-
-// renderLegacyBuildPacket projects the validated pack onto the legacy build charge. It
-// reads every source and column from the decoded pack, never from the policy.
-func renderLegacyBuildPacket(root string, facts Facts, pack *chargeevidence.Pack, name string, full bool) (string, int) {
-	manifest, metadata := pack.Manifest(), pack.Metadata()
-	byID := map[string]chargeSource{}
-	var listed []chargeSource
-	for _, source := range manifest.Sources {
-		if source.Kind != chargeevidence.KindRepository {
-			continue
-		}
-		data, _ := pack.Source(source.ID)
-		byID[source.ID] = chargeSource{path: source.Path, data: data}
-		listed = append(listed, byID[source.ID])
-	}
-	handlesOf := func(ids []string) string {
-		sources := make([]chargeSource, len(ids))
-		for i, id := range ids {
-			sources[i] = byID[id]
-		}
-		return sourceHandles(sources...)
-	}
-	coverage, err := toon.Table("coverage", []string{"row"}, rows(metadata.Coverage))
-	if err != nil {
-		return toon.RenderError(err) + "\n", 1
-	}
-	selection := manifest.Selection
-	return renderChargePacket(chargePacket{
-		fields: []string{"assignment", "checkout", "base", "source_tip", "fence", "ticket", "writes", "evidence", "checks", "return"},
-		rows: [][]string{{
-			facts.AssignmentTarget, root, selection.Base, selection.SourceTip,
-			chargeFenceCell(metadata.Fence), handlesOf([]string{metadata.Charge[0].Ticket}),
-			strings.Join(metadata.Writes, ", "), sourceHandles(listed...),
-			handlesOf(metadata.Checks), handlesOf(metadata.Returns),
-		}},
-		middle:  []string{coverage},
-		sources: listed,
-		next:    chargeInvocation(modeBuild, facts, name),
-	}, full)
 }
 
 // currentEvidenceCommand binds one prepared artifact to the current action. The manifest

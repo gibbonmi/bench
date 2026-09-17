@@ -67,45 +67,6 @@ func assertChargeCells(t *testing.T, row map[string]any, want map[string]string)
 	}
 }
 
-func TestBuildChargeRowCells(t *testing.T) {
-	root, slug := preflighttest.SeedConformant(t)
-	args := preflighttest.ChargeArgs(t, root, slug, true)
-	out, code := Command(args)
-	if code != 0 {
-		t.Fatalf("build charge exit = %d:\n%s", code, out)
-	}
-	rows := preflighttest.TableRows(t, preflighttest.DecodeMap(t, out), "charge")
-	if len(rows) != 1 {
-		t.Fatalf("charge rows = %d, want 1", len(rows))
-	}
-	ticket := "specs/" + slug + "/tickets/one.md"
-	spec := "specs/" + slug + "/spec.md"
-	assertChargeCells(t, rows[0], map[string]string{
-		"assignment": preflighttest.ChargeFixtureAssignment,
-		"checkout":   root,
-		"base":       args[6],
-		"source_tip": args[8],
-		"fence":      strings.Join(preflighttest.ConformantFence, ", "),
-		"ticket":     fixtureHandle(t, ticket),
-		"writes":     "specs",
-		"evidence":   fixtureHandles(t, ticket, spec, chargesource.DelegateSkill, chargesource.BuildPhase, chargesource.DelegateProcedure),
-		"checks":     fixtureHandles(t, ticket, chargesource.BuildPhase),
-		"return":     fixtureHandles(t, chargesource.DelegateSkill, chargesource.DelegateProcedure),
-		"complete":   "true",
-		"next":       "",
-	})
-}
-
-func TestBuildChargeCellsCarryDistinctFacts(t *testing.T) {
-	root, slug := preflighttest.SeedConformant(t)
-	out, code := Command(preflighttest.ChargeArgs(t, root, slug, true))
-	if code != 0 {
-		t.Fatalf("build charge exit = %d:\n%s", code, out)
-	}
-	rows := preflighttest.TableRows(t, preflighttest.DecodeMap(t, out), "charge")
-	assertDistinctCells(t, rows[0], "fence", "ticket", "evidence", "checks", "return")
-}
-
 func TestReviewChargeRowCells(t *testing.T) {
 	_, slug, args := seedReviewEvidence(t, false)
 	out, code := Command(args)
@@ -205,13 +166,7 @@ func TestPreparedFormsIgnoreNestedWorkingDirectory(t *testing.T) {
 		assertNestedRunMatches(t, root, filepath.Join(root, "target"), args)
 	})
 
-	t.Run("build charge", func(t *testing.T) {
-		root, slug := preflighttest.SeedConformant(t)
-		args := preflighttest.ChargeArgs(t, root, slug, true)
-		assertNestedRunMatches(t, root, filepath.Join(root, "internal", slug), args)
-	})
-
-	t.Run("compact build charge", func(t *testing.T) {
+	t.Run("build preparation", func(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
 		args := preflighttest.ChargeArgs(t, root, slug, false)
 		assertNestedRunMatches(t, root, filepath.Join(root, "internal", slug), args)

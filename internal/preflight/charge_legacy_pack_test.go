@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/diff"
@@ -108,16 +107,6 @@ func mutationNamed(t *testing.T, name string) func(t *testing.T, root, slug stri
 
 func legacyChargeCases() []legacyChargeCase {
 	return []legacyChargeCase{
-		{"full", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := preflighttest.SeedConformant(t)
-			return legacyChargeRun(t, root, preflighttest.ChargeArgs(t, root, slug, true))
-		}},
-		{"unicode-without-final-newline-full", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := preflighttest.SeedConformant(t)
-			ticket := strings.Replace(preflighttest.TicketDoc("One", "PF1", "PF2"), "Writes: specs", "Writes: specs, internal/example", 1)
-			preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", strings.TrimSuffix(ticket, "\n")+"\n\nRésumé 雪\t\"q\" \\ x")
-			return legacyChargeRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "unicode ticket", true))
-		}},
 		{"refusal-absent-phase", func(t *testing.T) (string, int, string, string, string) {
 			root, slug := preflighttest.SeedConformant(t)
 			mutationNamed(t, "absent phase")(t, root, slug, nil)

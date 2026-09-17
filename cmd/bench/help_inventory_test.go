@@ -73,7 +73,6 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench preflight review <slug> --charge --base <commit> --source-tip <commit> --full  legacy review charge that inlines every source
   bench preflight build <slug> [--base <commit>] [--source-tip <commit>]  build-entry checks that a spec's artifacts agree with the tree, one verdict row per check
   bench preflight build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]  prepare one immutable build evidence artifact and print its bounded orientation
-  bench preflight build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> --full  legacy build charge that inlines every source
   bench preflight build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>  propose one ticket's Writes: entries from the pinned source
   bench preflight evidence <id> [--cursor <cursor>]  print one bounded fragment of a prepared evidence artifact and its exact successor
   bench preflight evidence <id> --source <source-id> [--cursor <cursor>]  print one bounded fragment of one declared source stream and its exact successor
