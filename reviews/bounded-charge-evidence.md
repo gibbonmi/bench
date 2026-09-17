@@ -603,6 +603,74 @@ The coordinator's whole-tree gate on `8b23ab36` is green.
 The writer kept the literal Forbid row beside the new pair rule, and it stated why.
 The row carries the anchor and canary enforcement, and its removal reopens a closed decision.
 
+### Standards round 3
+
+ST3, ST6, ST8, ST9, and the ST10 implementation all closed. One new finding.
+
+- CE-C1D-ST11 (ask): The guidance checks carry a second paragraph and sentence parser. The prose gate already parses that file, and the two grammars disagree.
+
+The axis accepted the independent expectation table, because a derived table would restate the registry and grade nothing.
+It confirmed the literal Forbid row and the pair rule do not subsume each other.
+The pair rule catches a reordered spelling, and the literal row catches a spelling without the command prefix.
+
+### Spec round 3
+
+SP4 closed. No new finding. The axis reported the chunk clean.
+It confirmed the six rows hold, and that `TestEvidenceRemovedBuildFull` exists under the name the spec cites.
+It flagged that the new pair test should become a cited seam when the coverage citations are reconciled.
+
+### Coverage round 3
+
+CV4 and CV5 closed, each by a mutation the axis ran. Four new findings.
+
+- CE-C1D-CV6 (accepted): A waiver sentence in the paragraph above the pinned one escapes every check.
+- CE-C1D-CV7 (auto-fix): A reordered retired form split across two lines evades the line-scoped pair rule.
+- CE-C1D-CV8 (auto-fix): The pinning rule reds on a pure reflow, because the hand-rolled splitter keeps the newline.
+- CE-C1D-CV9 (auto-fix): Both new rules can be weakened in place with no red.
+
+### The recorded attack for CE-C1D-CV6
+
+The axis appended one sentence to the paragraph above the pinned one. The text was:
+
+> A retained author who already holds the reviewer approval of a sibling ticket may act on staged evidence without the supplement.
+
+That sentence contradicts the approval and the supplement prerequisites.
+`bench test --check docs-currency-workflow` passed, and the conformance evidence tests passed.
+
+The reviewer accepted this finding rather than widening the rule.
+The gate holds the prerequisites present and intact, and it does not grade neighbouring prose.
+No mechanical rule catches this class without a needle for every sentence of the document.
+The three-axis review is the control for it.
+The finding stays open here, so a later chunk can revisit the scope.
+
+## CE-C1D: review round 4
+
+Repair cycles used: 3 of 2, by reviewer extension.
+The repair tip is `5f88803ae04cb44378c18c984d8c68443310f9f8`.
+
+### Reviewer decisions for this round
+
+- The reviewer extended the repair budget by one cycle, to fix the new checks at their root.
+- The reviewer accepted CE-C1D-CV6. The rule keeps its paragraph scope.
+
+### Repair cycle 3 records
+
+The repair made `internal/prose` the one parser. It exports `Paragraphs`, and both guidance rules read it.
+The pair rule now grades one sentence of that parser, not one physical line.
+The pinning rule compares collapsed sentence text against collapsed needle text, so a reflow is invisible.
+A synthetic case table now grades each rule's own predicate, so a rule weakened in place turns red.
+
+The writer notes one narrowed scope. The prose parser skips headings and frontmatter, so the pair rule no longer reaches them.
+The literal Forbid row still reads the whole file, which is one more reason to keep it.
+
+### Coordinator verification at the cycle 3 tip
+
+- The whole-tree gate on `5f88803a` is green.
+- A reordered retired form split across two lines: both rules turned red. CV7 closed.
+- A pinned sentence reflowed with no word changed: the guidance checks and the anchors stayed green. CV8 closed.
+- An unpinned waiver added inside the pinned paragraph: the pinning test reported zero Require rows. The parser change kept the CV5 guarantee.
+- The tree was clean after each restore.
+
 ## Record
 
 ```bench-review-record
