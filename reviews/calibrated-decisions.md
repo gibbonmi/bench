@@ -459,6 +459,28 @@ Each run reports no skip. The elapsed time is the package time the verb reports.
 
 Both provider files hold fewer than 120 lines.
 
+### Repair cycle 1
+
+Finding CD4-C1 held. The `unknown` cell rule had no anchor, so its omission was silent. The repair adds one `RequireInSection` anchor on `Update contract`, its row in `TestCalibrationScorecardAnchors`, and the omission fixture `calibration-unknown-cell`. The README bytes did not change.
+
+The omission probe now bites. Its verdict line reads `bit,capture/agent-performance/README.md,omit,failed,1,yes`, and `TestRootConformance` reported `calibration: the scorecard must keep the unknown cell for a provider with no labeled pair`.
+
+| row | status | confidence | label |
+| --- | --- | --- | --- |
+| CR24 | verified | 9 |  |
+| CR25 | claimed | 8 |  |
+| CR26 | verified | 9 |  |
+
+CR25 stays `claimed`. The new anchor grades the README's `unknown` cell rule, not the provider cells themselves, which stay review-owned. The confidences are the return-time values, and no cell holds a label.
+
+| check | verdict | elapsed |
+| --- | --- | --- |
+| `bench test --check docs-currency-workflow` | pass | 843 ms |
+| `bench test --package ./internal/anchors/... --run TestCalibration` | pass | 44 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 9162 ms |
+| `go vet ./...` | pass | no output |
+| `bench gate-prose . -- reviews/calibrated-decisions.md` | pass | no output |
+
 ## CD1 review
 
 The frozen pair is base `9148850200714f000eec2fbf44cddea6182f95c7` and tip `09f26779f65b7938f313cff9ec877fabe9d009f5`. The reviewer directed the review line. The first pass of every chunk review runs fable / medium. Every later pass on the same chunk runs sonnet / xhigh. Each axis ran in its own read-only worktree.

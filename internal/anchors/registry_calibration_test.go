@@ -58,5 +58,6 @@ func TestCalibrationScorecardAnchors(t *testing.T) {
 	anchorHarness{group: AfterImplementSpec, rules: []anchorRule{
 		{file: readme, section: "Measures", needle: "| calibration | the Brier mean over labeled pairs, the pair count, and the abstention count |", want: "calibration: the scorecard Measures table needs the calibration row"},
 		{file: readme, section: "Update contract", needle: "The calibration measure is one input to the two-run routing rule, obeys the ten-assignment cap, and never moves a tier on its own.", want: "calibration: the scorecard must keep the measure as one routing input with no tier move"},
+		{file: readme, section: "Update contract", needle: "A provider with no labeled pair shows `unknown` in the calibration cell.", want: "calibration: the scorecard must keep the unknown cell for a provider with no labeled pair"},
 	}}.check(t)
 }
