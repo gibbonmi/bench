@@ -879,6 +879,8 @@ It grants no implementation authority until the implementation phase starts.
 - `tests/canary/workflow-guidance-anchors/review-repair-ticket-owner`
 - `tests/canary/workflow-guidance-anchors/review-standing-falsification`
 - `tests/canary/workflow-guidance-anchors/review-universal-claim-bar`
+- `tests/canary/workflow-guidance-anchors/calibration-pickup-confidence`
+- `tests/canary/workflow-guidance-anchors/calibration-pickup-step-move`
 
 Build-time rewrites exclude every `specs/*/spec.md` and every existing implementation ticket.
 An in-scope plan expansion follows the operating guide before its writes occur.
