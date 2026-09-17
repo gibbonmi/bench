@@ -246,7 +246,7 @@ func axiEnvelopeCases() map[string]axiEnvelopeCase {
 		"anchors": {
 			route: []string{"anchors"}, successArgv: []string{"anchors", "AGENTS.md"}, deepSuccessArgv: []string{"anchors", "../../AGENTS.md"}, emptyArgv: []string{"anchors", "unregistered.md"},
 			blocks:        []string{"anchors", "help"},
-			successMarker: "anchors[", emptyMarker: "anchors[0]{kind,section,needle,line}:\n", usage: "usage: bench anchors", setupSuccess: setupAXIAnchors, setupEmpty: noSetup,
+			successMarker: "anchors[", emptyMarker: "anchors[0]{kind,section,step,needle,line}:\n", usage: "usage: bench anchors", setupSuccess: setupAXIAnchors, setupEmpty: noSetup,
 		},
 		"learnings": {
 			route: []string{"learnings"}, successArgv: []string{"learnings"}, emptyArgv: []string{"learnings"},

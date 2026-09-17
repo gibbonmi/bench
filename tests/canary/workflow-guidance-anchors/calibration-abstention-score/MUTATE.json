@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-line/references/calibration-score.md",
+    "old": "An abstention scores 0, stays out of the Brier mean, and is counted apart.\n",
+    "new": ""
+  }
+]

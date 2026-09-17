@@ -166,6 +166,33 @@ func TestRetroScaffoldListsUnknownWithoutATicketsDirectory(t *testing.T) {
 	}
 }
 
+// TestRetroScaffoldRendersCalibrationTable grades the calibration table the retro author
+// fills. The repository holds no scorecard directory, so the table's shape is proved for a
+// linked repository that captured no score.
+func TestRetroScaffoldRendersCalibrationTable(t *testing.T) {
+	root, _ := newScaffoldRepo(t)
+	if _, err := os.Stat(filepath.Join(root, "capture", "agent-performance")); !os.IsNotExist(err) {
+		t.Fatalf("scaffold repository holds a scorecard directory: %v", err)
+	}
+	body, code := RetroCommand([]string{"calibrated", "--scaffold"})
+	if code != 0 {
+		t.Fatalf("scaffold exit = %d, want 0: %q", code, body)
+	}
+	lines := strings.Split(strings.TrimSpace(sectionOf(t, body, retros.DelegateHeading)), "\n")
+	if len(lines) != 3 {
+		t.Fatalf("delegate-performance section holds %d lines, want the header, the separator, and one row:\n%s", len(lines), strings.Join(lines, "\n"))
+	}
+	if lines[0] != retros.CalibrationHeader {
+		t.Fatalf("rendered header = %q, want the exported constant %q", lines[0], retros.CalibrationHeader)
+	}
+	if lines[1] != "|---|---|---|---|---|---|" {
+		t.Fatalf("separator row = %q, want six cells", lines[1])
+	}
+	if lines[2] != "| unknown | unknown | unknown | unknown | unknown | unknown |" {
+		t.Fatalf("calibration row = %q, want one row of six unknown cells", lines[2])
+	}
+}
+
 func TestRetroScaffoldWritesNoFile(t *testing.T) {
 	root, _ := newScaffoldRepo(t)
 	body, code := RetroCommand([]string{"later", "--scaffold"})

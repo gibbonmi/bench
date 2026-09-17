@@ -122,6 +122,9 @@ Record concrete evidence:
 
 A spec retro cites the landing's census entry under `### Bench CLI` with its `Feeds:` line.
 
+The retro fills the calibration table with one row per labeled claim: surface, claim, status, confidence, label, and model, effort, and role.
+The retro states the Brier mean, the pair count, and the abstention count below the table, with `unknown` for a mean over zero pairs.
+
 Write each improvement item as one list item. Give the item one sentence that
 states the change to make. End the item with one line that reads `Feeds: FT<n>`,
 `Feeds: new`, or `Feeds: none`. Use `FT<n>` for the roadmap row the change

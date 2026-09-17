@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-final-check.md",
+    "old": "The retro states the Brier mean, the pair count, and the abstention count below the table, with `unknown` for a mean over zero pairs.\n",
+    "new": ""
+  }
+]

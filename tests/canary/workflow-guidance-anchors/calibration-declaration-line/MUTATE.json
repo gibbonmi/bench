@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-line/SKILL.md",
+    "old": "> Expected repair rounds: <count> / confidence <0-10>. `references/calibration-score.md` owns the score.\n",
+    "new": ""
+  }
+]

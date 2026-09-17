@@ -30,7 +30,7 @@ Standing preferences: a recommendation names the complete shape and never
 scopes by implementation time. The top tier implements nothing unless the
 reviewer names it. The gate and the coordinator are the only label sources.
 
-A map-owned asset stays in the map's assets folder, decisions/calibrated-decisions/assets/.
+A map-owned asset stays in the map's assets folder, specs/calibrated-decisions/decisions/calibrated-decisions/assets/.
 
 ## Decisions so far
 
@@ -70,7 +70,7 @@ A map-owned asset stays in the map's assets folder, decisions/calibrated-decisio
 
 ## Sources
 
-- Path: `decisions/calibrated-decisions/assets/calibration-research.md`
+- Path: `specs/calibrated-decisions/decisions/calibrated-decisions/assets/calibration-research.md`
   Supports: #1 in full, and the recommendations in #2 through #10. Produced 2026-09-16 from four arXiv papers and the TypeSafe article.
   Drift: a new primary source on process-level calibration, or a change to the scorecard contract.
 - URL: https://arxiv.org/abs/2507.16806

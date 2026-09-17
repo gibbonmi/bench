@@ -98,10 +98,10 @@ Effort has no enforcement surface, so the declaration must name it.
 ## The declaration
 
 > Line: <model id> / <effort> / <iteration policy> / <fan-out when used>.
+> Expected repair rounds: <count> / confidence <0-10>. `references/calibration-score.md` owns the score.
 > <one clause: the signals that selected this row.>
 
-The iteration policy is a numeric cap or an explicit `uncapped` policy.
-Declare fan-out for visibility before spend. Report an overrun like a ladder move. Derive a numeric cap from expected cycles plus one red. Price a likely shift repair higher.
+The iteration policy is a numeric cap or an explicit `uncapped` policy. Declare fan-out for visibility before spend. Report an overrun like a ladder move. Derive a numeric cap from expected cycles plus one red. Price a likely shift repair higher.
 
 ## Retained implementation continuation
 

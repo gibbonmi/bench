@@ -129,6 +129,19 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   production-grading test. A junction that rebuilds its own wiring proves the
   junction, not the adapter.
 
+## Claim schema
+
+- A done-claim row carries a `status` of `verified`, `claimed`, or `abstained`
+  and a stated confidence as an integer from 0 to 10.
+- `verified` means the author ran the named check and returns its red-to-green
+  log, and `claimed` means an assertion with no executed check.
+- A claim carries no free-text field.
+- A delegate that cannot state a confidence returns the row `abstained` with no
+  confidence.
+- No later probe turns an abstention into a refuted claim.
+- The coordinator's probe of the exact tree labels a done-claim row `held` or
+  `refuted`, whatever its status.
+
 ## Read-only returns
 
 - A diagnostic request contains only one question, the relevant error, minimal code, and attempted hypotheses.

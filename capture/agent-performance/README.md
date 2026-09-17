@@ -29,6 +29,8 @@ log. Provider-specific evidence lives in `open-ai-models.md` and
   or orchestrator. Do not charge upstream omissions to the implementer.
 - Compare dollars separately from tokens and latency. Unknown measurements stay
   unknown; qualitative impressions never become invented token counts.
+- A provider with no labeled pair shows `unknown` in the calibration cell.
+- The calibration measure is one input to the two-run routing rule, obeys the ten-assignment cap, and never moves a tier on its own.
 
 Good: fold a landing into its model/effort/role aggregate and replace weaker
 evidence. Bad: append a dated narrative or add one row per run.
@@ -43,3 +45,4 @@ evidence. Bad: append a dated narrative or add one row per run.
 | mutation quality | Required mutations bit and production was restored exactly |
 | terminal quality | Focused checks, full gate, and exact-tip review outcome |
 | efficiency | Token evidence when available, relative dollar input, and wall-clock churn |
+| calibration | the Brier mean over labeled pairs, the pair count, and the abstention count |

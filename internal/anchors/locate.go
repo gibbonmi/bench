@@ -17,13 +17,31 @@ import (
 // a rune's byte length cannot shift the reported line. A forbid kind is located
 // the same way as a require kind: a non-zero line locates the violation, the
 // presence of the forbidden needle.
+//
+// This entry point passes step 0, which no line opens, so a step-scoped kind
+// answers 0 here. The evaluator locates such an anchor with the anchor's own step.
 func Locate(kind Kind, section, needle, data string) int {
+	return locate(kind, section, 0, needle, data)
+}
+
+// locate is the package's one location walk. Locate is its step-free projection, and the
+// evaluator calls it with the anchor's own step, so a step-scoped anchor reports the line
+// of the match inside its step and nothing else.
+func locate(kind Kind, section string, step int, needle, data string) int {
 	stripped, origin := stripCommentsMapped(data)
 	text, textOrigin := stripped, origin
 	if kind.sectionScoped() {
 		body, bodyOrigin, count := sectionRunesMapped(stripped, origin, section)
 		// An absent section and a duplicated one both refuse: the evaluator resolves a
 		// scoped anchor against exactly one owning heading.
+		if count != 1 {
+			return 0
+		}
+		text, textOrigin = body, bodyOrigin
+	}
+	if kind.stepScoped() {
+		body, bodyOrigin, count := stepRunesMapped(text, textOrigin, step)
+		// An absent step and a duplicated one refuse for the same reason a section does.
 		if count != 1 {
 			return 0
 		}
@@ -73,34 +91,35 @@ func stripCommentsMapped(data string) (text []rune, origin []int) {
 	}
 }
 
-// sectionRunesMapped is the package's one H2 section resolution: it walks the lines once
-// and answers title's first owning section as a rune slice, its origin mapping into runes,
-// and the number of owning headings. A heading inside a fenced block neither delimits a
-// section nor counts as one. The body and the count come from the same walk, so a caller
-// that refuses a duplicated section reads the count the body came from.
-// MarkdownH2Sections is this function's string projection.
-func sectionRunesMapped(runes []rune, origin []int, title string) (body []rune, bodyOrigin []int, count int) {
+// scopeRunesMapped is the package's one narrowing walk: it walks the lines once and answers
+// the first region opens accepts, that region's origin mapping into runes, and the number of
+// lines opens accepted. A line inside a fenced block neither opens nor closes a region. The
+// body and the count come from the same walk, so a caller that refuses a duplicated region
+// reads the count the body came from. keepOpener keeps the opening line inside the body, for
+// a region whose own first line carries text.
+func scopeRunesMapped(runes []rune, origin []int, opens, closes func(line []rune) bool, keepOpener bool) (body []rune, bodyOrigin []int, count int) {
 	lines := splitRuneLines(runes)
-	heading := []rune("## " + title)
 	fenced := false
 	start, end := -1, -1
 	for i, line := range lines {
-		trimmed := trimSpaceRunes(line)
-		if hasPrefixRunes(trimmed, fenceMark) {
+		if hasPrefixRunes(trimSpaceRunes(line), fenceMark) {
 			fenced = !fenced
 			continue
 		}
 		if fenced {
 			continue
 		}
-		if slices.Equal(trimmed, heading) {
+		if opens(line) {
 			count++
 			if count == 1 {
-				start = i + 1
+				start = i
+				if !keepOpener {
+					start = i + 1
+				}
 			}
 			continue
 		}
-		if start >= 0 && end < 0 && hasPrefixRunes(line, headingMark) {
+		if start >= 0 && end < 0 && closes(line) {
 			end = i
 		}
 	}
@@ -127,6 +146,32 @@ func sectionRunesMapped(runes []rune, origin []int, title string) (body []rune, 
 		endOffset = startOffset
 	}
 	return runes[startOffset:endOffset], origin[startOffset:endOffset], count
+}
+
+// sectionRunesMapped is the package's one H2 section resolution: title's first owning
+// section, the number of owning headings, and the next H2 heading as the close. A heading
+// inside a fenced block neither delimits a section nor counts as one.
+// MarkdownH2Sections is this function's string projection.
+func sectionRunesMapped(runes []rune, origin []int, title string) (body []rune, bodyOrigin []int, count int) {
+	heading := []rune("## " + title)
+	return scopeRunesMapped(runes, origin,
+		func(line []rune) bool { return slices.Equal(trimSpaceRunes(line), heading) },
+		func(line []rune) bool { return hasPrefixRunes(line, headingMark) },
+		false)
+}
+
+// stepRunesMapped is the package's one numbered-step resolution: the first body of the step
+// the reader sees as step, and the number of lines that open it. The next opener of any step
+// closes the body, so an indented continuation line stays inside its step. The opener's own
+// line joins the body, because that line carries the step's first words.
+// MarkdownNumberedSteps is this function's string projection.
+func stepRunesMapped(runes []rune, origin []int, step int) (body []rune, bodyOrigin []int, count int) {
+	return scopeRunesMapped(runes, origin,
+		// The reader sees the literal digits, so the match is on the written number and
+		// never on the opener's ordinal position in the section.
+		func(line []rune) bool { number, opens := stepOpener(line); return opens && number == step },
+		func(line []rune) bool { _, opens := stepOpener(line); return opens },
+		true)
 }
 
 // collapseSpaceMapped is the package's one whitespace collapse: each whitespace run becomes

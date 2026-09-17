@@ -42,6 +42,7 @@ surface, never that family's CLI. Cross-family reviews use the exact recipes in
 
 Prefer compressed inputs: the named decision source, exact passages, coverage rows, and the fence's fixture-and-seam inventory.
 The delegate then uses prior art instead of re-deriving it.
+The charge names the `Claim schema` section of `references/delegation-discipline.md` as the return shape.
 
 Use a read-only mid-tier delegate to interpret ambiguous repair evidence. It distinguishes invalid probes, no executed tests, missing coverage, and scope defects only when evidence supports each classification. Missing or contradictory evidence remains unknown. Resolve the harness's bound mid model at medium effort for one iteration. Use high effort only when existing line rules require it.
 

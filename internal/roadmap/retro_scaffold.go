@@ -51,10 +51,23 @@ func scaffoldSection(home, root, slug, heading string) string {
 	switch heading {
 	case retros.TimingsHeading:
 		return timingsSection(home, root)
+	case retros.DelegateHeading:
+		return calibrationSection()
 	case retros.RepairHeading:
 		return repairSection(root, slug)
 	}
 	return ""
+}
+
+// calibrationSection prints the calibration table's shape with one unknown row. Every cell
+// is a claim the retro author labels after the run, so the scaffold states no value and
+// reads no scorecard directory. The separator and the row count their cells from the
+// header constant, so a column changed there cannot leave either row short.
+func calibrationSection() string {
+	cells := strings.Count(retros.CalibrationHeader, "|") - 1
+	separator := "|" + strings.Repeat("---|", cells)
+	row := "|" + strings.Repeat(" "+unknownFact+" |", cells)
+	return strings.Join([]string{retros.CalibrationHeader, separator, row}, "\n")
 }
 
 // timingsSection lists the gate stages of the landing's own trace. It names the
