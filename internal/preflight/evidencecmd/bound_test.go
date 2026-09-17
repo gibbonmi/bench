@@ -12,7 +12,7 @@ import (
 func TestEvidenceFinalGuard(t *testing.T) {
 	for _, op := range operations {
 		if (op.Kind == KindPrepareEvidence || op.Kind == KindReadEvidence) && !op.Bounded {
-			t.Errorf("operation %q bypasses the final guard", op.usage)
+			t.Errorf("operation %q bypasses the final guard", op.usageLine())
 		}
 	}
 	out, code := Bound(strings.Repeat("x", preflighttest.ResponseBudget+1), 0)

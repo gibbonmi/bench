@@ -39,6 +39,28 @@ const (
 	modeEvidence = "evidence"
 )
 
+// flagSpec is one registered preflight flag. A switch has no placeholder; a valued flag
+// names the placeholder its usage text shows.
+type flagSpec struct {
+	name, placeholder string
+}
+
+// flagTable is the one flag registry. The argument grammar, the selector switches, and
+// every usage line derive from it.
+var flagTable = []flagSpec{
+	{FlagBase, "<commit>"},
+	{FlagTip, "<commit>"},
+	{flagCharge, ""},
+	{flagPropose, ""},
+	{FlagTicket, "<basename>"},
+	{FlagFull, ""},
+	{flagQuota, "<n>"},
+	{flagCursor, "<cursor>"},
+}
+
+// modeOperands names the positional operand each mode takes.
+var modeOperands = map[string]string{modeReview: "<slug>", ModeBuild: "<slug>", modeEvidence: "<id>"}
+
 // Operation is one implemented public preflight form. The registry below is the one source
 // for the argument grammar, the preflight help, and the root help rows.
 type Operation struct {
@@ -46,7 +68,7 @@ type Operation struct {
 	// selectors are the switch flags that choose this form; required and optional list
 	// every other flag the form accepts.
 	selectors, required, optional []string
-	usage, description            string
+	description                   string
 	Kind                          Kind
 	// Bounded forms obey the shared response bound for every response they produce.
 	Bounded bool
@@ -54,42 +76,81 @@ type Operation struct {
 
 var operations = []Operation{
 	{Mode: modeReview, optional: []string{FlagBase, FlagTip}, Kind: KindVerdict,
-		usage: "review <slug> [--base <commit>] [--source-tip <commit>]", description: "review-entry checks that a spec's artifacts agree with the tree, one verdict row per check"},
+		description: "review-entry checks that a spec's artifacts agree with the tree, one verdict row per check"},
 	{Mode: modeReview, selectors: []string{flagCharge}, required: []string{FlagBase, FlagTip}, Kind: KindLegacyCharge,
-		usage: "review <slug> --charge --base <commit> --source-tip <commit>", description: "legacy review charge that names every omitted source"},
+		description: "legacy review charge that names every omitted source"},
 	{Mode: modeReview, selectors: []string{flagCharge, FlagFull}, required: []string{FlagBase, FlagTip}, Kind: KindLegacyCharge,
-		usage: "review <slug> --charge --base <commit> --source-tip <commit> --full", description: "legacy review charge that inlines every source"},
+		description: "legacy review charge that inlines every source"},
 	{Mode: ModeBuild, optional: []string{FlagBase, FlagTip}, Kind: KindVerdict,
-		usage: "build <slug> [--base <commit>] [--source-tip <commit>]", description: "build-entry checks that a spec's artifacts agree with the tree, one verdict row per check"},
+		description: "build-entry checks that a spec's artifacts agree with the tree, one verdict row per check"},
 	{Mode: ModeBuild, selectors: []string{flagCharge}, required: []string{FlagTicket, FlagBase, FlagTip}, optional: []string{flagQuota}, Kind: KindPrepareEvidence, Bounded: true,
-		usage: "build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]", description: "prepare one immutable build evidence artifact and print its bounded orientation"},
+		description: "prepare one immutable build evidence artifact and print its bounded orientation"},
 	{Mode: ModeBuild, selectors: []string{flagCharge, FlagFull}, required: []string{FlagTicket, FlagBase, FlagTip}, Kind: KindLegacyCharge,
-		usage: "build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> --full", description: "legacy build charge that inlines every source"},
+		description: "legacy build charge that inlines every source"},
 	{Mode: ModeBuild, selectors: []string{flagPropose}, required: []string{FlagTicket, FlagBase, FlagTip}, Kind: KindProposal,
-		usage: "build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>", description: "propose one ticket's Writes: entries from the pinned source"},
+		description: "propose one ticket's Writes: entries from the pinned source"},
 	{Mode: modeEvidence, optional: []string{flagCursor}, Kind: KindReadEvidence, Bounded: true,
-		usage: "evidence <id> [--cursor <cursor>]", description: "print one bounded fragment of a prepared evidence artifact and its exact successor"},
+		description: "print one bounded fragment of a prepared evidence artifact and its exact successor"},
 }
 
-// selectorFlags lists every switch flag in declaration order.
-var selectorFlags = []string{flagCharge, flagPropose, FlagFull}
+// selectorFlags lists every switch flag in registry order.
+var selectorFlags = switchFlags()
+
+func switchFlags() []string {
+	var names []string
+	for _, flag := range flagTable {
+		if flag.placeholder == "" {
+			names = append(names, flag.name)
+		}
+	}
+	return names
+}
 
 // Grammar is the preflight argument grammar the operation registry accepts.
 var Grammar = usage.Grammar{
-	Cmd:  "bench preflight",
-	Help: operationUsage(),
-	Flags: []usage.Flag{
-		{Name: FlagBase, HasValue: true, NoEmptyValue: true},
-		{Name: FlagTip, HasValue: true, NoEmptyValue: true},
-		{Name: flagCharge},
-		{Name: flagPropose},
-		{Name: FlagTicket, HasValue: true, NoEmptyValue: true},
-		{Name: FlagFull},
-		{Name: flagQuota, HasValue: true, NoEmptyValue: true},
-		{Name: flagCursor, HasValue: true, NoEmptyValue: true},
-	},
+	Cmd:     "bench preflight",
+	Help:    operationUsage(),
+	Flags:   grammarFlags(),
 	MinArgs: 2,
 	MaxArgs: 2,
+}
+
+func grammarFlags() []usage.Flag {
+	flags := make([]usage.Flag, len(flagTable))
+	for i, flag := range flagTable {
+		valued := flag.placeholder != ""
+		flags[i] = usage.Flag{Name: flag.name, HasValue: valued, NoEmptyValue: valued}
+	}
+	return flags
+}
+
+// usageLine renders one form after `bench preflight`: the mode and its operand, the first
+// selector, the required flags, the remaining selectors, then the bracketed optional flags.
+func (op Operation) usageLine() string {
+	terms := []string{op.Mode, modeOperands[op.Mode]}
+	if len(op.selectors) > 0 {
+		terms = append(terms, op.selectors[0])
+	}
+	for _, name := range op.required {
+		terms = append(terms, flagTerm(name))
+	}
+	if len(op.selectors) > 1 {
+		terms = append(terms, op.selectors[1:]...)
+	}
+	for _, name := range op.optional {
+		terms = append(terms, "["+flagTerm(name)+"]")
+	}
+	return strings.Join(terms, " ")
+}
+
+// flagTerm is a flag followed by its registered placeholder, if it takes a value.
+func flagTerm(name string) string {
+	for _, flag := range flagTable {
+		if flag.name == name && flag.placeholder != "" {
+			return name + " " + flag.placeholder
+		}
+	}
+	return name
 }
 
 func operationUsage() string {
@@ -99,7 +160,7 @@ func operationUsage() string {
 		if i == 0 {
 			prefix = "usage: bench preflight "
 		}
-		b.WriteString(prefix + op.usage + "\n")
+		b.WriteString(prefix + op.usageLine() + "\n")
 	}
 	return b.String()
 }
@@ -113,7 +174,7 @@ type HelpRow struct {
 func HelpRows() []HelpRow {
 	rows := make([]HelpRow, len(operations))
 	for i, op := range operations {
-		rows[i] = HelpRow{Suffix: " " + op.usage, Description: op.description}
+		rows[i] = HelpRow{Suffix: " " + op.usageLine(), Description: op.description}
 	}
 	return rows
 }
@@ -182,9 +243,9 @@ func requirementLine(op Operation) string {
 }
 
 func grammarFlagNames() []string {
-	names := make([]string, len(Grammar.Flags))
-	for i, flag := range Grammar.Flags {
-		names[i] = flag.Name
+	names := make([]string, len(flagTable))
+	for i, flag := range flagTable {
+		names[i] = flag.name
 	}
 	return names
 }
