@@ -838,6 +838,15 @@ It grants no implementation authority until the implementation phase starts.
 - `tests/canary/workflow-guidance-anchors/implement-spec-write-delegation`
 - `tests/canary/workflow-guidance-anchors/line-anchor-missing`
 - `tests/canary/workflow-guidance-anchors/prepared-build-freshness`
+- `tests/canary/workflow-guidance-anchors/dg-25`
+- `tests/canary/workflow-guidance-anchors/dg-26`
+- `tests/canary/workflow-guidance-anchors/dg-29`
+- `tests/canary/workflow-guidance-anchors/dg-29-verification-target`
+- `tests/canary/workflow-guidance-anchors/dg-30`
+- `tests/canary/workflow-guidance-anchors/dg-31`
+- `tests/canary/workflow-guidance-anchors/dg-31-contradiction-trigger`
+- `tests/canary/workflow-guidance-anchors/implement-spec-adoption-freshness`
+- `tests/canary/workflow-guidance-anchors/implement-spec-prose-owner-transfer`
 - `tests/canary/docs-currency-token-diet/signal-vocabulary-drift`
 - `tests/canary/workflow-guidance-anchors/context-acceptance-row-vocabulary`
 - `tests/canary/workflow-guidance-anchors/context-coverage-map-term`
