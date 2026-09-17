@@ -43,7 +43,9 @@ func SelectQuota(op Operation, identity string, flags map[string]string) (uint64
 		}
 		quota = value
 	}
-	if op.Kind == KindReadEvidence || op.Kind == KindVerifyEvidence || op.Kind == KindCurrentEvidence {
+	// The operation registry owns which forms read evidence, so a newly registered evidence
+	// form validates its operands without a second enumeration here.
+	if op.Mode == modeEvidence {
 		return quota, operandRefusal(identity, flags[flagSource], flags[flagCursor])
 	}
 	return quota, ""

@@ -108,8 +108,8 @@ var operations = []Operation{
 }
 
 // selectorFlags lists every flag that chooses a registered form, in flag registry order.
-// The operations below are the one source of that set, so a flag is a selector exactly
-// when some form selects on it.
+// The operation registry above is the one source of that set, so a flag is a selector
+// exactly when some form selects on it.
 var selectorFlags = operationSelectors()
 
 func operationSelectors() []string {
