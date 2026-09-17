@@ -134,14 +134,14 @@ The ticket adds the `RequireInStep` anchor kind and a `Step` field on `Anchor`. 
 
 ### Done-claim table
 
-The author wrote no label cell. Each status is `verified`, because the author ran the named check and kept its log. The coordinator's probe on `stepScoped` was silent against the first diff. The kind now owns the step narrowing on both sides, and that probe bites. Repair cycle 1 closed four more silent mutations.
+The author wrote no label cell. Each status is `verified`, because the author ran the named check and kept its log. The coordinator's probe on `stepScoped` was silent against the first diff. The kind now owns the step narrowing on both sides, and that probe bites. Two repair cycles closed six more silent mutations.
 
 | row | status | confidence | label |
 | --- | --- | --- | --- |
 | CR22 | verified | 9 |  |
 | CR38 | verified | 9 |  |
 
-CR38 returns to 9. The step parser and the two scope boundaries each carry a biting test now. A reviewer reads the guarantee from the suite, and not from the code.
+CR38 holds at 9. The step parser and all four scope boundaries carry a biting test now. A reviewer reads the guarantee from the suite, and not from the code.
 
 ### One owner for the step narrowing
 
@@ -172,6 +172,18 @@ CD2b-S2 and CD2b-S3 are comment repairs. The narrating comment reads timeless no
 | CD2b-S1 | the `Locate` doc states the step-0 answer; the signature stays | none | comment |
 | CD2b-S2 | the diagnostics-test comment reads timeless | none | comment |
 | CD2b-S3 | the rationale sits once on `stepScoped`; the two restatements and the test name are gone | none | comment |
+
+### Repair cycle 2
+
+The Coverage pass reopened CD2b-C4. The cycle-1 test grades the section arm of the shared narrowing, where the body starts under its heading. The step arm inverts that rule, and it had no test. A mutation that starts every body one line down was therefore silent on the step side.
+
+`TestMarkdownNumberedStepsIncludesItsOpener` grades the step arm. A step's own first words sit on its opener line, so the body must start with that line. The test also reads a needle from the opener line through `Satisfied`, and it holds the next opener out of the body.
+
+| finding | fix | probe | verdict |
+| --- | --- | --- | --- |
+| CD2b-C4, step arm | `TestMarkdownNumberedStepsIncludesItsOpener` grades the step body's open boundary | the `keepOpener` branch collapses to `start = i + 1` | `bit,internal/anchors/locate.go,swap,failed,1,yes` |
+
+The mutation fails that one test, and no other. This result names the step arm as the half the earlier test could not reach.
 
 `06.` reads as step 6. A markdown reader sees `06.` and `6.` as the same step, and the doc comment on `stepOpener` states that rule.
 
