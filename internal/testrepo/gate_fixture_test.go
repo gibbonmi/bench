@@ -128,7 +128,17 @@ func TestGateFixtureWritesOnlyRequestedPathsAndCanRepeat(t *testing.T) {
 					}
 					continue
 				}
-				if output, err := exec.Command(path).CombinedOutput(); err != nil || string(output) != want {
+				info, err := os.Stat(path)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if mode := info.Mode().Perm(); mode&0o111 != 0o111 {
+					t.Fatalf("%s mode = %v, want executable", name, mode)
+				}
+				// The shell reads the script instead of executing the file. A parallel
+				// subtest's fork can still hold a write handle to it, and a direct exec
+				// then fails with text file busy.
+				if output, err := exec.Command("/bin/sh", path).CombinedOutput(); err != nil || string(output) != want {
 					t.Fatalf("%s = %q, %v, want %q", name, output, err, want)
 				}
 			}
