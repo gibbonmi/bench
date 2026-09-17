@@ -133,6 +133,34 @@ The coordinator ran the three chunk verifications at `85de8fa3`. Both focused su
 The repair writer logged nine probe runs at `85de8fa3`, and each run failed the expected tests and restored the file.
 The coordinator's independent probe changed the ticket-cell sentence in the reference generator, and the projection test failed.
 
+## CE-C1A: review round 4
+
+Frozen pair: base `bcd9eb7ff876abd681d2c71547e9cf6c5b86174b`, tip `3d9932917645b955b012070c5a2862bfb560cbe8`.
+The round reviewed only the scoped extension cycle. The raw finding count is 0.
+Repair cycles used: 2 of 2, plus the one reviewer-approved scoped extension. The extension closed ST8 and SP5.
+
+### Standards
+
+Finding count: 0. The axis passed.
+
+### Spec
+
+Finding count: 0. The axis passed.
+
+### Coverage
+
+Finding count: 0. The axis passed.
+
+### Advice
+
+- The Standards axis reported that `EncoderModule` restates the module path that the encoder imports, and that its test reads `go.mod` instead of the import. By reviewer decision, this item is advice without an ID. The ticket 2 author ties the test to the encoder import, and the CE-C1B review verifies that change.
+
+### Author verification
+
+The coordinator ran the three chunk verifications at `3d993291`. Both focused suites passed, and the plan probe failed seven tests and restored the file.
+The extension writer probed the module constant and the removed sentence, and both probes failed the projection test.
+The coordinator's independent probe removed the version sentence from the generator, and the projection test failed.
+
 ## Record
 
 ```bench-review-record
@@ -145,9 +173,9 @@ The coordinator's independent probe changed the ticket-cell sentence in the refe
     {
       "id": "CE-C1A",
       "base": "bcd9eb7ff876abd681d2c71547e9cf6c5b86174b",
-      "tip": "85de8fa38a9d90808a6034e3dda0029b860cdebc",
+      "tip": "3d9932917645b955b012070c5a2862bfb560cbe8",
       "plan_digest": "sha256:971cc327eafed497f8ad3ae83762bcaf4c1a30538971f90736c74ba6be2031d0",
-      "source_digest": "a9540853957b34f88b3f5ecb14fe4930f439406d",
+      "source_digest": "ff09af8a6fdd9a16b23d8b34074a3c3ea5492c78",
       "acceptance_rows": [
         "CE16",
         "CE18",
@@ -386,6 +414,71 @@ The coordinator's independent probe changed the ticket-cell sentence in the refe
               "excerpt": "bench probe internal/chargeevidence/schema.go --omit ', str(\"cwd\")' --package ./internal/chargeevidence at 85de8fa3: verdict bit, 7 failed tests, restored=yes"
             }
           }
+        },
+        {
+          "id": "ce-c1a-v4-preflight",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff09af8a6fdd9a16b23d8b34074a3c3ea5492c78",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:5c12cb1a9fd00a6aae7c00b24149ffda51c462f5bb54c5df8b8042d4f2290d9e",
+            "excerpt": "bench test --package ./internal/preflight at 3d993291: pass, 18108 ms"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1a-v4-format",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff09af8a6fdd9a16b23d8b34074a3c3ea5492c78",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:3a5f9633edeebc7becac0a9296c042aa3be12252351762bbd40c4bc3c73dbf45",
+            "excerpt": "bench test --package ./internal/chargeevidence at 3d993291: pass, 8 ms"
+          },
+          "requirement": "format",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1a-v4-mutation",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff09af8a6fdd9a16b23d8b34074a3c3ea5492c78",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:3a5f9633edeebc7becac0a9296c042aa3be12252351762bbd40c4bc3c73dbf45",
+            "excerpt": "bench test --package ./internal/chargeevidence at 3d993291: pass, 8 ms"
+          },
+          "requirement": "mutation",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit a declared field from the shipped format projection",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:coordinator-run",
+              "digest": "sha256:25394e590ed5e19d64fdae77d91137ff16d20ec6a45ca809dc019b01ad42a255",
+              "excerpt": "bench probe internal/chargeevidence/schema.go --omit ', str(\"cwd\")' --package ./internal/chargeevidence at 3d993291: verdict bit, 7 failed tests, restored=yes"
+            }
+          }
         }
       ],
       "reviews": [
@@ -606,6 +699,72 @@ The coordinator's independent probe changed the ticket-cell sentence in the refe
           "finding_ids": [],
           "supersedes": [
             "ce-c1a-r2-coverage"
+          ]
+        },
+        {
+          "id": "ce-c1a-r4-standards",
+          "performer": "claude-review-ce-c1a-standards-r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ff09af8a6fdd9a16b23d8b34074a3c3ea5492c78",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1a-standards-r4",
+            "digest": "sha256:835657faa6b8dae28dc18e61dc94076d4d0464f789e6b2ac26f8ec7572764b91",
+            "excerpt": "Standards CE-C1A round 4: ST8 closed. The axis raised one minor non-blocking item: EncoderModule restates the encoder import path and its test anchors on go.mod. By reviewer decision this item is advice without an ID, carried into ticket 2."
+          },
+          "axis": "Standards",
+          "base": "bcd9eb7ff876abd681d2c71547e9cf6c5b86174b",
+          "tip": "3d9932917645b955b012070c5a2862bfb560cbe8",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c1a-r3-standards"
+          ]
+        },
+        {
+          "id": "ce-c1a-r4-spec",
+          "performer": "claude-review-ce-c1a-spec-r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ff09af8a6fdd9a16b23d8b34074a3c3ea5492c78",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1a-spec-r4",
+            "digest": "sha256:90aca4587b65f31526fcb24cd45b8ed5ed85b916a400adc1ed57cc769069d41d",
+            "excerpt": "Spec CE-C1A round 4: SP5 closed; the reference names github.com/toon-format/toon-go at the go.mod pin, which meets spec lines 153 and 257. No new findings."
+          },
+          "axis": "Spec",
+          "base": "bcd9eb7ff876abd681d2c71547e9cf6c5b86174b",
+          "tip": "3d9932917645b955b012070c5a2862bfb560cbe8",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c1a-r3-spec"
+          ]
+        },
+        {
+          "id": "ce-c1a-r4-coverage",
+          "performer": "claude-review-ce-c1a-coverage-r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ff09af8a6fdd9a16b23d8b34074a3c3ea5492c78",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1a-coverage-r4",
+            "digest": "sha256:42e97d94105892ed24271f64216ebdec54d3b976b01cc70d0e8471594d23d167",
+            "excerpt": "Coverage CE-C1A round 4: 0 findings. The EncoderModule drift probe and the quoting paragraph omission probe bit; the weakened go.mod check stays guarded by the projection test."
+          },
+          "axis": "Coverage",
+          "base": "bcd9eb7ff876abd681d2c71547e9cf6c5b86174b",
+          "tip": "3d9932917645b955b012070c5a2862bfb560cbe8",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c1a-r3-coverage"
           ]
         }
       ]
