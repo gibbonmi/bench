@@ -235,7 +235,7 @@ The axis gave one item of optional advice with no confidence. The CR1 why-it-cat
 
 The first pass reviewed base `87869759bf975c1f76a6e12ccc638e8471d40dfd` and tip `1ecb33ec4cede2be8bde4bc07bb648786e906d13`. Each axis ran fable / medium in its own read-only worktree. The checkpoint requires a chunk base whose source tree equals the CD1 tip and a chunk tip whose source tree equals the graded source. The recorded CD2 pair is therefore base `7ce1266321c1a2bd8a974dd34255d161aa665cdf` and tip `8b14208c1b87b0528d54541aa9aa4ad3936fea8d`. The uncovered delta holds the plan and spec amendments, the ticket 7 file, pickup commits, and two merged main commits on `roadmap/FT287.md`.
 
-One sonnet / xhigh later pass per axis covered that delta in its own worktree. Standards and Spec passed with no finding. Coverage found one `Writes:` gap, CD2b-C1: ticket 7 lacked `internal/anchors/match_test.go`, whose kind table drives the scoped-kind predicate. The coordinator applied it as a ticket expectation expansion under the plan-expansion policy, inside the CD2b delta. The author of ticket 7 received the fence expansion before its return.
+One sonnet / xhigh later pass per axis covered that delta in its own worktree. Standards and Spec passed with no finding. Coverage found one `Writes:` gap, CD2-C3: ticket 7 lacked `internal/anchors/match_test.go`, whose kind table drives the scoped-kind predicate. The coordinator applied it as a ticket expectation expansion under the plan-expansion policy, inside the CD2b delta. The author of ticket 7 received the fence expansion before its return.
 
 The raw finding count is 4. The de-duplicated repair target count is 1. CD2 consumed 0 repair cycles. The one accepted finding is a new seam that the reviewer routed to a new chunk, CD2b, not a repair of this delta.
 
@@ -283,8 +283,61 @@ The reviewer decided CD2-C1. A step-scoped anchor kind is a new seam, and the re
 | review finding | CD2-S2 | claimed | 4 | refuted | fable / medium / Standards |
 | review finding | CD2-C1 | claimed | 7 | held | fable / medium / Coverage |
 | review finding | CD2-C2 | claimed | 3 | refuted | fable / medium / Coverage |
-| review finding | CD2b-C1 | claimed | 6 | held | sonnet / xhigh / Coverage |
-| review finding | CD2b-C2 | claimed | 8 | refuted | sonnet / xhigh / Coverage |
+| review finding | CD2-C3 | claimed | 6 | held | sonnet / xhigh / Coverage |
+| review finding | CD2-C4 | claimed | 8 | refuted | sonnet / xhigh / Coverage |
+
+The later-pass Coverage axis issued its two findings as CD2b-C1 and CD2b-C2, and the record excerpt keeps that spelling. This pickup names them CD2-C3 and CD2-C4, because the CD2b chunk review below owns the CD2b ids.
+
+## CD2b review
+
+The frozen pair is base `67af9d502c9f37c4853f5f72f5684115ca0154a9` and tip `779f0e68b68e97f5a313da6d6e90c4b778af4052`. The delta holds ticket 7, one coordinator-probe repair before commit, the ticket 2 fixture-closure fix, and one merged main commit outside the fence. Each axis ran fable / medium in its own read-only worktree.
+
+The raw finding count is 8. The de-duplicated repair target count is 7. CD2b consumed 1 repair cycle of its 2, for the seven `auto-fix` findings below, sent to the ticket 7 author as one batch.
+
+### Standards
+
+Finding count: 2 hard violations, 2 judgment calls. Worst issue: the exported `Locate` doc comment omits that a step-scoped call through it answers 0.
+
+| id | finding | citation | confidence | disposition | label |
+| --- | --- | --- | --- | --- | --- |
+| CD2b-S1 | The `Locate` doc comment lists the zero cases and omits the step-kind case, because `Locate` forwards step 0. | craft-comments, aging: update a comment over edited code. | 8 | auto-fix | held |
+| CD2b-S2 | A diagnostics test comment narrates a change with "no longer reads around". | craft-comments, no narration. | 9 | auto-fix | held |
+| CD2b-S3 | The "kind alone decides step scoping" rationale appears in three files, and production names a test. | craft-comments and AGENTS.md, one source owns a fact. | 6 | auto-fix | held |
+| CD2b-S4 | The shared walk takes five parameters with a flag argument. | Fowler smell baseline, long parameter list; the collapse bought the line budget. | 4 | no-op | refuted |
+
+The axis confirmed four clean points. The section walk reproduces the old semantics. `Anchor` stays comparable. Step scoping has one owner, and the opener has one parser. The column list widened in lockstep across its six test derivations.
+
+### Spec
+
+The finding count is 0, and there is no worst issue. CR22 and CR38 held. The re-pinned anchor, the two-entry step-move fixture, the four harness cases, the kind table, and the `step` column match the spec. The shared narrowing walk is within the ticket. A second copy of the fence toggle and origin mapping would duplicate knowledge.
+
+### Coverage
+
+Finding count: 4. Worst issue: the step body's close boundary has no biting test, so a move of the sentence into step 7 would pass.
+
+| id | finding | citation | confidence | disposition | label |
+| --- | --- | --- | --- | --- | --- |
+| CD2b-C1 | Replacing the step `closes` predicate with `return false` stays green on every check; the existing moved case writes the needle's step before the bare opener. | Ticket 7, "The step body runs to the next such line"; three silent probes. | 8 | auto-fix | held |
+| CD2b-C2 | The opener trims leading space, so an indented numbered line opens a step. | Ticket 7, an indented continuation stays inside its step; two silent probes. | 6 | auto-fix | held |
+| CD2b-C3 | The opener parses one digit, so `10.` reads as step 1. | Ticket 7, literal digits the reader sees; one silent probe. | 5 | auto-fix | held |
+| CD2b-C4 | Removing the `keepOpener` branch of the shared walk stays green. | The refactor moved the heading-exclusion decision into a parameter with no assertion. | 4 | auto-fix | held |
+
+Ten probes ran: one bit on the fence toggle, and nine stayed silent. The silent ones are the four findings above and one item of advice.
+
+The axis gave two items of optional advice with no confidence. The step cache key drops the step number, which one registered step anchor cannot expose. A `06.` opener parses as step 6, and the ticket's literal-digits rule leaves leading zeros undecided.
+
+### Pairs recorded for CD5
+
+| surface | claim | status | confidence | label | model / effort / role |
+| --- | --- | --- | --- | --- | --- |
+| review finding | CD2b-S1 | claimed | 8 | held | fable / medium / Standards |
+| review finding | CD2b-S2 | claimed | 9 | held | fable / medium / Standards |
+| review finding | CD2b-S3 | claimed | 6 | held | fable / medium / Standards |
+| review finding | CD2b-S4 | claimed | 4 | refuted | fable / medium / Standards |
+| review finding | CD2b-C1 | claimed | 8 | held | fable / medium / Coverage |
+| review finding | CD2b-C2 | claimed | 6 | held | fable / medium / Coverage |
+| review finding | CD2b-C3 | claimed | 5 | held | fable / medium / Coverage |
+| review finding | CD2b-C4 | claimed | 4 | held | fable / medium / Coverage |
 
 ## Native review record
 
