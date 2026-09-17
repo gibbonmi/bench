@@ -6,6 +6,15 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Calibrated decisions
+
+- Added a claim schema to the delegate return: each done-claim row states its status and a 0-to-10 confidence, an unstatable confidence becomes an abstention, and the coordinator's tree probe writes every label.
+- Added a stated confidence to each actionable review finding, with a fixed disposition-to-label mapping. The confidence never changes whether a finding blocks.
+- Added an `Expected repair rounds:` line to the line declaration, and a `craft-line` reference that owns the Brier score rule, the abstention rule, and the three label sources.
+- Added a calibration table to the retro scaffold's delegate-performance section, and a retro duty to state the Brier mean, the pair count per role, and the abstention count.
+- Added a calibration measure to the agent-performance scorecards, with one `calibration` column in each provider routing table. The measure is one advisory routing input, it moves no tier on its own, and no routing change is measured yet.
+- Added the `require-in-step` anchor kind, which pins a sentence inside one numbered step of a section, and a `step` column in the `bench anchors` projection.
+
 ### Semantic review evidence
 
 - Changed review guidance to distinguish runnable claims from mandatory standards and require independent Coverage bypass attempts.
