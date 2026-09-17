@@ -10,15 +10,19 @@ small enough for the lighter-path threshold. It declares the line and works vert
 slices at the pre-agreed seams. If there is no spec, the change must fall under that
 threshold in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not fall under that threshold, route to `/bench-write-spec` first.
 If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there.
+
 ## Exit handoff
 
 Close by reporting the implemented stories, each acceptance row's coverage status, and
-the landed commits. A reviewed spec-backed build closes after its chunk reviews and final reconciliation through `bench worktree land`, then `/bench-final-check`. A light-path build goes straight
+the landed commits. A reviewed spec-backed build closes through the "Land" section below. A light-path build goes straight
 to `/bench-final-check`. A build that stops short exits through "When the build stops short" below, which recommends its one durable next action.
+
 ## Declare the line, validate the tickets, route the venue
 
 Declare the line before you touch code. `craft-line` owns the template, the tier decision, and the escalation ladder. After the write-spec-phase approval,
 create or retain one integration worktree at the reviewed graph commit; that commit is its frozen review base. Enter it and run `bench preflight build <slug>` before the first edit; a red preflight stops the phase.
+
+The reviewer approves the spec and the whole ticket graph once, in `/bench-write-spec`. A ticket inside that approved graph starts without a new approval stop. The verb below returns mechanical inputs only, so this session writes the supplement.
 
 After reviewer approval of the selected spec and ticket, run `bench preflight build <slug> --charge --ticket <ticket> --base <base> --source-tip <tip> --full` and retrieve its complete mechanical inputs. Require a complete task-specific supplement. A generated charge or staged artifact does not supply approval. The supplement names selectors, model, effort, cap, and mutation. Verify the fence, dependency completion, and expected source tip before the retained author starts the ticket.
 
@@ -34,7 +38,7 @@ One material action can contain several related edits before the rerun. If a res
 
 Work approved tickets in dependency order inside their planned chunks. Use TDD only where `craft-tdd` marks the seam. When the spec carries a coverage map, seed the
 harness's native task list from `bench coverage <spec>`, whose `rows[N]{story,behavior,seam}` projection is one task per row.
-The spec and the ticket are final. Do not evaluate other approaches. Implement the ticket as written, run its focused checks, and stop.
+The spec and the ticket are final. Do not evaluate another approach. Implement the ticket as written, run its focused checks, then continue to the commit below.
 
 Apply `craft-line`'s retained implementation continuation policy throughout the ticket graph. At initial review or before post-review repairs, including resumed work, read [the bounded repair policy](../skills/bench-craft-line/references/bounded-repair-policy.md).
 
@@ -42,7 +46,7 @@ A prose-only owner edit is an implementation write. Before another session edits
 
 Before each ticket, revalidate prepared source identity and required source bytes. Regenerate a charge when either changes. The retained author runs focused checks and the required mutation probe, then commits the ticket on a green lane. Run the plan's named probe exactly. Do not replace it with a similar mutation. If the named probe cannot run, stop and amend the plan before verification.
 
-After the last ticket in a chunk, freeze the chunk delta and run the three review axes before advancing.
+After the last ticket in a chunk, freeze the chunk delta and run the three review axes before advancing. `/bench-review-implementation` owns those axes and the review record.
 When evidence requires an in-scope plan, `Writes:`, or gate expansion, apply `.bench/BENCH.md`'s approved plan-expansion policy before using it.
 
 ## Land
@@ -64,7 +68,7 @@ The review and final-check phases own ordinary assessment updates. Keep the reta
 Report the state: what is done, what remains, the coverage table, and what
 consumed the cap. Keep landed work landed. Then route by cause:
 
-- Wrong tier: escalate one `craft-line` rung and resume.
+- Wrong tier: apply `craft-line`'s ladder. In a retained build, raise the effort and resume; a tier move asks the reviewer first.
 - Wrong spec: route to `/bench-write-spec` with the finding quoted.
 - Wrong scope: propose the split for the reviewer to decide.
 
@@ -72,8 +76,11 @@ consumed the cap. Keep landed work landed. Then route by cause:
 
 This command orchestrates retained implementation, chunk reviews, the final landing, and `/bench-final-check`. It refuses on a missing or unnamed spec. At every phase
 boundary it writes the phase reached into `capture/session-handoff.md` and refreshes
-the pin with `bench handoff`. A diff large enough to hide bugs pauses to ask the reviewer
-before escalating tier. The review phase owns cross-harness review opt-in.
+the pin with `bench handoff`. The review phase owns cross-harness review opt-in.
+
+A chunk delta can grow past its approved plan. It touches a path outside the tickets'
+`Writes:` fences, or it adds a ticket the plan does not list. Such a delta pauses to ask
+the reviewer before escalating tier.
 
 ## `--delegate`
 
