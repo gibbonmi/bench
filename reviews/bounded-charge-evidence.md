@@ -311,6 +311,58 @@ The Spec axis read the merged command file and confirmed that every clause this 
 The coordinator reran the five chunk verifications at `6322d341`. All passed, and the plan probe failed twenty-four tests and restored the file.
 The coordinator's independent probe dropped the candidate size from the capacity call, and the capacity recovery test failed.
 
+## CE-C1C: review round 1
+
+Frozen pair: base `b89e8689bb687c93c4d52d74b4510858828b8fe5`, tip `61304d6969d27382e8e6528912bd3d50d4551541`.
+The raw finding count is 9. The de-duplicated repair-target count is 7.
+Repair cycles used: 0 of 2.
+
+### Author verification and probe records
+
+The coordinator ran the five chunk verifications at `61304d69`. All passed, and the named plan probe turned the verify grammar case red.
+The ticket 3 author logged twelve probes, and each one failed its named test and restored its file.
+
+- Verify page-digest check disabled: CE60 failed. Reconstructed-source digest comparison dropped: CE61 failed.
+- Source-tip comparison disabled: CE57 failed. Required-source digest comparison disabled: CE124 failed.
+- Store opened under the checkout instead of the repository-common directory: ten system cases failed, including CE55, CE56, CE65, and CE120.
+- A cursor read that writes a progress file into the store: CE65 failed.
+- Consumer membership branch disabled: CE8 failed. Consumer coverage loop disabled: CE106 failed twice.
+- Within-source successor clamp dropped: CE62 failed. Registry field `sources_verified` omitted: two tests failed.
+- Source-read operation omitted from the registry: two command tests failed.
+
+The coordinator's independent probe skipped the clean-checkout predicate in the current binding, and the released-assignment and dirty-checkout cases failed.
+
+### Standards
+
+Finding count: 5. Worst issue: ST1.
+
+- CE-C1C-ST1 (auto-fix): The chunk's independent expectations had no recorded red when the axis read the tree. The records above close the record half. The repair adds the missing probes for the verified and current headers, the registry rows, the help forms, and the consumer fixture.
+- CE-C1C-ST2 (auto-fix): The evidence read path enumerates its three read kinds beside the operation registry that already owns them. Derive the predicate from the registry.
+- CE-C1C-ST3 (auto-fix): The page-digest and source-digest rules and their refusal text exist in the reader and again in the pack. Give each rule one owner.
+- CE-C1C-ST4 (auto-fix): A traversal helper is pasted in two test files, and the system test restates the cursor grammar. Share one helper and read the cursor owner.
+- CE-C1C-ST5 (auto-fix): Two comments narrate the ticket or point at the wrong declaration.
+
+### Spec
+
+Finding count: 2. Worst issue: SP2. The record finding merges into ST1.
+
+- CE-C1C-SP2 (auto-fix): The independent consumer must verify actual returned source ranges, membership, source digests, and exact byte coverage. It compares page digests only. Reconstruct each source body from its returned pages, compare the manifest source digest, and check the declared offsets and lengths.
+
+### Coverage
+
+Finding count: 2. Worst issue: CV1.
+
+- CE-C1C-CV1 (auto-fix): No case covers a selected source whose first page is its last. A probe of the within-source truncation guard stayed silent. Add that case and assert one page, an empty next value, and the stream end.
+- CV2 (advisory, no repair): The current binding adopts the base from the manifest, so no case can prove the base is re-derived. The manifest supplies it by design.
+
+### Advice
+
+- The system fixture excludes every name that ends in `.lock`, so a progress file with that suffix would escape CE65. The repair names the two lock files instead.
+- The current-source comparison skips the derived metadata source, and the reason is not recorded.
+- The dirty-checkout case uses an untracked file only.
+- One slice expression in the operation registry reads as a puzzle.
+- One budget test comment lost its sentence in a reflow.
+
 ## Record
 
 ```bench-review-record
@@ -1501,6 +1553,213 @@ The coordinator's independent probe dropped the candidate size from the capacity
           "supersedes": [
             "ce-c1b-r2-coverage"
           ]
+        }
+      ]
+    },
+    {
+      "id": "CE-C1C",
+      "base": "b89e8689bb687c93c4d52d74b4510858828b8fe5",
+      "tip": "61304d6969d27382e8e6528912bd3d50d4551541",
+      "plan_digest": "sha256:bd4837edc8c926625c78753261b6eb6a4c9bff01e43afa43c1a1a609be8949fb",
+      "source_digest": "9afd0d74528b7db97cac2c1eaa01d216024c3137",
+      "acceptance_rows": [
+        "CE7",
+        "CE8",
+        "CE55",
+        "CE56",
+        "CE57",
+        "CE58",
+        "CE59",
+        "CE60",
+        "CE61",
+        "CE62",
+        "CE65",
+        "CE106",
+        "CE120",
+        "CE123",
+        "CE124",
+        "CE133",
+        "CE134",
+        "CE158",
+        "CE159",
+        "CE160",
+        "CE161",
+        "CE162",
+        "CE174"
+      ],
+      "verification": [
+        {
+          "id": "ce-c1c-v1-preflight",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9afd0d74528b7db97cac2c1eaa01d216024c3137",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:37693a6b25653a9b1c9fb0a40b89f3e73b45e7e1789030b4298b007e5e1e1c9f",
+            "excerpt": "at 61304d69: pass; preflight 19725 ms and evidencecmd 4308 ms"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1c-v1-store",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9afd0d74528b7db97cac2c1eaa01d216024c3137",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:f197d6c382bf4d359e8291f0b97eed7fc1e988aa0b7fbf32e6c7119ceedfca34",
+            "excerpt": "at 61304d69: pass, 124 ms; the CE94 device case skipped for the privilege capability"
+          },
+          "requirement": "store",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1c-v1-inventory",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9afd0d74528b7db97cac2c1eaa01d216024c3137",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:b83619488ed41fe4150865f42d19b0103daf3298e019137ff9a68e7fcb0a33fe",
+            "excerpt": "at 61304d69: pass, 7318 ms"
+          },
+          "requirement": "inventory",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1c-v1-system",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9afd0d74528b7db97cac2c1eaa01d216024c3137",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:e602c3f2c3c06ed3ba207ab9fdc6291defed4be275f86f2b575aefcae3749904",
+            "excerpt": "at 61304d69: pass, 32935 ms"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1c-v1-mutation",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9afd0d74528b7db97cac2c1eaa01d216024c3137",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:d7ee393997281161785e4bc83490a94c2dc695bc3cde0978cf775495322b96ef",
+            "excerpt": "at 61304d69: pass"
+          },
+          "requirement": "mutation",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "accept --verify with --cursor",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:coordinator-run",
+              "digest": "sha256:a60562d2a78f479176ebadcc32b0cfaeab597e3c3a43f4223a622a8354f6e0c4",
+              "excerpt": "bench probe internal/preflight/evidencecmd/operations.go giving the verify form an optional cursor at 61304d69: verdict bit, TestEvidenceVerifyGrammar/with_cursor failed, restored=yes"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "ce-c1c-r1-standards",
+          "performer": "claude-review-ce-c1c-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9afd0d74528b7db97cac2c1eaa01d216024c3137",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1c-standards",
+            "digest": "sha256:07a93434ed86d81eac2c7ecd305a61b07eebfd343541416788bea2557b43823b",
+            "excerpt": "Standards CE-C1C: 5 findings. Worst: the chunk's independent expectations carried no recorded red when the axis read the tree. Also a second read-mode inventory, verification rules restated in two files, a pasted traversal helper, and comment register."
+          },
+          "axis": "Standards",
+          "base": "b89e8689bb687c93c4d52d74b4510858828b8fe5",
+          "tip": "61304d6969d27382e8e6528912bd3d50d4551541",
+          "finding_ids": [
+            "CE-C1C-ST1",
+            "CE-C1C-ST2",
+            "CE-C1C-ST3",
+            "CE-C1C-ST4",
+            "CE-C1C-ST5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ce-c1c-r1-spec",
+          "performer": "claude-review-ce-c1c-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9afd0d74528b7db97cac2c1eaa01d216024c3137",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1c-spec",
+            "digest": "sha256:f410e29522e1e49b1a7095582f29e70886eb7112d826876ce74c60f7294837de",
+            "excerpt": "Spec CE-C1C: 2 findings. The record finding merges into ST1. SP2: the independent consumer compares page digests only, and it checks no source digest, offset, or length, so it depends on the verifier it authenticates."
+          },
+          "axis": "Spec",
+          "base": "b89e8689bb687c93c4d52d74b4510858828b8fe5",
+          "tip": "61304d6969d27382e8e6528912bd3d50d4551541",
+          "finding_ids": [
+            "CE-C1C-SP2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ce-c1c-r1-coverage",
+          "performer": "claude-review-ce-c1c-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9afd0d74528b7db97cac2c1eaa01d216024c3137",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1c-coverage",
+            "digest": "sha256:600b919c1c1f6ccc4618e229c28c4a505855db546c5654b45a2267e5e810a8bc",
+            "excerpt": "Coverage CE-C1C: 2 findings. CV1: no case covers a selected source whose first page is its last, and a probe of that truncation guard stayed silent. CV2 is advisory: the current base is adopted from the manifest, so no case can separate it."
+          },
+          "axis": "Coverage",
+          "base": "b89e8689bb687c93c4d52d74b4510858828b8fe5",
+          "tip": "61304d6969d27382e8e6528912bd3d50d4551541",
+          "finding_ids": [
+            "CE-C1C-CV1"
+          ],
+          "supersedes": []
         }
       ]
     }
