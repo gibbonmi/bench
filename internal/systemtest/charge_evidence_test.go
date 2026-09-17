@@ -137,16 +137,22 @@ func (j evidenceJourney) startPaused(t *testing.T, worktree systemLandingWorktre
 			_ = cmd.Wait()
 		}
 	})
+	waitForFile(t, marker, "the preparation to reach stage "+stage)
+	return cmd, marker, stdout.String
+}
+
+// waitForFile waits a bounded window until path exists.
+func waitForFile(t *testing.T, path, wait string) {
+	t.Helper()
 	window := bounds.TestDeadline(0)
 	for deadline := time.Now().Add(window); ; time.Sleep(10 * time.Millisecond) {
-		if _, err := os.Stat(marker); err == nil {
-			break
+		if _, err := os.Stat(path); err == nil {
+			return
 		}
 		if time.Now().After(deadline) {
-			t.Fatal(bounds.TestTimeoutVerdict("the preparation to reach stage "+stage, window))
+			t.Fatal(bounds.TestTimeoutVerdict(wait, window))
 		}
 	}
-	return cmd, marker, stdout.String
 }
 
 func waitExit(t *testing.T, cmd *exec.Cmd) int {
@@ -172,8 +178,11 @@ func TestEvidenceLocationIndependence(t *testing.T) {
 	}
 }
 
-// TestEvidenceQuotaConcurrency is CE77: a writer paused after its capacity calculation
-// blocks a second writer, which then counts the first artifact.
+// TestEvidenceQuotaConcurrency is CE77. The first writer pauses between its capacity
+// calculation and its temporary growth. The second writer pauses just before it requests the
+// writer lock and is released first; only after it reports its resumption does the first
+// writer resume. A writer lock that did not serialize the two lets the second writer count
+// an empty store and publish past the quota.
 func TestEvidenceQuotaConcurrency(t *testing.T) {
 	j := newEvidenceJourney(t)
 	first := j.assignment(t, "quota-first", "first\n")
@@ -181,22 +190,19 @@ func TestEvidenceQuotaConcurrency(t *testing.T) {
 	sizeFirst, sizeSecond := j.requiredBytes(t, first), j.requiredBytes(t, second)
 	quota := strconv.FormatUint(max(sizeFirst, sizeSecond)+min(sizeFirst, sizeSecond)-1, 10)
 	paused, marker, _ := j.startPaused(t, first, "capacity", "--max-store-bytes", quota)
-	blocked, stdout, _ := systemStartSelected(t, second.path, j.env(), j.prepareArgs(second, "--max-store-bytes", quota)...)
-	exited := make(chan int, 1)
-	go func() { exited <- systemExitCode(blocked.Wait()) }()
-	select {
-	case code := <-exited:
-		t.Fatalf("the second writer did not wait for the writer lock: exit %d, %q", code, stdout.String())
-	case <-time.After(500 * time.Millisecond):
+	waiting, secondMarker, secondOut := j.startPaused(t, second, "writer-lock", "--max-store-bytes", quota)
+	if err := os.Remove(secondMarker); err != nil {
+		t.Fatal(err)
 	}
+	waitForFile(t, secondMarker+".resumed", "the second writer to leave its pause")
 	if err := os.Remove(marker); err != nil {
 		t.Fatal(err)
 	}
 	if code := waitExit(t, paused); code != 0 {
 		t.Fatalf("paused writer exit = %d", code)
 	}
-	if code := <-exited; code != 1 || !strings.Contains(stdout.String(), "evidence capacity") {
-		t.Fatalf("second writer = (%d, %q)", code, stdout.String())
+	if code := waitExit(t, waiting); code != 1 || !strings.Contains(secondOut(), "evidence capacity") {
+		t.Fatalf("second writer = (%d, %q)", code, secondOut())
 	}
 	if packs := j.packs(t); len(packs) != 1 {
 		t.Fatalf("concurrent writers left %v under the quota", packs)

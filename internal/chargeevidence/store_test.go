@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	ce "github.com/gibbonmi/bench/internal/chargeevidence"
 )
@@ -240,6 +241,7 @@ func TestEvidenceStoreKinds(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			window := bounds.TestDeadline(0)
 			done := make(chan error, 1)
 			go func() {
 				_, openErr := store.Open(identity)
@@ -250,8 +252,8 @@ func TestEvidenceStoreKinds(t *testing.T) {
 				if refusalClass(err) != ce.RefuseUnsafe {
 					t.Fatalf("%s = %v, want %s", kind, err, ce.RefuseUnsafe)
 				}
-			case <-time.After(10 * time.Second):
-				t.Fatalf("%s blocked the reader", kind)
+			case <-time.After(window):
+				t.Fatal(bounds.TestTimeoutVerdict(kind+" to refuse without blocking the reader", window))
 			}
 			if info, err := os.Lstat(path); err != nil || info.Mode().IsRegular() {
 				t.Fatalf("%s object changed: %v", kind, err)

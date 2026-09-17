@@ -50,6 +50,7 @@ const (
 	StepSyncTemp         = "sync-temp"
 	StepVerifyTemp       = "verify-temp"
 	StepLink             = "link"
+	StageWriterLock      = "writer-lock"
 	StageCapacity        = "capacity"
 	StageStaged          = "staged"
 	StageVerifying       = "verifying"
@@ -72,7 +73,8 @@ func OpenStore(commonDir string, options StoreOptions) *Store {
 // PauseFromEnvironment returns the stage pause the system owner requests through
 // PauseEnvironment, as `<stage>:<marker path>`. At that stage the writer creates the marker
 // file and waits while it exists, so the owner either removes it to resume the writer or
-// ends the process. An unset value pauses nothing.
+// ends the process. On resumption the writer creates `<marker path>.resumed`, so the owner
+// can order a release after the writer has left its pause. An unset value pauses nothing.
 func PauseFromEnvironment() func(string) {
 	stage, marker, ok := strings.Cut(os.Getenv(PauseEnvironment), pauseEnvironmentMark)
 	if !ok || stage == "" || marker == "" {
@@ -87,6 +89,7 @@ func PauseFromEnvironment() func(string) {
 		}
 		for {
 			if _, err := os.Lstat(marker); errors.Is(err, fs.ErrNotExist) {
+				_ = os.WriteFile(marker+".resumed", nil, 0o600)
 				return
 			}
 			time.Sleep(10 * time.Millisecond)
@@ -225,6 +228,7 @@ func (s *Store) Stage(pack *Pack, quota uint64, attempt int) (*Staged, error) {
 		st.Discard()
 		return nil, err
 	}
+	s.pause(StageWriterLock)
 	if st.writer, err = acquire(dir, writerLockName, syscall.LOCK_EX, true); err != nil {
 		st.Discard()
 		return nil, err
