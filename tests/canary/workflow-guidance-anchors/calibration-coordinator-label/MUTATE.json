@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+    "old": "- The coordinator's probe of the exact tree labels a done-claim row `held` or\n  `refuted`, whatever its status.\n",
+    "new": ""
+  }
+]

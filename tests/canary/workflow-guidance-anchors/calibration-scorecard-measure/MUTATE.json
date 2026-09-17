@@ -1,0 +1,7 @@
+[
+  {
+    "path": "capture/agent-performance/README.md",
+    "old": "| calibration | the Brier mean over labeled pairs, the pair count, and the abstention count |\n",
+    "new": ""
+  }
+]

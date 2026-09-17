@@ -1,0 +1,7 @@
+[
+  {
+    "path": "capture/agent-performance/README.md",
+    "old": "- The calibration measure is one input to the two-run routing rule, obeys the ten-assignment cap, and never moves a tier on its own.\n",
+    "new": ""
+  }
+]

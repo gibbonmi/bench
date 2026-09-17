@@ -1,0 +1,7 @@
+[
+  {
+    "path": "capture/agent-performance/README.md",
+    "old": "- A provider with no labeled pair shows `unknown` in the calibration cell.\n",
+    "new": ""
+  }
+]
