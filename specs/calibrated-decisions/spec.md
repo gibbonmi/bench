@@ -113,11 +113,11 @@ Harder chunks: CD3, CD4.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| CD1 / tbd | A delegate return carries the claim schema, the coordinator labels each row by probe, and a malformed or abstained row follows its rule | CR1, CR2, CR3, CR13, CR14, CR29, CR32 | docs-currency-workflow anchors with omission canaries, guidance-prose-budgets, prose lane | no |
-| CD2 / tbd | A review finding carries a confidence that the reviewer's disposition labels and that never changes blocking | CR4, CR5, CR6, CR15, CR16, CR22, CR23, CR30 | docs-currency-workflow anchors with omission canaries, guidance-prose-budgets, prose lane, review-owned schema check | no |
-| CD3 / tbd | A line declaration states expected repair rounds with a confidence, and one reference owns the score, label-source, abstention, and expectation-label rules | CR7, CR8, CR9, CR10, CR11, CR12, CR31 | docs-currency-workflow anchors with omission canaries, guidance-prose-budgets, prose lane | yes |
-| CD4 / tbd | The retro scaffold renders the calibration table, the final-check guidance names the retro duty, and the scorecard defines and carries the measure | CR17, CR18, CR19, CR20, CR21, CR24, CR25, CR26, CR28 | internal/roadmap scaffold test, internal/retros parse tests, docs-currency-workflow anchors with omission canaries, prose lane, review-owned data check | yes |
-| CD5 / tbd | The build that lands this spec records the first pairs in its own retro and every edited Markdown file passes the prose lane | CR27, CR33 | review-owned at final reconciliation, prose lane | no |
+| CD1 / 1-state-claim-schema-on-delegate-return.md | A delegate return carries the claim schema, the coordinator labels each row by probe, and a malformed or abstained row follows its rule | CR1, CR2, CR3, CR13, CR14, CR29, CR32 | docs-currency-workflow anchors with omission canaries, guidance-prose-budgets, prose lane | no |
+| CD2 / 2-state-finding-confidence-in-review.md | A review finding carries a confidence that the reviewer's disposition labels and that never changes blocking | CR4, CR5, CR6, CR15, CR16, CR22, CR23, CR30 | docs-currency-workflow anchors with omission canaries, guidance-prose-budgets, prose lane, review-owned schema check | no |
+| CD3 / 3-declare-expected-repair-rounds-with-score.md | A line declaration states expected repair rounds with a confidence, and one reference owns the score, label-source, abstention, and expectation-label rules | CR7, CR8, CR9, CR10, CR11, CR12, CR31 | docs-currency-workflow anchors with omission canaries, guidance-prose-budgets, prose lane | yes |
+| CD4 / 4-render-calibration-table-in-retro-scaffold.md, 5-define-calibration-measure-in-scorecard.md | The retro scaffold renders the calibration table, the final-check guidance names the retro duty, and the scorecard defines and carries the measure | CR17, CR18, CR19, CR20, CR21, CR24, CR25, CR26, CR28 | internal/roadmap scaffold test, internal/retros parse tests, docs-currency-workflow anchors with omission canaries, prose lane, review-owned data check | yes |
+| CD5 / 6-record-first-pairs-in-own-retro.md | The build that lands this spec records the first pairs in its own retro and every edited Markdown file passes the prose lane | CR27, CR33 | review-owned at final reconciliation, prose lane | no |
 
 ## Testing decisions
 
@@ -209,8 +209,6 @@ In-scope edges, each with a row:
 
 ## Ownership fences
 
-Provisional until the ticket fork finalizes it from the union of Writes: lines. A path that does not exist yet carries the `(new)` marker in the tickets, not here.
-
 - `.agents/skills/bench-craft-delegate/SKILL.md`
 - `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`
 - `.agents/skills/bench-craft-review/SKILL.md`
@@ -250,7 +248,13 @@ Provisional until the ticket fork finalizes it from the union of Writes: lines. 
 - `tests/canary/workflow-guidance-anchors/calibration-retro-aggregate-duty`
 - `tests/canary/workflow-guidance-anchors/calibration-scorecard-measure`
 - `tests/canary/workflow-guidance-anchors/calibration-routing-input`
+- `tests/canary/claude-agent-definitions/agent-unnamed-in-skill`
+- `tests/canary/claude-agent-definitions/skill-names-missing-agent`
+- `tests/canary/workflow-guidance-anchors/` fixtures that pin an edited guidance file, each named in its ticket's `Writes:` line
 - `reviews/calibrated-decisions.md`
+- `CHANGELOG.md`
+- `specs/calibrated-decisions/spec.md`
+- `decisions/calibrated-decisions.md` and `decisions/calibrated-decisions/`, the retired top-level map paths the spec commit moved under this folder
 
 ## Out of scope
 
@@ -327,6 +331,12 @@ Four edge dispositions go beyond the decision source. Each has a row, and the re
 
 - All four arXiv abstracts and the TypeSafe page were re-opened on 2026-09-17 and still carry the quoted claims. The Rewarding Doubt abstract does not show the 0-to-10 scale; that fact rests on the full-text read recorded in the asset on 2026-09-16.
 - Local paths in the map's Sources were read: `capture/agent-performance/README.md` and `.bench/BENCH.md` invariant 1.
+
+### Completion plan
+
+```bench-completion-plan
+{"version":1,"chunks":[{"id":"CD1","tickets":["1-state-claim-schema-on-delegate-return.md"],"verification":[{"id":"workflow","command":"bench test --check docs-currency-workflow"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"},{"id":"prose","command":"bench test --check prose-mechanics"}]},{"id":"CD2","tickets":["2-state-finding-confidence-in-review.md"],"verification":[{"id":"workflow","command":"bench test --check docs-currency-workflow"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"},{"id":"prose","command":"bench test --check prose-mechanics"}]},{"id":"CD3","tickets":["3-declare-expected-repair-rounds-with-score.md"],"verification":[{"id":"workflow","command":"bench test --check docs-currency-workflow"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"},{"id":"prose","command":"bench test --check prose-mechanics"}]},{"id":"CD4","tickets":["4-render-calibration-table-in-retro-scaffold.md","5-define-calibration-measure-in-scorecard.md"],"verification":[{"id":"workflow","command":"bench test --check docs-currency-workflow"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"},{"id":"prose","command":"bench test --check prose-mechanics"},{"id":"scaffold","command":"bench test --package ./internal/roadmap/..."},{"id":"retros","command":"bench test --package ./internal/retros/..."}]},{"id":"CD5","tickets":["6-record-first-pairs-in-own-retro.md"],"verification":[{"id":"workflow","command":"bench test --check docs-currency-workflow"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"},{"id":"prose","command":"bench test --check prose-mechanics"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/calibrated-decisions/spec.md"},{"id":"workflow","command":"bench test --check docs-currency-workflow"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"},{"id":"prose","command":"bench test --check prose-mechanics"},{"id":"scaffold","command":"bench test --package ./internal/roadmap/..."},{"id":"retros","command":"bench test --package ./internal/retros/..."}]}
+```
 
 ### Assumptions
 
