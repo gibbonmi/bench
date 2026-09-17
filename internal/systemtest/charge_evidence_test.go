@@ -290,8 +290,8 @@ func (j evidenceJourney) read(t *testing.T, dir string, args ...string) processR
 	return systemSelected(t, dir, j.env(), append([]string{"preflight", "evidence"}, args...)...)
 }
 
-// storeState lists the store's objects with their sizes, excluding the lock files every
-// operation opens. A consumer cursor or reading log would appear here.
+// storeState lists the store's objects with their sizes, excluding the two lock files every
+// operation opens. A consumer cursor or reading log would appear here, whatever its name.
 func (j evidenceJourney) storeState(t *testing.T) []string {
 	t.Helper()
 	entries, err := os.ReadDir(j.store())
@@ -300,7 +300,7 @@ func (j evidenceJourney) storeState(t *testing.T) []string {
 	}
 	var state []string
 	for _, entry := range entries {
-		if strings.HasSuffix(entry.Name(), ".lock") {
+		if name := entry.Name(); name == chargeevidence.OperationLockName || name == chargeevidence.WriterLockName {
 			continue
 		}
 		info, err := entry.Info()
@@ -360,9 +360,8 @@ func TestEvidenceStatelessProcesses(t *testing.T) {
 	j := newEvidenceJourney(t)
 	worktree := j.assignment(t, "stateless", "stateless\n")
 	identity := identityOf(t, j.prepare(t, worktree))
-	hex := strings.TrimPrefix(identity, "sha256:")
-	manifest := "v1." + hex + ".m.0.0"
-	source := "v1." + hex + ".s.1.0"
+	manifest := chargeevidence.Cursor{Identity: identity}.String()
+	source := chargeevidence.Cursor{Identity: identity, Ordinal: 1}.String()
 	before := j.storeState(t)
 	// The later source page reads before the first manifest fragment, and each read repeats.
 	order := []string{source, manifest, source, manifest}
