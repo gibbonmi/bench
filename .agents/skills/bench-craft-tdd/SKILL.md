@@ -17,9 +17,9 @@ minimum to pass its own tests, then stops. So:
 
 - TDD **only** at reviewer-confirmed seams. Spec-backed work consumes the seams
   `/bench-write-spec` named: spec sign-off already confirmed them, so it takes the
-  signed-off seam without a second reviewer gate. At those seams the test target is
-  external — I chose it — so a passing test matches my spec, not the agent's
-  guess.
+  signed-off seam without a second reviewer gate. At those seams the reviewer chose the
+  test target, so the target is external and a passing test matches the spec, not the
+  agent's guess.
 - Light-path work names the test seam in its ticket file and starts without a live
   confirmation stop; the reviewer can veto the seam post-hoc. The right-size
   table's standing approval gives the named seam external-target authority.
@@ -118,5 +118,5 @@ The agent's own assertions are never the completion signal; the gate is.
 
 ## Declare the line
 
-A TDD pass is a multi-cycle stage — declare model/effort/cap first. High effort
-for the uncertain seam; low for mechanical ones. Don't grind past the cap.
+A TDD pass is a multi-cycle stage, so declare the line first. `craft-line` owns the
+declaration, the tier decision, and the cap.
