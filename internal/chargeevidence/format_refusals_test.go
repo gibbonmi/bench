@@ -26,6 +26,31 @@ func repack(t *testing.T, pack *ce.Pack, edit func(string) string) ([]byte, stri
 	return out, "sha256:" + sum(manifest)
 }
 
+// tamperSourceBody rebuilds a pack around one raw source body, replacing old with a new
+// body of the same length and updating every manifest occurrence of its digest to match.
+// A single-page body's digest occurs once in its source row and once in its page row.
+func tamperSourceBody(t *testing.T, pack *ce.Pack, old, new string) ([]byte, string) {
+	t.Helper()
+	if len(old) != len(new) {
+		t.Fatalf("tamper changes body length")
+	}
+	manifestOld := pack.ManifestBytes()
+	oldDigest, newDigest := sum(old), sum(new)
+	if strings.Count(string(manifestOld), oldDigest) == 0 {
+		t.Fatalf("digest %s does not appear in the manifest", oldDigest)
+	}
+	manifest := strings.ReplaceAll(string(manifestOld), oldDigest, newDigest)
+	data := pack.Bytes()
+	if count := bytes.Count(data, []byte(old)); count != 1 {
+		t.Fatalf("body %q appears %d times in the pack, want once", old, count)
+	}
+	data = bytes.Replace(data, []byte(old), []byte(new), 1)
+	header := bytes.Clone(data[:24])
+	binary.LittleEndian.PutUint64(header[16:], uint64(len(manifest)))
+	out := append(append(header, manifest...), data[24+len(manifestOld):]...)
+	return out, "sha256:" + sum(manifest)
+}
+
 func assertRefusal(t *testing.T, data []byte, identity, class string) {
 	t.Helper()
 	_, err := ce.Read(data, identity)
@@ -105,6 +130,21 @@ func TestEvidenceManifestRefusals(t *testing.T) {
 			ticket := sum("# One\n")
 			return func(s string) string { return strings.Replace(s, ","+ticket+"\n", ",1234\n", 1) }
 		}},
+		{"CV4 integer upper bound", "cell-type", func(t *testing.T) func(string) string {
+			return replaceOnce(t, "  1,sha256,8192", "  1,sha256,9007199254740992")
+		}},
+		{"CV4 exponent form", "noncanonical", func(t *testing.T) func(string) string {
+			return replaceOnce(t, "  1,sha256,8192", "  1,sha256,8192e0")
+		}},
+		{"CV4 negative zero", "noncanonical", func(t *testing.T) func(string) string {
+			return func(s string) string { return strings.Replace(s, "  s2,0,0,", "  s2,-0,0,", 1) }
+		}},
+		{"CV4 fractional-form integer", "noncanonical", func(t *testing.T) func(string) string {
+			return replaceOnce(t, "  1,sha256,8192", "  1.0,sha256,8192")
+		}},
+		{"CV4 leading zero", "cell-type", func(t *testing.T) func(string) string {
+			return replaceOnce(t, "  1,sha256,8192", "  1,sha256,08192")
+		}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			data, identity := repack(t, pack, test.edit(t))
@@ -147,20 +187,50 @@ func TestEvidencePackRefusals(t *testing.T) {
 		}},
 		{"CE37 truncated body", "truncated", func(*testing.T) ([]byte, string) {
 			data := pack.Bytes()
-			return data[:len(data)-1], identity
+			n := len(data) - 1
+			return data[:n:n], identity
 		}},
 		{"CE37 truncated header", "truncated", func(*testing.T) ([]byte, string) {
-			return pack.Bytes()[:23], identity
+			return pack.Bytes()[:23:23], identity
 		}},
 		{"CE37 truncated manifest", "truncated", func(*testing.T) ([]byte, string) {
-			data := pack.Bytes()
-			return data[:30], identity
+			return pack.Bytes()[:30:30], identity
 		}},
 		{"CE38 trailing data", "trailing-data", func(*testing.T) ([]byte, string) {
 			return append(pack.Bytes(), 'x'), identity
 		}},
 		{"CE125 page beyond source", "page-range", func(t *testing.T) ([]byte, string) {
 			return repack(t, pack, replaceOnce(t, secondPage, fmt.Sprintf("  s2,1,8192,1809,%s\n", sum(big[8192:]))))
+		}},
+		{"CV1 page split", "page-split", func(t *testing.T) ([]byte, string) {
+			firstPage := fmt.Sprintf("  s2,0,0,8192,%s\n", sum(big[:8192]))
+			newFirst := fmt.Sprintf("  s2,0,0,8000,%s\n", sum(big[:8000]))
+			newSecond := fmt.Sprintf("  s2,1,8000,2000,%s\n", sum(big[8000:]))
+			return repack(t, pack, func(s string) string {
+				if strings.Count(s, firstPage) != 1 || strings.Count(s, secondPage) != 1 {
+					t.Fatalf("manifest holds an unexpected page-row count")
+				}
+				return strings.Replace(strings.Replace(s, firstPage, newFirst, 1), secondPage, newSecond, 1)
+			})
+		}},
+		{"CV2 source digest", "source-digest", func(t *testing.T) ([]byte, string) {
+			p := mustBuild(t, fixtureCandidate("# One\n"))
+			ticket := sum("# One\n")
+			return repack(t, p, func(s string) string { return strings.Replace(s, ","+ticket+"\n", ","+strings.Repeat("a", 64)+"\n", 1) })
+		}},
+		{"CV2 zero-byte optional source digest", "source-digest", func(t *testing.T) ([]byte, string) {
+			c := fixtureCandidate("# One\n")
+			c.Sources = append(c.Sources, ce.SourceInput{Role: "optional", Kind: "repository", Path: "specs/example/optional.md"})
+			p := mustBuild(t, c)
+			return repack(t, p, replaceOnce(t, ","+sum("")+"\n", ","+strings.Repeat("f", 64)+"\n"))
+		}},
+		{"CV3 control byte source", "source-bytes", func(t *testing.T) ([]byte, string) {
+			p := mustBuild(t, fixtureCandidate("safe\n"))
+			return tamperSourceBody(t, p, "safe\n", "s\x1bfe\n")
+		}},
+		{"CV3 invalid UTF-8 source", "source-bytes", func(t *testing.T) ([]byte, string) {
+			p := mustBuild(t, fixtureCandidate("safe\n"))
+			return tamperSourceBody(t, p, "safe\n", "s\x80fe\n")
 		}},
 		{"changed page body", "page-digest", func(*testing.T) ([]byte, string) {
 			data := pack.Bytes()

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -188,6 +189,61 @@ func TestEvidencePageSplit(t *testing.T) {
 	if got, _ := pack.Source("s2"); string(got) != body {
 		t.Fatalf("reconstructed body differs")
 	}
+}
+
+// generatedSourceCandidate extends fixtureCandidate with one generated source that
+// declares a producer and two ordered arguments.
+func generatedSourceCandidate(ticket string) ce.Candidate {
+	c := fixtureCandidate(ticket)
+	c.Sources = append(c.Sources, ce.SourceInput{
+		Role: "diff", Kind: "generated", Path: "diff", Required: true,
+		Data:     []byte("+++ generated diff\n"),
+		Producer: &ce.Producer{Name: "collector", Version: "v1", Cwd: ".", Arguments: []string{"alpha", "beta"}},
+	})
+	return c
+}
+
+// TestEvidenceGeneratedSourceProvenance is CV5: a generated source's producer and
+// argument rows round-trip through the strict reader unchanged.
+func TestEvidenceGeneratedSourceProvenance(t *testing.T) {
+	pack := mustBuild(t, generatedSourceCandidate("# One\n"))
+	wantProducers := []ce.ProducerRow{{Source: "s4", Name: "collector", Version: "v1", Cwd: "."}}
+	wantArguments := []ce.ArgumentRow{{Source: "s4", Index: 0, Value: "alpha"}, {Source: "s4", Index: 1, Value: "beta"}}
+	if got := pack.Manifest().Producers; !reflect.DeepEqual(got, wantProducers) {
+		t.Fatalf("producers = %+v, want %+v", got, wantProducers)
+	}
+	if got := pack.Manifest().Arguments; !reflect.DeepEqual(got, wantArguments) {
+		t.Fatalf("arguments = %+v, want %+v", got, wantArguments)
+	}
+	reread, err := ce.Read(pack.Bytes(), pack.Identity())
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+	if got := reread.Manifest().Producers; !reflect.DeepEqual(got, wantProducers) {
+		t.Fatalf("round-trip producers = %+v, want %+v", got, wantProducers)
+	}
+	if got := reread.Manifest().Arguments; !reflect.DeepEqual(got, wantArguments) {
+		t.Fatalf("round-trip arguments = %+v, want %+v", got, wantArguments)
+	}
+}
+
+// TestEvidenceProvenanceRefusals is CV5's refusal half: a producer row naming a
+// repository source, and an out-of-order argument row, both refuse.
+func TestEvidenceProvenanceRefusals(t *testing.T) {
+	t.Run("producer names repository source", func(t *testing.T) {
+		pack := mustBuild(t, fixtureCandidate("# One\n"))
+		data, identity := repack(t, pack, replaceOnce(t,
+			"producers[0]{source,name,version,cwd}:\n",
+			"producers[1]{source,name,version,cwd}:\n  s2,fake,v1,.\n"))
+		assertRefusal(t, data, identity, "invalid-manifest")
+	})
+	t.Run("out-of-order arguments", func(t *testing.T) {
+		pack := mustBuild(t, generatedSourceCandidate("# One\n"))
+		data, identity := repack(t, pack, replaceOnce(t,
+			"  s4,0,alpha\n  s4,1,beta\n",
+			"  s4,1,beta\n  s4,0,alpha\n"))
+		assertRefusal(t, data, identity, "invalid-manifest")
+	})
 }
 
 func TestEvidenceCandidateRefusals(t *testing.T) {
