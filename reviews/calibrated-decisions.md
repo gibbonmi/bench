@@ -364,6 +364,38 @@ Each run reports no skip. The elapsed time is the package time the verb reports.
 
 `bench structure` lists no file this ticket edits.
 
+### Repair cycle 1
+
+The review raised two findings on the ticket 4 part, and one attempt closed both. The base commit is `5043fcd5f5c47d78c154ef8657c8e31ec4e43bd3`.
+
+CD4-S1 collapsed the table's column count to one source. `calibrationSection` counted six cells from a literal and spelled the separator by hand, so a column added to `retros.CalibrationHeader` would leave both rows short. The renderer now reads the count from the header constant and builds the separator and the unknown row from that count. `unknownFact` stays the one spelling of `unknown`. `retros.RequiredHeadings` and every heading byte are unchanged.
+
+CD4-S2 reworded the `CalibrationHeader` comment. The old sentence named six cells, which the renderer no longer counts. The comment now states that the renderer spells no cell of its own and counts the columns from the header row.
+
+The independent probe adds one column to the header constant. The verdict line reads `bit,internal/retros/retros.go,swap,failed,1,yes`. The failed test is `TestRetroScaffoldRendersCalibrationTable`, and it reported `separator row = "|---|---|---|---|---|---|---|", want six cells`. The test spells the separator and the unknown row independently, so this bite proves the renderer follows the constant.
+
+The refreshed done-claim table holds the same rows. CR35 is now `verified`, because the probe executes the promise that the renderer holds no cell spelling of its own. Each confidence keeps the value stated at return time, because a stated confidence is the claim made before the label arrives.
+
+| row | status | confidence | label |
+| --- | --- | --- | --- |
+| CR17 | verified | 9 |  |
+| CR18 | verified | 9 |  |
+| CR19 | verified | 8 |  |
+| CR20 | verified | 9 |  |
+| CR21 | verified | 9 |  |
+| CR28 | verified | 9 |  |
+| CR35 | verified | 7 |  |
+
+The repair suite reports no skip.
+
+| check | verdict | elapsed |
+| --- | --- | --- |
+| `bench test --package ./internal/roadmap/...` | pass | 2159 ms |
+| `bench test --package ./internal/retros/...` | pass | 10 ms |
+| `bench test --check docs-currency-workflow` | pass | 787 ms |
+| `go vet ./...` and `gofmt -l internal/retros internal/roadmap` | pass | no output |
+| `bench gate-prose . -- reviews/calibrated-decisions.md` | pass | no output |
+
 ## CD4 ticket 5 author evidence
 
 The ticket defines the calibration measure in the scorecard README and carries it in both provider files. The README gains one Measures row and two update-contract bullets. Each provider routing table gains one `calibration` column. The README has no prior anchor, so these two anchors are its first.
