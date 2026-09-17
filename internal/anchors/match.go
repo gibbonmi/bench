@@ -46,7 +46,9 @@ func (kind Kind) sectionScoped() bool {
 	return kind == RequireInSection || kind == ForbidInSection || kind == RequireInStep
 }
 
-// stepScoped reports whether kind narrows its section body to one numbered step.
+// stepScoped reports whether kind narrows its section body to one numbered step. The kind
+// is the one owner of that decision: the evaluator and the locator both ask this predicate,
+// so neither can narrow a subject the other reads whole.
 func (kind Kind) stepScoped() bool {
 	return kind == RequireInStep
 }
@@ -71,8 +73,10 @@ func MarkdownH2Sections(text, title string) (string, int) {
 }
 
 // stepOpener answers the step number a line opens, the number a reader sees. An opener
-// carries decimal digits at column zero, then a period, then a space or a tab. An indented
-// line opens no step, so a continuation line belongs to the step above it.
+// carries every one of its decimal digits at column zero, then a period, then a space or a
+// tab. An indented line opens no step, so a continuation line belongs to the step above it.
+// A leading zero reads as the number without it, because a markdown reader sees `06.` and
+// `6.` as the same step.
 func stepOpener(line []rune) (int, bool) {
 	digits := 0
 	for digits < len(line) && line[digits] >= '0' && line[digits] <= '9' {

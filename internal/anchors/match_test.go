@@ -61,6 +61,50 @@ func TestUnpairedEmphasisRunsStayVisible(t *testing.T) {
 	}
 }
 
+// TestStepOpenerReadsEveryLeadingDigitAtColumnZero pins the opener shape the reader sees.
+// The multi-digit rows keep `10.` apart from `1.`, and the indented rows keep a continuation
+// line inside the step above it. The rows without a period keep a line of digits and spaces,
+// such as a table cell or a measurement, out of the opener shape.
+func TestStepOpenerReadsEveryLeadingDigitAtColumnZero(t *testing.T) {
+	for _, test := range []struct {
+		line   string
+		number int
+		opens  bool
+	}{
+		{"1. the first step", 1, true},
+		{"10. the tenth step", 10, true},
+		{"06. a padded sixth step", 6, true},
+		{"7.\ta tab after the period", 7, true},
+		{"   6. an indented line", 0, false},
+		{"\t6. a tab-indented line", 0, false},
+		{"6.no space after the period", 0, false},
+		{"6 . a space before the period", 0, false},
+		{"6  two spaces and no period", 0, false},
+		{"6\t\ttwo tabs and no period", 0, false},
+		{"step 6. a line that opens with a word", 0, false},
+	} {
+		t.Run(test.line, func(t *testing.T) {
+			number, opens := stepOpener([]rune(test.line))
+			if number != test.number || opens != test.opens {
+				t.Fatalf("stepOpener(%q) = (%d, %t), want (%d, %t)", test.line, number, opens, test.number, test.opens)
+			}
+		})
+	}
+}
+
+// TestMarkdownH2SectionExcludesItsHeading pins the section body's open boundary. The body
+// starts under the heading, so a needle that repeats the heading text is located inside the
+// section only when the section carries that text in its own body.
+func TestMarkdownH2SectionExcludesItsHeading(t *testing.T) {
+	const doc = "# title\n\n## Alpha\n\nfirst line\n\n## Beta\n\nsecond line\n"
+	if body := MarkdownH2Section(doc, "Alpha"); strings.Contains(body, "## Alpha") || !strings.Contains(body, "first line") {
+		t.Fatalf("MarkdownH2Section(Alpha) = %q, want the body under the heading and not the heading line", body)
+	}
+	if got := Locate(RequireInSection, "Alpha", "## Alpha", doc); got != 0 {
+		t.Fatalf("Locate of the heading text inside its own section = %d, want 0", got)
+	}
+}
+
 func TestSatisfiedNormalizesByKind(t *testing.T) {
 	tests := []struct {
 		name   string

@@ -120,9 +120,9 @@ func TestResolveStepRefusesAStepScopedAnchorWithNoStep(t *testing.T) {
 	}
 }
 
-// TestRegistryBindsStepToItsKind refuses the authoring mistake the evaluator no longer reads
-// around: a Step on a kind that narrows no step, or a step-scoped kind with no Step. The kind
-// and the field must agree, because the kind alone decides the narrowing.
+// TestRegistryBindsStepToItsKind refuses two authoring mistakes: a Step on a kind that
+// narrows no step, and a step-scoped kind with no Step. The kind and the field must agree,
+// because the kind decides the narrowing and a field the kind does not read is dead.
 func TestRegistryBindsStepToItsKind(t *testing.T) {
 	for _, anchor := range Entries() {
 		if anchor.Kind.stepScoped() != (anchor.Step != 0) {

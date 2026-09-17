@@ -125,9 +125,6 @@ func evaluate(root string, group *Group, subject string) PathEvaluation {
 			continue
 		}
 		body := section.body
-		// The kind decides the step narrowing here, exactly as it does in the locator, so
-		// the two cannot disagree about which anchors read a step. A Step on a kind that
-		// reads none is an authoring mistake that TestRegistryBindsStepToItsKind refuses.
 		if anchor.Kind.stepScoped() {
 			stepKey := key + "\x00" + strconv.Itoa(anchor.Step)
 			step, stepResolved := steps[stepKey]
