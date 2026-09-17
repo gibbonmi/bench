@@ -4,10 +4,12 @@ package systemtest
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -280,4 +282,116 @@ func TestEvidenceConcurrentPublication(t *testing.T) {
 			t.Fatalf("distinct writers left %v", packs)
 		}
 	})
+}
+
+// read runs one evidence read in the given directory.
+func (j evidenceJourney) read(t *testing.T, dir string, args ...string) processResult {
+	t.Helper()
+	return systemSelected(t, dir, j.env(), append([]string{"preflight", "evidence"}, args...)...)
+}
+
+// storeState lists the store's objects with their sizes, excluding the lock files every
+// operation opens. A consumer cursor or reading log would appear here.
+func (j evidenceJourney) storeState(t *testing.T) []string {
+	t.Helper()
+	entries, err := os.ReadDir(j.store())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var state []string
+	for _, entry := range entries {
+		if strings.HasSuffix(entry.Name(), ".lock") {
+			continue
+		}
+		info, err := entry.Info()
+		if err != nil {
+			t.Fatal(err)
+		}
+		state = append(state, fmt.Sprintf("%s %d %s", entry.Name(), info.Size(), info.ModTime()))
+	}
+	sort.Strings(state)
+	return state
+}
+
+// TestEvidenceSiblingRead is CE55: a sibling assignment reads the same prepared bytes,
+// because the store lives beneath the repository-common directory, not the checkout.
+func TestEvidenceSiblingRead(t *testing.T) {
+	j := newEvidenceJourney(t)
+	origin := j.assignment(t, "sibling-origin", "sibling\n")
+	sibling := j.assignment(t, "sibling-reader", "", "sibling-origin")
+	identity := identityOf(t, j.prepare(t, origin))
+	first := j.read(t, origin.path, identity)
+	second := j.read(t, sibling.path, identity)
+	if first.code != 0 || second.code != 0 || first.stdout != second.stdout || !strings.HasPrefix(second.stdout, "page[1]") {
+		t.Fatalf("sibling read = (%d, %d):\n%q\n%q", first.code, second.code, first.stdout, second.stdout)
+	}
+}
+
+// TestEvidenceReleaseRead is CE56: production assignment release keeps historical evidence
+// readable, so releasing the preparing assignment destroys no prepared artifact.
+func TestEvidenceReleaseRead(t *testing.T) {
+	j := newEvidenceJourney(t)
+	// The preparing assignment commits nothing of its own, so release has no unlanded
+	// branch to retain and the production verb runs to completion.
+	origin := j.assignment(t, "release-origin", "")
+	reader := j.assignment(t, "release-reader", "")
+	identity := identityOf(t, j.prepare(t, origin))
+	before := j.read(t, reader.path, identity)
+	released := systemSelected(t, j.root, j.env(), "worktree", "release", "--request", origin.request, origin.path)
+	if released.code != 0 {
+		t.Fatalf("worktree release = (%d, %q, %q)", released.code, released.stdout, released.stderr)
+	}
+	if _, err := os.Stat(origin.path); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("release left the origin worktree at %s: %v", origin.path, err)
+	}
+	after := j.read(t, reader.path, identity)
+	if before.code != 0 || after.code != 0 || before.stdout != after.stdout {
+		t.Fatalf("read after release = (%d):\n%q\nbefore:\n%q", after.code, after.stdout, before.stdout)
+	}
+	if verified := j.read(t, reader.path, identity, "--verify"); verified.code != 0 || !strings.HasPrefix(verified.stdout, "verified[1]") {
+		t.Fatalf("verify after release = (%d, %q)", verified.code, verified.stdout)
+	}
+}
+
+// TestEvidenceStatelessProcesses is CE65: repeated and out-of-order reads in separate
+// processes return the same bytes and leave the store unchanged, so no reading session or
+// consumer cursor survives a read.
+func TestEvidenceStatelessProcesses(t *testing.T) {
+	j := newEvidenceJourney(t)
+	worktree := j.assignment(t, "stateless", "stateless\n")
+	identity := identityOf(t, j.prepare(t, worktree))
+	hex := strings.TrimPrefix(identity, "sha256:")
+	manifest := "v1." + hex + ".m.0.0"
+	source := "v1." + hex + ".s.1.0"
+	before := j.storeState(t)
+	// The later source page reads before the first manifest fragment, and each read repeats.
+	order := []string{source, manifest, source, manifest}
+	results := map[string]string{}
+	for _, cursor := range order {
+		result := j.read(t, worktree.path, identity, "--cursor", cursor)
+		if result.code != 0 {
+			t.Fatalf("read %s = (%d, %q)", cursor, result.code, result.stdout)
+		}
+		if seen, repeated := results[cursor]; repeated && seen != result.stdout {
+			t.Fatalf("repeated read of %s returned different bytes", cursor)
+		}
+		results[cursor] = result.stdout
+	}
+	if after := j.storeState(t); strings.Join(before, "\n") != strings.Join(after, "\n") {
+		t.Fatalf("reads changed the store:\nbefore:\n%s\nafter:\n%s", strings.Join(before, "\n"), strings.Join(after, "\n"))
+	}
+}
+
+// TestEvidenceNestedDirectory is CE120: a nested working directory resolves the same
+// repository-common artifact and returns the same source bytes.
+func TestEvidenceNestedDirectory(t *testing.T) {
+	j := newEvidenceJourney(t)
+	worktree := j.assignment(t, "nested", "nested\n")
+	identity := identityOf(t, j.prepare(t, worktree))
+	nested := filepath.Join(worktree.path, "specs", "x", "tickets")
+	root := j.read(t, worktree.path, identity, "--source", "s2")
+	deep := j.read(t, nested, identity, "--source", "s2")
+	if root.code != 0 || deep.code != 0 || root.stdout != deep.stdout {
+		t.Fatalf("nested read = (%d):\n%q\nroot:\n%q", deep.code, deep.stdout, root.stdout)
+	}
 }
