@@ -164,7 +164,7 @@ func renderReviewPacket(
 	for _, axis := range reviewrecord.Axes() {
 		chargeRows = append(chargeRows, []string{
 			axis, facts.AssignmentTarget, root, facts.SourceBase, facts.SourceTip,
-			chargeFenceCell(facts), sources.spec.handle(), "read-only", shared.handle(),
+			chargeFenceCell(facts.FenceEntries), sources.spec.handle(), "read-only", shared.handle(),
 			sources.reviewSkill.handle(),
 			sourceHandles(sources.reviewPhase, sources.delegateSkill, sources.delegateProcedure),
 		})

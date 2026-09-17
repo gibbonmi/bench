@@ -53,6 +53,11 @@ type Manifest struct {
 // metadata source is always ordinal 1.
 func SourceID(ordinal int) string { return "s" + strconv.Itoa(ordinal) }
 
+// InputSourceID returns the manifest identifier of one candidate source input at its
+// zero-based position in Candidate.Sources. The metadata source always precedes every
+// input, so the first input is ordinal 2.
+func InputSourceID(index int) string { return SourceID(index + 2) }
+
 // Identity returns the artifact identifier of canonical manifest bytes.
 func Identity(manifest []byte) string {
 	return IdentityPrefix + digest(manifest)

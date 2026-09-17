@@ -126,11 +126,12 @@ func renderChargePacket(packet chargePacket, full bool) (string, int) {
 	return b.String(), 0
 }
 
-// chargeFenceCell is the spec's declared ownership fence, the one fact the review fence
+// chargeFenceCell is the spec's declared ownership fence, the one fact the charge fence
 // column carries. It is deliberately not a source handle: the ticket and evidence
 // columns already carry handles, and a column that repeats one of them grades nothing.
-func chargeFenceCell(facts Facts) string {
-	return strings.Join(facts.FenceEntries, ", ")
+// Both the build and the review packet render this same joined cell.
+func chargeFenceCell(fence []string) string {
+	return strings.Join(fence, ", ")
 }
 
 func renderCharge(root string, facts Facts, verdict Verdict, name string, full bool) (string, int) {

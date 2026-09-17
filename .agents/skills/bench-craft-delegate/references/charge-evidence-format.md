@@ -39,9 +39,18 @@ The reader decodes the manifest, encodes it again, and refuses bytes that differ
 Source identifiers are `s` followed by the one-based source position.
 A source page holds at most 8192 raw bytes.
 Each page is the longest UTF-8 prefix within that limit.
+A page offset is relative to its own source body.
+
 Pages cover each source exactly once, with no gap and no overlap.
 An empty optional source has no page.
 Every digest cell holds 64 lowercase hexadecimal digits as a string.
+A page index and an argument index both start at zero.
+
+## Canonical string quoting
+
+The shared TOON adapter owns spec-TOON cell escaping and quoting.
+It quotes an empty string, a spec-TOON keyword string, and a numeric-looking string.
+It also quotes a string needing an escape, then applies the spec-TOON escapes.
 
 ## Metadata source
 
@@ -49,14 +58,16 @@ The first source has the role `metadata`, the kind `derived`, and an empty path.
 Repository sources have the kind `repository`, and generated sources have the kind `generated`.
 The metadata body uses the same canonical table rules as the manifest.
 Every source cell holds a manifest source identifier.
+A build charge row uses access `write-within-fence` and names the selected ticket source in its ticket cell.
+A review charge row uses access `read-only` and names the spec source in its ticket cell.
 
 | Table | Ordered fields | Rows |
 | --- | --- | --- |
-| `charge` | `axis` (string), `ticket` (string), `access` (string) | One build row with an empty axis, or one row per review axis in axis order. |
+| `charge` | `axis` (string), `ticket` (string), `access` (string) | One build row with empty axis, or the existing review-axis inventory order. |
 | `fence` | `path` (string) | Declared spec fence order. |
 | `writes` | `path` (string) | Selected ticket write order. Review has zero rows. |
-| `coverage` | `row` (string) | Selected ticket coverage order. Review has zero rows. |
-| `checks` | `source` (string) | Check-source order. |
-| `returns` | `source` (string) | Return-source order. |
+| `coverage` | `row` (string) | Selected ticket coverage order. Review has zero rows here. |
+| `checks` | `source` (string) | Existing build check-source order or review skill source. |
+| `returns` | `source` (string) | Existing return-source order. |
 | `shared_evidence` | `kind` (string), `source` (string) | Diff, consumers, coverage order. Build has zero rows. |
-| `completion_evidence` | `record` (string), `source_digest` (string), `plan_digest` (string), `record_state` (string), `detail` (string) | Completion facts. Build has zero rows. |
+| `completion_evidence` | `record` (string), `source_digest` (string), `plan_digest` (string), `record_state` (string), `detail` (string) | Existing completion facts. Build has zero rows. |

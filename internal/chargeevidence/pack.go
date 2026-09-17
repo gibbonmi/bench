@@ -50,7 +50,8 @@ func (p *Pack) Bytes() []byte { return bytes.Clone(p.data) }
 
 // ManifestBytes returns the canonical manifest bytes.
 func (p *Pack) ManifestBytes() []byte {
-	length := binary.LittleEndian.Uint64(p.data[16:HeaderBytes])
+	lengthStart, lengthEnd := HeaderRange(headerLengthField)
+	length := binary.LittleEndian.Uint64(p.data[lengthStart:lengthEnd])
 	return bytes.Clone(p.data[HeaderBytes : HeaderBytes+length])
 }
 
@@ -124,8 +125,10 @@ func Build(c Candidate) (*Pack, error) {
 	}
 	data := make([]byte, HeaderBytes, HeaderBytes+len(manifest)+bodies.Len())
 	copy(data, HeaderMarker)
-	binary.LittleEndian.PutUint32(data[8:12], ContainerVersion)
-	binary.LittleEndian.PutUint64(data[16:24], uint64(len(manifest)))
+	versionStart, versionEnd := HeaderRange(headerVersionField)
+	binary.LittleEndian.PutUint32(data[versionStart:versionEnd], ContainerVersion)
+	lengthStart, lengthEnd := HeaderRange(headerLengthField)
+	binary.LittleEndian.PutUint64(data[lengthStart:lengthEnd], uint64(len(manifest)))
 	data = append(append(data, manifest...), bodies.Bytes()...)
 	return Read(data, Identity(manifest))
 }
@@ -174,16 +177,20 @@ func Read(data []byte, expected string) (*Pack, error) {
 	if len(data) < HeaderBytes {
 		return nil, refuse(RefuseTruncated, "pack holds %d bytes, fewer than the %d-byte header", len(data), HeaderBytes)
 	}
-	if string(data[:8]) != HeaderMarker {
+	markerStart, markerEnd := HeaderRange(headerMarkerField)
+	if string(data[markerStart:markerEnd]) != HeaderMarker {
 		return nil, refuse(RefuseMarker, "header marker is not BENCHEV")
 	}
-	if version := binary.LittleEndian.Uint32(data[8:12]); version != ContainerVersion {
+	versionStart, versionEnd := HeaderRange(headerVersionField)
+	if version := binary.LittleEndian.Uint32(data[versionStart:versionEnd]); version != ContainerVersion {
 		return nil, refuse(RefuseContainerVersion, "container version %d is not supported", version)
 	}
-	if reserved := binary.LittleEndian.Uint32(data[12:16]); reserved != 0 {
+	reservedStart, reservedEnd := HeaderRange(headerReservedField)
+	if reserved := binary.LittleEndian.Uint32(data[reservedStart:reservedEnd]); reserved != ReservedHeaderValue {
 		return nil, refuse(RefuseReserved, "reserved header value is %d", reserved)
 	}
-	length := binary.LittleEndian.Uint64(data[16:24])
+	lengthStart, lengthEnd := HeaderRange(headerLengthField)
+	length := binary.LittleEndian.Uint64(data[lengthStart:lengthEnd])
 	if length > math.MaxUint64-HeaderBytes {
 		return nil, refuse(RefuseOverflow, "manifest length %d overflows the pack offset", length)
 	}

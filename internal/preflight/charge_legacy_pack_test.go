@@ -11,10 +11,9 @@ import (
 	"github.com/gibbonmi/bench/internal/diff"
 )
 
-// legacyChargeCase is one enumerated legacy build charge response. The baseline under
-// testdata/legacy-charge was captured from the pre-pack renderer before the build charge
-// moved onto the validated in-memory pack. The permanent test compares a live run with
-// that stored capture and never rewrites it.
+// legacyChargeCase is one enumerated legacy build charge response, checked against the
+// fixed baseline under testdata/legacy-charge. The permanent test compares a live run
+// with that stored capture and never rewrites it.
 type legacyChargeCase struct {
 	name string
 	run  func(t *testing.T) (out string, code int, root, base, tip string)

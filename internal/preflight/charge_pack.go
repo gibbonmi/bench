@@ -69,7 +69,7 @@ func prepareBuildPack(root string, facts Facts, selected *tickets.Entry, parsed 
 		Coverage: parsed.Covers,
 	}
 	for i, descriptor := range policy {
-		id := chargeevidence.SourceID(i + 2)
+		id := chargeevidence.InputSourceID(i)
 		if descriptor.ticket {
 			metadata.Charge = append(metadata.Charge, chargeevidence.ChargeRow{Ticket: id, Access: buildAccess})
 		}
@@ -121,7 +121,7 @@ func renderLegacyBuildPacket(root string, facts Facts, pack *chargeevidence.Pack
 		fields: []string{"assignment", "checkout", "base", "source_tip", "fence", "ticket", "writes", "evidence", "checks", "return"},
 		rows: [][]string{{
 			facts.AssignmentTarget, root, selection.Base, selection.SourceTip,
-			strings.Join(metadata.Fence, ", "), handlesOf([]string{metadata.Charge[0].Ticket}),
+			chargeFenceCell(metadata.Fence), handlesOf([]string{metadata.Charge[0].Ticket}),
 			strings.Join(metadata.Writes, ", "), sourceHandles(listed...),
 			handlesOf(metadata.Checks), handlesOf(metadata.Returns),
 		}},

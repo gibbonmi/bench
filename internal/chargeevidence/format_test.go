@@ -15,7 +15,7 @@ import (
 )
 
 // The expectations below are written from the spec's format tables, not read from the
-// registry. Each one carries a recorded omission probe in the review pickup.
+// registry, so an omitted or reordered field turns one of them red.
 
 const (
 	fixtureBase = "abcdefabcdefabcdefabcdefabcdefabcdefabcd"
@@ -214,7 +214,9 @@ func TestEvidenceCandidateRefusals(t *testing.T) {
 }
 
 // TestEvidenceFormatProjection is CE148: the shipped reference equals the registry
-// projection, and the projection names every registered field.
+// projection, and every block's own projected row names every one of its registered
+// fields. A row-scoped check catches an omitted field even when another block's row
+// carries the same label.
 func TestEvidenceFormatProjection(t *testing.T) {
 	shipped, err := os.ReadFile(filepath.Join("..", "..", filepath.FromSlash(ce.ReferencePath)))
 	if err != nil {
@@ -224,11 +226,24 @@ func TestEvidenceFormatProjection(t *testing.T) {
 	if string(shipped) != generated {
 		t.Fatalf("shipped %s differs from the registry projection:\n%s", ce.ReferencePath, generated)
 	}
+	lines := strings.Split(generated, "\n")
 	for _, block := range append(append([]ce.Block{}, ce.ManifestBlocks...), ce.MetadataBlocks...) {
+		prefix := "| `" + block.Name + "` |"
+		var row string
+		count := 0
+		for _, line := range lines {
+			if strings.HasPrefix(line, prefix) {
+				row = line
+				count++
+			}
+		}
+		if count != 1 {
+			t.Fatalf("projection holds %d rows for block %s, want 1", count, block.Name)
+		}
 		for _, field := range block.Fields {
 			label := fmt.Sprintf("`%s` (%s)", field.Name, field.Type)
-			if !strings.Contains(generated, "| `"+block.Name+"` |") || !strings.Contains(generated, label) {
-				t.Errorf("projection omits %s field %s", block.Name, label)
+			if !strings.Contains(row, label) {
+				t.Errorf("%s row omits field %s:\n%s", block.Name, label, row)
 			}
 		}
 	}

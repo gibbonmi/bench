@@ -6,6 +6,8 @@
 // registry. The writer, the strict reader, and the generated format reference all read it.
 package chargeevidence
 
+import "fmt"
+
 // CellType is the declared TOON type of one registered column.
 type CellType int
 
@@ -72,7 +74,24 @@ const (
 	PageBytes = 8192
 	// IdentityPrefix precedes the hexadecimal manifest digest in an artifact identifier.
 	IdentityPrefix = "sha256:"
+	// ReservedHeaderValue is the only accepted header reserved-field value.
+	ReservedHeaderValue = 0
 )
+
+// Named indexes into Header. The reader and the writer use these to derive their byte
+// ranges, so the registered layout has one source.
+const (
+	headerMarkerField = iota
+	headerVersionField
+	headerReservedField
+	headerLengthField
+)
+
+// HeaderRange returns the half-open byte bounds of one registered header field.
+func HeaderRange(field int) (start, end int) {
+	h := Header[field]
+	return h.First, h.Last + 1
+}
 
 // Source roles and kinds that the format itself defines. Preflight owns every canonical
 // and generated role name.
@@ -83,11 +102,12 @@ const (
 	KindDerived    = "derived"
 )
 
-// Header is the registered physical header layout.
+// Header is the registered physical header layout. Its field order matches
+// headerMarkerField through headerLengthField.
 var Header = []HeaderField{
 	{0, 7, "The seven ASCII bytes `BENCHEV`, then one NUL byte."},
-	{8, 11, "Unsigned little-endian container version 1."},
-	{12, 15, "Reserved unsigned little-endian value 0."},
+	{8, 11, fmt.Sprintf("Unsigned little-endian container version %d.", ContainerVersion)},
+	{12, 15, fmt.Sprintf("Reserved unsigned little-endian value %d.", ReservedHeaderValue)},
 	{16, 23, "Unsigned little-endian manifest byte length."},
 }
 
@@ -108,7 +128,7 @@ const (
 // ManifestBlocks is the registered canonical manifest profile 1.
 var ManifestBlocks = []Block{
 	{blockProfile, []Field{num("version"), str("hash"), num("page_bytes")},
-		"One row: integer 1, string sha256, integer 8192."},
+		fmt.Sprintf("One row: integer %d, string %s, integer %d.", ProfileVersion, HashName, PageBytes)},
 	{blockSelection, []Field{str("mode"), str("spec"), str("ticket"), str("base"), str("source_tip")},
 		"One row. Review uses an empty ticket string."},
 	{blockSources, []Field{str("id"), str("role"), str("kind"), str("path"), flag("required"), num("bytes"), str("sha256")},
@@ -136,13 +156,13 @@ const (
 // MetadataBlocks is the registered schema of the required metadata source.
 var MetadataBlocks = []Block{
 	{blockCharge, []Field{str("axis"), str("ticket"), str("access")},
-		"One build row with an empty axis, or one row per review axis in axis order."},
+		"One build row with empty axis, or the existing review-axis inventory order."},
 	{blockFence, []Field{str("path")}, "Declared spec fence order."},
 	{blockWrites, []Field{str("path")}, "Selected ticket write order. Review has zero rows."},
-	{blockCoverage, []Field{str("row")}, "Selected ticket coverage order. Review has zero rows."},
-	{blockChecks, []Field{str("source")}, "Check-source order."},
-	{blockReturns, []Field{str("source")}, "Return-source order."},
+	{blockCoverage, []Field{str("row")}, "Selected ticket coverage order. Review has zero rows here."},
+	{blockChecks, []Field{str("source")}, "Existing build check-source order or review skill source."},
+	{blockReturns, []Field{str("source")}, "Existing return-source order."},
 	{blockShared, []Field{str("kind"), str("source")}, "Diff, consumers, coverage order. Build has zero rows."},
 	{blockCompletion, []Field{str("record"), str("source_digest"), str("plan_digest"), str("record_state"), str("detail")},
-		"Completion facts. Build has zero rows."},
+		"Existing completion facts. Build has zero rows."},
 }
