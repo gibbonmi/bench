@@ -276,6 +276,41 @@ The coordinator's independent probe loosened the bounded diagnostic limit, and t
 
 The coordinator reran the five chunk verifications at `88513d7c`. All passed, and the plan probe failed twenty-four tests and restored the file.
 
+## CE-C1B: review round 3
+
+Frozen pair: base `88a981b9cf9952ccb59be918fe72cae3c73f16d3`, tip `6322d3419e746778bb338122e28ec9b174be46a8`.
+The raw finding count is 0. All three axes passed.
+Repair cycles used: 2 of 2. Repair cycle 2 renamed the command-layer quota selector.
+
+### Standards
+
+Finding count: 0. The axis passed. ST8 and ST1 are closed.
+
+### Spec
+
+Finding count: 0. The axis passed. SP5 is closed.
+
+### Coverage
+
+Finding count: 0. The axis passed.
+
+### Main merge
+
+The coordinator merged main `27d3a8ea` into the source at `6322d341`. The merge changed the implement-spec command and three craft skills, and it produced no conflict.
+The review preflight therefore reports `paths-authorized` red for those three skill files, because a main merge inside a review pair always names them. They are main's content, not this chunk's delta.
+The Spec axis read the merged command file and confirmed that every clause this spec pins survives.
+
+### Advice
+
+- `SelectQuota` also refuses a bad identifier or cursor, so its name states only part of its job.
+- The exported selector has no direct unit test; the command seam grades it.
+- The CE-C1D charge should state approval at the ticket-graph level, because the merged command file now carries both a graph-level and a per-ticket phrasing.
+
+### Author verification
+
+The coordinator reran the five chunk verifications at `6322d341`. All passed, and the plan probe failed twenty-four tests and restored the file.
+The coordinator's independent probe dropped the candidate size from the capacity call, and the capacity recovery test failed.
+
 ## Record
 
 ```bench-review-record
@@ -887,9 +922,9 @@ The coordinator reran the five chunk verifications at `88513d7c`. All passed, an
     {
       "id": "CE-C1B",
       "base": "88a981b9cf9952ccb59be918fe72cae3c73f16d3",
-      "tip": "88513d7c0d4ae4f4d026f8143874d49f4eefab74",
+      "tip": "6322d3419e746778bb338122e28ec9b174be46a8",
       "plan_digest": "sha256:bd4837edc8c926625c78753261b6eb6a4c9bff01e43afa43c1a1a609be8949fb",
-      "source_digest": "ef9207e68bab2b2f294bd2fb8b41225ae731df71",
+      "source_digest": "d644eac204307bb10a1aa4daf683ce4c47f4cce2",
       "acceptance_rows": [
         "CE1",
         "CE2",
@@ -1148,6 +1183,107 @@ The coordinator reran the five chunk verifications at `88513d7c`. All passed, an
               "excerpt": "bench probe internal/chargeevidence/schema.go --omit 'num(\"manifest_bytes\"),' --package ./internal/preflight/... at 88513d7c: verdict bit, 24 failed tests, restored=yes"
             }
           }
+        },
+        {
+          "id": "ce-c1b-v3-preflight",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d644eac204307bb10a1aa4daf683ce4c47f4cce2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:6e182828cc1630cdaf1e9e993da458afd3a49ae0f8a924599ab7ce03146cf0bf",
+            "excerpt": "at 6322d341: pass; preflight 18333 ms and evidencecmd 3060 ms"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1b-v3-store",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d644eac204307bb10a1aa4daf683ce4c47f4cce2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:2565f4dd384d5e14ad01804296d8bd7007330ca537e63a82a9fbf136181245f0",
+            "excerpt": "at 6322d341: pass, 101 ms; the CE94 device case skipped for the privilege capability"
+          },
+          "requirement": "store",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1b-v3-inventory",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d644eac204307bb10a1aa4daf683ce4c47f4cce2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:9f4ef2bfc14b4fb82cb54ddf54bdd19ab0b6b4ca2d5981312ff9b38d1d444988",
+            "excerpt": "at 6322d341: pass, 6963 ms"
+          },
+          "requirement": "inventory",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1b-v3-system",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d644eac204307bb10a1aa4daf683ce4c47f4cce2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:345fdb06340fa8e4edf16fd2234c481104a8514024f052a0a5751f38cc2104d6",
+            "excerpt": "at 6322d341: pass, 31774 ms"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1b-v3-mutation",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d644eac204307bb10a1aa4daf683ce4c47f4cce2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:30effa2088128d63b7f84d80d1e0c3a3d1905ec99a4e0463842e512d48f5a92a",
+            "excerpt": "at 6322d341: pass"
+          },
+          "requirement": "mutation",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit manifest_bytes from the prepared response",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:coordinator-run",
+              "digest": "sha256:3526fcbf63c232c9f66ad3883b743df84b84703a4ecab968f6de310cd777e057",
+              "excerpt": "bench probe internal/chargeevidence/schema.go --omit 'num(\"manifest_bytes\"),' --package ./internal/preflight/... at 6322d341: verdict bit, 24 failed tests, restored=yes"
+            }
+          }
         }
       ],
       "reviews": [
@@ -1298,6 +1434,72 @@ The coordinator reran the five chunk verifications at `88513d7c`. All passed, an
           "finding_ids": [],
           "supersedes": [
             "ce-c1b-r1-coverage"
+          ]
+        },
+        {
+          "id": "ce-c1b-r3-standards",
+          "performer": "claude-review-ce-c1b-standards-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d644eac204307bb10a1aa4daf683ce4c47f4cce2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1b-standards-r3",
+            "digest": "sha256:4a40e9639316efff625039398983d585e7c028a45d1336387e2c444e3c40b4be",
+            "excerpt": "Standards CE-C1B round 3: 0 findings. ST8 closed by the rename to SelectQuota with no stale name, and ST1 closed by the recorded probes for the three constants."
+          },
+          "axis": "Standards",
+          "base": "88a981b9cf9952ccb59be918fe72cae3c73f16d3",
+          "tip": "6322d3419e746778bb338122e28ec9b174be46a8",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c1b-r2-standards"
+          ]
+        },
+        {
+          "id": "ce-c1b-r3-spec",
+          "performer": "claude-review-ce-c1b-spec-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d644eac204307bb10a1aa4daf683ce4c47f4cce2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1b-spec-r3",
+            "digest": "sha256:b3dbbd025e72d46425a45a7bcfd73fcb4bf5c1d8f9f196ab21670112d01b5a80",
+            "excerpt": "Spec CE-C1B round 3: 0 findings. The rename changed no behavior or response text, SP5 is closed in all seven ticket check lists, and the merged main guidance keeps every clause this spec pins."
+          },
+          "axis": "Spec",
+          "base": "88a981b9cf9952ccb59be918fe72cae3c73f16d3",
+          "tip": "6322d3419e746778bb338122e28ec9b174be46a8",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c1b-r2-spec"
+          ]
+        },
+        {
+          "id": "ce-c1b-r3-coverage",
+          "performer": "claude-review-ce-c1b-coverage-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d644eac204307bb10a1aa4daf683ce4c47f4cce2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1b-coverage-r3",
+            "digest": "sha256:6ffa1d95e3d621bb89fc362335b045d1212efc1ca0ec266d87506fcc74174441",
+            "excerpt": "Coverage CE-C1B round 3: 0 findings. Two probes bit on the renamed function and on its call site, and no test lost coverage in the rename."
+          },
+          "axis": "Coverage",
+          "base": "88a981b9cf9952ccb59be918fe72cae3c73f16d3",
+          "tip": "6322d3419e746778bb338122e28ec9b174be46a8",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c1b-r2-coverage"
           ]
         }
       ]
