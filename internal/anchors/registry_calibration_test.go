@@ -42,3 +42,12 @@ func TestCalibrationScoreAnchors(t *testing.T) {
 		{file: ".agents/skills/bench-craft-line/SKILL.md", section: "The declaration", needle: "Expected repair rounds: <count> / confidence <0-10>. `references/calibration-score.md` owns the score.", want: "calibration: the declaration must state expected repair rounds"},
 	}}.check(t)
 }
+
+// These independent expectations make removal of a retro calibration duty fail.
+func TestCalibrationRetroDutyAnchors(t *testing.T) {
+	const command = ".agents/commands/bench-final-check.md"
+	anchorHarness{group: AfterImplementSpec, rules: []anchorRule{
+		{file: command, section: "Capture the implementation retro", needle: "The retro fills the calibration table with one row per labeled claim: surface, claim, status, confidence, label, and model, effort, and role.", want: "calibration: the retro must fill the calibration table"},
+		{file: command, section: "Capture the implementation retro", needle: "The retro states the Brier mean, the pair count, and the abstention count below the table, with `unknown` for a mean over zero pairs.", want: "calibration: the retro must state the Brier mean and the counts"},
+	}}.check(t)
+}
