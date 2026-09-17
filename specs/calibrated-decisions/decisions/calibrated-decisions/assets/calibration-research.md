@@ -1,6 +1,6 @@
 # Calibrated decisions: research
 
-Consumed by: `decisions/calibrated-decisions.md` and the spec that follows it.
+Consumed by: `specs/calibrated-decisions/decisions/calibrated-decisions.md` and `specs/calibrated-decisions/spec.md`.
 Drift: a new primary source on process-level calibration, or a change to the scorecard contract in `capture/agent-performance/README.md`.
 Retire when: the calibrated-decisions spec ships or the map closes without a spec.
 
