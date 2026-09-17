@@ -199,7 +199,7 @@ The fenced payload below retains every terminal return for the checkpoint. The f
           "effort": "medium",
           "source_digest": "e4866f1d8569f350474dcf28334a23f195baedd8",
           "state": "completed",
-          "outcome": "pass",
+          "outcome": "fail",
           "native_ref": {
             "ref": "claude:agent/cd-c1-standards-20260917@09f26779",
             "digest": "sha256:80c16504f159fca1ef6d0ca4e647ff755032e64b04b5dd96ddae18608c38f315",
