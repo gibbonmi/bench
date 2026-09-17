@@ -1,4 +1,4 @@
-package preflight
+package evidencecmd_test
 
 import (
 	"fmt"
@@ -7,11 +7,9 @@ import (
 
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
-
-// responseBudget is the spec's encoded stdout bound, written here independently.
-const responseBudget = 48000
 
 // seedLargeEvidence builds the expansion fixture: a 40 KB spec with 5000 fence entries, a
 // ticket above the response bound, and escaped and multibyte text.
@@ -52,32 +50,21 @@ func TestEvidenceResponseBudget(t *testing.T) {
 	if manifestPages < 1 || sourcePages < 10 {
 		t.Fatalf("expansion fixture produced %d manifest and %d source pages", manifestPages, sourcePages)
 	}
-	usage, code := Command([]string{"build", strings.Repeat("s", 70000)})
+	usage, code := preflight.Command([]string{"build", strings.Repeat("s", 70000)})
 	if code != 2 {
 		t.Fatalf("oversized usage exit = %d", code)
 	}
 	cases["CE138 usage refusal"] = usage
-	refusal, code := Command([]string{"evidence", "sha256:" + strings.Repeat("0", 64), "--cursor", "v1." + strings.Repeat("0", 64) + ".m.0.0"})
+	refusal, code := preflight.Command([]string{"evidence", "sha256:" + strings.Repeat("0", 64), "--cursor", "v1." + strings.Repeat("0", 64) + ".m.0.0"})
 	if code != 1 {
 		t.Fatalf("operational refusal exit = %d:\n%s", code, refusal)
 	}
 	cases["CE139 operational refusal"] = refusal
 	for name, out := range cases {
-		if len(out) > responseBudget || len(out) == 0 {
-			t.Errorf("%s holds %d encoded bytes, want 1 to %d", name, len(out), responseBudget)
+		if len(out) > preflighttest.ResponseBudget || len(out) == 0 {
+			t.Errorf("%s holds %d encoded bytes, want 1 to %d", name, len(out), preflighttest.ResponseBudget)
 		}
 	}
-	t.Run("final guard covers bounded forms", func(t *testing.T) {
-		for _, op := range operations {
-			if (op.kind == opPrepareEvidence || op.kind == opReadEvidence) && !op.bounded {
-				t.Errorf("operation %q bypasses the final guard", op.usage)
-			}
-		}
-		out, code := boundResponse(strings.Repeat("x", responseBudget+1), 0)
-		if code != 1 || len(out) > responseBudget || !strings.Contains(out, "response bound exceeded") {
-			t.Fatalf("guard = (%d, %d bytes)", code, len(out))
-		}
-	})
 }
 
 // TestEvidenceLargeMetadata is CE14: 5000 fence entries reconstruct without omission.
@@ -103,13 +90,13 @@ func TestEvidenceBoundedErrors(t *testing.T) {
 		{"evidence", hostile},
 		{"evidence", "sha256:" + strings.Repeat("a", 64), "--cursor", hostile},
 	} {
-		out, code := Command(args)
+		out, code := preflight.Command(args)
 		want := "oversized operand bytes=70000 sha256=" + sha(hostile)
-		if code != 2 || len(out) > responseBudget || !strings.Contains(out, want) || strings.Contains(out, "$(hostile)") {
+		if code != 2 || len(out) > preflighttest.ResponseBudget || !strings.Contains(out, want) || strings.Contains(out, "$(hostile)") {
 			t.Fatalf("oversized operand = (%d, %d bytes):\n%.300s", code, len(out), out)
 		}
 	}
-	out, code := Command([]string{"evidence", "sha256:" + strings.Repeat("g", 64)})
+	out, code := preflight.Command([]string{"evidence", "sha256:" + strings.Repeat("g", 64)})
 	if code != 2 || !strings.Contains(out, "invalid evidence identifier bytes=71 sha256=") {
 		t.Fatalf("invalid identifier = (%d):\n%s", code, out)
 	}
@@ -154,11 +141,11 @@ func TestEvidenceLargeManifestScalar(t *testing.T) {
 	pages := traverseEvidence(t, identity)
 	manifest, sources := reconstructEvidence(t, identity, pages)
 	arguments := preflighttest.TableRows(t, preflighttest.DecodeMap(t, manifest), "arguments")
-	if len(scalar) <= responseBudget || len(arguments) != 1 || arguments[0]["value"] != scalar || sources["s2"] != "diff body\n" {
+	if len(scalar) <= preflighttest.ResponseBudget || len(arguments) != 1 || arguments[0]["value"] != scalar || sources["s2"] != "diff body\n" {
 		t.Fatalf("large scalar did not reconstruct: %d arguments", len(arguments))
 	}
 	for _, page := range pages {
-		if len(page.raw) > responseBudget {
+		if len(page.raw) > preflighttest.ResponseBudget {
 			t.Fatalf("fragment holds %d bytes", len(page.raw))
 		}
 	}

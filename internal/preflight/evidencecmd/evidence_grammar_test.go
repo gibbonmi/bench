@@ -1,10 +1,11 @@
-package preflight
+package evidencecmd_test
 
 import (
 	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
@@ -125,7 +126,7 @@ func TestEvidenceBuildGrammar(t *testing.T) {
 		append(append([]string{}, valid...), "--max-store-bytes", "1073741824"),
 		{"build", slug, "--source-tip", tip, "--base", base, "--ticket", "one.md", "--charge"},
 	} {
-		if out, code := Command(form); code != 0 || !strings.HasPrefix(out, "prepared[1]") {
+		if out, code := preflight.Command(form); code != 0 || !strings.HasPrefix(out, "prepared[1]") {
 			t.Fatalf("accepted form %v = (%d):\n%s", form, code, out)
 		}
 	}
@@ -147,7 +148,7 @@ func TestEvidenceBuildGrammar(t *testing.T) {
 		{"missing quota value", append(append([]string{}, valid...), "--max-store-bytes"), "missing argument: --max-store-bytes"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			if out, code := Command(test.args); code != 2 || !strings.Contains(out, test.want) {
+			if out, code := preflight.Command(test.args); code != 2 || !strings.Contains(out, test.want) {
 				t.Fatalf("%s = (%d):\n%s", test.name, code, out)
 			}
 		})
@@ -160,7 +161,7 @@ func TestEvidenceReadGrammar(t *testing.T) {
 	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
 	cursor := "v1." + strings.TrimPrefix(identity, "sha256:") + ".m.0.0"
 	for _, form := range [][]string{{"evidence", identity}, {"evidence", identity, "--cursor", cursor}, {"evidence", "--cursor", cursor, identity}} {
-		if out, code := Command(form); code != 0 || !strings.HasPrefix(out, "page[1]") {
+		if out, code := preflight.Command(form); code != 0 || !strings.HasPrefix(out, "page[1]") {
 			t.Fatalf("accepted form %v = (%d):\n%s", form, code, out)
 		}
 	}
@@ -179,7 +180,7 @@ func TestEvidenceReadGrammar(t *testing.T) {
 		{"charge flag", []string{"evidence", identity, "--charge"}, "--charge requires"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			if out, code := Command(test.args); code != 2 || !strings.Contains(out, test.want) {
+			if out, code := preflight.Command(test.args); code != 2 || !strings.Contains(out, test.want) {
 				t.Fatalf("%s = (%d):\n%s", test.name, code, out)
 			}
 		})
@@ -206,14 +207,14 @@ func TestEvidenceCursorRefusals(t *testing.T) {
 		{"missing field", "v1." + hex + ".s.1"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			out, code := Command([]string{"evidence", identity, "--cursor", test.cursor})
+			out, code := preflight.Command([]string{"evidence", identity, "--cursor", test.cursor})
 			if code != 2 || !strings.Contains(out, "invalid cursor bytes=") || strings.Contains(out, test.cursor) {
 				t.Fatalf("%s cursor = (%d):\n%s", test.name, code, out)
 			}
 		})
 	}
 	for _, cursor := range []string{"v1." + hex + ".m.0.999", "v1." + hex + ".s.99.0", "v1." + hex + ".s.1.999"} {
-		out, code := Command([]string{"evidence", identity, "--cursor", cursor})
+		out, code := preflight.Command([]string{"evidence", identity, "--cursor", cursor})
 		if code != 1 || !strings.Contains(out, "invalid-cursor") {
 			t.Fatalf("out-of-range cursor %s = (%d):\n%s", cursor, code, out)
 		}

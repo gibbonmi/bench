@@ -1,4 +1,4 @@
-package preflight
+package evidencecmd
 
 import (
 	"errors"
@@ -30,10 +30,29 @@ func evidenceStore(root string) (*chargeevidence.Store, string) {
 	return chargeevidence.OpenStore(common, chargeevidence.StoreOptions{Pause: chargeevidence.PauseFromEnvironment()}), ""
 }
 
-// prepareEvidenceCommand prepares one immutable build evidence artifact. Every attempt of
-// the movement-checked retry stages its own verified temporary pack; only the unmoved final
-// attempt publishes, and every other staged candidate is discarded.
-func prepareEvidenceCommand(root, slug, base, sourceTip, name string, quota uint64, args []string) (string, int) {
+// Admit validates op's evidence operands before any repository access: the quota operand,
+// then a read's identifier and cursor. It returns the selected quota, or the usage line.
+func Admit(op Operation, identity string, flags map[string]string) (uint64, string) {
+	quota := uint64(chargeevidence.DefaultQuota)
+	if text, ok := flags[flagQuota]; ok {
+		value, valid := chargeevidence.ParseDecimal(text)
+		if !valid || value == 0 {
+			return 0, toon.Usage(Grammar.Cmd, flagQuota+" needs a positive decimal byte count within the unsigned 64-bit range")
+		}
+		quota = value
+	}
+	if op.Kind == KindReadEvidence {
+		return quota, operandRefusal(identity, flags[flagCursor])
+	}
+	return quota, ""
+}
+
+// Prepare publishes one immutable build evidence artifact. run executes the
+// movement-checked preparation attempts. Each attempt that reaches its build passes stage
+// its validated pack and assignment, or its refusal. stage discards the previous attempt's
+// candidate and stages this one's verified temporary pack; only the unmoved final attempt
+// publishes, and every other staged candidate is discarded.
+func Prepare(root string, quota uint64, run func(stage func(pack *chargeevidence.Pack, assignment, refusal string) string) (string, int)) (string, int) {
 	store, refusal := evidenceStore(root)
 	if refusal != "" {
 		return refusal, 1
@@ -44,20 +63,19 @@ func prepareEvidenceCommand(root, slug, base, sourceTip, name string, quota uint
 		assignment string
 		attempt    int
 	)
-	out, code := preparedAttempts(root, modeBuild, slug, base, sourceTip, "charge", args, func(facts Facts) (string, int) {
+	out, code := run(func(built *chargeevidence.Pack, target, refusal string) string {
 		attempt++
 		staged.Discard()
 		staged, pack = nil, nil
-		built, refusal := buildChargePack(root, facts, Decide(facts), name, buildSourcePolicy())
 		if refusal != "" {
-			return refusal, 1
+			return refusal
 		}
 		candidate, err := store.Stage(built, quota, attempt)
 		if err != nil {
-			return storeRefusal(err), 1
+			return storeRefusal(err)
 		}
-		staged, pack, assignment = candidate, built, facts.AssignmentTarget
-		return "", 0
+		staged, pack, assignment = candidate, built, target
+		return ""
 	})
 	if code != 0 {
 		staged.Discard()
@@ -81,24 +99,24 @@ func prepareEvidenceCommand(root, slug, base, sourceTip, name string, quota uint
 	return text, 0
 }
 
-// evidenceOperandRefusal validates the read operands before any path use. A refusal names
-// a hostile operand only by length and digest.
-func evidenceOperandRefusal(identity, cursor string) string {
+// operandRefusal validates the read operands before any path use. A refusal names a
+// hostile operand only by length and digest.
+func operandRefusal(identity, cursor string) string {
 	if !chargeevidence.ValidIdentity(identity) {
-		return toon.Usage(grammar.Cmd, boundedOperand("invalid evidence identifier", identity))
+		return toon.Usage(Grammar.Cmd, boundedOperand("invalid evidence identifier", identity))
 	}
 	if cursor == "" {
 		return ""
 	}
 	if _, err := chargeevidence.ParseCursor(cursor, identity); err != nil {
-		return toon.Usage(grammar.Cmd, boundedOperand("invalid cursor", cursor)+" "+refusalClass(err))
+		return toon.Usage(Grammar.Cmd, boundedOperand("invalid cursor", cursor)+" "+refusalClass(err))
 	}
 	return ""
 }
 
-// readEvidenceCommand prints one bounded fragment of the default evidence stream. It keeps
-// no reading state: the cursor alone names the position.
-func readEvidenceCommand(root, identity, cursorText string) (string, int) {
+// Read prints one bounded fragment of the default evidence stream at the position the
+// cursor flag names. It keeps no reading state: the cursor alone names the position.
+func Read(root, identity string, flags map[string]string) (string, int) {
 	store, refusal := evidenceStore(root)
 	if refusal != "" {
 		return refusal, 1
@@ -109,7 +127,7 @@ func readEvidenceCommand(root, identity, cursorText string) (string, int) {
 	}
 	defer artifact.Close()
 	cursor := artifact.First()
-	if cursorText != "" {
+	if cursorText := flags[flagCursor]; cursorText != "" {
 		if cursor, err = chargeevidence.ParseCursor(cursorText, identity); err != nil {
 			return storeRefusal(err), 1
 		}

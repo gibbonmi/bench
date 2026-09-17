@@ -1,17 +1,18 @@
 package preflight
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
+
+const modeBuild = evidencecmd.ModeBuild
 
 // Command is the legacy adapter for `bench preflight review <slug>` and `bench
 // preflight build <slug>`. It is the CLI-contract seam. Grammar and usage errors ride
@@ -29,40 +30,31 @@ func CommandWithVersion(version string) func([]string) (string, int) {
 }
 
 func command(version string, args []string) (string, int) {
-	if line := oversizedOperand(args); line != "" {
-		return boundResponse(line+"\n", 2)
+	if line := evidencecmd.OversizedOperand(args); line != "" {
+		return evidencecmd.Bound(line+"\n", 2)
 	}
-	parsed, line, code := usage.Parse(grammar, args)
+	parsed, line, code := usage.Parse(evidencecmd.Grammar, args)
 	if line != "" {
-		return boundResponse(line+"\n", code)
+		return evidencecmd.Bound(line+"\n", code)
 	}
 	mode, slug := parsed.Positionals[0], parsed.Positionals[1]
-	op, line := selectOperation(mode, parsed.Flags)
+	op, line := evidencecmd.Select(mode, parsed.Flags)
 	if line != "" {
-		return boundResponse(line+"\n", 2)
+		return evidencecmd.Bound(line+"\n", 2)
 	}
 	out, code := dispatch(version, op, slug, parsed.Flags, args)
-	if op.bounded {
-		return boundResponse(out, code)
+	if op.Bounded {
+		return evidencecmd.Bound(out, code)
 	}
 	return out, code
 }
 
-func dispatch(version string, op operation, slug string, flags map[string]string, args []string) (string, int) {
-	base, sourceTip, ticket := flags[flagBase], flags[flagTip], flags[flagTicket]
-	_, full := flags[flagFull]
-	quota := uint64(chargeevidence.DefaultQuota)
-	if text, ok := flags[flagQuota]; ok {
-		value, valid := chargeevidence.ParseDecimal(text)
-		if !valid || value == 0 {
-			return toon.Usage(grammar.Cmd, flagQuota+" needs a positive decimal byte count within the unsigned 64-bit range") + "\n", 2
-		}
-		quota = value
-	}
-	if op.kind == opReadEvidence {
-		if line := evidenceOperandRefusal(slug, flags[flagCursor]); line != "" {
-			return line + "\n", 2
-		}
+func dispatch(version string, op evidencecmd.Operation, slug string, flags map[string]string, args []string) (string, int) {
+	base, sourceTip, ticket := flags[evidencecmd.FlagBase], flags[evidencecmd.FlagTip], flags[evidencecmd.FlagTicket]
+	_, full := flags[evidencecmd.FlagFull]
+	quota, line := evidencecmd.Admit(op, slug, flags)
+	if line != "" {
+		return line + "\n", 2
 	}
 	root, err := git.Root()
 	if err != nil {
@@ -71,17 +63,31 @@ func dispatch(version string, op operation, slug string, flags map[string]string
 	if err := unrepresentableCell("--source-tip", sourceTip); err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
-	switch op.kind {
-	case opLegacyCharge:
-		return chargeCommand(root, op.mode, slug, base, sourceTip, ticket, full, version, args)
-	case opProposal:
-		return proposeWritesCommand(root, op.mode, slug, base, sourceTip, ticket, args)
-	case opPrepareEvidence:
+	switch op.Kind {
+	case evidencecmd.KindLegacyCharge:
+		return chargeCommand(root, op.Mode, slug, base, sourceTip, ticket, full, version, args)
+	case evidencecmd.KindProposal:
+		return proposeWritesCommand(root, op.Mode, slug, base, sourceTip, ticket, args)
+	case evidencecmd.KindPrepareEvidence:
 		return prepareEvidenceCommand(root, slug, base, sourceTip, ticket, quota, args)
-	case opReadEvidence:
-		return readEvidenceCommand(root, slug, flags[flagCursor])
+	case evidencecmd.KindReadEvidence:
+		return evidencecmd.Read(root, slug, flags)
 	}
-	return verdictCommand(root, op.mode, slug, base, sourceTip, args)
+	return verdictCommand(root, op.Mode, slug, base, sourceTip, args)
+}
+
+// prepareEvidenceCommand runs the movement-checked build preparation and hands each
+// attempt's validated pack, or its refusal, to the evidence publisher.
+func prepareEvidenceCommand(root, slug, base, sourceTip, name string, quota uint64, args []string) (string, int) {
+	return evidencecmd.Prepare(root, quota, func(stage func(*chargeevidence.Pack, string, string) string) (string, int) {
+		return preparedAttempts(root, modeBuild, slug, base, sourceTip, "charge", args, func(facts Facts) (string, int) {
+			pack, refusal := buildChargePack(root, facts, Decide(facts), name, buildSourcePolicy())
+			if refusal = stage(pack, facts.AssignmentTarget, refusal); refusal != "" {
+				return refusal, 1
+			}
+			return "", 0
+		})
+	})
 }
 
 func verdictCommand(root, mode, slug, base, sourceTip string, args []string) (string, int) {
@@ -123,35 +129,6 @@ func verdictCommand(root, mode, slug, base, sourceTip string, args []string) (st
 		exit = 1
 	}
 	return b.String(), exit
-}
-
-// maxOperandBytes bounds every preflight operand before the parser can echo it. Every valid
-// selector, pin, identifier, cursor, and quota is far shorter.
-const maxOperandBytes = 1024
-
-// oversizedOperand refuses an operand too long to echo, naming it only by length and digest.
-func oversizedOperand(args []string) string {
-	for _, arg := range args {
-		if len(arg) > maxOperandBytes {
-			return toon.Usage(grammar.Cmd, boundedOperand("oversized operand", arg))
-		}
-	}
-	return ""
-}
-
-// boundedOperand identifies a hostile operand by type, length, and digest, never by value.
-func boundedOperand(kind, value string) string {
-	sum := sha256.Sum256([]byte(value))
-	return fmt.Sprintf("%s bytes=%d sha256=%s", kind, len(value), hex.EncodeToString(sum[:]))
-}
-
-// boundResponse is the shared final guard for bounded forms and every usage line: a response
-// above chargeevidence.ResponseLimit encoded bytes becomes one bounded operational refusal.
-func boundResponse(out string, code int) (string, int) {
-	if len(out) <= chargeevidence.ResponseLimit {
-		return out, code
-	}
-	return toon.Errorf("response bound exceeded", fmt.Sprintf("the response held %d bytes above the %d-byte limit; report this defect", len(out), chargeevidence.ResponseLimit)) + "\n", 1
 }
 
 func snapshotDriftRefusal(args []string, hint string) string {

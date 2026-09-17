@@ -11,7 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/poolkey"
-	"github.com/gibbonmi/bench/internal/preflight"
+	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/repairpilot"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
@@ -84,7 +84,7 @@ var internalInventory = commandInventory{Visibility: inventoryInternal}
 // order, so root help and preflight help advertise the same implemented forms.
 func preflightHelpRows(order int) []helpRow {
 	var rows []helpRow
-	for _, row := range preflight.HelpRows() {
+	for _, row := range evidencecmd.HelpRows() {
 		rows = append(rows, helpRow{Order: order, Suffix: row.Suffix, Description: row.Description})
 	}
 	return rows

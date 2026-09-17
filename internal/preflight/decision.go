@@ -155,8 +155,6 @@ const (
 	verdictGreen = "green"
 	verdictRed   = "red"
 	verdictNA    = "not-applicable"
-
-	modeBuild = "build"
 )
 
 // Verdict is Decide's complete answer: the check rows, in fixed order, and

@@ -1,4 +1,4 @@
-package preflight
+package evidencecmd_test
 
 import (
 	"crypto/sha256"
@@ -13,6 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
@@ -28,7 +29,7 @@ func sha(data string) string {
 // prepareEvidence runs the build preparation and returns its identity and decoded row.
 func prepareEvidence(t *testing.T, args []string) (string, map[string]any, string) {
 	t.Helper()
-	out, code := Command(args)
+	out, code := preflight.Command(args)
 	if code != 0 {
 		t.Fatalf("prepare = (%d):\n%s", code, out)
 	}
@@ -51,7 +52,7 @@ func traverseEvidence(t *testing.T, identity string) []evidencePage {
 	args := []string{"evidence", identity}
 	var pages []evidencePage
 	for len(pages) < 10000 {
-		out, code := Command(args)
+		out, code := preflight.Command(args)
 		if code != 0 {
 			t.Fatalf("read %v = (%d):\n%s", args, code, out)
 		}
@@ -263,7 +264,7 @@ func TestEvidenceMovementPublication(t *testing.T) {
 				preflighttest.RunGit(t, "update-index", "--refresh")
 			}
 		})
-		out, code := Command(args)
+		out, code := preflight.Command(args)
 		restore()
 		if code != 0 || calls != 2 || len(preflighttest.PublishedPacks(t, root)) != 1 || len(preflighttest.StagedTemps(t, root)) != 0 {
 			t.Fatalf("one movement = (%d, %d, %v):\n%s", code, calls, preflighttest.PublishedPacks(t, root), out)
@@ -277,7 +278,7 @@ func TestEvidenceMovementPublication(t *testing.T) {
 			calls++
 			preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n// moved "+string(rune('0'+calls))+"\n")
 		})
-		out, code := Command(args)
+		out, code := preflight.Command(args)
 		restore()
 		if code != 1 || calls != 2 || !strings.Contains(out, "snapshot drift") || len(preflighttest.PublishedPacks(t, root)) != 0 || len(preflighttest.StagedTemps(t, root)) != 0 {
 			t.Fatalf("two movements = (%d, %d, %v):\n%s", code, calls, preflighttest.PublishedPacks(t, root), out)

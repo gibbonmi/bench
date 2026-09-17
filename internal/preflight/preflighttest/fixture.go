@@ -20,6 +20,10 @@ import (
 	toonlib "github.com/toon-format/toon-go"
 )
 
+// ResponseBudget is the encoded stdout bound every bounded preflight response obeys. Tests
+// state it independently of chargeevidence.ResponseLimit, so a changed limit turns them red.
+const ResponseBudget = 48000
+
 // ChargeFixtureAssignment is the assignment ID OwnedAssignment registers.
 const ChargeFixtureAssignment = "00000000000000000000000000000001"
 

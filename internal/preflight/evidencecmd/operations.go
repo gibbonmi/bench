@@ -1,4 +1,8 @@
-package preflight
+// Package evidencecmd owns the public preflight operation registry and the bounded charge
+// evidence commands: build evidence publication, stateless evidence reads, and the shared
+// response bound. Package preflight dispatches through it and supplies the preparation
+// attempts; this package does not import package preflight.
+package evidencecmd
 
 import (
 	"sort"
@@ -8,74 +12,79 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
+// Kind names the handler one registered operation dispatches to.
+type Kind int
+
 // Operation kinds. Each registered operation dispatches to exactly one kind.
 const (
-	opVerdict = iota
-	opLegacyCharge
-	opProposal
-	opPrepareEvidence
-	opReadEvidence
+	KindVerdict Kind = iota
+	KindLegacyCharge
+	KindProposal
+	KindPrepareEvidence
+	KindReadEvidence
 )
 
-// Flag spellings the operations share.
+// Flag spellings and modes the operations share.
 const (
-	flagBase     = "--base"
-	flagTip      = "--source-tip"
+	FlagBase     = "--base"
+	FlagTip      = "--source-tip"
 	flagCharge   = "--charge"
 	flagPropose  = "--propose-writes"
-	flagTicket   = "--ticket"
-	flagFull     = "--full"
+	FlagTicket   = "--ticket"
+	FlagFull     = "--full"
 	flagQuota    = "--max-store-bytes"
 	flagCursor   = "--cursor"
 	modeReview   = "review"
+	ModeBuild    = "build"
 	modeEvidence = "evidence"
 )
 
-// operation is one implemented public preflight form. The registry below is the one source
+// Operation is one implemented public preflight form. The registry below is the one source
 // for the argument grammar, the preflight help, and the root help rows.
-type operation struct {
-	mode string
+type Operation struct {
+	Mode string
 	// selectors are the switch flags that choose this form; required and optional list
 	// every other flag the form accepts.
 	selectors, required, optional []string
 	usage, description            string
-	kind                          int
-	// bounded forms obey the shared response bound for every response they produce.
-	bounded bool
+	Kind                          Kind
+	// Bounded forms obey the shared response bound for every response they produce.
+	Bounded bool
 }
 
-var operations = []operation{
-	{mode: modeReview, optional: []string{flagBase, flagTip}, kind: opVerdict,
+var operations = []Operation{
+	{Mode: modeReview, optional: []string{FlagBase, FlagTip}, Kind: KindVerdict,
 		usage: "review <slug> [--base <commit>] [--source-tip <commit>]", description: "review-entry checks that a spec's artifacts agree with the tree, one verdict row per check"},
-	{mode: modeReview, selectors: []string{flagCharge}, required: []string{flagBase, flagTip}, kind: opLegacyCharge,
+	{Mode: modeReview, selectors: []string{flagCharge}, required: []string{FlagBase, FlagTip}, Kind: KindLegacyCharge,
 		usage: "review <slug> --charge --base <commit> --source-tip <commit>", description: "legacy review charge that names every omitted source"},
-	{mode: modeReview, selectors: []string{flagCharge, flagFull}, required: []string{flagBase, flagTip}, kind: opLegacyCharge,
+	{Mode: modeReview, selectors: []string{flagCharge, FlagFull}, required: []string{FlagBase, FlagTip}, Kind: KindLegacyCharge,
 		usage: "review <slug> --charge --base <commit> --source-tip <commit> --full", description: "legacy review charge that inlines every source"},
-	{mode: modeBuild, optional: []string{flagBase, flagTip}, kind: opVerdict,
+	{Mode: ModeBuild, optional: []string{FlagBase, FlagTip}, Kind: KindVerdict,
 		usage: "build <slug> [--base <commit>] [--source-tip <commit>]", description: "build-entry checks that a spec's artifacts agree with the tree, one verdict row per check"},
-	{mode: modeBuild, selectors: []string{flagCharge}, required: []string{flagTicket, flagBase, flagTip}, optional: []string{flagQuota}, kind: opPrepareEvidence, bounded: true,
+	{Mode: ModeBuild, selectors: []string{flagCharge}, required: []string{FlagTicket, FlagBase, FlagTip}, optional: []string{flagQuota}, Kind: KindPrepareEvidence, Bounded: true,
 		usage: "build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]", description: "prepare one immutable build evidence artifact and print its bounded orientation"},
-	{mode: modeBuild, selectors: []string{flagCharge, flagFull}, required: []string{flagTicket, flagBase, flagTip}, kind: opLegacyCharge,
+	{Mode: ModeBuild, selectors: []string{flagCharge, FlagFull}, required: []string{FlagTicket, FlagBase, FlagTip}, Kind: KindLegacyCharge,
 		usage: "build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> --full", description: "legacy build charge that inlines every source"},
-	{mode: modeBuild, selectors: []string{flagPropose}, required: []string{flagTicket, flagBase, flagTip}, kind: opProposal,
+	{Mode: ModeBuild, selectors: []string{flagPropose}, required: []string{FlagTicket, FlagBase, FlagTip}, Kind: KindProposal,
 		usage: "build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>", description: "propose one ticket's Writes: entries from the pinned source"},
-	{mode: modeEvidence, optional: []string{flagCursor}, kind: opReadEvidence, bounded: true,
+	{Mode: modeEvidence, optional: []string{flagCursor}, Kind: KindReadEvidence, Bounded: true,
 		usage: "evidence <id> [--cursor <cursor>]", description: "print one bounded fragment of a prepared evidence artifact and its exact successor"},
 }
 
 // selectorFlags lists every switch flag in declaration order.
-var selectorFlags = []string{flagCharge, flagPropose, flagFull}
+var selectorFlags = []string{flagCharge, flagPropose, FlagFull}
 
-var grammar = usage.Grammar{
+// Grammar is the preflight argument grammar the operation registry accepts.
+var Grammar = usage.Grammar{
 	Cmd:  "bench preflight",
 	Help: operationUsage(),
 	Flags: []usage.Flag{
-		{Name: flagBase, HasValue: true, NoEmptyValue: true},
-		{Name: flagTip, HasValue: true, NoEmptyValue: true},
+		{Name: FlagBase, HasValue: true, NoEmptyValue: true},
+		{Name: FlagTip, HasValue: true, NoEmptyValue: true},
 		{Name: flagCharge},
 		{Name: flagPropose},
-		{Name: flagTicket, HasValue: true, NoEmptyValue: true},
-		{Name: flagFull},
+		{Name: FlagTicket, HasValue: true, NoEmptyValue: true},
+		{Name: FlagFull},
 		{Name: flagQuota, HasValue: true, NoEmptyValue: true},
 		{Name: flagCursor, HasValue: true, NoEmptyValue: true},
 	},
@@ -109,9 +118,9 @@ func HelpRows() []HelpRow {
 	return rows
 }
 
-// selectOperation returns the one registered form that accepts mode and the given flags, or
-// the usage line that explains why none does.
-func selectOperation(mode string, flags map[string]string) (operation, string) {
+// Select returns the one registered form that accepts mode and the given flags, or the
+// usage line that explains why none does.
+func Select(mode string, flags map[string]string) (Operation, string) {
 	present := func(name string) bool { _, ok := flags[name]; return ok }
 	var selectors []string
 	for _, name := range selectorFlags {
@@ -119,17 +128,17 @@ func selectOperation(mode string, flags map[string]string) (operation, string) {
 			selectors = append(selectors, name)
 		}
 	}
-	var sameMode, otherMode *operation
+	var sameMode, otherMode *Operation
 	modeKnown := false
 	for i := range operations {
 		op := &operations[i]
-		if op.mode == mode {
+		if op.Mode == mode {
 			modeKnown = true
 		}
 		if !sameSet(op.selectors, selectors) {
 			continue
 		}
-		if op.mode == mode {
+		if op.Mode == mode {
 			sameMode = op
 		} else if otherMode == nil {
 			otherMode = op
@@ -137,44 +146,44 @@ func selectOperation(mode string, flags map[string]string) (operation, string) {
 	}
 	switch {
 	case !modeKnown:
-		return operation{}, toon.Usage(grammar.Cmd, mode)
+		return Operation{}, toon.Usage(Grammar.Cmd, mode)
 	case sameMode != nil:
 		for _, name := range sameMode.required {
 			if !present(name) {
-				return operation{}, requirementLine(*sameMode)
+				return Operation{}, requirementLine(*sameMode)
 			}
 		}
 		allowed := append(append(append([]string{}, sameMode.selectors...), sameMode.required...), sameMode.optional...)
 		for _, name := range grammarFlagNames() {
 			if present(name) && !contains(allowed, name) {
-				return operation{}, toon.Usage(grammar.Cmd, name)
+				return Operation{}, toon.Usage(Grammar.Cmd, name)
 			}
 		}
 		return *sameMode, ""
 	case otherMode != nil:
-		return operation{}, requirementLine(*otherMode)
+		return Operation{}, requirementLine(*otherMode)
 	}
 	for _, op := range operations {
 		if subset(selectors, op.selectors) {
 			missing := without(op.selectors, selectors...)
-			return operation{}, toon.Usage(grammar.Cmd, strings.Join(selectors, " and ")+" requires "+strings.Join(missing, " and "))
+			return Operation{}, toon.Usage(Grammar.Cmd, strings.Join(selectors, " and ")+" requires "+strings.Join(missing, " and "))
 		}
 	}
-	return operation{}, toon.Usage(grammar.Cmd, strings.Join(selectors, " and ")+" cannot be combined")
+	return Operation{}, toon.Usage(Grammar.Cmd, strings.Join(selectors, " and ")+" cannot be combined")
 }
 
-func requirementLine(op operation) string {
-	needs := append([]string{op.mode}, op.required...)
+func requirementLine(op Operation) string {
+	needs := append([]string{op.Mode}, op.required...)
 	list := strings.Join(needs[:len(needs)-1], ", ") + ", and " + needs[len(needs)-1]
 	if len(needs) == 2 {
 		list = needs[0] + " and " + needs[1]
 	}
-	return toon.Usage(grammar.Cmd, strings.Join(op.selectors, " and ")+" requires "+list)
+	return toon.Usage(Grammar.Cmd, strings.Join(op.selectors, " and ")+" requires "+list)
 }
 
 func grammarFlagNames() []string {
-	names := make([]string, len(grammar.Flags))
-	for i, flag := range grammar.Flags {
+	names := make([]string, len(Grammar.Flags))
+	for i, flag := range Grammar.Flags {
 		names[i] = flag.Name
 	}
 	return names

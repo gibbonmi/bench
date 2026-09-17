@@ -1,4 +1,4 @@
-package preflight
+package evidencecmd_test
 
 import (
 	"os"
@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
@@ -16,7 +17,7 @@ func TestEvidenceQuotaOperands(t *testing.T) {
 		t.Run(quota, func(t *testing.T) {
 			root, slug := preflighttest.SeedConformant(t)
 			args := append(preflighttest.ChargeArgs(t, root, slug, false), "--max-store-bytes", quota)
-			out, code := Command(args)
+			out, code := preflight.Command(args)
 			if code != 2 || !strings.Contains(out, "--max-store-bytes needs a positive decimal byte count") {
 				t.Fatalf("quota %q = (%d):\n%s", quota, code, out)
 			}
@@ -33,7 +34,7 @@ var retryQuota = regexp.MustCompile(` — retry with --max-store-bytes ([0-9]+)\
 // its capacity refusal names.
 func capacityRequired(t *testing.T, args []string, quota string) uint64 {
 	t.Helper()
-	out, code := Command(append(append([]string{}, args...), "--max-store-bytes", quota))
+	out, code := preflight.Command(append(append([]string{}, args...), "--max-store-bytes", quota))
 	match := retryQuota.FindStringSubmatch(out)
 	if code != 1 || match == nil || !strings.HasPrefix(out, "error: evidence capacity: ") || strings.Count(out, "\n") != 1 {
 		t.Fatalf("capacity refusal under %s = (%d):\n%s", quota, code, out)
@@ -67,7 +68,7 @@ func TestEvidenceCapacityRecovery(t *testing.T) {
 	if got := preflighttest.PublishedPacks(t, root); strings.Join(got, ",") != strings.Join(first, ",") || len(got) != 1 {
 		t.Fatalf("capacity refusal changed the published artifacts: %v, want %v", got, first)
 	}
-	if out, code := Command([]string{"evidence", identity}); code != 0 || !strings.HasPrefix(out, "page[1]") {
+	if out, code := preflight.Command([]string{"evidence", identity}); code != 0 || !strings.HasPrefix(out, "page[1]") {
 		t.Fatalf("preserved artifact read = (%d):\n%s", code, out)
 	}
 	prepareEvidence(t, append(append([]string{}, second...), "--max-store-bytes", strconv.FormatUint(next, 10)))
