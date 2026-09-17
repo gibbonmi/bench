@@ -78,6 +78,9 @@ const (
 	ReservedHeaderValue = 0
 )
 
+// HeaderMarkerASCII is HeaderMarker's seven ASCII bytes, without the trailing NUL.
+var HeaderMarkerASCII = HeaderMarker[:7]
+
 // Named indexes into Header. The reader and the writer use these to derive their byte
 // ranges, so the registered layout has one source.
 const (
@@ -93,6 +96,11 @@ func HeaderRange(field int) (start, end int) {
 	return h.First, h.Last + 1
 }
 
+// HeaderLengthRange returns the half-open byte bounds of the header's manifest-length
+// field. A caller that reframes a pack around an edited manifest writes this field
+// instead of a literal byte range.
+func HeaderLengthRange() (start, end int) { return HeaderRange(headerLengthField) }
+
 // Source roles and kinds that the format itself defines. Preflight owns every canonical
 // and generated role name.
 const (
@@ -102,10 +110,17 @@ const (
 	KindDerived    = "derived"
 )
 
+// Charge access values for the metadata charge block. A build row writes within its
+// fence; a review row only reads.
+const (
+	AccessBuild  = "write-within-fence"
+	AccessReview = "read-only"
+)
+
 // Header is the registered physical header layout. Its field order matches
 // headerMarkerField through headerLengthField.
 var Header = []HeaderField{
-	{0, 7, "The seven ASCII bytes `BENCHEV`, then one NUL byte."},
+	{0, 7, fmt.Sprintf("The seven ASCII bytes `%s`, then one NUL byte.", HeaderMarkerASCII)},
 	{8, 11, fmt.Sprintf("Unsigned little-endian container version %d.", ContainerVersion)},
 	{12, 15, fmt.Sprintf("Reserved unsigned little-endian value %d.", ReservedHeaderValue)},
 	{16, 23, "Unsigned little-endian manifest byte length."},

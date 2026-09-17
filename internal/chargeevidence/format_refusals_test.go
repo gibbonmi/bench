@@ -11,6 +11,16 @@ import (
 	ce "github.com/gibbonmi/bench/internal/chargeevidence"
 )
 
+// reframe rebuilds a physical pack's header and body region around a replacement
+// manifest, given the complete prior pack bytes and the prior manifest's byte length.
+// It is the one header re-frame a test fixture uses to edit a manifest or a source body.
+func reframe(data []byte, oldManifestLen int, manifest string) []byte {
+	lengthStart, lengthEnd := ce.HeaderLengthRange()
+	header := bytes.Clone(data[:ce.HeaderBytes])
+	binary.LittleEndian.PutUint64(header[lengthStart:lengthEnd], uint64(len(manifest)))
+	return append(append(header, manifest...), data[ce.HeaderBytes+oldManifestLen:]...)
+}
+
 // repack rebuilds a physical pack around an edited manifest, with the original bodies.
 func repack(t *testing.T, pack *ce.Pack, edit func(string) string) ([]byte, string) {
 	t.Helper()
@@ -19,11 +29,7 @@ func repack(t *testing.T, pack *ce.Pack, edit func(string) string) ([]byte, stri
 	if manifest == string(old) {
 		t.Fatalf("manifest edit changed nothing")
 	}
-	data := pack.Bytes()
-	header := bytes.Clone(data[:24])
-	binary.LittleEndian.PutUint64(header[16:], uint64(len(manifest)))
-	out := append(append(header, manifest...), data[24+len(old):]...)
-	return out, "sha256:" + sum(manifest)
+	return reframe(pack.Bytes(), len(old), manifest), "sha256:" + sum(manifest)
 }
 
 // tamperSourceBody rebuilds a pack around one raw source body, replacing old with a new
@@ -45,10 +51,7 @@ func tamperSourceBody(t *testing.T, pack *ce.Pack, old, new string) ([]byte, str
 		t.Fatalf("body %q appears %d times in the pack, want once", old, count)
 	}
 	data = bytes.Replace(data, []byte(old), []byte(new), 1)
-	header := bytes.Clone(data[:24])
-	binary.LittleEndian.PutUint64(header[16:], uint64(len(manifest)))
-	out := append(append(header, manifest...), data[24+len(manifestOld):]...)
-	return out, "sha256:" + sum(manifest)
+	return reframe(data, len(manifestOld), manifest), "sha256:" + sum(manifest)
 }
 
 func assertRefusal(t *testing.T, data []byte, identity, class string) {

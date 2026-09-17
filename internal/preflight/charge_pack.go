@@ -38,8 +38,6 @@ func buildSourcePolicy() []buildSourceDescriptor {
 	}
 }
 
-const buildAccess = "write-within-fence"
-
 // loadBuildSources reads every policy source at the pinned tip, in policy order.
 func loadBuildSources(root string, facts Facts, selected *tickets.Entry, policy []buildSourceDescriptor) ([]chargeevidence.SourceInput, string) {
 	inputs := make([]chargeevidence.SourceInput, 0, len(policy))
@@ -71,7 +69,7 @@ func prepareBuildPack(root string, facts Facts, selected *tickets.Entry, parsed 
 	for i, descriptor := range policy {
 		id := chargeevidence.InputSourceID(i)
 		if descriptor.ticket {
-			metadata.Charge = append(metadata.Charge, chargeevidence.ChargeRow{Ticket: id, Access: buildAccess})
+			metadata.Charge = append(metadata.Charge, chargeevidence.ChargeRow{Ticket: id, Access: chargeevidence.AccessBuild})
 		}
 		if descriptor.checks {
 			metadata.Checks = append(metadata.Checks, id)

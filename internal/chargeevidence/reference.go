@@ -46,17 +46,17 @@ func FormatReference() string {
 	b.WriteString("A page index and an argument index both start at zero.\n")
 
 	b.WriteString("\n## Canonical string quoting\n\n")
-	b.WriteString("The shared TOON adapter owns spec-TOON cell escaping and quoting.\n")
-	b.WriteString("It quotes an empty string, a spec-TOON keyword string, and a numeric-looking string.\n")
-	b.WriteString("It also quotes a string needing an escape, then applies the spec-TOON escapes.\n")
+	b.WriteString("The pinned shared TOON encoder owns every string quoting and escaping rule.\n")
+	b.WriteString("`internal/toon/toon_test.go`'s `TestTableCellEscaping` pins its complete trigger inventory.\n")
+	b.WriteString("This reference does not restate a partial trigger list.\n")
 
 	b.WriteString("\n## Metadata source\n\n")
 	fmt.Fprintf(&b, "The first source has the role `%s`, the kind `%s`, and an empty path.\n", RoleMetadata, KindDerived)
 	fmt.Fprintf(&b, "Repository sources have the kind `%s`, and generated sources have the kind `%s`.\n", KindRepository, KindGenerated)
 	b.WriteString("The metadata body uses the same canonical table rules as the manifest.\n")
 	b.WriteString("Every source cell holds a manifest source identifier.\n")
-	b.WriteString("A build charge row uses access `write-within-fence` and names the selected ticket source in its ticket cell.\n")
-	b.WriteString("A review charge row uses access `read-only` and names the spec source in its ticket cell.\n\n")
+	fmt.Fprintf(&b, "A build charge row uses access `%s` and names the selected ticket source in its ticket cell.\n", AccessBuild)
+	fmt.Fprintf(&b, "A review charge row uses access `%s` and names the spec source in its ticket cell.\n\n", AccessReview)
 	writeBlocks(&b, "Table", MetadataBlocks)
 	return b.String()
 }

@@ -179,7 +179,7 @@ func Read(data []byte, expected string) (*Pack, error) {
 	}
 	markerStart, markerEnd := HeaderRange(headerMarkerField)
 	if string(data[markerStart:markerEnd]) != HeaderMarker {
-		return nil, refuse(RefuseMarker, "header marker is not BENCHEV")
+		return nil, refuse(RefuseMarker, "header marker is not %s", HeaderMarkerASCII)
 	}
 	versionStart, versionEnd := HeaderRange(headerVersionField)
 	if version := binary.LittleEndian.Uint32(data[versionStart:versionEnd]); version != ContainerVersion {

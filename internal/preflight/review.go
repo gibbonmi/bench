@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/consumers"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
@@ -164,7 +165,7 @@ func renderReviewPacket(
 	for _, axis := range reviewrecord.Axes() {
 		chargeRows = append(chargeRows, []string{
 			axis, facts.AssignmentTarget, root, facts.SourceBase, facts.SourceTip,
-			chargeFenceCell(facts.FenceEntries), sources.spec.handle(), "read-only", shared.handle(),
+			chargeFenceCell(facts.FenceEntries), sources.spec.handle(), chargeevidence.AccessReview, shared.handle(),
 			sources.reviewSkill.handle(),
 			sourceHandles(sources.reviewPhase, sources.delegateSkill, sources.delegateProcedure),
 		})

@@ -48,9 +48,9 @@ A page index and an argument index both start at zero.
 
 ## Canonical string quoting
 
-The shared TOON adapter owns spec-TOON cell escaping and quoting.
-It quotes an empty string, a spec-TOON keyword string, and a numeric-looking string.
-It also quotes a string needing an escape, then applies the spec-TOON escapes.
+The pinned shared TOON encoder owns every string quoting and escaping rule.
+`internal/toon/toon_test.go`'s `TestTableCellEscaping` pins its complete trigger inventory.
+This reference does not restate a partial trigger list.
 
 ## Metadata source
 

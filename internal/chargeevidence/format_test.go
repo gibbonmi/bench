@@ -93,8 +93,13 @@ func TestEvidenceIdentityInputs(t *testing.T) {
 	}
 }
 
+// TestEvidenceCanonicalProfile pins the exact canonical bytes. The mutated ticket role
+// and spec path add a comma-bearing and a colon-bearing string value, so the pinned
+// bytes also fix their quoted forms; internal/toon/toon_test.go owns the quoting rule
+// itself.
 func TestEvidenceCanonicalProfile(t *testing.T) {
 	const ticket, spec = "# One\n", "# Spec\n"
+	const role, path = "ticket, primary", "specs/example/spec.md:pinned"
 	metadata := "charge[1]{axis,ticket,access}:\n  \"\",s2,write-within-fence\n" +
 		"fence[1]{path}:\n  internal/example/\n" +
 		"writes[1]{path}:\n  internal/example\n" +
@@ -107,15 +112,18 @@ func TestEvidenceCanonicalProfile(t *testing.T) {
 		"selection[1]{mode,spec,ticket,base,source_tip}:\n  build,specs/example/spec.md,specs/example/tickets/one.md," + fixtureBase + "," + fixtureTip + "\n" +
 		"sources[3]{id,role,kind,path,required,bytes,sha256}:\n" +
 		fmt.Sprintf("  s1,metadata,derived,\"\",true,%d,%s\n", len(metadata), sum(metadata)) +
-		fmt.Sprintf("  s2,ticket,repository,specs/example/tickets/one.md,true,%d,%s\n", len(ticket), sum(ticket)) +
-		fmt.Sprintf("  s3,spec,repository,specs/example/spec.md,true,%d,%s\n", len(spec), sum(spec)) +
+		fmt.Sprintf("  s2,\"%s\",repository,specs/example/tickets/one.md,true,%d,%s\n", role, len(ticket), sum(ticket)) +
+		fmt.Sprintf("  s3,spec,repository,\"%s\",true,%d,%s\n", path, len(spec), sum(spec)) +
 		"pages[3]{source,index,offset,bytes,sha256}:\n" +
 		fmt.Sprintf("  s1,0,0,%d,%s\n", len(metadata), sum(metadata)) +
 		fmt.Sprintf("  s2,0,0,%d,%s\n", len(ticket), sum(ticket)) +
 		fmt.Sprintf("  s3,0,0,%d,%s\n", len(spec), sum(spec)) +
 		"producers[0]{source,name,version,cwd}:\n" +
 		"arguments[0]{source,index,value}:\n"
-	pack := mustBuild(t, fixtureCandidate(ticket))
+	candidate := fixtureCandidate(ticket)
+	candidate.Sources[0].Role = role
+	candidate.Sources[1].Path = path
+	pack := mustBuild(t, candidate)
 	if got := string(pack.ManifestBytes()); got != manifest {
 		t.Fatalf("manifest =\n%s\nwant\n%s", got, manifest)
 	}
