@@ -126,14 +126,18 @@ func renderChargePacket(packet chargePacket, full bool) (string, int) {
 	return b.String(), 0
 }
 
-// chargeFenceCell is the spec's declared ownership fence, the one fact the fence column
-// carries. It is deliberately not a source handle: the ticket and evidence columns
-// already carry handles, and a column that repeats one of them grades nothing.
+// chargeFenceCell is the spec's declared ownership fence, the one fact the review fence
+// column carries. It is deliberately not a source handle: the ticket and evidence
+// columns already carry handles, and a column that repeats one of them grades nothing.
 func chargeFenceCell(facts Facts) string {
 	return strings.Join(facts.FenceEntries, ", ")
 }
 
 func renderCharge(root string, facts Facts, verdict Verdict, name string, full bool) (string, int) {
+	return renderChargeWithPolicy(root, facts, verdict, name, full, buildSourcePolicy())
+}
+
+func renderChargeWithPolicy(root string, facts Facts, verdict Verdict, name string, full bool, policy []buildSourceDescriptor) (string, int) {
 	if refusal := preparationCheckoutRefusal(root, facts, "charge"); refusal != "" {
 		return refusal, 1
 	}
@@ -144,52 +148,14 @@ func renderCharge(root string, facts Facts, verdict Verdict, name string, full b
 	if detail != "" {
 		return chargeRefusal("ticket", detail, selectionNext), 1
 	}
-	sources, failure := chargeSources(root, facts.SourceTip, facts.SpecPath, selected)
+	pack, failure, err := prepareBuildPack(root, facts, selected, parsed, policy)
 	if failure != "" {
 		return chargeRefusal("source", failure, "restore the named canonical source and rerun the exact charge"), 1
 	}
-	coverage, err := toon.Table("coverage", []string{"row"}, rows(parsed.Covers))
 	if err != nil {
-		return toon.RenderError(err) + "\n", 1
+		return chargeRefusal("evidence", err.Error(), "repair the prepared evidence input and rerun the exact charge"), 1
 	}
-	return renderChargePacket(chargePacket{
-		fields: []string{"assignment", "checkout", "base", "source_tip", "fence", "ticket", "writes", "evidence", "checks", "return"},
-		rows: [][]string{{
-			facts.AssignmentTarget, root, facts.SourceBase, facts.SourceTip,
-			chargeFenceCell(facts), sources.ticket.handle(), strings.Join(parsed.Writes, ", "),
-			sourceHandles(sources.list()...),
-			sourceHandles(sources.ticket, sources.buildPhase),
-			sourceHandles(sources.delegateSkill, sources.delegateProcedure),
-		}},
-		middle:  []string{coverage},
-		sources: sources.list(),
-		next:    chargeInvocation(modeBuild, facts, name),
-	}, full)
-}
-
-// buildChargeSourceSet names each frozen build source. Every charge column reads a field
-// name, so a reorder of the load list below cannot silently reassign a column.
-type buildChargeSourceSet struct {
-	ticket, spec, delegateSkill, buildPhase, delegateProcedure chargeSource
-}
-
-func (set buildChargeSourceSet) list() []chargeSource {
-	return []chargeSource{set.ticket, set.spec, set.delegateSkill, set.buildPhase, set.delegateProcedure}
-}
-
-func chargeSources(root, sourceTip, specPath string, selected *tickets.Entry) (buildChargeSourceSet, string) {
-	var set buildChargeSourceSet
-	failure := loadChargeSources(root, sourceTip, []namedChargeSource{
-		{filepath.ToSlash(filepath.Join(filepath.Dir(specPath), "tickets", selected.Rel)), &set.ticket},
-		{specPath, &set.spec},
-		{delegateSkill, &set.delegateSkill},
-		{buildPhase, &set.buildPhase},
-		{delegateProcedure, &set.delegateProcedure},
-	})
-	if failure != "" {
-		return buildChargeSourceSet{}, failure
-	}
-	return set, ""
+	return renderLegacyBuildPacket(root, facts, pack, name, full)
 }
 
 // namedChargeSource binds one canonical path to the field that holds it. The binding is
@@ -201,16 +167,26 @@ type namedChargeSource struct {
 
 func loadChargeSources(root, sourceTip string, named []namedChargeSource) string {
 	for _, item := range named {
-		data, failure := readChargeSource(root, sourceTip, item.path)
+		data, failure := loadChargeSource(root, sourceTip, item.path)
 		if failure != "" {
 			return failure
-		}
-		if !toon.Representable(string(data)) {
-			return item.path + " contains a byte spec-TOON cannot represent"
 		}
 		*item.into = chargeSource{path: item.path, data: data}
 	}
 	return ""
+}
+
+// loadChargeSource reads one required source at the pinned tip and refuses bytes the
+// shared TOON adapter cannot represent.
+func loadChargeSource(root, sourceTip, path string) ([]byte, string) {
+	data, failure := readChargeSource(root, sourceTip, path)
+	if failure != "" {
+		return nil, failure
+	}
+	if !toon.Representable(string(data)) {
+		return nil, path + " contains a byte spec-TOON cannot represent"
+	}
+	return data, ""
 }
 
 func selectedTicket(entries []tickets.Entry, name string) *tickets.Entry {

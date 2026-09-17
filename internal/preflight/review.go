@@ -127,8 +127,8 @@ func renderReviewCharge(root string, facts Facts, verdict Verdict, full bool, ve
 	return renderReviewPacket(root, facts, sources, evidence, full)
 }
 
-// reviewChargeSourceSet names each frozen review source, for the reason
-// buildChargeSourceSet does: a column reads a field name, never a list position.
+// reviewChargeSourceSet names each frozen review source, so a column reads a field
+// name, never a list position.
 type reviewChargeSourceSet struct {
 	spec, reviewSkill, reviewPhase, delegateSkill, delegateProcedure chargeSource
 }
