@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+    "old": "- `verified` means the author ran the named check and returns its red-to-green\n  log, and `claimed` means an assertion with no executed check.\n",
+    "new": ""
+  }
+]
