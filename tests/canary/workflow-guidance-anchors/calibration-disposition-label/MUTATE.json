@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-review/references/finding-discipline.md",
+    "old": "- `auto-fix` and `ask-user` label a finding `held`, and `no-op` labels it `refuted`.\n  The reviewer's disposition is the label source.\n",
+    "new": ""
+  }
+]

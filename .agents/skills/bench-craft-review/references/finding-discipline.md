@@ -41,3 +41,12 @@ baseline, and the universal-claim rule.
 
 - An unreachable row seam amends the row's seam column. The build records the helper seam
   it adds as a decision, so the reviewer sees the new surface.
+
+## What a confidence states
+
+- A finding carries a stated confidence as an integer from 0 to 10.
+- The confidence never changes whether a finding blocks. The kind and the citation
+  decide the round.
+- `auto-fix` and `ask-user` label a finding `held`, and `no-op` labels it `refuted`.
+  The reviewer's disposition is the label source.
+- Optional advice carries no confidence.

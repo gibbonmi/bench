@@ -64,6 +64,70 @@ Each run reports no skip. The elapsed time is the package time the verb reports.
 | `go vet ./...` | pass | no output |
 | `bench gate-prose` on both edited files | pass | two pass rows |
 
+## CD2 ticket 2 author evidence
+
+The ticket adds one `What a confidence states` section to the finding discipline reference. It adds one second sentence to the review skill's pointer line and one sentence to the review-implementation pickup step. Six anchors and six omission canary fixtures grade the six sentences.
+
+### Scenario finding
+
+This row shows the finding shape the ticket describes. The label cell holds the scenario the ticket states, not a reviewer disposition on real work. The row does not count as a pair.
+
+| surface | claim | citation | status | confidence | disposition | label |
+| --- | --- | --- | --- | --- | --- | --- |
+| review finding | the behavior under the cited line is wrong | the diff line the axis read this pass | claimed | 3 | no-op | refuted |
+
+The finding blocks the round, because its kind and its citation decide. The confidence of 3 changes nothing about that block. The reviewer disposes the finding `no-op`, and the fixed mapping labels it `refuted`.
+
+### Done-claim table
+
+The author did not write a label cell. A label source writes it later.
+
+| row | status | confidence | label |
+| --- | --- | --- | --- |
+| CR4 | verified | 9 |  |
+| CR5 | verified | 9 |  |
+| CR6 | verified | 9 |  |
+| CR15 | verified | 9 |  |
+| CR16 | verified | 9 |  |
+| CR22 | verified | 9 |  |
+| CR23 | verified | 8 |  |
+| CR30 | verified | 9 |  |
+
+### Red-then-green log
+
+Each row below except CR16 and CR23 uses `bench probe` with the omission kind against `docs-currency-workflow`. The row for CR16 uses a line-growth swap against `guidance-prose-budgets`. The row for CR23 uses a diff of the package against the base commit. The verb records the green baseline, then the red under the mutation, then the proved restore.
+
+| row | red line under the mutation | green |
+| --- | --- | --- |
+| CR4 | `gate: calibration: a finding needs its stated confidence` | baseline passed, restored yes |
+| CR5 | `gate: calibration: the confidence must never change whether a finding blocks` | baseline passed, restored yes |
+| CR6 | `gate: calibration: the dispositions need their label mapping` | baseline passed, restored yes |
+| CR15 | `gate: calibration: the review skill must point at the finding confidence` | baseline passed, restored yes |
+| CR16 | `gate: prose-budget exceeded: .agents/skills/bench-craft-review/SKILL.md is 123 lines, over its 122-line budget` | baseline passed, restored yes |
+| CR22 | `gate: calibration: the pickup line must carry its stated confidence` | baseline passed, restored yes |
+| CR23 | no mutation: `git diff --stat <base> -- internal/reviewrecord` gives empty output | the package is byte-identical to the base |
+| CR30 | `gate: calibration: optional advice must carry no confidence` | baseline passed, restored yes |
+
+`TestEveryRetainedFixtureBitesThroughRegisteredOwner` proves each of the six new canaries bites through its registered owner. A control run with one wrong `EXPECT` byte made that fixture fail, which shows the run reads the new fixtures. The same run proves every earlier fixture keeps its planted diagnostic.
+
+### Probe verdict
+
+The self-probe omits the CR15 sentence from the review skill and runs `docs-currency-workflow`. The verdict line reads `bit`, and `restored` reads `yes`.
+
+### Verification table
+
+Each run reports no skip. The elapsed time is the package time the verb reports.
+
+| check | verdict | elapsed |
+| --- | --- | --- |
+| `bench test --check docs-currency-workflow` | pass | 1185 ms |
+| `bench test --check guidance-prose-budgets` | pass | 5 ms |
+| `bench test --package ./internal/anchors/... --run 'TestCalibration'` | pass | 29 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 11923 ms |
+| `go vet ./...` | pass | no output |
+| `git diff --stat <base> -- internal/reviewrecord` | empty | no output |
+| `bench gate-prose` on the three edited files and this pickup | pass | four pass rows |
+
 ## CD1 review
 
 The frozen pair is base `9148850200714f000eec2fbf44cddea6182f95c7` and tip `09f26779f65b7938f313cff9ec877fabe9d009f5`. The reviewer directed the review line. The first pass of every chunk review runs fable / medium. Every later pass on the same chunk runs sonnet / xhigh. Each axis ran in its own read-only worktree.
