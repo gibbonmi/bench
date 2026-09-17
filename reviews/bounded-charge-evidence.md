@@ -161,13 +161,76 @@ The coordinator ran the three chunk verifications at `3d993291`. Both focused su
 The extension writer probed the module constant and the removed sentence, and both probes failed the projection test.
 The coordinator's independent probe removed the version sentence from the generator, and the projection test failed.
 
+## CE-C1B: review round 1
+
+Frozen pair: base `88a981b9cf9952ccb59be918fe72cae3c73f16d3`, tip `1829a5c8641de6029801e87a3ca1fc9584600270`.
+The raw finding count is 16. The de-duplicated repair-target count is 15, including the reviewer-directed directory move.
+Repair cycles used: 0 of 2.
+
+### Reviewer decisions for this chunk
+
+- The root help check accepts one named preflight help projection, and the check moved into its own conformance test file. The plan expansions at `9e78a26b` and `1e7500b3` added both files to the fence and ticket 2.
+- The production hook `BENCH_EVIDENCE_PAUSE` is accepted, including its resume marker file.
+- CE-C1A advice ST9 was carried into ticket 2, and the Spec axis confirmed that the encoder test now reads the adapter import.
+- CE75 uses a pure admission function test with a candidate above the default quota.
+- The evidence command surface moves into its own subpackage under `internal/preflight` in this repair.
+
+### Standards
+
+Finding count: 7. Worst issue: ST1.
+
+- CE-C1B-ST1 (auto-fix): The independent test constants for the response budget, the store name, and the default quota have no recorded red. Probe each against its production owner and record the result.
+- CE-C1B-ST2 (auto-fix): A preflight test repeats the literal response budget beside the package test constant.
+- CE-C1B-ST3 (auto-fix): Each operation row states its flags in its lists and again in its usage string. Derive the usage text from the lists.
+- CE-C1B-ST4 (auto-fix): The selector flags, the grammar flags, and the operation flag sets restate one fact. Derive them from one source.
+- CE-C1B-ST5 (auto-fix): Three test packages restate the store directory name and the pack and temporary name parts. Use the exported owners.
+- CE-C1B-ST6 (auto-fix): Several comments narrate history, cite the spec as provenance, mislabel a constant block, or restate the cursor grammar.
+- CE-C1B-ST7 (auto-fix): `internal/preflight` holds 41 source files against a budget of 12. By reviewer decision, the evidence command surface moves into a subpackage.
+
+### Spec
+
+Finding count: 4. Worst issue: SP1.
+
+- CE-C1B-SP1 (auto-fix): The CE128 test refuses at repository resolution and never reaches source inspection. Make the missing tool fail inside source inspection, and prove that no artifact is published. Coverage CV3 names the same repair.
+- CE-C1B-SP2 (auto-fix): CE75 never admits an artifact above the default quota. Test the admission function directly with a large candidate. Coverage CV4 names the same repair.
+- CE-C1B-SP3 (auto-fix): The response budget rows do not fail when a guard call is removed from the command dispatch. Push an over-bound response through the command for each path.
+- CE-C1B-SP4 (auto-fix): CE94 had no durable pending record. This pickup now records it below.
+
+### Coverage
+
+Finding count: 4 after the merge. Worst issue: CV1.
+
+- CE-C1B-CV1 (auto-fix): A legitimate large preparation refusal becomes a generic response bound defect line and loses its check and recovery action. Bound the diagnostic operands so the refusal keeps its meaning.
+- CE-C1B-CV2 (auto-fix): An empty existing store refuses as `unsafe-store`, but the spec requires a missing-artifact refusal.
+- CE-C1B-CV5 (auto-fix): No test replaces the store directory between inspection and open. Add a registered in-process test port at that point.
+- CE-C1B-CV6 (auto-fix): No test covers the refusal for an unrepresentable required quota.
+
+### Advice
+
+- `BENCH_EVIDENCE_PAUSE` waits without a limit, and a stray value can overwrite an existing file through its resume marker.
+- `refusalClass` exists in two packages.
+- Add cursor cases for uppercase hex and the integer boundary.
+- The help check constrains only the projection name.
+- A symbolic link above the Git common directory is followed.
+- Spec lines 472 to 474 expect the compact differential to remain until its consumer migrates. The author replaced the compact route, and the Spec axis flagged this contradiction as non-behavioral.
+
+### Pending evidence
+
+- CE94: the device store-kind case skips on this host because the user cannot create a device node. The row stays pending until a privileged native run records it.
+
+### Author verification
+
+The coordinator ran the five chunk verifications at `1829a5c8`. All passed, and the plan probe failed 23 tests and restored the file.
+The ticket 2 author logged 29 probe runs and two manual system probes, each with a failing result and a verified restore.
+The coordinator's independent probe changed the required bytes in the capacity refusal, and the capacity recovery test failed.
+
 ## Record
 
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/bounded-charge-evidence/spec.md",
-  "plan_digest": "sha256:971cc327eafed497f8ad3ae83762bcaf4c1a30538971f90736c74ba6be2031d0",
+  "plan_digest": "sha256:ad140f7fc480da95134f328448ea09d840c4b3e49c8e1c5a76ef9518d56544f5",
   "implementation_session": "bounded-charge-evidence-retained-author",
   "chunks": [
     {
@@ -768,6 +831,252 @@ The coordinator's independent probe removed the version sentence from the genera
           ]
         }
       ]
+    },
+    {
+      "id": "CE-C1B",
+      "base": "88a981b9cf9952ccb59be918fe72cae3c73f16d3",
+      "tip": "1829a5c8641de6029801e87a3ca1fc9584600270",
+      "plan_digest": "sha256:ad140f7fc480da95134f328448ea09d840c4b3e49c8e1c5a76ef9518d56544f5",
+      "source_digest": "3284d0947b73d4492340feda5908eb7497a3a24e",
+      "acceptance_rows": [
+        "CE1",
+        "CE2",
+        "CE3",
+        "CE4",
+        "CE5",
+        "CE6",
+        "CE9",
+        "CE10",
+        "CE11",
+        "CE12",
+        "CE13",
+        "CE14",
+        "CE15",
+        "CE17",
+        "CE39",
+        "CE40",
+        "CE53",
+        "CE54",
+        "CE63",
+        "CE64",
+        "CE74",
+        "CE75",
+        "CE76",
+        "CE77",
+        "CE86",
+        "CE87",
+        "CE88",
+        "CE89",
+        "CE90",
+        "CE91",
+        "CE92",
+        "CE93",
+        "CE94",
+        "CE95",
+        "CE96",
+        "CE97",
+        "CE98",
+        "CE99",
+        "CE118",
+        "CE128",
+        "CE129",
+        "CE130",
+        "CE131",
+        "CE132",
+        "CE138",
+        "CE139",
+        "CE150",
+        "CE151",
+        "CE152",
+        "CE153",
+        "CE154",
+        "CE155",
+        "CE156",
+        "CE157"
+      ],
+      "verification": [
+        {
+          "id": "ce-c1b-v1-preflight",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3284d0947b73d4492340feda5908eb7497a3a24e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:892af95fb638aefbc880ce96a8b9dcb022600b0d3b75c72944c46abc8aec12c8",
+            "excerpt": "bench test --package ./internal/preflight at 1829a5c8: pass, 22754 ms"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1b-v1-store",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3284d0947b73d4492340feda5908eb7497a3a24e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:d0026688d4f8d20b25aa1aaea5f7aaee2b66acca9b5ab047f6cb55d8fdf0a705",
+            "excerpt": "bench test --package ./internal/chargeevidence at 1829a5c8: pass, 88 ms; CE94 device case skipped for the privilege capability"
+          },
+          "requirement": "store",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1b-v1-inventory",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3284d0947b73d4492340feda5908eb7497a3a24e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:5de083c4cce3f78d7886d5b948c7413741756c1e1b8e62edda5a91b20709cd93",
+            "excerpt": "bench test --package ./cmd/bench at 1829a5c8: pass, 7468 ms"
+          },
+          "requirement": "inventory",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1b-v1-system",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3284d0947b73d4492340feda5908eb7497a3a24e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:928db49bfbace995498270b3306017a05def8ea61cb20a207f431a16943c5ad4",
+            "excerpt": "bench test --check system at 1829a5c8: pass, 34695 ms"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1b-v1-mutation",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3284d0947b73d4492340feda5908eb7497a3a24e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:892af95fb638aefbc880ce96a8b9dcb022600b0d3b75c72944c46abc8aec12c8",
+            "excerpt": "bench test --package ./internal/preflight at 1829a5c8: pass, 22754 ms"
+          },
+          "requirement": "mutation",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit manifest_bytes from the prepared response",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:coordinator-run",
+              "digest": "sha256:699570ea129787a043e2f0f3dd70916e445978a5aa180d50e6eded9ecc7326ac",
+              "excerpt": "bench probe internal/chargeevidence/schema.go --omit 'num(\"manifest_bytes\"),' --package ./internal/preflight at 1829a5c8: verdict bit, 23 failed tests, restored=yes"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "ce-c1b-r1-standards",
+          "performer": "claude-review-ce-c1b-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3284d0947b73d4492340feda5908eb7497a3a24e",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1b-standards",
+            "digest": "sha256:cd36ed763ad0c19add1ce656a67df35d1446cf7a392b3adcc90c732d6af958e5",
+            "excerpt": "Standards CE-C1B: 6 findings plus a crowded preflight directory. Worst: independent test constants for the response budget, store name, and default quota have no recorded red (ST1)."
+          },
+          "axis": "Standards",
+          "base": "88a981b9cf9952ccb59be918fe72cae3c73f16d3",
+          "tip": "1829a5c8641de6029801e87a3ca1fc9584600270",
+          "finding_ids": [
+            "CE-C1B-ST1",
+            "CE-C1B-ST2",
+            "CE-C1B-ST3",
+            "CE-C1B-ST4",
+            "CE-C1B-ST5",
+            "CE-C1B-ST6",
+            "CE-C1B-ST7"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ce-c1b-r1-spec",
+          "performer": "claude-review-ce-c1b-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3284d0947b73d4492340feda5908eb7497a3a24e",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1b-spec",
+            "digest": "sha256:860243751d44c9a1c798dc1e3164bf9abaf0b49aa325b7001532284aef795aee",
+            "excerpt": "Spec CE-C1B: 4 findings. Worst: the CE128 test refuses at repository resolution and never reaches preparation (SP1). CE75 lacks an above-quota artifact (SP2); budget rows miss a removed guard call (SP3); CE94 lacks a pending record (SP4)."
+          },
+          "axis": "Spec",
+          "base": "88a981b9cf9952ccb59be918fe72cae3c73f16d3",
+          "tip": "1829a5c8641de6029801e87a3ca1fc9584600270",
+          "finding_ids": [
+            "CE-C1B-SP1",
+            "CE-C1B-SP2",
+            "CE-C1B-SP3",
+            "CE-C1B-SP4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ce-c1b-r1-coverage",
+          "performer": "claude-review-ce-c1b-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3284d0947b73d4492340feda5908eb7497a3a24e",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1b-coverage",
+            "digest": "sha256:02f648906be7541972d6978944e884f439093fe3a100d8e399cad4a9639d2867",
+            "excerpt": "Coverage CE-C1B: 6 findings (2 merged into SP1 and SP2). Worst: a large preparation refusal becomes a generic response-bound defect line (CV1). An empty store refuses as unsafe (CV2); the store replacement check is untested (CV5); the unrepresentable-quota refusal is untested (CV6)."
+          },
+          "axis": "Coverage",
+          "base": "88a981b9cf9952ccb59be918fe72cae3c73f16d3",
+          "tip": "1829a5c8641de6029801e87a3ca1fc9584600270",
+          "finding_ids": [
+            "CE-C1B-CV1",
+            "CE-C1B-CV2",
+            "CE-C1B-CV5",
+            "CE-C1B-CV6"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -776,6 +1085,35 @@ The coordinator's independent probe removed the version sentence from the genera
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:971cc327eafed497f8ad3ae83762bcaf4c1a30538971f90736c74ba6be2031d0",
+      "to": "sha256:ad140f7fc480da95134f328448ea09d840c4b3e49c8e1c5a76ef9518d56544f5",
+      "chunk_ids": {
+        "CE-C1A": [
+          "CE-C1A"
+        ],
+        "CE-C1B": [
+          "CE-C1B"
+        ],
+        "CE-C1C": [
+          "CE-C1C"
+        ],
+        "CE-C1D": [
+          "CE-C1D"
+        ],
+        "CE-C2": [
+          "CE-C2"
+        ],
+        "CE-C3": [
+          "CE-C3"
+        ],
+        "CE-C4": [
+          "CE-C4"
+        ]
+      }
+    }
+  ]
 }
 ```
