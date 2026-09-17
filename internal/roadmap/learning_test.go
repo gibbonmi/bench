@@ -61,7 +61,7 @@ func TestLearningRefusesAnOverBoundSentenceAndWritesNothing(t *testing.T) {
 		wantWrites bool
 	}{
 		{"25 words writes", 25, 0, true},
-		{"26 words refuses", 26, 2, false},
+		{"26 words refuses", 26, 1, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newProseGradedRepo(t)
@@ -77,8 +77,12 @@ func TestLearningRefusesAnOverBoundSentenceAndWritesNothing(t *testing.T) {
 			if tc.wantWrites {
 				return
 			}
-			if !strings.HasPrefix(out, learningGrammar.Help+"\n") {
-				t.Fatalf("out = %q, want it to start with the usage line", out)
+			// A prose refusal is a content error: exit 1 above, and no usage line here.
+			if strings.Contains(out, learningGrammar.Help) {
+				t.Fatalf("out = %q, want no usage line on a prose refusal", out)
+			}
+			if !strings.HasPrefix(out, "refused --what: ") {
+				t.Fatalf("out = %q, want it to lead with the refused --what flag", out)
 			}
 			if !strings.Contains(out, fmt.Sprintf("sentence of %d words is over the 25-word bound", tc.wantTotal)) {
 				t.Fatalf("out = %q, want the grader's own sentence diagnostic", out)
@@ -93,11 +97,11 @@ func TestLearningRefusesAnOverBoundSentenceAndWritesNothing(t *testing.T) {
 func TestLearningRefusalNamesTheOffendingEntryLine(t *testing.T) {
 	root := newProseGradedRepo(t)
 	out, code := LearningCommand([]string{"a", "title", "--what", "it happened", "--right", words(26)})
-	if code != 2 {
-		t.Fatalf("code = %d, want 2\n%s", code, out)
+	if code != 1 {
+		t.Fatalf("code = %d, want 1\n%s", code, out)
 	}
-	if !strings.Contains(out, "line 3") {
-		t.Fatalf("out = %q, want it to name line 3, the --right bullet", out)
+	if !strings.Contains(out, "line 3") || !strings.HasPrefix(out, "refused --right: ") {
+		t.Fatalf("out = %q, want it to name line 3 and the --right flag", out)
 	}
 	if _, err := os.Stat(journalPath(t, root)); err == nil {
 		t.Fatal("journal should not have been created on refusal")
