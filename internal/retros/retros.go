@@ -31,7 +31,8 @@ const (
 )
 
 // CalibrationHeader is the calibration table's header row. It is named here, beside the
-// heading that owns the table, so the renderer holds no second spelling of the six cells.
+// heading that owns the table, so the renderer spells no cell of its own and counts the
+// table's columns from this row.
 const CalibrationHeader = "| surface | claim | status | confidence | label | model / effort / role |"
 
 var requiredHeadings = []string{
