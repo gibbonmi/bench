@@ -17,6 +17,9 @@ import (
 // a rune's byte length cannot shift the reported line. A forbid kind is located
 // the same way as a require kind: a non-zero line locates the violation, the
 // presence of the forbidden needle.
+//
+// This entry point passes step 0, which no line opens, so a step-scoped kind
+// answers 0 here. The evaluator locates such an anchor with the anchor's own step.
 func Locate(kind Kind, section, needle, data string) int {
 	return locate(kind, section, 0, needle, data)
 }
@@ -39,8 +42,6 @@ func locate(kind Kind, section string, step int, needle, data string) int {
 	if kind.stepScoped() {
 		body, bodyOrigin, count := stepRunesMapped(text, textOrigin, step)
 		// An absent step and a duplicated one refuse for the same reason a section does.
-		// The kind alone decides that this narrowing runs, so the locator and the evaluator
-		// cannot disagree about which anchors are step-scoped.
 		if count != 1 {
 			return 0
 		}

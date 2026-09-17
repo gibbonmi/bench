@@ -134,18 +134,46 @@ The ticket adds the `RequireInStep` anchor kind and a `Step` field on `Anchor`. 
 
 ### Done-claim table
 
-The author wrote no label cell. Each status is `verified`, because the author ran the named check and kept its log. The coordinator's probe on `stepScoped` was silent against the first diff. The kind now owns the step narrowing on both sides, and that probe bites.
+The author wrote no label cell. Each status is `verified`, because the author ran the named check and kept its log. The coordinator's probe on `stepScoped` was silent against the first diff. The kind now owns the step narrowing on both sides, and that probe bites. Repair cycle 1 closed four more silent mutations.
 
 | row | status | confidence | label |
 | --- | --- | --- | --- |
 | CR22 | verified | 9 |  |
-| CR38 | verified | 8 |  |
+| CR38 | verified | 9 |  |
+
+CR38 returns to 9. The step parser and the two scope boundaries each carry a biting test now. A reviewer reads the guarantee from the suite, and not from the code.
 
 ### One owner for the step narrowing
 
 The first diff decided the narrowing twice. The evaluator read `anchor.Step != 0`, and the locator read `kind.stepScoped()`. A section-scoped anchor with a step would then narrow in the evaluator and not in the locator.
 
 The kind is the one owner now. `resolveStep` raises its own diagnostic when a step-scoped anchor names no step. `TestRegistryBindsStepToItsKind` refuses a registry row whose kind and `Step` field disagree, so no such row reaches the evaluator.
+
+### Repair cycle 1
+
+Seven findings arrived together. Two name a production defect, and the tree refutes both. Four hold as test gaps or comment defects. One asks for a decision, and this section states it.
+
+CD2b-C2 says `stepOpener` trims leading space. The parser reads `line[0]` directly and never trims. An indented `6.` line therefore opens no step. CD2b-C3 says the parser reads one digit. The scan takes every leading digit, and `strconv.Atoi` reads them together, so `10.` reads as step 10.
+
+A scratch test at this tip printed `"   6. indented" -> (0, false)` and `"10. ten" -> (10, true)`. The author deleted that scratch file. Both findings are `no-op` on production. Each names a real test gap, because both mutations were silent. Both gaps carry a biting test now.
+
+CD2b-C1 says the step close boundary has no biting test. The registered opener leads in each moved tree now. A body that ran past the next opener would read the moved needle as its own. CD2b-C4 says the section open boundary has none. `TestMarkdownH2SectionExcludesItsHeading` grades the body and the heading's own line.
+
+CD2b-S1 asks for a decision on `Locate`. The exported signature stays as it is, and the doc comment states the step-0 case. The signature is read by `locate_test.go`, which sits outside this ticket's fence.
+
+CD2b-S2 and CD2b-S3 are comment repairs. The narrating comment reads timeless now. The step-scoping rationale sits once on `stepScoped` in `match.go`, and production names no test.
+
+| finding | fix | probe | verdict |
+| --- | --- | --- | --- |
+| CD2b-C2 | no production change; a harness case writes an indented numbered continuation inside the registered step | trim the line before the opener test | `bit,internal/anchors/match.go,swap,failed,1,yes` |
+| CD2b-C3 | no production change; `TestStepOpenerReadsEveryLeadingDigitAtColumnZero` grades `1.`, `10.`, `06.`, and four refusals | read one digit instead of every digit | `bit,internal/anchors/match.go,swap,failed,2,yes` |
+| CD2b-C1 | the extra opener leads the rules' own, and two moved cases join the table | the step `closes` test answers false | `bit,internal/anchors/locate.go,swap,failed,2,yes` |
+| CD2b-C4 | `TestMarkdownH2SectionExcludesItsHeading` grades the section's open boundary | the `keepOpener` branch never runs | `bit,internal/anchors/locate.go,swap,failed,1,yes` |
+| CD2b-S1 | the `Locate` doc states the step-0 answer; the signature stays | none | comment |
+| CD2b-S2 | the diagnostics-test comment reads timeless | none | comment |
+| CD2b-S3 | the rationale sits once on `stepScoped`; the two restatements and the test name are gone | none | comment |
+
+`06.` reads as step 6. A markdown reader sees `06.` and `6.` as the same step, and the doc comment on `stepOpener` states that rule.
 
 ### Red-then-green log
 
@@ -159,9 +187,13 @@ The re-pinned row reads `require-in-step,Process,6,Each actionable finding line 
 
 ### Probe verdict
 
-The self-probe swaps the step-digit test in `internal/anchors/locate.go` for a test that accepts any opener. The verdict line reads `bit,internal/anchors/locate.go,swap,failed,1,yes`, and the failed test is `TestAnchorHarnessStepRules/moved_to_another_step`.
+The self-probe swaps the step-digit test in `internal/anchors/locate.go` for a test that accepts any opener. The verdict line reads `bit,internal/anchors/locate.go,swap,failed,1,yes`, and the failed test is a moved case of `TestAnchorHarnessStepRules`.
 
 The coordinator's probe swaps the body of `stepScoped` in `internal/anchors/match.go` for `return false`. The verdict line reads `bit,internal/anchors/match.go,swap,failed,3,yes`. The failed tests are the moved, the no-such-step, and the duplicated-step cases of `TestAnchorHarnessStepRules`.
+
+Repair cycle 1 adds four probes. Each verdict line sits in the table above, and each came back `bit`.
+
+A later probe omits the period test from the opener. Digits and blank space then read as an opener, and two refusal rows hold that shape out. The verdict line reads `bit,internal/anchors/match.go,omit,failed,2,yes`.
 
 ### Verification table
 
@@ -169,15 +201,15 @@ Each run reports no skip. The elapsed time is the package time the verb reports.
 
 | check | verdict | elapsed |
 | --- | --- | --- |
-| `bench test --package ./internal/anchors/...` | pass | 521 ms |
-| `bench test --package ./cmd/bench/... --run TestAnchors` | pass | 147 ms |
-| `bench test --check docs-currency-workflow` | pass | 1047 ms |
-| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 12568 ms |
+| `bench test --package ./internal/anchors/...` | pass | 407 ms |
+| `bench test --package ./cmd/bench/... --run TestAnchors` | pass | 113 ms |
+| `bench test --check docs-currency-workflow` | pass | 805 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 9298 ms |
 | `go vet ./...` | pass | no output |
 | `gofmt -l internal/anchors cmd/bench` | pass | no output |
-| `bench structure` | pass | no new file over its budget |
+| `bench gate-prose . -- reviews/calibrated-decisions.md` | pass | one row |
 
-`internal/anchors/locate.go` first grew to 452 lines, over its 400-line budget. One narrowing walk now serves both the section resolution and the step resolution, and the file reads 399 lines.
+`internal/anchors/locate.go` first grew to 452 lines, over its 400-line budget. One narrowing walk now serves both the section resolution and the step resolution, and the file reads 400 lines.
 
 ## CD1 review
 
