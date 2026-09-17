@@ -138,32 +138,33 @@ commands above.
 
 ## How it meets the rest of Bench
 
-The reviewer invokes this phase; a write delegate never charges it. When a write delegate's
-repro proves the defect lives outside its ticket fence, the delegate stops implementation edits.
-It keeps its
-in-fence work dirty in its owned worktree. It returns a bounded blocked report: the repro
-command, the red output digest, the failing surface it observed, and its in-fence dirty paths.
-The reviewer runs this skill against that report to confirm the cause. The coordinator then
-validates the report and reslices repair tickets per
-`.agents/commands/bench-implement-spec.md`'s "When the build stops short"; this skill only
-produces the report's evidence.
+The current ticket author owns the debug loop and writes its in-scope repair.
+Additional delegates perform read-only diagnostic work only.
 
-The Phase 1 loop joins the project gate for the fix. If the fix launches a shift, add the repro
-as a test the gate runs alongside its existing checks. It is committed in the project's
-expected-failure form: a quarantine marker naming the bug (a skip or expected-fail annotation
-in the project's test framework). This way the committed tree stays green while the repro
-survives shift rollback. An iteration that ends red rolls the worktree back to the last commit,
-which destroys any uncommitted repro test. The fix's green commit removes the marker, which
-turns the repro into the live regression test.
+For an in-fence defect, that author runs debug through Phase 6.
+For an out-of-fence defect, that author runs Phases 1 through 3 before the diagnostic handoff.
+When a repro proves an out-of-fence cause, the author stops implementation edits.
+The author keeps its in-fence work dirty in its owned worktree.
+The author returns a bounded blocked report with these fields:
+
+- the repro command
+- the red output digest
+- the ranked hypotheses
+- the failing surface
+- its in-fence dirty paths
+
+The reviewer uses the report to confirm the cause. The coordinator validates the report and reslices
+repair tickets per `.agents/commands/bench-implement-spec.md`'s "When the build stops short".
+
+The Phase 1 loop joins the project gate alongside its existing checks.
+Before a shift, the repro is committed in the project's expected-failure form.
+A quarantine marker naming the bug preserves the repro across shift rollback and keeps the tree green.
+The fix's green commit removes the marker and activates the regression test.
 
 A project with no expected-failure form keeps the repro out of the shift and runs it by hand
-against the fix. State that fallback in the close rather than commit a red tree; invariant
-4 (commit only on green) has no red-commit exception. Route code authorship through
-`craft-delegate`, including a diagnosed single-seam fix; it owns the inline threshold, worktree
-isolation, and verification discipline. A repro that replaces the gate weakens the oracle;
-that replacement is my call, never a debug step. The `craft-seams` skill owns the seam decision in Phase 5.
-Declare the line first — a hard bug runs a high-effort shift.
+against the fix. State that fallback at close. Commit only on green.
 
-Any delegation along the way (a fan-out search, a scoped fix) carries its own line. State an
-explicit bound model alias on the Agent call, never the inherited default. State the effort and
-the iteration cap in the charge, per `craft-line` and `craft-delegate`.
+`craft-delegate` owns worktree isolation and verification; `craft-seams` owns the seam decision in Phase 5.
+Only the reviewer can authorize a repro that replaces the project gate.
+Declare the line before debug. Use high effort for a hard bug.
+State the bound model, effort, and iteration cap in each charge, per `craft-line` and `craft-delegate`.

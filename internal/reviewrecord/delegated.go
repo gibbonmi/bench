@@ -26,6 +26,7 @@ type Assignment struct {
 // Execution declares the delegated run. A version 2 plan owns exactly one.
 type Execution struct {
 	Mode                string                  `json:"mode"`
+	ReviewMode          string                  `json:"review_mode,omitempty"`
 	RunID               string                  `json:"run_id"`
 	OrchestratorSession string                  `json:"orchestrator_session"`
 	AuthorLimit         int                     `json:"author_limit"`
@@ -41,11 +42,27 @@ func verificationRoles() []string {
 
 // Triggers is the closed set of author-transfer reasons.
 func Triggers() []string {
-	return []string{"no-progress", "terminal-failure", "cap-exhausted", "session-lost"}
+	return []string{"no-progress", "terminal-failure", "cap-exhausted", "session-lost", "user-directed"}
 }
 
 // Delegated reports whether the plan carries the version 2 delegated form.
 func (p Plan) Delegated() bool { return p.Version == 2 && p.Execution != nil }
+
+// reviewCardinality returns the required number of reviewers for one chunk.
+// Version 1 has no cardinality rule. Delegated modes fail closed here.
+func (p Plan) reviewCardinality() (int, error) {
+	if !p.Delegated() {
+		return 0, nil
+	}
+	switch p.Execution.ReviewMode {
+	case "":
+		return 3, nil
+	case "unified":
+		return 1, nil
+	default:
+		return 0, fmt.Errorf("invalid review mode %q; omit it or use unified", p.Execution.ReviewMode)
+	}
+}
 
 // Author is a ticket's effective author. An undispatched ticket has none.
 func (p Plan) Author(ticket string) (string, bool) {
@@ -103,6 +120,9 @@ func validateExecution(plan Plan) error {
 	}
 	if execution.Mode != "delegate" {
 		return fmt.Errorf("invalid execution mode %q; use delegate", execution.Mode)
+	}
+	if _, err := plan.reviewCardinality(); err != nil {
+		return err
 	}
 	if execution.RunID == "" || execution.OrchestratorSession == "" {
 		return errors.New("missing run id or orchestrator session")

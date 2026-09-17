@@ -597,9 +597,11 @@ escalation.
   The reviewer applies `craft-tickets` and `craft-spec` to the spec and its ticket
   breakdown after the author slices it. `/bench-write-spec` owns the round's
   operating protocol, and the fork retains all writes.
-- **Review-axis delegate** (`/bench-review-implementation`, one per axis) → the
-  conditional review line in `craft-line`, at high effort and **~1 iteration each**.
-  Three axes can run in parallel with the full diff and their axis sources.
+- **Review-axis delegate** (`/bench-review-implementation`) → the conditional
+  review line in `craft-line`, at high effort and **~1 iteration each**. By
+  default, each axis gets a fresh parallel session with its own source. Explicit
+  unified mode is the sole exception: one independent session re-derives and
+  reports all three axes separately.
 
 ## Notes for cold sessions
 

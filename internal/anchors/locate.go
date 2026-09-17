@@ -9,18 +9,18 @@ import (
 // character of an anchor's first match, or 0 when the needle has no match,
 // the section is absent or duplicated, or data is empty.
 //
-// The evaluator resolves an anchor's presence over comment-stripped,
-// whitespace-collapsed, and (for a section kind) case-folded text; Locate
-// answers a position over that same resolution, so the two stay in lock
-// step. It maps a match in the transformed text back to data by rune index,
-// not by byte offset, so a case fold that changes a rune's byte length
-// cannot shift the reported line. A forbid kind is located the same way as
-// a require kind: a non-zero line locates the violation, the presence of
-// the forbidden needle.
+// The evaluator resolves an anchor's presence over comment-stripped and
+// whitespace-collapsed text. For ForbidCaseFoldedEmphasis, it also removes
+// ordinary emphasis and case-folds whole-file text. Locate uses that same
+// resolution, so the two stay in lock step. It maps a match in the transformed
+// text back to data by rune index, not by byte offset. A case fold that changes
+// a rune's byte length cannot shift the reported line. A forbid kind is located
+// the same way as a require kind: a non-zero line locates the violation, the
+// presence of the forbidden needle.
 func Locate(kind Kind, section, needle, data string) int {
 	stripped, origin := stripCommentsMapped(data)
 	text, textOrigin := stripped, origin
-	if kind == RequireInSection || kind == ForbidInSection {
+	if kind.sectionScoped() {
 		body, bodyOrigin, count := sectionRunesMapped(stripped, origin, section)
 		// An absent section and a duplicated one both refuse: the evaluator resolves a
 		// scoped anchor against exactly one owning heading.
@@ -29,18 +29,14 @@ func Locate(kind Kind, section, needle, data string) int {
 		}
 		text, textOrigin = body, bodyOrigin
 	}
-	collapsed, collapsedOrigin := collapseSpaceMapped(text, textOrigin)
-	searchText := collapsed
-	searchNeedle := []rune(CollapseSpace(needle))
-	if kind == RequireInSection || kind == ForbidInSection {
-		searchText = toLowerRunes(collapsed)
-		searchNeedle = toLowerRunes(searchNeedle)
-	}
+	searchText, searchOrigin := normalizeMatchMapped(kind, text, textOrigin)
+	searchNeedleRunes := []rune(needle)
+	searchNeedle, _ := normalizeMatchMapped(kind, searchNeedleRunes, identityOrigin(len(searchNeedleRunes)))
 	at := indexRunes(searchText, searchNeedle)
-	if at < 0 || at >= len(collapsedOrigin) {
+	if at < 0 || at >= len(searchOrigin) {
 		return 0
 	}
-	return lineAtRune(data, collapsedOrigin[at])
+	return lineAtRune(data, searchOrigin[at])
 }
 
 // commentOpen and commentClose delimit an HTML comment, fenceMark opens a fenced block,
@@ -153,6 +149,113 @@ func collapseSpaceMapped(runes []rune, origin []int) (out []rune, outOrigin []in
 		inField = true
 	}
 	return out, outOrigin
+}
+
+func normalizeMatchMapped(kind Kind, runes []rune, origin []int) ([]rune, []int) {
+	if kind == ForbidCaseFoldedEmphasis {
+		runes, origin = stripMarkdownEmphasisMapped(runes, origin)
+	}
+	runes, origin = collapseSpaceMapped(runes, origin)
+	if kind.sectionScoped() || kind == ForbidCaseFoldedEmphasis {
+		runes = toLowerRunes(runes)
+	}
+	return runes, origin
+}
+
+// stripMarkdownEmphasisMapped removes paired emphasis markers at word boundaries.
+// Intraword underscores remain visible, so identifiers keep their exact spelling.
+// Each delimiter run enters and leaves the stack at most once.
+func stripMarkdownEmphasisMapped(runes []rune, origin []int) (out []rune, outOrigin []int) {
+	type opener struct {
+		at, width int
+		marker    rune
+		previous  int
+	}
+	var stack []opener
+	top := make(map[rune]int)
+	removed := make([]bool, len(runes))
+	pop := func() {
+		last := stack[len(stack)-1]
+		top[last.marker] = last.previous
+		stack = stack[:len(stack)-1]
+	}
+	for i := 0; i < len(runes); {
+		width := emphasisMarkerWidth(runes, i)
+		if width == 0 {
+			i++
+			continue
+		}
+		marker := runes[i]
+		if _, seen := top[marker]; !seen {
+			top[marker] = -1
+		}
+		remaining := width
+		canClose := i > 0 && !unicode.IsSpace(runes[i-1]) &&
+			(i+width == len(runes) || unicode.IsSpace(runes[i+width]) || unicode.IsPunct(runes[i+width]))
+		for canClose && remaining > 0 && top[marker] >= 0 {
+			open := top[marker]
+			for len(stack)-1 > open {
+				pop()
+			}
+			paired := min(remaining, stack[open].width)
+			for offset := 0; offset < paired; offset++ {
+				removed[stack[open].at+stack[open].width-1-offset] = true
+				removed[i+width-remaining+offset] = true
+			}
+			stack[open].width -= paired
+			remaining -= paired
+			if stack[open].width == 0 {
+				pop()
+			}
+		}
+		if remaining > 0 && emphasisCanOpen(runes, i, width) {
+			stack = append(stack, opener{i + width - remaining, remaining, marker, top[marker]})
+			top[marker] = len(stack) - 1
+		}
+		i += width
+	}
+	for i, r := range runes {
+		if !removed[i] {
+			out = append(out, r)
+			outOrigin = append(outOrigin, origin[i])
+		}
+	}
+	return out, outOrigin
+}
+
+func emphasisMarkerWidth(runes []rune, at int) int {
+	if at >= len(runes) || runes[at] != '*' && runes[at] != '_' {
+		return 0
+	}
+	if escapedAt(runes, at) {
+		return 0
+	}
+	if at > 0 && runes[at-1] == runes[at] {
+		return 0
+	}
+	end := at
+	for end < len(runes) && runes[end] == runes[at] {
+		end++
+	}
+	if width := end - at; width >= 1 && width <= 3 {
+		return width
+	}
+	return 0
+}
+
+func escapedAt(runes []rune, at int) bool {
+	backslashes := 0
+	for i := at - 1; i >= 0 && runes[i] == '\\'; i-- {
+		backslashes++
+	}
+	return backslashes%2 == 1
+}
+
+func emphasisCanOpen(runes []rune, at, width int) bool {
+	if at+width >= len(runes) || unicode.IsSpace(runes[at+width]) {
+		return false
+	}
+	return at == 0 || unicode.IsSpace(runes[at-1]) || unicode.IsPunct(runes[at-1])
 }
 
 // identityOrigin answers the origin map of a rune slice that has had nothing removed yet:

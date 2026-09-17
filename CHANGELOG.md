@@ -6,6 +6,37 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Semantic review evidence
+
+- Changed review guidance to distinguish runnable claims from mandatory standards and require independent Coverage bypass attempts.
+
+### Focused implementation evidence
+
+- Changed implementation guidance to identify each slice's acceptance target and inspect focused evidence after every material action.
+
+### Complete outcome slices
+
+- Changed ticket guidance to split independently useful outcomes and merge fragments that have no standalone result.
+
+### Delegated author transfer
+
+- Added explicit user direction as a valid reason to transfer a delegated author.
+
+### Unified implementation review
+
+- Added an explicit delegated-plan mode that lets one independent reviewer
+  report Standards, Spec, and Coverage without changing the distinct-session
+  default.
+
+### Debug repair authorship
+
+- Changed debug to retain repair authorship and give write delegates an evidence-based handoff at the ticket fence.
+
+### Spec evidence guidance
+
+- Changed spec authoring to inspect concrete scenarios, current owners, sufficient seams, and cheapest-wrong evidence before dependent design.
+- New-feature specifications plan future evidence without implementing code only to obtain an executable red.
+
 ### Concurrent capture drains
 
 - Added `bench capture drain` transactions. A drain now seals the reviewed idea

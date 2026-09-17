@@ -15,14 +15,14 @@ Before classifying repairs, read [the bounded repair policy](../bench-craft-line
 
 ## Re-derive, then compare
 
-Every axis derives its facts from the current primary source *before* it compares
-the candidate against them. A declaration-only confirmation, trusting the ticket or
-commit message, is incomplete. An axis that never re-reads its source cannot catch a
-claim the source refutes, and every finding cites its derivation, not a recollection
-of it. The three axes run in parallel fresh contexts so one axis's derivation cannot
-seed another's. Before any candidate-controlled execution (a script, a test, a tool
-the diff itself introduces), ask what authenticates the verifier. A candidate's own
-proof of correctness is not evidence until something outside it confirms it.
+Every axis derives its facts from the current primary source *before* it compares the candidate against them. A declaration-only confirmation, trusting the ticket or
+commit message, is incomplete. An axis that never re-reads its source cannot catch a claim the source refutes, and every finding cites its derivation, not a recollection
+of it. By default, the three axes run in parallel fresh contexts so one cannot seed
+another. Explicit unified mode is the sole exception: one independent session
+re-derives and reports each axis separately.
+
+Before relying on candidate-controlled execution, ask what authenticates the verifier. A candidate's own proof of correctness
+is not evidence until something outside it confirms it.
 
 Review also treats a compiled map's defaulted decisions as authoritative unless the
 spec explicitly overrides them. Grade a claimed repair against both its
@@ -30,11 +30,8 @@ coverage row and the applicable defaulted-decision table.
 
 ## The axes stay separate
 
-Code can pass one axis and fail another. For example, the right thing built against
-the conventions, clean conventions around the wrong thing, or a correct happy path
-with open edges. A merge of the axes lets one mask another. Report findings under
-separate headings, never reranked into a single list. Each axis ends with its count
-and its worst issue.
+Code can pass one axis and fail another. For example, the right thing built against the conventions, clean conventions around the wrong thing, or a correct happy path with open edges.
+A merge of the axes lets one mask another. Report findings under separate headings, never reranked into a single list. Each axis ends with its count and its worst issue.
 
 - **Standards** — independently reread the current working agreement, the shared
   platform rules, the project profile, and conventions docs, then hunt every place
@@ -115,8 +112,11 @@ no citation and no object, so nothing can be checked or fixed.
 
 ## Refute before you report
 
-Before a finding lands, try to kill it with the repo. Grep for the test the Coverage
-finding claims is missing, and re-read the convention the Standards finding cites.
-Run the command the Spec finding says is broken. A finding the repo refutes in one
-command wastes the reviewer's attention and teaches them to skim the rest. "No
-findings" is a real result — state what you examined, not a LGTM.
+1. Select one candidate finding from the axis's current binding source and the frozen implementation.
+2. Apply the evidence rule in `references/finding-discipline.md` before you retain the candidate.
+3. If possible, construct an independent Coverage bypass that preserves claimed positive evidence while violating the requirement.
+   Replaying only the author's supplied mutations does not satisfy this attempt.
+4. Keep an unsupported concern uncertain.
+5. Route accepted findings through the existing repair disposition at `/bench-review-implementation`.
+
+If no candidate survives, report no findings. State what you examined.

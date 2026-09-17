@@ -87,6 +87,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 
 ## Delegated author transfer
 
+- `craft-line` owns author-transfer direction, and `reviewrecord.Triggers` owns its schema tokens.
 - Two completed attempts with no progress permit a replacement or a model change only after a recorded reassessment.
 - A recorded terminal author failure permits a replacement or a model change.
 - An exhausted declared author cap permits a replacement or a model change.

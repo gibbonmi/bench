@@ -83,7 +83,11 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 		// occurrence keeps its own author. Review exclusion reads the current
 		// plan instead: a session that reviewed an early chunk and later became
 		// an author must not keep that review.
-		if err := CheckReviews(*chunk, reviewExclusions(current, record), current.Delegated()); err != nil {
+		reviewerCount, err := current.reviewCardinality()
+		if err != nil {
+			return err
+		}
+		if err := checkReviews(*chunk, reviewExclusions(current, record), reviewerCount); err != nil {
 			return err
 		}
 		ids, err := mappedIDs(record, plan.Digest, current.Digest, chunk.ID)

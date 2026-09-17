@@ -13,6 +13,17 @@ func delegatedCheckpointFixture(t *testing.T) *recordtest.Fixture {
 	return attachedCheckpointFixture(t, recordtest.AttachDelegated)
 }
 
+func unifiedCheckpointFixture(t *testing.T) *recordtest.Fixture {
+	return attachedCheckpointFixture(t, recordtest.AttachDelegated, func(f *recordtest.Fixture) {
+		f.Plan.Execution.RunID = "fixture-unified-review"
+		f.Plan.Execution.ReviewMode = "unified"
+		f.WritePlan()
+		f.Commit("select unified review")
+		f.Reload()
+		f.Record.PlanDigest = f.Plan.Digest
+	})
+}
+
 // resave writes the mutated record and commits it, so the checkpoint grades the
 // committed tree rather than an in-memory value.
 func resave(t *testing.T, f *recordtest.Fixture, message string) {
@@ -61,15 +72,20 @@ func TestDelegatedChunkVerifier(t *testing.T) {
 
 // DI5: a current or former author cannot review any chunk.
 func TestDelegatedAuthorReview(t *testing.T) {
-	for _, who := range []string{recordtest.Author("1.md"), recordtest.Orchestrator} {
-		t.Run(who, func(t *testing.T) {
-			f := delegatedCheckpointFixture(t)
-			f.Record.Chunks[0].Reviews[0].Performer = who
-			resave(t, f, "let a participant review")
-			if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "invalid Standards performer") {
-				t.Fatalf("a run participant supplied independent review: %d %s", code, out)
-			}
-		})
+	for mode, fixture := range map[string]func(*testing.T) *recordtest.Fixture{
+		"omitted": delegatedCheckpointFixture,
+		"unified": unifiedCheckpointFixture,
+	} {
+		for _, who := range []string{recordtest.Author("1.md"), recordtest.Orchestrator} {
+			t.Run(mode+"/"+who, func(t *testing.T) {
+				f := fixture(t)
+				f.Record.Chunks[0].Reviews[0].Performer = who
+				resave(t, f, "let a participant review")
+				if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "invalid Standards performer") {
+					t.Fatalf("a run participant supplied independent review: %d %s", code, out)
+				}
+			})
+		}
 	}
 }
 
@@ -86,14 +102,40 @@ func TestDelegatedOrchestratorReview(t *testing.T) {
 	}
 }
 
-// DI7: one session cannot supply two axes for a chunk.
+// DI7: the omitted mode requires distinct reviewers, while the explicit
+// unified mode permits one independent reviewer across the separate axes.
 func TestDelegatedDistinctAxes(t *testing.T) {
-	f := delegatedCheckpointFixture(t)
-	f.Record.Chunks[0].Reviews[1].Performer = f.Record.Chunks[0].Reviews[0].Performer
-	resave(t, f, "reuse one reviewer for two axes")
-	if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "three distinct review sessions") {
-		t.Fatalf("one session satisfied two axes: %d %s", code, out)
-	}
+	t.Run("omitted mode refuses reuse", func(t *testing.T) {
+		f := delegatedCheckpointFixture(t)
+		f.Record.Chunks[0].Reviews[1].Performer = f.Record.Chunks[0].Reviews[0].Performer
+		resave(t, f, "reuse one reviewer for two axes")
+		if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "three distinct review sessions") {
+			t.Fatalf("one session satisfied two axes: %d %s", code, out)
+		}
+	})
+
+	t.Run("unified mode accepts reuse", func(t *testing.T) {
+		f := unifiedCheckpointFixture(t)
+		for i := range f.Record.Chunks[0].Reviews {
+			f.Record.Chunks[0].Reviews[i].Performer = "fixture-unified-reviewer"
+		}
+		f.Save()
+		f.Commit("retain unified review evidence")
+		if code, out := runCheckpoint(t, f); code != 0 {
+			t.Fatalf("one independent session could not supply separate axes: %d %s", code, out)
+		}
+	})
+
+	t.Run("unified mode refuses mixed reviewers", func(t *testing.T) {
+		f := unifiedCheckpointFixture(t)
+		f.Record.Chunks[0].Reviews[0].Performer = "fixture-reviewer-a"
+		f.Record.Chunks[0].Reviews[1].Performer = "fixture-reviewer-b"
+		f.Record.Chunks[0].Reviews[2].Performer = "fixture-reviewer-a"
+		resave(t, f, "mix unified review performers")
+		if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "one reviewer for all three axes") {
+			t.Fatalf("mixed performers satisfied unified review: %d %s", code, out)
+		}
+	})
 }
 
 // DI12: delegated checkpoints retain the existing terminal-evidence refusals.

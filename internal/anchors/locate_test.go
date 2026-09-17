@@ -89,6 +89,16 @@ func TestLocateMapsCollapsedMatchesToLines(t *testing.T) {
 	})
 }
 
+func TestLocateMapsCaseFoldedEmphasisToPhysicalLine(t *testing.T) {
+	doc := "<!-- An executable **red** is mandatory in a comment. -->\n" +
+		"KELVIN appears before the match.\n" +
+		"An EXECUTABLE **RED** IS MANDATORY before specification.\n" +
+		"An executable *red* is mandatory later.\n"
+	if got := Locate(ForbidCaseFoldedEmphasis, "", "executable red is mandatory", doc); got != 3 {
+		t.Fatalf("Locate = %d, want line 3", got)
+	}
+}
+
 // TestLocateStripsRejoinedComments pins DG43: the removal of one comment can join the text
 // on either side of it into a second comment, and the evaluator's strip rescans and removes
 // that one too. Locate rescans with it, so a needle the evaluator reads as absent locates

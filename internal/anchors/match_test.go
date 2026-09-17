@@ -1,9 +1,65 @@
 package anchors
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
+
+func TestEvaluatePathRejectsMixedNestedEmphasis(t *testing.T) {
+	anchor := pathTestAnchor(t, ForbidCaseFoldedEmphasis)
+	for _, test := range []struct {
+		name string
+		text string
+		line int
+	}{
+		{"bold around italic", "An executable **_red_** is mandatory before specification.", 3},
+		{"italic around bold", "An executable _**red**_ is mandatory before specification.", 3},
+		{"triple around bold", "An executable ***__red__*** is mandatory before specification.", 3},
+		{"mapped multiline", "intro\nAn **_EXECUTABLE\nRED_** IS MANDATORY before specification.", 4},
+		{"repeated bold", "**An _executable **red** is mandatory_ before specification.**", 3},
+		{"repeated italic", "*An _executable *red* is mandatory_ before specification.*", 3},
+		{"repeated triple", "***An _executable ***red*** is mandatory_ before specification.***", 3},
+		{"repeated underscore bold", "__An *executable __red__ is mandatory* before specification.__", 3},
+		{"repeated underscore italic", "_An *executable _red_ is mandatory* before specification._", 3},
+		{"repeated underscore triple", "___An *executable ___red___ is mandatory* before specification.___", 3},
+		{"shared star two then one", "An ***executable** red is mandatory* before specification.", 3},
+		{"shared star one then two", "An ***executable* red is mandatory** before specification.", 3},
+		{"shared underscore two then one", "An ___executable__ red is mandatory_ before specification.", 3},
+		{"shared underscore one then two", "An ___executable_ red is mandatory__ before specification.", 3},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			h := anchorHarness{rules: []anchorRule{{file: anchor.File, needle: test.text}}}
+			result := EvaluatePath(h.write(t, -1), anchor.File)
+			if !slices.Contains(result.Diagnostics, anchor.Diagnostic) {
+				t.Errorf("missing %q for %q", anchor.Diagnostic, test.text)
+			}
+			for _, location := range result.Locations {
+				if location.Anchor == anchor {
+					if location.Line != test.line {
+						t.Errorf("violation line = %d, want %d", location.Line, test.line)
+					}
+					return
+				}
+			}
+			t.Fatal("registered DG15 location missing")
+		})
+	}
+}
+
+func TestUnpairedEmphasisRunsStayVisible(t *testing.T) {
+	for _, marker := range []string{"*", "_", "**", "__", "***", "___"} {
+		t.Run(marker, func(t *testing.T) {
+			text := strings.Repeat(marker+"a ", 4096)
+			if !Satisfied(ForbidCaseFoldedEmphasis, text, "a a") {
+				t.Error("unpaired markers disappeared between words")
+			}
+			if Satisfied(ForbidCaseFoldedEmphasis, text, marker+"a") {
+				t.Error("unpaired marker is no longer searchable")
+			}
+		})
+	}
+}
 
 func TestSatisfiedNormalizesByKind(t *testing.T) {
 	tests := []struct {
@@ -22,6 +78,47 @@ func TestSatisfiedNormalizesByKind(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			if got := Satisfied(test.kind, test.text, test.needle); got != test.want {
 				t.Fatalf("Satisfied(%v, %q, %q) = %t, want %t", test.kind, test.text, test.needle, got, test.want)
+			}
+		})
+	}
+}
+
+func TestForbidCaseFoldedEmphasisMatchesBoundedForms(t *testing.T) {
+	const needle = "executable red is mandatory"
+	for _, test := range []struct {
+		name string
+		text string
+	}{
+		{"bold", "An executable **red** is mandatory before specification."},
+		{"asterisk italic", "An executable *red* is mandatory before specification."},
+		{"underscore bold", "An executable __red__ is mandatory before specification."},
+		{"underscore italic", "An executable _red_ is mandatory before specification."},
+		{"nested asterisks", "An executable ***red*** is mandatory before specification."},
+		{"uppercase", "An EXECUTABLE **RED** IS MANDATORY before specification."},
+		{"inline code stays searchable", "`An executable red is mandatory before specification.`"},
+		{"fenced code stays searchable", "```markdown\nAn executable red is mandatory before specification.\n```"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if Satisfied(ForbidCaseFoldedEmphasis, test.text, needle) {
+				t.Errorf("Satisfied(ForbidCaseFoldedEmphasis, %q, %q) = true, want false", test.text, needle)
+			}
+		})
+	}
+	for _, test := range []struct {
+		name string
+		text string
+	}{
+		{"legitimate negative", "An executable red is not mandatory before specification."},
+		{"escaped opening", `An executable \**red** is mandatory before specification.`},
+		{"escaped closing", `An executable **red\** is mandatory before specification.`},
+		{"unpaired", "An executable **red is mandatory before specification."},
+		{"intraword underscore", "An executable r_ed_ is mandatory before specification."},
+		{"escaped inner opening", `An executable **\_red_** is mandatory before specification.`},
+		{"unpaired inner", "An executable **_red** is mandatory before specification."},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if !Satisfied(ForbidCaseFoldedEmphasis, test.text, needle) {
+				t.Errorf("Satisfied(ForbidCaseFoldedEmphasis, %q, %q) = false, want true", test.text, needle)
 			}
 		})
 	}

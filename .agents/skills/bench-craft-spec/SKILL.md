@@ -8,21 +8,33 @@ index: coverage-map rows, edge inventories, story sizing, and review-chunk slici
 
 Turn the authorized decision source and what you know of the codebase into `specs/<slug>/spec.md` — synthesize, with at most two late questions.
 
+## Authoring process
+
 1. **Explore the repo**; use the glossary's terms and respect the area's ADRs. Before the coverage map locks, do three reads.
    - Open every enforcement file a row or a fence names. These files are the conformance checks, the contract tests, the wrapper help, the injected-port registry, and the grammar files. Cite each read.
    - Read one existing precedent for each named seam.
-   - Sweep the whole tree for each reader of a count, a schema field, or an artifact path the spec changes.
-     This reader sweep includes `.mjs` scripts and workflow files, and `references/map-discipline.md` states its rules.
-     Each reader takes a row or a named exclusion.
-2. **Sketch the seams** (`craft-seams`): existing over new, the highest that still shows the failure, ideally one;
-   confirm them with the reviewer first.
-3. **Write the spec** from the template below, in ASD-STE100 prose per `references/ste-prose.md`, and run
-   `bench coverage --check`. The spec file is the published artifact.
+   - Sweep the whole tree for each reader of a count, a schema field, or an artifact path the spec changes. This reader sweep includes `.mjs` scripts and workflow files, and `references/map-discipline.md` states its rules. Each reader takes a row or a named exclusion.
+2. **Place the seam**: After step 1, apply [Evidence-led authoring](#evidence-led-authoring). If its exception applies, follow `craft-seams`. Confirm the selected seam with the reviewer.
+3. **Write the spec** from the template below, in ASD-STE100 prose per `references/ste-prose.md`, and run `bench coverage --check`. The spec file is the published artifact.
+
+## Evidence-led authoring
+
+For each approved outcome, state a concrete scenario before you select its verification seam.
+Inspect the current behavior and its relevant owner before you choose the next authoring action.
+Name evidence that fails on the cheapest wrong result for the scenario.
+Use a sufficient existing seam before you explore alternatives.
+If the evidence leaves the seam unresolved, use `craft-seams` to compare alternatives.
+
+Choose one bounded authoring action.
+Inspect its result before you choose the next action.
+
+If intended behavior remains unresolved, return it to the reviewer before dependent authoring continues.
+For a new feature without an executable check, plan future evidence from exact inputs and expected outputs.
+Do not implement the feature only to obtain a red during specification.
 
 ## User stories
 
-Write a long, numbered list grouped by outcome, with an extensive breadth floor. One story per actor-want-benefit —
-`As an <actor>, I want <feature>, so that <benefit>` — covers every behavior, edge, and reviewed exclusion the source promises.
+Write a long, numbered list grouped by outcome, with an extensive breadth floor. One story per actor-want-benefit — `As an <actor>, I want <feature>, so that <benefit>` — covers every behavior, edge, and reviewed exclusion the source promises.
 Partial redundancy is the point. A story is a want, never an engineering layer (`craft-tickets` owns slice sizing).
 
 Recommend one implementation line for the complete build. Explain it from the hardest material chunk, spec precision, seam uncertainty, and test strength. Mark each harder chunk in the implementation plan.
@@ -31,31 +43,26 @@ Recommend one implementation line for the complete build. Explain it from the ha
 
 Each row ties a story to one observable behavior at a seam: `story`, `behavior`, `seam`, `why it catches the failure`. An optional leading `row` column opts the spec into ticket covers traceability (new specs default to it).
 `bench coverage --check` refuses a row that references more than four stories, and it refuses a row that states two predicates (`;`). It also refuses a declared story that no row references, unless a `Not covered: story <n> — <reason>` line sits under the map.
-Name the cheapest wrong implementation per story. Name the row that goes red on it, across fences and through the composition degenerate to the real producer.
+Connect each story's [Evidence-led authoring](#evidence-led-authoring) result to the row that goes red across fences and through composition to the real producer.
 
 Enumerate every quantifier; every source behavior becomes a row or an exception. `references/map-discipline.md` states the rule each row must satisfy; open that reference before you lock the rows.
 
-Three checks run before the first review charge. Walk each restore or copy promise for a deterministic omission case. A restore comparison without an omission row is green by construction.
-Cite no test-only helper across a package boundary, because such a row has no seam in the graded package. Use canned events for any row that compares two rendered reports, because two real runs differ in their elapsed times.
+Three checks run before the first review charge. Walk each restore or copy promise for a deterministic omission case. A restore comparison without an omission row is green by construction. Cite no test-only helper across a package boundary, because such a row has no seam in the graded package. Use canned events for any row that compares two rendered reports, because two real runs differ in their elapsed times.
 
 ## The edge inventory
 
 `craft-tdd` walks the canonical edge classes at the seam. Attach the profile's hostile-input checklist to that walk.
 Give each edge the reviewer deliberately excludes a one-line **Won't handle** with a surviving in-scope caller.
-
 ## Bootstrap authority before execution
 
-A trusted-execution or refusal-before-execution claim traces every executable hop, naming how each validator authenticates the next executable before launching the next executable.
-A path, record, digest, or executable cannot authenticate itself. Without an independent trust root the design is incomplete; see `references/bootstrap-authority.md`.
-
+A trusted-execution or refusal-before-execution claim traces every executable hop, naming how each validator authenticates the next executable before launching the next executable. A path, record, digest, or executable cannot authenticate itself. Without an independent trust root the design is incomplete; see `references/bootstrap-authority.md`.
 ## Scope cuts
 
 Price every cut as `<n> edits, <n> gate runs`. A cut must be a separate capability with its own future spec, never "the rest of this feature".
 
 ## Slicing a build for delegates
 
-Record **who-writes-where** ownership fences at spec time, checkable at charge time. A fence entry is an exact repo-relative file or path prefix, never a glob or an implementation ticket. An empty or invalid fence section is incomplete. The author writes the fence section after the ticket slice, from the union of the tickets' `Writes:` lines.
-The fences include the review pickup and every conformance-pinned consumer of a moved symbol.
+Record **who-writes-where** ownership fences at spec time, checkable at charge time. A fence entry is an exact repo-relative file or path prefix, never a glob or an implementation ticket. An empty or invalid fence section is incomplete. The author writes the fence section after the ticket slice, from the union of the tickets' `Writes:` lines. The fences include the review pickup and every conformance-pinned consumer of a moved symbol.
 A Won't handle over an anchored sentence quotes the bytes it keeps.
 
 During a build, `.bench/BENCH.md` owns approved in-scope plan expansion. A material acceptance change, unrelated scope, or weakened guarantee returns to `/bench-write-spec` for a reviewer decision. A budget row equal to its subject's current line count proves nothing, because the check parses only that one source.
@@ -75,11 +82,7 @@ The round asks six questions:
 - Are the source and observed reds sound even when the source is same-session, conflicting, or mostly not observed?
 - Per row, does the map name the gate check or test that reds it, or mark the row review-owned?
 
-The degenerate standard is the cheapest plausible wrong implementation — a degenerate that needs deliberate contrivance is
-the build's mutation-probe target, never a new spec row. A finding blocks only when it changes observable behavior, an
-ownership fence, or the ticket graph. A round that returns only prose or accounting findings is the acceptance round. Fold
-those fixes into the acceptance instead of another round. A revision may not add a promise beyond the decision source
-unless a blocking finding demands it. The review flags an unflagged addition for removal rather than demanding rows for it.
+The degenerate standard is the cheapest plausible wrong implementation — a degenerate that needs deliberate contrivance is the build's mutation-probe target, never a new spec row. A finding blocks only when it changes observable behavior, an ownership fence, or the ticket graph. A round that returns only prose or accounting findings is the acceptance round. Fold those fixes into the acceptance instead of another round. A revision may not add a promise beyond the decision source unless a blocking finding demands it. The review flags an unflagged addition for removal rather than demanding rows for it.
 
 An anchor needle longer than the STE sentence bound is a spec smell. Re-cut it into one row per rule before the build.
 
@@ -149,5 +152,4 @@ Each genuine separate capability includes its derived `<n> edits, <n> gate runs`
 ## Further notes
 ```
 
-Before a build starts, emit a scannable approval table. The table covers stories and their lines, seam diagrams, acceptance coverage including edge dispositions, ownership fences with an explicit reviewer disposition, and out
-of scope. Pause for sign-off. The user stories set breadth, engineering seams place tests, and the gate defines done.
+Before a build starts, emit a scannable approval table. The table covers stories and their lines, seam diagrams, acceptance coverage including edge dispositions, ownership fences with an explicit reviewer disposition, and out of scope. Pause for sign-off. The user stories set breadth, engineering seams place tests, and the gate defines done.

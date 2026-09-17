@@ -77,6 +77,14 @@ type Record struct {
 // identity that cannot supply independent review. Under distinct, one session
 // supplies at most one axis for the chunk.
 func CheckReviews(chunk Chunk, excluded []string, distinct bool) error {
+	reviewerCount := 0
+	if distinct {
+		reviewerCount = 3
+	}
+	return checkReviews(chunk, excluded, reviewerCount)
+}
+
+func checkReviews(chunk Chunk, excluded []string, reviewerCount int) error {
 	axisOwners := map[string]string{}
 	for _, axis := range Axes() {
 		var current *Review
@@ -91,9 +99,6 @@ func CheckReviews(chunk Chunk, excluded []string, distinct bool) error {
 		if current.Role != "independent-review" || contains(excluded, current.Performer) || current.Performer == "" {
 			return fmt.Errorf("chunk %s: invalid %s performer or role; obtain independent review", chunk.ID, axis)
 		}
-		if owned, taken := axisOwners[current.Performer]; distinct && taken {
-			return fmt.Errorf("chunk %s: %s reviewer already supplied %s; use three distinct review sessions", chunk.ID, axis, owned)
-		}
 		axisOwners[current.Performer] = axis
 		if current.State != "completed" || current.Outcome != "pass" || len(current.FindingIDs) != 0 {
 			return fmt.Errorf("chunk %s: %s %s; resolve findings and obtain a completed result", chunk.ID, current.State, axis)
@@ -101,6 +106,12 @@ func CheckReviews(chunk Chunk, excluded []string, distinct bool) error {
 		if current.SourceDigest != chunk.SourceDigest || current.Base != chunk.Base || current.Tip != chunk.Tip {
 			return fmt.Errorf("chunk %s: stale %s; review the current frozen pair", chunk.ID, axis)
 		}
+	}
+	if reviewerCount == 3 && len(axisOwners) != 3 {
+		return fmt.Errorf("chunk %s: use three distinct review sessions", chunk.ID)
+	}
+	if reviewerCount == 1 && len(axisOwners) != 1 {
+		return fmt.Errorf("chunk %s: unified review requires one reviewer for all three axes", chunk.ID)
 	}
 	return nil
 }

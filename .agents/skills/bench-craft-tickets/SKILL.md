@@ -19,18 +19,19 @@ Gather context: the spec, or the conversation. Explore the codebase if you have 
 
 A ticket that implements a roadmap row's decided fix first verifies the row's premise against the code. A premise the code contradicts is a reviewer decision, not a fix to implement as written. The check reads the definition of every kind, state, or error the row names. A ticket that adds a line to a file over its line budget moves that file's headroom in the same ticket. The lane grades growth against the current tip, so a later ticket cannot pay the debt.
 
-Name every real blocker by sibling ticket file basename; blockers precede consumers.
-A ticket joins the **frontier** when its blockers land.
+Name every real blocker by sibling ticket file basename; blockers precede consumers. A ticket joins the **frontier** when its blockers land.
 A wide refactor
 sequences as expand (new form beside the old), migrate (move callers
 in green batches), then contract. Contract removes the old form after every migrate ticket lands, `Blocked by:` naming them all.
 
-Before ticket lock, run a source-clause pass and an executable-route pass.
-Assign each applicable source clause to a ticket or an explicit scope cut.
+Before ticket lock, run a source-clause pass and an executable-route pass. Assign each applicable source clause to a ticket or an explicit scope cut.
 Trace each claimed operation through its executable owner, using the [map-discipline proof rules](../bench-craft-spec/references/map-discipline.md#before-the-map-locks).
 
-**Reviewer-approved breakdown**: before assigning spec-backed tickets, the coordinator
-presents the reviewer a numbered list — title, `Blocked by:`, and delivered outcome — for every ticket.
+Start with each ticket's delivered outcome and its smallest complete slice of behavior, tests, and integration. State a concrete acceptance scenario before you lock the ticket. Name checks that prove completion while successor tickets remain unbuilt. Record each real dependency and the value that its predecessor supplies.
+
+Shared writes determine serial order, but they do not merge independently useful outcomes. Split independently useful outcomes. Merge a fragment that cannot deliver or verify a result alone. Plan the ticket evidence without implementing the feature or requiring an existing executable red.
+
+**Reviewer-approved breakdown**: before assigning spec-backed tickets, the coordinator presents the reviewer a numbered list — title, `Blocked by:`, and delivered outcome — for every ticket.
 Ask the reviewer about granularity, dependencies, and merges or splits. Iterate and record approval.
 For spec-backed builds, this is the only route onto the frontier; the batch-approval AFK carve-out in `.bench/BENCH.md` is the sole no-round-trip exception.
 The light path is the exception: `.bench/BENCH.md`'s right-size table is the one ticket's standing approval, and the main session implements it inline.
@@ -58,8 +59,7 @@ Covers: <coverage row ids this ticket owns, or none>
 
 Use ASD-STE100 per `craft-spec`'s `references/ste-prose.md`. `What to build` states the end-to-end behavior. State shared contracts in that prose and in `Acceptance`, never in a separate schema field. Review re-derives each crossing from the tree.
 
-The parser enforces these rules. `Blocked by:` holds `none` or sibling ticket file
-basenames; a basename survives a retitle, and `--ticket` already names it. Each
+The parser enforces these rules. `Blocked by:` holds `none` or sibling ticket file basenames; a basename survives a retitle, and `--ticket` already names it. Each
 `Writes:` path exists in the tree or carries the `(new)` marker. A fixture-pinned path
 also names its fixture, and a bound package also names its registries. `Covers:` holds
 `none` or declared row ids, cited in full because preflight reads ids, not ranges.
@@ -81,8 +81,7 @@ Covers: CJ1, CJ2
 
 ## What to build
 
-Users see a cancelled row, its reason, and the next recovery action — one
-demoable path from parsed record to rendered row, sized to a fresh context.
+Users see a cancelled row, its reason, and the next recovery action — one demoable path from parsed record to rendered row, sized to a fresh context.
 
 ## Acceptance
 

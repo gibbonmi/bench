@@ -1,0 +1,1 @@
+[{"path":".agents/commands/bench-implement-spec.md","old":"Run fresh-session adoption after the final committed owner-byte change. A later owner-byte edit invalidates that evidence; rerun it against the new committed tip before review.","new":"Run fresh-session adoption before review."}]

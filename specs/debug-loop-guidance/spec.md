@@ -1,6 +1,6 @@
 # Phase-specific action and evidence guidance
 
-Status: staged
+Status: implemented
 
 Decision source: specs/debug-loop-guidance/decisions/debug-loop-guidance.md
 
@@ -85,6 +85,11 @@ Harder chunks: DG-C5.
 42. As a debug author, I want the local six-phase procedure, so that concrete reproduction guidance remains available.
 43. As a Coverage reviewer, I want an independent bypass attempt, so that supplied positive checks do not hide a violating state.
 
+### Trial one reviewer across all three axes
+
+44. As a coordinator, I want an explicit unified-review mode, so that one independent reviewer can own all three axes without weakening the default.
+45. As an implementation maintainer, I want review misses tied back to the implementation command. I want the workflow prose to improve when it contributed to an issue.
+
 ## Implementation decisions
 
 ### Existing owners
@@ -96,6 +101,7 @@ Harder chunks: DG-C5.
 | Slice independently verifiable outcomes | `.agents/skills/bench-craft-tickets/SKILL.md` | Its ticket supplies guidance, checks, and adoption evidence before its successor |
 | Drive implementation with focused evidence | `.agents/commands/bench-implement-spec.md` | Its ticket supplies guidance, checks, and adoption evidence before its successor |
 | Ground semantic findings in appropriate evidence | `.agents/skills/bench-craft-review/SKILL.md` | Its ticket supplies guidance, checks, and adoption evidence before its successor |
+| Trial one reviewer across all three axes | `.agents/commands/bench-review-implementation.md` and `internal/reviewrecord` | An explicit plan mode changes reviewer cardinality while retaining axis evidence and participant exclusions |
 
 The debug integration section owns its revised author and fence rules.
 The delegate skill points to that section instead of repeating the report contract.
@@ -124,6 +130,12 @@ Replace its unconditional real-run sentence and reconcile its existing anchor, u
 When a claimed enforcement can admit a bypass, Coverage constructs an independent counterexample that keeps the claimed positive evidence satisfied while violating the requirement.
 Replaying only the author's supplied mutations does not satisfy this refutation step.
 
+The completion plan may opt into one independent reviewer for all three axes.
+The omitted mode keeps the existing three-distinct-session rule.
+The unified reviewer still returns three separately attributable axis results and cannot be the orchestrator or an implementation author.
+It re-derives each axis from its primary source within one session; separate fresh contexts remain the default outside this explicit mode.
+Each unified result also states whether the issue or miss exposes an improvement to `.agents/commands/bench-implement-spec.md`.
+
 For the exception, cite the binding rule and violating source.
 Inspect applicable exceptions and contrary evidence before retaining the finding.
 State why executable refutation is unavailable.
@@ -142,6 +154,11 @@ Keep existing checks and prove each changed fixture still catches its named muta
 Keep the debug phases and loop-constructions reference at their existing locations.
 Do not add a universal loop owner, trial flag, metric schema, or comparative speed claim.
 Do not change gate authority, authorship authority, or the repair allowance.
+
+Represent an explicit user-directed author transfer in the completion plan.
+Include the stopped predecessor and preserved source, so a requested prose
+specialist can write without inventing a failure trigger.
+
 Use the current prose budgets through concise replacement text.
 The compiled decision map contains the reviewer refinements and retained debug decisions.
 The old trial artifacts retire only after that preservation step.
@@ -157,13 +174,14 @@ Each chunk receives the existing three-axis checkpoint before its successor.
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | DG-C1 / `1-retain-debug-authorship.md` | Retain debug repair authorship with its adoption evidence | DG1, DG2, DG3, DG4, DG5, DG6, DG7, DG8, DG42 | workflow anchors, fixture bite, prose budgets, owning adoption task | no |
+| DG-CR / `1a-enable-unified-review-trial.md` | Enable an opt-in unified reviewer without changing the default | DG44, DG45 | review-record and delegated-checkpoint tests, prose mechanics | no |
 | DG-C2 / `2-guide-spec-evidence.md` | Guide spec authoring with concrete evidence with its adoption evidence | DG9, DG10, DG11, DG12, DG13, DG14, DG15, DG16 | workflow anchors, fixture bite, prose budgets, owning adoption task | no |
 | DG-C3 / `3-slice-complete-outcomes.md` | Slice independently verifiable outcomes with its adoption evidence | DG17, DG18, DG19, DG20, DG21, DG22, DG23, DG24 | workflow anchors, fixture bite, prose budgets, owning adoption task | no |
 | DG-C4 / `4-drive-implementation-evidence.md` | Drive implementation with focused evidence with its adoption evidence | DG25, DG26, DG27, DG28, DG29, DG30, DG31, DG32 | workflow anchors, fixture bite, prose budgets, owning adoption task | no |
 | DG-C5 / `5-ground-semantic-findings.md` | Ground semantic findings in appropriate evidence with its adoption evidence | DG33, DG34, DG35, DG36, DG37, DG38, DG39, DG40, DG41, DG43 | workflow anchors, fixture bite, prose budgets, owning adoption task | yes |
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"DG-C1","tickets":["1-retain-debug-authorship.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"restore the blanket write-delegate debug ban"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"}]},{"id":"DG-C2","tickets":["2-guide-spec-evidence.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"require an executable red for a new-feature specification"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"}]},{"id":"DG-C3","tickets":["3-slice-complete-outcomes.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"merge useful outcomes solely because their writes overlap"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"}]},{"id":"DG-C4","tickets":["4-drive-implementation-evidence.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"remove the focused rerun after each material action"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"}]},{"id":"DG-C5","tickets":["5-ground-semantic-findings.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"restore unconditional real-run evidence for mandatory standards"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"}]}],"final_verification":[{"id":"acceptance","command":"bench coverage --check specs/debug-loop-guidance/spec.md"},{"id":"integration","command":"bench test --check docs-currency-workflow"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"}]}
+{"version":2,"execution":{"mode":"delegate","run_id":"debug-loop-guidance-full-20260916","orchestrator_session":"/root","author_limit":1,"assignments":{"1-retain-debug-authorship.md":[{"session":"/root/candidate_a","assignment":"debug-loop-candidate-a","model":"gpt-6-astra","effort":"high","source":"9deb0a7af31712427ff47d6fd0515e8458dbde0d","native_ref":"codex:session/candidate_a@ae21e4a538d7713b147a8a888221063c2ba2ba02"}],"1a-enable-unified-review-trial.md":[{"session":"/root/unified_review_author","assignment":"debug-loop-unified-review-trial","model":"gpt-5.6-sol","effort":"medium","source":"f68d62773d77e7138d8c92ef9a88f5dcaeb3e732","native_ref":"codex:collaboration/spawn_agent/unified_review_author"}],"2-guide-spec-evidence.md":[{"session":"/root/dgc2_author","assignment":"debug-loop-dgc2","model":"gpt-5.6-sol","effort":"medium","source":"8b2073e3104e3b0ddb8a52aec6c7506acf27c7fc","native_ref":"codex:collaboration/spawn_agent/dgc2_author"},{"session":"/root/dgc2_prose_luna","assignment":"debug-loop-dgc2-prose-compaction","model":"gpt-5.6-luna","effort":"medium","source":"1c70037d3a20d61b71b4c0873bf44850e5fa9816","native_ref":"codex:collaboration/spawn_agent/dgc2_prose_luna","predecessor":"/root/dgc2_author","trigger":"user-directed","stopped":"root confirmed the Sol author paused before prose compaction","preserved":"1c70037d3a20d61b71b4c0873bf44850e5fa9816"},{"session":"/root/dgc2_author","assignment":"debug-loop-dgc2-resume-after-prose","model":"gpt-5.6-sol","effort":"medium","source":"0ddffa02ae04e794a1d237143652004dd0c09d57","native_ref":"codex:collaboration/followup_task/dgc2_author@0ddffa02","predecessor":"/root/dgc2_prose_luna","trigger":"user-directed","stopped":"Luna completed the bounded prose compaction and stopped","preserved":"0ddffa02ae04e794a1d237143652004dd0c09d57"},{"session":"/root/dgc2_workflow_terra","assignment":"debug-loop-dgc2-workflow-fix","model":"gpt-5.6-terra","effort":"medium","source":"848f8014dac2efec258433c3a755293bdd846ab6","native_ref":"codex:collaboration/spawn_agent/dgc2_workflow_terra","predecessor":"/root/dgc2_author","trigger":"user-directed","stopped":"root confirmed the Sol author paused for the requested Terra workflow edit","preserved":"848f8014dac2efec258433c3a755293bdd846ab6"},{"session":"/root/dgc2_author","assignment":"debug-loop-dgc2-critical-repair","model":"gpt-5.6-sol","effort":"medium","source":"6cb0559cff28b5f567d36d66ffe26a81b39b9678","native_ref":"codex:collaboration/followup_task/dgc2_author@6cb0559c","predecessor":"/root/dgc2_workflow_terra","trigger":"user-directed","stopped":"Terra completed the bounded workflow prose edit and stopped","preserved":"6cb0559cff28b5f567d36d66ffe26a81b39b9678"},{"session":"/root/dgc2_workflow_terra","assignment":"debug-loop-dgc2-prose-repair","model":"gpt-5.6-terra","effort":"medium","source":"20f0796bb3ccc5cbe395fb70900adfa1deae86df","native_ref":"codex:collaboration/followup_task/dgc2_workflow_terra@20f0796b","predecessor":"/root/dgc2_author","trigger":"user-directed","stopped":"the Sol author committed the validator repair and stopped","preserved":"20f0796bb3ccc5cbe395fb70900adfa1deae86df"},{"session":"/root/dgc2_author","assignment":"debug-loop-dgc2-coverage-repair","model":"gpt-5.6-sol","effort":"medium","source":"41fe4f002d47b5c8a152908d154314712054d37d","native_ref":"codex:collaboration/followup_task/dgc2_author@41fe4f00","predecessor":"/root/dgc2_workflow_terra","trigger":"user-directed","stopped":"Terra completed the accepted prose and comment repairs and stopped","preserved":"41fe4f002d47b5c8a152908d154314712054d37d"},{"session":"/root/dg15_nested_emphasis_debug","assignment":"debug-loop-dg15-nested-emphasis","model":"gpt-6-astra","effort":"medium","source":"fa40516c45ee71c5cd925ea32bcee0cced8f4500","native_ref":"codex:collaboration/spawn_agent/dg15_nested_emphasis_debug","predecessor":"/root/dgc2_author","trigger":"user-directed","stopped":"DG-C2 was closed; the final independent bug hunt found a mixed nested ordinary-emphasis bypass and the reviewer explicitly invoked bench-debug on Astra/medium","preserved":"fa40516c45ee71c5cd925ea32bcee0cced8f4500"}],"3-slice-complete-outcomes.md":[{"session":"/root/dgc3_author","assignment":"debug-loop-dgc3","model":"gpt-5.6-sol","effort":"medium","source":"c1ec1e3145ac98d5ed5a07b4ebaf01dbe380924c","native_ref":"codex:collaboration/spawn_agent/dgc3_author"},{"session":"/root/dgc3_repair_terra","assignment":"debug-loop-dgc3-prose-adoption-repair","model":"gpt-5.6-terra","effort":"medium","source":"09e6084872ff4a8c8e6de31e68446c017e7bf787","native_ref":"codex:collaboration/spawn_agent/dgc3_repair_terra","predecessor":"/root/dgc3_author","trigger":"user-directed","stopped":"the Sol author completed initial DG-C3 implementation and stopped","preserved":"09e6084872ff4a8c8e6de31e68446c017e7bf787"}],"4-drive-implementation-evidence.md":[{"session":"/root/dgc4_author","assignment":"debug-loop-dgc4","model":"gpt-5.6-sol","effort":"high","source":"e6e32ddd27c85773f2b036e9b5fb9d6258ca1824","native_ref":"codex:collaboration/spawn_agent/dgc4_author"},{"session":"/root/dgc4_prose_luna","assignment":"debug-loop-dgc4-prose-budget-repair","model":"gpt-5.6-luna","effort":"medium","source":"c1c7b63c62bc9a92fa79447730d8b8a174fdf902","native_ref":"codex:collaboration/spawn_agent/dgc4_prose_luna","predecessor":"/root/dgc4_author","trigger":"user-directed","stopped":"the Ticket 4 author paused with Ticket 4 changes preserved before prose-budget repair","preserved":"c1c7b63c62bc9a92fa79447730d8b8a174fdf902"},{"session":"/root/dgc4_astra_integrator","assignment":"debug-loop-dgc4-final-integration","model":"gpt-6-astra","effort":"low","source":"c1c7b63c62bc9a92fa79447730d8b8a174fdf902","native_ref":"codex:collaboration/spawn_agent/dgc4_astra_integrator","predecessor":"/root/dgc4_prose_luna","trigger":"user-directed","stopped":"Luna completed the bounded prose compaction and stopped; the retained tree preserves all Ticket 4 and prose-pass changes","preserved":"c1c7b63c62bc9a92fa79447730d8b8a174fdf902"},{"session":"/root/dgc4_review_prose_luna","assignment":"debug-loop-dgc4-review-prose-repair","model":"gpt-5.6-luna","effort":"medium","source":"f08434a2957d6f6da44db31a6cd9abc2cd39ab27","native_ref":"codex:collaboration/spawn_agent/dgc4_review_prose_luna","predecessor":"/root/dgc4_astra_integrator","trigger":"user-directed","stopped":"formal Standards review identified two compound imperative sentences; committed Ticket 4 tip is preserved","preserved":"f08434a2957d6f6da44db31a6cd9abc2cd39ab27"},{"session":"/root/dgc4_repair_astra","assignment":"debug-loop-dgc4-review-repair-and-adoption","model":"gpt-6-astra","effort":"low","source":"c34ed317a35108d282b7b922f4faf0997a51e9eb","native_ref":"codex:collaboration/spawn_agent/dgc4_repair_astra","predecessor":"/root/dgc4_review_prose_luna","trigger":"user-directed","stopped":"Luna completed the bounded compound-imperative prose repair and stopped; its command-file change is preserved for semantic anchor and fresh-adoption repair","preserved":"c34ed317a35108d282b7b922f4faf0997a51e9eb"}],"5-ground-semantic-findings.md":[{"session":"/root/dgc5_author","assignment":"debug-loop-dgc5","model":"gpt-6-astra","effort":"low","source":"414c5697d71093df835f3701c26f602a028354b3","native_ref":"codex:collaboration/spawn_agent/dgc5_author"},{"session":"/root/dgc5_prose_luna","assignment":"debug-loop-dgc5-evidence-prose","model":"gpt-5.6-luna","effort":"medium","source":"602edd9460b24adeac58007f771dc4bd771c594e","native_ref":"codex:collaboration/spawn_agent/dgc5_prose_luna","predecessor":"/root/dgc5_author","trigger":"user-directed","stopped":"the Astra author completed final adoption and stopped with only overlong evidence paragraphs preserved after prose-mechanics failed","preserved":"602edd9460b24adeac58007f771dc4bd771c594e"},{"session":"/root/dgc5_author","assignment":"debug-loop-dgc5-finalize-evidence","model":"gpt-6-astra","effort":"low","source":"3d19c2139cf7417debb5e544d4ec4b56f813545f","preserved":"3d19c2139cf7417debb5e544d4ec4b56f813545f","predecessor":"/root/dgc5_prose_luna","trigger":"user-directed","stopped":"Luna split only the two overlong evidence paragraphs without wording changes and stopped; Ticket 5 evidence remains preserved","native_ref":"codex:collaboration/followup_task/dgc5_author@3d19c213"},{"session":"/root/dgc5_history_repair","assignment":"debug-loop-dgc5-history-and-ste-repair","model":"gpt-6-astra","effort":"low","source":"7d73c40e1f161c5965bb455a62b11fbb759eec82","native_ref":"codex:collaboration/spawn_agent/dgc5_history_repair","predecessor":"/root/dgc5_author","trigger":"user-directed","stopped":"formal Standards review found the historical red duplicate-ledger commit and a bounded STE repair; the final clean Ticket 5 content is preserved","preserved":"7d73c40e1f161c5965bb455a62b11fbb759eec82"},{"session":"/root/dgc5_review_prose_luna","assignment":"debug-loop-dgc5-review-prose-repair","model":"gpt-5.6-luna","effort":"medium","source":"6c0cd955a5962851debbcfa8f37c7982fa41a2e3","preserved":"6c0cd955a5962851debbcfa8f37c7982fa41a2e3","predecessor":"/root/dgc5_history_repair","trigger":"user-directed","stopped":"the authorized post-602edd94 history reconstruction completed green with red commit 3d19c213 omitted; the two formal-review STE sentence repairs remain","native_ref":"codex:collaboration/spawn_agent/dgc5_review_prose_luna"},{"session":"/root/dgc5_ste_repair_astra","assignment":"debug-loop-dgc5-ste-anchor-and-adoption-repair","model":"gpt-6-astra","effort":"low","source":"9ae5d0d3bfd47a9785ede8b9bca3cb1024d228a9","preserved":"9ae5d0d3bfd47a9785ede8b9bca3cb1024d228a9","predecessor":"/root/dgc5_review_prose_luna","trigger":"user-directed","stopped":"Luna completed the bounded STE sentence repair and stopped; exact anchor, fixture, fresh adoption, and review evidence remain","native_ref":"codex:collaboration/spawn_agent/dgc5_ste_repair_astra"}]}},"chunks":[{"id":"DG-C1","tickets":["1-retain-debug-authorship.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"restore the blanket write-delegate debug ban","ticket":"1-retain-debug-authorship.md"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner","ticket":"1-retain-debug-authorship.md"},{"id":"budgets","command":"bench test --check guidance-prose-budgets","ticket":"1-retain-debug-authorship.md"}]},{"id":"DG-CR","tickets":["1a-enable-unified-review-trial.md"],"verification":[{"id":"reviewrecord","command":"bench test --package ./internal/reviewrecord --run 'TestDelegated.*Review'","probe":"omit the explicit unified-review mode while reusing one reviewer","ticket":"1a-enable-unified-review-trial.md"},{"id":"checkpoint","command":"bench test --package ./internal/gate --run TestDelegatedDistinctAxes","ticket":"1a-enable-unified-review-trial.md"},{"id":"prose","command":"bench test --check prose-mechanics","ticket":"1a-enable-unified-review-trial.md"}]},{"id":"DG-C2","tickets":["2-guide-spec-evidence.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"require an executable red for a new-feature specification","ticket":"2-guide-spec-evidence.md"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner","ticket":"2-guide-spec-evidence.md"},{"id":"budgets","command":"bench test --check guidance-prose-budgets","ticket":"2-guide-spec-evidence.md"}]},{"id":"DG-C3","tickets":["3-slice-complete-outcomes.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"merge useful outcomes solely because their writes overlap","ticket":"3-slice-complete-outcomes.md"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner","ticket":"3-slice-complete-outcomes.md"},{"id":"budgets","command":"bench test --check guidance-prose-budgets","ticket":"3-slice-complete-outcomes.md"}]},{"id":"DG-C4","tickets":["4-drive-implementation-evidence.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"remove the focused rerun after each material action","ticket":"4-drive-implementation-evidence.md"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner","ticket":"4-drive-implementation-evidence.md"},{"id":"budgets","command":"bench test --check guidance-prose-budgets","ticket":"4-drive-implementation-evidence.md"}]},{"id":"DG-C5","tickets":["5-ground-semantic-findings.md"],"verification":[{"id":"anchors","command":"bench test --check docs-currency-workflow","probe":"restore unconditional real-run evidence for mandatory standards","ticket":"5-ground-semantic-findings.md"},{"id":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner","ticket":"5-ground-semantic-findings.md"},{"id":"budgets","command":"bench test --check guidance-prose-budgets","ticket":"5-ground-semantic-findings.md"}]}],"final_verification":[{"id":"acceptance","command":"bench coverage --check specs/debug-loop-guidance/spec.md"},{"id":"integration","command":"bench test --check docs-currency-workflow"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"}]}
 ```
 
 ## Testing decisions
@@ -262,6 +280,8 @@ Review-owned rows test real behavior and do not infer it from prose presence.
 | DG41 | 41 | The changed guidance preserves the existing prose budgets. | `guidance-prose-budgets`: `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetsHoldOnTheLiveTree`) | A budget increase pays for unnecessary guidance growth. |
 | DG42 | 42 | Debug keeps its Phase 1 through Phase 6 procedure and local loop-constructions reference. | review-owned: `reviews/debug-loop-guidance.md`, DG-C1 preservation evidence | A universal loop replaces the concrete local procedure. |
 | DG43 | 43 | Coverage constructs an independent bypass that preserves claimed positive evidence while violating the requirement when such a state is possible. | `docs-currency-workflow`, canary `dg-43` at `.agents/skills/bench-craft-review/SKILL.md`  `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | The axis replays supplied mutations and misses a contradictory state that still satisfies the positive check. |
+| DG44 | 44 | An explicit plan mode permits one independent reviewer to supply all three separately recorded axes while the omitted mode retains distinct sessions. | `internal/reviewrecord/delegated_test.go` (`TestDelegatedRecordVersions`), `internal/gate/delegated_checkpoint_test.go` (`TestDelegatedDistinctAxes`) | The opt-in weakens the default, accepts a participant, or collapses the axes into one result. |
+| DG45 | 45 | A unified review reports whether an issue or miss exposes an improvement to the implementation-command prose. | `prose-mechanics`, review-owned: `reviews/debug-loop-guidance.md`, DG-CR trial evidence | A review identifies a workflow-caused miss without evaluating the command that directed the implementation. |
 
 ### Fresh-session adoption tasks
 
@@ -314,11 +334,13 @@ Audience: The guidance serves each repository that links the kit. The conformanc
 | Evidence is missing or contradictory | DG37 preserves uncertainty. |
 | Adoption evidence is missing, stale, or failed | DG7, DG8, DG16, DG24, DG32, DG39, and DG40 remain open. |
 
-No new parser, directory reader, executable hop, environment variable, or package-variable substitution enters this build.
+The critical debug repair adds one opt-in anchor normalization for case and ordinary Markdown emphasis.
+It is not a general Markdown parser.
+No new directory reader, executable hop, environment variable, or package-variable substitution enters this build.
 The hostile-input checklist therefore adds no path, empty-directory, symlink, process, or external-service behavior.
 The existing gate and fixture readers retain those contracts.
 
-Won't handle: New parser edge behavior — the existing conformance and ticket readers remain the in-scope callers.
+Won't handle: Full Markdown parsing, links, entities, HTML formatting, code-span interpretation, or semantic paraphrase detection.
 Won't handle: Debug phase redesign — retain "No red-capable command, no Phase 2" and "Do not proceed until you have reproduced and minimised".
 Won't handle: Trial comparison — ordinary review evidence remains the in-scope adoption record.
 
@@ -326,7 +348,9 @@ Won't handle: Trial comparison — ordinary review evidence remains the in-scope
 
 - `.agents/commands/bench-debug.md`
 - `.agents/commands/bench-implement-spec.md`
+- `.agents/commands/bench-review-implementation.md`
 - `.agents/skills/bench-craft-delegate/SKILL.md`
+- `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`
 - `.agents/skills/bench-craft-review/SKILL.md`
 - `.agents/skills/bench-craft-review/references/finding-discipline.md`
 - `.agents/skills/bench-craft-spec/SKILL.md`
@@ -334,23 +358,48 @@ Won't handle: Trial comparison — ordinary review evidence remains the in-scope
 - `CHANGELOG.md`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
+- `cmd/bench/anchors_command.go`
+- `cmd/bench/anchor_help_test.go`
 - `cmd/bench/help_inventory_test.go`
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
 - `internal/anchors/registry_debug_loop.go`
+- `internal/anchors/registry.go`
+- `internal/anchors/anchor_harness_diagnostics_test.go`
+- `internal/anchors/match.go`
+- `internal/anchors/match_test.go`
+- `internal/anchors/locate.go`
+- `internal/anchors/locate_test.go`
+- `internal/anchors/registry_ft311_review_dispatch.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
+- `internal/gate/delegated_checkpoint_test.go`
+- `internal/gate/review_checkpoint_test.go`
+- `internal/reviewrecord/coverage.go`
+- `internal/reviewrecord/delegated.go`
+- `internal/reviewrecord/delegated_test.go`
+- `internal/reviewrecord/plan.go`
+- `internal/reviewrecord/record.go`
+- `projects/benchkit.md`
 - `reviews/debug-loop-guidance.md`
 - `tests/canary/claude-agent-definitions`
+- `tests/canary/guidance-prose-budgets`
+- `tests/canary/line-routing`
+- `tests/canary/skill-description-budgets`
 - `tests/canary/skills-index-command-adapters/debug-implicit-invocation-reverted`
 - `tests/canary/workflow-guidance-anchors`
 
 These fences are the union of the five ticket Writes fields.
+
 The command registry paths close the current `internal/tickets/registry_data.go` binding for the anchors package.
 Their inclusion does not authorize a new CLI command or a product change.
 Keep each unchanged unless its existing inventory requires a mechanical update.
+
 The fixture directories close the current pinning rules for guidance owners.
+
+The review-record paths implement only the explicit unified-review opt-in and retain the distinct-session default.
+
 Build-time guidance rewrites exclude `specs/*/spec.md` and `specs/*/tickets/` by name.
 
 ## Out of scope
