@@ -879,6 +879,71 @@ After the two repairs, one sonnet / high later pass per axis ran at tip c82bd884
 | review finding | CD4-C2 | claimed | 8 | refuted | opus / medium / Coverage |
 | review finding | CD4-C3 | claimed | 7 | refuted | opus / medium / Coverage |
 
+## CD5 review
+
+The frozen pair is base `1e2eb6f1a33e0c2183519b8ab6b7b5b6f5f6675f` and tip `ce58acffd6c5121cec475758eb2889ae0a176a2a`, ticket 6. Each axis ran opus / medium in its own read-only worktree. This is the last chunk, so the Spec axis also reconciled every acceptance row against the pickup.
+
+The raw finding count is 10. The de-duplicated repair target count is 7. CD5 consumed 1 repair cycle of its 2, sent to the ticket 6 author as one batch. Every finding is prose, a table cell, or a label; no production file changed after the CD4 checkpoint.
+
+### Standards
+
+Finding count: 4 auto-fix, 1 judgment call. Worst issue: a comma splice and three over-length bullets in the changelog entry.
+
+| id | finding | citation | confidence | disposition | label |
+| --- | --- | --- | --- | --- | --- |
+| CD5-S1 | The routing bullet joins three clauses with a bare comma. | ste-prose, one idea per sentence. | 7 | auto-fix | held |
+| CD5-S2 | One changelog bullet runs to 34 words and coins `unstatable`. | ste-prose, sentence length and approved vocabulary. | 7 | auto-fix | held |
+| CD5-S3 | Two more bullets run to 29 and 30 words. | ste-prose, sentence length; the file's own bullets run 17 to 21 words. | 6 | auto-fix | held |
+| CD5-S4 | The aggregate row id `CR22 (CD2b)` exists in no source table. | AGENTS.md, one source per fact; the section's own "no row is invented" sentence. | 5 | auto-fix | held |
+| CD5-S5 | The aggregate table restates all pairs already held in the five chunk tables. | One source per fact; ticket 6 commissions the copy. | 4 | no-op | refuted |
+
+The axis recomputed the counts and the Brier sum from the five per-chunk tables and found every figure equal to the aggregate. The completion record's chunk tips match the fenced record, and both co-named changelog fixtures keep their bytes.
+
+### Spec
+
+Finding count: 3. Worst issue: the line-declaration row carried no label, so CR27's third surface was not met as written.
+
+| id | finding | citation | confidence | disposition | label |
+| --- | --- | --- | --- | --- | --- |
+| CD5-P1 | The only line-declaration pair had an empty label cell, so CR27's "at least one labeled row for each of the three surfaces" was short. | Spec row CR27; the ticket's own deferral sentence. | 8 | ask-user | held |
+| CD5-P2 | The author-evidence gate-prose row states 13 edited Markdown files; the build authored 17. | Spec row CR33; the axis reran the lane over all 17 and every file passed. | 9 | auto-fix | held |
+| CD5-P3 | The aggregate row for CR35 reads `claimed` where the CD4 repair table reads `verified`. | One source per fact; the confidence and label are unchanged. | 7 | auto-fix | held |
+
+The coordinator resolved CD5-P1 without a reviewer round trip, because the spec's expectation-label rule already decides it. The declaration expected one repair round for the run. The pickup records four: two cycles on CD2b, one on CD4, and one on CD5. The rule labels the expectation `refuted`, and the repair writes that label and its score of 0.36 into the aggregate. The reconciliation table the axis returned closes every row CR1 to CR38, with CR29 removed by a recorded decision.
+
+### Coverage
+
+Finding count: 2. Worst issue: the same unlabeled declaration row, returned as `verified` at confidence 9.
+
+| id | finding | citation | confidence | disposition | label |
+| --- | --- | --- | --- | --- | --- |
+| CD5-C1 | CR27 was returned `verified` while the line-declaration surface had no labeled row. | Spec row CR27; the pickup's own justification sentence. | 8 | ask-user | held |
+| CD5-C2 | The aggregate said the retro fills the table "from this section alone" with a pair count of 61 over a denominator of 60, which would carry an unlabeled row into the retro table. | Spec Won't-handle on a claim with no label at retro time; rows CR20 and CR21. | 7 | auto-fix | held |
+
+CD5-C1 closes with CD5-P1. CD5-C2 closes by stating that the retro table holds labeled rows only and that the labeled count equals the denominator.
+
+The axis confirmed the cross-chunk invariants. Every fenced canary exists and bites. The three skills sit at or under budget. The reviewrecord package is byte-identical to the spec base. The scaffold renders the table, and two fresh probes on CD3 and CD4 anchors bit.
+
+### Pairs recorded for CD5
+
+| surface | claim | status | confidence | label | model / effort / role |
+| --- | --- | --- | --- | --- | --- |
+| delegate return | CR27 | verified | 9 | held | opus / high / author |
+| delegate return | CR33 | verified | 9 | held | opus / high / author |
+| review finding | CD5-S1 | claimed | 7 | held | opus / medium / Standards |
+| review finding | CD5-S2 | claimed | 7 | held | opus / medium / Standards |
+| review finding | CD5-S3 | claimed | 6 | held | opus / medium / Standards |
+| review finding | CD5-S4 | claimed | 5 | held | opus / medium / Standards |
+| review finding | CD5-S5 | claimed | 4 | refuted | opus / medium / Standards |
+| review finding | CD5-P1 | claimed | 8 | held | opus / medium / Spec |
+| review finding | CD5-P2 | claimed | 9 | held | opus / medium / Spec |
+| review finding | CD5-P3 | claimed | 7 | held | opus / medium / Spec |
+| review finding | CD5-C1 | claimed | 8 | held | opus / medium / Coverage |
+| review finding | CD5-C2 | claimed | 7 | held | opus / medium / Coverage |
+| line declaration | Expected repair rounds: 1 / confidence 6 | claimed | 6 | refuted | fable / low / orchestrator |
+
+The CR27 and CR33 labels come from the gate lane at the CD5 tip and the Spec axis's own prose-lane rerun over all seventeen files. The pairs in this table land after the aggregate was written. The CD5 aggregate therefore holds the pairs of CD1 to CD4 plus the declaration. This table is the record for the CD5 pairs themselves.
+
 ## Native review record
 
 The fenced payload below retains every terminal return for the checkpoint. The first CD1 Standards occurrence lists its two findings; a later occurrence supersedes it after the evidence-only correction is reaffirmed. The first CD2 Coverage occurrence lists its actionable finding; the reaffirmation supersedes it after the reviewer decision. The amendment list maps each plan digest to its successor across the two assignment commits and the CD2b expansion.
