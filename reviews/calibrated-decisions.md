@@ -81,6 +81,8 @@ Finding count: 2 judgment calls, 0 hard violations. Worst issue: the registry te
 
 CD1-S1 is `no-op`. The exemplar pair `registry_ticket_passes.go` and its test hold the same shape. The Coverage axis showed the red route through `anchorHarness.check` and the fixture-bite run. The coordinator repaired CD1-S2 in this pickup as an evidence-only correction. The paragraph now names the CR14 exception in its first sentence.
 
+A sonnet / xhigh reaffirmation pass in its own worktree confirmed the correction. It found CD1-S2 gone, CD1-S1 still `no-op`, no other claim changed, and no new finding.
+
 The axis gave two items of optional advice with no confidence. Replace the derived count "the 525 earlier fixtures" with "every earlier fixture". Prefer "for every status" over "whatever its status" in the reference. Both stay open. The reference bytes are the spec's pasted needle, and the count is run evidence.
 
 ### Spec
@@ -208,6 +210,26 @@ The fenced payload below retains every terminal return for the checkpoint. The f
           "tip": "09f26779f65b7938f313cff9ec877fabe9d009f5",
           "finding_ids": ["CD1-S1", "CD1-S2"],
           "supersedes": []
+        },
+        {
+          "id": "cd1-standards-r2",
+          "performer": "claude:bench-reviewer/cd-c1-standards-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "xhigh",
+          "source_digest": "e4866f1d8569f350474dcf28334a23f195baedd8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c1-standards-r2-20260917@09f26779",
+            "digest": "sha256:3bb29329cb87762c6aa5d13b5c81412238dc14bc68c213f8960525cf1e869255",
+            "excerpt": "Verdict: pass. CD1-S2 repaired in the pickup; CD1-S1 no-op holds against the tree; no new findings."
+          },
+          "axis": "Standards",
+          "base": "9148850200714f000eec2fbf44cddea6182f95c7",
+          "tip": "09f26779f65b7938f313cff9ec877fabe9d009f5",
+          "finding_ids": [],
+          "supersedes": ["cd1-standards"]
         },
         {
           "id": "cd1-spec",
