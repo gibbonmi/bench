@@ -6,6 +6,8 @@ import (
 
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
+	specref "github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/tickets"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -128,4 +130,59 @@ func renderLegacyBuildPacket(root string, facts Facts, pack *chargeevidence.Pack
 		sources: listed,
 		next:    chargeInvocation(modeBuild, facts, name),
 	}, full)
+}
+
+// currentEvidenceCommand binds one prepared artifact to the current action. The manifest
+// supplies the frozen selectors; the assignment, the checkout state, the source pair, and
+// the required bytes come from the current checkout, so a released assignment, a dirty
+// checkout, a moved source, or a changed required source refuses. The binding names the
+// current assignment, never the assignment that prepared the artifact.
+func currentEvidenceCommand(root, identity string, args []string) (string, int) {
+	artifact, refusal, code := evidencecmd.OpenEvidence(root, identity)
+	if refusal != "" {
+		return refusal, code
+	}
+	defer artifact.Close()
+	manifest, _ := artifact.Manifest()
+	selection := manifest.Selection
+	return preparedAttempts(root, selection.Mode, specref.LiveSpecSlug(selection.Spec), selection.Base, "", "check", args, func(facts Facts) (string, int) {
+		if refusal := preparationCheckoutRefusal(root, facts, "check"); refusal != "" {
+			return refusal, 1
+		}
+		if verdict := Decide(facts); verdict.Red {
+			return chargeVerdictRefusal(boundedVerdict(verdict)), 1
+		}
+		if facts.SourceTip != selection.SourceTip {
+			return chargeRefusal("source", "the current source tip "+facts.SourceTip+" is not the prepared source tip "+selection.SourceTip,
+				"prepare evidence for the current source and rerun the exact check"), 1
+		}
+		if refusal := currentSourcesRefusal(root, facts, manifest); refusal != "" {
+			return refusal, 1
+		}
+		text, err := chargeevidence.Current{Evidence: identity, Assignment: facts.AssignmentTarget,
+			Base: selection.Base, SourceTip: facts.SourceTip}.Encode()
+		if err != nil {
+			return toon.RenderError(err) + "\n", 1
+		}
+		return text, 0
+	})
+}
+
+// currentSourcesRefusal compares every prepared repository source with the bytes the
+// current source tip holds, so unchanged Git pins alone cannot authorize action.
+func currentSourcesRefusal(root string, facts Facts, manifest chargeevidence.Manifest) string {
+	for _, source := range manifest.Sources {
+		if source.Kind != chargeevidence.KindRepository {
+			continue
+		}
+		data, failure := loadChargeSource(root, facts.SourceTip, source.Path)
+		if failure != "" {
+			return chargeRefusal("source", failure, "restore the named canonical source and rerun the exact check")
+		}
+		if chargeevidence.Digest(data) != source.SHA256 {
+			return chargeRefusal("source", source.Path+" differs from the prepared evidence",
+				"prepare evidence for the current sources and rerun the exact check")
+		}
+	}
+	return ""
 }

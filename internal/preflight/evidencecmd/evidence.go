@@ -19,6 +19,7 @@ var evidenceRecovery = map[string]string{
 	chargeevidence.RefuseExisting: "inspect the corrupt published artifact; Bench replaced nothing",
 	chargeevidence.RefuseReplaced: "rerun the exact read after the store stops changing",
 	chargeevidence.RefuseCursor:   "rerun the read with the next command a previous page printed",
+	chargeevidence.RefuseSource:   "read the manifest and name one source identifier it declares",
 }
 
 // evidenceStore opens the repository-common store for root. It creates nothing.
@@ -42,8 +43,8 @@ func SelectQuota(op Operation, identity string, flags map[string]string) (uint64
 		}
 		quota = value
 	}
-	if op.Kind == KindReadEvidence {
-		return quota, operandRefusal(identity, flags[flagCursor])
+	if op.Kind == KindReadEvidence || op.Kind == KindVerifyEvidence || op.Kind == KindCurrentEvidence {
+		return quota, operandRefusal(identity, flags[flagSource], flags[flagCursor])
 	}
 	return quota, ""
 }
@@ -88,7 +89,7 @@ func Prepare(root string, quota uint64, run func(stage func(pack *chargeevidence
 	text, err := chargeevidence.Prepared{
 		Evidence: pack.Identity(), Mode: m.Selection.Mode, Base: m.Selection.Base, SourceTip: m.Selection.SourceTip,
 		Assignment: assignment, Sources: len(m.Sources), Pages: len(m.Pages), ManifestBytes: len(pack.ManifestBytes()),
-		Next: evidenceInvocation(pack.Identity(), ""),
+		Next: evidenceInvocation(pack.Identity(), "", ""),
 	}.Encode()
 	if err != nil {
 		staged.Discard()
@@ -101,45 +102,67 @@ func Prepare(root string, quota uint64, run func(stage func(pack *chargeevidence
 }
 
 // operandRefusal validates the read operands before any path use. A refusal names a
-// hostile operand only by length and digest.
-func operandRefusal(identity, cursor string) string {
+// hostile operand only by length and digest. A source read pairs its cursor with the
+// selected source, so a cursor from another stream refuses before the store opens.
+func operandRefusal(identity, source, cursor string) string {
 	if !chargeevidence.ValidIdentity(identity) {
 		return toon.Usage(Grammar.Cmd, boundedOperand("invalid evidence identifier", identity))
+	}
+	if source != "" && !chargeevidence.ValidSourceID(source) {
+		return toon.Usage(Grammar.Cmd, boundedOperand("invalid source identifier", source))
 	}
 	if cursor == "" {
 		return ""
 	}
-	if _, err := chargeevidence.ParseCursor(cursor, identity); err != nil {
+	position, err := chargeevidence.ParseCursor(cursor, identity)
+	if err != nil {
 		return toon.Usage(Grammar.Cmd, boundedOperand("invalid cursor", cursor)+" "+refusalClass(err))
+	}
+	if source != "" && chargeevidence.SourceID(position.Ordinal) != source {
+		return toon.Usage(Grammar.Cmd, boundedOperand("invalid cursor", cursor)+" names another source than "+source)
 	}
 	return ""
 }
 
-// Read prints one bounded fragment of the default evidence stream at the position the
-// cursor flag names. It keeps no reading state: the cursor alone names the position.
-func Read(root, identity string, flags map[string]string) (string, int) {
+// OpenEvidence opens one published artifact for a read that needs its manifest. The caller
+// closes the artifact; a refusal carries its own exit code.
+func OpenEvidence(root, identity string) (*chargeevidence.Artifact, string, int) {
 	store, refusal := evidenceStore(root)
 	if refusal != "" {
-		return refusal, 1
+		return nil, refusal, 1
 	}
 	artifact, err := store.Open(identity)
 	if err != nil {
-		return storeRefusal(err), 1
+		return nil, storeRefusal(err), 1
+	}
+	return artifact, "", 0
+}
+
+// Read prints one bounded fragment at the position the cursor flag names. Without a source
+// flag it reads the default stream; with one it reads only that declared source and ends
+// after it. It keeps no reading state: the flags alone name the position.
+func Read(root, identity string, flags map[string]string) (string, int) {
+	artifact, refusal, code := OpenEvidence(root, identity)
+	if refusal != "" {
+		return refusal, code
 	}
 	defer artifact.Close()
-	cursor := artifact.First()
-	if cursorText := flags[flagCursor]; cursorText != "" {
-		if cursor, err = chargeevidence.ParseCursor(cursorText, identity); err != nil {
-			return storeRefusal(err), 1
-		}
+	source := flags[flagSource]
+	cursor, refusal := readCursor(artifact, identity, source, flags[flagCursor])
+	if refusal != "" {
+		return refusal, 1
 	}
-	fragment, err := artifact.Read(cursor)
+	read := artifact.Read
+	if source != "" {
+		read = artifact.ReadWithin
+	}
+	fragment, err := read(cursor)
 	if err != nil {
 		return storeRefusal(err), 1
 	}
 	next := ""
 	if fragment.Next != nil {
-		next = evidenceInvocation(identity, fragment.Next.String())
+		next = evidenceInvocation(identity, source, fragment.Next.String())
 	}
 	text, err := fragment.Encode(identity, next)
 	if err != nil {
@@ -148,10 +171,52 @@ func Read(root, identity string, flags map[string]string) (string, int) {
 	return text, 0
 }
 
+// readCursor resolves the requested position: the named cursor, the first page of the
+// selected source, or the first fragment of the default stream.
+func readCursor(artifact *chargeevidence.Artifact, identity, source, cursorText string) (chargeevidence.Cursor, string) {
+	if cursorText != "" {
+		cursor, err := chargeevidence.ParseCursor(cursorText, identity)
+		if err != nil {
+			return chargeevidence.Cursor{}, storeRefusal(err)
+		}
+		return cursor, ""
+	}
+	if source == "" {
+		return artifact.First(), ""
+	}
+	ordinal, err := artifact.SourceOrdinal(source)
+	if err != nil {
+		return chargeevidence.Cursor{}, storeRefusal(err)
+	}
+	return chargeevidence.Cursor{Identity: identity, Ordinal: ordinal}, ""
+}
+
+// Verify reads every stored page and source digest of one artifact and prints the complete
+// verification result. It certifies stored bytes, never consumer delivery.
+func Verify(root, identity string) (string, int) {
+	artifact, refusal, code := OpenEvidence(root, identity)
+	if refusal != "" {
+		return refusal, code
+	}
+	defer artifact.Close()
+	verified, err := artifact.Verify()
+	if err != nil {
+		return storeRefusal(err), 1
+	}
+	text, err := verified.Encode()
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return text, 0
+}
+
 // evidenceInvocation is the exact read command for one artifact position. An empty cursor
-// is the manifest-first command.
-func evidenceInvocation(identity, cursor string) string {
+// is the manifest-first command, and a source read repeats its source flag.
+func evidenceInvocation(identity, source, cursor string) string {
 	args := []string{"bench", "preflight", modeEvidence, identity}
+	if source != "" {
+		args = append(args, flagSource, source)
+	}
 	if cursor != "" {
 		args = append(args, flagCursor, cursor)
 	}

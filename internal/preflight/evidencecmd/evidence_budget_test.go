@@ -33,7 +33,7 @@ func seedLargeEvidence(t *testing.T) (root string, args []string, fence []string
 	return root, preflighttest.LegacyCommitted(t, root, slug, "large evidence", false), fence, ticket
 }
 
-// TestEvidenceResponseBudget is CE13, CE131, CE132, CE138, and CE139.
+// TestEvidenceResponseBudget is CE13, CE131, CE132, CE133, CE134, CE138, and CE139.
 func TestEvidenceResponseBudget(t *testing.T) {
 	_, args, _, _ := seedLargeEvidence(t)
 	identity, _, prepared := prepareEvidence(t, args)
@@ -51,6 +51,16 @@ func TestEvidenceResponseBudget(t *testing.T) {
 	if manifestPages < 1 || sourcePages < 10 {
 		t.Fatalf("expansion fixture produced %d manifest and %d source pages", manifestPages, sourcePages)
 	}
+	verified, code := preflight.Command([]string{"evidence", identity, "--verify"})
+	if code != 0 {
+		t.Fatalf("verify exit = %d:\n%s", code, verified)
+	}
+	cases["CE133 verify"] = verified
+	current, code := preflight.Command([]string{"evidence", identity, "--check-current"})
+	if code != 0 {
+		t.Fatalf("check-current exit = %d:\n%s", code, current)
+	}
+	cases["CE134 check-current"] = current
 	usage, code := preflight.Command([]string{"build", strings.Repeat("s", 70000)})
 	if code != 2 {
 		t.Fatalf("oversized usage exit = %d", code)
@@ -68,7 +78,8 @@ func TestEvidenceResponseBudget(t *testing.T) {
 	}
 }
 
-// TestEvidenceResponseBound is the guard half of CE13, CE131, CE132, CE138, and CE139. Under
+// TestEvidenceResponseBound is the guard half of CE13, CE131, CE132, CE133, CE134, CE138,
+// and CE139. Under
 // a lowered in-process limit, every bounded path's response becomes the bounded defect
 // refusal, so a path that skips the shared guard turns its case red.
 func TestEvidenceResponseBound(t *testing.T) {
@@ -85,6 +96,9 @@ func TestEvidenceResponseBound(t *testing.T) {
 		{"CE13 build preparation", args},
 		{"CE131 manifest read", []string{"evidence", identity}},
 		{"CE132 source read", []string{"evidence", identity, "--cursor", source}},
+		{"CE132 selected source read", []string{"evidence", identity, "--source", "s2"}},
+		{"CE133 verify", []string{"evidence", identity, "--verify"}},
+		{"CE134 check-current", []string{"evidence", identity, "--check-current"}},
 		{"CE138 oversized operand usage", []string{"build", strings.Repeat("s", 2000)}},
 		{"CE138 grammar usage", []string{"build", slug, "--unknown"}},
 		{"CE138 operation usage", []string{"build", slug, "--full"}},

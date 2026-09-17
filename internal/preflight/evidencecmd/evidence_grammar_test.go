@@ -221,3 +221,96 @@ func TestEvidenceCursorRefusals(t *testing.T) {
 		}
 	}
 }
+
+// TestEvidenceSourceGrammar is CE174: the source-selected read accepts exactly its declared
+// forms, including valid cursor pairing, and refuses every other combination.
+func TestEvidenceSourceGrammar(t *testing.T) {
+	root, slug := preflighttest.SeedConformant(t)
+	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+	hex := strings.TrimPrefix(identity, "sha256:")
+	for _, form := range [][]string{
+		{"evidence", identity, "--source", "s2"},
+		{"evidence", identity, "--source", "s2", "--cursor", "v1." + hex + ".s.2.0"},
+		{"evidence", "--source", "s2", identity},
+	} {
+		if out, code := preflight.Command(form); code != 0 || !strings.HasPrefix(out, "page[1]") {
+			t.Fatalf("accepted form %v = (%d):\n%s", form, code, out)
+		}
+	}
+	for _, test := range []struct {
+		name string
+		args []string
+		code int
+		want string
+	}{
+		{"missing source value", []string{"evidence", identity, "--source"}, 2, "missing argument: --source"},
+		{"duplicate source", []string{"evidence", identity, "--source", "s2", "--source", "s3"}, 2, "unknown argument: --source"},
+		{"extra operand", []string{"evidence", identity, "--source", "s2", "extra"}, 2, "unknown argument: extra"},
+		{"malformed source", []string{"evidence", identity, "--source", "specs/example/spec.md"}, 2, "invalid source identifier bytes="},
+		{"zero source", []string{"evidence", identity, "--source", "s0"}, 2, "invalid source identifier bytes="},
+		{"padded source", []string{"evidence", identity, "--source", "s02"}, 2, "invalid source identifier bytes="},
+		{"cursor of another source", []string{"evidence", identity, "--source", "s2", "--cursor", "v1." + hex + ".s.3.0"}, 2, "names another source than s2"},
+		{"manifest cursor", []string{"evidence", identity, "--source", "s2", "--cursor", "v1." + hex + ".m.0.0"}, 2, "names another source than s2"},
+		{"verify combination", []string{"evidence", identity, "--source", "s2", "--verify"}, 2, "cannot be combined"},
+		{"current combination", []string{"evidence", identity, "--source", "s2", "--check-current"}, 2, "cannot be combined"},
+		{"undeclared source", []string{"evidence", identity, "--source", "s99"}, 1, "unknown-source"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			out, code := preflight.Command(test.args)
+			if code != test.code || !strings.Contains(out, test.want) {
+				t.Fatalf("%s = (%d):\n%s", test.name, code, out)
+			}
+		})
+	}
+}
+
+// TestEvidenceVerifyGrammar is CE158 and TestEvidenceCurrentGrammar is CE159: each mode
+// accepts only its exclusive declared form and refuses before any store access.
+func TestEvidenceVerifyGrammar(t *testing.T) {
+	assertExclusiveMode(t, "--verify", "verified[1]")
+}
+
+func TestEvidenceCurrentGrammar(t *testing.T) {
+	assertExclusiveMode(t, "--check-current", "current[1]")
+}
+
+// assertExclusiveMode proves that mode accepts only `evidence <id> <mode>` and that every
+// other operand combination refuses with exit 2.
+func assertExclusiveMode(t *testing.T, mode, header string) {
+	t.Helper()
+	root, slug := preflighttest.SeedConformant(t)
+	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+	hex := strings.TrimPrefix(identity, "sha256:")
+	for _, form := range [][]string{{"evidence", identity, mode}, {"evidence", mode, identity}} {
+		if out, code := preflight.Command(form); code != 0 || !strings.HasPrefix(out, header) {
+			t.Fatalf("accepted form %v = (%d):\n%s", form, code, out)
+		}
+	}
+	other := "--verify"
+	if mode == other {
+		other = "--check-current"
+	}
+	for _, test := range []struct{ name, flag, value, want string }{
+		{"with cursor", "--cursor", "v1." + hex + ".m.0.0", "unknown argument: --cursor"},
+		{"with source", "--source", "s2", "cannot be combined"},
+		{"with base", "--base", "main", "unknown argument: --base"},
+		{"with quota", "--max-store-bytes", "5", "unknown argument: --max-store-bytes"},
+		{"with the other mode", other, "", "cannot be combined"},
+		{"duplicate", mode, "", "unknown argument: " + mode},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			args := []string{"evidence", identity, mode, test.flag}
+			if test.value != "" {
+				args = append(args, test.value)
+			}
+			out, code := preflight.Command(args)
+			if code != 2 || !strings.Contains(out, test.want) {
+				t.Fatalf("%s %s = (%d):\n%s", mode, test.name, code, out)
+			}
+		})
+	}
+	// An invalid identifier refuses before any store access.
+	if out, code := preflight.Command([]string{"evidence", "sha256:nope", mode}); code != 2 || !strings.Contains(out, "invalid evidence identifier bytes=") {
+		t.Fatalf("%s with an invalid identifier = (%d):\n%s", mode, code, out)
+	}
+}

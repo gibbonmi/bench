@@ -22,6 +22,8 @@ const (
 	KindProposal
 	KindPrepareEvidence
 	KindReadEvidence
+	KindVerifyEvidence
+	KindCurrentEvidence
 )
 
 // Flag spellings and modes the operations share.
@@ -34,6 +36,9 @@ const (
 	FlagFull     = "--full"
 	flagQuota    = "--max-store-bytes"
 	flagCursor   = "--cursor"
+	flagSource   = "--source"
+	flagVerify   = "--verify"
+	flagCurrent  = "--check-current"
 	modeReview   = "review"
 	ModeBuild    = "build"
 	modeEvidence = "evidence"
@@ -56,6 +61,9 @@ var flagTable = []flagSpec{
 	{FlagFull, ""},
 	{flagQuota, "<n>"},
 	{flagCursor, "<cursor>"},
+	{flagSource, "<source-id>"},
+	{flagVerify, ""},
+	{flagCurrent, ""},
 }
 
 // modeOperands names the positional operand each mode takes.
@@ -91,16 +99,27 @@ var operations = []Operation{
 		description: "propose one ticket's Writes: entries from the pinned source"},
 	{Mode: modeEvidence, optional: []string{flagCursor}, Kind: KindReadEvidence, Bounded: true,
 		description: "print one bounded fragment of a prepared evidence artifact and its exact successor"},
+	{Mode: modeEvidence, selectors: []string{flagSource}, optional: []string{flagCursor}, Kind: KindReadEvidence, Bounded: true,
+		description: "print one bounded fragment of one declared source stream and its exact successor"},
+	{Mode: modeEvidence, selectors: []string{flagVerify}, Kind: KindVerifyEvidence, Bounded: true,
+		description: "verify every stored page and source digest of a prepared evidence artifact"},
+	{Mode: modeEvidence, selectors: []string{flagCurrent}, Kind: KindCurrentEvidence, Bounded: true,
+		description: "bind a prepared evidence artifact to the current assignment and source pair"},
 }
 
-// selectorFlags lists every switch flag in registry order.
-var selectorFlags = switchFlags()
+// selectorFlags lists every flag that chooses a registered form, in flag registry order.
+// The operations below are the one source of that set, so a flag is a selector exactly
+// when some form selects on it.
+var selectorFlags = operationSelectors()
 
-func switchFlags() []string {
+func operationSelectors() []string {
 	var names []string
 	for _, flag := range flagTable {
-		if flag.placeholder == "" {
-			names = append(names, flag.name)
+		for _, op := range operations {
+			if contains(op.selectors, flag.name) {
+				names = append(names, flag.name)
+				break
+			}
 		}
 	}
 	return names
@@ -129,13 +148,13 @@ func grammarFlags() []usage.Flag {
 func (op Operation) usageLine() string {
 	terms := []string{op.Mode, modeOperands[op.Mode]}
 	if len(op.selectors) > 0 {
-		terms = append(terms, op.selectors[0])
+		terms = append(terms, flagTerm(op.selectors[0]))
 	}
 	for _, name := range op.required {
 		terms = append(terms, flagTerm(name))
 	}
-	if len(op.selectors) > 1 {
-		terms = append(terms, op.selectors[1:]...)
+	for _, name := range op.selectors[min(1, len(op.selectors)):] {
+		terms = append(terms, flagTerm(name))
 	}
 	for _, name := range op.optional {
 		terms = append(terms, "["+flagTerm(name)+"]")

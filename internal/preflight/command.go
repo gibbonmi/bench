@@ -72,6 +72,10 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 		return prepareEvidenceCommand(root, slug, base, sourceTip, ticket, quota, args)
 	case evidencecmd.KindReadEvidence:
 		return evidencecmd.Read(root, slug, flags)
+	case evidencecmd.KindVerifyEvidence:
+		return evidencecmd.Verify(root, slug)
+	case evidencecmd.KindCurrentEvidence:
+		return currentEvidenceCommand(root, slug, args)
 	}
 	return verdictCommand(root, op.Mode, slug, base, sourceTip, args)
 }

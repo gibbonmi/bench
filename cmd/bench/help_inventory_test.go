@@ -76,6 +76,9 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench preflight build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> --full  legacy build charge that inlines every source
   bench preflight build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>  propose one ticket's Writes: entries from the pinned source
   bench preflight evidence <id> [--cursor <cursor>]  print one bounded fragment of a prepared evidence artifact and its exact successor
+  bench preflight evidence <id> --source <source-id> [--cursor <cursor>]  print one bounded fragment of one declared source stream and its exact successor
+  bench preflight evidence <id> --verify  verify every stored page and source digest of a prepared evidence artifact
+  bench preflight evidence <id> --check-current  bind a prepared evidence artifact to the current assignment and source pair
   bench repair-pilot activate | report [--full]  collect and report attributed repair evidence for an explicit local pilot
   bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>  run focused Go-test or named-check evidence as TOON; no gate verdict
   bench probe <file> (--swap <old> --with <new> | --omit <old>) (--package <expr> [--run <go-regex>] | --check <name>) [--full]  mutate one file once, run one focused test or check, restore the file, and report bit, silent, invalid, or restore-failed
@@ -144,15 +147,17 @@ func TestEvidenceHelpInventory(t *testing.T) {
 			t.Fatalf("root preflight forms:\n%s\npreflight help forms:\n%s", strings.Join(rootForms, "\n"), strings.Join(preflightForms, "\n"))
 		}
 	})
-	t.Run("preparation and default read", func(t *testing.T) {
-		for _, want := range []string{"build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]", "evidence <id> [--cursor <cursor>]"} {
+	t.Run("preparation and every implemented read", func(t *testing.T) {
+		for _, want := range []string{"build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]",
+			"evidence <id> [--cursor <cursor>]", "evidence <id> --source <source-id> [--cursor <cursor>]",
+			"evidence <id> --verify", "evidence <id> --check-current"} {
 			if !strings.Contains(strings.Join(preflightForms, "\n"), want) {
 				t.Errorf("preflight help omits %q", want)
 			}
 		}
 	})
 	t.Run("no later operation", func(t *testing.T) {
-		for _, later := range []string{"--source ", "--verify", "--check-current", "evidence-clean"} {
+		for _, later := range []string{"evidence-clean"} {
 			if strings.Contains(root.String(), later) || strings.Contains(preflightHelp.String(), later) {
 				t.Errorf("help advertises the later operation %q", later)
 			}
