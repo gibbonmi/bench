@@ -233,14 +233,19 @@ The reviewer decided CD2-C1. A step-scoped anchor kind is a new seam, and the re
 
 ## Native review record
 
-The fenced payload below retains every terminal return for the checkpoint. The first Standards occurrence lists its two findings; a later occurrence supersedes it after the evidence-only correction is reaffirmed.
+The fenced payload below retains every terminal return for the checkpoint. The first CD1 Standards occurrence lists its two findings; a later occurrence supersedes it after the evidence-only correction is reaffirmed. The first CD2 Coverage occurrence lists its actionable finding; the reaffirmation supersedes it after the reviewer decision. The amendment list maps each plan digest to its successor across the two assignment commits and the CD2b expansion.
 
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/calibrated-decisions/spec.md",
-  "plan_digest": "sha256:9a5079a914a8c51fea3eccf16a76b5dbb9a687c7eebec78a9bb84c36bfc6ff94",
+  "plan_digest": "sha256:2a20907b4162c42f8fdc101392a17e0be6300188b009aaabf0ad40dd64f0a105",
   "implementation_session": "",
+  "amendments": [
+    {"from": "sha256:9a5079a914a8c51fea3eccf16a76b5dbb9a687c7eebec78a9bb84c36bfc6ff94", "to": "sha256:bd4a4ea1b9ec05c6aa378023c9c43ff8fae6021cf41f88949e8359bda3f6f601", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
+    {"from": "sha256:bd4a4ea1b9ec05c6aa378023c9c43ff8fae6021cf41f88949e8359bda3f6f601", "to": "sha256:ba0c975ed0afb1fb695519ebdcbedb9b0335d30f4c276c1573643285ee9f9588", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
+    {"from": "sha256:ba0c975ed0afb1fb695519ebdcbedb9b0335d30f4c276c1573643285ee9f9588", "to": "sha256:2a20907b4162c42f8fdc101392a17e0be6300188b009aaabf0ad40dd64f0a105", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD2b": ["CD2b"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}}
+  ],
   "chunks": [
     {
       "id": "CD1",
@@ -385,6 +390,152 @@ The fenced payload below retains every terminal return for the checkpoint. The f
           "tip": "09f26779f65b7938f313cff9ec877fabe9d009f5",
           "finding_ids": [],
           "supersedes": []
+        }
+      ]
+    },
+    {
+      "id": "CD2",
+      "base": "87869759bf975c1f76a6e12ccc638e8471d40dfd",
+      "tip": "1ecb33ec4cede2be8bde4bc07bb648786e906d13",
+      "plan_digest": "sha256:bd4a4ea1b9ec05c6aa378023c9c43ff8fae6021cf41f88949e8359bda3f6f601",
+      "source_digest": "f19df4a3214da33af5e54a114c1e57c3125d3e02",
+      "acceptance_rows": ["CR4", "CR5", "CR6", "CR15", "CR16", "CR22", "CR23", "CR30"],
+      "verification": [
+        {
+          "id": "cd2-workflow",
+          "performer": "claude:bench-writer/cd-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f19df4a3214da33af5e54a114c1e57c3125d3e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t2-author-20260917/cd2-workflow@1ecb33ec",
+            "digest": "sha256:cc727adc79103626f8bcd082dc50aa1a5d10822309e42d08370e67abf77a1bbf",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,906\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "cd2-budgets",
+          "performer": "claude:bench-writer/cd-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f19df4a3214da33af5e54a114c1e57c3125d3e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t2-author-20260917/cd2-budgets@1ecb33ec",
+            "digest": "sha256:6f72c99a424331a3381e284e55ffa703b490f81e19b498e848e8bfc5d9ca25ed",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "cd2-prose",
+          "performer": "claude:bench-writer/cd-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f19df4a3214da33af5e54a114c1e57c3125d3e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t2-author-20260917/cd2-prose@1ecb33ec",
+            "digest": "sha256:7dfafade66e113474640067ea339bf5373b838b6887602e8fa95e42c1ad6b42b",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,175\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "prose",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "cd2-standards",
+          "performer": "claude:bench-reviewer/cd-c2-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "f19df4a3214da33af5e54a114c1e57c3125d3e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c2-standards-20260917@1ecb33ec",
+            "digest": "sha256:7f502333470dcb01f651c27bc503e5baff5924c04166db347939d98b01fc0b5e",
+            "excerpt": "Count: 0 hard violations, 2 judgment calls. CD2-S1 two guidance sources state the 0 to 10 range, confidence 8, no-op. CD2-S2 second test function instead of extending the first, confidence 4, no-op."
+          },
+          "axis": "Standards",
+          "base": "87869759bf975c1f76a6e12ccc638e8471d40dfd",
+          "tip": "1ecb33ec4cede2be8bde4bc07bb648786e906d13",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "cd2-spec",
+          "performer": "claude:bench-reviewer/cd-c2-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "f19df4a3214da33af5e54a114c1e57c3125d3e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c2-spec-20260917@1ecb33ec",
+            "digest": "sha256:d843d14e024bf89611be77c314fd029db3ac267e877c223a642d98c310353eb3",
+            "excerpt": "Finding count: 0. Worst issue: none. Every CD2 row held: CR4, CR5, CR6, CR15, CR16, CR22, CR23, CR30. The author's heading judgment is accepted."
+          },
+          "axis": "Spec",
+          "base": "87869759bf975c1f76a6e12ccc638e8471d40dfd",
+          "tip": "1ecb33ec4cede2be8bde4bc07bb648786e906d13",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "cd2-coverage",
+          "performer": "claude:bench-reviewer/cd-c2-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "f19df4a3214da33af5e54a114c1e57c3125d3e02",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/cd-c2-coverage-20260917@1ecb33ec",
+            "digest": "sha256:990cbaa0ebaa3ab37f47e12ca45d65b63e028748182e49aca4ff5755d7ec8b94",
+            "excerpt": "Finding count: 2. CD2-C1 the CR22 sentence can leave the pickup step under a section-scoped anchor, confidence 7, ask-user. CD2-C2 an appended contradiction beside CR5 stays green, confidence 3, no-op."
+          },
+          "axis": "Coverage",
+          "base": "87869759bf975c1f76a6e12ccc638e8471d40dfd",
+          "tip": "1ecb33ec4cede2be8bde4bc07bb648786e906d13",
+          "finding_ids": ["CD2-C1"],
+          "supersedes": []
+        },
+        {
+          "id": "cd2-coverage-r2",
+          "performer": "claude:bench-reviewer/cd-c2-coverage-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "xhigh",
+          "source_digest": "f19df4a3214da33af5e54a114c1e57c3125d3e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c2-coverage-r2-20260917@1ecb33ec",
+            "digest": "sha256:c86f3caa3e5b0b928f2605f254bcbcc5ca162b5d726c6f592a34436646a3eb85",
+            "excerpt": "Verdict: pass. CD2-C1 routed to chunk CD2b by reviewer decision; CD2-C2 no-op; no unresolved Coverage finding at tip 1ecb33ec; no new finding."
+          },
+          "axis": "Coverage",
+          "base": "87869759bf975c1f76a6e12ccc638e8471d40dfd",
+          "tip": "1ecb33ec4cede2be8bde4bc07bb648786e906d13",
+          "finding_ids": [],
+          "supersedes": ["cd2-coverage"]
         }
       ]
     }
