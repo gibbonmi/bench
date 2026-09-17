@@ -2421,7 +2421,7 @@ The coordinator owns the checkpoint retry.
 {
   "version": 2,
   "spec": "specs/debug-loop-guidance/spec.md",
-  "plan_digest": "sha256:6b7f43297f319ff2f3dade0fab4cabc97d6297b11e3e6afd27609da9ecd95940",
+  "plan_digest": "sha256:73bbfd886728844ad22b1e351fe73571ef141e90ad66144e08c42607ac84b3bd",
   "chunks": [
     {
       "id": "DG-C1",
@@ -3337,21 +3337,477 @@ The coordinator owns the checkpoint retry.
         }
       ]
     }
-    ,{"id":"DG-C5","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"71b8173eba2f028b6ff8ff184913ee7630ade2cc","plan_digest":"sha256:6b7f43297f319ff2f3dade0fab4cabc97d6297b11e3e6afd27609da9ecd95940","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","acceptance_rows":["DG33","DG34","DG35","DG36","DG37","DG38","DG39","DG40","DG41","DG43"],"verification":[{"id":"dg-c5-anchors-checkpoint","performer":"/root/dgc5_ste_repair_astra","role":"author-verification","model":"gpt-6-astra","effort":"low","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"pass","native_ref":{"ref":"codex:session/dgc5_ste_repair_astra/dg-c5-anchors@4e9c5b93","digest":"sha256:23e8059d81f4d0f013100e737d3116923b148cdfe0d24d2924f570e332d95669","excerpt":"packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1510\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"},"requirement":"anchors","command":"bench test --check docs-currency-workflow","exit_code":0,"probe":{"mutation":"restore unconditional real-run evidence for mandatory standards","outcome":"bit","exit_code":1,"restore":"pass","native_ref":{"ref":"codex:session/dgc5_ste_repair_astra/dg-c5-unconditional-real-run@4e9c5b93","digest":"sha256:48466e6aee0696f00201bff8cc5b5431edb05b9b3af8e02b01f64a5a4e35d275","excerpt":"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/skills/bench-craft-review/references/finding-discipline.md,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,1265\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: finding-discipline.md Where an axis under-reads dropped the real run that refutes a strong finding before the report\"\nskips[0]{package,test,reason}:\n"}}},{"id":"dg-c5-bite-checkpoint","performer":"/root/dgc5_ste_repair_astra","role":"author-verification","model":"gpt-6-astra","effort":"low","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"pass","native_ref":{"ref":"codex:session/dgc5_ste_repair_astra/dg-c5-bite@4e9c5b93","digest":"sha256:a4f4f1805dc7542e90a63918e62eea2dac1ba4dcc1cb29bdd1fb853497e35a2e","excerpt":"packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,9755\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"},"requirement":"bite","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner","exit_code":0},{"id":"dg-c5-budgets-checkpoint","performer":"/root/dgc5_ste_repair_astra","role":"author-verification","model":"gpt-6-astra","effort":"low","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"pass","native_ref":{"ref":"codex:session/dgc5_ste_repair_astra/dg-c5-budgets@4e9c5b93","digest":"sha256:3dbcbda9d319f8709d4842f8a33b45a8f7eccd2400c68d4a9d0e378b926d0d7a","excerpt":"packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"},"requirement":"budgets","command":"bench test --check guidance-prose-budgets","exit_code":0},{"id":"dg-c5-ticket-grammar-checkpoint","performer":"/root/dgc5_ste_repair_astra","role":"author-verification","model":"gpt-6-astra","effort":"low","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"pass","native_ref":{"ref":"codex:session/dgc5_ste_repair_astra/dg-c5-ticket-grammar@4e9c5b93","digest":"sha256:cb5c0ac706e5bb32061cfd0b6a8fbe6212bf6f91d452e9bfc7fddcdca435f675","excerpt":"packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1119\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"},"requirement":"ticket-grammar","command":"bench test --check ticket-grammar","exit_code":0}],"reviews":[{"id":"dg-c5-coverage-initial","performer":"/root/dgc5_coverage_review","role":"independent-review","model":"gpt-6-astra","effort":"medium","source_digest":"da7164ba566717ef6f96dd4525a64536fbfbd95f","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_coverage_review","digest":"sha256:8934505013c0c7675ad24543ef94b3e60269f0a6518a3f2b4d3ae021276c2cc4","excerpt":"Coverage: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..7d73c40e1f161c5965bb455a62b11fbb759eec82. DG33–DG38 and DG43 have live owner anchors and biting fixtures. Final adoption source 602edd9460b24adeac58007f771dc4bd771c594e matched all recorded owner hashes and preserved its subject. It independently constructed an additive contradiction before replaying the supplied deletion mutation. DG40's five-family reconciliation was current. Workflow guidance, complete fixture bite, and prose budgets passed with zero failures or skips. No Coverage repair was required."},"axis":"Coverage","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"7d73c40e1f161c5965bb455a62b11fbb759eec82","finding_ids":[],"supersedes":[]},{"id":"dg-c5-spec-initial","performer":"/root/dgc5_spec_review","role":"independent-review","model":"gpt-5.6-sol","effort":"high","source_digest":"da7164ba566717ef6f96dd4525a64536fbfbd95f","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_spec_review","digest":"sha256:436aa0b600855e595e5d29f75898434255cc4e22f8569dd545eaebf368452c99","excerpt":"Spec: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..7d73c40e1f161c5965bb455a62b11fbb759eec82. DG33–DG41 and DG43 were satisfied by candidate-source derivation, runnable refutation, exact-source mandatory-standard evidence, unavailable-run explanation, contrary-evidence inspection, independent positive-preserving Coverage bypass, uncertainty, disposition routing, current adoption, and five-family reconciliation. All focused checks passed with zero skips. No Spec repair was required."},"axis":"Spec","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"7d73c40e1f161c5965bb455a62b11fbb759eec82","finding_ids":[],"supersedes":[]},{"id":"dg-c5-standards-initial","performer":"/root/dgc5_standards_review","role":"independent-review","model":"gpt-5.6-sol","effort":"high","source_digest":"da7164ba566717ef6f96dd4525a64536fbfbd95f","state":"completed","outcome":"fail","native_ref":{"ref":"/root/dgc5_standards_review","digest":"sha256:a6a58b1003ddd115d419bab264dce41bd53f29e10407646cb96c63996b5ccfd5","excerpt":"Standards: FAIL — 2 blocking findings; worst issue: historical red completion-plan commit. Frozen range 414c5697d71093df835f3701c26f602a028354b3..7d73c40e1f161c5965bb455a62b11fbb759eec82. DG-C5-S1 (ask-user): commit 3d19c213 duplicated the Luna assignment and failed completion-plan predecessor validation; an additive commit could not repair the historical invariant, so bounded reconstruction after 602edd94 required user authorization. DG-C5-S2 (auto-fix): craft-review used declarative 'Coverage constructs' and combined 'report no findings' with 'state what you examined', violating one-imperative-per-sentence STE. Other ownership, anchors, registries, budgets, provenance, adoption hashes, and focused checks passed."},"axis":"Standards","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"7d73c40e1f161c5965bb455a62b11fbb759eec82","finding_ids":["DG-C5-S1","DG-C5-S2"],"supersedes":[]},{"id":"dg-c5-standards-cycle1","performer":"/root/dgc5_standards_review","role":"independent-review","model":"gpt-5.6-sol","effort":"high","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"fail","native_ref":{"ref":"/root/dgc5_standards_review","digest":"sha256:2873701cbdbb8e83caac45b61c8c0ef386138f038fa49e0af4dcaae1a5fc6ccc","excerpt":"Standards repair cycle 1: FAIL — 2 blocking findings; worst issue: fresh adoption ran before loading its changed guidance. Frozen range 414c5697d71093df835f3701c26f602a028354b3..9a983a2dbf28e01daef0f3e0f2825b60c66e5afc. DG-C5-S1 is closed: 3d19c213 is outside current ancestry, the recovery ref preserves it, all mapped trees match, and every retained reconstructed commit passes the 12-check review preflight. DG-C5-S2 is closed: the final Coverage instruction is imperative, the no-findings instructions are split, and the matching DG43 owner, anchor, omission fixture, and complete bite suite pass. DG-C5-S3 (P1, auto-fix): the current DG39/DG43 artifact ran unit tests, real-run refutation, and the independent bypass before its first successful committed-owner read, contradicting the record claim and the required load-guidance-first adoption order. Rerun that adoption in a fresh session after successful current-owner reads and replace the evidence. DG-C5-S4 (P2, auto-fix): the repair record claims review preflight passed all 13 checks, but the current and four reconstructed runs report 12; correct the evidence count to 12. One-source ownership, transfer provenance, budgets, and other focused checks pass."},"axis":"Standards","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"9a983a2dbf28e01daef0f3e0f2825b60c66e5afc","finding_ids":["DG-C5-S3","DG-C5-S4"],"supersedes":["dg-c5-standards-initial"]},{"id":"dg-c5-coverage-cycle1","performer":"/root/dgc5_coverage_review","role":"independent-review","model":"gpt-6-astra","effort":"medium","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_coverage_review","digest":"sha256:caf0e75ac1d1b3511771791202c823f9139f7a86ac951de50fe4e66b3cb4d4e2","excerpt":"Coverage cycle 1: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..9a983a2dbf28e01daef0f3e0f2825b60c66e5afc. The repaired DG43 owner, anchor, and fixture agree. Fresh workflow, complete fixture-bite, and prose-budget checks passed with zero failures or skips. Fresh adoption at committed source c264a3f414b32614b321306740e280b76e05660f matches all current owner hashes and preserves its subject. Its independent additive bypass preceded the supplied mutation read and replay. All five adoption families remain current; earlier owners, artifact commits, and preserved dirty-work hashes are unchanged. No Coverage repair is required."},"axis":"Coverage","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"9a983a2dbf28e01daef0f3e0f2825b60c66e5afc","finding_ids":[],"supersedes":["dg-c5-coverage-initial"]},{"id":"dg-c5-spec-cycle1","performer":"/root/dgc5_spec_review","role":"independent-review","model":"gpt-5.6-sol","effort":"high","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_spec_review","digest":"sha256:2217417c3f43b0c101c0b77e219b83db79845fa2968ac54f2f723b94fac0ea6b","excerpt":"Spec repair cycle 1: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..9a983a2dbf28e01daef0f3e0f2825b60c66e5afc. DG33–DG41 and DG43 remain satisfied after the imperative and history repair. Fresh DG39/DG43 adoption at c264a3f414b32614b321306740e280b76e05660f retains real-run refutation, exact-source mandatory-standard evidence, contrary-evidence inspection, uncertainty, disposition routing, and an independent additive bypass before supplied-mutation replay. All five adoption families reconcile. Focused checks, prose mechanics, review-record parsing, and the 45-row coverage map passed with zero skips."},"axis":"Spec","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"9a983a2dbf28e01daef0f3e0f2825b60c66e5afc","finding_ids":[],"supersedes":["dg-c5-spec-initial"]},{"id":"dg-c5-standards-final","performer":"/root/dgc5_standards_review","role":"independent-review","model":"gpt-5.6-sol","effort":"high","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_standards_review","digest":"sha256:f96fe400407f80e5fc3bbad1543e0320dde4786398efd2b93e6cb6fb433c91dc","excerpt":"Standards final re-review: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..71b8173eba2f028b6ff8ff184913ee7630ade2cc. DG-C5-S1 remains closed: 3d19c213 is outside current ancestry, recovery mapping is tree-equal, and all retained reconstructed commits pass the 12-check preflight. DG-C5-S2 remains closed: final STE prose, DG43 owner/anchor/fixture, and complete bite coverage agree. DG-C5-S3 is closed: commands 1–3 in the fresh artifact are successful committed-owner reads, command 4 is the first subject inspection, and the independent bypass precedes supplied-mutation read and replay. DG-C5-S4 is closed: the record and current preflight both report 12 checks. The decoded owner outputs match final hashes aa9ce175, 3a5018f0, and c1b74aa2; the five earlier owner hashes also match. Transfer and recovery provenance are clean, focused checks and record parsing pass with zero skips, both worktrees are clean, and the two-of-two repair allowance is exhausted."},"axis":"Standards","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"71b8173eba2f028b6ff8ff184913ee7630ade2cc","finding_ids":[],"supersedes":["dg-c5-standards-cycle1"]},{"id":"dg-c5-coverage-final","performer":"/root/dgc5_coverage_review","role":"independent-review","model":"gpt-6-astra","effort":"medium","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_coverage_review","digest":"sha256:4428d2e0bee8661f08e262fee514271e0114476e02dc90ae08a19cdfc1548f0d","excerpt":"Coverage final: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..71b8173eba2f028b6ff8ff184913ee7630ade2cc. The ordered fresh adoption successfully reads all three committed owners before subject inspection. Their actual logged outputs hash to the current owner bytes. Its independent additive bypass precedes the supplied mutation read and replay. All eight subject files remain unchanged. All five adoption families are current; earlier owner bytes, artifact commits, and preserved dirty-work hashes remain unchanged. Fresh workflow, complete fixture-bite, and prose-budget checks passed with zero failures or skips. No further Coverage repair is required."},"axis":"Coverage","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"71b8173eba2f028b6ff8ff184913ee7630ade2cc","finding_ids":[],"supersedes":["dg-c5-coverage-cycle1"]},{"id":"dg-c5-spec-final","performer":"/root/dgc5_spec_review","role":"independent-review","model":"gpt-5.6-sol","effort":"high","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_spec_review","digest":"sha256:6f0338fea45dbb0ac0ef073a1e5d5ec8b15ad1e044fe418681f084c702eb141c","excerpt":"Spec repair cycle 2: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..71b8173eba2f028b6ff8ff184913ee7630ade2cc. DG33–DG41 and DG43 remain satisfied. The ordered adoption at source 9a983a2dbf28e01daef0f3e0f2825b60c66e5afc reads all three owners before subject inspection. It runs the independent additive bypass before it reads or replays the supplied mutation. It retains real-run refutation, exact-source mandatory-standard evidence, contrary-evidence inspection, uncertainty, and existing dispositions. The four earlier owner families remain byte-identical, all five families reconcile, and the focused checks, prose mechanics, review-record parser, and 45-row coverage map pass with zero skips."},"axis":"Spec","base":"414c5697d71093df835f3701c26f602a028354b3","tip":"71b8173eba2f028b6ff8ff184913ee7630ade2cc","finding_ids":[],"supersedes":["dg-c5-spec-cycle1"]}]}
+    ,{
+      "id": "DG-C5",
+      "base": "414c5697d71093df835f3701c26f602a028354b3",
+      "tip": "6265ac69d4535192482eab8b5b798b7fdf998d6e",
+      "plan_digest": "sha256:73bbfd886728844ad22b1e351fe73571ef141e90ad66144e08c42607ac84b3bd",
+      "source_digest": "5d99937db376e7e03bdf5e86ccc6b16bcad22e67",
+      "acceptance_rows": [
+        "DG33",
+        "DG34",
+        "DG35",
+        "DG36",
+        "DG37",
+        "DG38",
+        "DG39",
+        "DG40",
+        "DG41",
+        "DG43"
+      ],
+      "verification": [
+        {
+          "id": "dg-c5-anchors-checkpoint",
+          "performer": "/root/dgc5_ste_repair_astra",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "low",
+          "source_digest": "5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/dgc5_ste_repair_astra/dg-c5-anchors@4e9c5b93",
+            "digest": "sha256:23e8059d81f4d0f013100e737d3116923b148cdfe0d24d2924f570e332d95669",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1510\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "anchors",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "restore unconditional real-run evidence for mandatory standards",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "codex:session/dgc5_ste_repair_astra/dg-c5-unconditional-real-run@4e9c5b93",
+              "digest": "sha256:48466e6aee0696f00201bff8cc5b5431edb05b9b3af8e02b01f64a5a4e35d275",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/skills/bench-craft-review/references/finding-discipline.md,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,1265\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: finding-discipline.md Where an axis under-reads dropped the real run that refutes a strong finding before the report\"\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dg-c5-bite-checkpoint",
+          "performer": "/root/dgc5_ste_repair_astra",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "low",
+          "source_digest": "5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/dgc5_ste_repair_astra/dg-c5-bite@4e9c5b93",
+            "digest": "sha256:a4f4f1805dc7542e90a63918e62eea2dac1ba4dcc1cb29bdd1fb853497e35a2e",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,9755\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bite",
+          "command": "bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner",
+          "exit_code": 0
+        },
+        {
+          "id": "dg-c5-budgets-checkpoint",
+          "performer": "/root/dgc5_ste_repair_astra",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "low",
+          "source_digest": "5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/dgc5_ste_repair_astra/dg-c5-budgets@4e9c5b93",
+            "digest": "sha256:3dbcbda9d319f8709d4842f8a33b45a8f7eccd2400c68d4a9d0e378b926d0d7a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "dg-c5-ticket-grammar-checkpoint",
+          "performer": "/root/dgc5_ste_repair_astra",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "low",
+          "source_digest": "5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:session/dgc5_ste_repair_astra/dg-c5-ticket-grammar@4e9c5b93",
+            "digest": "sha256:cb5c0ac706e5bb32061cfd0b6a8fbe6212bf6f91d452e9bfc7fddcdca435f675",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1119\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-grammar",
+          "command": "bench test --check ticket-grammar",
+          "exit_code": 0
+        },
+        {
+          "id": "dg-c5-anchors-post-dg15",
+          "performer": "/root/dgc5_ste_repair_astra",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "low",
+          "source_digest": "5d99937db376e7e03bdf5e86ccc6b16bcad22e67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/followup_task/dgc5_ste_repair_astra@6265ac69",
+            "digest": "sha256:81919c38357e8cbce422cda473952edc913903c958da7b38706546950192d6cf",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1775\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "anchors",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "restore unconditional real-run evidence for mandatory standards",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "codex:collaboration/followup_task/dgc5_ste_repair_astra/probe@6265ac69",
+              "digest": "sha256:0ef65b288394dd888b18e38f130f64096a6b1c5f055b89cd9cf681b9d178b9a7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/skills/bench-craft-review/references/finding-discipline.md,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,2720\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: finding-discipline.md Where an axis under-reads dropped the real run that refutes a strong finding before the report\"\nskips[0]{package,test,reason}:"
+            }
+          }
+        },
+        {
+          "id": "dg-c5-bite-post-dg15",
+          "performer": "/root/dgc5_ste_repair_astra",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "low",
+          "source_digest": "5d99937db376e7e03bdf5e86ccc6b16bcad22e67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/followup_task/dgc5_ste_repair_astra/bite@6265ac69",
+            "digest": "sha256:46c343caff74444f1f3f5d28af9c4e605a42256d1922ea0a9b697b2caa541c8d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,11040\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "bite",
+          "command": "bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner",
+          "exit_code": 0
+        },
+        {
+          "id": "dg-c5-budgets-post-dg15",
+          "performer": "/root/dgc5_ste_repair_astra",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "low",
+          "source_digest": "5d99937db376e7e03bdf5e86ccc6b16bcad22e67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/followup_task/dgc5_ste_repair_astra/budgets@6265ac69",
+            "digest": "sha256:195c58a46ff053795736e21abc37c5e1cd2949710ba2071a87e150719c5a0552",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "dg-c5-ticket-grammar-post-dg15",
+          "performer": "/root/dgc5_ste_repair_astra",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "low",
+          "source_digest": "5d99937db376e7e03bdf5e86ccc6b16bcad22e67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/followup_task/dgc5_ste_repair_astra/ticket-grammar@6265ac69",
+            "digest": "sha256:bb1bff032e3322eb91da296e1d286ca20bae5d90ba090b0de7bfa740da233113",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1263\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "ticket-grammar",
+          "command": "bench test --check ticket-grammar",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "dg-c5-coverage-initial",
+          "performer": "/root/dgc5_coverage_review",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "da7164ba566717ef6f96dd4525a64536fbfbd95f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/root/dgc5_coverage_review",
+            "digest": "sha256:8934505013c0c7675ad24543ef94b3e60269f0a6518a3f2b4d3ae021276c2cc4",
+            "excerpt": "Coverage: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..7d73c40e1f161c5965bb455a62b11fbb759eec82. DG33–DG38 and DG43 have live owner anchors and biting fixtures. Final adoption source 602edd9460b24adeac58007f771dc4bd771c594e matched all recorded owner hashes and preserved its subject. It independently constructed an additive contradiction before replaying the supplied deletion mutation. DG40's five-family reconciliation was current. Workflow guidance, complete fixture bite, and prose budgets passed with zero failures or skips. No Coverage repair was required."
+          },
+          "axis": "Coverage",
+          "base": "414c5697d71093df835f3701c26f602a028354b3",
+          "tip": "7d73c40e1f161c5965bb455a62b11fbb759eec82",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dg-c5-spec-initial",
+          "performer": "/root/dgc5_spec_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "da7164ba566717ef6f96dd4525a64536fbfbd95f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/root/dgc5_spec_review",
+            "digest": "sha256:436aa0b600855e595e5d29f75898434255cc4e22f8569dd545eaebf368452c99",
+            "excerpt": "Spec: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..7d73c40e1f161c5965bb455a62b11fbb759eec82. DG33–DG41 and DG43 were satisfied by candidate-source derivation, runnable refutation, exact-source mandatory-standard evidence, unavailable-run explanation, contrary-evidence inspection, independent positive-preserving Coverage bypass, uncertainty, disposition routing, current adoption, and five-family reconciliation. All focused checks passed with zero skips. No Spec repair was required."
+          },
+          "axis": "Spec",
+          "base": "414c5697d71093df835f3701c26f602a028354b3",
+          "tip": "7d73c40e1f161c5965bb455a62b11fbb759eec82",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dg-c5-standards-initial",
+          "performer": "/root/dgc5_standards_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "da7164ba566717ef6f96dd4525a64536fbfbd95f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "/root/dgc5_standards_review",
+            "digest": "sha256:a6a58b1003ddd115d419bab264dce41bd53f29e10407646cb96c63996b5ccfd5",
+            "excerpt": "Standards: FAIL — 2 blocking findings; worst issue: historical red completion-plan commit. Frozen range 414c5697d71093df835f3701c26f602a028354b3..7d73c40e1f161c5965bb455a62b11fbb759eec82. DG-C5-S1 (ask-user): commit 3d19c213 duplicated the Luna assignment and failed completion-plan predecessor validation; an additive commit could not repair the historical invariant, so bounded reconstruction after 602edd94 required user authorization. DG-C5-S2 (auto-fix): craft-review used declarative 'Coverage constructs' and combined 'report no findings' with 'state what you examined', violating one-imperative-per-sentence STE. Other ownership, anchors, registries, budgets, provenance, adoption hashes, and focused checks passed."
+          },
+          "axis": "Standards",
+          "base": "414c5697d71093df835f3701c26f602a028354b3",
+          "tip": "7d73c40e1f161c5965bb455a62b11fbb759eec82",
+          "finding_ids": [
+            "DG-C5-S1",
+            "DG-C5-S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dg-c5-standards-cycle1",
+          "performer": "/root/dgc5_standards_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "/root/dgc5_standards_review",
+            "digest": "sha256:2873701cbdbb8e83caac45b61c8c0ef386138f038fa49e0af4dcaae1a5fc6ccc",
+            "excerpt": "Standards repair cycle 1: FAIL — 2 blocking findings; worst issue: fresh adoption ran before loading its changed guidance. Frozen range 414c5697d71093df835f3701c26f602a028354b3..9a983a2dbf28e01daef0f3e0f2825b60c66e5afc. DG-C5-S1 is closed: 3d19c213 is outside current ancestry, the recovery ref preserves it, all mapped trees match, and every retained reconstructed commit passes the 12-check review preflight. DG-C5-S2 is closed: the final Coverage instruction is imperative, the no-findings instructions are split, and the matching DG43 owner, anchor, omission fixture, and complete bite suite pass. DG-C5-S3 (P1, auto-fix): the current DG39/DG43 artifact ran unit tests, real-run refutation, and the independent bypass before its first successful committed-owner read, contradicting the record claim and the required load-guidance-first adoption order. Rerun that adoption in a fresh session after successful current-owner reads and replace the evidence. DG-C5-S4 (P2, auto-fix): the repair record claims review preflight passed all 13 checks, but the current and four reconstructed runs report 12; correct the evidence count to 12. One-source ownership, transfer provenance, budgets, and other focused checks pass."
+          },
+          "axis": "Standards",
+          "base": "414c5697d71093df835f3701c26f602a028354b3",
+          "tip": "9a983a2dbf28e01daef0f3e0f2825b60c66e5afc",
+          "finding_ids": [
+            "DG-C5-S3",
+            "DG-C5-S4"
+          ],
+          "supersedes": [
+            "dg-c5-standards-initial"
+          ]
+        },
+        {
+          "id": "dg-c5-coverage-cycle1",
+          "performer": "/root/dgc5_coverage_review",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/root/dgc5_coverage_review",
+            "digest": "sha256:caf0e75ac1d1b3511771791202c823f9139f7a86ac951de50fe4e66b3cb4d4e2",
+            "excerpt": "Coverage cycle 1: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..9a983a2dbf28e01daef0f3e0f2825b60c66e5afc. The repaired DG43 owner, anchor, and fixture agree. Fresh workflow, complete fixture-bite, and prose-budget checks passed with zero failures or skips. Fresh adoption at committed source c264a3f414b32614b321306740e280b76e05660f matches all current owner hashes and preserves its subject. Its independent additive bypass preceded the supplied mutation read and replay. All five adoption families remain current; earlier owners, artifact commits, and preserved dirty-work hashes are unchanged. No Coverage repair is required."
+          },
+          "axis": "Coverage",
+          "base": "414c5697d71093df835f3701c26f602a028354b3",
+          "tip": "9a983a2dbf28e01daef0f3e0f2825b60c66e5afc",
+          "finding_ids": [],
+          "supersedes": [
+            "dg-c5-coverage-initial"
+          ]
+        },
+        {
+          "id": "dg-c5-spec-cycle1",
+          "performer": "/root/dgc5_spec_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/root/dgc5_spec_review",
+            "digest": "sha256:2217417c3f43b0c101c0b77e219b83db79845fa2968ac54f2f723b94fac0ea6b",
+            "excerpt": "Spec repair cycle 1: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..9a983a2dbf28e01daef0f3e0f2825b60c66e5afc. DG33–DG41 and DG43 remain satisfied after the imperative and history repair. Fresh DG39/DG43 adoption at c264a3f414b32614b321306740e280b76e05660f retains real-run refutation, exact-source mandatory-standard evidence, contrary-evidence inspection, uncertainty, disposition routing, and an independent additive bypass before supplied-mutation replay. All five adoption families reconcile. Focused checks, prose mechanics, review-record parsing, and the 45-row coverage map passed with zero skips."
+          },
+          "axis": "Spec",
+          "base": "414c5697d71093df835f3701c26f602a028354b3",
+          "tip": "9a983a2dbf28e01daef0f3e0f2825b60c66e5afc",
+          "finding_ids": [],
+          "supersedes": [
+            "dg-c5-spec-initial"
+          ]
+        },
+        {
+          "id": "dg-c5-standards-final",
+          "performer": "/root/dgc5_standards_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/root/dgc5_standards_review",
+            "digest": "sha256:f96fe400407f80e5fc3bbad1543e0320dde4786398efd2b93e6cb6fb433c91dc",
+            "excerpt": "Standards final re-review: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..71b8173eba2f028b6ff8ff184913ee7630ade2cc. DG-C5-S1 remains closed: 3d19c213 is outside current ancestry, recovery mapping is tree-equal, and all retained reconstructed commits pass the 12-check preflight. DG-C5-S2 remains closed: final STE prose, DG43 owner/anchor/fixture, and complete bite coverage agree. DG-C5-S3 is closed: commands 1–3 in the fresh artifact are successful committed-owner reads, command 4 is the first subject inspection, and the independent bypass precedes supplied-mutation read and replay. DG-C5-S4 is closed: the record and current preflight both report 12 checks. The decoded owner outputs match final hashes aa9ce175, 3a5018f0, and c1b74aa2; the five earlier owner hashes also match. Transfer and recovery provenance are clean, focused checks and record parsing pass with zero skips, both worktrees are clean, and the two-of-two repair allowance is exhausted."
+          },
+          "axis": "Standards",
+          "base": "414c5697d71093df835f3701c26f602a028354b3",
+          "tip": "71b8173eba2f028b6ff8ff184913ee7630ade2cc",
+          "finding_ids": [],
+          "supersedes": [
+            "dg-c5-standards-cycle1"
+          ]
+        },
+        {
+          "id": "dg-c5-coverage-final",
+          "performer": "/root/dgc5_coverage_review",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/root/dgc5_coverage_review",
+            "digest": "sha256:4428d2e0bee8661f08e262fee514271e0114476e02dc90ae08a19cdfc1548f0d",
+            "excerpt": "Coverage final: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..71b8173eba2f028b6ff8ff184913ee7630ade2cc. The ordered fresh adoption successfully reads all three committed owners before subject inspection. Their actual logged outputs hash to the current owner bytes. Its independent additive bypass precedes the supplied mutation read and replay. All eight subject files remain unchanged. All five adoption families are current; earlier owner bytes, artifact commits, and preserved dirty-work hashes remain unchanged. Fresh workflow, complete fixture-bite, and prose-budget checks passed with zero failures or skips. No further Coverage repair is required."
+          },
+          "axis": "Coverage",
+          "base": "414c5697d71093df835f3701c26f602a028354b3",
+          "tip": "71b8173eba2f028b6ff8ff184913ee7630ade2cc",
+          "finding_ids": [],
+          "supersedes": [
+            "dg-c5-coverage-cycle1"
+          ]
+        },
+        {
+          "id": "dg-c5-spec-final",
+          "performer": "/root/dgc5_spec_review",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/root/dgc5_spec_review",
+            "digest": "sha256:6f0338fea45dbb0ac0ef073a1e5d5ec8b15ad1e044fe418681f084c702eb141c",
+            "excerpt": "Spec repair cycle 2: PASS — 0 findings; worst issue: none. Frozen range 414c5697d71093df835f3701c26f602a028354b3..71b8173eba2f028b6ff8ff184913ee7630ade2cc. DG33–DG41 and DG43 remain satisfied. The ordered adoption at source 9a983a2dbf28e01daef0f3e0f2825b60c66e5afc reads all three owners before subject inspection. It runs the independent additive bypass before it reads or replays the supplied mutation. It retains real-run refutation, exact-source mandatory-standard evidence, contrary-evidence inspection, uncertainty, and existing dispositions. The four earlier owner families remain byte-identical, all five families reconcile, and the focused checks, prose mechanics, review-record parser, and 45-row coverage map pass with zero skips."
+          },
+          "axis": "Spec",
+          "base": "414c5697d71093df835f3701c26f602a028354b3",
+          "tip": "71b8173eba2f028b6ff8ff184913ee7630ade2cc",
+          "finding_ids": [],
+          "supersedes": [
+            "dg-c5-spec-cycle1"
+          ]
+        },
+        {
+          "id": "dg-c5-standards-post-dg15",
+          "performer": "/root/dg15_debug_rereview_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "5d99937db376e7e03bdf5e86ccc6b16bcad22e67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/followup_task/dg15_debug_rereview_standards@6265ac69",
+            "digest": "sha256:b8b72fbe0424992096a77c0974ecd9da8e1946419cebd52f289de5069b2f27dc",
+            "excerpt": "Standards: PASS - 0 actionable findings. Frozen range 414c5697d71093df835f3701c26f602a028354b3..6265ac69d4535192482eab8b5b798b7fdf998d6e. DG-C5-S1 through S4 remain closed. DG15 ST-1 through ST-3 are closed by registry-derived tests, the durable historical red, and marker-rune keyed stack state. The authorized extension is recorded. Current anchors, retained fixture bite, reviewrecord, vet, and diff checks pass; the tree is clean."
+          },
+          "axis": "Standards",
+          "base": "414c5697d71093df835f3701c26f602a028354b3",
+          "tip": "6265ac69d4535192482eab8b5b798b7fdf998d6e",
+          "finding_ids": [],
+          "supersedes": [
+            "dg-c5-standards-final"
+          ]
+        },
+        {
+          "id": "dg-c5-spec-post-dg15",
+          "performer": "/root/dg15_debug_rereview_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "5d99937db376e7e03bdf5e86ccc6b16bcad22e67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/followup_task/dg15_debug_rereview_spec@6265ac69",
+            "digest": "sha256:716b336f0ce4f4b3f302cb55b75213283ae71ef2682a67bd6f50249bc27e46e2",
+            "excerpt": "Spec: PASS - 0 findings. Frozen range 414c5697d71093df835f3701c26f602a028354b3..6265ac69d4535192482eab8b5b798b7fdf998d6e. DG33 through DG41 and DG43 retain current owner, adoption, refutation, reconciliation, and budget evidence. The later DG15 repair satisfies ordinary nested emphasis and preserves the non-parser exclusions. Workflow, fixture bite, budgets, anchors, coverage, and diff checks pass with zero skips."
+          },
+          "axis": "Spec",
+          "base": "414c5697d71093df835f3701c26f602a028354b3",
+          "tip": "6265ac69d4535192482eab8b5b798b7fdf998d6e",
+          "finding_ids": [],
+          "supersedes": [
+            "dg-c5-spec-final"
+          ]
+        },
+        {
+          "id": "dg-c5-coverage-post-dg15",
+          "performer": "/root/dg15_debug_rereview_coverage",
+          "role": "independent-review",
+          "model": "gpt-6-astra",
+          "effort": "medium",
+          "source_digest": "5d99937db376e7e03bdf5e86ccc6b16bcad22e67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:collaboration/followup_task/dg15_debug_rereview_coverage@6265ac69",
+            "digest": "sha256:a5ccd5290d35ce5f4d19ddc265b656c556bda32e48f6194e6e95915d0ce792ef",
+            "excerpt": "Coverage: PASS - 0 findings. Frozen range 414c5697d71093df835f3701c26f602a028354b3..6265ac69d4535192482eab8b5b798b7fdf998d6e. DG33 through DG38 and DG43 retain biting anchors and fixtures; DG39 adoption ordering and owner hashes remain current; all five owner families reconcile. DG15 has 14 nested/location regressions, a biting 4096-opener regression, preserved exclusions and line mapping, and bounded 65536-opener behavior. Workflow, complete fixture bite, prose budgets, anchors, and independent probes pass."
+          },
+          "axis": "Coverage",
+          "base": "414c5697d71093df835f3701c26f602a028354b3",
+          "tip": "6265ac69d4535192482eab8b5b798b7fdf998d6e",
+          "finding_ids": [],
+          "supersedes": [
+            "dg-c5-coverage-final"
+          ]
+        }
+      ]
+    }
   ],
   "completion": {
     "state": "completed",
-    "source_digest": "5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990",
+    "source_digest": "5d99937db376e7e03bdf5e86ccc6b16bcad22e67",
     "performer": "/root",
     "reconciliation": {"DG1":"covered","DG2":"covered","DG3":"covered","DG4":"covered","DG5":"covered","DG6":"covered","DG7":"covered","DG8":"covered","DG9":"covered","DG10":"covered","DG11":"covered","DG12":"covered","DG13":"covered","DG14":"covered","DG15":"covered","DG16":"covered","DG17":"covered","DG18":"covered","DG19":"covered","DG20":"covered","DG21":"covered","DG22":"covered","DG23":"covered","DG24":"covered","DG25":"covered","DG26":"covered","DG27":"covered","DG28":"covered","DG29":"covered","DG30":"covered","DG31":"covered","DG32":"covered","DG33":"covered","DG34":"covered","DG35":"covered","DG36":"covered","DG37":"covered","DG38":"covered","DG39":"covered","DG40":"covered","DG41":"covered","DG42":"covered","DG43":"covered","DG44":"covered","DG45":"covered"},
     "verification": [
       {"id":"final-acceptance","performer":"/root","role":"integration-verification","model":"gpt-6-astra","effort":"low","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_ste_repair_astra/final-reconciliation","digest":"sha256:bb992fc54885935f8569e2461060e646c018ec8bebd84539e268379a958952f6","excerpt":"ok: coverage map valid — 45 row(s)\nuncited: 1 row(s) with no seam-cell citation — DG45\n"},"requirement":"acceptance","command":"bench coverage --check specs/debug-loop-guidance/spec.md","exit_code":0},
       {"id":"final-integration","performer":"/root","role":"integration-verification","model":"gpt-6-astra","effort":"low","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_ste_repair_astra/final-reconciliation","digest":"sha256:a0cd5e8ad35eb245a30d88f676cfe0a418ffd8a5ee59e48a35505edabf5b6c38","excerpt":"packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1717\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"},"requirement":"integration","command":"bench test --check docs-currency-workflow","exit_code":0},
-      {"id":"final-budgets","performer":"/root","role":"integration-verification","model":"gpt-6-astra","effort":"low","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_ste_repair_astra/final-reconciliation","digest":"sha256:907451be9411629d3b2882c5ac073527bb4fe7f8db4e4c3d53f4cfe254a1653c","excerpt":"packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"},"requirement":"budgets","command":"bench test --check guidance-prose-budgets","exit_code":0}
+      {"id":"final-budgets","performer":"/root","role":"integration-verification","model":"gpt-6-astra","effort":"low","source_digest":"5ad8d3fbbd9c7d73f2ed4cf2a98793e0171c2990","state":"completed","outcome":"pass","native_ref":{"ref":"/root/dgc5_ste_repair_astra/final-reconciliation","digest":"sha256:907451be9411629d3b2882c5ac073527bb4fe7f8db4e4c3d53f4cfe254a1653c","excerpt":"packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"},"requirement":"budgets","command":"bench test --check guidance-prose-budgets","exit_code":0},
+      {"id":"final-acceptance-post-dg15","performer":"/root","role":"integration-verification","model":"gpt-6-astra","effort":"medium","source_digest":"5d99937db376e7e03bdf5e86ccc6b16bcad22e67","state":"completed","outcome":"pass","native_ref":{"ref":"codex:session/root/final-reconciliation@6265ac69","digest":"sha256:6f814620f8b0426cd7c21c2a40a3f20843fd720a5d5810fb212b307997895467","excerpt":"ok: coverage map valid - 45 row(s)\nuncited: 1 row(s) with no seam-cell citation - DG45"},"requirement":"acceptance","command":"bench coverage --check specs/debug-loop-guidance/spec.md","exit_code":0},
+      {"id":"final-integration-post-dg15","performer":"/root","role":"integration-verification","model":"gpt-6-astra","effort":"medium","source_digest":"5d99937db376e7e03bdf5e86ccc6b16bcad22e67","state":"completed","outcome":"pass","native_ref":{"ref":"codex:session/root/final-reconciliation@6265ac69","digest":"sha256:54fc5c5652255f32626fa1233c7ba3e339e18be575ea1fe2618400b775c4c56f","excerpt":"packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1383\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"},"requirement":"integration","command":"bench test --check docs-currency-workflow","exit_code":0},
+      {"id":"final-budgets-post-dg15","performer":"/root","role":"integration-verification","model":"gpt-6-astra","effort":"medium","source_digest":"5d99937db376e7e03bdf5e86ccc6b16bcad22e67","state":"completed","outcome":"pass","native_ref":{"ref":"codex:session/root/final-reconciliation@6265ac69","digest":"sha256:6f72c99a424331a3381e284e55ffa703b490f81e19b498e848e8bfc5d9ca25ed","excerpt":"packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"},"requirement":"budgets","command":"bench test --check guidance-prose-budgets","exit_code":0}
     ]
   },
   "amendments": [
     {"from":"sha256:d522c7f3bb8f231a758986209286da90692048a775f1296fe1e7b3671b1de32d","to":"sha256:6b7f43297f319ff2f3dade0fab4cabc97d6297b11e3e6afd27609da9ecd95940","chunk_ids":{"DG-C1":["DG-C1"],"DG-CR":["DG-CR"],"DG-C2":["DG-C2"],"DG-C3":["DG-C3"],"DG-C4":["DG-C4"],"DG-C5":["DG-C5"]}},
+    {"from":"sha256:6b7f43297f319ff2f3dade0fab4cabc97d6297b11e3e6afd27609da9ecd95940","to":"sha256:73bbfd886728844ad22b1e351fe73571ef141e90ad66144e08c42607ac84b3bd","chunk_ids":{"DG-C1":["DG-C1"],"DG-CR":["DG-CR"],"DG-C2":["DG-C2"],"DG-C3":["DG-C3"],"DG-C4":["DG-C4"],"DG-C5":["DG-C5"]}},
     {
       "from": "sha256:1fe49b1a3f575aa482643283599862988bf7131c042f5d70c80d249afe820da1",
       "to": "sha256:5bf67838e7c2c0f59f8bd20104f2066c592bb3f6374bccc41a7005ab72cd0df8",
