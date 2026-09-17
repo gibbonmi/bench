@@ -5,6 +5,7 @@ package conformance
 // until a reviewer binds it in. A package inside it that derives nothing fails closed.
 var auditedPortPackages = []string{
 	"internal/assessment",
+	"internal/chargeevidence",
 	"internal/gitguard",
 	"internal/preflight",
 	"internal/publication",
@@ -37,6 +38,10 @@ type injectedPortRow struct {
 // reports them. A diff against a re-derived inventory therefore reads straight down.
 var injectedPortRegistry = []injectedPortRow{
 	{pkg: "internal/assessment", port: "FileOps", testFile: "internal/assessment/record_test.go", testName: "TestAssessmentRecordUpdates"},
+	{
+		pkg: "internal/chargeevidence", port: "StoreOptions",
+		testFile: "internal/systemtest/charge_evidence_test.go", testName: "TestEvidenceInterruptedPublication",
+	},
 	{
 		pkg: "internal/gitguard", port: "Checker",
 		testFile: "internal/gitguard/checker_junction_test.go", testName: "TestClassifyRealCheckerResolvedComposition",

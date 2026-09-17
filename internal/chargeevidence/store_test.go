@@ -2,6 +2,7 @@ package chargeevidence_test
 
 import (
 	"errors"
+	"math"
 	"net"
 	"os"
 	"path/filepath"
@@ -54,6 +55,7 @@ func refusalClass(err error) string {
 	return ""
 }
 
+// storeEntries lists the published and temporary pack names in dir.
 func storeEntries(t *testing.T, dir string) []string {
 	t.Helper()
 	entries, err := os.ReadDir(dir)
@@ -63,10 +65,31 @@ func storeEntries(t *testing.T, dir string) []string {
 	var names []string
 	for _, entry := range entries {
 		if name := entry.Name(); strings.HasSuffix(name, ce.PackSuffix) || strings.HasPrefix(name, ce.TempPrefix) {
-			names = append(names, entry.Name())
+			names = append(names, name)
 		}
 	}
 	return names
+}
+
+// copyStore copies every regular file of the store at dir into a new directory at dst.
+func copyStore(t *testing.T, dir, dst string) {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	if err == nil {
+		err = os.Mkdir(dst, 0o700)
+	}
+	for _, entry := range entries {
+		var data []byte
+		if data, err = os.ReadFile(filepath.Join(dir, entry.Name())); err == nil {
+			err = os.WriteFile(filepath.Join(dst, entry.Name()), data, 0o600)
+		}
+		if err != nil {
+			break
+		}
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 // flipAt rewrites one byte of a published pack in place.
@@ -84,39 +107,6 @@ func flipAt(t *testing.T, path string, offset int64) {
 	b[0] ^= 0x01
 	if _, err := file.WriteAt(b, offset); err != nil {
 		t.Fatal(err)
-	}
-}
-
-// sourcePageCursor returns the cursor of the ticket source page.
-func sourcePageCursor(identity string) ce.Cursor { return ce.Cursor{Identity: identity, Ordinal: 2} }
-
-// TestEvidencePageCorruption is CE39.
-func TestEvidencePageCorruption(t *testing.T) {
-	store, dir := newStore(t, ce.StoreOptions{})
-	pack := mustBuild(t, fixtureCandidate("# One\n"))
-	identity := publish(t, store, pack, ce.DefaultQuota)
-	size := int64(len(pack.Bytes()))
-	flipAt(t, packPath(dir, identity), size-int64(len("# Spec\n"))-2)
-	artifact, err := store.Open(identity)
-	if err != nil {
-		t.Fatalf("Open: %v", err)
-	}
-	defer artifact.Close()
-	if _, err := artifact.Read(ce.Cursor{Identity: identity}); err != nil {
-		t.Fatalf("manifest fragment: %v", err)
-	}
-	if _, err := artifact.Read(sourcePageCursor(identity)); refusalClass(err) != ce.RefusePageDigest {
-		t.Fatalf("changed page = %v, want %s", err, ce.RefusePageDigest)
-	}
-}
-
-// TestEvidenceManifestCorruption is CE40.
-func TestEvidenceManifestCorruption(t *testing.T) {
-	store, dir := newStore(t, ce.StoreOptions{})
-	identity := publish(t, store, mustBuild(t, fixtureCandidate("# One\n")), ce.DefaultQuota)
-	flipAt(t, packPath(dir, identity), 30)
-	if _, err := store.Open(identity); refusalClass(err) != ce.RefuseIdentity {
-		t.Fatalf("changed manifest = %v, want %s", err, ce.RefuseIdentity)
 	}
 }
 
@@ -151,7 +141,35 @@ func TestEvidenceQuota(t *testing.T) {
 	publish(t, store, second, need)
 }
 
-// TestEvidenceQuotaOverride is CE75: a quota above the default admits a store beyond it.
+// TestEvidenceAdmission is CE75 at the capacity rule: only the total quota limits a
+// candidate, so an explicit quota admits an artifact larger than the default quota.
+func TestEvidenceAdmission(t *testing.T) {
+	const gib = uint64(1) << 30
+	for _, test := range []struct {
+		name                       string
+		observed, candidate, quota uint64
+		admitted                   bool
+		required                   uint64
+	}{
+		{"CE75 artifact above the default quota", 0, 2 * gib, 3 * gib, true, 0},
+		{"store and artifact exactly at the quota", gib, 2 * gib, 3 * gib, true, 0},
+		{"one byte above the quota", gib, 2*gib + 1, 3 * gib, false, 3*gib + 1},
+		{"largest representable artifact", 0, math.MaxUint64, math.MaxUint64, true, 0},
+		{"unrepresentable total", math.MaxUint64, 1, math.MaxUint64, false, 0},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			err := ce.Admit(test.observed, test.candidate, test.quota)
+			var capacity *ce.CapacityError
+			if test.admitted != (err == nil) || !test.admitted && (!errors.As(err, &capacity) || capacity.Required != test.required ||
+				capacity.Observed != test.observed || capacity.Candidate != test.candidate || capacity.Quota != test.quota) {
+				t.Fatalf("Admit(%d, %d, %d) = %+v (%v)", test.observed, test.candidate, test.quota, capacity, err)
+			}
+		})
+	}
+}
+
+// TestEvidenceQuotaOverride is CE74 and CE75 over real store bytes: a sparse temporary pack
+// counts against the default quota, and a larger explicit quota admits the candidate.
 func TestEvidenceQuotaOverride(t *testing.T) {
 	store, dir := newStore(t, ce.StoreOptions{})
 	publish(t, store, mustBuild(t, fixtureCandidate("# One\n")), ce.DefaultQuota)
@@ -288,7 +306,7 @@ func TestEvidenceExistingCorruption(t *testing.T) {
 	}
 }
 
-// TestEvidenceStoreDirectoryStates is CE98, CE99, and CE118.
+// TestEvidenceStoreDirectoryStates is CE98, CE99, CE118, and the empty store read.
 func TestEvidenceStoreDirectoryStates(t *testing.T) {
 	pack := mustBuild(t, fixtureCandidate("# One\n"))
 	t.Run("CE118 absent read", func(t *testing.T) {
@@ -300,11 +318,53 @@ func TestEvidenceStoreDirectoryStates(t *testing.T) {
 			t.Fatalf("read created the store: %v", err)
 		}
 	})
+	t.Run("empty store read", func(t *testing.T) {
+		store, dir := newStore(t, ce.StoreOptions{})
+		if err := os.Mkdir(dir, 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := store.Open(pack.Identity()); refusalClass(err) != ce.RefuseAbsent {
+			t.Fatalf("empty store read = %v, want %s", err, ce.RefuseAbsent)
+		}
+		if entries, err := os.ReadDir(dir); err != nil || len(entries) != 0 {
+			t.Fatalf("empty store read changed the store: %v, %v", entries, err)
+		}
+	})
 	t.Run("CE99 preparation creates", func(t *testing.T) {
 		store, dir := newStore(t, ce.StoreOptions{})
 		publish(t, store, pack, ce.DefaultQuota)
 		if info, err := os.Lstat(dir); err != nil || !info.IsDir() || info.Mode().Perm() != 0o700 {
 			t.Fatalf("created store = %v, %v", info, err)
+		}
+	})
+	t.Run("CE98 replaced while opened", func(t *testing.T) {
+		for _, operation := range []string{"read", "preparation"} {
+			t.Run(operation, func(t *testing.T) {
+				store, dir := newStore(t, ce.StoreOptions{})
+				publish(t, store, pack, ce.DefaultQuota)
+				copyStore(t, dir, dir+".copy")
+				replaced := false
+				racing := ce.OpenStore(filepath.Dir(dir), ce.StoreOptions{Pause: func(stage string) {
+					if stage == ce.StageStoreInspected && !replaced {
+						replaced = true
+						if err := os.Rename(dir, dir+".old"); err != nil {
+							t.Fatal(err)
+						}
+						if err := os.Rename(dir+".copy", dir); err != nil {
+							t.Fatal(err)
+						}
+					}
+				}})
+				var err error
+				if operation == "read" {
+					_, err = racing.Open(pack.Identity())
+				} else {
+					_, err = racing.Stage(pack, ce.DefaultQuota, 1)
+				}
+				if !replaced || refusalClass(err) != ce.RefuseUnsafe {
+					t.Fatalf("replaced store %s = %v, want %s", operation, err, ce.RefuseUnsafe)
+				}
+			})
 		}
 	})
 	for _, state := range []string{"symlink", "regular file"} {
@@ -329,31 +389,5 @@ func TestEvidenceStoreDirectoryStates(t *testing.T) {
 				t.Fatalf("%s store read = %v", state, err)
 			}
 		})
-	}
-}
-
-// TestEvidenceReplacementRace is CE129: a read of a replaced artifact refuses the page.
-func TestEvidenceReplacementRace(t *testing.T) {
-	store, dir := newStore(t, ce.StoreOptions{})
-	identity := publish(t, store, mustBuild(t, fixtureCandidate("# One\n")), ce.DefaultQuota)
-	artifact, err := store.Open(identity)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer artifact.Close()
-	path := packPath(dir, identity)
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	replacement := path + ".replacement"
-	if err := os.WriteFile(replacement, data, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Rename(replacement, path); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := artifact.Read(sourcePageCursor(identity)); refusalClass(err) != ce.RefuseReplaced {
-		t.Fatalf("replaced artifact read = %v, want %s", err, ce.RefuseReplaced)
 	}
 }

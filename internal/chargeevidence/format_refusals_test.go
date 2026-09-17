@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -254,5 +255,64 @@ func TestEvidencePackRefusals(t *testing.T) {
 	}
 	if _, err := ce.Read(pack.Bytes(), identity); err != nil {
 		t.Fatalf("unchanged pack refused: %v", err)
+	}
+}
+
+// sourcePageCursor returns the cursor of the ticket source page.
+func sourcePageCursor(identity string) ce.Cursor { return ce.Cursor{Identity: identity, Ordinal: 2} }
+
+// TestEvidencePageCorruption is CE39.
+func TestEvidencePageCorruption(t *testing.T) {
+	store, dir := newStore(t, ce.StoreOptions{})
+	pack := mustBuild(t, fixtureCandidate("# One\n"))
+	identity := publish(t, store, pack, ce.DefaultQuota)
+	size := int64(len(pack.Bytes()))
+	flipAt(t, packPath(dir, identity), size-int64(len("# Spec\n"))-2)
+	artifact, err := store.Open(identity)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer artifact.Close()
+	if _, err := artifact.Read(ce.Cursor{Identity: identity}); err != nil {
+		t.Fatalf("manifest fragment: %v", err)
+	}
+	if _, err := artifact.Read(sourcePageCursor(identity)); refusalClass(err) != ce.RefusePageDigest {
+		t.Fatalf("changed page = %v, want %s", err, ce.RefusePageDigest)
+	}
+}
+
+// TestEvidenceManifestCorruption is CE40.
+func TestEvidenceManifestCorruption(t *testing.T) {
+	store, dir := newStore(t, ce.StoreOptions{})
+	identity := publish(t, store, mustBuild(t, fixtureCandidate("# One\n")), ce.DefaultQuota)
+	flipAt(t, packPath(dir, identity), 30)
+	if _, err := store.Open(identity); refusalClass(err) != ce.RefuseIdentity {
+		t.Fatalf("changed manifest = %v, want %s", err, ce.RefuseIdentity)
+	}
+}
+
+// TestEvidenceReplacementRace is CE129: a read of a replaced artifact refuses the page.
+func TestEvidenceReplacementRace(t *testing.T) {
+	store, dir := newStore(t, ce.StoreOptions{})
+	identity := publish(t, store, mustBuild(t, fixtureCandidate("# One\n")), ce.DefaultQuota)
+	artifact, err := store.Open(identity)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer artifact.Close()
+	path := packPath(dir, identity)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	replacement := path + ".replacement"
+	if err := os.WriteFile(replacement, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(replacement, path); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := artifact.Read(sourcePageCursor(identity)); refusalClass(err) != ce.RefuseReplaced {
+		t.Fatalf("replaced artifact read = %v, want %s", err, ce.RefuseReplaced)
 	}
 }

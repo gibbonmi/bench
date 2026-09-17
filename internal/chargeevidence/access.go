@@ -19,15 +19,20 @@ func (l *lock) release() {
 	}
 }
 
-// acquire takes one store lock and waits for it. A writer creates an absent lock file; a
-// reader refuses a store without one, because only preparation creates a store.
+// acquire takes one store lock and waits for it. A writer creates an absent lock file. Only
+// preparation creates a lock file, so a reader of a store without one refuses the absent
+// artifact and changes nothing.
 func acquire(dir *os.Root, name string, how int, create bool) (*lock, error) {
 	flags := os.O_RDWR | syscall.O_NOFOLLOW | syscall.O_NONBLOCK
 	if create {
 		flags |= os.O_CREATE
 	}
-	if info, err := dir.Lstat(name); err == nil && !info.Mode().IsRegular() {
+	info, err := dir.Lstat(name)
+	if err == nil && !info.Mode().IsRegular() {
 		return nil, refuse(RefuseUnsafe, "store lock %s is %s", name, kindOf(info))
+	}
+	if errors.Is(err, fs.ErrNotExist) && !create {
+		return nil, refuse(RefuseAbsent, "the evidence store holds no artifacts")
 	}
 	file, err := dir.OpenFile(name, flags, 0o600)
 	if err != nil {

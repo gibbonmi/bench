@@ -39,17 +39,19 @@ type StoreOptions struct {
 	// Fault runs before each named publication step. A returned error fails that step, so
 	// a test injects deterministic filesystem failures without editing private state.
 	Fault func(step string) error
-	// Pause runs at each named publication stage. The system owner coordinates process
-	// interruption through it.
+	// Pause runs at each named store stage. The system owner coordinates process
+	// interruption through it, and a test replaces store objects at a stage.
 	Pause func(stage string)
 }
 
-// Publication steps and stages, in the order a writer reaches them.
+// Publication steps and store stages, in the order a writer reaches them. A reader reaches
+// only StageStoreInspected.
 const (
 	StepWriteTemp        = "write-temp"
 	StepSyncTemp         = "sync-temp"
 	StepVerifyTemp       = "verify-temp"
 	StepLink             = "link"
+	StageStoreInspected  = "store-inspected"
 	StageWriterLock      = "writer-lock"
 	StageCapacity        = "capacity"
 	StageStaged          = "staged"
@@ -134,6 +136,7 @@ func (s *Store) openDir(create bool) (*os.Root, error) {
 	if !info.IsDir() {
 		return nil, refuse(RefuseUnsafe, "store path is %s, not a directory", kindOf(info))
 	}
+	s.pause(StageStoreInspected)
 	dir, err := parent.OpenRoot(StoreName)
 	if err != nil {
 		return nil, refuse(RefuseUnsafe, "store directory is not openable: %v", err)
@@ -154,6 +157,19 @@ type CapacityError struct {
 
 func (e *CapacityError) Error() string {
 	return RefuseCapacity + ": the store cannot admit the candidate"
+}
+
+// Admit is the store's capacity rule: a store holding observed bytes admits a candidate of
+// candidate bytes when their sum fits within quota. It returns nil or the *CapacityError
+// that refuses the candidate. There is no per-artifact limit.
+func Admit(observed, candidate, quota uint64) error {
+	if observed > math.MaxUint64-candidate {
+		return &CapacityError{Observed: observed, Candidate: candidate, Quota: quota}
+	}
+	if observed+candidate > quota {
+		return &CapacityError{Observed: observed, Candidate: candidate, Quota: quota, Required: observed + candidate}
+	}
+	return nil
 }
 
 // usage sums the published and temporary pack bytes in the store. A pack-named object that
@@ -245,14 +261,9 @@ func (s *Store) Stage(pack *Pack, quota uint64, attempt int) (*Staged, error) {
 		st.Discard()
 		return nil, err
 	}
-	candidate := uint64(len(pack.data))
-	if observed > math.MaxUint64-candidate {
+	if err := Admit(observed, uint64(len(pack.data)), quota); err != nil {
 		st.Discard()
-		return nil, &CapacityError{Observed: observed, Candidate: candidate, Quota: quota}
-	}
-	if observed+candidate > quota {
-		st.Discard()
-		return nil, &CapacityError{Observed: observed, Candidate: candidate, Quota: quota, Required: observed + candidate}
+		return nil, err
 	}
 	s.pause(StageCapacity)
 	if err := st.writeTemp(); err != nil {
