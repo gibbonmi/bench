@@ -14,18 +14,19 @@ Uncoordinated changes can duplicate measurement owners or hide required evidence
 
 ## Solution
 
-One coordinating spec links four child specs.
+One coordinating spec links the two remaining child specs.
 Each child owns its implementation stories, acceptance rows, and ticket graph.
 This document owns their dependencies and reviewer checkpoints.
 It adds no executable orchestration layer and has no implementation tickets.
 The child ticket folders provide the complete build breakdown.
 
+Measurement and selected-set cleanup have shipped. They are prerequisites, not
+remaining build targets.
+
 | Child spec | Delivered outcome | Prerequisite |
 | --- | --- | --- |
-| [Measurement](../session-context-measurement/spec.md) | Reliable measures and comparative budget evidence | Spec and ticket approval |
 | [Queries](../session-context-queries/spec.md) | Task-shaped reads and both selected query families | Measurement and budget review before new defaults |
 | [Overflow](../session-context-overflow/spec.md) | Verified complete-output preservation and bounded replacement | Measurement, budget review, and runtime capability evidence |
-| [Cleanup](../session-context-cleanup/spec.md) | One selected-set cleanup plan and apply | Spec and ticket approval |
 
 ## User stories
 
@@ -48,12 +49,12 @@ The work coordinates uncertain semantics across existing owners.
 ## Implementation decisions
 
 This is a coordination document, not a fifth product capability.
-The four sibling spec folders are independently reviewable build sources.
+The two sibling spec folders are independently reviewable build sources.
 Their ticket graphs express local dependencies with sibling ticket basenames.
 This document expresses dependencies between specs.
 A child build reads both its local prerequisites and this coordination table.
 
-The first build frontier contains measurement and cleanup after their approvals.
+Measurement and cleanup are shipped prerequisites.
 Query selectors can precede new default budgets only where their child spec permits that slice.
 No build fills numeric budget placeholders or enables an unverified harness path.
 Those changes return to spec authoring with the required evidence.
@@ -74,14 +75,14 @@ The table follows the existing ticket graph and preserves every evidence checkpo
 
 The coordinating record has review-owned acceptance.
 Each child names executable tests at its own seam.
-The spec checker validates all five coverage maps and the child ticket grammar.
+The spec checker validates all three coverage maps and the child ticket grammar.
 The project gate retains its existing six-phase architecture.
 This phase does not change the gate or manufacture executable coverage for a document-only checkpoint.
 
 ### Seam diagram
 
 ```text
-reviewed map -> coordinating record -> four child specs -> child ticket graphs
+reviewed map -> coordinating record -> two child specs -> child ticket graphs
                         |
                         +-> reviewer budget and capability checkpoints
 ```
@@ -145,7 +146,7 @@ Their enforcement references are in [seam evidence](assets/seam-evidence.md).
 
 ### Flagged additions
 
-The coordination format introduces no behavior beyond the approved coordinating spec and four-child split.
+The coordination format introduces no behavior beyond the approved coordinating spec and two-child residual.
 The review-owned dependency record does not add a new CLI or gate check.
 
 The [spec review record](assets/spec-review.md) records Sol/high acceptance and the retained user approval boundary.
