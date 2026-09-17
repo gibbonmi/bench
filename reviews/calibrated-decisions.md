@@ -80,18 +80,18 @@ The finding blocks the round, because its kind and its citation decide. The conf
 
 ### Done-claim table
 
-The author did not write a label cell. A label source writes it later.
+The author did not write a label cell. The coordinator wrote each label. The label source is the gate lane at the merge, green at tip 1ecb33ec. One independent swap probe on the CR6 mapping also bit.
 
 | row | status | confidence | label |
 | --- | --- | --- | --- |
-| CR4 | verified | 9 |  |
-| CR5 | verified | 9 |  |
-| CR6 | verified | 9 |  |
-| CR15 | verified | 9 |  |
-| CR16 | verified | 9 |  |
-| CR22 | verified | 9 |  |
-| CR23 | verified | 8 |  |
-| CR30 | verified | 9 |  |
+| CR4 | verified | 9 | held |
+| CR5 | verified | 9 | held |
+| CR6 | verified | 9 | held |
+| CR15 | verified | 9 | held |
+| CR16 | verified | 9 | held |
+| CR22 | verified | 9 | held |
+| CR23 | verified | 8 | held |
+| CR30 | verified | 9 | held |
 
 ### Red-then-green log
 
@@ -179,6 +179,57 @@ The axis gave one item of optional advice with no confidence. The CR1 why-it-cat
 | delegate return | CR37 | verified | 9 | held | opus / high / author |
 | review finding | CD1-S1 | claimed | 5 | refuted | fable / medium / Standards |
 | review finding | CD1-S2 | claimed | 6 | held | fable / medium / Standards |
+
+## CD2 review
+
+The frozen pair is base `87869759bf975c1f76a6e12ccc638e8471d40dfd` and tip `1ecb33ec4cede2be8bde4bc07bb648786e906d13`. Main moved during the review, so the integration source merged main after that tip. The chunk keeps the ticket-only pair, because the checkpoint compares the recorded tip's own tree. Each axis ran fable / medium in its own read-only worktree.
+
+The raw finding count is 4. The de-duplicated repair target count is 1. CD2 consumed 0 repair cycles. The one accepted finding is a new seam that the reviewer routed to a new chunk, CD2b, not a repair of this delta.
+
+### Standards
+
+Finding count: 2 judgment calls, 0 hard violations. Worst issue: two guidance sentences carry the 0 to 10 range.
+
+| id | finding | citation | confidence | disposition | label |
+| --- | --- | --- | --- | --- | --- |
+| CD2-S1 | The finding discipline reference and the review skill each state the 0 to 10 range. | AGENTS.md, one source per fact; the spec requires both sentences verbatim as CR4 and CR15. | 8 | no-op | refuted |
+| CD2-S2 | The registry test adds a second function instead of extending the first. | Ticket 2, "its harness test"; the exemplar keeps one function per topic. | 4 | no-op | refuted |
+
+Both findings are `no-op`. The spec's pasted needles decide CD2-S1, and the ticket-passes exemplar decides CD2-S2. The axis noted that the scenario finding table omits the model, effort, and role cell; that table is illustrative and not a pair.
+
+### Spec
+
+The finding count is 0, and there is no worst issue. The axis audited every CD2 row and found each held. It accepted the author's heading judgment: `## What a confidence states` follows the reference's one-question-per-heading shape.
+
+The axis gave two items of optional advice with no confidence. The CR22 anchor is section-scoped, so it cannot pin step 6. The disposition-label fixture removes two lines where one sentence would match its siblings.
+
+### Coverage
+
+Finding count: 2. Worst issue: the CR22 sentence can leave the pickup step while the check stays green.
+
+| id | finding | citation | confidence | disposition | label |
+| --- | --- | --- | --- | --- | --- |
+| CD2-C1 | Omitting the step 6 heading moves the CR22 sentence into step 5, and `docs-currency-workflow` stays green, because `RequireInSection` is heading-scoped. | Spec row CR22, "the pickup step"; probe 8, `silent`. | 7 | ask-user | held |
+| CD2-C2 | A contradicting sentence appended after the CR5 needle stays green. | The known bound of every sentence anchor; no row promises it. | 3 | no-op | refuted |
+
+The reviewer decided CD2-C1. A step-scoped anchor kind is a new seam, and the reviewer expanded this run with one ticket for it. The ticket forms chunk CD2b, re-pins CR22 on step 6, and takes its own three-axis review. CD2 closes on the section anchor, and the finding is resolved by that decision. The axis ran eight probes: six bit and two stayed silent.
+
+### Pairs recorded for CD5
+
+| surface | claim | status | confidence | label | model / effort / role |
+| --- | --- | --- | --- | --- | --- |
+| delegate return | CR4 | verified | 9 | held | opus / high / author |
+| delegate return | CR5 | verified | 9 | held | opus / high / author |
+| delegate return | CR6 | verified | 9 | held | opus / high / author |
+| delegate return | CR15 | verified | 9 | held | opus / high / author |
+| delegate return | CR16 | verified | 9 | held | opus / high / author |
+| delegate return | CR22 | verified | 9 | held | opus / high / author |
+| delegate return | CR23 | verified | 8 | held | opus / high / author |
+| delegate return | CR30 | verified | 9 | held | opus / high / author |
+| review finding | CD2-S1 | claimed | 8 | refuted | fable / medium / Standards |
+| review finding | CD2-S2 | claimed | 4 | refuted | fable / medium / Standards |
+| review finding | CD2-C1 | claimed | 7 | held | fable / medium / Coverage |
+| review finding | CD2-C2 | claimed | 3 | refuted | fable / medium / Coverage |
 
 ## Native review record
 
