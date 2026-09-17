@@ -95,6 +95,44 @@ The coordinator ran the three chunk verifications at `d434bb76`. Both focused su
 The repair writer logged 31 probe runs at `76afb4fb`, and each run failed the expected tests and restored the file.
 The coordinator's independent probe shifted the input ordinal in `internal/chargeevidence/manifest.go`, and six tests failed.
 
+## CE-C1A: review round 3
+
+Frozen pair: base `bcd9eb7ff876abd681d2c71547e9cf6c5b86174b`, tip `85de8fa38a9d90808a6034e3dda0029b860cdebc`.
+The raw finding count is 2. The de-duplicated repair-target count is 1, because both findings concern one quoting paragraph.
+Repair cycles used: 2 of 2. Repair cycle 2 closed ST2, ST6, ST7, and SP4.
+
+### Standards
+
+Finding count: 1. Worst issue: ST8.
+
+- CE-C1A-ST8 (auto-fix): `internal/chargeevidence/reference.go` adds a sentence that answers the removed trigger list. A later reader learns nothing from it. Delete the sentence.
+
+### Spec
+
+Finding count: 1. Worst issue: SP5.
+
+- CE-C1A-SP5 (auto-fix): The quoting paragraph names a Bench test file as the trigger inventory. Spec line 257 requires a reference that an independent reader can use without Bench-private helpers. Name the upstream encoder module and the version that `go.mod` pins instead.
+
+### Coverage
+
+Finding count: 0.
+
+### Advice
+
+- Derive the ASCII marker text from `HeaderMarker` without a literal length.
+- Keep `HeaderLengthRange` out of the package API through a test-only export.
+- A header length probe fails by a panic instead of a named assertion.
+
+### Reviewer decision
+
+The allowance was exhausted with SP5 open. The reviewer extended the allowance by one repair cycle. The extension covers only the quoting paragraph in `internal/chargeevidence/reference.go` and the regenerated shipped reference. A fresh opus write delegate at medium effort performs it. Round 4 reviews only that change.
+
+### Author verification
+
+The coordinator ran the three chunk verifications at `85de8fa3`. Both focused suites passed, and the plan probe failed seven tests and restored the file.
+The repair writer logged nine probe runs at `85de8fa3`, and each run failed the expected tests and restored the file.
+The coordinator's independent probe changed the ticket-cell sentence in the reference generator, and the projection test failed.
+
 ## Record
 
 ```bench-review-record
@@ -107,9 +145,9 @@ The coordinator's independent probe shifted the input ordinal in `internal/charg
     {
       "id": "CE-C1A",
       "base": "bcd9eb7ff876abd681d2c71547e9cf6c5b86174b",
-      "tip": "d434bb7623126a0b632f018098c4d66b51922608",
+      "tip": "85de8fa38a9d90808a6034e3dda0029b860cdebc",
       "plan_digest": "sha256:971cc327eafed497f8ad3ae83762bcaf4c1a30538971f90736c74ba6be2031d0",
-      "source_digest": "7301ed96ce7df50b7f267a86cd9f50ae3e3a4f26",
+      "source_digest": "a9540853957b34f88b3f5ecb14fe4930f439406d",
       "acceptance_rows": [
         "CE16",
         "CE18",
@@ -283,6 +321,71 @@ The coordinator's independent probe shifted the input ordinal in `internal/charg
               "excerpt": "bench probe internal/chargeevidence/schema.go --omit ', str(\"cwd\")' --package ./internal/chargeevidence at d434bb76: verdict bit, 7 failed tests, restored=yes"
             }
           }
+        },
+        {
+          "id": "ce-c1a-v3-preflight",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a9540853957b34f88b3f5ecb14fe4930f439406d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:29aa55e29ab195a78f6b19559682939596b5282e3c3ce8054058a8ad2aefd48e",
+            "excerpt": "bench test --package ./internal/preflight at 85de8fa3: pass, 17411 ms"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1a-v3-format",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a9540853957b34f88b3f5ecb14fe4930f439406d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:441191ee37556bde55a06cdf39ad37f42d052797ab6a3b3390315afe695e99d7",
+            "excerpt": "bench test --package ./internal/chargeevidence at 85de8fa3: pass, 9 ms"
+          },
+          "requirement": "format",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1a-v3-mutation",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a9540853957b34f88b3f5ecb14fe4930f439406d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:441191ee37556bde55a06cdf39ad37f42d052797ab6a3b3390315afe695e99d7",
+            "excerpt": "bench test --package ./internal/chargeevidence at 85de8fa3: pass, 9 ms"
+          },
+          "requirement": "mutation",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit a declared field from the shipped format projection",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:coordinator-run",
+              "digest": "sha256:71513b041e3213348a018fbe124c206bb4ab0b93538fec7dc7e953ba6c6b5e8f",
+              "excerpt": "bench probe internal/chargeevidence/schema.go --omit ', str(\"cwd\")' --package ./internal/chargeevidence at 85de8fa3: verdict bit, 7 failed tests, restored=yes"
+            }
+          }
         }
       ],
       "reviews": [
@@ -433,6 +536,76 @@ The coordinator's independent probe shifted the input ordinal in `internal/charg
           "finding_ids": [],
           "supersedes": [
             "ce-c1a-r1-coverage"
+          ]
+        },
+        {
+          "id": "ce-c1a-r3-standards",
+          "performer": "claude-review-ce-c1a-standards-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a9540853957b34f88b3f5ecb14fe4930f439406d",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1a-standards-r3",
+            "digest": "sha256:80e72420bd321a8509befd4c80f9d17e103a158da4fc1dca46baf784e7b7879e",
+            "excerpt": "Standards CE-C1A round 3: ST2, ST6, ST7 closed. New ST8: reference.go adds a sentence that argues with removed text (This reference does not restate a partial trigger list); delete it."
+          },
+          "axis": "Standards",
+          "base": "bcd9eb7ff876abd681d2c71547e9cf6c5b86174b",
+          "tip": "85de8fa38a9d90808a6034e3dda0029b860cdebc",
+          "finding_ids": [
+            "CE-C1A-ST8"
+          ],
+          "supersedes": [
+            "ce-c1a-r2-standards"
+          ]
+        },
+        {
+          "id": "ce-c1a-r3-spec",
+          "performer": "claude-review-ce-c1a-spec-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a9540853957b34f88b3f5ecb14fe4930f439406d",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1a-spec-r3",
+            "digest": "sha256:157d7f997c173451e2c77dad5eb59c77a695f633e21e4891aef2a81d0c049c4d",
+            "excerpt": "Spec CE-C1A round 3: SP4 closed. New SP5: the quoting paragraph names a Bench test file as the trigger inventory, which contradicts spec line 257; name the upstream encoder module and its pinned version instead."
+          },
+          "axis": "Spec",
+          "base": "bcd9eb7ff876abd681d2c71547e9cf6c5b86174b",
+          "tip": "85de8fa38a9d90808a6034e3dda0029b860cdebc",
+          "finding_ids": [
+            "CE-C1A-SP5"
+          ],
+          "supersedes": [
+            "ce-c1a-r2-spec"
+          ]
+        },
+        {
+          "id": "ce-c1a-r3-coverage",
+          "performer": "claude-review-ce-c1a-coverage-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a9540853957b34f88b3f5ecb14fe4930f439406d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1a-coverage-r3",
+            "digest": "sha256:582b2d5de38c364ba10b65ec25195e1eb214b3993e296856f399343ddd95d804",
+            "excerpt": "Coverage CE-C1A round 3: 0 findings. Every guard changed in 85de8fa3 bit under a probe: marker text, header length range, reframe helper, access constants and uses, comma and colon cells."
+          },
+          "axis": "Coverage",
+          "base": "bcd9eb7ff876abd681d2c71547e9cf6c5b86174b",
+          "tip": "85de8fa38a9d90808a6034e3dda0029b860cdebc",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c1a-r2-coverage"
           ]
         }
       ]
