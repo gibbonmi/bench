@@ -817,6 +817,7 @@ It grants no implementation authority until the implementation phase starts.
 - `cmd/bench/help_inventory_test.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
+- `internal/conformance/package_shipped_surface_test.go`
 - `internal/conformance/charge_evidence_guidance_test.go`
 - `internal/anchors/registry_ft311_preparation.go`
 - `internal/conformance/ft311_preparation_test.go`

@@ -1,7 +1,7 @@
 # Publish bounded build evidence
 
 Blocked by: 1-validate-legacy-prepared-packs.md
-Writes: internal/preflight, internal/chargeevidence (new), .agents/skills/bench-craft-delegate/references/charge-evidence-format.md (new), reviews/bounded-charge-evidence.md (new), internal/systemtest, internal/conformance/injected_ports_registry_test.go, internal/git/worktree_admin.go, cmd/bench/main.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/package-core-guard/unrouted-subcommand
+Writes: internal/preflight, internal/chargeevidence (new), .agents/skills/bench-craft-delegate/references/charge-evidence-format.md (new), reviews/bounded-charge-evidence.md (new), internal/systemtest, internal/conformance/injected_ports_registry_test.go, internal/git/worktree_admin.go, cmd/bench/main.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/package_shipped_surface_test.go, tests/canary/package-core-guard/unrouted-subcommand
 Covers: CE1, CE2, CE3, CE4, CE5, CE6, CE9, CE10, CE11, CE12, CE13, CE14, CE15, CE17, CE39, CE40, CE53, CE54, CE63, CE64, CE74, CE75, CE76, CE77, CE86, CE87, CE88, CE89, CE90, CE91, CE92, CE93, CE94, CE95, CE96, CE97, CE98, CE99, CE118, CE128, CE129, CE130, CE131, CE132, CE138, CE139, CE150, CE151, CE152, CE153, CE154, CE155, CE156, CE157
 
 ## What to build
