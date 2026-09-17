@@ -60,6 +60,24 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **line** — the declared model, effort, and rough token cap for a stage, with one
   clause of justification. "Declare the line" means state this before a long run.
   Not "budget" alone — the line is the whole routing decision.
+- **claim** — one assertion an agent makes that a label source grades later:
+  a done-claim row, a review finding, or a line declaration's expected repair
+  rounds. It carries a status of `verified`, `claimed`, or `abstained`. Not
+  "assertion", not "result" — claim.
+- **stated confidence** — the integer from 0 to 10 an agent attaches to a
+  claim before its label, normalized to `p = n / 10` for the score. Not
+  "certainty", not "probability" in prose — stated confidence.
+- **outcome label** — `held` or `refuted`, written for a claim by a label
+  source after the fact. Not "result", not "verdict" — outcome label.
+- **label source** — the gate, the coordinator's probe of the exact tree, or
+  the reviewer's disposition. A model judgment is never one. Not "grader" —
+  label source.
+- **calibration score** — the Brier value `(p - label)^2` of one claim, or its
+  mean over a model, effort, and role in the scorecard. Lower is better. Not
+  "accuracy", not "hit rate" — calibration score.
+- **abstention** — a claim withheld with the status `abstained` and no
+  confidence. It scores 0, stays out of the Brier mean, and is counted apart.
+  Not "refusal", not "skip" — abstention.
 - **worktree** — an isolated Git checkout. `bench shift` leases warm, reusable
   pooled worktrees. Interactive and harness lifecycle commands create exact owned,
   locked assignment worktrees and release them safely.
