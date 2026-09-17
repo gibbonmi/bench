@@ -363,6 +363,57 @@ Finding count: 2. Worst issue: CV1.
 - One slice expression in the operation registry reads as a puzzle.
 - One budget test comment lost its sentence in a reflow.
 
+## CE-C1C: review round 2
+
+Frozen pair: base `b89e8689bb687c93c4d52d74b4510858828b8fe5`, tip `537e8d49f80078817a7516dbb27e81deba3ba4c3`.
+The raw finding count is 3. The de-duplicated repair-target count is 1, because ST1 closes with this record and SP3 takes a no-op disposition.
+Repair cycles used: 1 of 2. Repair cycle 1 closed SP2, CV1, ST2, ST3, ST4, ST5, and the lock-exclusion strengthening.
+
+### Repair cycle 1 probe records
+
+Each probe below failed the named tests and restored its file.
+
+- The verify form given an optional cursor: the verify grammar case failed. This is the plan probe.
+- The within-source clamp weakened: the new single-page source case failed.
+- The page offset zeroed in the reader: the delivery coverage case failed, which the digest-only fixture had accepted.
+- The consumer reconstruction disabled: the out-of-order, overlapping, and crafted-digest cases failed.
+- The registered field `sources_verified` omitted: the verify command, verify grammar, and budget cases failed. The registry and shipped reference cases failed in the store package.
+- The current response field renamed in the registry: the current-binding case failed on its hand-written header.
+- The current form given an optional cursor: the root help inventory failed.
+- The operand predicate narrowed to one kind: the verify and current grammar cases failed before any store access.
+- The page digest owner neutered: the pack refusal, page corruption, and full verification cases failed.
+- The source digest owner neutered: both source digest refusals and the full verification case failed.
+- A live system probe wrote a progress file named after the artifact, with a lock suffix. The stateless-read journey failed under the named-lock exclusion. It passed under the old suffix exclusion.
+
+The coordinator's independent probe made page reads ignore their offset, and three delivery and text cases failed.
+
+### Standards
+
+Finding count: 1. Worst issue: ST1.
+
+- CE-C1C-ST1 (auto-fix): The per-expectation probes existed only in the author report. The records above close this finding.
+
+### Spec
+
+Finding count: 0 blocking. The axis passed.
+
+- CE-C1C-SP3 (no-op): The consumer fixture also rejects pages that arrive out of order, which the spec permits. The spec's named rejections still hold, and the strictness never leaves the test binary.
+
+### Coverage
+
+Finding count: 1. Worst issue: CV3.
+
+- CE-C1C-CV3 (auto-fix): No delivery declares a page byte count that differs from its content, so the new page-length clause is never reached. A probe of that clause stayed silent. Add a shortened-page case.
+
+### Advice
+
+- Sort received pages by source and index before reconstruction, so the overlap case can assert an overlap-specific message.
+- The reconstruction message names the digest even when only the length differs.
+- Two fixture helpers index a second page without a length guard.
+- The source-level byte comparison in the reconstruction is unmeasured.
+- The length clause in the source digest owner is dead on the paged-read path and earns its keep on the verification path.
+- Two lock names are exported for one system test.
+
 ## Record
 
 ```bench-review-record
@@ -1559,9 +1610,9 @@ Finding count: 2. Worst issue: CV1.
     {
       "id": "CE-C1C",
       "base": "b89e8689bb687c93c4d52d74b4510858828b8fe5",
-      "tip": "61304d6969d27382e8e6528912bd3d50d4551541",
+      "tip": "537e8d49f80078817a7516dbb27e81deba3ba4c3",
       "plan_digest": "sha256:bd4837edc8c926625c78753261b6eb6a4c9bff01e43afa43c1a1a609be8949fb",
-      "source_digest": "9afd0d74528b7db97cac2c1eaa01d216024c3137",
+      "source_digest": "121b974df8c28fef20699200c1dcea1f5e325bb1",
       "acceptance_rows": [
         "CE7",
         "CE8",
@@ -1688,6 +1739,107 @@ Finding count: 2. Worst issue: CV1.
               "excerpt": "bench probe internal/preflight/evidencecmd/operations.go giving the verify form an optional cursor at 61304d69: verdict bit, TestEvidenceVerifyGrammar/with_cursor failed, restored=yes"
             }
           }
+        },
+        {
+          "id": "ce-c1c-v2-preflight",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "121b974df8c28fef20699200c1dcea1f5e325bb1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:bbf14e4f7f341e448808e3ac2a971facc09d1e37a288888e959abdf79b352a35",
+            "excerpt": "at 537e8d49: pass; preflight 18430 ms and evidencecmd 4306 ms"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1c-v2-store",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "121b974df8c28fef20699200c1dcea1f5e325bb1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:f5a3725b9f0c2466c6fa9e8459c8f6ab57660ac4f0534c3eacbd40af164f3a7e",
+            "excerpt": "at 537e8d49: pass, 117 ms; the CE94 device case skipped for the privilege capability"
+          },
+          "requirement": "store",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1c-v2-inventory",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "121b974df8c28fef20699200c1dcea1f5e325bb1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:1b5a976aaf043d7b0520e6d49efd481c79b6ae60319244e08d676cfd9f8f18e1",
+            "excerpt": "at 537e8d49: pass, 7070 ms"
+          },
+          "requirement": "inventory",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1c-v2-system",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "121b974df8c28fef20699200c1dcea1f5e325bb1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:8a9d930af9c1d5da3e7dada1d83dc0aa7bba44009f9ed7e8e48b44c5eca6a61f",
+            "excerpt": "at 537e8d49: pass, 33439 ms"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1c-v2-mutation",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "121b974df8c28fef20699200c1dcea1f5e325bb1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:f73a028976d19eb4e6cbed99b2917a99a518cd90a03b419d8b929f95c2e8837e",
+            "excerpt": "at 537e8d49: pass"
+          },
+          "requirement": "mutation",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "accept --verify with --cursor",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:coordinator-run",
+              "digest": "sha256:73d71c423571d68f13e848d8c426eda7aefff54023b09c29565cb62f2f88ca78",
+              "excerpt": "bench probe internal/preflight/evidencecmd/operations.go giving the verify form an optional cursor at 537e8d49: verdict bit, TestEvidenceVerifyGrammar/with_cursor failed, restored=yes"
+            }
+          }
         }
       ],
       "reviews": [
@@ -1760,6 +1912,76 @@ Finding count: 2. Worst issue: CV1.
             "CE-C1C-CV1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ce-c1c-r2-standards",
+          "performer": "claude-review-ce-c1c-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "121b974df8c28fef20699200c1dcea1f5e325bb1",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1c-standards-r2",
+            "digest": "sha256:ecd82fb1c8aac4fddf338280df6eaecc4cc6928b7257af87db646bac5dcab077",
+            "excerpt": "Standards CE-C1C round 2: ST2 to ST5 closed. ST1 stayed open because the repair's per-expectation probes lived only in the author report; this record now carries them."
+          },
+          "axis": "Standards",
+          "base": "b89e8689bb687c93c4d52d74b4510858828b8fe5",
+          "tip": "537e8d49f80078817a7516dbb27e81deba3ba4c3",
+          "finding_ids": [
+            "CE-C1C-ST1"
+          ],
+          "supersedes": [
+            "ce-c1c-r1-standards"
+          ]
+        },
+        {
+          "id": "ce-c1c-r2-spec",
+          "performer": "claude-review-ce-c1c-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "121b974df8c28fef20699200c1dcea1f5e325bb1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1c-spec-r2",
+            "digest": "sha256:9c2772085aa29e08f5b02576ed9a12cb5d75bd8c06af5a061e76032810d04851",
+            "excerpt": "Spec CE-C1C round 2: SP2 and CV1 closed. The consumer now checks returned ranges, membership, source digests, and byte coverage, and the single-page case matches the spec. One no-op note: the fixture also rejects out-of-order arrival, which the spec permits."
+          },
+          "axis": "Spec",
+          "base": "b89e8689bb687c93c4d52d74b4510858828b8fe5",
+          "tip": "537e8d49f80078817a7516dbb27e81deba3ba4c3",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c1c-r1-spec"
+          ]
+        },
+        {
+          "id": "ce-c1c-r2-coverage",
+          "performer": "claude-review-ce-c1c-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "121b974df8c28fef20699200c1dcea1f5e325bb1",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1c-coverage-r2",
+            "digest": "sha256:dfe0517a2ea123d582b0dfed9ca036ea82ef975c7765a7219bf7323c1be891a9",
+            "excerpt": "Coverage CE-C1C round 2: CV1 closed, and the repair's new owners, predicate, and shared helper each bit. New CV3: no delivery declares a page byte count that differs from its content, so the new page-length clause is never reached."
+          },
+          "axis": "Coverage",
+          "base": "b89e8689bb687c93c4d52d74b4510858828b8fe5",
+          "tip": "537e8d49f80078817a7516dbb27e81deba3ba4c3",
+          "finding_ids": [
+            "CE-C1C-CV3"
+          ],
+          "supersedes": [
+            "ce-c1c-r1-coverage"
+          ]
         }
       ]
     }
