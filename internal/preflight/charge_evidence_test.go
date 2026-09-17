@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/canonicalpath"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
@@ -15,37 +17,36 @@ const phaseRefusal = "error: source required: .agents/commands/bench-implement-s
 const sourceNext = " — restore the named canonical source and rerun the exact charge\n"
 
 // TestEvidenceRequiredSourceStates covers CE41 through CE48. Every Git-trackable state
-// runs through the public command. The special kinds that cannot enter Git reach the
-// no-follow source adapter below the checkout guard, which would otherwise answer first.
+// runs through the public command, using the same setups as the enumerated legacy
+// differential. The special kinds that cannot enter Git reach the no-follow source
+// adapter below the checkout guard, which would otherwise answer first.
 func TestEvidenceRequiredSourceStates(t *testing.T) {
 	for _, test := range []struct {
-		name, want string
-		prepare    func(t *testing.T)
+		name, mutation, want string
 	}{
-		{"CE41 absent", "is absent: ", func(t *testing.T) { removeFile(t, buildPhase) }},
-		{"CE42 empty", "is empty: ", func(t *testing.T) { mustWriteFile(t, buildPhase, "") }},
-		{"CE43 symlink", "is wrong-type: not a regular file: L---------", func(t *testing.T) {
-			removeFile(t, buildPhase)
-			if err := os.Symlink("../skills/bench-craft-delegate/SKILL.md", buildPhase); err != nil {
-				t.Fatal(err)
-			}
-		}},
-		{"CE47 directory", "is wrong-type: not a regular file: d---------", func(t *testing.T) {
-			removeFile(t, buildPhase)
-			mustWriteFile(t, filepath.Join(buildPhase, "inner.md"), "# Inner\n")
-		}},
-		{"CE48 control byte", "contains a byte spec-TOON cannot represent", func(t *testing.T) { mustWriteFile(t, buildPhase, "bad \x1b\n") }},
-		{"CE48 invalid UTF-8", "is malformed: invalid UTF-8", func(t *testing.T) { mustWriteFile(t, buildPhase, "bad \xff\n") }},
+		{"CE41 absent", "absent phase", "is absent: "},
+		{"CE42 empty", "empty phase", "is empty: "},
+		{"CE43 symlink", "symlink phase", "is wrong-type: not a regular file: L---------"},
+		{"CE47 directory", "directory phase", "is wrong-type: not a regular file: d---------"},
+		{"CE48 control byte", "control byte phase", "contains a byte spec-TOON cannot represent"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			root, slug := seedConformant(t)
-			test.prepare(t)
+			mutationNamed(t, test.mutation)(t, root, slug, nil)
 			out, code := Command(legacyCommitted(t, root, slug, test.name, true))
 			if want := phaseRefusal + test.want + sourceNext; code != 1 || out != want {
 				t.Fatalf("%s = (%d, %q), want (1, %q)", test.name, code, out, want)
 			}
 		})
 	}
+	t.Run("CE48 invalid UTF-8", func(t *testing.T) {
+		root, slug := seedConformant(t)
+		mustWriteFile(t, buildPhase, "bad \xff\n")
+		out, code := Command(legacyCommitted(t, root, slug, "CE48 invalid UTF-8", true))
+		if want := phaseRefusal + "is malformed: invalid UTF-8" + sourceNext; code != 1 || out != want {
+			t.Fatalf("CE48 invalid UTF-8 = (%d, %q), want (1, %q)", code, out, want)
+		}
+	})
 	for _, test := range []struct {
 		name, want string
 		make       func(t *testing.T) (root, path string)
@@ -81,7 +82,8 @@ func TestEvidenceRequiredSourceStates(t *testing.T) {
 	}
 }
 
-// TestEvidencePreparationRefusals covers CE49 through CE52 at the public command.
+// TestEvidencePreparationRefusals covers CE49 through CE52 at the public command, using
+// the same shared setups as the enumerated legacy differential.
 func TestEvidencePreparationRefusals(t *testing.T) {
 	for _, test := range []struct {
 		name string
@@ -89,26 +91,27 @@ func TestEvidencePreparationRefusals(t *testing.T) {
 		want string
 	}{
 		{"CE49 dirty checkout", func(t *testing.T, root, slug string) []string {
-			args := chargeArgs(t, root, slug, true)
-			mustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n// dirty\n")
-			return args
+			return mutationNamed(t, "dirty checkout")(t, root, slug, chargeArgs(t, root, slug, true))
 		}, "error: checkout required: source checkout is dirty — commit or remove local changes and rerun the exact charge\n"},
 		{"CE50 missing ticket", func(t *testing.T, root, slug string) []string {
-			args := chargeArgs(t, root, slug, true)
-			args[4] = "missing.md"
-			return args
+			return mutationNamed(t, "missing ticket")(t, root, slug, chargeArgs(t, root, slug, true))
 		}, "error: ticket required: selected ticket \"missing.md\" was not found — pass a ticket basename from the spec tickets directory\n"},
 		{"CE51 source-tip mismatch", func(t *testing.T, root, slug string) []string {
-			args := chargeArgs(t, root, slug, true)
-			args[8] = args[6]
-			return args
+			return mutationNamed(t, "source-tip mismatch")(t, root, slug, chargeArgs(t, root, slug, true))
 		}, "error: preflight required: tip-current: --source-tip <base> is not the derived source tip <tip> — repair tip-current and rerun the exact charge\n"},
 		{"CE52 no assignment", func(t *testing.T, root, slug string) []string {
-			return []string{"build", slug, "--charge", "--ticket", "one.md", "--base", runGit(t, "rev-parse", "main"), "--source-tip", runGit(t, "rev-parse", "HEAD"), "--full"}
+			return append(mutationNamed(t, "no assignment")(t, root, slug, nil), "--full")
 		}, "error: assignment required: active assignment is required — run from the assigned worktree\n"},
 		{"CE52 foreign assignment", func(t *testing.T, root, slug string) []string {
+			return mutationNamed(t, "foreign assignment")(t, root, slug, chargeArgs(t, root, slug, true))
+		}, "error: assignment required: active assignment is required — run from the assigned worktree\n"},
+		{"CE52 owned non-active assignment", func(t *testing.T, root, slug string) []string {
 			args := chargeArgs(t, root, slug, true)
-			activeAssignment(t, root, t.TempDir())
+			canonical, err := canonicalpath.Resolve(root)
+			if err != nil {
+				t.Fatalf("canonicalpath.Resolve(%q): %v", root, err)
+			}
+			ownedAssignment(t, root, canonical, intent.StateComplete)
 			return args
 		}, "error: assignment required: active assignment is required — run from the assigned worktree\n"},
 	} {
@@ -204,13 +207,6 @@ func TestEvidenceBuildMetadataSchema(t *testing.T) {
 	manifest := pack.Manifest()
 	if first := manifest.Sources[0]; first.Role != "metadata" || first.Kind != "derived" || first.Path != "" || !first.Required {
 		t.Fatalf("metadata descriptor = %+v", first)
-	}
-}
-
-func removeFile(t *testing.T, path string) {
-	t.Helper()
-	if err := os.Remove(path); err != nil {
-		t.Fatal(err)
 	}
 }
 

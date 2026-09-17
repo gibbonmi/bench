@@ -210,6 +210,13 @@ func TestGatherSpecStatusOutsideFolderEnumerationNotReadable(t *testing.T) {
 // command writes.
 func activeAssignment(t *testing.T, root, worktree string) string {
 	t.Helper()
+	return ownedAssignment(t, root, worktree, intent.StateActive)
+}
+
+// ownedAssignment registers one assignment in root's ledger, owning the tree at
+// worktree in the given lifecycle state, and returns its id.
+func ownedAssignment(t *testing.T, root, worktree string, state intent.AssignmentState) string {
+	t.Helper()
 	const id = "00000000000000000000000000000001"
 	const owner = "00000000000000000000000000000002"
 	err := intent.PutAssignment(root, intent.Assignment{
@@ -221,7 +228,7 @@ func activeAssignment(t *testing.T, root, worktree string) string {
 		Start:    runGit(t, "rev-parse", "HEAD"),
 		Branch:   intent.AssignmentBranchRef(owner, id),
 		Worktree: worktree,
-		State:    intent.StateActive,
+		State:    state,
 	})
 	if err != nil {
 		t.Fatalf("PutAssignment: %v", err)
