@@ -168,9 +168,10 @@ type systemLandingWorktree struct {
 	path, assignment, branch, request, tip string
 }
 
-func systemCreateLandingWorktree(t *testing.T, root, home, label, request string) systemLandingWorktree {
+func systemCreateLandingWorktree(t *testing.T, root, home, label, request string, extra ...string) systemLandingWorktree {
 	t.Helper()
-	result := systemSelected(t, root, []string{"BENCH_HOME=" + home, "BENCH_SYSTEM_ROOT=" + root, "BENCH_COMMAND_OBSERVE=1"}, "worktree", "create", "--request", request, "--label", label)
+	args := append([]string{"worktree", "create", "--request", request, "--label", label}, extra...)
+	result := systemSelected(t, root, []string{"BENCH_HOME=" + home, "BENCH_SYSTEM_ROOT=" + root, "BENCH_COMMAND_OBSERVE=1"}, args...)
 	if result.code != 0 || !strings.Contains(result.stderr, "command-registry:worktree") {
 		t.Fatalf("worktree create %s = (%d, %q, %q)", label, result.code, result.stdout, result.stderr)
 	}
@@ -239,12 +240,19 @@ func systemLand(t *testing.T, root, home, tally, trees, ready, release string, s
 
 func systemStartLand(t *testing.T, root, home, tally, trees, ready, release string, source systemLandingWorktree, base string) (*exec.Cmd, *bytes.Buffer, *bytes.Buffer) {
 	t.Helper()
+	return systemStartSelected(t, root, systemLandEnv(root, home, tally, trees, ready, release), systemLandArgs(source, base)...)
+}
+
+// systemStartSelected starts the selected executable without waiting for it. It joins the
+// owner's starts ledger, so a blocking journey and a foreground one share one start path.
+func systemStartSelected(t *testing.T, dir string, env []string, args ...string) (*exec.Cmd, *bytes.Buffer, *bytes.Buffer) {
+	t.Helper()
 	if err := owner.observeSelected(); err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command(owner.selected.path, systemLandArgs(source, base)...)
-	cmd.Dir = root
-	cmd.Env = mergeEnvironment(os.Environ(), systemLandEnv(root, home, tally, trees, ready, release))
+	cmd := exec.Command(owner.selected.path, args...)
+	cmd.Dir = dir
+	cmd.Env = mergeEnvironment(os.Environ(), env)
 	stdout, stderr := &bytes.Buffer{}, &bytes.Buffer{}
 	cmd.Stdout, cmd.Stderr = stdout, stderr
 	owner.mu.Lock()

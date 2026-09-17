@@ -137,26 +137,14 @@ func TestChargeSnapshotMovement(t *testing.T) {
 	}
 }
 
+// TestChargeProjectionAndFullRetrieval keeps the legacy --full projection that the build
+// phase reads until its guidance migrates; the compact projection became the prepared
+// evidence response.
 func TestChargeProjectionAndFullRetrieval(t *testing.T) {
 	root, slug := seedConformant(t)
-	compact, code := Command(chargeArgs(t, root, slug, false))
-	if code != 0 || !strings.Contains(compact, "\"false\",bench preflight") || !strings.Contains(compact, "omitted[5]{source}") || !strings.Contains(compact, "--full") || strings.Contains(compact, "## Acceptance") {
-		t.Fatalf("compact charge = (%d):\n%s", code, compact)
-	}
 	full, code := Command(chargeArgs(t, root, slug, true))
 	if code != 0 || !strings.Contains(full, "\"true\"") || !strings.Contains(full, "evidence[5]{source,content}") || !strings.Contains(full, "## Acceptance") || !strings.Contains(full, "Status: staged") || !strings.Contains(full, "Delegation skill") || !strings.Contains(full, "Build phase") || !strings.Contains(full, "Focused suite:") {
 		t.Fatalf("full charge = (%d):\n%s", code, full)
-	}
-
-	root, slug = seedConformant(t)
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2")+strings.Repeat("large ticket evidence\n", 12000))
-	runGit(t, "add", "specs/"+slug+"/tickets/one.md")
-	runGit(t, "commit", "-q", "-m", "large ticket")
-	args := chargeArgs(t, root, slug, false)
-	args[8] = runGit(t, "rev-parse", "HEAD")
-	compact, code = Command(args)
-	if code != 0 || len(compact) > 10000 || strings.Contains(compact, "large ticket evidence") || !strings.Contains(compact, "omitted[5]{source}") {
-		t.Fatalf("large compact charge = (%d, %d bytes):\n%s", code, len(compact), compact)
 	}
 }
 

@@ -1,45 +1,22 @@
 package preflight
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/axi"
+	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// grammar is the declared argument shape usage.Parse enforces for this
-// subcommand. Two required positionals (mode, slug), an optional explicit
-// base, and the optional frozen source tip the review phase pins. Both
-// `review` and `build` are accepted modes. The mode-validity check below
-// rejects anything else the same way it rejects any unknown word.
-var grammar = usage.Grammar{
-	Cmd: "bench preflight",
-	Help: "usage: bench preflight review <slug> [--base <commit>] [--source-tip <commit>]\n" +
-		"       bench preflight review <slug> --charge --base <commit> --source-tip <commit> [--full]\n" +
-		"       bench preflight build <slug> [--base <commit>] [--source-tip <commit>]\n" +
-		"       bench preflight build <slug> --charge --ticket <basename> --base <commit> " +
-		"--source-tip <commit> [--full]\n" +
-		"       bench preflight build <slug> --propose-writes --ticket <basename> --base <commit> " +
-		"--source-tip <commit>\n",
-	Flags: []usage.Flag{
-		{Name: "--base", HasValue: true, NoEmptyValue: true},
-		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
-		{Name: "--charge"},
-		{Name: "--propose-writes"},
-		{Name: "--ticket", HasValue: true, NoEmptyValue: true},
-		{Name: "--full"},
-	},
-	MinArgs: 2,
-	MaxArgs: 2,
-}
-
 // Command is the legacy adapter for `bench preflight review <slug>` and `bench
 // preflight build <slug>`. It is the CLI-contract seam. Grammar and usage errors ride
-// usage.Parse (exit 2). A not-in-repo cwd or a bootstrap failure is one
-// toon.Errorf line (exit 1). Otherwise the verdict renders as TOON and the
+// usage.Parse and the operation registry (exit 2). A not-in-repo cwd or a bootstrap
+// failure is one toon.Errorf line (exit 1). Otherwise the verdict renders as TOON and the
 // exit code follows Verdict.Red (0 green, 1 red).
 func Command(args []string) (string, int) {
 	return CommandWithVersion("")(args)
@@ -52,56 +29,62 @@ func CommandWithVersion(version string) func([]string) (string, int) {
 }
 
 func command(version string, args []string) (string, int) {
+	if line := oversizedOperand(args); line != "" {
+		return boundResponse(line+"\n", 2)
+	}
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
-		return line + "\n", code
+		return boundResponse(line+"\n", code)
 	}
 	mode, slug := parsed.Positionals[0], parsed.Positionals[1]
-	base := parsed.Flags["--base"]
-	sourceTip := parsed.Flags["--source-tip"]
-	_, charge := parsed.Flags["--charge"]
-	_, proposeWrites := parsed.Flags["--propose-writes"]
-	_, full := parsed.Flags["--full"]
-	ticket := parsed.Flags["--ticket"]
-	if mode != "review" && mode != modeBuild {
-		return toon.Usage(grammar.Cmd, mode) + "\n", 2
+	op, line := selectOperation(mode, parsed.Flags)
+	if line != "" {
+		return boundResponse(line+"\n", 2)
 	}
-	if charge && proposeWrites {
-		return toon.Usage(grammar.Cmd, "--charge and --propose-writes cannot be combined") + "\n", 2
+	out, code := dispatch(version, op, slug, parsed.Flags, args)
+	if op.bounded {
+		return boundResponse(out, code)
 	}
-	if charge && mode == modeBuild && (base == "" || sourceTip == "" || ticket == "") {
-		return toon.Usage(grammar.Cmd, "--charge requires build, --ticket, --base, and --source-tip") + "\n", 2
+	return out, code
+}
+
+func dispatch(version string, op operation, slug string, flags map[string]string, args []string) (string, int) {
+	base, sourceTip, ticket := flags[flagBase], flags[flagTip], flags[flagTicket]
+	_, full := flags[flagFull]
+	quota := uint64(chargeevidence.DefaultQuota)
+	if text, ok := flags[flagQuota]; ok {
+		value, valid := chargeevidence.ParseDecimal(text)
+		if !valid || value == 0 {
+			return toon.Usage(grammar.Cmd, flagQuota+" needs a positive decimal byte count within the unsigned 64-bit range") + "\n", 2
+		}
+		quota = value
 	}
-	if charge && mode == "review" && ticket != "" {
-		return toon.Usage(grammar.Cmd, "--charge requires build with --ticket, or review without --ticket") + "\n", 2
-	}
-	if charge && mode == "review" && (base == "" || sourceTip == "") {
-		return toon.Usage(grammar.Cmd, "review --charge requires --base and --source-tip") + "\n", 2
-	}
-	if proposeWrites && (mode != modeBuild || base == "" || sourceTip == "" || ticket == "") {
-		return toon.Usage(grammar.Cmd, "--propose-writes requires build, --ticket, --base, and --source-tip") + "\n", 2
-	}
-	if !charge && (ticket != "" || full) && !proposeWrites {
-		return toon.Usage(grammar.Cmd, "--ticket and --full require --charge") + "\n", 2
-	}
-	if proposeWrites && full {
-		return toon.Usage(grammar.Cmd, "--full requires --charge") + "\n", 2
+	if op.kind == opReadEvidence {
+		if line := evidenceOperandRefusal(slug, flags[flagCursor]); line != "" {
+			return line + "\n", 2
+		}
 	}
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-
 	if err := unrepresentableCell("--source-tip", sourceTip); err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
-	if charge {
-		return chargeCommand(root, mode, slug, base, sourceTip, ticket, full, version, args)
+	switch op.kind {
+	case opLegacyCharge:
+		return chargeCommand(root, op.mode, slug, base, sourceTip, ticket, full, version, args)
+	case opProposal:
+		return proposeWritesCommand(root, op.mode, slug, base, sourceTip, ticket, args)
+	case opPrepareEvidence:
+		return prepareEvidenceCommand(root, slug, base, sourceTip, ticket, quota, args)
+	case opReadEvidence:
+		return readEvidenceCommand(root, slug, flags[flagCursor])
 	}
-	if proposeWrites {
-		return proposeWritesCommand(root, mode, slug, base, sourceTip, ticket, args)
-	}
+	return verdictCommand(root, op.mode, slug, base, sourceTip, args)
+}
 
+func verdictCommand(root, mode, slug, base, sourceTip string, args []string) (string, int) {
 	facts, bootErr := GatherPinned(root, mode, slug, base, sourceTip)
 	if bootErr != nil {
 		if bootErr.Kind == "snapshot drift" {
@@ -140,6 +123,35 @@ func command(version string, args []string) (string, int) {
 		exit = 1
 	}
 	return b.String(), exit
+}
+
+// maxOperandBytes bounds every preflight operand before the parser can echo it. Every valid
+// selector, pin, identifier, cursor, and quota is far shorter.
+const maxOperandBytes = 1024
+
+// oversizedOperand refuses an operand too long to echo, naming it only by length and digest.
+func oversizedOperand(args []string) string {
+	for _, arg := range args {
+		if len(arg) > maxOperandBytes {
+			return toon.Usage(grammar.Cmd, boundedOperand("oversized operand", arg))
+		}
+	}
+	return ""
+}
+
+// boundedOperand identifies a hostile operand by type, length, and digest, never by value.
+func boundedOperand(kind, value string) string {
+	sum := sha256.Sum256([]byte(value))
+	return fmt.Sprintf("%s bytes=%d sha256=%s", kind, len(value), hex.EncodeToString(sum[:]))
+}
+
+// boundResponse is the shared final guard for bounded forms and every usage line: a response
+// above chargeevidence.ResponseLimit encoded bytes becomes one bounded operational refusal.
+func boundResponse(out string, code int) (string, int) {
+	if len(out) <= chargeevidence.ResponseLimit {
+		return out, code
+	}
+	return toon.Errorf("response bound exceeded", fmt.Sprintf("the response held %d bytes above the %d-byte limit; report this defect", len(out), chargeevidence.ResponseLimit)) + "\n", 1
 }
 
 func snapshotDriftRefusal(args []string, hint string) string {

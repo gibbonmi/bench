@@ -114,18 +114,9 @@ func mutationNamed(t *testing.T, name string) func(t *testing.T, root, slug stri
 
 func legacyChargeCases() []legacyChargeCase {
 	return []legacyChargeCase{
-		{"compact", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := seedConformant(t)
-			return legacyChargeRun(t, root, chargeArgs(t, root, slug, false))
-		}},
 		{"full", func(t *testing.T) (string, int, string, string, string) {
 			root, slug := seedConformant(t)
 			return legacyChargeRun(t, root, chargeArgs(t, root, slug, true))
-		}},
-		{"large-ticket-compact", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := seedConformant(t)
-			mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2")+strings.Repeat("large ticket evidence\n", 3000))
-			return legacyChargeRun(t, root, legacyCommitted(t, root, slug, "large ticket", false))
 		}},
 		{"unicode-without-final-newline-full", func(t *testing.T) (string, int, string, string, string) {
 			root, slug := seedConformant(t)

@@ -25,6 +25,25 @@ func preparedCommand(
 	args []string,
 	form preparationMode,
 ) (string, int) {
+	action := "charge"
+	if form == proposalPreparation {
+		action = "proposal"
+	}
+	return preparedAttempts(root, mode, slug, base, sourceTip, action, args, func(facts Facts) (string, int) {
+		switch {
+		case form == proposalPreparation:
+			return renderWritesProposal(root, facts, name)
+		case mode == modeBuild:
+			return renderCharge(root, facts, Decide(facts), name, full)
+		}
+		return renderReviewCharge(root, facts, Decide(facts), full, version)
+	})
+}
+
+// preparedAttempts gathers the pinned facts inside the movement-checked retry and renders
+// each attempt through render. A drift or read failure replaces the attempt's output, so
+// only an unmoved attempt's answer reaches the caller.
+func preparedAttempts(root, mode, slug, base, sourceTip, action string, args []string, render func(Facts) (string, int)) (string, int) {
 	var out string
 	code := 1
 	result := diff.MovementCheckedRetry(root, func(snapshot diff.MovementSnapshot) (string, string) {
@@ -41,10 +60,6 @@ func preparedCommand(
 		}
 		facts, failure := gatherCharge(root, mode, slug, &source, paths, sourceTip)
 		if failure != nil {
-			action := "charge"
-			if form == proposalPreparation {
-				action = "proposal"
-			}
 			out = chargeRefusal("source", failure.Kind+": "+failure.Hint, "restore the named canonical source and rerun the exact "+action)
 			return "", ""
 		}
@@ -52,16 +67,7 @@ func preparedCommand(
 			out = toon.RenderError(err) + "\n"
 			return "", ""
 		}
-		switch form {
-		case chargePreparation:
-			if mode == modeBuild {
-				out, code = renderCharge(root, facts, Decide(facts), name, full)
-			} else {
-				out, code = renderReviewCharge(root, facts, Decide(facts), full, version)
-			}
-		case proposalPreparation:
-			out, code = renderWritesProposal(root, facts, name)
-		}
+		out, code = render(facts)
 		return "", ""
 	})
 	if result.DriftKind != "" {

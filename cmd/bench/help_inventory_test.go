@@ -68,7 +68,14 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench harnesses [<harness> [--record <path> --format <source-id>]]  the harness record as TOON; one name prints that harness's cells; both flags observe one named session record
   bench assessment list | show <run-id> | record --input <file> | compare --plan <file> --runs <id,...>  store and inspect local workflow cost and quality
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
-  bench preflight review|build <slug>  phase-entry checks that a spec's artifacts agree with the tree, one verdict row per check
+  bench preflight review <slug> [--base <commit>] [--source-tip <commit>]  review-entry checks that a spec's artifacts agree with the tree, one verdict row per check
+  bench preflight review <slug> --charge --base <commit> --source-tip <commit>  legacy review charge that names every omitted source
+  bench preflight review <slug> --charge --base <commit> --source-tip <commit> --full  legacy review charge that inlines every source
+  bench preflight build <slug> [--base <commit>] [--source-tip <commit>]  build-entry checks that a spec's artifacts agree with the tree, one verdict row per check
+  bench preflight build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]  prepare one immutable build evidence artifact and print its bounded orientation
+  bench preflight build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> --full  legacy build charge that inlines every source
+  bench preflight build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>  propose one ticket's Writes: entries from the pinned source
+  bench preflight evidence <id> [--cursor <cursor>]  print one bounded fragment of a prepared evidence artifact and its exact successor
   bench repair-pilot activate | report [--full]  collect and report attributed repair evidence for an explicit local pilot
   bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>  run focused Go-test or named-check evidence as TOON; no gate verdict
   bench probe <file> (--swap <old> --with <new> | --omit <old>) (--package <expr> [--run <go-regex>] | --check <name>) [--full]  mutate one file once, run one focused test or check, restore the file, and report bit, silent, invalid, or restore-failed
@@ -107,6 +114,50 @@ func TestHelpInventoryIsComplete(t *testing.T) {
 	if stdout.String() != want {
 		t.Fatalf("help inventory:\n%s\nwant complete public inventory:\n%s", stdout.String(), want)
 	}
+}
+
+// TestEvidenceHelpInventory is CE152. TestHelpInventoryIsComplete owns the independent
+// root inventory; these cases prove that `bench preflight --help` advertises exactly the
+// preflight forms root help advertises, and that neither advertises a later operation.
+func TestEvidenceHelpInventory(t *testing.T) {
+	var root bytes.Buffer
+	if code := (Command{Stdout: &root}).Run([]string{"help"}); code != 0 {
+		t.Fatalf("help exit = %d", code)
+	}
+	var preflightHelp bytes.Buffer
+	if code := (Command{Stdout: &preflightHelp}).Run([]string{"preflight", "--help"}); code != 0 {
+		t.Fatalf("preflight help exit = %d", code)
+	}
+	var rootForms, preflightForms []string
+	for _, line := range strings.Split(root.String(), "\n") {
+		if form, ok := strings.CutPrefix(line, "  bench preflight "); ok {
+			command, _, _ := strings.Cut(form, "  ")
+			rootForms = append(rootForms, command)
+		}
+	}
+	for _, line := range strings.Split(strings.TrimSpace(preflightHelp.String()), "\n") {
+		form := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(line), "usage:"))
+		preflightForms = append(preflightForms, strings.TrimPrefix(form, "bench preflight "))
+	}
+	t.Run("same forms", func(t *testing.T) {
+		if len(rootForms) == 0 || strings.Join(rootForms, "\n") != strings.Join(preflightForms, "\n") {
+			t.Fatalf("root preflight forms:\n%s\npreflight help forms:\n%s", strings.Join(rootForms, "\n"), strings.Join(preflightForms, "\n"))
+		}
+	})
+	t.Run("preparation and default read", func(t *testing.T) {
+		for _, want := range []string{"build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]", "evidence <id> [--cursor <cursor>]"} {
+			if !strings.Contains(strings.Join(preflightForms, "\n"), want) {
+				t.Errorf("preflight help omits %q", want)
+			}
+		}
+	})
+	t.Run("no later operation", func(t *testing.T) {
+		for _, later := range []string{"--source ", "--verify", "--check-current", "evidence-clean"} {
+			if strings.Contains(root.String(), later) || strings.Contains(preflightHelp.String(), later) {
+				t.Errorf("help advertises the later operation %q", later)
+			}
+		}
+	})
 }
 
 func TestRepairPilotRoute(t *testing.T) {

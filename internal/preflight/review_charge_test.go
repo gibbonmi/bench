@@ -361,7 +361,7 @@ func TestReviewChargeGrammarRejectsTicket(t *testing.T) {
 	_, _, args := seedReviewEvidence(t, false)
 	args = append(args, "--ticket", "one.md")
 	out, code := Command(args)
-	const want = "--charge requires build with --ticket, or review without --ticket"
+	const want = "unknown argument: --ticket"
 	if code != 2 || !strings.Contains(out, want) {
 		t.Fatalf("review ticket grammar = (%d):\n%s", code, out)
 	}

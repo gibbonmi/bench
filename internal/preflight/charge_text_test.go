@@ -1,8 +1,6 @@
 package preflight
 
 import (
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -75,25 +73,5 @@ func TestChargeQuotesNumericLookingSourceTip(t *testing.T) {
 	out, code := Command(chargeArgs(t, root, slug, false))
 	if code != 0 || !strings.Contains(out, ",\""+tip+"\",") {
 		t.Fatalf("numeric-looking source tip = (%d, %s):\n%s", code, tip, out)
-	}
-}
-
-func TestChargeHostileTicketPathRemainsData(t *testing.T) {
-	root, slug := seedConformant(t)
-	name := "one [*] $(touch sentinel).md"
-	rel := "specs/" + slug + "/tickets/dir /" + name
-	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug, "- `specs/"+slug+"/` (ticket fixtures)"))
-	mustWriteFile(t, rel, ticketDoc("Hostile path", "PF1", "PF2"))
-	runGit(t, "add", "specs/"+slug)
-	runGit(t, "commit", "-q", "-m", "hostile ticket path")
-	args := chargeArgs(t, root, slug, false)
-	args[4] = name
-	out, code := Command(args)
-	if code != 0 || !strings.Contains(out, rel) ||
-		!strings.Contains(out, "'"+name+"'") || strings.Contains(out, "complete,true") {
-		t.Fatalf("hostile ticket path = (%d):\n%s", code, out)
-	}
-	if _, err := os.Stat(filepath.Join(root, "sentinel")); !os.IsNotExist(err) {
-		t.Fatalf("hostile ticket path created sentinel: %v", err)
 	}
 }

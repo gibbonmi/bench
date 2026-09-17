@@ -9,6 +9,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/tickets"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -139,24 +140,34 @@ func renderCharge(root string, facts Facts, verdict Verdict, name string, full b
 }
 
 func renderChargeWithPolicy(root string, facts Facts, verdict Verdict, name string, full bool, policy []buildSourceDescriptor) (string, int) {
-	if refusal := preparationCheckoutRefusal(root, facts, "charge"); refusal != "" {
+	pack, refusal := buildChargePack(root, facts, verdict, name, policy)
+	if refusal != "" {
 		return refusal, 1
 	}
+	return renderLegacyBuildPacket(root, facts, pack, name, full)
+}
+
+// buildChargePack applies every build charge refusal in its fixed order and returns the
+// validated in-memory pack, or the refusal that stopped it.
+func buildChargePack(root string, facts Facts, verdict Verdict, name string, policy []buildSourceDescriptor) (*chargeevidence.Pack, string) {
+	if refusal := preparationCheckoutRefusal(root, facts, "charge"); refusal != "" {
+		return nil, refusal
+	}
 	if verdict.Red {
-		return chargeVerdictRefusal(verdict), 1
+		return nil, chargeVerdictRefusal(verdict)
 	}
 	selected, parsed, detail, selectionNext := preparationTicket(root, facts, name)
 	if detail != "" {
-		return chargeRefusal("ticket", detail, selectionNext), 1
+		return nil, chargeRefusal("ticket", detail, selectionNext)
 	}
 	pack, failure, err := prepareBuildPack(root, facts, selected, parsed, policy)
 	if failure != "" {
-		return chargeRefusal("source", failure, "restore the named canonical source and rerun the exact charge"), 1
+		return nil, chargeRefusal("source", failure, "restore the named canonical source and rerun the exact charge")
 	}
 	if err != nil {
-		return chargeRefusal("evidence", err.Error(), "repair the prepared evidence input and rerun the exact charge"), 1
+		return nil, chargeRefusal("evidence", err.Error(), "repair the prepared evidence input and rerun the exact charge")
 	}
-	return renderLegacyBuildPacket(root, facts, pack, name, full)
+	return pack, ""
 }
 
 // namedChargeSource binds one canonical path to the field that holds it. The binding is

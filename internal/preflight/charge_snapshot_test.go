@@ -66,18 +66,6 @@ func TestChargeRepeatedPinnedInputsAreIdentical(t *testing.T) {
 	}
 }
 
-func TestChargeCompactNamesExactFullRetrieval(t *testing.T) {
-	root, slug := seedConformant(t)
-	args := chargeArgs(t, root, slug, false)
-	out, code := Command(args)
-	want := "bench preflight build specs/example/spec.md --charge --ticket one.md --base " +
-		args[6] + " --source-tip " + args[8] + " --full"
-	if code != 0 || !strings.Contains(out, "\"false\"") ||
-		!strings.Contains(out, want) || !strings.Contains(out, "omitted[5]{source}") {
-		t.Fatalf("compact retrieval = (%d), want %q:\n%s", code, want, out)
-	}
-}
-
 func TestChargeFinalSnapshotFailureDiscardsPreparedOutput(t *testing.T) {
 	root, slug := seedConformant(t)
 	head := filepath.Join(root, ".git", "HEAD")

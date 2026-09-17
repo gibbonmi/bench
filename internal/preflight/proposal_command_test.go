@@ -39,7 +39,7 @@ func TestWritesProposalGrammar(t *testing.T) {
 		{"missing source tip value", base[:len(base)-1], "--source-tip"},
 		{"review mode", append([]string{"review"}, base[1:]...), "--propose-writes requires build"},
 		{"combined modes", append(append([]string{}, base...), "--charge"), "cannot be combined"},
-		{"full unsupported", append(append([]string{}, base...), "--full"), "--full requires --charge"},
+		{"full unsupported", append(append([]string{}, base...), "--full"), "cannot be combined"},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
