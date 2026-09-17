@@ -324,7 +324,7 @@ The later-pass Coverage axis issued its two findings as CD2b-C1 and CD2b-C2, and
 
 The frozen pair is base `67af9d502c9f37c4853f5f72f5684115ca0154a9` and tip `779f0e68b68e97f5a313da6d6e90c4b778af4052`. The delta holds ticket 7, one coordinator-probe repair before commit, the ticket 2 fixture-closure fix, and one merged main commit outside the fence. Each axis ran fable / medium in its own read-only worktree.
 
-The raw finding count is 8. The de-duplicated repair target count is 7. CD2b consumed 1 repair cycle of its 2, for the seven `auto-fix` findings below, sent to the ticket 7 author as one batch.
+The raw finding count is 8. The de-duplicated repair target count is 7. CD2b consumed both of its 2 repair cycles. Cycle 1 carried the seven `auto-fix` findings below to the ticket 7 author as one batch. Cycle 2 carried the reopened step arm of CD2b-C4.
 
 ### Standards
 
@@ -350,11 +350,15 @@ Finding count: 4. Worst issue: the step body's close boundary has no biting test
 | id | finding | citation | confidence | disposition | label |
 | --- | --- | --- | --- | --- | --- |
 | CD2b-C1 | Replacing the step `closes` predicate with `return false` stays green on every check; the existing moved case writes the needle's step before the bare opener. | Ticket 7, "The step body runs to the next such line"; three silent probes. | 8 | auto-fix | held |
-| CD2b-C2 | The opener trims leading space, so an indented numbered line opens a step. | Ticket 7, an indented continuation stays inside its step; two silent probes. | 6 | auto-fix | held |
-| CD2b-C3 | The opener parses one digit, so `10.` reads as step 1. | Ticket 7, literal digits the reader sees; one silent probe. | 5 | auto-fix | held |
+| CD2b-C2 | The opener trims leading space, so an indented numbered line opens a step. | Ticket 7, an indented continuation stays inside its step; two silent probes. | 6 | auto-fix | refuted |
+| CD2b-C3 | The opener parses one digit, so `10.` reads as step 1. | Ticket 7, literal digits the reader sees; one silent probe. | 5 | auto-fix | refuted |
 | CD2b-C4 | Removing the `keepOpener` branch of the shared walk stays green. | The refactor moved the heading-exclusion decision into a parameter with no assertion. | 4 | auto-fix | held |
 
 Ten probes ran: one bit on the fence toggle, and nine stayed silent. The silent ones are the four findings above and one item of advice.
+
+The coordinator read the pre-repair opener at tip 779f0e68 and refuted CD2b-C2 and CD2b-C3 as stated. The opener reads column zero without a trim and parses every leading digit. Their silent probes were real test gaps, and the repair closed them with new rows. The labels above score the claims as written.
+
+After repair cycle 1, one sonnet / xhigh later pass per axis ran at tip da019659. Standards and Spec passed. Coverage reran the four mutations. Three bit. The step arm of the shared walk stayed silent, because the cycle-1 test covers only the section arm. CD2b-C4 reopened for that arm, and repair cycle 2 closes it with one test.
 
 The axis gave two items of optional advice with no confidence. The step cache key drops the step number, which one registered step anchor cannot expose. A `06.` opener parses as step 6, and the ticket's literal-digits rule leaves leading zeros undecided.
 
@@ -367,8 +371,8 @@ The axis gave two items of optional advice with no confidence. The step cache ke
 | review finding | CD2b-S3 | claimed | 6 | held | fable / medium / Standards |
 | review finding | CD2b-S4 | claimed | 4 | refuted | fable / medium / Standards |
 | review finding | CD2b-C1 | claimed | 8 | held | fable / medium / Coverage |
-| review finding | CD2b-C2 | claimed | 6 | held | fable / medium / Coverage |
-| review finding | CD2b-C3 | claimed | 5 | held | fable / medium / Coverage |
+| review finding | CD2b-C2 | claimed | 6 | refuted | fable / medium / Coverage |
+| review finding | CD2b-C3 | claimed | 5 | refuted | fable / medium / Coverage |
 | review finding | CD2b-C4 | claimed | 4 | held | fable / medium / Coverage |
 
 ## Native review record
