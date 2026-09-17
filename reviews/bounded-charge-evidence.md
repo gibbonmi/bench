@@ -543,6 +543,66 @@ The coordinator's whole-tree gate on the first repair commit was red. The new li
 The writer registered the assertion and split `tier_test.go`, which sat at its line budget.
 The coordinator's whole-tree gate on `e38d64bd` is green.
 
+### Standards
+
+Five findings closed. ST3 and ST6 stayed open in part. Three new findings: ST8, ST9, and ST10.
+
+- CE-C1D-ST3 (open in part): Three more spots in the legacy pack test name the deleted build route. One doc comment describes a path this chunk removed.
+- CE-C1D-ST6 (open in part): The test still copies six kind and diagnostic pairs. The count check uses `t.Fatalf`, so a deleted row stops before the table.
+- CE-C1D-ST8 (auto-fix): The test writes the row count as a literal. The expectation table already encodes that count as its length.
+- CE-C1D-ST9 (auto-fix): The test hardcodes the guidance path. Every enumerated row carries that path in its `File` field.
+- CE-C1D-ST10 (ask): The new mode guard restates the operation registry's review-only binding. No public command form reaches the guard.
+
+The axis ran no test and did not confirm the gate. The coordinator ran the whole-tree gate, and it was green.
+
+### Spec
+
+Three findings closed. One new finding: SP4.
+
+- CE-C1D-SP4 (auto-fix): Ticket 4 does not carry the two conformance tier files that the repair writes. The plan-expansion rule needs the ticket first.
+
+The axis confirmed the rewritten delivery sentence against the glossary and the grammar rows.
+It confirmed the needle carries the guidance words byte for byte.
+It confirmed the Forbid row cannot reach the review route, because its needle opens with the literal `build <slug>`.
+
+### Coverage
+
+Three findings closed, each by a mutation the axis ran. Two new findings: CV4 and CV5.
+
+- CE-C1D-CV4 (ask): The Forbid row grades one literal spelling. A re-advertisement with the flags reordered stayed green.
+- CE-C1D-CV5 (ask): The pinning test finds only sentences with the pinned lead. An appended approval waiver stayed green everywhere.
+
+The axis closed CV1 with a sharper probe. It narrowed a needle to its trailing clause, so the row kept its diagnostic and the count.
+Root conformance and the guidance test stayed green, and the pinning test alone turned red.
+
+## CE-C1D: review round 3
+
+Repair cycles used: 2 of 2.
+The repair tip is `8b23ab36c188b71632c2a87d3e5b686fb6241dbb`.
+
+### Reviewer decisions for this round
+
+- The reviewer chose the whole-paragraph rule. Each sentence of a pinned paragraph needs a Require needle that contains it.
+- The reviewer chose to forbid the flag pair. No guidance line names `bench preflight build` and carries `--full`.
+- The reviewer kept the mode guard, because its removal reopens CV3.
+
+### Repair cycle 2 probe records
+
+- The approval waiver appended to the pinned paragraph: the pinning test reported zero Require rows for that sentence.
+- The reordered re-advertisement: the literal row stayed green, and the new pair rule turned red.
+- One diagnostic reworded: the expectation table failed, which is the recorded red that finding ST6 needed.
+- One Require row deleted: the count and the table both failed, so the count no longer shadows the table.
+- The Forbid row pointed at the review guidance: both live-tree tests failed on two named guidance files.
+- The pair rule's registration deleted: the conformance meta check failed before the gate this time.
+- The kept mode guard inverted: the non-review refusal test failed.
+- The coordinator's independent probe re-registered the retired build full charge operation. `TestEvidenceRemovedBuildFull` failed, so the seam the spec names is load-bearing.
+
+### Gate evidence
+
+The coordinator's whole-tree gate on `8b23ab36` is green.
+The writer kept the literal Forbid row beside the new pair rule, and it stated why.
+The row carries the anchor and canary enforcement, and its removal reopens a closed decision.
+
 ## Record
 
 ```bench-review-record
