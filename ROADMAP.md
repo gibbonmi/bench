@@ -31,6 +31,8 @@ findings in the owner details.
 
 **FT253 (MEDIUM) — one landing lease in the intent ledger, from composition through publish.**
 
+**FT315 (MEDIUM) — a landing supplies the declared `BENCH_HOME` itself, and `bench doctor` reports a missing declared gate input.**
+
 **FT207 (MEDIUM, decision required) — worktree-mutating paths share malformed-admin refusal.**
 
 **FT199 (MEDIUM) — the shipped unclaimed-ref cleanup grows into a recovery-aware repository-wide ref inventory.**
@@ -232,6 +234,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT300 ticket authority and final-consumer verification — /bench-update-kit
-2. FT313 bounded delegation and repair evidence — /bench-update-kit
-3. FT312 cross-harness reviewer and review-axis creation verb — /bench-write-spec
+1. Staged bounded-charge-evidence spec (FT287 output-budget evidence) — /bench-implement-spec specs/bounded-charge-evidence
+2. FT315 landing refusal without `BENCH_HOME` — /bench-debug
+3. FT300 ticket authority and final-consumer verification — /bench-write-spec
