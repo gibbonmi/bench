@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
@@ -242,7 +243,7 @@ func StoreDir(t *testing.T, root string) string {
 	if err != nil {
 		t.Fatalf("common dir: %v", err)
 	}
-	return filepath.Join(common, "bench-charge-evidence")
+	return filepath.Join(common, chargeevidence.StoreName)
 }
 
 // PublishedPacks lists the published pack names in root's evidence store.
@@ -257,7 +258,7 @@ func PublishedPacks(t *testing.T, root string) []string {
 	}
 	var packs []string
 	for _, entry := range entries {
-		if strings.HasSuffix(entry.Name(), ".pack") {
+		if strings.HasSuffix(entry.Name(), chargeevidence.PackSuffix) {
 			packs = append(packs, entry.Name())
 		}
 	}
@@ -270,7 +271,7 @@ func StagedTemps(t *testing.T, root string) []string {
 	entries, _ := os.ReadDir(StoreDir(t, root))
 	var temps []string
 	for _, entry := range entries {
-		if strings.HasPrefix(entry.Name(), "tmp-") {
+		if strings.HasPrefix(entry.Name(), chargeevidence.TempPrefix) {
 			temps = append(temps, entry.Name())
 		}
 	}

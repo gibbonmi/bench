@@ -18,8 +18,8 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
-// The expectations in this file are written from the spec's response tables and cursor
-// grammar, not read from the format registry.
+// The expected stream fields and cursor text in this file are stated independently of the
+// format registry, so an omission from the registry turns a case red.
 
 func sha(data string) string {
 	sum := sha256.Sum256([]byte(data))

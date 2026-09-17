@@ -156,12 +156,18 @@ var ManifestBlocks = []Block{
 		"Source order, then argument index."},
 }
 
-// Response facts. Every public evidence response, including a usage or operational
-// refusal, holds at most ResponseLimit encoded stdout bytes.
 const (
-	ResponseLimit      = 48000
-	DefaultQuota       = 1 << 30
-	StoreName          = "bench-charge-evidence"
+	// ResponseLimit is the most encoded stdout bytes any public evidence response holds,
+	// including a usage or operational refusal.
+	ResponseLimit = 48000
+	// DefaultQuota is the store byte quota a preparation uses without an explicit quota.
+	DefaultQuota = 1 << 30
+	// StoreName is the store directory beneath the Git common directory.
+	StoreName = "bench-charge-evidence"
+)
+
+// Response cell values.
+const (
 	DeliveryUnverified = "unverified"
 	SelectionReference = "manifest:" + blockSelection
 	StreamManifest     = "manifest"

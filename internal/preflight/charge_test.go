@@ -129,9 +129,8 @@ func TestChargeSnapshotMovement(t *testing.T) {
 	}
 }
 
-// TestChargeProjectionAndFullRetrieval keeps the legacy --full projection that the build
-// phase reads until its guidance migrates; the compact projection became the prepared
-// evidence response.
+// TestChargeProjectionAndFullRetrieval covers the legacy --full projection that the build
+// phase reads.
 func TestChargeProjectionAndFullRetrieval(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
 	full, code := Command(preflighttest.ChargeArgs(t, root, slug, true))

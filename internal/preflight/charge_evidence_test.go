@@ -3,6 +3,7 @@ package preflight
 import (
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -15,7 +16,7 @@ import (
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
-const phaseRefusal = "error: source required: .agents/commands/bench-implement-spec.md "
+const phaseRefusal = "error: source required: " + chargesource.BuildPhase + " "
 const sourceNext = " — restore the named canonical source and rerun the exact charge\n"
 
 // TestEvidenceRequiredSourceStates covers CE41 through CE48. Every Git-trackable state
@@ -96,18 +97,34 @@ func TestEvidencePreparationRefusals(t *testing.T) {
 	for _, route := range chargeRoutes {
 		t.Run(route.name, func(t *testing.T) { preparationRefusals(t, route.full) })
 	}
-	t.Run("CE128 missing tool", func(t *testing.T) {
+	t.Run("CE128 failing tool", func(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
 		args := preflighttest.ChargeArgs(t, root, slug, false)
-		path := os.Getenv("PATH")
-		t.Setenv("PATH", t.TempDir())
+		failGitRead(t, args[8]+":"+chargesource.BuildPhase)
 		out, code := Command(args)
-		if code != 1 || len(out) > 48000 || !strings.HasPrefix(out, "error: ") || strings.Contains(out, "prepared[") {
-			t.Fatalf("missing tool = (%d):\n%s", code, out)
+		want := phaseRefusal + "is absent or unreadable at source tip <tip>" + sourceNext
+		if got := normalizeLegacy(out, root, args[6], args[8]); code != 1 || got != want || len(out) > preflighttest.ResponseBudget {
+			t.Fatalf("failing tool = (%d, %q), want (1, %q)", code, got, want)
 		}
-		t.Setenv("PATH", path)
 		preflighttest.AssertNothingPublished(t, root)
 	})
+}
+
+// failGitRead puts a git wrapper first on PATH. The wrapper fails the one git call that
+// names object and runs the real git for every other call, so repository resolution and the
+// source snapshot succeed and only the pinned source read fails.
+func failGitRead(t *testing.T, object string) {
+	t.Helper()
+	real, err := exec.LookPath("git")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	script := "#!/bin/sh\nfor arg do\n\tif [ \"$arg\" = '" + object + "' ]; then\n\t\techo 'injected git read failure' >&2\n\t\texit 128\n\tfi\ndone\nexec '" + real + "' \"$@\"\n"
+	if err := os.WriteFile(filepath.Join(dir, "git"), []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 }
 
 // chargeRoutes are the two build charge routes that share the refusal pipeline: the legacy

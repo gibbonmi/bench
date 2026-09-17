@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 )
 
@@ -96,16 +97,21 @@ func identityOf(t *testing.T, result processResult) string {
 	return match[1]
 }
 
+func (j evidenceJourney) store() string {
+	return filepath.Join(j.root, ".git", chargeevidence.StoreName)
+}
+
+// packs lists the published and temporary pack names in the store.
 func (j evidenceJourney) packs(t *testing.T) []string {
 	t.Helper()
-	entries, err := os.ReadDir(filepath.Join(j.root, ".git", "bench-charge-evidence"))
+	entries, err := os.ReadDir(j.store())
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		t.Fatal(err)
 	}
 	var names []string
 	for _, entry := range entries {
-		if !strings.HasSuffix(entry.Name(), ".lock") {
-			names = append(names, entry.Name())
+		if name := entry.Name(); strings.HasSuffix(name, chargeevidence.PackSuffix) || strings.HasPrefix(name, chargeevidence.TempPrefix) {
+			names = append(names, name)
 		}
 	}
 	return names
@@ -130,7 +136,7 @@ func (j evidenceJourney) requiredBytes(t *testing.T, worktree systemLandingWorkt
 func (j evidenceJourney) startPaused(t *testing.T, worktree systemLandingWorktree, stage string, extra ...string) (*exec.Cmd, string, func() string) {
 	t.Helper()
 	marker := filepath.Join(j.home, worktree.request+" "+stage+".marker")
-	cmd, stdout, _ := systemStartSelected(t, worktree.path, j.env("BENCH_EVIDENCE_PAUSE="+stage+":"+marker), j.prepareArgs(worktree, extra...)...)
+	cmd, stdout, _ := systemStartSelected(t, worktree.path, j.env(chargeevidence.PauseEnvironment+"="+stage+":"+marker), j.prepareArgs(worktree, extra...)...)
 	t.Cleanup(func() {
 		if cmd.ProcessState == nil {
 			_ = cmd.Process.Kill()
@@ -189,8 +195,8 @@ func TestEvidenceQuotaConcurrency(t *testing.T) {
 	second := j.assignment(t, "quota-second", "second body\n")
 	sizeFirst, sizeSecond := j.requiredBytes(t, first), j.requiredBytes(t, second)
 	quota := strconv.FormatUint(max(sizeFirst, sizeSecond)+min(sizeFirst, sizeSecond)-1, 10)
-	paused, marker, _ := j.startPaused(t, first, "capacity", "--max-store-bytes", quota)
-	waiting, secondMarker, secondOut := j.startPaused(t, second, "writer-lock", "--max-store-bytes", quota)
+	paused, marker, _ := j.startPaused(t, first, chargeevidence.StageCapacity, "--max-store-bytes", quota)
+	waiting, secondMarker, secondOut := j.startPaused(t, second, chargeevidence.StageWriterLock, "--max-store-bytes", quota)
 	if err := os.Remove(secondMarker); err != nil {
 		t.Fatal(err)
 	}
@@ -211,7 +217,7 @@ func TestEvidenceQuotaConcurrency(t *testing.T) {
 
 // TestEvidenceInterruptedPublication is CE86 and CE87.
 func TestEvidenceInterruptedPublication(t *testing.T) {
-	for _, stage := range []string{"staged", "verifying"} {
+	for _, stage := range []string{chargeevidence.StageStaged, chargeevidence.StageVerifying} {
 		t.Run(stage, func(t *testing.T) {
 			j := newEvidenceJourney(t)
 			worktree := j.assignment(t, "interrupt-"+stage, "interrupted\n")
@@ -221,7 +227,7 @@ func TestEvidenceInterruptedPublication(t *testing.T) {
 			}
 			_ = cmd.Wait()
 			entries := j.packs(t)
-			if len(entries) != 1 || !strings.HasPrefix(entries[0], "tmp-") {
+			if len(entries) != 1 || !strings.HasPrefix(entries[0], chargeevidence.TempPrefix) {
 				t.Fatalf("interrupted %s left %v, want one temporary pack and no artifact", stage, entries)
 			}
 			identity := identityOf(t, j.prepare(t, worktree))
@@ -238,7 +244,7 @@ func TestEvidenceConcurrentPublication(t *testing.T) {
 		j := newEvidenceJourney(t)
 		first := j.assignment(t, "identical-first", "identical\n")
 		second := j.assignment(t, "identical-second", "", "identical-first")
-		paused, marker, stdout := j.startPaused(t, first, "staged")
+		paused, marker, stdout := j.startPaused(t, first, chargeevidence.StageStaged)
 		blocked, blockedOut, _ := systemStartSelected(t, second.path, j.env(), j.prepareArgs(second)...)
 		if err := os.Remove(marker); err != nil {
 			t.Fatal(err)
@@ -247,14 +253,14 @@ func TestEvidenceConcurrentPublication(t *testing.T) {
 			t.Fatalf("first writer exit = %d", code)
 		}
 		published := j.packs(t)
-		before, err := os.Stat(filepath.Join(j.root, ".git", "bench-charge-evidence", published[0]))
+		before, err := os.Stat(filepath.Join(j.store(), published[0]))
 		if err != nil {
 			t.Fatal(err)
 		}
 		if code := waitExit(t, blocked); code != 0 {
 			t.Fatalf("second writer = (%d, %q)", code, blockedOut.String())
 		}
-		after, err := os.Stat(filepath.Join(j.root, ".git", "bench-charge-evidence", published[0]))
+		after, err := os.Stat(filepath.Join(j.store(), published[0]))
 		firstID := preparedIdentity.FindStringSubmatch(stdout())
 		secondID := preparedIdentity.FindStringSubmatch(blockedOut.String())
 		if err != nil || !os.SameFile(before, after) || !after.ModTime().Equal(before.ModTime()) || firstID == nil || secondID == nil || firstID[1] != secondID[1] || len(j.packs(t)) != 1 {

@@ -15,11 +15,9 @@ import (
 	ce "github.com/gibbonmi/bench/internal/chargeevidence"
 )
 
-// storeName and quota are the spec's values, written here independently.
-const (
-	storeName    = "bench-charge-evidence"
-	defaultQuota = 1073741824
-)
+// storeName is the store directory name, stated independently of ce.StoreName so that a
+// renamed store turns these tests red.
+const storeName = "bench-charge-evidence"
 
 func newStore(t *testing.T, options ce.StoreOptions) (*ce.Store, string) {
 	t.Helper()
@@ -45,7 +43,7 @@ func publish(t *testing.T, store *ce.Store, pack *ce.Pack, quota uint64) string 
 }
 
 func packPath(dir, identity string) string {
-	return filepath.Join(dir, strings.TrimPrefix(identity, "sha256:")+".pack")
+	return filepath.Join(dir, strings.TrimPrefix(identity, ce.IdentityPrefix)+ce.PackSuffix)
 }
 
 func refusalClass(err error) string {
@@ -64,7 +62,7 @@ func storeEntries(t *testing.T, dir string) []string {
 	}
 	var names []string
 	for _, entry := range entries {
-		if !strings.HasSuffix(entry.Name(), ".lock") {
+		if name := entry.Name(); strings.HasSuffix(name, ce.PackSuffix) || strings.HasPrefix(name, ce.TempPrefix) {
 			names = append(names, entry.Name())
 		}
 	}
@@ -96,7 +94,7 @@ func sourcePageCursor(identity string) ce.Cursor { return ce.Cursor{Identity: id
 func TestEvidencePageCorruption(t *testing.T) {
 	store, dir := newStore(t, ce.StoreOptions{})
 	pack := mustBuild(t, fixtureCandidate("# One\n"))
-	identity := publish(t, store, pack, defaultQuota)
+	identity := publish(t, store, pack, ce.DefaultQuota)
 	size := int64(len(pack.Bytes()))
 	flipAt(t, packPath(dir, identity), size-int64(len("# Spec\n"))-2)
 	artifact, err := store.Open(identity)
@@ -115,7 +113,7 @@ func TestEvidencePageCorruption(t *testing.T) {
 // TestEvidenceManifestCorruption is CE40.
 func TestEvidenceManifestCorruption(t *testing.T) {
 	store, dir := newStore(t, ce.StoreOptions{})
-	identity := publish(t, store, mustBuild(t, fixtureCandidate("# One\n")), defaultQuota)
+	identity := publish(t, store, mustBuild(t, fixtureCandidate("# One\n")), ce.DefaultQuota)
 	flipAt(t, packPath(dir, identity), 30)
 	if _, err := store.Open(identity); refusalClass(err) != ce.RefuseIdentity {
 		t.Fatalf("changed manifest = %v, want %s", err, ce.RefuseIdentity)
@@ -126,8 +124,8 @@ func TestEvidenceManifestCorruption(t *testing.T) {
 func TestEvidenceQuota(t *testing.T) {
 	store, dir := newStore(t, ce.StoreOptions{})
 	first := mustBuild(t, fixtureCandidate("# One\n"))
-	identity := publish(t, store, first, defaultQuota)
-	orphan := filepath.Join(dir, "tmp-0123456789abcdef.partial")
+	identity := publish(t, store, first, ce.DefaultQuota)
+	orphan := filepath.Join(dir, ce.TempPrefix+"0123456789abcdef"+ce.TempSuffix)
 	if err := os.WriteFile(orphan, make([]byte, 1000), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -156,20 +154,20 @@ func TestEvidenceQuota(t *testing.T) {
 // TestEvidenceQuotaOverride is CE75: a quota above the default admits a store beyond it.
 func TestEvidenceQuotaOverride(t *testing.T) {
 	store, dir := newStore(t, ce.StoreOptions{})
-	publish(t, store, mustBuild(t, fixtureCandidate("# One\n")), defaultQuota)
-	large, err := os.Create(filepath.Join(dir, "tmp-ffffffffffffffff.partial"))
+	publish(t, store, mustBuild(t, fixtureCandidate("# One\n")), ce.DefaultQuota)
+	large, err := os.Create(filepath.Join(dir, ce.TempPrefix+"ffffffffffffffff"+ce.TempSuffix))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := large.Truncate(defaultQuota); err != nil {
+	if err := large.Truncate(ce.DefaultQuota); err != nil {
 		t.Fatal(err)
 	}
 	large.Close()
 	pack := mustBuild(t, fixtureCandidate("# Two\n"))
-	if _, err := store.Stage(pack, defaultQuota, 1); !errors.As(err, new(*ce.CapacityError)) {
+	if _, err := store.Stage(pack, ce.DefaultQuota, 1); !errors.As(err, new(*ce.CapacityError)) {
 		t.Fatalf("default quota = %v, want a capacity refusal", err)
 	}
-	publish(t, store, pack, 2*defaultQuota)
+	publish(t, store, pack, 2*ce.DefaultQuota)
 }
 
 // TestEvidencePublicationFailure is CE88 and the deterministic write, sync, and
@@ -185,7 +183,7 @@ func TestEvidencePublicationFailure(t *testing.T) {
 			}
 			store, dir := newStore(t, ce.StoreOptions{Fault: fail})
 			pack := mustBuild(t, fixtureCandidate("# One\n"))
-			staged, err := store.Stage(pack, defaultQuota, 1)
+			staged, err := store.Stage(pack, ce.DefaultQuota, 1)
 			if err == nil {
 				_, err = staged.Publish(1)
 			}
@@ -199,7 +197,7 @@ func TestEvidencePublicationFailure(t *testing.T) {
 	}
 	t.Run("stale attempt", func(t *testing.T) {
 		store, dir := newStore(t, ce.StoreOptions{})
-		staged, err := store.Stage(mustBuild(t, fixtureCandidate("# One\n")), defaultQuota, 1)
+		staged, err := store.Stage(mustBuild(t, fixtureCandidate("# One\n")), ce.DefaultQuota, 1)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -215,7 +213,7 @@ func TestEvidenceStoreKinds(t *testing.T) {
 	for _, kind := range []string{"CE91 symlink", "CE92 FIFO", "CE93 socket", "CE94 device", "CE95 directory"} {
 		t.Run(kind, func(t *testing.T) {
 			store, dir := newStore(t, ce.StoreOptions{})
-			decoy := publish(t, store, mustBuild(t, fixtureCandidate("# Decoy\n")), defaultQuota)
+			decoy := publish(t, store, mustBuild(t, fixtureCandidate("# Decoy\n")), ce.DefaultQuota)
 			identity := mustBuild(t, fixtureCandidate("# One\n")).Identity()
 			path := packPath(dir, identity)
 			var err error
@@ -276,13 +274,13 @@ func TestEvidenceStorePaths(t *testing.T) {
 func TestEvidenceExistingCorruption(t *testing.T) {
 	store, dir := newStore(t, ce.StoreOptions{})
 	pack := mustBuild(t, fixtureCandidate("# One\n"))
-	identity := publish(t, store, pack, defaultQuota)
+	identity := publish(t, store, pack, ce.DefaultQuota)
 	flipAt(t, packPath(dir, identity), int64(len(pack.Bytes())-1))
 	before, err := os.ReadFile(packPath(dir, identity))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := store.Stage(pack, defaultQuota, 1); refusalClass(err) != ce.RefuseExisting {
+	if _, err := store.Stage(pack, ce.DefaultQuota, 1); refusalClass(err) != ce.RefuseExisting {
 		t.Fatalf("corrupt existing = %v, want %s", err, ce.RefuseExisting)
 	}
 	if after, _ := os.ReadFile(packPath(dir, identity)); string(after) != string(before) {
@@ -304,7 +302,7 @@ func TestEvidenceStoreDirectoryStates(t *testing.T) {
 	})
 	t.Run("CE99 preparation creates", func(t *testing.T) {
 		store, dir := newStore(t, ce.StoreOptions{})
-		publish(t, store, pack, defaultQuota)
+		publish(t, store, pack, ce.DefaultQuota)
 		if info, err := os.Lstat(dir); err != nil || !info.IsDir() || info.Mode().Perm() != 0o700 {
 			t.Fatalf("created store = %v, %v", info, err)
 		}
@@ -324,7 +322,7 @@ func TestEvidenceStoreDirectoryStates(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if _, err := store.Stage(pack, defaultQuota, 1); refusalClass(err) != ce.RefuseUnsafe {
+			if _, err := store.Stage(pack, ce.DefaultQuota, 1); refusalClass(err) != ce.RefuseUnsafe {
 				t.Fatalf("%s store preparation = %v", state, err)
 			}
 			if _, err := store.Open(pack.Identity()); refusalClass(err) != ce.RefuseUnsafe {
@@ -337,7 +335,7 @@ func TestEvidenceStoreDirectoryStates(t *testing.T) {
 // TestEvidenceReplacementRace is CE129: a read of a replaced artifact refuses the page.
 func TestEvidenceReplacementRace(t *testing.T) {
 	store, dir := newStore(t, ce.StoreOptions{})
-	identity := publish(t, store, mustBuild(t, fixtureCandidate("# One\n")), defaultQuota)
+	identity := publish(t, store, mustBuild(t, fixtureCandidate("# One\n")), ce.DefaultQuota)
 	artifact, err := store.Open(identity)
 	if err != nil {
 		t.Fatal(err)

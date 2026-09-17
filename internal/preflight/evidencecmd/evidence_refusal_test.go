@@ -1,12 +1,15 @@
 package evidencecmd_test
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
@@ -25,6 +28,37 @@ func TestEvidenceQuotaOperands(t *testing.T) {
 				t.Fatalf("quota %q changed the store: %v", quota, err)
 			}
 		})
+	}
+}
+
+// defaultQuota is the store quota a preparation without --max-store-bytes uses, stated
+// independently of chargeevidence.DefaultQuota so that a changed default turns this red.
+const defaultQuota = 1073741824
+
+// TestEvidenceDefaultQuota is CE74 at the public command: without an explicit quota, the
+// store's existing temporary bytes count against the default quota.
+func TestEvidenceDefaultQuota(t *testing.T) {
+	root, slug := preflighttest.SeedConformant(t)
+	args := preflighttest.ChargeArgs(t, root, slug, false)
+	store := preflighttest.StoreDir(t, root)
+	if err := os.Mkdir(store, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	orphan, err := os.Create(filepath.Join(store, chargeevidence.TempPrefix+"0"+chargeevidence.TempSuffix))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := orphan.Truncate(defaultQuota); err != nil {
+		t.Fatal(err)
+	}
+	orphan.Close()
+	out, code := preflight.Command(args)
+	want := fmt.Sprintf("the store holds %d bytes", defaultQuota)
+	if code != 1 || !strings.Contains(out, want) || !strings.Contains(out, fmt.Sprintf("the quota is %d bytes", defaultQuota)) {
+		t.Fatalf("default quota refusal = (%d):\n%s", code, out)
+	}
+	if packs := preflighttest.PublishedPacks(t, root); len(packs) != 0 {
+		t.Fatalf("default quota refusal published %v", packs)
 	}
 }
 

@@ -7,9 +7,9 @@ import (
 	"syscall"
 )
 
-// Cursor grammar: `v1.<hex-id>.<m|s>.<source-ordinal>.<page-index>`. The manifest stream
-// uses source ordinal zero. A cursor names a position only; it never names a path and the
-// store never records one.
+// Cursor parts. Cursor.String and ParseCursor own the field order; the manifest stream uses
+// source ordinal zero. A cursor names a position only; it never names a path and the store
+// never records one.
 const (
 	CursorVersion  = "v1"
 	cursorManifest = "m"

@@ -9,8 +9,9 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
-// The expectations in this file are written from the spec's public grammar and response
-// tables, not read from the operation or format registry.
+// The expected grammar forms, response headers, and cell types in this file are stated
+// independently of the operation and format registries, so an omission from either turns a
+// case red.
 
 func headerLine(out string) string {
 	line, _, _ := strings.Cut(out, "\n")

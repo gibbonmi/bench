@@ -29,9 +29,9 @@ const (
 const (
 	operationLockName = "operation.lock"
 	writerLockName    = "writer.lock"
-	packSuffix        = ".pack"
-	tempPrefix        = "tmp-"
-	tempSuffix        = ".partial"
+	PackSuffix        = ".pack"
+	TempPrefix        = "tmp-"
+	TempSuffix        = ".partial"
 )
 
 // StoreOptions are the store's local-substitutable dependencies.
@@ -190,16 +190,16 @@ func usage(dir *os.Root) (uint64, error) {
 }
 
 func isPackName(name string) bool {
-	hexPart, ok := strings.CutSuffix(name, packSuffix)
+	hexPart, ok := strings.CutSuffix(name, PackSuffix)
 	return ok && validDigest(hexPart)
 }
 
 func isTempName(name string) bool {
-	return strings.HasPrefix(name, tempPrefix) && strings.HasSuffix(name, tempSuffix)
+	return strings.HasPrefix(name, TempPrefix) && strings.HasSuffix(name, TempSuffix)
 }
 
 func packName(identity string) string {
-	return strings.TrimPrefix(identity, IdentityPrefix) + packSuffix
+	return strings.TrimPrefix(identity, IdentityPrefix) + PackSuffix
 }
 
 // Staged is one verified temporary pack that holds the writer lock until it publishes or
@@ -272,7 +272,7 @@ func (st *Staged) writeTemp() error {
 	if _, err := rand.Read(random); err != nil {
 		return refuse(RefuseStorage, "temporary name is not available: %v", err)
 	}
-	st.temp = tempPrefix + hex.EncodeToString(random) + tempSuffix
+	st.temp = TempPrefix + hex.EncodeToString(random) + TempSuffix
 	file, err := st.dir.OpenFile(st.temp, os.O_WRONLY|os.O_CREATE|os.O_EXCL|syscall.O_NOFOLLOW, 0o600)
 	if err != nil {
 		st.temp = ""
