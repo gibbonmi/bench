@@ -1000,6 +1000,8 @@ The axis confirmed the cross-chunk invariants. Every fenced canary exists and bi
 | review finding | CD5-C2 | claimed | 7 | held | opus / medium / Coverage |
 | line declaration | Expected repair rounds: 1 / confidence 6 | claimed | 6 | refuted | fable / low / orchestrator |
 
+After the repair, one sonnet / high later pass per axis ran at tip 633405d8 in its own worktree. All three passed, and the Standards pass recomputed the Brier total from the six sources. The orchestrator then ran the plan's eight final verification commands on the integration source, all green. It reconciled every acceptance row as covered in the completion block.
+
 The CR27 and CR33 labels come from the gate lane at the CD5 tip and the Spec axis's own prose-lane rerun over all seventeen files. The pairs in this table land after the aggregate was written. The CD5 aggregate therefore holds the pairs of CD1 to CD4 plus the declaration. This table is the record for the CD5 pairs themselves.
 
 ## Native review record
@@ -1010,9 +1012,10 @@ The fenced payload below retains every terminal return for the checkpoint. The f
 {
   "version": 2,
   "spec": "specs/calibrated-decisions/spec.md",
-  "plan_digest": "sha256:649e23b7d4e0ad277fe6c8b038458e22793a7c9130f10ae9c2e7da98aff2e9ae",
+  "plan_digest": "sha256:a8387bed5ee2306b2ce3b6576d87349600c31bb3230b4df2b0cc4b60714f726d",
   "implementation_session": "",
   "amendments": [
+    {"from": "sha256:649e23b7d4e0ad277fe6c8b038458e22793a7c9130f10ae9c2e7da98aff2e9ae", "to": "sha256:a8387bed5ee2306b2ce3b6576d87349600c31bb3230b4df2b0cc4b60714f726d", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD2b": ["CD2b"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
     {"from": "sha256:b76aff6080777f4bd95ef7ea7be9b075fb5fd511e8f54b14c92681be2ccbb6a9", "to": "sha256:649e23b7d4e0ad277fe6c8b038458e22793a7c9130f10ae9c2e7da98aff2e9ae", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD2b": ["CD2b"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
     {"from": "sha256:37ef0eb88a3496e3fc048c85e66bd6b4db2ac676d1dca36243cb5e160430ffe7", "to": "sha256:b76aff6080777f4bd95ef7ea7be9b075fb5fd511e8f54b14c92681be2ccbb6a9", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD2b": ["CD2b"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
     {"from": "sha256:2a20907b4162c42f8fdc101392a17e0be6300188b009aaabf0ad40dd64f0a105", "to": "sha256:37ef0eb88a3496e3fc048c85e66bd6b4db2ac676d1dca36243cb5e160430ffe7", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD2b": ["CD2b"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
@@ -2013,14 +2016,350 @@ The fenced payload below retains every terminal return for the checkpoint. The f
           "supersedes": ["cd4-coverage"]
         }
       ]
+    },
+    {
+      "id": "CD5",
+      "base": "1e2eb6f1a33e0c2183519b8ab6b7b5b6f5f6675f",
+      "tip": "633405d8d7a911e8bce9449b37dce59671ede28b",
+      "plan_digest": "sha256:a8387bed5ee2306b2ce3b6576d87349600c31bb3230b4df2b0cc4b60714f726d",
+      "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+      "acceptance_rows": ["CR27", "CR33"],
+      "verification": [
+        {
+          "id": "cd5-workflow",
+          "performer": "claude:bench-writer/cd-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t6-author-20260917/cd5-workflow@633405d8",
+            "digest": "sha256:e29d6268ee4d311b64e808967782b7c70d4ed97b1de11499a21183d2c335d701",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,970\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "cd5-budgets",
+          "performer": "claude:bench-writer/cd-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t6-author-20260917/cd5-budgets@633405d8",
+            "digest": "sha256:6f72c99a424331a3381e284e55ffa703b490f81e19b498e848e8bfc5d9ca25ed",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "cd5-prose",
+          "performer": "claude:bench-writer/cd-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t6-author-20260917/cd5-prose@633405d8",
+            "digest": "sha256:b4a80fb643b9214cf1a34b40ee928ca36f05c6f55efcbf8843b9de56f8d86bd8",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,157\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "prose",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "cd5-standards",
+          "performer": "claude:bench-reviewer/cd-c5-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/cd-c5-standards-20260917@ce58acff",
+            "digest": "sha256:3d4429828cfbad9af58cb2ab1c9b3cae61b241a7847493b7a77b367576e38c2b",
+            "excerpt": "Finding count: 5. CD5-S1 comma splice, CD5-S2 and CD5-S3 over-length bullets and a coined word, CD5-S4 an aggregate id in no source table, all auto-fix. CD5-S5 the sanctioned aggregate copy, no-op."
+          },
+          "axis": "Standards",
+          "base": "1e2eb6f1a33e0c2183519b8ab6b7b5b6f5f6675f",
+          "tip": "ce58acffd6c5121cec475758eb2889ae0a176a2a",
+          "finding_ids": ["CD5-S1", "CD5-S2", "CD5-S3", "CD5-S4"],
+          "supersedes": []
+        },
+        {
+          "id": "cd5-standards-r2",
+          "performer": "claude:bench-reviewer/cd-c5-standards-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c5-standards-r2-20260917@633405d8",
+            "digest": "sha256:5f987b81302330ced883934287e56373979687f9f554e2a5c5c4093fbd8fdd24",
+            "excerpt": "Verdict: pass. Every changelog bullet within bound; both CR22 rows plain; the Brier total recomputed as 6.35 over 61; CR35 agrees across tables."
+          },
+          "axis": "Standards",
+          "base": "1e2eb6f1a33e0c2183519b8ab6b7b5b6f5f6675f",
+          "tip": "633405d8d7a911e8bce9449b37dce59671ede28b",
+          "finding_ids": [],
+          "supersedes": ["cd5-standards"]
+        },
+        {
+          "id": "cd5-spec",
+          "performer": "claude:bench-reviewer/cd-c5-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/cd-c5-spec-20260917@ce58acff",
+            "digest": "sha256:4bffc59e38a83c68702f75d6dca815ec72bf22be2818ca5b45278d927dcde9b7",
+            "excerpt": "Findings: 3. CD5-P1 the line-declaration row carried no label, ask-user. CD5-P2 a wrong file count, auto-fix. CD5-P3 a stale CR35 status, auto-fix. Every row CR1 to CR38 closes in the pickup."
+          },
+          "axis": "Spec",
+          "base": "1e2eb6f1a33e0c2183519b8ab6b7b5b6f5f6675f",
+          "tip": "ce58acffd6c5121cec475758eb2889ae0a176a2a",
+          "finding_ids": ["CD5-P1", "CD5-P2", "CD5-P3"],
+          "supersedes": []
+        },
+        {
+          "id": "cd5-spec-r2",
+          "performer": "claude:bench-reviewer/cd-c5-spec-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c5-spec-r2-20260917@633405d8",
+            "digest": "sha256:f4049489d045033dfb7a8a620fbd842d35234dabb07ac21137b3e41f2bc392b6",
+            "excerpt": "Verdict: pass. CR27 holds with all three surfaces labeled; the refuted label follows the expectation rule over four rounds; CR33 holds over seventeen files; coverage mapped with 37 rows."
+          },
+          "axis": "Spec",
+          "base": "1e2eb6f1a33e0c2183519b8ab6b7b5b6f5f6675f",
+          "tip": "633405d8d7a911e8bce9449b37dce59671ede28b",
+          "finding_ids": [],
+          "supersedes": ["cd5-spec"]
+        },
+        {
+          "id": "cd5-coverage",
+          "performer": "claude:bench-reviewer/cd-c5-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/cd-c5-coverage-20260917@ce58acff",
+            "digest": "sha256:f2634d22dcd3a985487efc95085ed25d517f97c5ea9d2b9464a2eb4588970a92",
+            "excerpt": "Finding count: 2. CD5-C1 CR27 returned verified with an unlabeled surface, ask-user. CD5-C2 the aggregate could carry an unlabeled row into the retro table, auto-fix. Cross-chunk invariants green."
+          },
+          "axis": "Coverage",
+          "base": "1e2eb6f1a33e0c2183519b8ab6b7b5b6f5f6675f",
+          "tip": "ce58acffd6c5121cec475758eb2889ae0a176a2a",
+          "finding_ids": ["CD5-C1", "CD5-C2"],
+          "supersedes": []
+        },
+        {
+          "id": "cd5-coverage-r2",
+          "performer": "claude:bench-reviewer/cd-c5-coverage-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c5-coverage-r2-20260917@633405d8",
+            "digest": "sha256:2f7f5d799bde94071e446ba39758954072d5bef3a72ef5726f347befdc3c51b0",
+            "excerpt": "Verdict: pass. Labeled rows only, 61 equals the denominator, no unlabeled row; cross-chunk checks green; a fresh CD1 omission probe bit."
+          },
+          "axis": "Coverage",
+          "base": "1e2eb6f1a33e0c2183519b8ab6b7b5b6f5f6675f",
+          "tip": "633405d8d7a911e8bce9449b37dce59671ede28b",
+          "finding_ids": [],
+          "supersedes": ["cd5-coverage"]
+        }
+      ]
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+    "performer": "claude:session_01PAwDzo8gg18CxyXMeGdzrN",
+    "reconciliation": {
+      "CR1": "covered", "CR2": "covered", "CR3": "covered", "CR4": "covered", "CR5": "covered", "CR6": "covered", "CR7": "covered", "CR8": "covered", "CR9": "covered", "CR10": "covered",
+      "CR11": "covered", "CR12": "covered", "CR13": "covered", "CR14": "covered", "CR15": "covered", "CR16": "covered", "CR17": "covered", "CR18": "covered", "CR19": "covered", "CR20": "covered",
+      "CR21": "covered", "CR22": "covered", "CR23": "covered", "CR24": "covered", "CR25": "covered", "CR26": "covered", "CR27": "covered", "CR28": "covered", "CR30": "covered", "CR31": "covered",
+      "CR32": "covered", "CR33": "covered", "CR34": "covered", "CR35": "covered", "CR36": "covered", "CR37": "covered", "CR38": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-coverage",
+        "performer": "claude:session_01PAwDzo8gg18CxyXMeGdzrN",
+        "role": "integration-verification",
+        "model": "claude-fable-5-1",
+        "effort": "low",
+        "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_01PAwDzo8gg18CxyXMeGdzrN/final-coverage@633405d8",
+          "digest": "sha256:b5bca3631f1b6c6918cb5457c66e174622ba448cfc8ce48c1fbce90b2ee18e27",
+          "excerpt": "ok: coverage map valid — 37 row(s)\nuncited: 7 row(s) with no seam-cell citation — CR12, CR14, CR16, CR18, CR27, CR28, CR33"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/calibrated-decisions/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-workflow",
+        "performer": "claude:session_01PAwDzo8gg18CxyXMeGdzrN",
+        "role": "integration-verification",
+        "model": "claude-fable-5-1",
+        "effort": "low",
+        "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_01PAwDzo8gg18CxyXMeGdzrN/final-workflow@633405d8",
+          "digest": "sha256:33b501a5317f0f7df886cbc52f43585dba72d43c9e4a66b51a46d567117ecb14",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,846\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "workflow",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      },
+      {
+        "id": "final-budgets",
+        "performer": "claude:session_01PAwDzo8gg18CxyXMeGdzrN",
+        "role": "integration-verification",
+        "model": "claude-fable-5-1",
+        "effort": "low",
+        "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_01PAwDzo8gg18CxyXMeGdzrN/final-budgets@633405d8",
+          "digest": "sha256:6f72c99a424331a3381e284e55ffa703b490f81e19b498e848e8bfc5d9ca25ed",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "budgets",
+        "command": "bench test --check guidance-prose-budgets",
+        "exit_code": 0
+      },
+      {
+        "id": "final-prose",
+        "performer": "claude:session_01PAwDzo8gg18CxyXMeGdzrN",
+        "role": "integration-verification",
+        "model": "claude-fable-5-1",
+        "effort": "low",
+        "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_01PAwDzo8gg18CxyXMeGdzrN/final-prose@633405d8",
+          "digest": "sha256:4a96938900b2096e9618d579d7c8190e396c7f7e7d708fa5259fda95964688e9",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,161\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "prose",
+        "command": "bench test --check prose-mechanics",
+        "exit_code": 0
+      },
+      {
+        "id": "final-scaffold",
+        "performer": "claude:session_01PAwDzo8gg18CxyXMeGdzrN",
+        "role": "integration-verification",
+        "model": "claude-fable-5-1",
+        "effort": "low",
+        "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_01PAwDzo8gg18CxyXMeGdzrN/final-scaffold@633405d8",
+          "digest": "sha256:08482e1f98f290b8e06f9327d7b73a7f609c03c0f1cd66f4b8ce9243a308b066",
+          "excerpt": "packages[2]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/roadmap,pass,1934\n  github.com/gibbonmi/bench/internal/roadmap/roadmaptest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "scaffold",
+        "command": "bench test --package ./internal/roadmap/...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-retros",
+        "performer": "claude:session_01PAwDzo8gg18CxyXMeGdzrN",
+        "role": "integration-verification",
+        "model": "claude-fable-5-1",
+        "effort": "low",
+        "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_01PAwDzo8gg18CxyXMeGdzrN/final-retros@633405d8",
+          "digest": "sha256:5987c2d88e97b5d2b7ef970212839e29d85e957e51f88db6b5cb49d06cb082cf",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/retros,pass,10\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "retros",
+        "command": "bench test --package ./internal/retros/...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-anchors",
+        "performer": "claude:session_01PAwDzo8gg18CxyXMeGdzrN",
+        "role": "integration-verification",
+        "model": "claude-fable-5-1",
+        "effort": "low",
+        "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_01PAwDzo8gg18CxyXMeGdzrN/final-anchors@633405d8",
+          "digest": "sha256:986c073662cecaa7554b57b2eedf0c3a35c1478b28836ccddc6ea75c374f11aa",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,438\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "anchors",
+        "command": "bench test --package ./internal/anchors/...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-projection",
+        "performer": "claude:session_01PAwDzo8gg18CxyXMeGdzrN",
+        "role": "integration-verification",
+        "model": "claude-fable-5-1",
+        "effort": "low",
+        "source_digest": "a7b524a1510a58cfdcebca5d44eded5f79364176",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_01PAwDzo8gg18CxyXMeGdzrN/final-projection@633405d8",
+          "digest": "sha256:128df479a142bd933c0afb9b758ef52f23c631d7b4c530748796a48dba7b2237",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,110\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "projection",
+        "command": "bench test --package ./cmd/bench/... --run TestAnchors",
+        "exit_code": 0
+      }
+    ]
   }
 }
 ```
