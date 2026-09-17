@@ -291,6 +291,70 @@ func TestEvidenceManifestCorruption(t *testing.T) {
 	}
 }
 
+// TestEvidenceVerifyAll is CE60 and CE61: full verification reads every page and checks
+// every reconstructed source, so corruption outside the pages a consumer read still refuses.
+func TestEvidenceVerifyAll(t *testing.T) {
+	t.Run("CE60 corruption in an unread page", func(t *testing.T) {
+		store, dir := newStore(t, ce.StoreOptions{})
+		pack := mustBuild(t, fixtureCandidate(strings.Repeat("a", ce.PageBytes)+"tail\n"))
+		identity := publish(t, store, pack, ce.DefaultQuota)
+		// The flipped byte sits in the ticket source's second page, which the first read
+		// never reaches.
+		flipAt(t, packPath(dir, identity), int64(len(pack.Bytes()))-int64(len("# Spec\n"))-3)
+		artifact, err := store.Open(identity)
+		if err != nil {
+			t.Fatalf("Open: %v", err)
+		}
+		defer artifact.Close()
+		if _, err := artifact.Read(sourcePageCursor(identity)); err != nil {
+			t.Fatalf("first page: %v", err)
+		}
+		if _, err := artifact.Verify(); refusalClass(err) != ce.RefusePageDigest {
+			t.Fatalf("verify = %v, want %s", err, ce.RefusePageDigest)
+		}
+	})
+	t.Run("CE61 source digest mismatch", func(t *testing.T) {
+		store, dir := newStore(t, ce.StoreOptions{})
+		pack := mustBuild(t, fixtureCandidate("# One\n"))
+		publish(t, store, pack, ce.DefaultQuota)
+		// Only the source row's digest changes, so every page digest still matches its
+		// bytes and the manifest stays canonical.
+		body := sum("# One\n")
+		data, identity := repack(t, pack, func(manifest string) string {
+			row := ",specs/example/tickets/one.md,true,6," + body
+			if strings.Count(manifest, row) != 1 {
+				t.Fatalf("ticket source row appears %d times", strings.Count(manifest, row))
+			}
+			return strings.Replace(manifest, row, ",specs/example/tickets/one.md,true,6,"+strings.Repeat("b", 64), 1)
+		})
+		if err := os.WriteFile(packPath(dir, identity), data, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		artifact, err := store.Open(identity)
+		if err != nil {
+			t.Fatalf("Open: %v", err)
+		}
+		defer artifact.Close()
+		if _, err := artifact.Verify(); refusalClass(err) != ce.RefuseSourceDigest {
+			t.Fatalf("verify = %v, want %s", err, ce.RefuseSourceDigest)
+		}
+	})
+	t.Run("intact artifact verifies every page and source", func(t *testing.T) {
+		store, _ := newStore(t, ce.StoreOptions{})
+		pack := mustBuild(t, fixtureCandidate(strings.Repeat("a", ce.PageBytes)+"tail\n"))
+		identity := publish(t, store, pack, ce.DefaultQuota)
+		artifact, err := store.Open(identity)
+		if err != nil {
+			t.Fatalf("Open: %v", err)
+		}
+		defer artifact.Close()
+		verified, err := artifact.Verify()
+		if err != nil || verified.Pages != len(pack.Manifest().Pages) || verified.Sources != len(pack.Manifest().Sources) {
+			t.Fatalf("verify = (%+v, %v), want %d pages and %d sources", verified, err, len(pack.Manifest().Pages), len(pack.Manifest().Sources))
+		}
+	})
+}
+
 // TestEvidenceReplacementRace is CE129: a read of a replaced artifact refuses the page.
 func TestEvidenceReplacementRace(t *testing.T) {
 	store, dir := newStore(t, ce.StoreOptions{})

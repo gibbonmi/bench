@@ -163,11 +163,13 @@ func TestEvidenceSchemaRegistry(t *testing.T) {
 		"completion_evidence": "record:string,source_digest:string,plan_digest:string,record_state:string,detail:string",
 		"prepared":            "evidence:string,mode:string,base:string,source_tip:string,assignment:string,selection:string,metadata:string,sources:integer,pages:integer,manifest_bytes:integer,response_complete:boolean,delivery:string,next:string",
 		"page":                "evidence:string,stream:string,source:string,index:integer,offset:integer,bytes:integer,total:integer,sha256:string,content:string,response_complete:boolean,stream_end:boolean,next:string",
+		"verified":            "evidence:string,manifest_verified:boolean,pages_verified:integer,sources_verified:integer,delivery:string",
+		"current":             "evidence:string,assignment:string,base:string,source_tip:string,current:boolean,delivery:string",
 	}
 	order := map[string][]string{
 		"manifest": {"profile", "selection", "sources", "pages", "producers", "arguments"},
 		"metadata": {"charge", "fence", "writes", "coverage", "checks", "returns", "shared_evidence", "completion_evidence"},
-		"response": {"prepared", "page"},
+		"response": {"prepared", "page", "verified", "current"},
 	}
 	for family, blocks := range map[string][]ce.Block{"manifest": ce.ManifestBlocks, "metadata": ce.MetadataBlocks, "response": ce.ResponseBlocks} {
 		var names []string

@@ -17,8 +17,12 @@ const (
 	cursorFields   = 5
 )
 
-// RefuseCursor names a malformed, foreign, or out-of-range cursor.
-const RefuseCursor = "invalid-cursor"
+// RefuseCursor names a malformed, foreign, or out-of-range cursor. RefuseSource names a
+// well-formed source identifier the manifest does not declare.
+const (
+	RefuseCursor = "invalid-cursor"
+	RefuseSource = "unknown-source"
+)
 
 // Cursor is one stateless position in an artifact's default evidence stream.
 type Cursor struct {
@@ -180,12 +184,33 @@ type Fragment struct {
 // First returns the cursor that starts the default stream: the first manifest fragment.
 func (a *Artifact) First() Cursor { return Cursor{Identity: a.identity} }
 
-// Read returns the fragment at cursor and its successor. A source page is read from the
-// opened file, checked against its manifest digest, and returned only if the directory
-// still names the same unchanged file.
-func (a *Artifact) Read(c Cursor) (Fragment, error) {
+// SourceOrdinal returns the one-based ordinal of the source the manifest declares under id.
+func (a *Artifact) SourceOrdinal(id string) (int, error) {
+	for i, source := range a.m.Sources {
+		if source.ID == id {
+			return i + 1, nil
+		}
+	}
+	return 0, refuse(RefuseSource, "the manifest declares no source %s", id)
+}
+
+// Read returns the fragment at cursor and its successor in the default stream.
+func (a *Artifact) Read(c Cursor) (Fragment, error) { return a.read(c, false) }
+
+// ReadWithin returns the fragment at cursor with a successor that stays inside the cursor's
+// own source, so an explicit source read ends after that source instead of continuing into
+// the default stream.
+func (a *Artifact) ReadWithin(c Cursor) (Fragment, error) { return a.read(c, true) }
+
+// read returns the fragment at cursor. A source page is read from the opened file, checked
+// against its manifest digest, and returned only when the directory still names the same
+// unchanged file. within keeps the successor inside the cursor's own source.
+func (a *Artifact) read(c Cursor, within bool) (Fragment, error) {
 	if c.Identity != a.identity {
 		return Fragment{}, refuse(RefuseCursor, "cursor belongs to another artifact")
+	}
+	if within && c.Ordinal == 0 {
+		return Fragment{}, refuse(RefuseCursor, "a source read takes a source cursor")
 	}
 	if c.Ordinal == 0 {
 		return a.manifestFragment(c.Index)
@@ -203,14 +228,18 @@ func (a *Artifact) Read(c Cursor) (Fragment, error) {
 	if err != nil {
 		return Fragment{}, err
 	}
-	if digest(content) != page.SHA256 {
+	if Digest(content) != page.SHA256 {
 		return Fragment{}, refuse(RefusePageDigest, "source %s page %d digest differs", source.ID, page.Index)
 	}
 	if err := unchanged(a.dir, packName(a.identity), a.file, a.info); err != nil {
 		return Fragment{}, err
 	}
+	next := a.after(c.Ordinal, c.Index)
+	if within && next != nil && next.Ordinal != c.Ordinal {
+		next = nil
+	}
 	return Fragment{Stream: StreamSource, Source: source.ID, Index: page.Index, Offset: page.Offset, Bytes: page.Bytes,
-		Total: source.Bytes, SHA256: page.SHA256, Content: content, Next: a.after(c.Ordinal, c.Index)}, nil
+		Total: source.Bytes, SHA256: page.SHA256, Content: content, Next: next}, nil
 }
 
 func (a *Artifact) manifestFragment(index int) (Fragment, error) {
@@ -228,7 +257,7 @@ func (a *Artifact) manifestFragment(index int) (Fragment, error) {
 		next = a.after(0, 0)
 	}
 	return Fragment{Stream: StreamManifest, Index: index, Offset: offset, Bytes: len(content), Total: len(a.manifest),
-		SHA256: digest(content), Content: content, Next: next}, nil
+		SHA256: Digest(content), Content: content, Next: next}, nil
 }
 
 // after returns the default-stream position that follows page index of source ordinal,
@@ -253,6 +282,58 @@ func (a *Artifact) pagesOf(id string) []Page {
 		}
 	}
 	return pages
+}
+
+// Verified counts one artifact's complete verification.
+type Verified struct {
+	Evidence       string
+	Pages, Sources int
+}
+
+// Verify reads every page of every source, checks each page digest, and checks each
+// reconstructed source against its declared length and digest. Opening the artifact already
+// validated the complete manifest against the expected identity, so a successful return
+// covers every stored byte.
+func (a *Artifact) Verify() (Verified, error) {
+	verified := Verified{Evidence: a.identity}
+	for ordinal, source := range a.m.Sources {
+		body := make([]byte, 0, source.Bytes)
+		for _, page := range a.pagesOf(source.ID) {
+			content, err := a.readAt(a.starts[ordinal]+int64(page.Offset), page.Bytes)
+			if err != nil {
+				return Verified{}, err
+			}
+			if Digest(content) != page.SHA256 {
+				return Verified{}, refuse(RefusePageDigest, "source %s page %d digest differs", source.ID, page.Index)
+			}
+			body = append(body, content...)
+			verified.Pages++
+		}
+		if len(body) != source.Bytes || Digest(body) != source.SHA256 {
+			return Verified{}, refuse(RefuseSourceDigest, "source %s digest differs", source.ID)
+		}
+		verified.Sources++
+	}
+	if err := unchanged(a.dir, packName(a.identity), a.file, a.info); err != nil {
+		return Verified{}, err
+	}
+	return verified, nil
+}
+
+// Encode renders the verified response through the registered schema.
+func (v Verified) Encode() (string, error) {
+	return encodeResponse(blockVerified, []any{v.Evidence, true, v.Pages, v.Sources, DeliveryUnverified})
+}
+
+// Current is the registered current-action binding response row. Assignment names the
+// current assignment, never the assignment that prepared the artifact.
+type Current struct {
+	Evidence, Assignment, Base, SourceTip string
+}
+
+// Encode renders the current response through the registered schema.
+func (c Current) Encode() (string, error) {
+	return encodeResponse(blockCurrent, []any{c.Evidence, c.Assignment, c.Base, c.SourceTip, true, DeliveryUnverified})
 }
 
 // Prepared is the registered prepared response row.

@@ -100,11 +100,11 @@ func Build(c Candidate) (*Pack, error) {
 		if err := validateInput(i, input); err != nil {
 			return nil, err
 		}
-		m.Sources = append(m.Sources, ManifestSource{id, input.Role, input.Kind, input.Path, input.Required, len(input.Data), digest(input.Data)})
+		m.Sources = append(m.Sources, ManifestSource{id, input.Role, input.Kind, input.Path, input.Required, len(input.Data), Digest(input.Data)})
 		offset := 0
 		for index, size := range pageSizes(input.Data) {
 			page := input.Data[offset : offset+size]
-			m.Pages = append(m.Pages, Page{id, index, offset, size, digest(page)})
+			m.Pages = append(m.Pages, Page{id, index, offset, size, Digest(page)})
 			offset += size
 		}
 		if input.Producer != nil {
@@ -263,12 +263,12 @@ func readBodies(region []byte, m Manifest) (map[string][]byte, error) {
 		var sizes []int
 		for ; next < len(m.Pages) && m.Pages[next].Source == s.ID; next++ {
 			p := m.Pages[next]
-			if digest(body[p.Offset:p.Offset+p.Bytes]) != p.SHA256 {
+			if Digest(body[p.Offset:p.Offset+p.Bytes]) != p.SHA256 {
 				return nil, refuse(RefusePageDigest, "source %s page %d digest differs", s.ID, p.Index)
 			}
 			sizes = append(sizes, p.Bytes)
 		}
-		if digest(body) != s.SHA256 {
+		if Digest(body) != s.SHA256 {
 			return nil, refuse(RefuseSourceDigest, "source %s digest differs", s.ID)
 		}
 		if !supportedText(body) {

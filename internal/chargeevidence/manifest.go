@@ -58,9 +58,20 @@ func SourceID(ordinal int) string { return "s" + strconv.Itoa(ordinal) }
 // input, so the first input is ordinal 2.
 func InputSourceID(index int) string { return SourceID(index + 2) }
 
+// ValidSourceID reports whether value is a well-formed manifest source identifier: the
+// letter s followed by a canonical positive decimal ordinal.
+func ValidSourceID(value string) bool {
+	ordinal, ok := strings.CutPrefix(value, "s")
+	if !ok {
+		return false
+	}
+	number, valid := ParseDecimal(ordinal)
+	return valid && number > 0
+}
+
 // Identity returns the artifact identifier of canonical manifest bytes.
 func Identity(manifest []byte) string {
-	return IdentityPrefix + digest(manifest)
+	return IdentityPrefix + Digest(manifest)
 }
 
 // ValidIdentity reports whether value is a well-formed artifact identifier.
@@ -69,7 +80,10 @@ func ValidIdentity(value string) bool {
 	return ok && validDigest(hexPart)
 }
 
-func digest(data []byte) string {
+// Digest is the lowercase hexadecimal SHA-256 digest that every manifest source, page,
+// and identity cell holds. A consumer comparing prepared bytes with current bytes reads
+// this one owner.
+func Digest(data []byte) string {
 	sum := sha256.Sum256(data)
 	return hex.EncodeToString(sum[:])
 }

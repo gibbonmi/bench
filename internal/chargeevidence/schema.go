@@ -178,6 +178,8 @@ const (
 const (
 	blockPrepared = "prepared"
 	blockPage     = "page"
+	blockVerified = "verified"
+	blockCurrent  = "current"
 )
 
 // ResponseBlocks is the registered schema of every implemented evidence response.
@@ -189,6 +191,12 @@ var ResponseBlocks = []Block{
 	{blockPage, []Field{str("evidence"), str("stream"), str("source"), num("index"), num("offset"), num("bytes"),
 		num("total"), str("sha256"), str("content"), flag("response_complete"), flag("stream_end"), str("next")},
 		fmt.Sprintf("One fragment. A `%s` fragment has an empty source; a `%s` page names its source.", StreamManifest, StreamSource)},
+	{blockVerified, []Field{str("evidence"), flag("manifest_verified"), num("pages_verified"), num("sources_verified"),
+		str("delivery")},
+		fmt.Sprintf("One row after every page and every source digest verified. Delivery stays `%s`.", DeliveryUnverified)},
+	{blockCurrent, []Field{str("evidence"), str("assignment"), str("base"), str("source_tip"), flag("current"),
+		str("delivery")},
+		fmt.Sprintf("One row naming the current assignment binding. Delivery stays `%s`.", DeliveryUnverified)},
 }
 
 // Metadata block names in their canonical order.
