@@ -404,3 +404,17 @@ Four edge dispositions went beyond the decision source. The review round removed
 
 - The `unknown` cell in every provider routing row is a data edit this build makes so the column exists before the first retro fills it.
 - The canary fixture names above are the author's proposal; the ticket fork may rename them, and the fence follows the tickets.
+
+### Completion record
+
+The chunk tips and the checkpoint verdicts below come from the native review record in `reviews/calibrated-decisions.md`. Each chunk closed green, and no finding stays open on it.
+
+| chunk | tip | checkpoint verdict |
+| --- | --- | --- |
+| CD1 | `09f26779f65b7938f313cff9ec877fabe9d009f5` | green; Standards, Spec, and Coverage each pass |
+| CD2 | `8b14208c1b87b0528d54541aa9aa4ad3936fea8d` | green; three later passes cover the uncovered delta |
+| CD2b | `d4ddc08852af81003cd5b5403d67240cb024f603` | green after two repair cycles |
+| CD3 | `7c3ef89216a5797de657e77ff26670f638260d2a` | green; Standards, Spec, and Coverage each pass |
+| CD4 | `c82bd8842275c3b1ec121dd3d64ca9b98bf581a1` | green after one repair cycle |
+
+The CD5 row lands with ticket 6. Its tip and its verdict arrive at the final reconciliation, because this ticket writes the pickup that the Spec axis reads.

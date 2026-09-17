@@ -136,10 +136,12 @@ The ticket adds the `RequireInStep` anchor kind and a `Step` field on `Anchor`. 
 
 The author wrote no label cell. Each status is `verified`, because the author ran the named check and kept its log. The coordinator's probe on `stepScoped` was silent against the first diff. The kind now owns the step narrowing on both sides, and that probe bites. Two repair cycles closed six more silent mutations.
 
+The coordinator wrote both label cells. The label sources are the gate lane at the CD2b tip `d4ddc088` and the named step-move probe that bit. They also include two independent coordinator probes. One swaps the kind predicate in `internal/anchors/match.go`, and one swaps the call site in `internal/anchors/locate.go`. Each of the two probes bit.
+
 | row | status | confidence | label |
 | --- | --- | --- | --- |
-| CR22 | verified | 9 |  |
-| CR38 | verified | 9 |  |
+| CR22 | verified | 9 | held |
+| CR38 | verified | 9 | held |
 
 CR38 holds at 9. The step parser and all four scope boundaries carry a biting test now. A reviewer reads the guarantee from the suite, and not from the code.
 
@@ -481,6 +483,130 @@ CR25 stays `claimed`. The new anchor grades the README's `unknown` cell rule, no
 | `go vet ./...` | pass | no output |
 | `bench gate-prose . -- reviews/calibrated-decisions.md` | pass | no output |
 
+## CD5 first pairs
+
+This section collects every pair the ticket sections and the chunk reviews above recorded. Each row keeps its surface, its claim, its status, its stated confidence, its label, and its model, effort, and role. The rows are grouped by surface, and then by model, effort, and role. No row is invented here, and no source table above changed. The retro author fills the calibration table from this section alone.
+
+The two scenario tables above are illustrative, so their rows are not pairs. A done-claim table that still holds an empty label cell supplies no pair either. Each pair below comes from a `Pairs recorded for CD5` table or from the line declaration.
+
+### All pairs
+
+| surface | claim | status | confidence | label | model / effort / role |
+| --- | --- | --- | --- | --- | --- |
+| delegate return | CR1 | verified | 9 | held | opus / high / author |
+| delegate return | CR2 | verified | 9 | held | opus / high / author |
+| delegate return | CR3 | verified | 9 | held | opus / high / author |
+| delegate return | CR13 | verified | 9 | held | opus / high / author |
+| delegate return | CR14 | verified | 9 | held | opus / high / author |
+| delegate return | CR32 | verified | 9 | held | opus / high / author |
+| delegate return | CR34 | verified | 9 | held | opus / high / author |
+| delegate return | CR37 | verified | 9 | held | opus / high / author |
+| delegate return | CR4 | verified | 9 | held | opus / high / author |
+| delegate return | CR5 | verified | 9 | held | opus / high / author |
+| delegate return | CR6 | verified | 9 | held | opus / high / author |
+| delegate return | CR15 | verified | 9 | held | opus / high / author |
+| delegate return | CR16 | verified | 9 | held | opus / high / author |
+| delegate return | CR22 | verified | 9 | held | opus / high / author |
+| delegate return | CR23 | verified | 8 | held | opus / high / author |
+| delegate return | CR30 | verified | 9 | held | opus / high / author |
+| delegate return | CR7 | verified | 9 | held | opus / high / author |
+| delegate return | CR8 | verified | 9 | held | opus / high / author |
+| delegate return | CR9 | verified | 9 | held | opus / high / author |
+| delegate return | CR10 | verified | 9 | held | opus / high / author |
+| delegate return | CR11 | verified | 9 | held | opus / high / author |
+| delegate return | CR12 | verified | 9 | held | opus / high / author |
+| delegate return | CR31 | verified | 9 | held | opus / high / author |
+| delegate return | CR36 | verified | 9 | held | opus / high / author |
+| delegate return | CR17 | verified | 9 | held | opus / high / author |
+| delegate return | CR18 | verified | 9 | held | opus / high / author |
+| delegate return | CR19 | verified | 8 | held | opus / high / author |
+| delegate return | CR20 | verified | 9 | held | opus / high / author |
+| delegate return | CR21 | verified | 9 | held | opus / high / author |
+| delegate return | CR28 | verified | 9 | held | opus / high / author |
+| delegate return | CR35 | claimed | 7 | held | opus / high / author |
+| delegate return | CR24 | verified | 9 | held | opus / high / author |
+| delegate return | CR25 | claimed | 8 | held | opus / high / author |
+| delegate return | CR26 | verified | 9 | held | opus / high / author |
+| delegate return | CR22 (CD2b) | verified | 9 | held | opus / high / author |
+| delegate return | CR38 | verified | 9 | held | opus / high / author |
+| review finding | CD1-S1 | claimed | 5 | refuted | fable / medium / Standards |
+| review finding | CD1-S2 | claimed | 6 | held | fable / medium / Standards |
+| review finding | CD2-S1 | claimed | 8 | refuted | fable / medium / Standards |
+| review finding | CD2-S2 | claimed | 4 | refuted | fable / medium / Standards |
+| review finding | CD2b-S1 | claimed | 8 | held | fable / medium / Standards |
+| review finding | CD2b-S2 | claimed | 9 | held | fable / medium / Standards |
+| review finding | CD2b-S3 | claimed | 6 | held | fable / medium / Standards |
+| review finding | CD2b-S4 | claimed | 4 | refuted | fable / medium / Standards |
+| review finding | CD2-C1 | claimed | 7 | held | fable / medium / Coverage |
+| review finding | CD2-C2 | claimed | 3 | refuted | fable / medium / Coverage |
+| review finding | CD2b-C1 | claimed | 8 | held | fable / medium / Coverage |
+| review finding | CD2b-C2 | claimed | 6 | refuted | fable / medium / Coverage |
+| review finding | CD2b-C3 | claimed | 5 | refuted | fable / medium / Coverage |
+| review finding | CD2b-C4 | claimed | 4 | held | fable / medium / Coverage |
+| review finding | CD2-C3 | claimed | 6 | held | sonnet / xhigh / Coverage |
+| review finding | CD2-C4 | claimed | 8 | refuted | sonnet / xhigh / Coverage |
+| review finding | CD3-S1 | claimed | 6 | refuted | opus / medium / Standards |
+| review finding | CD3-S2 | claimed | 5 | refuted | opus / medium / Standards |
+| review finding | CD4-S1 | claimed | 8 | held | opus / medium / Standards |
+| review finding | CD4-S2 | claimed | 9 | held | opus / medium / Standards |
+| review finding | CD3-C1 | claimed | 3 | refuted | opus / medium / Coverage |
+| review finding | CD4-C1 | claimed | 9 | held | opus / medium / Coverage |
+| review finding | CD4-C2 | claimed | 8 | refuted | opus / medium / Coverage |
+| review finding | CD4-C3 | claimed | 7 | refuted | opus / medium / Coverage |
+| line declaration | Expected repair rounds: 1 / confidence 6 | claimed | 6 |  | fable / low / orchestrator |
+
+The CR22 row appears twice. The CD2 chunk returned the sentence under a section anchor, and the CD2b chunk returned it again under the step anchor. Each return is its own claim, so each is its own pair. The second row reads `CR22 (CD2b)`.
+
+The line declaration row carries no label yet. The coordinator labels it after the landing, from this build's repair-attribution table.
+
+### Counts
+
+The pair count is 61. The delegate-return surface holds 36 pairs, the review-finding surface holds 24 pairs, and the line-declaration surface holds 1 pair.
+
+| role | pairs |
+| --- | --- |
+| author | 36 |
+| Standards | 12 |
+| Coverage | 12 |
+| orchestrator | 1 |
+
+The abstention count is 0. No pair in this pickup holds the `abstained` status. The one abstained row above sits in the CD1 scenario table, which is illustrative.
+
+### Brier mean
+
+The score of one pair is `(p - label)^2`. The stated confidence gives `p = n / 10`. The label gives 1 for `held` and 0 for `refuted`. The labeled pair count is 60, because the line declaration holds no label.
+
+The 36 delegate-return pairs are each `held`. Thirty-two rows at confidence 9 give `32 x 0.01 = 0.32`. Three rows at confidence 8 give `3 x 0.04 = 0.12`. One row at confidence 7 gives `0.09`. Their sum is 0.53.
+
+Eleven review findings are `held`. Their scores are 0.16, 0.09, 0.16, 0.04, 0.01, 0.16, 0.04, 0.36, 0.04, 0.01, and 0.01. Their sum is 1.08.
+
+Thirteen review findings are `refuted`. Their scores are 0.25, 0.64, 0.16, 0.09, 0.64, 0.16, 0.36, 0.25, 0.36, 0.25, 0.09, 0.64, and 0.49. Their sum is 4.38.
+
+The three sums give `0.53 + 1.08 + 4.38 = 5.99`. The Brier mean is `5.99 / 60 = 0.100`. The author rows alone give `0.53 / 36 = 0.015`. The review rows alone give `5.46 / 24 = 0.228`.
+
+### Author evidence
+
+The ticket 6 author wrote no label cell. CR27 and CR33 are the two rows of this ticket.
+
+| row | status | confidence | label |
+| --- | --- | --- | --- |
+| CR27 | verified | 9 |  |
+| CR33 | verified | 9 |  |
+
+CR27 is `verified`, because the section above holds a labeled row for each of the three surfaces and states the pair count per role. CR33 is `verified`, because the prose lane passed over every Markdown file this build edited.
+
+The self-probe removes one bullet from the new changelog entry. `bench test --check prose-mechanics` and the prose lane both stay green, because no anchor and no prose rule grades that bullet. The author restored the bullet, and `git diff` reports the entry whole again. The second probe omits the pinned `changelog-ticket-vocabulary` bytes from `CHANGELOG.md`. Its verdict line reads `bit,CHANGELOG.md,omit,failed,1,yes`, so the co-named fixture still bites through the live tree.
+
+Each run reports no skip. The elapsed time is the package time the verb reports.
+
+| check | verdict | elapsed |
+| --- | --- | --- |
+| `bench test --check docs-currency-workflow` | pass | 825 ms |
+| `bench test --check guidance-prose-budgets` | pass | 5 ms |
+| `bench test --check prose-mechanics` | pass | 154 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 9453 ms |
+| `bench gate-prose . --` over the 13 edited Markdown files | pass | no issue |
+
 ## CD1 review
 
 The frozen pair is base `9148850200714f000eec2fbf44cddea6182f95c7` and tip `09f26779f65b7938f313cff9ec877fabe9d009f5`. The reviewer directed the review line. The first pass of every chunk review runs fable / medium. Every later pass on the same chunk runs sonnet / xhigh. Each axis ran in its own read-only worktree.
@@ -638,6 +764,8 @@ The axis gave two items of optional advice with no confidence. The step cache ke
 
 | surface | claim | status | confidence | label | model / effort / role |
 | --- | --- | --- | --- | --- | --- |
+| delegate return | CR22 | verified | 9 | held | opus / high / author |
+| delegate return | CR38 | verified | 9 | held | opus / high / author |
 | review finding | CD2b-S1 | claimed | 8 | held | fable / medium / Standards |
 | review finding | CD2b-S2 | claimed | 9 | held | fable / medium / Standards |
 | review finding | CD2b-S3 | claimed | 6 | held | fable / medium / Standards |
