@@ -316,17 +316,17 @@ The scaffold test repository holds no `capture/agent-performance` directory, and
 
 ### Done-claim table
 
-The author wrote no label cell. Each status is `verified`, because the author ran the named check and kept its red-then-green log. CR35 is `claimed`, because no check grades a second spelling; the review greps `internal/roadmap` for it.
+The author wrote no label cell. Each status is `verified`, because the author ran the named check and kept its red-then-green log. CR35 is `claimed`, because no check grades a second spelling; the review greps `internal/roadmap` for it. The coordinator wrote each label. The label sources are the gate lane at the merge, green at tip 5043fcd5, and one independent swap probe on the section dispatch. The Spec axis grep labels CR35.
 
 | row | status | confidence | label |
 | --- | --- | --- | --- |
-| CR17 | verified | 9 |  |
-| CR18 | verified | 9 |  |
-| CR19 | verified | 8 |  |
-| CR20 | verified | 9 |  |
-| CR21 | verified | 9 |  |
-| CR28 | verified | 9 |  |
-| CR35 | claimed | 7 |  |
+| CR17 | verified | 9 | held |
+| CR18 | verified | 9 | held |
+| CR19 | verified | 8 | held |
+| CR20 | verified | 9 | held |
+| CR21 | verified | 9 | held |
+| CR28 | verified | 9 | held |
+| CR35 | claimed | 7 | held |
 
 ### TDD red
 
@@ -387,13 +387,13 @@ The OpenAI scorecard's six routing rows carry the same column and the same `unkn
 
 ### Done-claim table
 
-The author wrote no label cell. CR24 and CR26 are `verified`, because each ran its named check with a red-then-green log. CR25 is `claimed`, because no check grades the column; the Spec axis reads both provider files.
+The author wrote no label cell. CR24 and CR26 are `verified`, because each ran its named check with a red-then-green log. CR25 is `claimed`, because no check grades the column; the Spec axis reads both provider files. The coordinator wrote each label. The label sources are the gate lane at the merge and one independent swap probe on the Measures row. The Spec axis read of both provider files labels CR25.
 
 | row | status | confidence | label |
 | --- | --- | --- | --- |
-| CR24 | verified | 9 |  |
-| CR25 | claimed | 8 |  |
-| CR26 | verified | 9 |  |
+| CR24 | verified | 9 | held |
+| CR25 | claimed | 8 | held |
+| CR26 | verified | 9 | held |
 
 ### Red-then-green log
 
@@ -578,6 +578,21 @@ After repair cycle 1, one sonnet / xhigh later pass per axis ran at tip da019659
 
 After repair cycle 2, each axis reaffirmed at tip d4ddc088 in its own worktree. The new test bites both the shared-walk branch and its call-site value. No finding remains open on CD2b.
 
+The axis gave two items of optional advice with no confidence. The step cache key drops the step number, which one registered step anchor cannot expose. A `06.` opener parses as step 6, and the ticket's literal-digits rule leaves leading zeros undecided.
+
+### Pairs recorded for CD5
+
+| surface | claim | status | confidence | label | model / effort / role |
+| --- | --- | --- | --- | --- | --- |
+| review finding | CD2b-S1 | claimed | 8 | held | fable / medium / Standards |
+| review finding | CD2b-S2 | claimed | 9 | held | fable / medium / Standards |
+| review finding | CD2b-S3 | claimed | 6 | held | fable / medium / Standards |
+| review finding | CD2b-S4 | claimed | 4 | refuted | fable / medium / Standards |
+| review finding | CD2b-C1 | claimed | 8 | held | fable / medium / Coverage |
+| review finding | CD2b-C2 | claimed | 6 | refuted | fable / medium / Coverage |
+| review finding | CD2b-C3 | claimed | 5 | refuted | fable / medium / Coverage |
+| review finding | CD2b-C4 | claimed | 4 | held | fable / medium / Coverage |
+
 ## CD3 review
 
 The frozen pair is base `b47edde2c7a5bc4f00a77ea94e77ac09a6df24ea` and tip `7c3ef89216a5797de657e77ff26670f638260d2a`. The reviewer changed the review line before this chunk. The first pass now runs opus / medium, and every later pass runs sonnet / high. Each axis ran in its own read-only worktree.
@@ -625,20 +640,60 @@ The axis gave one item of optional advice with no confidence. A needle demoted i
 | review finding | CD3-S2 | claimed | 5 | refuted | opus / medium / Standards |
 | review finding | CD3-C1 | claimed | 3 | refuted | opus / medium / Coverage |
 
-The axis gave two items of optional advice with no confidence. The step cache key drops the step number, which one registered step anchor cannot expose. A `06.` opener parses as step 6, and the ticket's literal-digits rule leaves leading zeros undecided.
+## CD4 review
+
+The frozen pair is base `66dc82f10880055d0128aa1139e03ee43393050c` and tip `5043fcd5f5c47d78c154ef8657c8e31ec4e43bd3`, tickets 4 and 5. Each axis ran opus / medium in its own read-only worktree.
+
+The raw finding count is 5. The de-duplicated repair target count is 2. CD4 consumed 1 repair cycle of its 2. The cycle carries two repairs in series under the author limit. The ticket 4 author collapses the cell count to one source. The ticket 5 author anchors the `unknown`-cell sentence.
+
+### Standards
+
+Finding count: 1 hard violation, 1 dependent comment. Worst issue: the six-cell shape of the calibration table is derived three times in production.
+
+| id | finding | citation | confidence | disposition | label |
+| --- | --- | --- | --- | --- | --- |
+| CD4-S1 | The header constant, a literal repeat count, and a hand-written separator each spell the six-cell shape. | AGENTS.md, one source per fact; the enumeration is the full grep of the table shape. | 8 | auto-fix | held |
+| CD4-S2 | The header constant's comment claims the renderer holds no second spelling of the six cells. | craft-comments, what is true of the code as it stands. | 9 | auto-fix | held |
+
+The axis confirmed four clean points. The heading list is unchanged in content. The word `unknown` comes from `unknownFact`. The Measures row and the contract bullets are single-sourced against their anchors. The scaffold test follows its prior art.
+
+### Spec
+
+The finding count is 0, and there is no worst issue. Every CD4 row held, including the review-owned CR25 and CR35. The `DelegateHeading` export keeps the nine heading bytes, so it is within the spec's decision.
+
+The axis gave two items of optional advice with no confidence. The header equality assertion is a tautology against the renderer, which the spec anticipates by making CR35 review-owned. The spec and ticket say "beside the two derived-section headings" where the tree now holds three.
+
+### Coverage
+
+Finding count: 3. Worst issue: the README's `unknown`-cell sentence had no anchor, so an omission stayed green.
+
+| id | finding | citation | confidence | disposition | label |
+| --- | --- | --- | --- | --- | --- |
+| CD4-C1 | The update-contract sentence that a provider with no labeled pair shows `unknown` has no anchor or canary. | Ticket 5, the update contract states the `unknown` cell rule; one silent omission probe. | 9 | auto-fix | held |
+| CD4-C2 | The provider `calibration` column is unchecked; a column dropped from one file stays green. | Spec row CR25 is review-owned for the provider files by decision. | 8 | no-op | refuted |
+| CD4-C3 | The six cell names in the header constant bind to nothing in a test. | Spec row CR35 routes the header promise to the review grep. | 7 | no-op | refuted |
+
+The coordinator applied CD4-C1 as a gate expansion under the plan-expansion policy. The CR25 row now names the anchor and the `calibration-unknown-cell` canary. The fence and ticket 5's `Writes:` carry the fixture, and the ticket 5 author adds them in this cycle.
 
 ### Pairs recorded for CD5
 
 | surface | claim | status | confidence | label | model / effort / role |
 | --- | --- | --- | --- | --- | --- |
-| review finding | CD2b-S1 | claimed | 8 | held | fable / medium / Standards |
-| review finding | CD2b-S2 | claimed | 9 | held | fable / medium / Standards |
-| review finding | CD2b-S3 | claimed | 6 | held | fable / medium / Standards |
-| review finding | CD2b-S4 | claimed | 4 | refuted | fable / medium / Standards |
-| review finding | CD2b-C1 | claimed | 8 | held | fable / medium / Coverage |
-| review finding | CD2b-C2 | claimed | 6 | refuted | fable / medium / Coverage |
-| review finding | CD2b-C3 | claimed | 5 | refuted | fable / medium / Coverage |
-| review finding | CD2b-C4 | claimed | 4 | held | fable / medium / Coverage |
+| delegate return | CR17 | verified | 9 | held | opus / high / author |
+| delegate return | CR18 | verified | 9 | held | opus / high / author |
+| delegate return | CR19 | verified | 8 | held | opus / high / author |
+| delegate return | CR20 | verified | 9 | held | opus / high / author |
+| delegate return | CR21 | verified | 9 | held | opus / high / author |
+| delegate return | CR28 | verified | 9 | held | opus / high / author |
+| delegate return | CR35 | claimed | 7 | held | opus / high / author |
+| delegate return | CR24 | verified | 9 | held | opus / high / author |
+| delegate return | CR25 | claimed | 8 | held | opus / high / author |
+| delegate return | CR26 | verified | 9 | held | opus / high / author |
+| review finding | CD4-S1 | claimed | 8 | held | opus / medium / Standards |
+| review finding | CD4-S2 | claimed | 9 | held | opus / medium / Standards |
+| review finding | CD4-C1 | claimed | 9 | held | opus / medium / Coverage |
+| review finding | CD4-C2 | claimed | 8 | refuted | opus / medium / Coverage |
+| review finding | CD4-C3 | claimed | 7 | refuted | opus / medium / Coverage |
 
 ## Native review record
 

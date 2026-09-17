@@ -1,7 +1,7 @@
 # Define the calibration measure in the scorecard
 
 Blocked by: 4-render-calibration-table-in-retro-scaffold.md
-Writes: capture/agent-performance/README.md, capture/agent-performance/claude-models.md, capture/agent-performance/open-ai-models.md, internal/anchors/registry_calibration.go (new), internal/anchors/registry_calibration_test.go (new), reviews/calibrated-decisions.md (new), tests/canary/workflow-guidance-anchors/calibration-scorecard-measure (new), tests/canary/workflow-guidance-anchors/calibration-routing-input (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: capture/agent-performance/README.md, capture/agent-performance/claude-models.md, capture/agent-performance/open-ai-models.md, internal/anchors/registry_calibration.go (new), internal/anchors/registry_calibration_test.go (new), reviews/calibrated-decisions.md (new), tests/canary/workflow-guidance-anchors/calibration-scorecard-measure (new), tests/canary/workflow-guidance-anchors/calibration-routing-input (new), tests/canary/workflow-guidance-anchors/calibration-unknown-cell (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: CR24, CR25, CR26
 
 Chunk: CD4.
