@@ -414,6 +414,39 @@ Finding count: 1. Worst issue: CV3.
 - The length clause in the source digest owner is dead on the paged-read path and earns its keep on the verification path.
 - Two lock names are exported for one system test.
 
+## CE-C1C: review round 3
+
+Frozen pair: base `b89e8689bb687c93c4d52d74b4510858828b8fe5`, tip `6a36f51fedf93ab084b4f60b3befeeb9d6d11472`.
+The raw finding count is 2, and both take the fold disposition. The de-duplicated repair-target count is 0.
+Repair cycles used: 2 of 2. Repair cycle 2 closed CV3 and both round 2 advice items.
+
+### Standards
+
+Finding count: 0. The axis passed, and ST1 is closed.
+
+### Spec
+
+Finding count: 0. The axis passed.
+
+### Coverage
+
+Finding count: 0 blocking. CV3 is closed.
+
+- The axis raised two silent branches in the consumer test helper: the source-length comparison and the page-digest comparison. Both are test-only, and production keeps its own checks for each condition.
+- Coordinator decision: these are advice, not repair targets, because no binding requirement fails and no production defect remains. Ticket 5 carries them, since it is the next ticket that edits these tests.
+
+### Repair cycle 2 probe records
+
+- The page-length clause in the consumer reconstruction: the probe was silent before the repair and failed the new shortened-page case after it.
+- The coordinator's independent probe made production declare a page one byte shorter than it delivers, and the complete-delivery case failed. That mutation passed before this repair.
+
+### Advice
+
+- The source-level byte comparison remains unmeasured, because the page-level clause fires first.
+- One call site rescans for a position the helper already found.
+- The helper that answers a query also fails the test, and its name states only the query.
+- The operation registry advertisement test has no recorded red of its own; it cross-checks two production sources rather than restating knowledge.
+
 ## Record
 
 ```bench-review-record
@@ -1610,9 +1643,9 @@ Finding count: 1. Worst issue: CV3.
     {
       "id": "CE-C1C",
       "base": "b89e8689bb687c93c4d52d74b4510858828b8fe5",
-      "tip": "537e8d49f80078817a7516dbb27e81deba3ba4c3",
+      "tip": "6a36f51fedf93ab084b4f60b3befeeb9d6d11472",
       "plan_digest": "sha256:bd4837edc8c926625c78753261b6eb6a4c9bff01e43afa43c1a1a609be8949fb",
-      "source_digest": "121b974df8c28fef20699200c1dcea1f5e325bb1",
+      "source_digest": "13b4879f705842823e2577ee469f6435ec84086d",
       "acceptance_rows": [
         "CE7",
         "CE8",
@@ -1840,6 +1873,107 @@ Finding count: 1. Worst issue: CV3.
               "excerpt": "bench probe internal/preflight/evidencecmd/operations.go giving the verify form an optional cursor at 537e8d49: verdict bit, TestEvidenceVerifyGrammar/with_cursor failed, restored=yes"
             }
           }
+        },
+        {
+          "id": "ce-c1c-v3-preflight",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "13b4879f705842823e2577ee469f6435ec84086d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:33bc8be304b7c3b70d9d29e6bcfbc3512b42aeacce61f2516901b8519bbedf80",
+            "excerpt": "at 6a36f51f: pass; preflight 17599 ms and evidencecmd 4257 ms"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1c-v3-store",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "13b4879f705842823e2577ee469f6435ec84086d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:d05c2455ec49f18dd6946e36a80395cebc209ff2f6ee1a954962aceea4a36d28",
+            "excerpt": "at 6a36f51f: pass, 112 ms; the CE94 device case skipped for the privilege capability"
+          },
+          "requirement": "store",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1c-v3-inventory",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "13b4879f705842823e2577ee469f6435ec84086d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:140f1ba7f3981668496b2efacabcbbae46af080018a99ecc596dc6f2150d58bb",
+            "excerpt": "at 6a36f51f: pass, 6766 ms"
+          },
+          "requirement": "inventory",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1c-v3-system",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "13b4879f705842823e2577ee469f6435ec84086d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:07a88533a5bdcb89d4cdfab1ccb7685994eec71b6a25bfceba0d15d6ce035cd8",
+            "excerpt": "at 6a36f51f: pass, 32718 ms"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1c-v3-mutation",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "13b4879f705842823e2577ee469f6435ec84086d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:85c2b7327e33065e225d5785eb7bd95d0c81d2981999513f21e64e497b50ced7",
+            "excerpt": "at 6a36f51f: pass"
+          },
+          "requirement": "mutation",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "accept --verify with --cursor",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:coordinator-run",
+              "digest": "sha256:d396a5b00acf14708f425b065a2d8bf68f0efc9f1e9c50b50462f5bc4e854be5",
+              "excerpt": "bench probe internal/preflight/evidencecmd/operations.go giving the verify form an optional cursor at 6a36f51f: verdict bit, TestEvidenceVerifyGrammar/with_cursor failed, restored=yes"
+            }
+          }
         }
       ],
       "reviews": [
@@ -1981,6 +2115,72 @@ Finding count: 1. Worst issue: CV3.
           ],
           "supersedes": [
             "ce-c1c-r1-coverage"
+          ]
+        },
+        {
+          "id": "ce-c1c-r3-standards",
+          "performer": "claude-review-ce-c1c-standards-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "13b4879f705842823e2577ee469f6435ec84086d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1c-standards-r3",
+            "digest": "sha256:f6fd745c8d93fda8aae39d40cc6182de9ac2c08be22cfb72b12ac29836599f94",
+            "excerpt": "Standards CE-C1C round 3: 0 findings. ST1 closed; the record carries a red for each named expectation class, and the delta itself is clean."
+          },
+          "axis": "Standards",
+          "base": "b89e8689bb687c93c4d52d74b4510858828b8fe5",
+          "tip": "6a36f51fedf93ab084b4f60b3befeeb9d6d11472",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c1c-r2-standards"
+          ]
+        },
+        {
+          "id": "ce-c1c-r3-spec",
+          "performer": "claude-review-ce-c1c-spec-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "13b4879f705842823e2577ee469f6435ec84086d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1c-spec-r3",
+            "digest": "sha256:da8cf3e73f23f6d3a7b5c9b0c566dec6a4d0a2470da8ca5ccd0cdf21758e932e",
+            "excerpt": "Spec CE-C1C round 3: 0 findings. The consumer fixture keeps every spec requirement, changes no production behavior, and loses no covered row."
+          },
+          "axis": "Spec",
+          "base": "b89e8689bb687c93c4d52d74b4510858828b8fe5",
+          "tip": "6a36f51fedf93ab084b4f60b3befeeb9d6d11472",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c1c-r2-spec"
+          ]
+        },
+        {
+          "id": "ce-c1c-r3-coverage",
+          "performer": "claude-review-ce-c1c-coverage-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "13b4879f705842823e2577ee469f6435ec84086d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1c-coverage-r3",
+            "digest": "sha256:e6e1c9157904aa3d3330cecf3f0b2dd33f86d0e642f1ae446bf5ffa49810c9f9",
+            "excerpt": "Coverage CE-C1C round 3: CV3 closed with a biting probe, and no earlier case lost its bite. The axis dispositioned two silent test-helper branches as fold; the coordinator reclassified them as advice carried into ticket 5."
+          },
+          "axis": "Coverage",
+          "base": "b89e8689bb687c93c4d52d74b4510858828b8fe5",
+          "tip": "6a36f51fedf93ab084b4f60b3befeeb9d6d11472",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c1c-r2-coverage"
           ]
         }
       ]
