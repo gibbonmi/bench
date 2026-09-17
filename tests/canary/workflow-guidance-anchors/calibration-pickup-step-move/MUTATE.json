@@ -1,0 +1,12 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "   Each actionable finding line carries its stated confidence.\n",
+    "new": ""
+  },
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "   read-only phase to make the edit itself.\n",
+    "new": "   read-only phase to make the edit itself.\n   Each actionable finding line carries its stated confidence.\n"
+  }
+]

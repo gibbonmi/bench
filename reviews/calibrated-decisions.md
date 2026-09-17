@@ -128,6 +128,57 @@ Each run reports no skip. The elapsed time is the package time the verb reports.
 | `git diff --stat <base> -- internal/reviewrecord` | empty | no output |
 | `bench gate-prose` on the three edited files and this pickup | pass | four pass rows |
 
+## CD2b ticket 7 author evidence
+
+The ticket adds the `RequireInStep` anchor kind and a `Step` field on `Anchor`. The kind resolves the H2 section first, then narrows that body to one numbered step. The `bench anchors` projection gains a `step` column after `section`. The pickup-confidence anchor moves from `require-in-section` to step 6 of `Process`.
+
+### Done-claim table
+
+The author wrote no label cell. Each status is `verified`, because the author ran the named check and kept its log. The coordinator's probe on `stepScoped` was silent against the first diff. The kind now owns the step narrowing on both sides, and that probe bites.
+
+| row | status | confidence | label |
+| --- | --- | --- | --- |
+| CR22 | verified | 9 |  |
+| CR38 | verified | 8 |  |
+
+### One owner for the step narrowing
+
+The first diff decided the narrowing twice. The evaluator read `anchor.Step != 0`, and the locator read `kind.stepScoped()`. A section-scoped anchor with a step would then narrow in the evaluator and not in the locator.
+
+The kind is the one owner now. `resolveStep` raises its own diagnostic when a step-scoped anchor names no step. `TestRegistryBindsStepToItsKind` refuses a registry row whose kind and `Step` field disagree, so no such row reaches the evaluator.
+
+### Red-then-green log
+
+`TestAnchorHarnessStepRules` came first. The package did not compile, and the compiler named `undefined: RequireInStep`, `anchor.Step undefined (type Anchor has no field or method Step)`, and `unknown field step in struct literal of type anchorRule`. The kind, the field, and the harness support turned that red green.
+
+The CR22 step move is a live-tree red. The author copied `.agents/commands/bench-review-implementation.md` aside. The author then deleted the pinned sentence from step 6 and inserted the identical bytes into step 5. `bench test --check docs-currency-workflow` failed with `gate: calibration: the pickup line must carry its stated confidence`. The author restored the copy, and `cmp` reported no difference. `git status --short` on the path reported no change, and the check passed again.
+
+The new `calibration-pickup-step-move` canary plants that same move. A verbose run of `TestEveryRetainedFixtureBitesThroughRegisteredOwner` shows `calibration-pickup-confidence` and `calibration-pickup-step-move` each pass as its own subtest. The omission canary keeps its planted diagnostic.
+
+The re-pinned row reads `require-in-step,Process,6,Each actionable finding line carries its stated confidence.,178`.
+
+### Probe verdict
+
+The self-probe swaps the step-digit test in `internal/anchors/locate.go` for a test that accepts any opener. The verdict line reads `bit,internal/anchors/locate.go,swap,failed,1,yes`, and the failed test is `TestAnchorHarnessStepRules/moved_to_another_step`.
+
+The coordinator's probe swaps the body of `stepScoped` in `internal/anchors/match.go` for `return false`. The verdict line reads `bit,internal/anchors/match.go,swap,failed,3,yes`. The failed tests are the moved, the no-such-step, and the duplicated-step cases of `TestAnchorHarnessStepRules`.
+
+### Verification table
+
+Each run reports no skip. The elapsed time is the package time the verb reports.
+
+| check | verdict | elapsed |
+| --- | --- | --- |
+| `bench test --package ./internal/anchors/...` | pass | 521 ms |
+| `bench test --package ./cmd/bench/... --run TestAnchors` | pass | 147 ms |
+| `bench test --check docs-currency-workflow` | pass | 1047 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 12568 ms |
+| `go vet ./...` | pass | no output |
+| `gofmt -l internal/anchors cmd/bench` | pass | no output |
+| `bench structure` | pass | no new file over its budget |
+
+`internal/anchors/locate.go` first grew to 452 lines, over its 400-line budget. One narrowing walk now serves both the section resolution and the step resolution, and the file reads 399 lines.
+
 ## CD1 review
 
 The frozen pair is base `9148850200714f000eec2fbf44cddea6182f95c7` and tip `09f26779f65b7938f313cff9ec877fabe9d009f5`. The reviewer directed the review line. The first pass of every chunk review runs fable / medium. Every later pass on the same chunk runs sonnet / xhigh. Each axis ran in its own read-only worktree.

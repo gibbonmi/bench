@@ -73,6 +73,9 @@ func TestSatisfiedNormalizesByKind(t *testing.T) {
 		{"forbid", Forbid, "alpha\n  beta", "alpha   beta", false},
 		{"require in section", RequireInSection, "Alpha\n  Beta", "alpha   beta", true},
 		{"forbid in section", ForbidInSection, "Alpha\n  Beta", "alpha   beta", false},
+		// A step-scoped kind normalizes as a section-scoped kind does, so the case fold
+		// reaches the needle inside the step.
+		{"require in step", RequireInStep, "Alpha\n  Beta", "alpha   beta", true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

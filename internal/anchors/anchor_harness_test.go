@@ -21,6 +21,9 @@ type anchorRule struct {
 	// fenced wraps the needle in a backtick fence, so a needle that opens with an H2
 	// heading does not close the section that must hold it.
 	fenced bool
+	// step nests the needle under a numbered step opener inside its section. A zero step
+	// leaves the needle in the section body, under no step.
+	step int
 }
 
 // anchorHarness writes one minimal tree per run and evaluates a registry group
@@ -37,6 +40,10 @@ type anchorHarness struct {
 	// skipCrossTalk drops the cross-talk assertion, for a rule set whose subjects
 	// cannot separate one diagnostic from another.
 	skipCrossTalk bool
+	// extraSteps writes one bare step opener per entry into each section, after the
+	// openers the rules themselves need. A repeated entry gives a section two lines that
+	// open the same step.
+	extraSteps []int
 }
 
 // defaultAnchorTemplate gives a subject file a title and nothing else.
@@ -74,9 +81,28 @@ func (h anchorHarness) write(t *testing.T, broken int) string {
 		for _, section := range sections {
 			body += "\n## " + section + "\n\n"
 			for i, r := range h.rules {
-				if r.file == file && r.section == section && h.present(i, r, broken) {
+				if r.file == file && r.section == section && r.step == 0 && h.present(i, r, broken) {
 					body += h.line(r)
 				}
+			}
+			var steps []int
+			for _, r := range h.rules {
+				if r.file == file && r.section == section && r.step != 0 && !slices.Contains(steps, r.step) {
+					steps = append(steps, r.step)
+				}
+			}
+			// The opener stands whether or not this run keeps the needle, so an omission
+			// reads as a missing needle and never as a missing step.
+			for _, step := range steps {
+				body += stepOpenerLine(step)
+				for i, r := range h.rules {
+					if r.file == file && r.section == section && r.step == step && h.present(i, r, broken) {
+						body += "   " + h.line(r)
+					}
+				}
+			}
+			for _, step := range h.extraSteps {
+				body += stepOpenerLine(step)
 			}
 		}
 		template := defaultAnchorTemplate
@@ -97,6 +123,12 @@ func (h anchorHarness) write(t *testing.T, broken int) string {
 // present reports whether the rule's needle belongs in this run's tree.
 func (h anchorHarness) present(i int, r anchorRule, broken int) bool {
 	return (i == broken) == r.forbidden
+}
+
+// stepOpenerLine writes one numbered step opener at column zero, the shape a reader sees
+// in a `## Process` section.
+func stepOpenerLine(step int) string {
+	return fmt.Sprintf("%d. step %d\n", step, step)
 }
 
 func (h anchorHarness) line(r anchorRule) string {
@@ -121,6 +153,41 @@ func (h anchorHarness) check(t *testing.T) {
 	for i := range h.rules {
 		root := h.write(t, i)
 		h.checkBroken(t, root, i, EvaluateGroup(root, h.group))
+	}
+}
+
+// TestAnchorHarnessStepRules pins the step-scoped kind against its own expectations: a
+// needle inside the registered step is conformant, the same needle under another step
+// raises the anchor's diagnostic, and a missing or duplicated step opener raises its own
+// diagnostic. The four trees differ only in where the step openers sit, so the step
+// narrowing, not the section narrowing, is the subject.
+func TestAnchorHarnessStepRules(t *testing.T) {
+	anchor := pathTestAnchor(t, RequireInStep)
+	missing := fmt.Sprintf("%s is missing step %d of the %q section that owns a step-scoped anchor", anchor.File, anchor.Step, anchor.Section)
+	duplicate := fmt.Sprintf("%s carries 2 lines that open step %d of the %q section; a step-scoped anchor needs exactly one owning step", anchor.File, anchor.Step, anchor.Section)
+	rule := anchorRule{file: anchor.File, section: anchor.Section, needle: anchor.Needle, want: anchor.Diagnostic, step: anchor.Step}
+	for _, tc := range []struct {
+		name       string
+		step       int
+		extraSteps []int
+		want       string
+	}{
+		{name: "in the registered step", step: anchor.Step},
+		{name: "moved to another step", step: anchor.Step + 1, extraSteps: []int{anchor.Step}, want: anchor.Diagnostic},
+		{name: "no such step", step: 0, want: missing},
+		{name: "duplicated step", step: anchor.Step, extraSteps: []int{anchor.Step}, want: duplicate},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			subject := rule
+			subject.step = tc.step
+			h := anchorHarness{group: anchor.Group, rules: []anchorRule{subject}, extraSteps: tc.extraSteps}
+			diags := EvaluateGroup(h.write(t, -1), anchor.Group)
+			for _, other := range []string{anchor.Diagnostic, missing, duplicate} {
+				if got := slices.Contains(diags, other); got != (other == tc.want) {
+					t.Fatalf("%s tree = %v, want %q present=%t", tc.name, diags, other, other == tc.want)
+				}
+			}
+		})
 	}
 }
 
