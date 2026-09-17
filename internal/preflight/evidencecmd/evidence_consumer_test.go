@@ -23,7 +23,8 @@ type delivery struct {
 }
 
 // consume checks one delivery against the trusted identity. It verifies the manifest digest,
-// then every page's membership in the declared manifest, then exact page coverage.
+// then every page's membership in the declared manifest, then exact page coverage, then the
+// source bodies the received pages reconstruct.
 func consume(trusted string, received delivery) error {
 	if "sha256:"+sha(received.manifest) != trusted {
 		return errors.New("reconstructed manifest does not match the trusted identity")
@@ -63,6 +64,36 @@ func consume(trusted string, received delivery) error {
 			return fmt.Errorf("page %s never arrived", key)
 		}
 	}
+	return reconstruct(document, received.pages)
+}
+
+// reconstruct rebuilds every declared source from the pages the consumer received, in the
+// order they arrived. A page must open exactly where its source body stands and must hold
+// exactly the length it declares, so an out-of-order or an overlapping page set fails here.
+// The joined body then matches the length and the digest the manifest declares.
+func reconstruct(document map[string][]map[string]any, pages []map[string]any) error {
+	bodies := map[string]string{}
+	for _, page := range pages {
+		if page["stream"] != "source" {
+			continue
+		}
+		id, content := page["source"].(string), page["content"].(string)
+		key := id + "#" + integer(page["index"])
+		switch {
+		case number(page["offset"]) != len(bodies[id]):
+			return fmt.Errorf("page %s opens at %d, not where source %s stands", key, number(page["offset"]), id)
+		case number(page["bytes"]) != len(content):
+			return fmt.Errorf("page %s declares %d bytes and holds %d", key, number(page["bytes"]), len(content))
+		}
+		bodies[id] += content
+	}
+	for _, source := range document["sources"] {
+		id := source["id"].(string)
+		if number(source["bytes"]) != len(bodies[id]) || sha(bodies[id]) != source["sha256"] {
+			return fmt.Errorf("source %s reconstructs %d of %d declared bytes and not its declared digest",
+				id, len(bodies[id]), number(source["bytes"]))
+		}
+	}
 	return nil
 }
 
@@ -94,9 +125,44 @@ func decodeIndependently(manifest string) (map[string][]map[string]any, error) {
 	return document, nil
 }
 
-func integer(value any) string {
-	number, _ := value.(float64)
-	return strconv.Itoa(int(number))
+func integer(value any) string { return strconv.Itoa(number(value)) }
+
+func number(value any) int {
+	count, _ := value.(float64)
+	return int(count)
+}
+
+// sourceIndexes lists the positions at which the pages of source id arrived.
+func sourceIndexes(pages []map[string]any, id string) []int {
+	var found []int
+	for i, page := range pages {
+		if page["stream"] == "source" && page["source"] == id {
+			found = append(found, i)
+		}
+	}
+	return found
+}
+
+// reordered exchanges the first two pages of source id, so that source arrives out of order.
+func reordered(pages []map[string]any, id string) []map[string]any {
+	changed := append([]map[string]any{}, pages...)
+	at := sourceIndexes(changed, id)
+	changed[at[0]], changed[at[1]] = changed[at[1]], changed[at[0]]
+	return changed
+}
+
+// overlapped restates the second page of source id at the first page's offset, so the two
+// declared ranges overlap.
+func overlapped(pages []map[string]any, id string) []map[string]any {
+	changed := append([]map[string]any{}, pages...)
+	at := sourceIndexes(changed, id)
+	moved := map[string]any{}
+	for name, value := range changed[at[1]] {
+		moved[name] = value
+	}
+	moved["offset"] = changed[at[0]]["offset"]
+	changed[at[1]] = moved
+	return changed
 }
 
 // receive traverses the default stream and returns what the consumer received.
@@ -173,6 +239,8 @@ func TestEvidenceDeliveryCoverage(t *testing.T) {
 		{"missing page", "never arrived", received.pages[:len(received.pages)-1]},
 		{"duplicate page", "arrived twice", append(append([]map[string]any{}, received.pages...), received.pages[len(received.pages)-1])},
 		{"final page only", "never arrived", received.pages[len(received.pages)-1:]},
+		{"out-of-order pages", "not where source s2 stands", reordered(received.pages, "s2")},
+		{"overlapping pages", "not where source s2 stands", overlapped(received.pages, "s2")},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			if err := consume(identity, delivery{manifest: received.manifest, pages: test.pages}); err == nil ||
@@ -181,4 +249,16 @@ func TestEvidenceDeliveryCoverage(t *testing.T) {
 			}
 		})
 	}
+	t.Run("source digest the pages do not produce", func(t *testing.T) {
+		// The crafted manifest keeps every page digest and every declared range, so the
+		// delivery fails only where the joined body meets the declared source digest.
+		crafted := strings.Replace(received.manifest, sha(ticket), strings.Repeat("c", 64), 1)
+		if crafted == received.manifest {
+			t.Fatalf("manifest holds no digest of the %d-byte ticket", len(ticket))
+		}
+		err := consume("sha256:"+sha(crafted), delivery{manifest: crafted, pages: received.pages})
+		if err == nil || !strings.Contains(err.Error(), "not its declared digest") {
+			t.Fatalf("crafted source digest = %v, want a reconstruction rejection", err)
+		}
+	})
 }

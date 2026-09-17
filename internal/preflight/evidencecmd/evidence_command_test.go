@@ -46,10 +46,16 @@ type evidencePage struct {
 	raw string
 }
 
-// traverseEvidence follows every next command from the first read to the stream end.
+// traverseEvidence follows the default stream from its first read to its end.
 func traverseEvidence(t *testing.T, identity string) []evidencePage {
 	t.Helper()
-	args := []string{"evidence", identity}
+	return traverseFrom(t, []string{"evidence", identity})
+}
+
+// traverseFrom runs the read that args names, then every next command it prints, to the end
+// of the stream that read opened. Each response holds exactly one page row.
+func traverseFrom(t *testing.T, args []string) []evidencePage {
+	t.Helper()
 	var pages []evidencePage
 	for len(pages) < 10000 {
 		out, code := preflight.Command(args)

@@ -12,9 +12,9 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
-// This file covers the read modes ticket 3 adds: the selected source stream, full
-// verification, and the current-action binding. The expected headers, cell types, and
-// refusal texts below are stated independently of the format and operation registries.
+// This file covers three read modes: the selected source stream, full verification, and the
+// current-action binding. The expected headers, cell types, and refusal texts below are
+// stated independently of the format and operation registries.
 
 // checkCurrent runs the current-action check over one prepared artifact.
 func checkCurrent(t *testing.T, identity string) (string, int) {
@@ -118,53 +118,51 @@ func TestEvidenceCurrentBinding(t *testing.T) {
 // traverseSource follows one declared source stream from its first page to its end.
 func traverseSource(t *testing.T, identity, source string) []evidencePage {
 	t.Helper()
-	args := []string{"evidence", identity, "--source", source}
-	var pages []evidencePage
-	for len(pages) < 10000 {
-		out, code := preflight.Command(args)
-		if code != 0 {
-			t.Fatalf("source read %v = (%d):\n%s", args, code, out)
-		}
-		rows := preflighttest.TableRows(t, preflighttest.DecodeMap(t, out), "page")
-		if len(rows) != 1 {
-			t.Fatalf("page rows = %d:\n%s", len(rows), out)
-		}
-		pages = append(pages, evidencePage{rows[0], out})
-		next := rows[0]["next"].(string)
-		if next == "" {
-			return pages
-		}
-		args = strings.Fields(next)[2:]
-	}
-	t.Fatal("source traversal did not end")
-	return nil
+	return traverseFrom(t, []string{"evidence", identity, "--source", source})
 }
 
 // TestEvidenceSourceNavigation is CE62: an explicit selector returns only that declared
-// source stream, ends after it, and never continues into the default traversal.
+// source stream, ends after it, and never continues into the default traversal. The
+// single-page source proves the stream ends at a first page that is also its last.
 func TestEvidenceSourceNavigation(t *testing.T) {
-	root, slug := preflighttest.SeedConformant(t)
-	ticket := preflighttest.TicketDoc("One", "PF1", "PF2") + strings.Repeat("paged ticket\n", 1000)
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticket)
-	identity, _, _ := prepareEvidence(t, preflighttest.LegacyCommitted(t, root, slug, "paged source", false))
-	pages := traverseSource(t, identity, "s2")
-	body := ""
-	for i, page := range pages {
-		if page.row["stream"] != "source" || page.row["source"] != "s2" {
-			t.Fatalf("page %d left the selected source: %v", i, page.row)
+	t.Run("paged source", func(t *testing.T) {
+		root, slug := preflighttest.SeedConformant(t)
+		ticket := preflighttest.TicketDoc("One", "PF1", "PF2") + strings.Repeat("paged ticket\n", 1000)
+		preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticket)
+		identity, _, _ := prepareEvidence(t, preflighttest.LegacyCommitted(t, root, slug, "paged source", false))
+		pages := traverseSource(t, identity, "s2")
+		body := ""
+		for i, page := range pages {
+			if page.row["stream"] != "source" || page.row["source"] != "s2" {
+				t.Fatalf("page %d left the selected source: %v", i, page.row)
+			}
+			if got := page.row["next"].(string); (got == "") != (i == len(pages)-1) {
+				t.Fatalf("page %d next = %q", i, got)
+			}
+			body += page.row["content"].(string)
 		}
-		if got := page.row["next"].(string); (got == "") != (i == len(pages)-1) {
-			t.Fatalf("page %d next = %q", i, got)
+		if len(pages) < 2 || body != ticket || pages[len(pages)-1].row["stream_end"] != true {
+			t.Fatalf("source stream held %d pages and %d of %d bytes", len(pages), len(body), len(ticket))
 		}
-		body += page.row["content"].(string)
-	}
-	if len(pages) < 2 || body != ticket || pages[len(pages)-1].row["stream_end"] != true {
-		t.Fatalf("source stream held %d pages and %d of %d bytes", len(pages), len(body), len(ticket))
-	}
-	// Every page of the selected source appears exactly once, and no other source does.
-	if all := traverseEvidence(t, identity); len(all) <= len(pages) {
-		t.Fatalf("default traversal held %d pages, want more than the %d of one source", len(all), len(pages))
-	}
+		// Every page of the selected source appears exactly once, and no other source does.
+		if all := traverseEvidence(t, identity); len(all) <= len(pages) {
+			t.Fatalf("default traversal held %d pages, want more than the %d of one source", len(all), len(pages))
+		}
+	})
+	t.Run("single-page source", func(t *testing.T) {
+		root, slug := preflighttest.SeedConformant(t)
+		ticket := preflighttest.TicketDoc("One", "PF1", "PF2")
+		identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+		pages := traverseSource(t, identity, "s2")
+		if len(pages) != 1 {
+			t.Fatalf("single-page source held %d pages", len(pages))
+		}
+		row := pages[0].row
+		if row["next"] != "" || row["stream_end"] != true || row["index"] != float64(0) ||
+			row["source"] != "s2" || row["content"] != ticket {
+			t.Fatalf("single page = %v, want the whole %d-byte ticket and the stream end", row, len(ticket))
+		}
+	})
 }
 
 // TestEvidenceVerifyCommand is CE160 at the command seam: verification reports every page
