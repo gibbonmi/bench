@@ -1,0 +1,18 @@
+exit: 0
+charge[1]{assignment,checkout,base,source_tip,fence,ticket,writes,evidence,checks,return,complete,next}:
+  "00000000000000000000000000000001",<root>,<base>,<tip>,"internal/example/, reviews/example.md, .agents/skills/bench-craft-delegate/, .agents/commands/bench-implement-spec.md","specs/example/tickets/one.md sha256:9b7b480ea632b8dab93632a21c60f03d7077d0831c0a495df74e5f4f37656298","specs, internal/example","specs/example/tickets/one.md sha256:9b7b480ea632b8dab93632a21c60f03d7077d0831c0a495df74e5f4f37656298; specs/example/spec.md sha256:d24cec14bac3260e393659254bc0732d3a30955c51aeb1d6c02b47f77ce714ed; .agents/skills/bench-craft-delegate/SKILL.md sha256:ed8531c16e2f4b48c2379899f2de68d999e30e3cc0d7d806b9d29ccfd0dbde1f; .agents/commands/bench-implement-spec.md sha256:36fc9e75b46d6cd3685143cce25bbe09aa59f66035b273a8eb5367ef33ead554; .agents/skills/bench-craft-delegate/references/delegation-discipline.md sha256:b5d866efa7f02eeeda9198584bcfb4b351be91e33725d7c31bdf0420b9d97f17","specs/example/tickets/one.md sha256:9b7b480ea632b8dab93632a21c60f03d7077d0831c0a495df74e5f4f37656298; .agents/commands/bench-implement-spec.md sha256:36fc9e75b46d6cd3685143cce25bbe09aa59f66035b273a8eb5367ef33ead554",".agents/skills/bench-craft-delegate/SKILL.md sha256:ed8531c16e2f4b48c2379899f2de68d999e30e3cc0d7d806b9d29ccfd0dbde1f; .agents/skills/bench-craft-delegate/references/delegation-discipline.md sha256:b5d866efa7f02eeeda9198584bcfb4b351be91e33725d7c31bdf0420b9d97f17","true",""
+coverage[2]{row}:
+  PF1
+  PF2
+sources[5]{path,identity}:
+  specs/example/tickets/one.md,"sha256:9b7b480ea632b8dab93632a21c60f03d7077d0831c0a495df74e5f4f37656298"
+  specs/example/spec.md,"sha256:d24cec14bac3260e393659254bc0732d3a30955c51aeb1d6c02b47f77ce714ed"
+  .agents/skills/bench-craft-delegate/SKILL.md,"sha256:ed8531c16e2f4b48c2379899f2de68d999e30e3cc0d7d806b9d29ccfd0dbde1f"
+  .agents/commands/bench-implement-spec.md,"sha256:36fc9e75b46d6cd3685143cce25bbe09aa59f66035b273a8eb5367ef33ead554"
+  .agents/skills/bench-craft-delegate/references/delegation-discipline.md,"sha256:b5d866efa7f02eeeda9198584bcfb4b351be91e33725d7c31bdf0420b9d97f17"
+evidence[5]{source,content}:
+  specs/example/tickets/one.md,"# One\n\nBlocked by: none\nWrites: specs, internal/example\nCovers: PF1, PF2\n\n## What to build\n\nBuild it.\n\n## Acceptance\n\n- [ ] It is built.\n\nRésumé 雪\t\"q\" \\ x"
+  specs/example/spec.md,"# example\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| PF1 | 1 | does x | cli seam | catches z |\n| PF2 | 1 | does y | cli seam | catches w |\n\n## Ownership fences\n\n- `internal/example/` (implementation)\n- `reviews/example.md` (review pickup)\n- `.agents/skills/bench-craft-delegate/` (delegation instructions)\n- `.agents/commands/bench-implement-spec.md` (build instructions)\n\n## Completion plan\n\n```bench-completion-plan\n{\"version\":1,\"chunks\":[{\"id\":\"c1\",\"tickets\":[\"one.md\"],\"verification\":[{\"id\":\"tests\",\"command\":\"go test ./...\"}]}],\"final_verification\":[{\"id\":\"acceptance\",\"command\":\"go test ./...\"}]}\n```\n"
+  .agents/skills/bench-craft-delegate/SKILL.md,"# Delegation skill\n"
+  .agents/commands/bench-implement-spec.md,"# Build phase\n\nRun root conformance before return.\n"
+  .agents/skills/bench-craft-delegate/references/delegation-discipline.md,"# Delegation procedure\n\nFocused suite: bench test --package ./internal/preflight\n"
