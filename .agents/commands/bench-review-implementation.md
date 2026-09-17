@@ -175,6 +175,7 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    `## Spec`, and `## Coverage`. Each section carries its
    finding count, its worst issue, and every actionable finding, with its
    disposition and the file or doc citation its axis supplied.
+   Each actionable finding line carries its stated confidence.
    Keep all three headings, including axes with zero findings.
 
    Retain every terminal return in one fenced `bench-review-record` JSON payload.
