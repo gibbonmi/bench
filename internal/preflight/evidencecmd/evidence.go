@@ -30,9 +30,10 @@ func evidenceStore(root string) (*chargeevidence.Store, string) {
 	return chargeevidence.OpenStore(common, chargeevidence.StoreOptions{Pause: chargeevidence.PauseFromEnvironment()}), ""
 }
 
-// Admit validates op's evidence operands before any repository access: the quota operand,
-// then a read's identifier and cursor. It returns the selected quota, or the usage line.
-func Admit(op Operation, identity string, flags map[string]string) (uint64, string) {
+// SelectQuota validates op's evidence operands before any repository access: the quota
+// operand, then a read's identifier and cursor. It returns the selected quota, or the usage
+// line.
+func SelectQuota(op Operation, identity string, flags map[string]string) (uint64, string) {
 	quota := uint64(chargeevidence.DefaultQuota)
 	if text, ok := flags[flagQuota]; ok {
 		value, valid := chargeevidence.ParseDecimal(text)

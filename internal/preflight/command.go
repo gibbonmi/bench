@@ -52,7 +52,7 @@ func command(version string, args []string) (string, int) {
 func dispatch(version string, op evidencecmd.Operation, slug string, flags map[string]string, args []string) (string, int) {
 	base, sourceTip, ticket := flags[evidencecmd.FlagBase], flags[evidencecmd.FlagTip], flags[evidencecmd.FlagTicket]
 	_, full := flags[evidencecmd.FlagFull]
-	quota, line := evidencecmd.Admit(op, slug, flags)
+	quota, line := evidencecmd.SelectQuota(op, slug, flags)
 	if line != "" {
 		return line + "\n", 2
 	}
