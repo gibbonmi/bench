@@ -28,3 +28,17 @@ func TestCalibrationFindingAnchors(t *testing.T) {
 		{file: ".agents/commands/bench-review-implementation.md", section: "Process", step: 6, needle: "Each actionable finding line carries its stated confidence.", want: "calibration: the pickup line must carry its stated confidence"},
 	}}.check(t)
 }
+
+// These independent expectations make removal of a calibration score rule fail.
+func TestCalibrationScoreAnchors(t *testing.T) {
+	const score = ".agents/skills/bench-craft-line/references/calibration-score.md"
+	anchorHarness{group: AfterImplementSpec, rules: []anchorRule{
+		{file: score, section: "What the declaration states", needle: "The line declaration states the expected repair-round count and a stated confidence as an integer from 0 to 10.", want: "calibration: the line declaration needs its expected rounds and stated confidence"},
+		{file: score, section: "How one claim scores", needle: "One claim's calibration score is `(p - label)^2`, with `p = n / 10` and label 1 for `held` or 0 for `refuted`.", want: "calibration: the Brier rule needs its score expression"},
+		{file: score, section: "How one claim scores", needle: "An abstention scores 0, stays out of the Brier mean, and is counted apart.", want: "calibration: an abstention needs its own scoring rule"},
+		{file: score, section: "Who writes a label", needle: "A label source is the gate, the coordinator's probe of the exact tree, or the reviewer's disposition.", want: "calibration: the three label sources must stay named"},
+		{file: score, section: "Who writes a label", needle: "A model judgment is never a label source.", want: "calibration: a model judgment must never label a claim"},
+		{file: score, section: "Who writes a label", needle: "The repair-attribution table's actual round count labels the expectation `held` when it equals the expected count and `refuted` otherwise.", want: "calibration: the round count must label the expectation"},
+		{file: ".agents/skills/bench-craft-line/SKILL.md", section: "The declaration", needle: "Expected repair rounds: <count> / confidence <0-10>. `references/calibration-score.md` owns the score.", want: "calibration: the declaration must state expected repair rounds"},
+	}}.check(t)
+}

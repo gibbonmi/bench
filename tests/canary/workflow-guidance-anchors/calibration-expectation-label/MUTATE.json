@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-line/references/calibration-score.md",
+    "old": "The repair-attribution table's actual round count labels the expectation `held` when it equals the expected count and `refuted` otherwise.\n",
+    "new": ""
+  }
+]
