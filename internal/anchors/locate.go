@@ -167,10 +167,12 @@ func normalizeMatchMapped(kind Kind, runes []rune, origin []int) ([]rune, []int)
 // Each delimiter run enters and leaves the stack at most once.
 func stripMarkdownEmphasisMapped(runes []rune, origin []int) (out []rune, outOrigin []int) {
 	type opener struct {
-		at, width, marker, previous int
+		at, width int
+		marker    rune
+		previous  int
 	}
 	var stack []opener
-	top := [2]int{-1, -1}
+	top := make(map[rune]int)
 	removed := make([]bool, len(runes))
 	pop := func() {
 		last := stack[len(stack)-1]
@@ -183,9 +185,9 @@ func stripMarkdownEmphasisMapped(runes []rune, origin []int) (out []rune, outOri
 			i++
 			continue
 		}
-		marker := 0
-		if runes[i] == '_' {
-			marker = 1
+		marker := runes[i]
+		if _, seen := top[marker]; !seen {
+			top[marker] = -1
 		}
 		remaining := width
 		canClose := i > 0 && !unicode.IsSpace(runes[i-1]) &&
