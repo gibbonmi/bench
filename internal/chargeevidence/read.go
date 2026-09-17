@@ -107,7 +107,7 @@ func (s *Store) Open(identity string) (*Artifact, error) {
 		return nil, err
 	}
 	a := &Artifact{identity: identity, dir: dir}
-	if a.operation, err = acquire(dir, operationLockName, syscall.LOCK_SH, false); err != nil {
+	if a.operation, err = acquire(dir, OperationLockName, syscall.LOCK_SH, false); err != nil {
 		a.Close()
 		return nil, err
 	}
@@ -228,8 +228,8 @@ func (a *Artifact) read(c Cursor, within bool) (Fragment, error) {
 	if err != nil {
 		return Fragment{}, err
 	}
-	if Digest(content) != page.SHA256 {
-		return Fragment{}, refuse(RefusePageDigest, "source %s page %d digest differs", source.ID, page.Index)
+	if err := checkPage(source.ID, page, content); err != nil {
+		return Fragment{}, err
 	}
 	if err := unchanged(a.dir, packName(a.identity), a.file, a.info); err != nil {
 		return Fragment{}, err
@@ -303,14 +303,14 @@ func (a *Artifact) Verify() (Verified, error) {
 			if err != nil {
 				return Verified{}, err
 			}
-			if Digest(content) != page.SHA256 {
-				return Verified{}, refuse(RefusePageDigest, "source %s page %d digest differs", source.ID, page.Index)
+			if err := checkPage(source.ID, page, content); err != nil {
+				return Verified{}, err
 			}
 			body = append(body, content...)
 			verified.Pages++
 		}
-		if len(body) != source.Bytes || Digest(body) != source.SHA256 {
-			return Verified{}, refuse(RefuseSourceDigest, "source %s digest differs", source.ID)
+		if err := checkSource(source, body); err != nil {
+			return Verified{}, err
 		}
 		verified.Sources++
 	}

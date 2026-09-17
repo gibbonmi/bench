@@ -27,8 +27,8 @@ const (
 // Lock and object names inside the store directory. A pack name derives only from its
 // validated identity; a temporary pack name derives only from random bytes.
 const (
-	operationLockName = "operation.lock"
-	writerLockName    = "writer.lock"
+	OperationLockName = "operation.lock"
+	WriterLockName    = "writer.lock"
 	PackSuffix        = ".pack"
 	TempPrefix        = "tmp-"
 	TempSuffix        = ".partial"
@@ -240,12 +240,12 @@ func (s *Store) Stage(pack *Pack, quota uint64, attempt int) (*Staged, error) {
 		return nil, err
 	}
 	st := &Staged{store: s, dir: dir, pack: pack, attempt: attempt}
-	if st.operation, err = acquire(dir, operationLockName, syscall.LOCK_SH, true); err != nil {
+	if st.operation, err = acquire(dir, OperationLockName, syscall.LOCK_SH, true); err != nil {
 		st.Discard()
 		return nil, err
 	}
 	s.pause(StageWriterLock)
-	if st.writer, err = acquire(dir, writerLockName, syscall.LOCK_EX, true); err != nil {
+	if st.writer, err = acquire(dir, WriterLockName, syscall.LOCK_EX, true); err != nil {
 		st.Discard()
 		return nil, err
 	}

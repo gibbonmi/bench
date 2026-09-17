@@ -254,6 +254,24 @@ func manifestAt(manifest []byte, expected string, end, size uint64) (Manifest, e
 	return m, nil
 }
 
+// checkPage is the one page-digest rule: page content matches the digest its manifest page
+// declares. Every path that returns stored bytes checks it here.
+func checkPage(source string, page Page, content []byte) error {
+	if Digest(content) != page.SHA256 {
+		return refuse(RefusePageDigest, "source %s page %d digest differs", source, page.Index)
+	}
+	return nil
+}
+
+// checkSource is the one source-digest rule: a reconstructed body holds exactly the length
+// and the digest its manifest source declares.
+func checkSource(source ManifestSource, body []byte) error {
+	if len(body) != source.Bytes || Digest(body) != source.SHA256 {
+		return refuse(RefuseSourceDigest, "source %s digest differs", source.ID)
+	}
+	return nil
+}
+
 func readBodies(region []byte, m Manifest) (map[string][]byte, error) {
 	bodies := make(map[string][]byte, len(m.Sources))
 	start, next := 0, 0
@@ -263,13 +281,13 @@ func readBodies(region []byte, m Manifest) (map[string][]byte, error) {
 		var sizes []int
 		for ; next < len(m.Pages) && m.Pages[next].Source == s.ID; next++ {
 			p := m.Pages[next]
-			if Digest(body[p.Offset:p.Offset+p.Bytes]) != p.SHA256 {
-				return nil, refuse(RefusePageDigest, "source %s page %d digest differs", s.ID, p.Index)
+			if err := checkPage(s.ID, p, body[p.Offset:p.Offset+p.Bytes]); err != nil {
+				return nil, err
 			}
 			sizes = append(sizes, p.Bytes)
 		}
-		if Digest(body) != s.SHA256 {
-			return nil, refuse(RefuseSourceDigest, "source %s digest differs", s.ID)
+		if err := checkSource(s, body); err != nil {
+			return nil, err
 		}
 		if !supportedText(body) {
 			return nil, refuse(RefuseSourceBytes, "source %s holds bytes the shared TOON adapter cannot represent", s.ID)
