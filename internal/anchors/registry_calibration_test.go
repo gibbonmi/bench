@@ -51,3 +51,12 @@ func TestCalibrationRetroDutyAnchors(t *testing.T) {
 		{file: command, section: "Capture the implementation retro", needle: "The retro states the Brier mean, the pair count, and the abstention count below the table, with `unknown` for a mean over zero pairs.", want: "calibration: the retro must state the Brier mean and the counts"},
 	}}.check(t)
 }
+
+// These independent expectations make removal of a scorecard calibration rule fail.
+func TestCalibrationScorecardAnchors(t *testing.T) {
+	const readme = "capture/agent-performance/README.md"
+	anchorHarness{group: AfterImplementSpec, rules: []anchorRule{
+		{file: readme, section: "Measures", needle: "| calibration | the Brier mean over labeled pairs, the pair count, and the abstention count |", want: "calibration: the scorecard Measures table needs the calibration row"},
+		{file: readme, section: "Update contract", needle: "The calibration measure is one input to the two-run routing rule, obeys the ten-assignment cap, and never moves a tier on its own.", want: "calibration: the scorecard must keep the measure as one routing input with no tier move"},
+	}}.check(t)
+}
