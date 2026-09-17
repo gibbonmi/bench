@@ -184,22 +184,18 @@ func ActiveAssignment(t *testing.T, root, worktree string) string {
 
 // ChargeArgs activates root's assignment and returns the build charge arguments over the
 // seeded ticket, pinned to main and HEAD. The base is element 6 and the tip is element 8.
-func ChargeArgs(t *testing.T, root, slug string, full bool) []string {
+func ChargeArgs(t *testing.T, root, slug string) []string {
 	t.Helper()
 	ActiveAssignment(t, root, root)
-	args := []string{"build", slug, "--charge", "--ticket", "one.md", "--base", RunGit(t, "rev-parse", "main"), "--source-tip", RunGit(t, "rev-parse", "HEAD")}
-	if full {
-		return append(args, "--full")
-	}
-	return args
+	return []string{"build", slug, "--charge", "--ticket", "one.md", "--base", RunGit(t, "rev-parse", "main"), "--source-tip", RunGit(t, "rev-parse", "HEAD")}
 }
 
 // LegacyCommitted commits every change and repins the charge arguments to the new tip.
-func LegacyCommitted(t *testing.T, root, slug, message string, full bool) []string {
+func LegacyCommitted(t *testing.T, root, slug, message string) []string {
 	t.Helper()
 	RunGit(t, "add", "-A")
 	RunGit(t, "commit", "-q", "-m", message)
-	args := ChargeArgs(t, root, slug, full)
+	args := ChargeArgs(t, root, slug)
 	args[8] = RunGit(t, "rev-parse", "HEAD")
 	return args
 }

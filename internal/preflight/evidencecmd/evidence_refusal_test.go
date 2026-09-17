@@ -19,7 +19,7 @@ func TestEvidenceQuotaOperands(t *testing.T) {
 	for _, quota := range []string{"0", "-1", "+1", "01", "1.5", "1e3", "abc", " 1", "18446744073709551616"} {
 		t.Run(quota, func(t *testing.T) {
 			root, slug := preflighttest.SeedConformant(t)
-			args := append(preflighttest.ChargeArgs(t, root, slug, false), "--max-store-bytes", quota)
+			args := append(preflighttest.ChargeArgs(t, root, slug), "--max-store-bytes", quota)
 			out, code := preflight.Command(args)
 			if code != 2 || !strings.Contains(out, "--max-store-bytes needs a positive decimal byte count") {
 				t.Fatalf("quota %q = (%d):\n%s", quota, code, out)
@@ -39,7 +39,7 @@ const defaultQuota = 1073741824
 // store's existing temporary bytes count against the default quota.
 func TestEvidenceDefaultQuota(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	args := preflighttest.ChargeArgs(t, root, slug, false)
+	args := preflighttest.ChargeArgs(t, root, slug)
 	store := preflighttest.StoreDir(t, root)
 	if err := os.Mkdir(store, 0o700); err != nil {
 		t.Fatal(err)
@@ -73,7 +73,7 @@ func TestEvidenceLargePreparationRefusal(t *testing.T) {
 		paths = append(paths, path)
 		preflighttest.MustWriteFile(t, path, "package p\n")
 	}
-	args := preflighttest.LegacyCommitted(t, root, slug, "unauthorized paths", false)
+	args := preflighttest.LegacyCommitted(t, root, slug, "unauthorized paths")
 	out, code := preflight.Command(args)
 	detail := "not authorized by any ownership fence: " + strings.Join(paths, ", ")
 	want := fmt.Sprintf("error: preflight required: paths-authorized: detail bytes=%d sha256=%s — repair paths-authorized and rerun the exact charge\n", len(detail), sha(detail))
@@ -106,7 +106,7 @@ func capacityRequired(t *testing.T, args []string, quota string) uint64 {
 // preserves them.
 func TestEvidenceCapacityRecovery(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	args := preflighttest.ChargeArgs(t, root, slug, false)
+	args := preflighttest.ChargeArgs(t, root, slug)
 	required := capacityRequired(t, args, "1")
 	if capacityRequired(t, args, strconv.FormatUint(required-1, 10)) != required {
 		t.Fatal("the named quota changed between refusals")
@@ -115,7 +115,7 @@ func TestEvidenceCapacityRecovery(t *testing.T) {
 	first := preflighttest.PublishedPacks(t, root)
 
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF2")+"second artifact\n")
-	second := preflighttest.LegacyCommitted(t, root, slug, "second artifact", false)
+	second := preflighttest.LegacyCommitted(t, root, slug, "second artifact")
 	next := capacityRequired(t, second, strconv.FormatUint(required, 10))
 	if next <= required {
 		t.Fatalf("second required %d does not count the first artifact of %d bytes", next, required)

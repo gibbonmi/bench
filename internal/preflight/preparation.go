@@ -7,6 +7,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/tickets"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -26,8 +27,14 @@ func preparedCommand(
 	form preparationMode,
 ) (string, int) {
 	action := "charge"
-	if form == proposalPreparation {
+	switch {
+	case form == proposalPreparation:
 		action = "proposal"
+	case mode != evidencecmd.ModeReview:
+		// The build guidance migration retired the build charge, so review is the one mode
+		// this renderer serves. A new non-review caller refuses here rather than receiving
+		// a review charge under its own mode.
+		return chargeRefusal("mode", "charge rendering requires review mode, not "+mode, "prepare bounded evidence for this mode instead"), 1
 	}
 	return preparedAttempts(root, mode, slug, base, sourceTip, action, args, func(facts Facts) (string, int) {
 		if form == proposalPreparation {

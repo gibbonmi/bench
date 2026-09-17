@@ -33,29 +33,25 @@ func TestEvidenceRequiredSourceStates(t *testing.T) {
 		{"CE47 directory", "directory phase", "is wrong-type: not a regular file: d---------"},
 		{"CE48 control byte", "control byte phase", "contains a byte spec-TOON cannot represent"},
 	} {
-		for _, route := range chargeRoutes {
-			t.Run(test.name+" "+route.name, func(t *testing.T) {
-				root, slug := preflighttest.SeedConformant(t)
-				mutationNamed(t, test.mutation)(t, root, slug, nil)
-				out, code := Command(preflighttest.LegacyCommitted(t, root, slug, test.name, route.full))
-				if want := phaseRefusal + test.want + sourceNext; code != 1 || out != want {
-					t.Fatalf("%s = (%d, %q), want (1, %q)", test.name, code, out, want)
-				}
-				preflighttest.AssertNothingPublished(t, root)
-			})
-		}
-	}
-	for _, route := range chargeRoutes {
-		t.Run("CE48 invalid UTF-8 "+route.name, func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			root, slug := preflighttest.SeedConformant(t)
-			preflighttest.MustWriteFile(t, chargesource.BuildPhase, "bad \xff\n")
-			out, code := Command(preflighttest.LegacyCommitted(t, root, slug, "CE48 invalid UTF-8", route.full))
-			if want := phaseRefusal + "is malformed: invalid UTF-8" + sourceNext; code != 1 || out != want {
-				t.Fatalf("CE48 invalid UTF-8 = (%d, %q), want (1, %q)", code, out, want)
+			mutationNamed(t, test.mutation)(t, root, slug, nil)
+			out, code := Command(preflighttest.LegacyCommitted(t, root, slug, test.name))
+			if want := phaseRefusal + test.want + sourceNext; code != 1 || out != want {
+				t.Fatalf("%s = (%d, %q), want (1, %q)", test.name, code, out, want)
 			}
 			preflighttest.AssertNothingPublished(t, root)
 		})
 	}
+	t.Run("CE48 invalid UTF-8", func(t *testing.T) {
+		root, slug := preflighttest.SeedConformant(t)
+		preflighttest.MustWriteFile(t, chargesource.BuildPhase, "bad \xff\n")
+		out, code := Command(preflighttest.LegacyCommitted(t, root, slug, "CE48 invalid UTF-8"))
+		if want := phaseRefusal + "is malformed: invalid UTF-8" + sourceNext; code != 1 || out != want {
+			t.Fatalf("CE48 invalid UTF-8 = (%d, %q), want (1, %q)", code, out, want)
+		}
+		preflighttest.AssertNothingPublished(t, root)
+	})
 	for _, test := range []struct {
 		name, want string
 		make       func(t *testing.T) (root, path string)
@@ -94,12 +90,10 @@ func TestEvidenceRequiredSourceStates(t *testing.T) {
 // TestEvidencePreparationRefusals covers CE49 through CE52 at the public command, using
 // the same shared setups as the enumerated legacy differential.
 func TestEvidencePreparationRefusals(t *testing.T) {
-	for _, route := range chargeRoutes {
-		t.Run(route.name, func(t *testing.T) { preparationRefusals(t, route.full) })
-	}
+	preparationRefusals(t)
 	t.Run("CE128 failing tool", func(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
-		args := preflighttest.ChargeArgs(t, root, slug, false)
+		args := preflighttest.ChargeArgs(t, root, slug)
 		failGitRead(t, args[8]+":"+chargesource.BuildPhase)
 		out, code := Command(args)
 		want := phaseRefusal + "is absent or unreadable at source tip <tip>" + sourceNext
@@ -127,41 +121,40 @@ func failGitRead(t *testing.T, object string) {
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 }
 
-// chargeRoutes are the build charge routes that share the refusal pipeline. The build
-// guidance migration retired the legacy full projection, so evidence preparation is the
-// one surviving route.
-var chargeRoutes = []struct {
-	name string
-	full bool
-}{{"preparation", false}}
+// TestEvidenceChargeRenderingRefusesNonReviewMode reaches the mode case the retired build
+// charge left behind. Review is the one mode the charge renderer serves, so a non-review
+// charge caller refuses before any preparation attempt.
+func TestEvidenceChargeRenderingRefusesNonReviewMode(t *testing.T) {
+	out, code := preparedCommand("", modeBuild, "example", "", "", "one.md", false, "", nil, chargePreparation)
+	want := "error: mode required: charge rendering requires review mode, not build — prepare bounded evidence for this mode instead\n"
+	if code != 1 || out != want {
+		t.Fatalf("non-review charge rendering = (%d, %q), want (1, %q)", code, out, want)
+	}
+}
 
-func preparationRefusals(t *testing.T, full bool) {
+func preparationRefusals(t *testing.T) {
 	for _, test := range []struct {
 		name string
 		args func(t *testing.T, root, slug string) []string
 		want string
 	}{
 		{"CE49 dirty checkout", func(t *testing.T, root, slug string) []string {
-			return mutationNamed(t, "dirty checkout")(t, root, slug, preflighttest.ChargeArgs(t, root, slug, full))
+			return mutationNamed(t, "dirty checkout")(t, root, slug, preflighttest.ChargeArgs(t, root, slug))
 		}, "error: checkout required: source checkout is dirty — commit or remove local changes and rerun the exact charge\n"},
 		{"CE50 missing ticket", func(t *testing.T, root, slug string) []string {
-			return mutationNamed(t, "missing ticket")(t, root, slug, preflighttest.ChargeArgs(t, root, slug, full))
+			return mutationNamed(t, "missing ticket")(t, root, slug, preflighttest.ChargeArgs(t, root, slug))
 		}, "error: ticket required: selected ticket \"missing.md\" was not found — pass a ticket basename from the spec tickets directory\n"},
 		{"CE51 source-tip mismatch", func(t *testing.T, root, slug string) []string {
-			return mutationNamed(t, "source-tip mismatch")(t, root, slug, preflighttest.ChargeArgs(t, root, slug, full))
+			return mutationNamed(t, "source-tip mismatch")(t, root, slug, preflighttest.ChargeArgs(t, root, slug))
 		}, "error: preflight required: tip-current: --source-tip <base> is not the derived source tip <tip> — repair tip-current and rerun the exact charge\n"},
 		{"CE52 no assignment", func(t *testing.T, root, slug string) []string {
-			args := mutationNamed(t, "no assignment")(t, root, slug, nil)
-			if full {
-				args = append(args, "--full")
-			}
-			return args
+			return mutationNamed(t, "no assignment")(t, root, slug, nil)
 		}, "error: assignment required: active assignment is required — run from the assigned worktree\n"},
 		{"CE52 foreign assignment", func(t *testing.T, root, slug string) []string {
-			return mutationNamed(t, "foreign assignment")(t, root, slug, preflighttest.ChargeArgs(t, root, slug, full))
+			return mutationNamed(t, "foreign assignment")(t, root, slug, preflighttest.ChargeArgs(t, root, slug))
 		}, "error: assignment required: active assignment is required — run from the assigned worktree\n"},
 		{"CE52 owned non-active assignment", func(t *testing.T, root, slug string) []string {
-			args := preflighttest.ChargeArgs(t, root, slug, full)
+			args := preflighttest.ChargeArgs(t, root, slug)
 			canonical, err := canonicalpath.Resolve(root)
 			if err != nil {
 				t.Fatalf("canonicalpath.Resolve(%q): %v", root, err)
@@ -187,7 +180,7 @@ func preparationRefusals(t *testing.T, full bool) {
 func preparedFixtureBuild(t *testing.T) (root string, facts Facts, entry *tickets.Entry, parsed *tickets.Ticket, args []string) {
 	t.Helper()
 	root, slug := preflighttest.SeedConformant(t)
-	args = preflighttest.ChargeArgs(t, root, slug, false)
+	args = preflighttest.ChargeArgs(t, root, slug)
 	facts, failure := gatherPinned(root, modeBuild, slug, args[6], args[8], true)
 	if failure != nil {
 		t.Fatalf("gather: %v", failure)

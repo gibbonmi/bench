@@ -39,7 +39,7 @@ const (
 	flagSource   = "--source"
 	flagVerify   = "--verify"
 	flagCurrent  = "--check-current"
-	modeReview   = "review"
+	ModeReview   = "review"
 	ModeBuild    = "build"
 	modeEvidence = "evidence"
 )
@@ -67,7 +67,7 @@ var flagTable = []flagSpec{
 }
 
 // modeOperands names the positional operand each mode takes.
-var modeOperands = map[string]string{modeReview: "<slug>", ModeBuild: "<slug>", modeEvidence: "<id>"}
+var modeOperands = map[string]string{ModeReview: "<slug>", ModeBuild: "<slug>", modeEvidence: "<id>"}
 
 // Operation is one implemented public preflight form. The registry below is the one source
 // for the argument grammar, the preflight help, and the root help rows.
@@ -83,11 +83,11 @@ type Operation struct {
 }
 
 var operations = []Operation{
-	{Mode: modeReview, optional: []string{FlagBase, FlagTip}, Kind: KindVerdict,
+	{Mode: ModeReview, optional: []string{FlagBase, FlagTip}, Kind: KindVerdict,
 		description: "review-entry checks that a spec's artifacts agree with the tree, one verdict row per check"},
-	{Mode: modeReview, selectors: []string{flagCharge}, required: []string{FlagBase, FlagTip}, Kind: KindLegacyCharge,
+	{Mode: ModeReview, selectors: []string{flagCharge}, required: []string{FlagBase, FlagTip}, Kind: KindLegacyCharge,
 		description: "legacy review charge that names every omitted source"},
-	{Mode: modeReview, selectors: []string{flagCharge, FlagFull}, required: []string{FlagBase, FlagTip}, Kind: KindLegacyCharge,
+	{Mode: ModeReview, selectors: []string{flagCharge, FlagFull}, required: []string{FlagBase, FlagTip}, Kind: KindLegacyCharge,
 		description: "legacy review charge that inlines every source"},
 	{Mode: ModeBuild, optional: []string{FlagBase, FlagTip}, Kind: KindVerdict,
 		description: "build-entry checks that a spec's artifacts agree with the tree, one verdict row per check"},

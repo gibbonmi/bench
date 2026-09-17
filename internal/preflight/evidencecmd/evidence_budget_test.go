@@ -30,7 +30,7 @@ func seedLargeEvidence(t *testing.T) (root string, args []string, fence []string
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", spec)
 	ticket = preflighttest.TicketDoc("One", "PF1", "PF2") + strings.Repeat("tab\there \"quote\" back\\slash 雪🚀\n", 2000)
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticket)
-	return root, preflighttest.LegacyCommitted(t, root, slug, "large evidence", false), fence, ticket
+	return root, preflighttest.LegacyCommitted(t, root, slug, "large evidence"), fence, ticket
 }
 
 // TestEvidenceResponseBudget is CE13, CE131, CE132, CE133, CE134, CE138, and CE139.
@@ -84,7 +84,7 @@ func TestEvidenceResponseBudget(t *testing.T) {
 // refusal, so a path that skips the shared guard turns its case red.
 func TestEvidenceResponseBound(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	args := preflighttest.ChargeArgs(t, root, slug, false)
+	args := preflighttest.ChargeArgs(t, root, slug)
 	identity, _, _ := prepareEvidence(t, args)
 	source := "v1." + strings.TrimPrefix(identity, "sha256:") + ".s.1.0"
 	restore := evidencecmd.SetResponseLimitForTest(16)

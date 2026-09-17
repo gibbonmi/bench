@@ -15,7 +15,7 @@ func TestChargeDoesNotOpenLinkedInputTarget(t *testing.T) {
 		t.Run(input, func(t *testing.T) {
 			root, slug, target := seedLinkedChargeInput(t, input)
 			opened := watchOpen(t, target)
-			_, _ = Command(preflighttest.ChargeArgs(t, root, slug, false))
+			_, _ = Command(preflighttest.ChargeArgs(t, root, slug))
 			if opened() {
 				t.Fatalf("charge opened the target of linked %s input before refusing it", input)
 			}

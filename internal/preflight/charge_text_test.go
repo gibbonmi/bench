@@ -22,7 +22,7 @@ func TestChargeTextSinksUseTOONEscapingAndRefusal(t *testing.T) {
 			preflighttest.MustWriteFile(t, chargesource.BuildPhase, "unsafe "+string(control.byte)+" source\n")
 			preflighttest.RunGit(t, "add", chargesource.BuildPhase)
 			preflighttest.RunGit(t, "commit", "-q", "-m", "source with "+control.name)
-			out, code := Command(preflighttest.ChargeArgs(t, root, slug, false))
+			out, code := Command(preflighttest.ChargeArgs(t, root, slug))
 			if code != 1 || !strings.Contains(out, "source required") ||
 				!strings.Contains(out, chargesource.BuildPhase) ||
 				!strings.Contains(out, "cannot represent") || strings.Contains(out, "prepared[") {
@@ -46,7 +46,7 @@ func TestChargeQuotesNumericLookingSourceTip(t *testing.T) {
 	if tip[0] != '0' || tip[1] < '0' || tip[1] > '9' {
 		t.Fatalf("fixture did not produce a numeric-looking tip: %s", tip)
 	}
-	out, code := Command(preflighttest.ChargeArgs(t, root, slug, false))
+	out, code := Command(preflighttest.ChargeArgs(t, root, slug))
 	if code != 0 || !strings.Contains(out, ",\""+tip+"\",") {
 		t.Fatalf("numeric-looking source tip = (%d, %s):\n%s", code, tip, out)
 	}

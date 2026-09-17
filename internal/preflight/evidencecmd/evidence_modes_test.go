@@ -51,7 +51,7 @@ func craftedDigestArtifact(t *testing.T, root, identity, oldDigest, newDigest st
 func TestEvidenceCurrentBinding(t *testing.T) {
 	t.Run("CE59 current binding for unchanged pins", func(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
-		args := preflighttest.ChargeArgs(t, root, slug, false)
+		args := preflighttest.ChargeArgs(t, root, slug)
 		identity, prepared, _ := prepareEvidence(t, args)
 		out, code := checkCurrent(t, identity)
 		if code != 0 {
@@ -71,7 +71,7 @@ func TestEvidenceCurrentBinding(t *testing.T) {
 	})
 	t.Run("CE57 moved source tip", func(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
-		identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+		identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 		preflighttest.MustWriteFile(t, "internal/"+slug+"/moved.go", "package example\n")
 		preflighttest.RunGit(t, "add", "-A")
 		preflighttest.RunGit(t, "commit", "-q", "-m", "move the source tip")
@@ -82,7 +82,7 @@ func TestEvidenceCurrentBinding(t *testing.T) {
 	})
 	t.Run("CE58 released assignment", func(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
-		identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+		identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 		preflighttest.OwnedAssignment(t, root, root, intent.StateComplete)
 		out, code := checkCurrent(t, identity)
 		if code != 1 || !strings.Contains(out, "assignment required") || strings.Contains(out, "current[1]") {
@@ -91,7 +91,7 @@ func TestEvidenceCurrentBinding(t *testing.T) {
 	})
 	t.Run("CE123 dirty assignment checkout", func(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
-		identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+		identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 		preflighttest.MustWriteFile(t, "internal/"+slug+"/dirty.go", "package example\n")
 		out, code := checkCurrent(t, identity)
 		if code != 1 || !strings.Contains(out, "source checkout is dirty") || strings.Contains(out, "current[1]") {
@@ -100,7 +100,7 @@ func TestEvidenceCurrentBinding(t *testing.T) {
 	})
 	t.Run("CE124 changed required source bytes", func(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
-		identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+		identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 		// The crafted artifact keeps the Git pair and every page digest; only the ticket
 		// source descriptor claims bytes the tree does not hold.
 		ticket := preflighttest.TicketDoc("One", "PF1", "PF2")
@@ -129,7 +129,7 @@ func TestEvidenceSourceNavigation(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
 		ticket := preflighttest.TicketDoc("One", "PF1", "PF2") + strings.Repeat("paged ticket\n", 1000)
 		preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticket)
-		identity, _, _ := prepareEvidence(t, preflighttest.LegacyCommitted(t, root, slug, "paged source", false))
+		identity, _, _ := prepareEvidence(t, preflighttest.LegacyCommitted(t, root, slug, "paged source"))
 		pages := traverseSource(t, identity, "s2")
 		body := ""
 		for i, page := range pages {
@@ -152,7 +152,7 @@ func TestEvidenceSourceNavigation(t *testing.T) {
 	t.Run("single-page source", func(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
 		ticket := preflighttest.TicketDoc("One", "PF1", "PF2")
-		identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+		identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 		pages := traverseSource(t, identity, "s2")
 		if len(pages) != 1 {
 			t.Fatalf("single-page source held %d pages", len(pages))
@@ -169,7 +169,7 @@ func TestEvidenceSourceNavigation(t *testing.T) {
 // and source it checked and still claims no delivery.
 func TestEvidenceVerifyCommand(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	identity, prepared, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+	identity, prepared, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 	out, code := preflight.Command([]string{"evidence", identity, "--verify"})
 	if code != 0 {
 		t.Fatalf("verify = (%d):\n%s", code, out)

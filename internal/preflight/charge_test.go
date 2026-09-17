@@ -40,7 +40,7 @@ func TestChargeRequiredInputs(t *testing.T) {
 
 func TestChargeSnapshotMovement(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	args := preflighttest.ChargeArgs(t, root, slug, false)
+	args := preflighttest.ChargeArgs(t, root, slug)
 	calls := 0
 	restore := diff.SetSnapshotAfterReadForTest(func() {
 		calls++
@@ -53,7 +53,7 @@ func TestChargeSnapshotMovement(t *testing.T) {
 	restore()
 
 	root, slug = preflighttest.SeedConformant(t)
-	args = preflighttest.ChargeArgs(t, root, slug, false)
+	args = preflighttest.ChargeArgs(t, root, slug)
 	args[len(args)-1] = preflighttest.RunGit(t, "rev-parse", "main")
 	out, code = Command(args)
 	if code != 1 || !strings.Contains(out, "tip-current") {
@@ -61,7 +61,7 @@ func TestChargeSnapshotMovement(t *testing.T) {
 	}
 
 	root, slug = preflighttest.SeedConformant(t)
-	args = preflighttest.ChargeArgs(t, root, slug, false)
+	args = preflighttest.ChargeArgs(t, root, slug)
 	calls = 0
 	restore = diff.SetSnapshotAfterReadForTest(func() {
 		calls++
@@ -78,7 +78,7 @@ func TestChargeSnapshotMovement(t *testing.T) {
 
 func TestChargeHostileInputs(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	args := preflighttest.ChargeArgs(t, root, slug, false)
+	args := preflighttest.ChargeArgs(t, root, slug)
 	args[4] = "one.md; touch sentinel"
 	out, code := Command(args)
 	if code != 1 || !strings.Contains(out, "selected ticket") {
@@ -92,7 +92,7 @@ func TestChargeHostileInputs(t *testing.T) {
 	preflighttest.MustWriteFile(t, chargesource.BuildPhase, "bad\x1b\n")
 	preflighttest.RunGit(t, "add", chargesource.BuildPhase)
 	preflighttest.RunGit(t, "commit", "-q", "-m", "hostile phase")
-	args = preflighttest.ChargeArgs(t, root, slug, false)
+	args = preflighttest.ChargeArgs(t, root, slug)
 	args[8] = preflighttest.RunGit(t, "rev-parse", "HEAD")
 	out, code = Command(args)
 	if code != 1 || !strings.Contains(out, "source required") || !strings.Contains(out, chargesource.BuildPhase) {
@@ -134,7 +134,7 @@ func TestChargeRefusesSpecialRequiredSource(t *testing.T) {
 			test.prepare(t)
 			preflighttest.RunGit(t, "add", "-A")
 			preflighttest.RunGit(t, "commit", "-q", "-m", "special phase")
-			args := preflighttest.ChargeArgs(t, root, slug, false)
+			args := preflighttest.ChargeArgs(t, root, slug)
 			args[8] = preflighttest.RunGit(t, "rev-parse", "HEAD")
 			out, code := Command(args)
 			if code != 1 || !strings.Contains(out, "source required") || !strings.Contains(out, chargesource.BuildPhase) {
@@ -150,7 +150,7 @@ func TestChargeRefusesSpecialRequiredSource(t *testing.T) {
 		if err := syscall.Mkfifo(chargesource.BuildPhase, 0o600); err != nil {
 			t.Fatal(err)
 		}
-		out, code := Command(preflighttest.ChargeArgs(t, root, slug, false))
+		out, code := Command(preflighttest.ChargeArgs(t, root, slug))
 		if code != 1 || !strings.Contains(out, "checkout required") {
 			t.Fatalf("fifo source = (%d):\n%s", code, out)
 		}

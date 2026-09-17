@@ -111,7 +111,7 @@ func manifestSources(t *testing.T, manifest string) []map[string]any {
 // TestEvidenceBuildRoundTrip is CE1: every canonical source reconstructs byte for byte.
 func TestEvidenceBuildRoundTrip(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	args := preflighttest.ChargeArgs(t, root, slug, false)
+	args := preflighttest.ChargeArgs(t, root, slug)
 	identity, _, _ := prepareEvidence(t, args)
 	manifest, sources := reconstructEvidence(t, identity, traverseEvidence(t, identity))
 	rows := manifestSources(t, manifest)
@@ -135,7 +135,7 @@ func TestEvidenceLargeTicket(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
 	ticket := preflighttest.TicketDoc("One", "PF1", "PF2") + strings.Repeat("large ticket evidence\n", 3000)
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticket)
-	identity, _, _ := prepareEvidence(t, preflighttest.LegacyCommitted(t, root, slug, "large ticket", false))
+	identity, _, _ := prepareEvidence(t, preflighttest.LegacyCommitted(t, root, slug, "large ticket"))
 	_, sources := reconstructEvidence(t, identity, traverseEvidence(t, identity))
 	if len(ticket) <= chargeevidence.ResponseLimit || sources["s2"] != ticket {
 		t.Fatalf("large ticket reconstructed %d of %d bytes", len(sources["s2"]), len(ticket))
@@ -146,7 +146,7 @@ func TestEvidenceLargeTicket(t *testing.T) {
 // claims delivery.
 func TestEvidencePreparationState(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	_, row, out := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+	_, row, out := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 	if row["delivery"] != "unverified" || row["response_complete"] != true || strings.Contains(out, "delivery_complete") {
 		t.Fatalf("prepared state = %v", row)
 	}
@@ -154,7 +154,7 @@ func TestEvidencePreparationState(t *testing.T) {
 
 func TestEvidencePageState(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 	pages := traverseEvidence(t, identity)
 	for i, page := range pages {
 		last := i == len(pages)-1
@@ -170,7 +170,7 @@ func TestEvidenceTraversalOrder(t *testing.T) {
 	t.Run("build", func(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
 		preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF2")+strings.Repeat("x", 20000))
-		identity, _, _ := prepareEvidence(t, preflighttest.LegacyCommitted(t, root, slug, "paged ticket", false))
+		identity, _, _ := prepareEvidence(t, preflighttest.LegacyCommitted(t, root, slug, "paged ticket"))
 		assertStreamOrder(t, identity, 1, 6)
 	})
 	t.Run("multi-fragment manifest", func(t *testing.T) {
@@ -221,7 +221,7 @@ func TestEvidenceExactText(t *testing.T) {
 			root, slug := preflighttest.SeedConformant(t)
 			ticket := strings.TrimSuffix(preflighttest.TicketDoc("One", "PF1", "PF2"), "\n") + test.tail
 			preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticket)
-			identity, _, _ := prepareEvidence(t, preflighttest.LegacyCommitted(t, root, slug, test.name, false))
+			identity, _, _ := prepareEvidence(t, preflighttest.LegacyCommitted(t, root, slug, test.name))
 			if _, sources := reconstructEvidence(t, identity, traverseEvidence(t, identity)); sources["s2"] != ticket {
 				t.Fatalf("ticket reconstructed as %q", sources["s2"])
 			}
@@ -237,7 +237,7 @@ func TestEvidenceHostilePaths(t *testing.T) {
 	rel := "specs/" + slug + "/tickets/dir /" + name
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug, "- `specs/"+slug+"/` (ticket fixtures)"))
 	preflighttest.MustWriteFile(t, rel, preflighttest.TicketDoc("Hostile path", "PF1", "PF2"))
-	args := preflighttest.LegacyCommitted(t, root, slug, "hostile ticket path", false)
+	args := preflighttest.LegacyCommitted(t, root, slug, "hostile ticket path")
 	args[4] = name
 	identity, _, _ := prepareEvidence(t, args)
 	manifest, sources := reconstructEvidence(t, identity, traverseEvidence(t, identity))
@@ -254,7 +254,7 @@ func TestEvidenceHostilePaths(t *testing.T) {
 func TestEvidenceMovementPublication(t *testing.T) {
 	t.Run("CE53 one movement", func(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
-		args := preflighttest.ChargeArgs(t, root, slug, false)
+		args := preflighttest.ChargeArgs(t, root, slug)
 		calls := 0
 		restore := diff.SetSnapshotAfterReadForTest(func() {
 			calls++
@@ -278,7 +278,7 @@ func TestEvidenceMovementPublication(t *testing.T) {
 	})
 	t.Run("CE54 two movements", func(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
-		args := preflighttest.ChargeArgs(t, root, slug, false)
+		args := preflighttest.ChargeArgs(t, root, slug)
 		calls := 0
 		restore := diff.SetSnapshotAfterReadForTest(func() {
 			calls++
@@ -295,7 +295,7 @@ func TestEvidenceMovementPublication(t *testing.T) {
 // TestEvidencePreparationNext is CE156: the only next action is the manifest-first read.
 func TestEvidencePreparationNext(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	identity, row, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+	identity, row, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 	if want := "bench preflight evidence " + identity; row["next"] != want || !strings.HasPrefix(identity, "sha256:") {
 		t.Fatalf("prepared next = %q, want %q", row["next"], want)
 	}
@@ -305,7 +305,7 @@ func TestEvidencePreparationNext(t *testing.T) {
 // command, and the terminal page names none.
 func TestEvidenceNextActions(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 	pages := traverseEvidence(t, identity)
 	hex := strings.TrimPrefix(identity, "sha256:")
 	manifestFragments := 0

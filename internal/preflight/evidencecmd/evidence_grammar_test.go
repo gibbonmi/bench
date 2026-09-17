@@ -43,7 +43,7 @@ func assertTypedRow(t *testing.T, row map[string]any, types map[string]string) {
 // TestEvidencePreparedSchema is CE153.
 func TestEvidencePreparedSchema(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	_, row, out := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+	_, row, out := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 	if got := headerLine(out); got != "prepared[1]{evidence,mode,base,source_tip,assignment,selection,metadata,sources,pages,manifest_bytes,response_complete,delivery,next}:" {
 		t.Fatalf("prepared header = %q", got)
 	}
@@ -58,7 +58,7 @@ func TestEvidencePreparedSchema(t *testing.T) {
 // TestEvidenceManifestPageSchema is CE154 and TestEvidenceSourcePageSchema is CE155.
 func TestEvidenceManifestPageSchema(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	identity, prepared, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+	identity, prepared, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 	page := traverseEvidence(t, identity)[0]
 	assertPageSchema(t, page)
 	if page.row["stream"] != "manifest" || page.row["source"] != "" || page.row["total"] != prepared["manifest_bytes"] || page.row["evidence"] != identity {
@@ -68,7 +68,7 @@ func TestEvidenceManifestPageSchema(t *testing.T) {
 
 func TestEvidenceSourcePageSchema(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 	for _, page := range traverseEvidence(t, identity) {
 		if page.row["stream"] != "source" {
 			continue
@@ -105,7 +105,7 @@ func TestEvidenceTypedCells(t *testing.T) {
 			break
 		}
 	}
-	identity, row, out := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+	identity, row, out := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 	if row["source_tip"] != tip || !strings.Contains(out, ",\""+tip+"\",") {
 		t.Fatalf("source tip = %#v, want string %s", row["source_tip"], tip)
 	}
@@ -120,7 +120,7 @@ func TestEvidenceTypedCells(t *testing.T) {
 // TestEvidenceBuildGrammar is CE150.
 func TestEvidenceBuildGrammar(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	valid := preflighttest.ChargeArgs(t, root, slug, false)
+	valid := preflighttest.ChargeArgs(t, root, slug)
 	base, tip := valid[6], valid[8]
 	for _, form := range [][]string{
 		valid,
@@ -147,10 +147,28 @@ func TestEvidenceBuildGrammar(t *testing.T) {
 		{"padded quota", append(append([]string{}, valid...), "--max-store-bytes", "05"), "needs a positive decimal byte count"},
 		{"overflowing quota", append(append([]string{}, valid...), "--max-store-bytes", "18446744073709551616"), "needs a positive decimal byte count"},
 		{"missing quota value", append(append([]string{}, valid...), "--max-store-bytes"), "missing argument: --max-store-bytes"},
-		// CE173. The build guidance migration retires the legacy full charge, so the exact
-		// form the phase used to run now refuses through the bounded usage path.
-		{"CE173 build charge full", append(append([]string{}, valid...), "--full"), "--charge and --full requires review"},
-		{"CE173 build full alone", []string{"build", slug, "--full"}, "--full requires"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if out, code := preflight.Command(test.args); code != 2 || !strings.Contains(out, test.want) {
+				t.Fatalf("%s = (%d):\n%s", test.name, code, out)
+			}
+		})
+	}
+}
+
+// TestEvidenceRemovedBuildFull is CE173. The build guidance migration retires the legacy
+// full charge, so the exact form the phase used to run now refuses through the bounded
+// usage path.
+func TestEvidenceRemovedBuildFull(t *testing.T) {
+	root, slug := preflighttest.SeedConformant(t)
+	valid := preflighttest.ChargeArgs(t, root, slug)
+	for _, test := range []struct {
+		name string
+		args []string
+		want string
+	}{
+		{"build charge full", append(append([]string{}, valid...), "--full"), "--charge and --full requires review"},
+		{"build full alone", []string{"build", slug, "--full"}, "--full requires"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			if out, code := preflight.Command(test.args); code != 2 || !strings.Contains(out, test.want) {
@@ -163,7 +181,7 @@ func TestEvidenceBuildGrammar(t *testing.T) {
 // TestEvidenceReadGrammar is CE151.
 func TestEvidenceReadGrammar(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 	cursor := "v1." + strings.TrimPrefix(identity, "sha256:") + ".m.0.0"
 	for _, form := range [][]string{{"evidence", identity}, {"evidence", identity, "--cursor", cursor}, {"evidence", "--cursor", cursor, identity}} {
 		if out, code := preflight.Command(form); code != 0 || !strings.HasPrefix(out, "page[1]") {
@@ -196,7 +214,7 @@ func TestEvidenceReadGrammar(t *testing.T) {
 // store access; a well-formed cursor beyond the artifact refuses at the read.
 func TestEvidenceCursorRefusals(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 	hex := strings.TrimPrefix(identity, "sha256:")
 	foreign := strings.Repeat("0", 64)
 	for _, test := range []struct{ name, cursor string }{
@@ -230,7 +248,7 @@ func TestEvidenceCursorRefusals(t *testing.T) {
 // forms, including valid cursor pairing, and refuses every other combination.
 func TestEvidenceSourceGrammar(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 	hex := strings.TrimPrefix(identity, "sha256:")
 	for _, form := range [][]string{
 		{"evidence", identity, "--source", "s2"},
@@ -283,7 +301,7 @@ func TestEvidenceCurrentGrammar(t *testing.T) {
 func assertExclusiveMode(t *testing.T, mode, header string) {
 	t.Helper()
 	root, slug := preflighttest.SeedConformant(t)
-	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 	hex := strings.TrimPrefix(identity, "sha256:")
 	for _, form := range [][]string{{"evidence", identity, mode}, {"evidence", mode, identity}} {
 		if out, code := preflight.Command(form); code != 0 || !strings.HasPrefix(out, header) {

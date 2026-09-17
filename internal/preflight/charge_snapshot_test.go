@@ -15,7 +15,7 @@ func TestChargeHeadAndIndexMovementRefuseAfterOneRetry(t *testing.T) {
 	for _, movement := range []string{"head", "index", "required source"} {
 		t.Run(movement, func(t *testing.T) {
 			root, slug := preflighttest.SeedConformant(t)
-			args := preflighttest.ChargeArgs(t, root, slug, false)
+			args := preflighttest.ChargeArgs(t, root, slug)
 			calls := 0
 			restore := diff.SetSnapshotAfterReadForTest(func() {
 				calls++
@@ -46,7 +46,7 @@ func TestChargeHeadAndIndexMovementRefuseAfterOneRetry(t *testing.T) {
 
 func TestChargeDirtySourceRefusesWithoutCompleteOutput(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	args := preflighttest.ChargeArgs(t, root, slug, false)
+	args := preflighttest.ChargeArgs(t, root, slug)
 	preflighttest.MustWriteFile(t, "internal/example/dirty.go", "package example\n")
 	out, code := Command(args)
 	if code != 1 || !strings.Contains(out, "checkout required") ||
@@ -59,7 +59,7 @@ func TestChargeDirtySourceRefusesWithoutCompleteOutput(t *testing.T) {
 
 func TestChargeRepeatedPinnedInputsAreIdentical(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	args := preflighttest.ChargeArgs(t, root, slug, false)
+	args := preflighttest.ChargeArgs(t, root, slug)
 	first, firstCode := Command(args)
 	second, secondCode := Command(args)
 	if firstCode != 0 || secondCode != 0 || first != second {
@@ -79,7 +79,7 @@ func TestChargeFinalSnapshotFailureDiscardsPreparedOutput(t *testing.T) {
 	})
 	defer restoreSeam()
 
-	out, code := Command(preflighttest.ChargeArgs(t, root, slug, false))
+	out, code := Command(preflighttest.ChargeArgs(t, root, slug))
 	if err := os.Rename(moved, head); err != nil {
 		t.Fatal(err)
 	}

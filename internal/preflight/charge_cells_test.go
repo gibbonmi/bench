@@ -168,7 +168,7 @@ func TestPreparedFormsIgnoreNestedWorkingDirectory(t *testing.T) {
 
 	t.Run("build preparation", func(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
-		args := preflighttest.ChargeArgs(t, root, slug, false)
+		args := preflighttest.ChargeArgs(t, root, slug)
 		assertNestedRunMatches(t, root, filepath.Join(root, "internal", slug), args)
 	})
 

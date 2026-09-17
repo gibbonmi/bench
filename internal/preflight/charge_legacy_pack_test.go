@@ -12,15 +12,15 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
-// legacyChargeCase is one enumerated legacy build charge response, checked against the
-// fixed baseline under testdata/legacy-charge. The permanent test compares a live run
-// with that stored capture and never rewrites it.
-type legacyChargeCase struct {
+// preparationRefusalCase is one enumerated bounded build preparation refusal, checked
+// against the fixed baseline under testdata/legacy-charge. The permanent test compares a
+// live run with that stored capture and never rewrites it.
+type preparationRefusalCase struct {
 	name string
 	run  func(t *testing.T) (out string, code int, root, base, tip string)
 }
 
-func legacyChargeRun(t *testing.T, root string, args []string) (string, int, string, string, string) {
+func preparationRefusalRun(t *testing.T, root string, args []string) (string, int, string, string, string) {
 	t.Helper()
 	out, code := Command(args)
 	return out, code, root, args[6], args[8]
@@ -105,69 +105,69 @@ func mutationNamed(t *testing.T, name string) func(t *testing.T, root, slug stri
 	return nil
 }
 
-func legacyChargeCases() []legacyChargeCase {
-	return []legacyChargeCase{
+func preparationRefusalCases() []preparationRefusalCase {
+	return []preparationRefusalCase{
 		{"refusal-absent-phase", func(t *testing.T) (string, int, string, string, string) {
 			root, slug := preflighttest.SeedConformant(t)
 			mutationNamed(t, "absent phase")(t, root, slug, nil)
-			return legacyChargeRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "absent phase", false))
+			return preparationRefusalRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "absent phase"))
 		}},
 		{"refusal-empty-phase", func(t *testing.T) (string, int, string, string, string) {
 			root, slug := preflighttest.SeedConformant(t)
 			mutationNamed(t, "empty phase")(t, root, slug, nil)
-			return legacyChargeRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "empty phase", false))
+			return preparationRefusalRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "empty phase"))
 		}},
 		{"refusal-symlink-phase", func(t *testing.T) (string, int, string, string, string) {
 			root, slug := preflighttest.SeedConformant(t)
 			mutationNamed(t, "symlink phase")(t, root, slug, nil)
-			return legacyChargeRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "linked phase", false))
+			return preparationRefusalRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "linked phase"))
 		}},
 		{"refusal-directory-phase", func(t *testing.T) (string, int, string, string, string) {
 			root, slug := preflighttest.SeedConformant(t)
 			mutationNamed(t, "directory phase")(t, root, slug, nil)
-			return legacyChargeRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "directory phase", false))
+			return preparationRefusalRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "directory phase"))
 		}},
 		{"refusal-control-byte-phase", func(t *testing.T) (string, int, string, string, string) {
 			root, slug := preflighttest.SeedConformant(t)
 			mutationNamed(t, "control byte phase")(t, root, slug, nil)
-			return legacyChargeRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "control phase", false))
+			return preparationRefusalRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "control phase"))
 		}},
 		{"refusal-dirty-checkout", func(t *testing.T) (string, int, string, string, string) {
 			root, slug := preflighttest.SeedConformant(t)
-			args := mutationNamed(t, "dirty checkout")(t, root, slug, preflighttest.ChargeArgs(t, root, slug, false))
-			return legacyChargeRun(t, root, args)
+			args := mutationNamed(t, "dirty checkout")(t, root, slug, preflighttest.ChargeArgs(t, root, slug))
+			return preparationRefusalRun(t, root, args)
 		}},
 		{"refusal-missing-ticket", func(t *testing.T) (string, int, string, string, string) {
 			root, slug := preflighttest.SeedConformant(t)
-			args := mutationNamed(t, "missing ticket")(t, root, slug, preflighttest.ChargeArgs(t, root, slug, false))
-			return legacyChargeRun(t, root, args)
+			args := mutationNamed(t, "missing ticket")(t, root, slug, preflighttest.ChargeArgs(t, root, slug))
+			return preparationRefusalRun(t, root, args)
 		}},
 		{"refusal-source-tip-mismatch", func(t *testing.T) (string, int, string, string, string) {
 			root, slug := preflighttest.SeedConformant(t)
-			args := mutationNamed(t, "source-tip mismatch")(t, root, slug, preflighttest.ChargeArgs(t, root, slug, false))
+			args := mutationNamed(t, "source-tip mismatch")(t, root, slug, preflighttest.ChargeArgs(t, root, slug))
 			out, code := Command(args)
 			return out, code, root, args[6], preflighttest.RunGit(t, "rev-parse", "HEAD")
 		}},
 		{"refusal-inactive-assignment", func(t *testing.T) (string, int, string, string, string) {
 			root, slug := preflighttest.SeedConformant(t)
 			args := mutationNamed(t, "no assignment")(t, root, slug, nil)
-			return legacyChargeRun(t, root, args)
+			return preparationRefusalRun(t, root, args)
 		}},
 		{"refusal-foreign-assignment", func(t *testing.T) (string, int, string, string, string) {
 			root, slug := preflighttest.SeedConformant(t)
-			args := mutationNamed(t, "foreign assignment")(t, root, slug, preflighttest.ChargeArgs(t, root, slug, false))
-			return legacyChargeRun(t, root, args)
+			args := mutationNamed(t, "foreign assignment")(t, root, slug, preflighttest.ChargeArgs(t, root, slug))
+			return preparationRefusalRun(t, root, args)
 		}},
 		{"refusal-persistent-movement", func(t *testing.T) (string, int, string, string, string) {
 			root, slug := preflighttest.SeedConformant(t)
-			args := preflighttest.ChargeArgs(t, root, slug, false)
+			args := preflighttest.ChargeArgs(t, root, slug)
 			calls := 0
 			restore := diff.SetSnapshotAfterReadForTest(func() {
 				calls++
 				preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n// moved "+strconv.Itoa(calls)+"\n")
 			})
 			defer restore()
-			return legacyChargeRun(t, root, args)
+			return preparationRefusalRun(t, root, args)
 		}},
 	}
 }
@@ -184,7 +184,7 @@ func TestLegacyPreparedPackDifferential(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, test := range legacyChargeCases() {
+	for _, test := range preparationRefusalCases() {
 		t.Run(test.name, func(t *testing.T) {
 			want, err := os.ReadFile(filepath.Join(sourceDir, "testdata", "legacy-charge", test.name+".toon"))
 			if err != nil {

@@ -15,7 +15,7 @@ func TestChargeRefusesLinkedSpecAndTicketInputs(t *testing.T) {
 	for _, input := range []string{"spec", "ticket", "tickets directory"} {
 		t.Run(input, func(t *testing.T) {
 			root, slug, _ := seedLinkedChargeInput(t, input)
-			out, code := Command(preflighttest.ChargeArgs(t, root, slug, false))
+			out, code := Command(preflighttest.ChargeArgs(t, root, slug))
 			if code != 1 || !strings.Contains(out, "source required") ||
 				!strings.Contains(out, "wrong-type") ||
 				!strings.Contains(out, "restore the named canonical source") ||
@@ -98,7 +98,7 @@ func TestChargeRefusesSpecialTicketBeforeRead(t *testing.T) {
 				}
 				t.Cleanup(func() { _ = listener.Close() })
 			}
-			out, code := Command(preflighttest.ChargeArgs(t, root, slug, false))
+			out, code := Command(preflighttest.ChargeArgs(t, root, slug))
 			if code != 1 || !strings.Contains(out, "ticket file not readable") ||
 				!strings.Contains(out, "one.md") ||
 				strings.Contains(out, "tickets-parse") || strings.Contains(out, "complete,next}") {

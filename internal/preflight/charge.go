@@ -40,10 +40,10 @@ func chargeCommand(
 	return preparedCommand(root, mode, slug, base, sourceTip, ticket, full, version, args, chargePreparation)
 }
 
-// chargePacket is the one source for every charge tail. Build and review differ only in
-// their charge columns and in the table between the charge and the sources listing. The
-// complete/next flip, the sources listing, and the full-or-omitted projection are the
-// same fact in both modes, so they are authored once here.
+// chargePacket is the review charge tail. The review renderer in review.go is its one
+// caller, because the build phase reaches the bounded evidence preparation instead. The
+// complete/next flip, the sources listing, and the full-or-omitted projection are
+// authored here.
 type chargePacket struct {
 	// fields and rows exclude the trailing complete and next columns; the renderer owns
 	// that pair because it owns the flip that fills them.
@@ -51,12 +51,12 @@ type chargePacket struct {
 	rows   [][]string
 
 	// middle holds already-rendered tables that sit between the charge and the sources
-	// listing: the build coverage rows, or the review shared-evidence identities.
+	// listing: the shared-evidence identities and the completion evidence.
 	middle []string
 
 	// sources are the frozen inputs the packet lists, retrieves under --full, and names
-	// as omitted otherwise. identitiesOnly are listed but never retrieved: the review
-	// packet's derived shared-evidence handle is one.
+	// as omitted otherwise. identitiesOnly are listed but never retrieved: the derived
+	// shared-evidence handle is one.
 	sources        []chargeSource
 	identitiesOnly []chargeSource
 

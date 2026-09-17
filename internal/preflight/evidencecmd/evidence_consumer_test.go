@@ -210,7 +210,7 @@ func receive(t *testing.T, identity string) delivery {
 // TestEvidenceIndependentReader is CE7 and CE8.
 func TestEvidenceIndependentReader(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
-	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
+	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 	received := receive(t, identity)
 	if err := consume(identity, received); err != nil {
 		t.Fatalf("complete delivery = %v, want acceptance", err)
@@ -247,7 +247,7 @@ func TestEvidenceDeliveryCoverage(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
 	ticket := preflighttest.TicketDoc("One", "PF1", "PF2") + strings.Repeat("paged ticket\n", 1000)
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticket)
-	identity, _, _ := prepareEvidence(t, preflighttest.LegacyCommitted(t, root, slug, "paged delivery", false))
+	identity, _, _ := prepareEvidence(t, preflighttest.LegacyCommitted(t, root, slug, "paged delivery"))
 	received := receive(t, identity)
 	if err := consume(identity, received); err != nil {
 		t.Fatalf("complete delivery = %v, want acceptance", err)
