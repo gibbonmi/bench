@@ -224,13 +224,65 @@ The coordinator ran the five chunk verifications at `1829a5c8`. All passed, and 
 The ticket 2 author logged 29 probe runs and two manual system probes, each with a failing result and a verified restore.
 The coordinator's independent probe changed the required bytes in the capacity refusal, and the capacity recovery test failed.
 
+## CE-C1B: review round 2
+
+Frozen pair: base `88a981b9cf9952ccb59be918fe72cae3c73f16d3`, tip `88513d7c0d4ae4f4d026f8143874d49f4eefab74`.
+The raw finding count is 3. The de-duplicated repair-target count is 1, because ST1 closes with this record and SP5 closed at the tip.
+Repair cycles used: 1 of 2. Repair cycle 1 closed thirteen targets and moved the evidence command surface.
+
+### Standards
+
+Finding count: 2. Worst issue: ST1.
+
+- CE-C1B-ST1 (auto-fix): The three independent constants had no recorded red. The probe records below close this finding.
+- CE-C1B-ST8 (auto-fix): `internal/preflight/evidencecmd` exports `Admit` for operand selection while `internal/chargeevidence` exports `Admit` for the capacity rule, and one file calls both. Rename the command-layer function after what it does.
+
+### Spec
+
+Finding count: 1. Worst issue: SP5.
+
+- CE-C1B-SP5 (closed at the tip): The plan expansion widened the plan commands. It left the seven ticket check lists on `./internal/preflight`, which skips the moved tests. The coordinator widened every ticket list.
+
+### Coverage
+
+Finding count: 0. The axis passed.
+
+### Repair cycle 1 probe records
+
+The repair author ran sixteen probes, and each one failed the named tests and restored its file.
+
+- The response budget constant changed from 48000 to 48001, and the final guard test failed.
+- The store name constant changed, and thirteen store tests failed.
+- The default quota constant changed by one byte, and the default quota test failed.
+- An optional flag added to one operation row failed the help inventory test, and an omitted flag table row failed the operation registry test.
+- Preparation that substitutes data for a failed source read failed the CE128 case.
+- A per-artifact cap added to the admission rule failed three admission cases.
+- The bound guard removed from the dispatch failed four budget cases, and each unguarded usage line failed its own case.
+- The store same-file check weakened failed both replacement cases, and the omitted registry row failed the root conformance test.
+- The unrepresentable quota branch disabled failed the unrepresentable quota test.
+- The plan probe in both selector forms failed two and twenty-four tests.
+
+The coordinator's independent probe loosened the bounded diagnostic limit, and the large preparation refusal test failed.
+
+### Advice
+
+- Two packages expose a function named `Admit` for different jobs; see ST8.
+- `StoreOptions.Fault` has no production producer, so its registry row grades half the port.
+- The response limit seam mutates a package variable without synchronization, and no rule keeps those tests serial.
+- The absent-lock branch treats a store without its lock file as empty, which cleanup could later meet with packs present.
+- The narrowed store listing helpers would miss a leftover object under another name.
+
+### Author verification
+
+The coordinator reran the five chunk verifications at `88513d7c`. All passed, and the plan probe failed twenty-four tests and restored the file.
+
 ## Record
 
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/bounded-charge-evidence/spec.md",
-  "plan_digest": "sha256:ad140f7fc480da95134f328448ea09d840c4b3e49c8e1c5a76ef9518d56544f5",
+  "plan_digest": "sha256:bd4837edc8c926625c78753261b6eb6a4c9bff01e43afa43c1a1a609be8949fb",
   "implementation_session": "bounded-charge-evidence-retained-author",
   "chunks": [
     {
@@ -835,9 +887,9 @@ The coordinator's independent probe changed the required bytes in the capacity r
     {
       "id": "CE-C1B",
       "base": "88a981b9cf9952ccb59be918fe72cae3c73f16d3",
-      "tip": "1829a5c8641de6029801e87a3ca1fc9584600270",
-      "plan_digest": "sha256:ad140f7fc480da95134f328448ea09d840c4b3e49c8e1c5a76ef9518d56544f5",
-      "source_digest": "3284d0947b73d4492340feda5908eb7497a3a24e",
+      "tip": "88513d7c0d4ae4f4d026f8143874d49f4eefab74",
+      "plan_digest": "sha256:bd4837edc8c926625c78753261b6eb6a4c9bff01e43afa43c1a1a609be8949fb",
+      "source_digest": "ef9207e68bab2b2f294bd2fb8b41225ae731df71",
       "acceptance_rows": [
         "CE1",
         "CE2",
@@ -995,6 +1047,107 @@ The coordinator's independent probe changed the required bytes in the capacity r
               "excerpt": "bench probe internal/chargeevidence/schema.go --omit 'num(\"manifest_bytes\"),' --package ./internal/preflight at 1829a5c8: verdict bit, 23 failed tests, restored=yes"
             }
           }
+        },
+        {
+          "id": "ce-c1b-v2-preflight",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef9207e68bab2b2f294bd2fb8b41225ae731df71",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:b816151e0f103360bc0811dc82c21f803b7a84d41e31e3e81c1ef623960139ef",
+            "excerpt": "bench test --package ./internal/preflight/... at 88513d7c: pass; preflight 23138 ms and evidencecmd 3246 ms"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1b-v2-store",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef9207e68bab2b2f294bd2fb8b41225ae731df71",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:719d641ccfd15d63f4eb6518f4fd22c12dc6016bb612d5ee7712e86a055a1a6a",
+            "excerpt": "bench test --package ./internal/chargeevidence at 88513d7c: pass, 103 ms; the CE94 device case skipped for the privilege capability"
+          },
+          "requirement": "store",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1b-v2-inventory",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef9207e68bab2b2f294bd2fb8b41225ae731df71",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:718a2923965d94b4f764601f94cc246d771d9a84af6b5aac4d0d04c56fbe1850",
+            "excerpt": "bench test --package ./cmd/bench at 88513d7c: pass, 7306 ms"
+          },
+          "requirement": "inventory",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1b-v2-system",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef9207e68bab2b2f294bd2fb8b41225ae731df71",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:4f0ac572b14a3415c43e8e2dcd22bd805ae1dc39dfe1d0be053911f773e13bb8",
+            "excerpt": "bench test --check system at 88513d7c: pass, 32999 ms"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1b-v2-mutation",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef9207e68bab2b2f294bd2fb8b41225ae731df71",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:fed099a629ec19a04a83db7377e70b84d79a1664e1d8c39f9f4ea08685882cb1",
+            "excerpt": "bench test --package ./internal/preflight/... at 88513d7c: pass"
+          },
+          "requirement": "mutation",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit manifest_bytes from the prepared response",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:coordinator-run",
+              "digest": "sha256:cca713dd6d7422d7ca51f9f35927073c1ef2fe0ea7156cc18e9b24d55f144d6e",
+              "excerpt": "bench probe internal/chargeevidence/schema.go --omit 'num(\"manifest_bytes\"),' --package ./internal/preflight/... at 88513d7c: verdict bit, 24 failed tests, restored=yes"
+            }
+          }
         }
       ],
       "reviews": [
@@ -1075,6 +1228,77 @@ The coordinator's independent probe changed the required bytes in the capacity r
             "CE-C1B-CV6"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ce-c1b-r2-standards",
+          "performer": "claude-review-ce-c1b-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ef9207e68bab2b2f294bd2fb8b41225ae731df71",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1b-standards-r2",
+            "digest": "sha256:04c96ee67e31ea36885fb065c5a3123fda47d6abfc4a8eac7f7933de2f3dc138",
+            "excerpt": "Standards CE-C1B round 2: ST2 to ST7 closed. ST1 stays open because the tree held no probe record for the three independent constants; this pickup now records them. New ST8: two Admit functions in one call path, one parsing operands and one deciding capacity."
+          },
+          "axis": "Standards",
+          "base": "88a981b9cf9952ccb59be918fe72cae3c73f16d3",
+          "tip": "88513d7c0d4ae4f4d026f8143874d49f4eefab74",
+          "finding_ids": [
+            "CE-C1B-ST1",
+            "CE-C1B-ST8"
+          ],
+          "supersedes": [
+            "ce-c1b-r1-standards"
+          ]
+        },
+        {
+          "id": "ce-c1b-r2-spec",
+          "performer": "claude-review-ce-c1b-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ef9207e68bab2b2f294bd2fb8b41225ae731df71",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1b-spec-r2",
+            "digest": "sha256:931978a426a642c3e38375b4eeb0dfbbc0c9edb8f1aa8c39773972d49fb832ec",
+            "excerpt": "Spec CE-C1B round 2: SP1 to SP4 and CV1, CV2, CV5, CV6 closed. New SP5: the plan expansion left the ticket check lists on the narrow selector. The coordinator widened all seven ticket lists at 88513d7c."
+          },
+          "axis": "Spec",
+          "base": "88a981b9cf9952ccb59be918fe72cae3c73f16d3",
+          "tip": "88513d7c0d4ae4f4d026f8143874d49f4eefab74",
+          "finding_ids": [
+            "CE-C1B-SP5"
+          ],
+          "supersedes": [
+            "ce-c1b-r1-spec"
+          ]
+        },
+        {
+          "id": "ce-c1b-r2-coverage",
+          "performer": "claude-review-ce-c1b-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ef9207e68bab2b2f294bd2fb8b41225ae731df71",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1b-coverage-r2",
+            "digest": "sha256:9990207760d1c0ef2305804ad53258233169f4804d8f5a8123a3325a53bf7ce5",
+            "excerpt": "Coverage CE-C1B round 2: 0 findings. Every round 1 finding closed with a biting probe, the repair's new seams each bit, and the census shows no case lost in the move."
+          },
+          "axis": "Coverage",
+          "base": "88a981b9cf9952ccb59be918fe72cae3c73f16d3",
+          "tip": "88513d7c0d4ae4f4d026f8143874d49f4eefab74",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c1b-r1-coverage"
+          ]
         }
       ]
     }
@@ -1090,6 +1314,33 @@ The coordinator's independent probe changed the required bytes in the capacity r
     {
       "from": "sha256:971cc327eafed497f8ad3ae83762bcaf4c1a30538971f90736c74ba6be2031d0",
       "to": "sha256:ad140f7fc480da95134f328448ea09d840c4b3e49c8e1c5a76ef9518d56544f5",
+      "chunk_ids": {
+        "CE-C1A": [
+          "CE-C1A"
+        ],
+        "CE-C1B": [
+          "CE-C1B"
+        ],
+        "CE-C1C": [
+          "CE-C1C"
+        ],
+        "CE-C1D": [
+          "CE-C1D"
+        ],
+        "CE-C2": [
+          "CE-C2"
+        ],
+        "CE-C3": [
+          "CE-C3"
+        ],
+        "CE-C4": [
+          "CE-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ad140f7fc480da95134f328448ea09d840c4b3e49c8e1c5a76ef9518d56544f5",
+      "to": "sha256:bd4837edc8c926625c78753261b6eb6a4c9bff01e43afa43c1a1a609be8949fb",
       "chunk_ids": {
         "CE-C1A": [
           "CE-C1A"
