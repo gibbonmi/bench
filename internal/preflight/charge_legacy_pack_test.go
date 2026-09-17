@@ -172,13 +172,13 @@ func preparationRefusalCases() []preparationRefusalCase {
 	}
 }
 
-func legacyChargeRecord(out string, code int) string {
+func preparationRefusalRecord(out string, code int) string {
 	return fmt.Sprintf("exit: %d\n%s", code, out)
 }
 
-// TestLegacyPreparedPackDifferential is CE147. Every enumerated build charge response
-// keeps its captured exit and bytes after the charge reads its sources and metadata back
-// from the validated in-memory pack.
+// TestLegacyPreparedPackDifferential is CE147. Every enumerated bounded build preparation
+// refusal keeps its captured exit and bytes. Each case refuses inside preparedAttempts, so
+// no case reaches the pack renderer.
 func TestLegacyPreparedPackDifferential(t *testing.T) {
 	sourceDir, err := os.Getwd()
 	if err != nil {
@@ -191,9 +191,9 @@ func TestLegacyPreparedPackDifferential(t *testing.T) {
 				t.Fatal(err)
 			}
 			out, code, root, base, tip := test.run(t)
-			got := legacyChargeRecord(normalizeLegacy(out, root, base, tip), code)
+			got := preparationRefusalRecord(normalizeLegacy(out, root, base, tip), code)
 			if got != string(want) {
-				t.Fatalf("legacy charge %s changed:\ngot:\n%s\nwant:\n%s", test.name, got, want)
+				t.Fatalf("bounded preparation refusal %s changed:\ngot:\n%s\nwant:\n%s", test.name, got, want)
 			}
 		})
 	}

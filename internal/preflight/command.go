@@ -12,7 +12,10 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-const modeBuild = evidencecmd.ModeBuild
+const (
+	modeBuild  = evidencecmd.ModeBuild
+	modeReview = evidencecmd.ModeReview
+)
 
 // Command is the legacy adapter for `bench preflight review <slug>` and `bench
 // preflight build <slug>`. It is the CLI-contract seam. Grammar and usage errors ride

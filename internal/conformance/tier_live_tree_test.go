@@ -10,11 +10,12 @@ import (
 	"testing"
 )
 
-// classifiedLiveTreeTests is the sole classification of tests that read the live tree only
-// to construct a mutation or driver fixture, not to enforce policy directly. The staleness
-// test below requires every entry to still be a detected live-tree reader. The
-// hidden-inventory check supplies the reverse direction: it rejects every detected reader
-// absent from this classification or the executable registry.
+// classifiedLiveTreeTests is the sole classification of tests that read the live tree. Most
+// read it to construct a mutation or driver fixture. Some enforce a policy on the kit root
+// directly, because the kit root is that policy's subject. The staleness test below requires
+// every entry to still be a detected live-tree reader. The hidden-inventory check supplies
+// the reverse direction: it rejects every detected reader absent from this classification or
+// the executable registry.
 var classifiedLiveTreeTests = map[string]bool{
 	"TestCanaryFixtureRegistryClassifiesEveryFixture":              true,
 	"TestConformanceMetaBites":                                     true,
@@ -22,6 +23,7 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestDecisionMapIntegrityCheckValidatesEveryCandidate":         true,
 	"TestDecisionMapIntegrityFixtureInventoryRejectsDeletion":      true,
 	"TestEvidenceBuildActionSentencesArePinned":                    true,
+	"TestEvidenceBuildGuidanceRejectsThePreflightBuildFullPair":    true,
 	"TestEveryRetainedFixtureBitesThroughRegisteredOwner":          true,
 	"TestFixtureBiteProofArchitecture":                             true,
 	"TestGuidanceProseBudgetCanaryFixtureBites":                    true,

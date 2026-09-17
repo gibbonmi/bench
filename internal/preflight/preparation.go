@@ -7,7 +7,6 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/tickets"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -30,7 +29,7 @@ func preparedCommand(
 	switch {
 	case form == proposalPreparation:
 		action = "proposal"
-	case mode != evidencecmd.ModeReview:
+	case mode != modeReview:
 		// The build guidance migration retired the build charge, so review is the one mode
 		// this renderer serves. A new non-review caller refuses here rather than receiving
 		// a review charge under its own mode.
