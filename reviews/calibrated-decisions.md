@@ -485,7 +485,9 @@ CR25 stays `claimed`. The new anchor grades the README's `unknown` cell rule, no
 
 ## CD5 first pairs
 
-This section collects every pair the ticket sections and the chunk reviews above recorded. Each row keeps its surface, its claim, its status, its stated confidence, its label, and its model, effort, and role. The rows are grouped by surface, and then by model, effort, and role. No row is invented here, and no source table above changed. The retro author fills the calibration table from this section alone.
+This section collects every pair the ticket sections and the chunk reviews above recorded. Each row keeps its surface, its claim, its status, its stated confidence, its label, and its model, effort, and role. The rows are grouped by surface, and then by model, effort, and role. No row is invented here, and no source table above changed.
+
+The retro author fills the calibration table from the `### All pairs` table, labeled rows only. The retro table holds labeled claims only. The labeled pair count is 61, and it equals the Brier denominator.
 
 The two scenario tables above are illustrative, so their rows are not pairs. A done-claim table that still holds an empty label cell supplies no pair either. Each pair below comes from a `Pairs recorded for CD5` table or from the line declaration.
 
@@ -523,11 +525,11 @@ The two scenario tables above are illustrative, so their rows are not pairs. A d
 | delegate return | CR20 | verified | 9 | held | opus / high / author |
 | delegate return | CR21 | verified | 9 | held | opus / high / author |
 | delegate return | CR28 | verified | 9 | held | opus / high / author |
-| delegate return | CR35 | claimed | 7 | held | opus / high / author |
+| delegate return | CR35 | verified | 7 | held | opus / high / author |
 | delegate return | CR24 | verified | 9 | held | opus / high / author |
 | delegate return | CR25 | claimed | 8 | held | opus / high / author |
 | delegate return | CR26 | verified | 9 | held | opus / high / author |
-| delegate return | CR22 (CD2b) | verified | 9 | held | opus / high / author |
+| delegate return | CR22 | verified | 9 | held | opus / high / author |
 | delegate return | CR38 | verified | 9 | held | opus / high / author |
 | review finding | CD1-S1 | claimed | 5 | refuted | fable / medium / Standards |
 | review finding | CD1-S2 | claimed | 6 | held | fable / medium / Standards |
@@ -553,11 +555,11 @@ The two scenario tables above are illustrative, so their rows are not pairs. A d
 | review finding | CD4-C1 | claimed | 9 | held | opus / medium / Coverage |
 | review finding | CD4-C2 | claimed | 8 | refuted | opus / medium / Coverage |
 | review finding | CD4-C3 | claimed | 7 | refuted | opus / medium / Coverage |
-| line declaration | Expected repair rounds: 1 / confidence 6 | claimed | 6 |  | fable / low / orchestrator |
+| line declaration | Expected repair rounds: 1 / confidence 6 | claimed | 6 | refuted | fable / low / orchestrator |
 
-The CR22 row appears twice. The CD2 chunk returned the sentence under a section anchor, and the CD2b chunk returned it again under the step anchor. Each return is its own claim, so each is its own pair. The second row reads `CR22 (CD2b)`.
+The CR22 row appears twice. The CD2 chunk returned the sentence under a section anchor, and the CD2b chunk returned it again under the step anchor. Each return is its own claim, so each is its own pair.
 
-The line declaration row carries no label yet. The coordinator labels it after the landing, from this build's repair-attribution table.
+The coordinator labeled the line declaration `refuted`. The label source is the repair-attribution table of this run. The declaration expected 1 repair round, and this pickup records 4 rounds: two cycles on CD2b, one on CD4, and one on CD5. The actual count differs from the expected count, so the rule labels the expectation `refuted`.
 
 ### Counts
 
@@ -574,7 +576,7 @@ The abstention count is 0. No pair in this pickup holds the `abstained` status. 
 
 ### Brier mean
 
-The score of one pair is `(p - label)^2`. The stated confidence gives `p = n / 10`. The label gives 1 for `held` and 0 for `refuted`. The labeled pair count is 60, because the line declaration holds no label.
+The score of one pair is `(p - label)^2`. The stated confidence gives `p = n / 10`. The label gives 1 for `held` and 0 for `refuted`. The labeled pair count is 61, because every pair now holds a label.
 
 The 36 delegate-return pairs are each `held`. Thirty-two rows at confidence 9 give `32 x 0.01 = 0.32`. Three rows at confidence 8 give `3 x 0.04 = 0.12`. One row at confidence 7 gives `0.09`. Their sum is 0.53.
 
@@ -582,7 +584,9 @@ Eleven review findings are `held`. Their scores are 0.16, 0.09, 0.16, 0.04, 0.01
 
 Thirteen review findings are `refuted`. Their scores are 0.25, 0.64, 0.16, 0.09, 0.64, 0.16, 0.36, 0.25, 0.36, 0.25, 0.09, 0.64, and 0.49. Their sum is 4.38.
 
-The three sums give `0.53 + 1.08 + 4.38 = 5.99`. The Brier mean is `5.99 / 60 = 0.100`. The author rows alone give `0.53 / 36 = 0.015`. The review rows alone give `5.46 / 24 = 0.228`.
+The one line declaration is `refuted` at confidence 6. Its score is `(0.6 - 0)^2 = 0.36`.
+
+The four sums give `0.53 + 1.08 + 4.38 + 0.36 = 6.35`. The Brier mean is `6.35 / 61 = 0.104`. The author rows alone give `0.53 / 36 = 0.015`. The review rows alone give `5.46 / 24 = 0.228`. The orchestrator row alone gives `0.36 / 1 = 0.36`.
 
 ### Author evidence
 
@@ -605,7 +609,61 @@ Each run reports no skip. The elapsed time is the package time the verb reports.
 | `bench test --check guidance-prose-budgets` | pass | 5 ms |
 | `bench test --check prose-mechanics` | pass | 154 ms |
 | `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 9453 ms |
-| `bench gate-prose . --` over the 13 edited Markdown files | pass | no issue |
+| `bench gate-prose . --` over every Markdown file this build authored | pass | no issue |
+
+The lane ran over these 17 paths:
+
+- `.agents/commands/bench-final-check.md`
+- `.agents/commands/bench-review-implementation.md`
+- `.agents/skills/bench-craft-delegate/SKILL.md`
+- `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`
+- `.agents/skills/bench-craft-line/SKILL.md`
+- `.agents/skills/bench-craft-line/references/calibration-score.md`
+- `.agents/skills/bench-craft-review/SKILL.md`
+- `.agents/skills/bench-craft-review/references/finding-discipline.md`
+- `CHANGELOG.md`
+- `capture/agent-performance/README.md`
+- `capture/agent-performance/claude-models.md`
+- `capture/agent-performance/open-ai-models.md`
+- `reviews/calibrated-decisions.md`
+- `specs/calibrated-decisions/spec.md`
+- `specs/calibrated-decisions/tickets/2-state-finding-confidence-in-review.md`
+- `specs/calibrated-decisions/tickets/5-define-calibration-measure-in-scorecard.md`
+- `specs/calibrated-decisions/tickets/7-pin-the-pickup-step-with-a-step-anchor.md`
+
+`ROADMAP.md` and the six `roadmap/FT*.md` files also differ from the run base. They come from merged main commits, so this build did not author them.
+
+### Repair cycle 1
+
+The review raised eight findings on the CD5 delta, and one attempt closed them all. The base commit is `ce58acffd6c5121cec475758eb2889ae0a176a2a`.
+
+CD5-S1, CD5-S2, and CD5-S3 are prose repairs in the changelog entry. The routing bullet held a comma splice, which is two sentences now. Each bullet reads 25 words or fewer, and a split carries the advisory-only qualifier instead of a cut. The coined word `unstatable` is gone, and the abstention bullet states "a confidence the delegate cannot state".
+
+CD5-S4 removes the invented row id. Both rows read `CR22`, and the sentence above the table keeps the rule that each return is its own claim.
+
+Spec-S3 sets the aggregate CR35 row to `verified`, which is the status the CD4 repair-cycle table records.
+
+Spec-S2 replaces the file count with the rule. The lane covers every Markdown file this build authored, and the 17 paths sit under that row. The six roadmap files and `ROADMAP.md` come from merged main commits, so they are not this build's.
+
+Spec-S1 and Coverage-C1 label the line declaration. Coverage-C2 states the labeled-only rule for the retro table and names 61 as both the labeled pair count and the Brier denominator.
+
+The recomputation from the per-chunk tables replaces the missing biting probe. The five chunk sums are 0.49, 1.89, 1.40, 0.78, and 1.43. With the line declaration's 0.36, they give `0.49 + 1.89 + 1.40 + 0.78 + 1.43 + 0.36 = 6.35`, which equals the aggregate total.
+
+| row | status | confidence | label |
+| --- | --- | --- | --- |
+| CR27 | verified | 9 |  |
+| CR33 | verified | 9 |  |
+
+Each confidence is the return-time value. CR27 now rests on a labeled row for each of the three surfaces, because the line declaration holds its label.
+
+The repair suite reports no skip.
+
+| check | verdict | elapsed |
+| --- | --- | --- |
+| `bench test --check docs-currency-workflow` | pass | 849 ms |
+| `bench test --check prose-mechanics` | pass | 156 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 9521 ms |
+| `bench gate-prose . -- CHANGELOG.md reviews/calibrated-decisions.md` | pass | two pass rows |
 
 ## CD1 review
 
@@ -869,7 +927,7 @@ After the two repairs, one sonnet / high later pass per axis ran at tip c82bd884
 | delegate return | CR20 | verified | 9 | held | opus / high / author |
 | delegate return | CR21 | verified | 9 | held | opus / high / author |
 | delegate return | CR28 | verified | 9 | held | opus / high / author |
-| delegate return | CR35 | claimed | 7 | held | opus / high / author |
+| delegate return | CR35 | verified | 7 | held | opus / high / author |
 | delegate return | CR24 | verified | 9 | held | opus / high / author |
 | delegate return | CR25 | claimed | 8 | held | opus / high / author |
 | delegate return | CR26 | verified | 9 | held | opus / high / author |
