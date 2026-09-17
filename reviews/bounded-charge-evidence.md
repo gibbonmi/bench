@@ -447,6 +447,28 @@ Finding count: 0 blocking. CV3 is closed.
 - The helper that answers a query also fails the test, and its name states only the query.
 - The operation registry advertisement test has no recorded red of its own; it cross-checks two production sources rather than restating knowledge.
 
+## CE-C1D: review round 1
+
+Frozen pair: base `687a5fc3e3b7568ea1a990c79cb65eebee4351b5`, tip `95ae907a219c5b88c2915bbe86a98ab98cec8ad5`.
+
+### Author verification and probe records
+
+The author ran the five chunk verifications at `95ae907a`. All passed.
+The build preflight is green with twelve green checks, and the whole-tree gate is green.
+The named plan probe deleted the current-action binding sentence from the build guidance.
+`TestRootConformance` then reported the diagnostic for a build action without a current binding.
+
+- Verified-delivery sentence replaced by an orientation-stream claim: the delivery diagnostic fired.
+- Required-context sentence replaced by a retrieval completion claim: the context diagnostic fired.
+- Reviewer-approval sentence deleted: the approval diagnostic fired.
+- Supplement sentence made satisfiable by verified evidence: the supplement diagnostic fired.
+- The build `--full` legacy-charge operation restored in the registry: case `CE173 build charge full` failed.
+- The approval anchor row deleted from the registry: `TestEvidenceBuildGuidance` counted four anchors and wanted five.
+
+The coordinator's independent probe made the `prepared-build-approval` canary mutation a no-op.
+`TestEveryRetainedFixtureBitesThroughRegisteredOwner` failed, and the completed proof count dropped to 550.
+Every probe restored its file, and `git status` was empty after each restore.
+
 ## Record
 
 ```bench-review-record
