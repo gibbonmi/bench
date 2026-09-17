@@ -5,16 +5,13 @@ description: Implement a spec (or a clearly-scoped change) at the pre-agreed sea
 # /bench-implement-spec — do the work at the seams
 
 ## Entry orientation
-This is the implementation phase. It starts from an approved spec, or from a change
-small enough for the lighter-path threshold. It declares the line and works vertical
-slices at the pre-agreed seams. If there is no spec, the change must fall under that
+This is the implementation phase. It starts from an approved spec, or from a change small enough for the lighter-path threshold. It declares the line and works vertical slices at the pre-agreed seams. If there is no spec, the change must fall under that
 threshold in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not fall under that threshold, route to `/bench-write-spec` first.
 If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there.
 
 ## Exit handoff
 
-Close by reporting the implemented stories, each acceptance row's coverage status, and
-the landed commits. A reviewed spec-backed build closes through the "Land" section below. A light-path build goes straight
+Close by reporting the implemented stories, each acceptance row's coverage status, and the landed commits. A reviewed spec-backed build closes through the "Land" section below. A light-path build goes straight
 to `/bench-final-check`. A build that stops short exits through "When the build stops short" below, which recommends its one durable next action.
 
 ## Declare the line, validate the tickets, route the venue
@@ -37,8 +34,7 @@ A material action changes behavior, a verification target, or a premise that det
 One material action can contain several related edits before the rerun. If a result contradicts the approved behavior or seam, stop. Route it through the wrong-spec path under "When the build stops short."
 
 Work approved tickets in dependency order inside their planned chunks. Use TDD only where `craft-tdd` marks the seam. When the spec carries a coverage map, seed the
-harness's native task list from `bench coverage <spec>`, whose `rows[N]{story,behavior,seam}` projection is one task per row.
-The spec and the ticket are final. Do not evaluate another approach. Implement the ticket as written, run its focused checks, then continue to the commit below.
+harness's native task list from `bench coverage <spec>`, whose `rows[N]{story,behavior,seam}` projection is one task per row. The spec and the ticket are final. Do not evaluate another approach. Implement the ticket as written, run its focused checks, then continue to the commit below.
 
 Apply `craft-line`'s retained implementation continuation policy throughout the ticket graph. At initial review or before post-review repairs, including resumed work, read [the bounded repair policy](../skills/bench-craft-line/references/bounded-repair-policy.md).
 
@@ -65,8 +61,7 @@ The review and final-check phases own ordinary assessment updates. Keep the reta
 
 ## When the build stops short
 
-Report the state: what is done, what remains, the coverage table, and what
-consumed the cap. Keep landed work landed. Then route by cause:
+Report the state: what is done, what remains, the coverage table, and what consumed the cap. Keep landed work landed. Then route by cause:
 
 - Wrong tier: apply `craft-line`'s ladder. In a retained build, raise the effort and resume; a tier move asks the reviewer first.
 - Wrong spec: route to `/bench-write-spec` with the finding quoted.
@@ -74,13 +69,9 @@ consumed the cap. Keep landed work landed. Then route by cause:
 
 ## `--full <spec>`
 
-This command orchestrates retained implementation, chunk reviews, the final landing, and `/bench-final-check`. It refuses on a missing or unnamed spec. At every phase
-boundary it writes the phase reached into `capture/session-handoff.md` and refreshes
-the pin with `bench handoff`. The review phase owns cross-harness review opt-in.
+This command orchestrates retained implementation, chunk reviews, the final landing, and `/bench-final-check`. It refuses on a missing or unnamed spec. At every phase boundary it writes the phase reached into `capture/session-handoff.md` and refreshes the pin with `bench handoff`. The review phase owns cross-harness review opt-in.
 
-A chunk delta can grow past its approved plan. It touches a path outside the tickets'
-`Writes:` fences, or it adds a ticket the plan does not list. Such a delta pauses to ask
-the reviewer before escalating tier.
+A chunk delta can grow past its approved plan. It touches a path outside the tickets' `Writes:` fences, or it adds a ticket the plan does not list. Such a delta pauses to ask the reviewer before escalating tier.
 
 ## `--delegate`
 

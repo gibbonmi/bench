@@ -24,8 +24,7 @@ Assess three signals for the stage in front of you:
 
 - **Spec precision** — exact guidance, or only a goal?
 - **Seam uncertainty** — is the shape of the answer known, or genuinely open?
-- **Gate coverage** — does a wrong answer turn the gate red cheaply? A scaffold
-  stub or an auto-detected gate is weak.
+- **Gate coverage** — does a wrong answer turn the gate red cheaply? A scaffold stub or an auto-detected gate is weak.
 
 | Spec precision | Seam uncertainty | Gate coverage | → Line |
 |---|---|---|---|
@@ -49,16 +48,11 @@ A guidance defect multiplies through every session. The top tier implements noth
 | Ticket implementation | cheap + low |
 | Review axis | conditional + high |
 
-The conditional review line uses high effort and ~1 iteration. A Codex mid implementation sends each axis to the Codex top binding.
-Every other implementation sends each axis to the invoking harness's mid binding.
-A different implementation model or session requires user direction. The author can adjust effort in the retained session and reports the change.
+The conditional review line uses high effort and ~1 iteration. A Codex mid implementation sends each axis to the Codex top binding. Every other implementation sends each axis to the invoking harness's mid binding. A different implementation model or session requires user direction. The author can adjust effort in the retained session and reports the change.
 
-These are starting defaults, not a flat rule. A spec's per-story line is a
-**ceiling, not a binding**. Re-run the decision table per ticket at charge time.
+These are starting defaults, not a flat rule. A spec's per-story line is a **ceiling, not a binding**. Re-run the decision table per ticket at charge time.
 
-A post-review repair runs at low effort. The author raises that effort only when the
-repair is at risk of failure at low effort, and reports the raise in one line. The
-repair keeps the retained author's model.
+A post-review repair runs at low effort. The author raises that effort only when the repair is at risk of failure at low effort, and reports the raise in one line. The repair keeps the retained author's model.
 
 The leverage override still wins for orchestration and implementation. The conditional review line owns review.
 `craft-delegate` owns the author venue; this skill routes the author. For one atomic
@@ -79,9 +73,8 @@ A red is **diff-owned**, **inherited**, or **spec-predicted**. Only diff-owned
 reds count toward the ladder. Report the others without retrying against them.
 1. **First diff-owned red** — retry the same tier, feeding the gate output
    back as guidance. Most reds are fixable feedback, not capability gaps.
-2. **Second diff-owned red at the same tier** — in a retained build, raise the effort
-   one step and resume. A tier move changes the implementation model, so ask the
-   reviewer first. A `--delegate` run moves the tier without that stop.
+2. **Second diff-owned red at the same tier** — in a retained build, raise the effort one step and resume.
+   A tier move changes the implementation model, so ask the reviewer first. A `--delegate` run moves the tier without that stop.
 3. **Delegate reports the seam is more uncertain than specced** — escalate
    immediately; no retry burned.
 4. **A non-shrinking diff-owned red set across an iteration** — stop the
