@@ -20,14 +20,14 @@ The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches dol
 
 ## Current routing
 
-| model / effort | role and sample | observed quality | current use |
-| --- | --- | --- | --- |
-| Astra / high, medium, low | implementation, debug repair, Coverage review, and coordination | Astra/medium found the final DG15 bypass. The retained debug author needed three attempts and one approved Standards-only extension before all axes passed. | Use medium for Coverage and debug validation. Use low for bounded coding when the user selects it. |
-| Terra / medium, high | implementation, latest 10 bounded tickets and repairs | Terra/high implemented FT311 ticket 4 with live evidence open. Review found the missing triage input contract, and repair added its five inputs. | Medium for exact one-seam tickets under coordinator mutation. High when one fact crosses multiple policy consumers. |
-| Terra / high, medium, low | research and seam inspection, latest 5 assignments; semantic review, latest 10 axis passes | On `bounded-repair-policy`, all three Terra/high axes passed before a cross-harness reviewer found two policy defects. Each axis verified the repairs; Coverage corrected one source-identity claim after the coordinator checked Git. | Standards, Spec, and Coverage review in separate contexts; independently census production callers. |
-| Luna / max, medium | prose implementation and bounded repairs | Luna preserved the Ticket 4 prose pass. Review found owner-identity and instruction-shape defects that required an Astra repair and refreshed adoption evidence. | Use Luna for narrow prose changes after an owner census and before independent review. |
-| Sol / high | retained implementation and adoption work | Sol completed substantive guidance and fresh adoption work. Coordinator checks found stale source identity and one final parser defect outside the prose. | Use Sol/high for exact specification chunks under independent review and coordinator probes. |
-| Sol / high | Standards and Spec review | Separate Sol/high axes found Ticket 4 and Ticket 5 defects, then passed the final range through `6265ac69`. | Use separate Standards and Spec contexts with an exact source range and an explicit review cap. |
+| model / effort | role and sample | observed quality | current use | calibration |
+| --- | --- | --- | --- | --- |
+| Astra / high, medium, low | implementation, debug repair, Coverage review, and coordination | Astra/medium found the final DG15 bypass. The retained debug author needed three attempts and one approved Standards-only extension before all axes passed. | Use medium for Coverage and debug validation. Use low for bounded coding when the user selects it. | unknown |
+| Terra / medium, high | implementation, latest 10 bounded tickets and repairs | Terra/high implemented FT311 ticket 4 with live evidence open. Review found the missing triage input contract, and repair added its five inputs. | Medium for exact one-seam tickets under coordinator mutation. High when one fact crosses multiple policy consumers. | unknown |
+| Terra / high, medium, low | research and seam inspection, latest 5 assignments; semantic review, latest 10 axis passes | On `bounded-repair-policy`, all three Terra/high axes passed before a cross-harness reviewer found two policy defects. Each axis verified the repairs; Coverage corrected one source-identity claim after the coordinator checked Git. | Standards, Spec, and Coverage review in separate contexts; independently census production callers. | unknown |
+| Luna / max, medium | prose implementation and bounded repairs | Luna preserved the Ticket 4 prose pass. Review found owner-identity and instruction-shape defects that required an Astra repair and refreshed adoption evidence. | Use Luna for narrow prose changes after an owner census and before independent review. | unknown |
+| Sol / high | retained implementation and adoption work | Sol completed substantive guidance and fresh adoption work. Coordinator checks found stale source identity and one final parser defect outside the prose. | Use Sol/high for exact specification chunks under independent review and coordinator probes. | unknown |
+| Sol / high | Standards and Spec review | Separate Sol/high axes found Ticket 4 and Ticket 5 defects, then passed the final range through `6265ac69`. | Use separate Standards and Spec contexts with an exact source range and an explicit review cap. | unknown |
 
 ## Representative evidence
 

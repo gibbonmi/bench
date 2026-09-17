@@ -364,6 +364,69 @@ Each run reports no skip. The elapsed time is the package time the verb reports.
 
 `bench structure` lists no file this ticket edits.
 
+## CD4 ticket 5 author evidence
+
+The ticket defines the calibration measure in the scorecard README and carries it in both provider files. The README gains one Measures row and two update-contract bullets. Each provider routing table gains one `calibration` column. The README has no prior anchor, so these two anchors are its first.
+
+### Column and cell scenario
+
+Every routing cell reads `unknown`, because no labeled pair exists before this build's retro. The contract bullet states this rule: a provider with no labeled pair shows `unknown` in the calibration cell. A later retro replaces one cell with a Brier mean, a pair count, and an abstention count.
+
+The Claude scorecard's six routing rows each show `unknown` in the new column:
+
+| model / effort | calibration |
+| --- | --- |
+| Fable / low–high | unknown |
+| Fable / high | unknown |
+| Opus / high | unknown |
+| Opus / medium, low | unknown |
+| Sonnet / high | unknown |
+| Sonnet / low–medium | unknown |
+
+The OpenAI scorecard's six routing rows carry the same column and the same `unknown` cells. No other cell's bytes changed.
+
+### Done-claim table
+
+The author wrote no label cell. CR24 and CR26 are `verified`, because each ran its named check with a red-then-green log. CR25 is `claimed`, because no check grades the column; the Spec axis reads both provider files.
+
+| row | status | confidence | label |
+| --- | --- | --- | --- |
+| CR24 | verified | 9 |  |
+| CR25 | claimed | 8 |  |
+| CR26 | verified | 9 |  |
+
+### Red-then-green log
+
+| row | red | green |
+| --- | --- | --- |
+| CR24 | `bit,...,omit,failed,1,yes` with `calibration: the scorecard Measures table needs the calibration row` | `bench test --check docs-currency-workflow` passes |
+| CR26 | `bit,...,omit,failed,1,yes` with `calibration: the scorecard must keep the measure as one routing input with no tier move` | `bench test --check docs-currency-workflow` passes |
+| CR25 | no executed red; the column is review-owned | both provider files carry the column with `unknown` in every cell |
+
+Each omission probe ran `bench probe capture/agent-performance/README.md --omit "<the row or sentence>" --check docs-currency-workflow`. Each baseline passed, each omission failed `TestRootConformance` with its own diagnostic, and the probe restored the subject. `TestEveryRetainedFixtureBitesThroughRegisteredOwner` passed with the two new canaries, so both bite.
+
+### Probe verdict
+
+The self-probe swaps `never moves a tier on its own` for `moves a tier when the mean improves`. The verdict line reads `bit,capture/agent-performance/README.md,swap,failed,1,yes`. The failed test is `TestRootConformance`, and it reported `calibration: the scorecard must keep the measure as one routing input with no tier move`.
+
+### Verification table
+
+Each run reports no skip. The elapsed time is the package time the verb reports.
+
+| check | verdict | elapsed |
+| --- | --- | --- |
+| `bench test --check docs-currency-workflow` | pass | 837 ms |
+| `bench test --package ./internal/anchors/... --run 'TestCalibration'` | pass | 49 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 10433 ms |
+| `bench test --check guidance-prose-budgets` | pass | 5 ms |
+| `go vet ./...` | pass | no output |
+| `bench gate-prose . -- four Markdown files` | pass | no output |
+| `wc -l capture/agent-performance/README.md` | 48 | no output |
+| `wc -l capture/agent-performance/claude-models.md` | 49 | no output |
+| `wc -l capture/agent-performance/open-ai-models.md` | 56 | no output |
+
+Both provider files hold fewer than 120 lines.
+
 ## CD1 review
 
 The frozen pair is base `9148850200714f000eec2fbf44cddea6182f95c7` and tip `09f26779f65b7938f313cff9ec877fabe9d009f5`. The reviewer directed the review line. The first pass of every chunk review runs fable / medium. Every later pass on the same chunk runs sonnet / xhigh. Each axis ran in its own read-only worktree.
