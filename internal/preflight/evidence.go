@@ -63,18 +63,20 @@ func prepareEvidenceCommand(root, slug, base, sourceTip, name string, quota uint
 		staged.Discard()
 		return out, code
 	}
-	identity, err := staged.Publish(attempt)
-	if err != nil {
-		return storeRefusal(err), 1
-	}
+	// The response renders before publication, so a response that cannot render
+	// publishes nothing.
 	m := pack.Manifest()
 	text, err := chargeevidence.Prepared{
-		Evidence: identity, Mode: m.Selection.Mode, Base: m.Selection.Base, SourceTip: m.Selection.SourceTip,
+		Evidence: pack.Identity(), Mode: m.Selection.Mode, Base: m.Selection.Base, SourceTip: m.Selection.SourceTip,
 		Assignment: assignment, Sources: len(m.Sources), Pages: len(m.Pages), ManifestBytes: len(pack.ManifestBytes()),
-		Next: evidenceInvocation(identity, ""),
+		Next: evidenceInvocation(pack.Identity(), ""),
 	}.Encode()
 	if err != nil {
+		staged.Discard()
 		return toon.RenderError(err) + "\n", 1
+	}
+	if _, err := staged.Publish(attempt); err != nil {
+		return storeRefusal(err), 1
 	}
 	return text, 0
 }
