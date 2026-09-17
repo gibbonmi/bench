@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
 func assertProposalRefusal(t *testing.T, out string, code int, want string) {
@@ -19,10 +21,10 @@ func assertProposalRefusal(t *testing.T, out string, code int, want string) {
 
 func advanceProposalFromCurrent(t *testing.T) {
 	t.Helper()
-	runGit(t, "update-ref", "refs/heads/main", "HEAD")
-	mustWriteFile(t, "internal/example/after.go", "package example\n")
-	runGit(t, "add", "internal/example/after.go")
-	runGit(t, "commit", "-q", "-m", "advance proposal source")
+	preflighttest.RunGit(t, "update-ref", "refs/heads/main", "HEAD")
+	preflighttest.MustWriteFile(t, "internal/example/after.go", "package example\n")
+	preflighttest.RunGit(t, "add", "internal/example/after.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "advance proposal source")
 }
 
 func TestWritesProposalGrammar(t *testing.T) {
@@ -63,7 +65,7 @@ func TestWritesProposalSnapshotRefusals(t *testing.T) {
 	t.Run("pin mismatch", func(t *testing.T) {
 		root, slug := seedProposal(t)
 		args := proposalArgs(t, root, slug)
-		args[8] = runGit(t, "rev-parse", "main")
+		args[8] = preflighttest.RunGit(t, "rev-parse", "main")
 		out, code := Command(args)
 		assertProposalRefusal(t, out, code, "tip-current")
 	})
@@ -71,7 +73,7 @@ func TestWritesProposalSnapshotRefusals(t *testing.T) {
 	t.Run("dirty checkout", func(t *testing.T) {
 		root, slug := seedProposal(t)
 		args := proposalArgs(t, root, slug)
-		mustWriteFile(t, "dirty.txt", "dirty\n")
+		preflighttest.MustWriteFile(t, "dirty.txt", "dirty\n")
 		out, code := Command(args)
 		assertProposalRefusal(t, out, code, "checkout required")
 	})
@@ -81,16 +83,16 @@ func TestWritesProposalSnapshotRefusals(t *testing.T) {
 		mutate func(*testing.T, int)
 	}{
 		{"head movement", func(t *testing.T, n int) {
-			mustWriteFile(t, "head-move.txt", string(rune('0'+n))+"\n")
-			runGit(t, "add", "head-move.txt")
-			runGit(t, "commit", "-q", "-m", "move head")
+			preflighttest.MustWriteFile(t, "head-move.txt", string(rune('0'+n))+"\n")
+			preflighttest.RunGit(t, "add", "head-move.txt")
+			preflighttest.RunGit(t, "commit", "-q", "-m", "move head")
 		}},
 		{"index movement", func(t *testing.T, n int) {
-			mustWriteFile(t, "index-move.txt", string(rune('0'+n))+"\n")
-			runGit(t, "add", "index-move.txt")
+			preflighttest.MustWriteFile(t, "index-move.txt", string(rune('0'+n))+"\n")
+			preflighttest.RunGit(t, "add", "index-move.txt")
 		}},
 		{"required byte movement", func(t *testing.T, n int) {
-			mustWriteFile(t, buildPhase, "# moved "+string(rune('0'+n))+"\n")
+			preflighttest.MustWriteFile(t, chargesource.BuildPhase, "# moved "+string(rune('0'+n))+"\n")
 		}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -118,7 +120,7 @@ func TestWritesProposalSnapshotRefusals(t *testing.T) {
 			calls++
 			if calls == 1 {
 				path := "specs/" + slug + "/spec.md"
-				mustWriteFile(t, path, strings.Replace(specBody(slug), "Status: staged", "Status: draft", 1))
+				preflighttest.MustWriteFile(t, path, strings.Replace(preflighttest.SpecBody(slug), "Status: staged", "Status: draft", 1))
 			}
 		})
 		out, code := Command(args)
@@ -132,7 +134,7 @@ func TestWritesProposalSnapshotRefusals(t *testing.T) {
 	t.Run("final recapture error discards output", func(t *testing.T) {
 		root, slug := seedProposal(t)
 		args := proposalArgs(t, root, slug)
-		index := strings.TrimSpace(runGit(t, "rev-parse", "--git-path", "index"))
+		index := strings.TrimSpace(preflighttest.RunGit(t, "rev-parse", "--git-path", "index"))
 		restore := diff.SetSnapshotAfterReadForTest(func() {
 			if err := os.Remove(index); err != nil {
 				t.Fatal(err)
@@ -147,24 +149,24 @@ func TestWritesProposalSnapshotRefusals(t *testing.T) {
 func TestWritesProposalRequiredInputs(t *testing.T) {
 	t.Run("ignored required source absent at tip", func(t *testing.T) {
 		root, slug := seedProposal(t)
-		if err := os.Remove(buildPhase); err != nil {
+		if err := os.Remove(chargesource.BuildPhase); err != nil {
 			t.Fatal(err)
 		}
-		mustWriteFile(t, ".gitignore", buildPhase+"\n")
-		runGit(t, "add", "-A")
-		runGit(t, "commit", "-q", "-m", "remove required source")
-		mustWriteFile(t, buildPhase, "# ignored live source\n")
+		preflighttest.MustWriteFile(t, ".gitignore", chargesource.BuildPhase+"\n")
+		preflighttest.RunGit(t, "add", "-A")
+		preflighttest.RunGit(t, "commit", "-q", "-m", "remove required source")
+		preflighttest.MustWriteFile(t, chargesource.BuildPhase, "# ignored live source\n")
 		advanceProposalFromCurrent(t)
 		out, code := Command(proposalArgs(t, root, slug))
-		assertProposalRefusal(t, out, code, buildPhase+" is absent or unreadable at source tip")
+		assertProposalRefusal(t, out, code, chargesource.BuildPhase+" is absent or unreadable at source tip")
 	})
 
 	t.Run("required source differs from tip", func(t *testing.T) {
 		root, slug := seedProposal(t)
-		runGit(t, "update-index", "--assume-unchanged", buildPhase)
-		mustWriteFile(t, buildPhase, "# live drift\n")
+		preflighttest.RunGit(t, "update-index", "--assume-unchanged", chargesource.BuildPhase)
+		preflighttest.MustWriteFile(t, chargesource.BuildPhase, "# live drift\n")
 		out, code := Command(proposalArgs(t, root, slug))
-		assertProposalRefusal(t, out, code, buildPhase+" does not match source tip")
+		assertProposalRefusal(t, out, code, chargesource.BuildPhase+" does not match source tip")
 	})
 
 	t.Run("unreadable fixture inventory", func(t *testing.T) {
@@ -183,19 +185,19 @@ func TestWritesProposalRequiredInputs(t *testing.T) {
 		prepare func(*testing.T)
 	}{
 		{"live link", func(t *testing.T) {
-			if err := os.Remove(buildPhase); err != nil {
+			if err := os.Remove(chargesource.BuildPhase); err != nil {
 				t.Fatal(err)
 			}
-			mustWriteFile(t, "phase-target.md", "# phase\n")
-			if err := os.Symlink("../../phase-target.md", buildPhase); err != nil {
+			preflighttest.MustWriteFile(t, "phase-target.md", "# phase\n")
+			if err := os.Symlink("../../phase-target.md", chargesource.BuildPhase); err != nil {
 				t.Fatal(err)
 			}
 		}},
 		{"dangling link", func(t *testing.T) {
-			if err := os.Remove(buildPhase); err != nil {
+			if err := os.Remove(chargesource.BuildPhase); err != nil {
 				t.Fatal(err)
 			}
-			if err := os.Symlink("missing", buildPhase); err != nil {
+			if err := os.Symlink("missing", chargesource.BuildPhase); err != nil {
 				t.Fatal(err)
 			}
 		}},
@@ -203,20 +205,20 @@ func TestWritesProposalRequiredInputs(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			root, slug := seedProposal(t)
 			test.prepare(t)
-			runGit(t, "add", "-A")
-			runGit(t, "commit", "-q", "-m", "special source")
+			preflighttest.RunGit(t, "add", "-A")
+			preflighttest.RunGit(t, "commit", "-q", "-m", "special source")
 			advanceProposalFromCurrent(t)
 			out, code := Command(proposalArgs(t, root, slug))
-			assertProposalRefusal(t, out, code, buildPhase)
+			assertProposalRefusal(t, out, code, chargesource.BuildPhase)
 		})
 	}
 
 	t.Run("fifo", func(t *testing.T) {
 		root, slug := seedProposal(t)
-		if err := os.Remove(buildPhase); err != nil {
+		if err := os.Remove(chargesource.BuildPhase); err != nil {
 			t.Fatal(err)
 		}
-		if err := syscall.Mkfifo(filepath.Clean(buildPhase), 0o600); err != nil {
+		if err := syscall.Mkfifo(filepath.Clean(chargesource.BuildPhase), 0o600); err != nil {
 			t.Fatal(err)
 		}
 		out, code := Command(proposalArgs(t, root, slug))

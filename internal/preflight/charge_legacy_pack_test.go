@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
 // legacyChargeCase is one enumerated legacy build charge response, checked against the
@@ -25,19 +27,9 @@ func legacyChargeRun(t *testing.T, root string, args []string) (string, int, str
 	return out, code, root, args[6], args[8]
 }
 
-// legacyCommitted commits every change and repins the charge arguments to the new tip.
-func legacyCommitted(t *testing.T, root, slug, message string, full bool) []string {
-	t.Helper()
-	runGit(t, "add", "-A")
-	runGit(t, "commit", "-q", "-m", message)
-	args := chargeArgs(t, root, slug, full)
-	args[8] = runGit(t, "rev-parse", "HEAD")
-	return args
-}
-
 func replacePhase(t *testing.T, prepare func(t *testing.T)) {
 	t.Helper()
-	if err := os.Remove(buildPhase); err != nil {
+	if err := os.Remove(chargesource.BuildPhase); err != nil {
 		t.Fatal(err)
 	}
 	prepare(t)
@@ -59,27 +51,29 @@ func requiredSourceMutations() []requiredSourceMutation {
 			return args
 		}},
 		{"empty phase", func(t *testing.T, root, slug string, args []string) []string {
-			mustWriteFile(t, buildPhase, "")
+			preflighttest.MustWriteFile(t, chargesource.BuildPhase, "")
 			return args
 		}},
 		{"symlink phase", func(t *testing.T, root, slug string, args []string) []string {
 			replacePhase(t, func(t *testing.T) {
-				if err := os.Symlink("../skills/bench-craft-delegate/SKILL.md", buildPhase); err != nil {
+				if err := os.Symlink("../skills/bench-craft-delegate/SKILL.md", chargesource.BuildPhase); err != nil {
 					t.Fatal(err)
 				}
 			})
 			return args
 		}},
 		{"directory phase", func(t *testing.T, root, slug string, args []string) []string {
-			replacePhase(t, func(t *testing.T) { mustWriteFile(t, filepath.Join(buildPhase, "inner.md"), "# Inner\n") })
+			replacePhase(t, func(t *testing.T) {
+				preflighttest.MustWriteFile(t, filepath.Join(chargesource.BuildPhase, "inner.md"), "# Inner\n")
+			})
 			return args
 		}},
 		{"control byte phase", func(t *testing.T, root, slug string, args []string) []string {
-			mustWriteFile(t, buildPhase, "unsafe \x1b source\n")
+			preflighttest.MustWriteFile(t, chargesource.BuildPhase, "unsafe \x1b source\n")
 			return args
 		}},
 		{"dirty checkout", func(t *testing.T, root, slug string, args []string) []string {
-			mustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n// dirty\n")
+			preflighttest.MustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n// dirty\n")
 			return args
 		}},
 		{"missing ticket", func(t *testing.T, root, slug string, args []string) []string {
@@ -91,10 +85,10 @@ func requiredSourceMutations() []requiredSourceMutation {
 			return args
 		}},
 		{"no assignment", func(t *testing.T, root, slug string, args []string) []string {
-			return []string{"build", slug, "--charge", "--ticket", "one.md", "--base", runGit(t, "rev-parse", "main"), "--source-tip", runGit(t, "rev-parse", "HEAD")}
+			return []string{"build", slug, "--charge", "--ticket", "one.md", "--base", preflighttest.RunGit(t, "rev-parse", "main"), "--source-tip", preflighttest.RunGit(t, "rev-parse", "HEAD")}
 		}},
 		{"foreign assignment", func(t *testing.T, root, slug string, args []string) []string {
-			activeAssignment(t, root, t.TempDir())
+			preflighttest.ActiveAssignment(t, root, t.TempDir())
 			return args
 		}},
 	}
@@ -115,73 +109,73 @@ func mutationNamed(t *testing.T, name string) func(t *testing.T, root, slug stri
 func legacyChargeCases() []legacyChargeCase {
 	return []legacyChargeCase{
 		{"full", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := seedConformant(t)
-			return legacyChargeRun(t, root, chargeArgs(t, root, slug, true))
+			root, slug := preflighttest.SeedConformant(t)
+			return legacyChargeRun(t, root, preflighttest.ChargeArgs(t, root, slug, true))
 		}},
 		{"unicode-without-final-newline-full", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := seedConformant(t)
-			ticket := strings.Replace(ticketDoc("One", "PF1", "PF2"), "Writes: specs", "Writes: specs, internal/example", 1)
-			mustWriteFile(t, "specs/"+slug+"/tickets/one.md", strings.TrimSuffix(ticket, "\n")+"\n\nRésumé 雪\t\"q\" \\ x")
-			return legacyChargeRun(t, root, legacyCommitted(t, root, slug, "unicode ticket", true))
+			root, slug := preflighttest.SeedConformant(t)
+			ticket := strings.Replace(preflighttest.TicketDoc("One", "PF1", "PF2"), "Writes: specs", "Writes: specs, internal/example", 1)
+			preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", strings.TrimSuffix(ticket, "\n")+"\n\nRésumé 雪\t\"q\" \\ x")
+			return legacyChargeRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "unicode ticket", true))
 		}},
 		{"refusal-absent-phase", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := seedConformant(t)
+			root, slug := preflighttest.SeedConformant(t)
 			mutationNamed(t, "absent phase")(t, root, slug, nil)
-			return legacyChargeRun(t, root, legacyCommitted(t, root, slug, "absent phase", false))
+			return legacyChargeRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "absent phase", false))
 		}},
 		{"refusal-empty-phase", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := seedConformant(t)
+			root, slug := preflighttest.SeedConformant(t)
 			mutationNamed(t, "empty phase")(t, root, slug, nil)
-			return legacyChargeRun(t, root, legacyCommitted(t, root, slug, "empty phase", false))
+			return legacyChargeRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "empty phase", false))
 		}},
 		{"refusal-symlink-phase", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := seedConformant(t)
+			root, slug := preflighttest.SeedConformant(t)
 			mutationNamed(t, "symlink phase")(t, root, slug, nil)
-			return legacyChargeRun(t, root, legacyCommitted(t, root, slug, "linked phase", false))
+			return legacyChargeRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "linked phase", false))
 		}},
 		{"refusal-directory-phase", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := seedConformant(t)
+			root, slug := preflighttest.SeedConformant(t)
 			mutationNamed(t, "directory phase")(t, root, slug, nil)
-			return legacyChargeRun(t, root, legacyCommitted(t, root, slug, "directory phase", false))
+			return legacyChargeRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "directory phase", false))
 		}},
 		{"refusal-control-byte-phase", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := seedConformant(t)
+			root, slug := preflighttest.SeedConformant(t)
 			mutationNamed(t, "control byte phase")(t, root, slug, nil)
-			return legacyChargeRun(t, root, legacyCommitted(t, root, slug, "control phase", false))
+			return legacyChargeRun(t, root, preflighttest.LegacyCommitted(t, root, slug, "control phase", false))
 		}},
 		{"refusal-dirty-checkout", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := seedConformant(t)
-			args := mutationNamed(t, "dirty checkout")(t, root, slug, chargeArgs(t, root, slug, false))
+			root, slug := preflighttest.SeedConformant(t)
+			args := mutationNamed(t, "dirty checkout")(t, root, slug, preflighttest.ChargeArgs(t, root, slug, false))
 			return legacyChargeRun(t, root, args)
 		}},
 		{"refusal-missing-ticket", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := seedConformant(t)
-			args := mutationNamed(t, "missing ticket")(t, root, slug, chargeArgs(t, root, slug, false))
+			root, slug := preflighttest.SeedConformant(t)
+			args := mutationNamed(t, "missing ticket")(t, root, slug, preflighttest.ChargeArgs(t, root, slug, false))
 			return legacyChargeRun(t, root, args)
 		}},
 		{"refusal-source-tip-mismatch", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := seedConformant(t)
-			args := mutationNamed(t, "source-tip mismatch")(t, root, slug, chargeArgs(t, root, slug, false))
+			root, slug := preflighttest.SeedConformant(t)
+			args := mutationNamed(t, "source-tip mismatch")(t, root, slug, preflighttest.ChargeArgs(t, root, slug, false))
 			out, code := Command(args)
-			return out, code, root, args[6], runGit(t, "rev-parse", "HEAD")
+			return out, code, root, args[6], preflighttest.RunGit(t, "rev-parse", "HEAD")
 		}},
 		{"refusal-inactive-assignment", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := seedConformant(t)
+			root, slug := preflighttest.SeedConformant(t)
 			args := mutationNamed(t, "no assignment")(t, root, slug, nil)
 			return legacyChargeRun(t, root, args)
 		}},
 		{"refusal-foreign-assignment", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := seedConformant(t)
-			args := mutationNamed(t, "foreign assignment")(t, root, slug, chargeArgs(t, root, slug, false))
+			root, slug := preflighttest.SeedConformant(t)
+			args := mutationNamed(t, "foreign assignment")(t, root, slug, preflighttest.ChargeArgs(t, root, slug, false))
 			return legacyChargeRun(t, root, args)
 		}},
 		{"refusal-persistent-movement", func(t *testing.T) (string, int, string, string, string) {
-			root, slug := seedConformant(t)
-			args := chargeArgs(t, root, slug, false)
+			root, slug := preflighttest.SeedConformant(t)
+			args := preflighttest.ChargeArgs(t, root, slug, false)
 			calls := 0
 			restore := diff.SetSnapshotAfterReadForTest(func() {
 				calls++
-				mustWriteFile(t, "internal/example/foo.go", "package example\n// moved "+strconv.Itoa(calls)+"\n")
+				preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n// moved "+strconv.Itoa(calls)+"\n")
 			})
 			defer restore()
 			return legacyChargeRun(t, root, args)

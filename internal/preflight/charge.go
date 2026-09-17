@@ -15,12 +15,6 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-const (
-	delegateSkill     = ".agents/skills/bench-craft-delegate/SKILL.md"
-	delegateProcedure = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
-	buildPhase        = ".agents/commands/bench-implement-spec.md"
-)
-
 type chargeSource struct {
 	path string
 	data []byte

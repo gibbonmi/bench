@@ -7,28 +7,30 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
 func TestChargeHeadAndIndexMovementRefuseAfterOneRetry(t *testing.T) {
 	for _, movement := range []string{"head", "index", "required source"} {
 		t.Run(movement, func(t *testing.T) {
-			root, slug := seedConformant(t)
-			args := chargeArgs(t, root, slug, false)
+			root, slug := preflighttest.SeedConformant(t)
+			args := preflighttest.ChargeArgs(t, root, slug, false)
 			calls := 0
 			restore := diff.SetSnapshotAfterReadForTest(func() {
 				calls++
 				path := "internal/example/movement.go"
 				body := "package example\n// movement " + string(rune('0'+calls)) + "\n"
 				if movement == "required source" {
-					path = buildPhase
+					path = chargesource.BuildPhase
 					body = "# Build phase\n\nmovement " + string(rune('0'+calls)) + "\n"
 				}
-				mustWriteFile(t, path, body)
+				preflighttest.MustWriteFile(t, path, body)
 				if movement != "required source" {
-					runGit(t, "add", path)
+					preflighttest.RunGit(t, "add", path)
 				}
 				if movement == "head" {
-					runGit(t, "commit", "-q", "-m", "move head")
+					preflighttest.RunGit(t, "commit", "-q", "-m", "move head")
 				}
 			})
 			out, code := Command(args)
@@ -43,9 +45,9 @@ func TestChargeHeadAndIndexMovementRefuseAfterOneRetry(t *testing.T) {
 }
 
 func TestChargeDirtySourceRefusesWithoutCompleteOutput(t *testing.T) {
-	root, slug := seedConformant(t)
-	args := chargeArgs(t, root, slug, false)
-	mustWriteFile(t, "internal/example/dirty.go", "package example\n")
+	root, slug := preflighttest.SeedConformant(t)
+	args := preflighttest.ChargeArgs(t, root, slug, false)
+	preflighttest.MustWriteFile(t, "internal/example/dirty.go", "package example\n")
 	out, code := Command(args)
 	if code != 1 || !strings.Contains(out, "checkout required") ||
 		!strings.Contains(out, "source checkout is dirty") ||
@@ -56,8 +58,8 @@ func TestChargeDirtySourceRefusesWithoutCompleteOutput(t *testing.T) {
 }
 
 func TestChargeRepeatedPinnedInputsAreIdentical(t *testing.T) {
-	root, slug := seedConformant(t)
-	args := chargeArgs(t, root, slug, true)
+	root, slug := preflighttest.SeedConformant(t)
+	args := preflighttest.ChargeArgs(t, root, slug, true)
 	first, firstCode := Command(args)
 	second, secondCode := Command(args)
 	if firstCode != 0 || secondCode != 0 || first != second {
@@ -67,7 +69,7 @@ func TestChargeRepeatedPinnedInputsAreIdentical(t *testing.T) {
 }
 
 func TestChargeFinalSnapshotFailureDiscardsPreparedOutput(t *testing.T) {
-	root, slug := seedConformant(t)
+	root, slug := preflighttest.SeedConformant(t)
 	head := filepath.Join(root, ".git", "HEAD")
 	moved := head + ".during-charge"
 	restoreSeam := diff.SetSnapshotAfterReadForTest(func() {
@@ -77,7 +79,7 @@ func TestChargeFinalSnapshotFailureDiscardsPreparedOutput(t *testing.T) {
 	})
 	defer restoreSeam()
 
-	out, code := Command(chargeArgs(t, root, slug, true))
+	out, code := Command(preflighttest.ChargeArgs(t, root, slug, true))
 	if err := os.Rename(moved, head); err != nil {
 		t.Fatal(err)
 	}

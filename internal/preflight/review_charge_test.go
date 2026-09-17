@@ -7,15 +7,16 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/diff"
-	toonlib "github.com/toon-format/toon-go"
+	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
 func seedReviewEvidence(t *testing.T, poisonedConsumer bool) (root, slug string, args []string) {
 	t.Helper()
 	slug = "example"
-	root = initRepo(t)
-	mustWriteFile(t, "go.mod", "module example.com/review\n\ngo 1.25\n")
-	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug,
+	root = preflighttest.StartRepo(t)
+	preflighttest.MustWriteFile(t, "go.mod", "module example.com/review\n\ngo 1.25\n")
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug,
 		"- `target/` (review fixture)",
 		"- `edited/` (review fixture)",
 		"- `outside/` (review fixture)",
@@ -23,34 +24,34 @@ func seedReviewEvidence(t *testing.T, poisonedConsumer bool) (root, slug string,
 		"- `.agents/skills/bench-craft-review/` (review instructions)",
 		"- `.agents/commands/bench-review-implementation.md` (review phase)",
 	))
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2"))
-	mustWriteFile(t, delegateSkill, "# Delegation skill\n")
-	mustWriteFile(t, delegateProcedure,
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF2"))
+	preflighttest.MustWriteFile(t, chargesource.DelegateSkill, "# Delegation skill\n")
+	preflighttest.MustWriteFile(t, chargesource.DelegateProcedure,
 		"# Delegation procedure\n\nFocused suite: bench test --package ./internal/preflight\n")
-	mustWriteFile(t, buildPhase, "# Build phase\n")
-	mustWriteFile(t, reviewSkill,
+	preflighttest.MustWriteFile(t, chargesource.BuildPhase, "# Build phase\n")
+	preflighttest.MustWriteFile(t, reviewSkill,
 		"# Review skill\n\n## Standards\n\nRules.\n\n## Spec\n\nRequirements.\n\n## Coverage\n\nEdges.\n")
-	mustWriteFile(t, reviewPhase, "# Review phase\n\nUse the three canonical axes.\n")
-	mustWriteFile(t, "target/target.go", "package target\n\nfunc Changed() int { return 0 }\nfunc Gone() {}\n")
-	mustWriteFile(t, "outside/user.go",
+	preflighttest.MustWriteFile(t, reviewPhase, "# Review phase\n\nUse the three canonical axes.\n")
+	preflighttest.MustWriteFile(t, "target/target.go", "package target\n\nfunc Changed() int { return 0 }\nfunc Gone() {}\n")
+	preflighttest.MustWriteFile(t, "outside/user.go",
 		"package outside\n\nimport \"example.com/review/target\"\n\nfunc Use() int { return target.Changed() }\n")
-	mustWriteFile(t, "edited/user.go",
+	preflighttest.MustWriteFile(t, "edited/user.go",
 		"package edited\n\nimport \"example.com/review/target\"\n\nfunc Use() int { return target.Changed() }\n")
 	if poisonedConsumer {
-		mustWriteFile(t, "outside/a\x1b.go", "package outside\n\nimport \"example.com/review/target\"\n\nfunc Poisoned() int { return target.Changed() }\n")
+		preflighttest.MustWriteFile(t, "outside/a\x1b.go", "package outside\n\nimport \"example.com/review/target\"\n\nfunc Poisoned() int { return target.Changed() }\n")
 	}
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "base")
-	runGit(t, "checkout", "-q", "-b", "feature")
-	mustWriteFile(t, "target/target.go", "package target\n\nfunc Changed() int { return 1 }\n")
-	mustWriteFile(t, "edited/user.go", "package edited\n\nimport \"example.com/review/target\"\n\n// Use is an edited consumer.\nfunc Use() int { return target.Changed() }\n")
-	mustWriteFile(t, "notes/a \"quote\" \\ café*.txt", "review π evidence\n")
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "review source")
-	activeAssignment(t, root, root)
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "base")
+	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+	preflighttest.MustWriteFile(t, "target/target.go", "package target\n\nfunc Changed() int { return 1 }\n")
+	preflighttest.MustWriteFile(t, "edited/user.go", "package edited\n\nimport \"example.com/review/target\"\n\n// Use is an edited consumer.\nfunc Use() int { return target.Changed() }\n")
+	preflighttest.MustWriteFile(t, "notes/a \"quote\" \\ café*.txt", "review π evidence\n")
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "review source")
+	preflighttest.ActiveAssignment(t, root, root)
 	args = []string{
-		"review", slug, "--charge", "--base", runGit(t, "rev-parse", "main"),
-		"--source-tip", runGit(t, "rev-parse", "HEAD"), "--full",
+		"review", slug, "--charge", "--base", preflighttest.RunGit(t, "rev-parse", "main"),
+		"--source-tip", preflighttest.RunGit(t, "rev-parse", "HEAD"), "--full",
 	}
 	return root, slug, args
 }
@@ -87,7 +88,7 @@ func TestReviewChargeSharedEvidence(t *testing.T) {
 	restoreSnapshot := diff.SetSnapshotAfterReadForTest(func() {
 		if !moved {
 			moved = true
-			runGit(t, "branch", "-f", "main", args[6])
+			preflighttest.RunGit(t, "branch", "-f", "main", args[6])
 		}
 	})
 	defer restoreSnapshot()
@@ -126,14 +127,14 @@ func TestReviewChargeEvidence(t *testing.T) {
 		t.Errorf("diff evidence was duplicated across axes:\n%s", out)
 	}
 	consumerOutput := evidenceContent(t, out, "consumers")
-	document := decodeMap(t, consumerOutput)
+	document := preflighttest.DecodeMap(t, consumerOutput)
 	assertBlastRow(t, document, "target.Changed", "outside/user.go", false)
 	assertBlastRow(t, document, "target.Changed", "edited/user.go", true)
-	deleted := tableRows(t, document, "blast_deleted")
+	deleted := preflighttest.TableRows(t, document, "blast_deleted")
 	if len(deleted) != 1 || deleted[0]["changed_symbol"] != "target.Gone" {
 		t.Fatalf("deleted rows = %#v, want target.Gone", deleted)
 	}
-	citation := tableRows(t, document, "citation")
+	citation := preflighttest.TableRows(t, document, "citation")
 	if len(citation) != 1 || citation[0]["version"] != "fixture-version" || citation[0]["hash"] == "" {
 		t.Fatalf("citation = %#v, want injected version and hash", citation)
 	}
@@ -141,7 +142,7 @@ func TestReviewChargeEvidence(t *testing.T) {
 
 func evidenceContent(t *testing.T, output, source string) string {
 	t.Helper()
-	for _, row := range tableRows(t, decodeMap(t, output), "evidence") {
+	for _, row := range preflighttest.TableRows(t, preflighttest.DecodeMap(t, output), "evidence") {
 		if row["source"] == source {
 			content, ok := row["content"].(string)
 			if !ok {
@@ -154,49 +155,19 @@ func evidenceContent(t *testing.T, output, source string) string {
 	return ""
 }
 
-func decodeMap(t *testing.T, output string) map[string]any {
-	t.Helper()
-	decoded, err := toonlib.DecodeString(output)
-	if err != nil {
-		t.Fatalf("decode TOON: %v\n%s", err, output)
-	}
-	document, ok := decoded.(map[string]any)
-	if !ok {
-		t.Fatalf("decoded packet = %T, want object", decoded)
-	}
-	return document
-}
-
-func tableRows(t *testing.T, document map[string]any, table string) []map[string]any {
-	t.Helper()
-	values, ok := document[table].([]any)
-	if !ok {
-		t.Fatalf("%s = %T, want table", table, document[table])
-	}
-	rows := make([]map[string]any, len(values))
-	for i, value := range values {
-		row, ok := value.(map[string]any)
-		if !ok {
-			t.Fatalf("%s row %d = %T, want object", table, i, value)
-		}
-		rows[i] = row
-	}
-	return rows
-}
-
 func assertBlastRow(t *testing.T, document map[string]any, symbol, file string, touched bool) {
 	t.Helper()
 	want := map[string]any{"changed_symbol": symbol, "file": file, "touched": touched}
-	for _, row := range tableRows(t, document, "blast") {
+	for _, row := range preflighttest.TableRows(t, document, "blast") {
 		if row["changed_symbol"] == symbol && row["file"] == file && row["touched"] == touched {
 			return
 		}
 	}
-	t.Fatalf("blast rows omitted %#v: %#v", want, tableRows(t, document, "blast"))
+	t.Fatalf("blast rows omitted %#v: %#v", want, preflighttest.TableRows(t, document, "blast"))
 }
 
 func TestReviewChargeAxes(t *testing.T) {
-	for _, source := range []string{reviewSkill, reviewPhase, delegateSkill, delegateProcedure} {
+	for _, source := range []string{reviewSkill, reviewPhase, chargesource.DelegateSkill, chargesource.DelegateProcedure} {
 		t.Run(source, func(t *testing.T) {
 			_, _, args := seedReviewEvidence(t, false)
 			before, code := Command(args)
@@ -204,10 +175,10 @@ func TestReviewChargeAxes(t *testing.T) {
 				t.Fatalf("initial charge exit = %d:\n%s", code, before)
 			}
 			changed := "# Current canonical source\n\n" + source + " changed.\n"
-			mustWriteFile(t, source, changed)
-			runGit(t, "add", source)
-			runGit(t, "commit", "-q", "-m", "change review source")
-			args[6] = runGit(t, "rev-parse", "HEAD")
+			preflighttest.MustWriteFile(t, source, changed)
+			preflighttest.RunGit(t, "add", source)
+			preflighttest.RunGit(t, "commit", "-q", "-m", "change review source")
+			args[6] = preflighttest.RunGit(t, "rev-parse", "HEAD")
 			after, code := Command(args)
 			identity := (chargeSource{path: source, data: []byte(changed)}).identity()
 			if code != 0 || after == before || !strings.Contains(after, identity) ||
@@ -221,10 +192,10 @@ func TestReviewChargeAxes(t *testing.T) {
 func TestReviewChargeRefusals(t *testing.T) {
 	t.Run("collector refusal", func(t *testing.T) {
 		_, _, args := seedReviewEvidence(t, false)
-		mustWriteFile(t, "outside/broken.go", "package outside\n\nfunc Broken( {\n")
-		runGit(t, "add", "outside/broken.go")
-		runGit(t, "commit", "-q", "-m", "ill typed source")
-		args[6] = runGit(t, "rev-parse", "HEAD")
+		preflighttest.MustWriteFile(t, "outside/broken.go", "package outside\n\nfunc Broken( {\n")
+		preflighttest.RunGit(t, "add", "outside/broken.go")
+		preflighttest.RunGit(t, "commit", "-q", "-m", "ill typed source")
+		args[6] = preflighttest.RunGit(t, "rev-parse", "HEAD")
 		assertReviewRefusal(t, args, "consumer evidence failed")
 	})
 
@@ -235,7 +206,7 @@ func TestReviewChargeRefusals(t *testing.T) {
 
 	t.Run("dirty checkout", func(t *testing.T) {
 		_, _, args := seedReviewEvidence(t, false)
-		mustWriteFile(t, "outside/dirty.go", "package outside\n")
+		preflighttest.MustWriteFile(t, "outside/dirty.go", "package outside\n")
 		assertReviewRefusal(t, args, "source checkout is dirty")
 	})
 
@@ -251,7 +222,7 @@ func TestReviewChargeRefusals(t *testing.T) {
 		restore := diff.SetSnapshotAfterReadForTest(func() {
 			calls++
 			if calls == 1 {
-				mustWriteFile(t, "specs/"+slug+"/spec.md", strings.Replace(specBody(slug), "Status: staged", "Status: draft", 1))
+				preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", strings.Replace(preflighttest.SpecBody(slug), "Status: staged", "Status: draft", 1))
 			}
 		})
 		defer restore()
@@ -287,9 +258,9 @@ func TestReviewChargeRefusals(t *testing.T) {
 		if err := os.Remove(reviewPhase); err != nil {
 			t.Fatal(err)
 		}
-		runGit(t, "add", "-A")
-		runGit(t, "commit", "-q", "-m", "remove review source")
-		args[6] = runGit(t, "rev-parse", "HEAD")
+		preflighttest.RunGit(t, "add", "-A")
+		preflighttest.RunGit(t, "commit", "-q", "-m", "remove review source")
+		args[6] = preflighttest.RunGit(t, "rev-parse", "HEAD")
 		assertReviewRefusal(t, args, reviewPhase)
 	})
 
@@ -301,7 +272,7 @@ func TestReviewChargeRefusals(t *testing.T) {
 			}
 			switch kind {
 			case "empty":
-				mustWriteFile(t, reviewPhase, "")
+				preflighttest.MustWriteFile(t, reviewPhase, "")
 			case "live symlink":
 				if err := os.Symlink("../skills/bench-craft-review/SKILL.md", reviewPhase); err != nil {
 					t.Fatal(err)
@@ -311,9 +282,9 @@ func TestReviewChargeRefusals(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			runGit(t, "add", "-A")
-			runGit(t, "commit", "-q", "-m", "replace review source")
-			args[6] = runGit(t, "rev-parse", "HEAD")
+			preflighttest.RunGit(t, "add", "-A")
+			preflighttest.RunGit(t, "commit", "-q", "-m", "replace review source")
+			args[6] = preflighttest.RunGit(t, "rev-parse", "HEAD")
 			assertReviewRefusal(t, args, reviewPhase)
 		})
 	}
@@ -329,14 +300,14 @@ func TestReviewChargeMovementDiscardsPayload(t *testing.T) {
 				suffix := string(rune('0' + calls))
 				switch movement {
 				case "head":
-					mustWriteFile(t, "notes/head.txt", "movement "+suffix+"\n")
-					runGit(t, "add", "notes/head.txt")
-					runGit(t, "commit", "-q", "-m", "move head")
+					preflighttest.MustWriteFile(t, "notes/head.txt", "movement "+suffix+"\n")
+					preflighttest.RunGit(t, "add", "notes/head.txt")
+					preflighttest.RunGit(t, "commit", "-q", "-m", "move head")
 				case "index":
-					mustWriteFile(t, "notes/index.txt", "movement "+suffix+"\n")
-					runGit(t, "add", "notes/index.txt")
+					preflighttest.MustWriteFile(t, "notes/index.txt", "movement "+suffix+"\n")
+					preflighttest.RunGit(t, "add", "notes/index.txt")
 				case "required source":
-					mustWriteFile(t, reviewPhase, "# Review phase\n\nmovement "+suffix+"\n")
+					preflighttest.MustWriteFile(t, reviewPhase, "# Review phase\n\nmovement "+suffix+"\n")
 				}
 			})
 			defer restore()

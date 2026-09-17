@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
 // TestCommandBuildFresh is B1 (the fresh-build contract test). With no
@@ -35,7 +37,7 @@ func TestCommandBuildFresh(t *testing.T) {
 // every declared row, `build` runs rows-owned and rows-membership for real
 // — green, not not-applicable — while diff-nonempty stays not-applicable.
 func TestCommandBuildResumedTicketsRunForReal(t *testing.T) {
-	_, slug := seedConformant(t) // seedConformant's tickets/one.md cites PF1 and PF2
+	_, slug := preflighttest.SeedConformant(t) // SeedConformant's tickets/one.md cites PF1 and PF2
 
 	out, code := Command([]string{"build", slug})
 	if code != 0 {
@@ -74,11 +76,11 @@ func TestCommandBuildEmptyTicketsRed(t *testing.T) {
 // diff-nonempty are not-applicable.
 func TestCommandBuildStaleBaseRedDespiteNA(t *testing.T) {
 	_, slug := seedBuildFresh(t)
-	runGit(t, "checkout", "-q", "main")
-	mustWriteFile(t, "unrelated.txt", "advance main\n")
-	runGit(t, "add", "unrelated.txt")
-	runGit(t, "commit", "-q", "-m", "advance main")
-	runGit(t, "checkout", "-q", "feature")
+	preflighttest.RunGit(t, "checkout", "-q", "main")
+	preflighttest.MustWriteFile(t, "unrelated.txt", "advance main\n")
+	preflighttest.RunGit(t, "add", "unrelated.txt")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "advance main")
+	preflighttest.RunGit(t, "checkout", "-q", "feature")
 
 	out, code := Command([]string{"build", slug})
 	if code != 1 {
@@ -99,9 +101,9 @@ func TestCommandBuildStaleBaseRedDespiteNA(t *testing.T) {
 // exit 1.
 func TestCommandBuildOutOfFenceRed(t *testing.T) {
 	_, slug := seedBuildFresh(t)
-	mustWriteFile(t, "unfenced/other.go", "package other\n")
-	runGit(t, "add", "unfenced/other.go")
-	runGit(t, "commit", "-q", "-m", "out of fence")
+	preflighttest.MustWriteFile(t, "unfenced/other.go", "package other\n")
+	preflighttest.RunGit(t, "add", "unfenced/other.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "out of fence")
 
 	out, code := Command([]string{"build", slug})
 	if code != 1 {
@@ -125,26 +127,26 @@ func ticketWithoutAcceptance(blocker, covers string, writes ...string) string {
 func seedSixGrammarReds(t *testing.T) (root, slug string) {
 	t.Helper()
 	slug = "example"
-	root = initRepo(t)
-	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	mustWriteFile(t, "tests/canary/example-family/pinning-fixture/EXPECT", "planted diagnostic\n")
-	mustWriteFile(t, "tests/canary/example-family/pinning-fixture/BASE", "internal/example/pinned.go\n")
-	mustWriteFile(t, "internal/example/pinned.go", "package example\n")
-	mustWriteFile(t, "internal/toon/toon_test.go", "package toon\n")
-	mustWriteFile(t, "internal/example/sys_test.go", "//go:build system\n\npackage example\n")
-	mustWriteFile(t, "specs/"+slug+"/tickets/a.md", ticketWithoutAcceptance(
+	root = preflighttest.StartRepo(t)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug))
+	preflighttest.MustWriteFile(t, "tests/canary/example-family/pinning-fixture/EXPECT", "planted diagnostic\n")
+	preflighttest.MustWriteFile(t, "tests/canary/example-family/pinning-fixture/BASE", "internal/example/pinned.go\n")
+	preflighttest.MustWriteFile(t, "internal/example/pinned.go", "package example\n")
+	preflighttest.MustWriteFile(t, "internal/toon/toon_test.go", "package toon\n")
+	preflighttest.MustWriteFile(t, "internal/example/sys_test.go", "//go:build system\n\npackage example\n")
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/a.md", ticketWithoutAcceptance(
 		"b.md", "PF1",
 		"internal/example/pinned.go", "internal/toon/toon_test.go",
 		"internal/example/sys_test.go", "gone.go"))
-	mustWriteFile(t, "specs/"+slug+"/tickets/b.md",
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/b.md",
 		"# B\n\nBlocked by: a.md\nWrites: specs\nCovers: PF2\n\n"+
 			"## What to build\n\nBuild it.\n\n## Acceptance\n\n- [ ] It is built.\n")
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "c0")
-	runGit(t, "checkout", "-q", "-b", "feature")
-	mustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
-	runGit(t, "add", "internal/"+slug+"/foo.go")
-	runGit(t, "commit", "-q", "-m", "c1")
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+	preflighttest.MustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
+	preflighttest.RunGit(t, "add", "internal/"+slug+"/foo.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
 	return root, slug
 }
 

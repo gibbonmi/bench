@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
 type proposalTicketSpec struct {
@@ -18,8 +20,8 @@ func setProposalGraph(t *testing.T, slug string, specs ...proposalTicketSpec) {
 		names = append(names, spec.name)
 	}
 	replanSpec(t, slug, names...)
-	runGit(t, "add", "specs/"+slug)
-	runGit(t, "commit", "-q", "-m", "set proposal graph")
+	preflighttest.RunGit(t, "add", "specs/"+slug)
+	preflighttest.RunGit(t, "commit", "-q", "-m", "set proposal graph")
 }
 
 func assertOrdering(t *testing.T, out string, pairs ...string) {

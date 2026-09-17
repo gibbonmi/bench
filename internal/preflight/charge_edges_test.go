@@ -5,22 +5,25 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
 func TestChargeRefusesLiveLinkedRequiredSource(t *testing.T) {
-	root, slug := seedConformant(t)
-	if err := os.Remove(buildPhase); err != nil {
+	root, slug := preflighttest.SeedConformant(t)
+	if err := os.Remove(chargesource.BuildPhase); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Symlink("../../internal/"+slug+"/foo.go", buildPhase); err != nil {
+	if err := os.Symlink("../../internal/"+slug+"/foo.go", chargesource.BuildPhase); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, "add", "-A")
-	runGit(t, "commit", "-q", "-m", "linked phase")
-	args := chargeArgs(t, root, slug, false)
-	args[8] = runGit(t, "rev-parse", "HEAD")
+	preflighttest.RunGit(t, "add", "-A")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "linked phase")
+	args := preflighttest.ChargeArgs(t, root, slug, false)
+	args[8] = preflighttest.RunGit(t, "rev-parse", "HEAD")
 	out, code := Command(args)
-	if code != 1 || !strings.Contains(out, "source required") || !strings.Contains(out, buildPhase) || strings.Contains(out, "complete,next}") {
+	if code != 1 || !strings.Contains(out, "source required") || !strings.Contains(out, chargesource.BuildPhase) || strings.Contains(out, "complete,next}") {
 		t.Fatalf("live linked source = (%d):\n%s", code, out)
 	}
 }
@@ -36,16 +39,16 @@ func TestChargeRequiredSpecAndCoverageRefuse(t *testing.T) {
 			}
 		}},
 		{"coverage", func(t *testing.T, slug string) {
-			mustWriteFile(t, "specs/"+slug+"/spec.md", strings.Replace(specBody(slug), "### Acceptance coverage map", "### Other map", 1))
+			preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", strings.Replace(preflighttest.SpecBody(slug), "### Acceptance coverage map", "### Other map", 1))
 		}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			root, slug := seedConformant(t)
+			root, slug := preflighttest.SeedConformant(t)
 			test.prepare(t, slug)
-			runGit(t, "add", "-A")
-			runGit(t, "commit", "-q", "-m", "missing charge input")
-			args := chargeArgs(t, root, slug, false)
-			args[8] = runGit(t, "rev-parse", "HEAD")
+			preflighttest.RunGit(t, "add", "-A")
+			preflighttest.RunGit(t, "commit", "-q", "-m", "missing charge input")
+			args := preflighttest.ChargeArgs(t, root, slug, false)
+			args[8] = preflighttest.RunGit(t, "rev-parse", "HEAD")
 			out, code := Command(args)
 			if code != 1 || !strings.Contains(out, "error:") || strings.Contains(out, "complete,next}") {
 				t.Fatalf("%s required source = (%d):\n%s", test.name, code, out)
@@ -55,14 +58,14 @@ func TestChargeRequiredSpecAndCoverageRefuse(t *testing.T) {
 }
 
 func TestChargeRefusesRequiredSourceOutsidePinnedTip(t *testing.T) {
-	root, slug := seedConformant(t)
-	runGit(t, "rm", "--cached", buildPhase)
-	mustWriteFile(t, filepath.Join(root, ".git/info/exclude"), buildPhase+"\n")
-	runGit(t, "commit", "-q", "-m", "remove required source from tip")
+	root, slug := preflighttest.SeedConformant(t)
+	preflighttest.RunGit(t, "rm", "--cached", chargesource.BuildPhase)
+	preflighttest.MustWriteFile(t, filepath.Join(root, ".git/info/exclude"), chargesource.BuildPhase+"\n")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "remove required source from tip")
 
-	out, code := Command(chargeArgs(t, root, slug, true))
+	out, code := Command(preflighttest.ChargeArgs(t, root, slug, true))
 	if code != 1 || !strings.Contains(out, "source required") ||
-		!strings.Contains(out, buildPhase) || !strings.Contains(out, "source tip") ||
+		!strings.Contains(out, chargesource.BuildPhase) || !strings.Contains(out, "source tip") ||
 		strings.Contains(out, "complete,next}") {
 		t.Fatalf("ignored source outside tip = (%d):\n%s", code, out)
 	}
@@ -84,7 +87,7 @@ func TestChargeDistinguishesAbsentAndEmptyRequiredInputs(t *testing.T) {
 				}
 			},
 			empty: func(t *testing.T, slug string) {
-				mustWriteFile(t, "specs/"+slug+"/spec.md", "")
+				preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", "")
 			},
 			absentWant: "spec folder is missing",
 			emptyWant:  "Status:  (want staged)",
@@ -109,14 +112,14 @@ func TestChargeDistinguishesAbsentAndEmptyRequiredInputs(t *testing.T) {
 		{
 			name: "selected ticket",
 			absent: func(t *testing.T, slug string) {
-				mustWriteFile(t, "specs/"+slug+"/tickets/two.md", ticketDoc("Two", "PF1", "PF2"))
+				preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/two.md", preflighttest.TicketDoc("Two", "PF1", "PF2"))
 				if err := os.Remove("specs/" + slug + "/tickets/one.md"); err != nil {
 					t.Fatal(err)
 				}
 				replanSpec(t, slug, "two.md")
 			},
 			empty: func(t *testing.T, slug string) {
-				mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "")
+				preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", "")
 			},
 			absentWant: "selected ticket",
 			emptyWant:  "tickets-parse",
@@ -131,11 +134,11 @@ func TestChargeDistinguishesAbsentAndEmptyRequiredInputs(t *testing.T) {
 				want    string
 			}{{"absent", test.absent, test.absentWant}, {"empty", test.empty, test.emptyWant}} {
 				t.Run(state.name, func(t *testing.T) {
-					root, slug := seedConformant(t)
+					root, slug := preflighttest.SeedConformant(t)
 					state.prepare(t, slug)
-					runGit(t, "add", "-A")
-					runGit(t, "commit", "-q", "-m", state.name+" required input")
-					out, code := Command(chargeArgs(t, root, slug, false))
+					preflighttest.RunGit(t, "add", "-A")
+					preflighttest.RunGit(t, "commit", "-q", "-m", state.name+" required input")
+					out, code := Command(preflighttest.ChargeArgs(t, root, slug, false))
 					outputs[i] = out
 					if code != 1 || !strings.Contains(out, state.want) ||
 						!strings.Contains(out, " — ") || strings.Contains(out, "complete,next}") {
@@ -151,21 +154,21 @@ func TestChargeDistinguishesAbsentAndEmptyRequiredInputs(t *testing.T) {
 }
 
 func TestChargeDistinguishesAbsentAndEmptyGuidanceSources(t *testing.T) {
-	for _, source := range []string{delegateSkill, delegateProcedure, buildPhase} {
+	for _, source := range []string{chargesource.DelegateSkill, chargesource.DelegateProcedure, chargesource.BuildPhase} {
 		t.Run(source, func(t *testing.T) {
 			for _, state := range []string{"absent", "empty"} {
 				t.Run(state, func(t *testing.T) {
-					root, slug := seedConformant(t)
+					root, slug := preflighttest.SeedConformant(t)
 					if state == "absent" {
 						if err := os.Remove(source); err != nil {
 							t.Fatal(err)
 						}
 					} else {
-						mustWriteFile(t, source, "")
+						preflighttest.MustWriteFile(t, source, "")
 					}
-					runGit(t, "add", "-A")
-					runGit(t, "commit", "-q", "-m", state+" guidance source")
-					out, code := Command(chargeArgs(t, root, slug, false))
+					preflighttest.RunGit(t, "add", "-A")
+					preflighttest.RunGit(t, "commit", "-q", "-m", state+" guidance source")
+					out, code := Command(preflighttest.ChargeArgs(t, root, slug, false))
 					if code != 1 || !strings.Contains(out, "source required") ||
 						!strings.Contains(out, source+" is "+state) ||
 						!strings.Contains(out, "restore the named canonical source") ||
@@ -179,8 +182,8 @@ func TestChargeDistinguishesAbsentAndEmptyGuidanceSources(t *testing.T) {
 }
 
 func TestChargeGrammarBoundariesRefuse(t *testing.T) {
-	root, slug := seedConformant(t)
-	valid := chargeArgs(t, root, slug, false)
+	root, slug := preflighttest.SeedConformant(t)
+	valid := preflighttest.ChargeArgs(t, root, slug, false)
 	base, tip := valid[6], valid[8]
 	tests := []struct {
 		name string

@@ -3,14 +3,17 @@ package preflight
 import (
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
 const proposalRegistryCitation = "internal/tickets/registry_data.go"
 
 func proposalArgs(t *testing.T, root, slug string) []string {
 	t.Helper()
-	activeAssignment(t, root, root)
-	return []string{"build", slug, "--propose-writes", "--ticket", "one.md", "--base", runGit(t, "rev-parse", "main"), "--source-tip", runGit(t, "rev-parse", "HEAD")}
+	preflighttest.ActiveAssignment(t, root, root)
+	return []string{"build", slug, "--propose-writes", "--ticket", "one.md", "--base", preflighttest.RunGit(t, "rev-parse", "main"), "--source-tip", preflighttest.RunGit(t, "rev-parse", "HEAD")}
 }
 
 func seedProposal(t *testing.T) (string, string) {
@@ -21,37 +24,37 @@ func seedProposal(t *testing.T) (string, string) {
 
 func seedProposalWith(t *testing.T, selectedWrites string, others map[string]string, extraFence ...string) (string, string) {
 	t.Helper()
-	root := initRepo(t)
+	root := preflighttest.StartRepo(t)
 	slug := "example"
-	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug, extraFence...))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug, extraFence...))
 	writeProposalTicket(t, slug, "one.md", "One", "none", selectedWrites)
 	for name, writes := range others {
 		writeProposalTicket(t, slug, name, strings.TrimSuffix(name, ".md"), "none", writes)
 	}
-	mustWriteFile(t, "tests/canary/example-family/pinning-fixture/BASE", "internal/example/pinned.go\n")
-	mustWriteFile(t, "tests/canary/example-family/pinning-fixture/EXPECT", "fixture\n")
-	mustWriteFile(t, "internal/example/pinned.go", "package example\n")
-	mustWriteFile(t, "internal/toon/toon.go", "package toon\n")
-	mustWriteFile(t, "internal/toon/other.go", "package toon\n")
-	mustWriteFile(t, "internal/toon/toon_test.go", "package toon\n")
-	mustWriteFile(t, "internal/conformance/data_handling_test.go", "package conformance\n")
-	mustWriteFile(t, delegateSkill, "# Delegation skill\n")
-	mustWriteFile(t, delegateProcedure, "# Delegation procedure\n")
-	mustWriteFile(t, buildPhase, "# Build phase\n")
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "c0")
-	runGit(t, "checkout", "-q", "-b", "feature")
-	mustWriteFile(t, "internal/example/foo.go", "package example\n")
-	runGit(t, "add", "internal/example/foo.go")
-	runGit(t, "commit", "-q", "-m", "c1")
+	preflighttest.MustWriteFile(t, "tests/canary/example-family/pinning-fixture/BASE", "internal/example/pinned.go\n")
+	preflighttest.MustWriteFile(t, "tests/canary/example-family/pinning-fixture/EXPECT", "fixture\n")
+	preflighttest.MustWriteFile(t, "internal/example/pinned.go", "package example\n")
+	preflighttest.MustWriteFile(t, "internal/toon/toon.go", "package toon\n")
+	preflighttest.MustWriteFile(t, "internal/toon/other.go", "package toon\n")
+	preflighttest.MustWriteFile(t, "internal/toon/toon_test.go", "package toon\n")
+	preflighttest.MustWriteFile(t, "internal/conformance/data_handling_test.go", "package conformance\n")
+	preflighttest.MustWriteFile(t, chargesource.DelegateSkill, "# Delegation skill\n")
+	preflighttest.MustWriteFile(t, chargesource.DelegateProcedure, "# Delegation procedure\n")
+	preflighttest.MustWriteFile(t, chargesource.BuildPhase, "# Build phase\n")
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+	preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n")
+	preflighttest.RunGit(t, "add", "internal/example/foo.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
 	return root, slug
 }
 
 func writeProposalTicket(t *testing.T, slug, name, title, blockers, writes string) {
 	t.Helper()
-	body := strings.Replace(ticketDoc(title, "PF1", "PF2"), "Blocked by: none", "Blocked by: "+blockers, 1)
+	body := strings.Replace(preflighttest.TicketDoc(title, "PF1", "PF2"), "Blocked by: none", "Blocked by: "+blockers, 1)
 	body = strings.Replace(body, "Writes: specs", "Writes: "+writes, 1)
-	mustWriteFile(t, "specs/"+slug+"/tickets/"+name, body)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/"+name, body)
 }
 
 func assertProposalRow(t *testing.T, out, path, source, fence string) {
@@ -88,8 +91,8 @@ func TestWritesProposalClosure(t *testing.T) {
 	}
 
 	root, slug := seedProposal(t)
-	activeAssignment(t, root, root)
-	charge := append([]string{"build", slug, "--charge", "--ticket", "one.md", "--base", runGit(t, "rev-parse", "main"), "--source-tip", runGit(t, "rev-parse", "HEAD")}, "--full")
+	preflighttest.ActiveAssignment(t, root, root)
+	charge := append([]string{"build", slug, "--charge", "--ticket", "one.md", "--base", preflighttest.RunGit(t, "rev-parse", "main"), "--source-tip", preflighttest.RunGit(t, "rev-parse", "HEAD")}, "--full")
 	if chargeOut, chargeCode := Command(charge); chargeCode != 1 || !strings.Contains(chargeOut, "fixture-closure") {
 		t.Errorf("charge after proposal = (%d):\n%s", chargeCode, chargeOut)
 	}
@@ -113,8 +116,8 @@ func TestWritesProposalAlreadyCovered(t *testing.T) {
 			fences := []string{"- `tests/canary/`", "- `internal/toon/`", "- `internal/conformance/`"}
 			root, slug := seedProposalWith(t, test.writes, map[string]string{"two.md": "tests/canary/example-family/pinning-fixture/EXPECT"}, fences...)
 			writeProposalTicket(t, slug, "two.md", "Two", "one.md", "tests/canary/example-family/pinning-fixture/EXPECT")
-			runGit(t, "add", "specs/"+slug)
-			runGit(t, "commit", "-q", "-m", "approve closure and ordering")
+			preflighttest.RunGit(t, "add", "specs/"+slug)
+			preflighttest.RunGit(t, "commit", "-q", "-m", "approve closure and ordering")
 			args := proposalArgs(t, root, slug)
 			out, code := Command(args)
 			if code != 0 || !strings.Contains(out, "writes_proposal[0]{path,source,fence}") || !strings.Contains(out, "ordering[0]{ticket,other,required}") {
@@ -124,7 +127,7 @@ func TestWritesProposalAlreadyCovered(t *testing.T) {
 			if repeatCode != 0 || repeat != out {
 				t.Fatalf("repeat covered closure = (%d, equal=%t):\n%s", repeatCode, repeat == out, repeat)
 			}
-			charge := []string{"build", slug, "--charge", "--ticket", "one.md", "--base", runGit(t, "rev-parse", "main"), "--source-tip", runGit(t, "rev-parse", "HEAD"), "--full"}
+			charge := []string{"build", slug, "--charge", "--ticket", "one.md", "--base", preflighttest.RunGit(t, "rev-parse", "main"), "--source-tip", preflighttest.RunGit(t, "rev-parse", "HEAD"), "--full"}
 			if chargeOut, chargeCode := Command(charge); chargeCode != 0 || !strings.Contains(chargeOut, "\"true\"") {
 				t.Fatalf("approved charge = (%d):\n%s", chargeCode, chargeOut)
 			}
@@ -134,12 +137,12 @@ func TestWritesProposalAlreadyCovered(t *testing.T) {
 
 // TestWritesProposalRefusalOrder covers DP14: grammar wins over closure output.
 func TestWritesProposalRefusalOrder(t *testing.T) {
-	for _, body := range []string{"# broken\n", strings.Replace(ticketDoc("One", "PF1", "PF2"), "Writes: specs", "Writes: internal/example/pinned.go\nWrites: specs", 1)} {
+	for _, body := range []string{"# broken\n", strings.Replace(preflighttest.TicketDoc("One", "PF1", "PF2"), "Writes: specs", "Writes: internal/example/pinned.go\nWrites: specs", 1)} {
 		root, slug := seedProposal(t)
 		path := "specs/" + slug + "/tickets/one.md"
-		mustWriteFile(t, path, body)
-		runGit(t, "add", path)
-		runGit(t, "commit", "-q", "-m", "malformed ticket")
+		preflighttest.MustWriteFile(t, path, body)
+		preflighttest.RunGit(t, "add", path)
+		preflighttest.RunGit(t, "commit", "-q", "-m", "malformed ticket")
 		out, code := Command(proposalArgs(t, root, slug))
 		if code != 1 || !strings.Contains(out, "tickets-parse") || strings.Contains(out, "writes_proposal") {
 			t.Fatalf("grammar before closure = (%d):\n%s", code, out)

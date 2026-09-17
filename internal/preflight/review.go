@@ -3,15 +3,17 @@ package preflight
 import (
 	"errors"
 	"fmt"
-	benchgit "github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"path/filepath"
 	"strings"
+
+	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/reviewrecord"
 
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/consumers"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/preflight/chargesource"
 	"github.com/gibbonmi/bench/internal/toon"
 	toonlib "github.com/toon-format/toon-go"
 )
@@ -144,8 +146,8 @@ func reviewChargeSources(root, sourceTip, specPath string) (reviewChargeSourceSe
 		{specPath, &set.spec},
 		{reviewSkill, &set.reviewSkill},
 		{reviewPhase, &set.reviewPhase},
-		{delegateSkill, &set.delegateSkill},
-		{delegateProcedure, &set.delegateProcedure},
+		{chargesource.DelegateSkill, &set.delegateSkill},
+		{chargesource.DelegateProcedure, &set.delegateProcedure},
 	})
 	if failure != "" {
 		return reviewChargeSourceSet{}, failure

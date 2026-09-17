@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -16,10 +17,10 @@ import (
 // structured red.
 func TestCommandTicketsAbsent(t *testing.T) {
 	slug := "example"
-	initRepo(t)
-	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "c0")
+	preflighttest.StartRepo(t)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug))
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -35,7 +36,7 @@ func TestCommandTicketsAbsent(t *testing.T) {
 // wrapper is the test-level bound the ticket requires: a hang mutation fails the test
 // instead of the suite.
 func TestCommandSpecialFileInTickets(t *testing.T) {
-	_, slug := seedConformant(t)
+	_, slug := preflighttest.SeedConformant(t)
 	fifoPath := filepath.Join("specs", slug, "tickets", "fifo")
 	if err := syscall.Mkfifo(fifoPath, 0o644); err != nil {
 		t.Fatalf("Mkfifo: %v", err)
@@ -77,8 +78,8 @@ func TestCommandNotInRepo(t *testing.T) {
 // missing slug, and unknown flag each exit 2. `build` is a real accepted mode now (see
 // TestCommandBuildFresh and its siblings), so it is no longer one of these branches.
 func TestCommandUsageBranches(t *testing.T) {
-	initRepo(t)
-	runGit(t, "commit", "-q", "--allow-empty", "-m", "c0")
+	preflighttest.StartRepo(t)
+	preflighttest.RunGit(t, "commit", "-q", "--allow-empty", "-m", "c0")
 
 	cases := []struct {
 		name string
@@ -104,7 +105,7 @@ func TestCommandUsageBranches(t *testing.T) {
 // tried path, exit 1.
 func TestCommandMissingSpecNamesPath(t *testing.T) {
 	slug := "example"
-	initRepo(t)
+	preflighttest.StartRepo(t)
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -124,7 +125,7 @@ func TestCommandMissingSpecNamesPath(t *testing.T) {
 // distinct error from the missing-spec case, naming the spec path.
 func TestCommandDanglingSymlinkClassifiedBroken(t *testing.T) {
 	slug := "example"
-	initRepo(t)
+	preflighttest.StartRepo(t)
 	specPath := filepath.Join("specs", slug, "spec.md")
 	if err := os.MkdirAll(filepath.Dir(specPath), 0o755); err != nil {
 		t.Fatalf("MkdirAll: %v", err)
@@ -153,14 +154,14 @@ func TestCommandDanglingSymlinkClassifiedBroken(t *testing.T) {
 // validator's own message, exit 1.
 func TestCommandInvalidCoverageMapCarriesMessage(t *testing.T) {
 	slug := "example"
-	initRepo(t)
+	preflighttest.StartRepo(t)
 	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
 		"### Acceptance coverage map\n" +
 		"| row | story | behavior | seam | why it catches the failure |\n" +
 		"|---|---|---|---|---|\n" +
 		"| PF1 | 1 | does x | cli seam |\n" + // 4 cells where 5 are wanted
 		"\n## Ownership fences\n\n- `internal/" + slug + "/`\n"
-	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -179,14 +180,14 @@ func TestCommandInvalidCoverageMapCarriesMessage(t *testing.T) {
 // column) is refused. The error names the row-ID opt-in, exit 1.
 func TestCommandNoRowIDMapNamesOptIn(t *testing.T) {
 	slug := "example"
-	initRepo(t)
+	preflighttest.StartRepo(t)
 	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
 		"### Acceptance coverage map\n" +
 		"| story | behavior | seam | why it catches the failure |\n" +
 		"|---|---|---|---|\n" +
 		"| 1 | does x | cli seam | catches z |\n" +
 		"\n## Ownership fences\n\n- `internal/" + slug + "/`\n"
-	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -205,13 +206,13 @@ func TestCommandNoRowIDMapNamesOptIn(t *testing.T) {
 // exit 1.
 func TestCommandFencesAbsentError(t *testing.T) {
 	slug := "example"
-	initRepo(t)
+	preflighttest.StartRepo(t)
 	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
 		"### Acceptance coverage map\n" +
 		"| row | story | behavior | seam | why it catches the failure |\n" +
 		"|---|---|---|---|---|\n" +
 		"| PF1 | 1 | does x | cli seam | catches z |\n"
-	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -228,14 +229,14 @@ func TestCommandFencesAbsentError(t *testing.T) {
 // Exit is 1.
 func TestCommandFencesEmptyError(t *testing.T) {
 	slug := "example"
-	initRepo(t)
+	preflighttest.StartRepo(t)
 	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
 		"### Acceptance coverage map\n" +
 		"| row | story | behavior | seam | why it catches the failure |\n" +
 		"|---|---|---|---|---|\n" +
 		"| PF1 | 1 | does x | cli seam | catches z |\n" +
 		"\n## Ownership fences\n\n## Next section\n"
-	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -253,14 +254,14 @@ func TestCommandFencesEmptyError(t *testing.T) {
 // authorization.
 func TestCommandFencesParenTokenNeverAuthorizes(t *testing.T) {
 	slug := "example"
-	initRepo(t)
+	preflighttest.StartRepo(t)
 	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
 		"### Acceptance coverage map\n" +
 		"| row | story | behavior | seam | why it catches the failure |\n" +
 		"|---|---|---|---|---|\n" +
 		"| PF1 | 1 | does x | cli seam | catches z |\n" +
 		"\n## Ownership fences\n\n- see also (`internal/" + slug + "/`)\n"
-	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -282,16 +283,16 @@ func TestCommandFencesParenTokenNeverAuthorizes(t *testing.T) {
 // the section itself non-empty.
 func TestCommandFencesWrappedParenNeverAuthorizes(t *testing.T) {
 	slug := "example"
-	initRepo(t)
-	body := specBody(slug, "- see also (", "  `internal/wrapped/`)")
-	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2"))
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "c0")
-	runGit(t, "checkout", "-q", "-b", "feature")
-	mustWriteFile(t, "internal/wrapped/foo.go", "package wrapped\n")
-	runGit(t, "add", "internal/wrapped/foo.go")
-	runGit(t, "commit", "-q", "-m", "c1")
+	preflighttest.StartRepo(t)
+	body := preflighttest.SpecBody(slug, "- see also (", "  `internal/wrapped/`)")
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF2"))
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+	preflighttest.MustWriteFile(t, "internal/wrapped/foo.go", "package wrapped\n")
+	preflighttest.RunGit(t, "add", "internal/wrapped/foo.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -308,16 +309,16 @@ func TestCommandFencesWrappedParenNeverAuthorizes(t *testing.T) {
 // a later line authorizes normally rather than reading as still-nested.
 func TestCommandFencesEntryAfterClosedParenAuthorizes(t *testing.T) {
 	slug := "example"
-	initRepo(t)
-	body := specBody(slug, "- see also (", "  `internal/aside/`)", "- `internal/real/`")
-	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2"))
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "c0")
-	runGit(t, "checkout", "-q", "-b", "feature")
-	mustWriteFile(t, "internal/real/foo.go", "package real\n")
-	runGit(t, "add", "internal/real/foo.go")
-	runGit(t, "commit", "-q", "-m", "c1")
+	preflighttest.StartRepo(t)
+	body := preflighttest.SpecBody(slug, "- see also (", "  `internal/aside/`)", "- `internal/real/`")
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF2"))
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+	preflighttest.MustWriteFile(t, "internal/real/foo.go", "package real\n")
+	preflighttest.RunGit(t, "add", "internal/real/foo.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
 
 	out, code := Command([]string{"review", slug})
 	if code != 0 {
@@ -333,9 +334,9 @@ func TestCommandFencesEntryAfterClosedParenAuthorizes(t *testing.T) {
 // found status, exit 1.
 func TestCommandNonStagedNamesFoundStatus(t *testing.T) {
 	slug := "example"
-	initRepo(t)
-	body := strings.Replace(specBody(slug), "Status: staged", "Status: implemented", 1)
-	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
+	preflighttest.StartRepo(t)
+	body := strings.Replace(preflighttest.SpecBody(slug), "Status: staged", "Status: implemented", 1)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -354,10 +355,10 @@ func TestCommandNonStagedNamesFoundStatus(t *testing.T) {
 // identically to their terminated forms.
 func TestCommandTrailingNewlineParity(t *testing.T) {
 	slug := "example"
-	terminated := specBody(slug)
+	terminated := preflighttest.SpecBody(slug)
 	unterminated := strings.TrimSuffix(terminated, "\n")
 	if unterminated == terminated {
-		t.Fatal("fixture invalid: specBody already lacks a trailing newline")
+		t.Fatal("fixture invalid: SpecBody already lacks a trailing newline")
 	}
 
 	for _, tc := range []struct {
@@ -365,20 +366,20 @@ func TestCommandTrailingNewlineParity(t *testing.T) {
 		specBody  string
 		ticketDoc string
 	}{
-		{"terminated", terminated, ticketDoc("One", "PF1", "PF2")},
-		{"unterminated spec", unterminated, ticketDoc("One", "PF1", "PF2")},
-		{"unterminated ticket", terminated, strings.TrimSuffix(ticketDoc("One", "PF1", "PF2"), "\n")},
+		{"terminated", terminated, preflighttest.TicketDoc("One", "PF1", "PF2")},
+		{"unterminated spec", unterminated, preflighttest.TicketDoc("One", "PF1", "PF2")},
+		{"unterminated ticket", terminated, strings.TrimSuffix(preflighttest.TicketDoc("One", "PF1", "PF2"), "\n")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			initRepo(t)
-			mustWriteFile(t, "specs/"+slug+"/spec.md", tc.specBody)
-			mustWriteFile(t, "specs/"+slug+"/tickets/one.md", tc.ticketDoc)
-			runGit(t, "add", ".")
-			runGit(t, "commit", "-q", "-m", "c0")
-			runGit(t, "checkout", "-q", "-b", "feature")
-			mustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
-			runGit(t, "add", "internal/"+slug+"/foo.go")
-			runGit(t, "commit", "-q", "-m", "c1")
+			preflighttest.StartRepo(t)
+			preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", tc.specBody)
+			preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", tc.ticketDoc)
+			preflighttest.RunGit(t, "add", ".")
+			preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+			preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+			preflighttest.MustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
+			preflighttest.RunGit(t, "add", "internal/"+slug+"/foo.go")
+			preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
 
 			out, code := Command([]string{"review", slug})
 			if code != 0 {

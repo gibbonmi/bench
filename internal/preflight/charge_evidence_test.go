@@ -10,6 +10,8 @@ import (
 
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
@@ -32,25 +34,25 @@ func TestEvidenceRequiredSourceStates(t *testing.T) {
 	} {
 		for _, route := range chargeRoutes {
 			t.Run(test.name+" "+route.name, func(t *testing.T) {
-				root, slug := seedConformant(t)
+				root, slug := preflighttest.SeedConformant(t)
 				mutationNamed(t, test.mutation)(t, root, slug, nil)
-				out, code := Command(legacyCommitted(t, root, slug, test.name, route.full))
+				out, code := Command(preflighttest.LegacyCommitted(t, root, slug, test.name, route.full))
 				if want := phaseRefusal + test.want + sourceNext; code != 1 || out != want {
 					t.Fatalf("%s = (%d, %q), want (1, %q)", test.name, code, out, want)
 				}
-				assertNothingPublished(t, root)
+				preflighttest.AssertNothingPublished(t, root)
 			})
 		}
 	}
 	for _, route := range chargeRoutes {
 		t.Run("CE48 invalid UTF-8 "+route.name, func(t *testing.T) {
-			root, slug := seedConformant(t)
-			mustWriteFile(t, buildPhase, "bad \xff\n")
-			out, code := Command(legacyCommitted(t, root, slug, "CE48 invalid UTF-8", route.full))
+			root, slug := preflighttest.SeedConformant(t)
+			preflighttest.MustWriteFile(t, chargesource.BuildPhase, "bad \xff\n")
+			out, code := Command(preflighttest.LegacyCommitted(t, root, slug, "CE48 invalid UTF-8", route.full))
 			if want := phaseRefusal + "is malformed: invalid UTF-8" + sourceNext; code != 1 || out != want {
 				t.Fatalf("CE48 invalid UTF-8 = (%d, %q), want (1, %q)", code, out, want)
 			}
-			assertNothingPublished(t, root)
+			preflighttest.AssertNothingPublished(t, root)
 		})
 	}
 	for _, test := range []struct {
@@ -95,8 +97,8 @@ func TestEvidencePreparationRefusals(t *testing.T) {
 		t.Run(route.name, func(t *testing.T) { preparationRefusals(t, route.full) })
 	}
 	t.Run("CE128 missing tool", func(t *testing.T) {
-		root, slug := seedConformant(t)
-		args := chargeArgs(t, root, slug, false)
+		root, slug := preflighttest.SeedConformant(t)
+		args := preflighttest.ChargeArgs(t, root, slug, false)
 		path := os.Getenv("PATH")
 		t.Setenv("PATH", t.TempDir())
 		out, code := Command(args)
@@ -104,7 +106,7 @@ func TestEvidencePreparationRefusals(t *testing.T) {
 			t.Fatalf("missing tool = (%d):\n%s", code, out)
 		}
 		t.Setenv("PATH", path)
-		assertNothingPublished(t, root)
+		preflighttest.AssertNothingPublished(t, root)
 	})
 }
 
@@ -115,15 +117,6 @@ var chargeRoutes = []struct {
 	full bool
 }{{"legacy full", true}, {"preparation", false}}
 
-// assertNothingPublished proves that a refused preparation left no artifact and no
-// temporary pack behind.
-func assertNothingPublished(t *testing.T, root string) {
-	t.Helper()
-	if packs, temps := publishedPacks(t, root), stagedTemps(t, root); len(packs) != 0 || len(temps) != 0 {
-		t.Fatalf("refusal left packs %v and temporary packs %v", packs, temps)
-	}
-}
-
 func preparationRefusals(t *testing.T, full bool) {
 	for _, test := range []struct {
 		name string
@@ -131,13 +124,13 @@ func preparationRefusals(t *testing.T, full bool) {
 		want string
 	}{
 		{"CE49 dirty checkout", func(t *testing.T, root, slug string) []string {
-			return mutationNamed(t, "dirty checkout")(t, root, slug, chargeArgs(t, root, slug, full))
+			return mutationNamed(t, "dirty checkout")(t, root, slug, preflighttest.ChargeArgs(t, root, slug, full))
 		}, "error: checkout required: source checkout is dirty — commit or remove local changes and rerun the exact charge\n"},
 		{"CE50 missing ticket", func(t *testing.T, root, slug string) []string {
-			return mutationNamed(t, "missing ticket")(t, root, slug, chargeArgs(t, root, slug, full))
+			return mutationNamed(t, "missing ticket")(t, root, slug, preflighttest.ChargeArgs(t, root, slug, full))
 		}, "error: ticket required: selected ticket \"missing.md\" was not found — pass a ticket basename from the spec tickets directory\n"},
 		{"CE51 source-tip mismatch", func(t *testing.T, root, slug string) []string {
-			return mutationNamed(t, "source-tip mismatch")(t, root, slug, chargeArgs(t, root, slug, full))
+			return mutationNamed(t, "source-tip mismatch")(t, root, slug, preflighttest.ChargeArgs(t, root, slug, full))
 		}, "error: preflight required: tip-current: --source-tip <base> is not the derived source tip <tip> — repair tip-current and rerun the exact charge\n"},
 		{"CE52 no assignment", func(t *testing.T, root, slug string) []string {
 			args := mutationNamed(t, "no assignment")(t, root, slug, nil)
@@ -147,36 +140,36 @@ func preparationRefusals(t *testing.T, full bool) {
 			return args
 		}, "error: assignment required: active assignment is required — run from the assigned worktree\n"},
 		{"CE52 foreign assignment", func(t *testing.T, root, slug string) []string {
-			return mutationNamed(t, "foreign assignment")(t, root, slug, chargeArgs(t, root, slug, full))
+			return mutationNamed(t, "foreign assignment")(t, root, slug, preflighttest.ChargeArgs(t, root, slug, full))
 		}, "error: assignment required: active assignment is required — run from the assigned worktree\n"},
 		{"CE52 owned non-active assignment", func(t *testing.T, root, slug string) []string {
-			args := chargeArgs(t, root, slug, full)
+			args := preflighttest.ChargeArgs(t, root, slug, full)
 			canonical, err := canonicalpath.Resolve(root)
 			if err != nil {
 				t.Fatalf("canonicalpath.Resolve(%q): %v", root, err)
 			}
-			ownedAssignment(t, root, canonical, intent.StateComplete)
+			preflighttest.OwnedAssignment(t, root, canonical, intent.StateComplete)
 			return args
 		}, "error: assignment required: active assignment is required — run from the assigned worktree\n"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			root, slug := seedConformant(t)
+			root, slug := preflighttest.SeedConformant(t)
 			args := test.args(t, root, slug)
 			out, code := Command(args)
-			got := normalizeLegacy(out, root, runGit(t, "rev-parse", "main"), runGit(t, "rev-parse", "HEAD"))
+			got := normalizeLegacy(out, root, preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD"))
 			if code != 1 || got != test.want {
 				t.Fatalf("%s = (%d, %q), want (1, %q)", test.name, code, got, test.want)
 			}
-			assertNothingPublished(t, root)
+			preflighttest.AssertNothingPublished(t, root)
 		})
 	}
 }
 
-// preparedFixtureBuild gathers the seedConformant build inputs for a direct preparation.
+// preparedFixtureBuild gathers the SeedConformant build inputs for a direct preparation.
 func preparedFixtureBuild(t *testing.T) (root string, facts Facts, entry *tickets.Entry, parsed *tickets.Ticket, args []string) {
 	t.Helper()
-	root, slug := seedConformant(t)
-	args = chargeArgs(t, root, slug, true)
+	root, slug := preflighttest.SeedConformant(t)
+	args = preflighttest.ChargeArgs(t, root, slug, true)
 	facts, failure := gatherPinned(root, modeBuild, slug, args[6], args[8], true)
 	if failure != nil {
 		t.Fatalf("gather: %v", failure)
@@ -224,7 +217,7 @@ func TestEvidenceSourcePolicy(t *testing.T) {
 		t.Fatalf("reduced prepare = (%q, %v)", failure, err)
 	}
 	out, code := renderChargeWithPolicy(root, facts, Decide(facts), "one.md", true, reduced)
-	if code != 0 || strings.Contains(out, delegateProcedure) || !strings.Contains(out, "sources[4]{path,identity}") {
+	if code != 0 || strings.Contains(out, chargesource.DelegateProcedure) || !strings.Contains(out, "sources[4]{path,identity}") {
 		t.Fatalf("reduced policy charge still lists the omitted source (%d):\n%s", code, out)
 	}
 }

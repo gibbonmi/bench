@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
 // The expectations in this file are written from the spec's public grammar and response
@@ -38,23 +40,23 @@ func assertTypedRow(t *testing.T, row map[string]any, types map[string]string) {
 
 // TestEvidencePreparedSchema is CE153.
 func TestEvidencePreparedSchema(t *testing.T) {
-	root, slug := seedConformant(t)
-	_, row, out := prepareEvidence(t, chargeArgs(t, root, slug, false))
+	root, slug := preflighttest.SeedConformant(t)
+	_, row, out := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
 	if got := headerLine(out); got != "prepared[1]{evidence,mode,base,source_tip,assignment,selection,metadata,sources,pages,manifest_bytes,response_complete,delivery,next}:" {
 		t.Fatalf("prepared header = %q", got)
 	}
 	assertTypedRow(t, row, map[string]string{"evidence": "string", "mode": "string", "base": "string", "source_tip": "string",
 		"assignment": "string", "selection": "string", "metadata": "string", "sources": "integer", "pages": "integer",
 		"manifest_bytes": "integer", "response_complete": "boolean", "delivery": "string", "next": "string"})
-	if row["mode"] != "build" || row["selection"] != "manifest:selection" || row["metadata"] != "s1" || row["assignment"] != chargeFixtureAssignment || row["sources"] != float64(6) {
+	if row["mode"] != "build" || row["selection"] != "manifest:selection" || row["metadata"] != "s1" || row["assignment"] != preflighttest.ChargeFixtureAssignment || row["sources"] != float64(6) {
 		t.Fatalf("prepared values = %v", row)
 	}
 }
 
 // TestEvidenceManifestPageSchema is CE154 and TestEvidenceSourcePageSchema is CE155.
 func TestEvidenceManifestPageSchema(t *testing.T) {
-	root, slug := seedConformant(t)
-	identity, prepared, _ := prepareEvidence(t, chargeArgs(t, root, slug, false))
+	root, slug := preflighttest.SeedConformant(t)
+	identity, prepared, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
 	page := traverseEvidence(t, identity)[0]
 	assertPageSchema(t, page)
 	if page.row["stream"] != "manifest" || page.row["source"] != "" || page.row["total"] != prepared["manifest_bytes"] || page.row["evidence"] != identity {
@@ -63,8 +65,8 @@ func TestEvidenceManifestPageSchema(t *testing.T) {
 }
 
 func TestEvidenceSourcePageSchema(t *testing.T) {
-	root, slug := seedConformant(t)
-	identity, _, _ := prepareEvidence(t, chargeArgs(t, root, slug, false))
+	root, slug := preflighttest.SeedConformant(t)
+	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
 	for _, page := range traverseEvidence(t, identity) {
 		if page.row["stream"] != "source" {
 			continue
@@ -91,22 +93,22 @@ func assertPageSchema(t *testing.T, page evidencePage) {
 // TestEvidenceTypedCells is CE11: a numeric-looking source tip and every digest decode as
 // strings.
 func TestEvidenceTypedCells(t *testing.T) {
-	root, slug := seedConformant(t)
+	root, slug := preflighttest.SeedConformant(t)
 	t.Setenv("GIT_COMMITTER_DATE", "2026-01-02T03:04:05Z")
 	tip := ""
 	for i := 0; i < 512; i++ {
-		runGit(t, "commit", "--amend", "-q", "-m", "numeric tip "+strconv.Itoa(i))
-		tip = runGit(t, "rev-parse", "HEAD")
+		preflighttest.RunGit(t, "commit", "--amend", "-q", "-m", "numeric tip "+strconv.Itoa(i))
+		tip = preflighttest.RunGit(t, "rev-parse", "HEAD")
 		if tip[0] == '0' && tip[1] >= '0' && tip[1] <= '9' {
 			break
 		}
 	}
-	identity, row, out := prepareEvidence(t, chargeArgs(t, root, slug, false))
+	identity, row, out := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
 	if row["source_tip"] != tip || !strings.Contains(out, ",\""+tip+"\",") {
 		t.Fatalf("source tip = %#v, want string %s", row["source_tip"], tip)
 	}
 	manifest, _ := reconstructEvidence(t, identity, traverseEvidence(t, identity))
-	for _, page := range tableRows(t, decodeMap(t, manifest), "pages") {
+	for _, page := range preflighttest.TableRows(t, preflighttest.DecodeMap(t, manifest), "pages") {
 		if _, ok := page["sha256"].(string); !ok {
 			t.Fatalf("page digest = %#v", page["sha256"])
 		}
@@ -115,8 +117,8 @@ func TestEvidenceTypedCells(t *testing.T) {
 
 // TestEvidenceBuildGrammar is CE150.
 func TestEvidenceBuildGrammar(t *testing.T) {
-	root, slug := seedConformant(t)
-	valid := chargeArgs(t, root, slug, false)
+	root, slug := preflighttest.SeedConformant(t)
+	valid := preflighttest.ChargeArgs(t, root, slug, false)
 	base, tip := valid[6], valid[8]
 	for _, form := range [][]string{
 		valid,
@@ -154,8 +156,8 @@ func TestEvidenceBuildGrammar(t *testing.T) {
 
 // TestEvidenceReadGrammar is CE151.
 func TestEvidenceReadGrammar(t *testing.T) {
-	root, slug := seedConformant(t)
-	identity, _, _ := prepareEvidence(t, chargeArgs(t, root, slug, false))
+	root, slug := preflighttest.SeedConformant(t)
+	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
 	cursor := "v1." + strings.TrimPrefix(identity, "sha256:") + ".m.0.0"
 	for _, form := range [][]string{{"evidence", identity}, {"evidence", identity, "--cursor", cursor}, {"evidence", "--cursor", cursor, identity}} {
 		if out, code := Command(form); code != 0 || !strings.HasPrefix(out, "page[1]") {
@@ -187,8 +189,8 @@ func TestEvidenceReadGrammar(t *testing.T) {
 // TestEvidenceCursorRefusals is CE63. A malformed or foreign cursor refuses before any
 // store access; a well-formed cursor beyond the artifact refuses at the read.
 func TestEvidenceCursorRefusals(t *testing.T) {
-	root, slug := seedConformant(t)
-	identity, _, _ := prepareEvidence(t, chargeArgs(t, root, slug, false))
+	root, slug := preflighttest.SeedConformant(t)
+	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug, false))
 	hex := strings.TrimPrefix(identity, "sha256:")
 	foreign := strings.Repeat("0", 64)
 	for _, test := range []struct{ name, cursor string }{

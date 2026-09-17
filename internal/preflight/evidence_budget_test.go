@@ -7,6 +7,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
 // responseBudget is the spec's encoded stdout bound, written here independently.
@@ -16,21 +17,21 @@ const responseBudget = 48000
 // ticket above the response bound, and escaped and multibyte text.
 func seedLargeEvidence(t *testing.T) (root string, args []string, fence []string, ticket string) {
 	t.Helper()
-	root, slug := seedConformant(t)
+	root, slug := preflighttest.SeedConformant(t)
 	var lines []string
 	for i := 0; i < 5000; i++ {
 		entry := fmt.Sprintf("internal/example/generated/%04d \"q\" 雪/", i)
 		fence = append(fence, entry)
 		lines = append(lines, "- `"+entry+"` (generated fence)")
 	}
-	spec := specBody(slug, lines...)
+	spec := preflighttest.SpecBody(slug, lines...)
 	if len(spec) < 40000 {
 		t.Fatalf("spec fixture holds %d bytes, want at least 40 KB", len(spec))
 	}
-	mustWriteFile(t, "specs/"+slug+"/spec.md", spec)
-	ticket = ticketDoc("One", "PF1", "PF2") + strings.Repeat("tab\there \"quote\" back\\slash 雪🚀\n", 2000)
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticket)
-	return root, legacyCommitted(t, root, slug, "large evidence", false), fence, ticket
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", spec)
+	ticket = preflighttest.TicketDoc("One", "PF1", "PF2") + strings.Repeat("tab\there \"quote\" back\\slash 雪🚀\n", 2000)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticket)
+	return root, preflighttest.LegacyCommitted(t, root, slug, "large evidence", false), fence, ticket
 }
 
 // TestEvidenceResponseBudget is CE13, CE131, CE132, CE138, and CE139.
@@ -85,10 +86,10 @@ func TestEvidenceLargeMetadata(t *testing.T) {
 	identity, _, _ := prepareEvidence(t, args)
 	_, sources := reconstructEvidence(t, identity, traverseEvidence(t, identity))
 	var got []string
-	for _, row := range tableRows(t, decodeMap(t, sources["s1"]), "fence") {
+	for _, row := range preflighttest.TableRows(t, preflighttest.DecodeMap(t, sources["s1"]), "fence") {
 		got = append(got, row["path"].(string))
 	}
-	want := append(append([]string{}, conformantFence...), fence...)
+	want := append(append([]string{}, preflighttest.ConformantFence...), fence...)
 	if strings.Join(got, "\n") != strings.Join(want, "\n") || sources["s2"] != ticket {
 		t.Fatalf("metadata fence holds %d of %d entries; ticket equal=%t", len(got), len(want), sources["s2"] == ticket)
 	}
@@ -147,12 +148,12 @@ func publishCraftedEvidence(t *testing.T, root, scalar string) string {
 // TestEvidenceLargeManifestScalar is CE6: a manifest cell above the response bound
 // reconstructs exactly through bounded manifest fragments.
 func TestEvidenceLargeManifestScalar(t *testing.T) {
-	root, _ := seedConformant(t)
+	root, _ := preflighttest.SeedConformant(t)
 	scalar := strings.Repeat("argument 雪 \"q\" ", 5000)
 	identity := publishCraftedEvidence(t, root, scalar)
 	pages := traverseEvidence(t, identity)
 	manifest, sources := reconstructEvidence(t, identity, pages)
-	arguments := tableRows(t, decodeMap(t, manifest), "arguments")
+	arguments := preflighttest.TableRows(t, preflighttest.DecodeMap(t, manifest), "arguments")
 	if len(scalar) <= responseBudget || len(arguments) != 1 || arguments[0]["value"] != scalar || sources["s2"] != "diff body\n" {
 		t.Fatalf("large scalar did not reconstruct: %d arguments", len(arguments))
 	}

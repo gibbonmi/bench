@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 )
 
@@ -45,14 +46,14 @@ func TestDelegatedEvidenceProjection(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			_, _, args := seedReviewEvidence(t, false)
-			mustWriteFile(t, "reviews/example.md", tc.body(t))
-			runGit(t, "add", ".")
-			runGit(t, "commit", "-q", "-m", "retain the record under test")
+			preflighttest.MustWriteFile(t, "reviews/example.md", tc.body(t))
+			preflighttest.RunGit(t, "add", ".")
+			preflighttest.RunGit(t, "commit", "-q", "-m", "retain the record under test")
 			// Retaining the record moved the tip, so the charge pins the tip it
 			// now reads rather than the one the seed computed.
 			for i, arg := range args {
 				if arg == "--source-tip" {
-					args[i+1] = runGit(t, "rev-parse", "HEAD")
+					args[i+1] = preflighttest.RunGit(t, "rev-parse", "HEAD")
 				}
 			}
 			out, code := Command(args)

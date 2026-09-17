@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/consumers"
+	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
 // The charge row is the packet's contract, and a Contains needle over the whole packet
@@ -14,18 +16,7 @@ import (
 // handle needle on their own. The tests below decode the packet and compare each named
 // cell against a value the test computes, so an emptied or swapped cell reds.
 
-const chargeFixtureAssignment = "00000000000000000000000000000001"
-
-// conformantFence is the ownership fence seedConformant's spec declares, in document
-// order. reviewFixtureFence adds the entries seedReviewEvidence appends.
-var conformantFence = []string{
-	"internal/example/",
-	"reviews/example.md",
-	".agents/skills/bench-craft-delegate/",
-	".agents/commands/bench-implement-spec.md",
-}
-
-var reviewFixtureFence = append(append([]string{}, conformantFence...),
+var reviewFixtureFence = append(append([]string{}, preflighttest.ConformantFence...),
 	"target/", "edited/", "outside/", "notes/",
 	".agents/skills/bench-craft-review/",
 	".agents/commands/bench-review-implementation.md",
@@ -77,41 +68,41 @@ func assertChargeCells(t *testing.T, row map[string]any, want map[string]string)
 }
 
 func TestBuildChargeRowCells(t *testing.T) {
-	root, slug := seedConformant(t)
-	args := chargeArgs(t, root, slug, true)
+	root, slug := preflighttest.SeedConformant(t)
+	args := preflighttest.ChargeArgs(t, root, slug, true)
 	out, code := Command(args)
 	if code != 0 {
 		t.Fatalf("build charge exit = %d:\n%s", code, out)
 	}
-	rows := tableRows(t, decodeMap(t, out), "charge")
+	rows := preflighttest.TableRows(t, preflighttest.DecodeMap(t, out), "charge")
 	if len(rows) != 1 {
 		t.Fatalf("charge rows = %d, want 1", len(rows))
 	}
 	ticket := "specs/" + slug + "/tickets/one.md"
 	spec := "specs/" + slug + "/spec.md"
 	assertChargeCells(t, rows[0], map[string]string{
-		"assignment": chargeFixtureAssignment,
+		"assignment": preflighttest.ChargeFixtureAssignment,
 		"checkout":   root,
 		"base":       args[6],
 		"source_tip": args[8],
-		"fence":      strings.Join(conformantFence, ", "),
+		"fence":      strings.Join(preflighttest.ConformantFence, ", "),
 		"ticket":     fixtureHandle(t, ticket),
 		"writes":     "specs",
-		"evidence":   fixtureHandles(t, ticket, spec, delegateSkill, buildPhase, delegateProcedure),
-		"checks":     fixtureHandles(t, ticket, buildPhase),
-		"return":     fixtureHandles(t, delegateSkill, delegateProcedure),
+		"evidence":   fixtureHandles(t, ticket, spec, chargesource.DelegateSkill, chargesource.BuildPhase, chargesource.DelegateProcedure),
+		"checks":     fixtureHandles(t, ticket, chargesource.BuildPhase),
+		"return":     fixtureHandles(t, chargesource.DelegateSkill, chargesource.DelegateProcedure),
 		"complete":   "true",
 		"next":       "",
 	})
 }
 
 func TestBuildChargeCellsCarryDistinctFacts(t *testing.T) {
-	root, slug := seedConformant(t)
-	out, code := Command(chargeArgs(t, root, slug, true))
+	root, slug := preflighttest.SeedConformant(t)
+	out, code := Command(preflighttest.ChargeArgs(t, root, slug, true))
 	if code != 0 {
 		t.Fatalf("build charge exit = %d:\n%s", code, out)
 	}
-	rows := tableRows(t, decodeMap(t, out), "charge")
+	rows := preflighttest.TableRows(t, preflighttest.DecodeMap(t, out), "charge")
 	assertDistinctCells(t, rows[0], "fence", "ticket", "evidence", "checks", "return")
 }
 
@@ -121,8 +112,8 @@ func TestReviewChargeRowCells(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("review charge exit = %d:\n%s", code, out)
 	}
-	document := decodeMap(t, out)
-	rows := tableRows(t, document, "charge")
+	document := preflighttest.DecodeMap(t, out)
+	rows := preflighttest.TableRows(t, document, "charge")
 	if len(rows) != 3 {
 		t.Fatalf("charge rows = %d, want one per axis", len(rows))
 	}
@@ -141,7 +132,7 @@ func TestReviewChargeRowCells(t *testing.T) {
 	for i, axis := range []string{"Standards", "Spec", "Coverage"} {
 		assertChargeCells(t, rows[i], map[string]string{
 			"axis":       axis,
-			"assignment": chargeFixtureAssignment,
+			"assignment": preflighttest.ChargeFixtureAssignment,
 			"checkout":   root,
 			"base":       args[4],
 			"source_tip": args[6],
@@ -150,7 +141,7 @@ func TestReviewChargeRowCells(t *testing.T) {
 			"writes":     "read-only",
 			"evidence":   shared.handle(),
 			"checks":     fixtureHandle(t, reviewSkill),
-			"return":     fixtureHandles(t, reviewPhase, delegateSkill, delegateProcedure),
+			"return":     fixtureHandles(t, reviewPhase, chargesource.DelegateSkill, chargesource.DelegateProcedure),
 			"complete":   "true",
 			"next":       "",
 		})
@@ -215,24 +206,24 @@ func TestPreparedFormsIgnoreNestedWorkingDirectory(t *testing.T) {
 	})
 
 	t.Run("build charge", func(t *testing.T) {
-		root, slug := seedConformant(t)
-		args := chargeArgs(t, root, slug, true)
+		root, slug := preflighttest.SeedConformant(t)
+		args := preflighttest.ChargeArgs(t, root, slug, true)
 		assertNestedRunMatches(t, root, filepath.Join(root, "internal", slug), args)
 	})
 
 	t.Run("compact build charge", func(t *testing.T) {
-		root, slug := seedConformant(t)
-		args := chargeArgs(t, root, slug, false)
+		root, slug := preflighttest.SeedConformant(t)
+		args := preflighttest.ChargeArgs(t, root, slug, false)
 		assertNestedRunMatches(t, root, filepath.Join(root, "internal", slug), args)
 	})
 
 	t.Run("propose writes", func(t *testing.T) {
-		root, slug := seedConformant(t)
-		activeAssignment(t, root, root)
+		root, slug := preflighttest.SeedConformant(t)
+		preflighttest.ActiveAssignment(t, root, root)
 		args := []string{
 			"build", slug, "--propose-writes", "--ticket", "one.md",
-			"--base", runGit(t, "rev-parse", "main"),
-			"--source-tip", runGit(t, "rev-parse", "HEAD"),
+			"--base", preflighttest.RunGit(t, "rev-parse", "main"),
+			"--source-tip", preflighttest.RunGit(t, "rev-parse", "HEAD"),
 		}
 		assertNestedRunMatches(t, root, filepath.Join(root, "internal", slug), args)
 	})

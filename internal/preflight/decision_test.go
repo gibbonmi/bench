@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
@@ -646,9 +647,8 @@ func TestBinarySealIsBuildModeOnly(t *testing.T) {
 	}
 }
 
-// sealFixtureRoot is the smallest rebuildable root the seal primitives
-// accept: a module whose ./cmd/bench resolves, plus the build-inputs
-// manifest the source digest reads.
+// sealFixtureRoot is the smallest rebuildable root the seal primitives accept: a module
+// whose ./cmd/bench resolves, plus the build-inputs manifest the source digest reads.
 func sealFixtureRoot(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
@@ -658,7 +658,7 @@ func sealFixtureRoot(t *testing.T) string {
 		"scripts/go-build.sh":     "#!/usr/bin/env bash\n",
 		"scripts/go-build.inputs": "build_script=scripts/go-build.sh\n",
 	} {
-		mustWriteFile(t, filepath.Join(root, filepath.FromSlash(name)), body)
+		preflighttest.MustWriteFile(t, filepath.Join(root, filepath.FromSlash(name)), body)
 	}
 	return root
 }
@@ -669,7 +669,7 @@ func sealFixtureRoot(t *testing.T) string {
 func publishSealedBinary(t *testing.T, root string) string {
 	t.Helper()
 	staged := filepath.Join(root, "staged-bench")
-	mustWriteFile(t, staged, "Bench executable")
+	preflighttest.MustWriteFile(t, staged, "Bench executable")
 	if err := os.Chmod(staged, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -709,7 +709,7 @@ func TestBinarySealFactsGradeARootOnDisk(t *testing.T) {
 			name: "sources changed after the seal",
 			place: func(t *testing.T, root string) {
 				publishSealedBinary(t, root)
-				mustWriteFile(t, filepath.Join(root, "cmd", "bench", "main.go"), "package main\n\nfunc main() { _ = 1 }\n")
+				preflighttest.MustWriteFile(t, filepath.Join(root, "cmd", "bench", "main.go"), "package main\n\nfunc main() { _ = 1 }\n")
 			},
 			present: true,
 			refused: true,

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/chargeevidence"
+	"github.com/gibbonmi/bench/internal/preflight/chargesource"
 	"github.com/gibbonmi/bench/internal/tickets"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -32,9 +33,9 @@ func buildSourcePolicy() []buildSourceDescriptor {
 	return []buildSourceDescriptor{
 		{role: "ticket", path: selectedTicketPath, ticket: true, checks: true},
 		{role: "spec", path: func(specPath string, _ *tickets.Entry) string { return specPath }},
-		{role: "delegate-skill", path: fixedSource(delegateSkill), returns: true},
-		{role: "build-phase", path: fixedSource(buildPhase), checks: true},
-		{role: "delegate-procedure", path: fixedSource(delegateProcedure), returns: true},
+		{role: "delegate-skill", path: fixedSource(chargesource.DelegateSkill), returns: true},
+		{role: "build-phase", path: fixedSource(chargesource.BuildPhase), checks: true},
+		{role: "delegate-procedure", path: fixedSource(chargesource.DelegateProcedure), returns: true},
 	}
 }
 
