@@ -296,6 +296,74 @@ Each run reports no skip. The elapsed time is the package time the verb reports.
 | `bench gate-prose . -- three Markdown files` | pass | see below |
 | `wc -l .agents/skills/bench-craft-line/SKILL.md` | 130 | no output |
 
+## CD4 ticket 4 author evidence
+
+The ticket exports the calibration table header from the retros package and renders it in the retro scaffold. The renderer gains one case in `scaffoldSection`, under the delegate-performance heading. The final-check command gains the table duty and the aggregate duty, each with one anchor and one omission canary.
+
+### Scaffold scenario
+
+`bench retro calibrated-decisions --scaffold` printed this delegate-performance section:
+
+```markdown
+## Ticket-versus-spec-slice and delegate performance
+
+| surface | claim | status | confidence | label | model / effort / role |
+|---|---|---|---|---|---|
+| unknown | unknown | unknown | unknown | unknown | unknown |
+```
+
+The scaffold test repository holds no `capture/agent-performance` directory, and the test asserts that absence.
+
+### Done-claim table
+
+The author wrote no label cell. Each status is `verified`, because the author ran the named check and kept its red-then-green log. CR35 is `claimed`, because no check grades a second spelling; the review greps `internal/roadmap` for it.
+
+| row | status | confidence | label |
+| --- | --- | --- | --- |
+| CR17 | verified | 9 |  |
+| CR18 | verified | 9 |  |
+| CR19 | verified | 8 |  |
+| CR20 | verified | 9 |  |
+| CR21 | verified | 9 |  |
+| CR28 | verified | 9 |  |
+| CR35 | claimed | 7 |  |
+
+### TDD red
+
+The test came first. `go test ./internal/roadmap/... -run TestRetroScaffoldRendersCalibrationTable` failed to build with `undefined: retros.DelegateHeading` and `undefined: retros.CalibrationHeader`. After the two constants landed, and before the renderer case existed, the same run reported `delegate-performance section holds 1 lines, want the header, the separator, and one row`. The renderer case turned it green.
+
+### Red-then-green log
+
+| row | red | green |
+| --- | --- | --- |
+| CR17, CR18, CR28 | `delegate-performance section holds 1 lines` | `bench test --package ./internal/roadmap/...` passes |
+| CR19 | no red; the heading list keeps its nine members | `bench test --package ./internal/retros/...` passes |
+| CR20 | `bit,...,omit,failed,1,yes` with `calibration: the retro must fill the calibration table` | `bench test --check docs-currency-workflow` passes |
+| CR21 | `bit,...,omit,failed,1,yes` with `calibration: the retro must state the Brier mean and the counts` | `bench test --check docs-currency-workflow` passes |
+
+Each omission probe ran `bench probe .agents/commands/bench-final-check.md --omit "<the sentence>" --check docs-currency-workflow`. Each baseline passed, each omission failed `TestRootConformance` with the row's own diagnostic, and the probe restored the subject. `TestEveryRetainedFixtureBitesThroughRegisteredOwner` passed with the two new canaries, so every pre-existing fixture on the final-check command still plants its diagnostic. `bench anchors .agents/commands/bench-final-check.md` lists 36 needles, which is the 34 prior needles and these two.
+
+### Probe verdict
+
+The self-probe swaps the rendered row list for a list that holds the row twice. The verdict line reads `bit,internal/roadmap/retro_scaffold.go,swap,failed,1,yes`. The failed test is `TestRetroScaffoldRendersCalibrationTable`, and it reported `delegate-performance section holds 4 lines`.
+
+### Verification table
+
+Each run reports no skip. The elapsed time is the package time the verb reports.
+
+| check | verdict | elapsed |
+| --- | --- | --- |
+| `bench test --package ./internal/roadmap/...` | pass | 1927 ms |
+| `bench test --package ./internal/retros/...` | pass | 11 ms |
+| `bench test --check docs-currency-workflow` | pass | 946 ms |
+| `bench test --package ./internal/anchors/... --run 'TestCalibration'` | pass | 38 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 9632 ms |
+| `go vet ./...` and `gofmt -l` | pass | no output |
+| `bench gate-prose . -- two Markdown files` | pass | no output |
+| `bench structure` | no new issue | 105 pre-existing issues |
+
+`bench structure` lists no file this ticket edits.
+
 ## CD1 review
 
 The frozen pair is base `9148850200714f000eec2fbf44cddea6182f95c7` and tip `09f26779f65b7938f313cff9ec877fabe9d009f5`. The reviewer directed the review line. The first pass of every chunk review runs fable / medium. Every later pass on the same chunk runs sonnet / xhigh. Each axis ran in its own read-only worktree.

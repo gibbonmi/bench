@@ -16,21 +16,28 @@ const Directory = "capture/retros"
 
 var retrospectiveSlug = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
 
-// The two headings a scaffold fills with derived facts. They are named here, beside the
+// The three headings a scaffold fills with derived facts. They are named here, beside the
 // heading list itself, so a renderer addresses a section through this symbol rather than
 // through a second spelling of the heading.
 const (
 	// TimingsHeading opens the gate-stage timings section.
 	TimingsHeading = "## Gate-stage timings"
 
+	// DelegateHeading opens the ticket-versus-spec-slice and delegate performance section.
+	DelegateHeading = "## Ticket-versus-spec-slice and delegate performance"
+
 	// RepairHeading opens the repair-attribution section.
 	RepairHeading = "## Repair attribution"
 )
 
+// CalibrationHeader is the calibration table's header row. It is named here, beside the
+// heading that owns the table, so the renderer holds no second spelling of the six cells.
+const CalibrationHeader = "| surface | claim | status | confidence | label | model / effort / role |"
+
 var requiredHeadings = []string{
 	"## Outcome",
 	TimingsHeading,
-	"## Ticket-versus-spec-slice and delegate performance",
+	DelegateHeading,
 	"## Coordinator catches",
 	RepairHeading,
 	"## Agent-experience improvements",
