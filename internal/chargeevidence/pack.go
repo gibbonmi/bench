@@ -212,7 +212,7 @@ func Read(data []byte, expected string) (*Pack, error) {
 	if total < uint64(len(data)) {
 		return nil, refuse(RefuseTrailing, "pack holds %d bytes after its declared end %d", uint64(len(data))-total, total)
 	}
-	bodies, err := readBodies(data[end:], m)
+	bodies, err := readBodies(data[end:len(data):len(data)], m)
 	if err != nil {
 		return nil, err
 	}
