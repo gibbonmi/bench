@@ -34,10 +34,11 @@ func TestEvaluatePathAnchorKinds(t *testing.T) {
 		{Require, false}, {Forbid, true},
 		{RequireInSection, false}, {ForbidInSection, true},
 		{ForbidCaseFoldedEmphasis, true},
+		{RequireInStep, false},
 	} {
 		t.Run(fmt.Sprint(tc.kind), func(t *testing.T) {
 			anchor := pathTestAnchor(t, tc.kind)
-			h := anchorHarness{rules: []anchorRule{{file: anchor.File, section: anchor.Section, needle: anchor.Needle, forbidden: tc.forbidden}}}
+			h := anchorHarness{rules: []anchorRule{{file: anchor.File, section: anchor.Section, step: anchor.Step, needle: anchor.Needle, forbidden: tc.forbidden}}}
 			for _, broken := range []int{-1, 0} {
 				result := EvaluatePath(h.write(t, broken), anchor.File)
 				if got := slices.Contains(result.Diagnostics, anchor.Diagnostic); got != (broken == 0) {
@@ -105,6 +106,28 @@ func TestEvaluatePathRefusesInvalidSubjects(t *testing.T) {
 				t.Fatalf("diagnostics = %v, want %q", result.Diagnostics, tc.want)
 			}
 		})
+	}
+}
+
+// TestResolveStepRefusesAStepScopedAnchorWithNoStep pins the kind as the one owner of step
+// narrowing. The evaluator narrows on the kind alone, so a step-scoped anchor that names no
+// step must say so rather than read its whole section as if it were unscoped.
+func TestResolveStepRefusesAStepScopedAnchorWithNoStep(t *testing.T) {
+	const file, title = "guide.md", "Process"
+	want := fmt.Sprintf("%s carries a step-scoped anchor with no step in the %q section; a step-scoped anchor names one step", file, title)
+	if got := resolveStep(file, title, 0, "1. step one\n   needle\n"); got.diagnostic != want || got.body != "" {
+		t.Fatalf("resolveStep with no step = %+v, want the unnamed-step diagnostic %q and no body", got, want)
+	}
+}
+
+// TestRegistryBindsStepToItsKind refuses the authoring mistake the evaluator no longer reads
+// around: a Step on a kind that narrows no step, or a step-scoped kind with no Step. The kind
+// and the field must agree, because the kind alone decides the narrowing.
+func TestRegistryBindsStepToItsKind(t *testing.T) {
+	for _, anchor := range Entries() {
+		if anchor.Kind.stepScoped() != (anchor.Step != 0) {
+			t.Errorf("anchor %q on %s has kind %d with step %d; a step belongs to a step-scoped kind and to no other", anchor.Needle, anchor.File, anchor.Kind, anchor.Step)
+		}
 	}
 }
 

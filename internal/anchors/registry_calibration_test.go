@@ -25,6 +25,6 @@ func TestCalibrationFindingAnchors(t *testing.T) {
 		{file: discipline, section: "What a confidence states", needle: "`auto-fix` and `ask-user` label a finding `held`, and `no-op` labels it `refuted`.", want: "calibration: the dispositions need their label mapping"},
 		{file: discipline, section: "What a confidence states", needle: "Optional advice carries no confidence.", want: "calibration: optional advice must carry no confidence"},
 		{file: ".agents/skills/bench-craft-review/SKILL.md", section: "What a finding must cite", needle: "A finding also states its confidence as an integer from 0 to 10.", want: "calibration: the review skill must point at the finding confidence"},
-		{file: ".agents/commands/bench-review-implementation.md", section: "Process", needle: "Each actionable finding line carries its stated confidence.", want: "calibration: the pickup line must carry its stated confidence"},
+		{file: ".agents/commands/bench-review-implementation.md", section: "Process", step: 6, needle: "Each actionable finding line carries its stated confidence.", want: "calibration: the pickup line must carry its stated confidence"},
 	}}.check(t)
 }
