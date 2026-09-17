@@ -469,6 +469,80 @@ The coordinator's independent probe made the `prepared-build-approval` canary mu
 `TestEveryRetainedFixtureBitesThroughRegisteredOwner` failed, and the completed proof count dropped to 550.
 Every probe restored its file, and `git status` was empty after each restore.
 
+### Reviewer decisions for this chunk
+
+- The reviewer approved a Forbid row. The row keeps the retired build full charge form out of the phase guidance.
+- CE173 names only the grammar, so that row is a gate expansion beyond the acceptance rows.
+- The reviewer chose the strong needle grading. Each guidance sentence that starts "Build action requires" needs exactly one Require needle.
+
+### Standards
+
+Finding count: 7. Worst issue: ST1.
+
+- CE-C1D-ST1 (auto-fix): The migrated anchor row keeps a diagnostic that names approval and supplement contents. Those two prerequisites now hold their own rows.
+- CE-C1D-ST2 (auto-fix): `ChargeArgs` and `LegacyCommitted` keep a `full` parameter with one reachable value. `chargeRoutes` is a one-row table with a dead subtest level.
+- CE-C1D-ST3 (auto-fix): The legacy charge helpers name a build route that this chunk deletes. All surviving cases are bounded preparation refusals.
+- CE-C1D-ST4 (auto-fix): The `chargePacket` comment calls it the one source for every charge tail. Only the review renderer reaches it now.
+- CE-C1D-ST5 (auto-fix): The anchor registry and the new conformance test state one rationale twice. The registry prose also writes out a structural count.
+- CE-C1D-ST6 (auto-fix): The new test copies the five diagnostic strings and has no recorded red. The count check stops the loop below it.
+- CE-C1D-ST7 (auto-fix): The guidance says the verb returns mechanical inputs only. The verb now returns a prepared evidence identity.
+
+### Spec
+
+Finding count: 3. Worst issue: SP1.
+
+- CE-C1D-SP1 (auto-fix): The delivery prerequisite cites `--verify` as its proof. That command reports delivery unverified, and the spec keeps integrity and delivery apart.
+- CE-C1D-SP2 (auto-fix): This finding is the same defect as ST1. The canary EXPECT file repeats the stale diagnostic text.
+- CE-C1D-SP3 (auto-fix): Spec row CE173 names the seam `TestEvidenceRemovedBuildFull`. No test carries that name in the tree.
+
+### Coverage
+
+Finding count: 3. Worst issue: CV1.
+
+- CE-C1D-CV1 (auto-fix): No test grades what a needle says. A shortened needle and a duplicated needle were both silent.
+- CE-C1D-CV2 (ask): The guidance can re-advertise the retired build full charge form. That insertion left every check green.
+- CE-C1D-CV3 (auto-fix): `preparedCommand` lost its build arm and now renders a review charge for any non-proposal form. No test grades that route.
+
+### Advice
+
+- The build guidance file holds 78 lines against its 80-line budget. Chunk CE-C4 adds the handoff sentence, so plan its room now.
+- `bench coverage --check` reports all 175 rows uncited. The spec needs each planned seam label to become its executed test citation.
+- A wrong anchor group is not observable, because the conformance check evaluates every group.
+- `preparationMode` is now a two-value enum with one live charge form. Ticket 5 can collapse it.
+
+### Flagged for reviewer veto
+
+Rows CE147 and CE114 are worded against the legacy build renderer that this chunk deletes.
+The chunk plan authorizes the removal, so the implementation follows the current tree convention.
+The canary directory name `prepared-build-approval` no longer states the sentence its fixture mutates.
+A rename needs edits to ticket 7 and the spec, both outside the ticket 4 fence, so ticket 7 owns it.
+
+The repair merged two guidance paragraphs, because the new delivery sentence passed the six-sentence bound.
+The repair also edited `internal/conformance/tier_test.go` and added `tier_live_tree_test.go`, outside the ticket fence.
+The coordinator directed that edit, and the writer recorded the fence expansion with `bench learning`.
+
+## CE-C1D: review round 2
+
+Repair cycles used: 1 of 2.
+The repair tip is `e38d64bd72a1ca4b0cadde211f491178951633a0`.
+
+### Repair cycle 1 probe records
+
+- Needle shortened to its lead clause: the pinning test failed, because no Require row pinned the guidance sentence.
+- One needle replaced by another row's text: the pinning test failed on the shared needle.
+- The same swap with the guidance sentence deleted: the pinning test still failed, so the pair is no longer silent.
+- The migrated diagnostic reworded: the canary fixture stopped biting, and the proof count dropped to 550.
+- The retired build full charge form re-advertised: the new Forbid row turned `docs-currency-workflow` red.
+- The non-review mode refusal inverted: the new refusal test failed.
+- The live-tree registration row deleted: the conformance meta check failed.
+- The coordinator's independent probe added an unpinned prerequisite sentence to the guidance. The pinning test reported zero Require rows.
+
+### Gate evidence
+
+The coordinator's whole-tree gate on the first repair commit was red. The new live-tree assertion had no conformance meta registration.
+The writer registered the assertion and split `tier_test.go`, which sat at its line budget.
+The coordinator's whole-tree gate on `e38d64bd` is green.
+
 ## Record
 
 ```bench-review-record
