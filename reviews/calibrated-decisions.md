@@ -182,7 +182,9 @@ The axis gave one item of optional advice with no confidence. The CR1 why-it-cat
 
 ## CD2 review
 
-The frozen pair is base `87869759bf975c1f76a6e12ccc638e8471d40dfd` and tip `1ecb33ec4cede2be8bde4bc07bb648786e906d13`. Main moved during the review, so the integration source merged main after that tip. The chunk keeps the ticket-only pair, because the checkpoint compares the recorded tip's own tree. Each axis ran fable / medium in its own read-only worktree.
+The first pass reviewed base `87869759bf975c1f76a6e12ccc638e8471d40dfd` and tip `1ecb33ec4cede2be8bde4bc07bb648786e906d13`. Each axis ran fable / medium in its own read-only worktree. The checkpoint requires a chunk base whose source tree equals the CD1 tip and a chunk tip whose source tree equals the graded source. The recorded CD2 pair is therefore base `7ce1266321c1a2bd8a974dd34255d161aa665cdf` and tip `8b14208c1b87b0528d54541aa9aa4ad3936fea8d`. The uncovered delta holds the plan and spec amendments, the ticket 7 file, pickup commits, and two merged main commits on `roadmap/FT287.md`.
+
+One sonnet / xhigh later pass per axis covered that delta in its own worktree. Standards and Spec passed with no finding. Coverage found one `Writes:` gap, CD2b-C1: ticket 7 lacked `internal/anchors/match_test.go`, whose kind table drives the scoped-kind predicate. The coordinator applied it as a ticket expectation expansion under the plan-expansion policy, inside the CD2b delta. The author of ticket 7 received the fence expansion before its return.
 
 The raw finding count is 4. The de-duplicated repair target count is 1. CD2 consumed 0 repair cycles. The one accepted finding is a new seam that the reviewer routed to a new chunk, CD2b, not a repair of this delta.
 
@@ -230,6 +232,8 @@ The reviewer decided CD2-C1. A step-scoped anchor kind is a new seam, and the re
 | review finding | CD2-S2 | claimed | 4 | refuted | fable / medium / Standards |
 | review finding | CD2-C1 | claimed | 7 | held | fable / medium / Coverage |
 | review finding | CD2-C2 | claimed | 3 | refuted | fable / medium / Coverage |
+| review finding | CD2b-C1 | claimed | 6 | held | sonnet / xhigh / Coverage |
+| review finding | CD2b-C2 | claimed | 8 | refuted | sonnet / xhigh / Coverage |
 
 ## Native review record
 
@@ -395,10 +399,10 @@ The fenced payload below retains every terminal return for the checkpoint. The f
     },
     {
       "id": "CD2",
-      "base": "87869759bf975c1f76a6e12ccc638e8471d40dfd",
-      "tip": "1ecb33ec4cede2be8bde4bc07bb648786e906d13",
-      "plan_digest": "sha256:bd4a4ea1b9ec05c6aa378023c9c43ff8fae6021cf41f88949e8359bda3f6f601",
-      "source_digest": "f19df4a3214da33af5e54a114c1e57c3125d3e02",
+      "base": "7ce1266321c1a2bd8a974dd34255d161aa665cdf",
+      "tip": "8b14208c1b87b0528d54541aa9aa4ad3936fea8d",
+      "plan_digest": "sha256:2a20907b4162c42f8fdc101392a17e0be6300188b009aaabf0ad40dd64f0a105",
+      "source_digest": "a121c0a528a7979eb77ab6b45080d1478a8e34a1",
       "acceptance_rows": ["CR4", "CR5", "CR6", "CR15", "CR16", "CR22", "CR23", "CR30"],
       "verification": [
         {
@@ -407,13 +411,13 @@ The fenced payload below retains every terminal return for the checkpoint. The f
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "f19df4a3214da33af5e54a114c1e57c3125d3e02",
+          "source_digest": "a121c0a528a7979eb77ab6b45080d1478a8e34a1",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/cd-t2-author-20260917/cd2-workflow@1ecb33ec",
-            "digest": "sha256:cc727adc79103626f8bcd082dc50aa1a5d10822309e42d08370e67abf77a1bbf",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,906\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "claude:agent/cd-t2-author-20260917/cd2-workflow@8b14208c",
+            "digest": "sha256:3858ce1c6c9d09a126f346f744c17c7b18b3d801505114aad7c709475ad419fb",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,838\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "workflow",
           "command": "bench test --check docs-currency-workflow",
@@ -425,11 +429,11 @@ The fenced payload below retains every terminal return for the checkpoint. The f
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "f19df4a3214da33af5e54a114c1e57c3125d3e02",
+          "source_digest": "a121c0a528a7979eb77ab6b45080d1478a8e34a1",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/cd-t2-author-20260917/cd2-budgets@1ecb33ec",
+            "ref": "claude:agent/cd-t2-author-20260917/cd2-budgets@8b14208c",
             "digest": "sha256:6f72c99a424331a3381e284e55ffa703b490f81e19b498e848e8bfc5d9ca25ed",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
@@ -443,13 +447,13 @@ The fenced payload below retains every terminal return for the checkpoint. The f
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "f19df4a3214da33af5e54a114c1e57c3125d3e02",
+          "source_digest": "a121c0a528a7979eb77ab6b45080d1478a8e34a1",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/cd-t2-author-20260917/cd2-prose@1ecb33ec",
-            "digest": "sha256:7dfafade66e113474640067ea339bf5373b838b6887602e8fa95e42c1ad6b42b",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,175\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "claude:agent/cd-t2-author-20260917/cd2-prose@8b14208c",
+            "digest": "sha256:1fe8571edc70f18ded3c0bfc0ce47738ceab1301e324902abcddd2308df39c07",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,164\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "prose",
           "command": "bench test --check prose-mechanics",
@@ -536,6 +540,66 @@ The fenced payload below retains every terminal return for the checkpoint. The f
           "tip": "1ecb33ec4cede2be8bde4bc07bb648786e906d13",
           "finding_ids": [],
           "supersedes": ["cd2-coverage"]
+        },
+        {
+          "id": "cd2-standards-r3",
+          "performer": "claude:bench-reviewer/cd-c2-standards-r3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "xhigh",
+          "source_digest": "a121c0a528a7979eb77ab6b45080d1478a8e34a1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c2-standards-r3-20260917@8b14208c",
+            "digest": "sha256:3024b632b7b92e415231a69cce2e3aba31b88dc01cef46ce028ffbc301fb0c2c",
+            "excerpt": "Verdict: pass. No new finding on the uncovered delta 1ecb33ec..8b14208c; CD2-S1 and CD2-S2 still no-op at the wider tip."
+          },
+          "axis": "Standards",
+          "base": "7ce1266321c1a2bd8a974dd34255d161aa665cdf",
+          "tip": "8b14208c1b87b0528d54541aa9aa4ad3936fea8d",
+          "finding_ids": [],
+          "supersedes": ["cd2-standards"]
+        },
+        {
+          "id": "cd2-spec-r3",
+          "performer": "claude:bench-reviewer/cd-c2-spec-r3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "xhigh",
+          "source_digest": "a121c0a528a7979eb77ab6b45080d1478a8e34a1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c2-spec-r3-20260917@8b14208c",
+            "digest": "sha256:613e25761097e268486305116a77e6d60eea796dc874b8ba5c968bb9efc92093",
+            "excerpt": "Verdict: pass. The CD2b amendment preserves coverage, dependencies, checkpoints, and checks; coverage state mapped with 37 rows; the eight first-pass rows hold at the wider tip."
+          },
+          "axis": "Spec",
+          "base": "7ce1266321c1a2bd8a974dd34255d161aa665cdf",
+          "tip": "8b14208c1b87b0528d54541aa9aa4ad3936fea8d",
+          "finding_ids": [],
+          "supersedes": ["cd2-spec"]
+        },
+        {
+          "id": "cd2-coverage-r3",
+          "performer": "claude:bench-reviewer/cd-c2-coverage-r3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "xhigh",
+          "source_digest": "a121c0a528a7979eb77ab6b45080d1478a8e34a1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c2-coverage-r3-20260917@8b14208c",
+            "digest": "sha256:357d6dd1c64e8916d4d2e23227db047199308555ae5ce507b74967ce1a93125e",
+            "excerpt": "Verdict: pass after one Writes expansion. CD2b-C1 ticket 7 Writes lacked internal/anchors/match_test.go, confidence 6, applied under the plan-expansion policy in CD2b. CD2b-C2 no-op. No production file changed in the uncovered delta."
+          },
+          "axis": "Coverage",
+          "base": "7ce1266321c1a2bd8a974dd34255d161aa665cdf",
+          "tip": "8b14208c1b87b0528d54541aa9aa4ad3936fea8d",
+          "finding_ids": [],
+          "supersedes": ["cd2-coverage-r2"]
         }
       ]
     }
