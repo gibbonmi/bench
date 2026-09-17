@@ -372,6 +372,8 @@ The coordinator read the pre-repair opener at tip 779f0e68 and refuted CD2b-C2 a
 
 After repair cycle 1, one sonnet / xhigh later pass per axis ran at tip da019659. Standards and Spec passed. Coverage reran the four mutations. Three bit. The step arm of the shared walk stayed silent, because the cycle-1 test covers only the section arm. CD2b-C4 reopened for that arm, and repair cycle 2 closes it with one test.
 
+After repair cycle 2, each axis reaffirmed at tip d4ddc088 in its own worktree. The new test bites both the shared-walk branch and its call-site value. No finding remains open on CD2b.
+
 The axis gave two items of optional advice with no confidence. The step cache key drops the step number, which one registered step anchor cannot expose. A `06.` opener parses as step 6, and the ticket's literal-digits rule leaves leading zeros undecided.
 
 ### Pairs recorded for CD5
@@ -395,9 +397,10 @@ The fenced payload below retains every terminal return for the checkpoint. The f
 {
   "version": 2,
   "spec": "specs/calibrated-decisions/spec.md",
-  "plan_digest": "sha256:2a20907b4162c42f8fdc101392a17e0be6300188b009aaabf0ad40dd64f0a105",
+  "plan_digest": "sha256:37ef0eb88a3496e3fc048c85e66bd6b4db2ac676d1dca36243cb5e160430ffe7",
   "implementation_session": "",
   "amendments": [
+    {"from": "sha256:2a20907b4162c42f8fdc101392a17e0be6300188b009aaabf0ad40dd64f0a105", "to": "sha256:37ef0eb88a3496e3fc048c85e66bd6b4db2ac676d1dca36243cb5e160430ffe7", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD2b": ["CD2b"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
     {"from": "sha256:9a5079a914a8c51fea3eccf16a76b5dbb9a687c7eebec78a9bb84c36bfc6ff94", "to": "sha256:bd4a4ea1b9ec05c6aa378023c9c43ff8fae6021cf41f88949e8359bda3f6f601", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
     {"from": "sha256:bd4a4ea1b9ec05c6aa378023c9c43ff8fae6021cf41f88949e8359bda3f6f601", "to": "sha256:ba0c975ed0afb1fb695519ebdcbedb9b0335d30f4c276c1573643285ee9f9588", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
     {"from": "sha256:ba0c975ed0afb1fb695519ebdcbedb9b0335d30f4c276c1573643285ee9f9588", "to": "sha256:2a20907b4162c42f8fdc101392a17e0be6300188b009aaabf0ad40dd64f0a105", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD2b": ["CD2b"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}}
@@ -752,6 +755,281 @@ The fenced payload below retains every terminal return for the checkpoint. The f
           "tip": "8b14208c1b87b0528d54541aa9aa4ad3936fea8d",
           "finding_ids": [],
           "supersedes": ["cd2-coverage-r2"]
+        }
+      ]
+    },
+    {
+      "id": "CD2b",
+      "base": "67af9d502c9f37c4853f5f72f5684115ca0154a9",
+      "tip": "d4ddc08852af81003cd5b5403d67240cb024f603",
+      "plan_digest": "sha256:37ef0eb88a3496e3fc048c85e66bd6b4db2ac676d1dca36243cb5e160430ffe7",
+      "source_digest": "c34a87699da42aa63a2990b58182b7a2db9b1974",
+      "acceptance_rows": ["CR22", "CR38"],
+      "verification": [
+        {
+          "id": "cd2b-workflow",
+          "performer": "claude:bench-writer/cd-t7-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c34a87699da42aa63a2990b58182b7a2db9b1974",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t7-author-20260917/cd2b-workflow@d4ddc088",
+            "digest": "sha256:0391db62814c79d08fdfe7b1bab495b9ef2dd91f9131b17010a593f31ff47b7e",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,815\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "cd2b-anchors",
+          "performer": "claude:bench-writer/cd-t7-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c34a87699da42aa63a2990b58182b7a2db9b1974",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t7-author-20260917/cd2b-anchors@d4ddc088",
+            "digest": "sha256:50be4c99f031aef11b80b3693cd6bbb7a309b191f780769fb790d7ab2ec8aacf",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,408\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors/...",
+          "exit_code": 0
+        },
+        {
+          "id": "cd2b-projection",
+          "performer": "claude:bench-writer/cd-t7-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c34a87699da42aa63a2990b58182b7a2db9b1974",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t7-author-20260917/cd2b-projection@d4ddc088",
+            "digest": "sha256:b1014e2ed4a2943d849d57e2c1fd3ff5c5e311c07ca529a4646baad5cd12f63c",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,114\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "projection",
+          "command": "bench test --package ./cmd/bench/... --run TestAnchors",
+          "exit_code": 0
+        },
+        {
+          "id": "cd2b-bite",
+          "performer": "claude:bench-writer/cd-t7-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c34a87699da42aa63a2990b58182b7a2db9b1974",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t7-author-20260917/cd2b-bite@d4ddc088",
+            "digest": "sha256:45f42a6bb21e567cb797521fab992e63b41e3edb47762a3ace1d2e62ad9af1ab",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,9937\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "bite",
+          "command": "bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "move the pickup-confidence sentence from step 6 to step 5",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/cd-t7-author-20260917/cd2b-step-move-probe@d4ddc088",
+              "digest": "sha256:24ed1c54fbeef3e273fc63b1a21e53baa2961a55ab96f0016b1e3161b7be2c52",
+              "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,901\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: calibration: the pickup line must carry its stated confidence\"\nskips[0]{package,test,reason}:\nrestore: cmp exit 0, git status clean, check pass 817 ms"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "cd2b-standards",
+          "performer": "claude:bench-reviewer/cd-c2b-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "c34a87699da42aa63a2990b58182b7a2db9b1974",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/cd-c2b-standards-20260917@779f0e68",
+            "digest": "sha256:c7d7263297952e4b17dd0b21798975e6645b8385e7f6fa98b7b338d0dbef438f",
+            "excerpt": "Count: 2 hard, 2 judgment. CD2b-S1 stale Locate doc comment, auto-fix. CD2b-S2 change narration in a test comment, auto-fix. CD2b-S3 one why stated three times, auto-fix. CD2b-S4 flag argument on the shared walk, no-op."
+          },
+          "axis": "Standards",
+          "base": "67af9d502c9f37c4853f5f72f5684115ca0154a9",
+          "tip": "779f0e68b68e97f5a313da6d6e90c4b778af4052",
+          "finding_ids": ["CD2b-S1", "CD2b-S2", "CD2b-S3"],
+          "supersedes": []
+        },
+        {
+          "id": "cd2b-standards-r2",
+          "performer": "claude:bench-reviewer/cd-c2b-standards-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "xhigh",
+          "source_digest": "c34a87699da42aa63a2990b58182b7a2db9b1974",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c2b-standards-r2-20260917@da019659",
+            "digest": "sha256:c78e6274407391bf9ff1d1c8c857b4e59a24d810d3020ca97e039065cfe51dd1",
+            "excerpt": "Verdict: pass. S1, S2, S3 closed at da019659; S4 still no-op; no new finding."
+          },
+          "axis": "Standards",
+          "base": "67af9d502c9f37c4853f5f72f5684115ca0154a9",
+          "tip": "da019659879af9706f575e45dd6afffc45338864",
+          "finding_ids": [],
+          "supersedes": ["cd2b-standards"]
+        },
+        {
+          "id": "cd2b-standards-r3",
+          "performer": "claude:bench-reviewer/cd-c2b-standards-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "xhigh",
+          "source_digest": "c34a87699da42aa63a2990b58182b7a2db9b1974",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c2b-standards-r2-20260917@d4ddc088",
+            "digest": "sha256:45d7894b788cbfc04c4b5fd406eeff287daf0b138c278eabce32db4169dd0d5e",
+            "excerpt": "Verdict: pass. The cycle-2 test comment obeys craft-comments; no production file changed; prior verdict stands at d4ddc088."
+          },
+          "axis": "Standards",
+          "base": "67af9d502c9f37c4853f5f72f5684115ca0154a9",
+          "tip": "d4ddc08852af81003cd5b5403d67240cb024f603",
+          "finding_ids": [],
+          "supersedes": ["cd2b-standards-r2"]
+        },
+        {
+          "id": "cd2b-spec",
+          "performer": "claude:bench-reviewer/cd-c2b-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "c34a87699da42aa63a2990b58182b7a2db9b1974",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c2b-spec-20260917@779f0e68",
+            "digest": "sha256:300a31885cdfa444561a7c9d534d518f724ca156285b5297bea91269cae841ce",
+            "excerpt": "Finding count: 0. CR22 and CR38 held at 779f0e68; the shared narrowing walk is within the ticket."
+          },
+          "axis": "Spec",
+          "base": "67af9d502c9f37c4853f5f72f5684115ca0154a9",
+          "tip": "779f0e68b68e97f5a313da6d6e90c4b778af4052",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "cd2b-spec-r2",
+          "performer": "claude:bench-reviewer/cd-c2b-spec-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "xhigh",
+          "source_digest": "c34a87699da42aa63a2990b58182b7a2db9b1974",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c2b-spec-r2-20260917@da019659",
+            "digest": "sha256:b202bf6ef667aed34e85e5389d5c8c64791f88672e309f6e5fac2e1a62110dc9",
+            "excerpt": "Verdict: pass. CR22 and CR38 hold at da019659; leading-zero rule within the ticket; repair delta comment-only in production."
+          },
+          "axis": "Spec",
+          "base": "67af9d502c9f37c4853f5f72f5684115ca0154a9",
+          "tip": "da019659879af9706f575e45dd6afffc45338864",
+          "finding_ids": [],
+          "supersedes": ["cd2b-spec"]
+        },
+        {
+          "id": "cd2b-spec-r3",
+          "performer": "claude:bench-reviewer/cd-c2b-spec-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "xhigh",
+          "source_digest": "c34a87699da42aa63a2990b58182b7a2db9b1974",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c2b-spec-r2-20260917@d4ddc088",
+            "digest": "sha256:8d9e3b4a1a0635af6d77f71c4d871a1042c1ca6de9dd577659f4c931e009b391",
+            "excerpt": "Verdict: pass. CR22 and CR38 unchanged at d4ddc088; the cycle-2 test asserts the opener line joins the step body."
+          },
+          "axis": "Spec",
+          "base": "67af9d502c9f37c4853f5f72f5684115ca0154a9",
+          "tip": "d4ddc08852af81003cd5b5403d67240cb024f603",
+          "finding_ids": [],
+          "supersedes": ["cd2b-spec-r2"]
+        },
+        {
+          "id": "cd2b-coverage",
+          "performer": "claude:bench-reviewer/cd-c2b-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "c34a87699da42aa63a2990b58182b7a2db9b1974",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/cd-c2b-coverage-20260917@779f0e68",
+            "digest": "sha256:08cf36e44a0209e2256f0972f6e5e3d0b50c1c3b0051a2571d26d679a50f716c",
+            "excerpt": "Finding count: 4. CD2b-C1 step close boundary untested, auto-fix. CD2b-C2 opener trims leading space, auto-fix. CD2b-C3 opener parses one digit, auto-fix. CD2b-C4 keepOpener branch untested, auto-fix."
+          },
+          "axis": "Coverage",
+          "base": "67af9d502c9f37c4853f5f72f5684115ca0154a9",
+          "tip": "779f0e68b68e97f5a313da6d6e90c4b778af4052",
+          "finding_ids": ["CD2b-C1", "CD2b-C2", "CD2b-C3", "CD2b-C4"],
+          "supersedes": []
+        },
+        {
+          "id": "cd2b-coverage-r2",
+          "performer": "claude:bench-reviewer/cd-c2b-coverage-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "xhigh",
+          "source_digest": "c34a87699da42aa63a2990b58182b7a2db9b1974",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/cd-c2b-coverage-r2-20260917@da019659",
+            "digest": "sha256:130e1f9936d629cf75bc96f8a7886123583c507a2b11de0959d593423cf55b26",
+            "excerpt": "Verdict: findings. Three mutations bit; the step arm of keepOpener stayed silent, CD2b-C4 reopened. C2 and C3 confirmed false as stated."
+          },
+          "axis": "Coverage",
+          "base": "67af9d502c9f37c4853f5f72f5684115ca0154a9",
+          "tip": "da019659879af9706f575e45dd6afffc45338864",
+          "finding_ids": ["CD2b-C4"],
+          "supersedes": ["cd2b-coverage"]
+        },
+        {
+          "id": "cd2b-coverage-r3",
+          "performer": "claude:bench-reviewer/cd-c2b-coverage-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "xhigh",
+          "source_digest": "c34a87699da42aa63a2990b58182b7a2db9b1974",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c2b-coverage-r2-20260917@d4ddc088",
+            "digest": "sha256:ab53bdc78fddd016dd090eab746c4a52c8675f3663870f6bb18b427d48e39912",
+            "excerpt": "Verdict: pass. The keepOpener swap and the call-site swap both bit TestMarkdownNumberedStepsIncludesItsOpener; no unresolved Coverage finding at d4ddc088."
+          },
+          "axis": "Coverage",
+          "base": "67af9d502c9f37c4853f5f72f5684115ca0154a9",
+          "tip": "d4ddc08852af81003cd5b5403d67240cb024f603",
+          "finding_ids": [],
+          "supersedes": ["cd2b-coverage-r2"]
         }
       ]
     }
