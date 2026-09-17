@@ -729,6 +729,8 @@ Finding count: 3. Worst issue: the README's `unknown`-cell sentence had no ancho
 
 The coordinator applied CD4-C1 as a gate expansion under the plan-expansion policy. The CR25 row now names the anchor and the `calibration-unknown-cell` canary. The fence and ticket 5's `Writes:` carry the fixture, and the ticket 5 author adds them in this cycle.
 
+After the two repairs, one sonnet / high later pass per axis ran at tip c82bd884 in its own worktree. All three passed. The Coverage pass reran the omission, confirmed the new fixture is enumerated, and bit the repaired renderer with a fresh cell-count mutation. No finding remains open on CD4.
+
 ### Pairs recorded for CD5
 
 | surface | claim | status | confidence | label | model / effort / role |
@@ -757,9 +759,10 @@ The fenced payload below retains every terminal return for the checkpoint. The f
 {
   "version": 2,
   "spec": "specs/calibrated-decisions/spec.md",
-  "plan_digest": "sha256:b76aff6080777f4bd95ef7ea7be9b075fb5fd511e8f54b14c92681be2ccbb6a9",
+  "plan_digest": "sha256:649e23b7d4e0ad277fe6c8b038458e22793a7c9130f10ae9c2e7da98aff2e9ae",
   "implementation_session": "",
   "amendments": [
+    {"from": "sha256:b76aff6080777f4bd95ef7ea7be9b075fb5fd511e8f54b14c92681be2ccbb6a9", "to": "sha256:649e23b7d4e0ad277fe6c8b038458e22793a7c9130f10ae9c2e7da98aff2e9ae", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD2b": ["CD2b"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
     {"from": "sha256:37ef0eb88a3496e3fc048c85e66bd6b4db2ac676d1dca36243cb5e160430ffe7", "to": "sha256:b76aff6080777f4bd95ef7ea7be9b075fb5fd511e8f54b14c92681be2ccbb6a9", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD2b": ["CD2b"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
     {"from": "sha256:2a20907b4162c42f8fdc101392a17e0be6300188b009aaabf0ad40dd64f0a105", "to": "sha256:37ef0eb88a3496e3fc048c85e66bd6b4db2ac676d1dca36243cb5e160430ffe7", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD2b": ["CD2b"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
     {"from": "sha256:9a5079a914a8c51fea3eccf16a76b5dbb9a687c7eebec78a9bb84c36bfc6ff94", "to": "sha256:bd4a4ea1b9ec05c6aa378023c9c43ff8fae6021cf41f88949e8359bda3f6f601", "chunk_ids": {"CD1": ["CD1"], "CD2": ["CD2"], "CD3": ["CD3"], "CD4": ["CD4"], "CD5": ["CD5"]}},
@@ -1517,6 +1520,246 @@ The fenced payload below retains every terminal return for the checkpoint. The f
           "tip": "7c3ef89216a5797de657e77ff26670f638260d2a",
           "finding_ids": [],
           "supersedes": []
+        }
+      ]
+    },
+    {
+      "id": "CD4",
+      "base": "66dc82f10880055d0128aa1139e03ee43393050c",
+      "tip": "c82bd8842275c3b1ec121dd3d64ca9b98bf581a1",
+      "plan_digest": "sha256:649e23b7d4e0ad277fe6c8b038458e22793a7c9130f10ae9c2e7da98aff2e9ae",
+      "source_digest": "1e35193166723a69b1882a7b4264f1672dbca1da",
+      "acceptance_rows": ["CR17", "CR18", "CR19", "CR20", "CR21", "CR24", "CR25", "CR26", "CR28", "CR35"],
+      "verification": [
+        {
+          "id": "cd4-workflow-4",
+          "performer": "claude:bench-writer/cd-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1e35193166723a69b1882a7b4264f1672dbca1da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t4-author-20260917/cd4-workflow-4@c82bd884",
+            "digest": "sha256:de68b21bbdad24167b515ec6992c37a3965226f23f7000091d6d7075dff81f3d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,839\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "workflow-4",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "cd4-workflow-5",
+          "performer": "claude:bench-writer/cd-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1e35193166723a69b1882a7b4264f1672dbca1da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t5-author-20260917/cd4-workflow-5@c82bd884",
+            "digest": "sha256:14667bfd8982a419ae985ba21a98b6bbadb70efb3242d710ab99ecab560f4d38",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,904\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "workflow-5",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "cd4-budgets",
+          "performer": "claude:bench-writer/cd-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1e35193166723a69b1882a7b4264f1672dbca1da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t5-author-20260917/cd4-budgets@c82bd884",
+            "digest": "sha256:6f72c99a424331a3381e284e55ffa703b490f81e19b498e848e8bfc5d9ca25ed",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "cd4-prose",
+          "performer": "claude:bench-writer/cd-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1e35193166723a69b1882a7b4264f1672dbca1da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t5-author-20260917/cd4-prose@c82bd884",
+            "digest": "sha256:5d2d4fe5096be5e1e76034916bdf6c3f68fd873b121ab0762f9d3d516b6acec8",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,162\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "prose",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        },
+        {
+          "id": "cd4-scaffold",
+          "performer": "claude:bench-writer/cd-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1e35193166723a69b1882a7b4264f1672dbca1da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t4-author-20260917/cd4-scaffold@c82bd884",
+            "digest": "sha256:bbf43727b5f997353f4b4ad25bc3c3cae35a9d02dd3195f5628b678c9e4bc0fb",
+            "excerpt": "packages[2]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/roadmap,pass,2161\n  github.com/gibbonmi/bench/internal/roadmap/roadmaptest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "scaffold",
+          "command": "bench test --package ./internal/roadmap/...",
+          "exit_code": 0
+        },
+        {
+          "id": "cd4-retros",
+          "performer": "claude:bench-writer/cd-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1e35193166723a69b1882a7b4264f1672dbca1da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-t4-author-20260917/cd4-retros@c82bd884",
+            "digest": "sha256:5987c2d88e97b5d2b7ef970212839e29d85e957e51f88db6b5cb49d06cb082cf",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/retros,pass,10\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "retros",
+          "command": "bench test --package ./internal/retros/...",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "cd4-standards",
+          "performer": "claude:bench-reviewer/cd-c4-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1e35193166723a69b1882a7b4264f1672dbca1da",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/cd-c4-standards-20260917@5043fcd5",
+            "digest": "sha256:b36b0b7dc1c6e540569cc4f2a8ae2e8a43d2d427a04bd4e72d31ce18871bd53b",
+            "excerpt": "Finding count: 2. CD4-S1 the six-cell shape derived three times, auto-fix. CD4-S2 the header constant's comment states a false invariant, auto-fix."
+          },
+          "axis": "Standards",
+          "base": "66dc82f10880055d0128aa1139e03ee43393050c",
+          "tip": "5043fcd5f5c47d78c154ef8657c8e31ec4e43bd3",
+          "finding_ids": ["CD4-S1", "CD4-S2"],
+          "supersedes": []
+        },
+        {
+          "id": "cd4-standards-r2",
+          "performer": "claude:bench-reviewer/cd-c4-standards-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "1e35193166723a69b1882a7b4264f1672dbca1da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c4-standards-r2-20260917@c82bd884",
+            "digest": "sha256:569cd29cd7b08a44046ca546556c5bd3c8c7d2d6a8ae353ae73a87c9cd285ff6",
+            "excerpt": "Verdict: pass. S1 and S2 closed at c82bd884; the new anchor row and fixture match their siblings; heading bytes unchanged."
+          },
+          "axis": "Standards",
+          "base": "66dc82f10880055d0128aa1139e03ee43393050c",
+          "tip": "c82bd8842275c3b1ec121dd3d64ca9b98bf581a1",
+          "finding_ids": [],
+          "supersedes": ["cd4-standards"]
+        },
+        {
+          "id": "cd4-spec",
+          "performer": "claude:bench-reviewer/cd-c4-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1e35193166723a69b1882a7b4264f1672dbca1da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c4-spec-20260917@5043fcd5",
+            "digest": "sha256:59be51471fc88dec316c76dbc391d7ef49814fbe04a502ff8e4249a18531cf84",
+            "excerpt": "Findings: 0. Every CD4 row held at 5043fcd5, including the review-owned CR25 and CR35."
+          },
+          "axis": "Spec",
+          "base": "66dc82f10880055d0128aa1139e03ee43393050c",
+          "tip": "5043fcd5f5c47d78c154ef8657c8e31ec4e43bd3",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "cd4-spec-r2",
+          "performer": "claude:bench-reviewer/cd-c4-spec-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "1e35193166723a69b1882a7b4264f1672dbca1da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c4-spec-r2-20260917@c82bd884",
+            "digest": "sha256:a7540126ea06a45766ee02844945e161d0d5316aff6815a1b171fa9de9daf2c5",
+            "excerpt": "Verdict: pass. Coverage mapped with 37 rows; the amended CR25 row is satisfied; the scaffold renders one unknown row; the gate expansion preserves every guarantee."
+          },
+          "axis": "Spec",
+          "base": "66dc82f10880055d0128aa1139e03ee43393050c",
+          "tip": "c82bd8842275c3b1ec121dd3d64ca9b98bf581a1",
+          "finding_ids": [],
+          "supersedes": ["cd4-spec"]
+        },
+        {
+          "id": "cd4-coverage",
+          "performer": "claude:bench-reviewer/cd-c4-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1e35193166723a69b1882a7b4264f1672dbca1da",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/cd-c4-coverage-20260917@5043fcd5",
+            "digest": "sha256:dbd48a1707122f7d6167c6677cdd83ad5736c4cb16933e99bfd678546df201ac",
+            "excerpt": "Findings: 3. CD4-C1 the unknown-cell sentence has no anchor, auto-fix. CD4-C2 provider column unchecked, no-op. CD4-C3 header cells bound to nothing, no-op."
+          },
+          "axis": "Coverage",
+          "base": "66dc82f10880055d0128aa1139e03ee43393050c",
+          "tip": "5043fcd5f5c47d78c154ef8657c8e31ec4e43bd3",
+          "finding_ids": ["CD4-C1"],
+          "supersedes": []
+        },
+        {
+          "id": "cd4-coverage-r2",
+          "performer": "claude:bench-reviewer/cd-c4-coverage-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "1e35193166723a69b1882a7b4264f1672dbca1da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/cd-c4-coverage-r2-20260917@c82bd884",
+            "digest": "sha256:3577852c918892a5e762619a59fa05313ed52a459f45c9729b9095113ff23ba7",
+            "excerpt": "Verdict: pass. The unknown-cell omission bites; the new fixture is enumerated; a cells minus two swap bites the scaffold test; no unresolved finding at c82bd884."
+          },
+          "axis": "Coverage",
+          "base": "66dc82f10880055d0128aa1139e03ee43393050c",
+          "tip": "c82bd8842275c3b1ec121dd3d64ca9b98bf581a1",
+          "finding_ids": [],
+          "supersedes": ["cd4-coverage"]
         }
       ]
     }
