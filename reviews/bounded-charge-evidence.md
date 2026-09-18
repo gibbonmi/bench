@@ -1121,6 +1121,86 @@ The axis probed the derivation's own failure modes and found each one needs a te
 - The named plan probe made the read arm report a collector run. `TestEvidenceReviewCollectors` failed with a diff collection count of four against one.
 - The tree was clean after each restore.
 
+## CE-C3: author verification and probes
+
+Frozen pair: base `6ec77cca38646b86a420f3f8eab62c1566a209e5`, tip `f70a6209`.
+The author needed no fence expansion and no plan expansion.
+The build preflight reports `paths-authorized` green, which the coordinator ran itself.
+
+### CE117 native storage record
+
+Row CE117 requires production storage checks on each supported native platform.
+Its falsifier forbids a Linux result to stand as cross-platform proof, so this record states each platform apart.
+
+- Linux: produced. `bench test --check system` passes on this machine, which runs WSL2.
+- macOS: **pending**. This session produced no evidence.
+- Windows: **pending**. This session produced no evidence.
+
+Row CE117 is therefore pending at the landing, beside row CE94.
+Row CE94 is pending for a privilege capability, and its test emits a skip.
+No test emits a skip for CE117, so this record is its only evidence.
+
+### Author verification
+
+The author ran the four ticket selectors and reported all green.
+It ran the whole-tree gate before the commit and reported green.
+The coordinator reran the gate, the build preflight, and all four selectors at the committed tip.
+
+### The named plan probe was silent at first
+
+The plan names the probe `skip cleanup fingerprint revalidation before deletion`.
+The author removed the fingerprint comparison in the store and ran the plan's named command.
+All four preflight packages passed, and the mutation bit only in the store package.
+The guarantee held at the store seam and not at the command surface the plan names.
+
+That result is the same shape as finding CV4 in chunk CE-C2.
+The author added `TestEvidenceCleanupStalePlan` at the command surface and reran the same mutation.
+The coordinator reran it at the committed tip, and that test failed with an apply of a stale plan at exit zero.
+
+### Author probe records
+
+- Cleanup takes the operation lock shared: the reader exclusion test failed.
+- The applied block loses its remaining field: the schema registry and the format projection both failed.
+- The clean apply row leaves the operation registry: the help inventory tests failed on the missing form.
+- The fingerprint drops byte length and file identity: the changed-length case failed.
+- The collector drops its regular-file check: the unsafe target test failed.
+- Apply ignores each deletion error: the failure test reported two removed against one removed and one remaining.
+
+Rows CE136 and CE137 needed no hand-written case.
+The registry-derived bounded case list from chunk CE-C2 picked up both cleanup forms once the author registered them.
+That list stopped the test until the author gave the apply flag a fixture value, which is the behavior that chunk built.
+
+### The author removed a redundant writer lock
+
+Two author probes were silent: the cleanup writer lock weakened to shared, and that acquisition deleted.
+The store takes the operation lock shared before it takes the writer lock.
+Cleanup takes the operation lock exclusively, so it already excludes every writer.
+The second acquisition added no guarantee, and the author removed it rather than ship an unexercised lock.
+
+The coordinator probed that judgment at its root.
+It removed the shared operation lock from the staging path, which is the mechanism the author relies on.
+`TestEvidenceCleanupWriterExclusion` failed, because cleanup succeeded during a live writer.
+The exclusion is real and it is graded, so the removal lost no guarantee.
+
+### Expectations the author left unproven
+
+The author names each one, and the review axes own them.
+
+- The cleanup and targets block field lists. Only the applied block has a recorded red.
+- The cleanup cursor grammar, its new stream marker, and its rejection in the artifact read path.
+- The individual refusal cases of the cleanup grammar.
+- The ordering assertion of the orphan test, and the interrupt test.
+
+### Flagged for reviewer veto
+
+The spec's clean seam cell names a command test under `internal/preflight`.
+The author put that test under `internal/preflight/evidencecmd`, because package preflight cannot reach the fixture harness.
+Duplicating the harness would be the pasted-harness defect that chunk CE-C2 found twice.
+The path stays inside the ticket fence.
+
+`internal/systemtest/charge_evidence_test.go` grew past its budget, and the structure lane refused the commit.
+The author split the cleanup system tests into a new file inside the fence rather than record a budget grant.
+
 ## Record
 
 ```bench-review-record
