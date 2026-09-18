@@ -67,6 +67,27 @@ func planDocument(body string, data []byte) string {
 	return body + planHeading + "```bench-completion-plan\n" + string(data) + "\n```\n"
 }
 
+// preparedWrites is the `Writes:` line of every ticket Prepare writes.
+const preparedWrites = "Writes: source.txt"
+
+// SetTicketWrites replaces the `Writes:` line of every prepared ticket with writes,
+// commits the change, and reloads the plan, whose digest reads the ticket bytes.
+func (f *Fixture) SetTicketWrites(writes string) {
+	f.T.Helper()
+	for _, chunk := range f.Plan.Chunks {
+		for _, ticket := range chunk.Tickets {
+			path := filepath.ToSlash(filepath.Join(filepath.Dir(f.spec), "tickets", ticket))
+			data, err := os.ReadFile(filepath.Join(f.Root, path))
+			if err != nil || !strings.Contains(string(data), preparedWrites) {
+				f.T.Fatalf("prepared ticket %s: %v; want the %q line", path, err, preparedWrites)
+			}
+			f.Write(path, strings.Replace(string(data), preparedWrites, "Writes: "+writes, 1))
+		}
+	}
+	f.Commit("set fixture ticket writes")
+	f.loadPlan(f.spec)
+}
+
 // WithFenceEntry adds one fence entry to a spec this package wrote, before its plan heading.
 func WithFenceEntry(spec []byte, entry string) []byte {
 	return []byte(strings.Replace(string(spec), planHeading, "- `"+entry+"`\n"+planHeading, 1))
@@ -138,7 +159,7 @@ func Prepare(t testing.TB, root string, count int, spec, body string, options ..
 		if i > 1 {
 			blocker = fmt.Sprintf("%d.md", i-1)
 		}
-		f.Write(filepath.ToSlash(filepath.Join(filepath.Dir(spec), "tickets", ticket)), fmt.Sprintf("# Chunk %d\n\nBlocked by: %s\nWrites: source.txt\nCovers: E%d\n\n## What to build\n\nImplement the behavior.\n\n## Acceptance\n\n- [ ] E%d: The behavior works.\n", i, blocker, i, i))
+		f.Write(filepath.ToSlash(filepath.Join(filepath.Dir(spec), "tickets", ticket)), fmt.Sprintf("# Chunk %d\n\nBlocked by: %s\n"+preparedWrites+"\nCovers: E%d\n\n## What to build\n\nImplement the behavior.\n\n## Acceptance\n\n- [ ] E%d: The behavior works.\n", i, blocker, i, i))
 	}
 	for _, option := range options {
 		option(&plan)

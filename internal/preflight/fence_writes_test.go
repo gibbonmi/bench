@@ -67,6 +67,7 @@ func TestFenceWritesNormalizesSpelling(t *testing.T) {
 // authorize a path with no fence line, so neither side counts it.
 func TestFenceWritesIgnoresImplicitAuthority(t *testing.T) {
 	assertFenceWrites(t, fencedFacts([]string{"a/"}, "a", "specs/example/spec.md", "capture/learnings.md"), "")
+	assertFenceWrites(t, fencedFacts([]string{"a/", "specs/example/", "capture/"}, "a"), "")
 }
 
 // TestCommandBuildFenceWritesReportsProseToken covers SC20. A backticked token in a
