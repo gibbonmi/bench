@@ -15,8 +15,17 @@ var ticketSlicingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: slicingChecks, Kind: RequireInSection, Section: "Slicing rules", Needle: "A retirement pass gives each sentence that grants the retired behavior its own forbid row and red-capable check.", Diagnostic: "ticket slicing: each retired grant needs its own forbid row"},
 	{Group: AfterImplementSpec, File: slicingChecks, Kind: RequireInSection, Section: "Slicing rules", Needle: "A cited verifier row names the exact checks it performed.", Diagnostic: "ticket slicing: a verifier row names its exact checks"},
 	{Group: AfterImplementSpec, File: slicingChecks, Kind: RequireInSection, Section: "Slicing rules", Needle: "The slicer runs build preflight again after each fence change and before review.", Diagnostic: "ticket slicing: build preflight reruns after each fence change"},
+	{Group: AfterImplementSpec, File: slicingChecks, Kind: RequireInSection, Section: "Slicing rules", Needle: "Each acceptance claim names an available producer and an executable check at its ticket checkpoint.", Diagnostic: "ticket slicing: each claim names its producer and check at its checkpoint"},
+	{Group: AfterImplementSpec, File: slicingChecks, Kind: RequireInSection, Section: "Slicing rules", Needle: "A ticket that preserves or moves a ref names a check for each of the head, the tip, and the checked-out-ref shapes.", Diagnostic: "ticket slicing: a ref move checks every ref shape"},
+	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Before the map locks", Needle: "A spec that adds an invariant check sweeps every input constructor of that check.", Diagnostic: "map discipline: a new invariant check sweeps its input constructors"},
+	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Before the map locks", Needle: "Each input constructor satisfies the new invariant, or its file joins a ticket `Writes:` line.", Diagnostic: "map discipline: each input constructor satisfies the invariant or joins Writes"},
+	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Before the map locks", Needle: "A spec that adds or removes a preflight row names every file that asserts the row count or the row list.", Diagnostic: "map discipline: a preflight row change names every row-count reader"},
+	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Before the map locks", Needle: "A spec that changes the output of a fixture builder names every test that asserts or rewrites that output.", Diagnostic: "map discipline: a fixture builder change names every output reader"},
 }
 
 // slicingChecks is the craft-tickets reference that states the enforced Writes: rules
 // and the slicing rules no check enforces.
 const slicingChecks = ".agents/skills/bench-craft-tickets/references/slicing-checks.md"
+
+// mapDiscipline is the craft-spec reference that holds the reader-sweep rules.
+const mapDiscipline = ".agents/skills/bench-craft-spec/references/map-discipline.md"

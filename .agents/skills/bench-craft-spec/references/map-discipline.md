@@ -35,6 +35,10 @@ the explore reads, the fence rules, and the review rubric.
 - Each shared reader in the reader sweep takes an exact ownership fence.
 - The reader sweep names the shipped-surface claim words, because `package-core-guard` reds a claim word beside a repo-only path.
 - A posture change lists every existing test fixture it reds before the map locks.
+- A spec that adds an invariant check sweeps every input constructor of that check. The sweep names each seed and each fixture builder that builds the graded input.
+- Each input constructor satisfies the new invariant, or its file joins a ticket `Writes:` line.
+- A spec that adds or removes a preflight row names every file that asserts the row count or the row list.
+- A spec that changes the output of a fixture builder names every test that asserts or rewrites that output.
 - A spec that names a Git flag cites an observed run of that flag over the hostile
   shapes. A flag's documented behavior is an assumption until that run exists.
 - A row that widens a forbidden-import pattern names the enumeration command for its

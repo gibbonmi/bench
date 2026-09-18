@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/skills/bench-craft-spec/SKILL.md",
-    "old": "The author writes the fence section after the ticket slice, from the union of the tickets' `Writes:` lines.",
+    "old": "The author writes the fence section after the ticket slice, and [the slicing checks](../bench-craft-tickets/references/slicing-checks.md) state the fence rule that build preflight enforces.",
     "new": "The author writes the fence section before the ticket slice."
   }
 ]

@@ -65,8 +65,6 @@ findings in the owner details.
 
 **FT293 (MEDIUM, decision required) — preflight-closed ticket Writes determine registry pins and blocker edges.**
 
-**FT300 (MEDIUM) — the slicer guidance sweeps every input constructor, and one reference owns the fence rule.**
-
 **FT317 (MEDIUM, decision required) — a capability-blocked acceptance row has one decided value at the completion checkpoint.**
 
 **FT318 (MEDIUM, decision required) — the review record has a native writer.**
@@ -258,6 +256,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT300 input-constructor sweep and one fence-rule owner — a `craft-synthesis` kit edit to `craft-spec` and its slicing references.
-2. FT319 chunk chain and record order in the phase files — a `craft-synthesis` kit edit to the implement and review phase files.
-3. FT316 checkpoint and landing refusals name the expected commit — /bench-debug
+1. FT319 chunk chain and record order in the phase files — a `craft-synthesis` kit edit to the implement and review phase files.
+2. FT316 checkpoint and landing refusals name the expected commit — /bench-debug
+3. FT320 finding reader rules and the axis return rule — a `craft-synthesis` kit edit to `craft-review`.

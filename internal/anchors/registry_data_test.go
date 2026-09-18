@@ -1096,8 +1096,8 @@ func TestFenceOrderAndClaimWordAnchorsRedOnRemoval(t *testing.T) {
 			{
 				file:    skill,
 				section: slicing,
-				needle:  "The author writes the fence section after the ticket slice, from the union of the tickets' `Writes:` lines.",
-				want:    ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates dropped the fence section the author writes after the ticket slice from the union of the tickets' Writes: lines",
+				needle:  "The author writes the fence section after the ticket slice, and [the slicing checks](../bench-craft-tickets/references/slicing-checks.md) state the fence rule that build preflight enforces.",
+				want:    ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates dropped the fence section the author writes after the ticket slice under the slicing-checks fence rule",
 			},
 			{
 				file:    skill,
