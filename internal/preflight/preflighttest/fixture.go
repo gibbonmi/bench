@@ -22,7 +22,10 @@ import (
 )
 
 // ResponseBudget is the encoded stdout bound every bounded preflight response obeys. Tests
-// state it independently of chargeevidence.ResponseLimit, so a changed limit turns them red.
+// state it independently of chargeevidence.ResponseLimit, so a raised limit turns them red.
+// A lowered limit leaves them green, because a shorter response still holds under this
+// budget. The shipped format reference in package chargeevidence owns that direction,
+// because the reference states the limit and its projection compares the shipped bytes.
 const ResponseBudget = 48000
 
 // ChargeFixtureAssignment is the assignment ID OwnedAssignment registers.

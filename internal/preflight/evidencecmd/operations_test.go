@@ -5,6 +5,35 @@ import (
 	"testing"
 )
 
+// BoundedForm is one registered bounded form's invocation shape: the name its mode and
+// selectors give it, the mode it names, the operand placeholder that mode declares, the
+// flags an invocation must state, and the flags it also accepts.
+type BoundedForm struct {
+	Name, Mode, Operand string
+	Flags               []string
+	Optional            []string
+}
+
+// BoundedForms projects every registered form that declares the shared response bound, in
+// registry order. The command tests derive their bounded case list from this projection,
+// so a bounded form registered later arrives with its own behavior case.
+func BoundedForms() []BoundedForm {
+	var forms []BoundedForm
+	for _, op := range operations {
+		if !op.Bounded {
+			continue
+		}
+		forms = append(forms, BoundedForm{
+			Name:     strings.Join(append([]string{op.Mode}, op.selectors...), " "),
+			Mode:     op.Mode,
+			Operand:  modeOperands[op.Mode],
+			Flags:    append(append([]string{}, op.selectors...), op.required...),
+			Optional: append([]string{}, op.optional...),
+		})
+	}
+	return forms
+}
+
 // TestOperationFlagsRegistered proves that every flag an operation names comes from the flag
 // table with the kind its position needs, and that every mode names its operand. An
 // unregistered flag fails here, a required or optional flag that takes no value fails here,

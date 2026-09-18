@@ -2,6 +2,7 @@ package evidencecmd_test
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -81,35 +82,86 @@ func TestEvidenceResponseBudget(t *testing.T) {
 	}
 }
 
-// TestEvidenceResponseBound is the guard half of CE13, CE131, CE132, CE133, CE134, CE138,
-// and CE139. Under
-// a lowered in-process limit, every bounded path's response becomes the bounded defect
-// refusal, so a path that skips the shared guard turns its case red.
+// boundCase is one invocation the response bound must hold.
+type boundCase struct {
+	name string
+	args []string
+}
+
+// flagArguments renders the named flags with the fixture value each one takes. A flag with
+// no fixture value fatals, so a form cannot reach the bound test with an unstated argument.
+func flagArguments(t *testing.T, values map[string]string, names ...string) []string {
+	t.Helper()
+	var args []string
+	for _, name := range names {
+		value, ok := values[name]
+		if !ok {
+			t.Fatalf("flag %s has no fixture value", name)
+		}
+		args = append(args, name)
+		if value != "" {
+			args = append(args, value)
+		}
+	}
+	return args
+}
+
+// boundedFormCases derives the bounded case list from the operation registry: one
+// invocation for every registered bounded form, and one more for each optional flag that
+// form accepts. operands supplies the argument for each declared operand placeholder and
+// values supplies the argument for each flag, so a bounded form registered later either
+// arrives with its own behavior case or fatals here.
+func boundedFormCases(t *testing.T, operands, values map[string]string) []boundCase {
+	t.Helper()
+	var cases []boundCase
+	for _, form := range evidencecmd.BoundedForms() {
+		operand, ok := operands[form.Operand]
+		if !ok {
+			t.Fatalf("form %q takes operand %s, which has no fixture value", form.Name, form.Operand)
+		}
+		args := append([]string{form.Mode, operand}, flagArguments(t, values, form.Flags...)...)
+		cases = append(cases, boundCase{form.Name, args})
+		for _, optional := range form.Optional {
+			extended := append(append([]string{}, args...), flagArguments(t, values, optional)...)
+			cases = append(cases, boundCase{form.Name + " with " + optional, extended})
+		}
+	}
+	return cases
+}
+
+// TestEvidenceResponseBound is the guard half of CE13, CE131, CE132, CE133, CE134, CE135,
+// CE138, and CE139. Under a lowered in-process limit, every bounded path's response becomes
+// the bounded defect refusal, so a path that skips the shared guard turns its case red. The
+// registry supplies the form half of the list, and the cases below add the paths no
+// registered form states.
 func TestEvidenceResponseBound(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
 	args := preflighttest.ChargeArgs(t, root, slug)
 	identity, _, _ := prepareEvidence(t, args)
-	source := "v1." + strings.TrimPrefix(identity, "sha256:") + ".s.1.0"
+	cases := boundedFormCases(t,
+		map[string]string{"<slug>": slug, "<id>": identity},
+		map[string]string{
+			"--charge": "", "--verify": "", "--check-current": "",
+			"--ticket":          "one.md",
+			"--base":            preflighttest.RunGit(t, "rev-parse", "main"),
+			"--source-tip":      preflighttest.RunGit(t, "rev-parse", "HEAD"),
+			"--source":          "s2",
+			"--cursor":          "v1." + strings.TrimPrefix(identity, "sha256:") + ".s.1.0",
+			"--max-store-bytes": strconv.FormatUint(chargeevidence.DefaultQuota, 10),
+		})
+	// These cases reach the paths no registered form states: an operand refused before the
+	// grammar, a rejected argument, a registered selector without the flags its form
+	// requires, and a read of an artifact the store does not hold. The operation case
+	// reaches the operation registry, because the argument grammar accepts every token.
+	cases = append(cases,
+		boundCase{"CE138 oversized operand usage", []string{"build", strings.Repeat("s", 2000)}},
+		boundCase{"CE138 grammar usage", []string{"build", slug, "--unknown"}},
+		boundCase{"CE138 operation usage", []string{"build", slug, "--charge"}},
+		boundCase{"CE139 operational refusal", []string{"evidence", "sha256:" + strings.Repeat("0", 64)}},
+	)
 	restore := evidencecmd.SetResponseLimitForTest(16)
 	defer restore()
-	for _, test := range []struct {
-		name string
-		args []string
-	}{
-		{"CE13 build preparation", args},
-		{"CE131 manifest read", []string{"evidence", identity}},
-		{"CE132 source read", []string{"evidence", identity, "--cursor", source}},
-		{"CE132 selected source read", []string{"evidence", identity, "--source", "s2"}},
-		{"CE133 verify", []string{"evidence", identity, "--verify"}},
-		{"CE134 check-current", []string{"evidence", identity, "--check-current"}},
-		{"CE138 oversized operand usage", []string{"build", strings.Repeat("s", 2000)}},
-		{"CE138 grammar usage", []string{"build", slug, "--unknown"}},
-		// The operation case states a registered selector without the flags its form
-		// requires. The argument grammar accepts every token, so the refusal comes from the
-		// operation registry, not from the parse the case above it grades.
-		{"CE138 operation usage", []string{"build", slug, "--charge"}},
-		{"CE139 operational refusal", []string{"evidence", "sha256:" + strings.Repeat("0", 64)}},
-	} {
+	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			out, code := preflight.Command(test.args)
 			if code != 1 || !strings.HasPrefix(out, "error: response bound exceeded — ") || strings.Count(out, "\n") != 1 {
