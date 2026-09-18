@@ -1201,6 +1201,69 @@ The path stays inside the ticket fence.
 `internal/systemtest/charge_evidence_test.go` grew past its budget, and the structure lane refused the commit.
 The author split the cleanup system tests into a new file inside the fence rather than record a budget grant.
 
+## CE-C3: review round 1
+
+Frozen pair: base `6ec77cca`, tip `f70a6209`.
+The raw finding count is 16. The repair-target count is 13.
+Repair cycles used: 0 of 2.
+All three axes reported the interrupt test as one defect, under three ids.
+
+### Standards
+
+Finding count: 5. Worst issue: ST1.
+
+- CE-C3-ST1 (auto-fix): The store cleanup test still documents the writer lock as cleanup's exclusion mechanism. The author removed that lock in this same commit, so the second source drifted at once.
+- CE-C3-ST2 (auto-fix): The command fingerprint check re-derives the identity shape that the manifest already owns, and the same package already composes that owner elsewhere.
+- CE-C3-ST3 (auto-fix): The system cleanup test re-implements the pause-marker harness of the evidence system test. The copy already drifted, because it hard-codes its marker name instead of deriving it from the stage.
+- CE-C3-ST4 (auto-fix): The cleanup help test restates the two rendered forms that the help inventory already asserts twice.
+- CE-C3-ST5 (ask): The system interrupt test is documented as a killed apply that leaves a subset removed. It applies completely and kills nothing.
+
+The axis confirmed the exclusive lock comment states the current fact.
+It confirmed the cursor is one parser with two symmetric guards.
+It confirmed the fingerprint and its comment are one source, and that the format reference is generated.
+
+### Spec
+
+Finding count: 5. Worst issue: SP1. Row CE117 is pending, not met.
+
+- CE-C3-SP1 (auto-fix): The test the spec names for row CE122 never interrupts. The cleanup deletion loop holds no pause stage, so a real interruption is not reachable.
+- CE-C3-SP2 (auto-fix): Rows CE136 and CE137 name the response budget test, which measures no cleanup response. The cleanup forms reach only the bounded response test, under a synthetic limit.
+- CE-C3-SP3 (auto-fix): The two cleanup help forms are authored as literals in three places. This finding is the same defect as ST4.
+- CE-C3-SP4 (auto-fix): Rows CE169 and CE170 assert hand-written field lists with no recorded omission red.
+- CE-C3-SP5 (auto-fix): A grammar refusal reads a prefix clause and a contains clause under one negation. The operator order makes the prefix clause dead, so any output that holds the word anywhere passes.
+
+The axis confirmed row CE175 is met and that no quota-first expectation survives.
+It confirmed rows CE78 to CE85, CE100, CE119, CE121, CE171, CE172, and CE175 each hold.
+
+### Coverage
+
+Finding count: 6. Worst issue: CV1. Seven mutations were silent.
+
+- CE-C3-CV1 (auto-fix): The cleanup cursor stream has no oracle. Both cross-stream refusals and the stream marker are each silent.
+- CE-C3-CV2 (auto-fix): A stopped apply has no command-surface oracle, so its exit code and its fresh-plan recovery are unproven.
+- CE-C3-CV3 (auto-fix): The empty-plan successor suppression is silent, so an empty store may advertise an apply that authorizes nothing.
+- CE-C3-CV4 (auto-fix): The command fingerprint shape check is silent, because the one case that reaches it is caught earlier by the flag parser.
+- CE-C3-CV5 (ask): The pre-deletion identity recheck is ungraded, and it appears unreachable under the exclusive lock.
+- CE-C3-CV6 (auto-fix): The system interrupt test interrupts nothing. This finding is the same defect as ST5 and SP1.
+
+The axis confirmed the sort rule, the block field lists, the stopped-apply completion flag, the temporary inventory, and the extra-operand refusal all bite.
+It confirmed no cleanup path takes the operation lock shared or skips it.
+
+### Coordinator decisions for this chunk
+
+- CE-C3-CV5 stays and it gets graded. The exclusive lock excludes every Bench path, and the recheck defends against a process outside that protocol. Ticket 6 requires the revalidation of each target identity before deletion, so this is a spec obligation and not a redundant mechanism. It differs from the writer lock the author removed, which duplicated a guarantee another lock already gave.
+- The repair adds a pause stage to the cleanup deletion loop. That one seam closes four findings. It lets a test replace a target between the plan and its deletion, which grades CV5. It also makes a real mid-apply kill reachable, which closes ST5, SP1, and CV6 together and defeats the row CE122 falsifier at the system seam.
+- The repair covers ST1 to ST5, SP1, SP2, SP4, SP5, and CV1 to CV6. Findings ST4 and SP3 are one repair, and ST5, SP1, and CV6 are one repair.
+- Row CE117 stays pending. This session produces no macOS and no Windows evidence, and the record states each platform apart.
+
+### Flagged for reviewer veto
+
+The spec's clean seam cell names a command test path that the implementation does not use.
+Both test paths stay inside the ticket 6 fence, and the row holds with a corrected path.
+
+One system test still matches the capacity message by an unanchored substring.
+It asserts no ordering, so it preserves no quota-first expectation, and it no longer anchors the complete contract.
+
 ## Record
 
 ```bench-review-record
