@@ -247,6 +247,10 @@ Finding count: 0. Worst issue: none. A probe that turned "test files included" i
 
 The author ran the whole gate green at the repair tree. At the repair tip the anchors suite, the budget check, and the prose check passed. The named probe bit under `docs-currency-workflow`, and so did a probe that deleted the test-file clause.
 
+## Final reconciliation
+
+Every chunk checkpoint is green: SC-C1, SC-C2, and SC-C3. The retained author ran the plan's five final checks at the final source, and each passed. Each acceptance row SC1 to SC31 maps to a test that a review axis graded. Rows SC13, SC22, and SC23 use existing tests that the chunks extended. Stories 28 and 29 stay uncovered by the spec's own exclusions.
+
 ```bench-review-record
 {
   "version": 1,
@@ -1369,11 +1373,134 @@ The author ran the whole gate green at the repair tree. At the repair tip the an
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "4afc0e77019a7a6a275f62129d3402d346dd6919",
+    "performer": "slicing-closure-retained-author",
+    "reconciliation": {
+      "SC1": "covered",
+      "SC2": "covered",
+      "SC3": "covered",
+      "SC4": "covered",
+      "SC5": "covered",
+      "SC6": "covered",
+      "SC7": "covered",
+      "SC8": "covered",
+      "SC9": "covered",
+      "SC10": "covered",
+      "SC11": "covered",
+      "SC12": "covered",
+      "SC13": "covered",
+      "SC14": "covered",
+      "SC15": "covered",
+      "SC16": "covered",
+      "SC17": "covered",
+      "SC18": "covered",
+      "SC19": "covered",
+      "SC20": "covered",
+      "SC21": "covered",
+      "SC22": "covered",
+      "SC23": "covered",
+      "SC24": "covered",
+      "SC25": "covered",
+      "SC26": "covered",
+      "SC27": "covered",
+      "SC28": "covered",
+      "SC29": "covered",
+      "SC30": "covered",
+      "SC31": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-coverage",
+        "performer": "slicing-closure-retained-author",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "4afc0e77019a7a6a275f62129d3402d346dd6919",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:retained-author",
+          "digest": "sha256:9eafae32e1ca96f1d4599d62b3ca613a8aec4b72785c88249951387126a61b7b",
+          "excerpt": "bench coverage --check at c80a22f2 review-record tip: ok, coverage map valid, 31 rows"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/slicing-closure/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-anchors",
+        "performer": "slicing-closure-retained-author",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "4afc0e77019a7a6a275f62129d3402d346dd6919",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:retained-author",
+          "digest": "sha256:64e5717753ea0fce41416111724d07c1aa02774d4d6fa16d3e26531f9024591f",
+          "excerpt": "bench test --package ./internal/anchors at the final tip: pass, 474 ms"
+        },
+        "requirement": "anchors",
+        "command": "bench test --package ./internal/anchors",
+        "exit_code": 0
+      },
+      {
+        "id": "final-preflight",
+        "performer": "slicing-closure-retained-author",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "4afc0e77019a7a6a275f62129d3402d346dd6919",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:retained-author",
+          "digest": "sha256:1cc378c17c2d8500a6e89bb03680050d2ce761507c0f0393b0a05df9ff54c850",
+          "excerpt": "bench test --package ./internal/preflight/... at the final tip: pass, preflight 18757 ms, evidencecmd 7716 ms"
+        },
+        "requirement": "preflight",
+        "command": "bench test --package ./internal/preflight/...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-budget",
+        "performer": "slicing-closure-retained-author",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "4afc0e77019a7a6a275f62129d3402d346dd6919",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:retained-author",
+          "digest": "sha256:e06a6ad69fb42e9b44575766044a493b38e39c8ac8042513ecc045cc426951db",
+          "excerpt": "bench test --check guidance-prose-budgets at the final tip: pass"
+        },
+        "requirement": "budget",
+        "command": "bench test --check guidance-prose-budgets",
+        "exit_code": 0
+      },
+      {
+        "id": "final-canary",
+        "performer": "slicing-closure-retained-author",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "4afc0e77019a7a6a275f62129d3402d346dd6919",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:retained-author",
+          "digest": "sha256:b31bdcd1dc0e0cd0d3e047234a4c63bb1bf07bd76aceb90f33dc155030ad6421",
+          "excerpt": "bench test --check canary-fixture-compliance at the final tip: pass"
+        },
+        "requirement": "canary",
+        "command": "bench test --check canary-fixture-compliance",
+        "exit_code": 0
+      }
+    ]
   }
 }
 ```
