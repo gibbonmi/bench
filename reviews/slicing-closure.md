@@ -132,6 +132,35 @@ Finding count: 0. Worst issue: none.
 
 The author ran the preflight suites and the whole gate green at the ticket tree. The plan probe kept the review pickup in the fence set. 135 tests failed, `TestFenceWritesIgnoresReviewPickup` among them, and the file was restored.
 
+## SC-C2: review round 2
+
+Frozen pair: base `dd5c0a0ed93eb9f56d1ec13558bbcf9a96c8a277`, tip `b23a87f02d4f807c66800a38cf10f926fec86810`.
+The raw finding count is 0. The de-duplicated repair-target count is 0.
+Repair cycles used: 1 of 2. Repair cycle 1 closed ST1 and added the fence-side SC19 case.
+Three fresh opus sessions at high effort ran this review, by reviewer direction.
+
+### Standards
+
+Finding count: 0. Worst issue: none. The axis confirmed the ST1 fold.
+
+### Spec
+
+Finding count: 0. Worst issue: none. SC14 to SC23 hold, and SC19 now covers both sides.
+
+### Coverage
+
+Finding count: 0. Worst issue: none. A probe that dropped the spec-folder implicit entry made the SC19 test fail, and the file was restored.
+
+### Advice
+
+- `SetTicketWrites` reloads the fixture record, so it is safe only right after `Prepare`. Its comment does not state that constraint.
+- `SetTicketWrites` finds the prepared line as a substring. A longer prepared line would pass the guard and keep its tail.
+- The consumer evidence shows a false `blast_deleted` row for `systemLandingRaceFixture`, which still exists.
+
+### Author verification
+
+The author ran the whole gate green at the repair tree, the system suite included. The plan probe bit again with 135 failed tests, and the file was restored. A probe that skipped implicit-entry removal on the fence side made the new SC19 case fail.
+
 ```bench-review-record
 {
   "version": 1,
@@ -559,9 +588,9 @@ The author ran the preflight suites and the whole gate green at the ticket tree.
     {
       "id": "SC-C2",
       "base": "dd5c0a0ed93eb9f56d1ec13558bbcf9a96c8a277",
-      "tip": "5074d908c9863ca16d064b56a485cec49114f6f0",
+      "tip": "b23a87f02d4f807c66800a38cf10f926fec86810",
       "plan_digest": "sha256:1ed9c9b2b02c08e21b3aaaaf1b3d7d2e9000996ba380241425f8eca1c3dbc7ee",
-      "source_digest": "2850256baec0741152344bc8b63547e04b362b8f",
+      "source_digest": "93345167177a28fae104581bc7128478762428e4",
       "acceptance_rows": [
         "SC14",
         "SC15",
@@ -619,6 +648,53 @@ The author ran the preflight suites and the whole gate green at the ticket tree.
               "ref": "claude-session:retained-author",
               "digest": "sha256:f8270e88e59cdbbd0a1c96793299865f7eae4e1be2e0181bcea7ef8698a27e30",
               "excerpt": "bench probe internal/preflight/fence_writes.go --swap 'fence, owned := unionSide(f, f.FenceEntries, pickup)' --with 'fence, owned := unionSide(f, f.FenceEntries, \"\")' --package ./internal/preflight/...: verdict bit, 135 failed tests including TestFenceWritesIgnoresReviewPickup, restored=yes"
+            }
+          }
+        },
+        {
+          "id": "sc-c2-v2-preflight",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "93345167177a28fae104581bc7128478762428e4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:89d73a2816548129ea8270d10401d1c55769845e9089670dde0316f248d9a222",
+            "excerpt": "bench test --package ./internal/preflight/... at b23a87f0: baseline passed, 427 tests ran, before the plan probe; whole gate green at the repair tree"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "sc-c2-v2-mutation",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "93345167177a28fae104581bc7128478762428e4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:f5e02c786ac6fe8680c8d89726cc4861bb2caf481aa64e3ba5e7f3d38674d2cb",
+            "excerpt": "bench test --package ./internal/preflight/... at b23a87f0: baseline passed before the probe"
+          },
+          "requirement": "mutation",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "keep the review pickup in the fence set",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:retained-author",
+              "digest": "sha256:2ebf661ffe796c6c683d34692c59f6234ac6f71f0aa2ce6b86c4d31c4ec5b06d",
+              "excerpt": "bench probe internal/preflight/fence_writes.go --swap 'fence, owned := unionSide(f, f.FenceEntries, pickup)' --with 'fence, owned := unionSide(f, f.FenceEntries, \"\")' --package ./internal/preflight/... at b23a87f0: verdict bit, 135 failed tests, restored=yes"
             }
           }
         }
@@ -685,6 +761,72 @@ The author ran the preflight suites and the whole gate green at the ticket tree.
           "tip": "5074d908c9863ca16d064b56a485cec49114f6f0",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "sc-c2-r2-standards",
+          "performer": "sc-c2-r2-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "93345167177a28fae104581bc7128478762428e4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c2-r2-standards",
+            "digest": "sha256:fa2f4772ec93d7e4dfeb1d5352ed1dfc13cc3716613e7b8812f145d71438f381",
+            "excerpt": "Standards SC-C2 round 2 at b23a87f0: no findings. ST1 folded: preparedWrites has one owner and SetTicketWrites refuses a missing line. Advice: the helper reloads the record, so it is safe only right after Prepare."
+          },
+          "axis": "Standards",
+          "base": "dd5c0a0ed93eb9f56d1ec13558bbcf9a96c8a277",
+          "tip": "b23a87f02d4f807c66800a38cf10f926fec86810",
+          "finding_ids": [],
+          "supersedes": [
+            "sc-c2-r1-standards"
+          ]
+        },
+        {
+          "id": "sc-c2-r2-spec",
+          "performer": "sc-c2-r2-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "93345167177a28fae104581bc7128478762428e4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c2-r2-spec",
+            "digest": "sha256:83c8a70c829e497a14d11deebed156cae6b69f38ed80fff240e61bcc424443a7",
+            "excerpt": "Spec SC-C2 round 2 at b23a87f0: no findings. SC14 to SC23 hold; SC19 now covers both sides. Advice: a false blast_deleted row for systemLandingRaceFixture in the consumer evidence."
+          },
+          "axis": "Spec",
+          "base": "dd5c0a0ed93eb9f56d1ec13558bbcf9a96c8a277",
+          "tip": "b23a87f02d4f807c66800a38cf10f926fec86810",
+          "finding_ids": [],
+          "supersedes": [
+            "sc-c2-r1-spec"
+          ]
+        },
+        {
+          "id": "sc-c2-r2-coverage",
+          "performer": "sc-c2-r2-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "93345167177a28fae104581bc7128478762428e4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c2-r2-coverage",
+            "digest": "sha256:3bbd6f538d6efd8962798050f102ade68c7cf08e76230281450ae709aadbdf04",
+            "excerpt": "Coverage SC-C2 round 2 at b23a87f0: no blocking findings. Advice: SetTicketWrites matches the prepared line as a substring. Probe dropping the spec-folder implicit entry reds TestFenceWritesIgnoresImplicitAuthority; restored."
+          },
+          "axis": "Coverage",
+          "base": "dd5c0a0ed93eb9f56d1ec13558bbcf9a96c8a277",
+          "tip": "b23a87f02d4f807c66800a38cf10f926fec86810",
+          "finding_ids": [],
+          "supersedes": [
+            "sc-c2-r1-coverage"
+          ]
         }
       ]
     }
