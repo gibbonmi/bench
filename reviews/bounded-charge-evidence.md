@@ -671,6 +671,60 @@ The literal Forbid row still reads the whole file, which is one more reason to k
 - An unpinned waiver added inside the pinned paragraph: the pinning test reported zero Require rows. The parser change kept the CV5 guarantee.
 - The tree was clean after each restore.
 
+### The spec fence expansion
+
+The chunk checkpoint refused with `paths-authorized` red.
+The five files that the repairs wrote reached the ticket 4 `Writes:` line across three cycles.
+The spec ownership fence kept its old rows.
+Commit `9da026dd` adds the five rows, and the chunk tip moves to that commit.
+The plan digest moved three times inside this chunk, at `8b23ab36`, at `5f88803a`, and at `9da026dd`.
+The record carries one amendment for each move.
+
+### Round 4 axis verdicts
+
+The axes graded the frozen pair base `687a5fc3`, tip `9da026dd`.
+
+### Standards round 4
+
+ST11 closed. Two new findings.
+
+- CE-C1D-ST12 (auto-fix): `Findings` and `Paragraphs` each hold the same four-step preparation. A fourth strip step added to one leaves the pin reading raw prose.
+- CE-C1D-ST13 (auto-fix): Cycle 3 added three independent expectation sets with no recorded red.
+
+The axis confirmed one parser now owns the paragraph rule and the sentence rule.
+It confirmed the conformance test holds no splitter of its own.
+It confirmed the exported seam is a projection of the one walk, not a second grammar.
+
+### Spec round 4
+
+No acceptance row lost its cover. One new finding.
+
+- CE-C1D-SP5 (auto-fix): The declared `guidance-cases` command cannot reach `TestBoundedBuildActionRulesBiteOnSyntheticText`. That guard is the only check that closed CV9.
+
+The axis mapped each of the six rows to one anchor row and one passing test.
+It confirmed the fence expansion touches no acceptance row, no dependency, and no completion plan entry.
+
+Flagged for reviewer veto, with no finding ID: the CE-C1D price row names six owner files, and ticket 4 now names about eighteen.
+The overrun predates this delta, and the fence expansion widens it.
+
+### Coverage round 4
+
+CV7, CV8, and CV9 closed, each by a mutation the axis ran. Three new findings.
+
+- CE-C1D-CV10 (auto-fix): `needleText` reduces to `return needle` with the conformance package green.
+- CE-C1D-CV11 (auto-fix): Two of the three fail-closed arms of `Paragraphs` have no case. A drop of either arm is silent.
+- CE-C1D-CV12 (auto-fix): The `words > 0` guard in `sentenceSpans` deletes with no red. Cycle 3 made that guard the shared sentence rule.
+
+The axis kept CV6 closed, as the reviewer decided.
+It confirmed the CV1, CV4, and CV5 bites all hold at this tip.
+It read the `internal/prose` coverage profile, where every new function reports full statement coverage.
+The three findings are condition paths, not dead statements.
+
+### Reviewer decisions after round 4
+
+- The reviewer granted repair cycle 4 for all six findings.
+- The reviewer capped the hardening at two rounds after a chunk's acceptance rows prove. A later finding becomes advice for the reconciliation.
+
 ## Record
 
 ```bench-review-record
