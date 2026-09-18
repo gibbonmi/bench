@@ -1820,6 +1820,42 @@ The whole-tree gate on that tip is green, with eight capability skips.
 Each chunk section above holds its advice list.
 No advice item is a blocker, so none joined the reconciliation, and the drain owns their disposition.
 
+## CE-C4: review round 3
+
+Repair cycles used: 1 of 2. This round is review evidence only, and it uses no repair cycle.
+The frozen pair is base `f980d95c`, tip `5a709986918c2fc3fed5568e757734bf759a36f0`.
+
+### Why the chunk extends
+
+The completion checkpoint refused the first completion record with a stale reviewed source.
+It requires the reviewed source of the last chunk to equal the final source.
+The reconciliation commit changed the spec after the CE-C4 review, so CE-C4 extends to the reconciled tip.
+The new delta is the spec only: 171 seam cells and one storage sentence.
+
+### Round 3 axis verdicts
+
+Each axis worked from the record commit `c8060ceb` above that tip, and each graded the reconciliation delta.
+All three report pass, with no finding.
+
+- Standards: every new seam cell follows the one citation form, and no cell still names a planned seam.
+- Spec: only the seam column of 171 rows and one sentence changed. In a sample of 20 rows, each cited test grades its row.
+- Coverage: an undeclared test name, a missing path, and an empty name list each failed the coverage check.
+
+The Spec sample held all 17 hand-mapped rows and three script-mapped rows.
+The storage sentence matches the platform statement of the README.
+
+### Advice carried to the drain
+
+- The planned seam table of the spec describes a complete staging step, and its guidance row names one test file of two.
+- Three cited tests carry a row id comment that is narrower than the set of rows that cite them.
+- No check binds a cited test to the row that it grades.
+
+### Coordinator verification at the reconciled tip
+
+- The whole-tree gate on `5a709986` is green.
+- The three plan verifications pass at this tip.
+- The named plan probe bit at this tip, and the probe verb restored the file.
+
 ## Record
 
 ```bench-review-record
@@ -5051,9 +5087,9 @@ No advice item is a blocker, so none joined the reconciliation, and the drain ow
     {
       "id": "CE-C4",
       "base": "f980d95c8cd6113da9e35d305e854fdf497170de",
-      "tip": "50e8e1a0eee356975d1bbccffa49f465073e9788",
-      "plan_digest": "sha256:581807ed92fa23fe557273dd5bb3e11f966388d4b8b6ab24dab121e883a8d236",
-      "source_digest": "ee93f2a0342e032e9e5e9be9b1b2fc786c961e16",
+      "tip": "5a709986918c2fc3fed5568e757734bf759a36f0",
+      "plan_digest": "sha256:2e85ce688b2c1d6c6d3a90dde4e15fc89a8512267b4b0a1f8698c66c7a3cdc8a",
+      "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
       "acceptance_rows": [
         "CE104",
         "CE105",
@@ -5070,13 +5106,13 @@ No advice item is a blocker, so none joined the reconciliation, and the drain ow
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "ee93f2a0342e032e9e5e9be9b1b2fc786c961e16",
+          "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
             "ref": "claude-session:coordinator-run",
-            "digest": "sha256:4783c7763e07bf8dd686d25a389a6345547507ec868b0746ad8de2e40fc9d66b",
-            "excerpt": "at 50e8e1a0: pass; preflight 25632 ms and evidencecmd 10102 ms"
+            "digest": "sha256:d863743c8a667f735f92a357e19f07c80f4b22a5550adaa3bc4272d53fc8f11b",
+            "excerpt": "at 5a709986: pass; preflight 20967 ms and evidencecmd 9216 ms"
           },
           "requirement": "preflight",
           "command": "bench test --package ./internal/preflight/...",
@@ -5088,13 +5124,13 @@ No advice item is a blocker, so none joined the reconciliation, and the drain ow
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "ee93f2a0342e032e9e5e9be9b1b2fc786c961e16",
+          "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
             "ref": "claude-session:coordinator-run",
-            "digest": "sha256:a4d39b227cab0d34137f07e139f20bc6cc4a55d54150381e54b1283b11750da9",
-            "excerpt": "at 50e8e1a0: pass, 821 ms"
+            "digest": "sha256:3788988ecc7822cff42e17927901983cb4723e20480899122fd463576a17d4d7",
+            "excerpt": "at 5a709986: pass, 929 ms"
           },
           "requirement": "guidance",
           "command": "bench test --check docs-currency-workflow",
@@ -5106,13 +5142,13 @@ No advice item is a blocker, so none joined the reconciliation, and the drain ow
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "ee93f2a0342e032e9e5e9be9b1b2fc786c961e16",
+          "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
             "ref": "claude-session:coordinator-run",
-            "digest": "sha256:2cb914cdbfbdeac0b2b72b0c2b2f494a57a2ae98dd5f110f50fbef8af0be4d76",
-            "excerpt": "at 50e8e1a0: pass, 1653 ms"
+            "digest": "sha256:2705cd05907062651cf4a6c3ee130e6788f00d01d203c04e1d5c17b6a33e762f",
+            "excerpt": "at 5a709986: pass, 1565 ms"
           },
           "requirement": "guidance-cases",
           "command": "bench test --package ./internal/conformance --run TestEvidence",
@@ -5124,13 +5160,13 @@ No advice item is a blocker, so none joined the reconciliation, and the drain ow
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "ee93f2a0342e032e9e5e9be9b1b2fc786c961e16",
+          "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
             "ref": "claude-session:coordinator-run",
-            "digest": "sha256:a4d39b227cab0d34137f07e139f20bc6cc4a55d54150381e54b1283b11750da9",
-            "excerpt": "at 50e8e1a0: pass, 821 ms"
+            "digest": "sha256:3788988ecc7822cff42e17927901983cb4723e20480899122fd463576a17d4d7",
+            "excerpt": "at 5a709986: pass, 929 ms"
           },
           "requirement": "mutation",
           "command": "bench test --check docs-currency-workflow",
@@ -5142,8 +5178,8 @@ No advice item is a blocker, so none joined the reconciliation, and the drain ow
             "restore": "pass",
             "native_ref": {
               "ref": "claude-session:coordinator-run",
-              "digest": "sha256:6850eee63f029568d4c08fd0d05967915b92a2b51dff30e3ba798b7fde953b73",
-              "excerpt": "bench probe .agents/commands/bench-implement-spec.md swapping the fresh-consumer sentences for a sentence that accepts a transferred final cursor, check docs-currency-workflow at 50e8e1a0: verdict bit, TestRootConformance failed at gate_entry_test.go:29 with the consumer context diagnostic for bench-implement-spec.md, restored=yes"
+              "digest": "sha256:ee57df55b1a4295e738241306254f97a69a48d8ce48eb447c425f35bb0cb2233",
+              "excerpt": "bench probe .agents/commands/bench-implement-spec.md swapping the fresh-consumer sentences for a sentence that accepts a transferred final cursor, check docs-currency-workflow at 5a709986: verdict bit, TestRootConformance failed at gate_entry_test.go:29 with the consumer context diagnostic for bench-implement-spec.md, restored=yes"
             }
           }
         },
@@ -5153,13 +5189,13 @@ No advice item is a blocker, so none joined the reconciliation, and the drain ow
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "ee93f2a0342e032e9e5e9be9b1b2fc786c961e16",
+          "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
             "ref": "claude-session:coordinator-run",
-            "digest": "sha256:ad45bc5b0f2fc8ba2a582abf62b96e93fc24aec0ffa5e9145cbd4b6f42a5f273",
-            "excerpt": "whole-tree gate at 50e8e1a0: pass, six phases green, eight capability skips; the coordinator's narrowed-needle probe bit at that tip, restored=yes"
+            "digest": "sha256:76b2258e84f8cbf3a425d52ffee5c95d4de94d2e8fff719fdfe4679d610f0a4e",
+            "excerpt": "whole-tree gate at 5a709986: pass, six phases green, eight capability skips"
           },
           "requirement": "gate",
           "command": "bench gate",
@@ -5299,6 +5335,72 @@ No advice item is a blocker, so none joined the reconciliation, and the drain ow
           "finding_ids": [],
           "supersedes": [
             "ce-c4-r1-coverage"
+          ]
+        },
+        {
+          "id": "ce-c4-r3-standards",
+          "performer": "claude-review-ce-c4-standards-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c4-standards-r3",
+            "digest": "sha256:d31f08e72ada4007b9b671ba093058e335b9180c24be2cbd3f6f8877c97576b0",
+            "excerpt": "Standards CE-C4 round 3: 0 findings on the reconciliation delta. Every new seam cell follows the one citation form, and no cell still reads a planned seam. No mandatory standard forbids the retained planned seam table in a spec that retires after its landing. The storage sentences meet the STE rules."
+          },
+          "axis": "Standards",
+          "base": "f980d95c8cd6113da9e35d305e854fdf497170de",
+          "tip": "5a709986918c2fc3fed5568e757734bf759a36f0",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c4-r2-standards"
+          ]
+        },
+        {
+          "id": "ce-c4-r3-spec",
+          "performer": "claude-review-ce-c4-spec-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c4-spec-r3",
+            "digest": "sha256:f435441d3e1c9bf170a3fb8d10318d108b210ca1975713faf782a52775148007",
+            "excerpt": "Spec CE-C4 round 3: 0 findings. The delta changes only the seam column of 171 rows and one storage sentence, which matches the README platform statement. A sample of 20 rows, with all 17 hand-mapped rows, found that each cited test grades its row and defeats its falsifier. bench coverage --check reports a valid map of 175 rows."
+          },
+          "axis": "Spec",
+          "base": "f980d95c8cd6113da9e35d305e854fdf497170de",
+          "tip": "5a709986918c2fc3fed5568e757734bf759a36f0",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c4-r2-spec"
+          ]
+        },
+        {
+          "id": "ce-c4-r3-coverage",
+          "performer": "claude-review-ce-c4-coverage-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c4-coverage-r3",
+            "digest": "sha256:a627e59b5ab0a8899d5470eabafdd2d1a3dac3451c3ca42fc2c21496c069163e",
+            "excerpt": "Coverage CE-C4 round 3: 0 findings. The citation oracle is live: an undeclared test name, a missing path, and an empty name list each failed bench coverage --check with exit 1. No check binds a cited test to the row it grades, which is advice, because the Spec axis samples the semantics."
+          },
+          "axis": "Coverage",
+          "base": "f980d95c8cd6113da9e35d305e854fdf497170de",
+          "tip": "5a709986918c2fc3fed5568e757734bf759a36f0",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c4-r2-coverage"
           ]
         }
       ]
