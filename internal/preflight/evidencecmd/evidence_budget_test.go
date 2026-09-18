@@ -104,7 +104,10 @@ func TestEvidenceResponseBound(t *testing.T) {
 		{"CE134 check-current", []string{"evidence", identity, "--check-current"}},
 		{"CE138 oversized operand usage", []string{"build", strings.Repeat("s", 2000)}},
 		{"CE138 grammar usage", []string{"build", slug, "--unknown"}},
-		{"CE138 operation usage", []string{"build", slug, "--full"}},
+		// The operation case states a registered selector without the flags its form
+		// requires. The argument grammar accepts every token, so the refusal comes from the
+		// operation registry, not from the parse the case above it grades.
+		{"CE138 operation usage", []string{"build", slug, "--charge"}},
 		{"CE139 operational refusal", []string{"evidence", "sha256:" + strings.Repeat("0", 64)}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
