@@ -1515,6 +1515,105 @@ All three report pass, with no finding.
 - Spec: ticket 5 commit `2ba4e6de` wrote that file, and no `Covers:` list, acceptance row, check, or pass criterion moved.
 - Coverage: the delta touches no code, test, or oracle, and the `paths-authorized` check grades the fence at file level.
 
+## CE-C4: author verification and probes
+
+Frozen pair: base `f980d95c8cd6113da9e35d305e854fdf497170de`, tip `7e51a515bc5cda49f2b7d7f8a98c04b4d74dea9c`.
+The base is the CE-C3 close commit, so no commit lies between the two chunks.
+The author needed no fence expansion and no plan expansion.
+The build preflight reports every check green at the tip, which the coordinator ran itself.
+
+### Author venue, flagged for reviewer veto
+
+The recorded line names ticket authors as forks of the coordinator on opus.
+The resumed coordinator runs on the top binding, and a fork inherits that model.
+The coordinator asked the reviewer, and the reviewer started the phase again with no answer.
+The coordinator kept the approved tier: one fresh writer on opus at high effort wrote ticket 7.
+Ticket 7 had no earlier author, so no author transfer occurred.
+
+### Author verification
+
+The author ran the three ticket selectors and reported all green.
+It saw all three new tests fail with an anchor count of zero before the registry rows existed.
+The coordinator ran the three selectors, the build preflight, and the whole-tree gate at `7e51a515`, and all are green.
+
+### The named plan probe
+
+The plan names the probe `permit a final cursor to replace available required context`.
+The author replaced the fresh-consumer sentences of the build phase with a sentence that accepts a transferred final cursor.
+The coordinator ran the same swap with the probe verb against `docs-currency-workflow` at the committed tip.
+`TestRootConformance` failed with the consumer context diagnostic for the build phase, and the verb restored the file.
+
+### Author probe records
+
+Each mutation bit, and the probe verb restored each target.
+
+- The build reuse sentences omitted: the workflow check named reuse without verified membership, role, and requiredness.
+- The review reuse sentences omitted: the same diagnostic named the review phase.
+- The fresh-axis sentences omitted: the workflow check named a receipt or a final cursor in place of fresh context.
+- The handoff sentence changed to the checkout path: the workflow check named the dropped identity or retrieval command.
+- The full-run sentence omitted: the workflow check named the dropped phase-level control.
+- Charge retrieval added to the write-spec phase: the workflow check named that phase.
+- The review phase row omitted: `TestEvidenceConsumerGuidance` reported one phase against two.
+- The write-spec fork row omitted from the registry data: `TestEvidenceUnchangedRoutes` reported no row for the retained rule.
+
+Two of these probes touched files outside the ticket fence, and the verb restored both.
+
+### Flagged for reviewer veto
+
+The spec seam cells place the three guidance tests in `internal/conformance/charge_evidence_guidance_test.go`.
+The structure lane refused that file at 572 lines against its budget of 400.
+The author put the tests in `internal/conformance/ft311_preparation_test.go`, which is inside the ticket fence.
+The seam cell citations join the reconciliation sweep.
+
+Row CE113 cites the two existing registry rows for the write-spec contract, and it adds no second pin of that prose.
+The author added no canary fixture, because the row bites come from the shared anchor harness.
+`.agents/commands/bench-implement-spec.md` is now at its budget of 80 lines.
+
+### CE-C4 Claude transport record
+
+This record is the designed evidence of row CE116. It makes no claim of comprehension or approval.
+
+- Harness: Claude Code 2.1.276, one fresh subagent consumer.
+- Source tip: `7e51a515bc5cda49f2b7d7f8a98c04b4d74dea9c`, with build evidence for ticket 7 from the production binary.
+- Trusted expected identity: `sha256:ecdf337fb026f752008054ca7331e03e213749f080819695c68149597bc6954d`.
+- Page count: 23, which is one manifest page and 22 source pages.
+- Maximum stdout bytes: 8,998.
+
+The consumer received the identity and the first retrieval command only.
+It ran one page for each shell tool call, and it took each cursor from the tool result before it.
+Every `next` field was readable, and the last one was empty.
+The consumer wrote its own decoder, with no Bench code.
+The decoder rebuilt the manifest from the saved stdout, and its hash equals the trusted identity.
+
+- `s1` metadata: 9,499 bytes, `a20b141df16cc5eae2dc830d57ef0d0810547b0235e2c58d7b46f441ef95c401`.
+- `s2` ticket: 6,556 bytes, `7964b4c583d599a7a97d3f003727b2a1114483e1edb86bdb99dae1c0fd7cbe7b`.
+- `s3` spec: 100,042 bytes, `e577cf279e3d088542a6cbf33c81a21f4d8d24de6a243206df5f1280bb6d453c`.
+- `s4` delegate skill: 9,944 bytes, `d5e4692a97d9e9c3917a73c044398dcb22b230d85ad29b2b20c7118925be98ee`.
+- `s5` build phase: 8,891 bytes, `a6e9a45882f324504a3125907aaecb4e3ad9e7e4281e52cd70f9e96d8acecb89`.
+- `s6` delegate procedure: 11,681 bytes, `767018c18942c1996a5e6560ddeec5ab61ba07943be3cddd922721ea8dda9412`.
+
+Each rebuilt source matches its manifest length and hash.
+The coordinator ran the decoder again, and it compared the `s3` and `s5` hashes with the git blobs at the source tip.
+
+### CE-C4 Codex transport record
+
+This record is the designed evidence of row CE115. It makes no claim of comprehension or approval.
+
+- Harness: codex-cli 0.154.0, one fresh non-interactive consumer in the workspace-write sandbox.
+- Source tip, trusted expected identity, and page count: the same as the Claude record.
+- Maximum stdout bytes: 8,998.
+
+The consumer ran one bare page command for each shell tool call, and it took each cursor from the tool result before it.
+Every `next` field was readable, and the last one was empty.
+The coordinator rebuilt the evidence from the tool results in the Codex event log, which holds the text that the harness gave to the model.
+That decoder uses no Bench code.
+The rebuilt manifest hash equals the trusted identity, and all six sources match the lengths and hashes that the Claude record lists.
+
+Two earlier Codex runs returned no page, and each one met a deliberate guard.
+The kit hook refused a pipe after the page command, so the final run saves no stdout and reads the event log.
+The sandbox made the store lock read-only, so the final run has write access to the evidence store directory only.
+A sandboxed consumer therefore needs write access to the store lock before it can read, which the reconciliation must examine.
+
 ## Record
 
 ```bench-review-record
