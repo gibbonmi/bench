@@ -74,6 +74,30 @@ Finding count: 0. Worst issue: none. The axis confirmed the CV1 fold with its ow
 The author ran the anchors suite and the preflight suites green at the repair tip. The plan probe swapped the `pathCovered` call in `anchorFiles` to an exact match. One test failed, `TestAnchorClosureCoversDirectoryEntry`, and the file was restored.
 A second author probe restored the old split, which keeps the trailing slash. The two slash cases failed, and the file was restored.
 
+## SC-C1: review round 3
+
+Frozen pair: base `8434378b37c39f48e9dcc3d1247329d0fcc4b74f`, tip `c73a5774d30f624d1d08a46c6be8044f55e04905`.
+The raw finding count is 0. The de-duplicated repair-target count is 0.
+Repair cycles used: 2 of 2.
+
+The first checkpoint run found a diff-owned red: the SC11 FIFO test waited on a duration literal, which the wait-deadline-literals check refuses. Repair cycle 2 derives the wait from `bounds.TestDeadline(0)`. The whole gate is green at this tip.
+
+### Standards
+
+Finding count: 0. Worst issue: none.
+
+### Spec
+
+Finding count: 0. Worst issue: none. One anchors run by this axis failed while the Coverage axis probed `internal/bounds/classify.go` on the same tree. The author reran the suite on the clean tree, and it passed.
+
+### Coverage
+
+Finding count: 0. Worst issue: none. A probe that disabled the regular-file check made the SC11 test fail at its deadline.
+
+### Author verification
+
+The author ran the anchors suite and the preflight suites green at this tip. The plan probe bit again, with one failed test, `TestAnchorClosureCoversDirectoryEntry`, and the file was restored.
+
 ```bench-review-record
 {
   "version": 1,
@@ -84,9 +108,9 @@ A second author probe restored the old split, which keeps the trailing slash. Th
     {
       "id": "SC-C1",
       "base": "8434378b37c39f48e9dcc3d1247329d0fcc4b74f",
-      "tip": "b1bee1fa8bafbd40b2e698405fb2842f40ba685a",
+      "tip": "c73a5774d30f624d1d08a46c6be8044f55e04905",
       "plan_digest": "sha256:31ed8f167590e10e2ce870eab3f9c7224bc3eb23a843e98c9b9f50c9020a16c2",
-      "source_digest": "99a6f190b0905da038a01e85f14a00d62d2b5a4e",
+      "source_digest": "5dac482d96243d79b4cc1579d03e09425779c86e",
       "acceptance_rows": [
         "SC1",
         "SC2",
@@ -232,6 +256,71 @@ A second author probe restored the old split, which keeps the trailing slash. Th
               "excerpt": "bench probe internal/preflight/closure.go --swap 'if !pathCovered(literal, []string{path}) {' --with 'if literal != path {' --package ./internal/preflight/...: verdict bit, 1 failed test TestAnchorClosureCoversDirectoryEntry, restored=yes"
             }
           }
+        },
+        {
+          "id": "sc-c1-v3-anchors",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5dac482d96243d79b4cc1579d03e09425779c86e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:2d5ac91eeb5d3440eaaae838b34b2e14aa0231b0647dcc7d25b93574d60d18f9",
+            "excerpt": "bench test --package ./internal/anchors at c73a5774: pass, 432 ms"
+          },
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "sc-c1-v3-preflight",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5dac482d96243d79b4cc1579d03e09425779c86e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:a59ae4c701cd441e65d61f71560d5039b5f9d2c3fbb56b326275a0bd40461986",
+            "excerpt": "bench test --package ./internal/preflight/... at c73a5774: baseline passed, 507 tests ran, before the plan probe"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "sc-c1-v3-mutation",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5dac482d96243d79b4cc1579d03e09425779c86e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:9d60dfee64a55033a7822b076aa21d93755c2f8f258ce0d42a824c010720816a",
+            "excerpt": "bench test --package ./internal/preflight/... at c73a5774: baseline passed before the probe"
+          },
+          "requirement": "mutation",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "return no anchor requirement for a directory Writes entry",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:retained-author",
+              "digest": "sha256:73b5420305403c7335e2054a3e98ad1616790eab6b969d2e9ae0543001510b26",
+              "excerpt": "bench probe internal/preflight/closure.go --swap 'if !pathCovered(literal, []string{path}) {' --with 'if literal != path {' --package ./internal/preflight/... at c73a5774: verdict bit, 1 failed test TestAnchorClosureCoversDirectoryEntry, restored=yes"
+            }
+          }
         }
       ],
       "reviews": [
@@ -363,6 +452,72 @@ A second author probe restored the old split, which keeps the trailing slash. Th
           "finding_ids": [],
           "supersedes": [
             "sc-c1-r1-coverage"
+          ]
+        },
+        {
+          "id": "sc-c1-r3-standards",
+          "performer": "sc-c1-r1-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "5dac482d96243d79b4cc1579d03e09425779c86e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c1-r1-standards",
+            "digest": "sha256:fa96a2f56010d497a0f80e1c6c14290438212bd08e527bf523b3b9f89271bdd0",
+            "excerpt": "Standards SC-C1 round 3 at c73a5774: no findings. The FIFO wait uses bounds.TestDeadline(0), the tree idiom."
+          },
+          "axis": "Standards",
+          "base": "8434378b37c39f48e9dcc3d1247329d0fcc4b74f",
+          "tip": "c73a5774d30f624d1d08a46c6be8044f55e04905",
+          "finding_ids": [],
+          "supersedes": [
+            "sc-c1-r2-standards"
+          ]
+        },
+        {
+          "id": "sc-c1-r3-spec",
+          "performer": "sc-c1-r1-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "5dac482d96243d79b4cc1579d03e09425779c86e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c1-r1-spec",
+            "digest": "sha256:903a367c510fa6d827f0a615abd8d42f6a13fe8f4363d9257dc6b72aed4d1ef1",
+            "excerpt": "Spec SC-C1 round 3 at c73a5774: no findings. SC11 semantics unchanged; SC1 to SC13 hold. One anchors run failed while another axis probed the shared tree; later runs passed."
+          },
+          "axis": "Spec",
+          "base": "8434378b37c39f48e9dcc3d1247329d0fcc4b74f",
+          "tip": "c73a5774d30f624d1d08a46c6be8044f55e04905",
+          "finding_ids": [],
+          "supersedes": [
+            "sc-c1-r2-spec"
+          ]
+        },
+        {
+          "id": "sc-c1-r3-coverage",
+          "performer": "sc-c1-r1-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "5dac482d96243d79b4cc1579d03e09425779c86e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c1-r1-coverage",
+            "digest": "sha256:a85217ebed4ddf5a2231f56e96f73d2153ccc4422b867d41d52e4d654b4258b0",
+            "excerpt": "Coverage SC-C1 round 3 at c73a5774: no findings. Probe disabling the regular-file check made TestReferencingFilesRefuseFIFO fail after 20005 ms; restored."
+          },
+          "axis": "Coverage",
+          "base": "8434378b37c39f48e9dcc3d1247329d0fcc4b74f",
+          "tip": "c73a5774d30f624d1d08a46c6be8044f55e04905",
+          "finding_ids": [],
+          "supersedes": [
+            "sc-c1-r2-coverage"
           ]
         }
       ]
