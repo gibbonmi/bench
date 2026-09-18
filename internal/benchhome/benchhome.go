@@ -22,6 +22,20 @@ func Dir() string {
 	return fallbackDir()
 }
 
+// Export writes the fallback Bench home into the process environment when
+// BENCH_HOME is unset, as the shell wrapper does before it runs the binary. A
+// shim can run the binary with no wrapper, and a gate that declares BENCH_HOME
+// reads it from the environment, so the binary's entry point calls this once. An
+// unresolvable user home exports nothing, so a declared-input check still refuses.
+func Export() {
+	if os.Getenv(Env) != "" {
+		return
+	}
+	if home, err := os.UserHomeDir(); err == nil && home != "" {
+		os.Setenv(Env, fallbackDir())
+	}
+}
+
 // fallbackDir is the Bench home Dir supplies when BENCH_HOME is unset: the
 // user's own home directory joined with .bench. Dir and IsFallback share this
 // one join, so a caller never re-derives the fallback path a second way.

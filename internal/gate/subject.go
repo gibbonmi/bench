@@ -83,16 +83,15 @@ func buildSubjectForTree(root, identityRoot, policy, tree string) (subject, erro
 		s.open("launcher closure unavailable")
 	}
 	if m != nil {
-		for _, name := range m.Environment {
-			value, ok := os.LookupEnv(name)
-			if !ok {
-				s.open("declared environment unavailable")
-				continue
-			}
-			s.Env = append(s.Env, name+"="+value)
+		supplied, missing := suppliedEnvironment(m.Environment)
+		if len(missing) > 0 {
+			s.open("declared environment unavailable: " + strings.Join(missing, ", "))
+		}
+		for _, entry := range supplied {
+			s.Env = append(s.Env, entry[0]+"="+entry[1])
 			frame(h, "environment")
-			frame(h, name)
-			frame(h, value)
+			frame(h, entry[0])
+			frame(h, entry[1])
 		}
 		for _, path := range m.Paths {
 			frame(h, "path")

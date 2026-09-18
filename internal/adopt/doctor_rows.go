@@ -30,6 +30,7 @@ var doctorRows = []doctorRow{
 	{"AGENTS.md", evalAgentsRow},
 	{"CLAUDE.md", evalClaudeRow},
 	{"gate", evalGateRow},
+	{"gate inputs", evalGateInputsRow},
 	{"profile", evalProfileRow},
 	{"repo-local bench", evalRepoLocalBenchRow},
 	{"setup pointers", evalSetupPointersRow},
@@ -132,6 +133,19 @@ func evalGateRow(root string) (bool, string) {
 		return false, ".bench/gate.sh is still the unconfigured fail-closed stub (replace the " + SentinelMarker + " sentinel with real checks)"
 	}
 	return ok, msg
+}
+
+// evalGateInputsRow names each environment name the gate input manifest declares that
+// this process does not supply. A gate run or a landing from the same shell opens its
+// subject on that name and refuses a green gate as infrastructure, so the row is red.
+// A repository whose manifest declares nothing missing has nothing to say here.
+func evalGateInputsRow(root string) (bool, string) {
+	missing := gate.UnsuppliedEnvironment(root)
+	if len(missing) == 0 {
+		return true, ""
+	}
+	return false, ".bench/gate-inputs.json declares environment this shell does not supply: " +
+		strings.Join(missing, ", ") + " (export each before bench gate or bench worktree land)"
 }
 
 // evalSetupPointersRow validates the pointer setup's own next-action print relies on.
