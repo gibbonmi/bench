@@ -281,10 +281,46 @@ func TestParagraphsProjectsTheGradedSplit(t *testing.T) {
 
 // TestParagraphsRefusesAnUnterminatedDelimiter is the fail-closed half: a document the grade
 // stops reading projects no paragraph, so a caller that pins prose cannot read a truncated
-// document as a complete one.
+// document as a complete one. One row per delimiter, and each document holds prose the
+// projection would report if that delimiter's arm went away.
 func TestParagraphsRefusesAnUnterminatedDelimiter(t *testing.T) {
-	if got := Paragraphs("```text\nOne two.\n"); got != nil {
-		t.Errorf("Paragraphs() = %q, want none", got)
+	for _, tt := range []struct {
+		name string
+		doc  string
+	}{
+		{
+			name: "frontmatter",
+			doc:  "---\ntitle: One\nOne two.\n",
+		},
+		{
+			name: "HTML comment",
+			doc:  "One two.\n\n<!-- three four.\n",
+		},
+		{
+			name: "fenced block",
+			doc:  "```text\nOne two.\n",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Paragraphs(tt.doc); got != nil {
+				t.Errorf("Paragraphs() = %q, want none", got)
+			}
+		})
+	}
+}
+
+// TestParagraphsClosesNoSentenceOnAWordlessRun grades the word guard of the sentence rule. A
+// run of tokens that holds no word closes no sentence, so bare punctuation joins the sentence
+// after it rather than standing as a sentence of its own. The guard is the shared rule, so a
+// second sentence here would also become a second sentence of the paragraph bound.
+func TestParagraphsClosesNoSentenceOnAWordlessRun(t *testing.T) {
+	want := []string{"One two.", "... Three four."}
+	got := Paragraphs("One two. ... Three four.\n")
+	if len(got) != 1 {
+		t.Fatalf("Paragraphs() = %q, want one paragraph", got)
+	}
+	if strings.Join(got[0], "|") != strings.Join(want, "|") {
+		t.Errorf("paragraph = %q, want %q", got[0], want)
 	}
 }
 

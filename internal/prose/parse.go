@@ -114,15 +114,9 @@ type token struct {
 // once and returns one finding: past that delimiter the parser cannot tell prose from
 // code, and a truncated grade reports a clean file.
 func Findings(doc string) []Finding {
-	lines := strings.Split(doc, "\n")
-	if f := stripFrontmatter(lines); f != nil {
-		return []Finding{*f}
-	}
-	if f := stripComments(lines); f != nil {
-		return []Finding{*f}
-	}
-	if f := stripFences(lines); f != nil {
-		return []Finding{*f}
+	lines, fault := prepare(doc)
+	if fault != nil {
+		return []Finding{*fault}
 	}
 	return gradeBlocks(lines)
 }

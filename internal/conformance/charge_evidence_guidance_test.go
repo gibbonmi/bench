@@ -132,12 +132,13 @@ func TestEvidenceBuildGuidanceRejectsThePreflightBuildFullPair(t *testing.T) {
 	}
 }
 
-// TestBoundedBuildActionRulesBiteOnSyntheticText grades the two rules above apart from the
+// TestEvidenceBuildGuidanceRulesBiteOnSyntheticText grades the two rules above apart from the
 // shipped guidance. Each case feeds text through the rule's own predicate, so a rule that is
 // weakened in place reds here while the shipped guidance still satisfies it. This guard is a
 // case table rather than a canary fixture, because a canary mutates the guidance file and a
-// weakened rule accepts every mutation of it.
-func TestBoundedBuildActionRulesBiteOnSyntheticText(t *testing.T) {
+// weakened rule accepts every mutation of it. The name carries the family prefix, so the
+// chunk's declared TestEvidence run reaches it.
+func TestEvidenceBuildGuidanceRulesBiteOnSyntheticText(t *testing.T) {
 	for _, tt := range []struct {
 		name string
 		rule func(string) []string
@@ -193,6 +194,40 @@ func TestBoundedBuildActionRulesBiteOnSyntheticText(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.rule(tt.text); !slices.Equal(got, tt.want) {
 				t.Errorf("rule = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestEvidenceNeedleTextReadsTheGuidanceProjection grades the needle half of the pin. A
+// needle reaches the comparison through the same projection the guidance reaches it through,
+// so a wrap inside a needle, a run of spaces, and a needle of two sentences all read as the
+// guidance reads them. A needle that skips that projection keeps its own bytes and reds here.
+func TestEvidenceNeedleTextReadsTheGuidanceProjection(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		needle string
+		want   string
+	}{
+		{
+			name:   "a wrap inside a needle collapses",
+			needle: "Build action requires reviewer approval: act only after\nthe reviewer approves it.\n",
+			want:   "Build action requires reviewer approval: act only after the reviewer approves it.",
+		},
+		{
+			name:   "a run of spaces collapses",
+			needle: "Build action  requires  reviewer approval.\n",
+			want:   "Build action requires reviewer approval.",
+		},
+		{
+			name:   "two sentences join as the paragraph joins them",
+			needle: "Build action requires reviewer approval. The ticket lands first.\n",
+			want:   "Build action requires reviewer approval. The ticket lands first.",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := needleText(tt.needle); got != tt.want {
+				t.Errorf("needleText = %q, want %q", got, tt.want)
 			}
 		})
 	}

@@ -17,8 +17,8 @@ const maxStartWords = 3
 // comment, or fenced block never closes returns nothing, because past that delimiter the
 // parser cannot tell prose from code.
 func Paragraphs(doc string) [][]string {
-	lines := strings.Split(doc, "\n")
-	if stripFrontmatter(lines) != nil || stripComments(lines) != nil || stripFences(lines) != nil {
+	lines, fault := prepare(doc)
+	if fault != nil {
 		return nil
 	}
 	var out [][]string
@@ -30,6 +30,25 @@ func Paragraphs(doc string) [][]string {
 		out = append(out, sentences)
 	})
 	return out
+}
+
+// prepare splits one document into lines and blanks every span that is not prose: the
+// frontmatter block, every HTML comment, and every fenced code block. It returns the fault of
+// the first unterminated delimiter instead of the lines, because past that delimiter the
+// parser cannot tell prose from code. Findings and Paragraphs both prepare here, so a step
+// added to this list reaches both of them.
+func prepare(doc string) ([]string, *Finding) {
+	lines := strings.Split(doc, "\n")
+	if f := stripFrontmatter(lines); f != nil {
+		return nil, f
+	}
+	if f := stripComments(lines); f != nil {
+		return nil, f
+	}
+	if f := stripFences(lines); f != nil {
+		return nil, f
+	}
+	return lines, nil
 }
 
 // gradeBlocks grades every paragraph of the remaining lines.
