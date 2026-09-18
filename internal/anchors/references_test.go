@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // writeRegistryFile plants one file in a temporary root's anchor registry directory.
@@ -138,7 +140,7 @@ func TestReferencingFilesRefuseFIFO(t *testing.T) {
 		if err == nil || !strings.Contains(err.Error(), "internal/anchors/pipe.go") {
 			t.Fatalf("ReferencingFiles error = %v, want a refusal naming internal/anchors/pipe.go", err)
 		}
-	case <-time.After(5 * time.Second):
+	case <-time.After(bounds.TestDeadline(0)):
 		t.Fatal("ReferencingFiles blocked on the FIFO")
 	}
 }
