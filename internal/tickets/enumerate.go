@@ -163,11 +163,7 @@ func relTo(base, path string) string {
 // digit-leading ID answers the empty tag, which is the tickets-only posture:
 // the Covers tag rule stands down rather than grading every token as foreign.
 func TagOf(rowID string) string {
-	i := 0
-	for i < len(rowID) && rowID[i] >= 'A' && rowID[i] <= 'Z' {
-		i++
-	}
-	return rowID[:i]
+	return rowTagPrefix.FindString(rowID)
 }
 
 // UnrepresentableValue reports the first declared field value spec-TOON cannot
