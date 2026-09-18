@@ -1131,14 +1131,23 @@ The build preflight reports `paths-authorized` green, which the coordinator ran 
 
 Row CE117 requires production storage checks on each supported native platform.
 Its falsifier forbids a Linux result to stand as cross-platform proof, so this record states each platform apart.
+The row carries a `review-owned:` seam, which the coverage citation grammar accepts as the row's evidence.
+This record is therefore the designed evidence of the row, and not a substitute for a missing test.
 
 - Linux: produced. `bench test --check system` passes on this machine, which runs WSL2.
-- macOS: **pending**. This session produced no evidence.
-- Windows: **pending**. This session produced no evidence.
+- macOS: pending. This session produced no evidence.
+- Windows: outside the release target policy. The README states that Bench runs on macOS or Linux, and that Windows is unsupported.
 
-Row CE117 is therefore pending at the landing, beside row CE94.
-Row CE94 is pending for a privilege capability, and its test emits a skip.
-No test emits a skip for CE117, so this record is its only evidence.
+The spec rule for this row records unavailable evidence as pending, and never as a pass from cross-compilation.
+Row CE117 is met for Linux, pending for macOS, and not applicable to Windows.
+Row CE94 is pending for a privilege capability, and its test emits a capability skip.
+
+### Flagged for reviewer veto: the Windows enumeration
+
+The spec enumerates Linux, macOS, and Windows from the current release target policy.
+The README states that policy, and it excludes Windows.
+The implementation follows the README, because the README is the policy the spec cites.
+This contradiction is not behavioral, and the spec sentence needs one edit at the reconciliation.
 
 ### Author verification
 
@@ -1252,9 +1261,12 @@ It confirmed no cleanup path takes the operation lock shared or skips it.
 ### Coordinator decisions for this chunk
 
 - CE-C3-CV5 stays and it gets graded. The exclusive lock excludes every Bench path, and the recheck defends against a process outside that protocol. Ticket 6 requires the revalidation of each target identity before deletion, so this is a spec obligation and not a redundant mechanism. It differs from the writer lock the author removed, which duplicated a guarantee another lock already gave.
-- The repair adds a pause stage to the cleanup deletion loop. That one seam closes four findings. It lets a test replace a target between the plan and its deletion, which grades CV5. It also makes a real mid-apply kill reachable, which closes ST5, SP1, and CV6 together and defeats the row CE122 falsifier at the system seam.
+- The repair adds one pause stage to the cleanup deletion loop, and it fires after each successful removal. That one seam closes four findings. A unit test injects the pause through the store options and replaces the next target. That test grades CV5, and it grades the unfinished disposition of row CE82. A system test pauses through the environment and kills the process. That test closes ST5, SP1, and CV6, and it defeats the row CE122 falsifier.
+- The stage fires after a removal rather than before one, because the row CE122 state is a subset already removed. A pause before the first removal never reaches that state.
+- The environment pause recreates its marker at every matching stage, so a per-target stage pauses again on each later target. Both tests end after one pause, and the store holds two targets. The constant documents that repeat.
+- A top-tier read-only consultation reviewed the landing policy and this seam. It receives no implementation or repair assignment.
 - The repair covers ST1 to ST5, SP1, SP2, SP4, SP5, and CV1 to CV6. Findings ST4 and SP3 are one repair, and ST5, SP1, and CV6 are one repair.
-- Row CE117 stays pending. This session produces no macOS and no Windows evidence, and the record states each platform apart.
+- Row CE117 is met for Linux, pending for macOS, and not applicable to Windows. The Spec axis reported the row unmet, because it read the row title rather than its `review-owned:` seam. The record is the row's designed evidence, and finding SP1 to SP5 keep their dispositions.
 
 ### Flagged for reviewer veto
 
