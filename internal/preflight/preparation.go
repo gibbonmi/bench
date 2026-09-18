@@ -11,20 +11,19 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-type preparationMode int
+// preparedCommand renders one writes proposal inside the movement-checked attempts. Both
+// charge forms now publish immutable evidence through the store, so the proposal is the one
+// preparation that still answers from the attempt itself.
+func preparedCommand(root, mode, slug, base, sourceTip, name string, args []string) (string, int) {
+	return preparedAttempts(root, mode, slug, base, sourceTip, "proposal", args, func(facts Facts) (string, int) {
+		return renderWritesProposal(root, facts, name)
+	})
+}
 
-const (
-	chargePreparation preparationMode = iota
-	proposalPreparation
-)
-
-func preparedCommand(
-	root, mode, slug, base, sourceTip, name string,
-	full bool,
-	version string,
-	args []string,
-	form preparationMode,
-) (string, int) {
+// preparedAttempts gathers the pinned facts inside the movement-checked retry and renders
+// each attempt through render. A drift or read failure replaces the attempt's output, so
+// only an unmoved attempt's answer reaches the caller.
+func preparedAttempts(root, mode, slug, base, sourceTip, action string, args []string, render func(Facts) (string, int)) (string, int) {
 	var out string
 	code := 1
 	result := diff.MovementCheckedRetry(root, func(snapshot diff.MovementSnapshot) (string, string) {
@@ -41,10 +40,6 @@ func preparedCommand(
 		}
 		facts, failure := gatherCharge(root, mode, slug, &source, paths, sourceTip)
 		if failure != nil {
-			action := "charge"
-			if form == proposalPreparation {
-				action = "proposal"
-			}
 			out = chargeRefusal("source", failure.Kind+": "+failure.Hint, "restore the named canonical source and rerun the exact "+action)
 			return "", ""
 		}
@@ -52,16 +47,7 @@ func preparedCommand(
 			out = toon.RenderError(err) + "\n"
 			return "", ""
 		}
-		switch form {
-		case chargePreparation:
-			if mode == modeBuild {
-				out, code = renderCharge(root, facts, Decide(facts), name, full)
-			} else {
-				out, code = renderReviewCharge(root, facts, Decide(facts), full, version)
-			}
-		case proposalPreparation:
-			out, code = renderWritesProposal(root, facts, name)
-		}
+		out, code = render(facts)
 		return "", ""
 	})
 	if result.DriftKind != "" {

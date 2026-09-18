@@ -1,0 +1,2 @@
+exit: 1
+error: ticket required: selected ticket "missing.md" was not found — pass a ticket basename from the spec tickets directory

@@ -1,0 +1,301 @@
+package chargeevidence
+
+import (
+	"bytes"
+	"encoding/binary"
+	"math"
+	"slices"
+	"unicode/utf8"
+
+	"github.com/gibbonmi/bench/internal/toon"
+)
+
+// Producer is the declared provenance of one generated source.
+type Producer struct {
+	Name, Version, Cwd string
+	Arguments          []string
+}
+
+// SourceInput is one prepared canonical or generated source. The writer assigns its
+// identifier from its position: the first input is ordinal 2, after the metadata source.
+type SourceInput struct {
+	Role, Kind, Path string
+	Required         bool
+	Data             []byte
+	Producer         *Producer
+}
+
+// Candidate is one complete prepared evidence set before publication.
+type Candidate struct {
+	Selection Selection
+	Metadata  Metadata
+	Sources   []SourceInput
+}
+
+// Pack is a strictly validated evidence pack. Its accessors return copies, so a caller
+// cannot change validated bytes.
+type Pack struct {
+	identity string
+	data     []byte
+	manifest Manifest
+	metadata Metadata
+	bodies   map[string][]byte
+}
+
+// Identity returns the artifact identifier.
+func (p *Pack) Identity() string { return p.identity }
+
+// Bytes returns the complete physical pack.
+func (p *Pack) Bytes() []byte { return bytes.Clone(p.data) }
+
+// ManifestBytes returns the canonical manifest bytes.
+func (p *Pack) ManifestBytes() []byte {
+	lengthStart, lengthEnd := HeaderRange(headerLengthField)
+	length := binary.LittleEndian.Uint64(p.data[lengthStart:lengthEnd])
+	return bytes.Clone(p.data[HeaderBytes : HeaderBytes+length])
+}
+
+// Manifest returns the decoded manifest.
+func (p *Pack) Manifest() Manifest {
+	m := p.manifest
+	m.Sources = slices.Clone(m.Sources)
+	m.Pages = slices.Clone(m.Pages)
+	m.Producers = slices.Clone(m.Producers)
+	m.Arguments = slices.Clone(m.Arguments)
+	return m
+}
+
+// Metadata returns the decoded metadata source.
+func (p *Pack) Metadata() Metadata {
+	m := p.metadata
+	m.Charge = slices.Clone(m.Charge)
+	m.Fence = slices.Clone(m.Fence)
+	m.Writes = slices.Clone(m.Writes)
+	m.Coverage = slices.Clone(m.Coverage)
+	m.Checks = slices.Clone(m.Checks)
+	m.Returns = slices.Clone(m.Returns)
+	m.Shared = slices.Clone(m.Shared)
+	m.Completion = slices.Clone(m.Completion)
+	return m
+}
+
+// Source returns the exact body of one declared source.
+func (p *Pack) Source(id string) ([]byte, bool) {
+	body, ok := p.bodies[id]
+	return bytes.Clone(body), ok
+}
+
+// Build writes a candidate into an in-memory pack and returns it only after the strict
+// reader accepts the complete result.
+func Build(c Candidate) (*Pack, error) {
+	metadata, err := EncodeMetadata(c.Metadata)
+	if err != nil {
+		return nil, err
+	}
+	inputs := append([]SourceInput{{Role: RoleMetadata, Kind: KindDerived, Required: true, Data: metadata}}, c.Sources...)
+	m := Manifest{Selection: c.Selection}
+	var bodies bytes.Buffer
+	for i, input := range inputs {
+		id := SourceID(i + 1)
+		if err := validateInput(i, input); err != nil {
+			return nil, err
+		}
+		m.Sources = append(m.Sources, ManifestSource{id, input.Role, input.Kind, input.Path, input.Required, len(input.Data), Digest(input.Data)})
+		offset := 0
+		for index, size := range pageSizes(input.Data) {
+			page := input.Data[offset : offset+size]
+			m.Pages = append(m.Pages, Page{id, index, offset, size, Digest(page)})
+			offset += size
+		}
+		if input.Producer != nil {
+			p := input.Producer
+			m.Producers = append(m.Producers, ProducerRow{id, p.Name, p.Version, p.Cwd})
+			for index, value := range p.Arguments {
+				m.Arguments = append(m.Arguments, ArgumentRow{id, index, value})
+			}
+		}
+		bodies.Write(input.Data)
+	}
+	if err := validateManifest(m); err != nil {
+		return nil, refuse(RefuseCandidate, "%v", err)
+	}
+	manifest, err := encodeManifest(m)
+	if err != nil {
+		return nil, err
+	}
+	data := make([]byte, HeaderBytes, HeaderBytes+len(manifest)+bodies.Len())
+	copy(data, HeaderMarker)
+	versionStart, versionEnd := HeaderRange(headerVersionField)
+	binary.LittleEndian.PutUint32(data[versionStart:versionEnd], ContainerVersion)
+	lengthStart, lengthEnd := HeaderRange(headerLengthField)
+	binary.LittleEndian.PutUint64(data[lengthStart:lengthEnd], uint64(len(manifest)))
+	data = append(append(data, manifest...), bodies.Bytes()...)
+	return Read(data, Identity(manifest))
+}
+
+func validateInput(index int, input SourceInput) error {
+	if err := validateDescriptor(index, input.Role, input.Kind, input.Path, input.Required, len(input.Data)); err != nil {
+		return refuse(RefuseCandidate, "%v", err)
+	}
+	if (input.Kind == KindGenerated) != (input.Producer != nil) {
+		return refuse(RefuseCandidate, "source %d: exactly the generated sources declare a producer", index+1)
+	}
+	if !supportedText(input.Data) {
+		return refuse(RefuseCandidate, "source %d holds bytes the shared TOON adapter cannot represent", index+1)
+	}
+	return nil
+}
+
+func supportedText(data []byte) bool {
+	return utf8.Valid(data) && toon.Representable(string(data))
+}
+
+// pageSizes splits valid UTF-8 into the longest code-point-aligned prefixes of at most
+// PageBytes bytes. An empty body has no pages.
+func pageSizes(data []byte) []int {
+	var sizes []int
+	for len(data) > 0 {
+		size := min(len(data), PageBytes)
+		for size < len(data) && size > 0 && !utf8.RuneStart(data[size]) {
+			size--
+		}
+		if size == 0 {
+			size = min(len(data), PageBytes)
+		}
+		sizes = append(sizes, size)
+		data = data[size:]
+	}
+	return sizes
+}
+
+// Read strictly validates a complete physical pack against the trusted expected identity.
+// It derives every source offset from validated preceding lengths.
+func Read(data []byte, expected string) (*Pack, error) {
+	if !ValidIdentity(expected) {
+		return nil, refuse(RefuseIdentifier, "expected identity is not sha256 followed by 64 lowercase hexadecimal digits")
+	}
+	if len(data) < HeaderBytes {
+		return nil, refuse(RefuseTruncated, "pack holds %d bytes, fewer than the %d-byte header", len(data), HeaderBytes)
+	}
+	end, err := headerEnd(data[:HeaderBytes], uint64(len(data)))
+	if err != nil {
+		return nil, err
+	}
+	m, err := manifestAt(data[HeaderBytes:end], expected, end, uint64(len(data)))
+	if err != nil {
+		return nil, err
+	}
+	bodies, err := readBodies(data[end:len(data):len(data)], m)
+	if err != nil {
+		return nil, err
+	}
+	metadata, err := DecodeMetadata(bodies[SourceID(1)])
+	if err != nil {
+		return nil, err
+	}
+	for _, ref := range metadata.references() {
+		if _, ok := bodies[ref]; !ok {
+			return nil, refuse(RefuseInvalid, "metadata names undeclared source %q", ref)
+		}
+	}
+	return &Pack{identity: expected, data: bytes.Clone(data), manifest: m, metadata: metadata, bodies: bodies}, nil
+}
+
+// headerEnd validates the fixed header of a pack of size bytes and returns the offset at
+// which the manifest ends.
+func headerEnd(header []byte, size uint64) (uint64, error) {
+	markerStart, markerEnd := HeaderRange(headerMarkerField)
+	if string(header[markerStart:markerEnd]) != HeaderMarker {
+		return 0, refuse(RefuseMarker, "header marker is not %s", HeaderMarkerASCII)
+	}
+	versionStart, versionEnd := HeaderRange(headerVersionField)
+	if version := binary.LittleEndian.Uint32(header[versionStart:versionEnd]); version != ContainerVersion {
+		return 0, refuse(RefuseContainerVersion, "container version %d is not supported", version)
+	}
+	reservedStart, reservedEnd := HeaderRange(headerReservedField)
+	if reserved := binary.LittleEndian.Uint32(header[reservedStart:reservedEnd]); reserved != ReservedHeaderValue {
+		return 0, refuse(RefuseReserved, "reserved header value is %d", reserved)
+	}
+	lengthStart, lengthEnd := HeaderRange(headerLengthField)
+	length := binary.LittleEndian.Uint64(header[lengthStart:lengthEnd])
+	if length > math.MaxUint64-HeaderBytes {
+		return 0, refuse(RefuseOverflow, "manifest length %d overflows the pack offset", length)
+	}
+	end := HeaderBytes + length
+	if end > size {
+		return 0, refuse(RefuseTruncated, "manifest ends at %d beyond the %d-byte pack", end, size)
+	}
+	return end, nil
+}
+
+// manifestAt validates manifest bytes against the trusted identity and proves that the
+// declared source lengths end exactly at the pack size.
+func manifestAt(manifest []byte, expected string, end, size uint64) (Manifest, error) {
+	if Identity(manifest) != expected {
+		return Manifest{}, refuse(RefuseIdentity, "manifest digest differs from the expected identity")
+	}
+	m, err := decodeManifest(manifest)
+	if err != nil {
+		return Manifest{}, err
+	}
+	total := end
+	for _, s := range m.Sources {
+		if uint64(s.Bytes) > math.MaxUint64-total {
+			return Manifest{}, refuse(RefuseOverflow, "source %s length overflows the pack length", s.ID)
+		}
+		total += uint64(s.Bytes)
+	}
+	if total > size {
+		return Manifest{}, refuse(RefuseTruncated, "sources end at %d beyond the %d-byte pack", total, size)
+	}
+	if total < size {
+		return Manifest{}, refuse(RefuseTrailing, "pack holds %d bytes after its declared end %d", size-total, total)
+	}
+	return m, nil
+}
+
+// checkPage is the one page-digest rule: page content matches the digest its manifest page
+// declares. Every path that returns stored bytes checks it here.
+func checkPage(source string, page Page, content []byte) error {
+	if Digest(content) != page.SHA256 {
+		return refuse(RefusePageDigest, "source %s page %d digest differs", source, page.Index)
+	}
+	return nil
+}
+
+// checkSource is the one source-digest rule: a reconstructed body holds exactly the length
+// and the digest its manifest source declares.
+func checkSource(source ManifestSource, body []byte) error {
+	if len(body) != source.Bytes || Digest(body) != source.SHA256 {
+		return refuse(RefuseSourceDigest, "source %s digest differs", source.ID)
+	}
+	return nil
+}
+
+func readBodies(region []byte, m Manifest) (map[string][]byte, error) {
+	bodies := make(map[string][]byte, len(m.Sources))
+	start, next := 0, 0
+	for _, s := range m.Sources {
+		body := region[start : start+s.Bytes]
+		start += s.Bytes
+		var sizes []int
+		for ; next < len(m.Pages) && m.Pages[next].Source == s.ID; next++ {
+			p := m.Pages[next]
+			if err := checkPage(s.ID, p, body[p.Offset:p.Offset+p.Bytes]); err != nil {
+				return nil, err
+			}
+			sizes = append(sizes, p.Bytes)
+		}
+		if err := checkSource(s, body); err != nil {
+			return nil, err
+		}
+		if !supportedText(body) {
+			return nil, refuse(RefuseSourceBytes, "source %s holds bytes the shared TOON adapter cannot represent", s.ID)
+		}
+		if !slices.Equal(sizes, pageSizes(body)) {
+			return nil, refuse(RefusePageSplit, "source %s pages are not the canonical UTF-8 split", s.ID)
+		}
+		bodies[s.ID] = body
+	}
+	return bodies, nil
+}

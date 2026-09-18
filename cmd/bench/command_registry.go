@@ -11,6 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/repairpilot"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
@@ -78,6 +79,16 @@ func publicInventory(rows ...helpRow) commandInventory {
 }
 
 var internalInventory = commandInventory{Visibility: inventoryInternal}
+
+// preflightHelpRows projects the preflight operation registry into root help rows at one
+// order, so root help and preflight help advertise the same implemented forms.
+func preflightHelpRows(order int) []helpRow {
+	var rows []helpRow
+	for _, row := range evidencecmd.HelpRows() {
+		rows = append(rows, helpRow{Order: order, Suffix: row.Suffix, Description: row.Description})
+	}
+	return rows
+}
 
 type commandAXIDisposition struct {
 	root      bool
