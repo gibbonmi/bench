@@ -32,25 +32,6 @@ func Paragraphs(doc string) [][]string {
 	return out
 }
 
-// prepare splits one document into lines and blanks every span that is not prose: the
-// frontmatter block, every HTML comment, and every fenced code block. It returns the fault of
-// the first unterminated delimiter instead of the lines, because past that delimiter the
-// parser cannot tell prose from code. Findings and Paragraphs both prepare here, so a step
-// added to this list reaches both of them.
-func prepare(doc string) ([]string, *Finding) {
-	lines := strings.Split(doc, "\n")
-	if f := stripFrontmatter(lines); f != nil {
-		return nil, f
-	}
-	if f := stripComments(lines); f != nil {
-		return nil, f
-	}
-	if f := stripFences(lines); f != nil {
-		return nil, f
-	}
-	return lines, nil
-}
-
 // gradeBlocks grades every paragraph of the remaining lines.
 func gradeBlocks(lines []string) []Finding {
 	var out []Finding
