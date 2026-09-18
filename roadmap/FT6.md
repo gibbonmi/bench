@@ -2,9 +2,8 @@
 
 `bench refs`, `bench
 detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row, and
-`conformanceFamilies`-vs-dispatch reconcile meta-check. Also parked: a
-per-anchor bite-proof meta-test (canaries prove one needle per family today;
-graduate on observed anchor rot). `bench symbols` is not carried. Restore it only if
+`conformanceFamilies`-vs-dispatch reconcile meta-check. The per-anchor
+bite-proof meta-test graduated to FT326 on observed anchor rot. `bench symbols` is not carried. Restore it only if
 agents demonstrably burn turns on symbol search.
 
 Also parked here 2026-07-23:
