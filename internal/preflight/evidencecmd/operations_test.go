@@ -1,6 +1,7 @@
 package evidencecmd
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
@@ -14,6 +15,12 @@ type BoundedForm struct {
 	Optional            []string
 }
 
+// formName is the name one registered form carries: its mode and the selectors that choose
+// it. The registry gives no two forms the same pair, so the name is the form's identity.
+func (op Operation) formName() string {
+	return strings.Join(append([]string{op.Mode}, op.selectors...), " ")
+}
+
 // BoundedForms projects every registered form that declares the shared response bound, in
 // registry order. The command tests derive their bounded case list from this projection,
 // so a bounded form registered later arrives with its own behavior case.
@@ -24,7 +31,7 @@ func BoundedForms() []BoundedForm {
 			continue
 		}
 		forms = append(forms, BoundedForm{
-			Name:     strings.Join(append([]string{op.Mode}, op.selectors...), " "),
+			Name:     op.formName(),
 			Mode:     op.Mode,
 			Operand:  modeOperands[op.Mode],
 			Flags:    append(append([]string{}, op.selectors...), op.required...),
@@ -32,6 +39,27 @@ func BoundedForms() []BoundedForm {
 		})
 	}
 	return forms
+}
+
+// TestBoundedFormsProjectEveryBoundedOperation pins the projection to the registry it
+// projects. The case list of the response bound test derives from BoundedForms, so a form
+// the projection drops takes its behavior case with it and no other check moves. The names
+// are compared in registry order against the registry's own bounded rows, so a drop, an
+// addition, and a reorder all red here, and no count stands in for the names.
+func TestBoundedFormsProjectEveryBoundedOperation(t *testing.T) {
+	var want []string
+	for _, op := range operations {
+		if op.Bounded {
+			want = append(want, op.formName())
+		}
+	}
+	var got []string
+	for _, form := range BoundedForms() {
+		got = append(got, form.Name)
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("BoundedForms names = %v, want the registry's bounded rows %v", got, want)
+	}
 }
 
 // TestOperationFlagsRegistered proves that every flag an operation names comes from the flag
