@@ -11,35 +11,12 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-type preparationMode int
-
-const (
-	chargePreparation preparationMode = iota
-	proposalPreparation
-)
-
-func preparedCommand(
-	root, mode, slug, base, sourceTip, name string,
-	full bool,
-	version string,
-	args []string,
-	form preparationMode,
-) (string, int) {
-	action := "charge"
-	switch {
-	case form == proposalPreparation:
-		action = "proposal"
-	case mode != modeReview:
-		// The build guidance migration retired the build charge, so review is the one mode
-		// this renderer serves. A new non-review caller refuses here rather than receiving
-		// a review charge under its own mode.
-		return chargeRefusal("mode", "charge rendering requires review mode, not "+mode, "prepare bounded evidence for this mode instead"), 1
-	}
-	return preparedAttempts(root, mode, slug, base, sourceTip, action, args, func(facts Facts) (string, int) {
-		if form == proposalPreparation {
-			return renderWritesProposal(root, facts, name)
-		}
-		return renderReviewCharge(root, facts, Decide(facts), full, version)
+// preparedCommand renders one writes proposal inside the movement-checked attempts. Both
+// charge forms now publish immutable evidence through the store, so the proposal is the one
+// preparation that still answers from the attempt itself.
+func preparedCommand(root, mode, slug, base, sourceTip, name string, args []string) (string, int) {
+	return preparedAttempts(root, mode, slug, base, sourceTip, "proposal", args, func(facts Facts) (string, int) {
+		return renderWritesProposal(root, facts, name)
 	})
 }
 

@@ -54,7 +54,6 @@ func command(version string, args []string) (string, int) {
 
 func dispatch(version string, op evidencecmd.Operation, slug string, flags map[string]string, args []string) (string, int) {
 	base, sourceTip, ticket := flags[evidencecmd.FlagBase], flags[evidencecmd.FlagTip], flags[evidencecmd.FlagTicket]
-	_, full := flags[evidencecmd.FlagFull]
 	quota, line := evidencecmd.SelectQuota(op, slug, flags)
 	if line != "" {
 		return line + "\n", 2
@@ -67,12 +66,12 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 		return toon.RenderError(err) + "\n", 1
 	}
 	switch op.Kind {
-	case evidencecmd.KindLegacyCharge:
-		return chargeCommand(root, op.Mode, slug, base, sourceTip, ticket, full, version, args)
 	case evidencecmd.KindProposal:
 		return proposeWritesCommand(root, op.Mode, slug, base, sourceTip, ticket, args)
 	case evidencecmd.KindPrepareEvidence:
 		return prepareEvidenceCommand(root, slug, base, sourceTip, ticket, quota, args)
+	case evidencecmd.KindPrepareReviewEvidence:
+		return prepareReviewEvidenceCommand(root, version, slug, base, sourceTip, quota, args)
 	case evidencecmd.KindReadEvidence:
 		return evidencecmd.Read(root, slug, flags)
 	case evidencecmd.KindVerifyEvidence:
@@ -89,6 +88,21 @@ func prepareEvidenceCommand(root, slug, base, sourceTip, name string, quota uint
 	return evidencecmd.Prepare(root, quota, func(stage func(*chargeevidence.Pack, string, string) string) (string, int) {
 		return preparedAttempts(root, modeBuild, slug, base, sourceTip, "charge", args, func(facts Facts) (string, int) {
 			pack, refusal := buildChargePack(root, facts, boundedVerdict(Decide(facts)), name, buildSourcePolicy())
+			if refusal = stage(pack, facts.AssignmentTarget, refusal); refusal != "" {
+				return refusal, 1
+			}
+			return "", 0
+		})
+	})
+}
+
+// prepareReviewEvidenceCommand runs the movement-checked review preparation on the same
+// publisher the build uses. Each attempt runs the collectors once and stages its validated
+// pack; a refused attempt publishes no handle, and only the unmoved final attempt publishes.
+func prepareReviewEvidenceCommand(root, version, slug, base, sourceTip string, quota uint64, args []string) (string, int) {
+	return evidencecmd.Prepare(root, quota, func(stage func(*chargeevidence.Pack, string, string) string) (string, int) {
+		return preparedAttempts(root, modeReview, slug, base, sourceTip, "charge", args, func(facts Facts) (string, int) {
+			pack, refusal := reviewChargePack(root, version, facts, boundedVerdict(Decide(facts)))
 			if refusal = stage(pack, facts.AssignmentTarget, refusal); refusal != "" {
 				return refusal, 1
 			}

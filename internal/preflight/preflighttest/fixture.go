@@ -190,6 +190,60 @@ func ChargeArgs(t *testing.T, root, slug string) []string {
 	return []string{"build", slug, "--charge", "--ticket", "one.md", "--base", RunGit(t, "rev-parse", "main"), "--source-tip", RunGit(t, "rev-parse", "HEAD")}
 }
 
+// ReviewArgs is the review preparation argument vector over the seeded review tree, pinned
+// to main and HEAD. The base is element 4 and the tip is element 6.
+func ReviewArgs(t *testing.T, slug string) []string {
+	t.Helper()
+	return []string{"review", slug, "--charge",
+		"--base", RunGit(t, "rev-parse", "main"), "--source-tip", RunGit(t, "rev-parse", "HEAD")}
+}
+
+// SeedReviewEvidence builds the shared review tree: a changed package, a touched consumer,
+// an untouched consumer, a deleted symbol, and every canonical review source. A poisoned
+// consumer adds a path the full consumer projection cannot represent, so the collector
+// declares truncated output. It returns the repository root, the slug, and the review
+// preparation arguments.
+func SeedReviewEvidence(t *testing.T, poisonedConsumer bool) (root, slug string, args []string) {
+	t.Helper()
+	slug = "example"
+	root = StartRepo(t)
+	MustWriteFile(t, "go.mod", "module example.com/review\n\ngo 1.25\n")
+	MustWriteFile(t, "specs/"+slug+"/spec.md", SpecBody(slug,
+		"- `target/` (review fixture)",
+		"- `edited/` (review fixture)",
+		"- `outside/` (review fixture)",
+		"- `notes/` (review fixture)",
+		"- `.agents/skills/bench-craft-review/` (review instructions)",
+		"- `.agents/commands/bench-review-implementation.md` (review phase)",
+	))
+	MustWriteFile(t, "specs/"+slug+"/tickets/one.md", TicketDoc("One", "PF1", "PF2"))
+	MustWriteFile(t, chargesource.DelegateSkill, "# Delegation skill\n")
+	MustWriteFile(t, chargesource.DelegateProcedure,
+		"# Delegation procedure\n\nFocused suite: bench test --package ./internal/preflight\n")
+	MustWriteFile(t, chargesource.BuildPhase, "# Build phase\n")
+	MustWriteFile(t, chargesource.ReviewSkill,
+		"# Review skill\n\n## Standards\n\nRules.\n\n## Spec\n\nRequirements.\n\n## Coverage\n\nEdges.\n")
+	MustWriteFile(t, chargesource.ReviewPhase, "# Review phase\n\nUse the three canonical axes.\n")
+	MustWriteFile(t, "target/target.go", "package target\n\nfunc Changed() int { return 0 }\nfunc Gone() {}\n")
+	MustWriteFile(t, "outside/user.go",
+		"package outside\n\nimport \"example.com/review/target\"\n\nfunc Use() int { return target.Changed() }\n")
+	MustWriteFile(t, "edited/user.go",
+		"package edited\n\nimport \"example.com/review/target\"\n\nfunc Use() int { return target.Changed() }\n")
+	if poisonedConsumer {
+		MustWriteFile(t, "outside/a\x1b.go", "package outside\n\nimport \"example.com/review/target\"\n\nfunc Poisoned() int { return target.Changed() }\n")
+	}
+	RunGit(t, "add", ".")
+	RunGit(t, "commit", "-q", "-m", "base")
+	RunGit(t, "checkout", "-q", "-b", "feature")
+	MustWriteFile(t, "target/target.go", "package target\n\nfunc Changed() int { return 1 }\n")
+	MustWriteFile(t, "edited/user.go", "package edited\n\nimport \"example.com/review/target\"\n\n// Use is an edited consumer.\nfunc Use() int { return target.Changed() }\n")
+	MustWriteFile(t, "notes/a \"quote\" \\ café*.txt", "review π evidence\n")
+	RunGit(t, "add", ".")
+	RunGit(t, "commit", "-q", "-m", "review source")
+	ActiveAssignment(t, root, root)
+	return root, slug, ReviewArgs(t, slug)
+}
+
 // LegacyCommitted commits every change and repins the charge arguments to the new tip.
 func LegacyCommitted(t *testing.T, root, slug, message string) []string {
 	t.Helper()
@@ -259,6 +313,26 @@ func PublishedPacks(t *testing.T, root string) []string {
 		}
 	}
 	return packs
+}
+
+// PublishedPack reads the one published artifact in root's evidence store through the
+// strict reader. A test grades the bytes a consumer would retrieve, not a value the
+// producer kept in memory.
+func PublishedPack(t *testing.T, root, identity string) *chargeevidence.Pack {
+	t.Helper()
+	packs := PublishedPacks(t, root)
+	if len(packs) != 1 {
+		t.Fatalf("published packs = %d, want one", len(packs))
+	}
+	data, err := os.ReadFile(filepath.Join(StoreDir(t, root), packs[0]))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pack, err := chargeevidence.Read(data, identity)
+	if err != nil {
+		t.Fatalf("read published pack: %v", err)
+	}
+	return pack
 }
 
 // StagedTemps lists the temporary pack names in root's evidence store.

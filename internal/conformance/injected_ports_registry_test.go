@@ -52,6 +52,6 @@ var injectedPortRegistry = []injectedPortRow{
 	},
 	{
 		pkg: "internal/preflight", port: "reviewEvidenceObserver",
-		testFile: "internal/preflight/review_charge_test.go", testName: "TestReviewChargeSharedEvidence",
+		testFile: "internal/preflight/review_charge_test.go", testName: "TestEvidenceReviewCollectors",
 	},
 }

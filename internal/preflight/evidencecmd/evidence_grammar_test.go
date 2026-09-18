@@ -158,20 +158,21 @@ func TestEvidenceBuildGrammar(t *testing.T) {
 
 // TestEvidenceRemovedBuildFull is CE173. The build guidance migration retires the legacy
 // full charge, so the exact form the phase used to run now refuses through the bounded
-// usage path.
+// usage path. The review freeze then removed the run control from the flag registry, so the
+// refusal names it as an unknown argument rather than as a flag the build mode rejects.
 func TestEvidenceRemovedBuildFull(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
 	valid := preflighttest.ChargeArgs(t, root, slug)
 	for _, test := range []struct {
 		name string
 		args []string
-		want string
 	}{
-		{"build charge full", append(append([]string{}, valid...), "--full"), "--charge and --full requires review"},
-		{"build full alone", []string{"build", slug, "--full"}, "--full requires"},
+		{"build charge full", append(append([]string{}, valid...), "--full")},
+		{"build full alone", []string{"build", slug, "--full"}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			if out, code := preflight.Command(test.args); code != 2 || !strings.Contains(out, test.want) {
+			out, code := preflight.Command(test.args)
+			if code != 2 || !strings.Contains(out, "unknown argument: --full") {
 				t.Fatalf("%s = (%d):\n%s", test.name, code, out)
 			}
 		})

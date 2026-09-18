@@ -121,17 +121,6 @@ func failGitRead(t *testing.T, object string) {
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 }
 
-// TestEvidenceChargeRenderingRefusesNonReviewMode reaches the mode case the retired build
-// charge left behind. Review is the one mode the charge renderer serves, so a non-review
-// charge caller refuses before any preparation attempt.
-func TestEvidenceChargeRenderingRefusesNonReviewMode(t *testing.T) {
-	out, code := preparedCommand("", modeBuild, "example", "", "", "one.md", false, "", nil, chargePreparation)
-	want := "error: mode required: charge rendering requires review mode, not build — prepare bounded evidence for this mode instead\n"
-	if code != 1 || out != want {
-		t.Fatalf("non-review charge rendering = (%d, %q), want (1, %q)", code, out, want)
-	}
-}
-
 func preparationRefusals(t *testing.T) {
 	for _, test := range []struct {
 		name string

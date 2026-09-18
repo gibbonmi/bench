@@ -195,7 +195,7 @@ func TestChargeGrammarBoundariesRefuse(t *testing.T) {
 		{"unknown flag", append(append([]string{}, valid...), "--unknown"), 2, "unknown argument"},
 		{"missing value", []string{"build", slug, "--charge", "--ticket", "one.md", "--base", base, "--source-tip"}, 2, "missing argument: --source-tip"},
 		{"review charge", []string{"review", slug, "--charge", "--ticket", "one.md", "--base", base, "--source-tip", tip}, 2, "unknown argument: --ticket"},
-		{"full without charge", []string{"build", slug, "--full"}, 2, "--full requires --charge"},
+		{"full without charge", []string{"build", slug, "--full"}, 2, "unknown argument: --full"},
 		{"ticket without charge", []string{"build", slug, "--ticket", "one.md"}, 2, "unknown argument: --ticket"},
 		{"missing ticket", []string{"build", slug, "--charge", "--base", base, "--source-tip", tip}, 2, "--charge requires build"},
 		{"ticket traversal", []string{"build", slug, "--charge", "--ticket", "../one.md", "--base", base, "--source-tip", tip}, 1, "selected ticket"},

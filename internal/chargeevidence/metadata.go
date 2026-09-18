@@ -74,14 +74,25 @@ func DecodeMetadata(data []byte) (Metadata, error) {
 	return m, nil
 }
 
-// references lists every source identifier the metadata names.
+// references lists every source identifier the metadata names. An empty cell names no
+// source: a review charge row selects no ticket, and the reader must not read that blank
+// as a reference to a source the pack never declared.
 func (m Metadata) references() []string {
-	refs := append(append([]string{}, m.Checks...), m.Returns...)
+	var refs []string
+	add := func(values ...string) {
+		for _, value := range values {
+			if value != "" {
+				refs = append(refs, value)
+			}
+		}
+	}
+	add(m.Checks...)
+	add(m.Returns...)
 	for _, r := range m.Charge {
-		refs = append(refs, r.Ticket)
+		add(r.Ticket)
 	}
 	for _, r := range m.Shared {
-		refs = append(refs, r.Source)
+		add(r.Source)
 	}
 	return refs
 }

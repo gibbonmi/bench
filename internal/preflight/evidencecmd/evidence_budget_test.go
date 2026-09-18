@@ -33,7 +33,7 @@ func seedLargeEvidence(t *testing.T) (root string, args []string, fence []string
 	return root, preflighttest.LegacyCommitted(t, root, slug, "large evidence"), fence, ticket
 }
 
-// TestEvidenceResponseBudget is CE13, CE131, CE132, CE133, CE134, CE138, and CE139.
+// TestEvidenceResponseBudget is CE13, CE131, CE132, CE133, CE134, CE135, CE138, and CE139.
 func TestEvidenceResponseBudget(t *testing.T) {
 	_, args, _, _ := seedLargeEvidence(t)
 	identity, _, prepared := prepareEvidence(t, args)
@@ -71,6 +71,9 @@ func TestEvidenceResponseBudget(t *testing.T) {
 		t.Fatalf("operational refusal exit = %d:\n%s", code, refusal)
 	}
 	cases["CE139 operational refusal"] = refusal
+	// The review fixture seeds its own repository, so it runs after every read this
+	// build artifact needs.
+	cases["CE135 review preparation"] = largeReviewPreparation(t)
 	for name, out := range cases {
 		if len(out) > preflighttest.ResponseBudget || len(out) == 0 {
 			t.Errorf("%s holds %d encoded bytes, want 1 to %d", name, len(out), preflighttest.ResponseBudget)

@@ -18,9 +18,9 @@ type Kind int
 // Operation kinds. Each registered operation dispatches to exactly one kind.
 const (
 	KindVerdict Kind = iota
-	KindLegacyCharge
 	KindProposal
 	KindPrepareEvidence
+	KindPrepareReviewEvidence
 	KindReadEvidence
 	KindVerifyEvidence
 	KindCurrentEvidence
@@ -33,7 +33,6 @@ const (
 	flagCharge   = "--charge"
 	flagPropose  = "--propose-writes"
 	FlagTicket   = "--ticket"
-	FlagFull     = "--full"
 	flagQuota    = "--max-store-bytes"
 	flagCursor   = "--cursor"
 	flagSource   = "--source"
@@ -58,7 +57,6 @@ var flagTable = []flagSpec{
 	{flagCharge, ""},
 	{flagPropose, ""},
 	{FlagTicket, "<basename>"},
-	{FlagFull, ""},
 	{flagQuota, "<n>"},
 	{flagCursor, "<cursor>"},
 	{flagSource, "<source-id>"},
@@ -85,10 +83,8 @@ type Operation struct {
 var operations = []Operation{
 	{Mode: ModeReview, optional: []string{FlagBase, FlagTip}, Kind: KindVerdict,
 		description: "review-entry checks that a spec's artifacts agree with the tree, one verdict row per check"},
-	{Mode: ModeReview, selectors: []string{flagCharge}, required: []string{FlagBase, FlagTip}, Kind: KindLegacyCharge,
-		description: "legacy review charge that names every omitted source"},
-	{Mode: ModeReview, selectors: []string{flagCharge, FlagFull}, required: []string{FlagBase, FlagTip}, Kind: KindLegacyCharge,
-		description: "legacy review charge that inlines every source"},
+	{Mode: ModeReview, selectors: []string{flagCharge}, required: []string{FlagBase, FlagTip}, optional: []string{flagQuota}, Kind: KindPrepareReviewEvidence, Bounded: true,
+		description: "prepare one immutable review evidence artifact and print its bounded orientation"},
 	{Mode: ModeBuild, optional: []string{FlagBase, FlagTip}, Kind: KindVerdict,
 		description: "build-entry checks that a spec's artifacts agree with the tree, one verdict row per check"},
 	{Mode: ModeBuild, selectors: []string{flagCharge}, required: []string{FlagTicket, FlagBase, FlagTip}, optional: []string{flagQuota}, Kind: KindPrepareEvidence, Bounded: true,

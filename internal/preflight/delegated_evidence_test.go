@@ -19,7 +19,7 @@ func recordFence(t *testing.T, record reviewrecord.Record) string {
 	return "# Review outcomes\n\n```bench-review-record\n" + string(data) + "\n```\n"
 }
 
-// The charge packet describes both valid record versions, and it keeps naming
+// The prepared review metadata describes both valid record versions, and it keeps naming
 // an invalid record as invalid. The projection reports the state the reader
 // found; it does not decide acceptance.
 func TestDelegatedEvidenceProjection(t *testing.T) {
@@ -45,11 +45,11 @@ func TestDelegatedEvidenceProjection(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, _, args := seedReviewEvidence(t, false)
+			root, _, args := seedReviewEvidence(t, false)
 			preflighttest.MustWriteFile(t, "reviews/example.md", tc.body(t))
 			preflighttest.RunGit(t, "add", ".")
 			preflighttest.RunGit(t, "commit", "-q", "-m", "retain the record under test")
-			// Retaining the record moved the tip, so the charge pins the tip it
+			// Retaining the record moved the tip, so the preparation pins the tip it
 			// now reads rather than the one the seed computed.
 			for i, arg := range args {
 				if arg == "--source-tip" {
@@ -57,11 +57,16 @@ func TestDelegatedEvidenceProjection(t *testing.T) {
 				}
 			}
 			out, code := Command(args)
-			if code != 0 || !strings.Contains(out, "completion_evidence[1]") {
-				t.Fatalf("the charge packet lost its completion evidence row (%d):\n%s", code, out)
+			if code != 0 {
+				t.Fatalf("review preparation = (%d):\n%s", code, out)
 			}
-			if !strings.Contains(out, tc.want) {
-				t.Fatalf("the completion evidence row does not describe %q:\n%s", tc.want, out)
+			completion := preflighttest.PublishedPack(t, root, preparedIdentity(t, out)).Metadata().Completion
+			if len(completion) != 1 {
+				t.Fatalf("completion rows = %d, want one", len(completion))
+			}
+			row := completion[0]
+			if !strings.Contains(row.RecordState+" "+row.Detail, tc.want) {
+				t.Fatalf("the completion row does not describe %q: %#v", tc.want, row)
 			}
 		})
 	}
