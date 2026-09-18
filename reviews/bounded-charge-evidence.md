@@ -725,13 +725,86 @@ The three findings are condition paths, not dead statements.
 - The reviewer granted repair cycle 4 for all six findings.
 - The reviewer capped the hardening at two rounds after a chunk's acceptance rows prove. A later finding becomes advice for the reconciliation.
 
+## CE-C1D: review round 5
+
+Repair cycles used: 4 of 2, by two reviewer extensions.
+The repair tip is `29f690ba31cec5bc4dd5f375771fa5ea9aa095e9`.
+
+### Repair cycle 4 records
+
+The repair gave the four preparation steps one owner. `prepare` holds them, and `Findings` and `Paragraphs` both call it.
+The guard that grades the two rules is renamed, so the chunk's declared `TestEvidence` run reaches it.
+Three new case tables grade the needle projection, the two untested fail-closed arms, and the wordless-run guard.
+
+The writer reports one placement call. `internal/prose/parse.go` sits at 423 lines against a 400 budget, so `prepare` went into `starts.go`.
+A new `internal/prose/prepare.go` is the cleaner home, and that path is outside the ticket 4 fence.
+The reconciliation owns that move.
+
+### Repair cycle 4 probe records
+
+- The frontmatter arm dropped from `prepare`: the projection row and two grade cases failed.
+- The comment arm dropped from `prepare`: the projection row and two grade cases failed.
+- The fence arm dropped from `prepare`: the projection row and two grade cases failed.
+- The `words > 0` guard removed from `sentenceSpans`: the wordless-run case failed.
+- `sentenceText` joined with two spaces: both projection tests failed.
+- `needleText` reduced to its argument: all three projection rows failed.
+- The lead filter dropped from `pinnedParagraphSentences`: two synthetic cases and the pinning test failed.
+- The `--full` conjunct dropped from `preflightBuildFullPairs`: one synthetic case and the pair test failed.
+- The old guard name restored: the declared `TestEvidence` run reached four tests and exited zero.
+
+Each probe restored its target byte for byte.
+The first three probes each turned the grade side and the projection side red from one deleted line.
+That result is the evidence that one preparation now serves both.
+
+### Coordinator verification at the cycle 4 tip
+
+- The whole-tree gate on `29f690ba` is green.
+- The five plan verifications pass, and the named plan probe bit with its own diagnostic.
+- The coordinator's independent probe narrowed `pinnedParagraphSentences` to the sentences that carry the lead. That is the rule the reviewer replaced in round 3.
+- The synthetic case for a lead in the second sentence failed, and the red arrived through the renamed guard.
+- The tree was clean after each restore.
+
+### Round 5 axis verdicts
+
+The axes graded the frozen pair base `687a5fc3`, tip `29f690ba`. All three report pass.
+The reviewer cap was in force, so a new observation is advice with no finding ID.
+
+### Standards round 5
+
+ST12 and ST13 closed. No finding.
+
+The axis confirmed `prepare` holds the four preparation steps once, and that both callers read it.
+A fifth step added there reaches the grade and the projection together.
+It confirmed each expectation that cycle 4 adds lands on a mutation that round 4 named as silent.
+
+### Spec round 5
+
+SP5 closed. No finding. The six rows hold, each with one named passing test.
+
+The axis ran the declared `TestEvidence` filter and watched the renamed guard run all eight of its rows.
+A whole-tree sweep for the old test name returns only the historical finding text in this pickup.
+The cycle 4 delta touches five files, and each one is in the ticket fence and the spec fence.
+
+### Coverage round 5
+
+CV10, CV11, and CV12 closed, each by a mutation the axis ran. No finding.
+The CV1, CV4, and CV5 bites all hold at this tip.
+The axis restored every target and confirmed an empty status after each restore.
+
+### Advice carried to the reconciliation
+
+- The fenced-block row of `TestParagraphsRefusesAnUnterminatedDelimiter` is vacuous. `stripFences` blanks the unterminated fence to the end of the file, so the projection returns nothing whether or not the fault arm stays. `TestFindings` holds that arm. A document with prose before the fence opener makes the row bite alone.
+- `prepare` sits in `starts.go`, which is named for sentence starts. Move it to a new `internal/prose/prepare.go` with the three strip functions, and split the 400-line remainder of `parse.go` at the same time.
+- The CE-C1D verification list names no `./internal/prose` run, so the new prose expectations ride only the whole-tree gate.
+- The spec's seam cells for the six rows still read `planned guidance seam` and `planned preflight seam`. Every named test now exists, so each planned label becomes its executed citation.
+
 ## Record
 
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/bounded-charge-evidence/spec.md",
-  "plan_digest": "sha256:bd4837edc8c926625c78753261b6eb6a4c9bff01e43afa43c1a1a609be8949fb",
+  "plan_digest": "sha256:1c57f87df907d6126928290b50a03da7441194dd430d34a269c8e2ef9950f9c5",
   "implementation_session": "bounded-charge-evidence-retained-author",
   "chunks": [
     {
@@ -2466,9 +2539,9 @@ The three findings are condition paths, not dead statements.
     {
       "id": "CE-C1D",
       "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
-      "tip": "5f88803ae04cb44378c18c984d8c68443310f9f8",
-      "plan_digest": "sha256:bd4837edc8c926625c78753261b6eb6a4c9bff01e43afa43c1a1a609be8949fb",
-      "source_digest": "a11ed1cc4f6732a805a0212f1d55bac6ddadc780",
+      "tip": "29f690ba31cec5bc4dd5f375771fa5ea9aa095e9",
+      "plan_digest": "sha256:1c57f87df907d6126928290b50a03da7441194dd430d34a269c8e2ef9950f9c5",
+      "source_digest": "64579dc28ef99c2b88b5e6656505176ad0d8975e",
       "acceptance_rows": [
         "CE101",
         "CE102",
@@ -2665,6 +2738,125 @@ The three findings are condition paths, not dead statements.
               "excerpt": "bench probe .agents/commands/bench-implement-spec.md re-advertising the retired form across two lines at 5f88803a: verdict bit, both the literal Forbid row and the pair rule failed, restored=yes"
             }
           }
+        },
+        {
+          "id": "ce-c1d-v6-preflight",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "64579dc28ef99c2b88b5e6656505176ad0d8975e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:daaab85a92f6f9e972f487a920bc242a21b9bd5dcccaaa7b3de4ea77cd86182f",
+            "excerpt": "at 29f690ba: pass; preflight 17726 ms and evidencecmd 4745 ms"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1d-v6-inventory",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "64579dc28ef99c2b88b5e6656505176ad0d8975e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:74b15dba100c1dd44480729aff22cbc3da3c8ba4811a6edc195c34ec3bbd6e78",
+            "excerpt": "at 29f690ba: pass, 7397 ms"
+          },
+          "requirement": "inventory",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1d-v6-guidance",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "64579dc28ef99c2b88b5e6656505176ad0d8975e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:68a0b11ee35603c9892face1937f4dc18eaf168ed8a35443e4fc8a010f5fa4a5",
+            "excerpt": "at 29f690ba: pass, 620 ms"
+          },
+          "requirement": "guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1d-v6-guidance-cases",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "64579dc28ef99c2b88b5e6656505176ad0d8975e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:5b21756668c967b8c396b537b369c2f069c9ef869f2b7ec101ce12ef83af7c76",
+            "excerpt": "at 29f690ba: pass, 30 ms"
+          },
+          "requirement": "guidance-cases",
+          "command": "bench test --package ./internal/conformance --run TestEvidence",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1d-v6-mutation",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "64579dc28ef99c2b88b5e6656505176ad0d8975e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:68a0b11ee35603c9892face1937f4dc18eaf168ed8a35443e4fc8a010f5fa4a5",
+            "excerpt": "at 29f690ba: pass, 620 ms"
+          },
+          "requirement": "mutation",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "permit build action without a current binding",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:coordinator-run",
+              "digest": "sha256:6a04a0c8a8e7c7fa334e71f373eaa23dcce5482bfec3ca529f0151db62a79070",
+              "excerpt": "bench probe .agents/commands/bench-implement-spec.md deleting the current-action binding sentence at 29f690ba: verdict bit, TestRootConformance reported bench-implement-spec.md permits build action without a current binding, restored=yes"
+            }
+          }
+        },
+        {
+          "id": "ce-c1d-v6-gate",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "64579dc28ef99c2b88b5e6656505176ad0d8975e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:5350022931a84d7868cfff224af5741f97a059cd427188345502294e65df864b",
+            "excerpt": "whole-tree gate at 29f690ba: pass; the coordinator's independent probe narrowed pinnedParagraphSentences to the lead-bearing sentences and the renamed guard turned red, restored=yes"
+          },
+          "requirement": "gate",
+          "command": "bench gate",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -2893,6 +3085,147 @@ The three findings are condition paths, not dead statements.
           "supersedes": [
             "ce-c1d-r2-coverage"
           ]
+        },
+        {
+          "id": "ce-c1d-r4-standards",
+          "performer": "claude-review-ce-c1d-standards-r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "64579dc28ef99c2b88b5e6656505176ad0d8975e",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1d-standards-r4",
+            "digest": "sha256:50d3563d088f3e9cb8e8cc97a5431c31fc5c79e9b764931b249f20b453b9b19d",
+            "excerpt": "Standards CE-C1D round 4: ST11 closed, and one parser now owns both splits. ST12: Findings and Paragraphs each hard-code the same four-step preparation, so a fifth step added to one leaves the pin reading raw prose. ST13: cycle 3 added three independent expectation sets with no recorded red."
+          },
+          "axis": "Standards",
+          "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
+          "tip": "29f690ba31cec5bc4dd5f375771fa5ea9aa095e9",
+          "finding_ids": [
+            "CE-C1D-ST12",
+            "CE-C1D-ST13"
+          ],
+          "supersedes": [
+            "ce-c1d-r3-standards"
+          ]
+        },
+        {
+          "id": "ce-c1d-r4-spec",
+          "performer": "claude-review-ce-c1d-spec-r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "64579dc28ef99c2b88b5e6656505176ad0d8975e",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1d-spec-r4",
+            "digest": "sha256:daacd0349d20adf5031f7afc62ccdc7b0a4a30470f2cb68e6cf3d17e3ac38560",
+            "excerpt": "Spec CE-C1D round 4: the six rows hold and the fence expansion touches no acceptance row or plan entry. SP5: the declared guidance-cases command cannot reach TestBoundedBuildActionRulesBiteOnSyntheticText, which is the only check that closed CV9. Flagged for veto: the price row names six owner files and the ticket now names about eighteen."
+          },
+          "axis": "Spec",
+          "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
+          "tip": "29f690ba31cec5bc4dd5f375771fa5ea9aa095e9",
+          "finding_ids": [
+            "CE-C1D-SP5"
+          ],
+          "supersedes": [
+            "ce-c1d-r3-spec"
+          ]
+        },
+        {
+          "id": "ce-c1d-r4-coverage",
+          "performer": "claude-review-ce-c1d-coverage-r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "64579dc28ef99c2b88b5e6656505176ad0d8975e",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1d-coverage-r4",
+            "digest": "sha256:9e76f9e702956e2f6d47afde8f00143395f43766b8bf1b4c34307778b09bff62",
+            "excerpt": "Coverage CE-C1D round 4: CV7, CV8, and CV9 closed, each by a mutation the axis ran. CV10: needleText reduces to its argument with the package green. CV11: two of the three fail-closed arms of Paragraphs have no case. CV12: the words guard in sentenceSpans deletes with no red. CV6 stayed closed by reviewer decision."
+          },
+          "axis": "Coverage",
+          "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
+          "tip": "29f690ba31cec5bc4dd5f375771fa5ea9aa095e9",
+          "finding_ids": [
+            "CE-C1D-CV10",
+            "CE-C1D-CV11",
+            "CE-C1D-CV12"
+          ],
+          "supersedes": [
+            "ce-c1d-r3-coverage"
+          ]
+        },
+        {
+          "id": "ce-c1d-r5-standards",
+          "performer": "claude-review-ce-c1d-standards-r5",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "64579dc28ef99c2b88b5e6656505176ad0d8975e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1d-standards-r5",
+            "digest": "sha256:7f9d0254f2056291b8273b066f74898c38c1d007c1d6176cbb50f551fbd53e58",
+            "excerpt": "Standards CE-C1D round 5: 0 findings. ST12 closed, because prepare holds the four preparation steps once and both Findings and Paragraphs read it. ST13 closed, because each expectation cycle 4 adds lands on a mutation round 4 named as silent. Advice: move prepare to its own file at the reconciliation."
+          },
+          "axis": "Standards",
+          "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
+          "tip": "29f690ba31cec5bc4dd5f375771fa5ea9aa095e9",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c1d-r4-standards"
+          ]
+        },
+        {
+          "id": "ce-c1d-r5-spec",
+          "performer": "claude-review-ce-c1d-spec-r5",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "64579dc28ef99c2b88b5e6656505176ad0d8975e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1d-spec-r5",
+            "digest": "sha256:080e3fb23285e2c1c5e7e11f9fbb18c5c3707bc5220e7b0a54b6f4857626dcdd",
+            "excerpt": "Spec CE-C1D round 5: 0 findings. SP5 closed; the declared TestEvidence filter reaches the renamed guard and runs all eight rows. All six acceptance rows hold with one named passing test each. The rename broke no fixture, anchor, ticket, or spec row."
+          },
+          "axis": "Spec",
+          "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
+          "tip": "29f690ba31cec5bc4dd5f375771fa5ea9aa095e9",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c1d-r4-spec"
+          ]
+        },
+        {
+          "id": "ce-c1d-r5-coverage",
+          "performer": "claude-review-ce-c1d-coverage-r5",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "64579dc28ef99c2b88b5e6656505176ad0d8975e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1d-coverage-r5",
+            "digest": "sha256:b3c29465f6f034f525b55d2288efc73d9ff4376ab31b69e76845310963ceb81a",
+            "excerpt": "Coverage CE-C1D round 5: 0 findings. CV10, CV11, and CV12 closed, each by a mutation the axis ran and restored. The CV1, CV4, and CV5 bites all hold. Advice: the fenced-block row of the refusal table is vacuous, because stripFences blanks the unterminated fence either way."
+          },
+          "axis": "Coverage",
+          "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
+          "tip": "29f690ba31cec5bc4dd5f375771fa5ea9aa095e9",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c1d-r4-coverage"
+          ]
         }
       ]
     }
@@ -2935,6 +3268,33 @@ The three findings are condition paths, not dead statements.
     {
       "from": "sha256:ad140f7fc480da95134f328448ea09d840c4b3e49c8e1c5a76ef9518d56544f5",
       "to": "sha256:bd4837edc8c926625c78753261b6eb6a4c9bff01e43afa43c1a1a609be8949fb",
+      "chunk_ids": {
+        "CE-C1A": [
+          "CE-C1A"
+        ],
+        "CE-C1B": [
+          "CE-C1B"
+        ],
+        "CE-C1C": [
+          "CE-C1C"
+        ],
+        "CE-C1D": [
+          "CE-C1D"
+        ],
+        "CE-C2": [
+          "CE-C2"
+        ],
+        "CE-C3": [
+          "CE-C3"
+        ],
+        "CE-C4": [
+          "CE-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:bd4837edc8c926625c78753261b6eb6a4c9bff01e43afa43c1a1a609be8949fb",
+      "to": "sha256:1c57f87df907d6126928290b50a03da7441194dd430d34a269c8e2ef9950f9c5",
       "chunk_ids": {
         "CE-C1A": [
           "CE-C1A"
