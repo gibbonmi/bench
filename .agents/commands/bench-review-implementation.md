@@ -15,6 +15,8 @@ Review action requires verified delivery: act only after this session retrieves 
 
 Review action requires available required context: a retrieval receipt, a terminal cursor, or another axis's delivery never replaces the required bytes this session holds. Review action requires a current-action binding: act only after `bench preflight evidence <id> --check-current` binds the artifact to the current assignment and source pair. Review action requires reviewer approval, which a generated charge, a staged artifact, or a verified artifact never supplies. Review action requires the complete task supplement, which this session writes. The supplement names the axis, the model, the effort, and the frozen pair, and verified evidence never supplies it.
 
+The coordinator reuses exact available source bytes only after the new manifest verifies their membership, role, and requiredness. A matching body digest alone authorizes no reuse. A fresh axis runs its own retrieval from the trusted evidence identity. A transferred final cursor and another axis's receipt deliver no byte to it.
+
 ## Exit handoff
 
 Report the Standards, Spec, and Coverage findings in separate sections. State
@@ -146,9 +148,12 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    delegation, preserve the prepared charges and stop dispatch. Then emit a
    capable-harness handoff. The handoff names the repository, the assignment,
    the frozen pair, the charge inputs, the destination harness, and that
-   harness's exact native continuation command. Substitute no same-family CLI
-   launcher, and collect no axis into coordinator context. An explicitly
-   requested cross-harness falsification pass keeps its separate route.
+   harness's exact native continuation command. The handoff carries the trusted
+   expected evidence identity and the exact `bench preflight evidence <id>`
+   retrieval command, never the originating checkout path. Substitute no
+   same-family CLI launcher, and collect no axis into coordinator context. An
+   explicitly requested cross-harness falsification pass keeps its separate
+   route.
 
    A historical review and a spec-less review keep their existing preparation
    entry points under this same native authority rule.

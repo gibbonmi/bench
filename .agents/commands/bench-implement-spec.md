@@ -42,6 +42,8 @@ A prose-only owner edit is an implementation write. Before another session edits
 
 Before each ticket, revalidate prepared source identity and required source bytes. Regenerate a charge when either changes. The retained author runs focused checks and the required mutation probe, then commits the ticket on a green lane. Run the plan's named probe exactly. Do not replace it with a similar mutation. If the named probe cannot run, stop and amend the plan before verification.
 
+A retained consumer reuses exact available source bytes only after the new manifest verifies their membership, role, and requiredness. A matching body digest alone authorizes no reuse. A fresh consumer runs its own retrieval from the trusted evidence identity. A transferred final cursor and another consumer's receipt deliver no byte to it.
+
 After the last ticket in a chunk, freeze the chunk delta and run the three review axes before advancing. `/bench-review-implementation` owns those axes and the review record.
 When evidence requires an in-scope plan, `Writes:`, or gate expansion, apply `.bench/BENCH.md`'s approved plan-expansion policy before using it.
 

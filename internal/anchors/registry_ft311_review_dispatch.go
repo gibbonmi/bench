@@ -41,4 +41,14 @@ var ft311ReviewDispatchAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Require, Needle: "Review action requires reviewer approval, which a generated charge, a staged artifact, or a verified artifact never supplies.", Diagnostic: "bounded review action: bench-review-implementation.md permits review action without reviewer approval"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Require, Needle: "Review action requires the complete task supplement, which this session writes. The supplement names the axis, the model, the effort, and the frozen pair, and verified evidence never supplies it.", Diagnostic: "bounded review action: bench-review-implementation.md permits review action without the complete task supplement"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Needle: "bench preflight review <slug> --charge --base <b> --source-tip <t> --full", Diagnostic: "bounded review action: bench-review-implementation.md re-advertises the retired review full charge form"},
+
+	// The consumer-context rows below state the same two rules over the review reader.
+	// The coordinator is the retained consumer here, and each axis is a fresh one.
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Require, Needle: "The coordinator reuses exact available source bytes only after the new manifest verifies their membership, role, and requiredness. A matching body digest alone authorizes no reuse.", Diagnostic: "consumer context: .agents/commands/bench-review-implementation.md permits reuse without verified membership, role, and requiredness"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Require, Needle: "A fresh axis runs its own retrieval from the trusted evidence identity. A transferred final cursor and another axis's receipt deliver no byte to it.", Diagnostic: "consumer context: .agents/commands/bench-review-implementation.md permits another axis's receipt or a final cursor to replace fresh required context"},
+
+	// The native-handoff row keeps the destination harness able to resume the same review.
+	// The trusted identity and the exact retrieval command travel together, because the
+	// originating checkout path names no evidence and authorizes no retrieval.
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Require, Needle: "The handoff carries the trusted expected evidence identity and the exact `bench preflight evidence <id>` retrieval command, never the originating checkout path.", Diagnostic: "native handoff: .agents/commands/bench-review-implementation.md drops the trusted evidence identity or the exact retrieval command from the capable-harness handoff"},
 }

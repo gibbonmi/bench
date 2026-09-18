@@ -23,4 +23,18 @@ var ft311PreparationAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "Build action requires reviewer approval, which a generated charge, a staged artifact, or a verified artifact never supplies.", Diagnostic: "bounded build action: bench-implement-spec.md permits build action without reviewer approval"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "Build action requires the complete task supplement, which this session writes. The supplement names selectors, model, effort, cap, and mutation, and verified evidence never supplies it.", Diagnostic: "bounded build action: bench-implement-spec.md permits build action without the complete task supplement"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Forbid, Needle: "build <slug> --charge --ticket <ticket> --base <base> --source-tip <tip> --full", Diagnostic: "bounded build action: bench-implement-spec.md re-advertises the retired build full charge form"},
+
+	// The consumer-context rows below keep the build phase's reuse and retrieval rules
+	// apart. Reuse answers to the new manifest, so a body digest alone cannot carry a
+	// source across tickets. Retrieval answers to the fresh consumer itself, so neither a
+	// transferred final cursor nor a peer's receipt delivers a byte in its place.
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "A retained consumer reuses exact available source bytes only after the new manifest verifies their membership, role, and requiredness. A matching body digest alone authorizes no reuse.", Diagnostic: "consumer context: .agents/commands/bench-implement-spec.md permits reuse without verified membership, role, and requiredness"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "A fresh consumer runs its own retrieval from the trusted evidence identity. A transferred final cursor and another consumer's receipt deliver no byte to it.", Diagnostic: "consumer context: .agents/commands/bench-implement-spec.md permits another consumer's receipt or a final cursor to replace fresh required context"},
+
+	// The unchanged-route rows below hold the migration's declared boundary. The
+	// implementation phase keeps its own full-run control, which names no preflight
+	// command and is therefore no charge route. Write-spec keeps its existing contract,
+	// and the Forbid row keeps charge retrieval out of that phase.
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "## `--full <spec>`\n\nThis command orchestrates retained implementation, chunk reviews, the final landing, and `/bench-final-check`.", Diagnostic: "unchanged route: .agents/commands/bench-implement-spec.md dropped the phase-level full-run control"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-write-spec.md", Kind: Forbid, Needle: "bench preflight evidence", Diagnostic: "unchanged route: .agents/commands/bench-write-spec.md adds charge retrieval to the write-spec phase"},
 }
