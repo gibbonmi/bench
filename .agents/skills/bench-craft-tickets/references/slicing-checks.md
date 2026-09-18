@@ -40,3 +40,5 @@ differ.
   the checks and compare the results.
 - The slicer runs build preflight again after each fence change and before review. Review
   then grades the final fence, not an earlier one.
+- Each acceptance claim names an available producer and an executable check at its ticket checkpoint. A claim whose producer lands in a later ticket has no evidence at that checkpoint.
+- A ticket that preserves or moves a ref names a check for each of the head, the tip, and the checked-out-ref shapes. A check on one shape leaves the other shapes free to fail.

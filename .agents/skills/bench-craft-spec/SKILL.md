@@ -62,7 +62,7 @@ Price every cut as `<n> edits, <n> gate runs`. A cut must be a separate capabili
 
 ## Slicing a build for delegates
 
-Record **who-writes-where** ownership fences at spec time, checkable at charge time. A fence entry is an exact repo-relative file or path prefix, never a glob or an implementation ticket. An empty or invalid fence section is incomplete. The author writes the fence section after the ticket slice, from the union of the tickets' `Writes:` lines. The fences include the review pickup and every conformance-pinned consumer of a moved symbol.
+Record **who-writes-where** ownership fences at spec time, checkable at charge time. A fence entry is an exact repo-relative file or path prefix, never a glob or an implementation ticket. An empty or invalid fence section is incomplete. The author writes the fence section after the ticket slice, and [the slicing checks](../bench-craft-tickets/references/slicing-checks.md) state the fence rule that build preflight enforces. The fences include the review pickup and every conformance-pinned consumer of a moved symbol.
 A Won't handle over an anchored sentence quotes the bytes it keeps.
 
 During a build, `.bench/BENCH.md` owns approved in-scope plan expansion. A material acceptance change, unrelated scope, or weakened guarantee returns to `/bench-write-spec` for a reviewer decision. A budget row equal to its subject's current line count proves nothing, because the check parses only that one source.
