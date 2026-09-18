@@ -200,10 +200,17 @@ func TestEvidenceCleanupFailure(t *testing.T) {
 }
 
 // replace puts a different file under name without reusing the object the plan observed. It
-// writes a sibling and renames it, so the store object keeps its name and takes a new file
-// identity, which is what an out-of-protocol writer leaves behind.
-func replace(t *testing.T, dir, name, body string) {
+// writes a sibling of the same byte length and renames it, so the store object keeps its
+// name and its length and takes only a new file identity. That is the one difference the
+// recheck has to read, and it is what an out-of-protocol writer leaves behind. replace
+// returns the bytes it wrote.
+func replace(t *testing.T, dir, name string) string {
 	t.Helper()
+	info, err := os.Lstat(filepath.Join(dir, name))
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := strings.Repeat("!", int(info.Size()))
 	sibling := filepath.Join(dir, name+".replacement")
 	if err := os.WriteFile(sibling, []byte(body), 0o600); err != nil {
 		t.Fatal(err)
@@ -211,6 +218,7 @@ func replace(t *testing.T, dir, name, body string) {
 	if err := os.Rename(sibling, filepath.Join(dir, name)); err != nil {
 		t.Fatal(err)
 	}
+	return body
 }
 
 // TestEvidenceCleanupReplacedTarget is CE82 and the pre-deletion identity recheck. The
@@ -219,8 +227,7 @@ func replace(t *testing.T, dir, name, body string) {
 // reaches after it removed the first one. The apply removes exactly the target it planned,
 // leaves the file it did not plan, and reports the exact unfinished disposition.
 func TestEvidenceCleanupReplacedTarget(t *testing.T) {
-	var dir, published string
-	const intruder = "an object no plan named\n"
+	var dir, published, intruder string
 	paused := 0
 	store, storeDir := newStore(t, ce.StoreOptions{Pause: func(stage string) {
 		// The stage repeats once per removed target; this store holds two, and the apply
@@ -229,7 +236,12 @@ func TestEvidenceCleanupReplacedTarget(t *testing.T) {
 			return
 		}
 		paused++
-		replace(t, dir, published, intruder)
+		// The stage follows a deletion, so the first target is already gone from the store
+		// and only the target this pause replaces is left.
+		if got := storeEntries(t, dir); strings.Join(got, ",") != published {
+			t.Errorf("the removed stage holds %v, want only the unreached target %s", got, published)
+		}
+		intruder = replace(t, dir, published)
 	}})
 	dir = storeDir
 	identity := publish(t, store, mustBuild(t, fixtureCandidate("# One\n")), ce.DefaultQuota)

@@ -32,7 +32,8 @@ const StepRemove = "remove"
 // StageRemoved is the store stage one apply reaches after each successful target deletion,
 // which is the partly cleaned state an interruption leaves. The stage repeats once per
 // removed target, so an environment pause that recreates its marker pauses again at every
-// later target; an owner that resumes the apply reaches the same stage again.
+// later target. No apply resumes from this stage: a stopped apply leaves a store the old
+// fingerprint no longer describes, so the remaining targets need a fresh plan.
 const StageRemoved = "removed"
 
 // Target is one exact deletion target. ID is the artifact identity for a published pack and

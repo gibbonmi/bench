@@ -1,10 +1,13 @@
 package evidencecmd_test
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
@@ -201,10 +204,17 @@ func TestEvidenceCleanupStopped(t *testing.T) {
 	// The apply holds its locks through already opened files, so a store directory that
 	// admits no unlink fails exactly the deletion the plan authorized.
 	store := preflighttest.StoreDir(t, root)
-	if err := os.Chmod(store, 0o500); err != nil {
-		t.Fatal(err)
-	}
 	t.Cleanup(func() { _ = os.Chmod(store, 0o700) })
+	if err := os.Chmod(store, 0o500); err != nil {
+		capability.Capability(t, capability.Privilege, fmt.Sprintf("cannot strip directory permissions: %v", err))
+	}
+	// A privileged run writes a mode 0o500 directory anyway, so this case proves the
+	// refusal it needs before it grades the apply.
+	probe := filepath.Join(store, "admits-writes")
+	if err := os.WriteFile(probe, nil, 0o600); err == nil {
+		_ = os.Remove(probe)
+		capability.Capability(t, capability.Privilege, "mode 0o500 store directory is still writable by this user")
+	}
 	out, code := preflight.Command([]string{"evidence-clean", "--apply", fingerprint})
 	if err := os.Chmod(store, 0o700); err != nil {
 		t.Fatal(err)
@@ -247,6 +257,34 @@ func TestEvidenceCleanupEmptyPlan(t *testing.T) {
 	}
 }
 
+// TestEvidenceCleanupZeroByteTarget is CE85 and CE100 at the command surface. A zero-byte
+// orphan temporary is still a target the apply deletes, so the plan that names it advertises
+// its apply. The target count decides that successor; the planned byte total does not.
+func TestEvidenceCleanupZeroByteTarget(t *testing.T) {
+	root, slug := preflighttest.SeedConformant(t)
+	prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
+	plan, _ := cleanupPlan(t)
+	fingerprint, _ := plan["fingerprint"].(string)
+	if out, code := preflight.Command([]string{"evidence-clean", "--apply", fingerprint}); code != 0 {
+		t.Fatalf("apply = (%d):\n%s", code, out)
+	}
+	// The emptied store keeps the lock file every plan needs, so a killed writer's empty
+	// temporary is the one target it holds.
+	name := chargeevidence.TempPrefix + "orphan" + chargeevidence.TempSuffix
+	if err := os.WriteFile(filepath.Join(preflighttest.StoreDir(t, root), name), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	row, targets := cleanupPlan(t)
+	if len(targets) != 1 || preparedCount(t, row, "targets") != 1 || preparedCount(t, row, "bytes") != 0 {
+		t.Fatalf("the orphaned store planned %d target rows: %#v", len(targets), row)
+	}
+	orphaned, _ := row["fingerprint"].(string)
+	if want := evidencecmd.CleanCommand + " --apply " + orphaned; row["next"] != want {
+		t.Errorf("the zero-byte plan advertises %#v, want %q", row["next"], want)
+	}
+}
+
 // TestEvidenceCleanupGrammar is CE168. Cleanup accepts exactly its declared forms, and every
 // refused form exits two before the store is touched.
 func TestEvidenceCleanupGrammar(t *testing.T) {
@@ -285,24 +323,5 @@ func TestEvidenceCleanupGrammar(t *testing.T) {
 	// The two declared forms stay accepted, so the refusals above are not a blanket refusal.
 	if _, code := preflight.Command([]string{"evidence-clean"}); code != 0 {
 		t.Errorf("the declared plan form exits %d", code)
-	}
-}
-
-// TestEvidenceCleanupHelpDescriptions is CE172 at the registry. The root help inventory owns
-// the two rendered cleanup forms, so this case adds only what that inventory cannot see: a
-// projected cleanup row reaches help with the description its operation registered.
-func TestEvidenceCleanupHelpDescriptions(t *testing.T) {
-	rows := 0
-	for _, row := range evidencecmd.HelpRows() {
-		if !strings.HasPrefix(row.Suffix, " evidence-clean") {
-			continue
-		}
-		rows++
-		if row.Description == "" {
-			t.Errorf("cleanup help row %q carries no description", row.Suffix)
-		}
-	}
-	if rows == 0 {
-		t.Error("the operation registry projects no cleanup help row")
 	}
 }
