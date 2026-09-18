@@ -1614,6 +1614,119 @@ The kit hook refused a pipe after the page command, so the final run saves no st
 The sandbox made the store lock read-only, so the final run has write access to the evidence store directory only.
 A sandboxed consumer therefore needs write access to the store lock before it can read, which the reconciliation must examine.
 
+## CE-C4: review round 1
+
+Frozen pair: base `f980d95c`, tip `7e51a515`.
+The raw finding count is 5. The repair-target count is 3.
+Repair cycles used: 0 of 2.
+Each axis worked from the record commit `c650b94c` above the tip.
+
+### Standards
+
+Finding count: 3. Worst issue: ST2.
+
+- CE-C4-ST1 (auto-fix): The three new tests state each registry diagnostic apart from the registry, and no recorded red covered a reworded row.
+- CE-C4-ST2 (auto-fix): The new test file holds a second phase inventory and a second row lookup. The family harness of the same package already owns both.
+- CE-C4-ST3 (auto-fix): One rationale for the unchanged full-run control appears twice, in the registry comment and in the test comment.
+
+The axis judged the two per-phase guidance paragraphs honest repetition, because each phase file is the contract of its own reader.
+It matched that judgment to the paired bounded action rows that the two registries already hold.
+
+### Spec
+
+Finding count: 1. Six of seven rows were met, and row CE115 was pending on SP1.
+
+- CE-C4-SP1 (ask): In the first Codex transport record the coordinator ran the decoder, and the contract requires that the consumer rebuilds the evidence.
+
+The axis confirmed rows CE104, CE105, CE107, CE112, and CE113 each defeat their falsifier.
+It confirmed row CE116 meets every field of the transport record contract.
+It confirmed the delta stays inside the ticket 7 fence.
+It placed the guidance, package coverage, and response budget reconciliation after this chunk, as the spec assigns it.
+
+### Coverage
+
+Finding count: 1. Five of six new mutations bit.
+
+- CE-C4-CV1 (ask): A consumer-context needle narrowed to its first sentence stays green. The sentence that defeats the row CE104 falsifier can therefore lose its pin with no red.
+
+The whole-paragraph pin selects only the paragraphs that carry the two bounded action leads.
+The new paragraphs carry neither lead, so no rule put each of their sentences inside a needle.
+The weakened requiredness clause, the inverted delivery clause, and the deleted second sentence each bit.
+The deleted write-spec row and the repointed handoff row each bit.
+The axis confirmed that matching collapses whitespace, and that the live-tree read grades the wrapped handoff sentence.
+
+### Coordinator decisions for this chunk
+
+- ST1 closed with evidence and no code change. The coordinator reworded one diagnostic in each of the three families with the probe verb.
+- `TestEvidenceConsumerGuidance`, `TestEvidenceHandoffGuidance`, and `TestEvidenceUnchangedRoutes` each failed with no registry row for the expected text.
+- SP1 closed with evidence. A fourth Codex run fetched the pages, and the Codex consumer wrote and ran its own decoder over its own event log. The record below replaces the first Codex record.
+- The coordinator ran the narrowed-needle mutation of CV1, and it was silent across the conformance package.
+- CV1 joins the repair, and it is flagged for reviewer veto. The reviewer chose the whole-paragraph pin rule, and this repair applies that rule to new pinned prose. It changes no pin scope and no parser.
+- The repair covers ST2, ST3, and CV1. It stays with the ticket 7 author session, on the same model.
+
+### CE-C4 Codex transport record, final
+
+This record is the designed evidence of row CE115, and it replaces the first Codex record. It makes no claim of comprehension or approval.
+
+- Harness: codex-cli 0.154.0, one fresh non-interactive consumer in the workspace-write sandbox.
+- Source tip, trusted expected identity, and page count: the same as the Claude record.
+- Maximum stdout bytes: 8,998.
+
+The consumer ran one bare page command for each shell tool call, and it took each cursor from the tool result before it.
+Every `next` field was readable, and the last one was empty.
+The consumer then wrote its own decoder, with no Bench code, over its own session event log.
+That log holds the text that the harness gave to the model for each tool call.
+
+The decoder matched every page length and hash, and the rebuilt manifest hash equals the trusted identity.
+All six rebuilt sources match the lengths and hashes that the Claude record lists.
+The coordinator ran that decoder again, and its own decoder gave the same result.
+
+The sandbox needs write access to the evidence store directory, because a read opens the store lock.
+The kit hook refuses a pipe after the page command, so the consumer saves no stdout.
+
+## CE-C4: review round 2
+
+Repair cycles used: 1 of 2.
+The repair tip is `50e8e1a0eee356975d1bbccffa49f465073e9788`.
+The cycle landed one commit for the three repair targets, and it changed no guidance prose.
+
+### Repair cycle 1 records
+
+The second phase inventory is gone, and `boundedActionFamily` gained one `peer` field.
+The consumer-context rows derive their reader from the family rows, so no test names a phase guidance path.
+`requireRegisteredRow` is the one row lookup, and `TestEvidenceBoundedActionGuidance` now uses it.
+That test therefore also grades the reader of each bounded action row, which it did not grade before.
+The new diagnostics name each guidance file by its base name, which matches every earlier registry row.
+
+The registry comment keeps the rationale for the unchanged full-run control, and the test comment states only what it grades.
+The paragraph pin is now one function over a text and a lead, with one wrapper for each kind of paragraph.
+`requirePinnedParagraph` applies the pin to the consumer-context paragraph of each phase.
+The pin scope and the parser did not change.
+
+### Repair cycle 1 probe records
+
+- The build reuse needle narrowed to its first sentence: the pin reported the second sentence under zero Require rows.
+- The same mutation in the review registry: the review subtest reported the same line.
+- One consumer-context diagnostic reworded: the lookup reported no registry row for the expected text.
+- The `peer` value of the review family removed: the lookup reported no row for the fresh-consumer text.
+- The review family entry deleted: the count reported four rows against two.
+- The build fresh-consumer row repointed to the review reader: both phase counts failed.
+
+The probe verb restored each target.
+
+### What the repair left
+
+The native-handoff sentence has no whole-paragraph pin.
+Its paragraph holds six sentences that two families own, and two of those sentences sit in no Require needle.
+The pin grades one row set against one paragraph, so that paragraph needs a cross-family design.
+That design is advice for the reconciliation, and the handoff needle itself bites today.
+
+### Gate evidence
+
+The coordinator ran the narrowed-needle mutation again at `50e8e1a0`, and it bit.
+The named plan probe bit at that tip with the base-name diagnostic.
+The coordinator's whole-tree gate on `50e8e1a0` is green, with eight capability skips.
+
 ## Record
 
 ```bench-review-record
