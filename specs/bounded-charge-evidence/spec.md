@@ -822,6 +822,11 @@ It grants no implementation authority until the implementation phase starts.
 - `internal/conformance/charge_evidence_guidance_test.go`
 - `internal/anchors/registry_ft311_preparation.go`
 - `internal/conformance/ft311_preparation_test.go`
+- `internal/conformance/tier_test.go`
+- `internal/conformance/tier_live_tree_test.go`
+- `internal/prose/parse.go`
+- `internal/prose/starts.go`
+- `internal/prose/parse_test.go`
 - `.agents/commands/bench-implement-spec.md`
 - `tests/canary/workflow-guidance-anchors/prepared-build-approval`
 - `CONTEXT.md`
