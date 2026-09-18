@@ -31,8 +31,6 @@ findings in the owner details.
 
 **FT253 (MEDIUM) — one landing lease in the intent ledger, from composition through publish.**
 
-**FT315 (MEDIUM) — a landing supplies the declared `BENCH_HOME` itself, and `bench doctor` reports a missing declared gate input.**
-
 **FT316 (MEDIUM) — a checkpoint refusal and a landing refusal name the commit that the caller must use.**
 
 **FT207 (MEDIUM, decision required) — worktree-mutating paths share malformed-admin refusal.**
@@ -260,6 +258,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT315 landing refusal without `BENCH_HOME` — /bench-debug
-2. FT300 ticket authority and final-consumer verification — /bench-write-spec
-3. FT319 chunk chain and record order in the phase files — /bench-update-kit
+1. FT300 ticket authority and final-consumer verification — /bench-write-spec
+2. FT319 chunk chain and record order in the phase files — /bench-update-kit
+3. FT316 checkpoint and landing refusals name the expected commit — /bench-debug
