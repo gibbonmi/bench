@@ -798,6 +798,71 @@ The axis restored every target and confirmed an empty status after each restore.
 - The CE-C1D verification list names no `./internal/prose` run, so the new prose expectations ride only the whole-tree gate.
 - The spec's seam cells for the six rows still read `planned guidance seam` and `planned preflight seam`. Every named test now exists, so each planned label becomes its executed citation.
 
+## CE-C2: author verification and probes
+
+Frozen pair: base `6a81a1f65bcc17a134db88ad50232bbdfc49c4c7`, tip `2ba4e6de`.
+The ticket commits 26 paths, and every path is inside the ticket 5 fence.
+The author needed no fence expansion and no plan expansion.
+
+### Author verification
+
+The author ran the five ticket selectors at the tip. All passed.
+The coordinator's whole-tree gate on `2ba4e6de` is green.
+The named plan probe made the read-evidence arm rerun the diff collector.
+`TestEvidenceReviewCollectors` failed with a diff collection count of four against one.
+
+### Author probe records
+
+- The producer version pinned to a constant: the provenance test failed.
+- The producer arguments dropped: the provenance test failed on the missing tip.
+- The completion row dropped from the metadata: the metadata test and five projection cases failed.
+- One charge row emitted instead of one per axis: the axis test failed.
+- A shared row bound to a repository source: the axis test failed, because `s2` declared no generated source.
+- The `checks` field dropped from the review skill descriptor: the metadata schema test failed.
+- The incomplete-capture refusal ignored: the refusal test and the no-handle test failed.
+- A source-scoped next action returned: the preparation next test failed.
+- The old `references()` restored: preparation exited one.
+- The retired form re-advertised across two lines: the pair test and root conformance failed.
+- An unpinned waiver appended to the pinned paragraph: the review pin test reported zero Require rows.
+- The review approval anchor row deleted: the guidance test counted five rows and wanted six.
+
+Each probe restored its target, and the status was empty after each restore.
+
+### Author self-reports
+
+The author reports one probe that was silent, and it repaired its own test rather than the count.
+Its first provenance test inferred provenance from a changed evidence identity.
+The consumer capture embeds the version, so the identity moved on its own and hid the mutation.
+The test now reads the committed manifest producer rows directly, and the mutation bites.
+
+The author reports one mutation it judges unobservable, and it wrote no test for it.
+A `--full` row re-registered in the flag table while no operation names it gives the same refusal.
+The help rows derive from the operation registry, not the flag table.
+The author removed the dead row and left it ungraded.
+
+### Coordinator verification
+
+The coordinator probed the response budget, which the author did not probe.
+`internal/preflight/preflighttest/fixture.go` states its budget apart from `chargeevidence.ResponseLimit`, and its comment claims a changed limit turns the tests red.
+
+- The limit raised to 96000: four tests failed, including the large review test and the response budget test.
+- The limit lowered to 24000: the preflight packages stayed green, and the shipped format reference projection failed.
+- The file was restored, and the status was empty after each restore.
+
+The guarantee holds in both directions, through two different owners.
+The comment overstates its own reach, because the budget tests catch only the raise.
+
+### Flagged for reviewer veto
+
+The author deleted `TestEvidenceChargeRenderingRefusesNonReviewMode` together with its subject.
+That test graded the mode guard which the CE-C1D decision on ST10 kept.
+Ticket 5 moves review onto the bounded evidence path, so the charge arm of `preparedCommand` no longer exists.
+The decision is not reversed, and its subject is gone.
+
+The author changed the expected refusal wording of two grammar cases and of `TestEvidenceRemovedBuildFull`.
+The old wording existed only because the registry still held a `--full` row.
+Each case now asserts exit two and an unknown-argument refusal, which is the stronger refusal.
+
 ## Record
 
 ```bench-review-record
