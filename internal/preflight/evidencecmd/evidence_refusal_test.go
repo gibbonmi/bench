@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/preflight"
+	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
@@ -83,14 +84,16 @@ func TestEvidenceLargePreparationRefusal(t *testing.T) {
 	preflighttest.AssertNothingPublished(t, root)
 }
 
-var retryQuota = regexp.MustCompile(` — retry with --max-store-bytes ([0-9]+)\n$`)
+// capacityRecovery is the complete recovery contract of one capacity refusal: cleanup
+// first, then the explicit larger-quota alternative it names.
+var capacityRecovery = regexp.MustCompile(` — run ` + regexp.QuoteMeta(evidencecmd.CleanCommand) + `, or retry with --max-store-bytes ([0-9]+)\n$`)
 
 // capacityRequired runs one preparation under quota and returns the required byte count
-// its capacity refusal names.
+// the alternative of its capacity refusal names.
 func capacityRequired(t *testing.T, args []string, quota string) uint64 {
 	t.Helper()
 	out, code := preflight.Command(append(append([]string{}, args...), "--max-store-bytes", quota))
-	match := retryQuota.FindStringSubmatch(out)
+	match := capacityRecovery.FindStringSubmatch(out)
 	if code != 1 || match == nil || !strings.HasPrefix(out, "error: evidence capacity: ") || strings.Count(out, "\n") != 1 {
 		t.Fatalf("capacity refusal under %s = (%d):\n%s", quota, code, out)
 	}
@@ -101,12 +104,17 @@ func capacityRequired(t *testing.T, args []string, quota string) uint64 {
 	return required
 }
 
-// TestEvidenceCapacityRecovery is CE157. Before cleanup exists, a capacity refusal names
-// exactly the larger quota that admits the candidate, counts every existing artifact, and
-// preserves them.
+// TestEvidenceCapacityRecovery is CE175, the shared recovery oracle CE157 first recorded.
+// Now that cleanup exists, a capacity refusal names it first and keeps the exact larger
+// quota as the explicit alternative. The refusal still counts every existing artifact and
+// preserves them, and the named quota still admits the candidate.
 func TestEvidenceCapacityRecovery(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
 	args := preflighttest.ChargeArgs(t, root, slug)
+	refusal, code := preflight.Command(append(append([]string{}, args...), "--max-store-bytes", "1"))
+	if code != 1 || !strings.Contains(refusal, " — run "+evidencecmd.CleanCommand+", or retry with ") {
+		t.Fatalf("capacity refusal does not name cleanup first = (%d):\n%s", code, refusal)
+	}
 	required := capacityRequired(t, args, "1")
 	if capacityRequired(t, args, strconv.FormatUint(required-1, 10)) != required {
 		t.Fatal("the named quota changed between refusals")

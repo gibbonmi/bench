@@ -19,9 +19,9 @@ func (l *lock) release() {
 	}
 }
 
-// acquire takes one store lock and waits for it. A writer creates an absent lock file. Only
-// preparation creates a lock file, so a reader of a store without one refuses the absent
-// artifact and changes nothing.
+// acquire takes one store lock. A writer creates an absent lock file. Only preparation
+// creates a lock file, so a reader of a store without one refuses the absent artifact and
+// changes nothing. A caller that passes LOCK_NB refuses an active holder instead of waiting.
 func acquire(dir *os.Root, name string, how int, create bool) (*lock, error) {
 	flags := os.O_RDWR | syscall.O_NOFOLLOW | syscall.O_NONBLOCK
 	if create {
@@ -44,6 +44,11 @@ func acquire(dir *os.Root, name string, how int, create bool) (*lock, error) {
 	}
 	if err := syscall.Flock(int(file.Fd()), how); err != nil {
 		file.Close()
+		// A waiting caller that cannot take its lock met a storage failure. A caller that
+		// asked not to wait met an active holder, which is the refusal cleanup reports.
+		if how&syscall.LOCK_NB != 0 {
+			return nil, refuse(RefuseBusy, "store lock %s is held by an active reader or writer", name)
+		}
 		return nil, refuse(RefuseStorage, "store lock %s is not acquirable: %v", name, err)
 	}
 	return &lock{file: file}, nil

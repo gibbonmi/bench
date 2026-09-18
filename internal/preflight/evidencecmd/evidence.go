@@ -14,12 +14,14 @@ import (
 // evidenceRecovery is the next action for each store refusal class that has one. A class
 // without a row keeps the generic retry action.
 var evidenceRecovery = map[string]string{
-	chargeevidence.RefuseAbsent:   "run the build preparation that prints this identifier",
-	chargeevidence.RefuseUnsafe:   "repair the evidence store by hand; Bench removed nothing",
-	chargeevidence.RefuseExisting: "inspect the corrupt published artifact; Bench replaced nothing",
-	chargeevidence.RefuseReplaced: "rerun the exact read after the store stops changing",
-	chargeevidence.RefuseCursor:   "rerun the read with the next command a previous page printed",
-	chargeevidence.RefuseSource:   "read the manifest and name one source identifier it declares",
+	chargeevidence.RefuseAbsent:    "run the build preparation that prints this identifier",
+	chargeevidence.RefuseUnsafe:    "repair the evidence store by hand; Bench removed nothing",
+	chargeevidence.RefuseExisting:  "inspect the corrupt published artifact; Bench replaced nothing",
+	chargeevidence.RefuseReplaced:  "rerun the exact read after the store stops changing",
+	chargeevidence.RefuseCursor:    "rerun the read with the next command a previous page printed",
+	chargeevidence.RefuseSource:    "read the manifest and name one source identifier it declares",
+	chargeevidence.RefuseBusy:      "rerun the exact command after the active reader or writer finishes",
+	chargeevidence.RefuseStalePlan: freshPlan,
 }
 
 // evidenceStore opens the repository-common store for root. It creates nothing.
@@ -234,10 +236,13 @@ func storeRefusal(err error) string {
 	if errors.As(err, &capacity) {
 		kind := fmt.Sprintf("evidence %s: the store holds %d bytes, the candidate needs %d bytes, and the quota is %d bytes",
 			chargeevidence.RefuseCapacity, capacity.Observed, capacity.Candidate, capacity.Quota)
+		// Cleanup is the first recovery action now that its producer exists. The larger
+		// quota stays the documented alternative, and it is absent only when no
+		// representable quota admits the candidate.
 		if capacity.Required == 0 {
-			return toon.Errorf(kind, "no representable quota admits the candidate; remove evidence explicitly") + "\n"
+			return toon.Errorf(kind, "run "+CleanCommand+"; no representable quota admits the candidate") + "\n"
 		}
-		return toon.Errorf(kind, fmt.Sprintf("retry with %s %d", flagQuota, capacity.Required)) + "\n"
+		return toon.Errorf(kind, fmt.Sprintf("run %s, or retry with %s %d", CleanCommand, flagQuota, capacity.Required)) + "\n"
 	}
 	next, ok := evidenceRecovery[refusalClass(err)]
 	if !ok {

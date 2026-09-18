@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/gibbonmi/bench/internal/assessment"
 	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"os"
 	"path/filepath"
 	"strings"
@@ -77,6 +78,8 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench preflight evidence <id> --source <source-id> [--cursor <cursor>]  print one bounded fragment of one declared source stream and its exact successor
   bench preflight evidence <id> --verify  verify every stored page and source digest of a prepared evidence artifact
   bench preflight evidence <id> --check-current  bind a prepared evidence artifact to the current assignment and source pair
+  bench preflight evidence-clean [--cursor <cursor>]  print one bounded page of the exact evidence deletion targets and its fingerprint
+  bench preflight evidence-clean --apply <fingerprint>  delete exactly the targets one fingerprinted cleanup plan named
   bench repair-pilot activate | report [--full]  collect and report attributed repair evidence for an explicit local pilot
   bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>  run focused Go-test or named-check evidence as TOON; no gate verdict
   bench probe <file> (--swap <old> --with <new> | --omit <old>) (--package <expr> [--run <go-regex>] | --check <name>) [--full]  mutate one file once, run one focused test or check, restore the file, and report bit, silent, invalid, or restore-failed
@@ -148,16 +151,27 @@ func TestEvidenceHelpInventory(t *testing.T) {
 	t.Run("preparation and every implemented read", func(t *testing.T) {
 		for _, want := range []string{"build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]",
 			"evidence <id> [--cursor <cursor>]", "evidence <id> --source <source-id> [--cursor <cursor>]",
-			"evidence <id> --verify", "evidence <id> --check-current"} {
+			"evidence <id> --verify", "evidence <id> --check-current",
+			"evidence-clean [--cursor <cursor>]", "evidence-clean --apply <fingerprint>"} {
 			if !strings.Contains(strings.Join(preflightForms, "\n"), want) {
 				t.Errorf("preflight help omits %q", want)
 			}
 		}
 	})
-	t.Run("no later operation", func(t *testing.T) {
-		for _, later := range []string{"evidence-clean"} {
-			if strings.Contains(root.String(), later) || strings.Contains(preflightHelp.String(), later) {
-				t.Errorf("help advertises the later operation %q", later)
+	// Every implemented form now reaches help, so the earlier list of later operations is
+	// empty. An advertisement the registry does not declare is the remaining defect, and an
+	// invented alias fails here rather than passing an empty loop.
+	t.Run("no form the registry does not declare", func(t *testing.T) {
+		declared := map[string]bool{}
+		for _, row := range evidencecmd.HelpRows() {
+			declared[strings.TrimSpace(row.Suffix)] = true
+		}
+		if len(declared) != len(preflightForms) {
+			t.Errorf("help advertises %d preflight forms, want the %d the registry declares", len(preflightForms), len(declared))
+		}
+		for _, form := range preflightForms {
+			if !declared[form] {
+				t.Errorf("help advertises %q, which the operation registry does not declare", form)
 			}
 		}
 	})

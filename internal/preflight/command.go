@@ -40,8 +40,14 @@ func command(version string, args []string) (string, int) {
 	if line != "" {
 		return evidencecmd.Bound(line+"\n", code)
 	}
-	mode, slug := parsed.Positionals[0], parsed.Positionals[1]
+	mode := parsed.Positionals[0]
 	op, line := evidencecmd.Select(mode, parsed.Flags)
+	if line != "" {
+		return evidencecmd.Bound(line+"\n", 2)
+	}
+	// The registry owns how many operands each mode takes, so a mode that takes none
+	// refuses a second operand and a mode that takes one refuses its absence.
+	slug, line := evidencecmd.SelectOperand(op, parsed.Positionals)
 	if line != "" {
 		return evidencecmd.Bound(line+"\n", 2)
 	}
@@ -78,6 +84,10 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 		return evidencecmd.Verify(root, slug)
 	case evidencecmd.KindCurrentEvidence:
 		return currentEvidenceCommand(root, slug, args)
+	case evidencecmd.KindCleanPlan:
+		return evidencecmd.CleanPlan(root, flags)
+	case evidencecmd.KindCleanApply:
+		return evidencecmd.CleanApply(root, flags)
 	}
 	return verdictCommand(root, op.Mode, slug, base, sourceTip, args)
 }

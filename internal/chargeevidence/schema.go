@@ -180,6 +180,9 @@ const (
 	blockPage     = "page"
 	blockVerified = "verified"
 	blockCurrent  = "current"
+	blockCleanup  = "cleanup"
+	blockTargets  = "targets"
+	blockApplied  = "applied"
 )
 
 // ResponseBlocks is the registered schema of every implemented evidence response.
@@ -197,6 +200,13 @@ var ResponseBlocks = []Block{
 	{blockCurrent, []Field{str("evidence"), str("assignment"), str("base"), str("source_tip"), flag("current"),
 		str("delivery")},
 		fmt.Sprintf("One row naming the current assignment binding. Delivery stays `%s`.", DeliveryUnverified)},
+	{blockCleanup, []Field{str("fingerprint"), num("targets"), num("bytes"), flag("response_complete"),
+		flag("stream_end"), str("next")},
+		"One row orienting a bounded cleanup plan and naming its exact successor."},
+	{blockTargets, []Field{str("id"), str("kind"), num("bytes")},
+		fmt.Sprintf("One row per exact deletion target of this page, `%s` before `%s`.", TargetOrphan, TargetPublished)},
+	{blockApplied, []Field{str("fingerprint"), num("removed"), num("remaining"), flag("complete"), str("next")},
+		"One row giving the terminal cleanup disposition. A stopped apply names a fresh plan."},
 }
 
 // Metadata block names in their canonical order.

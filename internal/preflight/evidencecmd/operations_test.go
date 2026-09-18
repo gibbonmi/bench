@@ -72,8 +72,11 @@ func TestOperationFlagsRegistered(t *testing.T) {
 		placeholders[flag.name] = flag.placeholder
 	}
 	for _, op := range operations {
-		if modeOperands[op.Mode] == "" {
-			t.Errorf("mode %q has no registered operand", op.Mode)
+		// A mode is registered with the operand it takes, and an operand-less mode is
+		// registered with an empty one. An unregistered mode would take an operand no
+		// usage line advertises.
+		if _, ok := modeOperands[op.Mode]; !ok {
+			t.Errorf("mode %q is not registered in the operand table", op.Mode)
 		}
 		for _, name := range op.selectors {
 			placeholder, ok := placeholders[name]

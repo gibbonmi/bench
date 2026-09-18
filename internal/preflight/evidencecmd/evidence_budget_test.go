@@ -115,11 +115,17 @@ func boundedFormCases(t *testing.T, operands, values map[string]string) []boundC
 	t.Helper()
 	var cases []boundCase
 	for _, form := range evidencecmd.BoundedForms() {
-		operand, ok := operands[form.Operand]
-		if !ok {
-			t.Fatalf("form %q takes operand %s, which has no fixture value", form.Name, form.Operand)
+		args := []string{form.Mode}
+		// A form that takes no operand states none. A form that takes one needs its
+		// fixture value, so a later operand arrives with a stated argument or fatals.
+		if form.Operand != "" {
+			operand, ok := operands[form.Operand]
+			if !ok {
+				t.Fatalf("form %q takes operand %s, which has no fixture value", form.Name, form.Operand)
+			}
+			args = append(args, operand)
 		}
-		args := append([]string{form.Mode, operand}, flagArguments(t, values, form.Flags...)...)
+		args = append(args, flagArguments(t, values, form.Flags...)...)
 		cases = append(cases, boundCase{form.Name, args})
 		for _, optional := range form.Optional {
 			extended := append(append([]string{}, args...), flagArguments(t, values, optional)...)
@@ -148,6 +154,7 @@ func TestEvidenceResponseBound(t *testing.T) {
 			"--source":          "s2",
 			"--cursor":          "v1." + strings.TrimPrefix(identity, "sha256:") + ".s.1.0",
 			"--max-store-bytes": strconv.FormatUint(chargeevidence.DefaultQuota, 10),
+			"--apply":           "sha256:" + strings.Repeat("0", 64),
 		})
 	// These cases reach the paths no registered form states: an operand refused before the
 	// grammar, a rejected argument, a registered selector without the flags its form

@@ -45,13 +45,14 @@ type StoreOptions struct {
 }
 
 // Publication steps and store stages, in the order a writer reaches them. A reader reaches
-// only StageStoreInspected.
+// StageStoreInspected and then StageReaderLock, which it holds for its whole read.
 const (
 	StepWriteTemp        = "write-temp"
 	StepSyncTemp         = "sync-temp"
 	StepVerifyTemp       = "verify-temp"
 	StepLink             = "link"
 	StageStoreInspected  = "store-inspected"
+	StageReaderLock      = "reader-lock"
 	StageWriterLock      = "writer-lock"
 	StageCapacity        = "capacity"
 	StageStaged          = "staged"

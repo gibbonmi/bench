@@ -14,6 +14,7 @@ const (
 	CursorVersion  = "v1"
 	cursorManifest = "m"
 	cursorSource   = "s"
+	cursorClean    = "c"
 	cursorFields   = 5
 )
 
@@ -24,21 +25,31 @@ const (
 	RefuseSource = "unknown-source"
 )
 
-// Cursor is one stateless position in an artifact's default evidence stream.
+// Cursor is one stateless position in an evidence stream. An artifact cursor names the
+// artifact identity and its manifest or source position. A cleanup cursor names a plan
+// fingerprint and the next target position, so the two streams cannot be interchanged.
 type Cursor struct {
 	Identity string
 	Ordinal  int
 	Index    int
+	Clean    bool
 }
 
 // String renders the canonical cursor.
 func (c Cursor) String() string {
-	kind := cursorSource
-	if c.Ordinal == 0 {
-		kind = cursorManifest
-	}
-	return strings.Join([]string{CursorVersion, strings.TrimPrefix(c.Identity, IdentityPrefix), kind,
+	return strings.Join([]string{CursorVersion, strings.TrimPrefix(c.Identity, IdentityPrefix), c.stream(),
 		strconv.Itoa(c.Ordinal), strconv.Itoa(c.Index)}, ".")
+}
+
+// stream is the one rule that names a cursor's stream, so String and ParseCursor agree.
+func (c Cursor) stream() string {
+	switch {
+	case c.Clean:
+		return cursorClean
+	case c.Ordinal == 0:
+		return cursorManifest
+	}
+	return cursorSource
 }
 
 // ParseCursor strictly parses a cursor for the artifact named by identity.
@@ -63,10 +74,12 @@ func ParseCursor(text, identity string) (Cursor, error) {
 		return Cursor{}, refuse(RefuseCursor, "a manifest cursor uses source ordinal zero")
 	case parts[2] == cursorSource && ordinal == 0:
 		return Cursor{}, refuse(RefuseCursor, "a source cursor names a source ordinal")
-	case parts[2] != cursorManifest && parts[2] != cursorSource:
-		return Cursor{}, refuse(RefuseCursor, "cursor stream is neither %s nor %s", cursorManifest, cursorSource)
+	case parts[2] == cursorClean && ordinal != 0:
+		return Cursor{}, refuse(RefuseCursor, "a cleanup cursor uses source ordinal zero")
+	case parts[2] != cursorManifest && parts[2] != cursorSource && parts[2] != cursorClean:
+		return Cursor{}, refuse(RefuseCursor, "cursor stream is not %s, %s, or %s", cursorManifest, cursorSource, cursorClean)
 	}
-	return Cursor{Identity: identity, Ordinal: int(ordinal), Index: int(index)}, nil
+	return Cursor{Identity: identity, Ordinal: int(ordinal), Index: int(index), Clean: parts[2] == cursorClean}, nil
 }
 
 // ParseDecimal parses a canonical unsigned decimal: digits only, no sign, and no leading
@@ -111,6 +124,7 @@ func (s *Store) Open(identity string) (*Artifact, error) {
 		a.Close()
 		return nil, err
 	}
+	s.pause(StageReaderLock)
 	if a.file, a.info, err = openRegular(dir, packName(identity)); err != nil {
 		a.Close()
 		return nil, err
@@ -206,6 +220,9 @@ func (a *Artifact) ReadWithin(c Cursor) (Fragment, error) { return a.read(c, tru
 // against its manifest digest, and returned only when the directory still names the same
 // unchanged file. within keeps the successor inside the cursor's own source.
 func (a *Artifact) read(c Cursor, within bool) (Fragment, error) {
+	if c.Clean {
+		return Fragment{}, refuse(RefuseCursor, "a cleanup cursor names no artifact stream")
+	}
 	if c.Identity != a.identity {
 		return Fragment{}, refuse(RefuseCursor, "cursor belongs to another artifact")
 	}
@@ -357,9 +374,15 @@ func (f Fragment) Encode(identity, next string) (string, error) {
 }
 
 func encodeResponse(name string, row []any) (string, error) {
+	return encodeRows(name, [][]any{row})
+}
+
+// encodeRows renders one registered response block holding rows, which a multi-row block
+// such as a cleanup target page needs and a single-row block reaches with one row.
+func encodeRows(name string, rows [][]any) (string, error) {
 	for _, block := range ResponseBlocks {
 		if block.Name == name {
-			out, err := encodeBlocks([]Block{block}, map[string][][]any{name: {row}})
+			out, err := encodeBlocks([]Block{block}, map[string][][]any{name: rows})
 			return string(out), err
 		}
 	}

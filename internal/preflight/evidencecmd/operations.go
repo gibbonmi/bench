@@ -24,6 +24,8 @@ const (
 	KindReadEvidence
 	KindVerifyEvidence
 	KindCurrentEvidence
+	KindCleanPlan
+	KindCleanApply
 )
 
 // Flag spellings and modes the operations share.
@@ -38,9 +40,11 @@ const (
 	flagSource   = "--source"
 	flagVerify   = "--verify"
 	flagCurrent  = "--check-current"
+	flagApply    = "--apply"
 	ModeReview   = "review"
 	ModeBuild    = "build"
 	modeEvidence = "evidence"
+	modeClean    = "evidence-clean"
 )
 
 // flagSpec is one registered preflight flag. A switch has no placeholder; a valued flag
@@ -62,10 +66,16 @@ var flagTable = []flagSpec{
 	{flagSource, "<source-id>"},
 	{flagVerify, ""},
 	{flagCurrent, ""},
+	{flagApply, "<fingerprint>"},
 }
 
-// modeOperands names the positional operand each mode takes.
-var modeOperands = map[string]string{ModeReview: "<slug>", ModeBuild: "<slug>", modeEvidence: "<id>"}
+// modeOperands names the positional operand each mode takes. A mode with an empty operand
+// takes none, so the grammar's positional arity derives from this table rather than from a
+// second count.
+var modeOperands = map[string]string{ModeReview: "<slug>", ModeBuild: "<slug>", modeEvidence: "<id>", modeClean: ""}
+
+// Operand reports the placeholder this operation's mode takes, or empty when it takes none.
+func (op Operation) Operand() string { return modeOperands[op.Mode] }
 
 // Operation is one implemented public preflight form. The registry below is the one source
 // for the argument grammar, the preflight help, and the root help rows.
@@ -99,6 +109,10 @@ var operations = []Operation{
 		description: "verify every stored page and source digest of a prepared evidence artifact"},
 	{Mode: modeEvidence, selectors: []string{flagCurrent}, Kind: KindCurrentEvidence, Bounded: true,
 		description: "bind a prepared evidence artifact to the current assignment and source pair"},
+	{Mode: modeClean, optional: []string{flagCursor}, Kind: KindCleanPlan, Bounded: true,
+		description: "print one bounded page of the exact evidence deletion targets and its fingerprint"},
+	{Mode: modeClean, selectors: []string{flagApply}, Kind: KindCleanApply, Bounded: true,
+		description: "delete exactly the targets one fingerprinted cleanup plan named"},
 }
 
 // selectorFlags lists every flag that chooses a registered form, in flag registry order.
@@ -119,13 +133,35 @@ func operationSelectors() []string {
 	return names
 }
 
-// Grammar is the preflight argument grammar the operation registry accepts.
+// Grammar is the preflight argument grammar the operation registry accepts. Its positional
+// arity spans the registered modes, so a mode that takes no operand widens the accepted
+// range and the selected operation decides its own operand count.
 var Grammar = usage.Grammar{
 	Cmd:     "bench preflight",
 	Help:    operationUsage(),
 	Flags:   grammarFlags(),
-	MinArgs: 2,
-	MaxArgs: 2,
+	MinArgs: 1 + operandBound(false),
+	MaxArgs: 1 + operandBound(true),
+}
+
+// operandBound returns the fewest or the most operands any registered mode takes.
+func operandBound(most bool) int {
+	bound := -1
+	for _, op := range operations {
+		count := 0
+		if op.Operand() != "" {
+			count = 1
+		}
+		switch {
+		case bound < 0:
+			bound = count
+		case most:
+			bound = max(bound, count)
+		default:
+			bound = min(bound, count)
+		}
+	}
+	return max(bound, 0)
 }
 
 func grammarFlags() []usage.Flag {
@@ -140,7 +176,10 @@ func grammarFlags() []usage.Flag {
 // usageLine renders one form after `bench preflight`: the mode and its operand, the first
 // selector, the required flags, the remaining selectors, then the bracketed optional flags.
 func (op Operation) usageLine() string {
-	terms := []string{op.Mode, modeOperands[op.Mode]}
+	terms := []string{op.Mode}
+	if operand := op.Operand(); operand != "" {
+		terms = append(terms, operand)
+	}
 	if len(op.selectors) > 0 {
 		terms = append(terms, flagTerm(op.selectors[0]))
 	}
@@ -244,6 +283,22 @@ func Select(mode string, flags map[string]string) (Operation, string) {
 		}
 	}
 	return Operation{}, toon.Usage(Grammar.Cmd, strings.Join(selectors, " and ")+" cannot be combined")
+}
+
+// SelectOperand returns the operand op takes from the parsed positionals, or the usage line
+// that names the wrong operand count. The mode itself is the first positional.
+func SelectOperand(op Operation, positionals []string) (string, string) {
+	operands := positionals[1:]
+	if op.Operand() == "" {
+		if len(operands) != 0 {
+			return "", toon.Usage(Grammar.Cmd, operands[0])
+		}
+		return "", ""
+	}
+	if len(operands) != 1 {
+		return "", toon.MissingArg(Grammar.Cmd, strings.Trim(op.Operand(), "<>"))
+	}
+	return operands[0], ""
 }
 
 func requirementLine(op Operation) string {
