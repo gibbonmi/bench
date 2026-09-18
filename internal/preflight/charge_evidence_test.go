@@ -182,8 +182,8 @@ func preparedFixtureBuild(t *testing.T) (root string, facts Facts, entry *ticket
 }
 
 // TestEvidenceSourcePolicy is CE114. The prepared inventory equals the independently
-// listed build policy, and removing one descriptor removes that source from the pack and
-// from the legacy charge, so no second inventory survives in the renderer.
+// listed build policy, and removing one descriptor removes that source from the published
+// pack itself, because the policy is the one inventory every consumer reads.
 func TestEvidenceSourcePolicy(t *testing.T) {
 	want := []string{
 		"s1 metadata derived  true",

@@ -43,10 +43,10 @@ func TestEvidenceReviewAxes(t *testing.T) {
 	}
 
 	manifest := preflighttest.PublishedPack(t, root, identity).Manifest()
-	generated := map[string]string{}
+	generated := map[string]chargeevidence.ManifestSource{}
 	for _, source := range manifest.Sources {
 		if source.Kind == chargeevidence.KindGenerated {
-			generated[source.ID] = source.SHA256
+			generated[source.ID] = source
 		}
 	}
 	wantKinds := []string{"diff", "consumers", "coverage"}
@@ -58,8 +58,15 @@ func TestEvidenceReviewAxes(t *testing.T) {
 		if row.Kind != kind {
 			t.Errorf("shared row %d kind = %q, want %q", i, row.Kind, kind)
 		}
-		if _, declared := generated[row.Source]; !declared {
+		// The binding is the guarantee, not the existence of some generated source: each
+		// row names the capture of its own kind, so a rotation of the bindings reds here.
+		source, declared := generated[row.Source]
+		if !declared {
 			t.Errorf("shared row %q names %q, which declares no generated source", kind, row.Source)
+			continue
+		}
+		if source.Role != kind {
+			t.Errorf("shared row %q names %q, whose generated source is the %q capture", kind, row.Source, source.Role)
 		}
 	}
 }
@@ -107,14 +114,23 @@ func TestEvidenceReviewProvenanceRows(t *testing.T) {
 	}
 }
 
-// TestEvidenceLargeReview is CE70. A review capture larger than one bounded response
-// reconstructs byte for byte through the ordinary read stream.
-func TestEvidenceLargeReview(t *testing.T) {
-	root, _, args := preflighttest.SeedReviewEvidence(t, false)
+// seedLargeReview seeds the shared review tree with one committed artifact larger than a
+// bounded response, and returns the root with the preparation arguments pinned to that
+// commit. Every case that needs an oversized review capture shares this one fixture.
+func seedLargeReview(t *testing.T) (root string, args []string) {
+	t.Helper()
+	root, _, args = preflighttest.SeedReviewEvidence(t, false)
 	preflighttest.MustWriteFile(t, "notes/large.txt", strings.Repeat("large review evidence\n", 3000))
 	preflighttest.RunGit(t, "add", "-A")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "large review source")
 	args[6] = preflighttest.RunGit(t, "rev-parse", "HEAD")
+	return root, args
+}
+
+// TestEvidenceLargeReview is CE70. A review capture larger than one bounded response
+// reconstructs byte for byte through the ordinary read stream.
+func TestEvidenceLargeReview(t *testing.T) {
+	root, args := seedLargeReview(t)
 
 	identity, _, _ := prepareEvidence(t, args)
 	_, sources := reconstructEvidence(t, identity, traverseEvidence(t, identity))
@@ -139,11 +155,7 @@ func TestEvidenceLargeReview(t *testing.T) {
 // shared response bound, and returns the preparation response the budget case grades.
 func largeReviewPreparation(t *testing.T) string {
 	t.Helper()
-	root, _, args := preflighttest.SeedReviewEvidence(t, false)
-	preflighttest.MustWriteFile(t, "notes/large.txt", strings.Repeat("large review evidence\n", 3000))
-	preflighttest.RunGit(t, "add", "-A")
-	preflighttest.RunGit(t, "commit", "-q", "-m", "large review source")
-	args[6] = preflighttest.RunGit(t, "rev-parse", "HEAD")
+	root, args := seedLargeReview(t)
 
 	identity, _, out := prepareEvidence(t, args)
 	committed := 0
@@ -222,8 +234,10 @@ func TestEvidenceReviewMetadataSchema(t *testing.T) {
 	metadata := pack.Metadata()
 	manifest := pack.Manifest()
 
-	if len(metadata.Fence) == 0 {
-		t.Error("metadata declares no ownership fence")
+	// The fence is graded against the entries the seeded spec declares, so a truncated or
+	// reordered fence reds rather than passing on a non-empty list.
+	if got, want := strings.Join(metadata.Fence, "\n"), strings.Join(preflighttest.ReviewFence(), "\n"); got != want {
+		t.Errorf("metadata fence =\n%s\nwant\n%s", got, want)
 	}
 	if len(metadata.Writes) != 0 || len(metadata.Coverage) != 0 {
 		t.Errorf("review metadata declares %d writes and %d coverage rows, want none",

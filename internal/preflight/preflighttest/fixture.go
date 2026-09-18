@@ -36,6 +36,37 @@ var ConformantFence = []string{
 	".agents/commands/bench-implement-spec.md",
 }
 
+// reviewFenceExtra are the fence entries SeedReviewEvidence's spec adds to ConformantFence,
+// each beside the annotation its line carries. The seeded spec lines and ReviewFence both
+// derive from this table, so the fixture states its own fence once.
+var reviewFenceExtra = []struct{ path, annotation string }{
+	{"target/", "review fixture"},
+	{"edited/", "review fixture"},
+	{"outside/", "review fixture"},
+	{"notes/", "review fixture"},
+	{".agents/skills/bench-craft-review/", "review instructions"},
+	{".agents/commands/bench-review-implementation.md", "review phase"},
+}
+
+// ReviewFence is the complete ownership fence SeedReviewEvidence's spec declares, in
+// document order.
+func ReviewFence() []string {
+	fence := append([]string{}, ConformantFence...)
+	for _, entry := range reviewFenceExtra {
+		fence = append(fence, entry.path)
+	}
+	return fence
+}
+
+// reviewFenceLines renders the extra fence entries as the spec's own document lines.
+func reviewFenceLines() []string {
+	lines := make([]string, len(reviewFenceExtra))
+	for i, entry := range reviewFenceExtra {
+		lines[i] = "- `" + entry.path + "` (" + entry.annotation + ")"
+	}
+	return lines
+}
+
 // RunGit runs one git command in the working directory and returns its trimmed output.
 func RunGit(t *testing.T, args ...string) string {
 	t.Helper()
@@ -208,14 +239,7 @@ func SeedReviewEvidence(t *testing.T, poisonedConsumer bool) (root, slug string,
 	slug = "example"
 	root = StartRepo(t)
 	MustWriteFile(t, "go.mod", "module example.com/review\n\ngo 1.25\n")
-	MustWriteFile(t, "specs/"+slug+"/spec.md", SpecBody(slug,
-		"- `target/` (review fixture)",
-		"- `edited/` (review fixture)",
-		"- `outside/` (review fixture)",
-		"- `notes/` (review fixture)",
-		"- `.agents/skills/bench-craft-review/` (review instructions)",
-		"- `.agents/commands/bench-review-implementation.md` (review phase)",
-	))
+	MustWriteFile(t, "specs/"+slug+"/spec.md", SpecBody(slug, reviewFenceLines()...))
 	MustWriteFile(t, "specs/"+slug+"/tickets/one.md", TicketDoc("One", "PF1", "PF2"))
 	MustWriteFile(t, chargesource.DelegateSkill, "# Delegation skill\n")
 	MustWriteFile(t, chargesource.DelegateProcedure,

@@ -9,7 +9,7 @@ import (
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 )
 
-// recordFence renders the bench-review-record section the charge packet reads.
+// recordFence renders the bench-review-record section the prepared evidence metadata reads.
 func recordFence(t *testing.T, record reviewrecord.Record) string {
 	t.Helper()
 	data, err := json.Marshal(record)

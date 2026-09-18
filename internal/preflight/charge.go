@@ -93,14 +93,6 @@ func chargeVerdictRefusal(verdict Verdict) string {
 	return chargeRefusal("preflight", "required preflight checks are red", "repair the reported check and rerun the exact charge")
 }
 
-func rows(values []string) [][]string {
-	result := make([][]string, len(values))
-	for i, value := range values {
-		result[i] = []string{value}
-	}
-	return result
-}
-
 func chargeRefusal(input, detail, next string) string {
 	return toon.Errorf(input+" required: "+detail, next) + "\n"
 }

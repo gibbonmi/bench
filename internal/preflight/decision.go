@@ -81,8 +81,8 @@ type Facts struct {
 	// the spec's bench-completion-plan fence at SourceTip, and CompletionPlanError
 	// is that reader's message, empty when the plan parses. The gatherer reads the
 	// fence once; whether an unreadable plan is a fault is Decide's. The review
-	// charge's completion table renders the same pair, so a packet and a verdict
-	// can never disagree about the plan.
+	// preparation's completion metadata records the same pair, so prepared evidence
+	// and a verdict can never disagree about the plan.
 	CompletionPlanDigest string
 	CompletionPlanError  string
 

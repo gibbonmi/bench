@@ -38,8 +38,8 @@ func TestCompleteConsumerEvidenceMatchesLiveConsumerMeta(t *testing.T) {
 
 // TestPreparedFormsIgnoreNestedWorkingDirectory closes the hostile-input class of a cwd
 // deeper than the repo root. Every prepared form resolves the root itself, and the review
-// packet reaches three collectors that each resolve their own root, so a nested run must
-// render the identical bytes.
+// preparation reaches three collectors that each resolve their own root, so a nested run
+// must render the identical bytes.
 func TestPreparedFormsIgnoreNestedWorkingDirectory(t *testing.T) {
 	t.Run("review charge", func(t *testing.T) {
 		root, _, args := seedReviewEvidence(t, false)

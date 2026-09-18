@@ -50,6 +50,34 @@ func boundedActionFamilies() []boundedActionFamily {
 	}
 }
 
+// TestEvidenceBoundedActionFamilyInventory states the expected families apart from the
+// table. Every rule below iterates that table, so a family dropped from it leaves each rule
+// vacuously green. The names are compared in document order, so a drop, an addition, and a
+// rename all red here, and no count stands in for the names.
+func TestEvidenceBoundedActionFamilyInventory(t *testing.T) {
+	want := []string{"build", "review"}
+	var got []string
+	for _, family := range boundedActionFamilies() {
+		got = append(got, family.name)
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("bounded action families = %v, want %v", got, want)
+	}
+}
+
+// boundedActionFamilyNamed returns the one family the name selects. A case binds by name, so
+// a reordered table cannot re-point it at another family.
+func boundedActionFamilyNamed(t *testing.T, name string) boundedActionFamily {
+	t.Helper()
+	for _, family := range boundedActionFamilies() {
+		if family.name == name {
+			return family
+		}
+	}
+	t.Fatalf("no bounded action family is named %q", name)
+	return boundedActionFamily{}
+}
+
 func (f boundedActionFamily) anchors() []anchors.Anchor {
 	return anchorsWithDiagnosticPrefix(f.diagnosticPrefix)
 }
@@ -217,8 +245,8 @@ func TestEvidenceBoundedActionRejectsTheRetiredPair(t *testing.T) {
 // file and a weakened rule accepts every mutation of it. The name carries the family prefix,
 // so the chunk's declared TestEvidence run reaches it.
 func TestEvidenceBoundedActionRulesBiteOnSyntheticText(t *testing.T) {
-	build := boundedActionFamilies()[0]
-	review := boundedActionFamilies()[1]
+	build := boundedActionFamilyNamed(t, "build")
+	review := boundedActionFamilyNamed(t, "review")
 	for _, tt := range []struct {
 		name string
 		rule func(string) []string

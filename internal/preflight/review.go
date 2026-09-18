@@ -17,11 +17,6 @@ import (
 	toonlib "github.com/toon-format/toon-go"
 )
 
-const (
-	reviewSkill = chargesource.ReviewSkill
-	reviewPhase = chargesource.ReviewPhase
-)
-
 // reviewEvidenceObserver reports each real collector as it starts. Tests use this port
 // to prove that one preparation attempt does not repeat collection for each review axis.
 type reviewEvidenceObserver func(string)
@@ -169,8 +164,8 @@ func fixedReviewSource(path string) func(string) string {
 func reviewSourcePolicy() []reviewSourceDescriptor {
 	return []reviewSourceDescriptor{
 		{role: "spec", path: func(specPath string) string { return specPath }},
-		{role: "review-skill", path: fixedReviewSource(reviewSkill), checks: true},
-		{role: "review-phase", path: fixedReviewSource(reviewPhase), returns: true},
+		{role: "review-skill", path: fixedReviewSource(chargesource.ReviewSkill), checks: true},
+		{role: "review-phase", path: fixedReviewSource(chargesource.ReviewPhase), returns: true},
 		{role: "delegate-skill", path: fixedReviewSource(chargesource.DelegateSkill), returns: true},
 		{role: "delegate-procedure", path: fixedReviewSource(chargesource.DelegateProcedure), returns: true},
 	}
