@@ -234,6 +234,5 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. Staged bounded-charge-evidence spec (FT287 output-budget evidence) — /bench-implement-spec specs/bounded-charge-evidence
-2. FT315 landing refusal without `BENCH_HOME` — /bench-debug
-3. FT300 ticket authority and final-consumer verification — /bench-write-spec
+1. FT315 landing refusal without `BENCH_HOME` — /bench-debug
+2. FT300 ticket authority and final-consumer verification — /bench-write-spec
