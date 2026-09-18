@@ -863,6 +863,75 @@ The author changed the expected refusal wording of two grammar cases and of `Tes
 The old wording existed only because the registry still held a `--full` row.
 Each case now asserts exit two and an unknown-argument refusal, which is the stronger refusal.
 
+## CE-C2: review round 1
+
+Frozen pair: base `6a81a1f6`, tip `2ba4e6de`.
+The raw finding count is 14. The repair-target count is 10.
+Repair cycles used: 0 of 2.
+
+### Standards
+
+Finding count: 6. Worst issue: ST1.
+
+- CE-C2-ST1 (auto-fix): `internal/preflight/evidencecmd/evidence_review_test.go` pastes the same four-step large-review fixture twice. One helper owns the seeded large artifact.
+- CE-C2-ST2 (auto-fix): One grammar case is authored twice, in the preflight edge test and in the evidence grammar test. Both run the retired build form and assert the same refusal.
+- CE-C2-ST3 (auto-fix): Four comments name the deleted packet and renderer. Three sit in files this delta edits, and `internal/preflight/decision.go` sits outside it.
+- CE-C2-ST4 (auto-fix): `internal/preflight/review.go` keeps package-local aliases for the two moved constants, and the policy names two rows through the aliases and three through the package.
+- CE-C2-ST5 (auto-fix): The synthetic guidance cases bind to the family table by position. A reorder re-points every case, and several still pass.
+- CE-C2-ST6 (auto-fix): `internal/preflight/charge.go` keeps a `rows` helper with no caller.
+
+The axis cleared the three judgment calls the coordinator raised.
+The bounded action family table is one source, because each rule is one method and the two phases are data rows.
+The two package moves each give one owner.
+The ungraded flag-table row is correct, because the restored row returns the same usage string.
+
+### Spec
+
+Finding count: 5. Worst issue: SP3. All 23 acceptance rows hold with a passing test.
+
+- CE-C2-SP1 (auto-fix): CE109 cites a test that grades the page cursor chain, not the absence of a retired next action.
+- CE-C2-SP2 (auto-fix): CE110 cites a test name that no file carries.
+- CE-C2-SP3 (auto-fix): Rows CE142 to CE146 each cite a test name that no file carries.
+- CE-C2-SP4 (auto-fix): CE167 cites a name that two different tests now carry, so the citation is ambiguous.
+- CE-C2-SP5 (auto-fix): The `CE138 operation usage` case now takes the unknown-argument path, so no case grades an operation-level usage refusal.
+
+The axis confirmed the ST10 guarantee holds by construction rather than by a guard.
+`preparedCommand` takes no mode-dependent charge form, and the one route to review preparation fixes the mode.
+A swapped kind reds both preparation suites and the help inventory test.
+The axis confirmed CE173 still holds, and that its new wording narrows specificity without losing the guarantee.
+The axis confirmed the retired route is gone from the grammar, the next actions, and the phase guidance.
+
+### Coverage
+
+Finding count: 3. Worst issue: CV1. Every finding is a silent production path.
+
+- CE-C2-CV1 (auto-fix): The review response bound can be removed with no red. The final guard test enumerates two bounded kinds, and this chunk adds a third.
+- CE-C2-CV2 (auto-fix): The shared capture bindings can rotate with no red. The axis test accepts any declared generated source, and it never matches the role to the row kind.
+- CE-C2-CV3 (auto-fix): The metadata ownership fence can truncate to one entry with no red. The schema test asserts only that the fence is not empty.
+
+The axis cleared CE70, CE127, and CE163 with evidence.
+It confirmed the reconstruction test compares each length and digest, so a wrong page order and a dropped page both red.
+It confirmed no partial handle survives a collector failure.
+It confirmed a tenth argument form cannot arrive silently, because the parse grammar and the rejection sweep share one table.
+
+### Advice
+
+- No check enumerates the expected bounded action families. A family dropped from the table leaves every rule green.
+- `evidencecmd.Prepare` returns without a discard when the publish fails, so a failed publish can leave a temporary pack. The defect predates this delta and the build path shares it.
+- A lowercase conversion in the guidance test is a no-op, because both family names are already lowercase.
+- `ReviewArgs` documents two element positions, and five call sites hard-code them.
+
+### Coordinator decisions for this chunk
+
+- The repair covers CV1, CV2, CV3, ST1 to ST6, SP5, the family enumeration hole, and the discard leak. Each one is a behavior guarantee, a one-source defect, or a stale case inside the ticket fence.
+- SP1, SP2, SP3, and SP4 carry to the final reconciliation. They are spec seam citations, `specs/` sits outside the ticket 5 fence, and the reconciliation rewrites every citation in one sweep.
+
+### Flagged for reviewer veto
+
+Row CE147 now grades only bounded preparation refusals, because this chunk deletes the legacy renderer its wording names.
+This continues the CE-C1D flag on rows CE147 and CE114.
+Row CE173 changed its asserted refusal wording inside a closed chunk, and that change follows from row CE108.
+
 ## Record
 
 ```bench-review-record
