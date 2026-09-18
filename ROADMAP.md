@@ -259,5 +259,5 @@ recommended table is sequencing advice.
 ## Recommended sequence
 
 1. FT300 ticket authority and final-consumer verification — /bench-write-spec
-2. FT319 chunk chain and record order in the phase files — /bench-update-kit
+2. FT319 chunk chain and record order in the phase files — a `craft-synthesis` kit edit to the implement and review phase files.
 3. FT316 checkpoint and landing refusals name the expected commit — /bench-debug
