@@ -53,6 +53,26 @@ func TestCommandBuildResumedTicketsRunForReal(t *testing.T) {
 	}
 }
 
+// TestCommandBuildCoversAcceptsEveryMapRowID pins one row-ID grammar across the
+// map and the ticket. A zero-padded row the coverage map declares (PF02) is a
+// valid Covers: token, so the ticket that cites it parses and owns the row.
+func TestCommandBuildCoversAcceptsEveryMapRowID(t *testing.T) {
+	slug := "example"
+	preflighttest.StartRepo(t)
+	spec := strings.Replace(preflighttest.SpecBody(slug), "| PF2 |", "| PF02 |", 1)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", spec)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF02"))
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+
+	out, _ := Command([]string{"build", slug})
+	for _, check := range []string{"tickets-parse", "rows-owned", "rows-membership"} {
+		if row, _ := rowOf(t, out, check); !strings.Contains(row, check+",green") {
+			t.Errorf("%s must be green for a map row ID cited in Covers:\n%s", check, out)
+		}
+	}
+}
+
 // TestCommandBuildEmptyTicketsRed is B2's empty-tickets half (the empty-tickets
 // contract test): a present-but-empty tickets/ directory is red — declared rows
 // unowned — rather than not-applicable.
