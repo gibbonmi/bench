@@ -122,7 +122,7 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 	// The refusal line names the Bench segment and the operator that caused it, so
 	// an agent reads the cause at the hook seam. (Coverage rows G8 and G9.)
 	for _, tc := range []struct{ row, command, tail string }{
-		{"G8", "cat a && echo x; bench maps", "segment=bench maps operator=;"},
+		{"G8", "cat a && cd /tmp; bench maps", "segment=bench maps operator=;"},
 		{"G9", "bench gate 2>&1", "segment=bench gate operator=2>&1"},
 	} {
 		result := run(repo, tc.command)
@@ -178,8 +178,10 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 		t.Fatal(err)
 	}
 	blocked("FOG36 live symlink", repo, "./kit-command help | touch <marker>")
-	// The last two rows are the exec exception: a non-Bench step after the exec
-	// child, and a heredoc that feeds the child. (Coverage row G12.)
+	// Two rows are the exec exception: a non-Bench step after the exec child, and a
+	// heredoc that feeds the child. (Coverage row G12.) The last two rows are a legal
+	// lead: a step before the Bench call that changes no directory and no environment,
+	// which is the reported assessment import after its generator step.
 	for _, command := range []string{
 		"bench gate --fresh",
 		"bench worktree exec label -- bash -lc 'go test && go vet'",
@@ -190,6 +192,8 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 		"command -v bench | cat",
 		"bench worktree exec label -- cp a b; cp b a",
 		"bench worktree exec label -- cat <<'EOF'\nbody line\nEOF",
+		"python3 build.py out.json && bench assessment record --input out.json",
+		"cat a && echo x; bench maps",
 	} {
 		if result := run(repo, command); result.code != 0 || strings.Contains(result.stderr, "BLOCKED:") {
 			t.Errorf("allowed command %q = (%d, %q, %q)", command, result.code, result.stdout, result.stderr)

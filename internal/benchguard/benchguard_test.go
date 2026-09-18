@@ -74,9 +74,11 @@ func TestInvokesBenchWalksOneWrapperLevel(t *testing.T) {
 }
 
 // TestClassifySpanScopedFollowOns drives the span-scoped rule. A `bench worktree
-// exec` head allows a heredoc in its span and a `;` or `&&` after it; every other
-// shape refuses. A refuse row that carries a want also grades the refusal line.
-// (Coverage rows G1, G2, G3, G4, G5, G7, G14, KG14, KG15.)
+// exec` head allows a heredoc in its span and a `;` or `&&` after it. Every Bench head
+// allows a `;` or `&&` before it when no earlier command changes the directory or the
+// environment, because the Bench response still ends the call; every other shape
+// refuses. A refuse row that carries a want also grades the refusal line.
+// (Coverage rows G1, G2, G3, G4, G5, G7, G14, KG14, KG15, and the lead rows L1 to L11.)
 func TestClassifySpanScopedFollowOns(t *testing.T) {
 	resolver := Resolver{Getwd: func() (string, error) { return "/work", nil }, EvalSymlinks: func(string) (string, error) { return "", errors.New("not bench") }}
 	for _, tc := range []struct{ row, command string }{
@@ -85,13 +87,25 @@ func TestClassifySpanScopedFollowOns(t *testing.T) {
 		{"G5", "bench worktree exec L -- cat <<'EOF'\nbench gate\nEOF"},
 		{"G7", "cat <<'EOF'\nfirst line\nsecond line\nEOF"},
 		{"KG14", "bench worktree exec L -- cat <<'EOF'\nEOF"},
+		{"G2", "cp a b && bench worktree exec L -- true"},
+		{"L1", "python3 build.py out.json && bench assessment record --input out.json"},
+		{"L2", "cat a && echo x; bench maps"},
+		{"L3", "python3 gen.py > out.json; bench assessment record --input out.json"},
+		{"L4", "cat > state.md <<'EOF'\nbody\nEOF\nbench handoff --state-file state.md"},
 	} {
 		if Classify(tc.command, resolver).Blocked {
 			t.Errorf("%s: Classify(%q) = true, want false", tc.row, tc.command)
 		}
 	}
 	for _, tc := range []struct{ row, command, want string }{
-		{row: "G2", command: "cp a b && bench worktree exec L -- true"},
+		{row: "L5", command: "cd /tmp; bench maps", want: "it resolves the worktree itself. segment=bench maps operator=;"},
+		{row: "L6", command: "export A=1 && bench gate"},
+		{row: "L7", command: "A=1; bench gate"},
+		{row: "L8", command: "cat a | bench gate"},
+		{row: "L9", command: "true || bench gate"},
+		{row: "L10", command: "cp a b && bench gate; cp b a", want: "without a shell follow-on. segment=bench gate operator=;"},
+		{row: "L11", command: "cp a b && bench gate > out", want: "without a redirection. segment=bench gate operator=>out"},
+		{row: "L5", command: "cd /tmp && bench worktree exec L -- true"},
 		{row: "G3", command: "bench worktree exec L -- true | cat"},
 		{row: "G3", command: "bench worktree exec L -- true || echo x"},
 		{row: "G3", command: "bench worktree exec L -- true &"},
@@ -118,9 +132,9 @@ func TestClassifySpanScopedFollowOns(t *testing.T) {
 func TestClassifyNamesTheSegmentAndTheOperator(t *testing.T) {
 	resolver := Resolver{Getwd: func() (string, error) { return "/work", nil }, EvalSymlinks: func(string) (string, error) { return "", errors.New("not bench") }}
 	for _, tc := range []struct{ row, command, want string }{
-		{"G8", "cat a && echo x; bench maps", "segment=bench maps operator=;"},
+		{"G8", "cat a && cd /tmp; bench maps", "segment=bench maps operator=;"},
 		{"G9", "bench gate 2>&1", "segment=bench gate operator=2>&1"},
-		{"G10", "cp a b && bench worktree exec L -- true | cat", "segment=bench worktree exec L -- true operator=&&"},
+		{"G10", "cp a b && bench worktree exec L -- true | cat", "segment=bench worktree exec L -- true operator=|"},
 		{"G9b", "bench worktree exec L -- cat <<'EOF' 2>&1\nx\nEOF", "segment=bench worktree exec L -- cat operator=2>&1"},
 	} {
 		verdict := Classify(tc.command, resolver)

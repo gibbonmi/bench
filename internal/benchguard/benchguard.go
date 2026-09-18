@@ -92,11 +92,14 @@ func repairSentence(side Side) string {
 
 // Classify returns the verdict, the Bench segment's projected words, and the adjacent
 // operator token. The rule is span-scoped: it reads the first Bench-headed simple
-// command. A `bench worktree exec` head allows a heredoc redirection inside its
-// span, and a `;` or `&&` after the span when every later simple command is
-// non-Bench. Any other Bench head refuses on an operator or a redirection anywhere
-// in the stream. The named token follows one precedence: a redirection inside the
-// span, else the control operator before the span, else the one after it.
+// command. Every Bench head allows a lead: a `;` or `&&` before the span, when no
+// earlier simple command changes the directory or the environment the call reads. The
+// Bench response still ends such a call, so nothing consumes or reshapes it. A `bench
+// worktree exec` head also allows a heredoc redirection inside its span, and a `;` or
+// `&&` after the span when every later simple command is non-Bench. Any other Bench
+// head refuses on an operator or a redirection from its span to the end of the stream.
+// The named token follows one precedence: a redirection inside the span, else a refused
+// control operator before the span, else the one after it.
 func Classify(command string, resolver Resolver) Verdict {
 	return judge(shellcommand.Parse(command), resolver, true)
 }
@@ -116,7 +119,7 @@ func judge(stream shellcommand.Stream, resolver Resolver, outer bool) Verdict {
 				return judgeExec(stream, index, words, resolver)
 			}
 			blocked := refusal(stream, index, words, false)
-			blocked.Blocked = hasOuterSyntax(stream)
+			blocked.Blocked = !leadAllowed(stream, index) || hasSyntaxFrom(stream, span.Start)
 			return blocked
 		}
 		if !outer || !isWrapper(words[prefix.Index]) {
@@ -138,13 +141,13 @@ func judge(stream shellcommand.Stream, resolver Resolver, outer bool) Verdict {
 	return Verdict{}
 }
 
-// judgeExec reads the exec segment's own span. A segment before it shapes the Bench
-// call, a non-heredoc redirection inside it changes the response, a control operator
+// judgeExec reads the exec segment's own span. A refused lead shapes the Bench call, a
+// non-heredoc redirection inside the span changes the response, a control operator
 // other than `;` or `&&` after it consumes the response, and a later Bench segment
 // makes two responses share one call.
 func judgeExec(stream shellcommand.Stream, index int, words []string, resolver Resolver) Verdict {
 	refused := refusal(stream, index, words, true)
-	if index > 0 {
+	if !leadAllowed(stream, index) {
 		return refused
 	}
 	span := stream.Commands[index]
@@ -168,6 +171,53 @@ func judgeExec(stream shellcommand.Stream, index int, words []string, resolver R
 	return Verdict{}
 }
 
+// leadOperators are the control operators that may sit directly before a Bench span.
+// Each one only orders the call after an earlier command. A pipe feeds the call's input,
+// and `||` and `&` make the call conditional on a failure or concurrent with it.
+var leadOperators = map[string]bool{";": true, "&&": true}
+
+// shapingHeads are the commands that change the directory or the environment a later
+// Bench call reads. A lead that holds one is refused, because the call no longer runs
+// from the state the reader sees.
+var shapingHeads = map[string]bool{"cd": true, "pushd": true, "popd": true, "export": true, "unset": true, "source": true, ".": true, "eval": true}
+
+// leadAllowed reports whether the simple commands before one Bench span are a legal
+// lead. A first span has no lead. Otherwise the adjacent operator must be a lead
+// operator, and no earlier command may carry an assignment or a shaping head.
+func leadAllowed(stream shellcommand.Stream, index int) bool {
+	if index == 0 {
+		return true
+	}
+	start := stream.Commands[index].Start
+	if start == 0 || stream.Tokens[start-1].Kind != shellcommand.ControlOperator || !leadOperators[stream.Tokens[start-1].Text] {
+		return false
+	}
+	for _, earlier := range stream.Commands[:index] {
+		words := shellcommand.ProjectCommandWords(stream.Tokens[earlier.Start:earlier.End])
+		for _, word := range words {
+			if shellcommand.IsAssignment(word) {
+				return false
+			}
+		}
+		prefix := shellcommand.ResolveRoutinePrefix(words)
+		if prefix.Index < len(words) && shapingHeads[words[prefix.Index]] {
+			return false
+		}
+	}
+	return true
+}
+
+// hasSyntaxFrom reports whether a redirection or a control operator sits at or after
+// one token position, which is where a follow-on to a Bench span begins.
+func hasSyntaxFrom(stream shellcommand.Stream, start int) bool {
+	for _, token := range stream.Tokens[start:] {
+		if token.Kind == shellcommand.Redirection || token.Kind == shellcommand.ControlOperator {
+			return true
+		}
+	}
+	return false
+}
+
 // isExecHead reports whether the segment's head is a direct `bench worktree exec`
 // call, which is the only head the exception covers.
 func isExecHead(words []string, index int) bool {
@@ -177,7 +227,8 @@ func isExecHead(words []string, index int) bool {
 // operatorFor names the token adjacent to one segment, and the side it sits on, by the
 // refusal's precedence. The heredocAllowed flag marks a segment the exec exception
 // covers: a heredoc there is legal, so it never names the cause, and the next
-// redirection does.
+// redirection does. A legal lead never names the cause either, so the operator after
+// the span does.
 func operatorFor(stream shellcommand.Stream, index int, heredocAllowed bool) (string, Side) {
 	span := stream.Commands[index]
 	tokens := stream.Tokens[span.Start:span.End]
@@ -190,7 +241,7 @@ func operatorFor(stream shellcommand.Stream, index int, heredocAllowed bool) (st
 		}
 		return shellcommand.RedirectionText(tokens, i), SideRedirection
 	}
-	if span.Start > 0 && stream.Tokens[span.Start-1].Kind == shellcommand.ControlOperator {
+	if span.Start > 0 && stream.Tokens[span.Start-1].Kind == shellcommand.ControlOperator && !leadAllowed(stream, index) {
 		return stream.Tokens[span.Start-1].Text, SideBefore
 	}
 	if span.End < len(stream.Tokens) && stream.Tokens[span.End].Kind == shellcommand.ControlOperator {
@@ -203,93 +254,6 @@ func operatorFor(stream shellcommand.Stream, index int, heredocAllowed bool) (st
 func refusal(stream shellcommand.Stream, index int, words []string, heredocAllowed bool) Verdict {
 	operator, side := operatorFor(stream, index, heredocAllowed)
 	return Verdict{Blocked: true, Segment: words, Operator: operator, Side: side}
-}
-
-// PoolReference names the pool path that command reaches by a route other than
-// `bench worktree exec`, or the empty string when no simple command reaches it. Three
-// shapes reach it: a `cd` target, an assignment value in any command position, and a
-// git repository or worktree option. The scan reads the command text only: it never
-// resolves a path, so an unexpanded variable and a relative target stay allowed. A
-// wrapper string is one word here, so a relative `cd` inside an exec child stays
-// allowed too. A pool path as a plain argument stays allowed, because a read of a file
-// under the pool is not a route into the worktree.
-func PoolReference(command, pools string) string {
-	if pools == "" {
-		return ""
-	}
-	prefix := pools + string(filepath.Separator)
-	stream := shellcommand.Parse(command)
-	for _, span := range stream.Commands {
-		words := shellcommand.ProjectCommandWords(stream.Tokens[span.Start:span.End])
-		if target := assignedPool(words, prefix); target != "" {
-			return target
-		}
-		routine := shellcommand.ResolveRoutinePrefix(words)
-		if !routine.Executes || routine.Index >= len(words) {
-			continue
-		}
-		arguments := words[routine.Index+1:]
-		switch words[routine.Index] {
-		case "cd":
-			for _, argument := range arguments {
-				if strings.HasPrefix(argument, prefix) {
-					return argument
-				}
-			}
-		case "git":
-			if target := gitPool(arguments, prefix); target != "" {
-				return target
-			}
-		}
-	}
-	return ""
-}
-
-// assignedPool names the pool path an assignment word holds. The scan reads every word,
-// because an assignment before `export` or `env` sits outside the routine prefix, and a
-// later command expands the variable the guard never sees.
-func assignedPool(words []string, prefix string) string {
-	for _, word := range words {
-		if !shellcommand.IsAssignment(word) {
-			continue
-		}
-		if value := word[strings.IndexByte(word, '=')+1:]; strings.HasPrefix(value, prefix) {
-			return value
-		}
-	}
-	return ""
-}
-
-// gitPathOptions are the git options that name a repository or a worktree directory.
-// Each value follows its option word, or attaches to it after the option's joiner.
-var gitPathOptions = []struct{ option, joiner string }{{"-C", ""}, {"--git-dir", "="}, {"--work-tree", "="}}
-
-// gitPool names the pool path a git option directs the command at.
-func gitPool(arguments []string, prefix string) string {
-	for index, argument := range arguments {
-		for _, flag := range gitPathOptions {
-			var value string
-			switch {
-			case argument == flag.option:
-				if index+1 < len(arguments) {
-					value = arguments[index+1]
-				}
-			case strings.HasPrefix(argument, flag.option+flag.joiner):
-				value = argument[len(flag.option)+len(flag.joiner):]
-			}
-			if strings.HasPrefix(value, prefix) {
-				return value
-			}
-		}
-	}
-	return ""
-}
-
-// PoolReferenceMessage returns the refusal line for a command that reaches the pool path
-// outside the exec verb. It names the one command form a Bench worktree takes, and the
-// target it read.
-func PoolReferenceMessage(target string) string {
-	return `BLOCKED: a Bench worktree runs through bench worktree exec "<label>" -- <command>; never cd, assign, or git -C into the pool path. target=` + target
 }
 
 // InvokesBench reports whether command invokes Bench, in a simple command or in a
