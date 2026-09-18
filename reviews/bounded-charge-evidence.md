@@ -1355,6 +1355,89 @@ The gate publishes the binary and that manifest together.
 The coordinator replaced the manifest with the one the build verb wrote, and the system suite passed.
 This red is not owned by the chunk delta, and it goes to the drain as a learning.
 
+### Coordinator verification at the cycle 1 tip
+
+- The five plan verifications pass at `e2bf7a6e`.
+- The named plan probe replaced the fingerprint comparison in the store apply with a constant. `TestEvidenceCleanupStalePlan` failed with an apply of a stale plan at exit zero.
+- The probe verb restored the file, and the tree was clean.
+
+### Round 2 axis verdicts
+
+The axes graded the frozen pair base `6ec77cca`, tip `e2bf7a6e`.
+Each axis worked from the record commit `a22e4e39` above that tip.
+The raw finding count is 3. The repair-target count is 3.
+
+### Standards round 2
+
+ST1 to ST5 all closed. One new finding.
+
+- CE-C3-ST6 (auto-fix): `TestEvidenceCleanupHelpDescriptions` grades a fact that the root help golden already owns, and its comment denies that overlap.
+
+The coordinator changed the cleanup plan description, and `TestHelpInventoryIsComplete` failed alone.
+The second derivation has no necessary independence, so the one-source standard applies.
+
+### Spec round 2
+
+No finding. SP1 to SP5 all closed.
+Of the 21 rows of ticket 6, 20 are met and row CE117 is pending by its review-owned seam.
+The axis confirmed the pause is inert without the store option or the pause environment variable.
+It confirmed the delta stays inside the ticket 6 fence and changes no required behavior.
+
+### Coverage round 2
+
+CV1 to CV6 all closed. Two new findings.
+
+- CE-C3-CV7 (auto-fix): The identity recheck can compare byte length instead of file identity with no red, because the replacement in the test differs in length.
+- CE-C3-CV8 (auto-fix): The empty-plan successor suppression can key on the byte total instead of the target count with no red. A zero-byte orphan would then plan a target and advertise no apply.
+
+The coordinator ran both mutations with the probe verb, and both were silent.
+The axis ran three more mutations. The one-sided cursor refusal bit, and the unbounded apply row bit.
+The pause moved before the removal was silent at the store level, where only the system test graded it.
+The axis confirmed the coordinator's reading of `TestEvidenceCleanupStopped`: a privileged run fails loudly.
+
+### Advice from round 2
+
+- The tree convention for a permission-dependent test is an effectiveness probe and a capability skip. No check mandates it.
+- `ModeClean` became public only for one test reader, and an in-package test export avoids that.
+- The system cleanup test spells the cleanup mode as a literal, and it derives the identity shape as its own pattern.
+- The budget test comment omits rows CE136 and CE137.
+- Six seam cells of the spec name tests that carry other names. These citations join the reconciliation sweep.
+
+### Coordinator decisions after round 2
+
+- ST6, CV7, and CV8 earn repair cycle 2, the second of the two the cap allows. Each one is a test-side repair inside the ticket 6 fence.
+- Three small items join the cycle, because the writer is already in those files. They are the capability skip, a store-level assertion of the pause order, and the `StageRemoved` comment. That comment named a resume that does not exist.
+- The other advice items carry to the reconciliation.
+
+## CE-C3: review round 3
+
+Repair cycles used: 2 of 2.
+The repair tip is `e7827d7af69097ba7434035ea1da31fb985c845f`.
+
+### Repair cycle 2 records
+
+The writer deleted `TestEvidenceCleanupHelpDescriptions`, and no production symbol lost its last reader.
+The replacement helper of the store test now writes the same byte count as the file it replaces.
+The replaced-target test asserts at the pause that the store holds only the unreached target.
+`TestEvidenceCleanupZeroByteTarget` seeds one zero-byte orphan and asserts one target, zero bytes, and the exact apply successor.
+`TestEvidenceCleanupStopped` proves that its directory mode is effective, and it emits a privilege capability skip when it is not.
+The `StageRemoved` comment states that no apply resumes from the stage.
+
+### Repair cycle 2 probe records
+
+- The recheck compares byte length: `TestEvidenceCleanupReplacedTarget` reported two removed and a complete apply.
+- The pause moved before the removal: the same test reported two entries at the removed stage.
+- The suppression keyed on the byte total: `TestEvidenceCleanupZeroByteTarget` reported an empty successor.
+- The cleanup apply description changed: `TestHelpInventoryIsComplete` failed, which confirms the golden owns that fact.
+
+The probe verb restored each target.
+
+### Gate evidence
+
+The coordinator ran the byte-length mutation and the byte-total mutation again at `e7827d7a`, and both bit.
+The coordinator's whole-tree gate on `e7827d7a` is green, with eight capability skips.
+The skip count did not change, so the new privilege skip did not fire on this machine.
+
 ## Record
 
 ```bench-review-record
