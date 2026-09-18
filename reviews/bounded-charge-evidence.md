@@ -1776,13 +1776,57 @@ The refactor therefore weakened no earlier oracle.
 - The three plan verifications pass at this tip.
 - The named plan probe bit at this tip, and the probe verb restored the file.
 
+## Final reconciliation
+
+The reconciled tip is `5a709986918c2fc3fed5568e757734bf759a36f0`.
+All seven chunks are closed, and each one has a green checkpoint.
+
+### Seam cell citations
+
+The spec named 171 planned seam labels, and the reconciliation replaced each one with its executed test citation.
+A script resolved 154 cells to the one file that declares the named test.
+The coordinator mapped the other 17 cells from the row id in the test comment, or from the assertion that grades the row.
+`bench coverage --check` reports a valid map of 175 rows and no uncited row.
+
+The ten bounded action rows cite `TestEvidenceBoundedActionGuidance`, which replaced the two planned guidance tests.
+Row CE110 cites `TestEvidenceBoundedActionRejectsTheRetiredPair`.
+Rows CE160 and CE161 cite the command test of each mode and `TestEvidenceSchemaRegistry`.
+Two files declare `TestEvidenceHelpInventory`, so rows CE152, CE162, and CE172 cite the root file and row CE167 cites the command package.
+
+One advice item of the CE-C3 Spec axis was wrong.
+The cleanup tests that it reported absent exist in the store package, and rows CE78 to CE81, CE100, and CE119 cite them there.
+The five ticket 7 rows now cite `internal/conformance/ft311_preparation_test.go`.
+
+### The storage platform sentence
+
+The spec enumerated Linux, macOS, and Windows for native storage evidence, and the release target policy excludes Windows.
+The contradiction is not behavioral, so the reconciliation corrected the sentence to the policy.
+
+### Reviewer decision on rows CE94 and CE117
+
+The completion checkpoint accepts only the value `covered` for each planned row.
+Row CE94 has a test that emits a privilege capability skip on this host.
+Row CE117 has Linux storage evidence, and its macOS evidence is pending.
+On 2026-09-18 the reviewer decided that both rows reconcile as `covered`.
+The pending notes stay in this record, and each test stays in place for a capable host.
+
+### Final verification
+
+The coordinator ran all seven final verifications at the reconciled tip, and each one passed.
+The whole-tree gate on that tip is green, with eight capability skips.
+
+### Advice not taken in this build
+
+Each chunk section above holds its advice list.
+No advice item is a blocker, so none joined the reconciliation, and the drain owns their disposition.
+
 ## Record
 
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/bounded-charge-evidence/spec.md",
-  "plan_digest": "sha256:581807ed92fa23fe557273dd5bb3e11f966388d4b8b6ab24dab121e883a8d236",
+  "plan_digest": "sha256:2e85ce688b2c1d6c6d3a90dde4e15fc89a8512267b4b0a1f8698c66c7a3cdc8a",
   "implementation_session": "bounded-charge-evidence-retained-author",
   "chunks": [
     {
@@ -5261,11 +5305,314 @@ The refactor therefore weakened no earlier oracle.
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
+    "performer": "bounded-charge-evidence-retained-author",
+    "reconciliation": {
+      "CE16": "covered",
+      "CE18": "covered",
+      "CE19": "covered",
+      "CE20": "covered",
+      "CE21": "covered",
+      "CE22": "covered",
+      "CE23": "covered",
+      "CE24": "covered",
+      "CE25": "covered",
+      "CE26": "covered",
+      "CE27": "covered",
+      "CE28": "covered",
+      "CE29": "covered",
+      "CE30": "covered",
+      "CE31": "covered",
+      "CE32": "covered",
+      "CE33": "covered",
+      "CE34": "covered",
+      "CE35": "covered",
+      "CE36": "covered",
+      "CE37": "covered",
+      "CE38": "covered",
+      "CE41": "covered",
+      "CE42": "covered",
+      "CE43": "covered",
+      "CE44": "covered",
+      "CE45": "covered",
+      "CE46": "covered",
+      "CE47": "covered",
+      "CE48": "covered",
+      "CE49": "covered",
+      "CE50": "covered",
+      "CE51": "covered",
+      "CE52": "covered",
+      "CE111": "covered",
+      "CE114": "covered",
+      "CE125": "covered",
+      "CE126": "covered",
+      "CE147": "covered",
+      "CE148": "covered",
+      "CE149": "covered",
+      "CE1": "covered",
+      "CE2": "covered",
+      "CE3": "covered",
+      "CE4": "covered",
+      "CE5": "covered",
+      "CE6": "covered",
+      "CE9": "covered",
+      "CE10": "covered",
+      "CE11": "covered",
+      "CE12": "covered",
+      "CE13": "covered",
+      "CE14": "covered",
+      "CE15": "covered",
+      "CE17": "covered",
+      "CE39": "covered",
+      "CE40": "covered",
+      "CE53": "covered",
+      "CE54": "covered",
+      "CE63": "covered",
+      "CE64": "covered",
+      "CE74": "covered",
+      "CE75": "covered",
+      "CE76": "covered",
+      "CE77": "covered",
+      "CE86": "covered",
+      "CE87": "covered",
+      "CE88": "covered",
+      "CE89": "covered",
+      "CE90": "covered",
+      "CE91": "covered",
+      "CE92": "covered",
+      "CE93": "covered",
+      "CE94": "covered",
+      "CE95": "covered",
+      "CE96": "covered",
+      "CE97": "covered",
+      "CE98": "covered",
+      "CE99": "covered",
+      "CE118": "covered",
+      "CE128": "covered",
+      "CE129": "covered",
+      "CE130": "covered",
+      "CE131": "covered",
+      "CE132": "covered",
+      "CE138": "covered",
+      "CE139": "covered",
+      "CE150": "covered",
+      "CE151": "covered",
+      "CE152": "covered",
+      "CE153": "covered",
+      "CE154": "covered",
+      "CE155": "covered",
+      "CE156": "covered",
+      "CE157": "covered",
+      "CE7": "covered",
+      "CE8": "covered",
+      "CE55": "covered",
+      "CE56": "covered",
+      "CE57": "covered",
+      "CE58": "covered",
+      "CE59": "covered",
+      "CE60": "covered",
+      "CE61": "covered",
+      "CE62": "covered",
+      "CE65": "covered",
+      "CE106": "covered",
+      "CE120": "covered",
+      "CE123": "covered",
+      "CE124": "covered",
+      "CE133": "covered",
+      "CE134": "covered",
+      "CE158": "covered",
+      "CE159": "covered",
+      "CE160": "covered",
+      "CE161": "covered",
+      "CE162": "covered",
+      "CE174": "covered",
+      "CE101": "covered",
+      "CE102": "covered",
+      "CE103": "covered",
+      "CE140": "covered",
+      "CE141": "covered",
+      "CE173": "covered",
+      "CE66": "covered",
+      "CE67": "covered",
+      "CE68": "covered",
+      "CE69": "covered",
+      "CE70": "covered",
+      "CE71": "covered",
+      "CE72": "covered",
+      "CE73": "covered",
+      "CE108": "covered",
+      "CE109": "covered",
+      "CE110": "covered",
+      "CE127": "covered",
+      "CE135": "covered",
+      "CE142": "covered",
+      "CE143": "covered",
+      "CE144": "covered",
+      "CE145": "covered",
+      "CE146": "covered",
+      "CE163": "covered",
+      "CE164": "covered",
+      "CE165": "covered",
+      "CE166": "covered",
+      "CE167": "covered",
+      "CE78": "covered",
+      "CE79": "covered",
+      "CE80": "covered",
+      "CE81": "covered",
+      "CE82": "covered",
+      "CE83": "covered",
+      "CE84": "covered",
+      "CE85": "covered",
+      "CE100": "covered",
+      "CE117": "covered",
+      "CE119": "covered",
+      "CE121": "covered",
+      "CE122": "covered",
+      "CE136": "covered",
+      "CE137": "covered",
+      "CE168": "covered",
+      "CE169": "covered",
+      "CE170": "covered",
+      "CE171": "covered",
+      "CE172": "covered",
+      "CE175": "covered",
+      "CE104": "covered",
+      "CE105": "covered",
+      "CE107": "covered",
+      "CE112": "covered",
+      "CE113": "covered",
+      "CE115": "covered",
+      "CE116": "covered"
+    },
+    "verification": [
+      {
+        "id": "ce-final-v1-coverage",
+        "performer": "bounded-charge-evidence-retained-author",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:coordinator-run",
+          "digest": "sha256:769368ee358574a8f43bf28e74622bb5fc118390fe7ebe1ba1946f094e70c3ce",
+          "excerpt": "at 5a709986: ok, coverage map valid, 175 rows, no uncited row"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/bounded-charge-evidence/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "ce-final-v1-preflight",
+        "performer": "bounded-charge-evidence-retained-author",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:coordinator-run",
+          "digest": "sha256:d863743c8a667f735f92a357e19f07c80f4b22a5550adaa3bc4272d53fc8f11b",
+          "excerpt": "at 5a709986: pass; preflight 20967 ms and evidencecmd 9216 ms"
+        },
+        "requirement": "preflight",
+        "command": "bench test --package ./internal/preflight/...",
+        "exit_code": 0
+      },
+      {
+        "id": "ce-final-v1-store",
+        "performer": "bounded-charge-evidence-retained-author",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:coordinator-run",
+          "digest": "sha256:277b509c6e45ac02576ad9434bc3e250a6eb3bdfc68c3734e2edccf2a9d56284",
+          "excerpt": "at 5a709986: pass, 177 ms; the CE94 device case skipped for the privilege capability"
+        },
+        "requirement": "store",
+        "command": "bench test --package ./internal/chargeevidence",
+        "exit_code": 0
+      },
+      {
+        "id": "ce-final-v1-inventory",
+        "performer": "bounded-charge-evidence-retained-author",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:coordinator-run",
+          "digest": "sha256:563cfb5a50f3f063fb148cd45e9f29dec8528a7cd627ed252b69b2421b53e829",
+          "excerpt": "at 5a709986: pass, 8715 ms"
+        },
+        "requirement": "inventory",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "ce-final-v1-system",
+        "performer": "bounded-charge-evidence-retained-author",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:coordinator-run",
+          "digest": "sha256:295718e1580afd7861bd8847ecbbcd68c75cf8532217707194ad0be194f36562",
+          "excerpt": "at 5a709986: pass, 39386 ms, after the coordinator replaced the stale git-ignored broker manifest"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      },
+      {
+        "id": "ce-final-v1-guidance",
+        "performer": "bounded-charge-evidence-retained-author",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:coordinator-run",
+          "digest": "sha256:3788988ecc7822cff42e17927901983cb4723e20480899122fd463576a17d4d7",
+          "excerpt": "at 5a709986: pass, 929 ms"
+        },
+        "requirement": "guidance",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      },
+      {
+        "id": "ce-final-v1-guidance-cases",
+        "performer": "bounded-charge-evidence-retained-author",
+        "role": "author-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "9df4014c84cc327dddcb92c28783417009d61033",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:coordinator-run",
+          "digest": "sha256:2705cd05907062651cf4a6c3ee130e6788f00d01d203c04e1d5c17b6a33e762f",
+          "excerpt": "at 5a709986: pass, 1565 ms"
+        },
+        "requirement": "guidance-cases",
+        "command": "bench test --package ./internal/conformance --run TestEvidence",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -5352,6 +5699,33 @@ The refactor therefore weakened no earlier oracle.
     {
       "from": "sha256:1c57f87df907d6126928290b50a03da7441194dd430d34a269c8e2ef9950f9c5",
       "to": "sha256:581807ed92fa23fe557273dd5bb3e11f966388d4b8b6ab24dab121e883a8d236",
+      "chunk_ids": {
+        "CE-C1A": [
+          "CE-C1A"
+        ],
+        "CE-C1B": [
+          "CE-C1B"
+        ],
+        "CE-C1C": [
+          "CE-C1C"
+        ],
+        "CE-C1D": [
+          "CE-C1D"
+        ],
+        "CE-C2": [
+          "CE-C2"
+        ],
+        "CE-C3": [
+          "CE-C3"
+        ],
+        "CE-C4": [
+          "CE-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:581807ed92fa23fe557273dd5bb3e11f966388d4b8b6ab24dab121e883a8d236",
+      "to": "sha256:2e85ce688b2c1d6c6d3a90dde4e15fc89a8512267b4b0a1f8698c66c7a3cdc8a",
       "chunk_ids": {
         "CE-C1A": [
           "CE-C1A"
