@@ -33,6 +33,8 @@ findings in the owner details.
 
 **FT315 (MEDIUM) — a landing supplies the declared `BENCH_HOME` itself, and `bench doctor` reports a missing declared gate input.**
 
+**FT316 (MEDIUM) — a checkpoint refusal and a landing refusal name the commit that the caller must use.**
+
 **FT207 (MEDIUM, decision required) — worktree-mutating paths share malformed-admin refusal.**
 
 **FT199 (MEDIUM) — the shipped unclaimed-ref cleanup grows into a recovery-aware repository-wide ref inventory.**
@@ -66,6 +68,20 @@ findings in the owner details.
 **FT293 (MEDIUM, decision required) — preflight-closed ticket Writes determine registry pins and blocker edges.**
 
 **FT300 (MEDIUM) — ticket slicing verifies fixture ownership and executable evidence.**
+
+**FT317 (MEDIUM, decision required) — a capability-blocked acceptance row has one decided value at the completion checkpoint.**
+
+**FT318 (MEDIUM, decision required) — the review record has a native writer.**
+
+**FT319 (MEDIUM) — the implement and review phase files state the chunk chain and the record order.**
+
+**FT320 (MEDIUM) — the `craft-review` finding discipline states three reader rules.**
+
+**FT321 (LOW) — the `craft-delegate` references freeze a stated confidence and carry the transport consumer protocol.**
+
+**FT322 (LOW) — `craft-line` resolves a recorded fork line and times a consultation question.**
+
+**FT324 (MEDIUM, decision required) — the harness-memory rule has one owner.**
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
@@ -135,6 +151,12 @@ findings in the owner details.
 
 **FT297 (LOW) — conformance rows pin the Go-owned binary path against its shell derivations and the VCS-disable flag on every Go tool call.**
 
+**FT323 (LOW) — the project conventions name the prose seam, the prose lane, and the host limits.**
+
+**FT325 (LOW, decision required) — a canary fixture does not depend on the physical wrap of guidance prose.**
+
+**FT326 (MEDIUM) — needle integrity holds across every anchor family.**
+
 **FT299 (LOW) — a landing rehearsal precedes the first landing of a promotion-broker-changing spec.**
 
 **FT267 (LOW) — `scripts/verify-release-artifact.mjs` has a gate-owned execution seam.**
@@ -156,6 +178,10 @@ requirements are met.
 **FT6 (LOW, parked pending evidence — leave parked):**
 
 **FT24 (parked pending upstream) — Codex agent-line guard parity.**
+
+**FT327 (MEDIUM, parked pending a repro) — `bench worktree build` keeps the broker manifest current.**
+
+**FT328 (MEDIUM, parked pending a repro) — a sandboxed evidence reader takes its shared lock without store write access.**
 
 **FT38 (LOW, decision required) — dashboard visual identity pass.**
 
@@ -236,3 +262,4 @@ recommended table is sequencing advice.
 
 1. FT315 landing refusal without `BENCH_HOME` — /bench-debug
 2. FT300 ticket authority and final-consumer verification — /bench-write-spec
+3. FT319 chunk chain and record order in the phase files — /bench-update-kit
