@@ -24,7 +24,8 @@ Output too long to read is CLI-owned projection work, not call-site shaping. Nev
 append extra subcommands, `</dev/null`, `2>&1`, a pipeline, or a shell follow-on.
 `bench gate` is valid. `bench gate 2>&1 | tail -20` is not valid.
 
-`bench worktree exec` is the one exception. A heredoc can feed the exec child, and
+A `;` or `&&` step can come before a Bench call when it changes no directory and no
+environment. Only `bench worktree exec` takes more: a heredoc can feed the exec child, and
 a `;` or `&&` after the exec segment can start a non-Bench step. A second Bench
 call in the same line is still not valid.
 

@@ -125,8 +125,10 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   "dist build" — worktree build.
 - **follow-on** — a Bash tool call that adds a redirection or a control operator to
   a Bench-headed segment. The follow-on guard reads the first Bench segment and
-  refuses the call. A `bench worktree exec` head is the one exception. It allows a
-  heredoc in the segment, and a `;` or `&&` before a non-Bench step.
+  refuses the call. A lead is not a follow-on: a `;` or `&&` before the segment is
+  legal when no earlier command changes the directory or the environment. A
+  `bench worktree exec` head also allows a heredoc in the segment, and a `;` or `&&`
+  before a later non-Bench step.
   Not "pipeline", not "chain", not "shell wrapper" — follow-on.
 - **invariant** — one of the four non-negotiable rules (canonical in `.bench/BENCH.md`)
   that override convenience. Not "guideline", not "best practice" — invariant.

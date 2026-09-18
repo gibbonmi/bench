@@ -6,6 +6,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Follow-on guard
+
+- Changed the follow-on guard to allow a `;` or `&&` step before a Bench call when that step changes no directory and no environment.
+- The guard still refuses a `cd`, an `export`, an assignment, a pipe, or `||` before a Bench call, and every follow-on after one.
+- A refusal now names the operator after the segment when the step before it is legal.
+
 ### Calibrated decisions
 
 - Added a claim schema to the delegate return: each done-claim row states its status and a 0-to-10 confidence.
