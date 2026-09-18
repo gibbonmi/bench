@@ -1276,6 +1276,85 @@ Both test paths stay inside the ticket 6 fence, and the row holds with a correct
 One system test still matches the capacity message by an unanchored substring.
 It asserts no ordering, so it preserves no quota-first expectation, and it no longer anchors the complete contract.
 
+## CE-C3: review round 2
+
+Repair cycles used: 1 of 2.
+The repair tip is `e2bf7a6e8daf9426a43af8122e4918e1b2aa6024`.
+The cycle landed one commit for the 13 repair targets.
+
+### Repair cycle 1 records
+
+The cleanup deletion loop holds one pause stage, `StageRemoved`, which fires after each successful removal.
+`TestEvidenceCleanupReplacedTarget` injects the pause through the store options and replaces the second target.
+It asserts one removed, one remaining, an incomplete apply, the untouched replacement, and a changed fresh fingerprint.
+`TestEvidenceCleanupInterrupt` seeds a second target, pauses the apply through the environment, and kills the process.
+It proves that a subset was removed, that the old fingerprint refuses, and that only a fresh plan finishes.
+
+`TestEvidenceCleanupCursorStream` grades both cross-stream refusals and both stream markers.
+`TestEvidenceCleanupStopped` grades the exit code of a stopped apply and the recovery that its successor names.
+`TestEvidenceCleanupEmptyPlan` grades the successor suppression of an empty plan.
+A grammar case with a malformed fingerprint reaches the shape check, which now composes the manifest identity owner.
+The response budget case map measures both cleanup responses, and it derives their invocations from the operation registry.
+
+The grammar refusal assertion lost its dead contains clause.
+The store test comments name the exclusive operation lock.
+`startPausedAt` is the one pause-marker harness, and it derives the marker from the stage.
+`TestEvidenceCleanupHelpDescriptions` replaces the third copy of the rendered help forms with one independent oracle.
+SP4 needed no code change, and four recorded reds now back the two field lists.
+
+### Repair cycle 1 probe records
+
+The writer ran each mutation, saw the named test fail, and restored the target.
+
+- The identity recheck omitted in `Store.remove`: `TestEvidenceCleanupReplacedTarget` reported two removed and a complete apply.
+- The `StageRemoved` pause deleted: `TestEvidenceCleanupInterrupt` stopped on its 20-second wait for the stage.
+- The clean-cursor refusal omitted in the artifact read: the cursor stream test reported exit zero.
+- The artifact-cursor refusal omitted in the cleanup plan: the cursor stream test reported exit zero.
+- The cleanup stream marker changed: the cursor stream test named the wrong marker.
+- The stopped apply keeps its successor and loses its exit code: `TestEvidenceCleanupStopped` reported exit zero.
+- The stopped apply keeps its exit code and loses its successor: the same test reported no recovery.
+- The empty-plan case omitted: `TestEvidenceCleanupEmptyPlan` reported an advertised apply.
+- The identity shape check omitted: the malformed fingerprint case reported exit one.
+- The usage line replaced by an error row: the same case reported no usage prefix.
+- The cleanup plan row marked unbounded: `TestEvidenceResponseBudget` reported a usage exit for the apply form.
+- The `targets` field omitted from the cleanup block, and then renamed: `TestEvidenceCleanupSchema` failed both times.
+- The `kind` field omitted from the targets block, and then renamed: `TestEvidenceCleanupTargetsSchema` failed both times.
+- The cleanup plan description emptied: `TestEvidenceCleanupHelpDescriptions` failed.
+
+### What the writer judged unobservable
+
+`Apply` returns the disposition and swallows the removal error, which row CE82 requires.
+The replaced-target test therefore grades the disposition that the recheck produces, and the refusal class token stays ungraded.
+ST1 is a comment, and `TestEvidenceCleanupWriterExclusion` already grades the mechanism that it names.
+ST3 moves a harness with no behavior change, and the interrupt red exercises it.
+The SP5 claim that the old assertion passed is a derivation, and the writer did not run it.
+
+### Gate evidence
+
+The writer left the `binary-seal` check red, because it read a landing rule as a bar on the worktree rebuild.
+That rule applies to the promotion broker of the primary checkout.
+The coordinator rebuilt the worktree binary with `bench worktree build`, and the build preflight then reported every check green.
+The coordinator's whole-tree gate on `e2bf7a6e` is green, with eight capability skips.
+
+The coordinator ran two independent probes at that tip.
+With the identity recheck removed, `TestEvidenceCleanupReplacedTarget` failed with two removed against one.
+With the `StageRemoved` pause removed, the same test reported zero pauses, and `TestEvidenceCleanupInterrupt` stopped on its stage wait.
+The tree was clean after each restore.
+
+`TestEvidenceCleanupStopped` stops its apply with a store directory mode of `0o500`.
+A root-owned run ignores that mode, so the apply exits zero and the test stops at its exit code assertion.
+The test therefore fails loudly under that condition, and it cannot pass silently.
+The Coverage axis confirms this reading in its round.
+
+### A stale broker manifest after a mutation probe
+
+After the system probe, `TestDetectedProjectGateRejectsIgnoredDeclaredInput` failed on the restored tree.
+The setup step refused, because the promotion broker digest did not match the git-ignored manifest beside the wrapper.
+The gate publishes the binary and that manifest together.
+`bench test --check system` and `bench worktree build` rebuild the binary and leave that manifest as it was.
+The coordinator replaced the manifest with the one the build verb wrote, and the system suite passed.
+This red is not owned by the chunk delta, and it goes to the drain as a learning.
+
 ## Record
 
 ```bench-review-record
