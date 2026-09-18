@@ -1489,6 +1489,32 @@ The capability probe file matches neither store name class, so it cannot become 
 - A build restores that git-ignored manifest, so it keeps the digest of an older binary. The corrected cause is in a second learning.
 - The tree was clean after each restore.
 
+## CE-C3: review round 4
+
+Repair cycles used: 2 of 2. This round is review evidence only, and it uses no repair cycle.
+The corrected frozen pair is base `eb736260734c60c3fe2c5e79f6a058a0f45e397a`, tip `e7827d7af69097ba7434035ea1da31fb985c845f`.
+
+### The chain gap
+
+The chunk checkpoint refused the first CE-C3 record with a stale review chain gap.
+The coordinator had frozen the chunk base at the plan expansion commit `6ec77cca`.
+The checkpoint requires the base source to equal the reviewed source of chunk CE-C2, which ends at `eb736260`.
+No axis had graded the delta between those two commits.
+
+That delta adds `cmd/bench/preflight_version_test.go` to the spec ownership fence and to the ticket 5 `Writes:` line.
+Rounds 1 to 3 keep the base that their axes graded.
+The round 4 rows carry the corrected base, and they supersede the round 3 rows.
+The slip is in a learning for the drain.
+
+### Round 4 axis verdicts
+
+Each axis graded the uncovered delta, and each reaffirmed its round 3 pass for the whole corrected pair.
+All three report pass, with no finding.
+
+- Standards: the path appears once per owner in the form of its neighbours, and one commit edited the fence and the `Writes:` line together.
+- Spec: ticket 5 commit `2ba4e6de` wrote that file, and no `Covers:` list, acceptance row, check, or pass criterion moved.
+- Coverage: the delta touches no code, test, or oracle, and the `paths-authorized` check grades the fence at file level.
+
 ## Record
 
 ```bench-review-record
@@ -4284,7 +4310,7 @@ The capability probe file matches neither store name class, so it cannot become 
     },
     {
       "id": "CE-C3",
-      "base": "6ec77cca38646b86a420f3f8eab62c1566a209e5",
+      "base": "eb736260734c60c3fe2c5e79f6a058a0f45e397a",
       "tip": "e7827d7af69097ba7434035ea1da31fb985c845f",
       "plan_digest": "sha256:581807ed92fa23fe557273dd5bb3e11f966388d4b8b6ab24dab121e883a8d236",
       "source_digest": "1ad9835dc6c7db894db979740353711e59adc42f",
@@ -4647,6 +4673,72 @@ The capability probe file matches neither store name class, so it cannot become 
           "finding_ids": [],
           "supersedes": [
             "ce-c3-r2-coverage"
+          ]
+        },
+        {
+          "id": "ce-c3-r4-standards",
+          "performer": "claude-review-ce-c3-standards-r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1ad9835dc6c7db894db979740353711e59adc42f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c3-standards-r4",
+            "digest": "sha256:e092612218423fa7620dc8ee4f27d562e359550ee381fc349a47a8f65d089c12",
+            "excerpt": "Standards CE-C3 round 4: 0 findings. The delta eb736260 to 6ec77cca names cmd/bench/preflight_version_test.go once per owner, in the form of its neighbours. The spec fence and the ticket 5 Writes line agree, and one commit edited both. The round 3 pass stands for the pair eb736260 to e7827d7a."
+          },
+          "axis": "Standards",
+          "base": "eb736260734c60c3fe2c5e79f6a058a0f45e397a",
+          "tip": "e7827d7af69097ba7434035ea1da31fb985c845f",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c3-r3-standards"
+          ]
+        },
+        {
+          "id": "ce-c3-r4-spec",
+          "performer": "claude-review-ce-c3-spec-r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1ad9835dc6c7db894db979740353711e59adc42f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c3-spec-r4",
+            "digest": "sha256:dec9cf9cefee01df054bd01146d03d093d040d43cb7ce336a0590f6635d556b4",
+            "excerpt": "Spec CE-C3 round 4: 0 findings. The delta eb736260 to 6ec77cca widens the fence to a file that ticket 5 commit 2ba4e6de wrote, 75 changed lines. No Covers list, acceptance row, check, or pass criterion moved. The round 3 pass stands for the pair eb736260 to e7827d7a."
+          },
+          "axis": "Spec",
+          "base": "eb736260734c60c3fe2c5e79f6a058a0f45e397a",
+          "tip": "e7827d7af69097ba7434035ea1da31fb985c845f",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c3-r3-spec"
+          ]
+        },
+        {
+          "id": "ce-c3-r4-coverage",
+          "performer": "claude-review-ce-c3-coverage-r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1ad9835dc6c7db894db979740353711e59adc42f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c3-coverage-r4",
+            "digest": "sha256:2b0e1a8ebebac65d8b0ddebe839a4ea51de753166779203729d9b5dff18c54c0",
+            "excerpt": "Coverage CE-C3 round 4: 0 findings. The delta eb736260 to 6ec77cca touches no code, test, or oracle. The paths-authorized check grades the fence at file level, and the added line is a backfill for the wider spec range. The round 3 pass stands for the pair eb736260 to e7827d7a."
+          },
+          "axis": "Coverage",
+          "base": "eb736260734c60c3fe2c5e79f6a058a0f45e397a",
+          "tip": "e7827d7af69097ba7434035ea1da31fb985c845f",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c3-r3-coverage"
           ]
         }
       ]
