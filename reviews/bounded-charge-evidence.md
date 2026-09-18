@@ -1695,7 +1695,8 @@ The cycle landed one commit for the three repair targets, and it changed no guid
 The second phase inventory is gone, and `boundedActionFamily` gained one `peer` field.
 The consumer-context rows derive their reader from the family rows, so no test names a phase guidance path.
 `requireRegisteredRow` is the one row lookup, and `TestEvidenceBoundedActionGuidance` now uses it.
-That test therefore also grades the reader of each bounded action row, which it did not grade before.
+That test derives the reader from the same rows, so the reader half of its lookup cannot fail there.
+The consumer-context test grades the reader, through its file filter and its count.
 The new diagnostics name each guidance file by its base name, which matches every earlier registry row.
 
 The registry comment keeps the rationale for the unchanged full-run control, and the test comment states only what it grades.
@@ -1726,6 +1727,54 @@ That design is advice for the reconciliation, and the handoff needle itself bite
 The coordinator ran the narrowed-needle mutation again at `50e8e1a0`, and it bit.
 The named plan probe bit at that tip with the base-name diagnostic.
 The coordinator's whole-tree gate on `50e8e1a0` is green, with eight capability skips.
+
+### Round 2 axis verdicts
+
+The axes graded the frozen pair base `f980d95c`, tip `50e8e1a0`.
+Each axis worked from the record commit `be52a6e8` above that tip, and each graded the cycle 1 delta.
+All three report pass, and the chunk closes.
+
+### Standards round 2
+
+No finding. ST1, ST2, and ST3 closed.
+
+The axis judged the three coordinator reds sufficient for the independent-expectation exception.
+It confirmed one phase inventory, one row lookup, and one owner of the full-run rationale.
+It read the live-tree detector, and it confirmed that both classified tests must keep their inline kit-root read.
+It corrected one sentence of this record about the bounded action reader, and the record now states its reading.
+
+### Spec round 2
+
+No finding. SP1 closed, and all seven rows of ticket 7 are met.
+
+The final Codex record meets each field of the transport record contract.
+The registry needles are identical to round 1, and only the diagnostic text moved to base names.
+The delta stays inside the ticket 7 fence.
+
+### Coverage round 2
+
+No finding. CV1 closed.
+
+The axis ran six new mutations, and all six bit.
+A lead that matches no paragraph stops the test, so an empty selection cannot pass.
+An added unpinned sentence, a duplicated needle, and a wrong base name each failed the consumer-context test.
+A narrowed bounded action needle and a deleted bounded action row each failed the original oracles.
+The refactor therefore weakened no earlier oracle.
+
+### Advice carried to the reconciliation
+
+- The native-handoff paragraph has no whole-paragraph pin, because two families own its sentences.
+- The spec seam cells of rows CE104, CE105, CE107, CE112, and CE113 name a test file that does not hold those tests.
+- The ticket 7 `Writes:` line marks an existing test file as new.
+- The base-name diagnostics would collide for two guidance files with one base name. No such pair exists today.
+- A sandboxed consumer needs write access to the store lock before it can read evidence.
+- The first Codex record stays in this file, and the final record replaces it.
+
+### Coordinator verification at the cycle 1 tip
+
+- The whole-tree gate on `50e8e1a0` is green.
+- The three plan verifications pass at this tip.
+- The named plan probe bit at this tip, and the probe verb restored the file.
 
 ## Record
 
@@ -4951,6 +5000,261 @@ The coordinator's whole-tree gate on `50e8e1a0` is green, with eight capability 
           "finding_ids": [],
           "supersedes": [
             "ce-c3-r3-coverage"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CE-C4",
+      "base": "f980d95c8cd6113da9e35d305e854fdf497170de",
+      "tip": "50e8e1a0eee356975d1bbccffa49f465073e9788",
+      "plan_digest": "sha256:581807ed92fa23fe557273dd5bb3e11f966388d4b8b6ab24dab121e883a8d236",
+      "source_digest": "ee93f2a0342e032e9e5e9be9b1b2fc786c961e16",
+      "acceptance_rows": [
+        "CE104",
+        "CE105",
+        "CE107",
+        "CE112",
+        "CE113",
+        "CE115",
+        "CE116"
+      ],
+      "verification": [
+        {
+          "id": "ce-c4-v1-preflight",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ee93f2a0342e032e9e5e9be9b1b2fc786c961e16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:4783c7763e07bf8dd686d25a389a6345547507ec868b0746ad8de2e40fc9d66b",
+            "excerpt": "at 50e8e1a0: pass; preflight 25632 ms and evidencecmd 10102 ms"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c4-v1-guidance",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ee93f2a0342e032e9e5e9be9b1b2fc786c961e16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:a4d39b227cab0d34137f07e139f20bc6cc4a55d54150381e54b1283b11750da9",
+            "excerpt": "at 50e8e1a0: pass, 821 ms"
+          },
+          "requirement": "guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c4-v1-guidance-cases",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ee93f2a0342e032e9e5e9be9b1b2fc786c961e16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:2cb914cdbfbdeac0b2b72b0c2b2f494a57a2ae98dd5f110f50fbef8af0be4d76",
+            "excerpt": "at 50e8e1a0: pass, 1653 ms"
+          },
+          "requirement": "guidance-cases",
+          "command": "bench test --package ./internal/conformance --run TestEvidence",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c4-v1-mutation",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ee93f2a0342e032e9e5e9be9b1b2fc786c961e16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:a4d39b227cab0d34137f07e139f20bc6cc4a55d54150381e54b1283b11750da9",
+            "excerpt": "at 50e8e1a0: pass, 821 ms"
+          },
+          "requirement": "mutation",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "permit a final cursor to replace available required context",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:coordinator-run",
+              "digest": "sha256:6850eee63f029568d4c08fd0d05967915b92a2b51dff30e3ba798b7fde953b73",
+              "excerpt": "bench probe .agents/commands/bench-implement-spec.md swapping the fresh-consumer sentences for a sentence that accepts a transferred final cursor, check docs-currency-workflow at 50e8e1a0: verdict bit, TestRootConformance failed at gate_entry_test.go:29 with the consumer context diagnostic for bench-implement-spec.md, restored=yes"
+            }
+          }
+        },
+        {
+          "id": "ce-c4-v1-gate",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ee93f2a0342e032e9e5e9be9b1b2fc786c961e16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:ad45bc5b0f2fc8ba2a582abf62b96e93fc24aec0ffa5e9145cbd4b6f42a5f273",
+            "excerpt": "whole-tree gate at 50e8e1a0: pass, six phases green, eight capability skips; the coordinator's narrowed-needle probe bit at that tip, restored=yes"
+          },
+          "requirement": "gate",
+          "command": "bench gate",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "ce-c4-r1-standards",
+          "performer": "claude-review-ce-c4-standards-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fad6be8e06c8561ddf3d4db8c82529646a6a8f58",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c4-standards-r1",
+            "digest": "sha256:709c78a62efb4baddaef052364a463173f78d18c457c460d6c389952eb153522",
+            "excerpt": "Standards CE-C4: 3 findings. The new tests state each registry diagnostic apart from the registry with no recorded reworded-row red. The new test file holds a second phase inventory and a second row lookup beside the family harness. One rationale for the unchanged full-run control appears twice. The per-phase guidance paragraphs are honest repetition."
+          },
+          "axis": "Standards",
+          "base": "f980d95c8cd6113da9e35d305e854fdf497170de",
+          "tip": "7e51a515bc5cda49f2b7d7f8a98c04b4d74dea9c",
+          "finding_ids": [
+            "CE-C4-ST1",
+            "CE-C4-ST2",
+            "CE-C4-ST3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ce-c4-r1-spec",
+          "performer": "claude-review-ce-c4-spec-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fad6be8e06c8561ddf3d4db8c82529646a6a8f58",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c4-spec-r1",
+            "digest": "sha256:8ca5e816afea7d1b238d572435912a1f3172774b452afbd5b7b9d477055cf149",
+            "excerpt": "Spec CE-C4: 1 finding. In the first Codex transport record the coordinator ran the decoder, and the contract requires that the consumer rebuilds the evidence. Rows CE104, CE105, CE107, CE112, CE113, and CE116 are met, and CE115 is pending on SP1. The delta stays inside the ticket 7 fence."
+          },
+          "axis": "Spec",
+          "base": "f980d95c8cd6113da9e35d305e854fdf497170de",
+          "tip": "7e51a515bc5cda49f2b7d7f8a98c04b4d74dea9c",
+          "finding_ids": [
+            "CE-C4-SP1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ce-c4-r1-coverage",
+          "performer": "claude-review-ce-c4-coverage-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fad6be8e06c8561ddf3d4db8c82529646a6a8f58",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c4-coverage-r1",
+            "digest": "sha256:f230a5b2dc64ef26aa112896d1fb028fa70967d33043b4bfc5350a84db8c81ee",
+            "excerpt": "Coverage CE-C4: 1 finding, five of six new mutations bit. A consumer-context needle narrowed to its first sentence stays green, because the whole-paragraph pin selects only the two bounded action leads. The coordinator reproduced it as silent with bench probe."
+          },
+          "axis": "Coverage",
+          "base": "f980d95c8cd6113da9e35d305e854fdf497170de",
+          "tip": "7e51a515bc5cda49f2b7d7f8a98c04b4d74dea9c",
+          "finding_ids": [
+            "CE-C4-CV1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ce-c4-r2-standards",
+          "performer": "claude-review-ce-c4-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ee93f2a0342e032e9e5e9be9b1b2fc786c961e16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c4-standards-r2",
+            "digest": "sha256:267d3da7677a28dd9dbf889e46fc519c2834d9859fe395d732e5b5a50c671a4b",
+            "excerpt": "Standards CE-C4 round 2: 0 findings. ST1 closed by three recorded coordinator reds, ST2 closed with one phase inventory and one row lookup, ST3 closed with one owner of the rationale. The live-tree detector requires the two inline kit-root reads."
+          },
+          "axis": "Standards",
+          "base": "f980d95c8cd6113da9e35d305e854fdf497170de",
+          "tip": "50e8e1a0eee356975d1bbccffa49f465073e9788",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c4-r1-standards"
+          ]
+        },
+        {
+          "id": "ce-c4-r2-spec",
+          "performer": "claude-review-ce-c4-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ee93f2a0342e032e9e5e9be9b1b2fc786c961e16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c4-spec-r2",
+            "digest": "sha256:e057db9be8a5f5adb3976644aeb46008f0d098b538bd2608881a92b7ef1145d3",
+            "excerpt": "Spec CE-C4 round 2: 0 findings. SP1 closed: the Codex consumer wrote and ran its own decoder over its own event log. All seven ticket 7 rows are met. The registry needles are identical to round 1, and the delta stays inside the fence."
+          },
+          "axis": "Spec",
+          "base": "f980d95c8cd6113da9e35d305e854fdf497170de",
+          "tip": "50e8e1a0eee356975d1bbccffa49f465073e9788",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c4-r1-spec"
+          ]
+        },
+        {
+          "id": "ce-c4-r2-coverage",
+          "performer": "claude-review-ce-c4-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ee93f2a0342e032e9e5e9be9b1b2fc786c961e16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c4-coverage-r2",
+            "digest": "sha256:855b93600dda30341a45cb59d176ee6d155540d76b16c3fb29323b02c45db61e",
+            "excerpt": "Coverage CE-C4 round 2: 0 findings. CV1 closed. Six new mutations all bit: an empty lead selection, an added unpinned sentence, a duplicated needle, a wrong base name, a narrowed bounded action needle, and a deleted bounded action row. The refactor weakened no earlier oracle."
+          },
+          "axis": "Coverage",
+          "base": "f980d95c8cd6113da9e35d305e854fdf497170de",
+          "tip": "50e8e1a0eee356975d1bbccffa49f465073e9788",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c4-r1-coverage"
           ]
         }
       ]
