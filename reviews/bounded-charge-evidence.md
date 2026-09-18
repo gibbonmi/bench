@@ -1071,6 +1071,56 @@ The tree was clean after each restore.
 The bounded case subtest names changed from row names to form names.
 A spec row that cites one of the old subtest names is now stale, and that citation joins the sweep with SP1 to SP4.
 
+### Round 3 axis verdicts
+
+The axes graded the frozen pair base `6a81a1f6`, tip `6ba90e25`.
+Each axis worked from the record commit above that tip, so every probe record was in its tree.
+All three report pass, and the chunk closes.
+
+### Standards round 3
+
+No finding. The axis graded the cycle 2 delta only.
+
+It judged the projection pin a necessary independent expectation rather than a second copy.
+The shared bounded token names the registry fact the check exists to pin, so repeating it reads the source.
+The knowledge the check grades is that the projection adds no condition of its own and keeps registry order.
+Two recorded reds prove that class, one from the writer and one from the coordinator.
+It judged `formName` a single owner, because the name is the identity token and not the graded property.
+
+### Spec round 3
+
+No finding. SP5 closed. All 23 acceptance rows hold at this tip.
+
+The axis confirmed the SP5 case sends a registered selector without its required flags.
+That input reaches the operation-level refusal rather than the grammar path.
+Three rows are now stronger than when the ticket landed.
+Row CE69 matches each shared row's source role to its kind.
+Row CE135 is graded by a registry-derived case and not by a declaration alone.
+Row CE164 compares the whole fence in document order.
+
+### Coverage round 3
+
+No finding. CV4 closed, with both confirming mutations run by the axis.
+
+The dispatch gate on the review kind failed two review cases.
+The projection narrowed by a kind test failed the projection pin, which named the dropped form.
+The axis probed the derivation's own failure modes and found each one needs a test-file edit first.
+
+### Advice carried to the reconciliation
+
+- The projection pin compares form names only. A projection that drops the optional flags or the required flags keeps every name and changes the derived arguments. Form presence is closed, and argument shape is not.
+- The bound assertion cannot tell a form's own bounded path from a refusal that returns before the dispatch. A derived case with a wrong operand still passes.
+- The fatal guard on a missing fixture value keys on map presence, not on the flag table. A valued flag whose fixture value is empty emits a bare flag name, the invocation dies in the grammar, and the case still passes. The registry already knows which flags take a value.
+- Rows CE131 to CE135 cite the response budget test. The guard half that bites lives in the bounded response test, which no row cites.
+- No spec row cites a stale bounded case subtest name, so the rename is inert for the spec.
+
+### Coordinator verification at the cycle 2 tip
+
+- The whole-tree gate on `6ba90e25` is green.
+- The six plan verifications pass at this tip.
+- The named plan probe made the read arm report a collector run. `TestEvidenceReviewCollectors` failed with a diff collection count of four against one.
+- The tree was clean after each restore.
+
 ## Record
 
 ```bench-review-record
@@ -3498,6 +3548,368 @@ A spec row that cites one of the old subtest names is now stale, and that citati
           "finding_ids": [],
           "supersedes": [
             "ce-c1d-r4-coverage"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CE-C2",
+      "base": "6a81a1f65bcc17a134db88ad50232bbdfc49c4c7",
+      "tip": "6ba90e25c8d50801896b8921221cc91213ca9650",
+      "plan_digest": "sha256:1c57f87df907d6126928290b50a03da7441194dd430d34a269c8e2ef9950f9c5",
+      "source_digest": "5091adf4b8968e9499c3eaab8fa2eaa809232830",
+      "acceptance_rows": [
+        "CE66",
+        "CE67",
+        "CE68",
+        "CE69",
+        "CE70",
+        "CE71",
+        "CE72",
+        "CE73",
+        "CE108",
+        "CE109",
+        "CE110",
+        "CE127",
+        "CE135",
+        "CE142",
+        "CE143",
+        "CE144",
+        "CE145",
+        "CE146",
+        "CE163",
+        "CE164",
+        "CE165",
+        "CE166",
+        "CE167"
+      ],
+      "verification": [
+        {
+          "id": "ce-c2-v1-preflight",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5091adf4b8968e9499c3eaab8fa2eaa809232830",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:c159593992f1c60a8bcf5227133cf1653dffc88e18d13eb55a69ff822336ea53",
+            "excerpt": "at 6ba90e25: pass; preflight 17369 ms and evidencecmd 6652 ms"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c2-v1-store",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5091adf4b8968e9499c3eaab8fa2eaa809232830",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:3711a0fb4689132ccf53fb643a40ccb66cf0822bf2bd5b84b037243e0887577f",
+            "excerpt": "at 6ba90e25: pass, 118 ms; the CE94 device case skipped for the privilege capability"
+          },
+          "requirement": "store",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c2-v1-inventory",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5091adf4b8968e9499c3eaab8fa2eaa809232830",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:1a9e41519e206d937773df7c946706600f5248e356a2d14418919f0850d9d4bc",
+            "excerpt": "at 6ba90e25: pass, 7099 ms"
+          },
+          "requirement": "inventory",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c2-v1-guidance",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5091adf4b8968e9499c3eaab8fa2eaa809232830",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:cf452abe4c18abf1b7976d9acd60e9cd78d9ac309b050a439b17e090f846b4e9",
+            "excerpt": "at 6ba90e25: pass, 628 ms"
+          },
+          "requirement": "guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c2-v1-guidance-cases",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5091adf4b8968e9499c3eaab8fa2eaa809232830",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:9b9dbb1a10c70f6313df2d4665bc5a309aff553862ccd62c85c60a19379147d5",
+            "excerpt": "at 6ba90e25: pass, 51 ms"
+          },
+          "requirement": "guidance-cases",
+          "command": "bench test --package ./internal/conformance --run TestEvidence",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c2-v1-mutation",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5091adf4b8968e9499c3eaab8fa2eaa809232830",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:c159593992f1c60a8bcf5227133cf1653dffc88e18d13eb55a69ff822336ea53",
+            "excerpt": "at 6ba90e25: pass; preflight 17369 ms and evidencecmd 6652 ms"
+          },
+          "requirement": "mutation",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "rerun a collector during retrieval",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:coordinator-run",
+              "digest": "sha256:36c4230254016f124d377d548e4a33ff9fc90be1e3f67da4b965689f95c452a0",
+              "excerpt": "bench probe internal/preflight/command.go reporting a diff collector run from the read-evidence arm at 6ba90e25: verdict bit, TestEvidenceReviewCollectors failed with a diff collection count of 4 against 1, restored=yes"
+            }
+          }
+        },
+        {
+          "id": "ce-c2-v1-gate",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5091adf4b8968e9499c3eaab8fa2eaa809232830",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:4c74ed486dcb6f9fc070c16a2867f39c7c57b34ccb6759be0c6f24d3f58b4451",
+            "excerpt": "whole-tree gate at 6ba90e25: pass; the coordinator's projection probe narrowed BoundedForms by a kind test and the projection pin failed, restored=yes"
+          },
+          "requirement": "gate",
+          "command": "bench gate",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "ce-c2-r1-standards",
+          "performer": "claude-review-ce-c2-standards-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b4ab08e32c2189353acbed0876b3ee9c4fb27f17",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c2-standards-r1",
+            "digest": "sha256:7a4d939c3c758909be4c4a1074d36aea1acbc7e3cde320fc5d23ecd21925bb71",
+            "excerpt": "Standards CE-C2: 6 findings. Worst: a fixture harness pasted twice in one file. Also a duplicated grammar case, four comments naming the deleted packet and renderer, a leftover alias spelling, synthetic cases bound to the family table by position, and a dead helper. The axis cleared the bounded action family table, the two package moves, and the ungraded flag-table row."
+          },
+          "axis": "Standards",
+          "base": "6a81a1f65bcc17a134db88ad50232bbdfc49c4c7",
+          "tip": "2ba4e6dea02afbcd23a6210612421e5a8aa57c56",
+          "finding_ids": [
+            "CE-C2-ST1",
+            "CE-C2-ST2",
+            "CE-C2-ST3",
+            "CE-C2-ST4",
+            "CE-C2-ST5",
+            "CE-C2-ST6"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ce-c2-r1-spec",
+          "performer": "claude-review-ce-c2-spec-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b4ab08e32c2189353acbed0876b3ee9c4fb27f17",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c2-spec-r1",
+            "digest": "sha256:3399cbf30bb4c58080f4e96988cfc6eff435f3fc47501e93243bb355ee5a17f1",
+            "excerpt": "Spec CE-C2: 5 findings, none behavioral. All 23 acceptance rows hold with a passing test. Four are citation defects in the spec seam cells, and one is a stale bounded-path case. The axis confirmed the ST10 guarantee holds by construction and that row CE173 holds under its new wording."
+          },
+          "axis": "Spec",
+          "base": "6a81a1f65bcc17a134db88ad50232bbdfc49c4c7",
+          "tip": "2ba4e6dea02afbcd23a6210612421e5a8aa57c56",
+          "finding_ids": [
+            "CE-C2-SP1",
+            "CE-C2-SP2",
+            "CE-C2-SP3",
+            "CE-C2-SP4",
+            "CE-C2-SP5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ce-c2-r1-coverage",
+          "performer": "claude-review-ce-c2-coverage-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b4ab08e32c2189353acbed0876b3ee9c4fb27f17",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c2-coverage-r1",
+            "digest": "sha256:db4640b10161f4242ef94f9329e7d525739f2df2a2e7dbb8cc0e84c60dc94073",
+            "excerpt": "Coverage CE-C2: 3 findings, each a silent production path. The review response bound can be removed with no red, the shared capture bindings can rotate with no red, and the metadata ownership fence can truncate with no red. The axis cleared CE70, CE127, and CE163 with evidence."
+          },
+          "axis": "Coverage",
+          "base": "6a81a1f65bcc17a134db88ad50232bbdfc49c4c7",
+          "tip": "2ba4e6dea02afbcd23a6210612421e5a8aa57c56",
+          "finding_ids": [
+            "CE-C2-CV1",
+            "CE-C2-CV2",
+            "CE-C2-CV3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ce-c2-r2-standards",
+          "performer": "claude-review-ce-c2-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3cc1207e9fcf53c29cbcfeb41b80710fe40d5e7d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c2-standards-r2",
+            "digest": "sha256:ba2d935c832b199f6498298c46c7131dcd1adbfde0b2a9e814342223963a6b96",
+            "excerpt": "Standards CE-C2 round 2: ST1 to ST6 all closed, 0 findings. The axis confirmed the fixture table is one source with two readers, and that the exemption list is the permitted expectation half because the registry owns the bound and the comparison covers every kind."
+          },
+          "axis": "Standards",
+          "base": "6a81a1f65bcc17a134db88ad50232bbdfc49c4c7",
+          "tip": "b2c39d7008f845d92e4b0b184b51dd597540af1c",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c2-r1-standards"
+          ]
+        },
+        {
+          "id": "ce-c2-r2-coverage",
+          "performer": "claude-review-ce-c2-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3cc1207e9fcf53c29cbcfeb41b80710fe40d5e7d",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c2-coverage-r2",
+            "digest": "sha256:ff64c9f482244e637c95938926b6a2af717e609a7bb212051c6ad67dbb6705fb",
+            "excerpt": "Coverage CE-C2 round 2: CV2 and CV3 closed, and CV1 closed for its declaration only. CV4: the review response bound can be removed from production with no red, because the one consumer of the bounded field has no review behavior case. The build half is graded and the review half is not."
+          },
+          "axis": "Coverage",
+          "base": "6a81a1f65bcc17a134db88ad50232bbdfc49c4c7",
+          "tip": "b2c39d7008f845d92e4b0b184b51dd597540af1c",
+          "finding_ids": [
+            "CE-C2-CV4"
+          ],
+          "supersedes": [
+            "ce-c2-r1-coverage"
+          ]
+        },
+        {
+          "id": "ce-c2-r3-standards",
+          "performer": "claude-review-ce-c2-standards-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5091adf4b8968e9499c3eaab8fa2eaa809232830",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c2-standards-r3",
+            "digest": "sha256:8ff592ab00e2cd23b6600a8ec54447ab3fca108942194767d95b61ecb0db548c",
+            "excerpt": "Standards CE-C2 round 3: 0 findings. The projection pin is a necessary independent expectation, because the shared bounded token reads the registry fact and the graded knowledge is that the projection adds no condition and keeps registry order. Two recorded reds prove that class."
+          },
+          "axis": "Standards",
+          "base": "6a81a1f65bcc17a134db88ad50232bbdfc49c4c7",
+          "tip": "6ba90e25c8d50801896b8921221cc91213ca9650",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c2-r2-standards"
+          ]
+        },
+        {
+          "id": "ce-c2-r3-spec",
+          "performer": "claude-review-ce-c2-spec-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5091adf4b8968e9499c3eaab8fa2eaa809232830",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c2-spec-r3",
+            "digest": "sha256:c3731d3f7fbf279c2734d51a0182840348d0b4dcdb35e6c6df48ed6236b13cbe",
+            "excerpt": "Spec CE-C2 round 3: 0 findings. SP5 closed, and all 23 acceptance rows hold. Rows CE69, CE135, and CE164 are stronger than when the ticket landed. SP1 to SP4 carry to the reconciliation by reviewer-level decision, and no spec row cites a stale subtest name."
+          },
+          "axis": "Spec",
+          "base": "6a81a1f65bcc17a134db88ad50232bbdfc49c4c7",
+          "tip": "6ba90e25c8d50801896b8921221cc91213ca9650",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c2-r1-spec"
+          ]
+        },
+        {
+          "id": "ce-c2-r3-coverage",
+          "performer": "claude-review-ce-c2-coverage-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5091adf4b8968e9499c3eaab8fa2eaa809232830",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c2-coverage-r3",
+            "digest": "sha256:1c1e23db0aea2b9d6dd8b8a8a40d563af88ea48f71cc32832454f13a1321f526",
+            "excerpt": "Coverage CE-C2 round 3: 0 findings. CV4 closed with both confirming mutations. The dispatch gate on the review kind failed two review cases, and the narrowed projection failed the projection pin. Every derivation failure mode needs a test-file edit first."
+          },
+          "axis": "Coverage",
+          "base": "6a81a1f65bcc17a134db88ad50232bbdfc49c4c7",
+          "tip": "6ba90e25c8d50801896b8921221cc91213ca9650",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c2-r2-coverage"
           ]
         }
       ]
