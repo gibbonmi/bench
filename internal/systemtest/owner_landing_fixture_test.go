@@ -5,6 +5,7 @@ package systemtest
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"testing"
 
@@ -54,6 +55,16 @@ func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, re
 		t.Fatal(err)
 	}
 	recordtest.Prepare(t, root, 1, "specs/x/spec.md", specBody)
+	// The race writes the fenced files, so the ticket writes them too and the fence stays union-exact.
+	ticket := filepath.Join(root, "specs", "x", "tickets", "1.md")
+	data, err := os.ReadFile(ticket)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(ticket, []byte(strings.Replace(string(data), "Writes: source.txt", "Writes: loser.txt (new), winner.txt (new)", 1)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	systemGit(t, root, "commit", "-q", "-am", "race ticket writes")
 	base := systemGitOutput(t, root, "rev-parse", "HEAD")
 	systemGit(t, root, "update-ref", "refs/bench/green/main", base)
 	return root, home, tally, trees, ready, release

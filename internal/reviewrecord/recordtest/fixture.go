@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
@@ -56,7 +57,19 @@ func (f *Fixture) WritePlan() {
 	if err != nil {
 		f.T.Fatal(err)
 	}
-	f.Write(f.spec, f.body+"```bench-completion-plan\n"+string(data)+"\n```\n")
+	f.Write(f.spec, planDocument(f.body, data))
+}
+
+// planHeading closes the ownership-fence section, so no plan byte reads as a fence token.
+const planHeading = "\n## Completion plan\n\n"
+
+func planDocument(body string, data []byte) string {
+	return body + planHeading + "```bench-completion-plan\n" + string(data) + "\n```\n"
+}
+
+// WithFenceEntry adds one fence entry to a spec this package wrote, before its plan heading.
+func WithFenceEntry(spec []byte, entry string) []byte {
+	return []byte(strings.Replace(string(spec), planHeading, "- `"+entry+"`\n"+planHeading, 1))
 }
 
 // RewritePlan writes the fixture's current plan back into its spec, commits it,
@@ -134,7 +147,7 @@ func Prepare(t testing.TB, root string, count int, spec, body string, options ..
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.Write(spec, body+"```bench-completion-plan\n"+string(data)+"\n```\n")
+	f.Write(spec, planDocument(body, data))
 	f.Write("source.txt", "base\n")
 	f.Commit("fixture plan")
 	f.loadPlan(spec)

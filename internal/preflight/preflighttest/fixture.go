@@ -94,13 +94,27 @@ func MustWriteFile(t *testing.T, path, body string) {
 	}
 }
 
-// TicketDoc renders a grammar-conformant ticket citing rows. `Writes:` names the specs
-// folder every seeded fixture already holds, so writes-resolve stays green without a
-// planted file.
+// TicketDoc renders a grammar-conformant ticket citing rows. Its `Writes:` values derive
+// from ConformantFence, so the fence and the ticket union stay equal.
 func TicketDoc(title string, covers ...string) string {
+	return WritesTicketDoc(title, FenceWrites(ConformantFence), covers...)
+}
+
+// FenceWrites derives one `Writes:` entry from each fence entry. The builder has no tree
+// access, so each entry carries the (new) marker and writes-resolve stays green.
+func FenceWrites(fence []string) []string {
+	writes := make([]string, len(fence))
+	for i, entry := range fence {
+		writes[i] = entry + " (new)"
+	}
+	return writes
+}
+
+// WritesTicketDoc renders a conformant ticket that writes exactly writes and cites rows.
+func WritesTicketDoc(title string, writes []string, covers ...string) string {
 	return "# " + title + "\n\n" +
 		"Blocked by: none\n" +
-		"Writes: specs\n" +
+		"Writes: " + strings.Join(writes, ", ") + "\n" +
 		"Covers: " + strings.Join(covers, ", ") + "\n\n" +
 		"## What to build\n\nBuild it.\n\n" +
 		"## Acceptance\n\n- [ ] It is built.\n"
@@ -243,7 +257,7 @@ func SeedReviewEvidence(t *testing.T, poisonedConsumer bool) (root, slug string,
 	root = StartRepo(t)
 	MustWriteFile(t, "go.mod", "module example.com/review\n\ngo 1.25\n")
 	MustWriteFile(t, "specs/"+slug+"/spec.md", SpecBody(slug, reviewFenceLines()...))
-	MustWriteFile(t, "specs/"+slug+"/tickets/one.md", TicketDoc("One", "PF1", "PF2"))
+	MustWriteFile(t, "specs/"+slug+"/tickets/one.md", WritesTicketDoc("One", FenceWrites(ReviewFence()), "PF1", "PF2"))
 	MustWriteFile(t, chargesource.DelegateSkill, "# Delegation skill\n")
 	MustWriteFile(t, chargesource.DelegateProcedure,
 		"# Delegation procedure\n\nFocused suite: bench test --package ./internal/preflight\n")

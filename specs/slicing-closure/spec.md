@@ -99,7 +99,8 @@ Harder chunks: SC-C1.
 - **Proposal tolerance.** SC-C2 adds `fence-writes` to the proposal-tolerated checks list, because the proposal's fence column already reports the expansion that it requires.
 - **Headroom.** `gather.go` and `decision.go` are over their line budgets. SC-C1 moves the per-entry `Writes:` probe and the owned-path helpers into the closure file before it adds lines. No file grows past its budget at any ticket commit.
 - **Seeds.** The fixture has two fence tables: the conformant fence and the review fence extras. The seeded ticket's `Writes:` values derive from the fence table that its seed declares. Each derived entry carries the `(new)` marker, because the ticket builder has no tree access. A test that adds fence lines passes the same entries to a writes-aware ticket builder.
-- **Seed readers.** Each seed reader that fences an entry no ticket writes moves to the writes-aware builder: the 5000-entry budget seed and the closed-parenthesis bootstrap test. The proposal tests stop rewriting the literal `Writes: specs` text and pass their writes to that builder.
+- **Seed readers.** Each seed reader that fences an entry no ticket writes moves to the writes-aware builder: the 5000-entry budget seed and the closed-parenthesis bootstrap test. The proposal tests and the anchor closure seed stop rewriting the literal `Writes: specs` text and pass their writes to that builder. The build metadata expectation in `charge_evidence_test.go` takes the derived `Writes:` entries.
+- **Shared seeds.** By reviewer decision, three shared seeds outside the preflight package also become union-exact. The review record fixture closes the fence section with a plan heading. It owns the one helper that adds a fence entry above that heading. The landing race ticket writes its fenced files. The version test ticket writes its `outside/` entry.
 - **Row readers.** Each new row changes the row count and row list that five test files assert. The legacy charge baseline, the review command's row count, the bare row count in `source_tip_test.go`, and the two `Decide` row-order lists take the new row. `baseFacts` becomes union-exact. The edits in `command_review_test.go` (480 lines), `decision_test.go` (821 lines), and `command_bootstrap_test.go` (395 lines) are net-neutral in line count, so none of them grows.
 - **Guidance.** A new reference file under the `craft-tickets` skill holds the enforced `Writes:` rules and the six judgment rules. The skill replaces its parser-rules paragraph with a pointer sentence to that reference, so the skill does not grow. The ticket-slicing anchor group pins each new sentence, and its test file states each needle independently.
 
@@ -212,6 +213,13 @@ Reviewer disposition: proposed within the confirmed scope. It grants no implemen
 - `internal/preflight/charge_test.go`
 - `internal/preflight/command_review_test.go`
 - `internal/preflight/source_tip_test.go`
+- `internal/preflight/charge_evidence_test.go`
+- `internal/reviewrecord/recordtest/fixture.go`
+- `internal/systemtest/owner_landing_fixture_test.go`
+- `cmd/bench/preflight_version_test.go`
+- `internal/worktree/land_fixtures_test.go`
+- `internal/worktree/land_effects_test.go`
+- `internal/worktree/land_journey_test.go`
 - `internal/preflight/command_bootstrap_test.go`
 - `internal/preflight/evidencecmd/evidence_budget_test.go`
 - `internal/preflight/preflighttest/fixture.go`

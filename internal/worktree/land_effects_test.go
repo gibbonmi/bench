@@ -28,7 +28,7 @@ func brokerChangingLanding(t *testing.T, request string) (root string, creation 
 	if err != nil {
 		t.Fatal(err)
 	}
-	mustWrite(t, spec, append(body, []byte("- `scripts/go-build.sh`\n")...), 0o644)
+	mustWrite(t, spec, withFenceEntry(body, "scripts/go-build.sh"), 0o644)
 	gitRun(t, root, "add", ".")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "broker build inputs")
 	gitRun(t, creation.Path, "rebase", "main")

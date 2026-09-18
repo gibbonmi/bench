@@ -43,7 +43,7 @@ func TestCommandBuildResumedTicketsRunForReal(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Command exit = %d, want 0; output:\n%s", code, out)
 	}
-	for _, name := range []string{"rows-owned,green", "rows-membership,green"} {
+	for _, name := range []string{"rows-owned,green", "rows-membership,green", "fence-writes,green"} {
 		if !strings.Contains(out, name) {
 			t.Errorf("output missing %s row (present tickets/ must run the check for real):\n%s", name, out)
 		}

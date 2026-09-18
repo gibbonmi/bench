@@ -203,3 +203,6 @@ func ticketsOnlyLandingFixture(t *testing.T, request string) (string, Creation, 
 func ticketsOnlyLandArgs(request, base, tip, slug, path string) []string {
 	return append([]string{"--spec", slug}, specLessLandArgs(request, base, tip, path)...)
 }
+
+// withFenceEntry adds one fence entry to a spec the landing fixture prepared.
+func withFenceEntry(spec []byte, entry string) []byte { return recordtest.WithFenceEntry(spec, entry) }

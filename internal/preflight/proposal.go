@@ -9,7 +9,7 @@ const ticketBindingRegistry = "internal/tickets/registry_data.go"
 
 // proposalToleratedChecks names every check whose red does not refuse a proposal,
 // because the proposal itself reports the repair that the red requires.
-var proposalToleratedChecks = closureCheckNames()
+var proposalToleratedChecks = append(closureCheckNames(), "fence-writes")
 
 func proposeWritesCommand(root, mode, slug, base, sourceTip, name string, args []string) (string, int) {
 	return preparedCommand(root, mode, slug, base, sourceTip, name, args)

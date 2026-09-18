@@ -236,7 +236,7 @@ func TestEvidenceBuildMetadataSchema(t *testing.T) {
 	}
 	const want = "charge[1]{axis,ticket,access}:\n  \"\",s2,write-within-fence\n" +
 		"fence[4]{path}:\n  internal/example/\n  reviews/example.md\n  .agents/skills/bench-craft-delegate/\n  .agents/commands/bench-implement-spec.md\n" +
-		"writes[1]{path}:\n  specs\n" +
+		"writes[4]{path}:\n  internal/example/ (new)\n  reviews/example.md (new)\n  .agents/skills/bench-craft-delegate/ (new)\n  .agents/commands/bench-implement-spec.md (new)\n" +
 		"coverage[2]{row}:\n  PF1\n  PF2\n" +
 		"checks[2]{source}:\n  s2\n  s5\n" +
 		"returns[2]{source}:\n  s4\n  s6\n" +

@@ -312,7 +312,7 @@ func TestCommandFencesEntryAfterClosedParenAuthorizes(t *testing.T) {
 	preflighttest.StartRepo(t)
 	body := preflighttest.SpecBody(slug, "- see also (", "  `internal/aside/`)", "- `internal/real/`")
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF2"))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.WritesTicketDoc("One", preflighttest.FenceWrites(append(preflighttest.ConformantFence, "internal/real/")), "PF1", "PF2"))
 	preflighttest.RunGit(t, "add", ".")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
 	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")

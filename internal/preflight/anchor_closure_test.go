@@ -70,8 +70,7 @@ func seedAnchoredTicket(t *testing.T, writes string) (root, slug string) {
 	slug = "example"
 	root = preflighttest.StartRepo(t)
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug, "- `.agents/x/`", "- `internal/anchors/`"))
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md",
-		strings.Replace(preflighttest.TicketDoc("One", "PF1", "PF2"), "Writes: specs", "Writes: "+writes, 1))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.WritesTicketDoc("One", []string{writes}, "PF1", "PF2"))
 	preflighttest.MustWriteFile(t, ".agents/x/SKILL.md", "# X\n")
 	preflighttest.MustWriteFile(t, "internal/anchors/extra.go", "package anchors\n\nvar extra = []string{`.agents/x/SKILL.md`}\n")
 	for _, source := range []string{chargesource.DelegateSkill, chargesource.DelegateProcedure, chargesource.BuildPhase} {
