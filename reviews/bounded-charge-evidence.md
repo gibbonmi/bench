@@ -1019,6 +1019,58 @@ It confirmed the family inventory needs no repair, because the named lookup fata
 - The repair derives the bounded case list from the operation registry. That closes CV4 and the class the advice names.
 - The stale `ResponseBudget` comment joins the cycle, because the coordinator's own probe disproved its claim and the writer is already in that file.
 
+## CE-C2: review round 3
+
+Repair cycles used: 2 of 2.
+The repair tip is `6ba90e25c8d50801896b8921221cc91213ca9650`.
+The cycle landed two commits, `c464e9db` for the derived case list and `6ba90e25` for the projection inventory.
+
+### Repair cycle 2 records
+
+The bounded case list now derives from the operation registry.
+A projection returns every form that declares the bound, and the case builder gives each form one argument per declared operand and flag.
+A form whose operand or flag has no stated value stops the test, so a form registered later cannot arrive silently.
+The list grew from ten hand-written entries to ten derived entries and four explicit ones.
+The four explicit entries hold the two usage paths, the operation-level refusal, and the operational refusal, which no registered form states.
+
+The `ResponseBudget` comment now states the current fact.
+The independent budget catches a raised limit, and the shipped format reference owns a lowered one.
+
+### Repair cycle 2 probe records
+
+The writer gated the bound in the dispatch on each bounded kind in turn.
+
+- The review preparation kind gated: two review cases failed. That is the finding's own mutation, and it was silent before this cycle.
+- The build preparation kind gated: two build cases failed.
+- The read kind gated: four read cases and the operational refusal failed.
+- The verify kind gated: the verify case failed.
+- The current kind gated: the check-current case failed.
+
+The writer also registered a new bounded form and gated its kind.
+Without a stated argument the case builder stopped the test, and with one the derived case failed under the gate.
+That result is the evidence that the derivation closes the class and not the instance.
+
+### The projection needed its own pin
+
+The coordinator probed the projection itself, which the writer's cycle did not cover.
+A kind test added to the projection filter dropped the review form from the case list, and every package stayed green.
+The guarantee of row CE135 rested on a projection that could narrow in silence.
+
+The follow-on commit compares the projection's form names against the registry's bounded rows, in registry order.
+The expectation reads `operations` directly, so no second list and no count stands between the check and the registry.
+The coordinator reran its own mutation, and the check failed and named the missing form.
+Defeating the check now means deleting the comparison, which is a deletion and not a silent narrowing.
+
+### Gate evidence
+
+The coordinator's whole-tree gate on `6ba90e25` is green.
+The tree was clean after each restore.
+
+### Carried to the reconciliation
+
+The bounded case subtest names changed from row names to form names.
+A spec row that cites one of the old subtest names is now stale, and that citation joins the sweep with SP1 to SP4.
+
 ## Record
 
 ```bench-review-record
