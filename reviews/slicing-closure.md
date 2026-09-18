@@ -6,7 +6,7 @@ The fenced record at the end is the machine-readable evidence.
 ## Run decisions
 
 - The retained author is this coordinator session on opus. It runs medium effort for SC-C1 and SC-C2, and high effort for SC-C3.
-- The review axes run fable at medium effort, by reviewer direction. Each axis is a separate read-only session.
+- The review axes ran fable at medium effort for SC-C1 and the SC-C2 round 1 review, by reviewer direction. By a later reviewer direction, every review after that runs opus at high effort. Each axis is a separate read-only session.
 - Plan expansion in SC-C1: `internal/preflight/source_tip_test.go` asserts the bare row count per mode. The author added it to tickets 1 and 2, to the spec fence, and to the Row readers decision. A learning entry records the expansion.
 
 ## SC-C1: review round 1
@@ -98,11 +98,45 @@ Finding count: 0. Worst issue: none. A probe that disabled the regular-file chec
 
 The author ran the anchors suite and the preflight suites green at this tip. The plan probe bit again, with one failed test, `TestAnchorClosureCoversDirectoryEntry`, and the file was restored.
 
+## SC-C2: review round 1
+
+Frozen pair: base `dd5c0a0ed93eb9f56d1ec13558bbcf9a96c8a277`, tip `5074d908c9863ca16d064b56a485cec49114f6f0`.
+The raw finding count is 1. The de-duplicated repair-target count is 1.
+Repair cycles used: 0 of 2.
+
+Ticket 2 changed bytes, so the plan digest moved. The record keeps an identity amendment for every chunk ID.
+
+### Standards
+
+Finding count: 1. Worst issue: ST1.
+
+- SC-C2-ST1 (auto-fix, confidence 5): `internal/systemtest/owner_landing_fixture_test.go` restates the `Writes:` line of the review record fixture and replaces it. If the fixture changes that line, the replace does nothing and no test reds. Give the review record fixture the one owner of its ticket writes.
+
+### Spec
+
+Finding count: 0. Worst issue: none. SC14 to SC23 hold, and the shared seeds stay inside story 18.
+
+Flagged for reviewer veto, with no finding ID: the ticket says the gatherer records the review pickup. `fenceWritesCheck` reads it from the review record path owner at `Decide` time instead, which the spec clause allows.
+
+### Coverage
+
+Finding count: 0. Worst issue: none.
+
+### Advice
+
+- The SC19 test exercises implicit-entry removal on the `Writes:` side only. A probe that skipped the fence side stayed green. The repair adds fence-side entries to that test.
+- `withFenceEntry` in `internal/worktree/land_fixtures_test.go` forwards to the review record fixture. It exists because a direct import would grow `land_journey_test.go`, which is over its line budget.
+- The fixture ticket in `internal/worktree/land_fixtures_test.go` is not union-exact. The landing grades only `paths-authorized`, so no test reds on it today.
+
+### Author verification
+
+The author ran the preflight suites and the whole gate green at the ticket tree. The plan probe kept the review pickup in the fence set. 135 tests failed, `TestFenceWritesIgnoresReviewPickup` among them, and the file was restored.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/slicing-closure/spec.md",
-  "plan_digest": "sha256:31ed8f167590e10e2ce870eab3f9c7224bc3eb23a843e98c9b9f50c9020a16c2",
+  "plan_digest": "sha256:1ed9c9b2b02c08e21b3aaaaf1b3d7d2e9000996ba380241425f8eca1c3dbc7ee",
   "implementation_session": "slicing-closure-retained-author",
   "chunks": [
     {
@@ -521,6 +555,155 @@ The author ran the anchors suite and the preflight suites green at this tip. The
           ]
         }
       ]
+    },
+    {
+      "id": "SC-C2",
+      "base": "dd5c0a0ed93eb9f56d1ec13558bbcf9a96c8a277",
+      "tip": "5074d908c9863ca16d064b56a485cec49114f6f0",
+      "plan_digest": "sha256:1ed9c9b2b02c08e21b3aaaaf1b3d7d2e9000996ba380241425f8eca1c3dbc7ee",
+      "source_digest": "2850256baec0741152344bc8b63547e04b362b8f",
+      "acceptance_rows": [
+        "SC14",
+        "SC15",
+        "SC16",
+        "SC17",
+        "SC18",
+        "SC19",
+        "SC20",
+        "SC21",
+        "SC22",
+        "SC23"
+      ],
+      "verification": [
+        {
+          "id": "sc-c2-v1-preflight",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2850256baec0741152344bc8b63547e04b362b8f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:5955fc2fc37180cb05b7d845fd324b90cecf6cb679eddc826c97f2768c318c57",
+            "excerpt": "bench test --package ./internal/preflight/... at 5074d908 tree: pass, preflight 17308 ms, evidencecmd 7740 ms; whole gate green"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "sc-c2-v1-mutation",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2850256baec0741152344bc8b63547e04b362b8f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:bef344eb3e0bed18e0cd771891c9d6d776302fc0bbd06625738a3545a7763ac4",
+            "excerpt": "bench test --package ./internal/preflight/... at 5074d908 tree: baseline passed before the probe"
+          },
+          "requirement": "mutation",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "keep the review pickup in the fence set",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:retained-author",
+              "digest": "sha256:f8270e88e59cdbbd0a1c96793299865f7eae4e1be2e0181bcea7ef8698a27e30",
+              "excerpt": "bench probe internal/preflight/fence_writes.go --swap 'fence, owned := unionSide(f, f.FenceEntries, pickup)' --with 'fence, owned := unionSide(f, f.FenceEntries, \"\")' --package ./internal/preflight/...: verdict bit, 135 failed tests including TestFenceWritesIgnoresReviewPickup, restored=yes"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "sc-c2-r1-standards",
+          "performer": "sc-c1-r1-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "2850256baec0741152344bc8b63547e04b362b8f",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c1-r1-standards",
+            "digest": "sha256:244299fe2f5e469aeacefec233776fb90af93e6435a88d22f87907ece0db9a6e",
+            "excerpt": "Standards SC-C2: 1 finding. S-C2-1 blocker auto-fix: owner_landing_fixture_test.go re-spells the recordtest ticket Writes line and replaces it; give recordtest the one owner of the ticket writes. Advice: withFenceEntry forwarder; fence-writes literal beside closureCheckNames; mapValues; (new) spelling."
+          },
+          "axis": "Standards",
+          "base": "dd5c0a0ed93eb9f56d1ec13558bbcf9a96c8a277",
+          "tip": "5074d908c9863ca16d064b56a485cec49114f6f0",
+          "finding_ids": [
+            "SC-C2-ST1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sc-c2-r1-spec",
+          "performer": "sc-c1-r1-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "2850256baec0741152344bc8b63547e04b362b8f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c1-r1-spec",
+            "digest": "sha256:dbca5949ba0d7c321630fbf67e3fe88627bc321a4d0e7db958d7318a8ccb6ee5",
+            "excerpt": "Spec SC-C2: 0 findings. SC14 to SC23 met. Decide-time pickup satisfies the Union red clause; ticket wording is a non-behavioral contradiction for reviewer veto. Shared seeds stay inside story 18."
+          },
+          "axis": "Spec",
+          "base": "dd5c0a0ed93eb9f56d1ec13558bbcf9a96c8a277",
+          "tip": "5074d908c9863ca16d064b56a485cec49114f6f0",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "sc-c2-r1-coverage",
+          "performer": "sc-c1-r1-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "2850256baec0741152344bc8b63547e04b362b8f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c1-r1-coverage",
+            "digest": "sha256:30682bcb4f72bac9850992871ecfe913f76c91e23d4f700a3609be59908ef7ae",
+            "excerpt": "Coverage SC-C2: nothing above the blocking bar. Advice C-C2-1: SC19 tests only the Writes side of implicit-entry removal; a fence-side-blind probe was silent."
+          },
+          "axis": "Coverage",
+          "base": "dd5c0a0ed93eb9f56d1ec13558bbcf9a96c8a277",
+          "tip": "5074d908c9863ca16d064b56a485cec49114f6f0",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
+    }
+  ],
+  "amendments": [
+    {
+      "from": "sha256:31ed8f167590e10e2ce870eab3f9c7224bc3eb23a843e98c9b9f50c9020a16c2",
+      "to": "sha256:1ed9c9b2b02c08e21b3aaaaf1b3d7d2e9000996ba380241425f8eca1c3dbc7ee",
+      "chunk_ids": {
+        "SC-C1": [
+          "SC-C1"
+        ],
+        "SC-C2": [
+          "SC-C2"
+        ],
+        "SC-C3": [
+          "SC-C3"
+        ]
+      }
     }
   ],
   "completion": {
