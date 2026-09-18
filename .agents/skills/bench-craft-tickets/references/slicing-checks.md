@@ -1,20 +1,24 @@
 # Slicing checks
 
 Charged from `craft-tickets` when the slicer writes each ticket's `Writes:` line and
-the spec's ownership fence. The first section lists the rules that the ticket parser and
-build preflight enforce. The second section states the slicing rules that no check
-enforces, each from a repair round that a retrospective recorded.
+the spec's ownership fence. The first section lists every `Writes:` rule that the ticket
+parser and build preflight enforce, and the `Blocked by:` and `Covers:` rules beside them.
+The second section states the slicing rules that no check enforces, each from a repair
+round that a retrospective recorded.
 
 ## Enforced rules
 
 - `Blocked by:` holds `none` or sibling ticket file basenames. A basename survives a
   retitle, and `--ticket` already names it.
+- Each ticket states `Writes:` exactly once, beside `Blocked by:` and `Covers:`.
 - Each `Writes:` path exists in the tree or carries the `(new)` marker.
+- Each `Writes:` entry holds only text that spec TOON can render. Preflight refuses the
+  ticket set before it renders a verdict.
 - A `Writes:` entry that names a fixture-pinned path also names the fixture directory
   that pins it.
 - A `Writes:` entry that names a bound package also names every registry file that the
   binding registry binds to that package.
-- A `Writes:` entry that names an anchored guidance path also names every anchor registry file whose string literal names that path, test files included.
+- A `Writes:` entry that names an anchored guidance path, or a directory above one, also names every anchor registry file that names that path. Test files count.
 - The spec's ownership fence equals the union of the ticket `Writes:` paths, less the review pickup and every path under the spec folder or `capture`.
 - A ticket that writes a system-tagged test file states `BENCH_KIT`.
 - `Covers:` holds `none` or declared row IDs. Cite each ID in full, because preflight
