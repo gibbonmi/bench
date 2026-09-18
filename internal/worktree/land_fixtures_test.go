@@ -93,6 +93,9 @@ func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home stri
 	}
 	specBody := "# x\n\nStatus: staged\n\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | lands | command | catches failure |\n\n## Ownership fences\n\n- `owned.txt`\n- `reviews/x.md`\n- `" + siblingReviewPath + "`\n"
 	prepared := recordtest.Prepare(t, root, 1, "specs/x/spec.md", specBody)
+	// The ticket writes the fence less its review pickup, so a landing that grades
+	// fence-writes reads a union-exact spec.
+	prepared.SetTicketWrites("owned.txt (new), " + siblingReviewPath + " (new)")
 	base := prepared.Tip()
 	creation := mustCreate(t, root, home, request, "public landing")
 	commitInWorktree(t, creation.Path, "owned.txt", "reviewed bytes\n", "reviewed source")
