@@ -7,6 +7,10 @@ import (
 
 const ticketBindingRegistry = "internal/tickets/registry_data.go"
 
+// proposalToleratedChecks names every check whose red does not refuse a proposal,
+// because the proposal itself reports the repair that the red requires.
+var proposalToleratedChecks = closureCheckNames()
+
 func proposeWritesCommand(root, mode, slug, base, sourceTip, name string, args []string) (string, int) {
 	return preparedCommand(root, mode, slug, base, sourceTip, name, args)
 }
@@ -22,7 +26,7 @@ func renderWritesProposal(root string, f Facts, name string) (string, int) {
 	}
 	verdict := Decide(f)
 	for _, check := range verdict.Checks {
-		if check.Verdict == verdictRed && check.Check != "fixture-closure" && check.Check != "registry-closure" {
+		if check.Verdict == verdictRed && !containsStr(proposalToleratedChecks, check.Check) {
 			return chargeVerdictRefusal(verdict), 1
 		}
 	}
@@ -48,18 +52,27 @@ func renderWritesProposal(root string, f Facts, name string) (string, int) {
 func proposalRows(f Facts, selected tickets.Ticket) [][]string {
 	seen := map[string]bool{}
 	var rows [][]string
-	for _, requirement := range append(missingClosures(f, fixtureClosure), missingClosures(f, registryClosure)...) {
-		if requirement.ticket != selected.Name || seen[requirement.path] {
-			continue
+	for _, closure := range closureFamily {
+		for _, requirement := range missingClosures(f, closure.kind) {
+			if requirement.ticket != selected.Name || seen[requirement.path] {
+				continue
+			}
+			seen[requirement.path] = true
+			rows = append(rows, []string{requirement.path, proposalSource(requirement), proposalFence(requirement.path, f.FenceEntries)})
 		}
-		seen[requirement.path] = true
-		source := "registry " + ticketBindingRegistry
-		if requirement.kind == fixtureClosure {
-			source = "fixture " + requirement.path
-		}
-		rows = append(rows, []string{requirement.path, source, proposalFence(requirement.path, f.FenceEntries)})
 	}
 	return rows
+}
+
+// proposalSource names the fact that requires one proposed path.
+func proposalSource(requirement closureRequirement) string {
+	switch requirement.kind {
+	case fixtureClosure:
+		return "fixture " + requirement.path
+	case anchorClosure:
+		return "anchor " + requirement.entry
+	}
+	return "registry " + ticketBindingRegistry
 }
 
 func proposalFence(path string, entries []string) string {

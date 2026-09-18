@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/coverage"
@@ -119,6 +120,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		WritesPathExists:      ticketFacts.writes,
 		WritesFixturePins:     ticketFacts.pins,
 		WritesBoundFiles:      ticketFacts.bound,
+		WritesAnchorFiles:     ticketFacts.anchors,
 		WritesSystemTagged:    ticketFacts.systemTag,
 		TicketPinsKit:         ticketFacts.kitPinned,
 		TicketsDirExists:      ticketFacts.dirExists,
@@ -249,6 +251,7 @@ type ticketFacts struct {
 	writes      map[string]bool
 	pins        map[string][]string
 	bound       map[string][]string
+	anchors     map[string][]string
 	systemTag   map[string]bool
 	kitPinned   map[string]bool
 	dirExists   bool
@@ -309,8 +312,8 @@ func gatherTicketsWithPolicy(root, dir, mode, tag string, noFollow bool) (ticket
 
 // gradeTickets parses each enumerated ticket against its siblings and the
 // spec tag, and probes the tree for every declared `Writes:` entry. The
-// probe is the gatherer's whole I/O contribution to the ownership row;
-// the policy over the resulting bit belongs to Decide. The duplicate-identity
+// anchor registry scan reads the graded tree once, so a branch that adds an
+// anchor is graded by its own registry. The duplicate-identity
 // diagnostics the enumeration reports open the diagnostic list, so a duplicate
 // basename is named before the grammar faults below it.
 func gradeTickets(root string, files []tickets.Entry, duplicates []string, tag string) (ticketFacts, *BootstrapFailure) {
@@ -318,10 +321,15 @@ func gradeTickets(root string, files []tickets.Entry, duplicates []string, tag s
 	if pinErr != nil {
 		return ticketFacts{}, &BootstrapFailure{"fixture inventory not readable", pinErr.Error()}
 	}
+	refs, refErr := anchors.ReferencingFiles(root)
+	if refErr != nil {
+		return ticketFacts{}, &BootstrapFailure{"anchor registry not readable", refErr.Error()}
+	}
 	facts := ticketFacts{
 		writes:    map[string]bool{},
 		pins:      map[string][]string{},
 		bound:     map[string][]string{},
+		anchors:   map[string][]string{},
 		systemTag: map[string]bool{},
 		kitPinned: map[string]bool{},
 	}
@@ -343,33 +351,11 @@ func gradeTickets(root string, files []tickets.Entry, duplicates []string, tag s
 		facts.parsed = append(facts.parsed, parsed)
 		facts.kitPinned[file.Name] = bytes.Contains(file.Data, []byte(kitEnvMarker))
 		for _, entry := range parsed.Writes {
-			path, _ := splitWritesEntry(entry)
-			facts.writes[entry] = treeHolds(root, path)
-			if pinning := pins[path]; len(pinning) > 0 {
-				facts.pins[entry] = pinning
-			}
-			if bound := tickets.BoundFiles(path); len(bound) > 0 {
-				facts.bound[entry] = bound
-			}
-			if systemTagged(root, path) {
-				facts.systemTag[entry] = true
-			}
+			facts.probe(root, entry, pins, refs)
 		}
 	}
 	facts.cycles = tickets.Cycles(facts.parsed)
 	return facts, nil
-}
-
-// treeHolds reports whether one `Writes:` path names something in the tree.
-// Any file type answers yes: the row grades whether the path exists, not
-// what sits at it. The lstat never follows a link, so a dangling symlink
-// reads as the absent path it is.
-func treeHolds(root, path string) bool {
-	if path == "" {
-		return false
-	}
-	_, err := os.Lstat(filepath.Join(root, filepath.FromSlash(path)))
-	return err == nil
 }
 
 // kitEnvMarker is the literal a ticket states to pin the kit a system-tagged

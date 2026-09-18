@@ -1,7 +1,7 @@
 # Match the spec fence to the ticket Writes union
 
 Blocked by: 1-close-anchor-registry-writes.md
-Writes: internal/preflight/fence_writes.go (new), internal/preflight/fence_writes_test.go (new), internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/proposal.go, internal/preflight/closure.go, internal/preflight/decision_test.go, internal/preflight/command_build_test.go, internal/preflight/proposal_test.go, internal/preflight/charge_test.go, internal/preflight/command_review_test.go, internal/preflight/command_bootstrap_test.go, internal/preflight/evidencecmd/evidence_budget_test.go, internal/preflight/preflighttest/fixture.go
+Writes: internal/preflight/fence_writes.go (new), internal/preflight/fence_writes_test.go (new), internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/proposal.go, internal/preflight/closure.go, internal/preflight/decision_test.go, internal/preflight/command_build_test.go, internal/preflight/proposal_test.go, internal/preflight/charge_test.go, internal/preflight/command_review_test.go, internal/preflight/source_tip_test.go, internal/preflight/command_bootstrap_test.go, internal/preflight/evidencecmd/evidence_budget_test.go, internal/preflight/preflighttest/fixture.go
 Covers: SC14, SC15, SC16, SC17, SC18, SC19, SC20, SC21, SC22, SC23
 
 ## What to build

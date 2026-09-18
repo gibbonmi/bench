@@ -100,6 +100,10 @@ type Facts struct {
 	// registry binds to the package the entry writes into.
 	WritesBoundFiles map[string][]string
 
+	// WritesAnchorFiles reports, for each `Writes:` entry, the anchor registry files
+	// whose string literal names the entry path or a path under it.
+	WritesAnchorFiles map[string][]string
+
 	// WritesSystemTagged reports, for each `Writes:` entry, whether it names a Go
 	// test file whose build constraint carries the system tag.
 	WritesSystemTagged map[string]bool
@@ -195,10 +199,8 @@ func Decide(f Facts) Verdict {
 		ticketRow(f, "completion-plan", completionPlanCheck),
 		ticketRow(f, "blockers-resolve", blockersResolveCheck),
 		ticketRow(f, "writes-resolve", writesResolveCheck),
-		ticketRow(f, "fixture-closure", fixtureClosureCheck),
-		ticketRow(f, "registry-closure", registryClosureCheck),
-		ticketRow(f, "kit-pin", kitPinCheck),
 	)
+	checks = append(append(checks, closureRows(f)...), ticketRow(f, "kit-pin", kitPinCheck))
 	if f.Mode == modeBuild {
 		checks = append(checks, binarySealCheck(f))
 	}
@@ -429,29 +431,6 @@ func writesResolveCheck(f Facts) CheckResult {
 		return red("writes-resolve", "Writes: entry names no tree path and carries no (new) marker: "+strings.Join(unresolved, ", "))
 	}
 	return green("writes-resolve")
-}
-
-// ownedPaths is every tree path one ticket declares, with the (new) marker
-// stripped. The three closures below grade their required names against this one
-// set, so no two of them can disagree about what a ticket already owns.
-func ownedPaths(ticket tickets.Ticket) []string {
-	paths := make([]string, 0, len(ticket.Writes))
-	for _, entry := range ticket.Writes {
-		path, _ := splitWritesEntry(entry)
-		paths = append(paths, path)
-	}
-	return paths
-}
-
-// pathCovered reports whether one required path is already named by the ticket,
-// either exactly or through a directory entry that contains it.
-func pathCovered(required string, owned []string) bool {
-	for _, path := range owned {
-		if required == path || strings.HasPrefix(required, path+"/") {
-			return true
-		}
-	}
-	return false
 }
 
 // kitPinCheck grades the kit pin into the ticket. A system-tagged test file reads
