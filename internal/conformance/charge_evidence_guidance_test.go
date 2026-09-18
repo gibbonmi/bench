@@ -2,6 +2,7 @@ package conformance
 
 import (
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -26,6 +27,9 @@ type boundedActionFamily struct {
 	// a flag pair, not one spelling: the guidance may name the command, and it may name the
 	// run control, but one sentence may not carry both.
 	preflightCommand string
+	// peer names the other consumer of the same prepared evidence. Its receipt is the
+	// cheapest substitute for a fresh consumer's own retrieval, so each phase names its own.
+	peer string
 }
 
 // retiredFullFlag is the run control both retired charge forms carried.
@@ -40,12 +44,14 @@ func boundedActionFamilies() []boundedActionFamily {
 			diagnosticPrefix: "bounded build action: ",
 			sentenceLead:     "Build action requires",
 			preflightCommand: "bench preflight build",
+			peer:             "consumer",
 		},
 		{
 			name:             "review",
 			diagnosticPrefix: "bounded review action: ",
 			sentenceLead:     "Review action requires",
 			preflightCommand: "bench preflight review",
+			peer:             "axis",
 		},
 	}
 }
@@ -99,18 +105,29 @@ func (f boundedActionFamily) guidance(t *testing.T, family []anchors.Anchor) str
 	return ""
 }
 
-// pinnedSentences returns every sentence of every paragraph that carries the family lead.
-// It reads prose.Paragraphs, which is the paragraph rule and the sentence rule the prose
-// gate itself applies, so the pin and the gate cannot disagree about where a paragraph or a
+// pinnedParagraphSentences returns every sentence of every paragraph that carries lead. It
+// reads prose.Paragraphs, which is the paragraph rule and the sentence rule the prose gate
+// itself applies, so the pin and the gate cannot disagree about where a paragraph or a
 // sentence ends. Each sentence arrives with its whitespace collapsed.
-func (f boundedActionFamily) pinnedSentences(text string) []string {
+func pinnedParagraphSentences(text, lead string) []string {
 	var found []string
 	for _, paragraph := range prose.Paragraphs(text) {
-		if slices.ContainsFunc(paragraph, func(s string) bool { return strings.Contains(s, f.sentenceLead) }) {
+		if slices.ContainsFunc(paragraph, func(s string) bool { return strings.Contains(s, lead) }) {
 			found = append(found, paragraph...)
 		}
 	}
 	return found
+}
+
+// actionSentences selects the family's bounded action paragraph.
+func (f boundedActionFamily) actionSentences(text string) []string {
+	return pinnedParagraphSentences(text, f.sentenceLead)
+}
+
+// consumerSentences selects the family's consumer-context paragraph. One lead serves both
+// readers, because each paragraph opens with the same reuse clause.
+func (f boundedActionFamily) consumerSentences(text string) []string {
+	return pinnedParagraphSentences(text, consumerContextLead)
 }
 
 // retiredFormPairs returns every sentence that names the family's preparation command and
@@ -132,23 +149,25 @@ func (f boundedActionFamily) retiredFormPairs(text string) []string {
 
 // wantedRows is the independent half of the registry pair: each family states the same five
 // prerequisite diagnostics and the one retired-form refusal, apart from the registry, so a
-// reworded or deleted row bites.
-func (f boundedActionFamily) wantedRows() []struct {
+// reworded or deleted row bites. A diagnostic names the reader by its base name, as every
+// registered row does, and guidance supplies that reader.
+func (f boundedActionFamily) wantedRows(guidance string) []wantedRow {
+	action := strings.ToLower(f.name)
+	lead := f.diagnosticPrefix + path.Base(guidance) + " permits " + action + " action without "
+	return []wantedRow{
+		{anchors.Require, lead + "verified delivery"},
+		{anchors.Require, lead + "available required context"},
+		{anchors.Require, lead + "a current binding"},
+		{anchors.Require, lead + "reviewer approval"},
+		{anchors.Require, lead + "the complete task supplement"},
+		{anchors.Forbid, f.diagnosticPrefix + path.Base(guidance) + " re-advertises the retired " + action + " full charge form"},
+	}
+}
+
+// wantedRow is one expected registry row: its kind and its complete diagnostic.
+type wantedRow struct {
 	kind       anchors.Kind
 	diagnostic string
-} {
-	action := strings.ToLower(f.name)
-	return []struct {
-		kind       anchors.Kind
-		diagnostic string
-	}{
-		{anchors.Require, "permits " + action + " action without verified delivery"},
-		{anchors.Require, "permits " + action + " action without available required context"},
-		{anchors.Require, "permits " + action + " action without a current binding"},
-		{anchors.Require, "permits " + action + " action without reviewer approval"},
-		{anchors.Require, "permits " + action + " action without the complete task supplement"},
-		{anchors.Forbid, "re-advertises the retired " + action + " full charge form"},
-	}
 }
 
 // TestEvidenceBoundedActionGuidance grades the bounded action rows for CE101, CE102, CE103,
@@ -159,20 +178,13 @@ func TestEvidenceBoundedActionGuidance(t *testing.T) {
 	for _, family := range boundedActionFamilies() {
 		t.Run(family.name, func(t *testing.T) {
 			actionAnchors := family.anchors()
-			want := family.wantedRows()
+			guidance := family.guidance(t, actionAnchors)
+			want := family.wantedRows(guidance)
 			if got := len(actionAnchors); got != len(want) {
 				t.Errorf("%s anchor count = %d, want %d", family.name, got, len(want))
 			}
 			for _, expected := range want {
-				found := false
-				for _, anchor := range actionAnchors {
-					if anchor.Kind == expected.kind && containsDiagnostic([]string{anchor.Diagnostic}, expected.diagnostic) {
-						found = true
-					}
-				}
-				if !found {
-					t.Errorf("no %s row of the expected kind states %q", family.name, expected.diagnostic)
-				}
+				requireRegisteredRow(t, actionAnchors, expected.kind, guidance, expected.diagnostic)
 			}
 			runAnchorBites(t, actionAnchors, func(anchor anchors.Anchor) string { return anchor.Diagnostic })
 		})
@@ -189,33 +201,10 @@ func TestEvidenceBoundedActionSentencesArePinned(t *testing.T) {
 	for _, family := range boundedActionFamilies() {
 		t.Run(family.name, func(t *testing.T) {
 			rows := family.anchors()
-			needles := map[string]int{}
-			for _, anchor := range rows {
-				if anchor.Kind == anchors.Require {
-					needles[anchor.Needle]++
-				}
-			}
-			for needle, count := range needles {
-				if count != 1 {
-					t.Errorf("%d Require rows share the needle %q, want one row each", count, needle)
-				}
-			}
 			guidance := family.guidance(t, rows)
-			sentences := family.pinnedSentences(guidanceText(t, filepath.Join(NewHarness(t).KitRoot, filepath.FromSlash(guidance))))
-			if len(sentences) == 0 {
-				t.Fatalf("%s states no bounded %s action prerequisite", guidance, family.name)
-			}
-			for _, sentence := range sentences {
-				pinned := 0
-				for needle := range needles {
-					if strings.Contains(needleText(needle), sentence) {
-						pinned++
-					}
-				}
-				if pinned != 1 {
-					t.Errorf("guidance sentence %q is pinned by %d Require rows, want one", sentence, pinned)
-				}
-			}
+			h := NewHarness(t)
+			text := guidanceText(t, filepath.Join(h.KitRoot, filepath.FromSlash(guidance)))
+			requirePinnedParagraph(t, rows, guidance, family.actionSentences(text))
 		})
 	}
 }
@@ -229,7 +218,8 @@ func TestEvidenceBoundedActionRejectsTheRetiredPair(t *testing.T) {
 	for _, family := range boundedActionFamilies() {
 		t.Run(family.name, func(t *testing.T) {
 			guidance := family.guidance(t, family.anchors())
-			pairs := family.retiredFormPairs(guidanceText(t, filepath.Join(NewHarness(t).KitRoot, filepath.FromSlash(guidance))))
+			h := NewHarness(t)
+			pairs := family.retiredFormPairs(guidanceText(t, filepath.Join(h.KitRoot, filepath.FromSlash(guidance))))
 			for _, sentence := range pairs {
 				t.Errorf("%s states %q, which names %q and carries %q, and that re-advertises the retired full charge form",
 					guidance, sentence, family.preflightCommand, retiredFullFlag)
@@ -255,36 +245,36 @@ func TestEvidenceBoundedActionRulesBiteOnSyntheticText(t *testing.T) {
 	}{
 		{
 			name: "the lead opens the second sentence of a pinned paragraph",
-			rule: build.pinnedSentences,
+			rule: build.actionSentences,
 			text: "The ticket lands first. Build action requires reviewer approval.\n",
 			want: []string{"The ticket lands first.", "Build action requires reviewer approval."},
 		},
 		{
 			name: "a wrap inside a pinned sentence collapses",
-			rule: build.pinnedSentences,
+			rule: build.actionSentences,
 			text: "Build action requires verified delivery: act only after\nthis session reads it.\n",
 			want: []string{"Build action requires verified delivery: act only after this session reads it."},
 		},
 		{
 			name: "a neighbouring paragraph stays outside the pin",
-			rule: build.pinnedSentences,
+			rule: build.actionSentences,
 			text: "The reviewer may waive it.\n\nBuild action requires reviewer approval.\n",
 			want: []string{"Build action requires reviewer approval."},
 		},
 		{
 			name: "a paragraph with no lead states no prerequisite",
-			rule: build.pinnedSentences,
+			rule: build.actionSentences,
 			text: "The ticket lands first. It commits green.\n",
 		},
 		{
 			name: "the review lead pins its own paragraph",
-			rule: review.pinnedSentences,
+			rule: review.actionSentences,
 			text: "The axis reads first. Review action requires reviewer approval.\n",
 			want: []string{"The axis reads first.", "Review action requires reviewer approval."},
 		},
 		{
 			name: "the build lead leaves the review paragraph alone",
-			rule: review.pinnedSentences,
+			rule: review.actionSentences,
 			text: "Build action requires reviewer approval.\n",
 		},
 		{
@@ -368,12 +358,21 @@ func TestEvidenceNeedleTextReadsTheGuidanceProjection(t *testing.T) {
 	}
 }
 
-// guidanceText reads one canonical reader with its line endings normalized.
-func guidanceText(t *testing.T, path string) string {
+// liveGuidanceText reads one shipped canonical reader by its repository-relative path. A
+// test that the live-tree classification already names keeps its own kit-root read, because
+// that classification detects the read in the test body. Every other caller reads here.
+func liveGuidanceText(t *testing.T, guidance string) string {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Clean(path))
+	h := NewHarness(t)
+	return guidanceText(t, filepath.Join(h.KitRoot, filepath.FromSlash(guidance)))
+}
+
+// guidanceText reads one canonical reader with its line endings normalized.
+func guidanceText(t *testing.T, name string) string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Clean(name))
 	if err != nil {
-		t.Fatalf("read %s: %v", path, err)
+		t.Fatalf("read %s: %v", name, err)
 	}
 	return strings.ReplaceAll(string(data), "\r\n", "\n")
 }
