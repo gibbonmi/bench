@@ -1438,13 +1438,64 @@ The coordinator ran the byte-length mutation and the byte-total mutation again a
 The coordinator's whole-tree gate on `e7827d7a` is green, with eight capability skips.
 The skip count did not change, so the new privilege skip did not fire on this machine.
 
+### Round 3 axis verdicts
+
+The axes graded the frozen pair base `6ec77cca`, tip `e7827d7a`.
+Each axis worked from the record commit `3d57c76b` above that tip, and each graded the cycle 2 delta only.
+All three report pass, and the chunk closes.
+
+### Standards round 3
+
+No finding. ST6 closed.
+
+The axis confirmed `HelpRows` keeps three readers after the deletion.
+It confirmed the capability skip matches the run-log prune test in order and in class.
+It confirmed the replacement helper derives its length from the file that it replaces.
+
+### Spec round 3
+
+No finding. No row of ticket 6 changed status: 20 are met, and row CE117 is pending.
+
+The axis confirmed the one production edit is a comment.
+Row CE172 holds through `TestEvidenceHelpInventory` and the rendered golden.
+The evidencecmd package reported zero skips, so rows CE82 and CE122 stay met on this machine.
+
+### Coverage round 3
+
+No finding. CV7 and CV8 closed.
+
+The axis ran three new mutations, and all three bit.
+The suppression removed entirely failed the zero-byte case.
+The apply help row dropped failed three help inventory assertions.
+The plan byte total inflated failed the byte assertion of the zero-byte case.
+The capability probe file matches neither store name class, so it cannot become a plan target.
+
+### Advice carried to the reconciliation
+
+- `ModeClean` became public only for one test reader, and an in-package test export avoids that.
+- The system cleanup test spells the cleanup mode as a literal, and it derives the identity shape as its own pattern.
+- The budget test comment omits rows CE136 and CE137.
+- Six spec seam cells name cleanup tests that carry other names, and one names the `internal/preflight` path.
+- The Windows enumeration sentence of row CE117 needs one edit.
+- The last sentence of the `replace` comment restates the signature.
+- Three assertions grade a dropped help row, and one golden is enough.
+
+### Coordinator verification at the cycle 2 tip
+
+- The whole-tree gate on `e7827d7a` is green.
+- The five plan verifications pass at this tip.
+- The named plan probe replaced the fingerprint comparison of the store apply with a constant. `TestEvidenceCleanupStalePlan` failed with an apply of a stale plan at exit zero.
+- The hand-run system check first failed again on the stale broker manifest, with no mutation in the tree.
+- A build restores that git-ignored manifest, so it keeps the digest of an older binary. The corrected cause is in a second learning.
+- The tree was clean after each restore.
+
 ## Record
 
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/bounded-charge-evidence/spec.md",
-  "plan_digest": "sha256:1c57f87df907d6126928290b50a03da7441194dd430d34a269c8e2ef9950f9c5",
+  "plan_digest": "sha256:581807ed92fa23fe557273dd5bb3e11f966388d4b8b6ab24dab121e883a8d236",
   "implementation_session": "bounded-charge-evidence-retained-author",
   "chunks": [
     {
@@ -4230,6 +4281,375 @@ The skip count did not change, so the new privilege skip did not fire on this ma
           ]
         }
       ]
+    },
+    {
+      "id": "CE-C3",
+      "base": "6ec77cca38646b86a420f3f8eab62c1566a209e5",
+      "tip": "e7827d7af69097ba7434035ea1da31fb985c845f",
+      "plan_digest": "sha256:581807ed92fa23fe557273dd5bb3e11f966388d4b8b6ab24dab121e883a8d236",
+      "source_digest": "1ad9835dc6c7db894db979740353711e59adc42f",
+      "acceptance_rows": [
+        "CE78",
+        "CE79",
+        "CE80",
+        "CE81",
+        "CE82",
+        "CE83",
+        "CE84",
+        "CE85",
+        "CE100",
+        "CE117",
+        "CE119",
+        "CE121",
+        "CE122",
+        "CE136",
+        "CE137",
+        "CE168",
+        "CE169",
+        "CE170",
+        "CE171",
+        "CE172",
+        "CE175"
+      ],
+      "verification": [
+        {
+          "id": "ce-c3-v1-preflight",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1ad9835dc6c7db894db979740353711e59adc42f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:321288aa74a3273b4157a0613158e957e50ba4e8bcc26e806443b747ddf3ff75",
+            "excerpt": "at e7827d7a: pass as the probe baseline, 500 tests; preflight 17634 ms and evidencecmd 7342 ms"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c3-v1-store",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1ad9835dc6c7db894db979740353711e59adc42f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:47329ba8da2ee62a57612c68e3609dfb173959d8574c200aefcb6d6314bdcbcb",
+            "excerpt": "at e7827d7a: pass, 154 ms; the CE94 device case skipped for the privilege capability"
+          },
+          "requirement": "store",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c3-v1-inventory",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1ad9835dc6c7db894db979740353711e59adc42f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:05023003e66efb557a6d42fa839921d971efd5e7ad52403c5b241d93f74578d5",
+            "excerpt": "at e7827d7a: pass, 6720 ms"
+          },
+          "requirement": "inventory",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c3-v1-system",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1ad9835dc6c7db894db979740353711e59adc42f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:f3f22eb4f7a18f719fc3e59d46af5231bb8743402d255bcd929a1d2f9bbce853",
+            "excerpt": "at e7827d7a: pass, 33795 ms, after the coordinator replaced the stale git-ignored broker manifest with the one bench worktree build wrote"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c3-v1-mutation",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1ad9835dc6c7db894db979740353711e59adc42f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:321288aa74a3273b4157a0613158e957e50ba4e8bcc26e806443b747ddf3ff75",
+            "excerpt": "at e7827d7a: pass as the probe baseline, 500 tests; preflight 17634 ms and evidencecmd 7342 ms"
+          },
+          "requirement": "mutation",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "skip cleanup fingerprint revalidation before deletion",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:coordinator-run",
+              "digest": "sha256:59d6fbcca22e19298b2c42479452ea3c61d38feb359d1f704e829a33a1760ab4",
+              "excerpt": "bench probe internal/chargeevidence/clean.go swapping the plan fingerprint comparison of Store.Apply for false at e7827d7a: verdict bit, TestEvidenceCleanupStalePlan failed at evidence_cleanup_test.go:138 with an apply of a stale plan at exit zero, restored=yes"
+            }
+          }
+        },
+        {
+          "id": "ce-c3-v1-gate",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1ad9835dc6c7db894db979740353711e59adc42f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:21e25018bba705e9cd1234a57c20b5654126b00de3c9be660cf775e1681bcf84",
+            "excerpt": "whole-tree gate at e7827d7a: pass, six phases green, eight capability skips; the coordinator's byte-length and byte-total probes both bit at that tip, restored=yes"
+          },
+          "requirement": "gate",
+          "command": "bench gate",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "ce-c3-r1-standards",
+          "performer": "claude-review-ce-c3-standards-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d70c632900474e6f539a90c986965fd21fb09917",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c3-standards-r1",
+            "digest": "sha256:7c55f9ecbd043086d0331e7afb3c154bf71a8e68db33338a211cdfa7463e1be5",
+            "excerpt": "Standards CE-C3: 5 findings. Worst: the store cleanup test documents the writer lock that the same commit removed. Also a re-derived identity shape, a pasted pause-marker harness with a drifted marker name, a third copy of the rendered cleanup help forms, and a system interrupt test that kills nothing."
+          },
+          "axis": "Standards",
+          "base": "6ec77cca38646b86a420f3f8eab62c1566a209e5",
+          "tip": "f70a62095f32448145dc7bc45af257ce1f523db9",
+          "finding_ids": [
+            "CE-C3-ST1",
+            "CE-C3-ST2",
+            "CE-C3-ST3",
+            "CE-C3-ST4",
+            "CE-C3-ST5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ce-c3-r1-spec",
+          "performer": "claude-review-ce-c3-spec-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d70c632900474e6f539a90c986965fd21fb09917",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c3-spec-r1",
+            "digest": "sha256:786d856ac1cdbd3bb9a94692e9bd79aae3eccf4b8916348fd5db0bf994911289",
+            "excerpt": "Spec CE-C3: 5 findings. Worst: the test named for row CE122 never interrupts, because the deletion loop holds no pause stage. Also rows CE136 and CE137 name a budget test that measures no cleanup response, help forms authored in three places, two field lists with no recorded omission red, and a dead prefix clause in a grammar refusal."
+          },
+          "axis": "Spec",
+          "base": "6ec77cca38646b86a420f3f8eab62c1566a209e5",
+          "tip": "f70a62095f32448145dc7bc45af257ce1f523db9",
+          "finding_ids": [
+            "CE-C3-SP1",
+            "CE-C3-SP2",
+            "CE-C3-SP3",
+            "CE-C3-SP4",
+            "CE-C3-SP5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ce-c3-r1-coverage",
+          "performer": "claude-review-ce-c3-coverage-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d70c632900474e6f539a90c986965fd21fb09917",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c3-coverage-r1",
+            "digest": "sha256:3eb670dca102e56edd5a2024d924aa6311be6feb344185d9d729667d9e442f5f",
+            "excerpt": "Coverage CE-C3: 6 findings, seven silent mutations. The cleanup cursor stream has no oracle, a stopped apply has no command-surface oracle, the empty-plan successor suppression is silent, the fingerprint shape check is silent, the pre-deletion identity recheck is ungraded, and the system interrupt test interrupts nothing."
+          },
+          "axis": "Coverage",
+          "base": "6ec77cca38646b86a420f3f8eab62c1566a209e5",
+          "tip": "f70a62095f32448145dc7bc45af257ce1f523db9",
+          "finding_ids": [
+            "CE-C3-CV1",
+            "CE-C3-CV2",
+            "CE-C3-CV3",
+            "CE-C3-CV4",
+            "CE-C3-CV5",
+            "CE-C3-CV6"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ce-c3-r2-standards",
+          "performer": "claude-review-ce-c3-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a0d62f8cf6d14b188cf15d7115655653d189e9c4",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c3-standards-r2",
+            "digest": "sha256:9da5295ad1ed177fe6ad39afd0f4086172c58d4e9d6a7eccaf78bd89254a9665",
+            "excerpt": "Standards CE-C3 round 2: ST1 to ST5 all closed. ST6: TestEvidenceCleanupHelpDescriptions duplicates a fact the root help golden owns, and its comment denies that overlap. The coordinator changed the cleanup plan description and TestHelpInventoryIsComplete failed alone."
+          },
+          "axis": "Standards",
+          "base": "6ec77cca38646b86a420f3f8eab62c1566a209e5",
+          "tip": "e2bf7a6e8daf9426a43af8122e4918e1b2aa6024",
+          "finding_ids": [
+            "CE-C3-ST6"
+          ],
+          "supersedes": [
+            "ce-c3-r1-standards"
+          ]
+        },
+        {
+          "id": "ce-c3-r2-spec",
+          "performer": "claude-review-ce-c3-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a0d62f8cf6d14b188cf15d7115655653d189e9c4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c3-spec-r2",
+            "digest": "sha256:69b9a356be12adf856f28110638fd93d4a0bde6afda34227b62b2f7a6e8a5e31",
+            "excerpt": "Spec CE-C3 round 2: 0 findings. SP1 to SP5 all closed. Of 21 ticket 6 rows, 20 are met and CE117 is pending by its review-owned seam. The pause is inert without the store option or the pause environment variable, and the delta stays inside the fence."
+          },
+          "axis": "Spec",
+          "base": "6ec77cca38646b86a420f3f8eab62c1566a209e5",
+          "tip": "e2bf7a6e8daf9426a43af8122e4918e1b2aa6024",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c3-r1-spec"
+          ]
+        },
+        {
+          "id": "ce-c3-r2-coverage",
+          "performer": "claude-review-ce-c3-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a0d62f8cf6d14b188cf15d7115655653d189e9c4",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c3-coverage-r2",
+            "digest": "sha256:f2874638b69e30892e73ae02deccefd538327ca8c1bcec5275c2946ed52a0bf9",
+            "excerpt": "Coverage CE-C3 round 2: CV1 to CV6 all closed. CV7: the identity recheck can compare byte length with no red, because the test replacement differs in length. CV8: the empty-plan successor suppression can key on the byte total with no red. The coordinator reproduced both as silent with bench probe."
+          },
+          "axis": "Coverage",
+          "base": "6ec77cca38646b86a420f3f8eab62c1566a209e5",
+          "tip": "e2bf7a6e8daf9426a43af8122e4918e1b2aa6024",
+          "finding_ids": [
+            "CE-C3-CV7",
+            "CE-C3-CV8"
+          ],
+          "supersedes": [
+            "ce-c3-r1-coverage"
+          ]
+        },
+        {
+          "id": "ce-c3-r3-standards",
+          "performer": "claude-review-ce-c3-standards-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1ad9835dc6c7db894db979740353711e59adc42f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c3-standards-r3",
+            "digest": "sha256:41cc87ce5c48253c917f296bb0e6310b4ad2adda0a1c031c1b0f61e8635294d8",
+            "excerpt": "Standards CE-C3 round 3: 0 findings. ST6 closed: the duplicate help test is gone and HelpRows keeps three readers. The capability skip matches the run-log prune idiom in order and class. The replacement helper derives its length from the file it replaces."
+          },
+          "axis": "Standards",
+          "base": "6ec77cca38646b86a420f3f8eab62c1566a209e5",
+          "tip": "e7827d7af69097ba7434035ea1da31fb985c845f",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c3-r2-standards"
+          ]
+        },
+        {
+          "id": "ce-c3-r3-spec",
+          "performer": "claude-review-ce-c3-spec-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1ad9835dc6c7db894db979740353711e59adc42f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c3-spec-r3",
+            "digest": "sha256:6c9bd0c822880a6a1f9a5ac782d6b5419354b43835629b7b5ca1e77d95e69ccd",
+            "excerpt": "Spec CE-C3 round 3: 0 findings. The delta stays inside the ticket 6 fence, and its one production edit is a comment. Row CE172 holds through TestEvidenceHelpInventory and the rendered golden. The new privilege skip does not fire here, so rows CE82 and CE122 stay met. 20 rows met, CE117 pending, no status changed."
+          },
+          "axis": "Spec",
+          "base": "6ec77cca38646b86a420f3f8eab62c1566a209e5",
+          "tip": "e7827d7af69097ba7434035ea1da31fb985c845f",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c3-r2-spec"
+          ]
+        },
+        {
+          "id": "ce-c3-r3-coverage",
+          "performer": "claude-review-ce-c3-coverage-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1ad9835dc6c7db894db979740353711e59adc42f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c3-coverage-r3",
+            "digest": "sha256:9c42bacf714e0a27b208a3ffc92c893fe9f113cdebc93137096358a7e07a7720",
+            "excerpt": "Coverage CE-C3 round 3: 0 findings. CV7 and CV8 closed. Three new mutations all bit: the suppression removed entirely, the apply help row dropped, and the plan byte total inflated. The capability probe file matches neither store name class, so it cannot become a plan target."
+          },
+          "axis": "Coverage",
+          "base": "6ec77cca38646b86a420f3f8eab62c1566a209e5",
+          "tip": "e7827d7af69097ba7434035ea1da31fb985c845f",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c3-r2-coverage"
+          ]
+        }
+      ]
     }
   ],
   "completion": {
@@ -4297,6 +4717,33 @@ The skip count did not change, so the new privilege skip did not fire on this ma
     {
       "from": "sha256:bd4837edc8c926625c78753261b6eb6a4c9bff01e43afa43c1a1a609be8949fb",
       "to": "sha256:1c57f87df907d6126928290b50a03da7441194dd430d34a269c8e2ef9950f9c5",
+      "chunk_ids": {
+        "CE-C1A": [
+          "CE-C1A"
+        ],
+        "CE-C1B": [
+          "CE-C1B"
+        ],
+        "CE-C1C": [
+          "CE-C1C"
+        ],
+        "CE-C1D": [
+          "CE-C1D"
+        ],
+        "CE-C2": [
+          "CE-C2"
+        ],
+        "CE-C3": [
+          "CE-C3"
+        ],
+        "CE-C4": [
+          "CE-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1c57f87df907d6126928290b50a03da7441194dd430d34a269c8e2ef9950f9c5",
+      "to": "sha256:581807ed92fa23fe557273dd5bb3e11f966388d4b8b6ab24dab121e883a8d236",
       "chunk_ids": {
         "CE-C1A": [
           "CE-C1A"
