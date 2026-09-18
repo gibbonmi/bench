@@ -53,7 +53,8 @@ func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, re
 	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("retained-output\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	recordtest.Prepare(t, root, 1, "specs/x/spec.md", specBody)
+	// The race writes the fenced files, so the ticket writes them too and the fence stays union-exact.
+	recordtest.Prepare(t, root, 1, "specs/x/spec.md", specBody).SetTicketWrites("loser.txt (new), winner.txt (new)")
 	base := systemGitOutput(t, root, "rev-parse", "HEAD")
 	systemGit(t, root, "update-ref", "refs/bench/green/main", base)
 	return root, home, tally, trees, ready, release

@@ -224,7 +224,7 @@ func TestLandCommandRetainsJustInTimeOverlappingDestinationEdit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	mustWrite(t, specPath, append(specBytes, []byte("- `victim.txt`\n")...), 0o644)
+	mustWrite(t, specPath, withFenceEntry(specBytes, "victim.txt"), 0o644)
 	gitRun(t, creation.Path, "add", "victim.txt", "specs/x/spec.md")
 	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "review victim change")
 	refreshLandingEvidence(t, creation.Path, base)

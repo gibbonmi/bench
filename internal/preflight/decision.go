@@ -100,6 +100,10 @@ type Facts struct {
 	// registry binds to the package the entry writes into.
 	WritesBoundFiles map[string][]string
 
+	// WritesAnchorFiles reports, for each `Writes:` entry, the anchor registry files
+	// whose string literal names the entry path or a path under it.
+	WritesAnchorFiles map[string][]string
+
 	// WritesSystemTagged reports, for each `Writes:` entry, whether it names a Go
 	// test file whose build constraint carries the system tag.
 	WritesSystemTagged map[string]bool
@@ -195,10 +199,8 @@ func Decide(f Facts) Verdict {
 		ticketRow(f, "completion-plan", completionPlanCheck),
 		ticketRow(f, "blockers-resolve", blockersResolveCheck),
 		ticketRow(f, "writes-resolve", writesResolveCheck),
-		ticketRow(f, "fixture-closure", fixtureClosureCheck),
-		ticketRow(f, "registry-closure", registryClosureCheck),
-		ticketRow(f, "kit-pin", kitPinCheck),
 	)
+	checks = append(append(checks, closureRows(f)...), ticketRow(f, "fence-writes", fenceWritesCheck), ticketRow(f, "kit-pin", kitPinCheck))
 	if f.Mode == modeBuild {
 		checks = append(checks, binarySealCheck(f))
 	}
@@ -318,23 +320,13 @@ func unauthorizedPaths(f Facts) []string {
 // and no spec fences it. It is authorized for every range.
 const captureEntry = "capture"
 
-// authorizingEntries is every entry paths-authorized consults. This is
-// the spec's declared fence entries, the phase-owned capture folder, plus
-// the active spec's own folder, which authorizes an in-range amendment of
-// the spec without a self-fence entry.
-//
-// The implicit entries are derived rather than carried as their own facts,
-// so the printed spec path and the authorized folder cannot disagree. They
-// are appended to a copy so the gathered FenceEntries slice is never
-// mutated. Mode is deliberately not consulted: build preflight, review
-// preflight, and the landing's final source authorization all get the same
-// answer.
+// authorizingEntries is every entry paths-authorized consults: the spec's
+// declared fence entries plus the implicit entries. They are appended to a
+// copy so the gathered FenceEntries slice is never mutated. Mode is
+// deliberately not consulted: build preflight, review preflight, and the
+// landing's final source authorization all get the same answer.
 func authorizingEntries(f Facts) []string {
-	entries := append(append([]string{}, f.FenceEntries...), captureEntry)
-	if folder := specFolder(f.SpecPath); folder != "" {
-		entries = append(entries, folder)
-	}
-	return entries
+	return append(append([]string{}, f.FenceEntries...), implicitEntries(f)...)
 }
 
 // specFolder is the directory containing the resolved spec, empty when the
@@ -355,12 +347,11 @@ func specFolder(specPath string) string {
 // itself or anything under `internal/git/`.
 //
 // A fence entry conventionally spelled with its own trailing slash (a
-// directory marker, e.g. `internal/preflight/`) is normalized before
-// comparison, so the trailing slash is never itself an extra path segment.
+// directory marker, e.g. `internal/preflight/`) takes the one `Writes:`
+// split, so the trailing slash is never itself an extra path segment.
 func fenceAuthorizes(path string, fences []string) bool {
 	for _, fence := range fences {
-		trimmed := strings.TrimSuffix(fence, "/")
-		if path == trimmed || strings.HasPrefix(path, trimmed+"/") {
+		if entry, _ := splitWritesEntry(fence); pathCovered(path, []string{entry}) {
 			return true
 		}
 	}
@@ -373,15 +364,15 @@ func fenceAuthorizes(path string, fences []string) bool {
 const newMarker = "(new)"
 
 // splitWritesEntry separates one `Writes:` entry into the tree path it names
-// and whether it carries the (new) marker. The gatherer's existence probe and
-// the writes-resolve row read this one split, so the path probed and the path
-// graded can never disagree.
+// and whether it carries the (new) marker. A trailing `/` is a directory spelling,
+// not a path segment, so the split drops it. The gatherer's probes, the closures,
+// and the writes-resolve row read this one split, so no two of them can disagree.
 func splitWritesEntry(entry string) (path string, isNew bool) {
 	path = strings.TrimSpace(entry)
-	if !strings.HasSuffix(path, newMarker) {
-		return path, false
+	if isNew = strings.HasSuffix(path, newMarker); isNew {
+		path = strings.TrimSpace(strings.TrimSuffix(path, newMarker))
 	}
-	return strings.TrimSpace(strings.TrimSuffix(path, newMarker)), true
+	return strings.TrimSuffix(path, "/"), isNew
 }
 
 // ticketsParseCheck reports the ticket grammar itself: an absent required
@@ -429,29 +420,6 @@ func writesResolveCheck(f Facts) CheckResult {
 		return red("writes-resolve", "Writes: entry names no tree path and carries no (new) marker: "+strings.Join(unresolved, ", "))
 	}
 	return green("writes-resolve")
-}
-
-// ownedPaths is every tree path one ticket declares, with the (new) marker
-// stripped. The three closures below grade their required names against this one
-// set, so no two of them can disagree about what a ticket already owns.
-func ownedPaths(ticket tickets.Ticket) []string {
-	paths := make([]string, 0, len(ticket.Writes))
-	for _, entry := range ticket.Writes {
-		path, _ := splitWritesEntry(entry)
-		paths = append(paths, path)
-	}
-	return paths
-}
-
-// pathCovered reports whether one required path is already named by the ticket,
-// either exactly or through a directory entry that contains it.
-func pathCovered(required string, owned []string) bool {
-	for _, path := range owned {
-		if required == path || strings.HasPrefix(required, path+"/") {
-			return true
-		}
-	}
-	return false
 }
 
 // kitPinCheck grades the kit pin into the ticket. A system-tagged test file reads

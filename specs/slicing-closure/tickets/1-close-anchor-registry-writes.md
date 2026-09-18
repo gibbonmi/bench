@@ -1,7 +1,7 @@
 # Close anchor registry files into ticket Writes
 
 Blocked by: none
-Writes: internal/anchors/references.go (new), internal/anchors/references_test.go (new), internal/preflight/closure.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/proposal.go, internal/preflight/anchor_closure_test.go (new), internal/preflight/decision_test.go, internal/preflight/command_build_test.go, internal/preflight/proposal_test.go, internal/preflight/charge_test.go, internal/preflight/command_review_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/anchors/references.go (new), internal/anchors/references_test.go (new), internal/preflight/closure.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/proposal.go, internal/preflight/anchor_closure_test.go (new), internal/preflight/decision_test.go, internal/preflight/command_build_test.go, internal/preflight/proposal_test.go, internal/preflight/charge_test.go, internal/preflight/command_review_test.go, internal/preflight/source_tip_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: SC1, SC2, SC3, SC4, SC5, SC6, SC7, SC8, SC9, SC10, SC11, SC12, SC13
 
 ## What to build

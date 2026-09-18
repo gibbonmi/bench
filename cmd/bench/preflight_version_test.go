@@ -33,7 +33,7 @@ func TestPreflightReviewChargeUsesCurrentVersion(t *testing.T) {
 	writeAXIFixture(t, filepath.Join(root, "specs/example/tickets/one.md"), `# One
 
 Blocked by: none
-Writes: target
+Writes: target, outside
 Covers: PF1
 
 ## What to build

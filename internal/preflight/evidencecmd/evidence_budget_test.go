@@ -29,7 +29,7 @@ func seedLargeEvidence(t *testing.T) (root string, args []string, fence []string
 		t.Fatalf("spec fixture holds %d bytes, want at least 40 KB", len(spec))
 	}
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", spec)
-	ticket = preflighttest.TicketDoc("One", "PF1", "PF2") + strings.Repeat("tab\there \"quote\" back\\slash 雪🚀\n", 2000)
+	ticket = preflighttest.WritesTicketDoc("One", preflighttest.FenceWrites(append(append([]string{}, preflighttest.ConformantFence...), fence...)), "PF1", "PF2") + strings.Repeat("tab\there \"quote\" back\\slash 雪🚀\n", 2000)
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticket)
 	return root, preflighttest.LegacyCommitted(t, root, slug, "large evidence"), fence, ticket
 }

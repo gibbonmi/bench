@@ -22,14 +22,22 @@ func seedProposal(t *testing.T) (string, string) {
 		map[string]string{"two.md": "tests/canary/example-family/pinning-fixture/EXPECT"})
 }
 
+// seedProposalWith fences every entry the tickets write, so only extraFence can leave the
+// fence and the ticket union apart. The selected ticket also writes the conformant fence.
 func seedProposalWith(t *testing.T, selectedWrites string, others map[string]string, extraFence ...string) (string, string) {
 	t.Helper()
 	root := preflighttest.StartRepo(t)
 	slug := "example"
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug, extraFence...))
-	writeProposalTicket(t, slug, "one.md", "One", "none", selectedWrites)
+	fence := append([]string{}, extraFence...)
+	for _, writes := range append([]string{selectedWrites}, mapValues(others)...) {
+		for _, entry := range strings.Split(writes, ", ") {
+			fence = append(fence, "- `"+entry+"`")
+		}
+	}
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug, fence...))
+	writeProposalTicket(t, slug, "one.md", "One", "none", append(preflighttest.FenceWrites(preflighttest.ConformantFence), strings.Split(selectedWrites, ", ")...)...)
 	for name, writes := range others {
-		writeProposalTicket(t, slug, name, strings.TrimSuffix(name, ".md"), "none", writes)
+		writeProposalTicket(t, slug, name, strings.TrimSuffix(name, ".md"), "none", strings.Split(writes, ", ")...)
 	}
 	preflighttest.MustWriteFile(t, "tests/canary/example-family/pinning-fixture/BASE", "internal/example/pinned.go\n")
 	preflighttest.MustWriteFile(t, "tests/canary/example-family/pinning-fixture/EXPECT", "fixture\n")
@@ -50,11 +58,18 @@ func seedProposalWith(t *testing.T, selectedWrites string, others map[string]str
 	return root, slug
 }
 
-func writeProposalTicket(t *testing.T, slug, name, title, blockers, writes string) {
+func writeProposalTicket(t *testing.T, slug, name, title, blockers string, writes ...string) {
 	t.Helper()
-	body := strings.Replace(preflighttest.TicketDoc(title, "PF1", "PF2"), "Blocked by: none", "Blocked by: "+blockers, 1)
-	body = strings.Replace(body, "Writes: specs", "Writes: "+writes, 1)
+	body := strings.Replace(preflighttest.WritesTicketDoc(title, writes, "PF1", "PF2"), "Blocked by: none", "Blocked by: "+blockers, 1)
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/"+name, body)
+}
+
+func mapValues(m map[string]string) []string {
+	values := make([]string, 0, len(m))
+	for _, value := range m {
+		values = append(values, value)
+	}
+	return values
 }
 
 func assertProposalRow(t *testing.T, out, path, source, fence string) {
@@ -113,8 +128,7 @@ func TestWritesProposalAlreadyCovered(t *testing.T) {
 		{"prefix", "internal/example/pinned.go, tests/canary, internal/toon, internal/conformance"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			fences := []string{"- `tests/canary/`", "- `internal/toon/`", "- `internal/conformance/`"}
-			root, slug := seedProposalWith(t, test.writes, map[string]string{"two.md": "tests/canary/example-family/pinning-fixture/EXPECT"}, fences...)
+			root, slug := seedProposalWith(t, test.writes, map[string]string{"two.md": "tests/canary/example-family/pinning-fixture/EXPECT"})
 			writeProposalTicket(t, slug, "two.md", "Two", "one.md", "tests/canary/example-family/pinning-fixture/EXPECT")
 			preflighttest.RunGit(t, "add", "specs/"+slug)
 			preflighttest.RunGit(t, "commit", "-q", "-m", "approve closure and ordering")
@@ -137,7 +151,7 @@ func TestWritesProposalAlreadyCovered(t *testing.T) {
 
 // TestWritesProposalRefusalOrder covers DP14: grammar wins over closure output.
 func TestWritesProposalRefusalOrder(t *testing.T) {
-	for _, body := range []string{"# broken\n", strings.Replace(preflighttest.TicketDoc("One", "PF1", "PF2"), "Writes: specs", "Writes: internal/example/pinned.go\nWrites: specs", 1)} {
+	for _, body := range []string{"# broken\n", strings.Replace(preflighttest.TicketDoc("One", "PF1", "PF2"), "Covers:", "Writes: internal/example/pinned.go\nCovers:", 1)} {
 		root, slug := seedProposal(t)
 		path := "specs/" + slug + "/tickets/one.md"
 		preflighttest.MustWriteFile(t, path, body)

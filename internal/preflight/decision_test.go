@@ -20,7 +20,7 @@ func baseFacts() Facts {
 		DefaultBranchCurrent:  true,
 		ReviewBaseResolved:    true,
 		ChangedPaths:          []string{"internal/example/foo.go"},
-		FenceEntries:          []string{"internal/example"},
+		FenceEntries:          []string{"internal/example/foo.go"},
 		DeclaredRowIDs:        []string{"PF1", "PF2"},
 		SpecTag:               "PF",
 		Tickets: []tickets.Ticket{{
@@ -59,7 +59,7 @@ func TestDecideAllGreen(t *testing.T) {
 	wantChecks := []string{
 		"base-current", "paths-authorized",
 		"tickets-parse", "completion-plan", "blockers-resolve", "writes-resolve",
-		"fixture-closure", "registry-closure", "kit-pin",
+		"fixture-closure", "registry-closure", "anchor-closure", "fence-writes", "kit-pin",
 		"rows-owned", "rows-membership", "diff-nonempty",
 	}
 	if len(first.Checks) != len(wantChecks) {
@@ -102,8 +102,8 @@ func TestDecideAllGreen(t *testing.T) {
 	}
 	// Every row that reads a parsed ticket, plus diff-nonempty, is
 	// not-applicable in a build with no tickets/ directory at all.
-	if naSeen != 10 {
-		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 10", naSeen)
+	if naSeen != 12 {
+		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 12", naSeen)
 	}
 }
 
@@ -797,7 +797,7 @@ func TestTicketGatedRowsNotApplicableWithoutTickets(t *testing.T) {
 
 	want := []string{
 		"tickets-parse", "completion-plan", "blockers-resolve", "writes-resolve",
-		"fixture-closure", "registry-closure", "kit-pin",
+		"fixture-closure", "registry-closure", "anchor-closure", "fence-writes", "kit-pin",
 	}
 	at := -1
 	for i, c := range v.Checks {
