@@ -932,6 +932,54 @@ Row CE147 now grades only bounded preparation refusals, because this chunk delet
 This continues the CE-C1D flag on rows CE147 and CE114.
 Row CE173 changed its asserted refusal wording inside a closed chunk, and that change follows from row CE108.
 
+## CE-C2: review round 2
+
+Repair cycles used: 1 of 2.
+The repair tip is `b2c39d7008f845d92e4b0b184b51dd597540af1c`.
+The cycle landed two commits, `fb203f43` for the ten findings and `b2c39d70` for SP5.
+
+### Repair cycle 1 records
+
+The bound test now grades every registered operation against an exemption list.
+The registry supplies the bounded set, and the test supplies only the two exempt kinds.
+The axis test now matches each shared row's source role to the row kind.
+The review fence renders from one table, and the schema test compares the whole fence in document order.
+
+The family inventory check compares the family names with an equality over the whole list.
+No count stands in for the names, and the check reports rather than stops.
+The SP5 case now sends a registered selector without its required flags, which reaches the operation-level refusal.
+
+### Repair cycle 1 probe records
+
+- The bound dropped from the review operation row: the final guard named the review form and its kind.
+- The shared bindings rotated by one: the axis test named the `diff` row and the capture it wrongly reached.
+- The metadata fence truncated to one entry: the schema test failed on the whole list.
+- One family dropped from the table: the inventory check and the synthetic case table both failed.
+- The family table reversed: every case stayed green, which is the ST5 repair working.
+- The large-review repeat count cut to three: both callers of the one fixture failed.
+- The retired flag restored to the flag table and to the build verdict row: the surviving owner failed.
+- The operation-level refusal returned without the bound: exactly one case failed, and no other case moved.
+
+Each probe restored its target, and the status was empty after each restore.
+
+### The unfounded finding
+
+The coordinator promoted one Coverage advice item into the repair scope without verifying it.
+The advice claimed `evidencecmd.Prepare` leaks a temporary pack when the publish fails.
+The writer refused the item and proved the refusal.
+`chargeevidence.Staged.Publish` opens with a deferred discard, and that discard is idempotent.
+
+The writer's probe removed the deferred discard, and `TestEvidencePublicationFailure` failed on its link case and its stale-attempt case.
+The guarantee is owned, and a second discard call would advertise a leak that does not exist.
+No production code changed for this item.
+
+### Gate evidence
+
+The coordinator's whole-tree gate on `b2c39d70` is green.
+The coordinator's independent probe added a bound to the proposal operation row, which is an exempt kind.
+The final guard failed and named that operation, so the new check bites in both directions.
+The writer asserted this property and did not demonstrate it; the probe now records it.
+
 ## Record
 
 ```bench-review-record
