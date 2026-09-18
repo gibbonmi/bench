@@ -2408,6 +2408,439 @@ The literal Forbid row still reads the whole file, which is one more reason to k
           ]
         }
       ]
+    },
+    {
+      "id": "CE-C1D",
+      "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
+      "tip": "5f88803ae04cb44378c18c984d8c68443310f9f8",
+      "plan_digest": "sha256:bd4837edc8c926625c78753261b6eb6a4c9bff01e43afa43c1a1a609be8949fb",
+      "source_digest": "a11ed1cc4f6732a805a0212f1d55bac6ddadc780",
+      "acceptance_rows": [
+        "CE101",
+        "CE102",
+        "CE103",
+        "CE140",
+        "CE141",
+        "CE173"
+      ],
+      "verification": [
+        {
+          "id": "ce-c1d-v1-preflight",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "029f86253d19aea4b371dda59e4fe26d0e237ad7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:e2f6b2a1bc5ce69477ec1db575c033fb934115631de636f30b487120da4ddd92",
+            "excerpt": "at 95ae907a: pass; the build preflight reported twelve green checks"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1d-v1-inventory",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "029f86253d19aea4b371dda59e4fe26d0e237ad7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:71f2ed15ea2183e84602ac7e3a1ff4f0ed30853f31d5d3265a9e97325712d254",
+            "excerpt": "at 95ae907a: pass"
+          },
+          "requirement": "inventory",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1d-v1-guidance",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "029f86253d19aea4b371dda59e4fe26d0e237ad7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:71f2ed15ea2183e84602ac7e3a1ff4f0ed30853f31d5d3265a9e97325712d254",
+            "excerpt": "at 95ae907a: pass"
+          },
+          "requirement": "guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1d-v1-guidance-cases",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "029f86253d19aea4b371dda59e4fe26d0e237ad7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:71f2ed15ea2183e84602ac7e3a1ff4f0ed30853f31d5d3265a9e97325712d254",
+            "excerpt": "at 95ae907a: pass"
+          },
+          "requirement": "guidance-cases",
+          "command": "bench test --package ./internal/conformance --run TestEvidence",
+          "exit_code": 0
+        },
+        {
+          "id": "ce-c1d-v1-mutation",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "029f86253d19aea4b371dda59e4fe26d0e237ad7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:71f2ed15ea2183e84602ac7e3a1ff4f0ed30853f31d5d3265a9e97325712d254",
+            "excerpt": "at 95ae907a: pass"
+          },
+          "requirement": "mutation",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "delete the current-action binding sentence from the build guidance",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:coordinator-run",
+              "digest": "sha256:6bb88cf2c54d0edb7cb97dd731f167f24e4e95f6e35e33df3a75c8dbcb167061",
+              "excerpt": "bench probe .agents/commands/bench-implement-spec.md deleting the current-action binding sentence at 95ae907a: verdict bit, TestRootConformance reported the build action without a current binding, restored=yes"
+            }
+          }
+        },
+        {
+          "id": "ce-c1d-v2-gate",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a9305483cf5f1570186f6b526ac73167f6bb9d8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:296b4ca83ef5c83107f7eae0cebbb5b9a2bfb9fd8e471d01fbda596e7d43ddba",
+            "excerpt": "whole-tree gate at e38d64bd: pass; the earlier repair commit 1430bbb1 was red on the unregistered live-tree assertion TestEvidenceBuildActionSentencesArePinned"
+          },
+          "requirement": "gate",
+          "command": "bench gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "add an unpinned prerequisite sentence to the pinned build guidance paragraph",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:coordinator-run",
+              "digest": "sha256:7e1aa251fa9b93d74638f902f7b15a4acd0a33180d3d067958a70454dd97be28",
+              "excerpt": "bench probe .agents/commands/bench-implement-spec.md adding an unpinned prerequisite sentence at e38d64bd: verdict bit, TestEvidenceBuildActionSentencesArePinned reported zero Require rows, restored=yes"
+            }
+          }
+        },
+        {
+          "id": "ce-c1d-v3-gate",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7ffd12dc914722f0e9066e7521ca7a17ecd9054b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:82b720889076a7646dd53df9dd3a1bd9a5d367c3fefeb9de2259ffeb990d4227",
+            "excerpt": "whole-tree gate at 8b23ab36: pass"
+          },
+          "requirement": "gate",
+          "command": "bench gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "restore the retired build full charge operation in the evidence registry",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:coordinator-run",
+              "digest": "sha256:09b3c9371c19528e6d166f08ae55a39823efa25bb22bcaa57492e38095ad3cc7",
+              "excerpt": "bench probe internal/preflight/evidencecmd/operations.go restoring the build full charge row at 8b23ab36: verdict bit, TestEvidenceRemovedBuildFull failed, restored=yes"
+            }
+          }
+        },
+        {
+          "id": "ce-c1d-v4-gate",
+          "performer": "bounded-charge-evidence-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a11ed1cc4f6732a805a0212f1d55bac6ddadc780",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:coordinator-run",
+            "digest": "sha256:3daebbe6dc461c2d119b2f5af14d9481289f7d714733105f785b376d7c94d792",
+            "excerpt": "whole-tree gate at 5f88803a: pass; a pinned sentence reflowed with no word changed kept the guidance checks and the anchors green, which closed CV8"
+          },
+          "requirement": "gate",
+          "command": "bench gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "re-advertise the retired build full charge form with the flags reordered and split across two lines",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:coordinator-run",
+              "digest": "sha256:a4046f1efd71f3ffef2061ed8ec49b6f3a00072fecdf12f0bded563a981a50e7",
+              "excerpt": "bench probe .agents/commands/bench-implement-spec.md re-advertising the retired form across two lines at 5f88803a: verdict bit, both the literal Forbid row and the pair rule failed, restored=yes"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "ce-c1d-r1-standards",
+          "performer": "claude-review-ce-c1d-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "029f86253d19aea4b371dda59e4fe26d0e237ad7",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1d-standards",
+            "digest": "sha256:e00287d9e5cefd78b829988fc82381b597473540f0f0abe80cbd246305f5fb99",
+            "excerpt": "Standards CE-C1D: 7 findings. Worst: the migrated anchor row keeps a diagnostic that names the approval and supplement contents, which now hold their own rows. Also a dead full parameter, stale legacy route names, a stale one-source comment, a doubled rationale, copied diagnostic strings with no recorded red, and a stale mechanical inputs claim."
+          },
+          "axis": "Standards",
+          "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
+          "tip": "95ae907a219c5b88c2915bbe86a98ab98cec8ad5",
+          "finding_ids": [
+            "CE-C1D-ST1",
+            "CE-C1D-ST2",
+            "CE-C1D-ST3",
+            "CE-C1D-ST4",
+            "CE-C1D-ST5",
+            "CE-C1D-ST6",
+            "CE-C1D-ST7"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ce-c1d-r1-spec",
+          "performer": "claude-review-ce-c1d-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "029f86253d19aea4b371dda59e4fe26d0e237ad7",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1d-spec",
+            "digest": "sha256:eee73fef68ab7a8356c0f29a4db188c2083249fd1e9b7c409e028a2eeeeba39e",
+            "excerpt": "Spec CE-C1D: 3 findings. SP1: the delivery prerequisite cites --verify as its proof, but that command reports delivery unverified and the spec keeps integrity and delivery apart. SP2 repeats ST1 in the canary EXPECT file. SP3: row CE173 names the seam TestEvidenceRemovedBuildFull, and no test carried that name."
+          },
+          "axis": "Spec",
+          "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
+          "tip": "95ae907a219c5b88c2915bbe86a98ab98cec8ad5",
+          "finding_ids": [
+            "CE-C1D-SP1",
+            "CE-C1D-SP2",
+            "CE-C1D-SP3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ce-c1d-r1-coverage",
+          "performer": "claude-review-ce-c1d-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "029f86253d19aea4b371dda59e4fe26d0e237ad7",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1d-coverage",
+            "digest": "sha256:e31a08256fafa5b8c8683b4c42b5d6daaee6eb790b8ebdb8dd6b3cdbff7af175",
+            "excerpt": "Coverage CE-C1D: 3 findings. CV1: no test grades what a needle says, and a shortened needle and a duplicated needle were both silent. CV2: the guidance can re-advertise the retired build full charge form with every check green. CV3: the new non-review preparation route has no test."
+          },
+          "axis": "Coverage",
+          "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
+          "tip": "95ae907a219c5b88c2915bbe86a98ab98cec8ad5",
+          "finding_ids": [
+            "CE-C1D-CV1",
+            "CE-C1D-CV2",
+            "CE-C1D-CV3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ce-c1d-r2-standards",
+          "performer": "claude-review-ce-c1d-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a9305483cf5f1570186f6b526ac73167f6bb9d8e",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1d-standards-r2",
+            "digest": "sha256:a8084564c190c5cf745bff8e93e41f7179944748f7525cfc2173e0130ce63804",
+            "excerpt": "Standards CE-C1D round 2: five findings closed. ST3 and ST6 stayed open in part, and three are new. The test writes a literal row count and a hardcoded guidance path, and the new mode guard restates the operation registry binding. The axis ran no test and did not confirm the gate; the coordinator ran the whole-tree gate and it was green."
+          },
+          "axis": "Standards",
+          "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
+          "tip": "e38d64bd72a1ca4b0cadde211f491178951633a0",
+          "finding_ids": [
+            "CE-C1D-ST3",
+            "CE-C1D-ST6",
+            "CE-C1D-ST8",
+            "CE-C1D-ST9",
+            "CE-C1D-ST10"
+          ],
+          "supersedes": [
+            "ce-c1d-r1-standards"
+          ]
+        },
+        {
+          "id": "ce-c1d-r2-spec",
+          "performer": "claude-review-ce-c1d-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a9305483cf5f1570186f6b526ac73167f6bb9d8e",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1d-spec-r2",
+            "digest": "sha256:e8d9de69d9e16f03efeffe6d0a454d424420de40f6c2ce9837d7aa2bb6f00e56",
+            "excerpt": "Spec CE-C1D round 2: SP1, SP2, and SP3 closed. SP4: ticket 4 does not carry the two conformance tier files that the repair writes. The axis confirmed the rewritten delivery sentence, the byte-for-byte needle, and that the Forbid row cannot reach the review route."
+          },
+          "axis": "Spec",
+          "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
+          "tip": "e38d64bd72a1ca4b0cadde211f491178951633a0",
+          "finding_ids": [
+            "CE-C1D-SP4"
+          ],
+          "supersedes": [
+            "ce-c1d-r1-spec"
+          ]
+        },
+        {
+          "id": "ce-c1d-r2-coverage",
+          "performer": "claude-review-ce-c1d-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a9305483cf5f1570186f6b526ac73167f6bb9d8e",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1d-coverage-r2",
+            "digest": "sha256:8b30bdd6e14ddc50511f20d513abffd2320bf1b58740ad8a8b23021cd2ba1f12",
+            "excerpt": "Coverage CE-C1D round 2: three findings closed, each by a mutation the axis ran. CV4: the Forbid row grades one literal spelling, and a reordered re-advertisement stayed green. CV5: the pinning test finds only sentences with the pinned lead, and an appended approval waiver stayed green everywhere."
+          },
+          "axis": "Coverage",
+          "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
+          "tip": "e38d64bd72a1ca4b0cadde211f491178951633a0",
+          "finding_ids": [
+            "CE-C1D-CV4",
+            "CE-C1D-CV5"
+          ],
+          "supersedes": [
+            "ce-c1d-r1-coverage"
+          ]
+        },
+        {
+          "id": "ce-c1d-r3-standards",
+          "performer": "claude-review-ce-c1d-standards-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ffd12dc914722f0e9066e7521ca7a17ecd9054b",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1d-standards-r3",
+            "digest": "sha256:24a80d2955ff5d27febab9dcdb9ac63e91e802c7409a7aa85df2b535012d1c2c",
+            "excerpt": "Standards CE-C1D round 3: ST3, ST6, ST8, ST9, and the ST10 implementation all closed. ST11: the guidance checks carry a second paragraph and sentence parser, and it disagrees with the prose gate. The axis accepted the independent expectation table and confirmed the literal Forbid row and the pair rule do not subsume each other."
+          },
+          "axis": "Standards",
+          "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
+          "tip": "8b23ab36c188b71632c2a87d3e5b686fb6241dbb",
+          "finding_ids": [
+            "CE-C1D-ST11"
+          ],
+          "supersedes": [
+            "ce-c1d-r2-standards"
+          ]
+        },
+        {
+          "id": "ce-c1d-r3-spec",
+          "performer": "claude-review-ce-c1d-spec-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ffd12dc914722f0e9066e7521ca7a17ecd9054b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1d-spec-r3",
+            "digest": "sha256:4416fd3de26755692cf48f6a2c7cad7cd6b558930b978257d21eff7a46fdc7d2",
+            "excerpt": "Spec CE-C1D round 3: SP4 closed and no new finding. The axis confirmed the six rows hold and that TestEvidenceRemovedBuildFull exists under the name the spec cites. It flagged that the new pair test should become a cited seam at the coverage citation reconciliation."
+          },
+          "axis": "Spec",
+          "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
+          "tip": "8b23ab36c188b71632c2a87d3e5b686fb6241dbb",
+          "finding_ids": [],
+          "supersedes": [
+            "ce-c1d-r2-spec"
+          ]
+        },
+        {
+          "id": "ce-c1d-r3-coverage",
+          "performer": "claude-review-ce-c1d-coverage-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ffd12dc914722f0e9066e7521ca7a17ecd9054b",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:ce-c1d-coverage-r3",
+            "digest": "sha256:93d92b46bba5ac6ea7074cbfc92c36c5222b9601efb3d322f6aaf7856ba49054",
+            "excerpt": "Coverage CE-C1D round 3: CV4 and CV5 closed, each by a mutation the axis ran. Four are new. CV6: a waiver sentence in the paragraph above the pinned one escapes every check. CV7: a reordered retired form split across two lines evades the line-scoped pair rule. CV8: the pinning rule reds on a pure reflow. CV9: both new rules can be weakened in place with no red."
+          },
+          "axis": "Coverage",
+          "base": "687a5fc3e3b7568ea1a990c79cb65eebee4351b5",
+          "tip": "8b23ab36c188b71632c2a87d3e5b686fb6241dbb",
+          "finding_ids": [
+            "CE-C1D-CV6",
+            "CE-C1D-CV7",
+            "CE-C1D-CV8",
+            "CE-C1D-CV9"
+          ],
+          "supersedes": [
+            "ce-c1d-r2-coverage"
+          ]
+        }
+      ]
     }
   ],
   "completion": {
