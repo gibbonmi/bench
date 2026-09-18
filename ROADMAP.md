@@ -65,7 +65,7 @@ findings in the owner details.
 
 **FT293 (MEDIUM, decision required) — preflight-closed ticket Writes determine registry pins and blocker edges.**
 
-**FT300 (MEDIUM) — ticket slicing verifies fixture ownership and executable evidence.**
+**FT300 (MEDIUM) — the slicer guidance sweeps every input constructor, and one reference owns the fence rule.**
 
 **FT317 (MEDIUM, decision required) — a capability-blocked acceptance row has one decided value at the completion checkpoint.**
 
@@ -73,9 +73,7 @@ findings in the owner details.
 
 **FT319 (MEDIUM) — the implement and review phase files state the chunk chain and the record order.**
 
-**FT320 (MEDIUM) — the `craft-review` finding discipline states three reader rules.**
-
-**FT321 (LOW) — the `craft-delegate` references freeze a stated confidence and carry the transport consumer protocol.**
+**FT320 (MEDIUM) — the `craft-review` finding discipline states three reader rules and one return rule.**
 
 **FT322 (LOW) — `craft-line` resolves a recorded fork line and times a consultation question.**
 
@@ -181,6 +179,8 @@ requirements are met.
 
 **FT328 (MEDIUM, parked pending a repro) — a sandboxed evidence reader takes its shared lock without store write access.**
 
+**FT329 (LOW, parked pending a repro) — `bench consumers --changed` does not report a changed function as deleted.**
+
 **FT38 (LOW, decision required) — dashboard visual identity pass.**
 
 **FT100 (LOW) — prose-weight pass on the kit's guidance surface.**
@@ -258,6 +258,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT300 ticket authority and final-consumer verification — /bench-write-spec
+1. FT300 input-constructor sweep and one fence-rule owner — a `craft-synthesis` kit edit to `craft-spec` and its slicing references.
 2. FT319 chunk chain and record order in the phase files — a `craft-synthesis` kit edit to the implement and review phase files.
 3. FT316 checkpoint and landing refusals name the expected commit — /bench-debug
