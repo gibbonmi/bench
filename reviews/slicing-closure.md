@@ -161,11 +161,47 @@ Finding count: 0. Worst issue: none. A probe that dropped the spec-folder implic
 
 The author ran the whole gate green at the repair tree, the system suite included. The plan probe bit again with 135 failed tests, and the file was restored. A probe that skipped implicit-entry removal on the fence side made the new SC19 case fail.
 
+## SC-C3: review round 1
+
+Frozen pair: base `63370b6e0fc26d7d97f76a3ab90e5a7c13d6d078`, tip `e315c9e0a7392849df2eba3dcac0dd39b5729a90`.
+The raw finding count is 3. The de-duplicated repair-target count is 2, because ST1 and SP1 name the same list.
+Repair cycles used: 0 of 2.
+
+The plan digest moved again, because the SC-C3 mutation now runs through `docs-currency-workflow`. That check grades the live anchor group, and the anchors package does not. The record chains a second identity amendment.
+
+### Standards
+
+Finding count: 1. Worst issue: ST1.
+
+- SC-C3-ST1 (auto-fix, confidence 7): The pointer in the skill and the reference introduction claim to list every rule that the parser and build preflight enforce. The list holds the `Writes:` rules and two field rules only. Narrow both claims to the `Writes:` rules.
+
+### Spec
+
+Finding count: 1. Worst issue: SP1.
+
+- SC-C3-SP1 (auto-fix, confidence 6): Story 19 requires every enforced `Writes:` rule. The list omits the single required `Writes:` field and the rule that each entry is representable. Add both rules. SP1 and ST1 take one repair.
+
+### Coverage
+
+Finding count: 1. Worst issue: CV1.
+
+- SC-C3-CV1 (auto-fix, confidence 9): Map rows SC24 to SC31 name `TestTicketSlicingPasses` as the grader of a deleted live sentence. That test grades temporary trees only, and `docs-currency-workflow` grades the live sentence. Amend each seam cell. The amendment takes a repair ticket that cites each amended row.
+
+### Advice
+
+- `craft-spec` restates the fence-union fact that the reference now states. A merge edits a file outside the fence, so it needs a reviewer decision.
+- Six older enforced bullets have no anchor row, and the reason sentence of each slicing rule has no anchor row. Story 26 asks for rows for the new rules only.
+- The registry file adds a file-path constant, where sibling registry files repeat the literal.
+
+### Author verification
+
+The author ran the anchors suite, the budget check, the prose check, and the whole gate green at the ticket tree. `TestTicketSlicingPasses` was red before the registry rows existed. The plan probe deleted the rerun-preflight sentence. Under the anchors package it was silent, and under `docs-currency-workflow` it bit and restored the file.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/slicing-closure/spec.md",
-  "plan_digest": "sha256:1ed9c9b2b02c08e21b3aaaaf1b3d7d2e9000996ba380241425f8eca1c3dbc7ee",
+  "plan_digest": "sha256:99d9713f3d61b00f663beeefe0c46d7aafbc6602e54f107d6b3f89532378886d",
   "implementation_session": "slicing-closure-retained-author",
   "chunks": [
     {
@@ -829,12 +865,197 @@ The author ran the whole gate green at the repair tree, the system suite include
           ]
         }
       ]
+    },
+    {
+      "id": "SC-C3",
+      "base": "63370b6e0fc26d7d97f76a3ab90e5a7c13d6d078",
+      "tip": "e315c9e0a7392849df2eba3dcac0dd39b5729a90",
+      "plan_digest": "sha256:99d9713f3d61b00f663beeefe0c46d7aafbc6602e54f107d6b3f89532378886d",
+      "source_digest": "bb341ba8404e467af842f0a34963199569331ef3",
+      "acceptance_rows": [
+        "SC24",
+        "SC25",
+        "SC26",
+        "SC27",
+        "SC28",
+        "SC29",
+        "SC30",
+        "SC31"
+      ],
+      "verification": [
+        {
+          "id": "sc-c3-v1-anchors",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bb341ba8404e467af842f0a34963199569331ef3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:641ddcabed66d0ef363743ba81840eeb3e2aa612975f92943357fa3c6438a33d",
+            "excerpt": "bench test --package ./internal/anchors at e315c9e0 tree: pass, 485 ms; TestTicketSlicingPasses was red before the registry rows"
+          },
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "sc-c3-v1-budget",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bb341ba8404e467af842f0a34963199569331ef3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:b3674ee211e2cd6c54600c9351828c864403c0c90c045a5063bb47275ce72c24",
+            "excerpt": "bench test --check guidance-prose-budgets at e315c9e0 tree: pass"
+          },
+          "requirement": "budget",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "sc-c3-v1-prose",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bb341ba8404e467af842f0a34963199569331ef3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:cf3b8707bba66644156c47e51d0ec66a2f3798107339570ff6f9ed42d36c200e",
+            "excerpt": "bench test --check prose at e315c9e0 tree: exit 0"
+          },
+          "requirement": "prose",
+          "command": "bench test --check prose",
+          "exit_code": 0
+        },
+        {
+          "id": "sc-c3-v1-mutation",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bb341ba8404e467af842f0a34963199569331ef3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:8bd0122553d69360e5fe9a8051b292fe6413961f62f0a9aaca212b0dfc4a0ced",
+            "excerpt": "bench test --check docs-currency-workflow at e315c9e0 tree: baseline passed before the probe"
+          },
+          "requirement": "mutation",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "delete the rerun-preflight sentence from the reference",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:retained-author",
+              "digest": "sha256:58f598c7358826eca6611f94bd678b0f44b700f8c2ed5439027ccd7b03450010",
+              "excerpt": "bench probe .agents/skills/bench-craft-tickets/references/slicing-checks.md --omit 'The slicer runs build preflight again after each fence change and before review.' --check docs-currency-workflow at e315c9e0 tree: verdict bit, 1 failed test TestRootConformance naming 'ticket slicing: build preflight reruns after each fence change', restored=yes"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "sc-c3-r1-standards",
+          "performer": "sc-c3-r1-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bb341ba8404e467af842f0a34963199569331ef3",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c3-r1-standards",
+            "digest": "sha256:f47cba34e1153e77b76cfb17081d70fae7bd4559a3c6b0925ccae87084c16087",
+            "excerpt": "Standards SC-C3: 1 finding. ST1 blocker auto-fix: the pointer and the reference claim to list every rule the parser and preflight enforce, but list only Writes rules and two field rules. Advice ask-user: craft-spec restates the fence-union fact; anchor bullet omits paths under the entry."
+          },
+          "axis": "Standards",
+          "base": "63370b6e0fc26d7d97f76a3ab90e5a7c13d6d078",
+          "tip": "e315c9e0a7392849df2eba3dcac0dd39b5729a90",
+          "finding_ids": [
+            "SC-C3-ST1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sc-c3-r1-spec",
+          "performer": "sc-c3-r1-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bb341ba8404e467af842f0a34963199569331ef3",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c3-r1-spec",
+            "digest": "sha256:025e9eaee055bff634eff71289bc07571342f57f459164634745c8ee17a5e64f",
+            "excerpt": "Spec SC-C3: 1 finding. SP1 low ask-user: story 19 requires every enforced Writes rule; the list omits the required single Writes field and the TOON-representable entry rule. SC24 to SC31 met; the mutation amendment stays inside approved behavior."
+          },
+          "axis": "Spec",
+          "base": "63370b6e0fc26d7d97f76a3ab90e5a7c13d6d078",
+          "tip": "e315c9e0a7392849df2eba3dcac0dd39b5729a90",
+          "finding_ids": [
+            "SC-C3-SP1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sc-c3-r1-coverage",
+          "performer": "sc-c3-r1-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bb341ba8404e467af842f0a34963199569331ef3",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c3-r1-coverage",
+            "digest": "sha256:f0f6c67ad0bf00c0329fc8e925dcbee45721b533bac093dd154520428f426c07",
+            "excerpt": "Coverage SC-C3: 1 finding. CV1 low auto-fix: map rows SC24 to SC31 name TestTicketSlicingPasses as the seam of a live deletion, but that test grades temporary trees; docs-currency-workflow is the live grader. Four wrong-edit probes bit."
+          },
+          "axis": "Coverage",
+          "base": "63370b6e0fc26d7d97f76a3ab90e5a7c13d6d078",
+          "tip": "e315c9e0a7392849df2eba3dcac0dd39b5729a90",
+          "finding_ids": [
+            "SC-C3-CV1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "amendments": [
     {
       "from": "sha256:31ed8f167590e10e2ce870eab3f9c7224bc3eb23a843e98c9b9f50c9020a16c2",
       "to": "sha256:1ed9c9b2b02c08e21b3aaaaf1b3d7d2e9000996ba380241425f8eca1c3dbc7ee",
+      "chunk_ids": {
+        "SC-C1": [
+          "SC-C1"
+        ],
+        "SC-C2": [
+          "SC-C2"
+        ],
+        "SC-C3": [
+          "SC-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1ed9c9b2b02c08e21b3aaaaf1b3d7d2e9000996ba380241425f8eca1c3dbc7ee",
+      "to": "sha256:99d9713f3d61b00f663beeefe0c46d7aafbc6602e54f107d6b3f89532378886d",
       "chunk_ids": {
         "SC-C1": [
           "SC-C1"
