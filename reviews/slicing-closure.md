@@ -197,11 +197,37 @@ Finding count: 1. Worst issue: CV1.
 
 The author ran the anchors suite, the budget check, the prose check, and the whole gate green at the ticket tree. `TestTicketSlicingPasses` was red before the registry rows existed. The plan probe deleted the rerun-preflight sentence. Under the anchors package it was silent, and under `docs-currency-workflow` it bit and restored the file.
 
+## SC-C3: review round 2
+
+Frozen pair: base `63370b6e0fc26d7d97f76a3ab90e5a7c13d6d078`, tip `5300fba634d6375a30ae9e7d4a6e45804572385f`.
+The raw finding count is 2. The de-duplicated repair-target count is 2.
+Repair cycles used: 1 of 2. Repair cycle 1 closed ST1, SP1, and CV1, and added repair ticket 4 to chunk SC-C3.
+
+### Standards
+
+Finding count: 0. Worst issue: none. The axis confirmed the ST1 fold.
+
+### Spec
+
+Finding count: 1. Worst issue: SP2.
+
+- SC-C3-SP2 (auto-fix, confidence 7): The chunk table row for SC-C3 names only ticket 3, and its tests cell omits `docs-currency-workflow`. The seam diagram has the same gap.
+
+### Coverage
+
+Finding count: 1. Worst issue: CV2.
+
+- SC-C3-CV2 (auto-fix, confidence 7): Repair cycle 1 moved the test-file clause out of the pinned anchor closure sentence. A deleted clause now stays green, and story 4 needs that clause. Put the clause back inside the pinned sentence.
+
+### Advice
+
+- The reference introduction reads as a complete list of `Blocked by:` and `Covers:` rules. The repair says "some" rules.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/slicing-closure/spec.md",
-  "plan_digest": "sha256:99d9713f3d61b00f663beeefe0c46d7aafbc6602e54f107d6b3f89532378886d",
+  "plan_digest": "sha256:d006b521077c6b04dee9747bd1c7c6424f0e3597aff8d0242acd06b0e0e6212f",
   "implementation_session": "slicing-closure-retained-author",
   "chunks": [
     {
@@ -869,9 +895,9 @@ The author ran the anchors suite, the budget check, the prose check, and the who
     {
       "id": "SC-C3",
       "base": "63370b6e0fc26d7d97f76a3ab90e5a7c13d6d078",
-      "tip": "e315c9e0a7392849df2eba3dcac0dd39b5729a90",
-      "plan_digest": "sha256:99d9713f3d61b00f663beeefe0c46d7aafbc6602e54f107d6b3f89532378886d",
-      "source_digest": "bb341ba8404e467af842f0a34963199569331ef3",
+      "tip": "5300fba634d6375a30ae9e7d4a6e45804572385f",
+      "plan_digest": "sha256:d006b521077c6b04dee9747bd1c7c6424f0e3597aff8d0242acd06b0e0e6212f",
+      "source_digest": "c66ad2f84c045a91cac85deaae01bea3cc18b9d6",
       "acceptance_rows": [
         "SC24",
         "SC25",
@@ -1033,6 +1059,72 @@ The author ran the anchors suite, the budget check, the prose check, and the who
             "SC-C3-CV1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "sc-c3-r2-standards",
+          "performer": "sc-c3-r1-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c66ad2f84c045a91cac85deaae01bea3cc18b9d6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c3-r1-standards",
+            "digest": "sha256:b865908644243d942dcbd533a827973bda0d230e1179a37238dabae176baa5f7",
+            "excerpt": "Standards SC-C3 round 2 at 5300fba6: no findings. ST1 closed; the two new Writes rules match the parser and preflight. Advice: 'the Blocked by: and Covers: rules beside them' reads as complete."
+          },
+          "axis": "Standards",
+          "base": "63370b6e0fc26d7d97f76a3ab90e5a7c13d6d078",
+          "tip": "5300fba634d6375a30ae9e7d4a6e45804572385f",
+          "finding_ids": [],
+          "supersedes": [
+            "sc-c3-r1-standards"
+          ]
+        },
+        {
+          "id": "sc-c3-r2-spec",
+          "performer": "sc-c3-r1-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c66ad2f84c045a91cac85deaae01bea3cc18b9d6",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c3-r1-spec",
+            "digest": "sha256:90760bb4268498f7801aa7d477ba53e2009d8aaf382492e6b52dd188cbcf1d2e",
+            "excerpt": "Spec SC-C3 round 2 at 5300fba6: F1 closed; SC24 to SC31 met. SP2 low auto-fix: the chunk table SC-C3 row names only ticket 3 and omits docs-currency-workflow."
+          },
+          "axis": "Spec",
+          "base": "63370b6e0fc26d7d97f76a3ab90e5a7c13d6d078",
+          "tip": "5300fba634d6375a30ae9e7d4a6e45804572385f",
+          "finding_ids": [
+            "SC-C3-SP2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sc-c3-r2-coverage",
+          "performer": "sc-c3-r1-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c66ad2f84c045a91cac85deaae01bea3cc18b9d6",
+          "state": "completed",
+          "outcome": "findings",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c3-r1-coverage",
+            "digest": "sha256:7d9f38efd5eeab40e0a6b310dd6c1310998df65a08bd9bc6c1294c3460c99ebc",
+            "excerpt": "Coverage SC-C3 round 2 at 5300fba6: F1 folded. CV2 low auto-fix: 'Test files count.' sits outside the pinned anchor closure needle, so deleting it stays green. Probe swapping 'above' for 'below' bit; deleting the test-file sentence was silent."
+          },
+          "axis": "Coverage",
+          "base": "63370b6e0fc26d7d97f76a3ab90e5a7c13d6d078",
+          "tip": "5300fba634d6375a30ae9e7d4a6e45804572385f",
+          "finding_ids": [
+            "SC-C3-CV2"
+          ],
+          "supersedes": []
         }
       ]
     }
@@ -1056,6 +1148,21 @@ The author ran the anchors suite, the budget check, the prose check, and the who
     {
       "from": "sha256:1ed9c9b2b02c08e21b3aaaaf1b3d7d2e9000996ba380241425f8eca1c3dbc7ee",
       "to": "sha256:99d9713f3d61b00f663beeefe0c46d7aafbc6602e54f107d6b3f89532378886d",
+      "chunk_ids": {
+        "SC-C1": [
+          "SC-C1"
+        ],
+        "SC-C2": [
+          "SC-C2"
+        ],
+        "SC-C3": [
+          "SC-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:99d9713f3d61b00f663beeefe0c46d7aafbc6602e54f107d6b3f89532378886d",
+      "to": "sha256:d006b521077c6b04dee9747bd1c7c6424f0e3597aff8d0242acd06b0e0e6212f",
       "chunk_ids": {
         "SC-C1": [
           "SC-C1"
