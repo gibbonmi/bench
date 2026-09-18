@@ -45,6 +45,35 @@ Finding count: 1. Worst issue: CV1.
 The author ran the anchors suite and the preflight suites green at the ticket tree. The plan probe swapped the prefix branch of `anchorFiles` to an exact match. One test failed, `TestAnchorClosureCoversDirectoryEntry`, and the file was restored.
 A second author probe removed the anchor kind from `closureFamily`. All six new preflight tests failed, and the file was restored. This probe stands in for the pre-edit red of SC1, SC2, SC3, SC7, SC9, and SC12.
 
+## SC-C1: review round 2
+
+Frozen pair: base `8434378b37c39f48e9dcc3d1247329d0fcc4b74f`, tip `b1bee1fa8bafbd40b2e698405fb2842f40ba685a`.
+The raw finding count is 0. The de-duplicated repair-target count is 0.
+Repair cycles used: 1 of 2. Repair cycle 1 closed ST1 and CV1.
+The reviewer decided CV1: `splitWritesEntry` drops a trailing `/`, so every closure reads a slash-spelled directory entry the same way.
+
+### Standards
+
+Finding count: 0. Worst issue: none. The axis confirmed the ST1 fold.
+
+### Spec
+
+Finding count: 0. Worst issue: none. SC1 to SC13 hold, and the shared split stays inside story 3.
+
+### Coverage
+
+Finding count: 0. Worst issue: none. The axis confirmed the CV1 fold with its own probe.
+
+### Advice
+
+- `fenceAuthorizes` and `splitWritesEntry` each drop a trailing `/`. SC-C2 compares both sides, so it folds the rule into one normalizer.
+- A double slash, for example `.agents/x//`, still takes no anchor requirement. No story decides that spelling.
+
+### Author verification
+
+The author ran the anchors suite and the preflight suites green at the repair tip. The plan probe swapped the `pathCovered` call in `anchorFiles` to an exact match. One test failed, `TestAnchorClosureCoversDirectoryEntry`, and the file was restored.
+A second author probe restored the old split, which keeps the trailing slash. The two slash cases failed, and the file was restored.
+
 ```bench-review-record
 {
   "version": 1,
@@ -55,9 +84,9 @@ A second author probe removed the anchor kind from `closureFamily`. All six new 
     {
       "id": "SC-C1",
       "base": "8434378b37c39f48e9dcc3d1247329d0fcc4b74f",
-      "tip": "e8b8e3993ca29e936b50a710fdbf8b668088c000",
+      "tip": "b1bee1fa8bafbd40b2e698405fb2842f40ba685a",
       "plan_digest": "sha256:31ed8f167590e10e2ce870eab3f9c7224bc3eb23a843e98c9b9f50c9020a16c2",
-      "source_digest": "5463d91bcfbd2633888ee41245c86f6aa3ad5cb6",
+      "source_digest": "99a6f190b0905da038a01e85f14a00d62d2b5a4e",
       "acceptance_rows": [
         "SC1",
         "SC2",
@@ -138,6 +167,71 @@ A second author probe removed the anchor kind from `closureFamily`. All six new 
               "excerpt": "bench probe internal/preflight/closure.go --swap 'if literal != path && !strings.HasPrefix(literal, path+\"/\") {' --with 'if literal != path {' --package ./internal/preflight/...: verdict bit, 1 failed test TestAnchorClosureCoversDirectoryEntry, restored=yes"
             }
           }
+        },
+        {
+          "id": "sc-c1-v2-anchors",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "99a6f190b0905da038a01e85f14a00d62d2b5a4e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:1cc059af59a28408186304d6ca714f17e37c9622f945b34526893f84c1447229",
+            "excerpt": "bench test --package ./internal/anchors at b1bee1fa: pass, 444 ms"
+          },
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "sc-c1-v2-preflight",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "99a6f190b0905da038a01e85f14a00d62d2b5a4e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:3b9d7f8517052ea18b59966dbd563cad0ad73510ee2cd80a125a672bb4e18d89",
+            "excerpt": "bench test --package ./internal/preflight/... at b1bee1fa: pass, preflight 17054 ms, evidencecmd 7214 ms"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "sc-c1-v2-mutation",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "99a6f190b0905da038a01e85f14a00d62d2b5a4e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:72571c1467b43765c018dabde115f90c42bf08516d69fd5f12190da71c0b5a55",
+            "excerpt": "bench test --package ./internal/preflight/... at b1bee1fa: baseline passed before the probe"
+          },
+          "requirement": "mutation",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "return no anchor requirement for a directory Writes entry",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:retained-author",
+              "digest": "sha256:ac2b6e2176a532867017ee1774cc47886fd74c4e1862b68e19c0675e6ec5bffe",
+              "excerpt": "bench probe internal/preflight/closure.go --swap 'if !pathCovered(literal, []string{path}) {' --with 'if literal != path {' --package ./internal/preflight/...: verdict bit, 1 failed test TestAnchorClosureCoversDirectoryEntry, restored=yes"
+            }
+          }
         }
       ],
       "reviews": [
@@ -204,6 +298,72 @@ A second author probe removed the anchor kind from `closureFamily`. All six new 
             "SC-C1-CV1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "sc-c1-r2-standards",
+          "performer": "sc-c1-r1-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "99a6f190b0905da038a01e85f14a00d62d2b5a4e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c1-r1-standards",
+            "digest": "sha256:74f2c83a24662b074cad211ec2bac78bde37e1cead86b5eb0425e9de71cfdb98",
+            "excerpt": "Standards SC-C1 re-review at b1bee1fa: no findings above the blocking bar. S1 folded. Advice for SC-C2: fold the trailing-slash rule of fenceAuthorizes and splitWritesEntry into one normalizer."
+          },
+          "axis": "Standards",
+          "base": "8434378b37c39f48e9dcc3d1247329d0fcc4b74f",
+          "tip": "b1bee1fa8bafbd40b2e698405fb2842f40ba685a",
+          "finding_ids": [],
+          "supersedes": [
+            "sc-c1-r1-standards"
+          ]
+        },
+        {
+          "id": "sc-c1-r2-spec",
+          "performer": "sc-c1-r1-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "99a6f190b0905da038a01e85f14a00d62d2b5a4e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c1-r1-spec",
+            "digest": "sha256:c30e3ae8f8fc3232ad42b2b86c1886ee758510c3d249669905e654ef3ef0ee67",
+            "excerpt": "Spec SC-C1 re-review at b1bee1fa: no findings. SC1 to SC13 hold; SC3 and SC7 gain slash cases; the shared split stays inside story 3 and the anchor closure clause."
+          },
+          "axis": "Spec",
+          "base": "8434378b37c39f48e9dcc3d1247329d0fcc4b74f",
+          "tip": "b1bee1fa8bafbd40b2e698405fb2842f40ba685a",
+          "finding_ids": [],
+          "supersedes": [
+            "sc-c1-r1-spec"
+          ]
+        },
+        {
+          "id": "sc-c1-r2-coverage",
+          "performer": "sc-c1-r1-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "99a6f190b0905da038a01e85f14a00d62d2b5a4e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c1-r1-coverage",
+            "digest": "sha256:07a8ee602847b16f9ea36fef55ecdcaef6f9cae059a1c138f79ba4db6eb00de0",
+            "excerpt": "Coverage SC-C1 re-review at b1bee1fa: no findings. C1 closed. Advice: a double slash .agents/x// still yields anchor-closure green; path.Clean in the split would close it."
+          },
+          "axis": "Coverage",
+          "base": "8434378b37c39f48e9dcc3d1247329d0fcc4b74f",
+          "tip": "b1bee1fa8bafbd40b2e698405fb2842f40ba685a",
+          "finding_ids": [],
+          "supersedes": [
+            "sc-c1-r1-coverage"
+          ]
         }
       ]
     }
