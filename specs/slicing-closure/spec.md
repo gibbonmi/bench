@@ -112,14 +112,14 @@ One retained implementation session owns the build after approval. Each ticket i
 | --- | --- | --- | --- | --- |
 | SC-C1 / `1-close-anchor-registry-writes.md` | Preflight grades and proposes anchor closure | SC1, SC2, SC3, SC4, SC5, SC6, SC7, SC8, SC9, SC10, SC11, SC12, SC13 | the anchors and preflight tests the rows name | yes |
 | SC-C2 / `2-match-fence-to-writes.md` | Preflight grades the fence against the `Writes:` union | SC14, SC15, SC16, SC17, SC18, SC19, SC20, SC21, SC22, SC23 | the preflight tests the rows name | no |
-| SC-C3 / `3-state-slicing-checks.md` | The slicer reads every enforced rule and six judgment rules | SC24, SC25, SC26, SC27, SC28, SC29, SC30, SC31 | `TestTicketSlicingPasses` and the prose budget check | no |
+| SC-C3 / `3-state-slicing-checks.md`, `4-repair-slicing-checks-review.md` | The slicer reads every enforced `Writes:` rule and six judgment rules | SC24, SC25, SC26, SC27, SC28, SC29, SC30, SC31 | `docs-currency-workflow`, `TestTicketSlicingPasses`, and the prose budget check | no |
 
 ## Testing decisions
 
 - A good test drives `Decide` over constructed facts, or drives `bench preflight build` over a seeded repository, and reads the rendered row. It never reads an internal field.
 - The closure rows follow the fixture-closure and registry-closure tests. The command test follows `TestCommandBuildRendersSixGrammarRows`.
 - The anchor scan tests build a temporary directory and call the anchors function directly.
-- The guidance rows attach to the anchor harness test that pins the ticket-slicing group, and to the guidance prose budget check.
+- The guidance rows attach to `docs-currency-workflow`, which grades the live sentences. They also attach to the ticket-slicing anchor test and the prose budget check.
 
 ### Seam diagram
 
@@ -133,7 +133,7 @@ One retained implementation session owns the build after approval. Each ticket i
         │
         ▼
     craft-tickets SKILL.md + references/slicing-checks.md  ──▶  [ anchor registry evaluation ]  ──▶  diagnostics
-                      ◀ tests attach here: TestTicketSlicingPasses states each needle independently
+                      ◀ tests attach here: docs-currency-workflow grades the live tree; TestTicketSlicingPasses states each needle independently
 
 ### Acceptance coverage map
 

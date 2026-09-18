@@ -2,7 +2,7 @@
 
 Charged from `craft-tickets` when the slicer writes each ticket's `Writes:` line and
 the spec's ownership fence. The first section lists every `Writes:` rule that the ticket
-parser and build preflight enforce, and the `Blocked by:` and `Covers:` rules beside them.
+parser and build preflight enforce, and some `Blocked by:` and `Covers:` rules beside them.
 The second section states the slicing rules that no check enforces, each from a repair
 round that a retrospective recorded.
 
@@ -18,7 +18,7 @@ round that a retrospective recorded.
   that pins it.
 - A `Writes:` entry that names a bound package also names every registry file that the
   binding registry binds to that package.
-- A `Writes:` entry that names an anchored guidance path, or a directory above one, also names every anchor registry file that names that path. Test files count.
+- A `Writes:` entry for an anchored guidance path, or a directory above one, names every anchor registry file that names it, test files included.
 - The spec's ownership fence equals the union of the ticket `Writes:` paths, less the review pickup and every path under the spec folder or `capture`.
 - A ticket that writes a system-tagged test file states `BENCH_KIT`.
 - `Covers:` holds `none` or declared row IDs. Cite each ID in full, because preflight
