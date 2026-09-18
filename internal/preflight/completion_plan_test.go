@@ -1,39 +1,16 @@
 package preflight
 
 import (
-	"encoding/json"
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/reviewrecord"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
-
-// planFence renders the bench-completion-plan section the checkpoint reader
-// parses, as one chunk over tickets. Every seeded spec carries it, so a green
-// fixture states the plan the landing later requires. The section heading
-// closes the ownership-fence section above it, so no payload byte reads as a
-// fence token.
-func planFence(tickets ...string) string {
-	plan := reviewrecord.Plan{
-		Version: 1,
-		Chunks: []reviewrecord.PlannedChunk{{
-			ID:           "c1",
-			Tickets:      tickets,
-			Verification: []reviewrecord.Requirement{{ID: "tests", Command: "go test ./..."}},
-		}},
-		FinalVerification: []reviewrecord.Requirement{{ID: "acceptance", Command: "go test ./..."}},
-	}
-	data, err := json.Marshal(plan)
-	if err != nil {
-		panic(err)
-	}
-	return "\n## Completion plan\n\n```bench-completion-plan\n" + string(data) + "\n```\n"
-}
 
 // specWithoutPlan is the seeded spec body with its completion plan removed, the
 // state every spec written before the checkpoint reader is in.
 func specWithoutPlan(slug string) string {
-	return strings.TrimSuffix(specBody(slug), planFence("one.md"))
+	return strings.TrimSuffix(preflighttest.SpecBody(slug), preflighttest.PlanFence("one.md"))
 }
 
 // replanSpec rewrites the seeded spec so its completion plan names tickets, the
@@ -41,7 +18,7 @@ func specWithoutPlan(slug string) string {
 // never orders, so a fixture that grows its graph states that graph here.
 func replanSpec(t *testing.T, slug string, tickets ...string) {
 	t.Helper()
-	mustWriteFile(t, "specs/"+slug+"/spec.md", specWithoutPlan(slug)+planFence(tickets...))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", specWithoutPlan(slug)+preflighttest.PlanFence(tickets...))
 }
 
 // planRow is the rendered completion-plan row of one verdict table.
@@ -61,9 +38,9 @@ func planRow(t *testing.T, out string) string {
 // landing's checkpoint, so the build refuses before the work starts rather
 // than at the checkpoint after it.
 func TestCommandBuildRedsAbsentCompletionPlan(t *testing.T) {
-	_, slug := seedConformant(t)
-	mustWriteFile(t, "specs/"+slug+"/spec.md", specWithoutPlan(slug))
-	runGit(t, "commit", "-q", "-a", "-m", "drop the completion plan")
+	_, slug := preflighttest.SeedConformant(t)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", specWithoutPlan(slug))
+	preflighttest.RunGit(t, "commit", "-q", "-a", "-m", "drop the completion plan")
 
 	out, code := Command([]string{"build", slug})
 	if code != 1 {
@@ -78,7 +55,7 @@ func TestCommandBuildRedsAbsentCompletionPlan(t *testing.T) {
 // TestCommandBuildGreenCompletionPlan is that regression's sibling: the same
 // tree with the plan in place answers green and exits 0.
 func TestCommandBuildGreenCompletionPlan(t *testing.T) {
-	_, slug := seedConformant(t)
+	_, slug := preflighttest.SeedConformant(t)
 
 	out, code := Command([]string{"build", slug})
 	if code != 0 {
@@ -93,9 +70,9 @@ func TestCommandBuildGreenCompletionPlan(t *testing.T) {
 // review phase reads the same plan the checkpoint does, so the missing fence
 // reds there too.
 func TestCommandReviewRedsAbsentCompletionPlan(t *testing.T) {
-	_, slug := seedConformant(t)
-	mustWriteFile(t, "specs/"+slug+"/spec.md", specWithoutPlan(slug))
-	runGit(t, "commit", "-q", "-a", "-m", "drop the completion plan")
+	_, slug := preflighttest.SeedConformant(t)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", specWithoutPlan(slug))
+	preflighttest.RunGit(t, "commit", "-q", "-a", "-m", "drop the completion plan")
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -109,7 +86,7 @@ func TestCommandReviewRedsAbsentCompletionPlan(t *testing.T) {
 
 // TestCommandReviewGreenCompletionPlan is the review-mode green sibling.
 func TestCommandReviewGreenCompletionPlan(t *testing.T) {
-	_, slug := seedConformant(t)
+	_, slug := preflighttest.SeedConformant(t)
 
 	out, code := Command([]string{"review", slug})
 	if code != 0 {

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
 // bareRowCount is the number of check rows one mode renders with no
@@ -29,7 +31,7 @@ func rowHeader(rows int) string {
 func TestSourceTipOmittedKeepsTodaysVerdict(t *testing.T) {
 	for _, mode := range []string{"review", "build"} {
 		t.Run(mode, func(t *testing.T) {
-			_, slug := seedConformant(t)
+			_, slug := preflighttest.SeedConformant(t)
 			out, code := Command([]string{mode, slug})
 			if code != 0 {
 				t.Fatalf("bare %s = (%d):\n%s", mode, code, out)
@@ -50,9 +52,9 @@ func TestSourceTipOmittedKeepsTodaysVerdict(t *testing.T) {
 func TestSourceTipAcceptedByBothModes(t *testing.T) {
 	for _, mode := range []string{"review", "build"} {
 		t.Run(mode, func(t *testing.T) {
-			_, slug := seedConformant(t)
-			base := runGit(t, "rev-parse", "main")
-			tip := runGit(t, "rev-parse", "HEAD")
+			_, slug := preflighttest.SeedConformant(t)
+			base := preflighttest.RunGit(t, "rev-parse", "main")
+			tip := preflighttest.RunGit(t, "rev-parse", "HEAD")
 
 			out, code := Command([]string{mode, slug, "--source-tip", tip})
 			if code != 0 || !strings.Contains(out, "tip-current,green") {
@@ -83,9 +85,9 @@ func TestSourceTipAcceptedByBothModes(t *testing.T) {
 func TestSourceTipMismatchRendersRedRow(t *testing.T) {
 	for _, mode := range []string{"review", "build"} {
 		t.Run(mode, func(t *testing.T) {
-			_, slug := seedConformant(t)
-			base := runGit(t, "rev-parse", "main")
-			tip := runGit(t, "rev-parse", "HEAD")
+			_, slug := preflighttest.SeedConformant(t)
+			base := preflighttest.RunGit(t, "rev-parse", "main")
+			tip := preflighttest.RunGit(t, "rev-parse", "HEAD")
 
 			out, code := Command([]string{mode, slug, "--source-tip", base})
 			if code != 1 || !strings.Contains(out, "tip-current,red") {
@@ -112,7 +114,7 @@ func TestSourceTipMismatchRendersRedRow(t *testing.T) {
 // rather than rendered.
 func TestSourceTipUnresolvableIsAGrammarErrorNotAMismatch(t *testing.T) {
 	t.Run("unreachable revision", func(t *testing.T) {
-		_, slug := seedConformant(t)
+		_, slug := preflighttest.SeedConformant(t)
 		out, code := Command([]string{"review", slug, "--source-tip", "missing"})
 		if code != 1 || !strings.HasPrefix(out, "error: cannot resolve --source-tip") {
 			t.Fatalf("unreachable pin = (%d):\n%s", code, out)
@@ -122,8 +124,8 @@ func TestSourceTipUnresolvableIsAGrammarErrorNotAMismatch(t *testing.T) {
 		}
 	})
 	t.Run("unreachable revision under an explicit base", func(t *testing.T) {
-		_, slug := seedConformant(t)
-		base := runGit(t, "rev-parse", "main")
+		_, slug := preflighttest.SeedConformant(t)
+		base := preflighttest.RunGit(t, "rev-parse", "main")
 		out, code := Command([]string{"build", slug, "--base", base, "--source-tip", "missing"})
 		if code != 1 || !strings.HasPrefix(out, "error: cannot resolve --source-tip") {
 			t.Fatalf("unreachable pin under explicit base = (%d):\n%s", code, out)
@@ -133,7 +135,7 @@ func TestSourceTipUnresolvableIsAGrammarErrorNotAMismatch(t *testing.T) {
 		}
 	})
 	t.Run("control byte", func(t *testing.T) {
-		_, slug := seedConformant(t)
+		_, slug := preflighttest.SeedConformant(t)
 		out, code := Command([]string{"review", slug, "--source-tip", "feature\x1b"})
 		if code != 1 || !strings.Contains(out, "unrepresentable TOON cell") {
 			t.Fatalf("control-byte pin = (%d):\n%s", code, out)

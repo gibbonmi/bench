@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/commands/bench-review-implementation.md",
-    "old": "   Collect the shared evidence once with\n   `bench preflight review <spec> --charge --base <b> --source-tip <t> --full`.\n   Supply the same frozen base that preflight used. The command returns one\n   charge row for each axis. It also returns a `shared_evidence` table with one\n   identity each for diff, consumers, and coverage.",
+    "old": "   Prepare the shared evidence once with\n   `bench preflight review <slug> --charge --base <b> --source-tip <t>`.\n   Supply the same frozen base that preflight used. The command publishes one\n   immutable artifact and prints its identity. Retrieve every byte with\n   `bench preflight evidence <id>` and each exact successor command it prints.\n   The metadata names one charge row for each axis, and it binds the diff,\n   consumers, and coverage captures to their frozen sources.",
     "new": "   Pull the whole base-relative context with `bench diff --full` in\n   explicit-base mode. Supply the same frozen base that preflight used."
   }
 ]

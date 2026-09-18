@@ -1,0 +1,2 @@
+exit: 1
+error: preflight required: tip-current: --source-tip <base> is not the derived source tip <tip> — repair tip-current and rerun the exact charge

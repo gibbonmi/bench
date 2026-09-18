@@ -9,17 +9,18 @@ import (
 
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
 func TestExplicitBaseReviewOwnsSourceRangeNotDestinationHandoff(t *testing.T) {
-	root, slug := seedConformant(t)
-	base := runGit(t, "rev-parse", "main")
-	tip := runGit(t, "rev-parse", "feature")
-	runGit(t, "checkout", "-q", "main")
-	mustWriteFile(t, "capture/session-handoff.md", "destination only\n")
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "destination handoff")
-	runGit(t, "checkout", "-q", "feature")
+	root, slug := preflighttest.SeedConformant(t)
+	base := preflighttest.RunGit(t, "rev-parse", "main")
+	tip := preflighttest.RunGit(t, "rev-parse", "feature")
+	preflighttest.RunGit(t, "checkout", "-q", "main")
+	preflighttest.MustWriteFile(t, "capture/session-handoff.md", "destination only\n")
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "destination handoff")
+	preflighttest.RunGit(t, "checkout", "-q", "feature")
 	facts, boot := Gather(root, "review", slug, base)
 	if boot != nil {
 		t.Fatalf("Gather = %s: %s", boot.Kind, boot.Hint)
@@ -49,9 +50,8 @@ func TestExplicitBaseReviewOwnsSourceRangeNotDestinationHandoff(t *testing.T) {
 	if strings.Join(facts.ChangedPaths, ",") != "internal/example/foo.go" {
 		t.Fatalf("explicit source build paths = %v, want only source-authored path", facts.ChangedPaths)
 	}
-	// The advanced destination default branch is intentionally not an ancestor of
-	// the retained source. An explicit source range remains valid because the
-	// frozen base is an ancestor of its captured source tip.
+	// The advanced destination default branch is not an ancestor of the retained source. An
+	// explicit source range stays valid: its frozen base is an ancestor of its captured tip.
 	out, code = Command([]string{"build", slug, "--base", base})
 	if code != 0 || !strings.Contains(out, "base-current,green") {
 		t.Fatalf("explicit build = (%d):\n%s", code, out)
@@ -70,10 +70,10 @@ func TestExplicitBaseReviewOwnsSourceRangeNotDestinationHandoff(t *testing.T) {
 	if code != 1 || !strings.Contains(out, "base-current,red,default branch tip is not an ancestor of HEAD") {
 		t.Fatalf("bare build after destination advance = (%d):\n%s", code, out)
 	}
-	mustWriteFile(t, "internal/example/staged.go", "package example\n")
-	runGit(t, "add", "internal/example/staged.go")
-	mustWriteFile(t, "internal/example/foo.go", "package example\n// worktree\n")
-	mustWriteFile(t, "internal/example/untracked.go", "package example\n")
+	preflighttest.MustWriteFile(t, "internal/example/staged.go", "package example\n")
+	preflighttest.RunGit(t, "add", "internal/example/staged.go")
+	preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n// worktree\n")
+	preflighttest.MustWriteFile(t, "internal/example/untracked.go", "package example\n")
 	facts, boot = Gather(root, "build", slug, base)
 	if boot != nil {
 		t.Fatalf("build Gather = %s: %s", boot.Kind, boot.Hint)
@@ -95,9 +95,9 @@ func containsPath(paths []string, want string) bool {
 }
 
 func TestExplicitBasePreflightRefusesDirtyReview(t *testing.T) {
-	_, slug := seedConformant(t)
-	base := runGit(t, "rev-parse", "main")
-	mustWriteFile(t, "dirty.txt", "dirty\n")
+	_, slug := preflighttest.SeedConformant(t)
+	base := preflighttest.RunGit(t, "rev-parse", "main")
+	preflighttest.MustWriteFile(t, "dirty.txt", "dirty\n")
 	out, code := Command([]string{"review", slug, "--base", base})
 	if code != 1 || !strings.Contains(out, "source not clean") {
 		t.Fatalf("dirty source = (%d):\n%s", code, out)
@@ -105,9 +105,9 @@ func TestExplicitBasePreflightRefusesDirtyReview(t *testing.T) {
 }
 
 func TestExplicitBasePreflightRetriesConvergedTrackedWorktreeMovement(t *testing.T) {
-	root, slug := seedConformant(t)
-	base := runGit(t, "rev-parse", "main")
-	tip := runGit(t, "rev-parse", "HEAD")
+	root, slug := preflighttest.SeedConformant(t)
+	base := preflighttest.RunGit(t, "rev-parse", "main")
+	tip := preflighttest.RunGit(t, "rev-parse", "HEAD")
 	configBefore, err := os.ReadFile(filepath.Join(root, ".git", "config"))
 	if err != nil {
 		t.Fatal(err)
@@ -116,7 +116,7 @@ func TestExplicitBasePreflightRetriesConvergedTrackedWorktreeMovement(t *testing
 	restore := diff.SetSnapshotAfterReadForTest(func() {
 		calls++
 		if calls == 1 {
-			mustWriteFile(t, "internal/example/foo.go", "package example\n// moved\n")
+			preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n// moved\n")
 		}
 	})
 	defer restore()
@@ -139,14 +139,14 @@ func TestExplicitBasePreflightRetriesConvergedTrackedWorktreeMovement(t *testing
 
 func TestExplicitBasePreflightMovementChecksWholeGather(t *testing.T) {
 	t.Run("converges on post-gather fence movement", func(t *testing.T) {
-		root, slug := seedConformant(t)
-		base := runGit(t, "rev-parse", "main")
+		root, slug := preflighttest.SeedConformant(t)
+		base := preflighttest.RunGit(t, "rev-parse", "main")
 		calls := 0
 		restore := diff.SetSnapshotAfterReadForTest(func() {
 			calls++
 			if calls == 1 {
-				body := strings.Replace(specBody(slug), "`internal/"+slug+"/`", "`specs/"+slug+"/`", 1)
-				mustWriteFile(t, "specs/"+slug+"/spec.md", body)
+				body := strings.Replace(preflighttest.SpecBody(slug), "`internal/"+slug+"/`", "`specs/"+slug+"/`", 1)
+				preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
 			}
 		})
 		defer restore()
@@ -160,13 +160,13 @@ func TestExplicitBasePreflightMovementChecksWholeGather(t *testing.T) {
 		}
 	})
 	t.Run("does not retry past an ordinary gather failure", func(t *testing.T) {
-		root, slug := seedConformant(t)
-		base := runGit(t, "rev-parse", "main")
-		mustWriteFile(t, "specs/"+slug+"/spec.md", strings.Replace(specBody(slug), "Status: staged", "Status: draft", 1))
+		root, slug := preflighttest.SeedConformant(t)
+		base := preflighttest.RunGit(t, "rev-parse", "main")
+		preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", strings.Replace(preflighttest.SpecBody(slug), "Status: staged", "Status: draft", 1))
 		calls := 0
 		restore := diff.SetSnapshotAfterReadForTest(func() {
 			calls++
-			mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
+			preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug))
 		})
 		defer restore()
 
@@ -185,34 +185,34 @@ func TestExplicitBasePreflightRefusesPersistentSnapshotMovement(t *testing.T) {
 		{
 			name: "HEAD",
 			mutate: func(t *testing.T, call int) {
-				mustWriteFile(t, "internal/example/foo.go", "package example\n// head "+string(rune('0'+call))+"\n")
-				runGit(t, "add", "internal/example/foo.go")
-				runGit(t, "commit", "-q", "-m", "move head")
+				preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n// head "+string(rune('0'+call))+"\n")
+				preflighttest.RunGit(t, "add", "internal/example/foo.go")
+				preflighttest.RunGit(t, "commit", "-q", "-m", "move head")
 			},
 		},
 		{
 			name: "index",
 			mutate: func(t *testing.T, call int) {
-				mustWriteFile(t, "internal/example/index.go", "package example\n// index "+string(rune('0'+call))+"\n")
-				runGit(t, "add", "internal/example/index.go")
+				preflighttest.MustWriteFile(t, "internal/example/index.go", "package example\n// index "+string(rune('0'+call))+"\n")
+				preflighttest.RunGit(t, "add", "internal/example/index.go")
 			},
 		},
 		{
 			name: "tracked worktree",
 			mutate: func(t *testing.T, call int) {
-				mustWriteFile(t, "internal/example/foo.go", "package example\n// tracked "+string(rune('0'+call))+"\n")
+				preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n// tracked "+string(rune('0'+call))+"\n")
 			},
 		},
 		{
 			name: "untracked state",
 			mutate: func(t *testing.T, call int) {
-				mustWriteFile(t, "internal/example/untracked.go", "package example\n// untracked "+string(rune('0'+call))+"\n")
+				preflighttest.MustWriteFile(t, "internal/example/untracked.go", "package example\n// untracked "+string(rune('0'+call))+"\n")
 			},
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			root, slug := seedConformant(t)
-			base := runGit(t, "rev-parse", "main")
+			root, slug := preflighttest.SeedConformant(t)
+			base := preflighttest.RunGit(t, "rev-parse", "main")
 			configBefore, err := os.ReadFile(filepath.Join(root, ".git", "config"))
 			if err != nil {
 				t.Fatal(err)
@@ -247,12 +247,12 @@ func TestExplicitBasePreflightRefusesPersistentSnapshotMovement(t *testing.T) {
 }
 
 func TestExplicitBasePreflightRetryActionPreservesArgumentOrder(t *testing.T) {
-	_, slug := seedConformant(t)
-	base := runGit(t, "rev-parse", "main")
+	_, slug := preflighttest.SeedConformant(t)
+	base := preflighttest.RunGit(t, "rev-parse", "main")
 	calls := 0
 	restore := diff.SetSnapshotAfterReadForTest(func() {
 		calls++
-		mustWriteFile(t, "internal/example/foo.go", "package example\n// moved "+string(rune('0'+calls))+"\n")
+		preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n// moved "+string(rune('0'+calls))+"\n")
 	})
 	defer restore()
 
@@ -267,8 +267,8 @@ func TestExplicitBasePreflightRetryActionPreservesArgumentOrder(t *testing.T) {
 }
 
 func TestExplicitBasePreflightRefusesPersistentRawIndexByteMovement(t *testing.T) {
-	root, slug := seedConformant(t)
-	base := runGit(t, "rev-parse", "main")
+	root, slug := preflighttest.SeedConformant(t)
+	base := preflighttest.RunGit(t, "rev-parse", "main")
 	baseline, code := diff.Command([]string{"--base", base, "--full"})
 	if code != 0 {
 		t.Fatalf("baseline full diff = (%d):\n%s", code, baseline)
@@ -292,7 +292,7 @@ func TestExplicitBasePreflightRefusesPersistentRawIndexByteMovement(t *testing.T
 		if binary.BigEndian.Uint32(before[4:8]) == 4 {
 			target = "2"
 		}
-		runGit(t, "update-index", "--index-version="+target)
+		preflighttest.RunGit(t, "update-index", "--index-version="+target)
 		after, err := os.ReadFile(indexPath)
 		if err != nil {
 			t.Fatal(err)
@@ -338,8 +338,8 @@ func TestSnapshotDriftRefusalKeepsPrimaryErrorWhenRetryActionCannotRender(t *tes
 }
 
 func TestExplicitBasePreflightCommandUsesResolvedRootFromSubdirectory(t *testing.T) {
-	root, slug := seedConformant(t)
-	base := runGit(t, "rev-parse", "main")
+	root, slug := preflighttest.SeedConformant(t)
+	base := preflighttest.RunGit(t, "rev-parse", "main")
 	t.Chdir(filepath.Join(root, "internal", slug))
 	out, code := Command([]string{"build", slug, "--base", base})
 	if code != 0 || !strings.Contains(out, "source[1]{base,tip}") {
@@ -348,10 +348,10 @@ func TestExplicitBasePreflightCommandUsesResolvedRootFromSubdirectory(t *testing
 }
 
 func TestExplicitBaseGatherAndAuthorizeUseSuppliedRootOutsideCWD(t *testing.T) {
-	root, slug := seedConformant(t)
-	base := runGit(t, "rev-parse", "main")
-	tip := runGit(t, "rev-parse", "HEAD")
-	destination := initRepo(t)
+	root, slug := preflighttest.SeedConformant(t)
+	base := preflighttest.RunGit(t, "rev-parse", "main")
+	tip := preflighttest.RunGit(t, "rev-parse", "HEAD")
+	destination := preflighttest.StartRepo(t)
 	if root == destination {
 		t.Fatal("source and destination fixture roots unexpectedly match")
 	}
@@ -374,7 +374,7 @@ func TestExplicitBaseGatherAndAuthorizeUseSuppliedRootOutsideCWD(t *testing.T) {
 
 func TestExplicitBasePreflightKeepsOrdinaryFailuresOutOfSnapshotDrift(t *testing.T) {
 	t.Run("unreachable base", func(t *testing.T) {
-		_, slug := seedConformant(t)
+		_, slug := preflighttest.SeedConformant(t)
 		out, code := Command([]string{"build", slug, "--base", "missing"})
 		if code != 1 || !strings.HasPrefix(out, "error: cannot resolve --base") || strings.Contains(out, "snapshot drift") {
 			t.Fatalf("unreachable explicit base = (%d):\n%s", code, out)
@@ -388,12 +388,12 @@ func TestExplicitBasePreflightKeepsOrdinaryFailuresOutOfSnapshotDrift(t *testing
 		}
 	})
 	t.Run("unrepresentable path", func(t *testing.T) {
-		_, slug := seedConformant(t)
-		base := runGit(t, "rev-parse", "main")
+		_, slug := preflighttest.SeedConformant(t)
+		base := preflighttest.RunGit(t, "rev-parse", "main")
 		hostile := "internal/" + slug + "/a\x1bb.go"
-		mustWriteFile(t, hostile, "package example\n")
-		runGit(t, "add", "--", hostile)
-		runGit(t, "commit", "-q", "-m", "hostile path")
+		preflighttest.MustWriteFile(t, hostile, "package example\n")
+		preflighttest.RunGit(t, "add", "--", hostile)
+		preflighttest.RunGit(t, "commit", "-q", "-m", "hostile path")
 		out, code := Command([]string{"build", slug, "--base", base})
 		if code != 1 || !strings.Contains(out, "unrepresentable TOON cell") || strings.Contains(out, "snapshot drift") {
 			t.Fatalf("unrepresentable explicit path = (%d):\n%s", code, out)

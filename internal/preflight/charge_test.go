@@ -8,90 +8,29 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-func chargeArgs(t *testing.T, root, slug string, full bool) []string {
-	t.Helper()
-	activeAssignment(t, root, root)
-	args := []string{"build", slug, "--charge", "--ticket", "one.md", "--base", runGit(t, "rev-parse", "main"), "--source-tip", runGit(t, "rev-parse", "HEAD")}
-	if full {
-		return append(args, "--full")
-	}
-	return args
-}
-
-func TestChargeIdentity(t *testing.T) {
-	root, slug := seedConformant(t)
-	args := chargeArgs(t, root, slug, true)
-	const assignment = "00000000000000000000000000000001"
-	out, code := Command(args)
-	if code != 0 {
-		t.Fatalf("charge exit = %d:\n%s", code, out)
-	}
-	for _, want := range []string{
-		"charge[1]{assignment,checkout,base,source_tip,fence,ticket,writes,evidence,checks,return,complete,next}",
-		"sources[5]{path,identity}", "specs/example/tickets/one.md", args[6], args[8], "specs/example/spec.md", "\"" + assignment + "\"", "," + root + ",", ",specs,", "\"true\"",
-	} {
-		if !strings.Contains(out, want) {
-			t.Errorf("charge omitted %q:\n%s", want, out)
-		}
-	}
-}
-
-func TestChargeTicketEvidence(t *testing.T) {
-	root, slug := seedConformant(t)
-	out, code := Command(chargeArgs(t, root, slug, true))
-	if code != 0 {
-		t.Fatalf("full charge = (%d):\n%s", code, out)
-	}
-	for _, want := range []string{"Writes: specs", "Covers: PF1, PF2", "coverage[2]{row}", "  PF1", "  PF2", "## Acceptance"} {
-		if !strings.Contains(out, want) {
-			t.Errorf("full evidence omitted %q:\n%s", want, out)
-		}
-	}
-}
-
-func TestChargeCanonicalRequirements(t *testing.T) {
-	for _, source := range []string{delegateSkill, delegateProcedure, buildPhase} {
-		t.Run(source, func(t *testing.T) {
-			root, slug := seedConformant(t)
-			before, code := Command(chargeArgs(t, root, slug, true))
-			if code != 0 {
-				t.Fatalf("initial full charge = (%d):\n%s", code, before)
-			}
-			changed := "# Changed canonical source\n\n" + source + " changed.\n"
-			mustWriteFile(t, source, changed)
-			runGit(t, "add", source)
-			runGit(t, "commit", "-q", "-m", "change canonical source")
-			args := chargeArgs(t, root, slug, true)
-			args[8] = runGit(t, "rev-parse", "HEAD")
-			after, code := Command(args)
-			if code != 0 || !strings.Contains(after, strings.ReplaceAll(changed, "\n", "\\n")) || !strings.Contains(after, (chargeSource{path: source, data: []byte(changed)}).identity()) || after == before {
-				t.Fatalf("changed canonical source = (%d):\n%s", code, after)
-			}
-		})
-	}
-}
-
 func TestChargeRequiredInputs(t *testing.T) {
-	_, slug := seedConformant(t)
+	_, slug := preflighttest.SeedConformant(t)
 	out, code := Command([]string{"build", slug, "--charge", "--ticket", "one.md"})
 	if code != 2 || !strings.Contains(out, "--charge requires build, --ticket, --base, and --source-tip") {
 		t.Fatalf("incomplete charge = (%d):\n%s", code, out)
 	}
-	root, slug := seedConformant(t)
-	args := []string{"build", slug, "--charge", "--ticket", "one.md", "--base", runGit(t, "rev-parse", "main"), "--source-tip", runGit(t, "rev-parse", "HEAD")}
+	root, slug := preflighttest.SeedConformant(t)
+	args := []string{"build", slug, "--charge", "--ticket", "one.md", "--base", preflighttest.RunGit(t, "rev-parse", "main"), "--source-tip", preflighttest.RunGit(t, "rev-parse", "HEAD")}
 	out, code = Command(args)
 	if code != 1 || !strings.Contains(out, "assignment required") || !strings.Contains(out, "assigned worktree") {
 		t.Fatalf("missing assignment = (%d):\n%s", code, out)
 	}
-	activeAssignment(t, root, t.TempDir())
+	preflighttest.ActiveAssignment(t, root, t.TempDir())
 	out, code = Command(args)
 	if code != 1 || !strings.Contains(out, "assignment required") {
 		t.Fatalf("foreign assignment = (%d):\n%s", code, out)
 	}
-	activeAssignment(t, root, root)
+	preflighttest.ActiveAssignment(t, root, root)
 	args[4] = "missing.md"
 	out, code = Command(args)
 	if code != 1 || !strings.Contains(out, "selected ticket") || !strings.Contains(out, "pass a ticket basename") {
@@ -100,12 +39,12 @@ func TestChargeRequiredInputs(t *testing.T) {
 }
 
 func TestChargeSnapshotMovement(t *testing.T) {
-	root, slug := seedConformant(t)
-	args := chargeArgs(t, root, slug, false)
+	root, slug := preflighttest.SeedConformant(t)
+	args := preflighttest.ChargeArgs(t, root, slug)
 	calls := 0
 	restore := diff.SetSnapshotAfterReadForTest(func() {
 		calls++
-		mustWriteFile(t, "internal/example/foo.go", "package example\n// moved "+string(rune('0'+calls))+"\n")
+		preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n// moved "+string(rune('0'+calls))+"\n")
 	})
 	out, code := Command(args)
 	if code != 1 || calls != 2 || !strings.Contains(out, "error: snapshot drift") || !strings.Contains(out, "retry the exact invocation") {
@@ -113,21 +52,21 @@ func TestChargeSnapshotMovement(t *testing.T) {
 	}
 	restore()
 
-	root, slug = seedConformant(t)
-	args = chargeArgs(t, root, slug, false)
-	args[len(args)-1] = runGit(t, "rev-parse", "main")
+	root, slug = preflighttest.SeedConformant(t)
+	args = preflighttest.ChargeArgs(t, root, slug)
+	args[len(args)-1] = preflighttest.RunGit(t, "rev-parse", "main")
 	out, code = Command(args)
 	if code != 1 || !strings.Contains(out, "tip-current") {
 		t.Fatalf("mismatched pair = (%d):\n%s", code, out)
 	}
 
-	root, slug = seedConformant(t)
-	args = chargeArgs(t, root, slug, false)
+	root, slug = preflighttest.SeedConformant(t)
+	args = preflighttest.ChargeArgs(t, root, slug)
 	calls = 0
 	restore = diff.SetSnapshotAfterReadForTest(func() {
 		calls++
 		if calls == 1 {
-			mustWriteFile(t, "specs/"+slug+"/spec.md", strings.Replace(specBody(slug), "Status: staged", "Status: draft", 1))
+			preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", strings.Replace(preflighttest.SpecBody(slug), "Status: staged", "Status: draft", 1))
 		}
 	})
 	out, code = Command(args)
@@ -137,32 +76,9 @@ func TestChargeSnapshotMovement(t *testing.T) {
 	}
 }
 
-func TestChargeProjectionAndFullRetrieval(t *testing.T) {
-	root, slug := seedConformant(t)
-	compact, code := Command(chargeArgs(t, root, slug, false))
-	if code != 0 || !strings.Contains(compact, "\"false\",bench preflight") || !strings.Contains(compact, "omitted[5]{source}") || !strings.Contains(compact, "--full") || strings.Contains(compact, "## Acceptance") {
-		t.Fatalf("compact charge = (%d):\n%s", code, compact)
-	}
-	full, code := Command(chargeArgs(t, root, slug, true))
-	if code != 0 || !strings.Contains(full, "\"true\"") || !strings.Contains(full, "evidence[5]{source,content}") || !strings.Contains(full, "## Acceptance") || !strings.Contains(full, "Status: staged") || !strings.Contains(full, "Delegation skill") || !strings.Contains(full, "Build phase") || !strings.Contains(full, "Focused suite:") {
-		t.Fatalf("full charge = (%d):\n%s", code, full)
-	}
-
-	root, slug = seedConformant(t)
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2")+strings.Repeat("large ticket evidence\n", 12000))
-	runGit(t, "add", "specs/"+slug+"/tickets/one.md")
-	runGit(t, "commit", "-q", "-m", "large ticket")
-	args := chargeArgs(t, root, slug, false)
-	args[8] = runGit(t, "rev-parse", "HEAD")
-	compact, code = Command(args)
-	if code != 0 || len(compact) > 10000 || strings.Contains(compact, "large ticket evidence") || !strings.Contains(compact, "omitted[5]{source}") {
-		t.Fatalf("large compact charge = (%d, %d bytes):\n%s", code, len(compact), compact)
-	}
-}
-
 func TestChargeHostileInputs(t *testing.T) {
-	root, slug := seedConformant(t)
-	args := chargeArgs(t, root, slug, false)
+	root, slug := preflighttest.SeedConformant(t)
+	args := preflighttest.ChargeArgs(t, root, slug)
 	args[4] = "one.md; touch sentinel"
 	out, code := Command(args)
 	if code != 1 || !strings.Contains(out, "selected ticket") {
@@ -172,14 +88,14 @@ func TestChargeHostileInputs(t *testing.T) {
 		t.Fatalf("ticket name created sentinel: %v", err)
 	}
 
-	root, slug = seedConformant(t)
-	mustWriteFile(t, buildPhase, "bad\x1b\n")
-	runGit(t, "add", buildPhase)
-	runGit(t, "commit", "-q", "-m", "hostile phase")
-	args = chargeArgs(t, root, slug, false)
-	args[8] = runGit(t, "rev-parse", "HEAD")
+	root, slug = preflighttest.SeedConformant(t)
+	preflighttest.MustWriteFile(t, chargesource.BuildPhase, "bad\x1b\n")
+	preflighttest.RunGit(t, "add", chargesource.BuildPhase)
+	preflighttest.RunGit(t, "commit", "-q", "-m", "hostile phase")
+	args = preflighttest.ChargeArgs(t, root, slug)
+	args[8] = preflighttest.RunGit(t, "rev-parse", "HEAD")
 	out, code = Command(args)
-	if code != 1 || !strings.Contains(out, "source required") || !strings.Contains(out, buildPhase) {
+	if code != 1 || !strings.Contains(out, "source required") || !strings.Contains(out, chargesource.BuildPhase) {
 		t.Fatalf("hostile source text = (%d):\n%s", code, out)
 	}
 }
@@ -192,49 +108,49 @@ func TestChargeRefusesSpecialRequiredSource(t *testing.T) {
 		{
 			name: "dangling link",
 			prepare: func(t *testing.T) {
-				if err := os.Remove(buildPhase); err != nil {
+				if err := os.Remove(chargesource.BuildPhase); err != nil {
 					t.Fatal(err)
 				}
-				if err := os.Symlink("missing", buildPhase); err != nil {
+				if err := os.Symlink("missing", chargesource.BuildPhase); err != nil {
 					t.Fatal(err)
 				}
 			},
 		},
 		{
 			name:    "empty",
-			prepare: func(t *testing.T) { mustWriteFile(t, buildPhase, "") },
+			prepare: func(t *testing.T) { preflighttest.MustWriteFile(t, chargesource.BuildPhase, "") },
 		},
 		{
 			name: "absent",
 			prepare: func(t *testing.T) {
-				if err := os.Remove(buildPhase); err != nil {
+				if err := os.Remove(chargesource.BuildPhase); err != nil {
 					t.Fatal(err)
 				}
 			},
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			root, slug := seedConformant(t)
+			root, slug := preflighttest.SeedConformant(t)
 			test.prepare(t)
-			runGit(t, "add", "-A")
-			runGit(t, "commit", "-q", "-m", "special phase")
-			args := chargeArgs(t, root, slug, false)
-			args[8] = runGit(t, "rev-parse", "HEAD")
+			preflighttest.RunGit(t, "add", "-A")
+			preflighttest.RunGit(t, "commit", "-q", "-m", "special phase")
+			args := preflighttest.ChargeArgs(t, root, slug)
+			args[8] = preflighttest.RunGit(t, "rev-parse", "HEAD")
 			out, code := Command(args)
-			if code != 1 || !strings.Contains(out, "source required") || !strings.Contains(out, buildPhase) {
+			if code != 1 || !strings.Contains(out, "source required") || !strings.Contains(out, chargesource.BuildPhase) {
 				t.Fatalf("%s source = (%d):\n%s", test.name, code, out)
 			}
 		})
 	}
 	t.Run("fifo", func(t *testing.T) {
-		root, slug := seedConformant(t)
-		if err := os.Remove(buildPhase); err != nil {
+		root, slug := preflighttest.SeedConformant(t)
+		if err := os.Remove(chargesource.BuildPhase); err != nil {
 			t.Fatal(err)
 		}
-		if err := syscall.Mkfifo(buildPhase, 0o600); err != nil {
+		if err := syscall.Mkfifo(chargesource.BuildPhase, 0o600); err != nil {
 			t.Fatal(err)
 		}
-		out, code := Command(chargeArgs(t, root, slug, false))
+		out, code := Command(preflighttest.ChargeArgs(t, root, slug))
 		if code != 1 || !strings.Contains(out, "checkout required") {
 			t.Fatalf("fifo source = (%d):\n%s", code, out)
 		}
@@ -256,69 +172,69 @@ func TestLegacyPreflightDifferential(t *testing.T) {
 		run  func(*testing.T) result
 	}{
 		{"valid-build", func(t *testing.T) result {
-			root, slug := seedConformant(t)
-			base, tip := runGit(t, "rev-parse", "main"), runGit(t, "rev-parse", "HEAD")
+			root, slug := preflighttest.SeedConformant(t)
+			base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
 			return run([]string{"build", slug}, root, base, tip)
 		}},
 		{"valid-review", func(t *testing.T) result {
-			root, slug := seedConformant(t)
-			base, tip := runGit(t, "rev-parse", "main"), runGit(t, "rev-parse", "HEAD")
+			root, slug := preflighttest.SeedConformant(t)
+			base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
 			return run([]string{"review", slug}, root, base, tip)
 		}},
 		{"absent-tickets", func(t *testing.T) result {
 			root, slug := seedBuildFresh(t)
-			base, tip := runGit(t, "rev-parse", "main"), runGit(t, "rev-parse", "HEAD")
+			base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
 			return run([]string{"build", slug}, root, base, tip)
 		}},
 		{"empty-tickets", func(t *testing.T) result {
-			root, slug := seedConformant(t)
-			base := runGit(t, "rev-parse", "main")
+			root, slug := preflighttest.SeedConformant(t)
+			base := preflighttest.RunGit(t, "rev-parse", "main")
 			if err := os.Remove("specs/" + slug + "/tickets/one.md"); err != nil {
 				t.Fatal(err)
 			}
-			runGit(t, "add", "-A")
-			runGit(t, "commit", "-q", "-m", "empty tickets")
-			return run([]string{"build", slug}, root, base, runGit(t, "rev-parse", "HEAD"))
+			preflighttest.RunGit(t, "add", "-A")
+			preflighttest.RunGit(t, "commit", "-q", "-m", "empty tickets")
+			return run([]string{"build", slug}, root, base, preflighttest.RunGit(t, "rev-parse", "HEAD"))
 		}},
 		{"stale-base", func(t *testing.T) result {
-			root, slug := seedConformant(t)
-			base, tip := runGit(t, "rev-parse", "main"), runGit(t, "rev-parse", "HEAD")
-			runGit(t, "checkout", "-q", "main")
-			mustWriteFile(t, "advance.txt", "advance\n")
-			runGit(t, "add", "advance.txt")
-			runGit(t, "commit", "-q", "-m", "advance")
-			runGit(t, "checkout", "-q", "feature")
+			root, slug := preflighttest.SeedConformant(t)
+			base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
+			preflighttest.RunGit(t, "checkout", "-q", "main")
+			preflighttest.MustWriteFile(t, "advance.txt", "advance\n")
+			preflighttest.RunGit(t, "add", "advance.txt")
+			preflighttest.RunGit(t, "commit", "-q", "-m", "advance")
+			preflighttest.RunGit(t, "checkout", "-q", "feature")
 			return run([]string{"build", slug}, root, base, tip)
 		}},
 		{"dirty-review", func(t *testing.T) result {
-			root, slug := seedConformant(t)
-			base, tip := runGit(t, "rev-parse", "main"), runGit(t, "rev-parse", "HEAD")
-			mustWriteFile(t, "dirty.txt", "dirty\n")
+			root, slug := preflighttest.SeedConformant(t)
+			base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
+			preflighttest.MustWriteFile(t, "dirty.txt", "dirty\n")
 			return run([]string{"review", slug, "--base", base}, root, base, tip)
 		}},
 		{"explicit-base-success", func(t *testing.T) result {
-			root, slug := seedConformant(t)
-			base, tip := runGit(t, "rev-parse", "main"), runGit(t, "rev-parse", "HEAD")
+			root, slug := preflighttest.SeedConformant(t)
+			base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
 			return run([]string{"build", slug, "--base", base}, root, base, tip)
 		}},
 		{"source-tip-mismatch", func(t *testing.T) result {
-			root, slug := seedConformant(t)
-			base, tip := runGit(t, "rev-parse", "main"), runGit(t, "rev-parse", "HEAD")
+			root, slug := preflighttest.SeedConformant(t)
+			base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
 			return run([]string{"build", slug, "--base", base, "--source-tip", base}, root, base, tip)
 		}},
 		{"invalid-invocation", func(t *testing.T) result {
-			root, _ := seedConformant(t)
+			root, _ := preflighttest.SeedConformant(t)
 			return run([]string{"unknown", "example"}, root, "", "")
 		}},
 		{"empty-diff", func(t *testing.T) result {
-			root := initRepo(t)
+			root := preflighttest.StartRepo(t)
 			slug := "example"
-			mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-			mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2"))
-			runGit(t, "add", ".")
-			runGit(t, "commit", "-q", "-m", "c0")
-			runGit(t, "checkout", "-q", "-b", "feature")
-			base, tip := runGit(t, "rev-parse", "main"), runGit(t, "rev-parse", "HEAD")
+			preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug))
+			preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF2"))
+			preflighttest.RunGit(t, "add", ".")
+			preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+			preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+			base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
 			return run([]string{"review", slug, "--base", base}, root, base, tip)
 		}},
 	}

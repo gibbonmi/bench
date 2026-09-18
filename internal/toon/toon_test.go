@@ -174,6 +174,21 @@ func TestTableTyped(t *testing.T) {
 	}
 }
 
+// The charge evidence profile binds its identity to these typed cell bytes. A library
+// change that alters them must turn this pin red before it rewrites an evidence identity.
+func TestTableTypedEvidenceProfileCells(t *testing.T) {
+	rows := [][]any{
+		{true, 0, "", "0123", "1e5", "sha256"},
+		{false, 1<<53 - 1, "a\tb", "true", "-7", "雪"},
+	}
+	want := "p[2]{b,n,e,d,x,u}:\n" +
+		"  true,0,\"\",\"0123\",\"1e5\",sha256\n" +
+		"  false,9007199254740991,\"a\\tb\",\"true\",\"-7\",雪\n"
+	if got, err := TableTyped("p", []string{"b", "n", "e", "d", "x", "u"}, rows); err != nil || got != want {
+		t.Errorf("TableTyped evidence cells = (%q, %v), want %q", got, err, want)
+	}
+}
+
 func TestErrorfUsage(t *testing.T) {
 	if got := Errorf("not in a git repository", "run inside a Bench-linked repo"); got != "error: not in a git repository — run inside a Bench-linked repo" {
 		t.Errorf("Errorf = %q", got)

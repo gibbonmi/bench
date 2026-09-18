@@ -9,20 +9,8 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/canonicalpath"
-	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
-
-// ticketDoc renders a grammar-conformant ticket citing rows. `Writes:` names
-// the specs folder every seeded fixture already holds, so writes-resolve
-// stays green without a planted file.
-func ticketDoc(title string, covers ...string) string {
-	return "# " + title + "\n\n" +
-		"Blocked by: none\n" +
-		"Writes: specs\n" +
-		"Covers: " + strings.Join(covers, ", ") + "\n\n" +
-		"## What to build\n\nBuild it.\n\n" +
-		"## Acceptance\n\n- [ ] It is built.\n"
-}
 
 // gatherTicketsAt parses one tickets directory under a root the test owns,
 // with the PF tag every fixture spec declares.
@@ -35,7 +23,7 @@ func gatherTicketsAt(t *testing.T, root, dir string) (ticketFacts, *BootstrapFai
 // seam. A ticket whose last line lacks its newline parses to the same ticket
 // as its terminated form, so a hand-edited ending never invents a fault.
 func TestTicketParseTrailingNewlineParity(t *testing.T) {
-	terminated := ticketDoc("One", "PF1")
+	terminated := preflighttest.TicketDoc("One", "PF1")
 	unterminated := strings.TrimSuffix(terminated, "\n")
 	if unterminated == terminated {
 		t.Fatal("fixture invalid: terminated fixture already lacks a trailing newline")
@@ -43,7 +31,7 @@ func TestTicketParseTrailingNewlineParity(t *testing.T) {
 
 	termRoot := t.TempDir()
 	termDir := filepath.Join(termRoot, "tickets")
-	mustWriteFile(t, filepath.Join(termDir, "one.md"), terminated)
+	preflighttest.MustWriteFile(t, filepath.Join(termDir, "one.md"), terminated)
 	want, wantErr := gatherTicketsAt(t, termRoot, termDir)
 	if wantErr != nil {
 		t.Fatalf("gatherTickets(terminated) error = %+v, want nil", wantErr)
@@ -51,7 +39,7 @@ func TestTicketParseTrailingNewlineParity(t *testing.T) {
 
 	unterminatedRoot := t.TempDir()
 	unterminatedDir := filepath.Join(unterminatedRoot, "tickets")
-	mustWriteFile(t, filepath.Join(unterminatedDir, "one.md"), unterminated)
+	preflighttest.MustWriteFile(t, filepath.Join(unterminatedDir, "one.md"), unterminated)
 	got, gotErr := gatherTicketsAt(t, unterminatedRoot, unterminatedDir)
 	if gotErr != nil {
 		t.Fatalf("gatherTickets(unterminated) error = %+v, want nil", gotErr)
@@ -74,9 +62,9 @@ func TestTicketParseTrailingNewlineParity(t *testing.T) {
 func TestNonMarkdownFileIsIgnored(t *testing.T) {
 	root := t.TempDir()
 	dir := filepath.Join(root, "tickets")
-	mustWriteFile(t, filepath.Join(dir, "one.md"), ticketDoc("One", "PF1"))
-	mustWriteFile(t, filepath.Join(dir, "diagram.png"), "\xef\xbb\xbfnot a ticket at all\n")
-	mustWriteFile(t, filepath.Join(dir, "NOTES"), "scratch\n")
+	preflighttest.MustWriteFile(t, filepath.Join(dir, "one.md"), preflighttest.TicketDoc("One", "PF1"))
+	preflighttest.MustWriteFile(t, filepath.Join(dir, "diagram.png"), "\xef\xbb\xbfnot a ticket at all\n")
+	preflighttest.MustWriteFile(t, filepath.Join(dir, "NOTES"), "scratch\n")
 
 	facts, bootErr := gatherTicketsAt(t, root, dir)
 	if bootErr != nil {
@@ -96,8 +84,8 @@ func TestNonMarkdownFileIsIgnored(t *testing.T) {
 func TestBlockerControlByteRefused(t *testing.T) {
 	root := t.TempDir()
 	dir := filepath.Join(root, "tickets")
-	document := strings.Replace(ticketDoc("One", "PF1"), "Blocked by: none", "Blocked by: two\x01.md", 1)
-	mustWriteFile(t, filepath.Join(dir, "one.md"), document)
+	document := strings.Replace(preflighttest.TicketDoc("One", "PF1"), "Blocked by: none", "Blocked by: two\x01.md", 1)
+	preflighttest.MustWriteFile(t, filepath.Join(dir, "one.md"), document)
 
 	facts, bootErr := gatherTicketsAt(t, root, dir)
 	if bootErr == nil {
@@ -114,8 +102,8 @@ func TestBlockerControlByteRefused(t *testing.T) {
 func TestDuplicateBasenameAcrossDepths(t *testing.T) {
 	root := t.TempDir()
 	dir := filepath.Join(root, "tickets")
-	mustWriteFile(t, filepath.Join(dir, "one.md"), ticketDoc("One", "PF1"))
-	mustWriteFile(t, filepath.Join(dir, "sub", "one.md"), ticketDoc("One again", "PF2"))
+	preflighttest.MustWriteFile(t, filepath.Join(dir, "one.md"), preflighttest.TicketDoc("One", "PF1"))
+	preflighttest.MustWriteFile(t, filepath.Join(dir, "sub", "one.md"), preflighttest.TicketDoc("One again", "PF2"))
 
 	facts, bootErr := gatherTicketsAt(t, root, dir)
 	if bootErr != nil {
@@ -163,7 +151,7 @@ func TestSpecialTicketEntryRefused(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root := t.TempDir()
 			dir := filepath.Join(root, "tickets")
-			mustWriteFile(t, filepath.Join(dir, "one.md"), ticketDoc("One", "PF1"))
+			preflighttest.MustWriteFile(t, filepath.Join(dir, "one.md"), preflighttest.TicketDoc("One", "PF1"))
 			tc.plant(t, dir)
 
 			facts, bootErr := gatherTicketsAt(t, root, dir)
@@ -190,7 +178,7 @@ func TestGatherSpecStatusOutsideFolderEnumerationNotReadable(t *testing.T) {
 	root := t.TempDir()
 	t.Chdir(root)
 	slug := "specs/example/other.md" // valid content, but not specs/<slug>/spec.md
-	mustWriteFile(t, slug, specBody("example"))
+	preflighttest.MustWriteFile(t, slug, preflighttest.SpecBody("example"))
 
 	facts, bootErr := Gather(root, "review", slug)
 	if bootErr == nil {
@@ -204,43 +192,18 @@ func TestGatherSpecStatusOutsideFolderEnumerationNotReadable(t *testing.T) {
 	}
 }
 
-// activeAssignment registers one active assignment in root's ledger, owning the
-// tree at worktree, and returns its id. The record goes in through
-// intent.PutAssignment, so the gatherer reads exactly the shape every worktree
-// command writes.
-func activeAssignment(t *testing.T, root, worktree string) string {
-	t.Helper()
-	const id = "00000000000000000000000000000001"
-	const owner = "00000000000000000000000000000002"
-	err := intent.PutAssignment(root, intent.Assignment{
-		Schema:   intent.AssignmentRecordSchema,
-		ID:       id,
-		OwnerID:  owner,
-		Request:  intent.RequestDigest("preflight-assignment-target"),
-		Label:    "preflight-assignment-target",
-		Start:    runGit(t, "rev-parse", "HEAD"),
-		Branch:   intent.AssignmentBranchRef(owner, id),
-		Worktree: worktree,
-		State:    intent.StateActive,
-	})
-	if err != nil {
-		t.Fatalf("PutAssignment: %v", err)
-	}
-	return id
-}
-
 // TestGatherAssignmentTarget covers WF38, WF39, and WF40. The remedy the
 // stale-base red prints addresses the assignment the operator is standing in,
 // so the gatherer must recognize that tree by identity and no other.
 func TestGatherAssignmentTarget(t *testing.T) {
 	t.Run("the assignment's own worktree", func(t *testing.T) {
 		// WF38: the ledger holds this tree, so its id fills the fact.
-		root, slug := seedConformant(t)
+		root, slug := preflighttest.SeedConformant(t)
 		canonical, err := canonicalpath.Resolve(root)
 		if err != nil {
 			t.Fatalf("canonicalpath.Resolve(%q): %v", root, err)
 		}
-		id := activeAssignment(t, root, canonical)
+		id := preflighttest.ActiveAssignment(t, root, canonical)
 
 		facts, bootErr := Gather(root, "review", slug)
 		if bootErr != nil {
@@ -254,12 +217,12 @@ func TestGatherAssignmentTarget(t *testing.T) {
 	t.Run("a symlink to that worktree", func(t *testing.T) {
 		// WF39: the ledger records a resolved path, so a raw string compare
 		// against a symlinked root would miss the assignment that owns it.
-		root, slug := seedConformant(t)
+		root, slug := preflighttest.SeedConformant(t)
 		canonical, err := canonicalpath.Resolve(root)
 		if err != nil {
 			t.Fatalf("canonicalpath.Resolve(%q): %v", root, err)
 		}
-		id := activeAssignment(t, root, canonical)
+		id := preflighttest.ActiveAssignment(t, root, canonical)
 
 		link := filepath.Join(t.TempDir(), "link")
 		if err := os.Symlink(canonical, link); err != nil {
@@ -281,12 +244,12 @@ func TestGatherAssignmentTarget(t *testing.T) {
 	t.Run("the primary checkout", func(t *testing.T) {
 		// WF40: an active assignment owning some other tree names a stranger, so
 		// the primary checkout's remedy keeps the placeholder.
-		root, slug := seedConformant(t)
+		root, slug := preflighttest.SeedConformant(t)
 		other, err := canonicalpath.Resolve(t.TempDir())
 		if err != nil {
 			t.Fatalf("canonicalpath.Resolve: %v", err)
 		}
-		activeAssignment(t, root, other)
+		preflighttest.ActiveAssignment(t, root, other)
 
 		facts, bootErr := Gather(root, "review", slug)
 		if bootErr != nil {

@@ -5,41 +5,22 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/axi"
+	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// grammar is the declared argument shape usage.Parse enforces for this
-// subcommand. Two required positionals (mode, slug), an optional explicit
-// base, and the optional frozen source tip the review phase pins. Both
-// `review` and `build` are accepted modes. The mode-validity check below
-// rejects anything else the same way it rejects any unknown word.
-var grammar = usage.Grammar{
-	Cmd: "bench preflight",
-	Help: "usage: bench preflight review <slug> [--base <commit>] [--source-tip <commit>]\n" +
-		"       bench preflight review <slug> --charge --base <commit> --source-tip <commit> [--full]\n" +
-		"       bench preflight build <slug> [--base <commit>] [--source-tip <commit>]\n" +
-		"       bench preflight build <slug> --charge --ticket <basename> --base <commit> " +
-		"--source-tip <commit> [--full]\n" +
-		"       bench preflight build <slug> --propose-writes --ticket <basename> --base <commit> " +
-		"--source-tip <commit>\n",
-	Flags: []usage.Flag{
-		{Name: "--base", HasValue: true, NoEmptyValue: true},
-		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
-		{Name: "--charge"},
-		{Name: "--propose-writes"},
-		{Name: "--ticket", HasValue: true, NoEmptyValue: true},
-		{Name: "--full"},
-	},
-	MinArgs: 2,
-	MaxArgs: 2,
-}
+const (
+	modeBuild  = evidencecmd.ModeBuild
+	modeReview = evidencecmd.ModeReview
+)
 
 // Command is the legacy adapter for `bench preflight review <slug>` and `bench
 // preflight build <slug>`. It is the CLI-contract seam. Grammar and usage errors ride
-// usage.Parse (exit 2). A not-in-repo cwd or a bootstrap failure is one
-// toon.Errorf line (exit 1). Otherwise the verdict renders as TOON and the
+// usage.Parse and the operation registry (exit 2). A not-in-repo cwd or a bootstrap
+// failure is one toon.Errorf line (exit 1). Otherwise the verdict renders as TOON and the
 // exit code follows Verdict.Red (0 green, 1 red).
 func Command(args []string) (string, int) {
 	return CommandWithVersion("")(args)
@@ -52,56 +33,107 @@ func CommandWithVersion(version string) func([]string) (string, int) {
 }
 
 func command(version string, args []string) (string, int) {
-	parsed, line, code := usage.Parse(grammar, args)
+	if line := evidencecmd.OversizedOperand(args); line != "" {
+		return evidencecmd.Bound(line+"\n", 2)
+	}
+	parsed, line, code := usage.Parse(evidencecmd.Grammar, args)
 	if line != "" {
-		return line + "\n", code
+		return evidencecmd.Bound(line+"\n", code)
 	}
-	mode, slug := parsed.Positionals[0], parsed.Positionals[1]
-	base := parsed.Flags["--base"]
-	sourceTip := parsed.Flags["--source-tip"]
-	_, charge := parsed.Flags["--charge"]
-	_, proposeWrites := parsed.Flags["--propose-writes"]
-	_, full := parsed.Flags["--full"]
-	ticket := parsed.Flags["--ticket"]
-	if mode != "review" && mode != modeBuild {
-		return toon.Usage(grammar.Cmd, mode) + "\n", 2
+	mode := parsed.Positionals[0]
+	op, line := evidencecmd.Select(mode, parsed.Flags)
+	if line != "" {
+		return evidencecmd.Bound(line+"\n", 2)
 	}
-	if charge && proposeWrites {
-		return toon.Usage(grammar.Cmd, "--charge and --propose-writes cannot be combined") + "\n", 2
+	// The registry owns how many operands each mode takes, so a mode that takes none
+	// refuses a second operand and a mode that takes one refuses its absence.
+	slug, line := evidencecmd.SelectOperand(op, parsed.Positionals)
+	if line != "" {
+		return evidencecmd.Bound(line+"\n", 2)
 	}
-	if charge && mode == modeBuild && (base == "" || sourceTip == "" || ticket == "") {
-		return toon.Usage(grammar.Cmd, "--charge requires build, --ticket, --base, and --source-tip") + "\n", 2
+	out, code := dispatch(version, op, slug, parsed.Flags, args)
+	if op.Bounded {
+		return evidencecmd.Bound(out, code)
 	}
-	if charge && mode == "review" && ticket != "" {
-		return toon.Usage(grammar.Cmd, "--charge requires build with --ticket, or review without --ticket") + "\n", 2
-	}
-	if charge && mode == "review" && (base == "" || sourceTip == "") {
-		return toon.Usage(grammar.Cmd, "review --charge requires --base and --source-tip") + "\n", 2
-	}
-	if proposeWrites && (mode != modeBuild || base == "" || sourceTip == "" || ticket == "") {
-		return toon.Usage(grammar.Cmd, "--propose-writes requires build, --ticket, --base, and --source-tip") + "\n", 2
-	}
-	if !charge && (ticket != "" || full) && !proposeWrites {
-		return toon.Usage(grammar.Cmd, "--ticket and --full require --charge") + "\n", 2
-	}
-	if proposeWrites && full {
-		return toon.Usage(grammar.Cmd, "--full requires --charge") + "\n", 2
+	return out, code
+}
+
+func dispatch(version string, op evidencecmd.Operation, slug string, flags map[string]string, args []string) (string, int) {
+	base, sourceTip, ticket := flags[evidencecmd.FlagBase], flags[evidencecmd.FlagTip], flags[evidencecmd.FlagTicket]
+	quota, line := evidencecmd.SelectQuota(op, slug, flags)
+	if line != "" {
+		return line + "\n", 2
 	}
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-
 	if err := unrepresentableCell("--source-tip", sourceTip); err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
-	if charge {
-		return chargeCommand(root, mode, slug, base, sourceTip, ticket, full, version, args)
+	switch op.Kind {
+	case evidencecmd.KindProposal:
+		return proposeWritesCommand(root, op.Mode, slug, base, sourceTip, ticket, args)
+	case evidencecmd.KindPrepareEvidence:
+		return prepareEvidenceCommand(root, slug, base, sourceTip, ticket, quota, args)
+	case evidencecmd.KindPrepareReviewEvidence:
+		return prepareReviewEvidenceCommand(root, version, slug, base, sourceTip, quota, args)
+	case evidencecmd.KindReadEvidence:
+		return evidencecmd.Read(root, slug, flags)
+	case evidencecmd.KindVerifyEvidence:
+		return evidencecmd.Verify(root, slug)
+	case evidencecmd.KindCurrentEvidence:
+		return currentEvidenceCommand(root, slug, args)
+	case evidencecmd.KindCleanPlan:
+		return evidencecmd.CleanPlan(root, flags)
+	case evidencecmd.KindCleanApply:
+		return evidencecmd.CleanApply(root, flags)
 	}
-	if proposeWrites {
-		return proposeWritesCommand(root, mode, slug, base, sourceTip, ticket, args)
-	}
+	return verdictCommand(root, op.Mode, slug, base, sourceTip, args)
+}
 
+// prepareEvidenceCommand runs the movement-checked build preparation and hands each
+// attempt's validated pack, or its refusal, to the evidence publisher.
+func prepareEvidenceCommand(root, slug, base, sourceTip, name string, quota uint64, args []string) (string, int) {
+	return evidencecmd.Prepare(root, quota, func(stage func(*chargeevidence.Pack, string, string) string) (string, int) {
+		return preparedAttempts(root, modeBuild, slug, base, sourceTip, "charge", args, func(facts Facts) (string, int) {
+			pack, refusal := buildChargePack(root, facts, boundedVerdict(Decide(facts)), name, buildSourcePolicy())
+			if refusal = stage(pack, facts.AssignmentTarget, refusal); refusal != "" {
+				return refusal, 1
+			}
+			return "", 0
+		})
+	})
+}
+
+// prepareReviewEvidenceCommand runs the movement-checked review preparation on the same
+// publisher the build uses. Each attempt runs the collectors once and stages its validated
+// pack; a refused attempt publishes no handle, and only the unmoved final attempt publishes.
+func prepareReviewEvidenceCommand(root, version, slug, base, sourceTip string, quota uint64, args []string) (string, int) {
+	return evidencecmd.Prepare(root, quota, func(stage func(*chargeevidence.Pack, string, string) string) (string, int) {
+		return preparedAttempts(root, modeReview, slug, base, sourceTip, "charge", args, func(facts Facts) (string, int) {
+			pack, refusal := reviewChargePack(root, version, facts, boundedVerdict(Decide(facts)))
+			if refusal = stage(pack, facts.AssignmentTarget, refusal); refusal != "" {
+				return refusal, 1
+			}
+			return "", 0
+		})
+	})
+}
+
+// boundedVerdict identifies each check detail too long for a bounded response by type,
+// length, and digest. The check names, verdicts, and remedies stay unchanged.
+func boundedVerdict(verdict Verdict) Verdict {
+	checks := make([]CheckResult, len(verdict.Checks))
+	for i, check := range verdict.Checks {
+		check.Detail = evidencecmd.BoundedDiagnostic("detail", check.Detail)
+		checks[i] = check
+	}
+	verdict.Checks = checks
+	return verdict
+}
+
+func verdictCommand(root, mode, slug, base, sourceTip string, args []string) (string, int) {
 	facts, bootErr := GatherPinned(root, mode, slug, base, sourceTip)
 	if bootErr != nil {
 		if bootErr.Kind == "snapshot drift" {

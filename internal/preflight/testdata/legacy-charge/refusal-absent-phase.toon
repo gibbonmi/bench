@@ -1,0 +1,2 @@
+exit: 1
+error: source required: .agents/commands/bench-implement-spec.md is absent:  — restore the named canonical source and rerun the exact charge

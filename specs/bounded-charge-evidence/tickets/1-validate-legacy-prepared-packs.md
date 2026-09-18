@@ -35,7 +35,7 @@ This slice owns 41 predicates, including separately named table cases.
 Use one retained context and the existing shared fixture harness; do not copy private helpers across packages.
 Do not add code to an over-budget file without moving its responsibility and headroom in this ticket.
 
-- `bench test --package ./internal/preflight`
+- `bench test --package ./internal/preflight/...`
 - `bench test --package ./internal/chargeevidence`
 
 Record a biting omission or mutation for every independent expected schema or policy fact.

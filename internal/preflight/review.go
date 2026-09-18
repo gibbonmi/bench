@@ -3,21 +3,18 @@ package preflight
 import (
 	"errors"
 	"fmt"
-	benchgit "github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"path/filepath"
 	"strings"
 
+	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/reviewrecord"
+
+	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/consumers"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
-	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/preflight/chargesource"
 	toonlib "github.com/toon-format/toon-go"
-)
-
-const (
-	reviewSkill = ".agents/skills/bench-craft-review/SKILL.md"
-	reviewPhase = ".agents/commands/bench-review-implementation.md"
 )
 
 // reviewEvidenceObserver reports each real collector as it starts. Tests use this port
@@ -32,57 +29,98 @@ func setReviewEvidenceObserverForTest(observer reviewEvidenceObserver) func() {
 	return func() { reviewEvidenceObserved = previous }
 }
 
-type reviewEvidence struct {
-	diff, consumers, coverage chargeSource
+// reviewCollector is one generated review source. It carries the bytes the collector
+// returned and the exact invocation that produced them, so the manifest commits the
+// provenance beside the digest. A changed producer or a changed argument therefore changes
+// the evidence identity even when the captured bytes are identical.
+type reviewCollector struct {
+	kind      string
+	producer  string
+	arguments []string
+	data      []byte
 }
 
-func (e reviewEvidence) sources() []chargeSource {
-	return []chargeSource{e.diff, e.consumers, e.coverage}
+// reviewCollectorPolicy is the one review collector inventory. Each entry names the kind
+// the metadata binds, the producer the manifest records, and the command that runs.
+type reviewCollectorPolicy struct {
+	kind, producer string
+	arguments      func(facts Facts) []string
+	run            func(root, version string, args []string) (string, int)
 }
 
-func (e reviewEvidence) shared() chargeSource {
-	return chargeSource{
-		path: "shared-review-evidence",
-		data: append(append(append([]byte{}, e.diff.data...), e.consumers.data...), e.coverage.data...),
+func reviewCollectorPolicies() []reviewCollectorPolicy {
+	return []reviewCollectorPolicy{
+		{
+			kind: "diff", producer: "bench diff",
+			arguments: func(facts Facts) []string {
+				return []string{"--base", facts.SourceBase, "--source-tip", facts.SourceTip, "--full"}
+			},
+			run: func(_, _ string, args []string) (string, int) { return diff.Command(args) },
+		},
+		{
+			kind: "consumers", producer: "bench consumers",
+			arguments: func(facts Facts) []string {
+				return []string{"--changed", "--base", facts.SourceBase, "--source-tip", facts.SourceTip, "--full"}
+			},
+			run: func(_, version string, args []string) (string, int) {
+				return consumers.CommandWithVersion(version)(args)
+			},
+		},
+		{
+			// The coverage collector resolves a slashed argument against the caller's working
+			// directory, not against the repository root. The charge anchors the spec path at
+			// the root, so the capture stays identical from any working directory. Coverage
+			// renders the result repo-relative again, so the anchored argument changes no
+			// output byte.
+			kind: "coverage", producer: "bench coverage",
+			arguments: func(facts Facts) []string { return []string{facts.SpecPath} },
+			run: func(root, _ string, args []string) (string, int) {
+				anchored := []string{filepath.Join(root, filepath.FromSlash(args[0]))}
+				return coverage.Command(anchored)
+			},
+		},
 	}
 }
 
-func collectReviewEvidence(root, version string, facts Facts, observe reviewEvidenceObserver) (reviewEvidence, string) {
-	diffArgs := []string{"--base", facts.SourceBase, "--source-tip", facts.SourceTip, "--full"}
-	observe("diff")
-	diffOut, code := diff.Command(diffArgs)
-	if code != 0 {
-		return reviewEvidence{}, "diff evidence failed: " + strings.TrimSpace(diffOut)
+// collectReviewEvidence runs every registered collector once, in policy order. It runs only
+// inside a preparation attempt: a read serves published bytes from the store and reaches no
+// collector. A failed or incomplete collector stops the attempt, so no later collector's
+// capture reaches a published artifact.
+func collectReviewEvidence(root, version string, facts Facts, observe reviewEvidenceObserver) ([]reviewCollector, string) {
+	policies := reviewCollectorPolicies()
+	collected := make([]reviewCollector, 0, len(policies))
+	for _, policy := range policies {
+		arguments := policy.arguments(facts)
+		observe(policy.kind)
+		out, code := policy.run(root, version, arguments)
+		if code != 0 {
+			return nil, policy.kind + " evidence failed: " + strings.TrimSpace(out)
+		}
+		if failure := reviewCaptureRefusal(policy.kind, out); failure != "" {
+			return nil, failure
+		}
+		collected = append(collected, reviewCollector{
+			kind: policy.kind, producer: policy.producer, arguments: arguments, data: []byte(out),
+		})
 	}
+	return collected, ""
+}
 
-	consumerArgs := []string{"--changed", "--base", facts.SourceBase, "--source-tip", facts.SourceTip, "--full"}
-	observe("consumers")
-	consumerOut, code := consumers.CommandWithVersion(version)(consumerArgs)
-	if code != 0 {
-		return reviewEvidence{}, "consumer evidence failed: " + strings.TrimSpace(consumerOut)
+// reviewCaptureRefusal reports one collector's own completeness claim. A collector that
+// declares truncated output has not captured the frozen pair, so the attempt refuses rather
+// than freezing a partial capture.
+func reviewCaptureRefusal(kind, output string) string {
+	if kind != "consumers" {
+		return ""
 	}
-	complete, err := completeConsumerEvidence(consumerOut)
+	complete, err := completeConsumerEvidence(output)
 	if err != nil {
-		return reviewEvidence{}, "consumer evidence metadata failed: " + err.Error()
+		return "consumer evidence metadata failed: " + err.Error()
 	}
 	if !complete {
-		return reviewEvidence{}, "consumer evidence is incomplete: full collection omitted unrepresentable rows"
+		return "consumer evidence is incomplete: full collection omitted unrepresentable rows"
 	}
-
-	// The coverage collector resolves a slashed argument against the caller's working
-	// directory, not against the repository root. The charge anchors the spec path at the
-	// root, so the packet stays identical from any working directory. Coverage renders the
-	// result repo-relative again, so the anchored argument changes no output byte.
-	observe("coverage")
-	coverageOut, code := coverage.Command([]string{filepath.Join(root, filepath.FromSlash(facts.SpecPath))})
-	if code != 0 {
-		return reviewEvidence{}, "coverage evidence failed: " + strings.TrimSpace(coverageOut)
-	}
-	return reviewEvidence{
-		diff:      chargeSource{path: "diff", data: []byte(diffOut)},
-		consumers: chargeSource{path: "consumers", data: []byte(consumerOut)},
-		coverage:  chargeSource{path: "coverage", data: []byte(coverageOut)},
-	}, ""
+	return ""
 }
 
 func completeConsumerEvidence(output string) (bool, error) {
@@ -109,103 +147,122 @@ func completeConsumerEvidence(output string) (bool, error) {
 	return !truncated, nil
 }
 
-func renderReviewCharge(root string, facts Facts, verdict Verdict, full bool, version string) (string, int) {
+// reviewSourceDescriptor is one required review repository source. The descriptor list is
+// the one review source policy: the prepared inventory and the metadata check and return
+// columns all derive from it.
+type reviewSourceDescriptor struct {
+	role string
+	path func(specPath string) string
+	// checks and returns place the source in those metadata columns, in source order.
+	checks, returns bool
+}
+
+func fixedReviewSource(path string) func(string) string {
+	return func(string) string { return path }
+}
+
+func reviewSourcePolicy() []reviewSourceDescriptor {
+	return []reviewSourceDescriptor{
+		{role: "spec", path: func(specPath string) string { return specPath }},
+		{role: "review-skill", path: fixedReviewSource(chargesource.ReviewSkill), checks: true},
+		{role: "review-phase", path: fixedReviewSource(chargesource.ReviewPhase), returns: true},
+		{role: "delegate-skill", path: fixedReviewSource(chargesource.DelegateSkill), returns: true},
+		{role: "delegate-procedure", path: fixedReviewSource(chargesource.DelegateProcedure), returns: true},
+	}
+}
+
+// reviewChargePack applies every review preparation refusal in its fixed order and returns
+// the validated in-memory pack, or the refusal that stopped it. The collectors run last, so
+// a dirty checkout, a red verdict, or a missing source refuses before any collector starts.
+func reviewChargePack(root, version string, facts Facts, verdict Verdict) (*chargeevidence.Pack, string) {
 	if refusal := preparationCheckoutRefusal(root, facts, "charge"); refusal != "" {
-		return refusal, 1
+		return nil, refusal
 	}
 	if verdict.Red {
-		return chargeVerdictRefusal(verdict), 1
+		return nil, chargeVerdictRefusal(verdict)
 	}
-	sources, failure := reviewChargeSources(root, facts.SourceTip, facts.SpecPath)
-	if failure != "" {
-		return chargeRefusal("source", failure, "restore the named canonical source and rerun the exact charge"), 1
-	}
-	evidence, failure := collectReviewEvidence(root, version, facts, reviewEvidenceObserved)
-	if failure != "" {
-		return chargeRefusal("evidence", failure, "repair the named collector input and rerun the exact charge"), 1
-	}
-	return renderReviewPacket(root, facts, sources, evidence, full)
-}
-
-// reviewChargeSourceSet names each frozen review source, for the reason
-// buildChargeSourceSet does: a column reads a field name, never a list position.
-type reviewChargeSourceSet struct {
-	spec, reviewSkill, reviewPhase, delegateSkill, delegateProcedure chargeSource
-}
-
-func (set reviewChargeSourceSet) list() []chargeSource {
-	return []chargeSource{set.spec, set.reviewSkill, set.reviewPhase, set.delegateSkill, set.delegateProcedure}
-}
-
-func reviewChargeSources(root, sourceTip, specPath string) (reviewChargeSourceSet, string) {
-	var set reviewChargeSourceSet
-	failure := loadChargeSources(root, sourceTip, []namedChargeSource{
-		{specPath, &set.spec},
-		{reviewSkill, &set.reviewSkill},
-		{reviewPhase, &set.reviewPhase},
-		{delegateSkill, &set.delegateSkill},
-		{delegateProcedure, &set.delegateProcedure},
-	})
-	if failure != "" {
-		return reviewChargeSourceSet{}, failure
-	}
-	return set, ""
-}
-
-func renderReviewPacket(
-	root string,
-	facts Facts,
-	sources reviewChargeSourceSet,
-	evidence reviewEvidence,
-	full bool,
-) (string, int) {
-	shared := evidence.shared()
-	chargeRows := make([][]string, 0, 3)
-	for _, axis := range reviewrecord.Axes() {
-		chargeRows = append(chargeRows, []string{
-			axis, facts.AssignmentTarget, root, facts.SourceBase, facts.SourceTip,
-			chargeFenceCell(facts), sources.spec.handle(), "read-only", shared.handle(),
-			sources.reviewSkill.handle(),
-			sourceHandles(sources.reviewPhase, sources.delegateSkill, sources.delegateProcedure),
+	policy := reviewSourcePolicy()
+	inputs := make([]chargeevidence.SourceInput, 0, len(policy))
+	for _, descriptor := range policy {
+		path := descriptor.path(facts.SpecPath)
+		data, failure := loadChargeSource(root, facts.SourceTip, path)
+		if failure != "" {
+			return nil, chargeRefusal("source", failure, "restore the named canonical source and rerun the exact charge")
+		}
+		inputs = append(inputs, chargeevidence.SourceInput{
+			Role: descriptor.role, Kind: chargeevidence.KindRepository, Path: path, Required: true, Data: data,
 		})
 	}
-	sharedRows := make([][]string, 0, 3)
-	for _, item := range evidence.sources() {
-		sharedRows = append(sharedRows, []string{item.path, item.identity()})
+	collected, failure := collectReviewEvidence(root, version, facts, reviewEvidenceObserved)
+	if failure != "" {
+		return nil, chargeRefusal("evidence", failure, "repair the named collector input and rerun the exact charge")
 	}
-	sharedTable, err := toon.Table("shared_evidence", []string{"kind", "identity"}, sharedRows)
+	for _, item := range collected {
+		inputs = append(inputs, chargeevidence.SourceInput{
+			Role: item.kind, Kind: chargeevidence.KindGenerated, Path: item.kind, Required: true, Data: item.data,
+			Producer: &chargeevidence.Producer{
+				Name: item.producer, Version: version, Cwd: root, Arguments: item.arguments,
+			},
+		})
+	}
+	metadata, err := reviewMetadata(root, facts, policy, collected)
 	if err != nil {
-		return toon.RenderError(err) + "\n", 1
+		return nil, chargeRefusal("completion-evidence", err.Error(), "repair the record path and retry")
 	}
-	completionTable, err := completionEvidenceTable(root, facts)
-	if err != nil {
-		return chargeRefusal("completion-evidence", err.Error(), "repair the record path and retry"), 1
-	}
-	return renderChargePacket(chargePacket{
-		fields: []string{
-			"axis", "assignment", "checkout", "base", "source_tip", "fence", "ticket",
-			"writes", "evidence", "checks", "return",
+	pack, err := chargeevidence.Build(chargeevidence.Candidate{
+		Selection: chargeevidence.Selection{
+			Mode: modeReview, Spec: facts.SpecPath, Base: facts.SourceBase, SourceTip: facts.SourceTip,
 		},
-		rows:           chargeRows,
-		middle:         []string{sharedTable, completionTable},
-		sources:        append(append([]chargeSource{}, sources.list()...), evidence.sources()...),
-		identitiesOnly: []chargeSource{shared},
-		next:           chargeInvocation("review", facts, ""),
-	}, full)
+		Metadata: metadata,
+		Sources:  inputs,
+	})
+	if err != nil {
+		return nil, chargeRefusal("evidence", err.Error(), "repair the reported evidence condition and rerun the exact charge")
+	}
+	return pack, ""
 }
 
-func completionEvidenceTable(root string, facts Facts) (string, error) {
+// reviewMetadata binds the complete review facts to the prepared sources. Every axis reads
+// one artifact, so the charge block names each axis against the same frozen captures.
+func reviewMetadata(root string, facts Facts, policy []reviewSourceDescriptor, collected []reviewCollector) (chargeevidence.Metadata, error) {
+	metadata := chargeevidence.Metadata{Fence: facts.FenceEntries}
+	for _, axis := range reviewrecord.Axes() {
+		metadata.Charge = append(metadata.Charge, chargeevidence.ChargeRow{Axis: axis, Access: chargeevidence.AccessReview})
+	}
+	for i, descriptor := range policy {
+		id := chargeevidence.InputSourceID(i)
+		if descriptor.checks {
+			metadata.Checks = append(metadata.Checks, id)
+		}
+		if descriptor.returns {
+			metadata.Returns = append(metadata.Returns, id)
+		}
+	}
+	for i, item := range collected {
+		metadata.Shared = append(metadata.Shared, chargeevidence.SharedRow{
+			Kind: item.kind, Source: chargeevidence.InputSourceID(len(policy) + i),
+		})
+	}
+	completion, err := completionEvidenceRow(root, facts)
+	if err != nil {
+		return chargeevidence.Metadata{}, err
+	}
+	metadata.Completion = append(metadata.Completion, completion)
+	return metadata, nil
+}
+
+func completionEvidenceRow(root string, facts Facts) (chargeevidence.CompletionRow, error) {
 	path, err := reviewrecord.RecordPath(facts.SpecPath)
 	if err != nil {
-		return "", err
+		return chargeevidence.CompletionRow{}, err
 	}
 	tree, err := benchgit.Output("-C", root, "rev-parse", "--verify", facts.SourceTip+"^{tree}")
 	if err != nil {
-		return "", err
+		return chargeevidence.CompletionRow{}, err
 	}
 	source, err := reviewrecord.SourceDigest(root, tree, facts.SpecPath)
 	if err != nil {
-		return "", err
+		return chargeevidence.CompletionRow{}, err
 	}
 	state, detail := "parsed", ""
 	_, readErr := reviewrecord.Read(root, facts.SpecPath)
@@ -214,10 +271,13 @@ func completionEvidenceTable(root string, facts Facts) (string, error) {
 	} else if readErr != nil {
 		state, detail = "invalid", readErr.Error()
 	}
-	// The gatherer already read the plan for the completion-plan row. The packet
-	// renders that one answer rather than parsing the fence a second time.
+	// The gatherer already read the plan for the completion-plan row. The metadata
+	// records that one answer rather than parsing the fence a second time.
 	if facts.CompletionPlanError != "" {
 		detail = "completion plan unavailable: " + facts.CompletionPlanError
 	}
-	return toon.Table("completion_evidence", []string{"record", "source_digest", "plan_digest", "record_state", "detail"}, [][]string{{path, source, facts.CompletionPlanDigest, state, detail}})
+	return chargeevidence.CompletionRow{
+		Record: path, SourceDigest: source, PlanDigest: facts.CompletionPlanDigest,
+		RecordState: state, Detail: detail,
+	}, nil
 }

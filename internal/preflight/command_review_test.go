@@ -5,12 +5,13 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
 // TestCommandConformantTree is C1, the tracer: every row green by name, exit 0, and a
 // byte-identical second run.
 func TestCommandConformantTree(t *testing.T) {
-	_, slug := seedConformant(t)
+	_, slug := preflighttest.SeedConformant(t)
 
 	first, code := Command([]string{"review", slug})
 	if code != 0 {
@@ -35,12 +36,12 @@ func TestCommandConformantTree(t *testing.T) {
 // TestCommandStaleBase is C2: the default branch advanced past the branch point makes
 // base-current the red row, exit 1.
 func TestCommandStaleBase(t *testing.T) {
-	_, slug := seedConformant(t)
-	runGit(t, "checkout", "-q", "main")
-	mustWriteFile(t, "unrelated.txt", "advance main\n")
-	runGit(t, "add", "unrelated.txt")
-	runGit(t, "commit", "-q", "-m", "advance main")
-	runGit(t, "checkout", "-q", "feature")
+	_, slug := preflighttest.SeedConformant(t)
+	preflighttest.RunGit(t, "checkout", "-q", "main")
+	preflighttest.MustWriteFile(t, "unrelated.txt", "advance main\n")
+	preflighttest.RunGit(t, "add", "unrelated.txt")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "advance main")
+	preflighttest.RunGit(t, "checkout", "-q", "feature")
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -60,10 +61,10 @@ func TestCommandStaleBase(t *testing.T) {
 // TestCommandOutOfFencePath is C3: a tracked change outside every fence entry makes
 // paths-authorized red naming the path.
 func TestCommandOutOfFencePath(t *testing.T) {
-	_, slug := seedConformant(t)
-	mustWriteFile(t, "unfenced/other.go", "package other\n")
-	runGit(t, "add", "unfenced/other.go")
-	runGit(t, "commit", "-q", "-m", "out of fence")
+	_, slug := preflighttest.SeedConformant(t)
+	preflighttest.MustWriteFile(t, "unfenced/other.go", "package other\n")
+	preflighttest.RunGit(t, "add", "unfenced/other.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "out of fence")
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -86,17 +87,17 @@ func TestCommandOutOfFencePath(t *testing.T) {
 // uncommitted worktree edit distinguishes it.
 func TestCommandUnstagedOutOfFenceRed(t *testing.T) {
 	slug := "example"
-	initRepo(t)
-	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2"))
-	mustWriteFile(t, "unfenced/other.go", "package other\n")
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "c0")
-	runGit(t, "checkout", "-q", "-b", "feature")
-	mustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
-	runGit(t, "add", "internal/"+slug+"/foo.go")
-	runGit(t, "commit", "-q", "-m", "c1")
-	mustWriteFile(t, "unfenced/other.go", "package other\n\n// edited, never staged\n")
+	preflighttest.StartRepo(t)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF2"))
+	preflighttest.MustWriteFile(t, "unfenced/other.go", "package other\n")
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+	preflighttest.MustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
+	preflighttest.RunGit(t, "add", "internal/"+slug+"/foo.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
+	preflighttest.MustWriteFile(t, "unfenced/other.go", "package other\n\n// edited, never staged\n")
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -111,19 +112,19 @@ func TestCommandUnstagedOutOfFenceRed(t *testing.T) {
 // match a fence entry of internal/git.
 func TestCommandFencePrefixBoundary(t *testing.T) {
 	slug := "boundary"
-	initRepo(t)
+	preflighttest.StartRepo(t)
 	body := "# boundary\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
 		"### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n" +
 		"|---|---|---|---|---|\n| PF1 | 1 | does x | cli seam | catches z |\n\n" +
 		"## Ownership fences\n\n- `internal/git`\n- `reviews/boundary.md`\n"
-	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1"))
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "c0")
-	runGit(t, "checkout", "-q", "-b", "feature")
-	mustWriteFile(t, "internal/git2/thing.go", "package git2\n")
-	runGit(t, "add", "internal/git2/thing.go")
-	runGit(t, "commit", "-q", "-m", "c1")
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1"))
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+	preflighttest.MustWriteFile(t, "internal/git2/thing.go", "package git2\n")
+	preflighttest.RunGit(t, "add", "internal/git2/thing.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -138,15 +139,15 @@ func TestCommandFencePrefixBoundary(t *testing.T) {
 // rows-owned red naming the uncited ID.
 func TestCommandUncitedRow(t *testing.T) {
 	slug := "example"
-	initRepo(t)
-	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1"))
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "c0")
-	runGit(t, "checkout", "-q", "-b", "feature")
-	mustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
-	runGit(t, "add", "internal/"+slug+"/foo.go")
-	runGit(t, "commit", "-q", "-m", "c1")
+	preflighttest.StartRepo(t)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1"))
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+	preflighttest.MustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
+	preflighttest.RunGit(t, "add", "internal/"+slug+"/foo.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -163,15 +164,15 @@ func TestCommandUncitedRow(t *testing.T) {
 // citation fault, and rows-membership passes over it.
 func TestCommandPhantomAndForeignTag(t *testing.T) {
 	slug := "example"
-	initRepo(t)
-	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2", "PF99", "FT93"))
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "c0")
-	runGit(t, "checkout", "-q", "-b", "feature")
-	mustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
-	runGit(t, "add", "internal/"+slug+"/foo.go")
-	runGit(t, "commit", "-q", "-m", "c1")
+	preflighttest.StartRepo(t)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF2", "PF99", "FT93"))
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+	preflighttest.MustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
+	preflighttest.RunGit(t, "add", "internal/"+slug+"/foo.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -206,16 +207,16 @@ func rowOf(t *testing.T, out, check string) (string, bool) {
 // than skipping the subdirectory.
 func TestCommandTicketsSubdirRowOwned(t *testing.T) {
 	slug := "example"
-	initRepo(t)
-	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1"))
-	mustWriteFile(t, "specs/"+slug+"/tickets/sub/x.md", ticketDoc("X", "PF2"))
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "c0")
-	runGit(t, "checkout", "-q", "-b", "feature")
-	mustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
-	runGit(t, "add", "internal/"+slug+"/foo.go")
-	runGit(t, "commit", "-q", "-m", "c1")
+	preflighttest.StartRepo(t)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1"))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/sub/x.md", preflighttest.TicketDoc("X", "PF2"))
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+	preflighttest.MustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
+	preflighttest.RunGit(t, "add", "internal/"+slug+"/foo.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
 
 	out, code := Command([]string{"review", slug})
 	if code != 0 {
@@ -230,16 +231,16 @@ func TestCommandTicketsSubdirRowOwned(t *testing.T) {
 // own-tag token that appears only in a nested tickets/sub/ file is still detected.
 func TestCommandTicketsSubdirPhantomDetected(t *testing.T) {
 	slug := "example"
-	initRepo(t)
-	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2"))
-	mustWriteFile(t, "specs/"+slug+"/tickets/sub/x.md", ticketDoc("X", "PF99"))
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "c0")
-	runGit(t, "checkout", "-q", "-b", "feature")
-	mustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
-	runGit(t, "add", "internal/"+slug+"/foo.go")
-	runGit(t, "commit", "-q", "-m", "c1")
+	preflighttest.StartRepo(t)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF2"))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/sub/x.md", preflighttest.TicketDoc("X", "PF99"))
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+	preflighttest.MustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
+	preflighttest.RunGit(t, "add", "internal/"+slug+"/foo.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -250,16 +251,15 @@ func TestCommandTicketsSubdirPhantomDetected(t *testing.T) {
 	}
 }
 
-// TestCommandEmptyDiff is C6: an empty changed set in review mode makes diff-nonempty
-// red.
+// TestCommandEmptyDiff is C6: an empty review-mode changed set makes diff-nonempty red.
 func TestCommandEmptyDiff(t *testing.T) {
 	slug := "example"
-	initRepo(t)
-	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2"))
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "c0")
-	runGit(t, "checkout", "-q", "-b", "feature") // no further commits: HEAD == merge-base
+	preflighttest.StartRepo(t)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF2"))
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature") // no further commits: HEAD == merge-base
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -280,11 +280,11 @@ func TestCommandEmptyDiff(t *testing.T) {
 // fenced, otherwise-all-green case that exercises that distinction
 // directly.
 func TestCommandControlBytePath(t *testing.T) {
-	_, slug := seedConformant(t)
+	_, slug := preflighttest.SeedConformant(t)
 	hostile := "unfenced/a\x1bb.go"
-	mustWriteFile(t, hostile, "package example\n")
-	runGit(t, "add", "--", hostile)
-	runGit(t, "commit", "-q", "-m", "hostile path")
+	preflighttest.MustWriteFile(t, hostile, "package example\n")
+	preflighttest.RunGit(t, "add", "--", hostile)
+	preflighttest.RunGit(t, "commit", "-q", "-m", "hostile path")
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -305,11 +305,11 @@ func TestCommandControlBytePath(t *testing.T) {
 // green. PF7's refusal is unconditional, not gated on the path reaching
 // a red row's rendered detail cell.
 func TestCommandFencedControlBytePathReds(t *testing.T) {
-	_, slug := seedConformant(t)
+	_, slug := preflighttest.SeedConformant(t)
 	hostile := "internal/" + slug + "/a\x1bb.go"
-	mustWriteFile(t, hostile, "package example\n")
-	runGit(t, "add", "--", hostile)
-	runGit(t, "commit", "-q", "-m", "fenced hostile path")
+	preflighttest.MustWriteFile(t, hostile, "package example\n")
+	preflighttest.RunGit(t, "add", "--", hostile)
+	preflighttest.RunGit(t, "commit", "-q", "-m", "fenced hostile path")
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
@@ -326,11 +326,11 @@ func TestCommandFencedControlBytePathReds(t *testing.T) {
 // TestCommandSpaceAndGlobPath is C7's render half: a path with a space or glob
 // character renders escaped and authorizes correctly rather than false-reddening.
 func TestCommandSpaceAndGlobPath(t *testing.T) {
-	_, slug := seedConformant(t)
+	_, slug := preflighttest.SeedConformant(t)
 	fancy := "internal/" + slug + "/a b*.go"
-	mustWriteFile(t, fancy, "package example\n")
-	runGit(t, "add", "--", fancy)
-	runGit(t, "commit", "-q", "-m", "space and glob path")
+	preflighttest.MustWriteFile(t, fancy, "package example\n")
+	preflighttest.RunGit(t, "add", "--", fancy)
+	preflighttest.RunGit(t, "commit", "-q", "-m", "space and glob path")
 
 	out, code := Command([]string{"review", slug})
 	if code != 0 {
@@ -347,18 +347,18 @@ func TestCommandSpaceAndGlobPath(t *testing.T) {
 // consumes the recorded-key resolution bench diff itself uses. Bare bench
 // diff output stays byte-identical.
 func TestCommandRecordedBaseKey(t *testing.T) {
-	_, slug := seedConformant(t) // HEAD = c1 on feature, base commit = c0
-	mustWriteFile(t, "unfenced/other.go", "package other\n")
-	runGit(t, "add", "unfenced/other.go")
-	runGit(t, "commit", "-q", "-m", "out of fence")
-	c2 := runGit(t, "rev-parse", "HEAD") // past (includes) the out-of-fence commit
-	mustWriteFile(t, "internal/"+slug+"/bar.go", "package example\n")
-	runGit(t, "add", "internal/"+slug+"/bar.go")
-	runGit(t, "commit", "-q", "-m", "authorized change after the out-of-fence commit")
+	_, slug := preflighttest.SeedConformant(t) // HEAD = c1 on feature, base commit = c0
+	preflighttest.MustWriteFile(t, "unfenced/other.go", "package other\n")
+	preflighttest.RunGit(t, "add", "unfenced/other.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "out of fence")
+	c2 := preflighttest.RunGit(t, "rev-parse", "HEAD") // past (includes) the out-of-fence commit
+	preflighttest.MustWriteFile(t, "internal/"+slug+"/bar.go", "package example\n")
+	preflighttest.RunGit(t, "add", "internal/"+slug+"/bar.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "authorized change after the out-of-fence commit")
 
 	beforeDiff, beforeCode := diff.Command(nil)
 
-	runGit(t, "config", "branch.feature.benchBase", c2)
+	preflighttest.RunGit(t, "config", "branch.feature.benchBase", c2)
 	out, code := Command([]string{"review", slug})
 	if code != 0 {
 		t.Fatalf("with benchBase recorded past the out-of-fence commit, Command exit = %d, want 0; output:\n%s", code, out)
@@ -367,7 +367,7 @@ func TestCommandRecordedBaseKey(t *testing.T) {
 		t.Errorf("recorded-key base must exclude the out-of-fence commit from the diff:\n%s", out)
 	}
 
-	runGit(t, "config", "--unset", "branch.feature.benchBase")
+	preflighttest.RunGit(t, "config", "--unset", "branch.feature.benchBase")
 	out2, code2 := Command([]string{"review", slug})
 	if code2 != 1 {
 		t.Fatalf("with the key removed, Command exit = %d, want 1; output:\n%s", code2, out2)
@@ -388,19 +388,19 @@ func TestCommandRecordedBaseKey(t *testing.T) {
 func seedGrammarFaults(t *testing.T) (root, slug string) {
 	t.Helper()
 	slug = "example"
-	root = initRepo(t)
-	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	mustWriteFile(t, "specs/"+slug+"/tickets/broken.md", "Prose only, with no field line at all.\n")
-	mustWriteFile(t, "specs/"+slug+"/tickets/a.md",
+	root = preflighttest.StartRepo(t)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/broken.md", "Prose only, with no field line at all.\n")
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/a.md",
 		"# A\n\nBlocked by: b.md\nWrites: internal/example/typo.go\nCovers: PF1\n\n## What to build\n\nBuild it.\n\n## Acceptance\n\n- [ ] Built.\n")
-	mustWriteFile(t, "specs/"+slug+"/tickets/b.md",
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/b.md",
 		"# B\n\nBlocked by: a.md\nWrites: specs\nCovers: PF2\n\n## What to build\n\nBuild it.\n\n## Acceptance\n\n- [ ] Built.\n")
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "c0")
-	runGit(t, "checkout", "-q", "-b", "feature")
-	mustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
-	runGit(t, "add", "internal/"+slug+"/foo.go")
-	runGit(t, "commit", "-q", "-m", "c1")
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+	preflighttest.MustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
+	preflighttest.RunGit(t, "add", "internal/"+slug+"/foo.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
 	return root, slug
 }
 
@@ -459,13 +459,13 @@ func detailOf(row string) string {
 // cannot represent the cell and the table would die mid-render.
 func TestCommandControlByteTicketPathRefused(t *testing.T) {
 	slug := "example"
-	initRepo(t)
-	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2"))
-	mustWriteFile(t, "specs/"+slug+"/tickets/esc\x1bape.md", ticketDoc("Two", "PF1"))
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "c0")
-	runGit(t, "checkout", "-q", "-b", "feature")
+	preflighttest.StartRepo(t)
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF2"))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/esc\x1bape.md", preflighttest.TicketDoc("Two", "PF1"))
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
 
 	out, code := Command([]string{"review", slug})
 	if code != 1 {

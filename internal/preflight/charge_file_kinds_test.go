@@ -7,13 +7,15 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
 func TestChargeRefusesLinkedSpecAndTicketInputs(t *testing.T) {
 	for _, input := range []string{"spec", "ticket", "tickets directory"} {
 		t.Run(input, func(t *testing.T) {
 			root, slug, _ := seedLinkedChargeInput(t, input)
-			out, code := Command(chargeArgs(t, root, slug, false))
+			out, code := Command(preflighttest.ChargeArgs(t, root, slug))
 			if code != 1 || !strings.Contains(out, "source required") ||
 				!strings.Contains(out, "wrong-type") ||
 				!strings.Contains(out, "restore the named canonical source") ||
@@ -26,9 +28,9 @@ func TestChargeRefusesLinkedSpecAndTicketInputs(t *testing.T) {
 
 func seedLinkedChargeInput(t *testing.T, input string) (root, slug, target string) {
 	t.Helper()
-	root, slug = seedConformant(t)
-	spec := specBody(slug, "- `specs/"+slug+"/` (input fixtures)")
-	mustWriteFile(t, "specs/"+slug+"/spec.md", spec)
+	root, slug = preflighttest.SeedConformant(t)
+	spec := preflighttest.SpecBody(slug, "- `specs/"+slug+"/` (input fixtures)")
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", spec)
 	outside := t.TempDir()
 	switch input {
 	case "spec":
@@ -67,15 +69,15 @@ func seedLinkedChargeInput(t *testing.T, input string) (root, slug, target strin
 	default:
 		t.Fatalf("unknown linked input %q", input)
 	}
-	runGit(t, "add", "-A")
-	runGit(t, "commit", "-q", "-m", "linked "+input+" input")
+	preflighttest.RunGit(t, "add", "-A")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "linked "+input+" input")
 	return root, slug, target
 }
 
 func TestChargeRefusesSpecialTicketBeforeRead(t *testing.T) {
 	for _, kind := range []string{"dangling link", "FIFO", "socket"} {
 		t.Run(kind, func(t *testing.T) {
-			root, slug := seedConformant(t)
+			root, slug := preflighttest.SeedConformant(t)
 			path := "specs/" + slug + "/tickets/one.md"
 			if err := os.Remove(path); err != nil {
 				t.Fatal(err)
@@ -96,7 +98,7 @@ func TestChargeRefusesSpecialTicketBeforeRead(t *testing.T) {
 				}
 				t.Cleanup(func() { _ = listener.Close() })
 			}
-			out, code := Command(chargeArgs(t, root, slug, false))
+			out, code := Command(preflighttest.ChargeArgs(t, root, slug))
 			if code != 1 || !strings.Contains(out, "ticket file not readable") ||
 				!strings.Contains(out, "one.md") ||
 				strings.Contains(out, "tickets-parse") || strings.Contains(out, "complete,next}") {

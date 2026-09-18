@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gittest"
@@ -74,22 +75,70 @@ Build it.
 		t.Fatal(err)
 	}
 
-	var stdout, stderr bytes.Buffer
-	command := Command{Stdout: &stdout, Stderr: &stderr}
-	code := command.Run([]string{
-		"preflight", "review", "example", "--charge", "--base", base,
-		"--source-tip", tip, "--full",
+	stdout := runPreflight(t, []string{
+		"preflight", "review", "example", "--charge", "--base", base, "--source-tip", tip,
 	})
-	if code != 0 || stderr.Len() != 0 {
-		t.Fatalf("preflight review charge = (%d, stderr=%q):\n%s", code, stderr.String(), stdout.String())
+	prepared := tableValue(t, decodeVersionTOON(t, stdout), "prepared")
+	if len(prepared) != 1 {
+		t.Fatalf("prepared rows = %d:\n%s", len(prepared), stdout)
 	}
-	document := decodeVersionTOON(t, stdout.String())
-	consumerOutput := evidenceValue(t, document, "consumers")
-	consumerDocument := decodeVersionTOON(t, consumerOutput)
-	citation := tableValue(t, consumerDocument, "citation")
-	if len(citation) != 1 || citation[0]["version"] != version {
-		t.Fatalf("citation = %#v, want current version %q", citation, version)
+	identity, ok := prepared[0]["evidence"].(string)
+	if !ok {
+		t.Fatalf("prepared evidence = %#v", prepared[0]["evidence"])
 	}
+	// The manifest opens the default stream, so the producer rows arrive before any
+	// source page. Every generated capture must name the running executable's version.
+	manifest := readManifestStream(t, identity)
+	producers := tableValue(t, decodeVersionTOON(t, manifest), "producers")
+	if len(producers) == 0 {
+		t.Fatalf("manifest declares no producer:\n%s", manifest)
+	}
+	for _, row := range producers {
+		if row["version"] != version {
+			t.Fatalf("producer %#v, want current version %q", row, version)
+		}
+	}
+}
+
+// runPreflight runs one preflight invocation through the real command and returns its
+// stdout, so the assertion grades the version the executable itself carries.
+func runPreflight(t *testing.T, args []string) string {
+	t.Helper()
+	var stdout, stderr bytes.Buffer
+	if code := (Command{Stdout: &stdout, Stderr: &stderr}).Run(args); code != 0 || stderr.Len() != 0 {
+		t.Fatalf("%v = (%d, stderr=%q):\n%s", args, code, stderr.String(), stdout.String())
+	}
+	return stdout.String()
+}
+
+// readManifestStream follows the default stream from its first read until the manifest
+// fragments end, and returns the reconstructed manifest bytes.
+func readManifestStream(t *testing.T, identity string) string {
+	t.Helper()
+	var manifest strings.Builder
+	args := []string{"preflight", "evidence", identity}
+	for i := 0; i < 10000; i++ {
+		rows := tableValue(t, decodeVersionTOON(t, runPreflight(t, args)), "page")
+		if len(rows) != 1 {
+			t.Fatalf("page rows = %d", len(rows))
+		}
+		row := rows[0]
+		if row["stream"] != "manifest" {
+			return manifest.String()
+		}
+		content, ok := row["content"].(string)
+		if !ok {
+			t.Fatalf("page content = %#v", row["content"])
+		}
+		manifest.WriteString(content)
+		next, _ := row["next"].(string)
+		if next == "" {
+			return manifest.String()
+		}
+		args = strings.Fields(next)[1:]
+	}
+	t.Fatal("manifest traversal did not end")
+	return ""
 }
 
 func trimmedAXIGit(t *testing.T, root string, args ...string) string {

@@ -1,0 +1,4 @@
+exit: 1
+error: snapshot drift — the dirty content changed while reading; retry the exact invocation
+help[1]{cmd,why}:
+  bench preflight build example --charge --ticket one.md --base <base> --source-tip <tip>,retry after the repository stopped moving
