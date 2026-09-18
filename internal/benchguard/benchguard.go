@@ -49,22 +49,26 @@ func CommandFromEnvelope(data []byte) (string, error) {
 	return command, nil
 }
 
-// Side names where the refused operator sits relative to the Bench segment. The
-// reader repairs a different thing on each side, so the refusal sentence follows it.
+// Side names where the refused operator sits relative to the Bench segment, and on the
+// before side which cause refused the lead. The reader repairs a different thing in each
+// case, so the refusal sentence follows the side.
 type Side uint8
 
 const (
 	// SideAfter is a control operator after the Bench segment, the default side.
 	SideAfter Side = iota
-	// SideBefore is a control operator before the Bench segment.
+	// SideBefore is a refused lead before the Bench segment that leaves the directory
+	// alone: an assignment, an environment shaper, or an operator no lead may hold.
 	SideBefore
+	// SideBeforeDirectory is a refused lead that changes the directory.
+	SideBeforeDirectory
 	// SideRedirection is a redirection inside the Bench segment.
 	SideRedirection
 )
 
 // Verdict is the guard's decision for one command. Segment holds the Bench
 // segment's projected words, Operator names the token that caused a refusal, and
-// Side names which side of the segment that token sits on.
+// Side names which side of the segment that token sits on, and the repair it needs.
 type Verdict struct {
 	Blocked  bool
 	Segment  []string
@@ -81,8 +85,10 @@ func (v Verdict) Message() string {
 // repairSentence names the one repair that removes the refused token.
 func repairSentence(side Side) string {
 	switch side {
-	case SideBefore:
+	case SideBeforeDirectory:
 		return "Run the Bench command from the current directory; it resolves the worktree itself."
+	case SideBefore:
+		return "Run the Bench command as its own step, with no earlier step that sets the environment or feeds it."
 	case SideRedirection:
 		return "Run the Bench command without a redirection."
 	default:
@@ -178,33 +184,47 @@ var leadOperators = map[string]bool{";": true, "&&": true}
 
 // shapingHeads are the commands that change the directory or the environment a later
 // Bench call reads. A lead that holds one is refused, because the call no longer runs
-// from the state the reader sees.
-var shapingHeads = map[string]bool{"cd": true, "pushd": true, "popd": true, "export": true, "unset": true, "source": true, ".": true, "eval": true}
+// from the state the reader sees. The side each head carries names the repair the
+// reader needs, so the refusal reads the cause here and never classifies the lead twice.
+var shapingHeads = map[string]Side{
+	"cd": SideBeforeDirectory, "pushd": SideBeforeDirectory, "popd": SideBeforeDirectory,
+	"export": SideBefore, "unset": SideBefore, "source": SideBefore, ".": SideBefore, "eval": SideBefore,
+}
 
-// leadAllowed reports whether the simple commands before one Bench span are a legal
-// lead. A first span has no lead. Otherwise the adjacent operator must be a lead
-// operator, and no earlier command may carry an assignment or a shaping head.
-func leadAllowed(stream shellcommand.Stream, index int) bool {
+// leadRefusal reports whether the simple commands before one Bench span are a refused
+// lead, and which side the cause takes. A first span has no lead. Otherwise the adjacent
+// operator must be a lead operator, and no earlier command may carry an assignment or a
+// shaping head. Only a head that changes the directory takes SideBeforeDirectory; the
+// side of an allowed lead is unread.
+func leadRefusal(stream shellcommand.Stream, index int) (Side, bool) {
 	if index == 0 {
-		return true
+		return SideBefore, false
 	}
 	start := stream.Commands[index].Start
 	if start == 0 || stream.Tokens[start-1].Kind != shellcommand.ControlOperator || !leadOperators[stream.Tokens[start-1].Text] {
-		return false
+		return SideBefore, true
 	}
 	for _, earlier := range stream.Commands[:index] {
 		words := shellcommand.ProjectCommandWords(stream.Tokens[earlier.Start:earlier.End])
 		for _, word := range words {
 			if shellcommand.IsAssignment(word) {
-				return false
+				return SideBefore, true
 			}
 		}
 		prefix := shellcommand.ResolveRoutinePrefix(words)
-		if prefix.Index < len(words) && shapingHeads[words[prefix.Index]] {
-			return false
+		if prefix.Index < len(words) {
+			if side, shaping := shapingHeads[words[prefix.Index]]; shaping {
+				return side, true
+			}
 		}
 	}
-	return true
+	return SideBefore, false
+}
+
+// leadAllowed reports whether the lead before one Bench span is legal.
+func leadAllowed(stream shellcommand.Stream, index int) bool {
+	_, refused := leadRefusal(stream, index)
+	return !refused
 }
 
 // hasSyntaxFrom reports whether a redirection or a control operator sits at or after
@@ -241,8 +261,10 @@ func operatorFor(stream shellcommand.Stream, index int, heredocAllowed bool) (st
 		}
 		return shellcommand.RedirectionText(tokens, i), SideRedirection
 	}
-	if span.Start > 0 && stream.Tokens[span.Start-1].Kind == shellcommand.ControlOperator && !leadAllowed(stream, index) {
-		return stream.Tokens[span.Start-1].Text, SideBefore
+	if span.Start > 0 && stream.Tokens[span.Start-1].Kind == shellcommand.ControlOperator {
+		if side, refused := leadRefusal(stream, index); refused {
+			return stream.Tokens[span.Start-1].Text, side
+		}
 	}
 	if span.End < len(stream.Tokens) && stream.Tokens[span.End].Kind == shellcommand.ControlOperator {
 		return stream.Tokens[span.End].Text, SideAfter
