@@ -12,6 +12,10 @@ import (
 // of the production constant.
 const blockedPrefixWant = "BLOCKED: Bench response is bounded, complete, and self-contained."
 
+// isolationSentenceWant is the before-side repair for a refused lead that does not change
+// the directory, written here independently of the production constant.
+const isolationSentenceWant = "Run the Bench command as its own step, with no earlier step that sets the environment or feeds it."
+
 func TestClassifyFollowOns(t *testing.T) {
 	resolver := Resolver{Getwd: func() (string, error) { return "/work", nil }, EvalSymlinks: func(path string) (string, error) {
 		if path == "/work/kit-command" {
@@ -154,7 +158,10 @@ func TestClassifyNamesTheSegmentAndTheOperator(t *testing.T) {
 
 // TestClassifyNamesTheSideOfTheOperator proves the refusal names the side the operator
 // sits on. A leading operator is not a follow-on, so the sentence that tells the reader
-// to remove a follow-on points at nothing.
+// to remove a follow-on points at nothing. The before side carries two repairs: a lead
+// that changes the directory reads the directory sentence, and every other refused lead
+// — an assignment, an environment shaper, a pipe, or a `||` — reads the isolation
+// sentence, because the current directory is not what those leads spoil.
 func TestClassifyNamesTheSideOfTheOperator(t *testing.T) {
 	resolver := Resolver{Getwd: func() (string, error) { return "/work", nil }, EvalSymlinks: func(string) (string, error) { return "", errors.New("not bench") }}
 	const prefix = blockedPrefixWant
@@ -163,6 +170,26 @@ func TestClassifyNamesTheSideOfTheOperator(t *testing.T) {
 			name:    "leading operator",
 			command: "cd /tmp && bench gate",
 			want:    prefix + " Run the Bench command from the current directory; it resolves the worktree itself. segment=bench gate operator=&&",
+		},
+		{
+			name:    "assignment lead",
+			command: "A=1; bench gate",
+			want:    prefix + " " + isolationSentenceWant + " segment=bench gate operator=;",
+		},
+		{
+			name:    "environment shaper lead",
+			command: "export A=1 && bench gate",
+			want:    prefix + " " + isolationSentenceWant + " segment=bench gate operator=&&",
+		},
+		{
+			name:    "pipe into the call",
+			command: "cat a | bench gate",
+			want:    prefix + " " + isolationSentenceWant + " segment=bench gate operator=|",
+		},
+		{
+			name:    "conditional lead",
+			command: "true || bench gate",
+			want:    prefix + " " + isolationSentenceWant + " segment=bench gate operator=||",
 		},
 		{
 			name:    "trailing operator",
