@@ -139,7 +139,7 @@ func anchorFiles(anchors map[string][]string, path string) []string {
 	seen := map[string]bool{}
 	var files []string
 	for literal, holders := range anchors {
-		if literal != path && !strings.HasPrefix(literal, path+"/") {
+		if !pathCovered(literal, []string{path}) {
 			continue
 		}
 		for _, file := range holders {

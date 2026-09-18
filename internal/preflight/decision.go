@@ -375,15 +375,15 @@ func fenceAuthorizes(path string, fences []string) bool {
 const newMarker = "(new)"
 
 // splitWritesEntry separates one `Writes:` entry into the tree path it names
-// and whether it carries the (new) marker. The gatherer's existence probe and
-// the writes-resolve row read this one split, so the path probed and the path
-// graded can never disagree.
+// and whether it carries the (new) marker. A trailing `/` is a directory spelling,
+// not a path segment, so the split drops it. The gatherer's probes, the closures,
+// and the writes-resolve row read this one split, so no two of them can disagree.
 func splitWritesEntry(entry string) (path string, isNew bool) {
 	path = strings.TrimSpace(entry)
-	if !strings.HasSuffix(path, newMarker) {
-		return path, false
+	if isNew = strings.HasSuffix(path, newMarker); isNew {
+		path = strings.TrimSpace(strings.TrimSuffix(path, newMarker))
 	}
-	return strings.TrimSpace(strings.TrimSuffix(path, newMarker)), true
+	return strings.TrimSuffix(path, "/"), isNew
 }
 
 // ticketsParseCheck reports the ticket grammar itself: an absent required

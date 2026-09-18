@@ -60,6 +60,7 @@ func TestAnchorClosureGreenWhenNamed(t *testing.T) {
 	anchored := map[string][]string{".agents/x/SKILL.md": {"internal/anchors/registry_a.go", "internal/anchors/registry_a_test.go"}}
 	assertAnchorClosure(t, anchoredFacts(anchored, ".agents/x/SKILL.md", "internal/anchors/registry_a.go", "internal/anchors/registry_a_test.go (new)"), "")
 	assertAnchorClosure(t, anchoredFacts(anchored, ".agents/x/SKILL.md", "internal/anchors"), "")
+	assertAnchorClosure(t, anchoredFacts(anchored, ".agents/x/SKILL.md", "internal/anchors/"), "")
 }
 
 // seedAnchoredTicket plants a repository whose own anchor registry file names the
@@ -105,11 +106,13 @@ func TestCommandBuildAnchorClosureReadsTree(t *testing.T) {
 }
 
 // TestAnchorClosureCoversDirectoryEntry covers SC3. A directory entry takes the
-// closure of the anchored file under it.
+// closure of the anchored file under it, with or without a trailing slash.
 func TestAnchorClosureCoversDirectoryEntry(t *testing.T) {
-	_, slug := seedAnchoredTicket(t, ".agents/x")
-	out, _ := Command([]string{"build", slug})
-	assertAnchorClosureRow(t, out, "one.md: .agents/x is anchored by internal/anchors/extra.go")
+	for _, entry := range []string{".agents/x", ".agents/x/"} {
+		_, slug := seedAnchoredTicket(t, entry)
+		out, _ := Command([]string{"build", slug})
+		assertAnchorClosureRow(t, out, "one.md: "+entry+" is anchored by internal/anchors/extra.go")
+	}
 }
 
 // TestProposeWritesListsAnchorClosure covers SC9. The proposal lists the missing
