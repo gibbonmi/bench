@@ -60,10 +60,7 @@ Covers: <coverage row ids this ticket owns, or none>
 
 Use ASD-STE100 per `craft-spec`'s `references/ste-prose.md`. `What to build` states the end-to-end behavior. State shared contracts in that prose and in `Acceptance`, never in a separate schema field. Review re-derives each crossing from the tree.
 
-The parser enforces these rules. `Blocked by:` holds `none` or sibling ticket file basenames; a basename survives a retitle, and `--ticket` already names it. Each
-`Writes:` path exists in the tree or carries the `(new)` marker. A fixture-pinned path
-also names its fixture, and a bound package also names its registries. `Covers:` holds
-`none` or declared row ids, cited in full because preflight reads ids, not ranges.
+Before you lock a `Writes:` line, read [the slicing checks](references/slicing-checks.md), which list every rule that the parser and build preflight enforce.
 
 A ticket names every relocation destination in `Writes:`, including destinations for snapshots and registry rows.
 
