@@ -44,7 +44,7 @@ const (
 	ModeReview   = "review"
 	ModeBuild    = "build"
 	modeEvidence = "evidence"
-	modeClean    = "evidence-clean"
+	ModeClean    = "evidence-clean"
 )
 
 // flagSpec is one registered preflight flag. A switch has no placeholder; a valued flag
@@ -72,7 +72,7 @@ var flagTable = []flagSpec{
 // modeOperands names the positional operand each mode takes. A mode with an empty operand
 // takes none, so the grammar's positional arity derives from this table rather than from a
 // second count.
-var modeOperands = map[string]string{ModeReview: "<slug>", ModeBuild: "<slug>", modeEvidence: "<id>", modeClean: ""}
+var modeOperands = map[string]string{ModeReview: "<slug>", ModeBuild: "<slug>", modeEvidence: "<id>", ModeClean: ""}
 
 // Operand reports the placeholder this operation's mode takes, or empty when it takes none.
 func (op Operation) Operand() string { return modeOperands[op.Mode] }
@@ -109,9 +109,9 @@ var operations = []Operation{
 		description: "verify every stored page and source digest of a prepared evidence artifact"},
 	{Mode: modeEvidence, selectors: []string{flagCurrent}, Kind: KindCurrentEvidence, Bounded: true,
 		description: "bind a prepared evidence artifact to the current assignment and source pair"},
-	{Mode: modeClean, optional: []string{flagCursor}, Kind: KindCleanPlan, Bounded: true,
+	{Mode: ModeClean, optional: []string{flagCursor}, Kind: KindCleanPlan, Bounded: true,
 		description: "print one bounded page of the exact evidence deletion targets and its fingerprint"},
-	{Mode: modeClean, selectors: []string{flagApply}, Kind: KindCleanApply, Bounded: true,
+	{Mode: ModeClean, selectors: []string{flagApply}, Kind: KindCleanApply, Bounded: true,
 		description: "delete exactly the targets one fingerprinted cleanup plan named"},
 }
 

@@ -72,6 +72,9 @@ func TestEvidenceResponseBudget(t *testing.T) {
 		t.Fatalf("operational refusal exit = %d:\n%s", code, refusal)
 	}
 	cases["CE139 operational refusal"] = refusal
+	// The cleanup responses measure last in this repository, because the apply removes the
+	// artifact every case above reads.
+	cleanupBudget(t, cases)
 	// The review fixture seeds its own repository, so it runs after every read this
 	// build artifact needs.
 	cases["CE135 review preparation"] = largeReviewPreparation(t)
@@ -79,6 +82,38 @@ func TestEvidenceResponseBudget(t *testing.T) {
 		if len(out) > preflighttest.ResponseBudget || len(out) == 0 {
 			t.Errorf("%s holds %d encoded bytes, want 1 to %d", name, len(out), preflighttest.ResponseBudget)
 		}
+	}
+}
+
+// cleanupBudget measures every registered cleanup response of the seeded store: CE136 for the
+// plan and CE137 for the apply. The operation registry supplies the invocations, so a cleanup
+// form registered later arrives with its own measured response instead of a hand-written one.
+// The forms run in registry order, which delivers the plan before the apply that plan's
+// fingerprint authorizes, and the apply empties the store.
+func cleanupBudget(t *testing.T, cases map[string]string) {
+	t.Helper()
+	fingerprint := ""
+	for _, form := range evidencecmd.BoundedForms() {
+		if form.Mode != evidencecmd.ModeClean {
+			continue
+		}
+		args := append([]string{form.Mode}, flagArguments(t, map[string]string{"--apply": fingerprint}, form.Flags...)...)
+		out, code := preflight.Command(args)
+		if code != 0 {
+			t.Fatalf("%s = (%d):\n%.300s", form.Name, code, out)
+		}
+		cases["CE136 and CE137 "+form.Name] = out
+		if fingerprint != "" {
+			continue
+		}
+		rows := preflighttest.TableRows(t, preflighttest.DecodeMap(t, out), "cleanup")
+		if len(rows) != 1 {
+			t.Fatalf("%s carries %d orientation rows", form.Name, len(rows))
+		}
+		fingerprint, _ = rows[0]["fingerprint"].(string)
+	}
+	if fingerprint == "" {
+		t.Fatal("the operation registry declares no bounded cleanup plan form")
 	}
 }
 

@@ -1,14 +1,12 @@
 package evidencecmd
 
 import (
-	"strings"
-
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // CleanCommand is the public cleanup command the responses name in their successors.
-const CleanCommand = "bench preflight " + modeClean
+const CleanCommand = "bench preflight " + ModeClean
 
 // freshPlan is the recovery action every stale or stopped cleanup names. A plan is the one
 // authorization cleanup accepts, so recovery is always a new plan and never a retry.
@@ -67,8 +65,10 @@ func CleanApply(root string, flags map[string]string) (string, int) {
 	if refusal != "" {
 		return refusal, 1
 	}
+	// A plan fingerprint is an artifact identity over the target list, so the manifest owner
+	// of that shape validates it before any store access.
 	fingerprint := flags[flagApply]
-	if !validFingerprint(fingerprint) {
+	if !chargeevidence.ValidIdentity(fingerprint) {
 		return toon.Usage(Grammar.Cmd, flagApply+" needs a plan fingerprint the cleanup plan printed"), 2
 	}
 	applied, err := store.Apply(fingerprint)
@@ -85,20 +85,4 @@ func CleanApply(root string, flags map[string]string) (string, int) {
 		return storeRefusal(err), 1
 	}
 	return out, code
-}
-
-// validFingerprint reports whether value is a well-formed plan fingerprint: the artifact
-// identity prefix followed by 64 lowercase hexadecimal digits.
-func validFingerprint(value string) bool {
-	hexPart, ok := strings.CutPrefix(value, chargeevidence.IdentityPrefix)
-	if !ok || len(hexPart) != 64 {
-		return false
-	}
-	for i := 0; i < len(hexPart); i++ {
-		c := hexPart[i]
-		if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
-			return false
-		}
-	}
-	return true
 }

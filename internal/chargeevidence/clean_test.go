@@ -199,6 +199,67 @@ func TestEvidenceCleanupFailure(t *testing.T) {
 	}
 }
 
+// replace puts a different file under name without reusing the object the plan observed. It
+// writes a sibling and renames it, so the store object keeps its name and takes a new file
+// identity, which is what an out-of-protocol writer leaves behind.
+func replace(t *testing.T, dir, name, body string) {
+	t.Helper()
+	sibling := filepath.Join(dir, name+".replacement")
+	if err := os.WriteFile(sibling, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(sibling, filepath.Join(dir, name)); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// TestEvidenceCleanupReplacedTarget is CE82 and the pre-deletion identity recheck. The
+// exclusive operation lock excludes every Bench reader and writer, so this test models the
+// process outside that protocol: it replaces the second target at the stage the apply
+// reaches after it removed the first one. The apply removes exactly the target it planned,
+// leaves the file it did not plan, and reports the exact unfinished disposition.
+func TestEvidenceCleanupReplacedTarget(t *testing.T) {
+	var dir, published string
+	const intruder = "an object no plan named\n"
+	paused := 0
+	store, storeDir := newStore(t, ce.StoreOptions{Pause: func(stage string) {
+		// The stage repeats once per removed target; this store holds two, and the apply
+		// stops at the second, so the replacement happens exactly once.
+		if stage != ce.StageRemoved || paused > 0 {
+			return
+		}
+		paused++
+		replace(t, dir, published, intruder)
+	}})
+	dir = storeDir
+	identity := publish(t, store, mustBuild(t, fixtureCandidate("# One\n")), ce.DefaultQuota)
+	published = strings.TrimPrefix(identity, ce.IdentityPrefix) + ce.PackSuffix
+	orphan(t, dir, "partial bytes\n")
+
+	plan := planOf(t, store)
+	applied, err := store.Apply(plan.Fingerprint)
+	if err != nil {
+		t.Fatalf("Apply: %v", err)
+	}
+	if paused != 1 {
+		t.Fatalf("the apply reached the removed stage %d times, want one removal before it stopped", paused)
+	}
+	if applied.Complete || applied.Removed != 1 || applied.Remaining != 1 {
+		t.Fatalf("stopped apply = %+v, want one removed and one remaining", applied)
+	}
+	// The replacement is not the file the plan committed to, so the apply left it in place.
+	body, err := os.ReadFile(filepath.Join(dir, published))
+	if err != nil || string(body) != intruder {
+		t.Fatalf("the apply deleted the replaced target: %v", err)
+	}
+	if got := storeEntries(t, dir); strings.Join(got, ",") != published {
+		t.Fatalf("stopped apply left %v, want only the replaced target", got)
+	}
+	if fresh := planOf(t, store); fresh.Fingerprint == plan.Fingerprint {
+		t.Fatal("the changed store still produces the old fingerprint")
+	}
+}
+
 // TestEvidenceCleanupUnsafe is CE121. An unsafe target refuses the whole plan before any
 // deletion, and the refusal never follows the object it names.
 func TestEvidenceCleanupUnsafe(t *testing.T) {
@@ -228,7 +289,8 @@ func TestEvidenceCleanupUnsafe(t *testing.T) {
 }
 
 // TestEvidenceCleanupOrphans is CE85. A temporary object becomes a plannable orphan only
-// while cleanup holds the writer lock, so a live writer's temporary is never planned.
+// while cleanup holds the operation lock exclusively, so a live writer's temporary is never
+// planned.
 func TestEvidenceCleanupOrphans(t *testing.T) {
 	store, dir := newStore(t, ce.StoreOptions{})
 	publish(t, store, mustBuild(t, fixtureCandidate("# One\n")), ce.DefaultQuota)
@@ -237,7 +299,7 @@ func TestEvidenceCleanupOrphans(t *testing.T) {
 		t.Fatalf("plan targets = %v, want the orphan first", got)
 	}
 
-	// A staged writer holds the writer lock, which is the proof cleanup needs. Cleanup
+	// A staged writer holds the operation lock, which cleanup needs exclusively. Cleanup
 	// refuses rather than planning a temporary object that writer still owns.
 	staged, err := store.Stage(mustBuild(t, fixtureCandidate("# Two\n")), ce.DefaultQuota, 1)
 	if err != nil {

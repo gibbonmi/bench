@@ -134,19 +134,11 @@ func (j evidenceJourney) requiredBytes(t *testing.T, worktree systemLandingWorkt
 	return size
 }
 
-// startPaused starts one preparation that pauses at stage and waits for its marker.
+// startPaused starts one preparation that pauses at stage. startPausedAt owns the marker
+// protocol every paused case here shares.
 func (j evidenceJourney) startPaused(t *testing.T, worktree systemLandingWorktree, stage string, extra ...string) (*exec.Cmd, string, func() string) {
 	t.Helper()
-	marker := filepath.Join(j.home, worktree.request+" "+stage+".marker")
-	cmd, stdout, _ := systemStartSelected(t, worktree.path, j.env(chargeevidence.PauseEnvironment+"="+stage+":"+marker), j.prepareArgs(worktree, extra...)...)
-	t.Cleanup(func() {
-		if cmd.ProcessState == nil {
-			_ = cmd.Process.Kill()
-			_ = cmd.Wait()
-		}
-	})
-	waitForFile(t, marker, "the preparation to reach stage "+stage)
-	return cmd, marker, stdout.String
+	return j.startPausedAt(t, worktree, stage, j.prepareArgs(worktree, extra...)...)
 }
 
 // waitForFile waits a bounded window until path exists.

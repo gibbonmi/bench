@@ -13,28 +13,44 @@ import (
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 )
 
-// startPausedRead starts one evidence read that pauses while it holds the shared operation
-// lock, so another process meets a live reader.
-func (j evidenceJourney) startPausedRead(t *testing.T, worktree systemLandingWorktree, identity string) (*exec.Cmd, string) {
+// startPausedAt starts one Bench process that pauses at stage, and waits for the marker that
+// pause writes. This is the one pause harness the cases here share: the stage names the
+// marker, so no case carries a marker name of its own.
+func (j evidenceJourney) startPausedAt(t *testing.T, worktree systemLandingWorktree, stage string, args ...string) (*exec.Cmd, string, func() string) {
 	t.Helper()
-	marker := filepath.Join(j.home, worktree.request+" read.marker")
-	env := j.env(chargeevidence.PauseEnvironment + "=" + chargeevidence.StageReaderLock + ":" + marker)
-	cmd, _, _ := systemStartSelected(t, worktree.path, env, "preflight", "evidence", identity)
+	marker := filepath.Join(j.home, worktree.request+" "+stage+".marker")
+	cmd, stdout, _ := systemStartSelected(t, worktree.path, j.env(chargeevidence.PauseEnvironment+"="+stage+":"+marker), args...)
 	t.Cleanup(func() {
 		if cmd.ProcessState == nil {
 			_ = cmd.Process.Kill()
 			_ = cmd.Wait()
 		}
 	})
-	waitForFile(t, marker, "the read to hold the operation lock")
+	waitForFile(t, marker, "the process to reach stage "+stage)
+	return cmd, marker, stdout.String
+}
+
+// startPausedRead starts one evidence read that pauses while it holds the shared operation
+// lock, so another process meets a live reader.
+func (j evidenceJourney) startPausedRead(t *testing.T, worktree systemLandingWorktree, identity string) (*exec.Cmd, string) {
+	t.Helper()
+	cmd, marker, _ := j.startPausedAt(t, worktree, chargeevidence.StageReaderLock, "preflight", "evidence", identity)
 	return cmd, marker
+}
+
+// cleanArgs is the one cleanup invocation the cases here run.
+func cleanArgs(args ...string) []string {
+	return append([]string{"preflight", "evidence-clean"}, args...)
 }
 
 // clean runs one cleanup form in the given directory.
 func (j evidenceJourney) clean(t *testing.T, dir string, args ...string) processResult {
 	t.Helper()
-	return systemSelected(t, dir, j.env(), append([]string{"preflight", "evidence-clean"}, args...)...)
+	return systemSelected(t, dir, j.env(), cleanArgs(args...)...)
 }
+
+// planFingerprint reads the fingerprint one cleanup plan response committed to.
+var planFingerprint = regexp.MustCompile(`(sha256:[0-9a-f]{64})`)
 
 // TestEvidenceCleanupReaderExclusion is CE83. Cleanup refuses while a reader holds the
 // operation lock, and it deletes nothing.
@@ -89,31 +105,44 @@ func TestEvidenceCleanupWriterExclusion(t *testing.T) {
 	}
 }
 
-// TestEvidenceCleanupInterrupt is CE122. A killed apply leaves a subset removed, and the
-// remaining targets need a freshly fingerprinted plan.
+// TestEvidenceCleanupInterrupt is CE122. A killed apply leaves the targets it already removed
+// removed and reports nothing, so the plan it was applying no longer describes the store:
+// that fingerprint refuses, and only a fresh plan covers the targets that survived.
 func TestEvidenceCleanupInterrupt(t *testing.T) {
 	j := newEvidenceJourney(t)
 	worktree := j.assignment(t, "clean-interrupt", "interrupt\n")
 	identityOf(t, j.prepare(t, worktree))
-
+	// A second target makes the interruption observable. The apply pauses after each
+	// removal, so the kill at the first pause leaves the target it had not reached.
+	orphan := chargeevidence.TempPrefix + "interrupt" + chargeevidence.TempSuffix
+	if err := os.WriteFile(filepath.Join(j.store(), orphan), []byte("partial bytes\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	plan := j.clean(t, worktree.path)
-	if plan.code != 0 {
-		t.Fatalf("cleanup plan = (%d, %q)", plan.code, plan.stdout)
+	fingerprint := planFingerprint.FindString(plan.stdout)
+	if plan.code != 0 || fingerprint == "" || len(j.packs(t)) != 2 {
+		t.Fatalf("cleanup plan = (%d, %q) over %v", plan.code, plan.stdout, j.packs(t))
 	}
-	fingerprint := regexp.MustCompile(`(sha256:[0-9a-f]{64})`).FindString(plan.stdout)
-	if fingerprint == "" {
-		t.Fatalf("cleanup plan names no fingerprint: %q", plan.stdout)
+
+	apply, _, _ := j.startPausedAt(t, worktree, chargeevidence.StageRemoved, cleanArgs("--apply", fingerprint)...)
+	if err := apply.Process.Kill(); err != nil {
+		t.Fatal(err)
 	}
-	if applied := j.clean(t, worktree.path, "--apply", fingerprint); applied.code != 0 {
-		t.Fatalf("cleanup apply = (%d, %q)", applied.code, applied.stdout)
+	_ = apply.Wait()
+	if got := j.packs(t); len(got) != 1 || got[0] == orphan {
+		t.Fatalf("the killed apply left %v, want only the target it had not reached", got)
 	}
-	if got := j.packs(t); len(got) != 0 {
-		t.Fatalf("apply left %v", got)
-	}
-	// The same fingerprint no longer describes the store, so a repeat refuses and the
-	// operator must take a fresh plan.
+	// The interrupted plan is spent: it named a target the store no longer holds.
 	repeat := j.clean(t, worktree.path, "--apply", fingerprint)
 	if repeat.code != 1 || !strings.Contains(repeat.stdout, chargeevidence.RefuseStalePlan) {
-		t.Fatalf("repeated apply = (%d, %q)", repeat.code, repeat.stdout)
+		t.Fatalf("apply of the interrupted plan = (%d, %q)", repeat.code, repeat.stdout)
+	}
+	fresh := j.clean(t, worktree.path)
+	freshFingerprint := planFingerprint.FindString(fresh.stdout)
+	if fresh.code != 0 || freshFingerprint == "" || freshFingerprint == fingerprint {
+		t.Fatalf("fresh plan = (%d, %q)", fresh.code, fresh.stdout)
+	}
+	if applied := j.clean(t, worktree.path, "--apply", freshFingerprint); applied.code != 0 || len(j.packs(t)) != 0 {
+		t.Fatalf("apply of the fresh plan = (%d, %q), store %v", applied.code, applied.stdout, j.packs(t))
 	}
 }

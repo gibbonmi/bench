@@ -1,9 +1,11 @@
 package evidencecmd_test
 
 import (
+	"os"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
@@ -145,6 +147,106 @@ func TestEvidenceCleanupStalePlan(t *testing.T) {
 	}
 }
 
+// TestEvidenceCleanupCursorStream is CE78 at the cursor seam. One cursor grammar carries two
+// streams, so the cleanup page refuses an artifact cursor, the artifact read refuses a
+// cleanup cursor, and each path still accepts its own. The rendered stream marker is the one
+// token that separates them, so it is pinned here.
+func TestEvidenceCleanupCursorStream(t *testing.T) {
+	root, slug := preflighttest.SeedConformant(t)
+	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
+	plan, _ := cleanupPlan(t)
+	fingerprint, _ := plan["fingerprint"].(string)
+
+	// Each cursor names the stream it does not belong to, under the identity its target path
+	// accepts, so the refusal below is the stream check and never an identity mismatch.
+	foreignToClean := chargeevidence.Cursor{Identity: fingerprint}.String()
+	foreignToRead := chargeevidence.Cursor{Identity: identity, Clean: true}.String()
+	if got := strings.Split(foreignToRead, ".")[2]; got != "c" {
+		t.Errorf("cleanup cursor stream marker = %q, want c", got)
+	}
+	if got := strings.Split(foreignToClean, ".")[2]; got != "m" {
+		t.Errorf("artifact cursor stream marker = %q, want m", got)
+	}
+	for _, test := range []struct {
+		name string
+		args []string
+	}{
+		{"cleanup page from an artifact cursor", []string{"evidence-clean", "--cursor", foreignToClean}},
+		{"artifact read from a cleanup cursor", []string{"evidence", identity, "--cursor", foreignToRead}},
+	} {
+		out, code := preflight.Command(test.args)
+		if code != 1 || !strings.Contains(out, chargeevidence.RefuseCursor) {
+			t.Errorf("%s = (%d):\n%s", test.name, code, out)
+		}
+	}
+	// Each path accepts its own stream, so the refusals above are not a blanket refusal.
+	own := chargeevidence.Cursor{Identity: fingerprint, Clean: true}.String()
+	if out, code := preflight.Command([]string{"evidence-clean", "--cursor", own}); code != 0 {
+		t.Errorf("cleanup page from its own cursor = (%d):\n%s", code, out)
+	}
+	if out, code := preflight.Command([]string{"evidence", identity, "--cursor", chargeevidence.Cursor{Identity: identity}.String()}); code != 0 {
+		t.Errorf("artifact read from its own cursor = (%d):\n%s", code, out)
+	}
+}
+
+// TestEvidenceCleanupStopped is CE82 and CE122 at the command surface. A store that admits no
+// deletion stops the apply: it exits one, deletes nothing, and names a fresh plan. That named
+// plan is the only recovery, and it applies completely once the store admits deletions again.
+func TestEvidenceCleanupStopped(t *testing.T) {
+	root, slug := preflighttest.SeedConformant(t)
+	prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
+	plan, _ := cleanupPlan(t)
+	fingerprint, _ := plan["fingerprint"].(string)
+
+	// The apply holds its locks through already opened files, so a store directory that
+	// admits no unlink fails exactly the deletion the plan authorized.
+	store := preflighttest.StoreDir(t, root)
+	if err := os.Chmod(store, 0o500); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(store, 0o700) })
+	out, code := preflight.Command([]string{"evidence-clean", "--apply", fingerprint})
+	if err := os.Chmod(store, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	rows := preflighttest.TableRows(t, preflighttest.DecodeMap(t, out), "applied")
+	if code != 1 || len(rows) != 1 {
+		t.Fatalf("stopped apply = (%d):\n%s", code, out)
+	}
+	if rows[0]["complete"] != false || preparedCount(t, rows[0], "removed") != 0 || preparedCount(t, rows[0], "remaining") != 1 {
+		t.Errorf("stopped apply = %#v, want nothing removed and one remaining", rows[0])
+	}
+	if len(preflighttest.PublishedPacks(t, root)) != 1 {
+		t.Fatalf("the stopped apply changed the store to %v", preflighttest.PublishedPacks(t, root))
+	}
+	next, _ := rows[0]["next"].(string)
+	if !strings.Contains(next, evidencecmd.CleanCommand) {
+		t.Fatalf("the stopped apply names no recovery: %#v", rows[0])
+	}
+	// The recovery it names produces a plan that applies completely.
+	fresh, _ := cleanupPlan(t)
+	freshFingerprint, _ := fresh["fingerprint"].(string)
+	if applied, code := preflight.Command([]string{"evidence-clean", "--apply", freshFingerprint}); code != 0 {
+		t.Fatalf("apply of the fresh plan = (%d):\n%s", code, applied)
+	}
+	if got := preflighttest.PublishedPacks(t, root); len(got) != 0 {
+		t.Fatalf("the fresh apply left %v", got)
+	}
+}
+
+// TestEvidenceCleanupEmptyPlan is CE100 at the command surface. An empty store plans no
+// target, so it advertises no apply: an apply of an empty plan would authorize nothing.
+func TestEvidenceCleanupEmptyPlan(t *testing.T) {
+	preflighttest.SeedConformant(t)
+	row, targets := cleanupPlan(t)
+	if len(targets) != 0 || preparedCount(t, row, "targets") != 0 || preparedCount(t, row, "bytes") != 0 {
+		t.Fatalf("the unprepared store planned %d targets: %#v", len(targets), row)
+	}
+	if row["next"] != "" {
+		t.Errorf("the empty plan advertises %#v, want no successor", row["next"])
+	}
+}
+
 // TestEvidenceCleanupGrammar is CE168. Cleanup accepts exactly its declared forms, and every
 // refused form exits two before the store is touched.
 func TestEvidenceCleanupGrammar(t *testing.T) {
@@ -161,6 +263,9 @@ func TestEvidenceCleanupGrammar(t *testing.T) {
 		{"apply with cursor", []string{"evidence-clean", "--apply", fingerprint, "--cursor", "v1." + strings.Repeat("0", 64) + ".c.0.0"}},
 		{"apply without a fingerprint", []string{"evidence-clean", "--apply"}},
 		{"apply with an empty fingerprint", []string{"evidence-clean", "--apply", ""}},
+		// A non-empty malformed fingerprint passes the flag parser, so only the command's own
+		// shape check refuses it. It is a usage fault, not a plan the store could ever hold.
+		{"apply with a malformed fingerprint", []string{"evidence-clean", "--apply", "sha256:" + strings.Repeat("g", 64)}},
 		{"duplicate cursor", []string{"evidence-clean", "--cursor", "v1." + strings.Repeat("0", 64) + ".c.0.0", "--cursor", "v1." + strings.Repeat("0", 64) + ".c.0.1"}},
 		{"extra operand", []string{"evidence-clean", "example"}},
 		{"evidence source selector", []string{"evidence-clean", "--source", "s2"}},
@@ -169,7 +274,7 @@ func TestEvidenceCleanupGrammar(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			out, code := preflight.Command(test.args)
-			if code != 2 || !strings.HasPrefix(out, "usage: ") && !strings.Contains(out, "usage") {
+			if code != 2 || !strings.HasPrefix(out, "usage: ") {
 				t.Fatalf("%s = (%d):\n%s", test.name, code, out)
 			}
 			if got := preflighttest.PublishedPacks(t, root); strings.Join(got, ",") != strings.Join(before, ",") {
@@ -183,25 +288,21 @@ func TestEvidenceCleanupGrammar(t *testing.T) {
 	}
 }
 
-// TestEvidenceCleanupHelpInventory is CE172. The public help projects exactly the
-// implemented cleanup grammar, and an omission oracle names each form independently.
-func TestEvidenceCleanupHelpInventory(t *testing.T) {
-	var clean []string
+// TestEvidenceCleanupHelpDescriptions is CE172 at the registry. The root help inventory owns
+// the two rendered cleanup forms, so this case adds only what that inventory cannot see: a
+// projected cleanup row reaches help with the description its operation registered.
+func TestEvidenceCleanupHelpDescriptions(t *testing.T) {
+	rows := 0
 	for _, row := range evidencecmd.HelpRows() {
-		if strings.HasPrefix(row.Suffix, " evidence-clean") {
-			clean = append(clean, strings.TrimSpace(row.Suffix))
+		if !strings.HasPrefix(row.Suffix, " evidence-clean") {
+			continue
 		}
-	}
-	want := []string{
-		"evidence-clean [--cursor <cursor>]",
-		"evidence-clean --apply <fingerprint>",
-	}
-	if strings.Join(clean, "\n") != strings.Join(want, "\n") {
-		t.Errorf("cleanup help rows =\n%s\nwant\n%s", strings.Join(clean, "\n"), strings.Join(want, "\n"))
-	}
-	for _, row := range evidencecmd.HelpRows() {
-		if strings.Contains(row.Suffix, "evidence-clean") && row.Description == "" {
+		rows++
+		if row.Description == "" {
 			t.Errorf("cleanup help row %q carries no description", row.Suffix)
 		}
+	}
+	if rows == 0 {
+		t.Error("the operation registry projects no cleanup help row")
 	}
 }

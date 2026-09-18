@@ -29,6 +29,12 @@ const (
 // deterministic deletion failure the same way it injects a publication failure.
 const StepRemove = "remove"
 
+// StageRemoved is the store stage one apply reaches after each successful target deletion,
+// which is the partly cleaned state an interruption leaves. The stage repeats once per
+// removed target, so an environment pause that recreates its marker pauses again at every
+// later target; an owner that resumes the apply reaches the same stage again.
+const StageRemoved = "removed"
+
 // Target is one exact deletion target. ID is the artifact identity for a published pack and
 // the store object name for an orphan temporary. name is the store object the deletion
 // removes, and identity is the observed file identity the fingerprint commits to.
@@ -102,6 +108,7 @@ func (s *Store) Apply(fingerprint string) (Applied, error) {
 		}
 		applied.Removed++
 		applied.Remaining--
+		s.pause(StageRemoved)
 	}
 	applied.Complete = true
 	return applied, nil
