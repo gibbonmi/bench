@@ -980,6 +980,45 @@ The coordinator's independent probe added a bound to the proposal operation row,
 The final guard failed and named that operation, so the new check bites in both directions.
 The writer asserted this property and did not demonstrate it; the probe now records it.
 
+### Round 2 axis verdicts
+
+The axes graded the frozen pair base `6a81a1f6`, tip `b2c39d70`.
+The reviewer cap was in force, so a defect that breaks a shipped behavior, an acceptance row, or the gate is a finding.
+
+The coordinator dispatched two axes, not three.
+The Spec findings SP1 to SP4 carry to the reconciliation by decision, and SP5 landed with its own probe.
+The cycle 1 delta changes no behavior and touches no acceptance row, so the Spec axis had nothing to re-grade.
+
+### Standards round 2
+
+ST1 to ST6 all closed. No finding.
+
+The axis confirmed `reviewFenceExtra` is one source with two readers.
+The fixture renders the seeded fence lines from that table, and the schema test renders its expectation from the same table.
+The axis confirmed `unboundedKinds` is the permitted expectation half, because the registry owns the bound and the test owns only the exemption.
+The comparison covers all seven kinds, so a kind added later reds by default.
+
+### Coverage round 2
+
+CV2 and CV3 closed. CV1 closed for its declaration only. One new finding.
+
+- CE-C2-CV4 (auto-fix): The review response bound can be removed from production with no red. `internal/preflight/command.go` is the one consumer of the bounded field, and a kind guard on that branch leaves the package green.
+
+The cause is the case list of `TestEvidenceResponseBound`.
+Under the lowered limit that list names build preparation, four reads, two usage forms, and the operational refusal.
+It names no review preparation, so this chunk's new bounded form has no behavior case.
+The same guard against the build kind reds at once, which shows the build half is graded and the review half is not.
+
+The axis confirmed the CV1 repair grades the declaration, because dropping the bounded field reds the final guard.
+It confirmed the fixture and the expectation cannot drift, because a table edit reds the source identity test.
+It confirmed the family inventory needs no repair, because the named lookup fatals on a dropped family.
+
+### Coordinator decisions after round 2
+
+- CE-C2-CV4 earns repair cycle 2, the second of the two the cap allows. Row CE135 is an acceptance row, and its guarantee can be removed with no red.
+- The repair derives the bounded case list from the operation registry. That closes CV4 and the class the advice names.
+- The stale `ResponseBudget` comment joins the cycle, because the coordinator's own probe disproved its claim and the writer is already in that file.
+
 ## Record
 
 ```bench-review-record
