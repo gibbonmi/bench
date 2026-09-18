@@ -25,6 +25,7 @@ import (
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/bounds"
 	specref "github.com/gibbonmi/bench/internal/spec"
+	"github.com/gibbonmi/bench/internal/tickets"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -144,14 +145,10 @@ func schemaFor(header string) schema {
 	return schema{}
 }
 
-// rowIDPattern is the one row-ID grammar the map's leading `row` cell answers to:
-// an uppercase tag plus a number. The group captures the tag.
-const rowIDPattern = `([A-Z]+)[0-9]+`
-
-// rowIDRe anchors rowIDPattern to a whole cell, spec-local unique. Its one
-// submatch is the row's alphabetic tag, so a caller reads the tag from the same
+// rowIDRe anchors the shared row-ID grammar to a whole cell, spec-local unique. Its
+// one submatch is the row's alphabetic tag, so a caller reads the tag from the same
 // match that decides whether the cell is well-formed.
-var rowIDRe = regexp.MustCompile(`^` + rowIDPattern + `$`)
+var rowIDRe = regexp.MustCompile(`^` + tickets.RowIDPattern + `$`)
 
 type dataRow struct {
 	cells []string // one map row's cells, trimmed, exactly as many as were written

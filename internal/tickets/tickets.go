@@ -52,7 +52,12 @@ var ticketFields = []maps.FieldSpec{
 // requiredFields names every field a ticket must carry, in diagnostic order.
 var requiredFields = []string{fieldTitle, fieldBlockedBy, fieldWrites, fieldCovers, sectionBuild, sectionAccept}
 
-var coversToken = regexp.MustCompile(`^([A-Za-z]+)([1-9][0-9]*)$`)
+// RowIDPattern is the one row-ID grammar: an uppercase tag plus a number. The
+// group captures the tag. A coverage-map row cell and a Covers: token both answer
+// to it, so every row the map declares is a token a ticket can cite.
+const RowIDPattern = `([A-Z]+)[0-9]+`
+
+var coversToken = regexp.MustCompile(`^` + RowIDPattern + `$`)
 
 func fieldScan() maps.FieldScan {
 	return maps.FieldScan{
