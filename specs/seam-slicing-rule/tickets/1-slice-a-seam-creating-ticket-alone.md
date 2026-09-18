@@ -8,7 +8,7 @@ Covers: none
 
 The ticket slicing skill states one more breakdown rule, and the gate holds that rule.
 
-A ticket that creates a seam its sibling tickets consume is its own slice, and that slice stays small.
+A ticket that creates a seam its sibling tickets consume is its own review chunk, and that chunk stays small.
 Its chunk review closes before any consumer ticket starts.
 A seam the implementation introduces counts the same as a seam the spec declares.
 
@@ -27,7 +27,7 @@ One canary fixture deletes the pinned sentence and expects the row's diagnostic.
 
 ## Acceptance
 
-- [ ] The `Draft the breakdown` section states that a seam-creating ticket is its own slice, and that its review closes before a consumer starts.
+- [ ] The `Draft the breakdown` section states that a seam-creating ticket is its own review chunk, and that its review closes before a consumer starts.
 - [ ] The section states that a seam the implementation introduces counts the same as a seam the spec declares.
 - [ ] A `RequireInSection` anchor row pins the new rule to the `Draft the breakdown` section, with its own diagnostic.
 - [ ] The registry test's expectation table names the new row's file, section, needle, and diagnostic.

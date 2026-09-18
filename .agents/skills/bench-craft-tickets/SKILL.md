@@ -17,7 +17,7 @@ commit is the grading rule.
 
 Gather context: the spec, or the conversation. Explore the codebase if you have not. Put any prefactoring that makes the change easy first, as its own ticket. Then draft the vertical slices. A rewrite ticket is sized by the lines the retained author must read, not the lines it edits.
 
-A ticket that creates a seam its sibling tickets consume is its own slice, and that slice stays small. Its chunk review closes before any consumer ticket starts. A seam the implementation introduces counts the same as a seam the spec declares.
+A ticket that creates a seam its sibling tickets consume is its own review chunk, and that chunk stays small. Its chunk review closes before any consumer ticket starts. A seam the implementation introduces counts the same as a seam the spec declares.
 
 A ticket that implements a roadmap row's decided fix first verifies the row's premise against the code. A premise the code contradicts is a reviewer decision, not a fix to implement as written. The check reads the definition of every kind, state, or error the row names. A ticket that adds a line to a file over its line budget moves that file's headroom in the same ticket. The lane grades growth against the current tip, so a later ticket cannot pay the debt.
 
