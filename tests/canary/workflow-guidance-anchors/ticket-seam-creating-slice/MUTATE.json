@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-tickets/SKILL.md",
+    "old": "A ticket that creates a seam its sibling tickets consume is its own review chunk, and that chunk stays small. Its chunk review closes before any consumer ticket starts. A seam the implementation introduces counts the same as a seam the spec declares.",
+    "new": ""
+  }
+]
