@@ -223,11 +223,35 @@ Finding count: 1. Worst issue: CV2.
 
 - The reference introduction reads as a complete list of `Blocked by:` and `Covers:` rules. The repair says "some" rules.
 
+## SC-C3: review round 3
+
+Frozen pair: base `63370b6e0fc26d7d97f76a3ab90e5a7c13d6d078`, tip `c80a22f2bb19c15df86f57c77a41d11095682c66`.
+The raw finding count is 0. The de-duplicated repair-target count is 0.
+Repair cycles used: 2 of 2. Repair cycle 2 closed SP2 and CV2.
+
+The round 2 record gave the Spec and Coverage occurrences no supersession link. This record adds the two links. The correction changes no finding, source, observation, or verdict. The spec edit in repair cycle 2 also moved the plan digest, so the record chains one more identity amendment.
+
+### Standards
+
+Finding count: 0. Worst issue: none.
+
+### Spec
+
+Finding count: 0. Worst issue: none. SC24 to SC31 hold.
+
+### Coverage
+
+Finding count: 0. Worst issue: none. A probe that turned "test files included" into "test files excluded" made the owning check fail, and the file was restored.
+
+### Author verification
+
+The author ran the whole gate green at the repair tree. At the repair tip the anchors suite, the budget check, and the prose check passed. The named probe bit under `docs-currency-workflow`, and so did a probe that deleted the test-file clause.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/slicing-closure/spec.md",
-  "plan_digest": "sha256:d006b521077c6b04dee9747bd1c7c6424f0e3597aff8d0242acd06b0e0e6212f",
+  "plan_digest": "sha256:1398410bd7e3a16840757a6a6389504c1fb57979a014461757371d9e166355d6",
   "implementation_session": "slicing-closure-retained-author",
   "chunks": [
     {
@@ -895,9 +919,9 @@ Finding count: 1. Worst issue: CV2.
     {
       "id": "SC-C3",
       "base": "63370b6e0fc26d7d97f76a3ab90e5a7c13d6d078",
-      "tip": "5300fba634d6375a30ae9e7d4a6e45804572385f",
-      "plan_digest": "sha256:d006b521077c6b04dee9747bd1c7c6424f0e3597aff8d0242acd06b0e0e6212f",
-      "source_digest": "c66ad2f84c045a91cac85deaae01bea3cc18b9d6",
+      "tip": "c80a22f2bb19c15df86f57c77a41d11095682c66",
+      "plan_digest": "sha256:1398410bd7e3a16840757a6a6389504c1fb57979a014461757371d9e166355d6",
+      "source_digest": "4afc0e77019a7a6a275f62129d3402d346dd6919",
       "acceptance_rows": [
         "SC24",
         "SC25",
@@ -989,6 +1013,89 @@ Finding count: 1. Worst issue: CV2.
               "ref": "claude-session:retained-author",
               "digest": "sha256:58f598c7358826eca6611f94bd678b0f44b700f8c2ed5439027ccd7b03450010",
               "excerpt": "bench probe .agents/skills/bench-craft-tickets/references/slicing-checks.md --omit 'The slicer runs build preflight again after each fence change and before review.' --check docs-currency-workflow at e315c9e0 tree: verdict bit, 1 failed test TestRootConformance naming 'ticket slicing: build preflight reruns after each fence change', restored=yes"
+            }
+          }
+        },
+        {
+          "id": "sc-c3-v2-anchors",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4afc0e77019a7a6a275f62129d3402d346dd6919",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:72441ea5b39bce2a2ac759b1967cd48749fe8c534fd2972949ee68086e22e5db",
+            "excerpt": "bench test --package ./internal/anchors at c80a22f2: pass, 727 ms"
+          },
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "sc-c3-v2-budget",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4afc0e77019a7a6a275f62129d3402d346dd6919",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:8cad2b7341b5ce1f8db22b5837ff31c84cba0390fe620ba8f8286dd672efa5b9",
+            "excerpt": "bench test --check guidance-prose-budgets at c80a22f2: pass"
+          },
+          "requirement": "budget",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "sc-c3-v2-prose",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4afc0e77019a7a6a275f62129d3402d346dd6919",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:71cf43b7638b07685b028481c643b1cf3fdd2a3678721a17ab55d360a4bdfe48",
+            "excerpt": "bench test --check prose at c80a22f2: exit 0; whole gate prose conformance green at the repair tree"
+          },
+          "requirement": "prose",
+          "command": "bench test --check prose",
+          "exit_code": 0
+        },
+        {
+          "id": "sc-c3-v2-mutation",
+          "performer": "slicing-closure-retained-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4afc0e77019a7a6a275f62129d3402d346dd6919",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:retained-author",
+            "digest": "sha256:cff84d7d50a15f6d797f56e75a2a928e9956c0a4366a5e0cc18afd707fafc8a7",
+            "excerpt": "bench test --check docs-currency-workflow at c80a22f2: baseline passed before the probe"
+          },
+          "requirement": "mutation",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "delete the rerun-preflight sentence from the reference",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:retained-author",
+              "digest": "sha256:5744e2bb670831ff4fc06ba7c237ecc819cae02c7bed58af50facec1edd67c72",
+              "excerpt": "bench probe .agents/skills/bench-craft-tickets/references/slicing-checks.md --omit 'The slicer runs build preflight again after each fence change and before review.' --check docs-currency-workflow at c80a22f2: verdict bit, 1 failed test TestRootConformance naming 'ticket slicing: build preflight reruns after each fence change', restored=yes"
             }
           }
         }
@@ -1102,7 +1209,9 @@ Finding count: 1. Worst issue: CV2.
           "finding_ids": [
             "SC-C3-SP2"
           ],
-          "supersedes": []
+          "supersedes": [
+            "sc-c3-r1-spec"
+          ]
         },
         {
           "id": "sc-c3-r2-coverage",
@@ -1124,7 +1233,75 @@ Finding count: 1. Worst issue: CV2.
           "finding_ids": [
             "SC-C3-CV2"
           ],
-          "supersedes": []
+          "supersedes": [
+            "sc-c3-r1-coverage"
+          ]
+        },
+        {
+          "id": "sc-c3-r3-standards",
+          "performer": "sc-c3-r1-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4afc0e77019a7a6a275f62129d3402d346dd6919",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c3-r1-standards",
+            "digest": "sha256:4365a284fdde3b9f92f9d6c94375b7c6294a865061025f15d01f4f427c8c5e0a",
+            "excerpt": "Standards SC-C3 round 3 at c80a22f2: no findings. The anchor closure sentence is 24 words and matches anchorFiles; the introduction says some Blocked by: and Covers: rules."
+          },
+          "axis": "Standards",
+          "base": "63370b6e0fc26d7d97f76a3ab90e5a7c13d6d078",
+          "tip": "c80a22f2bb19c15df86f57c77a41d11095682c66",
+          "finding_ids": [],
+          "supersedes": [
+            "sc-c3-r2-standards"
+          ]
+        },
+        {
+          "id": "sc-c3-r3-spec",
+          "performer": "sc-c3-r1-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4afc0e77019a7a6a275f62129d3402d346dd6919",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c3-r1-spec",
+            "digest": "sha256:e70fec4fd5e18fb52ffeb9b7a7b96253414593c87870111fdc712f94c6e3d49c",
+            "excerpt": "Spec SC-C3 round 3 at c80a22f2: no findings. SP2 closed; SC24 to SC31 hold."
+          },
+          "axis": "Spec",
+          "base": "63370b6e0fc26d7d97f76a3ab90e5a7c13d6d078",
+          "tip": "c80a22f2bb19c15df86f57c77a41d11095682c66",
+          "finding_ids": [],
+          "supersedes": [
+            "sc-c3-r2-spec"
+          ]
+        },
+        {
+          "id": "sc-c3-r3-coverage",
+          "performer": "sc-c3-r1-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4afc0e77019a7a6a275f62129d3402d346dd6919",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-subagent:sc-c3-r1-coverage",
+            "digest": "sha256:5d0f3aa8cc92b2c99e60a5d1b0825551fef8a900873900cc90dc78329eef6515",
+            "excerpt": "Coverage SC-C3 round 3 at c80a22f2: no findings. CV2 folded. Probe swapping 'test files included' for 'excluded' bit under docs-currency-workflow; restored."
+          },
+          "axis": "Coverage",
+          "base": "63370b6e0fc26d7d97f76a3ab90e5a7c13d6d078",
+          "tip": "c80a22f2bb19c15df86f57c77a41d11095682c66",
+          "finding_ids": [],
+          "supersedes": [
+            "sc-c3-r2-coverage"
+          ]
         }
       ]
     }
@@ -1163,6 +1340,21 @@ Finding count: 1. Worst issue: CV2.
     {
       "from": "sha256:99d9713f3d61b00f663beeefe0c46d7aafbc6602e54f107d6b3f89532378886d",
       "to": "sha256:d006b521077c6b04dee9747bd1c7c6424f0e3597aff8d0242acd06b0e0e6212f",
+      "chunk_ids": {
+        "SC-C1": [
+          "SC-C1"
+        ],
+        "SC-C2": [
+          "SC-C2"
+        ],
+        "SC-C3": [
+          "SC-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:d006b521077c6b04dee9747bd1c7c6424f0e3597aff8d0242acd06b0e0e6212f",
+      "to": "sha256:1398410bd7e3a16840757a6a6389504c1fb57979a014461757371d9e166355d6",
       "chunk_ids": {
         "SC-C1": [
           "SC-C1"
