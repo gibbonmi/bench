@@ -23,6 +23,8 @@ findings in the owner details.
 
 **FT306 (HIGH, external qualification required) — a qualified release and one Regroup adoption prove the factory on a user-visible change.**
 
+**FT331 (LOW, decision required) — the jev decision service advises routine Bench decisions.**
+
 ## Factory correctness, recovery, and execution
 
 **FT296 (MEDIUM, decision required) — the durable supervisor and production workers have distinct lifetimes.**
@@ -135,6 +137,8 @@ findings in the owner details.
 
 **FT255 (MEDIUM, decision required) — concurrent tests share one explicit machine budget.**
 
+**FT332 (LOW, decision required) — a nightly constrained-CPU stress job finds new flakes before they reach `main`.**
+
 **FT297 (LOW) — conformance rows pin the Go-owned binary path against its shell derivations and the VCS-disable flag on every Go tool call.**
 
 **FT323 (LOW) — the project conventions name the prose seam, the prose lane, and the host limits.**
@@ -170,6 +174,8 @@ requirements are met.
 **FT328 (MEDIUM, parked pending a repro) — a sandboxed evidence reader takes its shared lock without store write access.**
 
 **FT329 (LOW, parked pending a repro) — `bench consumers --changed` does not report a changed function as deleted.**
+
+**FT330 (LOW, parked pending a repro) — a `bench gate --checkpoint` refusal names the recovery route of its cause.**
 
 **FT38 (LOW, decision required) — dashboard visual identity pass.**
 
@@ -248,6 +254,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT290 `bench test` projection faces — /bench-shape-idea
+1. FT290 `bench test` projection faces — /bench-implement-spec specs/ft290-test-projection
 2. FT322 fork-line resolution and consultation timing — a `craft-synthesis` kit edit to `craft-line`.
 3. FT318 the review record writer and its content — a reviewer decision.
