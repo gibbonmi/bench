@@ -69,8 +69,6 @@ findings in the owner details.
 
 **FT318 (MEDIUM, decision required) — the review record has a native writer.**
 
-**FT319 (MEDIUM) — the implement and review phase files state the chunk chain and the record order.**
-
 **FT320 (MEDIUM) — the `craft-review` finding discipline states three reader rules and one return rule.**
 
 **FT322 (LOW) — `craft-line` resolves a recorded fork line and times a consultation question.**
@@ -256,6 +254,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT319 chunk chain and record order in the phase files — a `craft-synthesis` kit edit to the implement and review phase files.
-2. FT316 checkpoint and landing refusals name the expected commit — /bench-debug
-3. FT320 finding reader rules and the axis return rule — a `craft-synthesis` kit edit to `craft-review`.
+1. FT316 checkpoint and landing refusals name the expected commit — /bench-debug
+2. FT320 finding reader rules and the axis return rule — a `craft-synthesis` kit edit to `craft-review`.
+3. FT313 charge binding and the claim schema — a `craft-synthesis` kit edit to the `craft-delegate` references.
