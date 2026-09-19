@@ -73,6 +73,12 @@ func FormatReference() string {
 	b.WriteString("Each response names its exact successor command, and the last response has an empty successor.\n")
 	b.WriteString("A final response does not prove that the consumer received the earlier responses.\n\n")
 	writeBlocks(&b, "Response", ResponseBlocks)
+
+	b.WriteString("\n## Consumers\n\n")
+	b.WriteString("A cross-harness consumer retrieves every page through its own shell tool and rebuilds each source with its own decoder.\n")
+	b.WriteString("The coordinator never decodes a record for the consumer.\n")
+	b.WriteString("The follow-on hook refuses a pipeline after a Bench call, so the consumer saves each response and decodes the saved bytes in a separate step.\n")
+	b.WriteString("A read takes the shared lock of the evidence store, so a sandboxed consumer needs write access to that store.\n")
 	return b.String()
 }
 
