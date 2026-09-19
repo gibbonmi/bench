@@ -169,6 +169,29 @@ func FIFOWorktreeAdmin(t testing.TB, root, id string) string {
 	return gitDir
 }
 
+// MaintenanceProbe writes a script that commits in a fresh repository with GIT_TRACE on.
+// The script exits 3 when that commit starts git auto-maintenance, and 0 when it does
+// not. Any other exit means the probe itself failed. It returns the script's path. A
+// test runs the script under the environment it grades.
+func MaintenanceProbe(t testing.TB) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "maintenance-probe")
+	body := `#!/bin/sh
+set -eu
+dir=$(mktemp -d)
+trap 'rm -rf "$dir"' EXIT
+git -C "$dir" init -q
+trace=$(GIT_TRACE=1 git -C "$dir" -c user.email=probe@example.invalid -c user.name=probe commit -q --allow-empty -m probe 2>&1)
+case "$trace" in
+  *'maintenance run'*) echo 'commit started git auto-maintenance'; exit 3;;
+esac
+`
+	if err := os.WriteFile(path, []byte(body), 0o755); err != nil {
+		t.Fatalf("maintenance probe: %v", err)
+	}
+	return path
+}
+
 func initialize(t testing.TB, options ...string) string {
 	t.Helper()
 	root := t.TempDir()

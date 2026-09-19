@@ -13,6 +13,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
@@ -243,6 +244,8 @@ func (r *runner) runExternal(ctx context.Context, name string) (int, error) {
 	}
 	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...)
 	cmd.Dir = r.root
+	// Release preflight grades the kit alone, so every phase carries the kit's git test policy.
+	cmd.Env = append(os.Environ(), env.GitTestConfig()...)
 	cmd.Stdout = r.stderr
 	cmd.Stderr = r.stderr
 	if runtime.GOOS != "windows" {

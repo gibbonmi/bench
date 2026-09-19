@@ -18,6 +18,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess"
@@ -151,6 +152,24 @@ func rootConformanceEnv(root, kit string) []string {
 // graded root.
 const conformancePackagePath = "internal/conformance"
 
+// KitTestEnv answers the git test policy a child running in dir carries: the kit's
+// policy when dir is the kit, and none otherwise. A linked repository's tests keep the
+// git environment their operator gave them.
+func KitTestEnv(dir, kit string) []string {
+	if !sameDirectory(dir, kit) {
+		return nil
+	}
+	return env.GitTestConfig()
+}
+
+func withKitTestEnv(phases []Phase, root, kit string) []Phase {
+	policy := KitTestEnv(root, kit)
+	for i := range phases {
+		phases[i].Env = mergeEnv(phases[i].Env, policy)
+	}
+	return phases
+}
+
 func withRunBinary(phases []Phase, selection *runbinary.Selection) []Phase {
 	selected := make([]Phase, len(phases))
 	for i, phase := range phases {
@@ -272,7 +291,7 @@ func phasesCommandAtKitWithSelection(base context.Context, root, kit string, sel
 		fmt.Fprintf(stderr, "gate: phase schedule refused: %s\n", decision.Refusal)
 		return 1
 	}
-	phases = withRunBinary(phases, selection)
+	phases = withKitTestEnv(withRunBinary(phases, selection), root, kit)
 	ctx, stop := subprocess.NotifyCancel(base)
 	defer stop()
 	return runPhases(ctx, kit, phases, stdout, stderr)
