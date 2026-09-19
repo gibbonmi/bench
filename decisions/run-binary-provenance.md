@@ -14,7 +14,7 @@ Domain: the run binary selection and the `bench test` result projection.
 Charge `bench-craft-research` for ticket #1.
 
 This map is the second half of the FT290 split. The first half is
-`decisions/ft290-test-projection.md`, and it owns the `check` row that a
+`specs/ft290-test-projection/decisions/ft290-test-projection.md`, and it owns the `check` row that a
 provenance fact can join.
 
 A map-owned asset stays in the map's assets folder,
@@ -28,7 +28,7 @@ decisions/run-binary-provenance/assets/.
 
 ## Out of scope
 
-- The identity in the unknown-check refusal; `decisions/ft290-test-projection.md` ticket #2 owns it.
+- The identity in the unknown-check refusal; ticket #2 of `specs/ft290-test-projection/decisions/ft290-test-projection.md` owns it.
 
 ## Sources
 
