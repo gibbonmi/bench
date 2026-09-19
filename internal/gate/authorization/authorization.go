@@ -163,8 +163,23 @@ func AuthorizeWithWriters(ctx context.Context, root, tree string, stdout, stderr
 	result := Result{Kind: kind, Evidence: evidenceToken(kind, tree, inspection)}
 	if kind == Infrastructure {
 		result.Reason = execution.Inspection.Reason
+		fmt.Fprint(stderr, infrastructureDiagnostic(execution, inspection))
 	}
 	return result
+}
+
+// infrastructureDiagnostic names what the gate observed when it left an Infrastructure
+// outcome without a reason. The result's reason stays empty, because the merge retry keys
+// on the refusal line with the kind alone. A gate reason gets no line here, because the
+// gate printed that reason itself.
+func infrastructureDiagnostic(execution gate.Result, inspection gate.EvidenceInspection) string {
+	if execution.Inspection.Reason != "" {
+		return ""
+	}
+	if execution.ActionExit == 0 {
+		return fmt.Sprintf("gate: infrastructure: the gate passed but left no reusable green evidence (%s)\n", inspection.Reason)
+	}
+	return fmt.Sprintf("gate: infrastructure: the gate stopped with gate exit %d and action exit %d and recorded no reason\n", execution.GateExit, execution.ActionExit)
 }
 
 // Validate reports whether evidence still names reusable exact green proof for tree.
