@@ -31,6 +31,9 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **run binary** — the exact source-bound executable the gate authorizes and runs;
   `internal/runbinary` implements it as its `Selection`. Not "private binary", not
   "selected executable" — run binary.
+- **running executable** — the Bench executable that runs the current verb. It owns
+  the check name set that `bench test` validates, and it exists before a run binary
+  does. Not "the binary", not "run binary" — running executable.
 - **canary inventory** — the non-empty set of immutable fixture bindings that
   `bench canary` validates. It proves the inventory shape and one accepted binding
   per fixture, not owner execution or a planted red. Not “canary dispatch”, not

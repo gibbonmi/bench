@@ -10,7 +10,7 @@ outcomes.
 
 - The inventory faces: `bench test --checks` lists the named checks, and
   `bench test --check <name> --fixtures` lists the fixtures a check owns.
-- The result evidence: a `check` row and a `tests_run` count prove a run, the
+- The result evidence: a `check` row with its counts proves a run, the
   prose check prints a result on green, the failures table shows each
   diagnostic, `--check system` accepts `--run`, and the unknown-check refusal
   names the running executable.
@@ -28,17 +28,17 @@ name set. The **run binary** is the source-bound executable that a run selects
 for its Go child. Do not write "the binary" for one of them.
 
 A map-owned asset stays in the map's assets folder,
-decisions/ft290-test-projection/assets/.
+specs/ft290-test-projection/decisions/ft290-test-projection/assets/.
 
 ## Decisions so far
 
 - [Which occurrence items join the destination?](ft290-test-projection/tickets/1.md): system `--run` and the failures row unit join; the compile error is a shipped exclusion.
-- [Which identity does the unknown-check refusal name?](ft290-test-projection/tickets/2.md): the running executable path and the source commit of its seal.
-- [What proves that the selected check ran?](ft290-test-projection/tickets/3.md): a `check` row with a `tests_run` count, zero exits 1, and a `tests_run` cell on each packages row.
-- [What does the fixtures face print?](ft290-test-projection/tickets/4.md): one row for each owned fixture and no test run. A check with no family prints an empty table at exit 0.
-- [What does the prose check print on green?](ft290-test-projection/tickets/5.md): the `check` row with the graded subject count, no packages table, and the subjects under `--full`.
+- [Which identity does the unknown-check refusal name?](ft290-test-projection/tickets/2.md): the running executable path and the source digest of its seal, or `unsealed`.
+- [What proves that the selected check ran?](ft290-test-projection/tickets/3.md): the row `check[1]{name,kind,tests_run,subjects}`, a zero count exits 1, and each packages row has a `tests_run` cell.
+- [What does the fixtures face print?](ft290-test-projection/tickets/4.md): one row for each fixture that the canary inventory gives to the check, and no test run. A check with no fixture prints an empty table at exit 0.
+- [What does the prose check print on green?](ft290-test-projection/tickets/5.md): the `check` row with `tests_run` 0 and the real `subjects` count, and no packages table. `--full` lists the subjects, and zero subjects exits 1.
 - [How does the changed form explain a widened set?](ft290-test-projection/tickets/6.md): one `selected_by` cause for each package, by the precedence `go-metadata`, `changed`, `embed`, `imports <package>`.
-- [What does the check inventory print?](ft290-test-projection/tickets/7.md): one row for each named check with its kind and its family count, at exit 0.
+- [What does the check inventory print?](ft290-test-projection/tickets/7.md): one row for each named check with its kind and its family count, at exit 0. The count uses the inventory owner.
 - [What is the failures row unit?](ft290-test-projection/tickets/8.md): one row for each failed test with a `lines` count, and one row for each diagnostic line under `--full`.
 - [Which named checks accept a run pattern?](ft290-test-projection/tickets/9.md): `system` only, and a pattern with no match exits 1.
 - [Does the shaped scope split?](ft290-test-projection/tickets/10.md): the run binary provenance moves to its own map, and the other outcomes stay as one spec.
@@ -71,5 +71,11 @@ decisions/ft290-test-projection/assets/.
   Supports: ticket #6: the four selection causes and the reverse-import closure.
   Drift: a change to `selectCurrentPackages`.
 - Path: `internal/conformance/registry/registry.go`
-  Supports: tickets #4 and #7: `CanaryFamilies` binds a check to its families, and `Names` owns the check set.
+  Supports: tickets #4 and #7: the family binding that the fixture owner falls back to, and `Names` owns the check set.
   Drift: a change to the family binding or to the check set owner.
+- Path: `internal/freshness/freshness.go`
+  Supports: ticket #2: the seal holds a source digest and an executable digest, and it holds no source commit.
+  Drift: a change to the seal fields or to `SealDigests`.
+- Path: `internal/canary/inventory.go`
+  Supports: tickets #4 and #7: `Fixtures` resolves one owner for each fixture, and a `CHECK` marker comes before the family binding.
+  Drift: a change to `Fixtures`, `fixtureCheck`, or `fixtureScope`.
