@@ -428,7 +428,7 @@ The command registry, its two tests, and the two conformance registry tests join
 
 ### Collision with a staged spec
 
-The staged `ft290-test-projection` spec writes all of `internal/testreport/`, because each of its tickets writes there. This spec writes that package in ticket 2 (`environment.go` and its test), ticket 5 (`check_test.go`), and ticket 8 (`command.go`). The ft290 ticket 1 still plans a move of the named-check owner that `f877c158` already landed. The reviewer decides which spec builds first. The second build composes the first build's landed tip with `bench worktree merge --from`. The workflow rejects a rebase.
+The staged `ft290-test-projection` spec writes all of `internal/testreport/`, because each of its tickets writes there. This spec writes that package in ticket 2 (`environment.go` and its test), ticket 5 (`check_test.go`), and ticket 8 (`command.go`). The ft290 ticket 1 still plans a move of the named-check owner that `f877c158` already landed. The reviewer decided that this spec is built first. The ft290 build then composes this build's landed tip with `bench worktree merge --from`. The workflow rejects a rebase.
 
 ### Completion plan
 
