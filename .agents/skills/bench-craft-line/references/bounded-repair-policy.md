@@ -34,6 +34,10 @@ Optional advice is neither a finding nor a repair target.
 Give optional advice no disposition or finding ID, and exclude it from finding totals.
 Retain optional advice in a separate advice section of the native excerpt and the review pickup.
 
+After the acceptance rows of a chunk prove, the chunk permits at most one hardening cycle.
+A hardening cycle adds checks beyond the approved acceptance rows.
+A later finding that grades only a check from that hardening cycle is optional advice, unless it meets a blocking condition above.
+
 Use the existing review phase's dispositions for findings; preserve earlier findings and their supersession history.
 Do not label an unrefuted suggestion as `no-op` to obtain a pass.
 A native review can pass with no finding IDs while its prose retains optional advice.
