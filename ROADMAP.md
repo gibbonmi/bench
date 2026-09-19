@@ -41,8 +41,6 @@ findings in the owner details.
 
 **FT312 (MEDIUM) — a native `bench` verb codifies the cross-harness reviewer invocation.**
 
-**FT313 (MEDIUM) — a write or repair charge binds every acceptance row to a named test and names its baseline artifact.**
-
 **FT283 (MEDIUM, decision required) — `bench worktree land --spec` has one phase-scoped transition contract.**
 
 **FT284 (MEDIUM, decision required) — `bench spec retire` owns its roadmap retirement atomically.**
@@ -250,6 +248,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT313 charge binding and the claim schema — a `craft-synthesis` kit edit to the `craft-delegate` references.
-2. FT290 `bench test` projection faces — /bench-shape-idea
-3. FT322 fork-line resolution and consultation timing — a `craft-synthesis` kit edit to `craft-line`.
+1. FT290 `bench test` projection faces — /bench-shape-idea
+2. FT322 fork-line resolution and consultation timing — a `craft-synthesis` kit edit to `craft-line`.
+3. FT318 the review record writer and its content — a reviewer decision.

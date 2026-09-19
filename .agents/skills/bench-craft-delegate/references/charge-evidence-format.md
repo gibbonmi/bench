@@ -93,3 +93,10 @@ A final response does not prove that the consumer received the earlier responses
 | `cleanup` | `fingerprint` (string), `targets` (integer), `bytes` (integer), `response_complete` (boolean), `stream_end` (boolean), `next` (string) | One row orienting a bounded cleanup plan and naming its exact successor. |
 | `targets` | `id` (string), `kind` (string), `bytes` (integer) | One row per exact deletion target of this page, `orphan` before `published`. |
 | `applied` | `fingerprint` (string), `removed` (integer), `remaining` (integer), `complete` (boolean), `next` (string) | One row giving the terminal cleanup disposition. A stopped apply names a fresh plan. |
+
+## Consumers
+
+A cross-harness consumer retrieves every page through its own shell tool and rebuilds each source with its own decoder.
+The coordinator never decodes a record for the consumer.
+The follow-on hook refuses a pipeline after a Bench call, so the consumer saves each response and decodes the saved bytes in a separate step.
+A read takes the shared lock of the evidence store, so a sandboxed consumer needs write access to that store.

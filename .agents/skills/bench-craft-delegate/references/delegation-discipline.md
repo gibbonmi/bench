@@ -84,6 +84,10 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   confirms the ticket's stated headroom route.
 - A charge names each fenced path that must still exist on return, so a fixture
   directory that the fence names stays in the tree.
+- Before a write charge dispatches, the coordinator ticks each item of this list against the ticket's `Writes:` line.
+- A test that guards on a root privilege routes through the capability seam, never through a bare `t.Skip`.
+- A repair fence is the approved chunk union plus the exact paths that the review names.
+- A repair based on a frozen sibling uses an integration assignment from `main`. The integration assignment merges the sibling before the landing.
 
 ## Delegated author transfer
 
@@ -128,6 +132,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - An independent probe reaches the production adapter through the
   production-grading test. A junction that rebuilds its own wiring proves the
   junction, not the adapter.
+- A completion-plan probe names the check that independently detects its mutation. A passing baseline command does not prove that the mutation bites.
 
 ## Claim schema
 
@@ -141,6 +146,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - No later probe turns an abstention into a refuted claim.
 - The coordinator's probe of the exact tree labels a done-claim row `held` or
   `refuted`, whatever its status.
+- A stated confidence freezes at return time. The coordinator refuses a later raise.
 
 ## Read-only returns
 
@@ -170,6 +176,8 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A retry cap counts coherent attempts at implementation and verification. A
   planned TDD red is not a failed attempt, and a slow tool call is not a failed
   attempt.
+- Before the final allowed repair attempt, the author checks every review axis for duplicated facts and derived counts.
+- At the cap, the author preserves a green semantic repair and requests an explicit evidence-scoped extension for the remaining edit. The extension record states whether it adds a repair round to the implementation retro.
 
 ## Before the landing
 
@@ -192,6 +200,9 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   coordinator records the scope of that stop. The scope is cross-harness
   verification only, or all verification.
 - The coordinator runs `bench preflight build` on the integration source after every ticket commit and before the next charge. An edit can remove a fenced path.
+- After a rebase changes the source digest, the author repeats verification against the new digest before the coordinator accepts the evidence.
+- An adoption repair covers the contradiction class with an independent fixture, not only the literal examples.
+- Implementation delegation and independent review are separate choices, and the assessment record keeps their costs separate.
 
 ## In a review round
 
