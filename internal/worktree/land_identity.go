@@ -218,11 +218,35 @@ func landingSourceRange(j joins, worktree, slug, base, head string) (diff.Source
 		// attaches this face's route there.
 		var unfenced preflight.UnauthorizedPathsError
 		if errors.As(err, &unfenced) && len(unfenced.Paths) > 0 {
-			return diff.SourceRange{}, detail, landingFaceRefusal(faceSourceNotFenced, "", "", unfenced.Paths)
+			raised := refusal{paths: unfenced.Paths}
+			if folded := foldedDefaultBase(worktree, base, head); folded != "" {
+				raised.observed, raised.wanted = base, folded
+			}
+			return diff.SourceRange{}, detail, landingFaceRefusalOf(faceSourceNotFenced, raised, "")
 		}
 		return diff.SourceRange{}, detail, fmt.Errorf("%s: %s", detail, err)
 	}
 	return resolved, detail, nil
+}
+
+// foldedDefaultBase is the default-branch commit the source folded after the caller's
+// base: the merge base of the source head and the default branch, when that commit
+// descends from base and differs from it. The default branch's own paths then read as
+// unfenced under the older base. Any fact the reader cannot establish answers "", so the
+// fence face keeps its generic route rather than guessing a base.
+func foldedDefaultBase(worktree, base, head string) string {
+	branch, ok := git.ResolvedDefault(worktree)
+	if !ok {
+		return ""
+	}
+	folded, err := git.Output("-C", worktree, "merge-base", head, branch)
+	if err != nil || folded == "" || folded == base {
+		return ""
+	}
+	if descends, err := authorization.IsAncestor(worktree, base, folded); err != nil || !descends {
+		return ""
+	}
+	return folded
 }
 
 // landingBaseNotAncestorDetail names the two commits `--base` can mean, because the

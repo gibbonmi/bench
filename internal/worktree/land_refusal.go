@@ -278,11 +278,18 @@ var landingRefusalFaces = []landingRefusalFace{
 		}),
 	},
 	{
+		// A source that folded a later default-branch commit carries the caller's base as
+		// observed and the folded merge base as wanted, so the route re-points --base at the
+		// commit that works. Any path still refused after that re-run is a real fence gap.
 		name:   faceSourceNotFenced,
 		detail: "reviewed source range or ownership fence is invalid",
-		repair: pathless(func(rerun string) string {
+		repair: func(rerun string, raised refusal) string {
+			if raised.observed != "" && raised.wanted != "" {
+				return "the source folded a default-branch commit after --base; re-run at the folded merge base: " +
+					strings.Replace(rerun, landingBaseFlag(raised.observed), landingBaseFlag(raised.wanted), 1)
+			}
 			return "take the refusal_paths entries out of the reviewed range, or declare them under the spec's ## Ownership fences; then " + rerun
-		}),
+		},
 	},
 	{
 		// The composition names the conflicted paths in its own sentence, so the entry
@@ -399,42 +406,6 @@ func landingFaceRoute(err error, rerun string, shortCircuited bool) error {
 		return err
 	}
 	return skippedProofs(refusalError{raised}, true)
-}
-
-// landingRerun is the caller's own re-run of the landing, with the flag values it passed.
-// Every landing-preflight route ends with it, so a repair does not cost the operator its
-// flags. An assignment that has not resolved yet has no id for the pointer form to
-// address, so the re-run names the operator's own worktree path instead.
-func landingRerun(request, base, tip, specArg, path, assignment string) string {
-	command := "bench worktree land --request " + landingRerunArg(request, "<request>") +
-		" --base " + landingRerunArg(base, "<full-review-base>") +
-		landingSourceTipFlag(tip)
-	if specArg != "" {
-		command += " --spec " + landingRerunArg(specArg, "<spec>")
-	}
-	command += " -m <message>"
-	if assignment != "" {
-		return atSourceWorktree(command, path, assignment)
-	}
-	if lineSafe(path) {
-		return command + " " + sanitize.ShellQuote(path)
-	}
-	return command + " <worktree-path>"
-}
-
-// landingSourceTipFlag is the one rendering of the re-run's --source-tip argument. The
-// mismatch face swaps this exact text, so the composition and the swap read the same fact.
-func landingSourceTipFlag(tip string) string {
-	return " --source-tip " + landingRerunArg(tip, "<full-source-tip>")
-}
-
-// landingRerunArg renders one flag value the re-run repeats, and the placeholder that
-// stands in for a value the operator could not paste back.
-func landingRerunArg(value, placeholder string) string {
-	if value == "" || !lineSafe(value) {
-		return placeholder
-	}
-	return sanitize.ShellQuote(value)
 }
 
 func landRefusal(stdout io.Writer, detail string) int {

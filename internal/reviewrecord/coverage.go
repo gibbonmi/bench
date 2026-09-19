@@ -76,7 +76,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 				return err
 			}
 			if baseDigest != previous.SourceDigest || !benchgit.OK("-C", root, "merge-base", "--is-ancestor", previous.Tip, chunk.Base) {
-				return fmt.Errorf("chunk %s: stale review chain gap; review the uncovered delta", chunk.ID)
+				return fmt.Errorf("chunk %s: stale review chain gap: expected base %s, the chunk %s tip, got %s; plan commits and default-branch merges land before the ticket merge, and only record commits follow a chunk tip; review the uncovered delta", chunk.ID, previous.Tip, previous.ID, chunk.Base)
 			}
 		}
 		// Verification ownership reads the frozen plan above, so a historical
@@ -118,7 +118,13 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 		return fmt.Errorf("missing chunk %s; record its completed evidence", chunkID)
 	}
 	if previous.SourceDigest != digest {
-		return fmt.Errorf("chunk %s: stale reviewed source; cover the later source or repair delta", previous.ID)
+		// The reviewed tip and the requested tip bound the delta no review covers. When they
+		// are one commit, the delta is the uncommitted work past that commit.
+		uncovered := previous.Tip + ".." + tip
+		if previous.Tip == tip {
+			uncovered = "the uncommitted work past " + tip
+		}
+		return fmt.Errorf("chunk %s: stale reviewed source: no chunk review covers %s; cover the later source or repair delta", previous.ID, uncovered)
 	}
 	if complete {
 		for _, planned := range current.Chunks {
