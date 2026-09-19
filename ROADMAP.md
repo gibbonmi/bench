@@ -31,8 +31,6 @@ findings in the owner details.
 
 **FT253 (MEDIUM) — one landing lease in the intent ledger, from composition through publish.**
 
-**FT316 (MEDIUM) — a checkpoint refusal and a landing refusal name the commit that the caller must use.**
-
 **FT207 (MEDIUM, decision required) — worktree-mutating paths share malformed-admin refusal.**
 
 **FT199 (MEDIUM) — the shipped unclaimed-ref cleanup grows into a recovery-aware repository-wide ref inventory.**
@@ -254,6 +252,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT316 checkpoint and landing refusals name the expected commit — /bench-debug
-2. FT320 finding reader rules and the axis return rule — a `craft-synthesis` kit edit to `craft-review`.
-3. FT313 charge binding and the claim schema — a `craft-synthesis` kit edit to the `craft-delegate` references.
+1. FT320 finding reader rules and the axis return rule — a `craft-synthesis` kit edit to `craft-review`.
+2. FT313 charge binding and the claim schema — a `craft-synthesis` kit edit to the `craft-delegate` references.
+3. FT290 `bench test` projection faces — /bench-shape-idea
