@@ -9,7 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/gate"
@@ -152,7 +151,7 @@ func runFocusedRequest(root string, request focusedRequest) (Outcome, string, in
 		if kind != "" {
 			return refusedOutcome(toon.Errorf("changed selection failed", kind+": "+hint)+"\n", 1)
 		}
-		changedEnv, err := selectedRunEnvironment(os.Environ(), selection)
+		changedEnv, err := selectedRunEnvironment(os.Environ(), root, selection)
 		if err != nil {
 			return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 		}
@@ -177,7 +176,7 @@ func runFocusedRequest(root string, request focusedRequest) (Outcome, string, in
 	} else {
 		operands = append(operands, request.packageExpr)
 	}
-	env, err := selectedRunEnvironment(os.Environ(), selection)
+	env, err := selectedRunEnvironment(os.Environ(), root, selection)
 	if err != nil {
 		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 	}
@@ -212,7 +211,7 @@ func runProseCheck(root string) (Outcome, string, int) {
 // conformance scope.
 func runSystemCheck(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (Outcome, string, int) {
 	operands, suiteEnv := gate.SystemSuite(root)
-	env, err := selectedRunEnvironment(os.Environ(), selection)
+	env, err := selectedRunEnvironment(os.Environ(), root, selection)
 	if err != nil {
 		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 	}
@@ -224,66 +223,6 @@ func runSystemCheck(ctx context.Context, root string, request focusedRequest, se
 // build cache entries instead of writing a second, path-keyed set.
 func focusedTestArgv(operands ...string) []string {
 	return gate.BaseTestArgv("", append([]string{"-json"}, operands...)...)
-}
-
-func conformanceEnvironment(base []string, root, scope string, selection *runbinary.Selection) ([]string, error) {
-	consumerOnly := environmentValue(base, registry.ConsumerOnlyEnv) == "1"
-	env, err := selectedRunEnvironment(base, selection)
-	if err != nil {
-		return nil, err
-	}
-	env = append(env,
-		registry.ConformanceRootEnv+"="+root,
-		registry.ConformanceTierEnv+"="+string(registry.Dev),
-		registry.ConformanceScopeEnv+"="+scope,
-	)
-	if consumerOnly {
-		env = append(env, registry.ConsumerOnlyEnv+"=1")
-	}
-	return env, nil
-}
-
-func environmentValue(env []string, name string) string {
-	prefix := name + "="
-	for i := len(env) - 1; i >= 0; i-- {
-		if strings.HasPrefix(env[i], prefix) {
-			return strings.TrimPrefix(env[i], prefix)
-		}
-	}
-	return ""
-}
-
-func selectedRunEnvironment(base []string, selection *runbinary.Selection) ([]string, error) {
-	env, err := testEnvironment(base, selection.Path)
-	if err != nil {
-		return nil, err
-	}
-	return append(env, "BENCH_KIT="+selection.SourceRoot), nil
-}
-
-// testEnvironment returns the environment the focused run's Go child carries: the
-// caller's, without the inherited conformance and capability entries, with the selected
-// Bench executable, and with the Bench build cache entry so a focused run warms the
-// archives a gate reads.
-func testEnvironment(base []string, binary string) ([]string, error) {
-	return gocache.Apply(runbinary.WithEnv(withoutConformanceEnvironment(base), binary))
-}
-
-func withoutConformanceEnvironment(base []string) []string {
-	env := base
-	for _, name := range []string{
-		registry.ConformanceRootEnv,
-		registry.ConformanceTierEnv,
-		registry.ConformanceScopeEnv,
-		registry.ConformanceChecksEnv,
-		registry.ConformanceInheritedEnv,
-		registry.ConsumerOnlyEnv,
-		capability.LogEnv,
-		"BENCH_KIT",
-	} {
-		env = capability.WithoutEnvironment(env, name)
-	}
-	return env
 }
 
 func runGoTest(ctx context.Context, root string, request focusedRequest, argv, env []string) (Outcome, string, int) {

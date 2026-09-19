@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/canary"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -136,6 +137,30 @@ func TestPhaseElapsedCellEqualsItsFinishRecord(t *testing.T) {
 	}
 	if cell := phaseTableRow(t, stdout.String(), "timed")[2]; cell != strconv.FormatInt(recorded, 10) {
 		t.Errorf("elapsed_ms cell = %q, want the finish record's %d", cell, recorded)
+	}
+}
+
+// A kit phase's git starts no auto-maintenance. A background prune from that maintenance
+// can remove a worktree admin entry that a test fixture planted, while the test still
+// reads it.
+func TestKitPhaseGitStartsNoAutoMaintenance(t *testing.T) {
+	probe, err := json.Marshal(gittest.MaintenanceProbe(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := fixturePhaseRoot(t, `{"phases":[{"name":"maintenance","argv":[`+string(probe)+`]}]}`)
+
+	code, stdout, stderr := runFixturePhases(context.Background(), t, root)
+
+	if code != 0 {
+		t.Fatalf("maintenance probe exit = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+}
+
+// A linked root keeps its own git environment: the kit test policy is the kit's alone.
+func TestKitTestEnvSkipsALinkedRoot(t *testing.T) {
+	if got := KitTestEnv(t.TempDir(), t.TempDir()); got != nil {
+		t.Fatalf("linked-root kit test env = %#v, want none", got)
 	}
 }
 
