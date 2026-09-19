@@ -12,6 +12,8 @@ Add `bench test --check <name> --fixtures`. It prints `fixtures[N]{family,fixtur
 The face reads `tests/canary` under the graded repository root. It selects no run binary and starts no Go child.
 
 Export one no-fixtures sentinel error from `internal/canary`, and make `Fixtures` and `FixturePins` both use it, with no line growth in `inventory.go`.
+The sentinel needs a doc comment. Reclaim the lines from the `err.Error() == absentHarnessMessage` block in `FixturePins`, which collapses under `errors.Is`.
+
 An absent or empty `tests/canary` directory gives the empty table at exit 0, through `errors.Is` on that sentinel. Each other inventory error exits 1 with the inventory diagnostic.
 `--fixtures` requires `--check` and accepts no other flag. An unknown check gives the unknown-check refusal.
 

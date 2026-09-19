@@ -26,5 +26,5 @@ This ticket supplies the `check` row producer and the kind owner that tickets 4,
 - [ ] A named check with no run event exits 1 with the title `named check ran nothing`.
 - [ ] `--package chosen` with no run event exits 0.
 - [ ] A `--changed` run with no run event exits 0.
-- [ ] A named check whose package does not compile prints the compile diagnostic at exit 1, without the title `named check ran nothing`.
+- [ ] A named check gets a `build-fail` event, no run event, and a nonzero child exit. It prints the compile diagnostic at exit 1, without the zero-rule title.
 - [ ] The real `--check ordinary-build-census` run prints `tests_run` 1.

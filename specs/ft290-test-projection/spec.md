@@ -6,7 +6,7 @@ Roadmap: FT290
 
 Decision source: `specs/ft290-test-projection/decisions/ft290-test-projection.md` (ready compiled map).
 
-Verification log: 0 iteration(s) to accept — the review round has not run.
+Verification log: 2 iteration(s) to accept — iteration one returned F1 to F14. Iteration two returned R1 to R6 on the repair delta. Both sets are folded. No review examined the R1 to R6 repair, because the cap was two iterations.
 
 ## Problem
 
@@ -224,7 +224,7 @@ the unknown-check refusal.
 | TP-C1a / `1-split-named-check-owner.md`, `2-count-tests-run.md`, `3-prove-named-check-ran.md` | A result proves what ran, and the later tickets get the packages header and the `check` row producer. | TP1, TP2, TP3, TP4, TP5, TP6, TP18, TP47, TP51, TP55 | `bench test --package ./internal/testreport` | yes |
 | TP-C1b / `4-print-prose-check-result.md`, `5-show-each-failure-diagnostic.md` | The prose check prints a result, and the failures table shows each diagnostic. | TP7, TP8, TP9, TP10, TP11, TP12, TP13, TP14, TP15, TP16, TP17, TP49 | `bench test --package ./internal/testreport`, `bench test --package ./internal/prose`, `bench test --package ./internal/probe` | no |
 | TP-C2 / `6-filter-system-suite.md`, `7-name-running-executable.md` | A delegate filters the system suite, and the refusal has an owner. | TP19, TP20, TP21, TP22, TP23, TP24, TP25, TP26, TP54 | `bench test --package ./internal/testreport`, `bench test --package ./cmd/bench` | no |
-| TP-C3 / `8-list-check-fixtures.md`, `9-list-check-inventory.md` | The CLI lists the fixtures of a check and the check inventory. | TP27, TP28, TP29, TP30, TP31, TP32, TP33, TP34, TP35, TP36, TP37, TP38, TP39, TP40, TP50, TP52, TP53 | `bench test --package ./internal/testreport`, `bench test --package ./cmd/bench` | no |
+| TP-C3 / `8-list-check-fixtures.md`, `9-list-check-inventory.md` | The CLI lists the fixtures of a check and the check inventory. | TP27, TP28, TP29, TP30, TP31, TP32, TP33, TP34, TP35, TP36, TP37, TP38, TP39, TP40, TP50, TP52, TP53 | `bench test --package ./internal/testreport`, `bench test --package ./cmd/bench`, `bench test --package ./internal/canary` | no |
 | TP-C4 / `10-explain-changed-selection.md` | Each `--changed` row names its cause. | TP41, TP42, TP43, TP44, TP45, TP46, TP48 | `bench test --package ./internal/testreport` | no |
 
 Stable chunk IDs: the first review round split TP-C1 into TP-C1a and TP-C1b. Tickets 2 and 3 create the header and the `check` row that tickets 4 and 5 consume, so their chunk review closes first. TP-C2, TP-C3, and TP-C4 keep their IDs.
@@ -284,7 +284,7 @@ the system check, and ticket 6 adds the pattern case beside it.
 | TP3 | 2 | `--check line-routing` with one run event prints the first block `check[1]{name,kind,tests_run,subjects}:` with the row `line-routing,conformance,1,0` | planned TestNamedCheckPrintsCheckRowFirst in internal/testreport, through `Command` with a canned `go` | A result with no `check` row, or with the row after the packages table, fails the prefix match. |
 | TP4 | 2 | `--check system` prints the `kind` cell `system` | planned TestSystemCheckRowKind in internal/testreport, through `Command` with a canned `go` | One fixed kind for each Go-backed check prints `conformance`. |
 | TP5 | 3 | `--check line-routing` with a package pass and no run event exits 1 and prints `tests_run` 0 and the title `named check ran nothing` | planned TestNamedCheckRanNothingExitsOne in internal/testreport, through `Command` with a canned `go` | The current code exits 0 for this input. |
-| TP51 | 3 | `--check line-routing` with a `build-fail` event and no run event exits 1, prints the compile diagnostic in the failures table, and does not print the title `named check ran nothing` | planned TestNamedCheckBuildFailureWinsOverZeroRule in internal/testreport, through `Command` with canned events | A zero rule that reads only the count prints its title over the build failure. |
+| TP51 | 3 | `--check line-routing` with a `build-fail` event, no run event, and a nonzero child exit exits 1, prints the compile diagnostic in the failures table, and does not print the title `named check ran nothing` | planned TestNamedCheckBuildFailureWinsOverZeroRule in internal/testreport, through `Command` with canned events | A zero rule that reads only the count prints its title over the build failure. |
 | TP6 | 4 | `--package chosen` with a package pass and no run event exits 0 | planned TestPackageRunWithNoTestKeepsExitZero in internal/testreport, through `Command` with a canned `go` | A zero rule on each form changes this exit code to 1. |
 | TP55 | 4 | `--changed` over one changed Go file with a package pass and no run event exits 0 | planned TestChangedRunWithNoTestKeepsExitZero in internal/testreport, through `Command` with a canned `go list` and `go test` | `bench worktree merge` folds this exit code into its retry, and a zero rule on each form makes it 1. |
 | TP7 | 5 | A green prose run over two subjects prints exactly the row `prose,prose,0,2` under the `check` header, with no `packages[` text, at exit 0 | planned TestProseGreenPrintsOnlyCheckRow in internal/testreport, through `Command` over a temporary tree | The current output is empty, and a packages table fails the exact match. |
@@ -368,8 +368,15 @@ process, so each swap reaches the code under test.
 
 Hostile input, shell CLI surface: a control character in the executable path
 prints escaped. `canary.Fixtures` does not call `canary.Select`, so it does not refuse a control
-character in a fixture name. The `toon.Table` encoder refuses a cell below
-U+0020, and the face prints `toon.RenderError` at exit 1: TP52. U+007F passes
+character in a fixture name. The `toon.Table` encoder refuses a cell that
+holds a control character below U+0020, other than a tab, a newline, or a
+return. The face then prints `toon.RenderError` at exit 1: TP52.
+
+A fixture name
+with a tab, a newline, or a return is handled, because the encoder escapes it
+in the cell. `TestRepresentableMatchesEncoder` and the `"a\tb"` golden cell in
+`internal/toon/toon_test.go` pin that behavior, and both were read in this
+session. U+007F passes
 `toon.Representable` and prints as it is. The caller's check name in the
 unknown-check refusal prints escaped: TP54.
 An operand after `--checks` refuses through TP39's branch.
@@ -493,8 +500,10 @@ Reviewer disposition of the ownership fences: open. The freshness package stays
 outside the fence, because the build only calls `freshness.SealDigests`.
 
 The fence holds two canary files as a flagged expansion for reviewer veto.
-Ticket 8 exports the no-fixtures sentinel there, so that the empty answer has
-one owner.
+Ticket 8 exports the no-fixtures sentinel there, so that `Fixtures` and
+`FixturePins` share one error identity. The `Select` diagnostic in
+`internal/canary/decision.go` holds the same words as a literal. That literal
+stays untouched and outside the fence.
 
 The build preflight binds four more paths to the help row file. They are the
 command registry file, the two conformance registry tests, and the
