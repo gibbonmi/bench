@@ -16,6 +16,7 @@ baseline, and the universal-claim rule.
   from an earlier pass points at bytes that moved.
 - A review-owned row names the artifact that stores its evidence. Evidence that lives
   only in a delegate return is not citable at the landing.
+- A review of gate-anchored prose names the anchor state of each sentence that it proposes to change. A change to an anchored sentence moves its anchor row, its test expectation, and its canary in the same repair.
 
 ## Where an axis under-reads
 
@@ -31,6 +32,12 @@ baseline, and the universal-claim rule.
 - The Coverage axis probes a test's fixture source, not only its assertion. A fixture
   that names a symbol the production file declares can stay green while the assertion
   never runs.
+- A Coverage finding describes the tree before the probes of the axis. Behavior that those probes added is never a finding.
+- An axis reads the seam cell of a row before it judges a review-owned row unmet. A review-owned seam places the evidence in the review record, not in a test.
+
+## What an axis return carries
+
+- An axis return lists the evidence cursors that it fetched. The coordinator then finds a partial retrieval before it accepts the result.
 
 ## When a ticket already decided
 

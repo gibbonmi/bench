@@ -67,8 +67,6 @@ findings in the owner details.
 
 **FT318 (MEDIUM, decision required) — the review record has a native writer.**
 
-**FT320 (MEDIUM) — the `craft-review` finding discipline states three reader rules and one return rule.**
-
 **FT322 (LOW) — `craft-line` resolves a recorded fork line and times a consultation question.**
 
 **FT324 (MEDIUM, decision required) — the harness-memory rule has one owner.**
@@ -252,6 +250,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT320 finding reader rules and the axis return rule — a `craft-synthesis` kit edit to `craft-review`.
-2. FT313 charge binding and the claim schema — a `craft-synthesis` kit edit to the `craft-delegate` references.
-3. FT290 `bench test` projection faces — /bench-shape-idea
+1. FT313 charge binding and the claim schema — a `craft-synthesis` kit edit to the `craft-delegate` references.
+2. FT290 `bench test` projection faces — /bench-shape-idea
+3. FT322 fork-line resolution and consultation timing — a `craft-synthesis` kit edit to `craft-line`.
