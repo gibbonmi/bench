@@ -37,6 +37,7 @@ Before classifying repairs, read [the bounded repair policy](../skills/bench-cra
 Each planned chunk takes one review across Standards, Spec, and Coverage. The axes read the whole approved spec and focus on the frozen `chunk-base..chunk-tip` delta.
 
 After the retained author repairs accepted findings, current repair coverage closes those predicates. Repeat delegated review only for a later semantic delta or a cross-chunk concern that invalidates prior evidence. A repeated review uses the full chunk diff as context and blocks only on that later delta or named concern.
+A chunk that ends on a repair takes one confirming round of all three axes at its final tip.
 
 The coordinator writes one repair ticket when accepted repairs amend the coverage map. The ticket records the accepted repairs, and it cites each amended row in `Covers:`.
 
@@ -82,6 +83,7 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    commit. A spec-less review keeps `bench diff --full` in explicit-base mode.
 
    The first chunk base is the `main` tip merged into the source. Each later chunk base is the accepted predecessor tip, so the range holds only that chunk's delta.
+   A later plan commit is never a chunk base.
 
 2. **Find the sources.** The spec source is `specs/<feature>/spec.md` for this
    work, or the path I give you. The standards sources are `AGENTS.md` and
@@ -116,6 +118,9 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    (`.agents/skills/bench-craft-review/SKILL.md`).
 
    Resolve every axis through `craft-line`'s conditional review line from the implementation model.
+
+   On one shared tree, only one axis runs tests or probes while the other axes read.
+   A probing axis otherwise takes its own worktree.
 
    Collect every axis return before you accept a finding. A missing or failed
    axis return leaves the review incomplete. It is never a clean finding set.
@@ -201,6 +206,7 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    Completed results with zero findings are positive terminal results.
 
    Commit the artifact in the same session that writes it, before any repair edit lands.
+   A review worktree moves to the record commit, and the frozen pair still names the source tip.
    Append superseding occurrences and retain earlier findings.
    Apply the bounded repair policy's current-evidence rule and its narrow evidence-only exception after a repair.
 
