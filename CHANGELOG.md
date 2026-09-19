@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Shaping
+
+- Added a park step to `/bench-shape-idea`: a map that starts from a fresh idea gets a `bench idea` entry with the map path, so that the next drain gives the map a roadmap row.
+
 ### Follow-on guard
 
 - Changed the follow-on guard to allow a `;` or `&&` step before a Bench call when that step changes no directory and no environment.
