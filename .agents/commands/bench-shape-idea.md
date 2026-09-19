@@ -123,6 +123,10 @@ item's status as current open work. The row remains through shaping, spec,
 and build until shipped retirement removes it. This command never edits
 `ROADMAP.md` or `roadmap/`.
 
+A map that starts from a fresh idea has no roadmap row. Before the exit, run
+`bench idea "<text>"` with the map path in the text. The next `/bench-drain`
+then gives the map a row.
+
 ## Two modes
 
 **Bootstrap** (loose idea in): use `craft-grill` to discover whether the idea
