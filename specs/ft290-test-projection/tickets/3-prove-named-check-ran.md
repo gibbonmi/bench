@@ -2,11 +2,11 @@
 
 Blocked by: 1-split-named-check-owner.md, 2-count-tests-run.md
 Writes: internal/testreport/
-Covers: TP3, TP4, TP5, TP6, TP18
+Covers: TP3, TP4, TP5, TP6, TP18, TP51, TP55
 
 ## What to build
 
-Chunk: TP-C1.
+Chunk: TP-C1a.
 
 Print the row `check[1]{name,kind,tests_run,subjects}` as the first block of each Go-backed named-check result that reached a verdict.
 Add the one owner that maps a check name to its kind: `conformance`, `system`, or `prose`.
@@ -25,4 +25,6 @@ This ticket supplies the `check` row producer and the kind owner that tickets 4,
 - [ ] `--check system` prints the kind `system`.
 - [ ] A named check with no run event exits 1 with the title `named check ran nothing`.
 - [ ] `--package chosen` with no run event exits 0.
+- [ ] A `--changed` run with no run event exits 0.
+- [ ] A named check whose package does not compile prints the compile diagnostic at exit 1, without the title `named check ran nothing`.
 - [ ] The real `--check ordinary-build-census` run prints `tests_run` 1.

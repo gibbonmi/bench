@@ -6,7 +6,7 @@ Covers: TP1, TP2, TP47
 
 ## What to build
 
-Chunk: TP-C1.
+Chunk: TP-C1a.
 
 Add the `tests_run` cell to each packages row.
 The cell is the count of distinct tests and subtests of that package that emitted a run event.

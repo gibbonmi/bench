@@ -6,7 +6,7 @@ Covers: TP13, TP14, TP15, TP16, TP17, TP49
 
 ## What to build
 
-Chunk: TP-C1.
+Chunk: TP-C1b.
 
 Change the failures header to `failures[N]{package,test,line,lines}` in each mode.
 The `lines` cell is the count of diagnostic lines of that test.
@@ -23,4 +23,3 @@ A package failure with no test name obeys the same rules over its package log.
 - [ ] `--full` prints three rows for that test, and no cell holds an escaped newline.
 - [ ] A package failure with two log lines prints two `--full` rows with an empty `test` cell.
 - [ ] `Outcome.FailedTests` is 1 for that `--full` run.
-- [ ] `bench test --package ./internal/probe` is green.

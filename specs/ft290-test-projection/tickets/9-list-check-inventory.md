@@ -8,7 +8,8 @@ Covers: TP31, TP32, TP34, TP35, TP36, TP37, TP38, TP39, TP50
 
 Chunk: TP-C3.
 
-Add `bench test --checks`. It prints `checks[N]{name,kind,families}` at exit 0, in the order of the help check list, from the same name source.
+Add `bench test --checks`. It prints `checks[N]{name,kind,families}` at exit 0, in the order of the help check list.
+The producer calls `namedChecks()`, the one name source of the help text.
 The `kind` cell reads the kind owner of ticket 3. The `families` cell counts the distinct family names in which the check owns one fixture or more, through the owner filter of ticket 8.
 
 A fixture with no family adds nothing to the count. An absent `tests/canary` directory gives `families` 0 on each row.
