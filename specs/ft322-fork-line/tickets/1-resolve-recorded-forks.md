@@ -70,4 +70,75 @@ It raises an unresolved judgment question immediately and reserves reviewer-owne
 
 The five scenario claims are claimed, with confidence 9, 10, 10, 9, and 10 respectively.
 This exercise supplies comprehension evidence. It proves no dispatch, model availability, veto mechanism, or executable behavior.
-No owner bytes change after this committed adoption subject. Independent review remains pending.
+No owner bytes change after this committed adoption subject. The independent review follows below.
+
+## Independent review
+
+Frozen pair: f71301908b6d5627fc4c621187491a1bc9b79fd4..fe62ec6b892515da578c35aef8ead1381322e100.
+Each axis runs in a distinct native session and an isolated read-only assignment.
+Each uses gpt-5.6-sol at high effort for one iteration.
+The coordinator checks each source tip, clean checkout, and cited authority before accepting the return.
+
+| axis | native session | result | claim status | confidence |
+| --- | --- | --- | --- | --- |
+| Standards | /root/ft322_standards | Zero blockers | claimed | 9 |
+| Spec | /root/ft322_spec | Zero blockers | claimed | 10 |
+| Coverage | /root/ft322_coverage | Zero blockers | claimed | 9 |
+
+Raw findings: zero per axis. Distinct repair targets: zero. Optional advice: none.
+No axis identifies an implementation-command defect.
+
+Coverage corrects its claim status from accepted to claimed in an evidence-only clarification.
+Its source, confidence, findings, and observations remain unchanged. That correction consumes no repair cycle.
+
+Coverage independently combines a mismatched fork, an existing author, and a reviewer-owned decision.
+The existing transfer and reviewer-authority rules prevent that proposed bypass.
+The independent axes inspect guidance; they claim no executed behavior or red-to-green test proof.
+
+### Standards native excerpt
+
+SHA-256: 7c24327f01f17dd64aea2ae14818de996677b40d4ab3239f5e7b3dff14d004f0
+
+```text
+Standards: PASS
+findings[0]{id,disposition,confidence,citation}:
+worst: none
+advice: none
+subject: fe62ec6b892515da578c35aef8ead1381322e100
+checkout: clean
+claim: claimed / confidence 9
+```
+
+### Spec native excerpt
+
+SHA-256: a73d9588208e8ffff78b76bbaf5c8c745aba35d5d0dbf0aa2e0e2166975a912c
+
+```text
+Spec PASS
+base=f71301908b6d5627fc4c621187491a1bc9b79fd4
+tip=fe62ec6b892515da578c35aef8ead1381322e100
+findings=0 worst=none
+acceptance=all four claims satisfied
+scope=prose-only; no executable or test behavior change
+status=clean
+```
+
+### Coverage native excerpt
+
+SHA-256: be03942d40ea9f2584867f7a037a298f6437f0c22e0de36acc214a2e1af59cac
+
+```text
+base=f71301908b6d5627fc4c621187491a1bc9b79fd4
+head=fe62ec6b892515da578c35aef8ead1381322e100
+files=3 staged=0 unstaged=0 untracked=0
+Coverage: 0 findings; worst: none
+final status: clean
+```
+
+## Final reconciliation
+
+All four acceptance rows are complete. All three independent review axes have zero blockers.
+Post-review repair cycles consumed: zero of two. Hardening cycles: zero. Extensions: zero.
+
+The final record changes no owner, executable, test, or acceptance behavior after the reviewed tip.
+The green prospective landing gate remains the whole-project oracle.
