@@ -46,6 +46,9 @@ that red. This exception applies only to the expectation-versus-implementation
 pair. Production policy, parsers, fixture harnesses, executable registries,
 and derived counts remain single-sourced.
 
+Before you change a check that grades authored Markdown, read `internal/prose`.
+Use its sentence and paragraph rules; do not write a second splitter.
+
 **Dependency standard.** A third-party Go dependency must follow the
 precedent set by the first dependency: an official-org source, an
 MIT-compatible license, and a build-time-only footprint. This footprint means
@@ -110,5 +113,6 @@ information; the next session does not need to confirm it.
   and `bench <verb> --help` for a grammar. Note that `bench commands --brief`
   is a three-verb liveness probe, not an inventory. Never discover a verb by
   trying a bare unknown verb.
+- Before a commit, run `bench gate-prose . -- <path>` on each edited Markdown file.
 - Run the system suite by hand through `bench test --check system`.
   The verb supplies the sealed run binary and the kit root.
