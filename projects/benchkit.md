@@ -607,9 +607,10 @@ escalation.
 
 This WSL host stores `GOFLAGS=-p=4 -parallel=4` in its Go environment configuration.
 At most two delegates run tests at once. A delegate's Go test run uses `-parallel 2`.
-Serialize heavy tests, gates, and landings on this host.
 
-`xdg-open` hangs on this host. Print the report path instead of calling the desktop opener.
+`xdg-open` hangs on this host.
+When a shared command requests a desktop opener, print the report path instead.
+This host exception overrides the shared command's opener step.
 
 ## Notes for cold sessions
 

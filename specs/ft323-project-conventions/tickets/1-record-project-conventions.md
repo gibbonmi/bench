@@ -53,3 +53,24 @@ The inherited structure report has 104 issues. This prose-only ticket adds no Go
 
 The host evidence comes from the Go environment file, FT255, and a retained session memory attachment.
 The ticket applies craft-synthesis through its prose-only route. The landing gate completes that route.
+
+## Initial independent review
+
+Source pair: e667581749f23b9d12243ef4c844b6694abf25c6..9968f2711a78d94f31469c6ac3cd584f90a46b3f.
+All three native reviewers used gpt-5.6-sol at high effort in separate read-only assignments.
+Standards returned zero findings, with confidence 9. Spec returned FT323-S1, with confidence 9.
+Coverage returned COV-1, with confidence 9. Each reviewer confirmed the frozen tip and a clean checkout.
+
+FT323-S1 requires removal of the added permanent serialization policy. The author accepts this auto-fix within FT323.
+
+COV-1 identifies the shared bench-deepen opener instruction as a consumer of the local host exception.
+The axis proposed ask-user because a shared-command edit would exceed the ticket fence.
+The author resolves COV-1 within the approved profile instead. The profile explicitly overrides a shared command's opener step on this host.
+No shared-command change or new product decision is required. The final axis round must verify this repair.
+
+## Repair evidence
+
+Post-review repair cycles consumed: 1 of 2. The retained author keeps the user-selected gpt-6-astra and ultra effort.
+The repair removes the serialization policy and makes the local opener exception explicit.
+The author read bench-deepen's report step and confirmed its cross-platform opener instruction remains intact.
+The run still serializes heavy work under the user's batch instruction.
