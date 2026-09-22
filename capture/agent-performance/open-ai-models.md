@@ -1,18 +1,11 @@
 # OpenAI model scorecard
 
-Last incorporated landing: `debug-loop-guidance` (`ae5182b1178603fb3f5ad7cc734c3c890ef00f46`, 2026-09-16 UTC).
-Astra, Sol, and Luna implemented or reviewed the final two tickets and the DG15 debug repair.
-All final review axes passed, and the prospective landing gate passed every available phase.
-Token counts, cache benefit, provider costs, and comparative latency remain unknown.
+Last incorporated landing: `ft323-project-conventions` (`333bc7ce38821638c5d352a65ac896d2642f943e`, 2026-09-22 UTC).
+Astra/ultra retains implementation, coordination, verification, and one post-review repair cycle.
+Sol/high supplies three independent review axes. Sol/medium supplies one read-only host-fact consultation.
 
-The research report records two user-supplied Codex issue reports about repeated waits and context work.
-The cause and quota effect in this run remain unverified.
-Do not attribute those repeated checks to the fork workflow without separate evidence.
-
-Latest shaping observation: `debug-loop-guidance` dispatched Sol/high for one primary-source research question.
-The coordinator reopened all three papers and retained their transfer limits.
-The return misidentified its inherited model; runtime identity remains unknown beyond the explicit dispatch setting.
-This research observation supplies no implementation or review-quality result and changes no routing decision.
+The final axes have zero blockers. The retained-source and prospective landing gates pass.
+Run tokens, context capacity, provider costs, and comparative latency remain unknown.
 
 ## Cost assumptions
 
@@ -22,19 +15,19 @@ The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches dol
 
 | model / effort | role and sample | observed quality | current use | calibration |
 | --- | --- | --- | --- | --- |
-| Astra / high, medium, low | implementation, debug repair, Coverage review, and coordination | Astra/medium found the final DG15 bypass. The retained debug author needed three attempts and one approved Standards-only extension before all axes passed. | Use medium for Coverage and debug validation. Use low for bounded coding when the user selects it. | unknown |
+| Astra / ultra, high, medium, low | retained implementation, repair, verification, and coordination; latest FT323 ticket | Astra/ultra completes FT323 in one post-review repair cycle. Review removes extra policy and makes the local opener exception explicit. | Use medium for Coverage and debug validation. Use low for bounded coding when the user selects it. | Repair forecast: 0.09 over 1 labeled pair; 0 abstentions |
 | Terra / medium, high | implementation, latest 10 bounded tickets and repairs | Terra/high implemented FT311 ticket 4 with live evidence open. Review found the missing triage input contract, and repair added its five inputs. | Medium for exact one-seam tickets under coordinator mutation. High when one fact crosses multiple policy consumers. | unknown |
 | Terra / high, medium, low | research and seam inspection, latest 5 assignments; semantic review, latest 10 axis passes | On `bounded-repair-policy`, all three Terra/high axes passed before a cross-harness reviewer found two policy defects. Each axis verified the repairs; Coverage corrected one source-identity claim after the coordinator checked Git. | Standards, Spec, and Coverage review in separate contexts; independently census production callers. | unknown |
 | Luna / max, medium | prose implementation and bounded repairs | Luna preserved the Ticket 4 prose pass. Review found owner-identity and instruction-shape defects that required an Astra repair and refreshed adoption evidence. | Use Luna for narrow prose changes after an owner census and before independent review. | unknown |
 | Sol / high | retained implementation and adoption work | Sol completed substantive guidance and fresh adoption work. Coordinator checks found stale source identity and one final parser defect outside the prose. | Use Sol/high for exact specification chunks under independent review and coordinator probes. | unknown |
-| Sol / high | Standards and Spec review | Separate Sol/high axes found Ticket 4 and Ticket 5 defects, then passed the final range through `6265ac69`. | Use separate Standards and Spec contexts with an exact source range and an explicit review cap. | unknown |
+| Sol / high, medium | independent review axes and read-only host diagnosis | Sol/high finds two FT323 repair targets and confirms their closure in three independent axes. Sol/medium traces the exact host pins and retained opener evidence. | Use separate Standards and Spec contexts with an exact source range and an explicit review cap. | unknown |
 
 ## Representative evidence
 
 | task | result | attribution | routing signal |
 | --- | --- | --- | --- |
 | Bounded repair policy | Astra closed two cross-harness findings in two repair cycles, and all 21 rows passed final reconciliation. Terra missed both initial defects and verified their repair. | spec/ticket, reviewer, and orchestrator | Keep independent cross-harness review for shared workflow guidance. |
-| Shared preparation spec | Two sequential author forks produce three serial tickets. One Sol/high pass finds two blockers, which the author repairs under coordinator verification. | spec/ticket, reviewer, and coordinator | Match parsed authority to the ticket union and assign combined behavior to its final consumer. This phase supplies no comparative cache or cost evidence. |
+| Project conventions | One retained Astra/ultra author resolves two review targets in one cycle. Three Sol/high axes confirm the repaired source before the green landing. | retained author | Keep host facts local and give host exceptions explicit precedence over shared command steps. |
 | FT311 recoverable-reset candidate | A Fable/high round found three behavior defects after the candidate's medium-tier review. | delegate and reviewer | Keep independent adversarial verification when authority or destructive behavior crosses boundaries. |
 | Repair collection pilot | Sol/high implemented three chunks; Astra/medium found gaps in each, then passed every repaired source and final composition. | delegate | Keep one retained author across bounded repair rounds and bind every review to its source. |
 | Debug loop guidance | Astra, Sol, and Luna completed two tickets and the DG15 debug repair. Six Ticket 5 repair rounds ended with three passing review axes and a green landing gate. | delegate, reviewer, tree/tooling, and orchestrator | Keep source identity exact, retain one debug author, and require independent final axes. |
