@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Recorded fork lines
+
+- Changed craft-line to resolve a mismatched recorded fork through a fresh writer and flag that venue for reviewer veto.
+- Added immediate read-only consultation for judgment calls that the gate cannot settle.
+
 ### Shaping
 
 - Added a park step to `/bench-shape-idea`: a map that starts from a fresh idea gets a `bench idea` entry with the map path, so that the next drain gives the map a roadmap row.
