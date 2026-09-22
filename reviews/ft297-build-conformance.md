@@ -1,6 +1,6 @@
 # FT297 author verification
 
-Status: first repair author verified; native review reaffirmations pending
+Status: author acceptance satisfied; all native axes pass; landing pending
 Base: 216ced3fb95ff10314dc72ab237609f14a6e4bab
 Assignment: batch-ft297
 Ticket: specs/ft297-build-conformance/tickets/pin-go-build-contracts.md
@@ -148,3 +148,168 @@ It reported `bit`, four failed fixture cases, zero skips, and `restored=yes`.
 The specific wrong-type expectations independently catch that refusal omission.
 The retained author consumed one of the two permitted repair cycles.
 All three native axes must reaffirm the repaired source before the full gate.
+
+## Final native review results
+
+Reviewed base: 216ced3fb95ff10314dc72ab237609f14a6e4bab
+Reviewed source: 6987b214fec96b48c69f5a297831bfaeace66cf6
+
+The coordinator supplied the native terminal excerpts below.
+Each SHA-256 digest covers the exact UTF-8 excerpt bytes.
+All three axes used separate native sessions at gpt-5.6-sol with high effort.
+The review claims remain claimed; they do not replace the executed author checks.
+
+| Axis | Final findings | Outcome | Confidence |
+|---|---:|---|---:|
+| Standards | 0 | pass | 10 |
+| Spec | 0 | pass | 9 |
+| Coverage | 0 | pass | 10 |
+
+The final Standards result supersedes ST1 after the shared resolver repair.
+The final Coverage result supersedes COV1 after all four reader repairs.
+The initial findings and their accepted dispositions remain in this record.
+
+This light-path ticket has no spec-backed preflight source digest or plan digest.
+Those unavailable fields are omitted rather than invented.
+The typed terminal metadata records the frozen commit pairs.
+It does not claim spec-backed record-schema verification.
+
+```json
+[
+  {
+    "id": "ft297-standards-initial",
+    "performer": "/root/ft326_standards",
+    "role": "independent-review",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "state": "completed",
+    "outcome": "findings",
+    "native_ref": {
+      "ref": "/root/ft326_standards",
+      "digest": "sha256:022dc9f80c387b5db9a6d90f4d03f8d1691ed5ac1a46e6e7c965dea2c80c7548",
+      "excerpt": "ST1(auto-fix,c9) new importedPackage at build_contracts_test95-109 duplicates exec alias derivation scanArchitectureGo ordinary_build_census_test206-217; AGENTS34-47 parsers single-source."
+    },
+    "axis": "Standards",
+    "base": "216ced3fb95ff10314dc72ab237609f14a6e4bab",
+    "tip": "0d3f61f986a96c233872025290b78351fecd877b",
+    "finding_ids": [
+      "ST1"
+    ],
+    "supersedes": []
+  },
+  {
+    "id": "ft297-standards-final",
+    "performer": "/root/ft326_standards",
+    "role": "independent-review",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "state": "completed",
+    "outcome": "pass",
+    "native_ref": {
+      "ref": "/root/ft326_standards",
+      "digest": "sha256:acda3e81976635df416fb10871a5534bf9d1985c564d60ca026fc5022f87577e",
+      "excerpt": "ST1sharedimportedPackage soleowner, existingboundsClassifyNoFollow/hostileSkillPlantersreused no duplicates."
+    },
+    "axis": "Standards",
+    "base": "216ced3fb95ff10314dc72ab237609f14a6e4bab",
+    "tip": "6987b214fec96b48c69f5a297831bfaeace66cf6",
+    "finding_ids": [],
+    "supersedes": [
+      "ft297-standards-initial"
+    ]
+  },
+  {
+    "id": "ft297-spec-initial",
+    "performer": "/root/ft326_spec",
+    "role": "independent-review",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "state": "completed",
+    "outcome": "pass",
+    "native_ref": {
+      "ref": "/root/ft326_spec",
+      "digest": "sha256:526852fbe63cbf2eabba53b6291fe6ebbbfc32c9093d1fbbdd4589a764a116c4",
+      "excerpt": "Spec0 findingsc9."
+    },
+    "axis": "Spec",
+    "base": "216ced3fb95ff10314dc72ab237609f14a6e4bab",
+    "tip": "0d3f61f986a96c233872025290b78351fecd877b",
+    "finding_ids": [],
+    "supersedes": []
+  },
+  {
+    "id": "ft297-spec-final",
+    "performer": "/root/ft326_spec",
+    "role": "independent-review",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "state": "completed",
+    "outcome": "pass",
+    "native_ref": {
+      "ref": "/root/ft326_spec",
+      "digest": "sha256:956a290025539e48656f07c309d34eb8a8d0f941f9e500a2ecbcdd94f269e3ef",
+      "excerpt": "all6acceptancesunchanged; exact4readsiteswrongtypefixtures,approvedfence."
+    },
+    "axis": "Spec",
+    "base": "216ced3fb95ff10314dc72ab237609f14a6e4bab",
+    "tip": "6987b214fec96b48c69f5a297831bfaeace66cf6",
+    "finding_ids": [],
+    "supersedes": [
+      "ft297-spec-initial"
+    ]
+  },
+  {
+    "id": "ft297-coverage-initial",
+    "performer": "/root/ft326_coverage",
+    "role": "independent-review",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "state": "completed",
+    "outcome": "findings",
+    "native_ref": {
+      "ref": "/root/ft326_coverage",
+      "digest": "sha256:952943c820041ec5e066329da19476fcae7d0e346b05a78c21dfc92e1fdb869a",
+      "excerpt": "COV1(auto-fix,c10): pathchecker parser.ParseFile(owner)/os.ReadFile(shell), Go walk os.ReadFile each .go can block on FIFO; profile226-228 requires reject specialfiles before read."
+    },
+    "axis": "Coverage",
+    "base": "216ced3fb95ff10314dc72ab237609f14a6e4bab",
+    "tip": "0d3f61f986a96c233872025290b78351fecd877b",
+    "finding_ids": [
+      "COV1"
+    ],
+    "supersedes": []
+  },
+  {
+    "id": "ft297-coverage-final",
+    "performer": "/root/ft326_coverage",
+    "role": "independent-review",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "state": "completed",
+    "outcome": "pass",
+    "native_ref": {
+      "ref": "/root/ft326_coverage",
+      "digest": "sha256:e4b3eff960a7288f8b7cb797f0411f7e9c5c833bee2ef08b7696d09cc512c40b",
+      "excerpt": "COV1all4FIFOreadsites classifybeforebytes, bypassswapbitall4/restorednoskip."
+    },
+    "axis": "Coverage",
+    "base": "216ced3fb95ff10314dc72ab237609f14a6e4bab",
+    "tip": "6987b214fec96b48c69f5a297831bfaeace66cf6",
+    "finding_ids": [],
+    "supersedes": [
+      "ft297-coverage-initial"
+    ]
+  }
+]
+```
+
+## Final author acceptance
+
+The retained author confirms all six ticket acceptance criteria as satisfied.
+The original acceptance claims retain confidence 9.
+The repair evidence above supplies the executed tests and mutation results.
+The final native results close both accepted findings.
+One of two repair cycles is consumed, and no hardening cycle is consumed.
+
+This record-only update changes no production or test bytes.
+The coordinator owns the remaining whole-project gate and local landing.
