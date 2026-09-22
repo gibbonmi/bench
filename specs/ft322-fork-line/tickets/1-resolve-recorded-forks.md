@@ -17,10 +17,10 @@ The approved batch permits the local landing. It permits no remote push.
 
 ## Acceptance
 
-- [ ] A model mismatch selects a fresh writer on the recorded model.
-- [ ] The coordinator flags that venue change for reviewer veto.
-- [ ] The coordinator raises an unresolved judgment call as a read-only consultation question when it appears.
-- [ ] Existing tier routes and retained-author transfer authority remain intact.
+- [x] A model mismatch selects a fresh writer on the recorded model.
+- [x] The coordinator flags that venue change for reviewer veto.
+- [x] The coordinator raises an unresolved judgment call as a read-only consultation question when it appears.
+- [x] Existing tier routes and retained-author transfer authority remain intact.
 
 ## Verification
 
@@ -44,3 +44,30 @@ Base: f71301908b6d5627fc4c621187491a1bc9b79fd4.
 
 The build preflight requires spec.md and refuses the approved tickets-only light path.
 Use the existing explicit-base review route with this ticket and the roadmap row as the approved source.
+
+## Author verification
+
+Implementation tip: 1b91432ebbbced544f6b1dcc93819035b54df1ce.
+The named-file prose lane passes all three Markdown files.
+The guidance-prose-budgets and docs-currency-workflow checks pass with no skipped tests.
+The commit's ordinary lane passes. The source is clean after the commit.
+
+The author reads each fork consumer in bench-write-spec and the project profile.
+The author reads the delegation skill, its discipline reference, and the retained-author boundary in the operating guide.
+The new precedence sentence resolves the planned-fork exception. Existing author transfer still follows craft-delegate.
+The source keeps all existing tier rows and anchor phrases. The skill remains within its 130-line budget.
+
+## Fresh-session adoption
+
+Native session: /root/ft322_adoption. Line: gpt-5.6-terra, low effort, one iteration.
+Subject: 1b91432ebbbced544f6b1dcc93819035b54df1ce in the isolated ft322-adoption assignment.
+The reader confirms the expected tip and a clean checkout. The coordinator independently confirms the clean checkout.
+
+The fresh reader selects an inherited fork when both models match.
+It selects a fresh writer on the recorded model when they differ and flags that venue before dispatch.
+It keeps an existing author until user direction permits a transfer.
+It raises an unresolved judgment question immediately and reserves reviewer-owned decisions for the reviewer.
+
+The five scenario claims are claimed, with confidence 9, 10, 10, 9, and 10 respectively.
+This exercise supplies comprehension evidence. It proves no dispatch, model availability, veto mechanism, or executable behavior.
+No owner bytes change after this committed adoption subject. Independent review remains pending.
