@@ -54,6 +54,17 @@ Apply the deletion test from `craft-seams` to anything suspected shallow. A
 delegate's finding is a claim. Before a candidate enters the report, confirm
 against source that the named files exist and the shallowness reads as described.
 
+### Refresh an existing ready map
+
+When a survey revisits an existing decision map, verify its frontier against the current source.
+If open questions remain, continue with the candidate report.
+If the verified frontier is empty, refresh that map before the exit handoff.
+Rewrite its active body around the remaining work and preserve its closed decisions.
+
+Replace duplicate roadmap decision claims with pointers to the map.
+Run `bench maps`, then rewrite the session handoff from the refreshed map.
+Use the normal exit route below without creating another map or grilling settled predicates again.
+
 ## 3. Present candidates as an HTML report
 
 Write one self-contained HTML file to the OS temp directory (`$TMPDIR`, falling back
