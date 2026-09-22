@@ -1,6 +1,6 @@
 # FT297 author verification
 
-Status: author verified; native reviews pending
+Status: initial native reviews complete; accepted repairs pending
 Base: 216ced3fb95ff10314dc72ab237609f14a6e4bab
 Assignment: batch-ft297
 Ticket: specs/ft297-build-conformance/tickets/pin-go-build-contracts.md
@@ -92,3 +92,27 @@ The coordinator owns native Standards, Spec, and Coverage reviews.
 The coordinator also owns the serialized commit, full gate, and local landing.
 The author retains all production, test, probe, and repair work.
 No full gate or commit ran during this author pass.
+
+## Initial native reviews
+
+Source pair: 216ced3fb95ff10314dc72ab237609f14a6e4bab..0d3f61f986a96c233872025290b78351fecd877b
+
+| Axis | Findings | Worst | Status | Confidence |
+|---|---:|---|---|---:|
+| Standards | 1 | ST1 | claimed | 9 |
+| Spec | 0 | none | claimed | 9 |
+| Coverage | 1 | COV1 | claimed | 10 |
+
+ST1: auto-fix; accepted.
+The import resolver duplicates the architecture scanner's import-alias parser.
+AGENTS.md requires one source per fact, including parsers.
+Both scanners must use one import resolver.
+
+COV1: auto-fix; accepted.
+Both checks can read a FIFO before they reject its special-file mode.
+The project profile requires rejection of special files before a read.
+Both checks must reject each nonregular source before they read its bytes.
+
+These accepted findings share repair cycle one.
+The retained author remains gpt-6-astra at ultra effort.
+The repair keeps the existing two-cycle allowance.
