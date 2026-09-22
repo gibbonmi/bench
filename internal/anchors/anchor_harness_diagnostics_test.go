@@ -198,3 +198,78 @@ func TestAnchorHarnessAttributesFailureDiagnostics(t *testing.T) {
 		t.Fatalf("cross-talk escaped the assertion: %v", failures)
 	}
 }
+
+func TestRegistryNeedlesDistinct(t *testing.T) {
+	checkRegistryNeedlesDistinct(t, Entries())
+}
+
+func checkRegistryNeedlesDistinct(t interface {
+	Helper()
+	Errorf(string, ...any)
+}, entries []Anchor) {
+	t.Helper()
+	type key struct {
+		file   string
+		kind   Kind
+		needle string
+	}
+	seen := map[key]int{}
+	for i, anchor := range entries {
+		runes := []rune(anchor.Needle)
+		normalized, _ := normalizeMatchMapped(anchor.Kind, runes, identityOrigin(len(runes)))
+		k := key{
+			file:   filepath.Clean(filepath.FromSlash(anchor.File)),
+			kind:   anchor.Kind,
+			needle: string(normalized),
+		}
+		if previous, ok := seen[k]; ok {
+			t.Errorf("anchor needle distinctness: rows %d and %d repeat needle %q for file %q and kind %d", previous+1, i+1, k.needle, k.file, k.kind)
+		} else {
+			seen[k] = i
+		}
+	}
+}
+
+func TestRegistryNeedleDistinctnessBoundary(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		kind      Kind
+		change    func(*Anchor)
+		duplicate bool
+	}{
+		{"exact", Require, func(a *Anchor) {}, true},
+		{"different file", Require, func(a *Anchor) { a.File = "other.md" }, false},
+		{"different kind", Require, func(a *Anchor) { a.Kind = Forbid }, false},
+		{"different needle", Require, func(a *Anchor) { a.Needle = "Other words." }, false},
+		{"substring", Require, func(a *Anchor) { a.Needle = "Pinned" }, false},
+		{"path alias", Require, func(a *Anchor) { a.File = "unused/../guide.md" }, true},
+		{"different group", Require, func(a *Anchor) { a.Group = AfterStructured }, true},
+		{"different section", RequireInSection, func(a *Anchor) { a.Section = "Other" }, true},
+		{"different step", RequireInStep, func(a *Anchor) { a.Step = 2 }, true},
+		{"different diagnostic", Require, func(a *Anchor) { a.Diagnostic = "other failure" }, true},
+		{"required whitespace", Require, func(a *Anchor) { a.Needle = " Pinned\n\twords. " }, true},
+		{"nonbreaking space", Require, func(a *Anchor) { a.Needle = "Pinned\u00a0words." }, true},
+		{"zero width space", Require, func(a *Anchor) { a.Needle = "Pinned\u200bwords." }, false},
+		{"forbidden whitespace", Forbid, func(a *Anchor) { a.Needle = "Pinned  words." }, true},
+		{"required case", Require, func(a *Anchor) { a.Needle = "pinned words." }, false},
+		{"forbidden case", Forbid, func(a *Anchor) { a.Needle = "pinned words." }, false},
+		{"required section case", RequireInSection, func(a *Anchor) { a.Needle = "pinned words." }, true},
+		{"forbidden section case", ForbidInSection, func(a *Anchor) { a.Needle = "pinned words." }, true},
+		{"step case", RequireInStep, func(a *Anchor) { a.Needle = "pinned words." }, true},
+		{"emphasis case", ForbidCaseFoldedEmphasis, func(a *Anchor) { a.Needle = "**PINNED** words." }, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			first := Anchor{File: "guide.md", Kind: tc.kind, Section: "Rules", Step: 1, Needle: "Pinned words.", Diagnostic: "missing words"}
+			second := first
+			tc.change(&second)
+			var failures anchorErrors
+			checkRegistryNeedlesDistinct(&failures, []Anchor{first, second})
+			if got := len(failures); got > 1 || (got == 1) != tc.duplicate {
+				t.Fatalf("distinctness failures = %v, want duplicate=%t", failures, tc.duplicate)
+			}
+			if tc.duplicate && !strings.Contains(failures[0], "anchor needle distinctness: rows 1 and 2") {
+				t.Fatalf("distinctness failure does not identify both rows: %v", failures)
+			}
+		})
+	}
+}
