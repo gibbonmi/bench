@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/gate"
 )
 
@@ -28,7 +29,7 @@ func checkPublishedExecutablePath(root string) []string {
 		{".bench/lib/resolve-bench.sh", "bench_rebuild_action", `(?m)^\s*printf [^\n]*bench_shell_quote "\$1/([^"\n]+)"`},
 		{"bin/bench.sh", "bench_binary_path", `(?m)^\s*c="\$k/([^"\n]+)"`},
 	} {
-		body, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(site.path)))
+		body, err := readBuildContractSource(filepath.Join(root, filepath.FromSlash(site.path)))
 		if err != nil {
 			diags = append(diags, site.path+": published executable path unavailable: "+err.Error())
 			continue
@@ -51,7 +52,11 @@ func checkPublishedExecutablePath(root string) []string {
 }
 
 func publishedExecutableSpelling(path string) (string, error) {
-	file, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
+	body, err := readBuildContractSource(path)
+	if err != nil {
+		return "", err
+	}
+	file, err := parser.ParseFile(token.NewFileSet(), path, body, 0)
 	if err != nil {
 		return "", err
 	}
@@ -148,7 +153,7 @@ func checkGoBuildVCS(root string) []string {
 		if filepath.Ext(path) != ".go" {
 			return nil
 		}
-		body, err := os.ReadFile(path)
+		body, err := readBuildContractSource(path)
 		if err != nil {
 			return err
 		}
@@ -280,6 +285,43 @@ func TestGoBuildVCSCallFamily(t *testing.T) {
 			diags := checkGoBuildVCS(root)
 			if got := len(diags) != 0; got != tc.red {
 				t.Fatalf("diagnostics = %v, want red=%t", diags, tc.red)
+			}
+		})
+	}
+}
+
+func readBuildContractSource(path string) ([]byte, error) {
+	classified := bounds.ClassifyNoFollow(path)
+	if classified.State != bounds.StateParsed && classified.State != bounds.StateEmpty {
+		return nil, fmt.Errorf("%s: %s: %s", path, classified.State, classified.Reason)
+	}
+	return classified.Data, nil
+}
+
+func TestBuildContractChecksRefuseSpecialFiles(t *testing.T) {
+	for _, tc := range []struct {
+		path  string
+		check func(string) []string
+	}{
+		{"internal/freshness/freshness_verify.go", checkPublishedExecutablePath},
+		{".bench/lib/resolve-bench.sh", checkPublishedExecutablePath},
+		{"bin/bench.sh", checkPublishedExecutablePath},
+		{"internal/example/probe.go", checkGoBuildVCS},
+	} {
+		t.Run(tc.path, func(t *testing.T) {
+			files := map[string]string{
+				"internal/freshness/freshness_verify.go": `package freshness
+import "path/filepath"
+func PublishedExecutable(root string) string { return filepath.Join(root, "dist", "bench") }
+`,
+				".bench/lib/resolve-bench.sh": "bench_rebuild_action() {\n printf '%s' \"$(bench_shell_quote \"$1/dist/bench\")\"\n}\n",
+				"bin/bench.sh":                "bench_binary_path() {\n c=\"$k/dist/bench\"\n}\n",
+			}
+			delete(files, tc.path)
+			root := throwawayRoot{files: files, plants: map[string]func(*testing.T, string){tc.path: hostileSkillPlanters["fifo"]}}.build(t)
+			diags := strings.Join(tc.check(root), "\n")
+			if !strings.Contains(diags, tc.path) || !strings.Contains(diags, "wrong-type") {
+				t.Fatalf("special-file refusal = %q", diags)
 			}
 		})
 	}

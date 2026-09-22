@@ -1,13 +1,13 @@
 # FT297 author verification
 
-Status: initial native reviews complete; accepted repairs pending
+Status: first repair author verified; native review reaffirmations pending
 Base: 216ced3fb95ff10314dc72ab237609f14a6e4bab
 Assignment: batch-ft297
 Ticket: specs/ft297-build-conformance/tickets/pin-go-build-contracts.md
 Author: ft297_author
 Line: gpt-6-astra / ultra
 Pre-review coherent attempts consumed: 1 of 3
-Post-review repair cycles consumed: 0 of 2
+Post-review repair cycles consumed: 1 of 2
 Hardening cycles consumed: 0 of 1
 
 ## Current-source readiness
@@ -116,3 +116,35 @@ Both checks must reject each nonregular source before they read its bytes.
 These accepted findings share repair cycle one.
 The retained author remains gpt-6-astra at ultra effort.
 The repair keeps the existing two-cycle allowance.
+
+## Repair cycle one
+
+Initial review record commit: 9721cf8ea39e4619447224755a5685c9c3876a9c
+
+ST1 author result: verified; confidence 9.
+Both scanners now call `importedPackage` for import resolution.
+The architecture scanner no longer keeps its own alias parser.
+The existing architecture census and the complete build-contract fixture family pass.
+
+COV1 author result: verified; confidence 9.
+Every new source reader uses `bounds.ClassifyNoFollow` before it receives source bytes.
+The classifier owns the special-file refusal and the bounded read.
+The shared fixture planter owns FIFO capability handling.
+Four FIFO fixtures cover the Go owner, both shell sources, and the Go source sweep.
+Each fixture returns the specific wrong-type refusal without a writer or a wait.
+
+The focused repair suite passed without skips in 0.296 seconds.
+The structure growth check passed against the frozen review tip.
+The skip-ownership check also passed without skips.
+
+```sh
+go test -count=1 -parallel 2 ./internal/conformance -run 'Test(PublishedExecutablePath|GoBuildVCS|BuildContractChecksRefuseSpecialFiles|BranchNativeArchitectureCensus|ConformanceMetaBites)' -v
+./dist/bench test --check skip-ownership
+./dist/bench probe internal/conformance/build_contracts_test.go --swap 'if classified.State != bounds.StateParsed && classified.State != bounds.StateEmpty {' --with 'if false && classified.State != bounds.StateParsed && classified.State != bounds.StateEmpty {' --package ./internal/conformance --run '^TestBuildContractChecksRefuseSpecialFiles$'
+```
+
+The probe bypassed the classifier-refusal branch.
+It reported `bit`, four failed fixture cases, zero skips, and `restored=yes`.
+The specific wrong-type expectations independently catch that refusal omission.
+The retained author consumed one of the two permitted repair cycles.
+All three native axes must reaffirm the repaired source before the full gate.
