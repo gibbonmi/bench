@@ -10,13 +10,19 @@ Declare the line before every multi-cycle stage. Name the model, effort, and ite
 
 ## Resolve the tiers first
 
-Tiers are abstract roles: **cheap / mid / top**, the only identity harnesses share.
-The reviewer binds each harness to opaque model IDs in `.bench/lines.env`. One `BENCH_<HARNESS>_<TIER>` key names each cell. Cached routes live in `projects/<name>.md` `Lines`.
+Tiers are abstract roles: **cheap / mid / top**, the only identity harnesses share. The reviewer binds each harness to opaque model IDs in `.bench/lines.env`. One `BENCH_<HARNESS>_<TIER>` key names each cell. Cached routes live in `projects/<name>.md` `Lines`.
 
 `bench models` refreshes candidates but never assigns a tier. Resolve the tier through the harness. No `lines.env` means the repo is unrouted; use the `Lines` prose and flag the missing binding.
 
 When `capture/agent-performance/` has a scorecard for the provider, read its `Current routing` and `Current decisions` before you select the line.
 Use the scorecard to suggest or validate the line. It does not indicate outcomes for the current task. User direction, project `Lines`, and current-task signals remain authoritative.
+
+Before a planned fork, compare the coordinator's model with the recorded line. If they differ, use a fresh writer on the recorded model.
+Flag the venue change for reviewer veto before dispatch. This resolution takes precedence over default fork inheritance.
+Apply [craft-delegate](../bench-craft-delegate/SKILL.md) to any transfer of an existing author.
+
+Raise each judgment call that the gate cannot settle as a read-only consultation question when it appears.
+Apply [craft-delegate](../bench-craft-delegate/SKILL.md) to that consultation.
 
 ## The decision table picks the starting tier
 
@@ -34,11 +40,9 @@ Assess three signals for the stage in front of you:
 | any | any | weak / uncovered | bump one tier |
 
 Rows read top-down, first match wins. A stage that is uncertain and weakly gated takes the uncertain row.
-Tier and effort are one joint output. The last row is the load-bearing up-bias.
-Where the gate cannot catch a wrong answer, buy insurance at the start. Under-escalation is expensive; a covered gate catches a wrong downgrade cheaply.
+Tier and effort are one joint output. The last row is the load-bearing up-bias. Where the gate cannot catch a wrong answer, buy insurance at the start. Under-escalation is expensive; a covered gate catches a wrong downgrade cheaply.
 
-A fourth signal, **leverage**, overrides the table. An artifact that steers future generation routes mid + high.
-A guidance defect multiplies through every session. The top tier implements nothing unless the reviewer names it. Read `Lines` for a cached route before you assess from scratch.
+A fourth signal, **leverage**, overrides the table. An artifact that steers future generation routes mid + high. A guidance defect multiplies through every session. The top tier implements nothing unless the reviewer names it. Read `Lines` for a cached route before you assess from scratch.
 
 ## Ticketed-build stage defaults
 
@@ -55,8 +59,7 @@ These are starting defaults, not a flat rule. A spec's per-story line is a **cei
 A post-review repair runs at low effort. The author raises that effort only when the repair is at risk of failure at low effort, and reports the raise in one line. The repair keeps the retained author's model.
 
 The leverage override still wins for orchestration and implementation. The conditional review line owns review.
-`craft-delegate` owns the author venue; this skill routes the author. For one atomic
-diff, use the highest tier any story needs. Report each collapsed line.
+`craft-delegate` owns the author venue; this skill routes the author. For one atomic diff, use the highest tier any story needs. Report each collapsed line.
 
 ## Delegated author lines
 
@@ -91,8 +94,7 @@ Known-flaky retry stops are in `craft-delegate`'s delegation discipline.
 
 ## What is enforced vs. declared
 
-The Agent-tool hook and `BENCH_AGENT` adapters enforce model membership.
-Effort has no enforcement surface, so the declaration must name it.
+The Agent-tool hook and `BENCH_AGENT` adapters enforce model membership. Effort has no enforcement surface, so the declaration must name it.
 
 ## The declaration
 
@@ -125,5 +127,4 @@ Stop immediately when the user cancels. If no useful next check remains, report 
 
 A diagnostic route does not change the retained implementation session. A diagnostic route does not change the retained implementation model.
 
-An uncapped retained implementation has no artificial iteration stop within the approved spec.
-It retains the user budget, approval boundaries, external blockers, and cancellation stops.
+An uncapped retained implementation has no artificial iteration stop within the approved spec. It retains the user budget, approval boundaries, external blockers, and cancellation stops.
