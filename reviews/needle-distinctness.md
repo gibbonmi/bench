@@ -1,6 +1,6 @@
 # Needle distinctness verification
 
-Status: repair verified; native reaffirmations and landing pending
+Status: author acceptance satisfied; all native axes pass; landing pending
 Base: 216ced3fb95ff10314dc72ab237609f14a6e4bab
 Assignment: batch-ft326
 Author: ft326_author
@@ -267,3 +267,170 @@ Neither final check reports a failure or skip.
 | `env GOFLAGS='-p=4 -parallel=2' bench test --check docs-currency-workflow` | 463 | 4550 |
 
 All three native axes must reaffirm the repaired source before the coordinator lands it.
+
+## Terminal native reviews
+
+Frozen base: 216ced3fb95ff10314dc72ab237609f14a6e4bab
+Frozen source: 7afcd8bb3156b2a6ff2daf1dec944e2015e02ccc
+Repair cycles consumed: 1 of 2
+Hardening cycles consumed: 0
+
+The coordinator reports a terminal pass from each distinct native review session.
+Standards closes S1 and S2; Coverage closes COV-1 and COV-3 and retains the COV-2 refutation.
+Spec confirms all five acceptance rows and the excluded sentence-boundary proposal.
+These results supersede the initial occurrences without deleting their findings.
+
+| Axis | Native session | Status | Confidence | Findings |
+|---|---|---|---|---|
+| Standards | `/root/ft326_standards` | claimed; completed; pass | 10 | 0 |
+| Spec | `/root/ft326_spec` | claimed; completed; pass | 9 | 0 |
+| Coverage | `/root/ft326_coverage` | claimed; completed; pass | 10 | 0 |
+
+The metadata below uses the terminal Review fields from `internal/reviewrecord`.
+The coordinator relayed the excerpts; their SHA-256 values bind the embedded bytes.
+Initial excerpts summarize the retained findings; final excerpts preserve the coordinator's supplied native-result text.
+Model and effort are the confirmed native settings.
+
+This tickets-only route has no preflight plan or source digest.
+Those unavailable fields are omitted instead of fabricated.
+The JSON is light-path terminal metadata, not a claim of spec-backed record-schema verification.
+
+```json
+[
+  {
+    "id": "ft326-standards-initial",
+    "performer": "/root/ft326_standards",
+    "role": "independent-review",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "state": "completed",
+    "outcome": "findings",
+    "native_ref": {
+      "ref": "/root/ft326_standards",
+      "digest": "sha256:0d697400264363d5dd7ac714c8f9967b1f3df058b8def823d11a95dab4c52f5a",
+      "excerpt": "S1: The 18 independent expectations lack demonstrated named mutation support. S2: The ticket and review duplicate the baseline repro, hypotheses, and timings."
+    },
+    "axis": "Standards",
+    "base": "216ced3fb95ff10314dc72ab237609f14a6e4bab",
+    "tip": "09b48bf61dc71066486e4937dc873faf6e6043f6",
+    "finding_ids": [
+      "S1",
+      "S2"
+    ],
+    "supersedes": []
+  },
+  {
+    "id": "ft326-standards-final",
+    "performer": "/root/ft326_standards",
+    "role": "independent-review",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "state": "completed",
+    "outcome": "pass",
+    "native_ref": {
+      "ref": "/root/ft326_standards",
+      "digest": "sha256:0529d03bc3d99cfd1db1cb3168986c379950cb759808564c77b75af34e30a4d8",
+      "excerpt": "S1 all20expectations mapped6probes, S2 singleevidenceownerclosed."
+    },
+    "axis": "Standards",
+    "base": "216ced3fb95ff10314dc72ab237609f14a6e4bab",
+    "tip": "7afcd8bb3156b2a6ff2daf1dec944e2015e02ccc",
+    "finding_ids": [],
+    "supersedes": [
+      "ft326-standards-initial"
+    ]
+  },
+  {
+    "id": "ft326-spec-initial",
+    "performer": "/root/ft326_spec",
+    "role": "independent-review",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "state": "completed",
+    "outcome": "pass",
+    "native_ref": {
+      "ref": "/root/ft326_spec",
+      "digest": "sha256:bbd442520ffa7a865b9949ecd01f13457892d2ea136dbb654067e83d317b42ed",
+      "excerpt": "The axis returned no findings."
+    },
+    "axis": "Spec",
+    "base": "216ced3fb95ff10314dc72ab237609f14a6e4bab",
+    "tip": "09b48bf61dc71066486e4937dc873faf6e6043f6",
+    "finding_ids": [],
+    "supersedes": []
+  },
+  {
+    "id": "ft326-spec-final",
+    "performer": "/root/ft326_spec",
+    "role": "independent-review",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "state": "completed",
+    "outcome": "pass",
+    "native_ref": {
+      "ref": "/root/ft326_spec",
+      "digest": "sha256:e501deeebed1a44d252fa512b5e03e8d1e84cad9548bf46f341323c188beb50a",
+      "excerpt": "ND1-5preserved, only2Unicodefixture additions; sentenceboundaryexcluded."
+    },
+    "axis": "Spec",
+    "base": "216ced3fb95ff10314dc72ab237609f14a6e4bab",
+    "tip": "7afcd8bb3156b2a6ff2daf1dec944e2015e02ccc",
+    "finding_ids": [],
+    "supersedes": [
+      "ft326-spec-initial"
+    ]
+  },
+  {
+    "id": "ft326-coverage-initial",
+    "performer": "/root/ft326_coverage",
+    "role": "independent-review",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "state": "completed",
+    "outcome": "findings",
+    "native_ref": {
+      "ref": "/root/ft326_coverage",
+      "digest": "sha256:1f4ca4287f39bff97cc988cd738c19954b71eda6513bfe0e4b17dbe0f1ca1c10",
+      "excerpt": "COV-1: Entries narrowed to generalAnchors excludes 13 families. COV-2: Enumerate 15 unordered kind pairs. COV-3: Add NBSP and zero-width-space boundaries."
+    },
+    "axis": "Coverage",
+    "base": "216ced3fb95ff10314dc72ab237609f14a6e4bab",
+    "tip": "09b48bf61dc71066486e4937dc873faf6e6043f6",
+    "finding_ids": [
+      "COV-1",
+      "COV-2",
+      "COV-3"
+    ],
+    "supersedes": []
+  },
+  {
+    "id": "ft326-coverage-final",
+    "performer": "/root/ft326_coverage",
+    "role": "independent-review",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "state": "completed",
+    "outcome": "pass",
+    "native_ref": {
+      "ref": "/root/ft326_coverage",
+      "digest": "sha256:bf31d57805d758c59e94f49051d4d4d333f9cb142a21f1aa13710877de9e94fe",
+      "excerpt": "COV1 crossfrontDoor/general rows6/460, COV3 NBSPrawnorm andZWSPwidening closed; COV2no-op exactKind field."
+    },
+    "axis": "Coverage",
+    "base": "216ced3fb95ff10314dc72ab237609f14a6e4bab",
+    "tip": "7afcd8bb3156b2a6ff2daf1dec944e2015e02ccc",
+    "finding_ids": [],
+    "supersedes": [
+      "ft326-coverage-initial"
+    ]
+  }
+]
+```
+
+## Final author acceptance
+
+The retained author confirms ND1, ND2, ND3, ND4, and ND5 as satisfied.
+The acceptance claims retain their previously stated confidence of 9.
+The repair verification and exact mutation map above supply the executed evidence.
+The final review record changes no owner or test bytes and consumes no repair cycle.
+The coordinator owns the remaining whole-project gate and landing.
