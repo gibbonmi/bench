@@ -1,12 +1,129 @@
 # Bench
 
-A command-first workflow for agent work in small, gated phases. You invoke the
-Bench phase for the work in front of you; the agent runs the CLI substrate
-underneath.
+A command-first workflow that keeps AI-written code maintainable. Bench turns
+intent into small changes, traces affected code, attaches tests at stable
+seams, and lets an external gate decide when the work is done.
 
 ---
 
 ## Reviewer quick start
+
+### Keep AI-written code maintainable
+
+AI can produce working behavior before it produces code that remains easy to
+change. Bench makes maintenance part of the task. It asks where behavior
+crosses a seam, which code consumes a change, what tests prove it, and where
+structure is under pressure.
+
+For example, an agent can copy one pricing rule into checkout and invoicing.
+Tests can pass today, while the next discount change spreads across unrelated
+files. Reviewers must then prove that both copies still agree.
+
+A **seam** is a stable interface where callers and tests meet. For example, a
+scheduler can accept a clock instead of reading system time directly.
+Production supplies a real clock, while tests supply a fixed clock. A later
+clock change then stays behind the interface, and tests do not patch internals.
+
+You request a Bench phase, and the agent uses the CLI evidence beneath it.
+You can also run these commands to inspect the same evidence. Replace the
+example path and symbol with values from your repository.
+
+| Question | Command | Maintenance benefit |
+|---|---|---|
+| Where are possible seams? | `bench outline "internal/gocache"` | Lists symbols and source locations for focused inspection. |
+| What can a Go symbol affect? | `bench consumers "gocache.Apply"` | Lists resolved static reference edges and exposes consumers outside the edited file. |
+| What does the committed change affect? | `bench consumers --changed --base "<base-commit>" --source-tip HEAD` | Shows consumers of changed declarations between the base and HEAD. Requires a clean checkout. |
+| Where is structure under pressure? | `bench structure` | Flags oversized files and crowded directories that need a responsibility check. |
+| Which behavior must stay observable? | `bench coverage "<spec>"` | Projects each approved story, behavior, and seam into the implementation work. |
+| Does the ticket graph still fit the tree? | `bench preflight build "<slug>"` | Checks the approved artifacts, dependencies, and write fence before implementation. |
+
+`bench outline` locates candidates; it never declares a blessed seam.
+`bench consumers` approximates blast radius as potentially affected Go
+reference sites. It uses the default build context and cannot see reflection,
+plugins, executed programs, other languages, or transitive effects.
+
+If checkout and invoicing call one shared pricing function, the consumer rows
+identify both callers for review. Tests can then attach to the pricing seam.
+The CLI guides caller and test review; it does not deduplicate the rule.
+
+### See the workflows
+
+Research stays inside the phase that owns the question. It produces cited
+facts, while the reviewer retains each product and scope decision.
+
+```mermaid
+flowchart TD
+    clear["Clear reviewed intent"] --> spec["/bench-write-spec"]
+    fog["Multi-session decision fog"] --> shape["/bench-shape-idea"]
+    shape -. "needs facts" .-> research["Research ticket<br/>craft-research"]
+    research -->|"cited evidence"| shape
+    shape --> ready["Ready decision map"]
+    ready --> spec
+    spec --> artifacts["Spec + coverage map<br/>+ implementation tickets"]
+    artifacts --> approval{"Reviewer approves<br/>spec and ticket graph?"}
+    approval -->|"revise"| spec
+    approval -->|"approve"| approved["Approved implementation graph"]
+```
+
+Implementation stays with its retained author. Agent semantic review is
+advisory, and it grades a frozen chunk instead of each ticket separately.
+
+```mermaid
+flowchart TD
+    approved["Approved implementation graph"] --> chunk["Implement the chunk's tickets<br/>verify + green lane commits"]
+    chunk --> frozen["Freeze the complete chunk delta"]
+    frozen --> review["/bench-review-implementation<br/>Standards · Spec · Coverage"]
+    review --> blockers{"Blocking findings?"}
+    blockers -->|"accepted; allowance remains"| repair["Retained author repairs"]
+    repair --> coverage["Current repair coverage<br/>+ author verification"]
+    coverage --> review
+    blockers -->|"allowance exhausted"| decision["Reviewer decision required"]
+    blockers -->|"none; chunk checkpoint"| more{"More approved chunks?"}
+    more -->|"yes"| chunk
+    more -->|"no"| accepted["All chunks accepted"]
+```
+
+Final reconciliation precedes the landing. The landing runs the whole-project
+gate. For a reviewed spec, final-check reports the retained landing evidence.
+
+```mermaid
+flowchart TD
+    accepted["All chunks accepted"] --> reconcile["Final acceptance + integration reconciliation"]
+    reconcile --> checkpoint["Complete checkpoint"]
+    checkpoint --> land["bench worktree land<br/>compose + whole-project gate"]
+    land --> result{"Gate green?"}
+    result -->|"no; nothing published"| repair["Return to the owning repair or debug path"]
+    result -->|"yes"| publish["Publish + release the source"]
+    publish --> final["/bench-final-check<br/>report retained evidence + capture retro"]
+    final --> human["Human reviews the green evidence<br/>and owns further ship decisions"]
+    final -. "new design concern" .-> concern["Route a finding to semantic review"]
+```
+
+Capture stores deferred work and evidence. An unresolved in-scope finding
+remains a repair target or blocker instead of entering the inbox.
+
+```mermaid
+flowchart TD
+    finding["Unresolved in-scope review finding"] --> blocker["Retained repair or blocker"]
+    deferred["Tangent, assessment finding,<br/>or deferred out-of-scope work"] --> idea["bench idea<br/>capture/IDEAS.md"]
+    active["Active work"] -->|"process or judgment learning"| learning["bench learning<br/>capture/learnings.md"]
+    final["Implemented spec<br/>/bench-final-check"] --> retro["capture/retros/"]
+    idea --> drain["/bench-drain"]
+    learning --> drain
+    retro --> drain
+    drain --> reconcile["Reconcile the tree and roadmap<br/>propose every disposition"]
+    reconcile --> approval{"Reviewer approves the batch?"}
+    approval -->|"revise"| drain
+    approval -->|"approve"| landing["Green drain batch landing"]
+    landing --> roadmap["Roadmap updated or item closed"]
+    roadmap --> next["Recommended next command<br/>shape, spec, or implement"]
+    next --> active
+```
+
+`/bench-final-check` reports the retained landing evidence for a spec. It
+does not run another gate over an unchanged landed tree.
+
+### Run the workflow
 
 In Claude Code, run Bench as slash commands:
 
@@ -32,9 +149,11 @@ $bench-review-implementation
 $bench-final-check
 ```
 
-Maintenance commands follow the same pattern: `/bench-update-kit` and
-`/bench-drain` in Claude Code, or `$bench-update-kit` and
-`$bench-drain` in Codex.
+The capture command follows the same pattern: `/bench-drain` in Claude Code
+or `$bench-drain` in Codex. Kit maintainers also have
+`/bench-update-kit` or `$bench-update-kit`. A linked repository checks for
+managed-asset updates with `bench upgrade --check` and applies them with
+`bench upgrade`.
 
 Other AGENTS.md harnesses read the matching file under `.agents/commands/` when
 they do not expose a native command or skill surface.
@@ -43,22 +162,19 @@ For a new repo, ask the agent to run `/bench-setup-repo` or `$bench-setup-repo`.
 That phase runs `bench setup` to converge the repo. It then walks you through
 the project-specific gate, profile, lines, and an optional `CONTEXT.md`.
 
-For feature work, use the command path:
-
-```text
-clear reviewed intent -----------------> /bench-write-spec -> /bench-implement-spec -> /bench-review-implementation -> /bench-final-check
-multi-session decision fog -> /bench-shape-idea ---^
-```
-
 Decision maps are situational: `/bench-shape-idea` uses decision tickets only
 when reviewer choices form a multi-session dependency tree. The map file is an
 index; each decision lives in one ticket file under the map's tickets folder.
 It compiles a ready map beside its spec, under `specs/<slug>/decisions/`. A
 clear idea may instead authorize `/bench-write-spec` through the
-reviewer-confirmed current conversation or a named reviewed artifact. Spec
-authoring records exactly one `Decision source:` line and owns engineering seams
-and coverage, and implementation then derives independently-green implementation
-tickets. For bugs, use `/bench-debug`; it builds the repro loop first.
+reviewer-confirmed current conversation or a named reviewed artifact.
+
+Spec authoring records exactly one `Decision source:` line. It owns the
+engineering seams, coverage, and independently-green implementation tickets.
+Implementation starts from that approved ticket graph. The
+[implementation command](.agents/commands/bench-implement-spec.md) documents
+the end-to-end `--full <spec>` mode and its opt-in `--delegate` extension.
+For bugs, use `/bench-debug`; it builds the repro loop first.
 
 Each command orients you at entry. It then hands you off at exit with what
 changed, the current artifact or gate state, and the single next command it
@@ -67,23 +183,16 @@ not the reviewer's first operating surface.
 
 ---
 
-## Why Bench exists
+## How Bench protects maintainability
 
-Bench fuses **Matt Pocock's planning pipeline** with **kunchenguid's operational
-substrate**. Four invariants hold the two together.
+Planning names the behavior and seam before implementation. Small tickets keep
+each change reviewable and green. Review traces consumers beyond the edited
+files, and the gate checks the complete result outside the agent's judgment.
 
-Pocock gives the brain: the method that turns a loose idea into a sequenced
-plan, a spec that names its seams up front, and a build that tests the right
-places. Kun Chen gives the body: isolated worktrees, an autonomous gated loop,
-and the ergonomics that make tools cheap for agents to drive. The invariants
-are the connective tissue — the rules that decide who has authority when the
-two disagree.
-
-The name is the coaching bench. You run line changes from it; you don't touch
-the puck. You deploy the right **line** (model plus effort) for each **shift**
-— a bounded unit of agent work in a clean worktree. A shift counts only when
-it **backchecks clean**: it passes an external gate you never let the agent
-grade.
+Bench combines Matt Pocock's planning pipeline with kunchenguid's isolated
+worktrees and gated loop. A declared line selects the model and effort for
+each stage. A shift runs bounded agent work in an isolated worktree and commits
+only when the gate passes.
 
 ---
 
@@ -107,29 +216,28 @@ key entry points. The reference explains their roles.
 The reviewer-facing setup path is the setup command above. The worker-facing
 mechanics underneath are the `bench` CLI commands here.
 
-**Prerequisites.** Bench runs on macOS or Linux; Windows is unsupported, so
-use WSL2. Until the packages are published, the install path runs straight
-from the git repo. So you need **all three**: access to the `gibbonmi/bench`
-repo, **Node** (to run `npx`), and **Go**. npx builds the compiled core on
-your machine at install time. If you install under a node version manager,
-mind the PATH-shim caveat noted with the durable-install steps below.
+**Prerequisites.** Bench runs on macOS or Linux; use WSL2 on Windows. The
+source install requires Git and the Node version in
+[`package.json`](package.json). It also requires the Go toolchain in
+[`go.mod`](go.mod), because `npx` builds the compiled core during install.
+Run setup inside a Git repository. If you use a Node version manager, read the
+PATH-shim note with the durable-install steps below.
 
 The fastest way for the worker to wire a repo today is one `npx` command
-straight from git — nothing to clone, no global install. This is the
-git-dependency form: it still requires a Go toolchain on your machine (npx
-builds the compiled core at install time), and it's what actually runs until
-Bench publishes to npm. Pin the ref so npx's git cache serves the build you
-expect:
+from git. This git-dependency form needs no clone or global install. Replace
+`<tag-or-commit>` with an immutable release tag or commit so the cache serves
+the expected source:
 
 ```sh
 cd ~/src/your-project
-npx github:gibbonmi/bench#main setup   # inspect, preview, and converge the repo
+npx "github:gibbonmi/bench#<tag-or-commit>" setup
 ```
 
-Once Bench has a first npm publish, the same one command becomes a pinned,
-Go-toolchain-free install: `npx redbench@<version> setup`. That form doesn't
-work yet — it's not published — so use the git-dependency form above until it
-lands.
+The `redbench` package is not published, so `npx redbench@<version> setup`
+does not work yet. The
+[release-readiness status](https://github.com/gibbonmi/bench/blob/main/ROADMAP.md#release-readiness-status)
+keeps public release and external deployment at NO-GO pending qualification.
+Use the source-development path above only when that status fits your use.
 
 Run from `npx`, `setup` copies the kit in (the npx cache is ephemeral, so it
 won't leave dangling symlinks). Prefer to install once and get a durable
@@ -147,17 +255,16 @@ that proof.
 ```sh
 git clone https://github.com/gibbonmi/bench ~/src/bench
 bash ~/src/bench/scripts/go-build.sh ~/src/bench ~/src/bench/dist/bench
+mkdir -p ~/.local/bin
 ln -s ~/src/bench/bin/bench.sh ~/.local/bin/bench
 cd ~/src/your-project
-bench link             # copies Bench-owned assets in safely
-bench link symlink     # optional dogfood mode: point installed assets at this kit
-bench init
+bench setup
 ```
 
-A global install under a node version manager (nvm, asdf, fnm, volta) also
-drops a plain-shell `bench` shim on a stable PATH dir. So login shells and
-`bash -c` resolve `bench` the same as an interactive shell; `bench doctor`
-reports its health and `bench doctor --fix` repairs it.
+A global npm install attempts to place a plain-shell `bench` shim on a stable
+PATH directory. The postinstall step is best effort and does not fail the
+package install when shim repair fails. Run `bench doctor` and follow its
+reported `bench doctor --fix` or PATH instructions.
 
 To uninstall, start with the per-repo footprint: `bench unlink` consumes the
 link manifest and reverses the install. It removes the managed files whose
@@ -199,18 +306,21 @@ The reviewer action is the setup phase, not those CLI calls:
 $bench-setup-repo
 ```
 
-Setup is two halves, the same split as Pocock's `setup-matt-pocock-skills`.
-The **mechanical** half is the CLI: `link` wires the kit into the repo for
-every harness, and `init` scaffolds an empty `.bench/gate.sh`. Both are
-deterministic and idempotent. `/bench-setup-repo` confirms whether those steps
-already happened, and runs or reports the worker-facing step that is still
-needed. It then continues into the **project-specific** half.
+The setup phase starts with `bench setup`. That command inspects the Git
+repository, previews its inferred facts, and transactionally converges the
+managed assets. It also proposes a gate and a starter profile. The phase then
+continues into the project-specific work below.
 
-That half explores the repo and walks the reviewer through the gate (the load-bearing
+That work explores the repo and walks the reviewer through the gate (the load-bearing
 choice) and the profile (seams + lines + design-source path). It also covers
 an optional `CONTEXT.md`, one decision at a time, and writes them. The second
 half cannot be hardcoded because the gate command, seams, and lines differ in
 every repo. So it's an interview, not a script.
+
+`bench link` and `bench init` remain low-level adoption primitives.
+`bench link` installs the managed assets, and `bench init` scaffolds a
+fail-closed gate. Use them when you intentionally need the mechanical steps
+outside `bench setup`.
 
 `bench link` is idempotent and harness-neutral. It preserves project-owned
 files, adds or updates only the managed Bench block in `AGENTS.md`, and
@@ -258,11 +368,12 @@ enforcement it didn't have.
 
 ## Keeping Bench current
 
-Both upstream repos move. `/bench-update-kit` re-runs the synthesis against
-their latest state. It pulls Pocock's skills and kunchenguid's tooling, and
-diffs them against what Bench already incorporates (the provenance table is
-the current record). It then proposes adoptions and runs three quality loops
-before anything ships.
+In a linked repository, run `bench upgrade --check` to inspect managed-asset
+changes. Run `bench upgrade` to relink onto the installed kit version.
+
+Kit maintainers use `/bench-update-kit` or `$bench-update-kit` to compare
+Bench with its upstream sources. The command proposes adoptions and runs three
+quality loops before anything ships.
 
 The first loop is anti-sediment (`craft-skills`: does
 the change earn its place or just enlarge the kit?). The second is a
@@ -319,10 +430,11 @@ editing the repo directly under Codex or any other harness. Then commit,
 re-pin, and build against it. Nothing in the UI workflow depends on which design tool or which
 agent you're using; it depends only on the committed artifacts.
 
-## Integrating it into gl-axi
+## Example profile: gl-axi
 
-`projects/gl-axi.md` is the profile, and the `craft-cli` skill is the design
-spec. The key move: **AXI conformance is a gate check**, so an external oracle holds what you build to its own standard.
+[`projects/gl-axi.md`](projects/gl-axi.md) is a shipped example profile, not
+evidence of a live integration. It shows how the `craft-cli` skill and an AXI
+conformance gate can hold a CLI to an external standard.
 
 ```sh
 cd ~/src/gl-axi
@@ -357,7 +469,7 @@ the tool you're building.
 | `/bench-debug` (bug path) | diagnosing-bugs | — | repro loop as the bug's gate |
 | `/bench-deepen` (deepening survey) | improve-codebase-architecture | — | scopes from `ASSESSMENT.md` findings; vocabulary charged from `craft-seams`, grilling from `craft-grill`; mid-tier read-only delegate |
 | design-it-twice in `craft-seams` | codebase-design | — | high-effort line at the uncertain seam |
-| `bench shift` notes.md | — | gnhf (iteration context) | — |
+| `bench shift` `.bench-notes.md` | — | gnhf (iteration context) | — |
 | `block-dangerous-git.sh` | git-guardrails | — | agent has no destructive authority |
 | `block-primary-file-write.sh` | — | — | main receives writes only through landings |
 | Stop hook + `.bench/gate.sh` | — | no-mistakes (external gate) | the gate is the oracle |
