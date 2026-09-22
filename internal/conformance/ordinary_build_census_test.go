@@ -203,18 +203,6 @@ func scanArchitectureGo(rel string, data []byte) ([]architectureSite, error) {
 	if err != nil {
 		return nil, err
 	}
-	execAliases := map[string]bool{}
-	for _, spec := range file.Imports {
-		path, _ := strconv.Unquote(spec.Path.Value)
-		if path != "os/exec" {
-			continue
-		}
-		name := "exec"
-		if spec.Name != nil {
-			name = spec.Name.Name
-		}
-		execAliases[name] = true
-	}
 	var sites []architectureSite
 	for _, declaration := range file.Decls {
 		fn, ok := declaration.(*ast.FuncDecl)
@@ -237,7 +225,7 @@ func scanArchitectureGo(rel string, data []byte) ([]architectureSite, error) {
 		}
 		line := fset.Position(call.Pos()).Line
 		name, qualifier := callName(call.Fun)
-		if execAliases[qualifier] && (name == "Command" || name == "CommandContext") {
+		if importedPackage(file, qualifier) == "os/exec" && (name == "Command" || name == "CommandContext") {
 			kind := "process"
 			literals := callLiterals(call)
 			if containsSequence(literals, "go", "test") {

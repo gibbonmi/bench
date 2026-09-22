@@ -432,6 +432,8 @@ current-state advertisement of its non-meta input bindings:
 | `bounds-policy` | `catch-all` |
 | `marker-wait-deadlines` | `go-source` |
 | `canonical-path-owner` | `go-source` |
+| `published-executable-path` | `catch-all` |
+| `go-build-vcs` | `catch-all` |
 | `git-plumbing-owner` | `go-source` |
 | `cancel-signal-registrations` | `go-source` |
 | `wait-deadline-literals` | `go-source` |
