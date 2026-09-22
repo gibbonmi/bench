@@ -163,10 +163,10 @@ func TestDigestIgnoresMalformedAmbientVCSMetadata(t *testing.T) {
 	root := writeBuildFixtureAt(t, filepath.Join(ancestor, "fixture"))
 
 	if _, err := Digest(root); err != nil {
-		command := exec.Command("go", "list", "-json", "-deps", "./cmd/bench")
+		command := exec.Command("go", "list", "-buildvcs=false", "-json", "-deps", "./cmd/bench")
 		command.Dir = root
 		output, diagnosticErr := command.CombinedOutput()
-		t.Fatalf("Digest with malformed ambient VCS metadata: %v\nunprotected go list: %v\n%s", err, diagnosticErr, output)
+		t.Fatalf("Digest with malformed ambient VCS metadata: %v\ndiagnostic go list: %v\n%s", err, diagnosticErr, output)
 	}
 }
 
