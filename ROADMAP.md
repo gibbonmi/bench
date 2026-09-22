@@ -59,6 +59,8 @@ findings in the owner details.
 
 ## Planning, ownership, and review integrity
 
+**FT333 (MEDIUM, decision required) — prepared evidence supports the tickets-only light path.**
+
 **FT99 (LOW) — spec problem-premise verification.**
 
 **FT293 (MEDIUM, decision required) — preflight-closed ticket Writes determine registry pins and blocker edges.**
@@ -126,7 +128,7 @@ findings in the owner details.
 
 **FT290 (MEDIUM) — `bench test` projects a check's fixture family, a widened-set explanation, and a check inventory.**
 
-**FT168 (LOW) — focused iteration evidence through registered check owners.**
+**FT168 (LOW) — file-backed replacements and system or Markdown subjects extend the focused probe.**
 
 **FT115 (LOW) — load-robust test and phase deadlines derived from bounds.**
 
@@ -251,8 +253,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. Land the reviewed FT219 and FT102 assignments from their recorded tips in `capture/session-handoff.md`.
-2. Implement `specs/test-determinism` before FT290; first correct its stale collision note against current source.
-3. Refresh `specs/ft290-test-projection` after that prerequisite lands, then compose through Bench.
-4. Shape FT326's stronger sentence-boundary proposal separately; distinctness has landed.
-5. Resolve FT318's review-record writer through a reviewer decision.
+1. Run `$bench-write-spec FT71` for versioned local shift evidence; its dated reviewer hold has expired.
+2. Run `$bench-shape-idea FT305` to settle durable local execution before the dependent qualification work.
+3. After FT71 and FT305 land, run `$bench-shape-idea FT306` for the qualified release and Regroup adoption.
