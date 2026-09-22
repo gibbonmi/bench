@@ -67,7 +67,6 @@ findings in the owner details.
 
 **FT318 (MEDIUM, decision required) — the review record has a native writer.**
 
-**FT322 (LOW) — `craft-line` resolves a recorded fork line and times a consultation question.**
 
 **FT324 (MEDIUM, decision required) — the harness-memory rule has one owner.**
 
@@ -139,13 +138,11 @@ findings in the owner details.
 
 **FT332 (LOW, decision required) — a nightly constrained-CPU stress job finds new flakes before they reach `main`.**
 
-**FT297 (LOW) — conformance rows pin the Go-owned binary path against its shell derivations and the VCS-disable flag on every Go tool call.**
 
-**FT323 (LOW) — the project conventions name the prose seam, the prose lane, and the host limits.**
 
 **FT325 (LOW, decision required) — a canary fixture does not depend on the physical wrap of guidance prose.**
 
-**FT326 (MEDIUM) — needle integrity holds across every anchor family.**
+**FT326 (MEDIUM, decision required) — stronger needle boundaries need a separate shape.**
 
 **FT299 (LOW) — a landing rehearsal precedes the first landing of a promotion-broker-changing spec.**
 
@@ -254,6 +251,8 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT290 `bench test` projection faces — /bench-implement-spec specs/ft290-test-projection
-2. FT322 fork-line resolution and consultation timing — a `craft-synthesis` kit edit to `craft-line`.
-3. FT318 the review record writer and its content — a reviewer decision.
+1. Land the reviewed FT219 and FT102 assignments from their recorded tips in `capture/session-handoff.md`.
+2. Implement `specs/test-determinism` before FT290; first correct its stale collision note against current source.
+3. Refresh `specs/ft290-test-projection` after that prerequisite lands, then compose through Bench.
+4. Shape FT326's stronger sentence-boundary proposal separately; distinctness has landed.
+5. Resolve FT318's review-record writer through a reviewer decision.
