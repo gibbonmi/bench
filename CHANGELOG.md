@@ -6,6 +6,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Conformance contracts
+
+- Added same-file, same-kind needle distinctness across the anchor registry.
+- Added checks for the published executable path and VCS-disable flags on direct Go tool calls.
+- Added special-file refusals before the conformance checks read source bytes.
+
 ### Recorded fork lines
 
 - Changed craft-line to resolve a mismatched recorded fork through a fresh writer and flag that venue for reviewer veto.
