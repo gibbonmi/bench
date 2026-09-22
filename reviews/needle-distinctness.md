@@ -1,6 +1,6 @@
 # Needle distinctness verification
 
-Status: author verified; independent review and landing pending
+Status: initial review recorded; accepted repairs pending
 Base: 216ced3fb95ff10314dc72ab237609f14a6e4bab
 Assignment: batch-ft326
 Author: ft326_author
@@ -109,3 +109,77 @@ No existing row required cleanup.
 No blocking defect or architecture change remains in the author's scope.
 
 CLI improvement: distinguish the supported tickets-only route from a missing spec in build preflight output.
+
+## Initial native review
+
+Reviewed base: 216ced3fb95ff10314dc72ab237609f14a6e4bab
+Reviewed source: 09b48bf61dc71066486e4937dc873faf6e6043f6
+Review route: separate native Standards, Spec, and Coverage sessions
+
+The coordinator supplied the following native result summaries and dispositions.
+These read-only review claims are `claimed`; they are not executed verification.
+The original findings remain below when repairs close them.
+
+### Standards
+
+The axis returned two findings, with S1 as the worst issue.
+S1 has confidence 9; S2 has confidence 10.
+
+| Finding | Native concern | Binding source | Disposition | State |
+|---|---|---|---|---|
+| S1 | The 18 independent expectations lack demonstrated named mutation support. | `AGENTS.md` lines 41–47 | auto-fix | Open |
+| S2 | The ticket and review duplicate the baseline repro, hypotheses, and timings. | `AGENTS.md` lines 34–39 | auto-fix | Open |
+
+### Spec
+
+The axis returned no findings.
+Its conclusion is `claimed` with confidence 9.
+
+### Coverage
+
+The axis returned three findings, with COV-1 as the worst issue.
+
+| Finding | Native concern | Confidence | Disposition | State |
+|---|---|---|---|---|
+| COV-1 | A guard narrowed from `Entries()` to `generalAnchors` escapes the demonstrated probes and excludes 13 families. | 10 | auto-fix | Open |
+| COV-2 | A key that combines `RequireInSection` and `RequireInStep` can reject a permitted kind pair. | 9 | no-op | Refuted |
+| COV-3 | The coverage omits NBSP and zero-width-space predicate boundaries from the profile. | 10 | auto-fix | Open |
+
+COV-2 requests all 15 unordered pairs of the six kinds.
+The actual key stores the exact `Kind` value without a classification or mapping.
+The existing kind-omission probe demonstrates that the independent key field must remain present.
+No second kind-specific key path exists.
+The coordinator therefore treats additional pair enumeration as optional hardening, rather than a blocking defect.
+
+COV-3 cites `projects/benchkit.md` lines 202–209.
+The accepted repair proves that U+00A0 collides after normalization and U+200B remains distinct.
+A normalization bypass and a widened zero-width-space predicate must each turn their corresponding expectation red.
+
+The Coverage acceptance claims retain their original confidence values.
+The native ND5 abstention carries no confidence under the claim schema.
+
+```text
+coverage_claims[6]{row,status,confidence}:
+  ND1,claimed,8
+  ND2,claimed,6
+  ND3,claimed,5
+  ND4,claimed,8
+  ND5,abstained,
+  gate-inclusion,claimed,9
+```
+
+### Repair plan
+
+One coherent repair cycle addresses S1, S2, COV-1, and COV-3.
+The cycle preserves every approved acceptance row.
+The review remains the evidence owner; the ticket cites it.
+
+Each retained independent expectation receives a demonstrated mutation that it must detect.
+A cross-family duplicate probe exercises the complete registry union.
+The two Unicode boundary cases receive their named mutation probes.
+All three native axes must return current results after the repair.
+
+Repair cycles consumed before work: 0 of 2
+Raw finding count: 5
+Accepted repair targets: 4
+Refuted finding count: 1
