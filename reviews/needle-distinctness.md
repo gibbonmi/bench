@@ -1,12 +1,12 @@
 # Needle distinctness verification
 
-Status: initial review recorded; accepted repairs pending
+Status: repair verified; native reaffirmations and landing pending
 Base: 216ced3fb95ff10314dc72ab237609f14a6e4bab
 Assignment: batch-ft326
 Author: ft326_author
 Line: gpt-6-astra / ultra
 Pre-review attempts consumed: 1 of 3
-Post-review repair cycles consumed: 0 of 2
+Post-review repair cycles consumed: 1 of 2
 Expected repair rounds: 1
 Confidence: 7
 
@@ -183,3 +183,87 @@ Repair cycles consumed before work: 0 of 2
 Raw finding count: 5
 Accepted repair targets: 4
 Refuted finding count: 1
+
+## Repair cycle 1
+
+Initial review record commit: c042112371bcebf885d97913a9763bc3bc7e9ccb
+Repair cycles consumed after verification: 1 of 2
+
+The author committed the initial findings on a green prose lane before the repair.
+The repair adds NBSP and zero-width-space cases to the existing boundary table.
+The ticket now cites this record instead of duplicating the debug evidence.
+No production code, registered row, or existing expectation changed.
+The original findings remain in the initial review section.
+
+### Expectation mutation map
+
+Each listed subtest failed under its named mutation.
+Every probe started from a green baseline and restored its exact subject.
+All valid probes reported no skipped tests.
+The six boundary groups cover all 20 independent expectations.
+
+| Probe | Mutation | Failed boundary subtests |
+|---|---|---|
+| duplicate_rejection | Suppress duplicate rejection with an impossible index condition. | exact; path_alias; different_group; different_section; different_step; different_diagnostic |
+| normalization | Use raw needle runes instead of the existing normalizer. | required_whitespace; forbidden_whitespace; required_section_case; forbidden_section_case; step_case; emphasis_case; nonbreaking_space |
+| file_key | Omit the file field from the key. | different_file |
+| kind_key | Omit the kind field from the key. | different_kind |
+| needle_key | Clear the normalized needle value in the key. | different_needle; substring; required_case; forbidden_case |
+| zero_width_predicate | Replace U+200B with a space in the key. | zero_width_space |
+
+The first needle-field omission was invalid because it left an unused local variable.
+It failed to compile, restored successfully, and supplies no verification evidence.
+The replacement clears the value while preserving compilation and produces the four intended behavioral failures.
+
+### Complete registry proof
+
+The cross-family probe adds an `edge inventory` row to `frontDoorAnchors`.
+That row duplicates the existing row in `generalAnchors`.
+`TestRegistryNeedlesDistinct` reports rows 6 and 460 with the intended diagnostic.
+A guard narrowed to `generalAnchors` cannot detect this planted row.
+The probe restores `registry_front_door.go` after its observed red.
+
+### Repair probe results
+
+| Probe | Verdict | Failed tests | Executed tests | Package ms | Wall ms |
+|---|---|---|---|---|---|
+| duplicate_rejection | bit; restored | 6 | 7 | 3 | 9031 |
+| normalization | bit; restored | 7 | 8 | 3 | 5506 |
+| file_key | bit; restored | 1 | 2 | 2 | 6167 |
+| kind_key | bit; restored | 1 | 2 | 2 | 6424 |
+| needle_key | bit; restored | 4 | 5 | 3 | 7118 |
+| zero_width_predicate | bit; restored | 1 | 2 | 2 | 6305 |
+| cross_family | bit; restored | 1 | 1 | 5 | 7014 |
+
+The exact commands below produce the recorded mutations.
+
+```sh
+/home/mgibs/workspace/bench/bin/bench.sh worktree exec batch-ft326 -- env GOFLAGS='-p=4 -parallel=2' bench probe 'internal/anchors/anchor_harness_diagnostics_test.go' '--swap' 'if previous, ok := seen[k]; ok {' '--with' 'if previous, ok := seen[k]; ok && i < 0 {' --package ./internal/anchors --run '^TestRegistryNeedleDistinctnessBoundary$/(exact|path_alias|different_group|different_section|different_step|different_diagnostic)$'
+/home/mgibs/workspace/bench/bin/bench.sh worktree exec batch-ft326 -- env GOFLAGS='-p=4 -parallel=2' bench probe 'internal/anchors/anchor_harness_diagnostics_test.go' '--swap' 'normalized, _ := normalizeMatchMapped(anchor.Kind, runes, identityOrigin(len(runes)))' '--with' 'normalized := runes' --package ./internal/anchors --run '^TestRegistryNeedleDistinctnessBoundary$/(required_whitespace|forbidden_whitespace|required_section_case|forbidden_section_case|step_case|emphasis_case|nonbreaking_space)$'
+/home/mgibs/workspace/bench/bin/bench.sh worktree exec batch-ft326 -- env GOFLAGS='-p=4 -parallel=2' bench probe 'internal/anchors/anchor_harness_diagnostics_test.go' '--omit' 'file:   filepath.Clean(filepath.FromSlash(anchor.File)),' --package ./internal/anchors --run '^TestRegistryNeedleDistinctnessBoundary$/^different_file$'
+/home/mgibs/workspace/bench/bin/bench.sh worktree exec batch-ft326 -- env GOFLAGS='-p=4 -parallel=2' bench probe 'internal/anchors/anchor_harness_diagnostics_test.go' '--omit' 'kind:   anchor.Kind,' --package ./internal/anchors --run '^TestRegistryNeedleDistinctnessBoundary$/^different_kind$'
+/home/mgibs/workspace/bench/bin/bench.sh worktree exec batch-ft326 -- env GOFLAGS='-p=4 -parallel=2' bench probe 'internal/anchors/anchor_harness_diagnostics_test.go' '--swap' 'needle: string(normalized),' '--with' 'needle: string(normalized[:0]),' --package ./internal/anchors --run '^TestRegistryNeedleDistinctnessBoundary$/(different_needle|substring|required_case|forbidden_case)$'
+/home/mgibs/workspace/bench/bin/bench.sh worktree exec batch-ft326 -- env GOFLAGS='-p=4 -parallel=2' bench probe 'internal/anchors/anchor_harness_diagnostics_test.go' '--swap' 'needle: string(normalized),' '--with' 'needle: strings.ReplaceAll(string(normalized), "\u200b", " "),' --package ./internal/anchors --run '^TestRegistryNeedleDistinctnessBoundary$/^zero_width_space$'
+/home/mgibs/workspace/bench/bin/bench.sh worktree exec batch-ft326 -- env GOFLAGS='-p=4 -parallel=2' bench probe 'internal/anchors/registry_front_door.go' '--swap' 'var frontDoorAnchors = []Anchor{' '--with' 'var frontDoorAnchors = []Anchor{
+{File: ".agents/commands/bench-write-spec.md", Kind: Require, Needle: "edge inventory", Diagnostic: "planted cross-family duplicate"},' --package ./internal/anchors --run '^TestRegistryNeedlesDistinct$'
+```
+
+### Current verification and dispositions
+
+| Target | Repair evidence | Current state |
+|---|---|---|
+| S1 | The mutation map names every retained expectation and its observed red. | Author verified; Standards reaffirmation pending |
+| S2 | The ticket points to this record as the debug evidence owner. | Author verified; Standards reaffirmation pending |
+| COV-1 | The cross-family duplicate produces the union diagnostic. | Author verified; Coverage reaffirmation pending |
+| COV-3 | NBSP fails under normalization bypass; U+200B fails under predicate widening. | Author verified; Coverage reaffirmation pending |
+
+The full anchor package passes after every probe restores.
+The workflow conformance check also passes.
+Neither final check reports a failure or skip.
+
+| Final command after `worktree exec batch-ft326 --` | Package ms | Wall ms |
+|---|---|---|
+| `env GOFLAGS='-p=4 -parallel=2' bench test --package ./internal/anchors` | 665 | 4740 |
+| `env GOFLAGS='-p=4 -parallel=2' bench test --check docs-currency-workflow` | 463 | 4550 |
+
+All three native axes must reaffirm the repaired source before the coordinator lands it.

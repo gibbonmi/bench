@@ -248,6 +248,8 @@ func TestRegistryNeedleDistinctnessBoundary(t *testing.T) {
 		{"different step", RequireInStep, func(a *Anchor) { a.Step = 2 }, true},
 		{"different diagnostic", Require, func(a *Anchor) { a.Diagnostic = "other failure" }, true},
 		{"required whitespace", Require, func(a *Anchor) { a.Needle = " Pinned\n\twords. " }, true},
+		{"nonbreaking space", Require, func(a *Anchor) { a.Needle = "Pinned\u00a0words." }, true},
+		{"zero width space", Require, func(a *Anchor) { a.Needle = "Pinned\u200bwords." }, false},
 		{"forbidden whitespace", Forbid, func(a *Anchor) { a.Needle = "Pinned  words." }, true},
 		{"required case", Require, func(a *Anchor) { a.Needle = "pinned words." }, false},
 		{"forbidden case", Forbid, func(a *Anchor) { a.Needle = "pinned words." }, false},

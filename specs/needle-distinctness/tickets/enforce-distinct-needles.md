@@ -34,14 +34,7 @@ The coordinator runs the whole-project gate before the landing.
 
 ## Debug evidence
 
-The baseline probe duplicates the `edge inventory` row in `generalAnchors`.
-Two runs reported `silent` with 154 tests and no skips.
-Their package times were 597 ms and 620 ms.
-Both runs restored the subject.
-The existing registry tests therefore accept the duplicated row.
-
-The ranked hypotheses are missing union validation, per-row validation without distinctness, and validation within only one family.
-The guard uses the existing registry invariant seam in `anchor_harness_diagnostics_test.go`.
+The [author verification record](../../../reviews/needle-distinctness.md) owns the repro, diagnosis, timings, and mutation evidence.
 
 ## Retained author
 
