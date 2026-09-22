@@ -603,6 +603,15 @@ escalation.
   unified mode is the sole exception: one independent session re-derives and
   reports all three axes separately.
 
+## Local host limits
+
+This WSL host stores `GOFLAGS=-p=4 -parallel=4` in its Go environment configuration.
+At most two delegates run tests at once. A delegate's Go test run uses `-parallel 2`.
+
+`xdg-open` hangs on this host.
+When a shared command requests a desktop opener, print the report path instead.
+This host exception overrides the shared command's opener step.
+
 ## Notes for cold sessions
 
 - Read `AGENTS.md` first — the working agreement. The four invariants and the
