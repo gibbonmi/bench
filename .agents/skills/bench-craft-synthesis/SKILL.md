@@ -49,7 +49,10 @@ Run in order; prune or send back a change that fails a loop, never ship it.
 2. **Consistency loop.** Apply to a working copy, then re-run the staleness audit.
    Grep for invariant drift, broken cross-references, stale paths, app-specific
    leakage into core files, an out-of-date provenance table. Fix every hit.
-3. **Dogfood loop — the oracle.** Run a real shift on a real repo with the changed
+   Cross-check every tier-spending edit against `craft-line` and the project's escalation policy.
+3. **Dogfood loop — the oracle.** Use `craft-tickets` to check the candidate's decomposition against approved behavior and the project's one-source standard.
+   Reject widened behavior or duplicated knowledge before the shift.
+   Run a real shift on a real repo with the changed
    kit: `/bench-write-spec` a small task, `bench shift`, confirm the gate grades the
    tree, the hooks fire, `bench gate` ends green. Reject a change that reads well but
    breaks a real run. If you can't run a dogfood shift, the synthesis is **not complete** —
