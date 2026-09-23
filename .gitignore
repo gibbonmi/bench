@@ -4,8 +4,8 @@ npm-debug.log*
 *.tgz
 .env
 
-# Locally installed third-party skill, not maintained in this repo. Whether the kit
-# bundles it or a user installs it is an open decision.
+# Third-party skill that each user installs with `npx skills`. The kit does not bundle
+# or maintain it.
 .agents/skills/typesafe-ai/
 .claude/skills/typesafe-ai
 skills-lock.json
