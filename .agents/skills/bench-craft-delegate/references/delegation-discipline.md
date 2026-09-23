@@ -181,9 +181,12 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 
 ## Before the landing
 
-- A running `bench commit` is active until its process exits. A reported red does
-  not authorize a tree edit while a later phase or a cleanup can still run. The
-  coordinator waits for the terminal exit before diagnosis or repair.
+- A running Bench transaction is active until its process exits. Examples are
+  `bench commit`, `bench gate`, `bench worktree merge`, `bench worktree land`, and a
+  focused test run. A yielded session stays active until it reports its terminal
+  result. A reported red does not authorize a tree edit while a later phase or a
+  cleanup can still run. The coordinator waits for the terminal exit before
+  diagnosis or repair.
 - The coordinator reads a background commit by its `committed` line.
 - The coordinator compares the destination tip with the frozen base. The
   coordinator grades each destination change that a new oracle check reads.
