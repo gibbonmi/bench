@@ -239,15 +239,15 @@ func landingRefusalFixtures() []landingRefusalFixture {
 		{
 			face: faceDestinationNotClean,
 			mutate: func(t *testing.T, root string, _ Creation) {
-				mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
+				mustWrite(t, filepath.Join(root, "tracked.txt"), []byte("dirty\n"), 0o644)
 			},
 		},
 		{
-			face: faceDestinationResidue,
+			// The reviewed source adds owned.txt, so an untracked file at that path stands
+			// where the landing writes.
+			face: faceDestinationCollision,
 			mutate: func(t *testing.T, root string, _ Creation) {
-				mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("ignored/\n"), 0o644)
-				mustMkdirAll(t, filepath.Join(root, "ignored"), 0o755)
-				mustWrite(t, filepath.Join(root, "ignored", "residue"), []byte("residue\n"), 0o600)
+				mustWrite(t, filepath.Join(root, "owned.txt"), []byte("operator bytes\n"), 0o600)
 			},
 		},
 		{
@@ -284,7 +284,7 @@ func landingRefusalFixtures() []landingRefusalFixture {
 		{
 			face: faceResumeDestinationResidue,
 			mutate: func(t *testing.T, root string, _ Creation) {
-				mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
+				mustWrite(t, filepath.Join(root, "tracked.txt"), []byte("dirty\n"), 0o644)
 			},
 		},
 		{

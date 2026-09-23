@@ -117,7 +117,7 @@ func terminalResumeReceipt(root, path, request, sourceTip string) (intent.Cleanu
 }
 
 func resumeDestructiveDestinationState(j joins, root, destination, published, destinationBase string) error {
-	if detail := landingpolicy.Residue(destinationResidueFacts(j, root, destination, published, destinationBase)); detail != "" {
+	if detail := landingpolicy.Residue(destinationResidueFacts(root, destination, published, destinationBase)); detail != "" {
 		return errors.New(detail)
 	}
 	return nil
@@ -132,12 +132,15 @@ func resumeRerun(flags map[string]string, path, assignment string) string {
 }
 
 // destinationResidueFacts translates the destination's Git and filesystem state
-// into the typed residue facts once at the boundary. The expensive allowance
+// into the typed residue facts once at the boundary. The expensive published-tree
 // and staged-content facts bind as lazy suppliers the policy consults on demand.
-func destinationResidueFacts(j joins, root, destination, published, destinationBase string) landingpolicy.ResidueFacts {
+func destinationResidueFacts(root, destination, published, destinationBase string) landingpolicy.ResidueFacts {
 	facts := landingpolicy.ResidueFacts{
 		DestinationAtPublished: destination == published,
-		IgnoredDeclared:        func() bool { return ignoredResidueDeclared(j, root) },
+		Published: func() (landingpolicy.TreePaths, bool) {
+			tree, err := treePaths(root, published)
+			return tree, err == nil
+		},
 		StagedMatchesPublished: func() bool { return git.OK("-C", root, "diff", "--cached", "--quiet", destinationBase, "--") },
 	}
 	nested, err := classifyNestedState(root)
@@ -156,19 +159,6 @@ func destinationResidueFacts(j joins, root, destination, published, destinationB
 		facts.Entries = append(facts.Entries, landingpolicy.StatusEntry{Status: entry.Status, Path: entry.Path})
 	}
 	return facts
-}
-
-// ignoredResidueDeclared reports whether the destination's ignored residue sits
-// entirely inside its declared build outputs. Resume applies the same allowance the
-// first run did. A landing that validly proceeded with declared outputs and then
-// failed at release can still be completed, rather than being permanently stuck.
-func ignoredResidueDeclared(j joins, root string) bool {
-	ignored, _, ignoredErr := inventoryIgnored(j, root, false)
-	declared, _, declarationErr := loadBuildOutputs(root)
-	if ignoredErr != nil || declarationErr != nil {
-		return false
-	}
-	return ignoredWithinLandingAllowance(ignored, declared)
 }
 
 // resumeAssignment runs the resume's assignment group: the identity proofs first, then the

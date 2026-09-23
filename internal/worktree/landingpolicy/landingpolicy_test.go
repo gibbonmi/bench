@@ -35,7 +35,7 @@ func TestResidueDecisionTable(t *testing.T) {
 	}{
 		{"clean-destination", func(t *testing.T) ResidueFacts {
 			f := clean()
-			f.IgnoredDeclared = refuse(t, "IgnoredDeclared")
+			f.Published = refusePublished(t)
 			f.StagedMatchesPublished = refuse(t, "StagedMatchesPublished")
 			return f
 		}, ""},
@@ -54,23 +54,36 @@ func TestResidueDecisionTable(t *testing.T) {
 			f.StatusWellFormed = false
 			return f
 		}, "landing destination status is malformed"},
-		{"undeclared-ignored-residue", func(t *testing.T) ResidueFacts {
+		{"ignored-collision", func(t *testing.T) ResidueFacts {
 			f := clean()
-			f.Entries = []StatusEntry{{Status: "!!", Path: "private/output"}}
-			f.IgnoredDeclared = supply(t, false, nil)
+			f.Entries = []StatusEntry{{Status: "!!", Path: "owned.txt"}}
+			f.Published = published("owned.txt")
 			return f
-		}, "landing destination has ignored residue"},
-		{"declared-ignored-residue", func(t *testing.T) ResidueFacts {
+		}, "landing destination has ignored collisions"},
+		{"ignored-without-collision", func(t *testing.T) ResidueFacts {
 			f := clean()
-			f.Entries = []StatusEntry{{Status: "!!", Path: "dist/bench"}}
-			f.IgnoredDeclared = supply(t, true, nil)
+			f.Entries = []StatusEntry{{Status: "!!", Path: ".env"}, {Status: "!!", Path: "dist/"}}
+			f.Published = published("owned.txt")
 			return f
 		}, ""},
 		{"untracked-collision", func(t *testing.T) ResidueFacts {
 			f := clean()
-			f.Entries = []StatusEntry{{Status: "??", Path: "stray.txt"}}
+			f.Entries = []StatusEntry{{Status: "??", Path: "owned.txt"}}
+			f.Published = published("owned.txt")
 			return f
 		}, "landing destination has untracked collisions"},
+		{"untracked-without-collision", func(t *testing.T) ResidueFacts {
+			f := clean()
+			f.Entries = []StatusEntry{{Status: "??", Path: "stray.txt"}}
+			f.Published = published("owned.txt")
+			return f
+		}, ""},
+		{"published-tree-unreadable", func(t *testing.T) ResidueFacts {
+			f := clean()
+			f.Entries = []StatusEntry{{Status: "??", Path: "stray.txt"}}
+			f.Published = func() (TreePaths, bool) { return TreePaths{}, false }
+			return f
+		}, "published landing tree is unreadable"},
 		{"tracked-worktree-change", func(t *testing.T) ResidueFacts {
 			f := clean()
 			f.Entries = []StatusEntry{{Status: " M", Path: "tracked.txt"}}
@@ -111,19 +124,58 @@ func TestResidueDecisionTable(t *testing.T) {
 	}
 }
 
-// TestResidueConsultsIgnoredAllowanceOnce proves the allowance fact is read
-// at most once across many ignored entries.
-func TestResidueConsultsIgnoredAllowanceOnce(t *testing.T) {
+// published supplies the path set of a published tree that holds files.
+func published(files ...string) func() (TreePaths, bool) {
+	return func() (TreePaths, bool) { return NewTreePaths(files), true }
+}
+
+// refusePublished names the published-tree supplier the decision must never consult.
+func refusePublished(t *testing.T) func() (TreePaths, bool) {
+	t.Helper()
+	return func() (TreePaths, bool) {
+		t.Fatalf("decision consulted Published on a path that must not need it")
+		return TreePaths{}, false
+	}
+}
+
+// TestResidueConsultsPublishedTreeOnce proves the published-tree fact is read
+// at most once across many untracked and ignored entries.
+func TestResidueConsultsPublishedTreeOnce(t *testing.T) {
 	calls := 0
 	f := ResidueFacts{NestedClean: true, StatusReadable: true, StatusWellFormed: true,
-		Entries: []StatusEntry{{Status: "!!", Path: "dist/a"}, {Status: "!!", Path: "dist/b"}, {Status: "!!", Path: "dist/c"}},
-		IgnoredDeclared: func() bool {
+		Entries: []StatusEntry{{Status: "!!", Path: "dist/a"}, {Status: "??", Path: "stray"}, {Status: "!!", Path: "dist/c"}},
+		Published: func() (TreePaths, bool) {
 			calls++
-			return true
+			return NewTreePaths([]string{"owned.txt"}), true
 		},
 	}
 	if got := Residue(f); got != "" || calls != 1 {
-		t.Fatalf("Residue = %q with %d allowance reads, want accept with 1", got, calls)
+		t.Fatalf("Residue = %q with %d tree reads, want accept with 1", got, calls)
+	}
+}
+
+// TestTreePathsCollides is the collision rule: a path collides where a checkout of the
+// tree writes a file at it, fills it as a directory, or holds one of its parents as a file.
+func TestTreePathsCollides(t *testing.T) {
+	tree := NewTreePaths([]string{"owned.txt", "docs/guide/intro.md", "bin"})
+	for _, tc := range []struct {
+		path string
+		want bool
+	}{
+		{"owned.txt", true},
+		{"docs/guide/intro.md", true},
+		{"docs", true},
+		{"docs/guide/", true},
+		{"bin/tool", true},
+		{"bin/sub/tool", true},
+		{".env", false},
+		{"docs/other.md", false},
+		{"owned.txt.bak", false},
+		{"dist/", false},
+	} {
+		if got := tree.Collides(tc.path); got != tc.want {
+			t.Errorf("Collides(%q) = %v, want %v", tc.path, got, tc.want)
+		}
 	}
 }
 

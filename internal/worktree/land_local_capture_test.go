@@ -82,9 +82,11 @@ func TestResumeLandCommandAllowsLocalCaptureInDestination(t *testing.T) {
 	}
 }
 
-func TestLandCommandIgnoredDiagnosticListsOnlyForeignResidue(t *testing.T) {
+// An ignored file that no declaration names and no landed path touches is the operator's
+// own, so the landing publishes around it and leaves its bytes in place.
+func TestLandCommandKeepsUndeclaredIgnoredFileInDestination(t *testing.T) {
 	t.Parallel()
-	request := "local-capture-diagnostic"
+	request := "local-capture-foreign"
 	root, creation, _, _, _, home := specLessLandingFixture(t, request)
 	base, _ := addLocalCaptureIgnore(t, root, "foreign.tmp")
 	gitRun(t, creation.Path, "rebase", "main")
@@ -94,12 +96,10 @@ func TestLandCommandIgnoredDiagnosticListsOnlyForeignResidue(t *testing.T) {
 
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 1 || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:\n  foreign.tmp\n") {
-		t.Fatalf("mixed residue = (%d, %q, %q), want only foreign.tmp", code, stdout.String(), stderr.String())
+	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
+		t.Fatalf("land with an undeclared ignored file = (%d, %q, %q), want released", code, stdout.String(), stderr.String())
 	}
-	for _, rel := range localCapturePaths {
-		if strings.Contains(stdout.String(), rel) {
-			t.Fatalf("diagnostic leaked allowed local capture %q: %q", rel, stdout.String())
-		}
+	if got, err := os.ReadFile(filepath.Join(root, "foreign.tmp")); err != nil || string(got) != "foreign\n" {
+		t.Fatalf("undeclared ignored file after the landing = %q, %v, want its bytes kept", got, err)
 	}
 }

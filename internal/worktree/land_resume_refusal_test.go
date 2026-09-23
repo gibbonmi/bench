@@ -42,12 +42,14 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 			{name: "tracked-worktree changes", detail: "landing destination has tracked-worktree changes", setup: func(t *testing.T, root string) {
 				mustWrite(t, filepath.Join(root, "owned.txt"), []byte("caller bytes\n"), 0o600)
 			}},
-			{name: "untracked collision", detail: "landing destination has untracked collisions", setup: func(t *testing.T, root string) {
-				mustWrite(t, filepath.Join(root, "untracked-collision.txt"), []byte("caller bytes\n"), 0o600)
+			// An untracked or ignored file outside the published tree is the operator's own,
+			// so the resume completes around it.
+			{name: "untracked file", allowed: true, setup: func(t *testing.T, root string) {
+				mustWrite(t, filepath.Join(root, "untracked-file.txt"), []byte("caller bytes\n"), 0o600)
 			}},
-			{name: "ignored residue", detail: "landing destination has ignored residue", setup: func(t *testing.T, root string) {
-				mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("ignored-residue\n"), 0o644)
-				mustWrite(t, filepath.Join(root, "ignored-residue"), []byte("caller bytes\n"), 0o600)
+			{name: "undeclared ignored file", allowed: true, setup: func(t *testing.T, root string) {
+				mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte(".env\n"), 0o644)
+				mustWrite(t, filepath.Join(root, ".env"), []byte("caller bytes\n"), 0o600)
 			}},
 			{name: "nested repository", detail: "landing destination has nested repositories", setup: func(t *testing.T, root string) {
 				nested := filepath.Join(root, "nested")

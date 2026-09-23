@@ -899,7 +899,7 @@ func TestLandingDestinationNamesAnUnreadableStatusThroughTheSharedPredicate(t *t
 	// before it still answers.
 	mustWrite(t, filepath.Join(root, ".git", "index"), []byte("not an index\n"), 0o644)
 
-	_, _, _, _, err := landingDestination(defaultJoins(), root)
+	_, _, _, _, err := landingDestination(root)
 	if err == nil || !strings.Contains(err.Error(), "checkout status is unreadable") {
 		t.Fatalf("landing destination error = %v, want the shared predicate's unreadable-status refusal", err)
 	}

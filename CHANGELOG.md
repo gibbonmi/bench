@@ -6,6 +6,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Landing destination files
+
+- Changed `bench worktree land` to refuse only tracked changes in the landing checkout. An untracked or ignored file there, such as `.env`, no longer needs a build-output declaration.
+- Added a refusal before the gate for an untracked or ignored file at a path that the landing writes. Git refuses to overwrite an untracked file at that path, and it overwrites an ignored file without a warning.
+- Changed the landing resume to refuse an untracked or ignored file only at a path that the published commit writes.
+
 ### Conformance contracts
 
 - Added same-file, same-kind needle distinctness across the anchor registry.

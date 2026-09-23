@@ -144,7 +144,7 @@ func TestLandCommandReportsEveryRefusalInOnePreflight(t *testing.T) {
 	t.Parallel()
 	request := "land-surface-one-preflight"
 	root, creation, base, tip := landSurface(t, request)
-	mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
+	mustWrite(t, filepath.Join(root, "tracked.txt"), []byte("dirty\n"), 0o644)
 	mustWrite(t, filepath.Join(creation.Path, "scratch"), []byte("scratch\n"), 0o600)
 	code, stdout, stderr := landIn(t, root, landArgs(request, base, tip, creation.Path))
 	if code != 1 || !strings.Contains(stdout, "landing destination is not clean") || !strings.Contains(stdout, "reviewed source is not clean") {
@@ -180,7 +180,7 @@ func TestLandCommandReportsIdentityAndDestinationInOnePreflight(t *testing.T) {
 	t.Parallel()
 	request := "land-surface-identity-preflight"
 	root, creation, base, tip := landSurface(t, request)
-	mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
+	mustWrite(t, filepath.Join(root, "tracked.txt"), []byte("dirty\n"), 0o644)
 	code, stdout, stderr := landIn(t, root, landArgs("unknown-request", base, tip, creation.Path))
 	both := strings.Contains(stdout, "refused{detail=landing destination is not clean") &&
 		strings.Contains(stdout, "refused{detail=request token matches no assignment")
