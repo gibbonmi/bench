@@ -6,6 +6,52 @@
 // descendants. The source census test enforces that boundary.
 package landingpolicy
 
+import "strings"
+
+// TreePaths is the path set of one Git tree: every file path, and every directory
+// that holds one.
+type TreePaths struct {
+	files, dirs map[string]bool
+}
+
+// NewTreePaths indexes the file paths of one Git tree.
+func NewTreePaths(files []string) TreePaths {
+	t := TreePaths{files: map[string]bool{}, dirs: map[string]bool{}}
+	for _, file := range files {
+		t.files[file] = true
+		// A directory already indexed has its parents indexed too, so the walk stops there.
+		for dir := parentDir(file); dir != "" && !t.dirs[dir]; dir = parentDir(dir) {
+			t.dirs[dir] = true
+		}
+	}
+	return t
+}
+
+// Collides reports whether a checkout path that Git does not track stands where a
+// checkout of the tree writes. That is the path itself, a directory the tree fills, or a
+// parent the tree holds as a file. Git refuses to overwrite an untracked path there, and
+// it overwrites an ignored one without a word. A trailing slash marks a directory entry,
+// the form Git status prints for an ignored directory.
+func (t TreePaths) Collides(path string) bool {
+	path = strings.TrimSuffix(path, "/")
+	if t.files[path] || t.dirs[path] {
+		return true
+	}
+	for dir := parentDir(path); dir != ""; dir = parentDir(dir) {
+		if t.files[dir] {
+			return true
+		}
+	}
+	return false
+}
+
+func parentDir(path string) string {
+	if i := strings.LastIndexByte(path, '/'); i > 0 {
+		return path[:i]
+	}
+	return ""
+}
+
 // StatusEntry is one porcelain status record of the landing destination: the
 // two XY status characters and the path, translated at the parent boundary.
 type StatusEntry struct {
@@ -25,9 +71,10 @@ type ResidueFacts struct {
 	StatusWellFormed bool
 	// Entries are the parsed status records of the destination.
 	Entries []StatusEntry
-	// IgnoredDeclared reports whether every ignored path sits inside the
-	// destination's declared build-output allowance.
-	IgnoredDeclared func() bool
+	// Published is the path set of the published landing tree, and false when the
+	// tree is unreadable. An untracked or ignored path blocks the destructive step
+	// only where it collides with that tree.
+	Published func() (TreePaths, bool)
 	// DestinationAtPublished is true when the destination commit is the
 	// published landing commit.
 	DestinationAtPublished bool
@@ -49,20 +96,26 @@ func Residue(f ResidueFacts) string {
 		return "landing destination status is malformed"
 	}
 	staged := false
-	allowedIgnored, allowanceKnown := false, false
+	var published TreePaths
+	known, readable := false, false
 	for _, entry := range f.Entries {
 		switch entry.Status {
 		case "":
 			continue
-		case "!!":
-			if !allowanceKnown {
-				allowedIgnored, allowanceKnown = f.IgnoredDeclared(), true
+		case "!!", "??":
+			if !known {
+				published, readable = f.Published()
+				known = true
 			}
-			if allowedIgnored {
+			if !readable {
+				return "published landing tree is unreadable"
+			}
+			if !published.Collides(entry.Path) {
 				continue
 			}
-			return "landing destination has ignored residue"
-		case "??":
+			if entry.Status == "!!" {
+				return "landing destination has ignored collisions"
+			}
 			return "landing destination has untracked collisions"
 		}
 		if entry.Status[1] != ' ' {

@@ -1,9 +1,10 @@
-// Release refusal tests for the landing command: destination and ignored path tables in the refusal output.
+// Release refusal tests for the landing command: destination and collision path tables in the refusal output.
 package worktree
 
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -20,79 +21,49 @@ func TestLandCommandRefusalListsDestinationPaths(t *testing.T) {
 	stageLandSpec(t, root, creation.Path)
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
-	mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
+	mustWrite(t, filepath.Join(root, "tracked.txt"), []byte("dirty\n"), 0o644)
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, home, "", landArgs("refusal-destination", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
 	// The route reads from the registry, so the face's repair keeps one source. The
 	// caller's own re-run rides behind it and this row does not pin it.
 	wantNext := "next=" + landingRefusalFaceByName(faceDestinationNotClean).route("")
-	if code != 1 || !strings.Contains(stdout.String(), wantNext) || !strings.Contains(stdout.String(), "paths_total=1") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:") || !strings.Contains(stdout.String(), "dirty") || stderr.Len() != 0 {
+	if code != 1 || !strings.Contains(stdout.String(), wantNext) || !strings.Contains(stdout.String(), "paths_total=1") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:") || !strings.Contains(stdout.String(), "tracked.txt") || stderr.Len() != 0 {
 		t.Fatalf("destination refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 }
 
-func TestLandCommandRefusalListsIgnoredPaths(t *testing.T) {
+// The destination refuses only the untracked and ignored paths where the landing writes.
+// The reviewed source adds owned.txt, so an ignored owned.txt collides, while an ignored
+// .env and an untracked notes.txt stay the operator's own and are not named.
+func TestLandCommandRefusalListsCollidingPaths(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
 	home := filepath.Join(t.TempDir(), "bench-home")
-	creation := mustCreate(t, root, home, "refusal-ignored", "refusal")
+	creation := mustCreate(t, root, home, "refusal-collision", "refusal")
 	stageLandSpec(t, root, creation.Path)
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
-	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("ignored/\n"), 0o644)
-	mustMkdirAll(t, filepath.Join(root, "ignored"), 0o755)
-	mustWrite(t, filepath.Join(root, "ignored", "residue"), []byte("residue\n"), 0o600)
+	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("owned.txt\n.env\n"), 0o644)
+	mustWrite(t, filepath.Join(root, "owned.txt"), []byte("operator bytes\n"), 0o600)
+	mustWrite(t, filepath.Join(root, ".env"), []byte("SECRET=1\n"), 0o600)
+	mustWrite(t, filepath.Join(root, "notes.txt"), []byte("notes\n"), 0o600)
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	// The collision proof runs after the source proofs, and the minimal fixture spec has
+	// no valid coverage map, so the source range is stubbed to pass.
+	j := defaultJoins()
+	j.authorizeLandingSource = func(string, string, string) (diff.SourceRange, error) {
+		return diff.SourceRange{Base: base, Tip: tip}, nil
+	}
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs("refusal-ignored", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
-	if code != 1 || !strings.Contains(stdout.String(), "paths_total=1") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:") || !strings.Contains(stdout.String(), "ignored/residue") || stderr.Len() != 0 {
-		t.Fatalf("ignored refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	code := landWith(j, root, home, "", landArgs("refusal-collision", base, tip, creation.Path), &stdout, &stderr)
+	next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(faceDestinationCollision).detail)
+	if code != 1 || !printed || !strings.HasPrefix(next, landingRefusalFaceByName(faceDestinationCollision).route("")) ||
+		!strings.Contains(stdout.String(), "refusal_paths[1]{path}:\n  owned.txt\n") || strings.Contains(stdout.String(), ".env") ||
+		strings.Contains(stdout.String(), "notes.txt") || stderr.Len() != 0 {
+		t.Fatalf("collision refusal = (%d, %q, %q), want owned.txt alone", code, stdout.String(), stderr.String())
 	}
-	// LRS10 and LRS11. The operator chooses between the two routes out of undeclared
-	// residue, so the field names the declaration file and the removal of the exact path.
-	next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(faceDestinationResidue).detail)
-	if !printed || !strings.Contains(next, ".bench/build-outputs.json") || !strings.Contains(next, "rm -rf 'ignored/residue'") {
-		t.Fatalf("ignored refusal next = (%v, %q), want the declaration file and the removal command", printed, next)
-	}
-}
-
-// LRS10 edge: the residue face names no path when its own read fails, so the removal
-// command it states takes the placeholder the operator resolves by hand. The ignored
-// inventory refuses a control-bearing path before the route reads it, so this empty
-// list is the one state the placeholder covers.
-func TestLandCommandResidueRouteHoldsThePlaceholderWithoutPaths(t *testing.T) {
-	t.Parallel()
-	for _, tc := range []struct {
-		name  string
-		setup func(*testing.T, string)
-	}{
-		{name: "unreadable inventory", setup: func(t *testing.T, root string) {
-			mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("ignored/\n"), 0o644)
-			mustMkdirAll(t, filepath.Join(root, "ignored"), 0o755)
-			mustWrite(t, filepath.Join(root, "ignored", "res\x1bidue"), []byte("residue\n"), 0o600)
-		}},
-		// A directory in the declaration's place is not a regular file, so the
-		// declaration read fails.
-		{name: "unreadable declaration", setup: func(t *testing.T, root string) {
-			mustMkdirAll(t, filepath.Join(root, ".bench", "build-outputs.json"), 0o755)
-		}},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			request := "refusal-residue-" + strings.ReplaceAll(tc.name, " ", "-")
-			root := newWorktreeRepo(t)
-			home := filepath.Join(t.TempDir(), "bench-home")
-			creation := mustCreate(t, root, home, request, "refusal")
-			stageLandSpec(t, root, creation.Path)
-			base := gitOutput(t, root, "rev-parse", "HEAD")
-			commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
-			tc.setup(t, root)
-			var stdout, stderr bytes.Buffer
-			code := LandCommand(root, home, "", landArgs(request, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
-			next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(faceDestinationResidue).detail)
-			if code != 1 || !printed || !strings.Contains(next, "rm -rf <refusal_paths entries>") || strings.Contains(stdout.String(), "paths_total=") {
-				t.Fatalf("%s residue route = (%d, %q, %q), next %q, want the placeholder removal and no path table", tc.name, code, stdout.String(), stderr.String(), next)
-			}
-		})
+	if got, err := os.ReadFile(filepath.Join(root, "owned.txt")); err != nil || string(got) != "operator bytes\n" {
+		t.Fatalf("refused landing changed the operator's file: %q, %v", got, err)
 	}
 }
 
@@ -100,12 +71,15 @@ func TestLandCommandRefusalKeepsControlBearingPathInOneTableRow(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
 	home := filepath.Join(t.TempDir(), "bench-home")
+	path := "bad\n\x1b,comma"
+	mustWrite(t, filepath.Join(root, path), []byte("committed\n"), 0o644)
+	gitRun(t, root, "add", "--", path)
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "control-bearing path")
 	creation := mustCreate(t, root, home, "refusal-controls", "refusal")
 	stageLandSpec(t, root, creation.Path)
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
-	path := "bad\n\x1b,comma"
-	mustWrite(t, filepath.Join(root, path), []byte("residue\n"), 0o600)
+	mustWrite(t, filepath.Join(root, path), []byte("residue\n"), 0o644)
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	// The minimal fixture spec has no valid coverage map, so the source proof would add
 	// a second record; this test pins the destination record's shape alone.
@@ -192,13 +166,17 @@ func TestReleaseCommandRefusalHidesControlBearingRequestForSafePath(t *testing.T
 	}
 }
 
-func TestLandingDestinationAllowsDeclaredAndRuntimeIgnoredOutput(t *testing.T) {
+// The destination proof reads tracked changes only, so an ignored file needs no
+// declaration and an untracked file does not refuse.
+func TestLandingDestinationAllowsUntrackedAndIgnoredFiles(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
 		name, ignore, output, declaration string
 	}{
 		{name: "declared", ignore: "dist/", output: "dist/bench", declaration: "{\"schema\":1,\"paths\":[\"dist/\"]}\n"},
 		{name: "runtime", ignore: ".logs/", output: ".logs/gate.jsonl"},
+		{name: "undeclared ignored", ignore: ".env", output: ".env"},
+		{name: "untracked", ignore: ".env", output: "notes.txt"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
@@ -211,7 +189,7 @@ func TestLandingDestinationAllowsDeclaredAndRuntimeIgnoredOutput(t *testing.T) {
 			gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare output")
 			mustMkdirAll(t, filepath.Dir(filepath.Join(root, tc.output)), 0o755)
 			mustWrite(t, filepath.Join(root, tc.output), []byte("output\n"), 0o755)
-			tip, branch, marker, fingerprint, err := landingDestination(defaultJoins(), root)
+			tip, branch, marker, fingerprint, err := landingDestination(root)
 			if err != nil || tip == "" || branch != "main" || marker != "" || fingerprint == "" {
 				t.Fatalf("destination %s = (%q, %q, %q, %q, %v)", tc.name, tip, branch, marker, fingerprint, err)
 			}

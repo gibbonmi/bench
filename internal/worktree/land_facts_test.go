@@ -36,7 +36,7 @@ func TestLandingResidueFactAdapterTranslatesRealDestination(t *testing.T) {
 	mustMkdirAll(t, filepath.Join(root, "junk"), 0o755)
 	mustWrite(t, filepath.Join(root, "junk", "out"), []byte("ignored\n"), 0o600)
 
-	facts := destinationResidueFacts(defaultJoins(), root, destination, destination, destination+"^")
+	facts := destinationResidueFacts(root, destination, destination, destination+"^")
 	if !facts.NestedClean || !facts.StatusReadable || !facts.StatusWellFormed {
 		t.Fatalf("healthy destination facts = %+v", facts)
 	}
@@ -55,8 +55,9 @@ func TestLandingResidueFactAdapterTranslatesRealDestination(t *testing.T) {
 	if facts.StagedMatchesPublished() {
 		t.Fatalf("staged-matches-published fact = true for a staged edit beyond the base")
 	}
-	if facts.IgnoredDeclared() {
-		t.Fatalf("ignored-declared fact = true with no build-output declaration")
+	published, readable := facts.Published()
+	if !readable || !published.Collides("tracked.txt") || published.Collides("stray.txt") || published.Collides("junk/out") {
+		t.Fatalf("published-tree fact = readable %v, want the destination tree's paths alone", readable)
 	}
 	markProof(t, "landing/adapter/facts")
 }
@@ -134,7 +135,7 @@ func TestLandingDestinationFactAdapterTranslatesCleanCheckout(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
 	head := gitOutput(t, root, "rev-parse", "HEAD")
-	tip, branch, marker, fingerprint, err := landingDestination(defaultJoins(), root)
+	tip, branch, marker, fingerprint, err := landingDestination(root)
 	if err != nil || tip != head || branch != "main" || marker != "" {
 		t.Fatalf("destination facts = (%q, %q, %q, %v), want (%q, main, empty marker, nil)", tip, branch, marker, err, head)
 	}

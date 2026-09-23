@@ -147,11 +147,11 @@ func atSourceWorktree(command, path, assignment string) string {
 // The landing refusal face names. An operator reads a face's sentence in the record, so
 // the name and the registry entry are the same fact.
 const (
-	faceDestinationNotClean = "destination-not-clean"
-	faceDestinationResidue  = "destination-residue"
-	faceSourceNotClean      = "source-not-clean"
-	faceSourceNotFenced     = "source-not-fenced"
-	faceSourceTipMismatch   = "source-tip-mismatch"
+	faceDestinationNotClean  = "destination-not-clean"
+	faceDestinationCollision = "destination-collision"
+	faceSourceNotClean       = "source-not-clean"
+	faceSourceNotFenced      = "source-not-fenced"
+	faceSourceTipMismatch    = "source-tip-mismatch"
 	// The composition refuses after the preflight clears, so its face is declared here
 	// beside the preflight's.
 	faceCompositionConflict = "composition-conflict"
@@ -184,35 +184,9 @@ func destinationCleanRepair(rerun string) string {
 	return "commit the destination's uncommitted work, or discard it; then " + rerun
 }
 
-// destinationResidueRepair is the repair a destination that carries undeclared ignored
-// residue demands. The operator has two routes out of the state, so the line names both:
-// the declaration file that adopts the paths, and the removal that discards them.
-func destinationResidueRepair(rerun string, paths []string) string {
-	return "declare the refusal_paths entries in .bench/build-outputs.json, or remove them from the landing checkout with " +
-		residueRemovalCommand(paths) + "; then " + rerun
-}
-
-// residueRemovalCommand is the exact removal the residue repair names. Git owns no
-// removal of an ignored path, so the command is plain `rm`, and the value it names is the
-// destination-relative path the refusal's own table lists. A path the operator could not
-// paste back takes the placeholder, which the table beside the route resolves.
-func residueRemovalCommand(paths []string) string {
-	arguments := make([]string, 0, len(paths))
-	for _, path := range paths {
-		if !lineSafe(path) {
-			return "rm -rf <refusal_paths entries>"
-		}
-		arguments = append(arguments, sanitize.ShellQuote(path))
-	}
-	if len(arguments) == 0 {
-		return "rm -rf <refusal_paths entries>"
-	}
-	return "rm -rf " + strings.Join(arguments, " ")
-}
-
 // landingRefusalFace is one refusal the landing's preflight prints. detail is the
 // sentence, and repair composes the face's own repair ahead of the caller's re-run, from
-// the refusal's own paths where the repair names them. The registry test walks the slice
+// the refusal's own observed values where the repair names them. The registry test walks the slice
 // and drives one producing fixture per entry, so a face added without a fixture, or with
 // an empty repair, turns the gate red.
 type landingRefusalFace struct {
@@ -229,11 +203,6 @@ func (f landingRefusalFace) route(rerun string) string { return f.repair(rerun, 
 // pathless adapts a repair that reads none of the refusal's observed values.
 func pathless(build func(rerun string) string) func(rerun string, raised refusal) string {
 	return func(rerun string, _ refusal) string { return build(rerun) }
-}
-
-// withPaths adapts a repair that reads the refusal's own path table.
-func withPaths(build func(rerun string, paths []string) string) func(rerun string, raised refusal) string {
-	return func(rerun string, raised refusal) string { return build(rerun, raised.paths) }
 }
 
 // retargetSourceTip re-points the caller's own re-run at the source tip the landing read
@@ -258,9 +227,14 @@ var landingRefusalFaces = []landingRefusalFace{
 		repair: pathless(destinationCleanRepair),
 	},
 	{
-		name:   faceDestinationResidue,
-		detail: "landing destination has undeclared ignored residue",
-		repair: withPaths(destinationResidueRepair),
+		// The paths are the operator's own files where the landing writes. Git refuses to
+		// overwrite an untracked one and overwrites an ignored one without a word, so the
+		// operator moves them before the landing runs.
+		name:   faceDestinationCollision,
+		detail: "landing destination has untracked or ignored files where the landing writes",
+		repair: pathless(func(rerun string) string {
+			return "move the refusal_paths entries out of the landing checkout; then " + rerun
+		}),
 	},
 	{
 		// The mismatch refusal already carries the tip the tree holds beside the one the

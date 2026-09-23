@@ -152,7 +152,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, roo
 	// The destination proof runs before the assignment resolves, so its route has no
 	// assignment id to address and names the operator's own worktree path instead.
 	unassignedRerun := landingRerun(parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, "")
-	destination, branch, priorMarker, destinationFingerprint, err := landingDestination(j, root)
+	destination, branch, priorMarker, destinationFingerprint, err := landingDestination(root)
 	if err != nil {
 		refusals = append(refusals, landingFaceRoute(err, unassignedRerun, false))
 	}
@@ -173,6 +173,8 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, roo
 		// The review base binds before composition: a base outside the destination's
 		// history grades a range the destination never reviewed against.
 		refusals = append(refusals, identityRefusal(source.base, destination, landingBaseNotAncestorDetail))
+	} else if err := landingDestinationCollisions(root, source.tip); err != nil {
+		refusals = append(refusals, landingFaceRoute(err, landingRerun(parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment.ID), false))
 	}
 	if len(refusals) > 0 {
 		for _, err := range refusals {

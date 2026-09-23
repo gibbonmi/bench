@@ -38,8 +38,8 @@ works on any branch. This line only states the binding.)
 
   Reviewed spec-backed builds keep serial green ticket commits on one retained integration source. Semantic review binds each chunk's predecessor and current tips before the next chunk starts. `bench worktree land` composes and gates the reconciled source on the destination, and
   its published commit owns the spec's `Status: implemented` flip. The landing
-  destination permits the three exact ignored local-capture files without
-  treating the broader `capture/` tree as disposable residue.
+  destination refuses only tracked changes and the untracked or ignored files at
+  a path the landing writes. The operator's other local files stay in place.
 
   Completion checkpoints require current author verification and all three
   terminal review axes. Final landing also requires the complete acceptance

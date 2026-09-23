@@ -19,6 +19,7 @@ import (
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/spec"
+	"github.com/gibbonmi/bench/internal/worktree/landingpolicy"
 )
 
 // sourceTipMismatchDetail is the sentence the source-tip proof prints. The registry face
@@ -39,8 +40,8 @@ type landingSourceFact struct {
 // green marker. The commit resolves through the one spelling
 // `refs/heads/<branch>^{commit}`, so the landing verb and the resume read the same
 // commit. Both verbs call this fact rather than re-deriving it; the landing verb
-// composes the cleanliness, residue, and fingerprint proofs on top of it, and the
-// resume reads the identity alone.
+// composes the cleanliness and fingerprint proofs on top of it, and the resume reads the
+// identity alone.
 func landingDestinationIdentity(root string) (commit, branch, marker string, err error) {
 	branch, ok := git.ResolvedDefault(root)
 	if !ok {
@@ -61,12 +62,17 @@ func landingDestinationIdentity(root string) (commit, branch, marker string, err
 	return commit, branch, marker, nil
 }
 
-func landingDestination(j joins, root string) (string, string, string, string, error) {
+// landingDestination proves the destination clean of tracked changes only. An untracked
+// or ignored file is the operator's own and never reaches a commit, so it blocks the
+// landing only where it collides with the source, which landingDestinationCollisions
+// proves. The fingerprint still binds untracked and ignored state, so that proof holds
+// until publication.
+func landingDestination(root string) (string, string, string, string, error) {
 	tip, branch, marker, err := landingDestinationIdentity(root)
 	if err != nil {
 		return "", "", "", "", err
 	}
-	dirty, err := checkoutDirtyPaths(root)
+	dirty, err := checkoutTrackedChanges(root)
 	if err != nil {
 		return "", "", "", "", err
 	}
@@ -75,23 +81,55 @@ func landingDestination(j joins, root string) (string, string, string, string, e
 	if len(dirty) > 0 {
 		return "", "", "", "", landingFaceRefusal(faceDestinationNotClean, "", "", dirty)
 	}
-	ignored, _, ignoredErr := inventoryIgnored(j, root, false)
-	declared, _, declarationErr := loadBuildOutputs(root)
-	// The residue face reads its own paths, so the declared route names the removal of
-	// the exact entries beside the declaration file that would adopt them. An unreadable
-	// inventory or declaration names no path, and the same face routes it.
-	if ignoredErr != nil || declarationErr != nil || (ignored.Count > 0 && !ignoredWithinLandingAllowance(ignored, declared)) {
-		residue := []string(nil)
-		if ignoredErr == nil && declarationErr == nil {
-			residue = undeclaredLandingIgnoredPaths(ignored, declared)
-		}
-		return "", "", "", "", landingFaceRefusal(faceDestinationResidue, "", "", residue)
-	}
 	fingerprint, err := landing.CheckoutFingerprint(root)
 	if err != nil {
 		return "", "", "", "", errors.New("landing destination fingerprint is unavailable")
 	}
 	return tip, branch, marker, fingerprint, nil
+}
+
+// landingDestinationCollisions names the destination's untracked and ignored paths that
+// collide with the source tip's tree. A path the composition adds to the destination
+// comes from that tree, so the check runs before the gate and still misses no collision
+// the reconcile step would meet. The destination fingerprint holds the result until
+// publication.
+func landingDestinationCollisions(root, sourceTip string) error {
+	entries, err := checkoutStatusEntries(root, "--untracked-files=all", "--ignored")
+	if err != nil {
+		return err
+	}
+	tree, err := treePaths(root, sourceTip)
+	if err != nil {
+		return errors.New("reviewed source tree is unreadable")
+	}
+	var colliding []string
+	for _, entry := range entries {
+		if (entry.Status == "??" || entry.Status == "!!") && tree.Collides(entry.Path) {
+			colliding = append(colliding, entry.Path)
+		}
+	}
+	if len(colliding) > 0 {
+		return landingFaceRefusal(faceDestinationCollision, "", "", colliding)
+	}
+	return nil
+}
+
+// treePaths reads the joint path set of one or more trees, the fact the collision rule
+// reads. Each value names a tree or a commit.
+func treePaths(root string, trees ...string) (landingpolicy.TreePaths, error) {
+	var files []string
+	for _, tree := range trees {
+		raw, err := git.Raw("-C", root, "ls-tree", "-r", "--name-only", "-z", tree+"^{tree}")
+		if err != nil {
+			return landingpolicy.TreePaths{}, err
+		}
+		for name := range strings.SplitSeq(string(raw), "\x00") {
+			if name != "" {
+				files = append(files, name)
+			}
+		}
+	}
+	return landingpolicy.NewTreePaths(files), nil
 }
 
 func landingMarker(root, branch, destination string) (string, error) {
@@ -301,7 +339,32 @@ func reconcileLandingDestination(j joins, root, destination, published, destinat
 // registry faces and the merge verb's own refusals share, because the fact reads the
 // same for all of them while the refusal each one prints does not.
 func checkoutDirtyPaths(path string) ([]string, error) {
-	raw, err := git.Raw("-C", path, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all")
+	return checkoutStatusPaths(path, "--untracked-files=all")
+}
+
+// checkoutTrackedChanges reports only the tracked paths one checkout has changed. It is
+// the landing destination's cleanliness fact, because an untracked file there never
+// reaches a commit.
+func checkoutTrackedChanges(path string) ([]string, error) {
+	return checkoutStatusPaths(path, "--untracked-files=no")
+}
+
+func checkoutStatusPaths(path string, modes ...string) ([]string, error) {
+	entries, err := checkoutStatusEntries(path, modes...)
+	if err != nil {
+		return nil, err
+	}
+	paths := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		paths = append(paths, entry.Path)
+	}
+	return paths, nil
+}
+
+// checkoutStatusEntries is the parsed porcelain status read of a checkout. modes chooses which
+// untracked and ignored paths the read reports.
+func checkoutStatusEntries(path string, modes ...string) ([]git.PorcelainEntry, error) {
+	raw, err := git.Raw(append([]string{"-C", path, "status", "--porcelain=v1", "-z", "--no-renames"}, modes...)...)
 	if err != nil {
 		return nil, refusalError{refusal{detail: "checkout status is unreadable"}}
 	}
@@ -309,11 +372,7 @@ func checkoutDirtyPaths(path string) ([]string, error) {
 	if err != nil {
 		return nil, refusalError{refusal{detail: "checkout status is unreadable"}}
 	}
-	paths := make([]string, 0, len(entries))
-	for _, entry := range entries {
-		paths = append(paths, entry.Path)
-	}
-	return paths, nil
+	return entries, nil
 }
 
 // checkoutClean is the unregistered form the verbs outside the landing refusal registry

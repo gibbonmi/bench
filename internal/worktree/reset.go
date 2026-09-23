@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
@@ -281,49 +280,20 @@ func hiddenIndexFlags(path string) ([]string, error) {
 }
 
 // ignoredCollisions lists every ignored path that the given trees would overwrite when
-// the move writes them into the checkout. A tracked file whose path is a parent
-// directory of the ignored path collides, because the move replaces that directory with
-// the file. A tracked file below the ignored path collides too, because the move
-// replaces the ignored file with a directory.
+// the move writes them into the checkout. The collision rule is TreePaths.Collides.
 func ignoredCollisions(path string, trees []string) ([]string, error) {
 	ignored, err := ignoredListing(path)
 	if err != nil {
 		return nil, fmt.Errorf("read ignored inventory: %w", err)
 	}
-	tracked, above := map[string]bool{}, map[string]bool{}
-	for _, tree := range trees {
-		names, err := git.Raw("-C", path, "ls-tree", "-r", "-z", "--name-only", tree)
-		if err != nil {
-			return nil, fmt.Errorf("read materialized tree: %w", err)
-		}
-		for name := range bytes.SplitSeq(names, []byte{0}) {
-			if len(name) == 0 {
-				continue
-			}
-			tracked[string(name)] = true
-			for dir := string(name); strings.Contains(dir, "/"); {
-				dir = dir[:strings.LastIndexByte(dir, '/')]
-				above[dir] = true
-			}
-		}
+	materialized, err := treePaths(path, trees...)
+	if err != nil {
+		return nil, fmt.Errorf("read materialized tree: %w", err)
 	}
 	var collisions []string
 	for record := range bytes.SplitSeq(ignored, []byte{0}) {
-		if len(record) == 0 {
-			continue
-		}
-		if above[string(record)] {
+		if len(record) > 0 && materialized.Collides(string(record)) {
 			collisions = append(collisions, string(record))
-			continue
-		}
-		for candidate := string(record); ; candidate = candidate[:strings.LastIndexByte(candidate, '/')] {
-			if tracked[candidate] {
-				collisions = append(collisions, string(record))
-				break
-			}
-			if !strings.Contains(candidate, "/") {
-				break
-			}
 		}
 	}
 	return collisions, nil
