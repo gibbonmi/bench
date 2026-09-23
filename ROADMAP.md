@@ -25,6 +25,8 @@ findings in the owner details.
 
 **FT331 (LOW, decision required) — the jev decision service advises routine Bench decisions.**
 
+**FT334 (LOW, decision required) — a user-invoked deadline batch completes approved work within a stated usage allowance.**
+
 ## Factory correctness, recovery, and execution
 
 **FT296 (MEDIUM, decision required) — the durable supervisor and production workers have distinct lifetimes.**
@@ -69,7 +71,6 @@ findings in the owner details.
 
 **FT318 (MEDIUM, decision required) — the review record has a native writer.**
 
-
 **FT324 (MEDIUM, decision required) — the harness-memory rule has one owner.**
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
@@ -110,8 +111,6 @@ findings in the owner details.
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
 
-**FT219 (LOW) — `/bench-deepen` refreshes a ready map's frontier to current state before handoff.**
-
 **FT108 (LOW) — a refactor lane with a mechanical exit test.**
 
 **FT287 (MEDIUM, decision required) — AXI conformance is assessed for every bench command, argument, and option.**
@@ -140,8 +139,6 @@ findings in the owner details.
 
 **FT332 (LOW, decision required) — a nightly constrained-CPU stress job finds new flakes before they reach `main`.**
 
-
-
 **FT325 (LOW, decision required) — a canary fixture does not depend on the physical wrap of guidance prose.**
 
 **FT326 (MEDIUM, decision required) — stronger needle boundaries need a separate shape.**
@@ -152,9 +149,8 @@ findings in the owner details.
 
 ## Release qualification
 
-FT71 does not start before 2026-09-16. Its hold outranks priority. Bank use,
-public release, and Regroup adoption stay NO-GO until the existing qualification
-requirements are met.
+Bank use, public release, and Regroup adoption stay NO-GO until the existing
+qualification requirements are met.
 
 **FT71 (HIGH on the bank track) — versioned local shift evidence.**
 
@@ -176,13 +172,13 @@ requirements are met.
 
 **FT330 (LOW, parked pending a repro) — a `bench gate --checkpoint` refusal names the recovery route of its cause.**
 
+**FT335 (MEDIUM, parked pending a repro) — a `bench worktree merge` from a kit sibling selects the target lane, not the full gate.**
+
 **FT38 (LOW, decision required) — dashboard visual identity pass.**
 
 **FT100 (LOW) — prose-weight pass on the kit's guidance surface.**
 
 **FT101 (LOW) — per-context scope for monorepos: domain docs and profile.**
-
-**FT102 (LOW) — escalation-policy cross-check in the synthesis consistency and dogfood loops.**
 
 **FT240 (EXPERIMENT, decision required) — iq retrieval experiment: token-budgeted search against the EKS monorepo.**
 
@@ -253,6 +249,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. Run `$bench-write-spec FT71` for versioned local shift evidence; its dated reviewer hold has expired.
+1. Run `$bench-write-spec FT71` for versioned local shift evidence.
 2. Run `$bench-shape-idea FT305` to settle durable local execution before the dependent qualification work.
-3. After FT71 and FT305 land, run `$bench-shape-idea FT306` for the qualified release and Regroup adoption.
+3. Run `$bench-implement-spec test-determinism` to build FT115's staged spec before `ft290-test-projection`; FT306 waits on FT71 and FT305.
