@@ -1,4 +1,4 @@
-# 10. Record the worktree shell session
+# 11. Record the worktree shell session
 
 Blocked by: 4-record-the-shift-boundaries.md
 Writes: internal/worktree/subshell.go, internal/worktree/clean.go, internal/worktree/verb_span.go, internal/worktree/subshell_test.go, internal/worktree/otel_seams_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/otelrecord/registry.go
@@ -12,7 +12,7 @@ Open one `worktree.shell` span before `bench worktree shell` creates its assignm
 
 A normal shell exit is `completed`, with cleanup `released` when the release exits 0 and `retained` otherwise. A signal is `interrupted` with `retained`, because the lease stays for a reclaim. A shell that cannot start is `failed`.
 
-Add the seam to the registry and to the package's seam constants, so the seam equality test holds both. `internal/worktree/subshell.go` is over its line budget, so move the ignored-inventory function into `internal/worktree/clean.go` and leave `subshell.go` shorter. The command registry and its conformance tests join the Writes line through the binding closure only, and the build expects no edit there.
+Add the seam to the registry and to the package's seam constants, so the seam equality test holds both. `internal/worktree/subshell.go` is over its line budget, so move the ignored-inventory function into `internal/worktree/clean.go` and leave `subshell.go` shorter. Ticket 10 may edit one `claimAt` call site in `subshell.go`, so the retained author serializes the two tickets. The command registry and its conformance tests join the Writes line through the binding closure only, and the build expects no edit there.
 
 ## Acceptance
 

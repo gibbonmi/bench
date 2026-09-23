@@ -1,6 +1,6 @@
 # 8. Complete the shift intent on exit
 
-Blocked by: none
+Blocked by: 4-record-the-shift-boundaries.md
 Writes: internal/intent/admissionpolicy/admissionpolicy.go, internal/intent/admissionpolicy/liveness_test.go (new), internal/intent/ledger/ledger.go, internal/shift/loop.go, internal/shift/record_test.go (new)
 Covers: LE60, LE61, LE62, LE63
 
@@ -12,7 +12,9 @@ First verify the premise against the tree: `admissionpolicy.Live` keeps an entry
 
 Change the liveness rule. An entry that holds an outcome and a recovery of empty or `none` is done, so `Live` drops it and `Compact` removes it. An entry with a `worktree:` recovery stays live while its worktree exists, so the status keeps its recovery pointer.
 
-Add an optional `lease` field to the ledger entry. Right after `worktree.Acquire` returns, the shift reads its own lease file and records the line without its final newline. Ticket 9 consumes this field. `admissionpolicy_test.go` is near its line budget, so the new policy tests go in `liveness_test.go`.
+Add an optional `lease` field to the ledger entry. Right after `worktree.Acquire` returns, the shift reads its own lease file and records the line without its final newline. Ticket 10 consumes this field. `admissionpolicy_test.go` is near its line budget, so the new policy tests go in `liveness_test.go`.
+
+Ticket 4 creates `internal/shift/record_test.go`, and this ticket adds its two shift rows there. This ticket and chunk LE-B2 both write `loop.go` and that test file, so the retained author runs this ticket after the LE-B2 checkpoint.
 
 ## Acceptance
 

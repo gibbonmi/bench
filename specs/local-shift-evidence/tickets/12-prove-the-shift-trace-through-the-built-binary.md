@@ -1,4 +1,4 @@
-# 11. Prove the shift trace through the built binary
+# 12. Prove the shift trace through the built binary
 
 Blocked by: 2-redact-and-version-every-record-line.md, 5-record-each-pass-under-the-shift.md, 6-record-the-resolved-line.md
 Writes: internal/systemtest/otel_verbs_test.go
