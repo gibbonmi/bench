@@ -318,13 +318,13 @@ Review iteration 1 split the old LE-C2 into LE-C2 and LE-C3. The old ticket 9 be
 | LE61 | 33 | After a green shift exits, `intent.Snapshot` holds no entry for its key | `TestAGreenShiftEndsItsIntent` in `internal/shift` | A shift whose outcome does not end its intent leaves a live entry, so the read reds. |
 | LE62 | 34 | `Live` keeps an entry with the outcome `failed` and a `worktree:` recovery whose worktree exists | `TestLiveKeepsAShiftWithAWorktreeRecovery` in `internal/intent/admissionpolicy` | A rule that drops every terminal entry loses the recovery pointer, so the read reds. |
 | LE63 | 35 | After the acquire, the ledger entry of the shift carries a `lease` value equal to the lease line that the acquire wrote | `TestAShiftRecordsItsLease` in `internal/shift` | A shift that never records the lease leaves the field empty, so the equality reds. |
-| LE72 | 41 | An entry with no lease and no worktree whose key names a dead process gets the outcome `abandoned` | planned recovery test in `internal/shift` with a seeded ledger | A pass that skips entries with no lease leaves the stale intent live, so the read reds. |
-| LE73 | 41 | An entry with no lease whose key names the live test process stays unchanged | planned recovery test in `internal/shift` with a seeded ledger | A pass that abandons every entry with no lease drops a running shift, so the read reds. |
-| LE74 | 41 | An entry whose key does not parse as a shift key stays unchanged | planned recovery test in `internal/shift` with a seeded ledger | A parse that reads an unknown key as a dead process abandons it, so the read reds. |
-| LE76 | 44 | The session-inspect sequence runs the recovery pass after the resume phase, and a seeded dead-key entry is abandoned after `Inspect` | planned session-inspect test in `internal/sessioninspect` | A sequence without the phase leaves the entry open, so the read reds. |
-| LE77 | 44 | `bench shift` runs the recovery pass before its acquire, and a seeded dead-key entry is abandoned after the shift | planned recovery test in `internal/shift` | A shift that skips the pass leaves the entry open, so the read reds. |
-| LE78 | 45 | A pass that abandoned one entry prints exactly `bench shift recovery: recovered 0, abandoned 1` | planned recovery test in `internal/shift` | A pass that prints nothing or another form reds the exact comparison. |
-| LE79 | 45 | A pass with no open shift entry prints nothing | planned recovery test in `internal/shift` | A pass that always prints adds a line to every session start, so the empty read reds. |
+| LE72 | 41 | An entry with no lease and no worktree whose key names a dead process gets the outcome `abandoned` | `TestRecoverAbandonsADeadOwnersEntry` in `internal/shift` | A pass that skips entries with no lease leaves the stale intent live, so the read reds. |
+| LE73 | 41 | An entry with no lease whose key names the live test process stays unchanged | `TestRecoverKeepsALiveOrUnknownEntry` in `internal/shift` | A pass that abandons every entry with no lease drops a running shift, so the read reds. |
+| LE74 | 41 | An entry whose key does not parse as a shift key stays unchanged | `TestRecoverKeepsALiveOrUnknownEntry` in `internal/shift` | A parse that reads an unknown key as a dead process abandons it, so the read reds. |
+| LE76 | 44 | The session-inspect sequence runs the recovery pass after the resume phase, and a seeded dead-key entry is abandoned after `Inspect` | `TestInspectRecoversAfterTheResumePhase` in `internal/sessioninspect` | A sequence without the phase leaves the entry open, so the read reds. |
+| LE77 | 44 | `bench shift` runs the recovery pass before its acquire, and a seeded dead-key entry is abandoned after the shift | `TestAShiftRecoversBeforeItsAcquire` in `internal/shift` | A shift that skips the pass leaves the entry open, so the read reds. |
+| LE78 | 45 | A pass that abandoned one entry prints exactly `bench shift recovery: recovered 0, abandoned 1` | `TestRecoverAbandonsADeadOwnersEntry` in `internal/shift` | A pass that prints nothing or another form reds the exact comparison. |
+| LE79 | 45 | A pass with no open shift entry prints nothing | `TestRecoverWithNothingToDoPrintsNothing` in `internal/shift` | A pass that always prints adds a line to every session start, so the empty read reds. |
 | LE64 | 36, 43 | After a helper shift gets SIGKILL during its adapter, the pass writes a `shift.recovery` span with `bench.work.state` `recovered` and the intent key of the crashed `shift` span | planned recovery test in `internal/shift` with a killed helper process | A pass that never judges leased entries writes no recovery span, so the read reds. |
 | LE65 | 36 | The recovered entry carries the outcome `recovered` | planned recovery test in `internal/shift` with a killed helper process | A pass that records only the span leaves the entry open, so the outcome read reds. |
 | LE91 | 36 | After the recovery of a crashed shift whose adapter appended `MEMMARK` to the notes, one memory file holds the notes bytes | planned recovery test in `internal/shift` with a killed helper process | A pass that acts before it retains the memory can lose the notes, so the read reds. |
@@ -453,6 +453,7 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - `internal/worktree/snapshot.go`
 - `internal/worktree/snapshot_test.go`
 - `internal/worktree/lifecycle.go`
+- `internal/worktree/lifecycle_test.go`
 - `internal/worktree/subshell.go`
 - `internal/worktree/clean.go`
 - `internal/worktree/verb_span.go`

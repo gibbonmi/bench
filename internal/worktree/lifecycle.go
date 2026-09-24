@@ -62,8 +62,8 @@ const (
 	LeaseUnknown = lifecyclepolicy.LeaseUnknown
 )
 
-// pidAlive treats kill-0 success and EPERM as alive. Only ESRCH means gone.
-func pidAlive(pid int) bool {
+// PIDAlive treats kill-0 success and EPERM as alive. Only ESRCH means gone.
+func PIDAlive(pid int) bool {
 	err := syscall.Kill(pid, 0)
 	return err == nil || errors.Is(err, syscall.EPERM)
 }
@@ -86,7 +86,7 @@ func ProbeLease(leasePath string) LeaseState {
 	if !ok {
 		return LeaseUnknown
 	}
-	if pidAlive(pid) {
+	if PIDAlive(pid) {
 		return LeaseLive
 	}
 	return LeaseDead
@@ -132,7 +132,7 @@ func claimAt(j joins, leasePath string, now time.Time) bool {
 		return false // lease vanished under us (a racing reclaim); respect and rescan
 	}
 	content, _ := os.ReadFile(leasePath)
-	if !reclaimable(content, info.ModTime(), now, pidAlive) {
+	if !reclaimable(content, info.ModTime(), now, PIDAlive) {
 		return false
 	}
 	j.claimTakeoverGap(leasePath)
@@ -259,7 +259,7 @@ func releaseWith(j joins, wt string) {
 	}
 	content, _ := os.ReadFile(lease)
 	if field := strings.Fields(string(content)); len(field) > 0 {
-		if pid, err := strconv.Atoi(field[0]); err == nil && pid != os.Getpid() && pidAlive(pid) {
+		if pid, err := strconv.Atoi(field[0]); err == nil && pid != os.Getpid() && PIDAlive(pid) {
 			return
 		}
 	}

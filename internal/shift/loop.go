@@ -178,6 +178,7 @@ func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 		return usage(stdout, stderr, "could not persist shift intent")
 	}
 	record := beginShiftRecord(mainRoot, intentEntry, maxIters)
+	Recover(mainRoot, stdout)
 	wt, err := worktree.Acquire(mainRoot, base, "hard")
 	if err != nil {
 		fmt.Fprintln(stderr, err)

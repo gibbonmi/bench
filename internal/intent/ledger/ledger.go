@@ -28,9 +28,10 @@ type Entry struct {
 	Worktree  string    `json:"worktree,omitempty"`
 	Branch    string    `json:"branch,omitempty"`
 	// Outcome and Recovery record a shift's final result state. Outcome is one of the
-	// FT79 taxonomy's outcome names. Recovery is a pointer ("ref:<name>" or
-	// "worktree:<path>") or RecoveryNone. Both fields are optional, so every non-shift
-	// writer stays valid, as does every entry created before its writer resolves an outcome.
+	// FT79 taxonomy's outcome names, or a recovery pass's work-state word for an entry
+	// whose owner is gone. Recovery is a pointer ("ref:<name>" or "worktree:<path>") or
+	// RecoveryNone. Both fields are optional, so every non-shift writer stays valid, as
+	// does every entry created before its writer resolves an outcome.
 	Outcome  string `json:"outcome,omitempty"`
 	Recovery string `json:"recovery,omitempty"`
 	// Lease is the line a shift's worktree acquire wrote into its lease, without the

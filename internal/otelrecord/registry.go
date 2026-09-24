@@ -43,4 +43,5 @@ var Registry = []SeamEntry{
 	{Seam: "shift.iteration", Package: "internal/shift", Function: "beginPass"},
 	{Seam: "shift.refactor", Package: "internal/shift", Function: "beginPass"},
 	{Seam: "line.resolve", Package: "cmd/bench", Function: "beginResolveSpan"},
+	{Seam: "shift.recovery", Package: "internal/shift", Function: "recordRecovery"},
 }

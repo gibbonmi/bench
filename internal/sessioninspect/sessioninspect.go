@@ -17,6 +17,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/sanitize"
+	"github.com/gibbonmi/bench/internal/shift"
 	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -25,7 +26,7 @@ type phase func(context.Context, io.Writer, io.Writer, string) int
 
 type stderrKey struct{}
 
-var phases = []phase{environmentPhase, resumePhase, statusPhase, guardsPhase}
+var phases = []phase{environmentPhase, resumePhase, recoveryPhase, statusPhase, guardsPhase}
 var runInspect = Inspect
 
 func Inspect(ctx context.Context, w io.Writer, root string) int {
@@ -120,6 +121,14 @@ func resumePhase(ctx context.Context, stdout, stderr io.Writer, root string) int
 		fmt.Fprintln(stderr, "warning: bench session-start: resume-clean failed; inspect retained worktree state")
 	}
 	return code
+}
+
+// recoveryPhase runs the shift recovery pass after the resume phase, so a session start
+// closes each shift intent whose owner is gone.
+func recoveryPhase(ctx context.Context, stdout, _ io.Writer, root string) int {
+	_ = ctx
+	shift.Recover(root, stdout)
+	return 0
 }
 
 func statusPhase(ctx context.Context, stdout, _ io.Writer, root string) int {

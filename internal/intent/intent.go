@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -108,12 +109,39 @@ func readPath(path string) (Ledger, error) {
 // acquire. The key is the objective's identifier; the ledger stores no free-form
 // objective text. Callers retain the returned value and enrich that same key later.
 func NewEntry(kind Kind) Entry {
+	return EntryOwnedBy(kind, os.Getpid())
+}
+
+// EntryOwnedBy is NewEntry for the owner process pid. The key is the kind, the owner,
+// and the creation instant, and KeyOwner is its one parse.
+func EntryOwnedBy(kind Kind, pid int) Entry {
 	now := time.Now().UTC()
 	return Entry{
-		Key:       fmt.Sprintf("%s-%d-%d", kind, os.Getpid(), now.UnixNano()),
+		Key:       fmt.Sprintf("%s-%d-%d", kind, pid, now.UnixNano()),
 		Kind:      kind,
 		CreatedAt: now,
 	}
+}
+
+// KeyOwner returns the owner process that EntryOwnedBy wrote into a key of kind. It
+// reports false for a key that no writer of kind made.
+func KeyOwner(kind Kind, key string) (int, bool) {
+	rest, ok := strings.CutPrefix(key, string(kind)+"-")
+	if !ok {
+		return 0, false
+	}
+	owner, stamp, ok := strings.Cut(rest, "-")
+	if !ok {
+		return 0, false
+	}
+	pid, err := strconv.Atoi(owner)
+	if err != nil || pid <= 0 {
+		return 0, false
+	}
+	if _, err := strconv.ParseInt(stamp, 10, 64); err != nil {
+		return 0, false
+	}
+	return pid, true
 }
 
 // Upsert inserts or enriches one stable writer key. An identical upsert does not

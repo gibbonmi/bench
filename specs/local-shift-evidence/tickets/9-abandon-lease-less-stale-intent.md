@@ -1,7 +1,7 @@
 # 9. Abandon lease-less stale intent
 
 Blocked by: 4-record-the-shift-boundaries.md, 8-complete-the-shift-intent-on-exit.md
-Writes: internal/shift/recover.go (new), internal/shift/recover_test.go (new), internal/shift/loop.go, internal/intent/intent.go, internal/intent/ledger/ledger.go, internal/sessioninspect/sessioninspect.go, internal/sessioninspect/sessioninspect_test.go, internal/otelrecord/attributes.go, internal/otelrecord/registry.go
+Writes: internal/shift/recover.go (new), internal/shift/recover_test.go (new), internal/shift/loop.go, internal/intent/intent.go, internal/intent/ledger/ledger.go, internal/sessioninspect/sessioninspect.go, internal/sessioninspect/sessioninspect_test.go, internal/otelrecord/attributes.go, internal/otelrecord/registry.go, internal/worktree/lifecycle.go, internal/worktree/lifecycle_test.go
 Covers: LE72, LE73, LE74, LE76, LE77, LE78, LE79
 
 ## What to build

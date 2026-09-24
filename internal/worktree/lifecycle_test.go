@@ -175,7 +175,7 @@ func deadPidLine(t *testing.T) string {
 		t.Fatalf("spawn reap victim: %v", err)
 	}
 	pid := cmd.Process.Pid
-	if pidAlive(pid) {
+	if PIDAlive(pid) {
 		capability.Capability(t, capability.PID, "reaped pid reused before use")
 	}
 	return fmt.Sprintf("%d 2026-07-05T00:00:00Z\n", pid)

@@ -181,6 +181,8 @@ const (
 	WorkCompleted   = "completed"
 	WorkFailed      = "failed"
 	WorkInterrupted = "interrupted"
+	WorkRecovered   = "recovered"
+	WorkAbandoned   = "abandoned"
 )
 
 // The cleanup vocabulary: the run released its worktree, retained it for recovery, or
