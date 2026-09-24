@@ -385,6 +385,7 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - A sealed segment that the prune removes between a reader's list and its open — `ReadSpans` returns an error once, and the next read succeeds. LE15 survives.
 - A rotation between a reader's list and its live open — the reader misses the newly sealed segment and reports no error. The next read sees that segment, and LE15 survives.
 - The existing oversized live record — the first rotation seals it whole, and the count retention ages it out. LE14 survives.
+- A planted file at the largest sequence name — the writer refuses each rotation, and the live segment grows until an operator removes the file. LE106 survives.
 - An append or rename failure inside the span processor — the processor drops it, because the FT274 record never changes a verb outcome. The memory store failure keeps its own state, and LE95 survives.
 - A span status description — no seam sets one. The declared-key filter covers every attribute, and LE6 survives.
 - Free text inside a declared value, such as the lane diagnostic — review grades the value source of each declared key. LE7 survives.
@@ -562,7 +563,7 @@ The reviewer closed these four decisions at sign-off on 2026-09-23:
 3. This spec does not ship the `bank.ft71.local_event` producer. The producer is priced under Out of scope as its own capability, because FT88 closed with no producer and the release track stays NO-GO.
 4. The retained notes text lives in a 0600 memory file beside the record, referenced by digest. A span event would put model prose in the record, and the FT274 declared set forbids a payload.
 
-The reviewer closed two decisions at the LE-A review on 2026-09-23:
+The reviewer closed three decisions at the LE-A review on 2026-09-23:
 
 1. The listing of sealed names is the existence check, so the writer has no separate free-name step. LE94 grades a rotation that ignores the present names.
 2. A reader can miss a segment that a rotation seals between its list and its live open. A Won't handle line records this window.
