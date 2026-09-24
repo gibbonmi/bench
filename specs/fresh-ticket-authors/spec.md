@@ -217,6 +217,8 @@ The reviewer closed these decisions on 2026-09-24:
 6. A post-review repair goes to a fresh session recorded as a new assignment with the trigger `user-directed`.
 7. `internal/reviewrecord` stays unchanged.
 8. The change supersedes ADR 0021's single-author decision by promotion.
+9. For ticket 1, the reviewer grants a one-time permission rule for `.bench/BENCH.md` and removes it after the ticket commits.
+10. The repair record uses the existing `user-directed` trigger with its stopped-writer evidence, and this spec adds no new trigger.
 
 ### Bootstrap
 
