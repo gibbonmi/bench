@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, LE-B2, LE-C1, and LE-C2 are accepted. The LE-C2 confirming round passed on all three axes.
+Status: LE-A, LE-B1, LE-B2, LE-C1, and LE-C2 are accepted. LE-C3 is committed, and its review of the three axes is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -221,7 +221,7 @@ Three advisories go to LE-B2, because a repair here would need another confirmin
 
 The LE-B1 build cited its tests in the spec, and its repair added row LE107. These edits changed the plan identity after LE-A. The chunk IDs stay the same, so LE-A maps to LE-A.
 
-The LE-B2 build raised the shift grant to 16, fenced `pass_test.go`, `shift_test.go`, and `main_test.go`, and cited its tests. Those edits changed the plan identity again, and LE-A and LE-B1 map to themselves. The LE-B2 repairs corrected spec sentences and recorded a reviewer decision, and each later amendment maps LE-A and LE-B1 again. The LE-C1 build cited its tests and widened ticket 8, and its amendment maps LE-A, LE-B1, and LE-B2. The LE-C2 build did the same for ticket 9, and its amendment also maps LE-C1.
+The LE-B2 build raised the shift grant to 16, fenced `pass_test.go`, `shift_test.go`, and `main_test.go`, and cited its tests. Those edits changed the plan identity again, and LE-A and LE-B1 map to themselves. The LE-B2 repairs corrected spec sentences and recorded a reviewer decision, and each later amendment maps LE-A and LE-B1 again. The LE-C1 build cited its tests and widened ticket 8, and its amendment maps LE-A, LE-B1, and LE-B2. The LE-C2 build did the same for ticket 9, and its amendment also maps LE-C1. The LE-C3 build did the same for ticket 10, and its amendment also maps LE-C2.
 
 ## LE-B2 author verification
 
@@ -478,11 +478,35 @@ Three fresh axes graded the code tip `c773970a` with the source digest `e2915052
 
 Two axes note that a reaped child's process id can be reused before the pass runs. The worktree tests accept that risk, and LEC2-S1 chose that precedent over a second copy of the dead-owner fact.
 
+## LE-C3 author verification
+
+The frozen pair is `d2111dfa..f2ba5663`. The two planned checks and the root conformance test passed at the chunk tip. A learning records the ticket 10 Writes expansion. The tests came after the code, so each row's red is a probe.
+
+| Row | Test | Probe |
+|---|---|---|
+| LE64, LE65 | `TestRecoverRecoversAKilledDirtyShift` | Never recover a leased entry: bit. |
+| LE91 | `TestRecoverRecoversAKilledDirtyShift` | Keep no notes before the claim: bit. |
+| LE66, LE67 | `TestRecoverRecoversAKilledDirtyShift` | Release a dirty tree: bit. |
+| LE100 | `TestRecoverRecoversAKilledDirtyShift` | Resume any dead lease: bit. |
+| LE68 | `TestRecoverReleasesAKilledCleanShift` | Lock a clean tree: bit. |
+| LE69, LE70 | `TestRecoverAbandonsAnotherDeadIdentity` | Trust the path alone: bit. |
+| LE89 | `TestRecoverAbandonsAnAbsentLease` | Read an absent lease as a dead owner: bit. |
+| LE103, LE71 | `TestRecoverKeepsAnUnprovenLease` | Ignore a live owner: bit. |
+| LE75, LE90 | `TestRecoverKeepsAnUnprovenLease` | Read a bad lease as another owner: bit. |
+| LE97 | `TestClaimRecordedLeaseConcedesToAWriterInTheGap` | Skip the moved-bytes check: bit. |
+| LE98 | `TestRecoverConcedesAFaultedClaim` | Act after a lost claim: bit. |
+| LE105 | `TestRecoverConcedesAFaultedClaim` | Keep no notes before the claim: bit. |
+| LE99 | `TestRecoverFinishesAnInterruptedRecovery` | Never resume a recovered entry: bit. |
+| LE101 | `TestRecoverFinishesAnInterruptedRecovery` | Keep the notes again on resume: bit. |
+| LE104 | `TestRecoverKeepsARecoveryUnderAnotherLease` | Resume any dead lease: bit. |
+
+The takeover judgment is a `claimAt` parameter, so `lifecycle.go` and `subshell.go` keep their line counts. `ReadLease` beside the lease writer closes the LE-C1 deferral, and the LE63 test compares the lease line exactly. A test helper read a FIFO lease and blocked; `/bench-debug` also found three new claim tests without `t.Parallel()`.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/local-shift-evidence/spec.md",
-  "plan_digest": "sha256:2fa3b73470f28692ee1971b920079a592dc94f250ac9b37c82ae9cb72c0192aa",
+  "plan_digest": "sha256:e37d617a4b777e7c4b022938aa3e5fcd47b7287047f169b8b310d73356c3bffc",
   "implementation_session": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
   "chunks": [
     {
@@ -2422,6 +2446,74 @@ Two axes note that a reaped child's process id can be reused before the pass run
           ]
         }
       ]
+    },
+    {
+      "id": "LE-C3",
+      "base": "d2111dfa3a2474fb9d613e8aa3bf6cb982de3aba",
+      "tip": "f2ba5663f72d7177eba6b292f36540750fe4c71f",
+      "plan_digest": "sha256:e37d617a4b777e7c4b022938aa3e5fcd47b7287047f169b8b310d73356c3bffc",
+      "source_digest": "c65b7c3e44161fb52c2a0000ac140382030140a3",
+      "acceptance_rows": [
+        "LE64",
+        "LE65",
+        "LE91",
+        "LE105",
+        "LE66",
+        "LE67",
+        "LE68",
+        "LE69",
+        "LE70",
+        "LE89",
+        "LE103",
+        "LE71",
+        "LE75",
+        "LE90",
+        "LE97",
+        "LE98",
+        "LE99",
+        "LE101",
+        "LE100",
+        "LE104"
+      ],
+      "verification": [
+        {
+          "id": "LE-C3-verify-shift-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "c65b7c3e44161fb52c2a0000ac140382030140a3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/shift at f2ba5663",
+            "digest": "sha256:b391d2ee212f37048093c3dc675246a1801d42decf45224b1962cd2a6a4e0a43",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/shift,pass,6201\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "shift",
+          "command": "bench test --package ./internal/shift",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-C3-verify-worktree-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "c65b7c3e44161fb52c2a0000ac140382030140a3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/worktree --run TestClaimRecordedLease at f2ba5663",
+            "digest": "sha256:f6f0c6b6a5fdd954801f25fd0e90e6c9dcdd6c20ba4a0ee8ad4136050a955c47",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree --run TestClaimRecordedLease",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -2540,6 +2632,27 @@ Two axes note that a reaped child's process id can be reused before the pass run
         ],
         "LE-C1": [
           "LE-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:2fa3b73470f28692ee1971b920079a592dc94f250ac9b37c82ae9cb72c0192aa",
+      "to": "sha256:e37d617a4b777e7c4b022938aa3e5fcd47b7287047f169b8b310d73356c3bffc",
+      "chunk_ids": {
+        "LE-A": [
+          "LE-A"
+        ],
+        "LE-B1": [
+          "LE-B1"
+        ],
+        "LE-B2": [
+          "LE-B2"
+        ],
+        "LE-C1": [
+          "LE-C1"
+        ],
+        "LE-C2": [
+          "LE-C2"
         ]
       }
     }
