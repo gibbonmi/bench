@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 )
 
@@ -297,4 +298,47 @@ func TestAFailedAcquireStillEndsTheShiftSpan(t *testing.T) {
 func TestARetainedShiftRecordsRetainedCleanup(t *testing.T) {
 	span, _, _ := retainedShift(t)
 	requireAttr(t, span, otelrecord.AttrCleanup, otelrecord.CleanupRetained)
+}
+
+// shiftIntent returns the live intent entry of key in the working repository.
+func shiftIntent(t *testing.T, key string) (intent.Entry, bool) {
+	t.Helper()
+	root, err := git.Root()
+	if err != nil {
+		t.Fatal(err)
+	}
+	entries, err := intent.Snapshot(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		if entry.Key == key {
+			return entry, true
+		}
+	}
+	return intent.Entry{}, false
+}
+
+// LE61: a green shift ends its intent.
+func TestAGreenShiftEndsItsIntent(t *testing.T) {
+	span, _, _ := completeShift(t)
+	if entry, ok := shiftIntent(t, span.Attributes[otelrecord.AttrIntentKey]); ok {
+		t.Fatalf("the finished shift left a live intent entry: %+v", entry)
+	}
+}
+
+// LE63: the shift records the lease line its acquire wrote.
+func TestAShiftRecordsItsLease(t *testing.T) {
+	faultFixtureCore(t, "#!/usr/bin/env bash\nexit 1\n", nil)
+	lease := filepath.Join(t.TempDir(), "lease")
+	withAgent(t, "echo work >> work.txt\ncp \"$(git rev-parse --git-path "+git.BenchLeaseFilename+")\" '"+lease+"'\n")
+	span, _, _ := runRecordedShift(t, 1)
+	written, err := os.ReadFile(lease)
+	if err != nil {
+		t.Fatal(err)
+	}
+	entry, ok := shiftIntent(t, span.Attributes[otelrecord.AttrIntentKey])
+	if !ok || entry.Lease == "" || entry.Lease+"\n" != string(written) {
+		t.Fatalf("intent lease = %q (live %v), want the acquired lease line %q", entry.Lease, ok, written)
+	}
 }

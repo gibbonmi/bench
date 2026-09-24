@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -184,7 +185,9 @@ func interruptedShift(t *testing.T) (otelrecord.Span, []otelrecord.Span, []byte)
 	t.Helper()
 	root := faultFixtureCore(t, greenGate, nil)
 	started := filepath.Join(t.TempDir(), "started")
-	withAgent(t, "touch '"+started+"'\nexec sleep 30\n")
+	window := bounds.TestDeadline(0)
+	// The adapter outlasts the window, so a shift that waits for it instead of stopping it reds.
+	withAgent(t, fmt.Sprintf("touch '%s'\nexec sleep %d\n", started, 2*int(window/time.Second)))
 	cmd := exec.Command(os.Args[0], "-test.run=^TestShiftHelperProcess$")
 	cmd.Dir = root
 	cmd.Env = append(os.Environ(), helperRoleEnv+"=interrupt")
@@ -195,7 +198,6 @@ func interruptedShift(t *testing.T) (otelrecord.Span, []otelrecord.Span, []byte)
 	t.Cleanup(func() { _ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) })
 	done := make(chan error, 1)
 	go func() { done <- cmd.Wait() }()
-	window := bounds.TestDeadline(0)
 	for deadline := time.Now().Add(window); ; time.Sleep(20 * time.Millisecond) {
 		if _, err := os.Stat(started); err == nil {
 			break

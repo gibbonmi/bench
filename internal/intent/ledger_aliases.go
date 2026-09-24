@@ -25,6 +25,7 @@ const (
 	KindClaudeAgent = ledger.KindClaudeAgent
 
 	AssignmentRecordSchema = ledger.AssignmentRecordSchema
+	RecoveryNone           = ledger.RecoveryNone
 	RecoveryRefNamespace   = ledger.RecoveryRefNamespace
 	ResetRefNamespace      = ledger.ResetRefNamespace
 

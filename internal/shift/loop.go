@@ -72,6 +72,20 @@ func evidenceResult(s *session, detail string) Result {
 	}
 }
 
+// acquiredLease returns the line the acquire wrote into wt's lease, without its final
+// newline. An unreadable lease records no line.
+func acquiredLease(wt string) string {
+	path, err := worktree.LeaseFile(wt)
+	if err != nil {
+		return ""
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSuffix(string(raw), "\n")
+}
+
 // branchCollisionRetries bounds how many disambiguating suffixes createShiftBranch tries
 // before it gives up and reports the creation failure. Ten total attempts, the bare
 // per-second name then -2 through -10, gives generous headroom for concurrent same-second
@@ -169,6 +183,7 @@ func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return finish(stdout, stderr, mainRoot, &intentEntry, record, Result{Outcome: OutcomeUsage, Detail: "could not acquire a worktree"})
 	}
+	intentEntry.Lease = acquiredLease(wt)
 
 	s := &session{agent: os.Getenv("BENCH_AGENT"), root: wt, stdout: stdout, stderr: stderr, mainRoot: mainRoot, entry: &intentEntry, record: record}
 	record.session = s

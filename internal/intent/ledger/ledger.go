@@ -34,7 +34,14 @@ type Entry struct {
 	// resolves an outcome.
 	Outcome  string `json:"outcome,omitempty"`
 	Recovery string `json:"recovery,omitempty"`
+	// Lease is the line a shift's worktree acquire wrote into its lease, without the
+	// final newline. It ties the entry to the lease owner, so a later recovery can tell
+	// the shift's own lease from a newer owner's.
+	Lease string `json:"lease,omitempty"`
 }
+
+// RecoveryNone is the recovery pointer that means nothing is left to recover.
+const RecoveryNone = "none"
 
 type Ledger struct {
 	Schema          int              `json:"schema"`

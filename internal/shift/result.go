@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -42,7 +43,7 @@ var resultFields = []string{"outcome", "exit", "branch", "committed", "iteration
 // RecoveryNone is the one recovery-pointer sentinel meaning "nothing to preserve". The
 // shift_result block, the intent-ledger record, and bench status's rendering all use it,
 // so the three surfaces never drift on what "no recovery" looks like.
-const RecoveryNone = "none"
+const RecoveryNone = intent.RecoveryNone
 
 // recoveryWorktree is the recovery pointer's only non-"none" constructor: a preserving
 // failure leaves the dirty tree at its own path, so the pointer names that path.

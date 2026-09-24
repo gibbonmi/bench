@@ -314,10 +314,10 @@ Review iteration 1 split the old LE-C2 into LE-C2 and LE-C3. The old ticket 9 be
 | LE95 | 61 | With a symlinked memory directory, a green shift's span carries `bench.memory.state` `failed` | `TestAFailedMemoryWriteKeepsTheOutcome` in `internal/shift` | A shift that drops the store error leaves the memory keys undefined, so the value read reds. |
 | LE102 | 61 | With a symlinked memory directory, a green shift still ends with `bench.shift.outcome` `complete` and exit 0 | `TestAFailedMemoryWriteKeepsTheOutcome` in `internal/shift` | A shift that lets a record failure change its outcome exits nonzero, so the exit read reds. |
 | LE59 | 32 | The first adapter of a second shift reads an empty `.bench-notes.md`, and its stdin prompt holds no `MEMMARK` | `TestASecondShiftStartsWithEmptyNotes` in `internal/shift` | A shift that seeds its notes from the retained memory puts `MEMMARK` in the worktree, so the read reds. |
-| LE60 | 33 | `Live` drops an entry with the outcome `complete` and the recovery `none` whose worktree exists | planned policy test in `internal/intent/admissionpolicy` | Today's rule keeps every entry whose worktree exists, so the entry stays live and the read reds. |
-| LE61 | 33 | After a green shift exits, `intent.Snapshot` holds no entry for its key | planned shift test in `internal/shift` | A shift whose outcome does not end its intent leaves a live entry, so the read reds. |
-| LE62 | 34 | `Live` keeps an entry with the outcome `failed` and a `worktree:` recovery whose worktree exists | planned policy test in `internal/intent/admissionpolicy` | A rule that drops every terminal entry loses the recovery pointer, so the read reds. |
-| LE63 | 35 | After the acquire, the ledger entry of the shift carries a `lease` value equal to the lease line that the acquire wrote | planned shift test in `internal/shift` with an adapter that copies the lease file | A shift that never records the lease leaves the field empty, so the equality reds. |
+| LE60 | 33 | `Live` drops an entry with the outcome `complete` and the recovery `none` whose worktree exists | `TestLiveDropsAFinishedShiftWithNoRecovery` in `internal/intent/admissionpolicy` | Today's rule keeps every entry whose worktree exists, so the entry stays live and the read reds. |
+| LE61 | 33 | After a green shift exits, `intent.Snapshot` holds no entry for its key | `TestAGreenShiftEndsItsIntent` in `internal/shift` | A shift whose outcome does not end its intent leaves a live entry, so the read reds. |
+| LE62 | 34 | `Live` keeps an entry with the outcome `failed` and a `worktree:` recovery whose worktree exists | `TestLiveKeepsAShiftWithAWorktreeRecovery` in `internal/intent/admissionpolicy` | A rule that drops every terminal entry loses the recovery pointer, so the read reds. |
+| LE63 | 35 | After the acquire, the ledger entry of the shift carries a `lease` value equal to the lease line that the acquire wrote | `TestAShiftRecordsItsLease` in `internal/shift` | A shift that never records the lease leaves the field empty, so the equality reds. |
 | LE72 | 41 | An entry with no lease and no worktree whose key names a dead process gets the outcome `abandoned` | planned recovery test in `internal/shift` with a seeded ledger | A pass that skips entries with no lease leaves the stale intent live, so the read reds. |
 | LE73 | 41 | An entry with no lease whose key names the live test process stays unchanged | planned recovery test in `internal/shift` with a seeded ledger | A pass that abandons every entry with no lease drops a running shift, so the read reds. |
 | LE74 | 41 | An entry whose key does not parse as a shift key stays unchanged | planned recovery test in `internal/shift` with a seeded ledger | A parse that reads an unknown key as a dead process abandons it, so the read reds. |
@@ -443,6 +443,7 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - `internal/shift/recover_test.go`
 - `internal/intent/intent.go`
 - `internal/intent/ledger/ledger.go`
+- `internal/intent/ledger_aliases.go`
 - `internal/intent/admissionpolicy/admissionpolicy.go`
 - `internal/intent/admissionpolicy/liveness_test.go`
 - `internal/sessioninspect/sessioninspect.go`

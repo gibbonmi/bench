@@ -63,10 +63,18 @@ func Live(current ledger.Ledger, facts LivenessFacts) []ledger.Entry {
 			}
 			continue
 		}
+		// A run that recorded its outcome and left nothing to recover is done, even while
+		// its pool worktree persists after the release. A run that holds a recovery pointer
+		// stays live while its worktree exists, so the status keeps the pointer even when
+		// its branch holds no commit and reads as landed.
+		recovering := entry.Recovery != "" && entry.Recovery != ledger.RecoveryNone
+		if entry.Outcome != "" && !recovering {
+			continue
+		}
 		if entry.Worktree != "" && !facts.WorktreeExists[entry.Worktree] {
 			continue
 		}
-		if entry.Branch != "" && facts.Landed[entry.Branch] {
+		if entry.Branch != "" && facts.Landed[entry.Branch] && !recovering {
 			continue
 		}
 		live = append(live, entry)
