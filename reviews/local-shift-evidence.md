@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, LE-B2, LE-C1, and LE-C2 are accepted. LE-C3 is committed, and its review of the three axes is pending.
+Status: LE-A, LE-B1, LE-B2, LE-C1, and LE-C2 are accepted. The LE-C3 review returned 11 findings; repair cycle 1 is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -501,6 +501,36 @@ The frozen pair is `d2111dfa..f2ba5663`. The two planned checks and the root con
 | LE104 | `TestRecoverKeepsARecoveryUnderAnotherLease` | Resume any dead lease: bit. |
 
 The takeover judgment is a `claimAt` parameter, so `lifecycle.go` and `subshell.go` keep their line counts. `ReadLease` beside the lease writer closes the LE-C1 deferral, and the LE63 test compares the lease line exactly. A test helper read a FIFO lease and blocked; `/bench-debug` also found three new claim tests without `t.Parallel()`.
+
+## LE-C3 review round 1
+
+Three fresh axes graded the frozen pair `d2111dfa..c662fa2c` with the code tip `f2ba5663`. Each axis read the manifest, confirmed the current binding, and read the code delta. Raw findings: 11. Repair targets after de-duplication: 9, of which 6 take a repair. LEC3-P2 repeats LEC3-S2, and LEC3-C1 repeats LEC3-P1.
+
+### Standards
+
+Findings: 4. Worst issue: LEC3-S1.
+
+- LEC3-S1 (no-op, confidence 6): `finishRecovery` restates the preserve choice of `preserveAndRecover`. The recovery holds no session, so it cannot share the session's once-only teardown and its fault step. The two paths share only the words of the act.
+- LEC3-S2 (auto-fix, confidence 6): the lease newline is written, added, and trimmed in three places.
+- LEC3-S3 (auto-fix, confidence 6): `judge` reads and compares the lease twice.
+- LEC3-S4 (no-op, confidence 4): the `staleLease` line is long, and a wrap would grow `lifecycle.go` past its line count.
+
+### Spec
+
+Findings: 2. Worst issue: LEC3-P1.
+
+- LEC3-P1 (auto-fix, confidence 6): the dirty act drops its lease on any lock error. The ticket skips only the lock of a tree that is already locked.
+- LEC3-P2 (auto-fix, confidence 8): `ReadLease` accepts a line with no final newline, so the verdict differs from the claim's recorded line plus one newline.
+
+### Coverage
+
+Findings: 5. Worst issue: LEC3-C1.
+
+- LEC3-C1 (auto-fix, confidence 6): the same defect as LEC3-P1, with no test of the locked branch.
+- LEC3-C2 (auto-fix, confidence 8): the LE91 mutation that keeps the notes after the act survives the dirty test, because the lock keeps the notes.
+- LEC3-C3 (auto-fix, confidence 7): no test reads the memory keys of a fresh recovery, their absence on a resume, or a resumed clean entry. An abandon between the two entry writes needs a concurrent-writer seam that the plan does not have; it stays a known gap.
+- LEC3-C4 (auto-fix, confidence 8): the FIFO case has no deadline of its own.
+- LEC3-C5 (no-op, confidence 3): a reaped process id can be reused, the risk the worktree tests accept.
 
 ```bench-review-record
 {
@@ -2513,7 +2543,82 @@ The takeover judgment is a `claimAt` parameter, so `lifecycle.go` and `subshell.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "LE-C3-review-standards-1",
+          "performer": "claude-code:subagent:ae944b4b2e25e62d8",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c65b7c3e44161fb52c2a0000ac140382030140a3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:ae944b4b2e25e62d8, evidence sha256:d3c29c6619e1eccd2fdec8aba2710b266d0f1c44e8034ea9491dccd51107c764",
+            "digest": "sha256:60572adeed003b027eacbc060d9a20729f1adee8bb200bf3fb9a87194a53060e",
+            "excerpt": "Verdict: changes requested, with 4 findings. Worst issue: `finishRecovery` builds a second copy of the shift's preserve step."
+          },
+          "axis": "Standards",
+          "base": "d2111dfa3a2474fb9d613e8aa3bf6cb982de3aba",
+          "tip": "f2ba5663f72d7177eba6b292f36540750fe4c71f",
+          "finding_ids": [
+            "LEC3-S1",
+            "LEC3-S2",
+            "LEC3-S3",
+            "LEC3-S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "LE-C3-review-spec-1",
+          "performer": "claude-code:subagent:a8bbd6af0a9fc8c3c",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c65b7c3e44161fb52c2a0000ac140382030140a3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a8bbd6af0a9fc8c3c, evidence sha256:d3c29c6619e1eccd2fdec8aba2710b266d0f1c44e8034ea9491dccd51107c764",
+            "digest": "sha256:69bc90cc0563a59745ccdef1e4f245361afb5b859802f1e8ff23cf1399d44f75",
+            "excerpt": "Verdict: conforms, with two minor deviations. Findings: 2. Nothing goes beyond the approved behavior."
+          },
+          "axis": "Spec",
+          "base": "d2111dfa3a2474fb9d613e8aa3bf6cb982de3aba",
+          "tip": "f2ba5663f72d7177eba6b292f36540750fe4c71f",
+          "finding_ids": [
+            "LEC3-P1",
+            "LEC3-P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "LE-C3-review-coverage-1",
+          "performer": "claude-code:subagent:a3fe6c0e5d9b87d4b",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c65b7c3e44161fb52c2a0000ac140382030140a3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a3fe6c0e5d9b87d4b, evidence sha256:d3c29c6619e1eccd2fdec8aba2710b266d0f1c44e8034ea9491dccd51107c764",
+            "digest": "sha256:f75913a9bb7202117da274ce947b3c53c31219ef6ea82ac78386f0093cf9896d",
+            "excerpt": "Verdict: the coverage is adequate with gaps. I found 5 findings. The worst is an untested branch in `finishRecovery` that can drop the lease of a dirty tree it never locked."
+          },
+          "axis": "Coverage",
+          "base": "d2111dfa3a2474fb9d613e8aa3bf6cb982de3aba",
+          "tip": "f2ba5663f72d7177eba6b292f36540750fe4c71f",
+          "finding_ids": [
+            "LEC3-C1",
+            "LEC3-C2",
+            "LEC3-C3",
+            "LEC3-C4",
+            "LEC3-C5"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
