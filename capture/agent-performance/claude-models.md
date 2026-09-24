@@ -1,9 +1,9 @@
 # Claude model scorecard
 
-Last incorporated landing: `slicing-closure` (`0485927c0503cb0eafc8245554a279d54647ceb3`, 2026-09-18).
-One retained Opus session authored and orchestrated four tickets in three chunks, at medium effort for code and high effort for guidance.
-Fable/medium ran the review axes through the SC-C2 first round, and Opus/high ran every later axis by reviewer direction.
-The landing recorded 8 labeled pairs, with a Brier mean of 0.11 and 0 abstentions.
+Last incorporated landing: `local-shift-evidence` (`38c9aa291f43e4bb792fc5c8f66c0c4a54b0bf48`, 2026-09-24).
+One retained Opus/medium session authored and orchestrated 13 tickets in 7 chunks.
+Opus/high ran every review axis in a fresh session with narrow retrieval, by reviewer direction.
+The retro recorded 6 labeled pairs for the last chunk, with a Brier mean of 0.105 and 0 abstentions.
 Token counts, provider costs, and comparative latency remain unknown.
 
 ## Current routing
@@ -12,8 +12,8 @@ Token counts, provider costs, and comparative latency remain unknown.
 | --- | --- | --- | --- | --- |
 | Fable / low–high | orchestrator, 36 landings + implementer, 10 charges + reviewer, 21 axes | On `slicing-closure` the medium axes found the trailing-slash bypass with a probe and two one-source defects, and each finding held. One Coverage probe on the shared tree reddened a concurrent Spec run, and two returns skipped changed evidence pages. | Coordination of a delegated build and adversarial spec review; it implements only when the reviewer names it | orchestrator 0.36 over 1 pair; medium reviewer 0.188 over 17 pairs; 0 abstained |
 | Fable / high | reviewer, 3 axes on 1 landing | On `ft311-recoverable-reset` the three axes found the below-path collision, the ignore-rule drift that deleted bytes, the hidden index flags, and the primary-side checkpoint resolution, each with an executed probe, and the Standards axis enumerated every one-source duplicate with its callers. | Review axes over a candidate another provider built, when the reviewer names the tier | unknown |
-| Opus / high | implementer, latest 10 guidance and Go-seam charges; reviewer, latest 12 axes | On `slicing-closure` the high axes found a map row that named a grader blind to the live tree, a false completeness claim, and a pinned clause that a repair had split off, and each finding held. The guidance author needed two repair cycles on SC-C3. | High for process lifecycle, cleanup authority, destructive commands, anchored guidance, foundational Go seams, and review axes by reviewer direction. | 0.025 over 42 pairs; 2 abstained |
-| Opus / medium, low | implementer, orchestrator, and reviewer combined | On `slicing-closure` the retained medium author built two preflight rows with red-first tests and biting plan probes, but its approved `Writes:` lines missed seven seed and row readers across five packages. It used 2 of 2 repair cycles on SC-C1 against a declared expectation of 2. | Medium for gates, conformance, guidance, canaries, repair, Coverage, triage, and the repair-scoped re-review. Low for exact tickets and Standards or Spec review. | 0.262 over 12 pairs; 9 abstained |
+| Opus / high | implementer, latest 10 guidance and Go-seam charges; reviewer, latest 12 axes | On `local-shift-evidence` the fresh narrow axes read one binding check, one diff, and targeted files, and each axis cost about 20k to 45k tokens. Every LE-D finding held, and the LE-C3 axes found the lease-drop branch and the untested lock path. | High for process lifecycle, cleanup authority, destructive commands, anchored guidance, foundational Go seams, and review axes by reviewer direction. | 0.025 over 42 pairs; 2 abstained |
+| Opus / medium, low | implementer, orchestrator, and reviewer combined | On `local-shift-evidence` the retained medium author landed 13 tickets with biting probes, and it widened three `Writes:` lines through recorded plan expansions. LE-A and LE-B2 each needed a third repair cycle by reviewer extension, and the other chunks needed one. | Medium for gates, conformance, guidance, canaries, repair, Coverage, triage, and the repair-scoped re-review. Low for exact tickets and Standards or Spec review. | 0.262 over 12 pairs; 9 abstained |
 | Sonnet / high | orchestrator, 3 landings + later-pass reviewer, 14 axes | On `calibrated-decisions` the later passes at high reaffirmed every repaired chunk at its exact tip with zero findings, and the Standards pass recomputed the Brier total from six sources. One xhigh Coverage pass on CD2 raised two findings and one was refuted at confidence 8. | Later review passes after a repair, and orchestration; compare again after a fourth orchestrated build | high 0 labeled pairs; xhigh 0.40 over 2 pairs |
 | Sonnet / low–medium | implementer, latest 10 of 79 ticket-sized charges | On `ft311-diagnostics` one low charge landed after two corrections: its case-fold fixture was not red-capable for the row's named mutation, and its fixture left the fenced directory. On `craft-research-skill` one low review repair closed five findings first-pass with a biting omission probe. | Low for a prose or exact-spec repair at a known seam under a covering gate when the reviewer names it; the coordinator probes every return and runs the whole-tree gate before the landing | unknown |
 
@@ -32,9 +32,9 @@ Token counts, provider costs, and comparative latency remain unknown.
 - Change routing only after two comparable runs, one controlled comparison, or explicit user direction.
 - The top tier implements only when the reviewer names it for the run.
 - Use Opus/high as the delegated ticket author, and use a fresh writer when a fork would inherit another tier.
-- Use Opus/high for the review axes of a chunk by reviewer direction, and continue the same axis session for a confirming round.
+- Use Opus/high for the review axes of a chunk by reviewer direction, and run each axis and each confirming round in a fresh session.
+- Charge each axis with narrow retrieval: one binding check, one diff, targeted reads, and a bounded return.
 - Let only one review axis run tests or probes on a shared tree.
-- Accept an axis return only after it lists every changed evidence page that it fetched.
 - Use Fable/high to review another provider's candidate when the reviewer names the tier.
 - Keep Opus/high for shared guidance and its standing cross-harness review.
 - Use Sonnet/low for an exact ticket only when the coordinator probes the named mutation before commit.
