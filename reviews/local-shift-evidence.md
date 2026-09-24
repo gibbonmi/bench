@@ -1,12 +1,12 @@
 # Local shift evidence review record
 
-Status: LE-A repair cycle 2 is committed; the second confirming round of the three axes is pending.
+Status: the second LE-A confirming round returned 1 finding; repair cycle 3 is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
 Line: opus (claude-opus-5-5) / medium / uncapped
 Review line: opus / high / one iteration for each axis
-Post-review repair cycles consumed: LE-A 2 of 2
+Post-review repair cycles consumed: LE-A 2 of 3. The reviewer extended the LE-A allowance by one cycle on 2026-09-23. The extra cycle covers LEA-S7 and each blocker of the second confirming round.
 Expected repair rounds: 2
 Confidence: 5
 
@@ -117,6 +117,17 @@ The ticket `repair-le-a-review-round-2.md` covers the new row LE106.
 | LEA-S6 | The problem-address test comment carries no review ID. | Review of the text. |
 | LEA-C4 | The problem-address test reads a live problem after a sealed segment as line 1. | The probe that removes the per-segment reset bit. |
 | LEA-C5 | The writer refuses a rotation at the largest sequence. | `TestARotationRefusesTheLastSequence`; the probe that removes the guard bit. |
+
+## LE-A second confirming round
+
+The three axes graded the pair `ba9b8621..c23a31ab` with the source digest `2d7449e7`. LEA-S5, LEA-S6, LEA-C4, and LEA-C5 are closed.
+
+- Standards, 1 finding. Worst issue: LEA-S7.
+  - LEA-S7 (auto-fix, confidence 9): the spec says that the reviewer closed two decisions at the LE-A review, but the list below holds three. Rule: one source per fact.
+- Spec, 0 findings.
+- Coverage, 0 findings.
+
+Raw findings: 1. Repair targets: 1.
 
 ```bench-review-record
 {
@@ -521,6 +532,74 @@ The ticket `repair-le-a-review-round-2.md` covers the new row LE106.
           ],
           "supersedes": [
             "LE-A-review-coverage-1"
+          ]
+        },
+        {
+          "id": "LE-A-review-standards-3",
+          "performer": "claude-code:subagent:a29c984de1edb6a27",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d7449e7ca7ad718a46be43512b09b24447e85e3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a29c984de1edb6a27, evidence sha256:a1db1f280919fbe31937baf581bbd4806f86a66ea57cb9ac543e561bf51d4986",
+            "digest": "sha256:4f901b5cc440229927316927f14a95d28ea2d7b2386e4c11f6002fd35f7fdd70",
+            "excerpt": "Standards second confirming round, LE-A. Outcome: 1 finding. Both folds are closed. Worst: LEA-S7, a spec lead sentence whose count disagrees with the list below it."
+          },
+          "axis": "Standards",
+          "base": "ba9b86216536fa93f9f51410c31aea8e6f61725b",
+          "tip": "c23a31ab28ec7795b139a838961014de8069c9a0",
+          "finding_ids": [
+            "LEA-S7"
+          ],
+          "supersedes": [
+            "LE-A-review-standards-2"
+          ]
+        },
+        {
+          "id": "LE-A-review-spec-3",
+          "performer": "claude-code:subagent:a265ef2193aedd2c0",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d7449e7ca7ad718a46be43512b09b24447e85e3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a265ef2193aedd2c0, evidence sha256:a1db1f280919fbe31937baf581bbd4806f86a66ea57cb9ac543e561bf51d4986",
+            "digest": "sha256:5381fddf40018a8915f1e922307d94d3d0760d5d11b571081e3a1ad2a21f622f",
+            "excerpt": "outcome: pass. The repair delta introduces no blocking Spec finding and leaves none open. Count: 0. Worst issue: none."
+          },
+          "axis": "Spec",
+          "base": "ba9b86216536fa93f9f51410c31aea8e6f61725b",
+          "tip": "c23a31ab28ec7795b139a838961014de8069c9a0",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-A-review-spec-2"
+          ]
+        },
+        {
+          "id": "LE-A-review-coverage-3",
+          "performer": "claude-code:subagent:abf61b440adc50922",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d7449e7ca7ad718a46be43512b09b24447e85e3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:abf61b440adc50922, evidence sha256:a1db1f280919fbe31937baf581bbd4806f86a66ea57cb9ac543e561bf51d4986",
+            "digest": "sha256:0deba9e68424702f8a36f58711e99bbfb7928973e19d4cc59c484c64d50848ad",
+            "excerpt": "outcome: pass. New findings from this delta: none above the blocking bar. Findings: 0. Worst issue: none."
+          },
+          "axis": "Coverage",
+          "base": "ba9b86216536fa93f9f51410c31aea8e6f61725b",
+          "tip": "c23a31ab28ec7795b139a838961014de8069c9a0",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-A-review-coverage-2"
           ]
         }
       ]
