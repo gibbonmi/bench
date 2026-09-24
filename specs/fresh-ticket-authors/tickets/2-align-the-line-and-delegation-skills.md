@@ -2,7 +2,7 @@
 
 Blocked by: 1-route-each-ticket-to-a-fresh-author.md
 Writes: .agents/skills/bench-craft-line/SKILL.md, .agents/skills/bench-craft-delegate/SKILL.md, .agents/skills/bench-craft-delegate/references/delegation-discipline.md, .agents/skills/bench-craft-tickets/SKILL.md, internal/anchors/registry_retained_workflow.go, internal/anchors/registry_data.go, internal/conformance/retained_workflow_test.go, internal/conformance/implementation_continuation_test.go, tests/canary/workflow-guidance-anchors/, internal/anchors/registry_calibration.go, internal/anchors/registry_calibration_test.go, internal/anchors/registry_charge_binding.go, internal/anchors/registry_charge_binding_test.go, internal/anchors/registry_data_test.go, internal/anchors/registry_debug_loop.go, internal/anchors/registry_ft311_preparation.go, internal/anchors/registry_ft311_review_dispatch.go, internal/anchors/registry_ticket_passes.go, internal/anchors/registry_ticket_passes_test.go, tests/canary/claude-agent-definitions/, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: FA15, FA16, FA17, FA18, FA19, FA26
+Covers: FA15, FA16, FA17, FA18, FA19, FA26, FA30
 
 ## What to build
 

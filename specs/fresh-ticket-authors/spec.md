@@ -84,7 +84,7 @@ Reviewed exclusions:
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| FA / `1-route-each-ticket-to-a-fresh-author.md`, `2-align-the-line-and-delegation-skills.md`, `3-align-the-phase-commands-and-docs.md` | Every spec-backed build gives each ticket a fresh author under a narrow charge, and every guidance file, doc, and ADR states that rule. | FA1, FA2, FA3, FA4, FA5, FA6, FA7, FA8, FA9, FA10, FA11, FA12, FA13, FA14, FA15, FA16, FA17, FA18, FA19, FA20, FA21, FA22, FA23, FA24, FA25, FA26 | `bench test --check docs-currency-workflow`, `bench test --package ./internal/conformance --run TestRootConformance` | no |
+| FA / `1-route-each-ticket-to-a-fresh-author.md`, `2-align-the-line-and-delegation-skills.md`, `3-align-the-phase-commands-and-docs.md` | Every spec-backed build gives each ticket a fresh author under a narrow charge, and every guidance file, doc, and ADR states that rule. | FA1, FA2, FA3, FA4, FA5, FA6, FA7, FA8, FA9, FA10, FA11, FA12, FA13, FA14, FA15, FA16, FA17, FA18, FA19, FA20, FA21, FA22, FA23, FA24, FA25, FA26, FA27, FA28, FA29, FA30 | `bench test --check docs-currency-workflow`, `bench test --package ./internal/conformance --run TestRootConformance` | no |
 
 ## Testing decisions
 
@@ -115,7 +115,7 @@ Reviewed exclusions:
 | FA9 | 10 | `.agents/commands/bench-implement-spec.md` requires the orchestrator to read manifests, returns, and verdicts, not code | planned Require needle in `internal/anchors/registry_ft311_preparation.go` | A build phase with no orchestrator bound lacks the needle, so the check reds. |
 | FA10 | 11 | `.agents/commands/bench-implement-spec.md` requires a `bench handoff` refresh at each chunk checkpoint | planned Require needle in `internal/anchors/registry_ft311_preparation.go` | A build phase that refreshes only at `--full` phase boundaries lacks the needle, so the check reds. |
 | FA11 | 12 | `.bench/BENCH.md` requires the orchestrator to reconcile the final acceptance and integration | planned Require needle in `internal/anchors/registry_ft311_review_dispatch.go` | A guide that keeps the retained author as reconciler lacks the needle, so the check reds. |
-| FA12 | 13 | `.bench/BENCH.md` requires one fresh repair session for each affected ticket, recorded as a new assignment with the trigger `user-directed`, that reruns that ticket's verification, and routes a final-reconciliation finding to a fresh repair session, not to the orchestrator | planned Require needle in `internal/anchors/registry_retained_workflow.go` | A guide that keeps the repair with the ticket author lacks the needle, so the check reds. |
+| FA12 | 13 | `.bench/BENCH.md` requires one fresh repair session for each affected ticket, recorded as a new assignment with the trigger `user-directed`, that reruns that ticket's verification, and routes a final-reconciliation finding to a fresh repair session, not to the orchestrator, and treats a finding on a path that no `Writes:` line holds as a material acceptance shortfall | planned Require needle in `internal/anchors/registry_retained_workflow.go` | A guide that keeps the repair with the ticket author lacks the needle, so the check reds. |
 | FA13 | 14 | `.bench/BENCH.md` does not contain "Production repairs stay with the recorded ticket author." | planned Forbid needle in `internal/anchors/registry_retained_workflow.go` | A guide that keeps the retired sentence matches the Forbid needle, so the check reds. |
 | FA14 | 2 | `.bench/BENCH-reference.md` states that the plan amendment declares version 2 with a delegate execution block and splits each chunk verification into one verification for each ticket | planned Require needle in `internal/anchors/registry_retained_workflow.go` | A reference that still declares version 1, or keeps one shared chunk verification, lacks the needle, so the check reds. |
 | FA15 | 15 | `.agents/skills/bench-craft-line/SKILL.md` applies its continuation section to each ticket author | planned RequireInSection needle in `internal/anchors/registry_retained_workflow.go` | A skill that keeps the retained-session wording lacks the needle, so the check reds. |
@@ -126,10 +126,14 @@ Reviewed exclusions:
 | FA20 | 17 | `.agents/commands/bench-write-spec.md` recommends the line for fresh ticket authors on one integration source | planned Require needle in `internal/anchors/registry_data.go` | A handoff that keeps "one retained session" lacks the needle, so the check reds. |
 | FA21 | 18 | `.agents/commands/bench-review-implementation.md` routes accepted findings to a fresh repair author | planned Require needle in `internal/anchors/registry_ft311_review_dispatch.go` | A review phase that keeps the retained-session return lacks the needle, so the check reds. |
 | FA22 | 19 | `docs/field-guide.html` states that each ticket gets a fresh author session | planned Require needle in `internal/anchors/registry_data.go` | A guide page that keeps the retained-authorship sentence lacks the needle, so the check reds. |
-| FA23 | 19 | `README.md` states that each ticket gets a fresh author session | planned Require needle in `internal/anchors/registry_data.go` | A README that keeps "Implementation stays with its retained author" lacks the needle, so the check reds. |
+| FA23 | 19 | `README.md` states that each ticket gets a fresh author session | planned Require needle in `internal/anchors/registry_retained_workflow.go` | A README that keeps "Implementation stays with its retained author" lacks the needle, so the check reds. |
 | FA24 | 20 | ADR 0023 records the fresh-ticket-author decision, and ADR 0021 points to it | review-owned: an ADR has no mechanical seam here | Review grades both ADRs against this spec's decisions. |
 | FA25 | 21 | `.agents/commands/bench-drain.md` keeps the implement-now light path in the main session | `internal/anchors/registry_data.go` (existing Require needle "Write its one ticket file. Implement that ticket in the retained session under `craft-line`.") | A drain phase that moves the light path to a fresh author drops the needle, so the check reds. |
 | FA26 | 14 | `.agents/skills/bench-craft-delegate/SKILL.md` does not contain "Repairs return to the retained implementation session." | planned Forbid needle in `internal/anchors/registry_retained_workflow.go` | A skill that keeps the retired sentence matches the Forbid needle, so the check reds. |
+| FA27 | 12 | `.bench/BENCH.md` does not contain "After the last chunk, the retained author reconciles overall acceptance and integration." | planned Forbid needle in `internal/anchors/registry_ft311_review_dispatch.go` | A guide that keeps the retired sentence matches the Forbid needle, so the check reds. |
+| FA28 | 14 | `.bench/BENCH.md` does not contain "Return findings to the retained author and obtain current repair coverage." | planned Forbid needle in `internal/anchors/registry_ft311_review_dispatch.go` | A guide that keeps the retired sentence matches the Forbid needle, so the check reds. |
+| FA29 | 18 | `.agents/commands/bench-review-implementation.md` does not contain "Accepted findings return to the retained `/bench-implement-spec` session." | planned Forbid needle in `internal/anchors/registry_ft311_review_dispatch.go` | A review phase that keeps the retired sentence matches the Forbid needle, so the check reds. |
+| FA30 | 13 | `.agents/skills/bench-craft-delegate/references/delegation-discipline.md` permits a `user-directed` replacement for a post-review repair under "Delegated author transfer" | planned Require needle in `internal/anchors/registry_retained_workflow.go` | A discipline that drops the entry lacks the needle, so the check reds. |
 
 Not covered: story 22 — the reviewed exclusion changes no behavior, and the Won't handle lines record it.
 Not covered: story 23 — the reviewed exclusion changes no behavior, and the Out of scope section prices it.
@@ -138,7 +142,7 @@ Not covered: story 23 — the reviewed exclusion changes no behavior, and the Ou
 
 The canonical edge classes, walked at the anchor seam:
 
-- A retired sentence that returns: each retired sentence takes its own Forbid row (FA4, FA7, FA8, FA13, FA19, FA26).
+- A retired sentence that returns: each retired sentence takes its own Forbid row (FA4, FA7, FA8, FA13, FA19, FA26, FA27, FA28, FA29).
 - A sentence reflowed across lines: the registry matches a needle across a line break, and `charge_evidence_guidance_test.go` already reads a wrapped sentence.
 - A second spelling of the rule: every file points to `.bench/BENCH.md`, and review grades a paraphrase.
 - A canary that mutates a changed sentence: each changed canary's `MUTATE.json` names the new sentence, so its mutation stays red.
@@ -201,6 +205,11 @@ The canonical edge classes, walked at the anchor seam:
 - `docs/adr/0023-each-ticket-gets-a-fresh-author.md`
 - `internal/anchors/registry_decision_maps.go`
 - `internal/anchors/registry_decision_maps_test.go`
+- `projects/benchkit.md`
+- `CONTEXT.md`
+- `tests/canary/guidance-prose-budgets/`
+- `tests/canary/line-routing/`
+- `tests/canary/skill-description-budgets/`
 
 Reviewer disposition: pending sign-off.
 
