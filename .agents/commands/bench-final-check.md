@@ -137,6 +137,7 @@ owns the rest of the shape.
 These files are pending capture for `/bench-drain`, not
 a second roadmap.
 A tracked retro and its scorecard updates commit with the phase close.
+Write and commit them in a Bench worktree, and land that commit through `bench worktree land`.
 An ignored retro stays local until the next reviewer-approved capture drain.
 
 Report the applicable oracle result. This command does not form an opinion
