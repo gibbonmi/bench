@@ -152,6 +152,99 @@ Advice, with no finding ID:
 - The comment at `registry_retained_workflow.go:28-31` reads broader than the three constants.
 - The Require diagnostic for the review-repeat sentence names the wrong direction; that wording predates this chunk.
 
+## GR-B author evidence
+
+Each ticket had a fresh `bench-writer` author on opus at high effort, with a cap of 3 attempts. Each author added its registry rows before the guidance edit, and each new row went red on the unchanged tree. After the edit, each row went green.
+
+| Ticket | Author session | Start tip | Ticket commit | Attempts |
+|---|---|---|---|---|
+| 4 | `claude:bench-writer/gr-t4-author` | `7d203a51` | `acbb2318` | 1 of 3 |
+| 5 | `claude:bench-writer/gr-t5-author` | `acbb2318` | `43882975` | 1 of 3 |
+
+Ticket 4 added the `laneAndLandingAnchors` family, changed the `bench commit` help strings, and corrected the fifth paragraph of ADR 0014. Ticket 5 added the `retroCaptureAnchors` family. It replaced the nine heading Require rows with one Forbid row, so `registry_data.go` shrank by 8 rows. The ticket 5 author read the capture writer before it stated the tracked-or-ignored rule.
+
+After ticket 4, the build preflight reported a stale binary seal. The orchestrator ran `bench worktree build`, and the preflight went green.
+
+### Probe verdicts
+
+Each probe ran through `bench probe`. Each probe bit, and each restore reads `yes`.
+
+| Ticket | File | Mutation | Row |
+|---|---|---|---|
+| 4 | `.bench/BENCH-reference.md` | swap: the guidance-not-hook claim returns | GR54 |
+| 4 | `.bench/BENCH-reference.md` | swap: the owner sentence returns at the old copy site | owner Forbid |
+| 4 | `bench-final-check.md` | omission: the landing gate sentence | GR50 |
+| 4 | `.bench/BENCH-reference.md` | swap: the reviewer leaves the merge sentence | GR57 |
+| 4 | `bench-craft-synthesis/SKILL.md` | swap: the gate source becomes the commit | GR46 |
+| 4 | `internal/commit/commit.go` | swap: the old dry-run help returns | GR52 |
+| 4 | `internal/commit/commit.go` | swap: the dry-run help names no lane | GR53 |
+| 5 | `bench-final-check.md` | omission: the canary's GR117 sentence | GR117 |
+| 5 | `bench-final-check.md` | omission: the GR61 and GR65 sentences, one per probe | GR61, GR65 |
+| 5 | `bench-final-check.md` | swap: the drain-only exit replaces GR62 | GR62 |
+| 5 | `bench-final-check.md` | swap: each retired sentence returns, one per probe | GR59, GR60, GR64, GR66, GR67, GR120 |
+| 5 | `.bench/BENCH-reference.md` | swap: the drain capture commit returns | GR63 |
+
+### Verification
+
+Each author ran the five GR-B checks at the chunk tip `43882975`, and each check passed. The JSON payload holds each result.
+
+## GR-B chunk review, round 1
+
+The frozen pair is base `7d203a51837838874cf9a649eb2983139ee8cf4c` and tip `4388297567491603a5358e7024037bf7d7723139`. The base holds the accepted GR-A tip and its record commit only. The shared evidence is `sha256:63050b6da69f345b03411c222a92b41ec1af1eb9e08d406bca7a8ee024c600ad`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, and only the Coverage axis ran probes.
+
+The consumer table has four `bench.commandRegistry` rows outside the diff. The ticket 4 author ran the full `./cmd/bench` package, and it passed.
+
+The raw finding count is 16: Standards 6, Spec 6, and Coverage 4. After the orchestrator merges the findings that name the same fix, 13 repair targets remain. Two of them go to ticket 7 by plan expansion. The orchestrator decided each `ask-user` finding under the reviewer's approval of all work, and each decision is open to veto.
+
+## GR-B Standards
+
+Findings: 6. The worst issue is a third statement of the retro rule in the reference.
+
+- `internal/commit/dry_run_test.go:58-59` has a comment that narrates the change. Target B1. `auto-fix`. Confidence 8.
+- `.bench/BENCH-reference.md:48-49` restates the tracked-or-ignored retro rule. Ticket 5 required that copy, so the orchestrator amended ticket 5 to require a pointer. Target B8. `auto-fix` by orchestrator decision. Confidence 7.
+- `bench-final-check.md:41` and `bench-craft-synthesis/SKILL.md:65` restate owner facts, but rows GR50 and GR46 require both sentences. `no-op` by orchestrator decision. Confidence 5.
+- `bench-final-check.md:39-42` and `:152-163` state the same two facts twice. Target B2. `auto-fix`. Confidence 5.
+- `cmd/bench/main.go:132` and `internal/commit/commit.go:225` hard-code the same lane clause. Target B3 gives the clause one constant. `auto-fix` by orchestrator decision. Confidence 4.
+- `internal/anchors/registry_retained_workflow.go:6` states a group count that goes stale. Target B9. `auto-fix`. Confidence 4.
+
+## GR-B Spec
+
+Findings: 6. The worst issue is two live readers that still describe the retired commit behavior.
+
+- `.agents/commands/bench-final-check.md:2` still says that the command runs the gate and commits on green. Target B4. `auto-fix`. Confidence 8.
+- `projects/benchkit.md:15-17` says that `bench commit` works on any branch. That claim is false. Ticket 7 owns the path, so target B12 goes to ticket 7 by plan expansion. `auto-fix`. Confidence 8.
+- `.agents/commands/bench-final-check.md:45-47` asks for a second whole-project gate before the landing. That contradicts the decision that the gate runs once at the landing. Target B5. `auto-fix` by orchestrator decision. Confidence 5.
+- `.agents/commands/bench-final-check.md:141-144` does not say where a tracked retro commits. Target B10 names the Bench worktree. `auto-fix` by orchestrator decision. Confidence 4.
+- `.bench/BENCH.md:141` has a light-path cell that says "gate and commit on green". Ticket 7 owns the path, so target B13 goes to ticket 7 by plan expansion. `auto-fix` by orchestrator decision. Confidence 4.
+- `docs/field-guide.html:852-853` describes a commit only after a green gate. No fence holds that file, so a `bench idea` parks it. `no-op`. Confidence 3.
+
+## GR-B Coverage
+
+Findings: 4. The worst issue is that the dry-run help test accepts a negated lane.
+
+- `internal/commit/dry_run_test.go:75` accepts a negated lane clause and a dropped gate fallback. Two probes were silent. Target B3. `auto-fix`. Confidence 8.
+- `.agents/commands/bench-final-check.md:162` accepts two retired "Run it" sentences. The probe was silent. Target B6. `auto-fix`. Confidence 6.
+- `.agents/skills/bench-craft-synthesis/SKILL.md:64` accepts two retired sentences. The probe was silent. Target B7. `auto-fix`. Confidence 7.
+- `.agents/commands/bench-final-check.md:93,105` accepts a paste of the scaffold's headings or table header. Two probes were silent. Target B11. `auto-fix`. Confidence 7.
+
+## GR-B repair routing
+
+| Target | Owner | Repair |
+|---|---|---|
+| B1 | ticket 4 | State the current help contract in the test comment. |
+| B2 | ticket 4 | Keep the commit-then-land procedure in one paragraph. |
+| B3 | ticket 4 | Give the lane clause one constant, and pin the whole clause in the test. |
+| B4 | ticket 4 | Correct the frontmatter description, and forbid the old words. |
+| B5 | ticket 4 | Remove the second gate before the landing, and forbid it. |
+| B6 | ticket 4 | Forbid the two retired "Run it" sentences. |
+| B7 | ticket 4 | Forbid the two retired synthesis sentences. |
+| B8 | ticket 5 | Point the reference to the retro rule. |
+| B9 | ticket 5 | Remove the group count from the comment. |
+| B10 | ticket 5 | Name the Bench worktree for a tracked retro commit. |
+| B11 | ticket 5 | Forbid the scaffold's headings and table header through the owner constants. |
+| B12 | ticket 7 | Remove the any-branch claim from the profile. |
+| B13 | ticket 7 | Correct the light-path cell. |
+
 ```bench-review-record
 {
   "version": 2,
@@ -749,6 +842,303 @@ Advice, with no finding ID:
           "supersedes": [
             "gr-a-r2-coverage"
           ]
+        }
+      ]
+    },
+    {
+      "id": "GR-B",
+      "base": "7d203a51837838874cf9a649eb2983139ee8cf4c",
+      "tip": "4388297567491603a5358e7024037bf7d7723139",
+      "plan_digest": "sha256:b2b329ab938da6599a495a036ee6e2e49313f65bb1f1f6cd01882b6efba49f9f",
+      "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+      "acceptance_rows": [
+        "GR45",
+        "GR46",
+        "GR47",
+        "GR48",
+        "GR49",
+        "GR50",
+        "GR51",
+        "GR52",
+        "GR53",
+        "GR54",
+        "GR55",
+        "GR56",
+        "GR57",
+        "GR58",
+        "GR118",
+        "GR119",
+        "GR59",
+        "GR60",
+        "GR61",
+        "GR62",
+        "GR63",
+        "GR64",
+        "GR65",
+        "GR66",
+        "GR67",
+        "GR117",
+        "GR120"
+      ],
+      "verification": [
+        {
+          "id": "gr-b-4-workflow",
+          "performer": "claude:bench-writer/gr-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t4-author-20260924/4-workflow@43882975",
+            "digest": "sha256:59f8aa65e042203db64a2abe15e1bf3a0d25606b193cbc7dd8e16d0755d58fba",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,845\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "4-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-b-4-conformance",
+          "performer": "claude:bench-writer/gr-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t4-author-20260924/4-conformance@43882975",
+            "digest": "sha256:201146db0e50cb0a60ca65573125c7805433dcbc9ea8a0aad646843b0e9fb91e",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7569\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "4-conformance",
+          "command": "bench test --package ./internal/conformance --run TestRootConformance",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-b-4-anchors",
+          "performer": "claude:bench-writer/gr-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t4-author-20260924/4-anchors@43882975",
+            "digest": "sha256:aec283db3bc1576875fe9b92e4e2aa895d143ea8a4f1e2f3c3861e6371d1f718",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,770\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "4-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-b-4-help",
+          "performer": "claude:bench-writer/gr-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t4-author-20260924/4-help@43882975",
+            "digest": "sha256:10ec5dd5fb3390f41ec23e74bd1e0c921c7d6800d7a819486b2c46d0c7432a4f",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,4\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "4-help",
+          "command": "bench test --package ./cmd/bench --run TestHelpInventoryIsComplete",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-b-4-commit-help",
+          "performer": "claude:bench-writer/gr-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t4-author-20260924/4-commit-help@43882975",
+            "digest": "sha256:0485d5efabcdd21dfcca2edb5e133828ca6cb6f1717a5b165e7c7ce77850fba5",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commit,pass,21\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "4-commit-help",
+          "command": "bench test --package ./internal/commit --run TestHelpAdvertisesDryRun",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-b-5-workflow",
+          "performer": "claude:bench-writer/gr-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t5-author-20260924/5-workflow@43882975",
+            "digest": "sha256:32d8eac22310666a7f60ef232f44cdc37240e7646044e9df78e9050cadb7f3b9",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,897\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "5-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-b-5-conformance",
+          "performer": "claude:bench-writer/gr-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t5-author-20260924/5-conformance@43882975",
+            "digest": "sha256:b4d37f642a66b13cba22be2e58dc17b6d6612ca68cf5fde17e31e2fe2bac2826",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7599\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "5-conformance",
+          "command": "bench test --package ./internal/conformance --run TestRootConformance",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-b-5-anchors",
+          "performer": "claude:bench-writer/gr-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t5-author-20260924/5-anchors@43882975",
+            "digest": "sha256:3b3062ed19e164f629d9e13bdecbd8063ac308cfed310f8efeff86158a657c69",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,765\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "5-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-b-5-help",
+          "performer": "claude:bench-writer/gr-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t5-author-20260924/5-help@43882975",
+            "digest": "sha256:10ec5dd5fb3390f41ec23e74bd1e0c921c7d6800d7a819486b2c46d0c7432a4f",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,4\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "5-help",
+          "command": "bench test --package ./cmd/bench --run TestHelpInventoryIsComplete",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-b-5-commit-help",
+          "performer": "claude:bench-writer/gr-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t5-author-20260924/5-commit-help@43882975",
+            "digest": "sha256:818d6b02c4e7f799d4db11de8eedd5c7c69b5a0f9c063abcaf77c1e386eae298",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commit,pass,26\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "5-commit-help",
+          "command": "bench test --package ./internal/commit --run TestHelpAdvertisesDryRun",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "gr-b-r1-standards",
+          "performer": "claude:bench-reviewer/gr-b-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/gr-b-standards@43882975",
+            "digest": "sha256:38e1670a9ddf7ef85d429ef2130470821dba6e69afff68f81d44541ed180fc75",
+            "excerpt": "Standards: 6 findings. Worst: `.bench/BENCH-reference.md` adds a third statement of the tracked-or-ignored retro rule, and the ticket requires that copy."
+          },
+          "axis": "Standards",
+          "base": "7d203a51837838874cf9a649eb2983139ee8cf4c",
+          "tip": "4388297567491603a5358e7024037bf7d7723139",
+          "finding_ids": [
+            "B1",
+            "B2",
+            "B3",
+            "B8",
+            "B9"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gr-b-r1-spec",
+          "performer": "claude:bench-reviewer/gr-b-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/gr-b-spec@43882975",
+            "digest": "sha256:cba98737161576bd63ea8646016509ea99f445d8501c97f57bf47657dfb50cf1",
+            "excerpt": "Spec: 6 findings. Worst: two live readers still say the commit is the gate (the final-check frontmatter) or that `bench commit` works anywhere (`projects/benchkit.md`), which contradicts stories 21 and 23."
+          },
+          "axis": "Spec",
+          "base": "7d203a51837838874cf9a649eb2983139ee8cf4c",
+          "tip": "4388297567491603a5358e7024037bf7d7723139",
+          "finding_ids": [
+            "B4",
+            "B5",
+            "B10",
+            "B12",
+            "B13"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gr-b-r1-coverage",
+          "performer": "claude:bench-reviewer/gr-b-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/gr-b-coverage@43882975",
+            "digest": "sha256:d0c18283732a7a432e9b76c392d8cbf8f17d3e5cc3f05d7f9119861ff5d74436",
+            "excerpt": "Coverage: 4 findings. Worst: the `bench commit --help` dry-run test passes a line that negates the lane or drops the no-lane gate fallback."
+          },
+          "axis": "Coverage",
+          "base": "7d203a51837838874cf9a649eb2983139ee8cf4c",
+          "tip": "4388297567491603a5358e7024037bf7d7723139",
+          "finding_ids": [
+            "B3",
+            "B6",
+            "B7",
+            "B11"
+          ],
+          "supersedes": []
         }
       ]
     }
