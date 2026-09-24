@@ -436,6 +436,8 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - `internal/shift/fault.go`
 - `internal/shift/record.go`
 - `internal/shift/record_test.go`
+- `internal/shift/pass_test.go`
+- `internal/shift/shift_test.go`
 - `internal/shift/recover.go`
 - `internal/shift/recover_test.go`
 - `internal/intent/intent.go`
@@ -477,7 +479,7 @@ Reviewer disposition: approved on 2026-09-23. The reviewer approved the structur
 | `12-prove-the-shift-trace-through-the-built-binary.md` | `2-redact-and-version-every-record-line.md`, `5-record-each-pass-under-the-shift.md`, `6-record-the-resolved-line.md` | LE-D |
 | `13-document-the-local-evidence-contract.md` | `3-rotate-and-retain-the-record.md`, `7-retain-the-shift-memory.md`, `10-recover-crashed-shifts-by-lease-identity.md`, `11-record-the-worktree-shell-session.md` | LE-D |
 
-Ticket 4 creates `internal/shift/record.go` and `internal/shift/record_test.go`, and ticket 9 creates `internal/shift/recover.go` and `internal/shift/recover_test.go`. Each later ticket that writes one of those files marks it `(new)`, because the file is absent from the tree at spec time. Ticket 8 names every LE-B2 ticket in its `Blocked by:` line. Tickets 5, 6, and 7 also write `record_test.go`, and tickets 5 and 8 both write `loop.go`. So a delegated frontier starts LE-C1 only after the LE-B2 checkpoint.
+Ticket 4 creates `internal/shift/record.go` and `internal/shift/record_test.go`, and ticket 9 creates `internal/shift/recover.go` and `internal/shift/recover_test.go`. Each later ticket that writes one of those files marks it `(new)`, because the file is absent from the tree at spec time. Ticket 8 names every LE-B2 ticket in its `Blocked by:` line. Tickets 5, 6, and 7 also write `pass_test.go`, and tickets 5 and 8 both write `loop.go`. So a delegated frontier starts LE-C1 only after the LE-B2 checkpoint.
 
 ## Out of scope
 
