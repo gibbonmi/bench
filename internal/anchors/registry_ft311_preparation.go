@@ -18,7 +18,7 @@ var ft311PreparationAnchors = []Anchor{
 	// because verified evidence supplies neither one. The Forbid row keeps the retired
 	// build full charge form out of the same guidance.
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "Build action requires a narrow author read: act only after this session reads the metadata and ticket pages and targeted sources. An author does not retrieve every evidence page. `bench preflight evidence <id> --verify` is the separate artifact-integrity check.", Diagnostic: "bounded build action: bench-implement-spec.md permits build action without a narrow author read"},
-	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "Build action requires available required context: a retrieval receipt, a terminal cursor, or another consumer's delivery never replaces the required bytes this session holds.", Diagnostic: "bounded build action: bench-implement-spec.md permits build action without available required context"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "Build action requires available required context: a retrieval receipt, a terminal cursor, or another consumer's delivery never replaces what this session reads itself.", Diagnostic: "bounded build action: bench-implement-spec.md permits build action without available required context"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "Build action requires a current-action binding: act only after `bench preflight evidence <id> --check-current` binds the artifact to the current assignment and source pair.", Diagnostic: "bounded build action: bench-implement-spec.md permits build action without a current binding"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "Build action requires reviewer approval, which a generated charge, a staged artifact, or a verified artifact never supplies.", Diagnostic: "bounded build action: bench-implement-spec.md permits build action without reviewer approval"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "Build action requires the complete task supplement, which this session writes. The supplement names selectors, model, effort, cap, and mutation, and verified evidence never supplies it.", Diagnostic: "bounded build action: bench-implement-spec.md permits build action without the complete task supplement"},
@@ -26,19 +26,21 @@ var ft311PreparationAnchors = []Anchor{
 
 	// The consumer-context rows below keep the build phase's reuse and retrieval rules
 	// apart. Reuse answers to the new manifest, so a body digest alone cannot carry a
-	// source across tickets. Retrieval answers to the fresh consumer itself, so neither a
-	// transferred final cursor nor a peer's receipt delivers a byte in its place.
-	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "A retained consumer reuses exact available source bytes only after the new manifest verifies their membership, role, and requiredness. A matching body digest alone authorizes no reuse.", Diagnostic: "consumer context: bench-implement-spec.md permits reuse without verified membership, role, and requiredness"},
-	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "A fresh consumer runs its own retrieval from the trusted evidence identity. A transferred final cursor and another consumer's receipt deliver no byte to it.", Diagnostic: "consumer context: bench-implement-spec.md permits another consumer's receipt or a final cursor to replace fresh required context"},
+	// source across a regenerated charge. The narrow author read answers to the fresh author
+	// itself, so neither a transferred final cursor nor a peer's receipt delivers a byte in
+	// its place.
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "An author that takes a regenerated charge reuses exact available source bytes only after the new manifest verifies their membership, role, and requiredness. A matching body digest alone authorizes no reuse.", Diagnostic: "consumer context: bench-implement-spec.md permits reuse without verified membership, role, and requiredness"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "A fresh author makes its own narrow author read from the trusted evidence identity. A transferred final cursor and another consumer's receipt deliver no byte to it.", Diagnostic: "consumer context: bench-implement-spec.md permits another consumer's receipt or a final cursor to replace fresh required context"},
 
 	// The fresh ticket author rows below pin the narrow author charge and the small
 	// orchestrator. Each Require row states one bound, and each Forbid row keeps a retired
-	// full-retrieval sentence out of the build phase.
+	// full-retrieval sentence out of the build phase. The handoff-refresh needle starts at
+	// the read bound, so a negation of the refresh breaks it.
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "The author charge carries the ticket, its coverage rows, its `Writes:` fence, the evidence identity, and the declared line.", Diagnostic: "fresh ticket author: bench-implement-spec.md dropped the narrow author charge"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Forbid, Needle: "Retrieve every required source with `bench preflight evidence <id>`, and follow each exact successor command until the stream ends.", Diagnostic: "fresh ticket author: bench-implement-spec.md restored the full evidence retrieval"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Forbid, Needle: "Build action requires verified delivery", Diagnostic: "fresh ticket author: bench-implement-spec.md restored the verified-delivery build rule"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "The orchestrator reads manifests, returns, and verdicts, not code", Diagnostic: "fresh ticket author: bench-implement-spec.md dropped the orchestrator's read bound"},
-	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "refreshes `bench handoff` at each chunk checkpoint.", Diagnostic: "fresh ticket author: bench-implement-spec.md dropped the handoff refresh at each chunk checkpoint"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "not code, and it refreshes `bench handoff` at each chunk checkpoint.", Diagnostic: "fresh ticket author: bench-implement-spec.md dropped the handoff refresh at each chunk checkpoint"},
 
 	// The unchanged-route rows below hold the migration's declared boundary. The
 	// implementation phase keeps its own full-run control, which names no preflight
