@@ -14,9 +14,9 @@ Never assume the reviewer's decisions, and never assume a claim the gate could c
 
 ## The Bench CLI contract
 
-`bench help` is the complete executable inventory. Plumbing subcommands, driven by
-hooks and adapters, live in `.bench/BENCH-reference.md`. Run `bench` exactly as its
-executable help spells it.
+`bench help` is the complete executable inventory.
+The command registry owns the plumbing subcommands that hooks and adapters drive.
+Run `bench` exactly as its executable help spells it.
 
 Bench owns non-interactive input, complete output, required next actions, and
 red-gate failure attribution. Each Bench response is bounded and is the complete evidence.
@@ -138,7 +138,7 @@ The standing approvals are the table below, a size rule I have given you, and th
 
 | Observable | Route |
 |---|---|
-| Decomposes to one independently-green ticket and crosses no declared seam | Light path: write the one ticket file (`craft-tickets` owns the template) in a bench worktree, then implement it inline in this session — no breakdown-approval pause, no write-delegate. This table is the standing approval to skip the spec phase; gate and commit on green. Land through `bench worktree land` with the tickets-only `--spec`; the landing closes the ticket folder. |
+| Decomposes to one independently-green ticket and crosses no declared seam | Light path: write the one ticket file (`craft-tickets` owns the template) in a bench worktree, then implement it inline in this session — no breakdown-approval pause, no write-delegate. This table is the standing approval to skip the spec phase; commit on a lane pass. Land through `bench worktree land` with the tickets-only `--spec`; the landing runs the whole-project gate and closes the ticket folder. |
 | Either observable is false | Normal full workflow. |
 
 **Every phase runs in a bench worktree and lands through `bench worktree land`.**

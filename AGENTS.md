@@ -6,9 +6,10 @@ harness reads this file. Claude Code reads it through the `@AGENTS.md` and
 harnesses read the file directly.
 
 The shared platform rules are canonical in `.bench/BENCH.md` (see below).
-These rules cover the roles, the four invariants, how the pieces fit, the
-workflow and its proportionality rules, the communication rules, and the
-skills index. Edit this file for project-owned content. Edit
+These rules cover the roles, the four invariants, the workflow and its
+proportionality rules, and the communication rules.
+`.bench/BENCH-reference.md` holds how the pieces fit and the skills index.
+Edit this file for project-owned content. Edit
 `.bench/BENCH.md` for the shared rules. Do not edit `CLAUDE.md`.
 
 ## Shared platform rules
@@ -75,10 +76,7 @@ capture files stay local and never join that commit. Read
 that draft carries the headings, the stage timings, and one row per ticket.
 
 A phase close runs `bench handoff` from its own worktree.
-`bench handoff` rewrites only the calling worktree's assignment section.
-The primary checkout owns the `main` section. The verb keeps a non-empty Next
-command. The verb also refuses a State that pins a commit outside the tip's
-ancestry. Give the drafted State to `bench handoff --state-file <path>`.
+`.bench/BENCH-reference.md` states how `bench handoff` writes the handoff file.
 
 When the handoff and the tree disagree, the tree wins. `bench
 status` dates each section by the branch commits past its recorded tip, and

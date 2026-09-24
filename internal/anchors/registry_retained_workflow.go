@@ -8,9 +8,69 @@ import (
 
 // retainedWorkflowAnchors is the whole retained-workflow family: the default
 // contract below, the opt-in delegated exception that follows it, the
-// lane-and-landing split, the retro capture route, and the declared author line.
+// lane-and-landing split, the retro capture route, the declared author line, and
+// the fact owners that the guides point to.
 // The registry reads this one name, so its groups evaluate together.
-var retainedWorkflowAnchors = append(append(append(append(append([]Anchor{}, defaultWorkflowAnchors...), delegatedWorkflowAnchors...), laneAndLandingAnchors...), retroCaptureAnchors...), declaredLineAnchors...)
+var retainedWorkflowAnchors = append(append(append(append(append(append([]Anchor{}, defaultWorkflowAnchors...), delegatedWorkflowAnchors...), laneAndLandingAnchors...), retroCaptureAnchors...), declaredLineAnchors...), factOwnerAnchors...)
+
+// Each owner sentence below has one Require row at its owner. The Forbid row that keeps
+// a copy out of a former copy site reads the same constant.
+const (
+	// handoffSectionRule is the reference's owner sentence for the handoff verb.
+	handoffSectionRule = "`bench handoff` rewrites only the calling worktree's assignment section."
+	// censusSignalAccount is the reference's owner sentence for the census signal.
+	censusSignalAccount = "The `census` signal counts raw calls per assignment from `$BENCH_HOME/census/<repo-key>/`."
+	// greenRunGateOutput opens the reference's green-run gate output sentence.
+	greenRunGateOutput = "A green run prints one `phases[N]{phase,verdict,elapsed_ms}` table"
+	// redRunGateOutput opens the reference's red-run gate output sentence.
+	redRunGateOutput = "A red run prints one `failures[N]{phase,line}` table"
+	// skillLinkRule is the Claude README's owner sentence for the skill links.
+	skillLinkRule = "`.claude/skills/` links every `.agents/skills/` skill that has no same-named command."
+)
+
+// factOwnerAnchors pin each guide's pointer to the file that holds its fact.
+// Require rows pin the owner sentences: the command registry for the plumbing
+// subcommands, the reference for how the pieces fit, the skills index, the gate
+// output, the handoff verb, the plan version, and the one internal verb that a
+// session runs, and the Claude README for the skill links. Require rows also pin
+// the pointers that replace each copy. Forbid rows keep out the retired copies,
+// the reference's verb grammar, the false skill-link claims, the any-branch
+// commit claim, and the light path's gate-then-commit wording.
+var factOwnerAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Forbid, Needle: "live in `.bench/BENCH-reference.md`", Diagnostic: "fact owner: operating guide restored the reference as the home of the plumbing subcommands"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "The command registry owns the plumbing subcommands that hooks and adapters drive.", Diagnostic: "fact owner: operating guide dropped the command registry as the owner of the plumbing subcommands"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Forbid, Needle: "gate and commit on green", Diagnostic: "fact owner: operating guide light path restored the gate-then-commit wording"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "the four invariants, how the pieces fit", Diagnostic: "fact owner: working agreement restored how the pieces fit as a shared platform rule"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "the communication rules, and the skills index", Diagnostic: "fact owner: working agreement restored the skills index as a shared platform rule"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Require, Needle: "`.bench/BENCH-reference.md` holds how the pieces fit and the skills index.", Diagnostic: "fact owner: working agreement dropped the reference as the holder of how the pieces fit and the skills index"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Require, Needle: "`.bench/BENCH-reference.md` states how `bench handoff` writes the handoff file.", Diagnostic: "fact owner: working agreement dropped its pointer to the reference for the handoff verb behavior"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "The primary checkout owns the `main` section.", Diagnostic: "fact owner: working agreement restored its copy of the handoff main-section owner"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "The verb keeps a non-empty Next command.", Diagnostic: "fact owner: working agreement restored its copy of the handoff Next-command rule"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "refuses a State that pins a commit outside the tip's ancestry", Diagnostic: "fact owner: working agreement restored its copy of the handoff State ancestry refusal"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "Give the drafted State to `bench handoff --state-file <path>`.", Diagnostic: "fact owner: working agreement restored its copy of the handoff state-file route"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: RequireInSection, Section: "Plumbing subcommands", Needle: "`bench gate-prose` is the one internal verb that a session runs directly; Command Notes gives its forms.", Diagnostic: "fact owner: reference Plumbing subcommands dropped bench gate-prose as the one internal verb that a session runs"},
+	{Group: AfterSpecAuthorization, File: ".bench/BENCH-reference.md", Kind: Require, Needle: greenRunGateOutput, Diagnostic: ".bench/BENCH-reference.md dropped the green-run gate output shape"},
+	{Group: AfterImplementSpec, File: "projects/benchkit.md", Kind: Require, Needle: "`.bench/BENCH-reference.md` owns the bounded gate output account.", Diagnostic: "fact owner: project profile dropped its pointer to the reference for the gate output"},
+	{Group: AfterImplementSpec, File: "projects/benchkit.md", Kind: Forbid, Needle: redRunGateOutput, Diagnostic: "fact owner: project profile restored its copy of the red-run gate output that the reference owns"},
+	{Group: AfterImplementSpec, File: "projects/benchkit.md", Kind: Forbid, Needle: "one `capability-skips` line", Diagnostic: "fact owner: project profile restored its copy of the green-run capability-skips line that the reference owns"},
+	{Group: AfterImplementSpec, File: "projects/benchkit.md", Kind: Forbid, Needle: "`phases: N/N green`", Diagnostic: "fact owner: project profile restored its copy of the collapsed green-run row that the reference owns"},
+	{Group: AfterImplementSpec, File: "projects/benchkit.md", Kind: Forbid, Needle: "one more row names the file that holds the complete stream", Diagnostic: "fact owner: project profile restored its copy of the red-run stream row that the reference owns"},
+	{Group: AfterImplementSpec, File: "projects/benchkit.md", Kind: Forbid, Needle: "The complete phase stream goes to `.logs/gate-<run>.out`", Diagnostic: "fact owner: project profile restored its copy of the gate stream log that the reference owns"},
+	{Group: AfterImplementSpec, File: "projects/benchkit.md", Kind: Forbid, Needle: "`.logs/gate-<run>.jsonl` progress log", Diagnostic: "fact owner: project profile restored its copy of the gate progress log that the reference owns"},
+	{Group: AfterImplementSpec, File: "projects/benchkit.md", Kind: Forbid, Needle: "`bench commit` works on any branch", Diagnostic: "fact owner: project profile restored the false claim that bench commit works on any branch"},
+	{Group: AfterSpecAuthorization, File: ".bench/BENCH-reference.md", Kind: Require, Needle: handoffSectionRule, Diagnostic: ".bench/BENCH-reference.md dropped the handoff section rule; bench handoff rewrites only the calling worktree's assignment section"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "`bench handoff [--harness <name>]", Diagnostic: "fact owner: reference restored the bench handoff grammar that executable help owns"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "`bench worktree reset --to <commit> <target>` plans", Diagnostic: "fact owner: reference restored the bench worktree reset grammar that executable help owns"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "`bench retro <slug> (--body <markdown>", Diagnostic: "fact owner: reference restored the bench retro grammar that executable help owns"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: "Before the first dispatch, the plan amendment makes the authored version 1 fence a version 2 plan.", Diagnostic: "fact owner: reference dropped the plan amendment from the authored version 1 fence to a version 2 plan"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "`.claude/skills/` carries only the", Diagnostic: "fact owner: reference restored the false claim that .claude/skills/ links only the craft skills"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "because Claude already has each phase as a command", Diagnostic: "fact owner: reference restored its copy of the Codex-only phase adapter rule that the Claude README owns"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: skillLinkRule, Diagnostic: "fact owner: reference restored a copy of the Claude README's skill-link rule"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: "`.claude/README.md` states which skills `.claude/skills/` links.", Diagnostic: "fact owner: reference dropped its pointer to the Claude README for the skill links"},
+	{Group: AfterImplementSpec, File: ".claude/README.md", Kind: Require, Needle: skillLinkRule, Diagnostic: "fact owner: Claude README dropped the rule that .claude/skills/ links every skill with no same-named command"},
+	{Group: AfterImplementSpec, File: ".claude/README.md", Kind: Forbid, Needle: "links only the `bench-craft-*` skills", Diagnostic: "fact owner: Claude README restored the false claim that .claude/skills/ links only the craft skills"},
+	{Group: AfterImplementSpec, File: ".claude/README.md", Kind: Forbid, Needle: "`bench-writer` runs a user-directed write delegation", Diagnostic: "fact owner: Claude README restored bench-writer as the type of a user-directed write delegation only"},
+}
 
 // declaredLineAnchors pin how craft-line routes a ticket author. Require rows pin
 // the binding of every ticket author to the spec's one declared line, the step 3

@@ -10,4 +10,6 @@ Discover Bench verbs non-interactively
 
 Run the system suite by hand through `bench test --check system`.
 
-`bench handoff` rewrites only the calling worktree's assignment section.
+`.bench/BENCH-reference.md` holds how the pieces fit and the skills index.
+
+`.bench/BENCH-reference.md` states how `bench handoff` writes the handoff file.
