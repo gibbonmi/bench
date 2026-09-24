@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, LE-B2, LE-C1, LE-C2, and LE-C3 are accepted. LE-D is committed, and its review of the three axes is pending.
+Status: LE-A, LE-B1, LE-B2, LE-C1, LE-C2, and LE-C3 are accepted. The LE-D review passed on all three axes with 7 advisory findings; repair cycle 1 is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -571,6 +571,31 @@ The frozen pair is `38fc33d6..376f8b53`. The four planned checks and the root co
 | LE86, LE87 | `DATA_HANDLING.md` | Review-owned. The prose check passed. |
 
 The system suite is not a `bench probe` target. So each LE84 and LE85 probe edited one production line, rebuilt the binary, and restored the file. One committed pass under a cap of 1 ends the shift `incomplete`, so the journey expects exit 3. The ignored-inventory function moved into `clean.go`, and `subshell.go` shrank.
+
+## LE-D review round 1
+
+Three fresh axes graded the frozen pair `38fc33d6..376f8b53`. Each axis read the manifest, confirmed the current binding, and read the code delta. Each axis passed, and no finding blocks. Raw findings: 7. Repair targets after de-duplication: 5, of which 2 take a repair. LED-C2 repeats LED-P1.
+
+### Standards
+
+Findings: 1. Worst issue: LED-S1.
+
+- LED-S1 (auto-fix, confidence 6): `DATA_HANDLING.md` states the sealed sequence width, which the record writer owns.
+
+### Spec
+
+Findings: 1. Worst issue: LED-P1.
+
+- LED-P1 (no-op, confidence 7): no test drives the create and claim failures of the shell session. No row requires one, and the code records `failed` on each path.
+
+### Coverage
+
+Findings: 4. Worst issue: LED-C1.
+
+- LED-C1 (no-op, confidence 8): no test forces a nonzero release, because `ReleaseCommand` has no failure seam. It stays a known gap.
+- LED-C2 (no-op, confidence 7): the same gap as LED-P1.
+- LED-C3 (auto-fix, confidence 6): the start-failure test reads only the work state.
+- LED-C4 (no-op, confidence 7): the ancestry walk ends on a missing parent and on a cycle, so no gap remains.
 
 ```bench-review-record
 {
@@ -2852,7 +2877,77 @@ The system suite is not a `bench probe` target. So each LE84 and LE85 probe edit
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "LE-D-review-standards-1",
+          "performer": "claude-code:subagent:a2cbfc9e731405d94",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "40b9d32fe10f8a4970fd38fecd7e15db8cd4d263",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a2cbfc9e731405d94, evidence sha256:fdd5249a8e0986eb289d54dc3e2f09881f81c6ebf76cb20c6148bd3fe19e959a",
+            "digest": "sha256:d54917b463e6c9498e161957f424ddbd9190d505474c1f9665909d68a7c67ebf",
+            "excerpt": "PASS. Chunk LE-D meets the Standards axis. I found no blocking defect."
+          },
+          "axis": "Standards",
+          "base": "38fc33d69c093fdf26248a576502da404b014498",
+          "tip": "376f8b537b17fb109591dc91988ab177e2229b26",
+          "finding_ids": [
+            "LED-S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "LE-D-review-spec-1",
+          "performer": "claude-code:subagent:ac076656e9d871839",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "40b9d32fe10f8a4970fd38fecd7e15db8cd4d263",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:ac076656e9d871839, evidence sha256:fdd5249a8e0986eb289d54dc3e2f09881f81c6ebf76cb20c6148bd3fe19e959a",
+            "digest": "sha256:d44b44a655854dc35bdcc24d1fd7e45e22fcda0896ed33b3b12572d8c96071f5",
+            "excerpt": "PASS. All eight rows, LE80 to LE87, are met by the delta."
+          },
+          "axis": "Spec",
+          "base": "38fc33d69c093fdf26248a576502da404b014498",
+          "tip": "376f8b537b17fb109591dc91988ab177e2229b26",
+          "finding_ids": [
+            "LED-P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "LE-D-review-coverage-1",
+          "performer": "claude-code:subagent:ac2db607351db4648",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "40b9d32fe10f8a4970fd38fecd7e15db8cd4d263",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:ac2db607351db4648, evidence sha256:fdd5249a8e0986eb289d54dc3e2f09881f81c6ebf76cb20c6148bd3fe19e959a",
+            "digest": "sha256:68bdbb7fed4118f9331e0f236d6d4fae28098451b1028513f7fe9ec17a114479",
+            "excerpt": "PASS. Each LE80 to LE85 test can go red for its row, and none is green by construction."
+          },
+          "axis": "Coverage",
+          "base": "38fc33d69c093fdf26248a576502da404b014498",
+          "tip": "376f8b537b17fb109591dc91988ab177e2229b26",
+          "finding_ids": [
+            "LED-C1",
+            "LED-C2",
+            "LED-C3",
+            "LED-C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
