@@ -1,12 +1,12 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, and LE-B2 are accepted. The second LE-B2 confirming round passed on all three axes.
+Status: LE-A and LE-B1 are accepted. LE-B2 repair cycle 3 is committed; the third confirming round of the three axes is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
 Line: opus (claude-opus-5-5) / medium / uncapped
 Review line: opus / high / one iteration for each axis
-Post-review repair cycles consumed: LE-A 3 of 3; LE-B1 1 of 2; LE-B2 2 of 2. The reviewer extended the LE-A allowance by one cycle on 2026-09-23. The extra cycle covers LEA-S7 and each blocker of the second confirming round.
+Post-review repair cycles consumed: LE-A 3 of 3; LE-B1 1 of 2; LE-B2 3 of 3. The reviewer extended the LE-B2 allowance by one cycle on 2026-09-23, for the checkpoint red on the interrupt test waits. The reviewer extended the LE-A allowance by one cycle on 2026-09-23. The extra cycle covers LEA-S7 and each blocker of the second confirming round.
 Expected repair rounds: 2
 Confidence: 5
 
@@ -225,7 +225,7 @@ The LE-B2 build raised the shift grant to 16, fenced `pass_test.go`, `shift_test
 
 ## LE-B2 author verification
 
-The first frozen pair was `fab6d03e..acb050a9`. After repair cycle 2, the chunk tip is `53ac3cff`, and the four planned checks passed there too. The reviewer approved the grant `internal/shift/ 16` during this build. Three learnings record the Writes expansions of tickets 5, 6, and 7.
+The first frozen pair was `fab6d03e..acb050a9`. After repair cycle 3, the chunk tip is `1720cbc2`, and the four planned checks passed there too. The reviewer approved the grant `internal/shift/ 16` during this build. Three learnings record the Writes expansions of tickets 5, 6, and 7.
 
 | Row | Test | Probe |
 |---|---|---|
@@ -333,6 +333,15 @@ Three fresh axes graded the code tip `53ac3cff` with the source digest `5aaad495
 - Standards, 0 findings. One advisory goes to LE-C1: the comment of `retainedMemoryNames` names every entry.
 - Spec, 0 findings. The signal decision agrees with the spec rows.
 - Coverage, 0 findings. LEB2-C6 and LEB2-C7 are closed.
+
+## LE-B2 repair cycle 3
+
+The LE-B2 checkpoint gate was red on the wait-literal rule. The interrupt helper waited on a 30-second literal, and the rule derives each wait from `bounds.TestDeadline`.
+
+| Finding | Repair | Evidence |
+|---|---|---|
+| Checkpoint red | The interrupt helper waits derive from `bounds.TestDeadline(0)`. | The root conformance test passed. |
+| Standards advice | The comment of `retainedMemoryNames` names every entry. | Review of the text. |
 
 ```bench-review-record
 {
@@ -1184,9 +1193,9 @@ Three fresh axes graded the code tip `53ac3cff` with the source digest `5aaad495
     {
       "id": "LE-B2",
       "base": "fab6d03ed4a4d5418bd0f31dce0a2f1fc59bab80",
-      "tip": "53ac3cffc1edc897db58686898f353da6a57b67a",
+      "tip": "1720cbc2e3cb75b14165dd7297d91d8dc08daad8",
       "plan_digest": "sha256:ff3b2481ba8deec82508453c2cde46252305c98741262014a3a2a34e6a4b9122",
-      "source_digest": "5aaad495d0caa9ab84cf95f4b0a9dbb65da90824",
+      "source_digest": "ce04e0ec988b111bff8d00cd06c6eab8bdaec0de",
       "acceptance_rows": [
         "LE37",
         "LE38",
@@ -1427,6 +1436,78 @@ Three fresh axes graded the code tip `53ac3cff` with the source digest `5aaad495
             "ref": "bench test --check kit-compliance at 53ac3cff",
             "digest": "sha256:fe32d2dcf3e40d37ca7ee75c038f6af68ed5c498e141e4c4c456c56dc8307ab5",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,106\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "kit-compliance",
+          "command": "bench test --check kit-compliance",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-B2-verify-shift-4",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "ce04e0ec988b111bff8d00cd06c6eab8bdaec0de",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/shift at 1720cbc2",
+            "digest": "sha256:d9ae6b1832408e2476793c823d0cb4b132226e46ffefbe9095d75b73bd8ddfba",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/shift,pass,5396\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "shift",
+          "command": "bench test --package ./internal/shift",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-B2-verify-otelrecord-4",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "ce04e0ec988b111bff8d00cd06c6eab8bdaec0de",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/otelrecord at 1720cbc2",
+            "digest": "sha256:1a6acc50a1db27bbbe1cb0edde1ee4daf0238e1744577a4a69a925753b280151",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/otelrecord,pass,205\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "otelrecord",
+          "command": "bench test --package ./internal/otelrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-B2-verify-cmd-4",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "ce04e0ec988b111bff8d00cd06c6eab8bdaec0de",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./cmd/bench at 1720cbc2",
+            "digest": "sha256:345de5b9158566ae51497a8a8dde5047c1d5df3e3ef72d7603bfe7c144961139",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,7634\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-B2-verify-kit-compliance-4",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "ce04e0ec988b111bff8d00cd06c6eab8bdaec0de",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --check kit-compliance at 1720cbc2",
+            "digest": "sha256:9fd366978538ea4e9fae916b3de00b3b2570ef802e511e69b481951e2c8cbd6c",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,77\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "kit-compliance",
           "command": "bench test --check kit-compliance",
