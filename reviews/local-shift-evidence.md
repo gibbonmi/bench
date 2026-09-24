@@ -1,12 +1,12 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, LE-B2, LE-C1, and LE-C2 are accepted. The LE-C3 review returned 11 findings; repair cycle 1 is pending.
+Status: LE-A, LE-B1, LE-B2, LE-C1, and LE-C2 are accepted. LE-C3 repair cycle 1 is committed; the confirming round of the three axes is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
 Line: opus (claude-opus-5-5) / medium / uncapped
 Review line: opus / high / one iteration for each axis
-Post-review repair cycles consumed: LE-A 3 of 3; LE-B1 1 of 2; LE-C1 1 of 2; LE-C2 1 of 2; LE-B2 3 of 3. The reviewer extended the LE-B2 allowance by one cycle on 2026-09-23, for the checkpoint red on the interrupt test waits. The reviewer extended the LE-A allowance by one cycle on 2026-09-23. The extra cycle covers LEA-S7 and each blocker of the second confirming round.
+Post-review repair cycles consumed: LE-A and LE-B2 3 of 3 each, and LE-B1, LE-C1, LE-C2, and LE-C3 1 of 2 each. The reviewer extended the LE-B2 allowance by one cycle on 2026-09-23, for the checkpoint red on the interrupt test waits. The reviewer extended the LE-A allowance by one cycle on 2026-09-23. The extra cycle covers LEA-S7 and each blocker of the second confirming round.
 Expected repair rounds: 2
 Confidence: 5
 
@@ -480,7 +480,7 @@ Two axes note that a reaped child's process id can be reused before the pass run
 
 ## LE-C3 author verification
 
-The frozen pair is `d2111dfa..f2ba5663`. The two planned checks and the root conformance test passed at the chunk tip. A learning records the ticket 10 Writes expansion. The tests came after the code, so each row's red is a probe.
+The first frozen pair was `d2111dfa..f2ba5663`. After repair cycle 1, the chunk tip is `7befdbc0`, and the two planned checks and the root conformance test passed there. A learning records the ticket 10 Writes expansion. The tests came after the code, so each row's red is a probe.
 
 | Row | Test | Probe |
 |---|---|---|
@@ -531,6 +531,20 @@ Findings: 5. Worst issue: LEC3-C1.
 - LEC3-C3 (auto-fix, confidence 7): no test reads the memory keys of a fresh recovery, their absence on a resume, or a resumed clean entry. An abandon between the two entry writes needs a concurrent-writer seam that the plan does not have; it stays a known gap.
 - LEC3-C4 (auto-fix, confidence 8): the FIFO case has no deadline of its own.
 - LEC3-C5 (no-op, confidence 3): a reaped process id can be reused, the risk the worktree tests accept.
+
+## LE-C3 repair cycle 1
+
+| Finding | Repair | Evidence |
+|---|---|---|
+| LEC3-S2 | `leaseEnd` ends every lease line; the writer, the reader, and the claim use it. | The worktree package passed. |
+| LEC3-S3 | `leaseProof` grades the lease once for both arms of the verdict. | The shift package passed. |
+| LEC3-P1, LEC3-C1 | Only an already-locked tree skips the lock and loses the pass's lease; a failed lock keeps it for a later resume. | Never take the locked branch: bit. |
+| LEC3-P2 | No change: `LeaseOwnerPID` accepts only one line that ends in the newline. A new case reads a lease with no final newline. | The shift package passed. |
+| LEC3-C2 | The clean recovery test reads the kept notes. | Keep no notes before the claim: bit. |
+| LEC3-C3 | The fresh recovery records its memory keys, and dirty, locked, and clean resumes record none. | The shift package passed. |
+| LEC3-C4 | The FIFO case waits on its own deadline. | The shift package passed. |
+
+The crash fixture moved into `fault_test.go`, so each test file stays under the line cap.
 
 ```bench-review-record
 {
@@ -2480,9 +2494,9 @@ Findings: 5. Worst issue: LEC3-C1.
     {
       "id": "LE-C3",
       "base": "d2111dfa3a2474fb9d613e8aa3bf6cb982de3aba",
-      "tip": "f2ba5663f72d7177eba6b292f36540750fe4c71f",
+      "tip": "7befdbc0f6e5cac870a94390558ef131613211a4",
       "plan_digest": "sha256:e37d617a4b777e7c4b022938aa3e5fcd47b7287047f169b8b310d73356c3bffc",
-      "source_digest": "c65b7c3e44161fb52c2a0000ac140382030140a3",
+      "source_digest": "026d6f09d57d34fd8c9a1248402a578b77bedca5",
       "acceptance_rows": [
         "LE64",
         "LE65",
@@ -2535,6 +2549,42 @@ Findings: 5. Worst issue: LEC3-C1.
           "outcome": "pass",
           "native_ref": {
             "ref": "bench test --package ./internal/worktree --run TestClaimRecordedLease at f2ba5663",
+            "digest": "sha256:f6f0c6b6a5fdd954801f25fd0e90e6c9dcdd6c20ba4a0ee8ad4136050a955c47",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree --run TestClaimRecordedLease",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-C3-verify-shift-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "026d6f09d57d34fd8c9a1248402a578b77bedca5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/shift at 7befdbc0",
+            "digest": "sha256:3553ad44066bc97d4a227f0fc6464eedaa27704a5835cd8903f245b8b840ce6b",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/shift,pass,6798\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "shift",
+          "command": "bench test --package ./internal/shift",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-C3-verify-worktree-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "026d6f09d57d34fd8c9a1248402a578b77bedca5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/worktree --run TestClaimRecordedLease at 7befdbc0",
             "digest": "sha256:f6f0c6b6a5fdd954801f25fd0e90e6c9dcdd6c20ba4a0ee8ad4136050a955c47",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
