@@ -1,12 +1,12 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, LE-B2, and LE-C1 are accepted. The LE-C2 review returned 10 findings; repair cycle 1 is pending.
+Status: LE-A, LE-B1, LE-B2, and LE-C1 are accepted. LE-C2 repair cycle 1 is committed; the confirming round of the three axes is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
 Line: opus (claude-opus-5-5) / medium / uncapped
 Review line: opus / high / one iteration for each axis
-Post-review repair cycles consumed: LE-A 3 of 3; LE-B1 1 of 2; LE-C1 1 of 2; LE-B2 3 of 3. The reviewer extended the LE-B2 allowance by one cycle on 2026-09-23, for the checkpoint red on the interrupt test waits. The reviewer extended the LE-A allowance by one cycle on 2026-09-23. The extra cycle covers LEA-S7 and each blocker of the second confirming round.
+Post-review repair cycles consumed: LE-A 3 of 3; LE-B1 1 of 2; LE-C1 1 of 2; LE-C2 1 of 2; LE-B2 3 of 3. The reviewer extended the LE-B2 allowance by one cycle on 2026-09-23, for the checkpoint red on the interrupt test waits. The reviewer extended the LE-A allowance by one cycle on 2026-09-23. The extra cycle covers LEA-S7 and each blocker of the second confirming round.
 Expected repair rounds: 2
 Confidence: 5
 
@@ -415,7 +415,7 @@ Two advisories go to LE-C3, where ticket 10 moves the lease reader beside its wr
 
 ## LE-C2 author verification
 
-The frozen pair is `4353965b..160823bf`. The three planned checks and the root conformance test passed at `e3d4ad74`, and `160823bf` changes only the ticket 9 text. A learning records the ticket 9 Writes expansion.
+The first frozen pair was `4353965b..160823bf`. After repair cycle 1, the chunk tip is `c773970a`, and the three planned checks and the root conformance test passed there. A learning records the ticket 9 Writes expansion.
 
 | Row | Test | Probe |
 |---|---|---|
@@ -458,11 +458,21 @@ Findings: 4. Worst issue: LEC2-C1.
 - LEC2-C3 (auto-fix, confidence 6): the key parse accepts an owner past the process-id range, and no test reads the stamp check.
 - LEC2-C4 (no-op, confidence 5): the lease skip belongs to LE75 in LE-C3, and no row covers a ledger read error or an Upsert failure.
 
+## LE-C2 repair cycle 1
+
+| Finding | Repair | Evidence |
+|---|---|---|
+| LEC2-S1 | The session-inspect test reaps a real child for its dead owner. | The session-inspect package passed. |
+| LEC2-P2 | The spec names `PIDAlive`. | Review of the text. |
+| LEC2-C1 | The keep test seeds a closed entry of a dead owner. | Drop the outcome guard: bit. |
+| LEC2-C2 | The LE77 test fails the acquire and still reads the abandon. | Run the pass after the acquire: bit. |
+| LEC2-C3 | `KeyOwner` parses the owner in the process-id range, and the keep test reads a range key and a stamp key. | Parse the owner as 64 bits: bit. Drop the stamp check: bit. |
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/local-shift-evidence/spec.md",
-  "plan_digest": "sha256:32ce79a177fba310561bd28b59acb709ba0199ab73f5b812dd646feea4a3c830",
+  "plan_digest": "sha256:2fa3b73470f28692ee1971b920079a592dc94f250ac9b37c82ae9cb72c0192aa",
   "implementation_session": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
   "chunks": [
     {
@@ -2139,9 +2149,9 @@ Findings: 4. Worst issue: LEC2-C1.
     {
       "id": "LE-C2",
       "base": "4353965b42eeade19d5e8aad83550cb0d053c191",
-      "tip": "160823bf5c6266f856e59aa96c353efd0a2a0870",
-      "plan_digest": "sha256:32ce79a177fba310561bd28b59acb709ba0199ab73f5b812dd646feea4a3c830",
-      "source_digest": "ad940303070ad5014b460b38f4c6951bb08ea904",
+      "tip": "c773970ae80d22417b7ecca96399a80ef3326092",
+      "plan_digest": "sha256:2fa3b73470f28692ee1971b920079a592dc94f250ac9b37c82ae9cb72c0192aa",
+      "source_digest": "e2915052f2deb1cf041b5f4284453d52f9f9f189",
       "acceptance_rows": [
         "LE72",
         "LE73",
@@ -2201,6 +2211,60 @@ Findings: 4. Worst issue: LEC2-C1.
             "ref": "bench test --package ./internal/sessioninspect at e3d4ad74; 160823bf changes only ticket 9 text",
             "digest": "sha256:6a15b9c4660b81fb98b1aece71c78a3ae714226559e3dc2dda8870d44aec977e",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/sessioninspect,pass,2032\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "sessioninspect",
+          "command": "bench test --package ./internal/sessioninspect",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-C2-verify-shift-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "e2915052f2deb1cf041b5f4284453d52f9f9f189",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/shift at c773970a",
+            "digest": "sha256:e5a7464f1b095c21c5dfda7e48ce784307aa1c5e794ff57b5c5a3fde770763b2",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/shift,pass,5378\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "shift",
+          "command": "bench test --package ./internal/shift",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-C2-verify-intent-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "e2915052f2deb1cf041b5f4284453d52f9f9f189",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/intent/... at c773970a",
+            "digest": "sha256:5b38a1e55f9dc806cf0f00f21037fdf893ccf57ffdb455b30cf00eaecc19d538",
+            "excerpt": "packages[3]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/intent,pass,5341\n  github.com/gibbonmi/bench/internal/intent/admissionpolicy,pass,3\n  github.com/gibbonmi/bench/internal/intent/ledger,pass,2\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "intent",
+          "command": "bench test --package ./internal/intent/...",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-C2-verify-sessioninspect-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "e2915052f2deb1cf041b5f4284453d52f9f9f189",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/sessioninspect at c773970a",
+            "digest": "sha256:a56d98fe0383902e929f392b2a48207abbb823430e21d5673d159a41bb93364d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/sessioninspect,pass,2042\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "sessioninspect",
           "command": "bench test --package ./internal/sessioninspect",
@@ -2370,6 +2434,24 @@ Findings: 4. Worst issue: LEC2-C1.
     {
       "from": "sha256:b458a5e85d95d874b5405a881006d25825ce788f8a00318318a1be2a03ab0c4e",
       "to": "sha256:32ce79a177fba310561bd28b59acb709ba0199ab73f5b812dd646feea4a3c830",
+      "chunk_ids": {
+        "LE-A": [
+          "LE-A"
+        ],
+        "LE-B1": [
+          "LE-B1"
+        ],
+        "LE-B2": [
+          "LE-B2"
+        ],
+        "LE-C1": [
+          "LE-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:32ce79a177fba310561bd28b59acb709ba0199ab73f5b812dd646feea4a3c830",
+      "to": "sha256:2fa3b73470f28692ee1971b920079a592dc94f250ac9b37c82ae9cb72c0192aa",
       "chunk_ids": {
         "LE-A": [
           "LE-A"
