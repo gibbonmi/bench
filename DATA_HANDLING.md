@@ -148,7 +148,7 @@ rather than reported as a stray entry. A gate-side need is declared in
 - **Sealed record segments (`traces-<sequence>.jsonl`, mode 0600).** When an
   append would take the live `traces.jsonl` past `bounds.RecordSegmentLimit`,
   Bench renames it to a sealed segment in the same directory. The sequence is a
-  zero-padded 20-digit number, so name order is write order. Bench keeps
+  zero-padded number of fixed width, so name order is write order. Bench keeps
   `bounds.RecordSegmentsRetained` sealed segments and removes the lowest
   sequences first.
 - **Shift memory files (`memory/<UTC stamp>-<trace id>.md`, mode 0600).** Before

@@ -47,7 +47,8 @@ func TestSubshellRecordsAShellThatCannotStart(t *testing.T) {
 	subshellAt(root, home, filepath.Join(t.TempDir(), "absent-shell"), os.Environ(), nil, strings.NewReader(""), &stdout, &stderr)
 	requireTest(t, strings.Contains(stderr.String(), "bench worktree shell:"), "absent shell stderr = %q, want the start error", stderr.String())
 	span := shellSpan(t, home, root)
-	requireTest(t, span.Attributes[otelrecord.AttrWorkState] == otelrecord.WorkFailed, "absent shell work state = %q, want %q", span.Attributes[otelrecord.AttrWorkState], otelrecord.WorkFailed)
+	requireTest(t, span.Attributes[otelrecord.AttrSubjectID] != "", "absent shell span has no assignment id")
+	requireShellEnd(t, span, otelrecord.WorkFailed, otelrecord.CleanupReleased)
 }
 
 // shellSpan returns the one finished worktree.shell span of a session's record.
