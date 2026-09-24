@@ -2,7 +2,9 @@ package otelrecord
 
 import (
 	"context"
+	"encoding/json"
 	"os"
+	"reflect"
 	"testing"
 	"time"
 
@@ -163,5 +165,81 @@ func TestReaderSeamsAreRegisteredSeams(t *testing.T) {
 		if !registered[seam] {
 			t.Fatalf("reader seam %q names no Registry row", seam)
 		}
+	}
+}
+
+// schemaLine is the finished fixture span as one record line whose resource block holds
+// only the given schema value. An empty schema writes a legacy line with no schema key.
+func schemaLine(t *testing.T, schema string) []byte {
+	t.Helper()
+
+	line, err := Encode(fixtureSpan(t))
+	if err != nil {
+		t.Fatalf("the encoder failed: %v", err)
+	}
+	var data tracesData
+	if err := json.Unmarshal(line, &data); err != nil {
+		t.Fatalf("the line does not parse: %v", err)
+	}
+	data.ResourceSpans[0].Resource.Attributes = nil
+	if schema != "" {
+		data.ResourceSpans[0].Resource.Attributes = []keyValue{{Key: ResourceRecordSchema, Value: anyValue{StringValue: stringPtr(schema)}}}
+	}
+	out, err := json.Marshal(data)
+	if err != nil {
+		t.Fatalf("encode the schema line: %v", err)
+	}
+	return out
+}
+
+// recordOf writes the lines as one repository's record and returns its home and root.
+func recordOf(t *testing.T, lines ...[]byte) (string, string) {
+	t.Helper()
+
+	home, root := t.TempDir(), t.TempDir()
+	for _, line := range lines {
+		if err := NewWriter(home, root).Append(line); err != nil {
+			t.Fatalf("append a record line: %v", err)
+		}
+	}
+	return home, root
+}
+
+// TestReadSelectedReportsAnUnknownSchemaAsMalformed holds row LE8: a reader that ignores
+// the resource returns the span, so the problem read reds.
+func TestReadSelectedReportsAnUnknownSchemaAsMalformed(t *testing.T) {
+	home, root := recordOf(t, schemaLine(t, "2"))
+
+	spans, problems, err := ReadSelected(home, root, []string{fixtureTraceID})
+	if err != nil {
+		t.Fatalf("ReadSelected: %v", err)
+	}
+	if len(spans) != 0 {
+		t.Errorf("ReadSelected returned %d spans from a schema 2 line, want none", len(spans))
+	}
+	if !reflect.DeepEqual(problems, []string{"line 1 malformed"}) {
+		t.Errorf("problems = %v, want the one malformed line", problems)
+	}
+}
+
+// TestReadSpansReturnsNoSpanOfAnUnknownSchema holds row LE9: a reader that ignores the
+// resource returns the span, so the count reds.
+func TestReadSpansReturnsNoSpanOfAnUnknownSchema(t *testing.T) {
+	home, root := recordOf(t, schemaLine(t, "2"))
+
+	spans, err := ReadSpans(home, root)
+	if err != nil || len(spans) != 0 {
+		t.Fatalf("ReadSpans = %d spans, %v, want none from a schema 2 line", len(spans), err)
+	}
+}
+
+// TestReadSpansReadsALegacyLine holds row LE10: a reader that requires the schema
+// attribute drops the legacy span, so the count reds.
+func TestReadSpansReadsALegacyLine(t *testing.T) {
+	home, root := recordOf(t, schemaLine(t, ""))
+
+	spans, err := ReadSpans(home, root)
+	if err != nil || len(spans) != 1 || spans[0].TraceID != fixtureTraceID {
+		t.Fatalf("ReadSpans = %+v, %v, want the one legacy span", spans, err)
 	}
 }

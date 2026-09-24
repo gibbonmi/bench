@@ -309,3 +309,25 @@ func TestAHandedOffChildJoinsItsParentSpan(t *testing.T) {
 		t.Errorf("the child parent span id = %v, want the parent's %s", span["parentSpanId"], want.SpanID())
 	}
 }
+
+// TestBeginWritesNoEnvironmentResource holds row LE4: the 2026-09-23 probe found both
+// markers in every line of the encoder that kept the SDK resource, so the byte search
+// reds.
+func TestBeginWritesNoEnvironmentResource(t *testing.T) {
+	t.Setenv("OTEL_RESOURCE_ATTRIBUTES", "bench.leak=PROBEMARK")
+	t.Setenv("OTEL_SERVICE_NAME", "SVCMARK")
+	home, root := t.TempDir(), t.TempDir()
+
+	_, _, finish := Begin(home, root, "gate")
+	finish()
+
+	raw, err := os.ReadFile(Path(home, root))
+	if err != nil {
+		t.Fatalf("read the record: %v", err)
+	}
+	for _, marker := range []string{"PROBEMARK", "SVCMARK"} {
+		if strings.Contains(string(raw), marker) {
+			t.Errorf("a record line holds the environment marker %s", marker)
+		}
+	}
+}

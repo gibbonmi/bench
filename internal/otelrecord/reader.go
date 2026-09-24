@@ -136,6 +136,9 @@ func decodeRecord(line []byte) ([]decodedRecordSpan, error) {
 	}
 	var out []decodedRecordSpan
 	for _, resource := range data.ResourceSpans {
+		if err := gradeSchema(resource.Resource); err != nil {
+			return nil, err
+		}
 		for _, scope := range resource.ScopeSpans {
 			for _, encoded := range scope.Spans {
 				out = append(out, decodedRecordSpan{Span: decodeSpan(encoded), finished: encoded.EndTimeUnixNano != ""})
@@ -143,6 +146,20 @@ func decodeRecord(line []byte) ([]decodedRecordSpan, error) {
 		}
 	}
 	return out, nil
+}
+
+// gradeSchema refuses a line whose schema this reader does not know, so a consumer never
+// misreads a later shape. A line with no schema key is a legacy line and reads as before.
+func gradeSchema(block resource) error {
+	for _, pair := range block.Attributes {
+		if pair.Key != ResourceRecordSchema {
+			continue
+		}
+		if schema := decodeValue(pair.Value); schema != RecordSchema {
+			return fmt.Errorf("unknown record schema %q", schema)
+		}
+	}
+	return nil
 }
 
 func decodeSpan(encoded span) Span {

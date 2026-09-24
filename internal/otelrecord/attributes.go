@@ -1,13 +1,46 @@
 package otelrecord
 
-// This file declares the whole attribute set a Bench span may carry, and the outcome
-// vocabulary those spans state. Story 19 limits a span to the seam name, the subject id,
-// the outcome, and the measures. No mechanical check enforces the limit, so a review
-// grades each new attribute against this declaration. A key that is not declared here
-// does not ship.
+import "sync/atomic"
+
+// This file declares the whole attribute set a Bench span may carry, the resource block
+// every line carries, and the outcome vocabulary those spans state. The declared set is
+// the redaction contract: the encoder drops each span attribute whose key is not declared
+// here, so a key ships only when the diff that sets it also declares it. A review still
+// grades the value source of each declared key.
 //
 // No attribute carries payload. A subject is identified by its digest — a tree id or a
 // commit id — and never by its subject text.
+
+// The resource block. The encoder writes these keys itself for every line and never the
+// SDK resource, so no detector and no OTEL_* environment value reaches the record.
+const (
+	// ResourceServiceName names the service that wrote the line; its value is always bench.
+	ResourceServiceName = "service.name"
+
+	// ResourceServiceVersion carries the Bench version that wrote the line. A release
+	// producer selects its own events by this value.
+	ResourceServiceVersion = "service.version"
+
+	// ResourceRecordSchema carries the record schema version of the line.
+	ResourceRecordSchema = "bench.record.schema"
+
+	// ServiceName is the one ResourceServiceName value.
+	ServiceName = "bench"
+
+	// RecordSchema is the schema version this package writes and the one it reads. A
+	// line with another schema value is malformed; a line with none is a legacy line.
+	RecordSchema = "1"
+)
+
+// recordVersion is the Bench version the command layer set at process start. A process
+// that sets none writes no ResourceServiceVersion key.
+var recordVersion atomic.Pointer[string]
+
+// SetVersion hands the process's stamped Bench version to the record. The command layer
+// calls it once at process start, and every later line names that version.
+func SetVersion(version string) {
+	recordVersion.Store(&version)
+}
 
 const (
 	// AttrSeam names the seam that started the span, such as "gate" or "worktree.land".
@@ -45,8 +78,8 @@ const (
 // carries no end time, so a consumer filters unfinished spans by this marker.
 const RecordStart = "start"
 
-// DeclaredAttributes is the complete declared set. A reviewer grades a new span attribute
-// against this list, and a later ticket that adds a key adds it here in the same diff.
+// DeclaredAttributes is the complete declared set. The encoder writes only these span
+// attributes, and a later ticket that adds a key adds it here in the same diff.
 var DeclaredAttributes = []string{
 	AttrSeam,
 	AttrSubjectID,
@@ -59,6 +92,15 @@ var DeclaredAttributes = []string{
 	AttrMeasureCensusRawCalls,
 	AttrRecord,
 }
+
+// declared answers whether the encoder may write a span attribute key.
+var declared = func() map[string]bool {
+	keys := make(map[string]bool, len(DeclaredAttributes))
+	for _, key := range DeclaredAttributes {
+		keys[key] = true
+	}
+	return keys
+}()
 
 // The outcome vocabulary. A consumer groups runs by these three words, so a seam states
 // one of them and never its own spelling of the same idea.

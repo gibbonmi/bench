@@ -56,7 +56,7 @@ import (
 )
 
 // scripts/go-build.sh stamps the version. Unstamped builds report "dev".
-var version = "dev"
+var version = unstampedVersion
 
 func main() {
 	prepareProcessEnvironment()

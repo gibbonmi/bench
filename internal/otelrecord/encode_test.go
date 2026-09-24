@@ -2,6 +2,7 @@ package otelrecord
 
 import (
 	"encoding/json"
+	"reflect"
 	"regexp"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/sdk/instrumentation"
+	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
@@ -251,5 +253,144 @@ func TestEncodeWritesDeclaredAttributes(t *testing.T) {
 	count, ok := got[AttrMeasurePathCount].(map[string]any)
 	if !ok || count["intValue"] != "3" {
 		t.Errorf("%s is %#v, want the quoted int value 3", AttrMeasurePathCount, got[AttrMeasurePathCount])
+	}
+}
+
+// withVersion sets the record version for one test and clears it after.
+func withVersion(t *testing.T, version string) {
+	t.Helper()
+	SetVersion(version)
+	t.Cleanup(func() { recordVersion.Store(nil) })
+}
+
+// withoutVersion clears the record version for one test, as a process that sets none.
+func withoutVersion(t *testing.T) {
+	t.Helper()
+	previous := recordVersion.Swap(nil)
+	t.Cleanup(func() { recordVersion.Store(previous) })
+}
+
+// resourceOf returns the resource block of one encoded span as key to string value.
+func resourceOf(t *testing.T, readOnly sdktrace.ReadOnlySpan) map[string]string {
+	t.Helper()
+
+	line, err := Encode(readOnly)
+	if err != nil {
+		t.Fatalf("the encoder failed: %v", err)
+	}
+	var data tracesData
+	if err := json.Unmarshal(line, &data); err != nil {
+		t.Fatalf("the line does not parse: %v: %s", err, line)
+	}
+	if len(data.ResourceSpans) != 1 {
+		t.Fatalf("the line carries %d resourceSpans entries, want 1", len(data.ResourceSpans))
+	}
+	got := map[string]string{}
+	for _, pair := range data.ResourceSpans[0].Resource.Attributes {
+		got[pair.Key] = decodeValue(pair.Value)
+	}
+	return got
+}
+
+// sdkResourceSpan is the fixture span carrying the SDK's default resource, the resource
+// every provider span carried before the encoder wrote its own block.
+func sdkResourceSpan(t *testing.T) sdktrace.ReadOnlySpan {
+	t.Helper()
+
+	stub := tracetest.SpanStubFromReadOnlySpan(fixtureSpan(t))
+	stub.Resource = sdkresource.Default()
+	return stub.Snapshot()
+}
+
+// TestEncodeWritesTheRecordSchema holds row LE1: an encoder that keeps the SDK resource
+// has no schema key, so the value read reds.
+func TestEncodeWritesTheRecordSchema(t *testing.T) {
+	if got := resourceOf(t, sdkResourceSpan(t))[ResourceRecordSchema]; got != RecordSchema {
+		t.Fatalf("%s = %q, want %q", ResourceRecordSchema, got, RecordSchema)
+	}
+}
+
+// TestEncodeWritesTheSetVersion holds row LE2: an encoder that never reads the set
+// version writes no such key, so the value read reds.
+func TestEncodeWritesTheSetVersion(t *testing.T) {
+	withVersion(t, "9.9.9-test")
+	if got := resourceOf(t, sdkResourceSpan(t))[ResourceServiceVersion]; got != "9.9.9-test" {
+		t.Fatalf("%s = %q, want 9.9.9-test", ResourceServiceVersion, got)
+	}
+}
+
+// TestEncodeResourceHoldsExactlyTheBenchKeys holds row LE5: a filter that keeps a
+// telemetry.sdk key or a detector key fails the exact-set comparison.
+func TestEncodeResourceHoldsExactlyTheBenchKeys(t *testing.T) {
+	withVersion(t, "9.9.9-test")
+	want := map[string]string{
+		ResourceServiceName:    ServiceName,
+		ResourceServiceVersion: "9.9.9-test",
+		ResourceRecordSchema:   RecordSchema,
+	}
+	if got := resourceOf(t, sdkResourceSpan(t)); !reflect.DeepEqual(got, want) {
+		t.Fatalf("the resource block = %v, want exactly %v", got, want)
+	}
+}
+
+// TestEncodeWithoutAVersionWritesNoVersionKey holds row LE96: an encoder that writes an
+// empty or dev version claims a release it never had, so the exact-set comparison reds.
+func TestEncodeWithoutAVersionWritesNoVersionKey(t *testing.T) {
+	withoutVersion(t)
+	want := map[string]string{
+		ResourceServiceName:  ServiceName,
+		ResourceRecordSchema: RecordSchema,
+	}
+	if got := resourceOf(t, sdkResourceSpan(t)); !reflect.DeepEqual(got, want) {
+		t.Fatalf("the resource block = %v, want exactly %v", got, want)
+	}
+}
+
+// spanAttributeKeys returns the attribute keys of the one encoded span.
+func spanAttributeKeys(t *testing.T, readOnly sdktrace.ReadOnlySpan) map[string]bool {
+	t.Helper()
+
+	line, err := Encode(readOnly)
+	if err != nil {
+		t.Fatalf("the encoder failed: %v", err)
+	}
+	var parsed map[string]any
+	if err := json.Unmarshal(line, &parsed); err != nil {
+		t.Fatalf("the line does not parse: %v", err)
+	}
+	keys := map[string]bool{}
+	attributes, _ := onlySpan(t, parsed)["attributes"].([]any)
+	for _, entry := range attributes {
+		if pair, ok := entry.(map[string]any); ok {
+			key, _ := pair["key"].(string)
+			keys[key] = true
+		}
+	}
+	return keys
+}
+
+// TestEncodeDropsAnUndeclaredAttribute holds row LE6: an encoder that copies every
+// attribute keeps the payload key, so the absence read reds.
+func TestEncodeDropsAnUndeclaredAttribute(t *testing.T) {
+	stub := tracetest.SpanStubFromReadOnlySpan(fixtureSpan(t))
+	stub.Attributes = append(stub.Attributes, attribute.String("bench.payload", "the objective text"))
+	if spanAttributeKeys(t, stub.Snapshot())["bench.payload"] {
+		t.Fatal("the line keeps the undeclared bench.payload attribute")
+	}
+}
+
+// TestEncodeKeepsEveryDeclaredAttribute holds row LE7: a filter that drops too much loses
+// a declared key, so the presence read reds.
+func TestEncodeKeepsEveryDeclaredAttribute(t *testing.T) {
+	stub := tracetest.SpanStubFromReadOnlySpan(fixtureSpan(t))
+	stub.Attributes = nil
+	for _, key := range DeclaredAttributes {
+		stub.Attributes = append(stub.Attributes, attribute.String(key, "declared"))
+	}
+	keys := spanAttributeKeys(t, stub.Snapshot())
+	for _, key := range DeclaredAttributes {
+		if !keys[key] {
+			t.Errorf("the line lost the declared attribute %s", key)
+		}
 	}
 }
