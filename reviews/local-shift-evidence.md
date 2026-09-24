@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, and LE-B2 are accepted. LE-C1 repair cycle 1 is committed; the confirming round of the three axes is pending.
+Status: LE-A, LE-B1, LE-B2, and LE-C1 are accepted. The LE-C1 confirming round passed on all three axes.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -402,6 +402,16 @@ Findings: 3. Worst issue: LEC1-C1.
 | LEC1-C1 | The LE60 test also reads an outcome with an empty recovery as done. | Keep an empty recovery live: bit. |
 
 The spec fence and the ticket 8 Writes gained `internal/status/status.go` and the canary fixture that pins it.
+
+## LE-C1 confirming round
+
+Three fresh axes graded the code tip `02b777de` with the source digest `2a7af326`. Each axis read the manifest, confirmed the current binding, and read the repair delta `a95eb85e..02b777de`.
+
+- Standards, 0 findings. LEC1-S1 and LEC1-S3 are closed, and the LEC1-S2 deferral is sound.
+- Spec, 0 findings. LEC1-P1 is closed, and the status output does not change.
+- Coverage, 0 findings. LEC1-C1 is closed.
+
+Two advisories go to LE-C3, where ticket 10 moves the lease reader beside its writer. First, the LE63 test compares the lease with `TrimSpace`, which is looser than the reader's newline trim. The test will then compare against the moved reader exactly. Second, no test reads the status recovery rendering or the teardown recovery suffix, and both gaps predate this chunk.
 
 ```bench-review-record
 {
@@ -2012,6 +2022,72 @@ The spec fence and the ticket 8 Writes gained `internal/status/status.go` and th
             "LEC1-C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "LE-C1-review-standards-2",
+          "performer": "claude-code:subagent:a58b806be1d3a62ba",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2a7af326fb1920e8f018fe79ab02b8c364d6d00f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a58b806be1d3a62ba, evidence sha256:0161fe6b616d7595a41474ac5146dec7ca7fd86c2634fc65e4e6eb782d80c2bb",
+            "digest": "sha256:e32914beb8cf0fa67b0a97c63fcbae275b33f9533fbe0d75cbb8135f416aaaaa",
+            "excerpt": "Verdict: PASS. No blocking findings in the repair delta, and one advisory finding."
+          },
+          "axis": "Standards",
+          "base": "e6b96f828b5a3d4d4961321a8111388cad909fa2",
+          "tip": "02b777dee15a4beb77bebc541143cc867fbbb7c8",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-C1-review-standards-1"
+          ]
+        },
+        {
+          "id": "LE-C1-review-spec-2",
+          "performer": "claude-code:subagent:aab02c007f59c48c9",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2a7af326fb1920e8f018fe79ab02b8c364d6d00f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:aab02c007f59c48c9, evidence sha256:0161fe6b616d7595a41474ac5146dec7ca7fd86c2634fc65e4e6eb782d80c2bb",
+            "digest": "sha256:ecede18713bec1aa083b9df734af6ee5426d344fe6b93956a5a8da624f79bcf0",
+            "excerpt": "Verdict: pass. Findings: 1, advisory only."
+          },
+          "axis": "Spec",
+          "base": "e6b96f828b5a3d4d4961321a8111388cad909fa2",
+          "tip": "02b777dee15a4beb77bebc541143cc867fbbb7c8",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-C1-review-spec-1"
+          ]
+        },
+        {
+          "id": "LE-C1-review-coverage-2",
+          "performer": "claude-code:subagent:a2a34347de6034095",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2a7af326fb1920e8f018fe79ab02b8c364d6d00f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a2a34347de6034095, evidence sha256:0161fe6b616d7595a41474ac5146dec7ca7fd86c2634fc65e4e6eb782d80c2bb",
+            "digest": "sha256:7f0ef96c4e2adafa862be9c48c816f8ee6d313d5c3748212b519696fdd7dc858",
+            "excerpt": "Verdict: C1 is closed, and nothing blocks. I found 3 findings, all advisory. Confidence: high."
+          },
+          "axis": "Coverage",
+          "base": "e6b96f828b5a3d4d4961321a8111388cad909fa2",
+          "tip": "02b777dee15a4beb77bebc541143cc867fbbb7c8",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-C1-review-coverage-1"
+          ]
         }
       ]
     }
