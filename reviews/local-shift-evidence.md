@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, LE-B2, LE-C1, LE-C2, and LE-C3 are accepted. LE-D repair cycle 1 is committed; the confirming round of the three axes is pending.
+Status: LE-A, LE-B1, LE-B2, LE-C1, LE-C2, and LE-C3 are accepted. LE-D is accepted, and the final reconciliation is complete. The source is ready to land.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -605,6 +605,25 @@ Findings: 4. Worst issue: LED-C1.
 | LED-C3 | The start-failure test reads the assignment id and the cleanup word. | Record a released start failure as retained: bit. |
 
 After repair cycle 1, the chunk tip is `6dc949ed`. The four planned checks and the root conformance test passed there.
+
+## LE-D confirming round
+
+Three fresh axes graded the code tip `6dc949ed` with the source digest `576777bd`. Each axis read the manifest, confirmed the current binding, and read the repair delta `376f8b53..6dc949ed`.
+
+- Standards, 0 findings. LED-S1 is closed.
+- Spec, 0 findings. LE82, LE87, and the ticket 13 acceptance lines still hold.
+- Coverage, 0 findings. LED-C3 is closed. LED-C1 and LED-C2 stay known gaps.
+
+## Final reconciliation
+
+The retained author ran the five final checks at the source digest `576777bd`. They cover the coverage map, the record and shift packages, kit compliance, and the system suite. Each check passed. Each of the 105 rows that the seven chunks plan is reconciled as covered, and each chunk passed its confirming round.
+
+Known gaps that stay open:
+
+- The lease newline is also spelled in the lifecycle policy's lease parse.
+- No test forces a lock to fail on an unlocked tree.
+- An abandon between the two recovery entry writes has no seam.
+- No test forces a nonzero release of a shell session, or its create and claim failures.
 
 ```bench-review-record
 {
@@ -3027,16 +3046,279 @@ After repair cycle 1, the chunk tip is `6dc949ed`. The four planned checks and t
             "LED-C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "LE-D-review-standards-2",
+          "performer": "claude-code:subagent:a6504f27b1416a61b",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "576777bd01bca0891ca73d9f711c8268f8390fa1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a6504f27b1416a61b, evidence sha256:4ba5f5fba1eec119f9f461d6e0841ff3bd81ddedab03a07a65ab3ff78bcb8a26",
+            "digest": "sha256:8f0b9c6edbc47ec422587fc8d29e7bfae3a6136579c8e4ab1e8bc8b3743dbe03",
+            "excerpt": "PASS. The fold closes LED-S1. Findings: none."
+          },
+          "axis": "Standards",
+          "base": "38fc33d69c093fdf26248a576502da404b014498",
+          "tip": "6dc949edc5268c33e1fb11141ca934f0d0e82955",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-D-review-standards-1"
+          ]
+        },
+        {
+          "id": "LE-D-review-spec-2",
+          "performer": "claude-code:subagent:aced0ddad7f8c9215",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "576777bd01bca0891ca73d9f711c8268f8390fa1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:aced0ddad7f8c9215, evidence sha256:4ba5f5fba1eec119f9f461d6e0841ff3bd81ddedab03a07a65ab3ff78bcb8a26",
+            "digest": "sha256:a1d968a02e70e71cfd5ff1be15637193ee649f13beea20d197aa88e8d4de68bd",
+            "excerpt": "PASS. No finding reaches the blocking bar."
+          },
+          "axis": "Spec",
+          "base": "38fc33d69c093fdf26248a576502da404b014498",
+          "tip": "6dc949edc5268c33e1fb11141ca934f0d0e82955",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-D-review-spec-1"
+          ]
+        },
+        {
+          "id": "LE-D-review-coverage-2",
+          "performer": "claude-code:subagent:a550013a192c49386",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "576777bd01bca0891ca73d9f711c8268f8390fa1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a550013a192c49386, evidence sha256:4ba5f5fba1eec119f9f461d6e0841ff3bd81ddedab03a07a65ab3ff78bcb8a26",
+            "digest": "sha256:78c74ca18519fde97ed219029cff97ccc19a8a21ed3a3e384bd04eca54f1eb93",
+            "excerpt": "PASS. LED-C3 is closed. The repair opens no new gap."
+          },
+          "axis": "Coverage",
+          "base": "38fc33d69c093fdf26248a576502da404b014498",
+          "tip": "6dc949edc5268c33e1fb11141ca934f0d0e82955",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-D-review-coverage-1"
+          ]
         }
       ]
     }
   ],
   "completion": {
-    "state": "",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "576777bd01bca0891ca73d9f711c8268f8390fa1",
+    "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+    "reconciliation": {
+      "LE1": "covered",
+      "LE2": "covered",
+      "LE3": "covered",
+      "LE4": "covered",
+      "LE5": "covered",
+      "LE96": "covered",
+      "LE6": "covered",
+      "LE7": "covered",
+      "LE8": "covered",
+      "LE9": "covered",
+      "LE10": "covered",
+      "LE11": "covered",
+      "LE12": "covered",
+      "LE13": "covered",
+      "LE92": "covered",
+      "LE94": "covered",
+      "LE14": "covered",
+      "LE93": "covered",
+      "LE15": "covered",
+      "LE16": "covered",
+      "LE17": "covered",
+      "LE18": "covered",
+      "LE19": "covered",
+      "LE20": "covered",
+      "LE21": "covered",
+      "LE22": "covered",
+      "LE23": "covered",
+      "LE24": "covered",
+      "LE25": "covered",
+      "LE26": "covered",
+      "LE27": "covered",
+      "LE28": "covered",
+      "LE29": "covered",
+      "LE30": "covered",
+      "LE31": "covered",
+      "LE32": "covered",
+      "LE33": "covered",
+      "LE34": "covered",
+      "LE35": "covered",
+      "LE36": "covered",
+      "LE37": "covered",
+      "LE38": "covered",
+      "LE39": "covered",
+      "LE40": "covered",
+      "LE41": "covered",
+      "LE42": "covered",
+      "LE43": "covered",
+      "LE44": "covered",
+      "LE45": "covered",
+      "LE46": "covered",
+      "LE47": "covered",
+      "LE48": "covered",
+      "LE49": "covered",
+      "LE50": "covered",
+      "LE51": "covered",
+      "LE52": "covered",
+      "LE53": "covered",
+      "LE54": "covered",
+      "LE55": "covered",
+      "LE56": "covered",
+      "LE57": "covered",
+      "LE58": "covered",
+      "LE88": "covered",
+      "LE95": "covered",
+      "LE102": "covered",
+      "LE59": "covered",
+      "LE60": "covered",
+      "LE61": "covered",
+      "LE62": "covered",
+      "LE63": "covered",
+      "LE72": "covered",
+      "LE73": "covered",
+      "LE74": "covered",
+      "LE76": "covered",
+      "LE77": "covered",
+      "LE78": "covered",
+      "LE79": "covered",
+      "LE64": "covered",
+      "LE65": "covered",
+      "LE91": "covered",
+      "LE105": "covered",
+      "LE66": "covered",
+      "LE67": "covered",
+      "LE68": "covered",
+      "LE69": "covered",
+      "LE70": "covered",
+      "LE89": "covered",
+      "LE103": "covered",
+      "LE71": "covered",
+      "LE75": "covered",
+      "LE90": "covered",
+      "LE97": "covered",
+      "LE98": "covered",
+      "LE99": "covered",
+      "LE101": "covered",
+      "LE100": "covered",
+      "LE104": "covered",
+      "LE80": "covered",
+      "LE81": "covered",
+      "LE82": "covered",
+      "LE83": "covered",
+      "LE84": "covered",
+      "LE85": "covered",
+      "LE86": "covered",
+      "LE87": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-verify-coverage",
+        "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+        "role": "author-verification",
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "source_digest": "576777bd01bca0891ca73d9f711c8268f8390fa1",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "bench coverage --check specs/local-shift-evidence/spec.md at 6dc949ed",
+          "digest": "sha256:98d22ef1829d3e4e0044d6b1c729909ea8f779f357b302fb46e9c0e88640def9",
+          "excerpt": "ok: coverage map valid \u2014 107 row(s)"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/local-shift-evidence/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-verify-otelrecord",
+        "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+        "role": "author-verification",
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "source_digest": "576777bd01bca0891ca73d9f711c8268f8390fa1",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "bench test --package ./internal/otelrecord at 6dc949ed",
+          "digest": "sha256:7b803a2a403544befacee024a40c37576adfc9f9137f0f90f138b1a44842c3a9",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/otelrecord,pass,186\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "otelrecord",
+        "command": "bench test --package ./internal/otelrecord",
+        "exit_code": 0
+      },
+      {
+        "id": "final-verify-shift",
+        "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+        "role": "author-verification",
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "source_digest": "576777bd01bca0891ca73d9f711c8268f8390fa1",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "bench test --package ./internal/shift at 6dc949ed",
+          "digest": "sha256:de53f3f1629aebd67361d7479a9d72d76ab7d317bd7ae561c8292afd2fa3111e",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/shift,pass,6422\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "shift",
+        "command": "bench test --package ./internal/shift",
+        "exit_code": 0
+      },
+      {
+        "id": "final-verify-kit-compliance",
+        "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+        "role": "author-verification",
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "source_digest": "576777bd01bca0891ca73d9f711c8268f8390fa1",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "bench test --check kit-compliance at 6dc949ed",
+          "digest": "sha256:4b7ea6955d5fbcd81a6fb023fae53d7df97085b177985add14d242382f74845c",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,81\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "kit-compliance",
+        "command": "bench test --check kit-compliance",
+        "exit_code": 0
+      },
+      {
+        "id": "final-verify-system",
+        "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+        "role": "author-verification",
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "source_digest": "576777bd01bca0891ca73d9f711c8268f8390fa1",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "bench test --check system at 6dc949ed",
+          "digest": "sha256:eb017969051a83d1d99af1cd97cec0fafd4f4b47a3472a5d501ec51804dabe8a",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,36333\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
