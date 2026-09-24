@@ -28,9 +28,11 @@ After a won claim, the pass writes the entry: its own lease line and the outcome
 - A worktree with dirty paths beyond the scratch is locked in place. The lock step is skipped when the worktree is already locked, and the pass removes its own lease.
 - A clean worktree loses its scratch and is released to the pool.
 
+After the act, the pass writes its entry once more with the outcome `recovered` and its pointer. So a concurrent abandon that landed between the two writes loses, and a dirty tree keeps its live pointer.
+
 A resume arm judges each entry with the outcome `recovered`. When its lease file holds the entry's lease line with a dead owner, the pass runs only the act again. The resume retains no second memory file and writes one recovery span with no memory keys. Every other `recovered` entry stays as it is: an absent lease, a live owner, another identity, or a malformed or special lease file.
 
-Add two steps to the shift fault seam, one at the claim and one between the entry write and the act. The concede rows fault the claim step in process. The resume rows run the first pass in a helper role that this ticket adds beside ticket 5's role. That role arms the act fault from a test-only variable, runs the pass, and exits, so the first pass's lease line names a dead pid. The second pass then runs in the test process.
+Add two steps to the shift fault seam, one at the claim and one between the entry write and the act. The concede rows fault the claim step in process. The resume rows run the first pass in a helper role that this ticket adds beside ticket 5's role. That role arms the act fault from a test-only variable, runs the pass, and exits. The test waits for it, so the first pass's lease line names a dead pid and not a zombie that `pidAlive` reads as alive. The second pass then runs in the test process.
 
 The worktree claim test uses the existing takeover gap seam, and its test names start with `TestClaimRecordedLease`. `snapshot_test.go` routes its repository and process effects through the worktree journey harness. The killed-helper rows re-exec the shift test binary into ticket 5's helper role and kill that process with SIGKILL. The dead-other-owner rows rewrite the lease to a pid that the test started and reaped.
 
@@ -50,7 +52,8 @@ The command registry and its conformance tests join the Writes line through the 
 - [ ] A malformed lease line and a FIFO lease each leave the entry unchanged, and the pass returns within the test deadline.
 - [ ] When another writer replaces the lease in the takeover gap, the identity claim returns false and the other writer's lease stays.
 - [ ] A pass whose claim step is faulted leaves the entry, the lease, and the lock state unchanged and writes no recovery span.
-- [ ] After a helper-role pass exits between its entry write and its act, a second pass locks the dirty worktree and removes the first pass's lease.
+- [ ] A helper-role pass exits between its entry write and its act, and the test waits for it.
+- [ ] After that exit, a second pass locks the dirty worktree and removes the first pass's lease.
 - [ ] After that second pass, exactly one memory file exists for the crashed shift.
 - [ ] A second pass over a finished recovery changes no file, lease, lock, or entry and writes no recovery span.
 - [ ] A `recovered` entry whose lease holds another identity with a dead owner stays unchanged, and the pass changes no worktree file.
