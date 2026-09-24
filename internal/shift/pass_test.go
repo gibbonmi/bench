@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 )
@@ -194,7 +195,8 @@ func interruptedShift(t *testing.T) (otelrecord.Span, []otelrecord.Span, []byte)
 	t.Cleanup(func() { _ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) })
 	done := make(chan error, 1)
 	go func() { done <- cmd.Wait() }()
-	for deadline := time.Now().Add(30 * time.Second); ; time.Sleep(20 * time.Millisecond) {
+	window := bounds.TestDeadline(0)
+	for deadline := time.Now().Add(window); ; time.Sleep(20 * time.Millisecond) {
 		if _, err := os.Stat(started); err == nil {
 			break
 		}
@@ -207,7 +209,7 @@ func interruptedShift(t *testing.T) (otelrecord.Span, []otelrecord.Span, []byte)
 	}
 	select {
 	case <-done:
-	case <-time.After(30 * time.Second):
+	case <-time.After(window):
 		t.Fatal("the interrupted shift never exited")
 	}
 	if code := cmd.ProcessState.ExitCode(); code != exitCodes[OutcomeInterrupted] {

@@ -259,7 +259,7 @@ func TestARotationRefusesTheLastSequence(t *testing.T) {
 	}
 }
 
-// retainedMemoryNames returns the memory file names below root's record directory.
+// retainedMemoryNames returns the name of every entry in root's memory directory, sorted.
 func retainedMemoryNames(t *testing.T, home, root string) []string {
 	t.Helper()
 	entries, err := os.ReadDir(MemoryDir(home, root))
