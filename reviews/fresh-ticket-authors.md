@@ -81,3 +81,68 @@ Each FA4, FA7, FA8, and FA13 probe adds the retired sentence and keeps every oth
 - The plan-expansion paragraph of `.bench/BENCH.md` now names the orchestrator, not the retained author.
 - The `.bench/BENCH.md` line budget is 185 lines. To stay in budget, the author joined the wrapped landing-shape sentence onto one line.
 - The new rows use the diagnostic prefix `fresh ticket author: `. `TestFreshTicketAuthors` makes each row bite and reads the live guidance.
+
+## FA ticket 2 author evidence
+
+Author session: `claude:bench-writer/fta-t2-author`. Line: opus / high / cap 3 attempts. Source tip at start: `48ac4380df5fd2a46e1cd662f70678d0f72ef0af`. Ticket commit: `5950b823`.
+
+The author added the FA rows to the anchor registries before the skill edit. Then the author ran `bench anchors` on each unchanged skill file, and each row went red. After the skill edit, each row went green.
+
+### Done claims
+
+The coordinator fills the label cell after its own probe.
+
+| Row | Status | Confidence | Label |
+|---|---|---|---|
+| FA15 | verified | 9 | |
+| FA16 | verified | 9 | |
+| FA17 | verified | 9 | |
+| FA18 | verified | 9 | |
+| FA19 | verified | 9 | |
+| FA26 | verified | 9 | |
+
+### Red then green
+
+The red column quotes the diagnostic from `bench anchors <skill file>` on the unchanged skill, after `bench worktree build`. The green column is `bench test --check docs-currency-workflow` and `TestFreshTicketAuthors` after the skill edit.
+
+| Row | Seam | Red before the edit | Green after the edit |
+|---|---|---|---|
+| FA15 | RequireInSection "Retained implementation continuation", `registry_retained_workflow.go` | craft-line dropped the continuation rules for each ticket author | pass |
+| FA16 | Require, `registry_retained_workflow.go` | craft-line dropped the reviewer stop before a tier move of a fresh author | pass |
+| FA17 | Require, `registry_data.go` | craft-delegate dropped the owner pointer for ticket author sessions | pass |
+| FA18 | Require, `registry_data.go` | craft-tickets dropped the ticket size of one fresh author context | pass |
+| FA19 | Forbid, `registry_data.go` | craft-tickets restored the retained frontier session | pass |
+| FA26 | Forbid, `registry_retained_workflow.go` | craft-delegate restored the repair return to the retained session | pass |
+
+### Probe verdicts
+
+Each probe ran through `bench probe` after `bench worktree build`. Each restore reads `yes`.
+
+| Row | File | Mutation | Check | Verdict | Diagnostic |
+|---|---|---|---|---|---|
+| FA19 | `.agents/skills/bench-craft-tickets/SKILL.md` | swap: the retired frontier sentence returns | `docs-currency-workflow` | bit | craft-tickets restored the retained frontier session |
+| FA26 | `.agents/skills/bench-craft-delegate/SKILL.md` | swap: the retired repair sentence returns | `docs-currency-workflow` | bit | craft-delegate restored the repair return to the retained session |
+| FA16 | `.agents/skills/bench-craft-line/SKILL.md` | omission: the tier-move sentence leaves | `docs-currency-workflow` | bit | craft-line dropped the reviewer stop before a tier move of a fresh author |
+
+Each FA19 and FA26 probe adds the retired sentence and keeps every other needle. So only the Forbid row can make the check red.
+
+### Verification
+
+| Check | Verdict | Elapsed |
+|---|---|---|
+| `bench test --check docs-currency-workflow` | pass | 940 ms |
+| `bench test --package ./internal/conformance --run TestRootConformance` | pass | 7696 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 18398 ms |
+| `bench test --check guidance-prose-budgets` | pass | 5 ms |
+| `bench test --package ./internal/anchors` | pass | 883 ms |
+| `bench gate-prose . -- <four edited Markdown files>` | pass | not reported |
+| `go vet ./...` | pass | not reported |
+| `bench commit` lane | pass | not reported |
+
+### Flags for review
+
+- The rewritten frontier sentence keeps a Require row beside the FA19 Forbid row. That Require row is in `registry_retained_workflow.go`, not in `registry_data.go`, because `registry_data.go` is over its structure budget and must not grow.
+- The `delegated-per-ticket-author` canary now mutates the fresh author sentence of craft-delegate, and its diagnostic moved to the `fresh ticket author: ` family.
+- The craft-line continuation rows keep their needles in the "Retained implementation continuation" section, but the needles now name the ticket author. Three continuation diagnostics dropped the word "retained".
+- The new `user-directed` transfer entry in the delegation discipline has no anchor row, because the spec plans none.
+- Retained-author wording remains outside this fence in `.agents/commands/bench-review-implementation.md`: "A clean chunk review hands its frozen pair back to the retained author."
