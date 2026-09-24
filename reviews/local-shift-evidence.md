@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A is accepted. LE-B1 repair cycle 1 is committed; the confirming round of the three axes is pending.
+Status: LE-A and LE-B1 are accepted. The LE-B1 confirming round passed on all three axes.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -202,6 +202,20 @@ Findings: 3. Worst issue: LEB1-C1.
 | LEB1-C1 | `TestAFailedTeardownRecordsNoCleanup` drives the teardown fault. | Drop the release check: bit. |
 | LEB1-C2 | `TestAFailedAcquireStillEndsTheShiftSpan` plants a file at the pool path. | Pass no record on the acquire exit: bit. |
 | LEB1-C3 | No change: the retained worktree stays at its path. | Review of the code. |
+
+## LE-B1 confirming round
+
+Three fresh axes graded the code tip `a4372cad` with the source digest `6ea9b27a`. Each axis read the manifest, confirmed the current binding, and read the repair delta `77781047..a4372cad`.
+
+- Standards, 0 findings. LEB1-S1 and LEB1-S2 are closed.
+- Spec, 0 findings. LEB1-P1 is closed, and LE107 agrees with the spec.
+- Coverage, 0 findings. LEB1-C1 and LEB1-C2 are closed.
+
+Three advisories go to LE-B2, because a repair here would need another confirming round:
+
+- The LE107 mutation clause names `bench.recovery.kind`.
+- The acquire-failure test reads the recovery kind.
+- One seam constant replaces the `shift` literal.
 
 ```bench-review-record
 {
@@ -981,6 +995,72 @@ Findings: 3. Worst issue: LEB1-C1.
             "LEB1-C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "LE-B1-review-standards-2",
+          "performer": "claude-code:subagent:a61f51e98f782e915",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6ea9b27a3ff05f95fbfed11295964b80d69d7c82",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a61f51e98f782e915, evidence sha256:460aee19875e82abffe259ecbaf600338afa4eaf888c64100165ef745677cfe0",
+            "digest": "sha256:f10278c43007d5126f207651c2135dda897675b87f28f3b41903dd04a351888e",
+            "excerpt": "I found no blocking issue in the repair delta 77781047..a4372cad, and both round 1 findings are closed."
+          },
+          "axis": "Standards",
+          "base": "e5f755fdd4e4029dca72b18cf1d50e00f50cce26",
+          "tip": "a4372cad759d5024faa1538d2d0acbc02a651c09",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-B1-review-standards-1"
+          ]
+        },
+        {
+          "id": "LE-B1-review-spec-2",
+          "performer": "claude-code:subagent:a4e10b3bd2d6e128f",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6ea9b27a3ff05f95fbfed11295964b80d69d7c82",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a4e10b3bd2d6e128f, evidence sha256:460aee19875e82abffe259ecbaf600338afa4eaf888c64100165ef745677cfe0",
+            "digest": "sha256:277a26783b6ad8328c5da099c48b947772d148d3c75d86a203ae146c4938c13a",
+            "excerpt": "Verdict: pass. P1 is closed. Findings: 0 blocking, 1 advisory."
+          },
+          "axis": "Spec",
+          "base": "e5f755fdd4e4029dca72b18cf1d50e00f50cce26",
+          "tip": "a4372cad759d5024faa1538d2d0acbc02a651c09",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-B1-review-spec-1"
+          ]
+        },
+        {
+          "id": "LE-B1-review-coverage-2",
+          "performer": "claude-code:subagent:afcdb8f4bedb411cd",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6ea9b27a3ff05f95fbfed11295964b80d69d7c82",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:afcdb8f4bedb411cd, evidence sha256:460aee19875e82abffe259ecbaf600338afa4eaf888c64100165ef745677cfe0",
+            "digest": "sha256:d8f987927aaa528f80bd7ec6199a32e41875759d7fa8ff8dfa8905f896b28f33",
+            "excerpt": "Verdict: PASS. C1 and C2 are closed. 1 advisory finding, and it does not block."
+          },
+          "axis": "Coverage",
+          "base": "e5f755fdd4e4029dca72b18cf1d50e00f50cce26",
+          "tip": "a4372cad759d5024faa1538d2d0acbc02a651c09",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-B1-review-coverage-1"
+          ]
         }
       ]
     }
