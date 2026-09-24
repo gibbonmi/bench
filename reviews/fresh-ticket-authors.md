@@ -212,3 +212,63 @@ Each probe ran through `bench probe` after `bench worktree build`. Each restore 
 - The `write-spec-frozen-base-and-tip-review` canary copy now carries the FA20 sentence, so its mutation still reds only its own row.
 - The author also changed sentences that no row pins. These are the write-spec authorship sentence, two field-guide sentences, and the README repair node. They also include the final-check retro item, two review-phase sentences, and one registry comment.
 - ADR 0021 names its first outcome "ticket implementation", not "retained implementation".
+
+## FA chunk review, round 1
+
+The frozen pair is base `d23694e925c6e0ffd15d6eda355daef4497acbea` and tip `202a9196038e43a652147a59ec30aef9406ff8be`. The shared evidence is `sha256:a793bbcc5ef4271fa7a68cefd0ac1557ca3240c566b18917f7e4ab4a17a6f373`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort. Only the Coverage axis ran probes on the shared tree, and it left the tree clean.
+
+The raw finding count is 22: Standards 9, Spec 7, and Coverage 6. After the orchestrator merges the findings that name the same fix, 13 repair targets remain. The reviewer decided three questions on 2026-09-24:
+
+- Add Forbid rows for the three retired sentences that Coverage named.
+- Fix the retired wording in `projects/benchkit.md` and `CONTEXT.md` inside the ticket 3 repair.
+- Treat the restatements that approved rows require as `no-op`.
+
+## Standards
+
+Findings: 9. The worst issue is the tier-move stop in five places.
+
+- `.agents/skills/bench-craft-delegate/SKILL.md:19` restates the routing rule of `.bench/BENCH.md`. The ticket 2 text and a planned needle require the sentence. `no-op` by reviewer decision. Confidence 6.
+- `.agents/skills/bench-craft-tickets/SKILL.md:93` paraphrases the routing rule. FA18 requires the sentence. `no-op` by reviewer decision. Confidence 5.
+- `.bench/BENCH.md:122` repeats the tier-move stop that `craft-line` owns. FA1 and FA16 require both copies. `no-op` by reviewer decision. Confidence 6.
+- `.agents/commands/bench-implement-spec.md:26` restates the version 2 `execution` block before its pointer to `.bench/BENCH-reference.md`. Target R4. `auto-fix`. Confidence 5.
+- `docs/adr/0021-benchmark-workflow-orchestration.md:9-13` restates facts that ADR 0023 owns. Target R12. `auto-fix`. Confidence 5.
+- `internal/anchors/registry_retained_workflow.go:38` holds the FA23 row, but the FA23 coverage row names `registry_data.go`. The orchestrator amends the coverage row. Target R14. `auto-fix`. Confidence 6.
+- `.agents/commands/bench-implement-spec.md:24,45` keeps the full-retrieval words beside the narrow author read. Target R5. `auto-fix`. Confidence 5.
+- `.agents/skills/bench-craft-delegate/references/delegation-discipline.md:99` can read as a replacement of the repair policy itself. Target R8. `auto-fix`. Confidence 6.
+- `.bench/BENCH.md:122` keeps the "retained implementation continuation" section name, as FA15 requires. `no-op`. Confidence 6.
+
+## Spec
+
+Findings: 7. The worst issue is `docs/field-guide.html:1325`, which still states the retired single-author rule.
+
+- `docs/field-guide.html:1325` states "the approved implementation line retains one author through production changes, tests, probes, repairs, and chunk reviews." Target R9. `auto-fix`, blocking. Confidence 9.
+- `projects/benchkit.md:590` states that one session retains the build. Target R13. `ask-user`, and the reviewer approved the fix. Confidence 8.
+- `CONTEXT.md:357` limits the orchestrator to a delegated run. Target R13. `ask-user`, and the reviewer approved the fix. Confidence 7.
+- `internal/anchors/registry_data.go:348` with `internal/conformance/docs_workflow_helpers_test.go:524`: the integration-source scan no longer reads `bench-write-spec.md`. Target R10. `auto-fix`, because the repair restores the earlier guarantee. Confidence 7.
+- `.agents/commands/bench-implement-spec.md:42` keeps "A fresh consumer runs its own retrieval". Target R5. `auto-fix`. Confidence 5.
+- `docs/adr/0021-benchmark-workflow-orchestration.md:9` states the tier-move stop with no `--delegate` condition. Target R12. `auto-fix`. Confidence 5.
+- `.bench/BENCH.md:134` gives no `--delegate` scope to concurrent chunk authors. The limit-1 plan already stops concurrent authors. `no-op`. Confidence 5.
+
+## Coverage
+
+Findings: 6. The worst issue is the FA10 needle, which a negation does not break.
+
+- `internal/anchors/registry_ft311_preparation.go:542`: the FA10 needle stays green after "never refreshes". Probe P1 was silent. Target R1. `auto-fix`. Confidence 9.
+- `internal/conformance/docs_workflow_helpers_test.go:498-524`: the integration-source family no longer scans `bench-write-spec.md`. Probe P3 was silent. Target R10. `auto-fix`. Confidence 7.
+- `.bench/BENCH.md` and `.agents/commands/bench-review-implementation.md`: three retired sentences have no Forbid row. Targets R3 and R11. `ask-user`, and the reviewer approved the rows. Confidence 8.
+- `.agents/skills/bench-craft-delegate/references/delegation-discipline.md:99`: the `user-directed` transfer entry has no anchor row. Target R7. `auto-fix`. Confidence 9.
+- `.bench/BENCH.md:128`: the material-shortfall sentence after the FA12 needle has no pin. Target R2. `auto-fix`. Confidence 8.
+- `.agents/commands/bench-implement-spec.md:28,42`: the consumer retrieval sentences disagree with the narrow author read. Target R5. `auto-fix`. Confidence 6.
+
+## FA repair routing
+
+Each affected ticket takes one fresh repair session. The session reruns that ticket's verification.
+
+| ticket | targets |
+| --- | --- |
+| `1-route-each-ticket-to-a-fresh-author.md` | R1, R2, R3, R4, R5 |
+| `2-align-the-line-and-delegation-skills.md` | R7, R8 |
+| `3-align-the-phase-commands-and-docs.md` | R9, R10, R11, R12, R13 |
+| orchestrator spec amendment | R14, and the coverage rows for R2, R3, R7, and R11 |
+
+No repair edits `.bench/BENCH.md`, so no repair needs the reviewer's permission rule.
