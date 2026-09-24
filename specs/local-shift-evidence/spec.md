@@ -287,15 +287,15 @@ Review iteration 1 split the old LE-C2 into LE-C2 and LE-C3. The old ticket 9 be
 | LE34 | 19 | No line of the retained shift holds the absolute path of the Bench home | `TestARetainedShiftRecordHoldsNoHomePath` in `internal/shift` | A span that copies the recovery pointer holds the home path, so the byte search reds. |
 | LE35 | 20 | A green shift carries `bench.cleanup` `released` | `TestAGreenShiftRecordsReleasedCleanup` in `internal/shift` | A span with no cleanup key reds the value read. |
 | LE36 | 20 | A red shift that retained its worktree carries `bench.cleanup` `retained` | `TestARetainedShiftRecordsRetainedCleanup` in `internal/shift` | A span that records released on every path reds the value read. |
-| LE107 | 19 | A green shift that left no recovery pointer carries `bench.recovery.kind` `none` and no `bench.recovery.key` | `TestAGreenShiftRecordsNoRecoveryKind` in `internal/shift` | A span that writes the kind only for a retained worktree lacks the key, so the value read reds. |
-| LE37 | 24 | A shift that receives SIGINT during its adapter writes an end line for its `shift` span with `bench.work.state` `interrupted` | planned shift test in `internal/shift` that re-execs the test binary into a helper role | The checkpoint exits through `os.Exit`, so a deferred end writes no line and the read reds. |
-| LE38 | 21 | A two-iteration shift writes exactly two `shift.iteration` spans whose parent is the `shift` span | planned shift test in `internal/shift` | A loop with no pass span writes no pass line, so the count reds. |
-| LE39 | 21 | A pass whose adapter exits 3 carries `bench.adapter.result` `exited` and `bench.adapter.exit` `3` | planned shift test in `internal/shift` | A pass span without the adapter result lacks both keys, so the value read reds. |
-| LE40 | 21 | A pass whose adapter removed its own execute bit in iteration 1 carries `bench.adapter.result` `spawn-failed` and no `bench.adapter.exit` key in iteration 2 | planned shift test in `internal/shift` with an adapter that runs `chmod -x` on itself | A span that records a spawn failure as an exit reds the result read. |
-| LE41 | 21 | A refactor pass writes one `shift.refactor` span whose parent is the `shift` span | planned shift test in `internal/shift` with an over-budget touched file | A refactor loop with no pass span writes no refactor line, so the read reds. |
-| LE42 | 22 | Each pass span has exactly one child `gate` span, and that child carries `bench.subject.id` and `bench.outcome` | planned shift test in `internal/shift` | A gate run on a fresh context starts a new trace, so the parent comparison reds. |
-| LE43 | 23 | A pass that committed carries a `bench.subject.id` equal to the commit that the branch gained in that pass | planned shift test in `internal/shift` | A pass without the commit key reds the equality. |
-| LE44 | 24 | A shift that receives SIGINT during its adapter writes the end line of the open `shift.iteration` span before the end line of the `shift` span | planned shift test in `internal/shift` that re-execs the test binary into a helper role | An exit path that ends only the shift span leaves the pass open, so the order read reds. |
+| LE107 | 19 | A green shift that left no recovery pointer carries `bench.recovery.kind` `none` and no `bench.recovery.key` | `TestAGreenShiftRecordsNoRecoveryKind` in `internal/shift` | A span that writes the kind only for a retained worktree lacks `bench.recovery.kind`, so the value read reds. |
+| LE37 | 24 | A shift that receives SIGINT during its adapter writes an end line for its `shift` span with `bench.work.state` `interrupted` | `TestAnInterruptedShiftRecordsInterruptedWork` in `internal/shift` | The checkpoint exits through `os.Exit`, so a deferred end writes no line and the read reds. |
+| LE38 | 21 | A two-iteration shift writes exactly two `shift.iteration` spans whose parent is the `shift` span | `TestATwoIterationShiftWritesTwoPassSpans` in `internal/shift` | A loop with no pass span writes no pass line, so the count reds. |
+| LE39 | 21 | A pass whose adapter exits 3 carries `bench.adapter.result` `exited` and `bench.adapter.exit` `3` | `TestAPassRecordsTheAdapterExit` in `internal/shift` | A pass span without the adapter result lacks both keys, so the value read reds. |
+| LE40 | 21 | A pass whose adapter removed its own execute bit in iteration 1 carries `bench.adapter.result` `spawn-failed` and no `bench.adapter.exit` key in iteration 2 | `TestAPassRecordsASpawnFailure` in `internal/shift` | A span that records a spawn failure as an exit reds the result read. |
+| LE41 | 21 | A refactor pass writes one `shift.refactor` span whose parent is the `shift` span | `TestARefactorPassWritesARefactorSpan` in `internal/shift` | A refactor loop with no pass span writes no refactor line, so the read reds. |
+| LE42 | 22 | Each pass span has exactly one child `gate` span, and that child carries `bench.subject.id` and `bench.outcome` | `TestEachPassParentsOneGateSpan` in `internal/shift` | A gate run on a fresh context starts a new trace, so the parent comparison reds. |
+| LE43 | 23 | A pass that committed carries a `bench.subject.id` equal to the commit that the branch gained in that pass | `TestACommittedPassCarriesItsCommit` in `internal/shift` | A pass without the commit key reds the equality. |
+| LE44 | 24 | A shift that receives SIGINT during its adapter writes the end line of the open `shift.iteration` span before the end line of the `shift` span | `TestAnInterruptedShiftEndsThePassFirst` in `internal/shift` | An exit path that ends only the shift span leaves the pass open, so the order read reds. |
 | LE45 | 25 | The adapter environment carries `BENCH_OTEL_ROOT` and a `BENCH_OTEL_TRACEPARENT` whose span id is the current pass span | planned shift test in `internal/shift` with an adapter that writes its environment | An adapter launch without the handoff leaves the variables out, so the comparison reds. |
 | LE46 | 25 | `bench resolve-model --harness claude` with the handoff, a routed binding, and `BENCH_MODEL=mid` writes a `line.resolve` span under the handoff span with harness `claude`, tier `mid`, and the bound model | planned command test in `cmd/bench` | An uninstrumented resolver writes no line span, so the read reds. |
 | LE47 | 25 | `bench resolve-model` with no handoff environment writes a `line.resolve` span that has no parent | planned command test in `cmd/bench` | A resolver that records only under a handoff misses a standalone call, so the read reds. |
@@ -548,7 +548,7 @@ The source sentence "The repository-controlled bank evidence requirement makes t
 
 ### Structure and fence disposition
 
-- `internal/shift/` holds 11 files and the lane caps a directory at 12. This spec adds `record.go`, `record_test.go`, `recover.go`, and `recover_test.go`. Ticket 4 writes the grant line `internal/shift/ 15` into `.bench/structure.budgets` only after the reviewer approves it at sign-off.
+- `internal/shift/` holds 11 files and the lane caps a directory at 12. This spec adds `record.go`, `record_test.go`, `pass_test.go`, `recover.go`, and `recover_test.go`. Ticket 4 writes the grant line `internal/shift/ 15`, and ticket 5 raises it to 16.
 - `internal/otelrecord/` gains one file, `retention_test.go`, and reaches the cap of 12.
 - `cmd/bench/main.go`, `internal/gate/runner.go`, `internal/worktree/lifecycle.go`, and `internal/worktree/subshell.go` are over their line budgets. Tickets 1, 2, 6, 10, and 11 move code out or edit in place so that none of them grows. Ticket 11 moves the ignored-inventory function from `subshell.go` into `clean.go`.
 - The command registry, its two tests, and the two conformance registry tests join the fence through the binding registry closure only. The `cmd/bench` and `internal/worktree` packages are bound packages, and the build expects no edit to those five files.
@@ -571,6 +571,8 @@ The reviewer closed three decisions at the LE-A review on 2026-09-23:
 3. A planted file at the largest sequence has no successor, so the writer refuses the rotation. LE106 grades that refusal.
 
 The reviewer closed one more decision on 2026-09-23: a recovery releases a clean crashed worktree and locks only a dirty one, as `preserveAndRecover` does. The Implementation decisions section records it.
+
+The reviewer closed one decision at the LE-B2 build on 2026-09-23: the grant rises to `internal/shift/ 16`. The pass, line, and memory tests go in `pass_test.go`, so each test file stays under the line cap.
 
 ### Flagged additions
 

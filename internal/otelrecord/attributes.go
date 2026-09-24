@@ -99,6 +99,12 @@ const (
 
 	// AttrRecoveryKey carries the base name of the recovery pointer, never its path.
 	AttrRecoveryKey = "bench.recovery.key"
+
+	// AttrAdapterResult carries how a pass's adapter run ended.
+	AttrAdapterResult = "bench.adapter.result"
+
+	// AttrAdapterExit carries the adapter's exit code when the adapter exited.
+	AttrAdapterExit = "bench.adapter.exit"
 )
 
 // RecordStart is the AttrRecord value on the line written at span start. The start line
@@ -127,6 +133,8 @@ var DeclaredAttributes = []string{
 	AttrCleanup,
 	AttrRecoveryKind,
 	AttrRecoveryKey,
+	AttrAdapterResult,
+	AttrAdapterExit,
 }
 
 // declared answers whether the encoder may write a span attribute key.
@@ -160,6 +168,13 @@ const (
 	CleanupReleased = "released"
 	CleanupRetained = "retained"
 	CleanupNone     = "none"
+)
+
+// The adapter-result vocabulary: the adapter process exited, with a code, or it never
+// started.
+const (
+	AdapterExited      = "exited"
+	AdapterSpawnFailed = "spawn-failed"
 )
 
 // ExitOutcome is the outcome for a seam whose zero alone is green. A guard, a gate, and

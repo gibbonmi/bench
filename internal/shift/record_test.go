@@ -15,9 +15,14 @@ import (
 // shiftSeamAttr is the encoded seam attribute of a shift span line, and startMarker is
 // the encoded record-start attribute that only a start line carries.
 var (
-	shiftSeamAttr = fmt.Sprintf(`{"key":%q,"value":{"stringValue":"shift"}}`, otelrecord.AttrSeam)
+	shiftSeamAttr = seamAttr(shiftSeam)
 	startMarker   = fmt.Sprintf(`{"key":%q,"value":{"stringValue":%q}}`, otelrecord.AttrRecord, otelrecord.RecordStart)
 )
+
+// seamAttr is the encoded seam attribute of a span line of seam.
+func seamAttr(seam string) string {
+	return fmt.Sprintf(`{"key":%q,"value":{"stringValue":%q}}`, otelrecord.AttrSeam, seam)
+}
 
 // runRecordedShift runs Loop in the fixture's repository and returns the one finished
 // shift span with the raw bytes of the repository's record.
@@ -27,6 +32,14 @@ func runRecordedShift(t *testing.T, wantCode int) (otelrecord.Span, []byte, stri
 	if code := Loop("recorded shift", &stdout, &stderr); code != wantCode {
 		t.Fatalf("Loop = %d, want %d; stdout:\n%s\nstderr:\n%s", code, wantCode, stdout.String(), stderr.String())
 	}
+	span, _, raw := recordedShift(t)
+	return span, raw, stdout.String()
+}
+
+// recordedShift reads the record of the repository at the working directory and returns
+// its one finished shift span, every finished span, and the raw record bytes.
+func recordedShift(t *testing.T) (otelrecord.Span, []otelrecord.Span, []byte) {
+	t.Helper()
 	home := os.Getenv("BENCH_HOME")
 	root, err := git.Root()
 	if err != nil {
@@ -38,7 +51,7 @@ func runRecordedShift(t *testing.T, wantCode int) (otelrecord.Span, []byte, stri
 	}
 	var found []otelrecord.Span
 	for _, span := range spans {
-		if span.Seam == "shift" {
+		if span.Seam == shiftSeam {
 			found = append(found, span)
 		}
 	}
@@ -49,7 +62,7 @@ func runRecordedShift(t *testing.T, wantCode int) (otelrecord.Span, []byte, stri
 	if err != nil {
 		t.Fatal(err)
 	}
-	return found[0], raw, stdout.String()
+	return found[0], spans, raw
 }
 
 // withDonePredicate adds an executable .bench/done.sh that exits zero, so the first
@@ -277,6 +290,7 @@ func TestAFailedAcquireStillEndsTheShiftSpan(t *testing.T) {
 	span, _, _ := runRecordedShift(t, 2)
 	requireAttr(t, span, otelrecord.AttrShiftOutcome, string(OutcomeUsage))
 	requireAttr(t, span, otelrecord.AttrCleanup, otelrecord.CleanupNone)
+	requireAttr(t, span, otelrecord.AttrRecoveryKind, RecoveryNone)
 }
 
 // LE36: a red shift that retained its worktree records the retention.

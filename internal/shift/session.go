@@ -105,6 +105,7 @@ func (s *session) refactorPhase(base string, rcap int) error {
 		return nil
 	}
 	fmt.Fprintln(s.stdout, "▶ structure over budget — refactor phase (split at green, not before)")
+	defer s.record.endPass()
 	attempted := 0
 	for r := 1; r <= rcap; r++ {
 		s.checkpoint()
@@ -113,12 +114,13 @@ func (s *session) refactorPhase(base string, rcap int) error {
 			break
 		}
 		attempted = r
+		passCtx := s.record.beginPass(refactorSeam)
 		fmt.Fprintf(s.stdout, "── refactor %d/%d ──\n", r, rcap)
 		pre := dirtyPaths(s.root)
-		s.runAdapter(fmt.Sprintf(refactorPrompt, flagged))
+		s.record.adapterRan(s.runAdapter(fmt.Sprintf(refactorPrompt, flagged)))
 		s.checkpoint()
 		post := dirtyPaths(s.root)
-		if s.runGate() == 0 {
+		if s.runGate(passCtx) == 0 {
 			s.checkpoint()
 			if err := stageTouched(s.root, pre, post); err != nil {
 				fmt.Fprintf(s.stderr, "could not stage refactor %d: %v\n", r, err)
@@ -132,6 +134,7 @@ func (s *session) refactorPhase(base string, rcap int) error {
 				fmt.Fprintf(s.stderr, "could not commit refactor %d: %v\n", r, err)
 				return fmt.Errorf("could not commit refactor pass %d", r)
 			}
+			s.record.passCommitted(s.root)
 			fmt.Fprintf(s.stdout, "  ✓ tests green - refactor %d committed\n", r)
 		} else {
 			s.checkpoint()
@@ -203,9 +206,10 @@ func (s *session) killAdapter(sig syscall.Signal) {
 // implementation. The main loop's call propagates a red result through the evidence-split
 // preservation path (evidenceResult). The refactor probe's call instead rolls a red
 // result back, by design. Preservation itself happens once, explicitly, at each caller's
-// own return site, never implied by a flag this method sets on its way out.
-func (s *session) runGate() int {
-	ctx, cancel := context.WithCancel(context.Background())
+// own return site, never implied by a flag this method sets on its way out. The gate runs
+// below ctx, so its span is the child of the pass span on ctx.
+func (s *session) runGate(ctx context.Context) int {
+	ctx, cancel := context.WithCancel(ctx)
 	s.mu.Lock()
 	s.cancelGate = cancel
 	s.mu.Unlock()

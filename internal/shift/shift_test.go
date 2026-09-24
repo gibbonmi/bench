@@ -255,7 +255,7 @@ func TestRunGateReportsRed(t *testing.T) {
 	gitCmd("add", "-A")
 	gitCmd("-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "init")
 	s := &session{root: root, stdout: io.Discard, stderr: io.Discard}
-	if rc := s.runGate(); rc == 0 {
+	if rc := s.runGate(t.Context()); rc == 0 {
 		t.Fatal("red gate returned zero")
 	}
 	if s.preserve.Load() {

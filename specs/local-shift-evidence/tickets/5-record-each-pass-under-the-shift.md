@@ -1,12 +1,14 @@
 # 5. Record each pass under the shift
 
 Blocked by: 4-record-the-shift-boundaries.md
-Writes: internal/shift/loop.go, internal/shift/session.go, internal/shift/record.go (new), internal/shift/record_test.go (new), internal/otelrecord/attributes.go, internal/otelrecord/registry.go
+Writes: .bench/structure.budgets, specs/local-shift-evidence/spec.md, internal/shift/loop.go, internal/shift/session.go, internal/shift/record.go (new), internal/shift/record_test.go (new), internal/shift/pass_test.go (new), internal/shift/shift_test.go, internal/otelrecord/attributes.go, internal/otelrecord/registry.go
 Covers: LE37, LE38, LE39, LE40, LE41, LE42, LE43, LE44
 
 ## What to build
 
 Chunk: LE-B2.
+
+Raise the grant line to `internal/shift/ 16`, and put this ticket's tests in `pass_test.go`.
 
 Open one `shift.iteration` span for each main iteration and one `shift.refactor` span for each refactor pass, under the `shift` span. Add both seams to the registry and declare the new keys.
 

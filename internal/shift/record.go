@@ -2,7 +2,9 @@ package shift
 
 import (
 	"context"
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 
@@ -14,12 +16,22 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// shiftRecord is the shift's one span in the repository's record. It starts right after
-// the intent entry persists and ends in finish, so every exit path ends it. No value it
-// writes is a path or operator text: the adapter and the recovery pointer reach the record
-// as base names, and the line tier only as a word the tier list names.
+// The shift's seams: the shift itself, each main iteration, and each refactor pass.
+const (
+	shiftSeam     = "shift"
+	iterationSeam = "shift.iteration"
+	refactorSeam  = "shift.refactor"
+)
+
+// shiftRecord is the shift's span in the repository's record, with the pass span open
+// below it. The shift span starts right after the intent entry persists and ends in
+// finish, so every exit path ends it. No value it writes is a path or operator text: the
+// adapter and the recovery pointer reach the record as base names, and the line tier only
+// as a word the tier list names.
 type shiftRecord struct {
+	ctx     context.Context // carries the tracer and the shift span
 	span    trace.Span
+	pass    trace.Span // the open pass span, or nil between passes
 	end     func()
 	root    string
 	session *session // nil until the worktree is acquired
@@ -47,17 +59,67 @@ func beginShiftRecord(root string, entry intent.Entry, maxIters int) *shiftRecor
 	if tier := os.Getenv("BENCH_MODEL"); slices.Contains(lines.Tiers, tier) {
 		attrs = append(attrs, attribute.String(otelrecord.AttrLineTier, tier))
 	}
-	_, span, end := otelrecord.BeginIn(context.Background(), "", root, "shift", "shift", attrs...)
-	return &shiftRecord{span: span, end: end, root: root}
+	ctx, span, end := otelrecord.BeginIn(context.Background(), "", root, shiftSeam, shiftSeam, attrs...)
+	return &shiftRecord{ctx: ctx, span: span, end: end, root: root}
 }
 
-// finish ends the span with the shift's result: its outcome, work state, exit outcome,
-// head commit, recovery pointer, and cleanup. A nil record, the usage exit before the
-// intent entry persists, records nothing.
+// beginPass ends the open pass and starts a pass span of seam under the shift span. The
+// returned context parents the pass's gate run, so the gate span is the pass's child. A
+// nil record returns a context with no span.
+func (r *shiftRecord) beginPass(seam string) context.Context {
+	if r == nil {
+		return context.Background()
+	}
+	r.endPass()
+	ctx, pass := otelrecord.TracerFrom(r.ctx).Start(r.ctx, seam, trace.WithAttributes(attribute.String(otelrecord.AttrSeam, seam)))
+	r.pass = pass
+	return ctx
+}
+
+// adapterRan records how the pass's adapter run ended: an exit with its code, or a
+// failure to spawn.
+func (r *shiftRecord) adapterRan(err error) {
+	if r == nil || r.pass == nil {
+		return
+	}
+	var exitErr *exec.ExitError
+	switch {
+	case err == nil:
+		r.pass.SetAttributes(attribute.String(otelrecord.AttrAdapterResult, otelrecord.AdapterExited), attribute.Int(otelrecord.AttrAdapterExit, 0))
+	case errors.As(err, &exitErr):
+		r.pass.SetAttributes(attribute.String(otelrecord.AttrAdapterResult, otelrecord.AdapterExited), attribute.Int(otelrecord.AttrAdapterExit, exitErr.ExitCode()))
+	default:
+		r.pass.SetAttributes(attribute.String(otelrecord.AttrAdapterResult, otelrecord.AdapterSpawnFailed))
+	}
+}
+
+// passCommitted records the commit the pass made in the worktree at wt.
+func (r *shiftRecord) passCommitted(wt string) {
+	if r == nil || r.pass == nil {
+		return
+	}
+	if head, err := git.Output("-C", wt, "rev-parse", "HEAD"); err == nil {
+		r.pass.SetAttributes(attribute.String(otelrecord.AttrSubjectID, head))
+	}
+}
+
+// endPass ends the open pass span, if one is open.
+func (r *shiftRecord) endPass() {
+	if r == nil || r.pass == nil {
+		return
+	}
+	r.pass.End()
+	r.pass = nil
+}
+
+// finish ends the open pass and then the shift span, with the shift's result: its
+// outcome, work state, exit outcome, head commit, recovery pointer, and cleanup. A nil
+// record, the usage exit before the intent entry persists, records nothing.
 func (r *shiftRecord) finish(res Result) {
 	if r == nil {
 		return
 	}
+	r.endPass()
 	kind, path := splitRecovery(res.Recovery)
 	attrs := []attribute.KeyValue{
 		attribute.String(otelrecord.AttrShiftOutcome, string(res.Outcome)),

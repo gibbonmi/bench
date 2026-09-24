@@ -252,12 +252,14 @@ func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 	for i := 1; i <= maxIters; i++ {
 		s.checkpoint()
 		s.iterationsUsed = i
+		passCtx := record.beginPass(iterationSeam)
 		fmt.Fprintf(stdout, "── iteration %d/%d ──\n", i, maxIters)
 		pre := dirtyPaths(wt)
 		adapterErr := s.runAdapter(objective.prompt())
+		record.adapterRan(adapterErr)
 		s.checkpoint()
 		post := dirtyPaths(wt)
-		if s.runGate() == 0 {
+		if s.runGate(passCtx) == 0 {
 			s.checkpoint()
 			if err := stageTouched(wt, pre, post); err != nil {
 				fmt.Fprintf(stderr, "could not stage iteration %d: %v\n", i, err)
@@ -284,6 +286,7 @@ func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 				return finish(stdout, stderr, mainRoot, &intentEntry, record, evidenceResult(s, fmt.Sprintf("could not commit iteration %d", i)))
 			}
 			s.committed++
+			record.passCommitted(wt)
 			fmt.Fprintf(stdout, "  ✓ green — committed iteration %d\n", i)
 			if objectiveMet(wt, objective) {
 				fmt.Fprintln(stdout, "  objective met.")
@@ -308,6 +311,8 @@ func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 			return finish(stdout, stderr, mainRoot, &intentEntry, record, evidenceResult(s, fmt.Sprintf("gate failed on iteration %d", i)))
 		}
 	}
+
+	record.endPass()
 
 	if stopReason == "adapter-failed" {
 		return finish(stdout, stderr, mainRoot, &intentEntry, record, evidenceResult(s, stopDetail))

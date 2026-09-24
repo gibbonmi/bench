@@ -1,7 +1,7 @@
 # 7. Retain the shift memory
 
 Blocked by: 3-rotate-and-retain-the-record.md, 4-record-the-shift-boundaries.md
-Writes: internal/otelrecord/writer.go, internal/otelrecord/retention_test.go (new), internal/otelrecord/attributes.go, internal/bounds/bounds.go, tests/canary/package-core-guard/bounds-duplicate-owner, internal/shift/session.go, internal/shift/record.go (new), internal/shift/record_test.go (new)
+Writes: internal/otelrecord/writer.go, internal/otelrecord/retention_test.go (new), internal/otelrecord/attributes.go, internal/bounds/bounds.go, tests/canary/package-core-guard/bounds-duplicate-owner, internal/shift/session.go, internal/shift/record.go (new), internal/shift/pass_test.go (new)
 Covers: LE49, LE50, LE51, LE52, LE53, LE54, LE55, LE56, LE57, LE58, LE88, LE95, LE102, LE59
 
 ## What to build
