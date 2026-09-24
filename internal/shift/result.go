@@ -40,9 +40,7 @@ var exitCodes = map[Outcome]int{
 // resultFields is the shift_result block's field order, pinned by the spec.
 var resultFields = []string{"outcome", "exit", "branch", "committed", "iterations_used", "recovery", "detail"}
 
-// RecoveryNone is the one recovery-pointer sentinel meaning "nothing to preserve". The
-// shift_result block, the intent-ledger record, and bench status's rendering all use it,
-// so the three surfaces never drift on what "no recovery" looks like.
+// RecoveryNone is the ledger's no-recovery sentinel under the shift's own name.
 const RecoveryNone = intent.RecoveryNone
 
 // recoveryWorktree is the recovery pointer's only non-"none" constructor: a preserving

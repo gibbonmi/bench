@@ -17,9 +17,11 @@ func shiftEntry(outcome, recovery string) (ledger.Ledger, LivenessFacts) {
 // LE60: a shift that finished with nothing to recover is done, even while its pool
 // worktree exists.
 func TestLiveDropsAFinishedShiftWithNoRecovery(t *testing.T) {
-	current, facts := shiftEntry("complete", ledger.RecoveryNone)
-	if live := Live(current, facts); len(live) != 0 {
-		t.Fatalf("Live = %v, want the finished entry dropped", live)
+	for _, recovery := range []string{ledger.RecoveryNone, ""} {
+		current, facts := shiftEntry("complete", recovery)
+		if live := Live(current, facts); len(live) != 0 {
+			t.Fatalf("recovery %q: Live = %v, want the finished entry dropped", recovery, live)
+		}
 	}
 }
 

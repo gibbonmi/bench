@@ -28,10 +28,9 @@ type Entry struct {
 	Worktree  string    `json:"worktree,omitempty"`
 	Branch    string    `json:"branch,omitempty"`
 	// Outcome and Recovery record a shift's final result state. Outcome is one of the
-	// FT79 taxonomy's outcome names. Recovery is a pointer ("ref:<name>" | "worktree:<path>"
-	// | "none") once a later slice adds snapshot machinery. Both fields are optional, so
-	// every non-shift writer stays valid, as does every entry created before its writer
-	// resolves an outcome.
+	// FT79 taxonomy's outcome names. Recovery is a pointer ("ref:<name>" or
+	// "worktree:<path>") or RecoveryNone. Both fields are optional, so every non-shift
+	// writer stays valid, as does every entry created before its writer resolves an outcome.
 	Outcome  string `json:"outcome,omitempty"`
 	Recovery string `json:"recovery,omitempty"`
 	// Lease is the line a shift's worktree acquire wrote into its lease, without the
@@ -40,8 +39,14 @@ type Entry struct {
 	Lease string `json:"lease,omitempty"`
 }
 
-// RecoveryNone is the recovery pointer that means nothing is left to recover.
+// RecoveryNone is the recovery pointer that means nothing is left to recover. The
+// shift_result block, the ledger, and bench status all read this one sentinel.
 const RecoveryNone = "none"
+
+// HoldsRecovery reports whether a recovery pointer names something to recover.
+func HoldsRecovery(pointer string) bool {
+	return pointer != "" && pointer != RecoveryNone
+}
 
 type Ledger struct {
 	Schema          int              `json:"schema"`

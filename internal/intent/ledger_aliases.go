@@ -58,5 +58,6 @@ var (
 
 	validAssignmentBranchRef = ledger.ValidAssignmentBranchRef
 	validEntry               = ledger.ValidateEntry
+	HoldsRecovery            = ledger.HoldsRecovery
 	validateCleanupReceipts  = ledger.ValidateCleanupReceipts
 )

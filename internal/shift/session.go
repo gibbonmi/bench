@@ -331,7 +331,7 @@ func (s *session) preserveAndRecover(reason string) (recovery string, teardownEr
 // teardown failure is real even when the work is not lost.
 func teardownFailureResult(s *session, recovery string, err error) Result {
 	detail := fmt.Sprintf("teardown failed: %v; branch %s is safe", err, s.branch)
-	if recovery != "" && recovery != RecoveryNone {
+	if intent.HoldsRecovery(recovery) {
 		detail += "; recovery " + recovery
 	}
 	return Result{Outcome: OutcomeFailed, Branch: s.branch, Committed: s.committed, IterationsUsed: s.iterationsUsed, Recovery: recovery, Detail: detail}

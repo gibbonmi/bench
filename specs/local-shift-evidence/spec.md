@@ -175,7 +175,7 @@ Recovery and record safety:
 
 ### Intent completion and crash recovery
 
-- The liveness rule drops an entry that holds an outcome and a recovery of empty or `none`. An entry with a `worktree:` recovery stays live while its worktree exists.
+- The liveness rule drops an entry that holds an outcome and a recovery of empty or `none`. An entry with a `worktree:` recovery stays live while its worktree exists, even when its branch reads as landed.
 - The ledger entry gains an optional `lease` field. Right after the acquire, the shift records its lease line without the final newline.
 - The recovery pass lives in the shift package, because it reuses the shift's scratch policy, memory retention, and preservation. It judges each shift entry that has no outcome, and it resumes each entry with the outcome `recovered` whose act did not finish.
 - For an entry with no lease, the intent package parses the owner process from the key beside `NewEntry`. A dead owner abandons the entry. A live owner or an unparsable key skips it.
@@ -447,6 +447,7 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - `internal/intent/admissionpolicy/admissionpolicy.go`
 - `internal/intent/admissionpolicy/liveness_test.go`
 - `internal/sessioninspect/sessioninspect.go`
+- `internal/status/status.go`
 - `internal/sessioninspect/sessioninspect_test.go`
 - `internal/worktree/snapshot.go`
 - `internal/worktree/snapshot_test.go`
