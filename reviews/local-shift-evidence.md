@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, and LE-B2 are accepted. LE-C1 is committed, and its review of the three axes is pending.
+Status: LE-A, LE-B1, and LE-B2 are accepted. The LE-C1 review returned 8 findings; repair cycle 1 is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -363,6 +363,33 @@ The frozen pair is `e6b96f82..a95eb85e`. The two planned checks and the root con
 | LE63 | `TestAShiftRecordsItsLease` | Pre-edit red; record no lease: bit. |
 
 A recovery pointer now overrides the landed rule, as ticket 8 requires: a red shift with no commit keeps its recovery entry. The `none` recovery word has one owner in the ledger. The LE-B2 advisory is closed: the interrupt helper's adapter sleep derives from the wait window.
+
+## LE-C1 review round 1
+
+Three fresh axes graded the frozen pair `e6b96f82..f5674aea` with the code tip `a95eb85e`. Each axis read the manifest, confirmed the current binding, and read the code delta. Raw findings: 8. Repair targets: 5; three findings are no-ops.
+
+### Standards
+
+Findings: 3. Worst issue: LEC1-S1.
+
+- LEC1-S1 (auto-fix, confidence 8): the "holds a recovery pointer" check has four hand-written copies, in the admission policy, the shift session, and the status.
+- LEC1-S2 (auto-fix, confidence 7): `acquiredLease` strips the lease line's newline beside its writer `leaseLine`. The reader moves beside the writer in the worktree package, which ticket 10 writes, so the change stays inside the fence.
+- LEC1-S3 (auto-fix, confidence 5): the shift comment on `RecoveryNone` and the ledger `Recovery` field comment restate the sentinel and tell history.
+
+### Spec
+
+Findings: 2. Worst issue: LEC1-P1.
+
+- LEC1-P1 (auto-fix, confidence 6): the spec liveness bullet does not carry the rule that a landed branch never retires a recovery entry.
+- LEC1-P2 (no-op, confidence 4): the interrupt-helper change is the carried LE-B2 advisory, which the author verification names.
+
+### Coverage
+
+Findings: 3. Worst issue: LEC1-C1.
+
+- LEC1-C1 (auto-fix, confidence 6): no test reads an outcome with an empty recovery as done.
+- LEC1-C2 (no-op, confidence 5): an unreadable lease records no line; the lease consumers in LE-C2 and LE-C3 own that case.
+- LEC1-C3 (no-op, confidence 3): the delta keeps the `ref:` rule unchanged, and no writer produces a `ref:` recovery today.
 
 ```bench-review-record
 {
@@ -1866,7 +1893,79 @@ A recovery pointer now overrides the landed rule, as ticket 8 requires: a red sh
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "LE-C1-review-standards-1",
+          "performer": "claude-code:subagent:a08f6c39399698d3d",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d230edfb0a860a381d9a9599591d767fc52ce3ca",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a08f6c39399698d3d, evidence sha256:474665de3237327d2d40a3ec37daab8a4b78758679b49545e384c991a0f2e41f",
+            "digest": "sha256:0a55b575bf41078248fbe27294f09010b90752208049ac77b7cab2d0b2b0ecbe",
+            "excerpt": "Verdict: pass with findings. I found 3 findings, and none of them blocks. Worst issue: the delta adds a fourth hand-written copy of the \"holds a recovery pointer\" check."
+          },
+          "axis": "Standards",
+          "base": "e6b96f828b5a3d4d4961321a8111388cad909fa2",
+          "tip": "a95eb85e21cb61fcc9986c2e9710bc868a27d6a6",
+          "finding_ids": [
+            "LEC1-S1",
+            "LEC1-S2",
+            "LEC1-S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "LE-C1-review-spec-1",
+          "performer": "claude-code:subagent:af6ee9d6d1677b040",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d230edfb0a860a381d9a9599591d767fc52ce3ca",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:af6ee9d6d1677b040, evidence sha256:474665de3237327d2d40a3ec37daab8a4b78758679b49545e384c991a0f2e41f",
+            "digest": "sha256:3c21227a834f6e466662d2c5a8c82ac4bf13d37e960168237eac207625042048",
+            "excerpt": "Verdict: pass. The delta implements LE60-LE63 and ticket 8. I found 2 findings, both low. Confidence is high."
+          },
+          "axis": "Spec",
+          "base": "e6b96f828b5a3d4d4961321a8111388cad909fa2",
+          "tip": "a95eb85e21cb61fcc9986c2e9710bc868a27d6a6",
+          "finding_ids": [
+            "LEC1-P1",
+            "LEC1-P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "LE-C1-review-coverage-1",
+          "performer": "claude-code:subagent:a9d025e6271c0bbfd",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d230edfb0a860a381d9a9599591d767fc52ce3ca",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a9d025e6271c0bbfd, evidence sha256:474665de3237327d2d40a3ec37daab8a4b78758679b49545e384c991a0f2e41f",
+            "digest": "sha256:8d11a12ca813eecdc0f561eb0cde7a123cb8c7c36f2f632cd96b39c8ca29f127",
+            "excerpt": "Verdict: PASS. Evidence is current (`--check-current` returned true). I found 3 findings, all minor. The worst is that nothing tests an outcome with an empty recovery."
+          },
+          "axis": "Coverage",
+          "base": "e6b96f828b5a3d4d4961321a8111388cad909fa2",
+          "tip": "a95eb85e21cb61fcc9986c2e9710bc868a27d6a6",
+          "finding_ids": [
+            "LEC1-C1",
+            "LEC1-C2",
+            "LEC1-C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
