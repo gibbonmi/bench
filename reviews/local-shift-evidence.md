@@ -1,18 +1,18 @@
 # Local shift evidence review record
 
-Status: LE-A review round 1 returned 10 findings; repairs are pending.
+Status: LE-A repair cycle 1 is committed; the confirming round of the three axes is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
 Line: opus (claude-opus-5-5) / medium / uncapped
 Review line: opus / high / one iteration for each axis
-Post-review repair cycles consumed: LE-A 0 of 2
+Post-review repair cycles consumed: LE-A 1 of 2
 Expected repair rounds: 2
 Confidence: 5
 
 ## LE-A author verification
 
-The frozen pair is `ba9b8621..fff1e5ab`. The four planned checks passed at the tip.
+The first frozen pair was `ba9b8621..fff1e5ab`. After repair cycle 1, the chunk tip is `33b65a3e`, and the four planned checks passed there too.
 
 | Row | Test | Probe |
 |---|---|---|
@@ -21,7 +21,7 @@ The frozen pair is `ba9b8621..fff1e5ab`. The four planned checks passed at the t
 | LE1 | `TestEncodeWritesTheRecordSchema` | Pre-edit red. |
 | LE2 | `TestEncodeWritesTheSetVersion` | Pre-edit red. |
 | LE3 | `TestOtelGateRecordNamesTheStampedVersion` | Omit `SetVersion` (system suite, copy aside): bit. |
-| LE4 | `TestBeginWritesNoEnvironmentResource` | Write the SDK resource back: bit when the test runs alone. |
+| LE4 | `TestBeginWritesNoEnvironmentResource` | Write the SDK resource back: bit in the full package run (helper process). |
 | LE5 | `TestEncodeResourceHoldsExactlyTheBenchKeys` | Write the SDK resource back: bit. |
 | LE96 | `TestEncodeWithoutAVersionWritesNoVersionKey` | Pre-edit red. |
 | LE6 | `TestEncodeDropsAnUndeclaredAttribute` | Turn the filter off: bit. |
@@ -31,7 +31,7 @@ The frozen pair is `ba9b8621..fff1e5ab`. The four planned checks passed at the t
 | LE10 | `TestReadSpansReadsALegacyLine` | Require the schema key: bit. |
 | LE13 | `TestAnAppendPastTheLimitSealsTheLiveSegment` | Pre-edit red. |
 | LE92 | `TestTwoRotationsSealConsecutiveSequences` | Pre-edit red. |
-| LE94 | `TestARotationSkipsAPlantedSequenceName` | Ignore the present names: bit. Remove only the free-name loop: silent. |
+| LE94 | `TestARotationSkipsAPlantedSequenceName` | Ignore the present names: bit. |
 | LE14 | `TestThePruneKeepsTheRetainedCount` | Drop the prune: bit. |
 | LE93 | `TestThePruneRemovesTheLowestSequenceWhateverItsTime` | Drop the prune: bit. |
 | LE15 | `TestReadSpansReadsTheSealedSegmentsInOrder` | Read the live segment only: bit. |
@@ -44,8 +44,8 @@ The frozen pair is `ba9b8621..fff1e5ab`. The four planned checks passed at the t
 
 ## LE-A author notes
 
-- LE4 shares a process-wide cache with the SDK default resource. In a full package run, an earlier test builds that resource first, so LE4 bites only alone. LE5 bites the same mutation in the full run.
-- LE94: the sealed-name listing already counts a planted file, so the free-name loop guards only a race with a writer outside the lock. The spec requires the loop, and the build keeps it.
+- LE4 writes its record in a helper process, because the SDK builds its default resource once for each process.
+- LE94: the reviewer decided that the sealed-name listing is the existence check, so the writer has no free-name step.
 - LE21 has two defenses: the grade and the no-follow open. Each defense alone keeps the row green.
 - An unstamped `dev` build hands no version to the record, so its lines carry no `service.version` key. The spec names a stamped version only.
 - `bounds.RecordSegmentLimit` is spelled `1 << 24`. The spelling `16 << 20` collides by text with an unrelated value in `internal/harnesstranscript/read.go`, and the bounds-policy check then reds. A learning records this call for the reviewer.
@@ -77,19 +77,35 @@ Findings: 3. Worst issue: LEA-C1, where a reader can return an incomplete record
 
 Raw findings: 10. Repair targets after the merge of LEA-P1 and LEA-C2: 9.
 
+## LE-A repair cycle 1
+
+The reviewer closed LEA-P1 and LEA-C2 with the removal of the free-name step and a new LE94 reason. The reviewer closed LEA-C1 with a Won't handle line. The ticket `repair-le-a-review-round-1.md` covers the amended row.
+
+| Finding | Repair | Evidence |
+|---|---|---|
+| LEA-S1 | `encodeInto` owns the encode and parse steps. | The record tests pass. |
+| LEA-S2 | `sealedNames` reads through `sealedSequences`. | The record tests pass. |
+| LEA-S3 | The two comments state the present behavior. | Review of the text. |
+| LEA-S4 | The `main.go` comment names `unstampedVersion`. | Review of the text. |
+| LEA-P1, LEA-C2 | The writer has no free-name step, and LE94 grades a rotation that ignores the present names. | That probe bit. |
+| LEA-P2 | LE4 writes its record in a helper process. | The SDK-resource probe bit LE4 in the full package run. |
+| LEA-P3 | Each LE-A row cites its test. | `bench coverage --check` reports a valid map. |
+| LEA-C1 | A Won't handle line records the reader window. | Reviewer decision. |
+| LEA-C3 | `ReadSelected` names the sealed segment and counts lines per segment. | `TestReadSelectedNamesTheSegmentOfAProblem`; the cross-segment probe bit. |
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/local-shift-evidence/spec.md",
-  "plan_digest": "sha256:7fb022a3db20bc5ce8289757ac685876565f9812804aa23984d52761468ce096",
+  "plan_digest": "sha256:596aee0bd583c82d52e1eb70145f7f41cd945d378da153ad5f7d14a0660ea1fc",
   "implementation_session": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
   "chunks": [
     {
       "id": "LE-A",
       "base": "ba9b86216536fa93f9f51410c31aea8e6f61725b",
-      "tip": "fff1e5abedad3f270e0385e46fc743a09c2c67ef",
-      "plan_digest": "sha256:7fb022a3db20bc5ce8289757ac685876565f9812804aa23984d52761468ce096",
-      "source_digest": "0bef00fe9c58c2f02b2041309d34a355398aba28",
+      "tip": "33b65a3e073da681cf8e45c1ce02233e493dd4f9",
+      "plan_digest": "sha256:596aee0bd583c82d52e1eb70145f7f41cd945d378da153ad5f7d14a0660ea1fc",
+      "source_digest": "869256de0fde5b87aa31099a0910430f83f1bf71",
       "acceptance_rows": [
         "LE1",
         "LE2",
@@ -185,6 +201,78 @@ Raw findings: 10. Repair targets after the merge of LEA-P1 and LEA-C2: 9.
             "ref": "bench test --check system at fff1e5ab",
             "digest": "sha256:366d7196552a2e5b1e75cc2c8d83be04e4e1277565863702e0f97dade2d203c7",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,39281\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-A-verify-otelrecord-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "869256de0fde5b87aa31099a0910430f83f1bf71",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/otelrecord at 33b65a3e",
+            "digest": "sha256:bdf956482cfad7d4a811880d747b1d9be07a6c274d312bbd92c507bd1578568d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/otelrecord,pass,196\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "otelrecord",
+          "command": "bench test --package ./internal/otelrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-A-verify-gate-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "869256de0fde5b87aa31099a0910430f83f1bf71",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/gate at 33b65a3e",
+            "digest": "sha256:13206398342dcb25443171220ade3bbccda4a8b60f97966be85a5315a765cd9b",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,9569\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-A-verify-cmd-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "869256de0fde5b87aa31099a0910430f83f1bf71",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./cmd/bench at 33b65a3e",
+            "digest": "sha256:67e58bc8519d40a16d1d087fc0fba64bd224246a009c0ef8714d176b02d5bf21",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,9956\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-A-verify-system-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "869256de0fde5b87aa31099a0910430f83f1bf71",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --check system at 33b65a3e",
+            "digest": "sha256:58668e2606831bae902b3c79c1dd9befd350df464aa2e1ea71543bb80611796d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,39064\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "system",
           "command": "bench test --check system",
