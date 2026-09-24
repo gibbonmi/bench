@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, LE-B2, and LE-C1 are accepted. The LE-C1 confirming round passed on all three axes.
+Status: LE-A, LE-B1, LE-B2, and LE-C1 are accepted. LE-C2 is committed, and its review of the three axes is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -221,7 +221,7 @@ Three advisories go to LE-B2, because a repair here would need another confirmin
 
 The LE-B1 build cited its tests in the spec, and its repair added row LE107. These edits changed the plan identity after LE-A. The chunk IDs stay the same, so LE-A maps to LE-A.
 
-The LE-B2 build raised the shift grant to 16, fenced `pass_test.go`, `shift_test.go`, and `main_test.go`, and cited its tests. Those edits changed the plan identity again, and LE-A and LE-B1 map to themselves. The LE-B2 repairs corrected spec sentences and recorded a reviewer decision, and each later amendment maps LE-A and LE-B1 again. The LE-C1 build cited its tests and widened ticket 8, and its amendment maps LE-A, LE-B1, and LE-B2.
+The LE-B2 build raised the shift grant to 16, fenced `pass_test.go`, `shift_test.go`, and `main_test.go`, and cited its tests. Those edits changed the plan identity again, and LE-A and LE-B1 map to themselves. The LE-B2 repairs corrected spec sentences and recorded a reviewer decision, and each later amendment maps LE-A and LE-B1 again. The LE-C1 build cited its tests and widened ticket 8, and its amendment maps LE-A, LE-B1, and LE-B2. The LE-C2 build did the same for ticket 9, and its amendment also maps LE-C1.
 
 ## LE-B2 author verification
 
@@ -413,11 +413,27 @@ Three fresh axes graded the code tip `02b777de` with the source digest `2a7af326
 
 Two advisories go to LE-C3, where ticket 10 moves the lease reader beside its writer. First, the LE63 test compares the lease with `TrimSpace`, which is looser than the reader's newline trim. The test will then compare against the moved reader exactly. Second, no test reads the status recovery rendering or the teardown recovery suffix, and both gaps predate this chunk.
 
+## LE-C2 author verification
+
+The frozen pair is `4353965b..160823bf`. The three planned checks and the root conformance test passed at `e3d4ad74`, and `160823bf` changes only the ticket 9 text. A learning records the ticket 9 Writes expansion.
+
+| Row | Test | Probe |
+|---|---|---|
+| LE72 | `TestRecoverAbandonsADeadOwnersEntry` | Pre-edit red. |
+| LE73 | `TestRecoverKeepsALiveOrUnknownEntry` | Read every owner as dead: bit. |
+| LE74 | `TestRecoverKeepsALiveOrUnknownEntry` | Read an unknown owner as a dead process: bit. |
+| LE76 | `TestInspectRecoversAfterTheResumePhase` | Remove the recovery phase: bit. |
+| LE77 | `TestAShiftRecoversBeforeItsAcquire` | Pre-edit red; skip the pass in the shift: bit. |
+| LE78 | `TestRecoverAbandonsADeadOwnersEntry` | Pre-edit red. |
+| LE79 | `TestRecoverWithNothingToDoPrintsNothing` | Print on every pass: bit. |
+
+The worktree package's liveness rule is exported in place as `PIDAlive`, so the recovery pass reads one kill-0 rule. `intent.EntryOwnedBy` writes the key that `KeyOwner` parses.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/local-shift-evidence/spec.md",
-  "plan_digest": "sha256:b458a5e85d95d874b5405a881006d25825ce788f8a00318318a1be2a03ab0c4e",
+  "plan_digest": "sha256:32ce79a177fba310561bd28b59acb709ba0199ab73f5b812dd646feea4a3c830",
   "implementation_session": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
   "chunks": [
     {
@@ -2090,6 +2106,79 @@ Two advisories go to LE-C3, where ticket 10 moves the lease reader beside its wr
           ]
         }
       ]
+    },
+    {
+      "id": "LE-C2",
+      "base": "4353965b42eeade19d5e8aad83550cb0d053c191",
+      "tip": "160823bf5c6266f856e59aa96c353efd0a2a0870",
+      "plan_digest": "sha256:32ce79a177fba310561bd28b59acb709ba0199ab73f5b812dd646feea4a3c830",
+      "source_digest": "ad940303070ad5014b460b38f4c6951bb08ea904",
+      "acceptance_rows": [
+        "LE72",
+        "LE73",
+        "LE74",
+        "LE76",
+        "LE77",
+        "LE78",
+        "LE79"
+      ],
+      "verification": [
+        {
+          "id": "LE-C2-verify-shift-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "ad940303070ad5014b460b38f4c6951bb08ea904",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/shift at e3d4ad74; 160823bf changes only ticket 9 text",
+            "digest": "sha256:9117c5e1e1577c3973e1b356bffb340a167cff3094fa379128435f489a8ad2b7",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/shift,pass,5688\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "shift",
+          "command": "bench test --package ./internal/shift",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-C2-verify-intent-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "ad940303070ad5014b460b38f4c6951bb08ea904",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/intent/... at e3d4ad74; 160823bf changes only ticket 9 text",
+            "digest": "sha256:3971a51a8e7b24fc2794947069bf73de24e5975d2744ab59f7aecada792231e0",
+            "excerpt": "packages[3]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/intent,pass,5358\n  github.com/gibbonmi/bench/internal/intent/admissionpolicy,pass,8\n  github.com/gibbonmi/bench/internal/intent/ledger,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "intent",
+          "command": "bench test --package ./internal/intent/...",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-C2-verify-sessioninspect-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "ad940303070ad5014b460b38f4c6951bb08ea904",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/sessioninspect at e3d4ad74; 160823bf changes only ticket 9 text",
+            "digest": "sha256:6a15b9c4660b81fb98b1aece71c78a3ae714226559e3dc2dda8870d44aec977e",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/sessioninspect,pass,2032\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "sessioninspect",
+          "command": "bench test --package ./internal/sessioninspect",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -2172,6 +2261,24 @@ Two advisories go to LE-C3, where ticket 10 moves the lease reader beside its wr
         ],
         "LE-B2": [
           "LE-B2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:b458a5e85d95d874b5405a881006d25825ce788f8a00318318a1be2a03ab0c4e",
+      "to": "sha256:32ce79a177fba310561bd28b59acb709ba0199ab73f5b812dd646feea4a3c830",
+      "chunk_ids": {
+        "LE-A": [
+          "LE-A"
+        ],
+        "LE-B1": [
+          "LE-B1"
+        ],
+        "LE-B2": [
+          "LE-B2"
+        ],
+        "LE-C1": [
+          "LE-C1"
         ]
       }
     }
