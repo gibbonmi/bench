@@ -272,3 +272,45 @@ Each affected ticket takes one fresh repair session. The session reruns that tic
 | orchestrator spec amendment | R14, and the coverage rows for R2, R3, R7, and R11 |
 
 No repair edits `.bench/BENCH.md`, so no repair needs the reviewer's permission rule.
+
+## FA ticket 1 repair evidence
+
+The fresh repair session `claude:bench-writer/fta-t1-repair` ran on opus at high effort with a cap of 3 attempts. It started from tip `b2f800ac66ce53301521b861a2e0d96d7ba23998` and bound evidence `sha256:2b325c99fe948c59b102e2ccfcb6b79f106688dda8d4bc39fcd6b45d434ae713` as current. The repair commit is `da89b791dee350574c10c6126a4df1ea0d656fc8`. This repair is the first repair cycle of chunk FA. It used one attempt.
+
+| target | row | change | status |
+| --- | --- | --- | --- |
+| R1 | FA10 | The needle now starts at the read bound: "not code, and it refreshes `bench handoff` at each chunk checkpoint." | done |
+| R2 | FA12 | The FA12 Require needle now also holds "A finding on a path that no `Writes:` line holds is a material acceptance shortfall." | done |
+| R3 | FA27, FA28 | Two Forbid rows over `.bench/BENCH.md` in `registry_ft311_review_dispatch.go`. The family runner in `TestFreshTicketAuthors` bites each row. | done |
+| R4 | none | The build phase keeps only the pointer to the plan amendment in `.bench/BENCH-reference.md`. | done |
+| R5 | none | The context sentence and the consumer sentences now name the narrow author read. The guarantee stays: a receipt, a cursor, or another consumer's delivery never replaces what this session reads itself. | done |
+
+R3 adds no test code. `TestFreshTicketAuthors` gives each registered row of the family a synthetic bite, so a new row joins that test through its diagnostic prefix.
+
+### Red then green
+
+Each probe ran through `bench probe <file> ... --check docs-currency-workflow`. Each row shows the verdict before and after the repair.
+
+| probe | file | kind | before | after | diagnostic after |
+| --- | --- | --- | --- | --- | --- |
+| R1 negation: "and it refreshes" becomes "and it never refreshes" | `.agents/commands/bench-implement-spec.md` | swap | silent | bit | handoff refresh at each chunk checkpoint |
+| R2 omission of the material-shortfall sentence | `.bench/BENCH.md` | omit | silent | bit | fresh repair session for each affected ticket |
+| FA27 restore of the retired sentence before "Repeat delegated review" | `.bench/BENCH.md` | swap | silent | bit | retained author's final reconciliation |
+| FA28 restore of the retired sentence before "After the last chunk" | `.bench/BENCH.md` | swap | silent | bit | finding return to the retained author |
+
+Each probe reported one failure and restored the file. No Require needle fired in the FA27 and FA28 probes.
+
+### Verification
+
+| command | exit | result |
+| --- | --- | --- |
+| `bench test --check docs-currency-workflow` | 0 | pass, 0 failures, 0 skips |
+| `bench test --package ./internal/conformance --run TestRootConformance` | 0 | pass, 0 failures, 0 skips |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | 0 | pass, 0 failures, 0 skips |
+| `bench test --package ./internal/conformance --run "TestFreshTicketAuthors\|TestEvidence\|TestRetainedWorkflow"` | 0 | pass, 0 failures, 0 skips |
+| `bench test --package ./internal/anchors/...` | 0 | pass, 0 failures, 0 skips |
+| `bench test --check guidance-prose-budgets` | 0 | pass, 0 failures, 0 skips |
+| `bench gate-prose . -- .agents/commands/bench-implement-spec.md` | 0 | pass |
+| `go vet ./...` | 0 | no output |
+
+The first `TestRootConformance` run failed on a diff-owned red: the reworded context sentence had 27 words, over the 25-word bound. The repair shortened the sentence and its pin, and the rerun passed.
