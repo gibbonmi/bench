@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, LE-B2, LE-C1, and LE-C2 are accepted. LE-C3 repair cycle 1 is committed; the confirming round of the three axes is pending.
+Status: LE-A, LE-B1, LE-B2, LE-C1, LE-C2, and LE-C3 are accepted. The LE-C3 confirming round passed on all three axes.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -545,6 +545,16 @@ Findings: 5. Worst issue: LEC3-C1.
 | LEC3-C4 | The FIFO case waits on its own deadline. | The shift package passed. |
 
 The crash fixture moved into `fault_test.go`, so each test file stays under the line cap.
+
+## LE-C3 confirming round
+
+Three fresh axes graded the code tip `7befdbc0` with the source digest `026d6f09`. Each axis read the manifest, confirmed the current binding, and read the repair delta `f2ba5663..7befdbc0`.
+
+- Standards, 0 findings. LEC3-S3 is closed, and the LEC3-S1 and LEC3-S4 no-ops are sound.
+- Spec, 0 findings. LEC3-P1 is closed as the ticket states it, and the LEC3-P2 refutation holds.
+- Coverage, 0 findings. LEC3-C1 through LEC3-C4 are closed.
+
+Two known gaps stay open. The lease grammar parse in the lifecycle policy still spells the newline that `leaseEnd` names. A move there would grow a file past its line budget. No test forces a lock to fail on an unlocked tree, so the branch that keeps the lease has no test.
 
 ```bench-review-record
 {
@@ -2667,6 +2677,72 @@ The crash fixture moved into `fault_test.go`, so each test file stays under the 
             "LEC3-C5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "LE-C3-review-standards-2",
+          "performer": "claude-code:subagent:a0de46f3049bf03fb",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "026d6f09d57d34fd8c9a1248402a578b77bedca5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a0de46f3049bf03fb, evidence sha256:691403a5988ae87a5daabbf6f159de6e730cbcc2b62298a61e1f116295a46b7b",
+            "digest": "sha256:6c26e81df42f8770a9f6e42430a8dd339da4c14b3968718db713c1569aa6bf5e",
+            "excerpt": "Verdict: PASS. Nothing blocks, and I have 2 advisory findings."
+          },
+          "axis": "Standards",
+          "base": "d2111dfa3a2474fb9d613e8aa3bf6cb982de3aba",
+          "tip": "7befdbc0f6e5cac870a94390558ef131613211a4",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-C3-review-standards-1"
+          ]
+        },
+        {
+          "id": "LE-C3-review-spec-2",
+          "performer": "claude-code:subagent:a3a6bf7454240c61e",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "026d6f09d57d34fd8c9a1248402a578b77bedca5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a3a6bf7454240c61e, evidence sha256:691403a5988ae87a5daabbf6f159de6e730cbcc2b62298a61e1f116295a46b7b",
+            "digest": "sha256:ccd4c2ebb31bb77827b846b73b098e678b1a3c909798bb93af08f504590847f8",
+            "excerpt": "Verdict: PASS. Nothing blocks. One low finding. Confidence: high."
+          },
+          "axis": "Spec",
+          "base": "d2111dfa3a2474fb9d613e8aa3bf6cb982de3aba",
+          "tip": "7befdbc0f6e5cac870a94390558ef131613211a4",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-C3-review-spec-1"
+          ]
+        },
+        {
+          "id": "LE-C3-review-coverage-2",
+          "performer": "claude-code:subagent:a5d9a3f3422b9a285",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "026d6f09d57d34fd8c9a1248402a578b77bedca5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a5d9a3f3422b9a285, evidence sha256:691403a5988ae87a5daabbf6f159de6e730cbcc2b62298a61e1f116295a46b7b",
+            "digest": "sha256:d2f174cbddd658d89d43ace6afe3568192603f932769d9fe7e04a1137f89f2ab",
+            "excerpt": "Verdict: C1 through C4 are closed. I found 1 new gap in the repair delta. It is non-blocking, and my confidence is high."
+          },
+          "axis": "Coverage",
+          "base": "d2111dfa3a2474fb9d613e8aa3bf6cb982de3aba",
+          "tip": "7befdbc0f6e5cac870a94390558ef131613211a4",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-C3-review-coverage-1"
+          ]
         }
       ]
     }
