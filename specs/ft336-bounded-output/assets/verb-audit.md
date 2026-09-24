@@ -12,11 +12,11 @@ the needed part behind a second call adds one request for each use.
 
 | verb | exit | lines | bytes | what the agent acts on | FT336 disposition |
 | --- | --- | --- | --- | --- | --- |
-| `bench help` | 0 | 69 | 8348 | the grammar of the next verb | backstop spill |
+| `bench help` | 0 | 69 | 8348 | the grammar of the next verb | exempt help form |
 | `bench status` | 0 | 7 | 373 | the lead signal and its next command | inside the bound |
 | `bench worktree list` | 0 | 142 | 14489 | the target identity and its state | help slot rows, then backstop spill |
 | `bench worktree path <target>` | 0 | 2 | 228 | the absolute path | inside the bound |
-| `bench worktree --help` | 0 | 16 | 1324 | the grammar of one leaf | backstop spill |
+| `bench worktree --help` | 0 | 16 | 1324 | the grammar of one leaf | exempt help form |
 | `bench worktree show <target> <rev>:<path>` | 0 | 117 | 6343 | the blob bytes | backstop spill |
 | `bench roadmap` | 0 | 20 | 1985 | the top row and the drain state | backstop spill |
 | `bench learnings` | 0 | 2 | 43 | the open entries | inside the bound |

@@ -8,7 +8,7 @@ Covers: BO42, BO43, BO44
 
 `bench preflight evidence <id>`, with no cursor and no source, prints one `evidence_summary` block. The block holds the evidence identity, the source count, the page count, the manifest bytes, the total source bytes, and `next`. `next` is the exact command that reads the first manifest page. Register the block in the chargeevidence response schema, so the ADR 0022 encoded-response bound applies to it.
 
-The cursor, source, verify, and check-current forms keep their current output.
+The cursor, source, verify, and check-current forms keep their current output. The `next` of a `--charge` preparation response stays the bare `bench preflight evidence <id>` command.
 
 ## Acceptance
 

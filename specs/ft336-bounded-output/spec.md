@@ -66,7 +66,7 @@ Harder chunks: BO-C1, BO-C2.
 23. As an agent, I want stdin still forwarded to the child, so that the heredoc form keeps working.
 24. As an agent, I want an interrupted child's output kept, so that I can read what ran before the interrupt.
 25. As an agent, I want a nested Bench verb bounded in its own process, so that each process owns one bound.
-26. As an agent, I want exec memory bounded while a child prints a large output, so that a large child cannot exhaust memory.
+26. As an agent, I want exec memory bounded while a child prints many lines, so that a large child cannot exhaust memory.
 27. As an agent, I want exec's grammar refusal unchanged, so that I can still tell a refusal from the child's own exit 2.
 
 ### The per-verb defaults
@@ -123,6 +123,12 @@ Harder chunks: BO-C1, BO-C2.
 62. As a reviewer, I want `bench consumers` to keep one re-query action per candidate row, so that its anchored decision holds.
 63. As a reviewer, I want the audit to record each verb's size and acted-on part, so that the fix list comes from evidence.
 
+### Review-round additions
+
+64. As an agent, I want exec to return at its child's exit, so that a background process that holds a pipe cannot hang exec.
+65. As a release operator, I want the ship-tier commands exempt, so that the CI log keeps the complete release evidence.
+66. As an agent, I want a commit that exits 3 to stop the chain and name its commit, so that I can reconcile the checkout.
+
 ## Implementation decisions
 
 ### Closed decisions, 2026-09-24
@@ -138,7 +144,7 @@ The reviewer closed these decisions on 2026-09-24. They stay closed.
 
 A new package owns the response bound. The line value, 10, sits in the production policy registry of `internal/bounds` beside the other fixed bounds. No other package states the value.
 
-The owner accepts an ordered stream of writes, each tagged stdout or stderr. It keeps the first 11 lines in memory. When the eleventh line arrives, it creates the spill file, writes every retained byte, and then streams each later byte to the file. It keeps only the head lines and a ring of the last 5 lines in memory after that point.
+The owner accepts an ordered stream of writes, each tagged stdout or stderr. Its two tagged writers serialize their writes, because `os/exec` copies the two child streams on two goroutines. It keeps the first 11 lines in memory. When the eleventh line arrives, it creates the spill file, writes every retained byte, and then streams each later byte to the file. It keeps only the head lines and a ring of the last 5 lines in memory after that point.
 
 At the finish, a response of 10 lines or fewer replays each write to its own stream in arrival order. A longer response prints the head, the spill line, and the tail on stdout, in that order. The spill file holds the complete output, both streams, in arrival order. The spill line has this exact form: `spilled{lines=<total>,bytes=<total>,omitted_lines=<n>,path=<absolute path>}`.
 
@@ -146,7 +152,7 @@ A line ends at a newline byte. A final line without a newline counts as one line
 
 ### The spill store
 
-The spill store sits under the Bench home at `responses/<repo-key>/<scope>/`. The repo key is the census key of the repository. The scope is the assignment id when the process runs in an assignment worktree, and `primary` otherwise. A process outside any repository uses the repo key `none`.
+The spill store sits under the Bench home at `responses/<repo-key>/<scope>/`. The repo key is the census key of the repository. The scope is the assignment id when the process runs in an assignment worktree, and `primary` otherwise. A verb that retires an assignment writes its spill to the `primary` scope. So the retirement cannot remove a spill that is still open. A process outside any repository uses the repo key `none`.
 
 The owner creates each directory with mode 0700 and never follows a symlink. It creates each file with an exclusive create at mode 0600. A generated name selects the file, so no operand or output byte forms a path. The retirement path that drops an assignment's census records also removes that assignment's spill directory. The `primary` and `none` scopes keep the newest 64 files, and the owner removes older files after each new spill.
 
@@ -163,20 +169,24 @@ The exempt set is closed:
 - The help forms: `bench help`, and a command or a leaf followed by exactly one `--help`, `-h`, or `help` argument. A longer argument list stays bounded.
 - `bench dashboard --stdout`, because its stdout is a machine artifact.
 - `bench worktree shell` and `bench setup`, because each one drives an interactive terminal.
+- The ship-tier commands `release-preflight`, `prep-release`, and `release`, because CI runs them and a spill file on a discarded runner loses the evidence.
+- `repair`, because only the wrapper runs it, and it never reaches `Command.Run`.
 
 Each process owns one owner. `bench worktree exec` gives its child the owner's two writers, so Go copies the child's output through pipes into the owner. A Bench verb inside the child bounds its own output in its own process. Exec's outer bound then applies to the child's complete output.
 
-The first ticket declares only the `worktree exec` leaf bounded. Every other public entry declares a transitional `pending` disposition. The second ticket bounds every public entry and removes the `pending` value. This order is an expand, then a contract.
+A descendant of the child can keep a pipe open after the child exits. So exec sets a wait delay on the child command. Exec then returns at the child's own exit with the child's exit code, and the owner keeps the output that arrived before the pipes closed. The interrupt path uses the same delay.
+
+A leaf's disposition sits on its row in the leaf family table, because that row is the single declaration of the leaf. The first ticket declares only the `worktree exec` leaf bounded. Every other public entry declares a transitional `pending` disposition. The second ticket bounds every public entry and removes the `pending` value. This order is an expand, then a contract.
 
 ### The per-verb defaults
 
-`bench worktree list` renders one `bench worktree path <target>` action and one `bench worktree exec <target> -- <command>` action when one or more active rows are present. The cleanup-pending, missing-tree, and foreign rows keep their row-specific actions, because their operands appear in no cell. The id cell stays the address that `bench worktree path` accepts.
+`bench worktree list` renders one `bench worktree path <target>` action and one `bench worktree exec <target> -- <command>` action when one or more active rows with a present tree exist. The cleanup-pending, missing-tree, and foreign rows keep their row-specific actions, because their path operand appears in no cell. The id cell stays the address that `bench worktree path` accepts.
 
 `bench preflight build` and `bench preflight review` keep the `phase`, `spec`, and `source` lines. The check table then becomes one line: `checks{green=<n>,not_applicable=<n>,red=<n>}`. When one or more checks are red, a `checks[<n>]{check,verdict,detail,next}` table follows with the red rows only. The charge forms keep their complete check table in the evidence artifact.
 
 ### The evidence default face
 
-`bench preflight evidence <id>`, with no cursor and no source, prints one `evidence_summary` block. Its fields are the evidence identity, the source count, the page count, the manifest bytes, the total source bytes, and `next`. `next` is the exact command that reads the first manifest page. The chargeevidence response schema registers the block, so the encoded-response bound of ADR 0022 applies to it.
+`bench preflight evidence <id>`, with no cursor and no source, prints one `evidence_summary` block. Its fields are the evidence identity, the source count, the page count, the manifest bytes, the total source bytes, and `next`. `next` is the exact command that reads the first manifest page. The chargeevidence response schema registers the block, so the encoded-response bound of ADR 0022 applies to it. The `next` of a `--charge` preparation response stays the bare `bench preflight evidence <id>` command, so a consumer meets the summary first.
 
 `bench preflight evidence <id> --to <dir>` exports every declared source. A relative directory resolves against the working directory. The directory must be absent or empty, and it must not be a symlink.
 
@@ -184,7 +194,7 @@ The export verifies each page digest and each source digest before it writes tha
 
 ### The commit chain
 
-`bench commit -m <msg> --preflight-build <slug> <path>...` runs three steps in order: the commit, the worktree build of the current assignment, and `bench preflight build <slug>` at the published tip. The composition sits in the `cmd/bench` command layer, so no package import cycle forms. Each step prints its own response. The chain then prints one line: `commit-chain{commit=<sha|none>,build=<green|red|skipped>,preflight=<green|red|skipped>}`.
+`bench commit -m <msg> --preflight-build <slug> <path>...` runs three steps in order: the commit, the worktree build of the current assignment, and `bench preflight build <slug>` at the published tip. The composition sits in the `cmd/bench` command layer, so no package import cycle forms. The commit package returns the published commit to that layer, and the chain line takes the sha from that value. Each step prints its own response. The chain then prints one line: `commit-chain{commit=<sha|none>,build=<green|red|skipped>,preflight=<green|red|skipped>}`.
 
 A commit that publishes nothing skips both later steps. A red build skips the preflight. The chain returns the first non-zero step exit, or 0. A commit that exits 3 stops the chain, and the chain line names its published commit. `--dry-run` with `--preflight-build` is a usage refusal at exit 2.
 
@@ -192,7 +202,7 @@ A commit that publishes nothing skips both later steps. A red build skips the pr
 
 The census writes output records to a second file, `<id>.output`, beside the raw-call file of the same assignment. Each line holds the time, the verb head, the line count, the byte count, and `spilled` or `inline`. The verb head is `bench`, the command name, and the leaf word for a command that has leaves. The raw-call readers read only the `<id>` file, so their counts do not change.
 
-The dispatcher writes the record after the owner finishes. It uses the assignment of the working tree, or the target assignment of `bench worktree exec`. A process with neither writes no record. The landing prints `census output{<head>=<calls>/<bytes>,...}` on stderr beside the `census heads` line. `census.Drop` removes both files, so retirement keeps one call site.
+The dispatcher writes the record after the owner finishes. It uses the assignment of the working tree, or the target assignment of `bench worktree exec`. `ExecCommand` reports the assignment that it resolved, so the dispatcher runs no second resolution. A process with neither writes no record. The landing prints `census output{<head>=<calls>/<bytes>,...}` on stderr beside the `census heads` line. `census.Drop` removes both files, so retirement keeps one call site.
 
 ### The byte bound
 
@@ -202,15 +212,15 @@ The byte-bound ticket starts only after the queries ticket-4 measurement report 
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| BO-C1 / `1-bound-exec-output.md` | The response owner exists, and it bounds every `bench worktree exec` child. | BO1, BO2, BO3, BO4, BO5, BO6, BO7, BO14, BO15, BO18, BO19, BO20, BO21, BO22, BO23, BO24, BO25, BO26, BO27, BO28, BO29, BO30, BO31, BO68 | `bench test --package ./internal/responsebound`, `bench test --package ./cmd/bench`, `bench test --check system` | yes |
-| BO-C2 / `2-bound-every-public-response.md`, `3-retire-response-spills.md` | Every public response obeys the bound, and the spills follow the assignment lifecycle. | BO8, BO9, BO10, BO11, BO12, BO13, BO16, BO17, BO66 | `bench test --package ./cmd/bench`, `bench test --package ./internal/worktree`, `bench test --package ./internal/responsebound`, `bench test --check system` | yes |
+| BO-C1 / `1-bound-exec-output.md` | The response owner exists, and it bounds every `bench worktree exec` child. | BO1, BO2, BO3, BO4, BO5, BO6, BO7, BO14, BO15, BO18, BO19, BO20, BO21, BO22, BO23, BO24, BO25, BO26, BO27, BO28, BO29, BO31, BO68, BO69 | `bench test --package ./internal/responsebound`, `bench test --package ./cmd/bench`, `bench test --check system` | yes |
+| BO-C2 / `2-bound-every-public-response.md`, `3-retire-response-spills.md` | Every public response obeys the bound, and the spills follow the assignment lifecycle. | BO8, BO9, BO10, BO11, BO12, BO13, BO16, BO17, BO30, BO66, BO70 | `bench test --package ./cmd/bench`, `bench test --package ./internal/worktree`, `bench test --package ./internal/responsebound`, `bench test --check system` | yes |
 | BO-C3 / `4-slot-worktree-list-actions.md`, `5-summarize-green-preflight.md` | The list prints slot actions, and a green preflight prints one line. | BO32, BO33, BO34, BO35, BO36, BO37, BO38, BO39, BO40, BO41, BO67 | `bench test --package ./internal/worktree`, `bench test --package ./internal/preflight`, `bench test --package ./internal/anchors`, `bench test --package ./internal/consumers` | no |
 | BO-C4 / `6-summarize-evidence-default.md`, `7-export-evidence-sources.md` | The evidence default prints a summary, and `--to` exports verified sources. | BO42, BO43, BO44, BO45, BO46, BO47, BO48, BO49, BO50 | `bench test --package ./internal/preflight/evidencecmd`, `bench test --package ./internal/chargeevidence` | no |
-| BO-C5 / `8-chain-commit-preflight.md` | One commit call also builds the worktree and runs build preflight. | BO51, BO52, BO53, BO54, BO55, BO56 | `bench test --package ./cmd/bench`, `bench test --package ./internal/commit` | no |
+| BO-C5 / `8-chain-commit-preflight.md` | One commit call also builds the worktree and runs build preflight. | BO51, BO52, BO53, BO54, BO55, BO56, BO71 | `bench test --package ./cmd/bench`, `bench test --package ./internal/commit` | no |
 | BO-C6 / `9-record-response-census.md` | The census records the response sizes, and the landing prints them. | BO57, BO58, BO59, BO60, BO61, BO62 | `bench test --package ./internal/census`, `bench test --package ./internal/worktree`, `bench test --package ./cmd/bench` | no |
 | BO-C7 / `10-apply-byte-bound.md` | Each bounded response obeys the reviewed byte value. | BO63, BO64, BO65 | `bench test --package ./internal/responsebound` | no |
 
-Ticket 1 creates the owner that tickets 2, 3, 9, and 10 consume, so BO-C1 stays one small chunk, and its review closes first. Tickets 1, 2, 5, 7, 8, and 9 write `cmd/bench` registry or help files. The orchestrator lands them in ticket-number order inside that shared set. BO-C7 stays blocked by its entry stop until the budget decision exists.
+Ticket 1 creates the owner that tickets 2, 3, 9, and 10 consume, so BO-C1 stays one small chunk, and its review closes first. Tickets 1, 2, 3, 4, 7, 8, and 9 write `cmd/bench` registry or help files. The orchestrator lands them in ticket-number order inside that shared set. BO-C7 stays blocked by its entry stop until the budget decision exists.
 
 ## Testing decisions
 
@@ -253,7 +263,7 @@ Ticket 2 bounds every public response. So each test that reads more than 10 line
 | BO9 | 7 | `bench worktree --help` through `Command.Run` prints its complete grammar | planned TestHelpFormsStayComplete in cmd/bench | A leaf help form under the bound spills the grammar |
 | BO10 | 7 | A bounded command given two arguments that end in `--help` stays bounded | planned TestHelpExemptionNeedsOneArgument in cmd/bench | A suffix match exempts an exec child's own `--help` |
 | BO11 | 8 | `bench dashboard --stdout` through `Command.Run` prints the complete page | planned TestDashboardStdoutStaysComplete in cmd/bench | A bounded dashboard stream breaks the artifact |
-| BO12 | 8 | The exempt set in the registry equals the help forms, `dashboard --stdout`, `worktree shell`, and `setup`, and each exemption names a reason | planned TestBoundExemptionsAreClosed in cmd/bench | An added exemption or a missing reason fails the set comparison |
+| BO12 | 8 | The exempt set in the registry equals the help forms, `dashboard --stdout`, `worktree shell`, `setup`, the three ship-tier commands, and `repair`, and each exemption names a reason | planned TestBoundExemptionsAreClosed in cmd/bench | An added exemption or a missing reason fails the set comparison |
 | BO13 | 9 | The internal `guard-git` command prints a 30-line stderr in full | planned TestPlumbingStaysOutsideBound in cmd/bench | A dispatcher that bounds hook commands truncates the envelope |
 | BO14 | 10 | A new spill directory has mode 0700 and a new spill file has mode 0600 | planned TestSpillStorePrivateModes in internal/responsebound | A default umask create leaves the file readable by others |
 | BO15 | 10 | A symlink at the spill scope directory makes the owner take the create-failure route | planned TestSpillStoreRefusesSymlink in internal/responsebound | A followed symlink writes outside the Bench home |
@@ -271,8 +281,11 @@ Ticket 2 bounds every public response. So each test that reads more than 10 line
 | BO27 | 22 | An exec child that prints 40 lines and exits 7 makes exec exit 7 | planned TestExecKeepsChildExitUnderBound in internal/systemtest | An owner finish that replaces the child code fails the match |
 | BO28 | 23 | A heredoc on exec stdin reaches the child, and the child's 12 lines of output spill | planned TestExecForwardsStdinUnderBound in internal/systemtest | A captured stdin leaves the child without its script |
 | BO29 | 24 | A SIGINT to exec after the child printed 12 lines gives exit 130 and a spill file that holds those 12 lines | planned TestExecInterruptKeepsOutput in internal/systemtest | An owner that the interrupt path skips loses the printed lines |
-| BO30 | 25 | A nested `bench` child that prints 30 lines gives exec 10 lines with the child's own spill line | planned TestExecNestedBenchBoundsOnce in internal/systemtest | A child outside the bound passes 30 lines through exec |
-| BO68 | 26 | After the spill starts, the owner holds only the head lines and a ring of the last 5 lines in memory | review-owned: code reading at the BO-C1 review, with a 64 MiB exec child in planned TestExecStreamsLargeChild in internal/systemtest | An owner that buffers the complete output grows with the child |
+| BO30 | 25 | After ticket 2, a nested `bench` child that prints 30 lines gives exec 10 lines with the child's own spill line | planned TestExecNestedBenchBoundsOnce in internal/systemtest | A child outside the bound passes 30 lines through exec |
+| BO68 | 26 | After the spill starts, the owner holds only the head lines and a ring of the last 5 lines in memory | review-owned: code reading at the BO-C1 review, with a 64 MiB exec child of short lines in planned TestExecStreamsLargeChild in internal/systemtest | An owner that buffers the complete output grows with the child |
+| BO69 | 64 | `sh -c 'sleep 30 & echo up'` under exec returns within the wait delay with the child's exit code and the line `up` | planned TestExecReturnsAtChildExit in internal/systemtest | An exec with no wait delay blocks until the background process exits |
+| BO70 | 65 | `release-preflight` through `Command.Run` prints a 30-line response in full | planned TestShipTierStaysComplete in cmd/bench | A bounded ship-tier command spills its evidence on a discarded runner |
+| BO71 | 66 | A commit that exits 3 calls no build and prints `commit-chain{commit=<sha>,build=skipped,preflight=skipped}` at exit 3 | planned TestCommitChainStopsAtRemainder in cmd/bench | A chain that ignores exit 3 builds an unreconciled checkout |
 | BO31 | 27 | An exec grammar refusal prints its `usage: bench worktree exec` line unchanged | existing TestWorktreeExecGrammar tests in internal/worktree, run unchanged | An owner that rewrites refusals breaks the documented exit-2 rule |
 | BO32 | 28 | A list of 3 active rows prints `help[2]{cmd,why}:` with `bench worktree path <target>` and `bench worktree exec <target> -- <command>` and no active id in a help row | planned TestListActiveRowsUseTargetSlot in internal/worktree | Per-row help prints 6 rows and names each id |
 | BO33 | 29 | A cleanup-pending row keeps its `bench worktree release --request <token> <path>` help row | existing TestListActions cleanup-pending case in internal/worktree/list_actions_test.go, run unchanged | A slot rule applied to every state loses the path operand |
@@ -323,6 +336,7 @@ The shell CLI hostile-input profile applies to the owner and to `--to`. The walk
 - **Won't handle:** spill growth inside one assignment — the assignment's retirement bounds it.
 - **Won't handle:** an output record for a verb outside any assignment — no assignment key exists, and the verb audit covers those verbs.
 - **Won't handle:** a single line longer than the byte value before ticket 10 lands — the line bound still holds, and ticket 10 closes it.
+- **Won't handle:** the memory of a long unterminated line before ticket 10 lands — the owner never reaches line 11, and the byte bound closes it.
 - **Won't handle:** a nested verb's output counted in both the child record and the exec record — each head names its own process.
 
 ## Ownership fences
@@ -339,6 +353,8 @@ The shell CLI hostile-input profile applies to the owner and to `--to`. The walk
 - `cmd/bench/response_bound_test.go`
 - `cmd/bench/commit_chain_test.go`
 - `cmd/bench/census_output_test.go`
+- `cmd/bench/worktree_leaves.go`
+- `internal/worktree/exec.go`
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/systemtest/`
 - `internal/systemtest/exec_bound_test.go`
@@ -421,6 +437,8 @@ Readers of the public response bytes:
 - The tests that read public output through `Command.Run` sit in `cmd/bench`. The tests that run the built binary sit in `internal/systemtest`. Both prefixes are in the fence for the posture change.
 - `internal/worktree/path_identifier_test.go` extracts an id from a help row. Ticket 4 rewrites it to read the id cell.
 - `internal/conformance/axi_query_registry_test.go` requires the phrase `per matching row`. The general AXI sentence keeps that phrase, and only the `bench worktree list` table row changes.
+- `internal/preflight/evidencecmd/evidence.go` sets the `next` of a `--charge` response to the bare manifest-first command. After ticket 6 that command returns the summary, which adds one request for each charge read. Closed decision 2 accepts that request.
+- `.github/workflows/release.yml` and `.github/workflows/native-runtime.yml` run the ship-tier commands. The ship-tier exemption keeps their output complete.
 - `.agents/commands/bench-review-implementation.md` tells a consumer to follow `bench preflight evidence <id>` and each successor command. The summary prints that successor, so the text stays true.
 
 Readers of the census directory: `census.Counts`, `census.HeadBreakdown`, and `census.ReadEvents` read the `<id>` file only. `internal/assessment/collection.go` calls `census.ReadEvents`. `internal/status/status.go` calls `census.Counts`. `census.Drop` has one call site in `internal/worktree/lifecycle.go`, and `TestRequireOneCallSite` in `internal/worktree/worktree_test.go` pins it.
@@ -459,7 +477,7 @@ The `cmd/bench/` and `internal/systemtest/` prefixes carry the posture change of
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"BO-C1","tickets":["1-bound-exec-output.md"],"verification":[{"id":"owner","command":"bench test --package ./internal/responsebound"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"system","command":"bench test --check system"}]},{"id":"BO-C2","tickets":["2-bound-every-public-response.md","3-retire-response-spills.md"],"verification":[{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"owner","command":"bench test --package ./internal/responsebound"},{"id":"system","command":"bench test --check system"}]},{"id":"BO-C3","tickets":["4-slot-worktree-list-actions.md","5-summarize-green-preflight.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"preflight","command":"bench test --package ./internal/preflight"},{"id":"anchors","command":"bench test --package ./internal/anchors"}]},{"id":"BO-C4","tickets":["6-summarize-evidence-default.md","7-export-evidence-sources.md"],"verification":[{"id":"evidencecmd","command":"bench test --package ./internal/preflight/evidencecmd"},{"id":"chargeevidence","command":"bench test --package ./internal/chargeevidence"}]},{"id":"BO-C5","tickets":["8-chain-commit-preflight.md"],"verification":[{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"commit","command":"bench test --package ./internal/commit"}]},{"id":"BO-C6","tickets":["9-record-response-census.md"],"verification":[{"id":"census","command":"bench test --package ./internal/census"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"cmd","command":"bench test --package ./cmd/bench"}]},{"id":"BO-C7","tickets":["10-apply-byte-bound.md"],"verification":[{"id":"owner","command":"bench test --package ./internal/responsebound"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/ft336-bounded-output/spec.md"},{"id":"owner","command":"bench test --package ./internal/responsebound"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"system","command":"bench test --check system"}]}
+{"version":1,"chunks":[{"id":"BO-C1","tickets":["1-bound-exec-output.md"],"verification":[{"id":"owner","command":"bench test --package ./internal/responsebound"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"system","command":"bench test --check system"}]},{"id":"BO-C2","tickets":["2-bound-every-public-response.md","3-retire-response-spills.md"],"verification":[{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"owner","command":"bench test --package ./internal/responsebound"},{"id":"system","command":"bench test --check system"}]},{"id":"BO-C3","tickets":["4-slot-worktree-list-actions.md","5-summarize-green-preflight.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"preflight","command":"bench test --package ./internal/preflight"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"consumers","command":"bench test --package ./internal/consumers"}]},{"id":"BO-C4","tickets":["6-summarize-evidence-default.md","7-export-evidence-sources.md"],"verification":[{"id":"evidencecmd","command":"bench test --package ./internal/preflight/evidencecmd"},{"id":"chargeevidence","command":"bench test --package ./internal/chargeevidence"}]},{"id":"BO-C5","tickets":["8-chain-commit-preflight.md"],"verification":[{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"commit","command":"bench test --package ./internal/commit"}]},{"id":"BO-C6","tickets":["9-record-response-census.md"],"verification":[{"id":"census","command":"bench test --package ./internal/census"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"cmd","command":"bench test --package ./cmd/bench"}]},{"id":"BO-C7","tickets":["10-apply-byte-bound.md"],"verification":[{"id":"owner","command":"bench test --package ./internal/responsebound"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/ft336-bounded-output/spec.md"},{"id":"owner","command":"bench test --package ./internal/responsebound"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"system","command":"bench test --check system"}]}
 ```
 
 ### Flagged additions
@@ -469,6 +487,7 @@ The `cmd/bench/` and `internal/systemtest/` prefixes carry the posture change of
 - The `spill-failed` fallback posture comes from the overflow spec's preservation rule.
 - `--to` refuses a non-empty directory and names files by ordinal. The source names only the flag.
 - The stdout and stderr combination under the bound is an author choice, because the audit measured both streams together.
+- The ship-tier and `repair` exemptions, the exec wait delay, and the `primary` scope for a retiring verb came from the review round.
 
 ### Flags for reviewer veto
 

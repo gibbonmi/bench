@@ -8,7 +8,7 @@ Covers: BO16, BO17
 
 Add a spill drop to the response owner package. The retirement path in `internal/worktree/lifecycle.go` calls it beside `census.Drop`, so the retirement of an assignment removes that assignment's spill directory. The drop refuses an identifier that is not an assignment id, as `census.Drop` does.
 
-After each new spill in the `primary` or `none` scope, the owner removes the oldest files until 64 remain.
+A verb that retires an assignment writes its own spill to the `primary` scope, so the retirement cannot remove an open spill. After each new spill in the `primary` or `none` scope, the owner removes the oldest files until 64 remain.
 
 ## Acceptance
 
