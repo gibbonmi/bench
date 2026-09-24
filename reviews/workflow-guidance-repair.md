@@ -276,6 +276,99 @@ Advice, with no finding ID:
 
 The plan changed after the GR-A tip, so the payload maps the GR-A plan digest to the current plan digest. The chunk IDs do not change.
 
+## GR-C author evidence
+
+Each ticket had a fresh `bench-writer` author on opus at high effort, with a cap of 3 attempts. Each author added its registry rows before the guidance edit, and each new row went red on the unchanged tree. After the edit, each row went green.
+
+| Ticket | Author session | Start tip | Ticket commit | Attempts |
+|---|---|---|---|---|
+| 6 | `claude:bench-writer/gr-t6-author` | `60e4f04b` | `af4cf5fc` | 1 of 3 |
+| 7 | `claude:bench-writer/gr-t7-author` | `af4cf5fc` | `1b655325` | 1 of 3 |
+| 8 | `claude:bench-writer/gr-t8-author` | `1b655325` | `3c41f265` | 1 of 3 |
+
+Ticket 6 added the `declaredLineAnchors` family. Ticket 7 added the `factOwnerAnchors` family and carried the GR-B targets B12 and B13. Ticket 8 added the `referenceRouteAnchors` family and changed the drain contract strings together with their bite table. Before ticket 7, the orchestrator added a one-time permission rule for the three imported or adapter files. It removed the rule after the ticket 7 commit.
+
+### Probe verdicts
+
+Each probe ran through `bench probe`. Each probe bit, and each restore reads `yes`.
+
+| Ticket | File | Mutation | Row |
+|---|---|---|---|
+| 6 | `bench-craft-spec/SKILL.md` | swap: the `write-spec-fence-approval` canary mutation | GR72 |
+| 6 | `bench-craft-line/SKILL.md` | omission: the declared-line sentence | GR70 |
+| 6 | `bench-craft-line/SKILL.md` | swap: the per-ticket re-run returns | GR69 |
+| 6 | `bench-craft-spec/SKILL.md` | swap: the per-story lines return | GR73 |
+| 6 | `bench-craft-line/SKILL.md` | swap: the old step 3 and step 5 wording, one per probe | GR74, GR75 |
+| 6 | `bench-craft-line/SKILL.md` | omission: the step 2 tier-move sentence | GR106 |
+| 7 | `.bench/BENCH-reference.md` | swap: the retargeted `agents-handoff-section-rule` canary mutation | GR85 |
+| 7 | `projects/benchkit.md` | swap: the any-branch claim returns | B12 |
+| 7 | `AGENTS.md` | omission: the reference pointer | GR79 |
+| 7 | `.bench/BENCH-reference.md` | swap: the README link rule returns | GR90 |
+| 7 | `internal/anchors/registry_retained_workflow.go` | swap: the green-run row returns to the profile | GR82 |
+| 7 | `internal/anchors/registry_data.go` | swap: the handoff row returns to a Require row | GR84 |
+| 7 | `cmd/bench/anchor_help_test.go` | swap: each expected row takes one kind, then one diagnostic per row | GR107, GR108 |
+| 8 | `bench-craft-spec/SKILL.md` | swap: the chunk contract copy returns; omission: the pointer | owner rows |
+| 8 | `bench-drain.md` | swap: the batch approval owner sentence returns | owner Forbid |
+| 8 | `bench-craft-adr/SKILL.md` | swap: the invariant 3 copy returns | GR122 |
+| 8 | `bench-craft-tdd/references/tests.md` | swap: the test-expectation copy returns | GR103 |
+| 8 | `bench-drain.md` | swap: the handoff dating loses its `main` scope | GR96 |
+
+### Verification
+
+Each author ran the six GR-C checks at the chunk tip `3c41f265`, and each check passed. The JSON payload holds each result.
+
+## GR-C chunk review, round 1
+
+The frozen pair is base `60e4f04b96fa43feb1a615711153d313f51dad50` and tip `3c41f265b46798ce557d5a8f8de379153874ae59`. The base holds the accepted GR-B tip and its record commit only. The shared evidence is `sha256:78fc5abbe177b5caa3b8a1365c18eedb850d7f7727d6724b3ed7287bc9fafaaf`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, and only the Coverage axis ran probes. Every consumer row is inside the diff, and the deleted fixture helper has no caller at the tip.
+
+The raw finding count is 13: Standards 8, Spec 1, and Coverage 4. After the orchestrator merges the findings that name the same fix, 11 repair targets remain. Two of them come from Spec advice about stale lane wording, which the orchestrator promoted to findings. The orchestrator decided each `ask-user` finding under the reviewer's approval of all work, and each decision is open to veto.
+
+## GR-C Standards
+
+Findings: 8. The worst issue is the place where the drain runs `bench handoff`.
+
+- `.agents/commands/bench-drain.md:294` runs `bench handoff` from the primary checkout, but `AGENTS.md:78` names the phase worktree. Reviewer decision 4 of the spec sets the drain route, so `AGENTS.md` takes the drain exception. Target G1. `auto-fix` by orchestrator decision. Confidence 7.
+- `.agents/commands/bench-drain.md:296-297` copies the tree-wins sentence of `AGENTS.md`. The dating sentence stays, because GR96 requires it. Target G2. `auto-fix`. Confidence 6.
+- `AGENTS.md:11` paraphrases the lookup-material sentence of `.bench/BENCH.md`, but GR79 requires it. `no-op` by orchestrator decision. Confidence 6.
+- `.agents/commands/bench-drain.md:273-274` points to the batch approval owner and then paraphrases the rule. Target G3. `auto-fix`. Confidence 5.
+- `.agents/skills/bench-craft-line/SKILL.md:57` restates the declared-line binding, but GR70 requires it. `no-op` by orchestrator decision. Confidence 5.
+- `.agents/skills/bench-craft-line/SKILL.md:45` makes the top-tier rule absolute, but the delegated section allows top under `--delegate`. Target G4. `auto-fix` by orchestrator decision. Confidence 5.
+- `.bench/BENCH.md:141` restates invariant 4 in the light-path cell. Target G5. `auto-fix` by orchestrator decision. Confidence 5.
+- The gate-output and handoff rows sit across two registry files. `no-op`. Confidence 4.
+
+## GR-C Spec
+
+Findings: 1. The worst issue is the same `bench handoff` mismatch as the first Standards finding.
+
+- `AGENTS.md:78` against `.agents/commands/bench-drain.md:294`. Target G1. `auto-fix`. Confidence 6.
+
+The orchestrator also promoted two Spec advice items to findings, because each is a concrete stale claim against the lane decision. `AGENTS.md:73` still says "one gate-priced commit", which is target G10. `.agents/commands/bench-drain.md:272,277` still say "commit on green", which is target G11. Both are `auto-fix` by orchestrator decision.
+
+## GR-C Coverage
+
+Findings: 4. The worst issue is a GR107 and GR108 expectation that reads the production kind names.
+
+- `cmd/bench/anchor_help_test.go:35,49` takes the expected kind from `anchorKindName`. A swapped kind name was silent. Target G6. `auto-fix`. Confidence 9.
+- `.bench/BENCH-reference.md:274-275` holds moved handoff facts that no row pins. Two omission probes were silent. Target G7. `auto-fix`. Confidence 8.
+- `.claude/README.md:22-24` has a new `bench-writer` sentence that no row pins. The swap probe was silent. Target G8. `auto-fix`. Confidence 7.
+- `.agents/skills/bench-craft-line/SKILL.md:57,87` has needles that end before their predicate ends. Target G9 extends the GR75 needle. The GR70 case is a limit of substring anchors, so it is `no-op`. Confidence 5.
+
+## GR-C repair routing
+
+| Target | Owner | Repair |
+|---|---|---|
+| G1 | ticket 7 | Add the drain exception to the phase-close handoff route in `AGENTS.md`. |
+| G2 | ticket 8 | Remove the tree-wins copy from the drain, and forbid it. |
+| G3 | ticket 8 | Keep only the batch approval pointer, and forbid the paraphrase. |
+| G4 | ticket 6 | Scope the top-tier rule to work outside `--delegate`. |
+| G5 | ticket 7 | Stop the light-path cell from restating invariant 4. |
+| G6 | ticket 7 | Pin the kind names as independent literals. |
+| G7 | ticket 7 | Pin the moved handoff facts in the reference. |
+| G8 | ticket 7 | Pin the new `bench-writer` sentence in the README. |
+| G9 | ticket 6 | Extend the GR75 needle through the end of its clause. |
+| G10 | ticket 7 | Replace "one gate-priced commit" with the lane wording. |
+| G11 | ticket 8 | Replace "commit on green" in the drain with the lane wording, and forbid it. |
+
 ```bench-review-record
 {
   "version": 2,
@@ -1236,6 +1329,464 @@ The plan changed after the GR-A tip, so the payload maps the GR-A plan digest to
           "supersedes": [
             "gr-b-r1-coverage"
           ]
+        }
+      ]
+    },
+    {
+      "id": "GR-C",
+      "base": "60e4f04b96fa43feb1a615711153d313f51dad50",
+      "tip": "3c41f265b46798ce557d5a8f8de379153874ae59",
+      "plan_digest": "sha256:fe5ec0f1c3cf51d3252849be18b196da807826b7d147da281f48306a3abc4074",
+      "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+      "acceptance_rows": [
+        "GR68",
+        "GR69",
+        "GR70",
+        "GR71",
+        "GR72",
+        "GR73",
+        "GR74",
+        "GR75",
+        "GR106",
+        "GR76",
+        "GR77",
+        "GR78",
+        "GR79",
+        "GR80",
+        "GR81",
+        "GR82",
+        "GR83",
+        "GR84",
+        "GR85",
+        "GR86",
+        "GR87",
+        "GR88",
+        "GR89",
+        "GR90",
+        "GR91",
+        "GR107",
+        "GR108",
+        "GR114",
+        "GR121",
+        "GR123",
+        "GR124",
+        "GR92",
+        "GR93",
+        "GR94",
+        "GR95",
+        "GR96",
+        "GR97",
+        "GR98",
+        "GR99",
+        "GR100",
+        "GR101",
+        "GR102",
+        "GR103",
+        "GR104",
+        "GR105",
+        "GR122"
+      ],
+      "verification": [
+        {
+          "id": "gr-c-6-workflow",
+          "performer": "claude:bench-writer/gr-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t6-author-20260924/6-workflow@3c41f265",
+            "digest": "sha256:0bbe6eb7b9150e3d1aa55b43e65fe9c3e152a909bec656737809f82cc3d59bb4",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,953\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "6-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-6-conformance",
+          "performer": "claude:bench-writer/gr-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t6-author-20260924/6-conformance@3c41f265",
+            "digest": "sha256:07aaa0b4f811ec20a3aa23c9359ae0c52fad0b531f3c22a4dd623b837bf92cac",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7627\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "6-conformance",
+          "command": "bench test --package ./internal/conformance --run TestRootConformance",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-6-anchors",
+          "performer": "claude:bench-writer/gr-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t6-author-20260924/6-anchors@3c41f265",
+            "digest": "sha256:4e6eff64d2c6b7bbd498a39369a49c1546d28906a3a972fdb049f1cc55e327bf",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,991\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "6-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-6-anchors-cli",
+          "performer": "claude:bench-writer/gr-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t6-author-20260924/6-anchors-cli@3c41f265",
+            "digest": "sha256:f43dcb3cd3065b2b58c08587aab38960cbfe539cb23d38da55cd457ae073a176",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,117\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "6-anchors-cli",
+          "command": "bench test --package ./cmd/bench --run TestAnchors",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-6-budgets",
+          "performer": "claude:bench-writer/gr-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t6-author-20260924/6-budgets@3c41f265",
+            "digest": "sha256:6f72c99a424331a3381e284e55ffa703b490f81e19b498e848e8bfc5d9ca25ed",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "6-budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-6-fixture-bite",
+          "performer": "claude:bench-writer/gr-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t6-author-20260924/6-fixture-bite@3c41f265",
+            "digest": "sha256:0551bcd740a88ec151de2a398e586e57355ffdbfdc479797f8b6fbe5fe86b1e6",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1366\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "6-fixture-bite",
+          "command": "bench test --package ./internal/conformance --run 'TestWorkflowCadenceAnchorsRejectDeletionAndSwap|TestSpecTicketHandoffWorkflowFixturesAreComplete'",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-7-workflow",
+          "performer": "claude:bench-writer/gr-t7-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t7-author-20260924/7-workflow@3c41f265",
+            "digest": "sha256:f03ff44de56f88263b23c458f77b86c161fc44d30e0a1a8488d4c010e340e50f",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,894\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "7-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-7-conformance",
+          "performer": "claude:bench-writer/gr-t7-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t7-author-20260924/7-conformance@3c41f265",
+            "digest": "sha256:4849582a6b7275b017f1e08524efa32ae84af897b274471846ebefee41ec4957",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7494\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "7-conformance",
+          "command": "bench test --package ./internal/conformance --run TestRootConformance",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-7-anchors",
+          "performer": "claude:bench-writer/gr-t7-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t7-author-20260924/7-anchors@3c41f265",
+            "digest": "sha256:660dfe3a0a8f4861c3f542dc58506a05c1db7a01e184954611e571a57daf5a9e",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,932\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "7-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-7-anchors-cli",
+          "performer": "claude:bench-writer/gr-t7-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t7-author-20260924/7-anchors-cli@3c41f265",
+            "digest": "sha256:6c7efeacfdcc3e6b65792f384a4f3e19f1e2bae1a7665c82e2e96e00585b65c8",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,129\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "7-anchors-cli",
+          "command": "bench test --package ./cmd/bench --run TestAnchors",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-7-budgets",
+          "performer": "claude:bench-writer/gr-t7-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t7-author-20260924/7-budgets@3c41f265",
+            "digest": "sha256:6f72c99a424331a3381e284e55ffa703b490f81e19b498e848e8bfc5d9ca25ed",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "7-budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-7-fixture-bite",
+          "performer": "claude:bench-writer/gr-t7-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t7-author-20260924/7-fixture-bite@3c41f265",
+            "digest": "sha256:73570f5d1447e48e0e2330fe7bd143e0f6c40bb5070abf0c1c866e8dce302cdf",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1235\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "7-fixture-bite",
+          "command": "bench test --package ./internal/conformance --run 'TestWorkflowCadenceAnchorsRejectDeletionAndSwap|TestSpecTicketHandoffWorkflowFixturesAreComplete'",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-8-workflow",
+          "performer": "claude:bench-writer/gr-t8-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t8-author-20260924/8-workflow@3c41f265",
+            "digest": "sha256:cc727adc79103626f8bcd082dc50aa1a5d10822309e42d08370e67abf77a1bbf",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,906\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "8-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-8-conformance",
+          "performer": "claude:bench-writer/gr-t8-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t8-author-20260924/8-conformance@3c41f265",
+            "digest": "sha256:656a9106c91ee78059da1a707b72f57caabdc57ed4e6368b00c6f273d0212eef",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7586\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "8-conformance",
+          "command": "bench test --package ./internal/conformance --run TestRootConformance",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-8-anchors",
+          "performer": "claude:bench-writer/gr-t8-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t8-author-20260924/8-anchors@3c41f265",
+            "digest": "sha256:66edc47f32530f4174ca932daed7c1606f8299d2c9c202adc8dd3572e475c75d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,945\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "8-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-8-anchors-cli",
+          "performer": "claude:bench-writer/gr-t8-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t8-author-20260924/8-anchors-cli@3c41f265",
+            "digest": "sha256:9911435766a8c62ddde700e1014b5c0d185c94a83a8292f7d662e76a312350cc",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,123\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "8-anchors-cli",
+          "command": "bench test --package ./cmd/bench --run TestAnchors",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-8-budgets",
+          "performer": "claude:bench-writer/gr-t8-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t8-author-20260924/8-budgets@3c41f265",
+            "digest": "sha256:5a0bfe1ac249b6a4ba569c6c94e8f7a5d81b8eb48900ad6716d7beabc6be86e8",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,11\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "8-budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-c-8-fixture-bite",
+          "performer": "claude:bench-writer/gr-t8-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-t8-author-20260924/8-fixture-bite@3c41f265",
+            "digest": "sha256:a2e923d15f5a8506183cffb4e7d77b2d01ee4b8874ac6285951096a0e9e82564",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1364\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "8-fixture-bite",
+          "command": "bench test --package ./internal/conformance --run 'TestWorkflowCadenceAnchorsRejectDeletionAndSwap|TestSpecTicketHandoffWorkflowFixturesAreComplete'",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "gr-c-r1-standards",
+          "performer": "claude:bench-reviewer/gr-c-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/gr-c-standards@3c41f265",
+            "digest": "sha256:e76e8b36431fcf133eaca30b4b3e9dcffc7234f37cd70b70ef383230568f65cb",
+            "excerpt": "Standards: 7 findings. Worst: bench-drain now runs `bench handoff` from the primary checkout, but AGENTS.md says a phase close runs it from its own worktree."
+          },
+          "axis": "Standards",
+          "base": "60e4f04b96fa43feb1a615711153d313f51dad50",
+          "tip": "3c41f265b46798ce557d5a8f8de379153874ae59",
+          "finding_ids": [
+            "G1",
+            "G2",
+            "G3",
+            "G4",
+            "G5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gr-c-r1-spec",
+          "performer": "claude:bench-reviewer/gr-c-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/gr-c-spec@3c41f265",
+            "digest": "sha256:e7df133bcd5381e46ee217016dbe20e474f1d7d1813770b75cd9895db60065a6",
+            "excerpt": "Spec: 1 findings. Worst: the drain now runs `bench handoff` from the primary checkout, but the unedited AGENTS.md phase-close rule still says a phase close runs it from its own worktree."
+          },
+          "axis": "Spec",
+          "base": "60e4f04b96fa43feb1a615711153d313f51dad50",
+          "tip": "3c41f265b46798ce557d5a8f8de379153874ae59",
+          "finding_ids": [
+            "G1",
+            "G10",
+            "G11"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gr-c-r1-coverage",
+          "performer": "claude:bench-reviewer/gr-c-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6237c9fd30e6cf992a3561a15cf077e2ba780100",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/gr-c-coverage@3c41f265",
+            "digest": "sha256:7ec20b7dc253d4d8d893d5560f0cbf4343bcd29e82563f488406ded94d6e43e8",
+            "excerpt": "Coverage: 4 findings. Worst: a mutation of the production `anchorKindName` does not fail GR107 or GR108, because the tests take their expected kind column from that same function."
+          },
+          "axis": "Coverage",
+          "base": "60e4f04b96fa43feb1a615711153d313f51dad50",
+          "tip": "3c41f265b46798ce557d5a8f8de379153874ae59",
+          "finding_ids": [
+            "G6",
+            "G7",
+            "G8",
+            "G9"
+          ],
+          "supersedes": []
         }
       ]
     }
