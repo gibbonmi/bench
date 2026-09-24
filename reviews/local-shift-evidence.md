@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A repair cycle 3 is committed; the third confirming round of the three axes is pending.
+Status: LE-A is accepted. The final confirming round passed on all three axes.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -136,6 +136,14 @@ Raw findings: 1. Repair targets: 1.
 | LEA-S7 | The LE-A decision list names its count as three. | Review of the text. |
 | Coverage advice | A Won't handle line records the refused-rotation state. | Review of the text. |
 | Spec advice | The LE106 test reads the planted file's bytes. | The probe that renames over the planted file bit. |
+
+## LE-A final confirming round
+
+Three fresh axes graded the code tip `ee58eed2` with the source digest `899915f1`. Each axis read the manifest, confirmed the current binding, and read the repair delta. This narrow read follows the reviewer's decision of 2026-09-23. LEA-S7 is closed.
+
+- Standards, 0 findings.
+- Spec, 0 findings. LE106 holds.
+- Coverage, 0 findings. LE106 holds.
 
 ```bench-review-record
 {
@@ -680,6 +688,72 @@ Raw findings: 1. Repair targets: 1.
           "finding_ids": [],
           "supersedes": [
             "LE-A-review-coverage-2"
+          ]
+        },
+        {
+          "id": "LE-A-review-standards-4",
+          "performer": "claude-code:subagent:ab8afd80d8915bc6c",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "899915f1f507a10d607d60afa1e0f077b4d1a614",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:ab8afd80d8915bc6c, evidence sha256:0c69b579d5671a2da21ff13caaa99c3c694edc56ead8a5efd6a516aae3bfbfd4",
+            "digest": "sha256:bbef0486957525d68aedeabc8430bc392c5d76ee7e337925a1cbc3b9136a9b70",
+            "excerpt": "LEA-S7 is closed. The delta adds no finding above the blocking bar, so the count is 0, there is no worst issue, and the outcome is pass."
+          },
+          "axis": "Standards",
+          "base": "ba9b86216536fa93f9f51410c31aea8e6f61725b",
+          "tip": "ee58eed2b8a1ba20f5453e50fa879f04a0b4727a",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-A-review-standards-3"
+          ]
+        },
+        {
+          "id": "LE-A-review-spec-4",
+          "performer": "claude-code:subagent:a95bc61c2eda1fd7c",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "899915f1f507a10d607d60afa1e0f077b4d1a614",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a95bc61c2eda1fd7c, evidence sha256:0c69b579d5671a2da21ff13caaa99c3c694edc56ead8a5efd6a516aae3bfbfd4",
+            "digest": "sha256:1576ca684235767d81e648ccad5f12444743f30e46f6d7ee1141aa3244b9b496",
+            "excerpt": "The Spec axis passes for LE-A in the final confirming round. LE106 holds, and I found no blocking finding in this delta. Findings: 0. Outcome: pass."
+          },
+          "axis": "Spec",
+          "base": "ba9b86216536fa93f9f51410c31aea8e6f61725b",
+          "tip": "ee58eed2b8a1ba20f5453e50fa879f04a0b4727a",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-A-review-spec-3"
+          ]
+        },
+        {
+          "id": "LE-A-review-coverage-4",
+          "performer": "claude-code:subagent:a827dd78e9418ea05",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "899915f1f507a10d607d60afa1e0f077b4d1a614",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a827dd78e9418ea05, evidence sha256:0c69b579d5671a2da21ff13caaa99c3c694edc56ead8a5efd6a516aae3bfbfd4",
+            "digest": "sha256:0ff6834d24099d026e048fcbb350bfbb34eff1494680d0d6a3d248cc8d6e2777",
+            "excerpt": "LE106 verdict: holds. Findings: none above the blocking bar. Count: 0 findings. Worst issue: none. Outcome: pass."
+          },
+          "axis": "Coverage",
+          "base": "ba9b86216536fa93f9f51410c31aea8e6f61725b",
+          "tip": "ee58eed2b8a1ba20f5453e50fa879f04a0b4727a",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-A-review-coverage-3"
           ]
         }
       ]
