@@ -17,7 +17,7 @@ Make these changes in `.agents/commands/bench-final-check.md`:
 - Keep "These files are pending capture for `/bench-drain`, not a second roadmap." The drain still verdicts every retro.
 - Remove "The retro leaves through the next reviewer-approved capture drain." A tracked retro enters history at the phase close.
 
-In `.bench/BENCH-reference.md`, keep the needles "/bench-final-check` writes `capture/retros/<spec-slug>.md`" and "/bench-drain` owns their reviewed drain". Replace "and its capture commit" with the tracked-or-ignored rule.
+In `.bench/BENCH-reference.md`, keep the needles "/bench-final-check` writes `capture/retros/<spec-slug>.md`" and "/bench-drain` owns their reviewed drain". Replace "and its capture commit" with a pointer to the final check's tracked-or-ignored rule, so that the rule has one source.
 
 Replace each Require row whose sentence goes with the Forbid row that the spec names, and add each planned Require row. Add a Require row for the one-row-per-claim duty, and retarget the canary `calibration-retro-table-duty` to it.
 
