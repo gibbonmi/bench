@@ -26,7 +26,7 @@ A shift writes one `shift` span for its whole life and one pass span for each it
 
 Before any scratch cleanup, the shift retains its notes as a private memory file beside the record. The span references that file by digest, and no prompt reads it.
 
-A shift that exits normally ends its intent. The shift records its lease identity, and a recovery pass resolves each crashed shift. A crashed shift is recovered only when its lease identity still holds and its owner is dead. The pass takes the dead lease through the pool's own takeover protocol, locks the worktree in place, and finishes an interrupted recovery on a re-run. Otherwise the pass abandons the entry and leaves its worktree untouched.
+A shift that exits normally ends its intent. The shift records its lease identity, and a recovery pass resolves each crashed shift. A crashed shift is recovered only when its lease identity still holds and its owner is dead. The pass takes the dead lease through the pool's own takeover protocol. It locks a dirty worktree in place, releases a clean one, and finishes an interrupted recovery on a re-run. Otherwise the pass abandons the entry and leaves its worktree untouched.
 
 The worktree shell records its session boundaries the same way. `DATA_HANDLING.md` documents the record as mutable local evidence, not a tamper-proof central audit system.
 
@@ -87,7 +87,7 @@ Intent completion and crash recovery:
 35. As an operator, I want each shift to record its lease identity, so that crash recovery can prove the owner.
 36. As an operator, I want a crashed shift recovered when its lease still holds and its owner is dead, so that its intent completes.
 37. As an operator, I want a recovered dirty worktree retained and locked in place, so that the crash loses no work.
-38. As an operator, I want a recovered clean worktree retained in place too, so that recovery never resets a checkout at session start.
+38. As an operator, I want a recovered clean worktree released, so that the pool gets the worktree back.
 39. As an operator, I want a crashed shift abandoned untouched when its lease no longer holds, so that another owner's checkout stays safe.
 40. As an operator, I want an open entry left alone while its owner lives, so that recovery never judges a running shift.
 41. As an operator, I want an entry with no lease abandoned only for a dead key owner, so that stale intent resolves safely.
@@ -124,6 +124,8 @@ Recovery and record safety:
 60. As an operator, I want sealed segments named by a lock-held sequence, so that no rotation overwrites one and no clock step misorders them.
 61. As a retro reader, I want a failed memory write recorded as failed, so that the span never leaves the memory keys undefined.
 62. As a record consumer, I want a process with no version to write no version key, so that no false version appears.
+63. As an operator, I want an entry skipped while a live other owner holds its lease, so that no verdict races a claim.
+64. As an operator, I want a recovered entry left alone under another lease identity, so that a resume never touches a new owner.
 
 ## Implementation decisions
 
@@ -178,11 +180,14 @@ Recovery and record safety:
 - The recovery pass lives in the shift package, because it reuses the shift's scratch policy, memory retention, and preservation. It judges each shift entry that has no outcome, and it resumes each entry with the outcome `recovered` whose act did not finish.
 - For an entry with no lease, the intent package parses the owner process from the key beside `NewEntry`. A dead owner abandons the entry. A live owner or an unparsable key skips it.
 - For an entry with a lease, the pass first grades the lease file without a follow. An absent file abandons the entry. A file that is not regular, is unreadable, or holds a malformed lease line skips the entry. This grade comes before the comparison, so a malformed line never counts as another owner (LE75).
-- A well-formed lease line that differs from the recorded line abandons the entry. The recorded line with a live owner skips the entry. The recorded line with a dead owner starts a recovery.
-- A recovery takes the lease through the pool's takeover protocol. The protocol renames the lease to `.stale.<pid>`, compares the moved bytes with the recorded line, and creates the pass's own lease with an exclusive create. The worktree package owns that protocol, so a new identity claim beside `RetainAndLock` runs `claimAt` with the recorded line as the one accepted judgment. If the claim loses, the pass concedes and changes nothing.
-- After a won claim, the pass retains the memory. It then writes the entry: the pass's own lease line, the outcome `recovered`, and the `worktree:` pointer. Last, it acts: it locks the worktree in place, skipping the lock when the worktree is already locked, and removes its own lease.
-- A recovery never releases or resets a worktree, dirty or clean. The operator removes a recovered worktree with `bench worktree clean`.
-- An entry with the outcome `recovered` whose lease file still holds the entry's lease line with a dead owner has an unfinished act. The pass runs only the act again. It retains no second memory file and writes one recovery span with no memory keys. An entry with the outcome `recovered` and no lease file is finished, and the pass leaves it.
+- A well-formed lease line that differs from the recorded line abandons the entry only when that line's owner is dead. A differing line with a live owner skips the entry, because a concurrent pass or a new acquirer holds the lease. The recorded line with a live owner skips the entry. The recorded line with a dead owner starts a recovery.
+- A recovery first retains the memory, before any claim. A concurrent acquire of a clean tree runs `git clean -qfdx`, so the notes must leave the tree before the pass competes for it. A concede then leaves an orphan memory file, and the memory prune bounds it.
+- The recovery then takes the lease through the pool's takeover protocol. The protocol renames the lease to `.stale.<pid>`, compares the moved bytes with the recorded line, and creates the pass's own lease with an exclusive create. The worktree package owns that protocol, so a new identity claim beside `RetainAndLock` runs `claimAt` with the recorded line as the one accepted judgment. If the claim loses, the pass concedes and changes nothing more.
+- After a won claim, the pass writes the entry: its own lease line and the outcome `recovered`. A dirty worktree gets the `worktree:` pointer, and a clean worktree gets the recovery `none`. Last, the pass acts on the worktree.
+- The act follows `preserveAndRecover`. A worktree with dirty paths beyond the scratch is locked in place, and the pass removes its own lease. The lock step is skipped when the worktree is already locked. A dirty tree is never an acquire candidate, so its lock holds. A clean worktree loses its scratch and is released to the pool.
+- The reviewer decided on 2026-09-23 that a recovery releases a clean crashed worktree and locks only a dirty one. A lock does not keep a clean tree out of the pool. `acquireAt` picks a tree by its clean state and never reads a git lock.
+- A resume arm judges each entry with the outcome `recovered`. When its lease file holds the entry's lease line with a dead owner, the act did not finish. The pass then runs only the act again. The resume retains no second memory file and writes one recovery span with no memory keys.
+- Every other `recovered` entry stays as it is. No lease file means that the act finished, and a live owner means that a pass still acts. Another identity means that a new owner holds the tree. A malformed or special lease file gives no verdict.
 - An abandon changes no worktree file, lease, or lock. The pass sets the entry outcome to the work-state word, `recovered` or `abandoned`, and records one `shift.recovery` span with the intent key. The span starts a new trace, and the intent key joins it to the crashed `shift` span.
 - Two triggers run the pass: a session-inspect phase after the resume phase, and `bench shift` before its acquire. `worktree.Acquire` has that one production caller. The pass prints `bench shift recovery: recovered <n>, abandoned <m>` only when it acted.
 
@@ -200,10 +205,10 @@ Recovery and record safety:
 | LE-B2 / `5-record-each-pass-under-the-shift.md`, `6-record-the-resolved-line.md`, `7-retain-the-shift-memory.md` | Each pass, its gate, and the resolved line join the shift trace, an interrupted shift ends its spans, and the notes survive as a private memory file. | LE37, LE38, LE39, LE40, LE41, LE42, LE43, LE44, LE45, LE46, LE47, LE48, LE49, LE50, LE51, LE52, LE53, LE54, LE55, LE56, LE57, LE58, LE88, LE95, LE102, LE59 | `bench test --package ./internal/shift`, `bench test --package ./internal/otelrecord`, `bench test --package ./cmd/bench`, `bench test --check kit-compliance` | no |
 | LE-C1 / `8-complete-the-shift-intent-on-exit.md` | A normal exit ends the shift intent, and each shift records its lease identity. | LE60, LE61, LE62, LE63 | `bench test --package ./internal/intent/...`, `bench test --package ./internal/shift` | no |
 | LE-C2 / `9-abandon-lease-less-stale-intent.md` | A recovery pass with two triggers abandons each lease-less entry whose key owner is dead and prints one line when it acts. | LE72, LE73, LE74, LE76, LE77, LE78, LE79 | `bench test --package ./internal/shift`, `bench test --package ./internal/intent/...`, `bench test --package ./internal/sessioninspect` | no |
-| LE-C3 / `10-recover-crashed-shifts-by-lease-identity.md` | The pass recovers or abandons each leased entry by its lease identity through the takeover protocol, and a re-run finishes or keeps a recovery. | LE64, LE65, LE91, LE66, LE67, LE68, LE69, LE70, LE89, LE71, LE75, LE90, LE97, LE98, LE99, LE101, LE100 | `bench test --package ./internal/shift`, `bench test --package ./internal/worktree --run TestClaimRecordedLease` | yes |
+| LE-C3 / `10-recover-crashed-shifts-by-lease-identity.md` | The pass recovers or abandons each leased entry by its lease identity through the takeover protocol, locks a dirty tree or releases a clean one, and a re-run finishes or keeps a recovery. | LE64, LE65, LE91, LE105, LE66, LE67, LE68, LE69, LE70, LE89, LE103, LE71, LE75, LE90, LE97, LE98, LE99, LE101, LE100, LE104 | `bench test --package ./internal/shift`, `bench test --package ./internal/worktree --run TestClaimRecordedLease` | yes |
 | LE-D / `11-record-the-worktree-shell-session.md`, `12-prove-the-shift-trace-through-the-built-binary.md`, `13-document-the-local-evidence-contract.md` | The shell session is on record, the built binary proves the whole trace and the redaction, and `DATA_HANDLING.md` states the contract. | LE80, LE81, LE82, LE83, LE84, LE85, LE86, LE87 | `bench test --package ./internal/worktree --run TestSubshell`, `bench test --package ./internal/worktree --run TestWorktreeSeamsMatchTheRegistry`, `bench test --check system`, `bench gate-prose . -- DATA_HANDLING.md` | no |
 
-Review iteration 1 split the old LE-C2 into LE-C2 and LE-C3. The old ticket 9 became tickets 9 and 10, and the old tickets 10, 11, and 12 are now tickets 11, 12, and 13. LE37 moved from LE-B1 to LE-B2, beside LE44.
+Review iteration 1 split the old LE-C2 into LE-C2 and LE-C3. The old ticket 9 became tickets 9 and 10, and the old tickets 10, 11, and 12 are now tickets 11, 12, and 13. LE37 moved from LE-B1 to LE-B2, beside LE44. Review iteration 2 added LE103 to LE105 to LE-C3.
 
 ## Testing decisions
 
@@ -211,7 +216,7 @@ Review iteration 1 split the old LE-C2 into LE-C2 and LE-C3. The old ticket 9 be
 - The encoder, reader, rotation, handoff, and memory store get unit tests in the record package. The fixture spans of `encode_test.go` and the two-writer test of `writer_test.go` are the precedents.
 - The shift tests drive `Loop` in process for normal exits. For SIGINT and SIGKILL, they re-exec the shift test binary into one role test of the shift package, because the checkpoint exits through `os.Exit`.
 - That helper-process start is the Go re-exec idiom that each package authors for its own roles, as `internal/gocache/lock_test.go` and `internal/testreport/cancel_test.go` do. It copies nothing from the worktree package's `descendant`, whose knowledge is the worktree journey census record. So no shared start owner is planned.
-- The identity claim gets a worktree test through the existing takeover gap seam, beside `TestRetainAndLockLocksDropsLeaseAndPreservesDirt`. The recovery pass reaches its concede and its interrupted act through the shift package's step fault seam.
+- The identity claim gets a worktree test through the existing takeover gap seam, beside `TestRetainAndLockLocksDropsLeaseAndPreservesDirt`. The recovery pass reaches its concede through the shift package's step fault seam in process. It reaches its interrupted act in a helper role beside ticket 5's role. That role arms the act fault from a test-only variable, runs the pass, and exits, so the first pass's lease line names a dead pid.
 - The liveness rule gets a pure policy test beside `TestCompactionRuleReadsTypedLivenessFacts`. The resolve-model span gets a command test beside the hook seam test in `cmd/bench`.
 - The system suite proves the stamped version and the whole trace through the built binary. `TestOtelCrashKeepsStartedPhaseLine` and the verb span tests are the precedents.
 - The gate observes the feature through the `test` phase and the `system` phase. No new gate phase is added. The existing seam check in `kit-compliance` reds a registered seam whose symbol starts no span.
@@ -320,20 +325,23 @@ Review iteration 1 split the old LE-C2 into LE-C2 and LE-C3. The old ticket 9 be
 | LE64 | 36, 43 | After a helper shift gets SIGKILL during its adapter, the pass writes a `shift.recovery` span with `bench.work.state` `recovered` and the intent key of the crashed `shift` span | planned recovery test in `internal/shift` with a killed helper process | A pass that never judges leased entries writes no recovery span, so the read reds. |
 | LE65 | 36 | The recovered entry carries the outcome `recovered` | planned recovery test in `internal/shift` with a killed helper process | A pass that records only the span leaves the entry open, so the outcome read reds. |
 | LE91 | 36 | After the recovery of a crashed shift whose adapter appended `MEMMARK` to the notes, one memory file holds the notes bytes | planned recovery test in `internal/shift` with a killed helper process | A pass that acts before it retains the memory can lose the notes, so the read reds. |
+| LE105 | 26 | When the identity claim concedes, one memory file still holds the crashed shift's notes | planned recovery test in `internal/shift` with the claim step faulted | A pass that retains the memory after the claim loses the notes to the winner's clean, so the read reds. |
 | LE66 | 37 | When the crashed worktree holds a dirty file, the pass leaves the worktree locked with that file's bytes unchanged | planned recovery test in `internal/shift` with a killed helper process | A pass that releases a dirty worktree resets the file, so the byte comparison reds. |
-| LE67 | 37 | Each recovered entry carries a `worktree:` recovery pointer and stays live | planned recovery test in `internal/shift` with a killed helper process | A pass that drops the pointer hides the preserved work, so the read reds. |
-| LE68 | 38 | When the crashed worktree holds only scratch files, the pass locks it in place, removes the lease, and records `bench.cleanup` `retained` | planned recovery test in `internal/shift` with a killed helper process | A pass that releases a clean worktree resets it at session start, so the lock read reds. |
-| LE69 | 39 | When another identity holds the lease, the pass sets the outcome `abandoned` and writes a `shift.recovery` span with `bench.work.state` `abandoned` | planned recovery test in `internal/shift` with a rewritten lease | A pass that trusts the path alone recovers the checkout of another owner, so the state read reds. |
-| LE70 | 39 | When another identity holds the lease, the pass leaves the lease bytes, the worktree files, and the lock state unchanged | planned recovery test in `internal/shift` with a rewritten lease | A pass that acts on a mismatch removes the lease of the other owner, so the byte comparison reds. |
-| LE89 | 39 | When the lease file is absent, the pass sets the outcome `abandoned` and leaves every worktree file unchanged | planned recovery test in `internal/shift` with a removed lease | A pass that reads absence as a dead owner locks the worktree, so the lock read reds. |
+| LE67 | 37 | The recovered entry of a dirty worktree carries a `worktree:` recovery pointer and stays live | planned recovery test in `internal/shift` with a killed helper process | A pass that drops the pointer hides the preserved work, so the read reds. |
+| LE68 | 38 | When the crashed worktree holds only scratch files, the pass removes the lease and the scratch files and records `bench.cleanup` `released` | planned recovery test in `internal/shift` with a killed helper process | A pass that locks a clean worktree leaves a tree that the next acquire resets under a live entry, so the lease read reds. |
+| LE69 | 39 | When another identity whose owner is dead holds the lease, the pass sets the outcome `abandoned` and writes a `shift.recovery` span with `bench.work.state` `abandoned` | planned recovery test in `internal/shift` with a lease rewritten to a dead pid | A pass that trusts the path alone recovers the checkout of another owner, so the state read reds. |
+| LE70 | 39 | When another identity whose owner is dead holds the lease, the pass leaves the lease bytes, the worktree files, and the lock state unchanged | planned recovery test in `internal/shift` with a lease rewritten to a dead pid | A pass that acts on a mismatch removes the lease of the other owner, so the byte comparison reds. |
+| LE89 | 39 | When the lease file is absent, the pass sets the outcome `abandoned` and leaves every worktree file unchanged | planned recovery test in `internal/shift` with a removed lease | A pass that reads absence as a dead owner acts on the worktree, so the file comparison reds. |
+| LE103 | 63 | When another identity whose owner is alive holds the lease, the pass leaves the entry unchanged and writes no recovery span | planned recovery test in `internal/shift` with a lease rewritten to the live test process | A pass that abandons on any mismatch writes `abandoned` under a live claimant, so the entry read reds. |
 | LE71 | 40 | While the helper shift is alive, the pass leaves its entry unchanged and writes no recovery span | planned recovery test in `internal/shift` with a live helper process | A pass that judges by the lease match alone recovers a running shift, so the read reds. |
 | LE75 | 42 | An entry whose lease file holds a malformed line stays unchanged and gets no recovery span | planned recovery test in `internal/shift` with a seeded lease | A pass that reads a malformed lease as another owner abandons it with no proof, so the read reds. |
 | LE90 | 42 | An entry whose lease path is a FIFO stays unchanged, and the pass returns within the test deadline | planned recovery test in `internal/shift` with a FIFO lease | A pass that opens the FIFO blocks the session start, so the deadline reds. |
 | LE97 | 57 | When another writer replaces the lease in the takeover gap, the identity claim returns false and the other writer's lease stays | planned claim test in `internal/worktree` through the takeover gap seam | A claim that renames without the byte comparison takes the other writer's lease, so the lease read reds. |
 | LE98 | 57 | A pass whose identity claim concedes leaves the entry, the lease, and the lock state unchanged and writes no recovery span | planned recovery test in `internal/shift` with the claim step faulted | A pass that acts after a lost claim locks the other owner's tree, so the read reds. |
-| LE99 | 58 | After a fault stops a pass between its entry write and its act, a second pass locks the worktree and removes the pass's lease | planned recovery test in `internal/shift` with the act step faulted | A pass that judges only open entries never finishes the act, so the lock read reds. |
-| LE101 | 58 | After that second pass, exactly one memory file exists for the crashed shift | planned recovery test in `internal/shift` with the act step faulted | A resume that retains the memory again writes a second file, so the count reds. |
+| LE99 | 58 | A first pass runs in a helper role with the act fault armed and exits after its entry write, and then a second pass locks the dirty worktree and removes the first pass's lease | planned recovery test in `internal/shift` that runs the first pass in a helper process that exits | A pass that judges only open entries never finishes the act, so the lock read reds. |
+| LE101 | 58 | After that second pass, exactly one memory file exists for the crashed shift | planned recovery test in `internal/shift` that runs the first pass in a helper process that exits | A resume that retains the memory again writes a second file, so the count reds. |
 | LE100 | 59 | A second pass over a finished recovery changes no file, lease, lock, or entry and writes no recovery span | planned recovery test in `internal/shift` | A pass that re-judges a recovered entry rewrites it or retains the memory again, so the comparison reds. |
+| LE104 | 64 | A `recovered` entry whose lease file holds another identity with a dead owner stays unchanged, and the pass changes no worktree file | planned recovery test in `internal/shift` with a recovered entry and a rewritten lease | A resume that acts on any dead lease locks or releases the new owner's tree, so the comparison reds. |
 | LE80 | 46, 47 | A normal shell exit writes a `worktree.shell` span whose end line carries the assignment id, `bench.work.state` `completed`, and `bench.cleanup` `released` | planned subshell test in `internal/worktree` with a private Bench home | A session without a span writes no line, so the read reds. |
 | LE81 | 48 | A signalled session writes an end line with `bench.work.state` `interrupted` and `bench.cleanup` `retained` | planned subshell test in `internal/worktree` with the signal helper | A span that records every exit as completed reds the state read. |
 | LE82 | 49 | A session whose shell path does not exist writes an end line with `bench.work.state` `failed` | planned subshell test in `internal/worktree` | A span that records only a started shell misses this exit, so the read reds. |
@@ -359,8 +367,8 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - Absent versus empty: the notes file (LE55, LE56) and the lease file (LE89) each take a row for absence.
 - Special files: a FIFO at a sealed segment (LE20), at the notes path (LE54), and at the lease path (LE90) is refused before any open.
 - A dangling or live symlink: the notes read refuses both forms through the no-follow producer read (LE53). A symlinked sealed segment (LE21) and a symlinked memory directory (LE58, LE95) are refused.
-- State written by one process and read by a fresh one: LE64 kills a helper process and runs the pass in the test process.
-- Destructive worktree state: a mismatch (LE69, LE70), an absent lease (LE89), a live owner (LE71), and a lost claim (LE97, LE98) change no worktree.
+- State written by one process and read by a fresh one: LE64 kills a helper process and runs the pass in the test process. LE99 runs the first pass in a helper process that exits, so its lease line names a dead pid.
+- Destructive worktree state: a dead other owner (LE69, LE70), an absent lease (LE89), and a live other owner (LE103) change no worktree. So do a live entry owner (LE71), a lost claim (LE97, LE98), and a `recovered` entry under another identity (LE104).
 - A test that swaps a package variable: unexported constructors and one setter supply the limits, the counts, and the version in process. The system rows use the stamped binary and the real bounds.
 - Concurrent writers: LE18 and LE19 cover two writers and a held rotation lock. LE92 and LE94 cover the sealed name, and LE97 covers a competing lease claimant.
 - An interrupted act: LE99 and LE101 cover a pass stopped between its entry write and its act, and LE100 covers a re-run after the act.
@@ -382,6 +390,10 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - A host path with a symlinked component, such as `/var` on macOS — the pass locks the recorded path, as the shift does today. LE66 survives.
 - A reused process id — a crashed owner whose id a new process took reads as alive, so the entry stays open until that process exits. LE71 survives.
 - A kill between the won claim and the entry write — the lease then holds the pass's own dead line. A re-run reads another identity and abandons the entry. The abandon changes nothing, the work stays in place, and LE99 survives.
+- A kill between the memory write and the entry write, or a concede after the memory write — an orphan memory file remains. A re-run retains a second copy, and the memory prune bounds both. LE105 survives.
+- A kill after the act and before the recovery span ends — the record holds no finished `shift.recovery` span for that verdict. The ledger entry still holds the verdict, and LE65 survives.
+- A kill inside the release of a clean tree — the entry already holds the recovery `none`, so the compaction can drop it before a resume. The tree keeps a dead lease and no dirt, so the pool reclaims it through the ordinary acquire. LE68 survives.
+- Two concurrent passes over one entry — one pass can read the vacant lease slot between the other's rename and create, and it records `abandoned`. The ledger keeps the later verdict, the record holds both spans, and the abandoning pass changes no worktree. LE97 survives.
 
 ## Ownership fences
 
@@ -453,14 +465,14 @@ Reviewer disposition: pending. The structure grant for the shift package is a pe
 | `5-record-each-pass-under-the-shift.md` | `4-record-the-shift-boundaries.md` | LE-B2 |
 | `6-record-the-resolved-line.md` | `1-move-the-trace-handoff-into-the-record.md`, `5-record-each-pass-under-the-shift.md` | LE-B2 |
 | `7-retain-the-shift-memory.md` | `3-rotate-and-retain-the-record.md`, `4-record-the-shift-boundaries.md` | LE-B2 |
-| `8-complete-the-shift-intent-on-exit.md` | `4-record-the-shift-boundaries.md` | LE-C1 |
+| `8-complete-the-shift-intent-on-exit.md` | `4-record-the-shift-boundaries.md`, `5-record-each-pass-under-the-shift.md`, `6-record-the-resolved-line.md`, `7-retain-the-shift-memory.md` | LE-C1 |
 | `9-abandon-lease-less-stale-intent.md` | `4-record-the-shift-boundaries.md`, `8-complete-the-shift-intent-on-exit.md` | LE-C2 |
 | `10-recover-crashed-shifts-by-lease-identity.md` | `7-retain-the-shift-memory.md`, `8-complete-the-shift-intent-on-exit.md`, `9-abandon-lease-less-stale-intent.md` | LE-C3 |
 | `11-record-the-worktree-shell-session.md` | `4-record-the-shift-boundaries.md` | LE-D |
 | `12-prove-the-shift-trace-through-the-built-binary.md` | `2-redact-and-version-every-record-line.md`, `5-record-each-pass-under-the-shift.md`, `6-record-the-resolved-line.md` | LE-D |
 | `13-document-the-local-evidence-contract.md` | `3-rotate-and-retain-the-record.md`, `7-retain-the-shift-memory.md`, `10-recover-crashed-shifts-by-lease-identity.md`, `11-record-the-worktree-shell-session.md` | LE-D |
 
-Ticket 4 creates `internal/shift/record.go` and `internal/shift/record_test.go`, and ticket 9 creates `internal/shift/recover.go` and `internal/shift/recover_test.go`. Each later ticket that writes one of those files marks it `(new)`, because the file is absent from the tree at spec time. LE-C1 starts after the LE-B1 checkpoint, and it runs after LE-B2 because both write `loop.go` and `record_test.go`.
+Ticket 4 creates `internal/shift/record.go` and `internal/shift/record_test.go`, and ticket 9 creates `internal/shift/recover.go` and `internal/shift/recover_test.go`. Each later ticket that writes one of those files marks it `(new)`, because the file is absent from the tree at spec time. Ticket 8 names every LE-B2 ticket in its `Blocked by:` line. Tickets 5, 6, and 7 also write `record_test.go`, and tickets 5 and 8 both write `loop.go`. So a delegated frontier starts LE-C1 only after the LE-B2 checkpoint.
 
 ## Out of scope
 
@@ -544,7 +556,8 @@ The source sentence "The repository-controlled bank evidence requirement makes t
 2. The retention sizes. Recommended answer: a 16 MiB segment, 8 sealed segments, and 64 memory files. The record then stays under 144 MiB for each repository.
 3. Does this spec ship the `bank.ft71.local_event` producer? Recommended answer: no. The producer is priced under Out of scope as its own capability, because FT88 closed with no producer and the release track stays NO-GO.
 4. Where does the retained notes text live? Recommended answer: in a 0600 memory file beside the record, referenced by digest. A span event would put model prose in the record, and the FT274 declared set forbids a payload.
-5. Does a recovery release a clean crashed worktree? Recommended answer: no. The pass locks every recovered worktree in place, so no session start resets a checkout, and `bench worktree clean` stays the one removal route.
+
+The reviewer closed one decision on 2026-09-23: a recovery releases a clean crashed worktree and locks only a dirty one, as `preserveAndRecover` does. The Implementation decisions section records it.
 
 ### Flagged additions
 
@@ -557,6 +570,9 @@ The source sentence "The repository-controlled bank evidence requirement makes t
 - The `line.resolve` span records the resolved model at its one resolver. The shift itself knows only the declared tier.
 - The worktree shell is the "session" of "shift/session boundaries", because the source's C-05 names the subshell. Harness sessions take a Won't handle line.
 - The recovery triggers, the printed line, the takeover claim, the resume rule, and the memory states are mechanisms that the source did not name.
+- The release-when-clean rule of LE68 is a mechanism that the source did not name. The reviewer closed it on 2026-09-23, and it follows `preserveAndRecover`.
+- The skip for a live other owner (LE103) and the resume arm for another identity (LE104) are guards that the source did not name. They keep a verdict out from under a live claimant or a new owner.
+- The memory write before the claim (LE105) is an ordering that the source did not name. It keeps the notes when an acquire wins the tree.
 - The retention sizes are proposals that the reviewer owns.
 
 ### Completion plan
