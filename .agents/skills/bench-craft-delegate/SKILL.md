@@ -10,13 +10,13 @@ discipline: the charge contents, the repair-charge template, the probe rules, an
 
 ## Delegate or retain
 
-`.bench/BENCH.md` owns ticket author sessions. Beyond those authors, delegation normally buys independent read-only review or brief diagnostic consultation. A diagnostic helper can inspect evidence, but it receives no implementation or repair assignment.
+`.bench/BENCH.md` owns ticket author sessions. Beyond those authors, delegation normally buys independent read-only review or brief diagnostic consultation.
 
 During implementation, brief higher-tier diagnostic consultation is pre-approved through the top tier. That consultation reads only, so it is not a ladder move. `craft-line`'s top-tier pause applies to a tier move of the implementation itself.
 
-Never delegate a decision the reviewer owns. A change of implementation author or session requires user direction. When the user explicitly selects delegated authorship, the write delegate uses an isolated worktree and this skill's charge and verification rules. A harness limitation never changes authorship silently.
+Never delegate a decision the reviewer owns. `craft-line` owns a change of implementation model or session. When the user explicitly selects delegated authorship, the write delegate uses an isolated worktree and this skill's charge and verification rules. A harness limitation never changes authorship silently.
 
-A spec-backed ticket goes to a fresh author session on its integration source, in `Blocked by:` order. `references/delegation-discipline.md` owns the author transfer triggers under `Delegated author transfer`.
+`references/delegation-discipline.md` owns the author transfer triggers under `Delegated author transfer`.
 
 Before you spawn a delegation that changes who performs the requested work, surface it.
 
@@ -24,9 +24,9 @@ Before you spawn a delegation that changes who performs the requested work, surf
 
 Every Claude delegate runs as a Bench agent type, because the full tool set costs
 thousands of tokens before the delegate reads one line. A review axis and a
-diagnostic consultation run as `bench-reviewer`. A user-directed write
-delegation runs as `bench-writer`. The general-purpose type is not a Bench delegate
-type. A fork runs only for work that needs the parent's context, and its inherited
+diagnostic consultation run as `bench-reviewer`.
+Every write delegate runs as `bench-writer`: a fresh ticket author, a repair session, and a user-directed write delegation.
+The general-purpose type is not a Bench delegate type. A fork runs only for work that needs the parent's context, and its inherited
 boot is therefore a choice. Each type declares its own tools and no model, so the
 charge still names the resolved bound model id.
 
@@ -50,8 +50,8 @@ Name exemplar files to mirror when one exists. A charge that extends an enumerat
 registry the family already appears in, traced from one existing sibling through the tree. A
 registry the charge does not name is one the delegate will miss. A cap-change charge's search list names the closest pinning package.
 
-A user-directed write-delegation from a spec carries its stories' coverage rows every time — behavior, seam, why
-it catches the failure. It requires the delegate to show each row red before the edit and green
+Every write charge from a spec carries its stories' coverage rows — behavior, seam, why it catches the failure.
+It requires the delegate to show each row red before the edit and green
 after. First compare each slice with `craft-spec`'s "Slicing a build for delegates".
 
 Name the mutation that breaks the change's central property. Require the delegate to apply it to its
@@ -66,15 +66,15 @@ A new worktree charge starts after the coordinator runs `git rev-parse HEAD main
 If the refs differ, only the coordinator runs `bench worktree merge --from main <target>` and verifies equality before the delegate starts. Dependent tickets in a reviewed spec chain share the retained integration source and verify its expected tip.
 A fix-pass charge names a commit-specific sentinel.
 
-A ticket delegate returns focused evidence and its own mutation probe from its worktree; it does
-not land the diff. The coordinator probes the exact returned tree independently before landing it. The
+A user-directed write delegate returns focused evidence and its own mutation probe, and it does not land the diff.
+The coordinator probes a user-directed write delegate's returned tree independently before landing it. The
 coordinator probe's mutation kind differs from the delegate author's mutation
 kind. It also differs in site from every probe the delegate ran. A second probe
 at the same site is vacuous, and a vacuous probe is indistinguishable from a
 pass. A repeat site is not independent evidence.
 ```
-Implement story 3 of specs/retry-backoff/spec.md. Stale-base check first.
-Coverage rows: [rows]. Effort: medium, ~3 iterations. Stop at diff ready;
+Implement ticket 3-cap-the-backoff.md of specs/retry-backoff/spec.md. Stale-base check first.
+Coverage rows: [rows]. Effort: medium, ~3 iterations. Commit on a lane pass;
 return the red→green log per row. Self-probe: apply the central-property
 mutation; report the observed result and the mutation's kind (omission or swap).
 ```
@@ -94,12 +94,11 @@ from the session ID alone. The coordinator therefore runs `bench worktree create
 `bench worktree exec "<label>" -- <command>` is the one command form for every caller into an assignment worktree. The rule covers the coordinator, and it covers a read or a write.
 A shell loop inside the pool path is the same bypass. `bench worktree path "<label>"` serves file reads and edits only.
 
-Share a worktree only when a delegate's work depends on another's output. In that case, reviewed
+A build's serial ticket authors share its one integration source. Thus, reviewed
 dependent tickets share one retained integration source, and each charge names its root and
-expected tip. The whole-tree gate runs serially: a write-delegate stops at diff-ready with focused tests
-green; the coordinator runs `bench commit` per worktree, one at a time.
+expected tip. A ticket author commits its ticket on a lane pass before the next charge starts.
 
-A worktree isolates the working tree, not the repo-global stash stack a concurrent delegate shares. A charge bans `git stash` — the destructive-git guard refuses it — and names the substitute.
+A worktree isolates the working tree, not the repo-global stash stack a concurrent delegate shares. A charge bans `git stash` and names the substitute, because the destructive-git guard refuses only `git stash drop` and `git stash clear`.
 A probe runs through `bench probe`, which preserves the subject, applies one swap or omission, and proves the restore. The copy-aside sequence stays for a non-probe edit that must test the committed version.
 `cp` the working file aside, restore the committed version with `git show HEAD:<path> > <path>`, test, then copy it back. The copy
 lives inside the delegate's own worktree under a unique name, and every restore names exact files, never a

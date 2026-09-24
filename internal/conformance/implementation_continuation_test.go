@@ -90,8 +90,8 @@ func TestImplementationContinuation(t *testing.T) {
 			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
 			needle: "After reassessment, the ticket author can invoke `$bench-debug`.",
 		},
-		"implementation continuation: craft-delegate allowed diagnostic helper repairs": {
-			file: ".agents/skills/bench-craft-delegate/SKILL.md", section: "Delegate or retain",
+		"implementation continuation: craft-delegate restored its copy of the diagnostic helper boundary that the operating guide owns": {
+			file: ".agents/skills/bench-craft-delegate/SKILL.md", section: "",
 			needle: "A diagnostic helper can inspect evidence, but it receives no implementation or repair assignment.",
 		},
 		"implementation continuation: diagnostic escalation changed the author session": {
