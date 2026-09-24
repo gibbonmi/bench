@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A and LE-B1 are accepted. LE-B2 is committed, and its review of the three axes is pending.
+Status: LE-A and LE-B1 are accepted. The LE-B2 review returned 14 findings; repair cycle 1 is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -257,6 +257,41 @@ The frozen pair is `fab6d03e..acb050a9`. The four planned checks passed at the c
 | LE59 | `TestASecondShiftStartsWithEmptyNotes` | Characterization: no code path seeds the notes from the memory store. |
 
 The three LE-B1 advisories are closed here. The LE107 clause names `bench.recovery.kind`, the acquire-failure test reads the recovery kind, and the shift package owns one constant for each of its seams.
+
+## LE-B2 review round 1
+
+Three fresh axes graded the frozen pair `fab6d03e..5311cea3` with the code tip `acb050a9`. Each axis read the manifest, confirmed the current binding, and read the code delta. Raw findings: 14. Repair targets after de-duplication: 12, of which 9 take a repair. LEB2-C3 repeats LEB2-S2, and LEB2-C5 repeats LEB2-P1.
+
+### Standards
+
+Findings: 5. Worst issue: LEB2-S2, a subtest that fails off the test goroutine.
+
+- LEB2-S1 (auto-fix, confidence 8): `pass_test.go` declares `greenGate` and still spells the same gate script inline six times.
+- LEB2-S2 (auto-fix, confidence 8): `TestEachNotesStateIsRecorded` runs the fixture and `t.Fatal` in a goroutine, and the timeout path leaks it.
+- LEB2-S3 (auto-fix, confidence 5): `retainMemory` builds a partial `Writer` only to grade a path; the grade reads only the home.
+- LEB2-S4 (no-op, confidence 5): two call sites apply the one tier list `lines.Tiers`; the rule has one source.
+- LEB2-S5 (no-op, confidence 5): the test names the gate seam, whose constant the gate package keeps unexported.
+
+### Spec
+
+Findings: 4. Worst issue: LEB2-P1.
+
+- LEB2-P1 (auto-fix, confidence 6): the memory prune removes any entry that sorts first, and a failed remove after a good write reads `failed`.
+- LEB2-P2 (auto-fix, confidence 7): a signal-killed adapter records exit `-1`, which is not an exit code. The pass records `exited` with no exit key.
+- LEB2-P3 (no-op, confidence 5): the LE107 wording and the acquire assertion are the carried LE-B1 advisories, which the author verification names.
+- LEB2-P4 (auto-fix, confidence 8): the overlap sentence names `pass_test.go`, which ticket 8 does not write.
+
+### Coverage
+
+Findings: 5. Worst issue: LEB2-C1.
+
+- LEB2-C1 (auto-fix, confidence 8): the refactor test counts the span only, so a refactor gate on a fresh context stays green.
+- LEB2-C2 (auto-fix, confidence 9): no test reads the 0600 file mode or the 0700 directory mode.
+- LEB2-C3 (auto-fix, confidence 9): the same defect as LEB2-S2.
+- LEB2-C4 (auto-fix, confidence 7): no test drops an unknown harness or tier from the `line.resolve` span.
+- LEB2-C5 (auto-fix, confidence 6): the same defect as LEB2-P1.
+
+Advice taken: the LE59 test reads that the first shift kept a memory file.
 
 ```bench-review-record
 {
@@ -1213,7 +1248,85 @@ The three LE-B1 advisories are closed here. The LE107 clause names `bench.recove
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "LE-B2-review-standards-1",
+          "performer": "claude-code:subagent:ac67db097d459e54b",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b1b73b413d6f836f7ab8ee6030956703537359d2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:ac67db097d459e54b, evidence sha256:a46e5f2634962b9bb53178a07b688bdc561efe35491c19ae8e698db933d60538",
+            "digest": "sha256:37634704d5a98fd6e66a02031d0b93609f8df1e2538f42f7eb752db72e284e61",
+            "excerpt": "Verdict: Standards passes with small repairs. The chunk has 5 findings: 1 hard, 4 judgment calls. Worst issue: pass_test.go calls t.Fatal off the test goroutine (finding 2)."
+          },
+          "axis": "Standards",
+          "base": "fab6d03ed4a4d5418bd0f31dce0a2f1fc59bab80",
+          "tip": "acb050a9bca795c359c5d518b352782468222505",
+          "finding_ids": [
+            "LEB2-S1",
+            "LEB2-S2",
+            "LEB2-S3",
+            "LEB2-S4",
+            "LEB2-S5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "LE-B2-review-spec-1",
+          "performer": "claude-code:subagent:a765b7652d15e50e3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b1b73b413d6f836f7ab8ee6030956703537359d2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a765b7652d15e50e3, evidence sha256:a46e5f2634962b9bb53178a07b688bdc561efe35491c19ae8e698db933d60538",
+            "digest": "sha256:25ca3fb8ab1fa0f8c5d5509cee7e11a1c5ad02eb52abacf9641030170b3e5a83",
+            "excerpt": "Verdict: pass with minor findings. There are 4 findings and none of them blocks the chunk. Worst issue: pruning can mark a kept file as failed (finding 1)."
+          },
+          "axis": "Spec",
+          "base": "fab6d03ed4a4d5418bd0f31dce0a2f1fc59bab80",
+          "tip": "acb050a9bca795c359c5d518b352782468222505",
+          "finding_ids": [
+            "LEB2-P1",
+            "LEB2-P2",
+            "LEB2-P3",
+            "LEB2-P4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "LE-B2-review-coverage-1",
+          "performer": "claude-code:subagent:aa367c218d1ba932d",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b1b73b413d6f836f7ab8ee6030956703537359d2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:aa367c218d1ba932d, evidence sha256:a46e5f2634962b9bb53178a07b688bdc561efe35491c19ae8e698db933d60538",
+            "digest": "sha256:7ff0a0fa85a213f6abb5460d50f8a160d165e9d6e307f73734bd341f72c36ef1",
+            "excerpt": "Verdict: the chunk passes with coverage findings. I found 5. Each of the 26 rows' named mutations would turn its test red. Worst issue: refactor passes are only counted."
+          },
+          "axis": "Coverage",
+          "base": "fab6d03ed4a4d5418bd0f31dce0a2f1fc59bab80",
+          "tip": "acb050a9bca795c359c5d518b352782468222505",
+          "finding_ids": [
+            "LEB2-C1",
+            "LEB2-C2",
+            "LEB2-C3",
+            "LEB2-C4",
+            "LEB2-C5"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
