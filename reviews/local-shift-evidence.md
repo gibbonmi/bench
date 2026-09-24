@@ -1,18 +1,18 @@
 # Local shift evidence review record
 
-Status: the LE-A confirming round returned 4 findings; repair cycle 2 is pending.
+Status: LE-A repair cycle 2 is committed; the second confirming round of the three axes is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
 Line: opus (claude-opus-5-5) / medium / uncapped
 Review line: opus / high / one iteration for each axis
-Post-review repair cycles consumed: LE-A 1 of 2
+Post-review repair cycles consumed: LE-A 2 of 2
 Expected repair rounds: 2
 Confidence: 5
 
 ## LE-A author verification
 
-The first frozen pair was `ba9b8621..fff1e5ab`. After repair cycle 1, the chunk tip is `33b65a3e`, and the four planned checks passed there too.
+The first frozen pair was `ba9b8621..fff1e5ab`. After repair cycle 2, the chunk tip is `f1652445`, and the four planned checks passed there too.
 
 | Row | Test | Probe |
 |---|---|---|
@@ -107,19 +107,30 @@ The three axes graded the pair `ba9b8621..721250ae` with the source digest `8692
 
 Raw findings: 4. Repair targets: 4.
 
+## LE-A repair cycle 2
+
+The ticket `repair-le-a-review-round-2.md` covers the new row LE106.
+
+| Finding | Repair | Evidence |
+|---|---|---|
+| LEA-S5 | The LE94 test comment states the row's current reason. | Review of the text. |
+| LEA-S6 | The problem-address test comment carries no review ID. | Review of the text. |
+| LEA-C4 | The problem-address test reads a live problem after a sealed segment as line 1. | The probe that removes the per-segment reset bit. |
+| LEA-C5 | The writer refuses a rotation at the largest sequence. | `TestARotationRefusesTheLastSequence`; the probe that removes the guard bit. |
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/local-shift-evidence/spec.md",
-  "plan_digest": "sha256:596aee0bd583c82d52e1eb70145f7f41cd945d378da153ad5f7d14a0660ea1fc",
+  "plan_digest": "sha256:35a8667ce66740077c91b0b11932c566c0d2551c46e4564533d8b70d513dfa3e",
   "implementation_session": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
   "chunks": [
     {
       "id": "LE-A",
       "base": "ba9b86216536fa93f9f51410c31aea8e6f61725b",
-      "tip": "33b65a3e073da681cf8e45c1ce02233e493dd4f9",
-      "plan_digest": "sha256:596aee0bd583c82d52e1eb70145f7f41cd945d378da153ad5f7d14a0660ea1fc",
-      "source_digest": "869256de0fde5b87aa31099a0910430f83f1bf71",
+      "tip": "f1652445951fec8605ea480b11a966d695af861a",
+      "plan_digest": "sha256:35a8667ce66740077c91b0b11932c566c0d2551c46e4564533d8b70d513dfa3e",
+      "source_digest": "2d7449e7ca7ad718a46be43512b09b24447e85e3",
       "acceptance_rows": [
         "LE1",
         "LE2",
@@ -137,6 +148,7 @@ Raw findings: 4. Repair targets: 4.
         "LE13",
         "LE92",
         "LE94",
+        "LE106",
         "LE14",
         "LE93",
         "LE15",
@@ -287,6 +299,78 @@ Raw findings: 4. Repair targets: 4.
             "ref": "bench test --check system at 33b65a3e",
             "digest": "sha256:58668e2606831bae902b3c79c1dd9befd350df464aa2e1ea71543bb80611796d",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,39064\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-A-verify-otelrecord-3",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "2d7449e7ca7ad718a46be43512b09b24447e85e3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/otelrecord at f1652445",
+            "digest": "sha256:c6ffd8e6f1210815fc7a2d3a44da42abcc5aa41513e12df03d62288e1353ebdd",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/otelrecord,pass,215\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "otelrecord",
+          "command": "bench test --package ./internal/otelrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-A-verify-gate-3",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "2d7449e7ca7ad718a46be43512b09b24447e85e3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/gate at f1652445",
+            "digest": "sha256:2894942e89cd3733689c03484a9e479257614afbbc6e22fc4614a26e2a783e85",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,11240\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-A-verify-cmd-3",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "2d7449e7ca7ad718a46be43512b09b24447e85e3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./cmd/bench at f1652445",
+            "digest": "sha256:1e4ffa45ab3c39c3f320ff2d4917c500b9944c5684a51bf92f063397149ca7ea",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,11204\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-A-verify-system-3",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "2d7449e7ca7ad718a46be43512b09b24447e85e3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --check system at f1652445",
+            "digest": "sha256:822da29a6c3087a853d3ba2927d865022b32e2e003c43d73675adab44c62d846",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,39622\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "system",
           "command": "bench test --check system",
