@@ -15,6 +15,10 @@ findings in the owner details.
 
 ## Software factory: initial evidence and selected improvements
 
+**FT336 (HIGH) — every Bench verb prints its verdict and its next action by default, and `bench worktree exec` bounds its child output.**
+
+**FT337 (HIGH) — review evidence cost follows the changed code, not the whole spec.**
+
 **FT302 (MEDIUM) — the deepening batch's residuals: the diff package policy extraction and the Git-reader promotion.**
 
 **FT304 (MEDIUM, decision required) — one shared projection supplies a useful roadmap and execution view.**
@@ -64,6 +68,10 @@ findings in the owner details.
 **FT333 (MEDIUM, decision required) — prepared evidence supports the tickets-only light path.**
 
 **FT99 (LOW) — spec problem-premise verification.**
+
+**FT338 (MEDIUM) — a guidance-change spec sweeps each retired fact by its terms and pairs each rewrite with Forbid rows.**
+
+**FT340 (MEDIUM, decision required) — the fresh-author and lane decisions reach the repair-ticket rule and the drain's commit wording.**
 
 **FT293 (MEDIUM, decision required) — preflight-closed ticket Writes determine registry pins and blocker edges.**
 
@@ -128,6 +136,8 @@ findings in the owner details.
 **FT290 (MEDIUM) — `bench test` projects a check's fixture family, a widened-set explanation, and a check inventory.**
 
 **FT168 (LOW) — file-backed replacements and system or Markdown subjects extend the focused probe.**
+
+**FT339 (LOW) — `bench anchors` reads the registry of the named worktree and takes a directory.**
 
 **FT115 (LOW) — load-robust test and phase deadlines derived from bounds.**
 
@@ -229,7 +239,7 @@ recommended table is sequencing advice.
 | FT100 | FT231 | Editorial cuts need the measurement harness. |
 | FT240 | FT231 | The experiment keeps its approved three-arm comparison. |
 | FT304 | FT172 | The view needs the identity contract. |
-| FT306 | FT305, FT71 | Adoption follows durable execution and the held local evidence. |
+| FT306 | FT305 | Adoption follows durable execution. |
 
 ### Recommended
 
@@ -238,7 +248,6 @@ recommended table is sequencing advice.
 | FT305 | FT254, FT283, FT284 | Execution continuity reuses settled worktree and lifecycle contracts. |
 | FT306 | FT142, FT58 | Revalidate qualification residuals before the external pilot. |
 | FT222 | FT231 | Routing changes wait for comparable measurement evidence. |
-| FT204 | FT71 | The query reads the settled event schema. |
 | FT100 | FT89 | Cut prose after coherence identifies authoritative guidance. |
 | FT108 | FT89 | Use the established guidance owner before adding a refactor discipline. |
 | FT172 | FT106 | Reuse document-claim evidence for roadmap claims. |
@@ -247,6 +256,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. Run `$bench-write-spec FT71` for versioned local shift evidence.
-2. Run `$bench-shape-idea FT305` to settle durable local execution before the dependent qualification work.
-3. Run `$bench-implement-spec test-determinism` to build FT115's staged spec before `ft290-test-projection`; FT306 waits on FT71 and FT305.
+1. Run `$bench-write-spec FT336` for bounded default output, the reviewer's priority 1; read the staged session-context specs first.
+2. Run `$bench-write-spec FT337` to page review evidence by file and run the narrow-review control.
+3. Run `$bench-shape-idea FT305` to settle durable local execution; FT306 waits on it.
