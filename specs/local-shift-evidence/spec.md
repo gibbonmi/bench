@@ -453,7 +453,7 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - `DATA_HANDLING.md`
 - `tests/canary/data-handling-derivation/undocumented-passlist-var`
 
-Reviewer disposition: pending. The structure grant for the shift package is a pending reviewer decision under Further notes.
+Reviewer disposition: approved on 2026-09-23. The reviewer approved the structure grant for the shift package with the other decisions under Further notes.
 
 ## Ticket graph
 
@@ -551,14 +551,16 @@ The source sentence "The repository-controlled bank evidence requirement makes t
 - The three canary fixture paths join the fence through the fixture closure only. Each pins a file that a ticket writes, and the build expects no edit to a fixture.
 - `cmd/bench/`, `internal/gate/`, `internal/systemtest/`, and `internal/worktree/` have no directory headroom, so this spec adds no file there.
 
-### Pending reviewer decisions
+### Reviewer decisions
 
-1. The structure grant `internal/shift/ 15`. Recommended answer: approve it. The four new files hold one package's record, recovery, and their tests, and a split fragments that evidence.
-2. The retention sizes. Recommended answer: a 16 MiB segment, 8 sealed segments, and 64 memory files. The record then stays under 144 MiB for each repository.
-3. Does this spec ship the `bank.ft71.local_event` producer? Recommended answer: no. The producer is priced under Out of scope as its own capability, because FT88 closed with no producer and the release track stays NO-GO.
-4. Where does the retained notes text live? Recommended answer: in a 0600 memory file beside the record, referenced by digest. A span event would put model prose in the record, and the FT274 declared set forbids a payload.
+The reviewer closed these four decisions at sign-off on 2026-09-23:
 
-The reviewer closed one decision on 2026-09-23: a recovery releases a clean crashed worktree and locks only a dirty one, as `preserveAndRecover` does. The Implementation decisions section records it.
+1. The structure grant `internal/shift/ 15` is approved. The four new files hold one package's record, recovery, and their tests, and a split fragments that evidence.
+2. The retention sizes are a 16 MiB segment, 8 sealed segments, and 64 memory files. The record then stays under 144 MiB for each repository.
+3. This spec does not ship the `bank.ft71.local_event` producer. The producer is priced under Out of scope as its own capability, because FT88 closed with no producer and the release track stays NO-GO.
+4. The retained notes text lives in a 0600 memory file beside the record, referenced by digest. A span event would put model prose in the record, and the FT274 declared set forbids a payload.
+
+The reviewer closed one more decision on 2026-09-23: a recovery releases a clean crashed worktree and locks only a dirty one, as `preserveAndRecover` does. The Implementation decisions section records it.
 
 ### Flagged additions
 
