@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A is accepted. The final confirming round passed on all three axes.
+Status: LE-A is accepted. LE-B1 is committed, and its review of the three axes is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -145,11 +145,33 @@ Three fresh axes graded the code tip `ee58eed2` with the source digest `899915f1
 - Spec, 0 findings. LE106 holds.
 - Coverage, 0 findings. LE106 holds.
 
+## LE-B1 author verification
+
+The frozen pair is `e5f755fd..77781047`. The two planned checks passed at the chunk tip. The ticket Writes gained `internal/otelrecord/provider.go`, because the start line needs the shift attributes; a learning records this plan expansion.
+
+| Row | Test | Probe |
+|---|---|---|
+| LE22 | `TestAGreenShiftWritesAStartAndAnEndLine` | Pre-edit red. |
+| LE23 | `TestAShiftThatExhaustsItsBranchRetriesRecordsUsage` | Pre-edit red. |
+| LE24 | `TestTheShiftSpanCarriesTheAdapterBaseName` | Write the adapter path: bit. |
+| LE25 | `TestTheShiftSpanCarriesTheTierAndTheCap` | Pre-edit red. |
+| LE26 | `TestTheShiftSpanCarriesNoTierForAnOperatorModel` | Admit any model value: bit. |
+| LE27 | `TestACompleteShiftRecordsCompletedWork` | Pre-edit red. |
+| LE28 | `TestAFailedShiftRecordsFailedWork` | Pre-edit red. |
+| LE29 | `TestAnIncompleteShiftRecordsCompletedWork` | Map incomplete to failed: bit. |
+| LE30 | `TestANoOpShiftRecordsCompletedWork` | Pre-edit red. |
+| LE31 | `TestACommittedShiftCarriesTheBranchHead` | Pre-edit red. |
+| LE32 | `TestANoOpShiftCarriesNoSubject` | Write the subject with no commit: bit. |
+| LE33 | `TestARetainedShiftCarriesTheRecoveryBaseName` | Write the full recovery path: bit. |
+| LE34 | `TestARetainedShiftRecordHoldsNoHomePath` | Write the full recovery path: bit. |
+| LE35 | `TestAGreenShiftRecordsReleasedCleanup` | Pre-edit red. |
+| LE36 | `TestARetainedShiftRecordsRetainedCleanup` | Omit the retained arm: bit. |
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/local-shift-evidence/spec.md",
-  "plan_digest": "sha256:b146e8f55590f3dfcbd71c4dedbf099c2ae41cc2d5116c1084b6110ce253c784",
+  "plan_digest": "sha256:55587d7200e42e2ade6320952cc237e8a6e6be933974092c40b1a3ddbb601ade",
   "implementation_session": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
   "chunks": [
     {
@@ -756,6 +778,69 @@ Three fresh axes graded the code tip `ee58eed2` with the source digest `899915f1
           ]
         }
       ]
+    },
+    {
+      "id": "LE-B1",
+      "base": "e5f755fdd4e4029dca72b18cf1d50e00f50cce26",
+      "tip": "7778104776eb7572923b43b7f71f78c1791d8513",
+      "plan_digest": "sha256:55587d7200e42e2ade6320952cc237e8a6e6be933974092c40b1a3ddbb601ade",
+      "source_digest": "2fb40acbe145e50437945d87e796ca362942b349",
+      "acceptance_rows": [
+        "LE22",
+        "LE23",
+        "LE24",
+        "LE25",
+        "LE26",
+        "LE27",
+        "LE28",
+        "LE29",
+        "LE30",
+        "LE31",
+        "LE32",
+        "LE33",
+        "LE34",
+        "LE35",
+        "LE36"
+      ],
+      "verification": [
+        {
+          "id": "LE-B1-verify-shift-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "2fb40acbe145e50437945d87e796ca362942b349",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/shift at 77781047",
+            "digest": "sha256:f0fef15c68c646dc55b27817a87ec7084114b40de5133b5d6a1a16c35e315a37",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/shift,pass,4053\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "shift",
+          "command": "bench test --package ./internal/shift",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-B1-verify-kit-compliance-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "2fb40acbe145e50437945d87e796ca362942b349",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --check kit-compliance at 77781047",
+            "digest": "sha256:10714c3db13dae83408663b37f2f06b0283b20ce150c0beb79629a274a31f2bf",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,98\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "kit-compliance",
+          "command": "bench test --check kit-compliance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
