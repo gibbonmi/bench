@@ -245,11 +245,42 @@ Findings: 4. The worst issue is that the dry-run help test accepts a negated lan
 | B12 | ticket 7 | Remove the any-branch claim from the profile. |
 | B13 | ticket 7 | Correct the light-path cell. |
 
+## GR-B repair evidence, cycle 1
+
+Each repair ran in a fresh `bench-writer` session on opus at low effort, and each used 1 of 2 attempts. Cycle 1 is the first of two repair cycles for chunk GR-B, and its new rows are the chunk's one hardening cycle.
+
+| Ticket | Repair session | Commit | Targets |
+|---|---|---|---|
+| 4 | `claude:bench-writer/gr-t4-repair-b1` | `ad005cd3` | B1 to B7 |
+| 5 | `claude:bench-writer/gr-t5-repair-b1` | `e00b8e3b` | B8 to B11 |
+
+The plan commit `d71658a9` amended ticket 5 to require a pointer for B8. It also added B12 and B13 to ticket 7, with one new acceptance box. A `bench learning` entry records that plan expansion.
+
+For B3, the constant `commit.LaneClause` now feeds both help strings. `TestHelpAdvertisesDryRun` pins the whole clause as an independent literal. Two probes on the constant demonstrate its red: a negated lane and a dropped gate fallback. Each probe bit the test, and each restore reads `yes`. The confirming Coverage axis repeated both probes with the same result.
+
+For B11, the Forbid rows read the owner values `retros.CalibrationHeader` and the joined `retros.RequiredHeadings`. The package `internal/retros` imports only the standard library and `internal/bounds`, so the anchors package can import it.
+
+Each new row in cycle 1 has a probe that bit, and each restore reads `yes`. The current author of each ticket then ran its five checks at `e00b8e3b`, and each check passed.
+
+## GR-B chunk review, round 2, and close
+
+Round 2 confirms cycle 1 on the delta from `43882975` to `e00b8e3b`. The frozen pair is base `7d203a51837838874cf9a649eb2983139ee8cf4c` and tip `e00b8e3b38328f58e6739e39f4a93509370f6a70`. The shared evidence is `sha256:1358e316befea08b158596e13587f569335733e0f9c57be3333d61da6c5fdbc2`. Each axis ran in a new `bench-reviewer` session on opus at high effort.
+
+Each axis found 0 findings, and the axes confirmed every fold from B1 to B11. The Spec axis confirmed that ticket 7 now owns B12 and B13. The Coverage axis ran 12 probes, and 11 of them bit. The silent probe pasted the nine headings as one inline sentence. That paste is a paraphrase-class copy, so review owns it and the gate does not. Chunk GR-B used 1 of its 2 repair cycles.
+
+Advice, with no finding ID:
+
+- `bench-final-check.md:140` repeats the worktree route of line 39.
+- The `LaneClause` comment names its two readers.
+- The expansion boxes of ticket 7 carry no GR row.
+
+The plan changed after the GR-A tip, so the payload maps the GR-A plan digest to the current plan digest. The chunk IDs do not change.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/workflow-guidance-repair/spec.md",
-  "plan_digest": "sha256:b2b329ab938da6599a495a036ee6e2e49313f65bb1f1f6cd01882b6efba49f9f",
+  "plan_digest": "sha256:fe5ec0f1c3cf51d3252849be18b196da807826b7d147da281f48306a3abc4074",
   "implementation_session": "",
   "chunks": [
     {
@@ -848,9 +879,9 @@ Findings: 4. The worst issue is that the dry-run help test accepts a negated lan
     {
       "id": "GR-B",
       "base": "7d203a51837838874cf9a649eb2983139ee8cf4c",
-      "tip": "4388297567491603a5358e7024037bf7d7723139",
-      "plan_digest": "sha256:b2b329ab938da6599a495a036ee6e2e49313f65bb1f1f6cd01882b6efba49f9f",
-      "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+      "tip": "e00b8e3b38328f58e6739e39f4a93509370f6a70",
+      "plan_digest": "sha256:fe5ec0f1c3cf51d3252849be18b196da807826b7d147da281f48306a3abc4074",
+      "source_digest": "0cb2f091a585d8b763215891f33681ce957997d7",
       "acceptance_rows": [
         "GR45",
         "GR46",
@@ -882,180 +913,180 @@ Findings: 4. The worst issue is that the dry-run help test accepts a negated lan
       ],
       "verification": [
         {
-          "id": "gr-b-4-workflow",
-          "performer": "claude:bench-writer/gr-t4-author",
+          "id": "gr-b-4-workflow-r2",
+          "performer": "claude:bench-writer/gr-t4-repair-b1",
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "source_digest": "0cb2f091a585d8b763215891f33681ce957997d7",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/gr-t4-author-20260924/4-workflow@43882975",
-            "digest": "sha256:59f8aa65e042203db64a2abe15e1bf3a0d25606b193cbc7dd8e16d0755d58fba",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,845\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "claude:agent/gr-t4-repair-b1-20260924/4-workflow@e00b8e3b",
+            "digest": "sha256:5eb703f7027f1fd84934b00bdf912d62790cc4fd407ab6e0c2104d5a3a294afd",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,863\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "4-workflow",
           "command": "bench test --check docs-currency-workflow",
           "exit_code": 0
         },
         {
-          "id": "gr-b-4-conformance",
-          "performer": "claude:bench-writer/gr-t4-author",
+          "id": "gr-b-4-conformance-r2",
+          "performer": "claude:bench-writer/gr-t4-repair-b1",
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "source_digest": "0cb2f091a585d8b763215891f33681ce957997d7",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/gr-t4-author-20260924/4-conformance@43882975",
-            "digest": "sha256:201146db0e50cb0a60ca65573125c7805433dcbc9ea8a0aad646843b0e9fb91e",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7569\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "claude:agent/gr-t4-repair-b1-20260924/4-conformance@e00b8e3b",
+            "digest": "sha256:9376e0fef1d4a01b03b5cde4161e7935f64b8b29edc32370f65d3e86f8e6adda",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7076\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "4-conformance",
           "command": "bench test --package ./internal/conformance --run TestRootConformance",
           "exit_code": 0
         },
         {
-          "id": "gr-b-4-anchors",
-          "performer": "claude:bench-writer/gr-t4-author",
+          "id": "gr-b-4-anchors-r2",
+          "performer": "claude:bench-writer/gr-t4-repair-b1",
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "source_digest": "0cb2f091a585d8b763215891f33681ce957997d7",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/gr-t4-author-20260924/4-anchors@43882975",
-            "digest": "sha256:aec283db3bc1576875fe9b92e4e2aa895d143ea8a4f1e2f3c3861e6371d1f718",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,770\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "claude:agent/gr-t4-repair-b1-20260924/4-anchors@e00b8e3b",
+            "digest": "sha256:f2d6da413fbca3afa41142f1a99fb322e0c04134e0d549c8d855182c3e5f728a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,758\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "4-anchors",
           "command": "bench test --package ./internal/anchors",
           "exit_code": 0
         },
         {
-          "id": "gr-b-4-help",
-          "performer": "claude:bench-writer/gr-t4-author",
+          "id": "gr-b-4-help-r2",
+          "performer": "claude:bench-writer/gr-t4-repair-b1",
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "source_digest": "0cb2f091a585d8b763215891f33681ce957997d7",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/gr-t4-author-20260924/4-help@43882975",
-            "digest": "sha256:10ec5dd5fb3390f41ec23e74bd1e0c921c7d6800d7a819486b2c46d0c7432a4f",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,4\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "claude:agent/gr-t4-repair-b1-20260924/4-help@e00b8e3b",
+            "digest": "sha256:5bcd828e913b573ef73237b8676446db18ab316018c8091a713efe79c08306de",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "4-help",
           "command": "bench test --package ./cmd/bench --run TestHelpInventoryIsComplete",
           "exit_code": 0
         },
         {
-          "id": "gr-b-4-commit-help",
-          "performer": "claude:bench-writer/gr-t4-author",
+          "id": "gr-b-4-commit-help-r2",
+          "performer": "claude:bench-writer/gr-t4-repair-b1",
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "source_digest": "0cb2f091a585d8b763215891f33681ce957997d7",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/gr-t4-author-20260924/4-commit-help@43882975",
-            "digest": "sha256:0485d5efabcdd21dfcca2edb5e133828ca6cb6f1717a5b165e7c7ce77850fba5",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commit,pass,21\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "claude:agent/gr-t4-repair-b1-20260924/4-commit-help@e00b8e3b",
+            "digest": "sha256:81d07c4ef3b2e04c52a67f4aa4c51f9892119394f7062baeeef2218f9ea56489",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commit,pass,31\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "4-commit-help",
           "command": "bench test --package ./internal/commit --run TestHelpAdvertisesDryRun",
           "exit_code": 0
         },
         {
-          "id": "gr-b-5-workflow",
-          "performer": "claude:bench-writer/gr-t5-author",
+          "id": "gr-b-5-workflow-r2",
+          "performer": "claude:bench-writer/gr-t5-repair-b1",
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "source_digest": "0cb2f091a585d8b763215891f33681ce957997d7",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/gr-t5-author-20260924/5-workflow@43882975",
-            "digest": "sha256:32d8eac22310666a7f60ef232f44cdc37240e7646044e9df78e9050cadb7f3b9",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,897\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "claude:agent/gr-t5-repair-b1-20260924/5-workflow@e00b8e3b",
+            "digest": "sha256:35e9f4edd5be66f81c16074c902fbdb86ce1c969f85794a75c461cf67b340fc8",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,782\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "5-workflow",
           "command": "bench test --check docs-currency-workflow",
           "exit_code": 0
         },
         {
-          "id": "gr-b-5-conformance",
-          "performer": "claude:bench-writer/gr-t5-author",
+          "id": "gr-b-5-conformance-r2",
+          "performer": "claude:bench-writer/gr-t5-repair-b1",
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "source_digest": "0cb2f091a585d8b763215891f33681ce957997d7",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/gr-t5-author-20260924/5-conformance@43882975",
-            "digest": "sha256:b4d37f642a66b13cba22be2e58dc17b6d6612ca68cf5fde17e31e2fe2bac2826",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7599\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "claude:agent/gr-t5-repair-b1-20260924/5-conformance@e00b8e3b",
+            "digest": "sha256:304ef3de361e0902ca7c38be904d8c29ba90dc060f891e85c93562fb5629933e",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7055\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "5-conformance",
           "command": "bench test --package ./internal/conformance --run TestRootConformance",
           "exit_code": 0
         },
         {
-          "id": "gr-b-5-anchors",
-          "performer": "claude:bench-writer/gr-t5-author",
+          "id": "gr-b-5-anchors-r2",
+          "performer": "claude:bench-writer/gr-t5-repair-b1",
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "source_digest": "0cb2f091a585d8b763215891f33681ce957997d7",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/gr-t5-author-20260924/5-anchors@43882975",
-            "digest": "sha256:3b3062ed19e164f629d9e13bdecbd8063ac308cfed310f8efeff86158a657c69",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,765\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "claude:agent/gr-t5-repair-b1-20260924/5-anchors@e00b8e3b",
+            "digest": "sha256:346e8a0f5d803f744b7dd0878d5cf89d18c151a76ab3e8830ee41e9e3dfcadde",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,767\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "5-anchors",
           "command": "bench test --package ./internal/anchors",
           "exit_code": 0
         },
         {
-          "id": "gr-b-5-help",
-          "performer": "claude:bench-writer/gr-t5-author",
+          "id": "gr-b-5-help-r2",
+          "performer": "claude:bench-writer/gr-t5-repair-b1",
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "source_digest": "0cb2f091a585d8b763215891f33681ce957997d7",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/gr-t5-author-20260924/5-help@43882975",
-            "digest": "sha256:10ec5dd5fb3390f41ec23e74bd1e0c921c7d6800d7a819486b2c46d0c7432a4f",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,4\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "claude:agent/gr-t5-repair-b1-20260924/5-help@e00b8e3b",
+            "digest": "sha256:5bcd828e913b573ef73237b8676446db18ab316018c8091a713efe79c08306de",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "5-help",
           "command": "bench test --package ./cmd/bench --run TestHelpInventoryIsComplete",
           "exit_code": 0
         },
         {
-          "id": "gr-b-5-commit-help",
-          "performer": "claude:bench-writer/gr-t5-author",
+          "id": "gr-b-5-commit-help-r2",
+          "performer": "claude:bench-writer/gr-t5-repair-b1",
           "role": "author-verification",
           "model": "opus",
           "effort": "high",
-          "source_digest": "d4ca62e85057e9b8aa445b8a8c050c73e7aba0a9",
+          "source_digest": "0cb2f091a585d8b763215891f33681ce957997d7",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/gr-t5-author-20260924/5-commit-help@43882975",
-            "digest": "sha256:818d6b02c4e7f799d4db11de8eedd5c7c69b5a0f9c063abcaf77c1e386eae298",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commit,pass,26\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+            "ref": "claude:agent/gr-t5-repair-b1-20260924/5-commit-help@e00b8e3b",
+            "digest": "sha256:031087c06edf5466dfeb3517bae98386741622fd8fe8e49d80eb7f3a6b300c31",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commit,pass,23\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "5-commit-help",
           "command": "bench test --package ./internal/commit --run TestHelpAdvertisesDryRun",
@@ -1139,12 +1170,95 @@ Findings: 4. The worst issue is that the dry-run help test accepts a negated lan
             "B11"
           ],
           "supersedes": []
+        },
+        {
+          "id": "gr-b-r2-standards",
+          "performer": "claude:bench-reviewer/gr-b-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0cb2f091a585d8b763215891f33681ce957997d7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-b-standards-2@e00b8e3b",
+            "digest": "sha256:7996aa19d2c772c8588d747661704ee91cf0583f9a397eec2502df374595cb2e",
+            "excerpt": "Standards confirming: 0 findings. B1, B2, B8 and B9 are confirmed. B3 is confirmed in code, but the tree does not record its red. Worst: none."
+          },
+          "axis": "Standards",
+          "base": "7d203a51837838874cf9a649eb2983139ee8cf4c",
+          "tip": "e00b8e3b38328f58e6739e39f4a93509370f6a70",
+          "finding_ids": [],
+          "supersedes": [
+            "gr-b-r1-standards"
+          ]
+        },
+        {
+          "id": "gr-b-r2-spec",
+          "performer": "claude:bench-reviewer/gr-b-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0cb2f091a585d8b763215891f33681ce957997d7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-b-spec-2@e00b8e3b",
+            "digest": "sha256:f8af7ca20e3da4fdfc9c1adcbe910ee39db34f422ec4c01f0cf17c3cd0f9be07",
+            "excerpt": "Spec confirming: 0 findings. All five folds are confirmed: B4, B5, B10, the B12/B13 routing, and the ticket 5 amendment for B8. Worst: none."
+          },
+          "axis": "Spec",
+          "base": "7d203a51837838874cf9a649eb2983139ee8cf4c",
+          "tip": "e00b8e3b38328f58e6739e39f4a93509370f6a70",
+          "finding_ids": [],
+          "supersedes": [
+            "gr-b-r1-spec"
+          ]
+        },
+        {
+          "id": "gr-b-r2-coverage",
+          "performer": "claude:bench-reviewer/gr-b-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0cb2f091a585d8b763215891f33681ce957997d7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/gr-b-coverage-2@e00b8e3b",
+            "digest": "sha256:36ea3398e9ddac19b8d5d8baf8deb89c24a808738de9c596b513dd6bd9c09fb2",
+            "excerpt": "Coverage confirming: 0 findings. All folds confirmed (B3, B6, B7, B11). Worst: none."
+          },
+          "axis": "Coverage",
+          "base": "7d203a51837838874cf9a649eb2983139ee8cf4c",
+          "tip": "e00b8e3b38328f58e6739e39f4a93509370f6a70",
+          "finding_ids": [],
+          "supersedes": [
+            "gr-b-r1-coverage"
+          ]
         }
       ]
     }
   ],
   "completion": {
     "state": "pending"
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:b2b329ab938da6599a495a036ee6e2e49313f65bb1f1f6cd01882b6efba49f9f",
+      "to": "sha256:fe5ec0f1c3cf51d3252849be18b196da807826b7d147da281f48306a3abc4074",
+      "chunk_ids": {
+        "GR-A": [
+          "GR-A"
+        ],
+        "GR-B": [
+          "GR-B"
+        ],
+        "GR-C": [
+          "GR-C"
+        ]
+      }
+    }
+  ]
 }
 ```
