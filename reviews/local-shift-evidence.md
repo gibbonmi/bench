@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, LE-B2, and LE-C1 are accepted. LE-C2 repair cycle 1 is committed; the confirming round of the three axes is pending.
+Status: LE-A, LE-B1, LE-B2, LE-C1, and LE-C2 are accepted. The LE-C2 confirming round passed on all three axes.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -467,6 +467,16 @@ Findings: 4. Worst issue: LEC2-C1.
 | LEC2-C1 | The keep test seeds a closed entry of a dead owner. | Drop the outcome guard: bit. |
 | LEC2-C2 | The LE77 test fails the acquire and still reads the abandon. | Run the pass after the acquire: bit. |
 | LEC2-C3 | `KeyOwner` parses the owner in the process-id range, and the keep test reads a range key and a stamp key. | Parse the owner as 64 bits: bit. Drop the stamp check: bit. |
+
+## LE-C2 confirming round
+
+Three fresh axes graded the code tip `c773970a` with the source digest `e2915052`. Each axis read the manifest, confirmed the current binding, and read the repair delta `160823bf..c773970a`.
+
+- Standards, 0 findings. LEC2-S1 is closed.
+- Spec, 0 findings. LEC2-P2 is closed, and the owner bound rejects no key that `NewEntry` writes.
+- Coverage, 0 findings. LEC2-C1, LEC2-C2, and LEC2-C3 are closed.
+
+Two axes note that a reaped child's process id can be reused before the pass runs. The worktree tests accept that risk, and LEC2-S1 chose that precedent over a second copy of the dead-owner fact.
 
 ```bench-review-record
 {
@@ -2344,6 +2354,72 @@ Findings: 4. Worst issue: LEC2-C1.
             "LEC2-C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "LE-C2-review-standards-2",
+          "performer": "claude-code:subagent:a729c83049e46713b",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e2915052f2deb1cf041b5f4284453d52f9f9f189",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a729c83049e46713b, evidence sha256:78f62f62a29c0723341632fbd912f3ff6bb2a8657f2bb9ceacff8caa2e30134e",
+            "digest": "sha256:bacea297098ceeeef2e6cc38f4be193aaa91a8a12fc0f5bc96a687344910e80f",
+            "excerpt": "Verdict: pass. S1 is closed. The evidence is current (true), and the repair delta raises 0 blocking findings and 1 advisory."
+          },
+          "axis": "Standards",
+          "base": "4353965b42eeade19d5e8aad83550cb0d053c191",
+          "tip": "c773970ae80d22417b7ecca96399a80ef3326092",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-C2-review-standards-1"
+          ]
+        },
+        {
+          "id": "LE-C2-review-spec-2",
+          "performer": "claude-code:subagent:a401bf8d6021a17ae",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e2915052f2deb1cf041b5f4284453d52f9f9f189",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a401bf8d6021a17ae, evidence sha256:78f62f62a29c0723341632fbd912f3ff6bb2a8657f2bb9ceacff8caa2e30134e",
+            "digest": "sha256:1d1864660642ae1e8ba819bbbe3ff6c109c2aab44d82e3b469a411bea7ea2564",
+            "excerpt": "Verdict: pass. Findings: 0 blocking, 1 advisory. Confidence: 8."
+          },
+          "axis": "Spec",
+          "base": "4353965b42eeade19d5e8aad83550cb0d053c191",
+          "tip": "c773970ae80d22417b7ecca96399a80ef3326092",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-C2-review-spec-1"
+          ]
+        },
+        {
+          "id": "LE-C2-review-coverage-2",
+          "performer": "claude-code:subagent:ab040ab07a833838a",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e2915052f2deb1cf041b5f4284453d52f9f9f189",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:ab040ab07a833838a, evidence sha256:78f62f62a29c0723341632fbd912f3ff6bb2a8657f2bb9ceacff8caa2e30134e",
+            "digest": "sha256:6867c6218773210965ab33ca926cb5bcd67dcc8d3a66bbde0512348eb1d08c81",
+            "excerpt": "Verdict: PASS (C1-C3 closed). 1 advisory finding, 0 blocking."
+          },
+          "axis": "Coverage",
+          "base": "4353965b42eeade19d5e8aad83550cb0d053c191",
+          "tip": "c773970ae80d22417b7ecca96399a80ef3326092",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-C2-review-coverage-1"
+          ]
         }
       ]
     }
