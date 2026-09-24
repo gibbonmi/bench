@@ -152,8 +152,6 @@ findings in the owner details.
 Bank use, public release, and Regroup adoption stay NO-GO until the existing
 qualification requirements are met.
 
-**FT71 (HIGH on the bank track) — versioned local shift evidence.**
-
 **FT142 (MEDIUM) — FT91 runtime residuals, two tracks.**
 
 **FT58 (LOW) — hardened pool roots.**
