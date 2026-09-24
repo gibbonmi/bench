@@ -26,7 +26,8 @@ var retroCaptureAnchors = []Anchor{
 // laneAndLandingAnchors pin one statement of the commit and landing split: a
 // worktree `bench commit` runs the declared lane, and `bench worktree land` runs
 // the whole-project gate. Forbid rows keep out the retired claims that the commit
-// is the gate run, and the reference's claims that the landing boundary is
+// is the gate run or the source of the green verdict, the second gate before the
+// landing, and the reference's claims that the landing boundary is
 // unenforced and that a stale executable reruns the landing. The reference points
 // to the operating guide's enforcement sentence, and a Forbid row reads that
 // sentence's named constant so no copy returns there. Require rows pin the
@@ -35,6 +36,12 @@ var retroCaptureAnchors = []Anchor{
 var laneAndLandingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-synthesis/SKILL.md", Kind: Forbid, Needle: "`bench commit` gates the tree it lands", Diagnostic: "lane and landing: craft-synthesis restored the claim that bench commit gates the tree it lands"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-synthesis/SKILL.md", Kind: Require, Needle: "Take the green verdict from the whole-project gate. That gate is the landing's gate, or `bench worktree exec <target> -- bench gate` for a batch that waits for approval.", Diagnostic: "lane and landing: craft-synthesis dropped the whole-project gate as the source of the prose-only green verdict"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-synthesis/SKILL.md", Kind: Forbid, Needle: "Take that verdict from the commit itself.", Diagnostic: "lane and landing: craft-synthesis restored the commit as the source of the prose-only green verdict"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-synthesis/SKILL.md", Kind: Forbid, Needle: "A `bench gate` run before it grades the same tree twice and pays the oracle twice.", Diagnostic: "lane and landing: craft-synthesis restored the claim that a gate run before the commit pays the oracle twice"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "Run the external gate and commit work on green", Diagnostic: "lane and landing: final check description restored the claim that it runs the gate and commits on green"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "After a lane-only repair commit and before the landing, run the whole-tree gate on the source.", Diagnostic: "lane and landing: final check restored a second whole-project gate before the landing"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "Do not run `bench gate` first.", Diagnostic: "lane and landing: final check restored the ban on a gate run before the commit"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "the gate reuses a fresh green verdict for the identical tree and never re-pays it", Diagnostic: "lane and landing: final check restored the claim that the commit reuses a fresh green gate verdict"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "This command gates and commits them atomically.", Diagnostic: "lane and landing: final check restored the claim that bench commit gates and commits atomically"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "The commit already is the gate run", Diagnostic: "lane and landing: final check restored the claim that the commit is the gate run"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "the oracle run and landing are one command", Diagnostic: "lane and landing: final check restored the claim that the oracle run and the landing are one command"},

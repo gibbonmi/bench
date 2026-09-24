@@ -216,13 +216,17 @@ func restoreNext(commit string, paths []string) string {
 	return command + " " + strings.Join(quoted, " ")
 }
 
+// LaneClause names what a commit grades: the declared lane, or the gate when the
+// project declares no lane. The `bench help` row and the --dry-run help line read it.
+const LaneClause = "run the declared lane (or the gate when no lane is declared)"
+
 // helpText adds one concrete example and the exit-code meanings the grammar line
 // cannot carry. A usage error prints the grammar line alone, so only a help request
 // pays for them. The example shows the trailing `-- <path>...` form, so a caller does
 // not learn the argument shape by tripping the usage line.
 var helpText = grammar.Help + "\n" +
 	"example: bench commit -m \"fix: tighten the guard\" -- internal/gitguard/scan.go docs/adr/0007.md\n" +
-	"--dry-run: run the declared lane (or the gate when no lane is declared) on the exact composed snapshot and report the outcome; commit nothing\n" +
+	"--dry-run: " + LaneClause + " on the exact composed snapshot and report the outcome; commit nothing\n" +
 	"exit 1: refused before publication; nothing was committed\n" +
 	"exit 2: grammar error\n" +
 	"exit 3: published; the checkout did not reconcile — paste next= to repair"

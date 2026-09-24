@@ -1,5 +1,5 @@
 ---
-description: Run the external gate and commit work on green; after a spec's final landing, report the evidence and capture the retro. Never use the model's own judgment as a substitute for retained or freshly observed evidence.
+description: Commit work on a lane pass and land it through the whole-project gate; after a spec's final landing, report the evidence and capture the retro. Never use the model's own judgment as a substitute for retained or freshly observed evidence.
 ---
 
 # /bench-final-check — the gate is the oracle
@@ -41,10 +41,6 @@ Commit the named paths with `bench commit -m "<msg>" <path>...` in that worktree
 `bench worktree land` runs the whole-project gate on work that `bench commit` committed on a lane pass.
 When there is nothing to commit, the honest no-op runs `bench gate` and reports its verdict.
 A light-path fix lands before a spec's final merge only when its `CHANGELOG.md` entry sits under a heading no sibling touches.
-
-After a lane-only repair commit and before the landing, run the whole-tree
-gate on the source. The lane skips the conformance checks the landing gate
-runs.
 
 If the command refuses because of an
 unexplained working-tree file, surface that file. Do not commit or revert it.
@@ -149,18 +145,11 @@ result.
 
 ## Run it
 
-For work that has paths to land, commit in the Bench worktree:
-
-```sh
-bench commit -m "<msg>" <path>...
-```
-
-`bench commit` formats changed Go files inside the named paths. It does not
-format unnamed paths, and a dry run changes no files. A red run reports its own
-first failing phase and refuses to commit. Then land the source through
-`bench worktree land`; `.bench/BENCH-reference.md` holds the landing shape.
-Standalone `bench gate` has two jobs here: report the honest no-op, when nothing
-is left to commit, and diagnose a red run.
+Commit and land as "Exit handoff" states; `.bench/BENCH-reference.md` holds
+the landing shape. `bench commit` formats changed Go files inside the named
+paths. It does not format unnamed paths, and a dry run changes no files. A red
+run reports its own first failing phase and refuses to commit. Standalone
+`bench gate` also diagnoses a red run.
 
 Exit 3 means the commit is published but the checkout did not reconcile. Paste
 the `next=` restore command from the `committed{...}` record to repair the
