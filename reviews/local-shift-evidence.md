@@ -1,12 +1,12 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, LE-B2, LE-C1, LE-C2, and LE-C3 are accepted. The LE-D review passed on all three axes with 7 advisory findings; repair cycle 1 is pending.
+Status: LE-A, LE-B1, LE-B2, LE-C1, LE-C2, and LE-C3 are accepted. LE-D repair cycle 1 is committed; the confirming round of the three axes is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
 Line: opus (claude-opus-5-5) / medium / uncapped
 Review line: opus / high / one iteration for each axis
-Post-review repair cycles consumed: LE-A and LE-B2 3 of 3 each, and LE-B1, LE-C1, LE-C2, and LE-C3 1 of 2 each. The reviewer extended the LE-B2 allowance by one cycle on 2026-09-23, for the checkpoint red on the interrupt test waits. The reviewer extended the LE-A allowance by one cycle on 2026-09-23. The extra cycle covers LEA-S7 and each blocker of the second confirming round.
+Post-review repair cycles consumed: LE-A and LE-B2 3 of 3 each, and LE-B1, LE-C1, LE-C2, LE-C3, and LE-D 1 of 2 each. The reviewer extended the LE-B2 allowance by one cycle on 2026-09-23, for the checkpoint red on the interrupt test waits. The reviewer extended the LE-A allowance by one cycle on 2026-09-23. The extra cycle covers LEA-S7 and each blocker of the second confirming round.
 Expected repair rounds: 2
 Confidence: 5
 
@@ -596,6 +596,15 @@ Findings: 4. Worst issue: LED-C1.
 - LED-C2 (no-op, confidence 7): the same gap as LED-P1.
 - LED-C3 (auto-fix, confidence 6): the start-failure test reads only the work state.
 - LED-C4 (no-op, confidence 7): the ancestry walk ends on a missing parent and on a cycle, so no gap remains.
+
+## LE-D repair cycle 1
+
+| Finding | Repair | Evidence |
+|---|---|---|
+| LED-S1 | `DATA_HANDLING.md` names a fixed-width sequence and no longer states the width. | The prose check passed. |
+| LED-C3 | The start-failure test reads the assignment id and the cleanup word. | Record a released start failure as retained: bit. |
+
+After repair cycle 1, the chunk tip is `6dc949ed`. The four planned checks and the root conformance test passed there.
 
 ```bench-review-record
 {
@@ -2790,9 +2799,9 @@ Findings: 4. Worst issue: LED-C1.
     {
       "id": "LE-D",
       "base": "38fc33d69c093fdf26248a576502da404b014498",
-      "tip": "376f8b537b17fb109591dc91988ab177e2229b26",
+      "tip": "6dc949edc5268c33e1fb11141ca934f0d0e82955",
       "plan_digest": "sha256:f7b99e0925e425c8f0b3177fc8d47e9e83a3c5f7d1dbd5981c914d341b532fd6",
-      "source_digest": "40b9d32fe10f8a4970fd38fecd7e15db8cd4d263",
+      "source_digest": "576777bd01bca0891ca73d9f711c8268f8390fa1",
       "acceptance_rows": [
         "LE80",
         "LE81",
@@ -2875,6 +2884,78 @@ Findings: 4. Worst issue: LED-C1.
           "requirement": "prose",
           "command": "bench gate-prose . -- DATA_HANDLING.md",
           "exit_code": 0
+        },
+        {
+          "id": "LE-D-verify-subshell-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "576777bd01bca0891ca73d9f711c8268f8390fa1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/worktree --run TestSubshell at 6dc949ed",
+            "digest": "sha256:1f555f363ca8537fd3a6dee801d943f342c54ca383498e81a77a7ecc288179a9",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,542\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "subshell",
+          "command": "bench test --package ./internal/worktree --run TestSubshell",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-D-verify-seams-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "576777bd01bca0891ca73d9f711c8268f8390fa1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/worktree --run TestWorktreeSeamsMatchTheRegistry at 6dc949ed",
+            "digest": "sha256:dcdab519fb77eb813758385a351480e9c371b41ed26aed45d67a0926be6bdec2",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,4\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "seams",
+          "command": "bench test --package ./internal/worktree --run TestWorktreeSeamsMatchTheRegistry",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-D-verify-system-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "576777bd01bca0891ca73d9f711c8268f8390fa1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --check system at 6dc949ed",
+            "digest": "sha256:eb017969051a83d1d99af1cd97cec0fafd4f4b47a3472a5d501ec51804dabe8a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,36333\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-D-verify-prose-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "576777bd01bca0891ca73d9f711c8268f8390fa1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench gate-prose . -- DATA_HANDLING.md at 6dc949ed",
+            "digest": "sha256:8c3cb9d69efa24eae629ca68d60a54c57975ac73fd4c9e006957fff6c7945888",
+            "excerpt": "prose[1]{path,verdict}:\n  DATA_HANDLING.md,pass"
+          },
+          "requirement": "prose",
+          "command": "bench gate-prose . -- DATA_HANDLING.md",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -2886,7 +2967,7 @@ Findings: 4. Worst issue: LED-C1.
           "effort": "high",
           "source_digest": "40b9d32fe10f8a4970fd38fecd7e15db8cd4d263",
           "state": "completed",
-          "outcome": "pass",
+          "outcome": "fail",
           "native_ref": {
             "ref": "claude-code subagent claude-code:subagent:a2cbfc9e731405d94, evidence sha256:fdd5249a8e0986eb289d54dc3e2f09881f81c6ebf76cb20c6148bd3fe19e959a",
             "digest": "sha256:d54917b463e6c9498e161957f424ddbd9190d505474c1f9665909d68a7c67ebf",
@@ -2908,7 +2989,7 @@ Findings: 4. Worst issue: LED-C1.
           "effort": "high",
           "source_digest": "40b9d32fe10f8a4970fd38fecd7e15db8cd4d263",
           "state": "completed",
-          "outcome": "pass",
+          "outcome": "fail",
           "native_ref": {
             "ref": "claude-code subagent claude-code:subagent:ac076656e9d871839, evidence sha256:fdd5249a8e0986eb289d54dc3e2f09881f81c6ebf76cb20c6148bd3fe19e959a",
             "digest": "sha256:d44b44a655854dc35bdcc24d1fd7e45e22fcda0896ed33b3b12572d8c96071f5",
@@ -2930,7 +3011,7 @@ Findings: 4. Worst issue: LED-C1.
           "effort": "high",
           "source_digest": "40b9d32fe10f8a4970fd38fecd7e15db8cd4d263",
           "state": "completed",
-          "outcome": "pass",
+          "outcome": "fail",
           "native_ref": {
             "ref": "claude-code subagent claude-code:subagent:ac2db607351db4648, evidence sha256:fdd5249a8e0986eb289d54dc3e2f09881f81c6ebf76cb20c6148bd3fe19e959a",
             "digest": "sha256:68bdbb7fed4118f9331e0f236d6d4fae28098451b1028513f7fe9ec17a114479",
