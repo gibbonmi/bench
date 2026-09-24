@@ -217,6 +217,10 @@ Three advisories go to LE-B2, because a repair here would need another confirmin
 - The acquire-failure test reads the recovery kind.
 - One seam constant replaces the `shift` literal.
 
+## Plan amendments
+
+The LE-B1 build cited its tests in the spec, and its repair added row LE107. These edits changed the plan identity after LE-A. The chunk IDs stay the same, so LE-A maps to LE-A.
+
 ```bench-review-record
 {
   "version": 1,
@@ -1071,6 +1075,17 @@ Three advisories go to LE-B2, because a repair here would need another confirmin
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:b146e8f55590f3dfcbd71c4dedbf099c2ae41cc2d5116c1084b6110ce253c784",
+      "to": "sha256:8863c19c0fe7c185a65cfa69b9e2f5fd5f1140876abe11cbaef77d3b6dc08c97",
+      "chunk_ids": {
+        "LE-A": [
+          "LE-A"
+        ]
+      }
+    }
+  ]
 }
 ```
