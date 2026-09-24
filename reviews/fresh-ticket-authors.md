@@ -432,3 +432,37 @@ Findings: 1. The worst issue is the unpinned field-guide callout.
 | --- | --- |
 | `3-align-the-phase-commands-and-docs.md` | R15, R16 |
 | orchestrator spec amendment | row FA31 for R16 |
+
+## FA ticket 3 repair evidence, cycle 2
+
+The fresh repair session `claude:bench-writer/fta-t3-repair-2` ran on opus at high effort with a cap of 3 attempts. It started from tip `cfc68d9805f95d2ef100e8f74d1581b7038fbc11` and bound evidence `sha256:3518dfd8d5d21b47bad68bca37cbf7aa8e12f45bb26fea927e2026dd2d5fb568` as current. The repair commit is `e942e63a7fde9d1a7dcbe70d605d4cbd14aa90ec`. This repair is the second repair cycle of chunk FA, which is cycle 2 of 2. It used one attempt.
+
+| target | row | change | status |
+| --- | --- | --- | --- |
+| R15 | FA22 | The field-guide callout now states only that `.bench/BENCH.md` owns ticket and repair authorship after ticket approval. It restates no fact of the "How it works" card or `.bench/BENCH.md`, and it has no tier-move clause. The FA22 sentence in the "How it works" card does not change. | done |
+| R16 | FA31 | A Forbid row over `docs/field-guide.html` in `registry_ft311_review_dispatch.go`, with the needle "the approved implementation line retains one author through production changes, tests, probes, repairs, and chunk reviews." and the prefix `fresh ticket author: `. | done |
+
+R16 adds no test code. `TestFreshTicketAuthors` gives each registered row of the family a synthetic bite, so the new row joins that test through its diagnostic prefix.
+
+### Red then green
+
+Each probe ran through `bench probe docs/field-guide.html ... --check docs-currency-workflow` after `bench worktree build`. The before probe ran on the trimmed callout before the Forbid row existed.
+
+| probe | file | kind | before | after | diagnostic after |
+| --- | --- | --- | --- | --- | --- |
+| FA31 insertion of the retired sentence after the new pointer sentence, with the FA22 sentence in place | `docs/field-guide.html` | swap | silent | bit | field guide restored the one retained author on the approved implementation line |
+
+Both probe runs restored the file. The after run reported one failure. No row pins the new pointer sentence, so no omission self-probe applies to it.
+
+### Verification
+
+| command | exit | result |
+| --- | --- | --- |
+| `bench test --check docs-currency-workflow` | 0 | pass, 0 failures, 0 skips |
+| `bench test --package ./internal/conformance --run TestRootConformance` | 0 | pass, 0 failures, 0 skips |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | 0 | pass, 0 failures, 0 skips |
+| `bench test --full --package ./internal/conformance --run "TestFreshTicketAuthors\|TestIntegrationSourceWorkflowAnchorsBiteIndependently"` | 0 | pass, 0 failures, 0 skips |
+| `bench test --package ./internal/anchors/...` | 0 | pass, 0 failures, 0 skips |
+| `bench test --check guidance-prose-budgets` | 0 | pass, 0 failures, 0 skips |
+| `go vet ./...` | 0 | no output |
+| `bench commit` lane | 0 | pass |
