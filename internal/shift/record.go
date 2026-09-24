@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -59,31 +58,32 @@ func (r *shiftRecord) finish(res Result) {
 	if r == nil {
 		return
 	}
+	kind, path := splitRecovery(res.Recovery)
 	attrs := []attribute.KeyValue{
 		attribute.String(otelrecord.AttrShiftOutcome, string(res.Outcome)),
 		attribute.String(otelrecord.AttrWorkState, workStates[res.Outcome]),
 		attribute.String(otelrecord.AttrOutcome, otelrecord.ExitOutcome(res.ExitCode())),
-		attribute.String(otelrecord.AttrCleanup, r.cleanup(res)),
+		attribute.String(otelrecord.AttrCleanup, r.cleanup(kind)),
+		attribute.String(otelrecord.AttrRecoveryKind, kind),
+	}
+	if path != "" {
+		attrs = append(attrs, attribute.String(otelrecord.AttrRecoveryKey, filepath.Base(path)))
 	}
 	if res.Committed > 0 {
 		if head, err := git.Output("-C", r.root, "rev-parse", "refs/heads/"+res.Branch+"^{commit}"); err == nil {
 			attrs = append(attrs, attribute.String(otelrecord.AttrSubjectID, head))
 		}
 	}
-	if kind, path, ok := strings.Cut(res.Recovery, ":"); ok {
-		attrs = append(attrs,
-			attribute.String(otelrecord.AttrRecoveryKind, kind),
-			attribute.String(otelrecord.AttrRecoveryKey, filepath.Base(path)))
-	}
 	r.span.SetAttributes(attrs...)
 	r.end()
 }
 
-// cleanup names what became of the shift's worktree: retained for recovery, released to
-// the pool, or none when the shift never held one or its release failed.
-func (r *shiftRecord) cleanup(res Result) string {
+// cleanup names what became of the shift's worktree, given the kind of its recovery
+// pointer: retained for recovery, released to the pool, or none when the shift never
+// held one or its release failed.
+func (r *shiftRecord) cleanup(recoveryKind string) string {
 	switch {
-	case strings.HasPrefix(res.Recovery, recoveryWorktreeKind+":"):
+	case recoveryKind == recoveryWorktreeKind:
 		return otelrecord.CleanupRetained
 	case r.session != nil && r.session.released:
 		return otelrecord.CleanupReleased

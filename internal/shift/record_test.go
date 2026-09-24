@@ -12,8 +12,12 @@ import (
 	"github.com/gibbonmi/bench/internal/otelrecord"
 )
 
-// shiftSeamAttr is the encoded seam attribute of a shift span line.
-const shiftSeamAttr = `{"key":"bench.seam","value":{"stringValue":"shift"}}`
+// shiftSeamAttr is the encoded seam attribute of a shift span line, and startMarker is
+// the encoded record-start attribute that only a start line carries.
+var (
+	shiftSeamAttr = fmt.Sprintf(`{"key":%q,"value":{"stringValue":"shift"}}`, otelrecord.AttrSeam)
+	startMarker   = fmt.Sprintf(`{"key":%q,"value":{"stringValue":%q}}`, otelrecord.AttrRecord, otelrecord.RecordStart)
+)
 
 // runRecordedShift runs Loop in the fixture's repository and returns the one finished
 // shift span with the raw bytes of the repository's record.
@@ -106,7 +110,7 @@ func TestAGreenShiftWritesAStartAndAnEndLine(t *testing.T) {
 		if !bytes.Contains(line, []byte(shiftSeamAttr)) {
 			continue
 		}
-		if bytes.Contains(line, []byte(`"key":"bench.record"`)) {
+		if bytes.Contains(line, []byte(startMarker)) {
 			starts++
 		} else {
 			ends++
@@ -236,6 +240,43 @@ func TestARetainedShiftRecordHoldsNoHomePath(t *testing.T) {
 func TestAGreenShiftRecordsReleasedCleanup(t *testing.T) {
 	span, _, _ := completeShift(t)
 	requireAttr(t, span, otelrecord.AttrCleanup, otelrecord.CleanupReleased)
+}
+
+// LE107: a shift that left no recovery pointer records kind none and no key.
+func TestAGreenShiftRecordsNoRecoveryKind(t *testing.T) {
+	span, _, _ := completeShift(t)
+	requireAttr(t, span, otelrecord.AttrRecoveryKind, RecoveryNone)
+	requireNoAttr(t, span, otelrecord.AttrRecoveryKey)
+}
+
+// A teardown that fails before the release records no cleanup, not a release.
+func TestAFailedTeardownRecordsNoCleanup(t *testing.T) {
+	t.Setenv("BENCH_AGENT", "true")
+	faultFixtureNoAgentOverride(t, "#!/usr/bin/env bash\nexit 0\n")
+	armFault(t, func(step shiftStep) error {
+		if step == stepTeardown {
+			return fmt.Errorf("injected teardown failure")
+		}
+		return nil
+	})
+	span, _, _ := runRecordedShift(t, 1)
+	requireAttr(t, span, otelrecord.AttrCleanup, otelrecord.CleanupNone)
+}
+
+// The span starts before the worktree acquire, so a failed acquire still ends it.
+func TestAFailedAcquireStillEndsTheShiftSpan(t *testing.T) {
+	faultFixture(t, "#!/usr/bin/env bash\nexit 0\n")
+	home := os.Getenv("BENCH_HOME")
+	if err := os.MkdirAll(home, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	// A regular file where the worktree pool directory goes makes the acquire fail.
+	if err := os.WriteFile(filepath.Join(home, "worktrees"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	span, _, _ := runRecordedShift(t, 2)
+	requireAttr(t, span, otelrecord.AttrShiftOutcome, string(OutcomeUsage))
+	requireAttr(t, span, otelrecord.AttrCleanup, otelrecord.CleanupNone)
 }
 
 // LE36: a red shift that retained its worktree records the retention.

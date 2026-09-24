@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -49,6 +50,16 @@ func recoveryWorktree(path string) string { return recoveryWorktreeKind + ":" + 
 
 // recoveryWorktreeKind is the kind before the colon of a retained-worktree pointer.
 const recoveryWorktreeKind = "worktree"
+
+// splitRecovery splits a recovery pointer into its kind and its path. A pointer with no
+// path, RecoveryNone or an empty one, is kind RecoveryNone.
+func splitRecovery(pointer string) (kind, path string) {
+	kind, path, ok := strings.Cut(pointer, ":")
+	if !ok {
+		return RecoveryNone, ""
+	}
+	return kind, path
+}
 
 // Result is the one value computed at every shift exit path: outcome, branch, committed
 // count, iterations used, recovery pointer, and a short human-readable detail. Recovery
