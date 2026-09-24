@@ -9,6 +9,7 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -149,37 +150,6 @@ func TestAShiftRecoversBeforeItsAcquire(t *testing.T) {
 	}
 }
 
-// crashedShift runs a shift in a helper process whose adapter appends MEMMARK to the
-// notes, writes work.txt when dirty, and sleeps. It kills the helper with SIGKILL when
-// kill is set and waits for its exit, so the lease names a reaped owner. It returns the
-// repository root and the open shift entry.
-func crashedShift(t *testing.T, dirty, kill bool) (string, intent.Entry) {
-	t.Helper()
-	root := faultFixtureCore(t, greenGate, nil)
-	script := "echo MEMMARK >> " + notesFile + "\n"
-	if dirty {
-		script += "echo work > work.txt\n"
-	}
-	started := sleepingAgent(t, script)
-	h := startHelper(t, root, "interrupt")
-	waitForFile(t, started)
-	if kill {
-		_ = h.cmd.Process.Kill()
-		h.wait(t)
-	}
-	current, err := intent.Read(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, entry := range current.Entries {
-		if entry.Kind == intent.KindShift && entry.Lease != "" {
-			return root, entry
-		}
-	}
-	t.Fatal("the crashed shift left no leased entry")
-	return "", intent.Entry{}
-}
-
 // worktreeState is what a pass must leave unchanged: the lease bytes, the dirty file,
 // and the lock state of the entry's worktree.
 func worktreeState(t *testing.T, root string, entry intent.Entry) string {
@@ -237,6 +207,7 @@ func TestRecoverRecoversAKilledDirtyShift(t *testing.T) {
 	}
 	requireAttr(t, spans[0], otelrecord.AttrWorkState, otelrecord.WorkRecovered)
 	requireAttr(t, spans[0], otelrecord.AttrIntentKey, entry.Key)
+	requireAttr(t, spans[0], otelrecord.AttrMemoryState, otelrecord.MemoryRetained)
 	got := ledgerEntry(t, root, entry.Key)
 	if got.Outcome != otelrecord.WorkRecovered || !strings.HasPrefix(got.Recovery, recoveryWorktreeKind+":") {
 		t.Fatalf("entry = %+v, want recovered with a worktree pointer", got)
@@ -271,6 +242,9 @@ func TestRecoverReleasesAKilledCleanShift(t *testing.T) {
 		t.Fatalf("the record holds %d recovery spans, want 1", len(spans))
 	} else {
 		requireAttr(t, spans[0], otelrecord.AttrCleanup, otelrecord.CleanupReleased)
+	}
+	if files := memoryFiles(t); len(files) != 1 || string(files[0]) != "MEMMARK\n" {
+		t.Fatalf("memory files = %q, want the crashed notes", files)
 	}
 }
 
@@ -321,6 +295,9 @@ func TestRecoverKeepsAnUnprovenLease(t *testing.T) {
 		{"live other owner", true, func(t *testing.T, entry intent.Entry, _ string) { rewriteLease(t, entry, os.Getpid()) }},
 		{"live helper", false, func(*testing.T, intent.Entry, string) {}},
 		{"malformed", true, func(t *testing.T, _ intent.Entry, lease string) { _ = os.WriteFile(lease, []byte("garbage\n"), 0o600) }},
+		{"no final newline", true, func(t *testing.T, entry intent.Entry, lease string) {
+			_ = os.WriteFile(lease, []byte(entry.Lease), 0o600)
+		}},
 		{"fifo", true, func(t *testing.T, _ intent.Entry, lease string) {
 			_ = os.Remove(lease)
 			if err := syscall.Mkfifo(lease, 0o600); err != nil {
@@ -333,8 +310,17 @@ func TestRecoverKeepsAnUnprovenLease(t *testing.T) {
 			lease, _ := worktree.LeaseFile(entry.Worktree)
 			tc.set(t, entry, lease)
 			before := worktreeState(t, root, entry)
-			Recover(root, io.Discard)
+			done := make(chan struct{})
+			go func() { Recover(root, io.Discard); close(done) }()
+			select {
+			case <-done:
+			case <-time.After(helperWindow):
+				t.Fatal("the pass never returned")
+			}
 			requireUntouched(t, root, entry, before)
+			if files := memoryFiles(t); len(files) != 0 {
+				t.Fatalf("an unproven lease kept %d memory files, want none", len(files))
+			}
 		})
 	}
 }
@@ -358,9 +344,9 @@ func TestRecoverConcedesAFaultedClaim(t *testing.T) {
 
 // recoveredBeforeTheAct runs a first pass in a helper that exits between its entry write
 // and its act, and returns the entry that pass wrote.
-func recoveredBeforeTheAct(t *testing.T) (string, intent.Entry) {
+func recoveredBeforeTheAct(t *testing.T, dirty bool) (string, intent.Entry) {
 	t.Helper()
-	root, entry := crashedShift(t, true, true)
+	root, entry := crashedShift(t, dirty, true)
 	startHelper(t, root, "recover-act").wait(t)
 	got := ledgerEntry(t, root, entry.Key)
 	if got.Outcome != otelrecord.WorkRecovered || locked(t, root, got.Worktree) {
@@ -369,22 +355,39 @@ func recoveredBeforeTheAct(t *testing.T) (string, intent.Entry) {
 	return root, got
 }
 
-// LE99 and LE101: a second pass finishes an interrupted recovery with one memory file.
+// LE99 and LE101: a second pass finishes an interrupted recovery with one memory file, and
+// its span carries no memory keys. A tree already locked keeps its lock, and a clean tree
+// is released.
 func TestRecoverFinishesAnInterruptedRecovery(t *testing.T) {
-	root, entry := recoveredBeforeTheAct(t)
-	Recover(root, io.Discard)
-	lease, _ := worktree.LeaseFile(entry.Worktree)
-	if _, err := os.Stat(lease); !os.IsNotExist(err) || !locked(t, root, entry.Worktree) {
-		t.Fatalf("worktree %s, want it locked with no lease", worktreeState(t, root, entry))
-	}
-	if files := memoryFiles(t); len(files) != 1 {
-		t.Fatalf("the record holds %d memory files, want 1", len(files))
+	for _, tc := range []struct {
+		name          string
+		dirty, locked bool
+	}{{"dirty", true, false}, {"already locked", true, true}, {"clean", false, false}} {
+		t.Run(tc.name, func(t *testing.T) {
+			root, entry := recoveredBeforeTheAct(t, tc.dirty)
+			if tc.locked {
+				runGitOutput(t, root, "worktree", "lock", entry.Worktree)
+			}
+			Recover(root, io.Discard)
+			lease, _ := worktree.LeaseFile(entry.Worktree)
+			if _, err := os.Stat(lease); !os.IsNotExist(err) || locked(t, root, entry.Worktree) != tc.dirty {
+				t.Fatalf("worktree %s, want no lease and lock %v", worktreeState(t, root, entry), tc.dirty)
+			}
+			if files := memoryFiles(t); len(files) != 1 {
+				t.Fatalf("the record holds %d memory files, want 1", len(files))
+			}
+			if spans := recoverySpans(t, root); len(spans) != 1 {
+				t.Fatalf("the record holds %d recovery spans, want 1", len(spans))
+			} else {
+				requireNoAttr(t, spans[0], otelrecord.AttrMemoryState)
+			}
+		})
 	}
 }
 
 // LE104: a recovered entry whose lease names another dead owner stays unchanged.
 func TestRecoverKeepsARecoveryUnderAnotherLease(t *testing.T) {
-	root, entry := recoveredBeforeTheAct(t)
+	root, entry := recoveredBeforeTheAct(t, true)
 	rewriteLease(t, entry, reapedPID(t))
 	before := worktreeState(t, root, entry)
 	Recover(root, io.Discard)

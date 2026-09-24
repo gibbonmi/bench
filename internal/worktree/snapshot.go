@@ -29,6 +29,9 @@ func RetainAndLock(worktreePath, reason string) error {
 	return nil
 }
 
+// leaseEnd ends every lease line that leaseLine writes.
+const leaseEnd = "\n"
+
 // ClaimRecordedLease takes wt's lease through the pool's takeover protocol when the
 // lease file holds exactly the recorded line. It returns false when the claim concedes.
 func ClaimRecordedLease(wt, recorded string) bool {
@@ -44,13 +47,14 @@ func ClaimRecordedLease(wt, recorded string) bool {
 // one that changes in the takeover gap, concedes.
 func claimRecordedLease(j joins, lease, recorded string) bool {
 	return claimAt(j, lease, currentTime(), func(content []byte, _, _ time.Time) bool {
-		return string(content) == recorded+"\n"
+		return string(content) == recorded+leaseEnd
 	})
 }
 
 // ReadLease grades wt's lease file without a follow. It returns the lease line without
-// its final newline and the line's owner. present is false when the file is absent, and
-// ok is false for a special, unreadable, or malformed file.
+// its final leaseEnd and the line's owner. present is false when the file is absent, and
+// ok is false for a special, unreadable, or malformed file. The policy parse accepts
+// only one line that ends in leaseEnd.
 func ReadLease(wt string) (line string, owner int, present, ok bool) {
 	lease, err := LeaseFile(wt)
 	if err != nil {
@@ -64,5 +68,5 @@ func ReadLease(wt string) (line string, owner int, present, ok bool) {
 		return "", 0, true, false
 	}
 	owner, ok = leaseOwnerPID(read.Data)
-	return strings.TrimSuffix(string(read.Data), "\n"), owner, true, ok
+	return strings.TrimSuffix(string(read.Data), leaseEnd), owner, true, ok
 }

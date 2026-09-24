@@ -16,6 +16,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
@@ -363,4 +364,35 @@ func reapedPID(t *testing.T) int {
 		t.Fatal(err)
 	}
 	return child.Process.Pid
+}
+
+// crashedShift runs a shift in a helper process whose adapter appends MEMMARK to the
+// notes, writes work.txt when dirty, and sleeps. It kills the helper with SIGKILL when
+// kill is set and waits for its exit, so the lease names a reaped owner. It returns the
+// repository root and the open shift entry.
+func crashedShift(t *testing.T, dirty, kill bool) (string, intent.Entry) {
+	t.Helper()
+	root := faultFixtureCore(t, greenGate, nil)
+	script := "echo MEMMARK >> " + notesFile + "\n"
+	if dirty {
+		script += "echo work > work.txt\n"
+	}
+	started := sleepingAgent(t, script)
+	h := startHelper(t, root, "interrupt")
+	waitForFile(t, started)
+	if kill {
+		_ = h.cmd.Process.Kill()
+		h.wait(t)
+	}
+	current, err := intent.Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range current.Entries {
+		if entry.Kind == intent.KindShift && entry.Lease != "" {
+			return root, entry
+		}
+	}
+	t.Fatal("the crashed shift left no leased entry")
+	return "", intent.Entry{}
 }

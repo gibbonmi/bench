@@ -107,7 +107,7 @@ func candidateName(pool string, unixSecs int64, pid, try int) string {
 
 // leaseLine is the bytes an owner writes into its lease at the caller's instant: "<pid> <utc-time>\n".
 func leaseLine(now time.Time) []byte {
-	return []byte(fmt.Sprintf("%d %s\n", os.Getpid(), now.UTC().Format(leaseTimeLayout)))
+	return []byte(fmt.Sprintf("%d %s", os.Getpid(), now.UTC().Format(leaseTimeLayout)) + leaseEnd)
 }
 
 // tryCreate wins a lease only through an atomic O_EXCL create.

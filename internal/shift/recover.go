@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/worktree"
@@ -66,8 +67,7 @@ func judge(entry intent.Entry) verdict {
 	case "":
 	case otelrecord.WorkRecovered:
 		// A recovery that wrote its entry and stopped before its act still holds its lease.
-		line, owner, present, ok := worktree.ReadLease(entry.Worktree)
-		if present && ok && line == entry.Lease && !worktree.PIDAlive(owner) {
+		if _, _, held, gone := leaseProof(entry); held && gone {
 			return resumeRecovery
 		}
 		return keep
@@ -80,16 +80,24 @@ func judge(entry intent.Entry) verdict {
 		}
 		return keep
 	}
-	line, owner, present, ok := worktree.ReadLease(entry.Worktree)
+	present, ok, held, gone := leaseProof(entry)
 	switch {
 	case !present:
 		return abandon
-	case !ok, worktree.PIDAlive(owner):
+	case !ok, !gone:
 		return keep
-	case line != entry.Lease:
+	case !held:
 		return abandon
 	}
 	return recoverShift
+}
+
+// leaseProof grades the lease of entry's worktree. A special, unreadable, or malformed
+// lease is present and not ok. held reports that it holds the entry's recorded line, and
+// gone reports that its owner process is gone.
+func leaseProof(entry intent.Entry) (present, ok, held, gone bool) {
+	line, owner, present, ok := worktree.ReadLease(entry.Worktree)
+	return present, ok, ok && line == entry.Lease, ok && !worktree.PIDAlive(owner)
 }
 
 // abandonEntry closes an entry whose owner is gone. It changes no worktree file, lease,
@@ -129,11 +137,14 @@ func finishRecovery(root string, entry intent.Entry, memory ...attribute.KeyValu
 	cleanup := otelrecord.CleanupReleased
 	if kind == recoveryWorktreeKind {
 		cleanup = otelrecord.CleanupRetained
-		// A worktree that is already locked keeps its lock, and the pass drops its lease.
-		if worktree.RetainAndLock(entry.Worktree, "bench shift recovery") != nil {
+		if lockedTree(root, entry.Worktree) {
+			// A worktree that is already locked keeps its lock, and the pass drops its lease.
 			if lease, err := worktree.LeaseFile(entry.Worktree); err == nil {
 				_ = os.Remove(lease)
 			}
+		} else {
+			// A failed lock keeps the lease, so a later pass resumes the act.
+			_ = worktree.RetainAndLock(entry.Worktree, "bench shift recovery")
 		}
 	} else {
 		cleanupScratch(entry.Worktree)
@@ -144,6 +155,17 @@ func finishRecovery(root string, entry intent.Entry, memory ...attribute.KeyValu
 	}
 	recordRecovery(root, entry.Key, otelrecord.WorkRecovered, cleanup, memory...)
 	return true
+}
+
+// lockedTree reports whether git lists wt as a locked worktree of root.
+func lockedTree(root, wt string) bool {
+	listed, _ := git.Worktrees(root)
+	for _, tree := range listed {
+		if tree.Path == wt {
+			return tree.Locked
+		}
+	}
+	return false
 }
 
 // recordRecovery writes one shift.recovery span for a verdict on the entry key.
