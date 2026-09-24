@@ -121,34 +121,37 @@ func (r *shiftRecord) endPass() {
 // notesFile is the notes scratch file each adapter reads and appends.
 const notesFile = ".bench-notes.md"
 
-// retainNotes keeps the notes in wt as one memory file of the record, once per shift, and
-// records the memory state on the shift span. It reads the notes without following a link
-// and under the control-record bound, so a link, a special file, or an oversized file is
-// refused. A failed store write changes only the memory state.
+// retainNotes keeps the notes in wt once per shift and records the memory state on the
+// shift span.
 func (r *shiftRecord) retainNotes(wt string) {
 	if r == nil || r.notesKept {
 		return
 	}
 	r.notesKept = true
+	r.span.SetAttributes(keepNotes(r.root, wt, r.span.SpanContext().TraceID().String())...)
+}
+
+// keepNotes keeps the notes in wt as one memory file of root's record named for id, and
+// returns the memory attributes. It reads the notes without following a link and under
+// the control-record bound, so a link, a special file, or an oversized file is refused. A
+// failed store write changes only the memory state.
+func keepNotes(root, wt, id string) []attribute.KeyValue {
 	notes := bounds.ClassifyNoFollow(filepath.Join(wt, notesFile))
 	switch notes.State {
 	case bounds.StateAbsent:
-		r.span.SetAttributes(attribute.String(otelrecord.AttrMemoryState, otelrecord.MemoryAbsent))
-		return
+		return []attribute.KeyValue{attribute.String(otelrecord.AttrMemoryState, otelrecord.MemoryAbsent)}
 	case bounds.StateEmpty, bounds.StateParsed:
 	default:
-		r.span.SetAttributes(attribute.String(otelrecord.AttrMemoryState, otelrecord.MemoryRefused))
-		return
+		return []attribute.KeyValue{attribute.String(otelrecord.AttrMemoryState, otelrecord.MemoryRefused)}
 	}
-	digest, err := otelrecord.RetainMemory("", r.root, r.span.SpanContext().TraceID().String(), notes.Data)
+	digest, err := otelrecord.RetainMemory("", root, id, notes.Data)
 	if err != nil {
-		r.span.SetAttributes(attribute.String(otelrecord.AttrMemoryState, otelrecord.MemoryFailed))
-		return
+		return []attribute.KeyValue{attribute.String(otelrecord.AttrMemoryState, otelrecord.MemoryFailed)}
 	}
-	r.span.SetAttributes(
+	return []attribute.KeyValue{
 		attribute.String(otelrecord.AttrMemoryState, otelrecord.MemoryRetained),
 		attribute.Int(otelrecord.AttrMemoryBytes, len(notes.Data)),
-		attribute.String(otelrecord.AttrMemoryDigest, digest))
+		attribute.String(otelrecord.AttrMemoryDigest, digest)}
 }
 
 // finish ends the open pass and then the shift span, with the shift's result: its

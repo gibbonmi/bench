@@ -1,10 +1,13 @@
 package worktree
 
 import (
-	"github.com/gibbonmi/bench/internal/git"
+	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/git"
 )
 
 // mustAcquire leases a fresh linked pool worktree from root. It matches the
@@ -74,5 +77,62 @@ func TestRetainAndLockLocksDropsLeaseAndPreservesDirt(t *testing.T) {
 	}
 	if string(got) != "keep me\n" {
 		t.Errorf("dirty file content = %q, want %q", got, "keep me\n")
+	}
+}
+
+// recordedLeaseFile writes a lease that holds recorded and returns its path.
+func recordedLeaseFile(t *testing.T, recorded string) string {
+	t.Helper()
+	lease := filepath.Join(t.TempDir(), "bench-lease")
+	if err := os.WriteFile(lease, []byte(recorded+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return lease
+}
+
+// The identity claim takes a lease that holds the recorded line, and the lease then names
+// this process.
+func TestClaimRecordedLeaseTakesTheRecordedLine(t *testing.T) {
+	t.Parallel()
+	recorded := "4242 2026-07-05T00:00:00Z"
+	lease := recordedLeaseFile(t, recorded)
+	if !claimRecordedLease(defaultJoins(), lease, recorded) {
+		t.Fatal("the claim of the recorded line conceded")
+	}
+	if got, _ := os.ReadFile(lease); !bytes.HasPrefix(got, []byte(fmt.Sprintf("%d ", os.Getpid()))) {
+		t.Fatalf("lease = %q, want this process as the owner", got)
+	}
+}
+
+// The identity claim refuses a lease that holds another line, and the lease stays.
+func TestClaimRecordedLeaseRefusesAnotherLine(t *testing.T) {
+	t.Parallel()
+	lease := recordedLeaseFile(t, "4343 2026-07-05T00:00:01Z")
+	if claimRecordedLease(defaultJoins(), lease, "4242 2026-07-05T00:00:00Z") {
+		t.Fatal("the claim took a lease that holds another line")
+	}
+	if got, _ := os.ReadFile(lease); string(got) != "4343 2026-07-05T00:00:01Z\n" {
+		t.Fatalf("lease = %q, want the other line unchanged", got)
+	}
+}
+
+// LE97: a writer that replaces the lease in the takeover gap keeps it, and the identity
+// claim concedes.
+func TestClaimRecordedLeaseConcedesToAWriterInTheGap(t *testing.T) {
+	t.Parallel()
+	recorded := "4242 2026-07-05T00:00:00Z"
+	lease := recordedLeaseFile(t, recorded)
+	other := []byte("4343 2026-07-05T00:00:01Z\n")
+	j := defaultJoins()
+	j.claimTakeoverGap = func(path string) {
+		if err := os.WriteFile(path, other, 0o600); err != nil {
+			t.Error(err)
+		}
+	}
+	if claimRecordedLease(j, lease, recorded) {
+		t.Fatal("the claim won over a writer in the takeover gap")
+	}
+	if got, _ := os.ReadFile(lease); !bytes.Equal(got, other) {
+		t.Fatalf("lease = %q, want the other writer's lease %q", got, other)
 	}
 }

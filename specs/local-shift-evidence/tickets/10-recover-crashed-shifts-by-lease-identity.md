@@ -1,7 +1,7 @@
 # 10. Recover crashed shifts by lease identity
 
 Blocked by: 7-retain-the-shift-memory.md, 8-complete-the-shift-intent-on-exit.md, 9-abandon-lease-less-stale-intent.md
-Writes: internal/shift/recover.go (new), internal/shift/recover_test.go (new), internal/shift/fault.go, internal/worktree/snapshot.go, internal/worktree/snapshot_test.go, internal/worktree/lifecycle.go, internal/worktree/subshell.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/shift/recover.go (new), internal/shift/recover_test.go (new), internal/shift/fault.go, internal/shift/fault_test.go, internal/shift/record.go, internal/shift/record_test.go, internal/shift/pass_test.go, internal/shift/loop.go, internal/worktree/snapshot.go, internal/worktree/snapshot_test.go, internal/worktree/lifecycle.go, internal/worktree/lifecycle_test.go, internal/worktree/subshell.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: LE64, LE65, LE91, LE105, LE66, LE67, LE68, LE69, LE70, LE89, LE103, LE71, LE75, LE90, LE97, LE98, LE99, LE101, LE100, LE104
 
 ## What to build

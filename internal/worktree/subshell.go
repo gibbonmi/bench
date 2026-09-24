@@ -61,7 +61,7 @@ func subshellAt(root, home, shell string, environ []string, args []string, stdin
 		return 1
 	}
 	lease, err := LeaseFile(creation.Path)
-	if err != nil || !claimAt(defaultJoins(), lease, currentTime()) {
+	if err != nil || !claimAt(defaultJoins(), lease, currentTime(), staleLease) {
 		fmt.Fprintln(stderr, "bench worktree shell: cannot claim worktree lease")
 		return ReleaseCommand(root, home, []string{"--request", request, creation.Path}, io.Discard, stderr)
 	}

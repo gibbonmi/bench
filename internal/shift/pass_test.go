@@ -4,18 +4,13 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
-	"syscall"
 	"testing"
-	"time"
 
-	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 )
@@ -166,55 +161,18 @@ func TestTheAdapterReceivesThePassHandoff(t *testing.T) {
 	}
 }
 
-// helperRoleEnv selects the role of a re-executed test binary.
-const helperRoleEnv = "BENCH_SHIFT_HELPER_ROLE"
-
-// TestShiftHelperProcess is the re-exec target of the interrupt tests. In the interrupt
-// role it runs one shift in its working directory and exits with the shift's code, so the
-// checkpoint's os.Exit ends a real process. Without the role it does nothing.
-func TestShiftHelperProcess(t *testing.T) {
-	if os.Getenv(helperRoleEnv) != "interrupt" {
-		return
-	}
-	os.Exit(Loop("interrupted shift", io.Discard, io.Discard))
-}
-
 // interruptedShift runs a shift in a helper process and sends it SIGINT while its adapter
 // runs. It returns the shift span, every span, and the raw record.
 func interruptedShift(t *testing.T) (otelrecord.Span, []otelrecord.Span, []byte) {
 	t.Helper()
 	root := faultFixtureCore(t, greenGate, nil)
-	started := filepath.Join(t.TempDir(), "started")
-	window := bounds.TestDeadline(0)
-	// The adapter outlasts the window, so a shift that waits for it instead of stopping it reds.
-	withAgent(t, fmt.Sprintf("touch '%s'\nexec sleep %d\n", started, 2*int(window/time.Second)))
-	cmd := exec.Command(os.Args[0], "-test.run=^TestShiftHelperProcess$")
-	cmd.Dir = root
-	cmd.Env = append(os.Environ(), helperRoleEnv+"=interrupt")
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	if err := cmd.Start(); err != nil {
+	started := sleepingAgent(t, "")
+	h := startHelper(t, root, "interrupt")
+	waitForFile(t, started)
+	if err := h.cmd.Process.Signal(os.Interrupt); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) })
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
-	for deadline := time.Now().Add(window); ; time.Sleep(20 * time.Millisecond) {
-		if _, err := os.Stat(started); err == nil {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("the adapter never started")
-		}
-	}
-	if err := cmd.Process.Signal(os.Interrupt); err != nil {
-		t.Fatal(err)
-	}
-	select {
-	case <-done:
-	case <-time.After(window):
-		t.Fatal("the interrupted shift never exited")
-	}
-	if code := cmd.ProcessState.ExitCode(); code != exitCodes[OutcomeInterrupted] {
+	if code := h.wait(t); code != exitCodes[OutcomeInterrupted] {
 		t.Fatalf("the interrupted shift exited %d, want %d", code, exitCodes[OutcomeInterrupted])
 	}
 	return recordedShift(t)

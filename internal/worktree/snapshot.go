@@ -6,6 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // RetainAndLock is the preservation path a shift takes when its charged worktree is
@@ -24,4 +27,42 @@ func RetainAndLock(worktreePath, reason string) error {
 		return fmt.Errorf("drop lease for retention: %w", err)
 	}
 	return nil
+}
+
+// ClaimRecordedLease takes wt's lease through the pool's takeover protocol when the
+// lease file holds exactly the recorded line. It returns false when the claim concedes.
+func ClaimRecordedLease(wt, recorded string) bool {
+	lease, err := LeaseFile(wt)
+	if err != nil {
+		return false
+	}
+	return claimRecordedLease(defaultJoins(), lease, recorded)
+}
+
+// claimRecordedLease is ClaimRecordedLease on a lease path with the seam set given.
+// The recorded line is the one accepted judgment, so a lease another writer holds, or
+// one that changes in the takeover gap, concedes.
+func claimRecordedLease(j joins, lease, recorded string) bool {
+	return claimAt(j, lease, currentTime(), func(content []byte, _, _ time.Time) bool {
+		return string(content) == recorded+"\n"
+	})
+}
+
+// ReadLease grades wt's lease file without a follow. It returns the lease line without
+// its final newline and the line's owner. present is false when the file is absent, and
+// ok is false for a special, unreadable, or malformed file.
+func ReadLease(wt string) (line string, owner int, present, ok bool) {
+	lease, err := LeaseFile(wt)
+	if err != nil {
+		return "", 0, false, false
+	}
+	read := bounds.ClassifyNoFollow(lease)
+	if read.State == bounds.StateAbsent {
+		return "", 0, false, false
+	}
+	if read.State != bounds.StateParsed {
+		return "", 0, true, false
+	}
+	owner, ok = leaseOwnerPID(read.Data)
+	return strings.TrimSuffix(string(read.Data), "\n"), owner, true, ok
 }

@@ -338,7 +338,7 @@ func TestAShiftRecordsItsLease(t *testing.T) {
 		t.Fatal(err)
 	}
 	entry, ok := shiftIntent(t, span.Attributes[otelrecord.AttrIntentKey])
-	if !ok || entry.Lease == "" || entry.Lease != strings.TrimSpace(string(written)) {
+	if !ok || entry.Lease == "" || entry.Lease+"\n" != string(written) {
 		t.Fatalf("intent lease = %q (live %v), want the acquired lease line %q", entry.Lease, ok, written)
 	}
 }

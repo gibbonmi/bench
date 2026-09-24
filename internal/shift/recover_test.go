@@ -6,11 +6,14 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/otelrecord"
+	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 // deadOwner is a process id above every kernel's pid_max, so no process owns it.
@@ -144,4 +147,246 @@ func TestAShiftRecoversBeforeItsAcquire(t *testing.T) {
 	if got := ledgerEntry(t, root, entry.Key).Outcome; got != otelrecord.WorkAbandoned {
 		t.Fatalf("outcome = %q, want %q", got, otelrecord.WorkAbandoned)
 	}
+}
+
+// crashedShift runs a shift in a helper process whose adapter appends MEMMARK to the
+// notes, writes work.txt when dirty, and sleeps. It kills the helper with SIGKILL when
+// kill is set and waits for its exit, so the lease names a reaped owner. It returns the
+// repository root and the open shift entry.
+func crashedShift(t *testing.T, dirty, kill bool) (string, intent.Entry) {
+	t.Helper()
+	root := faultFixtureCore(t, greenGate, nil)
+	script := "echo MEMMARK >> " + notesFile + "\n"
+	if dirty {
+		script += "echo work > work.txt\n"
+	}
+	started := sleepingAgent(t, script)
+	h := startHelper(t, root, "interrupt")
+	waitForFile(t, started)
+	if kill {
+		_ = h.cmd.Process.Kill()
+		h.wait(t)
+	}
+	current, err := intent.Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range current.Entries {
+		if entry.Kind == intent.KindShift && entry.Lease != "" {
+			return root, entry
+		}
+	}
+	t.Fatal("the crashed shift left no leased entry")
+	return "", intent.Entry{}
+}
+
+// worktreeState is what a pass must leave unchanged: the lease bytes, the dirty file,
+// and the lock state of the entry's worktree.
+func worktreeState(t *testing.T, root string, entry intent.Entry) string {
+	t.Helper()
+	lease, _ := worktree.LeaseFile(entry.Worktree)
+	// Only a regular lease is read, so a FIFO lease never blocks the comparison.
+	leaseBytes := []byte("special")
+	if info, err := os.Lstat(lease); err == nil && info.Mode().IsRegular() {
+		leaseBytes, _ = os.ReadFile(lease)
+	}
+	work, _ := os.ReadFile(filepath.Join(entry.Worktree, "work.txt"))
+	return fmt.Sprintf("lease %q, work %q, locked %v", leaseBytes, work, locked(t, root, entry.Worktree))
+}
+
+// locked reports whether git lists wt as locked.
+func locked(t *testing.T, root, wt string) bool {
+	t.Helper()
+	listing := runGitOutput(t, root, "worktree", "list", "--porcelain")
+	block, _, _ := strings.Cut(listing[strings.Index(listing, "worktree "+wt):], "\n\n")
+	return strings.Contains(block, "\nlocked")
+}
+
+// rewriteLease replaces the lease owner of entry's worktree with pid.
+func rewriteLease(t *testing.T, entry intent.Entry, pid int) {
+	t.Helper()
+	lease, _ := worktree.LeaseFile(entry.Worktree)
+	_, stamp, _ := strings.Cut(entry.Lease, " ")
+	if err := os.WriteFile(lease, []byte(fmt.Sprintf("%d %s\n", pid, stamp)), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// requireUntouched fails when the pass changed the entry or its worktree, or recorded.
+func requireUntouched(t *testing.T, root string, entry intent.Entry, before string) {
+	t.Helper()
+	if got := ledgerEntry(t, root, entry.Key); got != entry {
+		t.Fatalf("entry = %+v, want %+v", got, entry)
+	}
+	if after := worktreeState(t, root, entry); after != before {
+		t.Fatalf("worktree %s, want %s", after, before)
+	}
+	if spans := recoverySpans(t, root); len(spans) != 0 {
+		t.Fatalf("the record holds %d recovery spans, want none", len(spans))
+	}
+}
+
+// LE64, LE65, LE91, LE66, LE67, and LE100: a killed dirty shift is recovered, and a
+// second pass changes nothing.
+func TestRecoverRecoversAKilledDirtyShift(t *testing.T) {
+	root, entry := crashedShift(t, true, true)
+	Recover(root, io.Discard)
+	spans := recoverySpans(t, root)
+	if len(spans) != 1 {
+		t.Fatalf("the record holds %d recovery spans, want 1", len(spans))
+	}
+	requireAttr(t, spans[0], otelrecord.AttrWorkState, otelrecord.WorkRecovered)
+	requireAttr(t, spans[0], otelrecord.AttrIntentKey, entry.Key)
+	got := ledgerEntry(t, root, entry.Key)
+	if got.Outcome != otelrecord.WorkRecovered || !strings.HasPrefix(got.Recovery, recoveryWorktreeKind+":") {
+		t.Fatalf("entry = %+v, want recovered with a worktree pointer", got)
+	}
+	if _, live := shiftIntent(t, entry.Key); !live {
+		t.Fatal("the recovered dirty entry is not live")
+	}
+	if files := memoryFiles(t); len(files) != 1 || string(files[0]) != "MEMMARK\n" {
+		t.Fatalf("memory files = %q, want the crashed notes", files)
+	}
+	if !locked(t, root, entry.Worktree) || !strings.Contains(worktreeState(t, root, entry), `work "work\n"`) {
+		t.Fatalf("worktree %s, want it locked with its dirty file", worktreeState(t, root, entry))
+	}
+	before := worktreeState(t, root, got)
+	Recover(root, io.Discard)
+	if after := worktreeState(t, root, got); after != before || ledgerEntry(t, root, entry.Key) != got || len(recoverySpans(t, root)) != 1 || len(memoryFiles(t)) != 1 {
+		t.Fatalf("a second pass changed the finished recovery: %s", after)
+	}
+}
+
+// LE68: a killed shift with only scratch files is released.
+func TestRecoverReleasesAKilledCleanShift(t *testing.T) {
+	root, entry := crashedShift(t, false, true)
+	Recover(root, io.Discard)
+	lease, _ := worktree.LeaseFile(entry.Worktree)
+	for _, path := range []string{lease, filepath.Join(entry.Worktree, notesFile)} {
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			t.Fatalf("%s survived the release: %v", path, err)
+		}
+	}
+	if spans := recoverySpans(t, root); len(spans) != 1 {
+		t.Fatalf("the record holds %d recovery spans, want 1", len(spans))
+	} else {
+		requireAttr(t, spans[0], otelrecord.AttrCleanup, otelrecord.CleanupReleased)
+	}
+}
+
+// LE69 and LE70: another identity with a dead owner abandons the entry and touches nothing.
+func TestRecoverAbandonsAnotherDeadIdentity(t *testing.T) {
+	root, entry := crashedShift(t, true, true)
+	rewriteLease(t, entry, reapedPID(t))
+	before := worktreeState(t, root, entry)
+	Recover(root, io.Discard)
+	if got := ledgerEntry(t, root, entry.Key).Outcome; got != otelrecord.WorkAbandoned {
+		t.Fatalf("outcome = %q, want abandoned", got)
+	}
+	if spans := recoverySpans(t, root); len(spans) != 1 {
+		t.Fatalf("the record holds %d recovery spans, want 1", len(spans))
+	} else {
+		requireAttr(t, spans[0], otelrecord.AttrWorkState, otelrecord.WorkAbandoned)
+	}
+	if after := worktreeState(t, root, entry); after != before {
+		t.Fatalf("worktree %s, want %s", after, before)
+	}
+}
+
+// LE89: an absent lease abandons the entry and leaves every worktree file.
+func TestRecoverAbandonsAnAbsentLease(t *testing.T) {
+	root, entry := crashedShift(t, true, true)
+	lease, _ := worktree.LeaseFile(entry.Worktree)
+	if err := os.Remove(lease); err != nil {
+		t.Fatal(err)
+	}
+	before := worktreeState(t, root, entry)
+	Recover(root, io.Discard)
+	if got := ledgerEntry(t, root, entry.Key).Outcome; got != otelrecord.WorkAbandoned {
+		t.Fatalf("outcome = %q, want abandoned", got)
+	}
+	if after := worktreeState(t, root, entry); after != before {
+		t.Fatalf("worktree %s, want %s", after, before)
+	}
+}
+
+// LE103, LE71, LE75, and LE90: a live owner, a live helper, and a malformed or special
+// lease leave the entry and its worktree unchanged.
+func TestRecoverKeepsAnUnprovenLease(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		kill bool
+		set  func(t *testing.T, entry intent.Entry, lease string)
+	}{
+		{"live other owner", true, func(t *testing.T, entry intent.Entry, _ string) { rewriteLease(t, entry, os.Getpid()) }},
+		{"live helper", false, func(*testing.T, intent.Entry, string) {}},
+		{"malformed", true, func(t *testing.T, _ intent.Entry, lease string) { _ = os.WriteFile(lease, []byte("garbage\n"), 0o600) }},
+		{"fifo", true, func(t *testing.T, _ intent.Entry, lease string) {
+			_ = os.Remove(lease)
+			if err := syscall.Mkfifo(lease, 0o600); err != nil {
+				t.Fatal(err)
+			}
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root, entry := crashedShift(t, true, tc.kill)
+			lease, _ := worktree.LeaseFile(entry.Worktree)
+			tc.set(t, entry, lease)
+			before := worktreeState(t, root, entry)
+			Recover(root, io.Discard)
+			requireUntouched(t, root, entry, before)
+		})
+	}
+}
+
+// LE98 and LE105: a conceded claim changes nothing, and the notes are already kept.
+func TestRecoverConcedesAFaultedClaim(t *testing.T) {
+	root, entry := crashedShift(t, true, true)
+	armFault(t, func(step shiftStep) error {
+		if step == stepRecoveryClaim {
+			return fmt.Errorf("injected claim loss")
+		}
+		return nil
+	})
+	before := worktreeState(t, root, entry)
+	Recover(root, io.Discard)
+	requireUntouched(t, root, entry, before)
+	if files := memoryFiles(t); len(files) != 1 || string(files[0]) != "MEMMARK\n" {
+		t.Fatalf("memory files = %q, want the crashed notes", files)
+	}
+}
+
+// recoveredBeforeTheAct runs a first pass in a helper that exits between its entry write
+// and its act, and returns the entry that pass wrote.
+func recoveredBeforeTheAct(t *testing.T) (string, intent.Entry) {
+	t.Helper()
+	root, entry := crashedShift(t, true, true)
+	startHelper(t, root, "recover-act").wait(t)
+	got := ledgerEntry(t, root, entry.Key)
+	if got.Outcome != otelrecord.WorkRecovered || locked(t, root, got.Worktree) {
+		t.Fatalf("entry = %+v, want recovered before the act", got)
+	}
+	return root, got
+}
+
+// LE99 and LE101: a second pass finishes an interrupted recovery with one memory file.
+func TestRecoverFinishesAnInterruptedRecovery(t *testing.T) {
+	root, entry := recoveredBeforeTheAct(t)
+	Recover(root, io.Discard)
+	lease, _ := worktree.LeaseFile(entry.Worktree)
+	if _, err := os.Stat(lease); !os.IsNotExist(err) || !locked(t, root, entry.Worktree) {
+		t.Fatalf("worktree %s, want it locked with no lease", worktreeState(t, root, entry))
+	}
+	if files := memoryFiles(t); len(files) != 1 {
+		t.Fatalf("the record holds %d memory files, want 1", len(files))
+	}
+}
+
+// LE104: a recovered entry whose lease names another dead owner stays unchanged.
+func TestRecoverKeepsARecoveryUnderAnotherLease(t *testing.T) {
+	root, entry := recoveredBeforeTheAct(t)
+	rewriteLease(t, entry, reapedPID(t))
+	before := worktreeState(t, root, entry)
+	Recover(root, io.Discard)
+	requireUntouched(t, root, entry, before)
 }
