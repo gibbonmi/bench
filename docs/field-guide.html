@@ -1115,7 +1115,7 @@
                   top-level <code>decisions/</code> for pre-spec decision work. Its entry contract owns
                   the narrow same-session recording
                   exception. The spec stops for your sign-off, tickets are sliced and approved in
-                  that context, then one implementation session retains authorship through the build. The target is locked before the loop starts, so the loop can't
+                  that context, then each ticket gets its own fresh author session in the build. The target is locked before the loop starts, so the loop can't
                   renegotiate it.</p>
                 </div>
               </div></div>
@@ -1137,9 +1137,9 @@
                 </div>
                 <div class="solution">
                   <div class="label">How it works</div>
-                  <p>One implementation session retains authorship through the approved ticket graph and its chunk reviews. Starting from the approved spec and ticket breakdown, the agent works dependency-ordered tickets on one retained integration source. Focused seam checks drive iteration; each ticket commits green there. Standards, Spec, and Coverage review each coherent chunk before its successor starts. After the last chunk, the author reconciles acceptance and integration before <code>bench worktree land</code> composes and gates the source on the destination. The acceptance coverage map keeps the
+                  <p>Each ticket gets a fresh author session under a narrow charge. Starting from the approved spec and ticket breakdown, the authors work dependency-ordered tickets on one retained integration source. Focused seam checks drive iteration; each ticket commits green there. Standards, Spec, and Coverage review each coherent chunk before its successor starts, and a fresh repair author takes each accepted finding. After the last chunk, the orchestrator reconciles acceptance and integration before <code>bench worktree land</code> composes and gates the source on the destination. The acceptance coverage map keeps the
                   target fixed. A build that stalls exits early with an honest report instead of
-                  grinding past its cap. You can opt one full run into delegated authorship; that run gives each ticket its own author and keeps the same chunk reviews, integration order, and landing.</p>
+                  grinding past its cap. You can opt one full run into delegated authorship; that run adds concurrent authors and the full tier range, and it keeps the same chunk reviews, integration order, and landing.</p>
                 </div>
               </div></div>
             </details>

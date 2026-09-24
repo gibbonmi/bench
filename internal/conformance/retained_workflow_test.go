@@ -60,7 +60,6 @@ func checkRetainedWorkflow(root string) []string {
 		"retained workflow: operating guide dropped diagnostic-only consultation boundary",
 		"retained workflow: implementation phase dropped the authorship policy reference",
 		"retained workflow: drain restored delegated batch authorship",
-		"retained workflow: field guide dropped retained chunk review",
 		"retained workflow: craft-spec dropped the canonical plan-expansion owner",
 		"retained workflow: operating guide dropped changed-chunk identity mapping",
 		"retained workflow: operating guide dropped plan-update timing or preserved guarantees",
@@ -142,10 +141,6 @@ func checkRetainedWorkflow(root string) []string {
 		"retained workflow: drain restored delegated batch authorship": {
 			file:   ".agents/commands/bench-drain.md",
 			needle: "If tracked changes remain, the retained drain session authors the complete tracked batch.",
-		},
-		"retained workflow: field guide dropped retained chunk review": {
-			file:   "docs/field-guide.html",
-			needle: "One implementation session retains authorship through the approved ticket graph and its chunk reviews.",
 		},
 		"retained workflow: craft-spec dropped the canonical plan-expansion owner": {
 			file:    ".agents/skills/bench-craft-spec/SKILL.md",

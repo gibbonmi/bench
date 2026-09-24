@@ -6,7 +6,7 @@ package anchors
 var retainedWorkflowAnchors = append(append([]Anchor{}, defaultWorkflowAnchors...), delegatedWorkflowAnchors...)
 
 // defaultWorkflowAnchors keep plan expansion within the approved behavior while
-// allowing the retained author to update the plan before new evidence is used.
+// allowing the orchestrator to update the plan before new evidence is used.
 var defaultWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: RequireInSection, Section: "Slicing a build for delegates", Needle: "During a build, `.bench/BENCH.md` owns approved in-scope plan expansion.", Diagnostic: "retained workflow: craft-spec dropped the canonical plan-expansion owner"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "When chunk boundaries change, record old-to-new stable IDs.", Diagnostic: "retained workflow: operating guide dropped changed-chunk identity mapping"},
@@ -35,6 +35,7 @@ var delegatedWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: RequireInSection, Section: "Retained implementation continuation", Needle: "The continuation rules below govern the pre-review work of each ticket author", Diagnostic: "fresh ticket author: craft-line dropped the continuation rules for each ticket author"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "Outside `--delegate`, a tier move of a fresh ticket author asks the reviewer first.", Diagnostic: "fresh ticket author: craft-line dropped the reviewer stop before a tier move of a fresh author"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-tickets/SKILL.md", Kind: Require, Needle: "Spec-backed builds work the unblocked frontier with one fresh author for each ticket.", Diagnostic: "fresh ticket author: craft-tickets dropped the frontier with one fresh author for each ticket"},
+	{Group: AfterImplementSpec, File: "README.md", Kind: Require, Needle: "Each ticket gets a fresh author session.", Diagnostic: "fresh ticket author: README dropped the fresh author session for each ticket"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Forbid, Needle: "Production repairs stay with the recorded ticket author.", Diagnostic: "fresh ticket author: operating guide restored the ticket-author repair ownership"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: "the plan amendment declares version 2 with a delegate execution block. The amendment splits each chunk verification into one verification for each ticket.", Diagnostic: "fresh ticket author: reference dropped the version 2 plan amendment or its verification for each ticket"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "`--delegate` authorizes selection and eligible escalation through every configured tier, including top.", Diagnostic: "retained workflow: craft-line dropped the delegated tier authorization"},

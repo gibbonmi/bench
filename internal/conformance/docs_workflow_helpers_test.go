@@ -100,7 +100,7 @@ func checkReviewConvergenceContract(implementSpec, reviewImplementation string) 
 		"current repair coverage closes those predicates",
 		"repeat delegated review only for a later semantic delta or a cross-chunk concern that invalidates prior evidence",
 		"the successor chunk starts only after findings and repair coverage close",
-		"after the last chunk, the retained author reconciles overall acceptance and integration before landing",
+		"after the last chunk, the orchestrator reconciles overall acceptance and integration before landing",
 	}
 	for _, requirement := range reviewRequirements {
 		if !strings.Contains(reviewImplementation, requirement) {
@@ -521,7 +521,7 @@ func checkIntegrationSourceWorkflowCurrency(root string) []string {
 
 func TestIntegrationSourceWorkflowAnchorsBiteIndependently(t *testing.T) {
 	workflowAnchors := integrationSourceWorkflowAnchors()
-	if got, want := len(workflowAnchors), 10; got != want {
+	if got, want := len(workflowAnchors), 9; got != want {
 		t.Fatalf("integration-source workflow anchor count = %d, want %d", got, want)
 	}
 	runAnchorBites(t, workflowAnchors, func(anchor anchors.Anchor) string { return anchor.File })
