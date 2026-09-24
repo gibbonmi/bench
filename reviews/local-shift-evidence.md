@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A is accepted. LE-B1 is committed, and its review of the three axes is pending.
+Status: LE-A is accepted. The LE-B1 review returned 5 findings; repair cycle 1 is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -166,6 +166,31 @@ The frozen pair is `e5f755fd..77781047`. The two planned checks passed at the ch
 | LE34 | `TestARetainedShiftRecordHoldsNoHomePath` | Write the full recovery path: bit. |
 | LE35 | `TestAGreenShiftRecordsReleasedCleanup` | Pre-edit red. |
 | LE36 | `TestARetainedShiftRecordsRetainedCleanup` | Omit the retained arm: bit. |
+
+## LE-B1 review round 1
+
+Three fresh axes graded the frozen pair `e5f755fd..f86965d1` with the code tip `77781047`. Each axis read the manifest, confirmed the current binding, and read the code delta. Raw findings: 5. Repair targets after de-duplication: 5.
+
+### Standards
+
+Findings: 2. Worst issue: LEB1-S1, a second parser of the recovery pointer.
+
+- LEB1-S1 (auto-fix, confidence 6): `record.go` splits the recovery pointer twice, apart from its constructor `recoveryWorktree` in `internal/shift/result.go`. Rule: `AGENTS.md`, one source per fact.
+- LEB1-S2 (auto-fix, confidence 4): `record_test.go` spells the encoded seam attribute and the record key as text, not from the `otelrecord` constants. Rule: `AGENTS.md`, independent test expectations.
+
+### Spec
+
+Findings: 1. Worst issue: LEB1-P1.
+
+- LEB1-P1 (auto-fix, confidence 8): a shift with no recovery pointer writes no `bench.recovery.kind`, but the spec names the kinds `none` and `worktree` (`internal/shift/record.go`). No row tests the `none` kind.
+
+### Coverage
+
+Findings: 3. Worst issue: LEB1-C1.
+
+- LEB1-C1 (auto-fix, confidence 8): no test drives the teardown-failure exit, so a mutation that reads a failed release as released stays green (`internal/shift/record.go`, `internal/shift/session.go`).
+- LEB1-C2 (auto-fix, confidence 8): no test drives the acquire-failure exit, so a span that starts after `worktree.Acquire` stays green (`internal/shift/loop.go`). A test can plant a file at the pool path.
+- LEB1-C3 (no-op, confidence 5): a failed `RetainAndLock` still records `retained`. The worktree stays at its path and is not released, so `retained` is true; the lock failure reaches stderr.
 
 ```bench-review-record
 {
@@ -840,7 +865,77 @@ The frozen pair is `e5f755fd..77781047`. The two planned checks passed at the ch
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "LE-B1-review-standards-1",
+          "performer": "claude-code:subagent:a3358b013bfaf0871",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2fb40acbe145e50437945d87e796ca362942b349",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a3358b013bfaf0871, evidence sha256:3e29c33176d620782613083116fa875ec7b19c948bf04648c84a1288933ea3ac",
+            "digest": "sha256:cb127b094ec1fa1e32ad07c9473bfe43fddbab87d06f318177eb19f13ebefc13",
+            "excerpt": "Verdict: the Standards axis passes with 2 findings. Neither is a hard violation, and both are small auto-fixes. Worst issue: the recovery-pointer format is derived in three places."
+          },
+          "axis": "Standards",
+          "base": "e5f755fdd4e4029dca72b18cf1d50e00f50cce26",
+          "tip": "7778104776eb7572923b43b7f71f78c1791d8513",
+          "finding_ids": [
+            "LEB1-S1",
+            "LEB1-S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "LE-B1-review-spec-1",
+          "performer": "claude-code:subagent:a09a1e63cf8adcc85",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2fb40acbe145e50437945d87e796ca362942b349",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a09a1e63cf8adcc85, evidence sha256:3e29c33176d620782613083116fa875ec7b19c948bf04648c84a1288933ea3ac",
+            "digest": "sha256:cb0d908b3b1691a46b619fff0adb1f5fb7fb741c27e65d1683ac630f76ac1b5c",
+            "excerpt": "Verdict: the delta mostly passes, with one spec deviation. Finding count: 1 (plus 1 advisory note). Worst issue: a shift that keeps no worktree writes no `bench.recovery.kind` at all."
+          },
+          "axis": "Spec",
+          "base": "e5f755fdd4e4029dca72b18cf1d50e00f50cce26",
+          "tip": "7778104776eb7572923b43b7f71f78c1791d8513",
+          "finding_ids": [
+            "LEB1-P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "LE-B1-review-coverage-1",
+          "performer": "claude-code:subagent:a6e28338e5532250e",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2fb40acbe145e50437945d87e796ca362942b349",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a6e28338e5532250e, evidence sha256:3e29c33176d620782613083116fa875ec7b19c948bf04648c84a1288933ea3ac",
+            "digest": "sha256:7b9666b1467c9c1746d0928de686c3af7427be0c48d99e7778ebe82b37994a95",
+            "excerpt": "Verdict: all 15 rows (LE22-LE36) hold. Each named mutation turns its test red. I found 3 gaps outside the rows. Worst issue: no test drives the teardown-failure path, so the path's cleanup word is not guarded."
+          },
+          "axis": "Coverage",
+          "base": "e5f755fdd4e4029dca72b18cf1d50e00f50cce26",
+          "tip": "7778104776eb7572923b43b7f71f78c1791d8513",
+          "finding_ids": [
+            "LEB1-C1",
+            "LEB1-C2",
+            "LEB1-C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
