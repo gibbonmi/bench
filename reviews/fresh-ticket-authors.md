@@ -351,3 +351,49 @@ Each probe reported one failure and restored the file.
 | `bench test --check guidance-prose-budgets` | 0 | pass, 0 failures, 0 skips |
 | `bench gate-prose . -- .agents/skills/bench-craft-delegate/references/delegation-discipline.md` | 0 | pass |
 | `go vet ./...` | 0 | no output |
+
+## FA ticket 3 repair evidence
+
+The fresh repair session `claude:bench-writer/fta-t3-repair` ran on opus at high effort with a cap of 3 attempts. It started from tip `32285a56f2b809d8d3510b4649b1c73076f702d5` and bound evidence `sha256:403fe1a16decce1f1ce4602d3b249b04b4cc5df5956cea54dbc03059a33df7f9` as current. The repair commit is `05bbe62625756bacf7f5b35fd7187150ded28670`. This repair is part of the first repair cycle of chunk FA. It used one attempt.
+
+| target | row | change | status |
+| --- | --- | --- | --- |
+| R9 | FA22 | The field-guide callout now states that each ticket gets a fresh author session, that a fresh repair session takes each accepted finding, and that the orchestrator reconciles before the landing. It points to `.bench/BENCH.md`. No other single-author sentence remains on the page. | done |
+| R10 | none | The write-spec reconciliation row in `registry_data.go` now uses the prefix `workflow integration source: `. The family count goes back to 10, and the stale-claim scan reads `.agents/commands/bench-write-spec.md` again. The canary `write-spec-frozen-base-and-tip-review` expects the new diagnostic. `registry_data.go` does not grow. | done |
+| R11 | FA29 | A Forbid row over `.agents/commands/bench-review-implementation.md` in `registry_ft311_review_dispatch.go`, with the prefix `fresh ticket author: `. | done |
+| R12 | FA24 | ADR 0021 consequences 1 and 5 now point to ADR 0023 for ticket authorship, repair authorship, and the additions of a delegated run. They restate no ADR 0023 fact. | done |
+| R13 | none | `projects/benchkit.md` and `CONTEXT.md` now state that every spec-backed build has an orchestrator and a fresh author for each ticket. The bytes "one retained integration source" do not change. No canary copy of `projects/benchkit.md` holds the changed sentence, so no canary changes. | done |
+
+R11 adds no test code. `TestFreshTicketAuthors` gives each registered row of the family a synthetic bite, so the new row joins that test through its diagnostic prefix.
+
+### Red then green
+
+Each probe ran through `bench probe <file> ... --check docs-currency-workflow` after `bench worktree build`. The R10 before probe ran with the old diagnostic put back in the tree for the probe only.
+
+| probe | file | kind | before | after | diagnostic after |
+| --- | --- | --- | --- | --- | --- |
+| R10 insertion of "Landing is the sole landing path." before "Then recommend the approved implementation line" | `.agents/commands/bench-write-spec.md` | swap | silent | bit | retains stale scalar or sole-path workflow claim "sole landing path" |
+| FA29 insertion of the retired sentence after the FA21 Require needle | `.agents/commands/bench-review-implementation.md` | swap | not run; no Forbid row existed | bit | review phase restored the finding return to the retained session |
+| self-probe: omission of the FA22 sentence | `docs/field-guide.html` | omit | not applicable | bit | field guide dropped the fresh author session for each ticket |
+
+Each probe reported one failure and restored the file. The FA29 probe keeps every Require needle, so only the Forbid row can make the check red. No row pins the new R9 sentence, so the self-probe omits the FA22 sentence.
+
+### Verification
+
+| command | exit | result |
+| --- | --- | --- |
+| `bench test --check docs-currency-workflow` | 0 | pass, 0 failures, 0 skips |
+| `bench test --package ./internal/conformance --run TestRootConformance` | 0 | pass, 0 failures, 0 skips |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | 0 | pass, 0 failures, 0 skips |
+| `bench test --full --package ./internal/conformance --run "TestFreshTicketAuthors\|TestIntegrationSourceWorkflowAnchorsBiteIndependently"` | 0 | pass, 0 failures, 0 skips |
+| `bench test --package ./internal/conformance` | 0 | pass, 0 failures, 3 capability skips |
+| `bench test --package ./internal/anchors/...` | 0 | pass, 0 failures, 0 skips |
+| `bench test --check guidance-prose-budgets` | 0 | pass, 0 failures, 0 skips |
+| `bench gate-prose . -- <three edited Markdown files>` | 0 | pass |
+| `go vet ./...` | 0 | no output |
+| `bench commit` lane | 0 | pass |
+
+### Flags for review
+
+- ADR 0021 no longer states "A model change requires reviewer direction." ADR 0023 owns the tier-move stop, and `craft-line` owns a change of model or session.
+- The `CONTEXT.md` entry for "ticket author" still lists repairs among the author's work. A fresh repair session is a new author assignment for its ticket, so the entry stays.
