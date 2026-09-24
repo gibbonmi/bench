@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, LE-B2, and LE-C1 are accepted. LE-C2 is committed, and its review of the three axes is pending.
+Status: LE-A, LE-B1, LE-B2, and LE-C1 are accepted. The LE-C2 review returned 10 findings; repair cycle 1 is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -428,6 +428,35 @@ The frozen pair is `4353965b..160823bf`. The three planned checks and the root c
 | LE79 | `TestRecoverWithNothingToDoPrintsNothing` | Print on every pass: bit. |
 
 The worktree package's liveness rule is exported in place as `PIDAlive`, so the recovery pass reads one kill-0 rule. `intent.EntryOwnedBy` writes the key that `KeyOwner` parses.
+
+## LE-C2 review round 1
+
+Three fresh axes graded the frozen pair `4353965b..566a5bed` with the code tip `160823bf`. Each axis read the manifest, confirmed the current binding, and read the code delta. Raw findings: 10. Repair targets: 5; five findings are no-ops.
+
+### Standards
+
+Findings: 3. Worst issue: LEC2-S1.
+
+- LEC2-S1 (auto-fix, confidence 8): two test packages state the dead-owner process id. The session-inspect test reaps a real process instead, the precedent of the worktree tests.
+- LEC2-S2 (no-op, confidence 6): the `recovered` count is not dead scaffolding. The spec fixes the line `recovered 0, abandoned 1`, and ticket 10 counts recoveries.
+- LEC2-S3 (no-op, confidence 5): row LE78 states the exact line, and the author verification records its red before the edit.
+
+### Spec
+
+Findings: 3. Worst issue: LEC2-P1.
+
+- LEC2-P1 (no-op, confidence 5): the five bound files in the ticket 9 Writes are the registry closure. The build preflight requires them for a worktree file.
+- LEC2-P2 (auto-fix, confidence 7): the spec prose still names `pidAlive`.
+- LEC2-P3 (no-op, confidence 4): the pass judges the lease, as the ticket and the spec name it.
+
+### Coverage
+
+Findings: 4. Worst issue: LEC2-C1.
+
+- LEC2-C1 (auto-fix, confidence 8): no test seeds a closed entry of a dead owner, so a pass that overwrites an outcome stays green.
+- LEC2-C2 (auto-fix, confidence 8): the LE77 test reads only the final outcome, so a pass after the acquire stays green.
+- LEC2-C3 (auto-fix, confidence 6): the key parse accepts an owner past the process-id range, and no test reads the stamp check.
+- LEC2-C4 (no-op, confidence 5): the lease skip belongs to LE75 in LE-C3, and no row covers a ledger read error or an Upsert failure.
 
 ```bench-review-record
 {
@@ -2178,7 +2207,81 @@ The worktree package's liveness rule is exported in place as `PIDAlive`, so the 
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "LE-C2-review-standards-1",
+          "performer": "claude-code:subagent:a7f5f5ea423eb98d1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ad940303070ad5014b460b38f4c6951bb08ea904",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a7f5f5ea423eb98d1, evidence sha256:70417c812cd14dc8b26bed8ddf3ea3ad71ba1254c5e551efdd40455f5c7295d2",
+            "digest": "sha256:dfcfcf1b230e2c559cf8b4fbaa9d4e4a014615a0917808658583b5969ff7110f",
+            "excerpt": "Verdict: pass with minor findings. Findings: 3. Worst issue: the dead-owner fact has two sources."
+          },
+          "axis": "Standards",
+          "base": "4353965b42eeade19d5e8aad83550cb0d053c191",
+          "tip": "160823bf5c6266f856e59aa96c353efd0a2a0870",
+          "finding_ids": [
+            "LEC2-S1",
+            "LEC2-S2",
+            "LEC2-S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "LE-C2-review-spec-1",
+          "performer": "claude-code:subagent:ace544c0da1766204",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ad940303070ad5014b460b38f4c6951bb08ea904",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:ace544c0da1766204, evidence sha256:70417c812cd14dc8b26bed8ddf3ea3ad71ba1254c5e551efdd40455f5c7295d2",
+            "digest": "sha256:d6409785c9ead480b2c749faac8a092ad792a67f3efa180c4d215bd1c7534b45",
+            "excerpt": "Verdict: the delta implements all seven rows and ticket 9, and it adds no behavior beyond the approved scope. I found 3 findings, all low severity."
+          },
+          "axis": "Spec",
+          "base": "4353965b42eeade19d5e8aad83550cb0d053c191",
+          "tip": "160823bf5c6266f856e59aa96c353efd0a2a0870",
+          "finding_ids": [
+            "LEC2-P1",
+            "LEC2-P2",
+            "LEC2-P3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "LE-C2-review-coverage-1",
+          "performer": "claude-code:subagent:a1656f63c45e04928",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ad940303070ad5014b460b38f4c6951bb08ea904",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a1656f63c45e04928, evidence sha256:70417c812cd14dc8b26bed8ddf3ea3ad71ba1254c5e551efdd40455f5c7295d2",
+            "digest": "sha256:8a4809dc0d45cd1b2248e70c74821dc9f9715f28cde08a5cba61cf0626b379bb",
+            "excerpt": "Verdict: the chunk passes with gaps. I found 4 findings. Every named row mutation turns its test red. Worst: outcome guard untested."
+          },
+          "axis": "Coverage",
+          "base": "4353965b42eeade19d5e8aad83550cb0d053c191",
+          "tip": "160823bf5c6266f856e59aa96c353efd0a2a0870",
+          "finding_ids": [
+            "LEC2-C1",
+            "LEC2-C2",
+            "LEC2-C3",
+            "LEC2-C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
