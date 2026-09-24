@@ -140,6 +140,23 @@ rather than reported as a stray entry. A gate-side need is declared in
   record, and it stays on the local machine. A line carries the seam name, the
   subject digest, the outcome, and the measures. It carries no objective text,
   no commit subject, and no environment value, and Bench sends it nowhere.
+- **Record line keys.** The encoder writes only declared attribute keys. Each
+  line has its own
+  resource block with three keys: `service.name`, `service.version`, and
+  `bench.record.schema`. A process with no stamped version writes no
+  `service.version` key.
+- **Sealed record segments (`traces-<sequence>.jsonl`, mode 0600).** When an
+  append would take the live `traces.jsonl` past `bounds.RecordSegmentLimit`,
+  Bench renames it to a sealed segment in the same directory. The sequence is a
+  zero-padded 20-digit number, so name order is write order. Bench keeps
+  `bounds.RecordSegmentsRetained` sealed segments and removes the lowest
+  sequences first.
+- **Shift memory files (`memory/<UTC stamp>-<trace id>.md`, mode 0600).** Before
+  its scratch cleanup, a shift copies its `.bench-notes.md` into this private
+  directory below the record directory. The directory has mode 0700. The notes
+  are agent-authored text, so a memory file can quote the objective. The seam
+  record holds only the digest and the size of the file, and no prompt reads the
+  directory. Bench keeps the newest `bounds.RecordMemoryRetained` files.
 - **Repair pilot document (`pilot.json`, mode 0600).** Explicit activation
   creates this document below `<Bench home>/repair-pilot/<repository key>/`.
   The private directory has mode 0700. The document contains attributed repair
@@ -211,3 +228,11 @@ object store holds commit subjects as ordinary repository history.
   only in the launched subprocess's memory for the duration of that process.
 - **Repair pilot evidence** persists until the operator removes its named
   document. Worktree release and the pilot cutoff do not remove this evidence.
+- **Seam record and shift memory** persist below the Bench home within their
+  bounds. The live segment and the sealed segments stay under their size and
+  count bounds, and the memory files stay under their count bound. The three
+  bound entries in `internal/bounds` own the values.
+- **Local records are mutable evidence inputs.** The seam record, its sealed
+  segments, and the memory files are local files that their owner can change or
+  remove. They are not a tamper-proof central audit system. A reader treats them
+  as evidence inputs, not as proof.
