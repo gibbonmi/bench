@@ -2,7 +2,7 @@
 
 Blocked by: 2-align-the-line-and-delegation-skills.md
 Writes: .agents/commands/bench-write-spec.md, .agents/commands/bench-review-implementation.md, .agents/commands/bench-final-check.md, README.md, docs/field-guide.html, docs/adr/0021-benchmark-workflow-orchestration.md, docs/adr/0023-each-ticket-gets-a-fresh-author.md (new), internal/anchors/registry_ft311_review_dispatch.go, internal/anchors/registry_data.go, internal/conformance/retained_workflow_test.go, internal/conformance/docs_workflow_helpers_test.go, tests/canary/workflow-guidance-anchors/, internal/anchors/registry_calibration.go, internal/anchors/registry_calibration_test.go, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, internal/anchors/registry_data_test.go, internal/anchors/registry_decision_maps.go, internal/anchors/registry_decision_maps_test.go, internal/anchors/registry_ft311_preparation.go, internal/anchors/registry_retained_workflow.go, tests/canary/docs-currency-token-diet/, tests/canary/load-validity-metadata/, tests/canary/skills-index-command-adapters/, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, projects/benchkit.md, CONTEXT.md, tests/canary/guidance-prose-budgets/, tests/canary/line-routing/, tests/canary/skill-description-budgets/
-Covers: FA20, FA21, FA22, FA23, FA24, FA25, FA29
+Covers: FA20, FA21, FA22, FA23, FA24, FA25, FA29, FA31
 
 ## What to build
 
