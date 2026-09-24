@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A and LE-B1 are accepted. LE-B2 repair cycle 3 is committed; the third confirming round of the three axes is pending.
+Status: LE-A, LE-B1, and LE-B2 are accepted. The third LE-B2 confirming round passed on all three axes.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -342,6 +342,14 @@ The LE-B2 checkpoint gate was red on the wait-literal rule. The interrupt helper
 |---|---|---|
 | Checkpoint red | The interrupt helper waits derive from `bounds.TestDeadline(0)`. | The root conformance test passed. |
 | Standards advice | The comment of `retainedMemoryNames` names every entry. | Review of the text. |
+
+## LE-B2 confirming round 3
+
+Three fresh axes graded the code tip `1720cbc2` with the source digest `ce04e0ec`. Each axis read the manifest, confirmed the current binding, and read the repair delta `53ac3cff..1720cbc2`.
+
+- Standards, 0 findings. The comment advisory is closed.
+- Spec, 0 findings. LE37 and LE44 keep every assertion.
+- Coverage, 0 findings. One advisory goes to LE-C1: the adapter sleep derives from the wait window.
 
 ```bench-review-record
 {
@@ -1725,6 +1733,72 @@ The LE-B2 checkpoint gate was red on the wait-literal rule. The interrupt helper
           "finding_ids": [],
           "supersedes": [
             "LE-B2-review-coverage-2"
+          ]
+        },
+        {
+          "id": "LE-B2-review-standards-4",
+          "performer": "claude-code:subagent:a29cebe0f06c30ba6",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ce04e0ec988b111bff8d00cd06c6eab8bdaec0de",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a29cebe0f06c30ba6, evidence sha256:0f23ebc0bcfd4871c0aa0b7323d8795e3119f4d151e1eeb8649a2cf82d7898c7",
+            "digest": "sha256:18ce12dd5a82d2bd50f0f52530cf91fc434984b2311f5ecf1b411bd47cdc3c43",
+            "excerpt": "Verdict: PASS. 0 blocking findings, 1 advisory."
+          },
+          "axis": "Standards",
+          "base": "fab6d03ed4a4d5418bd0f31dce0a2f1fc59bab80",
+          "tip": "1720cbc2e3cb75b14165dd7297d91d8dc08daad8",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-B2-review-standards-3"
+          ]
+        },
+        {
+          "id": "LE-B2-review-spec-4",
+          "performer": "claude-code:subagent:aa4868a228ea65935",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ce04e0ec988b111bff8d00cd06c6eab8bdaec0de",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:aa4868a228ea65935, evidence sha256:0f23ebc0bcfd4871c0aa0b7323d8795e3119f4d151e1eeb8649a2cf82d7898c7",
+            "digest": "sha256:bae2d5779b5ed90b1160acdf00016db6fec2c66ed643cccbb931f588fd159cf1",
+            "excerpt": "Verdict: PASS. 0 findings; nothing is severe enough to name as a worst issue. Confidence 8."
+          },
+          "axis": "Spec",
+          "base": "fab6d03ed4a4d5418bd0f31dce0a2f1fc59bab80",
+          "tip": "1720cbc2e3cb75b14165dd7297d91d8dc08daad8",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-B2-review-spec-3"
+          ]
+        },
+        {
+          "id": "LE-B2-review-coverage-4",
+          "performer": "claude-code:subagent:a118b4ef927ac3af0",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ce04e0ec988b111bff8d00cd06c6eab8bdaec0de",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a118b4ef927ac3af0, evidence sha256:0f23ebc0bcfd4871c0aa0b7323d8795e3119f4d151e1eeb8649a2cf82d7898c7",
+            "digest": "sha256:0f8d11ed3e976fbda852ae2975b6c61b69138444bd35a297080e9eecaaa1b957",
+            "excerpt": "Verdict: PASS. Findings: 0 blocking, 1 advisory. Confidence: high."
+          },
+          "axis": "Coverage",
+          "base": "fab6d03ed4a4d5418bd0f31dce0a2f1fc59bab80",
+          "tip": "1720cbc2e3cb75b14165dd7297d91d8dc08daad8",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-B2-review-coverage-3"
           ]
         }
       ]
