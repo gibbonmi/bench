@@ -12,7 +12,7 @@ Add `bounds.RecordSegmentLimit` and `bounds.RecordSegmentsRetained` to the bound
 
 Add one helper in the record package that formats and parses the sealed name `traces-<sequence>.jsonl`. The sequence is a zero-padded 20-digit decimal, so name order equals sequence order. The writer, the prune, and both readers use this one helper.
 
-When an append would take the live segment `traces.jsonl` past the limit, the writer tries a non-blocking exclusive lock on one lock file. With the lock, it checks the size again and reads the sealed names. The next sequence is one more than the highest sequence present. If a file already holds that name, the writer takes the next free sequence. It then renames the live segment to that name and removes the lowest sequences until the retained count remains.
+When an append would take the live segment `traces.jsonl` past the limit, the writer tries a non-blocking exclusive lock on one lock file. With the lock, it checks the size again and reads the sealed names. The next sequence is one more than the highest sequence present, and the listing holds every sealed name. It then renames the live segment to that name and removes the lowest sequences until the retained count remains.
 
 After the rotation the writer appends to a new live segment. A writer that cannot take the lock appends to the live segment and rotates on a later append. Each append stays one synchronous `O_APPEND` write. No clock enters the sealed name.
 
@@ -24,7 +24,7 @@ Make `ReadSpans` and `ReadSelected` read the sealed segments in sequence order a
 
 - [ ] With a 1 KiB limit, an append past the limit seals the live segment under the next sequence and starts a new live segment.
 - [ ] Two rotations in a row leave two sealed segments with consecutive sequences, and the first keeps every line it sealed.
-- [ ] A planted file at the next sequence name stays unchanged, and the rotation seals under the following free sequence.
+- [ ] A planted file at a sealed name stays unchanged, and the rotation seals under the following sequence.
 - [ ] After the retained count plus two rotations, exactly the retained count of sealed segments remains, and the two lowest sequences are gone.
 - [ ] The prune removes the lowest sequences even when their modification times are the newest in the directory.
 - [ ] `ReadSpans` returns the spans of two sealed segments in sequence order and then the spans of the live segment.
