@@ -36,10 +36,10 @@ over its unchanged tree.
 Report the reviewed source pair, the landing commit, and the retained exact
 green evidence. Then capture the retro below.
 
-Everything else takes the gate-then-commit path. On green, land the named
-paths with `bench commit -m "<msg>" <path>...`. This command gates and commits
-them atomically. When there is nothing to commit, the honest no-op runs
-`bench gate` and reports its verdict.
+Everything else commits in its Bench worktree and lands through `bench worktree land`.
+Commit the named paths with `bench commit -m "<msg>" <path>...` in that worktree.
+`bench worktree land` runs the whole-project gate on work that `bench commit` committed on a lane pass.
+When there is nothing to commit, the honest no-op runs `bench gate` and reports its verdict.
 A light-path fix lands before a spec's final merge only when its `CHANGELOG.md` entry sits under a heading no sibling touches.
 
 After a lane-only repair commit and before the landing, run the whole-tree
@@ -55,8 +55,9 @@ or `/bench-debug` for a bug.
 
 **The post-merge tail (exit duty).** After the green landing reaches the
 default branch, read `bench status` and run the housekeeping rows it flags
-before you close. A merged spec awaiting retirement gets `bench spec retire <slug>`
-and its `spec-retire: <slug>` commit. Promote durable content first,
+before you close.
+A merged spec awaiting retirement gets `bench spec retire <slug>` in a Bench worktree, and that worktree lands its `spec-retire: <slug>` commit through `bench worktree land`.
+Promote durable content first,
 for example a decision to an ADR or a hostile edge to the profile. Retirement
 of the whole `specs/<slug>/` folder removes its compiled decision provenance
 with its tickets, so there is no separate top-level decision-map delete.
@@ -169,21 +170,18 @@ result.
 
 ## Run it
 
-For work that has
-paths to land, the oracle run and landing are one command:
+For work that has paths to land, commit in the Bench worktree:
 
 ```sh
 bench commit -m "<msg>" <path>...
 ```
 
-`bench commit` formats changed Go files inside the named paths, then runs the
-gate and commits only on green. It does not format unnamed paths, and a dry run
-changes no files. A red run reports its own first failing phase and refuses to
-commit. Do not run `bench gate` first.
-The commit already is the gate run; the gate reuses a fresh green verdict for
-the identical tree and never re-pays it. Standalone `bench gate` has two jobs
-here: report the honest no-op, when nothing is left to commit, and diagnose a
-red run.
+`bench commit` formats changed Go files inside the named paths. It does not
+format unnamed paths, and a dry run changes no files. A red run reports its own
+first failing phase and refuses to commit. Then land the source through
+`bench worktree land`; `.bench/BENCH-reference.md` holds the landing shape.
+Standalone `bench gate` has two jobs here: report the honest no-op, when nothing
+is left to commit, and diagnose a red run.
 
 Exit 3 means the commit is published but the checkout did not reconcile. Paste
 the `next=` restore command from the `committed{...}` record to repair the

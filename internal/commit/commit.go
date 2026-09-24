@@ -222,7 +222,7 @@ func restoreNext(commit string, paths []string) string {
 // not learn the argument shape by tripping the usage line.
 var helpText = grammar.Help + "\n" +
 	"example: bench commit -m \"fix: tighten the guard\" -- internal/gitguard/scan.go docs/adr/0007.md\n" +
-	"--dry-run: gate the exact composed snapshot and report the verdict; commit nothing\n" +
+	"--dry-run: run the declared lane (or the gate when no lane is declared) on the exact composed snapshot and report the outcome; commit nothing\n" +
 	"exit 1: refused before publication; nothing was committed\n" +
 	"exit 2: grammar error\n" +
 	"exit 3: published; the checkout did not reconcile — paste next= to repair"

@@ -1,9 +1,36 @@
 package anchors
 
 // retainedWorkflowAnchors is the whole retained-workflow family: the default
-// contract below and the opt-in delegated exception that follows it. The
-// registry reads this one name, so both groups evaluate together.
-var retainedWorkflowAnchors = append(append([]Anchor{}, defaultWorkflowAnchors...), delegatedWorkflowAnchors...)
+// contract below, the opt-in delegated exception that follows it, and the
+// lane-and-landing split. The registry reads this one name, so the three groups
+// evaluate together.
+var retainedWorkflowAnchors = append(append(append([]Anchor{}, defaultWorkflowAnchors...), delegatedWorkflowAnchors...), laneAndLandingAnchors...)
+
+// laneAndLandingAnchors pin one statement of the commit and landing split: a
+// worktree `bench commit` runs the declared lane, and `bench worktree land` runs
+// the whole-project gate. Forbid rows keep out the retired claims that the commit
+// is the gate run, and the reference's claims that the landing boundary is
+// unenforced and that a stale executable reruns the landing. The reference points
+// to the operating guide's enforcement sentence, and a Forbid row reads that
+// sentence's named constant so no copy returns there. Require rows pin the
+// synthesis gate source, the final check's landing gate and worktree retirement,
+// and the reviewer as the runner of the raw conflict merge.
+var laneAndLandingAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-synthesis/SKILL.md", Kind: Forbid, Needle: "`bench commit` gates the tree it lands", Diagnostic: "lane and landing: craft-synthesis restored the claim that bench commit gates the tree it lands"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-synthesis/SKILL.md", Kind: Require, Needle: "Take the green verdict from the whole-project gate. That gate is the landing's gate, or `bench worktree exec <target> -- bench gate` for a batch that waits for approval.", Diagnostic: "lane and landing: craft-synthesis dropped the whole-project gate as the source of the prose-only green verdict"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "This command gates and commits them atomically.", Diagnostic: "lane and landing: final check restored the claim that bench commit gates and commits atomically"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "The commit already is the gate run", Diagnostic: "lane and landing: final check restored the claim that the commit is the gate run"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "the oracle run and landing are one command", Diagnostic: "lane and landing: final check restored the claim that the oracle run and the landing are one command"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "gate-then-commit path", Diagnostic: "lane and landing: final check restored the gate-then-commit path"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "then runs the gate and commits only on green", Diagnostic: "lane and landing: final check restored the claim that bench commit runs the gate and commits only on green"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "`bench worktree land` runs the whole-project gate on work that `bench commit` committed on a lane pass.", Diagnostic: "lane and landing: final check dropped the landing's whole-project gate on lane-pass commits"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "A merged spec awaiting retirement gets `bench spec retire <slug>` in a Bench worktree, and that worktree lands its `spec-retire: <slug>` commit through `bench worktree land`.", Diagnostic: "lane and landing: final check dropped the spec retirement in a Bench worktree and its landing"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "the rule is guidance, not a hook", Diagnostic: "lane and landing: reference restored the claim that the landing rule is guidance, not a hook"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: WorktreeEnforcementMarker, Diagnostic: "lane and landing: reference restored a copy of the operating guide's worktree enforcement sentence"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: "Every phase lands this way, and `.bench/BENCH.md` states how `bench commit` enforces that rule.", Diagnostic: "lane and landing: reference dropped its pointer to the operating guide's worktree enforcement sentence"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "A stale Bench executable is rebuilt, and the landing re-runs under it.", Diagnostic: "lane and landing: reference restored the claim that the landing rebuilds a stale Bench executable and re-runs"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: "the reviewer merges the destination into the source worktree with raw Git", Diagnostic: "lane and landing: reference dropped the reviewer as the runner of the raw Git conflict merge"},
+}
 
 // defaultWorkflowAnchors keep plan expansion within the approved behavior while
 // allowing the orchestrator to update the plan before new evidence is used.

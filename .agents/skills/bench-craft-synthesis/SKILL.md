@@ -61,12 +61,9 @@ Run in order; prune or send back a change that fails a loop, never ship it.
    fresh session. That is because this session loaded those surfaces before the edit.
    Proportionality: a prose-only change (no hook, gate, CLI, or adapter touched)
    may replace the full shift with a green gate verdict plus a read of every surface
-   the prose steers. Say which verification ran. Take that verdict from
-   the commit itself — `bench commit` gates the tree it lands. A `bench gate`
-   run before it grades the same tree twice and pays the oracle twice. Reach for
-   the standalone gate only when you need a verdict *without* a commit: a batch
-   awaiting approval, or a red under diagnosis. Anything that touches behavior
-   always dogfoods.
+   the prose steers. Say which verification ran.
+   Take the green verdict from the whole-project gate. That gate is the landing's gate, or `bench worktree exec <target> -- bench gate` for a batch that waits for approval.
+   Anything that touches behavior always dogfoods.
 
 ## Propose; the reviewer merges
 

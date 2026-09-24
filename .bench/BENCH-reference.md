@@ -202,12 +202,11 @@ composes and runs the one whole-project gate on that pair before publication and
 source release. Executable help owns its flags and positional grammar.
 
 The spec is optional on the landing and on its resume: a spec-less phase lands
-with no `--spec`, and a tickets-only `--spec` closes its folder. Every phase
-lands this way; the rule is guidance, not a hook, so `bench commit` still works
-on any branch. An abbreviated commit identity expands to the exact commit
+with no `--spec`, and a tickets-only `--spec` closes its folder.
+Every phase lands this way, and `.bench/BENCH.md` states how `bench commit` enforces that rule.
+An abbreviated commit identity expands to the exact commit
 before any proof runs. One preflight prints every refusal the caller must
-clear, and each refusal names its paths. A stale Bench executable is rebuilt,
-and the landing re-runs under it.
+clear, and each refusal names its paths.
 
 Each landing refusal face constructs through the registry constructor, which
 takes the recovery route as a required argument. Therefore each landing refusal
@@ -222,8 +221,8 @@ resolution, and `capture/` is authorized for every reviewed range. Any other
 conflict refuses and names every path, and its `next=` names the repair in
 order:
 
-- merge the destination into the source worktree with raw Git, because
-  `bench worktree merge` refuses this same conflict
+- the reviewer merges the destination into the source worktree with raw Git,
+  because `bench worktree merge` refuses this same conflict
 - commit the repair with `bench commit`
 - review the new range
 - re-run the landing with the new source tip

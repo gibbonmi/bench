@@ -54,11 +54,25 @@ func TestGrammarErrorPrintsNoExample(t *testing.T) {
 	}
 }
 
-// The help text advertises the flag the grammar accepts.
+// The help text advertises the flag the grammar accepts. Its --dry-run line names the
+// declared lane that a worktree commit runs, and it no longer claims to gate the
+// snapshot, because the whole-project gate runs at the landing.
 func TestHelpAdvertisesDryRun(t *testing.T) {
 	root, _ := landingRepo(t, 0, func(t *testing.T, root string) {})
 	code, stdout, _ := runCommand(t, root, "--help")
 	if code != 0 || !strings.Contains(stdout, "--dry-run") {
 		t.Fatalf("help = (%d, %q), want --dry-run advertised", code, stdout)
+	}
+	if strings.Contains(stdout, "gate the exact composed snapshot") {
+		t.Errorf("help = %q, want no claim that --dry-run gates the exact composed snapshot", stdout)
+	}
+	var dryRunLine string
+	for _, line := range strings.Split(stdout, "\n") {
+		if strings.HasPrefix(line, "--dry-run:") {
+			dryRunLine = line
+		}
+	}
+	if !strings.Contains(dryRunLine, "declared lane") {
+		t.Errorf("help --dry-run line = %q, want it to name the declared lane", dryRunLine)
 	}
 }
