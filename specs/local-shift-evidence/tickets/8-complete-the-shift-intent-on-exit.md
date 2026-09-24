@@ -14,7 +14,7 @@ Change the liveness rule. An entry that holds an outcome and a recovery of empty
 
 Add an optional `lease` field to the ledger entry. Right after `worktree.Acquire` returns, the shift reads its own lease file and records the line without its final newline. Ticket 10 consumes this field. `admissionpolicy_test.go` is near its line budget, so the new policy tests go in `liveness_test.go`.
 
-Ticket 4 creates `internal/shift/record_test.go`, and this ticket adds its two shift rows there. Tickets 5, 6, and 7 also write that test file, and ticket 5 also writes `loop.go`. So the `Blocked by:` line names all three, and a delegated frontier starts this ticket only after the LE-B2 checkpoint.
+Ticket 4 creates `internal/shift/record_test.go`, and this ticket adds its two shift rows there. Ticket 5 also writes that test file and `loop.go`, and tickets 6 and 7 share the pass tests with ticket 5. So the `Blocked by:` line names all three, and a delegated frontier starts this ticket only after the LE-B2 checkpoint.
 
 ## Acceptance
 

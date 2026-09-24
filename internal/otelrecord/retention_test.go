@@ -278,12 +278,25 @@ func retainedMemoryNames(t *testing.T, home, root string) []string {
 func TestTheMemoryStoreKeepsTheRetainedCount(t *testing.T) {
 	home, root := t.TempDir(), t.TempDir()
 	start := time.Date(2026, 9, 23, 12, 0, 0, 0, time.UTC)
+	// A foreign file and a directory that sort before every memory file survive the prune.
+	foreign := []string{filepath.Join(MemoryDir(home, root), "0-foreign.txt"), filepath.Join(MemoryDir(home, root), "0-dir.md")}
+	if err := os.MkdirAll(foreign[1], 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(foreign[0], nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
 	for index := range 4 {
 		if _, err := retainMemory(home, root, fmt.Sprintf("trace%d", index), []byte("notes\n"), start.Add(time.Duration(index)*time.Second), 3); err != nil {
 			t.Fatalf("retain memory %d: %v", index, err)
 		}
 	}
-	names := retainedMemoryNames(t, home, root)
+	for _, path := range foreign {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("the prune removed the foreign entry %s: %v", path, err)
+		}
+	}
+	names := retainedMemoryNames(t, home, root)[len(foreign):]
 	if len(names) != 3 || slices.ContainsFunc(names, func(name string) bool { return strings.Contains(name, "trace0") }) {
 		t.Fatalf("memory files = %v, want the newest 3", names)
 	}

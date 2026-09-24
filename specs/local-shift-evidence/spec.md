@@ -163,7 +163,7 @@ Recovery and record safety:
 - The work-state vocabulary is `completed`, `failed`, `interrupted`, `recovered`, and `abandoned`. The shift maps `complete`, `no-op`, and `incomplete` to `completed`; `failed` and `usage` to `failed`; and `interrupted` to `interrupted`.
 - The cleanup vocabulary is `released`, `retained`, and `none`. The recovery reference is `bench.recovery.kind` (`none` or `worktree`) and `bench.recovery.key`, the base name of the retained path. No absolute path enters the record.
 - Each main iteration opens a `shift.iteration` span, and each refactor pass opens a `shift.refactor` span, under the `shift` span. Each pass gives its own context to the gate, so the gate span is the pass span's child.
-- A pass span carries `bench.adapter.result` (`exited` or `spawn-failed`), `bench.adapter.exit` when the adapter exited, and the commit that the pass made. Every exit path ends an open pass span before it ends the `shift` span.
+- A pass span carries `bench.adapter.result` (`exited` or `spawn-failed`), `bench.adapter.exit` when the adapter exited with a code, and the commit that the pass made. An adapter that a signal ends records `exited` with no exit key. Every exit path ends an open pass span before it ends the `shift` span.
 - The shift hands the adapter the trace handoff for the current pass span. `bench resolve-model` joins that trace when the handoff is present and records a `line.resolve` span. That span carries the harness, the declared tier, the resolved model when it is a safe model token, and the outcome.
 
 ### Shift memory
@@ -576,6 +576,8 @@ The reviewer closed three decisions at the LE-A review on 2026-09-23:
 The reviewer closed one more decision on 2026-09-23: a recovery releases a clean crashed worktree and locks only a dirty one, as `preserveAndRecover` does. The Implementation decisions section records it.
 
 The reviewer closed one decision at the LE-B2 build on 2026-09-23: the grant rises to `internal/shift/ 16`. The pass, line, and memory tests go in `pass_test.go`, so each test file stays under the line cap.
+
+The reviewer closed one decision at the LE-B2 review on 2026-09-23. An adapter that a signal ends records `exited` with no `bench.adapter.exit` key, because it has no exit code.
 
 ### Flagged additions
 

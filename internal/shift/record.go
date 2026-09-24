@@ -124,8 +124,7 @@ const notesFile = ".bench-notes.md"
 // retainNotes keeps the notes in wt as one memory file of the record, once per shift, and
 // records the memory state on the shift span. It reads the notes without following a link
 // and under the control-record bound, so a link, a special file, or an oversized file is
-// refused. A failed store write changes only the memory state, and a failed prune after
-// a kept file leaves the state retained.
+// refused. A failed store write changes only the memory state.
 func (r *shiftRecord) retainNotes(wt string) {
 	if r == nil || r.notesKept {
 		return
@@ -141,8 +140,8 @@ func (r *shiftRecord) retainNotes(wt string) {
 		r.span.SetAttributes(attribute.String(otelrecord.AttrMemoryState, otelrecord.MemoryRefused))
 		return
 	}
-	digest, _ := otelrecord.RetainMemory("", r.root, r.span.SpanContext().TraceID().String(), notes.Data)
-	if digest == "" {
+	digest, err := otelrecord.RetainMemory("", r.root, r.span.SpanContext().TraceID().String(), notes.Data)
+	if err != nil {
 		r.span.SetAttributes(attribute.String(otelrecord.AttrMemoryState, otelrecord.MemoryFailed))
 		return
 	}

@@ -92,8 +92,8 @@ func MemoryDir(home, root string) string {
 
 // RetainMemory keeps body as one memory file of root's record, below home or the resolved
 // Bench home when home is empty, and returns the file's SHA-256 digest. The store keeps the
-// newest RecordMemoryRetained files. A digest with an error means the file was kept and
-// the prune failed; an empty digest means nothing was kept.
+// newest RecordMemoryRetained files. The error reports a failed write only: the prune is
+// best effort, because a failed prune leaves one extra file that the next write prunes.
 func RetainMemory(home, root, traceID string, body []byte) (string, error) {
 	home, ok := recordHome(home)
 	if !ok {
@@ -122,17 +122,15 @@ func retainMemory(home, root, traceID string, body []byte, now time.Time, retain
 	if err = errors.Join(err, out.Close()); err != nil {
 		return "", fmt.Errorf("write memory file: %w", err)
 	}
+	pruneMemory(dir, retained)
 	sum := sha256.Sum256(body)
-	return "sha256:" + hex.EncodeToString(sum[:]), pruneMemory(dir, retained)
+	return "sha256:" + hex.EncodeToString(sum[:]), nil
 }
 
 // pruneMemory removes the oldest memory files in dir down to the retained count. It
-// touches only memory file names, and its error leaves the new file kept.
-func pruneMemory(dir string, retained int) error {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return fmt.Errorf("list memory directory: %w", err)
-	}
+// touches only regular memory file names, and it reports nothing: see RetainMemory.
+func pruneMemory(dir string, retained int) {
+	entries, _ := os.ReadDir(dir)
 	var names []string
 	// ReadDir sorts by name, and name order is time order.
 	for _, entry := range entries {
@@ -140,13 +138,9 @@ func pruneMemory(dir string, retained int) error {
 			names = append(names, entry.Name())
 		}
 	}
-	var errs []error
 	for index := 0; index < len(names)-retained; index++ {
-		if err := os.Remove(filepath.Join(dir, names[index])); err != nil {
-			errs = append(errs, fmt.Errorf("prune memory file: %w", err))
-		}
+		_ = os.Remove(filepath.Join(dir, names[index]))
 	}
-	return errors.Join(errs...)
 }
 
 // Writer appends encoded spans to one repository's record file. The caller resolves
