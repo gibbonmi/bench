@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"os"
+	"path/filepath"
 	"strconv"
 	"syscall"
 	"time"
@@ -52,7 +53,7 @@ func (s Span) Elapsed() time.Duration { return s.End.Sub(s.Start) }
 // wrote every other line.
 func ReadSpans(home, root string) ([]Span, error) {
 	var spans []Span
-	err := scanRecord(home, root, func(line []byte) bool {
+	err := scanRecord(home, root, func(_ string, line []byte) bool {
 		spans = append(spans, finishedSpans(line)...)
 		return true
 	})
@@ -63,15 +64,17 @@ func ReadSpans(home, root string) ([]Span, error) {
 }
 
 // scanRecord calls visit with each line of root's record in record order, and stops when
-// visit answers false. Each segment passes the writer's grade before it opens, and the
-// open itself follows no link and never waits on a special file.
-func scanRecord(home, root string, visit func(line []byte) bool) error {
+// visit answers false. visit also receives the base name of the line's segment. Each
+// segment passes the writer's grade before it opens, and the open itself follows no link
+// and never waits on a special file.
+func scanRecord(home, root string, visit func(segment string, line []byte) bool) error {
 	paths, err := segments(home, root)
 	if err != nil {
 		return err
 	}
 	for _, path := range paths {
-		more, err := scanSegment(path, visit)
+		segment := filepath.Base(path)
+		more, err := scanSegment(path, func(line []byte) bool { return visit(segment, line) })
 		if err != nil || !more {
 			return err
 		}
@@ -239,7 +242,8 @@ func decodeValue(value anyValue) string {
 
 // ReadSelected streams only selected traces into memory, including unfinished spans.
 // Malformed lines remain explicit coverage gaps instead of disappearing as empty results.
-// A line number counts across the segments in record order.
+// A problem in a sealed segment names that segment, and a line number counts within its
+// own segment, so a consumer that names the live path points at the right line.
 func ReadSelected(home, root string, traceIDs []string) ([]Span, []string, error) {
 	wanted := map[string]bool{}
 	for _, id := range traceIDs {
@@ -248,7 +252,8 @@ func ReadSelected(home, root string, traceIDs []string) ([]Span, []string, error
 	var out []Span
 	var problems []string
 	var stopped error
-	line := 0
+	segment, line := "", 0
+	read := 0
 	retained := int64(0)
 	problem := func(reason string) bool {
 		retained += int64(len(reason))
@@ -258,11 +263,21 @@ func ReadSelected(home, root string, traceIDs []string) ([]Span, []string, error
 		problems = append(problems, reason)
 		return true
 	}
-	err := scanRecord(home, root, func(text []byte) bool {
+	where := func() string {
+		if segment == recordFile {
+			return fmt.Sprintf("line %d", line)
+		}
+		return fmt.Sprintf("%s line %d", segment, line)
+	}
+	err := scanRecord(home, root, func(name string, text []byte) bool {
+		if name != segment {
+			segment, line = name, 0
+		}
 		line++
+		read++
 		entries, err := decodeRecord(text)
 		if err != nil {
-			if !problem(fmt.Sprintf("line %d malformed", line)) {
+			if !problem(where() + " malformed") {
 				out, problems, stopped = nil, nil, fmt.Errorf("native diagnostics exceed control record bound")
 				return false
 			}
@@ -274,7 +289,7 @@ func ReadSelected(home, root string, traceIDs []string) ([]Span, []string, error
 				continue
 			}
 			if decoded.TraceID == "" || decoded.SpanID == "" || decoded.Start.IsZero() || (!decoded.End.IsZero() && decoded.End.Before(decoded.Start)) || (entry.finished && decoded.End.IsZero()) {
-				if !problem(fmt.Sprintf("line %d invalid span", line)) {
+				if !problem(where() + " invalid span") {
 					out, problems, stopped = nil, nil, fmt.Errorf("native diagnostics exceed control record bound")
 					return false
 				}
@@ -293,7 +308,7 @@ func ReadSelected(home, root string, traceIDs []string) ([]Span, []string, error
 		return out, problems, stopped
 	}
 	if err != nil {
-		if line == 0 {
+		if read == 0 {
 			return nil, nil, err
 		}
 		return out, problems, fmt.Errorf("read selected spans: %w", err)

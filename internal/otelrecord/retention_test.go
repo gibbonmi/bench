@@ -46,15 +46,13 @@ func segmentLines(t *testing.T, home, root, name string) []string {
 // sealedNames returns the sealed segment names below root's record directory, sorted.
 func sealedNames(t *testing.T, home, root string) []string {
 	t.Helper()
-	entries, err := os.ReadDir(Dir(home, root))
+	sequences, err := sealedSequences(Dir(home, root))
 	if err != nil {
 		t.Fatalf("list the record directory: %v", err)
 	}
 	var names []string
-	for _, entry := range entries {
-		if strings.HasPrefix(entry.Name(), "traces-") {
-			names = append(names, entry.Name())
-		}
+	for _, sequence := range sequences {
+		names = append(names, sealedName(sequence))
 	}
 	return names
 }

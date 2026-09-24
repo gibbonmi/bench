@@ -175,7 +175,7 @@ func (w *Writer) full(record string, incoming int64) (bool, error) {
 	return info.Size() > 0 && info.Size()+incoming > w.limit, nil
 }
 
-// rotate seals a full live segment under the next free sequence and prunes the lowest
+// rotate seals a full live segment under the next sequence and prunes the lowest
 // sequences down to the retained count. Only the rotation takes the lock, and it never
 // waits for it: a writer that finds the lock held appends to the live segment, and a
 // later append rotates.
@@ -208,19 +208,11 @@ func (w *Writer) rotate(record string, incoming int64) error {
 	if err != nil {
 		return fmt.Errorf("list sealed segments: %w", err)
 	}
+	// The listing holds every sealed name, planted or not, and only a lock holder seals, so
+	// one more than the highest sequence is a free name.
 	next := uint64(1)
 	if len(sequences) > 0 {
 		next = sequences[len(sequences)-1] + 1
-	}
-	for {
-		_, err := os.Lstat(filepath.Join(w.dir, sealedName(next)))
-		if errors.Is(err, os.ErrNotExist) {
-			break
-		}
-		if err != nil {
-			return fmt.Errorf("stat sealed segment: %w", err)
-		}
-		next++
 	}
 	if err := os.Rename(record, filepath.Join(w.dir, sealedName(next))); err != nil {
 		return fmt.Errorf("seal seam record: %w", err)

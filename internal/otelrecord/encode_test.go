@@ -63,15 +63,24 @@ func fixtureSpan(t *testing.T) sdktrace.ReadOnlySpan {
 func encodeFixture(t *testing.T) map[string]any {
 	t.Helper()
 
-	line, err := Encode(fixtureSpan(t))
+	var parsed map[string]any
+	encodeInto(t, fixtureSpan(t), &parsed)
+	return parsed
+}
+
+// encodeInto encodes one span, parses the line into out, and returns the line. It fails
+// the test when the encoder refuses the span or the line does not parse.
+func encodeInto(t *testing.T, readOnly sdktrace.ReadOnlySpan, out any) []byte {
+	t.Helper()
+
+	line, err := Encode(readOnly)
 	if err != nil {
 		t.Fatalf("the encoder failed: %v", err)
 	}
-	var parsed map[string]any
-	if err := json.Unmarshal(line, &parsed); err != nil {
-		t.Fatalf("the line does not parse as a JSON object: %v: %s", err, line)
+	if err := json.Unmarshal(line, out); err != nil {
+		t.Fatalf("the line does not parse: %v: %s", err, line)
 	}
-	return parsed
+	return line
 }
 
 // onlySpan walks the parsed line down to its one span object. It fails the test if any
@@ -259,8 +268,9 @@ func TestEncodeWritesDeclaredAttributes(t *testing.T) {
 // withVersion sets the record version for one test and clears it after.
 func withVersion(t *testing.T, version string) {
 	t.Helper()
+	previous := recordVersion.Load()
 	SetVersion(version)
-	t.Cleanup(func() { recordVersion.Store(nil) })
+	t.Cleanup(func() { recordVersion.Store(previous) })
 }
 
 // withoutVersion clears the record version for one test, as a process that sets none.
@@ -274,14 +284,8 @@ func withoutVersion(t *testing.T) {
 func resourceOf(t *testing.T, readOnly sdktrace.ReadOnlySpan) map[string]string {
 	t.Helper()
 
-	line, err := Encode(readOnly)
-	if err != nil {
-		t.Fatalf("the encoder failed: %v", err)
-	}
 	var data tracesData
-	if err := json.Unmarshal(line, &data); err != nil {
-		t.Fatalf("the line does not parse: %v: %s", err, line)
-	}
+	encodeInto(t, readOnly, &data)
 	if len(data.ResourceSpans) != 1 {
 		t.Fatalf("the line carries %d resourceSpans entries, want 1", len(data.ResourceSpans))
 	}
@@ -293,7 +297,7 @@ func resourceOf(t *testing.T, readOnly sdktrace.ReadOnlySpan) map[string]string 
 }
 
 // sdkResourceSpan is the fixture span carrying the SDK's default resource, the resource
-// every provider span carried before the encoder wrote its own block.
+// every provider span carries.
 func sdkResourceSpan(t *testing.T) sdktrace.ReadOnlySpan {
 	t.Helper()
 
@@ -350,14 +354,8 @@ func TestEncodeWithoutAVersionWritesNoVersionKey(t *testing.T) {
 func spanAttributeKeys(t *testing.T, readOnly sdktrace.ReadOnlySpan) map[string]bool {
 	t.Helper()
 
-	line, err := Encode(readOnly)
-	if err != nil {
-		t.Fatalf("the encoder failed: %v", err)
-	}
 	var parsed map[string]any
-	if err := json.Unmarshal(line, &parsed); err != nil {
-		t.Fatalf("the line does not parse: %v", err)
-	}
+	encodeInto(t, readOnly, &parsed)
 	keys := map[string]bool{}
 	attributes, _ := onlySpan(t, parsed)["attributes"].([]any)
 	for _, entry := range attributes {

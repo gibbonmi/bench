@@ -178,14 +178,8 @@ func TestReaderSeamsAreRegisteredSeams(t *testing.T) {
 func schemaLine(t *testing.T, schema string) []byte {
 	t.Helper()
 
-	line, err := Encode(fixtureSpan(t))
-	if err != nil {
-		t.Fatalf("the encoder failed: %v", err)
-	}
 	var data tracesData
-	if err := json.Unmarshal(line, &data); err != nil {
-		t.Fatalf("the line does not parse: %v", err)
-	}
+	encodeInto(t, fixtureSpan(t), &data)
 	data.ResourceSpans[0].Resource.Attributes = nil
 	if schema != "" {
 		data.ResourceSpans[0].Resource.Attributes = []keyValue{{Key: ResourceRecordSchema, Value: anyValue{StringValue: stringPtr(schema)}}}
@@ -380,5 +374,22 @@ func TestReadSpansRefusesASymlinkedSegment(t *testing.T) {
 
 	if spans, err := ReadSpans(home, root); err == nil {
 		t.Fatalf("ReadSpans followed a symlinked sealed segment and returned %d spans", len(spans))
+	}
+}
+
+// TestReadSelectedNamesTheSegmentOfAProblem holds review finding LEA-C3: a consumer names
+// the live path beside each problem, so a problem that counts lines across segments or
+// omits its sealed segment points at the wrong line.
+func TestReadSelectedNamesTheSegmentOfAProblem(t *testing.T) {
+	home, root := sealEach(t,
+		[]byte("not a record line"),
+		spanLine(t, fixtureTraceID, "live", "gate"))
+
+	_, problems, err := ReadSelected(home, root, []string{fixtureTraceID})
+	if err != nil {
+		t.Fatalf("ReadSelected: %v", err)
+	}
+	if want := []string{sealedName(1) + " line 1 malformed"}; !reflect.DeepEqual(problems, want) {
+		t.Fatalf("problems = %v, want %v", problems, want)
 	}
 }

@@ -55,7 +55,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-// scripts/go-build.sh stamps the version. Unstamped builds report "dev".
+// scripts/go-build.sh stamps the version. An unstamped build reports unstampedVersion.
 var version = unstampedVersion
 
 func main() {
