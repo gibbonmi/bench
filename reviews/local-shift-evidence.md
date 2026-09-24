@@ -175,7 +175,6 @@ Three fresh axes graded the code tip `ee58eed2` with the source digest `899915f1
         "LE13",
         "LE92",
         "LE94",
-        "LE106",
         "LE14",
         "LE93",
         "LE15",
