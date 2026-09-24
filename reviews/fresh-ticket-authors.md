@@ -397,3 +397,38 @@ Each probe reported one failure and restored the file. The FA29 probe keeps ever
 
 - ADR 0021 no longer states "A model change requires reviewer direction." ADR 0023 owns the tier-move stop, and `craft-line` owns a change of model or session.
 - The `CONTEXT.md` entry for "ticket author" still lists repairs among the author's work. A fresh repair session is a new author assignment for its ticket, so the entry stays.
+
+## FA chunk review, round 2
+
+This round confirms the first repair cycle. The frozen pair is base `d23694e925c6e0ffd15d6eda355daef4497acbea` and tip `b4ed0aa96f0de303821b45f7329755ca4d7a0616`, and the axes read the repair delta from `202a9196038e43a652147a59ec30aef9406ff8be`. The shared evidence is `sha256:87fd306037efcf863a59b90479ddac3f720f5e5e36ae77b0495efc796984f62a`. Each axis ran in a new `bench-reviewer` session on opus at high effort. Every fold of the first cycle landed.
+
+The raw finding count is 2: Standards 1, Spec 0, and Coverage 1. Both findings name the same callout, so one repair target remains. Chunk FA has used one of its two repair cycles, and this target takes the second cycle. The reviewer chose the repair on 2026-09-24: trim the callout, and add one Forbid row for the retired field-guide sentence.
+
+### Standards
+
+Findings: 1. The worst issue is the field-guide callout.
+
+- `docs/field-guide.html:1325-1328` restates the rule that line 1140 holds, and its tier-move clause has no `--delegate` condition. Target R15. `auto-fix`. Confidence 6.
+
+### Spec
+
+Findings: 0. Every fold is confirmed, and the three repair assignments are valid replacements.
+
+### Coverage
+
+Findings: 1. The worst issue is the unpinned field-guide callout.
+
+- `docs/field-guide.html:1325` with `internal/anchors/registry_data.go:357`: the retired single-author sentence can return beside a green FA22 needle. Probe P1 was silent. Target R16. `ask-user`, and the reviewer approved one Forbid row. Confidence 8.
+
+### Advice
+
+- Spec: the plan names each repair's start as the tip before its assignment commit, and the evidence sections name the assignment commit.
+- Standards: `CONTEXT.md:359` has a short reflowed line.
+- Coverage: the FA10 needle does not stop a separate negating sentence after it.
+
+### Repair routing
+
+| ticket | targets |
+| --- | --- |
+| `3-align-the-phase-commands-and-docs.md` | R15, R16 |
+| orchestrator spec amendment | row FA31 for R16 |
