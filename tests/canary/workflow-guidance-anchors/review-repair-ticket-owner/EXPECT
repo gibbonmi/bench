@@ -1,1 +1,1 @@
-.agents/commands/bench-review-implementation.md Review modes dropped the repair ticket for coverage-map amendments
+.agents/commands/bench-review-implementation.md restored the single repair ticket for coverage-map amendments; each affected ticket's `Covers:` line takes the amendment

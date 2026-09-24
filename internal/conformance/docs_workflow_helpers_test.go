@@ -98,9 +98,7 @@ func checkReviewConvergenceContract(implementSpec, reviewImplementation string) 
 		"each planned chunk takes one review across standards, spec, and coverage",
 		"the axes read the whole approved spec and focus on the frozen chunk-base..chunk-tip delta",
 		"current repair coverage closes those predicates",
-		"repeat delegated review only for a later semantic delta or a cross-chunk concern that invalidates prior evidence",
 		"the successor chunk starts only after findings and repair coverage close",
-		"after the last chunk, the orchestrator reconciles overall acceptance and integration before landing",
 	}
 	for _, requirement := range reviewRequirements {
 		if !strings.Contains(reviewImplementation, requirement) {
@@ -111,7 +109,6 @@ func checkReviewConvergenceContract(implementSpec, reviewImplementation string) 
 		"after the last ticket in a chunk, freeze the chunk delta and run the three review axes before advancing",
 		"accepted findings go to fresh repair sessions",
 		"after the last chunk, reconcile every acceptance row and the integrated behavior",
-		"repeat delegated review only when a later delta or cross-chunk concern invalidates prior evidence",
 	} {
 		if !strings.Contains(implementSpec, requirement) {
 			return []string{"bench-implement-spec dropped the retained chunk-review loop: " + requirement}

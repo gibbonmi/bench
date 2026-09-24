@@ -90,8 +90,8 @@ func TestImplementationContinuation(t *testing.T) {
 			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
 			needle: "After reassessment, the ticket author can invoke `$bench-debug`.",
 		},
-		"implementation continuation: craft-delegate allowed diagnostic helper repairs": {
-			file: ".agents/skills/bench-craft-delegate/SKILL.md", section: "Delegate or retain",
+		"implementation continuation: craft-delegate restored its copy of the diagnostic helper boundary that the operating guide owns": {
+			file: ".agents/skills/bench-craft-delegate/SKILL.md", section: "",
 			needle: "A diagnostic helper can inspect evidence, but it receives no implementation or repair assignment.",
 		},
 		"implementation continuation: diagnostic escalation changed the author session": {
@@ -131,8 +131,8 @@ func TestImplementationContinuation(t *testing.T) {
 			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Scope and allowance",
 			needle: "Each implementation chunk permits at most two repair cycles after its initial review.",
 		},
-		"implementation continuation: bounded repair dropped mode census": {
-			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Scope and allowance",
+		"implementation continuation: bounded repair restored the retired mode list": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "",
 			needle: "This allowance applies to retained, full, delegated, unattended, and light-path implementation runs.",
 		},
 		"implementation continuation: bounded repair dropped light-path chunk": {

@@ -41,12 +41,13 @@ perform. The gate decides done; the reviewer decides whether a green change ship
 
 Before classifying repairs, read [the bounded repair policy](../skills/bench-craft-line/references/bounded-repair-policy.md). Apply its allowance and retained-state rules.
 Each planned chunk takes one review across Standards, Spec, and Coverage. The axes read the whole approved spec and focus on the frozen `chunk-base..chunk-tip` delta.
+`.bench/BENCH.md` owns when a chunk review starts, when a delegated review repeats, and the final reconciliation after the last chunk.
 
-After the fresh repair author repairs accepted findings, current repair coverage closes those predicates. Repeat delegated review only for a later semantic delta or a cross-chunk concern that invalidates prior evidence. A repeated review uses the full chunk diff as context and blocks only on that later delta or named concern.
+After the fresh repair author repairs accepted findings, current repair coverage closes those predicates. A repeated review uses the full chunk diff as context and blocks only on the later delta or the named concern that starts it.
 A chunk that ends on a repair takes one confirming round of all three axes at its final tip.
 A confirming round reads only the repair delta, and its charge names the folds to confirm.
 
-The coordinator writes one repair ticket when accepted repairs amend the coverage map. The ticket records the accepted repairs, and it cites each amended row in `Covers:`.
+A coverage-map amendment updates each affected ticket's `Covers:` line under `.bench/BENCH.md`'s plan-expansion policy.
 
 The coordinator records every dogfood run in the spec before repair coverage closes. An unrecorded run is a blocking finding.
 
@@ -55,7 +56,7 @@ Each falsification finding takes one explicit outcome of accept, merge, or
 dismiss. An accepted falsification finding joins the review findings and takes
 the repair-routing disposition.
 
-A delegated chunk review starts after every ticket of the chunk reaches the integrated chunk tip. A per-ticket review does not replace that full-chunk review. Each delegated axis excludes the orchestrator and every current and former author of the run.
+A per-ticket review does not replace the full-chunk review. Each delegated axis excludes the orchestrator and every current and former author of the run.
 
 By default, an authorized review dispatches every prepared axis through the
 native agent surface without a second approval. Each axis uses a different
@@ -68,7 +69,7 @@ For each issue or review miss, it states whether the implementation command
 contributed. When it did, it names the exact improvement. Otherwise, it states
 that no command change is necessary.
 
-Here, findings that prevent progression are unresolved blockers; retain optional advice separately under the policy. The successor chunk starts only after findings and repair coverage close. After the last chunk, the orchestrator reconciles overall acceptance and integration before landing.
+Here, findings that prevent progression are unresolved blockers; retain optional advice separately under the policy. The successor chunk starts only after findings and repair coverage close.
 
 ## Process
 

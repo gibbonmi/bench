@@ -3,7 +3,7 @@
 ## Scope and allowance
 
 Each implementation chunk permits at most two repair cycles after its initial review.
-This allowance applies to retained, full, delegated, unattended, and light-path implementation runs.
+This allowance applies to every implementation run, the light path included.
 Light-path work counts as one chunk when it receives review findings.
 This policy adds no mandatory initial review for light-path work.
 Initial implementation, pre-review checks, and the first review consume no repair cycles.

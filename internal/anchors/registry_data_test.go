@@ -49,17 +49,18 @@ func TestFinalCommunicationMarkerTuples(t *testing.T) {
 	}
 }
 
-// TestBoundedGateOutputAnchorTuples pins BG27. The two needles are written here
-// independently of the registry, so a needle edited to match prose that dropped the
-// bounded-output account cannot define itself green.
+// TestBoundedGateOutputAnchorTuples pins BG27 and GR82. The reference owns the bounded
+// gate output account. The two needles are written here independently of the registry,
+// so a needle edited to match prose that dropped the bounded-output account cannot
+// define itself green.
 func TestBoundedGateOutputAnchorTuples(t *testing.T) {
 	wanted := []Anchor{
 		{
 			Group:   AfterSpecAuthorization,
-			File:    "projects/benchkit.md",
+			File:    ".bench/BENCH-reference.md",
 			Kind:    Require,
 			Section: "",
-			Needle:  "A green run prints one `phases[N]{phase,verdict,elapsed_ms}` table.",
+			Needle:  "A green run prints one `phases[N]{phase,verdict,elapsed_ms}` table",
 		},
 		{
 			Group:   AfterSpecAuthorization,
@@ -252,11 +253,11 @@ func TestFastLaneAnchorsRedOnRemoval(t *testing.T) {
 	}
 }
 
-// TestCensusDutyAnchorsRedOnRemoval pins EC27, EC29, EC31, EC32, and EC33. Each needle and
-// its diagnostic are written here independently of the registry, so a command, a skill, a
-// reference, or a profile that dropped the census account cannot define itself green. The
-// reference and the profile carry the same sentence, so a dropped file must raise only its
-// own diagnostic.
+// TestCensusDutyAnchorsRedOnRemoval pins EC27, EC29, EC31, EC32, EC33, and GR83. Each
+// needle and its diagnostic are written here independently of the registry, so a command,
+// a skill, or a reference that dropped the census account cannot define itself green. The
+// reference owns the census signal account, so a profile that restores its copy raises
+// only the profile's diagnostic.
 func TestCensusDutyAnchorsRedOnRemoval(t *testing.T) {
 	const finalCheck = ".agents/commands/bench-final-check.md"
 	anchorHarness{
@@ -293,9 +294,10 @@ func TestCensusDutyAnchorsRedOnRemoval(t *testing.T) {
 				want:   ".bench/BENCH-reference.md dropped the census signal account: raw calls per assignment under $BENCH_HOME/census/<repo-key>/",
 			},
 			{
-				file:   "projects/benchkit.md",
-				needle: "The `census` signal counts raw calls per assignment from `$BENCH_HOME/census/<repo-key>/`.",
-				want:   "projects/benchkit.md dropped the census signal account: raw calls per assignment under $BENCH_HOME/census/<repo-key>/",
+				file:      "projects/benchkit.md",
+				needle:    "The `census` signal counts raw calls per assignment from `$BENCH_HOME/census/<repo-key>/`.",
+				want:      "projects/benchkit.md restored its copy of the census signal account that .bench/BENCH-reference.md owns",
+				forbidden: true,
 			},
 		},
 	}.check(t)
@@ -412,10 +414,10 @@ func TestCraftDelegateDisciplineAnchorsRedOnRemoval(t *testing.T) {
 				want:    "delegation-discipline.md Read-only returns dropped the census read at charge close for a read-only charge",
 			},
 			{
-				file:    reference,
-				section: "Read-only returns",
-				needle:  "confirms the\n  restore with `cmp` against the copy aside.",
-				want:    "delegation-discipline.md Read-only returns dropped the exact probe restore confirmed by cmp",
+				file:      reference,
+				forbidden: true,
+				needle:    "restore with `cmp` against the copy aside",
+				want:      "delegation-discipline.md restored the cmp restore against a copy aside; bench probe reports the restore",
 			},
 			{
 				file:    skill,
@@ -872,25 +874,25 @@ func TestCraftGateBothEndsAnchorsRedOnRemoval(t *testing.T) {
 }
 
 // TestRepairTicketOwnerAnchorsRedOnRemoval holds the two rules that keep an accepted
-// repair on the coverage map. A repair that amends a mapped row leaves no ticket behind,
-// so the row loses its owner at the final check. Each section, needle, and diagnostic is
-// written here independently of the registry.
+// repair on the coverage map. A coverage-map amendment updates the `Covers:` line of each
+// affected ticket, so no single repair ticket carries the repairs of several tickets. Each
+// section, needle, and diagnostic is written here independently of the registry.
 func TestRepairTicketOwnerAnchorsRedOnRemoval(t *testing.T) {
 	const file = ".agents/commands/bench-review-implementation.md"
 	anchorHarness{
 		group: AfterImplementSpec,
 		rules: []anchorRule{
 			{
-				file:    file,
-				section: "Review modes",
-				needle:  "writes one repair ticket when accepted repairs amend the coverage map",
-				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the repair ticket for coverage-map amendments",
+				file:      file,
+				forbidden: true,
+				needle:    "writes one repair ticket when accepted repairs amend the coverage map",
+				want:      ".agents/commands/bench-review-implementation.md restored the single repair ticket for coverage-map amendments; each affected ticket's `Covers:` line takes the amendment",
 			},
 			{
 				file:    file,
 				section: "Review modes",
-				needle:  "it cites each amended row in `Covers:`.",
-				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the repair ticket's amended-row citation in `Covers:`",
+				needle:  "A coverage-map amendment updates each affected ticket's `Covers:` line under `.bench/BENCH.md`'s plan-expansion policy.",
+				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the `Covers:` update of each affected ticket for a coverage-map amendment",
 			},
 		},
 	}.check(t)
@@ -1255,22 +1257,16 @@ func TestSystemSuiteRouteAnchorsRedOnRemoval(t *testing.T) {
 	}.check(t)
 }
 
-// TestHandoffSectionRuleAnchorRedOnRemoval pins HS25. The working agreement states the
-// handoff section rule: a phase close runs `bench handoff` from its own worktree, and the
-// verb rewrites only that assignment's section. The needle and the diagnostic are written
-// here independently of the registry, so an agreement that dropped the rule cannot define
-// itself green.
+// TestHandoffSectionRuleAnchorRedOnRemoval pins HS25, GR84, and GR85. The reference owns
+// the handoff section rule, and the working agreement keeps no copy. Each needle and its
+// diagnostic are written here independently of the registry, so a reference that dropped
+// the rule, or an agreement that restored its copy, cannot define itself green.
 func TestHandoffSectionRuleAnchorRedOnRemoval(t *testing.T) {
-	anchorHarness{
-		group: AfterSpecAuthorization,
-		rules: []anchorRule{
-			{
-				file:   "AGENTS.md",
-				needle: "`bench handoff` rewrites only the calling worktree's assignment section.",
-				want:   "AGENTS.md dropped the handoff section rule; a phase close runs bench handoff from its own worktree, and the verb rewrites only that assignment's section",
-			},
-		},
-	}.check(t)
+	const rule = "`bench handoff` rewrites only the calling worktree's assignment section."
+	anchorHarness{group: AfterSpecAuthorization, rules: []anchorRule{
+		{file: ".bench/BENCH-reference.md", needle: rule, want: ".bench/BENCH-reference.md dropped the handoff section rule; bench handoff rewrites only the calling worktree's assignment section"},
+		{file: "AGENTS.md", needle: rule, want: "AGENTS.md restored its copy of the handoff section rule that .bench/BENCH-reference.md owns", forbidden: true},
+	}}.check(t)
 }
 
 // TestAgentPushRuleAnchorRedOnRemoval pins PG36. The reference guide's hook-layer list

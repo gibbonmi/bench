@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/commands/bench-review-implementation.md",
-    "old": "writes one repair ticket when accepted repairs amend the coverage map",
-    "new": "writes no repair ticket when accepted repairs amend the coverage map"
+    "old": "A coverage-map amendment updates each affected ticket's `Covers:` line under `.bench/BENCH.md`'s plan-expansion policy.",
+    "new": "A coverage-map amendment updates each affected ticket's `Covers:` line under `.bench/BENCH.md`'s plan-expansion policy.\nThe coordinator writes one repair ticket when accepted repairs amend the coverage map."
   }
 ]

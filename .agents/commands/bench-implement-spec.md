@@ -57,7 +57,7 @@ Commit the artifact on its ordinary lane, then run `bench gate --checkpoint spec
 An ordinary lane pass or ordinary green cannot replace this checkpoint. Follow its named record or review action when evidence fails.
 After a repair, apply the bounded repair policy's current-evidence rule and its narrow evidence-only exception before retrying.
 
-After the last chunk, reconcile every acceptance row and the integrated behavior. Repeat delegated review only when a later delta or cross-chunk concern invalidates prior evidence. From the clean destination, hand the accepted source to `bench worktree land`; it composes, gates, publishes `Status: implemented`, and releases the source. Then run `/bench-final-check`.
+After the last chunk, reconcile every acceptance row and the integrated behavior. From the clean destination, hand the accepted source to `bench worktree land`; it composes, gates, publishes `Status: implemented`, and releases the source. Then run `/bench-final-check`.
 
 Write the ordinary assessment record before the `bench worktree land` step, and append the landing evidence after it. The review and final-check phases own the other assessment updates. Keep the retained run identity available for those phase boundaries.
 
@@ -65,7 +65,7 @@ Write the ordinary assessment record before the `bench worktree land` step, and 
 
 Report the state: what is done, what remains, the coverage table, and what consumed the cap. Keep landed work landed. Then route by cause:
 
-- Wrong tier: apply `craft-line`'s ladder. For a ticket author, raise the effort and resume; a tier move asks the reviewer first.
+- Wrong tier: apply `craft-line`'s ladder.
 - Wrong spec: route to `/bench-write-spec` with the finding quoted.
 - Wrong scope: propose the split for the reviewer to decide.
 

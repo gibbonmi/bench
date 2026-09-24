@@ -8,7 +8,7 @@ A conflicted phase-owned capture file composes by one rule table with three verb
 
 A path the table does not name, a board file, or a non-regular object kind refuses. The refusal names every conflicted path and the source repair in order. That repair is: merge the destination into the source worktree, commit, review the new range, and re-run the landing.
 
-The rule is guidance, not enforcement. No hook refuses a commit on the default branch, and the ordinary commit verb keeps working on any branch. The handoff is written in the phase's worktree and lands with it, so the handoff rule and the merge rule agree.
+The commit verb refuses the primary checkout and directs the user to a Bench worktree. A file-write guard refuses an agent's write to a tracked path in the primary checkout. The handoff is written in the phase's worktree and lands with it, so the handoff rule and the merge rule agree.
 
 ## Considered options
 

@@ -40,10 +40,10 @@ var ft311ReviewDispatchAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "An implementation chunk is one coherent behavior outcome with acceptance rows, tests, and a review checkpoint.", Diagnostic: "retained workflow: operating guide dropped chunk outcome and review checkpoint"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "A ticket remains a serial green commit checkpoint.", Diagnostic: "retained workflow: operating guide dropped serial ticket checkpoint"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "After a chunk's ticket commits, freeze its delta and run Standards, Spec, and Coverage against the whole approved spec before starting its successor.", Diagnostic: "retained workflow: operating guide allows advancement before three-axis chunk review"},
-	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "After the last chunk, the orchestrator reconciles the final acceptance and integration.", Diagnostic: "fresh ticket author: operating guide dropped the orchestrator's final reconciliation"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: finalReconciliationRule, Diagnostic: "fresh ticket author: operating guide dropped the orchestrator's final reconciliation"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Forbid, Needle: "After the last chunk, the retained author reconciles overall acceptance and integration.", Diagnostic: "fresh ticket author: operating guide restored the retained author's final reconciliation"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Forbid, Needle: "Return findings to the retained author and obtain current repair coverage.", Diagnostic: "fresh ticket author: operating guide restored the finding return to the retained author"},
-	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "Repeat delegated review only for a later delta or a cross-chunk concern that invalidates prior evidence.", Diagnostic: "retained workflow: operating guide restored routine final full review"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: reviewRepeatRule, Diagnostic: "retained workflow: operating guide restored routine final full review"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "A brief read-only diagnostic consultation can inspect evidence, but it receives no implementation or repair assignment.", Diagnostic: "retained workflow: operating guide dropped diagnostic-only consultation boundary"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Require, Needle: "If tracked changes remain, the retained drain session authors the complete tracked batch.", Diagnostic: "retained workflow: drain restored delegated batch authorship"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Require, Needle: "Review action requires a narrow axis read: act only after this session reads the frozen delta and the targeted sources of its axis. An axis does not retrieve every evidence page. `bench preflight evidence <id> --verify` is the separate artifact-integrity check.", Diagnostic: "bounded review action: bench-review-implementation.md permits review action without a narrow axis read"},
@@ -63,3 +63,11 @@ var ft311ReviewDispatchAnchors = []Anchor{
 	// originating checkout path names no evidence and authorizes no retrieval.
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Require, Needle: "The handoff carries the trusted expected evidence identity and the exact `bench preflight evidence <id>` retrieval command, never the originating checkout path.", Diagnostic: "native handoff: bench-review-implementation.md drops the trusted evidence identity or the exact retrieval command from the capable-harness handoff"},
 }
+
+// reviewRepeatRule and finalReconciliationRule are owner sentences in `.bench/BENCH.md`.
+// The Require rows here and the retained-workflow Forbid rows that keep phase-command
+// copies out read the same constant, so a reworded owner sentence moves both rows.
+const (
+	reviewRepeatRule        = "Repeat delegated review only for a later delta or a cross-chunk concern that invalidates prior evidence."
+	finalReconciliationRule = "After the last chunk, the orchestrator reconciles the final acceptance and integration."
+)

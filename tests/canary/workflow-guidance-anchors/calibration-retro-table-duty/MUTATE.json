@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/commands/bench-final-check.md",
-    "old": "The retro fills the calibration table with one row per labeled claim: surface, claim, status, confidence, label, and model, effort, and role.\n",
+    "old": "The retro fills the scaffold's calibration table with one row per labeled claim.\n",
     "new": ""
   }
 ]

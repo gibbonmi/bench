@@ -1,5 +1,5 @@
 ---
-description: Run the external gate and commit work on green; after a spec's final landing, report the evidence and capture the retro. Never use the model's own judgment as a substitute for retained or freshly observed evidence.
+description: Commit work on a lane pass and land it through the whole-project gate; after a spec's final landing, report the evidence and capture the retro. Never use the model's own judgment as a substitute for retained or freshly observed evidence.
 ---
 
 # /bench-final-check — the gate is the oracle
@@ -13,9 +13,9 @@ retained evidence and captures the retro. Other work lands only on green. It
 does not substitute the model's own judgment for tests, types, lint, or
 conformance checks.
 
-Before spec-backed landing, reconcile every planned acceptance row and retain
-the author's final acceptance and integration command results in the review
-record. Each result must name its examined source and terminal outcome.
+Before spec-backed landing, reconcile every planned acceptance row.
+The review record retains the orchestrator's final `integration-verification` results.
+Each result must name its examined source and terminal outcome.
 Obtain `bench gate --checkpoint <spec-path> --complete` on that source.
 
 The landing carries that complete obligation into the prospective gate. The
@@ -36,15 +36,11 @@ over its unchanged tree.
 Report the reviewed source pair, the landing commit, and the retained exact
 green evidence. Then capture the retro below.
 
-Everything else takes the gate-then-commit path. On green, land the named
-paths with `bench commit -m "<msg>" <path>...`. This command gates and commits
-them atomically. When there is nothing to commit, the honest no-op runs
-`bench gate` and reports its verdict.
+Everything else commits in its Bench worktree and lands through `bench worktree land`.
+Commit the named paths with `bench commit -m "<msg>" <path>...` in that worktree.
+`bench worktree land` runs the whole-project gate on work that `bench commit` committed on a lane pass.
+When there is nothing to commit, the honest no-op runs `bench gate` and reports its verdict.
 A light-path fix lands before a spec's final merge only when its `CHANGELOG.md` entry sits under a heading no sibling touches.
-
-After a lane-only repair commit and before the landing, run the whole-tree
-gate on the source. The lane skips the conformance checks the landing gate
-runs.
 
 If the command refuses because of an
 unexplained working-tree file, surface that file. Do not commit or revert it.
@@ -55,8 +51,9 @@ or `/bench-debug` for a bug.
 
 **The post-merge tail (exit duty).** After the green landing reaches the
 default branch, read `bench status` and run the housekeeping rows it flags
-before you close. A merged spec awaiting retirement gets `bench spec retire <slug>`
-and its `spec-retire: <slug>` commit. Promote durable content first,
+before you close.
+A merged spec awaiting retirement gets `bench spec retire <slug>` in a Bench worktree, and that worktree lands its `spec-retire: <slug>` commit through `bench worktree land`.
+Promote durable content first,
 for example a decision to an ADR or a hostile edge to the profile. Retirement
 of the whole `specs/<slug>/` folder removes its compiled decision provenance
 with its tickets, so there is no separate top-level decision-map delete.
@@ -85,32 +82,11 @@ of a silent skip.
 ## Capture the implementation retro
 
 After any applicable post-merge tail, an implemented spec has two final exit
-duties. First, rewrite `capture/retros/<spec-slug>.md` in full. Do this only after the
-spec's final green landing commit has flipped it to `Status: implemented`. A
-re-run replaces that slug's whole file; it never appends,
-and it leaves other pending retros untouched.
-
-Use these headings exactly:
-
-```markdown
-## Outcome
-
-## Gate-stage timings
-
-## Ticket-versus-spec-slice and delegate performance
-
-## Coordinator catches
-
-## Repair attribution
-
-## Agent-experience improvements
-
-### Bench CLI
-
-### Skills
-
-### Process
-```
+duties. First, write the retro only after the spec's final green landing
+commit has flipped it to `Status: implemented`.
+Read `bench retro <slug> --scaffold`, then write the retro once with `bench retro <slug> --body <markdown>`.
+The scaffold owns the retro headings and the calibration table header; keep them as the scaffold prints them.
+The verb refuses a retro file that exists, and it changes no other retro.
 
 Record concrete evidence:
 
@@ -122,7 +98,7 @@ Record concrete evidence:
 
 A spec retro cites the landing's census entry under `### Bench CLI` with its `Feeds:` line.
 
-The retro fills the calibration table with one row per labeled claim: surface, claim, status, confidence, label, and model, effort, and role.
+The retro fills the scaffold's calibration table with one row per labeled claim.
 The retro states the Brier mean, the pair count, and the abstention count below the table, with `unknown` for a mean over zero pairs.
 
 Write each improvement item as one list item. Give the item one sentence that
@@ -137,7 +113,7 @@ three improvement headings takes this shape:
   Feeds: none
 ```
 
-Under that repair-attribution heading, write one table row per ticket in the
+Under the repair-attribution heading, write one table row per ticket in the
 build: the ticket, how many repair rounds it took to land, and one cause per
 round. A ticket that landed in one pass records `none`. Causes come from this
 vocabulary and no other, one term per round: `shaping-ambiguity`, `spec-row`,
@@ -159,9 +135,10 @@ restate this landing for that row, and replace the old text. Rewrite
 owns the rest of the shape.
 
 These files are pending capture for `/bench-drain`, not
-a second roadmap. Do not run another gate or commit just to capture the retro.
-The successful landing boundary is already the verdict. The retro leaves
-through the next reviewer-approved capture drain.
+a second roadmap.
+A tracked retro and its scorecard updates commit with the phase close.
+Write and commit them in a Bench worktree, and land that commit through `bench worktree land`.
+An ignored retro stays local until the next reviewer-approved capture drain.
 
 Report the applicable oracle result. This command does not form an opinion
 about whether the work is good. It reports the gate's retained or fresh
@@ -169,21 +146,11 @@ result.
 
 ## Run it
 
-For work that has
-paths to land, the oracle run and landing are one command:
-
-```sh
-bench commit -m "<msg>" <path>...
-```
-
-`bench commit` formats changed Go files inside the named paths, then runs the
-gate and commits only on green. It does not format unnamed paths, and a dry run
-changes no files. A red run reports its own first failing phase and refuses to
-commit. Do not run `bench gate` first.
-The commit already is the gate run; the gate reuses a fresh green verdict for
-the identical tree and never re-pays it. Standalone `bench gate` has two jobs
-here: report the honest no-op, when nothing is left to commit, and diagnose a
-red run.
+Commit and land as "Exit handoff" states; `.bench/BENCH-reference.md` holds
+the landing shape. `bench commit` formats changed Go files inside the named
+paths. It does not format unnamed paths, and a dry run changes no files. A red
+run reports its own first failing phase and refuses to commit. Standalone
+`bench gate` also diagnoses a red run.
 
 Exit 3 means the commit is published but the checkout did not reconcile. Paste
 the `next=` restore command from the `committed{...}` record to repair the
@@ -198,15 +165,17 @@ covers; it never selects the gate. To change what runs, change
 ## Report
 
 - **Spec landed:** report the final landing commit and its
-  retained exact green evidence plainly. Capture the retro without another
-  gate or commit.
+  retained exact green evidence plainly.
+  Capture the retro as "Capture the implementation retro" states.
 - **Ordinary green:** the work is committed. State it plainly, and add one line
   noting that ship-tier verification has not run. A dev green claim shows the
   kit works from the tree. Release-evidence checks run once per release under
   `bench prep-release`. This is a statement, not an approval prompt. Hand back to me to merge.
 - **Red:** report each failing check in the order it fails, with the smallest
   reproduction. Do not propose a weaker check. Diagnose the cause, and propose a
-  fix at the seam. If I approve, fix it and re-run the gate. A fix is real
+  fix at the seam.
+  A spec-backed red goes to a fresh repair session under `.bench/BENCH.md`'s repair rule.
+  For other work, if I approve, fix it and re-run the gate. A fix is real
   only when the gate is green again.
 
 If a check itself looks wrong, for example a flaky test or an over-tight lint

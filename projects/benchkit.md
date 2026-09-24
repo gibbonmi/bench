@@ -12,9 +12,8 @@ and any other AGENTS.md harness. This portability is the product.
 
 ## Working branch
 
-`main`. (`/bench-final-check` names the commit-on-green policy as canonical. The
-pre-push hook, not the commit step, guards the default branch, so `bench commit`
-works on any branch. This line only states the binding.)
+`main`. (`/bench-final-check` names the commit and landing policy as canonical.
+The pre-push hook guards the default branch. This line only states the binding.)
 
 ## Seams (test here; everything else is free to change)
 
@@ -125,7 +124,6 @@ works on any branch. This line only states the binding.)
   aggregating unpushed commits and unique local branches across the repository.
   Severity-2 intent joins the shared common-directory ledger, compact by default and
   expanded by `--all`.
-  The `census` signal counts raw calls per assignment from `$BENCH_HOME/census/<repo-key>/`.
 - **The capture inbox and working roadmap** (`bench idea` → `capture/IDEAS.md`,
   and `bench roadmap` → the `ROADMAP.md` index). Each roadmap row owns a
   `roadmap/FT<n>.md` detail file, holding that row's body, `Occurrence:` ledger,
@@ -474,16 +472,7 @@ artifacts were reproduced.
 
 ### Gate output
 
-A green run prints one `phases[N]{phase,verdict,elapsed_ms}` table.
-It also prints one `capability-skips` line, and then `gate: green`. Above seven
-phases the table collapses to one `phases: N/N green` row.
-
-A red run prints one `failures[N]{phase,line}` table, and then `gate: red`. The
-table holds failure rows only. Each phase gives at most twenty rows, and one
-more row names the file that holds the complete stream.
-
-The complete phase stream goes to `.logs/gate-<run>.out`. That file sits beside
-the `.logs/gate-<run>.jsonl` progress log, under the same twenty-run retention.
+`.bench/BENCH-reference.md` owns the bounded gate output account.
 
 ### Guidance prose budgets
 

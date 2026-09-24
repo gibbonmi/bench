@@ -45,7 +45,8 @@ assignments; the file map, adapter contracts, and hook layers live below.
 - `capture/retros/` holds one retro per spec: `/bench-final-check` writes
   `capture/retros/<spec-slug>.md` and refreshes affected
   `capture/agent-performance/` scorecards, and `/bench-drain` owns their
-  reviewed drain and its capture commit.
+  reviewed drain. `/bench-final-check` states when a tracked or an ignored
+  retro commits.
 - `ROADMAP.md` is the working roadmap's index. It holds board prose plus one
   heading line per row, with no bodies. `roadmap/` holds one detail owner per
   row, `roadmap/FT<n>.md`, carrying that row's body, `Occurrence:` ledger, and
@@ -65,10 +66,8 @@ assignments; the file map, adapter contracts, and hook layers live below.
   `bench check-agent-line`.
 - `.claude/` contains Claude Code adapter config. See `.claude/README.md`:
   Claude reads `.claude/skills/` and `.claude/commands/`, and those paths point
-  at the portable `.agents/` files. `.claude/skills/` carries only the
-  `bench-craft-*` skills. The `$bench-*` phase adapter skills stay Codex-only,
-  because Claude already has each phase as a command, and a same-named skill
-  would duplicate the slash-menu entry.
+  at the portable `.agents/` files.
+  `.claude/README.md` states which skills `.claude/skills/` links.
 - `.codex/` contains Codex adapter config.
 
 ## Skills index
@@ -202,12 +201,11 @@ composes and runs the one whole-project gate on that pair before publication and
 source release. Executable help owns its flags and positional grammar.
 
 The spec is optional on the landing and on its resume: a spec-less phase lands
-with no `--spec`, and a tickets-only `--spec` closes its folder. Every phase
-lands this way; the rule is guidance, not a hook, so `bench commit` still works
-on any branch. An abbreviated commit identity expands to the exact commit
+with no `--spec`, and a tickets-only `--spec` closes its folder.
+Every phase lands this way, and `.bench/BENCH.md` states how `bench commit` enforces that rule.
+An abbreviated commit identity expands to the exact commit
 before any proof runs. One preflight prints every refusal the caller must
-clear, and each refusal names its paths. A stale Bench executable is rebuilt,
-and the landing re-runs under it.
+clear, and each refusal names its paths.
 
 Each landing refusal face constructs through the registry constructor, which
 takes the recovery route as a required argument. Therefore each landing refusal
@@ -222,8 +220,8 @@ resolution, and `capture/` is authorized for every reviewed range. Any other
 conflict refuses and names every path, and its `next=` names the repair in
 order:
 
-- merge the destination into the source worktree with raw Git, because
-  `bench worktree merge` refuses this same conflict
+- the reviewer merges the destination into the source worktree with raw Git,
+  because `bench worktree merge` refuses this same conflict
 - commit the repair with `bench commit`
 - review the new range
 - re-run the landing with the new source tip
@@ -252,8 +250,8 @@ Its exit meanings follow the publication boundary:
   release, or a landing effect remains incomplete; the exit-3 record carries the
   `bench worktree land --resume` invocation you need
 
-`bench worktree reset --to <commit> <target>` plans a checkpoint reset, and
-`--restore <ref>` plans a restore; `--apply <fingerprint>` applies either plan.
+`bench worktree reset` plans a checkpoint reset or a restore, and a second call
+applies either plan by its fingerprint.
 Before a destructive move, the verb verifies a reset envelope under
 `refs/bench/reset/<owner>/<assignment>/<n>` that preserves staged, unstaged, and untracked work.
 The restore returns HEAD, the index, and the working tree to the preserved state.
@@ -272,16 +270,18 @@ The refusal names the colliding paths.
 Move the ignored content aside, then plan again.
 An index entry marked assume-unchanged or skip-worktree refuses the plan the same way.
 
-`bench handoff [--harness <name>] [--next <command>] [--state-file <path>]`
-rewrites the calling worktree's own section. `--state-file` names the file that
-holds the drafted State body. The verb refuses a path it cannot read as a
-regular file. It also refuses a draft that carries a control byte and a draft
-that opens a section heading. An empty draft resets the State to the scaffold
-guidance.
+`bench handoff` rewrites only the calling worktree's assignment section.
+The primary checkout owns the `main` section.
+The verb keeps a non-empty Next command.
+It refuses a State that pins a commit outside the tip's ancestry.
 
-`bench retro <slug> (--body <markdown> | --scaffold)` writes the retrospective or
-prints its draft. `--scaffold` prints the draft and writes no file, so the later
-`--body` call keeps its exclusive create. The draft renders the retrospective
+The verb reads the drafted State body from a file. It refuses a path that it
+cannot read as a regular file. It also refuses a draft that carries a control
+byte and a draft that opens a section heading. An empty draft resets the State
+to the scaffold guidance.
+
+`bench retro` writes the retrospective or prints its draft. The draft form
+writes no file, so the later write keeps its exclusive create. The draft renders the retrospective
 parser's own heading list and the stage timings of the newest landing span. It
 also gives one repair row per ticket of the slug. The rounds cell and the cause
 cell read `unknown`, and an absent tickets directory gives one `unknown` row.
@@ -293,6 +293,7 @@ The registry classifies some definitions as internal inventory; they support
 hooks and adapters, not interactive sessions. The registry owns their exact set, so a visibility change
 cannot drift from `bench help`. Inspect the registry when you maintain those
 callers.
+`bench gate-prose` is the one internal verb that a session runs directly; Command Notes gives its forms.
 
 ## Phase manifest
 
@@ -315,8 +316,10 @@ is no separate conformance phase, driver, or per-check evidence partition.
 `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>` checks the named chunk's
 source-bound author verification and three independent review results before advancement.
 Use `--complete` instead of `--chunk <id>` for final acceptance and integration evidence.
-The `bench-completion-plan` fence in `specs/<slug>/spec.md` declares version 1, the chunks
+The authored `bench-completion-plan` fence in `specs/<slug>/spec.md` declares version 1, the chunks
 with their tickets and verification requirements, and the final verification.
+Before the first dispatch, the plan amendment makes the authored version 1 fence a version 2 plan.
+
 The `bench-review-record` fence in `reviews/<slug>.md` holds the evidence the checkpoint grades.
 Checkpoint purpose and record bytes participate in the existing gate verdict identity.
 Ordinary lane checks remain available while implementation, review, or repair is in progress.

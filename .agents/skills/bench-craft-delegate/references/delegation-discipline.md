@@ -7,7 +7,7 @@ mutation-probe rule, and the done-claim check.
 
 ## Before the charge
 
-- `.bench/BENCH.md` owns ticket author sessions, and `craft-delegate` routes each spec-backed ticket to its fresh author. An independent worktree is for a user-directed delegated diff that lands on its own.
+- `.bench/BENCH.md` owns ticket author sessions. An independent worktree is for a user-directed delegated diff that lands on its own.
 - Disjoint ownership fences across sibling tickets do not license concurrent
   writers in one tree. The lever for parallelism is separate worktrees. A build
   that wants serial verdicts and parallel delegates says which one it buys.
@@ -33,7 +33,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A write charge states that its ownership fence is a refusal boundary above any
   mirror-every-registry instruction. The delegate reports an out-of-fence write
   before the delegate edits.
-- A user-directed write delegate treats `Writes:` as an expectation. When evidence requires an approved in-scope expansion, the orchestrator applies `.bench/BENCH.md`'s plan-expansion policy before continuing. The delegate never writes a second spelling to stay in fence.
+- Every write delegate treats `Writes:` as an expectation. When evidence requires an approved in-scope expansion, the orchestrator applies `.bench/BENCH.md`'s plan-expansion policy before continuing. The delegate never writes a second spelling to stay in fence.
 - A charge that exports from a package outside its fence names the fence amendment
   in its return.
 - A charge treats a coverage-row citation in a test doc as a reference to keep.
@@ -86,7 +86,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   directory that the fence names stays in the tree.
 - Before a write charge dispatches, the coordinator ticks each item of this list against the ticket's `Writes:` line.
 - A test that guards on a root privilege routes through the capability seam, never through a bare `t.Skip`.
-- A repair fence is the approved chunk union plus the exact paths that the review names.
+- A repair fence is the affected ticket's `Writes:` line. Only `.bench/BENCH.md`'s plan-expansion policy widens it.
 - A repair based on a frozen sibling uses an integration assignment from `main`. The integration assignment merges the sibling before the landing.
 
 ## Delegated author transfer
@@ -97,18 +97,17 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - An exhausted declared author cap permits a replacement or a model change.
 - A lost author session permits a replacement or a model change.
 - A post-review repair under the standing policy of `.bench/BENCH.md` permits a `user-directed` replacement of the author by a fresh repair session.
+- Outside `--delegate`, a model change under any trigger is a tier move, and it asks the reviewer first.
 - Every author transfer waits for confirmed termination of the old writer.
 - The successor receives the preserved source and performs fresh verification. Earlier evidence keeps its own author and source.
 
 ## Isolation and end of life
 
 - Release is the creating request's default end of life for a delegate worktree.
-  `bench worktree clean` and then `bench resume-clean` is the recovery pair.
+  To recover a worktree, run `bench worktree clean --target <target>` to see the
+  plan. Then run the same command with `--apply <fingerprint>`.
 - A fold between owned worktrees runs through `bench worktree merge`, never
   through a file copy.
-- A large uncommitted build that no worktree can hold may run in the main checkout
-  under exactly four conditions. The conditions are one writer, a named file
-  allowlist, no commit authority, and a `git status` check verified on return.
 
 ## Probes
 
@@ -117,10 +116,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   form, so no charge carries the copy-aside sequence.
 - A probe the verb reports as `invalid` proves nothing. Replace that probe before
   you read a verdict.
-- Probe a tracked file that has pending changes with a copy aside.
-  `git checkout --` wipes the whole in-flight diff, not only the probe.
-- Before the coordinator reads a probe verdict, the coordinator confirms the
-  mutated bytes against the copy aside.
+- Before the coordinator reads a probe verdict, the coordinator confirms the `restored` cell that `bench probe` reports.
 - A probe of a live-tree anchor or marker runs through the gate, not through the
   conformance package alone. Only the gate's entry test grades the live tree.
   `bench test --package ./internal/conformance` is not the root conformance
@@ -163,8 +159,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A triage return cites evidence and proposes a bounded repair charge.
 - The coordinator accepts the diagnosis and routes repairs under existing authoring and verification rules.
 - Triage cannot close a finding, expand a fence, waive a probe, or change default tiers.
-- A shared-worktree reader restores every probe byte exactly, and confirms the
-  restore with `cmp` against the copy aside.
+- A shared-worktree reader probes only through `bench probe` and reads its `restored` cell.
 - The coordinator verifies a clean `git status` in the shared worktree before it
   trusts a read-only return.
 
@@ -174,9 +169,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   coordination and hand both results to the reviewer.
 - Before aggregate grading, wait until returned delegates have no live tests and
   serialize the coordinator-owned resource.
-- A retry cap counts coherent attempts at implementation and verification. A
-  planned TDD red is not a failed attempt, and a slow tool call is not a failed
-  attempt.
+- `craft-line` owns the definition of an attempt that a retry cap counts.
 - Before the final allowed repair attempt, the author checks every review axis for duplicated facts and derived counts.
 - At the cap, the author preserves a green semantic repair and requests an explicit evidence-scoped extension for the remaining edit. The extension record states whether it adds a repair round to the implementation retro.
 
@@ -203,8 +196,8 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - Before the coordinator changes a completion plan after a user stop, the
   coordinator records the scope of that stop. The scope is cross-harness
   verification only, or all verification.
-- The coordinator runs `bench preflight build` on the integration source after every ticket commit and before the next charge. An edit can remove a fenced path.
-- After a rebase changes the source digest, the author repeats verification against the new digest before the coordinator accepts the evidence.
+- `.agents/commands/bench-implement-spec.md` owns the build preflight after each ticket commit.
+- After a `bench worktree merge` changes the source digest, the author repeats verification against the new digest before the coordinator accepts the evidence.
 - An adoption repair covers the contradiction class with an independent fixture, not only the literal examples.
 - Implementation delegation and independent review are separate choices, and the assessment record keeps their costs separate.
 

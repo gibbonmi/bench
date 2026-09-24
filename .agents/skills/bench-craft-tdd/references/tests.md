@@ -13,6 +13,7 @@ test itself should say. Four properties decide it.
   literal. Never run the implementation and paste back what it returned.
   Never recompute the expectation with the implementation's own algorithm:
   both pass by construction against any bug.
+  A project's own test-expectation standard in `AGENTS.md` overrides this default.
 - **One behavior per test.** One scenario, one logical assertion, a name that
   states the behavior. When it fails, the name alone says what broke; a test
   asserting five things reports only that the first one did.

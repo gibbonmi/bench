@@ -1,9 +1,205 @@
 package anchors
 
+import (
+	"strings"
+
+	"github.com/gibbonmi/bench/internal/retros"
+)
+
 // retainedWorkflowAnchors is the whole retained-workflow family: the default
-// contract below and the opt-in delegated exception that follows it. The
-// registry reads this one name, so both groups evaluate together.
-var retainedWorkflowAnchors = append(append([]Anchor{}, defaultWorkflowAnchors...), delegatedWorkflowAnchors...)
+// contract below, the opt-in delegated exception that follows it, the
+// lane-and-landing split, the retro capture route, the declared author line, the
+// fact owners that the guides point to, and the drain and craft skill references.
+// The registry reads this one name, so its groups evaluate together.
+var retainedWorkflowAnchors = append(append(append(append(append(append(append([]Anchor{}, defaultWorkflowAnchors...), delegatedWorkflowAnchors...), laneAndLandingAnchors...), retroCaptureAnchors...), declaredLineAnchors...), factOwnerAnchors...), referenceRouteAnchors...)
+
+// referenceRouteAnchors pin the reachable routes of the drain and assess commands and
+// each craft skill's pointer to the owner of a fact that another file holds. Require
+// rows pin the drain's batch-approval owner, the assess phase's `bench idea` route,
+// the phase adapter trigger pointer, the ambiguous-name re-query disclosure, the
+// coverage maximum and chunk-contract pointers, the project test-expectation
+// deferral, and the ADR invariant pointer. Forbid rows keep out the wrong ledger
+// file, the wrong rule owner, the hand-written handoff and its whole-file dating, the
+// hand-append park route, the blanket adapter rule, the terminal-only disclosure, the
+// literal story count, and each retired copy of an owner's sentence.
+var referenceRouteAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "`Occurrences:` line in `ROADMAP.md`", Diagnostic: "reference route: drain restored ROADMAP.md as the file of the Occurrences: ledger line"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "(the AGENTS.md rule)", Diagnostic: "reference route: drain restored AGENTS.md as the owner of the batch approval rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Require, Needle: "`.bench/BENCH.md` owns the batch approval rule", Diagnostic: "reference route: drain dropped .bench/BENCH.md as the owner of the batch approval rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "A batch approval covers per-spec sign-offs when I'm unreachable.", Diagnostic: "reference route: drain restored a copy of the operating guide's batch approval rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "a standing batch approval counts, with contestable calls flagged for post-hoc veto", Diagnostic: "reference route: drain restored its paraphrase of the batch approval rule that the operating guide owns"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "When the handoff and the tree disagree, the tree wins.", Diagnostic: "reference route: drain restored its copy of the working agreement's tree-wins rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "The coordinator writes ignored `capture/session-handoff.md` last.", Diagnostic: "reference route: drain restored the hand-written handoff as its last write"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "`bench status` dates the ignored handoff by its write time.", Diagnostic: "reference route: drain restored the write-time dating of the whole handoff"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "Its pin block names the pre-commit HEAD", Diagnostic: "reference route: drain restored the pre-commit HEAD pin of a handoff that it writes after the landing"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-assess.md", Kind: Forbid, Needle: "or into `capture/IDEAS.md`", Diagnostic: "reference route: assess restored the hand-append park route into capture/IDEAS.md"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-assess.md", Kind: Require, Needle: "park it with `bench idea` rather than editing the roadmap here.", Diagnostic: "reference route: assess dropped bench idea as the one park route"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-skills/SKILL.md", Kind: Forbid, Needle: "and the phase adapters are not", Diagnostic: "reference route: craft-skills restored the blanket rule that no phase adapter is model-invoked"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-skills/SKILL.md", Kind: Require, Needle: "Each phase adapter's trigger follows the invocation-policy account under \"Harness Invocation\" in `.bench/BENCH-reference.md`.", Diagnostic: "reference route: craft-skills dropped its pointer to the invocation-policy account for each phase adapter trigger"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-cli/SKILL.md", Kind: Require, Needle: "An ambiguous bare name answers its candidates with one re-query action per candidate row.", Diagnostic: "reference route: craft-cli bench consumers row dropped the ambiguous-name re-query disclosure"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-cli/SKILL.md", Kind: Forbid, Needle: "Only an over-cap default discloses", Diagnostic: "reference route: craft-cli bench consumers row restored the claim that only an over-cap default discloses"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: Forbid, Needle: "more than four stories", Diagnostic: "reference route: craft-spec restored the literal story count that bench coverage --check owns"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: Require, Needle: "refuses a row that references more stories than the maximum that the check prints", Diagnostic: "reference route: craft-spec dropped its pointer to the story maximum that bench coverage --check prints"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: Forbid, Needle: "Each planned chunk has a stable ID and names its tickets", Diagnostic: "reference route: craft-spec restored its copy of the implementation-chunk contract"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: Forbid, Needle: "Each planned chunk names its stable ID, outcome, acceptance rows, and tests.", Diagnostic: "reference route: craft-spec restored a copy of the operating guide's implementation-chunk contract"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: Require, Needle: "Apply `.bench/BENCH.md`'s implementation-chunk contract.", Diagnostic: "reference route: craft-spec dropped its pointer to the operating guide's implementation-chunk contract"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-tdd/references/tests.md", Kind: Require, Needle: "A project's own test-expectation standard in `AGENTS.md` overrides this default.", Diagnostic: "reference route: craft-tdd tests reference dropped its deferral to the project's test-expectation standard"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-tdd/references/tests.md", Kind: Forbid, Needle: "An independently authored test expectation counts as duplicated", Diagnostic: "reference route: craft-tdd tests reference restored a copy of the project's test-expectation standard"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-adr/SKILL.md", Kind: Forbid, Needle: "No file paths, no code snippets", Diagnostic: "reference route: craft-adr restored its copy of invariant 3"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-adr/SKILL.md", Kind: Forbid, Needle: "they go stale the next session and then mislead", Diagnostic: "reference route: craft-adr restored its copy of the reason for invariant 3"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-adr/SKILL.md", Kind: Forbid, Needle: "Put no file paths and no code snippets in an ADR", Diagnostic: "reference route: craft-adr restored a copy of the operating guide's invariant 3"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-adr/SKILL.md", Kind: Require, Needle: "Follow invariant 3 of `.bench/BENCH.md` for file paths and code snippets.", Diagnostic: "reference route: craft-adr dropped its pointer to invariant 3 of the operating guide"},
+}
+
+// Each owner sentence below has one Require row at its owner. The Forbid row that keeps
+// a copy out of a former copy site reads the same constant.
+const (
+	// handoffSectionRule is the reference's owner sentence for the handoff verb.
+	handoffSectionRule = "`bench handoff` rewrites only the calling worktree's assignment section."
+	// handoffMainOwner is the reference's owner sentence for the handoff's main section.
+	handoffMainOwner = "The primary checkout owns the `main` section."
+	// handoffNextRule is the reference's owner sentence for the handoff's Next command.
+	handoffNextRule = "The verb keeps a non-empty Next command."
+	// handoffAncestryRefusal is the reference's owner clause for the handoff State refusal.
+	handoffAncestryRefusal = "refuses a State that pins a commit outside the tip's ancestry"
+	// censusSignalAccount is the reference's owner sentence for the census signal.
+	censusSignalAccount = "The `census` signal counts raw calls per assignment from `$BENCH_HOME/census/<repo-key>/`."
+	// greenRunGateOutput opens the reference's green-run gate output sentence.
+	greenRunGateOutput = "A green run prints one `phases[N]{phase,verdict,elapsed_ms}` table"
+	// redRunGateOutput opens the reference's red-run gate output sentence.
+	redRunGateOutput = "A red run prints one `failures[N]{phase,line}` table"
+	// skillLinkRule is the Claude README's owner sentence for the skill links.
+	skillLinkRule = "`.claude/skills/` links every `.agents/skills/` skill that has no same-named command."
+)
+
+// factOwnerAnchors pin each guide's pointer to the file that holds its fact.
+// Require rows pin the owner sentences: the command registry for the plumbing
+// subcommands, the reference for how the pieces fit, the skills index, the gate
+// output, the handoff verb and its section, Next, and State rules, the plan
+// version, and the one internal verb that a session runs, and the Claude README
+// for the skill links and the write delegate roles. Require rows also pin the
+// pointers that replace each copy and the drain's handoff route. Forbid rows keep
+// out the retired copies, the reference's verb grammar, the false skill-link
+// claims, the any-branch commit claim, the gate-priced capture commit, and the
+// light path's gate-then-commit wording.
+var factOwnerAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Forbid, Needle: "live in `.bench/BENCH-reference.md`", Diagnostic: "fact owner: operating guide restored the reference as the home of the plumbing subcommands"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "The command registry owns the plumbing subcommands that hooks and adapters drive.", Diagnostic: "fact owner: operating guide dropped the command registry as the owner of the plumbing subcommands"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Forbid, Needle: "gate and commit on green", Diagnostic: "fact owner: operating guide light path restored the gate-then-commit wording"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "the four invariants, how the pieces fit", Diagnostic: "fact owner: working agreement restored how the pieces fit as a shared platform rule"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "the communication rules, and the skills index", Diagnostic: "fact owner: working agreement restored the skills index as a shared platform rule"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Require, Needle: "`.bench/BENCH-reference.md` holds how the pieces fit and the skills index.", Diagnostic: "fact owner: working agreement dropped the reference as the holder of how the pieces fit and the skills index"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Require, Needle: "`.bench/BENCH-reference.md` states how `bench handoff` writes the handoff file.", Diagnostic: "fact owner: working agreement dropped its pointer to the reference for the handoff verb behavior"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: handoffMainOwner, Diagnostic: "fact owner: working agreement restored its copy of the handoff main-section owner"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: handoffNextRule, Diagnostic: "fact owner: working agreement restored its copy of the handoff Next-command rule"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: handoffAncestryRefusal, Diagnostic: "fact owner: working agreement restored its copy of the handoff State ancestry refusal"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Require, Needle: "A drain runs it from the primary checkout after its landing.", Diagnostic: "fact owner: working agreement dropped the drain's primary-checkout handoff route after its landing"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "one gate-priced commit", Diagnostic: "fact owner: working agreement restored the gate-priced phase-close capture commit"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: handoffMainOwner, Diagnostic: "fact owner: reference dropped the primary checkout as the owner of the handoff main section"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: handoffNextRule, Diagnostic: "fact owner: reference dropped the handoff verb's non-empty Next command rule"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: handoffAncestryRefusal, Diagnostic: "fact owner: reference dropped the handoff verb's refusal of a State outside the tip's ancestry"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "Give the drafted State to `bench handoff --state-file <path>`.", Diagnostic: "fact owner: working agreement restored its copy of the handoff state-file route"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: RequireInSection, Section: "Plumbing subcommands", Needle: "`bench gate-prose` is the one internal verb that a session runs directly; Command Notes gives its forms.", Diagnostic: "fact owner: reference Plumbing subcommands dropped bench gate-prose as the one internal verb that a session runs"},
+	{Group: AfterSpecAuthorization, File: ".bench/BENCH-reference.md", Kind: Require, Needle: greenRunGateOutput, Diagnostic: ".bench/BENCH-reference.md dropped the green-run gate output shape"},
+	{Group: AfterImplementSpec, File: "projects/benchkit.md", Kind: Require, Needle: "`.bench/BENCH-reference.md` owns the bounded gate output account.", Diagnostic: "fact owner: project profile dropped its pointer to the reference for the gate output"},
+	{Group: AfterImplementSpec, File: "projects/benchkit.md", Kind: Forbid, Needle: redRunGateOutput, Diagnostic: "fact owner: project profile restored its copy of the red-run gate output that the reference owns"},
+	{Group: AfterImplementSpec, File: "projects/benchkit.md", Kind: Forbid, Needle: "one `capability-skips` line", Diagnostic: "fact owner: project profile restored its copy of the green-run capability-skips line that the reference owns"},
+	{Group: AfterImplementSpec, File: "projects/benchkit.md", Kind: Forbid, Needle: "`phases: N/N green`", Diagnostic: "fact owner: project profile restored its copy of the collapsed green-run row that the reference owns"},
+	{Group: AfterImplementSpec, File: "projects/benchkit.md", Kind: Forbid, Needle: "one more row names the file that holds the complete stream", Diagnostic: "fact owner: project profile restored its copy of the red-run stream row that the reference owns"},
+	{Group: AfterImplementSpec, File: "projects/benchkit.md", Kind: Forbid, Needle: "The complete phase stream goes to `.logs/gate-<run>.out`", Diagnostic: "fact owner: project profile restored its copy of the gate stream log that the reference owns"},
+	{Group: AfterImplementSpec, File: "projects/benchkit.md", Kind: Forbid, Needle: "`.logs/gate-<run>.jsonl` progress log", Diagnostic: "fact owner: project profile restored its copy of the gate progress log that the reference owns"},
+	{Group: AfterImplementSpec, File: "projects/benchkit.md", Kind: Forbid, Needle: "`bench commit` works on any branch", Diagnostic: "fact owner: project profile restored the false claim that bench commit works on any branch"},
+	{Group: AfterSpecAuthorization, File: ".bench/BENCH-reference.md", Kind: Require, Needle: handoffSectionRule, Diagnostic: ".bench/BENCH-reference.md dropped the handoff section rule; bench handoff rewrites only the calling worktree's assignment section"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "`bench handoff [--harness <name>]", Diagnostic: "fact owner: reference restored the bench handoff grammar that executable help owns"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "`bench worktree reset --to <commit> <target>` plans", Diagnostic: "fact owner: reference restored the bench worktree reset grammar that executable help owns"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "`bench retro <slug> (--body <markdown>", Diagnostic: "fact owner: reference restored the bench retro grammar that executable help owns"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: "Before the first dispatch, the plan amendment makes the authored version 1 fence a version 2 plan.", Diagnostic: "fact owner: reference dropped the plan amendment from the authored version 1 fence to a version 2 plan"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "`.claude/skills/` carries only the", Diagnostic: "fact owner: reference restored the false claim that .claude/skills/ links only the craft skills"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "because Claude already has each phase as a command", Diagnostic: "fact owner: reference restored its copy of the Codex-only phase adapter rule that the Claude README owns"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: skillLinkRule, Diagnostic: "fact owner: reference restored a copy of the Claude README's skill-link rule"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: "`.claude/README.md` states which skills `.claude/skills/` links.", Diagnostic: "fact owner: reference dropped its pointer to the Claude README for the skill links"},
+	{Group: AfterImplementSpec, File: ".claude/README.md", Kind: Require, Needle: skillLinkRule, Diagnostic: "fact owner: Claude README dropped the rule that .claude/skills/ links every skill with no same-named command"},
+	{Group: AfterImplementSpec, File: ".claude/README.md", Kind: Forbid, Needle: "links only the `bench-craft-*` skills", Diagnostic: "fact owner: Claude README restored the false claim that .claude/skills/ links only the craft skills"},
+	{Group: AfterImplementSpec, File: ".claude/README.md", Kind: Forbid, Needle: "`bench-writer` runs a user-directed write delegation", Diagnostic: "fact owner: Claude README restored bench-writer as the type of a user-directed write delegation only"},
+	{Group: AfterImplementSpec, File: ".claude/README.md", Kind: Require, Needle: "`bench-writer` is the write delegate for a fresh ticket author, a repair session, or a user-directed write delegation.", Diagnostic: "fact owner: Claude README dropped bench-writer as the write delegate for a fresh ticket author, a repair session, and a user-directed write delegation"},
+}
+
+// declaredLineAnchors pin how craft-line routes a ticket author. Require rows pin
+// the binding of every ticket author to the spec's one declared line, the step 3
+// escalation under the step 2 tier-move rule, and the step 5 top-tier pause
+// outside `--delegate`. Forbid rows keep out the per-story ceiling, the per-ticket
+// re-run of the decision table, the per-story collapse, the retired step 3 and
+// step 5 wording, the unscoped top-tier rule, and craft-spec's per-story lines in
+// its approval table.
+var declaredLineAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "Every ticket author runs on the spec's declared `Line:`.", Diagnostic: "declared line: craft-line dropped the binding of every ticket author to the spec's declared line"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "ceiling, not a binding", Diagnostic: "declared line: craft-line restored the per-story line as a ceiling, not a binding"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "Re-run the decision table per ticket at charge time.", Diagnostic: "declared line: craft-line restored the per-ticket re-run of the decision table"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "use the highest tier any story needs", Diagnostic: "declared line: craft-line restored the per-story collapse to the highest tier"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "Report each collapsed line.", Diagnostic: "declared line: craft-line restored the report of each collapsed per-story line"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "escalate immediately under the step 2 tier-move rule; no retry burned.", Diagnostic: "declared line: craft-line step 3 escalates without the step 2 tier-move rule"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "escalate immediately; no retry burned.", Diagnostic: "declared line: craft-line restored the step 3 escalation without the step 2 tier-move rule"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "Outside `--delegate`, a bump to the top tier pauses and asks the reviewer** —", Diagnostic: "declared line: craft-line step 5 dropped the `--delegate` exception from the top-tier pause"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "The top tier implements nothing unless the reviewer names it.", Diagnostic: "declared line: craft-line restored the top-tier rule for every run, `--delegate` included"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "Any bump to the top tier pauses and asks the reviewer", Diagnostic: "declared line: craft-line restored the top-tier pause for every run, `--delegate` included"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: Forbid, Needle: "stories and their lines", Diagnostic: "declared line: craft-spec restored per-story lines in the approval table"},
+}
+
+// retroCaptureAnchors pin how the final check writes and commits the retro. Require
+// rows pin the scaffold-then-body route through `bench retro`, the pointer to the
+// scaffold as the owner of the retro headings, the tracked-or-ignored commit rule,
+// the Bench worktree that writes and lands a tracked retro, and the report's and the
+// reference's pointers to that rule. Forbid rows keep out the report's copy of the
+// retired no-commit rule, the drain-only exit, the reference's claim that the drain
+// owns the retro's capture commit, the reference's copy of the commit rule, and a
+// paste of the scaffold's heading list, which the retros package owns.
+var retroCaptureAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "Read `bench retro <slug> --scaffold`, then write the retro once with `bench retro <slug> --body <markdown>`.", Diagnostic: "retro capture: final check dropped the scaffold-then-body route through bench retro"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "The scaffold owns the retro headings and the calibration table header; keep them as the scaffold prints them.", Diagnostic: "retro capture: final check dropped its pointer to the scaffold as the owner of the retro headings"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "A tracked retro and its scorecard updates commit with the phase close.", Diagnostic: "retro capture: final check dropped the phase-close commit of a tracked retro and its scorecard updates"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "An ignored retro stays local until the next reviewer-approved capture drain.", Diagnostic: "retro capture: final check dropped the local route of an ignored retro"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "Capture the retro as \"Capture the implementation retro\" states.", Diagnostic: "retro capture: final check report dropped its pointer to the retro capture rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "Capture the retro without another", Diagnostic: "retro capture: final check report restored the no-commit retro rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "The retro leaves through the next reviewer-approved capture drain.", Diagnostic: "retro capture: final check restored the drain-only retro exit"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "owns their reviewed drain and its capture commit", Diagnostic: "retro capture: reference restored the drain as the owner of the retro capture commit"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "Write and commit them in a Bench worktree, and land that commit through `bench worktree land`.", Diagnostic: "retro capture: final check dropped the Bench worktree that writes, commits, and lands a tracked retro"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: strings.Join(retros.RequiredHeadings(), "\n"), Diagnostic: "retro capture: final check restored a copy of the scaffold's retro heading list"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: "`/bench-final-check` states when a tracked or an ignored retro commits.", Diagnostic: "retro capture: reference dropped its pointer to the final check's tracked-or-ignored retro rule"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "A tracked retro commits with the phase close", Diagnostic: "retro capture: reference restored its copy of the final check's tracked-or-ignored retro rule"},
+}
+
+// laneAndLandingAnchors pin one statement of the commit and landing split: a
+// worktree `bench commit` runs the declared lane, and `bench worktree land` runs
+// the whole-project gate. Forbid rows keep out the retired claims that the commit
+// is the gate run or the source of the green verdict, the second gate before the
+// landing, and the reference's claims that the landing boundary is
+// unenforced and that a stale executable reruns the landing. The reference points
+// to the operating guide's enforcement sentence, and a Forbid row reads that
+// sentence's named constant so no copy returns there. Require rows pin the
+// synthesis gate source, the final check's landing gate and worktree retirement,
+// and the reviewer as the runner of the raw conflict merge.
+var laneAndLandingAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-synthesis/SKILL.md", Kind: Forbid, Needle: "`bench commit` gates the tree it lands", Diagnostic: "lane and landing: craft-synthesis restored the claim that bench commit gates the tree it lands"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-synthesis/SKILL.md", Kind: Require, Needle: "Take the green verdict from the whole-project gate. That gate is the landing's gate, or `bench worktree exec <target> -- bench gate` for a batch that waits for approval.", Diagnostic: "lane and landing: craft-synthesis dropped the whole-project gate as the source of the prose-only green verdict"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-synthesis/SKILL.md", Kind: Forbid, Needle: "Take that verdict from the commit itself.", Diagnostic: "lane and landing: craft-synthesis restored the commit as the source of the prose-only green verdict"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-synthesis/SKILL.md", Kind: Forbid, Needle: "A `bench gate` run before it grades the same tree twice and pays the oracle twice.", Diagnostic: "lane and landing: craft-synthesis restored the claim that a gate run before the commit pays the oracle twice"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "Run the external gate and commit work on green", Diagnostic: "lane and landing: final check description restored the claim that it runs the gate and commits on green"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "After a lane-only repair commit and before the landing, run the whole-tree gate on the source.", Diagnostic: "lane and landing: final check restored a second whole-project gate before the landing"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "Do not run `bench gate` first.", Diagnostic: "lane and landing: final check restored the ban on a gate run before the commit"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "the gate reuses a fresh green verdict for the identical tree and never re-pays it", Diagnostic: "lane and landing: final check restored the claim that the commit reuses a fresh green gate verdict"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "This command gates and commits them atomically.", Diagnostic: "lane and landing: final check restored the claim that bench commit gates and commits atomically"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "The commit already is the gate run", Diagnostic: "lane and landing: final check restored the claim that the commit is the gate run"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "the oracle run and landing are one command", Diagnostic: "lane and landing: final check restored the claim that the oracle run and the landing are one command"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "gate-then-commit path", Diagnostic: "lane and landing: final check restored the gate-then-commit path"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "then runs the gate and commits only on green", Diagnostic: "lane and landing: final check restored the claim that bench commit runs the gate and commits only on green"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "`bench worktree land` runs the whole-project gate on work that `bench commit` committed on a lane pass.", Diagnostic: "lane and landing: final check dropped the landing's whole-project gate on lane-pass commits"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "A merged spec awaiting retirement gets `bench spec retire <slug>` in a Bench worktree, and that worktree lands its `spec-retire: <slug>` commit through `bench worktree land`.", Diagnostic: "lane and landing: final check dropped the spec retirement in a Bench worktree and its landing"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "the rule is guidance, not a hook", Diagnostic: "lane and landing: reference restored the claim that the landing rule is guidance, not a hook"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: WorktreeEnforcementMarker, Diagnostic: "lane and landing: reference restored a copy of the operating guide's worktree enforcement sentence"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: "Every phase lands this way, and `.bench/BENCH.md` states how `bench commit` enforces that rule.", Diagnostic: "lane and landing: reference dropped its pointer to the operating guide's worktree enforcement sentence"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "A stale Bench executable is rebuilt, and the landing re-runs under it.", Diagnostic: "lane and landing: reference restored the claim that the landing rebuilds a stale Bench executable and re-runs"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: "the reviewer merges the destination into the source worktree with raw Git", Diagnostic: "lane and landing: reference dropped the reviewer as the runner of the raw Git conflict merge"},
+}
 
 // defaultWorkflowAnchors keep plan expansion within the approved behavior while
 // allowing the orchestrator to update the plan before new evidence is used.
@@ -15,14 +211,20 @@ var defaultWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "When evidence requires an in-scope plan, `Writes:`, or gate expansion, apply `.bench/BENCH.md`'s approved plan-expansion policy before using it.", Diagnostic: "retained workflow: implementation phase dropped plan-expansion timing"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-gate/SKILL.md", Kind: Require, Needle: "An in-scope gate addition during implementation follows `.bench/BENCH.md`'s approved plan-expansion policy before the author uses it.", Diagnostic: "retained workflow: craft-gate dropped approved expansion timing"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-tickets/SKILL.md", Kind: Require, Needle: "`Writes:` predicts the touched paths; `.bench/BENCH.md` owns how the orchestrator updates that expectation before an approved in-scope expansion is used.", Diagnostic: "retained workflow: craft-tickets restored Writes as an approval boundary"},
-	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "In the charge", Needle: "A user-directed write delegate treats `Writes:` as an expectation.", Diagnostic: "retained workflow: delegation discipline restored Writes as a refusal boundary"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: Forbid, Needle: "A user-directed write delegate treats `Writes:` as an expectation.", Diagnostic: "retained workflow: delegation discipline scoped the Writes expectation to a user-directed write delegate"},
 }
 
-// delegatedWorkflowAnchors pin the opt-in delegated exception and the fresh ticket
-// author rules that it extends. They join the
-// retained-workflow family because the same owners carry both contracts, and a
-// reader who loses one clause loses the boundary between them. Each needle is
-// the instruction's one source; no anchor claims to prove native dispatch.
+// delegatedWorkflowAnchors pin the opt-in delegated exception and every rule of
+// who authors, repairs, probes, commits, and lands a ticket: the fresh author
+// and repair sessions, the bench-writer role, the lane-pass commit and landing
+// bans, the stash and bench probe duties, and the retired copies that a
+// Forbid row keeps out (copy-aside probes, the main-checkout build, the
+// resume-clean step, and phase-command copies of owner rules). They join the
+// retained-workflow family because the same owners carry these contracts, and
+// a reader who loses one clause loses the boundary between them. Each needle
+// is the instruction's one source. A Forbid row that keeps a copy of an owner
+// sentence out reads the named constant of that sentence's Require row. No anchor
+// claims to prove native dispatch.
 var delegatedWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "`--delegate` applies only to an approved `$bench-implement-spec --full <spec>` run with an approved ticket graph.", Diagnostic: "retained workflow: operating guide dropped the delegated opt-in entry"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "A ticket in a dependent chunk waits for every prerequisite chunk checkpoint.", Diagnostic: "retained workflow: operating guide dropped the delegated prerequisite-checkpoint wait"},
@@ -30,8 +232,26 @@ var delegatedWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "A pending or red predecessor commit stops that successor dispatch.", Diagnostic: "retained workflow: operating guide dropped the pending-or-red predecessor stop"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "`--delegate` adds concurrent authors and the full tier range.", Diagnostic: "fresh ticket author: operating guide dropped the concurrent authors and the full tier range of `--delegate`"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "A post-review repair goes to a fresh repair session for each affected ticket, and that session reruns the ticket's verification with current repair coverage. The plan records each repair session as a new assignment with the trigger `user-directed`. At final reconciliation, the orchestrator does not repair. A finding there goes to a fresh repair session for the ticket whose `Writes:` line holds the path. A finding on a path that no `Writes:` line holds is a material acceptance shortfall.", Diagnostic: "fresh ticket author: operating guide dropped the fresh repair session for each affected ticket"},
-	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Require, Needle: "A spec-backed ticket goes to a fresh author session on its integration source, in `Blocked by:` order.", Diagnostic: "fresh ticket author: craft-delegate dropped the fresh author session for each ticket"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Forbid, Needle: "A spec-backed ticket goes to a fresh author session on its integration source", Diagnostic: "fresh ticket author: craft-delegate restored its copy of the fresh author session rule that the operating guide owns"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Forbid, Needle: "Repairs return to the retained implementation session.", Diagnostic: "fresh ticket author: craft-delegate restored the repair return to the retained session"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Require, Needle: "`craft-line` owns a change of implementation model or session.", Diagnostic: "fresh ticket author: craft-delegate dropped craft-line as the owner of a change of implementation model or session"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Require, Needle: "Every write delegate runs as `bench-writer`: a fresh ticket author, a repair session, and a user-directed write delegation.", Diagnostic: "fresh ticket author: craft-delegate dropped bench-writer as the type of a fresh ticket author and a repair session"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Forbid, Needle: "delegation runs as `bench-writer`", Diagnostic: "fresh ticket author: craft-delegate restored bench-writer as the type of a user-directed write delegation only"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Forbid, Needle: "A user-directed write-delegation from a spec carries", Diagnostic: "fresh ticket author: craft-delegate scoped the coverage-row charge to a user-directed write-delegation"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Require, Needle: "A ticket author commits its ticket on a lane pass before the next charge starts.", Diagnostic: "fresh ticket author: craft-delegate dropped the ticket author commit on a lane pass"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Forbid, Needle: "the coordinator runs `bench commit` per worktree", Diagnostic: "fresh ticket author: craft-delegate restored the coordinator commit per worktree"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Forbid, Needle: "stops at diff-ready", Diagnostic: "fresh ticket author: craft-delegate restored the diff-ready stop for every write delegate"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Forbid, Needle: "Stop at diff ready;", Diagnostic: "fresh ticket author: craft-delegate charge example restored the uncommitted diff-ready stop"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Forbid, Needle: "Share a worktree only when a delegate's work depends on another's output.", Diagnostic: "fresh ticket author: craft-delegate restored the dependency-only worktree share rule"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Require, Needle: "The coordinator probes a user-directed write delegate's returned tree independently before landing it.", Diagnostic: "fresh ticket author: craft-delegate dropped the user-directed scope of the returned-tree coordinator probe"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Forbid, Needle: "A ticket delegate returns focused evidence", Diagnostic: "fresh ticket author: craft-delegate restored the returned-tree coordinator probe for every ticket delegate"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Forbid, Needle: "the destructive-git guard refuses it", Diagnostic: "fresh ticket author: craft-delegate restored the false claim that the guard refuses every git stash"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Require, Needle: "the destructive-git guard refuses only `git stash drop` and `git stash clear`.", Diagnostic: "fresh ticket author: craft-delegate dropped the guard's real git stash deny surface"},
+	{Group: AfterImplementSpec, File: ".claude/agents/bench-writer.md", Kind: Require, Needle: "description: The Bench write delegate for a fresh ticket author, a repair session, or a user-directed write delegation.", Diagnostic: "fresh ticket author: bench-writer description dropped the fresh ticket author or the repair session"},
+	{Group: AfterImplementSpec, File: ".claude/agents/bench-writer.md", Kind: Require, Needle: "A ticket author or a repair author commits its ticket on a lane pass and does not run `bench worktree land`.", Diagnostic: "fresh ticket author: bench-writer dropped the lane-pass commit of a ticket or repair author, or its landing ban"},
+	{Group: AfterImplementSpec, File: ".claude/agents/bench-writer.md", Kind: Require, Needle: "focused checks green, and it does not land the diff.", Diagnostic: "fresh ticket author: bench-writer dropped the landing ban of a user-directed delegate"},
+	{Group: AfterImplementSpec, File: ".claude/agents/bench-writer.md", Kind: Forbid, Needle: "The user directed this delegation", Diagnostic: "fresh ticket author: bench-writer restored the user-directed premise for every write delegate"},
+	{Group: AfterImplementSpec, File: ".claude/agents/bench-writer.md", Kind: Forbid, Needle: "Stop at a diff that is ready, with the focused checks green.", Diagnostic: "fresh ticket author: bench-writer restored the uncommitted-diff stop for every write delegate"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: RequireInSection, Section: "Retained implementation continuation", Needle: "The continuation rules below govern the pre-review work of each ticket author", Diagnostic: "fresh ticket author: craft-line dropped the continuation rules for each ticket author"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "Outside `--delegate`, a tier move of a fresh ticket author asks the reviewer first.", Diagnostic: "fresh ticket author: craft-line dropped the reviewer stop before a tier move of a fresh author"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-tickets/SKILL.md", Kind: Require, Needle: "Spec-backed builds work the unblocked frontier with one fresh author for each ticket.", Diagnostic: "fresh ticket author: craft-tickets dropped the frontier with one fresh author for each ticket"},
@@ -48,10 +268,35 @@ var delegatedWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "Delegated author transfer", Needle: "A lost author session permits a replacement or a model change.", Diagnostic: "retained workflow: delegation discipline dropped the lost-session transfer trigger"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "Delegated author transfer", Needle: "A post-review repair under the standing policy of `.bench/BENCH.md` permits a `user-directed` replacement of the author by a fresh repair session.", Diagnostic: "fresh ticket author: delegation discipline dropped the user-directed transfer for a post-review repair"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "Delegated author transfer", Needle: "Every author transfer waits for confirmed termination of the old writer.", Diagnostic: "retained workflow: delegation discipline dropped the confirmed writer termination"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "Delegated author transfer", Needle: "Outside `--delegate`, a model change under any trigger is a tier move, and it asks the reviewer first.", Diagnostic: "fresh ticket author: delegation discipline let a transfer trigger move the tier outside --delegate without the reviewer"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "In the charge", Needle: "Every write delegate treats `Writes:` as an expectation.", Diagnostic: "fresh ticket author: delegation discipline dropped the Writes expectation for every write delegate"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: Forbid, Needle: "Probe a tracked file that has pending changes with a copy aside.", Diagnostic: "fresh ticket author: delegation discipline restored the copy-aside probe that bench probe replaces"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: Forbid, Needle: "mutated bytes against the copy aside", Diagnostic: "fresh ticket author: delegation discipline restored the copy-aside confirmation of the mutated bytes"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: Forbid, Needle: "may run in the main checkout", Diagnostic: "fresh ticket author: delegation discipline restored the main-checkout build exception"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: Forbid, Needle: "`bench resume-clean`", Diagnostic: "fresh ticket author: delegation discipline restored the internal resume-clean verb as a recovery step"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: Forbid, Needle: "on the integration source after every ticket commit and before the next charge", Diagnostic: "fresh ticket author: delegation discipline restored its copy of the build preflight rule that the build phase owns"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: Forbid, Needle: "a slow tool call is not a failed attempt", Diagnostic: "fresh ticket author: delegation discipline restored its copy of the attempt definition that craft-line owns"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "Read-only returns", Needle: "A shared-worktree reader probes only through `bench probe` and reads its `restored` cell.", Diagnostic: "fresh ticket author: delegation discipline dropped the bench probe restore duty of a shared-worktree reader"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "It refuses without `--full`, an approved spec, or an approved ticket graph.", Diagnostic: "retained workflow: implementation phase dropped the delegated entry refusals"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "Declare the configured model, effort, iteration cap, and author limit before the first dispatch.", Diagnostic: "retained workflow: implementation phase dropped the delegated dispatch declaration"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "A resumed delegated run keeps the recorded identities, source pins, replacement history, and pending obligations.", Diagnostic: "retained workflow: implementation phase dropped delegated resumption contents"},
-	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Require, Needle: "A delegated chunk review starts after every ticket of the chunk reaches the integrated chunk tip.", Diagnostic: "retained workflow: review phase dropped the integrated chunk-tip review fence"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: chunkTipReviewFence, Diagnostic: "retained workflow: operating guide dropped the integrated chunk-tip review fence"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Needle: "A delegated chunk review starts after every ticket of the chunk reaches the integrated chunk tip.", Diagnostic: "fresh ticket author: review phase restored its copy of the chunk-review start rule that the operating guide owns"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Needle: "Repeat delegated review only for a later semantic delta", Diagnostic: "fresh ticket author: review phase restored its copy of the review-repeat rule that the operating guide owns"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Needle: "After the last chunk, the orchestrator reconciles overall acceptance and integration before landing.", Diagnostic: "fresh ticket author: review phase restored its copy of the final reconciliation rule that the operating guide owns"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Forbid, Needle: "Repeat delegated review only when a later delta or cross-chunk concern invalidates prior evidence.", Diagnostic: "fresh ticket author: implementation phase restored its copy of the review-repeat rule that the operating guide owns"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Needle: reviewRepeatRule, Diagnostic: "fresh ticket author: review phase restored a copy of the operating guide's review-repeat rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Needle: finalReconciliationRule, Diagnostic: "fresh ticket author: review phase restored a copy of the operating guide's final reconciliation rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Needle: chunkTipReviewFence, Diagnostic: "fresh ticket author: review phase restored a copy of the operating guide's chunk-tip review fence"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Forbid, Needle: reviewRepeatRule, Diagnostic: "fresh ticket author: implementation phase restored a copy of the operating guide's review-repeat rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: RequireInSection, Section: "Review modes", Needle: "`.bench/BENCH.md` owns when a chunk review starts, when a delegated review repeats, and the final reconciliation after the last chunk.", Diagnostic: "fresh ticket author: review phase dropped its pointer to the operating guide's chunk-review cadence"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "For other work, if I approve, fix it and re-run the gate.", Diagnostic: "fresh ticket author: final check dropped the other-work scope of the approve-then-fix route"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Forbid, Needle: "For a ticket author, raise the effort and resume; a tier move asks the reviewer first.", Diagnostic: "fresh ticket author: implementation phase restored its copy of the tier ladder without the `--delegate` exception that craft-line owns"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: Forbid, Needle: "The coordinator validates the report and reslices", Diagnostic: "fresh ticket author: debug phase restored the coordinator reslice of an out-of-fence cause"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: Require, Needle: "An out-of-fence cause follows `.bench/BENCH.md`'s plan-expansion policy, or the reviewer's split for a scope change.", Diagnostic: "fresh ticket author: debug phase dropped the plan-expansion or reviewer-split route of an out-of-fence cause"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "the author's final acceptance and integration command results", Diagnostic: "fresh ticket author: final check restored the author as the performer of the final acceptance and integration results"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "The review record retains the orchestrator's final `integration-verification` results.", Diagnostic: "fresh ticket author: final check dropped the orchestrator's final integration-verification results"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "A spec-backed red goes to a fresh repair session under `.bench/BENCH.md`'s repair rule.", Diagnostic: "fresh ticket author: final check dropped the fresh repair session for a spec-backed red"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Require, Needle: "Each delegated axis excludes the orchestrator and every current and former author of the run.", Diagnostic: "retained workflow: review phase dropped the delegated axis exclusions"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "A delegated exit reconciles every known invocation against the recorded assessment attempts.", Diagnostic: "retained workflow: final check dropped the delegated account reconciliation"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "That account carries failed dispatches, every author, every review axis, diagnostics, verification, and orchestration work.", Diagnostic: "retained workflow: final check dropped an account inventory member"},
@@ -59,6 +304,11 @@ var delegatedWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "The orchestrator performs the final verification on the final source before the landing.", Diagnostic: "retained workflow: final check dropped the orchestrator final verification"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-tickets/SKILL.md", Kind: Require, Needle: "A delegated run keeps these serial green ticket checkpoints under the operating guide's delegated policy.", Diagnostic: "retained workflow: craft-tickets dropped the delegated serial ticket checkpoint"},
 }
+
+// chunkTipReviewFence is the `.bench/BENCH.md` owner sentence for the chunk-review
+// start. Its Require row and the Forbid row that keeps a review-phase copy out read
+// this one constant.
+const chunkTipReviewFence = "Every ticket contribution reaches the integrated chunk tip before that chunk's review begins."
 
 var implementationContinuationAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: RequireInSection, Section: "The declaration", Needle: "The iteration policy is a numeric cap or an explicit `uncapped` policy.", Diagnostic: "implementation continuation: craft-line dropped the explicit uncapped policy"},
@@ -80,7 +330,7 @@ var implementationContinuationAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: RequireInSection, Section: "Build", Needle: "Apply `craft-line`'s retained implementation continuation policy throughout the ticket graph.", Diagnostic: "implementation continuation: implementation phase dropped the continuation-policy action"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: RequireInSection, Section: "Retained implementation continuation", Needle: "An uncapped implementation has no artificial iteration stop within the approved spec.", Diagnostic: "implementation continuation: craft-line restored an artificial stop for uncapped work"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: RequireInSection, Section: "Retained implementation continuation", Needle: "After reassessment, the ticket author can invoke `$bench-debug`.", Diagnostic: "implementation continuation: craft-line dropped the debug route"},
-	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: RequireInSection, Section: "Delegate or retain", Needle: "A diagnostic helper can inspect evidence, but it receives no implementation or repair assignment.", Diagnostic: "implementation continuation: craft-delegate allowed diagnostic helper repairs"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Forbid, Needle: "A diagnostic helper can inspect evidence, but it receives no implementation or repair assignment.", Diagnostic: "implementation continuation: craft-delegate restored its copy of the diagnostic helper boundary that the operating guide owns"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: RequireInSection, Section: "Retained implementation continuation", Needle: "A diagnostic route does not change the ticket author's session.", Diagnostic: "implementation continuation: diagnostic escalation changed the author session"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: RequireInSection, Section: "Ticketed-build stage defaults", Needle: "The ticket author can adjust effort in its own session and reports the change.", Diagnostic: "implementation continuation: craft-line dropped the author's effort adjustment"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: RequireInSection, Section: "Delegate or retain", Needle: "During implementation, brief higher-tier diagnostic consultation is pre-approved through the top tier.", Diagnostic: "implementation continuation: craft-delegate dropped top-tier diagnostic pre-approval"},
@@ -90,7 +340,8 @@ var implementationContinuationAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "Read-only returns", Needle: "Record the actual consultation line used.", Diagnostic: "implementation continuation: delegation discipline dropped the actual consultation line"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "Read-only returns", Needle: "If the selected model is unavailable, report the failure and use an available authorized diagnostic route without an undeclared model substitution.", Diagnostic: "implementation continuation: delegation discipline allowed an undeclared model substitution"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", Kind: RequireInSection, Section: "Scope and allowance", Needle: "Each implementation chunk permits at most two repair cycles after its initial review.", Diagnostic: "implementation continuation: bounded repair dropped fixed allowance"},
-	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", Kind: RequireInSection, Section: "Scope and allowance", Needle: "This allowance applies to retained, full, delegated, unattended, and light-path implementation runs.", Diagnostic: "implementation continuation: bounded repair dropped mode census"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", Kind: Forbid, Needle: "This allowance applies to retained, full, delegated, unattended, and light-path implementation runs.", Diagnostic: "implementation continuation: bounded repair restored the retired mode list"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", Kind: RequireInSection, Section: "Scope and allowance", Needle: "This allowance applies to every implementation run, the light path included.", Diagnostic: "implementation continuation: bounded repair dropped its scope over every implementation run"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", Kind: RequireInSection, Section: "Scope and allowance", Needle: "Light-path work counts as one chunk when it receives review findings.", Diagnostic: "implementation continuation: bounded repair dropped light-path chunk"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", Kind: RequireInSection, Section: "Scope and allowance", Needle: "Initial implementation, pre-review checks, and the first review consume no repair cycles.", Diagnostic: "implementation continuation: bounded repair dropped initial-work exclusion"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", Kind: RequireInSection, Section: "Scope and allowance", Needle: "A repair cycle is one repair attempt and verification of its affected findings. It can address several findings.", Diagnostic: "implementation continuation: bounded repair dropped cycle unit"},

@@ -40,8 +40,8 @@ If a decision is easy to reverse, unsurprising, or had no real alternative, skip
   not "we considered Postgres, then SQLite, then switched to DuckDB."
 - History lives in git. If someone needs the path that led here, `git log` has it.
   The ADR is the destination, not the route.
-- **No file paths, no code snippets** — they go stale the next session and then
-  mislead. Name the module and the decision; let the reader find the code.
+- Follow invariant 3 of `.bench/BENCH.md` for file paths and code snippets.
+  Name the module and the decision; let the reader find the code.
 - One ADR per decision. When a decision changes, **rewrite the ADR to the new
   current state** and let git hold the old version. Don't append "UPDATE:" notes.
 

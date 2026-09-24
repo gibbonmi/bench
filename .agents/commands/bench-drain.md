@@ -123,7 +123,7 @@ Normalize every touched row before batch proposal.
 **Bad — remedy derivation:** `Occurrence: 2026-08-15 gate build — change preflight selection to fix the stale base.`
 
 For every `pending` owner/incident pair in `capture_occurrences`, add its incident
-key to that owner's `Occurrences:` line in `ROADMAP.md` before removing any source
+key to that owner's `Occurrences:` line in `roadmap/FT<n>.md` before removing any source
 unit. Show the owning-row edit in the batch before the corresponding
 source removal. Every `already-recorded` source already has that key: remove its
 source unit without adding another key. This procedure applies to ideas, retro
@@ -270,8 +270,7 @@ reviewer approves or adjusts it once, and there are no per-item interactive
 sign-offs.
 
 On approval, commit on green. Never commit the drain without that
-approval. A standing batch approval (the AGENTS.md rule) counts, with
-contestable calls flagged for post-hoc veto.
+approval. `.bench/BENCH.md` owns the batch approval rule.
 
 Three constraints shape the drain's commits.
 An item completed through "implement now" lands as its own commit on green before the drain's batch commit.
@@ -291,9 +290,6 @@ After approval and the tracked landing, the coordinator runs
 `bench capture drain commit <drain-id>`. This retires only the sealed generation; post-snapshot
 captures stay in the live inboxes. If the batch is abandoned, run `bench capture
 drain abort <drain-id>` to restore the sealed generation before the live entries.
-The coordinator writes ignored `capture/session-handoff.md` last.
+The coordinator runs `bench handoff` last, from the primary checkout after the landing.
 
-Its pin block names the
-pre-commit HEAD by construction, which is correct rather than stale. `bench
-status` dates the ignored handoff by its write time. The tree wins wherever the
-two disagree.
+`bench status` dates the `main` section of an ignored handoff by the file's write time.

@@ -54,11 +54,26 @@ func TestGrammarErrorPrintsNoExample(t *testing.T) {
 	}
 }
 
-// The help text advertises the flag the grammar accepts.
+// The help text advertises the flag the grammar accepts. Its --dry-run line names the
+// declared lane that a worktree commit runs and the gate as the fallback when no lane
+// is declared. The expectation is an independent literal, so a negated or truncated
+// clause reds it.
 func TestHelpAdvertisesDryRun(t *testing.T) {
 	root, _ := landingRepo(t, 0, func(t *testing.T, root string) {})
 	code, stdout, _ := runCommand(t, root, "--help")
 	if code != 0 || !strings.Contains(stdout, "--dry-run") {
 		t.Fatalf("help = (%d, %q), want --dry-run advertised", code, stdout)
+	}
+	if strings.Contains(stdout, "gate the exact composed snapshot") {
+		t.Errorf("help = %q, want no claim that --dry-run gates the exact composed snapshot", stdout)
+	}
+	var dryRunLine string
+	for _, line := range strings.Split(stdout, "\n") {
+		if strings.HasPrefix(line, "--dry-run:") {
+			dryRunLine = line
+		}
+	}
+	if !strings.HasPrefix(dryRunLine, "--dry-run: run the declared lane (or the gate when no lane is declared) on ") {
+		t.Errorf("help --dry-run line = %q, want it to name the declared lane and the gate only when no lane is declared", dryRunLine)
 	}
 }
