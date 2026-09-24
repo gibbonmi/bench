@@ -1,12 +1,12 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, and LE-B2 are accepted. The LE-C1 review returned 8 findings; repair cycle 1 is pending.
+Status: LE-A, LE-B1, and LE-B2 are accepted. LE-C1 repair cycle 1 is committed; the confirming round of the three axes is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
 Line: opus (claude-opus-5-5) / medium / uncapped
 Review line: opus / high / one iteration for each axis
-Post-review repair cycles consumed: LE-A 3 of 3; LE-B1 1 of 2; LE-B2 3 of 3. The reviewer extended the LE-B2 allowance by one cycle on 2026-09-23, for the checkpoint red on the interrupt test waits. The reviewer extended the LE-A allowance by one cycle on 2026-09-23. The extra cycle covers LEA-S7 and each blocker of the second confirming round.
+Post-review repair cycles consumed: LE-A 3 of 3; LE-B1 1 of 2; LE-C1 1 of 2; LE-B2 3 of 3. The reviewer extended the LE-B2 allowance by one cycle on 2026-09-23, for the checkpoint red on the interrupt test waits. The reviewer extended the LE-A allowance by one cycle on 2026-09-23. The extra cycle covers LEA-S7 and each blocker of the second confirming round.
 Expected repair rounds: 2
 Confidence: 5
 
@@ -353,7 +353,7 @@ Three fresh axes graded the code tip `1720cbc2` with the source digest `ce04e0ec
 
 ## LE-C1 author verification
 
-The frozen pair is `e6b96f82..a95eb85e`. The two planned checks and the root conformance test passed at the chunk tip. A learning records the ticket 8 Writes expansion and the recovery rule.
+The first frozen pair was `e6b96f82..a95eb85e`. After repair cycle 1, the chunk tip is `02b777de`, and the two planned checks and the root conformance test passed there too. A learning records the ticket 8 Writes expansion and the recovery rule.
 
 | Row | Test | Probe |
 |---|---|---|
@@ -391,11 +391,23 @@ Findings: 3. Worst issue: LEC1-C1.
 - LEC1-C2 (no-op, confidence 5): an unreadable lease records no line; the lease consumers in LE-C2 and LE-C3 own that case.
 - LEC1-C3 (no-op, confidence 3): the delta keeps the `ref:` rule unchanged, and no writer produces a `ref:` recovery today.
 
+## LE-C1 repair cycle 1
+
+| Finding | Repair | Evidence |
+|---|---|---|
+| LEC1-S1 | `ledger.HoldsRecovery` is the one recovery check; the admission policy, the shift session, and the status call it. | The intent, shift, and status packages passed. |
+| LEC1-S2 | No change. Every worktree file that could own the reader is over its line budget, and the package has no file headroom. Ticket 10 must shrink `lifecycle.go`, so the reader can move there in LE-C3. | The lane refused the move on the structure budget. |
+| LEC1-S3 | The ledger owns the sentinel's comment, and the field comment states the current grammar. | Review of the text. |
+| LEC1-P1 | The spec liveness bullet says a recovery entry stays live when its branch reads as landed. | Review of the text. |
+| LEC1-C1 | The LE60 test also reads an outcome with an empty recovery as done. | Keep an empty recovery live: bit. |
+
+The spec fence and the ticket 8 Writes gained `internal/status/status.go` and the canary fixture that pins it.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/local-shift-evidence/spec.md",
-  "plan_digest": "sha256:2eb501f72bf582d7489967e555dffa65f45a809e37406e6fa22ef91e68b0939e",
+  "plan_digest": "sha256:b458a5e85d95d874b5405a881006d25825ce788f8a00318318a1be2a03ab0c4e",
   "implementation_session": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
   "chunks": [
     {
@@ -1846,9 +1858,9 @@ Findings: 3. Worst issue: LEC1-C1.
     {
       "id": "LE-C1",
       "base": "e6b96f828b5a3d4d4961321a8111388cad909fa2",
-      "tip": "a95eb85e21cb61fcc9986c2e9710bc868a27d6a6",
-      "plan_digest": "sha256:2eb501f72bf582d7489967e555dffa65f45a809e37406e6fa22ef91e68b0939e",
-      "source_digest": "d230edfb0a860a381d9a9599591d767fc52ce3ca",
+      "tip": "02b777dee15a4beb77bebc541143cc867fbbb7c8",
+      "plan_digest": "sha256:b458a5e85d95d874b5405a881006d25825ce788f8a00318318a1be2a03ab0c4e",
+      "source_digest": "2a7af326fb1920e8f018fe79ab02b8c364d6d00f",
       "acceptance_rows": [
         "LE60",
         "LE61",
@@ -1887,6 +1899,42 @@ Findings: 3. Worst issue: LEC1-C1.
             "ref": "bench test --package ./internal/shift at a95eb85e",
             "digest": "sha256:ea4302596a7c227e4a3cb4e501dc0a52590bfe3c169d766a8d7216d93d50eb3d",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/shift,pass,5405\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "shift",
+          "command": "bench test --package ./internal/shift",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-C1-verify-intent-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "2a7af326fb1920e8f018fe79ab02b8c364d6d00f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/intent/... at 02b777de",
+            "digest": "sha256:b9130d2fe3af3f401d395ffc1f144df6e25d0897fe9cdf8f69b0e231b3bbace6",
+            "excerpt": "packages[3]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/intent,pass,5338\n  github.com/gibbonmi/bench/internal/intent/admissionpolicy,pass,3\n  github.com/gibbonmi/bench/internal/intent/ledger,pass,2\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "intent",
+          "command": "bench test --package ./internal/intent/...",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-C1-verify-shift-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "2a7af326fb1920e8f018fe79ab02b8c364d6d00f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/shift at 02b777de",
+            "digest": "sha256:d4dfc2a959042f276afa7743498db0a6408b0177d1032dc08001e0b361068ff0",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/shift,pass,5648\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "shift",
           "command": "bench test --package ./internal/shift",
@@ -2024,6 +2072,21 @@ Findings: 3. Worst issue: LEC1-C1.
     {
       "from": "sha256:ff3b2481ba8deec82508453c2cde46252305c98741262014a3a2a34e6a4b9122",
       "to": "sha256:2eb501f72bf582d7489967e555dffa65f45a809e37406e6fa22ef91e68b0939e",
+      "chunk_ids": {
+        "LE-A": [
+          "LE-A"
+        ],
+        "LE-B1": [
+          "LE-B1"
+        ],
+        "LE-B2": [
+          "LE-B2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:2eb501f72bf582d7489967e555dffa65f45a809e37406e6fa22ef91e68b0939e",
+      "to": "sha256:b458a5e85d95d874b5405a881006d25825ce788f8a00318318a1be2a03ab0c4e",
       "chunk_ids": {
         "LE-A": [
           "LE-A"
