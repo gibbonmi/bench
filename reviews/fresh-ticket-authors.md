@@ -146,3 +146,69 @@ Each FA19 and FA26 probe adds the retired sentence and keeps every other needle.
 - The craft-line continuation rows keep their needles in the "Retained implementation continuation" section, but the needles now name the ticket author. Three continuation diagnostics dropped the word "retained".
 - The new `user-directed` transfer entry in the delegation discipline has no anchor row, because the spec plans none.
 - Retained-author wording remains outside this fence in `.agents/commands/bench-review-implementation.md`: "A clean chunk review hands its frozen pair back to the retained author."
+
+## FA ticket 3 author evidence
+
+Author session: `claude:bench-writer/fta-t3-author`. Line: opus / high / cap 3 attempts. Source tip at start: `164a3c689958d02e9600e4bc7a8f0eabe79697a9`. Ticket commit: `0b947924`.
+
+The author added the FA rows to the anchor registries before the guidance edit. Then the author edited one file at a time and ran `TestFreshTicketAuthors` after each edit. Each row went red on the unchanged file and green after its edit.
+
+### Done claims
+
+The coordinator fills the label cell after its own probe.
+
+| Row | Status | Confidence | Label |
+|---|---|---|---|
+| FA20 | verified | 9 | |
+| FA21 | verified | 9 | |
+| FA22 | verified | 9 | |
+| FA23 | verified | 9 | |
+| FA24 | claimed | 8 | |
+| FA25 | verified | 9 | |
+
+### Red then green
+
+The red column quotes the first diagnostic of `TestFreshTicketAuthors` on the unchanged file. The green column is `bench test --check docs-currency-workflow` and `TestFreshTicketAuthors` after the edit.
+
+| Row | Seam | Red before the edit | Green after the edit |
+|---|---|---|---|
+| FA20 | Require, `registry_data.go` | spec authoring dropped the line for fresh ticket authors on one integration source | pass |
+| FA21 | Require, `registry_ft311_review_dispatch.go` | review phase dropped the fresh repair author for accepted findings | pass |
+| FA22 | Require, `registry_data.go` | field guide dropped the fresh author session for each ticket | pass |
+| FA23 | Require, `registry_retained_workflow.go` | README dropped the fresh author session for each ticket | pass |
+
+FA24 is review-owned and has no anchor. FA25 keeps its existing Require row byte for byte, and this commit does not change `.agents/commands/bench-drain.md`.
+
+### Probe verdicts
+
+Each probe ran through `bench probe` after `bench worktree build`. Each restore reads `yes`.
+
+| Row | File | Mutation | Check | Verdict | Diagnostic |
+|---|---|---|---|---|---|
+| FA20 | `.agents/commands/bench-write-spec.md` | swap: the retired retained-session sentence returns | `docs-currency-workflow` | bit | spec authoring dropped the line for fresh ticket authors on one integration source |
+| FA21 | `.agents/commands/bench-review-implementation.md` | swap: the retired retained-session return returns | `docs-currency-workflow` | bit | review phase dropped the fresh repair author for accepted findings |
+| FA22 | `docs/field-guide.html` | swap: the retired retained-authorship sentence returns | `docs-currency-workflow` | bit | field guide dropped the fresh author session for each ticket |
+| FA23 | `README.md` | omission: the fresh author sentence leaves | `docs-currency-workflow` | bit | README dropped the fresh author session for each ticket |
+
+### Verification
+
+| Check | Verdict | Elapsed |
+|---|---|---|
+| `bench test --check docs-currency-workflow` | pass | 1027 ms |
+| `bench test --package ./internal/conformance --run TestRootConformance` | pass | 7844 ms |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | pass | 17805 ms |
+| `bench test --check guidance-prose-budgets` | pass | 8 ms |
+| `bench test --package ./internal/anchors` | pass | 921 ms |
+| `bench gate-prose . -- <six edited Markdown files>` | pass | not reported |
+| `go vet ./...` | pass | not reported |
+| `bench commit` lane | pass | not reported |
+
+### Flags for review
+
+- The FA23 row is in `registry_retained_workflow.go`, not in `registry_data.go`, because `registry_data.go` is over its structure budget and must not grow. FA20 and FA22 replace the old rows in place, so `registry_data.go` keeps its length.
+- The FA20 row replaces the `workflow integration source: ` write-spec row. So the integration-source family count in `docs_workflow_helpers_test.go` goes from 10 to 9, and its stale-claim scan no longer reads `.agents/commands/bench-write-spec.md`.
+- The FA22 row replaces the `retained workflow: ` field-guide row, and its two entries in `retained_workflow_test.go` leave.
+- The review convergence contract in `docs_workflow_helpers_test.go` now requires "the orchestrator reconciles overall acceptance and integration before landing".
+- The `write-spec-frozen-base-and-tip-review` canary copy now carries the FA20 sentence, so its mutation still reds only its own row.
+- The author also changed sentences that no row pins. These are the write-spec authorship sentence, two field-guide sentences, and the README repair node. They also include the final-check retro item, two review-phase sentences, and one registry comment.
+- ADR 0021 names its first outcome "ticket implementation", not "retained implementation".
