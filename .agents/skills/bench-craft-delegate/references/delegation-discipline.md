@@ -96,7 +96,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A recorded terminal author failure permits a replacement or a model change.
 - An exhausted declared author cap permits a replacement or a model change.
 - A lost author session permits a replacement or a model change.
-- A `user-directed` trigger permits a replacement for the standing post-review repair policy of `.bench/BENCH.md`.
+- A post-review repair under the standing policy of `.bench/BENCH.md` permits a `user-directed` replacement of the author by a fresh repair session.
 - Every author transfer waits for confirmed termination of the old writer.
 - The successor receives the preserved source and performs fresh verification. Earlier evidence keeps its own author and source.
 
