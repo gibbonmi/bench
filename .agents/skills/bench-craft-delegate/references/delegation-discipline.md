@@ -2,12 +2,12 @@
 
 Charged from `craft-delegate` when the coordinator writes a charge, runs a probe,
 or accepts a return. Each rule below settles one question the delegation must
-answer. `craft-delegate` keeps the retained-author boundary, the worktree rule, the
+answer. `craft-delegate` keeps the ticket-author boundary, the worktree rule, the
 mutation-probe rule, and the done-claim check.
 
 ## Before the charge
 
-- A spec-backed ticket stays with the retained implementation session on its integration source, in `Blocked by:` order. An independent worktree is for a user-directed delegated diff that lands on its own.
+- `.bench/BENCH.md` owns ticket author sessions, and `craft-delegate` routes each spec-backed ticket to its fresh author. An independent worktree is for a user-directed delegated diff that lands on its own.
 - Disjoint ownership fences across sibling tickets do not license concurrent
   writers in one tree. The lever for parallelism is separate worktrees. A build
   that wants serial verdicts and parallel delegates says which one it buys.
@@ -33,7 +33,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A write charge states that its ownership fence is a refusal boundary above any
   mirror-every-registry instruction. The delegate reports an out-of-fence write
   before the delegate edits.
-- A user-directed write delegate treats `Writes:` as an expectation. When evidence requires an approved in-scope expansion, the retained coordinator applies `.bench/BENCH.md`'s plan-expansion policy before continuing. The delegate never writes a second spelling to stay in fence.
+- A user-directed write delegate treats `Writes:` as an expectation. When evidence requires an approved in-scope expansion, the orchestrator applies `.bench/BENCH.md`'s plan-expansion policy before continuing. The delegate never writes a second spelling to stay in fence.
 - A charge that exports from a package outside its fence names the fence amendment
   in its return.
 - A charge treats a coverage-row citation in a test doc as a reference to keep.
@@ -96,6 +96,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A recorded terminal author failure permits a replacement or a model change.
 - An exhausted declared author cap permits a replacement or a model change.
 - A lost author session permits a replacement or a model change.
+- A `user-directed` trigger permits a replacement for the standing post-review repair policy of `.bench/BENCH.md`.
 - Every author transfer waits for confirmed termination of the old writer.
 - The successor receives the preserved source and performs fresh verification. Earlier evidence keeps its own author and source.
 
@@ -192,7 +193,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   coordinator grades each destination change that a new oracle check reads.
 - A hand verification does not close an acceptance row without a named
   red-capable test.
-- A ticket without a pre-edit red for each row goes back to the retained author for those reds. The coordinator gets the reds before the commit.
+- A ticket without a pre-edit red for each row goes back to its ticket author for those reds. The coordinator gets the reds before the commit.
 - Keep an accepted finding on its original ticket when attribution is clear. Use
   an umbrella repair ticket only for a genuinely shared owner.
 - When an installed lane cannot commit its repair, run the same ordinary commit core from

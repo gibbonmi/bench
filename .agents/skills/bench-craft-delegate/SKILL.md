@@ -10,13 +10,13 @@ discipline: the charge contents, the repair-charge template, the probe rules, an
 
 ## Delegate or retain
 
-`.bench/BENCH.md` owns retained implementation authorship. Delegation normally buys independent read-only review or brief diagnostic consultation. A diagnostic helper can inspect evidence, but it receives no implementation or repair assignment.
+`.bench/BENCH.md` owns ticket author sessions. Beyond those authors, delegation normally buys independent read-only review or brief diagnostic consultation. A diagnostic helper can inspect evidence, but it receives no implementation or repair assignment.
 
-During retained implementation, brief higher-tier diagnostic consultation is pre-approved through the top tier. That consultation reads only, so it is not a ladder move. `craft-line`'s top-tier pause applies to a tier move of the implementation itself.
+During implementation, brief higher-tier diagnostic consultation is pre-approved through the top tier. That consultation reads only, so it is not a ladder move. `craft-line`'s top-tier pause applies to a tier move of the implementation itself.
 
 Never delegate a decision the reviewer owns. A change of implementation author or session requires user direction. When the user explicitly selects delegated authorship, the write delegate uses an isolated worktree and this skill's charge and verification rules. A harness limitation never changes authorship silently.
 
-A reviewer-approved delegated run gives each ticket its own retained author session. `references/delegation-discipline.md` owns the author transfer triggers under `Delegated author transfer`.
+A spec-backed ticket goes to a fresh author session on its integration source, in `Blocked by:` order. `references/delegation-discipline.md` owns the author transfer triggers under `Delegated author transfer`.
 
 Before you spawn a delegation that changes who performs the requested work, surface it.
 
@@ -118,7 +118,7 @@ and spot-check citations before folding a summary in. Resolve every named Red-mu
 
 Installed-lane repair and its post-landing rebuild are in `references/delegation-discipline.md`. Before retry coordination or aggregate grading, load the stopped-retry and quiet-grade rules from `references/delegation-discipline.md`.
 
-Report every verification round in one line: accepted, or what was missed and where the fix went. Repairs return to the retained implementation session. When the user selected delegated authorship, continue the same authoring delegate for its slice when the harness can resume it. Otherwise, ask before changing the implementation author. The coordinator verifies the repair in the checkout that owns the diff.
+Report every verification round in one line: accepted, or what was missed and where the fix went. A post-review repair goes to the fresh repair session that `.bench/BENCH.md` owns. The coordinator verifies the repair in the checkout that owns the diff.
 
 Acceptance closes an independent worktree after its slice lands: the coordinator runs `bench worktree release --request <opaque-id> <path>` for it. A reviewed
 dependent chain remains retained through explicit source review; only

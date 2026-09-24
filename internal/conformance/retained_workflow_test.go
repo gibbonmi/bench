@@ -77,7 +77,6 @@ func checkRetainedWorkflow(root string) []string {
 		"retained workflow: craft-line dropped the unbound delegated model stop",
 		"retained workflow: craft-line dropped the active-writer author limit",
 		"retained workflow: craft-line dropped the delegated mid review route",
-		"retained workflow: craft-delegate dropped the delegated per-ticket author",
 		"retained workflow: delegation discipline dropped the no-progress transfer trigger",
 		"retained workflow: delegation discipline dropped the terminal-failure transfer trigger",
 		"retained workflow: delegation discipline dropped the cap-exhaustion transfer trigger",
@@ -114,7 +113,7 @@ func checkRetainedWorkflow(root string) []string {
 		},
 		"retained workflow: craft-line dropped the user-directed model-switch boundary": {
 			file:   ".agents/skills/bench-craft-line/SKILL.md",
-			needle: "A different implementation model or session requires user direction. The author can adjust effort in the retained session and reports the change.",
+			needle: "A different implementation model, or a session beyond the planned ticket authors, requires user direction. The ticket author can adjust effort in its own session and reports the change.",
 		},
 		"retained workflow: operating guide dropped chunk outcome and review checkpoint": {
 			file:   ".bench/BENCH.md",
@@ -175,7 +174,7 @@ func checkRetainedWorkflow(root string) []string {
 		},
 		"retained workflow: craft-tickets restored Writes as an approval boundary": {
 			file:   ".agents/skills/bench-craft-tickets/SKILL.md",
-			needle: "`Writes:` predicts the touched paths; `.bench/BENCH.md` owns how the retained author updates that expectation before an approved in-scope expansion is used.",
+			needle: "`Writes:` predicts the touched paths; `.bench/BENCH.md` owns how the orchestrator updates that expectation before an approved in-scope expansion is used.",
 		},
 		"retained workflow: delegation discipline restored Writes as a refusal boundary": {
 			file:    ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
