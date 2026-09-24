@@ -18,7 +18,8 @@ var defaultWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: RequireInSection, Section: "In the charge", Needle: "A user-directed write delegate treats `Writes:` as an expectation.", Diagnostic: "retained workflow: delegation discipline restored Writes as a refusal boundary"},
 }
 
-// delegatedWorkflowAnchors pin the opt-in delegated exception. They join the
+// delegatedWorkflowAnchors pin the opt-in delegated exception and the fresh ticket
+// author repair and plan rules that it extends. They join the
 // retained-workflow family because the same owners carry both contracts, and a
 // reader who loses one clause loses the boundary between them. Each needle is
 // the instruction's one source; no anchor claims to prove native dispatch.
@@ -27,7 +28,10 @@ var delegatedWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "A ticket in a dependent chunk waits for every prerequisite chunk checkpoint.", Diagnostic: "retained workflow: operating guide dropped the delegated prerequisite-checkpoint wait"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "A same-chunk successor ticket starts after its predecessor ticket commits green.", Diagnostic: "retained workflow: operating guide dropped the green predecessor dispatch rule"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "A pending or red predecessor commit stops that successor dispatch.", Diagnostic: "retained workflow: operating guide dropped the pending-or-red predecessor stop"},
-	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "Production repairs stay with the recorded ticket author.", Diagnostic: "retained workflow: operating guide dropped delegated ticket-author repair ownership"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "`--delegate` adds concurrent authors and the full tier range.", Diagnostic: "fresh ticket author: operating guide dropped the concurrent authors and the full tier range of `--delegate`"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "A post-review repair goes to a fresh repair session for each affected ticket, and that session reruns the ticket's verification with current repair coverage. The plan records each repair session as a new assignment with the trigger `user-directed`. At final reconciliation, the orchestrator does not repair. A finding there goes to a fresh repair session for the ticket whose `Writes:` line holds the path.", Diagnostic: "fresh ticket author: operating guide dropped the fresh repair session for each affected ticket"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Forbid, Needle: "Production repairs stay with the recorded ticket author.", Diagnostic: "fresh ticket author: operating guide restored the ticket-author repair ownership"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: "the plan amendment declares version 2 with a delegate execution block. The amendment splits each chunk verification into one verification for each ticket.", Diagnostic: "fresh ticket author: reference dropped the version 2 plan amendment or its verification for each ticket"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "`--delegate` authorizes selection and eligible escalation through every configured tier, including top.", Diagnostic: "retained workflow: craft-line dropped the delegated tier authorization"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "An unavailable or unbound model stops that dispatch without a substitution.", Diagnostic: "retained workflow: craft-line dropped the unbound delegated model stop"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "The declared author limit counts concurrently active ticket writers, not retained idle author sessions.", Diagnostic: "retained workflow: craft-line dropped the active-writer author limit"},

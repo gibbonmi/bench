@@ -109,7 +109,7 @@ func checkReviewConvergenceContract(implementSpec, reviewImplementation string) 
 	}
 	for _, requirement := range []string{
 		"after the last ticket in a chunk, freeze the chunk delta and run the three review axes before advancing",
-		"accepted findings return to the retained author",
+		"accepted findings go to fresh repair sessions",
 		"after the last chunk, reconcile every acceptance row and the integrated behavior",
 		"repeat delegated review only when a later delta or cross-chunk concern invalidates prior evidence",
 	} {

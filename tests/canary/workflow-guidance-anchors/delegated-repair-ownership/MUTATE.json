@@ -1,7 +1,7 @@
 [
   {
     "path": ".bench/BENCH.md",
-    "old": "Production repairs stay with the recorded ticket author.",
-    "new": "The orchestrator can repair any ticket."
+    "old": "A post-review repair goes to a fresh repair session for each affected ticket,",
+    "new": "A post-review repair goes back to the ticket author,"
   }
 ]

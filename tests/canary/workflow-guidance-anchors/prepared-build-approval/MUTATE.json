@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/commands/bench-implement-spec.md",
-    "old": "Run `bench preflight build <slug> --charge --ticket <ticket> --base <base> --source-tip <tip>` and read the prepared evidence identity it returns. Retrieve every required source with `bench preflight evidence <id>`, and follow each exact successor command until the stream ends. Verify the fence, dependency completion, and expected source tip before the retained author starts the ticket.",
+    "old": "Run `bench preflight build <slug> --charge --ticket <ticket> --base <base> --source-tip <tip>` and read the prepared evidence identity it returns. Verify the fence, dependency completion, and expected source tip before the ticket's fresh author starts.",
     "new": "After the reviewer approves the spec, start the ticket."
   }
 ]

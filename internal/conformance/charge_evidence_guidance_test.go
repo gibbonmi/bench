@@ -19,9 +19,9 @@ import (
 type boundedActionFamily struct {
 	// name titles the family's subtests.
 	name string
-	// delivery names the family's delivery prerequisite. A build consumer verifies delivery
-	// of every required source, and a narrow review axis reads only its delta and targeted
-	// sources.
+	// delivery names the family's delivery prerequisite. A fresh build author reads its
+	// metadata and ticket pages and targeted sources, and a narrow review axis reads only
+	// its delta and targeted sources.
 	delivery string
 	// diagnosticPrefix enumerates the family's registry rows without a second registry.
 	diagnosticPrefix string
@@ -46,7 +46,7 @@ func boundedActionFamilies() []boundedActionFamily {
 	return []boundedActionFamily{
 		{
 			name:             "build",
-			delivery:         "verified delivery",
+			delivery:         "a narrow author read",
 			diagnosticPrefix: "bounded build action: ",
 			sentenceLead:     "Build action requires",
 			preflightCommand: "bench preflight build",
