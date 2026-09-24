@@ -248,6 +248,9 @@ func TestARotationRefusesTheLastSequence(t *testing.T) {
 	if refused == nil {
 		t.Fatal("the append past the limit reported no refused rotation")
 	}
+	if raw, err := os.ReadFile(last); err != nil || string(raw) != "PLANTED\n" {
+		t.Fatalf("the planted last sequence = %q, %v, want it unchanged", raw, err)
+	}
 	if got := sealedNames(t, home, root); !slices.Equal(got, []string{sealedName(math.MaxUint64)}) {
 		t.Fatalf("sealed segments = %v, want only the planted last sequence", got)
 	}
