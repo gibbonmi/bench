@@ -67,7 +67,7 @@ func checkRetainedWorkflow(root string) []string {
 		"retained workflow: implementation phase dropped plan-expansion timing",
 		"retained workflow: craft-gate dropped approved expansion timing",
 		"retained workflow: craft-tickets restored Writes as an approval boundary",
-		"retained workflow: delegation discipline restored Writes as a refusal boundary",
+		"retained workflow: delegation discipline scoped the Writes expectation to a user-directed write delegate",
 		"retained workflow: operating guide dropped the delegated opt-in entry",
 		"retained workflow: operating guide dropped the delegated prerequisite-checkpoint wait",
 		"retained workflow: operating guide dropped the green predecessor dispatch rule",
@@ -171,10 +171,9 @@ func checkRetainedWorkflow(root string) []string {
 			file:   ".agents/skills/bench-craft-tickets/SKILL.md",
 			needle: "`Writes:` predicts the touched paths; `.bench/BENCH.md` owns how the orchestrator updates that expectation before an approved in-scope expansion is used.",
 		},
-		"retained workflow: delegation discipline restored Writes as a refusal boundary": {
-			file:    ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
-			section: "In the charge",
-			needle:  "A user-directed write delegate treats `Writes:` as an expectation.",
+		"retained workflow: delegation discipline scoped the Writes expectation to a user-directed write delegate": {
+			file:   ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+			needle: "A user-directed write delegate treats `Writes:` as an expectation.",
 		},
 		"retained workflow: operating guide dropped the delegated opt-in entry": {
 			file:   ".bench/BENCH.md",

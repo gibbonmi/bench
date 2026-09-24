@@ -131,8 +131,8 @@ func TestImplementationContinuation(t *testing.T) {
 			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Scope and allowance",
 			needle: "Each implementation chunk permits at most two repair cycles after its initial review.",
 		},
-		"implementation continuation: bounded repair dropped mode census": {
-			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Scope and allowance",
+		"implementation continuation: bounded repair restored the retired mode list": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "",
 			needle: "This allowance applies to retained, full, delegated, unattended, and light-path implementation runs.",
 		},
 		"implementation continuation: bounded repair dropped light-path chunk": {

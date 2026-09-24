@@ -412,10 +412,10 @@ func TestCraftDelegateDisciplineAnchorsRedOnRemoval(t *testing.T) {
 				want:    "delegation-discipline.md Read-only returns dropped the census read at charge close for a read-only charge",
 			},
 			{
-				file:    reference,
-				section: "Read-only returns",
-				needle:  "confirms the\n  restore with `cmp` against the copy aside.",
-				want:    "delegation-discipline.md Read-only returns dropped the exact probe restore confirmed by cmp",
+				file:      reference,
+				forbidden: true,
+				needle:    "restore with `cmp` against the copy aside",
+				want:      "delegation-discipline.md restored the cmp restore against a copy aside; bench probe reports the restore",
 			},
 			{
 				file:    skill,
