@@ -45,7 +45,10 @@ const RecoveryNone = "none"
 
 // recoveryWorktree is the recovery pointer's only non-"none" constructor: a preserving
 // failure leaves the dirty tree at its own path, so the pointer names that path.
-func recoveryWorktree(path string) string { return "worktree:" + path }
+func recoveryWorktree(path string) string { return recoveryWorktreeKind + ":" + path }
+
+// recoveryWorktreeKind is the kind before the colon of a retained-worktree pointer.
+const recoveryWorktreeKind = "worktree"
 
 // Result is the one value computed at every shift exit path: outcome, branch, committed
 // count, iterations used, recovery pointer, and a short human-readable detail. Recovery

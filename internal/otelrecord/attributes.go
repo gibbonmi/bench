@@ -72,6 +72,33 @@ const (
 
 	// AttrRecord marks the record line itself rather than the seam.
 	AttrRecord = "bench.record"
+
+	// AttrIntentKey carries the intent entry key of the run that opened the span.
+	AttrIntentKey = "bench.intent.key"
+
+	// AttrAgent carries the base name of the adapter a shift runs, never its path.
+	AttrAgent = "bench.agent"
+
+	// AttrShiftCap carries the iteration cap of a shift.
+	AttrShiftCap = "bench.shift.cap"
+
+	// AttrLineTier carries the declared line tier, and only a tier the tier list names.
+	AttrLineTier = "bench.line.tier"
+
+	// AttrShiftOutcome carries the shift's own outcome word, such as "complete" or "no-op".
+	AttrShiftOutcome = "bench.shift.outcome"
+
+	// AttrWorkState carries the work-state word of the run.
+	AttrWorkState = "bench.work.state"
+
+	// AttrCleanup carries the cleanup word of the run's worktree.
+	AttrCleanup = "bench.cleanup"
+
+	// AttrRecoveryKind names the kind of recovery pointer a run left.
+	AttrRecoveryKind = "bench.recovery.kind"
+
+	// AttrRecoveryKey carries the base name of the recovery pointer, never its path.
+	AttrRecoveryKey = "bench.recovery.key"
 )
 
 // RecordStart is the AttrRecord value on the line written at span start. The start line
@@ -91,6 +118,15 @@ var DeclaredAttributes = []string{
 	AttrMeasurePathCount,
 	AttrMeasureCensusRawCalls,
 	AttrRecord,
+	AttrIntentKey,
+	AttrAgent,
+	AttrShiftCap,
+	AttrLineTier,
+	AttrShiftOutcome,
+	AttrWorkState,
+	AttrCleanup,
+	AttrRecoveryKind,
+	AttrRecoveryKey,
 }
 
 // declared answers whether the encoder may write a span attribute key.
@@ -108,6 +144,22 @@ const (
 	OutcomeGreen   = "green"
 	OutcomeRed     = "red"
 	OutcomeSkipped = "skipped"
+)
+
+// The work-state vocabulary. A consumer separates finished work from failed and cut-off
+// work by these words, whatever each seam calls its own outcomes.
+const (
+	WorkCompleted   = "completed"
+	WorkFailed      = "failed"
+	WorkInterrupted = "interrupted"
+)
+
+// The cleanup vocabulary: the run released its worktree, retained it for recovery, or
+// held none.
+const (
+	CleanupReleased = "released"
+	CleanupRetained = "retained"
+	CleanupNone     = "none"
 )
 
 // ExitOutcome is the outcome for a seam whose zero alone is green. A guard, a gate, and

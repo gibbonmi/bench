@@ -64,6 +64,8 @@ type session struct {
 	mainRoot string
 	branch   string
 	entry    *intent.Entry
+	record   *shiftRecord
+	released bool // set once teardown has released the worktree to the pool
 
 	mu          sync.Mutex
 	adapter     *exec.Cmd // the in-flight adapter child, or nil between runs
@@ -265,7 +267,7 @@ func (s *session) exitPreserving(outcome Outcome, detail string) {
 	if teardownErr != nil {
 		res = teardownFailureResult(s, recovery, teardownErr)
 	}
-	os.Exit(finish(s.stdout, s.stderr, s.mainRoot, s.entry, res))
+	os.Exit(finish(s.stdout, s.stderr, s.mainRoot, s.entry, s.record, res))
 }
 
 // teardown removes the shift scratch and releases the pool lease, exactly once whether
@@ -283,6 +285,7 @@ func (s *session) teardown() error {
 			return
 		}
 		worktree.Release(s.root)
+		s.released = true
 	})
 	return err
 }

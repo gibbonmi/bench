@@ -1,7 +1,7 @@
 # 4. Record the shift boundaries
 
 Blocked by: 2-redact-and-version-every-record-line.md
-Writes: .bench/structure.budgets, internal/shift/loop.go, internal/shift/session.go, internal/shift/result.go, internal/shift/record.go (new), internal/shift/record_test.go (new), internal/otelrecord/attributes.go, internal/otelrecord/registry.go
+Writes: .bench/structure.budgets, internal/shift/loop.go, internal/shift/session.go, internal/shift/result.go, internal/shift/record.go (new), internal/shift/record_test.go (new), internal/otelrecord/attributes.go, internal/otelrecord/registry.go, internal/otelrecord/provider.go
 Covers: LE22, LE23, LE24, LE25, LE26, LE27, LE28, LE29, LE30, LE31, LE32, LE33, LE34, LE35, LE36
 
 ## What to build

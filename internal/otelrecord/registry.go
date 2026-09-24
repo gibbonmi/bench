@@ -39,4 +39,5 @@ var Registry = []SeamEntry{
 	{Seam: "hook.stop-verdict", Package: "cmd/bench", Function: "beginHookSpan"},
 	{Seam: "hook.session-inspect", Package: "cmd/bench", Function: "beginHookSpan"},
 	{Seam: "hook.worktree-hook", Package: "cmd/bench", Function: "beginHookSpan"},
+	{Seam: "shift", Package: "internal/shift", Function: "beginShiftRecord"},
 }

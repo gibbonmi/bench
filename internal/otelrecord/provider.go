@@ -87,15 +87,17 @@ func Begin(home, root, seam string) (context.Context, trace.Span, func()) {
 // BeginIn is Begin with the parent context given, and with the span name separate from
 // the seam. A gate run and a lane run start below a context that is already threaded,
 // and both name the span for the mode or the lane while the seam attribute stays the
-// seam. An empty name takes the seam.
-func BeginIn(ctx context.Context, home, root, seam, name string) (context.Context, trace.Span, func()) {
+// seam. An empty name takes the seam. The attrs join the seam attribute at start, so the
+// start line carries them too.
+func BeginIn(ctx context.Context, home, root, seam, name string, attrs ...attribute.KeyValue) (context.Context, trace.Span, func()) {
 	if name == "" {
 		name = seam
 	}
 	provider := NewProvider(home, root)
 	tracer := provider.Tracer()
 	ctx = WithTracer(ctx, tracer)
-	ctx, span := tracer.Start(ctx, name, trace.WithAttributes(attribute.String(AttrSeam, seam)))
+	attrs = append([]attribute.KeyValue{attribute.String(AttrSeam, seam)}, attrs...)
+	ctx, span := tracer.Start(ctx, name, trace.WithAttributes(attrs...))
 	return ctx, span, func() {
 		span.End()
 		_ = provider.Shutdown(context.WithoutCancel(ctx))
