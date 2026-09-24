@@ -357,6 +357,7 @@ The canonical edge classes, walked at the anchor seam and the help seam:
 - `internal/anchors/registry_retained_workflow.go`
 - `internal/conformance/implementation_continuation_test.go`
 - `internal/conformance/retained_workflow_test.go`
+- `internal/conformance/docs_workflow_helpers_test.go`
 - `internal/conformance/recurrence_maintenance_contract_test.go`
 - `tests/canary/workflow-guidance-anchors/`
 - `tests/canary/claude-agent-definitions/`

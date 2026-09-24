@@ -1,7 +1,7 @@
 # Route phase command repairs to fresh sessions
 
 Blocked by: 2-align-the-delegation-discipline-with-fresh-authors.md
-Writes: .agents/commands/bench-review-implementation.md, .agents/commands/bench-implement-spec.md, .agents/commands/bench-debug.md, .agents/commands/bench-final-check.md, internal/anchors/registry_calibration.go, internal/anchors/registry_calibration_test.go, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/anchors/registry_debug_loop.go, internal/anchors/registry_front_door.go, internal/anchors/registry_front_door_test.go, internal/anchors/registry_ft311_preparation.go, internal/anchors/registry_ft311_review_dispatch.go, internal/anchors/registry_retained_workflow.go, internal/conformance/retained_workflow_test.go, tests/canary/workflow-guidance-anchors/, tests/canary/skills-index-command-adapters/, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/docs-currency-token-diet/
+Writes: .agents/commands/bench-review-implementation.md, .agents/commands/bench-implement-spec.md, .agents/commands/bench-debug.md, .agents/commands/bench-final-check.md, internal/anchors/registry_calibration.go, internal/anchors/registry_calibration_test.go, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/anchors/registry_debug_loop.go, internal/anchors/registry_front_door.go, internal/anchors/registry_front_door_test.go, internal/anchors/registry_ft311_preparation.go, internal/anchors/registry_ft311_review_dispatch.go, internal/anchors/registry_retained_workflow.go, internal/conformance/retained_workflow_test.go, internal/conformance/docs_workflow_helpers_test.go, tests/canary/workflow-guidance-anchors/, tests/canary/skills-index-command-adapters/, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/docs-currency-token-diet/
 Covers: GR33, GR34, GR35, GR36, GR37, GR38, GR39, GR40, GR41, GR42, GR43, GR44, GR116
 
 ## What to build
@@ -18,6 +18,8 @@ Make these changes:
 - In `bench-final-check.md`, send a spec-backed red to a fresh repair session under `.bench/BENCH.md`'s repair rule. Other work keeps the approve-then-fix route.
 
 Replace each Require row whose sentence goes with the Forbid row that the spec names, and add each planned Require row. The chunk-review start rule keeps a Require guard on its owner. Add a Require row for the `.bench/BENCH.md` sentence "Every ticket contribution reaches the integrated chunk tip before that chunk's review begins." Move the `TestRetainedWorkflow` row for the chunk-review start rule to that sentence.
+
+`checkReviewConvergenceContract` requires the three removed copies. Remove those three requirements, because the Forbid rows GR41, GR42, and GR44 and the `.bench/BENCH.md` Require rows now guard them.
 
 Retarget the canaries `review-repair-ticket-owner`, `review-repair-ticket-covers`, and `delegated-chunk-tip-review`. The last one mutates the `.bench/BENCH.md` sentence. Do not remove a canary directory.
 
