@@ -7,7 +7,7 @@ mutation-probe rule, and the done-claim check.
 
 ## Before the charge
 
-- `.bench/BENCH.md` owns ticket author sessions, and `craft-delegate` routes each spec-backed ticket to its fresh author. An independent worktree is for a user-directed delegated diff that lands on its own.
+- `.bench/BENCH.md` owns ticket author sessions. An independent worktree is for a user-directed delegated diff that lands on its own.
 - Disjoint ownership fences across sibling tickets do not license concurrent
   writers in one tree. The lever for parallelism is separate worktrees. A build
   that wants serial verdicts and parallel delegates says which one it buys.
