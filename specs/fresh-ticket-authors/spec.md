@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: the reviewer-confirmed current conversation, 2026-09-24.
 
-Verification log: 0 iteration(s) to accept — the review round has not run yet. Iteration 1 folded R1-R6.
+Verification log: 2 iteration(s) to accept — iteration 1 rejected on 2 blockers and 4 minor findings (R1–R6), and the author folded them. Iteration 2 accepted with no finding above the blocking bar.
 
 ## Problem
 
