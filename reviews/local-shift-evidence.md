@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, LE-B2, LE-C1, LE-C2, and LE-C3 are accepted. The LE-C3 confirming round passed on all three axes.
+Status: LE-A, LE-B1, LE-B2, LE-C1, LE-C2, and LE-C3 are accepted. LE-D is committed, and its review of the three axes is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -221,7 +221,7 @@ Three advisories go to LE-B2, because a repair here would need another confirmin
 
 The LE-B1 build cited its tests in the spec, and its repair added row LE107. These edits changed the plan identity after LE-A. The chunk IDs stay the same, so LE-A maps to LE-A.
 
-The LE-B2 build raised the shift grant to 16, fenced `pass_test.go`, `shift_test.go`, and `main_test.go`, and cited its tests. Those edits changed the plan identity again, and LE-A and LE-B1 map to themselves. The LE-B2 repairs corrected spec sentences and recorded a reviewer decision, and each later amendment maps LE-A and LE-B1 again. The LE-C1 build cited its tests and widened ticket 8, and its amendment maps LE-A, LE-B1, and LE-B2. The LE-C2 build did the same for ticket 9, and its amendment also maps LE-C1. The LE-C3 build did the same for ticket 10, and its amendment also maps LE-C2.
+The LE-B2 build raised the shift grant to 16, fenced `pass_test.go`, `shift_test.go`, and `main_test.go`, and cited its tests. Those edits changed the plan identity again, and LE-A and LE-B1 map to themselves. The LE-B2 repairs corrected spec sentences and recorded a reviewer decision, and each later amendment maps LE-A and LE-B1 again. The LE-C1, LE-C2, LE-C3, and LE-D builds each cited their tests, and LE-C1 to LE-C3 widened their tickets. Each of their amendments maps every chunk accepted before it.
 
 ## LE-B2 author verification
 
@@ -556,11 +556,27 @@ Three fresh axes graded the code tip `7befdbc0` with the source digest `026d6f09
 
 Two known gaps stay open. The lease grammar parse in the lifecycle policy still spells the newline that `leaseEnd` names. A move there would grow a file past its line budget. No test forces a lock to fail on an unlocked tree, so the branch that keeps the lease has no test.
 
+## LE-D author verification
+
+The frozen pair is `38fc33d6..376f8b53`. The four planned checks and the root conformance test passed at the chunk tip. No ticket needed a Writes expansion.
+
+| Row | Test | Red evidence |
+|---|---|---|
+| LE80 | `TestSubshellNormalExitReleasesItsAssignment` | Red before the code. Record a normal exit as failed: bit. |
+| LE81 | `TestSubshellSignalsLeaveAReclaimableLease` | Red before the code. Record a signal as completed: bit. |
+| LE82 | `TestSubshellRecordsAShellThatCannotStart` | Red before the code. Record a start failure as completed: bit. |
+| LE83 | `TestWorktreeSeamsMatchTheRegistry` | The existing set comparison holds `worktree.shell` on both sides. |
+| LE84 | `TestOtelShiftTraceJourney` | Hand the adapter an empty context: bit. |
+| LE85 | `TestOtelShiftTraceJourney` | Record the full adapter path: bit. |
+| LE86, LE87 | `DATA_HANDLING.md` | Review-owned. The prose check passed. |
+
+The system suite is not a `bench probe` target. So each LE84 and LE85 probe edited one production line, rebuilt the binary, and restored the file. One committed pass under a cap of 1 ends the shift `incomplete`, so the journey expects exit 3. The ignored-inventory function moved into `clean.go`, and `subshell.go` shrank.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/local-shift-evidence/spec.md",
-  "plan_digest": "sha256:e37d617a4b777e7c4b022938aa3e5fcd47b7287047f169b8b310d73356c3bffc",
+  "plan_digest": "sha256:f7b99e0925e425c8f0b3177fc8d47e9e83a3c5f7d1dbd5981c914d341b532fd6",
   "implementation_session": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
   "chunks": [
     {
@@ -2745,6 +2761,98 @@ Two known gaps stay open. The lease grammar parse in the lifecycle policy still 
           ]
         }
       ]
+    },
+    {
+      "id": "LE-D",
+      "base": "38fc33d69c093fdf26248a576502da404b014498",
+      "tip": "376f8b537b17fb109591dc91988ab177e2229b26",
+      "plan_digest": "sha256:f7b99e0925e425c8f0b3177fc8d47e9e83a3c5f7d1dbd5981c914d341b532fd6",
+      "source_digest": "40b9d32fe10f8a4970fd38fecd7e15db8cd4d263",
+      "acceptance_rows": [
+        "LE80",
+        "LE81",
+        "LE82",
+        "LE83",
+        "LE84",
+        "LE85",
+        "LE86",
+        "LE87"
+      ],
+      "verification": [
+        {
+          "id": "LE-D-verify-subshell-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "40b9d32fe10f8a4970fd38fecd7e15db8cd4d263",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/worktree --run TestSubshell at 376f8b53",
+            "digest": "sha256:1f555f363ca8537fd3a6dee801d943f342c54ca383498e81a77a7ecc288179a9",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,542\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "subshell",
+          "command": "bench test --package ./internal/worktree --run TestSubshell",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-D-verify-seams-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "40b9d32fe10f8a4970fd38fecd7e15db8cd4d263",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/worktree --run TestWorktreeSeamsMatchTheRegistry at 376f8b53",
+            "digest": "sha256:0299f5aa3192b66710895da19e05400dfadbfe978e556ba66a8880f6c83445fa",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,3\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "seams",
+          "command": "bench test --package ./internal/worktree --run TestWorktreeSeamsMatchTheRegistry",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-D-verify-system-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "40b9d32fe10f8a4970fd38fecd7e15db8cd4d263",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --check system at 376f8b53",
+            "digest": "sha256:5172fbcf2a082851ceb6c3d8cae1b1dd90e3d69e1bb2a2d30491566f1b9af3bd",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,36091\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-D-verify-prose-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "40b9d32fe10f8a4970fd38fecd7e15db8cd4d263",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench gate-prose . -- DATA_HANDLING.md at 376f8b53",
+            "digest": "sha256:8c3cb9d69efa24eae629ca68d60a54c57975ac73fd4c9e006957fff6c7945888",
+            "excerpt": "prose[1]{path,verdict}:\n  DATA_HANDLING.md,pass"
+          },
+          "requirement": "prose",
+          "command": "bench gate-prose . -- DATA_HANDLING.md",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -2884,6 +2992,30 @@ Two known gaps stay open. The lease grammar parse in the lifecycle policy still 
         ],
         "LE-C2": [
           "LE-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e37d617a4b777e7c4b022938aa3e5fcd47b7287047f169b8b310d73356c3bffc",
+      "to": "sha256:f7b99e0925e425c8f0b3177fc8d47e9e83a3c5f7d1dbd5981c914d341b532fd6",
+      "chunk_ids": {
+        "LE-A": [
+          "LE-A"
+        ],
+        "LE-B1": [
+          "LE-B1"
+        ],
+        "LE-B2": [
+          "LE-B2"
+        ],
+        "LE-C1": [
+          "LE-C1"
+        ],
+        "LE-C2": [
+          "LE-C2"
+        ],
+        "LE-C3": [
+          "LE-C3"
         ]
       }
     }
