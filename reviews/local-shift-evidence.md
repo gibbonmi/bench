@@ -2549,7 +2549,7 @@ Two known gaps stay open. The lease grammar parse in the lifecycle policy still 
           "exit_code": 0
         },
         {
-          "id": "LE-C3-verify-worktree-1",
+          "id": "LE-C3-verify-claim-1",
           "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
           "role": "author-verification",
           "model": "claude-opus-5-5",
@@ -2562,7 +2562,7 @@ Two known gaps stay open. The lease grammar parse in the lifecycle policy still 
             "digest": "sha256:f6f0c6b6a5fdd954801f25fd0e90e6c9dcdd6c20ba4a0ee8ad4136050a955c47",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
-          "requirement": "worktree",
+          "requirement": "claim",
           "command": "bench test --package ./internal/worktree --run TestClaimRecordedLease",
           "exit_code": 0
         },
@@ -2585,7 +2585,7 @@ Two known gaps stay open. The lease grammar parse in the lifecycle policy still 
           "exit_code": 0
         },
         {
-          "id": "LE-C3-verify-worktree-2",
+          "id": "LE-C3-verify-claim-2",
           "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
           "role": "author-verification",
           "model": "claude-opus-5-5",
@@ -2598,7 +2598,7 @@ Two known gaps stay open. The lease grammar parse in the lifecycle policy still 
             "digest": "sha256:f6f0c6b6a5fdd954801f25fd0e90e6c9dcdd6c20ba4a0ee8ad4136050a955c47",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
-          "requirement": "worktree",
+          "requirement": "claim",
           "command": "bench test --package ./internal/worktree --run TestClaimRecordedLease",
           "exit_code": 0
         }
