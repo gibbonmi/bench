@@ -123,11 +123,11 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 
 	noTrackedWriter := "If no tracked changes remain, start no batch writer."
 	sealedAfterApproval := "After approval and the tracked landing, the coordinator runs `bench capture drain commit <drain-id>`."
-	ignoredHandoff := "The coordinator writes ignored `capture/session-handoff.md` last."
+	handoffLast := "The coordinator runs `bench handoff` last, from the primary checkout after the landing."
 	reviewerBatch := "The reviewer batch contains the tracked diff, the sealed-generation retirement, and every journal verdict."
 	trackedDiff := "The tracked diff contains roadmap dispositions, retro removals, earned `bench spec retire` work, and provider scorecards."
 	ignoredNotTracked := "Ignored local changes do not enter that diff or commit."
-	handoffWriteTime := "`bench status` dates the ignored handoff by its write time."
+	handoffWriteTime := "`bench status` dates the `main` section of an ignored handoff by the file's write time."
 	all := collapseSpace(text)
 	if batchCount != 1 || !strings.Contains(batch, noTrackedWriter) {
 		diags = append(diags, "bench-drain does not suppress the batch writer when no tracked changes remain")
@@ -135,8 +135,8 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 	if !strings.Contains(all, sealedAfterApproval) {
 		diags = append(diags, "bench-drain does not delay sealed-generation retirement until approval and landing")
 	}
-	if !strings.Contains(all, ignoredHandoff) {
-		diags = append(diags, "bench-drain does not keep the ignored handoff last")
+	if !strings.Contains(all, handoffLast) {
+		diags = append(diags, "bench-drain does not run bench handoff as its last write")
 	}
 	if batchCount != 1 || !strings.Contains(batch, reviewerBatch) {
 		diags = append(diags, "bench-drain does not preserve the tracked-versus-ignored reviewer batch boundary")
@@ -148,9 +148,9 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 		diags = append(diags, "bench-drain does not exclude ignored local changes from the tracked diff and commit")
 	}
 	if !strings.Contains(all, handoffWriteTime) {
-		diags = append(diags, "bench-drain does not date the ignored handoff by write time")
+		diags = append(diags, "bench-drain does not date the handoff main section by write time")
 	}
-	pending := "add its incident key to that owner's `Occurrences:` line in `ROADMAP.md` before removing any source unit"
+	pending := "add its incident key to that owner's `Occurrences:` line in `roadmap/FT<n>.md` before removing any source unit"
 	if occurrenceCount != 1 || !strings.Contains(occurrences, "For every `pending` owner/incident pair") || !strings.Contains(occurrences, pending) {
 		diags = append(diags, "bench-drain does not ledger every pending occurrence before source removal")
 	}
@@ -242,12 +242,15 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 		{"single batch writer", "If tracked changes remain, the retained drain session authors the complete tracked batch.", "A later write delegate authors the complete tracked batch.", "bench-drain does not retain one conditional tracked batch author"},
 		{"no tracked writer", "If no tracked changes\nremain, start no batch writer.", "If no tracked changes remain, start a batch writer.", "bench-drain does not suppress the batch writer when no tracked changes remain"},
 		{"sealed retirement after approval", "After approval and the tracked landing, the coordinator runs\n`bench capture drain commit <drain-id>`.", "Before approval, retire the sealed generation.", "bench-drain does not delay sealed-generation retirement until approval and landing"},
-		{"ignored handoff last", "The coordinator writes ignored `capture/session-handoff.md` last.", "The coordinator writes the ignored handoff first.", "bench-drain does not keep the ignored handoff last"},
+		{"handoff verb last", "The coordinator runs `bench handoff` last, from the primary checkout after the landing.", "The coordinator runs `bench handoff` first.", "bench-drain does not run bench handoff as its last write"},
+		{"hand-written handoff", "The coordinator runs `bench handoff` last,", "The coordinator writes ignored `capture/session-handoff.md` last,", "bench-drain does not run bench handoff as its last write"},
 		{"reviewer batch boundary", "The reviewer batch contains the tracked diff, the sealed-generation retirement,\nand every journal verdict.", "The tracked diff contains every journal verdict.", "bench-drain does not preserve the tracked-versus-ignored reviewer batch boundary"},
 		{"tracked diff contents", "The tracked diff contains roadmap dispositions, retro removals, earned `bench spec retire` work, and provider scorecards.", "The tracked diff contains journal verdicts.", "bench-drain does not constrain the tracked diff contents"},
 		{"ignored changes excluded", "Ignored local\nchanges do not enter that diff or commit.", "Ignored local changes enter the tracked diff.", "bench-drain does not exclude ignored local changes from the tracked diff and commit"},
-		{"ignored handoff write time", "`bench\nstatus` dates the ignored handoff by its write time.", "`bench status` dates the ignored handoff by its commit time.", "bench-drain does not date the ignored handoff by write time"},
-		{"pending ledger", "add its incident\nkey to that owner's `Occurrences:` line in `ROADMAP.md` before removing any source\nunit", "record the pending pair for later", "bench-drain does not ledger every pending occurrence before source removal"},
+		{"main section write time", "`bench status` dates the `main` section of an ignored handoff by the file's write time.", "`bench status` dates the `main` section of an ignored handoff by its commit time.", "bench-drain does not date the handoff main section by write time"},
+		{"whole handoff write time", "the `main` section of an ignored handoff", "an ignored handoff", "bench-drain does not date the handoff main section by write time"},
+		{"pending ledger", "add its incident\nkey to that owner's `Occurrences:` line in `roadmap/FT<n>.md` before removing any source\nunit", "record the pending pair for later", "bench-drain does not ledger every pending occurrence before source removal"},
+		{"pending ledger file", "`Occurrences:` line in `roadmap/FT<n>.md`", "`Occurrences:` line in `ROADMAP.md`", "bench-drain does not ledger every pending occurrence before source removal"},
 		{"already recorded", "remove its\nsource unit without adding another key", "remove its source unit after adding another key", "bench-drain does not remove already-recorded occurrence sources without another key"},
 		{"normalize heading", "### Normalize touched rows", "### Touched rows", "bench-drain does not normalize every touched row before batch proposal"},
 		{"normalize before proposal", "Normalize every touched row before batch proposal.", "Normalize touched rows after batch proposal.", "bench-drain does not normalize every touched row before batch proposal"},

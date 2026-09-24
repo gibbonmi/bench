@@ -8,10 +8,46 @@ import (
 
 // retainedWorkflowAnchors is the whole retained-workflow family: the default
 // contract below, the opt-in delegated exception that follows it, the
-// lane-and-landing split, the retro capture route, the declared author line, and
-// the fact owners that the guides point to.
+// lane-and-landing split, the retro capture route, the declared author line, the
+// fact owners that the guides point to, and the drain and craft skill references.
 // The registry reads this one name, so its groups evaluate together.
-var retainedWorkflowAnchors = append(append(append(append(append(append([]Anchor{}, defaultWorkflowAnchors...), delegatedWorkflowAnchors...), laneAndLandingAnchors...), retroCaptureAnchors...), declaredLineAnchors...), factOwnerAnchors...)
+var retainedWorkflowAnchors = append(append(append(append(append(append(append([]Anchor{}, defaultWorkflowAnchors...), delegatedWorkflowAnchors...), laneAndLandingAnchors...), retroCaptureAnchors...), declaredLineAnchors...), factOwnerAnchors...), referenceRouteAnchors...)
+
+// referenceRouteAnchors pin the reachable routes of the drain and assess commands and
+// each craft skill's pointer to the owner of a fact that another file holds. Require
+// rows pin the drain's batch-approval owner, the assess phase's `bench idea` route,
+// the phase adapter trigger pointer, the ambiguous-name re-query disclosure, the
+// coverage maximum and chunk-contract pointers, the project test-expectation
+// deferral, and the ADR invariant pointer. Forbid rows keep out the wrong ledger
+// file, the wrong rule owner, the hand-written handoff and its whole-file dating, the
+// hand-append park route, the blanket adapter rule, the terminal-only disclosure, the
+// literal story count, and each retired copy of an owner's sentence.
+var referenceRouteAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "`Occurrences:` line in `ROADMAP.md`", Diagnostic: "reference route: drain restored ROADMAP.md as the file of the Occurrences: ledger line"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "(the AGENTS.md rule)", Diagnostic: "reference route: drain restored AGENTS.md as the owner of the batch approval rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Require, Needle: "`.bench/BENCH.md` owns the batch approval rule", Diagnostic: "reference route: drain dropped .bench/BENCH.md as the owner of the batch approval rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "A batch approval covers per-spec sign-offs when I'm unreachable.", Diagnostic: "reference route: drain restored a copy of the operating guide's batch approval rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "The coordinator writes ignored `capture/session-handoff.md` last.", Diagnostic: "reference route: drain restored the hand-written handoff as its last write"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "`bench status` dates the ignored handoff by its write time.", Diagnostic: "reference route: drain restored the write-time dating of the whole handoff"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "Its pin block names the pre-commit HEAD", Diagnostic: "reference route: drain restored the pre-commit HEAD pin of a handoff that it writes after the landing"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-assess.md", Kind: Forbid, Needle: "or into `capture/IDEAS.md`", Diagnostic: "reference route: assess restored the hand-append park route into capture/IDEAS.md"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-assess.md", Kind: Require, Needle: "park it with `bench idea` rather than editing the roadmap here.", Diagnostic: "reference route: assess dropped bench idea as the one park route"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-skills/SKILL.md", Kind: Forbid, Needle: "and the phase adapters are not", Diagnostic: "reference route: craft-skills restored the blanket rule that no phase adapter is model-invoked"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-skills/SKILL.md", Kind: Require, Needle: "Each phase adapter's trigger follows the invocation-policy account under \"Harness Invocation\" in `.bench/BENCH-reference.md`.", Diagnostic: "reference route: craft-skills dropped its pointer to the invocation-policy account for each phase adapter trigger"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-cli/SKILL.md", Kind: Require, Needle: "An ambiguous bare name answers its candidates with one re-query action per candidate row.", Diagnostic: "reference route: craft-cli bench consumers row dropped the ambiguous-name re-query disclosure"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-cli/SKILL.md", Kind: Forbid, Needle: "Only an over-cap default discloses", Diagnostic: "reference route: craft-cli bench consumers row restored the claim that only an over-cap default discloses"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: Forbid, Needle: "more than four stories", Diagnostic: "reference route: craft-spec restored the literal story count that bench coverage --check owns"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: Require, Needle: "refuses a row that references more stories than the maximum that the check prints", Diagnostic: "reference route: craft-spec dropped its pointer to the story maximum that bench coverage --check prints"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: Forbid, Needle: "Each planned chunk has a stable ID and names its tickets", Diagnostic: "reference route: craft-spec restored its copy of the implementation-chunk contract"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: Forbid, Needle: "Each planned chunk names its stable ID, outcome, acceptance rows, and tests.", Diagnostic: "reference route: craft-spec restored a copy of the operating guide's implementation-chunk contract"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: Require, Needle: "Apply `.bench/BENCH.md`'s implementation-chunk contract.", Diagnostic: "reference route: craft-spec dropped its pointer to the operating guide's implementation-chunk contract"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-tdd/references/tests.md", Kind: Require, Needle: "A project's own test-expectation standard in `AGENTS.md` overrides this default.", Diagnostic: "reference route: craft-tdd tests reference dropped its deferral to the project's test-expectation standard"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-tdd/references/tests.md", Kind: Forbid, Needle: "An independently authored test expectation counts as duplicated", Diagnostic: "reference route: craft-tdd tests reference restored a copy of the project's test-expectation standard"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-adr/SKILL.md", Kind: Forbid, Needle: "No file paths, no code snippets", Diagnostic: "reference route: craft-adr restored its copy of invariant 3"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-adr/SKILL.md", Kind: Forbid, Needle: "they go stale the next session and then mislead", Diagnostic: "reference route: craft-adr restored its copy of the reason for invariant 3"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-adr/SKILL.md", Kind: Forbid, Needle: "Put no file paths and no code snippets in an ADR", Diagnostic: "reference route: craft-adr restored a copy of the operating guide's invariant 3"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-adr/SKILL.md", Kind: Require, Needle: "Follow invariant 3 of `.bench/BENCH.md` for file paths and code snippets.", Diagnostic: "reference route: craft-adr dropped its pointer to invariant 3 of the operating guide"},
+}
 
 // Each owner sentence below has one Require row at its owner. The Forbid row that keeps
 // a copy out of a former copy site reads the same constant.

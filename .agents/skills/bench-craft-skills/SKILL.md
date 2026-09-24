@@ -16,10 +16,10 @@ the point.
 
 - **Model-invoked** — keeps a `description`, so the agent can fire it on its own and
   other skills can reach it. Costs context load (the description sits in the window
-  every turn). Use when the agent must reach the skill autonomously. In this kit
-  the rule is: every `craft-*` skill is model-invoked — they are the mid-work
-  guidance surface (`craft-synthesis` runs `craft-skills` against every kit
-  change) — and the phase adapters are not.
+  every turn). Use when the agent must reach the skill autonomously. In this kit,
+  every `craft-*` skill is model-invoked, because the craft skills are the mid-work
+  guidance surface (`craft-synthesis` runs `craft-skills` against every kit change).
+  Each phase adapter's trigger follows the invocation-policy account under "Harness Invocation" in `.bench/BENCH-reference.md`.
 - **User-invoked** — `disable-model-invocation: true`; only you, by name, can fire
   it. It is not a candidate for implicit matching, but *you* are the index that must
   remember it exists. Use for canonical phases or workflows the reviewer drives

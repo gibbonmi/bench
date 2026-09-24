@@ -42,7 +42,7 @@ Recommend one implementation line for the complete build. Explain it from the ha
 ## The acceptance coverage map
 
 Each row ties a story to one observable behavior at a seam: `story`, `behavior`, `seam`, `why it catches the failure`. An optional leading `row` column opts the spec into ticket covers traceability (new specs default to it).
-`bench coverage --check` refuses a row that references more than four stories, and it refuses a row that states two predicates (`;`). It also refuses a declared story that no row references, unless a `Not covered: story <n> — <reason>` line sits under the map.
+`bench coverage --check` refuses a row that references more stories than the maximum that the check prints, and it refuses a row that states two predicates (`;`). It also refuses a declared story that no row references, unless a `Not covered: story <n> — <reason>` line sits under the map.
 Connect each story's [Evidence-led authoring](#evidence-led-authoring) result to the row that goes red across fences and through composition to the real producer.
 
 Enumerate every quantifier; every source behavior becomes a row or an exception. `references/map-discipline.md` states the rule each row must satisfy; open that reference before you lock the rows.
@@ -67,7 +67,7 @@ A Won't handle over an anchored sentence quotes the bytes it keeps.
 
 During a build, `.bench/BENCH.md` owns approved in-scope plan expansion. A material acceptance change, unrelated scope, or weakened guarantee returns to `/bench-write-spec` for a reviewer decision. A budget row equal to its subject's current line count proves nothing, because the check parses only that one source.
 
-Apply `.bench/BENCH.md`'s implementation-chunk contract. Each planned chunk has a stable ID and names its tickets, coherent outcome, acceptance rows, tests, and review checkpoint.
+Apply `.bench/BENCH.md`'s implementation-chunk contract.
 `craft-tickets` owns the build-time **what-lands-green-next** unit; each ticket receives the spec's fence. Each fence carries value contracts across it. A contract between tickets is stated in the ticket's `What to build` and `Acceptance`. Review re-derives that contract from the tree; it does not trust the ticket's account.
 
 After a pass that touches many sections, reread the complete artifact end to end and reconcile contradictions before the handoff.

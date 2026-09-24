@@ -21,8 +21,7 @@ Report the new assessment's headline: how the prior backlog verified, the count 
 high, medium, and low findings, and the top of the ranked backlog. Route findings by
 kind. An operational item — drain a learning, delete a salvage branch — goes to
 `/bench-drain`. A new backlog item enters `ROADMAP.md` only through that reviewed
-drain, so park it with `bench idea`, or into `capture/IDEAS.md`, rather than editing
-the roadmap here.
+drain, so park it with `bench idea` rather than editing the roadmap here.
 
 An architecture-shaped finding — a shallow module, a leaky seam, friction the
 sweeps hit while reading the code — additionally feeds `/bench-deepen`. That
