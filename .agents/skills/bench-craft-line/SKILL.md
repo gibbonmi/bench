@@ -42,7 +42,7 @@ Assess three signals for the stage in front of you:
 Rows read top-down, first match wins. A stage that is uncertain and weakly gated takes the uncertain row.
 Tier and effort are one joint output. The last row is the load-bearing up-bias. Where the gate cannot catch a wrong answer, buy insurance at the start. Under-escalation is expensive; a covered gate catches a wrong downgrade cheaply.
 
-A fourth signal, **leverage**, overrides the table. An artifact that steers future generation routes mid + high. A guidance defect multiplies through every session. The top tier implements nothing unless the reviewer names it. Read `Lines` for a cached route before you assess from scratch.
+A fourth signal, **leverage**, overrides the table. An artifact that steers future generation routes mid + high. A guidance defect multiplies through every session. Outside `--delegate`, the top tier implements nothing unless the reviewer names it. Read `Lines` for a cached route before you assess from scratch.
 
 ## Ticketed-build stage defaults
 

@@ -113,7 +113,8 @@ var factOwnerAnchors = []Anchor{
 // escalation under the step 2 tier-move rule, and the step 5 top-tier pause
 // outside `--delegate`. Forbid rows keep out the per-story ceiling, the per-ticket
 // re-run of the decision table, the per-story collapse, the retired step 3 and
-// step 5 wording, and craft-spec's per-story lines in its approval table.
+// step 5 wording, the unscoped top-tier rule, and craft-spec's per-story lines in
+// its approval table.
 var declaredLineAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "Every ticket author runs on the spec's declared `Line:`.", Diagnostic: "declared line: craft-line dropped the binding of every ticket author to the spec's declared line"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "ceiling, not a binding", Diagnostic: "declared line: craft-line restored the per-story line as a ceiling, not a binding"},
@@ -122,7 +123,8 @@ var declaredLineAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "Report each collapsed line.", Diagnostic: "declared line: craft-line restored the report of each collapsed per-story line"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "escalate immediately under the step 2 tier-move rule; no retry burned.", Diagnostic: "declared line: craft-line step 3 escalates without the step 2 tier-move rule"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "escalate immediately; no retry burned.", Diagnostic: "declared line: craft-line restored the step 3 escalation without the step 2 tier-move rule"},
-	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "Outside `--delegate`, a bump to the top tier pauses and asks the reviewer", Diagnostic: "declared line: craft-line step 5 dropped the `--delegate` exception from the top-tier pause"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "Outside `--delegate`, a bump to the top tier pauses and asks the reviewer** —", Diagnostic: "declared line: craft-line step 5 dropped the `--delegate` exception from the top-tier pause"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "The top tier implements nothing unless the reviewer names it.", Diagnostic: "declared line: craft-line restored the top-tier rule for every run, `--delegate` included"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "Any bump to the top tier pauses and asks the reviewer", Diagnostic: "declared line: craft-line restored the top-tier pause for every run, `--delegate` included"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: Forbid, Needle: "stories and their lines", Diagnostic: "declared line: craft-spec restored per-story lines in the approval table"},
 }
