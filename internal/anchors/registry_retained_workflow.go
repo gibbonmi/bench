@@ -18,11 +18,15 @@ var defaultWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", Kind: Forbid, Needle: "A user-directed write delegate treats `Writes:` as an expectation.", Diagnostic: "retained workflow: delegation discipline scoped the Writes expectation to a user-directed write delegate"},
 }
 
-// delegatedWorkflowAnchors pin the opt-in delegated exception and the fresh ticket
-// author rules that it extends. They join the
-// retained-workflow family because the same owners carry both contracts, and a
-// reader who loses one clause loses the boundary between them. Each needle is
-// the instruction's one source; no anchor claims to prove native dispatch.
+// delegatedWorkflowAnchors pin the opt-in delegated exception and every rule of
+// who authors, repairs, probes, commits, and lands a ticket: the fresh author
+// and repair sessions, the bench-writer role, the lane-pass commit and landing
+// bans, the stash and bench probe duties, and the retired copies that a
+// Forbid row keeps out (copy-aside probes, the main-checkout build, the
+// resume-clean step, and phase-command copies of owner rules). They join the
+// retained-workflow family because the same owners carry these contracts, and
+// a reader who loses one clause loses the boundary between them. Each needle
+// is the instruction's one source; no anchor claims to prove native dispatch.
 var delegatedWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "`--delegate` applies only to an approved `$bench-implement-spec --full <spec>` run with an approved ticket graph.", Diagnostic: "retained workflow: operating guide dropped the delegated opt-in entry"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "A ticket in a dependent chunk waits for every prerequisite chunk checkpoint.", Diagnostic: "retained workflow: operating guide dropped the delegated prerequisite-checkpoint wait"},
@@ -47,6 +51,7 @@ var delegatedWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Require, Needle: "the destructive-git guard refuses only `git stash drop` and `git stash clear`.", Diagnostic: "fresh ticket author: craft-delegate dropped the guard's real git stash deny surface"},
 	{Group: AfterImplementSpec, File: ".claude/agents/bench-writer.md", Kind: Require, Needle: "description: The Bench write delegate for a fresh ticket author, a repair session, or a user-directed write delegation.", Diagnostic: "fresh ticket author: bench-writer description dropped the fresh ticket author or the repair session"},
 	{Group: AfterImplementSpec, File: ".claude/agents/bench-writer.md", Kind: Require, Needle: "A ticket author or a repair author commits its ticket on a lane pass and does not run `bench worktree land`.", Diagnostic: "fresh ticket author: bench-writer dropped the lane-pass commit of a ticket or repair author, or its landing ban"},
+	{Group: AfterImplementSpec, File: ".claude/agents/bench-writer.md", Kind: Require, Needle: "focused checks green, and it does not land the diff.", Diagnostic: "fresh ticket author: bench-writer dropped the landing ban of a user-directed delegate"},
 	{Group: AfterImplementSpec, File: ".claude/agents/bench-writer.md", Kind: Forbid, Needle: "The user directed this delegation", Diagnostic: "fresh ticket author: bench-writer restored the user-directed premise for every write delegate"},
 	{Group: AfterImplementSpec, File: ".claude/agents/bench-writer.md", Kind: Forbid, Needle: "Stop at a diff that is ready, with the focused checks green.", Diagnostic: "fresh ticket author: bench-writer restored the uncommitted-diff stop for every write delegate"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: RequireInSection, Section: "Retained implementation continuation", Needle: "The continuation rules below govern the pre-review work of each ticket author", Diagnostic: "fresh ticket author: craft-line dropped the continuation rules for each ticket author"},

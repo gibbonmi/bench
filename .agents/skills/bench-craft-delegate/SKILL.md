@@ -51,8 +51,8 @@ registry the family already appears in, traced from one existing sibling through
 registry the charge does not name is one the delegate will miss. A cap-change charge's search list names the closest pinning package.
 
 Every write charge from a spec carries its stories' coverage rows — behavior, seam, why it catches the failure.
-It requires the delegate to show each row red before the edit and green
-after. First compare each slice with `craft-spec`'s "Slicing a build for delegates".
+It requires the delegate to show each row red before the edit and green after.
+First compare each slice with `craft-spec`'s "Slicing a build for delegates".
 
 Name the mutation that breaks the change's central property. Require the delegate to apply it to its
 own finished work and report the observed result. Require the delegate to add the missing row when
@@ -63,7 +63,7 @@ and fold them into the landing's census entry.
 
 For a defect outside its fence, a delegate follows [debug integration](../../commands/bench-debug.md#how-it-meets-the-rest-of-bench) for the diagnostic handoff.
 A new worktree charge starts after the coordinator runs `git rev-parse HEAD main`.
-If the refs differ, only the coordinator runs `bench worktree merge --from main <target>` and verifies equality before the delegate starts. Dependent tickets in a reviewed spec chain share the retained integration source and verify its expected tip.
+If the refs differ, only the coordinator runs `bench worktree merge --from main <target>` and verifies equality before the delegate starts.
 A fix-pass charge names a commit-specific sentinel.
 
 A user-directed write delegate returns focused evidence and its own mutation probe, and it does not land the diff.
