@@ -849,10 +849,12 @@
               </div>
               <div class="pane good">
                 <div class="pane-head">exit zero · green · continue</div>
-                <p class="why">The only state in which a commit may happen.
-                <code>bench commit</code> stages the named paths; the shift loop commits on
-                its own. Green means the external checks passed, nothing more, so the work
-                still goes to review.</p>
+                <p class="why">The only state in which work reaches <code>main</code>.
+                In a worktree, <code>bench commit</code> publishes the named paths on a lane
+                pass, and <code>bench worktree land</code> runs the whole-project gate before
+                <code>main</code> takes the work; the shift loop commits on its own. Green
+                means the external checks passed, nothing more, so the work still goes to
+                review.</p>
               </div>
             </div>
           </div>
