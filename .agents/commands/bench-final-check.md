@@ -86,32 +86,11 @@ of a silent skip.
 ## Capture the implementation retro
 
 After any applicable post-merge tail, an implemented spec has two final exit
-duties. First, rewrite `capture/retros/<spec-slug>.md` in full. Do this only after the
-spec's final green landing commit has flipped it to `Status: implemented`. A
-re-run replaces that slug's whole file; it never appends,
-and it leaves other pending retros untouched.
-
-Use these headings exactly:
-
-```markdown
-## Outcome
-
-## Gate-stage timings
-
-## Ticket-versus-spec-slice and delegate performance
-
-## Coordinator catches
-
-## Repair attribution
-
-## Agent-experience improvements
-
-### Bench CLI
-
-### Skills
-
-### Process
-```
+duties. First, write the retro only after the spec's final green landing
+commit has flipped it to `Status: implemented`.
+Read `bench retro <slug> --scaffold`, then write the retro once with `bench retro <slug> --body <markdown>`.
+The scaffold owns the retro headings and the calibration table header; keep them as the scaffold prints them.
+The verb refuses a retro file that exists, and it changes no other retro.
 
 Record concrete evidence:
 
@@ -123,7 +102,7 @@ Record concrete evidence:
 
 A spec retro cites the landing's census entry under `### Bench CLI` with its `Feeds:` line.
 
-The retro fills the calibration table with one row per labeled claim: surface, claim, status, confidence, label, and model, effort, and role.
+The retro fills the scaffold's calibration table with one row per labeled claim.
 The retro states the Brier mean, the pair count, and the abstention count below the table, with `unknown` for a mean over zero pairs.
 
 Write each improvement item as one list item. Give the item one sentence that
@@ -138,7 +117,7 @@ three improvement headings takes this shape:
   Feeds: none
 ```
 
-Under that repair-attribution heading, write one table row per ticket in the
+Under the repair-attribution heading, write one table row per ticket in the
 build: the ticket, how many repair rounds it took to land, and one cause per
 round. A ticket that landed in one pass records `none`. Causes come from this
 vocabulary and no other, one term per round: `shaping-ambiguity`, `spec-row`,
@@ -160,9 +139,9 @@ restate this landing for that row, and replace the old text. Rewrite
 owns the rest of the shape.
 
 These files are pending capture for `/bench-drain`, not
-a second roadmap. Do not run another gate or commit just to capture the retro.
-The successful landing boundary is already the verdict. The retro leaves
-through the next reviewer-approved capture drain.
+a second roadmap.
+A tracked retro and its scorecard updates commit with the phase close.
+An ignored retro stays local until the next reviewer-approved capture drain.
 
 Report the applicable oracle result. This command does not form an opinion
 about whether the work is good. It reports the gate's retained or fresh
@@ -196,8 +175,8 @@ covers; it never selects the gate. To change what runs, change
 ## Report
 
 - **Spec landed:** report the final landing commit and its
-  retained exact green evidence plainly. Capture the retro without another
-  gate or commit.
+  retained exact green evidence plainly.
+  Capture the retro as "Capture the implementation retro" states.
 - **Ordinary green:** the work is committed. State it plainly, and add one line
   noting that ship-tier verification has not run. A dev green claim shows the
   kit works from the tree. Release-evidence checks run once per release under

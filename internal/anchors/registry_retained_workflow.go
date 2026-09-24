@@ -1,10 +1,27 @@
 package anchors
 
 // retainedWorkflowAnchors is the whole retained-workflow family: the default
-// contract below, the opt-in delegated exception that follows it, and the
-// lane-and-landing split. The registry reads this one name, so the three groups
-// evaluate together.
-var retainedWorkflowAnchors = append(append(append([]Anchor{}, defaultWorkflowAnchors...), delegatedWorkflowAnchors...), laneAndLandingAnchors...)
+// contract below, the opt-in delegated exception that follows it, the
+// lane-and-landing split, and the retro capture route. The registry reads this one
+// name, so the four groups evaluate together.
+var retainedWorkflowAnchors = append(append(append(append([]Anchor{}, defaultWorkflowAnchors...), delegatedWorkflowAnchors...), laneAndLandingAnchors...), retroCaptureAnchors...)
+
+// retroCaptureAnchors pin how the final check writes and commits the retro. Require
+// rows pin the scaffold-then-body route through `bench retro`, the pointer to the
+// scaffold as the owner of the retro headings, the tracked-or-ignored commit rule,
+// and the report's pointer to that rule. Forbid rows keep out the report's copy of
+// the retired no-commit rule, the drain-only exit, and the reference's claim that the
+// drain owns the retro's capture commit.
+var retroCaptureAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "Read `bench retro <slug> --scaffold`, then write the retro once with `bench retro <slug> --body <markdown>`.", Diagnostic: "retro capture: final check dropped the scaffold-then-body route through bench retro"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "The scaffold owns the retro headings and the calibration table header; keep them as the scaffold prints them.", Diagnostic: "retro capture: final check dropped its pointer to the scaffold as the owner of the retro headings"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "A tracked retro and its scorecard updates commit with the phase close.", Diagnostic: "retro capture: final check dropped the phase-close commit of a tracked retro and its scorecard updates"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "An ignored retro stays local until the next reviewer-approved capture drain.", Diagnostic: "retro capture: final check dropped the local route of an ignored retro"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "Capture the retro as \"Capture the implementation retro\" states.", Diagnostic: "retro capture: final check report dropped its pointer to the retro capture rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "Capture the retro without another", Diagnostic: "retro capture: final check report restored the no-commit retro rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "The retro leaves through the next reviewer-approved capture drain.", Diagnostic: "retro capture: final check restored the drain-only retro exit"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "owns their reviewed drain and its capture commit", Diagnostic: "retro capture: reference restored the drain as the owner of the retro capture commit"},
+}
 
 // laneAndLandingAnchors pin one statement of the commit and landing split: a
 // worktree `bench commit` runs the declared lane, and `bench worktree land` runs

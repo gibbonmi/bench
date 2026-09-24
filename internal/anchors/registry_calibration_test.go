@@ -43,11 +43,13 @@ func TestCalibrationScoreAnchors(t *testing.T) {
 	}}.check(t)
 }
 
-// These independent expectations make removal of a retro calibration duty fail.
+// These independent expectations make removal of a retro calibration duty, or the
+// return of the calibration column copy, fail.
 func TestCalibrationRetroDutyAnchors(t *testing.T) {
 	const command = ".agents/commands/bench-final-check.md"
 	anchorHarness{group: AfterImplementSpec, rules: []anchorRule{
-		{file: command, section: "Capture the implementation retro", needle: "The retro fills the calibration table with one row per labeled claim: surface, claim, status, confidence, label, and model, effort, and role.", want: "calibration: the retro must fill the calibration table"},
+		{file: command, section: "Capture the implementation retro", needle: "The retro fills the scaffold's calibration table with one row per labeled claim.", want: "calibration: the retro must fill the calibration table"},
+		{file: command, needle: "surface, claim, status, confidence, label, and model, effort, and role", want: "calibration: the final check restored a copy of the scaffold's calibration columns", forbidden: true},
 		{file: command, section: "Capture the implementation retro", needle: "The retro states the Brier mean, the pair count, and the abstention count below the table, with `unknown` for a mean over zero pairs.", want: "calibration: the retro must state the Brier mean and the counts"},
 	}}.check(t)
 }

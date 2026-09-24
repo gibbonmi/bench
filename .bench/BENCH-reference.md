@@ -45,7 +45,8 @@ assignments; the file map, adapter contracts, and hook layers live below.
 - `capture/retros/` holds one retro per spec: `/bench-final-check` writes
   `capture/retros/<spec-slug>.md` and refreshes affected
   `capture/agent-performance/` scorecards, and `/bench-drain` owns their
-  reviewed drain and its capture commit.
+  reviewed drain. A tracked retro commits with the phase close, and an ignored
+  retro stays local until that drain.
 - `ROADMAP.md` is the working roadmap's index. It holds board prose plus one
   heading line per row, with no bodies. `roadmap/` holds one detail owner per
   row, `roadmap/FT<n>.md`, carrying that row's body, `Occurrence:` ledger, and
