@@ -14,9 +14,15 @@ Rewrite the owner rule in `.bench/BENCH.md`.
 
 Every spec-backed build gives each ticket a fresh author session, with or without `--full`, on the declared line. The build records its authors in the version 2 delegate plan with an author limit of 1. A tier move still asks the reviewer. An explicit `--delegate` adds concurrent authors and the full tier range. The orchestrator reconciles the final acceptance and integration. A post-review repair goes to a fresh session that the plan records as a new assignment with the trigger `user-directed`.
 
-Rewrite `.agents/commands/bench-implement-spec.md` to that rule. The author charge carries the ticket, its coverage rows, its `Writes:` fence, the evidence identity, and the line. The author binds the evidence, fetches the metadata and ticket pages, and reads the rest with targeted reads. The build family's delivery prerequisite becomes `a narrow author read`. The orchestrator reads manifests, returns, and verdicts, not code, and refreshes `bench handoff` at each chunk checkpoint. Before the first dispatch, it writes the version 2 `execution` block and takes the plan amendment.
+Each affected ticket takes its own repair session, and that session reruns the ticket's verification. At final reconciliation, the orchestrator does not repair. A finding there goes to a fresh repair session for the ticket that owns the path.
 
-State in `.bench/BENCH-reference.md` that a build's completion plan declares version 2 with a delegate execution block. Add the Require and Forbid rows of FA1 to FA14. Change each pin of a retired sentence, and update each canary whose mutation names a changed sentence.
+Rewrite `.agents/commands/bench-implement-spec.md` to that rule. The author charge carries the ticket, its coverage rows, its `Writes:` fence, the evidence identity, and the line. The author binds the evidence, fetches the metadata and ticket pages, and reads the rest with targeted reads. The build family's delivery prerequisite becomes `a narrow author read`. The orchestrator reads manifests, returns, and verdicts, not code, and refreshes `bench handoff` at each chunk checkpoint.
+
+Before the first dispatch, the orchestrator writes the version 2 `execution` block and takes the plan amendment. The same amendment splits each chunk verification into one verification for each ticket.
+
+Keep the two continuation-policy pointer sentences in `.bench/BENCH.md` and `.agents/commands/bench-implement-spec.md` byte for byte. The `craft-line` section name "Retained implementation continuation" stays unchanged.
+
+State in `.bench/BENCH-reference.md` that the plan amendment declares version 2 with a delegate execution block. State there that the amendment splits each chunk verification into one verification for each ticket. In the same paragraph, replace "accepted findings return to the retained author there" with the fresh repair session rule. Add the Require and Forbid rows of FA1 to FA14. Change each pin of a retired sentence, and update each canary whose mutation names a changed sentence.
 
 ## Acceptance
 

@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: the reviewer-confirmed current conversation, 2026-09-24.
 
-Verification log: 0 iteration(s) to accept — the review round has not run yet.
+Verification log: 0 iteration(s) to accept — the review round has not run yet. Iteration 1 folded R1-R6.
 
 ## Problem
 
@@ -69,7 +69,12 @@ Reviewed exclusions:
 
 - `.bench/BENCH.md` owns the authorship rule. Its "Retain implementation authorship" paragraph becomes a fresh-ticket-author paragraph, and its "Delegate a full run only on my request" paragraph keeps only what `--delegate` adds. Every other file points to that owner and restates no rule.
 - The build plan uses the version 2 delegate form. Before the first dispatch, the orchestrator writes the `execution` block. The block names mode `delegate`, an author limit of 1, the run id, its own session, and an empty history for each ticket. That plan edit takes the ordinary plan amendment.
+- The same amendment sets the plan version to 2 and splits each chunk verification into one verification for each ticket. Version 2 requires each chunk verification to name one of that chunk's tickets, and each ticket to own one.
 - `internal/reviewrecord` allows one session for one ticket. So a repair session joins that ticket's history as a replacement with the trigger `user-directed`, the stopped-writer evidence, and the preserved source.
+- A finding that touches several tickets takes one repair session for each affected ticket. The repair session becomes that ticket's verifier, so it reruns that ticket's verification.
+- At final reconciliation, the orchestrator does not repair. A finding there goes to a fresh repair session for the ticket whose `Writes:` line holds the path. The orchestrator then reruns the final verification.
+- A finding on a path that no ticket's `Writes:` line holds is a material acceptance shortfall, so the build stops and reports.
+- `craft-line` keeps its section name "Retained implementation continuation". So ticket 1 keeps the continuation-policy pointer sentences in `.bench/BENCH.md` and `.agents/commands/bench-implement-spec.md` byte for byte, and their section anchors stay valid.
 - The build delivery rule follows the narrow review read that landed at `5f1453fc`. The charge-evidence guidance test names the build family's delivery prerequisite `a narrow author read`, beside the review family's `a narrow axis read`.
 - A fresh author works in the one integration worktree, serially, in `Blocked by:` order. Only `--delegate` with a limit above 1 runs authors at the same time.
 - The Claude Code auto-mode classifier refuses an agent edit to `.bench/BENCH.md` as a self-modification, because `CLAUDE.md` imports it. Ticket 1 therefore names a reviewer approval step: the reviewer makes that edit or grants a permission rule for it before the author starts.
@@ -79,7 +84,7 @@ Reviewed exclusions:
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| FA / `1-route-each-ticket-to-a-fresh-author.md`, `2-align-the-line-and-delegation-skills.md`, `3-align-the-phase-commands-and-docs.md` | Every spec-backed build gives each ticket a fresh author under a narrow charge, and every guidance file, doc, and ADR states that rule. | FA1, FA2, FA3, FA4, FA5, FA6, FA7, FA8, FA9, FA10, FA11, FA12, FA13, FA14, FA15, FA16, FA17, FA18, FA19, FA20, FA21, FA22, FA23, FA24, FA25 | `bench test --check docs-currency-workflow`, `bench test --package ./internal/conformance --run TestRootConformance` | no |
+| FA / `1-route-each-ticket-to-a-fresh-author.md`, `2-align-the-line-and-delegation-skills.md`, `3-align-the-phase-commands-and-docs.md` | Every spec-backed build gives each ticket a fresh author under a narrow charge, and every guidance file, doc, and ADR states that rule. | FA1, FA2, FA3, FA4, FA5, FA6, FA7, FA8, FA9, FA10, FA11, FA12, FA13, FA14, FA15, FA16, FA17, FA18, FA19, FA20, FA21, FA22, FA23, FA24, FA25, FA26 | `bench test --check docs-currency-workflow`, `bench test --package ./internal/conformance --run TestRootConformance` | no |
 
 ## Testing decisions
 
@@ -110,9 +115,9 @@ Reviewed exclusions:
 | FA9 | 10 | `.agents/commands/bench-implement-spec.md` requires the orchestrator to read manifests, returns, and verdicts, not code | planned Require needle in `internal/anchors/registry_ft311_preparation.go` | A build phase with no orchestrator bound lacks the needle, so the check reds. |
 | FA10 | 11 | `.agents/commands/bench-implement-spec.md` requires a `bench handoff` refresh at each chunk checkpoint | planned Require needle in `internal/anchors/registry_ft311_preparation.go` | A build phase that refreshes only at `--full` phase boundaries lacks the needle, so the check reds. |
 | FA11 | 12 | `.bench/BENCH.md` requires the orchestrator to reconcile the final acceptance and integration | planned Require needle in `internal/anchors/registry_ft311_review_dispatch.go` | A guide that keeps the retained author as reconciler lacks the needle, so the check reds. |
-| FA12 | 13 | `.bench/BENCH.md` requires a post-review repair to go to a fresh session recorded as a new assignment with the trigger `user-directed` | planned Require needle in `internal/anchors/registry_retained_workflow.go` | A guide that keeps the repair with the ticket author lacks the needle, so the check reds. |
+| FA12 | 13 | `.bench/BENCH.md` requires one fresh repair session for each affected ticket, recorded as a new assignment with the trigger `user-directed`, that reruns that ticket's verification, and routes a final-reconciliation finding to a fresh repair session, not to the orchestrator | planned Require needle in `internal/anchors/registry_retained_workflow.go` | A guide that keeps the repair with the ticket author lacks the needle, so the check reds. |
 | FA13 | 14 | `.bench/BENCH.md` does not contain "Production repairs stay with the recorded ticket author." | planned Forbid needle in `internal/anchors/registry_retained_workflow.go` | A guide that keeps the retired sentence matches the Forbid needle, so the check reds. |
-| FA14 | 2 | `.bench/BENCH-reference.md` states that a build's completion plan declares version 2 with a delegate execution block | planned Require needle in `internal/anchors/registry_retained_workflow.go` | A reference that still declares version 1 lacks the needle, so the check reds. |
+| FA14 | 2 | `.bench/BENCH-reference.md` states that the plan amendment declares version 2 with a delegate execution block and splits each chunk verification into one verification for each ticket | planned Require needle in `internal/anchors/registry_retained_workflow.go` | A reference that still declares version 1, or keeps one shared chunk verification, lacks the needle, so the check reds. |
 | FA15 | 15 | `.agents/skills/bench-craft-line/SKILL.md` applies its continuation section to each ticket author | planned RequireInSection needle in `internal/anchors/registry_retained_workflow.go` | A skill that keeps the retained-session wording lacks the needle, so the check reds. |
 | FA16 | 3 | `.agents/skills/bench-craft-line/SKILL.md` requires a reviewer stop before a tier move of a fresh author outside `--delegate` | planned Require needle in `internal/anchors/registry_retained_workflow.go` | A skill that lets a limit-1 plan move tiers like `--delegate` lacks the needle, so the check reds. |
 | FA17 | 1 | `.agents/skills/bench-craft-delegate/SKILL.md` points to `.bench/BENCH.md` as the owner of ticket author sessions | planned Require needle in `internal/anchors/registry_data.go` | A skill that keeps the retained-author pointer lacks the needle, so the check reds. |
@@ -124,6 +129,7 @@ Reviewed exclusions:
 | FA23 | 19 | `README.md` states that each ticket gets a fresh author session | planned Require needle in `internal/anchors/registry_data.go` | A README that keeps "Implementation stays with its retained author" lacks the needle, so the check reds. |
 | FA24 | 20 | ADR 0023 records the fresh-ticket-author decision, and ADR 0021 points to it | review-owned: an ADR has no mechanical seam here | Review grades both ADRs against this spec's decisions. |
 | FA25 | 21 | `.agents/commands/bench-drain.md` keeps the implement-now light path in the main session | `internal/anchors/registry_data.go` (existing Require needle "Write its one ticket file. Implement that ticket in the retained session under `craft-line`.") | A drain phase that moves the light path to a fresh author drops the needle, so the check reds. |
+| FA26 | 14 | `.agents/skills/bench-craft-delegate/SKILL.md` does not contain "Repairs return to the retained implementation session." | planned Forbid needle in `internal/anchors/registry_retained_workflow.go` | A skill that keeps the retired sentence matches the Forbid needle, so the check reds. |
 
 Not covered: story 22 — the reviewed exclusion changes no behavior, and the Won't handle lines record it.
 Not covered: story 23 — the reviewed exclusion changes no behavior, and the Out of scope section prices it.
@@ -132,7 +138,7 @@ Not covered: story 23 — the reviewed exclusion changes no behavior, and the Ou
 
 The canonical edge classes, walked at the anchor seam:
 
-- A retired sentence that returns: each retired sentence takes its own Forbid row (FA4, FA7, FA8, FA13, FA19).
+- A retired sentence that returns: each retired sentence takes its own Forbid row (FA4, FA7, FA8, FA13, FA19, FA26).
 - A sentence reflowed across lines: the registry matches a needle across a line break, and `charge_evidence_guidance_test.go` already reads a wrapped sentence.
 - A second spelling of the rule: every file points to `.bench/BENCH.md`, and review grades a paraphrase.
 - A canary that mutates a changed sentence: each changed canary's `MUTATE.json` names the new sentence, so its mutation stays red.
@@ -223,6 +229,15 @@ The reviewer closed these decisions on 2026-09-24:
 ### Bootstrap
 
 This spec's own build starts before its guidance lands. So the recommended build already uses the new shape under today's rules: `$bench-implement-spec --full --delegate specs/fresh-ticket-authors/spec.md` with an author limit of 1 on opus/high, and no tier escalation.
+
+The staged completion plan below stays at version 1, because a version 2 plan needs the run id and the orchestrator session. Before the first dispatch, the orchestrator amends that plan to the version 2 shape:
+
+- The plan version becomes 2. The `execution` block names mode `delegate`, an author limit of 1, the run id, and the orchestrator session. It also names an empty history for each ticket.
+- Chunk FA's verification splits into one pair for each ticket. `1-docs` and `1-conformance` name `1-route-each-ticket-to-a-fresh-author.md`.
+- `2-docs` and `2-conformance` name `2-align-the-line-and-delegation-skills.md`.
+- `3-docs` and `3-conformance` name `3-align-the-phase-commands-and-docs.md`.
+- Each `-docs` obligation runs `bench test --check docs-currency-workflow`, and each `-conformance` obligation runs `bench test --package ./internal/conformance --run TestRootConformance`.
+- The final verification names no ticket, and it stays as the staged plan writes it.
 
 ### Reader sweep
 

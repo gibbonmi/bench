@@ -13,7 +13,7 @@ Align the phase commands and the public docs to the owner rule in `.bench/BENCH.
 - `bench-write-spec`: the exit handoff recommends the line for fresh ticket authors on one integration source.
 - `bench-review-implementation`: accepted findings go to a fresh repair author, and the orchestrator performs the final reconciliation.
 - `bench-final-check`: the retro reports how each ticket author performed against the planned boundaries.
-- `README.md` and `docs/field-guide.html`: state that each ticket gets a fresh author session.
+- `README.md` and `docs/field-guide.html`: state that each ticket gets a fresh author session. Replace the field-guide sentence "One implementation session retains authorship through the approved ticket graph and its chunk reviews." and its pin in `internal/anchors/registry_data.go`.
 - ADR 0023 records the decision as the current state. ADR 0021's first, second, third, and fifth consequences change to the decided state and point to ADR 0023.
 
 The implement-now light path in `bench-drain` stays in the main session, so its anchor keeps its bytes. Add the rows of FA20 to FA23, change each pin of a changed sentence, and update each canary whose mutation names a changed sentence.
