@@ -152,4 +152,4 @@ Each genuine separate capability includes its derived `<n> edits, <n> gate runs`
 ## Further notes
 ```
 
-Before a build starts, emit a scannable approval table. The table covers stories and their lines, seam diagrams, acceptance coverage including edge dispositions, ownership fences with an explicit reviewer disposition, and out of scope. Pause for sign-off. The user stories set breadth, engineering seams place tests, and the gate defines done.
+Before a build starts, emit a scannable approval table. The table covers the implementation line, seam diagrams, acceptance coverage including edge dispositions, ownership fences with an explicit reviewer disposition, and out of scope. Pause for sign-off. The user stories set breadth, engineering seams place tests, and the gate defines done.

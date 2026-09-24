@@ -8,9 +8,28 @@ import (
 
 // retainedWorkflowAnchors is the whole retained-workflow family: the default
 // contract below, the opt-in delegated exception that follows it, the
-// lane-and-landing split, and the retro capture route. The registry reads this one
-// name, so its groups evaluate together.
-var retainedWorkflowAnchors = append(append(append(append([]Anchor{}, defaultWorkflowAnchors...), delegatedWorkflowAnchors...), laneAndLandingAnchors...), retroCaptureAnchors...)
+// lane-and-landing split, the retro capture route, and the declared author line.
+// The registry reads this one name, so its groups evaluate together.
+var retainedWorkflowAnchors = append(append(append(append(append([]Anchor{}, defaultWorkflowAnchors...), delegatedWorkflowAnchors...), laneAndLandingAnchors...), retroCaptureAnchors...), declaredLineAnchors...)
+
+// declaredLineAnchors pin how craft-line routes a ticket author. Require rows pin
+// the binding of every ticket author to the spec's one declared line, the step 3
+// escalation under the step 2 tier-move rule, and the step 5 top-tier pause
+// outside `--delegate`. Forbid rows keep out the per-story ceiling, the per-ticket
+// re-run of the decision table, the per-story collapse, the retired step 3 and
+// step 5 wording, and craft-spec's per-story lines in its approval table.
+var declaredLineAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "Every ticket author runs on the spec's declared `Line:`.", Diagnostic: "declared line: craft-line dropped the binding of every ticket author to the spec's declared line"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "ceiling, not a binding", Diagnostic: "declared line: craft-line restored the per-story line as a ceiling, not a binding"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "Re-run the decision table per ticket at charge time.", Diagnostic: "declared line: craft-line restored the per-ticket re-run of the decision table"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "use the highest tier any story needs", Diagnostic: "declared line: craft-line restored the per-story collapse to the highest tier"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "Report each collapsed line.", Diagnostic: "declared line: craft-line restored the report of each collapsed per-story line"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "escalate immediately under the step 2 tier-move rule; no retry burned.", Diagnostic: "declared line: craft-line step 3 escalates without the step 2 tier-move rule"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "escalate immediately; no retry burned.", Diagnostic: "declared line: craft-line restored the step 3 escalation without the step 2 tier-move rule"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Require, Needle: "Outside `--delegate`, a bump to the top tier pauses and asks the reviewer", Diagnostic: "declared line: craft-line step 5 dropped the `--delegate` exception from the top-tier pause"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: Forbid, Needle: "Any bump to the top tier pauses and asks the reviewer", Diagnostic: "declared line: craft-line restored the top-tier pause for every run, `--delegate` included"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: Forbid, Needle: "stories and their lines", Diagnostic: "declared line: craft-spec restored per-story lines in the approval table"},
+}
 
 // retroCaptureAnchors pin how the final check writes and commits the retro. Require
 // rows pin the scaffold-then-body route through `bench retro`, the pointer to the

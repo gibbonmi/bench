@@ -54,12 +54,12 @@ A fourth signal, **leverage**, overrides the table. An artifact that steers futu
 
 The conditional review line uses high effort and ~1 iteration. A Codex mid implementation sends each axis to the Codex top binding. Every other implementation sends each axis to the invoking harness's mid binding. A different implementation model, or a session beyond the planned ticket authors, requires user direction. The ticket author can adjust effort in its own session and reports the change.
 
-These are starting defaults, not a flat rule. A spec's per-story line is a **ceiling, not a binding**. Re-run the decision table per ticket at charge time.
+These are starting defaults, not a flat rule. Every ticket author runs on the spec's declared `Line:`.
 
 A post-review repair runs at low effort. The author raises that effort only when the repair is at risk of failure at low effort, and reports the raise in one line. The repair session keeps the ticket's declared model.
 
 The leverage override still wins for orchestration and implementation. The conditional review line owns review.
-`craft-delegate` owns the author venue; this skill routes the author. For one atomic diff, use the highest tier any story needs. Report each collapsed line.
+`craft-delegate` owns the author venue; this skill routes the author.
 
 ## Delegated author lines
 
@@ -78,15 +78,15 @@ reds count toward the ladder. Report the others without retrying against them.
    back as guidance. Most reds are fixable feedback, not capability gaps.
 2. **Second diff-owned red at the same tier** — without `--delegate`, raise the effort one step and resume.
    Outside `--delegate`, a tier move of a fresh ticket author asks the reviewer first. A `--delegate` run moves the tier without that stop.
-3. **Delegate reports the seam is more uncertain than specced** — escalate
-   immediately; no retry burned.
+3. **Delegate reports the seam is more uncertain than specced** —
+   escalate immediately under the step 2 tier-move rule; no retry burned.
 4. **A non-shrinking diff-owned red set across an iteration** — stop the
    stage and surface a likely seam or spec contradiction instead of buying
    a more expensive attempt: the ladder corrects wrong-tier work, not a
    wrong seam.
-5. **Any bump to the top tier pauses and asks the reviewer** — unless the
-   project's `Lines` grants a standing opt-out. Top-tier spend is the
-   reviewer's cost decision, not yours.
+5. **Outside `--delegate`, a bump to the top tier pauses and asks the reviewer** —
+   unless the project's `Lines` grants a standing opt-out. Top-tier spend is
+   the reviewer's cost decision, not yours.
 Report every move in one line ("escalated to mid after 2 diff-owned reds").
 Trust the ladder only where you trust the gate; it never replaces the up-bias row.
 
