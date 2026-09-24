@@ -89,7 +89,11 @@ func (r *shiftRecord) adapterRan(err error) {
 	case err == nil:
 		r.pass.SetAttributes(attribute.String(otelrecord.AttrAdapterResult, otelrecord.AdapterExited), attribute.Int(otelrecord.AttrAdapterExit, 0))
 	case errors.As(err, &exitErr):
-		r.pass.SetAttributes(attribute.String(otelrecord.AttrAdapterResult, otelrecord.AdapterExited), attribute.Int(otelrecord.AttrAdapterExit, exitErr.ExitCode()))
+		r.pass.SetAttributes(attribute.String(otelrecord.AttrAdapterResult, otelrecord.AdapterExited))
+		// A signal ends the process with no exit code, and ExitCode then answers -1.
+		if code := exitErr.ExitCode(); code >= 0 {
+			r.pass.SetAttributes(attribute.Int(otelrecord.AttrAdapterExit, code))
+		}
 	default:
 		r.pass.SetAttributes(attribute.String(otelrecord.AttrAdapterResult, otelrecord.AdapterSpawnFailed))
 	}
@@ -120,7 +124,8 @@ const notesFile = ".bench-notes.md"
 // retainNotes keeps the notes in wt as one memory file of the record, once per shift, and
 // records the memory state on the shift span. It reads the notes without following a link
 // and under the control-record bound, so a link, a special file, or an oversized file is
-// refused. A failed store write changes only the memory state.
+// refused. A failed store write changes only the memory state, and a failed prune after
+// a kept file leaves the state retained.
 func (r *shiftRecord) retainNotes(wt string) {
 	if r == nil || r.notesKept {
 		return
@@ -136,8 +141,8 @@ func (r *shiftRecord) retainNotes(wt string) {
 		r.span.SetAttributes(attribute.String(otelrecord.AttrMemoryState, otelrecord.MemoryRefused))
 		return
 	}
-	digest, err := otelrecord.RetainMemory("", r.root, r.span.SpanContext().TraceID().String(), notes.Data)
-	if err != nil {
+	digest, _ := otelrecord.RetainMemory("", r.root, r.span.SpanContext().TraceID().String(), notes.Data)
+	if digest == "" {
 		r.span.SetAttributes(attribute.String(otelrecord.AttrMemoryState, otelrecord.MemoryFailed))
 		return
 	}

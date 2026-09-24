@@ -60,10 +60,11 @@ func routedRepo(t *testing.T) {
 	t.Chdir(root)
 }
 
-// recordedResolve runs resolve-model for claude in a routed repository with a private
-// home, and returns its stdout, its exit, and the one line.resolve span it recorded.
-// handoff, when true, runs it under a handed-off parent span, which it also returns.
-func recordedResolve(t *testing.T, tier string, handoff bool) (string, int, otelrecord.Span, otelrecord.Span) {
+// recordedResolve runs resolve-model for harness in a routed repository with a private
+// home, and returns its stdout, its exit, the one line.resolve span it recorded, and the
+// raw record. handoff, when true, runs it under a handed-off parent span, which it also
+// returns.
+func recordedResolve(t *testing.T, harness, tier string, handoff bool) (string, int, otelrecord.Span, otelrecord.Span, []byte) {
 	t.Helper()
 	routedRepo(t)
 	home := t.TempDir()
@@ -90,7 +91,7 @@ func recordedResolve(t *testing.T, tier string, handoff bool) (string, int, otel
 		parent.TraceID, parent.SpanID = span.SpanContext().TraceID().String(), span.SpanContext().SpanID().String()
 		end = finish
 	}
-	out, code := resolveModel([]string{"--harness", "claude"})
+	out, code := resolveModel([]string{"--harness", harness})
 	end()
 	spans, err := otelrecord.ReadSpans(home, root)
 	if err != nil {
@@ -105,12 +106,16 @@ func recordedResolve(t *testing.T, tier string, handoff bool) (string, int, otel
 	if len(found) != 1 {
 		t.Fatalf("the record holds %d line.resolve spans, want 1: %+v", len(found), spans)
 	}
-	return out, code, found[0], parent
+	raw, err := os.ReadFile(otelrecord.Path(home, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return out, code, found[0], parent, raw
 }
 
 // LE46: a handed-off resolution records its harness, tier, and model under the handoff.
 func TestAHandedOffResolutionRecordsItsLine(t *testing.T) {
-	out, code, span, parent := recordedResolve(t, "mid", true)
+	out, code, span, parent, _ := recordedResolve(t, "claude", "mid", true)
 	if out != "opus\n" || code != 0 {
 		t.Fatalf("resolveModel = (%q, %d), want (\"opus\\n\", 0)", out, code)
 	}
@@ -131,7 +136,7 @@ func TestAHandedOffResolutionRecordsItsLine(t *testing.T) {
 
 // LE47: a resolution with no handoff records a span of its own trace.
 func TestAStandaloneResolutionRecordsARootSpan(t *testing.T) {
-	out, code, span, _ := recordedResolve(t, "cheap", false)
+	out, code, span, _, _ := recordedResolve(t, "claude", "cheap", false)
 	if out != "sonnet\n" || code != 0 {
 		t.Fatalf("resolveModel = (%q, %d), want (\"sonnet\\n\", 0)", out, code)
 	}
@@ -142,7 +147,7 @@ func TestAStandaloneResolutionRecordsARootSpan(t *testing.T) {
 
 // LE48: a refused resolution records a red outcome and no model.
 func TestARefusedResolutionRecordsRed(t *testing.T) {
-	out, code, span, _ := recordedResolve(t, "", false)
+	out, code, span, _, _ := recordedResolve(t, "claude", "", false)
 	if out != "" || code != 1 {
 		t.Fatalf("resolveModel = (%q, %d), want (\"\", 1)", out, code)
 	}
@@ -151,5 +156,21 @@ func TestARefusedResolutionRecordsRed(t *testing.T) {
 	}
 	if got, ok := span.Attributes[otelrecord.AttrLineModel]; ok {
 		t.Fatalf("line.resolve carries model %q, want none", got)
+	}
+}
+
+// An unknown harness and an operator tier never reach the record.
+func TestAResolutionRecordsNoOperatorText(t *testing.T) {
+	_, code, span, _, raw := recordedResolve(t, "gemini", "custom model", false)
+	if code != 1 {
+		t.Fatalf("resolveModel exit = %d, want 1", code)
+	}
+	for _, key := range []string{otelrecord.AttrLineHarness, otelrecord.AttrLineTier} {
+		if got, ok := span.Attributes[key]; ok {
+			t.Fatalf("line.resolve carries %s = %q, want none", key, got)
+		}
+	}
+	if strings.Contains(string(raw), "gemini") || strings.Contains(string(raw), "custom model") {
+		t.Fatalf("the record holds operator text:\n%s", raw)
 	}
 }

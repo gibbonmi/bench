@@ -82,6 +82,9 @@ func Path(home, root string) string {
 // model prose, so they live beside the record and never inside a record line.
 const memoryDir = "memory"
 
+// memorySuffix ends every memory file name, and the prune removes only such names.
+const memorySuffix = ".md"
+
 // MemoryDir returns the directory that holds root's retained shift notes.
 func MemoryDir(home, root string) string {
 	return filepath.Join(Dir(home, root), memoryDir)
@@ -89,7 +92,8 @@ func MemoryDir(home, root string) string {
 
 // RetainMemory keeps body as one memory file of root's record, below home or the resolved
 // Bench home when home is empty, and returns the file's SHA-256 digest. The store keeps the
-// newest RecordMemoryRetained files.
+// newest RecordMemoryRetained files. A digest with an error means the file was kept and
+// the prune failed; an empty digest means nothing was kept.
 func RetainMemory(home, root, traceID string, body []byte) (string, error) {
 	home, ok := recordHome(home)
 	if !ok {
@@ -103,8 +107,8 @@ func RetainMemory(home, root, traceID string, body []byte) (string, error) {
 // the record path is, and the file is created 0600 and never opened through a link.
 func retainMemory(home, root, traceID string, body []byte, now time.Time, retained int) (string, error) {
 	dir := MemoryDir(home, root)
-	file := filepath.Join(dir, now.UTC().Format("20060102T150405.000000000Z")+"-"+traceID+".md")
-	if err := (&Writer{home: home}).gradeRecordPath(file); err != nil {
+	file := filepath.Join(dir, now.UTC().Format("20060102T150405.000000000Z")+"-"+traceID+memorySuffix)
+	if err := gradeRecordPath(home, file); err != nil {
 		return "", err
 	}
 	if err := os.MkdirAll(dir, 0o700); err != nil {
@@ -118,18 +122,31 @@ func retainMemory(home, root, traceID string, body []byte, now time.Time, retain
 	if err = errors.Join(err, out.Close()); err != nil {
 		return "", fmt.Errorf("write memory file: %w", err)
 	}
+	sum := sha256.Sum256(body)
+	return "sha256:" + hex.EncodeToString(sum[:]), pruneMemory(dir, retained)
+}
+
+// pruneMemory removes the oldest memory files in dir down to the retained count. It
+// touches only memory file names, and its error leaves the new file kept.
+func pruneMemory(dir string, retained int) error {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return "", fmt.Errorf("list memory directory: %w", err)
+		return fmt.Errorf("list memory directory: %w", err)
 	}
+	var names []string
 	// ReadDir sorts by name, and name order is time order.
-	for index := 0; index < len(entries)-retained; index++ {
-		if err := os.Remove(filepath.Join(dir, entries[index].Name())); err != nil {
-			return "", fmt.Errorf("prune memory file: %w", err)
+	for _, entry := range entries {
+		if entry.Type().IsRegular() && strings.HasSuffix(entry.Name(), memorySuffix) {
+			names = append(names, entry.Name())
 		}
 	}
-	sum := sha256.Sum256(body)
-	return "sha256:" + hex.EncodeToString(sum[:]), nil
+	var errs []error
+	for index := 0; index < len(names)-retained; index++ {
+		if err := os.Remove(filepath.Join(dir, names[index])); err != nil {
+			errs = append(errs, fmt.Errorf("prune memory file: %w", err))
+		}
+	}
+	return errors.Join(errs...)
 }
 
 // Writer appends encoded spans to one repository's record file. The caller resolves
@@ -154,13 +171,13 @@ func newWriter(home, root string, limit int64, retained int) *Writer {
 	return &Writer{home: home, dir: Dir(home, root), limit: limit, retained: retained}
 }
 
-// gradeRecordPath refuses a record path that the appender must not follow or open.
+// gradeRecordPath refuses a record path below home that a writer must not follow or open.
 // Two failures live here. A symlink at any level below the home redirects the record
 // outside the home, because os.MkdirAll follows a link at a parent level as readily as
 // at the leaf. A non-regular file at the record path — a FIFO or a device — blocks the
 // open, so every recorded verb would hang on its first span.
-func (w *Writer) gradeRecordPath(file string) error {
-	for _, level := range levelsBelow(w.home, file) {
+func gradeRecordPath(home, file string) error {
+	for _, level := range levelsBelow(home, file) {
 		info, err := os.Lstat(level)
 		if err != nil {
 			continue
@@ -201,7 +218,7 @@ func levelsBelow(home, path string) []string {
 // the caller decides whether a failed record changes its outcome.
 func (w *Writer) Append(line []byte) error {
 	record := filepath.Join(w.dir, recordFile)
-	if err := w.gradeRecordPath(record); err != nil {
+	if err := gradeRecordPath(w.home, record); err != nil {
 		return err
 	}
 	if err := os.MkdirAll(w.dir, 0o700); err != nil {
@@ -242,7 +259,7 @@ func (w *Writer) rotate(record string, incoming int64) error {
 		return err
 	}
 	lockPath := filepath.Join(w.dir, rotationLockFile)
-	if err := w.gradeRecordPath(lockPath); err != nil {
+	if err := gradeRecordPath(w.home, lockPath); err != nil {
 		return err
 	}
 	lock, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR|syscall.O_NOFOLLOW, 0o600)
@@ -303,7 +320,7 @@ func (w *Writer) prune(sequences []uint64) error {
 func segments(home, root string) ([]string, error) {
 	w := NewWriter(home, root)
 	live := filepath.Join(w.dir, recordFile)
-	if err := w.gradeRecordPath(live); err != nil {
+	if err := gradeRecordPath(w.home, live); err != nil {
 		return nil, err
 	}
 	sequences, err := sealedSequences(w.dir)
@@ -316,7 +333,7 @@ func segments(home, root string) ([]string, error) {
 	}
 	paths = append(paths, live)
 	for _, path := range paths {
-		if err := w.gradeRecordPath(path); err != nil {
+		if err := gradeRecordPath(w.home, path); err != nil {
 			return nil, err
 		}
 	}

@@ -287,6 +287,11 @@ func TestTheMemoryStoreKeepsTheRetainedCount(t *testing.T) {
 	if len(names) != 3 || slices.ContainsFunc(names, func(name string) bool { return strings.Contains(name, "trace0") }) {
 		t.Fatalf("memory files = %v, want the newest 3", names)
 	}
+	dir, _ := os.Stat(MemoryDir(home, root))
+	file, _ := os.Stat(filepath.Join(MemoryDir(home, root), names[0]))
+	if dir == nil || file == nil || dir.Mode().Perm() != 0o700 || file.Mode().Perm() != 0o600 {
+		t.Fatalf("memory directory %v and file %v, want 0700 and 0600", dir, file)
+	}
 }
 
 // TestTheMemoryStoreRefusesASymlinkedDirectory holds row LE58: a store that follows the

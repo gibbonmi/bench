@@ -18,8 +18,12 @@ import (
 	"github.com/gibbonmi/bench/internal/otelrecord"
 )
 
-// gateSeam is the seam of the gate span that each pass parents.
-const gateSeam = "gate"
+// gateSeam is the seam of the gate span that each pass parents, and greenGate is a gate
+// script that always passes.
+const (
+	gateSeam  = "gate"
+	greenGate = "#!/usr/bin/env bash\nexit 0\n"
+)
 
 // childrenOf returns the spans of seam whose parent is parent, in start order.
 func childrenOf(spans []otelrecord.Span, parent otelrecord.Span, seam string) []otelrecord.Span {
@@ -48,7 +52,7 @@ func withAgent(t *testing.T, script string) string {
 // each iteration commits and the shift stops at its cap.
 func twoPassShift(t *testing.T) (shift otelrecord.Span, passes, spans []otelrecord.Span, root, stdout string) {
 	t.Helper()
-	root = faultFixtureCore(t, "#!/usr/bin/env bash\nexit 0\n", nil)
+	root = faultFixtureCore(t, greenGate, nil)
 	withAgent(t, "echo \"$RANDOM $$\" >> work.txt\n")
 	t.Setenv("BENCH_MAX_ITERS", "2")
 	shift, _, stdout = runRecordedShift(t, 3)
@@ -95,7 +99,7 @@ func TestACommittedPassCarriesItsCommit(t *testing.T) {
 
 // LE39: a pass whose adapter exits 3 records the exit.
 func TestAPassRecordsTheAdapterExit(t *testing.T) {
-	faultFixtureCore(t, "#!/usr/bin/env bash\nexit 0\n", nil)
+	faultFixtureCore(t, greenGate, nil)
 	withAgent(t, "exit 3\n")
 	shift, _, _ := runRecordedShift(t, 1)
 	_, spans, _ := recordedShift(t)
@@ -109,7 +113,7 @@ func TestAPassRecordsTheAdapterExit(t *testing.T) {
 
 // LE40: a pass whose adapter cannot start records a spawn failure and no exit.
 func TestAPassRecordsASpawnFailure(t *testing.T) {
-	faultFixtureCore(t, "#!/usr/bin/env bash\nexit 0\n", nil)
+	faultFixtureCore(t, greenGate, nil)
 	withAgent(t, "echo \"$RANDOM $$\" >> work.txt\nchmod -x \"$0\"\n")
 	t.Setenv("BENCH_MAX_ITERS", "2")
 	shift, _, _ := runRecordedShift(t, 3)
@@ -124,19 +128,24 @@ func TestAPassRecordsASpawnFailure(t *testing.T) {
 
 // LE41: a refactor pass writes one refactor span under the shift span.
 func TestARefactorPassWritesARefactorSpan(t *testing.T) {
-	faultFixtureCore(t, "#!/usr/bin/env bash\nexit 0\n", nil)
+	faultFixtureCore(t, greenGate, nil)
 	withAgent(t, "printf 'package work\\n\\n// a\\n// b\\n// c\\n// d\\n' > work.go\n")
 	t.Setenv("BENCH_MAX_LINES", "3")
 	shift, _, _ := runRecordedShift(t, 3)
 	_, spans, _ := recordedShift(t)
-	if refactors := childrenOf(spans, shift, refactorSeam); len(refactors) != 1 {
+	refactors := childrenOf(spans, shift, refactorSeam)
+	if len(refactors) != 1 {
 		t.Fatalf("the shift span has %d refactor children, want 1", len(refactors))
 	}
+	if gates := childrenOf(spans, refactors[0], gateSeam); len(gates) != 1 {
+		t.Fatalf("the refactor pass has %d gate children, want 1", len(gates))
+	}
+	requireAttr(t, refactors[0], otelrecord.AttrAdapterResult, otelrecord.AdapterExited)
 }
 
 // LE45: the adapter runs with the handoff of its pass span.
 func TestTheAdapterReceivesThePassHandoff(t *testing.T) {
-	faultFixtureCore(t, "#!/usr/bin/env bash\nexit 0\n", nil)
+	faultFixtureCore(t, greenGate, nil)
 	handoff := filepath.Join(t.TempDir(), "handoff")
 	withAgent(t, "printf '%s\\n%s\\n' \"$BENCH_OTEL_ROOT\" \"$BENCH_OTEL_TRACEPARENT\" > '"+handoff+"'\n")
 	shift, _, _ := runRecordedShift(t, 4)
@@ -172,7 +181,7 @@ func TestShiftHelperProcess(t *testing.T) {
 // runs. It returns the shift span, every span, and the raw record.
 func interruptedShift(t *testing.T) (otelrecord.Span, []otelrecord.Span, []byte) {
 	t.Helper()
-	root := faultFixtureCore(t, "#!/usr/bin/env bash\nexit 0\n", nil)
+	root := faultFixtureCore(t, greenGate, nil)
 	started := filepath.Join(t.TempDir(), "started")
 	withAgent(t, "touch '"+started+"'\nexec sleep 30\n")
 	cmd := exec.Command(os.Args[0], "-test.run=^TestShiftHelperProcess$")
@@ -209,8 +218,14 @@ func interruptedShift(t *testing.T) (otelrecord.Span, []otelrecord.Span, []byte)
 
 // LE37: an interrupted shift still ends its span, with work state interrupted.
 func TestAnInterruptedShiftRecordsInterruptedWork(t *testing.T) {
-	shift, _, _ := interruptedShift(t)
+	shift, spans, _ := interruptedShift(t)
 	requireAttr(t, shift, otelrecord.AttrWorkState, otelrecord.WorkInterrupted)
+	passes := childrenOf(spans, shift, iterationSeam)
+	if len(passes) != 1 {
+		t.Fatalf("the shift span has %d iteration children, want 1", len(passes))
+	}
+	requireAttr(t, passes[0], otelrecord.AttrAdapterResult, otelrecord.AdapterExited)
+	requireNoAttr(t, passes[0], otelrecord.AttrAdapterExit)
 }
 
 // LE44: the interrupted shift ends its open pass before it ends the shift span.
@@ -264,7 +279,6 @@ func memoryShift(t *testing.T, gate, script string, code int) (otelrecord.Span, 
 }
 
 const (
-	greenGate  = "#!/usr/bin/env bash\nexit 0\n"
 	memoryWork = "echo work >> work.txt\necho MEMMARK >> " + notesFile + "\n"
 )
 
@@ -309,18 +323,8 @@ func TestEachNotesStateIsRecorded(t *testing.T) {
 		{"empty", "true\n", otelrecord.MemoryRetained},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			done := make(chan struct{})
-			var shift otelrecord.Span
-			var files [][]byte
-			go func() {
-				defer close(done)
-				shift, _, files = memoryShift(t, greenGate, tc.script, 4)
-			}()
-			select {
-			case <-done:
-			case <-time.After(60 * time.Second):
-				t.Fatal("the shift never exited")
-			}
+			// A retention that opens the FIFO blocks, and the go test deadline reds it.
+			shift, _, files := memoryShift(t, greenGate, tc.script, 4)
 			requireAttr(t, shift, otelrecord.AttrMemoryState, tc.state)
 			if tc.state != otelrecord.MemoryRetained {
 				if len(files) != 0 {
@@ -356,9 +360,12 @@ func TestASecondShiftStartsWithEmptyNotes(t *testing.T) {
 	faultFixtureCore(t, greenGate, nil)
 	seen := t.TempDir()
 	withAgent(t, "cat > '"+seen+"/prompt'\ncp "+notesFile+" '"+seen+"/notes'\necho MEMMARK >> "+notesFile+"\n")
-	for range 2 {
+	for run := range 2 {
 		if code := Loop("memory shift", io.Discard, io.Discard); code != exitCodes[OutcomeNoOp] {
 			t.Fatalf("Loop = %d, want no-op", code)
+		}
+		if files := memoryFiles(t); run == 0 && (len(files) != 1 || !bytes.Contains(files[0], []byte("MEMMARK"))) {
+			t.Fatalf("the first shift kept memory files %q, want one with MEMMARK", files)
 		}
 	}
 	notes, _ := os.ReadFile(filepath.Join(seen, "notes"))
