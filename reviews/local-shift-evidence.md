@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A repair cycle 1 is committed; the confirming round of the three axes is pending.
+Status: the LE-A confirming round returned 4 findings; repair cycle 2 is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -92,6 +92,20 @@ The reviewer closed LEA-P1 and LEA-C2 with the removal of the free-name step and
 | LEA-P3 | Each LE-A row cites its test. | `bench coverage --check` reports a valid map. |
 | LEA-C1 | A Won't handle line records the reader window. | Reviewer decision. |
 | LEA-C3 | `ReadSelected` names the sealed segment and counts lines per segment. | `TestReadSelectedNamesTheSegmentOfAProblem`; the cross-segment probe bit. |
+
+## LE-A confirming round
+
+The three axes graded the pair `ba9b8621..721250ae` with the source digest `869256de`. Every round 1 finding is closed, except that LEA-C3 is only half closed (LEA-C4).
+
+- Standards, 2 findings. Worst issue: LEA-S5.
+  - LEA-S5 (auto-fix, confidence 8): the `TestARotationSkipsAPlantedSequenceName` comment still names the removed free-name check. Rule: `craft-comments`, update a comment with its code.
+  - LEA-S6 (auto-fix, confidence 7): the `TestReadSelectedNamesTheSegmentOfAProblem` comment cites a review finding ID. Rule: `craft-comments`, no provenance.
+- Spec, 0 findings.
+- Coverage, 2 findings. Worst issue: LEA-C4.
+  - LEA-C4 (auto-fix, confidence 9): no test fails when the per-segment line reset is removed. A live-segment problem after a sealed segment can then name a wrong line.
+  - LEA-C5 (ask-user, confidence 6): a planted name at the maximum sequence makes the next sequence wrap to 0. Each later rotation then renames over sealed segment 0. The reviewer decided on 2026-09-23 that the writer refuses that rotation.
+
+Raw findings: 4. Repair targets: 4.
 
 ```bench-review-record
 {
@@ -352,6 +366,78 @@ The reviewer closed LEA-P1 and LEA-C2 with the removal of the free-name step and
             "LEA-C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "LE-A-review-standards-2",
+          "performer": "claude-code:subagent:a29c984de1edb6a27",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "869256de0fde5b87aa31099a0910430f83f1bf71",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a29c984de1edb6a27, evidence sha256:04fdd1a78e6d13f5964aa2b9d5dad0c2fca08d0f7264f7098cbe531c7e7c5c1c",
+            "digest": "sha256:63fa5aee82e732343a1c89abeadf851520ab94d5fe7cd1451aefc920339da93b",
+            "excerpt": "Standards confirming round, LE-A. Outcome: 2 findings. All four earlier folds are closed. Worst: LEA-S5, a test comment that describes a mutation class the reviewer removed."
+          },
+          "axis": "Standards",
+          "base": "ba9b86216536fa93f9f51410c31aea8e6f61725b",
+          "tip": "721250aec7be579afb0870975a9a30c57a0c4c6b",
+          "finding_ids": [
+            "LEA-S5",
+            "LEA-S6"
+          ],
+          "supersedes": [
+            "LE-A-review-standards-1"
+          ]
+        },
+        {
+          "id": "LE-A-review-spec-2",
+          "performer": "claude-code:subagent:a265ef2193aedd2c0",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "869256de0fde5b87aa31099a0910430f83f1bf71",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a265ef2193aedd2c0, evidence sha256:04fdd1a78e6d13f5964aa2b9d5dad0c2fca08d0f7264f7098cbe531c7e7c5c1c",
+            "digest": "sha256:5381fddf40018a8915f1e922307d94d3d0760d5d11b571081e3a1ad2a21f622f",
+            "excerpt": "outcome: pass. The repair delta introduces no blocking Spec finding and leaves none open. Count: 0. Worst issue: none."
+          },
+          "axis": "Spec",
+          "base": "ba9b86216536fa93f9f51410c31aea8e6f61725b",
+          "tip": "721250aec7be579afb0870975a9a30c57a0c4c6b",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-A-review-spec-1"
+          ]
+        },
+        {
+          "id": "LE-A-review-coverage-2",
+          "performer": "claude-code:subagent:abf61b440adc50922",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "869256de0fde5b87aa31099a0910430f83f1bf71",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:abf61b440adc50922, evidence sha256:04fdd1a78e6d13f5964aa2b9d5dad0c2fca08d0f7264f7098cbe531c7e7c5c1c",
+            "digest": "sha256:30ab276a2b4e09d6b839965a2431097f73118a49ae032ec860334130927dc2b2",
+            "excerpt": "outcome: findings (2). Findings: 2. Worst issue: LEA-C4. The per-segment line count has no test that can fail, so LEA-C3 is only half closed."
+          },
+          "axis": "Coverage",
+          "base": "ba9b86216536fa93f9f51410c31aea8e6f61725b",
+          "tip": "721250aec7be579afb0870975a9a30c57a0c4c6b",
+          "finding_ids": [
+            "LEA-C4",
+            "LEA-C5"
+          ],
+          "supersedes": [
+            "LE-A-review-coverage-1"
+          ]
         }
       ]
     }
