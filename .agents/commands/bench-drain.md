@@ -270,8 +270,7 @@ reviewer approves or adjusts it once, and there are no per-item interactive
 sign-offs.
 
 On approval, commit on green. Never commit the drain without that
-approval. `.bench/BENCH.md` owns the batch approval rule: a standing batch
-approval counts, with contestable calls flagged for post-hoc veto.
+approval. `.bench/BENCH.md` owns the batch approval rule.
 
 Three constraints shape the drain's commits.
 An item completed through "implement now" lands as its own commit on green before the drain's batch commit.
@@ -294,4 +293,3 @@ drain abort <drain-id>` to restore the sealed generation before the live entries
 The coordinator runs `bench handoff` last, from the primary checkout after the landing.
 
 `bench status` dates the `main` section of an ignored handoff by the file's write time.
-When the handoff and the tree disagree, the tree wins.
