@@ -3,6 +3,7 @@ package otelrecord
 import (
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -209,10 +210,15 @@ func (w *Writer) rotate(record string, incoming int64) error {
 		return fmt.Errorf("list sealed segments: %w", err)
 	}
 	// The listing holds every sealed name, planted or not, and only a lock holder seals, so
-	// one more than the highest sequence is a free name.
+	// one more than the highest sequence is a free name. A highest sequence at the maximum
+	// has no successor, and a wrapped sequence would rename over a sealed segment.
 	next := uint64(1)
 	if len(sequences) > 0 {
-		next = sequences[len(sequences)-1] + 1
+		highest := sequences[len(sequences)-1]
+		if highest == math.MaxUint64 {
+			return fmt.Errorf("seal seam record: %s holds the last sequence", sealedName(highest))
+		}
+		next = highest + 1
 	}
 	if err := os.Rename(record, filepath.Join(w.dir, sealedName(next))); err != nil {
 		return fmt.Errorf("seal seam record: %w", err)

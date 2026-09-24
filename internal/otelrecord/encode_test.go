@@ -265,7 +265,7 @@ func TestEncodeWritesDeclaredAttributes(t *testing.T) {
 	}
 }
 
-// withVersion sets the record version for one test and clears it after.
+// withVersion sets the record version for one test and restores the earlier one after.
 func withVersion(t *testing.T, version string) {
 	t.Helper()
 	previous := recordVersion.Load()

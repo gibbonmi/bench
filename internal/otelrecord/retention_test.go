@@ -3,6 +3,7 @@ package otelrecord
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"slices"
@@ -94,8 +95,8 @@ func TestTwoRotationsSealConsecutiveSequences(t *testing.T) {
 	}
 }
 
-// TestARotationSkipsAPlantedSequenceName holds row LE94: a rotation with no free-name
-// check renames over the planted file, so the byte comparison reds.
+// TestARotationSkipsAPlantedSequenceName holds row LE94: a rotation that ignores the
+// present names renames over the planted file, so the byte comparison reds.
 func TestARotationSkipsAPlantedSequenceName(t *testing.T) {
 	home, root := t.TempDir(), t.TempDir()
 	if err := os.MkdirAll(Dir(home, root), 0o700); err != nil {
@@ -218,6 +219,37 @@ func TestAHeldRotationLockSkipsTheRotation(t *testing.T) {
 
 	if got := sealedNames(t, home, root); len(got) != 0 {
 		t.Fatalf("sealed segments = %v under a held lock, want none", got)
+	}
+	if live := segmentLines(t, home, root, recordFile); len(live) != 3 {
+		t.Fatalf("the live segment holds %d lines, want all 3", len(live))
+	}
+}
+
+// TestARotationRefusesTheLastSequence holds row LE106: a rotation whose next sequence
+// wraps to 0 seals under sequence 0 and renames over it on the next rotation, so the
+// sealed-name read reds.
+func TestARotationRefusesTheLastSequence(t *testing.T) {
+	home, root := t.TempDir(), t.TempDir()
+	if err := os.MkdirAll(Dir(home, root), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	last := filepath.Join(Dir(home, root), sealedName(math.MaxUint64))
+	if err := os.WriteFile(last, []byte("PLANTED\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	writer := newWriter(home, root, testSegmentLimit, 8)
+	var refused error
+	for index := 1; index <= 3; index++ {
+		if err := writer.Append(retentionLine(index)); err != nil {
+			refused = err
+		}
+	}
+
+	if refused == nil {
+		t.Fatal("the append past the limit reported no refused rotation")
+	}
+	if got := sealedNames(t, home, root); !slices.Equal(got, []string{sealedName(math.MaxUint64)}) {
+		t.Fatalf("sealed segments = %v, want only the planted last sequence", got)
 	}
 	if live := segmentLines(t, home, root, recordFile); len(live) != 3 {
 		t.Fatalf("the live segment holds %d lines, want all 3", len(live))

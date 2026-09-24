@@ -377,19 +377,20 @@ func TestReadSpansRefusesASymlinkedSegment(t *testing.T) {
 	}
 }
 
-// TestReadSelectedNamesTheSegmentOfAProblem holds review finding LEA-C3: a consumer names
-// the live path beside each problem, so a problem that counts lines across segments or
-// omits its sealed segment points at the wrong line.
+// TestReadSelectedNamesTheSegmentOfAProblem holds the problem address: a consumer names
+// the live path beside each problem. A problem that counts lines across segments, or that
+// omits its sealed segment, then points at the wrong line.
 func TestReadSelectedNamesTheSegmentOfAProblem(t *testing.T) {
 	home, root := sealEach(t,
 		[]byte("not a record line"),
-		spanLine(t, fixtureTraceID, "live", "gate"))
+		spanLine(t, fixtureTraceID, "sealed", "gate"),
+		[]byte("not a record line"))
 
 	_, problems, err := ReadSelected(home, root, []string{fixtureTraceID})
 	if err != nil {
 		t.Fatalf("ReadSelected: %v", err)
 	}
-	if want := []string{sealedName(1) + " line 1 malformed"}; !reflect.DeepEqual(problems, want) {
+	if want := []string{sealedName(1) + " line 1 malformed", "line 1 malformed"}; !reflect.DeepEqual(problems, want) {
 		t.Fatalf("problems = %v, want %v", problems, want)
 	}
 }
