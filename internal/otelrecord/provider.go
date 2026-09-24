@@ -2,10 +2,12 @@ package otelrecord
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/propagation"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -98,4 +100,47 @@ func BeginIn(ctx context.Context, home, root, seam, name string) (context.Contex
 		span.End()
 		_ = provider.Shutdown(context.WithoutCancel(ctx))
 	}
+}
+
+// The trace handoff to a child process. A child that records under its parent's trace
+// reads the repository and the parent span from these two variables. This package owns
+// both names, so every composer and every child reads one spelling.
+const (
+	handoffRootEnv        = "BENCH_OTEL_ROOT"
+	handoffTraceparentEnv = "BENCH_OTEL_TRACEPARENT"
+)
+
+// HandoffVariables returns every handoff variable name. A composer strips each inherited
+// value before it hands a child its own handoff.
+func HandoffVariables() []string {
+	return []string{handoffRootEnv, handoffTraceparentEnv}
+}
+
+// WithHandoff appends to env the handoff for the span on ctx, recorded under root. A
+// context with no span adds the root only, so the child records in a trace of its own.
+func WithHandoff(ctx context.Context, root string, env []string) []string {
+	env = append(env, handoffRootEnv+"="+root)
+	carrier := propagation.MapCarrier{}
+	propagation.TraceContext{}.Inject(ctx, carrier)
+	if parent := carrier.Get("traceparent"); parent != "" {
+		env = append(env, handoffTraceparentEnv+"="+parent)
+	}
+	return env
+}
+
+// AttachHandoff attaches this process to the record and the trace that its parent handed
+// off. The returned context carries the tracer and the parent span, and the closer shuts
+// the provider down. A process with no handoff gets its context back unchanged and a
+// closer that does nothing, so TracerFrom answers a no-op tracer.
+func AttachHandoff(ctx context.Context) (context.Context, func()) {
+	root := os.Getenv(handoffRootEnv)
+	if root == "" {
+		return ctx, func() {}
+	}
+	provider := NewProvider("", root)
+	ctx = WithTracer(ctx, provider.Tracer())
+	if parent := os.Getenv(handoffTraceparentEnv); parent != "" {
+		ctx = propagation.TraceContext{}.Extract(ctx, propagation.MapCarrier{"traceparent": parent})
+	}
+	return ctx, func() { _ = provider.Shutdown(context.WithoutCancel(ctx)) }
 }

@@ -273,3 +273,39 @@ func TestNewProviderRecordsAnExplicitBenchHomeElsewhere(t *testing.T) {
 		t.Fatalf("an explicit home elsewhere holds %d lines, want 2", len(lines))
 	}
 }
+
+// TestAHandedOffChildJoinsItsParentSpan holds row LE11: a handoff that omits the
+// traceparent starts a new trace, and one that omits the root records nothing, so the
+// child's trace id and parent span id both red.
+func TestAHandedOffChildJoinsItsParentSpan(t *testing.T) {
+	home := t.TempDir()
+	root := t.TempDir()
+	t.Setenv(benchhome.Env, home)
+	for _, name := range HandoffVariables() {
+		t.Setenv(name, "")
+	}
+
+	parentCtx, parent, end := BeginIn(context.Background(), home, root, "gate", "")
+	defer end()
+	for _, entry := range WithHandoff(parentCtx, root, nil) {
+		name, value, _ := strings.Cut(entry, "=")
+		t.Setenv(name, value)
+	}
+	ctx, closeChild := AttachHandoff(context.Background())
+	_, child := TracerFrom(ctx).Start(ctx, "gate.phase")
+	child.End()
+	closeChild()
+
+	lines := recordLines(t, home, root)
+	span := spanOf(t, lines[len(lines)-1])
+	if span["name"] != "gate.phase" {
+		t.Fatalf("the last line names %v, want the handed-off child gate.phase", span["name"])
+	}
+	want := parent.SpanContext()
+	if span["traceId"] != want.TraceID().String() {
+		t.Errorf("the child trace id = %v, want the parent's %s", span["traceId"], want.TraceID())
+	}
+	if span["parentSpanId"] != want.SpanID().String() {
+		t.Errorf("the child parent span id = %v, want the parent's %s", span["parentSpanId"], want.SpanID())
+	}
+}
