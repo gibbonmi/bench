@@ -466,3 +466,482 @@ Both probe runs restored the file. The after run reported one failure. No row pi
 | `bench test --check guidance-prose-budgets` | 0 | pass, 0 failures, 0 skips |
 | `go vet ./...` | 0 | no output |
 | `bench commit` lane | 0 | pass |
+
+## FA chunk review, round 3, and completion
+
+Round 3 confirms the second repair cycle on the delta from `b4ed0aa96f0de303821b45f7329755ca4d7a0616` to `e3260fc67e54a14e4623ed184c830094f5568d6e`. Each axis ran in a new `bench-reviewer` session on opus at high effort, and each axis found 0 findings. The Coverage axis bit FA31 at a third site, split across a line break. Chunk FA used both of its two repair cycles.
+
+Each ticket's current author reran that ticket's verification at the final tip. The orchestrator ran the final verification at the same source and reconciled all 31 acceptance rows as covered. The Spec axis review covers FA24, which has no mechanical seam.
+
+```bench-review-record
+{
+  "version": 2,
+  "spec": "specs/fresh-ticket-authors/spec.md",
+  "plan_digest": "sha256:e7c8e16173218565acb28535e47aafd8dd27d014da57ad4b47710085c3cf6ca5",
+  "implementation_session": "",
+  "chunks": [
+    {
+      "id": "FA",
+      "base": "d23694e925c6e0ffd15d6eda355daef4497acbea",
+      "tip": "e3260fc67e54a14e4623ed184c830094f5568d6e",
+      "plan_digest": "sha256:e7c8e16173218565acb28535e47aafd8dd27d014da57ad4b47710085c3cf6ca5",
+      "source_digest": "97e5eb5e908e400025f20503cf072bd53b0005f6",
+      "acceptance_rows": [
+        "FA1",
+        "FA2",
+        "FA3",
+        "FA4",
+        "FA5",
+        "FA6",
+        "FA7",
+        "FA8",
+        "FA9",
+        "FA10",
+        "FA11",
+        "FA12",
+        "FA13",
+        "FA14",
+        "FA15",
+        "FA16",
+        "FA17",
+        "FA18",
+        "FA19",
+        "FA20",
+        "FA21",
+        "FA22",
+        "FA23",
+        "FA24",
+        "FA25",
+        "FA26",
+        "FA27",
+        "FA28",
+        "FA29",
+        "FA30",
+        "FA31"
+      ],
+      "verification": [
+        {
+          "id": "fa-1-docs",
+          "performer": "claude:bench-writer/fta-t1-repair",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "97e5eb5e908e400025f20503cf072bd53b0005f6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/fta-t1-repair-20260924/1-docs@e3260fc6",
+            "digest": "sha256:aaa66cf7e0c576174c130a10d786f6a8b778e3c1d57951953adddecb589b7641",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,785\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "1-docs",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "fa-1-conformance",
+          "performer": "claude:bench-writer/fta-t1-repair",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "97e5eb5e908e400025f20503cf072bd53b0005f6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/fta-t1-repair-20260924/1-conformance@e3260fc6",
+            "digest": "sha256:9df3531c3dd76cfd31eae8c80ed332718f5c50dddb457e4ed06a3e4423376af2",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5964\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "1-conformance",
+          "command": "bench test --package ./internal/conformance --run TestRootConformance",
+          "exit_code": 0
+        },
+        {
+          "id": "fa-2-docs",
+          "performer": "claude:bench-writer/fta-t2-repair",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "97e5eb5e908e400025f20503cf072bd53b0005f6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/fta-t2-repair-20260924/2-docs@e3260fc6",
+            "digest": "sha256:ed0aa6c175859df6bfebb1f0bf2bb56355a4f4ac6b590c5df29a17e3c3cbd4cd",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,750\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-docs",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "fa-2-conformance",
+          "performer": "claude:bench-writer/fta-t2-repair",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "97e5eb5e908e400025f20503cf072bd53b0005f6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/fta-t2-repair-20260924/2-conformance@e3260fc6",
+            "digest": "sha256:420fb57c2e84468001ccbc1d33cce19e4fbd662da0a6f15540b1b4b8f8b37d63",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6072\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-conformance",
+          "command": "bench test --package ./internal/conformance --run TestRootConformance",
+          "exit_code": 0
+        },
+        {
+          "id": "fa-3-docs",
+          "performer": "claude:bench-writer/fta-t3-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "97e5eb5e908e400025f20503cf072bd53b0005f6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/fta-t3-repair-2-20260924/3-docs@e3260fc6",
+            "digest": "sha256:2030d2e5d6ef0da6329c5132524c0a0505724695d52a0975ad3d39e14ca22b89",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,675\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-docs",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "fa-3-conformance",
+          "performer": "claude:bench-writer/fta-t3-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "97e5eb5e908e400025f20503cf072bd53b0005f6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/fta-t3-repair-2-20260924/3-conformance@e3260fc6",
+            "digest": "sha256:d0dcf968d598eae5cd278144f3af5583c3fb8f021ecf9ac2add2914f3e73e7f6",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5800\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-conformance",
+          "command": "bench test --package ./internal/conformance --run TestRootConformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "fa-r1-standards",
+          "performer": "claude:bench-reviewer/fta-fa-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5b7b0bad8aef9d73effd1c460cfb9f2cb76afbb2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/fta-fa-standards@202a9196",
+            "digest": "sha256:4a0dbe36521a34c772342159b4ba62a99ccd53b4fc757376130d790156813fb3",
+            "excerpt": "Standards: 9 findings, 0 blocking, 6 minor, 3 advice. Worst: the tier-move stop is written in five places."
+          },
+          "axis": "Standards",
+          "base": "d23694e925c6e0ffd15d6eda355daef4497acbea",
+          "tip": "202a9196038e43a652147a59ec30aef9406ff8be",
+          "finding_ids": [
+            "R4",
+            "R5",
+            "R8",
+            "R12",
+            "R14"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "fa-r1-spec",
+          "performer": "claude:bench-reviewer/fta-fa-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5b7b0bad8aef9d73effd1c460cfb9f2cb76afbb2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/fta-fa-spec@202a9196",
+            "digest": "sha256:5f565eaefeb0ba868aa6585f2060426661c3ee6536a893143c1b979bbf0c79a5",
+            "excerpt": "Spec: 7 findings, 1 blocking, 3 minor, 3 advice. Worst: docs/field-guide.html:1325 still states the retired single-author rule."
+          },
+          "axis": "Spec",
+          "base": "d23694e925c6e0ffd15d6eda355daef4497acbea",
+          "tip": "202a9196038e43a652147a59ec30aef9406ff8be",
+          "finding_ids": [
+            "R5",
+            "R9",
+            "R10",
+            "R12",
+            "R13"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "fa-r1-coverage",
+          "performer": "claude:bench-reviewer/fta-fa-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5b7b0bad8aef9d73effd1c460cfb9f2cb76afbb2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/fta-fa-coverage@202a9196",
+            "digest": "sha256:79a353916b9c28d60bf1eecb579e1cce5b91b50e48ac7c9bdf0235784d4d116e",
+            "excerpt": "Coverage: 6 findings, 5 minor, 1 advice. Worst: the FA10 needle survives a negation; probe P1 silent."
+          },
+          "axis": "Coverage",
+          "base": "d23694e925c6e0ffd15d6eda355daef4497acbea",
+          "tip": "202a9196038e43a652147a59ec30aef9406ff8be",
+          "finding_ids": [
+            "R1",
+            "R2",
+            "R3",
+            "R5",
+            "R7",
+            "R10",
+            "R11"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "fa-r2-standards",
+          "performer": "claude:bench-reviewer/fta-fa-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cd7968a24231adbae67e8c9a2fd56106f2d1ff96",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/fta-fa-standards-2@b4ed0aa9",
+            "digest": "sha256:dfa28cdf2699c49ec0238fb664db52bb830adaa5dbf622b338f10541fb51e4c7",
+            "excerpt": "Standards confirming: 1 minor. R4, R5, R8, R12, R13 confirmed. Worst: the field-guide callout restates the rule and an unconditional tier-move stop."
+          },
+          "axis": "Standards",
+          "base": "d23694e925c6e0ffd15d6eda355daef4497acbea",
+          "tip": "b4ed0aa96f0de303821b45f7329755ca4d7a0616",
+          "finding_ids": [
+            "R15"
+          ],
+          "supersedes": [
+            "fa-r1-standards"
+          ]
+        },
+        {
+          "id": "fa-r2-spec",
+          "performer": "claude:bench-reviewer/fta-fa-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cd7968a24231adbae67e8c9a2fd56106f2d1ff96",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/fta-fa-spec-2@b4ed0aa9",
+            "digest": "sha256:d5bb4fbe562efb4c7f3264f66e386030f3df133606dc4e70ffd81b4551f1ef16",
+            "excerpt": "Spec confirming: 0 blocking, 1 advice. R9, R10, R12, R13, R14 confirmed; FA12, FA23, FA27-FA30 pass; three repair assignments valid."
+          },
+          "axis": "Spec",
+          "base": "d23694e925c6e0ffd15d6eda355daef4497acbea",
+          "tip": "b4ed0aa96f0de303821b45f7329755ca4d7a0616",
+          "finding_ids": [],
+          "supersedes": [
+            "fa-r1-spec"
+          ]
+        },
+        {
+          "id": "fa-r2-coverage",
+          "performer": "claude:bench-reviewer/fta-fa-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cd7968a24231adbae67e8c9a2fd56106f2d1ff96",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/fta-fa-coverage-2@b4ed0aa9",
+            "digest": "sha256:6581bb9ec5e512e700c6a910e9f3c6173c85f77a489eadb672a7b2e5d3725f8e",
+            "excerpt": "Coverage confirming: 1 minor, 1 advice. R1, R2, R3, R7, R10, R11 confirmed. Worst: the retired field-guide sentence can return beside FA22; probe P1 silent."
+          },
+          "axis": "Coverage",
+          "base": "d23694e925c6e0ffd15d6eda355daef4497acbea",
+          "tip": "b4ed0aa96f0de303821b45f7329755ca4d7a0616",
+          "finding_ids": [
+            "R16"
+          ],
+          "supersedes": [
+            "fa-r1-coverage"
+          ]
+        },
+        {
+          "id": "fa-r3-standards",
+          "performer": "claude:bench-reviewer/fta-fa-standards-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "97e5eb5e908e400025f20503cf072bd53b0005f6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/fta-fa-standards-3@e3260fc6",
+            "digest": "sha256:1495dfccbe44b6b94ec17e8648424497f872ba75235efef9c4beacdf58926f47",
+            "excerpt": "Standards round 3: 0 findings. R15 confirmed: the callout is one pointer sentence with no tier-move clause."
+          },
+          "axis": "Standards",
+          "base": "d23694e925c6e0ffd15d6eda355daef4497acbea",
+          "tip": "e3260fc67e54a14e4623ed184c830094f5568d6e",
+          "finding_ids": [],
+          "supersedes": [
+            "fa-r2-standards"
+          ]
+        },
+        {
+          "id": "fa-r3-spec",
+          "performer": "claude:bench-reviewer/fta-fa-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "97e5eb5e908e400025f20503cf072bd53b0005f6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/fta-fa-spec-3@e3260fc6",
+            "digest": "sha256:62435cb39bf97e29b7cf8a9eef366232cdb6d9b6be5ae50e1b48a50f498b9956",
+            "excerpt": "Spec round 3: 0 findings. FA31 row, FA22 why-clause, ticket 3 Covers, and the second ticket 3 repair assignment confirmed."
+          },
+          "axis": "Spec",
+          "base": "d23694e925c6e0ffd15d6eda355daef4497acbea",
+          "tip": "e3260fc67e54a14e4623ed184c830094f5568d6e",
+          "finding_ids": [],
+          "supersedes": [
+            "fa-r2-spec"
+          ]
+        },
+        {
+          "id": "fa-r3-coverage",
+          "performer": "claude:bench-reviewer/fta-fa-coverage-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "97e5eb5e908e400025f20503cf072bd53b0005f6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/fta-fa-coverage-3@e3260fc6",
+            "digest": "sha256:86763faa44380f21834935ddb69b00a3ca4c2d34cf56a01359d20df57fb1d0c4",
+            "excerpt": "Coverage round 3: 0 findings. R16/FA31 confirmed; third-site probe bit: fresh ticket author: field guide restored the one retained author on the approved implementation line."
+          },
+          "axis": "Coverage",
+          "base": "d23694e925c6e0ffd15d6eda355daef4497acbea",
+          "tip": "e3260fc67e54a14e4623ed184c830094f5568d6e",
+          "finding_ids": [],
+          "supersedes": [
+            "fa-r2-coverage"
+          ]
+        }
+      ]
+    }
+  ],
+  "completion": {
+    "state": "completed",
+    "source_digest": "97e5eb5e908e400025f20503cf072bd53b0005f6",
+    "performer": "claude:session_01PzPVd5kMaFqKt7bLjSjtgN",
+    "reconciliation": {
+      "FA1": "covered",
+      "FA2": "covered",
+      "FA3": "covered",
+      "FA4": "covered",
+      "FA5": "covered",
+      "FA6": "covered",
+      "FA7": "covered",
+      "FA8": "covered",
+      "FA9": "covered",
+      "FA10": "covered",
+      "FA11": "covered",
+      "FA12": "covered",
+      "FA13": "covered",
+      "FA14": "covered",
+      "FA15": "covered",
+      "FA16": "covered",
+      "FA17": "covered",
+      "FA18": "covered",
+      "FA19": "covered",
+      "FA20": "covered",
+      "FA21": "covered",
+      "FA22": "covered",
+      "FA23": "covered",
+      "FA24": "covered",
+      "FA25": "covered",
+      "FA26": "covered",
+      "FA27": "covered",
+      "FA28": "covered",
+      "FA29": "covered",
+      "FA30": "covered",
+      "FA31": "covered"
+    },
+    "verification": [
+      {
+        "id": "fa-final-coverage",
+        "performer": "claude:session_01PzPVd5kMaFqKt7bLjSjtgN",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "97e5eb5e908e400025f20503cf072bd53b0005f6",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:orchestrator/final-coverage@e3260fc6",
+          "digest": "sha256:efc35d7b0f407d6adfd4dc45f38ca1bf686eebc7078bd70fdb093ee9910086cf",
+          "excerpt": "ok: coverage map valid \u2014 31 row(s)"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/fresh-ticket-authors/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "fa-final-docs",
+        "performer": "claude:session_01PzPVd5kMaFqKt7bLjSjtgN",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "97e5eb5e908e400025f20503cf072bd53b0005f6",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:orchestrator/final-docs@e3260fc6",
+          "digest": "sha256:cb59e72550a830e3130088f940ee13febfbac4e0063ff2171f3044af35b8ba15",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,683\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "docs",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      },
+      {
+        "id": "fa-final-conformance",
+        "performer": "claude:session_01PzPVd5kMaFqKt7bLjSjtgN",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "97e5eb5e908e400025f20503cf072bd53b0005f6",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:orchestrator/final-conformance@e3260fc6",
+          "digest": "sha256:400c8a06ce70b90fc0a1d751b13029b4c7d1ab1801a37b8e9b82ec5913b22608",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5756\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "conformance",
+        "command": "bench test --package ./internal/conformance --run TestRootConformance",
+        "exit_code": 0
+      }
+    ]
+  }
+}
+```
