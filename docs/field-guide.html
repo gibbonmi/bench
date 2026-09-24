@@ -1322,7 +1322,10 @@
           The write-spec phase forks the current conversation before it authors the spec.
           The fork inherits the invoking session's line and reviewed intent while it turns the
           decision source into engineering seams, coverage, and an approved ticket breakdown.
-          After ticket approval, the approved implementation line retains one author through production changes, tests, probes, repairs, and chunk reviews. A model or session change requires your direction.
+          After ticket approval, each ticket gets a fresh author session on the approved implementation line.
+          A fresh repair session takes each accepted review finding, and the orchestrator reconciles
+          acceptance and integration before the landing. The rule lives in <code>.bench/BENCH.md</code>;
+          a tier move requires your direction.
         </p>
       </div>
 

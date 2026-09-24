@@ -587,8 +587,9 @@ escalation.
   The fork inherits the invoking session's line, with no model override.
 
   Top +
-  high remains a reviewer-approved escalation before the fork. After ticket approval, one
-  session on the approved implementation line retains the build. Distinct from the doc-authoring leverage
+  high remains a reviewer-approved escalation before the fork. After ticket approval, an
+  orchestrator runs the build, and each ticket gets a fresh author session on the approved
+  implementation line. Distinct from the doc-authoring leverage
   override above: that spends high effort on the kit's guidance prose.
 - **`bench` CLI shell plumbing** → cheap model, low–medium effort at the known seam.
   This stays mechanical once the gate-resolution and worktree-pool shapes exist.
