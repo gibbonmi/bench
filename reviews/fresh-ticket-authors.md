@@ -314,3 +314,40 @@ Each probe reported one failure and restored the file. No Require needle fired i
 | `go vet ./...` | 0 | no output |
 
 The first `TestRootConformance` run failed on a diff-owned red: the reworded context sentence had 27 words, over the 25-word bound. The repair shortened the sentence and its pin, and the rerun passed.
+
+## FA ticket 2 repair evidence
+
+The fresh repair session `claude:bench-writer/fta-t2-repair` ran on opus at high effort with a cap of 3 attempts. It started from tip `80be05150e8a69caee2d9770d2868044edda20bd` and bound evidence `sha256:9e83978c431cec2afb37570cad37ed38940fc29acab3b7e87578db50c4f5bb85` as current. The repair commit is `d6612e4df8de1854d8d25bd6e4167e49c456304f`. This repair is part of the first repair cycle of chunk FA. It used one attempt.
+
+| target | row | change | status |
+| --- | --- | --- | --- |
+| R7 | FA30 | A `RequireInSection` row in `registry_retained_workflow.go` pins the `user-directed` entry under "Delegated author transfer", with the prefix `fresh ticket author: `. | done |
+| R8 | FA30 | The entry now reads "A post-review repair under the standing policy of `.bench/BENCH.md` permits a `user-directed` replacement of the author by a fresh repair session." This sentence is the R7 needle. | done |
+
+R7 adds no test code. `TestFreshTicketAuthors` gives each registered row of the family a synthetic bite, so the new row joins that test through its diagnostic prefix.
+
+### Red then green
+
+The R7 row was added before the R8 rewording. `bench test --check docs-currency-workflow` then failed with one failure: "fresh ticket author: delegation discipline dropped the user-directed transfer for a post-review repair". After the rewording, the same check passed.
+
+Each probe ran through `bench probe .agents/skills/bench-craft-delegate/references/delegation-discipline.md ... --check docs-currency-workflow` after the repair.
+
+| probe | kind | verdict | diagnostic |
+| --- | --- | --- | --- |
+| "permits a `user-directed` replacement" becomes "never permits a `user-directed` replacement" | swap | bit | user-directed transfer for a post-review repair |
+| omission of the whole entry | omit | bit | user-directed transfer for a post-review repair |
+
+Each probe reported one failure and restored the file.
+
+### Verification
+
+| command | exit | result |
+| --- | --- | --- |
+| `bench test --check docs-currency-workflow` | 0 | pass, 0 failures, 0 skips |
+| `bench test --package ./internal/conformance --run TestRootConformance` | 0 | pass, 0 failures, 0 skips |
+| `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner` | 0 | pass, 0 failures, 0 skips |
+| `bench test --package ./internal/conformance --run TestFreshTicketAuthors` | 0 | pass, 0 failures, 0 skips |
+| `bench test --package ./internal/anchors/...` | 0 | pass, 0 failures, 0 skips |
+| `bench test --check guidance-prose-budgets` | 0 | pass, 0 failures, 0 skips |
+| `bench gate-prose . -- .agents/skills/bench-craft-delegate/references/delegation-discipline.md` | 0 | pass |
+| `go vet ./...` | 0 | no output |
