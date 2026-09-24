@@ -54,6 +54,12 @@ var referenceRouteAnchors = []Anchor{
 const (
 	// handoffSectionRule is the reference's owner sentence for the handoff verb.
 	handoffSectionRule = "`bench handoff` rewrites only the calling worktree's assignment section."
+	// handoffMainOwner is the reference's owner sentence for the handoff's main section.
+	handoffMainOwner = "The primary checkout owns the `main` section."
+	// handoffNextRule is the reference's owner sentence for the handoff's Next command.
+	handoffNextRule = "The verb keeps a non-empty Next command."
+	// handoffAncestryRefusal is the reference's owner clause for the handoff State refusal.
+	handoffAncestryRefusal = "refuses a State that pins a commit outside the tip's ancestry"
 	// censusSignalAccount is the reference's owner sentence for the census signal.
 	censusSignalAccount = "The `census` signal counts raw calls per assignment from `$BENCH_HOME/census/<repo-key>/`."
 	// greenRunGateOutput opens the reference's green-run gate output sentence.
@@ -67,11 +73,13 @@ const (
 // factOwnerAnchors pin each guide's pointer to the file that holds its fact.
 // Require rows pin the owner sentences: the command registry for the plumbing
 // subcommands, the reference for how the pieces fit, the skills index, the gate
-// output, the handoff verb, the plan version, and the one internal verb that a
-// session runs, and the Claude README for the skill links. Require rows also pin
-// the pointers that replace each copy. Forbid rows keep out the retired copies,
-// the reference's verb grammar, the false skill-link claims, the any-branch
-// commit claim, and the light path's gate-then-commit wording.
+// output, the handoff verb and its section, Next, and State rules, the plan
+// version, and the one internal verb that a session runs, and the Claude README
+// for the skill links and the write delegate roles. Require rows also pin the
+// pointers that replace each copy and the drain's handoff route. Forbid rows keep
+// out the retired copies, the reference's verb grammar, the false skill-link
+// claims, the any-branch commit claim, the gate-priced capture commit, and the
+// light path's gate-then-commit wording.
 var factOwnerAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Forbid, Needle: "live in `.bench/BENCH-reference.md`", Diagnostic: "fact owner: operating guide restored the reference as the home of the plumbing subcommands"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "The command registry owns the plumbing subcommands that hooks and adapters drive.", Diagnostic: "fact owner: operating guide dropped the command registry as the owner of the plumbing subcommands"},
@@ -80,9 +88,14 @@ var factOwnerAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "the communication rules, and the skills index", Diagnostic: "fact owner: working agreement restored the skills index as a shared platform rule"},
 	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Require, Needle: "`.bench/BENCH-reference.md` holds how the pieces fit and the skills index.", Diagnostic: "fact owner: working agreement dropped the reference as the holder of how the pieces fit and the skills index"},
 	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Require, Needle: "`.bench/BENCH-reference.md` states how `bench handoff` writes the handoff file.", Diagnostic: "fact owner: working agreement dropped its pointer to the reference for the handoff verb behavior"},
-	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "The primary checkout owns the `main` section.", Diagnostic: "fact owner: working agreement restored its copy of the handoff main-section owner"},
-	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "The verb keeps a non-empty Next command.", Diagnostic: "fact owner: working agreement restored its copy of the handoff Next-command rule"},
-	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "refuses a State that pins a commit outside the tip's ancestry", Diagnostic: "fact owner: working agreement restored its copy of the handoff State ancestry refusal"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: handoffMainOwner, Diagnostic: "fact owner: working agreement restored its copy of the handoff main-section owner"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: handoffNextRule, Diagnostic: "fact owner: working agreement restored its copy of the handoff Next-command rule"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: handoffAncestryRefusal, Diagnostic: "fact owner: working agreement restored its copy of the handoff State ancestry refusal"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Require, Needle: "A drain runs it from the primary checkout after its landing.", Diagnostic: "fact owner: working agreement dropped the drain's primary-checkout handoff route after its landing"},
+	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "one gate-priced commit", Diagnostic: "fact owner: working agreement restored the gate-priced phase-close capture commit"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: handoffMainOwner, Diagnostic: "fact owner: reference dropped the primary checkout as the owner of the handoff main section"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: handoffNextRule, Diagnostic: "fact owner: reference dropped the handoff verb's non-empty Next command rule"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Require, Needle: handoffAncestryRefusal, Diagnostic: "fact owner: reference dropped the handoff verb's refusal of a State outside the tip's ancestry"},
 	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "Give the drafted State to `bench handoff --state-file <path>`.", Diagnostic: "fact owner: working agreement restored its copy of the handoff state-file route"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: RequireInSection, Section: "Plumbing subcommands", Needle: "`bench gate-prose` is the one internal verb that a session runs directly; Command Notes gives its forms.", Diagnostic: "fact owner: reference Plumbing subcommands dropped bench gate-prose as the one internal verb that a session runs"},
 	{Group: AfterSpecAuthorization, File: ".bench/BENCH-reference.md", Kind: Require, Needle: greenRunGateOutput, Diagnostic: ".bench/BENCH-reference.md dropped the green-run gate output shape"},
@@ -106,6 +119,7 @@ var factOwnerAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".claude/README.md", Kind: Require, Needle: skillLinkRule, Diagnostic: "fact owner: Claude README dropped the rule that .claude/skills/ links every skill with no same-named command"},
 	{Group: AfterImplementSpec, File: ".claude/README.md", Kind: Forbid, Needle: "links only the `bench-craft-*` skills", Diagnostic: "fact owner: Claude README restored the false claim that .claude/skills/ links only the craft skills"},
 	{Group: AfterImplementSpec, File: ".claude/README.md", Kind: Forbid, Needle: "`bench-writer` runs a user-directed write delegation", Diagnostic: "fact owner: Claude README restored bench-writer as the type of a user-directed write delegation only"},
+	{Group: AfterImplementSpec, File: ".claude/README.md", Kind: Require, Needle: "`bench-writer` is the write delegate for a fresh ticket author, a repair session, or a user-directed write delegation.", Diagnostic: "fact owner: Claude README dropped bench-writer as the write delegate for a fresh ticket author, a repair session, and a user-directed write delegation"},
 }
 
 // declaredLineAnchors pin how craft-line routes a ticket author. Require rows pin

@@ -138,7 +138,7 @@ The standing approvals are the table below, a size rule I have given you, and th
 
 | Observable | Route |
 |---|---|
-| Decomposes to one independently-green ticket and crosses no declared seam | Light path: write the one ticket file (`craft-tickets` owns the template) in a bench worktree, then implement it inline in this session — no breakdown-approval pause, no write-delegate. This table is the standing approval to skip the spec phase; commit on a lane pass. Land through `bench worktree land` with the tickets-only `--spec`; the landing runs the whole-project gate and closes the ticket folder. |
+| Decomposes to one independently-green ticket and crosses no declared seam | Light path: write the one ticket file (`craft-tickets` owns the template) in a bench worktree, then implement it inline in this session — no breakdown-approval pause, no write-delegate. This table is the standing approval to skip the spec phase. Commit the ticket, then land it through `bench worktree land` with the tickets-only `--spec`; the landing closes the ticket folder. |
 | Either observable is false | Normal full workflow. |
 
 **Every phase runs in a bench worktree and lands through `bench worktree land`.**

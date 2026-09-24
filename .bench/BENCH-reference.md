@@ -271,8 +271,9 @@ Move the ignored content aside, then plan again.
 An index entry marked assume-unchanged or skip-worktree refuses the plan the same way.
 
 `bench handoff` rewrites only the calling worktree's assignment section.
-The primary checkout owns the `main` section. The verb keeps a non-empty Next
-command, and it refuses a State that pins a commit outside the tip's ancestry.
+The primary checkout owns the `main` section.
+The verb keeps a non-empty Next command.
+It refuses a State that pins a commit outside the tip's ancestry.
 
 The verb reads the drafted State body from a file. It refuses a path that it
 cannot read as a regular file. It also refuses a draft that carries a control

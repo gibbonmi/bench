@@ -32,21 +32,33 @@ func anchorsFixtureRows(t *testing.T) []anchors.Anchor {
 			continue
 		}
 		if planted[anchor.Needle] != (anchor.Kind == anchors.Require) {
-			t.Fatalf("fixture AGENTS.md planted=%t for the %s needle %q; the fixture plants each Require needle and no other", planted[anchor.Needle], anchorKindName(anchor.Kind), anchor.Needle)
+			t.Fatalf("fixture AGENTS.md planted=%t for the kind %d needle %q; the fixture plants each Require needle and no other", planted[anchor.Needle], anchor.Kind, anchor.Needle)
 		}
 		rows = append(rows, anchor)
 	}
 	return rows
 }
 
+// anchorsFixtureKindNames is the expected kind cell for each kind that the AGENTS.md rows
+// use. The names are literals, not anchorKindName, so a swapped kind name turns the
+// table tests red.
+var anchorsFixtureKindNames = map[anchors.Kind]string{
+	anchors.Require: "require",
+	anchors.Forbid:  "forbid",
+}
+
 // anchorsFixtureTable is the expected anchors table for the AGENTS.md rows. Each row takes
-// its kind from the registry and its line from lines, which holds 0 for a row whose
-// needle the file does not carry.
+// its kind cell from anchorsFixtureKindNames and its line from lines, which holds 0 for a
+// row whose needle the file does not carry.
 func anchorsFixtureTable(t *testing.T, rows []anchors.Anchor, lines []int) string {
 	t.Helper()
 	table := make([][]any, len(rows))
 	for i, anchor := range rows {
-		table[i] = []any{anchorKindName(anchor.Kind), anchor.Section, anchor.Step, anchor.Needle, lines[i]}
+		kind, ok := anchorsFixtureKindNames[anchor.Kind]
+		if !ok {
+			t.Fatalf("AGENTS.md row %q has kind %d, which anchorsFixtureKindNames does not name", anchor.Needle, anchor.Kind)
+		}
+		table[i] = []any{kind, anchor.Section, anchor.Step, anchor.Needle, lines[i]}
 	}
 	want, err := toon.TableTyped("anchors", []string{"kind", "section", "step", "needle", "line"}, table)
 	if err != nil {

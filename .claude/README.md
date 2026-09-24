@@ -19,10 +19,9 @@ task-list surface.
 agent file declares its name, its description, and the tools it needs, and it
 declares no model. A charge names the agent type and passes the bound tier
 token, so the agent-line guard keeps its verdict. `bench-reviewer` runs a
-review axis or a diagnostic consultation. `bench-writer`
-is the write delegate for a fresh ticket author, a repair session, or a
-user-directed write delegation. A consumer's own agent files sit beside
-them and stay ungraded.
+review axis or a diagnostic consultation.
+`bench-writer` is the write delegate for a fresh ticket author, a repair session, or a user-directed write delegation.
+A consumer's own agent files sit beside them and stay ungraded.
 
 Hook config in `.claude/settings.json` points to shared scripts in
 `.bench/hooks/`.

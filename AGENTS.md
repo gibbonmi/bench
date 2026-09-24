@@ -70,12 +70,13 @@ harness-native next command. This way, resumption never depends on
 conversation history.
 
 A phase close commits its tracked capture artifacts — the retro and the
-scorecard updates — together in one gate-priced commit. The git-ignored
+scorecard updates — together in one commit on a lane pass. The git-ignored
 capture files stay local and never join that commit. Read
 `bench retro <slug> --scaffold` before you write the retrospective, because
 that draft carries the headings, the stage timings, and one row per ticket.
 
 A phase close runs `bench handoff` from its own worktree.
+A drain runs it from the primary checkout after its landing.
 `.bench/BENCH-reference.md` states how `bench handoff` writes the handoff file.
 
 When the handoff and the tree disagree, the tree wins. `bench
