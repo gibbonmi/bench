@@ -11,9 +11,15 @@ separate axes: documented standards, the approved spec, and coverage gaps. It
 produces findings the gate cannot see. It claims no authority over done-ness.
 A spec-backed review runs from the retained integration source after each planned chunk. It opens with `bench preflight review` in explicit-base mode; a red preflight stops the phase.
 
-Review action requires verified delivery: act only after this session retrieves every required source and matches its byte coverage to the manifest descriptors. `bench preflight evidence <id> --verify` is the separate artifact-integrity check.
+Each review round dispatches a fresh session for each axis. The coordinator keeps the manifest, the metadata page, and the current binding, and it gives the evidence identity to each axis.
 
-Review action requires available required context: a retrieval receipt, a terminal cursor, or another axis's delivery never replaces the required bytes this session holds. Review action requires a current-action binding: act only after `bench preflight evidence <id> --check-current` binds the artifact to the current assignment and source pair. Review action requires reviewer approval, which a generated charge, a staged artifact, or a verified artifact never supplies. Review action requires the complete task supplement, which this session writes. The supplement names the axis, the model, the effort, and the frozen pair, and verified evidence never supplies it.
+A narrow axis runs `bench preflight evidence <id> --check-current` one time, to bind the artifact to the assignment and the source pair. The axis reads the delta through one `git diff` of the frozen pair. It reads the spec rows, the tickets, the standards, and the surrounding code with targeted reads. It returns a bounded report with one line for each finding. A resumed axis session keeps every earlier stream in its context, so the phase does not resume an axis for a later round.
+
+This narrow axis shape is provisional. Each narrow round records what each axis read and what it found. One full-retrieval control review of the same diff decides whether the shape becomes the permanent rule.
+
+Review action requires a narrow axis read: act only after this session reads the frozen delta and the targeted sources of its axis. An axis does not retrieve every evidence page. `bench preflight evidence <id> --verify` is the separate artifact-integrity check.
+
+Review action requires available required context: a retrieval receipt, a terminal cursor, or another axis's read never replaces the sources this session reads. Review action requires a current-action binding: act only after `bench preflight evidence <id> --check-current` binds the artifact to the current assignment and source pair. Review action requires reviewer approval, which a generated charge, a staged artifact, or a verified artifact never supplies. Review action requires the complete task supplement, which this session writes. The supplement names the axis, the model, the effort, and the frozen pair, and verified evidence never supplies it.
 
 The coordinator reuses exact available source bytes only after the new manifest verifies their membership, role, and requiredness. A matching body digest alone authorizes no reuse. A fresh axis runs its own retrieval from the trusted evidence identity. A transferred final cursor and another axis's receipt deliver no byte to it.
 
@@ -38,6 +44,7 @@ Each planned chunk takes one review across Standards, Spec, and Coverage. The ax
 
 After the retained author repairs accepted findings, current repair coverage closes those predicates. Repeat delegated review only for a later semantic delta or a cross-chunk concern that invalidates prior evidence. A repeated review uses the full chunk diff as context and blocks only on that later delta or named concern.
 A chunk that ends on a repair takes one confirming round of all three axes at its final tip.
+A confirming round reads only the repair delta, and its charge names the folds to confirm.
 
 The coordinator writes one repair ticket when accepted repairs amend the coverage map. The ticket records the accepted repairs, and it cites each amended row in `Covers:`.
 

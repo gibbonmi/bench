@@ -17,9 +17,8 @@ Before classifying repairs, read [the bounded repair policy](../bench-craft-line
 
 Every axis derives its facts from the current primary source *before* it compares the candidate against them. A declaration-only confirmation, trusting the ticket or
 commit message, is incomplete. An axis that never re-reads its source cannot catch a claim the source refutes, and every finding cites its derivation, not a recollection
-of it. By default, the three axes run in parallel fresh contexts so one cannot seed
-another. Explicit unified mode is the sole exception: one independent session
-re-derives and reports each axis separately.
+of it. By default, the three axes run in parallel fresh contexts so one cannot seed another. Explicit unified mode is the sole exception: one independent session
+re-derives and reports each axis separately. `/bench-review-implementation` owns the narrow axis shape: what a fresh axis reads in each round, and what it returns.
 
 Before relying on candidate-controlled execution, ask what authenticates the verifier. A candidate's own proof of correctness
 is not evidence until something outside it confirms it.

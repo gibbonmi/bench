@@ -12,12 +12,17 @@ import (
 	"github.com/gibbonmi/bench/internal/prose"
 )
 
-// boundedActionFamily is one bounded action guidance family. Each phase states the same
-// five prerequisites over its own canonical reader, so the rules below are written once and
-// bound to a family rather than copied per phase.
+// boundedActionFamily is one bounded action guidance family. Each phase states five
+// prerequisites over its own canonical reader, so the rules below are written once and
+// bound to a family rather than copied per phase. Four prerequisites are shared; the
+// delivery prerequisite is the family's own.
 type boundedActionFamily struct {
 	// name titles the family's subtests.
 	name string
+	// delivery names the family's delivery prerequisite. A build consumer verifies delivery
+	// of every required source, and a narrow review axis reads only its delta and targeted
+	// sources.
+	delivery string
 	// diagnosticPrefix enumerates the family's registry rows without a second registry.
 	diagnosticPrefix string
 	// sentenceLead opens every sentence that states one prerequisite. A paragraph that
@@ -41,6 +46,7 @@ func boundedActionFamilies() []boundedActionFamily {
 	return []boundedActionFamily{
 		{
 			name:             "build",
+			delivery:         "verified delivery",
 			diagnosticPrefix: "bounded build action: ",
 			sentenceLead:     "Build action requires",
 			preflightCommand: "bench preflight build",
@@ -48,6 +54,7 @@ func boundedActionFamilies() []boundedActionFamily {
 		},
 		{
 			name:             "review",
+			delivery:         "a narrow axis read",
 			diagnosticPrefix: "bounded review action: ",
 			sentenceLead:     "Review action requires",
 			preflightCommand: "bench preflight review",
@@ -147,7 +154,7 @@ func (f boundedActionFamily) retiredFormPairs(text string) []string {
 	return found
 }
 
-// wantedRows is the independent half of the registry pair: each family states the same five
+// wantedRows is the independent half of the registry pair: each family states its five
 // prerequisite diagnostics and the one retired-form refusal, apart from the registry, so a
 // reworded or deleted row bites. A diagnostic names the reader by its base name, as every
 // registered row does, and guidance supplies that reader.
@@ -155,7 +162,7 @@ func (f boundedActionFamily) wantedRows(guidance string) []wantedRow {
 	action := strings.ToLower(f.name)
 	lead := f.diagnosticPrefix + path.Base(guidance) + " permits " + action + " action without "
 	return []wantedRow{
-		{anchors.Require, lead + "verified delivery"},
+		{anchors.Require, lead + f.delivery},
 		{anchors.Require, lead + "available required context"},
 		{anchors.Require, lead + "a current binding"},
 		{anchors.Require, lead + "reviewer approval"},
