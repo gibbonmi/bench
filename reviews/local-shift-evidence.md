@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A, LE-B1, and LE-B2 are accepted. The third LE-B2 confirming round passed on all three axes.
+Status: LE-A, LE-B1, and LE-B2 are accepted. LE-C1 is committed, and its review of the three axes is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -221,7 +221,7 @@ Three advisories go to LE-B2, because a repair here would need another confirmin
 
 The LE-B1 build cited its tests in the spec, and its repair added row LE107. These edits changed the plan identity after LE-A. The chunk IDs stay the same, so LE-A maps to LE-A.
 
-The LE-B2 build raised the shift grant to 16, fenced `pass_test.go`, `shift_test.go`, and `main_test.go`, and cited its tests. Those edits changed the plan identity again, and LE-A and LE-B1 map to themselves. The LE-B2 repairs corrected spec sentences and recorded a reviewer decision, and each later amendment maps LE-A and LE-B1 again.
+The LE-B2 build raised the shift grant to 16, fenced `pass_test.go`, `shift_test.go`, and `main_test.go`, and cited its tests. Those edits changed the plan identity again, and LE-A and LE-B1 map to themselves. The LE-B2 repairs corrected spec sentences and recorded a reviewer decision, and each later amendment maps LE-A and LE-B1 again. The LE-C1 build cited its tests and widened ticket 8, and its amendment maps LE-A, LE-B1, and LE-B2.
 
 ## LE-B2 author verification
 
@@ -351,11 +351,24 @@ Three fresh axes graded the code tip `1720cbc2` with the source digest `ce04e0ec
 - Spec, 0 findings. LE37 and LE44 keep every assertion.
 - Coverage, 0 findings. One advisory goes to LE-C1: the adapter sleep derives from the wait window.
 
+## LE-C1 author verification
+
+The frozen pair is `e6b96f82..a95eb85e`. The two planned checks and the root conformance test passed at the chunk tip. A learning records the ticket 8 Writes expansion and the recovery rule.
+
+| Row | Test | Probe |
+|---|---|---|
+| LE60 | `TestLiveDropsAFinishedShiftWithNoRecovery` | Pre-edit red; remove the done rule: bit. |
+| LE61 | `TestAGreenShiftEndsItsIntent` | Pre-edit red. |
+| LE62 | `TestLiveKeepsAShiftWithAWorktreeRecovery` | Pre-edit red with a landed branch; retire a recovery entry as landed: bit. |
+| LE63 | `TestAShiftRecordsItsLease` | Pre-edit red; record no lease: bit. |
+
+A recovery pointer now overrides the landed rule, as ticket 8 requires: a red shift with no commit keeps its recovery entry. The `none` recovery word has one owner in the ledger. The LE-B2 advisory is closed: the interrupt helper's adapter sleep derives from the wait window.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/local-shift-evidence/spec.md",
-  "plan_digest": "sha256:ff3b2481ba8deec82508453c2cde46252305c98741262014a3a2a34e6a4b9122",
+  "plan_digest": "sha256:2eb501f72bf582d7489967e555dffa65f45a809e37406e6fa22ef91e68b0939e",
   "implementation_session": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
   "chunks": [
     {
@@ -1802,6 +1815,58 @@ Three fresh axes graded the code tip `1720cbc2` with the source digest `ce04e0ec
           ]
         }
       ]
+    },
+    {
+      "id": "LE-C1",
+      "base": "e6b96f828b5a3d4d4961321a8111388cad909fa2",
+      "tip": "a95eb85e21cb61fcc9986c2e9710bc868a27d6a6",
+      "plan_digest": "sha256:2eb501f72bf582d7489967e555dffa65f45a809e37406e6fa22ef91e68b0939e",
+      "source_digest": "d230edfb0a860a381d9a9599591d767fc52ce3ca",
+      "acceptance_rows": [
+        "LE60",
+        "LE61",
+        "LE62",
+        "LE63"
+      ],
+      "verification": [
+        {
+          "id": "LE-C1-verify-intent-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "d230edfb0a860a381d9a9599591d767fc52ce3ca",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/intent/... at a95eb85e",
+            "digest": "sha256:3978d4f73ba4d023f0a945c823991649cd1999da9d05ec6562bc50917013de0f",
+            "excerpt": "packages[3]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/intent,pass,5405\n  github.com/gibbonmi/bench/internal/intent/admissionpolicy,pass,3\n  github.com/gibbonmi/bench/internal/intent/ledger,pass,2\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "intent",
+          "command": "bench test --package ./internal/intent/...",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-C1-verify-shift-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "d230edfb0a860a381d9a9599591d767fc52ce3ca",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/shift at a95eb85e",
+            "digest": "sha256:ea4302596a7c227e4a3cb4e501dc0a52590bfe3c169d766a8d7216d93d50eb3d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/shift,pass,5405\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "shift",
+          "command": "bench test --package ./internal/shift",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1854,6 +1919,21 @@ Three fresh axes graded the code tip `1720cbc2` with the source digest `ce04e0ec
         ],
         "LE-B1": [
           "LE-B1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ff3b2481ba8deec82508453c2cde46252305c98741262014a3a2a34e6a4b9122",
+      "to": "sha256:2eb501f72bf582d7489967e555dffa65f45a809e37406e6fa22ef91e68b0939e",
+      "chunk_ids": {
+        "LE-A": [
+          "LE-A"
+        ],
+        "LE-B1": [
+          "LE-B1"
+        ],
+        "LE-B2": [
+          "LE-B2"
         ]
       }
     }
