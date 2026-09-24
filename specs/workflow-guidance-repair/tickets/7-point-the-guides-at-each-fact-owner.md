@@ -25,7 +25,7 @@ Make these changes:
 - Replace the reference's skill-link claim with a pointer to `.claude/README.md`. That file states that `.claude/skills/` links every `.agents/skills/` skill that has no same-named command.
 - In `.claude/README.md`, remove "links only the `bench-craft-*` skills". Replace "`bench-writer` runs a user-directed write delegation" with the three write roles that ticket 1 names.
 - In `projects/benchkit.md`, remove the claim that `bench commit` works on any branch. `bench commit` refuses the primary checkout. Add a Forbid row for the removed claim.
-- In the light-path cell of `.bench/BENCH.md`, replace "gate and commit on green" with the lane-pass commit and the landing gate. Keep the edit line-neutral, and update the row that pins the cell in place.
+- In the light-path cell of `.bench/BENCH.md`, replace "gate and commit on green" with the commit and the landing route. Invariant 4 owns the lane pass and the landing gate, so the cell does not restate them. Keep the edit line-neutral, and update the row that pins the cell in place.
 
 `bench anchors AGENTS.md` prints every `AGENTS.md` registry row, a Forbid row included. Change `TestAnchorsReportsNeedleLines` and `TestAnchorsReportsAbsentNeedles` so that each expected row takes its kind from the registry. A Forbid row reads line 0 and adds no missing-file diagnostic. Plant the GR79 needle in the `AGENTS.md` fixture.
 
@@ -43,4 +43,5 @@ Add each planned Require and Forbid row in the registry.
 - [ ] `TestAnchorsReportsNeedleLines` prints each `AGENTS.md` row with its registry kind (GR107).
 - [ ] `TestAnchorsReportsAbsentNeedles` gives a missing-file diagnostic for each Require row only (GR108).
 - [ ] The README and the profile contain none of the sentences that GR114, GR121, GR123, and GR124 name.
-- [ ] The profile does not claim that `bench commit` works on any branch, and the light-path cell names the lane-pass commit and the landing gate.
+- [ ] The profile does not claim that `bench commit` works on any branch.
+- [ ] The light-path cell names the commit and the landing route, and it does not restate invariant 4.
