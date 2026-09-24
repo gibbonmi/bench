@@ -94,9 +94,9 @@ from the session ID alone. The coordinator therefore runs `bench worktree create
 `bench worktree exec "<label>" -- <command>` is the one command form for every caller into an assignment worktree. The rule covers the coordinator, and it covers a read or a write.
 A shell loop inside the pool path is the same bypass. `bench worktree path "<label>"` serves file reads and edits only.
 
-A build's serial ticket authors share its one integration source. Thus, reviewed
-dependent tickets share one retained integration source, and each charge names its root and
-expected tip. A ticket author commits its ticket on a lane pass before the next charge starts.
+A build's serial ticket authors share its one integration source.
+Thus, reviewed dependent tickets share one retained integration source, and each charge names its root and expected tip.
+A ticket author commits its ticket on a lane pass before the next charge starts.
 
 A worktree isolates the working tree, not the repo-global stash stack a concurrent delegate shares. A charge bans `git stash` and names the substitute, because the destructive-git guard refuses only `git stash drop` and `git stash clear`.
 A probe runs through `bench probe`, which preserves the subject, applies one swap or omission, and proves the restore. The copy-aside sequence stays for a non-probe edit that must test the committed version.
