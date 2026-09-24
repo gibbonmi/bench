@@ -2,6 +2,8 @@ package shift
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"io"
 	"os"
 	"os/exec"
@@ -228,5 +230,140 @@ func TestAnInterruptedShiftEndsThePassFirst(t *testing.T) {
 	}
 	if passEnd < 0 || shiftEnd < 0 || passEnd > shiftEnd {
 		t.Fatalf("pass end line %d, shift end line %d, want the pass first:\n%s", passEnd, shiftEnd, raw)
+	}
+}
+
+// memoryFiles returns the bytes of each retained memory file of the working repository.
+func memoryFiles(t *testing.T) [][]byte {
+	t.Helper()
+	root, err := git.Root()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := otelrecord.MemoryDir(os.Getenv("BENCH_HOME"), root)
+	entries, _ := os.ReadDir(dir)
+	var files [][]byte
+	for _, entry := range entries {
+		raw, err := os.ReadFile(filepath.Join(dir, entry.Name()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		files = append(files, raw)
+	}
+	return files
+}
+
+// memoryShift runs a shift under gate whose adapter runs script, and returns the shift
+// span, the raw record, and the memory files.
+func memoryShift(t *testing.T, gate, script string, code int) (otelrecord.Span, []byte, [][]byte) {
+	t.Helper()
+	faultFixtureCore(t, gate, nil)
+	withAgent(t, script)
+	shift, raw, _ := runRecordedShift(t, code)
+	return shift, raw, memoryFiles(t)
+}
+
+const (
+	greenGate  = "#!/usr/bin/env bash\nexit 0\n"
+	memoryWork = "echo work >> work.txt\necho MEMMARK >> " + notesFile + "\n"
+)
+
+// LE49 and LE51: a green shift retains its notes and records their size and digest.
+func TestAGreenShiftRetainsItsNotes(t *testing.T) {
+	shift, _, files := memoryShift(t, greenGate, memoryWork, 3)
+	if len(files) != 1 || string(files[0]) != "MEMMARK\n" {
+		t.Fatalf("memory files = %q, want one file with the notes", files)
+	}
+	sum := sha256.Sum256(files[0])
+	requireAttr(t, shift, otelrecord.AttrMemoryState, otelrecord.MemoryRetained)
+	requireAttr(t, shift, otelrecord.AttrMemoryBytes, "8")
+	requireAttr(t, shift, otelrecord.AttrMemoryDigest, "sha256:"+hex.EncodeToString(sum[:]))
+}
+
+// LE50: a red shift that retained its worktree retains its notes.
+func TestARedShiftRetainsItsNotes(t *testing.T) {
+	_, _, files := memoryShift(t, "#!/usr/bin/env bash\nexit 1\n", memoryWork, 1)
+	if len(files) != 1 || string(files[0]) != "MEMMARK\n" {
+		t.Fatalf("memory files = %q, want one file with the notes", files)
+	}
+}
+
+// LE52: the notes text never enters the record.
+func TestTheRecordHoldsNoNotesText(t *testing.T) {
+	if _, raw, _ := memoryShift(t, greenGate, memoryWork, 3); bytes.Contains(raw, []byte("MEMMARK")) {
+		t.Fatalf("the record holds the notes text:\n%s", raw)
+	}
+}
+
+// LE53, LE54, LE88, LE55, and LE56: each notes state the adapter leaves.
+func TestEachNotesStateIsRecorded(t *testing.T) {
+	secret := filepath.Join(t.TempDir(), "secret")
+	if err := os.WriteFile(secret, []byte("SECRETMARK\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct{ name, script, state string }{
+		{"symlink", "rm " + notesFile + "\nln -s '" + secret + "' " + notesFile + "\n", otelrecord.MemoryRefused},
+		{"fifo", "rm " + notesFile + "\nmkfifo " + notesFile + "\n", otelrecord.MemoryRefused},
+		{"oversized", "head -c 3000000 /dev/zero > " + notesFile + "\n", otelrecord.MemoryRefused},
+		{"deleted", "rm " + notesFile + "\n", otelrecord.MemoryAbsent},
+		{"empty", "true\n", otelrecord.MemoryRetained},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			done := make(chan struct{})
+			var shift otelrecord.Span
+			var files [][]byte
+			go func() {
+				defer close(done)
+				shift, _, files = memoryShift(t, greenGate, tc.script, 4)
+			}()
+			select {
+			case <-done:
+			case <-time.After(60 * time.Second):
+				t.Fatal("the shift never exited")
+			}
+			requireAttr(t, shift, otelrecord.AttrMemoryState, tc.state)
+			if tc.state != otelrecord.MemoryRetained {
+				if len(files) != 0 {
+					t.Fatalf("a %s notes file wrote %d memory files", tc.name, len(files))
+				}
+				return
+			}
+			requireAttr(t, shift, otelrecord.AttrMemoryBytes, "0")
+		})
+	}
+}
+
+// LE95 and LE102: a failed memory write changes neither the outcome nor the exit.
+func TestAFailedMemoryWriteKeepsTheOutcome(t *testing.T) {
+	root := faultFixtureCore(t, greenGate, nil)
+	withDonePredicate(t, root)
+	withAgent(t, "echo work >> work.txt\n")
+	repo, _ := git.Root()
+	home := os.Getenv("BENCH_HOME")
+	if err := os.MkdirAll(otelrecord.Dir(home, repo), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(t.TempDir(), otelrecord.MemoryDir(home, repo)); err != nil {
+		t.Fatal(err)
+	}
+	shift, _, _ := runRecordedShift(t, 0)
+	requireAttr(t, shift, otelrecord.AttrMemoryState, otelrecord.MemoryFailed)
+	requireAttr(t, shift, otelrecord.AttrShiftOutcome, string(OutcomeComplete))
+}
+
+// LE59: a second shift starts with empty notes, and no retained memory reaches its prompt.
+func TestASecondShiftStartsWithEmptyNotes(t *testing.T) {
+	faultFixtureCore(t, greenGate, nil)
+	seen := t.TempDir()
+	withAgent(t, "cat > '"+seen+"/prompt'\ncp "+notesFile+" '"+seen+"/notes'\necho MEMMARK >> "+notesFile+"\n")
+	for range 2 {
+		if code := Loop("memory shift", io.Discard, io.Discard); code != exitCodes[OutcomeNoOp] {
+			t.Fatalf("Loop = %d, want no-op", code)
+		}
+	}
+	notes, _ := os.ReadFile(filepath.Join(seen, "notes"))
+	prompt, _ := os.ReadFile(filepath.Join(seen, "prompt"))
+	if len(notes) != 0 || len(prompt) == 0 || bytes.Contains(prompt, []byte("MEMMARK")) {
+		t.Fatalf("second shift notes %q, prompt %q, want empty notes and no MEMMARK", notes, prompt)
 	}
 }

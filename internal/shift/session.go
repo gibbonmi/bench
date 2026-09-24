@@ -296,6 +296,15 @@ func (s *session) teardown() error {
 	return err
 }
 
+// retainNotes keeps the notes of a shift that reached its first iteration. Every exit
+// after the first iteration runs preserveAndRecover, which calls it before any scratch
+// cleanup and on the retain path. An earlier exit has no notes to keep.
+func (s *session) retainNotes() {
+	if s.iterationsUsed > 0 {
+		s.record.retainNotes(s.root)
+	}
+}
+
 // preserveAndRecover is the one place a post-mutation failure preserves work before this
 // session's charged worktree leaves the process's hands. When nothing beyond scratch is
 // dirty, it releases through teardown and reports RecoveryNone. Otherwise it retains and
@@ -305,6 +314,7 @@ func (s *session) teardown() error {
 // session so the deferred cleanup never re-finalizes this worktree.
 func (s *session) preserveAndRecover(reason string) (recovery string, teardownErr error) {
 	defer s.preserve.Store(true)
+	s.retainNotes()
 	if len(dirtyPaths(s.root)) == 0 {
 		return RecoveryNone, s.teardown()
 	}

@@ -200,7 +200,7 @@ func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 		s.teardown()
 		return finish(stdout, stderr, mainRoot, &intentEntry, record, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not write shift objective"})
 	}
-	if err := os.WriteFile(wt+"/.bench-notes.md", nil, 0o644); err != nil {
+	if err := os.WriteFile(wt+"/"+notesFile, nil, 0o644); err != nil {
 		fmt.Fprintf(stderr, "could not write shift notes: %v\n", err)
 		s.teardown()
 		return finish(stdout, stderr, mainRoot, &intentEntry, record, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not write shift notes"})

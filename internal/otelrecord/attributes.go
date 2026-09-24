@@ -111,6 +111,16 @@ const (
 
 	// AttrLineModel carries the resolved model, and only a safe model token.
 	AttrLineModel = "bench.line.model"
+
+	// AttrMemoryState carries what became of a shift's notes.
+	AttrMemoryState = "bench.memory.state"
+
+	// AttrMemoryBytes carries the byte count of retained notes.
+	AttrMemoryBytes = "bench.memory.bytes"
+
+	// AttrMemoryDigest carries the SHA-256 digest of the retained memory file, which
+	// references the notes without carrying their text.
+	AttrMemoryDigest = "bench.memory.digest"
 )
 
 // RecordStart is the AttrRecord value on the line written at span start. The start line
@@ -143,6 +153,9 @@ var DeclaredAttributes = []string{
 	AttrAdapterExit,
 	AttrLineHarness,
 	AttrLineModel,
+	AttrMemoryState,
+	AttrMemoryBytes,
+	AttrMemoryDigest,
 }
 
 // declared answers whether the encoder may write a span attribute key.
@@ -176,6 +189,15 @@ const (
 	CleanupReleased = "released"
 	CleanupRetained = "retained"
 	CleanupNone     = "none"
+)
+
+// The memory-state vocabulary: the notes were kept, there were none, their file was a
+// link, a special file, or too large to keep, or the store write failed.
+const (
+	MemoryRetained = "retained"
+	MemoryAbsent   = "absent"
+	MemoryRefused  = "refused"
+	MemoryFailed   = "failed"
 )
 
 // The adapter-result vocabulary: the adapter process exited, with a code, or it never

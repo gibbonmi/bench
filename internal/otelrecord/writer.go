@@ -1,6 +1,8 @@
 package otelrecord
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math"
@@ -9,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/poolkey"
@@ -73,6 +76,60 @@ func Dir(home, root string) string {
 // Path returns the record file for one repository below an explicitly resolved home.
 func Path(home, root string) string {
 	return filepath.Join(Dir(home, root), recordFile)
+}
+
+// memoryDir holds the retained shift notes below the record directory. The notes are
+// model prose, so they live beside the record and never inside a record line.
+const memoryDir = "memory"
+
+// MemoryDir returns the directory that holds root's retained shift notes.
+func MemoryDir(home, root string) string {
+	return filepath.Join(Dir(home, root), memoryDir)
+}
+
+// RetainMemory keeps body as one memory file of root's record, below home or the resolved
+// Bench home when home is empty, and returns the file's SHA-256 digest. The store keeps the
+// newest RecordMemoryRetained files.
+func RetainMemory(home, root, traceID string, body []byte) (string, error) {
+	home, ok := recordHome(home)
+	if !ok {
+		return "", errors.New("a test binary may not write below the fallback Bench home")
+	}
+	return retainMemory(home, root, traceID, body, time.Now(), bounds.RecordMemoryRetained)
+}
+
+// retainMemory is RetainMemory with the instant and the retained count given. The file name
+// is the UTC instant and the trace id, so name order is time order. The path is graded as
+// the record path is, and the file is created 0600 and never opened through a link.
+func retainMemory(home, root, traceID string, body []byte, now time.Time, retained int) (string, error) {
+	dir := MemoryDir(home, root)
+	file := filepath.Join(dir, now.UTC().Format("20060102T150405.000000000Z")+"-"+traceID+".md")
+	if err := (&Writer{home: home}).gradeRecordPath(file); err != nil {
+		return "", err
+	}
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return "", fmt.Errorf("create memory directory: %w", err)
+	}
+	out, err := os.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_EXCL|syscall.O_NOFOLLOW, 0o600)
+	if err != nil {
+		return "", fmt.Errorf("create memory file: %w", err)
+	}
+	_, err = out.Write(body)
+	if err = errors.Join(err, out.Close()); err != nil {
+		return "", fmt.Errorf("write memory file: %w", err)
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return "", fmt.Errorf("list memory directory: %w", err)
+	}
+	// ReadDir sorts by name, and name order is time order.
+	for index := 0; index < len(entries)-retained; index++ {
+		if err := os.Remove(filepath.Join(dir, entries[index].Name())); err != nil {
+			return "", fmt.Errorf("prune memory file: %w", err)
+		}
+	}
+	sum := sha256.Sum256(body)
+	return "sha256:" + hex.EncodeToString(sum[:]), nil
 }
 
 // Writer appends encoded spans to one repository's record file. The caller resolves

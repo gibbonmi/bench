@@ -63,6 +63,9 @@ const (
 	// bound the record's disk use; the reviewer owns both sizes. The limit is 16 MiB.
 	RecordSegmentLimit     int64 = 1 << 24
 	RecordSegmentsRetained       = 8
+	// RecordMemoryRetained is how many retained shift-notes files the record keeps beside
+	// its segments; the reviewer owns the size.
+	RecordMemoryRetained = 64
 )
 
 // TestDeadline derives an outer test deadline from the inner bound that deadline has

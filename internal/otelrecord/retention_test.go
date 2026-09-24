@@ -258,3 +258,51 @@ func TestARotationRefusesTheLastSequence(t *testing.T) {
 		t.Fatalf("the live segment holds %d lines, want all 3", len(live))
 	}
 }
+
+// retainedMemoryNames returns the memory file names below root's record directory.
+func retainedMemoryNames(t *testing.T, home, root string) []string {
+	t.Helper()
+	entries, err := os.ReadDir(MemoryDir(home, root))
+	if err != nil {
+		t.Fatalf("list the memory directory: %v", err)
+	}
+	var names []string
+	for _, entry := range entries {
+		names = append(names, entry.Name())
+	}
+	return names
+}
+
+// TestTheMemoryStoreKeepsTheRetainedCount holds row LE57: a store that never prunes keeps
+// every file, so the count reds.
+func TestTheMemoryStoreKeepsTheRetainedCount(t *testing.T) {
+	home, root := t.TempDir(), t.TempDir()
+	start := time.Date(2026, 9, 23, 12, 0, 0, 0, time.UTC)
+	for index := range 4 {
+		if _, err := retainMemory(home, root, fmt.Sprintf("trace%d", index), []byte("notes\n"), start.Add(time.Duration(index)*time.Second), 3); err != nil {
+			t.Fatalf("retain memory %d: %v", index, err)
+		}
+	}
+	names := retainedMemoryNames(t, home, root)
+	if len(names) != 3 || slices.ContainsFunc(names, func(name string) bool { return strings.Contains(name, "trace0") }) {
+		t.Fatalf("memory files = %v, want the newest 3", names)
+	}
+}
+
+// TestTheMemoryStoreRefusesASymlinkedDirectory holds row LE58: a store that follows the
+// link writes outside the Bench home, so the refusal read reds.
+func TestTheMemoryStoreRefusesASymlinkedDirectory(t *testing.T) {
+	home, root, outside := t.TempDir(), t.TempDir(), t.TempDir()
+	if err := os.MkdirAll(Dir(home, root), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, MemoryDir(home, root)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := retainMemory(home, root, "trace", []byte("notes\n"), time.Now(), 3); err == nil {
+		t.Fatal("the memory write through a symlinked directory returned no error")
+	}
+	if entries, _ := os.ReadDir(outside); len(entries) != 0 {
+		t.Fatalf("the memory write left %d files outside the home", len(entries))
+	}
+}

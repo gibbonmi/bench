@@ -32,15 +32,23 @@ type Provider struct {
 // still starts and ends, but nothing reaches disk. A test that names its own BENCH_HOME
 // elsewhere still records, so a test that wants its own record still gets one.
 func NewProvider(home, root string) *Provider {
-	if home == "" {
-		home = benchhome.Dir()
-	}
-	if testing.Testing() && benchhome.IsFallback(home) {
+	home, ok := recordHome(home)
+	if !ok {
 		return &Provider{provider: sdktrace.NewTracerProvider()}
 	}
 	return &Provider{provider: sdktrace.NewTracerProvider(
 		sdktrace.WithSpanProcessor(newProcessor(home, root)),
 	)}
+}
+
+// recordHome resolves the home a record write goes below, and reports whether this
+// process may write there. An empty home resolves through internal/benchhome, and a test
+// binary may not write below the fallback home.
+func recordHome(home string) (string, bool) {
+	if home == "" {
+		home = benchhome.Dir()
+	}
+	return home, !testing.Testing() || !benchhome.IsFallback(home)
 }
 
 // Tracer returns the tracer that starts Bench seam spans.
