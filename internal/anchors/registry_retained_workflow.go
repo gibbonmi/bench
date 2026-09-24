@@ -26,7 +26,9 @@ var defaultWorkflowAnchors = []Anchor{
 // resume-clean step, and phase-command copies of owner rules). They join the
 // retained-workflow family because the same owners carry these contracts, and
 // a reader who loses one clause loses the boundary between them. Each needle
-// is the instruction's one source; no anchor claims to prove native dispatch.
+// is the instruction's one source. A Forbid row that keeps a copy of an owner
+// sentence out reads the named constant of that sentence's Require row. No anchor
+// claims to prove native dispatch.
 var delegatedWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "`--delegate` applies only to an approved `$bench-implement-spec --full <spec>` run with an approved ticket graph.", Diagnostic: "retained workflow: operating guide dropped the delegated opt-in entry"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "A ticket in a dependent chunk waits for every prerequisite chunk checkpoint.", Diagnostic: "retained workflow: operating guide dropped the delegated prerequisite-checkpoint wait"},
@@ -82,15 +84,15 @@ var delegatedWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "It refuses without `--full`, an approved spec, or an approved ticket graph.", Diagnostic: "retained workflow: implementation phase dropped the delegated entry refusals"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "Declare the configured model, effort, iteration cap, and author limit before the first dispatch.", Diagnostic: "retained workflow: implementation phase dropped the delegated dispatch declaration"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "A resumed delegated run keeps the recorded identities, source pins, replacement history, and pending obligations.", Diagnostic: "retained workflow: implementation phase dropped delegated resumption contents"},
-	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "Every ticket contribution reaches the integrated chunk tip before that chunk's review begins.", Diagnostic: "retained workflow: operating guide dropped the integrated chunk-tip review fence"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: chunkTipReviewFence, Diagnostic: "retained workflow: operating guide dropped the integrated chunk-tip review fence"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Needle: "A delegated chunk review starts after every ticket of the chunk reaches the integrated chunk tip.", Diagnostic: "fresh ticket author: review phase restored its copy of the chunk-review start rule that the operating guide owns"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Needle: "Repeat delegated review only for a later semantic delta", Diagnostic: "fresh ticket author: review phase restored its copy of the review-repeat rule that the operating guide owns"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Needle: "After the last chunk, the orchestrator reconciles overall acceptance and integration before landing.", Diagnostic: "fresh ticket author: review phase restored its copy of the final reconciliation rule that the operating guide owns"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Forbid, Needle: "Repeat delegated review only when a later delta or cross-chunk concern invalidates prior evidence.", Diagnostic: "fresh ticket author: implementation phase restored its copy of the review-repeat rule that the operating guide owns"},
-	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Needle: "Repeat delegated review only for a later delta or a cross-chunk concern that invalidates prior evidence.", Diagnostic: "fresh ticket author: review phase restored a copy of the operating guide's review-repeat rule"},
-	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Needle: "After the last chunk, the orchestrator reconciles the final acceptance and integration.", Diagnostic: "fresh ticket author: review phase restored a copy of the operating guide's final reconciliation rule"},
-	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Needle: "Every ticket contribution reaches the integrated chunk tip before that chunk's review begins.", Diagnostic: "fresh ticket author: review phase restored a copy of the operating guide's chunk-tip review fence"},
-	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Forbid, Needle: "Repeat delegated review only for a later delta or a cross-chunk concern that invalidates prior evidence.", Diagnostic: "fresh ticket author: implementation phase restored a copy of the operating guide's review-repeat rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Needle: reviewRepeatRule, Diagnostic: "fresh ticket author: review phase restored a copy of the operating guide's review-repeat rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Needle: finalReconciliationRule, Diagnostic: "fresh ticket author: review phase restored a copy of the operating guide's final reconciliation rule"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Needle: chunkTipReviewFence, Diagnostic: "fresh ticket author: review phase restored a copy of the operating guide's chunk-tip review fence"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Forbid, Needle: reviewRepeatRule, Diagnostic: "fresh ticket author: implementation phase restored a copy of the operating guide's review-repeat rule"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-review-implementation.md", Kind: RequireInSection, Section: "Review modes", Needle: "`.bench/BENCH.md` owns when a chunk review starts, when a delegated review repeats, and the final reconciliation after the last chunk.", Diagnostic: "fresh ticket author: review phase dropped its pointer to the operating guide's chunk-review cadence"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "For other work, if I approve, fix it and re-run the gate.", Diagnostic: "fresh ticket author: final check dropped the other-work scope of the approve-then-fix route"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Forbid, Needle: "For a ticket author, raise the effort and resume; a tier move asks the reviewer first.", Diagnostic: "fresh ticket author: implementation phase restored its copy of the tier ladder without the `--delegate` exception that craft-line owns"},
@@ -106,6 +108,11 @@ var delegatedWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "The orchestrator performs the final verification on the final source before the landing.", Diagnostic: "retained workflow: final check dropped the orchestrator final verification"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-tickets/SKILL.md", Kind: Require, Needle: "A delegated run keeps these serial green ticket checkpoints under the operating guide's delegated policy.", Diagnostic: "retained workflow: craft-tickets dropped the delegated serial ticket checkpoint"},
 }
+
+// chunkTipReviewFence is the `.bench/BENCH.md` owner sentence for the chunk-review
+// start. Its Require row and the Forbid row that keeps a review-phase copy out read
+// this one constant.
+const chunkTipReviewFence = "Every ticket contribution reaches the integrated chunk tip before that chunk's review begins."
 
 var implementationContinuationAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/SKILL.md", Kind: RequireInSection, Section: "The declaration", Needle: "The iteration policy is a numeric cap or an explicit `uncapped` policy.", Diagnostic: "implementation continuation: craft-line dropped the explicit uncapped policy"},
