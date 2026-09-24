@@ -13,7 +13,7 @@ synthesize, with no interview. It owns the discipline: stories, acceptance cover
 ## Exit handoff
 
 The spec carries `Status: staged` (staged → implemented at the green gate → promote-then-delete on merge). Stop for sign-off.
-Then recommend the approved implementation line for one retained session on one integration source. Review each frozen chunk before its successor, reconcile the final source, and hand it to `bench worktree land`.
+Then recommend the approved implementation line for fresh ticket authors on one integration source. Review each frozen chunk before its successor, reconcile the final source, and hand it to `bench worktree land`.
 
 ## Entry contract
 
@@ -38,7 +38,7 @@ tree or multi-session fog to `$bench-shape-idea`.
 
 The invoking session immediately forks the current conversation and charges that fork to author the spec and slice its tickets. The fork inherits the invoking session's line. Omit a model override. Keep all spec-and-ticket writes in the phase worktree. The invoking session coordinates the phase and presents the fork's completed approval table to the reviewer.
 
-The approved implementation session starts after ticket approval and retains authorship through the build. Spec authoring owns engineering seams, deep-versus-thin design, tests,
+After ticket approval, each ticket goes to a fresh author session under `.bench/BENCH.md`'s authorship rule. Spec authoring owns engineering seams, deep-versus-thin design, tests,
 acceptance coverage, hostile-input attachment, and gate attachment; shaping sources constrain behavior, scope,
 compatibility, or a reviewer-chosen seam.
 

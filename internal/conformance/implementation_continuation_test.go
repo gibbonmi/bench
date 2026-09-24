@@ -84,27 +84,27 @@ func TestImplementationContinuation(t *testing.T) {
 		},
 		"implementation continuation: craft-line restored an artificial stop for uncapped work": {
 			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
-			needle: "An uncapped retained implementation has no artificial iteration stop within the approved spec.",
+			needle: "An uncapped implementation has no artificial iteration stop within the approved spec.",
 		},
 		"implementation continuation: craft-line dropped the debug route": {
 			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
-			needle: "After reassessment, the retained author can invoke `$bench-debug`.",
+			needle: "After reassessment, the ticket author can invoke `$bench-debug`.",
 		},
 		"implementation continuation: craft-delegate allowed diagnostic helper repairs": {
 			file: ".agents/skills/bench-craft-delegate/SKILL.md", section: "Delegate or retain",
 			needle: "A diagnostic helper can inspect evidence, but it receives no implementation or repair assignment.",
 		},
-		"implementation continuation: diagnostic escalation changed the retained session": {
+		"implementation continuation: diagnostic escalation changed the author session": {
 			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
-			needle: "A diagnostic route does not change the retained implementation session.",
+			needle: "A diagnostic route does not change the ticket author's session.",
 		},
-		"implementation continuation: craft-line dropped retained-session effort adjustment": {
+		"implementation continuation: craft-line dropped the author's effort adjustment": {
 			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Ticketed-build stage defaults",
-			needle: "The author can adjust effort in the retained session and reports the change.",
+			needle: "The ticket author can adjust effort in its own session and reports the change.",
 		},
 		"implementation continuation: craft-delegate dropped top-tier diagnostic pre-approval": {
 			file: ".agents/skills/bench-craft-delegate/SKILL.md", section: "Delegate or retain",
-			needle: "During retained implementation, brief higher-tier diagnostic consultation is pre-approved through the top tier.",
+			needle: "During implementation, brief higher-tier diagnostic consultation is pre-approved through the top tier.",
 		},
 		"implementation continuation: delegation discipline expanded diagnostic request context": {
 			file: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", section: "Read-only returns",
@@ -114,9 +114,9 @@ func TestImplementationContinuation(t *testing.T) {
 			file: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", section: "Read-only returns",
 			needle: "A diagnostic return contains a short diagnosis and the next check.",
 		},
-		"implementation continuation: diagnostic escalation changed the retained model": {
+		"implementation continuation: diagnostic escalation changed the author model": {
 			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
-			needle: "A diagnostic route does not change the retained implementation model.",
+			needle: "A diagnostic route does not change the ticket author's model.",
 		},
 		"implementation continuation: delegation discipline dropped the actual consultation line": {
 			file: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", section: "Read-only returns",

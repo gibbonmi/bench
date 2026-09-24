@@ -116,7 +116,7 @@ Record concrete evidence:
 
 - what landed
 - elapsed time for each measured gate stage
-- how the retained session performed against the planned ticket and chunk boundaries
+- how each ticket author performed against the planned ticket and chunk boundaries
 - what the coordinator caught while accepting delegate claims
 - specific improvements to Bench CLI, skills, and process, with the friction and expected effect named
 

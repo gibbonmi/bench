@@ -52,11 +52,11 @@ A fourth signal, **leverage**, overrides the table. An artifact that steers futu
 | Ticket implementation | cheap + low |
 | Review axis | conditional + high |
 
-The conditional review line uses high effort and ~1 iteration. A Codex mid implementation sends each axis to the Codex top binding. Every other implementation sends each axis to the invoking harness's mid binding. A different implementation model or session requires user direction. The author can adjust effort in the retained session and reports the change.
+The conditional review line uses high effort and ~1 iteration. A Codex mid implementation sends each axis to the Codex top binding. Every other implementation sends each axis to the invoking harness's mid binding. A different implementation model, or a session beyond the planned ticket authors, requires user direction. The ticket author can adjust effort in its own session and reports the change.
 
 These are starting defaults, not a flat rule. A spec's per-story line is a **ceiling, not a binding**. Re-run the decision table per ticket at charge time.
 
-A post-review repair runs at low effort. The author raises that effort only when the repair is at risk of failure at low effort, and reports the raise in one line. The repair keeps the retained author's model.
+A post-review repair runs at low effort. The author raises that effort only when the repair is at risk of failure at low effort, and reports the raise in one line. The repair session keeps the ticket's declared model.
 
 The leverage override still wins for orchestration and implementation. The conditional review line owns review.
 `craft-delegate` owns the author venue; this skill routes the author. For one atomic diff, use the highest tier any story needs. Report each collapsed line.
@@ -76,8 +76,8 @@ A red is **diff-owned**, **inherited**, or **spec-predicted**. Only diff-owned
 reds count toward the ladder. Report the others without retrying against them.
 1. **First diff-owned red** — retry the same tier, feeding the gate output
    back as guidance. Most reds are fixable feedback, not capability gaps.
-2. **Second diff-owned red at the same tier** — in a retained build, raise the effort one step and resume.
-   A tier move changes the implementation model, so ask the reviewer first. A `--delegate` run moves the tier without that stop.
+2. **Second diff-owned red at the same tier** — without `--delegate`, raise the effort one step and resume.
+   Outside `--delegate`, a tier move of a fresh ticket author asks the reviewer first. A `--delegate` run moves the tier without that stop.
 3. **Delegate reports the seam is more uncertain than specced** — escalate
    immediately; no retry burned.
 4. **A non-shrinking diff-owned red set across an iteration** — stop the
@@ -107,7 +107,7 @@ The iteration policy is a numeric cap or an explicit `uncapped` policy. Declare 
 ## Retained implementation continuation
 
 At initial review or before post-review repairs, including resumed work, read [the bounded repair policy](references/bounded-repair-policy.md). It governs post-review repairs in every implementation mode.
-The continuation rules below govern pre-review work; the policy governs their use after initial review.
+The continuation rules below govern the pre-review work of each ticket author; the policy governs their use after initial review.
 A verified acceptance improvement is progress. New useful evidence is progress when it changes the next action.
 Continue while progress holds inside the approved scope.
 
@@ -116,7 +116,7 @@ An expected TDD red is not an attempt. An individual tool call is not an attempt
 A diagnostic-only action is not a completed implementation-and-verification attempt.
 
 After two completed attempts with no progress, reassess before the next implementation attempt.
-State the changed hypothesis and the next discriminating check. After reassessment, the retained author can invoke `$bench-debug`.
+State the changed hypothesis and the next discriminating check. After reassessment, the ticket author can invoke `$bench-debug`.
 
 Stop when the run exhausts a selected numeric cap.
 Stop dependent implementation for a required user decision.
@@ -125,6 +125,6 @@ Stop when the run reaches an explicit user budget.
 
 Stop immediately when the user cancels. If no useful next check remains, report the unresolved blocker and the smallest decision or evidence needed.
 
-A diagnostic route does not change the retained implementation session. A diagnostic route does not change the retained implementation model.
+A diagnostic route does not change the ticket author's session. A diagnostic route does not change the ticket author's model.
 
-An uncapped retained implementation has no artificial iteration stop within the approved spec. It retains the user budget, approval boundaries, external blockers, and cancellation stops.
+An uncapped implementation has no artificial iteration stop within the approved spec. It retains the user budget, approval boundaries, external blockers, and cancellation stops.

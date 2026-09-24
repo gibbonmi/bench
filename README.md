@@ -65,7 +65,7 @@ flowchart TD
     approval -->|"approve"| approved["Approved implementation graph"]
 ```
 
-Implementation stays with its retained author. Agent semantic review is
+Each ticket gets a fresh author session. Agent semantic review is
 advisory, and it grades a frozen chunk instead of each ticket separately.
 
 ```mermaid
@@ -74,7 +74,7 @@ flowchart TD
     chunk --> frozen["Freeze the complete chunk delta"]
     frozen --> review["/bench-review-implementation<br/>Standards · Spec · Coverage"]
     review --> blockers{"Blocking findings?"}
-    blockers -->|"accepted; allowance remains"| repair["Retained author repairs"]
+    blockers -->|"accepted; allowance remains"| repair["Fresh repair author repairs"]
     repair --> coverage["Current repair coverage<br/>+ author verification"]
     coverage --> review
     blockers -->|"allowance exhausted"| decision["Reviewer decision required"]

@@ -354,8 +354,9 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   index, and working tree under its reset namespace. Not "stash", not "recovery ref"
   — reset envelope.
 
-- **orchestrator** — the invoking session of a delegated run. It assigns ticket authors,
-  integrates their source, reconciles acceptance, and lands the approved run. Not
+- **orchestrator** — the invoking session of a spec-backed build. It assigns a fresh author
+  to each ticket, integrates their source, reconciles acceptance, and lands the approved
+  build. Not
   "implementation_session", not "ticket author" — orchestrator.
 - **ticket author** — the recorded session that owns one ticket's production changes,
   tests, probes, repairs, and author verification. Not "reviewer", not "orchestrator" —

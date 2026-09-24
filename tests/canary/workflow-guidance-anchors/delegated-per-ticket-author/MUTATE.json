@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/skills/bench-craft-delegate/SKILL.md",
-    "old": "A reviewer-approved delegated run gives each ticket its own retained author session.",
-    "new": "A reviewer-approved delegated run gives the whole chunk one author session."
+    "old": "A spec-backed ticket goes to a fresh author session on its integration source, in `Blocked by:` order.",
+    "new": "A spec-backed chunk goes to one author session on its integration source, in `Blocked by:` order."
   }
 ]

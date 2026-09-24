@@ -7,7 +7,7 @@ index: breaking a build into tracer-bullet tickets
 # Tickets: what lands green next
 
 Each **tracer-bullet** ticket cuts a complete path through schema, command, output, and tests.
-It is independently verifiable and sized to one retained-session context window.
+It is independently verifiable and sized to one fresh author context.
 A horizontal layer, tests without behavior, or behavior without its tests is
 not a ticket. A coverage row that only adds a test to a seam its parent slice
 already opened is that slice's acceptance row. Its green integration-source
@@ -15,7 +15,7 @@ commit is the grading rule.
 
 ## Draft the breakdown
 
-Gather context: the spec, or the conversation. Explore the codebase if you have not. Put any prefactoring that makes the change easy first, as its own ticket. Then draft the vertical slices. A rewrite ticket is sized by the lines the retained author must read, not the lines it edits.
+Gather context: the spec, or the conversation. Explore the codebase if you have not. Put any prefactoring that makes the change easy first, as its own ticket. Then draft the vertical slices. A rewrite ticket is sized by the lines the ticket author must read, not the lines it edits.
 
 A ticket that creates a seam its sibling tickets consume is its own review chunk, and that chunk stays small. Its chunk review closes before any consumer ticket starts. A seam the implementation introduces counts the same as a seam the spec declares.
 
@@ -64,7 +64,7 @@ Before you lock a `Writes:` line, read [the slicing checks](references/slicing-c
 
 A ticket names every relocation destination in `Writes:`, including destinations for snapshots and registry rows.
 
-`Writes:` predicts the touched paths; `.bench/BENCH.md` owns how the retained author updates that expectation before an approved in-scope expansion is used.
+`Writes:` predicts the touched paths; `.bench/BENCH.md` owns how the orchestrator updates that expectation before an approved in-scope expansion is used.
 `Acceptance` rows are observable behavioral criteria, not a project-gate checkbox.
 
 Good:
@@ -90,7 +90,7 @@ Users see a cancelled row, its reason, and the next recovery action — one demo
 
 ## Land the frontier
 
-Spec-backed builds work the unblocked frontier in one retained implementation session. Each ticket is one serial green commit checkpoint. The implementation plan groups tickets into coherent review chunks and names each chunk's outcome, acceptance rows, and tests. The retained author orders overlapping or dependent tickets explicitly.
+Spec-backed builds work the unblocked frontier with one fresh author for each ticket. Each ticket is one serial green commit checkpoint. The implementation plan groups tickets into coherent review chunks and names each chunk's outcome, acceptance rows, and tests. The orchestrator orders overlapping or dependent tickets explicitly.
 
 A delegated run keeps these serial green ticket checkpoints under the operating guide's delegated policy.
 

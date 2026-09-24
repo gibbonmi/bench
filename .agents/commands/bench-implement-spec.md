@@ -17,13 +17,13 @@ Close by reporting the implemented stories, each acceptance row's coverage statu
 Declare the line before you touch code. `craft-line` owns the template, the tier decision, and the escalation ladder. After the write-spec-phase approval,
 create or retain one integration worktree at the reviewed graph commit; that commit is its frozen review base. Enter it and run `bench preflight build <slug>` before the first edit; a red preflight stops the phase.
 
-The reviewer approves the spec and the whole ticket graph once, in `/bench-write-spec`. A ticket inside that approved graph starts without a new approval stop. Run `bench preflight build <slug> --charge --ticket <ticket> --base <base> --source-tip <tip>` and read the prepared evidence identity it returns. Retrieve every required source with `bench preflight evidence <id>`, and follow each exact successor command until the stream ends. Verify the fence, dependency completion, and expected source tip before the retained author starts the ticket.
+The reviewer approves the spec and the whole ticket graph once, in `/bench-write-spec`. A ticket inside that approved graph starts without a new approval stop. Run `bench preflight build <slug> --charge --ticket <ticket> --base <base> --source-tip <tip>` and read the prepared evidence identity it returns. Verify the fence, dependency completion, and expected source tip before the ticket's fresh author starts. Each ticket goes to a fresh author session under `.bench/BENCH.md`'s authorship rule. The author charge carries the ticket, its coverage rows, its `Writes:` fence, the evidence identity, and the declared line.
 
-Build action requires verified delivery: act only after this session retrieves every required source and matches its byte coverage to the manifest descriptors. `bench preflight evidence <id> --verify` is the separate artifact-integrity check.
+Build action requires a narrow author read: act only after this session reads the metadata and ticket pages and targeted sources. An author does not retrieve every evidence page. `bench preflight evidence <id> --verify` is the separate artifact-integrity check.
 
-Build action requires available required context: a retrieval receipt, a terminal cursor, or another consumer's delivery never replaces the required bytes this session holds. Build action requires a current-action binding: act only after `bench preflight evidence <id> --check-current` binds the artifact to the current assignment and source pair. Build action requires reviewer approval, which a generated charge, a staged artifact, or a verified artifact never supplies. Build action requires the complete task supplement, which this session writes. The supplement names selectors, model, effort, cap, and mutation, and verified evidence never supplies it.
+Build action requires available required context: a retrieval receipt, a terminal cursor, or another consumer's delivery never replaces what this session reads itself. Build action requires a current-action binding: act only after `bench preflight evidence <id> --check-current` binds the artifact to the current assignment and source pair. Build action requires reviewer approval, which a generated charge, a staged artifact, or a verified artifact never supplies. Build action requires the complete task supplement, which this session writes. The supplement names selectors, model, effort, cap, and mutation, and verified evidence never supplies it.
 
-Follow `.bench/BENCH.md`'s retained implementation and chunk-review policy. `craft-delegate` governs independent review and brief read-only diagnostic consultation. Neither role receives implementation or repair authorship.
+Follow `.bench/BENCH.md`'s ticket authorship and chunk-review policy. `craft-delegate` governs independent review and brief read-only diagnostic consultation. Neither role receives implementation or repair authorship. Before the first dispatch, the orchestrator takes the plan amendment that `.bench/BENCH-reference.md` states. The orchestrator reads manifests, returns, and verdicts, not code, and it refreshes `bench handoff` at each chunk checkpoint.
 
 ## Build
 
@@ -40,16 +40,16 @@ Apply `craft-line`'s retained implementation continuation policy throughout the 
 
 A prose-only owner edit is an implementation write. Before another session edits it, follow `craft-delegate`'s recorded user-directed author-transfer rules. Run fresh-session adoption after the final committed owner-byte change. A later owner-byte edit invalidates that evidence; rerun it against the new committed tip before review.
 
-Before each ticket, revalidate prepared source identity and required source bytes. Regenerate a charge when either changes. The retained author runs focused checks and the required mutation probe, then commits the ticket on a green lane. Run the plan's named probe exactly. Do not replace it with a similar mutation. If the named probe cannot run, stop and amend the plan before verification.
+Before each ticket, revalidate prepared source identity and required source bytes. Regenerate a charge when either changes. The ticket author runs focused checks and the required mutation probe, then commits the ticket on a green lane. Run the plan's named probe exactly. Do not replace it with a similar mutation. If the named probe cannot run, stop and amend the plan before verification.
 
-A retained consumer reuses exact available source bytes only after the new manifest verifies their membership, role, and requiredness. A matching body digest alone authorizes no reuse. A fresh consumer runs its own retrieval from the trusted evidence identity. A transferred final cursor and another consumer's receipt deliver no byte to it.
+An author that takes a regenerated charge reuses exact available source bytes only after the new manifest verifies their membership, role, and requiredness. A matching body digest alone authorizes no reuse. A fresh author makes its own narrow author read from the trusted evidence identity. A transferred final cursor and another consumer's receipt deliver no byte to it.
 
 After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug>`. A run from the primary checkout grades the wrong tip. After the last ticket in a chunk, freeze the chunk delta and run the three review axes before advancing. `/bench-review-implementation` owns those axes and the review record. The author commits the verification and probe record before the axis dispatch.
 When evidence requires an in-scope plan, `Writes:`, or gate expansion, apply `.bench/BENCH.md`'s approved plan-expansion policy before using it.
 
 ## Land
 
-Tickets commit green serially in `Blocked by:` order on the retained integration source. After each chunk review, accepted findings return to the retained author and commit there with current repair coverage. Start the successor only after that repair closes. Plan commits and `main` merges land before the ticket merge. Only record commits follow the chunk tip. The reconciliation commit joins the review delta of the last chunk.
+Tickets commit green serially in `Blocked by:` order on the retained integration source. After each chunk review, accepted findings go to fresh repair sessions under `.bench/BENCH.md`'s repair rule, and each repair commits with current repair coverage. Start the successor only after that repair closes. Plan commits and `main` merges land before the ticket merge. Only record commits follow the chunk tip. The reconciliation commit joins the review delta of the last chunk.
 
 Retain author verification and all three native review results in `reviews/<slug>.md`.
 Commit the artifact on its ordinary lane, then run `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>` before the successor.
@@ -65,16 +65,16 @@ Write the ordinary assessment record before the `bench worktree land` step, and 
 
 Report the state: what is done, what remains, the coverage table, and what consumed the cap. Keep landed work landed. Then route by cause:
 
-- Wrong tier: apply `craft-line`'s ladder. In a retained build, raise the effort and resume; a tier move asks the reviewer first.
+- Wrong tier: apply `craft-line`'s ladder. For a ticket author, raise the effort and resume; a tier move asks the reviewer first.
 - Wrong spec: route to `/bench-write-spec` with the finding quoted.
 - Wrong scope: propose the split for the reviewer to decide.
 
 ## `--full <spec>`
 
-This command orchestrates retained implementation, chunk reviews, the final landing, and `/bench-final-check`. It refuses on a missing or unnamed spec. At every phase boundary it writes the phase reached into `capture/session-handoff.md` and refreshes the pin with `bench handoff`. The review phase owns cross-harness review opt-in.
+This command orchestrates the fresh ticket authors, chunk reviews, the final landing, and `/bench-final-check`. It refuses on a missing or unnamed spec. At every phase boundary it writes the phase reached into `capture/session-handoff.md` and refreshes the pin with `bench handoff`. The review phase owns cross-harness review opt-in.
 
 A chunk delta can grow past its approved plan. It touches a path outside the tickets' `Writes:` fences, or it adds a ticket the plan does not list. Such a delta pauses to ask the reviewer before escalating tier.
 
 ## `--delegate`
 
-`--delegate` extends a `--full` run with `.bench/BENCH.md`'s delegated authorship policy. It refuses without `--full`, an approved spec, or an approved ticket graph. Declare the configured model, effort, iteration cap, and author limit before the first dispatch. Record each assignment in the completion plan before you send that author's write charge. A resumed delegated run keeps the recorded identities, source pins, replacement history, and pending obligations.
+`--delegate` extends a `--full` run with `.bench/BENCH.md`'s delegated run policy. It refuses without `--full`, an approved spec, or an approved ticket graph. Declare the configured model, effort, iteration cap, and author limit before the first dispatch. Record each assignment in the completion plan before you send that author's write charge. A resumed delegated run keeps the recorded identities, source pins, replacement history, and pending obligations.

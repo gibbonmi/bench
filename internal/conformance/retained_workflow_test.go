@@ -19,6 +19,18 @@ func TestRetainedWorkflow(t *testing.T) {
 	runAnchorBites(t, anchorsWithDiagnosticPrefix("retained workflow: "), func(anchor anchors.Anchor) string { return anchor.Diagnostic })
 }
 
+// TestFreshTicketAuthors grades the fresh ticket author rows. Each row bites alone on a
+// synthetic tree, and the shipped guidance satisfies every row. A Forbid row bites when its
+// retired sentence returns.
+func TestFreshTicketAuthors(t *testing.T) {
+	family := anchorsWithDiagnosticPrefix("fresh ticket author: ")
+	if len(family) == 0 {
+		t.Fatal("no fresh ticket author row is registered")
+	}
+	runAnchorBites(t, family, func(anchor anchors.Anchor) string { return anchor.Diagnostic })
+	requireConformantLiveTree(t, family)
+}
+
 func checkRetainedWorkflow(root string) []string {
 	var diags []string
 	binding := lines.ParseBinding([]byte(readIfExists(filepath.Join(root, ".bench", "lines.env"))))
@@ -41,16 +53,13 @@ func checkRetainedWorkflow(root string) []string {
 		"retained workflow: review phase dropped the conditional review-line reference",
 		"retained workflow: project profile dropped the conditional review-line reference",
 		"retained workflow: craft-line dropped the user-directed model-switch boundary",
-		"retained workflow: operating guide dropped retained implementation authorship",
 		"retained workflow: operating guide dropped chunk outcome and review checkpoint",
 		"retained workflow: operating guide dropped serial ticket checkpoint",
 		"retained workflow: operating guide allows advancement before three-axis chunk review",
-		"retained workflow: operating guide dropped final acceptance reconciliation",
 		"retained workflow: operating guide restored routine final full review",
 		"retained workflow: operating guide dropped diagnostic-only consultation boundary",
-		"retained workflow: implementation phase dropped retained policy reference",
+		"retained workflow: implementation phase dropped the authorship policy reference",
 		"retained workflow: drain restored delegated batch authorship",
-		"retained workflow: field guide dropped retained chunk review",
 		"retained workflow: craft-spec dropped the canonical plan-expansion owner",
 		"retained workflow: operating guide dropped changed-chunk identity mapping",
 		"retained workflow: operating guide dropped plan-update timing or preserved guarantees",
@@ -63,12 +72,10 @@ func checkRetainedWorkflow(root string) []string {
 		"retained workflow: operating guide dropped the delegated prerequisite-checkpoint wait",
 		"retained workflow: operating guide dropped the green predecessor dispatch rule",
 		"retained workflow: operating guide dropped the pending-or-red predecessor stop",
-		"retained workflow: operating guide dropped delegated ticket-author repair ownership",
 		"retained workflow: craft-line dropped the delegated tier authorization",
 		"retained workflow: craft-line dropped the unbound delegated model stop",
 		"retained workflow: craft-line dropped the active-writer author limit",
 		"retained workflow: craft-line dropped the delegated mid review route",
-		"retained workflow: craft-delegate dropped the delegated per-ticket author",
 		"retained workflow: delegation discipline dropped the no-progress transfer trigger",
 		"retained workflow: delegation discipline dropped the terminal-failure transfer trigger",
 		"retained workflow: delegation discipline dropped the cap-exhaustion transfer trigger",
@@ -105,11 +112,7 @@ func checkRetainedWorkflow(root string) []string {
 		},
 		"retained workflow: craft-line dropped the user-directed model-switch boundary": {
 			file:   ".agents/skills/bench-craft-line/SKILL.md",
-			needle: "A different implementation model or session requires user direction. The author can adjust effort in the retained session and reports the change.",
-		},
-		"retained workflow: operating guide dropped retained implementation authorship": {
-			file:   ".bench/BENCH.md",
-			needle: "The retained implementation session writes production changes, tests, probes, and repairs.",
+			needle: "A different implementation model, or a session beyond the planned ticket authors, requires user direction. The ticket author can adjust effort in its own session and reports the change.",
 		},
 		"retained workflow: operating guide dropped chunk outcome and review checkpoint": {
 			file:   ".bench/BENCH.md",
@@ -123,10 +126,6 @@ func checkRetainedWorkflow(root string) []string {
 			file:   ".bench/BENCH.md",
 			needle: "After a chunk's ticket commits, freeze its delta and run Standards, Spec, and Coverage against the whole approved spec before starting its successor.",
 		},
-		"retained workflow: operating guide dropped final acceptance reconciliation": {
-			file:   ".bench/BENCH.md",
-			needle: "After the last chunk, the retained author reconciles overall acceptance and integration.",
-		},
 		"retained workflow: operating guide restored routine final full review": {
 			file:   ".bench/BENCH.md",
 			needle: "Repeat delegated review only for a later delta or a cross-chunk concern that invalidates prior evidence.",
@@ -135,17 +134,13 @@ func checkRetainedWorkflow(root string) []string {
 			file:   ".bench/BENCH.md",
 			needle: "A brief read-only diagnostic consultation can inspect evidence, but it receives no implementation or repair assignment.",
 		},
-		"retained workflow: implementation phase dropped retained policy reference": {
+		"retained workflow: implementation phase dropped the authorship policy reference": {
 			file:   ".agents/commands/bench-implement-spec.md",
-			needle: "Follow `.bench/BENCH.md`'s retained implementation and chunk-review policy.",
+			needle: "Follow `.bench/BENCH.md`'s ticket authorship and chunk-review policy.",
 		},
 		"retained workflow: drain restored delegated batch authorship": {
 			file:   ".agents/commands/bench-drain.md",
 			needle: "If tracked changes remain, the retained drain session authors the complete tracked batch.",
-		},
-		"retained workflow: field guide dropped retained chunk review": {
-			file:   "docs/field-guide.html",
-			needle: "One implementation session retains authorship through the approved ticket graph and its chunk reviews.",
 		},
 		"retained workflow: craft-spec dropped the canonical plan-expansion owner": {
 			file:    ".agents/skills/bench-craft-spec/SKILL.md",
@@ -174,7 +169,7 @@ func checkRetainedWorkflow(root string) []string {
 		},
 		"retained workflow: craft-tickets restored Writes as an approval boundary": {
 			file:   ".agents/skills/bench-craft-tickets/SKILL.md",
-			needle: "`Writes:` predicts the touched paths; `.bench/BENCH.md` owns how the retained author updates that expectation before an approved in-scope expansion is used.",
+			needle: "`Writes:` predicts the touched paths; `.bench/BENCH.md` owns how the orchestrator updates that expectation before an approved in-scope expansion is used.",
 		},
 		"retained workflow: delegation discipline restored Writes as a refusal boundary": {
 			file:    ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",

@@ -31,7 +31,7 @@ finding count per axis, and the de-duplicated repair-target count after you
 collapse findings that name the same fix. Volume and repair work are different
 numbers; never report one number where the reviewer asks for the other.
 
-Accepted findings return to the retained `/bench-implement-spec` session. Findings that need a fix pass use the pickup-file route in step 6. A clean review returns to the next chunk, or to final reconciliation after the last chunk.
+Accepted findings go to a fresh repair author under `.bench/BENCH.md`'s repair rule. Findings that need a fix pass use the pickup-file route in step 6. A clean review returns to the next chunk, or to final reconciliation after the last chunk.
 
 The gate is deterministic: it runs the phase table the project profile declares,
 and nothing else. Review supplies the semantic judgment that phase table cannot
@@ -42,7 +42,7 @@ perform. The gate decides done; the reviewer decides whether a green change ship
 Before classifying repairs, read [the bounded repair policy](../skills/bench-craft-line/references/bounded-repair-policy.md). Apply its allowance and retained-state rules.
 Each planned chunk takes one review across Standards, Spec, and Coverage. The axes read the whole approved spec and focus on the frozen `chunk-base..chunk-tip` delta.
 
-After the retained author repairs accepted findings, current repair coverage closes those predicates. Repeat delegated review only for a later semantic delta or a cross-chunk concern that invalidates prior evidence. A repeated review uses the full chunk diff as context and blocks only on that later delta or named concern.
+After the fresh repair author repairs accepted findings, current repair coverage closes those predicates. Repeat delegated review only for a later semantic delta or a cross-chunk concern that invalidates prior evidence. A repeated review uses the full chunk diff as context and blocks only on that later delta or named concern.
 A chunk that ends on a repair takes one confirming round of all three axes at its final tip.
 A confirming round reads only the repair delta, and its charge names the folds to confirm.
 
@@ -68,7 +68,7 @@ For each issue or review miss, it states whether the implementation command
 contributed. When it did, it names the exact improvement. Otherwise, it states
 that no command change is necessary.
 
-Here, findings that prevent progression are unresolved blockers; retain optional advice separately under the policy. The successor chunk starts only after findings and repair coverage close. After the last chunk, the retained author reconciles overall acceptance and integration before landing.
+Here, findings that prevent progression are unresolved blockers; retain optional advice separately under the policy. The successor chunk starts only after findings and repair coverage close. After the last chunk, the orchestrator reconciles overall acceptance and integration before landing.
 
 ## Process
 
@@ -224,7 +224,7 @@ Here, findings that prevent progression are unresolved blockers; retain optional
 
 7. **Hand off, don't repair.** This phase makes no fixes and runs no gate. Accepted findings return to `/bench-implement-spec` on the same integration source. A spec amendment commits to that source on the finding cadence.
 
-   A clean chunk review hands its frozen pair back to the retained author. The author starts the successor or performs final reconciliation. Only the reconciled final source proceeds to `bench worktree land`; `/bench-final-check` reports that landing's oracle.
+   A clean chunk review hands its frozen pair back to the orchestrator. The orchestrator starts the successor ticket's fresh author or performs final reconciliation. Only the reconciled final source proceeds to `bench worktree land`; `/bench-final-check` reports that landing's oracle.
 
    The landing base is the `main` tip merged before the first chunk. `bench worktree land --base` takes that `main` tip, not a later chunk base.
 

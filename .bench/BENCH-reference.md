@@ -192,7 +192,7 @@ prints a `line` cell that carries the physical line of the first match. The cell
 reads 0 when the needle has no match. A link, a special file, or an unreadable
 file at the path answers a structured refusal at exit 1.
 
-A reviewed spec-backed build keeps its serial ticket commits in one retained integration source. Its approved plan groups tickets into coherent chunks. Semantic review freezes each chunk's predecessor tip and current tip, and accepted findings return to the retained author there.
+A reviewed spec-backed build keeps its serial ticket commits in one retained integration source. Its approved plan groups tickets into coherent chunks. Before the first dispatch, the plan amendment declares version 2 with a delegate execution block. The amendment splits each chunk verification into one verification for each ticket. Semantic review freezes each chunk's predecessor tip and current tip. Each accepted finding there goes to a fresh repair session under the repair rule of `.bench/BENCH.md`.
 
 A worktree `bench commit`
 runs the fast lane on a private checkout of the composed snapshot, and a lane pass
