@@ -448,6 +448,7 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - `internal/intent/admissionpolicy/liveness_test.go`
 - `internal/sessioninspect/sessioninspect.go`
 - `internal/status/status.go`
+- `tests/canary/docs-currency-token-diet/signal-vocabulary-drift`
 - `internal/sessioninspect/sessioninspect_test.go`
 - `internal/worktree/snapshot.go`
 - `internal/worktree/snapshot_test.go`
