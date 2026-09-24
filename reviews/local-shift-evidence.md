@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A and LE-B1 are accepted. LE-B2 repair cycle 1 is committed; the confirming round of the three axes is pending.
+Status: LE-A and LE-B1 are accepted. The first LE-B2 confirming round returned 2 findings; repair cycle 2 is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -306,6 +306,16 @@ Advice taken: the LE59 test reads that the first shift kept a memory file.
 | LEB2-C1 | The refactor test reads the pass's gate child and adapter result. | Run the refactor gate on a fresh context: bit. |
 | LEB2-C2 | The store test reads the 0600 file and the 0700 directory. | Create the file 0644: bit. |
 | LEB2-C4 | `TestAResolutionRecordsNoOperatorText` drops an unknown harness and tier. | Record any harness: bit. |
+
+## LE-B2 confirming round 1
+
+Three fresh axes graded the code tip `39e12681` with the source digest `bdb8fd46`. Each axis read the manifest, confirmed the current binding, and read the repair delta `acb050a9..39e12681`.
+
+- Standards, 0 findings. LEB2-S1, LEB2-S2, and LEB2-S3 are closed.
+- Spec, 0 findings. LEB2-P1, LEB2-P2, and LEB2-P4 are closed. The reviewer approved the LEB2-P2 reading on 2026-09-23.
+- Coverage, 2 findings. Worst issue: LEB2-C6.
+  - LEB2-C6 (auto-fix, confidence 8): no test plants a foreign entry in the memory directory, so a prune of any entry stays green.
+  - LEB2-C7 (auto-fix, confidence 6): no test drives a failed prune after a kept file, so the `retained` reading of that path is unguarded.
 
 ```bench-review-record
 {
@@ -1411,6 +1421,75 @@ Advice taken: the LE59 test reads that the first shift kept a memory file.
             "LEB2-C5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "LE-B2-review-standards-2",
+          "performer": "claude-code:subagent:a1e1ed8a7e35104a2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bdb8fd46baa5fe37ce2d14ce75e798e151e8df85",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:a1e1ed8a7e35104a2, evidence sha256:a2e6576c9200e3551b690a1824e5c15615261a28d899f29f246f10552b9e8100",
+            "digest": "sha256:1a860e27b6a42d477aebeeafd0105a50f16ae6a5967bdb6b40e36b33831f61a3",
+            "excerpt": "Verdict: PASS. S1, S2, and S3 are closed. The repair delta adds no blocking finding. Finding count: 0 blocking, 1 advisory."
+          },
+          "axis": "Standards",
+          "base": "fab6d03ed4a4d5418bd0f31dce0a2f1fc59bab80",
+          "tip": "39e126814e3c6c0ed6956cc171e547c7cc6caeaa",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-B2-review-standards-1"
+          ]
+        },
+        {
+          "id": "LE-B2-review-spec-2",
+          "performer": "claude-code:subagent:ac9605d1acaabf679",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bdb8fd46baa5fe37ce2d14ce75e798e151e8df85",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:ac9605d1acaabf679, evidence sha256:a2e6576c9200e3551b690a1824e5c15615261a28d899f29f246f10552b9e8100",
+            "digest": "sha256:86ccbd7b56a57e4a70d29e9b595f5537a855746acf2d10c37e4e2613fd7ef272",
+            "excerpt": "Verdict: pass. P1, P2, and P4 are closed, and nothing in the repair delta blocks. There are 2 advisory findings."
+          },
+          "axis": "Spec",
+          "base": "fab6d03ed4a4d5418bd0f31dce0a2f1fc59bab80",
+          "tip": "39e126814e3c6c0ed6956cc171e547c7cc6caeaa",
+          "finding_ids": [],
+          "supersedes": [
+            "LE-B2-review-spec-1"
+          ]
+        },
+        {
+          "id": "LE-B2-review-coverage-2",
+          "performer": "claude-code:subagent:abf2b25cd0bd7bb6f",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bdb8fd46baa5fe37ce2d14ce75e798e151e8df85",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-code subagent claude-code:subagent:abf2b25cd0bd7bb6f, evidence sha256:a2e6576c9200e3551b690a1824e5c15615261a28d899f29f246f10552b9e8100",
+            "digest": "sha256:5b9f26d00cd9c74686dbc7ad580cf086bd2d2bd7f372d2d86026449424fceb19",
+            "excerpt": "Verdict: block. 2 findings. Worst issue: LEB2-C5 is fixed in code but has no test."
+          },
+          "axis": "Coverage",
+          "base": "fab6d03ed4a4d5418bd0f31dce0a2f1fc59bab80",
+          "tip": "39e126814e3c6c0ed6956cc171e547c7cc6caeaa",
+          "finding_ids": [
+            "LEB2-C6",
+            "LEB2-C7"
+          ],
+          "supersedes": [
+            "LE-B2-review-coverage-1"
+          ]
         }
       ]
     }
