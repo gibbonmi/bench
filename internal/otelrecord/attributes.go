@@ -105,6 +105,12 @@ const (
 
 	// AttrAdapterExit carries the adapter's exit code when the adapter exited.
 	AttrAdapterExit = "bench.adapter.exit"
+
+	// AttrLineHarness carries the harness a line resolution named, and only a known one.
+	AttrLineHarness = "bench.line.harness"
+
+	// AttrLineModel carries the resolved model, and only a safe model token.
+	AttrLineModel = "bench.line.model"
 )
 
 // RecordStart is the AttrRecord value on the line written at span start. The start line
@@ -135,6 +141,8 @@ var DeclaredAttributes = []string{
 	AttrRecoveryKey,
 	AttrAdapterResult,
 	AttrAdapterExit,
+	AttrLineHarness,
+	AttrLineModel,
 }
 
 // declared answers whether the encoder may write a span attribute key.

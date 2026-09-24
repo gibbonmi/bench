@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 )
 
@@ -128,6 +129,27 @@ func TestARefactorPassWritesARefactorSpan(t *testing.T) {
 	_, spans, _ := recordedShift(t)
 	if refactors := childrenOf(spans, shift, refactorSeam); len(refactors) != 1 {
 		t.Fatalf("the shift span has %d refactor children, want 1", len(refactors))
+	}
+}
+
+// LE45: the adapter runs with the handoff of its pass span.
+func TestTheAdapterReceivesThePassHandoff(t *testing.T) {
+	faultFixtureCore(t, "#!/usr/bin/env bash\nexit 0\n", nil)
+	handoff := filepath.Join(t.TempDir(), "handoff")
+	withAgent(t, "printf '%s\\n%s\\n' \"$BENCH_OTEL_ROOT\" \"$BENCH_OTEL_TRACEPARENT\" > '"+handoff+"'\n")
+	shift, _, _ := runRecordedShift(t, 4)
+	_, spans, _ := recordedShift(t)
+	passes := childrenOf(spans, shift, iterationSeam)
+	raw, err := os.ReadFile(handoff)
+	if err != nil || len(passes) != 1 {
+		t.Fatalf("handoff %q (%v), %d passes, want a handoff and 1 pass", raw, err, len(passes))
+	}
+	root, traceparent, _ := strings.Cut(strings.TrimSpace(string(raw)), "\n")
+	if repo, _ := git.Root(); root != repo {
+		t.Fatalf("handoff root = %q, want the repository %q", root, repo)
+	}
+	if want := "00-" + passes[0].TraceID + "-" + passes[0].SpanID + "-01"; traceparent != want {
+		t.Fatalf("handoff traceparent = %q, want the pass span %q", traceparent, want)
 	}
 }
 

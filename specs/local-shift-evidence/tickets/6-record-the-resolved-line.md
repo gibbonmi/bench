@@ -1,7 +1,7 @@
 # 6. Record the resolved line
 
 Blocked by: 1-move-the-trace-handoff-into-the-record.md, 5-record-each-pass-under-the-shift.md
-Writes: internal/shift/session.go, internal/shift/pass_test.go (new), cmd/bench/main.go, cmd/bench/guards.go, cmd/bench/otel_hook_seams_test.go, tests/canary/package-core-guard/unrouted-subcommand, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/otelrecord/attributes.go, internal/otelrecord/registry.go
+Writes: internal/shift/session.go, internal/shift/pass_test.go (new), cmd/bench/main.go, cmd/bench/guards.go, cmd/bench/otel_hook_seams_test.go, cmd/bench/main_test.go, tests/canary/package-core-guard/unrouted-subcommand, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/otelrecord/attributes.go, internal/otelrecord/registry.go
 Covers: LE45, LE46, LE47, LE48
 
 ## What to build

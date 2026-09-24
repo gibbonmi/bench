@@ -296,10 +296,10 @@ Review iteration 1 split the old LE-C2 into LE-C2 and LE-C3. The old ticket 9 be
 | LE42 | 22 | Each pass span has exactly one child `gate` span, and that child carries `bench.subject.id` and `bench.outcome` | `TestEachPassParentsOneGateSpan` in `internal/shift` | A gate run on a fresh context starts a new trace, so the parent comparison reds. |
 | LE43 | 23 | A pass that committed carries a `bench.subject.id` equal to the commit that the branch gained in that pass | `TestACommittedPassCarriesItsCommit` in `internal/shift` | A pass without the commit key reds the equality. |
 | LE44 | 24 | A shift that receives SIGINT during its adapter writes the end line of the open `shift.iteration` span before the end line of the `shift` span | `TestAnInterruptedShiftEndsThePassFirst` in `internal/shift` | An exit path that ends only the shift span leaves the pass open, so the order read reds. |
-| LE45 | 25 | The adapter environment carries `BENCH_OTEL_ROOT` and a `BENCH_OTEL_TRACEPARENT` whose span id is the current pass span | planned shift test in `internal/shift` with an adapter that writes its environment | An adapter launch without the handoff leaves the variables out, so the comparison reds. |
-| LE46 | 25 | `bench resolve-model --harness claude` with the handoff, a routed binding, and `BENCH_MODEL=mid` writes a `line.resolve` span under the handoff span with harness `claude`, tier `mid`, and the bound model | planned command test in `cmd/bench` | An uninstrumented resolver writes no line span, so the read reds. |
-| LE47 | 25 | `bench resolve-model` with no handoff environment writes a `line.resolve` span that has no parent | planned command test in `cmd/bench` | A resolver that records only under a handoff misses a standalone call, so the read reds. |
-| LE48 | 25 | A refused resolution in a routed repo with no `BENCH_MODEL` writes a `line.resolve` span with `bench.outcome` `red` and no `bench.line.model` key | planned command test in `cmd/bench` | A span that records the refusal as green reds the outcome read. |
+| LE45 | 25 | The adapter environment carries `BENCH_OTEL_ROOT` and a `BENCH_OTEL_TRACEPARENT` whose span id is the current pass span | `TestTheAdapterReceivesThePassHandoff` in `internal/shift` | An adapter launch without the handoff leaves the variables out, so the comparison reds. |
+| LE46 | 25 | `bench resolve-model --harness claude` with the handoff, a routed binding, and `BENCH_MODEL=mid` writes a `line.resolve` span under the handoff span with harness `claude`, tier `mid`, and the bound model | `TestAHandedOffResolutionRecordsItsLine` in `cmd/bench` | An uninstrumented resolver writes no line span, so the read reds. |
+| LE47 | 25 | `bench resolve-model` with no handoff environment writes a `line.resolve` span that has no parent | `TestAStandaloneResolutionRecordsARootSpan` in `cmd/bench` | A resolver that records only under a handoff misses a standalone call, so the read reds. |
+| LE48 | 25 | A refused resolution in a routed repo with no `BENCH_MODEL` writes a `line.resolve` span with `bench.outcome` `red` and no `bench.line.model` key | `TestARefusedResolutionRecordsRed` in `cmd/bench` | A span that records the refusal as green reds the outcome read. |
 | LE49 | 26 | After a green shift whose adapter appended `MEMMARK` to the notes, one memory file below the record directory holds the notes bytes | planned shift test in `internal/shift` | A teardown that deletes the notes first leaves no memory file, so the read reds. |
 | LE50 | 27 | After a red shift that retained its worktree, one memory file holds the notes bytes | planned shift test in `internal/shift` with the retain fixture | A retention on the release path only leaves no file here, so the read reds. |
 | LE51 | 28 | The `shift` span carries `bench.memory.state` `retained`, the byte count, and a `bench.memory.digest` equal to the SHA-256 of the memory file | planned shift test in `internal/shift` | A span without the reference lacks the keys, so the equality reds. |
@@ -424,6 +424,7 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - `cmd/bench/main.go`
 - `cmd/bench/guards.go`
 - `cmd/bench/otel_hook_seams_test.go`
+- `cmd/bench/main_test.go`
 - `tests/canary/package-core-guard/unrouted-subcommand`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`

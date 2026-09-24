@@ -255,7 +255,7 @@ func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 		passCtx := record.beginPass(iterationSeam)
 		fmt.Fprintf(stdout, "── iteration %d/%d ──\n", i, maxIters)
 		pre := dirtyPaths(wt)
-		adapterErr := s.runAdapter(objective.prompt())
+		adapterErr := s.runAdapter(passCtx, objective.prompt())
 		record.adapterRan(adapterErr)
 		s.checkpoint()
 		post := dirtyPaths(wt)

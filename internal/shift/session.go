@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/structure"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -117,7 +118,7 @@ func (s *session) refactorPhase(base string, rcap int) error {
 		passCtx := s.record.beginPass(refactorSeam)
 		fmt.Fprintf(s.stdout, "── refactor %d/%d ──\n", r, rcap)
 		pre := dirtyPaths(s.root)
-		s.record.adapterRan(s.runAdapter(fmt.Sprintf(refactorPrompt, flagged)))
+		s.record.adapterRan(s.runAdapter(passCtx, fmt.Sprintf(refactorPrompt, flagged)))
 		s.checkpoint()
 		post := dirtyPaths(s.root)
 		if s.runGate(passCtx) == 0 {
@@ -161,8 +162,9 @@ func (s *session) refactorPhase(base string, rcap int) error {
 // in its own process group, so a pulled line can tear down the whole adapter tree, not
 // just the immediate child. The returned error, a spawn failure or a nonzero exit, is
 // evidence for progress, not the oracle. The gate still decides whether an iteration's
-// work counts.
-func (s *session) runAdapter(prompt string) error {
+// work counts. The adapter also gets the trace handoff for the pass span on ctx, after
+// every inherited value, so its line resolution records under this pass.
+func (s *session) runAdapter(ctx context.Context, prompt string) error {
 	adapterEnv, err := env.Build(s.root)
 	if err != nil {
 		fmt.Fprintln(s.stderr, err)
@@ -170,7 +172,7 @@ func (s *session) runAdapter(prompt string) error {
 	}
 	cmd := exec.Command(s.agent)
 	cmd.Dir = s.root
-	cmd.Env = append(adapterEnv, "BENCH_SHIFT=1")
+	cmd.Env = otelrecord.WithHandoff(ctx, s.mainRoot, append(adapterEnv, "BENCH_SHIFT=1"))
 	cmd.Stdin = strings.NewReader(prompt)
 	cmd.Stdout, cmd.Stderr = s.stdout, s.stderr
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
