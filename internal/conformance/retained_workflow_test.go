@@ -84,7 +84,7 @@ func checkRetainedWorkflow(root string) []string {
 		"retained workflow: implementation phase dropped the delegated entry refusals",
 		"retained workflow: implementation phase dropped the delegated dispatch declaration",
 		"retained workflow: implementation phase dropped delegated resumption contents",
-		"retained workflow: review phase dropped the integrated chunk-tip review fence",
+		"retained workflow: operating guide dropped the integrated chunk-tip review fence",
 		"retained workflow: review phase dropped the delegated axis exclusions",
 		"retained workflow: final check dropped the delegated account reconciliation",
 		"retained workflow: final check dropped an account inventory member",
@@ -191,9 +191,9 @@ func checkRetainedWorkflow(root string) []string {
 			file:   ".bench/BENCH.md",
 			needle: "A pending or red predecessor commit stops that successor dispatch.",
 		},
-		"retained workflow: review phase dropped the integrated chunk-tip review fence": {
-			file:   ".agents/commands/bench-review-implementation.md",
-			needle: "A delegated chunk review starts after every ticket of the chunk reaches the integrated chunk tip.",
+		"retained workflow: operating guide dropped the integrated chunk-tip review fence": {
+			file:   ".bench/BENCH.md",
+			needle: "Every ticket contribution reaches the integrated chunk tip before that chunk's review begins.",
 		},
 		"retained workflow: craft-line dropped the delegated mid review route": {
 			file:   ".agents/skills/bench-craft-line/SKILL.md",

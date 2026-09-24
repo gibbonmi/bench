@@ -153,8 +153,8 @@ The author returns a bounded blocked report with these fields:
 - the failing surface
 - its in-fence dirty paths
 
-The reviewer uses the report to confirm the cause. The coordinator validates the report and reslices
-repair tickets per `.agents/commands/bench-implement-spec.md`'s "When the build stops short".
+The reviewer uses the report to confirm the cause.
+An out-of-fence cause follows `.bench/BENCH.md`'s plan-expansion policy, or the reviewer's split for a scope change.
 
 The Phase 1 loop joins the project gate alongside its existing checks.
 Before a shift, the repro is committed in the project's expected-failure form.

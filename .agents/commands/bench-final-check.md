@@ -13,9 +13,9 @@ retained evidence and captures the retro. Other work lands only on green. It
 does not substitute the model's own judgment for tests, types, lint, or
 conformance checks.
 
-Before spec-backed landing, reconcile every planned acceptance row and retain
-the author's final acceptance and integration command results in the review
-record. Each result must name its examined source and terminal outcome.
+Before spec-backed landing, reconcile every planned acceptance row.
+The review record retains the orchestrator's final `integration-verification` results.
+Each result must name its examined source and terminal outcome.
 Obtain `bench gate --checkpoint <spec-path> --complete` on that source.
 
 The landing carries that complete obligation into the prospective gate. The
@@ -206,7 +206,9 @@ covers; it never selects the gate. To change what runs, change
   `bench prep-release`. This is a statement, not an approval prompt. Hand back to me to merge.
 - **Red:** report each failing check in the order it fails, with the smallest
   reproduction. Do not propose a weaker check. Diagnose the cause, and propose a
-  fix at the seam. If I approve, fix it and re-run the gate. A fix is real
+  fix at the seam.
+  A spec-backed red goes to a fresh repair session under `.bench/BENCH.md`'s repair rule.
+  For other work, if I approve, fix it and re-run the gate. A fix is real
   only when the gate is green again.
 
 If a check itself looks wrong, for example a flaky test or an over-tight lint

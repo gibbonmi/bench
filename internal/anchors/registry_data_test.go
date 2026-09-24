@@ -872,25 +872,25 @@ func TestCraftGateBothEndsAnchorsRedOnRemoval(t *testing.T) {
 }
 
 // TestRepairTicketOwnerAnchorsRedOnRemoval holds the two rules that keep an accepted
-// repair on the coverage map. A repair that amends a mapped row leaves no ticket behind,
-// so the row loses its owner at the final check. Each section, needle, and diagnostic is
-// written here independently of the registry.
+// repair on the coverage map. A coverage-map amendment updates the `Covers:` line of each
+// affected ticket, so no single repair ticket carries the repairs of several tickets. Each
+// section, needle, and diagnostic is written here independently of the registry.
 func TestRepairTicketOwnerAnchorsRedOnRemoval(t *testing.T) {
 	const file = ".agents/commands/bench-review-implementation.md"
 	anchorHarness{
 		group: AfterImplementSpec,
 		rules: []anchorRule{
 			{
-				file:    file,
-				section: "Review modes",
-				needle:  "writes one repair ticket when accepted repairs amend the coverage map",
-				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the repair ticket for coverage-map amendments",
+				file:      file,
+				forbidden: true,
+				needle:    "writes one repair ticket when accepted repairs amend the coverage map",
+				want:      ".agents/commands/bench-review-implementation.md restored the single repair ticket for coverage-map amendments; each affected ticket's `Covers:` line takes the amendment",
 			},
 			{
 				file:    file,
 				section: "Review modes",
-				needle:  "it cites each amended row in `Covers:`.",
-				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the repair ticket's amended-row citation in `Covers:`",
+				needle:  "A coverage-map amendment updates each affected ticket's `Covers:` line under `.bench/BENCH.md`'s plan-expansion policy.",
+				want:    ".agents/commands/bench-review-implementation.md Review modes dropped the `Covers:` update of each affected ticket for a coverage-map amendment",
 			},
 		},
 	}.check(t)
