@@ -134,14 +134,14 @@ func KeyOwner(kind Kind, key string) (int, bool) {
 	if !ok {
 		return 0, false
 	}
-	pid, err := strconv.Atoi(owner)
+	pid, err := strconv.ParseInt(owner, 10, 32)
 	if err != nil || pid <= 0 {
 		return 0, false
 	}
 	if _, err := strconv.ParseInt(stamp, 10, 64); err != nil {
 		return 0, false
 	}
-	return pid, true
+	return int(pid), true
 }
 
 // Upsert inserts or enriches one stable writer key. An identical upsert does not

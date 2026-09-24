@@ -2,8 +2,10 @@ package shift
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -84,18 +86,26 @@ func TestRecoverAbandonsADeadOwnersEntry(t *testing.T) {
 	}
 }
 
-// LE73 and LE74: a live owner's entry and an unparsable key stay unchanged.
+// LE73 and LE74: a live owner's entry, an unparsable key, and a closed entry stay
+// unchanged.
 func TestRecoverKeepsALiveOrUnknownEntry(t *testing.T) {
 	faultFixtureCore(t, greenGate, nil)
 	live := intent.NewEntry(intent.KindShift)
-	// The stamp parses and the owner does not, so only the owner parse refuses this key.
-	unknown := intent.Entry{Key: "shift-owner-1", Kind: intent.KindShift, CreatedAt: live.CreatedAt}
-	root := seedShiftEntry(t, live)
-	seedShiftEntry(t, unknown)
+	entries := []intent.Entry{live}
+	// Each key fails one part of the parse: the owner, the owner's range, or the stamp.
+	for _, key := range []string{"shift-owner-1", "shift-5368709120-1", fmt.Sprintf("shift-%d-stamp", deadOwner)} {
+		entries = append(entries, intent.Entry{Key: key, Kind: intent.KindShift, CreatedAt: live.CreatedAt})
+	}
+	closed := intent.EntryOwnedBy(intent.KindShift, deadOwner)
+	closed.Outcome = otelrecord.WorkCompleted
+	root := ""
+	for _, entry := range append(entries, closed) {
+		root = seedShiftEntry(t, entry)
+	}
 	Recover(root, io.Discard)
-	for _, key := range []string{live.Key, unknown.Key} {
-		if got := ledgerEntry(t, root, key).Outcome; got != "" {
-			t.Fatalf("entry %s outcome = %q, want it unchanged", key, got)
+	for _, entry := range append(entries, closed) {
+		if got := ledgerEntry(t, root, entry.Key).Outcome; got != entry.Outcome {
+			t.Fatalf("entry %s outcome = %q, want it unchanged", entry.Key, got)
 		}
 	}
 	if spans := recoverySpans(t, root); len(spans) != 0 {
@@ -113,15 +123,23 @@ func TestRecoverWithNothingToDoPrintsNothing(t *testing.T) {
 	}
 }
 
-// LE77: a shift runs the pass before its acquire.
+// LE77: a shift runs the pass before its acquire, so the pass acts even when the
+// acquire fails.
 func TestAShiftRecoversBeforeItsAcquire(t *testing.T) {
 	faultFixtureCore(t, greenGate, nil)
 	withAgent(t, "true\n")
 	entry := intent.EntryOwnedBy(intent.KindShift, deadOwner)
 	root := seedShiftEntry(t, entry)
-	var stdout bytes.Buffer
-	if code := Loop("recovering shift", &stdout, io.Discard); code != exitCodes[OutcomeNoOp] {
-		t.Fatalf("Loop = %d, want no-op", code)
+	// A regular file where the worktree pool directory goes makes the acquire fail.
+	home := os.Getenv("BENCH_HOME")
+	if err := os.MkdirAll(home, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(home, "worktrees"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if code := Loop("recovering shift", io.Discard, io.Discard); code != exitCodes[OutcomeUsage] {
+		t.Fatalf("Loop = %d, want usage from the failed acquire", code)
 	}
 	if got := ledgerEntry(t, root, entry.Key).Outcome; got != otelrecord.WorkAbandoned {
 		t.Fatalf("outcome = %q, want %q", got, otelrecord.WorkAbandoned)

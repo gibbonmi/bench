@@ -121,8 +121,12 @@ func TestInspectRecoversAfterTheResumePhase(t *testing.T) {
 		t.Fatalf("git init: %v: %s", err, out)
 	}
 	t.Setenv("BENCH_HOME", t.TempDir())
-	// A process id above every kernel's pid_max names no process.
-	entry := intent.EntryOwnedBy(intent.KindShift, 1<<30)
+	// A reaped child's process id names no live process.
+	child := exec.Command("true")
+	if err := child.Run(); err != nil {
+		t.Fatal(err)
+	}
+	entry := intent.EntryOwnedBy(intent.KindShift, child.Process.Pid)
 	if err := intent.Upsert(root, entry); err != nil {
 		t.Fatal(err)
 	}
