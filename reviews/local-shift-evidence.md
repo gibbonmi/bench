@@ -1,12 +1,12 @@
 # Local shift evidence review record
 
-Status: LE-A is accepted. The LE-B1 review returned 5 findings; repair cycle 1 is pending.
+Status: LE-A is accepted. LE-B1 repair cycle 1 is committed; the confirming round of the three axes is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
 Line: opus (claude-opus-5-5) / medium / uncapped
 Review line: opus / high / one iteration for each axis
-Post-review repair cycles consumed: LE-A 3 of 3. The reviewer extended the LE-A allowance by one cycle on 2026-09-23. The extra cycle covers LEA-S7 and each blocker of the second confirming round.
+Post-review repair cycles consumed: LE-A 3 of 3; LE-B1 1 of 2. The reviewer extended the LE-A allowance by one cycle on 2026-09-23. The extra cycle covers LEA-S7 and each blocker of the second confirming round.
 Expected repair rounds: 2
 Confidence: 5
 
@@ -147,7 +147,7 @@ Three fresh axes graded the code tip `ee58eed2` with the source digest `899915f1
 
 ## LE-B1 author verification
 
-The frozen pair is `e5f755fd..77781047`. The two planned checks passed at the chunk tip. The ticket Writes gained `internal/otelrecord/provider.go`, because the start line needs the shift attributes; a learning records this plan expansion.
+The first frozen pair was `e5f755fd..77781047`. After repair cycle 1, the chunk tip is `a4372cad`, and the two planned checks passed there too. The ticket Writes gained `internal/otelrecord/provider.go`, because the start line needs the shift attributes; a learning records this plan expansion.
 
 | Row | Test | Probe |
 |---|---|---|
@@ -192,11 +192,22 @@ Findings: 3. Worst issue: LEB1-C1.
 - LEB1-C2 (auto-fix, confidence 8): no test drives the acquire-failure exit, so a span that starts after `worktree.Acquire` stays green (`internal/shift/loop.go`). A test can plant a file at the pool path.
 - LEB1-C3 (no-op, confidence 5): a failed `RetainAndLock` still records `retained`. The worktree stays at its path and is not released, so `retained` is true; the lock failure reaches stderr.
 
+## LE-B1 repair cycle 1
+
+| Finding | Repair | Evidence |
+|---|---|---|
+| LEB1-S1 | `splitRecovery` beside `recoveryWorktree` is the one parser of the pointer. | The shift package passed. |
+| LEB1-S2 | The test builds its line match from the record constants. | The shift package passed. |
+| LEB1-P1 | A shift with no pointer writes kind `none`; row LE107 and `TestAGreenShiftRecordsNoRecoveryKind`. | Omit the kind attribute: bit. |
+| LEB1-C1 | `TestAFailedTeardownRecordsNoCleanup` drives the teardown fault. | Drop the release check: bit. |
+| LEB1-C2 | `TestAFailedAcquireStillEndsTheShiftSpan` plants a file at the pool path. | Pass no record on the acquire exit: bit. |
+| LEB1-C3 | No change: the retained worktree stays at its path. | Review of the code. |
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/local-shift-evidence/spec.md",
-  "plan_digest": "sha256:55587d7200e42e2ade6320952cc237e8a6e6be933974092c40b1a3ddbb601ade",
+  "plan_digest": "sha256:8863c19c0fe7c185a65cfa69b9e2f5fd5f1140876abe11cbaef77d3b6dc08c97",
   "implementation_session": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
   "chunks": [
     {
@@ -807,9 +818,9 @@ Findings: 3. Worst issue: LEB1-C1.
     {
       "id": "LE-B1",
       "base": "e5f755fdd4e4029dca72b18cf1d50e00f50cce26",
-      "tip": "7778104776eb7572923b43b7f71f78c1791d8513",
-      "plan_digest": "sha256:55587d7200e42e2ade6320952cc237e8a6e6be933974092c40b1a3ddbb601ade",
-      "source_digest": "2fb40acbe145e50437945d87e796ca362942b349",
+      "tip": "a4372cad759d5024faa1538d2d0acbc02a651c09",
+      "plan_digest": "sha256:8863c19c0fe7c185a65cfa69b9e2f5fd5f1140876abe11cbaef77d3b6dc08c97",
+      "source_digest": "6ea9b27a3ff05f95fbfed11295964b80d69d7c82",
       "acceptance_rows": [
         "LE22",
         "LE23",
@@ -859,6 +870,42 @@ Findings: 3. Worst issue: LEB1-C1.
             "ref": "bench test --check kit-compliance at 77781047",
             "digest": "sha256:10714c3db13dae83408663b37f2f06b0283b20ce150c0beb79629a274a31f2bf",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,98\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "kit-compliance",
+          "command": "bench test --check kit-compliance",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-B1-verify-shift-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "6ea9b27a3ff05f95fbfed11295964b80d69d7c82",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/shift at a4372cad",
+            "digest": "sha256:94c28e2f37609f556c6404a8f4a6523f74b3e7632bbbb737418a7603e2398a0f",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/shift,pass,4049\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "shift",
+          "command": "bench test --package ./internal/shift",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-B1-verify-kit-compliance-2",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "6ea9b27a3ff05f95fbfed11295964b80d69d7c82",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --check kit-compliance at a4372cad",
+            "digest": "sha256:5bae5cebf79d6f271af9fc7837ac32a20fe06ad7ec273bd8666bf36bbc3ed4ea",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,103\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "kit-compliance",
           "command": "bench test --check kit-compliance",
