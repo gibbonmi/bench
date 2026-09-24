@@ -1,6 +1,6 @@
 # Local shift evidence review record
 
-Status: LE-A and LE-B1 are accepted. The LE-B1 confirming round passed on all three axes.
+Status: LE-A and LE-B1 are accepted. LE-B2 is committed, and its review of the three axes is pending.
 Spec: specs/local-shift-evidence/spec.md
 Assignment: 8854df6a652ec4400d952339b55940b6
 Author: claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN
@@ -221,11 +221,48 @@ Three advisories go to LE-B2, because a repair here would need another confirmin
 
 The LE-B1 build cited its tests in the spec, and its repair added row LE107. These edits changed the plan identity after LE-A. The chunk IDs stay the same, so LE-A maps to LE-A.
 
+The LE-B2 build raised the shift grant to 16, fenced `pass_test.go`, `shift_test.go`, and `main_test.go`, and cited its tests. Those edits changed the plan identity again, and LE-A and LE-B1 map to themselves.
+
+## LE-B2 author verification
+
+The frozen pair is `fab6d03e..acb050a9`. The four planned checks passed at the chunk tip. The reviewer approved the grant `internal/shift/ 16` during this build. Three learnings record the Writes expansions of tickets 5, 6, and 7.
+
+| Row | Test | Probe |
+|---|---|---|
+| LE37 | `TestAnInterruptedShiftRecordsInterruptedWork` | Pass no record on the checkpoint exit: bit. |
+| LE38 | `TestATwoIterationShiftWritesTwoPassSpans` | Pre-edit red. |
+| LE39 | `TestAPassRecordsTheAdapterExit` | Pre-edit red. |
+| LE40 | `TestAPassRecordsASpawnFailure` | Record a spawn failure as an exit: bit. |
+| LE41 | `TestARefactorPassWritesARefactorSpan` | Pre-edit red. |
+| LE42 | `TestEachPassParentsOneGateSpan` | Run the gate on a fresh context: bit. |
+| LE43 | `TestACommittedPassCarriesItsCommit` | Pre-edit red. |
+| LE44 | `TestAnInterruptedShiftEndsThePassFirst` | Leave the pass open at finish: bit. |
+| LE45 | `TestTheAdapterReceivesThePassHandoff` | Hand off a context with no pass span: bit. |
+| LE46 | `TestAHandedOffResolutionRecordsItsLine` | Remove the resolve record: bit. |
+| LE47 | `TestAStandaloneResolutionRecordsARootSpan` | Record only a handed-off resolution: bit. |
+| LE48 | `TestARefusedResolutionRecordsRed` | Record every resolution green: bit. |
+| LE49 | `TestAGreenShiftRetainsItsNotes` | Retain the notes after the cleanup: bit. |
+| LE50 | `TestARedShiftRetainsItsNotes` | Remove the retention: bit. |
+| LE51 | `TestAGreenShiftRetainsItsNotes` | Remove the retention: bit. |
+| LE52 | `TestTheRecordHoldsNoNotesText` | Write the notes text into the digest key: bit. |
+| LE53 | `TestEachNotesStateIsRecorded/symlink` | Read the notes through the link: bit. |
+| LE54 | `TestEachNotesStateIsRecorded/fifo` | Remove the retention: bit. |
+| LE88 | `TestEachNotesStateIsRecorded/oversized` | Remove the retention: bit. |
+| LE55 | `TestEachNotesStateIsRecorded/deleted` | Remove the retention: bit. |
+| LE56 | `TestEachNotesStateIsRecorded/empty` | Remove the retention: bit. |
+| LE57 | `TestTheMemoryStoreKeepsTheRetainedCount` | Remove the prune: bit. |
+| LE58 | `TestTheMemoryStoreRefusesASymlinkedDirectory` | Remove the path grade: bit. |
+| LE95 | `TestAFailedMemoryWriteKeepsTheOutcome` | Remove the retention: bit. |
+| LE102 | `TestAFailedMemoryWriteKeepsTheOutcome` | Characterization: no code path lets a store failure change the outcome. |
+| LE59 | `TestASecondShiftStartsWithEmptyNotes` | Characterization: no code path seeds the notes from the memory store. |
+
+The three LE-B1 advisories are closed here. The LE107 clause names `bench.recovery.kind`, the acquire-failure test reads the recovery kind, and the shift package owns one constant for each of its seams.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/local-shift-evidence/spec.md",
-  "plan_digest": "sha256:8863c19c0fe7c185a65cfa69b9e2f5fd5f1140876abe11cbaef77d3b6dc08c97",
+  "plan_digest": "sha256:1365ab492e8d619556f912ede672994fab1427490c78354ffd67d6681caca676",
   "implementation_session": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
   "chunks": [
     {
@@ -1067,6 +1104,116 @@ The LE-B1 build cited its tests in the spec, and its repair added row LE107. The
           ]
         }
       ]
+    },
+    {
+      "id": "LE-B2",
+      "base": "fab6d03ed4a4d5418bd0f31dce0a2f1fc59bab80",
+      "tip": "acb050a9bca795c359c5d518b352782468222505",
+      "plan_digest": "sha256:1365ab492e8d619556f912ede672994fab1427490c78354ffd67d6681caca676",
+      "source_digest": "b1b73b413d6f836f7ab8ee6030956703537359d2",
+      "acceptance_rows": [
+        "LE37",
+        "LE38",
+        "LE39",
+        "LE40",
+        "LE41",
+        "LE42",
+        "LE43",
+        "LE44",
+        "LE45",
+        "LE46",
+        "LE47",
+        "LE48",
+        "LE49",
+        "LE50",
+        "LE51",
+        "LE52",
+        "LE53",
+        "LE54",
+        "LE55",
+        "LE56",
+        "LE57",
+        "LE58",
+        "LE88",
+        "LE95",
+        "LE102",
+        "LE59"
+      ],
+      "verification": [
+        {
+          "id": "LE-B2-verify-shift-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "b1b73b413d6f836f7ab8ee6030956703537359d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/shift at acb050a9",
+            "digest": "sha256:a3fd13be5207edef34cd36575d3e77d48d371abfef9313a45110859e8277a3bf",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/shift,pass,8031\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "shift",
+          "command": "bench test --package ./internal/shift",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-B2-verify-otelrecord-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "b1b73b413d6f836f7ab8ee6030956703537359d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./internal/otelrecord at acb050a9",
+            "digest": "sha256:3b2c0f24b7b395dc53b024def6d1c6da0d1b757c2dad92aed0090b36006b998b",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/otelrecord,pass,305\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "otelrecord",
+          "command": "bench test --package ./internal/otelrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-B2-verify-cmd-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "b1b73b413d6f836f7ab8ee6030956703537359d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --package ./cmd/bench at acb050a9",
+            "digest": "sha256:471d9ea9d36ec9d1b47ff53be55fb5740757799dd58216f4b4e2f782c9d91dc8",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16775\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "LE-B2-verify-kit-compliance-1",
+          "performer": "claude-code:session_01PzPVd5kMaFqKt7bLjSjtgN",
+          "role": "author-verification",
+          "model": "claude-opus-5-5",
+          "effort": "medium",
+          "source_digest": "b1b73b413d6f836f7ab8ee6030956703537359d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "bench test --check kit-compliance at acb050a9",
+            "digest": "sha256:aecba5b20aa85e9639a297512b554db3620ef5aabc87678cff411904a1a4fa71",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,95\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "kit-compliance",
+          "command": "bench test --check kit-compliance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1083,6 +1230,18 @@ The LE-B1 build cited its tests in the spec, and its repair added row LE107. The
       "chunk_ids": {
         "LE-A": [
           "LE-A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:8863c19c0fe7c185a65cfa69b9e2f5fd5f1140876abe11cbaef77d3b6dc08c97",
+      "to": "sha256:1365ab492e8d619556f912ede672994fab1427490c78354ffd67d6681caca676",
+      "chunk_ids": {
+        "LE-A": [
+          "LE-A"
+        ],
+        "LE-B1": [
+          "LE-B1"
         ]
       }
     }
