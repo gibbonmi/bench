@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -38,14 +40,25 @@ var exitCodes = map[Outcome]int{
 // resultFields is the shift_result block's field order, pinned by the spec.
 var resultFields = []string{"outcome", "exit", "branch", "committed", "iterations_used", "recovery", "detail"}
 
-// RecoveryNone is the one recovery-pointer sentinel meaning "nothing to preserve". The
-// shift_result block, the intent-ledger record, and bench status's rendering all use it,
-// so the three surfaces never drift on what "no recovery" looks like.
-const RecoveryNone = "none"
+// RecoveryNone is the ledger's no-recovery sentinel under the shift's own name.
+const RecoveryNone = intent.RecoveryNone
 
 // recoveryWorktree is the recovery pointer's only non-"none" constructor: a preserving
 // failure leaves the dirty tree at its own path, so the pointer names that path.
-func recoveryWorktree(path string) string { return "worktree:" + path }
+func recoveryWorktree(path string) string { return recoveryWorktreeKind + ":" + path }
+
+// recoveryWorktreeKind is the kind before the colon of a retained-worktree pointer.
+const recoveryWorktreeKind = "worktree"
+
+// splitRecovery splits a recovery pointer into its kind and its path. A pointer with no
+// path, RecoveryNone or an empty one, is kind RecoveryNone.
+func splitRecovery(pointer string) (kind, path string) {
+	kind, path, ok := strings.Cut(pointer, ":")
+	if !ok {
+		return RecoveryNone, ""
+	}
+	return kind, path
+}
 
 // Result is the one value computed at every shift exit path: outcome, branch, committed
 // count, iterations used, recovery pointer, and a short human-readable detail. Recovery

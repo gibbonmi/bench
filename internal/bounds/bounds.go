@@ -57,6 +57,15 @@ const (
 	// bounded response. The value holds a full commit subject or an objective, and it
 	// stays short enough that two previews and their surrounding row fit one screen.
 	PreviewRuneLimit = 240
+	// RecordSegmentLimit bounds the live segment of one repository's seam record. An
+	// append that would take the segment past it seals the segment first.
+	// RecordSegmentsRetained is how many sealed segments the record keeps. Together they
+	// bound the record's disk use; the reviewer owns both sizes. The limit is 16 MiB.
+	RecordSegmentLimit     int64 = 1 << 24
+	RecordSegmentsRetained       = 8
+	// RecordMemoryRetained is how many retained shift-notes files the record keeps beside
+	// its segments; the reviewer owns the size.
+	RecordMemoryRetained = 64
 )
 
 // TestDeadline derives an outer test deadline from the inner bound that deadline has

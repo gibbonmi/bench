@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -291,4 +292,57 @@ func discardIgnored(j joins, plan CleanupPlan) error {
 		}
 	}
 	return nil
+}
+
+func inventoryIgnored(j joins, target string, full bool) (IgnoredInventory, []byte, error) {
+	raw, err := ignoredListing(target)
+	if err != nil {
+		return IgnoredInventory{Uncertain: true}, nil, err
+	}
+	paths := make([]string, 0)
+	for record := range bytes.SplitSeq(raw, []byte{0}) {
+		if len(record) != 0 {
+			paths = append(paths, string(record))
+		}
+	}
+	sort.Strings(paths)
+	inventory := IgnoredInventory{Paths: paths}
+	parts := make([][]byte, 0, len(paths)*3)
+	for _, name := range paths {
+		inventory.Count++
+		if !cleanupOutputSafe(name) {
+			inventory.Uncertain = true
+			return inventory, canonicalParts(parts...), errors.New("ignored path contains unsafe control bytes")
+		}
+		if inventory.Count > ignoredEntryLimit {
+			inventory.AtLeast, inventory.OverLimit = true, true
+			break
+		}
+		rel := filepath.Clean(filepath.FromSlash(name))
+		if filepath.IsAbs(rel) || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			inventory.Uncertain = true
+			return inventory, canonicalParts(parts...), errors.New("ignored path escapes worktree")
+		}
+		info, statErr := j.ignoredLstat(filepath.Join(target, rel))
+		if statErr != nil {
+			inventory.Uncertain = true
+			return inventory, canonicalParts(parts...), statErr
+		}
+		inventory.Bytes += info.Size()
+		if inventory.Bytes > ignoredByteLimit {
+			inventory.OverLimit = true
+		}
+		parts = append(parts, []byte(name), []byte(strconv.FormatUint(uint64(info.Mode()), 10)), []byte(strconv.FormatInt(info.Size(), 10)))
+	}
+	show := 20
+	if full {
+		show = ignoredEntryLimit
+	}
+	if inventory.Count < show {
+		show = inventory.Count
+	}
+	inventory.Shown = show
+	inventory.Truncated = inventory.AtLeast || inventory.Count > show
+	inventory.Digest = fingerprintParts(parts...)
+	return inventory, canonicalParts(parts...), nil
 }

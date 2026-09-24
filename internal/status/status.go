@@ -36,7 +36,6 @@ import (
 	"github.com/gibbonmi/bench/internal/retros"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/sanitize"
-	"github.com/gibbonmi/bench/internal/shift"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/structure"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -692,7 +691,7 @@ func appendIntent(rows []row, root string) []row {
 		}
 	}
 	detail := fmt.Sprintf("%d correlated, %d uncorrelated; oldest: %s", correlated, uncorrelated, objectiveDisplay(live[0]))
-	if r := live[0].Recovery; r != "" && r != shift.RecoveryNone {
+	if r := live[0].Recovery; intent.HoldsRecovery(r) {
 		detail += "; recovery: " + sanitize.Preview(r)
 	}
 	return append(rows, row{2, "intent", detail, commandAction(statusAllAction)})
@@ -717,7 +716,7 @@ func expandIntentSignals(root string, signals []Signal) []Signal {
 		if entry.Branch != "" {
 			parts = append(parts, "branch="+sanitize.Preview(entry.Branch))
 		}
-		if entry.Recovery != "" && entry.Recovery != shift.RecoveryNone {
+		if intent.HoldsRecovery(entry.Recovery) {
 			parts = append(parts, "recovery="+sanitize.Preview(entry.Recovery))
 		}
 		parts = append(parts, "objective="+objectiveDisplay(entry))

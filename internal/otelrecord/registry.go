@@ -32,6 +32,7 @@ var Registry = []SeamEntry{
 	{Seam: "worktree.release", Package: "internal/worktree", Function: "beginVerbSpan"},
 	{Seam: "worktree.build", Package: "internal/worktree", Function: "beginVerbSpan"},
 	{Seam: "worktree.reauthorize", Package: "internal/worktree", Function: "beginVerbSpan"},
+	{Seam: "worktree.shell", Package: "internal/worktree", Function: "beginVerbSpan"},
 	{Seam: "hook.guard-git", Package: "cmd/bench", Function: "beginHookSpan"},
 	{Seam: "hook.guard-bench-follow-on", Package: "cmd/bench", Function: "beginHookSpan"},
 	{Seam: "hook.check-agent-line", Package: "cmd/bench", Function: "beginHookSpan"},
@@ -39,4 +40,9 @@ var Registry = []SeamEntry{
 	{Seam: "hook.stop-verdict", Package: "cmd/bench", Function: "beginHookSpan"},
 	{Seam: "hook.session-inspect", Package: "cmd/bench", Function: "beginHookSpan"},
 	{Seam: "hook.worktree-hook", Package: "cmd/bench", Function: "beginHookSpan"},
+	{Seam: "shift", Package: "internal/shift", Function: "beginShiftRecord"},
+	{Seam: "shift.iteration", Package: "internal/shift", Function: "beginPass"},
+	{Seam: "shift.refactor", Package: "internal/shift", Function: "beginPass"},
+	{Seam: "line.resolve", Package: "cmd/bench", Function: "beginResolveSpan"},
+	{Seam: "shift.recovery", Package: "internal/shift", Function: "recordRecovery"},
 }

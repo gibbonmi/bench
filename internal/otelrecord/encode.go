@@ -93,13 +93,21 @@ func Encode(readOnly sdktrace.ReadOnlySpan) ([]byte, error) {
 	return json.Marshal(tracesData{ResourceSpans: []resourceSpans{encodeResourceSpans(readOnly)}})
 }
 
+// encodeResourceSpans writes the record's own resource block and never the span's SDK
+// resource, so no detector and no environment value reaches the line.
 func encodeResourceSpans(readOnly sdktrace.ReadOnlySpan) resourceSpans {
-	out := resourceSpans{ScopeSpans: []scopeSpans{encodeScopeSpans(readOnly)}}
-	if res := readOnly.Resource(); res != nil {
-		out.Resource.Attributes = encodeAttributes(res.Attributes())
-		out.SchemaURL = res.SchemaURL()
+	return resourceSpans{
+		Resource:   resource{Attributes: recordResource()},
+		ScopeSpans: []scopeSpans{encodeScopeSpans(readOnly)},
 	}
-	return out
+}
+
+func recordResource() []keyValue {
+	out := []keyValue{{Key: ResourceServiceName, Value: anyValue{StringValue: stringPtr(ServiceName)}}}
+	if version := recordVersion.Load(); version != nil {
+		out = append(out, keyValue{Key: ResourceServiceVersion, Value: anyValue{StringValue: stringPtr(*version)}})
+	}
+	return append(out, keyValue{Key: ResourceRecordSchema, Value: anyValue{StringValue: stringPtr(RecordSchema)}})
 }
 
 func encodeScopeSpans(readOnly sdktrace.ReadOnlySpan) scopeSpans {
@@ -115,6 +123,18 @@ func encodeScopeSpans(readOnly sdktrace.ReadOnlySpan) scopeSpans {
 	}
 }
 
+// encodeSpanAttributes writes only the declared span attributes. The declared set is the
+// redaction contract, so an attribute no diff declared never reaches the record.
+func encodeSpanAttributes(pairs []attribute.KeyValue) []keyValue {
+	kept := make([]attribute.KeyValue, 0, len(pairs))
+	for _, pair := range pairs {
+		if declared[string(pair.Key)] {
+			kept = append(kept, pair)
+		}
+	}
+	return encodeAttributes(kept)
+}
+
 func encodeSpan(readOnly sdktrace.ReadOnlySpan) span {
 	spanContext := readOnly.SpanContext()
 	traceID := spanContext.TraceID()
@@ -126,7 +146,7 @@ func encodeSpan(readOnly sdktrace.ReadOnlySpan) span {
 		Name:              readOnly.Name(),
 		Kind:              int(readOnly.SpanKind()),
 		StartTimeUnixNano: unixNano(readOnly.StartTime().UnixNano()),
-		Attributes:        encodeAttributes(readOnly.Attributes()),
+		Attributes:        encodeSpanAttributes(readOnly.Attributes()),
 		Status: status{
 			Message: readOnly.Status().Description,
 			Code:    statusCode(readOnly.Status().Code),

@@ -55,8 +55,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-// scripts/go-build.sh stamps the version. Unstamped builds report "dev".
-var version = "dev"
+// scripts/go-build.sh stamps the version. An unstamped build reports unstampedVersion.
+var version = unstampedVersion
 
 func main() {
 	prepareProcessEnvironment()
@@ -289,40 +289,10 @@ func linesEnv() lines.Source {
 // so the matrix resolves one column and a denial advises in tokens that harness can pass.
 var harnessFlag = usage.Flag{Name: "--harness", HasValue: true, NoEmptyValue: true}
 
-var resolveModelGrammar = usage.Grammar{
-	Cmd:   "bench resolve-model",
-	Help:  "usage: bench resolve-model --harness <" + strings.Join(lines.Harnesses, "|") + ">",
-	Flags: []usage.Flag{harnessFlag},
-}
-
 var checkAgentLineGrammar = usage.Grammar{
 	Cmd:   "bench check-agent-line",
 	Help:  "usage: bench check-agent-line --harness <" + strings.Join(lines.Harnesses, "|") + ">",
 	Flags: []usage.Flag{harnessFlag},
-}
-
-// resolveModel is the `bench resolve-model` plumbing subcommand for the shift adapters.
-// It prints the model to pass via the harness --model flag, empty for passthrough, to
-// stdout and returns an exit code. Any warning or error goes to os.Stderr directly: the
-// map signature carries only stdout, and the adapter captures stdout as the model, so a
-// warning must never ride there. BENCH_MODEL names a tier and --harness names the column.
-// In a routed repo an unset or unbound tier exits 1 and the adapter refuses to launch.
-// The verdict lives in internal/lines, so it is unit-tested without a repo.
-func resolveModel(args []string) (string, int) {
-	harness, line, code := parseHarness(resolveModelGrammar, args)
-	if line != "" {
-		fmt.Fprintln(os.Stderr, line)
-		return "", code
-	}
-	benchModel, set := os.LookupEnv("BENCH_MODEL")
-	model, code, stderr := lines.ResolveModelVerdict(harness, benchModel, set, linesEnv())
-	if stderr != "" {
-		fmt.Fprintln(os.Stderr, stderr)
-	}
-	if model == "" {
-		return "", code
-	}
-	return model + "\n", code
 }
 
 // parseHarness applies g to args and returns the named harness. A missing --harness is a

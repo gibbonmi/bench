@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -271,5 +273,92 @@ func TestNewProviderRecordsAnExplicitBenchHomeElsewhere(t *testing.T) {
 
 	if lines := recordLines(t, home, root); len(lines) != 2 {
 		t.Fatalf("an explicit home elsewhere holds %d lines, want 2", len(lines))
+	}
+}
+
+// TestAHandedOffChildJoinsItsParentSpan holds row LE11: a handoff that omits the
+// traceparent starts a new trace, and one that omits the root records nothing, so the
+// child's trace id and parent span id both red.
+func TestAHandedOffChildJoinsItsParentSpan(t *testing.T) {
+	home := t.TempDir()
+	root := t.TempDir()
+	t.Setenv(benchhome.Env, home)
+	for _, name := range HandoffVariables() {
+		t.Setenv(name, "")
+	}
+
+	parentCtx, parent, end := BeginIn(context.Background(), home, root, "gate", "")
+	defer end()
+	for _, entry := range WithHandoff(parentCtx, root, nil) {
+		name, value, _ := strings.Cut(entry, "=")
+		t.Setenv(name, value)
+	}
+	ctx, closeChild := AttachHandoff(context.Background())
+	_, child := TracerFrom(ctx).Start(ctx, "gate.phase")
+	child.End()
+	closeChild()
+
+	lines := recordLines(t, home, root)
+	span := spanOf(t, lines[len(lines)-1])
+	if span["name"] != "gate.phase" {
+		t.Fatalf("the last line names %v, want the handed-off child gate.phase", span["name"])
+	}
+	want := parent.SpanContext()
+	if span["traceId"] != want.TraceID().String() {
+		t.Errorf("the child trace id = %v, want the parent's %s", span["traceId"], want.TraceID())
+	}
+	if span["parentSpanId"] != want.SpanID().String() {
+		t.Errorf("the child parent span id = %v, want the parent's %s", span["parentSpanId"], want.SpanID())
+	}
+}
+
+// The environment row runs its record write in a second process. The SDK builds its
+// default resource once per process, so a write in the test process reads whatever
+// environment the first resource build saw, and the row could never red.
+const (
+	helperRoleEnv  = "BENCH_OTELRECORD_HELPER_ROLE"
+	helperHomeEnv  = "BENCH_OTELRECORD_HELPER_HOME"
+	helperRootEnv  = "BENCH_OTELRECORD_HELPER_ROOT"
+	helperRoleSpan = "span"
+)
+
+// TestRecordHelperProcess is the second process the environment row drives, inert unless
+// the parent selects it through the role environment variable.
+func TestRecordHelperProcess(t *testing.T) {
+	if os.Getenv(helperRoleEnv) != helperRoleSpan {
+		return
+	}
+	_, _, finish := Begin(os.Getenv(helperHomeEnv), os.Getenv(helperRootEnv), "gate")
+	finish()
+	os.Exit(0)
+}
+
+// TestBeginWritesNoEnvironmentResource holds row LE4: an encoder that writes the SDK
+// resource puts both markers in every line, so the byte search reds.
+func TestBeginWritesNoEnvironmentResource(t *testing.T) {
+	home, root := t.TempDir(), t.TempDir()
+	ctx, cancel := context.WithTimeout(context.Background(), bounds.TestDeadline(0))
+	defer cancel()
+	helper := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestRecordHelperProcess$")
+	helper.Env = []string{
+		helperRoleEnv + "=" + helperRoleSpan,
+		helperHomeEnv + "=" + home,
+		helperRootEnv + "=" + root,
+		"OTEL_RESOURCE_ATTRIBUTES=bench.leak=PROBEMARK",
+		"OTEL_SERVICE_NAME=SVCMARK",
+		"PATH=" + os.Getenv("PATH"),
+	}
+	if out, err := helper.CombinedOutput(); err != nil {
+		t.Fatalf("the helper process failed: %v: %s", err, out)
+	}
+
+	raw, err := os.ReadFile(Path(home, root))
+	if err != nil {
+		t.Fatalf("read the record: %v", err)
+	}
+	for _, marker := range []string{"PROBEMARK", "SVCMARK"} {
+		if strings.Contains(string(raw), marker) {
+			t.Errorf("a record line holds the environment marker %s", marker)
+		}
 	}
 }

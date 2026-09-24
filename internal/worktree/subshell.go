@@ -10,15 +10,16 @@ import (
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/otelrecord"
 	refreshop "github.com/gibbonmi/bench/internal/refresh"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
+	"go.opentelemetry.io/otel/attribute"
 	"io"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -44,6 +45,13 @@ func subshellAt(root, home, shell string, environ []string, args []string, stdin
 	// when the terminal goes away, and an untrapped SIGHUP leaks the whole group.
 	signal.Notify(interrupts, subprocess.CancelSignals...)
 	defer signal.Stop(interrupts)
+	// One worktree.shell span covers the session; every return ends it with the work state
+	// and the cleanup decision. A signal retains the lease for a reclaim.
+	finishSpan, assignment := beginVerbSpan(home, root, otelShellSeam), ""
+	end := func(exit int, state, cleanup string) int {
+		finishSpan(exit, assignment, attribute.String(otelrecord.AttrWorkState, state), attribute.String(otelrecord.AttrCleanup, cleanup))
+		return exit
+	}
 
 	args, startRef := refreshop.Consume(root, args, stdout)
 	objective := strings.Join(args, " ")
@@ -53,17 +61,25 @@ func subshellAt(root, home, shell string, environ []string, args []string, stdin
 	request, err := randomID()
 	if err != nil {
 		fmt.Fprintln(stderr, err)
-		return 1
+		return end(1, otelrecord.WorkFailed, otelrecord.CleanupNone)
 	}
 	creation, err := createAt(defaultJoins(), root, home, request, objective, nil, currentTime(), func() (string, error) { return startRef, nil })
 	if err != nil {
 		fmt.Fprintln(stderr, err)
-		return 1
+		return end(1, otelrecord.WorkFailed, otelrecord.CleanupNone)
+	}
+	assignment = creation.Assignment.ID
+	release := func(state string) int {
+		code := ReleaseCommand(root, home, []string{"--request", request, creation.Path}, io.Discard, stderr)
+		if code != 0 {
+			return end(code, state, otelrecord.CleanupRetained)
+		}
+		return end(code, state, otelrecord.CleanupReleased)
 	}
 	lease, err := LeaseFile(creation.Path)
-	if err != nil || !claimAt(defaultJoins(), lease, currentTime()) {
+	if err != nil || !claimAt(defaultJoins(), lease, currentTime(), staleLease) {
 		fmt.Fprintln(stderr, "bench worktree shell: cannot claim worktree lease")
-		return ReleaseCommand(root, home, []string{"--request", request, creation.Path}, io.Discard, stderr)
+		return release(otelrecord.WorkFailed)
 	}
 	fmt.Fprintf(stderr, "🪵 worktree: %s  (exit to release)\n", creation.Path)
 	if shell == "" {
@@ -76,14 +92,14 @@ func subshellAt(root, home, shell string, environ []string, args []string, stdin
 	if err := cmd.Start(); err != nil {
 		_ = os.Remove(lease)
 		fmt.Fprintf(stderr, "bench worktree shell: %v\n", err)
-		return ReleaseCommand(root, home, []string{"--request", request, creation.Path}, io.Discard, stderr)
+		return release(otelrecord.WorkFailed)
 	}
 	done := make(chan error, 1)
 	go func() { done <- cmd.Wait() }()
 	select {
 	case <-done:
 		_ = os.Remove(lease)
-		return ReleaseCommand(root, home, []string{"--request", request, creation.Path}, io.Discard, stderr)
+		return release(otelrecord.WorkCompleted)
 	case interrupted := <-interrupts:
 		_ = syscall.Kill(-cmd.Process.Pid, interrupted.(syscall.Signal))
 		select {
@@ -92,7 +108,7 @@ func subshellAt(root, home, shell string, environ []string, args []string, stdin
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 			<-done
 		}
-		return 128 + int(interrupted.(syscall.Signal))
+		return end(128+int(interrupted.(syscall.Signal)), otelrecord.WorkInterrupted, otelrecord.CleanupRetained)
 	}
 }
 
@@ -416,57 +432,4 @@ func predictedForeignRef(root, target, admin string) (string, error) {
 			return prefix + strconv.Itoa(ordinal), nil
 		}
 	}
-}
-
-func inventoryIgnored(j joins, target string, full bool) (IgnoredInventory, []byte, error) {
-	raw, err := ignoredListing(target)
-	if err != nil {
-		return IgnoredInventory{Uncertain: true}, nil, err
-	}
-	paths := make([]string, 0)
-	for record := range bytes.SplitSeq(raw, []byte{0}) {
-		if len(record) != 0 {
-			paths = append(paths, string(record))
-		}
-	}
-	sort.Strings(paths)
-	inventory := IgnoredInventory{Paths: paths}
-	parts := make([][]byte, 0, len(paths)*3)
-	for _, name := range paths {
-		inventory.Count++
-		if !cleanupOutputSafe(name) {
-			inventory.Uncertain = true
-			return inventory, canonicalParts(parts...), errors.New("ignored path contains unsafe control bytes")
-		}
-		if inventory.Count > ignoredEntryLimit {
-			inventory.AtLeast, inventory.OverLimit = true, true
-			break
-		}
-		rel := filepath.Clean(filepath.FromSlash(name))
-		if filepath.IsAbs(rel) || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-			inventory.Uncertain = true
-			return inventory, canonicalParts(parts...), errors.New("ignored path escapes worktree")
-		}
-		info, statErr := j.ignoredLstat(filepath.Join(target, rel))
-		if statErr != nil {
-			inventory.Uncertain = true
-			return inventory, canonicalParts(parts...), statErr
-		}
-		inventory.Bytes += info.Size()
-		if inventory.Bytes > ignoredByteLimit {
-			inventory.OverLimit = true
-		}
-		parts = append(parts, []byte(name), []byte(strconv.FormatUint(uint64(info.Mode()), 10)), []byte(strconv.FormatInt(info.Size(), 10)))
-	}
-	show := 20
-	if full {
-		show = ignoredEntryLimit
-	}
-	if inventory.Count < show {
-		show = inventory.Count
-	}
-	inventory.Shown = show
-	inventory.Truncated = inventory.AtLeast || inventory.Count > show
-	inventory.Digest = fingerprintParts(parts...)
-	return inventory, canonicalParts(parts...), nil
 }

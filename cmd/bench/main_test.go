@@ -210,26 +210,7 @@ func TestHelpKeepsStatusPublicRoute(t *testing.T) {
 // column, and the retired --alias and --provider-model spellings are rejected rather than
 // quietly resolving a model, so there is only one way to ask the binding a question.
 func TestResolveModelHarnessFlag(t *testing.T) {
-	root := t.TempDir()
-	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
-	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	binding := "BENCH_CODEX_TOP=gpt-5.6-sol\nBENCH_CODEX_MID=gpt-5.6-terra\nBENCH_CODEX_CHEAP=gpt-5.6-luna\n" +
-		"BENCH_CLAUDE_TOP=fable\nBENCH_CLAUDE_MID=opus\nBENCH_CLAUDE_CHEAP=sonnet\n"
-	if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), []byte(binding), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	oldWD, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chdir(root); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+	routedRepo(t)
 	t.Setenv("BENCH_MODEL", "cheap")
 
 	for _, tt := range []struct {

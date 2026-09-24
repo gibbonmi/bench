@@ -73,3 +73,8 @@ internal/conformance/tier_test.go 973
 # already names its own. Granted 2026-09-06 under seam-record-test-refusal
 # (FT310).
 internal/systemtest/owner_test.go 520
+
+# The shift package gains its record span in one file and its tests in two.
+# Granted 2026-09-23 at the local-shift-evidence sign-off and raised to 16 at
+# its LE-B2 build; the next file re-asks.
+internal/shift/ 16

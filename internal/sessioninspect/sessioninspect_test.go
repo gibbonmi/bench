@@ -5,12 +5,15 @@ import (
 	"context"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/intent"
 )
 
 func TestInspectDeadlineWarnsAndReturnsZero(t *testing.T) {
@@ -94,5 +97,46 @@ func TestResumePhaseForwardsUnderlyingFailure(t *testing.T) {
 		if !strings.Contains(stderr.String(), want) {
 			t.Fatalf("resumePhase stderr missing %q:\n%s", want, stderr.String())
 		}
+	}
+}
+
+// phaseIndex returns the position of want in the inspection sequence, or -1.
+func phaseIndex(want phase) int {
+	for index, run := range phases {
+		if reflect.ValueOf(run).Pointer() == reflect.ValueOf(want).Pointer() {
+			return index
+		}
+	}
+	return -1
+}
+
+// LE76: the sequence runs the recovery pass right after the resume phase, and the pass
+// abandons a lease-less entry whose owner process is gone.
+func TestInspectRecoversAfterTheResumePhase(t *testing.T) {
+	if resume, recovery := phaseIndex(resumePhase), phaseIndex(recoveryPhase); resume < 0 || recovery != resume+1 {
+		t.Fatalf("resume phase %d, recovery phase %d, want recovery right after resume", resume, recovery)
+	}
+	root := t.TempDir()
+	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
+	}
+	t.Setenv("BENCH_HOME", t.TempDir())
+	// A reaped child's process id names no live process.
+	child := exec.Command("true")
+	if err := child.Run(); err != nil {
+		t.Fatal(err)
+	}
+	entry := intent.EntryOwnedBy(intent.KindShift, child.Process.Pid)
+	if err := intent.Upsert(root, entry); err != nil {
+		t.Fatal(err)
+	}
+	original := phases
+	t.Cleanup(func() { phases = original })
+	phases = []phase{recoveryPhase}
+	var out bytes.Buffer
+	Inspect(context.Background(), &out, root)
+	current, err := intent.Read(root)
+	if err != nil || len(current.Entries) != 1 || current.Entries[0].Outcome == "" {
+		t.Fatalf("ledger after Inspect = %+v (%v), want the entry abandoned", current.Entries, err)
 	}
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/structure"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -64,6 +65,8 @@ type session struct {
 	mainRoot string
 	branch   string
 	entry    *intent.Entry
+	record   *shiftRecord
+	released bool // set once teardown has released the worktree to the pool
 
 	mu          sync.Mutex
 	adapter     *exec.Cmd // the in-flight adapter child, or nil between runs
@@ -103,6 +106,7 @@ func (s *session) refactorPhase(base string, rcap int) error {
 		return nil
 	}
 	fmt.Fprintln(s.stdout, "▶ structure over budget — refactor phase (split at green, not before)")
+	defer s.record.endPass()
 	attempted := 0
 	for r := 1; r <= rcap; r++ {
 		s.checkpoint()
@@ -111,12 +115,13 @@ func (s *session) refactorPhase(base string, rcap int) error {
 			break
 		}
 		attempted = r
+		passCtx := s.record.beginPass(refactorSeam)
 		fmt.Fprintf(s.stdout, "── refactor %d/%d ──\n", r, rcap)
 		pre := dirtyPaths(s.root)
-		s.runAdapter(fmt.Sprintf(refactorPrompt, flagged))
+		s.record.adapterRan(s.runAdapter(passCtx, fmt.Sprintf(refactorPrompt, flagged)))
 		s.checkpoint()
 		post := dirtyPaths(s.root)
-		if s.runGate() == 0 {
+		if s.runGate(passCtx) == 0 {
 			s.checkpoint()
 			if err := stageTouched(s.root, pre, post); err != nil {
 				fmt.Fprintf(s.stderr, "could not stage refactor %d: %v\n", r, err)
@@ -130,6 +135,7 @@ func (s *session) refactorPhase(base string, rcap int) error {
 				fmt.Fprintf(s.stderr, "could not commit refactor %d: %v\n", r, err)
 				return fmt.Errorf("could not commit refactor pass %d", r)
 			}
+			s.record.passCommitted(s.root)
 			fmt.Fprintf(s.stdout, "  ✓ tests green - refactor %d committed\n", r)
 		} else {
 			s.checkpoint()
@@ -156,8 +162,9 @@ func (s *session) refactorPhase(base string, rcap int) error {
 // in its own process group, so a pulled line can tear down the whole adapter tree, not
 // just the immediate child. The returned error, a spawn failure or a nonzero exit, is
 // evidence for progress, not the oracle. The gate still decides whether an iteration's
-// work counts.
-func (s *session) runAdapter(prompt string) error {
+// work counts. The adapter also gets the trace handoff for the pass span on ctx, after
+// every inherited value, so its line resolution records under this pass.
+func (s *session) runAdapter(ctx context.Context, prompt string) error {
 	adapterEnv, err := env.Build(s.root)
 	if err != nil {
 		fmt.Fprintln(s.stderr, err)
@@ -165,7 +172,7 @@ func (s *session) runAdapter(prompt string) error {
 	}
 	cmd := exec.Command(s.agent)
 	cmd.Dir = s.root
-	cmd.Env = append(adapterEnv, "BENCH_SHIFT=1")
+	cmd.Env = otelrecord.WithHandoff(ctx, s.mainRoot, append(adapterEnv, "BENCH_SHIFT=1"))
 	cmd.Stdin = strings.NewReader(prompt)
 	cmd.Stdout, cmd.Stderr = s.stdout, s.stderr
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
@@ -201,9 +208,10 @@ func (s *session) killAdapter(sig syscall.Signal) {
 // implementation. The main loop's call propagates a red result through the evidence-split
 // preservation path (evidenceResult). The refactor probe's call instead rolls a red
 // result back, by design. Preservation itself happens once, explicitly, at each caller's
-// own return site, never implied by a flag this method sets on its way out.
-func (s *session) runGate() int {
-	ctx, cancel := context.WithCancel(context.Background())
+// own return site, never implied by a flag this method sets on its way out. The gate runs
+// below ctx, so its span is the child of the pass span on ctx.
+func (s *session) runGate(ctx context.Context) int {
+	ctx, cancel := context.WithCancel(ctx)
 	s.mu.Lock()
 	s.cancelGate = cancel
 	s.mu.Unlock()
@@ -265,7 +273,7 @@ func (s *session) exitPreserving(outcome Outcome, detail string) {
 	if teardownErr != nil {
 		res = teardownFailureResult(s, recovery, teardownErr)
 	}
-	os.Exit(finish(s.stdout, s.stderr, s.mainRoot, s.entry, res))
+	os.Exit(finish(s.stdout, s.stderr, s.mainRoot, s.entry, s.record, res))
 }
 
 // teardown removes the shift scratch and releases the pool lease, exactly once whether
@@ -283,8 +291,18 @@ func (s *session) teardown() error {
 			return
 		}
 		worktree.Release(s.root)
+		s.released = true
 	})
 	return err
+}
+
+// retainNotes keeps the notes of a shift that reached its first iteration. Every exit
+// after the first iteration runs preserveAndRecover, which calls it before any scratch
+// cleanup and on the retain path. An earlier exit has no notes to keep.
+func (s *session) retainNotes() {
+	if s.iterationsUsed > 0 {
+		s.record.retainNotes(s.root)
+	}
 }
 
 // preserveAndRecover is the one place a post-mutation failure preserves work before this
@@ -296,6 +314,7 @@ func (s *session) teardown() error {
 // session so the deferred cleanup never re-finalizes this worktree.
 func (s *session) preserveAndRecover(reason string) (recovery string, teardownErr error) {
 	defer s.preserve.Store(true)
+	s.retainNotes()
 	if len(dirtyPaths(s.root)) == 0 {
 		return RecoveryNone, s.teardown()
 	}
@@ -312,7 +331,7 @@ func (s *session) preserveAndRecover(reason string) (recovery string, teardownEr
 // teardown failure is real even when the work is not lost.
 func teardownFailureResult(s *session, recovery string, err error) Result {
 	detail := fmt.Sprintf("teardown failed: %v; branch %s is safe", err, s.branch)
-	if recovery != "" && recovery != RecoveryNone {
+	if intent.HoldsRecovery(recovery) {
 		detail += "; recovery " + recovery
 	}
 	return Result{Outcome: OutcomeFailed, Branch: s.branch, Committed: s.committed, IterationsUsed: s.iterationsUsed, Recovery: recovery, Detail: detail}

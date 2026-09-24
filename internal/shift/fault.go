@@ -9,6 +9,9 @@ const (
 	stepStage        shiftStep = "stage"
 	stepTeardown     shiftStep = "teardown"
 	stepIntentUpsert shiftStep = "intent-upsert"
+	// The recovery pass's claim, and the gap between its entry write and its act.
+	stepRecoveryClaim shiftStep = "recovery-claim"
+	stepRecoveryAct   shiftStep = "recovery-act"
 )
 
 // fault is a step-keyed injection hook. It is nil in every production path; a test

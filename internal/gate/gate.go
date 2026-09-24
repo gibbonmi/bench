@@ -28,6 +28,7 @@ import (
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gocache"
+	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -165,7 +166,7 @@ func gateEnv() ([]string, error) {
 	// own record lines to a run it is not part of. The parent sets them back on the one
 	// child that runs the phase table.
 	base := env.WithoutWrapperRouting(capability.WithoutEnvironment(capability.WithoutEnvironment(os.Environ(), capability.LogEnv), baselinePolicyEnv))
-	for _, name := range otelGateEnv {
+	for _, name := range otelrecord.HandoffVariables() {
 		base = capability.WithoutEnvironment(base, name)
 	}
 	return gocache.Apply(base)

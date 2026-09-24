@@ -3,13 +3,20 @@ package shift
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
@@ -254,4 +261,138 @@ func TestLoopRetainsAndLocksDirtyWorktree(t *testing.T) {
 	if leaseFound {
 		t.Fatal("retain-and-lock fallback left the pool lease in place")
 	}
+}
+
+// helperRoleEnv selects the role of a re-executed test binary.
+const helperRoleEnv = "BENCH_SHIFT_HELPER_ROLE"
+
+// helperWindow bounds every wait on a helper process and every adapter start.
+var helperWindow = bounds.TestDeadline(0)
+
+// TestShiftHelperProcess is the re-exec target of the helper-process tests. The interrupt
+// role runs one shift and exits with its code, so the checkpoint's os.Exit ends a real
+// process. The recover-act role runs one recovery pass that stops between its entry
+// write and its act, and exits. Without a role it does nothing.
+func TestShiftHelperProcess(t *testing.T) {
+	switch os.Getenv(helperRoleEnv) {
+	case "interrupt":
+		os.Exit(Loop("interrupted shift", io.Discard, io.Discard))
+	case "recover-act":
+		shiftFault = func(step shiftStep) error {
+			if step == stepRecoveryAct {
+				return fmt.Errorf("stop before the act")
+			}
+			return nil
+		}
+		root, _ := git.Root()
+		Recover(root, io.Discard)
+		os.Exit(0)
+	}
+}
+
+// helper is one re-executed test binary and the channel its exit arrives on.
+type helper struct {
+	cmd  *exec.Cmd
+	done chan error
+}
+
+// startHelper re-executes the test binary into role in root. The test's cleanup kills
+// the helper's process group.
+func startHelper(t *testing.T, root, role string) *helper {
+	t.Helper()
+	cmd := exec.Command(os.Args[0], "-test.run=^TestShiftHelperProcess$")
+	cmd.Dir = root
+	cmd.Env = append(os.Environ(), helperRoleEnv+"="+role)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) })
+	h := &helper{cmd: cmd, done: make(chan error, 1)}
+	go func() { h.done <- cmd.Wait() }()
+	return h
+}
+
+// wait waits for the helper's exit and returns its exit code.
+func (h *helper) wait(t *testing.T) int {
+	t.Helper()
+	select {
+	case <-h.done:
+	case <-time.After(helperWindow):
+		t.Fatal("the helper process never exited")
+	}
+	return h.cmd.ProcessState.ExitCode()
+}
+
+// sleepingAgent installs an adapter that runs script, records its own pid, marks its
+// start, and then sleeps past the helper window. It returns the file the start marks,
+// and the test's cleanup kills the adapter.
+func sleepingAgent(t *testing.T, script string) string {
+	t.Helper()
+	dir := t.TempDir()
+	started, pidFile := filepath.Join(dir, "started"), filepath.Join(dir, "adapter")
+	// The adapter outlasts the window, so a shift that waits for it instead of stopping it reds.
+	withAgent(t, fmt.Sprintf("%secho $$ > '%s'\ntouch '%s'\nexec sleep %d\n", script, pidFile, started, 2*int(helperWindow/time.Second)))
+	t.Cleanup(func() {
+		if raw, err := os.ReadFile(pidFile); err == nil {
+			if pid, err := strconv.Atoi(strings.TrimSpace(string(raw))); err == nil {
+				_ = syscall.Kill(pid, syscall.SIGKILL)
+			}
+		}
+	})
+	return started
+}
+
+// waitForFile waits until path exists.
+func waitForFile(t *testing.T, path string) {
+	t.Helper()
+	for deadline := time.Now().Add(helperWindow); ; time.Sleep(20 * time.Millisecond) {
+		if _, err := os.Stat(path); err == nil {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("%s never appeared", path)
+		}
+	}
+}
+
+// reapedPID is the process id of a child that exited and was waited for.
+func reapedPID(t *testing.T) int {
+	t.Helper()
+	child := exec.Command("true")
+	if err := child.Run(); err != nil {
+		t.Fatal(err)
+	}
+	return child.Process.Pid
+}
+
+// crashedShift runs a shift in a helper process whose adapter appends MEMMARK to the
+// notes, writes work.txt when dirty, and sleeps. It kills the helper with SIGKILL when
+// kill is set and waits for its exit, so the lease names a reaped owner. It returns the
+// repository root and the open shift entry.
+func crashedShift(t *testing.T, dirty, kill bool) (string, intent.Entry) {
+	t.Helper()
+	root := faultFixtureCore(t, greenGate, nil)
+	script := "echo MEMMARK >> " + notesFile + "\n"
+	if dirty {
+		script += "echo work > work.txt\n"
+	}
+	started := sleepingAgent(t, script)
+	h := startHelper(t, root, "interrupt")
+	waitForFile(t, started)
+	if kill {
+		_ = h.cmd.Process.Kill()
+		h.wait(t)
+	}
+	current, err := intent.Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range current.Entries {
+		if entry.Kind == intent.KindShift && entry.Lease != "" {
+			return root, entry
+		}
+	}
+	t.Fatal("the crashed shift left no leased entry")
+	return "", intent.Entry{}
 }

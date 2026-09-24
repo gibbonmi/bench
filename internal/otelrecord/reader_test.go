@@ -2,12 +2,19 @@ package otelrecord
 
 import (
 	"context"
+	"encoding/json"
 	"os"
+	"path/filepath"
+	"reflect"
+	"syscall"
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // beginRecorded opens one span through the real record path and returns its closer.
@@ -163,5 +170,227 @@ func TestReaderSeamsAreRegisteredSeams(t *testing.T) {
 		if !registered[seam] {
 			t.Fatalf("reader seam %q names no Registry row", seam)
 		}
+	}
+}
+
+// schemaLine is the finished fixture span as one record line whose resource block holds
+// only the given schema value. An empty schema writes a legacy line with no schema key.
+func schemaLine(t *testing.T, schema string) []byte {
+	t.Helper()
+
+	var data tracesData
+	encodeInto(t, fixtureSpan(t), &data)
+	data.ResourceSpans[0].Resource.Attributes = nil
+	if schema != "" {
+		data.ResourceSpans[0].Resource.Attributes = []keyValue{{Key: ResourceRecordSchema, Value: anyValue{StringValue: stringPtr(schema)}}}
+	}
+	out, err := json.Marshal(data)
+	if err != nil {
+		t.Fatalf("encode the schema line: %v", err)
+	}
+	return out
+}
+
+// recordOf writes the lines as one repository's record and returns its home and root.
+func recordOf(t *testing.T, lines ...[]byte) (string, string) {
+	t.Helper()
+
+	home, root := t.TempDir(), t.TempDir()
+	for _, line := range lines {
+		if err := NewWriter(home, root).Append(line); err != nil {
+			t.Fatalf("append a record line: %v", err)
+		}
+	}
+	return home, root
+}
+
+// TestReadSelectedReportsAnUnknownSchemaAsMalformed holds row LE8: a reader that ignores
+// the resource returns the span, so the problem read reds.
+func TestReadSelectedReportsAnUnknownSchemaAsMalformed(t *testing.T) {
+	home, root := recordOf(t, schemaLine(t, "2"))
+
+	spans, problems, err := ReadSelected(home, root, []string{fixtureTraceID})
+	if err != nil {
+		t.Fatalf("ReadSelected: %v", err)
+	}
+	if len(spans) != 0 {
+		t.Errorf("ReadSelected returned %d spans from a schema 2 line, want none", len(spans))
+	}
+	if !reflect.DeepEqual(problems, []string{"line 1 malformed"}) {
+		t.Errorf("problems = %v, want the one malformed line", problems)
+	}
+}
+
+// TestReadSpansReturnsNoSpanOfAnUnknownSchema holds row LE9: a reader that ignores the
+// resource returns the span, so the count reds.
+func TestReadSpansReturnsNoSpanOfAnUnknownSchema(t *testing.T) {
+	home, root := recordOf(t, schemaLine(t, "2"))
+
+	spans, err := ReadSpans(home, root)
+	if err != nil || len(spans) != 0 {
+		t.Fatalf("ReadSpans = %d spans, %v, want none from a schema 2 line", len(spans), err)
+	}
+}
+
+// TestReadSpansReadsALegacyLine holds row LE10: a reader that requires the schema
+// attribute drops the legacy span, so the count reds.
+func TestReadSpansReadsALegacyLine(t *testing.T) {
+	home, root := recordOf(t, schemaLine(t, ""))
+
+	spans, err := ReadSpans(home, root)
+	if err != nil || len(spans) != 1 || spans[0].TraceID != fixtureTraceID {
+		t.Fatalf("ReadSpans = %+v, %v, want the one legacy span", spans, err)
+	}
+}
+
+// spanLine is one finished record line for a span named name in the trace traceHex,
+// with its seam and extra attributes.
+func spanLine(t *testing.T, traceHex, name, seam string, extra ...attribute.KeyValue) []byte {
+	t.Helper()
+
+	traceID, err := trace.TraceIDFromHex(traceHex)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stub := tracetest.SpanStubFromReadOnlySpan(fixtureSpan(t))
+	stub.Name = name
+	stub.SpanContext = stub.SpanContext.WithTraceID(traceID)
+	stub.Attributes = append([]attribute.KeyValue{attribute.String(AttrSeam, seam)}, extra...)
+	line, err := Encode(stub.Snapshot())
+	if err != nil {
+		t.Fatalf("the encoder failed: %v", err)
+	}
+	return line
+}
+
+// sealEach writes each line as its own segment: every line but the last is sealed, and
+// the last one stays in the live segment.
+func sealEach(t *testing.T, lines ...[]byte) (string, string) {
+	t.Helper()
+
+	home, root := t.TempDir(), t.TempDir()
+	writer := newWriter(home, root, int64(len(lines[0])), 8)
+	for _, line := range lines {
+		if err := writer.Append(line); err != nil {
+			t.Fatalf("append a record line: %v", err)
+		}
+	}
+	if got := len(sealedNames(t, home, root)); got != len(lines)-1 {
+		t.Fatalf("the writer sealed %d segments, want %d", got, len(lines)-1)
+	}
+	return home, root
+}
+
+const otherTraceID = "f0e0d0c0b0a090807060504030201000"
+
+// TestReadSpansReadsTheSealedSegmentsInOrder holds row LE15: a reader of the live
+// segment alone drops the sealed spans, so the ordered comparison reds.
+func TestReadSpansReadsTheSealedSegmentsInOrder(t *testing.T) {
+	home, root := sealEach(t,
+		spanLine(t, fixtureTraceID, "first", "gate"),
+		spanLine(t, fixtureTraceID, "second", "gate"),
+		spanLine(t, fixtureTraceID, "third", "gate"))
+
+	spans, err := ReadSpans(home, root)
+	if err != nil {
+		t.Fatalf("ReadSpans: %v", err)
+	}
+	var names []string
+	for _, span := range spans {
+		names = append(names, span.Name)
+	}
+	if !reflect.DeepEqual(names, []string{"first", "second", "third"}) {
+		t.Fatalf("ReadSpans names = %v, want the two sealed spans in order and then the live one", names)
+	}
+}
+
+// TestNewestLandingReadsStagesFromASealedSegment holds row LE16: a live-only read finds
+// the landing without its stages, so the stage count reds.
+func TestNewestLandingReadsStagesFromASealedSegment(t *testing.T) {
+	home, root := sealEach(t,
+		spanLine(t, fixtureTraceID, "build", SeamGatePhase),
+		spanLine(t, fixtureTraceID, SeamLanding, SeamLanding, attribute.String(AttrSubjectID, "abc123")))
+
+	landing, ok := NewestLanding(home, root)
+	if !ok || landing.Commit != "abc123" || len(landing.Stages) != 1 || landing.Stages[0].Name != "build" {
+		t.Fatalf("NewestLanding = %+v, %v, want the landing with its sealed stage", landing, ok)
+	}
+}
+
+// TestReadSelectedReadsASealedSegment holds row LE17: a live-only read misses the span,
+// so the selection reds.
+func TestReadSelectedReadsASealedSegment(t *testing.T) {
+	home, root := sealEach(t,
+		spanLine(t, fixtureTraceID, "sealed", "gate"),
+		spanLine(t, otherTraceID, "live", "gate"))
+
+	spans, problems, err := ReadSelected(home, root, []string{fixtureTraceID})
+	if err != nil || len(problems) != 0 || len(spans) != 1 || spans[0].Name != "sealed" {
+		t.Fatalf("ReadSelected = %+v, %v, %v, want the one sealed span", spans, problems, err)
+	}
+}
+
+// liveRecord writes one live line below a fresh home and returns the home and root.
+func liveRecord(t *testing.T) (string, string) {
+	t.Helper()
+	return recordOf(t, spanLine(t, fixtureTraceID, "live", "gate"))
+}
+
+// TestReadSpansRefusesAFIFOSegment holds row LE20: an open of the FIFO blocks the read,
+// so the deadline reds.
+func TestReadSpansRefusesAFIFOSegment(t *testing.T) {
+	home, root := liveRecord(t)
+	if err := syscall.Mkfifo(filepath.Join(Dir(home, root), sealedName(1)), 0o600); err != nil {
+		t.Fatalf("create fifo: %v", err)
+	}
+
+	answered := make(chan error, 1)
+	go func() {
+		_, err := ReadSpans(home, root)
+		answered <- err
+	}()
+	window := bounds.TestDeadline(0)
+	select {
+	case err := <-answered:
+		if err == nil {
+			t.Fatal("ReadSpans accepted a FIFO sealed segment")
+		}
+	case <-time.After(window):
+		t.Fatal(bounds.TestTimeoutVerdict("ReadSpans to answer at a FIFO sealed segment", window))
+	}
+}
+
+// TestReadSpansRefusesASymlinkedSegment holds row LE21: a reader that follows the link
+// reads bytes outside the record, so the error read reds.
+func TestReadSpansRefusesASymlinkedSegment(t *testing.T) {
+	home, root := liveRecord(t)
+	outside := filepath.Join(t.TempDir(), "outside.jsonl")
+	if err := os.WriteFile(outside, append(spanLine(t, fixtureTraceID, "outside", "gate"), '\n'), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(Dir(home, root), sealedName(1))); err != nil {
+		t.Fatalf("symlink: %v", err)
+	}
+
+	if spans, err := ReadSpans(home, root); err == nil {
+		t.Fatalf("ReadSpans followed a symlinked sealed segment and returned %d spans", len(spans))
+	}
+}
+
+// TestReadSelectedNamesTheSegmentOfAProblem holds the problem address: a consumer names
+// the live path beside each problem. A problem that counts lines across segments, or that
+// omits its sealed segment, then points at the wrong line.
+func TestReadSelectedNamesTheSegmentOfAProblem(t *testing.T) {
+	home, root := sealEach(t,
+		[]byte("not a record line"),
+		spanLine(t, fixtureTraceID, "sealed", "gate"),
+		[]byte("not a record line"))
+
+	_, problems, err := ReadSelected(home, root, []string{fixtureTraceID})
+	if err != nil {
+		t.Fatalf("ReadSelected: %v", err)
+	}
+	if want := []string{sealedName(1) + " line 1 malformed", "line 1 malformed"}; !reflect.DeepEqual(problems, want) {
+		t.Fatalf("problems = %v, want %v", problems, want)
 	}
 }

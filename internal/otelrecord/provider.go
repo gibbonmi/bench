@@ -2,10 +2,12 @@ package otelrecord
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/propagation"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -30,15 +32,23 @@ type Provider struct {
 // still starts and ends, but nothing reaches disk. A test that names its own BENCH_HOME
 // elsewhere still records, so a test that wants its own record still gets one.
 func NewProvider(home, root string) *Provider {
-	if home == "" {
-		home = benchhome.Dir()
-	}
-	if testing.Testing() && benchhome.IsFallback(home) {
+	home, ok := recordHome(home)
+	if !ok {
 		return &Provider{provider: sdktrace.NewTracerProvider()}
 	}
 	return &Provider{provider: sdktrace.NewTracerProvider(
 		sdktrace.WithSpanProcessor(newProcessor(home, root)),
 	)}
+}
+
+// recordHome resolves the home a record write goes below, and reports whether this
+// process may write there. An empty home resolves through internal/benchhome, and a test
+// binary may not write below the fallback home.
+func recordHome(home string) (string, bool) {
+	if home == "" {
+		home = benchhome.Dir()
+	}
+	return home, !testing.Testing() || !benchhome.IsFallback(home)
 }
 
 // Tracer returns the tracer that starts Bench seam spans.
@@ -85,17 +95,62 @@ func Begin(home, root, seam string) (context.Context, trace.Span, func()) {
 // BeginIn is Begin with the parent context given, and with the span name separate from
 // the seam. A gate run and a lane run start below a context that is already threaded,
 // and both name the span for the mode or the lane while the seam attribute stays the
-// seam. An empty name takes the seam.
-func BeginIn(ctx context.Context, home, root, seam, name string) (context.Context, trace.Span, func()) {
+// seam. An empty name takes the seam. The attrs join the seam attribute at start, so the
+// start line carries them too.
+func BeginIn(ctx context.Context, home, root, seam, name string, attrs ...attribute.KeyValue) (context.Context, trace.Span, func()) {
 	if name == "" {
 		name = seam
 	}
 	provider := NewProvider(home, root)
 	tracer := provider.Tracer()
 	ctx = WithTracer(ctx, tracer)
-	ctx, span := tracer.Start(ctx, name, trace.WithAttributes(attribute.String(AttrSeam, seam)))
+	attrs = append([]attribute.KeyValue{attribute.String(AttrSeam, seam)}, attrs...)
+	ctx, span := tracer.Start(ctx, name, trace.WithAttributes(attrs...))
 	return ctx, span, func() {
 		span.End()
 		_ = provider.Shutdown(context.WithoutCancel(ctx))
 	}
+}
+
+// The trace handoff to a child process. A child that records under its parent's trace
+// reads the repository and the parent span from these two variables. This package owns
+// both names, so every composer and every child reads one spelling.
+const (
+	handoffRootEnv        = "BENCH_OTEL_ROOT"
+	handoffTraceparentEnv = "BENCH_OTEL_TRACEPARENT"
+)
+
+// HandoffVariables returns every handoff variable name. A composer strips each inherited
+// value before it hands a child its own handoff.
+func HandoffVariables() []string {
+	return []string{handoffRootEnv, handoffTraceparentEnv}
+}
+
+// WithHandoff appends to env the handoff for the span on ctx, recorded under root. A
+// context with no span adds the root only, so the child records in a trace of its own.
+func WithHandoff(ctx context.Context, root string, env []string) []string {
+	env = append(env, handoffRootEnv+"="+root)
+	carrier := propagation.MapCarrier{}
+	propagation.TraceContext{}.Inject(ctx, carrier)
+	if parent := carrier.Get("traceparent"); parent != "" {
+		env = append(env, handoffTraceparentEnv+"="+parent)
+	}
+	return env
+}
+
+// AttachHandoff attaches this process to the record and the trace that its parent handed
+// off. The returned context carries the tracer and the parent span, and the closer shuts
+// the provider down. A process with no handoff gets its context back unchanged and a
+// closer that does nothing, so TracerFrom answers a no-op tracer.
+func AttachHandoff(ctx context.Context) (context.Context, func()) {
+	root := os.Getenv(handoffRootEnv)
+	if root == "" {
+		return ctx, func() {}
+	}
+	provider := NewProvider("", root)
+	ctx = WithTracer(ctx, provider.Tracer())
+	if parent := os.Getenv(handoffTraceparentEnv); parent != "" {
+		ctx = propagation.TraceContext{}.Extract(ctx, propagation.MapCarrier{"traceparent": parent})
+	}
+	return ctx, func() { _ = provider.Shutdown(context.WithoutCancel(ctx)) }
 }

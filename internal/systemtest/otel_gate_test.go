@@ -21,6 +21,8 @@ type recordedSpan struct {
 	Parent     string
 	Ended      bool
 	Attributes map[string]string
+	// Version is the line's service.version resource value, empty when the line has none.
+	Version string
 }
 
 // TestOtelGateRecordJourney drives the built binary's `bench gate` against a scaffolded
@@ -158,6 +160,14 @@ func readRecordLines(t *testing.T, home string, strict bool) []recordedSpan {
 	for _, line := range strings.Split(strings.TrimSuffix(string(data), "\n"), "\n") {
 		var record struct {
 			ResourceSpans []struct {
+				Resource struct {
+					Attributes []struct {
+						Key   string `json:"key"`
+						Value struct {
+							StringValue string `json:"stringValue"`
+						} `json:"value"`
+					} `json:"attributes"`
+				} `json:"resource"`
 				ScopeSpans []struct {
 					Spans []struct {
 						SpanID       string `json:"spanId"`
@@ -181,9 +191,15 @@ func readRecordLines(t *testing.T, home string, strict bool) []recordedSpan {
 			continue
 		}
 		for _, resource := range record.ResourceSpans {
+			version := ""
+			for _, attribute := range resource.Resource.Attributes {
+				if attribute.Key == otelrecord.ResourceServiceVersion {
+					version = attribute.Value.StringValue
+				}
+			}
 			for _, scope := range resource.ScopeSpans {
 				for _, span := range scope.Spans {
-					one := recordedSpan{Name: span.Name, SpanID: span.SpanID, Parent: span.ParentSpanID, Ended: span.EndTime != "", Attributes: map[string]string{}}
+					one := recordedSpan{Name: span.Name, SpanID: span.SpanID, Parent: span.ParentSpanID, Ended: span.EndTime != "", Attributes: map[string]string{}, Version: version}
 					for _, attribute := range span.Attributes {
 						one.Attributes[attribute.Key] = attribute.Value.StringValue
 					}
@@ -289,5 +305,34 @@ func TestOtelGateIgnoresAnAmbientRecordRoot(t *testing.T) {
 	}
 	if phase.Parent != root.SpanID {
 		t.Fatalf("phase parent = %q, want this run's root span %q", phase.Parent, root.SpanID)
+	}
+}
+
+// TestOtelGateRecordNamesTheStampedVersion holds row LE3: a binary that never hands its
+// stamped version to the record writes no version, so the equality with the version
+// line reds. The version line also names the platform, so the row reads its second field.
+func TestOtelGateRecordNamesTheStampedVersion(t *testing.T) {
+	home := filepath.Join(t.TempDir(), "bench-home")
+	scaffold := scaffoldRecordedGateRepo(t, home, `{"phases":[{"name":"probe","argv":["true"]}]}`)
+	environment := scaffold.environment(t, home)
+
+	stamped := owner.runAt(scaffold.path, environment, owner.selected.path, "version")
+	fields := strings.Fields(stamped.stdout)
+	if stamped.code != 0 || len(fields) < 2 {
+		t.Fatalf("bench version = (%d, %q, %q)", stamped.code, stamped.stdout, stamped.stderr)
+	}
+	want := fields[1]
+
+	if recorded := owner.runAt(scaffold.path, environment, "bash", scaffold.wrapper, "gate", "--fresh"); recorded.code != 0 {
+		t.Fatalf("gate = (%d, %q, %q)", recorded.code, recorded.stdout, recorded.stderr)
+	}
+	lines := readRecordLines(t, home, true)
+	if len(lines) == 0 {
+		t.Fatal("the gate run wrote no record line")
+	}
+	for _, line := range lines {
+		if line.Version != want {
+			t.Fatalf("line %s carries service.version %q, want the stamped %q", line.Name, line.Version, want)
+		}
 	}
 }

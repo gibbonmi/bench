@@ -62,8 +62,8 @@ const (
 	LeaseUnknown = lifecyclepolicy.LeaseUnknown
 )
 
-// pidAlive treats kill-0 success and EPERM as alive. Only ESRCH means gone.
-func pidAlive(pid int) bool {
+// PIDAlive treats kill-0 success and EPERM as alive. Only ESRCH means gone.
+func PIDAlive(pid int) bool {
 	err := syscall.Kill(pid, 0)
 	return err == nil || errors.Is(err, syscall.EPERM)
 }
@@ -86,28 +86,28 @@ func ProbeLease(leasePath string) LeaseState {
 	if !ok {
 		return LeaseUnknown
 	}
-	if pidAlive(pid) {
+	if PIDAlive(pid) {
 		return LeaseLive
 	}
 	return LeaseDead
 }
 
-// reclaimable is the policy staleness decision over a lease's translated
-// content, mtime, and the caller's liveness probe, judged against the
-// bounds.LeaseStale window this boundary supplies.
+// reclaimable is the policy staleness decision, judged against the bounds.LeaseStale window.
 func reclaimable(content []byte, mtime, now time.Time, alive func(int) bool) bool {
 	return lifecyclepolicy.Reclaimable(content, mtime, now, alive, bounds.LeaseStale)
 }
+
+// staleLease is the pool's takeover judgment: a lease whose owner is provably gone.
+var staleLease = func(content []byte, mtime, now time.Time) bool { return reclaimable(content, mtime, now, PIDAlive) }
 
 // candidateName keeps each unique mint attempt inside the pool.
 func candidateName(pool string, unixSecs int64, pid, try int) string {
 	return filepath.Join(pool, fmt.Sprintf("%d-%d-%d", unixSecs, pid, try))
 }
 
-// leaseLine is the bytes an owner writes into its lease: "<pid> <utc-time>\n".
-// The instant is the caller's explicit boundary resolution, never an ambient read.
+// leaseLine is the bytes an owner writes into its lease at the caller's instant: "<pid> <utc-time>\n".
 func leaseLine(now time.Time) []byte {
-	return []byte(fmt.Sprintf("%d %s\n", os.Getpid(), now.UTC().Format(leaseTimeLayout)))
+	return []byte(fmt.Sprintf("%d %s", os.Getpid(), now.UTC().Format(leaseTimeLayout)) + leaseEnd)
 }
 
 // tryCreate wins a lease only through an atomic O_EXCL create.
@@ -121,9 +121,9 @@ func tryCreate(leasePath string, now time.Time) bool {
 	return werr == nil && cerr == nil
 }
 
-// claimAt atomically creates a lease or identity-checks a provably stale takeover,
-// judging staleness against the caller's explicitly resolved instant.
-func claimAt(j joins, leasePath string, now time.Time) bool {
+// claimAt atomically creates a lease, or takes over a lease that judge accepts and whose
+// bytes stay the judged bytes through the rename, at the caller's resolved instant.
+func claimAt(j joins, leasePath string, now time.Time, judge func([]byte, time.Time, time.Time) bool) bool {
 	if tryCreate(leasePath, now) {
 		return true
 	}
@@ -132,7 +132,7 @@ func claimAt(j joins, leasePath string, now time.Time) bool {
 		return false // lease vanished under us (a racing reclaim); respect and rescan
 	}
 	content, _ := os.ReadFile(leasePath)
-	if !reclaimable(content, info.ModTime(), now, pidAlive) {
+	if !judge(content, info.ModTime(), now) {
 		return false
 	}
 	j.claimTakeoverGap(leasePath)
@@ -189,7 +189,7 @@ func acquireAt(j joins, root, resetRef, resetMode, home string, now time.Time) (
 			continue
 		}
 		lease, err := LeaseFile(d)
-		if err != nil || !claimAt(j, lease, now) {
+		if err != nil || !claimAt(j, lease, now, staleLease) {
 			continue
 		}
 		wt = d
@@ -207,7 +207,7 @@ func acquireAt(j joins, root, resetRef, resetMode, home string, now time.Time) (
 		if err != nil {
 			continue
 		}
-		if claimAt(j, lease, now) {
+		if claimAt(j, lease, now, staleLease) {
 			wt = cand
 		}
 	}
@@ -259,7 +259,7 @@ func releaseWith(j joins, wt string) {
 	}
 	content, _ := os.ReadFile(lease)
 	if field := strings.Fields(string(content)); len(field) > 0 {
-		if pid, err := strconv.Atoi(field[0]); err == nil && pid != os.Getpid() && pidAlive(pid) {
+		if pid, err := strconv.Atoi(field[0]); err == nil && pid != os.Getpid() && PIDAlive(pid) {
 			return
 		}
 	}

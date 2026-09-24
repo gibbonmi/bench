@@ -4,24 +4,17 @@ import (
 	"context"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/propagation"
 )
 
 // The gate's seam record. The verb boundary resolves the Bench home once, builds the
 // provider, and puts its tracer on the context for the whole run, the way the run log
 // threads its own file. The phase table runs in a second process, so the record's
-// repository and this run's trace reach that process through the environment.
+// repository and this run's trace reach that process through the record package's
+// handoff.
 const (
 	otelGateSeam      = "gate"
 	otelGatePhaseSeam = "gate.phase"
-
-	otelRootEnv        = "BENCH_OTEL_ROOT"
-	otelTraceparentEnv = "BENCH_OTEL_TRACEPARENT"
 )
-
-// otelGateEnv is the whole set the phases process inherits, so the stripper and the
-// composer read one list rather than two that can disagree.
-var otelGateEnv = []string{otelRootEnv, otelTraceparentEnv}
 
 // otelRecordRootKey addresses the repository the run records under. The child that runs
 // the phases records under the same repository, so the run's spans land in one file.
@@ -54,11 +47,5 @@ func withGateSpanEnv(ctx context.Context, base []string) []string {
 	if root == "" {
 		return base
 	}
-	env := append(base, otelRootEnv+"="+root)
-	carrier := propagation.MapCarrier{}
-	propagation.TraceContext{}.Inject(ctx, carrier)
-	if parent := carrier.Get("traceparent"); parent != "" {
-		env = append(env, otelTraceparentEnv+"="+parent)
-	}
-	return env
+	return otelrecord.WithHandoff(ctx, root, base)
 }

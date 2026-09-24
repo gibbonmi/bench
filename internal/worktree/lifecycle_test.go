@@ -153,7 +153,7 @@ func TestReleaseNeverClaimableMidCleanup(t *testing.T) {
 	real := j.restoreClean
 	claimedMidCleanup := false
 	j.restoreClean = func(wt string) {
-		claimedMidCleanup = claimAt(j, lease, time.Now())
+		claimedMidCleanup = claimAt(j, lease, time.Now(), staleLease)
 		real(wt)
 	}
 	releaseWith(j, dir)
@@ -175,7 +175,7 @@ func deadPidLine(t *testing.T) string {
 		t.Fatalf("spawn reap victim: %v", err)
 	}
 	pid := cmd.Process.Pid
-	if pidAlive(pid) {
+	if PIDAlive(pid) {
 		capability.Capability(t, capability.PID, "reaped pid reused before use")
 	}
 	return fmt.Sprintf("%d 2026-07-05T00:00:00Z\n", pid)
@@ -208,9 +208,9 @@ func TestClaimSecondReclaimerConcedes(t *testing.T) {
 			return // the nested reclaimer's own gap is a no-op
 		}
 		reentered = true
-		nestedWon = claimAt(j, leasePath, time.Now())
+		nestedWon = claimAt(j, leasePath, time.Now(), staleLease)
 	}
-	outerWon := claimAt(j, lease, time.Now())
+	outerWon := claimAt(j, lease, time.Now(), staleLease)
 	if !nestedWon {
 		t.Error("first (nested) reclaimer did not win the dead-pid lease")
 	}
@@ -264,7 +264,7 @@ func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 			return // B's own pass through this gap must not recurse again
 		}
 		inNestedTakeover = true
-		nestedWon = claimAt(j, lp, time.Now())
+		nestedWon = claimAt(j, lp, time.Now(), staleLease)
 		inNestedTakeover = false
 	}
 	const sentinel = "999999 sentinel-first-writer\n"
@@ -280,7 +280,7 @@ func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	outerWon := claimAt(j, lease, time.Now())
+	outerWon := claimAt(j, lease, time.Now(), staleLease)
 	if outerWon {
 		t.Error("outer Claim = true, want false (it must concede to the first-writer)")
 	}

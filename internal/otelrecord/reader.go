@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"os"
+	"path/filepath"
 	"strconv"
+	"syscall"
 	"time"
 )
 
@@ -44,26 +46,59 @@ type Span struct {
 func (s Span) Elapsed() time.Duration { return s.End.Sub(s.Start) }
 
 // ReadSpans returns the finished spans of one repository's record below an explicitly
-// resolved home, in record order. An absent record and an unreadable record are both
+// resolved home, in record order: the sealed segments by sequence, then the live one. An
+// absent record, an unreadable record, and a segment the writer's grade refuses are all
 // refusals, so a consumer states that it knows nothing rather than that nothing ran.
 // A single malformed line is skipped: one truncated write must not hide the run that
 // wrote every other line.
 func ReadSpans(home, root string) ([]Span, error) {
-	file, err := os.Open(Path(home, root))
+	var spans []Span
+	err := scanRecord(home, root, func(_ string, line []byte) bool {
+		spans = append(spans, finishedSpans(line)...)
+		return true
+	})
 	if err != nil {
-		return nil, fmt.Errorf("open seam record: %w", err)
+		return nil, err
+	}
+	return spans, nil
+}
+
+// scanRecord calls visit with each line of root's record in record order, and stops when
+// visit answers false. visit also receives the base name of the line's segment. Each
+// segment passes the writer's grade before it opens, and the open itself follows no link
+// and never waits on a special file.
+func scanRecord(home, root string, visit func(segment string, line []byte) bool) error {
+	paths, err := segments(home, root)
+	if err != nil {
+		return err
+	}
+	for _, path := range paths {
+		segment := filepath.Base(path)
+		more, err := scanSegment(path, func(line []byte) bool { return visit(segment, line) })
+		if err != nil || !more {
+			return err
+		}
+	}
+	return nil
+}
+
+func scanSegment(path string, visit func(line []byte) bool) (bool, error) {
+	file, err := os.OpenFile(path, os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
+	if err != nil {
+		return false, fmt.Errorf("open seam record: %w", err)
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
 	scanner.Buffer(make([]byte, 0, 64<<10), recordLineLimit)
-	var spans []Span
 	for scanner.Scan() {
-		spans = append(spans, finishedSpans(scanner.Bytes())...)
+		if !visit(scanner.Bytes()) {
+			return false, nil
+		}
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("read seam record: %w", err)
+		return false, fmt.Errorf("read seam record: %w", err)
 	}
-	return spans, nil
+	return true, nil
 }
 
 // Landing is the newest completed landing with a published subject in one
@@ -136,6 +171,9 @@ func decodeRecord(line []byte) ([]decodedRecordSpan, error) {
 	}
 	var out []decodedRecordSpan
 	for _, resource := range data.ResourceSpans {
+		if err := gradeSchema(resource.Resource); err != nil {
+			return nil, err
+		}
 		for _, scope := range resource.ScopeSpans {
 			for _, encoded := range scope.Spans {
 				out = append(out, decodedRecordSpan{Span: decodeSpan(encoded), finished: encoded.EndTimeUnixNano != ""})
@@ -143,6 +181,20 @@ func decodeRecord(line []byte) ([]decodedRecordSpan, error) {
 		}
 	}
 	return out, nil
+}
+
+// gradeSchema refuses a line whose schema this reader does not know, so a consumer never
+// misreads a later shape. A line with no schema key is a legacy line and reads as before.
+func gradeSchema(block resource) error {
+	for _, pair := range block.Attributes {
+		if pair.Key != ResourceRecordSchema {
+			continue
+		}
+		if schema := decodeValue(pair.Value); schema != RecordSchema {
+			return fmt.Errorf("unknown record schema %q", schema)
+		}
+	}
+	return nil
 }
 
 func decodeSpan(encoded span) Span {
@@ -190,25 +242,18 @@ func decodeValue(value anyValue) string {
 
 // ReadSelected streams only selected traces into memory, including unfinished spans.
 // Malformed lines remain explicit coverage gaps instead of disappearing as empty results.
+// A problem in a sealed segment names that segment, and a line number counts within its
+// own segment, so a consumer that names the live path points at the right line.
 func ReadSelected(home, root string, traceIDs []string) ([]Span, []string, error) {
-	path := Path(home, root)
-	if err := NewWriter(home, root).gradeRecordPath(path); err != nil {
-		return nil, nil, err
-	}
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer file.Close()
 	wanted := map[string]bool{}
 	for _, id := range traceIDs {
 		wanted[id] = true
 	}
-	scanner := bufio.NewScanner(file)
-	scanner.Buffer(make([]byte, 0, 64<<10), recordLineLimit)
 	var out []Span
 	var problems []string
-	line := 0
+	var stopped error
+	segment, line := "", 0
+	read := 0
 	retained := int64(0)
 	problem := func(reason string) bool {
 		retained += int64(len(reason))
@@ -218,14 +263,25 @@ func ReadSelected(home, root string, traceIDs []string) ([]Span, []string, error
 		problems = append(problems, reason)
 		return true
 	}
-	for scanner.Scan() {
+	where := func() string {
+		if segment == recordFile {
+			return fmt.Sprintf("line %d", line)
+		}
+		return fmt.Sprintf("%s line %d", segment, line)
+	}
+	err := scanRecord(home, root, func(name string, text []byte) bool {
+		if name != segment {
+			segment, line = name, 0
+		}
 		line++
-		entries, err := decodeRecord(scanner.Bytes())
+		read++
+		entries, err := decodeRecord(text)
 		if err != nil {
-			if !problem(fmt.Sprintf("line %d malformed", line)) {
-				return nil, nil, fmt.Errorf("native diagnostics exceed control record bound")
+			if !problem(where() + " malformed") {
+				out, problems, stopped = nil, nil, fmt.Errorf("native diagnostics exceed control record bound")
+				return false
 			}
-			continue
+			return true
 		}
 		for _, entry := range entries {
 			decoded := entry.Span
@@ -233,19 +289,28 @@ func ReadSelected(home, root string, traceIDs []string) ([]Span, []string, error
 				continue
 			}
 			if decoded.TraceID == "" || decoded.SpanID == "" || decoded.Start.IsZero() || (!decoded.End.IsZero() && decoded.End.Before(decoded.Start)) || (entry.finished && decoded.End.IsZero()) {
-				if !problem(fmt.Sprintf("line %d invalid span", line)) {
-					return nil, nil, fmt.Errorf("native diagnostics exceed control record bound")
+				if !problem(where() + " invalid span") {
+					out, problems, stopped = nil, nil, fmt.Errorf("native diagnostics exceed control record bound")
+					return false
 				}
 				continue
 			}
-			retained += int64(len(scanner.Bytes()))
+			retained += int64(len(text))
 			if retained > bounds.ControlRecordLimit {
-				return nil, problems, fmt.Errorf("selected spans exceed control record bound")
+				out, stopped = nil, fmt.Errorf("selected spans exceed control record bound")
+				return false
 			}
 			out = append(out, decoded)
 		}
+		return true
+	})
+	if stopped != nil {
+		return out, problems, stopped
 	}
-	if err := scanner.Err(); err != nil {
+	if err != nil {
+		if read == 0 {
+			return nil, nil, err
+		}
 		return out, problems, fmt.Errorf("read selected spans: %w", err)
 	}
 	finished := map[string]bool{}

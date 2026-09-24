@@ -13,6 +13,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/otelrecord"
 )
 
 func TestSubshellNormalExitReleasesItsAssignment(t *testing.T) {
@@ -32,6 +33,43 @@ func TestSubshellNormalExitReleasesItsAssignment(t *testing.T) {
 	requireTest(t, filepath.IsAbs(path), "subshell announcement path = %q, want literal absolute path", path)
 	childDir, err := os.ReadFile(pwd)
 	requireTest(t, err == nil && string(childDir) == path, "subshell child directory = %q, %v; want announced worktree %q", childDir, err, path)
+	span := shellSpan(t, home, root)
+	id := span.Attributes[otelrecord.AttrSubjectID]
+	requireTest(t, id != "" && strings.HasSuffix(filepath.Base(path), "-"+id), "shell span subject = %q, want the assignment id of %q", id, path)
+	requireShellEnd(t, span, otelrecord.WorkCompleted, otelrecord.CleanupReleased)
+}
+
+func TestSubshellRecordsAShellThatCannotStart(t *testing.T) {
+	t.Parallel()
+	root := newWorktreeRepo(t)
+	home := t.TempDir()
+	var stdout, stderr bytes.Buffer
+	subshellAt(root, home, filepath.Join(t.TempDir(), "absent-shell"), os.Environ(), nil, strings.NewReader(""), &stdout, &stderr)
+	requireTest(t, strings.Contains(stderr.String(), "bench worktree shell:"), "absent shell stderr = %q, want the start error", stderr.String())
+	span := shellSpan(t, home, root)
+	requireTest(t, span.Attributes[otelrecord.AttrSubjectID] != "", "absent shell span has no assignment id")
+	requireShellEnd(t, span, otelrecord.WorkFailed, otelrecord.CleanupReleased)
+}
+
+// shellSpan returns the one finished worktree.shell span of a session's record.
+func shellSpan(t *testing.T, home, root string) otelrecord.Span {
+	t.Helper()
+	spans, err := otelrecord.ReadSpans(home, root)
+	requireTest(t, err == nil, "read shell spans: %v", err)
+	var shells []otelrecord.Span
+	for _, span := range spans {
+		if span.Seam == otelShellSeam {
+			shells = append(shells, span)
+		}
+	}
+	requireTest(t, len(shells) == 1, "worktree.shell spans = %#v, want one", shells)
+	return shells[0]
+}
+
+func requireShellEnd(t *testing.T, span otelrecord.Span, state, cleanup string) {
+	t.Helper()
+	got := [2]string{span.Attributes[otelrecord.AttrWorkState], span.Attributes[otelrecord.AttrCleanup]}
+	requireTest(t, got == [2]string{state, cleanup}, "shell span work state and cleanup = %q, want %q and %q", got, state, cleanup)
 }
 
 const subshellSignalHelperEnv = "BENCH_SUBSHELL_SIGNAL_HELPER"
@@ -71,6 +109,9 @@ func TestSubshellSignalsLeaveAReclaimableLease(t *testing.T) {
 
 			assignments, err := intent.Assignments(root)
 			requireTest(t, err == nil && len(assignments) == 1, "signalled subshell assignments = %#v, %v; want one retained owner", assignments, err)
+			span := shellSpan(t, home, root)
+			requireTest(t, span.Attributes[otelrecord.AttrSubjectID] == assignments[0].ID, "signalled shell span subject = %q, want %q", span.Attributes[otelrecord.AttrSubjectID], assignments[0].ID)
+			requireShellEnd(t, span, otelrecord.WorkInterrupted, otelrecord.CleanupRetained)
 			lease, err := LeaseFile(assignments[0].Worktree)
 			requireTest(t, err == nil && ProbeLease(lease) == LeaseDead, "signalled subshell lease = %q, %v; want a dead reclaimable lease", lease, err)
 			plan, err := PlanExplicit(root, assignments[0].Worktree)

@@ -23,7 +23,6 @@ import (
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -139,7 +138,9 @@ func (r phaseResult) green() bool {
 }
 
 func runPhases(ctx context.Context, root string, phases []Phase, stdout, stderr io.Writer) int {
-	ctx, closeRecord := beginPhaseRecord(ctx)
+	// The phases run in their own process, so the run's record and trace come from the
+	// handoff that the run's parent composed.
+	ctx, closeRecord := otelrecord.AttachHandoff(ctx)
 	defer closeRecord()
 	skipLog, cleanup, err := newSkipLog()
 	if err != nil {
@@ -546,23 +547,6 @@ func bytesIndexByte(b []byte, c byte) int {
 		}
 	}
 	return -1
-}
-
-// beginPhaseRecord attaches the seam record of the gate run that started this process.
-// The phases run in their own process, so the repository and the trace come from the
-// environment the run's parent composed. A process outside a recorded run records
-// nothing: TracerFrom then answers a no-op tracer, and the phase spans cost nothing.
-func beginPhaseRecord(ctx context.Context) (context.Context, func()) {
-	root := os.Getenv(otelRootEnv)
-	if root == "" {
-		return ctx, func() {}
-	}
-	provider := otelrecord.NewProvider("", root)
-	ctx = otelrecord.WithTracer(ctx, provider.Tracer())
-	if parent := os.Getenv(otelTraceparentEnv); parent != "" {
-		ctx = propagation.TraceContext{}.Extract(ctx, propagation.MapCarrier{"traceparent": parent})
-	}
-	return ctx, func() { _ = provider.Shutdown(context.WithoutCancel(ctx)) }
 }
 
 // startPhaseSpan opens one phase's span. The phase name is the span name, so a reader
