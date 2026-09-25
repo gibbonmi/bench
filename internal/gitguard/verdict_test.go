@@ -100,13 +100,25 @@ func TestClassifyVerdicts(t *testing.T) {
 
 		// unconditional destructive verbs
 		{"rebase", "git rebase main", refYes, "history rewrite"},
-		{"reset --hard", "git reset --hard", refYes, "git reset --hard"},
-		{"reset --soft allowed", "git reset --soft HEAD~1", refYes, ""},
-		{"reset mixed allowed", "git reset HEAD~1", refYes, ""},
+		// Every commit and every reset is Bench's, so each option form denies.
+		{"reset --hard", "git reset --hard", refYes, "git reset"},
+		{"reset --soft", "git reset --soft HEAD~1", refYes, "git reset"},
+		{"reset mixed", "git reset HEAD~1", refYes, "git reset"},
+		{"reset --keep", "git reset --keep HEAD~1", refYes, "git reset"},
+		{"reset --merge", "git reset --merge", refYes, "git reset"},
+		{"reset bare", "git reset", refYes, "git reset"},
+		{"reset pathspec", "git reset -- README.md", refYes, "git reset"},
 		{"clean -fd", "git clean -fd", refYes, "git clean -f"},
 		{"clean --force", "git clean --force", refYes, "git clean -f"},
-		{"amend", "git commit --amend -m x", refYes, "git commit --amend"},
-		{"commit allowed", "git commit -m checkout-notes", refYes, ""},
+		{"commit -m", "git commit -m x", refYes, "git commit"},
+		{"commit --amend", "git commit --amend -m x", refYes, "git commit"},
+		{"commit bare", "git commit", refYes, "git commit"},
+		{"commit --allow-empty", "git commit --allow-empty -m x", refYes, "git commit"},
+		{"commit under a global -C", "git -C /other commit -m x", refYes, "git commit"},
+		// An index write discards no work and moves no ref, and a Bench commit composes
+		// through its own index, so staging stays ordinary file work.
+		{"add allowed", "git add -A", refYes, ""},
+		{"restore --staged dot allowed", "git restore --staged .", refYes, ""},
 		{"update-ref -d", "git update-ref -d refs/heads/x", refYes, "git update-ref -d"},
 		{"tag -d", "git tag -d v1", refYes, "git tag -d"},
 		{"tag --delete", "git tag --delete v1", refYes, "git tag -d"},
@@ -194,15 +206,42 @@ func TestClassifyVerdicts(t *testing.T) {
 		// non-command git words, prefixes, wrappers
 		{"echo git push allowed", "echo git push", refYes, ""},
 		{"env prefix", "env git push origin main", pushMain, "git push to the default branch"},
-		{"timeout prefix", "timeout 5 git reset --hard", refYes, "git reset --hard"},
+		{"timeout prefix", "timeout 5 git reset --hard", refYes, "git reset"},
 		{"command prefix", "command git push origin main", pushMain, "git push to the default branch"},
 		{"nohup prefix", "nohup git push origin main", pushMain, "git push to the default branch"},
 		{"wrapper -c", "bash -c 'git push origin main'", pushMain, "git push to the default branch"},
 		{"wrapper -lc", "bash -lc 'git push origin main'", pushMain, "git push to the default branch"},
 		{"later separator blocks", "git status && git push origin main", pushMain, "git push to the default branch"},
 		{"allowed push composes with a follow-on", "git push origin topic && ls", pushMain, ""},
-		{"newline block blocks", "git add -A\ngit commit -m wip\ngit push origin main", pushMain, "git push to the default branch"},
-		{"clean newline flow allowed", "git add -A\ngit status --short\ngit commit -m wip", refYes, ""},
+		{"newline block blocks", "git add -A\ngit status --short\ngit push origin main", pushMain, "git push to the default branch"},
+		{"newline commit blocks", "git add -A\ngit status --short\ngit commit -m wip", refYes, "git commit"},
+		{"wrapper commit blocks", "bash -c 'git commit -m wip'", refYes, "git commit"},
+		{"clean newline flow allowed", "git add -A\ngit status --short\ngit diff --cached --stat", refYes, ""},
+
+		// bench worktree exec runs its child argv directly, so the child takes every verdict
+		// one level deep, the way a wrapper string does.
+		{"exec commit blocks", "bench worktree exec X -- git commit -m x", refYes, "git commit"},
+		{"exec reset --soft blocks", "bench worktree exec X -- git reset --soft HEAD~1", refYes, "git reset"},
+		{"exec reset --hard blocks", "bench worktree exec X -- git reset --hard", refYes, "git reset"},
+		{"exec with env values blocks", "bench worktree exec X --env A=1 --env B=2 -- git commit -m x", refYes, "git commit"},
+		{"exec through a built binary blocks", "./dist/bench worktree exec X -- git reset --hard", refYes, "git reset"},
+		{"exec after a routine prefix blocks", "env A=1 bench worktree exec X -- timeout 5 git commit -m x", refYes, "git commit"},
+		{"exec in a later command blocks", "ls && bench worktree exec X -- git commit -m x", refYes, "git commit"},
+		{"exec status allowed", "bench worktree exec X -- git status", refYes, ""},
+		{"exec log allowed", "bench worktree exec X -- git log", refYes, ""},
+		{"exec diff allowed", "bench worktree exec X -- git diff", refYes, ""},
+		{"exec rev-parse allowed", "bench worktree exec X -- git rev-parse HEAD", refYes, ""},
+		{"exec apply --index allowed", "bench worktree exec X -- git apply --index fix.patch", refYes, ""},
+		{"exec format-patch allowed", "bench worktree exec X -- git format-patch -1", refYes, ""},
+		{"exec non-git child allowed", "bench worktree exec X -- bench gate", refYes, ""},
+		// The child runs in another checkout, so the push facts of this directory do not
+		// describe it, and the push fails closed.
+		{"exec push is unresolved", "bench worktree exec X -- git push origin topic", pushMain, "git push with an unresolved destination"},
+		// One level deep: a wrapper inside the exec child and an exec inside a wrapper are
+		// each a second level.
+		{"exec wrapper child not re-expanded", "bench worktree exec X -- bash -c 'git commit -m x'", refYes, ""},
+		{"wrapper exec not re-expanded", "bash -c 'bench worktree exec X -- git commit -m x'", refYes, ""},
+		{"exec word as an argument allowed", "echo bench worktree exec X -- git commit", refYes, ""},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

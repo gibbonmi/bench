@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # name: block-dangerous-git
 # boundary: PreToolUse:Bash
-# denies: destructive git operations
-# why: agents lack destructive-git authority; merge and history rewrites belong to the reviewer, and discarding work detaches the gate verdict from the tree
+# denies: destructive git operations and a raw commit or reset
+# why: agents lack destructive-git authority; merge and history rewrites belong to the reviewer, discarding work detaches the gate verdict from the tree, and every commit and reset goes through Bench
 # This is a PreToolUse guard. The agent holds no destructive git authority. This
 # makes invariant #4 enforceable — the agent assists, and the reviewer decides —
 # for operations that can silently destroy a shift's work or bypass the merge.

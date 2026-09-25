@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 
 	"github.com/gibbonmi/bench/internal/shellcommand"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // Checker resolves repository truth for the verdicts that need it (checkout ref-ness,
@@ -44,6 +45,13 @@ func callFact(fact func() (string, bool)) (string, bool) {
 // cherry-pick row name the two Bench verbs from one source.
 const composeAdvice = "Compose through Bench: bench worktree merge <target> --from <commit> folds a sibling, and bench worktree land lands a source."
 
+// commitAdvice and resetAdvice name the Bench route for the two lane-bypass classes. The
+// reset route reads the reset verb's own grammar line, so the refusal cannot drift from it.
+const (
+	commitAdvice = "Commit through Bench: bench commit -m <msg> -- <path>... runs the lane and commits the named paths."
+	resetAdvice  = "Reset through Bench: " + usage.WorktreeReset + " plans a recoverable reset, and --apply applies it."
+)
+
 // denyTable is the ordered source for every destructive class; classification returns
 // its labels in the live block verdict. The advice column is the one source of the
 // sentence a refusal appends, and only a class whose fix the agent can type carries one.
@@ -55,7 +63,7 @@ var denyTable = []struct{ key, label, advice string }{
 	{"push-mirror", "git push --mirror", ""},
 	{"push-tags", "git push --tags", ""},
 	{"push-unresolved", "git push with an unresolved destination", "Run the push from inside the repository. Name the remote and the branch: git push <remote> <branch>."},
-	{"reset", "git reset --hard", ""},
+	{"reset", "git reset", resetAdvice},
 	{"clean", "git clean -f", ""},
 	{"branch-force", "git branch -f", ""},
 	{"branch-delete-safe", "git branch -d", ""},
@@ -67,7 +75,7 @@ var denyTable = []struct{ key, label, advice string }{
 	{"filter-branch", "git filter-branch", ""},
 	{"merge", "git merge", composeAdvice},
 	{"cherry-pick", "git cherry-pick", composeAdvice},
-	{"amend", "git commit --amend", ""},
+	{"commit", "git commit", commitAdvice},
 	{"update-ref", "git update-ref -d", ""},
 	{"tag", "git tag -d", ""},
 	{"reflog", "git reflog expire", ""},
