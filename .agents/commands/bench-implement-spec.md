@@ -49,7 +49,7 @@ When evidence requires an in-scope plan, `Writes:`, or gate expansion, apply `.b
 
 ## Land
 
-Tickets commit green serially in `Blocked by:` order on the retained integration source. After each chunk review, accepted findings go to fresh repair sessions under `.bench/BENCH.md`'s repair rule, and each repair commits with current repair coverage. Start the successor only after that repair closes. Plan commits and `main` merges land before the ticket merge. Only record commits follow the chunk tip. The reconciliation commit joins the review delta of the last chunk.
+Tickets commit green serially in `Blocked by:` order on the retained integration source. After each chunk review, accepted findings go to fresh repair sessions under `.bench/BENCH.md`'s repair rule, and each repair commits with current repair coverage. Start the successor only after that repair closes. Plan commits land before the ticket merge, and a `main` merge lands only before the first chunk. Only record commits follow the chunk tip. The reconciliation commit joins the review delta of the last chunk.
 
 Retain author verification and all three native review results in `reviews/<slug>.md`.
 Commit the artifact on its ordinary lane, then run `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>` before the successor.
