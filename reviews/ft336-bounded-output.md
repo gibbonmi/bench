@@ -879,11 +879,31 @@ This is cycle 1 of the two repair cycles for chunk BO-C7. The spec amendment and
 | R66 | ticket 10 | Add a 409 and 410 content-byte pair. |
 | R67 | ticket 10 | Add a spill with 10 or more long lines to the retained-memory row. |
 
+## BO-C7 repair cycle 1
+
+The plan commit `2db57e5f` amends spec line 225 and ticket 10 to the implemented rune rule. It adds `internal/gate/subject.go` to the fence of ticket 10, and `9689cb84` adds that path to the ownership fences. It also records the repair session `claude:bench-writer/bo-t10-repair-c1` with the trigger `user-directed`. A `bench learning` entry records the fence expansion.
+
+The repair session ran on opus at low effort, with a cap of 3 attempts, and it committed `c71d031f` on a lane pass. The registry now spells `ResponseBytes = 4096`, and `SubjectFirstLineLimit` owns the subject read limit. `firstLine` reads through `bounds.Read` and keeps its behavior. The registry comment no longer restates the value or the line-cut derivation.
+
+The session added five cases to `TestOwnerCutsLongLine` and one ten-line case to `TestOwnerRetainsBoundedLongLine`. Each case went red under its named swap at `lines.go:70`, `:61`, or `:53`. The heap measure now runs two collections and keeps the smallest of three spill measures, because one measure failed once on correct code. That change stays open to reviewer veto.
+
+The central probe wrapped the subject read in `io.LimitReader(f, 4096)`, and the root conformance pass went red. The coordinator probe omitted `l.size += len(content)`, and six cut cases went red. Each restore reads `yes`. The session ran the two ticket checks at `c71d031f`, and each check passed.
+
+The repair found two defects outside the fence. The guard does not grade a `bounds.Read` limit, and the `binary-seal` remedy names a `cd` into the pool path. A `bench learning` entry records each one, and a light-path fix for each one runs from `main`.
+
+## BO-C7 chunk review, round 2, and close
+
+Round 2 confirms cycle 1 at the final tip. The frozen pair is base `c0fb9c3ccb95b7c8674a94537f3591170e85a5cd` and tip `c71d031f5495b12d27f5418213f153a833f4c0ad`. The shared evidence is `sha256:db4ee4af287ccb3b5967e7ed24728170cc90ee322e92c508ff4c2b241f25e4f4`. Each axis ran in a new `bench-reviewer` session on opus at medium effort.
+
+Each axis found 0 findings. Standards confirmed R59, R60, and R61, and Spec confirmed R59, R63, and R68. Coverage confirmed R65 to R68 with four probes that bit, and each restore reads `yes`. Chunk BO-C7 used one of its two repair cycles.
+
+The spec amendment for R63, the fence expansion for R59, and the heap measure stay open to reviewer veto.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ft336-bounded-output/spec.md",
-  "plan_digest": "sha256:57349fe6cbe7d41fcbf6446c1d19489f64e8958670398eafeb73ad13afa5136d",
+  "plan_digest": "sha256:f9fcb549650e3acef2c0d3e29ff212e83df2eac6c692752265798a480223ce67",
   "implementation_session": "",
   "chunks": [
     {
@@ -3354,9 +3374,9 @@ This is cycle 1 of the two repair cycles for chunk BO-C7. The spec amendment and
     {
       "id": "BO-C7",
       "base": "c0fb9c3ccb95b7c8674a94537f3591170e85a5cd",
-      "tip": "b69070e42c97c24cd8452a637146ec539d095860",
-      "plan_digest": "sha256:57349fe6cbe7d41fcbf6446c1d19489f64e8958670398eafeb73ad13afa5136d",
-      "source_digest": "200c379ae16af00a0b7e12af5c3833056f972c10",
+      "tip": "c71d031f5495b12d27f5418213f153a833f4c0ad",
+      "plan_digest": "sha256:f9fcb549650e3acef2c0d3e29ff212e83df2eac6c692752265798a480223ce67",
+      "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
       "acceptance_rows": [
         "BO63",
         "BO64",
@@ -3398,6 +3418,42 @@ This is cycle 1 of the two repair cycles for chunk BO-C7. The spec amendment and
             "ref": "claude:agent/bo-t10-author/10-system@b69070e4",
             "digest": "sha256:d970b1624a46f0fb2093b333e4e5b4684ddc0a844489d0795345c4876197345a",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,44242\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "10-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c7-10-owner-r2",
+          "performer": "claude:bench-writer/bo-t10-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t10-repair-c1/10-owner@c71d031f",
+            "digest": "sha256:2a00d769f47488e1bdcb941c2bf0ca35f2ac116e242e31bb1b87a1f21d8a7a13",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,238\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "10-owner",
+          "command": "bench test --package ./internal/responsebound",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c7-10-system-r2",
+          "performer": "claude:bench-writer/bo-t10-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t10-repair-c1/10-system@c71d031f",
+            "digest": "sha256:7a00091a7a5ffd5fd53356d640c38b7e43560a95dc381fbce455f60a74cf1d95",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,41503\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "10-system",
           "command": "bench test --check system",
@@ -3477,6 +3533,72 @@ This is cycle 1 of the two repair cycles for chunk BO-C7. The spec amendment and
             "R68"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bo-c7-r2-standards",
+          "performer": "claude:bench-reviewer/bo-c7-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c7-standards-2@c71d031f",
+            "digest": "sha256:78dcf898af31969b9db9e485fa7e7d39d0584e3155d8d313fc74f82498fe9e1f",
+            "excerpt": "Standards BO-C7 round 2: 0 findings; R59, R60, R61 confirmed; the new BO65/BO76 table tests reuse the single `heapBytes` helper and fixture seams, and the remaining write-loop repeat is below the bar (no-op, confidence 3)."
+          },
+          "axis": "Standards",
+          "base": "c0fb9c3ccb95b7c8674a94537f3591170e85a5cd",
+          "tip": "c71d031f5495b12d27f5418213f153a833f4c0ad",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c7-r1-standards"
+          ]
+        },
+        {
+          "id": "bo-c7-r2-spec",
+          "performer": "claude:bench-reviewer/bo-c7-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c7-spec-2@c71d031f",
+            "digest": "sha256:57c38401302695166fda930735b8a2dd5bbbc2f47a8079290c793a11b7d17411",
+            "excerpt": "Spec BO-C7 round 2: 0 blocking; R59, R63, R68 confirmed; BO63-65, BO74-76 hold; BO64 sweep clean; BO76 measure change accepted without weakening."
+          },
+          "axis": "Spec",
+          "base": "c0fb9c3ccb95b7c8674a94537f3591170e85a5cd",
+          "tip": "c71d031f5495b12d27f5418213f153a833f4c0ad",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c7-r1-spec"
+          ]
+        },
+        {
+          "id": "bo-c7-r2-coverage",
+          "performer": "claude:bench-reviewer/bo-c7-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c7-coverage-2@c71d031f",
+            "digest": "sha256:b28fb4162bcc805c0ba8e5fa7cf6f55570c9228a82fe5c60ef05db3f9d46769a",
+            "excerpt": "Coverage BO-C7 round 2: 0 findings; R65, R66, R67, and R68 confirmed by 4 biting probes at lines.go:73, :136, :71 and owner.go:150; the R59 firstLine split is silent in internal/gate, but the gap was already there before this chunk; tree clean."
+          },
+          "axis": "Coverage",
+          "base": "c0fb9c3ccb95b7c8674a94537f3591170e85a5cd",
+          "tip": "c71d031f5495b12d27f5418213f153a833f4c0ad",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c7-r1-coverage"
+          ]
         }
       ]
     }
@@ -4082,6 +4204,33 @@ This is cycle 1 of the two repair cycles for chunk BO-C7. The spec amendment and
     {
       "from": "sha256:86a5deb6d7b3182707910017f6b49253faf8599f01219a9887291a6fec3a28a1",
       "to": "sha256:57349fe6cbe7d41fcbf6446c1d19489f64e8958670398eafeb73ad13afa5136d",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:57349fe6cbe7d41fcbf6446c1d19489f64e8958670398eafeb73ad13afa5136d",
+      "to": "sha256:f9fcb549650e3acef2c0d3e29ff212e83df2eac6c692752265798a480223ce67",
       "chunk_ids": {
         "BO-C1": [
           "BO-C1"
