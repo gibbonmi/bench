@@ -55,7 +55,7 @@ func TestListActiveRowsUseTargetSlot(t *testing.T) {
 			}
 		}
 	}
-	want := "help[2]{cmd,why}:\n  bench worktree path <target>,inspect an active worktree by its id\n  bench worktree exec <target> -- <command>,run a command in an active worktree by its id\n"
+	want := "help[2]{cmd,why}:\n" + activeHelpRows
 	if !strings.HasSuffix(out, want) {
 		t.Fatalf("ListCommand = %q, want the help block %q", out, want)
 	}

@@ -227,7 +227,7 @@ func TestActionsForRowsEnumeratesActiveAndOrphanRows(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "help[4]{cmd,why}:\n  bench worktree path <target>,inspect an active worktree by its id\n  bench worktree exec <target> -- <command>,run a command in an active worktree by its id\n  bench worktree clean '/tmp/orphan one',clean the orphaned worktree\n  bench worktree clean /tmp/orphan-two,clean the orphaned worktree\n"
+	want := "help[4]{cmd,why}:\n" + activeHelpRows + "  bench worktree clean '/tmp/orphan one',clean the orphaned worktree\n  bench worktree clean /tmp/orphan-two,clean the orphaned worktree\n"
 	if help != want {
 		t.Fatalf("help = %q, want %q", help, want)
 	}
@@ -261,7 +261,7 @@ func TestListCommandPublicRowsAndDisclosure(t *testing.T) {
 		"{{PRESENT}}", present,
 		"{{MISSING}}", missing,
 	).Replace(string(primaryTemplate))
-	help := fmt.Sprintf("help[4]{cmd,why}:\n  bench worktree path <target>,inspect an active worktree by its id\n  bench worktree exec <target> -- <command>,run a command in an active worktree by its id\n  bench worktree clean '%s',clean the orphaned worktree\n  bench worktree clean --landed,clean landed assignments\n", missing)
+	help := "help[4]{cmd,why}:\n" + activeHelpRows + fmt.Sprintf("  bench worktree clean '%s',clean the orphaned worktree\n  bench worktree clean --landed,clean landed assignments\n", missing)
 	if code != 0 || out != primary+help {
 		t.Fatalf("ListCommand = (%d, %q), want materialized checked-in primary plus exactly one help block", code, out)
 	}
@@ -316,6 +316,14 @@ func TestListCommandAngleBracketOrphanPathPreservesPrimaryAndHonestFallback(t *t
 	}
 }
 
+// The help rows that every active row with a present tree shares. The list tests read
+// them here, so one expectation pins the text that actionsForRows renders.
+const (
+	activePathHelpRow = "  bench worktree path <target>,inspect an active worktree by its id\n"
+	activeExecHelpRow = "  bench worktree exec <target> -- <command>,run a command in an active worktree by its id\n"
+	activeHelpRows    = activePathHelpRow + activeExecHelpRow
+)
+
 // activeListRow builds one owned assignment row in the field order the list response
 // declares, so an action test reads the same cells the command produces.
 func activeListRow(id, request, tree string, landed any, path string) listRow {
@@ -348,7 +356,7 @@ func TestActionsForRowsReadsTheTreeCell(t *testing.T) {
 		{
 			name: "present tree",
 			row:  activeListRow("here", "req-here", "present", false, "/tmp/here"),
-			want: "help[2]{cmd,why}:\n  bench worktree path <target>,inspect an active worktree by its id\n  bench worktree exec <target> -- <command>,run a command in an active worktree by its id\n",
+			want: "help[2]{cmd,why}:\n" + activeHelpRows,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

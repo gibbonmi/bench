@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -252,6 +254,14 @@ func TestLandedClassifierOnlyActiveStateQualifies(t *testing.T) {
 	if code != 0 || !strings.Contains(before, cleanupPending.Path) || !strings.Contains(before, "resume the cleanup-pending assignment") {
 		t.Fatalf("ListCommand = (%d, %q), want the cleanup-pending release action", code, before)
 	}
+	argv, err := axitest.RecoverHelpCommandArgv(before)
+	if err != nil {
+		t.Fatal(err)
+	}
+	release := []string{"bench", "worktree", "release", "--request", cleanupPending.Assignment.RequestToken, cleanupPending.Path}
+	if !slices.Equal(argv, release) {
+		t.Fatalf("release action argv = %q, want %q", argv, release)
+	}
 
 	var stdout, stderr bytes.Buffer
 	if code := ResumeCleanCommand(root, home, nil, &stdout, &stderr); code != 0 {
@@ -308,7 +318,7 @@ func TestListCommandAdvertisesOneLandedSweep(t *testing.T) {
 	if strings.Count(out, "bench worktree clean --landed") != 1 {
 		t.Fatalf("ListCommand output=%q, want one landed action", out)
 	}
-	if strings.Count(out, "\n  bench worktree path <target>,") != 1 || strings.Count(out, "\n  bench worktree exec <target> -- <command>,") != 1 {
+	if strings.Count(out, activePathHelpRow) != 1 || strings.Count(out, activeExecHelpRow) != 1 {
 		t.Fatalf("ListCommand output=%q, want one target-slot path action and one target-slot exec action", out)
 	}
 	for _, id := range []string{landed.Assignment.ID, active.Assignment.ID} {

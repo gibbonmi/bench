@@ -17,11 +17,12 @@ var retainedWorkflowAnchors = append(append(append(append(append(append(append([
 // each craft skill's pointer to the owner of a fact that another file holds. Require
 // rows pin the drain's batch-approval owner, the assess phase's `bench idea` route,
 // the phase adapter trigger pointer, the ambiguous-name re-query disclosure, the
-// worktree list target slot rule, the coverage maximum and chunk-contract pointers, the project test-expectation
-// deferral, and the ADR invariant pointer. Forbid rows keep out the wrong ledger
-// file, the wrong rule owner, the hand-written handoff and its whole-file dating, the
-// hand-append park route, the blanket adapter rule, the terminal-only disclosure, the
-// literal story count, and each retired copy of an owner's sentence.
+// worktree list target slot rule, the coverage maximum and chunk-contract pointers,
+// the project test-expectation deferral, and the ADR invariant pointer. Forbid rows
+// keep out the wrong ledger file, the wrong rule owner, the hand-written handoff and
+// its whole-file dating, the hand-append park route, the blanket adapter rule, the
+// terminal-only disclosure, the literal story count, and each retired copy of an
+// owner's sentence.
 var referenceRouteAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "`Occurrences:` line in `ROADMAP.md`", Diagnostic: "reference route: drain restored ROADMAP.md as the file of the Occurrences: ledger line"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "(the AGENTS.md rule)", Diagnostic: "reference route: drain restored AGENTS.md as the owner of the batch approval rule"},
