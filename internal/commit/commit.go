@@ -3,7 +3,6 @@ package commit
 
 import (
 	"bytes"
-	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -20,7 +19,6 @@ import (
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/poolkey"
-	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -110,43 +108,6 @@ func Run(args []string, stdout, stderr io.Writer) (Outcome, int) {
 	outcome.Published = measures.subject
 	return outcome, exit
 }
-
-// ChainSteps are the steps of `bench commit --preflight-build`, each with its owner's own
-// signature. The command layer binds them, so this package imports neither the worktree
-// build nor the preflight command.
-type ChainSteps struct {
-	Commit    func(args []string, stdout, stderr io.Writer) (Outcome, int)
-	Build     func(root, home string, args []string, stdout, stderr io.Writer) int
-	Home      func() string
-	Preflight func(args []string) (string, int)
-}
-
-// Chain runs the commit and, when --preflight-build names a slug, the worktree build and
-// the build preflight at the published commit. Each step prints its own response, then
-// one commit-chain line states every step. The exit is the first non-zero step exit.
-func Chain(steps ChainSteps, args []string, stdout, stderr io.Writer) int {
-	outcome, exit := steps.Commit(args, stdout, stderr)
-	if outcome.PreflightBuild == "" {
-		return exit
-	}
-	build, preflight := "skipped", "skipped"
-	// Exit 3 published a commit that the checkout does not match, so a build would grade
-	// an unreconciled tree. It stops the chain the way a refusal does.
-	if exit == 0 {
-		exit = steps.Build(outcome.Root, steps.Home(), []string{outcome.Root}, stdout, stderr)
-		build = stepState[exit == 0]
-		if exit == 0 {
-			out, code := steps.Preflight([]string{evidencecmd.ModeBuild, outcome.PreflightBuild, evidencecmd.FlagTip, outcome.Published})
-			fmt.Fprint(stdout, out)
-			exit, preflight = code, stepState[code == 0]
-		}
-	}
-	fmt.Fprintf(stdout, "commit-chain{commit=%s,build=%s,preflight=%s}\n", cmp.Or(outcome.Published, "none"), build, preflight)
-	return exit
-}
-
-// stepState names a chained step that ran by whether it exited 0.
-var stepState = map[bool]string{true: "green", false: "red"}
 
 // commitAttributed is the verb's own work, with the span's measures written to measures
 // as each becomes known. The exit code it returns is the verb's, so the record and the

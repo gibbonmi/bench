@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/commit"
+	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 // The chain line is authored apart from its renderer: the spec fixes its fields and
@@ -18,7 +19,6 @@ import (
 const (
 	chainSlug      = "chain-fixture"
 	chainWorktree  = "/fixture/worktree"
-	chainHome      = "/fixture/home"
 	chainPublished = "0123456789abcdef0123456789abcdef01234567"
 )
 
@@ -39,7 +39,7 @@ func runCommitChain(t *testing.T, published string, commitExit, buildExit, prefl
 	old := commitChain
 	t.Cleanup(func() { commitChain = old })
 	calls = &chainCalls{}
-	commitChain = commit.ChainSteps{
+	commitChain = chainSteps{
 		Commit: func(_ []string, stdout, _ io.Writer) (commit.Outcome, int) {
 			fmt.Fprintln(stdout, "commit step")
 			return commit.Outcome{Root: chainWorktree, Published: published, PreflightBuild: chainSlug}, commitExit
@@ -49,7 +49,6 @@ func runCommitChain(t *testing.T, published string, commitExit, buildExit, prefl
 			fmt.Fprintln(stdout, "build step")
 			return buildExit
 		},
-		Home: func() string { return chainHome },
 		Preflight: func(args []string) (string, int) {
 			calls.preflights = append(calls.preflights, args)
 			return "preflight step\n", preflightExit
@@ -73,8 +72,8 @@ func TestCommitChainRunsThreeSteps(t *testing.T) {
 	if code != 0 || stdout != want {
 		t.Fatalf("chain = (%d, %q), want (0, %q)", code, stdout, want)
 	}
-	if want := [][]string{{chainWorktree, chainHome, chainWorktree}}; !reflect.DeepEqual(calls.builds, want) {
-		t.Fatalf("builds = %q, want %q: the commit's own worktree as root and target", calls.builds, want)
+	if want := [][]string{{chainWorktree, worktree.Home(), chainWorktree}}; !reflect.DeepEqual(calls.builds, want) {
+		t.Fatalf("builds = %q, want %q: the commit's own worktree as root and target under the Bench home", calls.builds, want)
 	}
 	if want := [][]string{{"build", chainSlug, "--source-tip", chainPublished}}; !reflect.DeepEqual(calls.preflights, want) {
 		t.Fatalf("preflight argv = %q, want %q", calls.preflights, want)
