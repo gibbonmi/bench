@@ -600,11 +600,70 @@ Advice, with no finding ID:
 
 R29 and R35 correct non-behavioral spec text, and both stay open to reviewer veto.
 
+## BO-C5 author evidence
+
+Ticket 8 had a fresh `bench-writer` author, `claude:bench-writer/bo-t8-author`, on opus at high effort, with a cap of 3 attempts. The chunk base is `136b84b4`, the BO-C4 record commit. By user direction, the ticket authored in the sibling worktree `ft336-t8-opus` from `709602ac`, and the orchestrator merged it at `3427521f`. The author used 2 of 3 attempts.
+
+The first attempt put the chain in `internal/commit`, because `cmd/bench/main.go` is over its line cap. A Fable delegate at high effort kept the spec's `cmd/bench` seam, by user direction: a new file cannot trip the growth ratchet. The second attempt moved the composition into `cmd/bench/commit_chain.go` at `f9555ceb`, and the plan commit `bf350195` fences that file.
+
+The author ran both ticket checks at the chunk tip `3427521f`, and each check passed. Each row went red before the change. The two central probes bit against the moved code: a preflight after a red build, and a build after a commit exit 3.
+
+## BO-C5 chunk review, round 1
+
+The frozen pair is base `136b84b42b5255a505b2624f4435f7f595628a16` and tip `3427521f15c69a9cb697db398fffd4e239e66db6`. The shared evidence is `sha256:43d78308e70069f14c593b650bd2f83e6d2ccd6c5ccd3a255d939678584426ca`. Each axis ran in a fresh `bench-reviewer` session on opus at medium effort. Only the Coverage axis ran probes, and it left the tree clean.
+
+The raw finding count is 8: Standards 4, Spec 2, and Coverage 2. A Fable delegate at high effort decided the two `ask-user` findings, by user direction. No two findings name the same fix, so 8 repair targets remain.
+
+## Standards
+
+Findings: 4. The worst issue is a chain-line expectation with no recorded red.
+
+- `cmd/bench/commit_chain_test.go:16-17` claims the chain-line literals are independent, and no red is recorded. The comment also gives provenance. Target R36. `auto-fix`. Confidence 6.
+- `cmd/bench/main.go:132` writes the `--preflight-build` help suffix by hand, and the commit package owns that spelling. Target R37. `auto-fix`. Confidence 6.
+- `internal/commit/commit.go:247` describes the chain steps and the chain line, and `cmd/bench/commit_chain.go` owns them. Target R38. `auto-fix`. Confidence 5.
+- `commit.Command` has no production caller, and its doc comment holds the exit-code contract that `Run` owns. Target R39. `auto-fix`. Confidence 4.
+
+## Spec
+
+Findings: 2. The worst issue is a stated seam reason that is false.
+
+- `spec.md:205` says the `cmd/bench` seam avoids an import cycle, and no such cycle can form. Target R41. `auto-fix`. Confidence 8.
+- BO56 says the form without the flag keeps its current output, but the help text and the usage line now name the flag. Target R40. `auto-fix`. Confidence 6.
+
+The Spec axis held BO51 to BO56 and BO71, and the fence expansion.
+
+## Coverage
+
+Findings: 2. The worst issue is a BO56 test that skips the new dispatch seam.
+
+- A guard swap at `cmd/bench/commit_chain.go:31` stayed silent. A commit without the flag would then run the build and a preflight. The BO56 tests call `commit.Command` directly and skip `commitChainCommand`. Target R42. `auto-fix`. Confidence 8.
+- A swap that drops `NoEmptyValue` from the `--preflight-build` flag stayed silent. The Fable delegate found that the refusal of an empty value is the approved behavior, so a parser row pins it. Target R43. `auto-fix`. Confidence 6.
+
+## Advice
+
+- `stepState` is a package-level map. A small function would state the same mapping.
+- No test runs the production `commitChain` binding.
+
+## BO-C5 repair routing
+
+This is cycle 1 of the two repair cycles for chunk BO-C5. R40 and R41 correct non-behavioral spec text, so they are flagged for reviewer veto.
+
+| Target | Owner | Repair |
+|---|---|---|
+| R36 | ticket 8 | Record a demonstrated red for the chain-line literals, and remove the provenance from the comment. |
+| R37 | ticket 8 | Take the help suffix from the commit package. |
+| R38 | ticket 8 | Give the chain help text one owner with the chain. |
+| R39 | ticket 8 | Move the exit-code contract to `Run`, and remove or justify `commit.Command`. |
+| R40 | orchestrator | Reword the BO56 behavior cell to name what the flag changes. |
+| R41 | orchestrator | Replace the import-cycle reason with the true reason. |
+| R42 | ticket 8 | Add a `cmd/bench` row that runs `commit` without the flag through the dispatcher. |
+| R43 | ticket 8 | Add a parser row for an empty `--preflight-build` value. |
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ft336-bounded-output/spec.md",
-  "plan_digest": "sha256:b4c74435636a7531f51f9e9227c68baafdbb7bc6bb21af2dcdf642be7c23c5e3",
+  "plan_digest": "sha256:e1adc6f7e81a9c22412e1f8187ad4495f6651e39397ff163fa0c9534d3eb3e65",
   "implementation_session": "",
   "chunks": [
     {
@@ -2346,6 +2405,133 @@ R29 and R35 correct non-behavioral spec text, and both stay open to reviewer vet
           ]
         }
       ]
+    },
+    {
+      "id": "BO-C5",
+      "base": "136b84b42b5255a505b2624f4435f7f595628a16",
+      "tip": "3427521f15c69a9cb697db398fffd4e239e66db6",
+      "plan_digest": "sha256:e1adc6f7e81a9c22412e1f8187ad4495f6651e39397ff163fa0c9534d3eb3e65",
+      "source_digest": "5b2edcab7a61262e5ca3e0e403bba3d0c47db94b",
+      "acceptance_rows": [
+        "BO51",
+        "BO52",
+        "BO53",
+        "BO54",
+        "BO55",
+        "BO56",
+        "BO71"
+      ],
+      "verification": [
+        {
+          "id": "bo-c5-8-cmd-r1",
+          "performer": "claude:bench-writer/bo-t8-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5b2edcab7a61262e5ca3e0e403bba3d0c47db94b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t8-author/8-cmd@3427521f",
+            "digest": "sha256:69635ff952631a8e742154b79a65a4fcec9623e0a58d5b37217fce676ef1112d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,9104\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "8-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c5-8-commit-r1",
+          "performer": "claude:bench-writer/bo-t8-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5b2edcab7a61262e5ca3e0e403bba3d0c47db94b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t8-author/8-commit@3427521f",
+            "digest": "sha256:b566c95b98997d856ec95e0b54000c4a0ae662ea4e91c656b775c498d51b139c",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commit,pass,4195\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "8-commit",
+          "command": "bench test --package ./internal/commit",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "bo-c5-r1-standards",
+          "performer": "claude:bench-reviewer/bo-c5-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5b2edcab7a61262e5ca3e0e403bba3d0c47db94b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c5-standards@3427521f",
+            "digest": "sha256:e52081cda4e4b9177a51ae904a286f8f9c66a6e9c53696001c21b5bc551397fa",
+            "excerpt": "Standards BO-C5: 4 findings (1 hard: independent chain-line expectation with no recorded red and a provenance comment; 3 judgment: hand-copied help suffix, chain help text outside its owner, test-only commit.Command), all auto-fix."
+          },
+          "axis": "Standards",
+          "base": "136b84b42b5255a505b2624f4435f7f595628a16",
+          "tip": "3427521f15c69a9cb697db398fffd4e239e66db6",
+          "finding_ids": [
+            "R36",
+            "R37",
+            "R38",
+            "R39"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bo-c5-r1-spec",
+          "performer": "claude:bench-reviewer/bo-c5-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5b2edcab7a61262e5ca3e0e403bba3d0c47db94b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c5-spec@3427521f",
+            "digest": "sha256:12c3459f1275d65768fde65802aa8516ef8fec83813a970557e85d66a1397047",
+            "excerpt": "Spec BO-C5: 2 low (the BO56 output-wording conflict, and the empty import-cycle reason at spec.md:205). BO51-BO56 and BO71 are met, and the commit_chain.go expansion is in scope."
+          },
+          "axis": "Spec",
+          "base": "136b84b42b5255a505b2624f4435f7f595628a16",
+          "tip": "3427521f15c69a9cb697db398fffd4e239e66db6",
+          "finding_ids": [
+            "R40",
+            "R41"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bo-c5-r1-coverage",
+          "performer": "claude:bench-reviewer/bo-c5-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5b2edcab7a61262e5ca3e0e403bba3d0c47db94b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c5-coverage@3427521f",
+            "digest": "sha256:fd189f5c23d0ce279cd5dbf620c7a90ed6bbd8da22aed141ce31bd8733c0e357",
+            "excerpt": "Coverage BO-C5: 2 findings. BO56 is unguarded at the commitChainCommand dispatch seam (probe silent), and the empty --preflight-build value is undecided (probe silent)."
+          },
+          "axis": "Coverage",
+          "base": "136b84b42b5255a505b2624f4435f7f595628a16",
+          "tip": "3427521f15c69a9cb697db398fffd4e239e66db6",
+          "finding_ids": [
+            "R42",
+            "R43"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2760,6 +2946,33 @@ R29 and R35 correct non-behavioral spec text, and both stay open to reviewer vet
     {
       "from": "sha256:75033907021185f5014c45908851c44948fe8b0b13b9b828687401d3d92501b3",
       "to": "sha256:b4c74435636a7531f51f9e9227c68baafdbb7bc6bb21af2dcdf642be7c23c5e3",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:b4c74435636a7531f51f9e9227c68baafdbb7bc6bb21af2dcdf642be7c23c5e3",
+      "to": "sha256:e1adc6f7e81a9c22412e1f8187ad4495f6651e39397ff163fa0c9534d3eb3e65",
       "chunk_ids": {
         "BO-C1": [
           "BO-C1"
