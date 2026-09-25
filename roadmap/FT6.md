@@ -30,13 +30,12 @@ measurement landing or a reviewer call to move without it. The direction, the
 replacement Observable wording, and the anchors/canaries it drags are
 unresolved. Source: `capture/IDEAS.md`, drained here.
 
-Six candidates stay in the pending-evidence tier:
+These candidates stay in the pending-evidence tier:
 
 - A low-tier drain reader graduates after the malformed-journal gap closes and one measured run reduces coordinator turns.
 - The status reader graduates when `bench status` reproduces a partial-count loss on one malformed journal heading.
 - Unclaimed cleanup graduates when the sanctioned command omits unreached selected refs during a deterministic deletion fault.
 - The unclaimed fingerprint graduates if its required flags diverge or an observed digest mismatch occurs.
 - The cleanup-row test parser graduates when a comma-bearing fixture shifts a rendered field silently.
-- Untracked-file structure grading graduates when `bench structure --growth HEAD` reproduces a silent over-budget pass.
 
-Sources: `capture/IDEAS.md` 2026-09-11 through 2026-09-12 and `capture/learnings.md` 2026-09-12, drained here.
+Sources: `capture/IDEAS.md` 2026-09-11 through 2026-09-12 and `capture/learnings.md` 2026-09-12, drained here. The structure candidate moved to FT307.
