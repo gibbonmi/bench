@@ -659,11 +659,44 @@ This is cycle 1 of the two repair cycles for chunk BO-C5. R40 and R41 correct no
 | R42 | ticket 8 | Add a `cmd/bench` row that runs `commit` without the flag through the dispatcher. |
 | R43 | ticket 8 | Add a parser row for an empty `--preflight-build` value. |
 
+## BO-C5 repair evidence, cycle 1
+
+The orchestrator applied R40 and R41 at `9443c12d`, and that commit adds one fresh repair session for ticket 8. The first R40 wording joined two predicates with a semicolon, and the coverage map requires one predicate per row. The spec commit `77931a42` reduces the BO56 cell to one predicate.
+
+The session `claude:bench-writer/bo-t8-repair-c1` ran on opus at low effort and committed `aa0e4ff5`. It made these repairs:
+
+- R36: the test declares the expected chain line once, in `wantChainLine`, and its comment states what the test pins.
+- R37: `main.go` takes the help suffix from `commit.HelpRowSuffix`, and `main.go` stays at 449 lines.
+- R38: the chain help line moved to `chainHelp` in `cmd/bench/commit_chain.go`, and it now follows the exit lines.
+- R39: the exit-code contract is on `Run`, and `commit.Command` is a test helper for two test callers outside the fence.
+- R42: `TestCommitWithoutPreflightBuildRunsCommitAlone` runs `commit` without the flag through the dispatcher.
+- R43: `TestCommitChainRefusesEmptySlug` pins the refusal of an empty slug.
+
+The R36 chain line stays independent, because it is the public chain output. This is the demonstrated red for it. A `bench probe` swap of `,preflight=%s}` to `,pre=%s}` in the renderer bit all five chain rows, and the restore reads `yes`.
+
+The R42 probe that keys the guard on `Root` bit the new row. The R43 probe that drops `NoEmptyValue` bit the new parser row. The session ran both ticket checks at `77931a42`, and each check passed.
+
+## BO-C5 chunk review, round 2
+
+Round 2 confirms cycle 1 on the delta from `3427521f` to `77931a42`. The frozen pair is base `136b84b42b5255a505b2624f4435f7f595628a16` and tip `77931a4264c146900a1c371d574399cb16744b00`. The shared evidence is `sha256:9f2b338a2291f4b71af1a4d4a776cbf6335743e0c22bea8fb54a1c3aaea45a70`. Each axis ran in a new `bench-reviewer` session on opus at medium effort.
+
+Standards confirmed R36 to R39, Spec confirmed R40 and R41, and Coverage confirmed R42 and R43. Coverage ran three new probes: two bit, and one on the help wording stayed silent. Standards and Spec each found 1 new finding.
+
+- `internal/commit/chain_grammar_test.go:29` states the full empty-slug refusal line, and `internal/usage` and `commit.PreflightBuildFlag` own its parts. No red is recorded for it. Target R44. `auto-fix`. Confidence 5.
+- The BO56 seam cell does not name the new dispatcher test. The ticket 8 text still says the form without the flag keeps its current behavior. Target R45. `auto-fix`. Confidence 5.
+
+Advice, with no finding ID:
+
+- No test pins the wording of the chain help line, and that gap is older than this chunk.
+- `grammar.Help` and `HelpRowSuffix` state the argument shape twice in one package.
+
+R44 goes to cycle 2, the last repair cycle of chunk BO-C5, in a fresh repair session for ticket 8. R45 is the orchestrator's.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ft336-bounded-output/spec.md",
-  "plan_digest": "sha256:e1adc6f7e81a9c22412e1f8187ad4495f6651e39397ff163fa0c9534d3eb3e65",
+  "plan_digest": "sha256:09accadc80e58cc9350a513d9096923e13804bbd2ade29259ed270cdae18bd3e",
   "implementation_session": "",
   "chunks": [
     {
@@ -2409,9 +2442,9 @@ This is cycle 1 of the two repair cycles for chunk BO-C5. R40 and R41 correct no
     {
       "id": "BO-C5",
       "base": "136b84b42b5255a505b2624f4435f7f595628a16",
-      "tip": "3427521f15c69a9cb697db398fffd4e239e66db6",
-      "plan_digest": "sha256:e1adc6f7e81a9c22412e1f8187ad4495f6651e39397ff163fa0c9534d3eb3e65",
-      "source_digest": "5b2edcab7a61262e5ca3e0e403bba3d0c47db94b",
+      "tip": "77931a4264c146900a1c371d574399cb16744b00",
+      "plan_digest": "sha256:09accadc80e58cc9350a513d9096923e13804bbd2ade29259ed270cdae18bd3e",
+      "source_digest": "1e56c8700d3b809cc41c47467ba1a5012bc07c7d",
       "acceptance_rows": [
         "BO51",
         "BO52",
@@ -2453,6 +2486,42 @@ This is cycle 1 of the two repair cycles for chunk BO-C5. R40 and R41 correct no
             "ref": "claude:agent/bo-t8-author/8-commit@3427521f",
             "digest": "sha256:b566c95b98997d856ec95e0b54000c4a0ae662ea4e91c656b775c498d51b139c",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commit,pass,4195\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "8-commit",
+          "command": "bench test --package ./internal/commit",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c5-8-cmd-r2",
+          "performer": "claude:bench-writer/bo-t8-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "1e56c8700d3b809cc41c47467ba1a5012bc07c7d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t8-repair-c1/8-cmd@77931a42",
+            "digest": "sha256:15beb900bd4b3abfe7b5b36e3d94323aa833069923e42ca890f7cc93ba18f052",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,8070\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "8-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c5-8-commit-r2",
+          "performer": "claude:bench-writer/bo-t8-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "1e56c8700d3b809cc41c47467ba1a5012bc07c7d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t8-repair-c1/8-commit@77931a42",
+            "digest": "sha256:dfa6271fcd56205a85ba2c5f38a426cee50cd2a10b0105470b150bb96263888f",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commit,pass,3643\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "8-commit",
           "command": "bench test --package ./internal/commit",
@@ -2530,6 +2599,76 @@ This is cycle 1 of the two repair cycles for chunk BO-C5. R40 and R41 correct no
             "R43"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bo-c5-r2-standards",
+          "performer": "claude:bench-reviewer/bo-c5-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1e56c8700d3b809cc41c47467ba1a5012bc07c7d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c5-standards-2@77931a42",
+            "digest": "sha256:692af4284a48b62a40ed49bb3aeb1c648675f9ae9dfff0e35f4da467bf7a1e01",
+            "excerpt": "Standards BO-C5 round 2: 1 finding (judgment: the empty-slug refusal literal at chain_grammar_test.go:29 duplicates the usage rendering with no recorded red), auto-fix. R36 to R39 confirmed."
+          },
+          "axis": "Standards",
+          "base": "136b84b42b5255a505b2624f4435f7f595628a16",
+          "tip": "77931a4264c146900a1c371d574399cb16744b00",
+          "finding_ids": [
+            "R44"
+          ],
+          "supersedes": [
+            "bo-c5-r1-standards"
+          ]
+        },
+        {
+          "id": "bo-c5-r2-spec",
+          "performer": "claude:bench-reviewer/bo-c5-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1e56c8700d3b809cc41c47467ba1a5012bc07c7d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c5-spec-2@77931a42",
+            "digest": "sha256:98350cb0a250897b67360043a1363e73e1825a82ac61fe11266df6cd91336920",
+            "excerpt": "Spec round 2: R40 and R41 confirmed. 1 new finding: BO56's seam cell omits the R42 dispatch test (auto-fix, confidence 5). BO51 to BO56, BO71, and the bo-t8-repair-c1 assignment hold."
+          },
+          "axis": "Spec",
+          "base": "136b84b42b5255a505b2624f4435f7f595628a16",
+          "tip": "77931a4264c146900a1c371d574399cb16744b00",
+          "finding_ids": [
+            "R45"
+          ],
+          "supersedes": [
+            "bo-c5-r1-spec"
+          ]
+        },
+        {
+          "id": "bo-c5-r2-coverage",
+          "performer": "claude:bench-reviewer/bo-c5-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1e56c8700d3b809cc41c47467ba1a5012bc07c7d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c5-coverage-2@77931a42",
+            "digest": "sha256:3619476ec1b3cd523e406270eb7ec224f4af81745f7f5f3b517ebd37edcb6d28",
+            "excerpt": "BO-C5 Coverage r2: 0 new findings; R42 and R43 confirmed by reading; 3 probes ran (Run Help flag bit, help-row suffix bit, chainHelp wording silent and not new), all restored."
+          },
+          "axis": "Coverage",
+          "base": "136b84b42b5255a505b2624f4435f7f595628a16",
+          "tip": "77931a4264c146900a1c371d574399cb16744b00",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c5-r1-coverage"
+          ]
         }
       ]
     }
@@ -2973,6 +3112,60 @@ This is cycle 1 of the two repair cycles for chunk BO-C5. R40 and R41 correct no
     {
       "from": "sha256:b4c74435636a7531f51f9e9227c68baafdbb7bc6bb21af2dcdf642be7c23c5e3",
       "to": "sha256:e1adc6f7e81a9c22412e1f8187ad4495f6651e39397ff163fa0c9534d3eb3e65",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e1adc6f7e81a9c22412e1f8187ad4495f6651e39397ff163fa0c9534d3eb3e65",
+      "to": "sha256:07515bca2bfed9e23e9e90a0fcb0fc5c4d70cc99df75f9c8dd63442c6e595364",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:07515bca2bfed9e23e9e90a0fcb0fc5c4d70cc99df75f9c8dd63442c6e595364",
+      "to": "sha256:09accadc80e58cc9350a513d9096923e13804bbd2ade29259ed270cdae18bd3e",
       "chunk_ids": {
         "BO-C1": [
           "BO-C1"
