@@ -774,11 +774,10 @@ func TestMergeExitsThreeWhenTheReconcileFails(t *testing.T) {
 	if !strings.Contains(record, ",tip="+tip+",") {
 		t.Fatalf("record = %q, want it to name the published tip %s", record, tip)
 	}
-	if !strings.Contains(record, "next=git -C ") || !strings.Contains(record, target.Path) {
-		t.Fatalf("record = %q, want the repair at the target checkout %s", record, target.Path)
-	}
-	if !strings.HasSuffix(record, " reset --merge "+tip+"}") {
-		t.Fatalf("record = %q, want the repair to name the published commit %s", record, tip)
+	// The repair is the reset verb's plan at the published commit, because the guard
+	// denies an agent's raw git reset.
+	if !strings.HasSuffix(record, ",next="+resetCommand("--to", tip, target.Assignment.ID)+"}") {
+		t.Fatalf("record = %q, want the reset plan at the published commit %s for %s", record, tip, target.Assignment.ID)
 	}
 	// A linked worktree's HEAD follows the branch ref whether or not the checkout was
 	// reconciled, so the unreconciled state reads through the status and the tree.

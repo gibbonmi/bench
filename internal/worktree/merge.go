@@ -151,13 +151,11 @@ func mergeSubject(spelling, incoming, label string) string {
 	return "merge: compose " + spelling + " " + incoming[:8] + " into " + label
 }
 
-// mergeReconcileNext names the repair the exit-3 boundary leaves the operator. A path
-// that is not line-safe takes the pointer form every next= uses.
+// mergeReconcileNext names the repair the exit-3 boundary leaves the operator: the reset
+// verb's plan at the published commit, which reconciles the checkout under a preserved
+// envelope. The guard denies an agent's raw git reset, so the repair is the Bench route.
 func mergeReconcileNext(target intent.Assignment, tip string) string {
-	if !lineSafe(target.Worktree) {
-		return "bench worktree exec " + target.ID + " -- git reset --merge " + tip
-	}
-	return "git -C " + sanitize.ShellQuote(target.Worktree) + " reset --merge " + tip
+	return resetCommand("--to", tip, target.ID)
 }
 
 // mergeOnAssignmentBranch proves one checkout is on its assignment's branch. It runs
