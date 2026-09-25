@@ -6,7 +6,7 @@ Covers: BO37, BO38, BO39, BO40
 
 ## What to build
 
-`bench preflight build <slug>` and `bench preflight review <slug>` keep the `phase`, `spec`, and `source` lines. The check table becomes one line: `checks{green=<n>,not_applicable=<n>,red=<n>}`. When one or more checks are red, a `checks[<n>]{check,verdict,detail,next}` table follows with the red rows only. The exit code stays 1 for a red verdict and 0 otherwise. The charge forms keep their complete check table in the evidence artifact.
+`bench preflight build <slug>` and `bench preflight review <slug>` keep the `phase`, `spec`, and `source` lines. The check table becomes one line: `checks{green=<n>,not_applicable=<n>,red=<n>}`. When one or more checks are red, a `checks[<n>]{check,verdict,detail,next}` table follows with the red rows only. The exit code stays 1 for a red verdict and 0 otherwise. The charge forms print no check table, and a red check refuses the charge with that check's name, detail, and next step. The evidence artifact holds no check rows.
 
 ## Acceptance
 
