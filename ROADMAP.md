@@ -47,6 +47,8 @@ findings in the owner details.
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
+**FT341 (MEDIUM) — each Bench verb declares its tree scope, and a tree-scoped verb takes an explicit target.**
+
 **FT312 (MEDIUM) — a native `bench` verb codifies the cross-harness reviewer invocation.**
 
 **FT283 (MEDIUM, decision required) — `bench worktree land --spec` has one phase-scoped transition contract.**
@@ -69,7 +71,7 @@ findings in the owner details.
 
 **FT99 (LOW) — spec problem-premise verification.**
 
-**FT338 (MEDIUM) — a guidance-change spec sweeps each retired fact by its terms and pairs each rewrite with Forbid rows.**
+**FT338 (MEDIUM) — a spec sweeps each retired claim and each affected caller before review, and pairs each rewrite with Forbid rows.**
 
 **FT340 (MEDIUM, decision required) — the fresh-author and lane decisions reach the repair-ticket rule and the drain's commit wording.**
 
@@ -253,9 +255,10 @@ recommended table is sequencing advice.
 | FT172 | FT106 | Reuse document-claim evidence for roadmap claims. |
 | FT241 | FT231 | Retained acceptance evidence reuses the harness record shape. |
 | FT254 | FT258 | Resolution follows the `MERGE_HEAD` contract. |
+| FT341 | FT336 | Tree targets reuse the bounded response owner that FT336 ticket 1 adds. |
 
 ## Recommended sequence
 
-1. Run `$bench-write-spec FT336` for bounded default output, the reviewer's priority 1; read the staged session-context specs first.
+1. Run `$bench-implement-spec ft336-bounded-output` to build bounded default output, the reviewer's priority 1.
 2. Run `$bench-write-spec FT337` to page review evidence by file and run the narrow-review control.
 3. Run `$bench-shape-idea FT305` to settle durable local execution; FT306 waits on it.
