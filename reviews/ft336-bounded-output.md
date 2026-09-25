@@ -408,11 +408,38 @@ This is cycle 1 of the two repair cycles for chunk BO-C3. The Fable delegate fou
 | R20 | ticket 4 and orchestrator | Pin `bench worktree release --request <token> <path>` in the BO33 test, and change its seam cell from "run unchanged" to "strengthened in ticket 4". |
 | R21 | orchestrator and ticket 5 | State that the charge forms print no check table in the spec and the ticket, and correct the comment at `command.go:175`. |
 
+## BO-C3 repair evidence, cycle 1
+
+The orchestrator applied R17, R18, R19, R20, and R21 to the spec and the ticket 5 text at `4b45e0b3`. That commit also adds one fresh repair session for each ticket.
+
+The session `claude:bench-writer/bo-t4-repair-c1` ran on opus at low effort and committed `6729f9e3`. It put the active-row help block in one test constant that five tests read (R15). It rewrapped the registry comment (R16), and it pinned the full release argv of the cleanup-pending row (R20). A probe that omits the `--request <token>` operand in `list.go` was silent before the R20 edit and bit after it.
+
+The R15 constant stays independent of `list.go`, because a derived expectation follows an owner edit and stays green. This is the demonstrated red for that independent expectation. A `bench probe` swap of the why text `"inspect an active worktree by its id"` in `internal/worktree/list.go` bit, and five tests failed. The failed tests are TestActionsForRowsEnumeratesActiveAndOrphanRows, TestActionsForRowsReadsTheTreeCell, TestListActiveRowsUseTargetSlot, TestListCommandAdvertisesOneLandedSweep, and TestListCommandPublicRowsAndDisclosure. The restore reads `yes`.
+
+The session `claude:bench-writer/bo-t5-repair-c1` ran on opus at low effort and committed `276b7d32`. The legacy baselines now take their counts from `Decide` on each case's fixture (R14). The summary format stays one independent test constant, because the format is the BO37 output contract. A `bench probe` swap of `not_applicable=` to `na=` in the render bit 32 tests. The session also replaced the charge-form comment (R21).
+
+## BO-C3 chunk review, round 2
+
+Round 2 confirms cycle 1 on the delta from `a5f7588b` to `276b7d32`. The frozen pair is base `6d3a45e10437c5875f729e4652364f44853ea5c6` and tip `276b7d32b4d8c58c7b49324a953fc57976daf0d5`. The shared evidence is `sha256:48a9ab56854c406663dbd4fca022cd1f95803aa3a3b0ae165e9e47baf001c9a8`. Each axis ran in a new `bench-reviewer` session on opus at medium effort.
+
+The Spec axis confirmed R17 to R21 and found 0 new findings. The Coverage axis confirmed R14, R15, R20, and R21 and found 0 new findings. Its three new probes bit and restored. The Standards axis confirmed R14, R15, and R16 and found 2 new findings.
+
+- The new comment at `internal/preflight/command.go:175` is 115 columns, and its paragraph wraps at about 82. The orchestrator's charge supplied that line. Target R22. `auto-fix`. Confidence 8.
+- The tree held no record of the R15 red. Target R23. `auto-fix`. Confidence 6. The cycle 1 evidence above now records that red, so R23 is an evidence-only correction and consumes no repair cycle.
+
+Advice, with no finding ID:
+
+- `decidedVerdicts` repeats the optional-base unwrap that `Gather` does.
+- The manifest has a block named `checks` that lists source ids, so "no check rows" can read as that block.
+- The charge refusal names only the first red check.
+
+R22 goes to cycle 2, the last repair cycle of chunk BO-C3, in a fresh repair session for ticket 5.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ft336-bounded-output/spec.md",
-  "plan_digest": "sha256:9910f5713b7072b8c5dfdc05720354b021c326847722aeff5e7ed3b021ae29d2",
+  "plan_digest": "sha256:da4fcb78d6575c4772c2a754667c428fee8d48b65981433d457a2264edcd3377",
   "implementation_session": "",
   "chunks": [
     {
@@ -1049,9 +1076,9 @@ This is cycle 1 of the two repair cycles for chunk BO-C3. The Fable delegate fou
     {
       "id": "BO-C3",
       "base": "6d3a45e10437c5875f729e4652364f44853ea5c6",
-      "tip": "a5f7588b53c5a208f7ce1935589921405f27be57",
-      "plan_digest": "sha256:9910f5713b7072b8c5dfdc05720354b021c326847722aeff5e7ed3b021ae29d2",
-      "source_digest": "5822cf287cd5af8edca99280f595bd0687032c0e",
+      "tip": "276b7d32b4d8c58c7b49324a953fc57976daf0d5",
+      "plan_digest": "sha256:da4fcb78d6575c4772c2a754667c428fee8d48b65981433d457a2264edcd3377",
+      "source_digest": "19ac78ff900c3671a18ac9799cd7c31619eda90b",
       "acceptance_rows": [
         "BO32",
         "BO33",
@@ -1282,6 +1309,75 @@ This is cycle 1 of the two repair cycles for chunk BO-C3. The Fable delegate fou
             "R21"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bo-c3-r2-standards",
+          "performer": "claude:bench-reviewer/bo-c3-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "19ac78ff900c3671a18ac9799cd7c31619eda90b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c3-standards-2@276b7d32",
+            "digest": "sha256:e05ea46ac5e74db1b6be385e76380af7b74696a4c03478e3a859e7656ea3dca9",
+            "excerpt": "Standards r2: 2 findings (command.go:175 overlong comment, the same defect R16 fixed; R15 red not recorded); R14, R15, R16 confirmed."
+          },
+          "axis": "Standards",
+          "base": "6d3a45e10437c5875f729e4652364f44853ea5c6",
+          "tip": "276b7d32b4d8c58c7b49324a953fc57976daf0d5",
+          "finding_ids": [
+            "R22",
+            "R23"
+          ],
+          "supersedes": [
+            "bo-c3-r1-standards"
+          ]
+        },
+        {
+          "id": "bo-c3-r2-spec",
+          "performer": "claude:bench-reviewer/bo-c3-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "19ac78ff900c3671a18ac9799cd7c31619eda90b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c3-spec-2@276b7d32",
+            "digest": "sha256:f8c8a96bda1027ed937c59e4199d27942bbb5a81079e4f905c18f146b9a79a4b",
+            "excerpt": "Spec, round 2: 0 new findings in a5f7588b..276b7d32. R17 to R21 are confirmed. Plan assignments bo-t4-repair-c1 and bo-t5-repair-c1 are valid. Confidence 8/10."
+          },
+          "axis": "Spec",
+          "base": "6d3a45e10437c5875f729e4652364f44853ea5c6",
+          "tip": "276b7d32b4d8c58c7b49324a953fc57976daf0d5",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c3-r1-spec"
+          ]
+        },
+        {
+          "id": "bo-c3-r2-coverage",
+          "performer": "claude:bench-reviewer/bo-c3-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "19ac78ff900c3671a18ac9799cd7c31619eda90b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c3-coverage-2@276b7d32",
+            "digest": "sha256:614ba9035c934140d8ce368a3887892c3da78bf77551f2dd2192251fd5eb1411",
+            "excerpt": "Coverage round 2: 0 new findings; R14, R15, R20 and R21 confirmed; 3 new probes (release path operand, source-tip pin, summary count order) all bit and were restored."
+          },
+          "axis": "Coverage",
+          "base": "6d3a45e10437c5875f729e4652364f44853ea5c6",
+          "tip": "276b7d32b4d8c58c7b49324a953fc57976daf0d5",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c3-r1-coverage"
+          ]
         }
       ]
     }
@@ -1509,6 +1605,33 @@ This is cycle 1 of the two repair cycles for chunk BO-C3. The Fable delegate fou
     {
       "from": "sha256:39c7d4febcfb247c2557df9987e4ffd76597e9b42150b7139bf6fb8f48ed0aba",
       "to": "sha256:9910f5713b7072b8c5dfdc05720354b021c326847722aeff5e7ed3b021ae29d2",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:9910f5713b7072b8c5dfdc05720354b021c326847722aeff5e7ed3b021ae29d2",
+      "to": "sha256:da4fcb78d6575c4772c2a754667c428fee8d48b65981433d457a2264edcd3377",
       "chunk_ids": {
         "BO-C1": [
           "BO-C1"
