@@ -17,7 +17,7 @@ approve.
 
 Close by reporting the reconcile verdicts (rows removed or reworded), the drained
 idea count, each journal verdict, and the refreshed sequence — with judgment
-calls flagged for veto. On approval, commit on green; the recommended next
+calls flagged for veto. On approval, commit the pass once on a lane pass; the recommended next
 command is the top line of the refreshed `## Recommended sequence`.
 
 ## 1. Reconcile the roadmap
@@ -57,6 +57,6 @@ does no judgment, so this section is where the judgment lands.
 Draft the full pass — reconciled roadmap, emptied inbox, journal verdicts
 including dismissals — as one uncommitted batch diff. That diff is the verdict
 sheet: the reviewer approves or adjusts it once, and there are no per-item
-interactive sign-offs. On approval, commit on green. Never commit the drain
+interactive sign-offs. On approval, commit the pass once on a lane pass. Never commit the drain
 without that approval; a standing batch approval (the AGENTS.md rule) counts,
 with contestable calls flagged for post-hoc veto.
