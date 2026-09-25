@@ -99,6 +99,10 @@ status, so this pass is the backstop for anything spec-retire missed. The
 empty-state recommendation is only trustworthy if the roadmap is current. Write
 no completion markers; history lives in git.
 
+Audit top-level decision maps against shipped work and recorded closure decisions in the same pass.
+For each obsolete map, promote durable decisions, repair references, and remove its index and topic folder together.
+A map closed without a spec follows this retirement path too; `ready` means ready for spec authoring.
+
 Retire here a spec whose work has landed but whose directory still sits under
 `specs/`; do not leave it for a later invocation. Run
 `bench spec retire <slug>` during this pass so its deletions join the batch
@@ -203,6 +207,8 @@ For a drained item that meets the light-path observables, build the item in this
 Write its one ticket file. Implement that ticket in the retained session under `craft-line`. Verify the diff against the ticket's acceptance rows and the gate. Open a `ROADMAP.md` row only when the reviewer declines.
 Items needing a reviewer decision, a new seam, or spec-level design
 still graduate to `ROADMAP.md`.
+
+A learning entry with a light-path fix goes to the write delegate that `.bench/BENCH.md` names, and its verdict closes the entry by implementation.
 
 ## 6. Classify every run; restructure on request
 

@@ -173,6 +173,36 @@ func TestGateProseCommandCleanList(t *testing.T) {
 	}
 }
 
+// TestGateProseCommandRefusesAMissingOperand: a named path that does not exist refuses the
+// run and names the path, so a grade on the wrong checkout cannot read as a pass. A clean
+// path beside the missing ones does not rescue the run, and each missing path gets its own
+// line.
+func TestGateProseCommandRefusesAMissingOperand(t *testing.T) {
+	root := t.TempDir()
+	write(t, root, ".bench/prose-exclusions", "")
+	write(t, root, "docs/notes.md", "Short prose.\n")
+	missing := []string{"specs/no-such-dir/no-such-file.md", "docs/gone.md"}
+
+	var stdout, stderr bytes.Buffer
+	code := GateProseCommand(append([]string{root, "--", "docs/notes.md"}, missing...), &stdout, &stderr)
+
+	if code != 1 {
+		t.Fatalf("exit = %d, want 1; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+	out := stdout.String()
+	if strings.Contains(out, "prose[") || strings.Contains(out, "pass") {
+		t.Fatalf("stdout = %q, want no pass table for a missing operand", out)
+	}
+	for _, path := range missing {
+		if want := strconv.Quote(path) + ": refused unreadable subject:"; !strings.Contains(out, want) {
+			t.Errorf("stdout = %q, want the refusal %q", out, want)
+		}
+	}
+	if strings.Contains(out, "docs/notes.md") {
+		t.Errorf("stdout = %q, want no line for the readable operand", out)
+	}
+}
+
 // TestGateProseCommandEmptyPathList passes with no findings when the lane names no
 // Markdown, and its pass table carries no row.
 func TestGateProseCommandEmptyPathList(t *testing.T) {

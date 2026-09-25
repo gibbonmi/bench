@@ -185,9 +185,11 @@ forms in a `notes:` block.
 
 `bench gate-prose <root> --staged` grades the staged Markdown from the index and
 takes no path list. The subject bytes and the exclusion policy come from the
-index blobs, so a working file does not change the answer. A paragraph finding
-names the line and the start of each sentence in the paragraph. `bench anchors`
-prints a `line` cell that carries the physical line of the first match. The cell
+index blobs, so a working file does not change the answer. The path-list form
+refuses a named path that does not exist at exit 1 and names each such path. A
+paragraph finding names the line and the start of each sentence in the paragraph.
+
+`bench anchors` prints a `line` cell that carries the physical line of the first match. The cell
 reads 0 when the needle has no match. A link, a special file, or an unreadable
 file at the path answers a structured refusal at exit 1.
 
@@ -435,6 +437,7 @@ Bench layers git safety:
   `git config bench.allowProtectedPush true`. Guard discovery reports a
   static, generic deny surface, and enforcement stays live.
 - The destructive-git guard allows an agent push to any branch other than the default branch. The guard denies a force, a deletion, a broadcast (`--all`, `--mirror`, `--tags`), and a push with an unresolved destination. The guard also denies a raw git merge and a raw git cherry-pick in every form; `bench worktree merge` folds a sibling, and `bench worktree land` lands a source.
+- The destructive-git guard denies a raw git commit and a raw git reset in every form. `bench commit` commits named paths on a lane pass, and `bench worktree reset` plans a recoverable reset. The guard allows an index write such as `git add` or `git restore --staged`, because a Bench commit composes through its own index. The guard grades the child argv of `bench worktree exec` one level deep, the same depth as a `bash -c` string.
 - The primary-checkout write guard (`guard-file-write`) denies a file-tool write to a tracked path in the primary checkout, because main receives writes only through landings. The guard allows a write in a Bench worktree, a write to a path git ignores, and a write outside every repository. It wires on Claude Code only, because Codex has no file-tool hook surface.
 - Claude Code and Codex hook adapters call the shared scripts in
   `.bench/hooks/`. Codex loads `.codex/hooks.json` only after you trust it

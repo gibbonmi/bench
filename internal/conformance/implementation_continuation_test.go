@@ -70,6 +70,10 @@ func TestImplementationContinuation(t *testing.T) {
 			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
 			needle: "Stop immediately when the user cancels.",
 		},
+		"implementation continuation: craft-line dropped the orchestrator scope of the stop conditions": {
+			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
+			needle: "The stop conditions in this section also govern the orchestrator of a `--full` run between chunks.",
+		},
 		"implementation continuation: craft-line counted diagnostic-only work as an attempt": {
 			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
 			needle: "A diagnostic-only action is not a completed implementation-and-verification attempt.",

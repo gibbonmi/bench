@@ -95,7 +95,17 @@ func discoverDecisionMapCandidates(root string) ([]DecisionMapCandidate, []strin
 // ValidateDecisionMapTree validates every discovered active and compiled decision map.
 func ValidateDecisionMapTree(root string) []string {
 	candidates, diagnostics := discoverDecisionMapCandidates(root)
+	active := make(map[string]string)
 	for _, candidate := range candidates {
+		if !candidate.Compiled {
+			active[filepath.Base(candidate.Path)] = candidate.Path
+		}
+	}
+	for _, candidate := range candidates {
+		if path, exists := active[filepath.Base(candidate.Path)]; candidate.Compiled && exists {
+			diagnostics = append(diagnostics, fmt.Sprintf("%s: active map also compiled at %s; move the map instead of copying it", path, candidate.Path))
+		}
+
 		file := bounds.Classify(filepath.Join(root, filepath.FromSlash(candidate.Path)), bounds.ControlRecordLimit)
 		if file.State != bounds.StateParsed && file.State != bounds.StateEmpty {
 			diagnostics = append(diagnostics, fmt.Sprintf("%s: %s: %s", candidate.Path, file.State, file.Reason))

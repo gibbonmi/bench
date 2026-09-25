@@ -13,8 +13,8 @@ import (
 )
 
 // proseCheck names the one `bench test` check that grades sentences instead of running a
-// Go test. It and the system suite are refused as probe targets, because neither reaches
-// the report a verdict derives from.
+// Go test. The probe refuses it and the system suite as targets, because `bench test`
+// stays the caller for both after a hand mutation, and the refusal names that route.
 const proseCheck = "prose"
 
 // probeFields is the verdict row's schema. failed_tests is a genuine count, so the row
@@ -122,7 +122,7 @@ func selectionArgs(parsed usage.Result) []string {
 func gradeCheckTarget(parsed usage.Result) string {
 	switch parsed.Flags["--check"] {
 	case proseCheck, gate.SystemPhaseName:
-		hint := "--check prose and --check system are not probe targets"
+		hint := "--check prose and --check system are not probe targets; " + testreport.HandProbeRoute
 		return toon.Errorf("probe focused run unsupported", hint) + "\n"
 	}
 	return ""

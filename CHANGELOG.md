@@ -6,6 +6,15 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Decision-map retirement
+
+- Removed six closed or shipped maps from the active decision inventory, including five false spec-ready entries in `bench maps`.
+- Added an integrity refusal when an active map also exists under a spec, and extended the drain audit to closed maps.
+
+### Learning fixes
+
+- Added a standing rule: a captured learning with a light-path fix goes to a fresh write delegate on the mid tier at high effort, and the drain closes the entry by implementation.
+
 ### Landing destination files
 
 - Changed `bench worktree land` to refuse only tracked changes in the landing checkout. An untracked or ignored file there, such as `.env`, no longer needs a build-output declaration.

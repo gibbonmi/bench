@@ -12,7 +12,8 @@ import (
 // operators). It strips the honest-mistake prefixes an agent reflexively types
 // (env/xargs/timeout/…), and hands each `git <subcommand>` to classify. Wrapper strings
 // (`sh|bash|zsh -c '…'`) are re-tokenized and scanned exactly one level deep, by design:
-// this is an honest-mistake layer, not an evasion-resistant boundary.
+// this is an honest-mistake layer, not an evasion-resistant boundary. The child argv of
+// `bench worktree exec` is the same one level, because a pool worktree runs git that way.
 
 // keywords are shell keywords skipped in command position so the verb after them is
 // found (`if git …`, `while git …`).
@@ -32,41 +33,73 @@ var wrapperCFlagRe = regexp.MustCompile(`^-[A-Za-z]*c[A-Za-z]*$`)
 func scan(stream shellcommand.Stream, chk Checker, allowWrapper bool) string {
 	for _, span := range stream.Commands {
 		tokens := shellcommand.ProjectCommandWords(stream.Tokens[span.Start:span.End])
-		if len(tokens) == 0 {
-			continue
-		}
 		for len(tokens) > 0 && keywords[tokens[0]] {
 			tokens = tokens[1:]
 		}
-		prefix := shellcommand.ResolveRoutinePrefix(tokens)
-		j, viaXargs := prefix.Index, prefix.ViaXargs
-		if prefix.Executes && j < len(tokens) {
-			base := filepath.Base(tokens[j])
-			if base == "git" {
-				sub, argsStart, ok := FindSubcommand(tokens, j+1, len(tokens))
-				if ok {
-					redirected := redirectsRepository(tokens[j+1 : argsStart-1])
-					if reason := classify(sub, tokens[argsStart:], viaXargs, redirected, chk); reason != "" {
-						return reason
-					}
-				}
-			} else if allowWrapper && wrappers[base] {
-				for k := j + 1; k < len(tokens); k++ {
-					if wrapperCFlagRe.MatchString(tokens[k]) {
-						if k+1 < len(tokens) {
-							inner := shellcommand.Parse(tokens[k+1])
-							if reason := scan(inner, chk, false); reason != "" {
-								return reason
-							}
-						}
-						break
-					}
-				}
-			}
+		if reason := scanWords(tokens, chk, allowWrapper, false); reason != "" {
+			return reason
 		}
 	}
 	return ""
 }
+
+// scanWords classifies one simple command's words. A wrapper's `-c` string and a
+// `bench worktree exec` child are each the one level of recursion allowWrapper gates.
+// elsewhere marks words that run in another checkout, so the verdicts that read this
+// directory's repository facts do not describe them.
+func scanWords(tokens []string, chk Checker, allowWrapper, elsewhere bool) string {
+	prefix := shellcommand.ResolveRoutinePrefix(tokens)
+	j, viaXargs := prefix.Index, prefix.ViaXargs
+	if !prefix.Executes || j >= len(tokens) {
+		return ""
+	}
+	base := filepath.Base(tokens[j])
+	switch {
+	case base == "git":
+		sub, argsStart, ok := FindSubcommand(tokens, j+1, len(tokens))
+		if !ok {
+			return ""
+		}
+		redirected := elsewhere || redirectsRepository(tokens[j+1:argsStart-1])
+		return classify(sub, tokens[argsStart:], viaXargs, redirected, chk)
+	case !allowWrapper:
+		return ""
+	case wrappers[base]:
+		for k := j + 1; k < len(tokens); k++ {
+			if wrapperCFlagRe.MatchString(tokens[k]) {
+				if k+1 < len(tokens) {
+					return scan(shellcommand.Parse(tokens[k+1]), chk, false)
+				}
+				break
+			}
+		}
+	default:
+		if child, ok := worktreeExecChild(tokens[j:]); ok {
+			return scanWords(child, chk, false, true)
+		}
+	}
+	return ""
+}
+
+// worktreeExecChild returns the argv a `bench worktree exec <target> [--env KEY=VALUE]...
+// -- <argv>` call runs, and whether words are such a call. The child argv starts after
+// the first `--`, the terminator the verb's grammar requires. The verb runs the argv
+// directly in the target worktree, with no shell between them.
+func worktreeExecChild(words []string) ([]string, bool) {
+	if len(words) < 3 || !benchExecutables[filepath.Base(words[0])] || words[1] != "worktree" || words[2] != "exec" {
+		return nil, false
+	}
+	for i := 3; i < len(words); i++ {
+		if words[i] == "--" {
+			return words[i+1:], true
+		}
+	}
+	return nil, false
+}
+
+// benchExecutables are the command names that run Bench: the installed CLI and the
+// repository wrapper.
+var benchExecutables = map[string]bool{"bench": true, "bench.sh": true}
 
 // FindSubcommand skips git's global options (and their values) after the `git` token.
 // It returns the subcommand, the index its args start at, and whether one was found.

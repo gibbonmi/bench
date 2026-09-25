@@ -229,14 +229,15 @@ func TestProbeRefusesAnUnknownCheckBeforeAnyWrite(t *testing.T) {
 	requireNoRunChild(t, f)
 }
 
-// PB24: neither the prose grade nor the system suite reaches the report a verdict derives
-// from, so both refuse as probe targets.
+// PB24: the probe refuses the prose grade and the system suite, and the refusal names the
+// hand route through `bench test`, which stays the caller for both checks.
 func TestProbeRefusesProseAndSystemChecks(t *testing.T) {
 	for _, check := range []string{"prose", "system"} {
 		t.Run(check, func(t *testing.T) {
 			f := refusalFixture(t)
 			out, code := runProbe(t, probeArgs("clamp.go", "--omit", "n < 0", "--check", check)...)
-			want := "error: probe focused run unsupported — --check prose and --check system are not probe targets\n"
+			want := "error: probe focused run unsupported — --check prose and --check system are not probe targets; " +
+				"copy the file aside, edit it, run bench test --check <name>, and restore the copy\n"
 			requireRefused(t, f, out, code, want, 1)
 		})
 	}
@@ -285,11 +286,12 @@ func TestProbeRefusesWhenTheMutationWriteFails(t *testing.T) {
 	requireBaselineOnly(t, f)
 }
 
-// probeHelpNotes is the three facts the help owes, spelled independently of the producer.
+// probeHelpNotes is the four facts the help owes, spelled independently of the producer.
 // A dropped or reworded note reds this row rather than passing as a fresh expectation.
 var probeHelpNotes = []string{
 	"--package <expr> takes a Go package expression, as bench test --package does.",
 	"--check <name> names a conformance check from the bench test --help inventory, and prose and system are not probe targets.",
+	"For prose or system, copy the file aside, edit it, run bench test --check <name>, and restore the copy.",
 	"A named check compiles from the run binary's source, so an edited tree needs bench worktree build <target> first.",
 }
 

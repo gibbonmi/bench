@@ -28,6 +28,7 @@ the explore reads, the fence rules, and the review rubric.
   - `Promised field labels` names each exact field label.
   - `Changed-function callers` lists every caller of each changed function.
   - `Copy survival`, when a new owner replaces copies, names a red-capable row that fails if any copy survives.
+  - `Rendered-shape readers` cites the old-text needle and every hit per ticket, under the rendered-shape rule in [the slicing checks](../bench-craft-tickets/references/slicing-checks.md#slicing-rules).
 - Each canary row and each conformance row traces to its executed root before the coverage map locks.
 - The reader sweep lists each named consumer of the decision fact.
 - The reader sweep lists each helper that a named consumer calls directly.
@@ -72,6 +73,7 @@ the explore reads, the fence rules, and the review rubric.
   unreached.
 - A row whose seam is the existing tests names the test function, and someone reads
   that function in the same session.
+  The seam cell cites that function as `` `<path>_test.go` (`<Name>`) ``, so `bench coverage --check` and build preflight resolve the name against the tree.
 - A row that substitutes a package variable names the venue. A substitution in the
   test process reaches nothing inside a test that drives a real subprocess.
 - An ordering promise gets a row where two refusals compete, and the row names the

@@ -38,7 +38,14 @@ differ.
 - A retirement pass gives each sentence that grants the retired behavior its own forbid row and red-capable check. One forbid row for a family of sentences leaves the others free to return.
 - A cited verifier row names the exact checks it performed. A reviewer can then repeat
   the checks and compare the results.
-- The slicer runs build preflight again after each fence change and before review. Review
-  then grades the final fence, not an earlier one.
+- The slicer runs `bench preflight build <slug>` after each change to a ticket or an acceptance row.
+  The spec goes to review, to sign-off, and to its landing only on a green preflight of its current ticket graph.
+  Review then grades the final fence, not an earlier one.
 - Each acceptance claim names an available producer and an executable check at its ticket checkpoint. A claim whose producer lands in a later ticket has no evidence at that checkpoint.
 - A ticket that preserves or moves a ref names a check for each of the head, the tip, and the checked-out-ref shapes. A check on one shape leaves the other shapes free to fail.
+- A rule for one member of an enumerated family goes on its declaration row, and `Writes:` names the declaration table and its dispatch test.
+- A ticket that adds a second caller of another package's private rule names that package in `Writes:`, so one exported rule serves both callers.
+- A ticket that changes a rendered output shape runs one `rg` for the old text, and each hit joins that ticket's own `Writes:` line.
+  A rendered output shape is a block name, a row kind, a table header, a line format, or a help line.
+  The search covers the tests, the help inventories, the generated references, and their anchor registry files.
+  The spec-wide fence masks a hit that is absent from one ticket's `Writes:` line, so the fence alone does not close the gap.

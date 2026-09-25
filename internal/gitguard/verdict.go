@@ -18,10 +18,12 @@ func classify(sub string, args []string, viaXargs, redirected bool, chk Checker)
 		if key := pushVerdict(args, viaXargs, redirected, chk); key != "" {
 			return denyLabels[key]
 		}
+	// A raw commit skips the lane that bench commit runs, and a raw reset moves a ref with
+	// no preserved envelope, so every option form of both verbs denies.
 	case "reset":
-		if contains(args, "--hard") {
-			return denyLabels["reset"]
-		}
+		return denyLabels["reset"]
+	case "commit":
+		return denyLabels["commit"]
 	case "clean":
 		if forced(args) {
 			return denyLabels["clean"]
@@ -52,10 +54,6 @@ func classify(sub string, args []string, viaXargs, redirected bool, chk Checker)
 		return denyLabels["merge"]
 	case "cherry-pick":
 		return denyLabels["cherry-pick"]
-	case "commit":
-		if contains(args, "--amend") {
-			return denyLabels["amend"]
-		}
 	case "update-ref":
 		if contains(args, "-d") {
 			return denyLabels["update-ref"]

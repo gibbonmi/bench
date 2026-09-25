@@ -111,9 +111,11 @@ func closureMessages(requirements []closureRequirement) []string {
 
 // probe records the tree facts of one `Writes:` entry. The probe is the gatherer's
 // whole I/O contribution to the ownership and closure rows; the policy over the
-// resulting facts belongs to Decide.
+// resulting facts belongs to Decide. A (new) test file the tree does not hold yet takes
+// its system tag from its directory, so build preflight grades the kit pin before the
+// build creates the file.
 func (facts *ticketFacts) probe(root, entry string, pins, anchors map[string][]string) {
-	path, _ := splitWritesEntry(entry)
+	path, isNew := splitWritesEntry(entry)
 	facts.writes[entry] = treeHolds(root, path)
 	if pinning := pins[path]; len(pinning) > 0 {
 		facts.pins[entry] = pinning
@@ -124,7 +126,7 @@ func (facts *ticketFacts) probe(root, entry string, pins, anchors map[string][]s
 	if files := anchorFiles(anchors, path); len(files) > 0 {
 		facts.anchors[entry] = files
 	}
-	if systemTagged(root, path) {
+	if systemTagged(root, path) || isNew && !facts.writes[entry] && newSystemTest(root, path) {
 		facts.systemTag[entry] = true
 	}
 }

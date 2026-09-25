@@ -58,7 +58,8 @@ install-time fetch. A dependency outside this shape needs a reviewer
 decision; it is not a default.
 
 **Phase-close handoff.** A Bench phase closes when a drain commits, a spec
-stages, a build lands, or a review delivers. The closing message must then
+stages, a build lands, or a review phase delivers outside a `--full` build.
+The closing message must then
 do one of two things. It must emit a copy-paste fresh-session
 continuation prompt, or it must update `capture/session-handoff.md`. This
 repo git-ignores the handoff, so it is a local file. Write the primary
