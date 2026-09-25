@@ -65,31 +65,48 @@ func beginCommitSpan(root string) func(int, commitMeasures) {
 // checkout exits 3; the landing owner alone composes, authorizes, and publishes the
 // prospective tree.
 func Command(args []string, stdout, stderr io.Writer) int {
-	msg, paths, dryRun, help, usageErr := parseArgs(args)
+	_, exit := Run(args, stdout, stderr)
+	return exit
+}
+
+// Outcome is what one commit call hands the command layer: the checkout the commit ran
+// in, the commit it published, and the spec slug that --preflight-build named. A call
+// that published nothing leaves Published empty.
+type Outcome struct {
+	Root, Published, PreflightBuild string
+}
+
+// Run is Command with its Outcome, so the commit chain reads the published commit from
+// the call that published it.
+func Run(args []string, stdout, stderr io.Writer) (Outcome, int) {
+	req, help, usageErr := parseRequest(args)
 	if help != "" {
 		fmt.Fprintln(stdout, helpText)
-		return 0
+		return Outcome{}, 0
 	}
 	if usageErr != "" {
 		if strings.HasPrefix(usageErr, "usage: ") {
 			fmt.Fprintln(stderr, usageErr)
-			return 2
+			return Outcome{}, 2
 		}
 		fmt.Fprintln(stderr, grammar.Help+" ("+usageErr+")")
-		return 2
+		return Outcome{}, 2
 	}
+	outcome := Outcome{PreflightBuild: req.preflightBuild}
 	root, err := git.Root()
 	if err != nil {
 		fmt.Fprintln(stderr, toon.NotInRepo())
-		return 1
+		return outcome, 1
 	}
+	outcome.Root = root
 	// The seam record opens once the repository is known, because the record is addressed
 	// by repository. A grammar answer reaches no repository and records nothing.
 	var measures commitMeasures
 	finishSpan := beginCommitSpan(root)
-	exit := commitAttributed(&measures, root, msg, paths, dryRun, stdout, stderr)
+	exit := commitAttributed(&measures, root, req.msg, req.paths, req.dryRun, stdout, stderr)
 	finishSpan(exit, measures)
-	return exit
+	outcome.Published = measures.subject
+	return outcome, exit
 }
 
 // commitAttributed is the verb's own work, with the span's measures written to measures
@@ -227,37 +244,55 @@ const LaneClause = "run the declared lane (or the gate when no lane is declared)
 var helpText = grammar.Help + "\n" +
 	"example: bench commit -m \"fix: tighten the guard\" -- internal/gitguard/scan.go docs/adr/0007.md\n" +
 	"--dry-run: " + LaneClause + " on the exact composed snapshot and report the outcome; commit nothing\n" +
+	preflightBuildFlag + " <slug>: after a commit that publishes, run bench worktree build on this worktree, then bench preflight build <slug> at the published commit; end with commit-chain{commit,build,preflight} and exit with the first non-zero step exit\n" +
 	"exit 1: refused before publication; nothing was committed\n" +
 	"exit 2: grammar error\n" +
 	"exit 3: published; the checkout did not reconcile — paste next= to repair"
 
 var grammar = usage.Grammar{
-	Cmd:     "bench commit",
-	Help:    "usage: bench commit [--dry-run] -m <msg> [--] <path>...",
-	Flags:   []usage.Flag{{Name: "-m", HasValue: true}, {Name: "--dry-run"}},
+	Cmd:  "bench commit",
+	Help: "usage: bench commit [--dry-run | " + preflightBuildFlag + " <slug>] -m <msg> [--] <path>...",
+	Flags: []usage.Flag{{Name: "-m", HasValue: true}, {Name: "--dry-run"},
+		{Name: preflightBuildFlag, HasValue: true, NoEmptyValue: true}},
 	MaxArgs: -1,
 }
 
-func parseArgs(args []string) (msg string, paths []string, dryRun bool, help string, usageErr string) {
+const preflightBuildFlag = "--preflight-build"
+
+// request is one parsed commit call.
+type request struct {
+	msg            string
+	paths          []string
+	dryRun         bool
+	preflightBuild string
+}
+
+func parseRequest(args []string) (req request, help string, usageErr string) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
 		if code == 0 {
-			return "", nil, false, line, ""
+			return request{}, line, ""
 		}
-		return "", nil, false, "", line
+		return request{}, "", line
 	}
-	_, dryRun = parsed.Flags["--dry-run"]
+	_, req.dryRun = parsed.Flags["--dry-run"]
+	req.preflightBuild = parsed.Flags[preflightBuildFlag]
+	// A dry run publishes nothing, so the chain would have no commit to build.
+	if req.dryRun && req.preflightBuild != "" {
+		return request{}, "", "--dry-run excludes " + preflightBuildFlag
+	}
 	msg, msgSet := parsed.Flags["-m"]
 	if !msgSet {
-		return "", nil, false, "", "-m <msg> is required"
+		return request{}, "", "-m <msg> is required"
 	}
 	if strings.TrimSpace(msg) == "" {
-		return "", nil, false, "", "-m <msg> must not be empty"
+		return request{}, "", "-m <msg> must not be empty"
 	}
 	if len(parsed.Positionals) == 0 {
-		return "", nil, false, "", "at least one <path> is required"
+		return request{}, "", "at least one <path> is required"
 	}
-	return msg, parsed.Positionals, dryRun, "", ""
+	req.msg, req.paths = msg, parsed.Positionals
+	return req, "", ""
 }
 
 func formatNamedGoFiles(root string, named []string) ([]string, error) {
