@@ -39,6 +39,14 @@ type injectedPortRow struct {
 var injectedPortRegistry = []injectedPortRow{
 	{pkg: "internal/assessment", port: "FileOps", testFile: "internal/assessment/record_test.go", testName: "TestAssessmentRecordUpdates"},
 	{
+		pkg: "internal/chargeevidence", port: "ExportWrite",
+		testFile: "internal/preflight/evidencecmd/evidence_export_test.go", testName: "TestEvidenceExportWritesSources",
+	},
+	{
+		pkg: "internal/chargeevidence", port: "SourceAt",
+		testFile: "internal/preflight/evidencecmd/evidence_export_test.go", testName: "TestEvidenceExportVerifiesBeforeWrite",
+	},
+	{
 		pkg: "internal/chargeevidence", port: "StoreOptions",
 		testFile: "internal/systemtest/charge_evidence_test.go", testName: "TestEvidenceInterruptedPublication",
 	},

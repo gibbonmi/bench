@@ -78,6 +78,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench preflight evidence <id> --source <source-id> [--cursor <cursor>]  print one bounded fragment of one declared source stream and its exact successor
   bench preflight evidence <id> --verify  verify every stored page and source digest of a prepared evidence artifact
   bench preflight evidence <id> --check-current  bind a prepared evidence artifact to the current assignment and source pair
+  bench preflight evidence <id> --to <dir>  export every verified source of a prepared evidence artifact to its own file in an absent or empty directory
   bench preflight evidence-clean [--cursor <cursor>]  print one bounded page of the exact evidence deletion targets and its fingerprint
   bench preflight evidence-clean --apply <fingerprint>  delete exactly the targets one fingerprinted cleanup plan named
   bench repair-pilot activate | report [--full]  collect and report attributed repair evidence for an explicit local pilot
@@ -151,7 +152,7 @@ func TestEvidenceHelpInventory(t *testing.T) {
 	t.Run("preparation and every implemented read", func(t *testing.T) {
 		for _, want := range []string{"build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]",
 			"evidence <id> [--cursor <cursor>]", "evidence <id> --source <source-id> [--cursor <cursor>]",
-			"evidence <id> --verify", "evidence <id> --check-current",
+			"evidence <id> --verify", "evidence <id> --check-current", "evidence <id> --to <dir>",
 			"evidence-clean [--cursor <cursor>]", "evidence-clean --apply <fingerprint>"} {
 			if !strings.Contains(strings.Join(preflightForms, "\n"), want) {
 				t.Errorf("preflight help omits %q", want)
