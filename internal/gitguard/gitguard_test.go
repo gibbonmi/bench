@@ -3,6 +3,8 @@ package gitguard
 import (
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 func TestCommandFromEnvelope(t *testing.T) {
@@ -30,7 +32,8 @@ func TestCommandFromEnvelope(t *testing.T) {
 // the seven push classes, so a shared or dropped label cannot hide which rule fired.
 func TestBlockMessageNamesLabel(t *testing.T) {
 	labels := []string{
-		"git reset --hard",
+		"git reset",
+		"git commit",
 		"git push to the default branch",
 		"git push --force",
 		"git push --delete",
@@ -61,6 +64,20 @@ func TestBlockMessageCarriesUnresolvedAdvice(t *testing.T) {
 	}
 	if other := BlockMessage("git push --force"); strings.Contains(other, advice) {
 		t.Errorf("BlockMessage for the force label carried the unresolved advice: %q", other)
+	}
+}
+
+// TestBlockMessageNamesBenchRoute pins the route each lane-bypass refusal names: a raw
+// commit points at `bench commit`, and a raw reset points at the reset verb's grammar.
+func TestBlockMessageNamesBenchRoute(t *testing.T) {
+	cases := []struct{ label, route string }{
+		{"git commit", "bench commit -m <msg> -- <path>..."},
+		{"git reset", usage.WorktreeReset},
+	}
+	for _, c := range cases {
+		if msg := BlockMessage(c.label); !strings.Contains(msg, c.route) {
+			t.Errorf("BlockMessage(%q) did not name the route %q: %q", c.label, c.route, msg)
+		}
 	}
 }
 
