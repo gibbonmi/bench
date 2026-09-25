@@ -324,11 +324,95 @@ Advice, with no finding ID:
 - The prune order reads the time in the spill name, so a backward clock step can prune a new spill.
 - Four test sites state the spill line index 4, which equals the owner's head line count.
 
+## BO-C3 author evidence
+
+Each ticket had a fresh `bench-writer` author on opus at high effort, with a cap of 3 attempts. The chunk base is `6d3a45e1`, the BO-C2 record commit.
+
+| Ticket | Author session | Commit | Attempts |
+|---|---|---|---|
+| 4 | `claude:bench-writer/bo-t4-author` | `ac8eee88` | 2 of 3 |
+| 5 | `claude:bench-writer/bo-t5-author` | `8f93b8c7` | 1 of 3 |
+
+Ticket 4 fills the `<target>` slot of the path and exec actions for an active row with a present tree. The help renderer collapses the equal actions into one pair. Ticket 5 prints one `checks{green,not_applicable,red}` line and a table of the red rows only.
+
+Each author stopped once on a test outside its fence, and the orchestrator widened the fence under the plan-expansion policy. Commit `395bf499` adds `landed_test.go` to ticket 4 and cites the real tests for BO33, BO34, and BO35. Commit `078b5da7` adds five preflight tests and the two help descriptions to ticket 5. Commit `a5f7588b` adds the four files bound to the help inventory and one fence entry. A `bench learning` entry records each expansion.
+
+Each author ran its four ticket checks again at the chunk tip `a5f7588b`, and each check passed. The `internal/worktree` runs skipped two socket subtests, because this host cannot open a unix socket at that path length.
+
+### Probe verdicts
+
+Each probe ran through `bench probe`. Each probe bit, and each restore reads `yes`.
+
+| Ticket | Mutation | Test |
+|---|---|---|
+| 4 | swap: the path action slot back to the row id | TestListActiveRowsUseTargetSlot |
+| 4 | swap: the path action slot back to the row id | TestListCommandAdvertisesOneLandedSweep |
+| 4 | omission: the craft-cli slot sentence | docs-currency-workflow |
+| 5 | swap: the old full-table render | TestPreflightGreenSummaryLine, TestPreflightRedRowsOnly, BO40 cases |
+| 5 | omission: the green early return | TestPreflightGreenSummaryLine |
+| 5 | swap: the exit flag is ignored | the BO40 red cases |
+| 5 | swap: the summary forces `not_applicable=0` | the rewritten preflight tests |
+
+## BO-C3 chunk review, round 1
+
+The frozen pair is base `6d3a45e10437c5875f729e4652364f44853ea5c6` and tip `a5f7588b53c5a208f7ce1935589921405f27be57`. The shared evidence is `sha256:deb8b5235f9d42110d7919bb07af04c62fc58cbe68b8afc0ef1163038305c658`. Each axis ran in a fresh `bench-reviewer` session on opus at medium effort. Only the Coverage axis ran probes, and it left the tree clean.
+
+The raw finding count is 9: Standards 4, Spec 4, and Coverage 1. A Fable delegate at high effort decided the two `ask-user` findings, by user direction. It moved the Standards placement finding to advice, so 8 repair targets remain.
+
+## Standards
+
+Findings: 3. The worst issue is a set of hand-written counts in the legacy baselines.
+
+- `internal/preflight/charge_test.go:289-315` states the summary counts of each legacy case by hand. `verdict_summary_test.go:55-56` derives the same counts from `Decide`, and no red is recorded for the independent values. Target R14. `auto-fix`. Confidence 6.
+- The same two-line help block is pasted at `path_identifier_test.go:58` and `list_actions_test.go:230,264,351`, and `landed_test.go:311` repeats the command text. Each copy restates the text that `list.go:140-141` owns. Target R15. `auto-fix`. Confidence 5.
+- The edited comment line at `internal/anchors/registry_retained_workflow.go:20` is about 115 columns, and its paragraph wraps at about 85. Target R16. `auto-fix`. Confidence 6.
+
+## Spec
+
+Findings: 4. The worst issue is a seam cell that cites a test that does not exist.
+
+- `spec.md:315` cites `TestReviewPreflight` for BO40. No such test exists. `command_review_test.go` (`TestCommandStaleBase`) holds the assertion. Target R17. `auto-fix`. Confidence 9.
+- `spec.md:313` says BO38 prints "the same summary line", but the review fixture gives `green=14,not_applicable=0`. The code follows the line shape. Target R18. `auto-fix`. Confidence 8.
+- `spec.md:239` names the tickets that write `cmd/bench` registry or help files, and it omits ticket 5. Target R19. `auto-fix`. Confidence 6.
+- The BO33 test at `landed_test.go:252` does not pin the `--request <token>` operand of the release row. Target R20. `auto-fix`. Confidence 5.
+
+The Spec axis held BO32, BO34 to BO37, BO39, BO41, and BO67, and each fence expansion.
+
+## Coverage
+
+Findings: 1. The worst issue is a false spec sentence about the charge forms.
+
+- `spec.md:193` and the ticket 5 text say the charge forms keep their complete check table in the evidence artifact. The new comment at `internal/preflight/command.go:175` repeats it. The charge builders read only the red flag and the first red row, and the artifact holds no check rows. Target R21. `auto-fix`. Confidence 8.
+
+The Coverage axis ran five new probes, and each one bit and restored. The probes swap the exec slot and admit green rows to the red table. They also drop the `next` cell, cap the red count, and revert a help description.
+
+## Advice
+
+- `TestListActiveRowsUseTargetSlot` sits in `path_identifier_test.go` to keep `list_actions_test.go` under its budget. A split of `list_actions_test.go` by action class needs a file outside the fence, and no binding requirement asks for it.
+- The BO39 and BO40 tests use fixtures with one red row. A case with several red rows would pin the red count directly.
+- `verdict_summary_test.go:95` restates the reason that BO37 catches its failure.
+- `TestPreflightGreenSummaryLine` takes its counts from `Decide`, so only `charge_test.go:289` pins the BO37 literal.
+
+## BO-C3 repair routing
+
+This is cycle 1 of the two repair cycles for chunk BO-C3. The Fable delegate found R21 to be a false statement that changes no approved behavior, so it is flagged for reviewer veto.
+
+| Target | Owner | Repair |
+|---|---|---|
+| R14 | ticket 5 | Derive the legacy counts from `Decide`, or record a demonstrated red for each independent value. |
+| R15 | ticket 4 | Put the active-row help block in one shared test constant. |
+| R16 | ticket 4 | Wrap the comment line to its paragraph. |
+| R17 | orchestrator | Cite `command_review_test.go` (`TestCommandStaleBase`) for BO40. |
+| R18 | orchestrator | Say "the same summary line shape" in BO38. |
+| R19 | orchestrator | Add ticket 5 to the `cmd/bench` writers at spec line 239. |
+| R20 | ticket 4 and orchestrator | Pin `bench worktree release --request <token> <path>` in the BO33 test, and change its seam cell from "run unchanged" to "strengthened in ticket 4". |
+| R21 | orchestrator and ticket 5 | State that the charge forms print no check table in the spec and the ticket, and correct the comment at `command.go:175`. |
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ft336-bounded-output/spec.md",
-  "plan_digest": "sha256:020a1a93d65e334bc552fb7573ebc564e69e06e8f4cfbdeb2bddb00b2e216b55",
+  "plan_digest": "sha256:9910f5713b7072b8c5dfdc05720354b021c326847722aeff5e7ed3b021ae29d2",
   "implementation_session": "",
   "chunks": [
     {
@@ -961,6 +1045,245 @@ Advice, with no finding ID:
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "BO-C3",
+      "base": "6d3a45e10437c5875f729e4652364f44853ea5c6",
+      "tip": "a5f7588b53c5a208f7ce1935589921405f27be57",
+      "plan_digest": "sha256:9910f5713b7072b8c5dfdc05720354b021c326847722aeff5e7ed3b021ae29d2",
+      "source_digest": "5822cf287cd5af8edca99280f595bd0687032c0e",
+      "acceptance_rows": [
+        "BO32",
+        "BO33",
+        "BO34",
+        "BO35",
+        "BO36",
+        "BO41",
+        "BO67",
+        "BO37",
+        "BO38",
+        "BO39",
+        "BO40"
+      ],
+      "verification": [
+        {
+          "id": "bo-c3-4-worktree-r1",
+          "performer": "claude:bench-writer/bo-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5822cf287cd5af8edca99280f595bd0687032c0e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t4-author/4-worktree@a5f7588b",
+            "digest": "sha256:aae901945cb152caf96e626efa1928e6c73752d8227c976e7873b0940aeb91f6",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,50382\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:99: unix sockets unavailable: listen unix /tmp/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket2883031489/001/.bench-home/worktrees/001-3761743728/7d817d4a2cbcbb9572bccb5167442469-7d65e6e4aa9caef11a3e78a1… (272 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket1470693506/001/.bench-home/worktrees/001-1430137697/a688de029ded6ce4119202982a3ddb3c-a302c311f8622bcc8fd3ca38c393cb2… (270 bytes)\""
+          },
+          "requirement": "4-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c3-4-preflight-r1",
+          "performer": "claude:bench-writer/bo-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5822cf287cd5af8edca99280f595bd0687032c0e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t4-author/4-preflight@a5f7588b",
+            "digest": "sha256:41daa88e83d7de6cfb7bb08101b1e9de4546e86bcf05be226c8f067ecd00c2a4",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight,pass,18100\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "4-preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c3-4-anchors-r1",
+          "performer": "claude:bench-writer/bo-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5822cf287cd5af8edca99280f595bd0687032c0e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t4-author/4-anchors@a5f7588b",
+            "digest": "sha256:edf57bfa9a90eef76112ce8b17be4fbe76e9660eb25c9e52e88ac2e4f9152298",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,864\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "4-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c3-4-consumers-r1",
+          "performer": "claude:bench-writer/bo-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5822cf287cd5af8edca99280f595bd0687032c0e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t4-author/4-consumers@a5f7588b",
+            "digest": "sha256:80925ef1e5efa05af0af047a80a01c363ccc5c872141e4146f541a7a11e46bc4",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/consumers,pass,1840\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "4-consumers",
+          "command": "bench test --package ./internal/consumers",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c3-5-worktree-r1",
+          "performer": "claude:bench-writer/bo-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5822cf287cd5af8edca99280f595bd0687032c0e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t5-author/5-worktree@a5f7588b",
+            "digest": "sha256:521dbb4286166b9634431dc9a9a7015194ed406906f1ef22c4fce37a49bca1c9",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,50488\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket2197444593/001/.bench-home/worktrees/001-312235821/7e6f08e64ee60c6bdd9c780ad18f9ada-2cfae5e52d051dce38a4ef393cd19231: bind: … (256 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket3438120481/001/.bench-home/worktrees/001-3412348911/474d56aed361247e7a2f775874c34aa1-3c87312dcd01a3814ce0f9f05d4c642… (270 bytes)\""
+          },
+          "requirement": "5-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c3-5-preflight-r1",
+          "performer": "claude:bench-writer/bo-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5822cf287cd5af8edca99280f595bd0687032c0e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t5-author/5-preflight@a5f7588b",
+            "digest": "sha256:d3e26330d4dcb366e934c68f5037cc71cb8df6018386d47fd5dbcf6567045cd3",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight,pass,17929\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "5-preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c3-5-anchors-r1",
+          "performer": "claude:bench-writer/bo-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5822cf287cd5af8edca99280f595bd0687032c0e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t5-author/5-anchors@a5f7588b",
+            "digest": "sha256:f722735737e2f985ec7d6ee3df687eefa213ce80f2bdfa5ca4598507d7bf4a8a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,827\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "5-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c3-5-consumers-r1",
+          "performer": "claude:bench-writer/bo-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5822cf287cd5af8edca99280f595bd0687032c0e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t5-author/5-consumers@a5f7588b",
+            "digest": "sha256:483aaeb10af9c00212a68fdc01d4d8f40fe7c2992445dee67612ba3ea9c906cd",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/consumers,pass,2058\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "5-consumers",
+          "command": "bench test --package ./internal/consumers",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "bo-c3-r1-standards",
+          "performer": "claude:bench-reviewer/bo-c3-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5822cf287cd5af8edca99280f595bd0687032c0e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c3-standards@a5f7588b",
+            "digest": "sha256:8d650b9a971fe275aa0ead121711128d9069eac54f2fab9f282c152e528ea7e4",
+            "excerpt": "Standards: 4 findings; worst is the hand-written legacy-differential counts in charge_test.go:289-315, which restate the registry that fixtureCounts derives, with no recorded red."
+          },
+          "axis": "Standards",
+          "base": "6d3a45e10437c5875f729e4652364f44853ea5c6",
+          "tip": "a5f7588b53c5a208f7ce1935589921405f27be57",
+          "finding_ids": [
+            "R14",
+            "R15",
+            "R16"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bo-c3-r1-spec",
+          "performer": "claude:bench-reviewer/bo-c3-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5822cf287cd5af8edca99280f595bd0687032c0e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c3-spec@a5f7588b",
+            "digest": "sha256:3652d03b8916695c30eac0d49a6f6b3682bd58b3aa3b6269645d0988fd13597b",
+            "excerpt": "Spec BO-C3: 4 findings. BO40 cites the nonexistent TestReviewPreflight, BO38's \"same line\" is a literal contradiction with correct behavior, spec line 239 is stale for ticket 5, and BO33's seam leaves the request token unpinned."
+          },
+          "axis": "Spec",
+          "base": "6d3a45e10437c5875f729e4652364f44853ea5c6",
+          "tip": "a5f7588b53c5a208f7ce1935589921405f27be57",
+          "finding_ids": [
+            "R17",
+            "R18",
+            "R19",
+            "R20"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bo-c3-r1-coverage",
+          "performer": "claude:bench-reviewer/bo-c3-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5822cf287cd5af8edca99280f595bd0687032c0e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c3-coverage@a5f7588b",
+            "digest": "sha256:6b907714541f3396f04217ca6232fbf39c3381717c9f3289e337171e657ac926",
+            "excerpt": "Coverage BO-C3: 1 finding (ask-user). The spec line 193 claim that the charge forms keep a complete check table has no code or test behind it, and command.go:175 repeats it. All 5 new probe sites were killed and restored."
+          },
+          "axis": "Coverage",
+          "base": "6d3a45e10437c5875f729e4652364f44853ea5c6",
+          "tip": "a5f7588b53c5a208f7ce1935589921405f27be57",
+          "finding_ids": [
+            "R21"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1105,6 +1428,87 @@ Advice, with no finding ID:
     {
       "from": "sha256:bb9f83d52955dada78658a97aa87c76ab6233bfdf4de04e61966a3cb17cc42d1",
       "to": "sha256:020a1a93d65e334bc552fb7573ebc564e69e06e8f4cfbdeb2bddb00b2e216b55",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:020a1a93d65e334bc552fb7573ebc564e69e06e8f4cfbdeb2bddb00b2e216b55",
+      "to": "sha256:99f5a5c022f0cbd8603fa5e41d85d9d04845c9f9c6eaad6455ffa32be162677f",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:99f5a5c022f0cbd8603fa5e41d85d9d04845c9f9c6eaad6455ffa32be162677f",
+      "to": "sha256:39c7d4febcfb247c2557df9987e4ffd76597e9b42150b7139bf6fb8f48ed0aba",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:39c7d4febcfb247c2557df9987e4ffd76597e9b42150b7139bf6fb8f48ed0aba",
+      "to": "sha256:9910f5713b7072b8c5dfdc05720354b021c326847722aeff5e7ed3b021ae29d2",
       "chunk_ids": {
         "BO-C1": [
           "BO-C1"
