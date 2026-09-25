@@ -692,11 +692,27 @@ Advice, with no finding ID:
 
 R44 goes to cycle 2, the last repair cycle of chunk BO-C5, in a fresh repair session for ticket 8. R45 is the orchestrator's.
 
+## BO-C5 repair evidence, cycle 2
+
+The plan commit `5f749e71` applies R45. The BO56 seam cell now also cites the dispatcher test, and the ticket 8 text states what the form without the flag keeps. The commit also adds one fresh repair session for ticket 8.
+
+The session `claude:bench-writer/bo-t8-repair-c2` ran on opus at low effort and committed `33c513ce`. The empty-slug test now builds its expected line from `toon.Usage`, `grammar.Cmd`, and `PreflightBuildFlag`, as the parser does (R44). The empty-value marker stays inline, because its owner in `internal/usage` states it inline and exports nothing. A `bench idea` entry parks that owner question. A `bench probe` that drops `NoEmptyValue` still bit the row, and the restore reads `yes`.
+
+The session ran both ticket checks at `33c513ce`, and each check passed.
+
+## BO-C5 chunk review, round 3, and close
+
+Round 3 confirms cycle 2 at the final tip. The frozen pair is base `136b84b42b5255a505b2624f4435f7f595628a16` and tip `33c513cec4fecd24e0cc88a5ff7652a4d2734e03`. The shared evidence is `sha256:1c849f1b5e9e7d523b01ad0377095a6a7d11c25e2a56206aebded4f85c30611b`. Each axis ran in a new `bench-reviewer` session on opus at medium effort.
+
+Each axis found 0 findings. Standards confirmed R44, and Spec confirmed R45. Coverage found that the rebuilt expectation still pins the exit code, the empty stdout, and the exact refusal line. Chunk BO-C5 used both of its two repair cycles. It used no hardening cycle.
+
+R40, R41, and R45 correct non-behavioral spec text, and they stay open to reviewer veto.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ft336-bounded-output/spec.md",
-  "plan_digest": "sha256:09accadc80e58cc9350a513d9096923e13804bbd2ade29259ed270cdae18bd3e",
+  "plan_digest": "sha256:30bb247ded7137e89d8156df57c15532f10ce93fe584e01e0d58392532cb054c",
   "implementation_session": "",
   "chunks": [
     {
@@ -2442,9 +2458,9 @@ R44 goes to cycle 2, the last repair cycle of chunk BO-C5, in a fresh repair ses
     {
       "id": "BO-C5",
       "base": "136b84b42b5255a505b2624f4435f7f595628a16",
-      "tip": "77931a4264c146900a1c371d574399cb16744b00",
-      "plan_digest": "sha256:09accadc80e58cc9350a513d9096923e13804bbd2ade29259ed270cdae18bd3e",
-      "source_digest": "1e56c8700d3b809cc41c47467ba1a5012bc07c7d",
+      "tip": "33c513cec4fecd24e0cc88a5ff7652a4d2734e03",
+      "plan_digest": "sha256:30bb247ded7137e89d8156df57c15532f10ce93fe584e01e0d58392532cb054c",
+      "source_digest": "87d6ec6c3e4961178fbe5dae31360556d3eb7588",
       "acceptance_rows": [
         "BO51",
         "BO52",
@@ -2522,6 +2538,42 @@ R44 goes to cycle 2, the last repair cycle of chunk BO-C5, in a fresh repair ses
             "ref": "claude:agent/bo-t8-repair-c1/8-commit@77931a42",
             "digest": "sha256:dfa6271fcd56205a85ba2c5f38a426cee50cd2a10b0105470b150bb96263888f",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commit,pass,3643\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "8-commit",
+          "command": "bench test --package ./internal/commit",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c5-8-cmd-final",
+          "performer": "claude:bench-writer/bo-t8-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "87d6ec6c3e4961178fbe5dae31360556d3eb7588",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t8-repair-c2/8-cmd@33c513ce",
+            "digest": "sha256:a1007497a12bd3c7d5a60b9b0f645ad8b15315aae651a632c19e0ca672d6ccd1",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,7869\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "8-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c5-8-commit-final",
+          "performer": "claude:bench-writer/bo-t8-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "87d6ec6c3e4961178fbe5dae31360556d3eb7588",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t8-repair-c2/8-commit@33c513ce",
+            "digest": "sha256:ee8a6442d4e3ad0ea238a3c3ca2de78de74a6f2ea66b2964fd2e49b8105ed3ea",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commit,pass,3557\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "8-commit",
           "command": "bench test --package ./internal/commit",
@@ -2668,6 +2720,72 @@ R44 goes to cycle 2, the last repair cycle of chunk BO-C5, in a fresh repair ses
           "finding_ids": [],
           "supersedes": [
             "bo-c5-r1-coverage"
+          ]
+        },
+        {
+          "id": "bo-c5-r3-standards",
+          "performer": "claude:bench-reviewer/bo-c5-standards-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "87d6ec6c3e4961178fbe5dae31360556d3eb7588",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c5-standards-3@33c513ce",
+            "digest": "sha256:cc4b46a92b9e1279d98a90646aac3c2c9bb645c6dec75577e504db21148f46be",
+            "excerpt": "BO-C5 R3 Standards: R44 confirmed (test composes toon.Usage, grammar.Cmd, and PreflightBuildFlag as parse.go:149 does); 0 new findings."
+          },
+          "axis": "Standards",
+          "base": "136b84b42b5255a505b2624f4435f7f595628a16",
+          "tip": "33c513cec4fecd24e0cc88a5ff7652a4d2734e03",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c5-r2-standards"
+          ]
+        },
+        {
+          "id": "bo-c5-r3-spec",
+          "performer": "claude:bench-reviewer/bo-c5-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "87d6ec6c3e4961178fbe5dae31360556d3eb7588",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c5-spec-3@33c513ce",
+            "digest": "sha256:04b9d2ccd2d0633f96f269b9eb4ff65cb1743ec684192bfc9355a5f9475ef9f7",
+            "excerpt": "Spec r3 BO-C5: 0 new; R45 confirmed; coverage --check ok (76 rows); v2 plan valid; BO51-BO56, BO71 hold."
+          },
+          "axis": "Spec",
+          "base": "136b84b42b5255a505b2624f4435f7f595628a16",
+          "tip": "33c513cec4fecd24e0cc88a5ff7652a4d2734e03",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c5-r2-spec"
+          ]
+        },
+        {
+          "id": "bo-c5-r3-coverage",
+          "performer": "claude:bench-reviewer/bo-c5-coverage-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "87d6ec6c3e4961178fbe5dae31360556d3eb7588",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c5-coverage-3@33c513ce",
+            "digest": "sha256:cec08be40bc52bb00056a9e39602cfe4741b1e815576b0d16402ade99f7c623a",
+            "excerpt": "BO-C5 Coverage round 3: 0 findings; the rebuilt expectation at chain_grammar_test.go:31 pins exit 2, empty stdout and the exact refusal line (confidence 9/10)."
+          },
+          "axis": "Coverage",
+          "base": "136b84b42b5255a505b2624f4435f7f595628a16",
+          "tip": "33c513cec4fecd24e0cc88a5ff7652a4d2734e03",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c5-r2-coverage"
           ]
         }
       ]
@@ -3166,6 +3284,33 @@ R44 goes to cycle 2, the last repair cycle of chunk BO-C5, in a fresh repair ses
     {
       "from": "sha256:07515bca2bfed9e23e9e90a0fcb0fc5c4d70cc99df75f9c8dd63442c6e595364",
       "to": "sha256:09accadc80e58cc9350a513d9096923e13804bbd2ade29259ed270cdae18bd3e",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:09accadc80e58cc9350a513d9096923e13804bbd2ade29259ed270cdae18bd3e",
+      "to": "sha256:30bb247ded7137e89d8156df57c15532f10ce93fe584e01e0d58392532cb054c",
       "chunk_ids": {
         "BO-C1": [
           "BO-C1"
