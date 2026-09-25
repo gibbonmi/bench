@@ -324,7 +324,7 @@ func TestCommandFencesEntryAfterClosedParenAuthorizes(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Command exit = %d, want 0; output:\n%s", code, out)
 	}
-	if !strings.Contains(out, "paths-authorized,green") {
+	if renderedVerdicts(t, out, modeReview, slug)["paths-authorized"] != verdictGreen {
 		t.Errorf("a real entry after a closed cross-line paren must authorize:\n%s", out)
 	}
 }
@@ -385,9 +385,10 @@ func TestCommandTrailingNewlineParity(t *testing.T) {
 			if code != 0 {
 				t.Fatalf("Command exit = %d, want 0; output:\n%s", code, out)
 			}
-			for _, name := range []string{"rows-owned,green", "rows-membership,green"} {
-				if !strings.Contains(out, name) {
-					t.Errorf("%s: output missing %s (trailing-newline handling dropped the last citation):\n%s", tc.name, name, out)
+			verdicts := renderedVerdicts(t, out, modeReview, slug)
+			for _, name := range []string{"rows-owned", "rows-membership"} {
+				if verdicts[name] != verdictGreen {
+					t.Errorf("%s: %s is %q (trailing-newline handling dropped the last citation):\n%s", tc.name, name, verdicts[name], out)
 				}
 			}
 		})

@@ -69,9 +69,9 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench harnesses [<harness> [--record <path> --format <source-id>]]  the harness record as TOON; one name prints that harness's cells; both flags observe one named session record
   bench assessment list | show <run-id> | record --input <file> | compare --plan <file> --runs <id,...>  store and inspect local workflow cost and quality
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
-  bench preflight review <slug> [--base <commit>] [--source-tip <commit>]  review-entry checks that a spec's artifacts agree with the tree, one verdict row per check
+  bench preflight review <slug> [--base <commit>] [--source-tip <commit>]  review-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only
   bench preflight review <slug> --charge --base <commit> --source-tip <commit> [--max-store-bytes <n>]  prepare one immutable review evidence artifact and print its bounded orientation
-  bench preflight build <slug> [--base <commit>] [--source-tip <commit>]  build-entry checks that a spec's artifacts agree with the tree, one verdict row per check
+  bench preflight build <slug> [--base <commit>] [--source-tip <commit>]  build-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only
   bench preflight build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]  prepare one immutable build evidence artifact and print its bounded orientation
   bench preflight build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>  propose one ticket's Writes: entries from the pinned source
   bench preflight evidence <id> [--cursor <cursor>]  print one bounded fragment of a prepared evidence artifact and its exact successor

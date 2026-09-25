@@ -33,7 +33,7 @@ func TestExplicitBaseReviewOwnsSourceRangeNotDestinationHandoff(t *testing.T) {
 		t.Fatal(err)
 	}
 	out, code := Command([]string{"review", slug, "--base", base})
-	if code != 0 || !strings.Contains(out, "diff-nonempty,green") || !strings.Contains(out, "source[1]{base,tip}") || !strings.Contains(out, base) || !strings.Contains(out, tip) {
+	if code != 0 || renderedVerdicts(t, out, modeReview, slug, base)["diff-nonempty"] != verdictGreen || !strings.Contains(out, "source[1]{base,tip}") || !strings.Contains(out, base) || !strings.Contains(out, tip) {
 		t.Fatalf("explicit review = (%d):\n%s", code, out)
 	}
 	configAfter, err := os.ReadFile(filepath.Join(root, ".git", "config"))
@@ -53,7 +53,7 @@ func TestExplicitBaseReviewOwnsSourceRangeNotDestinationHandoff(t *testing.T) {
 	// The advanced destination default branch is not an ancestor of the retained source. An
 	// explicit source range stays valid: its frozen base is an ancestor of its captured tip.
 	out, code = Command([]string{"build", slug, "--base", base})
-	if code != 0 || !strings.Contains(out, "base-current,green") {
+	if code != 0 || renderedVerdicts(t, out, modeBuild, slug, base)["base-current"] != verdictGreen {
 		t.Fatalf("explicit build = (%d):\n%s", code, out)
 	}
 	configAfter, err = os.ReadFile(filepath.Join(root, ".git", "config"))

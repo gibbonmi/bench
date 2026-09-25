@@ -10,7 +10,7 @@ import (
 )
 
 // TestCommandBuildFresh is B1 (the fresh-build contract test). With no
-// tickets/ directory at all, `build` prints a not-applicable row for each
+// tickets/ directory at all, `build` counts a not-applicable verdict for each
 // of rows-owned, rows-membership, and diff-nonempty, individually
 // asserted. It runs the rest for real, and exits 0 when they are green.
 func TestCommandBuildFresh(t *testing.T) {
@@ -20,16 +20,9 @@ func TestCommandBuildFresh(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Command exit = %d, want 0; output:\n%s", code, out)
 	}
-	for _, name := range []string{"base-current,green", "paths-authorized,green"} {
-		if !strings.Contains(out, name) {
-			t.Errorf("output missing %s row:\n%s", name, out)
-		}
-	}
-	for _, name := range []string{"rows-owned,not-applicable", "rows-membership,not-applicable", "diff-nonempty,not-applicable"} {
-		if !strings.Contains(out, name) {
-			t.Errorf("output missing %s row:\n%s", name, out)
-		}
-	}
+	verdicts := renderedVerdicts(t, out, modeBuild, slug)
+	requireVerdict(t, verdicts, verdictGreen, "base-current", "paths-authorized")
+	requireVerdict(t, verdicts, verdictNA, "rows-owned", "rows-membership", "diff-nonempty")
 }
 
 // TestCommandBuildResumedTicketsRunForReal is B2's present-tickets half (the
@@ -43,14 +36,9 @@ func TestCommandBuildResumedTicketsRunForReal(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Command exit = %d, want 0; output:\n%s", code, out)
 	}
-	for _, name := range []string{"rows-owned,green", "rows-membership,green", "fence-writes,green"} {
-		if !strings.Contains(out, name) {
-			t.Errorf("output missing %s row (present tickets/ must run the check for real):\n%s", name, out)
-		}
-	}
-	if !strings.Contains(out, "diff-nonempty,not-applicable") {
-		t.Errorf("output missing diff-nonempty,not-applicable row:\n%s", out)
-	}
+	verdicts := renderedVerdicts(t, out, modeBuild, slug)
+	requireVerdict(t, verdicts, verdictGreen, "rows-owned", "rows-membership", "fence-writes")
+	requireVerdict(t, verdicts, verdictNA, "diff-nonempty")
 }
 
 // TestCommandBuildCoversAcceptsEveryMapRowID pins one row-ID grammar across the
@@ -66,11 +54,8 @@ func TestCommandBuildCoversAcceptsEveryMapRowID(t *testing.T) {
 	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
 
 	out, _ := Command([]string{"build", slug})
-	for _, check := range []string{"tickets-parse", "rows-owned", "rows-membership"} {
-		if row, _ := rowOf(t, out, check); !strings.Contains(row, check+",green") {
-			t.Errorf("%s must be green for a map row ID cited in Covers:\n%s", check, out)
-		}
-	}
+	verdicts := renderedVerdicts(t, out, modeBuild, slug)
+	requireVerdict(t, verdicts, verdictGreen, "tickets-parse", "rows-owned", "rows-membership")
 }
 
 // TestCommandBuildEmptyTicketsRed is B2's empty-tickets half (the empty-tickets
@@ -109,11 +94,8 @@ func TestCommandBuildStaleBaseRedDespiteNA(t *testing.T) {
 	if !strings.Contains(out, "base-current,red") {
 		t.Errorf("output missing red base-current row:\n%s", out)
 	}
-	for _, name := range []string{"rows-owned,not-applicable", "rows-membership,not-applicable", "diff-nonempty,not-applicable"} {
-		if !strings.Contains(out, name) {
-			t.Errorf("output missing %s row:\n%s", name, out)
-		}
-	}
+	verdicts := renderedVerdicts(t, out, modeBuild, slug)
+	requireVerdict(t, verdicts, verdictNA, "rows-owned", "rows-membership", "diff-nonempty")
 }
 
 // TestCommandBuildOutOfFenceRed is B4 (the build out-of-fence contract test): a

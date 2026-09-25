@@ -92,11 +92,11 @@ type Operation struct {
 
 var operations = []Operation{
 	{Mode: ModeReview, optional: []string{FlagBase, FlagTip}, Kind: KindVerdict,
-		description: "review-entry checks that a spec's artifacts agree with the tree, one verdict row per check"},
+		description: "review-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only"},
 	{Mode: ModeReview, selectors: []string{flagCharge}, required: []string{FlagBase, FlagTip}, optional: []string{flagQuota}, Kind: KindPrepareReviewEvidence, Bounded: true,
 		description: "prepare one immutable review evidence artifact and print its bounded orientation"},
 	{Mode: ModeBuild, optional: []string{FlagBase, FlagTip}, Kind: KindVerdict,
-		description: "build-entry checks that a spec's artifacts agree with the tree, one verdict row per check"},
+		description: "build-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only"},
 	{Mode: ModeBuild, selectors: []string{flagCharge}, required: []string{FlagTicket, FlagBase, FlagTip}, optional: []string{flagQuota}, Kind: KindPrepareEvidence, Bounded: true,
 		description: "prepare one immutable build evidence artifact and print its bounded orientation"},
 	{Mode: ModeBuild, selectors: []string{flagPropose}, required: []string{FlagTicket, FlagBase, FlagTip}, Kind: KindProposal,
