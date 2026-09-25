@@ -420,6 +420,7 @@ The shell CLI hostile-input profile applies to the owner and to `--to`. The walk
 - `internal/census/output_test.go`
 - `internal/anchors/registry_retained_workflow.go`
 - `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/injected_ports_registry_test.go`
 - `.agents/skills/bench-craft-cli/SKILL.md`
 - `reviews/ft336-bounded-output.md`
 
