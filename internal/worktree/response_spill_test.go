@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/responsebound"
+	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 )
 
 // overBound writes one response line more than the bound allows, so the owner starts its
@@ -23,18 +24,6 @@ func overBound(t *testing.T, stream io.Writer) {
 	}
 }
 
-// namedSpill answers the path that the spill line of one finished response names.
-func namedSpill(t *testing.T, response string) string {
-	t.Helper()
-	for _, line := range strings.SplitAfter(response, "\n") {
-		if _, path, found := strings.Cut(strings.TrimSuffix(line, "}\n"), ",path="); found && strings.HasPrefix(line, "spilled{") {
-			return path
-		}
-	}
-	t.Fatalf("response = %q, want a spill line", response)
-	return ""
-}
-
 // spillAt sends one over-bound response from a process whose repository root is root, and
 // answers its spill path below home.
 func spillAt(t *testing.T, home, root string) string {
@@ -43,7 +32,7 @@ func spillAt(t *testing.T, home, root string) string {
 	owner := responsebound.New(home, &sink, &sink, func() string { return root }, false)
 	overBound(t, owner.Stdout())
 	owner.Finish()
-	return namedSpill(t, sink.String())
+	return responseboundtest.Path(t, sink.String())
 }
 
 // BO16: the retirement of an assignment removes its spill directory, and a spill in the
@@ -77,7 +66,7 @@ func TestRetiringVerbSpillsToPrimary(t *testing.T) {
 	code := ReleaseCommand(root, home, args, owner.Stdout(), owner.Stderr())
 	owner.Finish()
 	requireTest(t, code == 0, "release = (%d, %q)", code, sink.String())
-	path := namedSpill(t, sink.String())
+	path := responseboundtest.Path(t, sink.String())
 	requireTest(t, !strings.Contains(path, creation.Assignment.ID), "spill %s lies in the retired assignment's scope", path)
 	data, err := os.ReadFile(path)
 	requireTest(t, err == nil, "the release removed its own spill: %v", err)

@@ -9,25 +9,14 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 )
-
-// spillPath answers the path that the spill line of one response names.
-func spillPath(t *testing.T, response string) string {
-	t.Helper()
-	for _, line := range strings.SplitAfter(response, "\n") {
-		if _, path, found := strings.Cut(strings.TrimSuffix(line, "}\n"), ",path="); found && strings.HasPrefix(line, "spilled{") {
-			return path
-		}
-	}
-	t.Fatalf("response = %q, want a spill line", response)
-	return ""
-}
 
 // spillOnce sends one over-bound response through a new owner and answers its spill path.
 func spillOnce(t *testing.T, home string, root func() string) string {
 	t.Helper()
 	var sink bytes.Buffer
-	return spillPath(t, respondWith(t, New(home, &sink, &sink, root, false), &sink, stdoutLines(numbered(1, 11)...)))
+	return responseboundtest.Path(t, respondWith(t, New(home, &sink, &sink, root, false), &sink, stdoutLines(numbered(1, 11)...)))
 }
 
 // BO17: the 65th spill in a `primary` scope leaves the newest 64 files. The counts are
@@ -85,5 +74,40 @@ func TestDropRefusesNonAssignmentID(t *testing.T) {
 	}
 	if _, err := os.Stat(scope); err != nil {
 		t.Fatalf("a refused drop removed the primary scope: %v", err)
+	}
+}
+
+// The spill drop never follows a symlink at a store level. A symlink at `responses/` or at
+// `responses/<repo-key>/` that names a directory outside the home would otherwise send the
+// removal to that directory.
+func TestDropRefusesSymlinkedStore(t *testing.T) {
+	root := t.TempDir()
+	key, assignment := poolkey.Key(root), strings.Repeat("a", 32)
+	for _, row := range []struct {
+		name  string
+		level string
+		held  string
+	}{
+		{"store", storeDirName, key},
+		{"repository key", filepath.Join(storeDirName, key), ""},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			home, outside := t.TempDir(), t.TempDir()
+			target := filepath.Join(outside, row.held, assignment)
+			if err := os.MkdirAll(target, 0o700); err != nil {
+				t.Fatal(err)
+			}
+			link := filepath.Join(home, row.level)
+			if err := os.MkdirAll(filepath.Dir(link), 0o700); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Symlink(outside, link); err != nil {
+				t.Fatal(err)
+			}
+			_ = Drop(home, root, assignment)
+			if _, err := os.Stat(target); err != nil {
+				t.Fatalf("a drop through a symlink at %s removed %s: %v", row.level, target, err)
+			}
+		})
 	}
 }

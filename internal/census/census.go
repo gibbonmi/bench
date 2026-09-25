@@ -242,7 +242,7 @@ func Counts(home, root string) (map[string]int, error) {
 		return counts, fmt.Errorf("read census directory: %w", err)
 	}
 	for _, entry := range entries {
-		if !isAssignmentID(entry.Name()) {
+		if !poolkey.IsAssignmentID(entry.Name()) {
 			continue
 		}
 		text, ok := readRecords(Dir(home, root), entry.Name())
@@ -331,13 +331,8 @@ func readRecords(dir, name string) (string, bool) {
 	return string(data), true
 }
 
-// isAssignmentID reports whether name is one 32-hex assignment id. The test composes
-// the segment pair rather than restating the hexadecimal shape, so poolkey stays the
-// one source of what an identifier looks like.
-func isAssignmentID(name string) bool {
-	_, ok := poolkey.SplitAssignmentSegment(poolkey.AssignmentSegment(name, name))
-	return ok
-}
+// isAssignmentID is the poolkey predicate under the name the event reader calls.
+var isAssignmentID = poolkey.IsAssignmentID
 
 // lineCount returns the number of records in one file's text.
 func lineCount(text string) int {
@@ -360,7 +355,7 @@ func recordLines(text string) []string {
 // id is refused rather than composed into a path, because the removal is
 // unrecoverable.
 func Drop(home, root, assignment string) error {
-	if !isAssignmentID(assignment) {
+	if !poolkey.IsAssignmentID(assignment) {
 		return fmt.Errorf("census assignment id is malformed: %s", sanitize.Controls(assignment))
 	}
 	if err := os.Remove(filepath.Join(Dir(home, root), assignment)); err != nil && !os.IsNotExist(err) {

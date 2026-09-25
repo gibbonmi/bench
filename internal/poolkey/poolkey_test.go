@@ -162,6 +162,21 @@ func TestAssignmentSegmentRoundTrips(t *testing.T) {
 	}
 }
 
+// TestIsAssignmentIDAcceptsOnlyAnID proves the predicate that guards a path composed from
+// an operand accepts one 32-hex id and refuses a traversal, a scope name, and a segment.
+func TestIsAssignmentIDAcceptsOnlyAnID(t *testing.T) {
+	t.Parallel()
+	id := strings.Repeat("b", 32)
+	if !IsAssignmentID(id) {
+		t.Errorf("IsAssignmentID(%q) = false, want true", id)
+	}
+	for _, name := range []string{"", "..", "primary", strings.Repeat("g", 32), strings.Repeat("B", 32), id[1:], AssignmentSegment(id, id), id + "/"} {
+		if IsAssignmentID(name) {
+			t.Errorf("IsAssignmentID(%q) = true, want a refusal", name)
+		}
+	}
+}
+
 // TestSplitAssignmentSegmentRejectsOtherNames proves a pool entry that is not an
 // assignment is refused, so a reader of the pool needs no ledger.
 func TestSplitAssignmentSegmentRejectsOtherNames(t *testing.T) {

@@ -21,7 +21,7 @@ import (
 // because the removal is unrecoverable. A store level that is not a real directory holds
 // no spill of this owner, so the drop never follows a symlink.
 func Drop(home, root, assignment string) error {
-	if _, ok := poolkey.SplitAssignmentSegment(poolkey.AssignmentSegment(assignment, assignment)); !ok {
+	if !poolkey.IsAssignmentID(assignment) {
 		return fmt.Errorf("response spill assignment id is malformed: %s", sanitize.Controls(assignment))
 	}
 	dir := home
