@@ -198,6 +198,15 @@ type Fragment struct {
 // First returns the cursor that starts the default stream: the first manifest fragment.
 func (a *Artifact) First() Cursor { return Cursor{Identity: a.identity} }
 
+// Summary renders the summary response; next is the exact command that reads First.
+func (a *Artifact) Summary(next string) (string, error) {
+	sourceBytes := 0
+	for _, source := range a.m.Sources {
+		sourceBytes += source.Bytes
+	}
+	return encodeResponse(blockSummary, []any{a.identity, len(a.m.Sources), len(a.m.Pages), len(a.manifest), sourceBytes, next})
+}
+
 // SourceOrdinal returns the one-based ordinal of the source the manifest declares under id.
 func (a *Artifact) SourceOrdinal(id string) (int, error) {
 	for i, source := range a.m.Sources {
