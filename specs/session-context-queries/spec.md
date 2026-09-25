@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: `specs/session-context-efficiency/decisions/session-context-efficiency.md` (ready compiled map).
 
-Verification log: 2 iteration(s) to accept — Sol/high accepted the suite. Trace-only partials and review-state bookkeeping are folded.
+Verification log: 2 iteration(s) to accept — Sol/high accepted the suite. Trace-only partials and review-state bookkeeping are folded. The FT336 spec review accepted the retirement of ticket 4.
 
 Coordinator: [Session context efficiency](../session-context-efficiency/spec.md)
 
@@ -17,14 +17,14 @@ General call aggregation does not solve the oversized-result problem.
 
 Extend the existing worktree and spec-history owners with selected multi-target views.
 Add focused raw-read guidance with explicit recovery paths.
-Apply new numeric defaults only after the measurement report and reviewer budget decision.
+The FT336 spec owns the default output budget of every Bench response, including the worktree list and the spec history.
 Current domain-owned truncation policies remain authoritative.
 
 ## User stories
 
 Line: gpt-5.6-sol / high.
-Implementation-line reason: Shared history and later budgets are the hardest chunks. The selected contracts are precise, but producer preservation and future policy need new tests.
-Harder chunks: QU-C2, QU-C4.
+Implementation-line reason: Shared history is the hardest chunk. The selected contracts are precise, but producer preservation needs new tests.
+Harder chunks: QU-C2.
 The source fixes the outcome, but the seams require careful evidence and compatibility work.
 
 1. As an agent, I want selected worktree identity, path, and state, so that one read supplies my next operation.
@@ -39,12 +39,10 @@ The source fixes the outcome, but the seams require careful evidence and compati
 10. As an agent, I want relevant raw-read defaults, so that file and command evidence starts with the needed material.
 11. As an agent, I want explicit full reads to remain available, so that projection cannot hide needed evidence.
 12. As a reviewer, I want authority boundaries retained, so that fewer calls cannot bypass approval or verification.
-13. As a reviewer, I want measured numeric policies, so that a build cannot invent new limits.
-14. As an agent, I want recoverable bounded defaults, so that approved limits preserve the route to complete evidence.
-15. As an agent, I want hostile target text handled per target, so that output remains usable.
-16. As an agent, I want unrequested output omitted, so that selected queries actually reduce context.
+13. As an agent, I want hostile target text handled per target, so that output remains usable.
+14. As an agent, I want unrequested output omitted, so that selected queries actually reduce context.
 
-17. As an agent, I want a complete worktree-detail route, so that the selected view cannot hide additional worktree facts.
+15. As an agent, I want a complete worktree-detail route, so that the selected view cannot hide additional worktree facts.
 
 ## Implementation decisions
 
@@ -90,14 +88,6 @@ Independent archive and log reads can share one discovery step.
 Polling, mutation, verification, approval, and publication keep their existing boundaries.
 Build-then-run consolidation needs separate evidence and remains outside these tickets.
 
-The final ticket waits for the measurement child's budget evidence and an explicit reviewer decision.
-Before that ticket starts, spec authoring records each numeric value, surface, unit, omission metadata, and full-detail route.
-That authoring pass also closes any additional owner fence required by the selected surfaces.
-
-If several owners receive approved budgets, the author splits the final ticket into one vertical ticket per owner.
-The build cannot choose its own numeric policy.
-The platform governs in-scope plan expansion after the required checkpoint.
-Until that checkpoint, the final ticket is not on the executable frontier.
 Existing budgets remain active and do not require reapproval.
 
 ## Implementation chunks
@@ -113,7 +103,6 @@ The successor starts after accepted findings have current repair coverage.
 | QU-C1 / `1-select-worktrees.md` | none | Selected worktree facts | QU1, QU2, QU3, QU9, QU10, QU16, QU17, QU18 | TestSelectedWorktreeFacts and the remaining owned-row tests | no |
 | QU-C2 / `2-select-histories.md` | none | Selected bounded histories | QU4, QU5, QU6, QU7, QU8, QU19, QU20, QU21, QU22, QU23, QU24, QU25 | TestSelectedHistoryPreservesProducer and the remaining owned-row tests | yes |
 | QU-C3 / `3-guide-relevant-reads.md` | 1-select-worktrees.md, 2-select-histories.md | Focused raw-read guidance | QU11, QU12, QU13 | Standards and Spec inspection at QU11–QU13 | no |
-| QU-C4 / `4-apply-reviewed-budgets.md` | 1-select-worktrees.md, 2-select-histories.md, 3-guide-relevant-reads.md | Reviewed owner budgets | QU14, QU15 | TestApprovedQueryBudget after the policy checkpoint | yes |
 
 The coverage map supplies the complete test inventory for each chunk's owned rows.
 The final reconciliation checks every acceptance row and the integrated result.
@@ -148,23 +137,21 @@ named input -> existing command owner -> typed producer -> projected result
 | QU6 | 5 | Each omitted history reports its complete event count | planned TestSelectedSpecOmissions in internal/spec | A clipped count cannot describe the omitted evidence |
 | QU7 | 6 | Each selected spec result includes an exact complete-history command | planned TestSelectedSpecDetailRoute in internal/spec | A generic help action cannot recover the omitted target |
 | QU8 | 7 | A failed spec target retains its own result beside successful targets | planned TestSelectedSpecPartialFailure in internal/spec | One Git failure cannot erase another target result |
-| QU9 | 8 | The bare worktree view matches the baseline before new budgets | planned TestSelectedWorktreesPreserveDefault in internal/worktree | A differential input matrix catches accidental default changes |
+| QU9 | 8 | The bare worktree view matches the baseline | planned TestSelectedWorktreesPreserveDefault in internal/worktree | A differential input matrix catches accidental default changes |
 | QU10 | 9 | Malformed worktree selection grammar returns usage at exit 2 | planned TestSelectedWorktreeGrammar in internal/worktree | Mixed modes and invalid limits cannot silently choose a different query |
 | QU11 | 10 | Raw-read guidance selects relevant sections, paths, failures, or rows before full detail | review-owned: Standards axis reads the three guidance files | Advice to concatenate complete results defeats projection |
 | QU12 | 11 | Raw-read guidance retains an explicit complete-detail route | review-owned: Standards axis reads the examples | A bounded example without recovery hides required evidence |
 | QU13 | 12 | Guidance keeps polling and distinct authority boundaries as separate operations | review-owned: Spec axis compares `specs/session-context-efficiency/decisions/session-context-efficiency/tickets/4.md` and `specs/session-context-efficiency/decisions/session-context-efficiency/tickets/6.md` | A call-saving example cannot combine mutation with later approval |
-| QU14 | 13 | New numeric defaults require an approved per-surface byte policy before their build ticket starts | review-owned: budget record and ticket-entry inspection | A build cannot turn the diagnostic cut into its own cap |
-| QU15 | 14 | Approved defaults retain their complete-detail routes and owner metadata | planned TestApprovedQueryBudget in the respective command packages | Boundary fixtures catch lost detail routes or missing omission metadata |
-| QU16 | 15 | A control-bearing worktree target failure does not hide other target results | planned TestSelectedWorktreeHostileTarget in internal/worktree | An unsafe TOON cell cannot collapse the complete result into one render error |
-| QU17 | 16 | Selected worktree output omits unrequested worktree rows | planned TestSelectedWorktreesExcludeOldOutput in internal/worktree | Presence-only assertions would let the old full output survive |
-| QU18 | 17 | The selected worktree view names `bench worktree list` as its complete-detail action | planned TestSelectedWorktreeDetailRoute in internal/worktree | A result without the exact full inventory command fails the recovery contract |
-| QU19 | 8 | The positional history view matches the baseline before new budgets | planned TestSelectedHistoriesPreserveDefault in internal/spec | A differential history matrix catches accidental changes to complete history |
+| QU16 | 13 | A control-bearing worktree target failure does not hide other target results | planned TestSelectedWorktreeHostileTarget in internal/worktree | An unsafe TOON cell cannot collapse the complete result into one render error |
+| QU17 | 14 | Selected worktree output omits unrequested worktree rows | planned TestSelectedWorktreesExcludeOldOutput in internal/worktree | Presence-only assertions would let the old full output survive |
+| QU18 | 15 | The selected worktree view names `bench worktree list` as its complete-detail action | planned TestSelectedWorktreeDetailRoute in internal/worktree | A result without the exact full inventory command fails the recovery contract |
+| QU19 | 8 | The positional history view matches the baseline | planned TestSelectedHistoriesPreserveDefault in internal/spec | A differential history matrix catches accidental changes to complete history |
 | QU20 | 9 | Malformed spec selection grammar returns usage at exit 2 | planned TestSelectedHistoryGrammar in internal/spec | An invalid history limit cannot silently choose another query |
-| QU21 | 15 | A control-bearing spec target failure does not hide other target results | planned TestSelectedHistoryHostileTarget in internal/spec | One unsafe target cannot collapse the whole result into a render error |
-| QU22 | 16 | Selected history output omits unrequested history bodies | planned TestSelectedHistoriesExcludeOldOutput in internal/spec | Presence-only assertions would let full histories survive beside selected output |
+| QU21 | 13 | A control-bearing spec target failure does not hide other target results | planned TestSelectedHistoryHostileTarget in internal/spec | One unsafe target cannot collapse the whole result into a render error |
+| QU22 | 14 | Selected history output omits unrequested history bodies | planned TestSelectedHistoriesExcludeOldOutput in internal/spec | Presence-only assertions would let full histories survive beside selected output |
 | QU23 | 4, 8 | The shared history producer preserves the baseline complete ordered fact sequence | planned TestSelectedHistoryPreservesProducer in internal/spec | Applying selection limits inside History would truncate roadmap context |
 | QU24 | 5 | Each omitted history reports its complete serialized UTF-8 byte count | planned TestSelectedHistoryTrueBytes in internal/spec | A correct event count cannot hide a byte total computed after projection |
-| QU25 | 7, 15 | An unrepresentable history subject fails only its selected spec result | planned TestSelectedHistoryHostileSubject in internal/spec | A combined table failure must not erase valid histories for other specs |
+| QU25 | 7, 13 | An unrepresentable history subject fails only its selected spec result | planned TestSelectedHistoryHostileSubject in internal/spec | A combined table failure must not erase valid histories for other specs |
 
 ### Edge inventory
 
@@ -235,7 +222,6 @@ The fence is the union of ticket writes and the review pickup.
 | [1. Select worktree path facts](tickets/1-select-worktrees.md) | none | QU1, QU2, QU3, QU9, QU10, QU16, QU17, QU18 |
 | [2. Select bounded spec histories](tickets/2-select-histories.md) | none | QU4, QU5, QU6, QU7, QU8, QU19, QU20, QU21, QU22, QU23, QU24, QU25 |
 | [3. Guide relevant raw reads](tickets/3-guide-relevant-reads.md) | 1-select-worktrees.md, 2-select-histories.md | QU11, QU12, QU13 |
-| [4. Apply reviewed owner budgets](tickets/4-apply-reviewed-budgets.md) | 1-select-worktrees.md, 2-select-histories.md, 3-guide-relevant-reads.md | QU14, QU15 |
 
 ## Out of scope
 
@@ -249,11 +235,11 @@ Build-then-run consolidation needs separate evidence: approximately 4 edits, 1 g
 
 | Source clause | Coverage |
 | --- | --- |
-| Ticket 3: bounded raw reads and Bench queries | QU5–QU7, QU11, QU12, QU14, QU15, QU18, QU24 |
+| Ticket 3: bounded raw reads and Bench queries | QU5–QU7, QU11, QU12, QU18, QU24 |
 | Ticket 4: selected multi-target queries and archive guidance | QU1–QU4, QU8, QU11, QU13 |
 | Ticket 8: identity, path, state, and bounded histories | QU1–QU8, QU16–QU18, QU21, QU22, QU24, QU25 |
-| Ticket 9: reviewer-approved numeric budgets | QU14, QU15 |
-| FT173: existing owners and full-detail routes | QU4, QU7, QU9, QU12, QU15, QU18–QU20, QU23 |
+| Ticket 9: reviewer-approved numeric budgets | retired to `specs/ft336-bounded-output` |
+| FT173: existing owners and full-detail routes | QU4, QU7, QU9, QU12, QU18–QU20, QU23 |
 
 ### Reader sweep and proof checklist
 
@@ -283,5 +269,4 @@ The selected history view retains the spec owner's operational contract.
 
 Repeated selectors, first-occurrence deduplication, and the explicit history limit are proposed grammar decisions for this sign-off.
 QU1–QU10 and QU16–QU22 grade these additions.
-The numeric-default ticket remains staged until its external checkpoint is complete.
-The checkpoint retains the full bounded-default scope rather than silently declaring the early selectors complete.
+This spec has no numeric-default ticket.

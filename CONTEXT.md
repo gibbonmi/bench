@@ -240,8 +240,16 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   state without a cold run. Not "gate log".
 - **census** — the hook-recorded count of **raw calls** per assignment worktree,
   kept under `$BENCH_HOME/census/<repo-key>/`,
-  shown as the `census` **signal** and carried in the landing record. Not "log",
-  not "audit", not "trace" — census.
+  shown as the `census` **signal** and carried in the landing record. Beside each
+  raw-call file, an output record file holds the line and byte count of each
+  bounded Bench response in that assignment. Not "log", not "audit", not "trace" — census.
+- **response bound** — the most lines that one public Bench response prints by
+  default. The production policy registry holds the value. One owner applies it and the projection, and each over-bound
+  response prints its first lines, one **response spill** line, and its last lines.
+  Not "truncation", not "output cap", not "page" — response bound.
+- **response spill** — the private file that holds the complete output of one
+  over-bound response. The spill line names its path, its line count, and its byte
+  count. Not "overflow artifact", not "log" — response spill.
 - **raw call** — one Bash tool call that names a path under the repository's
   pool directory with a **verb head** other than `bench`. A chain in one call
   is one raw call. A Read, Edit, or Write tool call is never one. Not "path
