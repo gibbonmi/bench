@@ -21,7 +21,7 @@ Give each public registry entry in `cmd/bench` a bound disposition. A leaf's dis
 - [ ] A test-registered bounded command that prints 25 lines through `Command.Run` produces exactly 10 stdout lines.
 - [ ] A bounded command that prints 10 lines produces its exact bytes and no spill file.
 - [ ] An 11-line response prints lines 1 to 4, the spill line, and lines 7 to 11.
-- [ ] A 25-line response of 300 bytes prints `spilled{lines=25,bytes=300,omitted_lines=16,path=<abs>}` as its fifth line.
+- [ ] A 25-line response of 300 bytes prints `spilled{lines=25,bytes=300,omitted_lines=16,cut_lines=0,path=<abs>}` as its fifth line.
 - [ ] The spill file holds the complete input bytes, both streams, in write order.
 - [ ] A bounded command that prints 30 lines and exits 3 returns exit 3.
 - [ ] Each spill directory has mode 0700, each spill file has mode 0600, and a symlink at the scope directory takes the create-failure route.

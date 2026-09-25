@@ -4,9 +4,9 @@ Status: staged
 
 Roadmap: FT336
 
-Decision source: reviewer-confirmed current conversation, 2026-09-24, on the named reviewed artifact `roadmap/FT336.md`.
+Decision source: named reviewed artifact `roadmap/FT336.md`, with the reviewer decisions of 2026-09-24 under "Closed decisions, 2026-09-24".
 
-Verification log: 2 iteration(s) to accept — Opus/high iteration 1 returned 4 blocking and 10 non-blocking findings. Iteration 2 closed all 14 and accepted, and the author folded its 3 non-blocking notes. A pre-draft Fable/high consultation changed the help exemption, the spill-failure fallback, and the exec owner rule.
+Verification log: 2 iteration(s) to accept — Opus/high iteration 1 returned 4 blocking and 10 non-blocking findings. Iteration 2 closed all 14 and accepted, and the author folded its 3 non-blocking notes. A pre-draft Fable/high consultation changed the help exemption, the spill-failure fallback, and the exec owner rule. The byte-budget amendment took 2 Opus/high iterations and reached its cap. Iteration 1 returned 5 blocking and 10 non-blocking findings. Iteration 2 left one blocking finding on the BO64 sweep scope, and the author folded it without a third review.
 
 ## Problem
 
@@ -18,7 +18,7 @@ The FT71 build session made 1,126 model requests at an average context of about 
 
 ## Solution
 
-One owner holds each public Bench response to 10 lines. A response of 10 lines or fewer prints unchanged. A longer response prints its first 4 lines, one spill line, and its last 5 lines. The spill line names a private file that holds the complete output. The verb keeps its exit code.
+One owner holds each public Bench response to 10 lines and 4096 bytes. A response within both values prints unchanged. A longer response prints its first 4 lines, one spill line, and its last 5 lines. The spill line names a private file that holds the complete output. The verb keeps its exit code.
 
 The `cmd/bench` dispatcher applies the bound to each public command. `bench worktree exec` passes its child's output through the same bound. The help forms, `bench dashboard --stdout`, `bench worktree shell`, and `bench setup` stay exempt.
 
@@ -28,18 +28,18 @@ Three verbs change their default shape:
 - `bench preflight build` and `bench preflight review` print one summary line in place of the green and not-applicable rows.
 - `bench preflight evidence <id>` prints the manifest summary and the next page command. The new `--to <dir>` form exports each verified source to a file.
 
-`bench commit --preflight-build <slug>` commits, builds the worktree, and runs build preflight in one call. The census records the output lines and bytes of each Bench response in an assignment, and the landing prints the breakdown. A byte bound joins the line bound after the queries ticket-4 budget decision exists.
+`bench commit --preflight-build <slug>` commits, builds the worktree, and runs build preflight in one call. The census records the output lines and bytes of each Bench response in an assignment, and the landing prints the breakdown. A bound of 4096 bytes joins the line bound. FT336 owns this default budget for every Bench response, and the queries spec no longer holds a budget ticket.
 
 ## User stories
 
 Line: opus / high.
 Implementation-line reason: The response owner and the dispatcher posture change are the hardest material chunks. The spec fixes the projection exactly, but stream order, interrupts, and the posture reds across the command tests are uncertain. Owner-level tests are strong, and the dispatcher reds need a gate run to find.
-Harder chunks: BO-C1, BO-C2.
+Harder chunks: BO-C1, BO-C2, BO-C7.
 
 ### The response bound
 
 1. As an agent, I want each public Bench response held to 10 lines, so that one call cannot flood my context.
-2. As an agent, I want a response of 10 lines or fewer printed unchanged, so that a small answer keeps its bytes.
+2. As an agent, I want a response within both values printed unchanged, so that a small answer keeps its bytes.
 3. As an agent, I want an over-bound response to show its first 4 and last 5 lines, so that the verdict stays visible.
 4. As an agent, I want one spill line with the path, the totals, and the omitted count, so that I see the gap.
 5. As an agent, I want the spill file to hold the complete output in arrival order, so that I can read every omitted line.
@@ -113,9 +113,9 @@ Harder chunks: BO-C1, BO-C2.
 
 ### The byte bound
 
-58. As an agent, I want each bounded response held to the reviewed byte value as well, so that one long line cannot flood my context.
-59. As a reviewer, I want the byte value taken from the queries ticket-4 budget decision, so that FT336 invents no number.
-60. As a reviewer, I want the byte-bound ticket stopped before product writes while that decision is absent, so that no placeholder value ships.
+58. As an agent, I want each bounded response held to 4096 bytes as well, so that one long line cannot flood my context.
+59. As a reviewer, I want the byte value in the policy registry beside the line value, so that one owner holds both values.
+60. As an agent, I want a long projected line cut and counted in the spill line, so that I know the file holds the rest.
 
 ### Reviewed exclusions and evidence
 
@@ -129,6 +129,14 @@ Harder chunks: BO-C1, BO-C2.
 65. As a release operator, I want the ship-tier commands exempt, so that the CI log keeps the complete release evidence.
 66. As an agent, I want a commit that exits 3 to stop the chain and name its commit, so that I can reconcile the checkout.
 
+### The byte bound, continued
+
+67. As an agent, I want exec memory bounded while a child prints one long line, so that a line without a newline cannot exhaust memory.
+
+### The budget owner
+
+68. As a reviewer, I want one spec to own the default output budget, so that the query spec cannot set a second value.
+
 ## Implementation decisions
 
 ### Closed decisions, 2026-09-24
@@ -138,15 +146,15 @@ The reviewer closed these decisions on 2026-09-24. They stay closed.
 1. Bench call chains: the refusal of a second Bench call in one line stays. The `.bench/BENCH.md` rule and `block-bench-follow-on.sh` do not change. The commit chain removes the need for doubled calls.
 2. ADR 0022 is not superseded. `bench preflight evidence` keeps the ADR 0022 pages. The default response prints only the manifest summary and the next page command, with no source bytes. `--to <dir>` is an additive export and does not replace the verified pages.
 3. The compound action is a flag on `bench commit`: commit, then the worktree build, then build preflight. It is not a new verb.
-4. FT336 waits for the measurement. The 10-line bound stands. FT336 invents no numeric byte value. Each byte bound consumes the value from the measurement report and the reviewer budget decision that `specs/session-context-queries/tickets/4-apply-reviewed-budgets.md` owns. Any FT336 ticket that needs a byte bound waits for that decision.
+4. FT336 owns the default output budget of every Bench response, including `bench worktree list` and the spec history. The queries spec keeps its selected views and holds no budget ticket. The reviewer approves the byte value at the FT336 sign-off.
 
 ### The response owner
 
 A new package owns the response bound. The line value, 10, sits in the production policy registry of `internal/bounds` beside the other fixed bounds. No other package states the value.
 
-The owner accepts an ordered stream of writes, each tagged stdout or stderr. Its two tagged writers serialize their writes, because `os/exec` copies the two child streams on two goroutines. It keeps the first 11 lines in memory. When the eleventh line arrives, it creates the spill file, writes every retained byte, and then streams each later byte to the file. It keeps only the head lines and a ring of the last 5 lines in memory after that point.
+The owner accepts an ordered stream of writes, each tagged stdout or stderr. Its two tagged writers serialize their writes, because `os/exec` copies the two child streams on two goroutines. It keeps the first 11 lines in memory. At the eleventh line, or at byte 4097 under "The byte bound" below, it creates the spill file. It writes every retained byte, and then it streams each later byte to the file. It keeps only the head lines and a ring of the last 5 lines in memory after that point.
 
-At the finish, a response of 10 lines or fewer replays each write to its own stream in arrival order. A longer response prints the head, the spill line, and the tail on stdout, in that order. The spill file holds the complete output, both streams, in arrival order. The spill line has this exact form: `spilled{lines=<total>,bytes=<total>,omitted_lines=<n>,path=<absolute path>}`.
+At the finish, a response within the bound replays each write to its own stream in arrival order. An over-bound response prints the head, the spill line, and the tail on stdout, in that order. The spill file holds the complete output, both streams, in arrival order. The spill line has this exact form: `spilled{lines=<total>,bytes=<total>,omitted_lines=<n>,cut_lines=<n>,path=<absolute path>}`. Until the byte bound lands, `cut_lines` is always 0.
 
 A line ends at a newline byte. A final line without a newline counts as one line. The owner counts bytes, not runes, and it copies binary bytes exactly.
 
@@ -206,7 +214,15 @@ The dispatcher writes the record after the owner finishes. It uses the assignmen
 
 ### The byte bound
 
-The byte-bound ticket starts only after the queries ticket-4 measurement report and the reviewer budget decision record exist. The ticket then records the approved value, or the per-surface values, in the production policy registry. The owner treats a response as over-bound when its bytes exceed the value, and its projection stays within the value. The ticket chooses no value.
+The byte value, 4096, sits in the production policy registry beside the line value. The queries measurement in `capture/retros/parallel-implementation-wave.md` at commit `52485ec9` supports it. That commit is on an unlanded assignment branch. The full worktree inventory was 16938 UTF-8 bytes for 55 rows, about 308 bytes for each row. So a 10-line response of ordinary rows fits in 4096 bytes, and a long line spills.
+
+A response is over-bound when it has more than 10 lines or more than 4096 bytes. The head is the first 4 lines, or fewer when the response is shorter. The tail is the last 5 lines that the head does not hold. So a byte-only overflow of 9 lines or fewer prints every line, and `omitted_lines` is 0.
+
+The owner derives the line cut as the byte value divided by the line value, both read from the registry: 409 bytes. No third value exists. A projected line longer than the cut, without its newline, keeps its first 409 bytes. If that prefix ends inside a well-formed UTF-8 rune, the owner cuts back to the start of that rune. Otherwise it cuts at 409 bytes.
+
+`cut_lines` counts the cut lines. The nine content lines then hold at most 3690 bytes with their newlines, and the spill line has 406 bytes with its newline.
+
+Line 11 or byte 4097 starts the spill. After that point, each retained head or tail line holds at most 409 bytes in memory. So a long line without a newline cannot grow the owner.
 
 ## Implementation chunks
 
@@ -218,9 +234,9 @@ The byte-bound ticket starts only after the queries ticket-4 measurement report 
 | BO-C4 / `6-summarize-evidence-default.md`, `7-export-evidence-sources.md` | The evidence default prints a summary, and `--to` exports verified sources. | BO42, BO43, BO44, BO45, BO46, BO47, BO48, BO49, BO50 | `bench test --package ./internal/preflight/evidencecmd`, `bench test --package ./internal/chargeevidence` | no |
 | BO-C5 / `8-chain-commit-preflight.md` | One commit call also builds the worktree and runs build preflight. | BO51, BO52, BO53, BO54, BO55, BO56, BO71 | `bench test --package ./cmd/bench`, `bench test --package ./internal/commit` | no |
 | BO-C6 / `9-record-response-census.md` | The census records the response sizes, and the landing prints them. | BO57, BO58, BO59, BO60, BO61, BO62 | `bench test --package ./internal/census`, `bench test --package ./internal/worktree`, `bench test --package ./cmd/bench` | no |
-| BO-C7 / `10-apply-byte-bound.md` | Each bounded response obeys the reviewed byte value. | BO63, BO64, BO65 | `bench test --package ./internal/responsebound` | no |
+| BO-C7 / `10-apply-byte-bound.md` | Each bounded response obeys the 4096-byte value. | BO63, BO64, BO65, BO74, BO75, BO76 | `bench test --package ./internal/responsebound`, `bench test --check system` | yes |
 
-Ticket 1 creates the owner that tickets 2, 3, 9, and 10 consume, so BO-C1 stays one small chunk, and its review closes first. Tickets 1, 2, 3, 4, 7, 8, and 9 write `cmd/bench` registry or help files. The orchestrator lands them in ticket-number order inside that shared set. BO-C7 stays blocked by its entry stop until the budget decision exists.
+Ticket 1 creates the owner that tickets 2, 3, 9, and 10 consume, so BO-C1 stays one small chunk, and its review closes first. Tickets 1, 2, 3, 4, 7, 8, and 9 write `cmd/bench` registry or help files. The orchestrator lands them in ticket-number order inside that shared set.
 
 ## Testing decisions
 
@@ -255,7 +271,7 @@ Ticket 2 bounds every public response. So each test that reads more than 10 line
 | BO1 | 1 | A test-registered public command that prints 25 lines through `Command.Run` produces exactly 10 stdout lines | planned TestDispatcherBoundsPublicResponse in cmd/bench | A dispatcher that skips the owner prints 25 lines |
 | BO2 | 2 | A public command that prints exactly 10 lines produces its exact bytes and creates no spill file | planned TestDispatcherPassesBoundaryResponse in cmd/bench | An off-by-one bound spills the tenth line |
 | BO3 | 3 | An 11-line response prints lines 1 to 4, the spill line, and lines 7 to 11 | planned TestOwnerProjectsHeadAndTail in internal/responsebound | A head-only or tail-only projection drops the other end |
-| BO4 | 4 | A 25-line response of 300 bytes prints `spilled{lines=25,bytes=300,omitted_lines=16,path=<abs>}` as its fifth line | planned TestOwnerSpillLineFields in internal/responsebound | A wrong count or a relative path fails the exact line match |
+| BO4 | 4 | A 25-line response of 300 bytes prints `spilled{lines=25,bytes=300,omitted_lines=16,cut_lines=0,path=<abs>}` as its fifth line | planned TestOwnerSpillLineFields in internal/responsebound | A wrong count or a relative path fails the exact line match |
 | BO5 | 5 | The spill file bytes equal the complete input bytes | planned TestOwnerSpillHoldsCompleteOutput in internal/responsebound | A spill of the omitted lines alone fails the byte comparison |
 | BO6 | 5 | Alternate stdout and stderr writes of 12 lines appear in the spill file in write order | planned TestOwnerKeepsArrivalOrder in internal/responsebound | Two separate stream buffers reorder the lines |
 | BO7 | 6 | A bounded command that prints 30 lines and exits 3 returns exit 3 | planned TestDispatcherKeepsExitCode in cmd/bench | An owner that maps the exit to 0 or 1 fails the code match |
@@ -319,9 +335,13 @@ Ticket 2 bounds every public response. So each test that reads more than 10 line
 | BO60 | 55 | The landing prints `census output{bench worktree list=2/28978}` on stderr for two canned records | planned TestLandingPrintsOutputBreakdown in internal/worktree | A landing that reads only raw calls prints no output line |
 | BO61 | 56 | `census.Drop` removes both the raw-call file and the output file | planned TestDropRemovesOutputRecord in internal/census | A drop of one file leaves the output record |
 | BO62 | 57 | A symlink at the census directory leaves the verb's response and exit code unchanged | planned TestOutputRecordFailureKeepsVerdict in cmd/bench | A write error that reaches the exit code changes the verdict |
-| BO63 | 58 | A response above the approved byte value spills, and its projection stays within the value | planned TestOwnerAppliesByteBound in internal/responsebound, after the entry stop clears | A line-only owner prints one oversized line |
-| BO64 | 59 | The byte value in the policy registry equals the value in the reviewer budget decision record | review-owned: ticket-entry inspection of the decision record | A value chosen by the build ships an unreviewed budget |
-| BO65 | 60 | The byte-bound ticket starts no product write while the decision record is absent | review-owned: ticket-entry inspection by the orchestrator | A placeholder value ships before the decision |
+| BO63 | 58 | A 3-line response of 5000 bytes spills with `omitted_lines=0`, and its printed bytes stay within 4096 | planned TestOwnerAppliesByteBound in internal/responsebound | A line-only owner prints the 5000 bytes |
+| BO75 | 58 | A 10-line response of exactly 4096 bytes prints its exact bytes and creates no spill file, and one more byte spills | planned TestOwnerByteBoundary in internal/responsebound | An off-by-one byte test spills at the value or passes one byte above it |
+| BO64 | 59 | The bounds-policy guard stays green, and no line that the FT336 diff adds to a Go file outside `internal/bounds` states 4096 or 409 | existing canary tests/canary/package-core-guard/bounds-duplicate-owner, plus review-owned sweep of the added lines at the BO-C7 review | A second package that restates 4096 or 409 drifts from the owner |
+| BO65 | 60 | A head line of 999 bytes of 3-byte runes prints 408 bytes, and the spill line holds `cut_lines=1` | planned TestOwnerCutsLongLine in internal/responsebound | A cut inside a rune prints invalid UTF-8, and an uncut line passes the byte value |
+| BO74 | 67 | An exec child that prints one 64 MiB line with no newline returns its exit code, and the spill file holds the 64 MiB | planned TestExecStreamsLongLine in internal/systemtest | An exec path that drops the tail of a long line fails the file size |
+| BO76 | 67 | After one 64 MiB write with no newline, the owner retains at most 4096 plus 9 times 409 bytes | planned TestOwnerRetainsBoundedLongLine in internal/responsebound | An owner that buffers the current line retains 64 MiB |
+| BO73 | 68 | At the FT336 landing, `specs/session-context-queries` holds no QU-C4 chunk, no QU14 or QU15 row, and no ticket 4 | review-owned: final reconciliation of the landed tree, not a build task | A queries landing that restores QU-C4 leaves two budget owners |
 | BO66 | 61 | The diff leaves `.bench/hooks/block-bench-follow-on.sh` and the chain sentence of `.bench/BENCH.md` unchanged | review-owned: final reconciliation of the landed diff | An edit to the chain rule reopens closed decision 1 |
 | BO67 | 62 | An ambiguous `bench consumers` name keeps one re-query help row per candidate | existing candidate tests in internal/consumers, run unchanged | A slot rule applied to consumers breaks its anchored decision |
 
@@ -338,6 +358,7 @@ The shell CLI hostile-input profile applies to the owner and to `--to`. The walk
 - **Won't handle:** an output record for a verb outside any assignment — no assignment key exists, and the verb audit covers those verbs.
 - **Won't handle:** a single line longer than the byte value before ticket 10 lands — the line bound still holds, and ticket 10 closes it.
 - **Won't handle:** the memory of a long unterminated line before ticket 10 lands — the owner never reaches line 11, and the byte bound closes it.
+- **Won't handle:** a spill line longer than 406 bytes with its newline — only a long Bench home path makes one. The projection then passes 4096 by that excess.
 - **Won't handle:** a nested verb's output counted in both the child record and the exec record — each head names its own process.
 
 ## Ownership fences
@@ -427,7 +448,7 @@ The shell CLI hostile-input profile applies to the owner and to `--to`. The walk
 | Each source stays behind an explicit request or a `--to <dir>` spill. | BO44, BO45 |
 | A compound verb commits, runs the worktree build, and runs the build preflight in one call. | BO51 |
 | The reviewer decides whether a hook and platform rule allows safe chains of Bench calls. | BO66 |
-| Closed decision 4: FT336 waits for the measurement. | BO63, BO64, BO65 |
+| Closed decision 4: FT336 owns the default output budget. | BO63, BO64, BO73 |
 
 ### Reader sweep and proof checklist
 
@@ -454,7 +475,7 @@ Proof checklist:
   - In other packages: `commit.Command`, `census.Record`, `census.Counts`, `census.HeadBreakdown`, `census.ReadEvents`, and `census.Drop`.
 - Import edges: `cmd/bench` already imports `internal/census`, `internal/worktree`, and `internal/preflight`. The new owner package imports only `internal/bounds`, `internal/benchhome`, `internal/poolkey`, and `internal/sanitize`.
 - Source-row clauses and occurrences: the source trace table above.
-- Promised field labels: `spilled{lines,bytes,omitted_lines,path}`, `spill-failed{reason}`, `spill-failed{path,written_bytes,reason}`, `checks{green,not_applicable,red}`, `evidence_summary`, `exported{sources,bytes,dir}`, `commit-chain{commit,build,preflight}`, and `census output{...}`.
+- Promised field labels: `spilled{lines,bytes,omitted_lines,cut_lines,path}`, `spill-failed{reason}`, `spill-failed{path,written_bytes,reason}`, `checks{green,not_applicable,red}`, `evidence_summary`, `exported{sources,bytes,dir}`, `commit-chain{commit,build,preflight}`, and `census output{...}`.
 - Changed-function callers: `Command.Run` has one production caller, `main`. `verdictCommand` serves the build and review modes. `evidencecmd.Read` has one caller, the evidence mode dispatch. `actionsForRows` has one caller, `ListCommand`.
 - Copy survival: BO20.
 
@@ -479,7 +500,7 @@ The `cmd/bench/` and `internal/systemtest/` prefixes carry the posture change of
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"BO-C1","tickets":["1-bound-exec-output.md"],"verification":[{"id":"owner","command":"bench test --package ./internal/responsebound"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"system","command":"bench test --check system"}]},{"id":"BO-C2","tickets":["2-bound-every-public-response.md","3-retire-response-spills.md"],"verification":[{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"owner","command":"bench test --package ./internal/responsebound"},{"id":"system","command":"bench test --check system"}]},{"id":"BO-C3","tickets":["4-slot-worktree-list-actions.md","5-summarize-green-preflight.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"preflight","command":"bench test --package ./internal/preflight"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"consumers","command":"bench test --package ./internal/consumers"}]},{"id":"BO-C4","tickets":["6-summarize-evidence-default.md","7-export-evidence-sources.md"],"verification":[{"id":"evidencecmd","command":"bench test --package ./internal/preflight/evidencecmd"},{"id":"chargeevidence","command":"bench test --package ./internal/chargeevidence"}]},{"id":"BO-C5","tickets":["8-chain-commit-preflight.md"],"verification":[{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"commit","command":"bench test --package ./internal/commit"}]},{"id":"BO-C6","tickets":["9-record-response-census.md"],"verification":[{"id":"census","command":"bench test --package ./internal/census"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"cmd","command":"bench test --package ./cmd/bench"}]},{"id":"BO-C7","tickets":["10-apply-byte-bound.md"],"verification":[{"id":"owner","command":"bench test --package ./internal/responsebound"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/ft336-bounded-output/spec.md"},{"id":"owner","command":"bench test --package ./internal/responsebound"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"system","command":"bench test --check system"}]}
+{"version":1,"chunks":[{"id":"BO-C1","tickets":["1-bound-exec-output.md"],"verification":[{"id":"owner","command":"bench test --package ./internal/responsebound"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"system","command":"bench test --check system"}]},{"id":"BO-C2","tickets":["2-bound-every-public-response.md","3-retire-response-spills.md"],"verification":[{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"owner","command":"bench test --package ./internal/responsebound"},{"id":"system","command":"bench test --check system"}]},{"id":"BO-C3","tickets":["4-slot-worktree-list-actions.md","5-summarize-green-preflight.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"preflight","command":"bench test --package ./internal/preflight"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"consumers","command":"bench test --package ./internal/consumers"}]},{"id":"BO-C4","tickets":["6-summarize-evidence-default.md","7-export-evidence-sources.md"],"verification":[{"id":"evidencecmd","command":"bench test --package ./internal/preflight/evidencecmd"},{"id":"chargeevidence","command":"bench test --package ./internal/chargeevidence"}]},{"id":"BO-C5","tickets":["8-chain-commit-preflight.md"],"verification":[{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"commit","command":"bench test --package ./internal/commit"}]},{"id":"BO-C6","tickets":["9-record-response-census.md"],"verification":[{"id":"census","command":"bench test --package ./internal/census"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"cmd","command":"bench test --package ./cmd/bench"}]},{"id":"BO-C7","tickets":["10-apply-byte-bound.md"],"verification":[{"id":"owner","command":"bench test --package ./internal/responsebound"},{"id":"system","command":"bench test --check system"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/ft336-bounded-output/spec.md"},{"id":"owner","command":"bench test --package ./internal/responsebound"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"system","command":"bench test --check system"}]}
 ```
 
 ### Flagged additions
@@ -493,7 +514,9 @@ The `cmd/bench/` and `internal/systemtest/` prefixes carry the posture change of
 
 ### Flags for reviewer veto
 
-- The ticket parser accepts only sibling basenames in `Blocked by:`. Ticket 10 therefore carries its cross-spec wait as an entry stop in `What to build` and `Acceptance`, as queries ticket 4 does. The orchestrator, not the parser, honors that stop.
+- The byte value 4096 and the derived line cut of 409 bytes are author proposals from one worktree-inventory measurement. The reviewer approves or changes them at sign-off.
+- Ticket 9 of the compiled session-context map asks for per-surface budgets with task-success results and recovery-call counts. This spec supplies one shared value and neither result. The reviewer decision of 2026-09-24 chose one shared bound, and the sign-off waives that evidence.
+- The retirement of queries ticket 4 edits spec lines that the unlanded queries build also edits. That build is the `wave-context-queries` assignment at commit `194b7dba`. That branch resolves the conflict at its landing, and BO73 grades the result.
 - The unbuilt overflow ticket 2 plans a second store for preserved output. The reviewer can direct it to consume this spec's response owner, so that one store holds preserved output.
 - `bench consumers` keeps one re-query action per candidate row, because an anchor pins that decision.
 - The general AXI sentence "Derive one state-derived action per matching row" stays. Only the `bench worktree list` row states the slot rule.

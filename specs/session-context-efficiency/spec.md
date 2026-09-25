@@ -25,7 +25,7 @@ remaining build targets.
 
 | Child spec | Delivered outcome | Prerequisite |
 | --- | --- | --- |
-| [Queries](../session-context-queries/spec.md) | Task-shaped reads and both selected query families | Measurement and budget review before new defaults |
+| [Queries](../session-context-queries/spec.md) | Task-shaped reads and both selected query families | None; the FT336 spec owns the default output budget |
 | [Overflow](../session-context-overflow/spec.md) | Verified complete-output preservation and bounded replacement | Measurement, budget review, and runtime capability evidence |
 
 ## User stories
@@ -55,15 +55,15 @@ This document expresses dependencies between specs.
 A child build reads both its local prerequisites and this coordination table.
 
 Measurement and cleanup are shipped prerequisites.
-Query selectors can precede new default budgets only where their child spec permits that slice.
 No build fills numeric budget placeholders or enables an unverified harness path.
 Those changes return to spec authoring with the required evidence.
 The reviewer owns the resulting budget and enablement decisions.
+The FT336 spec owns the default output budget of every Bench response, and its sign-off records that decision.
 
 The measurement owner supplies facts to the other children.
 The query and lifecycle owners retain command policy.
 The overflow owner supplies capability evidence without claiming provider-token attribution.
-The approved map remains the sole record of reviewer decisions.
+The approved map remains the sole record of this program's reviewer decisions.
 
 ## Implementation chunks
 
