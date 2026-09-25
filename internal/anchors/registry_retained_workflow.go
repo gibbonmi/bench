@@ -17,7 +17,7 @@ var retainedWorkflowAnchors = append(append(append(append(append(append(append([
 // each craft skill's pointer to the owner of a fact that another file holds. Require
 // rows pin the drain's batch-approval owner, the assess phase's `bench idea` route,
 // the phase adapter trigger pointer, the ambiguous-name re-query disclosure, the
-// coverage maximum and chunk-contract pointers, the project test-expectation
+// worktree list target slot rule, the coverage maximum and chunk-contract pointers, the project test-expectation
 // deferral, and the ADR invariant pointer. Forbid rows keep out the wrong ledger
 // file, the wrong rule owner, the hand-written handoff and its whole-file dating, the
 // hand-append park route, the blanket adapter rule, the terminal-only disclosure, the
@@ -38,6 +38,7 @@ var referenceRouteAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-skills/SKILL.md", Kind: Require, Needle: "Each phase adapter's trigger follows the invocation-policy account under \"Harness Invocation\" in `.bench/BENCH-reference.md`.", Diagnostic: "reference route: craft-skills dropped its pointer to the invocation-policy account for each phase adapter trigger"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-cli/SKILL.md", Kind: Require, Needle: "An ambiguous bare name answers its candidates with one re-query action per candidate row.", Diagnostic: "reference route: craft-cli bench consumers row dropped the ambiguous-name re-query disclosure"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-cli/SKILL.md", Kind: Forbid, Needle: "Only an over-cap default discloses", Diagnostic: "reference route: craft-cli bench consumers row restored the claim that only an over-cap default discloses"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-cli/SKILL.md", Kind: Require, Needle: "The active rows with a present tree share one `bench worktree path <target>` action and one `bench worktree exec <target> -- <command>` action.", Diagnostic: "reference route: craft-cli bench worktree list row dropped the target slot rule for the active-row actions"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: Forbid, Needle: "more than four stories", Diagnostic: "reference route: craft-spec restored the literal story count that bench coverage --check owns"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: Require, Needle: "refuses a row that references more stories than the maximum that the check prints", Diagnostic: "reference route: craft-spec dropped its pointer to the story maximum that bench coverage --check prints"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: Forbid, Needle: "Each planned chunk has a stable ID and names its tickets", Diagnostic: "reference route: craft-spec restored its copy of the implementation-chunk contract"},

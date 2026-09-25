@@ -227,7 +227,7 @@ func TestActionsForRowsEnumeratesActiveAndOrphanRows(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "help[6]{cmd,why}:\n  bench worktree path a,inspect active worktree\n  bench worktree exec a -- <command>,run a command in the active worktree\n  bench worktree clean '/tmp/orphan one',clean the orphaned worktree\n  bench worktree path b,inspect active worktree\n  bench worktree exec b -- <command>,run a command in the active worktree\n  bench worktree clean /tmp/orphan-two,clean the orphaned worktree\n"
+	want := "help[4]{cmd,why}:\n  bench worktree path <target>,inspect an active worktree by its id\n  bench worktree exec <target> -- <command>,run a command in an active worktree by its id\n  bench worktree clean '/tmp/orphan one',clean the orphaned worktree\n  bench worktree clean /tmp/orphan-two,clean the orphaned worktree\n"
 	if help != want {
 		t.Fatalf("help = %q, want %q", help, want)
 	}
@@ -261,7 +261,7 @@ func TestListCommandPublicRowsAndDisclosure(t *testing.T) {
 		"{{PRESENT}}", present,
 		"{{MISSING}}", missing,
 	).Replace(string(primaryTemplate))
-	help := fmt.Sprintf("help[6]{cmd,why}:\n  bench worktree path %s,inspect active worktree\n  bench worktree exec %s -- <command>,run a command in the active worktree\n  bench worktree path %s,inspect active worktree\n  bench worktree exec %s -- <command>,run a command in the active worktree\n  bench worktree clean '%s',clean the orphaned worktree\n  bench worktree clean --landed,clean landed assignments\n", assignments[0].ID, assignments[0].ID, assignments[1].ID, assignments[1].ID, missing)
+	help := fmt.Sprintf("help[4]{cmd,why}:\n  bench worktree path <target>,inspect an active worktree by its id\n  bench worktree exec <target> -- <command>,run a command in an active worktree by its id\n  bench worktree clean '%s',clean the orphaned worktree\n  bench worktree clean --landed,clean landed assignments\n", missing)
 	if code != 0 || out != primary+help {
 		t.Fatalf("ListCommand = (%d, %q), want materialized checked-in primary plus exactly one help block", code, out)
 	}
@@ -327,7 +327,7 @@ func activeListRow(id, request, tree string, landed any, path string) listRow {
 
 // TestActionsForRowsReadsTheTreeCell is F10, F11, and F12: an advertised action must be
 // one the operator can run, so a row whose tree is gone offers its recovery verb alone,
-// and a present row keeps the two actions it always had.
+// and a present row offers the two target-slot actions.
 func TestActionsForRowsReadsTheTreeCell(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
@@ -348,7 +348,7 @@ func TestActionsForRowsReadsTheTreeCell(t *testing.T) {
 		{
 			name: "present tree",
 			row:  activeListRow("here", "req-here", "present", false, "/tmp/here"),
-			want: "help[2]{cmd,why}:\n  bench worktree path here,inspect active worktree\n  bench worktree exec here -- <command>,run a command in the active worktree\n",
+			want: "help[2]{cmd,why}:\n  bench worktree path <target>,inspect an active worktree by its id\n  bench worktree exec <target> -- <command>,run a command in an active worktree by its id\n",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

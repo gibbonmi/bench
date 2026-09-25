@@ -101,6 +101,11 @@ func ListCommand(root, _ string, args []string) (string, int) {
 	return out + help, 0
 }
 
+// actionsForRows derives the help rows from the row states. An active row with a present
+// tree gives a path action and an exec action with a `<target>` slot, because the id cell
+// already holds its address. The actions of each such row are identical, so the help
+// render collapses them to one pair. The other states keep a row-specific action, because
+// their operand appears in no cell.
 func actionsForRows(rows []listRow) []axi.Action {
 	actions := make([]axi.Action, 0, len(rows))
 	for _, row := range rows {
@@ -132,8 +137,8 @@ func actionsForRows(rows []listRow) []axi.Action {
 				continue
 			}
 			actions = append(actions,
-				axi.ExecutableInvocation("inspect active worktree", axi.KnownArgument("worktree"), axi.KnownArgument("path"), axi.KnownArgument(id)),
-				axi.ExecutableInvocation("run a command in the active worktree", axi.KnownArgument("worktree"), axi.KnownArgument("exec"), axi.KnownArgument(id), axi.KnownArgument("--"), axi.FutureInput("command")))
+				axi.ExecutableInvocation("inspect an active worktree by its id", axi.KnownArgument("worktree"), axi.KnownArgument("path"), axi.FutureInput("target")),
+				axi.ExecutableInvocation("run a command in an active worktree by its id", axi.KnownArgument("worktree"), axi.KnownArgument("exec"), axi.FutureInput("target"), axi.KnownArgument("--"), axi.FutureInput("command")))
 			continue
 		}
 		if row.values[3] == "foreign" && row.orphanPath != "" {

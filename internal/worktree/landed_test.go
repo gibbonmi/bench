@@ -308,9 +308,12 @@ func TestListCommandAdvertisesOneLandedSweep(t *testing.T) {
 	if strings.Count(out, "bench worktree clean --landed") != 1 {
 		t.Fatalf("ListCommand output=%q, want one landed action", out)
 	}
+	if strings.Count(out, "\n  bench worktree path <target>,") != 1 || strings.Count(out, "\n  bench worktree exec <target> -- <command>,") != 1 {
+		t.Fatalf("ListCommand output=%q, want one target-slot path action and one target-slot exec action", out)
+	}
 	for _, id := range []string{landed.Assignment.ID, active.Assignment.ID} {
-		if !strings.Contains(out, "bench worktree path "+id) || !strings.Contains(out, "bench worktree exec "+id+" -- <command>") {
-			t.Fatalf("ListCommand output=%q, want path/exec actions for %s", out, id)
+		if strings.Contains(out, "bench worktree path "+id) || strings.Contains(out, "bench worktree exec "+id) {
+			t.Fatalf("ListCommand output=%q, want no per-row action for %s", out, id)
 		}
 	}
 }
