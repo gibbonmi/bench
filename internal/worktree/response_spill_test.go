@@ -36,11 +36,11 @@ func namedSpill(t *testing.T, response string) string {
 }
 
 // spillAt sends one over-bound response from a process whose repository root is root, and
-// answers its spill path.
-func spillAt(t *testing.T, root string) string {
+// answers its spill path below home.
+func spillAt(t *testing.T, home, root string) string {
 	t.Helper()
 	var sink bytes.Buffer
-	owner := responsebound.New(&sink, &sink, func() string { return root })
+	owner := responsebound.New(home, &sink, &sink, func() string { return root })
 	overBound(t, owner.Stdout())
 	owner.Finish()
 	return namedSpill(t, sink.String())
@@ -49,10 +49,10 @@ func spillAt(t *testing.T, root string) string {
 // BO16: the retirement of an assignment removes its spill directory, and a spill in the
 // primary scope stays.
 func TestRetirementDropsResponseSpills(t *testing.T) {
+	t.Parallel()
 	root, creation, home := newOwnedAssignment(t, "spill-release")
-	bindEnv(t, homeEnv, home)
-	retired := spillAt(t, creation.Path)
-	primary := spillAt(t, root)
+	retired := spillAt(t, home, creation.Path)
+	primary := spillAt(t, home, root)
 	requireTest(t, filepath.Dir(retired) != filepath.Dir(primary), "assignment spill %s shares the primary scope of %s", retired, primary)
 	var stdout, stderr strings.Builder
 	code := ReleaseCommand(root, home, []string{"--request", "landed-spill-release", creation.Path}, &stdout, &stderr)
@@ -67,11 +67,11 @@ func TestRetirementDropsResponseSpills(t *testing.T) {
 // The spill starts before the retirement, so a spill in the assignment's own scope would
 // leave the line naming a removed file.
 func TestRetiringVerbSpillsToPrimary(t *testing.T) {
+	t.Parallel()
 	root, creation, home := newOwnedAssignment(t, "spill-own-release")
-	bindEnv(t, homeEnv, home)
 	args := []string{"--request", "landed-spill-own-release", creation.Path}
 	var sink bytes.Buffer
-	owner := responsebound.New(&sink, &sink, func() string { return creation.Path }, append([]string{"worktree", "release"}, args...)...)
+	owner := responsebound.New(home, &sink, &sink, func() string { return creation.Path }, append([]string{"worktree", "release"}, args...)...)
 	overBound(t, owner.Stdout())
 	code := ReleaseCommand(root, home, args, owner.Stdout(), owner.Stderr())
 	owner.Finish()

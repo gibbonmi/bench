@@ -46,6 +46,7 @@ type streamWrite struct {
 type Owner struct {
 	mu             sync.Mutex
 	stdout, stderr io.Writer
+	home           string
 	root           func() string
 	retiring       bool
 	create         func(path string) (io.WriteCloser, error)
@@ -67,11 +68,12 @@ type Owner struct {
 }
 
 // New returns the owner of one response whose original streams are stdout and stderr.
-// root answers the repository root of the process, or the empty string outside a
-// repository. The owner calls it only when a spill starts, so a bounded response never
-// pays for the lookup. argv is the command line, which names a retiring verb.
-func New(stdout, stderr io.Writer, root func() string, argv ...string) *Owner {
-	return &Owner{stdout: stdout, stderr: stderr, root: root, retiring: retiring(argv), create: exclusiveCreate}
+// home is the Bench home that holds the spill store. root answers the repository root of
+// the process, or the empty string outside a repository. The owner calls it only when a
+// spill starts, so a bounded response never pays for the lookup. argv is the command
+// line, which can name a retiring verb.
+func New(home string, stdout, stderr io.Writer, root func() string, argv ...string) *Owner {
+	return &Owner{stdout: stdout, stderr: stderr, home: home, root: root, retiring: retiring(argv), create: exclusiveCreate}
 }
 
 // Stdout answers the writer that takes the response's stdout bytes.
@@ -132,7 +134,7 @@ func (o *Owner) write(stdout bool, p []byte) {
 func (o *Owner) startSpill() {
 	retained := o.retained
 	o.retained = nil
-	file, path, err := openSpill(o.root, o.retiring, o.create)
+	file, path, err := openSpill(o.home, o.root, o.retiring, o.create)
 	if err != nil {
 		o.phase, o.reason = passing, failureReason(err)
 		for _, w := range retained {

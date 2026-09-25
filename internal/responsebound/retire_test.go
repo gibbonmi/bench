@@ -24,10 +24,10 @@ func spillPath(t *testing.T, response string) string {
 }
 
 // spillOnce sends one over-bound response through a new owner and answers its spill path.
-func spillOnce(t *testing.T, root func() string) string {
+func spillOnce(t *testing.T, home string, root func() string) string {
 	t.Helper()
 	var sink bytes.Buffer
-	return spillPath(t, respondWith(t, New(&sink, &sink, root), &sink, stdoutLines(numbered(1, 11)...)))
+	return spillPath(t, respondWith(t, New(home, &sink, &sink, root), &sink, stdoutLines(numbered(1, 11)...)))
 }
 
 // BO17: the 65th spill in a `primary` scope leaves the newest 64 files. The counts are
@@ -44,10 +44,10 @@ func TestPrimarySpillsKeepNewest(t *testing.T) {
 		{"repository", func() string { return repository }, poolkey.Key(repository)},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			home := privateHome(t)
+			home := t.TempDir()
 			var paths []string
 			for range 65 {
-				paths = append(paths, spillOnce(t, row.root))
+				paths = append(paths, spillOnce(t, home, row.root))
 			}
 			scope := filepath.Join(home, storeDirName, row.key, primaryScope)
 			entries, err := os.ReadDir(scope)

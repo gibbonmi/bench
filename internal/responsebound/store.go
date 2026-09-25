@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
@@ -39,8 +38,8 @@ var (
 // that is not line-safe, a store directory that is not a real directory, and a failed
 // create all return an error, and the caller takes the create-failure route. A new
 // spill in a primary scope then prunes that scope.
-func openSpill(root func() string, retiring bool, create func(string) (io.WriteCloser, error)) (io.WriteCloser, string, error) {
-	home, err := filepath.Abs(benchhome.Dir())
+func openSpill(home string, root func() string, retiring bool, create func(string) (io.WriteCloser, error)) (io.WriteCloser, string, error) {
+	home, err := filepath.Abs(home)
 	if err != nil {
 		return nil, "", err
 	}
