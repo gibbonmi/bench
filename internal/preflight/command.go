@@ -84,6 +84,8 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 		return evidencecmd.Verify(root, slug)
 	case evidencecmd.KindCurrentEvidence:
 		return currentEvidenceCommand(root, slug, args)
+	case evidencecmd.KindExportEvidence:
+		return evidencecmd.Export(root, slug, flags[evidencecmd.FlagTo], chargeevidence.WriteAll)
 	case evidencecmd.KindCleanPlan:
 		return evidencecmd.CleanPlan(root, flags)
 	case evidencecmd.KindCleanApply:
@@ -146,11 +148,7 @@ func verdictCommand(root, mode, slug, base, sourceTip string, args []string) (st
 	}
 
 	verdict := Decide(facts)
-	rows := make([][]string, len(verdict.Checks))
-	for i, c := range verdict.Checks {
-		rows[i] = []string{c.Check, c.Verdict, c.Detail, c.Next}
-	}
-	tbl, err := toon.Table("checks", []string{"check", "verdict", "detail", "next"}, rows)
+	checks, err := renderChecks(verdict)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
@@ -165,13 +163,38 @@ func verdictCommand(root, mode, slug, base, sourceTip string, args []string) (st
 		}
 		b.WriteString(source)
 	}
-	b.WriteString(tbl)
+	b.WriteString(checks)
 
 	exit := 0
 	if verdict.Red {
 		exit = 1
 	}
 	return b.String(), exit
+}
+
+// renderChecks prints one count line for the verdict and a table of the red rows
+// only, so a green verdict costs one line and a red row keeps its detail and next.
+// The charge forms do not use this render: a red check refuses the charge, and a
+// green charge prints no check row.
+func renderChecks(verdict Verdict) (string, error) {
+	counts := map[string]int{}
+	var red [][]string
+	for _, c := range verdict.Checks {
+		counts[c.Verdict]++
+		if c.Verdict == verdictRed {
+			red = append(red, []string{c.Check, c.Verdict, c.Detail, c.Next})
+		}
+	}
+	summary := fmt.Sprintf("checks{green=%d,not_applicable=%d,red=%d}\n",
+		counts[verdictGreen], counts[verdictNA], counts[verdictRed])
+	if len(red) == 0 {
+		return summary, nil
+	}
+	tbl, err := toon.Table("checks", []string{"check", "verdict", "detail", "next"}, red)
+	if err != nil {
+		return "", err
+	}
+	return summary + tbl, nil
 }
 
 func snapshotDriftRefusal(args []string, hint string) string {

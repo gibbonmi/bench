@@ -8,8 +8,8 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
-// TestCommandConformantTree is C1, the tracer: every row green by name, exit 0, and a
-// byte-identical second run.
+// TestCommandConformantTree is C1, the tracer: every row green, exit 0, one summary
+// line in place of the green rows, and a byte-identical second run.
 func TestCommandConformantTree(t *testing.T) {
 	_, slug := preflighttest.SeedConformant(t)
 
@@ -17,15 +17,11 @@ func TestCommandConformantTree(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Command exit = %d, want 0; output:\n%s", code, first)
 	}
-	for _, name := range []string{"base-current", "paths-authorized", "tickets-parse", "blockers-resolve", "writes-resolve", "rows-owned", "rows-membership", "diff-nonempty"} {
-		if !strings.Contains(first, name+",green") {
-			t.Errorf("output missing green %s row:\n%s", name, first)
-		}
+	if counts := summaryCounts(t, first); counts.red != 0 || counts.na != 0 {
+		t.Errorf("review summary = %+v, want every row green:\n%s", counts, first)
 	}
-	// WF32: the rendered header carries the next column on every run, green
-	// included. A Next field the renderer never reads would leave the old header.
-	if !strings.Contains(first, "checks[14]{check,verdict,detail,next}") {
-		t.Errorf("output missing the four-column checks header:\n%s", first)
+	if strings.Contains(first, "checks[") {
+		t.Errorf("a green verdict must print no checks table:\n%s", first)
 	}
 	second, code2 := Command([]string{"review", slug})
 	if code2 != 0 || second != first {
@@ -46,6 +42,10 @@ func TestCommandStaleBase(t *testing.T) {
 	out, code := Command([]string{"review", slug})
 	if code != 1 {
 		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
+	}
+	// BO40: the red flag survives the summary render, and the summary counts it.
+	if counts := summaryCounts(t, out); counts.red != 1 {
+		t.Errorf("summary = %+v, want red=1:\n%s", counts, out)
 	}
 	if !strings.Contains(out, "base-current,red") {
 		t.Errorf("output missing red base-current row:\n%s", out)
@@ -222,7 +222,7 @@ func TestCommandTicketsSubdirRowOwned(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Command exit = %d, want 0; output:\n%s", code, out)
 	}
-	if !strings.Contains(out, "rows-owned,green") {
+	if _, shown := rowOf(t, out, "rows-owned"); shown || summaryCounts(t, out).red != 0 {
 		t.Errorf("a row cited only under tickets/sub/ must still be owned:\n%s", out)
 	}
 }
@@ -265,7 +265,7 @@ func TestCommandEmptyDiff(t *testing.T) {
 	if code != 1 {
 		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
 	}
-	if !strings.Contains(out, "diff-nonempty,red") {
+	if !strings.Contains(out, "diff-nonempty,red") || summaryCounts(t, out).red != 1 {
 		t.Errorf("output missing red diff-nonempty:\n%s", out)
 	}
 }
@@ -336,7 +336,7 @@ func TestCommandSpaceAndGlobPath(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Command exit = %d, want 0; output:\n%s", code, out)
 	}
-	if !strings.Contains(out, "paths-authorized,green") {
+	if _, shown := rowOf(t, out, "paths-authorized"); shown || summaryCounts(t, out).red != 0 {
 		t.Errorf("a fenced space/glob path must stay authorized:\n%s", out)
 	}
 }
@@ -363,7 +363,7 @@ func TestCommandRecordedBaseKey(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("with benchBase recorded past the out-of-fence commit, Command exit = %d, want 0; output:\n%s", code, out)
 	}
-	if !strings.Contains(out, "paths-authorized,green") {
+	if _, shown := rowOf(t, out, "paths-authorized"); shown || summaryCounts(t, out).red != 0 {
 		t.Errorf("recorded-key base must exclude the out-of-fence commit from the diff:\n%s", out)
 	}
 

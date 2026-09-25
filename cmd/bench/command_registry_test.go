@@ -428,30 +428,6 @@ func runAXIGit(t *testing.T, args ...string) string {
 	return string(out)
 }
 
-func runAXICommandAt(t *testing.T, cwd string, argv []string) axiCommandResult {
-	t.Helper()
-	return runAXICommandAsAt(t, cwd, "bench", argv)
-}
-
-func runAXICommandAsAt(t *testing.T, cwd, executable string, argv []string) axiCommandResult {
-	t.Helper()
-	oldWD, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chdir(cwd); err != nil {
-		t.Fatal(err)
-	}
-	defer func() {
-		if err := os.Chdir(oldWD); err != nil {
-			t.Errorf("restore cwd: %v", err)
-		}
-	}()
-	var stdout, stderr bytes.Buffer
-	code := Command{Stdout: &stdout, Stderr: &stderr, Executable: executable}.Run(argv)
-	return axiCommandResult{stdout: stdout.String(), stderr: stderr.String(), code: code}
-}
-
 // TestWorktreeLandNeverConsultsTheInvokedExecutable drives the real dispatcher in a
 // repository that declares Go build inputs. The stable-owner landing runs entirely
 // under the invoked process: the registry seam must hand the landing no executable

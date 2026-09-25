@@ -21,7 +21,7 @@ func replanSpec(t *testing.T, slug string, tickets ...string) {
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", specWithoutPlan(slug)+preflighttest.PlanFence(tickets...))
 }
 
-// planRow is the rendered completion-plan row of one verdict table.
+// planRow is the rendered completion-plan row of one red verdict table.
 func planRow(t *testing.T, out string) string {
 	t.Helper()
 	for _, line := range strings.Split(out, "\n") {
@@ -61,9 +61,7 @@ func TestCommandBuildGreenCompletionPlan(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Command exit = %d, want 0; output:\n%s", code, out)
 	}
-	if row := planRow(t, out); row != "completion-plan,green,\"\",\"\"" {
-		t.Errorf("completion-plan row = %q, want green", row)
-	}
+	requireVerdict(t, renderedVerdicts(t, out, modeBuild, slug), verdictGreen, "completion-plan")
 }
 
 // TestCommandReviewRedsAbsentCompletionPlan is the review-mode counterpart. The
@@ -92,9 +90,7 @@ func TestCommandReviewGreenCompletionPlan(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Command exit = %d, want 0; output:\n%s", code, out)
 	}
-	if row := planRow(t, out); row != "completion-plan,green,\"\",\"\"" {
-		t.Errorf("completion-plan row = %q, want green", row)
-	}
+	requireVerdict(t, renderedVerdicts(t, out, modeReview, slug), verdictGreen, "completion-plan")
 }
 
 // TestDecideCompletionPlanRow grades the row against the gathered facts alone:

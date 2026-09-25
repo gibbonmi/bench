@@ -119,10 +119,17 @@ const (
 )
 
 type commandDefinition struct {
-	Name        string
-	Attachment  processAttachment
-	AXI         commandAXIDisposition
-	Inventory   commandInventory
+	Name       string
+	Attachment processAttachment
+	AXI        commandAXIDisposition
+	Inventory  commandInventory
+	Bound      boundDisposition
+	// Leaves is the family table of a command whose first argument names a leaf. Each
+	// leaf declares its own bound disposition on its row. The dispatcher and the bound
+	// both read this one table, so no family runs a leaf that the bound does not see.
+	Leaves []commandLeaf
+	// LeafUsage answers the family usage that a bare, help, or unknown-leaf call prints.
+	LeafUsage   func() string
 	WrapperOnly bool
 	// Hook marks a hook plumbing verb: a verb a harness hook shim pipes its envelope to.
 	// The set is the record's one source for which dispatches open a hook span.
@@ -156,6 +163,10 @@ type commandLeaf struct {
 	// no grammar constant.
 	Grammar string
 	Root    leafRootNeed
+	Bound   boundDisposition
+	// Retires marks a leaf that retires an assignment. Its spill goes to the primary scope,
+	// so the retirement cannot remove a spill that is still open.
+	Retires bool
 	Run     func(c Command, root string, args []string) int
 }
 
@@ -169,14 +180,11 @@ func dispatchLeafFamily(c Command, family, familyUsage string, leaves []commandL
 		fmt.Fprint(c.Stdout, familyUsage)
 		return 2
 	}
-	if len(args) == 1 && (args[0] == "help" || args[0] == "--help" || args[0] == "-h") {
+	if len(args) == 1 && helpArgument(args[0]) {
 		fmt.Fprint(c.Stdout, familyUsage)
 		return 0
 	}
-	for _, leaf := range leaves {
-		if leaf.Name != args[0] {
-			continue
-		}
+	if leaf, ok := leafNamed(leaves, args); ok {
 		root, ok := leafRoot(c, leaf.Root)
 		if !ok {
 			return 1
@@ -185,6 +193,43 @@ func dispatchLeafFamily(c Command, family, familyUsage string, leaves []commandL
 	}
 	fmt.Fprintln(c.Stderr, toon.Usage(family, args[0]))
 	return 2
+}
+
+// leafNamed answers the leaf that the first family argument names. The dispatcher and the
+// bound disposition both select a leaf here.
+func leafNamed(leaves []commandLeaf, args []string) (commandLeaf, bool) {
+	for _, leaf := range leaves {
+		if len(args) > 0 && leaf.Name == args[0] {
+			return leaf, true
+		}
+	}
+	return commandLeaf{}, false
+}
+
+// run calls the definition's handler. The help command renders the inventory here, after
+// the bound disposition, so `bench help` with an argument stays bounded. A family routes
+// its leaves through the shared leaf dispatcher, which reads the same table as the bound.
+func (definition commandDefinition) run(c Command, args []string) int {
+	if definition.Kind == commandHelp {
+		return helpCommand(c, args)
+	}
+	if definition.Leaves != nil {
+		return dispatchLeafFamily(c, "bench "+definition.Name, definition.LeafUsage(), definition.Leaves, args)
+	}
+	return definition.Run(c, args)
+}
+
+// bound answers the disposition that applies to one call. A help form is exempt. A call
+// that names a family leaf takes that leaf's disposition, and every other call takes the
+// command's own.
+func (definition commandDefinition) bound(args []string) boundDisposition {
+	if definition.helpForm(args) {
+		return boundHelpForm
+	}
+	if leaf, ok := leafNamed(definition.Leaves, args); ok {
+		return leaf.Bound.call(args[1:])
+	}
+	return definition.Bound.call(args)
 }
 
 // leafRoot is the family's one root producer. A required root that cannot resolve prints
@@ -237,6 +282,8 @@ type Command struct {
 	Stdout, Stderr io.Writer
 	Executable     string
 	Observe        io.Writer
+	// resolved receives the assignment a bounded verb resolved for its target.
+	resolved *string
 }
 
 // Run executes args through the production command dispatcher.
@@ -265,18 +312,18 @@ func (c Command) Run(args []string) int {
 	if c.Observe != nil {
 		fmt.Fprintln(c.Observe, commandImplementationID(definition))
 	}
-	if definition.Kind == commandHelp {
-		return helpCommand(c, args[1:])
-	}
 	// The hook plumbing verbs record here, at their one shared dispatch, so no adapter
 	// package opens a span of its own.
 	if definition.Hook {
 		finishSpan := beginHookSpan(definition.Name)
-		exit := definition.Run(c, args[1:])
+		exit := definition.run(c, args[1:])
 		finishSpan(exit)
 		return exit
 	}
-	return definition.Run(c, args[1:])
+	if !definition.bound(args[1:]).bounded {
+		return definition.run(c, args[1:])
+	}
+	return c.runBounded(definition, args[1:])
 }
 
 func commandImplementationID(definition commandDefinition) string {

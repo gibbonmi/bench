@@ -11,6 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 	"os"
@@ -423,19 +424,17 @@ func releaseRegistration(root, target string) error {
 	return os.RemoveAll(admin)
 }
 
-// executeCleanup retires one checkout and the raw-call records that describe it. It is
-// the one shared retirement path, so `bench worktree release`, `bench worktree clean`,
-// `clean --landed`, and the landing's own release step all drop the records here and
-// nowhere else. The assignment id comes from the pool segment, which is the same
-// segment the recorder read, so the writer and the drop never disagree. A target that
-// names no assignment drops nothing. The drop error goes the way the recorder's does,
-// because an advisory board never changes a retirement's verdict.
+// executeCleanup retires one checkout, its raw-call records, and its response spills. It
+// is the one shared retirement path, so release, clean, `clean --landed`, and the landing's
+// release step all drop both here and nowhere else. The assignment id comes from the pool
+// segment that the recorder and the spill owner read, so a writer and its drop never
+// disagree. A target that names no assignment drops nothing. Each drop error goes the way
+// the recorder's does, because an advisory store never changes a retirement's verdict.
 //
-// The retired assignment's handoff section leaves here too, beside the record drop, so
-// land, release, and clean all reach one removal. The section key is read before
-// retireCheckout runs, because the retirement mutates the record the key comes from. A
-// document that carries no such section is left as it is, and a document the removal
-// cannot rewrite is announced rather than discarded.
+// The retired assignment's handoff section leaves here too, so land, release, and clean
+// all reach one removal. The section key is read before retireCheckout runs, because the
+// retirement mutates the record the key comes from. A document without that section stays
+// as it is, and a document the removal cannot rewrite is announced rather than discarded.
 func executeCleanup(j joins, root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
 	var request string
 	if plan.assignment != nil {
@@ -447,6 +446,7 @@ func executeCleanup(j joins, root string, plan CleanupPlan, checkpoint func(stri
 	}
 	if id, ok := poolkey.SplitAssignmentSegment(filepath.Base(plan.Target)); ok {
 		_ = census.Drop(j.home, root, id)
+		_ = responsebound.Drop(j.home, root, id)
 	}
 	if path := handoffDocumentPath(root); request != "" && fileExists(path) {
 		if err := handoffdoc.RemoveSection(path, request); err != nil {

@@ -50,6 +50,12 @@ func Pool(home, root string) string {
 // halves of an assignment segment take.
 var idPattern = regexp.MustCompile(`^[0-9a-f]{32}$`)
 
+// IsAssignmentID reports whether name is one assignment id. A caller that composes a
+// path from an operand refuses any other name, so no operand reaches outside its store.
+func IsAssignmentID(name string) bool {
+	return idPattern.MatchString(name)
+}
+
 // AssignmentSegment returns the pool directory name of one assignment. The owner id
 // and the assignment id join with a hyphen, and neither half holds one.
 func AssignmentSegment(ownerID, assignmentID string) string {
@@ -61,7 +67,7 @@ func AssignmentSegment(ownerID, assignmentID string) string {
 // the pool can reject it without the ledger.
 func SplitAssignmentSegment(segment string) (string, bool) {
 	owner, id, found := strings.Cut(segment, "-")
-	if !found || !idPattern.MatchString(owner) || !idPattern.MatchString(id) {
+	if !found || !IsAssignmentID(owner) || !IsAssignmentID(id) {
 		return "", false
 	}
 	return id, true

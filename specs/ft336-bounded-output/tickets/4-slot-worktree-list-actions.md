@@ -1,7 +1,7 @@
 # 4. Print slot actions for the active worktree rows
 
 Blocked by: none
-Writes: internal/worktree/list.go, internal/worktree/list_actions_test.go, internal/worktree/path_identifier_test.go, .agents/skills/bench-craft-cli/SKILL.md, internal/anchors/registry_retained_workflow.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/worktree/list.go, internal/worktree/list_actions_test.go, internal/worktree/landed_test.go, internal/worktree/path_identifier_test.go, .agents/skills/bench-craft-cli/SKILL.md, internal/anchors/registry_retained_workflow.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: BO32, BO33, BO34, BO35, BO36, BO41, BO67
 
 ## What to build

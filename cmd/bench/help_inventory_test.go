@@ -69,15 +69,16 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench harnesses [<harness> [--record <path> --format <source-id>]]  the harness record as TOON; one name prints that harness's cells; both flags observe one named session record
   bench assessment list | show <run-id> | record --input <file> | compare --plan <file> --runs <id,...>  store and inspect local workflow cost and quality
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
-  bench preflight review <slug> [--base <commit>] [--source-tip <commit>]  review-entry checks that a spec's artifacts agree with the tree, one verdict row per check
+  bench preflight review <slug> [--base <commit>] [--source-tip <commit>]  review-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only
   bench preflight review <slug> --charge --base <commit> --source-tip <commit> [--max-store-bytes <n>]  prepare one immutable review evidence artifact and print its bounded orientation
-  bench preflight build <slug> [--base <commit>] [--source-tip <commit>]  build-entry checks that a spec's artifacts agree with the tree, one verdict row per check
+  bench preflight build <slug> [--base <commit>] [--source-tip <commit>]  build-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only
   bench preflight build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]  prepare one immutable build evidence artifact and print its bounded orientation
   bench preflight build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>  propose one ticket's Writes: entries from the pinned source
-  bench preflight evidence <id> [--cursor <cursor>]  print one bounded fragment of a prepared evidence artifact and its exact successor
+  bench preflight evidence <id> [--cursor <cursor>]  print the summary of a prepared evidence artifact, or one bounded fragment at a cursor, and its exact successor
   bench preflight evidence <id> --source <source-id> [--cursor <cursor>]  print one bounded fragment of one declared source stream and its exact successor
   bench preflight evidence <id> --verify  verify every stored page and source digest of a prepared evidence artifact
   bench preflight evidence <id> --check-current  bind a prepared evidence artifact to the current assignment and source pair
+  bench preflight evidence <id> --to <dir>  export every verified source of a prepared evidence artifact to its own file in an absent or empty directory
   bench preflight evidence-clean [--cursor <cursor>]  print one bounded page of the exact evidence deletion targets and its fingerprint
   bench preflight evidence-clean --apply <fingerprint>  delete exactly the targets one fingerprinted cleanup plan named
   bench repair-pilot activate | report [--full]  collect and report attributed repair evidence for an explicit local pilot
@@ -105,7 +106,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench worktree land --resume <published-commit> --request <opaque-id> --base <commit> --source-tip <commit> [--spec <slug>] <path>  resume incomplete post-publication landing work
   bench worktree --help      show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar
   bench shift [--refresh] "<objective>" gated loop in a pooled worktree; commit on green
-  bench commit -m <msg> <path>...  run the declared lane (or the gate when no lane is declared), then commit named paths on a pass
+  bench commit -m <msg> [--preflight-build <slug>] <path>...  run the declared lane (or the gate when no lane is declared), then commit named paths on a pass
   bench spec retire <slug>   delete a merged spec + its review pickup (validated)
   bench spec history <slug>  retire/delete commits for a spec, newest first (TOON)
   bench version              print the installed Bench version (os/arch)
@@ -151,7 +152,7 @@ func TestEvidenceHelpInventory(t *testing.T) {
 	t.Run("preparation and every implemented read", func(t *testing.T) {
 		for _, want := range []string{"build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]",
 			"evidence <id> [--cursor <cursor>]", "evidence <id> --source <source-id> [--cursor <cursor>]",
-			"evidence <id> --verify", "evidence <id> --check-current",
+			"evidence <id> --verify", "evidence <id> --check-current", "evidence <id> --to <dir>",
 			"evidence-clean [--cursor <cursor>]", "evidence-clean --apply <fingerprint>"} {
 			if !strings.Contains(strings.Join(preflightForms, "\n"), want) {
 				t.Errorf("preflight help omits %q", want)

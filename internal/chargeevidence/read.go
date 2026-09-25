@@ -198,6 +198,15 @@ type Fragment struct {
 // First returns the cursor that starts the default stream: the first manifest fragment.
 func (a *Artifact) First() Cursor { return Cursor{Identity: a.identity} }
 
+// Summary renders the summary response; next is the exact command that reads First.
+func (a *Artifact) Summary(next string) (string, error) {
+	sourceBytes := 0
+	for _, source := range a.m.Sources {
+		sourceBytes += source.Bytes
+	}
+	return encodeResponse(blockSummary, []any{a.identity, len(a.m.Sources), len(a.m.Pages), len(a.manifest), sourceBytes, next})
+}
+
 // SourceOrdinal returns the one-based ordinal of the source the manifest declares under id.
 func (a *Artifact) SourceOrdinal(id string) (int, error) {
 	for i, source := range a.m.Sources {
@@ -313,22 +322,12 @@ type Verified struct {
 // covers every stored byte.
 func (a *Artifact) Verify() (Verified, error) {
 	verified := Verified{Evidence: a.identity}
-	for ordinal, source := range a.m.Sources {
-		body := make([]byte, 0, source.Bytes)
-		for _, page := range a.pagesOf(source.ID) {
-			content, err := a.readAt(a.starts[ordinal]+int64(page.Offset), page.Bytes)
-			if err != nil {
-				return Verified{}, err
-			}
-			if err := checkPage(source.ID, page, content); err != nil {
-				return Verified{}, err
-			}
-			body = append(body, content...)
-			verified.Pages++
-		}
-		if err := checkSource(source, body); err != nil {
+	for ordinal := 1; ordinal <= len(a.m.Sources); ordinal++ {
+		_, pages, err := a.sourceBody(ordinal)
+		if err != nil {
 			return Verified{}, err
 		}
+		verified.Pages += pages
 		verified.Sources++
 	}
 	if err := unchanged(a.dir, packName(a.identity), a.file, a.info); err != nil {

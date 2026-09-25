@@ -1,7 +1,6 @@
 package preflight
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -18,16 +17,9 @@ func bareRowCount(mode string) int {
 	return 14
 }
 
-// rowHeader is the checks header for a given row count. The pinned form
-// below passes bareRowCount+1, because --source-tip adds exactly one row.
-func rowHeader(rows int) string {
-	return fmt.Sprintf("checks[%d]{check,verdict,detail,next}", rows)
-}
-
 // TestSourceTipOmittedKeepsTodaysVerdict is H30's control half: without
-// the flag both modes render exactly the rows bareRowCount names for them,
-// in order, and no tip row appears. The flag is an addition, not a new
-// requirement.
+// the flag both modes count exactly the rows bareRowCount names for them,
+// and no tip row appears. The flag is an addition, not a new requirement.
 func TestSourceTipOmittedKeepsTodaysVerdict(t *testing.T) {
 	for _, mode := range []string{"review", "build"} {
 		t.Run(mode, func(t *testing.T) {
@@ -36,8 +28,8 @@ func TestSourceTipOmittedKeepsTodaysVerdict(t *testing.T) {
 			if code != 0 {
 				t.Fatalf("bare %s = (%d):\n%s", mode, code, out)
 			}
-			if !strings.Contains(out, rowHeader(bareRowCount(mode))) {
-				t.Fatalf("bare %s did not render today's row table:\n%s", mode, out)
+			if total := summaryCounts(t, out).total(); total != bareRowCount(mode) {
+				t.Fatalf("bare %s counted %d rows, want %d:\n%s", mode, total, bareRowCount(mode), out)
 			}
 			if strings.Contains(out, "tip-current") {
 				t.Fatalf("bare %s rendered a tip row without --source-tip:\n%s", mode, out)
@@ -56,23 +48,21 @@ func TestSourceTipAcceptedByBothModes(t *testing.T) {
 			base := preflighttest.RunGit(t, "rev-parse", "main")
 			tip := preflighttest.RunGit(t, "rev-parse", "HEAD")
 
+			// A green pin adds exactly one counted row, and exit 0 means that row is
+			// not red.
+			pinned := bareRowCount(mode) + 1
 			out, code := Command([]string{mode, slug, "--source-tip", tip})
-			if code != 0 || !strings.Contains(out, "tip-current,green") {
-				t.Fatalf("bare %s --source-tip = (%d):\n%s", mode, code, out)
-			}
-			// WF41: the pinned-tip form carries the next column too, so the added
-			// row and the added column are pinned by the same fixture.
-			if !strings.Contains(out, rowHeader(bareRowCount(mode)+1)) {
-				t.Fatalf("pinned %s did not add exactly one row:\n%s", mode, out)
+			if code != 0 || summaryCounts(t, out).total() != pinned {
+				t.Fatalf("bare %s --source-tip = (%d), want %d rows:\n%s", mode, code, pinned, out)
 			}
 			// The pin is verified against the derived tip, not compared literally: a
 			// revision spelling that resolves to the same commit is green.
 			out, code = Command([]string{mode, slug, "--source-tip", "HEAD"})
-			if code != 0 || !strings.Contains(out, "tip-current,green") {
+			if code != 0 || summaryCounts(t, out).total() != pinned {
 				t.Fatalf("bare %s --source-tip HEAD = (%d):\n%s", mode, code, out)
 			}
 			out, code = Command([]string{mode, slug, "--base", base, "--source-tip", tip})
-			if code != 0 || !strings.Contains(out, "tip-current,green") {
+			if code != 0 || summaryCounts(t, out).total() != pinned {
 				t.Fatalf("explicit-base %s --source-tip = (%d):\n%s", mode, code, out)
 			}
 		})

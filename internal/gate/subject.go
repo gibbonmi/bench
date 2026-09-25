@@ -1,7 +1,6 @@
 package gate
 
 import (
-	"bufio"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -17,6 +16,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gocache"
@@ -438,9 +438,9 @@ func firstLine(path string) (string, error) {
 		return "", err
 	}
 	defer f.Close()
-	line, err := bufio.NewReader(io.LimitReader(f, 4096)).ReadString('\n')
-	if errors.Is(err, io.EOF) {
-		err = nil
+	read := bounds.Read(f, bounds.SubjectFirstLineLimit)
+	if read.Status == bounds.ReadFailed {
+		return "", read.Err
 	}
-	return line, err
+	return strings.SplitAfterN(string(read.Data), "\n", 2)[0], nil
 }

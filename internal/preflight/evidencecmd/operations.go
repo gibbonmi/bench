@@ -24,6 +24,7 @@ const (
 	KindReadEvidence
 	KindVerifyEvidence
 	KindCurrentEvidence
+	KindExportEvidence
 	KindCleanPlan
 	KindCleanApply
 )
@@ -41,6 +42,7 @@ const (
 	flagVerify   = "--verify"
 	flagCurrent  = "--check-current"
 	flagApply    = "--apply"
+	FlagTo       = "--to"
 	ModeReview   = "review"
 	ModeBuild    = "build"
 	modeEvidence = "evidence"
@@ -67,6 +69,7 @@ var flagTable = []flagSpec{
 	{flagVerify, ""},
 	{flagCurrent, ""},
 	{flagApply, "<fingerprint>"},
+	{FlagTo, "<dir>"},
 }
 
 // modeOperands names the positional operand each mode takes. A mode with an empty operand
@@ -92,23 +95,25 @@ type Operation struct {
 
 var operations = []Operation{
 	{Mode: ModeReview, optional: []string{FlagBase, FlagTip}, Kind: KindVerdict,
-		description: "review-entry checks that a spec's artifacts agree with the tree, one verdict row per check"},
+		description: "review-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only"},
 	{Mode: ModeReview, selectors: []string{flagCharge}, required: []string{FlagBase, FlagTip}, optional: []string{flagQuota}, Kind: KindPrepareReviewEvidence, Bounded: true,
 		description: "prepare one immutable review evidence artifact and print its bounded orientation"},
 	{Mode: ModeBuild, optional: []string{FlagBase, FlagTip}, Kind: KindVerdict,
-		description: "build-entry checks that a spec's artifacts agree with the tree, one verdict row per check"},
+		description: "build-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only"},
 	{Mode: ModeBuild, selectors: []string{flagCharge}, required: []string{FlagTicket, FlagBase, FlagTip}, optional: []string{flagQuota}, Kind: KindPrepareEvidence, Bounded: true,
 		description: "prepare one immutable build evidence artifact and print its bounded orientation"},
 	{Mode: ModeBuild, selectors: []string{flagPropose}, required: []string{FlagTicket, FlagBase, FlagTip}, Kind: KindProposal,
 		description: "propose one ticket's Writes: entries from the pinned source"},
 	{Mode: modeEvidence, optional: []string{flagCursor}, Kind: KindReadEvidence, Bounded: true,
-		description: "print one bounded fragment of a prepared evidence artifact and its exact successor"},
+		description: "print the summary of a prepared evidence artifact, or one bounded fragment at a cursor, and its exact successor"},
 	{Mode: modeEvidence, selectors: []string{flagSource}, optional: []string{flagCursor}, Kind: KindReadEvidence, Bounded: true,
 		description: "print one bounded fragment of one declared source stream and its exact successor"},
 	{Mode: modeEvidence, selectors: []string{flagVerify}, Kind: KindVerifyEvidence, Bounded: true,
 		description: "verify every stored page and source digest of a prepared evidence artifact"},
 	{Mode: modeEvidence, selectors: []string{flagCurrent}, Kind: KindCurrentEvidence, Bounded: true,
 		description: "bind a prepared evidence artifact to the current assignment and source pair"},
+	{Mode: modeEvidence, selectors: []string{FlagTo}, Kind: KindExportEvidence, Bounded: true,
+		description: "export every verified source of a prepared evidence artifact to its own file in an absent or empty directory"},
 	{Mode: ModeClean, optional: []string{flagCursor}, Kind: KindCleanPlan, Bounded: true,
 		description: "print one bounded page of the exact evidence deletion targets and its fingerprint"},
 	{Mode: ModeClean, selectors: []string{flagApply}, Kind: KindCleanApply, Bounded: true,

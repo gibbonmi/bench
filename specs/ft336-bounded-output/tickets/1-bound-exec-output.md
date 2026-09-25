@@ -16,6 +16,8 @@ Give each public registry entry in `cmd/bench` a bound disposition. A leaf's dis
 
 `bench worktree exec` then passes its child's streams through the owner, because the dispatcher hands exec the owner's writers. Exec sets a wait delay on the child command, so a descendant that holds a pipe open cannot hang exec after the child exits. The interrupt path uses the same delay. The wait-delay value sits in the policy registry of `internal/bounds`. Register the owner's concurrent-writes test in `internal/racetests/racetests.go`, so the race phase runs it.
 
+The exec rows run in the system suite, which is system-tagged. Run them with `BENCH_KIT` set, through `bench test --check system`.
+
 ## Acceptance
 
 - [ ] A test-registered bounded command that prints 25 lines through `Command.Run` produces exactly 10 stdout lines.

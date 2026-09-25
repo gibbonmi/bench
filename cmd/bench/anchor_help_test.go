@@ -148,6 +148,18 @@ func TestAnchorsReportsAbsentNeedles(t *testing.T) {
 	}
 }
 
+// requireOnlyAnchorsStdout fails unless the complete output of a dispatched anchors call
+// is exactly what anchorsCommand returns from root. A response over the bound spills both
+// streams into one file, so its empty stderr proves nothing; a stray stderr line shows
+// here as extra bytes.
+func requireOnlyAnchorsStdout(t *testing.T, root string, result axiCommandResult, args ...string) {
+	t.Helper()
+	t.Chdir(root)
+	if want, _ := anchorsCommand(args); result.stdout != want {
+		t.Fatalf("anchors %q complete output = %q, want only the command's stdout %q", args, result.stdout, want)
+	}
+}
+
 func TestAnchorsReportsForbiddenNeedles(t *testing.T) {
 	for _, anchor := range anchors.Entries() {
 		if anchor.Kind != anchors.Forbid {
@@ -159,6 +171,7 @@ func TestAnchorsReportsForbiddenNeedles(t *testing.T) {
 		if result.code != 1 || result.stderr != "" || !strings.Contains(result.stdout, toon.Errorf("anchor", anchor.Diagnostic)+"\n") {
 			t.Fatalf("forbidden anchor = %#v, want exit 1 and %q", result, anchor.Diagnostic)
 		}
+		requireOnlyAnchorsStdout(t, root, result, anchor.File)
 		return
 	}
 	t.Fatal("registry has no forbidden anchor")
@@ -182,6 +195,7 @@ func TestAnchorsReportsCaseFoldedEmphasisViolation(t *testing.T) {
 	if result.code != 1 || result.stderr != "" {
 		t.Fatalf("anchors emphasized violation = %#v, want exit 1 and no stderr", result)
 	}
+	requireOnlyAnchorsStdout(t, root, result, target.File)
 	if !strings.Contains(result.stdout, toon.Errorf("anchor", target.Diagnostic)+"\n") {
 		t.Fatalf("anchors emphasized violation stdout = %q, want diagnostic %q", result.stdout, target.Diagnostic)
 	}

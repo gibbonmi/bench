@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/runbinary"
@@ -50,19 +51,27 @@ func childEnvValues(parsed usage.Result) ([]string, string) {
 
 // ExecCommand runs a direct child argv from one active Bench-owned worktree.
 func ExecCommand(root, home string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	exit, _ := ExecCommandResolving(root, home, args, stdin, stdout, stderr)
+	return exit
+}
+
+// ExecCommandResolving is ExecCommand that also answers the assignment its target resolved
+// to, or the empty string when no target resolved. The dispatcher keys the census output
+// record by this assignment, so it runs no second resolution of the target.
+func ExecCommandResolving(root, home string, args []string, stdin io.Reader, stdout, stderr io.Writer) (int, string) {
 	parsed, line, code := usage.Parse(worktreeExecGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)
-		return code
+		return code, ""
 	}
 	if !parsed.EndedFlags || parsed.PositionalsBeforeTerminator != 1 || len(parsed.Positionals) < 2 {
 		fmt.Fprintln(stderr, worktreeExecGrammar.Help)
-		return 2
+		return 2, ""
 	}
 	values, refusal := childEnvValues(parsed)
 	if refusal != "" {
 		fmt.Fprintln(stderr, refusal)
-		return 2
+		return 2, ""
 	}
 	// The record opens after the grammar answers. The verb resolves its assignment inside
 	// the span, so a target refusal records the verb with no subject.
@@ -77,7 +86,15 @@ func ExecCommand(root, home string, args []string, stdin io.Reader, stdout, stde
 		spanExit = 1
 	}
 	finishSpan(spanExit, assignment)
-	return exit
+	return exit, assignment
+}
+
+// AssignmentActive reports whether the ledger at root holds the assignment id in the
+// active state. It reads the ledger and applies the landing's active check, and it
+// resolves no target. A ledger that cannot be read holds no active assignment.
+func AssignmentActive(root, id string) bool {
+	a, err := assignmentByID(root, id)
+	return err == nil && landingActiveState(a.State)
 }
 
 // execAttributed is the exec verb's own work, with the assignment that owns the child's
@@ -99,6 +116,9 @@ func runWorktreeChild(argv []string, dir, home string, extraEnv []string, stdin 
 	cmd.Dir, cmd.Stdin, cmd.Stdout, cmd.Stderr = dir, stdin, stdout, stderr
 	cmd.Env = execEnv(dir, home, extraEnv)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	// A descendant of the child can hold an output pipe open after the child exits. The
+	// delay lets exec return at the child's own exit with the output that arrived.
+	cmd.WaitDelay = bounds.ExecWaitDelay
 	if err := cmd.Start(); err != nil {
 		fmt.Fprintf(stderr, "bench worktree exec: %v\n", err)
 		return nameWorktree(stderr, dir, 1)
@@ -112,7 +132,7 @@ func runWorktreeChild(argv []string, dir, home string, extraEnv []string, stdin 
 		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
 		select {
 		case <-done:
-		case <-time.After(2 * time.Second):
+		case <-time.After(bounds.ExecWaitDelay):
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 			<-done
 		}

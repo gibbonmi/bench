@@ -159,11 +159,11 @@ func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
 		{argv: []string{"harnesses"}, header: "schema: 1\nharnesses[4]{harness,provider,phase_form,hooks,delegation_guard,headless,checked}:\n"},
 		{argv: []string{"harnesses", "codex"}, header: "schema: 1\ncells[13]{field,value,source,checked}:\n"},
 	} {
-		binaryHarnesses := run(binary, probe.argv...)
+		binaryHarnesses := spilledResponse(t, run(binary, probe.argv...))
 		if !strings.HasPrefix(binaryHarnesses, probe.header) {
 			t.Errorf("binary %v = %q, want the %q header", probe.argv, binaryHarnesses, probe.header)
 		}
-		if wrapperHarnesses := run(wrapper, probe.argv...); wrapperHarnesses != binaryHarnesses {
+		if wrapperHarnesses := spilledResponse(t, run(wrapper, probe.argv...)); wrapperHarnesses != binaryHarnesses {
 			t.Errorf("wrapper %v = %q, binary %v = %q", probe.argv, wrapperHarnesses, probe.argv, binaryHarnesses)
 		}
 	}

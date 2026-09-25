@@ -1,7 +1,7 @@
 # 6. Print the evidence manifest summary by default
 
 Blocked by: none
-Writes: internal/preflight/evidencecmd/, internal/chargeevidence/schema.go, internal/chargeevidence/read.go
+Writes: internal/preflight/evidencecmd/, internal/chargeevidence/schema.go, internal/chargeevidence/read.go, internal/chargeevidence/format_test.go, internal/chargeevidence/reference.go, .agents/skills/bench-craft-delegate/references/charge-evidence-format.md, cmd/bench/preflight_version_test.go, internal/systemtest/charge_evidence_test.go, cmd/bench/help_inventory_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/anchors/registry_charge_binding.go, internal/anchors/registry_charge_binding_test.go
 Covers: BO42, BO43, BO44
 
 ## What to build
@@ -9,6 +9,8 @@ Covers: BO42, BO43, BO44
 `bench preflight evidence <id>`, with no cursor and no source, prints one `evidence_summary` block. The block holds the evidence identity, the source count, the page count, the manifest bytes, the total source bytes, and `next`. `next` is the exact command that reads the first manifest page. Register the block in the chargeevidence response schema, so the ADR 0022 encoded-response bound applies to it.
 
 The cursor, source, verify, and check-current forms keep their current output. The `next` of a `--charge` preparation response stays the bare `bench preflight evidence <id>` command.
+
+The default-read rows in `internal/systemtest/charge_evidence_test.go` run in the system suite, which is system-tagged. Run them with `BENCH_KIT` set, through `bench test --check system`.
 
 ## Acceptance
 

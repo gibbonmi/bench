@@ -1,7 +1,7 @@
 # 3. Retire response spills with their assignment
 
 Blocked by: 1-bound-exec-output.md
-Writes: internal/responsebound/ (new), internal/worktree/lifecycle.go, internal/worktree/response_spill_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/responsebound/ (new), internal/poolkey/poolkey.go, internal/poolkey/poolkey_test.go, tests/canary/package-core-guard/reintroduced-bare-skip, internal/census/census.go, internal/worktree/lifecycle.go, internal/worktree/response_spill_test.go (new), cmd/bench/command_registry.go, cmd/bench/worktree_leaves.go, cmd/bench/response_bound_test.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: BO16, BO17, BO72
 
 ## What to build

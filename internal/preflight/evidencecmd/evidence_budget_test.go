@@ -2,6 +2,7 @@ package evidencecmd_test
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -190,6 +191,7 @@ func TestEvidenceResponseBound(t *testing.T) {
 			"--cursor":          "v1." + strings.TrimPrefix(identity, "sha256:") + ".s.1.0",
 			"--max-store-bytes": strconv.FormatUint(chargeevidence.DefaultQuota, 10),
 			"--apply":           "sha256:" + strings.Repeat("0", 64),
+			"--to":              filepath.Join(t.TempDir(), "export"),
 		})
 	// These cases reach the paths no registered form states: an operand refused before the
 	// grammar, a rejected argument, a registered selector without the flags its form
@@ -252,13 +254,20 @@ func TestEvidenceBoundedErrors(t *testing.T) {
 // source declares an argument holding scalar, so its manifest spans several fragments.
 func publishCraftedEvidence(t *testing.T, root, scalar string) string {
 	t.Helper()
+	return publishReview(t, root, chargeevidence.SourceInput{
+		Role: "diff", Kind: chargeevidence.KindGenerated, Path: "diff", Required: true, Data: []byte("diff body\n"),
+		Producer: &chargeevidence.Producer{Name: "diff", Version: "test", Cwd: ".", Arguments: []string{scalar}},
+	}).Identity()
+}
+
+// publishReview builds one valid review-mode artifact over sources, publishes it in root's
+// evidence store, and returns the published pack.
+func publishReview(t *testing.T, root string, sources ...chargeevidence.SourceInput) *chargeevidence.Pack {
+	t.Helper()
 	pack, err := chargeevidence.Build(chargeevidence.Candidate{
 		Selection: chargeevidence.Selection{Mode: "review", Spec: "specs/example/spec.md", Base: strings.Repeat("a", 40), SourceTip: strings.Repeat("b", 40)},
 		Metadata:  chargeevidence.Metadata{Checks: []string{"s2"}},
-		Sources: []chargeevidence.SourceInput{{
-			Role: "diff", Kind: chargeevidence.KindGenerated, Path: "diff", Required: true, Data: []byte("diff body\n"),
-			Producer: &chargeevidence.Producer{Name: "diff", Version: "test", Cwd: ".", Arguments: []string{scalar}},
-		}},
+		Sources:   sources,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -271,11 +280,10 @@ func publishCraftedEvidence(t *testing.T, root, scalar string) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	identity, err := staged.Publish(1)
-	if err != nil {
+	if _, err := staged.Publish(1); err != nil {
 		t.Fatal(err)
 	}
-	return identity
+	return pack
 }
 
 // TestEvidenceLargeManifestScalar is CE6: a manifest cell above the response bound

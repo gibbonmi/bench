@@ -162,10 +162,25 @@ func TestLegacyPreflightDifferential(t *testing.T) {
 		out             string
 		code            int
 		root, base, tip string
+		counts          verdictCounts
 	}
 	run := func(args []string, root, base, tip string) result {
 		out, code := Command(args)
-		return result{out, code, root, base, tip}
+		return result{out: out, code: code, root: root, base: base, tip: tip}
+	}
+	// decided runs one verdict invocation and counts Decide's rows for the same
+	// fixture, so the baseline states no count of its own.
+	decided := func(t *testing.T, mode, slug, explicitBase, pin, root, base, tip string) result {
+		args := []string{mode, slug}
+		if explicitBase != "" {
+			args = append(args, "--base", explicitBase)
+		}
+		if pin != "" {
+			args = append(args, "--source-tip", pin)
+		}
+		r := run(args, root, base, tip)
+		r.counts = countVerdicts(pinnedVerdicts(t, mode, slug, explicitBase, pin))
+		return r
 	}
 	cases := []struct {
 		name string
@@ -174,17 +189,17 @@ func TestLegacyPreflightDifferential(t *testing.T) {
 		{"valid-build", func(t *testing.T) result {
 			root, slug := preflighttest.SeedConformant(t)
 			base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
-			return run([]string{"build", slug}, root, base, tip)
+			return decided(t, modeBuild, slug, "", "", root, base, tip)
 		}},
 		{"valid-review", func(t *testing.T) result {
 			root, slug := preflighttest.SeedConformant(t)
 			base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
-			return run([]string{"review", slug}, root, base, tip)
+			return decided(t, modeReview, slug, "", "", root, base, tip)
 		}},
 		{"absent-tickets", func(t *testing.T) result {
 			root, slug := seedBuildFresh(t)
 			base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
-			return run([]string{"build", slug}, root, base, tip)
+			return decided(t, modeBuild, slug, "", "", root, base, tip)
 		}},
 		{"empty-tickets", func(t *testing.T) result {
 			root, slug := preflighttest.SeedConformant(t)
@@ -194,7 +209,7 @@ func TestLegacyPreflightDifferential(t *testing.T) {
 			}
 			preflighttest.RunGit(t, "add", "-A")
 			preflighttest.RunGit(t, "commit", "-q", "-m", "empty tickets")
-			return run([]string{"build", slug}, root, base, preflighttest.RunGit(t, "rev-parse", "HEAD"))
+			return decided(t, modeBuild, slug, "", "", root, base, preflighttest.RunGit(t, "rev-parse", "HEAD"))
 		}},
 		{"stale-base", func(t *testing.T) result {
 			root, slug := preflighttest.SeedConformant(t)
@@ -204,7 +219,7 @@ func TestLegacyPreflightDifferential(t *testing.T) {
 			preflighttest.RunGit(t, "add", "advance.txt")
 			preflighttest.RunGit(t, "commit", "-q", "-m", "advance")
 			preflighttest.RunGit(t, "checkout", "-q", "feature")
-			return run([]string{"build", slug}, root, base, tip)
+			return decided(t, modeBuild, slug, "", "", root, base, tip)
 		}},
 		{"dirty-review", func(t *testing.T) result {
 			root, slug := preflighttest.SeedConformant(t)
@@ -215,12 +230,12 @@ func TestLegacyPreflightDifferential(t *testing.T) {
 		{"explicit-base-success", func(t *testing.T) result {
 			root, slug := preflighttest.SeedConformant(t)
 			base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
-			return run([]string{"build", slug, "--base", base}, root, base, tip)
+			return decided(t, modeBuild, slug, base, "", root, base, tip)
 		}},
 		{"source-tip-mismatch", func(t *testing.T) result {
 			root, slug := preflighttest.SeedConformant(t)
 			base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
-			return run([]string{"build", slug, "--base", base, "--source-tip", base}, root, base, tip)
+			return decided(t, modeBuild, slug, base, base, root, base, tip)
 		}},
 		{"invalid-invocation", func(t *testing.T) result {
 			root, _ := preflighttest.SeedConformant(t)
@@ -235,14 +250,14 @@ func TestLegacyPreflightDifferential(t *testing.T) {
 			preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
 			preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
 			base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
-			return run([]string{"review", slug, "--base", base}, root, base, tip)
+			return decided(t, modeReview, slug, base, "", root, base, tip)
 		}},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			got := test.run(t)
 			got.out = normalizeLegacy(got.out, got.root, got.base, got.tip)
-			want, wantCode := legacyBaseline(test.name)
+			want, wantCode := legacyBaseline(test.name, got.counts)
 			if got.code != wantCode || got.out != want {
 				t.Fatalf("legacy %s = (%d, %q), want (%d, %q)", test.name, got.code, got.out, wantCode, want)
 			}
@@ -281,36 +296,40 @@ func TestNormalizeLegacyIdentityCells(t *testing.T) {
 		t.Fatalf("normalized numeric identity = %q", got)
 	}
 }
-func legacyBaseline(name string) (string, int) {
+
+// legacyBaseline is the output each legacy case prints. The counts line is the
+// case's own Decide counts; the red rows keep their approved text.
+func legacyBaseline(name string, counts verdictCounts) (string, int) {
 	const build = "phase: build\nspec: specs/example/spec.md\n"
 	const review = "phase: review\nspec: specs/example/spec.md\n"
 	const source = "source[1]{base,tip}:\n  <base>,<tip>\n"
-	const checks = "  paths-authorized,green,\"\",\"\"\n  tickets-parse,green,\"\",\"\"\n  completion-plan,green,\"\",\"\"\n  blockers-resolve,green,\"\",\"\"\n  writes-resolve,green,\"\",\"\"\n  fixture-closure,green,\"\",\"\"\n  registry-closure,green,\"\",\"\"\n  anchor-closure,green,\"\",\"\"\n  fence-writes,green,\"\",\"\"\n  kit-pin,green,\"\",\"\"\n"
-	const buildTail = "  binary-seal,not-applicable,\"\",\"\"\n  rows-owned,green,\"\",\"\"\n  rows-membership,green,\"\",\"\"\n  diff-nonempty,not-applicable,\"\",\"\"\n"
-	const reviewTail = "  rows-owned,green,\"\",\"\"\n  rows-membership,green,\"\",\"\"\n  diff-nonempty,green,\"\",\"\"\n"
-	greenBuild := build + "checks[15]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n" + checks + buildTail
-	greenReview := review + "checks[14]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n" + checks + reviewTail
+	const oneRed = "checks[1]{check,verdict,detail,next}:\n"
+	summary := counts.line()
 	switch name {
-	case "valid-build":
-		return greenBuild, 0
+	case "valid-build", "absent-tickets":
+		return build + summary, 0
 	case "valid-review":
-		return greenReview, 0
-	case "absent-tickets":
-		return build + "checks[15]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n  paths-authorized,green,\"\",\"\"\n  tickets-parse,not-applicable,\"\",\"\"\n  completion-plan,not-applicable,\"\",\"\"\n  blockers-resolve,not-applicable,\"\",\"\"\n  writes-resolve,not-applicable,\"\",\"\"\n  fixture-closure,not-applicable,\"\",\"\"\n  registry-closure,not-applicable,\"\",\"\"\n  anchor-closure,not-applicable,\"\",\"\"\n  fence-writes,not-applicable,\"\",\"\"\n  kit-pin,not-applicable,\"\",\"\"\n  binary-seal,not-applicable,\"\",\"\"\n  rows-owned,not-applicable,\"\",\"\"\n  rows-membership,not-applicable,\"\",\"\"\n  diff-nonempty,not-applicable,\"\",\"\"\n", 0
+		return review + summary, 0
 	case "empty-tickets":
-		return build + "checks[15]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n" + strings.Replace(strings.Replace(checks, "  completion-plan,green,\"\",\"\"\n", "  completion-plan,red,\"spec carries no valid bench-completion-plan fence at <tip>: missing or nonregular tree file specs/example/tickets/one.md; see .bench/BENCH-reference.md, bench gate --checkpoint\",\"\"\n", 1), "  fence-writes,green,\"\",\"\"\n", "  fence-writes,red,\"spec fence and ticket Writes: union differ: fence only: .agents/commands/bench-implement-spec.md, .agents/skills/bench-craft-delegate, internal/example\",\"\"\n", 1) + "  binary-seal,not-applicable,\"\",\"\"\n  rows-owned,red,\"declared row(s) cited by no ticket file: PF1, PF2\",\"\"\n  rows-membership,green,\"\",\"\"\n  diff-nonempty,not-applicable,\"\",\"\"\n", 1
+		return build + summary + "checks[3]{check,verdict,detail,next}:\n" +
+			"  completion-plan,red,\"spec carries no valid bench-completion-plan fence at <tip>: missing or nonregular tree file specs/example/tickets/one.md; see .bench/BENCH-reference.md, bench gate --checkpoint\",\"\"\n" +
+			"  fence-writes,red,\"spec fence and ticket Writes: union differ: fence only: .agents/commands/bench-implement-spec.md, .agents/skills/bench-craft-delegate, internal/example\",\"\"\n" +
+			"  rows-owned,red,\"declared row(s) cited by no ticket file: PF1, PF2\",\"\"\n", 1
 	case "stale-base":
-		return build + "checks[15]{check,verdict,detail,next}:\n  base-current,red,default branch tip is not an ancestor of HEAD,bench worktree merge --from main <target>\n" + checks + buildTail, 1
+		return build + summary + oneRed +
+			"  base-current,red,default branch tip is not an ancestor of HEAD,bench worktree merge --from main <target>\n", 1
 	case "dirty-review":
 		return "error: source not clean — review source has uncommitted changes\n", 1
 	case "explicit-base-success":
-		return build + source + strings.TrimPrefix(greenBuild, build), 0
+		return build + source + summary, 0
 	case "source-tip-mismatch":
-		return build + source + "checks[16]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n  tip-current,red,\"--source-tip <base> is not the derived source tip <tip>\",\"\"\n" + checks + buildTail, 1
+		return build + source + summary + oneRed +
+			"  tip-current,red,\"--source-tip <base> is not the derived source tip <tip>\",\"\"\n", 1
 	case "invalid-invocation":
 		return "usage: bench preflight (unknown argument: unknown)\n", 2
 	case "empty-diff":
-		return review + "source[1]{base,tip}:\n  <base>,<base>\nchecks[14]{check,verdict,detail,next}:\n  base-current,green,\"\",\"\"\n" + checks + "  rows-owned,green,\"\",\"\"\n  rows-membership,green,\"\",\"\"\n  diff-nonempty,red,no changed files since the resolved review base,\"\"\n", 1
+		return review + "source[1]{base,tip}:\n  <base>,<base>\n" + summary + oneRed +
+			"  diff-nonempty,red,no changed files since the resolved review base,\"\"\n", 1
 	}
 	return "", 0
 }
