@@ -123,7 +123,7 @@ Stop dependent implementation for a required user decision.
 Stop for an external blocker when no independent work remains.
 Stop when the run reaches an explicit user budget.
 
-Stop immediately when the user cancels. If no useful next check remains, report the unresolved blocker and the smallest decision or evidence needed.
+Stop immediately when the user cancels. If no useful next check remains, report the unresolved blocker and the smallest decision or evidence needed. The stop conditions in this section also govern the orchestrator of a `--full` run between chunks.
 
 A diagnostic route does not change the ticket author's session. A diagnostic route does not change the ticket author's model.
 
