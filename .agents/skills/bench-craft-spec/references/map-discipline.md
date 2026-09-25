@@ -28,6 +28,7 @@ the explore reads, the fence rules, and the review rubric.
   - `Promised field labels` names each exact field label.
   - `Changed-function callers` lists every caller of each changed function.
   - `Copy survival`, when a new owner replaces copies, names a red-capable row that fails if any copy survives.
+  - `Rendered-shape readers` cites the old-text needle and every hit per ticket, under the rendered-shape rule in [the slicing checks](../bench-craft-tickets/references/slicing-checks.md#slicing-rules).
 - Each canary row and each conformance row traces to its executed root before the coverage map locks.
 - The reader sweep lists each named consumer of the decision fact.
 - The reader sweep lists each helper that a named consumer calls directly.
