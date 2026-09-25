@@ -46,10 +46,10 @@ type evidencePage struct {
 	raw string
 }
 
-// traverseEvidence follows the default stream from its first read to its end.
+// traverseEvidence follows the default stream from the successor of its summary to its end.
 func traverseEvidence(t *testing.T, identity string) []evidencePage {
 	t.Helper()
-	return traverseFrom(t, []string{"evidence", identity})
+	return traverseFrom(t, commandArgs(t, readSummary(t, identity)["next"].(string)))
 }
 
 // traverseFrom runs the read that args names, then every next command it prints, to the end
@@ -71,11 +71,7 @@ func traverseFrom(t *testing.T, args []string) []evidencePage {
 		if next == "" {
 			return pages
 		}
-		fields := strings.Fields(next)
-		if len(fields) < 4 || strings.Join(fields[:2], " ") != "bench preflight" {
-			t.Fatalf("next = %q is not a preflight command", next)
-		}
-		args = fields[2:]
+		args = commandArgs(t, next)
 	}
 	t.Fatal("traversal did not end")
 	return nil

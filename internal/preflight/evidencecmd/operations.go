@@ -102,7 +102,7 @@ var operations = []Operation{
 	{Mode: ModeBuild, selectors: []string{flagPropose}, required: []string{FlagTicket, FlagBase, FlagTip}, Kind: KindProposal,
 		description: "propose one ticket's Writes: entries from the pinned source"},
 	{Mode: modeEvidence, optional: []string{flagCursor}, Kind: KindReadEvidence, Bounded: true,
-		description: "print one bounded fragment of a prepared evidence artifact and its exact successor"},
+		description: "print the summary of a prepared evidence artifact, or one bounded fragment at a cursor, and its exact successor"},
 	{Mode: modeEvidence, selectors: []string{flagSource}, optional: []string{flagCursor}, Kind: KindReadEvidence, Bounded: true,
 		description: "print one bounded fragment of one declared source stream and its exact successor"},
 	{Mode: modeEvidence, selectors: []string{flagVerify}, Kind: KindVerifyEvidence, Bounded: true,

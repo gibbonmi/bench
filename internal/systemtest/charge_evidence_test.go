@@ -225,7 +225,7 @@ func TestEvidenceInterruptedPublication(t *testing.T) {
 				t.Fatalf("interrupted %s left %v, want one temporary pack and no artifact", stage, entries)
 			}
 			identity := identityOf(t, j.prepare(t, worktree))
-			if read := systemSelected(t, worktree.path, j.env(), "preflight", "evidence", identity); read.code != 0 || !strings.HasPrefix(read.stdout, "page[1]") {
+			if read := systemSelected(t, worktree.path, j.env(), "preflight", "evidence", identity); read.code != 0 || !strings.HasPrefix(read.stdout, "evidence_summary[1]") {
 				t.Fatalf("read after interruption = (%d, %q)", read.code, read.stdout)
 			}
 		})
@@ -312,8 +312,9 @@ func TestEvidenceSiblingRead(t *testing.T) {
 	origin := j.assignment(t, "sibling-origin", "sibling\n")
 	sibling := j.assignment(t, "sibling-reader", "", "sibling-origin")
 	identity := identityOf(t, j.prepare(t, origin))
-	first := j.read(t, origin.path, identity)
-	second := j.read(t, sibling.path, identity)
+	manifest := chargeevidence.Cursor{Identity: identity}.String()
+	first := j.read(t, origin.path, identity, "--cursor", manifest)
+	second := j.read(t, sibling.path, identity, "--cursor", manifest)
 	if first.code != 0 || second.code != 0 || first.stdout != second.stdout || !strings.HasPrefix(second.stdout, "page[1]") {
 		t.Fatalf("sibling read = (%d, %d):\n%q\n%q", first.code, second.code, first.stdout, second.stdout)
 	}

@@ -131,7 +131,7 @@ func TestEvidenceCapacityRecovery(t *testing.T) {
 	if got := preflighttest.PublishedPacks(t, root); strings.Join(got, ",") != strings.Join(first, ",") || len(got) != 1 {
 		t.Fatalf("capacity refusal changed the published artifacts: %v, want %v", got, first)
 	}
-	if out, code := preflight.Command([]string{"evidence", identity}); code != 0 || !strings.HasPrefix(out, "page[1]") {
+	if out, code := preflight.Command([]string{"evidence", identity}); code != 0 || !strings.HasPrefix(out, "evidence_summary[1]") {
 		t.Fatalf("preserved artifact read = (%d):\n%s", code, out)
 	}
 	prepareEvidence(t, append(append([]string{}, second...), "--max-store-bytes", strconv.FormatUint(next, 10)))

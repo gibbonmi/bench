@@ -184,9 +184,16 @@ func TestEvidenceReadGrammar(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
 	identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
 	cursor := "v1." + strings.TrimPrefix(identity, "sha256:") + ".m.0.0"
-	for _, form := range [][]string{{"evidence", identity}, {"evidence", identity, "--cursor", cursor}, {"evidence", "--cursor", cursor, identity}} {
-		if out, code := preflight.Command(form); code != 0 || !strings.HasPrefix(out, "page[1]") {
-			t.Fatalf("accepted form %v = (%d):\n%s", form, code, out)
+	for _, test := range []struct {
+		form   []string
+		header string
+	}{
+		{[]string{"evidence", identity}, "evidence_summary[1]"},
+		{[]string{"evidence", identity, "--cursor", cursor}, "page[1]"},
+		{[]string{"evidence", "--cursor", cursor, identity}, "page[1]"},
+	} {
+		if out, code := preflight.Command(test.form); code != 0 || !strings.HasPrefix(out, test.header) {
+			t.Fatalf("accepted form %v = (%d):\n%s", test.form, code, out)
 		}
 	}
 	for _, test := range []struct {

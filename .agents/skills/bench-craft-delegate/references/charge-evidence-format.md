@@ -80,6 +80,7 @@ A manifest fragment is trustworthy only after the complete manifest matches the 
 
 A cursor has the form `v1.<hex-id>.<m|s>.<source-ordinal>.<page-index>`.
 The manifest stream uses source ordinal zero, and every number is a canonical unsigned decimal.
+A read without a cursor or a source returns only the `evidence_summary` row, and its successor reads the first manifest fragment.
 The default stream returns the manifest, then every source page in manifest order.
 Each response names its exact successor command, and the last response has an empty successor.
 A final response does not prove that the consumer received the earlier responses.
@@ -87,6 +88,7 @@ A final response does not prove that the consumer received the earlier responses
 | Response | Ordered fields | Rows |
 | --- | --- | --- |
 | `prepared` | `evidence` (string), `mode` (string), `base` (string), `source_tip` (string), `assignment` (string), `selection` (string), `metadata` (string), `sources` (integer), `pages` (integer), `manifest_bytes` (integer), `response_complete` (boolean), `delivery` (string), `next` (string) | One row. Selection is `manifest:selection`, metadata is the first source, and delivery is `unverified`. |
+| `evidence_summary` | `evidence` (string), `sources` (integer), `pages` (integer), `manifest_bytes` (integer), `source_bytes` (integer), `next` (string) | One row for a read without a cursor or a source. It holds no content, and `next` reads the first manifest fragment. |
 | `page` | `evidence` (string), `stream` (string), `source` (string), `index` (integer), `offset` (integer), `bytes` (integer), `total` (integer), `sha256` (string), `content` (string), `response_complete` (boolean), `stream_end` (boolean), `next` (string) | One fragment. A `manifest` fragment has an empty source; a `source` page names its source. |
 | `verified` | `evidence` (string), `manifest_verified` (boolean), `pages_verified` (integer), `sources_verified` (integer), `delivery` (string) | One row after every page and every source digest verified. Delivery stays `unverified`. |
 | `current` | `evidence` (string), `assignment` (string), `base` (string), `source_tip` (string), `current` (boolean), `delivery` (string) | One row naming the current assignment binding. Delivery stays `unverified`. |
