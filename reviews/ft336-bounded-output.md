@@ -820,6 +820,65 @@ Each axis found 0 findings. Standards confirmed R55 and R56, and Spec confirmed 
 
 The R52 and R53 spec sentence stays open to reviewer veto.
 
+## BO-C7 author evidence
+
+Ticket 10 had a fresh `bench-writer` author, `claude:bench-writer/bo-t10-author`, on opus at high effort, with a cap of 3 attempts. The chunk base is `c0fb9c3c`, the BO-C6 record commit. By user direction, the ticket authored in the sibling worktree `ft336-t10-opus`, and the orchestrator merged it at `b69070e4`. The build preflight at the merge was green.
+
+The author ran the two ticket checks at the chunk tip `b69070e4`, and each check passed. The author reported five deviations for reviewer veto. The registry spells the byte value `4 << 10`, and the rune cut-back reads only the kept prefix. An unterminated head line gets a newline before the spill line. `cut_lines` counts only printed lines, and BO74 reads the spill file as a prefix.
+
+## BO-C7 chunk review, round 1
+
+The frozen pair is base `c0fb9c3ccb95b7c8674a94537f3591170e85a5cd` and tip `b69070e42c97c24cd8452a637146ec539d095860`. The shared evidence is `sha256:c2085724373bb073c1a51b3b0a918a75e7bcdb21723eae1f85121f1b61f21534`. Each axis ran in a fresh `bench-reviewer` session on opus at medium effort. Only the Coverage axis ran probes, and it left the tree clean.
+
+The raw finding count is 10: Standards 4, Spec 2, and Coverage 4. A Fable delegate at high effort decided the three `ask-user` findings, by user direction. Two findings are `no-op`, so 8 repair targets remain. The Spec axis accepted deviations 1, 3, 4, and 5 with a veto flag.
+
+## Standards
+
+Findings: 4. The worst issue is a registry spelling that avoids a guard match.
+
+- `internal/bounds/bounds.go:75` spells `4 << 10`, because the text-keyed guard matched an unrelated `io.LimitReader(f, 4096)` in `internal/gate/subject.go:441`. That read limit is a bound that the registry does not own. Target R59. `ask-user`.
+- The comment at `internal/bounds/bounds.go:72-73` restates the value. Target R60. `auto-fix`.
+- The registry comment states the line-cut derivation, and the response owner owns that derivation. Target R61. `auto-fix`.
+- `internal/responsebound/lines.go:107` and `:118` repeat one append call. Target R62. `no-op`.
+
+The BO64 sweep of the added lines found no 4096 and no 409 outside `internal/bounds`.
+
+## Spec
+
+Findings: 2. The worst issue is a rune cut-back that differs from spec line 225 for ill-formed bytes.
+
+- After 407 ASCII bytes, the bytes `F0 9F` and a later `x` print 407 bytes, and spec line 225 states 409. The owner keeps no byte past the cut, so it cannot see the later byte. Target R63. `ask-user`.
+- Ticket 10 marks two existing paths `(new)`. Target R64. `no-op`.
+
+## Coverage
+
+Findings: 4. The worst issue is a rune window that one test covers at a single offset.
+
+- A swap that scans only the last kept byte stayed silent. No case puts 2 or 3 bytes of a rune across the cut. Target R65. `auto-fix`.
+- A swap of `>` to `>=` in the cut predicate stayed silent. No case has a line of exactly 409 content bytes. Target R66. `auto-fix`.
+- A buffer cap of 4 times the cut stayed silent. BO76 measures one long line, and 10 long lines are necessary to catch the cap. Target R67. `auto-fix`.
+- The ill-formed input of R63 has no test. Target R68. `ask-user`.
+
+Two probes of the byte boundary bit in both directions.
+
+## Fable decisions
+
+- R59: spell the registry value `4096`, and give the `subject.go` read limit its own registry entry. The read goes through `bounds.Read`. The fence of ticket 10 grows by `internal/gate/subject.go`. BO64 does not change.
+- R63 and R68: amend spec line 225 to the implemented rule. An incomplete rune start at the end of the kept prefix cuts back to that start. The owner reads no byte past the cut. BO65 has the same result under both rules, so no acceptance row changes.
+
+## BO-C7 repair routing
+
+This is cycle 1 of the two repair cycles for chunk BO-C7. The spec amendment and the fence expansion are plan clarifications, and they stay open to reviewer veto.
+
+| Target | Owner | Repair |
+|---|---|---|
+| R59 | ticket 10 | Spell `4096`, and add a registry entry for the `subject.go` read limit. |
+| R60, R61 | ticket 10 | Remove the value restatement and the line-cut derivation from the registry comment. |
+| R63, R68 | orchestrator | Amend spec line 225 and the ticket 10 text to the implemented rule. |
+| R65 | ticket 10 | Add rune cases that put 2 and 3 bytes of a rune across the cut. |
+| R66 | ticket 10 | Add a 409 and 410 content-byte pair. |
+| R67 | ticket 10 | Add a spill with 10 or more long lines to the retained-memory row. |
+
 ```bench-review-record
 {
   "version": 2,
@@ -3289,6 +3348,135 @@ The R52 and R53 spec sentence stays open to reviewer veto.
           "supersedes": [
             "bo-c6-r2-coverage"
           ]
+        }
+      ]
+    },
+    {
+      "id": "BO-C7",
+      "base": "c0fb9c3ccb95b7c8674a94537f3591170e85a5cd",
+      "tip": "b69070e42c97c24cd8452a637146ec539d095860",
+      "plan_digest": "sha256:57349fe6cbe7d41fcbf6446c1d19489f64e8958670398eafeb73ad13afa5136d",
+      "source_digest": "200c379ae16af00a0b7e12af5c3833056f972c10",
+      "acceptance_rows": [
+        "BO63",
+        "BO64",
+        "BO65",
+        "BO73",
+        "BO74",
+        "BO75",
+        "BO76"
+      ],
+      "verification": [
+        {
+          "id": "bo-c7-10-owner-r1",
+          "performer": "claude:bench-writer/bo-t10-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "200c379ae16af00a0b7e12af5c3833056f972c10",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t10-author/10-owner@b69070e4",
+            "digest": "sha256:d9329d3212ab67ae0bf5d9f08ecf442d7c46d42fe87ad86ada8f0b971936ca07",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,145\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "10-owner",
+          "command": "bench test --package ./internal/responsebound",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c7-10-system-r1",
+          "performer": "claude:bench-writer/bo-t10-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "200c379ae16af00a0b7e12af5c3833056f972c10",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t10-author/10-system@b69070e4",
+            "digest": "sha256:d970b1624a46f0fb2093b333e4e5b4684ddc0a844489d0795345c4876197345a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,44242\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "10-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "bo-c7-r1-standards",
+          "performer": "claude:bench-reviewer/bo-c7-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "200c379ae16af00a0b7e12af5c3833056f972c10",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c7-standards@b69070e4",
+            "digest": "sha256:beeebdbc36d7b130177cb309cf05093fb410a6026b66e476fe4a402e5713855f",
+            "excerpt": "Standards BO-C7: 4 findings (1 ask-user). The `4 << 10` spelling works around a text-keyed guard false positive without reporting it. BO64 sweep found 0 hits. `size.go` agrees with the owner."
+          },
+          "axis": "Standards",
+          "base": "c0fb9c3ccb95b7c8674a94537f3591170e85a5cd",
+          "tip": "b69070e42c97c24cd8452a637146ec539d095860",
+          "finding_ids": [
+            "R59",
+            "R60",
+            "R61",
+            "R62"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bo-c7-r1-spec",
+          "performer": "claude:bench-reviewer/bo-c7-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "200c379ae16af00a0b7e12af5c3833056f972c10",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c7-spec@b69070e4",
+            "digest": "sha256:0c2acf82981efa3d3c0c58686bb20f883d86bca4ce259447faa3f9e72f1cb687",
+            "excerpt": "BO-C7 Spec: 2 findings (F1 ask-user: rune cut-back on ill-formed bytes diverges from spec line 225; F2 no-op: stale \"(new)\" markers in ticket 10); BO64 sweep clean; deviations 1, 3, 4, 5 accepted."
+          },
+          "axis": "Spec",
+          "base": "c0fb9c3ccb95b7c8674a94537f3591170e85a5cd",
+          "tip": "b69070e42c97c24cd8452a637146ec539d095860",
+          "finding_ids": [
+            "R63",
+            "R64"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bo-c7-r1-coverage",
+          "performer": "claude:bench-reviewer/bo-c7-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "200c379ae16af00a0b7e12af5c3833056f972c10",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c7-coverage@b69070e4",
+            "digest": "sha256:7ef6bcb05d58c4f4cfddcef18e73d85bf36ab98b658a851cff2f5f55414864b4",
+            "excerpt": "Coverage BO-C7: 4 findings (3 auto-fix, 1 ask-user); byte boundary bit both ways; the rune window, the 409 cut predicate, and the per-line memory cap stay silent under probe."
+          },
+          "axis": "Coverage",
+          "base": "c0fb9c3ccb95b7c8674a94537f3591170e85a5cd",
+          "tip": "b69070e42c97c24cd8452a637146ec539d095860",
+          "finding_ids": [
+            "R65",
+            "R66",
+            "R67",
+            "R68"
+          ],
+          "supersedes": []
         }
       ]
     }
