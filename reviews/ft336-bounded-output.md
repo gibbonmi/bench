@@ -800,11 +800,31 @@ Advice, with no finding ID:
 
 R55, R56, and R57 go to cycle 2, the last repair cycle of chunk BO-C6, in a fresh repair session for ticket 9.
 
+## BO-C6 repair evidence, cycle 2
+
+The plan commit `7a38f3c6` fences a shared checkout helper for ticket 9, and it adds one fresh repair session. The session `claude:bench-writer/bo-t9-repair-c2` ran on opus at low effort and committed `980ede25`. It made these repairs:
+
+- R55: `responseboundtest.AssignmentCheckout` is the one linked-worktree fixture, and both callers use it.
+- R56: `AssignmentActive` reads the ledger through `assignmentByID`.
+- R57: one lazy `sync.OnceValue` root lookup serves the owner and the record, and the `size.go` comment now states when the two scopes split.
+
+A `bench probe` that makes the root lookup eager bit the new row `TestDispatcherSpillAfterTreeRemovalTakesNoRepository`, because the spill went to an orphan repo key. The charged probe for R56 stayed silent, because a released assignment leaves the ledger. So the session added `TestRecordOutputSkipsInactiveAssignment` for a cleanup-pending assignment, and the same probe bit that row. Each restore reads `yes`.
+
+The session ran the three ticket checks at `980ede25`, and each check passed. The package doc of `responseboundtest` is outside the fence, and a `bench idea` entry parks it.
+
+## BO-C6 chunk review, round 3, and close
+
+Round 3 confirms cycle 2 at the final tip. The frozen pair is base `27f725a17ef4d73d7ee76d640ab0cbc99b6c563f` and tip `980ede255545af70a4335840373246551a4c223f`. The shared evidence is `sha256:bae0912d36a6e4fd0cf89139190b554874aea0d7475689131cb399f7d2ea4ae2`. Each axis ran in a new `bench-reviewer` session on opus at medium effort.
+
+Each axis found 0 findings. Standards confirmed R55 and R56, and Spec confirmed R57. Coverage found that the two new rows pin what they claim. Chunk BO-C6 used both of its two repair cycles. It used no hardening cycle.
+
+The R52 and R53 spec sentence stays open to reviewer veto.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ft336-bounded-output/spec.md",
-  "plan_digest": "sha256:86a5deb6d7b3182707910017f6b49253faf8599f01219a9887291a6fec3a28a1",
+  "plan_digest": "sha256:57349fe6cbe7d41fcbf6446c1d19489f64e8958670398eafeb73ad13afa5136d",
   "implementation_session": "",
   "chunks": [
     {
@@ -2885,9 +2905,9 @@ R55, R56, and R57 go to cycle 2, the last repair cycle of chunk BO-C6, in a fres
     {
       "id": "BO-C6",
       "base": "27f725a17ef4d73d7ee76d640ab0cbc99b6c563f",
-      "tip": "0c3b7bb1eac93ba02bf9d91c838b6988691fd0a9",
-      "plan_digest": "sha256:86a5deb6d7b3182707910017f6b49253faf8599f01219a9887291a6fec3a28a1",
-      "source_digest": "715cb646df101dc0c96f9a65a2ec09527addbbb3",
+      "tip": "980ede255545af70a4335840373246551a4c223f",
+      "plan_digest": "sha256:57349fe6cbe7d41fcbf6446c1d19489f64e8958670398eafeb73ad13afa5136d",
+      "source_digest": "2d56b35690428deac07e79f5fdce53c6c2c24553",
       "acceptance_rows": [
         "BO57",
         "BO58",
@@ -3000,6 +3020,60 @@ R55, R56, and R57 go to cycle 2, the last repair cycle of chunk BO-C6, in a fres
             "ref": "claude:agent/bo-t9-repair-c1/9-cmd@0c3b7bb1",
             "digest": "sha256:a6be8e2c6126888927d00ffa4496ccfd3cbc7602a406e4ae7b778ff0c4329cfc",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13684\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "9-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c6-9-census-final",
+          "performer": "claude:bench-writer/bo-t9-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "2d56b35690428deac07e79f5fdce53c6c2c24553",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t9-repair-c2/9-census@980ede25",
+            "digest": "sha256:2f1689628341daa9f2ecc99d55e7b33c2592e574fdd37784618d371c4c0830db",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/census,pass,117\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "9-census",
+          "command": "bench test --package ./internal/census",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c6-9-worktree-final",
+          "performer": "claude:bench-writer/bo-t9-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "2d56b35690428deac07e79f5fdce53c6c2c24553",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t9-repair-c2/9-worktree@980ede25",
+            "digest": "sha256:db92fb1eab2c615d3935f1855d42d3019724b7e5b21e0c5c1b8200861cd345c7",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,49349\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket3746040086/001/.bench-home/worktrees/001-1992850849/0b5b87efdf691c2fa0e626fd42574eb1-dc5a638583c1d1f2c1a73ae046015212: bind:… (257 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket3864354191/001/.bench-home/worktrees/001-1706554809/4bad5cdf578a8ae4d528f1cf88bad8f4-94c667a8651234041848c28e0bf80dc… (270 bytes)\""
+          },
+          "requirement": "9-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c6-9-cmd-final",
+          "performer": "claude:bench-writer/bo-t9-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "2d56b35690428deac07e79f5fdce53c6c2c24553",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t9-repair-c2/9-cmd@980ede25",
+            "digest": "sha256:e9d3b6e561b6b31dea1743fce78378ed4639de7aa0274d3c1a0fe6b765af9b67",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,8705\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "9-cmd",
           "command": "bench test --package ./cmd/bench",
@@ -3148,6 +3222,72 @@ R55, R56, and R57 go to cycle 2, the last repair cycle of chunk BO-C6, in a fres
           "finding_ids": [],
           "supersedes": [
             "bo-c6-r1-coverage"
+          ]
+        },
+        {
+          "id": "bo-c6-r3-standards",
+          "performer": "claude:bench-reviewer/bo-c6-standards-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2d56b35690428deac07e79f5fdce53c6c2c24553",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c6-standards-3@980ede25",
+            "digest": "sha256:5bce05ba86ca0262515f04f16703b36cb691872df25a9068d7d61a23bebea9ce",
+            "excerpt": "Standards BO-C6 r3: 0 new findings in 0c3b7bb1..980ede25; R55 (one shared AssignmentCheckout) and R56 (AssignmentActive composes assignmentByID) confirmed."
+          },
+          "axis": "Standards",
+          "base": "27f725a17ef4d73d7ee76d640ab0cbc99b6c563f",
+          "tip": "980ede255545af70a4335840373246551a4c223f",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c6-r2-standards"
+          ]
+        },
+        {
+          "id": "bo-c6-r3-spec",
+          "performer": "claude:bench-reviewer/bo-c6-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2d56b35690428deac07e79f5fdce53c6c2c24553",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c6-spec-3@980ede25",
+            "digest": "sha256:8eec54e8151c20a913f520bd69c1f0fb6c9088f78df3ce3de7c8fa0089bfc9e2",
+            "excerpt": "BO-C6 round 3 Spec: 0 new; R57 confirmed (lazy shared root sends a post-removal spill to none/primary, pinned); plan and coverage valid."
+          },
+          "axis": "Spec",
+          "base": "27f725a17ef4d73d7ee76d640ab0cbc99b6c563f",
+          "tip": "980ede255545af70a4335840373246551a4c223f",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c6-r2-spec"
+          ]
+        },
+        {
+          "id": "bo-c6-r3-coverage",
+          "performer": "claude:bench-reviewer/bo-c6-coverage-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2d56b35690428deac07e79f5fdce53c6c2c24553",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c6-coverage-3@980ede25",
+            "digest": "sha256:115cec9a7e6b70b66e08e10b283450b27ab4253a12a65b86d38f82fe58de2ec5",
+            "excerpt": "Coverage round 3 on BO-C6: 0 new findings; the lazy-root and cleanup-pending rows each close a gap a mutation reaches, and the shared AssignmentCheckout keeps every caller's assertions."
+          },
+          "axis": "Coverage",
+          "base": "27f725a17ef4d73d7ee76d640ab0cbc99b6c563f",
+          "tip": "980ede255545af70a4335840373246551a4c223f",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c6-r2-coverage"
           ]
         }
       ]
@@ -3727,6 +3867,33 @@ R55, R56, and R57 go to cycle 2, the last repair cycle of chunk BO-C6, in a fres
     {
       "from": "sha256:785cd9054b7b5d9e7f7473f6961ca161419bc3b55bd7198bc49b16a525cba333",
       "to": "sha256:86a5deb6d7b3182707910017f6b49253faf8599f01219a9887291a6fec3a28a1",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:86a5deb6d7b3182707910017f6b49253faf8599f01219a9887291a6fec3a28a1",
+      "to": "sha256:57349fe6cbe7d41fcbf6446c1d19489f64e8958670398eafeb73ad13afa5136d",
       "chunk_ids": {
         "BO-C1": [
           "BO-C1"
