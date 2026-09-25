@@ -54,16 +54,16 @@ func recordWith(command, root, home string, now time.Time, resolver benchguard.R
 	return write(Dir(home, root), id, composeRecord(now.UTC().Format(time.RFC3339), head))
 }
 
-// recordSeparator divides a record line's two fields.
+// recordSeparator divides the fields of a record line.
 const recordSeparator = "\t"
 
-// composeRecord renders one record line: the time, the separator, the head, and the
-// newline that closes the record. The head passes through sanitize.Controls here,
-// because a raw tab or newline in it would forge a second field or a second record.
-// This function and parseRecord are the one source of the line's layout, so no other
-// call site states where the head sits.
-func composeRecord(timestamp, head string) string {
-	return timestamp + recordSeparator + sanitize.Controls(head) + "\n"
+// composeRecord renders one record line: the time, the separator, the head, each later
+// field after its own separator, and the newline that closes the record. The head passes
+// through sanitize.Controls here, because a raw tab or newline in it would forge a second
+// field or a second record. This function and parseRecord are the one source of the
+// line's layout, so no other call site states where the head sits.
+func composeRecord(timestamp, head string, later ...string) string {
+	return strings.Join(append([]string{timestamp, sanitize.Controls(head)}, later...), recordSeparator) + "\n"
 }
 
 // parseRecord returns the head one record line carries. The head is the second field,
@@ -206,17 +206,17 @@ func resolvedHead(words []string) string {
 	return head
 }
 
-// write appends one line to the assignment's record file. The directory is never
-// followed through a symlink, because a redirected census writes outside the Bench
+// write appends one line to the named record file of an assignment. The directory is
+// never followed through a symlink, because a redirected census writes outside the Bench
 // home. The single append write keeps concurrent writers' lines intact.
-func write(dir, id, line string) error {
+func write(dir, name, line string) error {
 	if info, err := os.Lstat(dir); err == nil && info.Mode()&os.ModeSymlink != 0 {
 		return fmt.Errorf("census directory %s is a symlink", dir)
 	}
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return fmt.Errorf("create census directory: %w", err)
 	}
-	file, err := os.OpenFile(filepath.Join(dir, id), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
+	file, err := os.OpenFile(filepath.Join(dir, name), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return fmt.Errorf("open census record: %w", err)
 	}
@@ -349,17 +349,19 @@ func recordLines(text string) []string {
 	return strings.Split(strings.TrimSuffix(text, "\n"), "\n")
 }
 
-// Drop removes one assignment's record file, which the assignment's retirement calls.
-// An absent file is not an error, so an assignment that made no raw call and a
-// retirement that runs twice both complete. An identifier that is not an assignment
-// id is refused rather than composed into a path, because the removal is
+// Drop removes one assignment's raw-call file and output file, which the assignment's
+// retirement calls. An absent file is not an error, so an assignment that made no call
+// and a retirement that runs twice both complete. An identifier that is not an
+// assignment id is refused rather than composed into a path, because the removal is
 // unrecoverable.
 func Drop(home, root, assignment string) error {
 	if !poolkey.IsAssignmentID(assignment) {
 		return fmt.Errorf("census assignment id is malformed: %s", sanitize.Controls(assignment))
 	}
-	if err := os.Remove(filepath.Join(Dir(home, root), assignment)); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("remove census record: %w", err)
+	for _, name := range []string{assignment, assignment + outputSuffix} {
+		if err := os.Remove(filepath.Join(Dir(home, root), name)); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("remove census record: %w", err)
+		}
 	}
 	return nil
 }

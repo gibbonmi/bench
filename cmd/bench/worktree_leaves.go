@@ -17,7 +17,9 @@ import (
 // refuses it as an unknown argument. `shell` has no grammar constant at all.
 var worktreeLeaves = []commandLeaf{
 	{Name: "exec", Grammar: usage.WorktreeExec, Root: rootRequired, Bound: boundResponse, Run: func(c Command, root string, args []string) int {
-		return worktree.ExecCommand(root, worktree.Home(), args, c.Stdin, c.Stdout, c.Stderr)
+		exit, assignment := worktree.ExecCommandResolving(root, worktree.Home(), args, c.Stdin, c.Stdout, c.Stderr)
+		c.reportAssignment(assignment)
+		return exit
 	}},
 	{Name: "shell", Root: rootNone, Bound: boundExempt(boundReasonTerminal), Run: func(c Command, _ string, args []string) int {
 		return worktree.Subshell(worktree.Home(), args, c.Stdin, c.Stdout, c.Stderr)
