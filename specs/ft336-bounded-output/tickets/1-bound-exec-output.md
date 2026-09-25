@@ -1,7 +1,7 @@
 # 1. Bound the exec child output through one response owner
 
 Blocked by: none
-Writes: internal/bounds/bounds.go, tests/canary/package-core-guard/bounds-duplicate-owner, internal/responsebound/ (new), cmd/bench/main.go, tests/canary/package-core-guard/unrouted-subcommand, cmd/bench/command_registry.go, cmd/bench/worktree_leaves.go, internal/worktree/exec.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, cmd/bench/response_bound_test.go (new), internal/systemtest/exec_bound_test.go (new)
+Writes: internal/bounds/bounds.go, tests/canary/package-core-guard/bounds-duplicate-owner, internal/responsebound/ (new), cmd/bench/main.go, tests/canary/package-core-guard/unrouted-subcommand, cmd/bench/command_registry.go, cmd/bench/worktree_leaves.go, internal/worktree/exec.go, internal/racetests/racetests.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, cmd/bench/response_bound_test.go (new), internal/systemtest/exec_bound_test.go (new)
 Covers: BO1, BO2, BO3, BO4, BO5, BO6, BO7, BO14, BO15, BO18, BO19, BO20, BO21, BO22, BO23, BO24, BO25, BO26, BO27, BO28, BO29, BO31, BO68, BO69
 
 ## What to build
@@ -14,7 +14,7 @@ Give each public registry entry in `cmd/bench` a bound disposition. A leaf's dis
 
 `Command.Run` gives a bounded command one owner for its stdout and its stderr. It finishes the owner after the command returns, and it returns the command's exit code. A registry test refuses a public entry with no disposition.
 
-`bench worktree exec` then passes its child's streams through the owner, because the dispatcher hands exec the owner's writers. Exec sets a wait delay on the child command, so a descendant that holds a pipe open cannot hang exec after the child exits. The interrupt path uses the same delay. Run the exec system rows under the race detector.
+`bench worktree exec` then passes its child's streams through the owner, because the dispatcher hands exec the owner's writers. Exec sets a wait delay on the child command, so a descendant that holds a pipe open cannot hang exec after the child exits. The interrupt path uses the same delay. The wait-delay value sits in the policy registry of `internal/bounds`. Register the owner's concurrent-writes test in `internal/racetests/racetests.go`, so the race phase runs it.
 
 ## Acceptance
 

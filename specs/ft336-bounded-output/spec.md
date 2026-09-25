@@ -6,7 +6,7 @@ Roadmap: FT336
 
 Decision source: reviewer-confirmed current conversation, 2026-09-24, on the named reviewed artifact `roadmap/FT336.md`.
 
-Verification log: pending
+Verification log: 2 iteration(s) to accept — Opus/high iteration 1 returned 4 blocking and 10 non-blocking findings. Iteration 2 closed all 14 and accepted, and the author folded its 3 non-blocking notes. A pre-draft Fable/high consultation changed the help exemption, the spill-failure fallback, and the exec owner rule.
 
 ## Problem
 
@@ -152,7 +152,7 @@ A line ends at a newline byte. A final line without a newline counts as one line
 
 ### The spill store
 
-The spill store sits under the Bench home at `responses/<repo-key>/<scope>/`. The repo key is the census key of the repository. The scope is the assignment id when the process runs in an assignment worktree, and `primary` otherwise. A verb that retires an assignment writes its spill to the `primary` scope. So the retirement cannot remove a spill that is still open. A process outside any repository uses the repo key `none`.
+The spill store sits under the Bench home at `responses/<repo-key>/<scope>/`. The repo key is the census key of the repository. The scope is the assignment id when the process runs in an assignment worktree, and `primary` otherwise. A retiring verb (`bench worktree release`, `clean`, `reclaim`, or `land`) writes its spill to the `primary` scope. So the retirement cannot remove a spill that is still open. A process outside any repository uses the repo key `none`.
 
 The owner creates each directory with mode 0700 and never follows a symlink. It creates each file with an exclusive create at mode 0600. A generated name selects the file, so no operand or output byte forms a path. The retirement path that drops an assignment's census records also removes that assignment's spill directory. The `primary` and `none` scopes keep the newest 64 files, and the owner removes older files after each new spill.
 
@@ -174,7 +174,7 @@ The exempt set is closed:
 
 Each process owns one owner. `bench worktree exec` gives its child the owner's two writers, so Go copies the child's output through pipes into the owner. A Bench verb inside the child bounds its own output in its own process. Exec's outer bound then applies to the child's complete output.
 
-A descendant of the child can keep a pipe open after the child exits. So exec sets a wait delay on the child command. Exec then returns at the child's own exit with the child's exit code, and the owner keeps the output that arrived before the pipes closed. The interrupt path uses the same delay.
+A descendant of the child can keep a pipe open after the child exits. So exec sets a wait delay on the child command, and the policy registry of `internal/bounds` holds that delay. Exec then returns at the child's own exit with the child's exit code, and the owner keeps the output that arrived before the pipes closed. The interrupt path uses the same delay.
 
 A leaf's disposition sits on its row in the leaf family table, because that row is the single declaration of the leaf. The first ticket declares only the `worktree exec` leaf bounded. Every other public entry declares a transitional `pending` disposition. The second ticket bounds every public entry and removes the `pending` value. This order is an expand, then a contract.
 
@@ -213,7 +213,7 @@ The byte-bound ticket starts only after the queries ticket-4 measurement report 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | BO-C1 / `1-bound-exec-output.md` | The response owner exists, and it bounds every `bench worktree exec` child. | BO1, BO2, BO3, BO4, BO5, BO6, BO7, BO14, BO15, BO18, BO19, BO20, BO21, BO22, BO23, BO24, BO25, BO26, BO27, BO28, BO29, BO31, BO68, BO69 | `bench test --package ./internal/responsebound`, `bench test --package ./cmd/bench`, `bench test --check system` | yes |
-| BO-C2 / `2-bound-every-public-response.md`, `3-retire-response-spills.md` | Every public response obeys the bound, and the spills follow the assignment lifecycle. | BO8, BO9, BO10, BO11, BO12, BO13, BO16, BO17, BO30, BO66, BO70 | `bench test --package ./cmd/bench`, `bench test --package ./internal/worktree`, `bench test --package ./internal/responsebound`, `bench test --check system` | yes |
+| BO-C2 / `2-bound-every-public-response.md`, `3-retire-response-spills.md` | Every public response obeys the bound, and the spills follow the assignment lifecycle. | BO8, BO9, BO10, BO11, BO12, BO13, BO16, BO17, BO30, BO66, BO70, BO72 | `bench test --package ./cmd/bench`, `bench test --package ./internal/worktree`, `bench test --package ./internal/responsebound`, `bench test --check system` | yes |
 | BO-C3 / `4-slot-worktree-list-actions.md`, `5-summarize-green-preflight.md` | The list prints slot actions, and a green preflight prints one line. | BO32, BO33, BO34, BO35, BO36, BO37, BO38, BO39, BO40, BO41, BO67 | `bench test --package ./internal/worktree`, `bench test --package ./internal/preflight`, `bench test --package ./internal/anchors`, `bench test --package ./internal/consumers` | no |
 | BO-C4 / `6-summarize-evidence-default.md`, `7-export-evidence-sources.md` | The evidence default prints a summary, and `--to` exports verified sources. | BO42, BO43, BO44, BO45, BO46, BO47, BO48, BO49, BO50 | `bench test --package ./internal/preflight/evidencecmd`, `bench test --package ./internal/chargeevidence` | no |
 | BO-C5 / `8-chain-commit-preflight.md` | One commit call also builds the worktree and runs build preflight. | BO51, BO52, BO53, BO54, BO55, BO56, BO71 | `bench test --package ./cmd/bench`, `bench test --package ./internal/commit` | no |
@@ -285,6 +285,7 @@ Ticket 2 bounds every public response. So each test that reads more than 10 line
 | BO68 | 26 | After the spill starts, the owner holds only the head lines and a ring of the last 5 lines in memory | review-owned: code reading at the BO-C1 review, with a 64 MiB exec child of short lines in planned TestExecStreamsLargeChild in internal/systemtest | An owner that buffers the complete output grows with the child |
 | BO69 | 64 | `sh -c 'sleep 30 & echo up'` under exec returns within the wait delay with the child's exit code and the line `up` | planned TestExecReturnsAtChildExit in internal/systemtest | An exec with no wait delay blocks until the background process exits |
 | BO70 | 65 | `release-preflight` through `Command.Run` prints a 30-line response in full | planned TestShipTierStaysComplete in cmd/bench | A bounded ship-tier command spills its evidence on a discarded runner |
+| BO72 | 11 | A `release` of the assignment that is its own scope keeps its over-bound spill in the `primary` scope | planned TestRetiringVerbSpillsToPrimary in internal/worktree | A retiring verb that spills to its own scope deletes the spill that it names |
 | BO71 | 66 | A commit that exits 3 calls no build and prints `commit-chain{commit=<sha>,build=skipped,preflight=skipped}` at exit 3 | planned TestCommitChainStopsAtRemainder in cmd/bench | A chain that ignores exit 3 builds an unreconciled checkout |
 | BO31 | 27 | An exec grammar refusal prints its `usage: bench worktree exec` line unchanged | existing TestWorktreeExecGrammar tests in internal/worktree, run unchanged | An owner that rewrites refusals breaks the documented exit-2 rule |
 | BO32 | 28 | A list of 3 active rows prints `help[2]{cmd,why}:` with `bench worktree path <target>` and `bench worktree exec <target> -- <command>` and no active id in a help row | planned TestListActiveRowsUseTargetSlot in internal/worktree | Per-row help prints 6 rows and names each id |
@@ -358,6 +359,7 @@ The shell CLI hostile-input profile applies to the owner and to `--to`. The walk
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/systemtest/`
 - `internal/systemtest/exec_bound_test.go`
+- `internal/racetests/racetests.go`
 - `internal/worktree/lifecycle.go`
 - `internal/worktree/land.go`
 - `internal/worktree/list.go`
