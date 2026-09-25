@@ -1,16 +1,11 @@
 package census
 
 import (
-	"cmp"
 	"fmt"
-	"maps"
-	"slices"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/poolkey"
-	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 // outputSuffix names an assignment's output record file beside its raw-call file. The
@@ -37,38 +32,48 @@ type Output struct {
 // that is not an assignment id is refused rather than composed into a path. The caller
 // ignores the error, so a failed write never changes a response or its exit code.
 func RecordOutput(home, root, assignment string, output Output, now time.Time) error {
-	if !poolkey.IsAssignmentID(assignment) {
-		return fmt.Errorf("census assignment id is malformed: %s", sanitize.Controls(assignment))
+	if err := checkAssignmentID(assignment); err != nil {
+		return err
 	}
 	return write(Dir(home, root), assignment+outputSuffix, composeOutput(now.UTC().Format(time.RFC3339), output))
 }
 
-// composeOutput renders one output record line. The time and the head keep the raw-call
-// layout, and the counts and the disposition follow them. This function and parseOutput
-// are the one source of the output line's layout.
+// The fields of an output record after its time and its head, in their order. The count
+// is the last value, so the writer and the reader share one statement of the layout.
+const (
+	outputLinesField = iota
+	outputBytesField
+	outputDispositionField
+	outputLaterFields
+)
+
+// composeOutput renders one output record line through composeRecord, which owns the time
+// and the head. This function and parseOutput place the later fields by the constants
+// above, and no other call site states where a field sits.
 func composeOutput(timestamp string, output Output) string {
-	disposition := outputInline
+	later := make([]string, outputLaterFields)
+	later[outputLinesField] = strconv.Itoa(output.Lines)
+	later[outputBytesField] = strconv.FormatInt(output.Bytes, 10)
+	later[outputDispositionField] = outputInline
 	if output.Spilled {
-		disposition = outputSpilled
+		later[outputDispositionField] = outputSpilled
 	}
-	return composeRecord(timestamp, output.Head, strconv.Itoa(output.Lines), strconv.FormatInt(output.Bytes, 10), disposition)
+	return composeRecord(timestamp, output.Head, later...)
 }
 
-// outputFields is the field count of one output record line.
-const outputFields = 5
-
-// parseOutput returns the head and the byte count one output record line carries. A line
-// of another shape, which only a foreign writer makes, carries neither.
+// parseOutput returns the head and the byte count one output record line carries. The
+// line splits through splitRecord, the raw-call codec. A line of another shape, which
+// only a foreign writer makes, carries neither.
 func parseOutput(line string) (string, int64, bool) {
-	fields := strings.Split(line, recordSeparator)
-	if len(fields) != outputFields || fields[1] == "" {
+	_, head, later, ok := splitRecord(line)
+	if !ok || len(later) != outputLaterFields {
 		return "", 0, false
 	}
-	bytes, err := strconv.ParseInt(fields[3], 10, 64)
+	bytes, err := strconv.ParseInt(later[outputBytesField], 10, 64)
 	if err != nil || bytes < 0 {
 		return "", 0, false
 	}
-	return fields[1], bytes, true
+	return head, bytes, true
 }
 
 // OutputBreakdown renders one assignment's output records per verb head, in the shape
@@ -79,29 +84,6 @@ func OutputBreakdown(home, root, assignment string) string {
 	if !poolkey.IsAssignmentID(assignment) {
 		return ""
 	}
-	text, ok := readRecords(Dir(home, root), assignment+outputSuffix)
-	if !ok {
-		return ""
-	}
-	calls, sizes := map[string]int{}, map[string]int64{}
-	for _, line := range recordLines(text) {
-		head, bytes, ok := parseOutput(line)
-		if !ok {
-			continue
-		}
-		calls[head]++
-		sizes[head] += bytes
-	}
-	names := slices.Collect(maps.Keys(calls))
-	slices.SortFunc(names, func(a, b string) int {
-		if sizes[a] != sizes[b] {
-			return cmp.Compare(sizes[b], sizes[a])
-		}
-		return strings.Compare(a, b)
-	})
-	parts := make([]string, 0, len(names))
-	for _, name := range names {
-		parts = append(parts, fmt.Sprintf("%s=%d/%d", escapeDelimiters(sanitize.Controls(name)), calls[name], sizes[name]))
-	}
-	return strings.Join(parts, ",")
+	calls, sizes := tally(Dir(home, root), assignment+outputSuffix, parseOutput)
+	return renderBreakdown(sizes, func(head string) string { return fmt.Sprintf("%d/%d", calls[head], sizes[head]) })
 }

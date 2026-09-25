@@ -17,11 +17,11 @@ func (o *Owner) Size() Size {
 	return Size{Lines: o.lines.count, Bytes: o.bytes, Spilled: o.path != ""}
 }
 
-// AssignmentScope answers the assignment whose scope a spill of this process takes: the
-// assignment of the worktree at root. It answers false for the primary scope, which a
-// root outside any assignment worktree and a retiring verb both take. The census output
-// record uses the same scope, so the two stores agree on which assignment a verb ran in.
-func AssignmentScope(home, root string, retiring bool) (string, bool) {
-	_, scope := location(home, root, retiring)
+// AssignmentScope answers the assignment of the worktree at root, the scope a spill of a
+// verb that retires nothing takes. It answers false for a root outside any assignment
+// worktree. The census output record uses this scope, so the two stores agree on which
+// assignment a verb ran in.
+func AssignmentScope(home, root string) (string, bool) {
+	_, scope := location(home, root, false)
 	return scope, scope != primaryScope
 }

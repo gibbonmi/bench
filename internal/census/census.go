@@ -2,11 +2,13 @@
 package census
 
 import (
+	"cmp"
 	"fmt"
 	"maps"
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -74,12 +76,18 @@ func parseRecord(line string) (string, bool) {
 	return head, ok
 }
 func recordFields(line string) (string, string, bool) {
-	timestamp, rest, ok := strings.Cut(line, recordSeparator)
-	if !ok {
-		return "", "", false
+	timestamp, head, _, ok := splitRecord(line)
+	return timestamp, head, ok
+}
+
+// splitRecord answers the time, the head, and the later fields of one record line. Every
+// census reader parses here, so no reader restates where the head sits or when it is absent.
+func splitRecord(line string) (string, string, []string, bool) {
+	fields := strings.Split(line, recordSeparator)
+	if len(fields) < 2 || fields[1] == "" {
+		return "", "", nil, false
 	}
-	head, _, _ := strings.Cut(rest, recordSeparator)
-	return timestamp, head, head != ""
+	return fields[0], fields[1], fields[2:], true
 }
 
 // assignment returns the assignment id of the first pool path in the raw command text.
@@ -263,7 +271,8 @@ func Counts(home, root string) (map[string]int, error) {
 // reader refuses each render no text, because the census is evidence beside the
 // landing and never a condition on it.
 func HeadBreakdown(home, root, assignment string) string {
-	return renderHeads(heads(home, root, assignment))
+	counts := heads(home, root, assignment)
+	return renderBreakdown(counts, func(head string) string { return strconv.Itoa(counts[head]) })
 }
 
 // heads returns the number of records each verb head holds in one assignment's file.
@@ -271,35 +280,48 @@ func HeadBreakdown(home, root, assignment string) string {
 // ends never disagree on where the head sits. A line with no head, which only a foreign
 // writer makes, counts under no head.
 func heads(home, root, assignment string) map[string]int {
-	counts := map[string]int{}
-	text, ok := readRecords(Dir(home, root), assignment)
-	if !ok {
-		return counts
-	}
-	for _, line := range recordLines(text) {
+	counts, _ := tally(Dir(home, root), assignment, func(line string) (string, int64, bool) {
 		head, ok := parseRecord(line)
-		if !ok {
-			continue
-		}
-		counts[head]++
-	}
+		return head, 0, ok
+	})
 	return counts
 }
 
-// renderHeads joins the counted heads into the breakdown text. The head text passes
-// through sanitize.Controls here rather than at the writer alone, because a record
-// file that a foreign writer changed must still print safely.
-func renderHeads(counts map[string]int) string {
-	names := slices.Collect(maps.Keys(counts))
+// tally reads one record file and answers, for each verb head, the number of lines that
+// parse reads and the sum of the weight parse reads from them. A line that parse refuses
+// counts under no head.
+func tally(dir, name string, parse func(string) (string, int64, bool)) (map[string]int, map[string]int64) {
+	calls, weights := map[string]int{}, map[string]int64{}
+	text, ok := readRecords(dir, name)
+	if !ok {
+		return calls, weights
+	}
+	for _, line := range recordLines(text) {
+		head, weight, ok := parse(line)
+		if !ok {
+			continue
+		}
+		calls[head]++
+		weights[head] += weight
+	}
+	return calls, weights
+}
+
+// renderBreakdown joins the heads into one breakdown text, `<head>=<value>,...`. The heads
+// sort by rank, largest first, and a tie sorts by the head name. The head text passes
+// through sanitize.Controls here rather than at the writer alone, because a record file
+// that a foreign writer changed must still print safely.
+func renderBreakdown[Rank int | int64](ranks map[string]Rank, value func(string) string) string {
+	names := slices.Collect(maps.Keys(ranks))
 	slices.SortFunc(names, func(a, b string) int {
-		if counts[a] != counts[b] {
-			return counts[b] - counts[a]
+		if ranks[a] != ranks[b] {
+			return cmp.Compare(ranks[b], ranks[a])
 		}
 		return strings.Compare(a, b)
 	})
 	parts := make([]string, 0, len(names))
 	for _, name := range names {
-		parts = append(parts, fmt.Sprintf("%s=%d", escapeDelimiters(sanitize.Controls(name)), counts[name]))
+		parts = append(parts, escapeDelimiters(sanitize.Controls(name))+"="+value(name))
 	}
 	return strings.Join(parts, ",")
 }
@@ -355,13 +377,22 @@ func recordLines(text string) []string {
 // assignment id is refused rather than composed into a path, because the removal is
 // unrecoverable.
 func Drop(home, root, assignment string) error {
-	if !poolkey.IsAssignmentID(assignment) {
-		return fmt.Errorf("census assignment id is malformed: %s", sanitize.Controls(assignment))
+	if err := checkAssignmentID(assignment); err != nil {
+		return err
 	}
 	for _, name := range []string{assignment, assignment + outputSuffix} {
 		if err := os.Remove(filepath.Join(Dir(home, root), name)); err != nil && !os.IsNotExist(err) {
 			return fmt.Errorf("remove census record: %w", err)
 		}
+	}
+	return nil
+}
+
+// checkAssignmentID refuses an identifier that is not an assignment id. The output writer
+// and the drop call it before they compose a file name, so no operand leaves the directory.
+func checkAssignmentID(assignment string) error {
+	if !poolkey.IsAssignmentID(assignment) {
+		return fmt.Errorf("census assignment id is malformed: %s", sanitize.Controls(assignment))
 	}
 	return nil
 }

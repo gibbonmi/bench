@@ -13,6 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/env"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/shellcommand"
 	"github.com/gibbonmi/bench/internal/subprocess"
@@ -87,6 +88,22 @@ func ExecCommandResolving(root, home string, args []string, stdin io.Reader, std
 	}
 	finishSpan(spanExit, assignment)
 	return exit, assignment
+}
+
+// AssignmentActive reports whether the ledger at root holds the assignment id in the
+// active state. It reads the ledger and applies the landing's active check, and it
+// resolves no target. A ledger that cannot be read holds no active assignment.
+func AssignmentActive(root, id string) bool {
+	assignments, err := intent.Assignments(root)
+	if err != nil {
+		return false
+	}
+	for _, a := range assignments {
+		if a.ID == id {
+			return landingActiveState(a.State)
+		}
+	}
+	return false
 }
 
 // execAttributed is the exec verb's own work, with the assignment that owns the child's

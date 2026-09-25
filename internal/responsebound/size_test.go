@@ -3,9 +3,14 @@ package responsebound
 import (
 	"bytes"
 	"io"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/poolkey"
 )
 
 // sizeOf sends writes through owner, finishes it, and answers its size.
@@ -67,14 +72,31 @@ func TestOwnerSizeFollowsTheSpillFile(t *testing.T) {
 	}
 }
 
-// A process outside any repository and a retiring verb both take the primary scope, so
-// neither names an assignment.
+// A process outside any repository and a repository root outside the pool both take the
+// primary scope, so neither names an assignment.
 func TestAssignmentScopeRefusesThePrimaryScope(t *testing.T) {
 	home := privateHome(t)
-	if id, ok := AssignmentScope(home, "", false); ok {
+	if id, ok := AssignmentScope(home, ""); ok {
 		t.Fatalf("AssignmentScope outside a repository = %q, want none", id)
 	}
-	if id, ok := AssignmentScope(home, t.TempDir(), true); ok {
-		t.Fatalf("AssignmentScope of a retiring verb = %q, want none", id)
+	if id, ok := AssignmentScope(home, t.TempDir()); ok {
+		t.Fatalf("AssignmentScope of a root outside the pool = %q, want none", id)
+	}
+}
+
+// The root of a linked worktree at an assignment segment of the pool names that
+// assignment, with no retirement input.
+func TestAssignmentScopeAnswersTheWorktreeAssignment(t *testing.T) {
+	home := privateHome(t)
+	repo := gittest.RepoOnBranch(t, "main")
+	id := strings.Repeat("b", 32)
+	checkout := filepath.Join(poolkey.Pool(home, repo), poolkey.AssignmentSegment(strings.Repeat("a", 32), id))
+	for _, args := range [][]string{{"commit", "-q", "--allow-empty", "-m", "base"}, {"worktree", "add", "-q", "--detach", checkout}} {
+		if out, err := exec.Command("git", append([]string{"-C", repo}, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %q: %v: %s", args, err, out)
+		}
+	}
+	if got, ok := AssignmentScope(home, checkout); !ok || got != id {
+		t.Fatalf("AssignmentScope of the worktree root = (%q, %v), want (%q, true)", got, ok, id)
 	}
 }

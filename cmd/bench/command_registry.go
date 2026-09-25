@@ -13,7 +13,6 @@ import (
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/repairpilot"
-	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -324,16 +323,7 @@ func (c Command) Run(args []string) int {
 	if !definition.bound(args[1:]).bounded {
 		return definition.run(c, args[1:])
 	}
-	// A bounded command writes both streams into one owner, which prints the response
-	// after the command returns. The command's own exit code stays the verb's exit.
-	leaf, _ := leafNamed(definition.Leaves, args[1:])
-	owner := responsebound.New(worktree.Home(), c.Stdout, c.Stderr, boundaryRoot, leaf.Retires)
-	var resolved string
-	c.Stdout, c.Stderr, c.resolved = owner.Stdout(), owner.Stderr(), &resolved
-	exit := definition.run(c, args[1:])
-	owner.Finish()
-	_ = recordOutput(owner.Size(), outputHead(definition, leaf), resolved, leaf.Retires)
-	return exit
+	return c.runBounded(definition, args[1:])
 }
 
 func commandImplementationID(definition commandDefinition) string {
