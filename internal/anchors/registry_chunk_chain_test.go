@@ -8,7 +8,7 @@ func TestChunkChainAnchors(t *testing.T) {
 	anchorHarness{group: AfterImplementSpec, rules: []anchorRule{
 		{file: implement, section: "Build", needle: "After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug>`.", want: "chunk chain: build preflight runs through the worktree after each ticket commit"},
 		{file: implement, section: "Build", needle: "The author commits the verification and probe record before the axis dispatch.", want: "chunk chain: the probe record commits before the axis dispatch"},
-		{file: implement, section: "Land", needle: "Plan commits land before the ticket merge. A `main` merge lands only before the first chunk. Only record commits follow the chunk tip.", want: "chunk chain: only record commits follow the chunk tip"},
+		{file: implement, section: "Land", needle: "Plan commits land before the ticket merge, and a `main` merge lands only before the first chunk. Only record commits follow the chunk tip.", want: "chunk chain: only record commits follow the chunk tip"},
 		{file: implement, section: "Land", needle: "The reconciliation commit joins the review delta of the last chunk.", want: "chunk chain: the reconciliation commit joins the last chunk delta"},
 		{file: implement, section: "Land", needle: "Write the ordinary assessment record before the `bench worktree land` step, and append the landing evidence after it.", want: "chunk chain: the assessment record precedes the landing"},
 		{file: ".agents/commands/bench-review-implementation.md", section: "Process", step: 1, needle: "A later plan commit is never a chunk base.", want: "chunk chain: a plan commit is never a chunk base"},
