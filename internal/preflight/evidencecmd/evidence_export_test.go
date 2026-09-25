@@ -254,34 +254,19 @@ func TestEvidenceExportVerifiesBeforeWrite(t *testing.T) {
 	})
 }
 
-// publishSourceMismatch publishes a copy of pack whose last source row declares another
-// digest, and returns the copy's identity. The last source fits one page, so its digest
-// appears first in its source row and then in its page row. Only the source row changes,
-// so every page still verifies. The manifest keeps its length, so the header stays valid.
-func publishSourceMismatch(t *testing.T, root string, pack *chargeevidence.Pack) string {
-	t.Helper()
-	sources := pack.Manifest().Sources
-	digest := sources[len(sources)-1].SHA256
-	manifest := string(pack.ManifestBytes())
-	if count := strings.Count(manifest, digest); count != 2 {
-		t.Fatalf("the last source digest appears %d times in the manifest, want its source and page rows", count)
-	}
-	edited := strings.Replace(manifest, digest, strings.Repeat("b", len(digest)), 1)
-	data := pack.Bytes()
-	data = append(append(data[:chargeevidence.HeaderBytes:chargeevidence.HeaderBytes], edited...), data[chargeevidence.HeaderBytes+len(manifest):]...)
-	identity := chargeevidence.IdentityPrefix + chargeevidence.Digest([]byte(edited))
-	if err := os.WriteFile(storedPack(t, root, identity), data, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	return identity
-}
-
 // TestEvidenceExportVerifiesSourceDigest is BO48 for a source digest: every page of the last
 // source verifies, but the body differs from its declared source digest. The export refuses
-// before the writer receives that source, and the created directory is gone.
+// before the writer receives that source, and the created directory is gone. The last source
+// fits one page, so its digest appears first in its source row and then in its page row. The
+// crafted copy changes only the first occurrence, the source row, so every page still verifies.
 func TestEvidenceExportVerifiesSourceDigest(t *testing.T) {
 	root, pack := publishExportFixture(t)
-	identity := publishSourceMismatch(t, root, pack)
+	sources := pack.Manifest().Sources
+	digest := sources[len(sources)-1].SHA256
+	if count := strings.Count(string(pack.ManifestBytes()), digest); count != 2 {
+		t.Fatalf("the last source digest appears %d times in the manifest, want its source and page rows", count)
+	}
+	identity := craftedDigestArtifact(t, root, pack.Identity(), digest, strings.Repeat("b", len(digest)))
 	written := 0
 	record := func(w io.Writer, data []byte) error {
 		written++
