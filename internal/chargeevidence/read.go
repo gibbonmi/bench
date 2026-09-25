@@ -322,22 +322,12 @@ type Verified struct {
 // covers every stored byte.
 func (a *Artifact) Verify() (Verified, error) {
 	verified := Verified{Evidence: a.identity}
-	for ordinal, source := range a.m.Sources {
-		body := make([]byte, 0, source.Bytes)
-		for _, page := range a.pagesOf(source.ID) {
-			content, err := a.readAt(a.starts[ordinal]+int64(page.Offset), page.Bytes)
-			if err != nil {
-				return Verified{}, err
-			}
-			if err := checkPage(source.ID, page, content); err != nil {
-				return Verified{}, err
-			}
-			body = append(body, content...)
-			verified.Pages++
-		}
-		if err := checkSource(source, body); err != nil {
+	for ordinal := 1; ordinal <= len(a.m.Sources); ordinal++ {
+		_, pages, err := a.sourceBody(ordinal)
+		if err != nil {
 			return Verified{}, err
 		}
+		verified.Pages += pages
 		verified.Sources++
 	}
 	if err := unchanged(a.dir, packName(a.identity), a.file, a.info); err != nil {

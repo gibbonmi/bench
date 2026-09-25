@@ -84,6 +84,8 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 		return evidencecmd.Verify(root, slug)
 	case evidencecmd.KindCurrentEvidence:
 		return currentEvidenceCommand(root, slug, args)
+	case evidencecmd.KindExportEvidence:
+		return evidencecmd.Export(root, slug, flags[evidencecmd.FlagTo], chargeevidence.WriteAll)
 	case evidencecmd.KindCleanPlan:
 		return evidencecmd.CleanPlan(root, flags)
 	case evidencecmd.KindCleanApply:

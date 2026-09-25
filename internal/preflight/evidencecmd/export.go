@@ -19,7 +19,8 @@ func Export(root, identity, dir string, write chargeevidence.ExportWrite) (strin
 	}
 	// The response line prints the path raw, so a control byte in it would forge a line.
 	if !sanitize.LineSafe(path) {
-		return toon.Errorf("evidence "+chargeevidence.RefuseExport+": "+boundedOperand("export directory with a control byte", path), exportRecovery) + "\n", 1
+		return storeRefusal(&chargeevidence.Refusal{Class: chargeevidence.RefuseExport,
+			Detail: boundedOperand("export directory with a control byte", path)}), 1
 	}
 	artifact, refusal, code := OpenEvidence(root, identity)
 	if refusal != "" {

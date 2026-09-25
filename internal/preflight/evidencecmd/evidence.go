@@ -150,11 +150,7 @@ func OpenEvidence(root, identity string) (*chargeevidence.Artifact, string, int)
 // flag it reads the default stream; with one it reads only that declared source and ends
 // after it. Without either flag it prints only the artifact summary, so the first read
 // costs no content bytes. It keeps no reading state: the flags alone name the position.
-// The export flag hands the read to Export.
 func Read(root, identity string, flags map[string]string) (string, int) {
-	if dir, ok := flags[flagTo]; ok {
-		return Export(root, identity, dir, chargeevidence.WriteAll)
-	}
 	artifact, refusal, code := OpenEvidence(root, identity)
 	if refusal != "" {
 		return refusal, code

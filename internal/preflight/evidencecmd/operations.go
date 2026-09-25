@@ -24,6 +24,7 @@ const (
 	KindReadEvidence
 	KindVerifyEvidence
 	KindCurrentEvidence
+	KindExportEvidence
 	KindCleanPlan
 	KindCleanApply
 )
@@ -41,7 +42,7 @@ const (
 	flagVerify   = "--verify"
 	flagCurrent  = "--check-current"
 	flagApply    = "--apply"
-	flagTo       = "--to"
+	FlagTo       = "--to"
 	ModeReview   = "review"
 	ModeBuild    = "build"
 	modeEvidence = "evidence"
@@ -68,7 +69,7 @@ var flagTable = []flagSpec{
 	{flagVerify, ""},
 	{flagCurrent, ""},
 	{flagApply, "<fingerprint>"},
-	{flagTo, "<dir>"},
+	{FlagTo, "<dir>"},
 }
 
 // modeOperands names the positional operand each mode takes. A mode with an empty operand
@@ -111,7 +112,7 @@ var operations = []Operation{
 		description: "verify every stored page and source digest of a prepared evidence artifact"},
 	{Mode: modeEvidence, selectors: []string{flagCurrent}, Kind: KindCurrentEvidence, Bounded: true,
 		description: "bind a prepared evidence artifact to the current assignment and source pair"},
-	{Mode: modeEvidence, selectors: []string{flagTo}, Kind: KindReadEvidence, Bounded: true,
+	{Mode: modeEvidence, selectors: []string{FlagTo}, Kind: KindExportEvidence, Bounded: true,
 		description: "export every verified source of a prepared evidence artifact to its own file in an absent or empty directory"},
 	{Mode: ModeClean, optional: []string{flagCursor}, Kind: KindCleanPlan, Bounded: true,
 		description: "print one bounded page of the exact evidence deletion targets and its fingerprint"},

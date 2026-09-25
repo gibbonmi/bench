@@ -16,8 +16,23 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
-// The file names, the index columns, and the response line below are the public export
-// contract, so this file states them independently of the export owner.
+// The export contract that a consumer reads: the source file names, the one index file, its
+// table and columns, and the response line. The spec states each of these, so this file
+// states each one once, independently of the export owner. A changed owner value then
+// turns the rows below red instead of passing through a derived expectation.
+const (
+	contractIndexFile     = "index.toon"
+	contractIndexBlock    = "sources"
+	contractExportedLabel = "exported"
+)
+
+var contractIndexColumns = []string{"ordinal", "id", "bytes", "file"}
+
+func contractSourceFile(ordinal int) string { return fmt.Sprintf("source-%d", ordinal) }
+
+func contractExported(sources, bytes int, dir string) string {
+	return fmt.Sprintf("%s{sources=%d,bytes=%d,dir=%s}\n", contractExportedLabel, sources, bytes, dir)
+}
 
 // publishExportFixture publishes one three-source artifact in a fresh repository: the
 // metadata source and two repository sources.
@@ -56,7 +71,7 @@ func exportEntries(t *testing.T, dir string) []string {
 // exportIndex decodes the one index table of an export directory.
 func exportIndex(t *testing.T, dir string) []map[string]any {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join(dir, "index.toon"))
+	data, err := os.ReadFile(filepath.Join(dir, contractIndexFile))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +79,18 @@ func exportIndex(t *testing.T, dir string) []map[string]any {
 	if len(document) != 1 {
 		t.Fatalf("index holds %d blocks, want one:\n%s", len(document), data)
 	}
-	return preflighttest.TableRows(t, document, "sources")
+	return preflighttest.TableRows(t, document, contractIndexBlock)
+}
+
+// contractEntries lists the names a complete export of count sources holds, in directory
+// order.
+func contractEntries(count int) []string {
+	names := []string{contractIndexFile}
+	for ordinal := 1; ordinal <= count; ordinal++ {
+		names = append(names, contractSourceFile(ordinal))
+	}
+	slices.Sort(names)
+	return names
 }
 
 // exportCommand runs the public export of identity into dir.
@@ -95,29 +121,30 @@ func TestEvidenceExportWritesSources(t *testing.T) {
 	for i, source := range sources {
 		total += source.Bytes
 		want, _ := pack.Source(source.ID)
-		got, err := os.ReadFile(filepath.Join(dir, fmt.Sprintf("source-%d", i+1)))
+		name := contractSourceFile(i + 1)
+		got, err := os.ReadFile(filepath.Join(dir, name))
 		if err != nil || string(got) != string(want) {
-			t.Errorf("source-%d = %q (%v), want the %s bytes %q", i+1, got, err, source.ID, want)
+			t.Errorf("%s = %q (%v), want the %s bytes %q", name, got, err, source.ID, want)
 		}
 	}
-	if want := fmt.Sprintf("exported{sources=%d,bytes=%d,dir=%s}\n", len(sources), total, dir); code != 0 || out != want {
+	if want := contractExported(len(sources), total, dir); code != 0 || out != want {
 		t.Fatalf("export = (%d):\n%s\nwant (0):\n%s", code, out, want)
 	}
-	if got := exportEntries(t, dir); !slices.Equal(got, []string{"index.toon", "source-1", "source-2", "source-3"}) {
-		t.Fatalf("export directory holds %v", got)
+	if got, want := exportEntries(t, dir), contractEntries(len(sources)); !slices.Equal(got, want) {
+		t.Fatalf("export directory holds %v, want %v", got, want)
 	}
 	rows := exportIndex(t, dir)
 	if len(rows) != len(sources) {
 		t.Fatalf("index holds %d rows, want %d", len(rows), len(sources))
 	}
 	for i, row := range rows {
-		want := map[string]any{"ordinal": float64(i + 1), "id": sources[i].ID, "bytes": float64(sources[i].Bytes), "file": fmt.Sprintf("source-%d", i+1)}
-		for field, value := range want {
-			if row[field] != value {
-				t.Errorf("index row %d %s = %v, want %v", i, field, row[field], value)
+		values := []any{float64(i + 1), sources[i].ID, float64(sources[i].Bytes), contractSourceFile(i + 1)}
+		for column, field := range contractIndexColumns {
+			if row[field] != values[column] {
+				t.Errorf("index row %d %s = %v, want %v", i, field, row[field], values[column])
 			}
 		}
-		if len(row) != len(want) {
+		if len(row) != len(contractIndexColumns) {
 			t.Errorf("index row %d holds columns %v", i, row)
 		}
 	}
@@ -131,7 +158,7 @@ func TestEvidenceExportRefusesNonEmptyDir(t *testing.T) {
 		t.Fatal(err)
 	}
 	out, code := exportCommand(pack.Identity(), dir)
-	if code != 1 || strings.Contains(out, "exported{") {
+	if code != 1 || strings.Contains(out, contractExportedLabel+"{") {
 		t.Fatalf("export into a non-empty directory = (%d):\n%s", code, out)
 	}
 	kept, err := os.ReadFile(filepath.Join(dir, "keep"))
@@ -152,7 +179,7 @@ func TestEvidenceExportRefusesSymlink(t *testing.T) {
 				t.Fatal(err)
 			}
 			out, code := exportCommand(pack.Identity(), link)
-			if code != 1 || !strings.Contains(out, "is a symlink") || strings.Contains(out, "exported{") {
+			if code != 1 || !strings.Contains(out, "is a symlink") || strings.Contains(out, contractExportedLabel+"{") {
 				t.Fatalf("export through a symlink = (%d):\n%s", code, out)
 			}
 			if got := exportEntries(t, target); len(got) != 0 {
@@ -165,12 +192,18 @@ func TestEvidenceExportRefusesSymlink(t *testing.T) {
 	}
 }
 
+// storedPack is the path of identity's published pack in root's evidence store.
+func storedPack(t *testing.T, root, identity string) string {
+	t.Helper()
+	name := strings.TrimPrefix(identity, chargeevidence.IdentityPrefix) + chargeevidence.PackSuffix
+	return filepath.Join(preflighttest.StoreDir(t, root), name)
+}
+
 // corruptLastSource changes the last stored byte of identity's pack. The source bodies close
 // the pack, so the byte belongs to the last source's last page.
 func corruptLastSource(t *testing.T, root, identity string) {
 	t.Helper()
-	path := filepath.Join(preflighttest.StoreDir(t, root), strings.TrimPrefix(identity, "sha256:")+".pack")
-	file, err := os.OpenFile(path, os.O_RDWR, 0)
+	file, err := os.OpenFile(storedPack(t, root, identity), os.O_RDWR, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -192,7 +225,7 @@ func TestEvidenceExportVerifiesBeforeWrite(t *testing.T) {
 	t.Run("command", func(t *testing.T) {
 		dir := filepath.Join(t.TempDir(), "export")
 		out, code := exportCommand(pack.Identity(), dir)
-		if code != 1 || !strings.Contains(out, chargeevidence.RefusePageDigest) || strings.Contains(out, "exported{") {
+		if code != 1 || !strings.Contains(out, chargeevidence.RefusePageDigest) || strings.Contains(out, contractExportedLabel+"{") {
 			t.Fatalf("export of a corrupt pack = (%d):\n%s", code, out)
 		}
 		assertAbsent(t, dir)
@@ -221,6 +254,62 @@ func TestEvidenceExportVerifiesBeforeWrite(t *testing.T) {
 	})
 }
 
+// publishSourceMismatch publishes a copy of pack whose last source row declares another
+// digest, and returns the copy's identity. The last source fits one page, so its digest
+// appears first in its source row and then in its page row. Only the source row changes,
+// so every page still verifies. The manifest keeps its length, so the header stays valid.
+func publishSourceMismatch(t *testing.T, root string, pack *chargeevidence.Pack) string {
+	t.Helper()
+	sources := pack.Manifest().Sources
+	digest := sources[len(sources)-1].SHA256
+	manifest := string(pack.ManifestBytes())
+	if count := strings.Count(manifest, digest); count != 2 {
+		t.Fatalf("the last source digest appears %d times in the manifest, want its source and page rows", count)
+	}
+	edited := strings.Replace(manifest, digest, strings.Repeat("b", len(digest)), 1)
+	data := pack.Bytes()
+	data = append(append(data[:chargeevidence.HeaderBytes:chargeevidence.HeaderBytes], edited...), data[chargeevidence.HeaderBytes+len(manifest):]...)
+	identity := chargeevidence.IdentityPrefix + chargeevidence.Digest([]byte(edited))
+	if err := os.WriteFile(storedPack(t, root, identity), data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return identity
+}
+
+// TestEvidenceExportVerifiesSourceDigest is BO48 for a source digest: every page of the last
+// source verifies, but the body differs from its declared source digest. The export refuses
+// before the writer receives that source, and the created directory is gone.
+func TestEvidenceExportVerifiesSourceDigest(t *testing.T) {
+	root, pack := publishExportFixture(t)
+	identity := publishSourceMismatch(t, root, pack)
+	written := 0
+	record := func(w io.Writer, data []byte) error {
+		written++
+		return chargeevidence.WriteAll(w, data)
+	}
+	dir := filepath.Join(t.TempDir(), "export")
+	out, code := evidencecmd.Export(root, identity, dir, record)
+	if code != 1 || !strings.Contains(out, chargeevidence.RefuseSourceDigest) || strings.Contains(out, contractExportedLabel+"{") {
+		t.Fatalf("export of a source digest mismatch = (%d):\n%s", code, out)
+	}
+	if want := len(pack.Manifest().Sources) - 1; written != want {
+		t.Fatalf("the writer received %d files, want only the %d sources before the mismatch", written, want)
+	}
+	assertAbsent(t, dir)
+}
+
+// TestEvidenceExportRefusesControlByte is the export directory line guard: a --to path with
+// a newline would forge a second response line, so the export refuses it and creates nothing.
+func TestEvidenceExportRefusesControlByte(t *testing.T) {
+	_, pack := publishExportFixture(t)
+	dir := filepath.Join(t.TempDir(), "export\nforged")
+	out, code := exportCommand(pack.Identity(), dir)
+	if code != 1 || !strings.Contains(out, chargeevidence.RefuseExport) || strings.Contains(out, contractExportedLabel+"{") {
+		t.Fatalf("export into a path with a newline = (%d):\n%s", code, out)
+	}
+	assertAbsent(t, dir)
+}
+
 // TestEvidenceExportNamesByOrdinal is BO49: a hostile source identifier names only an index
 // cell, and its bytes land in the ordinal file inside the directory.
 func TestEvidenceExportNamesByOrdinal(t *testing.T) {
@@ -236,25 +325,35 @@ func TestEvidenceExportNamesByOrdinal(t *testing.T) {
 	if got := exportEntries(t, parent); !slices.Equal(got, []string{"export"}) {
 		t.Fatalf("export parent holds %v, want only the export directory", got)
 	}
-	if got := exportEntries(t, dir); !slices.Equal(got, []string{"index.toon", "source-1"}) {
-		t.Fatalf("export directory holds %v", got)
+	if got, want := exportEntries(t, dir), contractEntries(1); !slices.Equal(got, want) {
+		t.Fatalf("export directory holds %v, want %v", got, want)
 	}
-	if got, err := os.ReadFile(filepath.Join(dir, "source-1")); err != nil || string(got) != body {
-		t.Fatalf("source-1 = %q (%v), want %q", got, err, body)
+	name := contractSourceFile(1)
+	if got, err := os.ReadFile(filepath.Join(dir, name)); err != nil || string(got) != body {
+		t.Fatalf("%s = %q (%v), want %q", name, got, err, body)
 	}
-	if rows := exportIndex(t, dir); len(rows) != 1 || rows[0]["id"] != "../escape" || rows[0]["file"] != "source-1" {
+	if rows := exportIndex(t, dir); len(rows) != 1 || rows[0]["id"] != "../escape" || rows[0]["file"] != name {
 		t.Fatalf("index rows = %v", rows)
 	}
 }
 
-// TestEvidenceExportCleansOnFailure is BO50: a write fault on the second source removes the
-// files the export created, and the directory only when the export created it.
+// TestEvidenceExportCleansOnFailure is BO50: a write fault on the second source, or on the
+// index after every source, removes the files the export created, and the directory only
+// when the export created it.
 func TestEvidenceExportCleansOnFailure(t *testing.T) {
 	root, pack := publishExportFixture(t)
+	// The index is the write after the last source.
+	indexWrite := len(pack.Manifest().Sources) + 1
 	for _, test := range []struct {
-		name   string
-		exists bool
-	}{{"created directory", false}, {"existing empty directory", true}} {
+		name    string
+		exists  bool
+		faultAt int
+	}{
+		{"created directory", false, 2},
+		{"existing empty directory", true, 2},
+		{"index write, created directory", false, indexWrite},
+		{"index write, existing empty directory", true, indexWrite},
+	} {
 		t.Run(test.name, func(t *testing.T) {
 			dir := filepath.Join(t.TempDir(), "export")
 			if test.exists {
@@ -265,7 +364,7 @@ func TestEvidenceExportCleansOnFailure(t *testing.T) {
 			calls := 0
 			fault := func(w io.Writer, data []byte) error {
 				calls++
-				if calls < 2 {
+				if calls < test.faultAt {
 					return chargeevidence.WriteAll(w, data)
 				}
 				if _, err := w.Write(data[:len(data)/2]); err != nil {
@@ -274,8 +373,8 @@ func TestEvidenceExportCleansOnFailure(t *testing.T) {
 				return errors.New("injected write fault")
 			}
 			out, code := evidencecmd.Export(root, pack.Identity(), dir, fault)
-			if code != 1 || calls != 2 || !strings.Contains(out, "injected write fault") {
-				t.Fatalf("faulted export = (%d) after %d writes:\n%s", code, calls, out)
+			if code != 1 || calls != test.faultAt || !strings.Contains(out, "injected write fault") {
+				t.Fatalf("faulted export = (%d) after %d writes, want the fault at write %d:\n%s", code, calls, test.faultAt, out)
 			}
 			if !test.exists {
 				assertAbsent(t, dir)

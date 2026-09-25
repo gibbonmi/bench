@@ -52,22 +52,41 @@ func (a *Artifact) Export(dir string, write ExportWrite) (Exported, error) {
 	return ExportSources(dir, len(a.m.Sources), a.verifiedSource, write)
 }
 
-// verifiedSource reads each page of one source through the checked page read, then checks
-// the reconstructed body against the source digest.
+// verifiedSource returns one source body after it verifies, and only while the directory
+// still names the same unchanged file.
 func (a *Artifact) verifiedSource(ordinal int) (string, []byte, error) {
-	source := a.m.Sources[ordinal-1]
-	body := make([]byte, 0, source.Bytes)
-	for index := range a.pagesOf(source.ID) {
-		fragment, err := a.ReadWithin(Cursor{Identity: a.identity, Ordinal: ordinal, Index: index})
-		if err != nil {
-			return "", nil, err
-		}
-		body = append(body, fragment.Content...)
-	}
-	if err := checkSource(source, body); err != nil {
+	body, _, err := a.sourceBody(ordinal)
+	if err != nil {
 		return "", nil, err
 	}
-	return source.ID, body, nil
+	if err := unchanged(a.dir, packName(a.identity), a.file, a.info); err != nil {
+		return "", nil, err
+	}
+	return a.m.Sources[ordinal-1].ID, body, nil
+}
+
+// sourceBody is the one page-then-source check that Verify and the export share. It reads
+// each page of the source at a one-based ordinal, checks each page digest, and checks the
+// reconstructed body against the declared length and digest. It returns the body and the
+// number of pages it read.
+func (a *Artifact) sourceBody(ordinal int) ([]byte, int, error) {
+	source := a.m.Sources[ordinal-1]
+	pages := a.pagesOf(source.ID)
+	body := make([]byte, 0, source.Bytes)
+	for _, page := range pages {
+		content, err := a.readAt(a.starts[ordinal-1]+int64(page.Offset), page.Bytes)
+		if err != nil {
+			return nil, 0, err
+		}
+		if err := checkPage(source.ID, page, content); err != nil {
+			return nil, 0, err
+		}
+		body = append(body, content...)
+	}
+	if err := checkSource(source, body); err != nil {
+		return nil, 0, err
+	}
+	return body, len(pages), nil
 }
 
 // ExportSources writes count sources into dir, then one index table. dir must be absent or
