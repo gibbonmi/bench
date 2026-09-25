@@ -80,7 +80,7 @@ A manifest fragment is trustworthy only after the complete manifest matches the 
 
 A cursor has the form `v1.<hex-id>.<m|s>.<source-ordinal>.<page-index>`.
 The manifest stream uses source ordinal zero, and every number is a canonical unsigned decimal.
-A read without a cursor or a source returns only the `evidence_summary` row, and its successor reads the first manifest fragment.
+The `evidence_summary` row in the response table below tells when a read returns that row and what its successor reads.
 The default stream returns the manifest, then every source page in manifest order.
 Each response names its exact successor command, and the last response has an empty successor.
 A final response does not prove that the consumer received the earlier responses.

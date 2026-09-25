@@ -69,7 +69,7 @@ func FormatReference() string {
 	b.WriteString("A manifest fragment is trustworthy only after the complete manifest matches the expected identity.\n\n")
 	fmt.Fprintf(&b, "A cursor has the form `%s.<hex-id>.<%s|%s>.<source-ordinal>.<page-index>`.\n", CursorVersion, cursorManifest, cursorSource)
 	b.WriteString("The manifest stream uses source ordinal zero, and every number is a canonical unsigned decimal.\n")
-	fmt.Fprintf(&b, "A read without a cursor or a source returns only the `%s` row, and its successor reads the first manifest fragment.\n", blockSummary)
+	fmt.Fprintf(&b, "The `%s` row in the response table below tells when a read returns that row and what its successor reads.\n", blockSummary)
 	b.WriteString("The default stream returns the manifest, then every source page in manifest order.\n")
 	b.WriteString("Each response names its exact successor command, and the last response has an empty successor.\n")
 	b.WriteString("A final response does not prove that the consumer received the earlier responses.\n\n")
