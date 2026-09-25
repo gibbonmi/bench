@@ -26,5 +26,6 @@ func TestTicketSlicingPasses(t *testing.T) {
 		{file: ".agents/skills/bench-craft-spec/references/map-discipline.md", section: "Before the map locks", needle: "Each input constructor satisfies the new invariant, or its file joins a ticket `Writes:` line.", want: "map discipline: each input constructor satisfies the invariant or joins Writes"},
 		{file: ".agents/skills/bench-craft-spec/references/map-discipline.md", section: "Before the map locks", needle: "A spec that adds or removes a preflight row names every file that asserts the row count or the row list.", want: "map discipline: a preflight row change names every row-count reader"},
 		{file: ".agents/skills/bench-craft-spec/references/map-discipline.md", section: "Before the map locks", needle: "A spec that changes the output of a fixture builder names every test that asserts or rewrites that output.", want: "map discipline: a fixture builder change names every output reader"},
+		{file: ".agents/skills/bench-craft-spec/references/map-discipline.md", section: "Per row", needle: "The seam cell cites that function as `` `<path>_test.go` (`<Name>`) ``, so `bench coverage --check` and build preflight resolve the name against the tree.", want: "map discipline: an existing test seam cites its function in the resolvable form"},
 	}}.check(t)
 }

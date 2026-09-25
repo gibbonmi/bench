@@ -72,6 +72,7 @@ the explore reads, the fence rules, and the review rubric.
   unreached.
 - A row whose seam is the existing tests names the test function, and someone reads
   that function in the same session.
+  The seam cell cites that function as `` `<path>_test.go` (`<Name>`) ``, so `bench coverage --check` and build preflight resolve the name against the tree.
 - A row that substitutes a package variable names the venue. A substitution in the
   test process reaches nothing inside a test that drives a real subprocess.
 - An ordering promise gets a row where two refusals compete, and the row names the
