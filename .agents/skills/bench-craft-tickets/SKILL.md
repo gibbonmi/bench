@@ -35,7 +35,7 @@ Shared writes determine serial order, but they do not merge independently useful
 **Reviewer-approved breakdown**: before assigning spec-backed tickets, the coordinator presents the reviewer a numbered list — title, `Blocked by:`, and delivered outcome — for every ticket.
 Ask the reviewer about granularity, dependencies, and merges or splits. Iterate and record approval.
 For spec-backed builds, this is the only route onto the frontier; the batch-approval AFK carve-out in `.bench/BENCH.md` is the sole no-round-trip exception.
-The light path is the exception: `.bench/BENCH.md`'s right-size table is the one ticket's standing approval, and the main session implements it inline.
+The light path is the exception: `.bench/BENCH.md`'s right-size table is the one ticket's standing approval, and `.bench/BENCH.md` owns its author.
 
 ## Write one file per ticket
 

@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Learning fixes
+
+- Added a standing rule: a captured learning with a light-path fix goes to a fresh write delegate on the mid tier at high effort, and the drain closes the entry by implementation.
+
 ### Landing destination files
 
 - Changed `bench worktree land` to refuse only tracked changes in the landing checkout. An untracked or ignored file there, such as `.env`, no longer needs a build-output declaration.

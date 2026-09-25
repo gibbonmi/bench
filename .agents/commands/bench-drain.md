@@ -204,6 +204,8 @@ Write its one ticket file. Implement that ticket in the retained session under `
 Items needing a reviewer decision, a new seam, or spec-level design
 still graduate to `ROADMAP.md`.
 
+A learning entry with a light-path fix goes to the write delegate that `.bench/BENCH.md` names, and its verdict closes the entry by implementation.
+
 ## 6. Classify every run; restructure on request
 
 While you walk the rows, classify each row. Use fix (a defect in existing
