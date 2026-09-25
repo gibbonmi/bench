@@ -1,7 +1,7 @@
 # Grade the limit of a bounds read seam in the bounds-policy guard
 
 Blocked by: none
-Writes: internal/conformance/bounds_policy_test.go, tests/canary/package-core-guard/bounds-read-limit-restated/BASE, tests/canary/package-core-guard/bounds-read-limit-restated/CHECK, tests/canary/package-core-guard/bounds-read-limit-restated/EXPECT, tests/canary/package-core-guard/bounds-read-limit-restated/MUTATE.json, tests/canary/package-core-guard/bounds-classify-limit-restated/BASE, tests/canary/package-core-guard/bounds-classify-limit-restated/CHECK, tests/canary/package-core-guard/bounds-classify-limit-restated/EXPECT, tests/canary/package-core-guard/bounds-classify-limit-restated/MUTATE.json
+Writes: internal/conformance/bounds_policy_test.go, internal/conformance/registry_test.go, tests/canary/package-core-guard/bounds-read-limit-restated/BASE, tests/canary/package-core-guard/bounds-read-limit-restated/CHECK, tests/canary/package-core-guard/bounds-read-limit-restated/EXPECT, tests/canary/package-core-guard/bounds-read-limit-restated/MUTATE.json, tests/canary/package-core-guard/bounds-classify-limit-restated/BASE, tests/canary/package-core-guard/bounds-classify-limit-restated/CHECK, tests/canary/package-core-guard/bounds-classify-limit-restated/EXPECT, tests/canary/package-core-guard/bounds-classify-limit-restated/MUTATE.json
 Covers: none
 
 ## What to build
