@@ -126,19 +126,40 @@ Advice, with no finding ID:
 
 R7 goes to cycle 2, the last repair cycle of chunk BO-C1, in a fresh repair session for ticket 1.
 
+## BO-C1 ticket 1 repair evidence, cycle 2
+
+The session `claude:bench-writer/bo-t1-repair-c2` ran on opus at low effort and used 1 of 2 attempts. It started at `6e174d30` and committed `ce6ea56a`. The owner now tracks `stderrOpen` beside `stdoutOpen` under the same lock. On the create-failure route, a newline goes to each stream whose own last line is open, and then the `spill-failed` line goes to stdout.
+
+`TestOwnerCreateFailureSeparatesStdoutLine` now has the rows "open stdout", "open stderr", and "both open". Each row checks the stdout view, the stderr view, and a shared-sink view. The rows "open stderr" and "both open" went red at `6e174d30` and green after the fix. The "open stderr" row changed its stderr expectation from `err partial` to `err partial` with a newline.
+
+The session's probe of `if o.stderrOpen {` to `if false {` bit, and the restore reads `yes`. The orchestrator's probe omitted `o.stderrOpen = open`, and it bit two rows with the restore `yes`. The session ran the three ticket checks at `ce6ea56a`, and each check passed.
+
+## BO-C1 chunk review, round 3, and close
+
+Round 3 confirms cycle 2 at the final tip. The frozen pair is base `80780c046df2796b635d0c139dae3b505d2891f1` and tip `ce6ea56a150fbf6b0212e973039c0a85cadb8ed6`. The shared evidence is `sha256:80951b7139d8a39e75afc6cf486f7228a8529c051c9a628bae9911742a658334`. Each axis ran in a new `bench-reviewer` session on opus at medium effort.
+
+Each axis found 0 findings. The Spec axis traced the three open states in each view, and it found no lost byte. The Coverage axis ran two more probes that bit: a swap of the separator order and a swap of the stdout separator. Chunk BO-C1 used both of its two repair cycles and its one hardening cycle.
+
+Advice, with no finding ID:
+
+- `internal/responsebound/owner.go:186-192` states the open-line separator in two shapes. One helper for each stream would state it once.
+- In a shared sink, an open stdout line gives an empty line before the `spill-failed` line.
+- The name `TestOwnerCreateFailureSeparatesStdoutLine` now covers three views.
+- `store_test.go:117-125` builds the failing owner twice.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ft336-bounded-output/spec.md",
-  "plan_digest": "sha256:a084c67ebcb68079d54fdce0940724d714541169252d3a9d3a341c118da3f3c0",
+  "plan_digest": "sha256:907409d5092633e390a0d499495fa26c31f82526b7567713e8caecab0f01f641",
   "implementation_session": "",
   "chunks": [
     {
       "id": "BO-C1",
       "base": "80780c046df2796b635d0c139dae3b505d2891f1",
-      "tip": "33c1e82057f1f1a573a5fb2817021dda104a81b5",
-      "plan_digest": "sha256:a084c67ebcb68079d54fdce0940724d714541169252d3a9d3a341c118da3f3c0",
-      "source_digest": "ced29d674e12dda4bcb70818803b6c71453e6ce5",
+      "tip": "ce6ea56a150fbf6b0212e973039c0a85cadb8ed6",
+      "plan_digest": "sha256:907409d5092633e390a0d499495fa26c31f82526b7567713e8caecab0f01f641",
+      "source_digest": "1cef6270a89d29d7b1917619d3ae96dd22cf19e2",
       "acceptance_rows": [
         "BO1",
         "BO2",
@@ -269,6 +290,60 @@ R7 goes to cycle 2, the last repair cycle of chunk BO-C1, in a fresh repair sess
             "ref": "claude:agent/bo-t1-repair-c1-20260925/1-system@33c1e820",
             "digest": "sha256:ee72e782b0526d8c4f367ddd721fbc3c4f7a49bfc8da0f1c72a4fcd28d54007d",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,40473\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "1-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c1-1-owner-r3",
+          "performer": "claude:bench-writer/bo-t1-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "1cef6270a89d29d7b1917619d3ae96dd22cf19e2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t1-repair-c2-20260925/1-owner@ce6ea56a",
+            "digest": "sha256:310b4caaf6a2b08688218e46c22372210b7ef1f0ad0eb64795f3891ce497d3b1",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,14\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "1-owner",
+          "command": "bench test --package ./internal/responsebound",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c1-1-cmd-r3",
+          "performer": "claude:bench-writer/bo-t1-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "1cef6270a89d29d7b1917619d3ae96dd22cf19e2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t1-repair-c2-20260925/1-cmd@ce6ea56a",
+            "digest": "sha256:2e052c0c02c17cc687205368a44ca8f431ec0a6b6cf3466752f9dba936722ac7",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,7781\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "1-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c1-1-system-r3",
+          "performer": "claude:bench-writer/bo-t1-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "1cef6270a89d29d7b1917619d3ae96dd22cf19e2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t1-repair-c2-20260925/1-system@ce6ea56a",
+            "digest": "sha256:2e9178385759b91d5881f6e7276a5dffa3cfccc97577544e6c291f540d9c3efc",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,41913\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "1-system",
           "command": "bench test --check system",
@@ -412,6 +487,72 @@ R7 goes to cycle 2, the last repair cycle of chunk BO-C1, in a fresh repair sess
           "supersedes": [
             "bo-c1-r1-coverage"
           ]
+        },
+        {
+          "id": "bo-c1-r3-standards",
+          "performer": "claude:bench-reviewer/bo-c1-standards-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1cef6270a89d29d7b1917619d3ae96dd22cf19e2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c1-standards-3@ce6ea56a",
+            "digest": "sha256:b356d3b0283bf53760b0a662841d06aa83e58eb1ba88909d41087b5b9b860740",
+            "excerpt": "Standards confirming: 0 findings. R7 holds; the two separator shapes in Finish are advice."
+          },
+          "axis": "Standards",
+          "base": "80780c046df2796b635d0c139dae3b505d2891f1",
+          "tip": "ce6ea56a150fbf6b0212e973039c0a85cadb8ed6",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c1-r2-standards"
+          ]
+        },
+        {
+          "id": "bo-c1-r3-spec",
+          "performer": "claude:bench-reviewer/bo-c1-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1cef6270a89d29d7b1917619d3ae96dd22cf19e2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c1-spec-3@ce6ea56a",
+            "digest": "sha256:35e45a096fe937ae3f382e624bbb604003b3e681bb1bd89a08995f0c077214e3",
+            "excerpt": "Spec confirming: 0 findings. R7 confirmed by a trace of the stdout, stderr, and combined views for each open state; the plan commit adds only bo-t1-repair-c2."
+          },
+          "axis": "Spec",
+          "base": "80780c046df2796b635d0c139dae3b505d2891f1",
+          "tip": "ce6ea56a150fbf6b0212e973039c0a85cadb8ed6",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c1-r2-spec"
+          ]
+        },
+        {
+          "id": "bo-c1-r3-coverage",
+          "performer": "claude:bench-reviewer/bo-c1-coverage-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1cef6270a89d29d7b1917619d3ae96dd22cf19e2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c1-coverage-3@ce6ea56a",
+            "digest": "sha256:d7845daa7f8e604cfc04fc4816e10d3280138f6864bcf6bfaf205076bfb2f3b0",
+            "excerpt": "Coverage confirming: 0 findings. R7 confirmed; two independent probes bit and restored."
+          },
+          "axis": "Coverage",
+          "base": "80780c046df2796b635d0c139dae3b505d2891f1",
+          "tip": "ce6ea56a150fbf6b0212e973039c0a85cadb8ed6",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c1-r2-coverage"
+          ]
         }
       ]
     }
@@ -423,6 +564,33 @@ R7 goes to cycle 2, the last repair cycle of chunk BO-C1, in a fresh repair sess
     {
       "from": "sha256:0d97c1e30b257bb8ff01f4de56e407176319611d19d78351521263313fc176c4",
       "to": "sha256:a084c67ebcb68079d54fdce0940724d714541169252d3a9d3a341c118da3f3c0",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:a084c67ebcb68079d54fdce0940724d714541169252d3a9d3a341c118da3f3c0",
+      "to": "sha256:907409d5092633e390a0d499495fa26c31f82526b7567713e8caecab0f01f641",
       "chunk_ids": {
         "BO-C1": [
           "BO-C1"
