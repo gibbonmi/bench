@@ -69,10 +69,11 @@ const (
 	// ResponseLines and ResponseBytes are the line value and the byte value of one public
 	// Bench response. A response with more lines or more bytes prints its head, one spill
 	// line, and its tail, and a private file holds the complete output. The response owner
-	// is the one reader of these values, and it derives its line cut from the two. The
-	// byte value is 4 KiB.
+	// is the one reader of these values.
 	ResponseLines = 10
-	ResponseBytes = 4 << 10
+	ResponseBytes = 4096
+	// SubjectFirstLineLimit bounds the read of a gate subject's first line.
+	SubjectFirstLineLimit int64 = 4096
 	// ExecWaitDelay bounds how long `bench worktree exec` waits for its child's output
 	// after the child exits, so a descendant that holds a pipe open cannot hang the verb.
 	// An interrupted child gets the same delay to exit before the verb kills its group.

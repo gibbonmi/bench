@@ -3,7 +3,7 @@ package responsebound
 import (
 	"bytes"
 	"fmt"
-	"io"
+	"math"
 	"os"
 	"runtime"
 	"strings"
@@ -83,68 +83,113 @@ func TestOwnerByteBoundary(t *testing.T) {
 	}
 }
 
-// BO65: a head line of 999 bytes of 3-byte runes prints only whole runes within the cut,
-// and the spill line counts one cut line.
+// BO65: a long head line prints only whole runes within the cut, and the spill line counts
+// the cut line. The cases put 1, 2, and 3 kept bytes of a rune across the cut, end a rune
+// at the cut, and end the kept bytes with an incomplete rune start that a later ASCII byte
+// makes ill-formed. A line of exactly the cut prints whole and is not a cut line.
 func TestOwnerCutsLongLine(t *testing.T) {
-	home := privateHome(t)
-	const wide = "語"
-	long := strings.Repeat(wide, 333)
-	writes := append(stdoutLines(long+"\n"), stdoutLines(numbered(2, 11)...)...)
-	if len(long) != 999 {
-		t.Fatalf("fixture line = %d bytes, want 999", len(long))
+	const wide, wider = "語", "🙂"
+	past := strings.Repeat("x", lineCut)
+	pad := func(n int) string { return strings.Repeat("x", n) }
+	cases := []struct {
+		name     string
+		line     string
+		printed  int
+		cutLines int
+	}{
+		{"one kept byte of a 3-byte rune", strings.Repeat(wide, 333), lineCut - lineCut%len(wide), 1},
+		{"two kept bytes of a 3-byte rune", pad(lineCut-2) + wide + past, lineCut - 2, 1},
+		{"three kept bytes of a 4-byte rune", pad(lineCut-3) + wider + past, lineCut - 3, 1},
+		{"a 3-byte rune that ends at the cut", pad(lineCut-3) + wide + past, lineCut, 1},
+		{"an incomplete rune start before an ASCII byte", pad(lineCut-2) + "\xF0\x9F" + past, lineCut - 2, 1},
+		{"exactly the cut", pad(lineCut), lineCut, 0},
+		{"one byte past the cut", pad(lineCut + 1), lineCut, 1},
 	}
-	got := respond(t, writes)
-	path := onlySpill(t, home)
-	kept := long[:lineCut-lineCut%len(wide)]
-	spill := fmt.Sprintf("spilled{lines=11,bytes=%d,omitted_lines=2,cut_lines=1,path=%s}\n", len(joined(writes)), path)
-	want := kept + "\n" + strings.Join(numbered(2, 4), "") + spill + strings.Join(numbered(7, 11), "")
-	if got != want {
-		t.Fatalf("response = %q, want %q", got, want)
-	}
-	if !utf8.ValidString(got) {
-		t.Fatalf("response %q is not valid UTF-8", got)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			home := privateHome(t)
+			writes := append(stdoutLines(tc.line+"\n"), stdoutLines(numbered(2, 11)...)...)
+			got := respond(t, writes)
+			path := onlySpill(t, home)
+			spill := fmt.Sprintf("spilled{lines=11,bytes=%d,omitted_lines=2,cut_lines=%d,path=%s}\n", len(joined(writes)), tc.cutLines, path)
+			want := tc.line[:tc.printed] + "\n" + strings.Join(numbered(2, 4), "") + spill + strings.Join(numbered(7, 11), "")
+			if got != want {
+				t.Fatalf("response = %q, want %q", got, want)
+			}
+			if !utf8.ValidString(got) {
+				t.Fatalf("response %q is not valid UTF-8", got)
+			}
+		})
 	}
 }
 
-// heapBytes answers the live heap after a full collection.
+// heapBytes answers the live heap after two full collections. The second one frees the
+// objects that the first one moved from a sync.Pool to its victim cache.
 func heapBytes() int64 {
+	runtime.GC()
 	runtime.GC()
 	var stats runtime.MemStats
 	runtime.ReadMemStats(&stats)
 	return int64(stats.HeapAlloc)
 }
 
-// BO76: one 64 MiB write with no newline spills, and the owner retains at most the byte
-// value plus one cut line for each head and tail line. An owner that keeps the current
-// line retains the whole write.
+// BO76: a spill retains at most the byte value plus one cut line for each head and tail
+// line. One 64 MiB write with no newline catches an owner that keeps the current line.
+// Ten long lines, each in two writes, fill every head and tail line, so they catch a line
+// buffer that grows past the cut.
 func TestOwnerRetainsBoundedLongLine(t *testing.T) {
-	home := privateHome(t)
 	const size = 64 << 20
-	data := bytes.Repeat([]byte("x"), size)
-	// A first spill in a separate home pays the process's one-time costs of a spill, such
-	// as the random source, so the measure below holds the owner's own bytes alone.
-	warm := New(t.TempDir(), io.Discard, io.Discard, outsideRepository, false)
-	_, _ = io.WriteString(warm.Stdout(), strings.Join(numbered(1, 11), ""))
-	warm.Finish()
-	var sink bytes.Buffer
-	owner := New(benchhome.Dir(), &sink, &sink, outsideRepository, false)
-	before := heapBytes()
-	if n, err := owner.Stdout().Write(data); err != nil || n != size {
-		t.Fatalf("write = (%d, %v), want every byte accepted", n, err)
+	long := bytes.Repeat([]byte("x"), size)
+	start, end := bytes.Repeat([]byte("x"), lineCut-1), []byte("xx\n")
+	var tenLines [][]byte
+	for range 10 {
+		tenLines = append(tenLines, start, end)
 	}
-	retained := heapBytes() - before
-	limit := int64(bounds.ResponseBytes + (bounds.ResponseLines-1)*lineCut)
-	if retained > limit {
-		t.Fatalf("owner retains %d bytes after one %d-byte line, want at most %d", retained, size, limit)
+	cases := []struct {
+		name   string
+		writes [][]byte
+		want   func(path string) string
+	}{
+		{"one 64 MiB line", [][]byte{long}, func(path string) string {
+			return cutLine() + fmt.Sprintf("spilled{lines=1,bytes=%d,omitted_lines=0,cut_lines=1,path=%s}\n", size, path)
+		}},
+		{"ten long lines", tenLines, func(path string) string {
+			spill := fmt.Sprintf("spilled{lines=10,bytes=%d,omitted_lines=1,cut_lines=9,path=%s}\n", len(bytes.Join(tenLines, nil)), path)
+			return strings.Repeat(cutLine(), 4) + spill + strings.Repeat(cutLine(), 5)
+		}},
 	}
-	owner.Finish()
-	runtime.KeepAlive(data)
-	path := onlySpill(t, home)
-	if info, err := os.Stat(path); err != nil || info.Size() != size {
-		t.Fatalf("spill file = (%v, %v), want %d bytes", info, err, size)
-	}
-	want := cutLine() + fmt.Sprintf("spilled{lines=1,bytes=%d,omitted_lines=0,cut_lines=1,path=%s}\n", size, path)
-	if sink.String() != want {
-		t.Fatalf("response = %q, want %q", sink.String(), want)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// The first of three spills pays the process's one-time costs of a spill, such as
+			// the random source, and another goroutine can allocate during one measure. So
+			// the smallest measure of the three holds the owner's own bytes alone.
+			retained, total := int64(math.MaxInt64), 0
+			for range 3 {
+				home := privateHome(t)
+				var sink bytes.Buffer
+				owner := New(benchhome.Dir(), &sink, &sink, outsideRepository, false)
+				total = 0
+				before := heapBytes()
+				for _, p := range tc.writes {
+					if n, err := owner.Stdout().Write(p); err != nil || n != len(p) {
+						t.Fatalf("write = (%d, %v), want every byte accepted", n, err)
+					}
+					total += len(p)
+				}
+				retained = min(retained, heapBytes()-before)
+				owner.Finish()
+				runtime.KeepAlive(tc.writes)
+				path := onlySpill(t, home)
+				if info, err := os.Stat(path); err != nil || info.Size() != int64(total) {
+					t.Fatalf("spill file = (%v, %v), want %d bytes", info, err, total)
+				}
+				if want := tc.want(path); sink.String() != want {
+					t.Fatalf("response = %q, want %q", sink.String(), want)
+				}
+			}
+			if limit := int64(bounds.ResponseBytes + (bounds.ResponseLines-1)*lineCut); retained > limit {
+				t.Fatalf("owner retains %d bytes after %d bytes, want at most %d", retained, total, limit)
+			}
+		})
 	}
 }
