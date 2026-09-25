@@ -40,7 +40,7 @@ func namedSpill(t *testing.T, response string) string {
 func spillAt(t *testing.T, home, root string) string {
 	t.Helper()
 	var sink bytes.Buffer
-	owner := responsebound.New(home, &sink, &sink, func() string { return root })
+	owner := responsebound.New(home, &sink, &sink, func() string { return root }, false)
 	overBound(t, owner.Stdout())
 	owner.Finish()
 	return namedSpill(t, sink.String())
@@ -64,14 +64,15 @@ func TestRetirementDropsResponseSpills(t *testing.T) {
 }
 
 // BO72: a `release` that runs in the assignment it retires keeps its over-bound spill.
-// The spill starts before the retirement, so a spill in the assignment's own scope would
-// leave the line naming a removed file.
+// The dispatcher marks the owner of a retiring leaf, as this test does. The spill starts
+// before the retirement, so a spill in the assignment's own scope would leave the line
+// naming a removed file.
 func TestRetiringVerbSpillsToPrimary(t *testing.T) {
 	t.Parallel()
 	root, creation, home := newOwnedAssignment(t, "spill-own-release")
 	args := []string{"--request", "landed-spill-own-release", creation.Path}
 	var sink bytes.Buffer
-	owner := responsebound.New(home, &sink, &sink, func() string { return creation.Path }, append([]string{"worktree", "release"}, args...)...)
+	owner := responsebound.New(home, &sink, &sink, func() string { return creation.Path }, true)
 	overBound(t, owner.Stdout())
 	code := ReleaseCommand(root, home, args, owner.Stdout(), owner.Stderr())
 	owner.Finish()

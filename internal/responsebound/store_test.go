@@ -114,14 +114,14 @@ func TestOwnerCreateFailureSeparatesStdoutLine(t *testing.T) {
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			var stdout, stderr bytes.Buffer
-			owner := New(benchhome.Dir(), &stdout, &stderr, outsideRepository)
+			owner := New(benchhome.Dir(), &stdout, &stderr, outsideRepository, false)
 			owner.create = func(string) (io.WriteCloser, error) { return nil, errInjected }
 			respondWith(t, owner, &stdout, row.writes)
 			if stdout.String() != row.stdout+line || stderr.String() != row.stderr {
 				t.Fatalf("streams = (%q, %q), want (%q, %q)", stdout.String(), stderr.String(), row.stdout+line, row.stderr)
 			}
 			var sink bytes.Buffer
-			owner = New(benchhome.Dir(), &sink, &sink, outsideRepository)
+			owner = New(benchhome.Dir(), &sink, &sink, outsideRepository, false)
 			owner.create = func(string) (io.WriteCloser, error) { return nil, errInjected }
 			if got := respondWith(t, owner, &sink, row.writes); got != row.combined+line {
 				t.Fatalf("combined response = %q, want %q", got, row.combined+line)

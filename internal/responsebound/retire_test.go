@@ -27,7 +27,7 @@ func spillPath(t *testing.T, response string) string {
 func spillOnce(t *testing.T, home string, root func() string) string {
 	t.Helper()
 	var sink bytes.Buffer
-	return spillPath(t, respondWith(t, New(home, &sink, &sink, root), &sink, stdoutLines(numbered(1, 11)...)))
+	return spillPath(t, respondWith(t, New(home, &sink, &sink, root, false), &sink, stdoutLines(numbered(1, 11)...)))
 }
 
 // BO17: the 65th spill in a `primary` scope leaves the newest 64 files. The counts are

@@ -39,13 +39,13 @@ var worktreeLeaves = []commandLeaf{
 	{Name: "create", Grammar: usage.WorktreeCreate, Root: rootRequired, Bound: boundResponse, Run: func(c Command, root string, args []string) int {
 		return worktree.CreateCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
-	{Name: "release", Grammar: usage.WorktreeRelease, Root: rootRequired, Bound: boundResponse, Run: func(c Command, root string, args []string) int {
+	{Name: "release", Grammar: usage.WorktreeRelease, Root: rootRequired, Bound: boundResponse, Retires: true, Run: func(c Command, root string, args []string) int {
 		return worktree.ReleaseCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
-	{Name: "clean", Grammar: usage.WorktreeClean, Root: rootBoundary, Bound: boundResponse, Run: func(c Command, root string, args []string) int {
+	{Name: "clean", Grammar: usage.WorktreeClean, Root: rootBoundary, Bound: boundResponse, Retires: true, Run: func(c Command, root string, args []string) int {
 		return worktree.CleanCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
-	{Name: "reclaim", Root: rootBoundary, Bound: boundResponse, Run: func(c Command, root string, args []string) int {
+	{Name: "reclaim", Root: rootBoundary, Bound: boundResponse, Retires: true, Run: func(c Command, root string, args []string) int {
 		return worktree.ReclaimCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
 	{Name: "reauthorize", Grammar: usage.WorktreeReauthorize, Root: rootRequired, Bound: boundResponse, Run: func(c Command, root string, args []string) int {
@@ -57,7 +57,7 @@ var worktreeLeaves = []commandLeaf{
 	{Name: "reset", Grammar: usage.WorktreeReset, Root: rootRequired, Bound: boundResponse, Run: func(c Command, root string, args []string) int {
 		return worktree.ResetCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
-	{Name: "land", Grammar: usage.WorktreeLand, Root: rootRequired, Bound: boundResponse, Run: func(c Command, root string, args []string) int {
+	{Name: "land", Grammar: usage.WorktreeLand, Root: rootRequired, Bound: boundResponse, Retires: true, Run: func(c Command, root string, args []string) int {
 		return worktree.LandCommand(root, worktree.Home(), c.Executable, args, c.Stdout, c.Stderr)
 	}},
 }

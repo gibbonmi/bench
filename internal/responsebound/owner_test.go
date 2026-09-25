@@ -52,7 +52,7 @@ func assertHomeEmpty(t *testing.T, home string) {
 func respond(t *testing.T, writes []tagged) string {
 	t.Helper()
 	var sink bytes.Buffer
-	return respondWith(t, New(benchhome.Dir(), &sink, &sink, outsideRepository), &sink, writes)
+	return respondWith(t, New(benchhome.Dir(), &sink, &sink, outsideRepository, false), &sink, writes)
 }
 
 func respondWith(t *testing.T, owner *Owner, sink *bytes.Buffer, writes []tagged) string {
@@ -176,7 +176,7 @@ func TestOwnerKeepsArrivalOrder(t *testing.T) {
 		writes = append(writes, tagged{stderr: i%2 == 0, data: fmt.Sprintf("stream %02d\n", i)})
 	}
 	var stdout, stderr bytes.Buffer
-	owner := New(benchhome.Dir(), &stdout, &stderr, outsideRepository)
+	owner := New(benchhome.Dir(), &stdout, &stderr, outsideRepository, false)
 	respondWith(t, owner, &stdout, writes)
 	if got, want := readSpill(t, onlySpill(t, home)), joined(writes); got != want {
 		t.Fatalf("spill file = %q, want arrival order %q", got, want)
@@ -187,7 +187,7 @@ func TestOwnerKeepsArrivalOrder(t *testing.T) {
 func TestOwnerReplaysWithinBound(t *testing.T) {
 	home := privateHome(t)
 	var stdout, stderr bytes.Buffer
-	owner := New(benchhome.Dir(), &stdout, &stderr, outsideRepository)
+	owner := New(benchhome.Dir(), &stdout, &stderr, outsideRepository, false)
 	writes := []tagged{{data: "out 1\n"}, {stderr: true, data: "err 1\n"}, {data: "out 2\n"}}
 	respondWith(t, owner, &stdout, writes)
 	if stdout.String() != "out 1\nout 2\n" || stderr.String() != "err 1\n" {
@@ -224,7 +224,7 @@ func (f *faultAfter) Close() error { return f.file.Close() }
 func TestOwnerMidwayFailureKeepsEveryByte(t *testing.T) {
 	home := privateHome(t)
 	var sink bytes.Buffer
-	owner := New(benchhome.Dir(), &sink, &sink, outsideRepository)
+	owner := New(benchhome.Dir(), &sink, &sink, outsideRepository, false)
 	owner.create = func(path string) (io.WriteCloser, error) {
 		file, err := exclusiveCreate(path)
 		if err != nil {
@@ -297,7 +297,7 @@ func TestOwnerCopiesBinaryBytes(t *testing.T) {
 func TestOwnerSerializesConcurrentWrites(t *testing.T) {
 	home := privateHome(t)
 	var sink bytes.Buffer
-	owner := New(benchhome.Dir(), &sink, &sink, outsideRepository)
+	owner := New(benchhome.Dir(), &sink, &sink, outsideRepository, false)
 	var wait sync.WaitGroup
 	for _, stream := range []struct {
 		name   string

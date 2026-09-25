@@ -70,10 +70,10 @@ type Owner struct {
 // New returns the owner of one response whose original streams are stdout and stderr.
 // home is the Bench home that holds the spill store. root answers the repository root of
 // the process, or the empty string outside a repository. The owner calls it only when a
-// spill starts, so a bounded response never pays for the lookup. argv is the command
-// line, which can name a retiring verb.
-func New(home string, stdout, stderr io.Writer, root func() string, argv ...string) *Owner {
-	return &Owner{stdout: stdout, stderr: stderr, home: home, root: root, retiring: retiring(argv), create: exclusiveCreate}
+// spill starts, so a bounded response never pays for the lookup. retiring reports a verb
+// that retires an assignment, and that verb spills to the primary scope.
+func New(home string, stdout, stderr io.Writer, root func() string, retiring bool) *Owner {
+	return &Owner{stdout: stdout, stderr: stderr, home: home, root: root, retiring: retiring, create: exclusiveCreate}
 }
 
 // Stdout answers the writer that takes the response's stdout bytes.

@@ -15,15 +15,6 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
-// retiringVerbs are the `bench worktree` leaves that retire an assignment. Each one
-// spills to the primary scope, so the retirement cannot remove a spill that is still open.
-var retiringVerbs = []string{"release", "clean", "reclaim", "land"}
-
-// retiring reports that argv calls a retiring verb.
-func retiring(argv []string) bool {
-	return len(argv) > 1 && argv[0] == "worktree" && slices.Contains(retiringVerbs, argv[1])
-}
-
 // Drop removes the spill directory of one retired assignment. The retirement path calls
 // it beside the census drop, and a retirement that runs twice completes both times. An
 // identifier that is not an assignment id is refused rather than composed into a path,

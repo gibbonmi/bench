@@ -165,6 +165,9 @@ type commandLeaf struct {
 	Grammar string
 	Root    leafRootNeed
 	Bound   boundDisposition
+	// Retires marks a leaf that retires an assignment. Its spill goes to the primary scope,
+	// so the retirement cannot remove a spill that is still open.
+	Retires bool
 	Run     func(c Command, root string, args []string) int
 }
 
@@ -321,7 +324,8 @@ func (c Command) Run(args []string) int {
 	}
 	// A bounded command writes both streams into one owner, which prints the response
 	// after the command returns. The command's own exit code stays the verb's exit.
-	owner := responsebound.New(worktree.Home(), c.Stdout, c.Stderr, boundaryRoot, args...)
+	leaf, _ := leafNamed(definition.Leaves, args[1:])
+	owner := responsebound.New(worktree.Home(), c.Stdout, c.Stderr, boundaryRoot, leaf.Retires)
 	c.Stdout, c.Stderr = owner.Stdout(), owner.Stderr()
 	exit := definition.run(c, args[1:])
 	owner.Finish()

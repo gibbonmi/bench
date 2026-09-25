@@ -5,12 +5,16 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/poolkey"
 )
 
 // The expectations here are authored apart from the owner: a bounded response over 10
@@ -185,5 +189,79 @@ func TestEveryPublicCommandDeclaresBound(t *testing.T) {
 	}
 	if missing := undeclaredBound(planted); !reflect.DeepEqual(missing, []string{"family leaf", "flagged --flag", "planted"}) {
 		t.Fatalf("planted undeclared entries = %q, want the public entries and the leaf", missing)
+	}
+}
+
+// assignmentCheckout makes a linked worktree of a new repository at an assignment segment
+// of the pool below home. It answers the repository, the checkout, and the assignment id.
+func assignmentCheckout(t *testing.T, home string) (repo, checkout, id string) {
+	t.Helper()
+	repo = gittest.RepoOnBranch(t, "main")
+	id = strings.Repeat("b", 32)
+	checkout = filepath.Join(poolkey.Pool(home, repo), poolkey.AssignmentSegment(strings.Repeat("a", 32), id))
+	for _, args := range [][]string{{"commit", "-q", "--allow-empty", "-m", "base"}, {"worktree", "add", "-q", "--detach", checkout}} {
+		if out, err := exec.Command("git", append([]string{"-C", repo}, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %q: %v: %s", args, err, out)
+		}
+	}
+	return repo, checkout, id
+}
+
+// spillDirOf answers the directory of the spill file that a bounded response names.
+func spillDirOf(t *testing.T, stdout string) string {
+	t.Helper()
+	lines := strings.SplitAfter(stdout, "\n")
+	if len(lines) < 5 {
+		t.Fatalf("response = %q, want a spill line", stdout)
+	}
+	_, path, found := strings.Cut(strings.TrimSuffix(lines[4], "}\n"), ",path=")
+	if !found {
+		t.Fatalf("fifth line = %q, want a spill line with a path", lines[4])
+	}
+	return filepath.Dir(path)
+}
+
+// BO72 at the dispatcher: from inside an assignment worktree, an over-bound leaf whose row
+// retires spills under the primary scope, and an over-bound leaf that does not retire
+// spills under the assignment scope. The spec fixes the store directory names.
+func TestDispatcherSpillsRetiringLeafToPrimary(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv(benchhome.Env, home)
+	repo, checkout, id := assignmentCheckout(t, home)
+	t.Chdir(checkout)
+	old := commandRegistry
+	t.Cleanup(func() { commandRegistry = old })
+	print11 := func(c Command, _ string, args []string) int { return linesHandler(stdoutOf, 11)(c, args) }
+	commandRegistry = []commandDefinition{{
+		Name: "family", Inventory: publicInventory(), Bound: boundResponse, LeafUsage: func() string { return "usage\n" },
+		Leaves: []commandLeaf{
+			{Name: "retire", Root: rootNone, Bound: boundResponse, Retires: true, Run: print11},
+			{Name: "keep", Root: rootNone, Bound: boundResponse, Run: print11},
+		},
+	}}
+	store := filepath.Join(home, "responses", poolkey.Key(repo))
+	for _, row := range []struct{ leaf, scope string }{{"retire", "primary"}, {"keep", id}} {
+		var out bytes.Buffer
+		if code := (Command{Stdout: &out, Stderr: &out}).Run([]string{"family", row.leaf}); code != 0 {
+			t.Fatalf("family %s exit = %d: %q", row.leaf, code, out.String())
+		}
+		if got, want := spillDirOf(t, out.String()), filepath.Join(store, row.scope); got != want {
+			t.Errorf("family %s spilled under %s, want %s", row.leaf, got, want)
+		}
+	}
+}
+
+// The retiring verbs of the spec each declare Retires on their own leaf row, and no other
+// leaf does.
+func TestRetiringLeavesDeclareRetires(t *testing.T) {
+	var retiring []string
+	for _, leaf := range worktreeLeaves {
+		if leaf.Retires {
+			retiring = append(retiring, leaf.Name)
+		}
+	}
+	sort.Strings(retiring)
+	if want := []string{"clean", "land", "reclaim", "release"}; !reflect.DeepEqual(retiring, want) {
+		t.Fatalf("retiring worktree leaves = %q, want %q", retiring, want)
 	}
 }
