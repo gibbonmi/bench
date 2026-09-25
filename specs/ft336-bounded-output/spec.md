@@ -398,6 +398,9 @@ The shell CLI hostile-input profile applies to the owner and to `--to`. The walk
 - `internal/chargeevidence/export.go`
 - `internal/commit/commit.go`
 - `internal/commit/chain_grammar_test.go`
+- `internal/poolkey/poolkey.go`
+- `internal/poolkey/poolkey_test.go`
+- `tests/canary/package-core-guard/reintroduced-bare-skip`
 - `internal/census/census.go`
 - `internal/census/output.go`
 - `internal/census/output_test.go`
