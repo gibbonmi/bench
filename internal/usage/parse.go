@@ -68,6 +68,15 @@ type Result struct {
 	EndedFlags                  bool
 }
 
+// EmptyOperand is the token a usage refusal shows for an empty argument, which is what
+// an unset shell variable expands to inside quotes.
+const EmptyOperand = `""`
+
+// EmptyFlagValue is the token a usage refusal shows for a flag that got an empty value.
+func EmptyFlagValue(flag string) string {
+	return flag + " " + EmptyOperand
+}
+
 // Parse applies g's grammar to args and returns exactly one of three
 // outcomes: a populated Result with an empty line and code 0 on a successful
 // parse; a help outcome (zero Result, g.Help as the line, code 0) when --help
@@ -146,7 +155,7 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 					}
 					i++
 					if args[i] == "" && noEmptyFlags[a] {
-						return Result{}, toon.Usage(g.Cmd, a+` ""`), 2
+						return Result{}, toon.Usage(g.Cmd, EmptyFlagValue(a)), 2
 					}
 					result.Flags[a] = args[i]
 				} else {
@@ -166,7 +175,7 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 			if g.UnquotedEmptyPositional {
 				return Result{}, toon.Usage(g.Cmd, ""), 2
 			}
-			return Result{}, toon.Usage(g.Cmd, `""`), 2
+			return Result{}, toon.Usage(g.Cmd, EmptyOperand), 2
 		}
 		// Trailing garbage is reported on the first excess argument, not a
 		// generic message, so a mistyped invocation names the token that
