@@ -449,11 +449,96 @@ Each axis found 0 findings. Standards confirmed R22 and R23. Spec found that the
 
 R18 and R21 correct non-behavioral spec text, and both stay open to reviewer veto.
 
+## BO-C4 author evidence
+
+Each ticket had a fresh `bench-writer` author on opus at high effort, with a cap of 3 attempts. The chunk base is `7bd63cc6`, the BO-C3 record commit. By user direction, ticket 6 authored in the sibling worktree `ft336-t6-opus` from `ed30dbe2`, and the orchestrator merged it at `3cf3700c`. Ticket 7 authored on the integration source.
+
+| Ticket | Author session | Commit | Attempts |
+|---|---|---|---|
+| 6 | `claude:bench-writer/bo-t6-author` | `d940c7dc` | 2 of 3 |
+| 7 | `claude:bench-writer/bo-t7-author` | `709602ac` | 1 of 3 |
+
+Ticket 6 prints one `evidence_summary` block for a bare evidence read, and its `next` reads the first manifest page. Ticket 7 adds `--to <dir>`, which verifies each source and writes it by ordinal with one `index.toon`.
+
+Each author stopped once on files outside its fence, and the orchestrator widened the fence under the plan-expansion policy. Commit `20479bac` adds the registry pin test, the generated format reference, and two default-read tests to ticket 6. Commit `f110f314` adds two anchor files and the `BENCH_KIT` sentence to ticket 6. Commit `27add0b7` adds the injected-port registry to ticket 7. A `bench learning` entry records each expansion.
+
+Each author ran its ticket checks at the chunk tip `709602ac`, and each check passed. The `internal/chargeevidence` runs skipped one device subtest, because this host cannot create a character device.
+
+### Probe verdicts
+
+Each probe ran through `bench probe`. Each probe bit, and each restore reads `yes`.
+
+| Ticket | Mutation | Test |
+|---|---|---|
+| 6 | swap: the bare read returns the first manifest page | TestEvidenceDefaultPrintsSummary |
+| 6 | swap: the summary `next` names a source cursor | TestEvidenceSummaryNextReadsFirstPage |
+| 7 | swap: a source is written before its check | TestEvidenceExportVerifiesBeforeWrite |
+| 7 | omission: the cleanup after a write fault | TestEvidenceExportCleansOnFailure |
+| 7 | swap: the emptiness check `> 0` to `> 1` | TestEvidenceExportRefusesNonEmptyDir |
+| 7 | swap: the file name comes from the source id | TestEvidenceExportNamesByOrdinal |
+
+## BO-C4 chunk review, round 1
+
+The frozen pair is base `7bd63cc6b6cacf0ff42547a8954287ccee2bbe04` and tip `709602ac485a28b6c1540866e866f5fe36ce5655`. The shared evidence is `sha256:dedfbd4b945d52344452e01ab69c12a4f69df3e7340fa918a504b526f435c0e7`. Each axis ran in a fresh `bench-reviewer` session on opus at medium effort. Only the Coverage axis ran probes, and it left the tree clean.
+
+The raw finding count is 10: Standards 5, Spec 2, and Coverage 3. No two findings name the same fix, so 10 repair targets remain.
+
+## Standards
+
+Findings: 5. The worst issue is a set of export contract literals with no recorded red.
+
+- `internal/preflight/evidencecmd/evidence_export_test.go` states `source-%d`, `index.toon`, the index columns, and the `exported{...}` line as literals. No red is recorded for them. Target R24. `auto-fix`. Confidence 8.
+- `verifiedSource` in `internal/chargeevidence/export.go:57-71` repeats the page and source check loop of `Verify` in `read.go:325-341`. Target R25. `auto-fix`. Confidence 6.
+- The generated reference states the bare-read trigger and successor twice, from `reference.go:72` and from the block description in `schema.go:195-197`. Target R26. `auto-fix`. Confidence 6.
+- `internal/preflight/evidencecmd/export.go:22` builds the refusal line by hand, and `storeRefusal` owns that line. Target R27. `auto-fix`. Confidence 5.
+- `--to` is a form of `KindReadEvidence`, so `Read` checks the flag again to route to `Export`. Verify and check-current have their own kinds. Target R28. `auto-fix`. Confidence 5.
+
+## Spec
+
+Findings: 2. The worst issue is a seam cell that says "run unchanged" for a changed helper.
+
+- BO44 says its tests run unchanged, but `traverseEvidence` now enters through the summary's `next`. The guarantee still holds. Target R29. `auto-fix`. Confidence 8.
+- The BO-C4 verification lists only `evidencecmd` and `chargeevidence`, but the widened fences add `cmd/bench`, system, and conformance tests. Target R30. `auto-fix`. Confidence 6.
+
+The Spec axis held BO42, BO43, and BO45 to BO50, and each fence expansion. It found the output of the bare read byte-identical to the old default at base.
+
+## Coverage
+
+Findings: 3. The worst issue is an index write fault that no test catches.
+
+- A swap that ignores a failed `index.toon` write at `internal/chargeevidence/export.go:110` stayed silent. The export would then print success over a partial directory. Target R31. `auto-fix`. Confidence 9.
+- A swap that disables the control-byte guard at `internal/preflight/evidencecmd/export.go:21` stayed silent. Target R32. `auto-fix`. Confidence 8.
+- A swap that disables the source check at `internal/chargeevidence/export.go:67` stayed silent, because BO48 corrupts only a page. Target R33. `auto-fix`. Confidence 5.
+
+## Advice
+
+- The `SameFile` race guard in the export has no test.
+- No `--to` row puts a regular file at the directory path.
+- `cmd/bench/preflight_version_test.go` parses `next` at two sites in one function.
+- Ticket 7 gave a wrong reason for the kind overload: `internal/preflight/command.go` is inside the spec fence.
+
+## BO-C4 repair routing
+
+This is cycle 1 of the two repair cycles for chunk BO-C4. R29 corrects non-behavioral spec text, so it is flagged for reviewer veto.
+
+| Target | Owner | Repair |
+|---|---|---|
+| R24 | ticket 7 | Derive each export literal from its owner, or record a demonstrated red for each independent value. |
+| R25 | ticket 7 | Give the page and source check one owner that `Verify` and the export share. |
+| R26 | ticket 6 | State the bare-read trigger and successor at one source. |
+| R27 | ticket 7 | Build the export refusal through the owner of the refusal line. |
+| R28 | ticket 7 | Give `--to` its own kind in the dispatch. |
+| R29 | orchestrator | Reword the BO44 seam cell to state the new helper entry. |
+| R30 | orchestrator | Add `cmd/bench`, system, and conformance checks to the BO-C4 verification. |
+| R31 | ticket 7 | Add a BO50 case that faults the index write. |
+| R32 | ticket 7 | Add a row for a control byte in `--to`. |
+| R33 | ticket 7 | Add a row for a source that fails its own check, or record why no store can hold one. |
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ft336-bounded-output/spec.md",
-  "plan_digest": "sha256:ba3e0c6c5db1ea8bb16614bec23d52dc82f442ec6a547cd56044521097c92e9d",
+  "plan_digest": "sha256:187c6c04e2a33dea45c518a130dd3de1d8abd48ec8cb97446ee68a7dbe8eb896",
   "implementation_session": "",
   "chunks": [
     {
@@ -1604,6 +1689,173 @@ R18 and R21 correct non-behavioral spec text, and both stay open to reviewer vet
           ]
         }
       ]
+    },
+    {
+      "id": "BO-C4",
+      "base": "7bd63cc6b6cacf0ff42547a8954287ccee2bbe04",
+      "tip": "709602ac485a28b6c1540866e866f5fe36ce5655",
+      "plan_digest": "sha256:187c6c04e2a33dea45c518a130dd3de1d8abd48ec8cb97446ee68a7dbe8eb896",
+      "source_digest": "c5ecd5e07c259614646ca1e5181c032a0accf8a9",
+      "acceptance_rows": [
+        "BO42",
+        "BO43",
+        "BO44",
+        "BO45",
+        "BO46",
+        "BO47",
+        "BO48",
+        "BO49",
+        "BO50"
+      ],
+      "verification": [
+        {
+          "id": "bo-c4-6-evidencecmd-r1",
+          "performer": "claude:bench-writer/bo-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c5ecd5e07c259614646ca1e5181c032a0accf8a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t6-author/6-evidencecmd@709602ac",
+            "digest": "sha256:5a5b6e6d538c2639be6b4b55673cf8c2090fb05ab192a25cc2fbf80234a1e12c",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,9297\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "6-evidencecmd",
+          "command": "bench test --package ./internal/preflight/evidencecmd",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c4-6-chargeevidence-r1",
+          "performer": "claude:bench-writer/bo-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c5ecd5e07c259614646ca1e5181c032a0accf8a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t6-author/6-chargeevidence@709602ac",
+            "digest": "sha256:5c0fb550e808e42900c1779af36d39aaeb0e2d12acfe9422633e2ffda2580df5",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/chargeevidence,pass,167\nfailures[0]{package,test,line}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/chargeevidence,TestEvidenceStoreKinds/CE94_device,\"capability: privilege: cannot create a character device: operation not permitted\""
+          },
+          "requirement": "6-chargeevidence",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c4-7-evidencecmd-r1",
+          "performer": "claude:bench-writer/bo-t7-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c5ecd5e07c259614646ca1e5181c032a0accf8a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t7-author/7-evidencecmd@709602ac",
+            "digest": "sha256:f225fb6459315e8e0dec2275e4846d33b00259153d1261f8fb76a2ae628be89c",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,8307\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "7-evidencecmd",
+          "command": "bench test --package ./internal/preflight/evidencecmd",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c4-7-chargeevidence-r1",
+          "performer": "claude:bench-writer/bo-t7-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c5ecd5e07c259614646ca1e5181c032a0accf8a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t7-author/7-chargeevidence@709602ac",
+            "digest": "sha256:363b2d4df64f28d2c9de601ece3356a318decce7383c443bbbf48406fa160f11",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/chargeevidence,pass,161\nfailures[0]{package,test,line}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/chargeevidence,TestEvidenceStoreKinds/CE94_device,\"capability: privilege: cannot create a character device: operation not permitted\""
+          },
+          "requirement": "7-chargeevidence",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "bo-c4-r1-standards",
+          "performer": "claude:bench-reviewer/bo-c4-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c5ecd5e07c259614646ca1e5181c032a0accf8a9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c4-standards@709602ac",
+            "digest": "sha256:c22e9358bd82ee2388745bbc231ee5941efa783a1e6f970f3e65ab47649893be",
+            "excerpt": "Standards: 5 findings (1 hard); worst: the export contract literals in evidence_export_test.go have no recorded red (AGENTS.md independent-expectation exception)."
+          },
+          "axis": "Standards",
+          "base": "7bd63cc6b6cacf0ff42547a8954287ccee2bbe04",
+          "tip": "709602ac485a28b6c1540866e866f5fe36ce5655",
+          "finding_ids": [
+            "R24",
+            "R25",
+            "R26",
+            "R27",
+            "R28"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bo-c4-r1-spec",
+          "performer": "claude:bench-reviewer/bo-c4-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c5ecd5e07c259614646ca1e5181c032a0accf8a9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c4-spec@709602ac",
+            "digest": "sha256:ebbf36d1249d46dcecfb05ac54a67d2ac7d53a26cd4616adb7bcbe6b3c6d43e6",
+            "excerpt": "Spec BO-C4: 2 findings, worst is BO44 marked \"run unchanged\" when the traversal helper changed (ask-user); the other seven rows are met."
+          },
+          "axis": "Spec",
+          "base": "7bd63cc6b6cacf0ff42547a8954287ccee2bbe04",
+          "tip": "709602ac485a28b6c1540866e866f5fe36ce5655",
+          "finding_ids": [
+            "R29",
+            "R30"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bo-c4-r1-coverage",
+          "performer": "claude:bench-reviewer/bo-c4-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c5ecd5e07c259614646ca1e5181c032a0accf8a9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c4-coverage@709602ac",
+            "digest": "sha256:3a38abee490050d1e3a9867d44e7278f4925d4368d26700010b6a638f84529fd",
+            "excerpt": "Coverage BO-C4: 3 gaps. Silent mutants at the index-write fault (export.go:110), the control-byte --to guard (evidencecmd/export.go:21) and the source-digest check (export.go:67). The summary counts and the relative-path resolution are covered."
+          },
+          "axis": "Coverage",
+          "base": "7bd63cc6b6cacf0ff42547a8954287ccee2bbe04",
+          "tip": "709602ac485a28b6c1540866e866f5fe36ce5655",
+          "finding_ids": [
+            "R31",
+            "R32",
+            "R33"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1883,6 +2135,87 @@ R18 and R21 correct non-behavioral spec text, and both stay open to reviewer vet
     {
       "from": "sha256:da4fcb78d6575c4772c2a754667c428fee8d48b65981433d457a2264edcd3377",
       "to": "sha256:ba3e0c6c5db1ea8bb16614bec23d52dc82f442ec6a547cd56044521097c92e9d",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ba3e0c6c5db1ea8bb16614bec23d52dc82f442ec6a547cd56044521097c92e9d",
+      "to": "sha256:bdb5cc2c0316481fd80b02a1bdce3534411d6183b704a2aabfb257e0fbdd846a",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:bdb5cc2c0316481fd80b02a1bdce3534411d6183b704a2aabfb257e0fbdd846a",
+      "to": "sha256:009f55c1722ea20bd48a2497eb795af246fe29de020970b47b0593d762e34e8b",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:009f55c1722ea20bd48a2497eb795af246fe29de020970b47b0593d762e34e8b",
+      "to": "sha256:187c6c04e2a33dea45c518a130dd3de1d8abd48ec8cb97446ee68a7dbe8eb896",
       "chunk_ids": {
         "BO-C1": [
           "BO-C1"
