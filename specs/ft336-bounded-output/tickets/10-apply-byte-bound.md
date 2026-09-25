@@ -1,8 +1,8 @@
 # 10. Apply the 4096-byte bound to each bounded response
 
 Blocked by: 2-bound-every-public-response.md
-Writes: internal/bounds/bounds.go, tests/canary/package-core-guard/bounds-duplicate-owner, internal/responsebound/, internal/systemtest/exec_bound_test.go
-Covers: BO63, BO64, BO65, BO74, BO75, BO76
+Writes: internal/bounds/bounds.go, tests/canary/package-core-guard/bounds-duplicate-owner, internal/responsebound/ (new), internal/systemtest/exec_bound_test.go (new)
+Covers: BO63, BO64, BO65, BO73, BO74, BO75, BO76
 
 ## What to build
 
