@@ -150,6 +150,8 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"release-future-owner-omitted":           conformanceFixture(".bench/gate.sh"),
 	"release-public-profile-omitted":         conformanceFixture(".bench/gate.sh"),
 	"bounds-duplicate-owner":                 conformanceFixture(".bench/gate.sh"),
+	"bounds-read-limit-restated":             conformanceGoFixture("internal/conformance/bounds_policy_test.go"),
+	"bounds-classify-limit-restated":         conformanceGoFixture("internal/conformance/bounds_policy_test.go"),
 	"unrouted-subcommand":                    conformanceFixture(".bench/gate.sh"),
 	"reintroduced-bare-skip":                 conformanceFixture(".bench/gate.sh"),
 	"offline-slice1-operation-omitted":       conformanceFixture(".bench/gate.sh"),

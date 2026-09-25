@@ -1,0 +1,3 @@
+[
+  {"path":"internal/models/models.go","old":"bounds.Read(resp.Body, bounds.ModelReadLimit)","new":"bounds.Read(resp.Body, 5 << 20)"}
+]
