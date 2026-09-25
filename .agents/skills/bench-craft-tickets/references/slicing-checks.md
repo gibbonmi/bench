@@ -38,7 +38,8 @@ differ.
 - A retirement pass gives each sentence that grants the retired behavior its own forbid row and red-capable check. One forbid row for a family of sentences leaves the others free to return.
 - A cited verifier row names the exact checks it performed. A reviewer can then repeat
   the checks and compare the results.
-- The slicer runs build preflight again after each fence change and before review. Review
-  then grades the final fence, not an earlier one.
+- The slicer runs `bench preflight build <slug>` after each change to a ticket or an acceptance row.
+  The spec goes to review, to sign-off, and to its landing only on a green preflight of its current ticket graph.
+  Review then grades the final fence, not an earlier one.
 - Each acceptance claim names an available producer and an executable check at its ticket checkpoint. A claim whose producer lands in a later ticket has no evidence at that checkpoint.
 - A ticket that preserves or moves a ref names a check for each of the head, the tip, and the checked-out-ref shapes. A check on one shape leaves the other shapes free to fail.
