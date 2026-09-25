@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -165,24 +164,43 @@ func TestExecStreamsLargeChild(t *testing.T) {
 	fixture, source := execBoundFixture(t)
 	cmd, stdout, stderr := systemStartSelected(t, fixture.root, fixture.environment(fixture.home),
 		execBoundArgs(source, "sh", "-c", fmt.Sprintf("yes line | head -c %d", size))...)
-	if code := systemExitCode(cmd.Wait()); code != 0 {
+	waited := make(chan error, 1)
+	done := make(chan struct{})
+	go func() {
+		waited <- cmd.Wait()
+		close(done)
+	}()
+	peak := peakResidentBytes(cmd.Process.Pid, done)
+	if code := systemExitCode(<-waited); code != 0 {
 		t.Fatalf("exec = (%d, %q, %q), want exit 0", code, stdout.String(), stderr.String())
 	}
 	path := spilledPath(t, stdout.String(), []string{"line", "line", "line", "line"}, []string{"line", "line", "line", "line", "line"})
 	if info, err := os.Stat(path); err != nil || info.Size() != size {
 		t.Fatalf("spill file = (%v, %v), want %d bytes", info, err, size)
 	}
-	usage, ok := cmd.ProcessState.SysUsage().(*syscall.Rusage)
-	if !ok {
-		t.Fatal("exec resource usage is unavailable")
+	if peak == 0 || peak >= peakLimit {
+		t.Fatalf("exec peak resident set = %d bytes, want a sample below %d while it streams %d bytes", peak, peakLimit, size)
 	}
-	// Linux reports the peak resident set in KiB, and Darwin reports it in bytes.
-	peak := usage.Maxrss * 1024
-	if runtime.GOOS == "darwin" {
-		peak = usage.Maxrss
-	}
-	if peak >= peakLimit {
-		t.Fatalf("exec peak resident set = %d bytes, want below %d while it streams %d bytes", peak, peakLimit, size)
+}
+
+// peakResidentBytes samples the resident set of pid until done closes, and answers the
+// largest sample. The wait status is no source here: on Linux, a child that the Go
+// runtime starts reports the parent's peak through its own, so it would grade this test
+// process rather than exec. `ps -o rss=` reads the process's own set in KiB on Linux
+// and on Darwin.
+func peakResidentBytes(pid int, done <-chan struct{}) int64 {
+	var peak int64
+	for {
+		select {
+		case <-done:
+			return peak
+		default:
+		}
+		sample := owner.runAt("", nil, "ps", "-o", "rss=", "-p", strconv.Itoa(pid))
+		if kib, err := strconv.ParseInt(strings.TrimSpace(sample.stdout), 10, 64); err == nil {
+			peak = max(peak, kib*1024)
+		}
+		time.Sleep(5 * time.Millisecond)
 	}
 }
 
