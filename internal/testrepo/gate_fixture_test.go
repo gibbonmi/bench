@@ -24,9 +24,8 @@ func TestGateFixtureDerivesInputs(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, name := range []string{"gate.sh", "gate-prospective.sh"} {
-		cmd := exec.Command(filepath.Join(root, ".bench", name))
-		cmd.Env = append(os.Environ(), "FIXTURE_VALUE=shared body")
-		if output, err := cmd.CombinedOutput(); err != nil || string(output) != "shared body" {
+		output, err := runScript(filepath.Join(root, ".bench", name), "FIXTURE_VALUE=shared body")
+		if err != nil || string(output) != "shared body" {
 			t.Fatalf("%s = %q, %v, want shared body", name, output, err)
 		}
 	}
@@ -51,7 +50,7 @@ func TestGateFixtureRestrictsAmbientPath(t *testing.T) {
 	}{
 		{"gate.sh", false}, {"gate-prospective.sh", true},
 	} {
-		output, err := exec.Command(filepath.Join(root, ".bench", tc.name)).CombinedOutput()
+		output, err := runScript(filepath.Join(root, ".bench", tc.name))
 		if (err != nil) != tc.wantErr || !strings.HasPrefix(string(output), "declared\n") {
 			t.Fatalf("%s = %q, %v, want failure %v", tc.name, output, err, tc.wantErr)
 		}
@@ -135,10 +134,7 @@ func TestGateFixtureWritesOnlyRequestedPathsAndCanRepeat(t *testing.T) {
 				if mode := info.Mode().Perm(); mode&0o111 != 0o111 {
 					t.Fatalf("%s mode = %v, want executable", name, mode)
 				}
-				// The shell reads the script instead of executing the file. A parallel
-				// subtest's fork can still hold a write handle to it, and a direct exec
-				// then fails with text file busy.
-				if output, err := exec.Command("/bin/sh", path).CombinedOutput(); err != nil || string(output) != want {
+				if output, err := runScript(path); err != nil || string(output) != want {
 					t.Fatalf("%s = %q, %v, want %q", name, output, err, want)
 				}
 			}
@@ -168,4 +164,13 @@ func TestGateFixtureRefusesNonAmbientNames(t *testing.T) {
 			t.Fatalf("command %q error = %v, want ambient-name refusal", name, err)
 		}
 	}
+}
+
+// runScript runs a fixture script through the shell instead of executing the file. A parallel
+// test's fork can still hold a write handle to the script, and a direct exec then fails with
+// text file busy.
+func runScript(path string, env ...string) ([]byte, error) {
+	cmd := exec.Command("/bin/sh", path)
+	cmd.Env = append(os.Environ(), env...)
+	return cmd.CombinedOutput()
 }
