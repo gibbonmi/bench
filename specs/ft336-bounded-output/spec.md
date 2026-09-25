@@ -419,6 +419,9 @@ The shell CLI hostile-input profile applies to the owner and to `--to`. The walk
 - `internal/census/census.go`
 - `internal/census/output.go`
 - `internal/census/output_test.go`
+- `cmd/bench/census_output.go`
+- `internal/responsebound/size.go`
+- `internal/responsebound/size_test.go`
 - `internal/anchors/registry_retained_workflow.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/injected_ports_registry_test.go`
