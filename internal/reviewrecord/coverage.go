@@ -76,7 +76,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 				return err
 			}
 			if baseDigest != previous.SourceDigest || !benchgit.OK("-C", root, "merge-base", "--is-ancestor", previous.Tip, chunk.Base) {
-				return fmt.Errorf("chunk %s: stale review chain gap: expected base %s, the chunk %s tip, got %s; plan commits and default-branch merges land before the ticket merge, and only record commits follow a chunk tip; review the uncovered delta", chunk.ID, previous.Tip, previous.ID, chunk.Base)
+				return fmt.Errorf("chunk %s: stale review chain gap: expected base %s, the chunk %s tip, got %s; plan commits land before the ticket merge, a default-branch merge lands only before the first chunk, and only record commits follow a chunk tip; review the uncovered delta", chunk.ID, previous.Tip, previous.ID, chunk.Base)
 			}
 		}
 		// Verification ownership reads the frozen plan above, so a historical
