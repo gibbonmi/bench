@@ -12,6 +12,7 @@ package preflight
 import (
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
@@ -140,10 +141,10 @@ type Facts struct {
 	BinarySealPresent bool
 
 	// BinarySealRefusal is the seal verifier's refusal for that published
-	// binary, empty when the seal matches the sources. The refusal already
-	// carries the one rebuild sentence, so the row renders this text whole
-	// rather than composing a second copy of it.
-	BinarySealRefusal string
+	// binary, nil when the seal matches the sources. The refusal already
+	// carries the reason and the one rebuild sentence, so the row renders
+	// them rather than composing a second copy.
+	BinarySealRefusal *freshness.Refusal
 }
 
 // CheckResult is one verdict row: the check's name, its verdict ("green" or
@@ -441,23 +442,6 @@ func kitPinCheck(f Facts) CheckResult {
 		return red("kit-pin", "ticket writes a system-tagged test file without stating BENCH_KIT: "+strings.Join(unpinned, ", "))
 	}
 	return green("kit-pin")
-}
-
-// binarySealCheck grades the published dist/bench a build is about to run.
-// A stale binary answers every consumer — a hand run, a hook, the wrapper, the
-// landing — from sources nobody reviewed, and no other row touches it. The
-// gathered refusal is rendered whole, because it already carries the one
-// rebuild sentence. A root that publishes no binary is not applicable, so a
-// linked consumer repo is reported on rather than refused. Decide calls this
-// in build mode alone; a review preflight renders no such row.
-func binarySealCheck(f Facts) CheckResult {
-	if !f.BinarySealPresent {
-		return notApplicable("binary-seal")
-	}
-	if f.BinarySealRefusal != "" {
-		return red("binary-seal", f.BinarySealRefusal)
-	}
-	return green("binary-seal")
 }
 
 // coversTokens is every row ID the parsed tickets cite, in enumeration order.
