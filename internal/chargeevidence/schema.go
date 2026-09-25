@@ -177,6 +177,7 @@ const (
 // Response block names.
 const (
 	blockPrepared = "prepared"
+	blockSummary  = "evidence_summary"
 	blockPage     = "page"
 	blockVerified = "verified"
 	blockCurrent  = "current"
@@ -191,6 +192,9 @@ var ResponseBlocks = []Block{
 		str("selection"), str("metadata"), num("sources"), num("pages"), num("manifest_bytes"),
 		flag("response_complete"), str("delivery"), str("next")},
 		fmt.Sprintf("One row. Selection is `%s`, metadata is the first source, and delivery is `%s`.", SelectionReference, DeliveryUnverified)},
+	{blockSummary, []Field{str("evidence"), num("sources"), num("pages"), num("manifest_bytes"), num("source_bytes"),
+		str("next")},
+		"One row for a read without a cursor or a source. It holds no content, and `next` reads the first manifest fragment."},
 	{blockPage, []Field{str("evidence"), str("stream"), str("source"), num("index"), num("offset"), num("bytes"),
 		num("total"), str("sha256"), str("content"), flag("response_complete"), flag("stream_end"), str("next")},
 		fmt.Sprintf("One fragment. A `%s` fragment has an empty source; a `%s` page names its source.", StreamManifest, StreamSource)},

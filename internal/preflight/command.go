@@ -84,6 +84,8 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 		return evidencecmd.Verify(root, slug)
 	case evidencecmd.KindCurrentEvidence:
 		return currentEvidenceCommand(root, slug, args)
+	case evidencecmd.KindExportEvidence:
+		return evidencecmd.Export(root, slug, flags[evidencecmd.FlagTo], chargeevidence.WriteAll)
 	case evidencecmd.KindCleanPlan:
 		return evidencecmd.CleanPlan(root, flags)
 	case evidencecmd.KindCleanApply:
@@ -172,7 +174,8 @@ func verdictCommand(root, mode, slug, base, sourceTip string, args []string) (st
 
 // renderChecks prints one count line for the verdict and a table of the red rows
 // only, so a green verdict costs one line and a red row keeps its detail and next.
-// The charge forms do not use this render: a red check refuses the charge, and a green charge prints no check row.
+// The charge forms do not use this render: a red check refuses the charge, and a
+// green charge prints no check row.
 func renderChecks(verdict Verdict) (string, error) {
 	counts := map[string]int{}
 	var red [][]string

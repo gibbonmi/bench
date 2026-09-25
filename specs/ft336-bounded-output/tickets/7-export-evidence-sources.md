@@ -1,7 +1,7 @@
 # 7. Export the verified evidence sources to a directory
 
 Blocked by: 6-summarize-evidence-default.md
-Writes: internal/preflight/evidencecmd/, internal/chargeevidence/export.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/preflight/evidencecmd/, internal/chargeevidence/export.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/injected_ports_registry_test.go, internal/chargeevidence/read.go, internal/preflight/command.go
 Covers: BO45, BO46, BO47, BO48, BO49, BO50
 
 ## What to build

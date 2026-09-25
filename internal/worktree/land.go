@@ -244,13 +244,17 @@ func censusCount(home, root, assignment string) int {
 	return counts[assignment]
 }
 
-// printCensusHeads states the raw-call count for each verb head the assignment used,
-// beside the landing's other evidence. The line prints before the release step, which
-// drops the records, so the retro reads the breakdown from the run instead of from
-// memory. An assignment with no records prints nothing.
+// printCensusHeads states the raw-call count for each verb head the assignment used, and
+// the response calls and bytes for each Bench verb head, beside the landing's other
+// evidence. The lines print before the release step, which drops the records, so the
+// retro reads the breakdown from the run instead of from memory. A line with no records
+// behind it prints nothing.
 func printCensusHeads(stderr io.Writer, home, root, assignment string) {
 	if breakdown := census.HeadBreakdown(home, root, assignment); breakdown != "" {
 		fmt.Fprintf(stderr, "census heads{%s}\n", breakdown)
+	}
+	if breakdown := census.OutputBreakdown(home, root, assignment); breakdown != "" {
+		fmt.Fprintf(stderr, "census output{%s}\n", breakdown)
 	}
 }
 

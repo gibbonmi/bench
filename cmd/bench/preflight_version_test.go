@@ -111,12 +111,17 @@ func runPreflight(t *testing.T, args []string) string {
 	return stdout.String()
 }
 
-// readManifestStream follows the default stream from its first read until the manifest
-// fragments end, and returns the reconstructed manifest bytes.
+// readManifestStream follows the default stream from the successor of its summary until
+// the manifest fragments end, and returns the reconstructed manifest bytes.
 func readManifestStream(t *testing.T, identity string) string {
 	t.Helper()
 	var manifest strings.Builder
-	args := []string{"preflight", "evidence", identity}
+	summary := tableValue(t, decodeVersionTOON(t, runPreflight(t, []string{"preflight", "evidence", identity})), "evidence_summary")
+	if len(summary) != 1 {
+		t.Fatalf("evidence_summary rows = %d", len(summary))
+	}
+	next, _ := summary[0]["next"].(string)
+	args := strings.Fields(next)[1:]
 	for i := 0; i < 10000; i++ {
 		rows := tableValue(t, decodeVersionTOON(t, runPreflight(t, args)), "page")
 		if len(rows) != 1 {

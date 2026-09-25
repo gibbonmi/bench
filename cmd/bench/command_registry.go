@@ -283,6 +283,8 @@ type Command struct {
 	Stdout, Stderr io.Writer
 	Executable     string
 	Observe        io.Writer
+	// resolved receives the assignment a bounded verb resolved for its target.
+	resolved *string
 }
 
 // Run executes args through the production command dispatcher.
@@ -326,9 +328,11 @@ func (c Command) Run(args []string) int {
 	// after the command returns. The command's own exit code stays the verb's exit.
 	leaf, _ := leafNamed(definition.Leaves, args[1:])
 	owner := responsebound.New(worktree.Home(), c.Stdout, c.Stderr, boundaryRoot, leaf.Retires)
-	c.Stdout, c.Stderr = owner.Stdout(), owner.Stderr()
+	var resolved string
+	c.Stdout, c.Stderr, c.resolved = owner.Stdout(), owner.Stderr(), &resolved
 	exit := definition.run(c, args[1:])
 	owner.Finish()
+	_ = recordOutput(owner.Size(), outputHead(definition, leaf), resolved, leaf.Retires)
 	return exit
 }
 

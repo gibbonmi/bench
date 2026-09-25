@@ -51,19 +51,27 @@ func childEnvValues(parsed usage.Result) ([]string, string) {
 
 // ExecCommand runs a direct child argv from one active Bench-owned worktree.
 func ExecCommand(root, home string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	exit, _ := ExecCommandResolving(root, home, args, stdin, stdout, stderr)
+	return exit
+}
+
+// ExecCommandResolving is ExecCommand that also answers the assignment its target resolved
+// to, or the empty string when no target resolved. The dispatcher keys the census output
+// record by this assignment, so it runs no second resolution of the target.
+func ExecCommandResolving(root, home string, args []string, stdin io.Reader, stdout, stderr io.Writer) (int, string) {
 	parsed, line, code := usage.Parse(worktreeExecGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)
-		return code
+		return code, ""
 	}
 	if !parsed.EndedFlags || parsed.PositionalsBeforeTerminator != 1 || len(parsed.Positionals) < 2 {
 		fmt.Fprintln(stderr, worktreeExecGrammar.Help)
-		return 2
+		return 2, ""
 	}
 	values, refusal := childEnvValues(parsed)
 	if refusal != "" {
 		fmt.Fprintln(stderr, refusal)
-		return 2
+		return 2, ""
 	}
 	// The record opens after the grammar answers. The verb resolves its assignment inside
 	// the span, so a target refusal records the verb with no subject.
@@ -78,7 +86,7 @@ func ExecCommand(root, home string, args []string, stdin io.Reader, stdout, stde
 		spanExit = 1
 	}
 	finishSpan(spanExit, assignment)
-	return exit
+	return exit, assignment
 }
 
 // execAttributed is the exec verb's own work, with the assignment that owns the child's
