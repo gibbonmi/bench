@@ -147,11 +147,188 @@ Advice, with no finding ID:
 - The name `TestOwnerCreateFailureSeparatesStdoutLine` now covers three views.
 - `store_test.go:117-125` builds the failing owner twice.
 
+## BO-C2 author evidence
+
+The orchestrator merged `main` into the source at `1b006c2f`, the BO-C2 base. Each ticket had a fresh `bench-writer` author on opus at high effort, with a cap of 3 attempts.
+
+| Ticket | Author session | Start tip | Commits |
+|---|---|---|---|
+| 2 | `claude:bench-writer/bo-t2-author` | `1b006c2f` | `cd26e76d` |
+| 3 | `claude:bench-writer/bo-t3-author` | `cd26e76d` | `2580e06f`, `3332e3b3`, `5f4cfe25` |
+
+Ticket 2 bounds every public entry except the closed exempt set, and it removes the `pending` value. Its one gate run listed the tests that the bound turned red, and the author changed each one to read the spill file. It also gave the `cmd/bench` tests a private Bench home, because the first gate run wrote spill directories into the real home. The author removed those directories.
+
+Ticket 3 drops an assignment's spills at retirement and keeps the newest 64 files in each `primary` scope. A retiring verb spills to `primary`. Before review, the orchestrator widened the ticket 3 `Writes:` line at `47b61391`. The retiring flag then moved onto the worktree leaf rows, and a dispatcher test covers the handoff. A `bench learning` entry records the expansion.
+
+### Probe verdicts
+
+Each probe bit, and each restore reads `yes`. Two system-suite reds used the copy-aside route, because `bench probe` refuses the system suite.
+
+| Ticket | Mutation | Test |
+|---|---|---|
+| 2 | omission: `return boundHelpForm` | TestHelpFormsStayComplete |
+| 2 | swap: the ship-tier reason is empty | TestBoundExemptionsAreClosed |
+| 2 | swap: a suffix-match help predicate | TestHelpExemptionNeedsOneArgument |
+| 2 | swap: the dashboard flag condition is false | TestDashboardStdoutStaysComplete |
+| 2 | hand route: the `show` leaf is exempt | TestExecNestedBenchBoundsOnce |
+| 3 | swap: the `responsebound.Drop` call loses its arguments | TestRetirementDropsResponseSpills |
+| 3 | swap: `primaryRetained` 64 to 65 | TestPrimarySpillsKeepNewest |
+| 3 | swap: the owner's retiring field is false | TestRetiringVerbSpillsToPrimary |
+| 3 | swap: `leaf.Retires && false` in `Command.Run` | TestDispatcherSpillsRetiringLeafToPrimary |
+| 3 | swap: the `release` row loses `Retires` | TestRetiringLeavesDeclareRetires |
+
+The orchestrator ran two independent probes. The first removed `-h` from `helpArgument`, and the second reversed the prune sort order. Both bit.
+
+### Verification
+
+The whole-project gate was green at `5f4cfe25`. Each author ran its four checks at `5f4cfe25`, and each check passed.
+
+## BO-C2 chunk review, round 1
+
+The frozen pair is base `1b006c2ff10a1607095b01773294c5a6059dc3cb` and tip `5f4cfe25a70738e623f3cb51b257604821291057`. The shared evidence is `sha256:d2778b2d52cca5e8b9887c4d93c44df686a1f3dbe536d6f24d95c6513542e783`. Each axis ran in a fresh `bench-reviewer` session on opus at medium effort. Only the Coverage axis ran probes, and it left the tree clean.
+
+The one production consumer outside the diff is `executeCleanup` at `internal/worktree/resume.go:193`. So `resume-clean` also drops spills. It is internal plumbing outside the bound, so it opens no spill that the drop could remove.
+
+The raw finding count is 6: Standards 4, Spec 0, and Coverage 2. Two Standards findings name the same fix, so 5 repair targets remain.
+
+## Standards
+
+Findings: 4. The worst issue is a fifth independent parser of the spill line across ticket fences.
+
+- `cmd/bench/response_bound_test.go:211` (`spillDirOf`) repeats the spill-line parse of `spilledResponse` in `cmd/bench/spill_support_test.go:34`. Target R8. `auto-fix`. Confidence 8.
+- `internal/responsebound/retire_test.go:15` and `internal/worktree/response_spill_test.go:27` hold identical spill-line parsers. With `internal/systemtest/exec_bound_test.go:55`, the tree holds five. Target R8. Confidence 7.
+- `internal/responsebound/retire.go:24` repeats the assignment-id check of `census.isAssignmentID` at `internal/census/census.go:337`. Target R9. `auto-fix`. Confidence 6.
+- `cmd/bench/main.go:251` spells the three help arguments beside `helpArgument`. Target R10. `auto-fix`. Confidence 5.
+
+The axis proposed `ask-user` for R8, because one parser for three packages needs a shared test-support package. The orchestrator routes R8 as `auto-fix`: `internal/reviewrecord/recordtest` is the precedent, and the package sits under the `internal/responsebound/` fence prefix. This decision is open to reviewer veto.
+
+## Spec
+
+Findings: 0. All 12 rows hold. These six reported choices conform to the spec:
+
+- The dashboard exemption needs `--stdout`.
+- The help forms are exempt through a predicate.
+- Bare `bench` and bare `bench worktree` stay bounded.
+- The owner takes the home and a retiring flag.
+- `resume-clean` is not a retiring verb.
+- The ticket 3 expansion stays inside approved behavior.
+
+## Coverage
+
+Findings: 2. The worst issue is an untested symlink guard on an irreversible removal.
+
+- A symlink at `responses/` or at `responses/<repo-key>/` would redirect `Drop`. The `realDir` loop at `internal/responsebound/retire.go:28-35` guards it, but a probe that removed the guard stayed silent in both packages. `spec.md:352` says each symlink edge has a row. Target R11. `auto-fix`. Confidence 7.
+- `anchor_help_test.go:159` and `:182` read the spill file, which holds both streams. Their `stderr == ""` check can no longer fail, and a stray stderr line stayed silent. The spec says "The author changes no assertion to a weaker predicate." Target R12. `auto-fix`. Confidence 5.
+
+## Advice
+
+- `prunePrimary` skips a non-spill file, and no test checks it.
+- A family with a leaf named `help` would bound the call and print the family usage. No family has one.
+- The prune order uses the creation time in the spill name, so a clock step backward could prune a new spill.
+- The independent 64, the four retiring leaves, and the closed exempt set keep their recorded reds in this record.
+
+## BO-C2 repair routing
+
+This is cycle 1 of the two repair cycles for chunk BO-C2. Each target goes to a fresh repair session for the ticket whose `Writes:` line holds its paths. The ticket 3 session runs first, because it creates the shared test-support package that the ticket 2 session then uses.
+
+| Target | Ticket | Repair |
+|---|---|---|
+| R8 | 3, then 2 | Ticket 3 adds one spill-line parser in a test-support package under `internal/responsebound/` and moves its own tests to it. Ticket 2 moves the `cmd/bench` and `internal/systemtest` parsers to it. |
+| R9 | 3 | Export one assignment-id predicate from `internal/poolkey`, and call it from `census` and from `Drop`. The orchestrator widens the ticket 3 `Writes:` line. |
+| R10 | 2 | Make `cmd/bench/main.go:251` call `helpArgument`. |
+| R11 | 3 | Test that `Drop` refuses a symlink at each store level and that the target survives. |
+| R12 | 2 | Restore a failing stderr check on the two anchor tests. |
+
+## BO-C2 repair evidence, cycle 1
+
+Two fresh repair sessions ran on opus at low effort, and each used 1 of 2 attempts. The ticket 3 session `claude:bench-writer/bo-t3-repair-c1` committed `852ebcae`. The ticket 2 session `claude:bench-writer/bo-t2-repair-c1` committed `8325c1f2`.
+
+- R8: `internal/responsebound/responseboundtest/spill.go` holds the one spill-line parser, and each earlier parser now calls it.
+- R9: `poolkey.IsAssignmentID` owns the assignment-id check. `census` and `Drop` call it. `census.go` keeps a one-line alias for `events.go`, which is outside the fence.
+- R10: `cmd/bench/main.go:251` calls `helpArgument`.
+- R11: `TestDropRefusesSymlinkedStore` plants a symlink at `responses/` and at `responses/<repo-key>/`.
+- R12: the two anchor tests require the complete output to equal the output of `anchorsCommand`. A stray stderr line was silent before the repair and bit after it.
+
+Review preflight then found three fence gaps from the R9 expansion. The orchestrator added the two `poolkey` paths and the `reintroduced-bare-skip` canary to the ticket 3 `Writes:` line and to the spec fences.
+
+The orchestrator also merged `main` into the source inside the chunk. The review charge then counted the merged `main` paths as outside the fences and refused. The orchestrator reset the source to `2cb6ea36`, the commit before that merge, and kept the restore ref. A `bench learning` entry records the error. The light-path rule that merges `main` only between chunks landed on `main`.
+
+Each probe of the two sessions bit, and each restore reads `yes`. The ticket 3 session probed the `realDir` guard, an accept-anything predicate in three packages, and the `,path=` field in two packages. The ticket 2 session probed a stray stderr line at three sites. It also probed the `,path=` field in `cmd/bench`, and in the system suite through the copy-aside route. The orchestrator's probe of the census alias was silent: no test covers `ReadEvents` with a foreign file name. That gap is older than this build, and a `bench idea` entry holds it.
+
+## BO-C2 chunk review, round 2
+
+Round 2 confirms cycle 1 on the delta from `5f4cfe25` to `2cb6ea36`. The frozen pair is base `1b006c2ff10a1607095b01773294c5a6059dc3cb` and tip `2cb6ea3641f5ac86e025b2ae7dd0533bd42f87eb`. The shared evidence is `sha256:fedaa7fe8551050ac80159f0c805a02895ee019f926dcc8593b13da21e053c77`. Each axis ran in a new `bench-reviewer` session on opus at medium effort.
+
+The Spec axis found 0 findings. It confirmed that R9 and R10 keep behavior and that R12 strengthens the assertion. The plan and fence commits add exactly the named paths and sessions. The Coverage axis confirmed R8, R9, R11, and R12 with five independent probes, and it found 0 findings. The Standards axis confirmed R8, R9, and R10, and it found 1 new finding.
+
+- `internal/responsebound/responseboundtest/spill.go:24,43-46` restates the four count fields of the spill line in `owner.go:183`, and no caller reads them. Target R13. `auto-fix`: parse only the prefix, `,path=`, and the suffix. Confidence 6.
+
+Advice, with no finding ID:
+
+- `cmd/bench/spill_support_test.go:41-44` passes a malformed fifth `spilled{` line through as plain stdout. The Coverage axis refuted a gate miss: the owner tests and 16 `cmd/bench` tests pin the line.
+- The `spilled{` clause at `cmd/bench/response_bound_exempt_test.go:98` cannot fail. The fixture check at line 93 still catches a bounded `dashboard --stdout`.
+- `census` names one predicate twice until `events.go` calls `poolkey.IsAssignmentID`.
+
+R13 goes to cycle 2, the last repair cycle of chunk BO-C2, in a fresh repair session for ticket 3.
+
+## BO-C2 ticket 3 repair evidence, cycle 2
+
+The session `claude:bench-writer/bo-t3-repair-c2` ran on opus at low effort and used 1 of 2 attempts. It started at `3fcf6bd4` and committed `dc30b5d1`. The shared parser now checks only the `spilled{` prefix, the `,path=` separator, and the `}` suffix, and `Spill` holds only `Path`. No caller changed.
+
+The session's two probes of the `,path=` field bit in `internal/responsebound` and `internal/worktree`. The orchestrator's probe of the `spilled{` prefix bit. Each restore reads `yes`. The current author of each ticket ran its four checks at `dc30b5d1`, and each check passed.
+
+## BO-C2 chunk review, round 3, and close
+
+Round 3 confirms cycle 2 at the final tip. The frozen pair is base `1b006c2ff10a1607095b01773294c5a6059dc3cb` and tip `dc30b5d13a70516565664a3ab1c5eae8f15f938d`. The shared evidence is `sha256:f61148061a942e3b81283b737fc9425e0d82fd7cf5183eea0162b868cf6a93f4`. Each axis ran in a new `bench-reviewer` session on opus at medium effort.
+
+Each axis found 0 findings. The Coverage axis bit the suffix check, and it showed that a malformed owner count still reds the owner tests. Chunk BO-C2 used both of its two repair cycles. It used no hardening cycle.
+
+Advice, with no finding ID:
+
+- The non-empty-path guard in the shared parser has no test. The owner never renders an empty path.
+- Two `cmd/bench` tests still pin `lines=` as the first count field of an expected value.
+
+## BO-C2 replay onto the BO-C1 record
+
+The BO-C2 checkpoint refused the base `1b006c2f`, because a `main` merge sat between the BO-C1 tip and the BO-C2 base. The review chain requires a later chunk base to hold the tree of the previous chunk tip, apart from this record. A Fable delegate at high effort chose a replay, by user direction.
+
+The orchestrator moved the source to `a8ce001c` with `bench worktree reset`, and the old tip `015cdbec` stays under a preserve ref. It then applied the 11 BO-C2 source commits in order and committed each one on a lane pass. The two record commits were not applied. The replayed delta and the reviewed delta, each without this record, have the same SHA-256, `78f34d26`. The `main` paths and the BO-C2 paths have no file in common.
+
+| Reviewed commit | Replayed commit |
+|---|---|
+| `cd26e76d` | `e5dc8c57` |
+| `2580e06f` | `9eb1dd33` |
+| `3332e3b3` | `1341f662` |
+| `47b61391` | `3a151229` |
+| `5f4cfe25` | `73d6163e` |
+| `d0a9961c` | `d1fd9f59` |
+| `852ebcae` | `c180c934` |
+| `8325c1f2` | `a23054df` |
+| `2cb6ea36` | `82ce23c3` |
+| `3fcf6bd4` | `75fab31b` |
+| `dc30b5d1` | `5b1497c0` |
+
+The plan commit `ebe16ee2` adds one user-directed session for each ticket, `bo-t2-replay-verify` and `bo-t3-replay-verify`, on opus at low effort. The earlier sessions had returned their final reports. Each new session ran its four ticket checks at `ebe16ee2`, and each check passed. The `internal/worktree` runs skipped two socket subtests, because this host cannot open a unix socket at that path length.
+
+The source commits of `bo-t2-repair-c1` and `bo-t3-repair-c2` are no longer ancestors of the source. The preserve ref keeps them reachable.
+
+## BO-C2 chunk review, replay round, and close
+
+The replay round confirms the replayed source. The frozen pair is base `a8ce001c1476db99e458cc34dfb500d50a8a70e6` and tip `ebe16ee2994e203cab05c6f86cfc664b01947779`. The shared evidence is `sha256:7dbdd63d2c4aea32e36f8ce687fbe4b21c525f8d477d03b1c5b90d74a037f002`. Each axis ran in a new `bench-reviewer` session on opus at medium effort.
+
+Each axis found 0 findings. Standards and Spec each computed the delta hash again, and each found no reference to the dropped merge. Spec traced all 12 BO-C2 rows to their tests at the tip. Coverage ran three new probes, and each one bit and restored. The probes swap the spill-drop removal and the repository-scope prune, and add a member to the exempt set.
+
+Advice, with no finding ID:
+
+- No test covers a prune that skips a non-spill file.
+- The prune order reads the time in the spill name, so a backward clock step can prune a new spill.
+- Four test sites state the spill line index 4, which equals the owner's head line count.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ft336-bounded-output/spec.md",
-  "plan_digest": "sha256:907409d5092633e390a0d499495fa26c31f82526b7567713e8caecab0f01f641",
+  "plan_digest": "sha256:020a1a93d65e334bc552fb7573ebc564e69e06e8f4cfbdeb2bddb00b2e216b55",
   "implementation_session": "",
   "chunks": [
     {
@@ -555,6 +732,235 @@ Advice, with no finding ID:
           ]
         }
       ]
+    },
+    {
+      "id": "BO-C2",
+      "base": "a8ce001c1476db99e458cc34dfb500d50a8a70e6",
+      "tip": "ebe16ee2994e203cab05c6f86cfc664b01947779",
+      "plan_digest": "sha256:020a1a93d65e334bc552fb7573ebc564e69e06e8f4cfbdeb2bddb00b2e216b55",
+      "source_digest": "bfc402525f9a9a08761335c2d715de780603e0b6",
+      "acceptance_rows": [
+        "BO8",
+        "BO9",
+        "BO10",
+        "BO11",
+        "BO12",
+        "BO13",
+        "BO30",
+        "BO66",
+        "BO70",
+        "BO16",
+        "BO17",
+        "BO72"
+      ],
+      "verification": [
+        {
+          "id": "bo-c2-2-cmd-replay",
+          "performer": "claude:bench-writer/bo-t2-replay-verify",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "bfc402525f9a9a08761335c2d715de780603e0b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t2-replay-verify-20260925/2-cmd@ebe16ee2",
+            "digest": "sha256:e1520c6fc6fe9bbd9a019b2334e96f962f144fa13ead46ca27f0a10ee0d6d7a8",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,9814\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c2-2-worktree-replay",
+          "performer": "claude:bench-writer/bo-t2-replay-verify",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "bfc402525f9a9a08761335c2d715de780603e0b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t2-replay-verify-20260925/2-worktree@ebe16ee2",
+            "digest": "sha256:5f8b7c933c44f4dce14cca08b83478f13b09547f99c842ad34030b3f8dbf7226",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,56804\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:99: unix sockets unavailable: listen unix /tmp/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket2255731327/001/.bench-home/worktrees/001-3407602614/b9716a4f50d6b42b12ff3f47e7af1a9c-2b03acd195471d068f711f21… (272 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket3813980438/001/.bench-home/worktrees/001-3058368114/c636c42035b3b712c7f1533f9209d423-6c7adab509b54f7ad1b9de926b97a19… (270 bytes)\""
+          },
+          "requirement": "2-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c2-2-owner-replay",
+          "performer": "claude:bench-writer/bo-t2-replay-verify",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "bfc402525f9a9a08761335c2d715de780603e0b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t2-replay-verify-20260925/2-owner@ebe16ee2",
+            "digest": "sha256:2e320b031b7e69918df1f45c0d4eb10e2f5a0b5d72b6cfc19d2d284bbb8d4dd7",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,92\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-owner",
+          "command": "bench test --package ./internal/responsebound",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c2-2-system-replay",
+          "performer": "claude:bench-writer/bo-t2-replay-verify",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "bfc402525f9a9a08761335c2d715de780603e0b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t2-replay-verify-20260925/2-system@ebe16ee2",
+            "digest": "sha256:1cd50ff146cd419066672195b7a4e4d83eb32c3d14394606d0852325b5b500f7",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,42529\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c2-3-cmd-replay",
+          "performer": "claude:bench-writer/bo-t3-replay-verify",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "bfc402525f9a9a08761335c2d715de780603e0b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t3-replay-verify-20260925/3-cmd@ebe16ee2",
+            "digest": "sha256:eae47df41211e78d3ffad02e99572f1f2b0a93f419a32841fc48073b80755e0e",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,7346\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c2-3-worktree-replay",
+          "performer": "claude:bench-writer/bo-t3-replay-verify",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "bfc402525f9a9a08761335c2d715de780603e0b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t3-replay-verify-20260925/3-worktree@ebe16ee2",
+            "digest": "sha256:8ef5431bcbab1457513ead13eb7545b064ef2d2dda43919926005bfb106334a9",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,63336\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:99: unix sockets unavailable: listen unix /tmp/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket2110282983/001/.bench-home/worktrees/001-2151229451/b7d692dd00cbfff66cb486bc8d20fe9e-ef50281a4f633086af1384e9… (272 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket1728783460/001/.bench-home/worktrees/001-1192126795/e19933868dd789c05b959560f7d8633d-000feb5f60cd1f54cb1d6407b8e4758… (270 bytes)\""
+          },
+          "requirement": "3-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c2-3-owner-replay",
+          "performer": "claude:bench-writer/bo-t3-replay-verify",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "bfc402525f9a9a08761335c2d715de780603e0b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t3-replay-verify-20260925/3-owner@ebe16ee2",
+            "digest": "sha256:1faf1cfdc318038832bb233039afad82ea5e35866138aeb5641504f5ebe1caee",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,109\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-owner",
+          "command": "bench test --package ./internal/responsebound",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c2-3-system-replay",
+          "performer": "claude:bench-writer/bo-t3-replay-verify",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "bfc402525f9a9a08761335c2d715de780603e0b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t3-replay-verify-20260925/3-system@ebe16ee2",
+            "digest": "sha256:225b41e459b4dd83d89b3583a8a0ac91a7a83f9091b2d665f1086fbb76376839",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,67453\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "bo-c2-replay-standards",
+          "performer": "claude:bench-reviewer/bo-c2-replay-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bfc402525f9a9a08761335c2d715de780603e0b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c2-replay-standards@ebe16ee2",
+            "digest": "sha256:735d028fd93cebe5b6c72ae7c947da0dc1574d110905504a7754e2069e6edaa6",
+            "excerpt": "Standards confirming (replay): 0 findings. Replayed delta hashes equal to the reviewed one (78f34d26), it references nothing from the dropped merge, the plan commit only appends two valid user-directed assignments, and R8 to R13 hold."
+          },
+          "axis": "Standards",
+          "base": "a8ce001c1476db99e458cc34dfb500d50a8a70e6",
+          "tip": "ebe16ee2994e203cab05c6f86cfc664b01947779",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "bo-c2-replay-spec",
+          "performer": "claude:bench-reviewer/bo-c2-replay-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bfc402525f9a9a08761335c2d715de780603e0b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c2-replay-spec@ebe16ee2",
+            "digest": "sha256:c4e07e80178c47cd549be736d999619b8051f726a14cf6c782fb571b8e4fa848",
+            "excerpt": "Spec replay confirming: 0 findings. All 12 BO-C2 rows hold at ebe16ee2; the spec and tickets 2 and 3 match dc30b5d1 apart from the two appended replay-verify assignments; nothing in them depends on the dropped merge."
+          },
+          "axis": "Spec",
+          "base": "a8ce001c1476db99e458cc34dfb500d50a8a70e6",
+          "tip": "ebe16ee2994e203cab05c6f86cfc664b01947779",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "bo-c2-replay-coverage",
+          "performer": "claude:bench-reviewer/bo-c2-replay-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bfc402525f9a9a08761335c2d715de780603e0b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c2-replay-coverage@ebe16ee2",
+            "digest": "sha256:ab2fd37f2952bfc1717fad2528b75abeabb4dc1112411642be19e536743b0e44",
+            "excerpt": "Coverage confirming (replay): 0 findings. Three independent probes bit and were restored (spill-drop removal, repository-scope prune, closed exempt set); no chunk test depends on the dropped merge; R8, R11, R12 and R13 hold at ebe16ee2."
+          },
+          "axis": "Coverage",
+          "base": "a8ce001c1476db99e458cc34dfb500d50a8a70e6",
+          "tip": "ebe16ee2994e203cab05c6f86cfc664b01947779",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -591,6 +997,114 @@ Advice, with no finding ID:
     {
       "from": "sha256:a084c67ebcb68079d54fdce0940724d714541169252d3a9d3a341c118da3f3c0",
       "to": "sha256:907409d5092633e390a0d499495fa26c31f82526b7567713e8caecab0f01f641",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:907409d5092633e390a0d499495fa26c31f82526b7567713e8caecab0f01f641",
+      "to": "sha256:ff9f46ae4082a4ab065af0de195687f20da14896ea75ba7137800a9ab4cc96af",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ff9f46ae4082a4ab065af0de195687f20da14896ea75ba7137800a9ab4cc96af",
+      "to": "sha256:d4480977d1c3372c58ce5e12699bc5eb2a93d0a4ea8a2951d9cc7f22810419bf",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:d4480977d1c3372c58ce5e12699bc5eb2a93d0a4ea8a2951d9cc7f22810419bf",
+      "to": "sha256:bb9f83d52955dada78658a97aa87c76ab6233bfdf4de04e61966a3cb17cc42d1",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:bb9f83d52955dada78658a97aa87c76ab6233bfdf4de04e61966a3cb17cc42d1",
+      "to": "sha256:020a1a93d65e334bc552fb7573ebc564e69e06e8f4cfbdeb2bddb00b2e216b55",
       "chunk_ids": {
         "BO-C1": [
           "BO-C1"
