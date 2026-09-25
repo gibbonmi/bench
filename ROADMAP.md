@@ -15,8 +15,6 @@ findings in the owner details.
 
 ## Delivery queue
 
-**FT336 (HIGH) — every Bench verb prints its verdict and its next action by default, and `bench worktree exec` bounds its child output.**
-
 **FT337 (HIGH) — review evidence cost follows the changed code, not the whole spec.**
 
 **FT318 (HIGH, decision required) — the review record has a native writer.**
@@ -229,12 +227,10 @@ recommended table is sequencing advice.
 | FT172 | FT106 | Reuse document-claim evidence for roadmap claims. |
 | FT241 | FT231 | Retained acceptance evidence reuses the harness record shape. |
 | FT254 | FT258 | Resolution follows the `MERGE_HEAD` contract. |
-| FT341 | FT336 | Tree targets reuse the bounded response owner that FT336 ticket 1 adds. |
 
 ## Recommended sequence
 
-1. Run `.agents/commands/bench-implement-spec.md ft336-bounded-output` to build the reviewer's priority 1.
-2. Run `.agents/commands/bench-write-spec.md FT337` to specify file-stable review evidence.
-3. Run `.agents/commands/bench-implement-spec.md test-determinism` to deliver FT115.
+1. Run `.agents/commands/bench-write-spec.md FT337` to specify file-stable review evidence.
+2. Run `.agents/commands/bench-implement-spec.md test-determinism` to deliver FT115.
 
 The section order supplies the larger sequence. It does not create new literal dependencies.
