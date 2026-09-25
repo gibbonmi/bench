@@ -8,9 +8,11 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/adopt"
+	"github.com/gibbonmi/bench/internal/commit"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/repairpilot"
 	"github.com/gibbonmi/bench/internal/responsebound"
@@ -261,6 +263,9 @@ func boundaryRoot() string {
 	}
 	return root
 }
+
+// commitChain binds each step of `bench commit --preflight-build` to its owner; a test replaces a step here.
+var commitChain = commit.ChainSteps{Commit: commit.Run, Build: worktree.BuildCommand, Home: worktree.Home, Preflight: preflight.CommandWithVersion(version)}
 
 func repairPilotCommand(c Command, args []string) int {
 	root := boundaryRoot()
