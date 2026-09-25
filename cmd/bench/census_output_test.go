@@ -9,6 +9,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/census"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -149,6 +150,24 @@ func TestRecordOutputSkipsReleasedAssignment(t *testing.T) {
 	}
 	if got := census.OutputBreakdown(home, repo, creation.Assignment.ID); got != "" {
 		t.Fatalf("output breakdown of the released assignment = %q, want no record", got)
+	}
+}
+
+// A reported assignment that the ledger still holds, but not as active, gets no record: the
+// active check, and not only the ledger lookup, gates the record.
+func TestRecordOutputSkipsInactiveAssignment(t *testing.T) {
+	home, repo, creation := censusAssignment(t, "census-output-pending")
+	pending := creation.Assignment
+	pending.State = intent.StateCleanupPending
+	if err := intent.PutAssignment(repo, pending); err != nil {
+		t.Fatal(err)
+	}
+	size := responsebound.Size{Lines: 1, Bytes: int64(len("child\n"))}
+	if err := recordOutput(size, "bench worktree exec", pending.ID, repo); err != nil {
+		t.Fatal(err)
+	}
+	if got := census.OutputBreakdown(home, repo, pending.ID); got != "" {
+		t.Fatalf("output breakdown of the cleanup-pending assignment = %q, want no record", got)
 	}
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sync"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/census"
@@ -10,17 +11,18 @@ import (
 
 // runBounded runs one bounded call. The command writes both streams into one owner, which
 // prints the response after the command returns, and the command's own exit code stays the
-// verb's exit. The root resolves once, before the verb runs, and the spill scope and the
-// census output record both read that one value.
+// verb's exit. The spill scope and the census output record share one root lookup. It runs
+// at most once and only when first needed, so a spill that opens after the verb removed its
+// own tree finds no root and takes the capped store outside any repository.
 func (c Command) runBounded(definition commandDefinition, args []string) int {
 	leaf, _ := leafNamed(definition.Leaves, args)
-	root := boundaryRoot()
-	owner := responsebound.New(worktree.Home(), c.Stdout, c.Stderr, func() string { return root }, leaf.Retires)
+	root := sync.OnceValue(boundaryRoot)
+	owner := responsebound.New(worktree.Home(), c.Stdout, c.Stderr, root, leaf.Retires)
 	var resolved string
 	c.Stdout, c.Stderr, c.resolved = owner.Stdout(), owner.Stderr(), &resolved
 	exit := definition.run(c, args)
 	owner.Finish()
-	_ = recordOutput(owner.Size(), outputHead(definition, leaf), resolved, root)
+	_ = recordOutput(owner.Size(), outputHead(definition, leaf), resolved, root())
 	return exit
 }
 

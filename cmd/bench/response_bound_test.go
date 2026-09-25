@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -13,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
-	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 )
@@ -193,21 +191,6 @@ func TestEveryPublicCommandDeclaresBound(t *testing.T) {
 	}
 }
 
-// assignmentCheckout makes a linked worktree of a new repository at an assignment segment
-// of the pool below home. It answers the repository, the checkout, and the assignment id.
-func assignmentCheckout(t *testing.T, home string) (repo, checkout, id string) {
-	t.Helper()
-	repo = gittest.RepoOnBranch(t, "main")
-	id = strings.Repeat("b", 32)
-	checkout = filepath.Join(poolkey.Pool(home, repo), poolkey.AssignmentSegment(strings.Repeat("a", 32), id))
-	for _, args := range [][]string{{"commit", "-q", "--allow-empty", "-m", "base"}, {"worktree", "add", "-q", "--detach", checkout}} {
-		if out, err := exec.Command("git", append([]string{"-C", repo}, args...)...).CombinedOutput(); err != nil {
-			t.Fatalf("git %q: %v: %s", args, err, out)
-		}
-	}
-	return repo, checkout, id
-}
-
 // spillDirOf answers the directory of the spill file that a bounded response names.
 func spillDirOf(t *testing.T, stdout string) string {
 	t.Helper()
@@ -224,7 +207,7 @@ func spillDirOf(t *testing.T, stdout string) string {
 func TestDispatcherSpillsRetiringLeafToPrimary(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv(benchhome.Env, home)
-	repo, checkout, id := assignmentCheckout(t, home)
+	repo, checkout, id := responseboundtest.AssignmentCheckout(t, home)
 	t.Chdir(checkout)
 	old := commandRegistry
 	t.Cleanup(func() { commandRegistry = old })
@@ -245,6 +228,33 @@ func TestDispatcherSpillsRetiringLeafToPrimary(t *testing.T) {
 		if got, want := spillDirOf(t, out.String()), filepath.Join(store, row.scope); got != want {
 			t.Errorf("family %s spilled under %s, want %s", row.leaf, got, want)
 		}
+	}
+}
+
+// The root lookup is lazy: a verb that removes its own tree before its spill opens finds no
+// root, so the spill takes the capped store outside any repository and keys no removed tree.
+func TestDispatcherSpillAfterTreeRemovalTakesNoRepository(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv(benchhome.Env, home)
+	_, checkout, _ := responseboundtest.AssignmentCheckout(t, home)
+	t.Chdir(checkout)
+	old := commandRegistry
+	t.Cleanup(func() { commandRegistry = old })
+	commandRegistry = []commandDefinition{{
+		Name: "remove", Inventory: publicInventory(), Bound: boundResponse,
+		Run: func(c Command, args []string) int {
+			if err := os.RemoveAll(checkout); err != nil {
+				t.Fatalf("remove the tree: %v", err)
+			}
+			return linesHandler(stdoutOf, 11)(c, args)
+		},
+	}}
+	var out bytes.Buffer
+	if code := (Command{Stdout: &out, Stderr: &out}).Run([]string{"remove"}); code != 0 {
+		t.Fatalf("remove exit = %d: %q", code, out.String())
+	}
+	if got, want := spillDirOf(t, out.String()), filepath.Join(home, "responses", "none", "primary"); got != want {
+		t.Fatalf("spill after the tree removal went under %s, want %s", got, want)
 	}
 }
 

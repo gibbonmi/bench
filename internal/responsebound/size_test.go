@@ -3,14 +3,10 @@ package responsebound
 import (
 	"bytes"
 	"io"
-	"os/exec"
-	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
-	"github.com/gibbonmi/bench/internal/gittest"
-	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 )
 
 // sizeOf sends writes through owner, finishes it, and answers its size.
@@ -88,14 +84,7 @@ func TestAssignmentScopeRefusesThePrimaryScope(t *testing.T) {
 // assignment, with no retirement input.
 func TestAssignmentScopeAnswersTheWorktreeAssignment(t *testing.T) {
 	home := privateHome(t)
-	repo := gittest.RepoOnBranch(t, "main")
-	id := strings.Repeat("b", 32)
-	checkout := filepath.Join(poolkey.Pool(home, repo), poolkey.AssignmentSegment(strings.Repeat("a", 32), id))
-	for _, args := range [][]string{{"commit", "-q", "--allow-empty", "-m", "base"}, {"worktree", "add", "-q", "--detach", checkout}} {
-		if out, err := exec.Command("git", append([]string{"-C", repo}, args...)...).CombinedOutput(); err != nil {
-			t.Fatalf("git %q: %v: %s", args, err, out)
-		}
-	}
+	_, checkout, id := responseboundtest.AssignmentCheckout(t, home)
 	if got, ok := AssignmentScope(home, checkout); !ok || got != id {
 		t.Fatalf("AssignmentScope of the worktree root = (%q, %v), want (%q, true)", got, ok, id)
 	}
