@@ -185,9 +185,11 @@ forms in a `notes:` block.
 
 `bench gate-prose <root> --staged` grades the staged Markdown from the index and
 takes no path list. The subject bytes and the exclusion policy come from the
-index blobs, so a working file does not change the answer. A paragraph finding
-names the line and the start of each sentence in the paragraph. `bench anchors`
-prints a `line` cell that carries the physical line of the first match. The cell
+index blobs, so a working file does not change the answer. The path-list form
+refuses a named path that does not exist at exit 1 and names each such path. A
+paragraph finding names the line and the start of each sentence in the paragraph.
+
+`bench anchors` prints a `line` cell that carries the physical line of the first match. The cell
 reads 0 when the needle has no match. A link, a special file, or an unreadable
 file at the path answers a structured refusal at exit 1.
 

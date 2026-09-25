@@ -1,9 +1,11 @@
 package gate
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -28,8 +30,8 @@ var gateProseFields = []string{"path", "verdict"}
 // prose check composes, so the lane and the gate agree on one rule. `--staged` selects the
 // staged Markdown instead of a path list and grades the index bytes, so a pre-commit
 // caller grades what the commit would carry. A sole `--help` writes usage to
-// stdout and exits 0. Exit 0 is otherwise a clean list, 1 is a list with findings printed
-// to stdout, and 2 is a usage error: an unknown flag or an omitted root. A pass states its
+// stdout and exits 0. Exit 0 is otherwise a clean list, 1 is a list with findings or a
+// missing named path printed to stdout, and 2 is a usage error: an unknown flag or an omitted root. A pass states its
 // verdict as a `prose[N]{path,verdict}` table, so a caller tells a clean list from a list
 // that graded nothing. The word `green` stays out of that table: the lane composes this
 // verb, and a lane pass is not a graded green.
@@ -53,7 +55,32 @@ func GateProseCommand(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, gateProseUsage)
 		return 2
 	}
+	if refusedOperands(root, paths, stdout) {
+		return 1
+	}
 	return renderProseVerdict(paths, prose.GradeNamedResults(root, paths), stdout)
+}
+
+// refusedOperands writes one refusal line for each named path the verb cannot find under
+// root, and it reports whether it wrote any. The prose grader skips an absent path, so
+// without this check a path on the wrong checkout would read as a pass row. The lane names
+// only the Markdown the composed tree holds, so a deleted file never reaches this check.
+func refusedOperands(root string, paths []string, stdout io.Writer) bool {
+	refused := false
+	for _, path := range paths {
+		_, err := os.Lstat(filepath.Join(root, filepath.FromSlash(path)))
+		if err == nil {
+			continue
+		}
+		reason := err
+		if inner := errors.Unwrap(err); inner != nil {
+			// The path error repeats the joined path; the refusal names the operand itself.
+			reason = inner
+		}
+		fmt.Fprintln(stdout, prose.UnreadableSubjectDiagnostic(path, reason.Error()))
+		refused = true
+	}
+	return refused
 }
 
 // renderProseVerdict states the verdict both forms owe: the pass table over the graded
