@@ -1,7 +1,7 @@
 # Name bench worktree build in the binary-seal remedy
 
 Blocked by: none
-Writes: internal/freshness/freshness_verify.go, internal/preflight/gather.go, internal/preflight/decision.go, internal/preflight/decision_test.go
+Writes: internal/freshness/freshness_verify.go, internal/preflight/gather.go, internal/preflight/decision.go, internal/preflight/decision_test.go, internal/preflight/binary_seal.go, internal/preflight/binary_seal_test.go
 Covers: none
 
 ## What to build
