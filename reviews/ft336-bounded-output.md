@@ -435,11 +435,25 @@ Advice, with no finding ID:
 
 R22 goes to cycle 2, the last repair cycle of chunk BO-C3, in a fresh repair session for ticket 5.
 
+## BO-C3 repair evidence, cycle 2
+
+The plan commit `ed30dbe2` adds one fresh repair session for ticket 5. It also raises the author limit to 3, because by user direction tickets 6 and 10 author in parallel sibling worktrees. The session `claude:bench-writer/bo-t5-repair-c2` ran on opus at low effort and committed `87fa6ed6`. It rewrapped the charge-form comment to its paragraph (R22) and changed no other byte. No test can grade a comment width, so the evidence is a column count of 81, 83, 81, and 36.
+
+The current session of each ticket ran its four ticket checks at `87fa6ed6`, and each check passed. The `internal/worktree` runs skipped two socket subtests, because this host cannot open a unix socket at that path length.
+
+## BO-C3 chunk review, round 3, and close
+
+Round 3 confirms cycle 2 at the final tip. The frozen pair is base `6d3a45e10437c5875f729e4652364f44853ea5c6` and tip `87fa6ed6e1162a3a402b97906eda55072368ee8e`. The shared evidence is `sha256:2c36b062f6a247b70573741d3d593dfd271a506f368d912af3b4faaf278bb1ac`. Each axis ran in a new `bench-reviewer` session on opus at medium effort.
+
+Each axis found 0 findings. Standards confirmed R22 and R23. Spec found that the plan edit stays valid and that the BO-C3 rows hold. Coverage found that the delta changes no executable byte, so its round 2 probes still hold. Chunk BO-C3 used both of its two repair cycles. It used no hardening cycle.
+
+R18 and R21 correct non-behavioral spec text, and both stay open to reviewer veto.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ft336-bounded-output/spec.md",
-  "plan_digest": "sha256:da4fcb78d6575c4772c2a754667c428fee8d48b65981433d457a2264edcd3377",
+  "plan_digest": "sha256:ba3e0c6c5db1ea8bb16614bec23d52dc82f442ec6a547cd56044521097c92e9d",
   "implementation_session": "",
   "chunks": [
     {
@@ -1076,9 +1090,9 @@ R22 goes to cycle 2, the last repair cycle of chunk BO-C3, in a fresh repair ses
     {
       "id": "BO-C3",
       "base": "6d3a45e10437c5875f729e4652364f44853ea5c6",
-      "tip": "276b7d32b4d8c58c7b49324a953fc57976daf0d5",
-      "plan_digest": "sha256:da4fcb78d6575c4772c2a754667c428fee8d48b65981433d457a2264edcd3377",
-      "source_digest": "19ac78ff900c3671a18ac9799cd7c31619eda90b",
+      "tip": "87fa6ed6e1162a3a402b97906eda55072368ee8e",
+      "plan_digest": "sha256:ba3e0c6c5db1ea8bb16614bec23d52dc82f442ec6a547cd56044521097c92e9d",
+      "source_digest": "0db019d763279159e6537e24e455cc4d04872092",
       "acceptance_rows": [
         "BO32",
         "BO33",
@@ -1236,6 +1250,150 @@ R22 goes to cycle 2, the last repair cycle of chunk BO-C3, in a fresh repair ses
           "requirement": "5-consumers",
           "command": "bench test --package ./internal/consumers",
           "exit_code": 0
+        },
+        {
+          "id": "bo-c3-4-worktree-final",
+          "performer": "claude:bench-writer/bo-t4-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "0db019d763279159e6537e24e455cc4d04872092",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t4-repair-c1/4-worktree@87fa6ed6",
+            "digest": "sha256:57f5bc99e96dbbd9f7bc89fb38bb73c7446e236b71bc363df8066ab03bbdcc16",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,86551\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket3806727763/001/.bench-home/worktrees/001-2824402559/71be8afc4ca302a3eecc5f14810c6a10-c31c455271a1d4a792599480daa2ae07: bind:… (257 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket363214714/001/.bench-home/worktrees/001-2551616421/29eea1a05be1e409c312580d2b35922a-ff359fb51eab3ca2b72aecc215e6e129… (269 bytes)\""
+          },
+          "requirement": "4-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c3-4-preflight-final",
+          "performer": "claude:bench-writer/bo-t4-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "0db019d763279159e6537e24e455cc4d04872092",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t4-repair-c1/4-preflight@87fa6ed6",
+            "digest": "sha256:1cdc218a4ed0337238486cdd7b1c33ce637fc457b1617b65da01317d3353c9ad",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight,pass,36498\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "4-preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c3-4-anchors-final",
+          "performer": "claude:bench-writer/bo-t4-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "0db019d763279159e6537e24e455cc4d04872092",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t4-repair-c1/4-anchors@87fa6ed6",
+            "digest": "sha256:06df5121ee2336123787652d291d1e48816170fe1dfeefc3443033b7ef339e07",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1519\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "4-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c3-4-consumers-final",
+          "performer": "claude:bench-writer/bo-t4-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "0db019d763279159e6537e24e455cc4d04872092",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t4-repair-c1/4-consumers@87fa6ed6",
+            "digest": "sha256:589ea13493a36985782e1ab75bb9f70f12efcbc95458ad1c026e81ebc2a03917",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/consumers,pass,3664\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "4-consumers",
+          "command": "bench test --package ./internal/consumers",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c3-5-worktree-final",
+          "performer": "claude:bench-writer/bo-t5-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "0db019d763279159e6537e24e455cc4d04872092",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t5-repair-c2/5-worktree@87fa6ed6",
+            "digest": "sha256:d8209310e9d1e5df105ddf5bd5176a6832e0a7b4c85f9806eba9744cd9b075c4",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,84847\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:99: unix sockets unavailable: listen unix /tmp/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket3952690531/001/.bench-home/worktrees/001-2645882020/1b57deed7bbc04c14eceec33badb1145-4624f98f291e4d0c24457374… (272 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket100862625/001/.bench-home/worktrees/001-85860869/8f1742281069651234bdbecd627125f0-54e5d3dc3818453f683c62e275bf6b25/.… (267 bytes)\""
+          },
+          "requirement": "5-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c3-5-preflight-final",
+          "performer": "claude:bench-writer/bo-t5-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "0db019d763279159e6537e24e455cc4d04872092",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t5-repair-c2/5-preflight@87fa6ed6",
+            "digest": "sha256:8635036fd5e51c329929fda1ee9cb91699a0c1b1756ddafd44af04cdb5ad6c94",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight,pass,35536\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "5-preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c3-5-anchors-final",
+          "performer": "claude:bench-writer/bo-t5-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "0db019d763279159e6537e24e455cc4d04872092",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t5-repair-c2/5-anchors@87fa6ed6",
+            "digest": "sha256:d1f53ff1066b25ea7925e126eea21e2f9462ecb2da074e6297ab7b62de55bd09",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1654\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "5-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c3-5-consumers-final",
+          "performer": "claude:bench-writer/bo-t5-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "0db019d763279159e6537e24e455cc4d04872092",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t5-repair-c2/5-consumers@87fa6ed6",
+            "digest": "sha256:8a2a1b1252484e0eddd8d8f963729acfa95da6fd5a71bfc5809bc30e662ba189",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/consumers,pass,3758\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "5-consumers",
+          "command": "bench test --package ./internal/consumers",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -1377,6 +1535,72 @@ R22 goes to cycle 2, the last repair cycle of chunk BO-C3, in a fresh repair ses
           "finding_ids": [],
           "supersedes": [
             "bo-c3-r1-coverage"
+          ]
+        },
+        {
+          "id": "bo-c3-r3-standards",
+          "performer": "claude:bench-reviewer/bo-c3-standards-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0db019d763279159e6537e24e455cc4d04872092",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c3-standards-3@87fa6ed6",
+            "digest": "sha256:5aefa0cfa6f43cf4ed72a34ae049a1e1cbf5e3b3ede4394d77ac8ff282a5277b",
+            "excerpt": "Standards r3: 0 new findings in 276b7d32..87fa6ed6; R22 (command.go:175-176 wraps to its paragraph) and R23 (R15 red recorded at reviews:417) confirmed."
+          },
+          "axis": "Standards",
+          "base": "6d3a45e10437c5875f729e4652364f44853ea5c6",
+          "tip": "87fa6ed6e1162a3a402b97906eda55072368ee8e",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c3-r2-standards"
+          ]
+        },
+        {
+          "id": "bo-c3-r3-spec",
+          "performer": "claude:bench-reviewer/bo-c3-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0db019d763279159e6537e24e455cc4d04872092",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c3-spec-3@87fa6ed6",
+            "digest": "sha256:906bbfe5a9892a6c48b1429b0c215ec7ef4b436c16731f16ca83c025af0dd431",
+            "excerpt": "Spec R3 (bo-c3-spec-3): 0 new findings; the delta is a comment rewrap plus a plan edit that stays valid under delegated.go; BO32-BO41 and BO67 hold."
+          },
+          "axis": "Spec",
+          "base": "6d3a45e10437c5875f729e4652364f44853ea5c6",
+          "tip": "87fa6ed6e1162a3a402b97906eda55072368ee8e",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c3-r2-spec"
+          ]
+        },
+        {
+          "id": "bo-c3-r3-coverage",
+          "performer": "claude:bench-reviewer/bo-c3-coverage-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0db019d763279159e6537e24e455cc4d04872092",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c3-coverage-3@87fa6ed6",
+            "digest": "sha256:0715cec86fe173b97259b018817f0c552290a9cd176cdc7910f4776c251a61ad",
+            "excerpt": "Coverage R3 (bo-c3-coverage-3): 0 findings; the delta 276b7d32..87fa6ed6 is comments, the plan, and the review record only; round 2 holds; confidence 9/10."
+          },
+          "axis": "Coverage",
+          "base": "6d3a45e10437c5875f729e4652364f44853ea5c6",
+          "tip": "87fa6ed6e1162a3a402b97906eda55072368ee8e",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c3-r2-coverage"
           ]
         }
       ]
@@ -1632,6 +1856,33 @@ R22 goes to cycle 2, the last repair cycle of chunk BO-C3, in a fresh repair ses
     {
       "from": "sha256:9910f5713b7072b8c5dfdc05720354b021c326847722aeff5e7ed3b021ae29d2",
       "to": "sha256:da4fcb78d6575c4772c2a754667c428fee8d48b65981433d457a2264edcd3377",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:da4fcb78d6575c4772c2a754667c428fee8d48b65981433d457a2264edcd3377",
+      "to": "sha256:ba3e0c6c5db1ea8bb16614bec23d52dc82f442ec6a547cd56044521097c92e9d",
       "chunk_ids": {
         "BO-C1": [
           "BO-C1"
