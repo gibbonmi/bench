@@ -767,11 +767,44 @@ This is cycle 1 of the two repair cycles for chunk BO-C6. The R52 and R53 spec s
 | R52, R53 | ticket 9 and orchestrator | Record only for an assignment that stays active, drop the `retiring` input, and add the spec sentence. |
 | R54 | ticket 9 | Add a dispatcher row for the head of a verb with no leaf. |
 
+## BO-C6 repair evidence, cycle 1
+
+The orchestrator added the record-lifetime rule to the spec and to ticket 9 at `a19d5dd1`. That commit also adds one fresh repair session for ticket 9. The session `claude:bench-writer/bo-t9-repair-c1` ran on opus at low effort and committed `0c3b7bb1`. It made these repairs:
+
+- R46: `splitRecord` owns the record split, and one constant set orders the later fields.
+- R47: one reader and one render serve both breakdowns, and the escape order stays.
+- R48: `runBounded` resolves the root once for the owner and the record.
+- R49: the `cmd/bench` tests read records through `census.OutputBreakdown`.
+- R50: `checkAssignmentID` owns the malformed-id refusal.
+- R52 and R53: `AssignmentActive` gates the record, and the `retiring` input is gone.
+- R54: a dispatcher row pins the head of a verb with no leaf.
+
+The row for a release of its own worktree was never red. A self-release removes the tree first, so the record scope falls back to primary either way. The red for R52 comes from the released-assignment row and an omission probe of the guard. The other new rows went red by probe, and each restore reads `yes`.
+
+The session ran the three ticket checks at `0c3b7bb1`, and each check passed. It also found a defect outside the fence: a release from inside its own worktree exits 1 after it removes the tree. A `bench learning` entry records it.
+
+## BO-C6 chunk review, round 2
+
+Round 2 confirms cycle 1 on the delta from `549a9502` to `0c3b7bb1`. The frozen pair is base `27f725a17ef4d73d7ee76d640ab0cbc99b6c563f` and tip `0c3b7bb1eac93ba02bf9d91c838b6988691fd0a9`. The shared evidence is `sha256:8d5851ced66269b8d1f6ab031860fd99a0e3e10a94a4136ce847ab873681fc0d`. Each axis ran in a new `bench-reviewer` session on opus at medium effort.
+
+Standards confirmed R46 to R50, Spec confirmed R52 and R53, and Coverage confirmed R54. Standards found 2 new findings, and Spec found 1.
+
+- `internal/responsebound/size_test.go:91-97` copies the `assignmentCheckout` fixture of `cmd/bench`. Target R55. `auto-fix`. Confidence 7.
+- `AssignmentActive` in `internal/worktree/exec.go:96-106` repeats the ledger lookup that `assignmentByID` owns. Target R56. `auto-fix`. Confidence 5.
+- The eager root in `runBounded` can send a spill that opens after its own tree is removed to an orphan repo key. Nothing prunes that key. Target R57. `auto-fix`. Confidence 5.
+
+Advice, with no finding ID:
+
+- No row separates the active state from the cleanup-pending state in `AssignmentActive`. The retirement's drop removes a cleanup-pending record, so the gap leaves no file.
+- The `size.go` comment says the spill and the record agree on the scope, and a retiring verb run from another tree now splits them.
+
+R55, R56, and R57 go to cycle 2, the last repair cycle of chunk BO-C6, in a fresh repair session for ticket 9.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ft336-bounded-output/spec.md",
-  "plan_digest": "sha256:785cd9054b7b5d9e7f7473f6961ca161419bc3b55bd7198bc49b16a525cba333",
+  "plan_digest": "sha256:86a5deb6d7b3182707910017f6b49253faf8599f01219a9887291a6fec3a28a1",
   "implementation_session": "",
   "chunks": [
     {
@@ -2852,9 +2885,9 @@ This is cycle 1 of the two repair cycles for chunk BO-C6. The R52 and R53 spec s
     {
       "id": "BO-C6",
       "base": "27f725a17ef4d73d7ee76d640ab0cbc99b6c563f",
-      "tip": "549a95025bbd0d04e7996281e4fc8e4369cd269a",
-      "plan_digest": "sha256:785cd9054b7b5d9e7f7473f6961ca161419bc3b55bd7198bc49b16a525cba333",
-      "source_digest": "654e5b2def1401e290b1c650413ecd1a14a94e0d",
+      "tip": "0c3b7bb1eac93ba02bf9d91c838b6988691fd0a9",
+      "plan_digest": "sha256:86a5deb6d7b3182707910017f6b49253faf8599f01219a9887291a6fec3a28a1",
+      "source_digest": "715cb646df101dc0c96f9a65a2ec09527addbbb3",
       "acceptance_rows": [
         "BO57",
         "BO58",
@@ -2913,6 +2946,60 @@ This is cycle 1 of the two repair cycles for chunk BO-C6. The R52 and R53 spec s
             "ref": "claude:agent/bo-t9-author/9-cmd@549a9502",
             "digest": "sha256:4ef904a45ecc99602b3b5dcb3eaf856900382b9b42519bfd948e2e733a74b1f9",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,8892\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "9-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c6-9-census-r2",
+          "performer": "claude:bench-writer/bo-t9-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "715cb646df101dc0c96f9a65a2ec09527addbbb3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t9-repair-c1/9-census@0c3b7bb1",
+            "digest": "sha256:d51d5077f01c2c54a2a4e028331847f813e77d9113932d9a9507f4eddf35c10a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/census,pass,153\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "9-census",
+          "command": "bench test --package ./internal/census",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c6-9-worktree-r2",
+          "performer": "claude:bench-writer/bo-t9-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "715cb646df101dc0c96f9a65a2ec09527addbbb3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t9-repair-c1/9-worktree@0c3b7bb1",
+            "digest": "sha256:700b65dd9b52587f80f82d101b3f45a5307984f51329bddd153a48d2e88fe30b",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,95048\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:99: unix sockets unavailable: listen unix /tmp/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket3284755421/001/.bench-home/worktrees/001-29835240/6c60598b5daea7ca94637efa70a60178-5a87922cb07292c64113195fe2… (270 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket2380899910/001/.bench-home/worktrees/001-1342244959/7e9c48e5fdb087973a33312dacb58f14-ba57453ee601b6bd7cf2cb158ec78d9… (270 bytes)\""
+          },
+          "requirement": "9-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c6-9-cmd-r2",
+          "performer": "claude:bench-writer/bo-t9-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "715cb646df101dc0c96f9a65a2ec09527addbbb3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t9-repair-c1/9-cmd@0c3b7bb1",
+            "digest": "sha256:a6be8e2c6126888927d00ffa4496ccfd3cbc7602a406e4ae7b778ff0c4329cfc",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13684\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "9-cmd",
           "command": "bench test --package ./cmd/bench",
@@ -2991,6 +3078,77 @@ This is cycle 1 of the two repair cycles for chunk BO-C6. The R52 and R53 spec s
             "R54"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bo-c6-r2-standards",
+          "performer": "claude:bench-reviewer/bo-c6-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "715cb646df101dc0c96f9a65a2ec09527addbbb3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c6-standards-2@0c3b7bb1",
+            "digest": "sha256:f17909ae258e9a9705d5c1cc85bf969da416f436ca816934df9368e1e39a295b",
+            "excerpt": "Standards round 2: R46 to R50 confirmed; 2 new auto-fix findings: size_test.go:91-97 copies the assignmentCheckout fixture (confidence 7), and AssignmentActive repeats assignmentByID (confidence 5)."
+          },
+          "axis": "Standards",
+          "base": "27f725a17ef4d73d7ee76d640ab0cbc99b6c563f",
+          "tip": "0c3b7bb1eac93ba02bf9d91c838b6988691fd0a9",
+          "finding_ids": [
+            "R55",
+            "R56"
+          ],
+          "supersedes": [
+            "bo-c6-r1-standards"
+          ]
+        },
+        {
+          "id": "bo-c6-r2-spec",
+          "performer": "claude:bench-reviewer/bo-c6-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "715cb646df101dc0c96f9a65a2ec09527addbbb3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c6-spec-2@0c3b7bb1",
+            "digest": "sha256:fc500eccc83d23c48924433d45df45dfc3b16ff5d3c9f6205585ae7ccfe52782",
+            "excerpt": "Spec round 2: R52 and R53 confirmed. There is 1 new finding: the eager root sends a spill that opens after its own tree is removed to an orphan repo key (census_output.go:15-16, auto-fix, confidence 5)."
+          },
+          "axis": "Spec",
+          "base": "27f725a17ef4d73d7ee76d640ab0cbc99b6c563f",
+          "tip": "0c3b7bb1eac93ba02bf9d91c838b6988691fd0a9",
+          "finding_ids": [
+            "R57"
+          ],
+          "supersedes": [
+            "bo-c6-r1-spec"
+          ]
+        },
+        {
+          "id": "bo-c6-r2-coverage",
+          "performer": "claude:bench-reviewer/bo-c6-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "715cb646df101dc0c96f9a65a2ec09527addbbb3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c6-coverage-2@0c3b7bb1",
+            "digest": "sha256:ca10340bc44407005078085dc6170e3075b10735668707a75c12f9b9186c3506",
+            "excerpt": "BO-C6 Coverage round 2: 0 new findings; R54 confirmed at census_output.go:30; probes: escape order bit, RecordOutput id check bit, AssignmentActive cleanup-pending silent but benign (the retirement's Drop removes the record), advice to pin it with a ledger unit row."
+          },
+          "axis": "Coverage",
+          "base": "27f725a17ef4d73d7ee76d640ab0cbc99b6c563f",
+          "tip": "0c3b7bb1eac93ba02bf9d91c838b6988691fd0a9",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c6-r1-coverage"
+          ]
         }
       ]
     }
@@ -3542,6 +3700,33 @@ This is cycle 1 of the two repair cycles for chunk BO-C6. The R52 and R53 spec s
     {
       "from": "sha256:30bb247ded7137e89d8156df57c15532f10ce93fe584e01e0d58392532cb054c",
       "to": "sha256:785cd9054b7b5d9e7f7473f6961ca161419bc3b55bd7198bc49b16a525cba333",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:785cd9054b7b5d9e7f7473f6961ca161419bc3b55bd7198bc49b16a525cba333",
+      "to": "sha256:86a5deb6d7b3182707910017f6b49253faf8599f01219a9887291a6fec3a28a1",
       "chunk_ids": {
         "BO-C1": [
           "BO-C1"
