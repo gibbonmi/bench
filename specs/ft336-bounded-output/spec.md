@@ -403,6 +403,11 @@ The shell CLI hostile-input profile applies to the owner and to `--to`. The walk
 - `internal/chargeevidence/schema.go`
 - `internal/chargeevidence/read.go`
 - `internal/chargeevidence/export.go`
+- `internal/chargeevidence/format_test.go`
+- `internal/chargeevidence/reference.go`
+- `.agents/skills/bench-craft-delegate/references/charge-evidence-format.md`
+- `cmd/bench/preflight_version_test.go`
+- `internal/systemtest/charge_evidence_test.go`
 - `internal/commit/commit.go`
 - `internal/commit/chain_grammar_test.go`
 - `internal/poolkey/poolkey.go`

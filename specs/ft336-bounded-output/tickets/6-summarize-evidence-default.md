@@ -1,7 +1,7 @@
 # 6. Print the evidence manifest summary by default
 
 Blocked by: none
-Writes: internal/preflight/evidencecmd/, internal/chargeevidence/schema.go, internal/chargeevidence/read.go
+Writes: internal/preflight/evidencecmd/, internal/chargeevidence/schema.go, internal/chargeevidence/read.go, internal/chargeevidence/format_test.go, internal/chargeevidence/reference.go, .agents/skills/bench-craft-delegate/references/charge-evidence-format.md, cmd/bench/preflight_version_test.go, internal/systemtest/charge_evidence_test.go, cmd/bench/help_inventory_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: BO42, BO43, BO44
 
 ## What to build
