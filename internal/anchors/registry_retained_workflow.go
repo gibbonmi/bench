@@ -83,11 +83,13 @@ const (
 // pointers that replace each copy and the drain's handoff route. Forbid rows keep
 // out the retired copies, the reference's verb grammar, the false skill-link
 // claims, the any-branch commit claim, the gate-priced capture commit, and the
-// light path's gate-then-commit wording.
+// gate-then-commit wording of the light path and the drain.
 var factOwnerAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Forbid, Needle: "live in `.bench/BENCH-reference.md`", Diagnostic: "fact owner: operating guide restored the reference as the home of the plumbing subcommands"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "The command registry owns the plumbing subcommands that hooks and adapters drive.", Diagnostic: "fact owner: operating guide dropped the command registry as the owner of the plumbing subcommands"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Forbid, Needle: "gate and commit on green", Diagnostic: "fact owner: operating guide light path restored the gate-then-commit wording"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "commit on green", Diagnostic: "fact owner: drain restored the gate-then-commit wording for a worktree commit"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Forbid, Needle: "The gate is what a commit costs", Diagnostic: "fact owner: drain restored the gate as the price of a worktree commit"},
 	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "the four invariants, how the pieces fit", Diagnostic: "fact owner: working agreement restored how the pieces fit as a shared platform rule"},
 	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Forbid, Needle: "the communication rules, and the skills index", Diagnostic: "fact owner: working agreement restored the skills index as a shared platform rule"},
 	{Group: AfterImplementSpec, File: "AGENTS.md", Kind: Require, Needle: "`.bench/BENCH-reference.md` holds how the pieces fit and the skills index.", Diagnostic: "fact owner: working agreement dropped the reference as the holder of how the pieces fit and the skills index"},
