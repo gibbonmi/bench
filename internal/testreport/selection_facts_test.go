@@ -86,17 +86,17 @@ func runEvent(test string) string {
 
 const packagePass = `{"Action":"pass","Package":"counted","Elapsed":0.01}` + "\n"
 
-// TestProbeNotesDeriveTheirTokens grades that the three notes carry the runner's own
+// TestProbeNotesDeriveTheirTokens grades that the four notes carry the runner's own
 // constants. A hand-copied token would drift the moment the runner renamed one.
 func TestProbeNotesDeriveTheirTokens(t *testing.T) {
 	notes := ProbeNotes()
 	if !strings.HasPrefix(notes, "notes:\n  ") {
 		t.Fatalf("notes = %q, want the notes block header", notes)
 	}
-	if lines := strings.Count(notes, "\n  "); lines != 3 {
-		t.Fatalf("notes hold %d facts, want 3:\n%s", lines, notes)
+	if lines := strings.Count(notes, "\n  "); lines != 4 {
+		t.Fatalf("notes hold %d facts, want 4:\n%s", lines, notes)
 	}
-	for _, token := range []string{proseCheckName, gate.SystemPhaseName, usage.WorktreeBuild} {
+	for _, token := range []string{proseCheckName, gate.SystemPhaseName, usage.WorktreeBuild, HandProbeRoute} {
 		if !strings.Contains(notes, token) {
 			t.Fatalf("notes = %q, want the runner's own %q", notes, token)
 		}

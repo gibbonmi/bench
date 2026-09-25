@@ -57,15 +57,20 @@ func namedCheckRunPattern() string {
 	return "^" + registry.RootConformanceTest + "$"
 }
 
-// ProbeNotes states the three facts a caller needs to name a focused run correctly: what
-// each selection form takes, which two names are not probe targets, and why an edited
-// tree needs a rebuild first. The probe's help prints this block, so the owner's behavior
-// and its description stay one source.
+// HandProbeRoute is the route for the two checks the probe refuses. `bench test` stays the
+// caller for them after a hand mutation, so the probe's refusal and its help name this route.
+const HandProbeRoute = "copy the file aside, edit it, run bench test --check <name>, and restore the copy"
+
+// ProbeNotes states the four facts a caller needs to name a focused run correctly: what
+// each selection form takes, which two names are not probe targets, the hand route for
+// those two, and why an edited tree needs a rebuild first. The probe's help prints this
+// block, so the owner's behavior and its description stay one source.
 func ProbeNotes() string {
 	return "notes:\n  " + strings.Join([]string{
 		"--package <expr> takes a Go package expression, as bench test --package does.",
 		"--check <name> names a conformance check from the bench test --help inventory, and " +
 			proseCheckName + " and " + gate.SystemPhaseName + " are not probe targets.",
+		"For " + proseCheckName + " or " + gate.SystemPhaseName + ", " + HandProbeRoute + ".",
 		"A named check compiles from the run binary's source, so an edited tree needs " +
 			usage.WorktreeBuild + " first.",
 	}, "\n  ")
