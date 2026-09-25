@@ -141,14 +141,13 @@ The standing approvals are the table below, a size rule I have given you, and th
 | Decomposes to one independently-green ticket and crosses no declared seam | Light path: write the one ticket file (`craft-tickets` owns the template) in a bench worktree, then implement it inline in this session — no breakdown-approval pause, no write-delegate. This table is the standing approval to skip the spec phase. Commit the ticket, then land it through `bench worktree land` with the tickets-only `--spec`; the landing closes the ticket folder. |
 | Either observable is false | Normal full workflow. |
 
+**Delegate a light-path fix for a learning.** At any point in the workflow, `/bench-implement-spec` included, a `bench learning` entry can have a light-path fix that needs no reviewer decision. Dispatch that fix to a fresh write delegate on the mid tier at high effort, in its own bench worktree. This dispatch is my standing decision and the one exception to the light-path row's inline route; the active phase keeps its own worktree and verdict. Verify the done-claim under `craft-delegate`, then land the ticket as the light-path row states. The entry stays in `capture/learnings.md` until `/bench-drain` closes it by implementation.
+
 **Every phase runs in a bench worktree and lands through `bench worktree land`.**
 `bench commit` enforces this boundary: it refuses the primary checkout and directs the user to create a Bench worktree. The landing is spec-less when the phase has no spec, and within Bench, `main` receives writes only through landings.
 Merge composition is the landing primitive because a rebase rewrites the reviewed tip, so the workflow rejects rebases. Editors and raw Git remain outside Bench's command boundary. `.bench/BENCH-reference.md` holds the landing shape.
 
-**Fix, don't park.** A small defect you find mid-work is not roadmap work: the
-fix lands in the active workflow as its own commit. Park a fix to
-`capture/IDEAS.md` or `capture/learnings.md` only when it needs a reviewer
-decision, a new seam, or spec-level design.
+**Fix, don't park.** A small defect you find mid-work is not roadmap work: the fix lands in the active workflow as its own commit. Park a fix to `capture/IDEAS.md` or `capture/learnings.md` only when it needs a reviewer decision, a new seam, or spec-level design.
 
 **A batch approval covers per-spec sign-offs when I'm unreachable.** If I
 approved a batch plan and went AFK, build on rather than stall. Leave each

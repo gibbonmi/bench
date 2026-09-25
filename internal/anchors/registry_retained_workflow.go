@@ -216,7 +216,8 @@ var defaultWorkflowAnchors = []Anchor{
 
 // delegatedWorkflowAnchors pin the opt-in delegated exception and every rule of
 // who authors, repairs, probes, commits, and lands a ticket: the fresh author
-// and repair sessions, the bench-writer role, the lane-pass commit and landing
+// and repair sessions, the light-path learning delegate and its drain closure,
+// the bench-writer role, the lane-pass commit and landing
 // bans, the stash and bench probe duties, and the retired copies that a
 // Forbid row keeps out (copy-aside probes, the main-checkout build, the
 // resume-clean step, and phase-command copies of owner rules). They join the
@@ -232,6 +233,9 @@ var delegatedWorkflowAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "A pending or red predecessor commit stops that successor dispatch.", Diagnostic: "retained workflow: operating guide dropped the pending-or-red predecessor stop"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "`--delegate` adds concurrent authors and the full tier range.", Diagnostic: "fresh ticket author: operating guide dropped the concurrent authors and the full tier range of `--delegate`"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "A post-review repair goes to a fresh repair session for each affected ticket, and that session reruns the ticket's verification with current repair coverage. The plan records each repair session as a new assignment with the trigger `user-directed`. At final reconciliation, the orchestrator does not repair. A finding there goes to a fresh repair session for the ticket whose `Writes:` line holds the path. A finding on a path that no `Writes:` line holds is a material acceptance shortfall.", Diagnostic: "fresh ticket author: operating guide dropped the fresh repair session for each affected ticket"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "Dispatch that fix to a fresh write delegate on the mid tier at high effort, in its own bench worktree.", Diagnostic: "learning delegate: operating guide dropped the mid-tier write delegate for a light-path learning fix"},
+	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Needle: "This dispatch is my standing decision and the one exception to the light-path row's inline route; the active phase keeps its own worktree and verdict.", Diagnostic: "learning delegate: operating guide dropped the standing exception to the light-path row's inline route"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Require, Needle: "A learning entry with a light-path fix goes to the write delegate that `.bench/BENCH.md` names, and its verdict closes the entry by implementation.", Diagnostic: "learning delegate: drain dropped the operating guide's write delegate or the closure by implementation of a learning entry"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Forbid, Needle: "A spec-backed ticket goes to a fresh author session on its integration source", Diagnostic: "fresh ticket author: craft-delegate restored its copy of the fresh author session rule that the operating guide owns"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Forbid, Needle: "Repairs return to the retained implementation session.", Diagnostic: "fresh ticket author: craft-delegate restored the repair return to the retained session"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Require, Needle: "`craft-line` owns a change of implementation model or session.", Diagnostic: "fresh ticket author: craft-delegate dropped craft-line as the owner of a change of implementation model or session"},
