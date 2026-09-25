@@ -1,7 +1,8 @@
-// Package responseboundtest reads the spill path of an over-bound response for consumer
-// tests. The spill line has one reader here, so a test in any package finds the spill
-// file the same way. The reader checks only the frame of the line and the path; the
-// owner is the one source of the count fields.
+// Package responseboundtest serves consumer tests of the response bound. It reads the
+// spill path of an over-bound response, and it makes the assignment checkout whose tree
+// sets the spill scope. The spill line has one reader here, so a test in any package
+// finds the spill file the same way. The reader checks only the frame of the line and
+// the path; the owner is the one source of the count fields.
 package responseboundtest
 
 import (
