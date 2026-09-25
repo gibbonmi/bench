@@ -22,13 +22,19 @@ type chainSteps struct {
 // commitChain binds each step to its owner.
 var commitChain = chainSteps{Commit: commit.Run, Build: worktree.BuildCommand, Preflight: preflight.CommandWithVersion(version)}
 
+// chainHelp is the help line for the chain that commitChainCommand runs.
+const chainHelp = commit.PreflightBuildFlag + " <slug>: after a commit that publishes, run bench worktree build on this worktree, then bench preflight build <slug> at the published commit; end with commit-chain{commit,build,preflight} and exit with the first non-zero step exit"
+
 // commitChainCommand runs the commit and, when --preflight-build names a slug, the worktree
 // build and the build preflight at the published commit. Each step prints its own
 // response, then one commit-chain line states every step. The exit is the first non-zero
-// step exit.
+// step exit. A help answer gets the chain's help line after the commit's help.
 func commitChainCommand(c Command, args []string) int {
 	steps := commitChain
 	outcome, exit := steps.Commit(args, c.Stdout, c.Stderr)
+	if outcome.Help {
+		fmt.Fprintln(c.Stdout, chainHelp)
+	}
 	if outcome.PreflightBuild == "" {
 		return exit
 	}

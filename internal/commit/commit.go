@@ -60,29 +60,24 @@ func beginCommitSpan(root string) func(int, commitMeasures) {
 	}
 }
 
-// Command runs a path-attributed prospective landing. Help exits 0, grammar errors exit
-// 2, operational refusals exit 1, and a commit that published without reconciling its
-// checkout exits 3; the landing owner alone composes, authorizes, and publishes the
-// prospective tree.
-func Command(args []string, stdout, stderr io.Writer) int {
-	_, exit := Run(args, stdout, stderr)
-	return exit
-}
-
 // Outcome is what one commit call hands the command layer: the checkout the commit ran
-// in, the commit it published, and the spec slug that --preflight-build named. A call
-// that published nothing leaves Published empty.
+// in, the commit it published, the spec slug that --preflight-build named, and whether
+// the call answered a help request. A call that published nothing leaves Published empty.
 type Outcome struct {
 	Root, Published, PreflightBuild string
+	Help                            bool
 }
 
-// Run is Command with its Outcome, so the commit chain reads the published commit from
-// the call that published it.
+// Run runs a path-attributed prospective landing and returns its Outcome, so the commit
+// chain reads the published commit from the call that published it. Help exits 0,
+// grammar errors exit 2, operational refusals exit 1, and a commit that published without
+// reconciling its checkout exits 3; the landing owner alone composes, authorizes, and
+// publishes the prospective tree.
 func Run(args []string, stdout, stderr io.Writer) (Outcome, int) {
 	req, help, usageErr := parseRequest(args)
 	if help != "" {
 		fmt.Fprintln(stdout, helpText)
-		return Outcome{}, 0
+		return Outcome{Help: true}, 0
 	}
 	if usageErr != "" {
 		if strings.HasPrefix(usageErr, "usage: ") {
@@ -240,24 +235,29 @@ const LaneClause = "run the declared lane (or the gate when no lane is declared)
 // helpText adds one concrete example and the exit-code meanings the grammar line
 // cannot carry. A usage error prints the grammar line alone, so only a help request
 // pays for them. The example shows the trailing `-- <path>...` form, so a caller does
-// not learn the argument shape by tripping the usage line.
+// not learn the argument shape by tripping the usage line. The command layer that runs
+// the chain adds the --preflight-build line.
 var helpText = grammar.Help + "\n" +
 	"example: bench commit -m \"fix: tighten the guard\" -- internal/gitguard/scan.go docs/adr/0007.md\n" +
 	"--dry-run: " + LaneClause + " on the exact composed snapshot and report the outcome; commit nothing\n" +
-	preflightBuildFlag + " <slug>: after a commit that publishes, run bench worktree build on this worktree, then bench preflight build <slug> at the published commit; end with commit-chain{commit,build,preflight} and exit with the first non-zero step exit\n" +
 	"exit 1: refused before publication; nothing was committed\n" +
 	"exit 2: grammar error\n" +
 	"exit 3: published; the checkout did not reconcile — paste next= to repair"
 
 var grammar = usage.Grammar{
 	Cmd:  "bench commit",
-	Help: "usage: bench commit [--dry-run | " + preflightBuildFlag + " <slug>] -m <msg> [--] <path>...",
+	Help: "usage: bench commit [--dry-run | " + PreflightBuildFlag + " <slug>] -m <msg> [--] <path>...",
 	Flags: []usage.Flag{{Name: "-m", HasValue: true}, {Name: "--dry-run"},
-		{Name: preflightBuildFlag, HasValue: true, NoEmptyValue: true}},
+		{Name: PreflightBuildFlag, HasValue: true, NoEmptyValue: true}},
 	MaxArgs: -1,
 }
 
-const preflightBuildFlag = "--preflight-build"
+// PreflightBuildFlag names the spec slug whose build the command layer chains after a
+// commit that publishes.
+const PreflightBuildFlag = "--preflight-build"
+
+// HelpRowSuffix is the argument shape of the `bench help` row.
+const HelpRowSuffix = " -m <msg> [" + PreflightBuildFlag + " <slug>] <path>..."
 
 // request is one parsed commit call.
 type request struct {
@@ -276,10 +276,10 @@ func parseRequest(args []string) (req request, help string, usageErr string) {
 		return request{}, "", line
 	}
 	_, req.dryRun = parsed.Flags["--dry-run"]
-	req.preflightBuild = parsed.Flags[preflightBuildFlag]
+	req.preflightBuild = parsed.Flags[PreflightBuildFlag]
 	// A dry run publishes nothing, so the chain would have no commit to build.
 	if req.dryRun && req.preflightBuild != "" {
-		return request{}, "", "--dry-run excludes " + preflightBuildFlag
+		return request{}, "", "--dry-run excludes " + PreflightBuildFlag
 	}
 	msg, msgSet := parsed.Flags["-m"]
 	if !msgSet {

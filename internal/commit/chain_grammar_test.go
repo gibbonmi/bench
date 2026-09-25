@@ -14,6 +14,23 @@ func parseArgs(args []string) (msg string, paths []string, dryRun bool, help str
 	return req.msg, req.paths, req.dryRun, help, usageErr
 }
 
+// Command is the exit-only view of Run that the package tests read.
+func Command(args []string, stdout, stderr io.Writer) int {
+	_, exit := Run(args, stdout, stderr)
+	return exit
+}
+
+// An empty --preflight-build value is what an unset shell variable expands to, so the
+// grammar refuses it before any repository read.
+func TestCommitChainRefusesEmptySlug(t *testing.T) {
+	t.Chdir(t.TempDir())
+	var stdout, stderr bytes.Buffer
+	code := Command([]string{"-m", "m", "--preflight-build", "", "a.txt"}, &stdout, &stderr)
+	if want := "usage: bench commit (unknown argument: --preflight-build \"\")\n"; code != 2 || stdout.Len() != 0 || stderr.String() != want {
+		t.Fatalf("exit = %d, stdout = %q, stderr = %q; want exit 2, no stdout, and stderr %q", code, stdout.String(), stderr.String(), want)
+	}
+}
+
 // BO55: a dry run grades without publishing, so it has no commit for the chain to build
 // on. The combination is a usage refusal before any repository read.
 func TestCommitChainRefusesDryRun(t *testing.T) {
