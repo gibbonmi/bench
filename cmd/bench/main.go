@@ -248,7 +248,7 @@ func commandsProbeIsStale(root string) bool {
 var gatePhasesCommand = gate.PhasesCommand
 
 func roadmapCommand(args []string) (string, int) {
-	if len(args) == 0 || len(args) == 1 && (args[0] == "--help" || args[0] == "-h" || args[0] == "help") {
+	if len(args) == 0 || len(args) == 1 && helpArgument(args[0]) {
 		return roadmap.RoadmapCommand(args)
 	}
 	// --flow is a mode selector like --context, so it is routed on its leading position

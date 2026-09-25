@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 )
 
 // The expectations here are authored apart from the response owner: a bounded exec
@@ -68,11 +69,7 @@ func spilledPath(t *testing.T, stdout string, head, tail []string) string {
 			t.Errorf("tail line %d = %q, want %q", i+1, got, want)
 		}
 	}
-	_, path, found := strings.Cut(lines[4], ",path=")
-	if !strings.HasPrefix(lines[4], "spilled{") || !found || !strings.HasSuffix(path, "}") {
-		t.Fatalf("fifth line = %q, want the spill line", lines[4])
-	}
-	return strings.TrimSuffix(path, "}")
+	return responseboundtest.Path(t, lines[4])
 }
 
 func readSpillFile(t *testing.T, path string) string {

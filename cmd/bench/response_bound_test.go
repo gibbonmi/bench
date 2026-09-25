@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 )
 
 // The expectations here are authored apart from the owner: a bounded response over 10
@@ -214,11 +215,7 @@ func spillDirOf(t *testing.T, stdout string) string {
 	if len(lines) < 5 {
 		t.Fatalf("response = %q, want a spill line", stdout)
 	}
-	_, path, found := strings.Cut(strings.TrimSuffix(lines[4], "}\n"), ",path=")
-	if !found {
-		t.Fatalf("fifth line = %q, want a spill line with a path", lines[4])
-	}
-	return filepath.Dir(path)
+	return filepath.Dir(responseboundtest.Path(t, lines[4]))
 }
 
 // BO72 at the dispatcher: from inside an assignment worktree, an over-bound leaf whose row

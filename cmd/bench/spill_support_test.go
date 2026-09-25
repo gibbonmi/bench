@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 )
 
 // TestMain runs the package under a private Bench home. A bounded response that spills
@@ -34,14 +35,14 @@ func TestMain(m *testing.M) {
 func spilledResponse(t *testing.T, response string) string {
 	t.Helper()
 	lines := strings.SplitAfter(response, "\n")
-	if len(lines) < 5 || !strings.HasPrefix(lines[4], "spilled{") {
+	if len(lines) < 5 {
 		return response
 	}
-	_, path, found := strings.Cut(strings.TrimSuffix(lines[4], "}\n"), ",path=")
-	if !found {
-		t.Fatalf("spill line = %q, want a path field", lines[4])
+	spill, ok := responseboundtest.ParseLine(lines[4])
+	if !ok {
+		return response
 	}
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(spill.Path)
 	if err != nil {
 		t.Fatalf("read spill file: %v", err)
 	}
