@@ -12,6 +12,8 @@ The owner derives the line cut as the byte value divided by the line value, 409 
 
 After the spill starts, each retained head and tail line holds at most 409 bytes in memory. The owner tests build their 4096, 4097, and 409 fixtures from the registry constants. Do not edit `specs/session-context-queries`. BO73 is a final reconciliation check, not a task of this ticket.
 
+The exec long-line row runs in the system suite, which is system-tagged. Run it with `BENCH_KIT` set, through `bench test --check system`.
+
 ## Acceptance
 
 - [ ] A 3-line response of 5000 bytes spills with `omitted_lines=0`, and its printed bytes stay within 4096.
