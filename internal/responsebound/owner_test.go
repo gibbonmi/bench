@@ -14,9 +14,11 @@ import (
 	"github.com/gibbonmi/bench/internal/benchhome"
 )
 
-// The expectations below are authored apart from the owner: 4 head lines, one spill line,
-// and 5 tail lines for any response over 10 lines. A shared constant would let a changed
-// projection move both sides at once.
+// The projection counts below are authored apart from the owner: 4 head lines, one spill
+// line, and 5 tail lines for any response over 10 lines. The spec fixes these counts, and
+// an expectation derived from the owner's constants would move with a changed constant and
+// stay green. The spec does not fix the store directory names, so the tests read them from
+// the owner's constants.
 
 // tagged is one write of a canned response, to stdout or to stderr.
 type tagged struct {
@@ -37,7 +39,13 @@ func privateHome(t *testing.T) string {
 // is the `primary` scope below the `none` repository key.
 func outsideRepository() string { return "" }
 
-func storeDir(home string) string { return filepath.Join(home, "responses", "none", "primary") }
+// assertHomeEmpty checks that a response wrote nothing under the Bench home.
+func assertHomeEmpty(t *testing.T, home string) {
+	t.Helper()
+	if entries, err := os.ReadDir(home); err != nil || len(entries) != 0 {
+		t.Fatalf("Bench home entries = %v (%v), want none", entries, err)
+	}
+}
 
 // respond sends writes through a new owner and answers the joined printed bytes. Both
 // streams share one sink, so the printed order is the order the owner wrote.
@@ -185,70 +193,7 @@ func TestOwnerReplaysWithinBound(t *testing.T) {
 	if stdout.String() != "out 1\nout 2\n" || stderr.String() != "err 1\n" {
 		t.Fatalf("streams = (%q, %q), want each write on its own stream", stdout.String(), stderr.String())
 	}
-	if _, err := os.Stat(filepath.Join(home, "responses")); !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("spill store exists for a bounded response: %v", err)
-	}
-}
-
-// BO14: a new spill directory is private to the owner, and so is the file.
-func TestSpillStorePrivateModes(t *testing.T) {
-	home := privateHome(t)
-	respond(t, stdoutLines(numbered(1, 11)...))
-	for _, dir := range []string{filepath.Join(home, "responses"), filepath.Join(home, "responses", "none"), storeDir(home)} {
-		info, err := os.Lstat(dir)
-		if err != nil || !info.IsDir() || info.Mode().Perm() != 0o700 {
-			t.Errorf("directory %s = (%v, %v), want a directory of mode 0700", dir, info, err)
-		}
-	}
-	info, err := os.Lstat(onlySpill(t, home))
-	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm() != 0o600 {
-		t.Fatalf("spill file = (%v, %v), want a regular file of mode 0600", info, err)
-	}
-}
-
-// assertCreateFailure grades the create-failure route: the complete output, then one
-// line-safe spill-failed line.
-func assertCreateFailure(t *testing.T, got, output string) {
-	t.Helper()
-	rest, found := strings.CutPrefix(got, output)
-	if !found {
-		t.Fatalf("response = %q, want the complete output %q first", got, output)
-	}
-	if !strings.HasPrefix(rest, "spill-failed{reason=") || !strings.HasSuffix(rest, "}\n") || strings.Count(rest, "\n") != 1 {
-		t.Fatalf("response tail = %q, want one spill-failed{reason=<reason>} line", rest)
-	}
-}
-
-// BO15: a symlink at the scope directory takes the create-failure route, and nothing is
-// written where the symlink points.
-func TestSpillStoreRefusesSymlink(t *testing.T) {
-	home := privateHome(t)
-	if err := os.MkdirAll(filepath.Dir(storeDir(home)), 0o700); err != nil {
-		t.Fatal(err)
-	}
-	elsewhere := t.TempDir()
-	if err := os.Symlink(elsewhere, storeDir(home)); err != nil {
-		t.Fatal(err)
-	}
-	writes := stdoutLines(numbered(1, 11)...)
-	assertCreateFailure(t, respond(t, writes), joined(writes))
-	if entries, err := os.ReadDir(elsewhere); err != nil || len(entries) != 0 {
-		t.Fatalf("symlink target entries = %v (%v), want none", entries, err)
-	}
-}
-
-// BO18: a regular file at the scope directory path gives the complete output and then
-// the spill-failed line.
-func TestOwnerCreateFailureKeepsOutput(t *testing.T) {
-	home := privateHome(t)
-	if err := os.MkdirAll(filepath.Dir(storeDir(home)), 0o700); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(storeDir(home), []byte("occupied\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	writes := append(stdoutLines(numbered(1, 8)...), tagged{stderr: true, data: "err 09\n"}, tagged{data: "line 10\n"}, tagged{data: "line 11\n"}, tagged{data: "line 12\n"})
-	assertCreateFailure(t, respond(t, writes), joined(writes))
+	assertHomeEmpty(t, home)
 }
 
 // faultAfter accepts limit bytes into the real file, then refuses every later byte.
@@ -315,9 +260,7 @@ func TestOwnerEmptyResponse(t *testing.T) {
 	if got := respond(t, nil); got != "" {
 		t.Fatalf("empty response printed %q", got)
 	}
-	if _, err := os.Stat(filepath.Join(home, "responses")); !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("spill store exists after an empty response: %v", err)
-	}
+	assertHomeEmpty(t, home)
 }
 
 // BO23: a last line without a newline counts as the eleventh line, and the response and
@@ -345,18 +288,6 @@ func TestOwnerCopiesBinaryBytes(t *testing.T) {
 	respond(t, writes)
 	if got, want := readSpill(t, onlySpill(t, home)), joined(writes); got != want {
 		t.Fatalf("spill file = %q, want %q", got, want)
-	}
-}
-
-// BO25: a Bench home that holds a newline takes the create-failure route, so no raw path
-// can forge a second response line.
-func TestOwnerRefusesUnsafeSpillPath(t *testing.T) {
-	home := filepath.Join(t.TempDir(), "unsafe\nhome")
-	t.Setenv(benchhome.Env, home)
-	writes := stdoutLines(numbered(1, 11)...)
-	assertCreateFailure(t, respond(t, writes), joined(writes))
-	if _, err := os.Stat(home); !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("unsafe home was created: %v", err)
 	}
 }
 

@@ -138,8 +138,11 @@ type commandDefinition struct {
 	Inventory  commandInventory
 	Bound      boundDisposition
 	// Leaves is the family table of a command whose first argument names a leaf. Each
-	// leaf declares its own bound disposition on its row.
-	Leaves      []commandLeaf
+	// leaf declares its own bound disposition on its row. The dispatcher and the bound
+	// both read this one table, so no family runs a leaf that the bound does not see.
+	Leaves []commandLeaf
+	// LeafUsage answers the family usage that a bare, help, or unknown-leaf call prints.
+	LeafUsage   func() string
 	WrapperOnly bool
 	// Hook marks a hook plumbing verb: a verb a harness hook shim pipes its envelope to.
 	// The set is the record's one source for which dispatches open a hook span.
@@ -211,6 +214,15 @@ func leafNamed(leaves []commandLeaf, args []string) (commandLeaf, bool) {
 		}
 	}
 	return commandLeaf{}, false
+}
+
+// run calls the definition's handler. A family routes its leaves through the shared leaf
+// dispatcher, which reads the same table as the bound.
+func (definition commandDefinition) run(c Command, args []string) int {
+	if definition.Leaves != nil {
+		return dispatchLeafFamily(c, "bench "+definition.Name, definition.LeafUsage(), definition.Leaves, args)
+	}
+	return definition.Run(c, args)
 }
 
 // bound answers the disposition that applies to one call. A call that names a family
@@ -307,18 +319,18 @@ func (c Command) Run(args []string) int {
 	// package opens a span of its own.
 	if definition.Hook {
 		finishSpan := beginHookSpan(definition.Name)
-		exit := definition.Run(c, args[1:])
+		exit := definition.run(c, args[1:])
 		finishSpan(exit)
 		return exit
 	}
 	if definition.bound(args[1:]) != boundResponse {
-		return definition.Run(c, args[1:])
+		return definition.run(c, args[1:])
 	}
 	// A bounded command writes both streams into one owner, which prints the response
 	// after the command returns. The command's own exit code stays the verb's exit.
 	owner := responsebound.New(c.Stdout, c.Stderr, boundaryRoot)
 	c.Stdout, c.Stderr = owner.Stdout(), owner.Stderr()
-	exit := definition.Run(c, args[1:])
+	exit := definition.run(c, args[1:])
 	owner.Finish()
 	return exit
 }

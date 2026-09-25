@@ -125,7 +125,7 @@ var commandRegistry = []commandDefinition{
 		helpRow{Order: 36, Suffix: worktreeSuffix(usage.WorktreeLand), Description: "compose, gate, and publish one owned worktree"},
 		helpRow{Order: 36, Suffix: worktreeSuffix(usage.WorktreeLandResume), Description: "resume incomplete post-publication landing work"},
 		helpRow{Order: 37, Suffix: " --help", Description: "show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar"},
-	), Bound: boundPending, Leaves: worktreeLeaves, Run: worktreeCommand},
+	), Bound: boundPending, Leaves: worktreeLeaves, LeafUsage: usage.WorktreeUsage},
 	{Name: "resume-clean", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: resumeCleanCommand},
 	{Name: "session-inspect", Hook: true, Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return sessioninspect.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "shift", Attachment: attachmentDirect, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 38, Suffix: " [--refresh] \"<objective>\"", Gap: 1, Description: "gated loop in a pooled worktree; commit on green"}), Bound: boundPending, Run: func(c Command, args []string) int { return shift.Command(args, c.Stdout, c.Stderr) }},

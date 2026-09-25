@@ -52,12 +52,16 @@ type Owner struct {
 	phase    phase
 	retained []streamWrite
 	lines    lineTracker
-	bytes    int64
-	file     io.WriteCloser
-	path     string
-	written  int64
-	refused  []byte
-	reason   string
+	// stdoutOpen reports that the last stdout byte is not a newline. The create-failure
+	// line reads it, because stderr writes change the response's line state but not
+	// stdout's.
+	stdoutOpen bool
+	bytes      int64
+	file       io.WriteCloser
+	path       string
+	written    int64
+	refused    []byte
+	reason     string
 }
 
 // New returns the owner of one response whose original streams are stdout and stderr.
@@ -69,30 +73,37 @@ func New(stdout, stderr io.Writer, root func() string) *Owner {
 }
 
 // Stdout answers the writer that takes the response's stdout bytes.
-func (o *Owner) Stdout() io.Writer { return streamWriter{owner: o, stream: o.stdout} }
+func (o *Owner) Stdout() io.Writer { return streamWriter{owner: o, stdout: true} }
 
 // Stderr answers the writer that takes the response's stderr bytes.
-func (o *Owner) Stderr() io.Writer { return streamWriter{owner: o, stream: o.stderr} }
+func (o *Owner) Stderr() io.Writer { return streamWriter{owner: o} }
 
 // streamWriter tags each write with its original stream.
 type streamWriter struct {
 	owner  *Owner
-	stream io.Writer
+	stdout bool
 }
 
 // Write accepts every byte. A spill failure changes where the bytes go, never whether
 // they arrive, so the command that writes never sees an error from the bound.
 func (w streamWriter) Write(p []byte) (int, error) {
-	w.owner.write(w.stream, p)
+	w.owner.write(w.stdout, p)
 	return len(p), nil
 }
 
-func (o *Owner) write(stream io.Writer, p []byte) {
+func (o *Owner) write(stdout bool, p []byte) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
+	stream := o.stderr
+	if stdout {
+		stream = o.stdout
+	}
 	if o.phase == finished {
 		_, _ = stream.Write(p)
 		return
+	}
+	if stdout && len(p) > 0 {
+		o.stdoutOpen = p[len(p)-1] != '\n'
 	}
 	o.bytes += int64(len(p))
 	o.lines.add(p)
@@ -167,7 +178,7 @@ func (o *Owner) Finish() {
 		o.printProjection(fmt.Sprintf("spill-failed{path=%s,written_bytes=%d,reason=%s}\n", o.path, o.written, o.reason), o.refused)
 	case passing:
 		separator := ""
-		if o.lines.open {
+		if o.stdoutOpen {
 			separator = "\n"
 		}
 		_, _ = fmt.Fprintf(o.stdout, "%sspill-failed{reason=%s}\n", separator, o.reason)

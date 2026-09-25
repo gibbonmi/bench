@@ -17,6 +17,8 @@ import (
 
 // The expectations here are authored apart from the response owner: a bounded exec
 // response over 10 lines prints its first 4 lines, one spill line, and its last 5 lines.
+// The spec fixes these counts, and only the owner package may read the line value from
+// the policy registry.
 
 // execBoundFixture answers a scaffolded repository and one active assignment in it.
 func execBoundFixture(t *testing.T) (recordedPublicationRepo, systemLandingWorktree) {

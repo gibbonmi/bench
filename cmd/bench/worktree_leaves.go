@@ -62,13 +62,6 @@ var worktreeLeaves = []commandLeaf{
 	}},
 }
 
-// worktreeCommand routes the worktree family through the shared leaf dispatcher. The
-// family answers its own bare, help, and unknown-leaf forms before any leaf runs, so a
-// missing or unknown leaf never acquires or creates a worktree.
-func worktreeCommand(c Command, args []string) int {
-	return dispatchLeafFamily(c, "bench worktree", usage.WorktreeUsage(), worktreeLeaves, args)
-}
-
 // worktreeSuffix derives a leaf's help suffix from its usage grammar, so the inventory
 // row and the grammar the verb refuses with have one source.
 func worktreeSuffix(grammar string) string { return strings.TrimPrefix(grammar, "bench worktree") }

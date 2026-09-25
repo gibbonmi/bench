@@ -2,10 +2,8 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -15,7 +13,8 @@ import (
 )
 
 // The expectations here are authored apart from the owner: a bounded response over 10
-// lines prints exactly 10. A shared constant would let a changed bound move both sides.
+// lines prints exactly 10, and its fifth line is the spill line. The spec fixes both
+// counts, and only the owner package may read the line value from the policy registry.
 
 // runBoundFixture registers one public command that prints lines numbered lines and
 // exits exit, declared with bound, and runs it through the production dispatcher under a
@@ -69,8 +68,8 @@ func TestDispatcherPassesBoundaryResponse(t *testing.T) {
 	if want := numberedLines(10); code != 0 || stderr != "" || stdout != want {
 		t.Fatalf("boundary fixture = (%d, %q, %q), want (0, %q, \"\")", code, stdout, stderr, want)
 	}
-	if _, err := os.Stat(filepath.Join(home, "responses")); !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("a 10-line response created the spill store: %v", err)
+	if entries, err := os.ReadDir(home); err != nil || len(entries) != 0 {
+		t.Fatalf("a 10-line response wrote the Bench home: %v (%v)", entries, err)
 	}
 }
 
