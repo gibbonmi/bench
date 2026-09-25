@@ -51,7 +51,8 @@ registry the family already appears in, traced from one existing sibling through
 registry the charge does not name is one the delegate will miss. A cap-change charge's search list names the closest pinning package.
 
 Every write charge from a spec carries its stories' coverage rows — behavior, seam, why it catches the failure.
-It requires the delegate to show each row red before the edit and green after.
+It requires the delegate to observe each row red at least once and then green.
+The red-to-green log names the route of each red: before the first production edit, a `bench probe`, or a revert. At a seam that the spec marks for TDD, the red follows the sequence in `craft-tdd`.
 First compare each slice with `craft-spec`'s "Slicing a build for delegates".
 
 Name the mutation that breaks the change's central property. Require the delegate to apply it to its

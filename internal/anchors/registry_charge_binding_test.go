@@ -5,12 +5,18 @@ import "testing"
 // These independent expectations make removal of a charge-binding rule or a consumer rule fail.
 func TestChargeBindingAnchors(t *testing.T) {
 	const (
+		delegate   = ".agents/skills/bench-craft-delegate/SKILL.md"
 		discipline = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
 		evidence   = ".agents/skills/bench-craft-delegate/references/charge-evidence-format.md"
 	)
 	anchorHarness{group: AfterImplementSpec, rules: []anchorRule{
+		{file: delegate, section: "The charge", needle: "The red-to-green log names the route of each red: before the first production edit, a `bench probe`, or a revert.", want: "charge binding: the red-to-green log dropped the route of each red"},
+		{file: delegate, section: "The charge", needle: "At a seam that the spec marks for TDD, the red follows the sequence in `craft-tdd`.", want: "charge binding: a TDD seam dropped the craft-tdd red sequence"},
 		{file: discipline, section: "In the charge", needle: "Before a write charge dispatches, the coordinator ticks each item of this list against the ticket's `Writes:` line.", want: "charge binding: the coordinator ticks the charge list against Writes"},
 		{file: discipline, section: "In the charge", needle: "A test that guards on a root privilege routes through the capability seam, never through a bare `t.Skip`.", want: "charge binding: a root-privilege guard routes through the capability seam"},
+		{file: discipline, section: "In the charge", needle: "A charge that asks for a commit, a commit sha, or a preflight result makes that request conditional on a committed ticket.", want: "charge binding: a commit, sha, or preflight request is conditional on a committed ticket"},
+		{file: discipline, section: "In the charge", needle: "A blocked author returns none of them and never creates a commit outside `bench commit`.", want: "charge binding: a blocked author returns no commit evidence and commits only through bench commit"},
+		{file: discipline, section: "In the charge", needle: "A write charge names the fence's existing fixture helpers to extend, and it quotes any one-source rule for fixture harnesses that the project's instructions state.", want: "charge binding: a write charge names the fence's fixture helpers and quotes any fixture-harness rule"},
 		{file: discipline, needle: "A repair fence is the approved chunk union plus the exact paths that the review names.", want: "charge binding: the repair fence restored the chunk union plus review-named paths", forbidden: true},
 		{file: discipline, section: "In the charge", needle: "A repair fence is the affected ticket's `Writes:` line.", want: "charge binding: the repair fence dropped the affected ticket's Writes line"},
 		{file: discipline, section: "In the charge", needle: "A repair based on a frozen sibling uses an integration assignment from `main`.", want: "charge binding: a frozen-sibling repair uses an integration assignment"},

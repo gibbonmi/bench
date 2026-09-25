@@ -1,10 +1,16 @@
 package anchors
 
 // chargeBindingAnchors pin the charge, probe, claim, retry, and landing rules of the
-// delegation discipline, and the transport consumer protocol of the charge evidence.
+// delegation discipline, the red route of craft-delegate's charge, and the transport
+// consumer protocol of the charge evidence.
 var chargeBindingAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: craftDelegate, Kind: RequireInSection, Section: "The charge", Needle: "The red-to-green log names the route of each red: before the first production edit, a `bench probe`, or a revert.", Diagnostic: "charge binding: the red-to-green log dropped the route of each red"},
+	{Group: AfterImplementSpec, File: craftDelegate, Kind: RequireInSection, Section: "The charge", Needle: "At a seam that the spec marks for TDD, the red follows the sequence in `craft-tdd`.", Diagnostic: "charge binding: a TDD seam dropped the craft-tdd red sequence"},
 	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "In the charge", Needle: "Before a write charge dispatches, the coordinator ticks each item of this list against the ticket's `Writes:` line.", Diagnostic: "charge binding: the coordinator ticks the charge list against Writes"},
 	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "In the charge", Needle: "A test that guards on a root privilege routes through the capability seam, never through a bare `t.Skip`.", Diagnostic: "charge binding: a root-privilege guard routes through the capability seam"},
+	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "In the charge", Needle: "A charge that asks for a commit, a commit sha, or a preflight result makes that request conditional on a committed ticket.", Diagnostic: "charge binding: a commit, sha, or preflight request is conditional on a committed ticket"},
+	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "In the charge", Needle: "A blocked author returns none of them and never creates a commit outside `bench commit`.", Diagnostic: "charge binding: a blocked author returns no commit evidence and commits only through bench commit"},
+	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "In the charge", Needle: "A write charge names the fence's existing fixture helpers to extend, and it quotes any one-source rule for fixture harnesses that the project's instructions state.", Diagnostic: "charge binding: a write charge names the fence's fixture helpers and quotes any fixture-harness rule"},
 	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: Forbid, Needle: "A repair fence is the approved chunk union plus the exact paths that the review names.", Diagnostic: "charge binding: the repair fence restored the chunk union plus review-named paths"},
 	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "In the charge", Needle: "A repair fence is the affected ticket's `Writes:` line.", Diagnostic: "charge binding: the repair fence dropped the affected ticket's Writes line"},
 	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "In the charge", Needle: "A repair based on a frozen sibling uses an integration assignment from `main`.", Diagnostic: "charge binding: a frozen-sibling repair uses an integration assignment"},
@@ -21,9 +27,10 @@ var chargeBindingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: chargeEvidenceFormat, Kind: RequireInSection, Section: "Consumers", Needle: "A read takes the shared lock of the evidence store, so a sandboxed consumer needs write access to that store.", Diagnostic: "charge binding: the consumer protocol names the sandbox constraint"},
 }
 
-// delegationDiscipline and chargeEvidenceFormat are the craft-delegate references these
-// anchors read.
+// craftDelegate is the craft-delegate skill, and delegationDiscipline and
+// chargeEvidenceFormat are its references these anchors read.
 const (
+	craftDelegate        = ".agents/skills/bench-craft-delegate/SKILL.md"
 	delegationDiscipline = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
 	chargeEvidenceFormat = ".agents/skills/bench-craft-delegate/references/charge-evidence-format.md"
 )
