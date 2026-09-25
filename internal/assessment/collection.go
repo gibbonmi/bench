@@ -100,7 +100,7 @@ func benchBatches(r Run) ([]BenchInputs, error) {
 	}
 	seen := map[string]bool{}
 	for _, b := range batches {
-		if _, ok := poolkey.SplitAssignmentSegment(poolkey.AssignmentSegment(b.AssignmentID, b.AssignmentID)); !ok {
+		if !poolkey.IsAssignmentID(b.AssignmentID) {
 			return nil, fmt.Errorf("invalid expected assignment")
 		}
 		if seen[b.AssignmentID] {
