@@ -44,3 +44,4 @@ differ.
 - Each acceptance claim names an available producer and an executable check at its ticket checkpoint. A claim whose producer lands in a later ticket has no evidence at that checkpoint.
 - A ticket that preserves or moves a ref names a check for each of the head, the tip, and the checked-out-ref shapes. A check on one shape leaves the other shapes free to fail.
 - A rule for one member of an enumerated family goes on its declaration row, and `Writes:` names the declaration table and its dispatch test.
+- A ticket that adds a second caller of another package's private rule names that package in `Writes:`, so one exported rule serves both callers.
