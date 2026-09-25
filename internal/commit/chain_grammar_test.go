@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // parseArgs is the positional view of parseRequest that the parser table in
@@ -28,7 +29,7 @@ func TestCommitChainRefusesEmptySlug(t *testing.T) {
 	t.Chdir(t.TempDir())
 	var stdout, stderr bytes.Buffer
 	code := Command([]string{"-m", "m", "--preflight-build", "", "a.txt"}, &stdout, &stderr)
-	if want := toon.Usage(grammar.Cmd, PreflightBuildFlag+` ""`) + "\n"; code != 2 || stdout.Len() != 0 || stderr.String() != want {
+	if want := toon.Usage(grammar.Cmd, usage.EmptyFlagValue(PreflightBuildFlag)) + "\n"; code != 2 || stdout.Len() != 0 || stderr.String() != want {
 		t.Fatalf("exit = %d, stdout = %q, stderr = %q; want exit 2, no stdout, and stderr %q", code, stdout.String(), stderr.String(), want)
 	}
 }

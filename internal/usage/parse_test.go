@@ -107,7 +107,7 @@ func TestParseEmptyPositionalIsUsageError(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			res, line, code := Parse(tc.g, tc.args)
-			if want := toon.Usage(tc.g.Cmd, `""`); line != want || code != 2 {
+			if want := toon.Usage(tc.g.Cmd, EmptyOperand); line != want || code != 2 {
 				t.Errorf("Parse(%q) = (%+v, %q, %d), want (%q, 2)", tc.args, res, line, code, want)
 			}
 		})
@@ -124,7 +124,7 @@ func TestParseUnquotedEmptyPositionalIsGrammarScoped(t *testing.T) {
 
 	ordinary := testGrammar()
 	_, line, code = Parse(ordinary, []string{""})
-	if want := toon.Usage(ordinary.Cmd, `""`); line != want || code != 2 {
+	if want := toon.Usage(ordinary.Cmd, EmptyOperand); line != want || code != 2 {
 		t.Errorf("ordinary Parse(empty) = (%q, %d), want (%q, 2)", line, code, want)
 	}
 }
@@ -411,7 +411,7 @@ func TestParseChildArgvPassesTokensThrough(t *testing.T) {
 func TestParseEmptyChildArgvStaysGrammarScoped(t *testing.T) {
 	g := commitShapedGrammar()
 	res, line, code := Parse(g, []string{"-m", "x", "--", ""})
-	if want := toon.Usage(g.Cmd, `""`); line != want || code != 2 {
+	if want := toon.Usage(g.Cmd, EmptyOperand); line != want || code != 2 {
 		t.Errorf("Parse(-m x -- \"\") = (%+v, %q, %d), want (%q, 2)", res, line, code, want)
 	}
 }
