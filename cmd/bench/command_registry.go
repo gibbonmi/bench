@@ -13,6 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/repairpilot"
+	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -118,11 +119,27 @@ const (
 	axiReasonRelease     = "release surface has its own ship-tier contract"
 )
 
+// boundDisposition is how one public command or leaf takes the response bound. The zero
+// value declares nothing, so a new public entry cannot skip the bound silently.
+type boundDisposition uint8
+
+const (
+	boundUndeclared boundDisposition = iota
+	// boundPending is the transitional disposition of an entry that is not bounded yet.
+	boundPending
+	// boundResponse holds the entry's stdout and stderr to the response bound.
+	boundResponse
+)
+
 type commandDefinition struct {
-	Name        string
-	Attachment  processAttachment
-	AXI         commandAXIDisposition
-	Inventory   commandInventory
+	Name       string
+	Attachment processAttachment
+	AXI        commandAXIDisposition
+	Inventory  commandInventory
+	Bound      boundDisposition
+	// Leaves is the family table of a command whose first argument names a leaf. Each
+	// leaf declares its own bound disposition on its row.
+	Leaves      []commandLeaf
 	WrapperOnly bool
 	// Hook marks a hook plumbing verb: a verb a harness hook shim pipes its envelope to.
 	// The set is the record's one source for which dispatches open a hook span.
@@ -156,6 +173,7 @@ type commandLeaf struct {
 	// no grammar constant.
 	Grammar string
 	Root    leafRootNeed
+	Bound   boundDisposition
 	Run     func(c Command, root string, args []string) int
 }
 
@@ -173,10 +191,7 @@ func dispatchLeafFamily(c Command, family, familyUsage string, leaves []commandL
 		fmt.Fprint(c.Stdout, familyUsage)
 		return 0
 	}
-	for _, leaf := range leaves {
-		if leaf.Name != args[0] {
-			continue
-		}
+	if leaf, ok := leafNamed(leaves, args); ok {
 		root, ok := leafRoot(c, leaf.Root)
 		if !ok {
 			return 1
@@ -185,6 +200,26 @@ func dispatchLeafFamily(c Command, family, familyUsage string, leaves []commandL
 	}
 	fmt.Fprintln(c.Stderr, toon.Usage(family, args[0]))
 	return 2
+}
+
+// leafNamed answers the leaf that the first family argument names. The dispatcher and the
+// bound disposition both select a leaf here.
+func leafNamed(leaves []commandLeaf, args []string) (commandLeaf, bool) {
+	for _, leaf := range leaves {
+		if len(args) > 0 && leaf.Name == args[0] {
+			return leaf, true
+		}
+	}
+	return commandLeaf{}, false
+}
+
+// bound answers the disposition that applies to one call. A call that names a family
+// leaf takes that leaf's disposition, and every other call takes the command's own.
+func (definition commandDefinition) bound(args []string) boundDisposition {
+	if leaf, ok := leafNamed(definition.Leaves, args); ok {
+		return leaf.Bound
+	}
+	return definition.Bound
 }
 
 // leafRoot is the family's one root producer. A required root that cannot resolve prints
@@ -276,7 +311,16 @@ func (c Command) Run(args []string) int {
 		finishSpan(exit)
 		return exit
 	}
-	return definition.Run(c, args[1:])
+	if definition.bound(args[1:]) != boundResponse {
+		return definition.Run(c, args[1:])
+	}
+	// A bounded command writes both streams into one owner, which prints the response
+	// after the command returns. The command's own exit code stays the verb's exit.
+	owner := responsebound.New(c.Stdout, c.Stderr, boundaryRoot)
+	c.Stdout, c.Stderr = owner.Stdout(), owner.Stderr()
+	exit := definition.Run(c, args[1:])
+	owner.Finish()
+	return exit
 }
 
 func commandImplementationID(definition commandDefinition) string {

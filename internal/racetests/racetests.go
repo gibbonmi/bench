@@ -15,4 +15,5 @@ var Tests = []Test{
 	{PackagePath: "./internal/guards", Name: "TestScanTimeoutPreservesPartialRowsAndHonestCounts"},
 	{PackagePath: "./internal/guards", Name: "TestScanEnumerationTimeoutUsesUnknownCounts"},
 	{PackagePath: "./internal/census", Name: "TestConcurrentRecordsKeepEveryLine"},
+	{PackagePath: "./internal/responsebound", Name: "TestOwnerSerializesConcurrentWrites"},
 }

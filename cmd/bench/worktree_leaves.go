@@ -16,48 +16,48 @@ import (
 // its own grammar today: `path` reads `--help` as a target operand, and `reclaim`
 // refuses it as an unknown argument. `shell` has no grammar constant at all.
 var worktreeLeaves = []commandLeaf{
-	{Name: "exec", Grammar: usage.WorktreeExec, Root: rootRequired, Run: func(c Command, root string, args []string) int {
+	{Name: "exec", Grammar: usage.WorktreeExec, Root: rootRequired, Bound: boundResponse, Run: func(c Command, root string, args []string) int {
 		return worktree.ExecCommand(root, worktree.Home(), args, c.Stdin, c.Stdout, c.Stderr)
 	}},
-	{Name: "shell", Root: rootNone, Run: func(c Command, _ string, args []string) int {
+	{Name: "shell", Root: rootNone, Bound: boundPending, Run: func(c Command, _ string, args []string) int {
 		return worktree.Subshell(worktree.Home(), args, c.Stdin, c.Stdout, c.Stderr)
 	}},
-	{Name: "path", Root: rootRequired, Run: func(c Command, root string, args []string) int {
+	{Name: "path", Root: rootRequired, Bound: boundPending, Run: func(c Command, root string, args []string) int {
 		return worktree.PathCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
-	{Name: "show", Grammar: usage.WorktreeShow, Root: rootRequired, Run: func(c Command, root string, args []string) int {
+	{Name: "show", Grammar: usage.WorktreeShow, Root: rootRequired, Bound: boundPending, Run: func(c Command, root string, args []string) int {
 		return worktree.ShowCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
-	{Name: "build", Grammar: usage.WorktreeBuild, Root: rootRequired, Run: func(c Command, root string, args []string) int {
+	{Name: "build", Grammar: usage.WorktreeBuild, Root: rootRequired, Bound: boundPending, Run: func(c Command, root string, args []string) int {
 		return worktree.BuildCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
-	{Name: "list", Grammar: usage.WorktreeList, Root: rootBoundary, Run: func(c Command, root string, args []string) int {
+	{Name: "list", Grammar: usage.WorktreeList, Root: rootBoundary, Bound: boundPending, Run: func(c Command, root string, args []string) int {
 		out, code := worktree.ListCommand(root, worktree.Home(), args)
 		fmt.Fprint(c.Stdout, out)
 		return code
 	}},
-	{Name: "create", Grammar: usage.WorktreeCreate, Root: rootRequired, Run: func(c Command, root string, args []string) int {
+	{Name: "create", Grammar: usage.WorktreeCreate, Root: rootRequired, Bound: boundPending, Run: func(c Command, root string, args []string) int {
 		return worktree.CreateCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
-	{Name: "release", Grammar: usage.WorktreeRelease, Root: rootRequired, Run: func(c Command, root string, args []string) int {
+	{Name: "release", Grammar: usage.WorktreeRelease, Root: rootRequired, Bound: boundPending, Run: func(c Command, root string, args []string) int {
 		return worktree.ReleaseCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
-	{Name: "clean", Grammar: usage.WorktreeClean, Root: rootBoundary, Run: func(c Command, root string, args []string) int {
+	{Name: "clean", Grammar: usage.WorktreeClean, Root: rootBoundary, Bound: boundPending, Run: func(c Command, root string, args []string) int {
 		return worktree.CleanCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
-	{Name: "reclaim", Root: rootBoundary, Run: func(c Command, root string, args []string) int {
+	{Name: "reclaim", Root: rootBoundary, Bound: boundPending, Run: func(c Command, root string, args []string) int {
 		return worktree.ReclaimCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
-	{Name: "reauthorize", Grammar: usage.WorktreeReauthorize, Root: rootRequired, Run: func(c Command, root string, args []string) int {
+	{Name: "reauthorize", Grammar: usage.WorktreeReauthorize, Root: rootRequired, Bound: boundPending, Run: func(c Command, root string, args []string) int {
 		return worktree.ReauthorizeCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
-	{Name: "merge", Grammar: usage.WorktreeMerge, Root: rootRequired, Run: func(c Command, root string, args []string) int {
+	{Name: "merge", Grammar: usage.WorktreeMerge, Root: rootRequired, Bound: boundPending, Run: func(c Command, root string, args []string) int {
 		return worktree.MergeCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
-	{Name: "reset", Grammar: usage.WorktreeReset, Root: rootRequired, Run: func(c Command, root string, args []string) int {
+	{Name: "reset", Grammar: usage.WorktreeReset, Root: rootRequired, Bound: boundPending, Run: func(c Command, root string, args []string) int {
 		return worktree.ResetCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
-	{Name: "land", Grammar: usage.WorktreeLand, Root: rootRequired, Run: func(c Command, root string, args []string) int {
+	{Name: "land", Grammar: usage.WorktreeLand, Root: rootRequired, Bound: boundPending, Run: func(c Command, root string, args []string) int {
 		return worktree.LandCommand(root, worktree.Home(), c.Executable, args, c.Stdout, c.Stderr)
 	}},
 }
