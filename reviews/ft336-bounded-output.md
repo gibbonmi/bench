@@ -918,11 +918,33 @@ The first landing refused, because `main` moved 13 commits past the landing base
 
 The orchestrator ran the five final checks again at `39cc8410`, and each check passed. The new source digest is `ebd842f67242af8d821fa0870c60679ab53de583`, and the completion now binds it. Each planned acceptance row stays covered. BO73 still holds, because the merged `main` changes no path under `specs/session-context-queries`.
 
+## BO-C7 destination merge and round 3
+
+The second landing refused, because no chunk review covered the merge `39cc8410`. So chunk BO-C7 extends to cover the merge. The ticket 10 author, `claude:bench-writer/bo-t10-repair-c1`, ran its two checks again at the merged source, and each check passed.
+
+The review preflight refused its charge at the merged tip, because the merge brings `main` paths that no ownership fence holds. Those paths landed on `main` through their own gates, so a fence expansion is wrong. Round 3 therefore ran without the evidence charge, and each axis read only the merge delta `c71d031f..39cc8410`.
+
+Standards found 0 findings: the merge is automatic, and the one shared Go file gets separate anchor rows from each side. Coverage found 0 findings, and its probe of the red-row filter bit. Spec found one blocking finding, R69. The `main` test `internal/preflight/kit_pin_new_test.go` expects green preflight rows, and ticket 5 prints only a summary line and the red rows. The package run confirmed two red cases.
+
+## BO-C7 merge repair and round 4
+
+The plan commit `260fbb1b` adds `internal/preflight/kit_pin_new_test.go` to the fence of ticket 5 and to the ownership fences. It also records the repair session `claude:bench-writer/bo-t5-repair-c3` with the trigger `user-directed`. A `bench learning` entry records the expansion.
+
+The repair session ran on opus at low effort and committed `95fc2ebe` on a lane pass. The two green cases now expect no kit-pin row, and they read the verdict through the summary helpers of ticket 5. The author's swap in the kit-pin check bit. The coordinator's omission of the summary count also bit, and each restore reads `yes`. The full gate was green at `95fc2ebe`, and the ticket 10 author ran its two checks again there.
+
+Round 4 read the delta `39cc8410..95fc2ebe`, and each axis found 0 findings. Spec confirmed R69. Coverage ran three probes that bit, and each restore reads `yes`. Spec saw one red run of the kit-pin test with a `not-applicable` verdict. At that time, a Coverage probe in the same tree swapped the green return to `not-applicable`. So the red run is a probe overlap, not a flake.
+
+The merge after the last chunk and the review round without an evidence charge stay open to reviewer veto.
+
+## Final reconciliation at the repair tip
+
+The orchestrator ran the five final checks again at `95fc2ebe`, and each check passed. The completion now binds the source digest `4e352fd26b305ba459cbadf220e3ff4aacdf4f4b`. Each planned acceptance row stays covered, and BO73 still holds. The landing base is now `202d04b0`, the `main` tip that the source merged.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ft336-bounded-output/spec.md",
-  "plan_digest": "sha256:f9fcb549650e3acef2c0d3e29ff212e83df2eac6c692752265798a480223ce67",
+  "plan_digest": "sha256:cedeeab19b700c07851086acb166caa108738ccc90b915582ddd9c49b6fc999a",
   "implementation_session": "",
   "chunks": [
     {
@@ -3393,9 +3415,9 @@ The orchestrator ran the five final checks again at `39cc8410`, and each check p
     {
       "id": "BO-C7",
       "base": "c0fb9c3ccb95b7c8674a94537f3591170e85a5cd",
-      "tip": "c71d031f5495b12d27f5418213f153a833f4c0ad",
-      "plan_digest": "sha256:f9fcb549650e3acef2c0d3e29ff212e83df2eac6c692752265798a480223ce67",
-      "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+      "tip": "95fc2ebee0bd5d6759c2128ef035a1cc940fcf90",
+      "plan_digest": "sha256:cedeeab19b700c07851086acb166caa108738ccc90b915582ddd9c49b6fc999a",
+      "source_digest": "4e352fd26b305ba459cbadf220e3ff4aacdf4f4b",
       "acceptance_rows": [
         "BO63",
         "BO64",
@@ -3473,6 +3495,78 @@ The orchestrator ran the five final checks again at `39cc8410`, and each check p
             "ref": "claude:agent/bo-t10-repair-c1/10-system@c71d031f",
             "digest": "sha256:7a00091a7a5ffd5fd53356d640c38b7e43560a95dc381fbce455f60a74cf1d95",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,41503\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "10-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c7-10-owner-r3",
+          "performer": "claude:bench-writer/bo-t10-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t10-repair-c1/10-owner@39cc8410",
+            "digest": "sha256:5eae67477f6480d4d9ba27eb0610d82e630f5f383ed8c48b3ed5bd8b16bae10a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,251\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "10-owner",
+          "command": "bench test --package ./internal/responsebound",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c7-10-system-r3",
+          "performer": "claude:bench-writer/bo-t10-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t10-repair-c1/10-system@39cc8410",
+            "digest": "sha256:2669d1f2dae0b7159f91519d0a3d2333d6b87c973f2aeb6120c67bb193ba7a43",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,41950\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "10-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c7-10-owner-r4",
+          "performer": "claude:bench-writer/bo-t10-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "4e352fd26b305ba459cbadf220e3ff4aacdf4f4b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t10-repair-c1/10-owner@95fc2ebe",
+            "digest": "sha256:75e0ba09de8260ba747fc737e4affda7afbb1487fcc05d51cdb9e87557e08947",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,244\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "10-owner",
+          "command": "bench test --package ./internal/responsebound",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c7-10-system-r4",
+          "performer": "claude:bench-writer/bo-t10-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "4e352fd26b305ba459cbadf220e3ff4aacdf4f4b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t10-repair-c1/10-system@95fc2ebe",
+            "digest": "sha256:53645d0aad10b42b981690354208006dcfe9cd73678e5c1475233ae5b5f25fc1",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,53354\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "10-system",
           "command": "bench test --check system",
@@ -3618,13 +3712,147 @@ The orchestrator ran the five final checks again at `39cc8410`, and each check p
           "supersedes": [
             "bo-c7-r1-coverage"
           ]
+        },
+        {
+          "id": "bo-c7-r3-standards",
+          "performer": "claude:bench-reviewer/bo-c7-standards-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c7-standards-3@39cc8410",
+            "digest": "sha256:e69d3f523d29fd8828440a60760382ea73af1d235fc9de643e65ddabb93a3dd1",
+            "excerpt": "Standards BO-C7 round 3: 0 findings; clean automatic merge (empty remerge-diff); the only shared Go file, registry_retained_workflow.go, gets separate anchor rows from each side; no main-side addition restates a bounds value or a helper spelling; tree clean."
+          },
+          "axis": "Standards",
+          "base": "c0fb9c3ccb95b7c8674a94537f3591170e85a5cd",
+          "tip": "39cc84109c40ff1931605aaf1962b8a73057e84e",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c7-r2-standards"
+          ]
+        },
+        {
+          "id": "bo-c7-r3-spec",
+          "performer": "claude:bench-reviewer/bo-c7-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c7-spec-3@39cc8410",
+            "digest": "sha256:87cf65e898ddcca825582ace6ef4079b1e84eb49bd3e4c5e6b75c92616da1334",
+            "excerpt": "Spec BO-C7 round 3: 1 blocking (the `main` test `kit_pin_new_test.go:21-22` expects green preflight rows that FT336's summary render drops; auto-fix by expanding ticket 5's `Writes:`), BO64/BO73/bounded-owner/guidance clean."
+          },
+          "axis": "Spec",
+          "base": "c0fb9c3ccb95b7c8674a94537f3591170e85a5cd",
+          "tip": "39cc84109c40ff1931605aaf1962b8a73057e84e",
+          "finding_ids": [
+            "R69"
+          ],
+          "supersedes": [
+            "bo-c7-r2-spec"
+          ]
+        },
+        {
+          "id": "bo-c7-r3-coverage",
+          "performer": "claude:bench-reviewer/bo-c7-coverage-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c7-coverage-3@39cc8410",
+            "digest": "sha256:a858e190b7b2c30b21326bcf81ec31d997e5cdca649534ffff354f6525ebfebe",
+            "excerpt": "Coverage BO-C7 round 3: 0 findings; the merge of main 202d04b0 touches FT336 only at disjoint hunks of registry_retained_workflow.go, the renderChecks red-row filter probe bit (3 red, restored yes), and gitguard/probe tests stay outside the cmd/bench bound."
+          },
+          "axis": "Coverage",
+          "base": "c0fb9c3ccb95b7c8674a94537f3591170e85a5cd",
+          "tip": "39cc84109c40ff1931605aaf1962b8a73057e84e",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c7-r2-coverage"
+          ]
+        },
+        {
+          "id": "bo-c7-r4-standards",
+          "performer": "claude:bench-reviewer/bo-c7-standards-4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4e352fd26b305ba459cbadf220e3ff4aacdf4f4b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c7-standards-4@95fc2ebe",
+            "digest": "sha256:344e2ecd4c475a713f2160cdb122fa2f2fb80ab77ff82d6992470814460ec30c",
+            "excerpt": "Standards BO-C7 round 4: 0 findings; the green cases read kit-pin through renderedVerdicts/requireVerdict and hold no render-layout literal; clean tree."
+          },
+          "axis": "Standards",
+          "base": "c0fb9c3ccb95b7c8674a94537f3591170e85a5cd",
+          "tip": "95fc2ebee0bd5d6759c2128ef035a1cc940fcf90",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c7-r3-standards"
+          ]
+        },
+        {
+          "id": "bo-c7-r4-spec",
+          "performer": "claude:bench-reviewer/bo-c7-spec-4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4e352fd26b305ba459cbadf220e3ff4aacdf4f4b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c7-spec-4@95fc2ebe",
+            "digest": "sha256:169ea3d4787f4ecce20241a1045163d6c576e4d7cfb1efcdb662447acb301547",
+            "excerpt": "Spec BO-C7 round 4: 0 blocking; R69 confirmed resolved; fence expansion in scope; one unexplained kit-pin flake noted, non-blocking."
+          },
+          "axis": "Spec",
+          "base": "c0fb9c3ccb95b7c8674a94537f3591170e85a5cd",
+          "tip": "95fc2ebee0bd5d6759c2128ef035a1cc940fcf90",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c7-r3-spec"
+          ]
+        },
+        {
+          "id": "bo-c7-r4-coverage",
+          "performer": "claude:bench-reviewer/bo-c7-coverage-4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4e352fd26b305ba459cbadf220e3ff4aacdf4f4b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c7-coverage-4@95fc2ebe",
+            "digest": "sha256:f302804d506fe31a6d83ebe6f142b3246edc65d3ae3790b6abfe8f9d42dadf82",
+            "excerpt": "Coverage BO-C7 round 4: 0 findings; 3 probes (decision.go green-to-na swap, system_tag.go detection-return swap, closure.go landed-guard omit) all bit and all restored; green and red kit-pin cases confirmed."
+          },
+          "axis": "Coverage",
+          "base": "c0fb9c3ccb95b7c8674a94537f3591170e85a5cd",
+          "tip": "95fc2ebee0bd5d6759c2128ef035a1cc940fcf90",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c7-r3-coverage"
+          ]
         }
       ]
     }
   ],
   "completion": {
     "state": "completed",
-    "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
+    "source_digest": "4e352fd26b305ba459cbadf220e3ff4aacdf4f4b",
     "performer": "claude:session_01WqUNrAjWfLrnhUGN5EzP14",
     "reconciliation": {
       "BO1": "covered",
@@ -3711,11 +3939,11 @@ The orchestrator ran the five final checks again at `39cc8410`, and each check p
         "role": "integration-verification",
         "model": "opus",
         "effort": "high",
-        "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
+        "source_digest": "4e352fd26b305ba459cbadf220e3ff4aacdf4f4b",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session/final2/coverage@39cc8410",
+          "ref": "claude:session/final3/coverage@95fc2ebe",
           "digest": "sha256:9adb654ae9b96fdcd74f1b97c4dbeb2b5aec973661bc691260361864bd8c0670",
           "excerpt": "ok: coverage map valid — 76 row(s)\nuncited: 67 row(s) with no seam-cell citation — BO1, BO2, BO3, BO4, BO5, BO6, BO7, BO8, BO9, BO10, BO11, BO12, BO13, BO14, BO15, BO16, BO17, BO18, BO19, BO21, BO22, BO23, BO24, BO25, BO26, BO27, BO28, BO29, BO30, BO69, BO70, BO72, BO71, BO31, BO32, BO36, BO37, BO38, BO39, BO41, BO42, BO43, BO44, BO45, BO46, BO47, BO48, BO49, BO50, BO51, BO52, BO53, BO54, BO55, BO57, BO58, BO59, BO60, BO61, BO62, BO63, BO75, BO64, BO65, BO74, BO76, BO67"
         },
@@ -3729,13 +3957,13 @@ The orchestrator ran the five final checks again at `39cc8410`, and each check p
         "role": "integration-verification",
         "model": "opus",
         "effort": "high",
-        "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
+        "source_digest": "4e352fd26b305ba459cbadf220e3ff4aacdf4f4b",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session/final2/owner@39cc8410",
-          "digest": "sha256:2ffdb9bd37438e9fbd7ddfe744764e499ea09fd7c64dcad08871533acf8d0d06",
-          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,240\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          "ref": "claude:session/final3/owner@95fc2ebe",
+          "digest": "sha256:ce67b9afcedad50f27a32a92cae0b615d9e7e26ecf83ef564eb1798a71934a67",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,218\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
         },
         "requirement": "owner",
         "command": "bench test --package ./internal/responsebound",
@@ -3747,13 +3975,13 @@ The orchestrator ran the five final checks again at `39cc8410`, and each check p
         "role": "integration-verification",
         "model": "opus",
         "effort": "high",
-        "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
+        "source_digest": "4e352fd26b305ba459cbadf220e3ff4aacdf4f4b",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session/final2/cmd@39cc8410",
-          "digest": "sha256:59485f90fd8b241b653f042e5d7a15593394b7964923441c8dadffb29810bb04",
-          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,10643\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          "ref": "claude:session/final3/cmd@95fc2ebe",
+          "digest": "sha256:befd672515b6c619c4e5c3a7d9f46197521841c6a6ce4010fc854bf9f570891e",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,9126\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
         },
         "requirement": "cmd",
         "command": "bench test --package ./cmd/bench",
@@ -3765,13 +3993,13 @@ The orchestrator ran the five final checks again at `39cc8410`, and each check p
         "role": "integration-verification",
         "model": "opus",
         "effort": "high",
-        "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
+        "source_digest": "4e352fd26b305ba459cbadf220e3ff4aacdf4f4b",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session/final2/worktree@39cc8410",
-          "digest": "sha256:23a80db78530999b1f6d9ea35f8c935e38a40749cf897c23cf2d73db96d63c2a",
-          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,49081\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket2111277742/001/.bench-home/worktrees/001-2406857141/e416275fc2c0790b29a74fd1a98a34f0-aa27c4b88a84151f814bb348e77f0e53: bind:… (257 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket3535090186/001/.bench-home/worktrees/001-264068969/e194cdcdfa3c34a1c0bfa2afd5ad7058-20103ac9e79dd5a28111374e78ec4711… (269 bytes)\""
+          "ref": "claude:session/final3/worktree@95fc2ebe",
+          "digest": "sha256:189c8eb5e645e885bd9645c3d1cc5bf26f9642f473923fbf45ddcd566ecb7384",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,54196\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:99: unix sockets unavailable: listen unix /tmp/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket2581645740/001/.bench-home/worktrees/001-224595397/3485897d7ed01e1f8b1e5a04ba0f11da-1e4532dc64f264925aa1e31f4… (271 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket1289239146/001/.bench-home/worktrees/001-1113711064/45e4d8db9848d923b5692521917d0edd-580d5bb72ce5c91cbbdfefe3ce64ba3… (270 bytes)\""
         },
         "requirement": "worktree",
         "command": "bench test --package ./internal/worktree",
@@ -3783,13 +4011,13 @@ The orchestrator ran the five final checks again at `39cc8410`, and each check p
         "role": "integration-verification",
         "model": "opus",
         "effort": "high",
-        "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
+        "source_digest": "4e352fd26b305ba459cbadf220e3ff4aacdf4f4b",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session/final2/system@39cc8410",
-          "digest": "sha256:5ceb8528ea7b47bcad5393b03569454d80b2c641b98d75246d300651e59058c5",
-          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,41404\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          "ref": "claude:session/final3/system@95fc2ebe",
+          "digest": "sha256:8b736c09cf5160683121fd9bc439ef2771e3d280b6256a1f7e214d4cfc3480fc",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,42997\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
         },
         "requirement": "system",
         "command": "bench test --check system",
@@ -4422,6 +4650,33 @@ The orchestrator ran the five final checks again at `39cc8410`, and each check p
     {
       "from": "sha256:57349fe6cbe7d41fcbf6446c1d19489f64e8958670398eafeb73ad13afa5136d",
       "to": "sha256:f9fcb549650e3acef2c0d3e29ff212e83df2eac6c692752265798a480223ce67",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:f9fcb549650e3acef2c0d3e29ff212e83df2eac6c692752265798a480223ce67",
+      "to": "sha256:cedeeab19b700c07851086acb166caa108738ccc90b915582ddd9c49b6fc999a",
       "chunk_ids": {
         "BO-C1": [
           "BO-C1"
