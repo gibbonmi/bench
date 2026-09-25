@@ -14,8 +14,8 @@ Third, the red-first rule required a red before the edit, but the build accepted
 a probe.
 
 The delegation discipline states that a charge asks for a commit, a sha, or a
-preflight result only on a committed ticket. It also states that a write charge quotes the
-fixture-harness clause and names the fence's fixture helpers. The charge section of the skill
+preflight result only on a committed ticket. It also states that a write charge names the
+fence's fixture helpers and quotes any fixture-harness rule of the project. The charge section of the skill
 states that each coverage row is observed red at least once and then green. The log names
 the route of each red, and a TDD seam keeps the red sequence of `craft-tdd`. One anchor row
 pins each new sentence, and one independent test expectation pins each new anchor row.

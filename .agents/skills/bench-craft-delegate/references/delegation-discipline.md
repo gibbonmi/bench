@@ -73,7 +73,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   focused verification list.
 - A charge that adds an anchor names `bench test --check <owning-check>` as
   its probe.
-- A write charge quotes the fixture-harness clause of the one-source rule in `AGENTS.md` and names the fence's existing fixture helpers to extend.
+- A write charge names the fence's existing fixture helpers to extend, and it quotes any one-source rule for fixture harnesses that the project's instructions state.
 - A grammar charge enumerates two inventories in its fence:
   the shared fixture owners and the exact-record assertion families.
 - A charge that adds a live-tree test includes in its fence the live-tree
