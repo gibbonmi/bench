@@ -22,6 +22,7 @@ var ticketSlicingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Before the map locks", Needle: "Each input constructor satisfies the new invariant, or its file joins a ticket `Writes:` line.", Diagnostic: "map discipline: each input constructor satisfies the invariant or joins Writes"},
 	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Before the map locks", Needle: "A spec that adds or removes a preflight row names every file that asserts the row count or the row list.", Diagnostic: "map discipline: a preflight row change names every row-count reader"},
 	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Before the map locks", Needle: "A spec that changes the output of a fixture builder names every test that asserts or rewrites that output.", Diagnostic: "map discipline: a fixture builder change names every output reader"},
+	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Per row", Needle: "The seam cell cites that function as `` `<path>_test.go` (`<Name>`) ``, so `bench coverage --check` and build preflight resolve the name against the tree.", Diagnostic: "map discipline: an existing test seam cites its function in the resolvable form"},
 }
 
 // slicingChecks is the craft-tickets reference that states the enforced Writes: rules
