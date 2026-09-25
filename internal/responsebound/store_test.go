@@ -96,28 +96,35 @@ func TestOwnerCreateFailureKeepsOutput(t *testing.T) {
 	})
 }
 
-// BO18: on the create-failure route, the spill-failed line starts a new stdout line. The
-// separator reads the stdout line state alone: a stderr line cannot hide an open stdout
-// line, and an open stderr line cannot add an empty stdout line.
+// BO18: on the create-failure route, the spill-failed line is whole in the stdout view,
+// the stderr view, and the combined view. Each stream whose own last line is open takes
+// one newline before the line, so neither stream can hide or merge the other's line.
 func TestOwnerCreateFailureSeparatesStdoutLine(t *testing.T) {
 	privateHome(t)
 	head := strings.Join(numbered(1, 10), "")
+	line := "spill-failed{reason=" + errInjected.Error() + "}\n"
 	for _, row := range []struct {
-		name           string
-		writes         []tagged
-		stdout, stderr string
+		name                     string
+		writes                   []tagged
+		stdout, stderr, combined string
 	}{
-		{"open stdout", append(stdoutLines(head, "partial"), tagged{stderr: true, data: "err line\n"}), head + "partial\n", "err line\n"},
-		{"open stderr", append(stdoutLines(head, "line 11\n"), tagged{stderr: true, data: "err partial"}), head + "line 11\n", "err partial"},
+		{"open stdout", append(stdoutLines(head, "partial"), tagged{stderr: true, data: "err line\n"}), head + "partial\n", "err line\n", head + "partialerr line\n\n"},
+		{"open stderr", append(stdoutLines(head, "line 11\n"), tagged{stderr: true, data: "err partial"}), head + "line 11\n", "err partial\n", head + "line 11\nerr partial\n"},
+		{"both open", append(stdoutLines(head, "partial"), tagged{stderr: true, data: "err partial"}), head + "partial\n", "err partial\n", head + "partialerr partial\n\n"},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			var stdout, stderr bytes.Buffer
 			owner := New(&stdout, &stderr, outsideRepository)
 			owner.create = func(string) (io.WriteCloser, error) { return nil, errInjected }
 			respondWith(t, owner, &stdout, row.writes)
-			want := row.stdout + "spill-failed{reason=" + errInjected.Error() + "}\n"
-			if stdout.String() != want || stderr.String() != row.stderr {
-				t.Fatalf("streams = (%q, %q), want (%q, %q)", stdout.String(), stderr.String(), want, row.stderr)
+			if stdout.String() != row.stdout+line || stderr.String() != row.stderr {
+				t.Fatalf("streams = (%q, %q), want (%q, %q)", stdout.String(), stderr.String(), row.stdout+line, row.stderr)
+			}
+			var sink bytes.Buffer
+			owner = New(&sink, &sink, outsideRepository)
+			owner.create = func(string) (io.WriteCloser, error) { return nil, errInjected }
+			if got := respondWith(t, owner, &sink, row.writes); got != row.combined+line {
+				t.Fatalf("combined response = %q, want %q", got, row.combined+line)
 			}
 		})
 	}

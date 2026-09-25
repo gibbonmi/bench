@@ -52,10 +52,11 @@ type Owner struct {
 	phase    phase
 	retained []streamWrite
 	lines    lineTracker
-	// stdoutOpen reports that the last stdout byte is not a newline. The create-failure
-	// line reads it, because stderr writes change the response's line state but not
-	// stdout's.
+	// stdoutOpen and stderrOpen report that the stream's last byte is not a newline. The
+	// create-failure route closes each open stream's line before its stdout line, so the
+	// line is whole in each stream and in a sink that takes both.
 	stdoutOpen bool
+	stderrOpen bool
 	bytes      int64
 	file       io.WriteCloser
 	path       string
@@ -102,8 +103,13 @@ func (o *Owner) write(stdout bool, p []byte) {
 		_, _ = stream.Write(p)
 		return
 	}
-	if stdout && len(p) > 0 {
-		o.stdoutOpen = p[len(p)-1] != '\n'
+	if len(p) > 0 {
+		open := p[len(p)-1] != '\n'
+		if stdout {
+			o.stdoutOpen = open
+		} else {
+			o.stderrOpen = open
+		}
 	}
 	o.bytes += int64(len(p))
 	o.lines.add(p)
@@ -177,6 +183,9 @@ func (o *Owner) Finish() {
 		_ = o.file.Close()
 		o.printProjection(fmt.Sprintf("spill-failed{path=%s,written_bytes=%d,reason=%s}\n", o.path, o.written, o.reason), o.refused)
 	case passing:
+		if o.stderrOpen {
+			_, _ = io.WriteString(o.stderr, "\n")
+		}
 		separator := ""
 		if o.stdoutOpen {
 			separator = "\n"
