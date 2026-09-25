@@ -399,6 +399,7 @@ The shell CLI hostile-input profile applies to the owner and to `--to`. The walk
 - `internal/preflight/command_bootstrap_test.go`
 - `internal/preflight/explicit_base_test.go`
 - `internal/preflight/evidencecmd/`
+- `internal/preflight/evidencecmd/operations.go`
 - `internal/chargeevidence/schema.go`
 - `internal/chargeevidence/read.go`
 - `internal/chargeevidence/export.go`
