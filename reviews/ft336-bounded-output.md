@@ -88,19 +88,57 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 1, whose 
 | R5 | 1 | Test a symlink and a regular file at each store level. |
 | R6 | 1 | Add owner tests for a split line and for one multi-line write, with the full spill line. |
 
+## BO-C1 ticket 1 repair evidence, cycle 1
+
+The session `claude:bench-writer/bo-t1-repair-c1` ran on opus at low effort, with a cap of 2 attempts. It started at `a01afaea` and committed `33c1e820`. The orchestrator closed R3 at `a01afaea`: the BO31 seam cell now names `TestExecGrammarRefusalKeepsUsageLine` and the two existing exec grammar tests.
+
+- R1: `commandDefinition` carries `Leaves` and `LeafUsage`, and its `run` method dispatches the same table that the bound check reads. `worktreeCommand` is gone.
+- R2: the store names now come from their constants. The values 10, 4, and 5 stay independent, because a derived expectation moves with its constant and stays green.
+- R4: `Owner.stdoutOpen` tracks the stdout line state for the create-failure separator. `TestOwnerCreateFailureSeparatesStdoutLine` went red at `a01afaea` and green after the fix.
+- R5: the symlink and regular-file rows run at `responses`, `responses/none`, and `responses/none/primary`. A regular file at a directory level fails the next create whatever the directory check does, so those rows bite only a route mutation.
+- R6: `TestOwnerJoinsLineSplitAcrossWrites` and `TestOwnerSplitsOneWriteIntoLines` compare the whole response and the full spill line.
+
+The three reds for the independent R2 values are these. Each probe restored its file.
+
+| Mutation | Red |
+|---|---|
+| swap: `ResponseLines = 10` to `11` in `internal/bounds/bounds.go` | TestOwnerProjectsHeadAndTail and TestDispatcherBoundsPublicResponse, through `bench probe`. The orchestrator ran the same swap against `bench test --check system` with a copy-aside restore: five system rows went red, and the tree was clean after the restore. |
+| swap: `tailLines = 5` to `4` in `internal/responsebound/owner.go` | TestOwnerProjectsHeadAndTail and TestDispatcherBoundsPublicResponse |
+| swap: the head derivation `- tailLines - 1` to `- tailLines - 2` | TestOwnerProjectsHeadAndTail |
+
+The repair's other probes bit and restored. They covered R4 in both directions, both R6 mutations in `lines.go`, and three R5 mutations. The repair session ran the three ticket checks at `33c1e820`, and each check passed.
+
+## BO-C1 chunk review, round 2
+
+Round 2 confirms cycle 1 on the delta from `463b4908` to `33c1e820`. The frozen pair is base `80780c046df2796b635d0c139dae3b505d2891f1` and tip `33c1e82057f1f1a573a5fb2817021dda104a81b5`. The shared evidence is `sha256:2042f89a2557d915eb682a95809c97a43eaad65b112daf5ad628476970cff71f`. Each axis ran in a new `bench-reviewer` session on opus at medium effort.
+
+The Standards axis confirmed R1 and R2 and found 0 new findings. It asked for the R2 red record above, which is an evidence-only correction. The Coverage axis confirmed R4, R5, and R6 with five independent probes that bit, and found 0 new findings. The Spec axis confirmed R3 and found 1 new finding.
+
+- `internal/responsebound/owner.go:181` decides the create-failure separator from the stdout line state alone. Stdout ends with a line, then stderr writes `err partial`. The combined response then reads `err partialspill-failed{reason=...}`, but the spec says "It then prints one line". Target R7. Confidence 6.
+
+The axis proposed `ask-user` for R7, because a fix could change the stream of the line. The orchestrator routes it as `auto-fix`. A newline goes to each stream whose own last line is open, and the `spill-failed` line stays on stdout. This decision is open to reviewer veto.
+
+Advice, with no finding ID:
+
+- A family that sets `Leaves` without `LeafUsage` panics at `cmd/bench/command_registry.go:223`, and a family that sets both `Leaves` and `Run` loses its `Run`. No entry does either today.
+- The names `Run` and `run` on `commandDefinition` differ only in case.
+- The comment at `cmd/bench/response_bound_test.go:90-91` says only the owner package may read the line value. The spec says no other package states it.
+
+R7 goes to cycle 2, the last repair cycle of chunk BO-C1, in a fresh repair session for ticket 1.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ft336-bounded-output/spec.md",
-  "plan_digest": "sha256:0d97c1e30b257bb8ff01f4de56e407176319611d19d78351521263313fc176c4",
+  "plan_digest": "sha256:a084c67ebcb68079d54fdce0940724d714541169252d3a9d3a341c118da3f3c0",
   "implementation_session": "",
   "chunks": [
     {
       "id": "BO-C1",
       "base": "80780c046df2796b635d0c139dae3b505d2891f1",
-      "tip": "463b49086757cde37b79d23812289e4df318250e",
-      "plan_digest": "sha256:0d97c1e30b257bb8ff01f4de56e407176319611d19d78351521263313fc176c4",
-      "source_digest": "9d651c1386edaf2c287c2bca4c55d1af34bd457c",
+      "tip": "33c1e82057f1f1a573a5fb2817021dda104a81b5",
+      "plan_digest": "sha256:a084c67ebcb68079d54fdce0940724d714541169252d3a9d3a341c118da3f3c0",
+      "source_digest": "ced29d674e12dda4bcb70818803b6c71453e6ce5",
       "acceptance_rows": [
         "BO1",
         "BO2",
@@ -181,6 +219,60 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 1, whose 
           "requirement": "1-system",
           "command": "bench test --check system",
           "exit_code": 0
+        },
+        {
+          "id": "bo-c1-1-owner-r2",
+          "performer": "claude:bench-writer/bo-t1-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "ced29d674e12dda4bcb70818803b6c71453e6ce5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t1-repair-c1-20260925/1-owner@33c1e820",
+            "digest": "sha256:7480c8dfb0821726a5aaf1092d4aceb1d927c6f199d74443be20caf83ee4394a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,12\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "1-owner",
+          "command": "bench test --package ./internal/responsebound",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c1-1-cmd-r2",
+          "performer": "claude:bench-writer/bo-t1-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "ced29d674e12dda4bcb70818803b6c71453e6ce5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t1-repair-c1-20260925/1-cmd@33c1e820",
+            "digest": "sha256:f02298aab76e5502b0190a463ad117427ed108deb1c1d7b61f7949aafd3e7e6b",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,7408\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "1-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c1-1-system-r2",
+          "performer": "claude:bench-writer/bo-t1-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "ced29d674e12dda4bcb70818803b6c71453e6ce5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t1-repair-c1-20260925/1-system@33c1e820",
+            "digest": "sha256:ee72e782b0526d8c4f367ddd721fbc3c4f7a49bfc8da0f1c72a4fcd28d54007d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,40473\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "1-system",
+          "command": "bench test --check system",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -252,12 +344,109 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 1, whose 
             "R6"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bo-c1-r2-standards",
+          "performer": "claude:bench-reviewer/bo-c1-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ced29d674e12dda4bcb70818803b6c71453e6ce5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c1-standards-2@33c1e820",
+            "digest": "sha256:801d750222add41509ab13da1d1474969e3b55bec3a3512ffdf970abecfcde66",
+            "excerpt": "Standards confirming: 0 findings. R1 and R2 confirmed; the R2 red record belongs in the round 2 review record."
+          },
+          "axis": "Standards",
+          "base": "80780c046df2796b635d0c139dae3b505d2891f1",
+          "tip": "33c1e82057f1f1a573a5fb2817021dda104a81b5",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c1-r1-standards"
+          ]
+        },
+        {
+          "id": "bo-c1-r2-spec",
+          "performer": "claude:bench-reviewer/bo-c1-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ced29d674e12dda4bcb70818803b6c71453e6ce5",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c1-spec-2@33c1e820",
+            "digest": "sha256:66e49853436aaa0b2361ad366032fe9e3e7da07f7c878b36230d29f8559f8f5f",
+            "excerpt": "Spec confirming: 1 finding. R3 confirmed. Worst: the create-failure separator reads only the stdout line state, so an open stderr line merges with the spill-failed line in the combined response."
+          },
+          "axis": "Spec",
+          "base": "80780c046df2796b635d0c139dae3b505d2891f1",
+          "tip": "33c1e82057f1f1a573a5fb2817021dda104a81b5",
+          "finding_ids": [
+            "R7"
+          ],
+          "supersedes": [
+            "bo-c1-r1-spec"
+          ]
+        },
+        {
+          "id": "bo-c1-r2-coverage",
+          "performer": "claude:bench-reviewer/bo-c1-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ced29d674e12dda4bcb70818803b6c71453e6ce5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c1-coverage-2@33c1e820",
+            "digest": "sha256:704203c4e9e8d39eee957fe90fa1785eef414da4f87e1a3c645fb11a0898f17f",
+            "excerpt": "Coverage confirming: 0 findings. R4, R5, and R6 confirmed; five independent probes bit and restored."
+          },
+          "axis": "Coverage",
+          "base": "80780c046df2796b635d0c139dae3b505d2891f1",
+          "tip": "33c1e82057f1f1a573a5fb2817021dda104a81b5",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c1-r1-coverage"
+          ]
         }
       ]
     }
   ],
   "completion": {
     "state": "pending"
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:0d97c1e30b257bb8ff01f4de56e407176319611d19d78351521263313fc176c4",
+      "to": "sha256:a084c67ebcb68079d54fdce0940724d714541169252d3a9d3a341c118da3f3c0",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    }
+  ]
 }
 ```
