@@ -86,7 +86,25 @@ func Check(root, executable string) error {
 }
 
 func refusal(repairRoot, executable string, cause error) error {
-	return fmt.Errorf("bench binary %q is untrusted: %v; rebuild with %s", executable, cause, RebuildAction(repairRoot))
+	return &Refusal{Executable: executable, RepairRoot: repairRoot, Cause: cause}
+}
+
+// Refusal is the verifier's answer for an untrusted executable. Error renders the whole
+// sentence with the one rebuild command. Reason renders the same sentence without that
+// command, for a caller whose root takes another rebuild route: a pool worktree, where
+// the hooks refuse the cd that RebuildAction names.
+type Refusal struct {
+	Executable, RepairRoot string
+	Cause                  error
+}
+
+// Reason names the untrusted executable and why, without a rebuild command.
+func (r *Refusal) Reason() string {
+	return fmt.Sprintf("bench binary %q is untrusted: %v", r.Executable, r.Cause)
+}
+
+func (r *Refusal) Error() string {
+	return r.Reason() + "; rebuild with " + RebuildAction(r.RepairRoot)
 }
 
 // PublishedExecutable returns the path root's build script publishes the Bench
