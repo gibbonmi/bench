@@ -1,8 +1,9 @@
 // Package responsebound owns the bound on one public Bench response. The owner takes the
 // response's stdout and stderr writes in arrival order. A response within the line value
-// prints unchanged. A longer response prints its head, one spill line, and its tail, and a
-// private spill file holds the complete output. The owner states the projection once, so
-// the dispatcher and `bench worktree exec` cannot drift apart.
+// and the byte value prints unchanged. A larger response prints its head, one spill line,
+// and its tail, each line cut to lineCut bytes, and a private spill file holds the
+// complete output. The owner states the projection once, so the dispatcher and
+// `bench worktree exec` cannot drift apart.
 package responsebound
 
 import (
@@ -18,6 +19,10 @@ import (
 const tailLines = 5
 
 const headLines = bounds.ResponseLines - tailLines - 1
+
+// lineCut is the most content bytes one printed line keeps, so the printed lines of a
+// projection share the byte value evenly.
+const lineCut = bounds.ResponseBytes / bounds.ResponseLines
 
 // phase is where one response stands between its first write and its finish.
 type phase uint8
@@ -116,17 +121,26 @@ func (o *Owner) write(stdout bool, p []byte) {
 	}
 	o.bytes += int64(len(p))
 	o.lines.add(p)
-	switch o.phase {
-	case retaining:
-		o.retained = append(o.retained, streamWrite{stream: stream, data: append([]byte(nil), p...)})
-		if o.lines.count > bounds.ResponseLines {
-			o.startSpill()
+	if o.phase == retaining {
+		// The write that passes the bound goes straight to the spill, so the owner never
+		// copies a long write into memory.
+		if !o.overBound() {
+			o.retained = append(o.retained, streamWrite{stream: stream, data: append([]byte(nil), p...)})
+			return
 		}
+		o.startSpill()
+	}
+	switch o.phase {
 	case spilling, unspilled:
 		o.spill(p)
 	case passing:
 		_, _ = stream.Write(p)
 	}
+}
+
+// overBound reports a response past the line value or the byte value.
+func (o *Owner) overBound() bool {
+	return o.lines.count > bounds.ResponseLines || o.bytes > bounds.ResponseBytes
 }
 
 // startSpill moves the retained writes into a new spill file. A file that cannot be
@@ -181,7 +195,7 @@ func (o *Owner) Finish() {
 	case spilling:
 		_ = o.file.Close()
 		o.printProjection(fmt.Sprintf("spilled{lines=%d,bytes=%d,omitted_lines=%d,cut_lines=%d,path=%s}\n",
-			o.lines.count, o.bytes, o.lines.omitted(), 0, o.path), o.lines.tail())
+			o.lines.count, o.bytes, o.lines.omitted(), o.lines.cutLines(), o.path), o.lines.tailBytes())
 	case unspilled:
 		_ = o.file.Close()
 		o.printProjection(fmt.Sprintf("spill-failed{path=%s,written_bytes=%d,reason=%s}\n", o.path, o.written, o.reason), o.refused)
@@ -199,9 +213,7 @@ func (o *Owner) Finish() {
 }
 
 func (o *Owner) printProjection(line string, rest []byte) {
-	for _, head := range o.lines.head {
-		_, _ = o.stdout.Write(head)
-	}
+	_, _ = o.stdout.Write(o.lines.headBytes())
 	_, _ = io.WriteString(o.stdout, line)
 	_, _ = o.stdout.Write(rest)
 }

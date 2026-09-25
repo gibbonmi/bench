@@ -182,6 +182,26 @@ func TestExecStreamsLargeChild(t *testing.T) {
 	}
 }
 
+// BO74: a child that prints one 64 MiB line with no newline keeps its exit code. Exec
+// prints the cut line and the spill line within the byte value. The spill file holds the
+// complete line first; the note that exec adds after a failed child follows it.
+func TestExecStreamsLongLine(t *testing.T) {
+	const size = 64 << 20
+	fixture, source := execBoundFixture(t)
+	result := runBoundedExec(t, fixture, source, "", "sh", "-c", fmt.Sprintf("head -c %d /dev/zero | tr '\\000' x; exit 5", size))
+	if result.code != 5 || len(result.stdout) > bounds.ResponseBytes {
+		t.Fatalf("exec = (%d, %d stdout bytes, %q), want the child's exit 5 within %d bytes", result.code, len(result.stdout), result.stderr, bounds.ResponseBytes)
+	}
+	lines := strings.Split(strings.TrimSuffix(result.stdout, "\n"), "\n")
+	if len(lines) != 2 || lines[0] == "" || strings.Trim(lines[0], "x") != "" {
+		t.Fatalf("stdout = %q, want the cut line and the spill line", result.stdout)
+	}
+	spill := readSpillFile(t, responseboundtest.Path(t, lines[1]))
+	if len(spill) < size || strings.Count(spill[:size], "x") != size || strings.HasPrefix(spill[size:], "x") {
+		t.Fatalf("spill file holds %d bytes, want the child's %d-byte line first", len(spill), size)
+	}
+}
+
 // peakResidentBytes samples the resident set of pid until done closes, and answers the
 // largest sample. The wait status is no source here: on Linux, a child that the Go
 // runtime starts reports the parent's peak through its own, so it would grade this test
