@@ -1,31 +1,29 @@
-// Package responseboundtest reads the spill line of an over-bound response for consumer
-// tests. The line has one parser here, so a test in any package reads the owner's fields
-// the same way.
+// Package responseboundtest reads the spill path of an over-bound response for consumer
+// tests. The spill line has one reader here, so a test in any package finds the spill
+// file the same way. The reader checks only the frame of the line and the path; the
+// owner is the one source of the count fields.
 package responseboundtest
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 )
 
 // Spill is the parsed spill line of one over-bound response.
 type Spill struct {
-	Lines, Bytes, OmittedLines, CutLines int64
 	// Path is the absolute path of the spill file. It is the last field, so it can hold a
 	// comma.
 	Path string
 }
 
 const (
-	linePrefix   = "spilled{"
-	pathField    = ",path="
-	lineSuffix   = "}"
-	countsFormat = "lines=%d,bytes=%d,omitted_lines=%d,cut_lines=%d"
+	linePrefix = "spilled{"
+	pathField  = ",path="
+	lineSuffix = "}"
 )
 
-// ParseLine parses one spill line, with or without its newline. A line that is not the
-// complete spill line answers false.
+// ParseLine parses one spill line, with or without its newline. A line without the spill
+// frame or a path answers false.
 func ParseLine(line string) (Spill, bool) {
 	body, ok := strings.CutPrefix(strings.TrimSuffix(line, "\n"), linePrefix)
 	if !ok {
@@ -35,18 +33,11 @@ func ParseLine(line string) (Spill, bool) {
 	if !ok {
 		return Spill{}, false
 	}
-	counts, path, ok := strings.Cut(body, pathField)
+	_, path, ok := strings.Cut(body, pathField)
 	if !ok || path == "" {
 		return Spill{}, false
 	}
-	spill := Spill{Path: path}
-	if _, err := fmt.Sscanf(counts, countsFormat, &spill.Lines, &spill.Bytes, &spill.OmittedLines, &spill.CutLines); err != nil {
-		return Spill{}, false
-	}
-	if fmt.Sprintf(countsFormat, spill.Lines, spill.Bytes, spill.OmittedLines, spill.CutLines) != counts {
-		return Spill{}, false
-	}
-	return spill, true
+	return Spill{Path: path}, true
 }
 
 // Find answers the first spill line of response. A response within the bound has none.
