@@ -579,11 +579,32 @@ Advice, with no finding ID:
 
 R34 goes to cycle 2, the last repair cycle of chunk BO-C4, in a fresh repair session for ticket 7. R35 is the orchestrator's.
 
+## BO-C4 repair evidence, cycle 2
+
+The plan commit `a40b4966` applies R35: the BO-C4 row of the chunk table now names the same five distinct checks as the plan verification. The round 2 record said "six" checks. The plan holds eight entries for five distinct checks, and this sentence corrects that count as evidence only. The commit also adds one fresh repair session for ticket 7.
+
+The session `claude:bench-writer/bo-t7-repair-c2` ran on opus at low effort and committed `59988063`. The source mismatch row now builds its fixture through `craftedDigestArtifact`, and `publishSourceMismatch` is gone (R34). A `bench probe` swap that disables the source check in `sourceBody` still bit that row, and the restore reads `yes`.
+
+The current session of each ticket ran all its BO-C4 checks at `59988063`, and each check passed.
+
+## BO-C4 chunk review, round 3, and close
+
+Round 3 confirms cycle 2 at the final tip. The frozen pair is base `7bd63cc6b6cacf0ff42547a8954287ccee2bbe04` and tip `599880636762d26741bc86aac533fd0d304cf0a4`. The shared evidence is `sha256:77a4e2d4876da053edba230644037d446e953ec41e163f1e3a155a2f4484ea7c`. Each axis ran in a new `bench-reviewer` session on opus at medium effort.
+
+Each axis found 0 findings. Standards confirmed R34 and the recorded R24 reds. Spec confirmed R35 and found the plan valid. Coverage found that the refactored row still changes only the source digest. Chunk BO-C4 used both of its two repair cycles. It used no hardening cycle.
+
+Advice, with no finding ID:
+
+- `craftedDigestArtifact` states the header offset 24, and `chargeevidence.HeaderBytes` owns it.
+- The fixture's doc comment names only its first caller.
+
+R29 and R35 correct non-behavioral spec text, and both stay open to reviewer veto.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ft336-bounded-output/spec.md",
-  "plan_digest": "sha256:75033907021185f5014c45908851c44948fe8b0b13b9b828687401d3d92501b3",
+  "plan_digest": "sha256:b4c74435636a7531f51f9e9227c68baafdbb7bc6bb21af2dcdf642be7c23c5e3",
   "implementation_session": "",
   "chunks": [
     {
@@ -1738,9 +1759,9 @@ R34 goes to cycle 2, the last repair cycle of chunk BO-C4, in a fresh repair ses
     {
       "id": "BO-C4",
       "base": "7bd63cc6b6cacf0ff42547a8954287ccee2bbe04",
-      "tip": "15df7e67bb8cad3149725910239e1228ce712e1b",
-      "plan_digest": "sha256:75033907021185f5014c45908851c44948fe8b0b13b9b828687401d3d92501b3",
-      "source_digest": "e0366e71381a4611fc48d072ba5a9db2dd12547b",
+      "tip": "599880636762d26741bc86aac533fd0d304cf0a4",
+      "plan_digest": "sha256:b4c74435636a7531f51f9e9227c68baafdbb7bc6bb21af2dcdf642be7c23c5e3",
+      "source_digest": "721d1c87988da45a7f222c4281dd8915b45a538f",
       "acceptance_rows": [
         "BO42",
         "BO43",
@@ -1968,6 +1989,150 @@ R34 goes to cycle 2, the last repair cycle of chunk BO-C4, in a fresh repair ses
           "requirement": "7-conformance",
           "command": "bench test --package ./internal/conformance",
           "exit_code": 0
+        },
+        {
+          "id": "bo-c4-6-evidencecmd-final",
+          "performer": "claude:bench-writer/bo-t6-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "721d1c87988da45a7f222c4281dd8915b45a538f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t6-repair-c1/6-evidencecmd@59988063",
+            "digest": "sha256:3d1878b6f3e670a392f3776ad24e81795d9607d1aa52f0ff9fab654b673bf6e3",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,10072\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "6-evidencecmd",
+          "command": "bench test --package ./internal/preflight/evidencecmd",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c4-6-chargeevidence-final",
+          "performer": "claude:bench-writer/bo-t6-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "721d1c87988da45a7f222c4281dd8915b45a538f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t6-repair-c1/6-chargeevidence@59988063",
+            "digest": "sha256:1aa5aa99d4c2a23f5a8486bac68872252183377777c9d301724399f8f07fcb2b",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/chargeevidence,pass,171\nfailures[0]{package,test,line}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/chargeevidence,TestEvidenceStoreKinds/CE94_device,\"capability: privilege: cannot create a character device: operation not permitted\""
+          },
+          "requirement": "6-chargeevidence",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c4-6-cmd-final",
+          "performer": "claude:bench-writer/bo-t6-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "721d1c87988da45a7f222c4281dd8915b45a538f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t6-repair-c1/6-cmd@59988063",
+            "digest": "sha256:a0bc13a782bd46cde777d6b36c1dbbc8d898d489bfe02b336be4462b94a8184a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,7486\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "6-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c4-6-system-final",
+          "performer": "claude:bench-writer/bo-t6-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "721d1c87988da45a7f222c4281dd8915b45a538f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t6-repair-c1/6-system@59988063",
+            "digest": "sha256:fa736e84ba3b7c3043b90f1abb3d2be548890da563df1b9e9d956536368278ef",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,43236\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "6-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c4-7-evidencecmd-final",
+          "performer": "claude:bench-writer/bo-t7-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "721d1c87988da45a7f222c4281dd8915b45a538f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t7-repair-c2/7-evidencecmd@59988063",
+            "digest": "sha256:11d2d6e55219b2e6b36861083414ace6e8cff4f2c5c080d72c06956a8065863c",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,7978\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "7-evidencecmd",
+          "command": "bench test --package ./internal/preflight/evidencecmd",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c4-7-chargeevidence-final",
+          "performer": "claude:bench-writer/bo-t7-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "721d1c87988da45a7f222c4281dd8915b45a538f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t7-repair-c2/7-chargeevidence@59988063",
+            "digest": "sha256:dc2fd4b69a7d39f7a4f94b5236e003a9a1461a90f1c6cd8a2e60409f8f037585",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/chargeevidence,pass,176\nfailures[0]{package,test,line}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/chargeevidence,TestEvidenceStoreKinds/CE94_device,\"capability: privilege: cannot create a character device: operation not permitted\""
+          },
+          "requirement": "7-chargeevidence",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c4-7-cmd-final",
+          "performer": "claude:bench-writer/bo-t7-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "721d1c87988da45a7f222c4281dd8915b45a538f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t7-repair-c2/7-cmd@59988063",
+            "digest": "sha256:f209695169c62db0115ac8cc7cc972f676d86f3cb2187aa689cab1a960975757",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,7774\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "7-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c4-7-conformance-final",
+          "performer": "claude:bench-writer/bo-t7-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "721d1c87988da45a7f222c4281dd8915b45a538f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t7-repair-c2/7-conformance@59988063",
+            "digest": "sha256:9ddf89654c0e73be529af2152185178179bb113bd9e6982137cbe9bf7c982157",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,36090\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket4199382533/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket1215844496/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\""
+          },
+          "requirement": "7-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -2112,6 +2277,72 @@ R34 goes to cycle 2, the last repair cycle of chunk BO-C4, in a fresh repair ses
           "finding_ids": [],
           "supersedes": [
             "bo-c4-r1-coverage"
+          ]
+        },
+        {
+          "id": "bo-c4-r3-standards",
+          "performer": "claude:bench-reviewer/bo-c4-standards-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "721d1c87988da45a7f222c4281dd8915b45a538f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c4-standards-3@59988063",
+            "digest": "sha256:cdd4c80fae34da4cbd4808837217996afe339380496715321ead4ac1e377bca8",
+            "excerpt": "Standards round 3: R34 confirmed (shared craftedDigestArtifact, duplicate fixture deleted); R24 reds recorded; 0 new findings."
+          },
+          "axis": "Standards",
+          "base": "7bd63cc6b6cacf0ff42547a8954287ccee2bbe04",
+          "tip": "599880636762d26741bc86aac533fd0d304cf0a4",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c4-r2-standards"
+          ]
+        },
+        {
+          "id": "bo-c4-r3-spec",
+          "performer": "claude:bench-reviewer/bo-c4-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "721d1c87988da45a7f222c4281dd8915b45a538f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c4-spec-3@59988063",
+            "digest": "sha256:e2d6b7330eefa86f614909908d11617f35c29a8cb0d9c10a0d4456b98213f5b4",
+            "excerpt": "Spec round 3: 0 findings. R35 confirmed; the plan validates; BO42 to BO50 and the R33 source-digest row keep their assertions."
+          },
+          "axis": "Spec",
+          "base": "7bd63cc6b6cacf0ff42547a8954287ccee2bbe04",
+          "tip": "599880636762d26741bc86aac533fd0d304cf0a4",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c4-r2-spec"
+          ]
+        },
+        {
+          "id": "bo-c4-r3-coverage",
+          "performer": "claude:bench-reviewer/bo-c4-coverage-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "721d1c87988da45a7f222c4281dd8915b45a538f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-c4-coverage-3@59988063",
+            "digest": "sha256:0edb787d40705909d34eddaca937e3b8593ba79630117a6ee75268c1b153b4f7",
+            "excerpt": "BO-C4 Coverage r3: 0 findings; the refactored BO48 source-digest row still changes only the source-row digest, and pages verify."
+          },
+          "axis": "Coverage",
+          "base": "7bd63cc6b6cacf0ff42547a8954287ccee2bbe04",
+          "tip": "599880636762d26741bc86aac533fd0d304cf0a4",
+          "finding_ids": [],
+          "supersedes": [
+            "bo-c4-r2-coverage"
           ]
         }
       ]
@@ -2502,6 +2733,33 @@ R34 goes to cycle 2, the last repair cycle of chunk BO-C4, in a fresh repair ses
     {
       "from": "sha256:187c6c04e2a33dea45c518a130dd3de1d8abd48ec8cb97446ee68a7dbe8eb896",
       "to": "sha256:75033907021185f5014c45908851c44948fe8b0b13b9b828687401d3d92501b3",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:75033907021185f5014c45908851c44948fe8b0b13b9b828687401d3d92501b3",
+      "to": "sha256:b4c74435636a7531f51f9e9227c68baafdbb7bc6bb21af2dcdf642be7c23c5e3",
       "chunk_ids": {
         "BO-C1": [
           "BO-C1"
