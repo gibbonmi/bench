@@ -92,6 +92,7 @@ Here, findings that prevent progression are unresolved blockers; retain optional
 
    The first chunk base is the `main` tip merged into the source. Each later chunk base is the accepted predecessor tip, so the range holds only that chunk's delta.
    A later plan commit is never a chunk base.
+   Merge `main` into the source only between chunks, and use the merge commit as the next chunk base. The review preflight counts each path that a merge brings in against the ownership fences.
 
 2. **Find the sources.** The spec source is `specs/<feature>/spec.md` for this
    work, or the path I give you. The standards sources are `AGENTS.md` and
