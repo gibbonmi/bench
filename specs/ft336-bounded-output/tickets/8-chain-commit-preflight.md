@@ -1,7 +1,7 @@
 # 8. Chain the worktree build and build preflight after a commit
 
 Blocked by: none
-Writes: internal/commit/commit.go, internal/commit/chain_grammar_test.go (new), cmd/bench/main.go, tests/canary/package-core-guard/unrouted-subcommand, cmd/bench/commit_chain_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/commit/commit.go, internal/commit/chain_grammar_test.go (new), cmd/bench/main.go, cmd/bench/commit_chain.go (new), tests/canary/package-core-guard/unrouted-subcommand, cmd/bench/commit_chain_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: BO51, BO52, BO53, BO54, BO55, BO56, BO71
 
 ## What to build

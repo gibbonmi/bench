@@ -373,6 +373,7 @@ The shell CLI hostile-input profile applies to the owner and to `--to`. The walk
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
 - `cmd/bench/response_bound_test.go`
+- `cmd/bench/commit_chain.go`
 - `cmd/bench/commit_chain_test.go`
 - `cmd/bench/census_output_test.go`
 - `cmd/bench/worktree_leaves.go`
