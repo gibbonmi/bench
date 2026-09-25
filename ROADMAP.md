@@ -29,6 +29,8 @@ findings in the owner details.
 
 **FT293 (HIGH, decision required) — preflight closes each ticket's complete ownership fence.**
 
+**FT342 (HIGH, decision required) — a chunked build has one sanctioned route for a moved `main`, from preflight through completion and landing.**
+
 **FT141 (HIGH, decision required) — red verdicts are attributed against an exact-tree baseline.**
 
 **FT341 (HIGH) — each Bench verb declares its tree scope, and a tree-scoped verb takes an explicit target.**
@@ -49,6 +51,8 @@ findings in the owner details.
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
+**FT344 (MEDIUM) — every rebuild remedy for a pool worktree names `bench worktree build` from one owner.**
+
 **FT312 (MEDIUM) — a native `bench` verb codifies the cross-harness reviewer invocation.**
 
 **FT283 (MEDIUM, decision required) — `bench worktree land --spec` has one phase-scoped transition contract.**
@@ -68,6 +72,8 @@ findings in the owner details.
 **FT333 (MEDIUM, decision required) — prepared evidence supports the tickets-only light path.**
 
 **FT338 (MEDIUM) — a spec sweeps each retired claim and each affected caller before review, and pairs each rewrite with Forbid rows.**
+
+**FT343 (MEDIUM, decision required) — production `Set*ForTest` hooks have one decided policy that the injected-port audit enforces.**
 
 **FT317 (MEDIUM, decision required) — a capability-blocked acceptance row has one decided value at the completion checkpoint.**
 
@@ -164,7 +170,9 @@ qualification requirements are met.
 
 **FT330 (LOW, parked pending a repro) — a `bench gate --checkpoint` refusal names the recovery route of its cause.**
 
-**FT335 (MEDIUM, parked pending a repro) — a `bench worktree merge` from a kit sibling selects the target lane, not the full gate.**
+**FT335 (MEDIUM, parked pending a repro) — a `bench worktree merge` grades the composed tree with the target lane from any caller checkout.**
+
+**FT345 (LOW, parked pending a repro) — worktree retirement surfaces agree on the row state and name a route that can succeed.**
 
 
 ## Release and bank reassessment gate
