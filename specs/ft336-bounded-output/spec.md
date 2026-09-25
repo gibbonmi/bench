@@ -393,6 +393,11 @@ The shell CLI hostile-input profile applies to the owner and to `--to`. The walk
 - `internal/preflight/command_review_test.go`
 - `internal/preflight/source_tip_test.go`
 - `internal/preflight/verdict_summary_test.go`
+- `internal/preflight/charge_test.go`
+- `internal/preflight/command_build_test.go`
+- `internal/preflight/completion_plan_test.go`
+- `internal/preflight/command_bootstrap_test.go`
+- `internal/preflight/explicit_base_test.go`
 - `internal/preflight/evidencecmd/`
 - `internal/chargeevidence/schema.go`
 - `internal/chargeevidence/read.go`

@@ -1,7 +1,7 @@
 # 5. Summarize the green preflight checks on one line
 
 Blocked by: none
-Writes: internal/preflight/command.go, internal/preflight/command_review_test.go, internal/preflight/source_tip_test.go, internal/preflight/verdict_summary_test.go (new)
+Writes: internal/preflight/command.go, internal/preflight/command_review_test.go, internal/preflight/source_tip_test.go, internal/preflight/verdict_summary_test.go (new), internal/preflight/charge_test.go, internal/preflight/command_build_test.go, internal/preflight/completion_plan_test.go, internal/preflight/command_bootstrap_test.go, internal/preflight/explicit_base_test.go, internal/preflight/evidencecmd/operations.go, cmd/bench/help_inventory_test.go
 Covers: BO37, BO38, BO39, BO40
 
 ## What to build
