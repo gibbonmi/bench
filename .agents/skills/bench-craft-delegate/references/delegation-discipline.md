@@ -36,6 +36,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - Every write delegate treats `Writes:` as an expectation. When evidence requires an approved in-scope expansion, the orchestrator applies `.bench/BENCH.md`'s plan-expansion policy before continuing. The delegate never writes a second spelling to stay in fence.
 - A charge that exports from a package outside its fence names the fence amendment
   in its return.
+- A charge that asks for a commit, a commit sha, or a preflight result makes that request conditional on a committed ticket. A blocked author returns none of them and never creates a commit outside `bench commit`.
 - A charge treats a coverage-row citation in a test doc as a reference to keep.
 - A pure test-addition charge names the production mutation each new test is
   proven against. The delegate then cannot return a test that is green by
@@ -49,7 +50,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   command run against the stored baseline data. A test never rewrites the
   repository source during an ordinary run.
 - A repair charge replays the acceptance tests against the exact pre-change
-  production code when the ticket kept no pre-edit red evidence.
+  production code when the ticket kept no red evidence.
 - A repair charge binds each acceptance row and each applicable edge case to a
   named test or to an explicit gap. The coordinator verifies the complete
   checklist on the return.
@@ -72,6 +73,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   focused verification list.
 - A charge that adds an anchor names `bench test --check <owning-check>` as
   its probe.
+- A write charge quotes the fixture-harness clause of the one-source rule in `AGENTS.md` and names the fence's existing fixture helpers to extend.
 - A grammar charge enumerates two inventories in its fence:
   the shared fixture owners and the exact-record assertion families.
 - A charge that adds a live-tree test includes in its fence the live-tree
@@ -186,7 +188,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
   coordinator grades each destination change that a new oracle check reads.
 - A hand verification does not close an acceptance row without a named
   red-capable test.
-- A ticket without a pre-edit red for each row goes back to its ticket author for those reds. The coordinator gets the reds before the commit.
+- A ticket without an observed red for each row goes back to its ticket author for those reds. The coordinator gets the reds before the commit.
 - Keep an accepted finding on its original ticket when attribution is clear. Use
   an umbrella repair ticket only for a genuinely shared owner.
 - When an installed lane cannot commit its repair, run the same ordinary commit core from
