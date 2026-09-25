@@ -58,6 +58,16 @@ func checkBoundsPolicy(root string) []string {
 }
 
 func checkBoundCallers(root, registryPath string) []string {
+	fset := token.NewFileSet()
+	registry, err := parser.ParseFile(fset, registryPath, nil, 0)
+	if err != nil {
+		return []string{"internal/bounds policy registry is not valid Go: " + err.Error()}
+	}
+	owned := boundsOwnedExpressions(fset, registry)
+	seams, err := boundsReadSeams(filepath.Dir(registryPath))
+	if err != nil {
+		return []string{"internal/bounds read seams cannot be parsed: " + err.Error()}
+	}
 	var diags []string
 	for _, top := range []string{"cmd", "internal"} {
 		base := filepath.Join(root, top)
@@ -69,27 +79,16 @@ func checkBoundCallers(root, registryPath string) []string {
 			if strings.HasPrefix(rel, "internal/bounds/") {
 				return nil
 			}
-			diags = append(diags, checkBoundCaller(path, rel, registryPath)...)
+			diags = append(diags, checkBoundCaller(fset, path, rel, owned, seams)...)
 			return nil
 		})
 	}
 	return uniqueSorted(diags)
 }
 
-func checkBoundCaller(path, rel, registryPath string) []string {
-	if readIfExists(path) == "" {
-		return nil
-	}
-	fset := token.NewFileSet()
-	registry, err := parser.ParseFile(fset, registryPath, nil, 0)
-	if err != nil {
-		return []string{"internal/bounds policy registry is not valid Go: " + err.Error()}
-	}
-	caller, err := parser.ParseFile(fset, path, nil, 0)
-	if err != nil {
-		return []string{rel + " cannot be parsed for bounds ownership: " + err.Error()}
-	}
-	ownedExpressions := map[string]string{}
+// boundsOwnedExpressions maps the expression text of each registry value to its entry name.
+func boundsOwnedExpressions(fset *token.FileSet, registry *ast.File) map[string]string {
+	owned := map[string]string{}
 	for _, decl := range registry.Decls {
 		gen, ok := decl.(*ast.GenDecl)
 		if !ok || gen.Tok != token.CONST {
@@ -99,10 +98,60 @@ func checkBoundCaller(path, rel, registryPath string) []string {
 			spec := item.(*ast.ValueSpec)
 			for i, name := range spec.Names {
 				if i < len(spec.Values) {
-					ownedExpressions[expressionText(fset, spec.Values[i])] = name.Name
+					owned[expressionText(fset, spec.Values[i])] = name.Name
 				}
 			}
 		}
+	}
+	return owned
+}
+
+// boundsReadSeams maps each read seam of the bounds package to the position of its limit
+// argument. A read seam is an exported function with a limit parameter of type int64; the
+// package source is the one list of seams.
+func boundsReadSeams(dir string) (map[string]int, error) {
+	fset := token.NewFileSet()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	seams := map[string]int{}
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() || filepath.Ext(name) != ".go" || strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		file, err := parser.ParseFile(fset, filepath.Join(dir, name), nil, 0)
+		if err != nil {
+			return nil, err
+		}
+		for _, decl := range file.Decls {
+			fn, ok := decl.(*ast.FuncDecl)
+			if !ok || fn.Recv != nil || !fn.Name.IsExported() {
+				continue
+			}
+			position := 0
+			for _, field := range fn.Type.Params.List {
+				kind, _ := field.Type.(*ast.Ident)
+				for _, param := range field.Names {
+					if param.Name == "limit" && kind != nil && kind.Name == "int64" {
+						seams["bounds."+fn.Name.Name] = position
+					}
+					position++
+				}
+			}
+		}
+	}
+	return seams, nil
+}
+
+func checkBoundCaller(fset *token.FileSet, path, rel string, ownedExpressions map[string]string, seams map[string]int) []string {
+	if readIfExists(path) == "" {
+		return nil
+	}
+	caller, err := parser.ParseFile(fset, path, nil, 0)
+	if err != nil {
+		return []string{rel + " cannot be parsed for bounds ownership: " + err.Error()}
 	}
 	var diags []string
 	ast.Inspect(caller, func(node ast.Node) bool {
@@ -129,6 +178,11 @@ func checkBoundCaller(path, rel, registryPath string) []string {
 				break
 			}
 			call := pkg.Name + "." + selector.Sel.Name
+			if position, ok := seams[call]; ok && position < len(value.Args) {
+				if owner := ownedExpressions[expressionText(fset, value.Args[position])]; owner != "" {
+					diags = append(diags, rel+" restates "+owner+" in the limit of "+call)
+				}
+			}
 			if call == "context.WithTimeout" || call == "context.WithTimeoutCause" || call == "io.LimitReader" {
 				for _, arg := range value.Args {
 					if expressionOwnsBound(fset, arg, ownedExpressions) {

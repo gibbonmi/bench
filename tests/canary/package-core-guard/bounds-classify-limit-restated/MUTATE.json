@@ -1,0 +1,3 @@
+[
+  {"path":"internal/learnings/learnings.go","old":"bounds.Classify(filepath.Join(root, JournalPath), bounds.ControlRecordLimit)","new":"bounds.Classify(filepath.Join(root, JournalPath), 2 << 20)"}
+]
