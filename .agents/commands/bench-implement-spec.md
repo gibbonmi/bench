@@ -71,7 +71,7 @@ Report the state: what is done, what remains, the coverage table, and what consu
 
 ## `--full <spec>`
 
-This command orchestrates the fresh ticket authors, chunk reviews, the final landing, and `/bench-final-check`. It refuses on a missing or unnamed spec. At every phase boundary it writes the phase reached into `capture/session-handoff.md` and refreshes the pin with `bench handoff`. The review phase owns cross-harness review opt-in.
+This command orchestrates the fresh ticket authors, chunk reviews, the final landing, and `/bench-final-check`. It refuses on a missing or unnamed spec. At every phase boundary it writes the phase reached into `capture/session-handoff.md` and refreshes the pin with `bench handoff`. A green chunk checkpoint and its handoff refresh are not a phase exit. The orchestrator continues into the successor chunk in the same turn, and it stops only on a `craft-line` stop condition. The review phase owns cross-harness review opt-in.
 
 A chunk delta can grow past its approved plan. It touches a path outside the tickets' `Writes:` fences, or it adds a ticket the plan does not list. Such a delta pauses to ask the reviewer before escalating tier.
 
