@@ -119,18 +119,6 @@ const (
 	axiReasonRelease     = "release surface has its own ship-tier contract"
 )
 
-// boundDisposition is how one public command or leaf takes the response bound. The zero
-// value declares nothing, so a new public entry cannot skip the bound silently.
-type boundDisposition uint8
-
-const (
-	boundUndeclared boundDisposition = iota
-	// boundPending is the transitional disposition of an entry that is not bounded yet.
-	boundPending
-	// boundResponse holds the entry's stdout and stderr to the response bound.
-	boundResponse
-)
-
 type commandDefinition struct {
 	Name       string
 	Attachment processAttachment
@@ -190,7 +178,7 @@ func dispatchLeafFamily(c Command, family, familyUsage string, leaves []commandL
 		fmt.Fprint(c.Stdout, familyUsage)
 		return 2
 	}
-	if len(args) == 1 && (args[0] == "help" || args[0] == "--help" || args[0] == "-h") {
+	if len(args) == 1 && helpArgument(args[0]) {
 		fmt.Fprint(c.Stdout, familyUsage)
 		return 0
 	}
@@ -216,22 +204,30 @@ func leafNamed(leaves []commandLeaf, args []string) (commandLeaf, bool) {
 	return commandLeaf{}, false
 }
 
-// run calls the definition's handler. A family routes its leaves through the shared leaf
-// dispatcher, which reads the same table as the bound.
+// run calls the definition's handler. The help command renders the inventory here, after
+// the bound disposition, so `bench help` with an argument stays bounded. A family routes
+// its leaves through the shared leaf dispatcher, which reads the same table as the bound.
 func (definition commandDefinition) run(c Command, args []string) int {
+	if definition.Kind == commandHelp {
+		return helpCommand(c, args)
+	}
 	if definition.Leaves != nil {
 		return dispatchLeafFamily(c, "bench "+definition.Name, definition.LeafUsage(), definition.Leaves, args)
 	}
 	return definition.Run(c, args)
 }
 
-// bound answers the disposition that applies to one call. A call that names a family
-// leaf takes that leaf's disposition, and every other call takes the command's own.
+// bound answers the disposition that applies to one call. A help form is exempt. A call
+// that names a family leaf takes that leaf's disposition, and every other call takes the
+// command's own.
 func (definition commandDefinition) bound(args []string) boundDisposition {
-	if leaf, ok := leafNamed(definition.Leaves, args); ok {
-		return leaf.Bound
+	if definition.helpForm(args) {
+		return boundHelpForm
 	}
-	return definition.Bound
+	if leaf, ok := leafNamed(definition.Leaves, args); ok {
+		return leaf.Bound.call(args[1:])
+	}
+	return definition.Bound.call(args)
 }
 
 // leafRoot is the family's one root producer. A required root that cannot resolve prints
@@ -312,9 +308,6 @@ func (c Command) Run(args []string) int {
 	if c.Observe != nil {
 		fmt.Fprintln(c.Observe, commandImplementationID(definition))
 	}
-	if definition.Kind == commandHelp {
-		return helpCommand(c, args[1:])
-	}
 	// The hook plumbing verbs record here, at their one shared dispatch, so no adapter
 	// package opens a span of its own.
 	if definition.Hook {
@@ -323,7 +316,7 @@ func (c Command) Run(args []string) int {
 		finishSpan(exit)
 		return exit
 	}
-	if definition.bound(args[1:]) != boundResponse {
+	if !definition.bound(args[1:]).bounded {
 		return definition.run(c, args[1:])
 	}
 	// A bounded command writes both streams into one owner, which prints the response

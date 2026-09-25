@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"sort"
@@ -16,29 +17,33 @@ import (
 // lines prints exactly 10, and its fifth line is the spill line. The spec fixes both
 // counts, and only the owner package may read the line value from the policy registry.
 
-// runBoundFixture registers one public command that prints lines numbered lines and
-// exits exit, declared with bound, and runs it through the production dispatcher under a
+// boundRun is one dispatch through the production dispatcher under a private Bench home.
+type boundRun struct {
+	stdout, stderr, home string
+	code                 int
+}
+
+// runRegistry runs argv through the production dispatcher against registry, under a
 // private Bench home.
-func runBoundFixture(t *testing.T, bound boundDisposition, lines, exit int) (stdout, stderr, home string, code int) {
+func runRegistry(t *testing.T, registry []commandDefinition, argv ...string) boundRun {
 	t.Helper()
-	home = t.TempDir()
+	home := t.TempDir()
 	t.Setenv(benchhome.Env, home)
 	old := commandRegistry
-	t.Cleanup(func() { commandRegistry = old })
-	commandRegistry = []commandDefinition{{
-		Name:      "fixture",
-		Inventory: publicInventory(helpRow{Order: 1, Description: "print numbered lines"}),
-		Bound:     bound,
-		Run: func(c Command, _ []string) int {
-			for i := 1; i <= lines; i++ {
-				fmt.Fprintf(c.Stdout, "line %02d\n", i)
-			}
-			return exit
-		},
-	}}
+	defer func() { commandRegistry = old }()
+	commandRegistry = registry
 	var out, errOut bytes.Buffer
-	code = Command{Stdout: &out, Stderr: &errOut, Executable: "bench"}.Run([]string{"fixture"})
-	return out.String(), errOut.String(), home, code
+	code := Command{Stdout: &out, Stderr: &errOut, Executable: "bench"}.Run(argv)
+	return boundRun{stdout: out.String(), stderr: errOut.String(), home: home, code: code}
+}
+
+// linesHandler answers a handler that prints count numbered lines on the stream that
+// stream selects and exits 0.
+func linesHandler(stream func(Command) io.Writer, count int) commandHandler {
+	return func(c Command, _ []string) int {
+		fmt.Fprint(stream(c), numberedLines(count))
+		return 0
+	}
 }
 
 func numberedLines(count int) string {
@@ -47,6 +52,27 @@ func numberedLines(count int) string {
 		fmt.Fprintf(&all, "line %02d\n", i)
 	}
 	return all.String()
+}
+
+func stdoutOf(c Command) io.Writer { return c.Stdout }
+
+func stderrOf(c Command) io.Writer { return c.Stderr }
+
+// runBoundFixture registers one public command that prints lines numbered lines and
+// exits exit, declared with bound, and runs it through the production dispatcher under a
+// private Bench home.
+func runBoundFixture(t *testing.T, bound boundDisposition, lines, exit int) (stdout, stderr, home string, code int) {
+	t.Helper()
+	run := runRegistry(t, []commandDefinition{{
+		Name:      "fixture",
+		Inventory: publicInventory(helpRow{Order: 1, Description: "print numbered lines"}),
+		Bound:     bound,
+		Run: func(c Command, args []string) int {
+			linesHandler(stdoutOf, lines)(c, args)
+			return exit
+		},
+	}}, "fixture")
+	return run.stdout, run.stderr, run.home, run.code
 }
 
 // BO1: a bounded public command that prints 25 lines produces exactly 10 stdout lines.
@@ -84,11 +110,14 @@ func TestDispatcherKeepsExitCode(t *testing.T) {
 	}
 }
 
-// A pending entry is not bounded yet, so it prints every line.
-func TestDispatcherPassesPendingResponse(t *testing.T) {
-	stdout, _, _, _ := runBoundFixture(t, boundPending, 25, 0)
+// An exempt entry prints every line.
+func TestDispatcherPassesExemptResponse(t *testing.T) {
+	stdout, _, home, _ := runBoundFixture(t, boundExempt("fixture reason"), 25, 0)
 	if want := numberedLines(25); stdout != want {
-		t.Fatalf("pending fixture stdout = %q, want %q", stdout, want)
+		t.Fatalf("exempt fixture stdout = %q, want %q", stdout, want)
+	}
+	if entries, err := os.ReadDir(home); err != nil || len(entries) != 0 {
+		t.Fatalf("an exempt response wrote the Bench home: %v (%v)", entries, err)
 	}
 }
 
@@ -104,42 +133,57 @@ func TestExecGrammarRefusalKeepsUsageLine(t *testing.T) {
 	}
 }
 
-// boundDeclarations answers each public entry and each family leaf of registry under its
-// declared disposition. An entry is named by its command, and a leaf by its command and
-// its leaf name.
-func boundDeclarations(registry []commandDefinition) map[boundDisposition][]string {
-	declared := map[boundDisposition][]string{}
+// boundEntry is one public entry or family leaf of a registry and its declared
+// disposition. An entry is named by its command, a leaf by its command and its leaf name,
+// and a flag-limited disposition adds its flag.
+type boundEntry struct {
+	name        string
+	disposition boundDisposition
+}
+
+func boundEntries(registry []commandDefinition) []boundEntry {
+	var entries []boundEntry
+	named := func(name string, disposition boundDisposition) boundEntry {
+		return boundEntry{name: strings.TrimSpace(name + " " + disposition.flag), disposition: disposition}
+	}
 	for _, definition := range registry {
 		if definition.Inventory.Visibility != inventoryPublic {
 			continue
 		}
-		declared[definition.Bound] = append(declared[definition.Bound], definition.Name)
+		entries = append(entries, named(definition.Name, definition.Bound))
 		for _, leaf := range definition.Leaves {
-			declared[leaf.Bound] = append(declared[leaf.Bound], definition.Name+" "+leaf.Name)
+			entries = append(entries, named(definition.Name+" "+leaf.Name, leaf.Bound))
 		}
 	}
-	for disposition := range declared {
-		sort.Strings(declared[disposition])
+	return entries
+}
+
+// undeclaredBound answers the entries of registry that declare neither the bound nor an
+// exemption, sorted.
+func undeclaredBound(registry []commandDefinition) []string {
+	var missing []string
+	for _, entry := range boundEntries(registry) {
+		if !entry.disposition.bounded && entry.disposition.exempt == "" {
+			missing = append(missing, entry.name)
+		}
 	}
-	return declared
+	sort.Strings(missing)
+	return missing
 }
 
 // BO21: every public registry entry and every leaf declares a bound disposition. The
-// planted entry proves the check refuses a public entry with none.
+// planted entries prove the check refuses a public entry and a leaf with none.
 func TestEveryPublicCommandDeclaresBound(t *testing.T) {
-	declared := boundDeclarations(commandRegistry)
-	if missing := declared[boundUndeclared]; len(missing) != 0 {
+	if missing := undeclaredBound(commandRegistry); len(missing) != 0 {
 		t.Fatalf("public entries without a bound disposition: %q", missing)
-	}
-	if bounded := declared[boundResponse]; !reflect.DeepEqual(bounded, []string{"worktree exec"}) {
-		t.Fatalf("bounded entries = %q, want only the worktree exec leaf", bounded)
 	}
 	planted := []commandDefinition{
 		{Name: "planted", Inventory: publicInventory()},
 		{Name: "internal", Inventory: internalInventory},
-		{Name: "family", Inventory: publicInventory(), Bound: boundPending, Leaves: []commandLeaf{{Name: "leaf"}}},
+		{Name: "flagged", Inventory: publicInventory(), Bound: boundDisposition{flag: "--flag"}},
+		{Name: "family", Inventory: publicInventory(), Bound: boundResponse, Leaves: []commandLeaf{{Name: "leaf"}}},
 	}
-	if missing := boundDeclarations(planted)[boundUndeclared]; !reflect.DeepEqual(missing, []string{"family leaf", "planted"}) {
-		t.Fatalf("planted undeclared entries = %q, want the public entry and the leaf", missing)
+	if missing := undeclaredBound(planted); !reflect.DeepEqual(missing, []string{"family leaf", "flagged --flag", "planted"}) {
+		t.Fatalf("planted undeclared entries = %q, want the public entries and the leaf", missing)
 	}
 }
