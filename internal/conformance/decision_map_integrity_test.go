@@ -107,6 +107,20 @@ func TestDecisionMapIntegrityCheckValidatesEveryCandidate(t *testing.T) {
 		t.Fatalf("valid active and compiled maps diagnostics = %v", diagnostics)
 	}
 
+	writeSplitMap(filepath.Join(root, "decisions", "compiled.md"), "ready", "none")
+	wantOwnership := "decisions/compiled.md: active map also compiled at specs/compiled/decisions/compiled.md; move the map instead of copying it"
+	if diagnostics := RunConformance(root, h.KitRoot, registry.Dev, "decision-map-integrity"); !containsDiagnostic(diagnostics, wantOwnership) {
+		t.Fatalf("copied map diagnostics = %v, want %q", diagnostics, wantOwnership)
+	}
+	for _, path := range []string{"decisions/compiled.md", "decisions/compiled"} {
+		if err := os.RemoveAll(filepath.Join(root, path)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if diagnostics := RunConformance(root, h.KitRoot, registry.Dev, "decision-map-integrity"); len(diagnostics) != 0 {
+		t.Fatalf("moved map diagnostics = %v", diagnostics)
+	}
+
 	writeMap(filepath.Join(root, "specs", "broken", "decisions", "broken.md"), "# Broken\n")
 	writeSplitMap(filepath.Join(root, "decisions", "graph.md"), "shaping", "#1")
 	diagnostics := RunConformance(root, h.KitRoot, registry.Dev, "decision-map-integrity")
