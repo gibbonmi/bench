@@ -305,9 +305,9 @@ Ticket 2 bounds every public response. So each test that reads more than 10 line
 | BO71 | 66 | A commit that exits 3 calls no build and prints `commit-chain{commit=<sha>,build=skipped,preflight=skipped}` at exit 3 | planned TestCommitChainStopsAtRemainder in cmd/bench | A chain that ignores exit 3 builds an unreconciled checkout |
 | BO31 | 27 | An exec grammar refusal prints its `usage: bench worktree exec` line unchanged | TestExecGrammarRefusalKeepsUsageLine in cmd/bench, plus the existing exec grammar tests TestExecHelpCarriesStdinAndTheExitRule and TestExecRefusesAMalformedEnvValue in internal/worktree, run unchanged | An owner that rewrites refusals breaks the documented exit-2 rule |
 | BO32 | 28 | A list of 3 active rows prints `help[2]{cmd,why}:` with `bench worktree path <target>` and `bench worktree exec <target> -- <command>` and no active id in a help row | planned TestListActiveRowsUseTargetSlot in internal/worktree | Per-row help prints 6 rows and names each id |
-| BO33 | 29 | A cleanup-pending row keeps its `bench worktree release --request <token> <path>` help row | existing TestListActions cleanup-pending case in internal/worktree/list_actions_test.go, run unchanged | A slot rule applied to every state loses the path operand |
-| BO34 | 30 | A missing-tree row keeps its recovery help row | existing TestListActions missing-tree case in internal/worktree/list_actions_test.go, run unchanged | A slot rule applied to every state loses the recovery route |
-| BO35 | 31 | A foreign row keeps its `bench worktree clean <path>` help row | existing TestListActions foreign case in internal/worktree/list_actions_test.go, run unchanged | A slot rule applied to every state loses the orphan path |
+| BO33 | 29 | A cleanup-pending row keeps its `bench worktree release --request <token> <path>` help row | existing `internal/worktree/landed_test.go` (`TestLandedClassifierOnlyActiveStateQualifies`), run unchanged | A slot rule applied to every state loses the path operand |
+| BO34 | 30 | A missing-tree row keeps its recovery help row | existing `internal/worktree/list_actions_test.go` (`TestListCommandNamesOneCleanLandedRowForAMissingTree`), run unchanged | A slot rule applied to every state loses the recovery route |
+| BO35 | 31 | A foreign row keeps its `bench worktree clean <path>` help row | existing `internal/worktree/list_actions_test.go` (`TestListCommandControlBearingOrphanPathPreservesPrimaryAndAction`), run unchanged | A slot rule applied to every state loses the orphan path |
 | BO36 | 32 | The id cell of an active row passes `bench worktree path` at exit 0 | rewritten TestListPathActionRunsAsAdvertised in internal/worktree/path_identifier_test.go | A cell that holds the label fails the resolver |
 | BO37 | 33 | An all-green build preflight prints `checks{green=13,not_applicable=2,red=0}` and no `checks[` table | planned TestPreflightGreenSummaryLine in internal/preflight | A render that keeps the green rows prints a `checks[15]` table |
 | BO38 | 34 | An all-green review preflight prints the same summary line and no `checks[` table | planned TestPreflightGreenSummaryLine review case in internal/preflight | A build-only change leaves the review table unchanged |
@@ -385,6 +385,7 @@ The shell CLI hostile-input profile applies to the owner and to `--to`. The walk
 - `internal/worktree/land.go`
 - `internal/worktree/list.go`
 - `internal/worktree/list_actions_test.go`
+- `internal/worktree/landed_test.go`
 - `internal/worktree/path_identifier_test.go`
 - `internal/worktree/response_spill_test.go`
 - `internal/worktree/land_census_output_test.go`
