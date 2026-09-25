@@ -912,6 +912,12 @@ Each planned acceptance row is covered by its chunk review and by the green chec
 
 These review findings stay open to reviewer veto: R7, R8, R13, R18, R21, R29, R35, R40, R41, and R45. The R52 and R53 record-lifetime sentence also stays open. So do the R63 spec amendment, the R59 fence expansion, and the BO76 heap measure.
 
+## Destination merge and final reconciliation again
+
+The first landing refused, because `main` moved 13 commits past the landing base. The completion gate refuses any composed path that differs from the reviewed source. By reviewer decision, the orchestrator merged `main` at `202d04b0` into the source after the last chunk, at `39cc8410`. The merge lane passed. The review chain grades only the gaps between chunks, so this merge after the BO-C7 tip leaves the chain intact.
+
+The orchestrator ran the five final checks again at `39cc8410`, and each check passed. The new source digest is `ebd842f67242af8d821fa0870c60679ab53de583`, and the completion now binds it. Each planned acceptance row stays covered. BO73 still holds, because the merged `main` changes no path under `specs/session-context-queries`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -3618,7 +3624,7 @@ These review findings stay open to reviewer veto: R7, R8, R13, R18, R21, R29, R3
   ],
   "completion": {
     "state": "completed",
-    "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+    "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
     "performer": "claude:session_01WqUNrAjWfLrnhUGN5EzP14",
     "reconciliation": {
       "BO1": "covered",
@@ -3705,11 +3711,11 @@ These review findings stay open to reviewer veto: R7, R8, R13, R18, R21, R29, R3
         "role": "integration-verification",
         "model": "opus",
         "effort": "high",
-        "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+        "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session/final/coverage@7b714cf3",
+          "ref": "claude:session/final2/coverage@39cc8410",
           "digest": "sha256:9adb654ae9b96fdcd74f1b97c4dbeb2b5aec973661bc691260361864bd8c0670",
           "excerpt": "ok: coverage map valid — 76 row(s)\nuncited: 67 row(s) with no seam-cell citation — BO1, BO2, BO3, BO4, BO5, BO6, BO7, BO8, BO9, BO10, BO11, BO12, BO13, BO14, BO15, BO16, BO17, BO18, BO19, BO21, BO22, BO23, BO24, BO25, BO26, BO27, BO28, BO29, BO30, BO69, BO70, BO72, BO71, BO31, BO32, BO36, BO37, BO38, BO39, BO41, BO42, BO43, BO44, BO45, BO46, BO47, BO48, BO49, BO50, BO51, BO52, BO53, BO54, BO55, BO57, BO58, BO59, BO60, BO61, BO62, BO63, BO75, BO64, BO65, BO74, BO76, BO67"
         },
@@ -3723,13 +3729,13 @@ These review findings stay open to reviewer veto: R7, R8, R13, R18, R21, R29, R3
         "role": "integration-verification",
         "model": "opus",
         "effort": "high",
-        "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+        "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session/final/owner@7b714cf3",
-          "digest": "sha256:465867c960aad630941cd003c829bae589650660753c6fd040cf8701ffba37ee",
-          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,250\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          "ref": "claude:session/final2/owner@39cc8410",
+          "digest": "sha256:2ffdb9bd37438e9fbd7ddfe744764e499ea09fd7c64dcad08871533acf8d0d06",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,240\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
         },
         "requirement": "owner",
         "command": "bench test --package ./internal/responsebound",
@@ -3741,13 +3747,13 @@ These review findings stay open to reviewer veto: R7, R8, R13, R18, R21, R29, R3
         "role": "integration-verification",
         "model": "opus",
         "effort": "high",
-        "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+        "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session/final/cmd@7b714cf3",
-          "digest": "sha256:c00d88a78a9c9f60809a0f3781ab75325d522c4828ab88420aab47bbfe53b67c",
-          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,10326\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          "ref": "claude:session/final2/cmd@39cc8410",
+          "digest": "sha256:59485f90fd8b241b653f042e5d7a15593394b7964923441c8dadffb29810bb04",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,10643\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
         },
         "requirement": "cmd",
         "command": "bench test --package ./cmd/bench",
@@ -3759,13 +3765,13 @@ These review findings stay open to reviewer veto: R7, R8, R13, R18, R21, R29, R3
         "role": "integration-verification",
         "model": "opus",
         "effort": "high",
-        "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+        "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session/final/worktree@7b714cf3",
-          "digest": "sha256:4a501e53add3597d7169e3d545ab8ebef33daf46c848e934be94569301264f41",
-          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,60318\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket3083408086/001/.bench-home/worktrees/001-3852100369/7aa3560454a3bbd9483732c79ae08074-ccc8e012f4a42e9395509e9e534a0db6: bind:… (257 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket1837593342/001/.bench-home/worktrees/001-689586632/f71b87ea9c32797c5ce5063bb46a01a0-52b2146e40528cc2b761ffeecfab39ef… (269 bytes)\""
+          "ref": "claude:session/final2/worktree@39cc8410",
+          "digest": "sha256:23a80db78530999b1f6d9ea35f8c935e38a40749cf897c23cf2d73db96d63c2a",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,49081\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket2111277742/001/.bench-home/worktrees/001-2406857141/e416275fc2c0790b29a74fd1a98a34f0-aa27c4b88a84151f814bb348e77f0e53: bind:… (257 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket3535090186/001/.bench-home/worktrees/001-264068969/e194cdcdfa3c34a1c0bfa2afd5ad7058-20103ac9e79dd5a28111374e78ec4711… (269 bytes)\""
         },
         "requirement": "worktree",
         "command": "bench test --package ./internal/worktree",
@@ -3777,13 +3783,13 @@ These review findings stay open to reviewer veto: R7, R8, R13, R18, R21, R29, R3
         "role": "integration-verification",
         "model": "opus",
         "effort": "high",
-        "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+        "source_digest": "ebd842f67242af8d821fa0870c60679ab53de583",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session/final/system@7b714cf3",
-          "digest": "sha256:a4da9e4777590aa0446956911fd52022bba3a100bc1a190a3c85e83d5e4f5aaf",
-          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,64836\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          "ref": "claude:session/final2/system@39cc8410",
+          "digest": "sha256:5ceb8528ea7b47bcad5393b03569454d80b2c641b98d75246d300651e59058c5",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,41404\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
         },
         "requirement": "system",
         "command": "bench test --check system",
