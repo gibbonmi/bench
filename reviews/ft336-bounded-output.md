@@ -708,11 +708,70 @@ Each axis found 0 findings. Standards confirmed R44, and Spec confirmed R45. Cov
 
 R40, R41, and R45 correct non-behavioral spec text, and they stay open to reviewer veto.
 
+## BO-C6 author evidence
+
+Ticket 9 had a fresh `bench-writer` author, `claude:bench-writer/bo-t9-author`, on opus at high effort, with a cap of 3 attempts. The chunk base is `27f725a1`, the BO-C5 record commit. By user direction, the ticket authored in the sibling worktree `ft336-t9-opus` from `3427521f`, and the orchestrator merged it at `549a9502`. The author used 1 of 3 attempts.
+
+The author stopped once before any edit. The record needs the response size, and only the unexported response owner holds it. Ticket 10 rewrites `owner.go` in parallel, so the plan commit `27bd7603` fences a new `size.go` and its test in the same package. It also fences `cmd/bench/census_output.go`, because `command_registry.go` had 5 lines of room. A `bench learning` entry records the expansion.
+
+The author ran the three ticket checks at the chunk tip `549a9502`, and each check passed. Each row went red before the change. The two central probes bit: a failed record write that changes the exit code, and an exec record keyed by the working tree.
+
+## BO-C6 chunk review, round 1
+
+The frozen pair is base `27f725a17ef4d73d7ee76d640ab0cbc99b6c563f` and tip `549a95025bbd0d04e7996281e4fc8e4369cd269a`. The shared evidence is `sha256:81e8a2ac8e346f3e6692da11a9e6d07fa9d84f2cb9d767337c637b7a180b9815`. Each axis ran in a fresh `bench-reviewer` session on opus at medium effort. Only the Coverage axis ran probes, and it left the tree clean.
+
+The raw finding count is 9: Standards 6, Spec 2, and Coverage 1. A Fable delegate at high effort decided the three `ask-user` findings, by user direction. One finding is a `no-op`, so 8 repair targets remain.
+
+## Standards
+
+Findings: 6. The worst issue is a second derivation of the census record layout.
+
+- `internal/census/output.go:62-71` reads the head field and applies its own empty-head rule, and `recordFields` owns that layout. `outputFields = 5` is a count kept apart from `composeOutput`. Target R46. `auto-fix`. Confidence 8.
+- `OutputBreakdown` copies the read loop, the comparator, and the sanitize-then-escape render of the head breakdown. Target R47. `auto-fix`. Confidence 7.
+- `recordOutput` runs the root lookup again after the owner ran it, so a spilled call runs it twice. Target R48. `auto-fix`. Confidence 6.
+- `cmd/bench/census_output_test.go:44-58` restates the output suffix and separator with no red. The Fable delegate kept the one independent reader in `internal/census` and routed this copy to read through `census.OutputBreakdown`. Target R49. `auto-fix`. Confidence 5.
+- The malformed-id refusal appears in `output.go:40-41` and `census.go:358-359`. Target R50. `auto-fix`. Confidence 5.
+- `ExecCommand` has no production caller, and its only callers are tests outside the fence. Target R51. `no-op`, because the fence holds none of those callers. Confidence 6.
+
+## Spec
+
+Findings: 2. The worst issue is an orphan output record after an exec retires its own target.
+
+- `bench worktree exec X -- bench worktree land` retires X, and the outer exec then writes `X.output` again. No later drop removes it, which breaks story 56. The Fable delegate found this on the routine landing path. Target R52. `auto-fix`. Confidence 8.
+- A retiring verb run from a live worktree Y writes no record for Y, because the `retiring` input forces the primary scope. Target R53. `auto-fix`. Confidence 6.
+
+The Fable delegate adopted one rule for R52 and R53. The dispatcher writes a record only if the ledger holds the assignment as active after the verb returns. The Spec axis held BO57 to BO62 and the fence expansion.
+
+## Coverage
+
+Findings: 1. The worst issue is an untested head for a verb with no leaf.
+
+- A swap that skips the `leaf.Name == ""` branch at `cmd/bench/census_output.go:14` stayed silent. Target R54. `auto-fix`. Confidence 8.
+
+## Advice
+
+- No test pins the tie-break order of the output breakdown.
+- `responsebound.Size` and `census.Output` repeat the same three fields across the one-way dependency.
+
+## BO-C6 repair routing
+
+This is cycle 1 of the two repair cycles for chunk BO-C6. The R52 and R53 spec sentence is a plan clarification, and it stays open to reviewer veto.
+
+| Target | Owner | Repair |
+|---|---|---|
+| R46 | ticket 9 | Read the output record through the census record codec. |
+| R47 | ticket 9 | Share one breakdown reader and render with the head breakdown. |
+| R48 | ticket 9 | Share one root lookup between the owner and the record. |
+| R49 | ticket 9 | Read the records in `cmd/bench` tests through `census.OutputBreakdown`. |
+| R50 | ticket 9 | Give the malformed-id refusal one owner. |
+| R52, R53 | ticket 9 and orchestrator | Record only for an assignment that stays active, drop the `retiring` input, and add the spec sentence. |
+| R54 | ticket 9 | Add a dispatcher row for the head of a verb with no leaf. |
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ft336-bounded-output/spec.md",
-  "plan_digest": "sha256:30bb247ded7137e89d8156df57c15532f10ce93fe584e01e0d58392532cb054c",
+  "plan_digest": "sha256:785cd9054b7b5d9e7f7473f6961ca161419bc3b55bd7198bc49b16a525cba333",
   "implementation_session": "",
   "chunks": [
     {
@@ -2789,6 +2848,151 @@ R40, R41, and R45 correct non-behavioral spec text, and they stay open to review
           ]
         }
       ]
+    },
+    {
+      "id": "BO-C6",
+      "base": "27f725a17ef4d73d7ee76d640ab0cbc99b6c563f",
+      "tip": "549a95025bbd0d04e7996281e4fc8e4369cd269a",
+      "plan_digest": "sha256:785cd9054b7b5d9e7f7473f6961ca161419bc3b55bd7198bc49b16a525cba333",
+      "source_digest": "654e5b2def1401e290b1c650413ecd1a14a94e0d",
+      "acceptance_rows": [
+        "BO57",
+        "BO58",
+        "BO59",
+        "BO60",
+        "BO61",
+        "BO62"
+      ],
+      "verification": [
+        {
+          "id": "bo-c6-9-census-r1",
+          "performer": "claude:bench-writer/bo-t9-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "654e5b2def1401e290b1c650413ecd1a14a94e0d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t9-author/9-census@549a9502",
+            "digest": "sha256:9fc65dd228ec4b686565c817832792e6bd8acb458057b09a3b5f14be30bc928c",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/census,pass,125\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "9-census",
+          "command": "bench test --package ./internal/census",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c6-9-worktree-r1",
+          "performer": "claude:bench-writer/bo-t9-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "654e5b2def1401e290b1c650413ecd1a14a94e0d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t9-author/9-worktree@549a9502",
+            "digest": "sha256:2c31185ca8b16d76902243bf01d8595de1363538277e0f810d7310d9ce4ad75d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,51641\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:99: unix sockets unavailable: listen unix /tmp/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket4129729850/001/.bench-home/worktrees/001-1923393592/0f36bcedbc1ba7aeb33ac1d5d1cbabe6-848dad1886c595b8fbb3d953… (272 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket3350227484/001/.bench-home/worktrees/001-3996991175/fb1e40432f7e13f64bb82b3488a232e7-e5b22689fd33d505160ba242d1e1f91… (270 bytes)\""
+          },
+          "requirement": "9-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "bo-c6-9-cmd-r1",
+          "performer": "claude:bench-writer/bo-t9-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "654e5b2def1401e290b1c650413ecd1a14a94e0d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/bo-t9-author/9-cmd@549a9502",
+            "digest": "sha256:4ef904a45ecc99602b3b5dcb3eaf856900382b9b42519bfd948e2e733a74b1f9",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,8892\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "9-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "bo-c6-r1-standards",
+          "performer": "claude:bench-reviewer/bo-c6-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "654e5b2def1401e290b1c650413ecd1a14a94e0d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c6-standards@549a9502",
+            "digest": "sha256:75268f46ab2aa359305ed382f174a9f2e9113414cf323608c519a705a3d6714b",
+            "excerpt": "Standards BO-C6: 6 findings (2 hard). Worst: parseOutput works out the census line layout a second time (output.go:62) and OutputBreakdown copies the head-breakdown render (output.go:96-104)."
+          },
+          "axis": "Standards",
+          "base": "27f725a17ef4d73d7ee76d640ab0cbc99b6c563f",
+          "tip": "549a95025bbd0d04e7996281e4fc8e4369cd269a",
+          "finding_ids": [
+            "R46",
+            "R47",
+            "R48",
+            "R49",
+            "R50",
+            "R51"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bo-c6-r1-spec",
+          "performer": "claude:bench-reviewer/bo-c6-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "654e5b2def1401e290b1c650413ecd1a14a94e0d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c6-spec@549a9502",
+            "digest": "sha256:43252f1ab448118c36cccea1b6ad08942d7d2884970a18c1c24387e9b202e83c",
+            "excerpt": "Spec BO-C6: 2 findings (ask-user) — exec-retired target leaves orphan <id>.output (story 56); Retires skip drops the working-tree record for a non-self retirement (spec :213); BO57-BO62 met."
+          },
+          "axis": "Spec",
+          "base": "27f725a17ef4d73d7ee76d640ab0cbc99b6c563f",
+          "tip": "549a95025bbd0d04e7996281e4fc8e4369cd269a",
+          "finding_ids": [
+            "R52",
+            "R53"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bo-c6-r1-coverage",
+          "performer": "claude:bench-reviewer/bo-c6-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "654e5b2def1401e290b1c650413ecd1a14a94e0d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/bo-c6-coverage@549a9502",
+            "digest": "sha256:c67cd2b621bb8a8bf42c34819922604f6c96316146cda2a7c2311a809ec71ef9",
+            "excerpt": "Coverage BO-C6: 1 finding (auto-fix, 8): the census head of a verb with no leaf is untested (cmd/bench/census_output.go:14 swap silent); retiring-verb suppression bit; Drop, the raw-call readers, and spill disposition are covered."
+          },
+          "axis": "Coverage",
+          "base": "27f725a17ef4d73d7ee76d640ab0cbc99b6c563f",
+          "tip": "549a95025bbd0d04e7996281e4fc8e4369cd269a",
+          "finding_ids": [
+            "R54"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -3311,6 +3515,33 @@ R40, R41, and R45 correct non-behavioral spec text, and they stay open to review
     {
       "from": "sha256:09accadc80e58cc9350a513d9096923e13804bbd2ade29259ed270cdae18bd3e",
       "to": "sha256:30bb247ded7137e89d8156df57c15532f10ce93fe584e01e0d58392532cb054c",
+      "chunk_ids": {
+        "BO-C1": [
+          "BO-C1"
+        ],
+        "BO-C2": [
+          "BO-C2"
+        ],
+        "BO-C3": [
+          "BO-C3"
+        ],
+        "BO-C4": [
+          "BO-C4"
+        ],
+        "BO-C5": [
+          "BO-C5"
+        ],
+        "BO-C6": [
+          "BO-C6"
+        ],
+        "BO-C7": [
+          "BO-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:30bb247ded7137e89d8156df57c15532f10ce93fe584e01e0d58392532cb054c",
+      "to": "sha256:785cd9054b7b5d9e7f7473f6961ca161419bc3b55bd7198bc49b16a525cba333",
       "chunk_ids": {
         "BO-C1": [
           "BO-C1"
