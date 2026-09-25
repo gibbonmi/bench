@@ -899,6 +899,19 @@ Each axis found 0 findings. Standards confirmed R59, R60, and R61, and Spec conf
 
 The spec amendment for R63, the fence expansion for R59, and the heap measure stay open to reviewer veto.
 
+## Final reconciliation
+
+The orchestrator, `claude:session_01WqUNrAjWfLrnhUGN5EzP14`, reconciled the integrated source at `7b714cf3`, after the BO-C7 close record. The source digest is `fd923c448c7ebcf81367898b3f522e946211a636`, the same source that the BO-C7 round 2 review graded. The BO-C7 checkpoint gate was green at that tip.
+
+The orchestrator ran the five final checks of the plan, and each check passed. They are the coverage map check, the owner, `cmd/bench`, and `internal/worktree` packages, and the system suite. The worktree package reported two capability skips for Unix sockets, and the gate classifies each one as a capability skip.
+
+Each planned acceptance row is covered by its chunk review and by the green checkpoint of that chunk. Two rows are review-owned:
+
+- BO73: `specs/session-context-queries` holds no QU-C4 chunk, no QU14 or QU15 row, and no ticket 4. This is true in the source and on `main` at `202d04b0`. No `main` commit since the landing base changes that spec.
+- BO64: the orchestrator swept each line that the whole FT336 diff from `80780c04` adds to a Go file outside `internal/bounds`. The sweep found no 4096 and no 409. The bounds-policy guard stays green in the checkpoint gate.
+
+These review findings stay open to reviewer veto: R7, R8, R13, R18, R21, R29, R35, R40, R41, and R45. The R52 and R53 record-lifetime sentence also stays open. So do the R63 spec amendment, the R59 fence expansion, and the BO76 heap measure.
+
 ```bench-review-record
 {
   "version": 2,
@@ -3604,7 +3617,179 @@ The spec amendment for R63, the fence expansion for R59, and the heap measure st
     }
   ],
   "completion": {
-    "state": "pending"
+    "state": "completed",
+    "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+    "performer": "claude:session_01WqUNrAjWfLrnhUGN5EzP14",
+    "reconciliation": {
+      "BO1": "covered",
+      "BO2": "covered",
+      "BO3": "covered",
+      "BO4": "covered",
+      "BO5": "covered",
+      "BO6": "covered",
+      "BO7": "covered",
+      "BO14": "covered",
+      "BO15": "covered",
+      "BO18": "covered",
+      "BO19": "covered",
+      "BO20": "covered",
+      "BO21": "covered",
+      "BO22": "covered",
+      "BO23": "covered",
+      "BO24": "covered",
+      "BO25": "covered",
+      "BO26": "covered",
+      "BO27": "covered",
+      "BO28": "covered",
+      "BO29": "covered",
+      "BO31": "covered",
+      "BO68": "covered",
+      "BO69": "covered",
+      "BO8": "covered",
+      "BO9": "covered",
+      "BO10": "covered",
+      "BO11": "covered",
+      "BO12": "covered",
+      "BO13": "covered",
+      "BO30": "covered",
+      "BO66": "covered",
+      "BO70": "covered",
+      "BO16": "covered",
+      "BO17": "covered",
+      "BO72": "covered",
+      "BO32": "covered",
+      "BO33": "covered",
+      "BO34": "covered",
+      "BO35": "covered",
+      "BO36": "covered",
+      "BO41": "covered",
+      "BO67": "covered",
+      "BO37": "covered",
+      "BO38": "covered",
+      "BO39": "covered",
+      "BO40": "covered",
+      "BO42": "covered",
+      "BO43": "covered",
+      "BO44": "covered",
+      "BO45": "covered",
+      "BO46": "covered",
+      "BO47": "covered",
+      "BO48": "covered",
+      "BO49": "covered",
+      "BO50": "covered",
+      "BO51": "covered",
+      "BO52": "covered",
+      "BO53": "covered",
+      "BO54": "covered",
+      "BO55": "covered",
+      "BO56": "covered",
+      "BO71": "covered",
+      "BO57": "covered",
+      "BO58": "covered",
+      "BO59": "covered",
+      "BO60": "covered",
+      "BO61": "covered",
+      "BO62": "covered",
+      "BO63": "covered",
+      "BO64": "covered",
+      "BO65": "covered",
+      "BO73": "covered",
+      "BO74": "covered",
+      "BO75": "covered",
+      "BO76": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-coverage",
+        "performer": "claude:session_01WqUNrAjWfLrnhUGN5EzP14",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session/final/coverage@7b714cf3",
+          "digest": "sha256:9adb654ae9b96fdcd74f1b97c4dbeb2b5aec973661bc691260361864bd8c0670",
+          "excerpt": "ok: coverage map valid — 76 row(s)\nuncited: 67 row(s) with no seam-cell citation — BO1, BO2, BO3, BO4, BO5, BO6, BO7, BO8, BO9, BO10, BO11, BO12, BO13, BO14, BO15, BO16, BO17, BO18, BO19, BO21, BO22, BO23, BO24, BO25, BO26, BO27, BO28, BO29, BO30, BO69, BO70, BO72, BO71, BO31, BO32, BO36, BO37, BO38, BO39, BO41, BO42, BO43, BO44, BO45, BO46, BO47, BO48, BO49, BO50, BO51, BO52, BO53, BO54, BO55, BO57, BO58, BO59, BO60, BO61, BO62, BO63, BO75, BO64, BO65, BO74, BO76, BO67"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/ft336-bounded-output/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-owner",
+        "performer": "claude:session_01WqUNrAjWfLrnhUGN5EzP14",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session/final/owner@7b714cf3",
+          "digest": "sha256:465867c960aad630941cd003c829bae589650660753c6fd040cf8701ffba37ee",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,250\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "owner",
+        "command": "bench test --package ./internal/responsebound",
+        "exit_code": 0
+      },
+      {
+        "id": "final-cmd",
+        "performer": "claude:session_01WqUNrAjWfLrnhUGN5EzP14",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session/final/cmd@7b714cf3",
+          "digest": "sha256:c00d88a78a9c9f60809a0f3781ab75325d522c4828ab88420aab47bbfe53b67c",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,10326\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "cmd",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "final-worktree",
+        "performer": "claude:session_01WqUNrAjWfLrnhUGN5EzP14",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session/final/worktree@7b714cf3",
+          "digest": "sha256:4a501e53add3597d7169e3d545ab8ebef33daf46c848e934be94569301264f41",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,60318\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket3083408086/001/.bench-home/worktrees/001-3852100369/7aa3560454a3bbd9483732c79ae08074-ccc8e012f4a42e9395509e9e534a0db6: bind:… (257 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket1837593342/001/.bench-home/worktrees/001-689586632/f71b87ea9c32797c5ce5063bb46a01a0-52b2146e40528cc2b761ffeecfab39ef… (269 bytes)\""
+        },
+        "requirement": "worktree",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      },
+      {
+        "id": "final-system",
+        "performer": "claude:session_01WqUNrAjWfLrnhUGN5EzP14",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "fd923c448c7ebcf81367898b3f522e946211a636",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session/final/system@7b714cf3",
+          "digest": "sha256:a4da9e4777590aa0446956911fd52022bba3a100bc1a190a3c85e83d5e4f5aaf",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,64836\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
