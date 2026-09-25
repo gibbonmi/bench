@@ -370,6 +370,7 @@ The shell CLI hostile-input profile applies to the owner and to `--to`. The walk
 ## Ownership fences
 
 - `internal/bounds/bounds.go`
+- `internal/gate/subject.go`
 - `tests/canary/package-core-guard/bounds-duplicate-owner`
 - `tests/canary/package-core-guard/unrouted-subcommand`
 - `internal/responsebound/`
