@@ -44,15 +44,15 @@ Before each ticket, revalidate prepared source identity and required source byte
 
 An author that takes a regenerated charge reuses exact available source bytes only after the new manifest verifies their membership, role, and requiredness. A matching body digest alone authorizes no reuse. A fresh author makes its own narrow author read from the trusted evidence identity. A transferred final cursor and another consumer's receipt deliver no byte to it.
 
-After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug>`. A run from the primary checkout grades the wrong tip. After the last ticket in a chunk, freeze the chunk delta and run the three review axes before advancing. `/bench-review-implementation` owns those axes and the review record. The author commits the verification and probe record before the axis dispatch.
-When evidence requires an in-scope plan, `Writes:`, or gate expansion, apply `.bench/BENCH.md`'s approved plan-expansion policy before using it.
+After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug>`. A run from the primary checkout grades the wrong tip. After the last ticket in a chunk, freeze the chunk delta and run the three review axes before advancing. `/bench-review-implementation` owns those axes and the review record.
+
+The author commits the verification and probe record before the axis dispatch. Prepare the review charge from that record commit. The sequence is the author record commit, then the review charge, then the axis dispatch. When evidence requires an in-scope plan, `Writes:`, or gate expansion, apply `.bench/BENCH.md`'s approved plan-expansion policy before using it.
 
 ## Land
 
 Tickets commit green serially in `Blocked by:` order on the retained integration source. After each chunk review, accepted findings go to fresh repair sessions under `.bench/BENCH.md`'s repair rule, and each repair commits with current repair coverage. Start the successor only after that repair closes. Plan commits land before the ticket merge, and a `main` merge lands only before the first chunk. Only record commits follow the chunk tip. The reconciliation commit joins the review delta of the last chunk.
 
-Retain author verification and all three native review results in `reviews/<slug>.md`.
-Commit the artifact on its ordinary lane, then run `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>` before the successor.
+Retain author verification and all three native review results in `reviews/<slug>.md`. Commit the artifact on its ordinary lane, then run `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>` before the successor.
 
 An ordinary lane pass or ordinary green cannot replace this checkpoint. Follow its named record or review action when evidence fails.
 After a repair, apply the bounded repair policy's current-evidence rule and its narrow evidence-only exception before retrying.
