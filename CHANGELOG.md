@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Implementation review
+
+- Fixed review guidance so each narrow axis reads its own frozen diff and targeted consumer rows. The coordinator keeps only the evidence manifest, metadata, and current binding.
+
 ### Decision-map retirement
 
 - Removed six closed or shipped maps from the active decision inventory, including five false spec-ready entries in `bench maps`.
