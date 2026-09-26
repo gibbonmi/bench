@@ -81,8 +81,8 @@ If tracked changes remain, the retained drain session authors the complete track
 Report the reconcile verdicts (rows removed or reworded), the drained idea
 count, each retro recommendation disposition, each journal verdict, and the
 refreshed sequence. Flag judgment calls for veto. Run `bench roadmap --flow`
-once and quote its flow block in the exit. On approval, commit on green,
-once, over everything the pass touched. The recommended next command is the
+once and quote its flow block in the exit. On approval, commit the pass once on a lane
+pass, over everything the pass touched, and land it through the gate. The recommended next command is the
 top line of the refreshed `## Recommended sequence`.
 
 ## 1. Reconcile first
@@ -263,9 +263,9 @@ and every journal verdict. The tracked diff contains roadmap dispositions, retro
 per-spec retros, scorecards persist after this batch.
 
 Everything tracked in the pass lands in one diff and one commit. Ignored local
-changes do not enter that diff or commit. The gate is what a commit costs, and
-this pass is bookkeeping. A split of other tracked work buys nothing and pays
-the oracle twice. The later required per-spec commit exceptions still apply.
+changes do not enter that diff or commit. Each landing costs one whole-project
+gate, and this pass is bookkeeping. A split of other tracked work buys nothing
+and pays the gate twice. The later required per-spec commit exceptions still apply.
 Leave no tracked part for a later run.
 
 The diff includes the run's concise `CHANGELOG.md` entry only when the pass
@@ -275,11 +275,11 @@ mirror that history in a second ledger. That diff is the verdict sheet: the
 reviewer approves or adjusts it once, and there are no per-item interactive
 sign-offs.
 
-On approval, commit on green. Never commit the drain without that
-approval. `.bench/BENCH.md` owns the batch approval rule.
+On approval, commit the pass once on a lane pass, and land it through the gate.
+Never commit the drain without that approval. `.bench/BENCH.md` owns the batch approval rule.
 
 Three constraints shape the drain's commits.
-An item completed through "implement now" lands as its own commit on green before the drain's batch commit.
+An item completed through "implement now" lands green through its own landing before the drain's batch commit.
 This is the second exception to the one-batch-commit rule.
 The other exception is the extra per-spec commits required when one pass retires two or more specs.
 
