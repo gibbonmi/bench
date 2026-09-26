@@ -187,6 +187,21 @@ reads `yes`.
 The chunk tip is now `4d9e6aa8`, which adds only the cycle 2 assignment to
 the plan.
 
+## RE1 chunk review, round 3
+
+This is the confirming round at chunk tip `4d9e6aa8`. The shared evidence is
+`sha256:3d700adfbef6f305ce274326514dc0a86409bbce84bf1b7e84c7e87beb912b0b`.
+Each axis ran in a fresh `bench-reviewer` session on fable at high effort.
+
+Raw findings: Standards 0, Spec 0, Coverage 0. Repair targets: 0. The
+Standards axis confirmed that R4 is resolved. The Coverage axis ran the ticket
+checks again and repeated the forbid-anchor omission probe, which bit.
+
+Advice: cycle 2 committed nothing, but this record counts it as consumed and
+does not assume a spare cycle. The anchor still passes a paraphrased reversal.
+One spec sentence about the review table predates the RE1 rounds, and the RE2
+checkpoint updates it.
+
 ```bench-review-record
 {
   "version": 2,
@@ -446,6 +461,72 @@ the plan.
           "finding_ids": [],
           "supersedes": [
             "re1-r1-coverage"
+          ]
+        },
+        {
+          "id": "re1-r3-standards",
+          "performer": "claude:bench-reviewer/re1-r3-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "f978963a596bcfaffbfb4be47235b78a80b4c8f6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re1-r3-standards@4d9e6aa8",
+            "digest": "sha256:0214e1a6f7d8fd6875b5bcd91845d0b1cf92d2b89d87be4b7041a31b2680d07d",
+            "excerpt": "Standards: 0 findings. Worst: none."
+          },
+          "axis": "Standards",
+          "base": "c8c444ffae2fb1578cfa54a22fa632590ffbc322",
+          "tip": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "finding_ids": [],
+          "supersedes": [
+            "re1-r2-standards"
+          ]
+        },
+        {
+          "id": "re1-r3-spec",
+          "performer": "claude:bench-reviewer/re1-r3-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "f978963a596bcfaffbfb4be47235b78a80b4c8f6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re1-r3-spec@4d9e6aa8",
+            "digest": "sha256:a672197d8e5c4170f6e300062addb831c7be9440f6282c9223ff82a2ba90b5b9",
+            "excerpt": "Spec: 0 findings. Worst: none."
+          },
+          "axis": "Spec",
+          "base": "c8c444ffae2fb1578cfa54a22fa632590ffbc322",
+          "tip": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "finding_ids": [],
+          "supersedes": [
+            "re1-r2-spec"
+          ]
+        },
+        {
+          "id": "re1-r3-coverage",
+          "performer": "claude:bench-reviewer/re1-r3-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "f978963a596bcfaffbfb4be47235b78a80b4c8f6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re1-r3-coverage@4d9e6aa8",
+            "digest": "sha256:fb6a887255f2ff7a5bde7a02c7143aab4feccc145e92b1aa3dd133e09084581b",
+            "excerpt": "Coverage: 0 findings. Worst: none \u2014 the delta c024a237..4d9e6aa8 is the cycle 2 assignment entry in the embedded plan JSON only (specs/review-evidence-file-pages/spec.md lines 190-201, 12 insertions, no code or test change), so round 2's coverage verdict carries unchanged."
+          },
+          "axis": "Coverage",
+          "base": "c8c444ffae2fb1578cfa54a22fa632590ffbc322",
+          "tip": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "finding_ids": [],
+          "supersedes": [
+            "re1-r2-coverage"
           ]
         }
       ]
