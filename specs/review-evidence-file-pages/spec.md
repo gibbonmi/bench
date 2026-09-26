@@ -155,13 +155,34 @@ Each ticket includes its behavior and tests.
 
 ### Completion plan
 
-This version 1 plan declares required verification, not completed evidence.
-The build records real author assignments in its version 2 amendment.
+This version 2 plan records the real author assignments of the build.
+The build runs in Claude Code. The user selected `opus` at high effort for
+each ticket author. This model is the Claude mid binding of the declared line.
+The user selected `fable` for each review axis and for the full control.
 The review-owned control comparison remains a required acceptance checkpoint.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft337-review-evidence-file-pages-full-20260926",
+    "orchestrator_session": "claude:session_0156tkEZcRSowaafegWfFZJP",
+    "author_limit": 1,
+    "assignments": {
+      "1-order-review-preparation.md": [
+        {
+          "session": "claude:bench-writer/re-t1-author",
+          "assignment": "re-t1-author",
+          "model": "opus",
+          "effort": "high",
+          "source": "c8c444ffae2fb1578cfa54a22fa632590ffbc322",
+          "native_ref": "claude:agent/re-t1-author-20260926@c8c444ffae2fb1578cfa54a22fa632590ffbc322"
+        }
+      ],
+      "2-page-review-diffs-by-file.md": []
+    }
+  },
   "chunks": [
     {
       "id": "RE1",
@@ -170,12 +191,14 @@ The review-owned control comparison remains a required acceptance checkpoint.
       ],
       "verification": [
         {
-          "id": "workflow",
-          "command": "bench test --check docs-currency-workflow"
+          "id": "1-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "ticket": "1-order-review-preparation.md"
         },
         {
-          "id": "record-order",
-          "command": "go test -count=1 -parallel=2 ./internal/preflight/evidencecmd"
+          "id": "1-record-order",
+          "command": "go test -count=1 -parallel=2 ./internal/preflight/evidencecmd",
+          "ticket": "1-order-review-preparation.md"
         }
       ]
     },
@@ -186,16 +209,19 @@ The review-owned control comparison remains a required acceptance checkpoint.
       ],
       "verification": [
         {
-          "id": "file-evidence",
-          "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/git ./internal/consumers ./internal/chargeevidence ./internal/preflight/..."
+          "id": "2-file-evidence",
+          "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/git ./internal/consumers ./internal/chargeevidence ./internal/preflight/...",
+          "ticket": "2-page-review-diffs-by-file.md"
         },
         {
-          "id": "ports",
-          "command": "bench test --check injected-port-registry"
+          "id": "2-ports",
+          "command": "bench test --check injected-port-registry",
+          "ticket": "2-page-review-diffs-by-file.md"
         },
         {
-          "id": "workflow",
-          "command": "bench test --check docs-currency-workflow"
+          "id": "2-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "ticket": "2-page-review-diffs-by-file.md"
         }
       ]
     }
@@ -326,7 +352,7 @@ Won't handle: automatic permanent adoption — RE15 keeps the reviewer as the in
 - `internal/conformance/injected_ports_registry_test.go`
 - `reviews/review-evidence-file-pages.md`
 
-Reviewer disposition: pending spec and ticket sign-off.
+Reviewer disposition: approved on 2026-09-26, with the ticket graph and the fences.
 The debug prerequisite is integrated. Further notes names its landing.
 This phase includes that repair. The implementation tickets consume its canonical
 guidance and add only the preparation order and file-page behavior.
