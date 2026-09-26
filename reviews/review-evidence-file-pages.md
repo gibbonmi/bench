@@ -93,19 +93,52 @@ prepared tip. Its independent bypass probe on `charge_pack.go` bit.
 Advice: a needle inside a fenced block in the Build section also satisfies
 the locator.
 
+## RE1 repair cycle 1
+
+The reviewer decided both open findings. R3 takes the chunk's one hardening
+cycle. R1 reverts the reflow and raises the prose budget row. Repair cycle 1
+of 2 is consumed.
+
+A fresh `bench-writer` repair session on opus at low effort started at
+`639e3a59` and committed `304913d7`. A `ForbidInSection` anchor now reds a
+reverse-order statement in the Build section. A new reversed fixture proves it
+through the workflow owner. The Land lines keep the base layout, and the
+budget row reads 81.
+
+Two plan expansions preceded and followed the repair. The first added
+`projects/benchkit.md` to the `Writes:` line of ticket 1. The second added the
+seven fixtures that pin that file, after `fixture-closure` went red. The
+chunk tip is now `c024a237`. The repair session ran the two ticket checks
+again at that tip, and each check passed.
+
+| File | Mutation | Check or test | Verdict |
+|---|---|---|---|
+| `.agents/commands/bench-implement-spec.md` | swap: add a reverse-order sentence, before the repair | docs-currency-workflow | silent |
+| `.agents/commands/bench-implement-spec.md` | swap: add a reverse-order sentence, after the repair | docs-currency-workflow | bit |
+| `internal/anchors/registry_chunk_chain.go` | omission: the forbid anchor | TestEveryRetainedFixtureBitesThroughRegisteredOwner | bit |
+| `projects/benchkit.md` | swap: the budget row back to 80 | guidance-prose-budgets | bit |
+| reversed fixture `MUTATE.json` | swap: "before" to "after" | TestEveryRetainedFixtureBitesThroughRegisteredOwner | bit |
+
+The orchestrator ran the last probe as the independent coordinator probe.
+Each restore reads `yes`.
+
+The build preflight reports `base-current` red, because `main` gained a
+landing after the build started. The review chain forbids a `main` merge
+after the first chunk, and the landing composes that commit.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/review-evidence-file-pages/spec.md",
-  "plan_digest": "sha256:137fb3616ac828784f2984e8c6a918d4f069bf9e993fb8a854cb8d9d4fd41c3c",
+  "plan_digest": "sha256:d7852c577c37e073b66469c12432eaeced47dabe23f549758c73f9554f99f0b3",
   "implementation_session": "",
   "chunks": [
     {
       "id": "RE1",
       "base": "c8c444ffae2fb1578cfa54a22fa632590ffbc322",
-      "tip": "260a62ea1e807c1989645b894c1a029f5a4b491e",
-      "plan_digest": "sha256:137fb3616ac828784f2984e8c6a918d4f069bf9e993fb8a854cb8d9d4fd41c3c",
-      "source_digest": "8f695ba5f19389ccf2b45f93462410180a429370",
+      "tip": "c024a23711443fb649bbd6063a70f70459e37511",
+      "plan_digest": "sha256:d7852c577c37e073b66469c12432eaeced47dabe23f549758c73f9554f99f0b3",
+      "source_digest": "65fd30ec52ec589771bba326bc17068488c199a1",
       "acceptance_rows": [
         "RE11",
         "RE12"
@@ -142,6 +175,42 @@ the locator.
             "ref": "claude:agent/re-t1-author-20260926/1-record-order@260a62ea",
             "digest": "sha256:1e368a6b9cb67d3508da92d8dbc44e4996f4fefd9419399ef2798cb13eaff0a3",
             "excerpt": "ok github.com/gibbonmi/bench/internal/preflight/evidencecmd 7.776s"
+          },
+          "requirement": "1-record-order",
+          "command": "go test -count=1 -parallel=2 ./internal/preflight/evidencecmd",
+          "exit_code": 0
+        },
+        {
+          "id": "re1-1-workflow-r2",
+          "performer": "claude:bench-writer/re-t1-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "65fd30ec52ec589771bba326bc17068488c199a1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t1-repair-c1-20260926/1-workflow@c024a237",
+            "digest": "sha256:374ff3cb73050cfa13dc3a30b7cb61d8fc586d391e9585ad3bf66a03db3354d2",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,619\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "1-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "re1-1-record-order-r2",
+          "performer": "claude:bench-writer/re-t1-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "65fd30ec52ec589771bba326bc17068488c199a1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t1-repair-c1-20260926/1-record-order@c024a237",
+            "digest": "sha256:fc3f21bce946d69e94977ac14b7e01a324a007132768827d8f496103db93bb2f",
+            "excerpt": "ok  \tgithub.com/gibbonmi/bench/internal/preflight/evidencecmd\t8.174s"
           },
           "requirement": "1-record-order",
           "command": "go test -count=1 -parallel=2 ./internal/preflight/evidencecmd",
