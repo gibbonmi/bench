@@ -1,7 +1,7 @@
 # Order the author record before the review charge
 
 Blocked by: none
-Writes: .agents/commands/bench-implement-spec.md, internal/anchors, tests/canary/workflow-guidance-anchors, internal/preflight/evidencecmd, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/injected_ports_registry_test.go, projects/benchkit.md
+Writes: .agents/commands/bench-implement-spec.md, internal/anchors, tests/canary/workflow-guidance-anchors, internal/preflight/evidencecmd, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/injected_ports_registry_test.go, projects/benchkit.md, tests/canary/guidance-prose-budgets/over-budget-skill, tests/canary/line-routing/line-binding-prose-drift, tests/canary/skill-description-budgets/budget-table-missing, tests/canary/skill-description-budgets/description-folded, tests/canary/skill-description-budgets/description-missing, tests/canary/skill-description-budgets/over-budget-command, tests/canary/skill-description-budgets/over-budget-description
 Covers: RE11, RE12
 
 ## What to build

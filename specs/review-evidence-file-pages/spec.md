@@ -364,6 +364,13 @@ Won't handle: automatic permanent adoption — RE15 keeps the reviewer as the in
 - `internal/conformance/injected_ports_registry_test.go`
 - `reviews/review-evidence-file-pages.md`
 - `projects/benchkit.md`
+- `tests/canary/guidance-prose-budgets/over-budget-skill`
+- `tests/canary/line-routing/line-binding-prose-drift`
+- `tests/canary/skill-description-budgets/budget-table-missing`
+- `tests/canary/skill-description-budgets/description-folded`
+- `tests/canary/skill-description-budgets/description-missing`
+- `tests/canary/skill-description-budgets/over-budget-command`
+- `tests/canary/skill-description-budgets/over-budget-description`
 
 Reviewer disposition: approved on 2026-09-26, with the ticket graph and the fences.
 The debug prerequisite is integrated. Further notes names its landing.
