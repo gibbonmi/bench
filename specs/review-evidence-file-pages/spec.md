@@ -204,7 +204,16 @@ The review-owned control comparison remains a required acceptance checkpoint.
           "preserved": "ca686c6fd62844452303fc72db401d4adb8e438b"
         }
       ],
-      "2-page-review-diffs-by-file.md": []
+      "2-page-review-diffs-by-file.md": [
+        {
+          "session": "claude:bench-writer/re-t2-author",
+          "assignment": "re-t2-author",
+          "model": "opus",
+          "effort": "high",
+          "source": "ed63e73259e48d881db2815b282f4c4e381e4725",
+          "native_ref": "claude:agent/re-t2-author-20260926@ed63e73259e48d881db2815b282f4c4e381e4725"
+        }
+      ]
     }
   },
   "chunks": [
