@@ -327,8 +327,9 @@ Won't handle: automatic permanent adoption — RE15 keeps the reviewer as the in
 - `reviews/review-evidence-file-pages.md`
 
 Reviewer disposition: pending spec and ticket sign-off.
-The separate debug repair owns the conflicting full-read instruction.
-Reconcile its committed result before the final fence lock.
+The separate debug repair landed at `3119dc72d48ad44a0a382bdf13a437a877b3e538`.
+This phase includes that repair. The implementation tickets consume its canonical
+guidance and add only the preparation order and file-page behavior.
 
 ## Out of scope
 
@@ -450,7 +451,7 @@ finished-tree mutations. A compile failure proves no behavioral predicate.
 
 Flagged additions: none.
 File sources and differential fixtures implement the reviewed per-file option.
-The separate debug repair remains a prerequisite until its tip is integrated.
+The debug prerequisite is integrated from landing `3119dc72d48ad44a0a382bdf13a437a877b3e538`.
 The real control result and usage remain unknown at spec time.
 
 ### Narrow and control evidence
