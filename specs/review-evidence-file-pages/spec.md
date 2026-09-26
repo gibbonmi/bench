@@ -60,10 +60,43 @@ The pack owner continues to derive page boundaries and digests.
 Do not duplicate pagination, path decoding, or changed-path knowledge.
 
 The diff sources contain the existing prefix, each file patch, and the existing
-suffix in reconstruction order. Their manifest descriptors distinguish file
-patches from structural fragments. Each file source identifies its repository
-path. A rename retains both spellings in its verbatim patch. A deletion uses
-its base path. RE3, RE5, and RE6 cover these distinctions.
+suffix in reconstruction order. Use these exact descriptors. RE5 checks the
+fragments, and RE9 selects files by their descriptors.
+
+| Fragment | Role | Path | Bytes |
+| --- | --- | --- | --- |
+| Prefix | `diff-prefix` | `diff-prefix` | Existing tables through `diff_body:` and its newline |
+| File patch | `diff-file` | Repository path defined below | Complete verbatim patch, including its headers |
+| Suffix | `diff-suffix` | `diff-suffix` | Existing help table after the patch body |
+
+An empty diff has the prefix and suffix, with no file source.
+Every fragment uses `kind=generated` and `required=true`.
+Every diff fragment's shared row uses `kind=diff`.
+
+Use the tip path for each surviving file, including additions, modifications, and renames.
+Use the base path for a deleted file. This rule also covers patches without `---` or `+++` lines.
+A rename keeps both spellings in its verbatim patch. RE9's identity cases
+cover an empty addition, empty deletion, binary change, mode change, and pure rename.
+
+Keep the producer's ambient rename behavior and complete output bytes.
+The inventory uses `--no-renames`, but the patch body can contain a rename.
+Match paths by identity, never by inventory position. RE3 and RE9 exercise
+rename detection both enabled and disabled.
+
+One shared decoder reads patch path syntax. It decodes C-quoted paths in
+`diff --git`, `---`, `+++`, and the rename or copy path headers.
+The `rename from`, `rename to`, `copy from`, and `copy to` paths are already
+repository-relative. Strip display prefixes only from headers that carry them.
+
+For headerless patches, use the `diff --git` paths and extended headers.
+The `new file mode` and `deleted file mode` headers identify absent sides.
+Prefer explicit rename or copy paths when present. Never split unquoted paths
+at each space. Resolve them against the frozen path inventory when needed.
+Parse path headers only in the patch header region, before its content.
+
+Move the existing consumers decoder to the shared owner if the diff owner
+needs it. Keep the consumers hunk interpretation unchanged. RE5 exercises
+hostile paths, and RE9 requires each headerless patch's exact descriptor.
 
 All fragments remain required and retain their actual producer provenance.
 Shared evidence rows bind every diff fragment in reconstruction order.
@@ -87,9 +120,15 @@ and available usage. Keep unavailable usage unknown. Run one independent
 full-retrieval control across all axes on RE2's same frozen diff.
 
 The control receives no narrow findings before its return. Record agreement,
-additional findings, and their dispositions. A miss uses the existing repair
-route. A missing control leaves adoption undecided. The reviewer owns permanent
-adoption. RE13, RE14, and RE15 grade this real-session evidence.
+additional findings, and their dispositions. Check complete patch retrieval
+against raw `git diff` bytes from the frozen pair.
+A miss uses the existing repair route. A missing control leaves adoption
+undecided. The reviewer owns permanent adoption.
+
+The orchestrator owns RE10 and RE13 through RE16 at the RE2 review checkpoint.
+It records native returns and the comparison after the ticket's green commit.
+These rows remain mandatory before final reconciliation. Their absence blocks
+that checkpoint, without assigning a ticket author to review its own work.
 
 ## Implementation chunks
 
@@ -173,6 +212,16 @@ Retrieve the published artifact through the normal evidence command.
 Pure partition tests belong under the diff owner. They supplement the complete
 producer-to-reader check. Pack format tests provide the paging precedent.
 
+Extend `TestEvidenceReviewProvenanceRows` for every generated fragment.
+It retains the existing provenance guarantee as source cardinality changes.
+
+RE5 compares old and new outputs from deterministic Git fixtures.
+Pin commit dates, identities, content, and relevant Git configuration.
+Capture the old full output before the refactor, including its framing bytes.
+The new producer must match that stored baseline. Raw `git diff` from the
+frozen pair independently checks each patch body. Do not regenerate expected
+bytes through the new partition owner.
+
 Use test-first development for digest stability and complete reconstruction.
 Observe the old monolithic source fail before the production change.
 An independent expectation requires a demonstrated omission or swap mutation.
@@ -206,18 +255,18 @@ committed author record -> review charge -> check-current -> fresh axes
 | --- | --- | --- | --- | --- |
 | RE1 | 1 | Growing `a.go` leaves every `z.go` patch page digest unchanged under one base | Planned `TestReviewFilePageStability` through `preflight.Command` | The first patch crosses a page boundary, so global pagination changes later digests |
 | RE2 | 2 | Separate spec, ticket, and review-record edits preserve the untouched code patch digests | Planned `TestReviewFilePageStability` document cases | Each document grows independently, so excluding only one cannot pass |
-| RE3 | 3 | Adding an earlier file preserves the retained file's path-to-digest mapping | Planned `TestReviewFileIdentity` through evidence retrieval | The inserted source moves ordinals, so ordinal-only reuse selects the wrong body |
+| RE3 | 3 | Adding an earlier file preserves the retained file's path-to-digest mapping | Planned `TestReviewFileIdentity` with both rename settings | The inserted source moves ordinals, so ordinal-only reuse selects the wrong body |
 | RE4 | 4 | Editing a file patch changes its source digest | Planned `TestReviewFileIdentity` changed-patch case | Retaining the previous body or digest returns the old value |
 | RE5 | 5 | Retrieved fragments reconstruct the complete original frozen diff byte for byte | Planned `TestReviewFileReconstruction` at the diff and preflight seams | An omitted patch or framing fragment changes the independent baseline comparison |
-| RE6 | 6 | Equal-content files retain separate manifest path memberships | Planned `TestReviewFileIdentity` duplicate-content case | Deduplication by file-content digest removes one declared file |
+| RE6 | 6 | Equal-content files retain separate manifest path memberships | Planned `TestReviewFileIdentity` duplicate-content case | Equal-length paths can share later page digests, so page deduplication can lose one membership |
 | RE7 | 7 | A later charge contains only its requested predecessor-to-tip diff | Planned `TestReviewFileReconstruction` predecessor-base case | A fallback to main includes the earlier chunk's sentinel patch |
 | RE8 | 8 | A multi-page Unicode patch reconstructs exactly through the existing page protocol | Planned `TestReviewFileReconstruction` large-file case | A split byte, repeated page, or omitted page changes the body |
-| RE9 | 9 | A selected file stream returns only that file's complete patch | Planned `TestReviewFileSelectedStream` through `preflight.Command` | Another file's sentinel or a missing suffix changes the selected body |
+| RE9 | 9 | Selection by the declared file identity returns only that file's complete patch | Planned `TestReviewFileSelectedStream` with the identity cases | A base-path rename, empty descriptor, or inventory-position match selects no source or the wrong body |
 | RE10 | 10 | Reuse requires the new manifest's membership, role, and requiredness | review-owned: inspect RE2's retrieval record | A digest-only reuse decision lacks the source descriptors |
 | RE11 | 11 | Guidance orders the author record commit before the review charge | `docs-currency-workflow` with chunk-chain omission and order-swap mutations | Commit-before-dispatch alone misses the charge-before-commit mutation |
 | RE12 | 12 | Current binding refuses a review charge after a later record commit | Planned `TestReviewRecordChargeOrder` through `preflight.Command` | The fixture first binds after commit, then moves the record and requires the stale-tip refusal |
 | RE13 | 13 | This spec records every narrow round's actual reads and findings | review-owned: compare native returns with the round table | An omitted axis or read inventory prevents reconciliation with its native return |
-| RE14 | 14 | A full-retrieval control reviews the narrow round's exact frozen diff | review-owned: compare transcripts, retrieval completion, and source pins | A different pair or incomplete retrieval cannot establish the control |
+| RE14 | 14 | A full-retrieval control reviews the narrow round's exact frozen diff | review-owned: compare transcripts and source pins against the frozen pair's raw Git patch bytes | A different pair or incomplete retrieval cannot establish the control |
 | RE15 | 15 | Permanent adoption waits for the control comparison and reviewer disposition | review-owned: inspect the comparison and decision | Cost reduction alone supplies neither missed-finding analysis nor the decision |
 | RE16 | 16 | Each fresh axis reads its own required context | review-owned: inspect each axis's native read inventory | A transferred receipt delivers no local source read |
 
@@ -228,6 +277,7 @@ RE5's differential fixture covers the producer's following shapes:
 
 - An empty diff and a diff containing only the spec or review record.
 - Added, modified, deleted, and renamed files, including a pure rename.
+- An empty addition and deletion with no `---` or `+++` headers.
 - A mode-only patch, binary marker, and committed symlink patch.
 - A missing final newline and content that resembles a patch header.
 - Paths with spaces, globs, quotes, backslashes, and non-ASCII bytes.
@@ -237,9 +287,6 @@ RE5's differential fixture covers the producer's following shapes:
 RE1 and RE8 cover page-size edges. RE6 covers equal-content members.
 RE7 covers a base other than main. RE12 covers a record-only tip change.
 Existing movement and missing-source tests remain in focused verification.
-
-Committed patch construction does not follow working links or read a FIFO.
-An absent working file does not become an empty committed patch.
 
 Won't handle: stable digests after a changed patch or base — the current manifest identifies the new bytes.
 Won't handle: delivery through another axis's receipt — RE16 keeps the fresh axis as the in-scope reader.
@@ -289,12 +336,19 @@ or upstream document determines this contract.
 
 | Question | Source fact | Consequence |
 | --- | --- | --- |
-| Why do pages move? | `internal/preflight/review.go:51` collects one diff. `internal/chargeevidence/pack.go:114` pages each source independently. | Split file sources and keep the pager |
+| Why do pages move? | `internal/preflight/review.go:51` collects one diff. `internal/chargeevidence/pack.go:104` pages each source independently. | Split file sources and keep the pager |
 | Does review always use main? | `internal/preflight/review.go:56` passes the explicit base and tip | Preserve explicit-base behavior |
-| Who owns membership? | `internal/chargeevidence/manifest.go:14` defines source descriptors. `internal/chargeevidence/metadata.go:43` writes shared rows. | Keep membership in the existing schema |
-| Who decodes patch paths? | `internal/consumers/hunks.go:64` owns header decoding | Share that rule if the diff owner needs it |
+| Who owns membership? | `internal/chargeevidence/manifest.go:15` defines source descriptors. `internal/chargeevidence/metadata.go:43` writes shared rows. | Keep membership in the existing schema |
+| Who decodes patch paths? | `internal/consumers/hunks.go:64` decodes only `---` and `+++` paths | Share its C-quote rule and extend headerless patch identity |
 | Who grades order? | `internal/anchors/registry_chunk_chain.go:7` pins commit before dispatch | Extend that owner with charge order |
 | Who executes the guidance check? | `internal/conformance/registry/registry.go` registers `docs-currency-workflow` and its fixture family | Extend the existing executed check |
+
+A Git fixture confirmed the inventory and patch cardinalities can differ.
+With rename detection enabled, six inventory paths produced five patches.
+With rename detection disabled, the same pair produced six patches.
+The pure rename, empty addition, binary change, and mode change lacked
+`---` and `+++` headers. The fixture used a committed base and tip.
+Evidence: `/tmp/ft337-git-identities-ici8r1fo` on 2026-09-25.
 
 The roadmap's phrase "from `main`" is stale factual shorthand. Preserve the
 current explicit chunk-base decision. This correction remains subject to
@@ -380,8 +434,9 @@ The real control result and usage remain unknown at spec time.
 
 ### Narrow and control evidence
 
-No implementation review has run. RE2 fills this table from native returns.
-Each row names its frozen pair and evidence identity.
+No implementation review has run. The orchestrator fills this table at RE2's
+review checkpoint from native returns. Each row names its frozen pair and
+evidence identity. Ticket 2's green commit precedes these records.
 
 | Round / axis | Mode | Frozen pair / identity | Reads | Findings | Usage |
 | --- | --- | --- | --- | --- | --- |

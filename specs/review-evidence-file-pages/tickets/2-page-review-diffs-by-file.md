@@ -1,7 +1,7 @@
 # Prepare complete review diffs with stable file pages
 
 Blocked by: 1-order-review-preparation.md
-Writes: internal/preflight, internal/diff, internal/consumers, internal/chargeevidence, .agents/skills/bench-craft-delegate/references/charge-evidence-format.md, internal/anchors, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/injected_ports_registry_test.go, specs/review-evidence-file-pages/spec.md
+Writes: internal/preflight, internal/diff, internal/consumers, internal/chargeevidence, .agents/skills/bench-craft-delegate/references/charge-evidence-format.md, internal/anchors, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/injected_ports_registry_test.go
 Covers: RE1, RE2, RE3, RE4, RE5, RE6, RE7, RE8, RE9, RE10, RE13, RE14, RE15, RE16
 
 ## What to build
@@ -16,11 +16,17 @@ pack. Match retained bytes through current manifest membership and descriptors.
 Preserve producer provenance. Extend the shared `preflighttest` fixture and
 its readers rather than copy the harness.
 
-The current patch-path parser belongs to consumers. If the diff owner needs
-that rule, move its implementation and migrate its existing reader here.
+Implement the spec's descriptor table and file-identity rule, including patches
+without `---` or `+++` lines. Preserve ambient rename behavior and verbatim bytes.
+The current C-quote decoder belongs to consumers. Share its implementation
+with the diff owner and preserve the existing hunk interpretation.
+
 RE1 supplies the author-record-before-charge contract for this chunk's review.
-The orchestrator records narrow reads and findings in the spec. It runs one
-independent full control on the same frozen pair before the adoption decision.
+RE10 and RE13 through RE16 in `Covers:` associate this chunk with its later
+orchestrator checkpoint. The ticket author delivers the executable evidence.
+After this ticket commits green, the orchestrator records the actual reviews
+and control comparison in the spec. Those obligations remain outside this
+author's acceptance criteria.
 
 ## Acceptance
 
@@ -32,10 +38,9 @@ independent full control on the same frozen pair before the adoption decision.
 - [ ] Retrieved fragments reconstruct every RE5 fixture byte for byte.
 - [ ] A later-chunk charge uses its explicit predecessor base.
 - [ ] A large Unicode patch reconstructs through the existing page protocol.
-- [ ] Selecting one file retrieves its complete patch without another file's body.
-- [ ] Generated fragments retain their actual producer provenance.
-- [ ] This spec records all narrow rounds and the same-pair full control.
-- [ ] The reviewer receives the comparison before permanent adoption.
+- [ ] Selection by the spec's file identity retrieves only that file's complete patch.
+- [ ] Headerless patches have the exact role and path that the spec defines.
+- [ ] Generated fragments retain their actual producer provenance under `TestEvidenceReviewProvenanceRows`.
 
 Use planned `TestReviewFilePageStability`, `TestReviewFileIdentity`,
 `TestReviewFileReconstruction`, and `TestReviewFileSelectedStream`.
@@ -43,10 +48,14 @@ Place command scenarios in new files under `internal/preflight/evidencecmd`.
 Keep file growth within the existing budget. Reuse package fixture and
 traversal helpers. Pure partition cases belong under `internal/diff`.
 
-Capture original full-diff outputs for the fixture family before production
-edits. Keep the permanent comparison against those baseline bytes. Do not
-rewrite production sources during ordinary tests. Prove the named spec
-mutations through `bench probe` and require restoration.
+Use RE5's deterministic fixture and independent baseline contract.
+Include pure renames, empty additions and deletions, binary patches, and mode changes
+in the selected-stream test. Test rename detection both enabled and disabled.
+Use equal-length paths and multi-page equal content for the RE6 case.
+Require equal later page digests while each path retains its own membership.
+
+Do not rewrite production sources during ordinary tests. Prove the named
+spec mutations through `bench probe` and require restoration.
 
 Run focused diff, consumers, preflight, and chargeevidence suites with `-parallel 2`.
 Retain binding, navigation, export, provenance, movement, and response-bound tests.
@@ -54,7 +63,6 @@ Run applicable command-registry and injected-port checks. Regenerate the
 format reference after its description changes. Run its prose check too.
 
 The package invariant is complete reconstruction with one source of paging
-and path-decoding knowledge. The control is real review evidence, not a
-simulated result. Use independent sessions under the review phase's rules.
-Record both frozen pins before an evidence-only spec update. Apply existing
-record and review rules to that update.
+and path-decoding knowledge. The orchestrator performs the real control under
+the spec's RE2 checkpoint obligations. It records both frozen pins before an
+evidence-only spec update. Existing record and review rules apply to that update.

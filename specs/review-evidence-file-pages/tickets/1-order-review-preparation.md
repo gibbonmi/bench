@@ -28,6 +28,9 @@ its accepted result. Extend the existing anchor and fixture owners. Use
 - [ ] Existing chunk-chain requirements retain their prior coverage.
 
 Use planned `TestReviewRecordChargeOrder` under `internal/preflight/evidencecmd`.
+CE57 already checks a moved tip in build mode. This review-mode scenario adds
+the author-record sequence. Reuse the shared current-binding fixture.
+
 Extend `TestChunkChainAnchors` and the workflow fixture family for RE11.
 Demonstrate the independent expectation's omission mutation through `bench probe`.
 Require its restored result before interpreting the red.
