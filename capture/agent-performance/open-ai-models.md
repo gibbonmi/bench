@@ -7,6 +7,8 @@ Astra/high orchestrates both landings and verifies the reviewed source bytes.
 
 Sol/high supplies independent Standards, Spec, and Coverage review.
 Terra/low interprets six fresh-reader scenarios as intended.
+Sol/high prepares the FT337 review-guidance debug repair in one fix cycle after daemon recovery.
+Focused conformance checks and reversible probes pass. The full gate and landing remain pending.
 Tokens, provider costs, and comparative fast-mode latency remain unknown.
 
 ## Cost assumptions
@@ -21,7 +23,7 @@ The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches dol
 | Terra / low, medium, high | implementation and fresh-session adoption | Terra/low interprets all six guidance scenarios as intended. This exercise proves comprehension only. | Use fresh readers against committed owner bytes. | unknown |
 | Terra / high, medium, low | research and seam inspection, latest 5 assignments; semantic review, latest 10 axis passes | On `bounded-repair-policy`, all three Terra/high axes passed before a cross-harness reviewer found two policy defects. Each axis verified the repairs; Coverage corrected one source-identity claim after the coordinator checked Git. | Standards, Spec, and Coverage review in separate contexts; independently census production callers. | unknown |
 | Luna / max, medium | prose implementation and bounded repairs | Luna preserved the Ticket 4 prose pass. Review found owner-identity and instruction-shape defects that required an Astra repair and refreshed adoption evidence. | Use Luna for narrow prose changes after an owner census and before independent review. | unknown |
-| Sol / high | retained implementation and adoption work | Sol completed substantive guidance and fresh adoption work. Coordinator checks found stale source identity and one final parser defect outside the prose. | Use Sol/high for exact specification chunks under independent review and coordinator probes. | unknown |
+| Sol / high | retained implementation and adoption work | Sol completed substantive guidance and fresh adoption work. In FT337, Sol/high repaired conflicting coordinator and axis retrieval guidance in one fix cycle after daemon recovery. Focused conformance and reversible probes passed. | Use Sol/high for exact specification chunks under independent review and coordinator probes. | unknown |
 | Sol / high, medium | independent review and admission diagnosis | Sol/high identifies six accepted repair targets across two tickets and one refuted request. All four tickets pass final native review and their landing gates. | Keep independent contexts for each axis and exact source identity. | unknown |
 
 ## Representative evidence
@@ -33,6 +35,7 @@ The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches dol
 | FT311 recoverable-reset candidate | A Fable/high round found three behavior defects after the candidate's medium-tier review. | delegate and reviewer | Keep independent adversarial verification when authority or destructive behavior crosses boundaries. |
 | Repair collection pilot | Sol/high implemented three chunks; Astra/medium found gaps in each, then passed every repaired source and final composition. | delegate | Keep one retained author across bounded repair rounds and bind every review to its source. |
 | Debug loop guidance | Astra, Sol, and Luna completed two tickets and the DG15 debug repair. Six Ticket 5 repair rounds ended with three passing review axes and a green landing gate. | delegate, reviewer, tree/tooling, and orchestrator | Keep source identity exact, retain one debug author, and require independent final axes. |
+| FT337 review-guidance debug | Sol/high removed stale coordinator retrieval instructions and preserved the full-retrieval control. Focused checks, retained fixtures, and reversible probes passed. | tree/tooling and coordinator | Keep Process links to canonical Entry orientation beside explicit contradiction guards. |
 
 ## Current decisions
 
