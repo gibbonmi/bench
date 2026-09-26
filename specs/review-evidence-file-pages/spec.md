@@ -190,6 +190,18 @@ The review-owned control comparison remains a required acceptance checkpoint.
           "trigger": "user-directed",
           "stopped": "claude:agent/re-t1-author returned its final report and holds no write charge",
           "preserved": "fa1b8717f0e6426fb28898cd9b0f72ba1d3b2839"
+        },
+        {
+          "session": "claude:bench-writer/re-t1-repair-c2",
+          "assignment": "re-t1-repair-c2",
+          "model": "opus",
+          "effort": "high",
+          "source": "ca686c6fd62844452303fc72db401d4adb8e438b",
+          "native_ref": "claude:agent/re-t1-repair-c2-20260926@ca686c6fd62844452303fc72db401d4adb8e438b",
+          "predecessor": "claude:bench-writer/re-t1-repair-c1",
+          "trigger": "user-directed",
+          "stopped": "claude:agent/re-t1-repair-c1 returned its final report and holds no write charge",
+          "preserved": "ca686c6fd62844452303fc72db401d4adb8e438b"
         }
       ],
       "2-page-review-diffs-by-file.md": []
