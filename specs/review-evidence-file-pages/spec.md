@@ -102,6 +102,70 @@ Review RE1 before RE2 starts. Both tickets name shared command registries, so
 their writes remain serial. RE2 consumes RE1's preparation order during review.
 Each ticket includes its behavior and tests.
 
+### Completion plan
+
+This version 1 plan declares required verification, not completed evidence.
+The build records real author assignments in its version 2 amendment.
+The review-owned control comparison remains a required acceptance checkpoint.
+
+```bench-completion-plan
+{
+  "version": 1,
+  "chunks": [
+    {
+      "id": "RE1",
+      "tickets": [
+        "1-order-review-preparation.md"
+      ],
+      "verification": [
+        {
+          "id": "workflow",
+          "command": "bench test --check docs-currency-workflow"
+        },
+        {
+          "id": "record-order",
+          "command": "go test -count=1 -parallel=2 ./internal/preflight/evidencecmd"
+        }
+      ]
+    },
+    {
+      "id": "RE2",
+      "tickets": [
+        "2-page-review-diffs-by-file.md"
+      ],
+      "verification": [
+        {
+          "id": "file-evidence",
+          "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/consumers ./internal/chargeevidence ./internal/preflight/..."
+        },
+        {
+          "id": "ports",
+          "command": "bench test --check injected-port-registry"
+        },
+        {
+          "id": "workflow",
+          "command": "bench test --check docs-currency-workflow"
+        }
+      ]
+    }
+  ],
+  "final_verification": [
+    {
+      "id": "coverage",
+      "command": "bench coverage --check specs/review-evidence-file-pages/spec.md"
+    },
+    {
+      "id": "file-evidence",
+      "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/consumers ./internal/chargeevidence ./internal/preflight/..."
+    },
+    {
+      "id": "workflow",
+      "command": "bench test --check docs-currency-workflow"
+    }
+  ]
+}
+```
+
 ## Testing decisions
 
 Drive `preflight.Command` through the existing `preflighttest` fixture.
