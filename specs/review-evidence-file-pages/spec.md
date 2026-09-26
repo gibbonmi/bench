@@ -327,7 +327,7 @@ Won't handle: automatic permanent adoption — RE15 keeps the reviewer as the in
 - `reviews/review-evidence-file-pages.md`
 
 Reviewer disposition: pending spec and ticket sign-off.
-The separate debug repair landed at `3119dc72d48ad44a0a382bdf13a437a877b3e538`.
+The debug prerequisite is integrated. Further notes names its landing.
 This phase includes that repair. The implementation tickets consume its canonical
 guidance and add only the preparation order and file-page behavior.
 

@@ -5,7 +5,7 @@ Sol/high completed the guidance repair in one fix cycle after daemon recovery.
 Focused checks, independent omission probes, and the full landing gate passed.
 The gate reported eight informational capability skips and no environment skips.
 
-The FT337 spec review has accepted the repaired draft, but human approval and its staging gate remain pending.
+At capture time, FT337 has an accepted draft, but human approval and its staging gate remain pending.
 The spec author and coordinator's exact model metadata and provider costs are unknown.
 The debug author's invalid confidence remains an abstention.
 Tokens and comparative latency remain unknown.

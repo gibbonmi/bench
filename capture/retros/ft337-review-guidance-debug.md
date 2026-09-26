@@ -47,7 +47,7 @@ The coordinator independently omitted the step 1 Process-to-Entry link.
 
 | ticket | rounds | causes |
 |---|---|---|
-| review-guidance debug | 1 original fix cycle; 0 post-return semantic repair cycles | tree/tooling: stale Process prose contradicted Entry orientation |
+| review-guidance debug | 1 original fix cycle; 0 post-return semantic repair cycles | other: stale Process prose contradicted Entry orientation |
 
 ## Agent-experience improvements
 

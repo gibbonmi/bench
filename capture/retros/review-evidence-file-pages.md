@@ -34,13 +34,14 @@ End-to-end latency and author or coordinator usage remain unknown.
 
 | surface | claim | status | confidence | label | model / effort / role |
 |---|---|---|---|---|---|
-| spec forecast | One blocking repair round follows initial review. | claimed | 7 | held | unknown / unknown / spec author |
+| spec forecast | Original forecast declaration unavailable after recovery. | abstained |  | pending | unknown / unknown / spec author |
 | review pass 1 | B1 leaves file identity undefined. | claimed | 7 | pending | claude-opus-5-5 / high / spec reviewer |
 | review pass 2 | B1 is resolved. | claimed | 8 | pending | claude-opus-5-5 / high / spec reviewer |
 | review pass 1 | Any test passed. | abstained |  | pending | claude-opus-5-5 / high / spec reviewer |
 | review pass 2 | Any test passed. | abstained |  | pending | claude-opus-5-5 / high / spec reviewer |
 
-The repair table labels the author forecast. Its Brier mean is 0.09 over one pair.
+The retained artifacts do not supply the original author forecast declaration.
+Its calibration is unknown, with no labeled pair and one abstention.
 The reviewer has no labeled pair and two explicit abstentions about test results.
 The coordinator retained both terminal reports. It did not infer test execution from their verdicts.
 The author and coordinator model metadata and provider costs remain unknown.
@@ -70,9 +71,9 @@ The same merge passed unchanged when the coordinator invoked it from the target 
 
 | ticket | rounds | causes |
 |---|---|---|
-| 1-order-review-preparation.md | 0 implementation rounds; not started | not applicable at spec staging |
-| 2-page-review-diffs-by-file.md | 0 implementation rounds; not started | not applicable at spec staging |
-| spec authoring | 1 blocking repair round; 1 nonblocking close fold | spec/ticket: the first draft did not settle headerless patch identity |
+| 1-order-review-preparation.md | not started | none |
+| 2-page-review-diffs-by-file.md | not started | none |
+| spec authoring | 1 blocking repair round; 1 nonblocking close fold | spec-row: the first draft did not settle headerless patch identity |
 
 Authoring used three passes in total. Those passes are not ticket build rounds.
 Daemon recovery restored the retained work without a new research cycle.
@@ -83,17 +84,14 @@ The separate debug retrospective owns the guidance repair's implementation count
 ### Bench CLI
 
 - Resolve merge lane paths from the target checkout, independent of the caller's checkout.
-  The unchanged retry exposed a caller-root defect. The capture learning retains the exact symptom.
   Feeds: new
 
 ### Skills
 
 - Observe headerless and repeated-path output before declaring file identity in a spec.
-  The existing learning records this proposed authoring rule.
   Feeds: none
 
 ### Process
 
 - Keep the real control comparison as an orchestrator checkpoint after the ticket commit.
-  A ticket author cannot deliver independent review of its own work.
   Feeds: none
