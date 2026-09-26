@@ -126,6 +126,41 @@ The build preflight reports `base-current` red, because `main` gained a
 landing after the build started. The review chain forbids a `main` merge
 after the first chunk, and the landing composes that commit.
 
+## RE1 chunk review, round 2
+
+This is the confirming round at chunk tip `c024a237`. The shared evidence is
+`sha256:cd39791c71881aca476d55885db7913f156bb438cf5e5fb786b5d984073ffdbf`.
+Each axis ran in a fresh `bench-reviewer` session on fable at high effort and
+read only the repair delta `260a62ea..c024a237`.
+
+Raw findings: Standards 1, Spec 0, Coverage 0. Repair targets: 1 open for a
+reviewer decision. R1, R2, and R3 are confirmed as folded.
+
+### Standards, round 2
+
+Findings: 1. Worst: R4.
+
+- R4 (ask-user, confidence 4): the plan records the repair session at low
+  effort. The repair edited a command document and a gate anchor. The Lines
+  section of `projects/benchkit.md` binds command authoring to high effort and
+  gate logic to mid effort. The `craft-line` skill runs a post-review repair
+  at low effort. The axis did not read that skill.
+
+Advice: the seven fixtures in the second plan expansion hold no row of the
+edited file, and that expansion followed the repair commit.
+
+### Spec, round 2
+
+Findings: 0. RE11 and RE12 remain covered. The plan expansions change no
+acceptance row, check, or guarantee.
+
+### Coverage, round 2
+
+Findings: 0. The round 1 probe now bites, the live check stays green, and the
+budget row change is red-capable.
+
+Advice: a paraphrased reversal still passes the substring anchor.
+
 ```bench-review-record
 {
   "version": 2,
@@ -282,6 +317,74 @@ after the first chunk, and the landing composes that commit.
             "R3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "re1-r2-standards",
+          "performer": "claude:bench-reviewer/re1-r2-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "65fd30ec52ec589771bba326bc17068488c199a1",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/re1-r2-standards@c024a237",
+            "digest": "sha256:3e15002c1612cba64e9ad6d664a86dd911c5b02f3470b07553c295faa3dc540f",
+            "excerpt": "Standards: 1 finding. Worst: S1."
+          },
+          "axis": "Standards",
+          "base": "c8c444ffae2fb1578cfa54a22fa632590ffbc322",
+          "tip": "c024a23711443fb649bbd6063a70f70459e37511",
+          "finding_ids": [
+            "R4"
+          ],
+          "supersedes": [
+            "re1-r1-standards"
+          ]
+        },
+        {
+          "id": "re1-r2-spec",
+          "performer": "claude:bench-reviewer/re1-r2-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "65fd30ec52ec589771bba326bc17068488c199a1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re1-r2-spec@c024a237",
+            "digest": "sha256:a672197d8e5c4170f6e300062addb831c7be9440f6282c9223ff82a2ba90b5b9",
+            "excerpt": "Spec: 0 findings. Worst: none."
+          },
+          "axis": "Spec",
+          "base": "c8c444ffae2fb1578cfa54a22fa632590ffbc322",
+          "tip": "c024a23711443fb649bbd6063a70f70459e37511",
+          "finding_ids": [],
+          "supersedes": [
+            "re1-r1-spec"
+          ]
+        },
+        {
+          "id": "re1-r2-coverage",
+          "performer": "claude:bench-reviewer/re1-r2-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "65fd30ec52ec589771bba326bc17068488c199a1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re1-r2-coverage@c024a237",
+            "digest": "sha256:9ce4673e322d7b34be879bf03406ae706d5c9ca6abedce365fd8857dd0fb4e80",
+            "excerpt": "Coverage: 0 findings. Worst: none \u2014 the R3 gap is closed by a section-scoped ForbidInSection anchor, and the R1 budget row is red-capable."
+          },
+          "axis": "Coverage",
+          "base": "c8c444ffae2fb1578cfa54a22fa632590ffbc322",
+          "tip": "c024a23711443fb649bbd6063a70f70459e37511",
+          "finding_ids": [],
+          "supersedes": [
+            "re1-r1-coverage"
+          ]
         }
       ]
     }
