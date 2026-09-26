@@ -202,11 +202,45 @@ does not assume a spare cycle. The anchor still passes a paraphrased reversal.
 One spec sentence about the review table predates the RE1 rounds, and the RE2
 checkpoint updates it.
 
+## RE2 author evidence
+
+Ticket 2 had a fresh `bench-writer` author on opus at high effort. The author
+started at `c45878f2` and committed `46e287c8` on a lane pass. The plan change
+that recorded this author follows the RE1 tip, so the record carries one plan
+amendment that maps RE1 and RE2 to themselves.
+
+The diff owner now splits its frozen body into a prefix, one patch for each
+file, and a suffix. One pure decoder in `internal/git` reads patch paths, and
+the consumers package calls it. Preflight publishes each fragment as its own
+generated source with a `kind=diff` shared row in reconstruction order. The
+author captured four RE5 baselines from the unchanged producer before any
+production edit.
+
+Every row from RE1 to RE9 showed red on the unchanged tree before the first
+production edit. The six named probes each bit, and each restore reads `yes`.
+
+| Rows | File | Mutation | Verdict |
+|---|---|---|---|
+| RE1, RE2, RE3 | `internal/preflight/review.go` | swap: one joined diff fragment | bit |
+| RE4 | `internal/preflight/review.go` | swap: the previous patch body | bit |
+| RE5 | `internal/diff/patches.go` | omission: the deleted-file patch | bit |
+| RE6, RE9 | `internal/preflight/review.go` | swap: the second file takes the first file source | bit |
+| RE7 | `internal/preflight/review.go` | swap: the predecessor base to main | bit |
+| RE8 | `internal/preflight/review.go` | omission: the final page of a patch | bit |
+| decoder | `internal/consumers/hunks.go` | swap: the base path skips the shared decoder | bit |
+
+The orchestrator ran the last probe as the independent coordinator probe. It
+failed six consumers tests.
+
+The author's three ticket checks passed at `46e287c8`. The empty diff has
+coverage only at the diff seam, because preflight refuses an empty charge
+first. An ambient `diff.noprefix` setting makes the charge refuse as a whole.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/review-evidence-file-pages/spec.md",
-  "plan_digest": "sha256:c202b02fb76d78aa3e4b0118e7836257f94a3937c8427ed97d53045f4505b0fb",
+  "plan_digest": "sha256:3dcd6a037980473271a0cd858b370e573e1c8adb100c30dd283adb7bec588c44",
   "implementation_session": "",
   "chunks": [
     {
@@ -530,10 +564,104 @@ checkpoint updates it.
           ]
         }
       ]
+    },
+    {
+      "id": "RE2",
+      "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+      "tip": "46e287c843ef2ebf6304ca9649be616fa7d9dbfc",
+      "plan_digest": "sha256:3dcd6a037980473271a0cd858b370e573e1c8adb100c30dd283adb7bec588c44",
+      "source_digest": "ea9cdbc40318258bd1781d3ff542d98e65f3dc9d",
+      "acceptance_rows": [
+        "RE1",
+        "RE2",
+        "RE3",
+        "RE4",
+        "RE5",
+        "RE6",
+        "RE7",
+        "RE8",
+        "RE9",
+        "RE10",
+        "RE13",
+        "RE14",
+        "RE15",
+        "RE16"
+      ],
+      "verification": [
+        {
+          "id": "re2-2-file-evidence-r1",
+          "performer": "claude:bench-writer/re-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ea9cdbc40318258bd1781d3ff542d98e65f3dc9d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-author-20260926/2-file-evidence@46e287c8",
+            "digest": "sha256:501d4261857bcc7a5ccd1fcdd059bd9fe5d1a89014bbffbbb2f4bd9424de26f8",
+            "excerpt": "all ok: diff 8.8s, git 1.9s, consumers 3.1s, chargeevidence 0.26s, preflight 24.5s, evidencecmd 17.5s"
+          },
+          "requirement": "2-file-evidence",
+          "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/git ./internal/consumers ./internal/chargeevidence ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-ports-r1",
+          "performer": "claude:bench-writer/re-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ea9cdbc40318258bd1781d3ff542d98e65f3dc9d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-author-20260926/2-ports@46e287c8",
+            "digest": "sha256:9390f81934af5e9f1075a2a2d88a1a896ae9d1e5ffa2124d976db4cf92f582de",
+            "excerpt": "internal/conformance,pass,17"
+          },
+          "requirement": "2-ports",
+          "command": "bench test --check injected-port-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-workflow-r1",
+          "performer": "claude:bench-writer/re-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ea9cdbc40318258bd1781d3ff542d98e65f3dc9d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-author-20260926/2-workflow@46e287c8",
+            "digest": "sha256:23ba3dfdbf85b08b6b34975fb26e0dbdcd370a6668ee2bb615875c8c959f0852",
+            "excerpt": "internal/conformance,pass,637"
+          },
+          "requirement": "2-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
     "state": "pending"
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:c202b02fb76d78aa3e4b0118e7836257f94a3937c8427ed97d53045f4505b0fb",
+      "to": "sha256:3dcd6a037980473271a0cd858b370e573e1c8adb100c30dd283adb7bec588c44",
+      "chunk_ids": {
+        "RE1": [
+          "RE1"
+        ],
+        "RE2": [
+          "RE2"
+        ]
+      }
+    }
+  ]
 }
 ```
