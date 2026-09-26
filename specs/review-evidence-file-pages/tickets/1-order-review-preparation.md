@@ -1,7 +1,7 @@
 # Order the author record before the review charge
 
 Blocked by: none
-Writes: .agents/commands/bench-implement-spec.md, internal/anchors, tests/canary/workflow-guidance-anchors, internal/preflight/evidencecmd, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/injected_ports_registry_test.go
+Writes: .agents/commands/bench-implement-spec.md, internal/anchors, tests/canary/workflow-guidance-anchors, internal/preflight/evidencecmd, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/injected_ports_registry_test.go, projects/benchkit.md
 Covers: RE11, RE12
 
 ## What to build

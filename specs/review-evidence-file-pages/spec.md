@@ -178,6 +178,18 @@ The review-owned control comparison remains a required acceptance checkpoint.
           "effort": "high",
           "source": "c8c444ffae2fb1578cfa54a22fa632590ffbc322",
           "native_ref": "claude:agent/re-t1-author-20260926@c8c444ffae2fb1578cfa54a22fa632590ffbc322"
+        },
+        {
+          "session": "claude:bench-writer/re-t1-repair-c1",
+          "assignment": "re-t1-repair-c1",
+          "model": "opus",
+          "effort": "low",
+          "source": "fa1b8717f0e6426fb28898cd9b0f72ba1d3b2839",
+          "native_ref": "claude:agent/re-t1-repair-c1-20260926@fa1b8717f0e6426fb28898cd9b0f72ba1d3b2839",
+          "predecessor": "claude:bench-writer/re-t1-author",
+          "trigger": "user-directed",
+          "stopped": "claude:agent/re-t1-author returned its final report and holds no write charge",
+          "preserved": "fa1b8717f0e6426fb28898cd9b0f72ba1d3b2839"
         }
       ],
       "2-page-review-diffs-by-file.md": []
@@ -351,6 +363,7 @@ Won't handle: automatic permanent adoption — RE15 keeps the reviewer as the in
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/conformance/injected_ports_registry_test.go`
 - `reviews/review-evidence-file-pages.md`
+- `projects/benchkit.md`
 
 Reviewer disposition: approved on 2026-09-26, with the ticket graph and the fences.
 The debug prerequisite is integrated. Further notes names its landing.
