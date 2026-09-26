@@ -6,7 +6,7 @@ Roadmap: FT337
 
 Decision source: `roadmap/FT337.md` (named reviewed artifact).
 
-Verification log: pending independent Opus/high review.
+Verification log: 2 iteration(s) to accept — Opus/high accepted after B1 and N1–N8 fixes. Final edits cover partition refusals, repeated paths, decoder ownership, and durable tests.
 
 ## Problem
 
@@ -83,6 +83,16 @@ The inventory uses `--no-renames`, but the patch body can contain a rename.
 Match paths by identity, never by inventory position. RE3 and RE9 exercise
 rename detection both enabled and disabled.
 
+If the body cannot partition into identified patches consistent with the inventory,
+refuse the charge through the existing evidence failure path. Publish no partial
+artifact. Keep ambient output unchanged. RE5 covers external-diff and forced-color
+outputs that the partition cannot represent.
+
+A type change can produce two patches for one path. Keep both sources in patch
+order, with the same path and distinct pack-local source IDs. A path maps to
+an ordered digest list. To retrieve one file, read each matching source in order.
+RE3 preserves this mapping, and RE9 covers a file-to-symlink change.
+
 One shared decoder reads patch path syntax. It decodes C-quoted paths in
 `diff --git`, `---`, `+++`, and the rename or copy path headers.
 The `rename from`, `rename to`, `copy from`, and `copy to` paths are already
@@ -94,9 +104,11 @@ Prefer explicit rename or copy paths when present. Never split unquoted paths
 at each space. Resolve them against the frozen path inventory when needed.
 Parse path headers only in the patch header region, before its content.
 
-Move the existing consumers decoder to the shared owner if the diff owner
-needs it. Keep the consumers hunk interpretation unchanged. RE5 exercises
-hostile paths, and RE9 requires each headerless patch's exact descriptor.
+`internal/git` owns the shared patch-path decoder. Move the existing consumers
+C-quote rule there. Both diff and consumers already import this package.
+Keep the decoder pure and independent of both callers. Keep the consumers
+hunk interpretation unchanged. RE5 exercises hostile paths, and RE9 requires
+each headerless patch's exact descriptor.
 
 All fragments remain required and retain their actual producer provenance.
 Shared evidence rows bind every diff fragment in reconstruction order.
@@ -175,7 +187,7 @@ The review-owned control comparison remains a required acceptance checkpoint.
       "verification": [
         {
           "id": "file-evidence",
-          "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/consumers ./internal/chargeevidence ./internal/preflight/..."
+          "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/git ./internal/consumers ./internal/chargeevidence ./internal/preflight/..."
         },
         {
           "id": "ports",
@@ -195,7 +207,7 @@ The review-owned control comparison remains a required acceptance checkpoint.
     },
     {
       "id": "file-evidence",
-      "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/consumers ./internal/chargeevidence ./internal/preflight/..."
+      "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/git ./internal/consumers ./internal/chargeevidence ./internal/preflight/..."
     },
     {
       "id": "workflow",
@@ -279,6 +291,8 @@ RE5's differential fixture covers the producer's following shapes:
 - Added, modified, deleted, and renamed files, including a pure rename.
 - An empty addition and deletion with no `---` or `+++` headers.
 - A mode-only patch, binary marker, and committed symlink patch.
+- A file-to-symlink change with two patches for the same path.
+- An external-diff or forced-color body that cannot partition, with no partial publication.
 - A missing final newline and content that resembles a patch header.
 - Paths with spaces, globs, quotes, backslashes, and non-ASCII bytes.
 - Permitted tab, newline, and return bytes under the current renderer.
@@ -300,6 +314,7 @@ Won't handle: automatic permanent adoption — RE15 keeps the reviewer as the in
 - `internal/preflight`
 - `internal/preflight/evidencecmd`
 - `internal/diff`
+- `internal/git`
 - `internal/consumers`
 - `internal/chargeevidence`
 - `.agents/skills/bench-craft-delegate/references/charge-evidence-format.md`
@@ -350,6 +365,11 @@ The pure rename, empty addition, binary change, and mode change lacked
 `---` and `+++` headers. The fixture used a committed base and tip.
 Evidence: `/tmp/ft337-git-identities-ici8r1fo` on 2026-09-25.
 
+A second fixture produced deletion and addition patches for one file-to-symlink
+path. Forced color prefixed patch headers with ANSI escapes. An external diff
+replaced the patch body. Evidence: `/tmp/ft337-git-review2-z6o6az97` on 2026-09-25.
+RE5 and RE9's planned durable cases supersede these temporary observations.
+
 The roadmap's phrase "from `main`" is stale factual shorthand. Preserve the
 current explicit chunk-base decision. This correction remains subject to
 reviewer veto.
@@ -362,7 +382,8 @@ not a field or pack version. This inventory covers readers and direct helpers.
 | --- | --- |
 | `internal/preflight/review.go`: `collectReviewEvidence`, `reviewChargePack`, `reviewMetadata` | RE2 changes composition |
 | `internal/diff/diff.go`, `range.go`, `snapshot.go` | RE2 preserves output and exposes its file snapshot |
-| `internal/consumers/hunks.go` and tests | RE2 owns any shared parser move |
+| `internal/consumers/hunks.go` and tests | RE2 moves the C-quote rule to `internal/git` |
+| `internal/git` | RE2 owns the shared decoder without caller imports |
 | `internal/preflight/review_charge_test.go` | RE2 updates collector and provenance assumptions |
 | `internal/preflight/evidencecmd/evidence_review_test.go` | RE2 replaces fixed generated-source counts with file membership assertions |
 | Evidence command, consumer, mode, export, and budget tests under `internal/preflight/evidencecmd` | RE2 verifies traversal, binding, export, and bounds |
@@ -400,7 +421,7 @@ new numeric cost target.
 ### Pre-review proof checklist
 
 - Cited symbols: the owner inventory resolves each named production function.
-- Import edges: preflight imports diff and chargeevidence. No cross-package test helper is promised.
+- Import edges: preflight imports diff and chargeevidence. Diff and consumers both import git. The shared decoder adds no reverse import. No cross-package test helper is promised.
 - Source-row clauses and occurrences: the preceding table covers the reviewed artifact and its ledger.
 - Promised field labels: `sources`, `pages`, `shared_evidence`, `role`, `path`, `required`, and `sha256` retain their grammar.
 - Changed-function callers: `reviewChargePack` calls the collector and metadata owner. The diff command and preflight share the snapshot producer.

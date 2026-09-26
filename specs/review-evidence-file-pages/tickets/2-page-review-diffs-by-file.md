@@ -1,7 +1,7 @@
 # Prepare complete review diffs with stable file pages
 
 Blocked by: 1-order-review-preparation.md
-Writes: internal/preflight, internal/diff, internal/consumers, internal/chargeevidence, .agents/skills/bench-craft-delegate/references/charge-evidence-format.md, internal/anchors, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/injected_ports_registry_test.go
+Writes: internal/preflight, internal/diff, internal/git, internal/consumers, internal/chargeevidence, .agents/skills/bench-craft-delegate/references/charge-evidence-format.md, internal/anchors, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/injected_ports_registry_test.go
 Covers: RE1, RE2, RE3, RE4, RE5, RE6, RE7, RE8, RE9, RE10, RE13, RE14, RE15, RE16
 
 ## What to build
@@ -18,8 +18,8 @@ its readers rather than copy the harness.
 
 Implement the spec's descriptor table and file-identity rule, including patches
 without `---` or `+++` lines. Preserve ambient rename behavior and verbatim bytes.
-The current C-quote decoder belongs to consumers. Share its implementation
-with the diff owner and preserve the existing hunk interpretation.
+Move the consumers C-quote decoder into `internal/git`. Both callers use that
+pure decoder. Preserve the existing hunk interpretation.
 
 RE1 supplies the author-record-before-charge contract for this chunk's review.
 RE10 and RE13 through RE16 in `Covers:` associate this chunk with its later
@@ -40,6 +40,8 @@ author's acceptance criteria.
 - [ ] A large Unicode patch reconstructs through the existing page protocol.
 - [ ] Selection by the spec's file identity retrieves only that file's complete patch.
 - [ ] Headerless patches have the exact role and path that the spec defines.
+- [ ] Repeated-path patches remain separate sources in patch order.
+- [ ] An unpartitionable body refuses the charge without partial publication.
 - [ ] Generated fragments retain their actual producer provenance under `TestEvidenceReviewProvenanceRows`.
 
 Use planned `TestReviewFilePageStability`, `TestReviewFileIdentity`,
@@ -50,14 +52,19 @@ traversal helpers. Pure partition cases belong under `internal/diff`.
 
 Use RE5's deterministic fixture and independent baseline contract.
 Include pure renames, empty additions and deletions, binary patches, and mode changes
-in the selected-stream test. Test rename detection both enabled and disabled.
+in the selected-stream test. Include a file-to-symlink change with two patches
+for one path. Test rename detection both enabled and disabled.
+
+RE5 also covers external-diff and forced-color outputs through the existing
+failed-publication posture. Test exact reconstruction or refusal, never a partial
+artifact. Preserve ambient Git output.
 Use equal-length paths and multi-page equal content for the RE6 case.
 Require equal later page digests while each path retains its own membership.
 
 Do not rewrite production sources during ordinary tests. Prove the named
 spec mutations through `bench probe` and require restoration.
 
-Run focused diff, consumers, preflight, and chargeevidence suites with `-parallel 2`.
+Run focused diff, git, consumers, preflight, and chargeevidence suites with `-parallel 2`.
 Retain binding, navigation, export, provenance, movement, and response-bound tests.
 Run applicable command-registry and injected-port checks. Regenerate the
 format reference after its description changes. Run its prose check too.
