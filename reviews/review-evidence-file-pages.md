@@ -161,19 +161,45 @@ budget row change is red-capable.
 
 Advice: a paraphrased reversal still passes the substring anchor.
 
+## RE1 repair cycle 2
+
+The reviewer directed cycle 2 at high effort for R4, and at user direction the
+session followed the `bench-debug` procedure. Repair cycle 2 of 2 is consumed.
+A fresh `bench-writer` repair session on opus at high effort examined the
+cycle 1 repair `304913d7` against the R1 and R3 decisions.
+
+Each suspected defect received a red-capable loop, and no loop showed red on
+the current tree. The session found no defect and made no commit. It ran the
+ticket checks at `4d9e6aa8`, and each check passed.
+
+| File | Mutation | Check or test | Verdict |
+|---|---|---|---|
+| `.agents/commands/bench-implement-spec.md` | swap: a reverse-order sentence in the Land section | docs-currency-workflow | silent |
+| `.agents/commands/bench-implement-spec.md` | swap: a reverse-order sentence with another verb in Build | docs-currency-workflow | bit |
+| `internal/anchors/registry_chunk_chain.go` | omission: the forbid anchor | TestChunkChainAnchors | bit |
+| `projects/benchkit.md` | swap: the budget row 81 to 82 | guidance-prose-budgets | silent |
+
+The first row proves the section scope of the forbid anchor. The third row is
+the omission red that the independent expectation of the forbid test row
+requires. The budget is a maximum, so the last row is expected. Each restore
+reads `yes`.
+
+The chunk tip is now `4d9e6aa8`, which adds only the cycle 2 assignment to
+the plan.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/review-evidence-file-pages/spec.md",
-  "plan_digest": "sha256:d7852c577c37e073b66469c12432eaeced47dabe23f549758c73f9554f99f0b3",
+  "plan_digest": "sha256:c202b02fb76d78aa3e4b0118e7836257f94a3937c8427ed97d53045f4505b0fb",
   "implementation_session": "",
   "chunks": [
     {
       "id": "RE1",
       "base": "c8c444ffae2fb1578cfa54a22fa632590ffbc322",
-      "tip": "c024a23711443fb649bbd6063a70f70459e37511",
-      "plan_digest": "sha256:d7852c577c37e073b66469c12432eaeced47dabe23f549758c73f9554f99f0b3",
-      "source_digest": "65fd30ec52ec589771bba326bc17068488c199a1",
+      "tip": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+      "plan_digest": "sha256:c202b02fb76d78aa3e4b0118e7836257f94a3937c8427ed97d53045f4505b0fb",
+      "source_digest": "f978963a596bcfaffbfb4be47235b78a80b4c8f6",
       "acceptance_rows": [
         "RE11",
         "RE12"
@@ -246,6 +272,42 @@ Advice: a paraphrased reversal still passes the substring anchor.
             "ref": "claude:agent/re-t1-repair-c1-20260926/1-record-order@c024a237",
             "digest": "sha256:fc3f21bce946d69e94977ac14b7e01a324a007132768827d8f496103db93bb2f",
             "excerpt": "ok  \tgithub.com/gibbonmi/bench/internal/preflight/evidencecmd\t8.174s"
+          },
+          "requirement": "1-record-order",
+          "command": "go test -count=1 -parallel=2 ./internal/preflight/evidencecmd",
+          "exit_code": 0
+        },
+        {
+          "id": "re1-1-workflow-r3",
+          "performer": "claude:bench-writer/re-t1-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f978963a596bcfaffbfb4be47235b78a80b4c8f6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t1-repair-c2-20260926/1-workflow@4d9e6aa8",
+            "digest": "sha256:2859a2eaec8ce6b97b992c6f82d3bbc209ac17f9030160e0223799cfd3e273d3",
+            "excerpt": "internal/conformance,pass,778; failures[0]; skips[0]"
+          },
+          "requirement": "1-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "re1-1-record-order-r3",
+          "performer": "claude:bench-writer/re-t1-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f978963a596bcfaffbfb4be47235b78a80b4c8f6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t1-repair-c2-20260926/1-record-order@4d9e6aa8",
+            "digest": "sha256:2693a15618151f211c1a72c366cca88f23deb82271733eb5b44a1cccaf75293a",
+            "excerpt": "ok github.com/gibbonmi/bench/internal/preflight/evidencecmd 11.314s"
           },
           "requirement": "1-record-order",
           "command": "go test -count=1 -parallel=2 ./internal/preflight/evidencecmd",
