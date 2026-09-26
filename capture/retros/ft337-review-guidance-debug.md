@@ -24,7 +24,9 @@ End-to-end phase timing, token use, provider cost, and comparative latency are u
 
 | surface | claim | status | confidence | label | model / effort / role |
 |---|---|---|---|---|---|
-| review guidance | Process assigns frozen diff and targeted consumer reads to each axis. | focused checks passed; gate pending | 96 | spec-less debug | gpt-5.6-sol / high / repair author |
+| review guidance | The repair is complete at the canonical registry and guidance seam. | abstained |  | pending | gpt-5.6-sol / high / repair author |
+
+Calibration: Brier mean unknown; labeled pairs 0; abstentions 1.
 
 ## Coordinator catches
 
@@ -35,24 +37,12 @@ The coordinator independently omitted the step 1 Process-to-Entry link.
 
 | ticket | rounds | causes |
 |---|---|---|
-| spec-less debug | 1 | Stale Process prose retained coordinator-owned retrieval after Entry orientation moved review reads to narrow axes. |
+| review-guidance debug | 1 original fix cycle; 0 post-return semantic repair cycles | other: stale Process prose contradicted Entry orientation |
 
 ## Agent-experience improvements
 
 ### Bench CLI
 
-The bounded `bench probe` result carried baseline, mutation, diagnostic, and restoration evidence.
-A substring miss left the tree untouched and named the mismatch.
-Feeds: none
-
 ### Skills
 
-The debug sequence required a live red before the prose repair.
-The gate discipline also required a reversible mutation for the strengthened registry.
-Feeds: none
-
 ### Process
-
-The preserved partial edit and named worktree made daemon recovery possible without repeated diagnosis.
-Read a bounded-output spill once from its response file instead of requesting repeated slices.
-Feeds: none
