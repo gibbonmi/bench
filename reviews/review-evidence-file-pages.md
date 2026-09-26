@@ -236,6 +236,72 @@ The author's three ticket checks passed at `46e287c8`. The empty diff has
 coverage only at the diff seam, because preflight refuses an empty charge
 first. An ambient `diff.noprefix` setting makes the charge refuse as a whole.
 
+## RE2 chunk review, round 1
+
+The frozen pair is base `4d9e6aa8df99630aa782f23545dcfec7e6dc10f9` and tip
+`46e287c843ef2ebf6304ca9649be616fa7d9dbfc`. The record commit `de294013`
+follows the tip. The shared evidence is
+`sha256:a8bd30e5d4535e93514e0039f889e8d3c49a76016bc7fe60a8ae0eb49f385eb3`,
+with 31 sources and 44 pages. The worktree build prepared it, so the diff
+arrives as file pages. Each narrow axis and the full control ran in a fresh
+`bench-reviewer` session on fable at high effort.
+
+The joined `diff-file` sources equal raw `git diff 4d9e6aa8 de294013` byte
+for byte: 21 files and 105407 bytes.
+
+Raw findings: narrow Standards 4, narrow Spec 1, narrow Coverage 3, and the
+control 6. De-duplicated findings: 11, R5 to R15. The spec table holds the
+comparison.
+
+## Standards
+
+Findings: 5. Worst: R5.
+
+- R5 (auto-fix, confidence 7): the raw-Git patch command occurs in
+  `internal/diff/patches_test.go:51` and in `rawPatch` of
+  `internal/preflight/evidencecmd/evidence_file_pages_test.go:105`. The
+  one-source rule applies. The narrow axis and the control both found it.
+- R6 (auto-fix, confidence 6): the baseline-to-pair table and the repeated
+  path expansion of `ShapePatch` occur in two test files. Narrow only.
+- R7 (auto-fix, confidence 5): `IdentifiedPack` in `reviewfiles.go:287`
+  derives the store read of `PublishedPack` in `fixture.go:355` again. Narrow
+  only.
+- R8 (no-op, confidence 3): `quoteImportPath` encodes the quote table that
+  the decoder reads. It is a fixture-side inverse. Narrow only.
+- R9 (auto-fix, confidence 4): four test files state the fragment role
+  spellings by hand. Control only.
+
+## Spec
+
+Findings: 1. Worst: R10.
+
+- R10 (no-op, confidence 5): no code reads the inventory to resolve an
+  ambiguous unquoted `diff --git` split. Git prints rename or copy headers
+  whenever the sides differ, so that branch is unreachable. Both found it.
+
+Both reviews found RE1 to RE9 covered by the planned tests.
+
+## Coverage
+
+Findings: 5. Worst: R14.
+
+- R11 (auto-fix, confidence 7): no test covers `copy from` and `copy to`.
+  An omission probe of those headers came back silent at both seams. Narrow
+  only.
+- R12 (auto-fix, confidence 8): no case sets `diff.suppressBlankEmpty`. A
+  probe that removes the bare blank line came back silent at both seams.
+  Narrow only.
+- R13 (ask-user, confidence 6): the spec decides nothing about ambient
+  prefix settings. With `diff.noprefix`, a path that starts with `a/` or
+  `b/` loses a segment, and the charge refuses as a whole. Both found it.
+- R14 (ask-user, confidence 6): `PatchSidePath` trims spaces before it
+  unquotes, so a path that ends in a space decodes wrong. The old consumers
+  decoder did the same, and the spec moved it unchanged. The partition reads
+  the `diff --git` paths first. Control only.
+- R15 (auto-fix, confidence 5): the forced-color refusal case asserts only
+  the substring `evidence`. Control only; the narrow Coverage axis gave it as
+  advice.
+
 ```bench-review-record
 {
   "version": 2,
@@ -643,7 +709,79 @@ first. An ambient `diff.noprefix` setting makes the charge refuse as a whole.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "re2-r1-standards",
+          "performer": "claude:bench-reviewer/re2-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "ea9cdbc40318258bd1781d3ff542d98e65f3dc9d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/re2-standards@46e287c8",
+            "digest": "sha256:9a1d9deaec563ad600db35eeb7d1ac4a09e1ee0c08c235fea554b94d5e4a7743",
+            "excerpt": "Standards: 4 findings. Worst: raw-Git patch derivation stated twice across packages (internal/preflight/evidencecmd/evidence_file_pages_test.go:105 and internal/diff/patches_test.go:51)."
+          },
+          "axis": "Standards",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "46e287c843ef2ebf6304ca9649be616fa7d9dbfc",
+          "finding_ids": [
+            "R5",
+            "R6",
+            "R7",
+            "R8"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "re2-r1-spec",
+          "performer": "claude:bench-reviewer/re2-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "ea9cdbc40318258bd1781d3ff542d98e65f3dc9d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/re2-spec@46e287c8",
+            "digest": "sha256:bac772fdd2e70a98395576833950d29c643e2cff8a6b76ca08e0556f9558ef94",
+            "excerpt": "Spec: 1 finding. Worst: internal/diff/patches.go:82 (partial, no-op recommended)."
+          },
+          "axis": "Spec",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "46e287c843ef2ebf6304ca9649be616fa7d9dbfc",
+          "finding_ids": [
+            "R10"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "re2-r1-coverage",
+          "performer": "claude:bench-reviewer/re2-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "ea9cdbc40318258bd1781d3ff542d98e65f3dc9d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/re2-coverage@46e287c8",
+            "digest": "sha256:338d4bd2886f025a7f327f2f679e18be08bbe297c149654338375c27d15dab0a",
+            "excerpt": "Coverage: 3 findings. Worst: ambient `diff.renames=copies` \u2014 `copy from`/`copy to` recognition has no test at either seam (silent probe)."
+          },
+          "axis": "Coverage",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "46e287c843ef2ebf6304ca9649be616fa7d9dbfc",
+          "finding_ids": [
+            "R11",
+            "R12",
+            "R13"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
