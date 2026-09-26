@@ -1,0 +1,184 @@
+revision[1]{commit,base,method}:
+  b726c7fee466dcced1e4b8a026d52bac4f1e6a4e,6ed0deabd2a9038b28469c2c7a965c85fdd135d9,explicit pair
+aggregate[1]{commits,files,insertions,deletions}:
+  "1","23","19","5"
+files[23]{status,path,kind}:
+  A,notes/add.txt,""
+  A,"notes/back\\slash.txt",""
+  M,notes/binary.bin,""
+  A,notes/café π.txt,""
+  A,"notes/carriage\rreturn.txt",""
+  D,notes/delete.txt,""
+  A,notes/empty-add.txt,""
+  D,notes/empty-delete.txt,""
+  A,"notes/glob*[?].txt",""
+  A,notes/link,""
+  M,notes/lookalike.txt,""
+  M,notes/mode.sh,""
+  M,notes/modify.txt,""
+  A,"notes/new\nline.txt",""
+  M,notes/no-newline.txt,""
+  A,"notes/quote\"d.txt",""
+  D,notes/rename-edit.txt,""
+  D,notes/rename-pure.txt,""
+  A,notes/renamed-edit.txt,""
+  A,notes/renamed-pure.txt,""
+  A,notes/space name.txt,""
+  A,"notes/tab\there.txt",""
+  T,notes/type-change,""
+log[1]{sha,subject}:
+  b726c7fee466,review source
+diff_body:
+diff --git a/notes/add.txt b/notes/add.txt
+new file mode 100644
+index 000000000000..d5f7fc3f74f7
+--- /dev/null
++++ b/notes/add.txt
+@@ -0,0 +1 @@
++added
+diff --git "a/notes/back\\slash.txt" "b/notes/back\\slash.txt"
+new file mode 100644
+index 000000000000..e589651364e3
+--- /dev/null
++++ "b/notes/back\\slash.txt"
+@@ -0,0 +1 @@
++hostile
+diff --git a/notes/binary.bin b/notes/binary.bin
+index 366fd408dbff..df727c322e89 100644
+Binary files a/notes/binary.bin and b/notes/binary.bin differ
+diff --git "a/notes/caf\303\251 \317\200.txt" "b/notes/caf\303\251 \317\200.txt"
+new file mode 100644
+index 000000000000..e589651364e3
+--- /dev/null
++++ "b/notes/caf\303\251 \317\200.txt"	
+@@ -0,0 +1 @@
++hostile
+diff --git "a/notes/carriage\rreturn.txt" "b/notes/carriage\rreturn.txt"
+new file mode 100644
+index 000000000000..e589651364e3
+--- /dev/null
++++ "b/notes/carriage\rreturn.txt"
+@@ -0,0 +1 @@
++hostile
+diff --git a/notes/delete.txt b/notes/delete.txt
+deleted file mode 100644
+index 2d030d7bc1bb..000000000000
+--- a/notes/delete.txt
++++ /dev/null
+@@ -1 +0,0 @@
+-delete me
+diff --git a/notes/empty-delete.txt b/notes/empty-add.txt
+similarity index 100%
+rename from notes/empty-delete.txt
+rename to notes/empty-add.txt
+diff --git a/notes/glob*[?].txt b/notes/glob*[?].txt
+new file mode 100644
+index 000000000000..e589651364e3
+--- /dev/null
++++ b/notes/glob*[?].txt
+@@ -0,0 +1 @@
++hostile
+diff --git a/notes/link b/notes/link
+new file mode 120000
+index 000000000000..cbfa21343912
+--- /dev/null
++++ b/notes/link
+@@ -0,0 +1 @@
++add.txt
+\ No newline at end of file
+diff --git a/notes/lookalike.txt b/notes/lookalike.txt
+index 78981922613b..75f21527edc8 100644
+--- a/notes/lookalike.txt
++++ b/notes/lookalike.txt
+@@ -1 +1,6 @@
+ a
++diff --git a/x b/x
++--- a/x
+++++ b/x
++rename to y
++@@ -1 +1 @@
+diff --git a/notes/mode.sh b/notes/mode.sh
+old mode 100644
+new mode 100755
+diff --git a/notes/modify.txt b/notes/modify.txt
+index 4cb29ea38f70..289bbdaa2109 100644
+--- a/notes/modify.txt
++++ b/notes/modify.txt
+@@ -1,3 +1,3 @@
+ one
+-two
++two changed
+ three
+diff --git "a/notes/new\nline.txt" "b/notes/new\nline.txt"
+new file mode 100644
+index 000000000000..e589651364e3
+--- /dev/null
++++ "b/notes/new\nline.txt"
+@@ -0,0 +1 @@
++hostile
+diff --git a/notes/no-newline.txt b/notes/no-newline.txt
+index 1c1206e8bf43..cf91bb9ed39d 100644
+--- a/notes/no-newline.txt
++++ b/notes/no-newline.txt
+@@ -1 +1 @@
+-last
+\ No newline at end of file
++last line changed
+\ No newline at end of file
+diff --git "a/notes/quote\"d.txt" "b/notes/quote\"d.txt"
+new file mode 100644
+index 000000000000..e589651364e3
+--- /dev/null
++++ "b/notes/quote\"d.txt"
+@@ -0,0 +1 @@
++hostile
+diff --git a/notes/rename-edit.txt b/notes/renamed-edit.txt
+similarity index 89%
+rename from notes/rename-edit.txt
+rename to notes/renamed-edit.txt
+index c9e9e05f445e..7155914b3e29 100644
+--- a/notes/rename-edit.txt
++++ b/notes/renamed-edit.txt
+@@ -2,7 +2,7 @@ one
+ two
+ three
+ four
+-five
++FIVE
+ six
+ seven
+ eight
+diff --git a/notes/rename-pure.txt b/notes/renamed-pure.txt
+similarity index 100%
+rename from notes/rename-pure.txt
+rename to notes/renamed-pure.txt
+diff --git a/notes/space name.txt b/notes/space name.txt
+new file mode 100644
+index 000000000000..e589651364e3
+--- /dev/null
++++ b/notes/space name.txt	
+@@ -0,0 +1 @@
++hostile
+diff --git "a/notes/tab\there.txt" "b/notes/tab\there.txt"
+new file mode 100644
+index 000000000000..e589651364e3
+--- /dev/null
++++ "b/notes/tab\there.txt"
+@@ -0,0 +1 @@
++hostile
+diff --git a/notes/type-change b/notes/type-change
+deleted file mode 100644
+index f52515160081..000000000000
+--- a/notes/type-change
++++ /dev/null
+@@ -1 +0,0 @@
+-regular
+diff --git a/notes/type-change b/notes/type-change
+new file mode 120000
+index 000000000000..11e50cab682c
+--- /dev/null
++++ b/notes/type-change
+@@ -0,0 +1 @@
++modify.txt
+\ No newline at end of file
+help[0]{cmd,why}:

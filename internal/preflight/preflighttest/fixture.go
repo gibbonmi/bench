@@ -255,16 +255,9 @@ func SeedReviewEvidence(t *testing.T, poisonedConsumer bool) (root, slug string,
 	t.Helper()
 	slug = "example"
 	root = StartRepo(t)
-	MustWriteFile(t, "go.mod", "module example.com/review\n\ngo 1.25\n")
-	MustWriteFile(t, "specs/"+slug+"/spec.md", SpecBody(slug, reviewFenceLines()...))
-	MustWriteFile(t, "specs/"+slug+"/tickets/one.md", WritesTicketDoc("One", FenceWrites(ReviewFence()), "PF1", "PF2"))
-	MustWriteFile(t, chargesource.DelegateSkill, "# Delegation skill\n")
-	MustWriteFile(t, chargesource.DelegateProcedure,
-		"# Delegation procedure\n\nFocused suite: bench test --package ./internal/preflight\n")
-	MustWriteFile(t, chargesource.BuildPhase, "# Build phase\n")
-	MustWriteFile(t, chargesource.ReviewSkill,
-		"# Review skill\n\n## Standards\n\nRules.\n\n## Spec\n\nRequirements.\n\n## Coverage\n\nEdges.\n")
-	MustWriteFile(t, chargesource.ReviewPhase, "# Review phase\n\nUse the three canonical axes.\n")
+	for _, file := range reviewCanonical(slug) {
+		MustWriteFile(t, file.path, file.body)
+	}
 	MustWriteFile(t, "target/target.go", "package target\n\nfunc Changed() int { return 0 }\nfunc Gone() {}\n")
 	MustWriteFile(t, "outside/user.go",
 		"package outside\n\nimport \"example.com/review/target\"\n\nfunc Use() int { return target.Changed() }\n")

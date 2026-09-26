@@ -1,0 +1,30 @@
+revision[1]{commit,base,method}:
+  fd6d2ed80ec6c7d317369c127e51216a4d2de1fe,160d71b97c129330feaf6573d5d4ab8d05ac7b2d,explicit pair
+aggregate[1]{commits,files,insertions,deletions}:
+  "1","2","5","0"
+files[2]{status,path,kind}:
+  A,reviews/example.md,""
+  M,specs/example/spec.md,""
+log[1]{sha,subject}:
+  fd6d2ed80ec6,review source
+diff_body:
+diff --git a/reviews/example.md b/reviews/example.md
+new file mode 100644
+index 000000000000..462239c9bd83
+--- /dev/null
++++ b/reviews/example.md
+@@ -0,0 +1 @@
++# Review record
+diff --git a/specs/example/spec.md b/specs/example/spec.md
+index 745613f963ed..8f08f49756d4 100644
+--- a/specs/example/spec.md
++++ b/specs/example/spec.md
+@@ -29,3 +29,7 @@ Status: staged
+ ```bench-completion-plan
+ {"version":1,"chunks":[{"id":"c1","tickets":["one.md"],"verification":[{"id":"tests","command":"go test ./..."}]}],"final_verification":[{"id":"acceptance","command":"go test ./..."}]}
+ ```
++
++## Further notes
++
++Edited.
+help[0]{cmd,why}:

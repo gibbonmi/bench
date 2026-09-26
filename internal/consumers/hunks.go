@@ -42,9 +42,9 @@ func parseHunks(text string) []fileHunks {
 		case current == nil:
 			// Text before the first file header belongs to no file.
 		case strings.HasPrefix(line, "--- "):
-			current.BasePath = diffPath(line[4:])
+			current.BasePath = git.PatchSidePath(line[4:])
 		case strings.HasPrefix(line, "+++ "):
-			current.TipPath = diffPath(line[4:])
+			current.TipPath = git.PatchSidePath(line[4:])
 		case strings.HasPrefix(line, "@@ "):
 			base, tip, ok := parseHunkHeader(line)
 			if !ok {
@@ -59,73 +59,6 @@ func parseHunks(text string) []fileHunks {
 		}
 	}
 	return out
-}
-
-// diffPath unquotes a patch header path and strips the a/ or b/ prefix git prints. A
-// missing side reads as /dev/null and keeps the empty string, so an added or deleted file
-// has one nameless side. The quoting wraps the prefix too, so it is undone first.
-func diffPath(field string) string {
-	field = unquoteHeaderPath(strings.TrimSpace(field))
-	if field == "/dev/null" {
-		return ""
-	}
-	if len(field) > 2 && (field[:2] == "a/" || field[:2] == "b/") {
-		return field[2:]
-	}
-	return field
-}
-
-// unquoteHeaderPath undoes the C-style quoting git applies to a patch header path. Git
-// always escapes a double quote, a backslash, and a control character, whatever
-// core.quotePath says, so such a path arrives wrapped in double quotes with C escapes
-// inside; a control byte comes as a three-digit octal escape. A field that is not quoted,
-// or whose escapes do not parse, is returned as it came: an unmatched path drops its own
-// row, which is a better answer than a guessed spelling.
-func unquoteHeaderPath(field string) string {
-	if len(field) < 2 || field[0] != '"' || field[len(field)-1] != '"' {
-		return field
-	}
-	body := field[1 : len(field)-1]
-	var out strings.Builder
-	for i := 0; i < len(body); i++ {
-		if body[i] != '\\' {
-			out.WriteByte(body[i])
-			continue
-		}
-		i++
-		if i >= len(body) {
-			return field
-		}
-		switch c := body[i]; c {
-		case '\\', '"':
-			out.WriteByte(c)
-		case 'a':
-			out.WriteByte('\a')
-		case 'b':
-			out.WriteByte('\b')
-		case 'f':
-			out.WriteByte('\f')
-		case 'n':
-			out.WriteByte('\n')
-		case 'r':
-			out.WriteByte('\r')
-		case 't':
-			out.WriteByte('\t')
-		case 'v':
-			out.WriteByte('\v')
-		default:
-			if i+3 > len(body) {
-				return field
-			}
-			octal, err := strconv.ParseUint(body[i:i+3], 8, 8)
-			if err != nil {
-				return field
-			}
-			out.WriteByte(byte(octal))
-			i += 2
-		}
-	}
-	return out.String()
 }
 
 // parseHunkHeader reads `@@ -a,b +c,d @@` into the base run and the tip run. Each side is

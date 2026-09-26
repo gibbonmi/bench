@@ -68,7 +68,7 @@ A review charge row uses access `read-only` and names the spec source in its tic
 | `coverage` | `row` (string) | Selected ticket coverage order. Review has zero rows here. |
 | `checks` | `source` (string) | Existing build check-source order or review skill source. |
 | `returns` | `source` (string) | Existing return-source order. |
-| `shared_evidence` | `kind` (string), `source` (string) | Diff, consumers, coverage order. Build has zero rows. |
+| `shared_evidence` | `kind` (string), `source` (string) | Diff fragments in reconstruction order, then consumers and coverage. Build has zero rows. |
 | `completion_evidence` | `record` (string), `source_digest` (string), `plan_digest` (string), `record_state` (string), `detail` (string) | Existing completion facts. Build has zero rows. |
 
 ## Responses
