@@ -562,6 +562,43 @@ chunk is now spent.
 The author reran its three plan checks at the repair tip `c6d2cfbf` on a clean
 tree. The JSON payload holds each result after the round 1 rows.
 
+## RI-C1b chunk review, round 2
+
+The confirming round read the two repair deltas `f1204694..c6d2cfbf` with the
+whole chunk as context. The record commit `6e93138e` follows the tip, and the
+shared evidence is `sha256:d671257b…`. Each axis ran in a fresh
+`bench-reviewer` session on opus at high effort. The charge limited each axis
+to findings above the blocking bar, because the chunk's two repair cycles are
+spent. Only the Coverage axis ran probes, and it left the tree clean.
+
+Every axis returned zero blocking findings. Standards confirmed R19 to R23 with
+D4, D5, and D6, and found no duplicated knowledge in the repair deltas. Spec
+confirmed R24 to R26 with D4, D5, and D6, and re-verified all eleven RI-C1b
+rows at the tip by test name. Coverage confirmed the same folds with two
+fixture-source probes and one producer probe of a new kind and site, each
+`bit` with restore `yes`. It also reran the orchestrator's faulted-detail
+omission probe with the same result.
+
+Advice, with no finding id, which the orchestrator carries to the final
+reconciliation:
+
+- Ticket 5 does not yet tell its author to read `UnclaimedPlanCommand`. The
+  RI-C2b plan commit adds that line.
+- An unborn repository, or one with no resolvable default branch, now routes
+  to a plan that fails with the same cause. The spec sentence requires the
+  route, and no row pins it.
+- A dirty path beside a blob-tip ref loses its dirty count, because the Git
+  state read fails as a whole.
+- `UnclaimedPlanCommand` re-spells the `worktree clean` words and the
+  modifier order that `cleanArguments` owns, an honest repetition under D5.
+- `rev-parse --absolute-git-dir` is spelled at four older sites in the status
+  test package.
+- The `unreadableLedger` closure writes an empty ledger, and the git dir it
+  writes equals the common dir only in a primary checkout.
+
+RI-C1b is complete at tip `c6d2cfbf`. Repair cycles consumed: 2 of 2. The
+hardening allowance is unused.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1320,6 +1357,66 @@ tree. The JSON payload holds each result after the round 1 rows.
           "tip": "f12046941a0ad1f2812e82de0bf4e9c61303079b",
           "finding_ids": ["R24", "R25", "R26"],
           "supersedes": []
+        },
+        {
+          "id": "ri-c1b-r2-standards",
+          "performer": "claude:bench-reviewer/ri-c1b-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "039b389cfbca79ef22bfd8e3092c47270ee89388",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c1b-standards-r2@c6d2cfbf",
+            "digest": "sha256:f56429cd44782253c4a633cb017d015b6b0f2284544bb5f87af530418b769e80",
+            "excerpt": "Standards round 2: 0 blocking findings. R19 to R23, D4, D5, and D6 confirmed; the repair deltas add no duplicated knowledge."
+          },
+          "axis": "Standards",
+          "base": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
+          "tip": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
+          "finding_ids": [],
+          "supersedes": ["ri-c1b-r1-standards"]
+        },
+        {
+          "id": "ri-c1b-r2-spec",
+          "performer": "claude:bench-reviewer/ri-c1b-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "039b389cfbca79ef22bfd8e3092c47270ee89388",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c1b-spec-r2@c6d2cfbf",
+            "digest": "sha256:cddde126f0db26bf6e5f13172a423e469eb62b8b691d792e9993f58955c3a2cc",
+            "excerpt": "Spec round 2: 0 blocking findings. R24, R25, R26, D4, D5, and D6 confirmed; all eleven RI-C1b rows delivered at c6d2cfbf."
+          },
+          "axis": "Spec",
+          "base": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
+          "tip": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
+          "finding_ids": [],
+          "supersedes": ["ri-c1b-r1-spec"]
+        },
+        {
+          "id": "ri-c1b-r2-coverage",
+          "performer": "claude:bench-reviewer/ri-c1b-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "039b389cfbca79ef22bfd8e3092c47270ee89388",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c1b-coverage-r2@c6d2cfbf",
+            "digest": "sha256:36a8cfad50e20decad31f0a8cf39a2cafa8f30f90acab45adbd6d28ff3d6a437",
+            "excerpt": "Coverage round 2: 0 blocking findings. R24 to R26 and D6 confirmed by fixture and producer probes; the repair deltas violate no row."
+          },
+          "axis": "Coverage",
+          "base": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
+          "tip": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
+          "finding_ids": [],
+          "supersedes": ["ri-c1b-r1-coverage"]
         }
       ]
     }
