@@ -1,22 +1,30 @@
 # 5. List the superseded candidates and the unique count on spec retire
 
 Blocked by: 2-route-status-to-the-plan.md, 4-discard-a-unique-ref-by-target.md
-Writes: internal/spec/spec.go, internal/spec/spec_test.go
-Covers: RI48, RI49, RI50, RI51, RI52
+Writes: cmd/bench/main.go, cmd/bench/spec_retire_listing.go (new), cmd/bench/spec_retire_listing_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/package-core-guard/unrouted-subcommand
+Covers: RI48, RI49, RI50, RI51, RI52, RI69, RI70, RI71
 
 ## What to build
 
 Chunk: RI-C2b.
+The two blockers are shared-write edges: this ticket reads the counts function that ticket 2 exports and spells the command that ticket 4 fixes.
 
-After every removal of `bench spec retire` succeeds, and before the `next:` line, print the candidate lines.
+Compose the listing at the `cmd/bench` dispatch of `bench spec retire`, because `internal/worktree` already imports `internal/spec`.
+The retire command in `internal/spec` returns as today.
+The dispatcher appends the candidate lines and the count line after a successful retire and before the `next:` line.
 One line per active or cleanup-pending assignment whose label or request token contains the slug reads `superseded candidate: <assignment id> <label> — bench worktree clean --discard-branch --target <assignment id>`.
-One count line reads `unique refs: <n> — bench worktree clean --discard-branch --unclaimed`, where `<n>` comes from the class counts of ticket 2.
+A complete record is not listed, and the calling worktree's own assignment is listed.
+
+One count line reads `unique refs: <n> — bench worktree clean --discard-branch --unclaimed`, where `<n>` comes from the counts function of ticket 2.
+When the ledger read or the planner fails, the count line reads `unique refs: unavailable — <error>`.
 The listing discards nothing and changes no exit code.
-Verify the new import of the worktree package against the import cycle check before the commit.
 
 ## Acceptance
 
 - [ ] Retire of slug `s` with one active assignment labelled `s-build` prints one candidate line with its id and the exact `--target` command.
+- [ ] Retire of slug `s` with one active assignment whose request token is `s-run` and whose label is `other` prints one candidate line.
+- [ ] Retire of slug `s` with one complete assignment labelled `s-build` prints no candidate line.
 - [ ] Retire with two unique unrecorded refs prints `unique refs: 2 — bench worktree clean --discard-branch --unclaimed`.
 - [ ] Retire with no matching assignment prints `unique refs: 0` and no candidate line.
+- [ ] Retire with an unreadable ledger prints `unique refs: unavailable — <error>` and exits 0.
 - [ ] Retire with a candidate exits 0 and every branch ref survives.

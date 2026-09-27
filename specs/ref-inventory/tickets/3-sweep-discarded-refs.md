@@ -1,6 +1,6 @@
 # 3. Declare the discarded namespace and sweep it at 30 days
 
-Blocked by: none
+Blocked by: 2-route-status-to-the-plan.md
 Writes: internal/intent/ledger/ledger.go, internal/intent/ledger_aliases.go, internal/worktree/reconcile.go, internal/worktree/reconcile_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: RI42, RI43, RI44, RI45, RI46, RI47
 
