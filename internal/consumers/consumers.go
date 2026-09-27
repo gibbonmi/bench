@@ -46,18 +46,27 @@ type Row struct {
 	Enclosing string
 }
 
-// rowFields is the consumers table schema. The queried symbol is constant across the
-// whole table, so it gets no column.
+// rowFields is the consumers table schema. A one-symbol query holds the symbol constant
+// across the whole table, so it gets no column; a several-symbol query prepends one.
 var rowFields = []string{"file", "line", "via", "enclosing"}
+
+// rowBlock is the consumers table's block name, shared by Render and the command response.
+const rowBlock = "consumers"
 
 // Render emits rows as the AXI `consumers[N]{file,line,via,enclosing}:` block. An empty
 // slice renders the definitive empty table rather than nothing.
 func Render(rows []Row) (string, error) {
 	cells := make([][]any, len(rows))
 	for i, r := range rows {
-		cells[i] = []any{r.File, r.Line, r.Via, r.Enclosing}
+		cells[i] = rowCells(r)
 	}
-	return toon.TableTyped("consumers", rowFields, cells)
+	return toon.TableTyped(rowBlock, rowFields, cells)
+}
+
+// rowCells is one row's cells in rowFields order, so every consumers block spells a row
+// one way.
+func rowCells(r Row) []any {
+	return []any{r.File, r.Line, r.Via, r.Enclosing}
 }
 
 // relPath renders a file-set filename relative to root. An empty root, or a filename
