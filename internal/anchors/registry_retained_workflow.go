@@ -180,8 +180,8 @@ var retroCaptureAnchors = []Anchor{
 // unenforced and that a stale executable reruns the landing. The reference points
 // to the operating guide's enforcement sentence, and a Forbid row reads that
 // sentence's named constant so no copy returns there. Require rows pin the
-// synthesis gate source, the final check's landing gate and worktree retirement,
-// and the reviewer as the runner of the raw conflict merge.
+// synthesis gate source, the final check's landing gate, broker rehearsal, and
+// worktree retirement, and the reviewer as the runner of the raw conflict merge.
 var laneAndLandingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-synthesis/SKILL.md", Kind: Forbid, Needle: "`bench commit` gates the tree it lands", Diagnostic: "lane and landing: craft-synthesis restored the claim that bench commit gates the tree it lands"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-synthesis/SKILL.md", Kind: Require, Needle: "Take the green verdict from the whole-project gate. That gate is the landing's gate, or `bench worktree exec <target> -- bench gate` for a batch that waits for approval.", Diagnostic: "lane and landing: craft-synthesis dropped the whole-project gate as the source of the prose-only green verdict"},
@@ -197,6 +197,7 @@ var laneAndLandingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "gate-then-commit path", Diagnostic: "lane and landing: final check restored the gate-then-commit path"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Forbid, Needle: "then runs the gate and commits only on green", Diagnostic: "lane and landing: final check restored the claim that bench commit runs the gate and commits only on green"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "`bench worktree land` runs the whole-project gate on work that `bench commit` committed on a lane pass.", Diagnostic: "lane and landing: final check dropped the landing's whole-project gate on lane-pass commits"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "Before the first landing of such a spec, run `bench worktree build <target>` and then `bench worktree exec <target> -- ./dist/bench doctor`.", Diagnostic: "lane and landing: final check dropped the broker rehearsal before the first landing of a broker-changing spec"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-final-check.md", Kind: Require, Needle: "A merged spec awaiting retirement gets `bench spec retire <slug>` in a Bench worktree, and that worktree lands its `spec-retire: <slug>` commit through `bench worktree land`.", Diagnostic: "lane and landing: final check dropped the spec retirement in a Bench worktree and its landing"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "the rule is guidance, not a hook", Diagnostic: "lane and landing: reference restored the claim that the landing rule is guidance, not a hook"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: WorktreeEnforcementMarker, Diagnostic: "lane and landing: reference restored a copy of the operating guide's worktree enforcement sentence"},
