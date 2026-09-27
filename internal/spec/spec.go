@@ -197,21 +197,26 @@ func deriveImplemented(content []byte) ([]byte, int) {
 // resolves from any cwd inside the repo, while a path argument stays cwd-relative. A
 // usage error — a missing or unknown subcommand, a missing or extra argument, or an
 // unknown flag — exits 2. A resolve, validate, or delete failure exits 1, naming the
-// file and the reason.
-func Command(args []string) (string, int) {
+// file and the reason. retireOperand is the operand a retire parsed, or "" for other runs.
+func Command(args []string) (out string, code int, retireOperand string) {
 	if len(args) == 0 {
-		return toon.Usage("bench spec", "expected a subcommand: retire, history") + "\n", 2
+		return toon.Usage("bench spec", "expected a subcommand: retire, history") + "\n", 2, ""
 	}
 	switch args[0] {
 	case "-h", "--help":
-		return "usage: bench spec <subcommand>\n\nsubcommands:\n  retire <slug>\n  history <slug>\n", 0
+		return "usage: bench spec <subcommand>\n\nsubcommands:\n  retire <slug>\n  history <slug>\n", 0, ""
 	case "retire":
-		return retireCommand(args[1:])
+		arg, out, code, ok := specArg("bench spec retire", "usage: bench spec retire <spec.md | slug>\n", args[1:])
+		if ok {
+			out, code = retireCommand(arg)
+		}
+		return out, code, arg
 	case "history":
-		return historyCommand(args[1:])
+		out, code = historyCommand(args[1:])
 	default:
-		return toon.Usage("bench spec", args[0]) + "\n", 2
+		out, code = toon.Usage("bench spec", args[0])+"\n", 2
 	}
+	return out, code, ""
 }
 
 // specArg extracts the single positional that a subcommand grammar has already
@@ -239,21 +244,16 @@ func RepoBase() string {
 // RetireNextPrefix opens the last line of a completed retire; the retire listing goes before it.
 const RetireNextPrefix = "next: "
 
-// retireCommand runs `bench spec retire <slug>`. On a merged-implemented spec, it
-// deletes the review pickup when present, the tickets, the spec file, and the
-// complete folder, and it prints what it removed plus the judgment duties that
-// remain. It never commits and never runs the gate; `bench commit` owns commit
-// discipline. Every unsafe input refuses at exit 1 without deleting anything. A spec
-// refuses when it is not merged-implemented: staged, or implemented only in the
-// working tree and not yet at HEAD. An unknown slug refuses, and so does an orphaned
-// review pickup with no spec. Inside a repository, the primary checkout refuses too,
-// because Bench write verbs run from a worktree. The next: line names the board
+// retireCommand runs `bench spec retire` on its parsed operand. On a merged-implemented spec, it
+// deletes the review pickup when present, the tickets, the spec file, and the complete folder,
+// and it prints what it removed plus the judgment duties that remain. It never commits and
+// never runs the gate; `bench commit` owns commit discipline. Every unsafe input refuses at
+// exit 1 without deleting anything. A spec refuses when it is not merged-implemented: staged,
+// or implemented only in the working tree and not yet at HEAD. An unknown slug refuses, and so
+// does an orphaned review pickup with no spec. Inside a repository, the primary checkout
+// refuses too, because Bench write verbs run from a worktree. The next: line names the board
 // remainder that roadmapRemainder renders from the Roadmap: value, read before deletion.
-func retireCommand(rest []string) (string, int) {
-	arg, out, code, ok := specArg("bench spec retire", "usage: bench spec retire <spec.md | slug>\n", rest)
-	if !ok {
-		return out, code
-	}
+func retireCommand(arg string) (string, int) {
 	base := RepoBase()
 	if base != "" {
 		primary, err := git.IsPrimaryCheckout(base)

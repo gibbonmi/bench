@@ -95,7 +95,7 @@ func TestSpecImplementedIsAnUnknownSubcommand(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	out, code := Command([]string{"implemented", "x"})
+	out, code, _ := Command([]string{"implemented", "x"})
 	if code != 2 {
 		t.Fatalf("code = %d, want 2; out = %q", code, out)
 	}
@@ -114,7 +114,7 @@ func TestSpecImplementedIsAnUnknownSubcommand(t *testing.T) {
 // TestSpecUsageNamesTheSurvivingSubcommands pins FA3's bare-argv half: the usage line
 // offers retire and history only.
 func TestSpecUsageNamesTheSurvivingSubcommands(t *testing.T) {
-	out, code := Command(nil)
+	out, code, _ := Command(nil)
 	if code != 2 {
 		t.Fatalf("code = %d, want 2", code)
 	}
@@ -126,7 +126,7 @@ func TestSpecUsageNamesTheSurvivingSubcommands(t *testing.T) {
 func TestSpecHelpPrintsThePublicSubcommandInventory(t *testing.T) {
 	const want = "usage: bench spec <subcommand>\n\nsubcommands:\n  retire <slug>\n  history <slug>\n"
 	for _, arg := range []string{"--help", "-h"} {
-		out, code := Command([]string{arg})
+		out, code, _ := Command([]string{arg})
 		if code != 0 {
 			t.Fatalf("Command(%q) code = %d, want 0; out = %q", arg, code, out)
 		}
@@ -138,16 +138,15 @@ func TestSpecHelpPrintsThePublicSubcommandInventory(t *testing.T) {
 
 func TestSpecSubcommandHelpUsesDeclaredUsage(t *testing.T) {
 	tests := []struct {
-		name    string
-		command func([]string) (string, int)
-		want    string
+		name string
+		want string
 	}{
-		{"retire", retireCommand, "usage: bench spec retire <spec.md | slug>\n"},
-		{"history", historyCommand, "usage: bench spec history <spec.md | slug>\n"},
+		{"retire", "usage: bench spec retire <spec.md | slug>\n"},
+		{"history", "usage: bench spec history <spec.md | slug>\n"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			out, code := tt.command([]string{"help"})
+			out, code, _ := Command([]string{tt.name, "help"})
 			if code != 0 {
 				t.Errorf("help code = %d, want 0; out = %q", code, out)
 			}
@@ -161,17 +160,17 @@ func TestSpecSubcommandHelpUsesDeclaredUsage(t *testing.T) {
 func TestSpecSubcommandUsageRefusals(t *testing.T) {
 	tests := []struct {
 		name    string
-		command func([]string) (string, int)
+		command string
 		args    []string
 	}{
-		{"retire unknown flag", retireCommand, []string{"--unknown"}},
-		{"retire missing operand", retireCommand, nil},
-		{"history unknown flag", historyCommand, []string{"--unknown"}},
-		{"history missing operand", historyCommand, nil},
+		{"retire unknown flag", "retire", []string{"--unknown"}},
+		{"retire missing operand", "retire", nil},
+		{"history unknown flag", "history", []string{"--unknown"}},
+		{"history missing operand", "history", nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			out, code := tt.command(tt.args)
+			out, code, _ := Command(append([]string{tt.command}, tt.args...))
 			if code != 2 {
 				t.Errorf("code = %d, want 2; out = %q", code, out)
 			}
@@ -557,7 +556,8 @@ func runRetire(t *testing.T, root, arg string) (string, int) {
 		t.Fatal(err)
 	}
 	defer os.Chdir(oldwd)
-	return retireCommand([]string{arg})
+	out, code, _ := Command([]string{"retire", arg})
+	return out, code
 }
 
 // TestRetireNextLineNamesTheBoardRemainder covers FC1-FC4 and FC6, and the last-line

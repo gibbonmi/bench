@@ -15,29 +15,31 @@ import (
 
 // retireListingCommand runs the spec family and prints its response with the retire listing
 // inserted before the retire's next: line. The exit code is always the family's own.
-func retireListingCommand(fn func([]string) (string, int)) commandHandler {
+func retireListingCommand(fn func([]string) (string, int, string)) commandHandler {
 	return func(c Command, args []string) int {
-		out, code := fn(args)
-		fmt.Fprint(c.Stdout, withRetireListing(args, out, code))
+		out, code, operand := fn(args)
+		fmt.Fprint(c.Stdout, withRetireListing(operand, out, code))
 		return code
 	}
 }
 
 // withRetireListing inserts the listing only after a code-0 retire that printed a next: line.
-// Help and every refusal print no next: line, so they pass through unchanged.
-func withRetireListing(args []string, out string, code int) string {
-	if code != 0 || len(args) < 2 || args[0] != "retire" {
+// A refusal can reflect an operand that carries a next: line, so the exit code, not the
+// marker, keeps every refusal unchanged.
+func withRetireListing(operand, out string, code int) string {
+	if code != 0 || operand == "" {
 		return out
 	}
 	at := strings.LastIndex("\n"+out, "\n"+spec.RetireNextPrefix)
 	if at < 0 {
 		return out
 	}
-	return out[:at] + retireListing(spec.RepoBase(), spec.SlugOf(args[len(args)-1])) + out[at:]
+	return out[:at] + retireListing(spec.RepoBase(), spec.SlugOf(operand)) + out[at:]
 }
 
 // retireListing is one candidate line per active or cleanup-pending assignment whose label or
-// request token contains slug, then the unique count line. It reads and discards nothing.
+// request token contains slug, then the count line. A faulted row is not unique, so it adds
+// its own count rather than a unique one. It reads and discards nothing.
 func retireListing(root, slug string) string {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
@@ -53,7 +55,11 @@ func retireListing(root, slug string) string {
 	if err != nil {
 		return b.String() + uniqueRefsLine("unavailable — "+err.Error())
 	}
-	return b.String() + uniqueRefsLine(fmt.Sprintf("%d — %s", counts.Unique(), worktree.UnclaimedPlanCommand()))
+	count := fmt.Sprint(counts.Unique())
+	if counts.Faulted > 0 {
+		count += fmt.Sprintf(", %d faulted", counts.Faulted)
+	}
+	return b.String() + uniqueRefsLine(count+" — "+worktree.UnclaimedPlanCommand())
 }
 
 // supersededCandidate holds a live record whose label or request token names the slug. A
@@ -65,6 +71,6 @@ func supersededCandidate(a intent.Assignment, slug string) bool {
 	return strings.Contains(a.Label, slug) || strings.Contains(a.RequestToken, slug)
 }
 
-// uniqueRefsLine is the count line with its value: a count and the plan command, or the
-// unavailable reason.
+// uniqueRefsLine is the count line with its value: the unique count, a faulted count when one
+// is nonzero, and the plan command, or the unavailable reason.
 func uniqueRefsLine(value string) string { return "unique refs: " + value + "\n" }

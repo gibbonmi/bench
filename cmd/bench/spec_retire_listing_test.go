@@ -101,6 +101,21 @@ func TestRetireListsSupersededCandidatesBeforeNext(t *testing.T) {
 	}
 }
 
+// The listing takes its slug from the operand the retire parsed, so a "--" on either side of
+// the operand still lists the candidate.
+func TestRetireListsCandidatesForTerminatedOperand(t *testing.T) {
+	for _, operands := range [][]string{{"--", retireSlug}, {retireSlug, "--"}} {
+		t.Run(strings.Join(operands, " "), func(t *testing.T) {
+			repo, _ := retireListingRepo(t, "retire-host")
+			build := plantAssignment(t, repo, "r77", "alpha-build")
+			out, code := dispatch(append([]string{"spec", "retire"}, operands...)...)
+			if got := candidateLines(out); code != 0 || !slices.Equal(got, []string{candidateLine(build)}) {
+				t.Errorf("retire %q = (%d, %q), want the candidate %q", operands, code, out, candidateLine(build))
+			}
+		})
+	}
+}
+
 // RI77: a path operand derives the same slug as the bare slug.
 func TestRetireListsCandidatesForPathOperand(t *testing.T) {
 	repo, _ := retireListingRepo(t, "retire-host")
@@ -135,14 +150,42 @@ func TestRetireSkipsCompleteRecord(t *testing.T) {
 	}
 }
 
-// RI50: two unique unrecorded refs print the count and the unclaimed plan command.
+// RI50, RI100: two unique unrecorded refs print the count and the unclaimed plan command, and
+// faulted rows add a faulted suffix without counting as unique.
 func TestRetireCountsUniqueRefs(t *testing.T) {
-	repo, _ := retireListingRepo(t, "retire-host")
-	plantUniqueShiftBranch(t, repo, "one")
-	plantUniqueShiftBranch(t, repo, "two")
-	out, code := dispatch("spec", "retire", retireSlug)
-	if want := "\nunique refs: 2 — bench worktree clean --discard-branch --unclaimed\n"; code != 0 || !strings.Contains(out, want) {
-		t.Errorf("retire = (%d, %q), want the line %q", code, out, want)
+	cases := []struct {
+		name  string
+		plant func(t *testing.T, repo string)
+		want  string
+	}{
+		{"two unique refs", func(t *testing.T, repo string) {
+			plantUniqueShiftBranch(t, repo, "one")
+			plantUniqueShiftBranch(t, repo, "two")
+		}, "unique refs: 2 — bench worktree clean --discard-branch --unclaimed"},
+		{"a symref to main and a blob tip", func(t *testing.T, repo string) {
+			runAXIGit(t, "-C", repo, "symbolic-ref", "refs/heads/bench/assign/orphan/symref", "refs/heads/main")
+			content := filepath.Join(t.TempDir(), "blob.txt")
+			writeAXIFixture(t, content, "blob\n")
+			blob := strings.TrimSpace(runAXIGit(t, "-C", repo, "hash-object", "-w", "--", content))
+			gitDir := strings.TrimSpace(runAXIGit(t, "-C", repo, "rev-parse", "--absolute-git-dir"))
+			writeAXIFixture(t, filepath.Join(gitDir, "refs", "heads", "bench", "assign", "orphan", "blob"), blob+"\n")
+		}, "unique refs: 0, 2 faulted — bench worktree clean --discard-branch --unclaimed"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			repo, _ := retireListingRepo(t, "retire-host")
+			tc.plant(t, repo)
+			out, code := dispatch("spec", "retire", retireSlug)
+			var counts []string
+			for _, line := range strings.Split(out, "\n") {
+				if strings.HasPrefix(line, "unique refs:") {
+					counts = append(counts, line)
+				}
+			}
+			if code != 0 || !slices.Equal(counts, []string{tc.want}) {
+				t.Errorf("retire = (%d, %q), want the one count line %q", code, out, tc.want)
+			}
+		})
 	}
 }
 
@@ -171,15 +214,26 @@ func TestRetireWithUnreadableLedgerKeepsExitZero(t *testing.T) {
 	}
 }
 
-// RI80: help and a refusal print no listing, even with a candidate on the ledger.
+// RI80, RI97: help and a refusal print no listing, even with a candidate on the ledger. The
+// retire reflects its operand into a refusal, so an operand that carries a next: line holds a
+// real marker, and only the exit code keeps that refusal free of the listing.
 func TestRetireHelpAndRefusalPrintNoListing(t *testing.T) {
 	repo, host := retireListingRepo(t, "alpha-host")
 	plantAssignment(t, repo, "r80", "alpha-build")
 	writeAXIFixture(t, filepath.Join(host.Path, "specs", "beta", "spec.md"), "# Beta\n\nStatus: staged\n")
-	for _, argv := range [][]string{{"spec", "retire", "--help"}, {"spec", "retire", "beta"}, {"spec", "--help"}} {
-		out, _ := dispatch(argv...)
-		if strings.Contains(out, "superseded candidate:") || strings.Contains(out, "unique refs:") {
-			t.Errorf("%q printed the listing: %q", argv, out)
+	cases := []struct {
+		argv []string
+		code int
+	}{
+		{[]string{"spec", "retire", "--help"}, 0},
+		{[]string{"spec", "retire", "beta"}, 1},
+		{[]string{"spec", "--help"}, 0},
+		{[]string{"spec", "retire", "gamma\nnext: alpha"}, 1},
+	}
+	for _, tc := range cases {
+		out, code := dispatch(tc.argv...)
+		if code != tc.code || strings.Contains(out, "superseded candidate:") || strings.Contains(out, "unique refs:") {
+			t.Errorf("%q = (%d, %q), want exit %d and no listing", tc.argv, code, out, tc.code)
 		}
 	}
 }
