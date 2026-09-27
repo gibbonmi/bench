@@ -373,11 +373,36 @@ Advice: the Won't-handle line for prefix settings over-claims, because a
 charge under `diff.noprefix` refuses only when a decoded path leaves the
 inventory. The refusal comparator is a substring match.
 
+## RE2 repair cycle 2
+
+Repair cycle 2 of 2 is consumed, so the RE2 allowance is exhausted. A fresh
+`bench-writer` repair session on opus at low effort started at `4fb9096a` and
+committed `52ce9574`. `ReviewFenceWith` is now the one owner of the canonical
+entries, and `SeedReviewPair` overlays the pair on it. `ReviewCase.Expected`
+is now the one owner of the expected bytes of a case. The final sweep also
+folded the fragment role set into `DiffRoles`.
+
+The sweep left five items with reasons. The positional base and tip
+arguments are real duplicated knowledge, but most of them predate RE2.
+
+| Finding | File | Mutation | Verdict |
+|---|---|---|---|
+| R16 | `preflighttest/reviewfiles.go` | swap: the fence owner drops one file | bit |
+| R17 | `preflighttest/reviewfiles.go` | swap: never select the stored baseline | silent |
+| R17 | `internal/diff/diff.go` | swap: add one framing byte | bit |
+| reference | `charge-evidence-format.md` | omission: the shared-row description | bit |
+
+The R17 swap is silent by construction, because the producer still matches
+the baseline. The framing-byte probe proves that the baseline branch of the
+owner catches a changed byte. The orchestrator ran the last probe as the
+independent coordinator probe. Each restore reads `yes`. The repair session
+ran the three ticket checks at `52ce9574`, and each check passed.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/review-evidence-file-pages/spec.md",
-  "plan_digest": "sha256:0a0dd94188bc7e51324817949e800dc3482dfe856328d9ca5be6b1f01f5c04c4",
+  "plan_digest": "sha256:8dddf1cf850b5fab367dbec2d528660f7f2ad2d616aa6fa58f3e124215d0016f",
   "implementation_session": "",
   "chunks": [
     {
@@ -705,9 +730,9 @@ inventory. The refusal comparator is a substring match.
     {
       "id": "RE2",
       "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
-      "tip": "4b23d9d69c29853ce37a9f923ecf2203c3809856",
-      "plan_digest": "sha256:0a0dd94188bc7e51324817949e800dc3482dfe856328d9ca5be6b1f01f5c04c4",
-      "source_digest": "d33c40e2d45e64827cafe2c98aab807789b5c1bd",
+      "tip": "52ce9574eea53b962c2d83ad333636f890f987c8",
+      "plan_digest": "sha256:8dddf1cf850b5fab367dbec2d528660f7f2ad2d616aa6fa58f3e124215d0016f",
+      "source_digest": "2a925ccc7b6a06693920ce448da3e383bde3697d",
       "acceptance_rows": [
         "RE1",
         "RE2",
@@ -828,6 +853,60 @@ inventory. The refusal comparator is a substring match.
             "ref": "claude:agent/re-t2-repair-c1-20260926/2-workflow@4b23d9d6",
             "digest": "sha256:f4ac35279c7217097c2d81a2127858bb4df7a1b23164b879c1e67a9a17f3da66",
             "excerpt": "internal/conformance,pass,560; failures[0]; skips[0]"
+          },
+          "requirement": "2-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-file-evidence-r3",
+          "performer": "claude:bench-writer/re-t2-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "2a925ccc7b6a06693920ce448da3e383bde3697d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-c2-20260926/2-file-evidence@52ce9574",
+            "digest": "sha256:49d22270efc5f980fcb52dfb5d90c36f2967cb5d883e25107263b9eb4956fb1f",
+            "excerpt": "ok  \tgithub.com/gibbonmi/bench/internal/diff\t7.446s\nok  \tgithub.com/gibbonmi/bench/internal/git\t1.557s\nok  \tgithub.com/gibbonmi/bench/internal/consumers\t2.541s\nok  \tgithub.com/gibbonmi/bench/internal/chargeevidence\t0.198s\nok  \tgithub.com/gibbonmi/bench/internal/preflight\t19.605s\nok  \tgithub.com/gibbonmi/bench/internal/preflight/evidencecmd\t14.522s"
+          },
+          "requirement": "2-file-evidence",
+          "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/git ./internal/consumers ./internal/chargeevidence ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-ports-r3",
+          "performer": "claude:bench-writer/re-t2-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "2a925ccc7b6a06693920ce448da3e383bde3697d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-c2-20260926/2-ports@52ce9574",
+            "digest": "sha256:d736784a5e65b2805edf8ffac5df36cb756ec5b104ed8e373948f4ddab5718ba",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-ports",
+          "command": "bench test --check injected-port-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-workflow-r3",
+          "performer": "claude:bench-writer/re-t2-repair-c2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "2a925ccc7b6a06693920ce448da3e383bde3697d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-c2-20260926/2-workflow@52ce9574",
+            "digest": "sha256:814b76cfe4e3783f73c48d0c274dddf3a8fe3d7332258cd3813b16aae1e1de30",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,532\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "2-workflow",
           "command": "bench test --check docs-currency-workflow",
@@ -997,6 +1076,18 @@ inventory. The refusal comparator is a substring match.
     {
       "from": "sha256:3dcd6a037980473271a0cd858b370e573e1c8adb100c30dd283adb7bec588c44",
       "to": "sha256:0a0dd94188bc7e51324817949e800dc3482dfe856328d9ca5be6b1f01f5c04c4",
+      "chunk_ids": {
+        "RE1": [
+          "RE1"
+        ],
+        "RE2": [
+          "RE2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:0a0dd94188bc7e51324817949e800dc3482dfe856328d9ca5be6b1f01f5c04c4",
+      "to": "sha256:8dddf1cf850b5fab367dbec2d528660f7f2ad2d616aa6fa58f3e124215d0016f",
       "chunk_ids": {
         "RE1": [
           "RE1"
