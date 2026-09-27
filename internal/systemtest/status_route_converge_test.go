@@ -62,7 +62,7 @@ func TestStatusRouteExecutesUnclaimedCleanup(t *testing.T) {
 	if run.code != 0 {
 		t.Fatalf("routed command %q = (%d, %q, %q)", command, run.code, run.stdout, run.stderr)
 	}
-	if result := owner.runAt(repo, nil, "git", "show-ref", "--verify", "--quiet", branch); result.code == 0 {
-		t.Fatalf("routed command %q left unclaimed assignment branch %q", command, branch)
+	if result := owner.runAt(repo, nil, "git", "show-ref", "--verify", "--quiet", branch); result.code != 0 {
+		t.Fatalf("routed command %q removed unique unclaimed assignment branch %q", command, branch)
 	}
 }

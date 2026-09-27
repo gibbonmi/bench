@@ -382,7 +382,14 @@ func unclaimedBranchFixture(t *testing.T, owners ...string) (string, string) {
 // selection any earlier plan described.
 func addUnclaimedBranch(t *testing.T, root, owner string) string {
 	t.Helper()
+	return addUnclaimedBranchAt(t, root, owner, "HEAD")
+}
+
+// addUnclaimedBranchAt creates one unclaimed assignment branch at start. The owner letter
+// leads the ref, so it also fixes the lexical order of the refs a fixture creates.
+func addUnclaimedBranchAt(t *testing.T, root, owner, start string) string {
+	t.Helper()
 	ref := intent.AssignmentBranchRef(strings.Repeat(owner, 32), strings.Repeat("f", 32))
-	gitRun(t, root, "branch", strings.TrimPrefix(ref, "refs/heads/"))
+	gitRun(t, root, "branch", strings.TrimPrefix(ref, "refs/heads/"), start)
 	return ref
 }

@@ -130,7 +130,7 @@ var actionDefinitions = [actionCount]actionDefinition{
 	statusAllAction:              {kind: actionBench, command: "bench status --all"},
 	benchWorktreeListAction:      {kind: actionBench, command: "bench worktree list"},
 	cleanWorktreeAction:          {kind: actionBench, command: "bench worktree clean", argument: oneWordArgument},
-	cleanUnclaimedWorktreeAction: {kind: actionBench, command: "bench worktree clean --discard-branch --unclaimed --apply-current"},
+	cleanUnclaimedWorktreeAction: {kind: actionBench, command: "bench worktree clean --discard-branch --unclaimed"},
 	linkAction:                   {kind: actionBench, command: "bench link"},
 	mapsAction:                   {kind: actionBench, command: "bench maps"},
 	roadmapAction:                {kind: actionBench, command: "bench roadmap"},

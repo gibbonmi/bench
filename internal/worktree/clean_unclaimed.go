@@ -11,7 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
-const unclaimedAssignmentFingerprintVersion = "bench-unclaimed-assignment-branches/v1"
+const unclaimedAssignmentFingerprintVersion = "bench-unclaimed-assignment-branches/v2"
 
 // StepUnlockedReplan is the re-plan this selector runs before it deletes anything. Every
 // StepApplyLocked site sits inside the registration lock a checkout holds, and this mode
@@ -20,10 +20,31 @@ const unclaimedAssignmentFingerprintVersion = "bench-unclaimed-assignment-branch
 // its size budget.
 const StepUnlockedReplan LifecycleStep = "unlocked-replan"
 
-type unclaimedAssignmentBranch struct{ ref, oid, reason string }
+type unclaimedAssignmentBranch struct {
+	ref, reason string
+	refVerdict
+}
 type unclaimedAssignmentSet struct {
 	rows        []unclaimedAssignmentBranch
 	fingerprint string
+	options     CleanupOptions
+}
+
+// faulted reports whether any row names a ref with no commit tip. Such a set has no
+// fingerprint, so a fingerprint apply refuses as stale, and its plan render refuses, so the
+// plan exits 1 and --apply-current stops before its apply.
+func (set unclaimedAssignmentSet) faulted() bool {
+	for _, row := range set.rows {
+		if row.fault != "" {
+			return true
+		}
+	}
+	return false
+}
+
+// plan is the cleanup row one classified branch renders.
+func (row unclaimedAssignmentBranch) plan(fingerprint string) CleanupPlan {
+	return CleanupPlan{Target: row.ref, Action: row.action(), Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: fingerprint, Reason: row.detail(row.reason)}
 }
 
 // unclaimedBranchReason reports whether ref sits in a Bench-created branch namespace and
@@ -39,8 +60,9 @@ func unclaimedBranchReason(ref string) (string, bool) {
 	}
 }
 
-// planUnclaimedAssignmentSet selects the unclaimed assignment and shift branches. It
-// excludes every assignment record, checked-out ref, and the default branch.
+// planUnclaimedAssignmentSet selects the unclaimed assignment and shift branches and
+// classifies each one. It excludes every assignment record, checked-out ref, and the
+// default branch.
 func planUnclaimedAssignmentSet(root string, options CleanupOptions) (unclaimedAssignmentSet, error) {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
@@ -68,37 +90,64 @@ func planUnclaimedAssignmentSet(root string, options CleanupOptions) (unclaimedA
 	if err != nil {
 		return unclaimedAssignmentSet{}, fmt.Errorf("git local branches: %w", err)
 	}
-	set := unclaimedAssignmentSet{}
+	set := unclaimedAssignmentSet{options: options}
 	for _, branch := range branches {
 		ref := "refs/heads/" + branch
 		reason, owned := unclaimedBranchReason(ref)
 		if !owned || protected[ref] {
 			continue
 		}
-		oid, err := git.Output("-C", root, "rev-parse", "--verify", ref+"^{commit}")
-		if err != nil {
-			return unclaimedAssignmentSet{}, fmt.Errorf("git assignment branch identity %s: %w", ref, err)
-		}
-		set.rows = append(set.rows, unclaimedAssignmentBranch{ref, oid, reason})
+		set.rows = append(set.rows, unclaimedAssignmentBranch{ref: ref, reason: reason})
 	}
 	sort.Slice(set.rows, func(i, j int) bool { return set.rows[i].ref < set.rows[j].ref })
-	if len(set.rows) == 0 {
-		return set, nil
+	refs := make([]string, len(set.rows))
+	for i, row := range set.rows {
+		refs[i] = row.ref
+	}
+	verdicts, err := classifyUnclaimedRefs(root, assignments, protected, defaultBranch, refs)
+	if err != nil {
+		return unclaimedAssignmentSet{}, err
 	}
 	parts := [][]byte{[]byte(unclaimedAssignmentFingerprintVersion), []byte("discard-branch=true"), []byte(fmt.Sprintf("unclaimed=%t", options.Unclaimed))}
-	for _, row := range set.rows {
-		parts = append(parts, []byte(row.ref), []byte(row.oid), []byte(row.reason))
+	for i := range set.rows {
+		set.rows[i].refVerdict = verdicts[i]
+		row := set.rows[i]
+		parts = append(parts, []byte(row.ref), []byte(row.oid), []byte(row.class), []byte(row.holder))
+	}
+	if len(set.rows) == 0 || set.faulted() {
+		return set, nil
 	}
 	set.fingerprint = fingerprintParts(parts...)
 	return set, nil
 }
 
+// renderUnclaimedAssignmentSet prints the plan rows, then the apply command when a row
+// removes. A set with an error row prints no apply command and returns the refusal, so the
+// plan exits 1 and --apply-current stops before any delete.
 func renderUnclaimedAssignmentSet(stdout io.Writer, set unclaimedAssignmentSet) error {
 	plans := make([]CleanupPlan, 0, len(set.rows))
+	removes := false
 	for _, row := range set.rows {
-		plans = append(plans, CleanupPlan{Target: row.ref, Action: ActionDiscardRemove, Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: set.fingerprint, Reason: row.reason})
+		plans = append(plans, row.plan(set.fingerprint))
+		removes = removes || row.action().Removes()
 	}
-	return renderCleanups(stdout, plans)
+	if err := renderCleanups(stdout, plans); err != nil {
+		return err
+	}
+	if set.faulted() {
+		return errUnresolvedUnclaimedRef
+	}
+	if !removes {
+		return nil
+	}
+	// The apply command is the re-plan command plus the digest this plan authorizes.
+	arguments := append(unclaimedReplan(set.options), axi.KnownArgument("--apply"), axi.KnownArgument(set.fingerprint))
+	help, err := axi.RenderHelp([]axi.Action{axi.ExecutableInvocation("apply the unclaimed branch plan", arguments...)})
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprint(stdout, help)
+	return err
 }
 
 func staleUnclaimedPlans(set unclaimedAssignmentSet) []CleanupPlan {
@@ -120,10 +169,11 @@ func unclaimedReplan(options CleanupOptions) []axi.InvocationArgument {
 	return cleanArguments(options, "--unclaimed")
 }
 
-// applyUnclaimedAssignmentSet deletes each planned branch at the exact object the plan
-// named. It reports the outcome rows alone. A stale refusal carries no rows, because the
-// refusal row is this command surface's own spelling and the caller renders it; a row
-// returned here would be a second derivation the caller discards.
+// applyUnclaimedAssignmentSet deletes each landed and subsumed branch at the exact object
+// the plan named, and it reports a retained row as planned. It reports the outcome rows
+// alone. A stale refusal carries no rows, because the refusal row is this command surface's
+// own spelling and the caller renders it; a row returned here would be a second derivation
+// the caller discards.
 func applyUnclaimedAssignmentSet(j joins, root string, set unclaimedAssignmentSet, options CleanupOptions) ([]CleanupPlan, error) {
 	// The window that refusal exists for: a branch can enter or leave the namespace between
 	// the caller's plan read and this re-plan. The boundary is nil in production; it lets a
@@ -143,6 +193,10 @@ func applyUnclaimedAssignmentSet(j joins, root string, set unclaimedAssignmentSe
 	for i, planned := range set.rows {
 		if current.rows[i] != planned {
 			return nil, errStaleFingerprint
+		}
+		if !planned.action().Removes() {
+			plans = append(plans, planned.plan(set.fingerprint))
+			continue
 		}
 		if err := git.DeleteBranchExact(root, planned.ref, planned.oid); err != nil {
 			return append(plans, CleanupPlan{Target: planned.ref, Action: ActionError, Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: set.fingerprint, Reason: err.Error()}), err
