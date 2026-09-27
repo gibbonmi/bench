@@ -3,6 +3,7 @@ package worktree
 import (
 	"fmt"
 	"io"
+	"slices"
 	"sort"
 	"strings"
 
@@ -160,12 +161,22 @@ func unclaimedOptions() CleanupOptions {
 	return CleanupOptions{DiscardBranch: true, Unclaimed: true}
 }
 
+// unclaimedSelector is the selector that names this mode.
+const unclaimedSelector = "--unclaimed"
+
 // unclaimedReplan is this mode's own re-plan command, beside the landed selector's. It takes
 // the caller's options so a later grammar change cannot leave the rendered command behind.
 // Today the two are pinned equal: valid() requires --discard-branch and refuses the other
 // two modifiers under --unclaimed, so every valid invocation carries unclaimedOptions().
 func unclaimedReplan(options CleanupOptions) []axi.InvocationArgument {
-	return cleanArguments(options, "--unclaimed")
+	return cleanArguments(options, unclaimedSelector)
+}
+
+// UnclaimedPlanCommand is the plan-only command that status routes an unclaimed ref to. It
+// carries the modifiers and the selector of the re-plan this mode's refusal offers.
+func UnclaimedPlanCommand() string {
+	words := append([]string{"bench", "worktree", "clean"}, cleanupModifierFlags(unclaimedOptions())...)
+	return strings.Join(append(words, unclaimedSelector), " ")
 }
 
 // applyUnclaimedAssignmentSet deletes each landed and subsumed branch at the exact object
@@ -205,34 +216,56 @@ func applyUnclaimedAssignmentSet(j joins, root string, set unclaimedAssignmentSe
 	return plans, nil
 }
 
-// UnclaimedRefCounts is how many rows of the unclaimed plan fall in each class. Faulted
-// counts the error rows, which carry no class and make the plan refuse its apply.
-type UnclaimedRefCounts struct{ Landed, Subsumed, Unique, Faulted int }
+// unclaimedClassOrder is the order the class counts are reported in.
+var unclaimedClassOrder = []refClass{classLanded, classSubsumed, classUnique}
+
+// UnclaimedClassCount is how many rows of the unclaimed plan carry one class.
+type UnclaimedClassCount struct {
+	Class string
+	Count int
+}
+
+// UnclaimedRefCounts is the unclaimed plan by class, in unclaimedClassOrder. Faulted counts
+// the error rows, which carry no class and make the plan refuse its apply. Refs holds the
+// ref of every row, so a reader that counts branches by another proof can leave them out.
+type UnclaimedRefCounts struct {
+	Classes []UnclaimedClassCount
+	Faulted int
+	Refs    map[string]bool
+}
 
 // Rows is how many rows the plan holds.
 func (counts UnclaimedRefCounts) Rows() int {
-	return counts.Landed + counts.Subsumed + counts.Unique + counts.Faulted
+	rows := counts.Faulted
+	for _, class := range counts.Classes {
+		rows += class.Count
+	}
+	return rows
 }
 
 // CountUnclaimedRefs counts the classes of the same plan the unclaimed clean prints, so
-// status and the plan cannot disagree.
+// status and the plan cannot disagree. A row with a class outside unclaimedClassOrder is an
+// error, not a silent unique count.
 func CountUnclaimedRefs(root string) (UnclaimedRefCounts, error) {
 	set, err := planUnclaimedAssignmentSet(root, unclaimedOptions())
 	if err != nil {
 		return UnclaimedRefCounts{}, err
 	}
-	var counts UnclaimedRefCounts
+	counts := UnclaimedRefCounts{Classes: make([]UnclaimedClassCount, len(unclaimedClassOrder)), Refs: make(map[string]bool, len(set.rows))}
+	for i, class := range unclaimedClassOrder {
+		counts.Classes[i].Class = string(class)
+	}
 	for _, row := range set.rows {
-		switch {
-		case row.fault != "":
+		counts.Refs[row.ref] = true
+		if row.fault != "" {
 			counts.Faulted++
-		case row.class == classLanded:
-			counts.Landed++
-		case row.class == classSubsumed:
-			counts.Subsumed++
-		default:
-			counts.Unique++
+			continue
 		}
+		i := slices.Index(unclaimedClassOrder, row.class)
+		if i < 0 {
+			return UnclaimedRefCounts{}, fmt.Errorf("unclaimed ref %s has unknown class %q", row.ref, row.class)
+		}
+		counts.Classes[i].Count++
 	}
 	return counts, nil
 }

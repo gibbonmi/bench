@@ -130,7 +130,7 @@ var actionDefinitions = [actionCount]actionDefinition{
 	statusAllAction:              {kind: actionBench, command: "bench status --all"},
 	benchWorktreeListAction:      {kind: actionBench, command: "bench worktree list"},
 	cleanWorktreeAction:          {kind: actionBench, command: "bench worktree clean", argument: oneWordArgument},
-	cleanUnclaimedWorktreeAction: {kind: actionBench, command: "bench worktree clean --discard-branch --unclaimed"},
+	cleanUnclaimedWorktreeAction: {kind: actionBench, command: worktree.UnclaimedPlanCommand()},
 	linkAction:                   {kind: actionBench, command: "bench link"},
 	mapsAction:                   {kind: actionBench, command: "bench maps"},
 	roadmapAction:                {kind: actionBench, command: "bench roadmap"},
@@ -602,65 +602,59 @@ func componentNames(components []gate.ComponentSkip) []string {
 	return names
 }
 
-// appendGit adds the uncommitted/unpushed signal (sev 1). dirty is the porcelain status;
-// ahead is the upstream-relative commit list, read only when an upstream is configured.
+// appendGit adds the git signal (sev 1). Its details are the dirty paths, the unpushed
+// commits, the unclaimed plan's class and fault counts, and the unique branches that neither
+// that plan nor an assignment holds. A failed Git state read keeps the unclaimed counts
+// beside `git state unavailable`. Any unclaimed ref, or a plan that cannot run while Git
+// state reads, routes the row to that plan, which prints the fault.
 func appendGit(rows []row, root string, query Query) []row {
-	fact, err := git.LandedState(root, query.ExcludeDirtyPaths...)
-	if err != nil {
-		return append(rows, row{1, "git", "git state unavailable", commandAction(gitStatusAction)})
-	}
 	var details []string
-	claimedUniqueBranches := 0
-	uniqueRefs := make(map[string]bool, len(fact.UniqueBranchNames))
-	for _, branch := range fact.UniqueBranchNames {
-		uniqueRefs["refs/heads/"+branch] = true
+	command := commandAction(gitPushAction)
+	fact, factErr := git.LandedState(root, query.ExcludeDirtyPaths...)
+	if factErr != nil {
+		details, command = append(details, "git state unavailable"), commandAction(gitStatusAction)
 	}
 	if fact.DirtyPaths > 0 {
-		details = append(details, Plural(fact.DirtyPaths, "dirty path", "dirty paths"))
+		details, command = append(details, Plural(fact.DirtyPaths, "dirty path", "dirty paths")), commandAction(finalCheckPhaseAction)
 	}
 	if fact.UnpushedCommits > 0 {
 		details = append(details, Plural(fact.UnpushedCommits, "unpushed commit", "unpushed commits"))
 	}
-	// The class counts come from the unclaimed plan itself. A plan that cannot run, or that
-	// holds an error row, still routes to that plan, which prints the fault.
+	// Beside a failed Git state read, a plan failure has the same cause and adds nothing.
 	unclaimed, unclaimedErr := worktree.CountUnclaimedRefs(root)
-	if unclaimedErr != nil {
+	planUnavailable := unclaimedErr != nil && factErr == nil
+	if planUnavailable {
 		details = append(details, "unclaimed refs unavailable")
 	}
-	for _, class := range []struct {
-		count     int
-		one, many string
-	}{
-		{unclaimed.Landed, "landed ref", "landed refs"},
-		{unclaimed.Subsumed, "subsumed ref", "subsumed refs"},
-		{unclaimed.Unique, "unique ref", "unique refs"},
-		{unclaimed.Faulted, "faulted ref", "faulted refs"},
-	} {
-		if class.count > 0 {
-			details = append(details, Plural(class.count, class.one, class.many))
+	for _, class := range unclaimed.Classes {
+		if class.Count > 0 {
+			details = append(details, Plural(class.Count, class.Class+" ref", class.Class+" refs"))
 		}
 	}
+	if unclaimed.Faulted > 0 {
+		details = append(details, Plural(unclaimed.Faulted, "faulted ref", "faulted refs"))
+	}
+	// A unique branch is counted by identity: a ref the unclaimed plan or an assignment holds
+	// is already reported there, whichever row or class the plan gave it.
+	claimed := map[string]bool{}
 	if assignments, err := intent.Assignments(root); err == nil {
 		for _, assignment := range assignments {
-			if uniqueRefs[assignment.Branch] {
-				claimedUniqueBranches++
-			}
+			claimed[assignment.Branch] = true
 		}
 	}
-	// A subsumed or unique ref fails the same landed proof the unique branch count reads, so
-	// both classes are already inside that count.
-	ordinaryUniqueBranches := fact.UniqueBranches - unclaimed.Subsumed - unclaimed.Unique - claimedUniqueBranches
+	ordinaryUniqueBranches := 0
+	for _, branch := range fact.UniqueBranchNames {
+		if ref := "refs/heads/" + branch; !unclaimed.Refs[ref] && !claimed[ref] {
+			ordinaryUniqueBranches++
+		}
+	}
 	if ordinaryUniqueBranches > 0 {
 		details = append(details, Plural(ordinaryUniqueBranches, "unique branch", "unique branches"))
 	}
 	if len(details) == 0 {
 		return rows
 	}
-	command := commandAction(gitPushAction)
-	if fact.DirtyPaths > 0 {
-		command = commandAction(finalCheckPhaseAction)
-	}
-	if unclaimedErr != nil || unclaimed.Rows() > 0 {
+	if planUnavailable || unclaimed.Rows() > 0 {
 		command = commandAction(cleanUnclaimedWorktreeAction)
 	}
 	return append(rows, row{1, "git", strings.Join(details, ", "), command})
