@@ -249,6 +249,18 @@ The review-owned control comparison remains a required acceptance checkpoint.
           "trigger": "user-directed",
           "stopped": "claude:agent/re-t2-repair-c2 returned its final report and holds no write charge",
           "preserved": "b0f6171b9b3cccb2bd4eb5692b58c98c091ee65a"
+        },
+        {
+          "session": "claude:bench-writer/re-t2-repair-c4",
+          "assignment": "re-t2-repair-c4",
+          "model": "opus",
+          "effort": "low",
+          "source": "085a0f5b4f90ba14ef7c8d1a8177b767e45d5a86",
+          "native_ref": "claude:agent/re-t2-repair-c4-20260927@085a0f5b4f90ba14ef7c8d1a8177b767e45d5a86",
+          "predecessor": "claude:bench-writer/re-t2-repair-c3",
+          "trigger": "user-directed",
+          "stopped": "claude:agent/re-t2-repair-c3 returned its final report and holds no write charge",
+          "preserved": "085a0f5b4f90ba14ef7c8d1a8177b767e45d5a86"
         }
       ]
     }
@@ -588,7 +600,7 @@ No axis reused bytes from another
 artifact, so RE10 found no reuse decision to grade.
 
 The reviewer extended the RE2 repair allowance by one cycle for two
-checkpoint gate reds.
+checkpoint gate reds, and by one more cycle for finding R18 only.
 
 Reviewer disposition: the narrow shape stays provisional and is not the
 permanent rule. The reviewer decided R13 as a Won't-handle refusal with a
