@@ -437,6 +437,25 @@ Each restore reads `yes`. The repair session ran the three ticket checks at
 `c4d104d3`, and each check passed. The whole `cmd/bench` package and the
 `package-core-guard` check also passed.
 
+## RE2 chunk review, round 4
+
+This is the confirming round at chunk tip `c4d104d3`. The shared evidence is
+`sha256:264fe3ca0a5fedda8e7658abcf2f73d85fa789a81aa62ecbf5e7eba6b6f11254`.
+Each axis ran in a fresh `bench-reviewer` session on fable at high effort.
+
+Raw findings: Standards 1, Spec 0, Coverage 0. Repair targets: 1. The
+extension cycle is consumed, so R18 needs a reviewer decision.
+
+- R18 (auto-fix, confidence 8): `runPreflight` in
+  `cmd/bench/preflight_version_test.go:114` reads the spill file again with
+  its own code. The same test package owns `spilledResponse` in
+  `cmd/bench/spill_support_test.go:32`. The one-source rule applies. The
+  cycle 3 charge named other precedents and not this helper, so the charge
+  contributed to the miss.
+
+Coverage proved that an incomplete spill file fails the manifest decode. The
+literal embed obeys the repository precedent.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1211,6 +1230,74 @@ Each restore reads `yes`. The repair session ran the three ticket checks at
           "finding_ids": [],
           "supersedes": [
             "re2-r2-coverage"
+          ]
+        },
+        {
+          "id": "re2-r4-standards",
+          "performer": "claude:bench-reviewer/re2-r4-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "26c2dc3e3c548a8365a7ba2ae7793ae76af10754",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/re2-r4-standards@c4d104d3",
+            "digest": "sha256:4cbd71cce27ca5baba46984af5c3f990ff7a0b02528e4b4a2b5731e191efaa47",
+            "excerpt": "Standards: 1 finding. Worst: cmd/bench/preflight_version_test.go:114-119."
+          },
+          "axis": "Standards",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "c4d104d3db60b85c4fd2a7dbf8d125ba6d3a3ef0",
+          "finding_ids": [
+            "R18"
+          ],
+          "supersedes": [
+            "re2-r3-standards"
+          ]
+        },
+        {
+          "id": "re2-r4-spec",
+          "performer": "claude:bench-reviewer/re2-r4-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "26c2dc3e3c548a8365a7ba2ae7793ae76af10754",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re2-r4-spec@c4d104d3",
+            "digest": "sha256:a672197d8e5c4170f6e300062addb831c7be9440f6282c9223ff82a2ba90b5b9",
+            "excerpt": "Spec: 0 findings. Worst: none."
+          },
+          "axis": "Spec",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "c4d104d3db60b85c4fd2a7dbf8d125ba6d3a3ef0",
+          "finding_ids": [],
+          "supersedes": [
+            "re2-r3-spec"
+          ]
+        },
+        {
+          "id": "re2-r4-coverage",
+          "performer": "claude:bench-reviewer/re2-r4-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "26c2dc3e3c548a8365a7ba2ae7793ae76af10754",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re2-r4-coverage@c4d104d3",
+            "digest": "sha256:04ceb41d3e5d9b687bd649181b1b91ef75889a0129ea770a120ccd7501d28295",
+            "excerpt": "Coverage: 0 findings. Worst: none above the bar."
+          },
+          "axis": "Coverage",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "c4d104d3db60b85c4fd2a7dbf8d125ba6d3a3ef0",
+          "finding_ids": [],
+          "supersedes": [
+            "re2-r3-coverage"
           ]
         }
       ]
