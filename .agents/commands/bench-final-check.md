@@ -117,7 +117,13 @@ Under the repair-attribution heading, write one table row per ticket in the
 build: the ticket, how many repair rounds it took to land, and one cause per
 round. A ticket that landed in one pass records `none`. Causes come from this
 vocabulary and no other, one term per round: `shaping-ambiguity`, `spec-row`,
-`ticket-slicing`, `tree-drift`, `delegate-error`, `other`. This template is the
+`ticket-slicing`, `tree-drift`, `delegate-error`, `one-source`, `check-gap`,
+`other`. `one-source` means that the round removed duplicated knowledge in the
+delta, such as a helper, a fixture harness, or an expectation copied from the
+implementation. `check-gap` means that the ticket's checks omitted a package or
+a check that the gate then ran red.
+
+This template is the
 single guidance source for that vocabulary; the anchors registry needle pinning
 those terms is its enforcement copy, not a second source. A later reader of the
 drained tables reads the terms from the tables themselves.
