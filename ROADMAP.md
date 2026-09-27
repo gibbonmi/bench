@@ -15,8 +15,6 @@ findings in the owner details.
 
 ## Delivery queue
 
-**FT337 (HIGH) — review evidence cost follows the changed code, not the whole spec.**
-
 **FT318 (HIGH, decision required) — the review record has a native writer.**
 
 **FT115 (HIGH) — the staged test-determinism build removes environment, timing, and shared-file defects.**
@@ -244,7 +242,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. Run `.agents/commands/bench-write-spec.md FT337` to specify file-stable review evidence.
-2. Run `.agents/commands/bench-implement-spec.md test-determinism` to deliver FT115.
+1. Run `.agents/commands/bench-implement-spec.md test-determinism` to deliver FT115.
 
 The section order supplies the larger sequence. It does not create new literal dependencies.
