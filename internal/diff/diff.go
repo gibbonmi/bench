@@ -196,32 +196,50 @@ func renderLive(root string, dr diffRange, facts git.DiffFacts, full bool) (stri
 }
 
 func renderCommit(root string, dr diffRange, full bool) (string, string, string) {
+	response, kind, hint := renderCommitResponse(root, dr, full)
+	return response.prefix + string(response.body) + response.suffix, kind, hint
+}
+
+// commitResponse is one immutable-range response in its three reconstruction parts: the
+// tables through the body marker, the verbatim Git body, and the help table. inventory is the
+// --no-renames path set the files table reports.
+type commitResponse struct {
+	prefix, suffix string
+	body           []byte
+	inventory      []string
+}
+
+func renderCommitResponse(root string, dr diffRange, full bool) (commitResponse, string, string) {
+	var response commitResponse
 	files, err := changedFilesAt(root, dr.filesArgs...)
 	if err != nil {
-		return "", "git diff --name-status failed", err.Error()
+		return response, "git diff --name-status failed", err.Error()
+	}
+	for _, row := range files {
+		response.inventory = append(response.inventory, row[1])
 	}
 	commits, err := commitLogAt(root, dr.logRange)
 	if err != nil {
-		return "", "git log failed", err.Error()
+		return response, "git log failed", err.Error()
 	}
 	insertions, deletions, err := shortstat(root, dr.filesArgs...)
 	if err != nil {
-		return "", "git diff --shortstat failed", err.Error()
+		return response, "git diff --shortstat failed", err.Error()
 	}
 	revision, err := toon.Table("revision", []string{"commit", "base", "method"}, [][]string{{dr.head, dr.base, dr.method}})
 	if err != nil {
-		return "", "unrepresentable TOON cell", err.Error()
+		return response, "unrepresentable TOON cell", err.Error()
 	}
 	aggregate, err := toon.Table("aggregate", []string{"commits", "files", "insertions", "deletions"}, [][]string{{strconv.Itoa(len(commits)), strconv.Itoa(len(files)), strconv.Itoa(insertions), strconv.Itoa(deletions)}})
 	if err != nil {
-		return "", "unrepresentable TOON cell", err.Error()
+		return response, "unrepresentable TOON cell", err.Error()
 	}
 	for i := range files {
 		files[i] = append(files[i], "")
 	}
 	fileTable, err := toon.Table("files", []string{"status", "path", "kind"}, files)
 	if err != nil {
-		return "", "unrepresentable TOON cell", err.Error()
+		return response, "unrepresentable TOON cell", err.Error()
 	}
 	var b strings.Builder
 	b.WriteString(revision)
@@ -230,15 +248,15 @@ func renderCommit(root string, dr diffRange, full bool) (string, string, string)
 	if full {
 		logTable, err := toon.Table("log", []string{"sha", "subject"}, commits)
 		if err != nil {
-			return "", "unrepresentable TOON cell", err.Error()
+			return response, "unrepresentable TOON cell", err.Error()
 		}
 		body, err := diffBodyAt(root, dr.bodyArgs...)
 		if err != nil {
-			return "", "git diff failed", err.Error()
+			return response, "git diff failed", err.Error()
 		}
 		b.WriteString(logTable)
 		b.WriteString("diff_body:\n")
-		b.Write(body)
+		response.body = body
 	}
 	actions := []axi.Action(nil)
 	if !full && len(files) > 0 {
@@ -246,8 +264,8 @@ func renderCommit(root string, dr diffRange, full bool) (string, string, string)
 	}
 	help, err := axi.RenderHelp(actions)
 	if err != nil {
-		return "", "unrepresentable TOON cell", err.Error()
+		return response, "unrepresentable TOON cell", err.Error()
 	}
-	b.WriteString(help)
-	return b.String(), "", ""
+	response.prefix, response.suffix = b.String(), help
+	return response, "", ""
 }

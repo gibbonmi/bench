@@ -234,7 +234,7 @@ var MetadataBlocks = []Block{
 	{blockCoverage, []Field{str("row")}, "Selected ticket coverage order. Review has zero rows here."},
 	{blockChecks, []Field{str("source")}, "Existing build check-source order or review skill source."},
 	{blockReturns, []Field{str("source")}, "Existing return-source order."},
-	{blockShared, []Field{str("kind"), str("source")}, "Diff, consumers, coverage order. Build has zero rows."},
+	{blockShared, []Field{str("kind"), str("source")}, "Diff fragments in reconstruction order, then consumers and coverage. Build has zero rows."},
 	{blockCompletion, []Field{str("record"), str("source_digest"), str("plan_digest"), str("record_state"), str("detail")},
 		"Existing completion facts. Build has zero rows."},
 }

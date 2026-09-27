@@ -123,32 +123,37 @@ func TestEvidenceReviewProvenance(t *testing.T) {
 	}
 	// Every collector states the frozen pair it read, so a capture cannot be attributed to
 	// an invocation that never ran.
-	for _, kind := range []string{"diff", "consumers"} {
-		if !producerArgumentsContain(t, manifest, kind, args[6]) {
-			t.Errorf("the %s producer arguments omit the frozen source tip", kind)
+	for _, role := range append(preflighttest.DiffRoles(), "consumers") {
+		if !producerArgumentsContain(t, manifest, role, args[6]) {
+			t.Errorf("a %s producer's arguments omit the frozen source tip", role)
 		}
 	}
 }
 
-// producerArgumentsContain reports whether the named generated source declares value among
-// its committed producer arguments.
+// producerArgumentsContain reports whether every generated source of the named role declares
+// value among its committed producer arguments.
 func producerArgumentsContain(t *testing.T, manifest chargeevidence.Manifest, role, value string) bool {
 	t.Helper()
-	id := ""
-	for _, source := range manifest.Sources {
-		if source.Role == role {
-			id = source.ID
+	declared := map[string]bool{}
+	for _, argument := range manifest.Arguments {
+		if argument.Value == value {
+			declared[argument.Source] = true
 		}
 	}
-	if id == "" {
+	sources := 0
+	for _, source := range manifest.Sources {
+		if source.Role != role {
+			continue
+		}
+		sources++
+		if !declared[source.ID] {
+			return false
+		}
+	}
+	if sources == 0 {
 		t.Fatalf("the manifest declares no %s source", role)
 	}
-	for _, argument := range manifest.Arguments {
-		if argument.Source == id && argument.Value == value {
-			return true
-		}
-	}
-	return false
+	return true
 }
 
 // TestEvidenceReviewMetadata is CE72. The completion facts ride inside the required metadata

@@ -29,15 +29,32 @@ func setReviewEvidenceObserverForTest(observer reviewEvidenceObserver) func() {
 	return func() { reviewEvidenceObserved = previous }
 }
 
-// reviewCollector is one generated review source. It carries the bytes the collector
-// returned and the exact invocation that produced them, so the manifest commits the
-// provenance beside the digest. A changed producer or a changed argument therefore changes
-// the evidence identity even when the captured bytes are identical.
+// reviewCollector is one collector's generated review evidence. It carries the fragments
+// the collector returned and the exact invocation that produced them, so the manifest commits
+// the provenance beside each digest. A changed producer or a changed argument therefore
+// changes the evidence identity even when the captured bytes are identical.
 type reviewCollector struct {
 	kind      string
 	producer  string
 	arguments []string
-	data      []byte
+	fragments []reviewFragment
+}
+
+// reviewFragment is one generated source of a collector: its declared role and path, and its
+// exact bytes. The fragments of one collector rebuild its complete output in order.
+type reviewFragment struct {
+	role, path string
+	data       []byte
+}
+
+// diffFragments is the diff collector's source table: the existing prefix, each file patch
+// under its identifying path, then the existing suffix, in reconstruction order.
+func diffFragments(snapshot diff.PatchSnapshot) []reviewFragment {
+	fragments := []reviewFragment{{role: "diff-prefix", path: "diff-prefix", data: snapshot.Prefix}}
+	for _, patch := range snapshot.Patches {
+		fragments = append(fragments, reviewFragment{role: "diff-file", path: patch.Path, data: patch.Body})
+	}
+	return append(fragments, reviewFragment{role: "diff-suffix", path: "diff-suffix", data: snapshot.Suffix})
 }
 
 // reviewCollectorPolicy is the one review collector inventory. Each entry names the kind
@@ -45,7 +62,8 @@ type reviewCollector struct {
 type reviewCollectorPolicy struct {
 	kind, producer string
 	arguments      func(facts Facts) []string
-	run            func(root, version string, args []string) (string, int)
+	// run returns the collector's fragments, or nil fragments and its whole output.
+	run func(root, version string, args []string) ([]reviewFragment, string, int)
 }
 
 func reviewCollectorPolicies() []reviewCollectorPolicy {
@@ -55,15 +73,22 @@ func reviewCollectorPolicies() []reviewCollectorPolicy {
 			arguments: func(facts Facts) []string {
 				return []string{"--base", facts.SourceBase, "--source-tip", facts.SourceTip, "--full"}
 			},
-			run: func(_, _ string, args []string) (string, int) { return diff.Command(args) },
+			run: func(_, _ string, args []string) ([]reviewFragment, string, int) {
+				snapshot, out, code := diff.PairPatches(args)
+				if code != 0 {
+					return nil, out, code
+				}
+				return diffFragments(snapshot), "", 0
+			},
 		},
 		{
 			kind: "consumers", producer: "bench consumers",
 			arguments: func(facts Facts) []string {
 				return []string{"--changed", "--base", facts.SourceBase, "--source-tip", facts.SourceTip, "--full"}
 			},
-			run: func(_, version string, args []string) (string, int) {
-				return consumers.CommandWithVersion(version)(args)
+			run: func(_, version string, args []string) ([]reviewFragment, string, int) {
+				out, code := consumers.CommandWithVersion(version)(args)
+				return nil, out, code
 			},
 		},
 		{
@@ -74,9 +99,10 @@ func reviewCollectorPolicies() []reviewCollectorPolicy {
 			// output byte.
 			kind: "coverage", producer: "bench coverage",
 			arguments: func(facts Facts) []string { return []string{facts.SpecPath} },
-			run: func(root, _ string, args []string) (string, int) {
+			run: func(root, _ string, args []string) ([]reviewFragment, string, int) {
 				anchored := []string{filepath.Join(root, filepath.FromSlash(args[0]))}
-				return coverage.Command(anchored)
+				out, code := coverage.Command(anchored)
+				return nil, out, code
 			},
 		},
 	}
@@ -92,15 +118,19 @@ func collectReviewEvidence(root, version string, facts Facts, observe reviewEvid
 	for _, policy := range policies {
 		arguments := policy.arguments(facts)
 		observe(policy.kind)
-		out, code := policy.run(root, version, arguments)
+		fragments, out, code := policy.run(root, version, arguments)
 		if code != 0 {
 			return nil, policy.kind + " evidence failed: " + strings.TrimSpace(out)
 		}
 		if failure := reviewCaptureRefusal(policy.kind, out); failure != "" {
 			return nil, failure
 		}
+		if fragments == nil {
+			// A collector that returns no fragments keeps its whole output as one source.
+			fragments = []reviewFragment{{role: policy.kind, path: policy.kind, data: []byte(out)}}
+		}
 		collected = append(collected, reviewCollector{
-			kind: policy.kind, producer: policy.producer, arguments: arguments, data: []byte(out),
+			kind: policy.kind, producer: policy.producer, arguments: arguments, fragments: fragments,
 		})
 	}
 	return collected, ""
@@ -198,12 +228,14 @@ func reviewChargePack(root, version string, facts Facts, verdict Verdict) (*char
 		return nil, chargeRefusal("evidence", failure, "repair the named collector input and rerun the exact charge")
 	}
 	for _, item := range collected {
-		inputs = append(inputs, chargeevidence.SourceInput{
-			Role: item.kind, Kind: chargeevidence.KindGenerated, Path: item.kind, Required: true, Data: item.data,
-			Producer: &chargeevidence.Producer{
-				Name: item.producer, Version: version, Cwd: root, Arguments: item.arguments,
-			},
-		})
+		for _, fragment := range item.fragments {
+			inputs = append(inputs, chargeevidence.SourceInput{
+				Role: fragment.role, Kind: chargeevidence.KindGenerated, Path: fragment.path, Required: true, Data: fragment.data,
+				Producer: &chargeevidence.Producer{
+					Name: item.producer, Version: version, Cwd: root, Arguments: item.arguments,
+				},
+			})
+		}
 	}
 	metadata, err := reviewMetadata(root, facts, policy, collected)
 	if err != nil {
@@ -238,10 +270,16 @@ func reviewMetadata(root string, facts Facts, policy []reviewSourceDescriptor, c
 			metadata.Returns = append(metadata.Returns, id)
 		}
 	}
-	for i, item := range collected {
-		metadata.Shared = append(metadata.Shared, chargeevidence.SharedRow{
-			Kind: item.kind, Source: chargeevidence.InputSourceID(len(policy) + i),
-		})
+	// Each fragment's shared row names its collector kind, in the same order the inputs
+	// declare the fragments, so a split collector binds every fragment in reconstruction order.
+	next := len(policy)
+	for _, item := range collected {
+		for range item.fragments {
+			metadata.Shared = append(metadata.Shared, chargeevidence.SharedRow{
+				Kind: item.kind, Source: chargeevidence.InputSourceID(next),
+			})
+			next++
+		}
 	}
 	completion, err := completionEvidenceRow(root, facts)
 	if err != nil {

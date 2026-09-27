@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-implement-spec.md",
+    "old": "The sequence is the author record commit, then the review charge, then the axis dispatch.",
+    "new": "The sequence is the review charge, then the author record commit, then the axis dispatch."
+  }
+]

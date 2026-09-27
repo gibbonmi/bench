@@ -1,0 +1,9 @@
+revision[1]{commit,base,method}:
+  fb1c8048f805888279c385e84d53e9818956b525,160d71b97c129330feaf6573d5d4ab8d05ac7b2d,explicit pair
+aggregate[1]{commits,files,insertions,deletions}:
+  "1","0","0","0"
+files[0]{status,path,kind}:
+log[1]{sha,subject}:
+  fb1c8048f805,review source
+diff_body:
+help[0]{cmd,why}:

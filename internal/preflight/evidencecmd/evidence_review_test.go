@@ -1,6 +1,7 @@
 package evidencecmd_test
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -49,25 +50,33 @@ func TestEvidenceReviewAxes(t *testing.T) {
 			generated[source.ID] = source
 		}
 	}
-	wantKinds := []string{"diff", "consumers", "coverage"}
-	if len(metadata.Shared) != len(wantKinds) {
-		t.Fatalf("shared rows = %d, want %d", len(metadata.Shared), len(wantKinds))
+	// The diff capture binds one row per fragment, prefix first and suffix last, and each
+	// other collector binds one row of its own kind.
+	wantRoles := map[string][]string{
+		"diff": preflighttest.DiffRoles(), "consumers": {"consumers"}, "coverage": {"coverage"},
 	}
-	for i, kind := range wantKinds {
-		row := metadata.Shared[i]
-		if row.Kind != kind {
-			t.Errorf("shared row %d kind = %q, want %q", i, row.Kind, kind)
-		}
+	var kinds, roles []string
+	for _, row := range metadata.Shared {
 		// The binding is the guarantee, not the existence of some generated source: each
-		// row names the capture of its own kind, so a rotation of the bindings reds here.
+		// row names a capture of its own kind, so a rotation of the bindings reds here.
 		source, declared := generated[row.Source]
 		if !declared {
-			t.Errorf("shared row %q names %q, which declares no generated source", kind, row.Source)
+			t.Errorf("shared row %q names %q, which declares no generated source", row.Kind, row.Source)
 			continue
 		}
-		if source.Role != kind {
-			t.Errorf("shared row %q names %q, whose generated source is the %q capture", kind, row.Source, source.Role)
+		if !slices.Contains(wantRoles[row.Kind], source.Role) {
+			t.Errorf("shared row %q names %q, whose generated source is the %q capture", row.Kind, row.Source, source.Role)
 		}
+		if len(kinds) == 0 || kinds[len(kinds)-1] != row.Kind {
+			kinds = append(kinds, row.Kind)
+		}
+		roles = append(roles, source.Role)
+	}
+	if want := []string{"diff", "consumers", "coverage"}; !slices.Equal(kinds, want) {
+		t.Fatalf("shared row kinds = %v, want %v in that order", kinds, want)
+	}
+	if len(metadata.Shared) != len(generated) || roles[0] != preflighttest.DiffPrefixRole || roles[len(roles)-3] != preflighttest.DiffSuffixRole {
+		t.Fatalf("shared rows bind roles %v, want every generated source with the diff prefix first and suffix last", roles)
 	}
 }
 
@@ -83,10 +92,13 @@ func TestEvidenceReviewProvenanceRows(t *testing.T) {
 			generated[source.ID] = true
 		}
 	}
-	if len(manifest.Producers) != len(generated) || len(generated) != 3 {
-		t.Fatalf("producers = %d for %d generated sources, want 3 each", len(manifest.Producers), len(generated))
+	if len(manifest.Producers) != len(generated) || len(generated) < 5 {
+		t.Fatalf("producers = %d for %d generated sources, want one per fragment", len(manifest.Producers), len(generated))
 	}
-	wantProducers := map[string]string{"diff": "bench diff", "consumers": "bench consumers", "coverage": "bench coverage"}
+	wantProducers := map[string]string{"consumers": "bench consumers", "coverage": "bench coverage"}
+	for _, role := range preflighttest.DiffRoles() {
+		wantProducers[role] = "bench diff"
+	}
 	byID := map[string]chargeevidence.ProducerRow{}
 	for _, producer := range manifest.Producers {
 		if !generated[producer.Source] {
@@ -94,6 +106,7 @@ func TestEvidenceReviewProvenanceRows(t *testing.T) {
 		}
 		byID[producer.Source] = producer
 	}
+	diffArguments := ""
 	for _, source := range manifest.Sources {
 		if !generated[source.ID] {
 			continue
@@ -102,14 +115,25 @@ func TestEvidenceReviewProvenanceRows(t *testing.T) {
 		if want := wantProducers[source.Role]; producer.Name != want {
 			t.Errorf("source %s producer = %q, want %q", source.Role, producer.Name, want)
 		}
-		arguments := 0
+		var arguments []string
 		for _, argument := range manifest.Arguments {
 			if argument.Source == source.ID {
-				arguments++
+				arguments = append(arguments, argument.Value)
 			}
 		}
-		if arguments == 0 {
+		if len(arguments) == 0 {
 			t.Errorf("generated source %s declares no producer argument", source.Role)
+		}
+		// Every diff fragment is a slice of one invocation's output, so each declares that
+		// same complete invocation.
+		if producer.Name == "bench diff" {
+			joined := strings.Join(arguments, "\x00")
+			if diffArguments == "" {
+				diffArguments = joined
+			}
+			if joined != diffArguments || !slices.Contains(arguments, "--full") {
+				t.Errorf("diff fragment %s arguments = %q, want the one full diff invocation", source.Path, arguments)
+			}
 		}
 	}
 }

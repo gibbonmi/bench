@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-implement-spec.md",
+    "old": " Prepare the review charge from that record commit. The sequence is the author record commit, then the review charge, then the axis dispatch.",
+    "new": ""
+  }
+]

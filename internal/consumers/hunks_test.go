@@ -93,6 +93,25 @@ func TestHunkHeaderPathsArriveUnquoted(t *testing.T) {
 	}
 }
 
+// Git ends a side header whose path holds a space with a tab, so a path that ends in a
+// space keeps that space when the parse names the file.
+func TestTrailingSpaceHeaderPathKeepsItsSpace(t *testing.T) {
+	const text = "diff --git a/pkg/edit.go  b/pkg/edit.go \n" +
+		"--- a/pkg/edit.go \t\n" +
+		"+++ b/pkg/edit.go \t\n" +
+		"@@ -3 +3 @@\n" +
+		"-\told := 1\n" +
+		"+\tnew := 2\n"
+	want := []fileHunks{{
+		BasePath: "pkg/edit.go ", TipPath: "pkg/edit.go ",
+		Added:   []lineSpan{{3, 3}},
+		Removed: []lineSpan{{3, 3}},
+	}}
+	if got := parseHunks(text); !reflect.DeepEqual(got, want) {
+		t.Fatalf("parseHunks = %#v, want %#v", got, want)
+	}
+}
+
 // Git C-quotes a double quote, a backslash, and a control byte in a patch header path
 // whatever core.quotePath says, so the parse unquotes a header before it names a file.
 // The planted path carries all three, so no escape arm goes ungraded.

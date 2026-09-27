@@ -1,6 +1,6 @@
 # Review evidence with stable file pages
 
-Status: staged
+Status: implemented
 
 Roadmap: FT337
 
@@ -107,7 +107,8 @@ Parse path headers only in the patch header region, before its content.
 `internal/git` owns the shared patch-path decoder. Move the existing consumers
 C-quote rule there. Both diff and consumers already import this package.
 Keep the decoder pure and independent of both callers. Keep the consumers
-hunk interpretation unchanged. RE5 exercises hostile paths, and RE9 requires
+hunk interpretation unchanged, except that a trailing space stays path text
+by reviewer decision on R14. RE5 exercises hostile paths, and RE9 requires
 each headerless patch's exact descriptor.
 
 All fragments remain required and retain their actual producer provenance.
@@ -155,13 +156,115 @@ Each ticket includes its behavior and tests.
 
 ### Completion plan
 
-This version 1 plan declares required verification, not completed evidence.
-The build records real author assignments in its version 2 amendment.
+This version 2 plan records the real author assignments of the build.
+The build runs in Claude Code. The user selected `opus` at high effort for
+each ticket author. This model is the Claude mid binding of the declared line.
+The user selected `fable` for each review axis and for the full control.
 The review-owned control comparison remains a required acceptance checkpoint.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft337-review-evidence-file-pages-full-20260926",
+    "orchestrator_session": "claude:session_0156tkEZcRSowaafegWfFZJP",
+    "author_limit": 1,
+    "assignments": {
+      "1-order-review-preparation.md": [
+        {
+          "session": "claude:bench-writer/re-t1-author",
+          "assignment": "re-t1-author",
+          "model": "opus",
+          "effort": "high",
+          "source": "c8c444ffae2fb1578cfa54a22fa632590ffbc322",
+          "native_ref": "claude:agent/re-t1-author-20260926@c8c444ffae2fb1578cfa54a22fa632590ffbc322"
+        },
+        {
+          "session": "claude:bench-writer/re-t1-repair-c1",
+          "assignment": "re-t1-repair-c1",
+          "model": "opus",
+          "effort": "low",
+          "source": "fa1b8717f0e6426fb28898cd9b0f72ba1d3b2839",
+          "native_ref": "claude:agent/re-t1-repair-c1-20260926@fa1b8717f0e6426fb28898cd9b0f72ba1d3b2839",
+          "predecessor": "claude:bench-writer/re-t1-author",
+          "trigger": "user-directed",
+          "stopped": "claude:agent/re-t1-author returned its final report and holds no write charge",
+          "preserved": "fa1b8717f0e6426fb28898cd9b0f72ba1d3b2839"
+        },
+        {
+          "session": "claude:bench-writer/re-t1-repair-c2",
+          "assignment": "re-t1-repair-c2",
+          "model": "opus",
+          "effort": "high",
+          "source": "ca686c6fd62844452303fc72db401d4adb8e438b",
+          "native_ref": "claude:agent/re-t1-repair-c2-20260926@ca686c6fd62844452303fc72db401d4adb8e438b",
+          "predecessor": "claude:bench-writer/re-t1-repair-c1",
+          "trigger": "user-directed",
+          "stopped": "claude:agent/re-t1-repair-c1 returned its final report and holds no write charge",
+          "preserved": "ca686c6fd62844452303fc72db401d4adb8e438b"
+        }
+      ],
+      "2-page-review-diffs-by-file.md": [
+        {
+          "session": "claude:bench-writer/re-t2-author",
+          "assignment": "re-t2-author",
+          "model": "opus",
+          "effort": "high",
+          "source": "ed63e73259e48d881db2815b282f4c4e381e4725",
+          "native_ref": "claude:agent/re-t2-author-20260926@ed63e73259e48d881db2815b282f4c4e381e4725"
+        },
+        {
+          "session": "claude:bench-writer/re-t2-repair-c1",
+          "assignment": "re-t2-repair-c1",
+          "model": "opus",
+          "effort": "low",
+          "source": "a3979037a8ea741ab3c941f8e7b2d99d4965c528",
+          "native_ref": "claude:agent/re-t2-repair-c1-20260926@a3979037a8ea741ab3c941f8e7b2d99d4965c528",
+          "predecessor": "claude:bench-writer/re-t2-author",
+          "trigger": "user-directed",
+          "stopped": "claude:agent/re-t2-author returned its final report and holds no write charge",
+          "preserved": "a3979037a8ea741ab3c941f8e7b2d99d4965c528"
+        },
+        {
+          "session": "claude:bench-writer/re-t2-repair-c2",
+          "assignment": "re-t2-repair-c2",
+          "model": "opus",
+          "effort": "low",
+          "source": "bdd6766f03fba23b768e874733592fadc664758e",
+          "native_ref": "claude:agent/re-t2-repair-c2-20260926@bdd6766f03fba23b768e874733592fadc664758e",
+          "predecessor": "claude:bench-writer/re-t2-repair-c1",
+          "trigger": "user-directed",
+          "stopped": "claude:agent/re-t2-repair-c1 returned its final report and holds no write charge",
+          "preserved": "bdd6766f03fba23b768e874733592fadc664758e"
+        },
+        {
+          "session": "claude:bench-writer/re-t2-repair-c3",
+          "assignment": "re-t2-repair-c3",
+          "model": "opus",
+          "effort": "low",
+          "source": "b0f6171b9b3cccb2bd4eb5692b58c98c091ee65a",
+          "native_ref": "claude:agent/re-t2-repair-c3-20260927@b0f6171b9b3cccb2bd4eb5692b58c98c091ee65a",
+          "predecessor": "claude:bench-writer/re-t2-repair-c2",
+          "trigger": "user-directed",
+          "stopped": "claude:agent/re-t2-repair-c2 returned its final report and holds no write charge",
+          "preserved": "b0f6171b9b3cccb2bd4eb5692b58c98c091ee65a"
+        },
+        {
+          "session": "claude:bench-writer/re-t2-repair-c4",
+          "assignment": "re-t2-repair-c4",
+          "model": "opus",
+          "effort": "low",
+          "source": "085a0f5b4f90ba14ef7c8d1a8177b767e45d5a86",
+          "native_ref": "claude:agent/re-t2-repair-c4-20260927@085a0f5b4f90ba14ef7c8d1a8177b767e45d5a86",
+          "predecessor": "claude:bench-writer/re-t2-repair-c3",
+          "trigger": "user-directed",
+          "stopped": "claude:agent/re-t2-repair-c3 returned its final report and holds no write charge",
+          "preserved": "085a0f5b4f90ba14ef7c8d1a8177b767e45d5a86"
+        }
+      ]
+    }
+  },
   "chunks": [
     {
       "id": "RE1",
@@ -170,12 +273,14 @@ The review-owned control comparison remains a required acceptance checkpoint.
       ],
       "verification": [
         {
-          "id": "workflow",
-          "command": "bench test --check docs-currency-workflow"
+          "id": "1-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "ticket": "1-order-review-preparation.md"
         },
         {
-          "id": "record-order",
-          "command": "go test -count=1 -parallel=2 ./internal/preflight/evidencecmd"
+          "id": "1-record-order",
+          "command": "go test -count=1 -parallel=2 ./internal/preflight/evidencecmd",
+          "ticket": "1-order-review-preparation.md"
         }
       ]
     },
@@ -186,16 +291,19 @@ The review-owned control comparison remains a required acceptance checkpoint.
       ],
       "verification": [
         {
-          "id": "file-evidence",
-          "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/git ./internal/consumers ./internal/chargeevidence ./internal/preflight/..."
+          "id": "2-file-evidence",
+          "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/git ./internal/consumers ./internal/chargeevidence ./internal/preflight/...",
+          "ticket": "2-page-review-diffs-by-file.md"
         },
         {
-          "id": "ports",
-          "command": "bench test --check injected-port-registry"
+          "id": "2-ports",
+          "command": "bench test --check injected-port-registry",
+          "ticket": "2-page-review-diffs-by-file.md"
         },
         {
-          "id": "workflow",
-          "command": "bench test --check docs-currency-workflow"
+          "id": "2-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "ticket": "2-page-review-diffs-by-file.md"
         }
       ]
     }
@@ -305,6 +413,7 @@ Existing movement and missing-source tests remain in focused verification.
 Won't handle: stable digests after a changed patch or base — the current manifest identifies the new bytes.
 Won't handle: delivery through another axis's receipt — RE16 keeps the fresh axis as the in-scope reader.
 Won't handle: automatic permanent adoption — RE15 keeps the reviewer as the in-scope decision owner.
+Won't handle: an ambient `diff.noprefix` path outside the frozen inventory — the charge refuses and publishes nothing, by reviewer decision on R13.
 
 ## Ownership fences
 
@@ -321,12 +430,43 @@ Won't handle: automatic permanent adoption — RE15 keeps the reviewer as the in
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
+- `cmd/bench/preflight_version_test.go`
+- `cmd/bench/spill_support_test.go`
+- `ROADMAP.md`
+- `decisions/jev-advisor/assets/jev-benchmark-trial.md`
+- `docs/research/aibadger-assessment.md`
+- `docs/research/parallel-implementation-wave.md`
+- `docs/research/roadmap-review-2026-09-25.md`
+- `roadmap/FT346.md`
+- `roadmap/FT347.md`
+- `roadmap/FT348.md`
+- `tests/canary/roadmap-detail-integrity/roadmap-degraded-row-directory`
+- `tests/canary/roadmap-detail-integrity/roadmap-duplicate-row`
+- `tests/canary/roadmap-detail-integrity/roadmap-heading-mismatch`
+- `tests/canary/roadmap-detail-integrity/roadmap-inline-body`
+- `tests/canary/roadmap-detail-integrity/roadmap-missing-detail-owner`
+- `tests/canary/roadmap-detail-integrity/roadmap-next-duplicate-line`
+- `tests/canary/roadmap-detail-integrity/roadmap-next-missing-line`
+- `tests/canary/roadmap-detail-integrity/roadmap-next-unanchored-line`
+- `tests/canary/roadmap-detail-integrity/roadmap-next-unknown-token`
+- `tests/canary/roadmap-detail-integrity/roadmap-orphan-detail`
+- `tests/canary/roadmap-detail-integrity/roadmap-unreadable-detail`
+- `tests/canary/roadmap-detail-integrity/roadmap-unrecognized-file`
+- `tests/canary/roadmap-detail-integrity/roadmap-wrapped-heading`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/conformance/injected_ports_registry_test.go`
 - `reviews/review-evidence-file-pages.md`
+- `projects/benchkit.md`
+- `tests/canary/guidance-prose-budgets/over-budget-skill`
+- `tests/canary/line-routing/line-binding-prose-drift`
+- `tests/canary/skill-description-budgets/budget-table-missing`
+- `tests/canary/skill-description-budgets/description-folded`
+- `tests/canary/skill-description-budgets/description-missing`
+- `tests/canary/skill-description-budgets/over-budget-command`
+- `tests/canary/skill-description-budgets/over-budget-description`
 
-Reviewer disposition: pending spec and ticket sign-off.
+Reviewer disposition: approved on 2026-09-26, with the ticket graph and the fences.
 The debug prerequisite is integrated. Further notes names its landing.
 This phase includes that repair. The implementation tickets consume its canonical
 guidance and add only the preparation order and file-page behavior.
@@ -456,12 +596,37 @@ The real control result and usage remain unknown at spec time.
 
 ### Narrow and control evidence
 
-No implementation review has run. The orchestrator fills this table at RE2's
-review checkpoint from native returns. Each row names its frozen pair and
-evidence identity. Ticket 2's green commit precedes these records.
+The orchestrator filled this table at RE2's review checkpoint from native
+returns. Each row names its frozen pair and evidence identity. Ticket 2's
+green commit precedes these records. Usage counts the session tokens that the
+harness reported.
 
 | Round / axis | Mode | Frozen pair / identity | Reads | Findings | Usage |
 | --- | --- | --- | --- | --- | --- |
+| RE2 r1 / Standards | narrow | `4d9e6aa8..46e287c8` / `sha256:a8bd30e5` | one `git diff`, the standards files, targeted code; no evidence page | R5, R6, R7, R8 | 127353 tokens |
+| RE2 r1 / Spec | narrow | `4d9e6aa8..46e287c8` / `sha256:a8bd30e5` | one `git diff`, the spec, ticket 2, coverage rows, the author record; no evidence page | R10 | 125710 tokens |
+| RE2 r1 / Coverage | narrow | `4d9e6aa8..46e287c8` / `sha256:a8bd30e5` | one `git diff`, targeted code, four consumer pages of `s30`; four probes | R11, R12, R13 | 146411 tokens |
+| RE2 r1 / all axes | full control | `4d9e6aa8..46e287c8` / `sha256:a8bd30e5` | all 31 sources and all 44 pages to stream end; no `git diff` | R5, R9, R10, R13, R14, R15 | 227918 tokens |
 
-Comparison and reviewer disposition: pending the real full control.
+The joined `diff-file` sources equal raw `git diff 4d9e6aa8 de294013` byte
+for byte, so the control retrieval was complete.
+
+Comparison: the narrow round found 8 raw findings with 3 sessions and 399474
+tokens. The control found 6 raw findings with 1 session and 227918 tokens.
+Both found R5, R10, and R13. Only the narrow round found R6, R7, R8, R11, and
+R12, which include the two gaps that silent probes proved. Only the control
+found R9, R14, and R15. R14 is an inherited decoding defect, and the narrow
+Coverage axis gave R15 as advice only.
+
+No axis reused bytes from another
+artifact, so RE10 found no reuse decision to grade.
+
+The reviewer extended the RE2 repair allowance by one cycle for two
+checkpoint gate reds, and by one more cycle for finding R18 only.
+The reviewer fenced the eight paths that the destination merge of `main`
+brought in, so a normal RE2 merge round reviews them.
+
+Reviewer disposition: the narrow shape stays provisional and is not the
+permanent rule. The reviewer decided R13 as a Won't-handle refusal with a
+test, and R14 as a fix in the RE2 repair.
 Validation plan: run focused tests, prove mutations, review each chunk, and record the control before final reconciliation.

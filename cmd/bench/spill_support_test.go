@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
@@ -34,11 +33,7 @@ func TestMain(m *testing.M) {
 // both streams in arrival order, and a spilled response prints nothing on stderr.
 func spilledResponse(t *testing.T, response string) string {
 	t.Helper()
-	lines := strings.SplitAfter(response, "\n")
-	if len(lines) < 5 {
-		return response
-	}
-	spill, ok := responseboundtest.ParseLine(lines[4])
+	spill, ok := responseboundtest.Find(response)
 	if !ok {
 		return response
 	}
