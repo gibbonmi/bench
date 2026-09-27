@@ -237,6 +237,18 @@ The review-owned control comparison remains a required acceptance checkpoint.
           "trigger": "user-directed",
           "stopped": "claude:agent/re-t2-repair-c1 returned its final report and holds no write charge",
           "preserved": "bdd6766f03fba23b768e874733592fadc664758e"
+        },
+        {
+          "session": "claude:bench-writer/re-t2-repair-c3",
+          "assignment": "re-t2-repair-c3",
+          "model": "opus",
+          "effort": "low",
+          "source": "b0f6171b9b3cccb2bd4eb5692b58c98c091ee65a",
+          "native_ref": "claude:agent/re-t2-repair-c3-20260927@b0f6171b9b3cccb2bd4eb5692b58c98c091ee65a",
+          "predecessor": "claude:bench-writer/re-t2-repair-c2",
+          "trigger": "user-directed",
+          "stopped": "claude:agent/re-t2-repair-c2 returned its final report and holds no write charge",
+          "preserved": "b0f6171b9b3cccb2bd4eb5692b58c98c091ee65a"
         }
       ]
     }
@@ -406,6 +418,7 @@ Won't handle: an ambient `diff.noprefix` path outside the frozen inventory — t
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
+- `cmd/bench/preflight_version_test.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/conformance/injected_ports_registry_test.go`
@@ -573,6 +586,9 @@ Coverage axis gave R15 as advice only.
 
 No axis reused bytes from another
 artifact, so RE10 found no reuse decision to grade.
+
+The reviewer extended the RE2 repair allowance by one cycle for two
+checkpoint gate reds.
 
 Reviewer disposition: the narrow shape stays provisional and is not the
 permanent rule. The reviewer decided R13 as a Won't-handle refusal with a
