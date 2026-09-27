@@ -69,6 +69,8 @@ findings in the owner details.
 
 **FT333 (MEDIUM, decision required) — prepared evidence supports the tickets-only light path.**
 
+**FT349 (MEDIUM) — the ticket checkpoint enforces the check floor and refuses a leftover `planned` citation.**
+
 **FT338 (MEDIUM) — a spec sweeps each retired claim and each affected caller before review, and pairs each rewrite with Forbid rows.**
 
 **FT343 (MEDIUM, decision required) — production `Set*ForTest` hooks have one decided policy that the injected-port audit enforces.**
@@ -243,5 +245,7 @@ recommended table is sequencing advice.
 ## Recommended sequence
 
 1. Run `.agents/commands/bench-implement-spec.md test-determinism` to deliver FT115.
+2. Run `.agents/commands/bench-implement-spec.md ft290-test-projection` to deliver FT290.
+3. Run `.agents/commands/bench-shape-idea.md` on FT199 before any unclaimed sweep runs.
 
 The section order supplies the larger sequence. It does not create new literal dependencies.
