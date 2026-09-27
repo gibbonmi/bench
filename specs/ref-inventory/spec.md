@@ -87,7 +87,7 @@ The status signal:
 Explicit discard of a unique ref:
 
 29. As a reviewer, I want `--target <branch path>` to resolve an unrecorded Bench-namespace branch, so that I can name one ref.
-30. As a reviewer, I want `--target <assignment id>` to resolve the one unrecorded branch whose id segment matches, so that the id from the row suffices.
+30. As a reviewer, I want `--target <assignment id>` to resolve the one unrecorded branch whose id segment matches, so that a recorded id suffices.
 31. As a reviewer, I want an id segment that matches two unrecorded branches to refuse and name both refs, so that ambiguity never picks one.
 32. As a reviewer, I want `--target archive/x` to keep today's refusal, so that a foreign branch is never selected.
 33. As a reviewer, I want a unique target's plan row to show `class=unique` and the planned discarded ref, so that I see the preservation.
@@ -166,7 +166,7 @@ Under ticket 1 its detail ends with `retained: content main lacks`, and ticket 4
 
 The branch path is the row's ref without `refs/heads/`, for an assignment branch and for a shift branch alike.
 The printed route and the explicit apply action derive their selector from one function.
-An id operand stays an input form under stories 30, 31, and 41, and it is never a printed route.
+An id operand stays an input form under stories 30, 31, and 41, and it is never a printed route for an unclaimed branch.
 
 The unclaimed fingerprint version moves to `bench-unclaimed-assignment-branches/v2` and binds each row's ref, tip, class, and holder.
 The apply loop, for a fingerprint and for `--apply-current`, skips a row whose action does not remove.
@@ -222,7 +222,7 @@ The explicit set fingerprint binds each unrecorded row's ref, tip, class, holder
 The apply of an unrecorded row runs inside the set's own transaction order.
 When the planned ref exists at the row's tip as a direct ref, the write is skipped.
 When it exists at another tip, or when the planned path is a symbolic ref, the apply refuses and writes nothing.
-Otherwise the write uses the zero old value.
+Otherwise the write uses the zero old value and never follows a symbolic ref, so a symref that appears after the read fails the write.
 The delete uses the exact tip, so a branch moved after the write survives with an error row.
 
 A fault boundary step precedes the read of the planned path, one sits between that read and the write, and one follows the write.
@@ -252,13 +252,13 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
 | RI-C1a / 1-classify-unclaimed-refs.md, 6-repair-glossary-shift-namespace.md | The unclaimed plan classes each ref, names holders, retains unique rows, applies landed and subsumed rows only, and status routes to the plan | RI1 to RI15, RI17 to RI23, RI25, RI28, RI55, RI57, RI59 to RI63, RI66, RI72, RI73, RI81 to RI87 | `internal/worktree` clean classes and unclaimed tests, the system route test | no |
 | RI-C1b / 2-route-status-to-the-plan.md | Status counts the three classes | RI24, RI26, RI27, RI88 to RI92 | `internal/status` producible signals and the landed second case of the system route test | no |
 | RI-C2a / 3-sweep-discarded-refs.md | The discarded namespace exists, survives the lifecycle emptying, and expires at 30 days | RI42 to RI47, RI93 to RI95 | `internal/worktree` reconcile tests | no |
-| RI-C2b / 4-discard-a-unique-ref-by-target.md, 5-list-retire-candidates.md | An unrecorded unique ref discards by target with a discarded ref first, and retire lists candidates | RI16, RI29 to RI41, RI48 to RI52, RI58, RI64, RI65, RI67 to RI71, RI74 to RI80, RI96 to RI101 | `internal/worktree` discard tests and `cmd/bench` retire dispatch tests | yes |
+| RI-C2b / 4-discard-a-unique-ref-by-target.md, 5-list-retire-candidates.md | An unrecorded unique ref discards by target with a discarded ref first, and retire lists candidates | RI16, RI29 to RI41, RI48 to RI52, RI58, RI64, RI65, RI67 to RI71, RI74 to RI80, RI96 to RI102 | `internal/worktree` discard tests and `cmd/bench` retire dispatch tests | yes |
 
 ## Testing decisions
 
 - A good test drives `cleanCommandWith` over a real Git repository with real branches, reads the rendered rows, and then reads the refs back with `show-ref`.
 - The class function receives its own table test over the ref shapes of the edge inventory.
-- The transaction rows use the `cleanupBoundary` step seam that the existing apply tests use, with two new step tokens around the discarded ref write.
+- The transaction rows use the `cleanupBoundary` step seam that the existing apply tests use. Three new step tokens sit before the read, between the read and the write, and after the write.
 - The sweep rows drive `reconcileLifecycleDebris` with a fixed instant and refs planted under the discarded namespace.
 - The status rows extend the producible-signal table, and the system test drives the routed command through the sealed binary.
 - The retire rows drive the `cmd/bench` dispatcher over a fixture repository with a merged-implemented spec and planted records.
@@ -279,7 +279,7 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
                         │
                         ▼
                   [ discard transaction: skip, refuse, or write refs/bench/discarded/..., then DeleteBranchExact ]
-                        ◀ tests attach here: cleanupBoundary steps before and after the write; the clock join
+                        ◀ tests attach here: cleanupBoundary steps before the read, before the write, and after the write; the clock join
 
     trigger: session start (bench resume)
         │
@@ -395,6 +395,7 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
 | RI99 | 21, 59 | After an explicit set removes a recorded holder, its formerly subsumed unrecorded member reports a stale error and survives at its original tip | `planned` | Omitting the per-member requalification deletes the unrecorded branch after its holder disappears |
 | RI100 | 50 | Retire with a resolving Bench symref to `main` and a Bench blob-tip ref prints exactly one count line, `unique refs: 0, 2 faulted — bench worktree clean --discard-branch --unclaimed` | `planned` | Ignoring faulted rows or counting them as unique changes the exact line |
 | RI101 | 35, 38 | A direct ref planted at the planned path between the absent-ref read and the write makes the apply print an `error` row, keep both refs unchanged, and write nothing | `planned` | Removing the zero old value lets the write overwrite a handle that appeared after the read |
+| RI102 | 35, 38 | A symref planted at the planned path between the absent-ref read and the write makes the apply print an `error` row, keep the branch at its tip, and create no ref at the symref's target | `planned` | A write that follows the symref creates a ref outside the planned path and deletes the branch with a `removed` row |
 
 Not covered: story 53 — reviewed exclusion, and the review round confirms that no hold surface is added.
 Not covered: story 54 — reviewed exclusion, and RI48 to RI52 show the listing discards nothing.
@@ -423,6 +424,8 @@ Not covered: story 56 — the build runs on fixtures only, and the reviewer runs
 - A unique shift row's explicit route: RI78.
 - A retire path operand, the listing position, and the help form: RI77, RI79, RI80.
 - A fault before the write, a fault after the write, a branch moved after the write, and a conflicting planted ref: RI36, RI37, RI67, RI38.
+- A symref at the planned path, and a direct ref or a symref planted in the absent window: RI96, RI101, RI102.
+- A faulted explicit target, and a holder removed in the same set: RI98, RI99.
 - The 30-day boundary on each side: RI43 and RI44.
 - A malformed date segment: RI46.
 - A concurrent ref move under the sweep: RI47.
@@ -562,6 +565,10 @@ An id route could select a recorded label or refuse two branches that share an i
 Story 16 and RI16 therefore name the branch path.
 
 The retire count line gains a faulted suffix, because a symref or blob-tip ref was invisible in the unique count.
+
+The RI-C2b confirming round added row RI102 as a gate coverage expansion inside the approved behavior.
+A symref planted in the absent window was followed by the write, so the write never follows a symbolic ref.
+The same round fixed the step count in the test-seam notes and scoped the printed-route sentence to an unclaimed branch.
 A third boundary step sits between the read of the planned path and the write, so a competing direct ref has a reachable window.
 
 ### Completion plan
@@ -695,6 +702,18 @@ A third boundary step sits between the read of the planned path and the write, s
           "trigger": "user-directed",
           "stopped": "ri-t4-author returned its final report and idle notification after the chunk-tip verification rerun at 7ccd9aaa; the worktree was clean and no further write came from it",
           "preserved": "505a4c659f8000ae0a088f42038bc69fbfc782ef on bench/assign/9cd9510fff4093f7f9f4456f6a029560/3a0fa26e2c3c38179f908f3636fb07ed, chunk tip 7ccd9aaab3a0f4be51d8b2bab0041f8e8ac28835"
+        },
+        {
+          "session": "claude:bench-writer/ri-t4-repair-2",
+          "assignment": "ri-t4-repair-2",
+          "model": "opus",
+          "effort": "high",
+          "source": "a7fba6acea34ec41fab38fc094ce4610a3ca7283",
+          "native_ref": "claude:agent/ri-t4-repair-2-20260927@a7fba6acea34ec41fab38fc094ce4610a3ca7283",
+          "predecessor": "claude:bench-writer/ri-t4-repair-1",
+          "trigger": "user-directed",
+          "stopped": "ri-t4-repair-1 returned its final report and idle notification after its commit 9d9541ce; the worktree was clean and no further write came from it",
+          "preserved": "9d9541cef2c3e05160982efa88e6ce99af7626fc on bench/assign/9cd9510fff4093f7f9f4456f6a029560/3a0fa26e2c3c38179f908f3636fb07ed, chunk tip a7fba6acea34ec41fab38fc094ce4610a3ca7283"
         }
       ],
       "5-list-retire-candidates.md": [
@@ -799,7 +818,7 @@ Source-sentence-to-row table:
 | `--target` resolves an unrecorded branch by id segment or path | RI29, RI30, RI31, RI32, RI58, RI74, RI75, RI76, RI78, RI98 |
 | The explicit plan shows class unique and the planned ref, and the apply needs the fingerprint | RI33, RI34 |
 | A class change between plan and apply refuses as stale | RI17, RI63, RI64, RI65, RI85 |
-| The preserve step and the discard step never split | RI36, RI37, RI38, RI96, RI99, RI101 |
+| The preserve step and the discard step never split | RI36, RI37, RI38, RI96, RI99, RI101, RI102 |
 | Equal tips make the lexically first ref the root | RI6 |
 | A holder is an active branch, a unique root, or a landed ref (narrowed: no landed ref holds) | RI7, RI8, RI9, RI59, RI60, RI61, RI81, RI82, RI84, RI86, RI87 |
 | A subsumed row names its holder and writes no discarded ref | RI14, RI40, RI68 |
