@@ -57,20 +57,33 @@ func failingPoolChmod(pool string) func(string, os.FileMode) error {
 	}
 }
 
-// requirePoolRootRefusal asserts the refusal names the root and the wanted mode, and
-// that the operation stopped before it put anything in the root or registered a checkout.
-func requirePoolRootRefusal(t *testing.T, err error, root, pool, entries string) {
+// recordingPoolChmod is the chmodPool join that records each path it receives and then
+// applies the real mode change.
+func recordingPoolChmod(seen *[]string) func(string, os.FileMode) error {
+	return func(path string, mode os.FileMode) error {
+		*seen = append(*seen, path)
+		return os.Chmod(path, mode)
+	}
+}
+
+// requirePoolRootRefusal asserts the refusal came from the branch that detail names, that
+// it names the root and the wanted mode, and that the operation stopped before it put
+// anything in entries or registered a checkout. An empty entries skips the content check.
+func requirePoolRootRefusal(t *testing.T, err error, detail, root, pool, entries string) {
 	t.Helper()
 	var refused refusalError
 	if !errors.As(err, &refused) {
 		t.Fatalf("error = %v, want a pool-root refusal", err)
+	}
+	if !strings.HasPrefix(refused.detail, detail) {
+		t.Fatalf("refusal detail = %q, want the %q branch", refused.detail, detail)
 	}
 	for _, want := range []string{pool, "0700"} {
 		if !strings.Contains(err.Error(), want) {
 			t.Fatalf("refusal %q does not name %q", err.Error(), want)
 		}
 	}
-	if listed, readErr := os.ReadDir(entries); readErr != nil || len(listed) != 0 {
+	if listed, readErr := os.ReadDir(entries); entries != "" && (readErr != nil || len(listed) != 0) {
 		t.Fatalf("refused pool root %s holds %d entries (%v), want none", entries, len(listed), readErr)
 	}
 	if list := gitOutput(t, root, "worktree", "list", "--porcelain"); strings.Count(list, "worktree ") != 1 {
@@ -86,7 +99,11 @@ func TestPoolRootChmodFailureRefuses(t *testing.T) {
 			root, home, pool := poolRootFixture(t)
 			j := defaultJoins()
 			j.chmodPool = failingPoolChmod(pool)
-			requirePoolRootRefusal(t, op.run(t, j, root, home), root, pool, pool)
+			err := op.run(t, j, root, home)
+			requirePoolRootRefusal(t, err, poolRootModeUnset, root, pool, pool)
+			if !strings.Contains(err.Error(), syscall.EPERM.Error()) {
+				t.Fatalf("refusal %q drops the join's failure", err.Error())
+			}
 		})
 	}
 }
@@ -105,10 +122,31 @@ func TestPoolRootSymlinkRefusesWithoutFollowing(t *testing.T) {
 			if err := os.Symlink(target, pool); err != nil {
 				t.Fatalf("symlink pool root: %v", err)
 			}
-			requirePoolRootRefusal(t, op.run(t, defaultJoins(), root, home), root, pool, target)
+			var chmodded []string
+			j := defaultJoins()
+			j.chmodPool = recordingPoolChmod(&chmodded)
+			requirePoolRootRefusal(t, op.run(t, j, root, home), poolRootSymlink, root, pool, target)
 			if info, err := os.Stat(target); err != nil || info.Mode().Perm() != 0o755 {
 				t.Fatalf("symlink target mode = %v (%v), want it untouched at 0755", info, err)
 			}
+			if len(chmodded) != 0 {
+				t.Fatalf("chmodPool reached %q through a symlinked pool root", chmodded)
+			}
+		})
+	}
+}
+
+func TestPoolRootNonDirectoryRefuses(t *testing.T) {
+	t.Parallel()
+	for _, op := range poolRootOperations {
+		t.Run(op.name, func(t *testing.T) {
+			t.Parallel()
+			root, home, pool := poolRootFixture(t)
+			if err := os.MkdirAll(filepath.Dir(pool), 0o700); err != nil {
+				t.Fatalf("mkdir pool parent: %v", err)
+			}
+			mustWrite(t, pool, []byte("not a directory\n"), 0o644)
+			requirePoolRootRefusal(t, op.run(t, defaultJoins(), root, home), poolRootNotDirectory, root, pool, "")
 		})
 	}
 }
@@ -131,7 +169,7 @@ func TestPoolRootPermissiveIsRetightened(t *testing.T) {
 				j := defaultJoins()
 				if failing {
 					j.chmodPool = failingPoolChmod(pool)
-					requirePoolRootRefusal(t, op.run(t, j, root, home), root, pool, pool)
+					requirePoolRootRefusal(t, op.run(t, j, root, home), poolRootModeUnset, root, pool, pool)
 					return
 				}
 				if err := op.run(t, j, root, home); err != nil {
