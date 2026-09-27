@@ -83,6 +83,9 @@ governs each current-code claim in the spec prose.
 ## Per row
 
 - A numeric fixture row shows its arithmetic against its rule.
+- Before each review and after each rule change, trace each classification row's
+  input through the full precedence order. Record the winning rule and resulting
+  class. Resolve any mismatch with the row's expected class before the spec stages.
 - A legacy-migration row proves that its new check is reachable from a real legacy
   input. A replacement probe follows the same path.
 - A universal claim names its authoritative inventory, its enforcement seam, and
