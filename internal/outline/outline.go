@@ -1,8 +1,8 @@
-// Package outline implements `bench outline [path] [--full]`, an on-demand repo seam
-// map. It walks the tracked files, optionally scoped to a path, and runs a hand-rolled
-// per-language pattern scan. It emits an AXI-conformant TOON table, so an agent can
-// locate a candidate seam by name and jump to `file:line`. It regenerates on every call
-// and writes nothing to the tree.
+// Package outline implements `bench outline [path] [--full] [--production|--test]`, an
+// on-demand repo seam map. It walks the tracked files, optionally scoped to a path, and
+// runs a hand-rolled per-language pattern scan. It emits an AXI-conformant TOON table,
+// so an agent can locate a candidate seam by name and jump to `file:line`. It
+// regenerates on every call and writes nothing to the tree.
 //
 // The form decides the table. A path argument or `--full` emits the symbol rows
 // `outline[N]{file,line,kind,name}:`, scoped to the path, or repository-wide. The bare
@@ -16,6 +16,10 @@
 // a language parser. It does not track comments, string literals, or Markdown code
 // fences, so a commented-out or fenced declaration indexes as a benign candidate. The
 // agent confirms the candidate by reading the line.
+//
+// `--production` drops every Go test file from the walk, and `--test` keeps only the Go
+// test files. A filter scopes the walk as the path argument does, so every form and its
+// metadata count only the files in scope.
 package outline
 
 import (
@@ -37,7 +41,7 @@ import (
 var grammar = usage.Grammar{
 	Cmd:     "bench outline",
 	Help:    strings.TrimSuffix(helpText(), "\n"),
-	Flags:   []usage.Flag{{Name: "--full"}},
+	Flags:   []usage.Flag{{Name: "--full"}, {Name: "--production"}, {Name: "--test"}},
 	MaxArgs: 1,
 }
 
@@ -47,7 +51,11 @@ var grammar = usage.Grammar{
 // with the same verbs in bin/bench.sh's help block.
 const promise = "outline locates candidate seams (file:line); it does not identify which are the project's blessed seams — projects/<name>.md owns that."
 
-const usageLine = "usage: bench outline [path] [--full]"
+// Suffix is the argument grammar after the command name. The usage line and the
+// `bench help` row both read it, so the two surfaces show one grammar.
+const Suffix = " [path] [--full] [--production|--test]"
+
+const usageLine = "usage: bench outline" + Suffix
 
 func helpText() string {
 	return usageLine + "\n" + promise + "\n"
@@ -225,19 +233,27 @@ func walkSymbols(rel, abs string) ([]Symbol, string, bool) {
 	return Symbols(rel, content), "", true
 }
 
-// Command implements `bench outline [path] [--full]`. It walks the tracked files, scoped
-// to an optional path, and dispatches each through walkSymbols. It drops any
-// row a control byte would make unrepresentable, and renders the symbol table for a
-// path or `--full`, and the per-directory summary for the bare form. Each form has the
+// Command implements `bench outline [path] [--full] [--production|--test]`. It walks the
+// tracked files, scoped to an optional path and an optional filter, and dispatches each
+// through walkSymbols. It drops any row a control byte would make unrepresentable, and
+// renders the symbol table for a path or `--full`, and the per-directory summary for
+// the bare form. Each form has the
 // definitive empty state when nothing matches, a structured stdout error with exit 1
 // outside a repo or on a git failure, and usage on stdout with exit 2 for an unknown
-// flag or a second positional argument.
+// flag, a second positional argument, or both filter flags.
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
 		return line + "\n", code
 	}
 	_, full := parsed.Flags["--full"]
+	_, production := parsed.Flags["--production"]
+	_, test := parsed.Flags["--test"]
+	// The two filters name opposite scopes, so a call with both is a mistyped invocation.
+	// It refuses before repository discovery rather than letting one flag win silently.
+	if production && test {
+		return usageLine + " (--production and --test are mutually exclusive)\n", 2
+	}
 	var path string
 	havePath := len(parsed.Positionals) == 1
 	if havePath {
@@ -252,6 +268,9 @@ func Command(args []string) (string, int) {
 	files, err := listFiles(root, path, havePath)
 	if err != nil {
 		return toon.Errorf("git ls-files failed", err.Error()) + "\n", 1
+	}
+	if production || test {
+		files = testScope(files, test)
 	}
 
 	var rows, skips [][]string
@@ -304,6 +323,19 @@ func Command(args []string) (string, int) {
 		return toon.RenderError(err) + "\n", 1
 	}
 	return tbl + meta + skipTable, 0
+}
+
+// testScope keeps the files whose Go test status equals test: the Go test files for
+// `--test`, and every other file for `--production`. It reuses the helper form's path
+// predicate, so the filter and the helper kind agree on what a test file is.
+func testScope(files []string, test bool) []string {
+	var kept []string
+	for _, rel := range files {
+		if isGoTestFile(rel) == test {
+			kept = append(kept, rel)
+		}
+	}
+	return kept
 }
 
 // topLevel is the bare summary's grouping key: the first segment of git's
