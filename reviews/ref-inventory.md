@@ -1088,6 +1088,84 @@ Each session reran its plan checks at its own commit on a clean tree, and the
 ticket 5 rows stand at the chunk tip. The JSON payload holds each result after
 the round 1 rows.
 
+## RI-C2b chunk review, round 2
+
+The confirming round froze base `114f94a2` and tip `a7fba6ac`, with the record
+commit `1ac1092d` after the tip and the shared evidence `sha256:983f0aa1…`.
+Each axis ran in a fresh `bench-reviewer` session on opus at high effort, and
+only the Coverage axis ran probes. It left the tree clean.
+
+Raw findings: Standards 0, Spec 2, Coverage 1. Every round 1 fold is confirmed
+in the tree by each axis. The two Spec findings are documentation items, and
+the orchestrator closes them itself. The Coverage finding is a safety defect,
+and it takes repair cycle 2 of 2.
+
+### Standards, round 2
+
+Findings: 0 blocking. R35 to R39 hold, every touched Go file stays under 400
+lines, and the three grandfathered files did not grow.
+
+Advice:
+
+- the RI101 test repeats the RI38 plant-and-assert shape in the new file
+- the `history.go` header comment still names the old argument convention
+- the retire and history operand parses now sit at different depths
+- the symref probe line appears in the class file and the discard file
+- the `uniqueRefsLine` comment describes its caller
+
+### Spec, round 2
+
+Findings: 2. Worst: R46. Every RI-C2b row is delivered by a named test, and no
+row is falsely classified.
+
+- R46 (auto-fix by the orchestrator, confidence 7): the fence commit `3a315db9`
+  added the transaction test file without a `bench learning` entry. The
+  orchestrator captured the entry and a second one for RI102 in this round.
+- R47 (auto-fix by a plan commit, confidence 6): the test-seam note and the seam
+  diagram still said two step tokens after D9 made three. The plan commit that
+  follows this record fixes both lines.
+
+Advice folded into the same plan commit:
+
+- the printed-route sentence is scoped to an unclaimed branch
+- the story 30 rationale no longer says the id comes from the row
+- the edge inventory lists RI96, RI98, RI99, RI101, and RI102
+
+Open advice: the RI51 test reads `refs/heads` only, and the RI-C2b seams must
+be cited before the final reconciliation.
+
+### Coverage, round 2
+
+Findings: 1. Worst: R48, confirmed by a fixture probe.
+
+- R48 (auto-fix, confidence 8): a symref planted at the planned path at
+  `StepDiscardedRefAbsent` is followed by `update-ref`. The apply then creates a
+  ref at the symref's target, deletes the branch, and prints `removed`. A symref
+  to an expired dated path would lose the content at the next sweep. Row RI102
+  pins the refusal, and the likely fix is `--no-deref` on the write.
+
+Probes, each with restore `yes`:
+
+- RI96 fixture: the symref target changed to a missing ref; bit on the fixture
+  check, and the apply still refused
+- RI101 fixture: a symref planted in place of the direct ref; bit, exit 0 and
+  `removed` (R48)
+- RI100 fixture: the blob ref moved out of the Bench namespace; bit, `1 faulted`
+- omission in `internal/spec/spec.go`: the `spec.md` branch of `SlugOf`; bit,
+  RI77
+
+Advice: no test covers a unique count and a faulted count that are nonzero at
+once; a `retain` row planned before a recorded removal keeps a stale holder in
+its detail; a requalify that crosses UTC midnight refuses as stale.
+
+### RI-C2b repair cycle 2
+
+R48 goes to a fresh repair session `ri-t4-repair-2` on opus at high, the last
+repair cycle for this chunk. The plan commit adds row RI102 as a gate coverage
+expansion inside the approved behavior, the ticket 4 acceptance line, and the
+assignment. After the repair the blocking bar applies: a further blocking
+finding stops the chunk for the reviewer. No command change is necessary.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2122,7 +2200,7 @@ the round 1 rows.
       "acceptance_rows": [
         "RI16", "RI29", "RI30", "RI31", "RI32", "RI33", "RI34", "RI35", "RI36", "RI37", "RI38", "RI39", "RI40", "RI41",
         "RI48", "RI49", "RI50", "RI51", "RI52", "RI58", "RI64", "RI65", "RI67", "RI68", "RI69", "RI70", "RI71",
-        "RI74", "RI75", "RI76", "RI77", "RI78", "RI79", "RI80", "RI96", "RI97", "RI98", "RI99", "RI100", "RI101"
+        "RI74", "RI75", "RI76", "RI77", "RI78", "RI79", "RI80", "RI96", "RI97", "RI98", "RI99", "RI100", "RI101", "RI102"
       ],
       "verification": [
         {
@@ -2330,6 +2408,66 @@ the round 1 rows.
           "tip": "7ccd9aaab3a0f4be51d8b2bab0041f8e8ac28835",
           "finding_ids": ["R41", "R42", "R43", "R44", "R45"],
           "supersedes": []
+        },
+        {
+          "id": "ri-c2b-r2-standards",
+          "performer": "claude:bench-reviewer/ri-c2b-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "eef2814a583e4812dfc742725ec343b633f35133",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2b-standards-r2@a7fba6ac",
+            "digest": "sha256:7b156d181379c57943015475ceedd58646a59ab7fee1cb6c531c1678d81ce5a4",
+            "excerpt": "Standards round 2: 0 blocking findings. R35 to R39 confirmed; the RI101 test repeats the RI38 fixture, as advice only."
+          },
+          "axis": "Standards",
+          "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "tip": "a7fba6acea34ec41fab38fc094ce4610a3ca7283",
+          "finding_ids": [],
+          "supersedes": ["ri-c2b-r1-standards"]
+        },
+        {
+          "id": "ri-c2b-r2-spec",
+          "performer": "claude:bench-reviewer/ri-c2b-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "eef2814a583e4812dfc742725ec343b633f35133",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2b-spec-r2@a7fba6ac",
+            "digest": "sha256:7c39b0e2f81e3c8575d538525ca8e6c466e329eb6688bf82fe1ea83b1be8c97d",
+            "excerpt": "Spec round 2: 2 blocking findings. Worst: the transaction test file fence expansion has no bench learning entry; every RI-C2b row is delivered."
+          },
+          "axis": "Spec",
+          "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "tip": "a7fba6acea34ec41fab38fc094ce4610a3ca7283",
+          "finding_ids": ["R46", "R47"],
+          "supersedes": ["ri-c2b-r1-spec"]
+        },
+        {
+          "id": "ri-c2b-r2-coverage",
+          "performer": "claude:bench-reviewer/ri-c2b-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "eef2814a583e4812dfc742725ec343b633f35133",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2b-coverage-r2@a7fba6ac",
+            "digest": "sha256:8cddf1c343b45d8c6be909121bc2edb9f1f4e283b5291bbd02773340d689788a",
+            "excerpt": "Coverage round 2: 1 blocking finding. Worst: a symref planted at the planned path in the absent window is followed by update-ref, so the apply writes outside the planned path."
+          },
+          "axis": "Coverage",
+          "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "tip": "a7fba6acea34ec41fab38fc094ce4610a3ca7283",
+          "finding_ids": ["R48"],
+          "supersedes": ["ri-c2b-r1-coverage"]
         }
       ]
     }
