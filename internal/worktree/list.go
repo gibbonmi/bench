@@ -8,6 +8,7 @@ import (
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -117,6 +118,11 @@ func actionsForRows(rows []listRow) []axi.Action {
 			if request == "" || row.assignmentPath == "" {
 				continue
 			}
+			if rowUnlanded(row) {
+				id, _ := row.values[0].(string)
+				actions = append(actions, discardUnlanded(row.assignmentPath, id).action())
+				continue
+			}
 			actions = append(actions, axi.ExecutableInvocation(
 				"resume the cleanup-pending assignment",
 				axi.KnownArgument("worktree"), axi.KnownArgument("release"),
@@ -163,10 +169,16 @@ func rowLanded(row listRow) bool {
 	return len(row.values) > listLandedCell && row.values[listLandedCell] == true
 }
 
-// missingTreeRecovery is the route out of an assignment record whose worktree tree is
-// gone. It renders as a refusal's `next=` line and as a `list` help row, so the two
-// surfaces cannot name different verbs.
-type missingTreeRecovery struct {
+// rowUnlanded reports a branch the row proves unlanded. An `unknown` cell proves neither
+// outcome, so that row keeps the release route.
+func rowUnlanded(row listRow) bool {
+	return len(row.values) > listLandedCell && row.values[listLandedCell] == false
+}
+
+// recoveryRoute is the route out of an assignment record that a retirement cannot finish.
+// It renders as a refusal's `next=` line and as a `list` help row, so the two surfaces
+// cannot name different verbs.
+type recoveryRoute struct {
 	words []string
 	path  string
 	why   string
@@ -175,16 +187,40 @@ type missingTreeRecovery struct {
 // recoverMissingTree owns the landed rule. A landed assignment leaves with the batch
 // clean, which is the one route `list` already advertises for the whole set. Any other
 // record needs its own release, so the operator reads the request token that opened it.
-func recoverMissingTree(landed bool, request, path string) missingTreeRecovery {
+func recoverMissingTree(landed bool, request, path string) recoveryRoute {
 	if landed {
-		return missingTreeRecovery{words: []string{"worktree", "clean", "--landed"}, why: "clean landed assignments"}
+		return recoveryRoute{words: []string{"worktree", "clean", "--landed"}, why: "clean landed assignments"}
 	}
-	return missingTreeRecovery{words: []string{"worktree", "release", "--request", request}, path: path, why: "release the assignment whose worktree tree is missing"}
+	return recoveryRoute{words: []string{"worktree", "release", "--request", request}, path: path, why: "release the assignment whose worktree tree is missing"}
+}
+
+// discardUnlanded is the route out of an assignment whose branch never landed. A release
+// retains that tree every time, so its refusal and the `list` row name the clean that plans
+// the branch discard; that plan still asks for its fingerprint. A path that no line can
+// carry leaves the route to the assignment id.
+func discardUnlanded(path, assignment string) recoveryRoute {
+	words, why := []string{"worktree", "clean", "--discard-branch"}, "discard the unlanded cleanup-pending assignment"
+	if !lineSafe(path) {
+		return recoveryRoute{words: append(words, "--target", assignment), why: why}
+	}
+	return recoveryRoute{words: words, path: path, why: why}
+}
+
+// releaseNext is the route a retained release names. An unlanded branch never releases, so
+// it names the discard clean; any other retain clears with its cause, then release runs again.
+func releaseNext(reason CleanupReason, target, assignment string) string {
+	if reason == ReasonUnmerged {
+		return discardUnlanded(target, assignment).line()
+	}
+	if lineSafe(target) {
+		return "bench worktree release --request <request> " + sanitize.ShellQuote(target)
+	}
+	return "bench worktree exec " + assignment + " -- bench worktree release --request <request> ."
 }
 
 // line renders the refusal's route. axi owns the quoting here too, so the `next=` line
 // and the help row give the operator one pasteable spelling of the same path.
-func (r missingTreeRecovery) line() string {
+func (r recoveryRoute) line() string {
 	line := "bench " + strings.Join(r.words, " ")
 	if r.path != "" {
 		line += " " + axi.ShellQuote(r.path)
@@ -194,7 +230,7 @@ func (r missingTreeRecovery) line() string {
 
 // action renders the same route as a help row. axi owns the quoting there, so the path
 // passes through as a known argument.
-func (r missingTreeRecovery) action() axi.Action {
+func (r recoveryRoute) action() axi.Action {
 	arguments := make([]axi.InvocationArgument, 0, len(r.words)+1)
 	for _, word := range r.words {
 		arguments = append(arguments, axi.KnownArgument(word))
