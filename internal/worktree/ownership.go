@@ -196,10 +196,9 @@ func createAt(j joins, root, home, request, label string, fault Fault, now time.
 		return Creation{}, fmt.Errorf("resolve assignment start: %w", err)
 	}
 	pool := poolAt(home, root)
-	if err := os.MkdirAll(pool, 0o700); err != nil {
+	if err := preparePoolRoot(j, pool); err != nil {
 		return Creation{}, fmt.Errorf("create worktree pool: %w", err)
 	}
-	_ = os.Chmod(pool, 0o700)
 	path := filepath.Join(pool, poolkey.AssignmentSegment(ownerID, assignmentID))
 	path, err = canonicalPath(path)
 	if err != nil {
