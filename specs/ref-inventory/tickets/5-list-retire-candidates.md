@@ -1,7 +1,7 @@
 # 5. List the superseded candidates and the unique count on spec retire
 
 Blocked by: 2-route-status-to-the-plan.md, 4-discard-a-unique-ref-by-target.md
-Writes: cmd/bench/main.go, cmd/bench/spec_retire_listing.go (new), cmd/bench/spec_retire_listing_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/package-core-guard/unrouted-subcommand, internal/spec/spec.go, internal/spec/spec_test.go
+Writes: cmd/bench/main.go, cmd/bench/spec_retire_listing.go (new), cmd/bench/spec_retire_listing_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/package-core-guard/unrouted-subcommand, internal/spec/spec.go, internal/spec/spec_test.go, internal/spec/history.go, internal/worktree/clean_discard.go
 Covers: RI48, RI49, RI50, RI51, RI52, RI69, RI70, RI71, RI77, RI79, RI80
 
 ## What to build
@@ -21,6 +21,8 @@ A complete record is not listed, and the calling worktree's own assignment is li
 
 One count line reads `unique refs: <n> — bench worktree clean --discard-branch --unclaimed`, where `<n>` comes from the counts function of ticket 2.
 The command text in that line comes from the exported plan command spelling of the worktree package, not from a second literal.
+The candidate line's discard command comes from one exported function of the worktree package that takes the target selector.
+The slug rename updates every caller, including the history command.
 When the ledger read or the planner fails, the count line reads `unique refs: unavailable — <error>`.
 The listing discards nothing and changes no exit code.
 

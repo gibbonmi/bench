@@ -452,6 +452,7 @@ Not covered: story 56 — the build runs on fixtures only, and the reviewer runs
 - `internal/systemtest/status_route_converge_test.go`
 - `internal/spec/spec.go`
 - `internal/spec/spec_test.go`
+- `internal/spec/history.go`
 - `cmd/bench/main.go`
 - `cmd/bench/spec_retire_listing.go`
 - `cmd/bench/spec_retire_listing_test.go`
