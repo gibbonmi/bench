@@ -302,11 +302,45 @@ Findings: 5. Worst: R14.
   the substring `evidence`. Control only; the narrow Coverage axis gave it as
   advice.
 
+## RE2 repair cycle 1
+
+The reviewer decided R13 as a Won't-handle refusal with a test and R14 as a
+fix now. The remaining auto-fix findings went to the repair under the
+standing fix-and-gate approval. R11 and R12 take the chunk's one hardening
+cycle. A read-only fable consultation set the repair effort to low under the
+repair rule of `craft-line`. Repair cycle 1 of 2 is consumed.
+
+A fresh `bench-writer` repair session on opus at low effort started at
+`68d7f1c0` and committed `4b23d9d6`. `PatchSidePath` now removes only the
+line ending and one tab, so a trailing space stays path text. One
+`preflighttest` owner now holds the raw patch command, the case table, the
+path expansion, the store reader, and the role names. Three new pinned pairs
+cover copy headers, a suppressed blank context line, and trailing spaces. A
+refusal row proves the Won't-handle for ambient prefixes.
+
+The three new pairs have no stored baseline. A second fable consultation
+found this acceptable: raw `git diff` checks every patch body, and the four
+stored baselines pin the unchanged framing code.
+
+| Finding | File | Mutation | Verdict |
+|---|---|---|---|
+| R14 | `internal/git/patchpath.go` | swap: trim all space again, at git and consumers | bit |
+| R11 | `internal/diff/patches.go` | omission: the copy headers, at both seams | bit |
+| R12 | `internal/diff/patches.go` | swap: refuse the bare blank line, at both seams | bit |
+| R15 | `internal/diff/patches.go` | swap: the refusal text | bit |
+| R13 | `internal/diff/patches.go` | swap: the inventory refusal text | bit |
+| R9 | `internal/preflight/review.go` | swap: the file role name | bit |
+| decoder | `internal/git/patchpath.go` | swap: the quoted split keeps a leading space | bit |
+
+The orchestrator ran the last probe as the independent coordinator probe.
+Each restore reads `yes`. The R14 red occurred before the fix. The repair
+session ran the three ticket checks at `4b23d9d6`, and each check passed.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/review-evidence-file-pages/spec.md",
-  "plan_digest": "sha256:3dcd6a037980473271a0cd858b370e573e1c8adb100c30dd283adb7bec588c44",
+  "plan_digest": "sha256:0a0dd94188bc7e51324817949e800dc3482dfe856328d9ca5be6b1f01f5c04c4",
   "implementation_session": "",
   "chunks": [
     {
@@ -634,9 +668,9 @@ Findings: 5. Worst: R14.
     {
       "id": "RE2",
       "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
-      "tip": "46e287c843ef2ebf6304ca9649be616fa7d9dbfc",
-      "plan_digest": "sha256:3dcd6a037980473271a0cd858b370e573e1c8adb100c30dd283adb7bec588c44",
-      "source_digest": "ea9cdbc40318258bd1781d3ff542d98e65f3dc9d",
+      "tip": "4b23d9d69c29853ce37a9f923ecf2203c3809856",
+      "plan_digest": "sha256:0a0dd94188bc7e51324817949e800dc3482dfe856328d9ca5be6b1f01f5c04c4",
+      "source_digest": "d33c40e2d45e64827cafe2c98aab807789b5c1bd",
       "acceptance_rows": [
         "RE1",
         "RE2",
@@ -703,6 +737,60 @@ Findings: 5. Worst: R14.
             "ref": "claude:agent/re-t2-author-20260926/2-workflow@46e287c8",
             "digest": "sha256:23ba3dfdbf85b08b6b34975fb26e0dbdcd370a6668ee2bb615875c8c959f0852",
             "excerpt": "internal/conformance,pass,637"
+          },
+          "requirement": "2-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-file-evidence-r2",
+          "performer": "claude:bench-writer/re-t2-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "d33c40e2d45e64827cafe2c98aab807789b5c1bd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-c1-20260926/2-file-evidence@4b23d9d6",
+            "digest": "sha256:39e899e5d4d414d41f7e867c229915ba61e7a9d83b9728c41c74836b9c289daa",
+            "excerpt": "ok  internal/diff 7.294s\nok  internal/git 1.533s\nok  internal/consumers 2.391s\nok  internal/chargeevidence 0.243s\nok  internal/preflight 23.234s\nok  internal/preflight/evidencecmd 19.167s"
+          },
+          "requirement": "2-file-evidence",
+          "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/git ./internal/consumers ./internal/chargeevidence ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-ports-r2",
+          "performer": "claude:bench-writer/re-t2-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "d33c40e2d45e64827cafe2c98aab807789b5c1bd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-c1-20260926/2-ports@4b23d9d6",
+            "digest": "sha256:c7502a8c58852dda89a75a7b6abc6009a5125d0b26b8aaed349f79e0bfff7ccd",
+            "excerpt": "internal/conformance,pass,16; failures[0]; skips[0]"
+          },
+          "requirement": "2-ports",
+          "command": "bench test --check injected-port-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-workflow-r2",
+          "performer": "claude:bench-writer/re-t2-repair-c1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "d33c40e2d45e64827cafe2c98aab807789b5c1bd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-c1-20260926/2-workflow@4b23d9d6",
+            "digest": "sha256:f4ac35279c7217097c2d81a2127858bb4df7a1b23164b879c1e67a9a17f3da66",
+            "excerpt": "internal/conformance,pass,560; failures[0]; skips[0]"
           },
           "requirement": "2-workflow",
           "command": "bench test --check docs-currency-workflow",
@@ -791,6 +879,18 @@ Findings: 5. Worst: R14.
     {
       "from": "sha256:c202b02fb76d78aa3e4b0118e7836257f94a3937c8427ed97d53045f4505b0fb",
       "to": "sha256:3dcd6a037980473271a0cd858b370e573e1c8adb100c30dd283adb7bec588c44",
+      "chunk_ids": {
+        "RE1": [
+          "RE1"
+        ],
+        "RE2": [
+          "RE2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:3dcd6a037980473271a0cd858b370e573e1c8adb100c30dd283adb7bec588c44",
+      "to": "sha256:0a0dd94188bc7e51324817949e800dc3482dfe856328d9ca5be6b1f01f5c04c4",
       "chunk_ids": {
         "RE1": [
           "RE1"
