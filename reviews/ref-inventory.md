@@ -538,11 +538,35 @@ failure still routes to the plan, a non-repository keeps today's row, and row
 RI92 pins a blob-tip ref beside an unreadable ledger. A second repair session
 implements D6 as repair cycle 2 of 2.
 
+## RI-C1b repair cycle 2
+
+A fresh `bench-writer` repair session `ri-t2-repair-2` on opus at high took D6
+and RI92 from the plan commit `f56fad23`. It committed `c6d2cfbf` on a lane
+pass in one attempt, and the explicit-base build preflight is green at that
+tip. `appendGit` drops a planner error only when `git.CommonDir` also fails,
+which means the directory is not a repository. The RI92 case prints
+`git state unavailable, unclaimed refs unavailable` with the plan action, and
+the exact `git unavailable` case is unchanged. The producible file stays at 422
+lines through two shared fixture closures.
+
+The author's probe swapped the distinction back to repair 1's behavior and bit
+the RI92 case alone. Its counter-probe forced the route on and bit the
+`git unavailable` case alone. Both restores read `yes`. The orchestrator ran the
+coordinator probe: an omission of the faulted-detail append, verdict `bit` on
+three cases, restore `yes`. The chunk tip moves to `c6d2cfbf`, and the plan
+digest moves with the amended spec and ticket. The repair allowance of this
+chunk is now spent.
+
+### Verification after repair 2
+
+The author reran its three plan checks at the repair tip `c6d2cfbf` on a clean
+tree. The JSON payload holds each result after the round 1 rows.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ref-inventory/spec.md",
-  "plan_digest": "sha256:232208681f534a3cc8f1b29756005041a593bb9aa51010d75bb8ce77f86f14e1",
+  "plan_digest": "sha256:74f8fb4685ed7e515b51757c2cd9d36d59a79ba8659977672e3b3aad337a118a",
   "implementation_session": "",
   "chunks": [
     {
@@ -1122,10 +1146,10 @@ implements D6 as repair cycle 2 of 2.
     {
       "id": "RI-C1b",
       "base": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
-      "tip": "f12046941a0ad1f2812e82de0bf4e9c61303079b",
-      "plan_digest": "sha256:232208681f534a3cc8f1b29756005041a593bb9aa51010d75bb8ce77f86f14e1",
-      "source_digest": "05b8019186bf6d6b724705534ec913486ac49945",
-      "acceptance_rows": ["RI24", "RI26", "RI27", "RI88", "RI89", "RI90", "RI91"],
+      "tip": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
+      "plan_digest": "sha256:74f8fb4685ed7e515b51757c2cd9d36d59a79ba8659977672e3b3aad337a118a",
+      "source_digest": "039b389cfbca79ef22bfd8e3092c47270ee89388",
+      "acceptance_rows": ["RI24", "RI26", "RI27", "RI88", "RI89", "RI90", "RI91", "RI92"],
       "verification": [
         {
           "id": "ri-c1b-2-status-r1",
@@ -1176,6 +1200,60 @@ implements D6 as repair cycle 2 of 2.
             "ref": "claude:agent/ri-t2-author-20260927/2-system@f1204694",
             "digest": "sha256:ad44035df9e790e200d8d60bb48bdc142bd582426679189d7fc6677539475004",
             "excerpt": "github.com/gibbonmi/bench/internal/systemtest,pass,39666"
+          },
+          "requirement": "2-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1b-2-status-r2",
+          "performer": "claude:bench-writer/ri-t2-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "039b389cfbca79ef22bfd8e3092c47270ee89388",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t2-repair-2-20260927/2-status@c6d2cfbf",
+            "digest": "sha256:0b1a35a60e68fe999d5a95cc44aa61b9154c8acd60e471846aba7afc74508ae6",
+            "excerpt": "github.com/gibbonmi/bench/internal/status,pass,14673"
+          },
+          "requirement": "2-status",
+          "command": "bench test --package ./internal/status",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1b-2-worktree-r2",
+          "performer": "claude:bench-writer/ri-t2-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "039b389cfbca79ef22bfd8e3092c47270ee89388",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t2-repair-2-20260927/2-worktree@c6d2cfbf",
+            "digest": "sha256:4474e4bc8de376b0b5ce7cf2fd48ed1ede575a95d8af48b892440eaff2affa08",
+            "excerpt": "github.com/gibbonmi/bench/internal/worktree,pass,52407"
+          },
+          "requirement": "2-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1b-2-system-r2",
+          "performer": "claude:bench-writer/ri-t2-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "039b389cfbca79ef22bfd8e3092c47270ee89388",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t2-repair-2-20260927/2-system@c6d2cfbf",
+            "digest": "sha256:3aece8da14e66f5bf31be8a95184f88186bb96c1b8fcdfcd0bc6b7f5ef37ae59",
+            "excerpt": "github.com/gibbonmi/bench/internal/systemtest,pass,44100"
           },
           "requirement": "2-system",
           "command": "bench test --check system",
