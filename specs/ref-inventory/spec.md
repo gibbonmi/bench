@@ -444,6 +444,7 @@ Not covered: story 56 — the build runs on fixtures only, and the reviewer runs
 - `internal/worktree/worktree.go`
 - `internal/worktree/reconcile.go`
 - `internal/worktree/reconcile_test.go`
+- `internal/worktree/resume_reconcile_test.go`
 - `internal/intent/ledger/ledger.go`
 - `internal/intent/ledger_aliases.go`
 - `internal/status/status.go`
