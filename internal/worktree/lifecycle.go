@@ -178,10 +178,9 @@ func Acquire(root, resetRef, resetMode string) (string, error) {
 // The home and the instant are the caller's explicit boundary resolutions.
 func acquireAt(j joins, root, resetRef, resetMode, home string, now time.Time) (string, error) {
 	pool := poolAt(home, root)
-	if err := os.MkdirAll(pool, 0o700); err != nil {
+	if err := preparePoolRoot(j, pool); err != nil {
 		return "", err
 	}
-	_ = j.chmodPool(pool, 0o700)
 	var wt string
 	entries, _ := os.ReadDir(pool) // sorted by name, matching the shell glob order
 	for _, e := range entries {

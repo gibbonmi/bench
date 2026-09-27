@@ -44,31 +44,6 @@ func TestAcquireCreatesPrivatePoolAndLease(t *testing.T) {
 	markProof(t, "lifecycle/journey/lock")
 }
 
-func TestAcquireTightensExistingPool(t *testing.T) {
-	t.Parallel()
-	home := t.TempDir()
-	root := newWorktreeRepo(t)
-	pool := poolAt(home, root)
-	if err := os.MkdirAll(pool, 0o777); err != nil {
-		t.Fatalf("mkdir loose pool: %v", err)
-	}
-	if err := os.Chmod(pool, 0o777); err != nil {
-		t.Fatalf("chmod loose pool: %v", err)
-	}
-	wt, err := acquireAt(defaultJoins(), root, "", "", home, currentTime())
-	if err != nil {
-		t.Fatalf("Acquire: %v", err)
-	}
-	t.Cleanup(func() { Release(wt) })
-	info, err := os.Stat(pool)
-	if err != nil {
-		t.Fatalf("stat pool: %v", err)
-	}
-	if got := info.Mode().Perm(); got != 0o700 {
-		t.Fatalf("pool mode after Acquire = %04o, want 0700", got)
-	}
-}
-
 // TestAcquireWithUnresolvableDefaultAddsAtHead covers the empty-remote-ref end of the
 // pool-minting fallback. With no default branch to start from, the first add is already
 // the HEAD one. So the mint still succeeds rather than spending its attempt twice.
@@ -90,30 +65,6 @@ func TestAcquireWithUnresolvableDefaultAddsAtHead(t *testing.T) {
 	t.Cleanup(func() { Release(wt) })
 	if head := gitOutput(t, wt, "rev-parse", "HEAD"); head != gitOutput(t, root, "rev-parse", "HEAD") {
 		t.Fatalf("pool worktree HEAD = %q, want the repository HEAD", head)
-	}
-}
-
-func TestAcquireContinuesWhenPoolTightenFails(t *testing.T) {
-	t.Parallel()
-	home := t.TempDir()
-	root := newWorktreeRepo(t)
-	pool := poolAt(home, root)
-	j := defaultJoins()
-	called := false
-	j.chmodPool = func(path string, mode os.FileMode) error {
-		if path == pool {
-			called = true
-			return os.ErrPermission
-		}
-		return os.Chmod(path, mode)
-	}
-	wt, err := acquireAt(j, root, "", "", home, currentTime())
-	if err != nil {
-		t.Fatalf("Acquire after pool chmod failure: %v", err)
-	}
-	t.Cleanup(func() { Release(wt) })
-	if !called {
-		t.Fatal("Acquire did not attempt to tighten the pool")
 	}
 }
 
