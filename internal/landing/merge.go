@@ -20,6 +20,8 @@ const (
 
 // MergeRequest names the immutable pair one merge composes and the target checkout the
 // publication is bound to. Both commits are exact; the caller resolves every spelling.
+// Root is the checkout the Git operations run in, and Worktree is the root the composed
+// tree is graded from.
 type MergeRequest struct {
 	Root, Branch, PreviousTip, Incoming string
 	Worktree, Fingerprint               string
@@ -89,7 +91,11 @@ func (o Owner) Merge(ctx context.Context, r MergeRequest) (MergeResult, error) {
 		}
 		tree, resolved = composition.Tree, composition.Resolved
 	}
-	if got := o.authorize(ctx, r.Root, tree, r.Stdout, r.Stderr); !o.publishes.permits(got.Kind) {
+	// The authority grades from the target checkout, as `bench commit` in that checkout
+	// does: the caller resolved the lane there, so the lane's file anchors name the target.
+	// The caller's root can be another checkout of the same repository, where no anchor of
+	// that lane points at the composed tree.
+	if got := o.authorize(ctx, r.Worktree, tree, r.Stdout, r.Stderr); !o.publishes.permits(got.Kind) {
 		return MergeResult{}, errors.New(refusalMessage(got))
 	}
 	// Recheck both moving identities after the lane and before creating an otherwise
