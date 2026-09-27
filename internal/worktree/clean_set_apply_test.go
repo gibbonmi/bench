@@ -389,7 +389,12 @@ func addUnclaimedBranch(t *testing.T, root, owner string) string {
 // leads the ref, so it also fixes the lexical order of the refs a fixture creates.
 func addUnclaimedBranchAt(t *testing.T, root, owner, start string) string {
 	t.Helper()
-	ref := intent.AssignmentBranchRef(strings.Repeat(owner, 32), strings.Repeat("f", 32))
+	ref := unclaimedBranchRef(owner)
 	gitRun(t, root, "branch", strings.TrimPrefix(ref, "refs/heads/"), start)
 	return ref
+}
+
+// unclaimedBranchRef is the assignment branch ref that the owner letter leads.
+func unclaimedBranchRef(owner string) string {
+	return intent.AssignmentBranchRef(strings.Repeat(owner, 32), strings.Repeat("f", 32))
 }

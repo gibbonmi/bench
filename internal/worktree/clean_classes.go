@@ -73,9 +73,10 @@ type holderTip struct{ ref, oid string }
 
 // classifyUnclaimedRefs gives each of the sorted unrecorded refs one class and one holder.
 // It reads refs only. It calls the shared landed proof for every ref, so this sweep and the
-// landing prune cannot disagree. A landed recorded branch holds nothing, because its later
-// retirement would leave a ref beneath it with no handle. A symref faults, because a delete
-// through it removes its target.
+// landing prune cannot disagree. A landed recorded branch holds nothing: a ref beneath an
+// ancestry-landed one is itself landed, and a content-landed one's later retirement would
+// leave a ref beneath it with no handle. A symref faults, because a delete through it
+// removes its target.
 func classifyUnclaimedRefs(root string, assignments []intent.Assignment, protected map[string]bool, defaultBranch string, refs []string) ([]refVerdict, error) {
 	verdicts := make([]refVerdict, len(refs))
 	var recorded []holderTip

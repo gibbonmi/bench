@@ -175,7 +175,7 @@ func TestClassifyUnclaimedRefsOverTheEdgeInventory(t *testing.T) {
 // forms refuse the set while the target and a removable sibling survive.
 func TestCleanUnclaimedSymrefFailsClosed(t *testing.T) {
 	t.Parallel()
-	for _, symref := range []string{intent.AssignmentBranchRef(strings.Repeat("e", 32), strings.Repeat("f", 32)), intent.ShiftBranchPrefix() + "20260101-000000"} {
+	for _, symref := range []string{unclaimedBranchRef("e"), intent.ShiftBranchPrefix() + "20260101-000000"} {
 		for _, at := range []string{"main", "a unique root"} {
 			t.Run(strings.TrimPrefix(symref, "refs/heads/")+" at "+at, func(t *testing.T) {
 				t.Parallel()
