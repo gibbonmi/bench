@@ -16,7 +16,7 @@ The domain terms are in `CONTEXT.md`: unclaimed ref, landed ref, subsumed ref, h
 The phase used craft-domain, craft-grill, and the read-only probes of 2026-09-27 that ticket 1 records.
 The reviewer answered every round on 2026-09-27 and confirmed each recommendation.
 Standing preferences: worktree retirement goes through `bench worktree clean`; no raw Git route exists; the reviewer owns every destructive choice.
-A map-owned asset stays in the map's assets folder, decisions/ref-inventory/assets/.
+A map-owned asset stays in the map's assets folder, specs/ref-inventory/decisions/ref-inventory/assets/.
 
 ## Decisions so far
 
@@ -61,6 +61,6 @@ A map-owned asset stays in the map's assets folder, decisions/ref-inventory/asse
 - Path: `roadmap/FT345.md`
   Supports: the closed decision that `clean --discard-branch <path>` is the unlanded release route.
   Drift: the row reopens a retirement surface.
-- Path: `decisions/ref-inventory/tickets/1.md`
+- Path: `specs/ref-inventory/decisions/ref-inventory/tickets/1.md`
   Supports: the probe record of 2026-09-27 over the 43 live refs.
   Drift: a ref lands, moves, or is discarded.
