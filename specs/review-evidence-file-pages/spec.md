@@ -212,6 +212,18 @@ The review-owned control comparison remains a required acceptance checkpoint.
           "effort": "high",
           "source": "ed63e73259e48d881db2815b282f4c4e381e4725",
           "native_ref": "claude:agent/re-t2-author-20260926@ed63e73259e48d881db2815b282f4c4e381e4725"
+        },
+        {
+          "session": "claude:bench-writer/re-t2-repair-c1",
+          "assignment": "re-t2-repair-c1",
+          "model": "opus",
+          "effort": "low",
+          "source": "a3979037a8ea741ab3c941f8e7b2d99d4965c528",
+          "native_ref": "claude:agent/re-t2-repair-c1-20260926@a3979037a8ea741ab3c941f8e7b2d99d4965c528",
+          "predecessor": "claude:bench-writer/re-t2-author",
+          "trigger": "user-directed",
+          "stopped": "claude:agent/re-t2-author returned its final report and holds no write charge",
+          "preserved": "a3979037a8ea741ab3c941f8e7b2d99d4965c528"
         }
       ]
     }
@@ -364,6 +376,7 @@ Existing movement and missing-source tests remain in focused verification.
 Won't handle: stable digests after a changed patch or base — the current manifest identifies the new bytes.
 Won't handle: delivery through another axis's receipt — RE16 keeps the fresh axis as the in-scope reader.
 Won't handle: automatic permanent adoption — RE15 keeps the reviewer as the in-scope decision owner.
+Won't handle: ambient patch prefix settings such as `diff.noprefix` — the charge refuses as a whole and publishes nothing, by reviewer decision on R13.
 
 ## Ownership fences
 
@@ -523,12 +536,32 @@ The real control result and usage remain unknown at spec time.
 
 ### Narrow and control evidence
 
-No implementation review has run. The orchestrator fills this table at RE2's
-review checkpoint from native returns. Each row names its frozen pair and
-evidence identity. Ticket 2's green commit precedes these records.
+The orchestrator filled this table at RE2's review checkpoint from native
+returns. Each row names its frozen pair and evidence identity. Ticket 2's
+green commit precedes these records. Usage counts the session tokens that the
+harness reported.
 
 | Round / axis | Mode | Frozen pair / identity | Reads | Findings | Usage |
 | --- | --- | --- | --- | --- | --- |
+| RE2 r1 / Standards | narrow | `4d9e6aa8..46e287c8` / `sha256:a8bd30e5` | one `git diff`, the standards files, targeted code; no evidence page | R5, R6, R7, R8 | 127353 tokens |
+| RE2 r1 / Spec | narrow | `4d9e6aa8..46e287c8` / `sha256:a8bd30e5` | one `git diff`, the spec, ticket 2, coverage rows, the author record; no evidence page | R10 | 125710 tokens |
+| RE2 r1 / Coverage | narrow | `4d9e6aa8..46e287c8` / `sha256:a8bd30e5` | one `git diff`, targeted code, four consumer pages of `s30`; four probes | R11, R12, R13 | 146411 tokens |
+| RE2 r1 / all axes | full control | `4d9e6aa8..46e287c8` / `sha256:a8bd30e5` | all 31 sources and all 44 pages to stream end; no `git diff` | R5, R9, R10, R13, R14, R15 | 227918 tokens |
 
-Comparison and reviewer disposition: pending the real full control.
+The joined `diff-file` sources equal raw `git diff 4d9e6aa8 de294013` byte
+for byte, so the control retrieval was complete.
+
+Comparison: the narrow round found 8 raw findings with 3 sessions and 399474
+tokens. The control found 6 raw findings with 1 session and 227918 tokens.
+Both found R5, R10, and R13. Only the narrow round found R6, R7, R8, R11, and
+R12, which include the two gaps that silent probes proved. Only the control
+found R9, R14, and R15. R14 is an inherited decoding defect, and the narrow
+Coverage axis gave R15 as advice only.
+
+No axis reused bytes from another
+artifact, so RE10 found no reuse decision to grade.
+
+Reviewer disposition: the narrow shape stays provisional and is not the
+permanent rule. The reviewer decided R13 as a Won't-handle refusal with a
+test, and R14 as a fix in the RE2 repair.
 Validation plan: run focused tests, prove mutations, review each chunk, and record the control before final reconciliation.
