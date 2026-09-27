@@ -69,13 +69,16 @@ A grep-anchor is still legitimate as a cheap *tripwire* on prose (a command
 file must keep naming a skill). It catches deletion, not decay — never
 present one as a behavior check.
 
+A prose rewrite adds an anchor Forbid row for the retired text of each rewritten sentence.
+A move of a rule to its owner also forbids the owner sentence at each former copy site.
+A Forbid row never removes the last Require guard of a surviving duty; a Require row on the owner sentence comes with it.
+[The slicing checks](../bench-craft-tickets/references/slicing-checks.md#slicing-rules) state the retirement-pass form of the retired-text rule.
+
 ## Hermetic and fast
 
-Fixtures run in throwaway temp repos with controlled inputs, never against
-the live repo's mutable state, the network, or the clock. Same tree, same
-verdict, every run. The gate runs on every shift iteration, so its runtime
-taxes every loop; keep checks cheap, and push expensive proofs into bounded
-fixtures.
+Fixtures run in throwaway temp repos with controlled inputs, never against the live repo's mutable state, the network, or the clock.
+Same tree, same verdict, every run.
+The gate runs on every shift iteration, so its runtime taxes every loop; keep checks cheap, and push expensive proofs into bounded fixtures.
 
 ## Choose the fail posture out loud
 
@@ -100,15 +103,12 @@ and a check another check depends on runs first.
 
 ## Keep the tripwire alive
 
-The gate runs from the working tree, so the agent it grades can edit it. Keep
-that edit loud: every retained kit fixture has direct ordinary-test proof, and
-an empty, invalid, or unbound canary inventory is red. Linked repos keep the
-same division of responsibility: Bench validates their inventory, while their
-native tests prove their checks bite. A scaffolded gate's configuration sentinel
-keeps it red until the project supplies real checks and bindings. To delete or
-weaken this defense, follow the rule below for any weakening; it is never a
-quiet step that makes a change pass. The threat this covers is the lazy
-shortcut, not a determined adversary — the contract is loudness, not prevention.
+The gate runs from the working tree, so the agent it grades can edit it.
+Keep that edit loud: every retained kit fixture has direct ordinary-test proof, and an empty, invalid, or unbound canary inventory is red.
+Linked repos keep the same division of responsibility: Bench validates their inventory, while their native tests prove their checks bite.
+A scaffolded gate's configuration sentinel keeps it red until the project supplies real checks and bindings.
+To delete or weaken this defense, follow the rule below for any weakening; it is never a quiet step that makes a change pass.
+The threat this covers is the lazy shortcut, not a determined adversary — the contract is loudness, not prevention.
 
 ## Weakening is a reviewer decision
 

@@ -26,6 +26,7 @@ is not evidence until something outside it confirms it.
 Review also treats a compiled map's defaulted decisions as authoritative unless the
 spec explicitly overrides them. Grade a claimed repair against both its
 coverage row and the applicable defaulted-decision table.
+A stale claim against an approved decision is a finding, even when an axis reports it as advice.
 
 ## The axes stay separate
 
