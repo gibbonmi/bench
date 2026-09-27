@@ -652,6 +652,106 @@ run, elapsed time included. The orchestrator asked for one more run with its raw
 output, and that run is the retained row. The JSON payload holds each result
 under the RI-C2a chunk.
 
+After the record commit the orchestrator ran one more coordinator probe. It
+swapped the private date layout to `2006-01-02`, with verdict `bit` on RI42 and
+restore `yes`. The Standards axis counted the aliases the hand-written alias test
+omits: five names, not the two the author evidence states.
+
+## RI-C2a chunk review, round 1
+
+The frozen pair is base `c6d2cfbf` and tip `5c54f668`. The record commit
+`49289a3d` follows the tip, and the shared evidence is `sha256:9e57b930…`. Each
+axis ran in a fresh `bench-reviewer` session on opus at high effort. Only the
+Coverage axis ran probes, and it left the tree clean.
+
+Raw findings: Standards 5, Spec 0, Coverage 3. Repair targets after the fold:
+one ticket 3 repair session with six items, three new coverage rows, and one
+fence expansion by plan commit. No question went to the reviewer route; the
+orchestrator expanded the plan inside the approved behavior and flags the
+symref rule for reviewer veto.
+
+### Standards
+
+Findings: 5. Worst: R27.
+
+- R27 (auto-fix, confidence 7): craft-comments aging. The doc comment of
+  `TestResumeReconcileSparesGreenVerdictRefs` in
+  `internal/worktree/resume_reconcile_test.go` says the sweep touches nothing
+  else, and this delta adds the discarded rule. The path is in no `Writes:`
+  line, so the plan commit that follows expands ticket 3's fence to it.
+- R28 (auto-fix, confidence 5): AGENTS.md one source per fixture harness. The
+  moved-ref harness in `reconcile_test.go` copies the one in
+  `resume_reconcile_test.go`. One helper returns the joins and the moved oid.
+- R29 (auto-fix, confidence 5): craft-comments register. The
+  `discardedRefDays` comment does not parse.
+- R30 (auto-fix, confidence 3): one source for the path shape. The RI46
+  fixture derives the tail shape a second time; a fixed suffix after `latest/`
+  suffices.
+- R31 (no-op, confidence 4): the namespace comment names a discard writer that
+  ticket 4 supplies before the landing, in the shape of the recovery comment.
+
+Advice: the alias test outside the fence omits five existing names and breaks
+only a convention. `sweepable` repeats the prefix check `DiscardedRefDate`
+makes. One comment leaves out a verb. An older fixture comment was already
+false at the base.
+
+### Spec
+
+Findings: 0. Rows RI42 to RI47 are delivered, and the boundary arithmetic holds
+on both sides. The reset rule is unchanged after the `sweepable` fold, and the
+ticket 5 sentence matches D5. `DiscardedRefDate` is not scope creep: it keeps
+the date layout at one source for the renderer and the sweep.
+
+Advice: the RI42 fixture cannot tell a UTC instant from a local one; the seam
+cells RI42 to RI47 still read `planned`; ticket 3's `Writes:` names five
+registry paths the delta does not touch.
+
+### Coverage
+
+Findings: 3. Worst: R32, confirmed by a fixture probe.
+
+- R32 (auto-fix, confidence 9): a symref `refs/bench/discarded/20200101/sym`
+  that points at `refs/heads/keep`, with the instant past the window. The
+  sweep's `update-ref -d` has no `--no-deref`, so Git follows the symref and
+  deletes `refs/heads/keep`. The listed oid is the target's, so the value check
+  passes. That delete is outside the spec's write set, and the hostile-input
+  checklist names the class. New row RI93 pins the target's survival, and the
+  repair adds `--no-deref` to the sweep's exact delete.
+- R33 (auto-fix, confidence 7): a date segment with a valid eight-digit prefix
+  and extra bytes, such as `20200101x`. The tree keeps it today, but a parser
+  that reads the first eight bytes stayed silent against every test. New row
+  RI94 pins the keep.
+- R34 (auto-fix, confidence 6): a non-UTC instant whose local date differs from
+  its UTC date. Removing `.UTC()` stayed silent, because the RI42 fixture is
+  already UTC, and the production clock is local time. New row RI95 pins the
+  UTC date.
+
+Probes, each with restore `yes`:
+
+- a discarded symref fixture with a target survival assertion: bit (R32)
+- the parser truncated to eight bytes, over the worktree tests: silent (R33)
+- the same bypass over the intent packages: silent (R33)
+- `.UTC()` removed from the renderer: silent (R34)
+- the RI46 segment `20200231`: silent, the impossible date is kept
+- the RI46 segment `20200101x`: silent, the suffix is kept today
+
+Advice: a failed discarded delete aborts the debris pass before the purge, as
+the other namespaces do; the record lacked the date-layout probe until this
+section.
+
+### RI-C2a repair routing
+
+The orchestrator expanded the plan inside the approved behavior. Rows RI93,
+RI94, and RI95 join ticket 3. `internal/worktree/resume_reconcile_test.go`
+joins its `Writes:` line for R27 and R28. The Implementation decisions gain one
+sentence on the symref delete. The symref rule is flagged for reviewer veto,
+because the earlier decision D1 left `DeleteBranchExact` unchanged. This repair
+changes only the sweep's own delete in `reconcile.go`.
+
+One fresh repair session for ticket 3 on opus at high consumes repair cycle 1
+of 2. It owns R27 to R30 and R32 to R34. No implementation command change is
+necessary.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1479,7 +1579,7 @@ under the RI-C2a chunk.
       "tip": "5c54f668f2d79291e447dda034c78a2046d9d999",
       "plan_digest": "sha256:fdca5b94dd475ee46e691bd0f07ba9d59d7bb3607ead6199f405d4275cd465bd",
       "source_digest": "f52ce0bb5f0ffb3d9977500f5989f20fc5b5bcea",
-      "acceptance_rows": ["RI42", "RI43", "RI44", "RI45", "RI46", "RI47"],
+      "acceptance_rows": ["RI42", "RI43", "RI44", "RI45", "RI46", "RI47", "RI93", "RI94", "RI95"],
       "verification": [
         {
           "id": "ri-c2a-3-worktree-r1",
@@ -1518,7 +1618,68 @@ under the RI-C2a chunk.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ri-c2a-r1-standards",
+          "performer": "claude:bench-reviewer/ri-c2a-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f52ce0bb5f0ffb3d9977500f5989f20fc5b5bcea",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2a-standards@5c54f668",
+            "digest": "sha256:1381bad4fddda4f1ca87310790430680e6fa3160bb2690fc1e97b4f442c40f3c",
+            "excerpt": "Standards: 5 findings. Worst: the sweep now also deletes expired discarded refs, and an older test comment outside every fence still says it touches nothing else."
+          },
+          "axis": "Standards",
+          "base": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
+          "tip": "5c54f668f2d79291e447dda034c78a2046d9d999",
+          "finding_ids": ["R27", "R28", "R29", "R30", "R31"],
+          "supersedes": []
+        },
+        {
+          "id": "ri-c2a-r1-spec",
+          "performer": "claude:bench-reviewer/ri-c2a-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f52ce0bb5f0ffb3d9977500f5989f20fc5b5bcea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2a-spec@5c54f668",
+            "digest": "sha256:7cad3059dec5ad1506258d0e644065116a1c49021baf59b988fec192fd9deb26",
+            "excerpt": "Spec: 0 findings. Rows RI42 to RI47 delivered; the boundary arithmetic and the path shape match the spec."
+          },
+          "axis": "Spec",
+          "base": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
+          "tip": "5c54f668f2d79291e447dda034c78a2046d9d999",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ri-c2a-r1-coverage",
+          "performer": "claude:bench-reviewer/ri-c2a-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f52ce0bb5f0ffb3d9977500f5989f20fc5b5bcea",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2a-coverage@5c54f668",
+            "digest": "sha256:1a5a2ad46b5da29841ef7d315feded8e492f5e5c531ddfe7ef834232a9e4f10f",
+            "excerpt": "Coverage: 3 findings. Worst: an old-dated symref under refs/bench/discarded/ makes the sweep delete its target ref outside the namespace."
+          },
+          "axis": "Coverage",
+          "base": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
+          "tip": "5c54f668f2d79291e447dda034c78a2046d9d999",
+          "finding_ids": ["R32", "R33", "R34"],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
