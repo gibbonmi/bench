@@ -106,6 +106,33 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   `bench worktree clean --landed` retires it. Not "orphan" (that names age
   alone), not "stale", "idle", "abandoned", or "unreleased" (true of every
   active row) — landed.
+- **unclaimed ref** — a branch under `refs/heads/bench/assign/` or
+  `refs/heads/bench/shift/` that no assignment record names and no checkout holds.
+  The ref inventory gives it exactly one class: landed, subsumed, or unique. Not
+  "orphan branch", not "stray branch", not "leftover" — unclaimed ref.
+- **landed ref** — an unclaimed ref whose content the default branch already
+  carries under one of the four landed proofs. The proofs are ancestry, the merge
+  check, patch containment, and the reverse-apply proof. A squash fold passes only
+  the last proof. Not "merged branch" (ancestry alone proves nothing after a squash) —
+  landed ref.
+- **subsumed ref** — an unclaimed ref whose tip equals, or is an ancestor of, its
+  holder's tip. Its commits stay reachable after its discard. Among equal tips the
+  lexically first ref is the root and the rest are subsumed. Not "duplicate", not
+  "redundant branch" — subsumed ref.
+- **holder** — the ref that keeps a subsumed ref's commits reachable: an active
+  assignment branch, a unique root, or a landed ref. Not "parent", not "owner" —
+  holder.
+- **unique ref** — an unclaimed ref with content the default branch lacks and no
+  holder. No bulk route discards it; only an explicit `--target` discard removes it,
+  and that discard writes a discarded ref first. A ref a spec retirement or a
+  re-authored landing superseded is a unique ref, because no proof can see a
+  supersession. Not "kept branch", not "held branch" (Bench writes no keep marker)
+  — unique ref.
+- **discarded ref** — `refs/bench/discarded/<yyyymmdd>/<branch-path>`, the ref an
+  explicit discard writes at the exact tip before it deletes a unique ref. The
+  session-start sweep removes it 30 days after its date. Not "recovery ref" (that
+  names the assignment-scoped `refs/bench/recovery/` namespace), not "backup" —
+  discarded ref.
 - **sibling assignment** — a second active owned assignment worktree in the same
   repository. A coordinator folds its committed branch tip into the integration
   source. Not "peer worktree", not "delegate worktree", not "parallel checkout" —
