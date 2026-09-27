@@ -821,11 +821,103 @@ reconciliation:
 RI-C2a is complete at tip `114f94a2`. Repair cycles consumed: 1 of 2. The
 hardening allowance is unused.
 
+## RI-C2b author evidence
+
+The RI-C2b base is the accepted RI-C2a tip `114f94a2`. The chunk holds tickets
+4 and 5 in that order, and the review runs once after both tickets commit. The
+chunk tip is `7ccd9aaa`.
+
+Ticket 4 had a fresh `bench-writer` author on opus at high effort from the plan
+commit `f6226f11`. That commit cited the RI-C2a seams and recorded the
+assignment. The author committed `505a4c65` on a lane pass in one attempt, and the
+explicit-base build preflight is green at that tip.
+
+The new `internal/worktree/clean_discard.go` owns the unrecorded-branch fallback, the
+discard transaction, and its two boundary steps, so `clean_set.go` stays under
+its budget. A unique row plans `intent.DiscardedRef` in its recovery cell,
+dated by a clock join. The write uses the zero old value, skips a planned ref
+at the row's tip, and refuses one at another tip. The delete uses
+`git.DeleteBranchExact` at the exact tip.
+
+The ticket 4 author reported three decisions for review. The rendered unique
+row now ends with the discard route and no longer shows `retained: content main
+lacks`, while the constant and its comment in `clean_classes.go`, outside the
+fence, stay stale. Without `--discard-branch` every unrecorded class retains
+with the route in its detail. Unrecorded members apply after the recorded ones,
+and each is re-checked just before its own transaction. A recorded removal can
+take away a subsumed row's holder.
+
+### Ticket 4 probe verdicts
+
+Each probe ran through `bench probe`, and each restore reads `yes`.
+
+| File | Mutation | Verdict |
+|---|---|---|
+| `internal/worktree/clean_discard.go` | swap: delete before the write | bit, RI35, RI36, RI37, RI38, RI67 |
+| `internal/worktree/clean_discard.go` | omission: the another-tip refusal | bit, RI38 |
+| `internal/worktree/clean_set.go` | omission: the class fingerprint part | bit, the RI64 class-only case |
+| `internal/worktree/clean_discard.go` | swap: the short-prefix test widened | bit, RI32 |
+| `internal/worktree/clean_discard.go` | swap: the record guard reduced | bit, RI41, RI76 |
+| `internal/worktree/clean_set.go` | swap: the apply-current guard reduced | bit, RI34 |
+| `internal/worktree/clean_discard.go` | omission: the before-write boundary hit | bit, RI36 |
+
+The last row is the orchestrator's coordinator probe. The author added the
+class-only stale case for RI64 before the commit, because the descendant-record
+case alone also moves the holder and the discarded ref.
+
+### Ticket 5
+
+Ticket 5 had a fresh `bench-writer` author on opus at high effort from the plan
+commit `c3db6064`. It stopped before any edit on two fence gaps: the discard
+command spelling that ticket 4 added was unexported, and the slug rename
+touched `internal/spec/history.go`. The plan commit `f8b97291` added both paths
+to the ticket and the fence, and the same author session committed `7ccd9aaa`
+on a lane pass. The explicit-base build preflight is green at that tip.
+
+The dispatcher wraps `spec.Command` in the new `cmd/bench/spec_retire_listing.go`
+through a one-line swap in `main.go`. The wrapper appends the candidate lines
+and the count line before the `next:` line after a code-0 retire, and nothing
+after `--help` or a refusal. `spec.SlugOf` is the one slug derivation, called
+by retire, history, and the wrapper. `worktree.DiscardTargetCommand` is the one
+spelling of the discard command, and `discardTargetCommand` calls it.
+
+The author added two facts for review. `UnclaimedRefCounts.Unique()` reads the
+unique class through the class constant, and `spec.RetireNextPrefix` is the one
+spelling of the retire's `next:` marker.
+
+### Ticket 5 probe verdicts
+
+Each probe ran through `bench probe`, and each restore reads `yes`.
+
+| File | Mutation | Verdict |
+|---|---|---|
+| `cmd/bench/spec_retire_listing.go` | swap: the listing after the `next:` line | bit, RI79 |
+| `cmd/bench/spec_retire_listing.go` | swap: the state filter to `if false` | bit, RI71 |
+| `cmd/bench/spec_retire_listing.go` | swap: the listing on every call | bit, RI80, RI79 |
+| `internal/worktree/clean_discard.go` | swap: the export's selector flag | bit, RI48, RI49, RI70, RI77 |
+| `cmd/bench/main.go` | swap: the dispatch back to no listing | bit, six tests |
+| `cmd/bench/spec_retire_listing.go` | swap: the raw operand as the slug | bit, RI77 |
+| `internal/worktree/clean_discard.go` | swap: the counted class | bit, RI50 |
+| `cmd/bench/spec_retire_listing.go` | swap: the exit code to one | bit, seven tests |
+| `cmd/bench/spec_retire_listing.go` | swap: the exit-code guard removed | silent |
+
+The last row is the orchestrator's coordinator probe. It is silent because a
+refusal prints no `next:` line, so the marker search alone stops the append.
+The Coverage axis grades whether that makes the guard redundant or leaves a
+refusal shape uncovered.
+
+### Verification
+
+Each author reran its plan checks at the chunk tip `7ccd9aaa` on a clean tree.
+The ticket 4 worktree excerpt keeps its two leading spaces, because the author
+hashed the line as printed. The JSON payload holds each result under the
+RI-C2b chunk.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ref-inventory/spec.md",
-  "plan_digest": "sha256:9bd083f4927a1ed4a55d7489d07f3e1869adfd9f0c05e5fb9a1c37e142c0da39",
+  "plan_digest": "sha256:6d0a708fb36fc22ce0045e0ced3c44c74de8369398357f838b667ae9f6a545e1",
   "implementation_session": "",
   "chunks": [
     {
@@ -1845,6 +1937,93 @@ hardening allowance is unused.
           "supersedes": ["ri-c2a-r1-coverage"]
         }
       ]
+    },
+    {
+      "id": "RI-C2b",
+      "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
+      "tip": "7ccd9aaab3a0f4be51d8b2bab0041f8e8ac28835",
+      "plan_digest": "sha256:6d0a708fb36fc22ce0045e0ced3c44c74de8369398357f838b667ae9f6a545e1",
+      "source_digest": "1bff2071f77f846d810a4c4a368333f1ba7131b9",
+      "acceptance_rows": [
+        "RI16", "RI29", "RI30", "RI31", "RI32", "RI33", "RI34", "RI35", "RI36", "RI37", "RI38", "RI39", "RI40", "RI41",
+        "RI48", "RI49", "RI50", "RI51", "RI52", "RI58", "RI64", "RI65", "RI67", "RI68", "RI69", "RI70", "RI71",
+        "RI74", "RI75", "RI76", "RI77", "RI78", "RI79", "RI80"
+      ],
+      "verification": [
+        {
+          "id": "ri-c2b-4-worktree-r1",
+          "performer": "claude:bench-writer/ri-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1bff2071f77f846d810a4c4a368333f1ba7131b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t4-author-20260927/4-worktree@7ccd9aaa",
+            "digest": "sha256:252815be093b92201d59f35ba30844551e7f78690be4221f1ff353ff0148d362",
+            "excerpt": "  github.com/gibbonmi/bench/internal/worktree,pass,50978"
+          },
+          "requirement": "4-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-4-cmd-r1",
+          "performer": "claude:bench-writer/ri-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1bff2071f77f846d810a4c4a368333f1ba7131b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t4-author-20260927/4-cmd@7ccd9aaa",
+            "digest": "sha256:2615260822ef2d207d8f9f624a57d1ef5b46e59a655a54468507aec850217bb1",
+            "excerpt": "  github.com/gibbonmi/bench/cmd/bench,pass,8640"
+          },
+          "requirement": "4-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-5-spec-r1",
+          "performer": "claude:bench-writer/ri-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1bff2071f77f846d810a4c4a368333f1ba7131b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t5-author-20260927/5-spec@7ccd9aaa",
+            "digest": "sha256:33034335a66c37c459c1de704bb648d8b504cdfbe0bf9c784d6c63789b162056",
+            "excerpt": "github.com/gibbonmi/bench/internal/spec,pass,261"
+          },
+          "requirement": "5-spec",
+          "command": "bench test --package ./internal/spec",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-5-cmd-r1",
+          "performer": "claude:bench-writer/ri-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1bff2071f77f846d810a4c4a368333f1ba7131b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t5-author-20260927/5-cmd@7ccd9aaa",
+            "digest": "sha256:457b32777059621568d5063e58b1af95c87eb0d41594b92579e309c5f827d0fe",
+            "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,9789"
+          },
+          "requirement": "5-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1874,6 +2053,16 @@ hardening allowance is unused.
     {
       "from": "sha256:fdca5b94dd475ee46e691bd0f07ba9d59d7bb3607ead6199f405d4275cd465bd",
       "to": "sha256:9bd083f4927a1ed4a55d7489d07f3e1869adfd9f0c05e5fb9a1c37e142c0da39",
+      "chunk_ids": {
+        "RI-C1a": ["RI-C1a"],
+        "RI-C1b": ["RI-C1b"],
+        "RI-C2a": ["RI-C2a"],
+        "RI-C2b": ["RI-C2b"]
+      }
+    },
+    {
+      "from": "sha256:9bd083f4927a1ed4a55d7489d07f3e1869adfd9f0c05e5fb9a1c37e142c0da39",
+      "to": "sha256:6d0a708fb36fc22ce0045e0ced3c44c74de8369398357f838b667ae9f6a545e1",
       "chunk_ids": {
         "RI-C1a": ["RI-C1a"],
         "RI-C1b": ["RI-C1b"],
