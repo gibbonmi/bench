@@ -20,6 +20,7 @@ One line per active or cleanup-pending assignment whose label or request token c
 A complete record is not listed, and the calling worktree's own assignment is listed.
 
 One count line reads `unique refs: <n> — bench worktree clean --discard-branch --unclaimed`, where `<n>` comes from the counts function of ticket 2.
+The command text in that line comes from the exported plan command spelling of the worktree package, not from a second literal.
 When the ledger read or the planner fails, the count line reads `unique refs: unavailable — <error>`.
 The listing discards nothing and changes no exit code.
 

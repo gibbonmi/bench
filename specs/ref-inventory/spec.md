@@ -618,7 +618,16 @@ RI92 pins a blob-tip ref beside an unreadable ledger in a repository.
           "preserved": "f0a8a3c6f3b0e4e70edacbda5d0a7ac9d80fc246 on bench/assign/9cd9510fff4093f7f9f4456f6a029560/3a0fa26e2c3c38179f908f3636fb07ed, the RI-C1b repair 1 tip"
         }
       ],
-      "3-sweep-discarded-refs.md": [],
+      "3-sweep-discarded-refs.md": [
+        {
+          "session": "claude:bench-writer/ri-t3-author",
+          "assignment": "ri-t3-author",
+          "model": "opus",
+          "effort": "high",
+          "source": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
+          "native_ref": "claude:agent/ri-t3-author-20260927@c6d2cfbf66d4b82f284e008ab063266bf61c4a23"
+        }
+      ],
       "4-discard-a-unique-ref-by-target.md": [],
       "5-list-retire-candidates.md": []
     }
