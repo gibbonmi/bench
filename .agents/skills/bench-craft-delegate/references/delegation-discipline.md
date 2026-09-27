@@ -24,6 +24,8 @@ Ownership fence: <exact repo-relative file or path prefix>
 Effort: <level and iteration cap>
 Focused suite: <exact command>
 Independent biting probe: <property, mutation kind, site, and expected red>
+Debug route: follow `.agents/commands/bench-debug.md`; a red-capable loop first, then the fix
+Repair context: <fold targets and author context, each read by the coordinator before this charge names it>
 ```
 
 ## In the charge
@@ -90,6 +92,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - A test that guards on a root privilege routes through the capability seam, never through a bare `t.Skip`.
 - A repair fence is the affected ticket's `Writes:` line. Only `.bench/BENCH.md`'s plan-expansion policy widens it.
 - A repair based on a frozen sibling uses an integration assignment from `main`. The integration assignment merges the sibling before the landing.
+- Every author charge and every repair charge requires two results before the ticket commit. The first is a duplicated-facts sweep of the delegate's own delta. The sweep gives one source to each fact, such as a helper, a fixture harness, a derived count, or an expectation copied from the implementation. The second is one recorded red for each independent test expectation.
 
 ## Delegated author transfer
 
@@ -172,7 +175,7 @@ Independent biting probe: <property, mutation kind, site, and expected red>
 - Before aggregate grading, wait until returned delegates have no live tests and
   serialize the coordinator-owned resource.
 - `craft-line` owns the definition of an attempt that a retry cap counts.
-- Before the final allowed repair attempt, the author checks every review axis for duplicated facts and derived counts.
+- Before the final allowed repair attempt, the author repeats the duplicated-facts sweep from "In the charge" on every review axis.
 - At the cap, the author preserves a green semantic repair and requests an explicit evidence-scoped extension for the remaining edit. The extension record states whether it adds a repair round to the implementation retro.
 
 ## Before the landing
