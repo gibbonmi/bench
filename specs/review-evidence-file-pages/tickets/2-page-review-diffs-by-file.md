@@ -1,7 +1,7 @@
 # Prepare complete review diffs with stable file pages
 
 Blocked by: 1-order-review-preparation.md
-Writes: internal/preflight, internal/diff, internal/git, internal/consumers, internal/chargeevidence, .agents/skills/bench-craft-delegate/references/charge-evidence-format.md, internal/anchors, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/injected_ports_registry_test.go, cmd/bench/preflight_version_test.go
+Writes: internal/preflight, internal/diff, internal/git, internal/consumers, internal/chargeevidence, .agents/skills/bench-craft-delegate/references/charge-evidence-format.md, internal/anchors, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/injected_ports_registry_test.go, cmd/bench/preflight_version_test.go, cmd/bench/spill_support_test.go
 Covers: RE1, RE2, RE3, RE4, RE5, RE6, RE7, RE8, RE9, RE10, RE13, RE14, RE15, RE16
 
 ## What to build

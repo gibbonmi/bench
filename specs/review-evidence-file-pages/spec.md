@@ -431,6 +431,7 @@ Won't handle: an ambient `diff.noprefix` path outside the frozen inventory — t
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
 - `cmd/bench/preflight_version_test.go`
+- `cmd/bench/spill_support_test.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/conformance/injected_ports_registry_test.go`
