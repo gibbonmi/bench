@@ -358,11 +358,60 @@ reconciliation:
 RI-C1a is complete at tip `09611663`. Repair cycles consumed: 2 of 2. The
 hardening allowance is unused.
 
+## RI-C1b author evidence
+
+The RI-C1b base is the accepted RI-C1a tip `09611663`. Ticket 2 had a fresh
+`bench-writer` author on opus at high effort from the plan commit `c42dd50b`.
+That commit cited the RI-C1a seams and recorded the assignment. The author committed
+`0e8f29cb` on a lane pass in one attempt.
+
+The build preflight at that tip was red on `base-current` alone, because the
+light path `precedence-trace` landed on `main` during the RI-C1a close. The reviewer route deferred the `main`
+composition to the landing preparation, with its own review round. The
+explicit-base preflight with `--base 72a749a3` is green at the tip.
+
+The exported ref list became `CountUnclaimedRefs`, which returns the landed,
+subsumed, unique, and faulted counts from the same planner, and both callers
+moved to it. The status git row prints the three class details through the
+plural helper, omits a zero class, and keeps the dirty and unpushed details. It
+routes to the plan command whenever any count is above zero or the planner
+fails. The author added a `faulted ref` detail and an `unclaimed refs
+unavailable` detail so a fault is never silent.
+
+The reviewer route accepted both details as row RI88. The plan commit
+`f1204694` carries the sentence, the row, the ticket 2 `Covers:` line, and the
+RI-C1b seam citations. The system route test gained a landed case that runs the
+printed apply command. The 43-ref plan time is about 550 ms over three runs, and
+a full `bench status` over that fixture is about 850 ms. The author measured a
+scratch repository with a worktree build, and no test asserts a bound.
+
+### Author probe verdicts
+
+Each probe ran through `bench probe` on `internal/status/status.go`, and each
+restore reads `yes`.
+
+| Mutation | Check or test | Verdict |
+|---|---|---|
+| swap: a zero class prints | the producible table | bit, 7 cases including RI27 |
+| omission: the subsumed detail | the producible table | bit, RI24 |
+| swap: the dirty path wins over the plan route | the producible table | bit, RI26 |
+| omission: the faulted detail | the producible table | bit, the mixed case (RI88) |
+
+The system landed case took a copy-aside mutation, because the system suite is
+not a probe target. The route test made status route a landed ref to `git
+push` and went red, and `cmp` confirmed the restore. The faulted-detail probe
+was silent until the author added the symref fixture to the mixed case.
+
+### Verification
+
+The author reran its three plan checks at the tip `f1204694` on a clean tree.
+The JSON payload holds each result under the RI-C1b chunk.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ref-inventory/spec.md",
-  "plan_digest": "sha256:084df113f531adbc7d196def8c112c45a1925608d2a1e45099e9428dbb5ba82b",
+  "plan_digest": "sha256:232208681f534a3cc8f1b29756005041a593bb9aa51010d75bb8ce77f86f14e1",
   "implementation_session": "",
   "chunks": [
     {
@@ -938,6 +987,71 @@ hardening allowance is unused.
           "supersedes": ["ri-c1a-r2-coverage"]
         }
       ]
+    },
+    {
+      "id": "RI-C1b",
+      "base": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
+      "tip": "f12046941a0ad1f2812e82de0bf4e9c61303079b",
+      "plan_digest": "sha256:232208681f534a3cc8f1b29756005041a593bb9aa51010d75bb8ce77f86f14e1",
+      "source_digest": "05b8019186bf6d6b724705534ec913486ac49945",
+      "acceptance_rows": ["RI24", "RI26", "RI27", "RI88"],
+      "verification": [
+        {
+          "id": "ri-c1b-2-status-r1",
+          "performer": "claude:bench-writer/ri-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "05b8019186bf6d6b724705534ec913486ac49945",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t2-author-20260927/2-status@f1204694",
+            "digest": "sha256:29f24d6fa9e391ef2be584c359f14dd8e618cb5b0cd28cd261d85bfaafcb5a7b",
+            "excerpt": "github.com/gibbonmi/bench/internal/status,pass,13921"
+          },
+          "requirement": "2-status",
+          "command": "bench test --package ./internal/status",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1b-2-worktree-r1",
+          "performer": "claude:bench-writer/ri-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "05b8019186bf6d6b724705534ec913486ac49945",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t2-author-20260927/2-worktree@f1204694",
+            "digest": "sha256:87c4a1aa0a6619187f2ee5ab8d2ff295a9b18090e3395688cc006f85f930d577",
+            "excerpt": "github.com/gibbonmi/bench/internal/worktree,pass,47162"
+          },
+          "requirement": "2-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1b-2-system-r1",
+          "performer": "claude:bench-writer/ri-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "05b8019186bf6d6b724705534ec913486ac49945",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t2-author-20260927/2-system@f1204694",
+            "digest": "sha256:ad44035df9e790e200d8d60bb48bdc142bd582426679189d7fc6677539475004",
+            "excerpt": "github.com/gibbonmi/bench/internal/systemtest,pass,39666"
+          },
+          "requirement": "2-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
