@@ -456,11 +456,39 @@ extension cycle is consumed, so R18 needs a reviewer decision.
 Coverage proved that an incomplete spill file fails the manifest decode. The
 literal embed obeys the repository precedent.
 
+## RE2 repair cycle 4, by second reviewer extension
+
+The reviewer extended RE2 by one more cycle for R18 only. A fresh
+`bench-writer` repair session on opus at low effort started at `e207f886`.
+The charged fold turned the suite red, because `spilledResponse` read the
+spill line only at index 4. A cut preflight page puts it at index 2. The
+session stopped at its fence and restored the tree.
+
+The reviewer chose to fix the helper, and the plan fence of ticket 2 gained
+`cmd/bench/spill_support_test.go`. The same session committed `064d704c`.
+`spilledResponse` now finds the spill line through `responseboundtest.Find`,
+and `runPreflight` calls it. The whole `cmd/bench` package passed.
+
+| File | Mutation | Test | Verdict |
+|---|---|---|---|
+| `cmd/bench/spill_support_test.go` | swap: skip the spill file read | TestPreflightReviewChargeUsesCurrentVersion | bit |
+| `cmd/bench/spill_support_test.go` | swap: the index-4 read again | TestPreflightReviewChargeUsesCurrentVersion | bit |
+| `cmd/bench/preflight_version_test.go` | swap: return the bounded stdout | TestPreflightReviewChargeUsesCurrentVersion | bit |
+
+The orchestrator ran the last probe as the independent coordinator probe.
+Each restore reads `yes`. The repair session ran the three ticket checks at
+`064d704c`, and each check passed.
+
+The reviewer's rule that every fix delegate follows `bench-debug` reached
+this session after its commit. Its mapping met the loop, reproduction, seam,
+and close-out phases. It skipped a written list of ranked hypotheses, an
+expected-failure commit, and a line declaration.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/review-evidence-file-pages/spec.md",
-  "plan_digest": "sha256:7566dd88fcc60fb959a82eac272899eb3d463fb33f7271e196f5c9feeb5cb929",
+  "plan_digest": "sha256:2e9660577cc694205746350c1f154b536e7ac25ed99ae42a5706a4554f9dc7c0",
   "implementation_session": "",
   "chunks": [
     {
@@ -788,9 +816,9 @@ literal embed obeys the repository precedent.
     {
       "id": "RE2",
       "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
-      "tip": "c4d104d3db60b85c4fd2a7dbf8d125ba6d3a3ef0",
-      "plan_digest": "sha256:7566dd88fcc60fb959a82eac272899eb3d463fb33f7271e196f5c9feeb5cb929",
-      "source_digest": "26c2dc3e3c548a8365a7ba2ae7793ae76af10754",
+      "tip": "064d704c973733d833b5b3ff435e938af904bc3a",
+      "plan_digest": "sha256:2e9660577cc694205746350c1f154b536e7ac25ed99ae42a5706a4554f9dc7c0",
+      "source_digest": "55535b280f1be9585e022d1fdd7ad02b73464efd",
       "acceptance_rows": [
         "RE1",
         "RE2",
@@ -1019,6 +1047,60 @@ literal embed obeys the repository precedent.
             "ref": "claude:agent/re-t2-repair-c3-20260927/2-workflow@c4d104d3",
             "digest": "sha256:acf1f19830798906a0156161f334545c84dff89b1f9f9475ba0d5e37432309da",
             "excerpt": "internal/conformance,pass,964; failures[0]; skips[0]"
+          },
+          "requirement": "2-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-file-evidence-r5",
+          "performer": "claude:bench-writer/re-t2-repair-c4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "55535b280f1be9585e022d1fdd7ad02b73464efd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-c4-20260927/2-file-evidence@064d704c",
+            "digest": "sha256:c9852a851456d5fd99900cc53174290a9170e7c5eac232825814b8343186b0eb",
+            "excerpt": "ok  \tgithub.com/gibbonmi/bench/internal/diff\t7.470s\nok  \tgithub.com/gibbonmi/bench/internal/git\t1.518s\nok  \tgithub.com/gibbonmi/bench/internal/consumers\t2.459s\nok  \tgithub.com/gibbonmi/bench/internal/chargeevidence\t0.264s\nok  \tgithub.com/gibbonmi/bench/internal/preflight\t20.680s\nok  \tgithub.com/gibbonmi/bench/internal/preflight/evidencecmd\t15.128s"
+          },
+          "requirement": "2-file-evidence",
+          "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/git ./internal/consumers ./internal/chargeevidence ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-ports-r5",
+          "performer": "claude:bench-writer/re-t2-repair-c4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "55535b280f1be9585e022d1fdd7ad02b73464efd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-c4-20260927/2-ports@064d704c",
+            "digest": "sha256:c7502a8c58852dda89a75a7b6abc6009a5125d0b26b8aaed349f79e0bfff7ccd",
+            "excerpt": "internal/conformance,pass,16; failures[0]; skips[0]"
+          },
+          "requirement": "2-ports",
+          "command": "bench test --check injected-port-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-workflow-r5",
+          "performer": "claude:bench-writer/re-t2-repair-c4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "55535b280f1be9585e022d1fdd7ad02b73464efd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-c4-20260927/2-workflow@064d704c",
+            "digest": "sha256:855b851cc17c74c2f9bc1cffbb8b5893b34e29720afd0e539b68b644c9554f00",
+            "excerpt": "internal/conformance,pass,551; failures[0]; skips[0]"
           },
           "requirement": "2-workflow",
           "command": "bench test --check docs-currency-workflow",
@@ -1346,6 +1428,18 @@ literal embed obeys the repository precedent.
     {
       "from": "sha256:8dddf1cf850b5fab367dbec2d528660f7f2ad2d616aa6fa58f3e124215d0016f",
       "to": "sha256:7566dd88fcc60fb959a82eac272899eb3d463fb33f7271e196f5c9feeb5cb929",
+      "chunk_ids": {
+        "RE1": [
+          "RE1"
+        ],
+        "RE2": [
+          "RE2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:7566dd88fcc60fb959a82eac272899eb3d463fb33f7271e196f5c9feeb5cb929",
+      "to": "sha256:2e9660577cc694205746350c1f154b536e7ac25ed99ae42a5706a4554f9dc7c0",
       "chunk_ids": {
         "RE1": [
           "RE1"
