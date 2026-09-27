@@ -2,7 +2,7 @@
 
 Blocked by: 2-route-status-to-the-plan.md, 4-discard-a-unique-ref-by-target.md
 Writes: cmd/bench/main.go, cmd/bench/spec_retire_listing.go (new), cmd/bench/spec_retire_listing_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/package-core-guard/unrouted-subcommand, internal/spec/spec.go, internal/spec/spec_test.go, internal/spec/history.go, internal/worktree/clean_discard.go
-Covers: RI48, RI49, RI50, RI51, RI52, RI69, RI70, RI71, RI77, RI79, RI80
+Covers: RI48, RI49, RI50, RI51, RI52, RI69, RI70, RI71, RI77, RI79, RI80, RI97, RI100
 
 ## What to build
 
@@ -24,6 +24,9 @@ The command text in that line comes from the exported plan command spelling of t
 The candidate line's discard command comes from one exported function of the worktree package that takes the target selector.
 The slug rename updates every caller, including the history command.
 When the ledger read or the planner fails, the count line reads `unique refs: unavailable — <error>`.
+
+When the faulted count is nonzero, the count line reads `unique refs: <n>, <faulted> faulted — bench worktree clean --discard-branch --unclaimed`, and a zero faulted count omits the suffix.
+The wrapper takes the slug from the operand the retire parsed, not from the last raw argument.
 The listing discards nothing and changes no exit code.
 
 ## Acceptance
@@ -37,4 +40,6 @@ The listing discards nothing and changes no exit code.
 - [ ] The candidate lines and the count line print after the `retired:` lines and before the `next:` line.
 - [ ] `bench spec retire --help` prints no candidate line and no count line.
 - [ ] Retire with an unreadable ledger prints `unique refs: unavailable — <error>` and exits 0.
+- [ ] A retire refusal whose operand contains a newline and `next: ` keeps its exit code and prints no listing.
+- [ ] Retire with a symref to `main` and a blob-tip ref prints `unique refs: 0, 2 faulted — bench worktree clean --discard-branch --unclaimed`.
 - [ ] Retire with a candidate exits 0 and every branch ref survives.

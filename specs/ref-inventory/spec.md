@@ -67,7 +67,7 @@ Plan rows and the bulk sweep:
 13. As a reviewer, I want each classified row's detail to start with `class=<class>`, so that I read the class without a second command.
 14. As a reviewer, I want a subsumed row to continue with `holder=<ref>`, so that I can verify reachability myself.
 15. As a reviewer, I want a landed or subsumed row to carry the action `discard-remove`, so that the sweep's reach is visible.
-16. As a reviewer, I want a unique row to carry `retain` and the explicit discard command, so that the bulk sweep never offers it.
+16. As a reviewer, I want unique rows to carry `retain` and a branch-path discard command, so that each route selects its ref.
 17. As a reviewer, I want the plan fingerprint to bind each row's ref, tip, class, and holder, so that a class change refuses at apply.
 18. As a reviewer, I want `--apply <fingerprint>` to delete landed and subsumed rows only, at their exact tips, so that a unique ref survives.
 19. As a reviewer, I want `--apply-current` to plan and apply in one call with the same reach, so that the shortcut stays available.
@@ -162,8 +162,11 @@ The unclaimed plan row keeps the seven cleanup columns.
 The `tracked` cell stays `unclaimed`.
 The `detail` cell starts with `class=<class>`, continues with ` holder=<ref>` for a subsumed row, and ends with the existing removal text for a removing row.
 A unique row carries the action `retain`.
-Under ticket 1 its detail ends with `retained: content main lacks`, and ticket 4 replaces that suffix with `bench worktree clean --discard-branch --target <assignment id>`.
-A unique shift row names the branch path form, because a shift branch has no id segment.
+Under ticket 1 its detail ends with `retained: content main lacks`, and ticket 4 replaces that suffix with `bench worktree clean --discard-branch --target <branch path>`.
+
+The branch path is the row's ref without `refs/heads/`, for an assignment branch and for a shift branch alike.
+The printed route and the explicit apply action derive their selector from one function.
+An id operand stays an input form under stories 30, 31, and 41, and it is never a printed route.
 
 The unclaimed fingerprint version moves to `bench-unclaimed-assignment-branches/v2` and binds each row's ref, tip, class, and holder.
 The apply loop, for a fingerprint and for `--apply-current`, skips a row whose action does not remove.
@@ -217,11 +220,13 @@ The date comes from a clock seam on the package's join set, so a test fixes the 
 The explicit set fingerprint binds each unrecorded row's ref, tip, class, holder, and planned discarded ref.
 
 The apply of an unrecorded row runs inside the set's own transaction order.
-When the planned ref exists at the row's tip, the write is skipped.
-When it exists at another tip, the apply refuses.
+When the planned ref exists at the row's tip as a direct ref, the write is skipped.
+When it exists at another tip, or when the planned path is a symbolic ref, the apply refuses and writes nothing.
 Otherwise the write uses the zero old value.
 The delete uses the exact tip, so a branch moved after the write survives with an error row.
-A fault boundary step precedes the write and another follows it, so a test can stand in each window.
+
+A fault boundary step precedes the read of the planned path, one sits between that read and the write, and one follows the write.
+A target that the class function faults prints an error row with no fingerprint, and both apply forms refuse.
 
 The retire listing lives at the `cmd/bench` dispatch of `bench spec retire`, because `internal/worktree` already imports `internal/spec`.
 The retire command returns as today.
@@ -233,6 +238,8 @@ A candidate line reads `superseded candidate: <assignment id> <label> — bench 
 The count line reads `unique refs: <n> — bench worktree clean --discard-branch --unclaimed`.
 
 When the ledger read or the planner fails, the count line reads `unique refs: unavailable — <error>`, and the exit code holds.
+When the faulted count is nonzero, the count line reads `unique refs: <n>, <faulted> faulted — bench worktree clean --discard-branch --unclaimed`, and a zero faulted count omits the suffix.
+The wrapper takes the slug from the operand the retire parsed, not from the last raw argument.
 The listing includes the calling worktree's own assignment, and the explicit discard retains that assignment on its live lease as today.
 
 The glossary term for the unclaimed ref names the shift namespace as `refs/heads/bench/shift-`, which is what the ledger declares.
@@ -245,7 +252,7 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
 | RI-C1a / 1-classify-unclaimed-refs.md, 6-repair-glossary-shift-namespace.md | The unclaimed plan classes each ref, names holders, retains unique rows, applies landed and subsumed rows only, and status routes to the plan | RI1 to RI15, RI17 to RI23, RI25, RI28, RI55, RI57, RI59 to RI63, RI66, RI72, RI73, RI81 to RI87 | `internal/worktree` clean classes and unclaimed tests, the system route test | no |
 | RI-C1b / 2-route-status-to-the-plan.md | Status counts the three classes | RI24, RI26, RI27, RI88 to RI92 | `internal/status` producible signals and the landed second case of the system route test | no |
 | RI-C2a / 3-sweep-discarded-refs.md | The discarded namespace exists, survives the lifecycle emptying, and expires at 30 days | RI42 to RI47, RI93 to RI95 | `internal/worktree` reconcile tests | no |
-| RI-C2b / 4-discard-a-unique-ref-by-target.md, 5-list-retire-candidates.md | An unrecorded unique ref discards by target with a discarded ref first, and retire lists candidates | RI16, RI29 to RI41, RI48 to RI52, RI58, RI64, RI65, RI67 to RI71, RI74 to RI80 | `internal/worktree` discard tests and `cmd/bench` retire dispatch tests | yes |
+| RI-C2b / 4-discard-a-unique-ref-by-target.md, 5-list-retire-candidates.md | An unrecorded unique ref discards by target with a discarded ref first, and retire lists candidates | RI16, RI29 to RI41, RI48 to RI52, RI58, RI64, RI65, RI67 to RI71, RI74 to RI80, RI96 to RI101 | `internal/worktree` discard tests and `cmd/bench` retire dispatch tests | yes |
 
 ## Testing decisions
 
@@ -305,7 +312,7 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
 | RI13 | 13 | Every classified row's detail cell begins with `class=` | `internal/worktree/clean_classes_test.go` (`TestClassifyUnclaimedRefsOverTheEdgeInventory`) | A row without the prefix hides the class |
 | RI14 | 14 | A subsumed row's detail contains ` holder=refs/heads/` | `internal/worktree/clean_classes_test.go` (`TestClassifyUnclaimedRefsOverTheEdgeInventory`) | A row without the holder cannot be verified |
 | RI15 | 15 | A landed row and a subsumed row both carry action `discard-remove` | `internal/worktree/clean_classes_test.go` (`TestClassifyUnclaimedRefsOverTheEdgeInventory`) | A subsumed row marked retain never retires |
-| RI16 | 16 | A unique row's detail ends with `bench worktree clean --discard-branch --target <assignment id>` | `planned` | A retained row without a route strands the ref |
+| RI16 | 16 | A unique row's detail ends with `bench worktree clean --discard-branch --target <branch path>`, using the row's ref without `refs/heads/` | `planned` | An id selector can select a recorded label or refuse branches that share an id segment |
 | RI17 | 17 | A plan, then one new commit on a subsumed ref, then an apply with the old fingerprint refuses as stale | `internal/worktree/clean_unclaimed_test.go` (`TestCleanUnclaimedStaleClassRefusesTheOldPlan`) | A fingerprint without the tip accepts the moved ref |
 | RI18 | 18 | An apply with the fingerprint over a landed, a subsumed, and a unique row removes two refs and keeps the unique ref | `internal/worktree/clean_unclaimed_test.go` (`TestCleanUnclaimedBulkSweepKeepsUniqueRefs`) | The old apply loop deletes every row |
 | RI19 | 19 | `--apply-current` over the same three rows prints the plan, removes two refs, and keeps the unique ref | `internal/worktree/clean_unclaimed_test.go` (`TestCleanUnclaimedBulkSweepKeepsUniqueRefs`) and `internal/worktree/clean_unclaimed_test.go` (`TestCleanUnclaimedApplyCurrent`) | The old shortcut deletes the unique ref |
@@ -382,6 +389,12 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
 | RI91 | 26 | Status with only one faulted unclaimed symref to `main` prints `1 faulted ref` with action `bench worktree clean --discard-branch --unclaimed` | `internal/status/status_producible_test.go` (`TestAllProducibleBoardActionsAreInvocableOrEmpty`) | No other ref class or planner error can trigger the route, so a faulted count left out of the row total fails the action assertion |
 | RI92 | 26 | Status over a blob-tip Bench ref beside an unreadable ledger prints `git state unavailable, unclaimed refs unavailable` with action `bench worktree clean --discard-branch --unclaimed` | `internal/status/status_producible_test.go` (`TestAllProducibleBoardActionsAreInvocableOrEmpty`) | A route that drops the planner error whenever Git state fails prints `git status` for a repository that still holds refs |
 | RI87 | 8 | A branch one commit under a cleanup-pending recorded branch prints `class=subsumed holder=<that branch>` | `internal/worktree/clean_classes_test.go` (`TestClassifyUnclaimedRefsOverTheEdgeInventory`) | A holder filter limited to active records prints `unique` |
+| RI96 | 35, 38 | A discarded-path symref pointing to the target branch makes the apply print an `error` row, keep both refs unchanged, and write nothing | `planned` | Accepting the dereferenced tip skips preservation and deletes the branch, leaving the recovery ref dangling |
+| RI97 | 51 | A retire refusal whose operand contains a newline followed by `next: ` preserves its nonzero exit code and prints neither candidate nor count lines | `planned` | Removing the exit-code guard lets the operand's `next: ` line trigger the listing |
+| RI98 | 29, 62 | An explicit target naming a resolving Bench symref prints an `error` row naming `symref`, no fingerprint, and both apply forms refuse without ref changes | `planned` | Ignoring the candidate's fault admits a dereferenced branch into the explicit discard plan |
+| RI99 | 21, 59 | After an explicit set removes a recorded holder, its formerly subsumed unrecorded member reports a stale error and survives at its original tip | `planned` | Omitting the per-member requalification deletes the unrecorded branch after its holder disappears |
+| RI100 | 50 | Retire with a resolving Bench symref to `main` and a Bench blob-tip ref prints exactly one count line, `unique refs: 0, 2 faulted — bench worktree clean --discard-branch --unclaimed` | `planned` | Ignoring faulted rows or counting them as unique changes the exact line |
+| RI101 | 35, 38 | A direct ref planted at the planned path between the absent-ref read and the write makes the apply print an `error` row, keep both refs unchanged, and write nothing | `planned` | Removing the zero old value lets the write overwrite a handle that appeared after the read |
 
 Not covered: story 53 — reviewed exclusion, and the review round confirms that no hold surface is added.
 Not covered: story 54 — reviewed exclusion, and RI48 to RI52 show the listing discards nothing.
@@ -541,6 +554,15 @@ A discarded symref made the sweep's delete follow it to a branch outside the nam
 That change touches only the sweep in `reconcile.go`, and the earlier decision on `DeleteBranchExact` stands; the reviewer can veto it.
 RI94 pins a date segment with extra bytes, and RI95 pins the UTC date for a local instant.
 
+The RI-C2b review added rows RI96 to RI101 and moved the printed discard route to the branch path.
+The reviewer decided both on 2026-09-27 through the Codex Astra route.
+A symref at the planned discarded path made the apply skip the write and delete the branch, so the apply refuses a symbolic planned path.
+An id route could select a recorded label or refuse two branches that share an id segment.
+Story 16 and RI16 therefore name the branch path.
+
+The retire count line gains a faulted suffix, because a symref or blob-tip ref was invisible in the unique count.
+A third boundary step sits between the read of the planned path and the write, so a competing direct ref has a reachable window.
+
 ### Completion plan
 
 ```bench-completion-plan
@@ -660,6 +682,18 @@ RI94 pins a date segment with extra bytes, and RI95 pins the UTC date for a loca
           "effort": "high",
           "source": "114f94a2d6541d11833af640e5a886cbe8d01966",
           "native_ref": "claude:agent/ri-t4-author-20260927@114f94a2d6541d11833af640e5a886cbe8d01966"
+        },
+        {
+          "session": "claude:bench-writer/ri-t4-repair-1",
+          "assignment": "ri-t4-repair-1",
+          "model": "opus",
+          "effort": "high",
+          "source": "7ccd9aaab3a0f4be51d8b2bab0041f8e8ac28835",
+          "native_ref": "claude:agent/ri-t4-repair-1-20260927@7ccd9aaab3a0f4be51d8b2bab0041f8e8ac28835",
+          "predecessor": "claude:bench-writer/ri-t4-author",
+          "trigger": "user-directed",
+          "stopped": "ri-t4-author returned its final report and idle notification after the chunk-tip verification rerun at 7ccd9aaa; the worktree was clean and no further write came from it",
+          "preserved": "505a4c659f8000ae0a088f42038bc69fbfc782ef on bench/assign/9cd9510fff4093f7f9f4456f6a029560/3a0fa26e2c3c38179f908f3636fb07ed, chunk tip 7ccd9aaab3a0f4be51d8b2bab0041f8e8ac28835"
         }
       ],
       "5-list-retire-candidates.md": [
@@ -670,6 +704,18 @@ RI94 pins a date segment with extra bytes, and RI95 pins the UTC date for a loca
           "effort": "high",
           "source": "505a4c659f8000ae0a088f42038bc69fbfc782ef",
           "native_ref": "claude:agent/ri-t5-author-20260927@505a4c659f8000ae0a088f42038bc69fbfc782ef"
+        },
+        {
+          "session": "claude:bench-writer/ri-t5-repair-1",
+          "assignment": "ri-t5-repair-1",
+          "model": "opus",
+          "effort": "high",
+          "source": "7ccd9aaab3a0f4be51d8b2bab0041f8e8ac28835",
+          "native_ref": "claude:agent/ri-t5-repair-1-20260927@7ccd9aaab3a0f4be51d8b2bab0041f8e8ac28835",
+          "predecessor": "claude:bench-writer/ri-t5-author",
+          "trigger": "user-directed",
+          "stopped": "ri-t5-author returned its final report and idle notification after the chunk-tip verification rerun at 7ccd9aaa; the worktree was clean and no further write came from it",
+          "preserved": "7ccd9aaab3a0f4be51d8b2bab0041f8e8ac28835 on bench/assign/9cd9510fff4093f7f9f4456f6a029560/3a0fa26e2c3c38179f908f3636fb07ed, the RI-C2b chunk tip"
         }
       ]
     }
@@ -749,16 +795,16 @@ Source-sentence-to-row table:
 | Status counts the three classes and routes to the plan-only form, above the dirty-path route | RI24, RI25, RI26, RI27, RI88, RI89, RI90, RI91, RI92 |
 | Status never names a destructive command | RI25, RI28 |
 | The plan output alone names the apply command, and only when a landed or subsumed row exists | RI22, RI66 |
-| `--target` resolves an unrecorded branch by id segment or path | RI29, RI30, RI31, RI32, RI58, RI74, RI75, RI76, RI78 |
+| `--target` resolves an unrecorded branch by id segment or path | RI29, RI30, RI31, RI32, RI58, RI74, RI75, RI76, RI78, RI98 |
 | The explicit plan shows class unique and the planned ref, and the apply needs the fingerprint | RI33, RI34 |
 | A class change between plan and apply refuses as stale | RI17, RI63, RI64, RI65, RI85 |
-| The preserve step and the discard step never split | RI36, RI37, RI38 |
+| The preserve step and the discard step never split | RI36, RI37, RI38, RI96, RI99, RI101 |
 | Equal tips make the lexically first ref the root | RI6 |
 | A holder is an active branch, a unique root, or a landed ref (narrowed: no landed ref holds) | RI7, RI8, RI9, RI59, RI60, RI61, RI81, RI82, RI84, RI86, RI87 |
 | A subsumed row names its holder and writes no discarded ref | RI14, RI40, RI68 |
 | `--apply-current` stays, narrows, and leaves the status table | RI19, RI25, RI73 |
 | Retire lists recorded rows by slug with the discard command | RI48, RI49, RI52, RI70, RI71, RI77 |
-| Retire adds the unique count line and discards nothing | RI50, RI51, RI69, RI79, RI80 |
+| Retire adds the unique count line and discards nothing | RI50, RI51, RI69, RI79, RI80, RI97, RI100 |
 | One spec, two chunks, A before B | the chunk table |
 | Fixtures prove the classes, the live refs stay | Not covered: story 56 |
 
