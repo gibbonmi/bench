@@ -537,6 +537,23 @@ The cycle 4 repair session ran the three ticket checks again at `00880a8b`,
 and each check passed. The completion block returns to pending until the
 final verification runs again at the new source.
 
+## RE2 chunk review, round 6: the destination merge
+
+This round reviews the merge of `main` and the fence commits at chunk tip
+`00880a8b`. The shared evidence is
+`sha256:11dc7db573e9f5dc46d664b13c1ae22d67fc564d9745a7a716a531b6e2aee2db`.
+Each axis ran in a fresh `bench-reviewer` session on fable at high effort.
+
+Raw findings: Standards 0, Spec 0, Coverage 0. The merge adds exactly the
+eight `main` paths with no conflict edit, and it holds no Go code. The
+roadmap, decision-map, and canary checks pass on the merged tree.
+
+Advice: the spec sentence names eight fenced paths, but the fence also holds
+the 13 roadmap fixtures that pin `ROADMAP.md`.
+
+The orchestrator ran the three final verifications again at `bc806372`, and
+each passed. The completion block now binds the merged source.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1554,12 +1571,154 @@ final verification runs again at the new source.
           "supersedes": [
             "re2-r4-coverage"
           ]
+        },
+        {
+          "id": "re2-r6-standards",
+          "performer": "claude:bench-reviewer/re2-r6-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "8bf139b3753aceb5f4228cf3d42f1370cd698f85",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re2-r6-standards@00880a8b",
+            "digest": "sha256:0214e1a6f7d8fd6875b5bcd91845d0b1cf92d2b89d87be4b7041a31b2680d07d",
+            "excerpt": "Standards: 0 findings. Worst: none."
+          },
+          "axis": "Standards",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "00880a8b89b425a399045ce0a727ffc732dfbb4f",
+          "finding_ids": [],
+          "supersedes": [
+            "re2-r5-standards"
+          ]
+        },
+        {
+          "id": "re2-r6-spec",
+          "performer": "claude:bench-reviewer/re2-r6-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "8bf139b3753aceb5f4228cf3d42f1370cd698f85",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re2-r6-spec@00880a8b",
+            "digest": "sha256:a672197d8e5c4170f6e300062addb831c7be9440f6282c9223ff82a2ba90b5b9",
+            "excerpt": "Spec: 0 findings. Worst: none."
+          },
+          "axis": "Spec",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "00880a8b89b425a399045ce0a727ffc732dfbb4f",
+          "finding_ids": [],
+          "supersedes": [
+            "re2-r5-spec"
+          ]
+        },
+        {
+          "id": "re2-r6-coverage",
+          "performer": "claude:bench-reviewer/re2-r6-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "8bf139b3753aceb5f4228cf3d42f1370cd698f85",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re2-r6-coverage@00880a8b",
+            "digest": "sha256:117f1f0a0cd1080db4bf4c4360c7c12e7116b2f13d4875480bc5cbb13addfca7",
+            "excerpt": "Coverage: 0 findings. Worst: none."
+          },
+          "axis": "Coverage",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "00880a8b89b425a399045ce0a727ffc732dfbb4f",
+          "finding_ids": [],
+          "supersedes": [
+            "re2-r5-coverage"
+          ]
         }
       ]
     }
   ],
   "completion": {
-    "state": "pending"
+    "state": "completed",
+    "source_digest": "8bf139b3753aceb5f4228cf3d42f1370cd698f85",
+    "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+    "reconciliation": {
+      "RE1": "covered",
+      "RE2": "covered",
+      "RE3": "covered",
+      "RE4": "covered",
+      "RE5": "covered",
+      "RE6": "covered",
+      "RE7": "covered",
+      "RE8": "covered",
+      "RE9": "covered",
+      "RE10": "covered",
+      "RE11": "covered",
+      "RE12": "covered",
+      "RE13": "covered",
+      "RE14": "covered",
+      "RE15": "covered",
+      "RE16": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-coverage-r2",
+        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+        "role": "integration-verification",
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "source_digest": "8bf139b3753aceb5f4228cf3d42f1370cd698f85",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/coverage@bc806372",
+          "digest": "sha256:d51087d4ae2f25ebd97601eca96569d172b58eeec14a2ebd2fb26c2bb29954dc",
+          "excerpt": "ok: coverage map valid \u2014 16 row(s)\nuncited: 11 row(s) with no seam-cell citation \u2014 RE1, RE2, RE3, RE4, RE5, RE6, RE7, RE8, RE9, RE11, RE12"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/review-evidence-file-pages/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-file-evidence-r2",
+        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+        "role": "integration-verification",
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "source_digest": "8bf139b3753aceb5f4228cf3d42f1370cd698f85",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/file-evidence@bc806372",
+          "digest": "sha256:fbdae5a60db7ee871f5134dd23e12efa75f0eb2a5e9ca729af8fef6ecb5d5305",
+          "excerpt": "ok  \tgithub.com/gibbonmi/bench/internal/diff\t7.496s\nok  \tgithub.com/gibbonmi/bench/internal/git\t1.557s\nok  \tgithub.com/gibbonmi/bench/internal/consumers\t2.554s\nok  \tgithub.com/gibbonmi/bench/internal/chargeevidence\t0.234s\nok  \tgithub.com/gibbonmi/bench/internal/preflight\t20.212s\nok  \tgithub.com/gibbonmi/bench/internal/preflight/evidencecmd\t15.261s"
+        },
+        "requirement": "file-evidence",
+        "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/git ./internal/consumers ./internal/chargeevidence ./internal/preflight/...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-workflow-r2",
+        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+        "role": "integration-verification",
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "source_digest": "8bf139b3753aceb5f4228cf3d42f1370cd698f85",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/workflow@bc806372",
+          "digest": "sha256:81641bf0d1c9f7a3da833bb31bc2830622433ea690bc935f8f7cf1b09b97224c",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,584\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "workflow",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
