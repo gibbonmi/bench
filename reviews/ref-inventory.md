@@ -300,19 +300,42 @@ exhausted for this chunk, so a later blocking finding returns to the reviewer.
 No implementation command change is necessary for this round; R13 is an
 orchestrator plan-step gap, captured as a learning.
 
+## RI-C1a repair cycle 2
+
+A fresh `bench-writer` repair session `ri-t1-repair-2` on opus at high took R14
+and R15 from the plan commit `b24187e9`. It committed `09611663` on a lane pass
+in one attempt. The chunk tip moves to `09611663`, and the plan digest moves
+with the amended spec and ticket. The delta is one comment sentence in
+`clean_classes.go` and one test helper, `unclaimedBranchRef`, that four sites
+now call. The author found a fourth site beyond the three the charge named. It
+folded that site the same way, with no line added to the file at its budget.
+
+The charged probe, a shorter owner repeat inside the helper, stayed silent by
+construction. Every consumer reads the helper's value for the fixture and the
+expectation. The author's second swap moved the ref out of the Bench
+namespace and bit thirty tests across every call site, with restore `yes`. The
+orchestrator read the diff, confirmed a clean tree, and ran the build preflight
+green. The repair allowance of this chunk is now spent.
+
+### Verification after repair 2
+
+Each author reran its plan checks at the repair tip `09611663` on a clean tree.
+The ticket 1 rows carry the repair 2 session as their performer. The JSON
+payload holds each result after the earlier rows.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ref-inventory/spec.md",
-  "plan_digest": "sha256:421a87999758406ec17bb606a1369cdd32f475da29544f5cb476fea6e950ae24",
+  "plan_digest": "sha256:084df113f531adbc7d196def8c112c45a1925608d2a1e45099e9428dbb5ba82b",
   "implementation_session": "",
   "chunks": [
     {
       "id": "RI-C1a",
       "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
-      "tip": "4b80686a12ea46afa0e6c0ba4fe9aab2e00935f6",
-      "plan_digest": "sha256:421a87999758406ec17bb606a1369cdd32f475da29544f5cb476fea6e950ae24",
-      "source_digest": "a6b40aeaceecdcdce4aeef5b455b95b43cbd5449",
+      "tip": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
+      "plan_digest": "sha256:084df113f531adbc7d196def8c112c45a1925608d2a1e45099e9428dbb5ba82b",
+      "source_digest": "8cb477fca58ec20c7e531218bc6ed542a9e7391a",
       "acceptance_rows": [
         "RI1", "RI2", "RI3", "RI4", "RI5", "RI6", "RI7", "RI8", "RI9", "RI10", "RI11", "RI12", "RI13", "RI14", "RI15",
         "RI17", "RI18", "RI19", "RI20", "RI21", "RI22", "RI23", "RI25", "RI28", "RI55", "RI57", "RI59", "RI60", "RI61",
@@ -566,6 +589,132 @@ orchestrator plan-step gap, captured as a learning.
             "ref": "claude:agent/ri-t1-repair-1-20260927/1-system@4b80686a",
             "digest": "sha256:5feb1076feb2d6497662939683e4eb3d53a85856a22eeeb4cfc8f40fcd192ae6",
             "excerpt": "github.com/gibbonmi/bench/internal/systemtest,pass,39178"
+          },
+          "requirement": "1-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1a-6-anchors-r3",
+          "performer": "claude:bench-writer/ri-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8cb477fca58ec20c7e531218bc6ed542a9e7391a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t6-author-20260927/6-anchors@09611663",
+            "digest": "sha256:1f8bc1486d8676cbba75a6dd778eba2e2d8804a9621decf4661ce520ca987db1",
+            "excerpt": "github.com/gibbonmi/bench/internal/anchors,pass,1028"
+          },
+          "requirement": "6-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1a-6-conformance-r3",
+          "performer": "claude:bench-writer/ri-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8cb477fca58ec20c7e531218bc6ed542a9e7391a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t6-author-20260927/6-conformance@09611663",
+            "digest": "sha256:67296c993506fc96922a0b06c2ef35a5238fe0790edd039577ddb6916aaf99f4",
+            "excerpt": "github.com/gibbonmi/bench/internal/conformance,pass,45688"
+          },
+          "requirement": "6-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1a-1-worktree-r3",
+          "performer": "claude:bench-writer/ri-t1-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8cb477fca58ec20c7e531218bc6ed542a9e7391a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t1-repair-2-20260927/1-worktree@09611663",
+            "digest": "sha256:6c46822e35b5d9bbbda2fcfd347e3675bfb4922e9dd2602c824feed0641150fd",
+            "excerpt": "github.com/gibbonmi/bench/internal/worktree,pass,54085"
+          },
+          "requirement": "1-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1a-1-status-r3",
+          "performer": "claude:bench-writer/ri-t1-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8cb477fca58ec20c7e531218bc6ed542a9e7391a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t1-repair-2-20260927/1-status@09611663",
+            "digest": "sha256:cc377cf3b46495a9ffd89ad57364fca21f2a0f454f6627cc118e85216b79dfe8",
+            "excerpt": "github.com/gibbonmi/bench/internal/status,pass,13324"
+          },
+          "requirement": "1-status",
+          "command": "bench test --package ./internal/status",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1a-1-cmd-r3",
+          "performer": "claude:bench-writer/ri-t1-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8cb477fca58ec20c7e531218bc6ed542a9e7391a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t1-repair-2-20260927/1-cmd@09611663",
+            "digest": "sha256:4be54fbb06d7ef5b258e6d4f3153a9a3ac0de9dec4a6c4a6c90c40da9c514106",
+            "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,8823"
+          },
+          "requirement": "1-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1a-1-conformance-r3",
+          "performer": "claude:bench-writer/ri-t1-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8cb477fca58ec20c7e531218bc6ed542a9e7391a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t1-repair-2-20260927/1-conformance@09611663",
+            "digest": "sha256:68c5ed52e85e8ef11ed62b3117f78ef753e47a9181570d9de06a85872b11b68c",
+            "excerpt": "github.com/gibbonmi/bench/internal/conformance,pass,35351"
+          },
+          "requirement": "1-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1a-1-system-r3",
+          "performer": "claude:bench-writer/ri-t1-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8cb477fca58ec20c7e531218bc6ed542a9e7391a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t1-repair-2-20260927/1-system@09611663",
+            "digest": "sha256:aa8ec50038fcd6ce1c0a45133ccec9a797ebe641a8a8185926494ab07d8be78e",
+            "excerpt": "github.com/gibbonmi/bench/internal/systemtest,pass,39299"
           },
           "requirement": "1-system",
           "command": "bench test --check system",
