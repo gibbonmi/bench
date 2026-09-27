@@ -508,6 +508,36 @@ of 2. It owns R21 to R26 and D4 and D5. No implementation command change is
 necessary; R20 is an orchestrator record gap, and the record now carries the
 keep decision.
 
+## RI-C1b repair cycle 1
+
+A fresh `bench-writer` repair session `ri-t2-repair-1` on opus at high took R21
+to R26, D4, and D5 from the plan commit `80b31424`. It committed `f0a8a3c6` on
+a lane pass in one attempt, and the explicit-base build preflight is green at
+that tip. `appendGit` no longer returns early when `LandedState` fails. The
+unique-branch count now works by ref identity, so a faulted symref counts once.
+`UnclaimedPlanCommand` is the one exported spelling of the plan command, and the
+status action table reads it. The class names come from one enumeration built
+on the class constants, and an unknown class is an error, not a unique count.
+
+The author's probes each bit with restore `yes`:
+
+- `Faulted` dropped from the row total: RI91 and the blob case
+- the planner-error route removed: RI90
+- the detail omitted: RI90
+- the identity check removed: three cases with RI89
+- the early return restored: the blob-tip case
+- a modifier flag swapped in the exported spelling: six status cases, and both
+  system subtests through a copy-aside run
+- `classUnique` dropped from the enumeration: three cases
+
+The author found one edge: a non-repository fails both reads, and the exact
+`git unavailable` case expects `git state unavailable` with `git status`. The
+author kept that row and routed only rows the planner still finds. The
+reviewer route decided D6: a repository with a planner error beside a Git state
+failure still routes to the plan, a non-repository keeps today's row, and row
+RI92 pins a blob-tip ref beside an unreadable ledger. A second repair session
+implements D6 as repair cycle 2 of 2.
+
 ```bench-review-record
 {
   "version": 2,
