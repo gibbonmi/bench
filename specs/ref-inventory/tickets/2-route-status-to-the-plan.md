@@ -2,7 +2,7 @@
 
 Blocked by: 1-classify-unclaimed-refs.md
 Writes: internal/worktree/clean_unclaimed.go, internal/worktree/land_prunes_landed_siblings_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/status/status.go, tests/canary/docs-currency-token-diet/signal-vocabulary-drift, internal/status/status_producible_test.go, internal/systemtest/status_route_converge_test.go
-Covers: RI24, RI26, RI27
+Covers: RI24, RI26, RI27, RI88
 
 ## What to build
 
@@ -17,6 +17,7 @@ Its details read `<n> landed ref`, `<n> subsumed ref`, and `<n> unique ref` thro
 Any Bench-namespace ref count above zero routes the row to the plan command, and the dirty-path and unpushed-commit details stay in the row text.
 The row's action is already the plan-only command from ticket 1.
 A repository with no Bench-namespace ref keeps today's row and today's actions.
+A faulted set shows `<n> faulted ref`, a planner failure shows `unclaimed refs unavailable`, and both route to the plan command.
 
 Add a second case to the system route test over a landed ref that runs the apply command the plan prints and confirms the removal.
 The landed-unclaimed status test changes posture: a landed unclaimed branch now prints `1 landed ref` with the plan route.
@@ -28,5 +29,6 @@ Record the plan time over a fixture with 43 unrecorded refs in the ticket's veri
 - [ ] Status over one dirty path and one unique ref prints both details and routes to `bench worktree clean --discard-branch --unclaimed`.
 - [ ] A repository with one unique feature branch and no Bench-namespace ref prints `1 unique branch` and `git push`.
 - [ ] The system route test runs the printed apply command over a landed ref and the ref is gone.
+- [ ] Status over one unique ref and one faulted ref includes `1 unique ref, 1 faulted ref` and routes to `bench worktree clean --discard-branch --unclaimed`.
 - [ ] The landing prune test reads the counts function and still passes.
 - [ ] The verification note records the plan time over 43 unrecorded refs.
