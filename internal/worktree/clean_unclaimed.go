@@ -43,14 +43,9 @@ func (set unclaimedAssignmentSet) faulted() bool {
 	return false
 }
 
-// plan is the cleanup row one classified branch renders. A unique row ends with the explicit
-// discard command, the one route that removes it.
+// plan is the cleanup row one classified branch renders.
 func (row unclaimedAssignmentBranch) plan(fingerprint string) CleanupPlan {
-	suffix := row.reason
-	if row.class == classUnique {
-		suffix = discardTargetCommand(row.ref)
-	}
-	return CleanupPlan{Target: row.ref, Action: row.action(), Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: fingerprint, Reason: classDetail(row.refVerdict, suffix)}
+	return CleanupPlan{Target: row.ref, Action: row.action(), Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: fingerprint, Reason: row.planDetail(row.ref, row.reason)}
 }
 
 // unclaimedBranchReason reports whether ref sits in a Bench-created branch namespace and

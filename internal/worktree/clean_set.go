@@ -267,15 +267,15 @@ func (set explicitCleanupSet) applyArguments(options CleanupOptions) []axi.Invoc
 }
 
 // targetSelectors names each member by its canonical identity: a recorded member by its
-// assignment, an unclaimed one by its branch path. The identity replaces the operand the
-// caller typed, so no operand text reaches a command line.
+// assignment, an unclaimed one by the selector its discard route prints. The identity
+// replaces the operand the caller typed, so no operand text reaches a command line.
 func (set explicitCleanupSet) targetSelectors() []string {
 	selectors := make([]string, 0, 2*(len(set.rows)+len(set.unrecorded)))
 	for _, row := range set.rows {
 		selectors = append(selectors, "--target", row.assignment.ID)
 	}
 	for _, row := range set.unrecorded {
-		selectors = append(selectors, "--target", strings.TrimPrefix(row.ref, "refs/heads/"))
+		selectors = append(selectors, "--target", discardSelector(row.ref))
 	}
 	return selectors
 }

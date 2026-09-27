@@ -14,11 +14,13 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
-// The two windows of the discard transaction. The first precedes the discarded ref write and
-// the second follows it, so a test can stand in each one. The tokens sit here rather than in
+// The three windows of the discard transaction, so a test can stand in each one. The first
+// precedes the read of the planned path, the second sits between a read that found the path
+// absent and the write, and the third follows the write. The tokens sit here rather than in
 // ownership.go, which is over its size budget.
 const (
 	StepDiscardedRefWrite     LifecycleStep = "discarded-ref-write"
+	StepDiscardedRefAbsent    LifecycleStep = "discarded-ref-absent"
 	StepDiscardedBranchDelete LifecycleStep = "discarded-branch-delete"
 )
 
@@ -26,22 +28,19 @@ const (
 // assignment id.
 func branchSegment(ref string) string { return ref[strings.LastIndex(ref, "/")+1:] }
 
-// discardSelector is the --target operand that selects one unclaimed branch: the id segment
-// of an assignment branch, or the branch path of a shift branch, which has no id segment.
-func discardSelector(ref string) string {
-	if strings.HasPrefix(ref, intent.AssignmentBranchPrefix()) && intent.ValidIdentity(branchSegment(ref)) {
-		return branchSegment(ref)
-	}
-	return strings.TrimPrefix(ref, "refs/heads/")
-}
+// discardSelector is the --target operand that names one unclaimed branch: its branch path,
+// the ref without refs/heads/. The printed discard route and the set's apply command both
+// read it, so the route a row prints is the operand its apply names. An id segment stays an
+// accepted operand, but no command this package prints carries one for an unclaimed branch,
+// because an id can also match a recorded label or a second branch.
+func discardSelector(ref string) string { return strings.TrimPrefix(ref, "refs/heads/") }
 
 // discardTargetCommand is the explicit discard command for one unclaimed branch. A unique row
 // of the unclaimed plan ends with it, and so does an explicit row planned without the flag.
 func discardTargetCommand(ref string) string { return DiscardTargetCommand(discardSelector(ref)) }
 
-// DiscardTargetCommand is the one spelling of the explicit discard command for a --target
-// selector: an assignment id, or the branch path of a shift branch. The retire listing names
-// each superseded assignment with it.
+// DiscardTargetCommand is the one spelling of the explicit discard command for one --target
+// selector. The retire listing names each superseded recorded assignment with it.
 func DiscardTargetCommand(selector string) string {
 	return cleanCommand(CleanupOptions{DiscardBranch: true}, "--target", selector)
 }
@@ -55,15 +54,6 @@ func (counts UnclaimedRefCounts) Unique() int {
 		}
 	}
 	return 0
-}
-
-// classDetail is refVerdict.detail with suffix in the place of the retained text a unique row
-// ends with there. Every other row already ends with the suffix it is given.
-func classDetail(v refVerdict, suffix string) string {
-	if v.class != classUnique {
-		return v.detail(suffix)
-	}
-	return strings.TrimSuffix(v.detail(suffix), uniqueRetainedDetail) + suffix
 }
 
 // discardPrefixRef reports whether target names a branch in a Bench-created namespace, with
@@ -191,11 +181,11 @@ func planUnrecordedRow(branch unclaimedAssignmentBranch, now time.Time, options 
 		return unrecordedCleanupRow{}, errors.New(branch.fault)
 	}
 	row := unrecordedCleanupRow{unclaimedAssignmentBranch: branch, plan: branch.plan("")}
-	row.plan.Action, row.plan.Reason = ActionRetain, classDetail(branch.refVerdict, discardTargetCommand(branch.ref))
+	row.plan.Action, row.plan.Reason = ActionRetain, branch.detail(discardTargetCommand(branch.ref))
 	if !options.DiscardBranch {
 		return row, nil
 	}
-	row.plan.Action, row.plan.Reason = ActionDiscardRemove, classDetail(branch.refVerdict, branch.reason)
+	row.plan.Action, row.plan.Reason = ActionDiscardRemove, branch.detail(branch.reason)
 	if branch.class == classUnique {
 		row.discarded = intent.DiscardedRef(now, branch.ref)
 		row.plan.Recovery = row.discarded
@@ -263,10 +253,12 @@ func discardUnrecordedBranch(j joins, root string, row unrecordedCleanupRow) err
 	return git.DeleteBranchExact(root, row.ref, row.oid)
 }
 
-// writeDiscardedRef writes the row's discarded ref at the row's tip. A ref already at that tip
-// is the write a stopped apply made, so a retry skips it. A ref at another tip is a handle
-// this write must not replace, so the apply refuses and keeps the branch. The zero old value
-// makes a ref that appears after the read fail the write.
+// writeDiscardedRef writes the row's discarded ref at the row's tip. A direct ref already at
+// that tip is the write a stopped apply made, so a retry skips it. A ref at another tip is a
+// handle this write must not replace, so the apply refuses and keeps the branch. A symref at
+// the path refuses too: the tip read dereferences it, so a symref to the branch itself would
+// read as a finished write, and the delete would leave the recovery cell naming nothing. The
+// zero old value makes a ref that appears after the read fail the write.
 func writeDiscardedRef(j joins, root string, row unrecordedCleanupRow) error {
 	if row.discarded == "" {
 		return nil
@@ -274,10 +266,16 @@ func writeDiscardedRef(j joins, root string, row unrecordedCleanupRow) error {
 	if err := hit(j.cleanupBoundary, StepDiscardedRefWrite); err != nil {
 		return err
 	}
+	if target, err := git.Output("-C", root, "symbolic-ref", "--quiet", row.discarded); err == nil {
+		return fmt.Errorf("discarded ref %s is a symref to %s; the branch stays", row.discarded, target)
+	}
 	existing, _ := git.Output("-C", root, "show-ref", "--verify", "--hash", row.discarded)
 	switch existing {
 	case row.oid:
 	case "":
+		if err := hit(j.cleanupBoundary, StepDiscardedRefAbsent); err != nil {
+			return err
+		}
 		if _, err := git.Output("-C", root, "update-ref", row.discarded, row.oid, strings.Repeat("0", len(row.oid))); err != nil {
 			return fmt.Errorf("write discarded ref %s: %w", row.discarded, err)
 		}

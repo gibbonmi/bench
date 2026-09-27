@@ -298,7 +298,7 @@ func TestCleanUnclaimedPlanNamesApplyOnlyWhenARowRemoves(t *testing.T) {
 	plan, stderr, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
 	rows := cleanupRows(plan)
 	if code != 0 || stderr != "" || strings.Contains(plan, "--apply") || len(rows) != 1 ||
-		!strings.HasSuffix(cleanupRowValue(cleanupRowFields(rows[0])[6]), "; bench worktree clean --discard-branch --target "+strings.Repeat("f", 32)) {
+		!strings.HasSuffix(cleanupRowValue(cleanupRowFields(rows[0])[6]), "; bench worktree clean --discard-branch --target "+strings.TrimPrefix(unique, "refs/heads/")) {
 		t.Fatalf("unique-only plan exit=%d stderr=%q stdout=%q, want a retained row and no apply action", code, stderr, plan)
 	}
 	addUnclaimedBranch(t, root, "b")

@@ -22,11 +22,10 @@ const (
 	classUnique refClass = "unique"
 )
 
-// The detail spellings of a classified row. A unique row ends with uniqueRetainedDetail.
+// The field spellings that open a classified row's detail.
 const (
-	classField           = "class="
-	holderField          = " holder="
-	uniqueRetainedDetail = "retained: content main lacks"
+	classField  = "class="
+	holderField = " holder="
 )
 
 // errFaultedUnclaimedRef refuses a plan that holds an error row.
@@ -52,9 +51,9 @@ func (v refVerdict) action() CleanupAction {
 	}
 }
 
-// detail is the row's detail cell: the class, the holder of a subsumed row, then the removal
-// reason of a removing row or the retained text of a unique row.
-func (v refVerdict) detail(reason string) string {
+// detail is the row's detail cell: the class, the holder of a subsumed row, then suffix. A
+// faulted row's detail is the fault alone.
+func (v refVerdict) detail(suffix string) string {
 	if v.fault != "" {
 		return v.fault
 	}
@@ -62,10 +61,17 @@ func (v refVerdict) detail(reason string) string {
 	if v.class == classSubsumed {
 		text += holderField + v.holder
 	}
+	return text + "; " + suffix
+}
+
+// planDetail is the detail the unclaimed plan prints for ref. A unique row, which no bulk
+// apply removes, ends with the explicit discard command for ref; every other row ends with
+// reason.
+func (v refVerdict) planDetail(ref, reason string) string {
 	if v.class == classUnique {
-		return text + "; " + uniqueRetainedDetail
+		return v.detail(discardTargetCommand(ref))
 	}
-	return text + "; " + reason
+	return v.detail(reason)
 }
 
 // holderTip is one ref that can hold a subsumed ref, at its resolved tip.
