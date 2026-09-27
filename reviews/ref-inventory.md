@@ -1012,6 +1012,82 @@ R45. Ticket 5 owns R37, R38 for its rows, R42, and D10. The implementation
 command contributed to R35, and the orchestrator captured the out-of-fence
 staleness rule as a learning.
 
+## RI-C2b repair cycle 1
+
+The repair cycle ran two fresh `bench-writer` sessions on opus at high effort,
+in ticket order. They started from the plan commit `8b792773` and the fence
+commit `3a315db9`. The fence commit added
+`internal/worktree/clean_discard_transaction_test.go` to ticket 4, because
+`clean_discard_test.go` stood at 397 lines.
+
+### Ticket 4 repair
+
+The session `ri-t4-repair-1` committed `9d9541ce` on a lane pass in one
+attempt, and the explicit-base build preflight is green at that tip. The branch
+path is now the one selector. `discardSelector` returns the ref without
+`refs/heads/`, and both the printed route and `targetSelectors` read it (D7,
+RI16, RI78). The class file owns the unique detail through
+`refVerdict.planDetail`, and the retained constant and `classDetail` are gone
+(R35). The write refuses a symbolic ref at the planned path before the tip read
+(D8, RI96). A third step, `StepDiscardedRefAbsent`, sits between the absent-ref
+read and `update-ref` (D9, RI101).
+
+New tests pin the fault guard (RI98) and the requalify after a recorded removal
+(RI99). The RI99 fixture reached the unrecorded member, so the Coverage axis's
+stale refusal did not recur. The charge named a check `root-conformance` that
+does not exist; the session substituted `conformance-meta` and the whole
+conformance package.
+
+Each probe ran through `bench probe` on `internal/worktree/clean_discard.go`
+with restore `yes`, and the last row is the orchestrator's coordinator probe:
+
+| Mutation | Verdict |
+|---|---|
+| swap: `discardSelector` returns the full ref | bit, RI16 and RI78 |
+| swap: the fault guard disabled | bit, RI98 |
+| swap: the requalify replaced with the planned row | bit, RI99 |
+| swap: the zero old value dropped | bit, RI101 |
+| swap: the symref refusal disabled | bit, RI96 |
+| omission in `clean_classes.go`: the unique branch of `planDetail` | bit, RI16 and RI78 |
+
+### Ticket 5 repair
+
+The session `ri-t5-repair-1` committed `a7fba6ac` on a lane pass from
+`9d9541ce`, and the explicit-base build preflight is green at that tip after
+the worktree build. `spec.Command` now returns the parsed retire operand beside
+its output and exit code. `withRetireListing` slugs that operand through
+`spec.SlugOf` without a second argv read (R37, R40). A refusal whose operand
+carries a `next: ` line keeps its exit and prints no listing (RI97). The count
+line adds `, <n> faulted` when the faulted count is nonzero (D10, RI100).
+
+The first commit try was refused on structure growth in `internal/spec`. The
+session then moved the operand parse into the `retire` case of `Command`, and
+the file stays at 527 lines.
+
+The `-- <slug>` form the charge named was already green, because the last raw
+argument is still the slug. The red form is a trailing `--`, and the new test
+covers both. Each probe ran through `bench probe` with restore `yes`, and the
+last row is the orchestrator's coordinator probe:
+
+| File | Mutation | Verdict |
+|---|---|---|
+| `cmd/bench/spec_retire_listing.go` | swap: the exit-code guard removed | bit, RI97 |
+| `cmd/bench/spec_retire_listing.go` | swap: the faulted suffix disabled | bit, RI100 |
+| `cmd/bench/spec_retire_listing.go` | swap: faulted rows counted as unique | bit, RI100 |
+| `cmd/bench/spec_retire_listing.go` | swap: the raw last argument restored | bit, the trailing `--` case |
+| `internal/worktree/clean_unclaimed.go` | swap: an extra selector in `UnclaimedPlanCommand` | bit, RI50 and RI52 |
+| `internal/worktree/clean_discard.go` | swap: the `DiscardTargetCommand` selector suffixed | bit, five candidate tests |
+| `cmd/bench/spec_retire_listing.go` | swap: the operand used unslugged | bit, the path operand case |
+
+The chunk tip moves to `a7fba6ac`, and the plan digest moves with the amended
+spec and tickets.
+
+### Verification after the repair
+
+Each session reran its plan checks at its own commit on a clean tree, and the
+ticket 5 rows stand at the chunk tip. The JSON payload holds each result after
+the round 1 rows.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2040,9 +2116,9 @@ staleness rule as a learning.
     {
       "id": "RI-C2b",
       "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
-      "tip": "7ccd9aaab3a0f4be51d8b2bab0041f8e8ac28835",
-      "plan_digest": "sha256:6d0a708fb36fc22ce0045e0ced3c44c74de8369398357f838b667ae9f6a545e1",
-      "source_digest": "1bff2071f77f846d810a4c4a368333f1ba7131b9",
+      "tip": "a7fba6acea34ec41fab38fc094ce4610a3ca7283",
+      "plan_digest": "sha256:e06057fede71811ba3f11083f9b78a4a89e6791a66711cbe86ba78d58408cac7",
+      "source_digest": "eef2814a583e4812dfc742725ec343b633f35133",
       "acceptance_rows": [
         "RI16", "RI29", "RI30", "RI31", "RI32", "RI33", "RI34", "RI35", "RI36", "RI37", "RI38", "RI39", "RI40", "RI41",
         "RI48", "RI49", "RI50", "RI51", "RI52", "RI58", "RI64", "RI65", "RI67", "RI68", "RI69", "RI70", "RI71",
@@ -2116,6 +2192,78 @@ staleness rule as a learning.
             "ref": "claude:agent/ri-t5-author-20260927/5-cmd@7ccd9aaa",
             "digest": "sha256:457b32777059621568d5063e58b1af95c87eb0d41594b92579e309c5f827d0fe",
             "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,9789"
+          },
+          "requirement": "5-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-4-worktree-r2",
+          "performer": "claude:bench-writer/ri-t4-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "eef2814a583e4812dfc742725ec343b633f35133",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t4-repair-1-20260927/4-worktree@9d9541ce",
+            "digest": "sha256:d567e7e502caeeac304b1832760133d2dc102f1d454650fde640a3e701127658",
+            "excerpt": "github.com/gibbonmi/bench/internal/worktree,pass,53223"
+          },
+          "requirement": "4-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-4-cmd-r2",
+          "performer": "claude:bench-writer/ri-t4-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "eef2814a583e4812dfc742725ec343b633f35133",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t4-repair-1-20260927/4-cmd@9d9541ce",
+            "digest": "sha256:0c33dff9f6be8d5d4691657fd36700de8a32967358775ae630d03fee85ef57e1",
+            "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,12813"
+          },
+          "requirement": "4-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-5-spec-r2",
+          "performer": "claude:bench-writer/ri-t5-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "eef2814a583e4812dfc742725ec343b633f35133",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t5-repair-1-20260927/5-spec@a7fba6ac",
+            "digest": "sha256:280e892b09491848a51f67ce5b1917bc84bb6e3a7dca01c1c8e2efc40eb537d3",
+            "excerpt": "github.com/gibbonmi/bench/internal/spec,pass,291"
+          },
+          "requirement": "5-spec",
+          "command": "bench test --package ./internal/spec",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-5-cmd-r2",
+          "performer": "claude:bench-writer/ri-t5-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "eef2814a583e4812dfc742725ec343b633f35133",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t5-repair-1-20260927/5-cmd@a7fba6ac",
+            "digest": "sha256:21c760ffc47f26efc22b3f8c018be244d4f295b88c6ccfdf037c0d2578e6fa90",
+            "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,12996"
           },
           "requirement": "5-cmd",
           "command": "bench test --package ./cmd/bench",
@@ -2223,6 +2371,26 @@ staleness rule as a learning.
     {
       "from": "sha256:9bd083f4927a1ed4a55d7489d07f3e1869adfd9f0c05e5fb9a1c37e142c0da39",
       "to": "sha256:6d0a708fb36fc22ce0045e0ced3c44c74de8369398357f838b667ae9f6a545e1",
+      "chunk_ids": {
+        "RI-C1a": ["RI-C1a"],
+        "RI-C1b": ["RI-C1b"],
+        "RI-C2a": ["RI-C2a"],
+        "RI-C2b": ["RI-C2b"]
+      }
+    },
+    {
+      "from": "sha256:6d0a708fb36fc22ce0045e0ced3c44c74de8369398357f838b667ae9f6a545e1",
+      "to": "sha256:54bee6d37901346d57cb0e548d95978a7decdd8b6295875dcd433a200e304536",
+      "chunk_ids": {
+        "RI-C1a": ["RI-C1a"],
+        "RI-C1b": ["RI-C1b"],
+        "RI-C2a": ["RI-C2a"],
+        "RI-C2b": ["RI-C2b"]
+      }
+    },
+    {
+      "from": "sha256:54bee6d37901346d57cb0e548d95978a7decdd8b6295875dcd433a200e304536",
+      "to": "sha256:e06057fede71811ba3f11083f9b78a4a89e6791a66711cbe86ba78d58408cac7",
       "chunk_ids": {
         "RI-C1a": ["RI-C1a"],
         "RI-C1b": ["RI-C1b"],
