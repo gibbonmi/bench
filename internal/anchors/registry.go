@@ -2,8 +2,11 @@ package anchors
 
 import (
 	"fmt"
+	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 )
@@ -35,6 +38,23 @@ const (
 // Entries returns the ordered anchor registry.
 func Entries() []Anchor {
 	return append([]Anchor(nil), registry...)
+}
+
+// FilesBelow answers each distinct registered file below the repository-relative dir,
+// sorted by path. A dir of "." is the repository root, so every registered file answers.
+// The registry is the only inventory of anchored files, so a directory query reads it
+// here and never walks the directory.
+func FilesBelow(dir string) []string {
+	prefix := path.Clean(dir) + "/"
+	var files []string
+	for _, anchor := range registry {
+		if prefix != "./" && !strings.HasPrefix(anchor.File, prefix) || slices.Contains(files, anchor.File) {
+			continue
+		}
+		files = append(files, anchor.File)
+	}
+	slices.Sort(files)
+	return files
 }
 
 // Location pairs a registered anchor with its first physical match line.
