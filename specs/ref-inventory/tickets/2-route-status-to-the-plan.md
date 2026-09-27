@@ -2,7 +2,7 @@
 
 Blocked by: 1-classify-unclaimed-refs.md
 Writes: internal/worktree/clean_unclaimed.go, internal/worktree/land_prunes_landed_siblings_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/status/status.go, tests/canary/docs-currency-token-diet/signal-vocabulary-drift, internal/status/status_producible_test.go, internal/systemtest/status_route_converge_test.go
-Covers: RI24, RI26, RI27, RI88, RI89, RI90, RI91
+Covers: RI24, RI26, RI27, RI88, RI89, RI90, RI91, RI92
 
 ## What to build
 
@@ -19,7 +19,9 @@ The row's action is already the plan-only command from ticket 1.
 A repository with no Bench-namespace ref keeps today's row and today's actions.
 
 A faulted set shows `<n> faulted ref`, a planner failure shows `unclaimed refs unavailable`, and both route to the plan command.
-When the Git state read fails, the row still counts the unclaimed rows and routes to the plan beside `git state unavailable`.
+When the Git state read fails in a repository, the row still counts the unclaimed rows or reports the planner error.
+It then routes to the plan beside `git state unavailable`.
+A non-repository keeps today's `git state unavailable` row with the `git status` action.
 The unique-branch count subtracts every unclaimed row, faulted rows included, so a symref is counted once.
 The worktree package exports the plan command spelling, and the status action table reads it.
 
@@ -38,5 +40,7 @@ Record the plan time over a fixture with 43 unrecorded refs in the ticket's veri
 - [ ] Status with an unreadable ledger prints `unclaimed refs unavailable` and routes to the plan command.
 - [ ] Status with only one faulted symref to `main` prints `1 faulted ref` and routes to the plan command.
 - [ ] Status over a blob-tip Bench ref prints its class details and `git state unavailable` and routes to the plan command.
+- [ ] Status over a blob-tip Bench ref beside an unreadable ledger prints `git state unavailable, unclaimed refs unavailable` and routes to the plan command.
+- [ ] A non-repository keeps `git state unavailable` with the `git status` action.
 - [ ] The landing prune test reads the counts function and still passes.
 - [ ] The verification note records the plan time over 43 unrecorded refs.

@@ -180,7 +180,8 @@ The git row details read `<n> landed ref`, `<n> subsumed ref`, and `<n> unique r
 Any Bench-namespace ref count above zero routes the git row to the plan command, and the dirty-path and unpushed-commit details stay in the row text.
 
 Status shows a nonzero `<n> faulted ref` count through the plural helper, or `unclaimed refs unavailable` on a planner failure, and routes both to the plan command.
-When Git state fails, unclaimed rows or planner errors still route status to the plan with their details and `git state unavailable`.
+When Git state fails in a repository, unclaimed rows or planner errors still route status to the plan with their details beside `git state unavailable`.
+A non-repository reports only `git state unavailable` with the `git status` action.
 The worktree package exports the plan command spelling, and status and the retire listing read it.
 
 The plan-only route costs one landed proof per unrecorded ref plus one ancestry check per root per ref.
@@ -240,7 +241,7 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | RI-C1a / 1-classify-unclaimed-refs.md, 6-repair-glossary-shift-namespace.md | The unclaimed plan classes each ref, names holders, retains unique rows, applies landed and subsumed rows only, and status routes to the plan | RI1 to RI15, RI17 to RI23, RI25, RI28, RI55, RI57, RI59 to RI63, RI66, RI72, RI73, RI81 to RI87 | `internal/worktree` clean classes and unclaimed tests, the system route test | no |
-| RI-C1b / 2-route-status-to-the-plan.md | Status counts the three classes | RI24, RI26, RI27, RI88 to RI91 | `internal/status` producible signals and the landed second case of the system route test | no |
+| RI-C1b / 2-route-status-to-the-plan.md | Status counts the three classes | RI24, RI26, RI27, RI88 to RI92 | `internal/status` producible signals and the landed second case of the system route test | no |
 | RI-C2a / 3-sweep-discarded-refs.md | The discarded namespace exists, survives the lifecycle emptying, and expires at 30 days | RI42 to RI47 | `internal/worktree` reconcile tests | no |
 | RI-C2b / 4-discard-a-unique-ref-by-target.md, 5-list-retire-candidates.md | An unrecorded unique ref discards by target with a discarded ref first, and retire lists candidates | RI16, RI29 to RI41, RI48 to RI52, RI58, RI64, RI65, RI67 to RI71, RI74 to RI80 | `internal/worktree` discard tests and `cmd/bench` retire dispatch tests | yes |
 
@@ -374,6 +375,7 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
 | RI89 | 24 | Status over one unique Bench ref, a resolving Bench symref to that ref, and one unique feature branch prints exactly `1 unique ref, 1 faulted ref, 1 unique branch` | `internal/status/status_producible_test.go` (`TestAllProducibleBoardActionsAreInvocableOrEmpty`) | Counting the faulted symref again as an ordinary unique branch produces `2 unique branches` |
 | RI90 | 26 | Status with an unreadable ledger prints `unclaimed refs unavailable` with action `bench worktree clean --discard-branch --unclaimed` | `internal/status/status_producible_test.go` (`TestAllProducibleBoardActionsAreInvocableOrEmpty`) | The ledger read forces a planner failure, so an omitted failure detail or a wrong action fails the exact signal assertion |
 | RI91 | 26 | Status with only one faulted unclaimed symref to `main` prints `1 faulted ref` with action `bench worktree clean --discard-branch --unclaimed` | `internal/status/status_producible_test.go` (`TestAllProducibleBoardActionsAreInvocableOrEmpty`) | No other ref class or planner error can trigger the route, so a faulted count left out of the row total fails the action assertion |
+| RI92 | 26 | Status over a blob-tip Bench ref beside an unreadable ledger prints `git state unavailable, unclaimed refs unavailable` with action `bench worktree clean --discard-branch --unclaimed` | `internal/status/status_producible_test.go` (`TestAllProducibleBoardActionsAreInvocableOrEmpty`) | A route that drops the planner error whenever Git state fails prints `git status` for a repository that still holds refs |
 | RI87 | 8 | A branch one commit under a cleanup-pending recorded branch prints `class=subsumed holder=<that branch>` | `internal/worktree/clean_classes_test.go` (`TestClassifyUnclaimedRefsOverTheEdgeInventory`) | A holder filter limited to active records prints `unique` |
 
 Not covered: story 53 — reviewed exclusion, and the review round confirms that no hold surface is added.
@@ -524,6 +526,9 @@ The row now keeps its details and its plan route beside `git state unavailable`.
 A symref to a unique ref was counted twice, so RI89 pins the single count.
 The plan command spelling moves to one exported source in the worktree package, because status and the retire listing print it too.
 
+The repair then found that a non-repository fails both reads, so the reviewer route separated that case from a repository.
+RI92 pins a blob-tip ref beside an unreadable ledger in a repository.
+
 ### Completion plan
 
 ```bench-completion-plan
@@ -599,6 +604,18 @@ The plan command spelling moves to one exported source in the worktree package, 
           "trigger": "user-directed",
           "stopped": "ri-t2-author returned its final report and idle notification after the chunk-tip verification rerun at f1204694; the worktree was clean and no further write came from it",
           "preserved": "0e8f29cbb4e0fb4159baa23c34cddea9ffbd1cf1 on bench/assign/9cd9510fff4093f7f9f4456f6a029560/3a0fa26e2c3c38179f908f3636fb07ed, chunk tip f12046941a0ad1f2812e82de0bf4e9c61303079b"
+        },
+        {
+          "session": "claude:bench-writer/ri-t2-repair-2",
+          "assignment": "ri-t2-repair-2",
+          "model": "opus",
+          "effort": "high",
+          "source": "f0a8a3c6f3b0e4e70edacbda5d0a7ac9d80fc246",
+          "native_ref": "claude:agent/ri-t2-repair-2-20260927@f0a8a3c6f3b0e4e70edacbda5d0a7ac9d80fc246",
+          "predecessor": "claude:bench-writer/ri-t2-repair-1",
+          "trigger": "user-directed",
+          "stopped": "ri-t2-repair-1 returned its final report and idle notification after its commit f0a8a3c6; the worktree was clean and no further write came from it",
+          "preserved": "f0a8a3c6f3b0e4e70edacbda5d0a7ac9d80fc246 on bench/assign/9cd9510fff4093f7f9f4456f6a029560/3a0fa26e2c3c38179f908f3636fb07ed, the RI-C1b repair 1 tip"
         }
       ],
       "3-sweep-discarded-refs.md": [],
@@ -678,7 +695,7 @@ Source-sentence-to-row table:
 | The sweep removes a ref 30 days after its date and reports the count | RI43, RI44, RI47 |
 | The emptying rule does not apply to the discarded namespace | RI45 |
 | A superseded ref classifies as unique and needs an explicit discard | RI10, RI33 |
-| Status counts the three classes and routes to the plan-only form, above the dirty-path route | RI24, RI25, RI26, RI27, RI88, RI89, RI90, RI91 |
+| Status counts the three classes and routes to the plan-only form, above the dirty-path route | RI24, RI25, RI26, RI27, RI88, RI89, RI90, RI91, RI92 |
 | Status never names a destructive command | RI25, RI28 |
 | The plan output alone names the apply command, and only when a landed or subsumed row exists | RI22, RI66 |
 | `--target` resolves an unrecorded branch by id segment or path | RI29, RI30, RI31, RI32, RI58, RI74, RI75, RI76, RI78 |
