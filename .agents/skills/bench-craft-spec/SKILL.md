@@ -11,11 +11,11 @@ Turn the authorized decision source and what you know of the codebase into `spec
 ## Authoring process
 
 1. **Explore the repo**; use the glossary's terms and respect the area's ADRs. Before the coverage map locks, do three reads.
-   - Open every enforcement file a row or a fence names. These files are the conformance checks, the contract tests, the wrapper help, the injected-port registry, and the grammar files. Cite each read.
+   - Open every enforcement file a row or a fence names. These files are the conformance checks, the contract tests, the wrapper help, the injected-port registry, and the grammar files. Cite each read. Also open the enforcement files of each new CLI verb and each new conformance test.
    - Read one existing precedent for each named seam.
    - Sweep the whole tree for each reader of a count, a schema field, or an artifact path the spec changes. This reader sweep includes `.mjs` scripts and workflow files, and `references/map-discipline.md` states its rules. Each reader takes a row or a named exclusion.
 2. **Place the seam**: After step 1, apply [Evidence-led authoring](#evidence-led-authoring). If its exception applies, follow `craft-seams`. Confirm the selected seam with the reviewer.
-3. **Write the spec** from the template below, in ASD-STE100 prose per `references/ste-prose.md`, and run `bench coverage --check`. The spec file is the published artifact.
+3. **Write the spec** from the template below, in ASD-STE100 prose per `references/ste-prose.md`, and run `bench coverage --check`. The spec file is the published artifact. Verify each current-code claim against the tree under the claim rules in `references/map-discipline.md`.
 
 ## Evidence-led authoring
 

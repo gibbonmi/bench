@@ -2,7 +2,8 @@
 
 Charged from `craft-spec` when the author writes or audits an acceptance coverage
 map. Each rule below settles one question the map must answer. `craft-spec` keeps
-the explore reads, the fence rules, and the review rubric.
+the explore reads, the fence rules, and the review rubric. The claims section also
+governs each current-code claim in the spec prose.
 
 ## Before the map locks
 
@@ -35,6 +36,24 @@ the explore reads, the fence rules, and the review rubric.
 - A deeper callee joins the reader sweep only when the callee reads the decision fact.
 - Each shared reader in the reader sweep takes an exact ownership fence.
 - The reader sweep names the shipped-surface claim words, because `package-core-guard` reds a claim word beside a repo-only path.
+- For a moved or retired guidance fact, the reader sweep searches by key terms and in normalized form, not only by exact bytes.
+  It covers each surface in this list:
+  - each phase command and the working agreement
+  - each agent definition and each harness README
+  - the public docs and the conformance helpers
+  - each test that consumes a registry output
+- A spec that changes a shared resource runs a writer sweep. The writer sweep names
+  each competing writer and the protocol that the row composes.
+- A spec that changes a public command sweeps the `.github` workflows for each caller.
+- A spec that replaces a process stream walks the `os/exec` pipe rules before the
+  first review charge.
+- An amendment that reverses a closed decision sweeps each touched spec for claims of
+  the old design before its review.
+- A spec that changes authorship or the completion plan cites the review-plan
+  validator and the assignment validator that the author read.
+- Before the first review charge, the author runs `bench anchors <path>` for each
+  guidance path that the spec edits. The author compares each anchor claim of the
+  spec with that output, and runs each other premise check that the spec names.
 - A posture change lists every existing test fixture it reds before the map locks.
 - A spec that adds an invariant check sweeps every input constructor of that check. The sweep names each seed and each fixture builder that builds the graded input.
 - Each input constructor satisfies the new invariant, or its file joins a ticket `Writes:` line.
@@ -49,8 +68,23 @@ the explore reads, the fence rules, and the review rubric.
   cites the row and the fixture that reach it. An enumerated kind list takes one
   row per kind.
 
+## Current-code claims
+
+- The spec verifies each current-code claim in its problem, solution, and
+  implementation sections against the tree.
+- Each such claim names its source or carries the mark `uncertain`.
+- The author rechecks an older decision source against its target and its history.
+- Work that already landed becomes an implementation decision, not a new requirement.
+- A recommendation that asserts current behavior names the evidence that the author
+  read in the current session.
+- The implementation plan prices this claim verification.
+- The author verifies each value that the spec records against `DATA_HANDLING.md`.
+
 ## Per row
 
+- A numeric fixture row shows its arithmetic against its rule.
+- A legacy-migration row proves that its new check is reachable from a real legacy
+  input. A replacement probe follows the same path.
 - A universal claim names its authoritative inventory, its enforcement seam, and
   one omission mutation that turns the seam red.
 - A spec justified by preserved behavior gives an exit row that names a
@@ -124,6 +158,13 @@ the explore reads, the fence rules, and the review rubric.
 - A ticket with more than six command-level tests names a second test file in its
   `Writes:` line. The rule applies when the sibling test file is near its line
   budget.
+- The changed-function caller sweep fences the injected-port registry of each new
+  injected parameter.
+- The caller sweep also fences a new accessor file when a parallel ticket rewrites
+  the owner file.
+- The author walks the end state of each ticket against every guard that the spec adds.
+- A performance spec plans a measurement after its first vertical slice. The build
+  returns to the spec when that measurement refutes the premise of the spec.
 
 ## At review
 
@@ -132,3 +173,10 @@ the explore reads, the fence rules, and the review rubric.
 - A process-group timeout row names a descendant-survival oracle, never elapsed
   time alone.
 - The review round demands one row for each listed addition, and it removes each unlisted addition.
+
+## At spec retirement
+
+- A real test that covers a row of a retiring spec records its provenance before
+  that spec disappears.
+- Migrated decision prose states the actual decision. A context-free gist such as
+  `With lever 1 landed.` or `Bound it.` loses that decision.
