@@ -159,19 +159,69 @@ implementation command contributed to R10, because the author's probe list
 named a fingerprint-binding swap without a field. The orchestrator captured the
 per-field probe rule as a learning.
 
+## RI-C1a repair cycle 1
+
+A fresh `bench-writer` repair session `ri-t1-repair-1` on opus at high took R1
+to R5, R9 to R12, and D2 from the plan commit `b0701a02`. It committed
+`4b80686a` on a lane pass in one attempt. The chunk tip moves to `4b80686a`.
+The plan digest moves with the amended spec and ticket. The delta touches the
+class function, its table test, the unclaimed planner, and its test.
+
+The class function runs `symbolic-ref --quiet` before `rev-parse`, and a symref
+gets the fault `<ref> is a symref to <target>`. Every landed recorded branch is
+excluded from the holders, not only a content-landed one. That widening is
+behavior-neutral: a ref beneath an ancestry-landed branch is itself landed, and
+the landed class wins, so the spec sentence "No landed ref is a holder" holds
+for recorded branches too. The fault error is renamed to
+`errFaultedUnclaimedRef`, because the old message named only a missing commit.
+
+A new helper `recordedBranch` plants a record in a named state, and RI8 folds
+onto it. `squashIntoMain` is gone in favour of `squashLand`.
+
+### Repair probe verdicts
+
+Each probe ran through `bench probe`, and each restore reads `yes`.
+
+| File | Mutation | Check or test | Verdict |
+|---|---|---|---|
+| `internal/worktree/clean_unclaimed.go` | swap: drop the class part of the fingerprint | `TestCleanUnclaimedStaleClassRefusesTheOldPlan` | bit, RI85 |
+| `internal/worktree/clean_classes.go` | swap: holder filter admits every state | `TestClassifyUnclaimedRefsOverTheEdgeInventory` | bit, RI86 |
+| `internal/worktree/clean_classes.go` | swap: holder filter admits active only | the class table | bit, RI87 |
+| `internal/worktree/clean_classes.go` | swap: a landed recorded branch holds | the class table | bit, RI84 twice |
+| `internal/worktree/clean_classes.go` | swap: `class=` to `kind=` | `./internal/worktree` | bit, 17 tests |
+| `internal/worktree/clean_classes.go` | swap: ` holder=` to ` owner=` | `./internal/worktree` | bit, 6 tests |
+| `internal/worktree/clean_classes.go` | swap: the retained detail text | `TestCleanUnclaimedPlanNamesApplyOnlyWhenARowRemoves` | bit |
+| `internal/worktree/clean_classes.go` | swap: the symref fault text | `./internal/worktree` | bit, RI83 four times |
+| `internal/worktree/clean_classes.go` | swap: the symref check never fires | `./internal/worktree` | bit, RI83 four times |
+| `internal/worktree/clean_classes.go` | swap: reverse the recorded-holder order | `./internal/worktree` selected tests | silent |
+
+The three label swaps are the recorded reds that R1 required for the
+independent expectations `class=`, ` holder=`, and `retained: content main lacks`.
+The last row is the orchestrator's coordinator probe. It is silent because no
+test reaches one ref from two recorded holders, so the spec sentence on the
+lexically first holder has no row. The code sorts, so no behavior is wrong. The
+confirming round's Coverage axis grades that gap.
+
+### Verification after the repair
+
+Each author reran its plan checks at the repair tip `4b80686a` on a clean tree.
+The ticket 1 rows carry the repair session as their performer, because the plan
+names it as the ticket's effective author. The JSON payload holds each result
+after the round 1 rows.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ref-inventory/spec.md",
-  "plan_digest": "sha256:dedf49a52da69c6ba1418a46f9d9f3586cba01ac634110edf19f32d62ad5ee99",
+  "plan_digest": "sha256:421a87999758406ec17bb606a1369cdd32f475da29544f5cb476fea6e950ae24",
   "implementation_session": "",
   "chunks": [
     {
       "id": "RI-C1a",
       "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
-      "tip": "c6b2a74effa57cbafdd8bc449c9fbbb24d1468eb",
-      "plan_digest": "sha256:dedf49a52da69c6ba1418a46f9d9f3586cba01ac634110edf19f32d62ad5ee99",
-      "source_digest": "be01c3ac5a00497a0c7e6631aa38ee47a4c2b80e",
+      "tip": "4b80686a12ea46afa0e6c0ba4fe9aab2e00935f6",
+      "plan_digest": "sha256:421a87999758406ec17bb606a1369cdd32f475da29544f5cb476fea6e950ae24",
+      "source_digest": "a6b40aeaceecdcdce4aeef5b455b95b43cbd5449",
       "acceptance_rows": [
         "RI1", "RI2", "RI3", "RI4", "RI5", "RI6", "RI7", "RI8", "RI9", "RI10", "RI11", "RI12", "RI13", "RI14", "RI15",
         "RI17", "RI18", "RI19", "RI20", "RI21", "RI22", "RI23", "RI25", "RI28", "RI55", "RI57", "RI59", "RI60", "RI61",
@@ -299,6 +349,132 @@ per-field probe rule as a learning.
             "ref": "claude:agent/ri-t1-author-20260927/1-system@c6b2a74e",
             "digest": "sha256:ab56672c31a42be0c763cb5a3e5345a5cec9edfcfd6b6e17bb7cabafd68f2196",
             "excerpt": "github.com/gibbonmi/bench/internal/systemtest,pass,38997"
+          },
+          "requirement": "1-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1a-6-anchors-r2",
+          "performer": "claude:bench-writer/ri-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a6b40aeaceecdcdce4aeef5b455b95b43cbd5449",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t6-author-20260927/6-anchors@4b80686a",
+            "digest": "sha256:c84530d71fb19801d588927aa8ef66079c5a2daba98b66dd63331f2ccfccfae5",
+            "excerpt": "github.com/gibbonmi/bench/internal/anchors,pass,944"
+          },
+          "requirement": "6-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1a-6-conformance-r2",
+          "performer": "claude:bench-writer/ri-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a6b40aeaceecdcdce4aeef5b455b95b43cbd5449",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t6-author-20260927/6-conformance@4b80686a",
+            "digest": "sha256:b9783166abd55b57c3bdaef654ac5c3a30d0497f90ee00187629a1c7c0558ab0",
+            "excerpt": "github.com/gibbonmi/bench/internal/conformance,pass,45257"
+          },
+          "requirement": "6-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1a-1-worktree-r2",
+          "performer": "claude:bench-writer/ri-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a6b40aeaceecdcdce4aeef5b455b95b43cbd5449",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t1-repair-1-20260927/1-worktree@4b80686a",
+            "digest": "sha256:b6e44140a56bbd7085eab52aefe0d8a7d27716f1ff36d64f53b57ee678ce54c6",
+            "excerpt": "github.com/gibbonmi/bench/internal/worktree,pass,54141"
+          },
+          "requirement": "1-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1a-1-status-r2",
+          "performer": "claude:bench-writer/ri-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a6b40aeaceecdcdce4aeef5b455b95b43cbd5449",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t1-repair-1-20260927/1-status@4b80686a",
+            "digest": "sha256:8389f3cb6d0972958c2486d661f3e31150fd1ee3175e3b89c7de0e4d7d250b13",
+            "excerpt": "github.com/gibbonmi/bench/internal/status,pass,13117"
+          },
+          "requirement": "1-status",
+          "command": "bench test --package ./internal/status",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1a-1-cmd-r2",
+          "performer": "claude:bench-writer/ri-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a6b40aeaceecdcdce4aeef5b455b95b43cbd5449",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t1-repair-1-20260927/1-cmd@4b80686a",
+            "digest": "sha256:d6f2f1dd6410089b6bee4226d3b64239be8a9f3794e98634033f91fbe1dc40b2",
+            "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,9261"
+          },
+          "requirement": "1-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1a-1-conformance-r2",
+          "performer": "claude:bench-writer/ri-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a6b40aeaceecdcdce4aeef5b455b95b43cbd5449",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t1-repair-1-20260927/1-conformance@4b80686a",
+            "digest": "sha256:b6fed8a9faa808070a69525526d8da361d5ae7ca429374468ff2d71296c51c1e",
+            "excerpt": "github.com/gibbonmi/bench/internal/conformance,pass,35468"
+          },
+          "requirement": "1-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c1a-1-system-r2",
+          "performer": "claude:bench-writer/ri-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a6b40aeaceecdcdce4aeef5b455b95b43cbd5449",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t1-repair-1-20260927/1-system@4b80686a",
+            "digest": "sha256:5feb1076feb2d6497662939683e4eb3d53a85856a22eeeb4cfc8f40fcd192ae6",
+            "excerpt": "github.com/gibbonmi/bench/internal/systemtest,pass,39178"
           },
           "requirement": "1-system",
           "command": "bench test --check system",
