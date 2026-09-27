@@ -524,11 +524,24 @@ failure.
 Repair totals: RE1 used two cycles. RE2 used two cycles and two reviewer
 extensions.
 
+## Destination merge
+
+The first landing refused, because `main` gained the cleanup landing
+`3937b584` after the build started. The orchestrator merged `main` into the
+source at `89eb9b56`. The review preflight then found eight merged paths
+outside every fence. The reviewer chose to fence them instead of the FT336
+route of a review without a charge. The fence expansion also added the 13
+roadmap fixtures that pin `ROADMAP.md`. The RE2 chunk tip is now `00880a8b`.
+
+The cycle 4 repair session ran the three ticket checks again at `00880a8b`,
+and each check passed. The completion block returns to pending until the
+final verification runs again at the new source.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/review-evidence-file-pages/spec.md",
-  "plan_digest": "sha256:2e9660577cc694205746350c1f154b536e7ac25ed99ae42a5706a4554f9dc7c0",
+  "plan_digest": "sha256:65ce119a87b1cc609d390efa8ccc19d6ed22a6b84c147879d6cd37207b75ca62",
   "implementation_session": "",
   "chunks": [
     {
@@ -856,9 +869,9 @@ extensions.
     {
       "id": "RE2",
       "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
-      "tip": "064d704c973733d833b5b3ff435e938af904bc3a",
-      "plan_digest": "sha256:2e9660577cc694205746350c1f154b536e7ac25ed99ae42a5706a4554f9dc7c0",
-      "source_digest": "55535b280f1be9585e022d1fdd7ad02b73464efd",
+      "tip": "00880a8b89b425a399045ce0a727ffc732dfbb4f",
+      "plan_digest": "sha256:65ce119a87b1cc609d390efa8ccc19d6ed22a6b84c147879d6cd37207b75ca62",
+      "source_digest": "8bf139b3753aceb5f4228cf3d42f1370cd698f85",
       "acceptance_rows": [
         "RE1",
         "RE2",
@@ -1141,6 +1154,60 @@ extensions.
             "ref": "claude:agent/re-t2-repair-c4-20260927/2-workflow@064d704c",
             "digest": "sha256:855b851cc17c74c2f9bc1cffbb8b5893b34e29720afd0e539b68b644c9554f00",
             "excerpt": "internal/conformance,pass,551; failures[0]; skips[0]"
+          },
+          "requirement": "2-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-file-evidence-r6",
+          "performer": "claude:bench-writer/re-t2-repair-c4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "8bf139b3753aceb5f4228cf3d42f1370cd698f85",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-c4-20260927/2-file-evidence@00880a8b",
+            "digest": "sha256:8a59a685c59ba68b4e3f57d46fbe2ba1bf1156e8bb8593ff2779a2cba002b239",
+            "excerpt": "ok  \tgithub.com/gibbonmi/bench/internal/diff\t7.425s\nok  \tgithub.com/gibbonmi/bench/internal/git\t1.557s\nok  \tgithub.com/gibbonmi/bench/internal/consumers\t2.459s\nok  \tgithub.com/gibbonmi/bench/internal/chargeevidence\t0.210s\nok  \tgithub.com/gibbonmi/bench/internal/preflight\t19.728s\nok  \tgithub.com/gibbonmi/bench/internal/preflight/evidencecmd\t14.877s"
+          },
+          "requirement": "2-file-evidence",
+          "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/git ./internal/consumers ./internal/chargeevidence ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-ports-r6",
+          "performer": "claude:bench-writer/re-t2-repair-c4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "8bf139b3753aceb5f4228cf3d42f1370cd698f85",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-c4-20260927/2-ports@00880a8b",
+            "digest": "sha256:f61a5fa07b41c6ac8be8d6731fa369fe75cb9e2368f82af704ad66e7f4616761",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-ports",
+          "command": "bench test --check injected-port-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-workflow-r6",
+          "performer": "claude:bench-writer/re-t2-repair-c4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "8bf139b3753aceb5f4228cf3d42f1370cd698f85",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-c4-20260927/2-workflow@00880a8b",
+            "digest": "sha256:d42d9cc2e9cc307d17229ce6cb7624144d6ef3ddd13cf6589116f94f66f1dd18",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,601\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "2-workflow",
           "command": "bench test --check docs-currency-workflow",
@@ -1492,83 +1559,7 @@ extensions.
     }
   ],
   "completion": {
-    "state": "completed",
-    "source_digest": "55535b280f1be9585e022d1fdd7ad02b73464efd",
-    "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
-    "reconciliation": {
-      "RE1": "covered",
-      "RE2": "covered",
-      "RE3": "covered",
-      "RE4": "covered",
-      "RE5": "covered",
-      "RE6": "covered",
-      "RE7": "covered",
-      "RE8": "covered",
-      "RE9": "covered",
-      "RE10": "covered",
-      "RE11": "covered",
-      "RE12": "covered",
-      "RE13": "covered",
-      "RE14": "covered",
-      "RE15": "covered",
-      "RE16": "covered"
-    },
-    "verification": [
-      {
-        "id": "final-coverage",
-        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
-        "role": "integration-verification",
-        "model": "claude-opus-5-5",
-        "effort": "medium",
-        "source_digest": "55535b280f1be9585e022d1fdd7ad02b73464efd",
-        "state": "completed",
-        "outcome": "pass",
-        "native_ref": {
-          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/coverage@d796eaa3",
-          "digest": "sha256:d51087d4ae2f25ebd97601eca96569d172b58eeec14a2ebd2fb26c2bb29954dc",
-          "excerpt": "ok: coverage map valid \u2014 16 row(s)\nuncited: 11 row(s) with no seam-cell citation \u2014 RE1, RE2, RE3, RE4, RE5, RE6, RE7, RE8, RE9, RE11, RE12"
-        },
-        "requirement": "coverage",
-        "command": "bench coverage --check specs/review-evidence-file-pages/spec.md",
-        "exit_code": 0
-      },
-      {
-        "id": "final-file-evidence",
-        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
-        "role": "integration-verification",
-        "model": "claude-opus-5-5",
-        "effort": "medium",
-        "source_digest": "55535b280f1be9585e022d1fdd7ad02b73464efd",
-        "state": "completed",
-        "outcome": "pass",
-        "native_ref": {
-          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/file-evidence@d796eaa3",
-          "digest": "sha256:2a873133a6346058e4215595156c57ab8213e018074266baaeeeaaa8a08aea66",
-          "excerpt": "ok  \tgithub.com/gibbonmi/bench/internal/diff\t7.527s\nok  \tgithub.com/gibbonmi/bench/internal/git\t1.569s\nok  \tgithub.com/gibbonmi/bench/internal/consumers\t2.479s\nok  \tgithub.com/gibbonmi/bench/internal/chargeevidence\t0.276s\nok  \tgithub.com/gibbonmi/bench/internal/preflight\t20.033s\nok  \tgithub.com/gibbonmi/bench/internal/preflight/evidencecmd\t15.160s"
-        },
-        "requirement": "file-evidence",
-        "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/git ./internal/consumers ./internal/chargeevidence ./internal/preflight/...",
-        "exit_code": 0
-      },
-      {
-        "id": "final-workflow",
-        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
-        "role": "integration-verification",
-        "model": "claude-opus-5-5",
-        "effort": "medium",
-        "source_digest": "55535b280f1be9585e022d1fdd7ad02b73464efd",
-        "state": "completed",
-        "outcome": "pass",
-        "native_ref": {
-          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/workflow@d796eaa3",
-          "digest": "sha256:3a028fd4e24ae45a6b158840952163049fa930488684e34fc028723ccce670bc",
-          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,597\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
-        },
-        "requirement": "workflow",
-        "command": "bench test --check docs-currency-workflow",
-        "exit_code": 0
-      }
-    ]
+    "state": "pending"
   },
   "amendments": [
     {
@@ -1622,6 +1613,18 @@ extensions.
     {
       "from": "sha256:7566dd88fcc60fb959a82eac272899eb3d463fb33f7271e196f5c9feeb5cb929",
       "to": "sha256:2e9660577cc694205746350c1f154b536e7ac25ed99ae42a5706a4554f9dc7c0",
+      "chunk_ids": {
+        "RE1": [
+          "RE1"
+        ],
+        "RE2": [
+          "RE2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:2e9660577cc694205746350c1f154b536e7ac25ed99ae42a5706a4554f9dc7c0",
+      "to": "sha256:65ce119a87b1cc609d390efa8ccc19d6ed22a6b84c147879d6cd37207b75ca62",
       "chunk_ids": {
         "RE1": [
           "RE1"
