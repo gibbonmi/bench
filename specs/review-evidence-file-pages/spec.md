@@ -432,6 +432,14 @@ Won't handle: an ambient `diff.noprefix` path outside the frozen inventory — t
 - `cmd/bench/help_inventory_test.go`
 - `cmd/bench/preflight_version_test.go`
 - `cmd/bench/spill_support_test.go`
+- `ROADMAP.md`
+- `decisions/jev-advisor/assets/jev-benchmark-trial.md`
+- `docs/research/aibadger-assessment.md`
+- `docs/research/parallel-implementation-wave.md`
+- `docs/research/roadmap-review-2026-09-25.md`
+- `roadmap/FT346.md`
+- `roadmap/FT347.md`
+- `roadmap/FT348.md`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/conformance/injected_ports_registry_test.go`
@@ -602,6 +610,8 @@ artifact, so RE10 found no reuse decision to grade.
 
 The reviewer extended the RE2 repair allowance by one cycle for two
 checkpoint gate reds, and by one more cycle for finding R18 only.
+The reviewer fenced the eight paths that the destination merge of `main`
+brought in, so a normal RE2 merge round reviews them.
 
 Reviewer disposition: the narrow shape stays provisional and is not the
 permanent rule. The reviewer decided R13 as a Won't-handle refusal with a
