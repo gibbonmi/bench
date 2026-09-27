@@ -752,11 +752,44 @@ One fresh repair session for ticket 3 on opus at high consumes repair cycle 1
 of 2. It owns R27 to R30 and R32 to R34. No implementation command change is
 necessary.
 
+## RI-C2a repair cycle 1
+
+A fresh `bench-writer` repair session `ri-t3-repair-1` on opus at high took R27
+to R30 and R32 to R34 from the plan commit `fc535d97`. It committed `114f94a2`
+on a lane pass in one attempt, and the explicit-base build preflight is green at
+that tip after the worktree build. The sweep's exact delete now runs
+`update-ref --no-deref -d`, so it deletes a discarded symref itself and never
+follows it. Git still checks the listed oid against the symref's target, so a
+moved target still refuses. `internal/git/git.go` is unchanged, as decision D1
+requires.
+
+The RI93 test pins two facts: the target survives at its commit, and the sweep
+deletes the symref with a swept count of one. The RI46 test gained the
+`20200101x` case for RI94, and the RI42 test gained a local instant a day behind
+UTC for RI95. One helper `movedRefJoins` in the older sweep test file now
+serves both moved-ref tests, and that file's guard comment names the discarded
+rule. The `discardedRefDays` comment is a plain sentence.
+
+The author's probes each bit with restore `yes`:
+
+- `--no-deref` removed: RI93
+- the symref skipped: the RI93 swept count
+- the segment cut to eight bytes: RI94
+- `.UTC()` removed: RI95 The orchestrator ran the coordinator
+probe: an omission of the `StepLifecycleSweep` boundary hit, verdict `bit` on
+three moved-ref tests, restore `yes`. The chunk tip moves to `114f94a2`, and the
+plan digest moves with the amended spec and ticket.
+
+### Verification after the repair
+
+The author reran its two plan checks at the repair tip `114f94a2` on a clean
+tree. The JSON payload holds each result after the round 1 rows.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ref-inventory/spec.md",
-  "plan_digest": "sha256:fdca5b94dd475ee46e691bd0f07ba9d59d7bb3607ead6199f405d4275cd465bd",
+  "plan_digest": "sha256:9bd083f4927a1ed4a55d7489d07f3e1869adfd9f0c05e5fb9a1c37e142c0da39",
   "implementation_session": "",
   "chunks": [
     {
@@ -1576,9 +1609,9 @@ necessary.
     {
       "id": "RI-C2a",
       "base": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
-      "tip": "5c54f668f2d79291e447dda034c78a2046d9d999",
-      "plan_digest": "sha256:fdca5b94dd475ee46e691bd0f07ba9d59d7bb3607ead6199f405d4275cd465bd",
-      "source_digest": "f52ce0bb5f0ffb3d9977500f5989f20fc5b5bcea",
+      "tip": "114f94a2d6541d11833af640e5a886cbe8d01966",
+      "plan_digest": "sha256:9bd083f4927a1ed4a55d7489d07f3e1869adfd9f0c05e5fb9a1c37e142c0da39",
+      "source_digest": "bef9fc586ec28458a2e0f7ce106c0021cf7589a4",
       "acceptance_rows": ["RI42", "RI43", "RI44", "RI45", "RI46", "RI47", "RI93", "RI94", "RI95"],
       "verification": [
         {
@@ -1610,6 +1643,42 @@ necessary.
           "outcome": "pass",
           "native_ref": {
             "ref": "claude:agent/ri-t3-author-20260927/3-ledger@5c54f668",
+            "digest": "sha256:3ed5d89c4490397a3d236ec4bd6fdf8aaca46245ba09f5644f63fe80400c0b50",
+            "excerpt": "github.com/gibbonmi/bench/internal/intent/ledger,pass,2"
+          },
+          "requirement": "3-ledger",
+          "command": "bench test --package ./internal/intent/ledger",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2a-3-worktree-r2",
+          "performer": "claude:bench-writer/ri-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bef9fc586ec28458a2e0f7ce106c0021cf7589a4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t3-repair-1-20260927/3-worktree@114f94a2",
+            "digest": "sha256:48c26691a2377e27185731bbf0701dd993fadd5a03ff2c093a0c152a5edf6f74",
+            "excerpt": "github.com/gibbonmi/bench/internal/worktree,pass,52054"
+          },
+          "requirement": "3-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2a-3-ledger-r2",
+          "performer": "claude:bench-writer/ri-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bef9fc586ec28458a2e0f7ce106c0021cf7589a4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t3-repair-1-20260927/3-ledger@114f94a2",
             "digest": "sha256:3ed5d89c4490397a3d236ec4bd6fdf8aaca46245ba09f5644f63fe80400c0b50",
             "excerpt": "github.com/gibbonmi/bench/internal/intent/ledger,pass,2"
           },
@@ -1699,6 +1768,16 @@ necessary.
     {
       "from": "sha256:74f8fb4685ed7e515b51757c2cd9d36d59a79ba8659977672e3b3aad337a118a",
       "to": "sha256:fdca5b94dd475ee46e691bd0f07ba9d59d7bb3607ead6199f405d4275cd465bd",
+      "chunk_ids": {
+        "RI-C1a": ["RI-C1a"],
+        "RI-C1b": ["RI-C1b"],
+        "RI-C2a": ["RI-C2a"],
+        "RI-C2b": ["RI-C2b"]
+      }
+    },
+    {
+      "from": "sha256:fdca5b94dd475ee46e691bd0f07ba9d59d7bb3607ead6199f405d4275cd465bd",
+      "to": "sha256:9bd083f4927a1ed4a55d7489d07f3e1869adfd9f0c05e5fb9a1c37e142c0da39",
       "chunk_ids": {
         "RI-C1a": ["RI-C1a"],
         "RI-C1b": ["RI-C1b"],
