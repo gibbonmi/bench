@@ -107,7 +107,7 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   alone), not "stale", "idle", "abandoned", or "unreleased" (true of every
   active row) — landed.
 - **unclaimed ref** — a branch under `refs/heads/bench/assign/` or
-  `refs/heads/bench/shift/` that no assignment record names and no checkout holds.
+  `refs/heads/bench/shift-` that no assignment record names and no checkout holds.
   The ref inventory gives it exactly one class: landed, subsumed, or unique. Not
   "orphan branch", not "stray branch", not "leftover" — unclaimed ref.
 - **landed ref** — an unclaimed ref whose content the default branch already
@@ -120,7 +120,7 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   lexically first ref is the root and the rest are subsumed. Not "duplicate", not
   "redundant branch" — subsumed ref.
 - **holder** — the ref that keeps a subsumed ref's commits reachable: an active
-  assignment branch, a unique root, or a landed ref. Not "parent", not "owner" —
+  assignment branch, a unique root, or an ancestry-landed ref. Not "parent", not "owner" —
   holder.
 - **unique ref** — an unclaimed ref with content the default branch lacks and no
   holder. No bulk route discards it; only an explicit `--target` discard removes it,
