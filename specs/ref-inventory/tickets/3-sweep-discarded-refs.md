@@ -1,8 +1,8 @@
 # 3. Declare the discarded namespace and sweep it at 30 days
 
 Blocked by: 2-route-status-to-the-plan.md
-Writes: internal/intent/ledger/ledger.go, internal/intent/ledger_aliases.go, internal/worktree/reconcile.go, internal/worktree/reconcile_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: RI42, RI43, RI44, RI45, RI46, RI47
+Writes: internal/intent/ledger/ledger.go, internal/intent/ledger_aliases.go, internal/worktree/reconcile.go, internal/worktree/reconcile_test.go (new), internal/worktree/resume_reconcile_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Covers: RI42, RI43, RI44, RI45, RI46, RI47, RI93, RI94, RI95
 
 ## What to build
 
@@ -19,6 +19,9 @@ It deletes a ref at its listed object when the resume instant is 30 days or more
 The swept count joins the existing total.
 A delete that fails because the ref moved reports an error, as the existing lifecycle deletes do.
 
+The delete never follows a symbolic ref, so a discarded symref leaves its target in place.
+The path function renders the UTC date of the instant, whatever zone the instant carries.
+
 ## Acceptance
 
 - [ ] The path function renders `refs/bench/discarded/20260927/bench/assign/<owner>/<id>` for 2026-09-27 and that branch.
@@ -27,3 +30,6 @@ A delete that fails because the ref moved reports an error, as the existing life
 - [ ] A planted ref dated today survives the pass that deletes a planted recovery ref.
 - [ ] A planted ref whose date segment is `latest` survives and the swept count is 0.
 - [ ] A ref moved between the listing and the delete stays, and the sweep returns an error.
+- [ ] A discarded symref dated past the window leaves its target ref in place after the sweep.
+- [ ] A planted ref whose date segment is `20200101x` survives and the swept count is 0.
+- [ ] The path function renders the UTC date for an instant whose local date differs from its UTC date.

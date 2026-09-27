@@ -193,6 +193,8 @@ It joins neither the lifecycle emptying list nor the reset rule.
 The sweep parses the first path segment under the namespace as a UTC date `yyyymmdd`.
 It keeps a ref whose segment does not parse.
 It deletes a ref at its listed object when the resume instant is at or past the date plus 30 days at 00:00:00Z.
+
+The delete never follows a symbolic ref, so a discarded symref leaves its target in place.
 The swept count joins the existing swept-refs total.
 
 The explicit set planner routes an operand to the unrecorded-branch fallback before the relative-path check.
@@ -242,7 +244,7 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
 | --- | --- | --- | --- | --- |
 | RI-C1a / 1-classify-unclaimed-refs.md, 6-repair-glossary-shift-namespace.md | The unclaimed plan classes each ref, names holders, retains unique rows, applies landed and subsumed rows only, and status routes to the plan | RI1 to RI15, RI17 to RI23, RI25, RI28, RI55, RI57, RI59 to RI63, RI66, RI72, RI73, RI81 to RI87 | `internal/worktree` clean classes and unclaimed tests, the system route test | no |
 | RI-C1b / 2-route-status-to-the-plan.md | Status counts the three classes | RI24, RI26, RI27, RI88 to RI92 | `internal/status` producible signals and the landed second case of the system route test | no |
-| RI-C2a / 3-sweep-discarded-refs.md | The discarded namespace exists, survives the lifecycle emptying, and expires at 30 days | RI42 to RI47 | `internal/worktree` reconcile tests | no |
+| RI-C2a / 3-sweep-discarded-refs.md | The discarded namespace exists, survives the lifecycle emptying, and expires at 30 days | RI42 to RI47, RI93 to RI95 | `internal/worktree` reconcile tests | no |
 | RI-C2b / 4-discard-a-unique-ref-by-target.md, 5-list-retire-candidates.md | An unrecorded unique ref discards by target with a discarded ref first, and retire lists candidates | RI16, RI29 to RI41, RI48 to RI52, RI58, RI64, RI65, RI67 to RI71, RI74 to RI80 | `internal/worktree` discard tests and `cmd/bench` retire dispatch tests | yes |
 
 ## Testing decisions
@@ -335,6 +337,9 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
 | RI45 | 45 | A planted ref dated today survives the lifecycle emptying pass while a planted recovery ref is deleted | `planned` | A namespace in the emptying list loses the handle |
 | RI46 | 46 | A planted ref whose date segment is `latest` survives and the swept count is 0 | `planned` | A parser that treats a bad date as old deletes it |
 | RI47 | 47 | A ref moved between the listing and the delete stays, and the sweep reports an error | `planned` | A delete without the listed object removes the moved ref |
+| RI93 | 47 | A discarded symref dated past the window leaves its target ref in place after the sweep | `planned` | A delete that follows the symref removes a branch outside the namespace |
+| RI94 | 46 | A planted ref whose date segment is `20200101x` survives and the swept count is 0 | `planned` | A parser that reads the first eight bytes deletes the ref |
+| RI95 | 42 | The path function renders the UTC date for an instant whose local date differs from its UTC date | `planned` | A renderer that formats the local date names the wrong day |
 | RI48 | 48 | Retire of slug `s` with one active assignment labelled `s-build` prints one `superseded candidate:` line with its id | `planned` | A retire without the listing leaves the assignment with no route |
 | RI49 | 49 | The candidate line ends with `bench worktree clean --discard-branch --target <assignment id>` | `planned` | A line without the command needs a lookup |
 | RI50 | 50 | Retire with two unique unrecorded refs prints `unique refs: 2 — bench worktree clean --discard-branch --unclaimed` | `planned` | A retire without the count hides the inventory |
@@ -529,6 +534,11 @@ The plan command spelling moves to one exported source in the worktree package, 
 The repair then found that a non-repository fails both reads, so the reviewer route separated that case from a repository.
 RI92 pins a blob-tip ref beside an unreadable ledger in a repository.
 
+The RI-C2a review added rows RI93 to RI95 and one sentence, by orchestrator plan expansion inside the approved behavior on 2026-09-27.
+A discarded symref made the sweep's delete follow it to a branch outside the namespace, so the sweep's own delete never dereferences.
+That change touches only the sweep in `reconcile.go`, and the earlier decision on `DeleteBranchExact` stands; the reviewer can veto it.
+RI94 pins a date segment with extra bytes, and RI95 pins the UTC date for a local instant.
+
 ### Completion plan
 
 ```bench-completion-plan
@@ -626,6 +636,18 @@ RI92 pins a blob-tip ref beside an unreadable ledger in a repository.
           "effort": "high",
           "source": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
           "native_ref": "claude:agent/ri-t3-author-20260927@c6d2cfbf66d4b82f284e008ab063266bf61c4a23"
+        },
+        {
+          "session": "claude:bench-writer/ri-t3-repair-1",
+          "assignment": "ri-t3-repair-1",
+          "model": "opus",
+          "effort": "high",
+          "source": "5c54f668f2d79291e447dda034c78a2046d9d999",
+          "native_ref": "claude:agent/ri-t3-repair-1-20260927@5c54f668f2d79291e447dda034c78a2046d9d999",
+          "predecessor": "claude:bench-writer/ri-t3-author",
+          "trigger": "user-directed",
+          "stopped": "ri-t3-author returned its final report and idle notification after the chunk-tip verification reruns at 5c54f668; the worktree was clean and no further write came from it",
+          "preserved": "5c54f668f2d79291e447dda034c78a2046d9d999 on bench/assign/9cd9510fff4093f7f9f4456f6a029560/3a0fa26e2c3c38179f908f3636fb07ed, the RI-C2a chunk tip"
         }
       ],
       "4-discard-a-unique-ref-by-target.md": [],
@@ -699,9 +721,9 @@ Source-sentence-to-row table:
 | The bulk sweep discards landed and subsumed rows only | RI15, RI18, RI19, RI21 |
 | A unique row never enters a bulk discard | RI10, RI16, RI18, RI22 |
 | No marker, the class is the keep | Not covered: story 53 |
-| The discard writes the dated ref at the exact tip before the delete | RI35, RI42, RI67 |
+| The discard writes the dated ref at the exact tip before the delete | RI35, RI42, RI67, RI95 |
 | The outcome row names the discarded ref | RI39 |
-| The sweep removes a ref 30 days after its date and reports the count | RI43, RI44, RI47 |
+| The sweep removes a ref 30 days after its date and reports the count | RI43, RI44, RI47, RI93, RI94 |
 | The emptying rule does not apply to the discarded namespace | RI45 |
 | A superseded ref classifies as unique and needs an explicit discard | RI10, RI33 |
 | Status counts the three classes and routes to the plan-only form, above the dirty-path route | RI24, RI25, RI26, RI27, RI88, RI89, RI90, RI91, RI92 |
