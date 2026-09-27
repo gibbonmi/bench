@@ -610,7 +610,7 @@ func appendGit(rows []row, root string, query Query) []row {
 		return append(rows, row{1, "git", "git state unavailable", commandAction(gitStatusAction)})
 	}
 	var details []string
-	unclaimedUniqueBranches, claimedUniqueBranches := 0, 0
+	claimedUniqueBranches := 0
 	uniqueRefs := make(map[string]bool, len(fact.UniqueBranchNames))
 	for _, branch := range fact.UniqueBranchNames {
 		uniqueRefs["refs/heads/"+branch] = true
@@ -621,12 +621,23 @@ func appendGit(rows []row, root string, query Query) []row {
 	if fact.UnpushedCommits > 0 {
 		details = append(details, Plural(fact.UnpushedCommits, "unpushed commit", "unpushed commits"))
 	}
-	unclaimedRefs, unclaimedErr := worktree.UnclaimedAssignmentBranchRefs(root)
-	if unclaimedErr == nil {
-		for _, ref := range unclaimedRefs {
-			if uniqueRefs[ref] {
-				unclaimedUniqueBranches++
-			}
+	// The class counts come from the unclaimed plan itself. A plan that cannot run, or that
+	// holds an error row, still routes to that plan, which prints the fault.
+	unclaimed, unclaimedErr := worktree.CountUnclaimedRefs(root)
+	if unclaimedErr != nil {
+		details = append(details, "unclaimed refs unavailable")
+	}
+	for _, class := range []struct {
+		count     int
+		one, many string
+	}{
+		{unclaimed.Landed, "landed ref", "landed refs"},
+		{unclaimed.Subsumed, "subsumed ref", "subsumed refs"},
+		{unclaimed.Unique, "unique ref", "unique refs"},
+		{unclaimed.Faulted, "faulted ref", "faulted refs"},
+	} {
+		if class.count > 0 {
+			details = append(details, Plural(class.count, class.one, class.many))
 		}
 	}
 	if assignments, err := intent.Assignments(root); err == nil {
@@ -636,10 +647,9 @@ func appendGit(rows []row, root string, query Query) []row {
 			}
 		}
 	}
-	if unclaimedUniqueBranches > 0 {
-		details = append(details, Plural(unclaimedUniqueBranches, "unclaimed assignment branch", "unclaimed assignment branches"))
-	}
-	ordinaryUniqueBranches := fact.UniqueBranches - unclaimedUniqueBranches - claimedUniqueBranches
+	// A subsumed or unique ref fails the same landed proof the unique branch count reads, so
+	// both classes are already inside that count.
+	ordinaryUniqueBranches := fact.UniqueBranches - unclaimed.Subsumed - unclaimed.Unique - claimedUniqueBranches
 	if ordinaryUniqueBranches > 0 {
 		details = append(details, Plural(ordinaryUniqueBranches, "unique branch", "unique branches"))
 	}
@@ -650,7 +660,7 @@ func appendGit(rows []row, root string, query Query) []row {
 	if fact.DirtyPaths > 0 {
 		command = commandAction(finalCheckPhaseAction)
 	}
-	if unclaimedUniqueBranches > 0 {
+	if unclaimedErr != nil || unclaimed.Rows() > 0 {
 		command = commandAction(cleanUnclaimedWorktreeAction)
 	}
 	return append(rows, row{1, "git", strings.Join(details, ", "), command})

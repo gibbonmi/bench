@@ -205,16 +205,34 @@ func applyUnclaimedAssignmentSet(j joins, root string, set unclaimedAssignmentSe
 	return plans, nil
 }
 
-// UnclaimedAssignmentBranchRefs gives status the same sorted assignment-and-shift
-// selection used by clean.
-func UnclaimedAssignmentBranchRefs(root string) ([]string, error) {
+// UnclaimedRefCounts is how many rows of the unclaimed plan fall in each class. Faulted
+// counts the error rows, which carry no class and make the plan refuse its apply.
+type UnclaimedRefCounts struct{ Landed, Subsumed, Unique, Faulted int }
+
+// Rows is how many rows the plan holds.
+func (counts UnclaimedRefCounts) Rows() int {
+	return counts.Landed + counts.Subsumed + counts.Unique + counts.Faulted
+}
+
+// CountUnclaimedRefs counts the classes of the same plan the unclaimed clean prints, so
+// status and the plan cannot disagree.
+func CountUnclaimedRefs(root string) (UnclaimedRefCounts, error) {
 	set, err := planUnclaimedAssignmentSet(root, unclaimedOptions())
 	if err != nil {
-		return nil, err
+		return UnclaimedRefCounts{}, err
 	}
-	refs := make([]string, len(set.rows))
-	for i, row := range set.rows {
-		refs[i] = row.ref
+	var counts UnclaimedRefCounts
+	for _, row := range set.rows {
+		switch {
+		case row.fault != "":
+			counts.Faulted++
+		case row.class == classLanded:
+			counts.Landed++
+		case row.class == classSubsumed:
+			counts.Subsumed++
+		default:
+			counts.Unique++
+		}
 	}
-	return refs, nil
+	return counts, nil
 }

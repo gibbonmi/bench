@@ -201,25 +201,38 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			commit(t, root)
 			return root, Query{}
 		}, exact: []Signal{testSignal(1, "git", "1 unique branch", "git push")}},
-		{name: "git unclaimed assignment branch", signal: "git", detail: "unclaimed assignment branch", setup: func(t *testing.T) (string, Query) {
+		{name: "git landed subsumed and unique refs", signal: "git", detail: "1 landed ref, 1 subsumed ref, 1 unique ref", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
-			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/ref")
+			gitRun(t, root, "branch", "bench/assign/orphan/landed")
+			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/subsumed")
+			write(t, root, "orphan.txt", "orphan\n", 0o644)
+			commit(t, root)
+			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/unique")
+			write(t, root, "orphan.txt", "unique\n", 0o644)
+			commit(t, root)
+			gitRun(t, root, "checkout", "main")
+			return root, Query{}
+		}, exact: []Signal{testSignal(1, "git", "1 landed ref, 1 subsumed ref, 1 unique ref", "bench worktree clean --discard-branch --unclaimed")}},
+		{name: "git dirty path and unique ref", signal: "git", detail: "1 dirty path, 1 unique ref", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/dirty")
 			write(t, root, "orphan.txt", "orphan\n", 0o644)
 			commit(t, root)
 			gitRun(t, root, "checkout", "main")
+			write(t, root, "tracked.txt", "dirty\n", 0o644)
 			return root, Query{}
-		}, exact: []Signal{testSignal(1, "git", "1 unclaimed assignment branch", "bench worktree clean --discard-branch --unclaimed")}},
-		{name: "git mixed unclaimed assignment and feature branches", signal: "git", detail: "1 unclaimed assignment branch, 1 unique branch", setup: func(t *testing.T) (string, Query) {
+		}, exact: []Signal{testSignal(1, "git", "1 dirty path, 1 unique ref", "bench worktree clean --discard-branch --unclaimed")}},
+		{name: "git mixed unclaimed assignment and feature branches", signal: "git", detail: "1 unique ref, 1 faulted ref, 1 unique branch", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
+			gitRun(t, root, "symbolic-ref", "refs/heads/bench/assign/orphan/symref", "refs/heads/main")
 			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/mixed")
 			write(t, root, "orphan-mixed.txt", "orphan\n", 0o644)
 			commit(t, root)
-			gitRun(t, root, "checkout", "main")
-			gitRun(t, root, "checkout", "-b", "feature-mixed")
+			gitRun(t, root, "checkout", "-b", "feature-mixed", "main")
 			write(t, root, "feature-mixed.txt", "feature\n", 0o644)
 			commit(t, root)
 			return root, Query{}
-		}, exact: []Signal{testSignal(1, "git", "1 unclaimed assignment branch, 1 unique branch", "bench worktree clean --discard-branch --unclaimed")}},
+		}, exact: []Signal{testSignal(1, "git", "1 unique ref, 1 faulted ref, 1 unique branch", "bench worktree clean --discard-branch --unclaimed")}},
 		{name: "worktree leased and out of pool", signal: "worktree", count: 2, setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			t.Setenv("BENCH_HOME", t.TempDir())
@@ -406,18 +419,5 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 				}
 			}
 		})
-	}
-}
-
-func TestGitSignalIgnoresLandedUnclaimedAssignmentBranch(t *testing.T) {
-	t.Parallel()
-	root := initRepo(t)
-	gitRun(t, root, "commit", "--allow-empty", "-m", "base")
-	gitRun(t, root, "branch", "-M", "main")
-	gitRun(t, root, "branch", "bench/assign/orphan/landed")
-	for _, signal := range SignalsWith(root, Query{}) {
-		if signal.Name == "git" {
-			t.Fatalf("landed unclaimed assignment branch produced git signal %#v", signal)
-		}
 	}
 }
