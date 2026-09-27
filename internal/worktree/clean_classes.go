@@ -29,12 +29,11 @@ const (
 	uniqueRetainedDetail = "retained: content main lacks"
 )
 
-// errUnresolvedUnclaimedRef refuses a plan that holds a ref with no commit tip. Such a plan
-// carries no fingerprint, so neither apply form can reach a delete through it.
-var errUnresolvedUnclaimedRef = errors.New("an unclaimed ref names no commit; the plan offers no apply")
+// errFaultedUnclaimedRef refuses a plan that holds an error row.
+var errFaultedUnclaimedRef = errors.New("an unclaimed ref has an error row; the plan offers no apply")
 
-// refVerdict is what the class function decides for one ref. A fault names a ref whose tip
-// is not a commit; that ref has no class and no holder.
+// refVerdict is what the class function decides for one ref. A fault names a symref or a ref
+// whose tip is not a commit; that ref has no class and no holder.
 type refVerdict struct {
 	oid, fault string
 	class      refClass
@@ -74,14 +73,9 @@ type holderTip struct{ ref, oid string }
 
 // classifyUnclaimedRefs gives each of the sorted unrecorded refs one class and one holder.
 // It reads refs only. It calls the shared landed proof for every ref, so this sweep and the
-// landing prune cannot disagree, and the landed class takes precedence over the subsumed one.
-//
-// A holder is an active or cleanup-pending recorded branch or a unique root. No landed ref
-// is a holder: the sweep deletes it, so it leaves no handle for a ref beneath it. A ref
-// beneath an ancestry-landed ref is itself landed, because ancestry is transitive. A
-// checkout that no record claims and a complete record's branch are never holders. The
-// named holder is the lexically first holder whose tip reaches the ref: recorded branches,
-// then unique roots.
+// landing prune cannot disagree. A landed recorded branch holds nothing, because its later
+// retirement would leave a ref beneath it with no handle. A symref faults, because a delete
+// through it removes its target.
 func classifyUnclaimedRefs(root string, assignments []intent.Assignment, protected map[string]bool, defaultBranch string, refs []string) ([]refVerdict, error) {
 	verdicts := make([]refVerdict, len(refs))
 	var recorded []holderTip
@@ -89,7 +83,15 @@ func classifyUnclaimedRefs(root string, assignments []intent.Assignment, protect
 		if assignment.State != intent.StateActive && assignment.State != intent.StateCleanupPending {
 			continue
 		}
-		if oid, err := git.Output("-C", root, "rev-parse", "--verify", "--quiet", assignment.Branch+"^{commit}"); err == nil {
+		oid, err := git.Output("-C", root, "rev-parse", "--verify", "--quiet", assignment.Branch+"^{commit}")
+		if err != nil {
+			continue
+		}
+		landed, _, err := git.LandedInDefault(root, assignment.Branch, defaultBranch)
+		if err != nil {
+			return nil, fmt.Errorf("git landedness %s: %w", assignment.Branch, err)
+		}
+		if !landed {
 			recorded = append(recorded, holderTip{assignment.Branch, oid})
 		}
 	}
@@ -98,6 +100,10 @@ func classifyUnclaimedRefs(root string, assignments []intent.Assignment, protect
 	for i, ref := range refs {
 		if protected[ref] {
 			return nil, fmt.Errorf("protected branch %s reached the unclaimed classes", ref)
+		}
+		if target, err := git.Output("-C", root, "symbolic-ref", "--quiet", ref); err == nil {
+			verdicts[i].fault = fmt.Sprintf("%s is a symref to %s", ref, target)
+			continue
 		}
 		oid, err := git.Output("-C", root, "rev-parse", "--verify", "--quiet", ref+"^{commit}")
 		if err != nil {

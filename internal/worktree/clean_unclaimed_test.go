@@ -356,8 +356,9 @@ func TestCleanUnclaimedPlanIsReadOnlyAndQuietWhenEmpty(t *testing.T) {
 	}
 }
 
-// TestCleanUnclaimedStaleClassRefusesTheOldPlan is RI17 and RI63: a moved subsumed ref and a
-// class change with the tip unchanged both refuse the old fingerprint before any delete.
+// TestCleanUnclaimedStaleClassRefusesTheOldPlan is RI17, RI63, and RI85: a moved subsumed ref,
+// a class change with the tip unchanged, and a class change alone each refuse the old
+// fingerprint before any delete. The subsumed ref's root b stays apart from unique ref c.
 func TestCleanUnclaimedStaleClassRefusesTheOldPlan(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
@@ -372,13 +373,17 @@ func TestCleanUnclaimedStaleClassRefusesTheOldPlan(t *testing.T) {
 			gitRun(t, active.Path, "reset", "-q", "--hard", gitOutput(t, root, "rev-parse", unique))
 			commitInWorktree(t, active.Path, "descendant.txt", "descendant\n", "descendant")
 		}},
+		{"RI85 main fast-forwarded onto the unique ref", func(t *testing.T, root, _, unique, _ string) {
+			gitRun(t, root, "merge", "-q", "--ff-only", unique)
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			root, home := unclaimedBranchFixture(t)
 			landed := addUnclaimedBranch(t, root, "a")
 			unique := addUnclaimedBranch(t, root, "c")
-			subsumed := addUnclaimedBranchAt(t, root, "d", commitOnBranch(t, root, unique, "unique.txt", "unique\n"))
+			commitOnBranch(t, root, unique, "unique.txt", "unique\n")
+			subsumed := addUnclaimedBranchAt(t, root, "d", commitOnBranch(t, root, addUnclaimedBranch(t, root, "b"), "held.txt", "held\n"))
 			uniqueTip := gitOutput(t, root, "rev-parse", unique)
 			plan, _, _ := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
 			tc.mutate(t, root, home, unique, subsumed)

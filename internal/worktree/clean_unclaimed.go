@@ -30,9 +30,9 @@ type unclaimedAssignmentSet struct {
 	options     CleanupOptions
 }
 
-// faulted reports whether any row names a ref with no commit tip. Such a set has no
-// fingerprint, so a fingerprint apply refuses as stale, and its plan render refuses, so the
-// plan exits 1 and --apply-current stops before its apply.
+// faulted reports whether any row is an error row. Such a set has no fingerprint, so a
+// fingerprint apply refuses as stale, and its plan render refuses, so the plan exits 1 and
+// --apply-current stops before its apply.
 func (set unclaimedAssignmentSet) faulted() bool {
 	for _, row := range set.rows {
 		if row.fault != "" {
@@ -122,8 +122,7 @@ func planUnclaimedAssignmentSet(root string, options CleanupOptions) (unclaimedA
 }
 
 // renderUnclaimedAssignmentSet prints the plan rows, then the apply command when a row
-// removes. A set with an error row prints no apply command and returns the refusal, so the
-// plan exits 1 and --apply-current stops before any delete.
+// removes.
 func renderUnclaimedAssignmentSet(stdout io.Writer, set unclaimedAssignmentSet) error {
 	plans := make([]CleanupPlan, 0, len(set.rows))
 	removes := false
@@ -135,7 +134,7 @@ func renderUnclaimedAssignmentSet(stdout io.Writer, set unclaimedAssignmentSet) 
 		return err
 	}
 	if set.faulted() {
-		return errUnresolvedUnclaimedRef
+		return errFaultedUnclaimedRef
 	}
 	if !removes {
 		return nil
