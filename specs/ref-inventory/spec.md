@@ -492,7 +492,16 @@ The compiled map stays untouched, and RI81 pins the narrowed rule.
           "native_ref": "claude:agent/ri-t6-author-20260927@72a749a35dc4c37de87f56534959ac9c137099e1"
         }
       ],
-      "1-classify-unclaimed-refs.md": [],
+      "1-classify-unclaimed-refs.md": [
+        {
+          "session": "claude:bench-writer/ri-t1-author",
+          "assignment": "ri-t1-author",
+          "model": "opus",
+          "effort": "high",
+          "source": "f3ff2543aa7e40b07fd481fe4286161402d96d2b",
+          "native_ref": "claude:agent/ri-t1-author-20260927@f3ff2543aa7e40b07fd481fe4286161402d96d2b"
+        }
+      ],
       "2-route-status-to-the-plan.md": [],
       "3-sweep-discarded-refs.md": [],
       "4-discard-a-unique-ref-by-target.md": [],
