@@ -107,7 +107,8 @@ Parse path headers only in the patch header region, before its content.
 `internal/git` owns the shared patch-path decoder. Move the existing consumers
 C-quote rule there. Both diff and consumers already import this package.
 Keep the decoder pure and independent of both callers. Keep the consumers
-hunk interpretation unchanged. RE5 exercises hostile paths, and RE9 requires
+hunk interpretation unchanged, except that a trailing space stays path text
+by reviewer decision on R14. RE5 exercises hostile paths, and RE9 requires
 each headerless patch's exact descriptor.
 
 All fragments remain required and retain their actual producer provenance.
@@ -224,6 +225,18 @@ The review-owned control comparison remains a required acceptance checkpoint.
           "trigger": "user-directed",
           "stopped": "claude:agent/re-t2-author returned its final report and holds no write charge",
           "preserved": "a3979037a8ea741ab3c941f8e7b2d99d4965c528"
+        },
+        {
+          "session": "claude:bench-writer/re-t2-repair-c2",
+          "assignment": "re-t2-repair-c2",
+          "model": "opus",
+          "effort": "low",
+          "source": "bdd6766f03fba23b768e874733592fadc664758e",
+          "native_ref": "claude:agent/re-t2-repair-c2-20260926@bdd6766f03fba23b768e874733592fadc664758e",
+          "predecessor": "claude:bench-writer/re-t2-repair-c1",
+          "trigger": "user-directed",
+          "stopped": "claude:agent/re-t2-repair-c1 returned its final report and holds no write charge",
+          "preserved": "bdd6766f03fba23b768e874733592fadc664758e"
         }
       ]
     }
@@ -376,7 +389,7 @@ Existing movement and missing-source tests remain in focused verification.
 Won't handle: stable digests after a changed patch or base — the current manifest identifies the new bytes.
 Won't handle: delivery through another axis's receipt — RE16 keeps the fresh axis as the in-scope reader.
 Won't handle: automatic permanent adoption — RE15 keeps the reviewer as the in-scope decision owner.
-Won't handle: ambient patch prefix settings such as `diff.noprefix` — the charge refuses as a whole and publishes nothing, by reviewer decision on R13.
+Won't handle: an ambient `diff.noprefix` path outside the frozen inventory — the charge refuses and publishes nothing, by reviewer decision on R13.
 
 ## Ownership fences
 
