@@ -154,6 +154,12 @@ qualification requirements are met.
 
 **FT287 (MEDIUM, decision required) — decide whether AXI policy expands beyond scoped query surfaces.**
 
+**FT346 (EXPERIMENT, decision required) — decide whether a controlled trial tests aibadger topology against current Bench.**
+
+**FT347 (EXPERIMENT, decision required) — decide whether the Jev skill-selection benchmark gets a sixth repair cycle and a new paid run.**
+
+**FT348 (MEDIUM, decision required) — decide the disposition of each retained stream from the 2026-09-22 parallel implementation wave.**
+
 ## Parked and scheduled work
 
 **FT6 (LOW, parked pending evidence — leave parked):**
