@@ -17,6 +17,7 @@ Run every command into your assignment worktree through
 `bench worktree exec "<label>" -- <command>`. Do not enter the worktree pool
 path with `cd`. Do not run `git stash`; use `bench probe` for a mutation probe.
 
+Before the ticket commit, apply the duplicated-facts sweep rule in `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`.
 A ticket author or a repair author commits its ticket on a lane pass and does not run `bench worktree land`.
 A user-directed delegate with no ticket returns an uncommitted diff with the
 focused checks green, and it does not land the diff. Return the red-then-green

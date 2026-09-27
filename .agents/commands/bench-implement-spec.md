@@ -40,7 +40,7 @@ Apply `craft-line`'s retained implementation continuation policy throughout the 
 
 A prose-only owner edit is an implementation write. Before another session edits it, follow `craft-delegate`'s recorded user-directed author-transfer rules. Run fresh-session adoption after the final committed owner-byte change. A later owner-byte edit invalidates that evidence; rerun it against the new committed tip before review.
 
-Before each ticket, revalidate prepared source identity and required source bytes. Regenerate a charge when either changes. The ticket author runs focused checks and the required mutation probe, then commits the ticket on a green lane. Run the plan's named probe exactly. Do not replace it with a similar mutation. If the named probe cannot run, stop and amend the plan before verification.
+Before each ticket, revalidate prepared source identity and required source bytes. Regenerate a charge when either changes. The ticket author runs focused checks and the required mutation probe, then commits the ticket on a green lane. The focused checks include root conformance, each package that the ticket writes, and the whole `cmd/bench` package for a changed public response or embed pattern. Run the plan's named probe exactly, and do not replace it with a similar mutation. If the named probe cannot run, stop and amend the plan before verification.
 
 An author that takes a regenerated charge reuses exact available source bytes only after the new manifest verifies their membership, role, and requiredness. A matching body digest alone authorizes no reuse. A fresh author makes its own narrow author read from the trusted evidence identity. A transferred final cursor and another consumer's receipt deliver no byte to it.
 

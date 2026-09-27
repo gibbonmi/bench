@@ -133,12 +133,12 @@ assume nobody specified the behavior: `git log --diff-filter=D -- specs/` lists
 every deleted spec, and `git log --grep=spec-retire` finds the retirement commits
 (and any decision it promoted). Recover the origin spec there before you hypothesise.
 For a single known slug, `bench spec history <slug>` runs both queries, merges and dedupes
-them, and renders one newest-first table. This shortcut replaces a hand run of the two
-commands above.
+them, and renders one newest-first table in place of the two hand runs.
 
 ## How it meets the rest of Bench
 
-The current ticket author owns the debug loop and writes its in-scope repair.
+Before review, the current ticket author owns the debug loop and writes its in-scope repair.
+After review, the ticket's fresh repair session owns the loop and writes the repair.
 Additional delegates perform read-only diagnostic work only.
 
 For an in-fence defect, that author runs debug through Phase 6.

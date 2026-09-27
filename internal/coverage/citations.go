@@ -29,13 +29,20 @@ var citedNameRe = regexp.MustCompile("`([^`]+)`")
 // subtest, so it neither adds a name nor exempts the file.
 var runNameRe = regexp.MustCompile(`\bt\.Run\([ \t\n]*`)
 
+// testNameRe matches one Go test function name in seam-cell text. plannedRe matches the
+// marker of a seam cell that names a test the build has yet to write.
+var testNameRe, plannedRe = regexp.MustCompile(`\bTest[A-Z][A-Za-z0-9_]*`), regexp.MustCompile(`\bplanned\b`)
+
 // citation is one seam-cell test token the grammar reads: the repo-relative path, and
 // the parenthesized name list when the token carries one. A token with no list is a
-// mention, which claims evidence it never names.
+// mention, which claims evidence it never names. relAt and listAt are the cell offsets
+// of the path and the list, so a caller can mask what the grammar already read.
 type citation struct {
 	rel     string
 	hasList bool
 	list    string
+	relAt   int
+	listAt  int
 }
 
 // namesSomething reports whether the citation's list names at least one thing. It is the
@@ -47,9 +54,9 @@ func (c citation) namesSomething() bool { return c.hasList && citedNameRe.MatchS
 func citationsIn(cell string) []citation {
 	var out []citation
 	for _, m := range citationRe.FindAllStringSubmatchIndex(cell, -1) {
-		c := citation{rel: cell[m[2]:m[3]], hasList: m[4] >= 0}
+		c := citation{rel: cell[m[2]:m[3]], hasList: m[4] >= 0, relAt: m[2]}
 		if c.hasList {
-			c.list = cell[m[4]:m[5]]
+			c.list, c.listAt = cell[m[4]:m[5]], m[4]
 		}
 		out = append(out, c)
 	}
@@ -61,8 +68,8 @@ func citationsIn(cell string) []citation {
 func reviewPickup(slug string) string { return "reviews/" + slug + ".md" }
 
 // CheckFiles is Check plus the two checks that read the tree the spec sits in: every
-// seam-cell test citation must resolve to a declared function, and a declared
-// ownership-fence section must authorize the spec's own review pickup. The repo root
+// seam-cell test name must be a citation that resolves to a declared function, and a
+// declared ownership-fence section must authorize the spec's own review pickup. The repo root
 // and the slug both derive from specPath, so no caller can supply an anchor that
 // disagrees with the file it passed.
 //
@@ -126,8 +133,41 @@ func checkCitations(p parsed, base string) []string {
 			}
 			v = append(v, checkCitation(rn, base, c.rel, c.list, scopes)...)
 		}
+		for _, name := range strayTestNames(cell) {
+			v = append(v, fmt.Sprintf("coverage map row %d names '%s' outside the citation form; cite it as `<path>_test.go` (`%s`)", rn, name, name))
+		}
 	}
 	return v
+}
+
+// strayTestNames lists, once each, the test names a seam cell holds outside the citation
+// form: it masks each citation path and backticked list name, so any name left resolves
+// nowhere. A planned cell names a test no file declares yet, so it stays an uncited row.
+func strayTestNames(cell string) []string {
+	if plannedRe.MatchString(cell) {
+		return nil
+	}
+	masked := []byte(cell)
+	blank := func(from, to int) {
+		for i := from; i < to; i++ {
+			masked[i] = ' '
+		}
+	}
+	for _, c := range citationsIn(cell) {
+		blank(c.relAt, c.relAt+len(c.rel))
+		for _, n := range citedNameRe.FindAllStringIndex(c.list, -1) {
+			blank(c.listAt+n[0], c.listAt+n[1])
+		}
+	}
+	var names []string
+	seen := map[string]bool{}
+	for _, name := range testNameRe.FindAllString(string(masked), -1) {
+		if !seen[name] {
+			seen[name] = true
+			names = append(names, name)
+		}
+	}
+	return names
 }
 
 // executedCensus answers which Go test phases the gate runs for the tree at base. Each

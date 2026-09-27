@@ -39,6 +39,9 @@ differ.
 - A cited verifier row names the exact checks it performed. A reviewer can then repeat
   the checks and compare the results.
 - The slicer runs `bench preflight build <slug>` after each change to a ticket or an acceptance row.
+  Before the ticket graph goes to approval, and before each plan-expansion commit, the slicer also runs
+  `bench preflight build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>`
+  for each affected ticket. The slicer adds each listed closure file to the `Writes:` line of that ticket.
   The spec goes to review, to sign-off, and to its landing only on a green preflight of its current ticket graph.
   Review then grades the final fence, not an earlier one.
 - Each acceptance claim names an available producer and an executable check at its ticket checkpoint. A claim whose producer lands in a later ticket has no evidence at that checkpoint.
