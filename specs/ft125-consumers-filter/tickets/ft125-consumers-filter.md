@@ -1,7 +1,7 @@
 # Filter consumers by production or test and take several symbols in one query
 
 Blocked by: none
-Writes: internal/consumers/command.go, internal/consumers/consumers.go, internal/consumers/query.go (new), internal/consumers/query_test.go (new), cmd/bench/main.go, cmd/bench/help_inventory_test.go, CHANGELOG.md
+Writes: internal/consumers/command.go, internal/consumers/consumers.go, internal/consumers/query.go (new), internal/consumers/query_test.go (new), internal/outline/outline.go, cmd/bench/main.go, cmd/bench/help_inventory_test.go, CHANGELOG.md
 Covers: none
 
 ## What to build
