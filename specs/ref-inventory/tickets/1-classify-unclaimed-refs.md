@@ -20,7 +20,8 @@ A holder is an active or cleanup-pending recorded assignment branch, or a unique
 No landed ref is a holder.
 A recorded assignment branch that `LandedInDefault` proves landed by content only is not a holder, including active and cleanup-pending assignments.
 A ref beneath an ancestry-landed ref is itself landed by ancestry, because ancestry is transitive.
-An unrecorded symbolic ref in either Bench namespace produces an error row that names the ref and `symref`, never a silent exclusion.
+A resolving unrecorded symbolic ref in either Bench namespace produces an error row naming the ref and `symref`, never a silent exclusion.
+Git's ref enumeration skips a dangling symref, and the spec does not handle it.
 
 A ref that is landed by content only is deleted by the bulk sweep but holds nothing.
 So a ref under a content-landed ref that is not itself landed classifies as unique.
@@ -62,7 +63,7 @@ The error-row fixture writes the loose ref file under `.git/refs/heads/` directl
 - [ ] An apply with the fingerprint, and an `--apply-current` run, each remove the landed and subsumed refs and keep the unique ref.
 - [ ] After each apply, every deleted tip stays reachable from `main` or from a surviving ref, with a ref under an ancestry-landed ref in the fixture.
 - [ ] A branch one commit under an ancestry-landed ref prints `class=landed` without a `holder=` field.
-- [ ] An unrecorded symref in either namespace prints action `error` with its name and `symref`, and the set has no fingerprint and no apply action.
+- [ ] A resolving unrecorded symref in either namespace prints action `error` with its name and `symref`, and the set has no fingerprint and no apply action.
 - [ ] Both apply forms refuse a set with a symref before any delete, and the target and a removable sibling survive.
 - [ ] An unrecorded ref at the first commit of a squash-folded recorded branch prints `class=unique` and `retain`, for an active and for a cleanup-pending record.
 - [ ] A plan, then `main` fast-forwarded onto the unique ref, then the old fingerprint refuses as stale.
