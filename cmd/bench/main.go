@@ -71,7 +71,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "assessment", AXI: axiApprovedChildren("list", "show", "compare"), Inventory: publicInventory(helpRow{Order: 20, Suffix: " list | show <run-id> | record --input <file> | compare --plan <file> --runs <id,...>", Description: "store and inspect local workflow cost and quality"}), Bound: boundResponse, Run: outputCommand(func(args []string) (string, int) {
 		return assessment.Command(assessment.Store{Home: worktree.Home(), Root: boundaryRoot()}, args)
 	})},
-	{Name: "anchors", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 15, Suffix: " <path>", Description: "anchors pinning a repo-relative path as TOON (kind, section, needle, line)"}), Bound: boundResponse, Run: outputCommand(anchorsCommand)},
+	{Name: "anchors", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 15, Suffix: " <file|dir>", Description: "anchors pinning a repo-relative file as TOON (kind, section, needle, line); a directory grades each anchored file below it"}), Bound: boundResponse, Run: outputCommand(anchorsCommand)},
 	{Name: "learnings", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 16, Description: "open journal entries as a TOON table (date, title)"}), Bound: boundResponse, Run: outputCommand(learnings.Command)},
 	{Name: "maps", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 17, Description: "unresolved decision-map tickets as TOON (map, ticket, type, state)"}), Bound: boundResponse, Run: outputCommand(maps.Command)},
 	{Name: "guards", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 18, Description: "every guard's deny surface as TOON (guard, boundary, denies)"}), Bound: boundResponse, Run: outputCommand(guards.Command)},
