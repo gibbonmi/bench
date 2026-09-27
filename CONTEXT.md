@@ -120,8 +120,8 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   lexically first ref is the root and the rest are subsumed. Not "duplicate", not
   "redundant branch" — subsumed ref.
 - **holder** — the ref that keeps a subsumed ref's commits reachable: an active
-  assignment branch, a unique root, or an ancestry-landed ref. Not "parent", not "owner" —
-  holder.
+  or cleanup-pending recorded assignment branch, or a unique root. Not "parent",
+  not "owner" — holder.
 - **unique ref** — an unclaimed ref with content the default branch lacks and no
   holder. No bulk route discards it; only an explicit `--target` discard removes it,
   and that discard writes a discarded ref first. A ref a spec retirement or a
