@@ -50,10 +50,8 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 		gitRun(t, root, "branch", "-M", "main")
 		return root
 	}
-	gateCache := func(t *testing.T, root string) string {
-		t.Helper()
-		return filepath.Join(gitRun(t, root, "rev-parse", "--absolute-git-dir"), git.GateCacheFile)
-	}
+	gitDir := func(t *testing.T, root string) string { return gitRun(t, root, "rev-parse", "--absolute-git-dir") }
+	gateCache := func(t *testing.T, root string) string { return filepath.Join(gitDir(t, root), git.GateCacheFile) }
 	writePendingGate := func(t *testing.T, root string) {
 		t.Helper()
 		record := fmt.Sprintf(`{"schema":1,"state":"pending","tree":%q,"oracle":%q,"started_at":%q,"owner_pid":999999}`+"\n",
@@ -107,6 +105,10 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 		}, exact: []Signal{testSignal(1, "git", detail, action)}}
 	}
 	plan := "bench worktree clean --discard-branch --unclaimed"
+	unreadableLedger := func(t *testing.T, root string) { write(t, gitDir(t, root), intent.Filename, "", 0o600) }
+	blobTipRef := func(t *testing.T, root string) {
+		write(t, gitDir(t, root), "refs/heads/bench/assign/orphan/blob", gitRun(t, root, "hash-object", "-w", "tracked.txt")+"\n", 0o644)
+	}
 	cases := []fixture{
 		{name: "setup", signal: "setup", detail: "no .bench/", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
@@ -230,12 +232,10 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 		gitRow("git faulted symref to main", "1 faulted ref", plan, func(t *testing.T, root string) { // RI91
 			gitRun(t, root, "symbolic-ref", "refs/heads/bench/assign/orphan/symref", "refs/heads/main")
 		}),
-		gitRow("git unreadable ledger", "unclaimed refs unavailable", plan, func(t *testing.T, root string) { // RI90
-			write(t, gitRun(t, root, "rev-parse", "--absolute-git-dir"), intent.Filename, "", 0o600)
-		}),
-		gitRow("git blob-tip ref", "git state unavailable, 1 faulted ref", plan, func(t *testing.T, root string) { // D4
-			write(t, gitRun(t, root, "rev-parse", "--absolute-git-dir"), "refs/heads/bench/assign/orphan/blob", gitRun(t, root, "hash-object", "-w", "tracked.txt")+"\n", 0o644)
-		}),
+		gitRow("git unreadable ledger", "unclaimed refs unavailable", plan, unreadableLedger), // RI90
+		gitRow("git blob-tip ref", "git state unavailable, 1 faulted ref", plan, blobTipRef),  // D4
+		// RI92: inside a repository, a planner error beside a Git state failure still routes to the plan.
+		gitRow("git blob-tip ref beside an unreadable ledger", "git state unavailable, unclaimed refs unavailable", plan, func(t *testing.T, root string) { blobTipRef(t, root); unreadableLedger(t, root) }),
 		{name: "worktree leased and out of pool", signal: "worktree", count: 2, setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			t.Setenv("BENCH_HOME", t.TempDir())

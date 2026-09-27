@@ -605,8 +605,9 @@ func componentNames(components []gate.ComponentSkip) []string {
 // appendGit adds the git signal (sev 1). Its details are the dirty paths, the unpushed
 // commits, the unclaimed plan's class and fault counts, and the unique branches that neither
 // that plan nor an assignment holds. A failed Git state read keeps the unclaimed counts
-// beside `git state unavailable`. Any unclaimed ref, or a plan that cannot run while Git
-// state reads, routes the row to that plan, which prints the fault.
+// beside `git state unavailable`. Any unclaimed ref, or a plan that cannot run inside a
+// repository, routes the row to that plan, which prints the fault. Outside a repository
+// both reads fail for one cause, so the row keeps only `git state unavailable`.
 func appendGit(rows []row, root string, query Query) []row {
 	var details []string
 	command := commandAction(gitPushAction)
@@ -620,9 +621,12 @@ func appendGit(rows []row, root string, query Query) []row {
 	if fact.UnpushedCommits > 0 {
 		details = append(details, Plural(fact.UnpushedCommits, "unpushed commit", "unpushed commits"))
 	}
-	// Beside a failed Git state read, a plan failure has the same cause and adds nothing.
 	unclaimed, unclaimedErr := worktree.CountUnclaimedRefs(root)
-	planUnavailable := unclaimedErr != nil && factErr == nil
+	planUnavailable := unclaimedErr != nil
+	if planUnavailable && factErr != nil {
+		_, repoErr := git.CommonDir(root)
+		planUnavailable = repoErr == nil
+	}
 	if planUnavailable {
 		details = append(details, "unclaimed refs unavailable")
 	}
