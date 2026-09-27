@@ -106,7 +106,8 @@ func identityBundleRefusal(root, target string, a intent.Assignment, active func
 func landingActiveState(state intent.AssignmentState) bool { return state == intent.StateActive }
 
 // resumeActiveState accepts the state a first landing leaves behind when it published and
-// then failed before release. A resume finishes that landing rather than refusing it.
+// then failed before release. A resume finishes that landing rather than refusing it, and
+// a `clean --target` retires a row that a refused release left in that state.
 func resumeActiveState(state intent.AssignmentState) bool {
 	return state == intent.StateActive || state == intent.StateCleanupPending
 }

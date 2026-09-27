@@ -9,7 +9,6 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/jsonfile"
 	"github.com/gibbonmi/bench/internal/poolkey"
-	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 	"io"
@@ -452,22 +451,15 @@ func releaseAssignment(j joins, root, requestArg, targetArg string) (intent.Clea
 
 // retainedReleaseError turns a retain plan — the safe planner declining to remove the
 // tree — into the verdict a session can act on. That verdict names what blocked, and a
-// route to re-run once it is cleared. It never points at
+// route that can succeed. It never points at
 // `bench worktree clean --discard-ignored`, whose request-less form orphans the
-// assignment. The tree stays for the caller to resolve, then release again.
+// assignment. The tree stays for the caller to resolve; releaseNext owns the route.
 func retainedReleaseError(plan CleanupPlan, target, assignment string) error {
 	reason := plan.Reason
 	if reason == "" {
 		reason = string(plan.ReasonCode)
 	}
-	return refusalError{refusal{detail: fmt.Sprintf("worktree retained (%s): %s", plan.ReasonCode, reason), next: releaseNext(target, assignment), paths: plan.Ignored.Paths}}
-}
-
-func releaseNext(target, assignment string) string {
-	if lineSafe(target) {
-		return "bench worktree release --request <request> " + sanitize.ShellQuote(target)
-	}
-	return "bench worktree exec " + assignment + " -- bench worktree release --request <request> ."
+	return refusalError{refusal{detail: fmt.Sprintf("worktree retained (%s): %s", plan.ReasonCode, reason), next: releaseNext(plan.ReasonCode, target, assignment), paths: plan.Ignored.Paths}}
 }
 
 // residualAssignment is the policy preservation-residue decision;

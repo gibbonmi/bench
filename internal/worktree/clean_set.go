@@ -125,13 +125,14 @@ type explicitCleanupSet struct {
 
 // planExplicitSet resolves every operand through the assignment identity resolver that
 // the other target-taking verbs share, collapses aliases by that identity, and plans each
-// member through the same explicit planner the single-target form calls. One unresolved
-// or ambiguous operand makes the whole selection unapplicable.
+// member through the same explicit planner the single-target form calls. It takes the
+// states a release takes, as the path form does. One unresolved or ambiguous operand makes
+// the whole selection unapplicable.
 func planExplicitSet(j joins, root string, targets []string, options CleanupOptions) explicitCleanupSet {
 	set := explicitCleanupSet{}
 	selected := make(map[string]bool, len(targets))
 	for _, target := range targets {
-		assignment, err := resolveAssignment(root, target)
+		assignment, err := resolveAssignmentIn(root, target, resumeActiveState)
 		if err != nil {
 			set.failures = append(set.failures, selectionFailurePlan(target, err))
 			continue

@@ -58,6 +58,12 @@ func resolveWorktree(root, target string) (string, error) {
 // answers the whole record, so a verb that names the assignment in its output reads the
 // ledger once. A verb that needs the path alone composes resolveWorktree.
 func resolveAssignment(root, target string) (intent.Assignment, error) {
+	return resolveAssignmentIn(root, target, landingActiveState)
+}
+
+// resolveAssignmentIn is the same resolution; accepts names the ledger states the calling
+// verb takes, as the identity bundle's own state check does.
+func resolveAssignmentIn(root, target string, accepts func(intent.AssignmentState) bool) (intent.Assignment, error) {
 	if !lineSafe(target) {
 		return intent.Assignment{}, errors.New("target contains control characters")
 	}
@@ -69,7 +75,7 @@ func resolveAssignment(root, target string) (intent.Assignment, error) {
 	if err != nil {
 		return intent.Assignment{}, err
 	}
-	if !landingActiveState(selected.State) {
+	if !accepts(selected.State) {
 		return intent.Assignment{}, componentRefusal(componentAssignmentState, selected.ID, string(selected.State), string(intent.StateActive))
 	}
 	// The tree check runs before the creation bundle, because every bundle component reads
