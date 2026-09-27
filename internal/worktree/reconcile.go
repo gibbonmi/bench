@@ -29,12 +29,13 @@ func insideLifecycleNamespace(ref string) bool {
 	return false
 }
 
-// discardedRefDays is how many days past its date a discarded ref outlives.
+// discardedRefDays is the number of days after its date that a discarded ref stays.
 const discardedRefDays = 30
 
 // sweepLifecycleRefs empties the lifecycle namespaces, deletes reset refs with no record,
 // and deletes discarded refs whose window closed at now.
-// Each deletion checks the listed object, so a concurrent ref move refuses.
+// Each deletion checks the listed object, so a concurrent ref move refuses. A deletion
+// removes a symbolic ref itself and never the ref it names.
 func sweepLifecycleRefs(j joins, root string, now time.Time) (int, error) {
 	args := append([]string{"-C", root, "for-each-ref", "--format=%(refname) %(objectname)"}, lifecycleRefNamespaces...)
 	args = append(args, intent.ResetRefNamespace, intent.DiscardedRefNamespace)
@@ -54,7 +55,7 @@ func sweepLifecycleRefs(j joins, root string, now time.Time) (int, error) {
 		if err := hit(j.cleanupBoundary, StepLifecycleSweep); err != nil {
 			return swept, err
 		}
-		if out, err := exec.Command("git", "-C", root, "update-ref", "-d", ref, oid).CombinedOutput(); err != nil {
+		if out, err := exec.Command("git", "-C", root, "update-ref", "--no-deref", "-d", ref, oid).CombinedOutput(); err != nil {
 			return swept, fmt.Errorf("delete lifecycle ref %s: %s", ref, strings.TrimSpace(string(out)))
 		}
 		swept++

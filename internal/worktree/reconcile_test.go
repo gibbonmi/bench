@@ -22,13 +22,22 @@ func plantDiscardedRef(t *testing.T, root string, day time.Time) string {
 	return ref
 }
 
-// TestDiscardedRefNamesTheDateAndTheBranchPath is RI42.
+// TestDiscardedRefNamesTheDateAndTheBranchPath is RI42 and RI95: the date is the UTC
+// date of the instant, also when the instant's own zone is on a different day.
 func TestDiscardedRefNamesTheDateAndTheBranchPath(t *testing.T) {
 	t.Parallel()
-	instant := time.Date(2026, 9, 27, 15, 4, 5, 0, time.UTC)
-	want := "refs/bench/discarded/20260927/bench/assign/" + strings.Repeat("a", 32) + "/" + strings.Repeat("b", 32)
-	got := intent.DiscardedRef(instant, discardedFixtureBranch)
-	requireTest(t, got == want, "discarded ref = %q, want %q", got, want)
+	tail := "/bench/assign/" + strings.Repeat("a", 32) + "/" + strings.Repeat("b", 32)
+	for _, row := range []struct {
+		name    string
+		instant time.Time
+		want    string
+	}{
+		{"RI42 a UTC instant", time.Date(2026, 9, 27, 15, 4, 5, 0, time.UTC), "refs/bench/discarded/20260927" + tail},
+		{"RI95 a local instant a day behind UTC", time.Date(2026, 9, 27, 22, 0, 0, 0, time.FixedZone("UTC-4", -4*60*60)), "refs/bench/discarded/20260928" + tail},
+	} {
+		got := intent.DiscardedRef(row.instant, discardedFixtureBranch)
+		requireTest(t, got == row.want, "%s: discarded ref = %q, want %q", row.name, got, row.want)
+	}
 }
 
 // TestSweepDeletesADiscardedRefAtThirtyDays is RI43 and RI44: the ref dated D survives
@@ -69,16 +78,38 @@ func TestSweepKeepsATodayDiscardedRefWhileItEmptiesRecovery(t *testing.T) {
 	requireTest(t, refsUnder(t, root, ref) != "", "today's discarded ref was emptied with the lifecycle namespaces")
 }
 
-// TestSweepKeepsADiscardedRefWithAnUnparseableDate is RI46.
+// TestSweepKeepsADiscardedRefWithAnUnparseableDate is RI46 and RI94. The segment
+// 20200101x starts with a date far past the window, so a parser that reads only the
+// first eight bytes deletes it.
 func TestSweepKeepsADiscardedRefWithAnUnparseableDate(t *testing.T) {
 	t.Parallel()
+	for _, segment := range []string{"latest", "20200101x"} {
+		t.Run(segment, func(t *testing.T) {
+			root := newWorktreeRepo(t)
+			ref := intent.DiscardedRefNamespace + segment + "/branch"
+			gitRun(t, root, "update-ref", ref, "HEAD")
+			swept, _, err := reconcileLifecycleDebris(defaultJoins(), root, nil, time.Date(2026, 9, 27, 0, 0, 0, 0, time.UTC))
+			mustNoError(t, err)
+			requireTest(t, swept == 0, "swept count = %d, want 0", swept)
+			requireTest(t, refsUnder(t, root, ref) != "", "a discarded ref with the date segment %s was deleted", segment)
+		})
+	}
+}
+
+// TestSweepDeletesADiscardedSymrefAndNotItsTarget is RI93. The sweep deletes the
+// expired symref itself and does not follow it to the branch it names.
+func TestSweepDeletesADiscardedSymrefAndNotItsTarget(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	ref := intent.DiscardedRefNamespace + "latest/" + strings.TrimPrefix(discardedFixtureBranch, "refs/heads/")
-	gitRun(t, root, "update-ref", ref, "HEAD")
+	head := gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, root, "update-ref", "refs/heads/keep", head)
+	symref := intent.DiscardedRefNamespace + "20200101/sym"
+	gitRun(t, root, "symbolic-ref", symref, "refs/heads/keep")
 	swept, _, err := reconcileLifecycleDebris(defaultJoins(), root, nil, time.Date(2026, 9, 27, 0, 0, 0, 0, time.UTC))
 	mustNoError(t, err)
-	requireTest(t, swept == 0, "swept count = %d, want 0", swept)
-	requireTest(t, refsUnder(t, root, ref) != "", "a discarded ref with the date segment latest was deleted")
+	requireTest(t, refsUnder(t, root, "refs/heads/keep") != "" && gitOutput(t, root, "rev-parse", "refs/heads/keep") == head,
+		"the sweep followed the discarded symref and deleted refs/heads/keep")
+	requireTest(t, swept == 1 && refsUnder(t, root, symref) == "", "swept count = %d, symref after the sweep: %q", swept, refsUnder(t, root, symref))
 }
 
 // TestSweepRefusesADiscardedRefMovedAfterListing is RI47.
@@ -86,15 +117,7 @@ func TestSweepRefusesADiscardedRefMovedAfterListing(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
 	ref := plantDiscardedRef(t, root, discardedFixtureDate)
-	moved, err := commitTree(root, gitOutput(t, root, "rev-parse", "HEAD^{tree}"), nil, "concurrent ref\n")
-	mustNoError(t, err)
-	j := defaultJoins()
-	j.cleanupBoundary = func(step LifecycleStep) error {
-		if step == StepLifecycleSweep {
-			gitRun(t, root, "update-ref", ref, moved)
-		}
-		return nil
-	}
+	j, moved := movedRefJoins(t, root, ref)
 	swept, _, err := reconcileLifecycleDebris(j, root, nil, time.Date(2026, 9, 27, 0, 0, 0, 0, time.UTC))
 	requireTest(t, err != nil && strings.Contains(err.Error(), "delete lifecycle ref "+ref), "moved discarded ref error = %v", err)
 	requireTest(t, swept == 0, "failed delete entered the swept count: %d", swept)

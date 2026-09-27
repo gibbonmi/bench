@@ -211,12 +211,10 @@ func TestResumeReconcileKeepsResetRefsForEveryRecordedState(t *testing.T) {
 	}
 }
 
-func TestResumeReconcileRefusesAResetRefMovedAfterListing(t *testing.T) {
-	t.Parallel()
-	home, root := t.TempDir(), newWorktreeRepo(t)
-	mustCreate(t, root, home, "reset-cas", "reset cas")
-	ref := intent.ResetRefPrefix(strings.Repeat("a", 32), strings.Repeat("b", 32)) + "1"
-	gitRun(t, root, "update-ref", ref, "HEAD")
+// movedRefJoins returns joins that move ref to a new commit at the sweep boundary, after
+// the sweep lists ref and before it deletes it. It also returns that new commit.
+func movedRefJoins(t *testing.T, root, ref string) (joins, string) {
+	t.Helper()
 	moved, err := commitTree(root, gitOutput(t, root, "rev-parse", "HEAD^{tree}"), nil, "concurrent ref\n")
 	mustNoError(t, err)
 	j := defaultJoins()
@@ -226,6 +224,16 @@ func TestResumeReconcileRefusesAResetRefMovedAfterListing(t *testing.T) {
 		}
 		return nil
 	}
+	return j, moved
+}
+
+func TestResumeReconcileRefusesAResetRefMovedAfterListing(t *testing.T) {
+	t.Parallel()
+	home, root := t.TempDir(), newWorktreeRepo(t)
+	mustCreate(t, root, home, "reset-cas", "reset cas")
+	ref := intent.ResetRefPrefix(strings.Repeat("a", 32), strings.Repeat("b", 32)) + "1"
+	gitRun(t, root, "update-ref", ref, "HEAD")
+	j, moved := movedRefJoins(t, root, ref)
 	var stdout, stderr bytes.Buffer
 	code := resumeCleanCommandWith(j, root, home, nil, &stdout, &stderr)
 	requireTest(t, code == 1 && strings.Contains(stderr.String(), "delete lifecycle ref "+ref),
@@ -234,10 +242,10 @@ func TestResumeReconcileRefusesAResetRefMovedAfterListing(t *testing.T) {
 	requireTest(t, strings.Contains(stdout.String(), "swept refs 0;"), "failed delete entered swept count: %s", &stdout)
 }
 
-// TestResumeReconcileSparesGreenVerdictRefs is the RM10 guard: the sweep empties the
-// two lifecycle namespaces, deletes only record-less reset refs, and touches nothing
-// else. The gate's verdict store shares the refs/bench/ prefix, so an over-broad delete
-// would destroy green evidence at every session start.
+// TestResumeReconcileSparesGreenVerdictRefs is the RM10 guard. The sweep empties the two
+// lifecycle namespaces, deletes only record-less reset refs and expired discarded refs, and
+// touches nothing else. The gate's verdict store shares the refs/bench/ prefix, so an
+// over-broad delete would destroy green evidence at every session start.
 func TestResumeReconcileSparesGreenVerdictRefs(t *testing.T) {
 	home := t.TempDir()
 	root := newWorktreeRepo(t)
