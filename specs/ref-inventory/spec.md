@@ -451,6 +451,7 @@ Not covered: story 56 — the build runs on fixtures only, and the reviewer runs
 - `internal/worktree/clean_set.go`
 - `internal/worktree/clean_discard.go`
 - `internal/worktree/clean_discard_test.go`
+- `internal/worktree/clean_discard_transaction_test.go`
 - `internal/worktree/joins.go`
 - `internal/worktree/land_prunes_landed_siblings_test.go`
 - `internal/worktree/path.go`

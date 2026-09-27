@@ -1,7 +1,7 @@
 # 4. Discard one unique unrecorded ref by target with a discarded ref first
 
 Blocked by: 1-classify-unclaimed-refs.md, 3-sweep-discarded-refs.md
-Writes: internal/worktree/clean_discard.go (new), internal/worktree/clean_discard_test.go (new), internal/worktree/clean_classes.go, internal/worktree/clean_set.go, internal/worktree/clean_set_apply.go, internal/worktree/clean_set_command_test.go, internal/worktree/clean_unclaimed.go, internal/worktree/clean_unclaimed_test.go, internal/worktree/joins.go, internal/worktree/path.go, internal/worktree/worktree.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/worktree/clean_discard.go (new), internal/worktree/clean_discard_test.go (new), internal/worktree/clean_discard_transaction_test.go (new), internal/worktree/clean_classes.go, internal/worktree/clean_set.go, internal/worktree/clean_set_apply.go, internal/worktree/clean_set_command_test.go, internal/worktree/clean_unclaimed.go, internal/worktree/clean_unclaimed_test.go, internal/worktree/joins.go, internal/worktree/path.go, internal/worktree/worktree.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: RI16, RI29, RI30, RI31, RI32, RI33, RI34, RI35, RI36, RI37, RI38, RI39, RI40, RI41, RI58, RI64, RI65, RI67, RI68, RI74, RI75, RI76, RI78, RI96, RI98, RI99, RI101
 
 ## What to build
