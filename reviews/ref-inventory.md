@@ -775,15 +775,51 @@ The author's probes each bit with restore `yes`:
 - `--no-deref` removed: RI93
 - the symref skipped: the RI93 swept count
 - the segment cut to eight bytes: RI94
-- `.UTC()` removed: RI95 The orchestrator ran the coordinator
-probe: an omission of the `StepLifecycleSweep` boundary hit, verdict `bit` on
-three moved-ref tests, restore `yes`. The chunk tip moves to `114f94a2`, and the
-plan digest moves with the amended spec and ticket.
+- `.UTC()` removed: RI95
+
+The orchestrator ran the coordinator probe: an omission of the
+`StepLifecycleSweep` boundary hit, verdict `bit` on three moved-ref tests,
+restore `yes`. The chunk tip moves to `114f94a2`, and the plan digest moves with
+the amended spec and ticket.
 
 ### Verification after the repair
 
 The author reran its two plan checks at the repair tip `114f94a2` on a clean
 tree. The JSON payload holds each result after the round 1 rows.
+
+## RI-C2a chunk review, round 2
+
+The confirming round read the repair delta `5c54f668..114f94a2` with the whole
+chunk as context. The record commit `e14969a9` follows the tip, and the shared
+evidence is `sha256:8da2d77d…`. Each axis ran in a fresh `bench-reviewer`
+session on opus at high effort. Only the Coverage axis ran probes, and it left
+the tree clean.
+
+Every axis returned zero blocking findings. Standards confirmed R27 to R31 and
+found no duplicated knowledge in the repair delta. Spec confirmed R32 to R34
+and re-verified all nine RI-C2a rows at the tip by test name. It graded the
+orchestrator's plan expansion as inside the approved behavior, with no conflict
+against decision D1. Coverage confirmed the same folds with twelve fixture and
+input probes. It observed that a moved symref target refuses under `--no-deref`
+with Git's own lock message.
+
+Advice, with no finding id, which the orchestrator carries to the final
+reconciliation:
+
+- A discarded symref that names an expired discarded ref sorting before it
+  makes one sweep error, and the symref then stays dangling. Only a manual
+  actor can plant it, and every delete stays inside the namespace. The
+  dangling-symref Won't-handle entry covers the unclaimed plan, not the sweep.
+- The RI93 fixture never asserts that its own ref is a symref; the row is proven
+  by the `--no-deref` removal probe.
+- `--no-deref` now applies to every sweep namespace, and the spec sentence sits
+  in the discarded paragraph; the code comment states the wider scope.
+- The nine RI-C2a seam cells read `planned` until the chunk close.
+- The record had one list item fused with the next paragraph; this section's
+  commit repairs it as an evidence-only correction.
+
+RI-C2a is complete at tip `114f94a2`. Repair cycles consumed: 1 of 2. The
+hardening allowance is unused.
 
 ```bench-review-record
 {
@@ -1747,6 +1783,66 @@ tree. The JSON payload holds each result after the round 1 rows.
           "tip": "5c54f668f2d79291e447dda034c78a2046d9d999",
           "finding_ids": ["R32", "R33", "R34"],
           "supersedes": []
+        },
+        {
+          "id": "ri-c2a-r2-standards",
+          "performer": "claude:bench-reviewer/ri-c2a-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bef9fc586ec28458a2e0f7ce106c0021cf7589a4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2a-standards-r2@114f94a2",
+            "digest": "sha256:1db3406446ad615634f85aebf4a3fdaf9eb7cfd33fabbbd5fd9f9d294e4bb498",
+            "excerpt": "Standards round 2: 0 blocking findings. R27 to R31 confirmed; the repair delta adds no duplicated knowledge."
+          },
+          "axis": "Standards",
+          "base": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
+          "tip": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "finding_ids": [],
+          "supersedes": ["ri-c2a-r1-standards"]
+        },
+        {
+          "id": "ri-c2a-r2-spec",
+          "performer": "claude:bench-reviewer/ri-c2a-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bef9fc586ec28458a2e0f7ce106c0021cf7589a4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2a-spec-r2@114f94a2",
+            "digest": "sha256:553374a367f428cf06b8312cadf3437204abe919e4d5f5d49ae003ee4a46bba7",
+            "excerpt": "Spec round 2: 0 blocking findings. R32 to R34 confirmed; all nine RI-C2a rows delivered at 114f94a2, and the plan expansion sits inside the approved behavior."
+          },
+          "axis": "Spec",
+          "base": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
+          "tip": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "finding_ids": [],
+          "supersedes": ["ri-c2a-r1-spec"]
+        },
+        {
+          "id": "ri-c2a-r2-coverage",
+          "performer": "claude:bench-reviewer/ri-c2a-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bef9fc586ec28458a2e0f7ce106c0021cf7589a4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2a-coverage-r2@114f94a2",
+            "digest": "sha256:0cdf849a8b8e49fd5bcb673de69e566cf9786d137bb1360b414a414de302ccfe",
+            "excerpt": "Coverage round 2: 0 blocking findings. R32 to R34 confirmed by twelve fixture and input probes; every sweep delete stays inside the namespace."
+          },
+          "axis": "Coverage",
+          "base": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
+          "tip": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "finding_ids": [],
+          "supersedes": ["ri-c2a-r1-coverage"]
         }
       ]
     }
