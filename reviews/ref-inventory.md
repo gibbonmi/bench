@@ -407,6 +407,107 @@ was silent until the author added the symref fixture to the mixed case.
 The author reran its three plan checks at the tip `f1204694` on a clean tree.
 The JSON payload holds each result under the RI-C1b chunk.
 
+The author kept two spellings of the plan command, the status action literal
+and `unclaimedReplan`, because `axi.InvocationArgument` has no exported string
+renderer. The round 1 review graded that keep decision as R19 below.
+
+## RI-C1b chunk review, round 1
+
+The frozen pair is base `09611663` and tip `f1204694`. The record commit
+`c1240476` follows the tip, and the shared evidence is `sha256:13d67d1f…`.
+Each axis ran in a fresh `bench-reviewer` session on opus at high effort. Only
+the Coverage axis ran probes, and it left the tree clean.
+
+Raw findings: Standards 5, Spec 2, Coverage 3. Repair targets after the fold:
+one ticket 2 repair session with seven items, three new coverage rows, and one
+spec sentence by the orchestrator. Two questions went to the reviewer route,
+and the answers are decisions D4 and D5 below.
+
+### Standards
+
+Findings: 5. Worst: R19.
+
+- R19 (ask-user, confidence 6): AGENTS.md one source per fact. The status
+  action literal at `status.go:133` and `unclaimedReplan` build the same plan
+  command. `axi` has no string renderer, but the worktree package can export
+  the spelling without an import cycle. Decision D5 folds it.
+- R20 (auto-fix, confidence 6): finding discipline, evidence only in a
+  delegate return. The keep decision for R19 was absent from this record. The
+  paragraph above now holds it.
+- R21 (auto-fix, confidence 7): craft-comments aging. The `appendGit` doc
+  comment names parameters that do not exist and says nothing of the class
+  counts the body now carries.
+- R22 (auto-fix, confidence 5): one source per fact. The class set is
+  enumerated four more times: the count fields, `Rows()`, the count switch,
+  and the hand-typed detail table. The repair returns ordered name and count
+  pairs from the class constants and renders them once.
+- R23 (auto-fix, confidence 4): repeated switches. The count switch sends an
+  unknown class to `Unique` while the action switch sends it to
+  `discard-remove`. The repair matches `classUnique` explicitly.
+
+Advice: the deleted landed-posture test is covered by the RI24 case and the
+landed system subtest. The `--apply` shape check in the system test has no
+recorded red but follows precedent. The promised-labels list omits the two new
+details.
+
+### Spec
+
+Findings: 2. Worst: R24.
+
+- R24 (auto-fix, confidence 7): "the counts match the plan". A resolving
+  symref whose target is unique is counted as a faulted ref and again as a
+  unique branch. The subtraction at `status.go:652` removes only subsumed and
+  unique. Traced: `1 faulted ref, 2 unique branches` where `1 unique branch`
+  is right. New row RI89 pins it.
+- R25 (ask-user, confidence 6): "Status shows a nonzero `<n> faulted ref`
+  count". A blob-tip Bench ref fails `LandedState` first, and the row reads
+  `git state unavailable` with `git status`. Decision D4 resolves it.
+
+Advice: the 43-ref timing lives in this record, not in the ticket file; the
+`unclaimed refs unavailable` detail had no test.
+
+### Coverage
+
+Findings: 3. Worst: R25, confirmed by a fixture probe that turned the mixed
+case into a blob ref.
+
+- R25 (ask-user, confidence 9): as above, with the probe evidence.
+- R24 (auto-fix, confidence 8): as above, confirmed by a fixture probe that
+  pointed the symref at a unique ref: `2 unique branches`.
+- R26 (auto-fix, confidence 8): the planner-failure detail and route have no
+  test, and a faulted-only set has no test. Three mutations stayed silent:
+  `Rows()` without `Faulted`, the route without the planner error, and the
+  detail omitted. New rows RI90 and RI91 pin them.
+
+Probes, each with restore `yes`:
+
+- `Rows()` without `Faulted`: silent
+- the route without the planner error: silent
+- the detail omitted: silent
+- the mixed case with a blob ref: bit (R25)
+- the mixed case with a symref to a unique ref: bit (R24)
+
+Advice: on a planner failure the Bench refs fall into the unique-branch count;
+the dashboard width over eight details is unmeasured.
+
+### RI-C1b decisions and repair cycle 1
+
+The reviewer route decided D4. `appendGit` tolerates a `LandedState` error, it
+still counts the unclaimed rows, and it routes to the plan with the details.
+The row keeps `git state unavailable` beside them. It decided D5: the worktree
+package exports the plan command spelling, and status and ticket 5 read it.
+The system test literal stays as an independent expectation with its recorded
+red. It supplied rows RI89, RI90, and RI91.
+
+The plan commit that follows this record carries the D4 sentence, the three
+rows, and the ticket 2 `Covers:` line. It also carries the chunk table cell
+and the repair session assignment.
+
+One fresh repair session for ticket 2 on opus at high consumes repair cycle 1
+of 2. It owns R21 to R26 and D4 and D5. No implementation command change is
+necessary; R20 is an orchestrator record gap, and the record now carries the
+keep decision.
+
 ```bench-review-record
 {
   "version": 2,
@@ -994,7 +1095,7 @@ The JSON payload holds each result under the RI-C1b chunk.
       "tip": "f12046941a0ad1f2812e82de0bf4e9c61303079b",
       "plan_digest": "sha256:232208681f534a3cc8f1b29756005041a593bb9aa51010d75bb8ce77f86f14e1",
       "source_digest": "05b8019186bf6d6b724705534ec913486ac49945",
-      "acceptance_rows": ["RI24", "RI26", "RI27", "RI88"],
+      "acceptance_rows": ["RI24", "RI26", "RI27", "RI88", "RI89", "RI90", "RI91"],
       "verification": [
         {
           "id": "ri-c1b-2-status-r1",
@@ -1051,7 +1152,68 @@ The JSON payload holds each result under the RI-C1b chunk.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ri-c1b-r1-standards",
+          "performer": "claude:bench-reviewer/ri-c1b-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "05b8019186bf6d6b724705534ec913486ac49945",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/ri-c1b-standards@f1204694",
+            "digest": "sha256:5f525a693e2763eb1fb542791e79f79dee68d61ba1ac32a25588a95f97501d3f",
+            "excerpt": "Standards: 5 findings. Worst: the plan command is spelled in the status action table and built by unclaimedReplan, two sources for one fact."
+          },
+          "axis": "Standards",
+          "base": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
+          "tip": "f12046941a0ad1f2812e82de0bf4e9c61303079b",
+          "finding_ids": ["R19", "R20", "R21", "R22", "R23"],
+          "supersedes": []
+        },
+        {
+          "id": "ri-c1b-r1-spec",
+          "performer": "claude:bench-reviewer/ri-c1b-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "05b8019186bf6d6b724705534ec913486ac49945",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/ri-c1b-spec@f1204694",
+            "digest": "sha256:bb100f40da676efbbef661ae83ecdd5054db9f48d24b3e05c9a23dc121e4af36",
+            "excerpt": "Spec: 2 findings. Worst: a faulted symref whose target is unique is counted as a faulted ref and again as a unique branch."
+          },
+          "axis": "Spec",
+          "base": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
+          "tip": "f12046941a0ad1f2812e82de0bf4e9c61303079b",
+          "finding_ids": ["R24", "R25"],
+          "supersedes": []
+        },
+        {
+          "id": "ri-c1b-r1-coverage",
+          "performer": "claude:bench-reviewer/ri-c1b-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "05b8019186bf6d6b724705534ec913486ac49945",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/ri-c1b-coverage@f1204694",
+            "digest": "sha256:1d3bcdac79cdc43c1a29c3dce82f5fda38c851a65e732be73c71a984ad4b0048",
+            "excerpt": "Coverage: 3 findings. Worst: a blob-tip Bench ref makes LandedState fail first, so the row reads git state unavailable and never routes to the plan."
+          },
+          "axis": "Coverage",
+          "base": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
+          "tip": "f12046941a0ad1f2812e82de0bf4e9c61303079b",
+          "finding_ids": ["R24", "R25", "R26"],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
