@@ -474,7 +474,84 @@ The compiled map stays untouched, and RI81 pins the narrowed rule.
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"RI-C1a","tickets":["1-classify-unclaimed-refs.md","6-repair-glossary-shift-namespace.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"status","command":"bench test --package ./internal/status"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"system","command":"bench test --check system"}]},{"id":"RI-C1b","tickets":["2-route-status-to-the-plan.md"],"verification":[{"id":"status","command":"bench test --package ./internal/status"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"system","command":"bench test --check system"}]},{"id":"RI-C2a","tickets":["3-sweep-discarded-refs.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"ledger","command":"bench test --package ./internal/intent/ledger"}]},{"id":"RI-C2b","tickets":["4-discard-a-unique-ref-by-target.md","5-list-retire-candidates.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"spec","command":"bench test --package ./internal/spec"},{"id":"cmd","command":"bench test --package ./cmd/bench"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/ref-inventory/spec.md"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"status","command":"bench test --package ./internal/status"},{"id":"spec","command":"bench test --package ./internal/spec"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"system","command":"bench test --check system"}]}
+{
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft199-ref-inventory-full-20260927",
+    "orchestrator_session": "claude:session_0156tkEZcRSowaafegWfFZJP",
+    "author_limit": 1,
+    "assignments": {
+      "6-repair-glossary-shift-namespace.md": [
+        {
+          "session": "claude:bench-writer/ri-t6-author",
+          "assignment": "ri-t6-author",
+          "model": "opus",
+          "effort": "high",
+          "source": "72a749a35dc4c37de87f56534959ac9c137099e1",
+          "native_ref": "claude:agent/ri-t6-author-20260927@72a749a35dc4c37de87f56534959ac9c137099e1"
+        }
+      ],
+      "1-classify-unclaimed-refs.md": [],
+      "2-route-status-to-the-plan.md": [],
+      "3-sweep-discarded-refs.md": [],
+      "4-discard-a-unique-ref-by-target.md": [],
+      "5-list-retire-candidates.md": []
+    }
+  },
+  "chunks": [
+    {
+      "id": "RI-C1a",
+      "tickets": ["1-classify-unclaimed-refs.md", "6-repair-glossary-shift-namespace.md"],
+      "verification": [
+        {"id": "6-anchors", "command": "bench test --package ./internal/anchors", "ticket": "6-repair-glossary-shift-namespace.md"},
+        {"id": "6-conformance", "command": "bench test --package ./internal/conformance", "ticket": "6-repair-glossary-shift-namespace.md"},
+        {"id": "1-worktree", "command": "bench test --package ./internal/worktree", "ticket": "1-classify-unclaimed-refs.md"},
+        {"id": "1-status", "command": "bench test --package ./internal/status", "ticket": "1-classify-unclaimed-refs.md"},
+        {"id": "1-cmd", "command": "bench test --package ./cmd/bench", "ticket": "1-classify-unclaimed-refs.md"},
+        {"id": "1-conformance", "command": "bench test --package ./internal/conformance", "ticket": "1-classify-unclaimed-refs.md"},
+        {"id": "1-system", "command": "bench test --check system", "ticket": "1-classify-unclaimed-refs.md"}
+      ]
+    },
+    {
+      "id": "RI-C1b",
+      "tickets": ["2-route-status-to-the-plan.md"],
+      "verification": [
+        {"id": "2-status", "command": "bench test --package ./internal/status", "ticket": "2-route-status-to-the-plan.md"},
+        {"id": "2-worktree", "command": "bench test --package ./internal/worktree", "ticket": "2-route-status-to-the-plan.md"},
+        {"id": "2-system", "command": "bench test --check system", "ticket": "2-route-status-to-the-plan.md"}
+      ]
+    },
+    {
+      "id": "RI-C2a",
+      "tickets": ["3-sweep-discarded-refs.md"],
+      "verification": [
+        {"id": "3-worktree", "command": "bench test --package ./internal/worktree", "ticket": "3-sweep-discarded-refs.md"},
+        {"id": "3-ledger", "command": "bench test --package ./internal/intent/ledger", "ticket": "3-sweep-discarded-refs.md"}
+      ]
+    },
+    {
+      "id": "RI-C2b",
+      "tickets": ["4-discard-a-unique-ref-by-target.md", "5-list-retire-candidates.md"],
+      "verification": [
+        {"id": "4-worktree", "command": "bench test --package ./internal/worktree", "ticket": "4-discard-a-unique-ref-by-target.md"},
+        {"id": "4-cmd", "command": "bench test --package ./cmd/bench", "ticket": "4-discard-a-unique-ref-by-target.md"},
+        {"id": "5-spec", "command": "bench test --package ./internal/spec", "ticket": "5-list-retire-candidates.md"},
+        {"id": "5-cmd", "command": "bench test --package ./cmd/bench", "ticket": "5-list-retire-candidates.md"}
+      ]
+    }
+  ],
+  "final_verification": [
+    {"id": "coverage", "command": "bench coverage --check specs/ref-inventory/spec.md"},
+    {"id": "worktree", "command": "bench test --package ./internal/worktree"},
+    {"id": "status", "command": "bench test --package ./internal/status"},
+    {"id": "spec", "command": "bench test --package ./internal/spec"},
+    {"id": "cmd", "command": "bench test --package ./cmd/bench"},
+    {"id": "conformance", "command": "bench test --package ./internal/conformance"},
+    {"id": "anchors", "command": "bench test --package ./internal/anchors"},
+    {"id": "system", "command": "bench test --check system"}
+  ]
+}
 ```
 
 Source-sentence-to-row table:
