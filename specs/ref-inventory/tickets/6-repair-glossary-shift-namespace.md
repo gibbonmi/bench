@@ -10,7 +10,9 @@ Chunk: RI-C1a.
 
 Repair the glossary term `unclaimed ref` in `CONTEXT.md` so that it names the shift namespace as `refs/heads/bench/shift-`.
 The ledger declares that prefix.
-Narrow the glossary term `holder` so that "a landed ref" reads "an ancestry-landed ref", which is the rule the reviewer fixed on 2026-09-27.
+Rewrite the glossary term `holder` so that it names an active or cleanup-pending recorded assignment branch, or a unique root, and no landed ref.
+That is the rule the reviewer fixed on 2026-09-27, because a ref beneath an ancestry-landed ref is itself landed.
+
 Run `bench anchors CONTEXT.md` before the edit and keep every anchored line intact.
 The anchor registries and the canary fixtures in `Writes:` are the closure the preflight names.
 This ticket changes them only when the edit moves an anchored line.
@@ -18,5 +20,5 @@ This ticket changes them only when the edit moves an anchored line.
 ## Acceptance
 
 - [ ] The glossary term `unclaimed ref` names `refs/heads/bench/shift-`.
-- [ ] The glossary term `holder` names an ancestry-landed ref.
+- [ ] The glossary term `holder` names a recorded assignment branch or a unique root, and no landed ref.
 - [ ] `bench anchors CONTEXT.md` prints the same eight anchors after the edit.

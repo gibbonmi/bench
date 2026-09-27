@@ -57,7 +57,7 @@ Classification:
 6. As a coordinator, I want an equal-tip branch to classify as subsumed by the lexically first ref, so that one member survives.
 7. As a coordinator, I want a strict ancestor of a holder's tip subsumed by that holder, so that the holder is fixed.
 8. As a coordinator, I want an active recorded branch to hold the refs at or beneath its tip, so that review-axis branches retire.
-9. As a coordinator, I want only an ancestry-landed ref to hold the refs beneath it, so that a content-landed ref strands nothing.
+9. As a coordinator, I want landed refs excluded from holders, so that a content-landed ref cannot authorize another ref's deletion. A ref beneath an ancestry-landed ref classifies as landed.
 10. As a coordinator, I want every other unrecorded branch to classify as unique, so that content `main` lacks is named as such.
 11. As a coordinator, I want a ref with no commit tip to print an error row, so that a damaged ref never rounds up.
 12. As a coordinator, I want the plan to read refs only and write nothing, so that a plan is safe to repeat.
@@ -132,7 +132,7 @@ Review-round additions:
 60. As a reviewer, I want the explicit delete to use the exact tip, so that a branch moved after the write survives.
 61. As a reviewer, I want retire to print `unique refs: unavailable` with the error when the count fails, so that the exit code holds.
 62. As a reviewer, I want the fallback to select from the unclaimed set only, so that a checkout or a recorded branch never enters it.
-63. As a maintainer, I want the glossary `holder` term to name an ancestry-landed ref, so that the term matches the narrowed rule.
+63. As a maintainer, I want the glossary `holder` term to name only a recorded branch or a unique root, so that it matches the rule.
 
 ## Implementation decisions
 
@@ -144,14 +144,17 @@ A ref whose tip does not resolve to a commit produces a row with action `error`,
 The error row's detail names the ref and the object type.
 
 The landed class takes precedence over the subsumed class.
-A holder is an active or cleanup-pending recorded assignment branch, a unique root, or a ref whose tip is an ancestor of `main`.
+A holder is an active or cleanup-pending recorded assignment branch, or a unique root.
+No landed ref is a holder.
+A ref beneath an ancestry-landed ref is itself landed by ancestry, because ancestry is transitive.
+
 A ref that is landed by content only, the squash fold through the reverse-apply proof, is deleted by the bulk sweep but holds nothing.
 So a ref under a content-landed ref that is not itself landed classifies as unique.
 A checked-out foreign branch, a complete record's branch, and a subsumed ref are never holders.
 A ref is subsumed when its tip equals, or is a strict ancestor of, a holder's tip.
 
 Among unrecorded refs with an equal tip and no other holder, the lexically first full ref name is the unique root.
-The holder a row names is the lexically first holder whose tip reaches the ref, with recorded branches first, then ancestry-landed refs, then unique roots.
+The holder a row names is the lexically first holder whose tip reaches the ref, with recorded branches first, then unique roots.
 
 The unclaimed plan row keeps the seven cleanup columns.
 The `tracked` cell stays `unclaimed`.
@@ -222,7 +225,7 @@ When the ledger read or the planner fails, the count line reads `unique refs: un
 The listing includes the calling worktree's own assignment, and the explicit discard retains that assignment on its live lease as today.
 
 The glossary term for the unclaimed ref names the shift namespace as `refs/heads/bench/shift-`, which is what the ledger declares.
-The glossary term for the holder names an ancestry-landed ref in place of a landed ref.
+The glossary term for the holder names an active or cleanup-pending recorded assignment branch, or a unique root, and no landed ref.
 
 ## Implementation chunks
 
@@ -284,7 +287,7 @@ The glossary term for the holder names an ancestry-landed ref in place of a land
 | RI6 | 6 | Two unrecorded branches at one unique tip print the lexically first as `class=unique` and the second as `class=subsumed holder=<first>` | `planned` | A rule that marks both subsumed deletes the tip |
 | RI7 | 7 | A branch one commit under a unique ref prints `class=subsumed holder=<that ref>` | `planned` | A rule that reads equality alone prints `unique` |
 | RI8 | 8 | A branch one commit under an active recorded branch prints `class=subsumed holder=<active branch>` | `planned` | A rule that ignores recorded branches prints `unique` |
-| RI9 | 9 | A branch one commit under an ancestry-landed ref prints `class=subsumed holder=<landed ref>` | `planned` | A rule that ignores ancestry-landed holders prints `unique` |
+| RI9 | 9 | A branch one commit under an ancestry-landed ref prints `class=landed` without a `holder=` field | `planned` | A rule that prints `class=subsumed holder=<landed ref>` fails the assertion |
 | RI10 | 10 | A branch with one commit `main` lacks and no holder prints `class=unique` and action `retain` | `planned` | The old sweep prints `discard-remove` for this row |
 | RI11 | 11 | A loose ref file under `.git/refs/heads/bench/assign/` that names a blob prints action `error` with the ref and `blob` in its detail, and no fingerprint | `planned` | A classifier that skips resolution offers the set |
 | RI12 | 12 | Two consecutive plans over one repository print identical rows and change no ref | `planned` | A plan that writes a ref changes the second output |
@@ -354,7 +357,7 @@ The glossary term for the holder names an ancestry-landed ref in place of a land
 | RI79 | 50 | The candidate lines and the count line print after the `retired:` lines and before the `next:` line | `planned` | A listing after `next:` hides the remainder step |
 | RI80 | 51 | `bench spec retire --help` prints no candidate line and no count line | `planned` | A wrapper that appends on every call pollutes the help |
 | RI81 | 9 | A adds `x=1`, B changes `x` to `2` and is squash-folded into `main`: the plan prints B as `class=landed` and A as `class=unique` | `planned` | A holder set that admits a content-landed ref deletes A with no surviving handle |
-| RI82 | 63 | The glossary term `holder` names an ancestry-landed ref | `review-owned` | A term that admits every landed ref contradicts the rule |
+| RI82 | 63 | The glossary term `holder` names a recorded assignment branch or a unique root, and no landed ref | `review-owned` | A term that admits a landed ref contradicts the rule |
 
 Not covered: story 53 — reviewed exclusion, and the review round confirms that no hold surface is added.
 Not covered: story 54 — reviewed exclusion, and RI48 to RI52 show the listing discards nothing.
@@ -367,7 +370,7 @@ Not covered: story 56 — the build runs on fixtures only, and the reviewer runs
 - Equal tips: RI6, RI21, and RI59.
 - A strict-ancestor chain of three refs: the root is the holder, RI61 and RI21.
 - A ref under an active recorded branch: RI8.
-- A ref under an ancestry-landed ref: RI9, and under a content-landed ref: RI81.
+- A ref under an ancestry-landed ref, landed by transitivity: RI9, and under a content-landed ref: RI81.
 - A ref under a checked-out foreign branch: RI60.
 - A ref that points at a blob: RI11, RI72, and RI73.
 - A plan over an empty namespace: RI23.
@@ -468,8 +471,11 @@ The ledger declares `refs/heads/bench/shift-`, and this spec uses the ledger's s
 The compiled map stays as the reviewer confirmed it, and this note flags the typo for reviewer veto.
 
 Decision ticket 7 of the map names "a landed ref" as a holder.
-By reviewer decision on 2026-09-27 that phrase narrows to an ancestry-landed ref, because a content-landed ref leaves no surviving handle for a ref beneath it.
-The compiled map stays untouched, and RI81 pins the narrowed rule.
+By reviewer decision on 2026-09-27 that phrase first narrowed to an ancestry-landed ref, because a content-landed ref leaves no handle for a ref beneath it.
+The ticket 1 author then found that the narrowed kind is unreachable.
+Ancestry is transitive, so every ref beneath an ancestry-landed ref is itself landed, and the landed-first precedence never names that holder.
+By a second reviewer decision on 2026-09-27, through the Codex Astra route, no landed ref is a holder.
+The compiled map stays untouched, RI9 pins the transitive landed class, and RI81 pins the content-landed case.
 
 ### Completion plan
 
@@ -588,7 +594,7 @@ Source-sentence-to-row table:
 | A class change between plan and apply refuses as stale | RI17, RI63, RI64, RI65 |
 | The preserve step and the discard step never split | RI36, RI37, RI38 |
 | Equal tips make the lexically first ref the root | RI6 |
-| A holder is an active branch, a unique root, or a landed ref (narrowed to ancestry-landed) | RI7, RI8, RI9, RI59, RI60, RI61, RI81, RI82 |
+| A holder is an active branch, a unique root, or a landed ref (narrowed: no landed ref holds) | RI7, RI8, RI9, RI59, RI60, RI61, RI81, RI82 |
 | A subsumed row names its holder and writes no discarded ref | RI14, RI40, RI68 |
 | `--apply-current` stays, narrows, and leaves the status table | RI19, RI25, RI73 |
 | Retire lists recorded rows by slug with the discard command | RI48, RI49, RI52, RI70, RI71, RI77 |

@@ -16,14 +16,16 @@ It calls `git.LandedInDefault` for each unrecorded ref, and the landed class tak
 A ref whose tip does not resolve to a commit produces a row with action `error`.
 That row names the ref and the object type, and the set fingerprint stays empty.
 
-A holder is an active or cleanup-pending recorded assignment branch, a unique root, or a ref whose tip is an ancestor of `main`.
+A holder is an active or cleanup-pending recorded assignment branch, or a unique root.
+No landed ref is a holder.
+A ref beneath an ancestry-landed ref is itself landed by ancestry, because ancestry is transitive.
 A ref that is landed by content only is deleted by the bulk sweep but holds nothing.
-So a ref under it that is not itself landed classifies as unique.
+So a ref under a content-landed ref that is not itself landed classifies as unique.
 
 A checked-out foreign branch, a complete record's branch, and a subsumed ref are never holders.
 A ref is subsumed when its tip equals, or is a strict ancestor of, a holder's tip.
 Among unrecorded refs with an equal tip and no other holder, the lexically first full ref name is the unique root.
-The named holder is the lexically first holder whose tip reaches the ref, with recorded branches first, then ancestry-landed refs, then unique roots.
+The named holder is the lexically first holder whose tip reaches the ref, with recorded branches first, then unique roots.
 
 The plan row keeps the seven cleanup columns and the `tracked` cell `unclaimed`.
 The detail cell starts with `class=<class>`, continues with ` holder=<ref>` for a subsumed row, and ends with the existing removal text for a removing row.
@@ -56,6 +58,7 @@ The error-row fixture writes the loose ref file under `.git/refs/heads/` directl
 - [ ] `--apply-current` over an error row and a landed row refuses before any delete, and the landed ref survives.
 - [ ] An apply with the fingerprint, and an `--apply-current` run, each remove the landed and subsumed refs and keep the unique ref.
 - [ ] After each apply, every deleted tip stays reachable from `main` or from a surviving ref, with a ref under an ancestry-landed ref in the fixture.
+- [ ] A branch one commit under an ancestry-landed ref prints `class=landed` without a `holder=` field.
 - [ ] A adds `x=1`, B changes `x` to `2` and is squash-folded into `main`: the plan prints B as `class=landed` and A as `class=unique`.
 - [ ] A plan, one new commit on a subsumed ref, then the old fingerprint refuses as stale and prints `bench worktree clean --discard-branch --unclaimed`.
 - [ ] A plan, then a recorded active branch at a descendant of the unique ref, then the old fingerprint refuses as stale with the tip unchanged.
