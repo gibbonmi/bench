@@ -412,11 +412,36 @@ Advice: the diff-seam comparison is always true for an unstored case. The
 `DiffRoles` comment claims an order that no reader enforces. One test comment
 still says that the prefix refusal applies to the whole charge.
 
+## RE2 repair cycle 3, by reviewer extension
+
+The RE2 checkpoint gate went red after the allowance ran out. The whole
+`cmd/bench` package failed, because the larger manifest page now spills past
+the response bound. Root conformance failed, because the npm pack check needs
+literal embed paths. A read-only fable consultation diagnosed both reds. The
+reviewer granted one more cycle and chose literal embed names. The plan fence
+of ticket 2 gained `cmd/bench/preflight_version_test.go`.
+
+A fresh `bench-writer` repair session on opus at low effort started at
+`c0d3110f` and committed `c4d104d3`. The embed directive now names the four
+baseline files, and the version test reads the spill file when the bound
+spills. Both edits are test-only.
+
+| Red | File | Mutation | Verdict |
+|---|---|---|---|
+| npm pack | `preflighttest/reviewfiles.go` | swap: the glob embed again | bit |
+| version test | `cmd/bench/preflight_version_test.go` | swap: skip the spill read | bit |
+| baseline | `testdata/review-empty.toon` | omission: the `diff_body:` line | bit |
+
+The orchestrator ran the last probe as the independent coordinator probe.
+Each restore reads `yes`. The repair session ran the three ticket checks at
+`c4d104d3`, and each check passed. The whole `cmd/bench` package and the
+`package-core-guard` check also passed.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/review-evidence-file-pages/spec.md",
-  "plan_digest": "sha256:8dddf1cf850b5fab367dbec2d528660f7f2ad2d616aa6fa58f3e124215d0016f",
+  "plan_digest": "sha256:7566dd88fcc60fb959a82eac272899eb3d463fb33f7271e196f5c9feeb5cb929",
   "implementation_session": "",
   "chunks": [
     {
@@ -744,9 +769,9 @@ still says that the prefix refusal applies to the whole charge.
     {
       "id": "RE2",
       "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
-      "tip": "52ce9574eea53b962c2d83ad333636f890f987c8",
-      "plan_digest": "sha256:8dddf1cf850b5fab367dbec2d528660f7f2ad2d616aa6fa58f3e124215d0016f",
-      "source_digest": "2a925ccc7b6a06693920ce448da3e383bde3697d",
+      "tip": "c4d104d3db60b85c4fd2a7dbf8d125ba6d3a3ef0",
+      "plan_digest": "sha256:7566dd88fcc60fb959a82eac272899eb3d463fb33f7271e196f5c9feeb5cb929",
+      "source_digest": "26c2dc3e3c548a8365a7ba2ae7793ae76af10754",
       "acceptance_rows": [
         "RE1",
         "RE2",
@@ -921,6 +946,60 @@ still says that the prefix refusal applies to the whole charge.
             "ref": "claude:agent/re-t2-repair-c2-20260926/2-workflow@52ce9574",
             "digest": "sha256:814b76cfe4e3783f73c48d0c274dddf3a8fe3d7332258cd3813b16aae1e1de30",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,532\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-file-evidence-r4",
+          "performer": "claude:bench-writer/re-t2-repair-c3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "26c2dc3e3c548a8365a7ba2ae7793ae76af10754",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-c3-20260927/2-file-evidence@c4d104d3",
+            "digest": "sha256:a42d5de8938eeb82c7714a3dd4c7f398c5e4a61619d2a866d81a0085d016d6fa",
+            "excerpt": "diff ok 13.715s, git ok 2.704s, consumers ok 5.161s, chargeevidence ok 0.395s, preflight ok 37.529s, evidencecmd ok 28.745s"
+          },
+          "requirement": "2-file-evidence",
+          "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/git ./internal/consumers ./internal/chargeevidence ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-ports-r4",
+          "performer": "claude:bench-writer/re-t2-repair-c3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "26c2dc3e3c548a8365a7ba2ae7793ae76af10754",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-c3-20260927/2-ports@c4d104d3",
+            "digest": "sha256:0e0fe9c4cd22b4ef21a56a7b2d5f160890fec36c5c27f6ecfa72356f4d4d3bfb",
+            "excerpt": "internal/conformance,pass,21; failures[0]; skips[0]"
+          },
+          "requirement": "2-ports",
+          "command": "bench test --check injected-port-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "re2-2-workflow-r4",
+          "performer": "claude:bench-writer/re-t2-repair-c3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "26c2dc3e3c548a8365a7ba2ae7793ae76af10754",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-c3-20260927/2-workflow@c4d104d3",
+            "digest": "sha256:acf1f19830798906a0156161f334545c84dff89b1f9f9475ba0d5e37432309da",
+            "excerpt": "internal/conformance,pass,964; failures[0]; skips[0]"
           },
           "requirement": "2-workflow",
           "command": "bench test --check docs-currency-workflow",
@@ -1168,6 +1247,18 @@ still says that the prefix refusal applies to the whole charge.
     {
       "from": "sha256:0a0dd94188bc7e51324817949e800dc3482dfe856328d9ca5be6b1f01f5c04c4",
       "to": "sha256:8dddf1cf850b5fab367dbec2d528660f7f2ad2d616aa6fa58f3e124215d0016f",
+      "chunk_ids": {
+        "RE1": [
+          "RE1"
+        ],
+        "RE2": [
+          "RE2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:8dddf1cf850b5fab367dbec2d528660f7f2ad2d616aa6fa58f3e124215d0016f",
+      "to": "sha256:7566dd88fcc60fb959a82eac272899eb3d463fb33f7271e196f5c9feeb5cb929",
       "chunk_ids": {
         "RE1": [
           "RE1"
