@@ -34,6 +34,16 @@ baseline, and the universal-claim rule.
   never runs.
 - A Coverage finding describes the tree before the probes of the axis. Behavior that those probes added is never a finding.
 - An axis reads the seam cell of a row before it judges a review-owned row unmet. A review-owned seam places the evidence in the review record, not in a test.
+- The Coverage axis checks each member of these sets:
+  - each call-site posture
+  - each competing refusal and each writer
+  - each pairing of a publication with a refusal
+  - each affected legacy input
+- The Coverage axis exercises these tree states:
+  - immutable tracked files
+  - transitioned specs
+  - untracked descendants
+  - nested working directories
 
 ## What an axis return carries
 

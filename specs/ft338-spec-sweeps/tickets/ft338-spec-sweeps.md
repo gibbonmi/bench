@@ -22,7 +22,7 @@ Each pinned sentence stays byte for byte, so no anchor needle and no canary fixt
 
 - [ ] The map discipline reference states the key-term and normalized-form search and the named surfaces of the reader sweep for a moved or retired guidance fact.
 - [ ] The map discipline reference states the writer sweep, the `.github` workflow sweep, the `os/exec` pipe walk, and the reversing-amendment sweep.
-- [ ] The map discipline reference states the enforcement-surface read for a new CLI verb or conformance test.
+- [ ] The `craft-spec` explore step states the enforcement-file read for a new CLI verb or conformance test.
 - [ ] The map discipline reference states the validator citation for an authorship change and the anchor check before the first review charge.
 - [ ] The map discipline reference states the current-code claim verification, the landed-work rule, and the `DATA_HANDLING.md` value check, and `craft-spec` charges that reference for claims.
 - [ ] The map discipline reference states the numeric-arithmetic row and the reachable legacy-migration row.
