@@ -71,7 +71,9 @@ harness-native next command. This way, resumption never depends on
 conversation history.
 
 A phase close commits its tracked capture artifacts — the retro and the
-scorecard updates — together in one commit on a lane pass. The git-ignored
+scorecard updates — together in one commit on a lane pass. Only the
+implementation close writes the retro, one for each spec. A spec-stage close
+commits its scorecard updates and no retro. The git-ignored
 capture files stay local and never join that commit. Read
 `bench retro <slug> --scaffold` before you write the retrospective, because
 that draft carries the headings, the stage timings, and one row per ticket.

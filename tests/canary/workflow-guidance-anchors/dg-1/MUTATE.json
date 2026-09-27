@@ -1,1 +1,1 @@
-[{"path":".agents/commands/bench-debug.md","old":"The current ticket author owns the debug loop and writes its in-scope repair.","new":""}]
+[{"path":".agents/commands/bench-debug.md","old":"Before review, the current ticket author owns the debug loop and writes its in-scope repair.\nAfter review, the ticket's fresh repair session owns the loop and writes the repair.","new":""}]
