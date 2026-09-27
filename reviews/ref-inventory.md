@@ -913,6 +913,105 @@ The ticket 4 worktree excerpt keeps its two leading spaces, because the author
 hashed the line as printed. The JSON payload holds each result under the
 RI-C2b chunk.
 
+## RI-C2b chunk review, round 1
+
+The frozen pair is base `114f94a2` and tip `7ccd9aaa`. The record commit
+`bcd69be4` follows the tip, and the shared evidence is `sha256:f22b899f…`. Each
+axis ran in a fresh `bench-reviewer` session on opus at high effort. Only the
+Coverage axis ran probes, and it left the tree clean.
+
+Raw findings: Standards 5, Spec 1, Coverage 5. The fold yields two repair
+sessions, six new coverage rows, and one fence expansion. Ticket 4 takes six
+items, and ticket 5 takes four. Four questions went to the reviewer route, and
+the answers are decisions D7 to D10 below.
+
+### Standards
+
+Findings: 5. Worst: R35.
+
+- R35 (auto-fix, confidence 9): one source per fact and craft-comments aging.
+  `refVerdict.detail` still ends a unique row with `uniqueRetainedDetail`, and
+  `classDetail` in `clean_discard.go` trims it off again; the constant and two
+  comments in `clean_classes.go` are false. The plan commit adds that file to
+  ticket 4's fence.
+- R36 (ask-user, confidence 6): one source per fact. `discardSelector` prints
+  the id form while `targetSelectors` names the branch path. Decision D7.
+- R37 (auto-fix, confidence 6): one parser per argv. `withRetireListing` slugs
+  the last raw argument while the retire parses its operand through `specArg`.
+  The Spec axis found the same defect as R40.
+- R38 (auto-fix, confidence 5): the test-expectation exception. The RI16, RI78,
+  RI50, and RI52 expectations copy production spellings with no recorded red.
+- R39 (no-op, confidence 4): the member order is index arithmetic at three
+  sites; a judgment call.
+
+Advice: `planUnrecordedRow` overwrites what `plan()` computed; `Unique()` sits
+in the discard file only because of the fence; the step-token comment repeats a
+budget fact; the two step tokens follow tree precedent.
+
+### Spec
+
+Findings: 1. Worst: R40. Every RI-C2b row is delivered, and all five author
+decisions are accepted.
+
+- R40 (auto-fix, confidence 6): "one slug derivation that the retire command
+  and the dispatcher both call". A trailing `--` operand slugs to `--`, so the
+  listing vanishes after a successful retire. The same repair as R37.
+
+Advice: the id route can select a recorded label or refuse an ambiguous pair,
+which became decision D7; the retire count hides faulted rows, which became
+decision D10; a prefix operand skips the control-byte refusal.
+
+### Coverage
+
+Findings: 5. Worst: R41, confirmed by a fixture probe.
+
+- R41 (auto-fix, confidence 8): a symref planted at the planned discarded path
+  makes `show-ref` return the branch tip, so the write is skipped and the delete
+  removes the branch with a dangling recovery cell. Decision D8 and row RI96.
+- R42 (auto-fix, confidence 8): a retire refusal whose operand embeds a
+  newline and `next: ` carries a real marker, so the exit-code guard is
+  load-bearing and uncovered. Row RI97. The orchestrator's silent probe was
+  silent because no test drives an operand-reflecting refusal.
+- R43 (auto-fix, confidence 7): the fault guard in `planUnrecordedRow` has no
+  test; disabling it left every test green. Row RI98.
+- R44 (auto-fix, confidence 6): the per-member requalify has never been
+  observed to fire; replacing it stayed green, and the fixture probe hit a
+  stale refusal on the recorded member first. Row RI99.
+- R45 (auto-fix, confidence 5): a competing direct ref between the `show-ref`
+  read and the write has no reachable seam; dropping the zero old value stayed
+  silent. Decision D9 adds a boundary step and row RI101.
+
+Probes, each with restore `yes`:
+
+- the fault guard disabled: silent (R43)
+- a symref fixture at the planned path: bit at the final RI35 assertion (R41)
+- the zero old value dropped: silent (R45)
+- the exit-code guard removed with an operand-reflecting refusal: bit (R42)
+- the same refusal with the guard kept: silent, the control
+- a recorded holder added to the RI68 set: bit by a stale refusal, inconclusive
+- the requalify replaced with the planned row: silent (R44)
+
+Advice: the count line after a planner failure that follows a ledger success has
+no test; slug matching is a raw substring; the candidate label prints raw.
+
+### RI-C2b decisions and repair cycle 1
+
+The reviewer route decided D7: the printed discard route uses the branch path
+for every unrecorded row, and story 16 and RI16 are rewritten. The printed
+route and the apply action derive their selector from one function. It decided
+D8: a symbolic ref at the planned path refuses (RI96). It decided D9: a third
+boundary step sits between the read and the write (RI101). It decided D10: the
+count line gains a faulted suffix (RI100). It supplied rows RI97 to RI99.
+
+The plan commit that follows this record carries the story and row rewrites
+and rows RI96 to RI101. It also carries the ticket 4 fence expansion to
+`clean_classes.go`, both ticket texts, and two repair session assignments.
+Two fresh repair sessions on opus at high consume repair cycle 1 of 2, in
+ticket order. Ticket 4 owns R35, R36, R38 for its rows, R41, R43, R44, and
+R45. Ticket 5 owns R37, R38 for its rows, R42, and D10. The implementation
+command contributed to R35, and the orchestrator captured the out-of-fence
+staleness rule as a learning.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1947,7 +2046,7 @@ RI-C2b chunk.
       "acceptance_rows": [
         "RI16", "RI29", "RI30", "RI31", "RI32", "RI33", "RI34", "RI35", "RI36", "RI37", "RI38", "RI39", "RI40", "RI41",
         "RI48", "RI49", "RI50", "RI51", "RI52", "RI58", "RI64", "RI65", "RI67", "RI68", "RI69", "RI70", "RI71",
-        "RI74", "RI75", "RI76", "RI77", "RI78", "RI79", "RI80"
+        "RI74", "RI75", "RI76", "RI77", "RI78", "RI79", "RI80", "RI96", "RI97", "RI98", "RI99", "RI100", "RI101"
       ],
       "verification": [
         {
@@ -2023,7 +2122,68 @@ RI-C2b chunk.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ri-c2b-r1-standards",
+          "performer": "claude:bench-reviewer/ri-c2b-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1bff2071f77f846d810a4c4a368333f1ba7131b9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2b-standards@7ccd9aaa",
+            "digest": "sha256:967eae43727df8e21843fa1edbd1848b329683de2aa63279f4a178391a55fe64",
+            "excerpt": "Standards: 5 findings. Worst: the unique row detail is produced with the retained text and trimmed again in the discard file, and the stale constant and comments stay outside the fence."
+          },
+          "axis": "Standards",
+          "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "tip": "7ccd9aaab3a0f4be51d8b2bab0041f8e8ac28835",
+          "finding_ids": ["R35", "R36", "R37", "R38", "R39"],
+          "supersedes": []
+        },
+        {
+          "id": "ri-c2b-r1-spec",
+          "performer": "claude:bench-reviewer/ri-c2b-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1bff2071f77f846d810a4c4a368333f1ba7131b9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2b-spec@7ccd9aaa",
+            "digest": "sha256:d1bccb8eb975de85e06923e40a7de8f18b8463ad019a90a1507053cc268a25d4",
+            "excerpt": "Spec: 1 finding. Worst: the retire wrapper slugs the last raw argument instead of the operand the retire parsed, so a trailing -- hides the listing."
+          },
+          "axis": "Spec",
+          "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "tip": "7ccd9aaab3a0f4be51d8b2bab0041f8e8ac28835",
+          "finding_ids": ["R40"],
+          "supersedes": []
+        },
+        {
+          "id": "ri-c2b-r1-coverage",
+          "performer": "claude:bench-reviewer/ri-c2b-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1bff2071f77f846d810a4c4a368333f1ba7131b9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2b-coverage@7ccd9aaa",
+            "digest": "sha256:8eb9d23b2df1d34aab4753dd6f23d3fbbe823c550600dabc71bac27715356607",
+            "excerpt": "Coverage: 5 findings. Worst: a symref at the planned discarded path makes the apply skip the write and delete the branch with a dangling recovery cell."
+          },
+          "axis": "Coverage",
+          "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "tip": "7ccd9aaab3a0f4be51d8b2bab0041f8e8ac28835",
+          "finding_ids": ["R41", "R42", "R43", "R44", "R45"],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
