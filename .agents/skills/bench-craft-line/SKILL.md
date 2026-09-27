@@ -52,13 +52,13 @@ A fourth signal, **leverage**, overrides the table. An artifact that steers futu
 | Ticket implementation | cheap + low |
 | Review axis | conditional + high |
 
-The conditional review line uses high effort and ~1 iteration. A Codex mid implementation sends each axis to the Codex top binding. Every other implementation sends each axis to the invoking harness's mid binding. A different implementation model, or a session beyond the planned ticket authors, requires user direction. The ticket author can adjust effort in its own session and reports the change.
+The conditional review line uses high effort and ~1 iteration. A Codex mid implementation sends each axis to the Codex top binding. Every other implementation sends each axis to the invoking harness's mid binding. A first review round runs each axis on this conditional line. Only a confirming round or a later round can move an axis to the top binding, and only at the reviewer's direction.
 
-These are starting defaults, not a flat rule. Every ticket author runs on the spec's declared `Line:`.
+These are starting defaults, not a flat rule. Every ticket author runs on the spec's declared `Line:`. A different implementation model, or a session beyond the planned ticket authors, requires user direction. The ticket author can adjust effort in its own session and reports the change.
 
-A post-review repair runs at low effort. The author raises that effort only when the repair is at risk of failure at low effort, and reports the raise in one line. The repair session keeps the ticket's declared model.
+A post-review repair keeps the declared model and the declared effort of its ticket.
 
-The leverage override still wins for orchestration and implementation. The conditional review line owns review.
+The leverage override still wins for orchestration, implementation, and repair, so a repair of guidance runs at high effort. The conditional review line owns review.
 `craft-delegate` owns the author venue; this skill routes the author.
 
 ## Delegated author lines
