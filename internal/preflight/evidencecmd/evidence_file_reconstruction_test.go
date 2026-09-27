@@ -91,14 +91,7 @@ func TestReviewFileReconstruction(t *testing.T) {
 		}
 		t.Run(test.Name, func(t *testing.T) {
 			root, _, args := preflighttest.SeedReviewPair(t, test.Pair)
-			want := ""
-			if test.Stored {
-				want = string(preflighttest.ReviewBaseline(t, test.Name))
-			} else if out, code := diff.Command(preflighttest.DiffArgs(args)); code == 0 {
-				want = out
-			} else {
-				t.Fatalf("command response = (%d):\n%s", code, out)
-			}
+			want := test.Expected(t, diff.Command, args)
 			identity, sources, joined := reviewDiff(t, root, args)
 			if joined != want {
 				t.Fatalf("reconstructed diff differs from the expected response:\n%s\nwant\n%s", joined, want)

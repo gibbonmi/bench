@@ -105,6 +105,9 @@ const (
 	DiffSuffixRole = "diff-suffix"
 )
 
+// DiffRoles is every diff fragment role, prefix first and suffix last.
+func DiffRoles() []string { return []string{DiffPrefixRole, DiffFileRole, DiffSuffixRole} }
+
 // typeChangePatches is the file-to-symlink identity: two patches for one path.
 var typeChangePatches = ShapePatch{"notes/type-change", []string{"notes/type-change"}, 2}
 

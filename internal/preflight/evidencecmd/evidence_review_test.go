@@ -53,7 +53,7 @@ func TestEvidenceReviewAxes(t *testing.T) {
 	// The diff capture binds one row per fragment, prefix first and suffix last, and each
 	// other collector binds one row of its own kind.
 	wantRoles := map[string][]string{
-		"diff": {preflighttest.DiffPrefixRole, preflighttest.DiffFileRole, preflighttest.DiffSuffixRole}, "consumers": {"consumers"}, "coverage": {"coverage"},
+		"diff": preflighttest.DiffRoles(), "consumers": {"consumers"}, "coverage": {"coverage"},
 	}
 	var kinds, roles []string
 	for _, row := range metadata.Shared {
@@ -95,9 +95,9 @@ func TestEvidenceReviewProvenanceRows(t *testing.T) {
 	if len(manifest.Producers) != len(generated) || len(generated) < 5 {
 		t.Fatalf("producers = %d for %d generated sources, want one per fragment", len(manifest.Producers), len(generated))
 	}
-	wantProducers := map[string]string{
-		preflighttest.DiffPrefixRole: "bench diff", preflighttest.DiffFileRole: "bench diff", preflighttest.DiffSuffixRole: "bench diff",
-		"consumers": "bench consumers", "coverage": "bench coverage",
+	wantProducers := map[string]string{"consumers": "bench consumers", "coverage": "bench coverage"}
+	for _, role := range preflighttest.DiffRoles() {
+		wantProducers[role] = "bench diff"
 	}
 	byID := map[string]chargeevidence.ProducerRow{}
 	for _, producer := range manifest.Producers {

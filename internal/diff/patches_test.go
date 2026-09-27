@@ -16,14 +16,13 @@ func TestReviewFileReconstruction(t *testing.T) {
 	for _, test := range preflighttest.ReviewCases() {
 		t.Run(test.Name, func(t *testing.T) {
 			_, _, args := preflighttest.SeedReviewPair(t, test.Pair)
+			want := test.Expected(t, Command, args)
 			response, code := Command(preflighttest.DiffArgs(args))
 			if code != 0 {
 				t.Fatalf("command response = (%d):\n%s", code, response)
 			}
-			if test.Stored {
-				if baseline := string(preflighttest.ReviewBaseline(t, test.Name)); response != baseline {
-					t.Fatalf("command response =\n%s\nwant the stored response\n%s", response, baseline)
-				}
+			if response != want {
+				t.Fatalf("command response =\n%s\nwant the expected response\n%s", response, want)
 			}
 			snapshot, out, code := PairPatches(preflighttest.DiffArgs(args))
 			if code != 0 {

@@ -46,7 +46,7 @@ const (
 
 // ReviewFenceWith is the canonical review tree of a pinned pair with extra fence paths, for
 // a pair whose changed paths lie outside the canonical fence. A pair sets it in Base, so both
-// commits declare the same fence.
+// commits declare the same fence. SeedReviewPair seeds every base from it.
 func ReviewFenceWith(paths ...string) map[string]TreeEntry {
 	entries := map[string]TreeEntry{}
 	for _, file := range reviewCanonical(pairSlug, paths...) {
@@ -102,10 +102,7 @@ func SeedReviewPair(t *testing.T, pair ReviewPair) (root, slug string, args []st
 	root = t.TempDir()
 	t.Chdir(root)
 	RunGit(t, "init", "-q", "--object-format=sha1", "-b", "main")
-	base := map[string]TreeEntry{}
-	for _, file := range reviewCanonical(slug) {
-		base[file.path] = Regular(file.body)
-	}
+	base := ReviewFenceWith()
 	for path, entry := range pair.Base {
 		base[path] = entry
 	}
@@ -226,4 +223,19 @@ func ReviewBaseline(t *testing.T, name string) []byte {
 		t.Fatal(err)
 	}
 	return data
+}
+
+// Expected is the full diff response the case's pair must rebuild: the stored baseline where
+// one exists, else the current response of command over the pair that review arguments pin.
+// The caller passes the diff command, so this package does not import the diff owner.
+func (c ReviewCase) Expected(t *testing.T, command func([]string) (string, int), reviewArgs []string) string {
+	t.Helper()
+	if c.Stored {
+		return string(ReviewBaseline(t, c.Name))
+	}
+	out, code := command(DiffArgs(reviewArgs))
+	if code != 0 {
+		t.Fatalf("command response = (%d):\n%s", code, out)
+	}
+	return out
 }
