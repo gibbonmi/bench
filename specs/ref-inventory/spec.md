@@ -661,7 +661,16 @@ RI94 pins a date segment with extra bytes, and RI95 pins the UTC date for a loca
           "native_ref": "claude:agent/ri-t4-author-20260927@114f94a2d6541d11833af640e5a886cbe8d01966"
         }
       ],
-      "5-list-retire-candidates.md": []
+      "5-list-retire-candidates.md": [
+        {
+          "session": "claude:bench-writer/ri-t5-author",
+          "assignment": "ri-t5-author",
+          "model": "opus",
+          "effort": "high",
+          "source": "505a4c659f8000ae0a088f42038bc69fbfc782ef",
+          "native_ref": "claude:agent/ri-t5-author-20260927@505a4c659f8000ae0a088f42038bc69fbfc782ef"
+        }
+      ]
     }
   },
   "chunks": [
