@@ -331,15 +331,15 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
 | RI39 | 39 | The outcome row's recovery cell equals the discarded ref | `planned` | A row with recovery `none` hides the handle |
 | RI40 | 40 | `--target <id>` for a landed unrecorded branch applies with recovery `none` and writes no discarded ref | `planned` | A ref for a landed row fills the namespace with noise |
 | RI41 | 41 | `--target <label>` for a recorded active assignment plans through the record and prints no `class=` prefix | `planned` | A fallback that shadows the record breaks the release route |
-| RI42 | 42 | The discarded ref path equals `refs/bench/discarded/` plus the UTC date plus `/` plus the branch path without `refs/heads/` | `planned` | A path without the date defeats the sweep |
-| RI43 | 43 | A ref dated D is deleted at the instant D plus 30 days 00:00:00Z, and the swept count is 1 | `planned` | A sweep that skips the namespace leaves the ref |
-| RI44 | 44 | A ref dated D survives at the instant D plus 29 days 23:59:59Z, and the swept count is 0 | `planned` | An off-by-one sweep removes a live handle |
-| RI45 | 45 | A planted ref dated today survives the lifecycle emptying pass while a planted recovery ref is deleted | `planned` | A namespace in the emptying list loses the handle |
-| RI46 | 46 | A planted ref whose date segment is `latest` survives and the swept count is 0 | `planned` | A parser that treats a bad date as old deletes it |
-| RI47 | 47 | A ref moved between the listing and the delete stays, and the sweep reports an error | `planned` | A delete without the listed object removes the moved ref |
-| RI93 | 47 | A discarded symref dated past the window leaves its target ref in place after the sweep | `planned` | A delete that follows the symref removes a branch outside the namespace |
-| RI94 | 46 | A planted ref whose date segment is `20200101x` survives and the swept count is 0 | `planned` | A parser that reads the first eight bytes deletes the ref |
-| RI95 | 42 | The path function renders the UTC date for an instant whose local date differs from its UTC date | `planned` | A renderer that formats the local date names the wrong day |
+| RI42 | 42 | The discarded ref path equals `refs/bench/discarded/` plus the UTC date plus `/` plus the branch path without `refs/heads/` | `internal/worktree/reconcile_test.go` (`TestDiscardedRefNamesTheDateAndTheBranchPath`) | A path without the date defeats the sweep |
+| RI43 | 43 | A ref dated D is deleted at the instant D plus 30 days 00:00:00Z, and the swept count is 1 | `internal/worktree/reconcile_test.go` (`TestSweepDeletesADiscardedRefAtThirtyDays`) | A sweep that skips the namespace leaves the ref |
+| RI44 | 44 | A ref dated D survives at the instant D plus 29 days 23:59:59Z, and the swept count is 0 | `internal/worktree/reconcile_test.go` (`TestSweepDeletesADiscardedRefAtThirtyDays`) | An off-by-one sweep removes a live handle |
+| RI45 | 45 | A planted ref dated today survives the lifecycle emptying pass while a planted recovery ref is deleted | `internal/worktree/reconcile_test.go` (`TestSweepKeepsATodayDiscardedRefWhileItEmptiesRecovery`) | A namespace in the emptying list loses the handle |
+| RI46 | 46 | A planted ref whose date segment is `latest` survives and the swept count is 0 | `internal/worktree/reconcile_test.go` (`TestSweepKeepsADiscardedRefWithAnUnparseableDate`) | A parser that treats a bad date as old deletes it |
+| RI47 | 47 | A ref moved between the listing and the delete stays, and the sweep reports an error | `internal/worktree/reconcile_test.go` (`TestSweepRefusesADiscardedRefMovedAfterListing`) | A delete without the listed object removes the moved ref |
+| RI93 | 47 | A discarded symref dated past the window leaves its target ref in place after the sweep | `internal/worktree/reconcile_test.go` (`TestSweepDeletesADiscardedSymrefAndNotItsTarget`) | A delete that follows the symref removes a branch outside the namespace |
+| RI94 | 46 | A planted ref whose date segment is `20200101x` survives and the swept count is 0 | `internal/worktree/reconcile_test.go` (`TestSweepKeepsADiscardedRefWithAnUnparseableDate`) | A parser that reads the first eight bytes deletes the ref |
+| RI95 | 42 | The path function renders the UTC date for an instant whose local date differs from its UTC date | `internal/worktree/reconcile_test.go` (`TestDiscardedRefNamesTheDateAndTheBranchPath`) | A renderer that formats the local date names the wrong day |
 | RI48 | 48 | Retire of slug `s` with one active assignment labelled `s-build` prints one `superseded candidate:` line with its id | `planned` | A retire without the listing leaves the assignment with no route |
 | RI49 | 49 | The candidate line ends with `bench worktree clean --discard-branch --target <assignment id>` | `planned` | A line without the command needs a lookup |
 | RI50 | 50 | Retire with two unique unrecorded refs prints `unique refs: 2 — bench worktree clean --discard-branch --unclaimed` | `planned` | A retire without the count hides the inventory |
@@ -651,7 +651,16 @@ RI94 pins a date segment with extra bytes, and RI95 pins the UTC date for a loca
           "preserved": "5c54f668f2d79291e447dda034c78a2046d9d999 on bench/assign/9cd9510fff4093f7f9f4456f6a029560/3a0fa26e2c3c38179f908f3636fb07ed, the RI-C2a chunk tip"
         }
       ],
-      "4-discard-a-unique-ref-by-target.md": [],
+      "4-discard-a-unique-ref-by-target.md": [
+        {
+          "session": "claude:bench-writer/ri-t4-author",
+          "assignment": "ri-t4-author",
+          "model": "opus",
+          "effort": "high",
+          "source": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "native_ref": "claude:agent/ri-t4-author-20260927@114f94a2d6541d11833af640e5a886cbe8d01966"
+        }
+      ],
       "5-list-retire-candidates.md": []
     }
   },
