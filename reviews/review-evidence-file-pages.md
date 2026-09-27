@@ -484,6 +484,19 @@ this session after its commit. Its mapping met the loop, reproduction, seam,
 and close-out phases. It skipped a written list of ranked hypotheses, an
 expected-failure commit, and a line declaration.
 
+## RE2 chunk review, round 5
+
+This is the confirming round at chunk tip `064d704c`. The shared evidence is
+`sha256:6751997c7a18cdbb3f38018df5c32ef94ccf0858530c4e8480d2c2c427969d43`.
+Each axis ran in a fresh `bench-reviewer` session on fable at high effort.
+
+Raw findings: Standards 0, Spec 0, Coverage 0. Repair targets: 0. R18 is
+confirmed. The whole `cmd/bench` package and `package-core-guard` passed,
+and no caller of the shared spill helper lost a check.
+
+Advice: `Find` accepts a spill line at any position, but the bound writes it
+only in the first five lines. `spillDirOf` still reads a fixed line.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1380,6 +1393,72 @@ expected-failure commit, and a line declaration.
           "finding_ids": [],
           "supersedes": [
             "re2-r3-coverage"
+          ]
+        },
+        {
+          "id": "re2-r5-standards",
+          "performer": "claude:bench-reviewer/re2-r5-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "55535b280f1be9585e022d1fdd7ad02b73464efd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re2-r5-standards@064d704c",
+            "digest": "sha256:0214e1a6f7d8fd6875b5bcd91845d0b1cf92d2b89d87be4b7041a31b2680d07d",
+            "excerpt": "Standards: 0 findings. Worst: none."
+          },
+          "axis": "Standards",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "064d704c973733d833b5b3ff435e938af904bc3a",
+          "finding_ids": [],
+          "supersedes": [
+            "re2-r4-standards"
+          ]
+        },
+        {
+          "id": "re2-r5-spec",
+          "performer": "claude:bench-reviewer/re2-r5-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "55535b280f1be9585e022d1fdd7ad02b73464efd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re2-r5-spec@064d704c",
+            "digest": "sha256:a672197d8e5c4170f6e300062addb831c7be9440f6282c9223ff82a2ba90b5b9",
+            "excerpt": "Spec: 0 findings. Worst: none."
+          },
+          "axis": "Spec",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "064d704c973733d833b5b3ff435e938af904bc3a",
+          "finding_ids": [],
+          "supersedes": [
+            "re2-r4-spec"
+          ]
+        },
+        {
+          "id": "re2-r5-coverage",
+          "performer": "claude:bench-reviewer/re2-r5-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "55535b280f1be9585e022d1fdd7ad02b73464efd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re2-r5-coverage@064d704c",
+            "digest": "sha256:117f1f0a0cd1080db4bf4c4360c7c12e7116b2f13d4875480bc5cbb13addfca7",
+            "excerpt": "Coverage: 0 findings. Worst: none."
+          },
+          "axis": "Coverage",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "064d704c973733d833b5b3ff435e938af904bc3a",
+          "finding_ids": [],
+          "supersedes": [
+            "re2-r4-coverage"
           ]
         }
       ]
