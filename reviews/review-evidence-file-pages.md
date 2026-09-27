@@ -336,6 +336,43 @@ The orchestrator ran the last probe as the independent coordinator probe.
 Each restore reads `yes`. The R14 red occurred before the fix. The repair
 session ran the three ticket checks at `4b23d9d6`, and each check passed.
 
+## RE2 chunk review, round 2
+
+This is the confirming round at chunk tip `4b23d9d6`. The shared evidence is
+`sha256:15919f4f7ede8345129fb719e795c0efa615042651558a6988ce6313abff63a9`.
+Each axis ran in a fresh `bench-reviewer` session on fable at high effort and
+read the repair delta `46e287c8..4b23d9d6`.
+
+Raw findings: Standards 2, Spec 0, Coverage 0. Repair targets: 2. R5 to R15
+are confirmed as folded, and R8 and R10 stay no-op.
+
+### Standards, round 2
+
+Findings: 2. Worst: R16.
+
+- R16 (auto-fix, confidence 5): `ReviewFenceWith` in `reviewfiles.go:50` and
+  `SeedReviewPair` in `reviewfiles.go:105` each turn every canonical file into
+  a regular entry at its path. The one-source rule applies.
+- R17 (auto-fix, confidence 4): `internal/diff/patches_test.go:19` and
+  `evidence_file_reconstruction_test.go:93` each state the expected bytes of a
+  case: the stored baseline, or else the current command response.
+
+### Spec, round 2
+
+Findings: 0. RE1 to RE9 remain covered. The plan commit records the reviewer
+decisions and changes no acceptance row or check.
+
+Advice: the consumers clause in the Implementation decisions does not name
+the R14 exception.
+
+### Coverage, round 2
+
+Findings: 0. The probes for R11 and R12 now bite. R13, R14, and R15 hold.
+
+Advice: the Won't-handle line for prefix settings over-claims, because a
+charge under `diff.noprefix` refuses only when a decoded path leaves the
+inventory. The refusal comparator is a substring match.
+
 ```bench-review-record
 {
   "version": 2,
@@ -868,6 +905,75 @@ session ran the three ticket checks at `4b23d9d6`, and each check passed.
             "R13"
           ],
           "supersedes": []
+        },
+        {
+          "id": "re2-r2-standards",
+          "performer": "claude:bench-reviewer/re2-r2-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "d33c40e2d45e64827cafe2c98aab807789b5c1bd",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/re2-r2-standards@4b23d9d6",
+            "digest": "sha256:3aa9e1d3207028762d46c1ff4101db2021d3f68eee3794e6d210dcccc562713f",
+            "excerpt": "Standards: 2 findings. Worst: `internal/preflight/preflighttest/reviewfiles.go:50` restates the canonical-tree-to-entries loop of `SeedReviewPair`."
+          },
+          "axis": "Standards",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "4b23d9d69c29853ce37a9f923ecf2203c3809856",
+          "finding_ids": [
+            "R16",
+            "R17"
+          ],
+          "supersedes": [
+            "re2-r1-standards"
+          ]
+        },
+        {
+          "id": "re2-r2-spec",
+          "performer": "claude:bench-reviewer/re2-r2-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "d33c40e2d45e64827cafe2c98aab807789b5c1bd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re2-r2-spec@4b23d9d6",
+            "digest": "sha256:a672197d8e5c4170f6e300062addb831c7be9440f6282c9223ff82a2ba90b5b9",
+            "excerpt": "Spec: 0 findings. Worst: none."
+          },
+          "axis": "Spec",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "4b23d9d69c29853ce37a9f923ecf2203c3809856",
+          "finding_ids": [],
+          "supersedes": [
+            "re2-r1-spec"
+          ]
+        },
+        {
+          "id": "re2-r2-coverage",
+          "performer": "claude:bench-reviewer/re2-r2-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "d33c40e2d45e64827cafe2c98aab807789b5c1bd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re2-r2-coverage@4b23d9d6",
+            "digest": "sha256:2aef6ef79442700a9f3fe43823265d26c1f2112d04cfa2c3c5084bd69d1d4b04",
+            "excerpt": "Coverage: 0 findings. Worst: none \u2014 all five folds confirmed at 4b23d9d6, both silent-in-r1 probes now bite, and the focused suites are green."
+          },
+          "axis": "Coverage",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "4b23d9d69c29853ce37a9f923ecf2203c3809856",
+          "finding_ids": [],
+          "supersedes": [
+            "re2-r1-coverage"
+          ]
         }
       ]
     }
