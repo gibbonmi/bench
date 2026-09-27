@@ -323,6 +323,41 @@ Each author reran its plan checks at the repair tip `09611663` on a clean tree.
 The ticket 1 rows carry the repair 2 session as their performer. The JSON
 payload holds each result after the earlier rows.
 
+## RI-C1a chunk review, round 3
+
+The confirming round read the repair 2 delta `4b80686a..09611663` and the plan
+delta `b0701a02..b24187e9`, with the whole chunk as context. The record commit
+`1a0ae536` follows the tip, and the shared evidence is `sha256:b898f652…`. Each
+axis ran in a fresh `bench-reviewer` session on opus at high effort. The charge
+limited each axis to findings above the blocking bar, because the chunk's two
+repair cycles are spent. Only the Coverage axis ran probes, and it left the
+tree clean.
+
+Every axis returned zero blocking findings. Standards confirmed R13, R14, R15,
+R16, and R18, and found no duplicated knowledge in the repair 2 delta. Spec
+confirmed R13, R17 with D3, and R18, and re-verified every RI-C1a row at the
+tip by test name. Coverage confirmed R15 with four call-site unwrap probes, each
+`bit` with restore `yes`, and confirmed that the repair 2 delta changes no
+production behavior.
+
+Advice, with no finding id, which the orchestrator carries to the final
+reconciliation:
+
+- The cost sentence still omits one ancestry check per recorded holder per
+  open ref.
+- A branch set to an annotated tag object fails closed at the apply. This
+  predates the chunk.
+- A fork under two unique roots has no row. The code names the lexically first
+  root.
+- The RI73 fixture never asserts that its landed row is present.
+- A short name ambiguous with a tag drops the branch from the sweep. That
+  excludes and never deletes.
+- The `holder` glossary entry states the recorded kinds without the
+  content-landed exclusion.
+
+RI-C1a is complete at tip `09611663`. Repair cycles consumed: 2 of 2. The
+hardening allowance is unused.
+
 ```bench-review-record
 {
   "version": 2,
@@ -841,6 +876,66 @@ payload holds each result after the earlier rows.
           "tip": "4b80686a12ea46afa0e6c0ba4fe9aab2e00935f6",
           "finding_ids": ["R17"],
           "supersedes": ["ri-c1a-r1-coverage"]
+        },
+        {
+          "id": "ri-c1a-r3-standards",
+          "performer": "claude:bench-reviewer/ri-c1a-standards-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8cb477fca58ec20c7e531218bc6ed542a9e7391a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c1a-standards-r3@09611663",
+            "digest": "sha256:e66920a0027f6cc0fdf894cfbe376e8270ea4e1484945d8bfc26559b382b97df",
+            "excerpt": "Standards round 3: 0 blocking findings. R13, R14, R15, R16, and R18 confirmed; the repair 2 delta adds no duplicated knowledge."
+          },
+          "axis": "Standards",
+          "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
+          "tip": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
+          "finding_ids": [],
+          "supersedes": ["ri-c1a-r2-standards"]
+        },
+        {
+          "id": "ri-c1a-r3-spec",
+          "performer": "claude:bench-reviewer/ri-c1a-spec-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8cb477fca58ec20c7e531218bc6ed542a9e7391a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c1a-spec-r3@09611663",
+            "digest": "sha256:7b22718f680d7295995d5124cfb02b38204aa2cf9f033f43c34d68c47de84b58",
+            "excerpt": "Spec round 3: 0 blocking findings. R13, R17 with D3, and R18 confirmed; every RI-C1a row re-verified at 09611663."
+          },
+          "axis": "Spec",
+          "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
+          "tip": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
+          "finding_ids": [],
+          "supersedes": ["ri-c1a-r2-spec"]
+        },
+        {
+          "id": "ri-c1a-r3-coverage",
+          "performer": "claude:bench-reviewer/ri-c1a-coverage-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8cb477fca58ec20c7e531218bc6ed542a9e7391a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c1a-coverage-r3@09611663",
+            "digest": "sha256:6f5607871dde38df253baad1cc70c50847ec67fca327955f29049751deb7e906",
+            "excerpt": "Coverage round 3: 0 blocking findings. R15 confirmed by four call-site unwrap probes; the repair 2 delta changes no production behavior."
+          },
+          "axis": "Coverage",
+          "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
+          "tip": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
+          "finding_ids": [],
+          "supersedes": ["ri-c1a-r2-coverage"]
         }
       ]
     }
