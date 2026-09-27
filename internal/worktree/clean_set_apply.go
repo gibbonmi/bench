@@ -203,7 +203,8 @@ func applyOutcomes(stdout io.Writer, plans, stale []CleanupPlan, err error, repl
 // began. Each one reuses its mode's own single row proof, so neither derives drift twice.
 //
 // Each returns the index of the member that refused, so a fault that is not drift can name
-// itself in that member's row instead of disappearing behind an unstarted detail.
+// itself in that member's row instead of disappearing behind an unstarted detail. An explicit
+// index counts the recorded members first, then the unclaimed ones, as the set's plans do.
 func preflightExplicitSet(j joins, root string, set explicitCleanupSet, options CleanupOptions) (int, error) {
 	for i, planned := range set.rows {
 		if !planned.plan.Action.Removes() {
@@ -211,6 +212,14 @@ func preflightExplicitSet(j joins, root string, set explicitCleanupSet, options 
 		}
 		if _, err := requalifyExplicitRow(j, root, planned, options); err != nil {
 			return i, err
+		}
+	}
+	for k, planned := range set.unrecorded {
+		if !planned.plan.Action.Removes() {
+			continue
+		}
+		if _, err := requalifyUnrecordedRow(j, root, planned, options); err != nil {
+			return len(set.rows) + k, err
 		}
 	}
 	return -1, nil

@@ -289,7 +289,7 @@ func TestCleanUnclaimedBulkSweepKeepsUniqueRefs(t *testing.T) {
 }
 
 // TestCleanUnclaimedPlanNamesApplyOnlyWhenARowRemoves is RI22 and RI66, and it pins the
-// retained detail of a unique row (RI10) in this one test file.
+// discard route that ends a unique row's detail (RI10 and RI16) in this one test file.
 func TestCleanUnclaimedPlanNamesApplyOnlyWhenARowRemoves(t *testing.T) {
 	t.Parallel()
 	root, home := unclaimedBranchFixture(t)
@@ -298,7 +298,7 @@ func TestCleanUnclaimedPlanNamesApplyOnlyWhenARowRemoves(t *testing.T) {
 	plan, stderr, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
 	rows := cleanupRows(plan)
 	if code != 0 || stderr != "" || strings.Contains(plan, "--apply") || len(rows) != 1 ||
-		!strings.HasSuffix(cleanupRowValue(cleanupRowFields(rows[0])[6]), "retained: content main lacks") {
+		!strings.HasSuffix(cleanupRowValue(cleanupRowFields(rows[0])[6]), "; bench worktree clean --discard-branch --target "+strings.Repeat("f", 32)) {
 		t.Fatalf("unique-only plan exit=%d stderr=%q stdout=%q, want a retained row and no apply action", code, stderr, plan)
 	}
 	addUnclaimedBranch(t, root, "b")

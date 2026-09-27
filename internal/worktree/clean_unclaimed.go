@@ -43,9 +43,14 @@ func (set unclaimedAssignmentSet) faulted() bool {
 	return false
 }
 
-// plan is the cleanup row one classified branch renders.
+// plan is the cleanup row one classified branch renders. A unique row ends with the explicit
+// discard command, the one route that removes it.
 func (row unclaimedAssignmentBranch) plan(fingerprint string) CleanupPlan {
-	return CleanupPlan{Target: row.ref, Action: row.action(), Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: fingerprint, Reason: row.detail(row.reason)}
+	suffix := row.reason
+	if row.class == classUnique {
+		suffix = discardTargetCommand(row.ref)
+	}
+	return CleanupPlan{Target: row.ref, Action: row.action(), Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: fingerprint, Reason: classDetail(row.refVerdict, suffix)}
 }
 
 // unclaimedBranchReason reports whether ref sits in a Bench-created branch namespace and
@@ -174,9 +179,13 @@ func unclaimedReplan(options CleanupOptions) []axi.InvocationArgument {
 
 // UnclaimedPlanCommand is the plan-only command that status routes an unclaimed ref to. It
 // carries the modifiers and the selector of the re-plan this mode's refusal offers.
-func UnclaimedPlanCommand() string {
-	words := append([]string{"bench", "worktree", "clean"}, cleanupModifierFlags(unclaimedOptions())...)
-	return strings.Join(append(words, unclaimedSelector), " ")
+func UnclaimedPlanCommand() string { return cleanCommand(unclaimedOptions(), unclaimedSelector) }
+
+// cleanCommand spells one clean command line for a reader: the verb, the modifiers options
+// carries, then the selectors.
+func cleanCommand(options CleanupOptions, selectors ...string) string {
+	words := append([]string{"bench", "worktree", "clean"}, cleanupModifierFlags(options)...)
+	return strings.Join(append(words, selectors...), " ")
 }
 
 // applyUnclaimedAssignmentSet deletes each landed and subsumed branch at the exact object
