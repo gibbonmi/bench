@@ -64,7 +64,7 @@ Classification:
 
 Plan rows and the bulk sweep:
 
-13. As a reviewer, I want each unclaimed plan row's detail to start with `class=<class>`, so that I read the class without a second command.
+13. As a reviewer, I want each classified row's detail to start with `class=<class>`, so that I read the class without a second command.
 14. As a reviewer, I want a subsumed row to continue with `holder=<ref>`, so that I can verify reachability myself.
 15. As a reviewer, I want a landed or subsumed row to carry the action `discard-remove`, so that the sweep's reach is visible.
 16. As a reviewer, I want a unique row to carry `retain` and the explicit discard command, so that the bulk sweep never offers it.
@@ -146,7 +146,9 @@ The error row's detail names the ref and the object type.
 The landed class takes precedence over the subsumed class.
 A holder is an active or cleanup-pending recorded assignment branch, or a unique root.
 No landed ref is a holder.
+A recorded assignment branch that `LandedInDefault` proves landed by content only is not a holder, including active and cleanup-pending assignments.
 A ref beneath an ancestry-landed ref is itself landed by ancestry, because ancestry is transitive.
+An unrecorded symbolic ref in either Bench namespace produces an error row that names the ref and `symref`, never a silent exclusion.
 
 A ref that is landed by content only, the squash fold through the reverse-apply proof, is deleted by the bulk sweep but holds nothing.
 So a ref under a content-landed ref that is not itself landed classifies as unique.
@@ -283,7 +285,7 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
 | RI2 | 2 | A recorded active branch with one unique commit prints no row | `planned` | A dropped record filter offers live work |
 | RI3 | 3 | A checked-out unrecorded branch and the default branch print no row | `internal/worktree/clean_unclaimed_test.go` (`TestPlanUnclaimedAssignmentSetExcludesClaimedCheckedOutAndForeignRefs`) and `internal/worktree/clean_unclaimed_test.go` (`TestPlanUnclaimedAssignmentSetExcludesDefaultBranchInAssignmentNamespace`) | A dropped checkout filter offers a live checkout |
 | RI4 | 4 | A branch at the `main` tip prints `class=landed` and action `discard-remove` | `planned` | A classifier that reads content alone misses the ancestor proof |
-| RI5 | 5 | A branch whose one commit was squash-folded into `main` prints `class=landed` | `planned` | A classifier that stops at ancestry or cherry prints `unique` |
+| RI5 | 5 | A branch whose two commits were squash-folded into `main` prints `class=landed` | `planned` | A classifier that stops at ancestry or cherry prints `unique` |
 | RI6 | 6 | Two unrecorded branches at one unique tip print the lexically first as `class=unique` and the second as `class=subsumed holder=<first>` | `planned` | A rule that marks both subsumed deletes the tip |
 | RI7 | 7 | A branch one commit under a unique ref prints `class=subsumed holder=<that ref>` | `planned` | A rule that reads equality alone prints `unique` |
 | RI8 | 8 | A branch one commit under an active recorded branch prints `class=subsumed holder=<active branch>` | `planned` | A rule that ignores recorded branches prints `unique` |
@@ -291,7 +293,7 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
 | RI10 | 10 | A branch with one commit `main` lacks and no holder prints `class=unique` and action `retain` | `planned` | The old sweep prints `discard-remove` for this row |
 | RI11 | 11 | A loose ref file under `.git/refs/heads/bench/assign/` that names a blob prints action `error` with the ref and `blob` in its detail, and no fingerprint | `planned` | A classifier that skips resolution offers the set |
 | RI12 | 12 | Two consecutive plans over one repository print identical rows and change no ref | `planned` | A plan that writes a ref changes the second output |
-| RI13 | 13 | Every unclaimed row's detail cell begins with `class=` | `planned` | A row without the prefix hides the class |
+| RI13 | 13 | Every classified row's detail cell begins with `class=` | `planned` | A row without the prefix hides the class |
 | RI14 | 14 | A subsumed row's detail contains ` holder=refs/heads/` | `planned` | A row without the holder cannot be verified |
 | RI15 | 15 | A landed row and a subsumed row both carry action `discard-remove` | `planned` | A subsumed row marked retain never retires |
 | RI16 | 16 | A unique row's detail ends with `bench worktree clean --discard-branch --target <assignment id>` | `planned` | A retained row without a route strands the ref |
@@ -358,6 +360,11 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
 | RI80 | 51 | `bench spec retire --help` prints no candidate line and no count line | `planned` | A wrapper that appends on every call pollutes the help |
 | RI81 | 9 | A adds `x=1`, B changes `x` to `2` and is squash-folded into `main`: the plan prints B as `class=landed` and A as `class=unique` | `planned` | A holder set that admits a content-landed ref deletes A with no surviving handle |
 | RI82 | 63 | The glossary term `holder` names a recorded assignment branch or a unique root, and no landed ref | `review-owned` | A term that admits a landed ref contradicts the rule |
+| RI83 | 3, 21 | An unrecorded symref in either Bench namespace produces action `error` with its name and `symref` in the detail, no class prefix, an empty set fingerprint, no apply action, and both apply forms refuse before any delete while the target and a removable sibling survive | `planned` | Silent exclusion omits the required error row, and a dereferenced classification lets the apply delete the target |
+| RI84 | 8, 9, 21 | Recorded R adds `x=1`, then changes it to `x=2`, and `main` receives a squash of R; unrecorded A at R's first commit with no other holder prints `class=unique` and `retain`, for an active R and for a cleanup-pending R | `planned` | A holder set that admits a content-landed recorded R prints A as subsumed and authorizes its deletion before R's later retirement |
+| RI85 | 17 | A plan, then `main` fast-forwarded onto the unique ref so that only its class changes, then the old fingerprint refuses as stale | `planned` | A fingerprint without the class accepts a row whose tip and holder are unchanged |
+| RI86 | 10 | A branch one commit under a complete record's branch prints `class=unique` | `planned` | A holder filter that admits every record state prints `subsumed` |
+| RI87 | 8 | A branch one commit under a cleanup-pending recorded branch prints `class=subsumed holder=<that branch>` | `planned` | A holder filter limited to active records prints `unique` |
 
 Not covered: story 53 — reviewed exclusion, and the review round confirms that no hold surface is added.
 Not covered: story 54 — reviewed exclusion, and RI48 to RI52 show the listing discards nothing.
@@ -372,6 +379,10 @@ Not covered: story 56 — the build runs on fixtures only, and the reviewer runs
 - A ref under an active recorded branch: RI8.
 - A ref under an ancestry-landed ref, landed by transitivity: RI9, and under a content-landed ref: RI81.
 - A ref under a checked-out foreign branch: RI60.
+- A ref under a complete record's branch, and under a cleanup-pending recorded branch: RI86 and RI87.
+- A ref under a recorded branch that is landed by content only: RI84, unique.
+- An unrecorded symref in either Bench namespace: an error row, never a silent exclusion, RI83. Its detail names the ref and `symref`. The set has no fingerprint or apply action, and both apply forms refuse before any delete.
+- A stale fingerprint after a class change alone: RI85.
 - A ref that points at a blob: RI11, RI72, and RI73.
 - A plan over an empty namespace: RI23.
 - A stale fingerprint after a tip move: RI17, and after a class change: RI63, RI64, and RI65.
@@ -477,6 +488,15 @@ Ancestry is transitive, so every ref beneath an ancestry-landed ref is itself la
 By a second reviewer decision on 2026-09-27, through the Codex Astra route, no landed ref is a holder.
 The compiled map stays untouched, RI9 pins the transitive landed class, and RI81 pins the content-landed case.
 
+The RI-C1a chunk review added five rows by reviewer decision on 2026-09-27, through the Codex Astra route.
+RI83 fails a symbolic ref closed, because Git dereferences a symref on delete.
+The Coverage axis observed the deletion of a unique root and of `main` through such a ref.
+RI84 excludes a content-landed recorded branch from the holders, because its later retirement would leave a subsumed ref with no handle.
+
+RI85, RI86, and RI87 pin the class-only fingerprint binding and the two recorded states, because the review probes at those sites stayed silent.
+RI5 reads two commits, because a one-commit squash lands by patch containment.
+RI13 and story 13 read classified rows, because an error row carries no class prefix.
+
 ### Completion plan
 
 ```bench-completion-plan
@@ -506,6 +526,18 @@ The compiled map stays untouched, RI9 pins the transitive landed class, and RI81
           "effort": "high",
           "source": "f3ff2543aa7e40b07fd481fe4286161402d96d2b",
           "native_ref": "claude:agent/ri-t1-author-20260927@f3ff2543aa7e40b07fd481fe4286161402d96d2b"
+        },
+        {
+          "session": "claude:bench-writer/ri-t1-repair-1",
+          "assignment": "ri-t1-repair-1",
+          "model": "opus",
+          "effort": "high",
+          "source": "c6b2a74effa57cbafdd8bc449c9fbbb24d1468eb",
+          "native_ref": "claude:agent/ri-t1-repair-1-20260927@c6b2a74effa57cbafdd8bc449c9fbbb24d1468eb",
+          "predecessor": "claude:bench-writer/ri-t1-author",
+          "trigger": "user-directed",
+          "stopped": "ri-t1-author returned its final report and idle notification after the chunk-tip verification rerun at c6b2a74e; the worktree was clean and no further write came from it",
+          "preserved": "2ace6d83cbe1430ea443cdee7743d081e6a6aa54 on bench/assign/9cd9510fff4093f7f9f4456f6a029560/3a0fa26e2c3c38179f908f3636fb07ed, chunk tip c6b2a74effa57cbafdd8bc449c9fbbb24d1468eb"
         }
       ],
       "2-route-status-to-the-plan.md": [],

@@ -2,7 +2,7 @@
 
 Blocked by: 6-repair-glossary-shift-namespace.md
 Writes: internal/worktree/clean_classes.go (new), internal/worktree/clean_classes_test.go (new), internal/worktree/clean_unclaimed.go, internal/worktree/clean_unclaimed_test.go, internal/worktree/clean_landed_apply_test.go, internal/worktree/clean_set_apply_test.go, internal/worktree/clean_set_outcomes_test.go, internal/worktree/clean_set_wiring_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/status/status.go, tests/canary/docs-currency-token-diet/signal-vocabulary-drift, internal/status/status_producible_test.go, internal/systemtest/status_route_converge_test.go
-Covers: RI1, RI2, RI3, RI4, RI5, RI6, RI7, RI8, RI9, RI10, RI11, RI12, RI13, RI14, RI15, RI17, RI18, RI19, RI20, RI21, RI22, RI23, RI25, RI28, RI55, RI59, RI60, RI61, RI62, RI63, RI66, RI72, RI73, RI81
+Covers: RI1, RI2, RI3, RI4, RI5, RI6, RI7, RI8, RI9, RI10, RI11, RI12, RI13, RI14, RI15, RI17, RI18, RI19, RI20, RI21, RI22, RI23, RI25, RI28, RI55, RI59, RI60, RI61, RI62, RI63, RI66, RI72, RI73, RI81, RI83, RI84, RI85, RI86, RI87
 
 ## What to build
 
@@ -18,7 +18,10 @@ That row names the ref and the object type, and the set fingerprint stays empty.
 
 A holder is an active or cleanup-pending recorded assignment branch, or a unique root.
 No landed ref is a holder.
+A recorded assignment branch that `LandedInDefault` proves landed by content only is not a holder, including active and cleanup-pending assignments.
 A ref beneath an ancestry-landed ref is itself landed by ancestry, because ancestry is transitive.
+An unrecorded symbolic ref in either Bench namespace produces an error row that names the ref and `symref`, never a silent exclusion.
+
 A ref that is landed by content only is deleted by the bulk sweep but holds nothing.
 So a ref under a content-landed ref that is not itself landed classifies as unique.
 
@@ -59,6 +62,11 @@ The error-row fixture writes the loose ref file under `.git/refs/heads/` directl
 - [ ] An apply with the fingerprint, and an `--apply-current` run, each remove the landed and subsumed refs and keep the unique ref.
 - [ ] After each apply, every deleted tip stays reachable from `main` or from a surviving ref, with a ref under an ancestry-landed ref in the fixture.
 - [ ] A branch one commit under an ancestry-landed ref prints `class=landed` without a `holder=` field.
+- [ ] An unrecorded symref in either namespace prints action `error` with its name and `symref`, and the set has no fingerprint and no apply action.
+- [ ] Both apply forms refuse a set with a symref before any delete, and the target and a removable sibling survive.
+- [ ] An unrecorded ref at the first commit of a squash-folded recorded branch prints `class=unique` and `retain`, for an active and for a cleanup-pending record.
+- [ ] A plan, then `main` fast-forwarded onto the unique ref, then the old fingerprint refuses as stale.
+- [ ] A branch one commit under a complete record's branch prints `class=unique`, and one under a cleanup-pending recorded branch prints `class=subsumed holder=<that branch>`.
 - [ ] A adds `x=1`, B changes `x` to `2` and is squash-folded into `main`: the plan prints B as `class=landed` and A as `class=unique`.
 - [ ] A plan, one new commit on a subsumed ref, then the old fingerprint refuses as stale and prints `bench worktree clean --discard-branch --unclaimed`.
 - [ ] A plan, then a recorded active branch at a descendant of the unique ref, then the old fingerprint refuses as stale with the tip unchanged.
