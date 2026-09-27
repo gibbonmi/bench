@@ -210,7 +210,7 @@ func IdentifiedPack(t *testing.T, root, identity string) *chargeevidence.Pack {
 // storedBaselines holds each stored full diff response. The files are embedded, so a test
 // reads them from any working directory and under a trimmed build path.
 //
-//go:embed testdata/*.toon
+//go:embed testdata/review-documents.toon testdata/review-empty.toon testdata/review-shapes-no-renames.toon testdata/review-shapes-renames.toon
 var storedBaselines embed.FS
 
 // ReviewBaseline reads one stored full diff response. Each baseline is the output of the

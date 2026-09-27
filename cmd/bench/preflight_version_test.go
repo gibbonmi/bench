@@ -2,12 +2,14 @@ package main
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 	toonlib "github.com/toon-format/toon-go"
 )
 
@@ -101,12 +103,20 @@ Build it.
 }
 
 // runPreflight runs one preflight invocation through the real command and returns its
-// stdout, so the assertion grades the version the executable itself carries.
+// complete stdout, so the assertion grades the version the executable itself carries. An
+// over-bound response is cut, so the complete output comes from its spill file.
 func runPreflight(t *testing.T, args []string) string {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
 	if code := (Command{Stdout: &stdout, Stderr: &stderr}).Run(args); code != 0 || stderr.Len() != 0 {
 		t.Fatalf("%v = (%d, stderr=%q):\n%s", args, code, stderr.String(), stdout.String())
+	}
+	if spill, ok := responseboundtest.Find(stdout.String()); ok {
+		data, err := os.ReadFile(spill.Path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
 	}
 	return stdout.String()
 }
