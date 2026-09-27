@@ -497,6 +497,33 @@ and no caller of the shared spill helper lost a check.
 Advice: `Find` accepts a spill line at any position, but the bound writes it
 only in the first five lines. `spillDirOf` still reads a fixed line.
 
+## Final reconciliation
+
+Both chunk checkpoints are green. RE1 is accepted at `4d9e6aa8`, and RE2 is
+accepted at `064d704c`. The orchestrator ran the three final verifications at
+`d796eaa3`, and each passed.
+
+| Row | Evidence | State |
+|---|---|---|
+| RE1, RE2 | `TestReviewFilePageStability` | covered |
+| RE3, RE4, RE6 | `TestReviewFileIdentity` | covered |
+| RE5, RE7, RE8 | `TestReviewFileReconstruction` at the diff and preflight seams | covered |
+| RE9 | `TestReviewFileSelectedStream` | covered |
+| RE10 | the RE2 round records: no axis reused bytes, so no reuse decision arose | covered |
+| RE11 | the chunk-chain anchors and three workflow fixtures | covered |
+| RE12 | `TestReviewRecordChargeOrder` | covered |
+| RE13 | the narrow round table in the spec | covered |
+| RE14 | the full control and the byte-equal raw `git diff` check | covered |
+| RE15 | the reviewer disposition: the narrow shape stays provisional | covered |
+| RE16 | each axis read its own sources, and no receipt replaced a read | covered |
+
+The coverage check lists 11 rows without a seam-cell citation, because the
+approved seam cells name planned tests. This state is information, not a
+failure.
+
+Repair totals: RE1 used two cycles. RE2 used two cycles and two reviewer
+extensions.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1465,7 +1492,83 @@ only in the first five lines. `spillDirOf` still reads a fixed line.
     }
   ],
   "completion": {
-    "state": "pending"
+    "state": "completed",
+    "source_digest": "55535b280f1be9585e022d1fdd7ad02b73464efd",
+    "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+    "reconciliation": {
+      "RE1": "covered",
+      "RE2": "covered",
+      "RE3": "covered",
+      "RE4": "covered",
+      "RE5": "covered",
+      "RE6": "covered",
+      "RE7": "covered",
+      "RE8": "covered",
+      "RE9": "covered",
+      "RE10": "covered",
+      "RE11": "covered",
+      "RE12": "covered",
+      "RE13": "covered",
+      "RE14": "covered",
+      "RE15": "covered",
+      "RE16": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-coverage",
+        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+        "role": "integration-verification",
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "source_digest": "55535b280f1be9585e022d1fdd7ad02b73464efd",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/coverage@d796eaa3",
+          "digest": "sha256:d51087d4ae2f25ebd97601eca96569d172b58eeec14a2ebd2fb26c2bb29954dc",
+          "excerpt": "ok: coverage map valid \u2014 16 row(s)\nuncited: 11 row(s) with no seam-cell citation \u2014 RE1, RE2, RE3, RE4, RE5, RE6, RE7, RE8, RE9, RE11, RE12"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/review-evidence-file-pages/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-file-evidence",
+        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+        "role": "integration-verification",
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "source_digest": "55535b280f1be9585e022d1fdd7ad02b73464efd",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/file-evidence@d796eaa3",
+          "digest": "sha256:2a873133a6346058e4215595156c57ab8213e018074266baaeeeaaa8a08aea66",
+          "excerpt": "ok  \tgithub.com/gibbonmi/bench/internal/diff\t7.527s\nok  \tgithub.com/gibbonmi/bench/internal/git\t1.569s\nok  \tgithub.com/gibbonmi/bench/internal/consumers\t2.479s\nok  \tgithub.com/gibbonmi/bench/internal/chargeevidence\t0.276s\nok  \tgithub.com/gibbonmi/bench/internal/preflight\t20.033s\nok  \tgithub.com/gibbonmi/bench/internal/preflight/evidencecmd\t15.160s"
+        },
+        "requirement": "file-evidence",
+        "command": "go test -count=1 -parallel=2 ./internal/diff ./internal/git ./internal/consumers ./internal/chargeevidence ./internal/preflight/...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-workflow",
+        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+        "role": "integration-verification",
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "source_digest": "55535b280f1be9585e022d1fdd7ad02b73464efd",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/workflow@d796eaa3",
+          "digest": "sha256:3a028fd4e24ae45a6b158840952163049fa930488684e34fc028723ccce670bc",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,597\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "workflow",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
