@@ -604,11 +604,59 @@ RI88, rows RI89 to RI91, and row RI92. No chunk split, merged, or renamed, so
 the record's amendment maps each chunk id to itself from the RI-C1a plan
 digest to the current one. The checkpoint walks that chain.
 
+## RI-C2a author evidence
+
+The RI-C2a base is the accepted RI-C1b tip `c6d2cfbf`. Ticket 3 had a fresh
+`bench-writer` author on opus at high effort from the plan commit `47579b27`.
+That commit recorded the assignment and bound ticket 5 to the exported plan
+command spelling. The author committed `5c54f668` on a lane pass in one attempt,
+and the explicit-base build preflight is green at that tip.
+
+The ledger package owns `DiscardedRefNamespace`, the private date layout, and
+two functions. `DiscardedRef` renders the dated path from a UTC instant and a
+branch ref, and `DiscardedRefDate` parses the first segment back. The intent
+package re-exports all three names. `sweepLifecycleRefs` takes the resume
+instant and lists the discarded namespace beside the reset namespace. One new
+function `sweepable` owns both deletion rules. A discarded ref is swept when its
+date parses and the instant is at or past the date plus thirty days.
+
+The namespace stays out of the emptying list and out of the reset rule. The
+moved-ref refusal reuses the existing exact delete. The author checked the
+namespace pins: no conformance check and no `DATA_HANDLING.md` entry names the
+ledger namespaces, and `data-handling-derivation` is green. The alias test
+outside the fence lists aliases by hand and already omits two reset names, so
+the three new aliases have no row there.
+
+### Author probe verdicts
+
+Each probe ran through `bench probe` on the sweep tests, and each restore reads
+`yes`.
+
+| File | Mutation | Verdict |
+|---|---|---|
+| `internal/worktree/reconcile.go` | swap: the window to twenty-nine days | bit, RI44 |
+| `internal/worktree/reconcile.go` | swap: the unparseable-date keep removed | bit, RI46 |
+| `internal/worktree/reconcile.go` | swap: the namespace joins the emptying list | bit, RI44, RI45, RI46 |
+| `internal/intent/ledger/ledger.go` | swap: the `refs/heads/` strip removed | bit, RI42 |
+| `internal/worktree/reconcile.go` | swap: the namespace dropped from the sweep listing | bit, RI43, RI47 |
+
+The last row is the orchestrator's coordinator probe. The author's first form of
+the second probe was `invalid`, because the mutation left a Go variable unused.
+The rewritten form is the same mutation.
+
+### Verification
+
+The author reran its two plan checks at the tip `5c54f668` on a clean tree. The
+first worktree rerun printed an excerpt byte-identical to an earlier session's
+run, elapsed time included. The orchestrator asked for one more run with its raw
+output, and that run is the retained row. The JSON payload holds each result
+under the RI-C2a chunk.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ref-inventory/spec.md",
-  "plan_digest": "sha256:74f8fb4685ed7e515b51757c2cd9d36d59a79ba8659977672e3b3aad337a118a",
+  "plan_digest": "sha256:fdca5b94dd475ee46e691bd0f07ba9d59d7bb3607ead6199f405d4275cd465bd",
   "implementation_session": "",
   "chunks": [
     {
@@ -1424,6 +1472,53 @@ digest to the current one. The checkpoint walks that chain.
           "supersedes": ["ri-c1b-r1-coverage"]
         }
       ]
+    },
+    {
+      "id": "RI-C2a",
+      "base": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
+      "tip": "5c54f668f2d79291e447dda034c78a2046d9d999",
+      "plan_digest": "sha256:fdca5b94dd475ee46e691bd0f07ba9d59d7bb3607ead6199f405d4275cd465bd",
+      "source_digest": "f52ce0bb5f0ffb3d9977500f5989f20fc5b5bcea",
+      "acceptance_rows": ["RI42", "RI43", "RI44", "RI45", "RI46", "RI47"],
+      "verification": [
+        {
+          "id": "ri-c2a-3-worktree-r1",
+          "performer": "claude:bench-writer/ri-t3-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f52ce0bb5f0ffb3d9977500f5989f20fc5b5bcea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t3-author-20260927/3-worktree@5c54f668",
+            "digest": "sha256:f150490e501ec60c0a0ae8ba9e6d71509651701aa6a44524674d821736827ebb",
+            "excerpt": "github.com/gibbonmi/bench/internal/worktree,pass,52343"
+          },
+          "requirement": "3-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2a-3-ledger-r1",
+          "performer": "claude:bench-writer/ri-t3-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f52ce0bb5f0ffb3d9977500f5989f20fc5b5bcea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t3-author-20260927/3-ledger@5c54f668",
+            "digest": "sha256:3ed5d89c4490397a3d236ec4bd6fdf8aaca46245ba09f5644f63fe80400c0b50",
+            "excerpt": "github.com/gibbonmi/bench/internal/intent/ledger,pass,2"
+          },
+          "requirement": "3-ledger",
+          "command": "bench test --package ./internal/intent/ledger",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1433,6 +1528,16 @@ digest to the current one. The checkpoint walks that chain.
     {
       "from": "sha256:084df113f531adbc7d196def8c112c45a1925608d2a1e45099e9428dbb5ba82b",
       "to": "sha256:74f8fb4685ed7e515b51757c2cd9d36d59a79ba8659977672e3b3aad337a118a",
+      "chunk_ids": {
+        "RI-C1a": ["RI-C1a"],
+        "RI-C1b": ["RI-C1b"],
+        "RI-C2a": ["RI-C2a"],
+        "RI-C2b": ["RI-C2b"]
+      }
+    },
+    {
+      "from": "sha256:74f8fb4685ed7e515b51757c2cd9d36d59a79ba8659977672e3b3aad337a118a",
+      "to": "sha256:fdca5b94dd475ee46e691bd0f07ba9d59d7bb3607ead6199f405d4275cd465bd",
       "chunk_ids": {
         "RI-C1a": ["RI-C1a"],
         "RI-C1b": ["RI-C1b"],
