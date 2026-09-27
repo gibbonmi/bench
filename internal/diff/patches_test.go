@@ -9,58 +9,51 @@ import (
 )
 
 // TestReviewFileReconstruction is RE5 at the diff seam. Over each pinned pair, the command
-// still prints the stored monolithic response, the file patch partition rebuilds that stored
-// response byte for byte, and each path's patches equal Git's own patch for that path.
+// still prints the stored monolithic response where one exists, the file patch partition
+// rebuilds the command response byte for byte, and each path's patches equal Git's own
+// patch for that path.
 func TestReviewFileReconstruction(t *testing.T) {
-	for _, test := range []struct {
-		baseline string
-		pair     preflighttest.ReviewPair
-		want     []preflighttest.ShapePatch
-	}{
-		{"review-empty", preflighttest.ReviewPair{}, nil},
-		{"review-documents", preflighttest.ReviewDocuments(), preflighttest.ReviewDocumentPatches()},
-		{"review-shapes-renames", preflighttest.ReviewShapes(true), preflighttest.ReviewShapePatches(true)},
-		{"review-shapes-no-renames", preflighttest.ReviewShapes(false), preflighttest.ReviewShapePatches(false)},
-	} {
-		t.Run(test.baseline, func(t *testing.T) {
-			_, _, args := preflighttest.SeedReviewPair(t, test.pair)
-			baseline := string(preflighttest.ReviewBaseline(t, test.baseline))
-			if out, code := Command(preflighttest.DiffArgs(args)); code != 0 || out != baseline {
-				t.Fatalf("command response = (%d):\n%s\nwant the stored response\n%s", code, out, baseline)
+	for _, test := range preflighttest.ReviewCases() {
+		t.Run(test.Name, func(t *testing.T) {
+			_, _, args := preflighttest.SeedReviewPair(t, test.Pair)
+			response, code := Command(preflighttest.DiffArgs(args))
+			if code != 0 {
+				t.Fatalf("command response = (%d):\n%s", code, response)
+			}
+			if test.Stored {
+				if baseline := string(preflighttest.ReviewBaseline(t, test.Name)); response != baseline {
+					t.Fatalf("command response =\n%s\nwant the stored response\n%s", response, baseline)
+				}
 			}
 			snapshot, out, code := PairPatches(preflighttest.DiffArgs(args))
 			if code != 0 {
 				t.Fatalf("partition = (%d):\n%s", code, out)
 			}
 			joined := string(snapshot.Prefix)
-			var paths, wantPaths []string
+			var paths []string
 			bodies := map[string]string{}
 			for _, patch := range snapshot.Patches {
 				joined += string(patch.Body)
 				paths = append(paths, patch.Path)
 				bodies[patch.Path] += string(patch.Body)
 			}
-			if joined += string(snapshot.Suffix); joined != baseline {
-				t.Fatalf("partition rebuilt\n%s\nwant the stored response\n%s", joined, baseline)
+			if joined += string(snapshot.Suffix); joined != response {
+				t.Fatalf("partition rebuilt\n%s\nwant the command response\n%s", joined, response)
 			}
-			for _, patch := range test.want {
-				for range patch.Patches {
-					wantPaths = append(wantPaths, patch.Path)
-				}
-				raw := preflighttest.RawGit(t, append([]string{"--literal-pathspecs", "diff", args[4], args[6], "--"}, patch.Pathspecs...)...)
-				if bodies[patch.Path] != raw {
-					t.Errorf("%q patches =\n%s\nwant\n%s", patch.Path, bodies[patch.Path], raw)
+			for _, patch := range test.Patches {
+				if got, raw := patch.Selected(bodies), preflighttest.RawPatch(t, args, patch.Pathspecs...); got != raw {
+					t.Errorf("%q patches =\n%s\nwant\n%s", patch.Path, got, raw)
 				}
 			}
-			if !slices.Equal(paths, wantPaths) {
-				t.Fatalf("patch paths =\n%q\nwant\n%q", paths, wantPaths)
+			if want := preflighttest.ShapePaths(test.Patches); !slices.Equal(paths, want) {
+				t.Fatalf("patch paths =\n%q\nwant\n%q", paths, want)
 			}
 		})
 	}
 }
 
 // TestPartitionPatchIdentity pins the file identity rule for header shapes: the tip path of a
-// surviving file and the base path of a deleted one, read from explicit rename paths, the
+// surviving file and the base path of a deleted one, read from explicit rename or copy paths, the
 // `diff --git` paths, or the side headers, with header-like content kept as content.
 func TestPartitionPatchIdentity(t *testing.T) {
 	for _, test := range []struct {
@@ -75,6 +68,8 @@ func TestPartitionPatchIdentity(t *testing.T) {
 		{"mode change", "diff --git a/a b/a b/a b/a\nold mode 100644\nnew mode 100755\n", []string{"a b/a"}, "a b/a"},
 		{"binary", "diff --git a/b.bin b/b.bin\nnew file mode 100644\nindex 0000000..1111111\nBinary files /dev/null and b/b.bin differ\n", []string{"b.bin"}, "b.bin"},
 		{"deleted with sides", "diff --git a/gone b/gone\ndeleted file mode 100644\nindex 1111111..0000000\n--- a/gone\n+++ /dev/null\n@@ -1 +0,0 @@\n-diff --git a/fake b/fake\n", []string{"gone"}, "gone"},
+		{"copy", "diff --git a/src b/dst\nsimilarity index 100%\ncopy from src\ncopy to dst\n", []string{"dst", "src"}, "dst"},
+		{"trailing-space sides and a bare blank context line", "diff --git a/x  b/x \nindex 1..2 100644\n--- a/x \t\n+++ b/x \t\n@@ -1,3 +1,3 @@\n a\n\n-b\n+c\n", []string{"x "}, "x "},
 		{"header-like content", "diff --git a/x b/x\nindex 1..2 100644\n--- a/x\n+++ b/x\n@@ -1 +1,3 @@\n a\n+rename to y\n+--- a/z\n\\ No newline at end of file\n", []string{"x"}, "x"},
 	} {
 		t.Run(test.name, func(t *testing.T) {

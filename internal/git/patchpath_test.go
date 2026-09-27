@@ -20,6 +20,11 @@ func TestPatchPathDecoder(t *testing.T) {
 	for _, test := range []struct{ field, want string }{
 		{"a/dir/file", "dir/file"},
 		{"b/space name.txt\t\n", "space name.txt"},
+		// Git ends a side header whose path holds a space with a tab, so a trailing space
+		// before that tab belongs to the path.
+		{"a/trail \t\n", "trail "},
+		{"b/dir/trail \t", "dir/trail "},
+		{"\"b/q\\\"uote \"\t\n", "q\"uote "},
 		{`"b/tab\there"`, "tab\there"},
 		{"/dev/null", ""},
 		{"c/no-prefix", "c/no-prefix"},

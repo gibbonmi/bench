@@ -20,17 +20,39 @@ type fixtureFile struct{ path, body string }
 // reviewCanonical is the canonical review tree every review fixture seeds: the module, the
 // conformant spec and ticket, and each charge source. SeedReviewEvidence writes it into the
 // worktree, and SeedReviewPair commits it into a pinned base, so both fixtures state it once.
-func reviewCanonical(slug string) []fixtureFile {
+// Extra fence paths join both the spec fence and the ticket's Writes line.
+func reviewCanonical(slug string, extraFence ...string) []fixtureFile {
+	fenceLines := reviewFenceLines()
+	for _, path := range extraFence {
+		fenceLines = append(fenceLines, fenceLine(path, "review fixture"))
+	}
 	return []fixtureFile{
 		{"go.mod", "module example.com/review\n\ngo 1.25\n"},
-		{"specs/" + slug + "/spec.md", SpecBody(slug, reviewFenceLines()...)},
-		{"specs/" + slug + "/tickets/one.md", WritesTicketDoc("One", FenceWrites(ReviewFence()), "PF1", "PF2")},
+		{"specs/" + slug + "/spec.md", SpecBody(slug, fenceLines...)},
+		{"specs/" + slug + "/tickets/one.md", WritesTicketDoc("One", FenceWrites(append(ReviewFence(), extraFence...)), "PF1", "PF2")},
 		{chargesource.DelegateSkill, "# Delegation skill\n"},
 		{chargesource.DelegateProcedure, "# Delegation procedure\n\nFocused suite: bench test --package ./internal/preflight\n"},
 		{chargesource.BuildPhase, "# Build phase\n"},
 		{chargesource.ReviewSkill, "# Review skill\n\n## Standards\n\nRules.\n\n## Spec\n\nRequirements.\n\n## Coverage\n\nEdges.\n"},
 		{chargesource.ReviewPhase, "# Review phase\n\nUse the three canonical axes.\n"},
 	}
+}
+
+// pairSlug is the spec slug of every pinned review pair, and pairSpecPath is its spec.
+const (
+	pairSlug     = "example"
+	pairSpecPath = "specs/" + pairSlug + "/spec.md"
+)
+
+// ReviewFenceWith is the canonical review tree of a pinned pair with extra fence paths, for
+// a pair whose changed paths lie outside the canonical fence. A pair sets it in Base, so both
+// commits declare the same fence.
+func ReviewFenceWith(paths ...string) map[string]TreeEntry {
+	entries := map[string]TreeEntry{}
+	for _, file := range reviewCanonical(pairSlug, paths...) {
+		entries[file.path] = Regular(file.body)
+	}
+	return entries
 }
 
 // TreeEntry is one blob of a pinned review tree: its Git file mode and its exact bytes.
@@ -76,7 +98,7 @@ var pinnedTimes = [2]string{"978307200 +0000", "978393600 +0000"}
 // returns the root, the slug, and the review preparation arguments over the pair.
 func SeedReviewPair(t *testing.T, pair ReviewPair) (root, slug string, args []string) {
 	t.Helper()
-	slug = "example"
+	slug = pairSlug
 	root = t.TempDir()
 	t.Chdir(root)
 	RunGit(t, "init", "-q", "--object-format=sha1", "-b", "main")
@@ -151,130 +173,16 @@ func quoteImportPath(path string) string {
 	return b.String()
 }
 
-// renameEditBody is the ten-line body the edited rename keeps nine lines of.
-var renameEditBody = "one\ntwo\nthree\nfour\nfive\nsix\nseven\neight\nnine\nten\n"
-
-// hostilePaths are the added paths whose bytes need quoting, escaping, or pathspec care:
-// spaces, glob characters, a quote, a backslash, non-ASCII bytes, and the tab, newline, and
-// return bytes the current renderer permits.
-var hostilePaths = []string{
-	"notes/space name.txt", "notes/glob*[?].txt", "notes/quote\"d.txt", "notes/back\\slash.txt",
-	"notes/café π.txt", "notes/tab\there.txt", "notes/new\nline.txt", "notes/carriage\rreturn.txt",
-}
-
-// ReviewShapes is the RE5 edge inventory as one pinned pair: added, modified, deleted, and
-// renamed files, a pure rename, an empty addition and deletion, a mode-only change, a binary
-// change, a committed symlink, a file-to-symlink change, a missing final newline, content
-// that resembles patch headers, and hostile paths. renames sets diff.renames for the pair.
-func ReviewShapes(renames bool) ReviewPair {
-	pair := ReviewPair{
-		Base: map[string]TreeEntry{
-			"notes/modify.txt":       Regular("one\ntwo\nthree\n"),
-			"notes/delete.txt":       Regular("delete me\n"),
-			"notes/rename-pure.txt":  Regular("pure rename body\nline two\nline three\n"),
-			"notes/rename-edit.txt":  Regular(renameEditBody),
-			"notes/empty-delete.txt": Regular(""),
-			"notes/mode.sh":          Regular("#!/bin/sh\n"),
-			"notes/binary.bin":       Regular("\x00\x01binary"),
-			"notes/type-change":      Regular("regular\n"),
-			"notes/no-newline.txt":   Regular("last"),
-			"notes/lookalike.txt":    Regular("a\n"),
-		},
-		Removed: []string{
-			"notes/delete.txt", "notes/rename-pure.txt", "notes/rename-edit.txt", "notes/empty-delete.txt",
-		},
-		Tip: map[string]TreeEntry{
-			"notes/modify.txt":       Regular("one\ntwo changed\nthree\n"),
-			"notes/renamed-pure.txt": Regular("pure rename body\nline two\nline three\n"),
-			"notes/renamed-edit.txt": Regular(strings.Replace(renameEditBody, "five", "FIVE", 1)),
-			"notes/mode.sh":          Executable("#!/bin/sh\n"),
-			"notes/binary.bin":       Regular("\x00\x02binary"),
-			"notes/type-change":      Symlink("modify.txt"),
-			"notes/no-newline.txt":   Regular("last line changed"),
-			"notes/lookalike.txt":    Regular("a\ndiff --git a/x b/x\n--- a/x\n+++ b/x\nrename to y\n@@ -1 +1 @@\n"),
-			"notes/add.txt":          Regular("added\n"),
-			"notes/empty-add.txt":    Regular(""),
-			"notes/link":             Symlink("add.txt"),
-		},
-		Config: [][2]string{{"diff.renames", fmt.Sprint(renames)}},
-	}
-	for _, path := range hostilePaths {
-		pair.Tip[path] = Regular("hostile\n")
-	}
-	return pair
-}
-
-// ShapePatch is one expected file identity: its declared path, the pathspecs whose raw Git
-// patch equals every source of that path joined, and its number of patch sources.
-type ShapePatch struct {
-	Path      string
-	Pathspecs []string
-	Patches   int
-}
-
-// OnePatch is an expected identity whose raw patch is the patch of its own path.
-func OnePatch(path string) ShapePatch { return ShapePatch{path, []string{path}, 1} }
-
-// RenamedPatch is an expected rename identity: the tip path, found by both spellings.
-func RenamedPatch(from, to string) ShapePatch { return ShapePatch{to, []string{from, to}, 1} }
-
-// typeChangePatches is the file-to-symlink identity: two patches for one path.
-var typeChangePatches = ShapePatch{"notes/type-change", []string{"notes/type-change"}, 2}
-
-// shapesWithRenames is the patch order of ReviewShapes with rename detection enabled.
-var shapesWithRenames = []ShapePatch{
-	OnePatch("notes/add.txt"), OnePatch("notes/back\\slash.txt"), OnePatch("notes/binary.bin"), OnePatch("notes/café π.txt"),
-	OnePatch("notes/carriage\rreturn.txt"), OnePatch("notes/delete.txt"),
-	RenamedPatch("notes/empty-delete.txt", "notes/empty-add.txt"), OnePatch("notes/glob*[?].txt"), OnePatch("notes/link"),
-	OnePatch("notes/lookalike.txt"), OnePatch("notes/mode.sh"), OnePatch("notes/modify.txt"), OnePatch("notes/new\nline.txt"),
-	OnePatch("notes/no-newline.txt"), OnePatch("notes/quote\"d.txt"),
-	RenamedPatch("notes/rename-edit.txt", "notes/renamed-edit.txt"),
-	RenamedPatch("notes/rename-pure.txt", "notes/renamed-pure.txt"), OnePatch("notes/space name.txt"),
-	OnePatch("notes/tab\there.txt"), typeChangePatches,
-}
-
-// shapesWithoutRenames is the patch order of ReviewShapes with rename detection disabled.
-var shapesWithoutRenames = []ShapePatch{
-	OnePatch("notes/add.txt"), OnePatch("notes/back\\slash.txt"), OnePatch("notes/binary.bin"), OnePatch("notes/café π.txt"),
-	OnePatch("notes/carriage\rreturn.txt"), OnePatch("notes/delete.txt"), OnePatch("notes/empty-add.txt"),
-	OnePatch("notes/empty-delete.txt"), OnePatch("notes/glob*[?].txt"), OnePatch("notes/link"), OnePatch("notes/lookalike.txt"),
-	OnePatch("notes/mode.sh"), OnePatch("notes/modify.txt"), OnePatch("notes/new\nline.txt"), OnePatch("notes/no-newline.txt"),
-	OnePatch("notes/quote\"d.txt"), OnePatch("notes/rename-edit.txt"), OnePatch("notes/rename-pure.txt"),
-	OnePatch("notes/renamed-edit.txt"), OnePatch("notes/renamed-pure.txt"), OnePatch("notes/space name.txt"),
-	OnePatch("notes/tab\there.txt"), typeChangePatches,
-}
-
-// ReviewShapePatches is the expected patch table of ReviewShapes under one rename setting,
-// stated by hand from the pair's trees and Git's path order.
-func ReviewShapePatches(renames bool) []ShapePatch {
-	if renames {
-		return shapesWithRenames
-	}
-	return shapesWithoutRenames
-}
-
-// ReviewDocuments is a pinned pair whose diff holds only the spec and the review record.
-func ReviewDocuments() ReviewPair {
-	return ReviewPair{Tip: map[string]TreeEntry{
-		"specs/example/spec.md": Regular(SpecBody("example", reviewFenceLines()...) + "\n## Further notes\n\nEdited.\n"),
-		"reviews/example.md":    Regular("# Review record\n"),
-	}}
-}
-
-// ReviewDocumentPatches is the expected patch table of ReviewDocuments.
-func ReviewDocumentPatches() []ShapePatch {
-	return []ShapePatch{OnePatch("reviews/example.md"), OnePatch("specs/example/spec.md")}
-}
-
 // DiffArgs is the diff collector invocation over the pair that review arguments pin.
 func DiffArgs(reviewArgs []string) []string {
 	return []string{"--base", reviewArgs[4], "--source-tip", reviewArgs[6], "--full"}
 }
 
-// RawGit runs one git command in the working directory and returns its exact standard
-// output, so a test compares a stored patch with the bytes Git itself prints.
-func RawGit(t *testing.T, args ...string) string {
+// RawPatch is Git's own patch for pathspecs over the frozen pair that review arguments pin,
+// read in the working directory, so a test compares a stored patch with the bytes Git prints.
+func RawPatch(t *testing.T, reviewArgs []string, pathspecs ...string) string {
 	t.Helper()
+	args := append([]string{"--literal-pathspecs", "diff", reviewArgs[4], reviewArgs[6], "--"}, pathspecs...)
 	out, err := exec.Command("git", args...).Output()
 	if err != nil {
 		t.Fatalf("git %v: %v", args, err)
@@ -286,16 +194,19 @@ func RawGit(t *testing.T, args ...string) string {
 // store holds several, as a series of preparations over one repository does.
 func IdentifiedPack(t *testing.T, root, identity string) *chargeevidence.Pack {
 	t.Helper()
+	var refusals []string
 	for _, name := range PublishedPacks(t, root) {
 		data, err := os.ReadFile(filepath.Join(StoreDir(t, root), name))
 		if err != nil {
 			t.Fatal(err)
 		}
-		if pack, err := chargeevidence.Read(data, identity); err == nil {
+		pack, err := chargeevidence.Read(data, identity)
+		if err == nil {
 			return pack
 		}
+		refusals = append(refusals, err.Error())
 	}
-	t.Fatalf("no published pack holds %s", identity)
+	t.Fatalf("no published pack holds %s; read refusals: %v", identity, refusals)
 	return nil
 }
 

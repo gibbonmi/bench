@@ -64,9 +64,10 @@ func UnquotePath(field string) string {
 // PatchSidePath decodes the path of a `---` or `+++` header field and strips the a/ or b/
 // display prefix git prints. A missing side reads as /dev/null and keeps the empty string, so
 // an added or deleted file has one nameless side. The quoting wraps the prefix too, so it is
-// undone first.
+// undone first. Git ends the field with a tab when the path holds a space, so only the line
+// ending and that one tab are removed: a space at the end of an unquoted path is path text.
 func PatchSidePath(field string) string {
-	field = UnquotePath(strings.TrimSpace(field))
+	field = UnquotePath(strings.TrimSuffix(strings.TrimSuffix(field, "\n"), "\t"))
 	if field == "/dev/null" {
 		return ""
 	}

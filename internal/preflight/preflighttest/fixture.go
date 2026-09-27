@@ -65,9 +65,14 @@ func ReviewFence() []string {
 func reviewFenceLines() []string {
 	lines := make([]string, len(reviewFenceExtra))
 	for i, entry := range reviewFenceExtra {
-		lines[i] = "- `" + entry.path + "` (" + entry.annotation + ")"
+		lines[i] = fenceLine(entry.path, entry.annotation)
 	}
 	return lines
+}
+
+// fenceLine renders one fence entry as the spec's own document line.
+func fenceLine(path, annotation string) string {
+	return "- `" + path + "` (" + annotation + ")"
 }
 
 // RunGit runs one git command in the working directory and returns its trimmed output.
@@ -354,19 +359,10 @@ func PublishedPacks(t *testing.T, root string) []string {
 // producer kept in memory.
 func PublishedPack(t *testing.T, root, identity string) *chargeevidence.Pack {
 	t.Helper()
-	packs := PublishedPacks(t, root)
-	if len(packs) != 1 {
+	if packs := PublishedPacks(t, root); len(packs) != 1 {
 		t.Fatalf("published packs = %d, want one", len(packs))
 	}
-	data, err := os.ReadFile(filepath.Join(StoreDir(t, root), packs[0]))
-	if err != nil {
-		t.Fatal(err)
-	}
-	pack, err := chargeevidence.Read(data, identity)
-	if err != nil {
-		t.Fatalf("read published pack: %v", err)
-	}
-	return pack
+	return IdentifiedPack(t, root, identity)
 }
 
 // StagedTemps lists the temporary pack names in root's evidence store.

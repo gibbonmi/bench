@@ -10,11 +10,8 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
-// The file role and the per-path membership rule in this file are stated independently of
-// the review collector, so a changed descriptor or a joined diff source turns a case red.
-
-// fileRole is the declared role of one file patch source.
-const fileRole = "diff-file"
+// The per-path membership rule in this file is stated independently of the review
+// collector, so a changed descriptor or a joined diff source turns a case red.
 
 // fileMember is one file patch source of a published manifest: its pack-local identifier,
 // its source digest, and its ordered page digests.
@@ -30,7 +27,7 @@ func fileMembers(t *testing.T, root, identity string) map[string][]fileMember {
 	manifest := preflighttest.IdentifiedPack(t, root, identity).Manifest()
 	members := map[string][]fileMember{}
 	for _, source := range manifest.Sources {
-		if source.Role != fileRole {
+		if source.Role != preflighttest.DiffFileRole {
 			continue
 		}
 		member := fileMember{id: source.ID, sha: source.SHA256}
@@ -42,7 +39,7 @@ func fileMembers(t *testing.T, root, identity string) map[string][]fileMember {
 		members[source.Path] = append(members[source.Path], member)
 	}
 	if len(members) == 0 {
-		t.Fatalf("manifest declares no %s source", fileRole)
+		t.Fatalf("manifest declares no %s source", preflighttest.DiffFileRole)
 	}
 	return members
 }
@@ -97,13 +94,6 @@ func selectedPatch(t *testing.T, identity string, members []fileMember) string {
 		}
 	}
 	return body.String()
-}
-
-// rawPatch is Git's own patch for pathspecs over the frozen pair that args pin.
-func rawPatch(t *testing.T, args []string, pathspecs ...string) string {
-	t.Helper()
-	command := append([]string{"--literal-pathspecs", "diff", args[4], args[6], "--"}, pathspecs...)
-	return preflighttest.RawGit(t, command...)
 }
 
 // TestReviewFilePageStability is RE1 and RE2. Growing an earlier patch across a page boundary
@@ -199,7 +189,7 @@ func TestReviewFileIdentity(t *testing.T) {
 		if len(after["notes/z.txt"]) != 1 || sameDigests(before["notes/z.txt"], after["notes/z.txt"]) {
 			t.Fatalf("changed z.txt members = %v -> %v, want a changed digest", before["notes/z.txt"], after["notes/z.txt"])
 		}
-		if got, want := selectedPatch(t, identity, after["notes/z.txt"]), rawPatch(t, args, "notes/z.txt"); got != want {
+		if got, want := selectedPatch(t, identity, after["notes/z.txt"]), preflighttest.RawPatch(t, args, "notes/z.txt"); got != want {
 			t.Fatalf("changed z.txt patch =\n%s\nwant\n%s", got, want)
 		}
 	})
@@ -219,7 +209,7 @@ func TestReviewFileIdentity(t *testing.T) {
 			t.Fatalf("duplicate later pages differ: %v and %v", first[0].pages[1:], second[0].pages[1:])
 		}
 		for _, path := range []string{"notes/dup-1.txt", "notes/dup-2.txt"} {
-			if got, want := selectedPatch(t, identity, members[path]), rawPatch(t, args, path); got != want {
+			if got, want := selectedPatch(t, identity, members[path]), preflighttest.RawPatch(t, args, path); got != want {
 				t.Errorf("%s patch =\n%.200s\nwant\n%.200s", path, got, want)
 			}
 		}

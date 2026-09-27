@@ -123,7 +123,7 @@ func TestEvidenceReviewProvenance(t *testing.T) {
 	}
 	// Every collector states the frozen pair it read, so a capture cannot be attributed to
 	// an invocation that never ran.
-	for _, role := range []string{"diff-prefix", "diff-file", "diff-suffix", "consumers"} {
+	for _, role := range []string{preflighttest.DiffPrefixRole, preflighttest.DiffFileRole, preflighttest.DiffSuffixRole, "consumers"} {
 		if !producerArgumentsContain(t, manifest, role, args[6]) {
 			t.Errorf("a %s producer's arguments omit the frozen source tip", role)
 		}
