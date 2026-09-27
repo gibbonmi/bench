@@ -37,8 +37,24 @@ func discardSelector(ref string) string {
 
 // discardTargetCommand is the explicit discard command for one unclaimed branch. A unique row
 // of the unclaimed plan ends with it, and so does an explicit row planned without the flag.
-func discardTargetCommand(ref string) string {
-	return cleanCommand(CleanupOptions{DiscardBranch: true}, "--target", discardSelector(ref))
+func discardTargetCommand(ref string) string { return DiscardTargetCommand(discardSelector(ref)) }
+
+// DiscardTargetCommand is the one spelling of the explicit discard command for a --target
+// selector: an assignment id, or the branch path of a shift branch. The retire listing names
+// each superseded assignment with it.
+func DiscardTargetCommand(selector string) string {
+	return cleanCommand(CleanupOptions{DiscardBranch: true}, "--target", selector)
+}
+
+// Unique is how many rows of the counted plan carry the unique class: the rows that only an
+// explicit discard removes.
+func (counts UnclaimedRefCounts) Unique() int {
+	for _, class := range counts.Classes {
+		if class.Class == string(classUnique) {
+			return class.Count
+		}
+	}
+	return 0
 }
 
 // classDetail is refVerdict.detail with suffix in the place of the retained text a unique row

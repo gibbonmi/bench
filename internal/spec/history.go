@@ -2,7 +2,7 @@
 // incantation `/bench-debug` and `/bench-write-spec` both name: `git log
 // --grep=spec-retire: <slug>` plus `git log --diff-filter=D -- specs/<slug>.md`. It
 // merges the two into one compiled, deduped, AXI-conformant query. It never writes. It
-// is a read-only sibling of retireCommand, and shares its slugOf/specArg
+// is a read-only sibling of retireCommand, and shares its SlugOf/specArg
 // argument convention.
 package spec
 
@@ -155,7 +155,7 @@ func historyCommand(rest []string) (string, int) {
 	if _, err := git.Root(); err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	slug := slugOf(arg)
+	slug := SlugOf(arg)
 
 	facts, err := History(slug)
 	if err != nil {

@@ -236,6 +236,9 @@ func RepoBase() string {
 	return ""
 }
 
+// RetireNextPrefix opens the last line of a completed retire; the retire listing goes before it.
+const RetireNextPrefix = "next: "
+
 // retireCommand runs `bench spec retire <slug>`. On a merged-implemented spec, it
 // deletes the review pickup when present, the tickets, the spec file, and the
 // complete folder, and it prints what it removed plus the judgment duties that
@@ -244,11 +247,8 @@ func RepoBase() string {
 // refuses when it is not merged-implemented: staged, or implemented only in the
 // working tree and not yet at HEAD. An unknown slug refuses, and so does an orphaned
 // review pickup with no spec. Inside a repository, the primary checkout refuses too,
-// because Bench write verbs run from a worktree.
-//
-// The printed next: line names the board remainder. It reads the spec's Roadmap:
-// value, through metadata, before any deletion happens, and roadmapRemainder renders
-// the exact row and detail-file clause from that value.
+// because Bench write verbs run from a worktree. The next: line names the board
+// remainder that roadmapRemainder renders from the Roadmap: value, read before deletion.
 func retireCommand(rest []string) (string, int) {
 	arg, out, code, ok := specArg("bench spec retire", "usage: bench spec retire <spec.md | slug>\n", rest)
 	if !ok {
@@ -304,7 +304,7 @@ func retireCommand(rest []string) (string, int) {
 	// Deletion order leaves each recoverable interrupt state with a spec file, never an
 	// orphaned review pickup. Once the spec file is gone, remaining folder content is terminal.
 	var b strings.Builder
-	slug := slugOf(resolved)
+	slug := SlugOf(resolved)
 	for _, target := range plan {
 		if err := target.remove(); err != nil {
 			return b.String() + toon.Errorf(fmt.Sprintf("remove %s: %v", RelTo(base, target.path), err), "check file permissions") + "\n", 1
@@ -321,7 +321,7 @@ func retireCommand(rest []string) (string, int) {
 		}
 	}
 	_, roadmapID := metadata(content)
-	fmt.Fprintf(&b, "next: promote durable content, remove the ROADMAP row%s, commit as `spec-retire: %s`\n", roadmapRemainder(base, roadmapID), slug)
+	fmt.Fprintf(&b, RetireNextPrefix+"promote durable content, remove the ROADMAP row%s, commit as `spec-retire: %s`\n", roadmapRemainder(base, roadmapID), slug)
 	return b.String(), 0
 }
 
@@ -345,7 +345,7 @@ func (target removalTarget) remove() error {
 // own filesystem permission boundary.
 func retirementPlan(base, resolved string) []removalTarget {
 	plan := []removalTarget{}
-	slug := slugOf(resolved)
+	slug := SlugOf(resolved)
 	if pickup := filepath.Join(base, "reviews", slug+".md"); fileExists(pickup) {
 		plan = append(plan, removalTarget{path: pickup})
 	}
@@ -484,16 +484,16 @@ func implementedAtHEAD(base, resolved string) bool {
 // orphanPickup reports the repo-relative reviews/<slug>.md when a review pickup exists for a
 // slug whose spec did not resolve — the orphaned-pickup refusal names it.
 func orphanPickup(base, arg string) (string, bool) {
-	pickup := filepath.Join(base, "reviews", slugOf(arg)+".md")
+	pickup := filepath.Join(base, "reviews", SlugOf(arg)+".md")
 	if fileExists(pickup) {
 		return RelTo(base, pickup), true
 	}
 	return "", false
 }
 
-// slugOf is the spec slug of a path or bare argument. A folder spec's filename is always
-// spec.md, so its parent folder supplies the slug rather than the generic filename.
-func slugOf(arg string) string {
+// SlugOf is the spec slug of a path or bare argument, which retire, history, and the retire
+// listing share. A folder spec's filename is always spec.md, so its parent folder supplies it.
+func SlugOf(arg string) string {
 	if filepath.Base(arg) == "spec.md" {
 		return filepath.Base(filepath.Dir(arg))
 	}
