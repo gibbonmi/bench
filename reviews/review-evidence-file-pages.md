@@ -398,6 +398,20 @@ owner catches a changed byte. The orchestrator ran the last probe as the
 independent coordinator probe. Each restore reads `yes`. The repair session
 ran the three ticket checks at `52ce9574`, and each check passed.
 
+## RE2 chunk review, round 3
+
+This is the confirming round at chunk tip `52ce9574`. The shared evidence is
+`sha256:5dbc5aad141d409880ddae54fbec8263eaf5ac42230fd3d86f6255b10312dc32`.
+Each axis ran in a fresh `bench-reviewer` session on fable at high effort.
+
+Raw findings: Standards 0, Spec 0, Coverage 0. Repair targets: 0. R16 and
+R17 are confirmed. A framing-byte probe bit at both seams for every stored
+case.
+
+Advice: the diff-seam comparison is always true for an unstored case. The
+`DiffRoles` comment claims an order that no reader enforces. One test comment
+still says that the prefix refusal applies to the whole charge.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1052,6 +1066,72 @@ ran the three ticket checks at `52ce9574`, and each check passed.
           "finding_ids": [],
           "supersedes": [
             "re2-r1-coverage"
+          ]
+        },
+        {
+          "id": "re2-r3-standards",
+          "performer": "claude:bench-reviewer/re2-r3-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "2a925ccc7b6a06693920ce448da3e383bde3697d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re2-r3-standards@52ce9574",
+            "digest": "sha256:0214e1a6f7d8fd6875b5bcd91845d0b1cf92d2b89d87be4b7041a31b2680d07d",
+            "excerpt": "Standards: 0 findings. Worst: none."
+          },
+          "axis": "Standards",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "52ce9574eea53b962c2d83ad333636f890f987c8",
+          "finding_ids": [],
+          "supersedes": [
+            "re2-r2-standards"
+          ]
+        },
+        {
+          "id": "re2-r3-spec",
+          "performer": "claude:bench-reviewer/re2-r3-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "2a925ccc7b6a06693920ce448da3e383bde3697d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re2-r3-spec@52ce9574",
+            "digest": "sha256:a672197d8e5c4170f6e300062addb831c7be9440f6282c9223ff82a2ba90b5b9",
+            "excerpt": "Spec: 0 findings. Worst: none."
+          },
+          "axis": "Spec",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "52ce9574eea53b962c2d83ad333636f890f987c8",
+          "finding_ids": [],
+          "supersedes": [
+            "re2-r2-spec"
+          ]
+        },
+        {
+          "id": "re2-r3-coverage",
+          "performer": "claude:bench-reviewer/re2-r3-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "2a925ccc7b6a06693920ce448da3e383bde3697d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re2-r3-coverage@52ce9574",
+            "digest": "sha256:c4ad8c11003d281ff2b89904512d2dbca138983e21b6adfc08b6aa81610136fd",
+            "excerpt": "Coverage: 0 findings. Worst: none \u2014 the helper refactor kept every stored-baseline assertion; both seams still bite on one framing byte, and the focused suites are green at 52ce9574."
+          },
+          "axis": "Coverage",
+          "base": "4d9e6aa8df99630aa782f23545dcfec7e6dc10f9",
+          "tip": "52ce9574eea53b962c2d83ad333636f890f987c8",
+          "finding_ids": [],
+          "supersedes": [
+            "re2-r2-coverage"
           ]
         }
       ]
