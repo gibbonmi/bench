@@ -209,6 +209,97 @@ The ticket 1 rows carry the repair session as their performer, because the plan
 names it as the ticket's effective author. The JSON payload holds each result
 after the round 1 rows.
 
+## RI-C1a chunk review, round 2
+
+The confirming round read the repair delta `c6b2a74e..4b80686a` with the
+whole chunk as context. The record commit `f9959ec9` follows the tip, and the
+shared evidence is `sha256:5cf4cc47…`. Each axis ran in a fresh
+`bench-reviewer` session on opus at high effort. Only the Coverage axis ran
+probes, and it left the tree clean.
+
+Every round 1 fold is confirmed. Standards confirmed R1 to R6, Spec confirmed
+R7, R8, D1, and D2, and Coverage confirmed R9 to R12 with D2.
+Each axis also judged the wider holder exclusion behavior-neutral.
+
+Raw findings: Standards 4, Spec 3, Coverage 1. Repair targets after the fold:
+two code items for one repair session, three spec items for the orchestrator,
+and one reviewer decision.
+
+### Standards, round 2
+
+Findings: 4. Worst: R13.
+
+- R13 (auto-fix, confidence 7): BENCH.md plan-expansion rule. The RI-C1a
+  chunk table cell at the spec omits RI83 to RI87, while ticket 1's `Covers:`
+  and this record's `acceptance_rows` list them. The orchestrator's plan
+  commit owns the fix.
+- R14 (auto-fix, confidence 4): craft-comments truth. The comment at
+  `clean_classes.go:76-77` gives the content-landed reason for every landed
+  recorded branch. The ancestry-landed half has a different reason.
+- R15 (auto-fix, confidence 4): AGENTS.md one source per fixture rule. The
+  owner-letter-to-ref rule is built at `clean_classes_test.go:178`,
+  `clean_set_apply_test.go:392`, and `clean_unclaimed_test.go:318`. One
+  helper owns it after the repair.
+- R16 (no-op, confidence 3): the RI83 `identities` closure beside `refsUnder`.
+  The closure reads the `%(symref)` column that `refsUnder` lacks, and the
+  Coverage axis proved the closure load-bearing at its line 204. So it is not
+  a pasted harness.
+
+Advice: a why clause for the RI85 fixture comment, "in the named state" in the
+`recordedBranch` comment, the error-variable comment repeats its message, a
+package-wide `markState` helper, and the per-record landed-proof cost.
+
+### Spec, round 2
+
+Findings: 3. Worst: R13, shared with Standards. Rows RI5, RI9, RI13, and RI83
+to RI87 are delivered, and the renamed error message conflicts with no spelling.
+
+- R17 (ask-user, confidence 5): a dangling symref never reaches the classifier,
+  because `for-each-ref` skips a broken ref and `Output` drops stderr. The
+  Coverage axis confirmed it by a run, as its C1 below. Decision D3 resolves it.
+- R18 (auto-fix, confidence 4): the plan-only cost sentence omitted the landed
+  proof the classifier now runs per active or cleanup-pending record. The
+  reviewer route confirmed the replacement sentence.
+
+Advice: `LandedInDefault` failing on a recorded branch aborts the plan, and
+status then drops its count silently. That is fail-closed and has no row.
+
+### Coverage, round 2
+
+Findings: 1. Worst: R17, the dangling symref, observed by a fixture probe: the
+plan exits 0, prints no row for it, and offers the apply. Nothing deletes
+through it, and a target that appears later trips the stale refusal.
+
+Probes, each with restore `yes`:
+
+- rerun of the landed-recorded-holder swap: bit, both RI84 cases
+- swap: the symref check limited to the assignment prefix: bit, both shift cases
+- omission of `PutAssignment` in `recordedBranch`: bit, RI86
+- a dereferencing delete inserted before each apply in the RI83 test: bit, four
+  cases at the closure line
+- a dangling symref fixture: bit, the plan exits 0 with no row (R17)
+- a symref chain in the shift namespace: silent, the outer row faults and both
+  applies refuse
+
+The axis graded the orchestrator's silent recorded-holder-order probe as
+optional advice for a hardening cycle, under the bounded repair policy's
+preference rule: the sentence is binding but does not fail, and no row covers
+two recorded holders that reach one ref.
+
+### RI-C1a decisions and repair cycle 2
+
+The reviewer route decided D3. The symref rule narrows to a resolving symref,
+and a dangling symref is a Won't-handle case. The cost sentence gains the
+per-record landed proof. The plan commit that follows this record carries the
+chunk table cell, the D3 wording, the cost sentence, and the source-row table.
+It also carries the repair session assignment.
+
+One fresh repair session for ticket 1 on opus at high consumes repair cycle 2
+of 2. It owns R14 and R15. The allowance is then
+exhausted for this chunk, so a later blocking finding returns to the reviewer.
+No implementation command change is necessary for this round; R13 is an
+orchestrator plan-step gap, captured as a learning.
+
 ```bench-review-record
 {
   "version": 2,
@@ -541,6 +632,66 @@ after the round 1 rows.
           "tip": "c6b2a74effa57cbafdd8bc449c9fbbb24d1468eb",
           "finding_ids": ["R9", "R10", "R11", "R12"],
           "supersedes": []
+        },
+        {
+          "id": "ri-c1a-r2-standards",
+          "performer": "claude:bench-reviewer/ri-c1a-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a6b40aeaceecdcdce4aeef5b455b95b43cbd5449",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/ri-c1a-standards-r2@4b80686a",
+            "digest": "sha256:e6e9a0142212fe9c526af9e4166f2bcb6a9e60341c024bc3add50b7c32b52e6f",
+            "excerpt": "Standards round 2: 4 findings, six folds confirmed. Worst: the RI-C1a chunk table cell omits RI83 to RI87 after the plan expansion."
+          },
+          "axis": "Standards",
+          "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
+          "tip": "4b80686a12ea46afa0e6c0ba4fe9aab2e00935f6",
+          "finding_ids": ["R13", "R14", "R15", "R16"],
+          "supersedes": ["ri-c1a-r1-standards"]
+        },
+        {
+          "id": "ri-c1a-r2-spec",
+          "performer": "claude:bench-reviewer/ri-c1a-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a6b40aeaceecdcdce4aeef5b455b95b43cbd5449",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/ri-c1a-spec-r2@4b80686a",
+            "digest": "sha256:54109ca17603b30d4a18e9fb88fcbdf2ddddc1d0943f84348f7419032b4236a8",
+            "excerpt": "Spec round 2: 3 findings, R7, R8, D1, D2 confirmed. Worst: the chunk table cell omits RI83 to RI87, and a dangling symref is skipped by for-each-ref."
+          },
+          "axis": "Spec",
+          "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
+          "tip": "4b80686a12ea46afa0e6c0ba4fe9aab2e00935f6",
+          "finding_ids": ["R13", "R17", "R18"],
+          "supersedes": ["ri-c1a-r1-spec"]
+        },
+        {
+          "id": "ri-c1a-r2-coverage",
+          "performer": "claude:bench-reviewer/ri-c1a-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a6b40aeaceecdcdce4aeef5b455b95b43cbd5449",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/ri-c1a-coverage-r2@4b80686a",
+            "digest": "sha256:82d71f9cc5717dd192fd495bf8e6519cf1b7ff4119be37dfef68630944648505",
+            "excerpt": "Coverage round 2: 1 finding, R9 to R12 and D2 confirmed. Worst: a dangling symref in a Bench namespace is excluded silently, against the RI83 wording."
+          },
+          "axis": "Coverage",
+          "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
+          "tip": "4b80686a12ea46afa0e6c0ba4fe9aab2e00935f6",
+          "finding_ids": ["R17"],
+          "supersedes": ["ri-c1a-r1-coverage"]
         }
       ]
     }
