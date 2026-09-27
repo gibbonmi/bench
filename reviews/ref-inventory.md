@@ -599,6 +599,11 @@ reconciliation:
 RI-C1b is complete at tip `c6d2cfbf`. Repair cycles consumed: 2 of 2. The
 hardening allowance is unused.
 
+The plan digest moved four times after RI-C1a closed: the seam citations, row
+RI88, rows RI89 to RI91, and row RI92. No chunk split, merged, or renamed, so
+the record's amendment maps each chunk id to itself from the RI-C1a plan
+digest to the current one. The checkpoint walks that chain.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1423,6 +1428,18 @@ hardening allowance is unused.
   ],
   "completion": {
     "state": "pending"
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:084df113f531adbc7d196def8c112c45a1925608d2a1e45099e9428dbb5ba82b",
+      "to": "sha256:74f8fb4685ed7e515b51757c2cd9d36d59a79ba8659977672e3b3aad337a118a",
+      "chunk_ids": {
+        "RI-C1a": ["RI-C1a"],
+        "RI-C1b": ["RI-C1b"],
+        "RI-C2a": ["RI-C2a"],
+        "RI-C2b": ["RI-C2b"]
+      }
+    }
+  ]
 }
 ```
