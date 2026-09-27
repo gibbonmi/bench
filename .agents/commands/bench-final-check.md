@@ -24,6 +24,11 @@ the exact broker-owned status transform and this spec's review-record delta.
 If destination composition adds another change, include that change in the
 source and complete its review and verification before retrying landing.
 
+A spec changes the promotion broker source when its diff changes a Bench build input, and its landing prints `landing changes the promotion broker source`.
+Before the first landing of such a spec, run `bench worktree build <target>` and then `bench worktree exec <target> -- ./dist/bench doctor`.
+This rehearsal checks the broker seal and manifest on the candidate binary before the landing depends on them.
+If a doctor row says that a landing would refuse, apply the remedy that the row names, even when the row reads `ok`.
+
 The orchestrator performs the final verification on the final source before the landing. A delegated exit reconciles every known invocation against the recorded assessment attempts. That account carries failed dispatches, every author, every review axis, diagnostics, verification, and orchestration work. Delegated verification launches no paid comparison and changes no model default.
 
 ## Exit handoff
