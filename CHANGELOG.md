@@ -10,6 +10,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Added the directory form `bench anchors <dir>`. It prints one row for each anchored guidance file below the directory, with the anchor count, the diagnostic count, and the verdict. A directory with no anchored file gives an empty table.
 
+### Consumer queries
+
+- Added `--production` and `--test` filters to `bench consumers`, and let one query take several symbols with a leading `symbol` column in each block.
+
 ### Implementation review
 
 - Fixed review guidance so each narrow axis reads its own frozen diff and targeted consumer rows. The coordinator keeps only the evidence manifest, metadata, and current binding.

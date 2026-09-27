@@ -85,7 +85,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>  run focused Go-test or named-check evidence as TOON; no gate verdict
   bench probe <file> (--swap <old> --with <new> | --omit <old>) (--package <expr> [--run <go-regex>] | --check <name>) [--full]  mutate one file once, run one focused test or check, restore the file, and report bit, silent, invalid, or restore-failed
   bench outline [path] [--full] [--production|--test]  top-level directory symbol counts as TOON; a path or --full locates candidate seams (file:line), never the project's blessed seams
-  bench consumers <qualified-symbol> [--full]  every resolved Go reference edge as TOON (file:line, via, enclosing); identifies edges, never blessed seams
+  bench consumers <qualified-symbol>... [--production | --test] [--full]  every resolved Go reference edge as TOON (symbol when several, file:line, via, enclosing); identifies edges, never blessed seams
   bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
   bench repair [--prune]     explicitly install the pinned platform binary or prune stale cache entries
   bench gate [--fresh] [--checkpoint <spec-path> (--chunk <id> | --complete)]  run the project gate (the oracle; --fresh ignores a reusable green)

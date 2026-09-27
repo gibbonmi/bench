@@ -91,7 +91,7 @@ var langTable = map[string][]pattern{
 		{re: regexp.MustCompile(`^[ \t]*function[ \t]+([A-Za-z_][A-Za-z0-9_-]*)`), kind: "function", group: 1},
 	},
 	".go": {
-		{re: regexp.MustCompile(`^func[ \t]+((?:new|make|with)[A-Z][A-Za-z0-9_]*)`), kind: "helper", group: 1, path: isGoTestFile},
+		{re: regexp.MustCompile(`^func[ \t]+((?:new|make|with)[A-Z][A-Za-z0-9_]*)`), kind: "helper", group: 1, path: IsGoTestFile},
 		{re: regexp.MustCompile(`^func[ \t]+\([^)]*\)[ \t]*([A-Za-z_][A-Za-z0-9_]*)`), kind: "func", group: 1},
 		{re: regexp.MustCompile(`^func[ \t]+([A-Za-z_][A-Za-z0-9_]*)`), kind: "func", group: 1},
 		{re: regexp.MustCompile(`^type[ \t]+([A-Za-z_][A-Za-z0-9_]*)`), kind: "type", group: 1},
@@ -150,10 +150,15 @@ func Symbols(path string, content []byte) []Symbol {
 	return out
 }
 
-// isGoTestFile is the helper form's path predicate: a helper is a construction function
-// a test file owns, so the same name in production code stays a plain func.
-func isGoTestFile(path string) bool {
-	return strings.HasSuffix(path, "_test.go")
+// GoTestFileSuffix names a Go test file: the go tool builds a file whose name ends in it
+// only under go test.
+const GoTestFileSuffix = "_test.go"
+
+// IsGoTestFile is the one Go test-file predicate. It is the helper form's path predicate:
+// a helper is a construction function a test file owns, so the same name in production
+// code stays a plain func. The outline and consumers filters read it too.
+func IsGoTestFile(path string) bool {
+	return strings.HasSuffix(path, GoTestFileSuffix)
 }
 
 // doublePrefixes are the test-double name forms, matched case-insensitively.
@@ -331,7 +336,7 @@ func Command(args []string) (string, int) {
 func testScope(files []string, test bool) []string {
 	var kept []string
 	for _, rel := range files {
-		if isGoTestFile(rel) == test {
+		if IsGoTestFile(rel) == test {
 			kept = append(kept, rel)
 		}
 	}

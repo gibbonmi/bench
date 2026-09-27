@@ -28,7 +28,11 @@ const (
 // per-directory aggregate instead, so one hot symbol never floods an agent's context.
 const rowCap = 200
 
-const usageLine = "usage: bench consumers <qualified-symbol> [--full] | bench consumers --changed [--base <commit> [--source-tip <commit>]] [--full]"
+// Suffix is the symbol form's argument grammar after the command name. The usage line and
+// the `bench help` row both read it, so the two surfaces show one grammar.
+const Suffix = " <qualified-symbol>... [--production | --test] [--full]"
+
+const usageLine = "usage: bench consumers" + Suffix + " | bench consumers --changed [--base <commit> [--source-tip <commit>]] [--full]"
 
 // capLine tells the reader which block an over-cap default emits and how to get the rows.
 // It reads rowCap rather than restating the number, so the help cannot promise one cap
@@ -69,7 +73,7 @@ const sourceTipLine = "--changed refuses a --source-tip that is not the checkout
 const refusalLine = "three inputs refuse at exit 1 with no citation row: an ill-typed tree names its first error position, a missing go binary names itself, and a name only a non-Go file declares names that file's language."
 
 func helpText() string {
-	return usageLine + "\n" + promise + "\n" + soundness + "\n" + vendorLine + "\n" + viaLine + "\n" + emptyInterfaceLine + "\n" + genericImplementerLine + "\n" + changedLine + "\n" + sourceTipLine + "\n" + capLine() + "\n" + citationLine + "\n" + refusalLine + "\n"
+	return usageLine + "\n" + promise + "\n" + soundness + "\n" + vendorLine + "\n" + viaLine + "\n" + emptyInterfaceLine + "\n" + genericImplementerLine + "\n" + changedLine + "\n" + sourceTipLine + "\n" + capLine() + "\n" + scopeLine + "\n" + severalLine + "\n" + citationLine + "\n" + refusalLine + "\n"
 }
 
 // grammar is the declared argument shape usage.Parse enforces for this subcommand. Arity,
@@ -82,8 +86,10 @@ var grammar = usage.Grammar{
 		{Name: "--changed"},
 		{Name: "--base", HasValue: true, NoEmptyValue: true},
 		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
+		{Name: string(production)},
+		{Name: string(testOnly)},
 	},
-	MaxArgs: 1,
+	MaxArgs: -1,
 }
 
 // candidateFields is the ambiguous-name schema: one row per declaration the bare name
@@ -91,20 +97,20 @@ var grammar = usage.Grammar{
 var candidateFields = []string{"qualified", "file", "line", "kind"}
 
 // aggregateFields is the over-cap schema: one row per consumer directory, which is one Go
-// package, with the row count that directory contributed. The queried symbol is constant
-// across the block, so it gets no column.
+// package, with the row count that directory contributed. A one-symbol query holds the
+// symbol constant across the block, so it gets no column; a several-symbol query prepends one.
 var aggregateFields = []string{"dir", "rows"}
 
 // metaFields is the response accounting every form carries.
 var metaFields = []string{"packages", "files", "matches", "rows", "truncated"}
 
-// CommandWithVersion implements `bench consumers <qualified-symbol> [--full]` for one
-// bench version. The version is a cell of every success response's citation row, and it
-// lives in package main, so the registration injects it here rather than the package
-// reading a second copy. The command resolves the symbol over the repository's packages
-// and emits the consumers table, the meta accounting, the citation row, and the terminal
-// help envelope. A symbol result is a terminal read, so its envelope is empty unless the
-// default truncated.
+// CommandWithVersion implements `bench consumers <qualified-symbol>... [--production |
+// --test] [--full]` for one bench version. The version is a cell of every success
+// response's citation row, and it lives in package main, so the registration injects it
+// here rather than the package reading a second copy. The command resolves each symbol
+// over the repository's packages and emits the result blocks, the meta accounting, the
+// citation row, and the terminal help envelope. A symbol result is a terminal read, so
+// its envelope is empty unless the default truncated or a name was ambiguous.
 func CommandWithVersion(version string) func([]string) (string, int) {
 	return func(args []string) (string, int) { return command(version, args) }
 }
@@ -121,7 +127,7 @@ func command(version string, args []string) (string, int) {
 	if _, changed := parsed.Flags["--changed"]; changed {
 		return changedCommand(version, args, parsed.Flags["--base"], parsed.Flags["--source-tip"], full)
 	}
-	symbol := parsed.Positionals[0]
+	symbols := parsed.Positionals
 
 	root, err := git.Root()
 	if err != nil {
@@ -129,41 +135,19 @@ func command(version string, args []string) (string, int) {
 	}
 	pkgs, err := load(root, "./...")
 	if err != nil {
-		return refuseLoadForQuery(root, symbol, err) + "\n", 1
+		// The non-Go sweep names the first operand; the load refusal is the same for all.
+		return refuseLoadForQuery(root, symbols[0], err) + "\n", 1
 	}
-	matches, err := Resolve(pkgs, symbol)
-	if err != nil {
-		return refuseUnresolved(root, symbol, err) + "\n", 1
+	q := query{scope: scopeOf(parsed.Flags), full: full, several: len(symbols) > 1}
+	answers := make([]answer, 0, len(symbols))
+	for _, symbol := range symbols {
+		matches, err := Resolve(pkgs, symbol)
+		if err != nil {
+			return refuseUnresolved(root, symbol, err) + "\n", 1
+		}
+		answers = append(answers, q.answer(pkgs, root, symbol, matches))
 	}
-	source := citation{root: root, version: version, args: args}
-	if len(matches) > 1 {
-		return candidates(source, pkgs, matches)
-	}
-	return response(source, symbol, len(pkgs), len(matches), Rows(pkgs, matches[0].Obj, root), full)
-}
-
-// response renders the whole answer for one resolved symbol: the result block, the meta
-// accounting, and the help envelope. Row rendering itself belongs to the core, so this
-// function composes Render rather than restating the row schema.
-func response(source citation, symbol string, pkgCount, matchCount int, rows []Row, full bool) (string, int) {
-	rows, files, dropped := representableFiles(rows, func(r Row) string { return r.File })
-	overCap := !full && len(rows) > rowCap
-	var block string
-	var err error
-	if overCap {
-		block, err = toon.TableTyped("consumers_packages", aggregateFields, aggregate(files))
-	} else {
-		block, err = Render(rows)
-	}
-	if err != nil {
-		return toon.RenderError(err) + "\n", 1
-	}
-	var actions []axi.Action
-	if overCap {
-		actions = append(actions, axi.ExecutableInvocation("emit every consumer row",
-			axi.KnownArgument("consumers"), axi.KnownArgument(symbol), axi.KnownArgument("--full")))
-	}
-	return envelope(source, block, pkgCount, countFiles(files), matchCount, len(rows), overCap || dropped, actions)
+	return q.response(citation{root: root, version: version, args: args}, len(pkgs), answers)
 }
 
 // representableFiles projects each row's file cell and drops the rows TOON cannot carry.
@@ -185,9 +169,9 @@ func representableFiles[T any](rows []T, file func(T) string) ([]T, []string, bo
 }
 
 // envelope closes every response shape: the result block, the meta accounting, the
-// citation row, then the terminal help block. Both the symbol answer and the candidates
-// answer render through it, so neither can grow a second accounting, lose its citation,
-// or drop the terminal envelope.
+// citation row, then the terminal help block. The symbol answer and the blast answer
+// render through it, so neither can grow a second accounting, lose its citation, or drop
+// the terminal envelope.
 func envelope(source citation, block string, pkgCount, fileCount, matchCount, rowCount int, truncated bool, actions []axi.Action) (string, int) {
 	// The counts and the flag are typed cells, so an integer stays bare and the flag stays
 	// a boolean through a TOON round-trip.
@@ -208,25 +192,6 @@ func envelope(source citation, block string, pkgCount, fileCount, matchCount, ro
 		return toon.RenderError(err) + "\n", 1
 	}
 	return block + meta + cited + help, 0
-}
-
-// candidates answers an ambiguous bare name. It is an answer, not a refusal: the table
-// names every declaration the name reached, the meta accounting states zero consumer
-// rows, and the envelope carries one literal re-query per row in table order. Every
-// argument is known, so no row offers a slot the agent must fill.
-func candidates(source citation, pkgs []*Package, matches []Match) (string, int) {
-	rows := make([][]any, 0, len(matches))
-	actions := make([]axi.Action, 0, len(matches))
-	for _, m := range candidateOrder(pkgs, matches, source.root) {
-		rows = append(rows, []any{m.qualified, m.file, m.line, m.kind})
-		actions = append(actions, axi.ExecutableInvocation("re-query the qualified symbol",
-			axi.KnownArgument("consumers"), axi.KnownArgument(m.qualified)))
-	}
-	block, err := toon.TableTyped("consumers_candidates", candidateFields, rows)
-	if err != nil {
-		return toon.RenderError(err) + "\n", 1
-	}
-	return envelope(source, block, len(pkgs), 0, len(matches), 0, false, actions)
 }
 
 // candidateRow is one match rendered for the candidates table, in the sort order the
@@ -296,13 +261,21 @@ func countFiles(files []string) int {
 // the blast query. The revision rules are the rules `bench test --changed` applies, so one
 // revision grammar serves both surfaces — a positional with --changed names two subjects,
 // a revision flag without --changed grades a pair nothing selected, and a source tip
-// without a base grades the wrong pair against a defaulted base.
+// without a base grades the wrong pair against a defaulted base. The two row filters name
+// disjoint row sets, so both together select nothing, and neither filters the blast rows.
 func checkModes(parsed usage.Result) (string, int) {
 	_, changed := parsed.Flags["--changed"]
 	_, hasBase := parsed.Flags["--base"]
 	_, hasTip := parsed.Flags["--source-tip"]
 	if len(parsed.Positionals) > 0 && changed {
 		return toon.Usage(grammar.Cmd, parsed.Positionals[0]), 2
+	}
+	_, hasProduction := parsed.Flags[string(production)]
+	if _, hasTest := parsed.Flags[string(testOnly)]; hasTest && hasProduction {
+		return toon.Usage(grammar.Cmd, string(testOnly)), 2
+	}
+	if filter := scopeOf(parsed.Flags); filter != everyRow && changed {
+		return toon.Usage(grammar.Cmd, string(filter)), 2
 	}
 	if (hasBase || hasTip) && !changed {
 		flag := "--base"
