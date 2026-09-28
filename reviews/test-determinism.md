@@ -213,7 +213,7 @@ Repair cycle 2 is reserved for this checkpoint defect.
 {
   "version": 1,
   "spec": "specs/test-determinism/spec.md",
-  "plan_digest": "sha256:0d5f95e951ad76b239486e744ceff9bc487b8d2c3422daf6f760f420744f000c",
+  "plan_digest": "sha256:a1c65436efe7e608851a1c837dc69d2dec30b6824629417613dbcaf5ccc3325b",
   "implementation_session": "codex/test-determinism-inline-20260928",
   "chunks": [
     {
@@ -761,6 +761,24 @@ Repair cycle 2 is reserved for this checkpoint defect.
     {
       "from": "sha256:a0a05390b237129415afa3bc4ccab193d0e0c7d672e8ebe3c22c00b1cf4c3b77",
       "to": "sha256:0d5f95e951ad76b239486e744ceff9bc487b8d2c3422daf6f760f420744f000c",
+      "chunk_ids": {
+        "TD-C1a": [
+          "TD-C1a"
+        ],
+        "TD-C1b": [
+          "TD-C1b"
+        ],
+        "TD-C2": [
+          "TD-C2"
+        ],
+        "TD-C3": [
+          "TD-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:0d5f95e951ad76b239486e744ceff9bc487b8d2c3422daf6f760f420744f000c",
+      "to": "sha256:a1c65436efe7e608851a1c837dc69d2dec30b6824629417613dbcaf5ccc3325b",
       "chunk_ids": {
         "TD-C1a": [
           "TD-C1a"
