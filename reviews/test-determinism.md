@@ -129,7 +129,7 @@ All four required package checks pass on the committed source.
 The root conformance test also passes without skips.
 The cache tests now share the environment test file, within the existing ownership fence.
 The commit lane and build preflight pass.
-Repair cycles consumed for TD-C1b: 1 of 2.
+Repair cycles consumed for TD-C1b: 2 of 2.
 
 The initial testreport run found two fixture assumptions about HOME and the kit selection.
 The fixtures now preserve the operator cache target and restore the linked kit selection after setup.
@@ -207,7 +207,22 @@ All other gate phases passed.
 Ticket 2 now owns the probe fixture and adds probe-package verification.
 The repair forwards non-test Go calls to the real toolchain.
 The existing baseline, mutation, restoration, refusal, and interrupt assertions stay intact.
-Repair cycle 2 is reserved for this checkpoint defect.
+Repair cycle 2 addresses this checkpoint defect.
+
+## TD-C1b repair 2
+
+The probe fixture now sends each non-test Go call to the real toolchain.
+Its canned test output and test-start count retain their existing owner.
+All five required package checks pass, with no skips.
+The repair commit passes its lane and build preflight.
+
+Probe session 36946 restores the old list-only forwarding branch.
+TestProbeRunsTheBaselineFirst then fails because the settings query cannot run.
+The probe reports a passing baseline, one failed test, and restored source.
+The complete native output is retained in .logs/test-determinism-c1b-repair-2.json.
+
+Repair cycles consumed for TD-C1b: 2 of 2.
+The second confirming round and full checkpoint remain pending.
 
 ```bench-review-record
 {
@@ -444,9 +459,9 @@ Repair cycle 2 is reserved for this checkpoint defect.
     {
       "id": "TD-C1b",
       "base": "21ad810f4262c1478799618a93356b14969d8b83",
-      "tip": "f6a54aec7cde5db3ed82dbb8be0c5ce9b904515f",
-      "plan_digest": "sha256:a0a05390b237129415afa3bc4ccab193d0e0c7d672e8ebe3c22c00b1cf4c3b77",
-      "source_digest": "0295b97d8f72ead651308de9242d9ada303ff237",
+      "tip": "54f284bb18494a3c3b36bc00000142b5200bdef4",
+      "plan_digest": "sha256:a1c65436efe7e608851a1c837dc69d2dec30b6824629417613dbcaf5ccc3325b",
+      "source_digest": "f9e429423aa5d946636fc4d7c678baeeb7cfac87",
       "acceptance_rows": [
         "TD7",
         "TD16",
@@ -597,6 +612,96 @@ Repair cycle 2 is reserved for this checkpoint defect.
           },
           "requirement": "releasepreflight",
           "command": "bench test --package ./internal/releasepreflight",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C1b-env-repair-2",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "f9e429423aa5d946636fc4d7c678baeeb7cfac87",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-12073",
+            "digest": "sha256:42a1f07749420d89d357d1d9605bc4263913b3451e22f43f2aed0c058a258a71",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/env,pass,667\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "env",
+          "command": "bench test --package ./internal/env",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C1b-testreport-repair-2",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "f9e429423aa5d946636fc4d7c678baeeb7cfac87",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-27139",
+            "digest": "sha256:3556d3047268bfba0bdd00dfb32d71fb65afbefb82454b12f47c3e5cee721343",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testreport,pass,35517\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C1b-gate-repair-2",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "f9e429423aa5d946636fc4d7c678baeeb7cfac87",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-19137",
+            "digest": "sha256:1fb65f49af99b7e58ee111255fe31a78e5eaeae0c059ea26646443bdc63559cf",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,17229\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C1b-releasepreflight-repair-2",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "f9e429423aa5d946636fc4d7c678baeeb7cfac87",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-24091",
+            "digest": "sha256:904c46b5b430ec28fd92fd19e9a91c36e8d69f7dea6c6e010ea05127f23d8afa",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/releasepreflight,pass,449\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "releasepreflight",
+          "command": "bench test --package ./internal/releasepreflight",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C1b-probe-repair-2",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "f9e429423aa5d946636fc4d7c678baeeb7cfac87",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-73155",
+            "digest": "sha256:1c946ad7d68e45547098a7635b1a64c89459a9a87216ef474ec54f7aa617331e",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/probe,pass,30101\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "probe",
+          "command": "bench test --package ./internal/probe",
           "exit_code": 0
         }
       ],
