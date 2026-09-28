@@ -132,6 +132,7 @@ func TestKitTestRunCloseRestoresDirectoryAccess(t *testing.T) {
 func TestKitTestRunRejectsInvalidHomeBeforeCreation(t *testing.T) {
 	for _, home := range []string{"absent", "", "relative"} {
 		t.Run(home, func(t *testing.T) {
+			t.Chdir(t.TempDir())
 			tmp := t.TempDir()
 			base := []string{"TMPDIR=" + tmp}
 			if home != "absent" {
