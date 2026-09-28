@@ -1,7 +1,7 @@
 # 2. Compose the kit test run into bench test and release preflight
 
 Blocked by: 1-open-kit-test-run.md
-Writes: internal/testreport/environment.go, internal/testreport/environment_test.go, internal/releasepreflight/command.go, internal/releasepreflight/external_test.go, internal/env/, internal/gate/phases.go, internal/testreport/command.go, internal/testreport/check_test.go, internal/testreport/testreport_test.go, internal/testreport/outcome_test.go, internal/testreport/selection_test.go, internal/testreport/cancel_test.go, internal/gate/phases_test.go
+Writes: internal/probe/probe_test.go, internal/testreport/environment.go, internal/testreport/environment_test.go, internal/releasepreflight/command.go, internal/releasepreflight/external_test.go, internal/env/, internal/gate/phases.go, internal/testreport/command.go, internal/testreport/check_test.go, internal/testreport/testreport_test.go, internal/testreport/outcome_test.go, internal/testreport/selection_test.go, internal/testreport/cancel_test.go, internal/gate/phases_test.go
 Covers: TD7, TD16, TD17, TD18, TD19
 
 ## What to build

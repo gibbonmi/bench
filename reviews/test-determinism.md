@@ -197,11 +197,23 @@ Each axis read the repair delta and reaffirmed the complete chunk pair.
 The reviews distinguish the recorded author probe observations from their independent source reads.
 No reviewer ran a probe or claimed an independent execution verdict.
 
+## TD-C1b checkpoint repair pickup
+
+Checkpoint gate-20260928T125001.947354924Z-3072350 failed in the probe package.
+Its canned Go command treats environment queries as test starts.
+The new runner queries Go settings before it starts a test, so the fixture refuses before reaching its assertion.
+All other gate phases passed.
+
+Ticket 2 now owns the probe fixture and adds probe-package verification.
+The repair forwards non-test Go calls to the real toolchain.
+The existing baseline, mutation, restoration, refusal, and interrupt assertions stay intact.
+Repair cycle 2 is reserved for this checkpoint defect.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/test-determinism/spec.md",
-  "plan_digest": "sha256:a0a05390b237129415afa3bc4ccab193d0e0c7d672e8ebe3c22c00b1cf4c3b77",
+  "plan_digest": "sha256:0d5f95e951ad76b239486e744ceff9bc487b8d2c3422daf6f760f420744f000c",
   "implementation_session": "codex/test-determinism-inline-20260928",
   "chunks": [
     {
@@ -731,6 +743,24 @@ No reviewer ran a probe or claimed an independent execution verdict.
     {
       "from": "sha256:0c1f19eeefd300b73018e190ea2fb3acf0baf416e4171f4b8717cfa5aa651a63",
       "to": "sha256:a0a05390b237129415afa3bc4ccab193d0e0c7d672e8ebe3c22c00b1cf4c3b77",
+      "chunk_ids": {
+        "TD-C1a": [
+          "TD-C1a"
+        ],
+        "TD-C1b": [
+          "TD-C1b"
+        ],
+        "TD-C2": [
+          "TD-C2"
+        ],
+        "TD-C3": [
+          "TD-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:a0a05390b237129415afa3bc4ccab193d0e0c7d672e8ebe3c22c00b1cf4c3b77",
+      "to": "sha256:0d5f95e951ad76b239486e744ceff9bc487b8d2c3422daf6f760f420744f000c",
       "chunk_ids": {
         "TD-C1a": [
           "TD-C1a"
