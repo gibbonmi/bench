@@ -1,7 +1,7 @@
 # 4. Run the build-script tests on a private kit copy
 
 Blocked by: none
-Writes: internal/gittest/gittest.go, internal/gittest/gittest_test.go (new), cmd/bench/build_subject_mode_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/gittest/gittest.go, internal/gittest/gittest_test.go (new), cmd/bench/build_subject_mode_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/testrepo/working_tree.go
 Covers: TD47, TD48
 
 ## What to build
@@ -11,6 +11,9 @@ Chunk: TD-C2.
 Add a kit copy helper to the shared git test scaffold. It copies each file that git lists as tracked, or as untracked and not ignored, from the kit root into a fresh temporary directory. It then initializes a git repository there with one commit. The copy holds no ignored file.
 
 `TestReleasePreflightBuildDoesNotRebindThePromotionBroker` and `TestGoBuildSubjectModePublishesTheStampedVersion` each run the real build script inside a kit copy. Each test still grades the operands that the script hands the builder, and each still reads the broker manifest from the copy's wrapper directory. The live checkout then gets no `dist/` path and no rewrite of its broker manifest.
+
+The helper composes testrepo.CommitWorkingTree, which owns file enumeration, copying, and the snapshot commit.
+The owner file joins the fence for the ignore-filter mutation; no persistent owner edit is expected.
 
 The five registry files join `Writes:` through the binding registry closure only. The ticket expects no edit to them.
 

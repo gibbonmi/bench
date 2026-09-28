@@ -452,11 +452,19 @@ The project has no expected-failure form, so the red ran manually before the fix
 No diagnostic tool or temporary harness remains.
 The local supplement must pass prose before the package run.
 
+## Ticket 4 owner composition
+
+The shared git test helper composes testrepo.CommitWorkingTree.
+That existing owner already enumerates, copies, and commits the permitted files.
+Its file joins the mutation fence, and the chunk verifies its package.
+No persistent owner change or acceptance change is planned.
+The learning inbox records the expansion before the ticket charge.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/test-determinism/spec.md",
-  "plan_digest": "sha256:9e27293b2fc324bfd625c4731e103debbd8ea09bd26741f75f9827a266024f00",
+  "plan_digest": "sha256:5a4a015267230e340f4238f75ab928b81a67eefa3a5e4f97476dbbb9ba57d970",
   "implementation_session": "codex/test-determinism-inline-20260928",
   "chunks": [
     {
@@ -1388,6 +1396,24 @@ The local supplement must pass prose before the package run.
     {
       "from": "sha256:c468cfe39ed63f5b14c447aba2d8b3a5178741083d43648063b3ab0224bffdbf",
       "to": "sha256:9e27293b2fc324bfd625c4731e103debbd8ea09bd26741f75f9827a266024f00",
+      "chunk_ids": {
+        "TD-C1a": [
+          "TD-C1a"
+        ],
+        "TD-C1b": [
+          "TD-C1b"
+        ],
+        "TD-C2": [
+          "TD-C2"
+        ],
+        "TD-C3": [
+          "TD-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:9e27293b2fc324bfd625c4731e103debbd8ea09bd26741f75f9827a266024f00",
+      "to": "sha256:5a4a015267230e340f4238f75ab928b81a67eefa3a5e4f97476dbbb9ba57d970",
       "chunk_ids": {
         "TD-C1a": [
           "TD-C1a"
