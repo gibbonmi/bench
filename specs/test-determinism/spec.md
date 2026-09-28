@@ -344,6 +344,8 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - `internal/releasepreflight/external_test.go`
 - `internal/conformance/checks_test.go`
 - `internal/conformance/conformance_env_test.go`
+- `internal/conformance/registry_test.go`
+- `internal/conformance/registry_validation_test.go`
 - `internal/conformance/bounds_waits_policy_test.go`
 - `internal/conformance/bounds_policy_test.go`
 - `internal/conformance/fixture_bite_test.go`
@@ -507,6 +509,10 @@ Ticket 7 moves the existing system environment helpers into internal/systemtest/
 This keeps the existing oversized owner test file from growing.
 Ticket 8 can place the wait-expression checker in internal/conformance/bounds_waits_policy_test.go.
 The existing bounds-policy owner calls that checker, so the rule has one executable owner.
+
+Tickets 7 and 8 also update the existing canary classification registry.
+Ticket 7 moves its validation tests into registry_validation_test.go so new entries do not exceed the file budget.
+All classification rules and existing fixture bindings remain enforced.
 
 ### Flagged additions
 

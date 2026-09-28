@@ -1,7 +1,7 @@
 # 7. Turn off verdict windows in a kit test run
 
 Blocked by: 2-compose-kit-test-run.md
-Writes: internal/systemtest/owner_environment_test.go (new), internal/bounds/bounds.go, internal/bounds/bounds_test.go, internal/env/, internal/git/git.go, internal/git/worktree_admin_enum_test.go, internal/gate/gate.go, internal/models/models.go, internal/sessioninspect/sessioninspect.go, internal/sessioninspect/sessioninspect_test.go, internal/guards/guards.go, internal/coverage/citation_execution.go, internal/refresh/refresh.go, internal/systemtest/owner_test.go, internal/systemtest/owner_land_race_test.go, internal/systemtest/owner_artifact_recovery_test.go, internal/conformance/bounds_policy_test.go, internal/conformance/fixture_bite_test.go, tests/canary/package-core-guard/, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/conformance/registry_validation_test.go (new), internal/conformance/registry_test.go, internal/systemtest/owner_environment_test.go (new), internal/bounds/bounds.go, internal/bounds/bounds_test.go, internal/env/, internal/git/git.go, internal/git/worktree_admin_enum_test.go, internal/gate/gate.go, internal/models/models.go, internal/sessioninspect/sessioninspect.go, internal/sessioninspect/sessioninspect_test.go, internal/guards/guards.go, internal/coverage/citation_execution.go, internal/refresh/refresh.go, internal/systemtest/owner_test.go, internal/systemtest/owner_land_race_test.go, internal/systemtest/owner_artifact_recovery_test.go, internal/conformance/bounds_policy_test.go, internal/conformance/fixture_bite_test.go, tests/canary/package-core-guard/, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: TD33, TD34, TD35, TD36, TD37, TD38, TD39, TD42, TD43, TD44, TD45, TD46
 
 ## What to build
@@ -13,6 +13,8 @@ The bounds package owns the switch `BENCH_TEST_UNBOUNDED_WAITS`, whose only acce
 Each package variable that holds one of the seven verdict windows initializes through the first accessor. Session inspection gains a variable for its provider window and its discovery window, both through the first accessor, and a setter for tests. Each setter for tests keeps its raw assignment. The bounds-policy check's required list and owner table name all seven windows, the discovery window included. The owner table asks for the first accessor around each one.
 
 Two new canaries in the `package-core-guard` family prove that rule: one for the worktree list window and one for the discovery window. The kit test run sets the switch in its entries.
+
+Register each new canary in the existing classification registry. Move the registry validation tests into registry_validation_test.go to keep both files within their budgets.
 
 The system suite removes the switch from each Bench child through one base-environment helper. `childEnvironment`, `systemStartSelected`, and `startArtifactLand` call that helper. The helper names the switch through the bounds package. Move the existing environment helpers into owner_environment_test.go so the oversized owner test file does not grow. The system suite files are system-tagged, so run them with `BENCH_KIT` set, through `bench test --check system`.
 

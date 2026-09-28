@@ -766,11 +766,25 @@ The ranked causes were missing markers, invalid paths, and stale preflight input
 The canonical parser confirms that these planned files require the marker.
 The corrective amendment adds only those two markers and preserves every fence path.
 
+## TD-C3 canary registry amendment
+
+The complete conformance run found two unclassified ticket 7 canaries.
+Session 10221 reproduced that exact failure in 13 ms through TestCanaryFixtureRegistryClassifiesEveryFixture.
+The ranked hypotheses were missing registry entries, incorrect check bindings, and stale inputs.
+The canary proof passed both executable bindings, while registry_test.go:285 found neither classification entry.
+This confirms a missing owner in the original ticket fence.
+
+The amendment fences registry_test.go for both remaining tickets.
+Ticket 7 can move the validation tests into registry_validation_test.go to keep the 399-line registry within budget.
+The registry stays in its existing file, so its documented readers retain their path.
+No check, acceptance predicate, or existing binding is removed.
+The author retained the dirty ticket implementation while the plan correction committed.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/test-determinism/spec.md",
-  "plan_digest": "sha256:aec9213b88ac300cb6f8a5e0b4cd7cf0ac1909212f388eba03e8da8a8009f9a5",
+  "plan_digest": "sha256:95397483990765ccfba4e331058d7febb6ed2286c8efc9195213aa4a51cb3aa5",
   "implementation_session": "codex/test-determinism-inline-20260928",
   "chunks": [
     {
@@ -2183,6 +2197,24 @@ The corrective amendment adds only those two markers and preserves every fence p
     {
       "from": "sha256:27e6b2a427af1a721ef859c1d70c7f9d25b667ae3a11c109edc0382e11aae639",
       "to": "sha256:aec9213b88ac300cb6f8a5e0b4cd7cf0ac1909212f388eba03e8da8a8009f9a5",
+      "chunk_ids": {
+        "TD-C1a": [
+          "TD-C1a"
+        ],
+        "TD-C1b": [
+          "TD-C1b"
+        ],
+        "TD-C2": [
+          "TD-C2"
+        ],
+        "TD-C3": [
+          "TD-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:aec9213b88ac300cb6f8a5e0b4cd7cf0ac1909212f388eba03e8da8a8009f9a5",
+      "to": "sha256:95397483990765ccfba4e331058d7febb6ed2286c8efc9195213aa4a51cb3aa5",
       "chunk_ids": {
         "TD-C1a": [
           "TD-C1a"

@@ -1,7 +1,7 @@
 # 8. Name the window of every production wait
 
 Blocked by: 7-switch-verdict-windows.md
-Writes: internal/intent/, internal/conformance/bounds_waits_policy_test.go (new), internal/conformance/bounds_policy_test.go, internal/conformance/fixture_bite_test.go, tests/canary/package-core-guard/, internal/bounds/bounds.go, internal/git/git.go, internal/handoffdoc/, internal/capturetx/, internal/gate/runner.go, internal/runbinary/runbinary.go, internal/worktree/subshell.go, internal/worktree/exec.go, internal/testreport/command.go, internal/freshness/freshness_publish.go, internal/releaseevidence/release_evidence.go, internal/shift/loop.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/conformance/registry_test.go, internal/intent/, internal/conformance/bounds_waits_policy_test.go (new), internal/conformance/bounds_policy_test.go, internal/conformance/fixture_bite_test.go, tests/canary/package-core-guard/, internal/bounds/bounds.go, internal/git/git.go, internal/handoffdoc/, internal/capturetx/, internal/gate/runner.go, internal/runbinary/runbinary.go, internal/worktree/subshell.go, internal/worktree/exec.go, internal/testreport/command.go, internal/freshness/freshness_publish.go, internal/releaseevidence/release_evidence.go, internal/shift/loop.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: TD40, TD41, TD50
 
 ## What to build
@@ -12,7 +12,7 @@ The bounds-policy check grows one rule. In production code outside the bounds pa
 
 Move the ref-check timeout, the handoff lock deadline, the capture lock wait, and the intent ledger lock wait into the bounds registry. Read each one through the first accessor, and add each one to the owner table with the first accessor around it. Pass each cancel grace, each poll interval, and the operator's wall limit through the second accessor. `TestUpdateRefusesALockAnotherWriterHolds` gets its own lock window through a setter. 
 
-The raw-duration and raw-deadline canaries in the `package-core-guard` family prove the wait rule. A third canary replaces the intent lock first accessor with the second accessor. Keep the wait-expression checker in bounds_waits_policy_test.go, called by the existing bounds-policy owner.
+The raw-duration and raw-deadline canaries in the `package-core-guard` family prove the wait rule. A third canary replaces the intent lock first accessor with the second accessor. Register each new canary in the existing classification registry. Keep the wait-expression checker in bounds_waits_policy_test.go, called by the existing bounds-policy owner.
 
 ## Acceptance
 
