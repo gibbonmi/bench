@@ -31,7 +31,10 @@ func checkBoundsPolicy(root string) []string {
 		"internal/gate/gate.go":                     {"bounds.VerdictWindow(bounds.GateTimeout)"},
 		"internal/coverage/citation_execution.go":   {"bounds.VerdictWindow(bounds.PackageLoadTimeout)"},
 		"internal/refresh/refresh.go":               {"bounds.VerdictWindow(bounds.GitRefreshTimeout)"},
-		"internal/git/git.go":                       {"bounds.VerdictWindow(bounds.WorktreeListTimeout)"},
+		"internal/git/git.go":                       {"bounds.VerdictWindow(bounds.WorktreeListTimeout)", "bounds.VerdictWindow(bounds.RefCheckTimeout)"},
+		"internal/intent/intent.go":                 {"bounds.VerdictWindow(bounds.IntentLockTimeout)"},
+		"internal/handoffdoc/store.go":              {"bounds.VerdictWindow(bounds.HandoffLockTimeout)"},
+		"internal/capturetx/transaction.go":         {"bounds.VerdictWindow(bounds.CaptureLockTimeout)"},
 		"internal/worktree/lifecycle.go":            {"bounds.LeaseStale"},
 		"internal/worktree/classifier.go":           {"bounds.AssignmentStale"},
 		"internal/shift/loop.go":                    {"bounds.MainIterationsDefault", "bounds.RefactorIterationsDefault", "bounds.IterationMin", "bounds.IterationMax", "bounds.MaxWall"},
@@ -75,6 +78,7 @@ func checkBoundCallers(root, registryPath string) []string {
 	if err != nil {
 		return []string{"internal/bounds read seams cannot be parsed: " + err.Error()}
 	}
+	waits := newWaitPolicy(registry)
 	var diags []string
 	for _, top := range []string{"cmd", "internal"} {
 		base := filepath.Join(root, top)
@@ -86,7 +90,7 @@ func checkBoundCallers(root, registryPath string) []string {
 			if strings.HasPrefix(rel, "internal/bounds/") {
 				return nil
 			}
-			diags = append(diags, checkBoundCaller(fset, path, rel, owned, seams)...)
+			diags = append(diags, checkBoundCaller(fset, path, rel, owned, seams, waits)...)
 			return nil
 		})
 	}
@@ -152,7 +156,7 @@ func boundsReadSeams(dir string) (map[string]int, error) {
 	return seams, nil
 }
 
-func checkBoundCaller(fset *token.FileSet, path, rel string, ownedExpressions map[string]string, seams map[string]int) []string {
+func checkBoundCaller(fset *token.FileSet, path, rel string, ownedExpressions map[string]string, seams map[string]int, waits *waitPolicy) []string {
 	if readIfExists(path) == "" {
 		return nil
 	}
@@ -160,7 +164,7 @@ func checkBoundCaller(fset *token.FileSet, path, rel string, ownedExpressions ma
 	if err != nil {
 		return []string{rel + " cannot be parsed for bounds ownership: " + err.Error()}
 	}
-	var diags []string
+	diags := waits.check(caller, path, rel)
 	ast.Inspect(caller, func(node ast.Node) bool {
 		switch value := node.(type) {
 		case *ast.ValueSpec:

@@ -4,6 +4,7 @@
 package intent
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent/admissionpolicy"
 	"github.com/gibbonmi/bench/internal/jsonfile"
@@ -204,8 +206,17 @@ func writePath(path string, ledger Ledger) error {
 	return nil
 }
 
+var lockWindow = bounds.VerdictWindow(bounds.IntentLockTimeout)
+
+func setLockWindowForTest(window time.Duration) func() {
+	previous := lockWindow
+	lockWindow = window
+	return func() { lockWindow = previous }
+}
+
 func acquire(lock string) (func(), error) {
-	deadline := time.Now().Add(2 * time.Second)
+	ctx, cancel := bounds.Context(context.Background(), lockWindow)
+	defer cancel()
 	for {
 		file, err := os.OpenFile(lock, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
 		if err == nil {
@@ -232,10 +243,10 @@ func acquire(lock string) (func(), error) {
 			_ = os.Remove(lock)
 			continue
 		}
-		if time.Now().After(deadline) {
+		if ctx.Err() != nil {
 			return nil, errors.New("lock intent ledger: timed out")
 		}
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(bounds.FixedWindow(10 * time.Millisecond))
 	}
 }
 

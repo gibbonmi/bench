@@ -856,7 +856,7 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
 {
   "version": 1,
   "spec": "specs/test-determinism/spec.md",
-  "plan_digest": "sha256:65356dbfee549d85740553ee95bcd987a9c0638bd20ab17d5dc8b974bb9d03e5",
+  "plan_digest": "sha256:99e115a7ba3f3afe54aa29c40f20dd56ecd71925c9b19147fa00a1927dd24288",
   "implementation_session": "codex/test-determinism-inline-20260928",
   "chunks": [
     {
@@ -2337,6 +2337,24 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
           "TD-C3"
         ]
       }
+    },
+    {
+      "from": "sha256:65356dbfee549d85740553ee95bcd987a9c0638bd20ab17d5dc8b974bb9d03e5",
+      "to": "sha256:99e115a7ba3f3afe54aa29c40f20dd56ecd71925c9b19147fa00a1927dd24288",
+      "chunk_ids": {
+        "TD-C1a": [
+          "TD-C1a"
+        ],
+        "TD-C1b": [
+          "TD-C1b"
+        ],
+        "TD-C2": [
+          "TD-C2"
+        ],
+        "TD-C3": [
+          "TD-C3"
+        ]
+      }
     }
   ]
 }
@@ -2354,3 +2372,83 @@ The first plan commit passed its lane but failed build preflight on fence-writes
 The diagnostic named only the two new ticket paths.
 Bench-debug ranked omitted spec entries, path grammar, and stale build state.
 The spec fence lacked those entries, so this repair adds them without changing behavior.
+
+## Ticket 8 wait ownership and verification
+
+The retained inline author implements TD40, TD41, and TD50 on model unknown at high effort.
+The current charge is sha256:b8cc15d43ce0ca93648cdd8fe11a7ff788f6b99bedd68b82dc20ba4847c969f3 at d822a4d8e0710827c58bbd719ad51788431c2b10.
+The author read its metadata, complete ticket, and current binding before implementation.
+The user retains uncapped repairs through bench-debug.
+
+The bounds registry now owns the four local verdict windows and the three cancellation grace values.
+Each verdict owner initializes through VerdictWindow, and each fixed wait consumes FixedWindow.
+The wait-expression check covers context windows, timers, sleeps, and deadlines derived from the current time.
+It resolves local aliases and package defaults before grading their windows.
+The existing bounds-policy check calls it and retains every earlier rule.
+
+| Row | Observed red | Observed green |
+| --- | --- | --- |
+| TD40 | Session 41124 lacked the raw-context diagnostic. | Session 27100 passed the complete retained-fixture proof. |
+| TD41 | Session 15153 lacked the raw-deadline diagnostic. | Session 69274 passed the complete retained-fixture proof. |
+| TD50 | Session 26727 lacked the intent accessor diagnostic. | Session 81412 passed the complete retained-fixture proof. |
+
+Session 66798 caught the raw Git context that remained after fixture restoration.
+The Git ref-check now uses the bounds context, and the next retained-fixture run passed.
+Session 67849 reported three cancellation graces as duplicate registry values.
+Bench-debug ranked local literal duplication, expression matching, and stale source.
+Moving each grace value to its named registry entry made the same check pass in session 61217.
+
+The wrong-accessor probes cover the other three moved verdict windows.
+Sessions 38202, 44446, and 29854 changed the ref-check, handoff, and capture accessors in turn.
+Each probe passed its baseline, produced the named owner diagnostic, and restored the source.
+Session 31845 passed the held-handoff-lock test with the switch enabled and a raw finite override.
+
+The first complete package run passed every package except intent.
+The intent run stalled and was stopped after 108 seconds; that run is failed verification, not a behavioral-red proof.
+The focused debug command was `env BENCH_TEST_UNBOUNDED_WAITS=1 go test -trimpath -count=1 -timeout=5s ./internal/intent -run '^TestReauthorizeCompensatesOnTheTerminalWriteFailure$/a_mutator_without_a_step_answers_the_failure$'`.
+Session 37510 timed out in intent.acquire from the fixture's second PutAssignment call.
+Session 25299 changed only the switch to 0 and passed after 2.036 seconds.
+
+The ranked causes were a refusal fixture that needs its own window, a leaked writer lock, and a slow Git child.
+The stack and switch-only control confirmed the fixture's dependency on the production deadline.
+The test now installs a raw finite window and retains all refusal and persistence assertions.
+The same debug loop passed in native chunk dbca59 after 0.033 seconds.
+The five-second diagnostic timeout belongs only to that repro; the gate and bench-test argv retain Go's default backstop.
+
+The spec census now names the intent refusal fixture.
+This evidence update changes no acceptance row, ownership fence, or required check.
+The complete system suite passed in session 65102 with no skips before the fixture repair.
+The local native records retain the first package run and every retained probe result.
+
+The repaired intent package passed in session 17143 after 4.080 seconds.
+Full root conformance passed in session 55072 after 8.059 seconds.
+The controlled repro and the regression are green, and no diagnostic instrumentation remains.
+A complete refusal-fixture census would have exposed this test-owned window before the broad run.
+
+| Changed package | Complete package session | Result |
+| --- | --- | --- |
+| bounds | 25498 | pass |
+| git | 78642 | pass |
+| handoffdoc | 31944 | pass |
+| capturetx | 65488 | pass |
+| runbinary | 47868 | pass |
+| gate | 86728 | pass |
+| worktree | 18183 | pass |
+| intent | 17143 | pass |
+| freshness | 27677 | pass |
+| releaseevidence | 3866 | pass |
+| testreport | 19709 | pass |
+| chargeevidence | 98453 | pass |
+| contract | 20172 | pass |
+| shift | 50371 | pass |
+| conformance | 12777 | pass |
+
+The first ticket commit attempt failed vet before creating a commit.
+An import insertion also changed the bytes field tag in capturetx.
+The focused command `go vet -trimpath ./internal/capturetx` reproduced the exact tag diagnostic in native chunk 01b3ea.
+Bench-debug ranked the broad insertion, a separate tag edit, and stale lane input.
+The source confirmed the insertion match, so the repair restores the original tag and keeps the context import.
+
+The focused vet repro passed after the tag repair in native chunk 76ec2c.
+The complete capture package passed in session 52052 after 0.224 seconds.
+The author then read the complete production diff and the new wait checker before retrying the lane.

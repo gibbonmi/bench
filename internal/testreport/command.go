@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/diff"
 	benchenv "github.com/gibbonmi/bench/internal/env"
@@ -325,7 +326,7 @@ func cancelGoProcessGroup(cmd *exec.Cmd, completed <-chan struct{}) {
 	_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
 	select {
 	case <-completed:
-	case <-time.After(runbinary.BuilderCancelGrace):
+	case <-time.After(bounds.FixedWindow(runbinary.BuilderCancelGrace)):
 	}
 	drainGoProcessGroup(cmd.Process.Pid)
 }

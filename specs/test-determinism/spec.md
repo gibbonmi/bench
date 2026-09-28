@@ -206,6 +206,7 @@ The author read each test below on 2026-09-19. The census sweep searched every t
 | `TestCommandInstallsTenSecondDeadline` in session inspection | The command receives an unbounded provider window under the switch. | Ticket 7 sets the provider window through the raw test setter. |
 | `TestWorktreeListTimeoutDefaultUsesPolicy` in the git package | It asserts that the variable equals the policy constant. That equality is false under the switch. | Ticket 7 changes the expected value to the first accessor's result. |
 | `TestUpdateRefusesALockAnotherWriterHolds` in the handoff store | It relies on the two-second lock window to expire. | Ticket 8 gives the test its own window through a setter. |
+| `TestReauthorizeCompensatesOnTheTerminalWriteFailure` in the intent ledger | Its nil-step fixture leaves a lock in a read-only directory, then expects the next write to refuse. | Ticket 8 gives the fixture its own raw lock window through a setter. |
 
 The capture transaction has no lock-held test, so its lock wait needs no test change.
 

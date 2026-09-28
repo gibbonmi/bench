@@ -1,0 +1,237 @@
+package conformance
+
+import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+)
+
+type waitBinding struct {
+	expr ast.Expr
+	file *ast.File
+}
+
+type waitPolicy struct {
+	seams    map[string]int
+	bindings map[string]map[string]waitBinding
+}
+
+// The bounds signatures own their duration argument positions. Test-only helpers
+// use other parameter names and are not production wait seams.
+func newWaitPolicy(registry *ast.File) *waitPolicy {
+	p := &waitPolicy{seams: map[string]int{}, bindings: map[string]map[string]waitBinding{}}
+	for _, decl := range registry.Decls {
+		fn, ok := decl.(*ast.FuncDecl)
+		if !ok || fn.Recv != nil || !fn.Name.IsExported() {
+			continue
+		}
+		position := 0
+		for _, field := range fn.Type.Params.List {
+			for _, name := range field.Names {
+				if name.Name == "limit" && waitCallName(field.Type, registry) == "time.Duration" {
+					p.seams["bounds."+fn.Name.Name] = position
+				}
+				position++
+			}
+		}
+	}
+	return p
+}
+
+func (p *waitPolicy) check(file *ast.File, path, rel string) []string {
+	bindings, err := p.packageBindings(filepath.Dir(path))
+	if err != nil {
+		return []string{rel + " cannot resolve wait windows: " + err.Error()}
+	}
+	var diags []string
+	ast.Inspect(file, func(node ast.Node) bool {
+		call, ok := node.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		name := waitFunctionName(call.Fun, file, bindings, map[ast.Expr]bool{})
+		position, wait := p.seams[name]
+		switch name {
+		case "context.WithTimeout", "context.WithTimeoutCause", "context.WithDeadline", "context.WithDeadlineCause":
+			position, wait = 1, true
+		case "time.Sleep", "time.After", "time.AfterFunc", "time.NewTimer", "time.NewTicker", "time.Tick":
+			position, wait = 0, true
+		}
+		if selector, ok := call.Fun.(*ast.SelectorExpr); ok && selector.Sel.Name == "Add" && currentWaitTime(selector.X, file, bindings, map[ast.Expr]bool{}) {
+			name, position, wait = "current-time deadline", 0, true
+		}
+		if wait && position < len(call.Args) && !classifiedWait(call.Args[position], file, bindings, map[ast.Expr]bool{}) {
+			diags = append(diags, rel+" has an unclassified wait in "+name)
+		}
+		return true
+	})
+	return diags
+}
+
+// Package defaults can live beside their callers. Local declarations resolve
+// through the parser's lexical objects before a package binding is considered.
+func (p *waitPolicy) packageBindings(dir string) (map[string]waitBinding, error) {
+	if found, ok := p.bindings[dir]; ok {
+		return found, nil
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	bindings := map[string]waitBinding{}
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		file, err := parser.ParseFile(token.NewFileSet(), filepath.Join(dir, name), nil, 0)
+		if err != nil {
+			return nil, err
+		}
+		for _, decl := range file.Decls {
+			gen, ok := decl.(*ast.GenDecl)
+			if !ok {
+				continue
+			}
+			for _, item := range gen.Specs {
+				value, ok := item.(*ast.ValueSpec)
+				if !ok {
+					continue
+				}
+				for i, name := range value.Names {
+					if i < len(value.Values) {
+						bindings[name.Name] = waitBinding{value.Values[i], file}
+					}
+				}
+			}
+		}
+	}
+	p.bindings[dir] = bindings
+	return bindings, nil
+}
+
+func classifiedWait(expr ast.Expr, file *ast.File, bindings map[string]waitBinding, seen map[ast.Expr]bool) bool {
+	if seen[expr] {
+		return false
+	}
+	seen[expr] = true
+	switch value := expr.(type) {
+	case *ast.ParenExpr:
+		return classifiedWait(value.X, file, bindings, seen)
+	case *ast.CallExpr:
+		if selector, ok := value.Fun.(*ast.SelectorExpr); ok && selector.Sel.Name == "Add" && len(value.Args) == 1 && currentWaitTime(selector.X, file, bindings, map[ast.Expr]bool{}) {
+			return classifiedWait(value.Args[0], file, bindings, seen)
+		}
+		name := waitFunctionName(value.Fun, file, bindings, map[ast.Expr]bool{})
+		return name == "bounds.VerdictWindow" || name == "bounds.FixedWindow"
+	case *ast.Ident:
+		binding, ok := resolveWaitBinding(value, file, bindings)
+		return ok && classifiedWait(binding.expr, binding.file, bindings, seen)
+	}
+	return false
+}
+
+func waitCallName(expr ast.Expr, file *ast.File) string {
+	selector, ok := expr.(*ast.SelectorExpr)
+	if !ok {
+		return ""
+	}
+	ident, ok := selector.X.(*ast.Ident)
+	if !ok || ident.Obj != nil {
+		return ""
+	}
+	for _, spec := range file.Imports {
+		path, err := strconv.Unquote(spec.Path.Value)
+		if err != nil {
+			continue
+		}
+		name := filepath.Base(path)
+		if spec.Name != nil {
+			name = spec.Name.Name
+		}
+		if name != ident.Name {
+			continue
+		}
+		switch path {
+		case "time", "context":
+			return path + "." + selector.Sel.Name
+		case "github.com/gibbonmi/bench/internal/bounds":
+			return "bounds." + selector.Sel.Name
+		}
+	}
+	return ""
+}
+
+func resolveWaitBinding(value *ast.Ident, file *ast.File, bindings map[string]waitBinding) (waitBinding, bool) {
+	if value.Obj == nil {
+		binding, ok := bindings[value.Name]
+		return binding, ok
+	}
+	switch decl := value.Obj.Decl.(type) {
+	case *ast.ValueSpec:
+		for i, name := range decl.Names {
+			if name.Name == value.Name && i < len(decl.Values) {
+				return waitBinding{decl.Values[i], file}, true
+			}
+		}
+	case *ast.AssignStmt:
+		for i, lhs := range decl.Lhs {
+			if name, ok := lhs.(*ast.Ident); ok && name.Name == value.Name && i < len(decl.Rhs) {
+				return waitBinding{decl.Rhs[i], file}, true
+			}
+		}
+	}
+	return waitBinding{}, false
+}
+
+func waitFunctionName(expr ast.Expr, file *ast.File, bindings map[string]waitBinding, seen map[ast.Expr]bool) string {
+	if seen[expr] {
+		return ""
+	}
+	seen[expr] = true
+	if name := waitCallName(expr, file); name != "" {
+		return name
+	}
+	if ident, ok := expr.(*ast.Ident); ok {
+		if binding, found := resolveWaitBinding(ident, file, bindings); found {
+			return waitFunctionName(binding.expr, binding.file, bindings, seen)
+		}
+	}
+	return ""
+}
+
+func currentWaitTime(expr ast.Expr, file *ast.File, bindings map[string]waitBinding, seen map[ast.Expr]bool) bool {
+	if seen[expr] {
+		return false
+	}
+	seen[expr] = true
+	switch value := expr.(type) {
+	case *ast.ParenExpr:
+		return currentWaitTime(value.X, file, bindings, seen)
+	case *ast.Ident:
+		binding, ok := resolveWaitBinding(value, file, bindings)
+		return ok && currentWaitTime(binding.expr, binding.file, bindings, seen)
+	case *ast.CallExpr:
+		if waitFunctionName(value.Fun, file, bindings, map[ast.Expr]bool{}) == "time.Now" {
+			return true
+		}
+		if selector, ok := value.Fun.(*ast.SelectorExpr); ok {
+			switch selector.Sel.Name {
+			case "UTC", "Local", "Round", "Truncate", "Add":
+				return currentWaitTime(selector.X, file, bindings, seen)
+			}
+		}
+		if ident, ok := value.Fun.(*ast.Ident); ok && ident.Obj != nil {
+			if field, ok := ident.Obj.Decl.(*ast.Field); ok {
+				if fn, ok := field.Type.(*ast.FuncType); ok && fn.Results != nil && len(fn.Results.List) == 1 {
+					return waitCallName(fn.Results.List[0].Type, file) == "time.Time"
+				}
+			}
+		}
+	}
+	return false
+}

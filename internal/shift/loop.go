@@ -233,7 +233,7 @@ func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 	// group and cancelling a running gate. It sets deadline rather than interrupted, so
 	// the next checkpoint resolves incomplete/3 with a deadline detail, not interrupted/130.
 	if wallDur > 0 {
-		wallTimer := time.AfterFunc(wallDur, func() {
+		wallTimer := time.AfterFunc(bounds.FixedWindow(wallDur), func() {
 			s.deadline.Store(true)
 			s.killAdapter(syscall.SIGTERM)
 			s.cancelRunningGate()

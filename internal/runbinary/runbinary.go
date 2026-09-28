@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gocache"
@@ -25,7 +26,7 @@ const Env = "BENCH_RUN_BINARY"
 // BuilderCancelGrace is how long a cancelled builder group has to exit on SIGTERM
 // before it is killed. This constant is exported, so a test waiting out the drain
 // derives its own deadline from this window, instead of guessing a literal.
-const BuilderCancelGrace = 2 * time.Second
+const BuilderCancelGrace = bounds.BuilderCancelGrace
 
 type Builder func(context.Context, string, string) error
 type Verifier func(string, string) error
@@ -282,7 +283,7 @@ func runBuildScript(ctx context.Context, sourceRoot, output, manifestDir string)
 		select {
 		case <-done:
 			drainBuilderGroup(cmd.Process.Pid)
-		case <-time.After(BuilderCancelGrace):
+		case <-time.After(bounds.FixedWindow(BuilderCancelGrace)):
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 			<-done
 			drainBuilderGroup(cmd.Process.Pid)
@@ -297,7 +298,7 @@ func drainBuilderGroup(pgid int) {
 		if err := syscall.Kill(-pgid, 0); errors.Is(err, syscall.ESRCH) {
 			return
 		}
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(bounds.FixedWindow(10 * time.Millisecond))
 	}
 }
 

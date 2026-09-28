@@ -9,6 +9,9 @@ import (
 	"sync"
 	"syscall"
 	"testing"
+	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // TestTwoWritersOnDistinctSectionsBothSurvive is the HS4 row. Two live phases
@@ -153,7 +156,8 @@ func TestDocumentPathIsSpelledOnce(t *testing.T) {
 // never releases refuses the caller by the lock path rather than hanging a phase
 // close forever.
 func TestUpdateRefusesALockAnotherWriterHolds(t *testing.T) {
-	t.Parallel()
+	t.Setenv(bounds.UnboundedWaitsEnv, "1")
+	t.Cleanup(setLockWindowForTest(time.Millisecond))
 	path := filepath.Join(t.TempDir(), "session-handoff.md")
 	lock := LockPath(path)
 	held, err := os.OpenFile(lock, os.O_CREATE|os.O_RDWR, 0o600)

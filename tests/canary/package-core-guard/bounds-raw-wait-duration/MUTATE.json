@@ -1,0 +1,7 @@
+[
+  {
+    "path": "internal/git/git.go",
+    "old": "func Root() (string, error) {",
+    "new": "func unclassifiedWait() {\n\tctx, cancel := context.WithTimeout(context.Background(), time.Duration(17))\n\tdefer cancel()\n\t_ = ctx\n}\n\nfunc Root() (string, error) {"
+  }
+]

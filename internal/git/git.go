@@ -16,13 +16,9 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 )
 
-// refCheckTimeout is the hook-scoped fail-safe for destructive-git classification,
-// unlike the policy-owned worktree discovery bound below. It bounds the ref and branch
-// existence probes the destructive-git guard runs per classification — internal/gitguard's
-// checkout and forced-creation verdicts. A hung git must never stall a PreToolUse Bash
-// hook, so the code bounds each probe at two seconds and resolves it to its caller's
-// fail-safe default.
-const refCheckTimeout = 2 * time.Second
+// refCheckTimeout bounds destructive-git classification probes. An expiry keeps
+// each caller's fail-safe verdict when Git cannot answer.
+var refCheckTimeout = bounds.VerdictWindow(bounds.RefCheckTimeout)
 
 var worktreeListTimeout = bounds.VerdictWindow(bounds.WorktreeListTimeout)
 
@@ -64,7 +60,7 @@ func BranchExists(name string) bool {
 // could not run — the undeterminable branch each caller resolves to its own fail-safe
 // default.
 func refCheck(ref string) (exitZero, ran bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), refCheckTimeout)
+	ctx, cancel := bounds.Context(context.Background(), refCheckTimeout)
 	defer cancel()
 	err := exec.CommandContext(ctx, "git", "rev-parse", "--verify", "--quiet", ref).Run()
 	if ctx.Err() == context.DeadlineExceeded {

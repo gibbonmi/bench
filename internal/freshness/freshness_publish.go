@@ -2,6 +2,7 @@
 package freshness
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
@@ -112,7 +114,7 @@ func sealContents(root, staged string) ([]byte, error) {
 // step to finish before restoring anyway. A step is one rename or one small write. A step
 // still running after the grace means the filesystem is wedged. Honoring the termination
 // then matters more than waiting for a step that may never return.
-const publicationStepGrace = 2 * time.Second
+const publicationStepGrace = bounds.PublicationStepGrace
 
 // publication owns replacing an executable and its seal as one outcome. The pair is only
 // consistent before the executable moves and after the seal lands. The transaction both
@@ -190,15 +192,16 @@ func (p *publication) watch() {
 }
 
 func (p *publication) awaitStep() bool {
-	deadline := time.Now().Add(publicationStepGrace)
+	ctx, cancel := bounds.Context(context.Background(), bounds.FixedWindow(publicationStepGrace))
+	defer cancel()
 	for {
 		if p.step.TryLock() {
 			return true
 		}
-		if time.Now().After(deadline) {
+		if ctx.Err() != nil {
 			return false
 		}
-		time.Sleep(5 * time.Millisecond)
+		time.Sleep(bounds.FixedWindow(5 * time.Millisecond))
 	}
 }
 

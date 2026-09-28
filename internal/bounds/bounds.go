@@ -28,6 +28,14 @@ const (
 	ProviderTimeout             = 10 * time.Second
 	EnvironmentDiscoveryTimeout = 2000 * time.Millisecond
 	GitRefreshTimeout           = 30 * time.Second
+	RefCheckTimeout             = 2 * time.Second
+	HandoffLockTimeout          = 2 * time.Second
+	CaptureLockTimeout          = 2 * time.Second
+	IntentLockTimeout           = 2 * time.Second
+	// Cancellation graces stay finite through FixedWindow.
+	ProcessGroupCancelGrace = 2 * time.Second
+	BuilderCancelGrace      = 2 * time.Second
+	PublicationStepGrace    = 2 * time.Second
 	// Git 2.43.0 can block while reading malformed worktree admin files; this
 	// backstop retires when upstream bounds those reads itself.
 	WorktreeListTimeout = 15 * time.Second

@@ -118,7 +118,7 @@ func runWorktreeChild(argv []string, dir, home string, extraEnv []string, stdin 
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	// A descendant of the child can hold an output pipe open after the child exits. The
 	// delay lets exec return at the child's own exit with the output that arrived.
-	cmd.WaitDelay = bounds.ExecWaitDelay
+	cmd.WaitDelay = bounds.FixedWindow(bounds.ExecWaitDelay)
 	if err := cmd.Start(); err != nil {
 		fmt.Fprintf(stderr, "bench worktree exec: %v\n", err)
 		return nameWorktree(stderr, dir, 1)
@@ -132,7 +132,7 @@ func runWorktreeChild(argv []string, dir, home string, extraEnv []string, stdin 
 		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
 		select {
 		case <-done:
-		case <-time.After(bounds.ExecWaitDelay):
+		case <-time.After(bounds.FixedWindow(bounds.ExecWaitDelay)):
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 			<-done
 		}
