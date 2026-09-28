@@ -553,6 +553,25 @@ The verified temporary backups and snapshot helper were removed after the checks
 The snapshot helper digest was sha256:62325880dbe7bf5b2799de958ac4cacdcf55a6cae3e9d27c910e71ec0ae0790b.
 TD47, TD48, and TD49 now have passing author evidence; independent chunk review and the checkpoint remain pending.
 
+## TD-C2 ticket 5 author result
+
+TD22 is review-owned: the test itself moves its timing reads into a private kit copy.
+Both direct file reads use the timing path derived from that copy.
+The selected executable and BENCH_KIT also name the copy.
+The original timing assertions and the separate timing fixture remain intact.
+The copy owner still enumerates source files through Git, as the approved copy contract requires.
+
+The focused test passes in session 74369.
+The mutation in session 10706 redirects the Go wrapper to the copied kit root.
+It reports a passing baseline, one behavioral failure, and restored source.
+The failure names the source timing change from absent to the ordinary-build-census record.
+Thus the existing comparison still rejects a write to the root it grades.
+
+The full testreport package passes in session 97549, and root conformance passes in session 42715.
+Both report zero failures and zero skips.
+The native evidence is in .logs/test-determinism-t5.json.
+Ticket 5 is ready for the chunk review after ticket 6.
+
 ```bench-review-record
 {
   "version": 1,

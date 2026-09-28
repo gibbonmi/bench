@@ -13,7 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gate"
-	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -237,10 +237,8 @@ func TestNamedCheckRefusesCorruptInheritedSelection(t *testing.T) {
 }
 
 func TestNamedCheckRunsOnlyRegisteredDevScope(t *testing.T) {
-	root, err := git.Root()
-	if err != nil {
-		t.Fatal(err)
-	}
+	root := gittest.KitCopy(t, filepath.Join("..", ".."))
+	t.Setenv("BENCH_KIT", root)
 	sourceTiming := registry.TimingPath(root)
 	before, beforeErr := os.ReadFile(sourceTiming)
 	existed := beforeErr == nil
