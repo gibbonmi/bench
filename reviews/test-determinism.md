@@ -619,6 +619,25 @@ Its six phases passed with eight capability skips and no environment skips.
 The build cache measured 9,939,719,806 bytes, below the declared 10,737,418,240-byte bound.
 No further writer or declared-path expansion was needed.
 
+## TD-C2 author verification
+
+All nine planned verification commands pass on source 56de27cbba48703bf21b64b4c2e378c058ce96f1.
+The record below retains their native results and command identities.
+The conformance suite has three capability skips and no environment skips.
+The other package checks have no skips.
+The stress-tagged caller check passed through its exact planned command.
+
+Ticket 6 committed as 74d988ca263b6bd523a36983f13eb33496c0633f on a green lane.
+Its post-commit build preflight passed.
+An earlier commit attempt created no commit because one evidence paragraph exceeded the sentence limit.
+Splitting that paragraph made the same prose check and commit lane pass.
+No source behavior changed in that repair.
+
+The TD-C2 source is ready for independent Standards, Spec, and Coverage review.
+No post-review repair cycle has been consumed for this chunk.
+The user removes the repair-cycle cap while bench-debug governs each repair.
+TD-C3 and final reconciliation remain pending.
+
 ```bench-review-record
 {
   "version": 1,
@@ -1470,6 +1489,196 @@ No further writer or declared-path expansion was needed.
           ]
         }
       ]
+    },
+    {
+      "id": "TD-C2",
+      "base": "786a1d2c69ccbf6b2d3b6f19609329e450c9bede",
+      "tip": "74d988ca263b6bd523a36983f13eb33496c0633f",
+      "plan_digest": "sha256:16abfe4c3e278cb992643dd86dfdb7be1fa874c001dea3ac15c9b9c5050853a8",
+      "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+      "acceptance_rows": [
+        "TD20",
+        "TD21",
+        "TD22",
+        "TD23",
+        "TD24",
+        "TD25",
+        "TD26",
+        "TD27",
+        "TD28",
+        "TD29",
+        "TD30",
+        "TD31",
+        "TD32",
+        "TD47",
+        "TD48",
+        "TD49"
+      ],
+      "verification": [
+        {
+          "id": "TD-C2-conformance-1",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-96997",
+            "digest": "sha256:d74c661898bffcaaf2c9402351790b35f99c28d82fd219e3c87552702526938c",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,38452\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/2RNO5U/t/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket1187858674/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/2RNO5U/t/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket1567135009/001/.agents/skills/bench-craft-planted/SKILL.md: bind: invalid argument\"\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C2-gittest-1",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-69609",
+            "digest": "sha256:f6eabafacccd4c1630fe1675754dfaeea7652d61a57f31cf95ad2d3a78cba8f8",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gittest,pass,25\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gittest",
+          "command": "bench test --package ./internal/gittest",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C2-cmd-1",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-46197",
+            "digest": "sha256:e62c9abb330c9c2b180942f6827c0994226f27c1aceb069b7f528d3f3bb32520",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13191\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C2-testreport-1",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-42004",
+            "digest": "sha256:fba2c67bfe77ceea552ce39471c9d59db9676bb6b1765838f64aae991ed75cc4",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testreport,pass,32392\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C2-gate-1",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-2675",
+            "digest": "sha256:64e977c6f98d7a993517073ad18e882fb5c28ab5a03c580b5a0e7b2e9561839f",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,14827\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C2-stress-callers-1",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-29617",
+            "digest": "sha256:55f7bf9bc7c8bc5aaf367c2aae00979c207aa32c203ea2ac0060da35ea973444",
+            "excerpt": "ok  \tgithub.com/gibbonmi/bench/internal/conformance\t0.006s\n"
+          },
+          "requirement": "stress-callers",
+          "command": "go test -trimpath -count=1 -tags=stress ./internal/conformance -run '^TestResidualCheckKeepsCrossCompile$'",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C2-testrepo-1",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-88556",
+            "digest": "sha256:bbe1a75d317060658ded7c5b3a033ccf6da4c4cbef9bb1095378f45b3d5bc1bf",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testrepo,pass,8\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "testrepo",
+          "command": "bench test --package ./internal/testrepo",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C2-env-1",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-19523",
+            "digest": "sha256:26756327514f25db40f24d28f5f85edeedeab68bf6a80466ecaa66b325fad317",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/env,pass,745\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "env",
+          "command": "bench test --package ./internal/env",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C2-releasepreflight-1",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-30117",
+            "digest": "sha256:5e5d91c3262893bb5f153622aaf29b5a6290ef6e8943dab6a00c30b39d256390",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/releasepreflight,pass,379\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "releasepreflight",
+          "command": "bench test --package ./internal/releasepreflight",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
