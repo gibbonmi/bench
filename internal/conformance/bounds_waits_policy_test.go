@@ -29,14 +29,8 @@ func newWaitPolicy(registry *ast.File) *waitPolicy {
 		if !ok || fn.Recv != nil || !fn.Name.IsExported() {
 			continue
 		}
-		position := 0
-		for _, field := range fn.Type.Params.List {
-			for _, name := range field.Names {
-				if name.Name == "limit" && waitCallName(field.Type, registry) == "time.Duration" {
-					p.seams["bounds."+fn.Name.Name] = position
-				}
-				position++
-			}
+		for _, position := range durationPositions(fn.Type, registry, "limit") {
+			p.seams["bounds."+fn.Name.Name] = position
 		}
 	}
 	return p
@@ -49,9 +43,30 @@ func (p *waitPolicy) check(file *ast.File, path, rel string) []string {
 	}
 	var diags []string
 	ast.Inspect(file, func(node ast.Node) bool {
+		if comparison, ok := node.(*ast.BinaryExpr); ok {
+			switch comparison.Op {
+			case token.LSS, token.LEQ, token.GTR, token.GEQ, token.EQL, token.NEQ:
+				for _, pair := range [][2]ast.Expr{{comparison.X, comparison.Y}, {comparison.Y, comparison.X}} {
+					if elapsedWaitTime(pair[0], file, bindings) && !classifiedWait(pair[1], file, bindings, map[ast.Expr]bool{}) {
+						diags = append(diags, rel+" has an unclassified wait in current-time deadline")
+					}
+				}
+			}
+		}
 		call, ok := node.(*ast.CallExpr)
 		if !ok {
 			return true
+		}
+		if ident, ok := call.Fun.(*ast.Ident); ok && ident.Obj != nil {
+			if field, ok := ident.Obj.Decl.(*ast.Field); ok {
+				if fn, ok := field.Type.(*ast.FuncType); ok {
+					for _, position := range durationPositions(fn, file, "") {
+						if position < len(call.Args) && !classifiedWait(call.Args[position], file, bindings, map[ast.Expr]bool{}) {
+							diags = append(diags, rel+" has an unclassified wait in injected duration function")
+						}
+					}
+				}
+			}
 		}
 		name := waitFunctionName(call.Fun, file, bindings, map[ast.Expr]bool{})
 		position, wait := p.seams[name]
@@ -88,7 +103,12 @@ func (p *waitPolicy) packageBindings(dir string) (map[string]waitBinding, error)
 		if entry.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
 			continue
 		}
-		file, err := parser.ParseFile(token.NewFileSet(), filepath.Join(dir, name), nil, 0)
+		path := filepath.Join(dir, name)
+		source, err := readBoundsSource(path)
+		if err != nil {
+			return nil, err
+		}
+		file, err := parser.ParseFile(token.NewFileSet(), path, source, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -130,18 +150,66 @@ func classifiedWait(expr ast.Expr, file *ast.File, bindings map[string]waitBindi
 		return name == "bounds.VerdictWindow" || name == "bounds.FixedWindow"
 	case *ast.Ident:
 		binding, ok := resolveWaitBinding(value, file, bindings)
-		return ok && classifiedWait(binding.expr, binding.file, bindings, seen)
+		if !ok || !classifiedWait(binding.expr, binding.file, bindings, seen) {
+			return false
+		}
+		for _, assigned := range localWaitAssignments(value, file) {
+			if !classifiedWait(assigned, file, bindings, seen) {
+				return false
+			}
+		}
+		return true
 	}
 	return false
 }
 
-func waitCallName(expr ast.Expr, file *ast.File) string {
-	selector, ok := expr.(*ast.SelectorExpr)
-	if !ok {
-		return ""
+// Package windows retain raw test setters. Local windows must classify each write.
+func localWaitAssignments(value *ast.Ident, file *ast.File) []ast.Expr {
+	if value.Obj == nil {
+		return nil
 	}
-	ident, ok := selector.X.(*ast.Ident)
-	if !ok || ident.Obj != nil {
+	for _, decl := range file.Decls {
+		gen, ok := decl.(*ast.GenDecl)
+		if !ok {
+			continue
+		}
+		for _, spec := range gen.Specs {
+			if spec == value.Obj.Decl {
+				return nil
+			}
+		}
+	}
+	var values []ast.Expr
+	ast.Inspect(file, func(node ast.Node) bool {
+		assignment, ok := node.(*ast.AssignStmt)
+		if !ok || assignment == value.Obj.Decl {
+			return true
+		}
+		for i, target := range assignment.Lhs {
+			if ident, ok := target.(*ast.Ident); ok && ident.Obj == value.Obj && i < len(assignment.Rhs) {
+				values = append(values, assignment.Rhs[i])
+			}
+		}
+		return true
+	})
+	return values
+}
+
+func waitCallName(expr ast.Expr, file *ast.File) string {
+	var qualifier, member string
+	switch value := expr.(type) {
+	case *ast.SelectorExpr:
+		ident, ok := value.X.(*ast.Ident)
+		if !ok || ident.Obj != nil {
+			return ""
+		}
+		qualifier, member = ident.Name, value.Sel.Name
+	case *ast.Ident:
+		if value.Obj != nil {
+			return ""
+		}
+		qualifier, member = ".", value.Name
+	default:
 		return ""
 	}
 	for _, spec := range file.Imports {
@@ -153,14 +221,14 @@ func waitCallName(expr ast.Expr, file *ast.File) string {
 		if spec.Name != nil {
 			name = spec.Name.Name
 		}
-		if name != ident.Name {
+		if name != qualifier {
 			continue
 		}
 		switch path {
 		case "time", "context":
-			return path + "." + selector.Sel.Name
+			return path + "." + member
 		case "github.com/gibbonmi/bench/internal/bounds":
-			return "bounds." + selector.Sel.Name
+			return "bounds." + member
 		}
 	}
 	return ""
@@ -234,4 +302,33 @@ func currentWaitTime(expr ast.Expr, file *ast.File, bindings map[string]waitBind
 		}
 	}
 	return false
+}
+
+func elapsedWaitTime(expr ast.Expr, file *ast.File, bindings map[string]waitBinding) bool {
+	call, ok := expr.(*ast.CallExpr)
+	if !ok || len(call.Args) != 1 {
+		return false
+	}
+	if waitFunctionName(call.Fun, file, bindings, map[ast.Expr]bool{}) == "time.Since" {
+		return currentWaitTime(call.Args[0], file, bindings, map[ast.Expr]bool{})
+	}
+	selector, ok := call.Fun.(*ast.SelectorExpr)
+	return ok && selector.Sel.Name == "Sub" && currentWaitTime(selector.X, file, bindings, map[ast.Expr]bool{}) && currentWaitTime(call.Args[0], file, bindings, map[ast.Expr]bool{})
+}
+
+func durationPositions(fn *ast.FuncType, file *ast.File, requiredName string) []int {
+	var positions []int
+	position := 0
+	for _, field := range fn.Params.List {
+		count := max(1, len(field.Names))
+		if waitCallName(field.Type, file) == "time.Duration" {
+			for i := 0; i < count; i++ {
+				if requiredName == "" || len(field.Names) > i && field.Names[i].Name == requiredName {
+					positions = append(positions, position+i)
+				}
+			}
+		}
+		position += count
+	}
+	return positions
 }

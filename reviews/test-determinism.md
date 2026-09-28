@@ -2765,3 +2765,73 @@ Spec and Coverage suggest placing evidence pagination grammar earlier in the hel
 No optional advice adds a repair target.
 Post-review repair cycles consumed: 0 before the pending first repair.
 The user authorizes uncapped inline repairs while bench-debug governs each cycle.
+
+
+## TD-C3 repair 1
+
+The retained inline author uses bench-debug under the user-approved uncapped repair policy.
+The current charge is sha256:54da593d8f9c8a9580f3b349c35aacac0faa7fdb607dc5a463d2172a76cf09f5.
+Its tip is the committed pickup b5b667a9f82900a16a18e47d123653a6bfa6bf9a.
+The author read metadata s1, the whole ticket s2, and the current assignment binding before repair.
+All writes remain inside ticket 8 and the existing review record.
+
+The registered bounds-policy owner now rejects discovered special files through bounds.ClassifyNoFollow.
+One local read adapter supplies the bytes to every parser in this check.
+This also prevents an earlier reader from blocking before the new sibling parser can refuse.
+The regression invokes the registered owner on a private source fixture and names the refused path.
+
+The wait classifier checks later local assignments and preserves raw package-level test setters.
+It recognizes elapsed-time comparisons whose two times derive from the current clock.
+A recorded timestamp remains outside that rule, as the spec requires.
+Injected duration positions and bounds duration positions come from one signature reader.
+The import resolver also recognizes dot imports without treating a shadowed local name as an import.
+
+### Reproduction and repair evidence
+
+The canary command is `bench test --package ./internal/conformance --run '^TestEveryRetainedFixtureBitesThroughRegisteredOwner$'` through the assignment.
+Each red below lacked its own required diagnostic, and each restored proof clears that diagnostic.
+The complete native observations are in .logs/test-determinism-c3-repair-1.json.
+
+| Case | Red session | Green session |
+| --- | --- | --- |
+| A later raw local assignment | 30632 | 14999 |
+| An elapsed-time comparison without its accessor | 85063 | 26006 |
+| An injected sleeper without its accessor | 81367 | 16496 |
+| A raw context timeout through a dot import | 63079 | 23472 |
+| A raw overwrite through a short redeclaration | 25454 | 21685 |
+
+The first three cases reproduce TD-C3-C1.
+The last two cases check ordinary import and assignment forms at the same approved seam.
+The ranked causes were resolver omissions, competing rule behavior, and fixture construction.
+Each minimal resolver repair makes the corresponding registered proof pass.
+Five retained canaries keep these observations executable.
+
+The first elapsed-time repair incorrectly graded the record-age comparison in internal/gate/composed_green.go.
+Session 21943 reproduced that exact diagnostic through the live bounds-policy check.
+The ranked causes were clock provenance, alias resolution, and stale input.
+Requiring both times to derive from the current clock preserves the approved record-age exclusion.
+Sessions 48914 and 26006 then passed the live check and retained-fixture proof.
+
+The special-source test failed on a live symlink in session 78362.
+The FIFO reproduction used `env BENCH_TEST_UNBOUNDED_WAITS=1 go test -trimpath -count=1 -timeout=5s ./internal/conformance -run '^TestBoundsPolicyRejectsSpecialSources$/fifo$'` through the assignment.
+Session 86871 timed out in parser.ParseFile, called by waitPolicy.packageBindings.
+The ranked causes were the unclassified sibling read, an earlier reader, and fixture setup.
+The stack confirms the new sibling reader, and session 62311 passes both special-file cases after repair.
+
+The first classifier probe failed to compile because the replacement lacked Classify's limit argument.
+Session 22663 executed no mutated test and restored the source, so it supplies no behavioral evidence.
+The corrected probe supplies bounds.ControlRecordLimit.
+Sessions 17040 and 71898 passed their baselines, caught the symlink regression, and reported restored=yes.
+The second run verifies the final private fixture.
+
+Complete conformance first reported an overlong local charge paragraph and an unregistered live-tree assertion.
+The ranked setup causes were live fixture input, missing classification, and stale source.
+The safety test needs no live registry, so its final fixture supplies only valid private Go source.
+A paragraph break repairs the charge without changing any instruction.
+Session 21685 passes complete conformance, including the root check, all canaries, and the special-source test.
+
+The final conformance run took 36.230 seconds, with three capability skips and no environment skips.
+All changed Go files are formatted, and the whitespace check passes.
+The cache clean removed 10,769,292,560 bytes after the cache exceeded its documented bound.
+Post-review repair cycles consumed: 1.
+Current C3 verification and three fresh confirming reviews remain required before the checkpoint.
