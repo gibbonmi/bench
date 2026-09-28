@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/anchors"
-	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
@@ -378,7 +377,12 @@ func runAt(dir string, args ...string) *Probe {
 }
 
 func runAtCleanEnv(dir string, args ...string) *Probe {
-	return runAtEnv(dir, conformanceSubprocessEnv(), args...)
+	env, cleanup, err := conformanceSubprocessEnv("")
+	if err != nil {
+		return &Probe{Args: append([]string(nil), args...), ExitCode: 1, Err: err}
+	}
+	defer cleanup()
+	return runAtEnv(dir, env, args...)
 }
 
 func runAtEnv(dir string, env []string, args ...string) *Probe {
@@ -410,36 +414,6 @@ func runWithInputEnv(dir string, env []string, input string, args ...string) *Pr
 	cmd.Env = env
 	cmd.Stdin = strings.NewReader(input)
 	return runProbe(cmd, args)
-}
-
-// conformanceSubprocessEnv is the one environment-composition seam every probe child's
-// environment passes through. It never carries the operator's real Bench home: BENCH_HOME
-// is scrubbed like every other conformance control var, and a private below-os.TempDir
-// home replaces it, so a probe's own bench child never writes a seam record into the
-// operator's real home.
-func conformanceSubprocessEnv() []string {
-	env := make([]string, 0, len(os.Environ()))
-	hasNpmCache := false
-	for _, kv := range os.Environ() {
-		// The scrub is symmetric across every conformance control var. Any one leaking into a
-		// probe subprocess is the recursive-cascade shape.
-		if strings.HasPrefix(kv, "BENCH_CONFORMANCE_ROOT=") ||
-			strings.HasPrefix(kv, registry.ConformanceTierEnv+"=") ||
-			strings.HasPrefix(kv, registry.ConformanceChecksEnv+"=") ||
-			strings.HasPrefix(kv, registry.ConformanceInheritedEnv+"=") ||
-			strings.HasPrefix(kv, benchhome.Env+"=") {
-			continue
-		}
-		if strings.HasPrefix(kv, "NPM_CONFIG_CACHE=") && strings.TrimPrefix(kv, "NPM_CONFIG_CACHE=") != "" {
-			hasNpmCache = true
-		}
-		env = append(env, kv)
-	}
-	if !hasNpmCache {
-		env = append(env, "NPM_CONFIG_CACHE="+filepath.Join(os.TempDir(), "bench-npm-cache"))
-	}
-	env = append(env, benchhome.Env+"="+filepath.Join(os.TempDir(), "bench-conformance-home"))
-	return env
 }
 
 func wrapperStubDir(realBench string) (string, func(), error) {

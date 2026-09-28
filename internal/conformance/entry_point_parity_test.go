@@ -281,9 +281,12 @@ func parityRuntimeDiags(root string) []string {
 	defer cleanupRepo()
 
 	wrapper := filepath.Join(bindir, "bench")
-	base := append(conformanceSubprocessEnv(),
-		"PATH="+bindir+string(os.PathListSeparator)+os.Getenv("PATH"),
-		"BENCH_COMMAND_OBSERVE=1")
+	base, cleanupEnv, err := conformanceSubprocessEnv(bindir)
+	if err != nil {
+		return []string{"entry-point-parity setup failed: " + err.Error()}
+	}
+	defer cleanupEnv()
+	base = append(base, "BENCH_COMMAND_OBSERVE=1")
 	var diags []string
 	for _, rel := range parityRelPaths() {
 		row := entryPointParity[rel]
@@ -437,21 +440,5 @@ func TestEntryPointParityAcceptsTheEnvPrefixedPreflight(t *testing.T) {
 	want := `scripts/release-preflight.sh does not name the registry command "release-preflight"`
 	if diags := checkEntryPointParity(parityStaticRoot(t, rel, mutated)); !containsDiagnostic(diags, want) {
 		t.Fatalf("the mutated env-prefixed exec line did not bite with %q:\n%s", want, strings.Join(diags, "\n"))
-	}
-}
-
-// TestEntryPointParityNamesAnUnreachedInternalCommand proves the table cannot lose a
-// plumbing verb in silence. The registry literal is synthetic, because the live one is
-// complete by construction once this check is green.
-func TestEntryPointParityNamesAnUnreachedInternalCommand(t *testing.T) {
-	registrySource := "package main\n\nvar commandRegistry = []commandDefinition{\n" +
-		"\t{Name: \"status\", Inventory: publicInventory(helpRow{Order: 1, Description: \"board\"})},\n" +
-		"\t{Name: \"new-plumbing\", Inventory: internalInventory},\n}\n"
-	root := throwawayRoot{files: map[string]string{"cmd/bench/main.go": registrySource}}.build(t)
-
-	diags := checkEntryPointParity(root)
-
-	if !containsDiagnostic(diags, `registry command "new-plumbing" is reached by no parity row and carries no exemption reason`) {
-		t.Fatalf("an unreached internal command was not named:\n%s", strings.Join(diags, "\n"))
 	}
 }

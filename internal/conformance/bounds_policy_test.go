@@ -2,6 +2,7 @@ package conformance
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"go/format"
 	"go/parser"
@@ -9,40 +10,62 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
+	"testing"
+
+	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 func checkBoundsPolicy(root string) []string {
 	registryPath := filepath.Join(root, "internal", "bounds", "bounds.go")
-	registry := readIfExists(registryPath)
+	registry, err := readBoundsSource(registryPath)
+	if err != nil {
+		return []string{err.Error()}
+	}
 	if registry == "" {
 		return []string{"internal/bounds policy registry is absent"}
 	}
-	required := []string{"ProviderTimeout", "GitRefreshTimeout", "WorktreeListTimeout", "GuardScanTimeout", "GateTimeout", "PackageLoadTimeout", "ModelReadLimit", "OutlineFileLimit", "ControlRecordLimit", "IterationMin", "IterationMax", "MainIterationsDefault", "RefactorIterationsDefault", "MaxWall", "LeaseStale", "AssignmentStale", "PreviewRuneLimit"}
+	required := []string{"ModelReadLimit", "OutlineFileLimit", "ControlRecordLimit", "IterationMin", "IterationMax", "MainIterationsDefault", "RefactorIterationsDefault", "MaxWall", "LeaseStale", "AssignmentStale", "PreviewRuneLimit"}
 	var diags []string
+	owners := map[string][]string{
+		"internal/models/models.go":                 {"bounds.VerdictWindow(bounds.ProviderTimeout)", "bounds.ModelReadLimit"},
+		"internal/sessioninspect/sessioninspect.go": {"bounds.VerdictWindow(bounds.ProviderTimeout)", "bounds.VerdictWindow(bounds.EnvironmentDiscoveryTimeout)"},
+		"internal/outline/read.go":                  {"bounds.OutlineFileLimit"},
+		"internal/learnings/learnings.go":           {"bounds.ControlRecordLimit"},
+		"internal/maps/maps.go":                     {"bounds.ControlRecordLimit"},
+		"internal/roadmap/roadmap.go":               {"bounds.ControlRecordLimit"},
+		"internal/guards/guards.go":                 {"bounds.VerdictWindow(bounds.GuardScanTimeout)"},
+		"internal/sanitize/sanitize.go":             {"bounds.PreviewRuneLimit"},
+		"internal/gate/gate.go":                     {"bounds.VerdictWindow(bounds.GateTimeout)"},
+		"internal/coverage/citation_execution.go":   {"bounds.VerdictWindow(bounds.PackageLoadTimeout)"},
+		"internal/refresh/refresh.go":               {"bounds.VerdictWindow(bounds.GitRefreshTimeout)"},
+		"internal/git/git.go":                       {"bounds.VerdictWindow(bounds.WorktreeListTimeout)", "bounds.VerdictWindow(bounds.RefCheckTimeout)"},
+		"internal/intent/intent.go":                 {"bounds.VerdictWindow(bounds.IntentLockTimeout)"},
+		"internal/handoffdoc/store.go":              {"bounds.VerdictWindow(bounds.HandoffLockTimeout)"},
+		"internal/capturetx/transaction.go":         {"bounds.VerdictWindow(bounds.CaptureLockTimeout)"},
+		"internal/worktree/lifecycle.go":            {"bounds.LeaseStale"},
+		"internal/worktree/classifier.go":           {"bounds.AssignmentStale"},
+		"internal/shift/loop.go":                    {"bounds.MainIterationsDefault", "bounds.RefactorIterationsDefault", "bounds.IterationMin", "bounds.IterationMax", "bounds.MaxWall"},
+	}
+	for _, tokens := range owners {
+		for _, consumer := range tokens {
+			if name, verdict := strings.CutPrefix(consumer, "bounds.VerdictWindow(bounds."); verdict {
+				required = append(required, strings.TrimSuffix(name, ")"))
+			}
+		}
+	}
 	for _, name := range required {
 		if !strings.Contains(registry, name) {
 			diags = append(diags, "internal/bounds policy registry missing "+name)
 		}
 	}
-	owners := map[string][]string{
-		"internal/models/models.go":                 {"bounds.ProviderTimeout", "bounds.ModelReadLimit"},
-		"internal/sessioninspect/sessioninspect.go": {"bounds.ProviderTimeout"},
-		"internal/outline/read.go":                  {"bounds.OutlineFileLimit"},
-		"internal/learnings/learnings.go":           {"bounds.ControlRecordLimit"},
-		"internal/maps/maps.go":                     {"bounds.ControlRecordLimit"},
-		"internal/roadmap/roadmap.go":               {"bounds.ControlRecordLimit"},
-		"internal/guards/guards.go":                 {"bounds.GuardScanTimeout"},
-		"internal/sanitize/sanitize.go":             {"bounds.PreviewRuneLimit"},
-		"internal/gate/gate.go":                     {"bounds.GateTimeout"},
-		"internal/coverage/citation_execution.go":   {"bounds.PackageLoadTimeout"},
-		"internal/refresh/refresh.go":               {"bounds.GitRefreshTimeout"},
-		"internal/git/git.go":                       {"bounds.WorktreeListTimeout"},
-		"internal/worktree/lifecycle.go":            {"bounds.LeaseStale"},
-		"internal/worktree/classifier.go":           {"bounds.AssignmentStale"},
-		"internal/shift/loop.go":                    {"bounds.MainIterationsDefault", "bounds.RefactorIterationsDefault", "bounds.IterationMin", "bounds.IterationMax", "bounds.MaxWall"},
-	}
 	for rel, tokens := range owners {
-		body := readIfExists(filepath.Join(root, filepath.FromSlash(rel)))
+		body, err := readBoundsSource(filepath.Join(root, filepath.FromSlash(rel)))
+		if err != nil {
+			diags = append(diags, err.Error())
+			continue
+		}
 		for _, token := range tokens {
 			if !strings.Contains(body, token) {
 				diags = append(diags, rel+" does not consume "+token)
@@ -50,7 +73,10 @@ func checkBoundsPolicy(root string) []string {
 		}
 	}
 	diags = append(diags, checkBoundCallers(root, registryPath)...)
-	wrapper := readIfExists(filepath.Join(root, "bin", "bench.sh"))
+	wrapper, err := readBoundsSource(filepath.Join(root, "bin", "bench.sh"))
+	if err != nil {
+		diags = append(diags, err.Error())
+	}
 	if !strings.Contains(wrapper, `[[ "${BENCH_OFFLINE:-}" == 1 ]]`) || !strings.Contains(registry, `os.Getenv("BENCH_OFFLINE") == "1"`) {
 		diags = append(diags, "wrapper and Go offline checks do not share exact BENCH_OFFLINE=1 semantics")
 	}
@@ -59,7 +85,11 @@ func checkBoundsPolicy(root string) []string {
 
 func checkBoundCallers(root, registryPath string) []string {
 	fset := token.NewFileSet()
-	registry, err := parser.ParseFile(fset, registryPath, nil, 0)
+	registryBytes, err := readBoundsSource(registryPath)
+	if err != nil {
+		return []string{err.Error()}
+	}
+	registry, err := parser.ParseFile(fset, registryPath, registryBytes, 0)
 	if err != nil {
 		return []string{"internal/bounds policy registry is not valid Go: " + err.Error()}
 	}
@@ -68,6 +98,7 @@ func checkBoundCallers(root, registryPath string) []string {
 	if err != nil {
 		return []string{"internal/bounds read seams cannot be parsed: " + err.Error()}
 	}
+	waits := newWaitPolicy(registry)
 	var diags []string
 	for _, top := range []string{"cmd", "internal"} {
 		base := filepath.Join(root, top)
@@ -79,7 +110,7 @@ func checkBoundCallers(root, registryPath string) []string {
 			if strings.HasPrefix(rel, "internal/bounds/") {
 				return nil
 			}
-			diags = append(diags, checkBoundCaller(fset, path, rel, owned, seams)...)
+			diags = append(diags, checkBoundCaller(fset, path, rel, owned, seams, waits)...)
 			return nil
 		})
 	}
@@ -121,7 +152,12 @@ func boundsReadSeams(dir string) (map[string]int, error) {
 		if entry.IsDir() || filepath.Ext(name) != ".go" || strings.HasSuffix(name, "_test.go") {
 			continue
 		}
-		file, err := parser.ParseFile(fset, filepath.Join(dir, name), nil, 0)
+		path := filepath.Join(dir, name)
+		source, err := readBoundsSource(path)
+		if err != nil {
+			return nil, err
+		}
+		file, err := parser.ParseFile(fset, path, source, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -145,15 +181,19 @@ func boundsReadSeams(dir string) (map[string]int, error) {
 	return seams, nil
 }
 
-func checkBoundCaller(fset *token.FileSet, path, rel string, ownedExpressions map[string]string, seams map[string]int) []string {
-	if readIfExists(path) == "" {
+func checkBoundCaller(fset *token.FileSet, path, rel string, ownedExpressions map[string]string, seams map[string]int, waits *waitPolicy) []string {
+	source, err := readBoundsSource(path)
+	if err != nil {
+		return []string{err.Error()}
+	}
+	if source == "" {
 		return nil
 	}
-	caller, err := parser.ParseFile(fset, path, nil, 0)
+	caller, err := parser.ParseFile(fset, path, source, 0)
 	if err != nil {
 		return []string{rel + " cannot be parsed for bounds ownership: " + err.Error()}
 	}
-	var diags []string
+	diags := waits.check(caller, path, rel)
 	ast.Inspect(caller, func(node ast.Node) bool {
 		switch value := node.(type) {
 		case *ast.ValueSpec:
@@ -252,4 +292,45 @@ func expressionText(fset *token.FileSet, expr ast.Expr) string {
 		return ""
 	}
 	return out.String()
+}
+
+func TestBoundsPolicyRejectsSpecialSources(t *testing.T) {
+	for _, kind := range []string{"symlink", "fifo"} {
+		t.Run(kind, func(t *testing.T) {
+			root := t.TempDir()
+			dir := filepath.Join(root, "internal", "sample")
+			requireFixtureNoError(t, os.MkdirAll(dir, 0o755))
+			owner := filepath.Join(root, "internal", "bounds")
+			requireFixtureNoError(t, os.MkdirAll(owner, 0o755))
+			requireFixtureNoError(t, os.WriteFile(filepath.Join(owner, "bounds.go"), []byte("package bounds\n"), 0o600))
+			requireFixtureNoError(t, os.WriteFile(filepath.Join(dir, "a.go"), []byte("package sample\n"), 0o600))
+			path := filepath.Join(dir, "blocked.go")
+			requireFixtureNoError(t, os.WriteFile(path, []byte("package sample\n"), 0o600))
+			check := conformanceChecks["bounds-policy"]
+			if diagnostics := check.run(root, root, check.tier); containsDiagnostic(diagnostics, "blocked.go") {
+				t.Fatalf("regular source refused: %v", diagnostics)
+			}
+			requireFixtureNoError(t, os.Remove(path))
+			if kind == "symlink" {
+				target := filepath.Join(t.TempDir(), "target")
+				requireFixtureNoError(t, os.WriteFile(target, []byte("package sample\n"), 0o600))
+				if err := os.Symlink(target, path); err != nil {
+					capability.Capability(t, capability.Symlink, err.Error())
+				}
+			} else if err := syscall.Mkfifo(path, 0o600); err != nil {
+				capability.Capability(t, capability.Fifo, err.Error())
+			}
+			if diagnostics := check.run(root, root, check.tier); !containsDiagnostic(diagnostics, "blocked.go") {
+				t.Fatalf("special source lacks a named refusal: %v", diagnostics)
+			}
+		})
+	}
+}
+
+func readBoundsSource(path string) (string, error) {
+	file := bounds.ClassifyNoFollow(path)
+	if file.State.Failed() {
+		return "", fmt.Errorf("%s: %s", path, file.Reason)
+	}
+	return string(file.Data), nil
 }

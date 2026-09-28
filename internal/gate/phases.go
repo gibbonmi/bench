@@ -152,24 +152,6 @@ func rootConformanceEnv(root, kit string) []string {
 // graded root.
 const conformancePackagePath = "internal/conformance"
 
-// KitTestEnv answers the git test policy a child running in dir carries: the kit's
-// policy when dir is the kit, and none otherwise. A linked repository's tests keep the
-// git environment their operator gave them.
-func KitTestEnv(dir, kit string) []string {
-	if !sameDirectory(dir, kit) {
-		return nil
-	}
-	return env.GitTestConfig()
-}
-
-func withKitTestEnv(phases []Phase, root, kit string) []Phase {
-	policy := KitTestEnv(root, kit)
-	for i := range phases {
-		phases[i].Env = mergeEnv(phases[i].Env, policy)
-	}
-	return phases
-}
-
 func withRunBinary(phases []Phase, selection *runbinary.Selection) []Phase {
 	selected := make([]Phase, len(phases))
 	for i, phase := range phases {
@@ -281,7 +263,7 @@ func phasesCommandAtKitWithContext(base context.Context, root, kit string, stdou
 	return phasesCommandAtKitWithSelection(base, root, kit, selection, stdout, stderr)
 }
 
-func phasesCommandAtKitWithSelection(base context.Context, root, kit string, selection *runbinary.Selection, stdout, stderr io.Writer) int {
+func phasesCommandAtKitWithSelection(base context.Context, root, kit string, selection *runbinary.Selection, stdout, stderr io.Writer) (code int) {
 	phases, err := phaseTable(root, kit)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
@@ -291,7 +273,26 @@ func phasesCommandAtKitWithSelection(base context.Context, root, kit string, sel
 		fmt.Fprintf(stderr, "gate: phase schedule refused: %s\n", decision.Refusal)
 		return 1
 	}
-	phases = withKitTestEnv(withRunBinary(phases, selection), root, kit)
+	phases = withRunBinary(phases, selection)
+	if sameDirectory(root, kit) {
+		run, err := env.OpenKitTestRun(os.Environ())
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1
+		}
+		defer func() {
+			if err := run.Close(); err != nil {
+				fmt.Fprintln(stderr, err)
+				if code == 0 {
+					code = 1
+				}
+			}
+		}()
+		for i := range phases {
+			phases[i].Env = mergeEnv(phases[i].Env, run.Entries())
+		}
+		base = withCheckoutGuard(base, root)
+	}
 	ctx, stop := subprocess.NotifyCancel(base)
 	defer stop()
 	return runPhases(ctx, kit, phases, stdout, stderr)

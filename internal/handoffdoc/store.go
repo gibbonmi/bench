@@ -1,23 +1,26 @@
 package handoffdoc
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"syscall"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
-// lockDeadline bounds the wait for the document lock, and lockPoll is the retry
-// interval. Both mirror the intent ledger's acquire loop, which is the repository's
-// existing answer for how long a caller waits on a small local file. The ledger's
-// own values are unexported literals inside its acquire function, so this is a
-// mirror rather than a shared constant.
-const (
-	lockDeadline = 2 * time.Second
-	lockPoll     = 10 * time.Millisecond
-)
+var lockDeadline = bounds.VerdictWindow(bounds.HandoffLockTimeout)
+
+const lockPoll = 10 * time.Millisecond
+
+func setLockWindowForTest(window time.Duration) func() {
+	previous := lockDeadline
+	lockDeadline = window
+	return func() { lockDeadline = previous }
+}
 
 // DocumentPath is the session handoff document's path, relative to the checkout that
 // owns it. The leaf owns the grammar, so it owns the name too: a consumer that spelled
@@ -111,13 +114,14 @@ func acquire(path string) (func(), error) {
 	if err := os.MkdirAll(filepath.Dir(lock), 0o755); err != nil {
 		return nil, fmt.Errorf("open handoff lock %s: %w", lock, err)
 	}
-	deadline := time.Now().Add(lockDeadline)
+	ctx, cancel := bounds.Context(context.Background(), lockDeadline)
+	defer cancel()
 	for {
 		file, err := os.OpenFile(lock, os.O_CREATE|os.O_RDWR, 0o600)
 		if err != nil {
 			return nil, fmt.Errorf("open handoff lock %s: %w", lock, err)
 		}
-		held, err := flockUntil(file, deadline)
+		held, err := flockUntil(file, ctx)
 		if err != nil {
 			_ = file.Close()
 			return nil, fmt.Errorf("lock handoff document at %s: %w", lock, err)
@@ -129,7 +133,7 @@ func acquire(path string) (func(), error) {
 		if !isFileAt(file, lock) {
 			_ = syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
 			_ = file.Close()
-			if time.Now().After(deadline) {
+			if ctx.Err() != nil {
 				return nil, stillHeld(lock)
 			}
 			continue
@@ -150,7 +154,7 @@ func stillHeld(lock string) error {
 
 // flockUntil polls for the exclusive flock until it wins or the deadline passes. A
 // false with no error is the deadline; an error is the lock call itself failing.
-func flockUntil(file *os.File, deadline time.Time) (bool, error) {
+func flockUntil(file *os.File, ctx context.Context) (bool, error) {
 	for {
 		err := syscall.Flock(int(file.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
 		if err == nil {
@@ -159,10 +163,10 @@ func flockUntil(file *os.File, deadline time.Time) (bool, error) {
 		if !errors.Is(err, syscall.EWOULDBLOCK) {
 			return false, err
 		}
-		if time.Now().After(deadline) {
+		if ctx.Err() != nil {
 			return false, nil
 		}
-		time.Sleep(lockPoll)
+		time.Sleep(bounds.FixedWindow(lockPoll))
 	}
 }
 

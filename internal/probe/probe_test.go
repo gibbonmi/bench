@@ -141,8 +141,8 @@ type stubStart struct {
 }
 
 // installStubStarts puts a canned `go` ahead of the real one and records every start in the
-// fixture's marker. A `list` call still reaches the real toolchain, because the run binary's
-// freshness verification resolves the module closure through it. The marker is dropped
+// fixture's marker. Non-test calls reach the real toolchain for settings and module
+// discovery. The marker is dropped
 // first, so each install restarts the count: an odd start is a baseline and the even start
 // after it is the mutated run. Both hooks read the start's ordinal in `$n`.
 func installStubStarts(t *testing.T, f *fixture, baseline, mutated stubStart) {
@@ -158,7 +158,7 @@ func installStubStarts(t *testing.T, f *fixture, baseline, mutated stubStart) {
 	dir := scratchDir(t)
 	script := "#!/usr/bin/env bash\n" +
 		"printf '%s\\n' \"$1\" >> " + marker + "\n" +
-		"if [ \"$1\" = list ]; then exec " + sanitize.ShellQuote(real) + " \"$@\"; fi\n" +
+		"if [ \"$1\" != test ]; then exec " + sanitize.ShellQuote(real) + " \"$@\"; fi\n" +
 		"n=$(grep -c '^test$' " + marker + ")\n" +
 		"if [ $((n % 2)) = 1 ]; then\n" + stubAnswer(baseline) + "fi\n" + stubAnswer(mutated)
 	writeFixtureFile(t, filepath.Join(dir, "go"), script, 0o755)

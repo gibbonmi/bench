@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 // Repo initializes an empty repository in a fresh temporary directory. It returns that
@@ -21,6 +22,16 @@ import (
 func Repo(t testing.TB) string {
 	t.Helper()
 	return initialize(t)
+}
+
+// KitCopy returns a private committed copy of the kit's visible working tree.
+func KitCopy(t testing.TB, root string) string {
+	t.Helper()
+	copyRoot := t.TempDir()
+	if err := testrepo.CommitWorkingTree(root, copyRoot); err != nil {
+		t.Fatalf("copy kit: %v", err)
+	}
+	return copyRoot
 }
 
 // StubGit installs a pure file-backed git stub on the process PATH for
@@ -190,6 +201,52 @@ esac
 		t.Fatalf("maintenance probe: %v", err)
 	}
 	return path
+}
+
+// KitRunProbe returns a command that checks a kit run against its operator environment.
+// Arguments carry the expected values without shell interpolation.
+func KitRunProbe(t testing.TB, base []string) []string {
+	t.Helper()
+	values := make(map[string]string)
+	for _, entry := range base {
+		name, value, _ := strings.Cut(entry, "=")
+		values[name] = value
+	}
+	cmd := exec.Command("go", "env", "GOMODCACHE", "GOPATH", "GOENV")
+	cmd.Env = base
+	settings, err := cmd.Output()
+	if err != nil {
+		t.Fatalf("kit run probe: resolve operator Go environment: %v", err)
+	}
+	path := filepath.Join(t.TempDir(), "kit-run-probe")
+	body := `#!/bin/sh
+set -eu
+fail() { echo "kit run probe: $1"; exit 3; }
+[ "$HOME" != "$1" ] || fail 'HOME is not private'
+[ "$TMPDIR" != "$2" ] || fail 'TMPDIR is not private'
+[ -d "$HOME" ] && [ -d "$TMPDIR" ] || fail 'private directory is absent'
+[ "$(dirname "$HOME")" = "$(dirname "$TMPDIR")" ] || fail 'directories have different owners'
+[ -z "$(ls -A "$HOME")" ] && [ -z "$(ls -A "$TMPDIR")" ] || fail 'private directory is not empty'
+if git config --global --get probe.marker >/dev/null; then
+  fail 'global git marker is visible'
+else
+  [ "$?" = 1 ] || fail 'global git query failed'
+fi
+if git config --get probe.system >/dev/null; then
+  fail 'system git marker is visible'
+else
+  [ "$?" = 1 ] || fail 'system git query failed'
+fi
+[ "$(printf '%s\n' "$GOMODCACHE" "$GOPATH" "$GOENV")" = "$3" ] || fail 'Go setting pins changed'
+[ "$(go env GOMODCACHE GOPATH GOENV)" = "$3" ] || fail 'Go settings changed'
+[ "$(go env GOTELEMETRY)" = off ] || fail 'Go telemetry is enabled'
+[ "$(dirname "$(go env GOTELEMETRYDIR)")" = "$(dirname "$HOME")" ] || fail 'Go telemetry configuration is outside the run'
+exec "$4"
+`
+	if err := os.WriteFile(path, []byte(body), 0o755); err != nil {
+		t.Fatalf("kit run probe: %v", err)
+	}
+	return []string{path, values["HOME"], values["TMPDIR"], strings.TrimSuffix(string(settings), "\n"), MaintenanceProbe(t)}
 }
 
 func initialize(t testing.TB, options ...string) string {

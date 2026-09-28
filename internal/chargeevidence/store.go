@@ -10,6 +10,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // Store refusal classes. A store operation reports exactly one class for its first failed
@@ -95,7 +97,7 @@ func PauseFromEnvironment() func(string) {
 				_ = os.WriteFile(marker+".resumed", nil, 0o600)
 				return
 			}
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(bounds.FixedWindow(10 * time.Millisecond))
 		}
 	}
 }

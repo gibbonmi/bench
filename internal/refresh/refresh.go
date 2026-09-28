@@ -19,7 +19,7 @@ type RefreshResult struct {
 	Detail string
 }
 
-var refreshTimeout = bounds.GitRefreshTimeout
+var refreshTimeout = bounds.VerdictWindow(bounds.GitRefreshTimeout)
 
 func Refresh(root string) RefreshResult {
 	if bounds.Offline() {

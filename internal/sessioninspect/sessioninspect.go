@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -28,6 +29,15 @@ type stderrKey struct{}
 
 var phases = []phase{environmentPhase, resumePhase, recoveryPhase, statusPhase, guardsPhase}
 var runInspect = Inspect
+
+var providerTimeout = bounds.VerdictWindow(bounds.ProviderTimeout)
+var discoveryTimeout = bounds.VerdictWindow(bounds.EnvironmentDiscoveryTimeout)
+
+func setWindowsForTest(provider, discovery time.Duration) func() {
+	previousProvider, previousDiscovery := providerTimeout, discoveryTimeout
+	providerTimeout, discoveryTimeout = provider, discovery
+	return func() { providerTimeout, discoveryTimeout = previousProvider, previousDiscovery }
+}
 
 func Inspect(ctx context.Context, w io.Writer, root string) int {
 	stderr, _ := ctx.Value(stderrKey{}).(io.Writer)
@@ -63,7 +73,7 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		return 0
 	}
-	ctx, cancel := bounds.Context(context.Background(), bounds.ProviderTimeout)
+	ctx, cancel := bounds.Context(context.Background(), providerTimeout)
 	defer cancel()
 	ctx = context.WithValue(ctx, stderrKey{}, stderr)
 	return runInspect(ctx, stdout, root)
@@ -80,7 +90,7 @@ func environmentPhase(ctx context.Context, stdout, _ io.Writer, root string) int
 	command := exec.Command("bash", "-c", "exec bash -lc 'command -v go' 2>/dev/null")
 	command.Dir = root
 	command.Env = capability.WithoutEnvironment(capability.WithoutEnvironment(os.Environ(), "ENVMAN_LOAD"), "BASH_ENV")
-	result := bounds.Run(ctx, bounds.EnvironmentDiscoveryTimeout, command)
+	result := bounds.Run(ctx, discoveryTimeout, command)
 	executable, valid := discoveredExecutable(result)
 	if !valid {
 		fmt.Fprintln(stdout, "bench: Go is absent from PATH and the clean Bash login did not resolve an executable Go toolchain.")

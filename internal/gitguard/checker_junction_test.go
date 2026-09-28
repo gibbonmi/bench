@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
@@ -110,8 +111,8 @@ func pushCompositionCases() []struct {
 }
 
 // TestClassifyRealCheckerTimeoutComposition composes Classify with the real Checker
-// against a PATH-front stub `git` that sleeps past the 2s refCheckTimeout bound
-// (internal/git.refCheckTimeout). It pins that both probes' opposite fail-safe
+// against a PATH-front stub `git` that outlasts the test's own ref-check window.
+// It pins that both probes' opposite fail-safe
 // defaults land on "block" under composition. RefResolves times out to false (an
 // unresolvable-looking ref blocks checkout), and BranchExists times out to true (an
 // undeterminable branch is presumed present, blocking forced creation). The bare-push row
@@ -121,6 +122,7 @@ func pushCompositionCases() []struct {
 // stub. It uses t.Chdir and no t.Parallel, for the same process-cwd reason as the
 // resolved-composition test above.
 func TestClassifyRealCheckerTimeoutComposition(t *testing.T) {
+	t.Cleanup(git.SetRefCheckTimeoutForTest(10 * time.Millisecond))
 	stubDir := t.TempDir()
 	stubGit(t, stubDir)
 	t.Setenv("PATH", stubDir+string(os.PathListSeparator)+os.Getenv("PATH"))
@@ -183,8 +185,7 @@ func runGit(t *testing.T, root string, args ...string) {
 	}
 }
 
-// stubGit writes a PATH-front `git` shell script that sleeps past refCheckTimeout
-// (2s) before doing anything else, standing in for a hung git process.
+// stubGit writes a PATH-front Git stub that outlasts the test's ref-check window.
 func stubGit(t *testing.T, dir string) {
 	t.Helper()
 	script := "#!/bin/sh\nsleep 3\n"

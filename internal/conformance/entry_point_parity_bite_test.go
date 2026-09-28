@@ -57,3 +57,19 @@ func parityRuntimeRoot(t *testing.T, rel, body string) string {
 	}
 	return root
 }
+
+// TestEntryPointParityNamesAnUnreachedInternalCommand proves the table cannot lose a
+// plumbing verb in silence. The registry literal is synthetic, because the live one is
+// complete by construction once this check is green.
+func TestEntryPointParityNamesAnUnreachedInternalCommand(t *testing.T) {
+	registrySource := "package main\n\nvar commandRegistry = []commandDefinition{\n" +
+		"\t{Name: \"status\", Inventory: publicInventory(helpRow{Order: 1, Description: \"board\"})},\n" +
+		"\t{Name: \"new-plumbing\", Inventory: internalInventory},\n}\n"
+	root := throwawayRoot{files: map[string]string{"cmd/bench/main.go": registrySource}}.build(t)
+
+	diags := checkEntryPointParity(root)
+
+	if !containsDiagnostic(diags, `registry command "new-plumbing" is reached by no parity row and carries no exemption reason`) {
+		t.Fatalf("an unreached internal command was not named:\n%s", strings.Join(diags, "\n"))
+	}
+}

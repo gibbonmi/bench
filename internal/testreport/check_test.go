@@ -13,7 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gate"
-	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -113,9 +113,7 @@ func TestNamedCheckRunsFromKitAgainstLinkedConsumer(t *testing.T) {
 	goDir := t.TempDir()
 	goPath := filepath.Join(goDir, "go")
 	source := "#!/usr/bin/env bash\npwd > " + sanitize.ShellQuote(marker) + "\nenv >> " + sanitize.ShellQuote(marker) + "\nprintf '%s\\n' '{\"Action\":\"pass\",\"Package\":\"checkfixture\"}'\n"
-	if err := os.WriteFile(goPath, []byte(source), 0o755); err != nil {
-		t.Fatal(err)
-	}
+	writeGoStub(t, goPath, source)
 	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	t.Setenv("BENCH_KIT", kit)
 	t.Setenv(registry.ConsumerOnlyEnv, "1")
@@ -239,10 +237,8 @@ func TestNamedCheckRefusesCorruptInheritedSelection(t *testing.T) {
 }
 
 func TestNamedCheckRunsOnlyRegisteredDevScope(t *testing.T) {
-	root, err := git.Root()
-	if err != nil {
-		t.Fatal(err)
-	}
+	root := gittest.KitCopy(t, filepath.Join("..", ".."))
+	t.Setenv("BENCH_KIT", root)
 	sourceTiming := registry.TimingPath(root)
 	before, beforeErr := os.ReadFile(sourceTiming)
 	existed := beforeErr == nil
@@ -329,9 +325,7 @@ func TestNamedChecksWriteNoGateOwnedRecords(t *testing.T) {
 func writeCheckGo(t *testing.T, path, marker string) {
 	t.Helper()
 	source := "#!/usr/bin/env bash\nenv > \"" + marker + "\"\nprintf 'argv=%s\\n' \"$*\" >> \"" + marker + "\"\nprintf '%s\\n' '{\"Action\":\"pass\",\"Package\":\"checkfixture\"}'\n"
-	if err := os.WriteFile(path, []byte(source), 0o755); err != nil {
-		t.Fatal(err)
-	}
+	writeGoStub(t, path, source)
 }
 
 func writeGoBoundaryWrapper(t *testing.T, path, realGo, conformanceRoot string) {
@@ -443,9 +437,7 @@ func TestSystemCheckReportsAFailingSuite(t *testing.T) {
 func writeFailingCheckGo(t *testing.T, path string) {
 	t.Helper()
 	source := "#!/usr/bin/env bash\nprintf '%s\\n' '{\"Action\":\"fail\",\"Package\":\"checkfixture\"}'\nexit 1\n"
-	if err := os.WriteFile(path, []byte(source), 0o755); err != nil {
-		t.Fatal(err)
-	}
+	writeGoStub(t, path, source)
 }
 
 // canonicalTestDir returns a temporary directory with its symlinks already resolved.

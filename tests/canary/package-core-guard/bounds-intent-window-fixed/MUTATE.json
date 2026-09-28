@@ -1,0 +1,7 @@
+[
+  {
+    "path": "internal/intent/intent.go",
+    "old": "bounds.VerdictWindow(bounds.IntentLockTimeout)",
+    "new": "bounds.FixedWindow(bounds.IntentLockTimeout)"
+  }
+]

@@ -1,0 +1,7 @@
+[
+  {
+    "path": "internal/git/git.go",
+    "old": "var worktreeListTimeout = bounds.VerdictWindow(bounds.WorktreeListTimeout)",
+    "new": "var worktreeListTimeout = bounds.WorktreeListTimeout"
+  }
+]

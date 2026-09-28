@@ -3,6 +3,8 @@ package contract
 import (
 	"os"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 type MarkerWaitMiss string
@@ -29,8 +31,8 @@ func WaitForTwoLegMarkers(fastPath, slowPath string, fastDeadline, slowDeadline 
 }
 
 func waitForMarker(path string, deadline time.Duration, missed MarkerWaitMiss, stat func(string) (os.FileInfo, error), exit <-chan struct{}, now func() time.Time, sleep func(time.Duration)) MarkerWaitMiss {
-	until := now().Add(deadline)
-	for now().Before(until) {
+	started := now()
+	for now().Sub(started) < bounds.FixedWindow(deadline) {
 		if _, err := stat(path); err == nil {
 			return ""
 		}
@@ -39,7 +41,7 @@ func waitForMarker(path string, deadline time.Duration, missed MarkerWaitMiss, s
 			return MarkerWaitExited
 		default:
 		}
-		sleep(10 * time.Millisecond)
+		sleep(bounds.FixedWindow(10 * time.Millisecond))
 	}
 	return missed
 }

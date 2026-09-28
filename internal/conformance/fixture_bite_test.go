@@ -591,49 +591,6 @@ func TestRunConformanceChecksExecutableGitMode(t *testing.T) {
 	}
 }
 
-func TestConformanceSubprocessEnvStripsConformanceControlVars(t *testing.T) {
-	t.Setenv("BENCH_CONFORMANCE_ROOT", "/tmp/outer-root")
-	t.Setenv(registry.ConformanceTierEnv, "ship")
-	t.Setenv(registry.ConformanceChecksEnv, "line-routing,package-core-guard")
-	t.Setenv(registry.ConformanceInheritedEnv, "bounds-policy")
-
-	for _, kv := range conformanceSubprocessEnv() {
-		for _, name := range []string{"BENCH_CONFORMANCE_ROOT", registry.ConformanceTierEnv, registry.ConformanceChecksEnv, registry.ConformanceInheritedEnv} {
-			if strings.HasPrefix(kv, name+"=") {
-				t.Fatalf("%s leaked into the probe subprocess env: %q", name, kv)
-			}
-		}
-	}
-}
-
-func TestConformanceSubprocessEnvProvidesWritableNpmCache(t *testing.T) {
-	oldCache, hadCache := os.LookupEnv("NPM_CONFIG_CACHE")
-	if err := os.Unsetenv("NPM_CONFIG_CACHE"); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if hadCache {
-			_ = os.Setenv("NPM_CONFIG_CACHE", oldCache)
-			return
-		}
-		_ = os.Unsetenv("NPM_CONFIG_CACHE")
-	})
-
-	var cache string
-	for _, kv := range conformanceSubprocessEnv() {
-		if strings.HasPrefix(kv, "NPM_CONFIG_CACHE=") {
-			cache = strings.TrimPrefix(kv, "NPM_CONFIG_CACHE=")
-			break
-		}
-	}
-	if cache == "" {
-		t.Fatal("NPM_CONFIG_CACHE missing from conformance subprocess env")
-	}
-	if !strings.HasPrefix(filepath.Clean(cache), filepath.Clean(os.TempDir())+string(os.PathSeparator)) {
-		t.Fatalf("NPM_CONFIG_CACHE = %q, want temp-backed cache", cache)
-	}
-}
-
 func TestCheckPackageFilesToleratesNpmStderrNotice(t *testing.T) {
 	root := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(root, "bin"), 0o755); err != nil {

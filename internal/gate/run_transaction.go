@@ -79,7 +79,7 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 	if err != nil {
 		return operational(storageRoot, 0, stderr, "git directory unavailable")
 	}
-	lock, err := os.OpenFile(filepath.Join(gitdir, "bench-gate.lock"), os.O_CREATE|os.O_RDWR, 0o600)
+	lock, err := os.OpenFile(gateLockPath(gitdir), os.O_CREATE|os.O_RDWR, 0o600)
 	if err != nil {
 		persistInterruptedIfGreen(storageRoot, gitdir, plan)
 		return operational(storageRoot, 0, stderr, "gate lock unavailable")
@@ -88,19 +88,19 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 	if err := acquireExecutionLock(lock); err != nil {
 		persistInterruptedIfGreen(storageRoot, gitdir, plan)
 		fmt.Fprintln(stderr, "gate execution already in progress")
-		writeOwnerDiagnostic(stderr, filepath.Join(gitdir, "bench-gate-owner"))
+		writeOwnerDiagnostic(stderr, gateOwnerPath(gitdir))
 		inspection := inspectAt(storageRoot, time.Now().UTC())
 		inspection.ReusableGreen = false
 		return Result{ActionExit: 1, Inspection: inspection}
 	}
 	defer unlockExecutionLock(lock)
-	logGateEvent(ctx, gateLogRecord{Event: "gate.locked", Root: storageRoot, Path: filepath.Join(gitdir, "bench-gate.lock")})
+	logGateEvent(ctx, gateLogRecord{Event: "gate.locked", Root: storageRoot, Path: gateLockPath(gitdir)})
 	if arm != nil {
 		var stop func()
 		ctx, stop = arm(ctx)
 		defer stop()
 	}
-	ownerPath := filepath.Join(gitdir, "bench-gate-owner")
+	ownerPath := gateOwnerPath(gitdir)
 	defer func() { _ = os.Remove(ownerPath) }()
 	if err := os.WriteFile(ownerPath, ownerRecord(time.Now().UTC()), 0o600); err != nil {
 		return operational(storageRoot, 0, stderr, "gate owner persistence failed")
@@ -376,7 +376,7 @@ func ExecutionInProgress(root string) (bool, error) {
 }
 
 func lockHeld(gitdir string) (bool, error) {
-	path := filepath.Join(gitdir, "bench-gate.lock")
+	path := gateLockPath(gitdir)
 	executionLockOwners.Lock()
 	defer executionLockOwners.Unlock()
 	if executionLockOwners.paths[path] {

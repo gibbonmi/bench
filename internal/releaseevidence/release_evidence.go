@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 type ReleaseIntentError struct{ Message string }
@@ -266,7 +268,7 @@ func waitForEvidenceProbe(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-time.After(10 * time.Millisecond):
+		case <-time.After(bounds.FixedWindow(10 * time.Millisecond)):
 		}
 	}
 }

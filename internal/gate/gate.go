@@ -33,7 +33,7 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-var gateTimeout = bounds.GateTimeout
+var gateTimeout = bounds.VerdictWindow(bounds.GateTimeout)
 var errGateTimeout = errors.New("gate deadline exceeded")
 
 // Kind names the resolved gate. The zero value None is the no-gate case (exit 3,
@@ -379,3 +379,7 @@ func subjectUnavailableHelp() (string, error) {
 		axi.KnownArgument("gate"), axi.KnownArgument("--fresh"),
 	)})
 }
+
+func gateLockPath(gitdir string) string { return filepath.Join(gitdir, "bench-gate.lock") }
+
+func gateOwnerPath(gitdir string) string { return filepath.Join(gitdir, "bench-gate-owner") }

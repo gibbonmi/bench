@@ -36,6 +36,8 @@ func TestInspectDeadlineWarnsAndReturnsZero(t *testing.T) {
 }
 
 func TestEnvironmentPhaseTE15StopsAtDiscoveryBound(t *testing.T) {
+	const discoveryWindow = 100 * time.Millisecond
+	t.Cleanup(setWindowsForTest(providerTimeout, discoveryWindow))
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "go.mod"), nil, 0o644); err != nil {
 		t.Fatal(err)
@@ -49,8 +51,8 @@ func TestEnvironmentPhaseTE15StopsAtDiscoveryBound(t *testing.T) {
 	if code := environmentPhase(context.Background(), io.Discard, io.Discard, root); code != 0 {
 		t.Fatalf("environmentPhase exit = %d, want 0", code)
 	}
-	if elapsed := time.Since(started); elapsed >= bounds.EnvironmentDiscoveryTimeout+time.Second {
-		t.Fatalf("environmentPhase elapsed = %s, want discovery stopped near %s", elapsed, bounds.EnvironmentDiscoveryTimeout)
+	if elapsed := time.Since(started); elapsed >= discoveryWindow+time.Second {
+		t.Fatalf("environmentPhase elapsed = %s, want discovery stopped near %s", elapsed, discoveryWindow)
 	}
 }
 
@@ -66,6 +68,7 @@ func TestPhaseFinishedHonorsCancellationAfterResult(t *testing.T) {
 }
 
 func TestCommandInstallsTenSecondDeadline(t *testing.T) {
+	t.Cleanup(setWindowsForTest(bounds.ProviderTimeout, discoveryTimeout))
 	original := runInspect
 	t.Cleanup(func() { runInspect = original })
 	runInspect = func(ctx context.Context, _ io.Writer, _ string) int {

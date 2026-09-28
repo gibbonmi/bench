@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/intent/admissionpolicy"
 )
@@ -275,6 +276,8 @@ func TestReauthorizeCompensatesOnTheTerminalWriteFailure(t *testing.T) {
 	})
 
 	t.Run("a mutator without a step answers the failure", func(t *testing.T) {
+		t.Setenv(bounds.UnboundedWaitsEnv, "1")
+		t.Cleanup(setLockWindowForTest(time.Millisecond))
 		root, path := mutatorFixture(t)
 		dir := filepath.Dir(path)
 		t.Cleanup(func() { _ = os.Chmod(dir, 0o700) })

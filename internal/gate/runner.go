@@ -1,9 +1,7 @@
 package gate
 
-// The execution engine for gate phases: the DAG scheduler both runners share, the
-// per-phase process launch with optional-binary resolution, and the prefixed
-// output plumbing. The phase table and the PhasesCommand surface live in
-// phases.go.
+// This file owns gate phase scheduling, process execution, and prefixed output.
+// The phase declarations and public command live in phases.go.
 
 import (
 	"bufio"
@@ -20,13 +18,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
-const processGroupCancelGrace = 2 * time.Second
+const processGroupCancelGrace = bounds.ProcessGroupCancelGrace
 
 type processGroupCancelGraceKey struct{}
 
@@ -77,7 +76,7 @@ func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd) processGroupResu
 		select {
 		case <-done:
 			drainProcessGroup(cmd.Process.Pid)
-		case <-time.After(processGroupGrace(ctx)):
+		case <-time.After(bounds.FixedWindow(processGroupGrace(ctx))):
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 			<-done
 			drainProcessGroup(cmd.Process.Pid)
@@ -92,7 +91,7 @@ func drainProcessGroup(pgid int) {
 		if err := syscall.Kill(-pgid, 0); errors.Is(err, syscall.ESRCH) {
 			return
 		}
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(bounds.FixedWindow(10 * time.Millisecond))
 	}
 }
 
@@ -158,7 +157,7 @@ func runPhasesSerial(ctx context.Context, root string, phases []Phase, skipLog s
 	results, cancelled := schedule(ctx, root, phases, streams.open)
 	return aggregateAndReport(results, cancelled, streams, stdout, stderr, func() ([]string, string, bool) {
 		return reportCapabilitySkips(skipLog)
-	}, cacheFootprintReport(ctx, os.Environ(), gocache.Measure, gocache.Bound))
+	}, cacheFootprintReport(ctx, os.Environ(), gocache.Measure, gocache.Bound), checkoutReport(ctx))
 }
 
 // prefixedPhaseWriters is the outer phase output plumbing. The mutex keeps each

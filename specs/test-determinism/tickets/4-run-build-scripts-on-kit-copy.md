@@ -1,8 +1,8 @@
 # 4. Run the build-script tests on a private kit copy
 
 Blocked by: none
-Writes: internal/gittest/gittest.go, internal/gittest/gittest_test.go (new), cmd/bench/build_subject_mode_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: TD47, TD48
+Writes: internal/gittest/gittest.go, internal/gittest/gittest_test.go (new), cmd/bench/build_subject_mode_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/testrepo/working_tree.go, internal/env/
+Covers: TD47, TD48, TD49
 
 ## What to build
 
@@ -12,10 +12,20 @@ Add a kit copy helper to the shared git test scaffold. It copies each file that 
 
 `TestReleasePreflightBuildDoesNotRebindThePromotionBroker` and `TestGoBuildSubjectModePublishesTheStampedVersion` each run the real build script inside a kit copy. Each test still grades the operands that the script hands the builder, and each still reads the broker manifest from the copy's wrapper directory. The live checkout then gets no `dist/` path and no rewrite of its broker manifest.
 
+The helper composes testrepo.CommitWorkingTree, which owns file enumeration, copying, and the snapshot commit.
+The owner file joins the fence for the ignore-filter mutation; no persistent owner edit is expected.
+
 The five registry files join `Writes:` through the binding registry closure only. The ticket expects no edit to them.
+
+The shared kit-run environment points BASH_ENV at the null device before a test child starts.
+An inherited startup file must not run under the private HOME.
+The owner regression uses a controlled startup file and a real Bash child.
+Linked repositories retain their environment, and no runner restates this policy.
+The original wrapper loop and all affected runner packages must pass with the normal ambient environment.
 
 ## Acceptance
 
 - [ ] A kit copy holds every tracked file and every untracked file that is not ignored, its own git directory, and no `dist/` path.
 - [ ] Both build-script tests pass on the copy.
 - [ ] After both tests run, the live checkout holds no new `dist/` path and an unchanged `bin/bench-broker.manifest`. The ticket report records the probe run that shows it.
+- [ ] A kit-run Bash child ignores the inherited startup file and emits only its requested output.

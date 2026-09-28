@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -26,9 +27,8 @@ import (
 	"time"
 )
 
-// Subshell owns the worktree shell leaf grammar and starts a shell in a newly owned,
-// leased worktree for the repository the caller is in. It releases the assignment when
-// the shell exits and forwards an interrupt or termination signal before release.
+// Subshell runs a shell in a leased worktree and releases it on exit.
+// Cancellation forwards the signal and retains the assignment.
 func Subshell(home string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	root, err := git.Root()
 	if err != nil {
@@ -104,7 +104,7 @@ func subshellAt(root, home, shell string, environ []string, args []string, stdin
 		_ = syscall.Kill(-cmd.Process.Pid, interrupted.(syscall.Signal))
 		select {
 		case <-done:
-		case <-time.After(5 * time.Second):
+		case <-time.After(bounds.FixedWindow(5 * time.Second)):
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 			<-done
 		}

@@ -2,6 +2,7 @@ package capturetx
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -12,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
@@ -19,8 +21,9 @@ const (
 	directoryName = "bench-capture-drain"
 	manifestName  = "manifest.json"
 	lockName      = "bench-capture-drain.lock"
-	lockWait      = 2 * time.Second
 )
+
+var lockWait = bounds.VerdictWindow(bounds.CaptureLockTimeout)
 
 type manifest struct {
 	Schema  int              `json:"schema"`
@@ -132,16 +135,17 @@ func withLock(root string, run func(common string) error) error {
 		return err
 	}
 	defer file.Close()
-	deadline := time.Now().Add(lockWait)
+	ctx, cancel := bounds.Context(context.Background(), lockWait)
+	defer cancel()
 	for {
 		err = syscall.Flock(int(file.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
 		if err == nil {
 			break
 		}
-		if !errors.Is(err, syscall.EWOULDBLOCK) || time.Now().After(deadline) {
+		if !errors.Is(err, syscall.EWOULDBLOCK) || ctx.Err() != nil {
 			return fmt.Errorf("capture transaction lock is busy: %w", err)
 		}
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(bounds.FixedWindow(10 * time.Millisecond))
 	}
 	defer syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
 	return run(common)

@@ -53,19 +53,6 @@ func fixtureMid(binding, harness string) string {
 	return value
 }
 
-// coreless returns env with a PATH carrying neither a bench wrapper nor the stub dir. The
-// shims' wrapper search then comes up empty, and each one takes its own missing-core rim.
-func coreless(env []string) []string {
-	out := make([]string, 0, len(env)+1)
-	for _, kv := range env {
-		if strings.HasPrefix(kv, "PATH=") {
-			continue
-		}
-		out = append(out, kv)
-	}
-	return append(out, "PATH=/usr/bin:/bin")
-}
-
 func checkAgentHookBehavior(root string) []string {
 	hook := filepath.Join(root, ".bench", "hooks", "check-agent-line.sh")
 	realBench := filepath.Join(root, "bin", "bench.sh")
@@ -85,7 +72,11 @@ func checkAgentHookBehavior(root string) []string {
 		return []string{"check-agent-line.sh setup failed: " + err.Error()}
 	}
 	defer cleanup()
-	env := append(conformanceSubprocessEnv(), "PATH="+bindir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	env, cleanupEnv, err := conformanceSubprocessEnv(bindir)
+	if err != nil {
+		return []string{"check-agent-line.sh setup failed: " + err.Error()}
+	}
+	defer cleanupEnv()
 	var diags []string
 
 	routed, cleanupRouted, err := tempGitRepoWithLines(matrixBinding)
@@ -247,7 +238,11 @@ func checkAdapterLineGuards(root string) []string {
 		if !exists(path) {
 			continue
 		}
-		envBase := append(conformanceSubprocessEnv(), "PATH="+bindir+string(os.PathListSeparator)+os.Getenv("PATH"))
+		envBase, cleanupEnv, err := conformanceSubprocessEnv(bindir)
+		if err != nil {
+			return append(diags, "adapter line guard setup failed: "+err.Error())
+		}
+		defer cleanupEnv()
 		// A harness the shared fixture leaves unadopted has no bound column there, so its
 		// launch cases run against the provider-qualified fixture instead.
 		unadopted := !boundIn(matrixBinding, name)
@@ -331,9 +326,12 @@ func checkLineHarnessSurfaces(root string) []string {
 		return []string{"line harness surface setup failed: " + err.Error()}
 	}
 	defer cleanupRouted()
-	env := append(conformanceSubprocessEnv(),
-		"PATH="+bindir+string(os.PathListSeparator)+os.Getenv("PATH"),
-		"BENCH_MODEL=mid")
+	env, cleanupEnv, err := conformanceSubprocessEnv(bindir)
+	if err != nil {
+		return []string{"line harness surface setup failed: " + err.Error()}
+	}
+	defer cleanupEnv()
+	env = append(env, "BENCH_MODEL=mid")
 
 	type surfaceCase struct {
 		name, want string

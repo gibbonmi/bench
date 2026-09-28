@@ -1,0 +1,7 @@
+[
+  {
+    "path": "internal/contract/marker_wait.go",
+    "old": "sleep(bounds.FixedWindow(10 * time.Millisecond))",
+    "new": "sleep(10 * time.Millisecond)"
+  }
+]

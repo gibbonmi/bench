@@ -6,8 +6,8 @@
 // construction all sit behind it, so a second ad hoc filter never drifts from
 // this one.
 //
-// This package serves the harness-adapter (agent) launch only. The project
-// gate's environment is a separate, already-closed subject: FT78's
+// KitTestRun also owns the private environment for the kit's test children.
+// The project gate's environment is a separate, already-closed subject: FT78's
 // manifest-declared closure, owned by internal/gate. That closure launches the
 // gate script with PATH plus only the names declared under `environment` in
 // `.bench/gate-inputs.json`. This feature pins that closure with a sentinel

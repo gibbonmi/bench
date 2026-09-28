@@ -1,0 +1,7 @@
+[
+  {
+    "path": "internal/git/git.go",
+    "old": "func Root() (string, error) {",
+    "new": "func unclassifiedDeadline() time.Time {\n\treturn time.Now().Add(time.Duration(17))\n}\n\nfunc Root() (string, error) {"
+  }
+]
