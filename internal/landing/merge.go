@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
 // The three merge kinds one target-and-incoming pair can take. Ancestry is reflexive,
@@ -121,7 +122,7 @@ func (o Owner) Merge(ctx context.Context, r MergeRequest) (MergeResult, error) {
 }
 
 func mergeTipUnmoved(root, branch, previous string) error {
-	tip, err := output(root, "rev-parse", "--verify", branch+"^{commit}")
+	tip, err := benchgit.ResolveCommit(root, branch)
 	if err != nil || tip != previous {
 		return errors.New("merge target tip moved")
 	}

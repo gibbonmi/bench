@@ -11,6 +11,32 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 )
 
+func TestResolveCommitMatchesOriginalQueries(t *testing.T) {
+	root := newRepo(t)
+	runGit(t, root, "branch", "topic")
+	runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "tag", "-a", "annotated", "-m", "fixture")
+	commit := strings.TrimSpace(runGit(t, root, "rev-parse", "HEAD"))
+	for _, flags := range [][]string{nil, {"--quiet"}, {"--quiet", "--end-of-options"}} {
+		for _, revision := range []string{"HEAD", "topic", commit, "annotated", "HEAD^{tree}", "HEAD:a.txt", "missing", "--help"} {
+			t.Run(fmt.Sprint(flags)+"/"+revision, func(t *testing.T) {
+				args := append([]string{"-C", root, "rev-parse", "--verify"}, flags...)
+				want, wantErr := Output(append(args, revision+"^{commit}")...)
+				got, err := ResolveCommit(root, revision, flags...)
+				if got != want || fmt.Sprint(err) != fmt.Sprint(wantErr) {
+					t.Fatalf("ResolveCommit = %q, %v; original query = %q, %v", got, err, want, wantErr)
+				}
+			})
+		}
+	}
+	for _, root := range []string{t.TempDir(), filepath.Join(root, "missing")} {
+		want, wantErr := Output("-C", root, "rev-parse", "--verify", "HEAD^{commit}")
+		got, err := ResolveCommit(root, "HEAD")
+		if got != want || fmt.Sprint(err) != fmt.Sprint(wantErr) {
+			t.Fatalf("invalid root = %q, %v; original query = %q, %v", got, err, want, wantErr)
+		}
+	}
+}
+
 func TestPruneLandedBranchesUsesNeutralDiscoveryFailure(t *testing.T) {
 	root := newRepo(t)
 	common, err := CommonDir(root)

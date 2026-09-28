@@ -104,12 +104,12 @@ func selectLandedCleanupRow(j joins, root string, assignment intent.Assignment, 
 	if !assignmentLanded(assignment, classifierPlan) {
 		return landedCleanupRow{}, false
 	}
-	headOID, oidErr := git.Output("-C", root, "rev-parse", "--verify", assignment.Branch+"^{commit}")
+	headOID, oidErr := git.ResolveCommit(root, assignment.Branch)
 	if oidErr != nil {
 		return landedCleanupRow{}, false
 	}
 	if scope != "" {
-		startOID, startErr := git.Output("-C", root, "rev-parse", "--verify", assignment.Start+"^{commit}")
+		startOID, startErr := git.ResolveCommit(root, assignment.Start)
 		if startErr != nil || startOID == headOID || !git.OK("-C", root, "merge-base", "--is-ancestor", startOID, headOID) {
 			return landedCleanupRow{}, false
 		}

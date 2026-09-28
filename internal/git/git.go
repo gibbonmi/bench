@@ -157,7 +157,7 @@ func PruneLandedBranches(root string, protectedBranches []string) (int, error) {
 		if !landed {
 			continue
 		}
-		oid, err := Output("-C", root, "rev-parse", "--verify", "refs/heads/"+branch+"^{commit}")
+		oid, err := ResolveCommit(root, "refs/heads/"+branch)
 		if err != nil {
 			return pruned, fmt.Errorf("git branch identity %s: %w", branch, err)
 		}
@@ -213,6 +213,13 @@ func LandedInDefault(root, branch, def string) (landed, byContent bool, err erro
 		}
 	}
 	return true, true, nil
+}
+
+// ResolveCommit returns the verified commit ID for revision.
+// Flags retain each caller's quiet and option-handling policy.
+func ResolveCommit(root, revision string, flags ...string) (string, error) {
+	args := append([]string{"-C", root, "rev-parse", "--verify"}, flags...)
+	return Output(append(args, revision+"^{commit}")...)
 }
 
 // Output runs `git <args>` and returns stdout with a single trailing newline trimmed.

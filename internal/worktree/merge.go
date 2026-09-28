@@ -197,7 +197,7 @@ func mergeTargetTip(root string, a intent.Assignment) (string, error) {
 	if err != nil {
 		return "", refusalError{refusal{detail: "merge target checkout has no commit"}}
 	}
-	tip, err := git.Output("-C", root, "rev-parse", "--verify", a.Branch+"^{commit}")
+	tip, err := git.ResolveCommit(root, a.Branch)
 	if err != nil || tip != head {
 		return "", refusalError{refusal{detail: "merge target branch tip is not the checkout HEAD", observed: head, wanted: tip}}
 	}
@@ -263,7 +263,7 @@ func siblingByTipSha(root string, active []intent.Assignment, targetID, commit s
 	var matched []intent.Assignment
 	var ids []string
 	for _, a := range active {
-		tip, err := git.Output("-C", root, "rev-parse", "--verify", a.Branch+"^{commit}")
+		tip, err := git.ResolveCommit(root, a.Branch)
 		if err != nil || tip != commit {
 			continue
 		}
@@ -309,7 +309,7 @@ func siblingContribution(root string, selected intent.Assignment, tip string) (s
 		return "", err
 	}
 	if tip == "" {
-		read, err := git.Output("-C", root, "rev-parse", "--verify", selected.Branch+"^{commit}")
+		read, err := git.ResolveCommit(root, selected.Branch)
 		if err != nil {
 			return "", refusalError{refusal{detail: "sibling assignment branch has no commit", observed: selected.Branch}}
 		}
@@ -359,7 +359,7 @@ func siblingTip(root string, assignments []intent.Assignment, exclude, from stri
 // is a third fact: it refuses and names the failure, because an unread history classifies
 // nothing.
 func mergeDefaultBranchCommit(root, from string) (commit string, resolved, owned bool, err error) {
-	commit, peelErr := git.Output("-C", root, "rev-parse", "--verify", "--quiet", from+"^{commit}")
+	commit, peelErr := git.ResolveCommit(root, from, "--quiet")
 	if peelErr != nil || commit == "" {
 		return "", false, false, nil
 	}
@@ -367,7 +367,7 @@ func mergeDefaultBranchCommit(root, from string) (commit string, resolved, owned
 	if !ok {
 		return commit, true, false, refusalError{refusal{detail: "default branch is unresolved", observed: from}}
 	}
-	tip, tipErr := git.Output("-C", root, "rev-parse", "--verify", branch+"^{commit}")
+	tip, tipErr := git.ResolveCommit(root, branch)
 	if tipErr != nil {
 		return commit, true, false, refusalError{refusal{detail: "default branch tip is unreadable", observed: branch}}
 	}

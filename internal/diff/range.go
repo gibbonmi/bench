@@ -38,7 +38,7 @@ type ChangedSubject struct {
 // ResolveChangedSubject resolves the changed paths a focused command may select.
 func ResolveChangedSubject(root, base, sourceTip string) (ChangedSubject, string, string) {
 	if sourceTip != "" {
-		tip, err := git.Output("-C", root, "rev-parse", "--verify", sourceTip+"^{commit}")
+		tip, err := git.ResolveCommit(root, sourceTip)
 		if err != nil {
 			return ChangedSubject{}, "cannot resolve --source-tip", "'" + sourceTip + "' does not name a commit reachable in this repository"
 		}
@@ -147,7 +147,7 @@ func (snapshot MovementSnapshot) SourceSnapshotPaths(source SourceRange) ([]stri
 
 // ResolveSourceRange resolves an explicit source base and its exact source tip.
 func ResolveSourceRange(root, base, tip string) (SourceRange, string, string) {
-	b, err := git.Output("-C", root, "rev-parse", "--verify", base+"^{commit}")
+	b, err := git.ResolveCommit(root, base)
 	if err != nil {
 		return SourceRange{}, "cannot resolve --base", "'" + base + "' does not name a commit reachable in this repository"
 	}
@@ -170,7 +170,7 @@ func ResolveSourceRange(root, base, tip string) (SourceRange, string, string) {
 // sha and a root commit's missing parent are each their own structured error (kind,
 // hint), never a leaked git failure.
 func resolveCommitRange(root, commitArg string) (dr diffRange, errKind, errHint string) {
-	headSha, err := git.Output("-C", root, "rev-parse", "--verify", commitArg+"^{commit}")
+	headSha, err := git.ResolveCommit(root, commitArg)
 	if err != nil {
 		return diffRange{}, "cannot resolve --commit",
 			"'" + commitArg + "' does not name a commit reachable in this repository"
@@ -219,7 +219,7 @@ func resolveExplicitRange(root, base, head string) (diffRange, string, string) {
 // pair — the same pair `bench preflight review` takes. The tip is resolved before the
 // base so its refusal names the flag the caller got wrong.
 func resolvePairRange(root, base, tip string) (diffRange, string, string) {
-	resolvedTip, err := git.Output("-C", root, "rev-parse", "--verify", tip+"^{commit}")
+	resolvedTip, err := git.ResolveCommit(root, tip)
 	if err != nil {
 		return diffRange{}, "cannot resolve --source-tip", "'" + tip + "' does not name a commit reachable in this repository"
 	}

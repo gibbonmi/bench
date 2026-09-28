@@ -12,7 +12,7 @@ import (
 
 func updateRef(root, ref, new, old string) error { return run(root, "update-ref", ref, new, old) }
 func destinationUpdateFailure(root, ref, expected string, updateErr error) error {
-	actual, err := output(root, "rev-parse", "--verify", ref+"^{commit}")
+	actual, err := benchgit.ResolveCommit(root, ref)
 	if err != nil {
 		return fmt.Errorf("read destination after failed ref update: %w", err)
 	}

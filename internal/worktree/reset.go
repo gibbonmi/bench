@@ -135,7 +135,7 @@ func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
 	if plan.ref == "" {
 		plan.ref = "detached"
 	}
-	plan.tip, err = git.Output("-C", root, "rev-parse", "--verify", selected.Branch+"^{commit}")
+	plan.tip, err = git.ResolveCommit(root, selected.Branch)
 	if err != nil {
 		return resetPlan{}, err
 	}
@@ -144,7 +144,7 @@ func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
 		plan.manifest, err = readResetRestore(root, selected, envelope)
 		checkpoint = plan.manifest.Base
 	} else {
-		checkpoint, err = git.Output("-C", selected.Worktree, "rev-parse", "--verify", "--quiet", "--end-of-options", checkpoint+"^{commit}")
+		checkpoint, err = git.ResolveCommit(selected.Worktree, checkpoint, "--quiet", "--end-of-options")
 	}
 	if err != nil && envelope != "" {
 		return resetPlan{}, err

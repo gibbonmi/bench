@@ -215,7 +215,7 @@ func resumePublished(j joins, root, destination, value, base, source, slug strin
 // the resolved review-source base and the published commit's destination base.
 func publicationFacts(root, destination, value, base, source, slug string) (landingpolicy.PublicationFacts, string, string) {
 	facts := landingpolicy.PublicationFacts{Requested: value, RequestedSource: source}
-	published, err := git.Output("-C", root, "rev-parse", "--verify", value+"^{commit}")
+	published, err := git.ResolveCommit(root, value)
 	if err != nil {
 		return facts, "", ""
 	}

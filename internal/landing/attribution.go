@@ -7,13 +7,15 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
 func validRequest(r Request) error {
 	if r.Root == "" || r.Destination == "" || r.Expected == "" || strings.TrimSpace(r.Message) == "" {
 		return errors.New("landing request is incomplete")
 	}
-	if _, err := output(r.Root, "rev-parse", "--verify", r.Expected+"^{commit}"); err != nil {
+	if _, err := benchgit.ResolveCommit(r.Root, r.Expected); err != nil {
 		return errors.New("expected base is not a commit")
 	}
 	return nil

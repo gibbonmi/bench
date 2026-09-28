@@ -90,7 +90,7 @@ func classifyUnclaimedRefs(root string, assignments []intent.Assignment, protect
 		if assignment.State != intent.StateActive && assignment.State != intent.StateCleanupPending {
 			continue
 		}
-		oid, err := git.Output("-C", root, "rev-parse", "--verify", "--quiet", assignment.Branch+"^{commit}")
+		oid, err := git.ResolveCommit(root, assignment.Branch, "--quiet")
 		if err != nil {
 			continue
 		}
@@ -112,7 +112,7 @@ func classifyUnclaimedRefs(root string, assignments []intent.Assignment, protect
 			verdicts[i].fault = fmt.Sprintf("%s is a symref to %s", ref, target)
 			continue
 		}
-		oid, err := git.Output("-C", root, "rev-parse", "--verify", "--quiet", ref+"^{commit}")
+		oid, err := git.ResolveCommit(root, ref, "--quiet")
 		if err != nil {
 			kind, _ := git.Output("-C", root, "cat-file", "-t", ref)
 			verdicts[i].fault = fmt.Sprintf("%s names a %s object that is not a commit", ref, kind)

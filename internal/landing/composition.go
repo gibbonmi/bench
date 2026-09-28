@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing/settlepolicy"
 )
 
@@ -197,7 +198,7 @@ func unionStages(root, path string, stages map[int]settlepolicy.StageRecord) (*s
 }
 
 func compositionCommit(root, value, role string) (string, error) {
-	commit, err := output(root, "rev-parse", "--verify", value+"^{commit}")
+	commit, err := benchgit.ResolveCommit(root, value)
 	if err != nil {
 		return "", fmt.Errorf("composition %s is not a commit", role)
 	}

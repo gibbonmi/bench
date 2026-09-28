@@ -136,7 +136,7 @@ func resolvePin(root, pin string) (string, *BootstrapFailure) {
 	if pin == "" {
 		return "", nil
 	}
-	resolved, err := git.Output("-C", root, "rev-parse", "--verify", pin+"^{commit}")
+	resolved, err := git.ResolveCommit(root, pin)
 	if err != nil {
 		return "", &BootstrapFailure{"cannot resolve --source-tip", "'" + pin + "' does not name a commit reachable in this repository"}
 	}

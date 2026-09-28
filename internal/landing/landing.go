@@ -201,7 +201,7 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 	if err != nil || source != r.SourceTip {
 		return ReviewedResult{}, errors.New("source tip is not an exact commit")
 	}
-	branchTip, err := output(r.Root, "rev-parse", "--verify", r.Source+"^{commit}")
+	branchTip, err := benchgit.ResolveCommit(r.Root, r.Source)
 	if err != nil || branchTip != source {
 		return ReviewedResult{}, errors.New("reviewed source tip moved")
 	}
@@ -256,7 +256,7 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 	}
 	// Recheck the two moving identities after the gate and before creating an
 	// otherwise unreachable object. Tree equality is insufficient: review binds a commit.
-	if branchTip, err = output(r.Root, "rev-parse", "--verify", r.Source+"^{commit}"); err != nil || branchTip != source {
+	if branchTip, err = benchgit.ResolveCommit(r.Root, r.Source); err != nil || branchTip != source {
 		return ReviewedResult{}, errors.New("reviewed source tip moved")
 	}
 	if fingerprint, fingerprintErr := CheckoutFingerprint(r.SourceWorktree); fingerprintErr != nil || fingerprint != r.SourceFingerprint {

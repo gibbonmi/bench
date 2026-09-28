@@ -172,7 +172,7 @@ func landingSource(j joins, root string, a intent.Assignment, base, requestedTip
 	if head != requestedTip {
 		return landingSourceFact{}, identityRefusal(requestedTip, head, sourceTipMismatchDetail)
 	}
-	branchTip, err := git.Output("-C", root, "rev-parse", "--verify", a.Branch+"^{commit}")
+	branchTip, err := git.ResolveCommit(root, a.Branch)
 	if err != nil {
 		return landingSourceFact{}, errors.New("assignment branch source tip mismatch")
 	}
@@ -302,7 +302,7 @@ func identityRefusal(observed, wanted, detail string) error {
 // commit. Git refuses an ambiguous prefix, and a value that is not a hex prefix of
 // a commit passes through unchanged for the proof that owns it to refuse.
 func expandIdentity(repository, value string) string {
-	full, err := git.Output("-C", repository, "rev-parse", "--verify", "--quiet", value+"^{commit}")
+	full, err := git.ResolveCommit(repository, value, "--quiet")
 	if err == nil && abbreviatedIdentity(value, full) {
 		return full
 	}

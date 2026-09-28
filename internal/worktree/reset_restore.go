@@ -15,7 +15,7 @@ func readResetRestore(root string, assignment intent.Assignment, ref string) (re
 	if !strings.HasPrefix(ref, intent.ResetRefPrefix(assignment.OwnerID, assignment.ID)) {
 		return recoveryManifest{}, errors.New("restore ref is not this assignment's")
 	}
-	rootOID, err := git.Output("-C", root, "rev-parse", "--verify", ref+"^{commit}")
+	rootOID, err := git.ResolveCommit(root, ref)
 	if err != nil {
 		return recoveryManifest{}, errors.New(resetEnvelopeUnverified)
 	}
