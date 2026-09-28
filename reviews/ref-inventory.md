@@ -1199,6 +1199,73 @@ and RI82 stay review-owned.
 The repair session reran the ticket 4 plan checks at `b592c85a` on a clean
 tree. The JSON payload holds each result after the cycle 1 rows.
 
+## RI-C2b chunk review, round 3
+
+The round froze base `114f94a2` and tip `b592c85a`. The seams commit
+`3f778192` and the record commit `dd9e4d56` follow the tip, and the shared
+evidence is `sha256:f0df3b00…`. Each axis ran in a fresh `bench-reviewer` session
+on opus at high effort under the blocking bar, because both repair cycles were
+spent. Only the Coverage axis ran probes, and it left the tree clean.
+
+Raw findings: Standards 0, Spec 0, Coverage 1. Every fold from round 2 holds,
+and all forty cited RI-C2b tests exist in their named files.
+
+### Standards, round 3
+
+Findings: 0 blocking. The tree has one `--no-deref` write, a comment in the
+craft-comments register, and no new fixture helper. No file is over 400 lines
+apart from the three grandfathered files, and those did not grow. Advice: the
+RI101 and RI102 tests each carry their own plant closure, and the file reads a
+symref in two ways.
+
+### Spec, round 3
+
+Findings: 0 blocking. R46, R47, and R48 hold under Option A, and RI102 is
+delivered by both subtests.
+
+Advice:
+
+- the D9 rationale sentence now sits under the RI102 paragraph
+- the round 2 sentence leaves out the story 30 rewording
+- story 30 reuses the word "recorded"
+- the RI102 learning's verification line predates the restatement
+
+### Coverage, round 3
+
+Findings: 1. Worst: R49, confirmed by a fixture probe.
+
+- R49 (ask-user, confidence 8): a symref planted at the branch path at
+  `StepDiscardedBranchDelete`, pointing at the just-written discarded ref, makes
+  `DeleteBranchExact` follow it. The exact-tip check passes through the
+  referent, the delete removes the discarded ref, and the apply prints
+  `removed` while no ref names the unique commit. The other callers of
+  `DeleteBranchExact` remove refs whose commits stay reachable, so this caller
+  is the one that removes the only handle.
+
+Probes, each with restore `yes`:
+
+- the dangling target name swapped to `main`: bit
+- the resolving target swapped to a missing ref: bit
+- the write error swallowed, the independent bypass: bit, RI101 and the resolving case
+- an expired dated target that resolves: silent, the row holds
+- an expired dated target that dangles: silent, the row holds
+- a branch-path symref planted before the delete: bit, R49
+
+Advice: the resolving subtest pins `main` only, not a same-tip target.
+
+### RI-C2b decision and repair cycle 3
+
+The Fable consultant at high effort recommended a delete local to
+`clean_discard.go` with `update-ref --no-deref -d`, a row RI103, and one more
+bounded cycle. The window breaks the invariant that the preserve step and the
+discard step never split. `DeleteBranchExact` stays unchanged under D1. The
+reviewer granted the third cycle in conversation on 2026-09-27.
+
+The plan commit that follows this record adds RI103, the spec sentence, the
+edge inventory line, and the assignment `ri-t4-repair-3`. After that repair one
+confirming round runs, and a further blocking finding stops the chunk for the
+reviewer. No command change is necessary.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2233,7 +2300,7 @@ tree. The JSON payload holds each result after the cycle 1 rows.
       "acceptance_rows": [
         "RI16", "RI29", "RI30", "RI31", "RI32", "RI33", "RI34", "RI35", "RI36", "RI37", "RI38", "RI39", "RI40", "RI41",
         "RI48", "RI49", "RI50", "RI51", "RI52", "RI58", "RI64", "RI65", "RI67", "RI68", "RI69", "RI70", "RI71",
-        "RI74", "RI75", "RI76", "RI77", "RI78", "RI79", "RI80", "RI96", "RI97", "RI98", "RI99", "RI100", "RI101", "RI102"
+        "RI74", "RI75", "RI76", "RI77", "RI78", "RI79", "RI80", "RI96", "RI97", "RI98", "RI99", "RI100", "RI101", "RI102", "RI103"
       ],
       "verification": [
         {
@@ -2537,6 +2604,66 @@ tree. The JSON payload holds each result after the cycle 1 rows.
           "tip": "a7fba6acea34ec41fab38fc094ce4610a3ca7283",
           "finding_ids": ["R48"],
           "supersedes": ["ri-c2b-r1-coverage"]
+        },
+        {
+          "id": "ri-c2b-r3-standards",
+          "performer": "claude:bench-reviewer/ri-c2b-standards-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5d088fb12ffdf04ba33e51dbc5384ccb599dcbb0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2b-standards-r3@b592c85a",
+            "digest": "sha256:7a54524171781df61f6d1ddb78036c7a149b703c3099015ab62c70a4a9dbd7c2",
+            "excerpt": "Standards round 3: 0 blocking findings. R48 folded with one no-deref write; the two plant closures stay as advice."
+          },
+          "axis": "Standards",
+          "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "tip": "b592c85ab201e0743cde20aa39843846ed309bb9",
+          "finding_ids": [],
+          "supersedes": ["ri-c2b-r2-standards"]
+        },
+        {
+          "id": "ri-c2b-r3-spec",
+          "performer": "claude:bench-reviewer/ri-c2b-spec-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5d088fb12ffdf04ba33e51dbc5384ccb599dcbb0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2b-spec-r3@b592c85a",
+            "digest": "sha256:a8557f8044ef0dacf264c3285f35cc464385d0707814140ec28847cd9d59c059",
+            "excerpt": "Spec round 3: 0 blocking findings. R46 to R48 folded under Option A, and all 40 cited RI-C2b tests exist."
+          },
+          "axis": "Spec",
+          "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "tip": "b592c85ab201e0743cde20aa39843846ed309bb9",
+          "finding_ids": [],
+          "supersedes": ["ri-c2b-r2-spec"]
+        },
+        {
+          "id": "ri-c2b-r3-coverage",
+          "performer": "claude:bench-reviewer/ri-c2b-coverage-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5d088fb12ffdf04ba33e51dbc5384ccb599dcbb0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2b-coverage-r3@b592c85a",
+            "digest": "sha256:cd9de60ba6b629276a0a4b229fad40e6d2ef9fe18e66bfdeafb92831bb1f7f28",
+            "excerpt": "Coverage round 3: 1 blocking finding. Worst: a symref planted at the branch path after the write makes the exact-tip delete follow it and remove the discarded ref."
+          },
+          "axis": "Coverage",
+          "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "tip": "b592c85ab201e0743cde20aa39843846ed309bb9",
+          "finding_ids": ["R49"],
+          "supersedes": ["ri-c2b-r2-coverage"]
         }
       ]
     }
