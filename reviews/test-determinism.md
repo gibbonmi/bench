@@ -255,6 +255,20 @@ The build needs an explicit extension for one additional TD-C1b repair cycle.
 That cycle must diagnose the writer, repair cleanup within the approved environment behavior, and retain the failure predicate.
 It must then refresh verification, independent confirming reviews, and the full checkpoint before the build continues.
 
+## TD-C1b debug authorization
+
+The user removes the repair-cycle cap while bench-debug governs each repair.
+The earlier two consumed cycles remain recorded above.
+The inline author keeps the unknown model at high effort.
+Independent reviews keep gpt-6-sol at high effort.
+The checkpoint, verification, and scope requirements remain in force.
+
+The initial focused command passed in 3122 milliseconds.
+The GOFLAGS repetition attempt also passed, but the runner fixes its own test count.
+A direct 30-repeat run of the reported test passed in 11.091 seconds.
+These results do not reproduce or explain the checkpoint failure.
+The debug loop remains under construction.
+
 ```bench-review-record
 {
   "version": 1,
