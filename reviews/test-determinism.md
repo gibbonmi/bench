@@ -801,6 +801,57 @@ The corrected fixture then produced the required missing-diagnostic red before t
 Registry closure, the remaining package checks, mutation probes, and final ticket verification are pending.
 TD44 remains the final landing gate's obligation.
 
+## Ticket 7 verification and registry closure
+
+The implementation checkpoint committed as 2f373e2adfb3159e6e6cfd84a53cf164db9c4857 on a green ordinary lane.
+The refreshed charge is sha256:6f1d539279090db4758e786ccd49b75d79390481c2d87abd6468fb88577c0a31.
+The author read its metadata, complete ticket, current binding, and registry owner.
+The registry repair adds both canary classifications and moves the existing validation tests without changing their checks.
+Session 38666 passes the exact 13 ms reproduction, and session 61276 passes complete conformance.
+
+The bounds owner selects unbounded waits only for the exact switch value 1.
+Its wait functions preserve cancellation while removing their own deadline for the sentinel.
+The fixed-window accessor preserves cancellation grace, polling windows, and operator limits.
+Verdict defaults read the first accessor at initialization, so raw test setters still take effect.
+The owner table also derives the required verdict-window inventory.
+
+The system environment helpers share one removal of the bounds-owned switch name.
+The hook suite failed before that removal in session 23364, then passed in session 75131.
+The two hook failures were excessive discovery time and a surviving descendant sentinel.
+The complete gate, environment, bounds, Git, session inspection, models, guards, coverage, and refresh packages pass.
+Complete conformance has three capability skips and no environment skips, while the other package checks have none.
+
+| Row | Observation |
+| --- | --- |
+| TD33 | Session 55509 was red for all seven policy windows, and 46882 was green. |
+| TD34 | Session 90013 was already green, and probe 55124 catches an always-unbounded accessor. |
+| TD35 | Session 56228 was already green, and probe 95103 catches accepting malformed values. |
+| TD36 | Session 78926 was red for timed contexts and the child, and 71729 was green. |
+| TD37 | Session 20010 passed the existing worktree timeout test under the switch. |
+| TD38 | Session 93454 passed the existing gate timeout test under the switch. |
+| TD39 | Session 83240 was red for the missing entry, and 85489 was green. |
+| TD42 | Session 18332 was red for the missing check, and 38250 was green. |
+| TD43 | Session 24059 was red for an unbounded cancellation grace, and 64486 was green. |
+| TD44 | The final landing gate remains the oracle. |
+| TD45 | Session 23364 was red at the hook child, and 75131 was green. |
+| TD46 | Session 51224 was red for the missing discovery-owner check, and 29568 was green. |
+
+The retained canaries invoke the registered owner and require their diagnostic to disappear after restoration.
+The switch probe, default-policy probe, and unbounded-run probe each caught behavioral failures after a passing baseline.
+The kit-entry swap probe also caught its behavior, then restored the source.
+These probes demonstrate why the independent expectations are necessary.
+Their complete native outputs and session identities are in .logs/test-determinism-t7.json.
+
+An initial entry-omission probe did not compile because it left an unused bounds import.
+Its ranked causes were the removed import use, incorrect test selection, and stale source.
+It reported zero executed tests and restored the source, so it is not behavioral evidence.
+The replacement value swap in session 80950 preserves the import and fails with the switch equal to 0.
+No temporary instrumentation remains.
+
+Root conformance passed in session 27235 with no skips.
+Formatting removed an extra final blank line from the moved registry, and the whitespace check passed.
+The final ticket lane remains pending, with ticket 8 next after that commit.
+
 ```bench-review-record
 {
   "version": 1,
