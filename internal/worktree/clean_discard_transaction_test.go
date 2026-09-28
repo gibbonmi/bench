@@ -81,6 +81,33 @@ func TestDiscardTargetNeverFollowsASymrefPlantedAfterTheRead(t *testing.T) {
 	}
 }
 
+// TestDiscardTargetNeverFollowsASymrefPlantedBeforeTheDelete is RI103: a symref planted at the
+// branch path after the write, pointing at the discarded ref, passes an exact-tip check
+// through its referent. The delete must not follow it, so the discarded ref survives at the
+// row's tip.
+func TestDiscardTargetNeverFollowsASymrefPlantedBeforeTheDelete(t *testing.T) {
+	t.Parallel()
+	root, home := unclaimedBranchFixture(t)
+	ref, tip := uniqueBranch(t, root, "a")
+	discarded := intent.DiscardedRef(discardDay, ref)
+	j := discardJoins()
+	j.cleanupBoundary = atStep(StepDiscardedBranchDelete, func() error {
+		gitRun(t, root, "symbolic-ref", ref, discarded)
+		return nil
+	})
+	applied, code, rows := planAndApply(t, j, root, home, "--discard-branch", "--target", strings.TrimPrefix(ref, "refs/heads/"))
+	if refTip(root, discarded) != tip {
+		t.Fatalf("apply exit=%d stdout=%q, want %s kept at %s", code, applied, discarded, tip)
+	}
+	// Git checks the old value against the referent and deletes only the symref.
+	if code != 0 || rowAction(rows, ref) != string(ActionRemoved) || refTip(root, ref) != "" {
+		t.Fatalf("apply exit=%d stdout=%q, want a removed row with the branch path gone", code, applied)
+	}
+	if holders := gitOutput(t, root, "for-each-ref", "--format=%(refname)", "--points-at", tip); holders != discarded {
+		t.Fatalf("refs at %s = %q, want only %s", tip, holders, discarded)
+	}
+}
+
 // TestDiscardTargetRefusesAFaultedCandidate is RI98: a Bench assignment branch that is a
 // resolving symref prints an error row that names the symref and no fingerprint, and neither
 // apply form changes a ref.

@@ -250,7 +250,19 @@ func discardUnrecordedBranch(j joins, root string, row unrecordedCleanupRow) err
 	if err := writeDiscardedRef(j, root, row); err != nil {
 		return err
 	}
-	return git.DeleteBranchExact(root, row.ref, row.oid)
+	return deleteDiscardedBranch(root, row)
+}
+
+// deleteDiscardedBranch deletes the branch at the row's tip and never follows a symref. A
+// symref planted at the branch path after the write can point at the discarded ref, which
+// holds the same tip, so a dereferencing delete passes the tip check and removes the only
+// ref that names the commit. The other branch deletes remove refs whose commits stay
+// reachable, so this one alone keeps its own delete.
+func deleteDiscardedBranch(root string, row unrecordedCleanupRow) error {
+	if _, err := git.Output("-C", root, "update-ref", "--no-deref", "-d", row.ref, row.oid); err != nil {
+		return fmt.Errorf("delete branch %s at %s: %w", row.ref, row.oid, err)
+	}
+	return nil
 }
 
 // writeDiscardedRef writes the row's discarded ref at the row's tip. A direct ref already at
