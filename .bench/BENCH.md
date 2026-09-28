@@ -1,8 +1,7 @@
 # Bench Operating Guide
 
 Bench is this repo's local agent-development workflow. `AGENTS.md` points here.
-The lookup material — the file map, the pieces, the skills index, the harness
-invocations, the command notes, and the hook layers — lives in
+The lookup material — the file map, the pieces, the skills index, the harness invocations, the command notes, and the hook layers — lives in
 `.bench/BENCH-reference.md`. Read that file on demand; it is never imported.
 
 ## Roles
@@ -128,6 +127,8 @@ After a chunk's ticket commits, freeze its delta and run Standards, Spec, and Co
 A post-review repair goes to a fresh repair session for each affected ticket, and that session reruns the ticket's verification with current repair coverage. The plan records each repair session as a new assignment with the trigger `user-directed`. At final reconciliation, the orchestrator does not repair. A finding there goes to a fresh repair session for the ticket whose `Writes:` line holds the path. A finding on a path that no `Writes:` line holds is a material acceptance shortfall.
 
 **Expand an approved implementation plan in scope.** The orchestrator may split, combine, or reorder chunks and expand ticket `Writes:` expectations or gate coverage within the approved behavior. When chunk boundaries change, record old-to-new stable IDs. Before using a plan expansion, update the affected spec and tickets; preserve acceptance coverage, dependencies, review checkpoints, existing checks, pass criteria, and required behavior. Unrelated scope, a material acceptance change, or a weakened guarantee requires my decision; a repair's in-scope fence expansion takes a plan commit, not a stop. Record every plan or gate expansion with `bench learning`, including what changed, why, and verification; `/bench-drain` owns its later disposition.
+
+Before later-ticket dispatch, run `bench learning` and make one enabling plan commit. That commit updates the coverage map, ticket `Covers:`/`Writes:` and later-ticket contracts, chunk table, and any required review-record amendment.
 
 **Delegate a full run only on my request.** `--delegate` applies only to an approved `$bench-implement-spec --full <spec>` run with an approved ticket graph. Beyond the fresh ticket authors above, `--delegate` adds concurrent authors and the full tier range. `craft-line` owns the delegated tiers, the author limit, and the review route; `craft-delegate` owns the author transfer triggers.
 
