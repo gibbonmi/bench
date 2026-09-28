@@ -172,7 +172,7 @@ func TestSeveralSymbolsAnswerCandidatesPerSymbol(t *testing.T) {
 // parser enforces is the grammar the usage line advertises.
 func TestHelpAdvertisesSeveralSymbolsAndTheFilter(t *testing.T) {
 	out, code := run(t, "--help")
-	if code != 0 || !strings.HasPrefix(out, "usage: bench consumers <qualified-symbol>... [--production | --test] [--full] |") {
+	if code != 0 || !strings.HasPrefix(out, "usage: bench consumers <qualified-symbol>... [--production|--test] [--full] |") {
 		t.Fatalf("help = %q exit %d, want the several-symbol and filter usage", out, code)
 	}
 }
