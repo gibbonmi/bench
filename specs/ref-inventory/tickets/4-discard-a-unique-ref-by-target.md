@@ -72,5 +72,6 @@ The outcome row's recovery cell names the discarded ref.
 - [ ] An explicit target of a resolving Bench symref prints an error row naming `symref`, no fingerprint, and both apply forms refuse.
 - [ ] After an explicit set removes a recorded holder, its formerly subsumed unrecorded member refuses as stale and survives.
 - [ ] A direct ref planted at the planned path between the read and the write makes the apply refuse and keep both refs.
-- [ ] A symref planted at the planned path between the read and the write makes the apply refuse and keep the branch. No ref appears at the symref's target.
+- [ ] A resolving symref planted at the planned path between the read and the write makes the apply refuse and keep the branch.
+- [ ] A dangling symref planted there is replaced by the discarded ref at the row's tip, and no ref appears at its old target.
 - [ ] A unique shift row ends with `bench worktree clean --discard-branch --target bench/shift-<stamp>`, and that command plans one row.

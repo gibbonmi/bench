@@ -222,7 +222,8 @@ The explicit set fingerprint binds each unrecorded row's ref, tip, class, holder
 The apply of an unrecorded row runs inside the set's own transaction order.
 When the planned ref exists at the row's tip as a direct ref, the write is skipped.
 When it exists at another tip, or when the planned path is a symbolic ref, the apply refuses and writes nothing.
-Otherwise the write uses the zero old value and never follows a symbolic ref, so a symref that appears after the read fails the write.
+Otherwise the write uses the zero old value and never follows a symbolic ref.
+A resolving symref that appears after the read fails the write, and Git replaces a dangling one with the discarded ref at the row's tip.
 The delete uses the exact tip, so a branch moved after the write survives with an error row.
 
 A fault boundary step precedes the read of the planned path, one sits between that read and the write, and one follows the write.
@@ -395,7 +396,7 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
 | RI99 | 21, 59 | After an explicit set removes a recorded holder, its formerly subsumed unrecorded member reports a stale error and survives at its original tip | `planned` | Omitting the per-member requalification deletes the unrecorded branch after its holder disappears |
 | RI100 | 50 | Retire with a resolving Bench symref to `main` and a Bench blob-tip ref prints exactly one count line, `unique refs: 0, 2 faulted — bench worktree clean --discard-branch --unclaimed` | `planned` | Ignoring faulted rows or counting them as unique changes the exact line |
 | RI101 | 35, 38 | A direct ref planted at the planned path between the absent-ref read and the write makes the apply print an `error` row, keep both refs unchanged, and write nothing | `planned` | Removing the zero old value lets the write overwrite a handle that appeared after the read |
-| RI102 | 35, 38 | A symref planted at the planned path between the absent-ref read and the write makes the apply print an `error` row, keep the branch at its tip, and create no ref at the symref's target | `planned` | A write that follows the symref creates a ref outside the planned path and deletes the branch with a `removed` row |
+| RI102 | 35, 38 | A symref planted at the planned path between the absent-ref read and the write is never followed: a resolving symref fails the write with an `error` row and the branch at its tip, and a dangling symref is replaced by the discarded ref at the row's tip with no ref at its old target | `planned` | A write that follows the symref creates a ref outside the planned path and deletes the branch with a `removed` row |
 
 Not covered: story 53 — reviewed exclusion, and the review round confirms that no hold surface is added.
 Not covered: story 54 — reviewed exclusion, and RI48 to RI52 show the listing discards nothing.
@@ -568,6 +569,10 @@ The retire count line gains a faulted suffix, because a symref or blob-tip ref w
 
 The RI-C2b confirming round added row RI102 as a gate coverage expansion inside the approved behavior.
 A symref planted in the absent window was followed by the write, so the write never follows a symbolic ref.
+On 2026-09-27 the reviewer decided that a dangling symref in that window is replaced by the discarded ref.
+Git 2.43 reads a dangling symref as absent under every write form.
+A ref lock across the check would need a stdin-driven Git runner, which decision D1 keeps out of this spec.
+
 The same round fixed the step count in the test-seam notes and scoped the printed-route sentence to an unclaimed branch.
 A third boundary step sits between the read of the planned path and the write, so a competing direct ref has a reachable window.
 
@@ -714,6 +719,18 @@ A third boundary step sits between the read of the planned path and the write, s
           "trigger": "user-directed",
           "stopped": "ri-t4-repair-1 returned its final report and idle notification after its commit 9d9541ce; the worktree was clean and no further write came from it",
           "preserved": "9d9541cef2c3e05160982efa88e6ce99af7626fc on bench/assign/9cd9510fff4093f7f9f4456f6a029560/3a0fa26e2c3c38179f908f3636fb07ed, chunk tip a7fba6acea34ec41fab38fc094ce4610a3ca7283"
+        },
+        {
+          "session": "claude:bench-writer/ri-t4-repair-2b",
+          "assignment": "ri-t4-repair-2b",
+          "model": "opus",
+          "effort": "high",
+          "source": "a7fba6acea34ec41fab38fc094ce4610a3ca7283",
+          "native_ref": "claude:agent/ri-t4-repair-2b-20260927@a7fba6acea34ec41fab38fc094ce4610a3ca7283",
+          "predecessor": "claude:bench-writer/ri-t4-repair-2",
+          "trigger": "user-directed",
+          "stopped": "ri-t4-repair-2 stopped on a material acceptance shortfall for RI102 without a commit; the worktree was clean and the reviewer restated the row",
+          "preserved": "no commit; the chunk tip stays a7fba6acea34ec41fab38fc094ce4610a3ca7283"
         }
       ],
       "5-list-retire-candidates.md": [
