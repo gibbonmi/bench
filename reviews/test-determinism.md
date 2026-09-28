@@ -675,6 +675,36 @@ There is one distinct repair target, owned by ticket 4.
 The implementation command needs no change; its existing rule already requires mutation evidence.
 TD-C2 has consumed no repair cycle yet; the next cycle addresses TD-C2-S1 through bench-debug.
 
+## TD-C2 repair 1: commit-count evidence
+
+TD-C2-S1 is held as a missing-evidence finding, with an auto-fix disposition.
+The repair used bench-debug under the retained inline author and the user-approved uncapped repair policy.
+The review pickup committed before the repaired evidence was collected.
+The ticket 4 charge is sha256:b6ecc1a1c2574b43c03bc3d227256b017ccb77b02c34d122aa22f344a0679e3a.
+The author read both required pages, the current binding, the test, and its copy owner.
+
+The ranked hypotheses were a necessary count assertion, an earlier assertion failure, and an ineffective count assertion.
+The probe added a second empty snapshot commit through CommitAll.
+Session 86295 passed the baseline, then failed at internal/gittest/gittest_test.go:67 with copy commits equal to 2.
+This confirms that the independently authored expectation of one commit is necessary for the named mutation.
+The probe reported restored=yes, and Git status was clean afterward.
+
+Sessions 65977 and 92198 passed the complete gittest and testrepo packages after restoration.
+Root conformance in session 21544 found a seven-sentence paragraph in the local handoff file.
+The ranked causes were paragraph size, sentence splitting, and stale input.
+Splitting that paragraph made the direct prose check pass.
+Session 35898 then passed the same root-conformance command.
+All three final package checks had no skips.
+
+The native results are in .logs/test-determinism-c2-repair-1.json and the record below.
+No implementation byte changed, so the source digest and nine planned verification bindings remain current.
+No temporary instrumentation remains.
+
+The runtime architecture needed no repair; the missing demonstration was the defect.
+A targeted mutation must reach the expectation it justifies, rather than fail at an earlier assertion.
+This cycle changes an observation and the finding's proposed closure, so it counts as repair cycle 1.
+All three fresh confirming reviews remain required before the chunk checkpoint.
+
 ```bench-review-record
 {
   "version": 1,
@@ -1712,6 +1742,78 @@ TD-C2 has consumed no repair cycle yet; the next cycle addresses TD-C2-S1 throug
           },
           "requirement": "releasepreflight",
           "command": "bench test --package ./internal/releasepreflight",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C2-commit-count-probe-repair-1",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-86295",
+            "digest": "sha256:3e7ac05c2de3defe24b14c1614a6ed6d08dacc4f9c95f98295bb4994a6f9249b",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testrepo/working_tree.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gittest,^TestKitCopyPreservesTheVisibleWorkingTree$,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gittest,fail,24\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/gittest,TestKitCopyPreservesTheVisibleWorkingTree,\"gittest_test.go:67: copy commits = \\\"2\\\", want one\"\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "commit-count-probe",
+          "command": "bench probe internal/testrepo/working_tree.go --swap '{\"commit\", \"-qm\", message}' --with '{\"commit\", \"-qm\", message}, {\"commit\", \"--allow-empty\", \"-qm\", \"second snapshot\"}' --package ./internal/gittest --run '^TestKitCopyPreservesTheVisibleWorkingTree$' --full",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C2-gittest-repair-1",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-65977",
+            "digest": "sha256:f6eabafacccd4c1630fe1675754dfaeea7652d61a57f31cf95ad2d3a78cba8f8",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gittest,pass,25\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gittest",
+          "command": "bench test --package ./internal/gittest",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C2-testrepo-repair-1",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-92198",
+            "digest": "sha256:bbe1a75d317060658ded7c5b3a033ccf6da4c4cbef9bb1095378f45b3d5bc1bf",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testrepo,pass,8\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "testrepo",
+          "command": "bench test --package ./internal/testrepo",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C2-root-conformance-repair-1",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-35898",
+            "digest": "sha256:346f232341ff991288d7a9c4b441b414b20eaecae6015b21e2ff2e947882f25d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7840\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --package ./internal/conformance --run '^TestRootConformance$' --full",
           "exit_code": 0
         }
       ],
