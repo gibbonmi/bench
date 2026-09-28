@@ -164,6 +164,40 @@ func TestKitTestEnvSkipsALinkedRoot(t *testing.T) {
 	}
 }
 
+func TestKitPhaseRunsInTheKitTestRun(t *testing.T) {
+	t.Setenv("TMPDIR", t.TempDir())
+	probe, err := json.Marshal(gittest.KitRunProbe(t, os.Environ()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := fixturePhaseRoot(t, `{"phases":[{"name":"kit-run","argv":`+string(probe)+`}]}`)
+	before, err := os.ReadDir(os.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	code, stdout, stderr := runFixturePhases(context.Background(), t, root)
+	if code != 0 {
+		t.Fatalf("kit run probe exit = %d; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	after, err := os.ReadDir(os.TempDir())
+	if err != nil || len(after) != len(before) {
+		t.Fatalf("phase left run directories: before=%v after=%v error=%v", before, after, err)
+	}
+}
+
+func TestLinkedPhaseKeepsTheOperatorHome(t *testing.T) {
+	argv, err := json.Marshal([]string{"sh", "-c", `test "$HOME" = "$1"`, "probe", os.Getenv("HOME")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := fixturePhaseRoot(t, `{"phases":[{"name":"home","argv":`+string(argv)+`}]}`)
+	var stdout, stderr bytes.Buffer
+	code := phasesCommandAtKitWithSelection(context.Background(), root, t.TempDir(), fixtureSelection(root), &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("linked HOME exit = %d; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+}
+
 // BG24 at the seam the row names, the in-package phases command: the one production line
 // that hands the engine's buffer the run's stream file is driven end to end here, and the
 // file is then read off disk. A genuinely killed process is out of reach for a unit test,
