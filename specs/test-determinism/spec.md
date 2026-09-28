@@ -371,6 +371,12 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
 
+- `internal/conformance/entry_point_parity_test.go`
+- `internal/conformance/entry_point_parity_bite_test.go`
+- `internal/conformance/cross_compile_stress_test.go`
+- `internal/conformance/harness_test.go`
+- `internal/conformance/line_routing_exec_test.go`
+- `internal/gate/run_transaction.go`
 Reviewer disposition: pending.
 
 ## Ticket graph
@@ -435,6 +441,16 @@ The hermetic run left `.cache/bench` and `.config/go` in the private home, and `
 
 ### Fence disposition
 
+Ticket 3 includes every environment caller, including the stress-tagged matrix.
+Each caller owns its private home cleanup and handles allocation failure.
+The environment helper owns optional PATH composition.
+Existing environment helpers and tests move to the environment file.
+The parity omission test moves to its existing fixture file to preserve the file growth bound.
+
+Ticket 6 includes the phase runner and the transaction path owners.
+The guard composes the existing verdict report and reads canonical lock and owner paths.
+These expansions preserve all acceptance rows and the declared path set.
+
 Ticket 2 includes the shared runner probe for the detached Go telemetry regression.
 Its verification includes the gittest package.
 The existing empty-directory and cleanup guarantees remain in force.
@@ -459,7 +475,7 @@ The staged `ft290-test-projection` spec writes all of `internal/testreport/`, be
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"TD-C1a","tickets":["1-open-kit-test-run.md"],"verification":[{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"TD-C1b","tickets":["2-compose-kit-test-run.md"],"verification":[{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"releasepreflight","command":"bench test --package ./internal/releasepreflight"},{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"probe","command":"bench test --package ./internal/probe"},{"id":"gittest","command":"bench test --package ./internal/gittest"}]},{"id":"TD-C2","tickets":["3-isolate-conformance-probe-home.md","4-run-build-scripts-on-kit-copy.md","5-grade-named-check-on-private-root.md","6-guard-live-checkout.md"],"verification":[{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"gittest","command":"bench test --package ./internal/gittest"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"TD-C3","tickets":["7-switch-verdict-windows.md","8-name-every-production-wait.md"],"verification":[{"id":"bounds","command":"bench test --package ./internal/bounds"},{"id":"git","command":"bench test --package ./internal/git"},{"id":"sessioninspect","command":"bench test --package ./internal/sessioninspect"},{"id":"worktree-bound","command":"bench test --package ./internal/worktree --run TestListCommandRendersBoundExpiryAsTypedFailure"},{"id":"bounds-policy","command":"bench test --check bounds-policy"},{"id":"system","command":"bench test --check system"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/test-determinism/spec.md"},{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"bounds","command":"bench test --package ./internal/bounds"},{"id":"bounds-policy","command":"bench test --check bounds-policy"},{"id":"system","command":"bench test --check system"}]}
+{"version":1,"chunks":[{"id":"TD-C1a","tickets":["1-open-kit-test-run.md"],"verification":[{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"TD-C1b","tickets":["2-compose-kit-test-run.md"],"verification":[{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"releasepreflight","command":"bench test --package ./internal/releasepreflight"},{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"probe","command":"bench test --package ./internal/probe"},{"id":"gittest","command":"bench test --package ./internal/gittest"}]},{"id":"TD-C2","tickets":["3-isolate-conformance-probe-home.md","4-run-build-scripts-on-kit-copy.md","5-grade-named-check-on-private-root.md","6-guard-live-checkout.md"],"verification":[{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"gittest","command":"bench test --package ./internal/gittest"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"stress-callers","command":"go test -trimpath -count=1 -tags=stress ./internal/conformance -run '^TestResidualCheckKeepsCrossCompile$'"}]},{"id":"TD-C3","tickets":["7-switch-verdict-windows.md","8-name-every-production-wait.md"],"verification":[{"id":"bounds","command":"bench test --package ./internal/bounds"},{"id":"git","command":"bench test --package ./internal/git"},{"id":"sessioninspect","command":"bench test --package ./internal/sessioninspect"},{"id":"worktree-bound","command":"bench test --package ./internal/worktree --run TestListCommandRendersBoundExpiryAsTypedFailure"},{"id":"bounds-policy","command":"bench test --check bounds-policy"},{"id":"system","command":"bench test --check system"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/test-determinism/spec.md"},{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"bounds","command":"bench test --package ./internal/bounds"},{"id":"bounds-policy","command":"bench test --check bounds-policy"},{"id":"system","command":"bench test --check system"}]}
 ```
 
 ### Flagged additions

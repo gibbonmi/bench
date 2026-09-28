@@ -401,11 +401,20 @@ The gate reports eight capability skips and zero environment skips.
 TD7 and TD16 to TD19 are accepted.
 TD-C2 starts from the following record commit; TD-C3 remains pending.
 
+## TD-C2 enabling plan
+
+The accepted predecessor is 786a1d2c69ccbf6b2d3b6f19609329e450c9bede.
+Ticket 3 includes its environment callers and their cleanup obligations.
+Its verification adds the existing stress-tagged matrix test.
+Ticket 6 includes the runner report and canonical transaction path owners.
+All chunk IDs, acceptance rows, existing checks, and pass criteria remain unchanged.
+The learning inbox records the expansion before implementation.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/test-determinism/spec.md",
-  "plan_digest": "sha256:c468cfe39ed63f5b14c447aba2d8b3a5178741083d43648063b3ab0224bffdbf",
+  "plan_digest": "sha256:9e27293b2fc324bfd625c4731e103debbd8ea09bd26741f75f9827a266024f00",
   "implementation_session": "codex/test-determinism-inline-20260928",
   "chunks": [
     {
@@ -557,7 +566,7 @@ TD-C2 starts from the following record commit; TD-C3 remains pending.
           "native_ref": {
             "ref": "collaboration:/root/td_c1a_coverage/final",
             "digest": "sha256:dcf9d02235fa97e630df2a301a129cc08067fe15fa22df44e3fe0228d884bf42",
-            "excerpt": "Coverage: 0 blocking findings; worst: none. TD-C1a covers TD1–TD6 and TD8–TD15; later chunks remain pending.\nAdvice: TestKitPhaseRunsInTheKitTestRun uses ambient configuration (phases_test.go:169). Explicit hostile markers there would strengthen TD15 against selective omission of Git overrides; the shared probe currently checks marker absence (gittest.go:219) without establishing that gate fixture’s marker precondition.\nCommand contribution: none. No tests or probes ran; executable refutation was prohibited by the charge.\n{\"status\":\"claimed\",\"confidence\":8}"
+            "excerpt": "Coverage: 0 blocking findings; worst: none. TD-C1a covers TD1\u2013TD6 and TD8\u2013TD15; later chunks remain pending.\nAdvice: TestKitPhaseRunsInTheKitTestRun uses ambient configuration (phases_test.go:169). Explicit hostile markers there would strengthen TD15 against selective omission of Git overrides; the shared probe currently checks marker absence (gittest.go:219) without establishing that gate fixture\u2019s marker precondition.\nCommand contribution: none. No tests or probes ran; executable refutation was prohibited by the charge.\n{\"status\":\"claimed\",\"confidence\":8}"
           },
           "axis": "Coverage",
           "base": "72e751b7a020a76aa35286852b4ea981c95cb865",
@@ -577,7 +586,7 @@ TD-C2 starts from the following record commit; TD-C3 remains pending.
           "native_ref": {
             "ref": "collaboration:/root/td_c1a_standards_confirm/final",
             "digest": "sha256:72d4c28b451e395904fae9aa57cfe2393dfbc73b47afbfcd0850053eec32a3e2",
-            "excerpt": "Standards: **0 blocking findings; worst issue: none.** Repair targets: 0. Optional advice: none.\nI affirm the Standards pass for the complete current TD-C1a pair, `72e751b7a020a76aa35286852b4ea981c95cb865..7feee3e4a4714d96429719ef25d52c5dc3e9582b`. The repair preserves prior evidence for TD1–TD6 and TD8–TD15.\nNo tests or probes ran, and no files changed. This is source review; author execution remains separately recorded."
+            "excerpt": "Standards: **0 blocking findings; worst issue: none.** Repair targets: 0. Optional advice: none.\nI affirm the Standards pass for the complete current TD-C1a pair, `72e751b7a020a76aa35286852b4ea981c95cb865..7feee3e4a4714d96429719ef25d52c5dc3e9582b`. The repair preserves prior evidence for TD1\u2013TD6 and TD8\u2013TD15.\nNo tests or probes ran, and no files changed. This is source review; author execution remains separately recorded."
           },
           "axis": "Standards",
           "base": "72e751b7a020a76aa35286852b4ea981c95cb865",
@@ -599,7 +608,7 @@ TD-C2 starts from the following record commit; TD-C3 remains pending.
           "native_ref": {
             "ref": "collaboration:/root/td_c1a_spec_confirm/final",
             "digest": "sha256:47a1db8e100de3190c28573489492ad1802d28f352951f4b81c1700b0d439fc7",
-            "excerpt": "Spec: **0 blocking findings; worst issue: none.** Finding IDs/dispositions: none. Line: gpt-6-sol / high / 1 iteration.\nI reaffirm the Spec pass for the complete TD-C1a pair `72e751b7a020a76aa35286852b4ea981c95cb865` → `7feee3e4a4714d96429719ef25d52c5dc3e9582b`, covering TD1–TD6 and TD8–TD15. Later chunks remain pending.\nClaim: {\"status\":\"claimed\",\"confidence\":9}"
+            "excerpt": "Spec: **0 blocking findings; worst issue: none.** Finding IDs/dispositions: none. Line: gpt-6-sol / high / 1 iteration.\nI reaffirm the Spec pass for the complete TD-C1a pair `72e751b7a020a76aa35286852b4ea981c95cb865` \u2192 `7feee3e4a4714d96429719ef25d52c5dc3e9582b`, covering TD1\u2013TD6 and TD8\u2013TD15. Later chunks remain pending.\nClaim: {\"status\":\"claimed\",\"confidence\":9}"
           },
           "axis": "Spec",
           "base": "72e751b7a020a76aa35286852b4ea981c95cb865",
@@ -621,7 +630,7 @@ TD-C2 starts from the following record commit; TD-C3 remains pending.
           "native_ref": {
             "ref": "collaboration:/root/td_c1a_coverage_confirm/final",
             "digest": "sha256:e752cf7033ee24ab00f4a7c8f31277aab1ed34a84dbf890f35f6863515effd81",
-            "excerpt": "Coverage: **0 blocking findings; worst: none.** Findings, dispositions, and finding confidences: none.\nI reaffirm the complete pair `72e751b7a020a76aa35286852b4ea981c95cb865` → `7feee3e4a4714d96429719ef25d52c5dc3e9582b`. The repair preserves the initial TD-C1a evidence for TD1–TD6 and TD8–TD15; later chunks remain pending.\nNo blocking missing evidence identified. The coordinator still owes the whole-project checkpoint. Command contribution: none. No edits, tests, or probes ran.\n{\"status\":\"claimed\",\"confidence\":9}"
+            "excerpt": "Coverage: **0 blocking findings; worst: none.** Findings, dispositions, and finding confidences: none.\nI reaffirm the complete pair `72e751b7a020a76aa35286852b4ea981c95cb865` \u2192 `7feee3e4a4714d96429719ef25d52c5dc3e9582b`. The repair preserves the initial TD-C1a evidence for TD1\u2013TD6 and TD8\u2013TD15; later chunks remain pending.\nNo blocking missing evidence identified. The coordinator still owes the whole-project checkpoint. Command contribution: none. No edits, tests, or probes ran.\n{\"status\":\"claimed\",\"confidence\":9}"
           },
           "axis": "Coverage",
           "base": "72e751b7a020a76aa35286852b4ea981c95cb865",
@@ -1003,7 +1012,7 @@ TD-C2 starts from the following record commit; TD-C3 remains pending.
           "native_ref": {
             "ref": "collaboration:/root/td_c1b_standards/final",
             "digest": "sha256:6f505bb6d3c2167669abfeccb2e461a29d41ef64ed66a96b9d26df11611e84b1",
-            "excerpt": "Standards: **1 blocking finding; worst issue: the new policy scanner reads special files without rejecting them.** Line: gpt-6-sol / high / one iteration.\n- **TD-C1b-S1 — held; auto-fix; confidence 8.** `internal/env/git_policy_test.go:18–26` enumerates tracked and untracked Go paths, then calls `os.ReadFile` without checking file type. `projects/benchkit.md:224–226` requires special files to be rejected before reading and says static inspection must not block on them. An enumerated FIFO reaches an unsafe read. The full scanner contains only filename exclusions and an absent-path exception; neither supplies file-type protection. Reject special entries before reading. Executable refutation was unavailable because this charge forbids tests and probes; this finding concerns the mandatory source-level precondition, not an observed hang."
+            "excerpt": "Standards: **1 blocking finding; worst issue: the new policy scanner reads special files without rejecting them.** Line: gpt-6-sol / high / one iteration.\n- **TD-C1b-S1 \u2014 held; auto-fix; confidence 8.** `internal/env/git_policy_test.go:18\u201326` enumerates tracked and untracked Go paths, then calls `os.ReadFile` without checking file type. `projects/benchkit.md:224\u2013226` requires special files to be rejected before reading and says static inspection must not block on them. An enumerated FIFO reaches an unsafe read. The full scanner contains only filename exclusions and an absent-path exception; neither supplies file-type protection. Reject special entries before reading. Executable refutation was unavailable because this charge forbids tests and probes; this finding concerns the mandatory source-level precondition, not an observed hang."
           },
           "axis": "Standards",
           "base": "21ad810f4262c1478799618a93356b14969d8b83",
@@ -1025,7 +1034,7 @@ TD-C2 starts from the following record commit; TD-C3 remains pending.
           "native_ref": {
             "ref": "collaboration:/root/td_c1b_spec/final",
             "digest": "sha256:48b9d15d1afb18121602955310e855747e6ed2c536d917937863219f39c9a5be",
-            "excerpt": "Spec: **0 blocking findings; worst issue: none.** Finding IDs and dispositions: none. Line: gpt-6-sol / high / one iteration.\nAudited TD7 and TD16–TD19 against the whole approved spec:\nThe TD14 amendment preserves the linked-root HOME guarantee at `TestLinkedPhaseKeepsTheOperatorHome` (`internal/gate/phases_test.go:181`). The plan expansion adds fences, fixture support, seam references, and gate verification without changing acceptance assignments. Cache-lock, refusal, cancellation, typed outcomes, and fixture assertions survive the changes. TD-C1a remains accepted; later chunks remain pending.\nClaim: {\"status\":\"claimed\",\"confidence\":9}"
+            "excerpt": "Spec: **0 blocking findings; worst issue: none.** Finding IDs and dispositions: none. Line: gpt-6-sol / high / one iteration.\nAudited TD7 and TD16\u2013TD19 against the whole approved spec:\nThe TD14 amendment preserves the linked-root HOME guarantee at `TestLinkedPhaseKeepsTheOperatorHome` (`internal/gate/phases_test.go:181`). The plan expansion adds fences, fixture support, seam references, and gate verification without changing acceptance assignments. Cache-lock, refusal, cancellation, typed outcomes, and fixture assertions survive the changes. TD-C1a remains accepted; later chunks remain pending.\nClaim: {\"status\":\"claimed\",\"confidence\":9}"
           },
           "axis": "Spec",
           "base": "21ad810f4262c1478799618a93356b14969d8b83",
@@ -1109,7 +1118,7 @@ TD-C2 starts from the following record commit; TD-C3 remains pending.
           "native_ref": {
             "ref": "codex:/root/td_c1b_coverage_confirm",
             "digest": "sha256:be4d3e1d8d3d1c2954a96784917623c11fbe754014aa1a70017a0d0e47d76891",
-            "excerpt": "Coverage: **pass; 0 blocking findings; worst issue: none.** Finding IDs and dispositions: none. Repair targets: 0.\n\nI reaffirm Coverage for the complete TD-C1b pair `21ad810f4262c1478799618a93356b14969d8b83..f6a54aec7cde5db3ed82dbb8be0c5ce9b904515f`, covering TD7 and TD16–TD19."
+            "excerpt": "Coverage: **pass; 0 blocking findings; worst issue: none.** Finding IDs and dispositions: none. Repair targets: 0.\n\nI reaffirm Coverage for the complete TD-C1b pair `21ad810f4262c1478799618a93356b14969d8b83..f6a54aec7cde5db3ed82dbb8be0c5ce9b904515f`, covering TD7 and TD16\u2013TD19."
           },
           "axis": "Coverage",
           "base": "21ad810f4262c1478799618a93356b14969d8b83",
@@ -1175,7 +1184,7 @@ TD-C2 starts from the following record commit; TD-C3 remains pending.
           "native_ref": {
             "ref": "codex:/root/td_c1b_coverage_confirm2",
             "digest": "sha256:e9b2117fc9435c0a473ef828fc6218b651d2e06dcdc6010a6601a4201f90aeb6",
-            "excerpt": "Coverage: **pass; 0 blocking findings; worst issue: none.** Finding IDs and dispositions: none. Distinct repair targets: 0.\n\nI reaffirm Coverage for TD7 and TD16–TD19 across the complete current chunk pair. The repair changes the fixture’s forwarding branch and its documentation; existing canned answers and assertions survive."
+            "excerpt": "Coverage: **pass; 0 blocking findings; worst issue: none.** Finding IDs and dispositions: none. Distinct repair targets: 0.\n\nI reaffirm Coverage for TD7 and TD16\u2013TD19 across the complete current chunk pair. The repair changes the fixture\u2019s forwarding branch and its documentation; existing canned answers and assertions survive."
           },
           "axis": "Coverage",
           "base": "21ad810f4262c1478799618a93356b14969d8b83",
@@ -1197,7 +1206,7 @@ TD-C2 starts from the following record commit; TD-C3 remains pending.
           "native_ref": {
             "ref": "collaboration:/root/td_c1b_standards_confirm3/final",
             "digest": "sha256:4b9ff6a6cf5237dd9ba5a08e74dd4d8ecaed7ba6fdf8dc33a4cf12858a1bed81",
-            "excerpt": "Standards: **pass; 0 blocking findings; worst issue: none.** Distinct repair targets: 0. Line: gpt-6-sol / high / one iteration.\n\nI reaffirm TD7 and TD16–TD19 for the complete TD-C1b pair `21ad810f4262c1478799618a93356b14969d8b83..e13063de55b12786b24fed7a8daeb45bef212817`. No repair-delta defect or cross-chunk concern invalidates the earlier Standards judgment."
+            "excerpt": "Standards: **pass; 0 blocking findings; worst issue: none.** Distinct repair targets: 0. Line: gpt-6-sol / high / one iteration.\n\nI reaffirm TD7 and TD16\u2013TD19 for the complete TD-C1b pair `21ad810f4262c1478799618a93356b14969d8b83..e13063de55b12786b24fed7a8daeb45bef212817`. No repair-delta defect or cross-chunk concern invalidates the earlier Standards judgment."
           },
           "axis": "Standards",
           "base": "21ad810f4262c1478799618a93356b14969d8b83",
@@ -1241,7 +1250,7 @@ TD-C2 starts from the following record commit; TD-C3 remains pending.
           "native_ref": {
             "ref": "collaboration:/root/td_c1b_coverage_confirm3/final",
             "digest": "sha256:5c35edf7863855b78a0051f5a797a3479e7ee38dab1b9ea199adec8b21b2e7f0",
-            "excerpt": "Coverage: **pass; 0 blocking findings; worst issue: none.** Finding IDs, dispositions, and finding confidences: none. Distinct repair targets: 0. Line: gpt-6-sol / high / one iteration.\n\nI reaffirm TD7 and TD16–TD19 for the complete pair `21ad810f4262c1478799618a93356b14969d8b83..e13063de55b12786b24fed7a8daeb45bef212817`."
+            "excerpt": "Coverage: **pass; 0 blocking findings; worst issue: none.** Finding IDs, dispositions, and finding confidences: none. Distinct repair targets: 0. Line: gpt-6-sol / high / one iteration.\n\nI reaffirm TD7 and TD16\u2013TD19 for the complete pair `21ad810f4262c1478799618a93356b14969d8b83..e13063de55b12786b24fed7a8daeb45bef212817`."
           },
           "axis": "Coverage",
           "base": "21ad810f4262c1478799618a93356b14969d8b83",
@@ -1319,6 +1328,24 @@ TD-C2 starts from the following record commit; TD-C3 remains pending.
     {
       "from": "sha256:a1c65436efe7e608851a1c837dc69d2dec30b6824629417613dbcaf5ccc3325b",
       "to": "sha256:c468cfe39ed63f5b14c447aba2d8b3a5178741083d43648063b3ab0224bffdbf",
+      "chunk_ids": {
+        "TD-C1a": [
+          "TD-C1a"
+        ],
+        "TD-C1b": [
+          "TD-C1b"
+        ],
+        "TD-C2": [
+          "TD-C2"
+        ],
+        "TD-C3": [
+          "TD-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:c468cfe39ed63f5b14c447aba2d8b3a5178741083d43648063b3ab0224bffdbf",
+      "to": "sha256:9e27293b2fc324bfd625c4731e103debbd8ea09bd26741f75f9827a266024f00",
       "chunk_ids": {
         "TD-C1a": [
           "TD-C1a"
