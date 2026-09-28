@@ -2104,9 +2104,9 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
     {
       "id": "TD-C3",
       "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
-      "tip": "3556703d715b97ab9f3941f79d07bda9c7f0ea34",
+      "tip": "beea10227002209431ab1219647640f905aac39f",
       "plan_digest": "sha256:99e115a7ba3f3afe54aa29c40f20dd56ecd71925c9b19147fa00a1927dd24288",
-      "source_digest": "2990e5f77a214412796e9dcf9a2b8c8fe34681c4",
+      "source_digest": "bf53bcb429e0beac5def72e767eba6b811fc79b7",
       "acceptance_rows": [
         "TD33",
         "TD34",
@@ -2282,6 +2282,168 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
             "ref": "codex:exec-session-12709",
             "digest": "sha256:e7eb439f3d7c7590daf9bd0a2be0ee9c7f152951f5ea9a4ff7cefd2175f0de38",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,50054\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C3-bounds-2",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "bf53bcb429e0beac5def72e767eba6b811fc79b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-32007",
+            "digest": "sha256:61ea8230de27fbeab7f4da4ec08a5b5c01e536298b20bf1e0f3091d269836821",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/bounds,pass,649\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bounds",
+          "command": "bench test --package ./internal/bounds",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C3-git-2",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "bf53bcb429e0beac5def72e767eba6b811fc79b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-50930",
+            "digest": "sha256:dc23d6a322849357ee5c3075ff49f2341051a1ab01dd9086e8f0f32124e6ad3e",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/git,pass,2427\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "git",
+          "command": "bench test --package ./internal/git",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C3-sessioninspect-2",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "bf53bcb429e0beac5def72e767eba6b811fc79b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-58596",
+            "digest": "sha256:4baab3d7f37bd4440fbbdaa866598fe3c58c5bc9bf68eb15483c9c8e6c677b7a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/sessioninspect,pass,144\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "sessioninspect",
+          "command": "bench test --package ./internal/sessioninspect",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C3-worktree-bound-2",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "bf53bcb429e0beac5def72e767eba6b811fc79b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-6267",
+            "digest": "sha256:3771f5be721001aab22b477cd97fee55240af0835fa1b7a946eb66decfb53641",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,113\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "worktree-bound",
+          "command": "bench test --package ./internal/worktree --run TestListCommandRendersBoundExpiryAsTypedFailure",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C3-bounds-policy-2",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "bf53bcb429e0beac5def72e767eba6b811fc79b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-70609",
+            "digest": "sha256:c6a0f471927b51de5b55eb2336500dd50e97d67b32dd320082ecb68252f26f32",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,191\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bounds-policy",
+          "command": "bench test --check bounds-policy",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C3-intent-2",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "bf53bcb429e0beac5def72e767eba6b811fc79b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-11480",
+            "digest": "sha256:a0e9f4db2bbac822743a07d82b442050f5a68252bf24e62d472b48d10db9b59d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/intent,pass,3519\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "intent",
+          "command": "bench test --package ./internal/intent",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C3-chargeevidence-2",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "bf53bcb429e0beac5def72e767eba6b811fc79b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-1408",
+            "digest": "sha256:0f6096b70a98e62bd32996f47a796f8b644f1912b4bac2e2dc3c5a3b5459ecf9",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/chargeevidence,pass,179\nfailures[0]{package,test,line}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/chargeevidence,TestEvidenceStoreKinds/CE94_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "chargeevidence",
+          "command": "bench test --package ./internal/chargeevidence",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C3-contract-2",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "bf53bcb429e0beac5def72e767eba6b811fc79b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-28571",
+            "digest": "sha256:a8c3901c55c267088918e5741be4851a409b15d015bdf3a133caa37f76680b41",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/contract,pass,2\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "contract",
+          "command": "bench test --package ./internal/contract",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C3-system-2",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "bf53bcb429e0beac5def72e767eba6b811fc79b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-96397",
+            "digest": "sha256:f2a9fcd209184ac00669bff219b31a68f130a44750fe06b77dc7d37cd27b1119",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,50570\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
           },
           "requirement": "system",
           "command": "bench test --check system",
@@ -2835,3 +2997,18 @@ All changed Go files are formatted, and the whitespace check passes.
 The cache clean removed 10,769,292,560 bytes after the cache exceeded its documented bound.
 Post-review repair cycles consumed: 1.
 Current C3 verification and three fresh confirming reviews remain required before the checkpoint.
+
+
+## TD-C3 repair verification
+
+Repair cycle 1 committed at beea10227002209431ab1219647640f905aac39f on a green lane and build preflight.
+The source digest is bf53bcb429e0beac5def72e767eba6b811fc79b7.
+All nine required C3 checks pass against this committed source.
+The complete system suite passed in session 96397 after 50.570 seconds, with no skips.
+The charge-evidence package has one privilege capability skip, and the other required checks have none.
+
+The source was clean before verification and stayed unchanged throughout the runs.
+The raw FIFO reproduction fixture was inspected and removed after the diagnostic.
+No temporary instrumentation remains.
+TD-C3-S1 and TD-C3-C1 have proposed repairs and current author evidence; independent confirmation remains pending.
+TD32 and TD44 retain the final landing gate obligation.
