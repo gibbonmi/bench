@@ -63,7 +63,8 @@ func checkRetainedWorkflow(root string) []string {
 		"retained workflow: craft-spec dropped the canonical plan-expansion owner",
 		"retained workflow: operating guide dropped changed-chunk identity mapping",
 		"retained workflow: operating guide dropped plan-update timing or preserved guarantees",
-		"retained workflow: operating guide dropped expansion learning and drain ownership",
+		"retained workflow: operating guide dropped the expansion learning deadline or drain ownership",
+		"retained workflow: operating guide restored expansion learning without a dispatch deadline",
 		"retained workflow: implementation phase dropped plan-expansion timing",
 		"retained workflow: craft-gate dropped approved expansion timing",
 		"retained workflow: craft-tickets restored Writes as an approval boundary",
@@ -155,7 +156,11 @@ func checkRetainedWorkflow(root string) []string {
 			file:   ".bench/BENCH.md",
 			needle: "Before using a plan expansion, update the affected spec and tickets; preserve acceptance coverage, dependencies, review checkpoints, existing checks, pass criteria, and required behavior.",
 		},
-		"retained workflow: operating guide dropped expansion learning and drain ownership": {
+		"retained workflow: operating guide dropped the expansion learning deadline or drain ownership": {
+			file:   ".bench/BENCH.md",
+			needle: "Before dispatch, record every plan or gate expansion with `bench learning`, including what changed, why, and verification; `/bench-drain` owns its later disposition.",
+		},
+		"retained workflow: operating guide restored expansion learning without a dispatch deadline": {
 			file:   ".bench/BENCH.md",
 			needle: "Record every plan or gate expansion with `bench learning`, including what changed, why, and verification; `/bench-drain` owns its later disposition.",
 		},
