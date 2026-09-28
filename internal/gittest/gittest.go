@@ -228,6 +228,8 @@ else
 fi
 [ "$(printf '%s\n' "$GOMODCACHE" "$GOPATH" "$GOENV")" = "$3" ] || fail 'Go setting pins changed'
 [ "$(go env GOMODCACHE GOPATH GOENV)" = "$3" ] || fail 'Go settings changed'
+[ "$(go env GOTELEMETRY)" = off ] || fail 'Go telemetry is enabled'
+[ "$(dirname "$(go env GOTELEMETRYDIR)")" = "$(dirname "$HOME")" ] || fail 'Go telemetry configuration is outside the run'
 exec "$4"
 `
 	if err := os.WriteFile(path, []byte(body), 0o755); err != nil {

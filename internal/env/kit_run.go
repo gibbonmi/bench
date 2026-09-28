@@ -45,14 +45,20 @@ func OpenKitTestRun(base []string) (*KitTestRun, error) {
 		return nil, fmt.Errorf("kit test run: TMPDIR: %w", err)
 	}
 	run := &KitTestRun{dir: dir}
-	for _, name := range []string{"h", "t"} {
+	for _, name := range []string{"h", "t", "c"} {
 		if err := os.Mkdir(filepath.Join(dir, name), 0o700); err != nil {
 			return nil, errors.Join(fmt.Errorf("kit test run: TMPDIR: %w", err), run.Close())
 		}
 	}
+	// Go telemetry can outlive its command and race removal of the private run.
+	telemetryDir := filepath.Join(dir, "c")
+	if err := os.WriteFile(filepath.Join(telemetryDir, "mode"), []byte("off"), 0o600); err != nil {
+		return nil, errors.Join(fmt.Errorf("kit test run: configure Go telemetry: %w", err), run.Close())
+	}
 	run.entries = []string{
 		"HOME=" + filepath.Join(dir, "h"),
 		"TMPDIR=" + filepath.Join(dir, "t"),
+		"TEST_TELEMETRY_DIR=" + telemetryDir,
 		"GIT_CONFIG_GLOBAL=" + os.DevNull,
 		"GIT_CONFIG_NOSYSTEM=1",
 		"GIT_CONFIG_COUNT=1",
