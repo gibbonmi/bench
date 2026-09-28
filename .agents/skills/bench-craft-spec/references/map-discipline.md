@@ -11,6 +11,10 @@ governs each current-code claim in the spec prose.
   count into the spec, because the Standards axis grades a restated count.
 - A spec that retires a symbol enumerates every production consumer and every
   pinning test before it slices tickets.
+- Before the map locks, run `go list` to validate each new cross-package import edge.
+- Before the map locks, read the first operand guard for each changed command path.
+- Before the map locks, enumerate every test caller of each changed export.
+- Before the map locks, exercise each reachability claim against an adversarial fixture.
 - A spec that deletes or moves literal bytes runs one repo-wide search for
   those bytes. The search covers the canary fixtures, `tests/`, and
   `internal/conformance`. A changed rendered message is a moved literal, and
