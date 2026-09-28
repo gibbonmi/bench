@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 // Repo initializes an empty repository in a fresh temporary directory. It returns that
@@ -21,6 +22,16 @@ import (
 func Repo(t testing.TB) string {
 	t.Helper()
 	return initialize(t)
+}
+
+// KitCopy returns a private committed copy of the kit's visible working tree.
+func KitCopy(t testing.TB, root string) string {
+	t.Helper()
+	copyRoot := t.TempDir()
+	if err := testrepo.CommitWorkingTree(root, copyRoot); err != nil {
+		t.Fatalf("copy kit: %v", err)
+	}
+	return copyRoot
 }
 
 // StubGit installs a pure file-backed git stub on the process PATH for

@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -23,8 +24,8 @@ func TestGoBuildSubjectModePublishesTheStampedVersion(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	root = gittest.KitCopy(t, root)
 	out := filepath.Join(t.TempDir(), "bench")
-	preserveWrapperManifest(t, root)
 
 	cmd := exec.Command("bash", filepath.Join(root, "scripts", "go-build.sh"), root, out)
 	cmd.Dir = root
@@ -79,7 +80,7 @@ func TestReleasePreflightBuildDoesNotRebindThePromotionBroker(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	preserveWrapperManifest(t, root)
+	root = gittest.KitCopy(t, root)
 	before, beforeErr := os.ReadFile(subjectManifestPath(root))
 	if beforeErr != nil && !os.IsNotExist(beforeErr) {
 		t.Fatal(beforeErr)
@@ -118,29 +119,6 @@ func TestReleasePreflightBuildDoesNotRebindThePromotionBroker(t *testing.T) {
 // wrapper's own directory, which is the one place the land route and the doctor row read.
 func subjectManifestPath(root string) string {
 	return filepath.Join(root, "bin", brokermanifest.Name)
-}
-
-// preserveWrapperManifest restores whatever the checkout's wrapper directory held before a
-// build test republished over it. The row has to run against the real module root, because
-// only that root carries the build inputs, so it writes where a developer's own dev-install
-// manifest lives.
-func preserveWrapperManifest(t *testing.T, root string) {
-	t.Helper()
-	path := subjectManifestPath(root)
-	before, err := os.ReadFile(path)
-	if err != nil && !os.IsNotExist(err) {
-		t.Fatal(err)
-	}
-	existed := err == nil
-	t.Cleanup(func() {
-		if !existed {
-			_ = os.Remove(path)
-			return
-		}
-		if err := os.WriteFile(path, before, 0o644); err != nil {
-			t.Error(err)
-		}
-	})
 }
 
 // stampedPackageVersion reads the version through the same two operands the builder walks:

@@ -460,6 +460,42 @@ Its file joins the mutation fence, and the chunk verifies its package.
 No persistent owner change or acceptance change is planned.
 The learning inbox records the expansion before the ticket charge.
 
+## Ticket 4 copy implementation and open debug repair
+
+The copy helper composes testrepo.CommitWorkingTree.
+The initial tracked-file test fails with the empty helper in session 69967, then passes with the composition.
+The complete fixture checks tracked files, visible untracked files, executable modes, binary bytes, symlinks, and a private committed repository.
+The gittest package passes in session 81887, and testrepo passes in session 25154.
+Root conformance passes in session 84241.
+
+The ignore-filter omission in session 1768 reports a passing baseline and one behavioral failure.
+The failure names the excluded dist/generated path, and the probe restores the owner.
+This red justifies the independent excluded-path expectation.
+
+Both real build-script tests pass in session 12831.
+The before and after probe compares six live artifact paths and reports no change.
+It also compares the broker manifest bytes and modification time; both remain unchanged.
+The complete probe is .logs/test-determinism-t4-live-probe.json.
+
+The full cmd/bench package remains red, so ticket 4 remains open.
+Its wrapper tests inherit BASH_ENV, which names the operator's Envman startup file.
+That file touches missing paths below the private HOME before the wrapper starts.
+
+The focused wrapper loop reproduces the diagnostic in session 76291.
+Removing only BASH_ENV makes that exact test pass in session 32071.
+The ranked hypotheses were inherited startup, explicit wrapper sourcing, and early home removal.
+The one-variable control confirms the inherited-startup cause.
+
+The shared environment owner is the narrowest repair point for all three kit runners.
+The current ticket fence does not yet include that repair.
+The copy implementation is preserved in a lane commit before the enabling plan and new charge.
+No successor ticket, review, or checkpoint may treat ticket 4 as complete before the repair checks pass.
+
+The repository hook refused git restore, so no source was discarded.
+The original edits remain intact, and verified copies remain in the local debug directory.
+The code commit uses the ordinary lane and records the known test failure here.
+Native test and probe results are in .logs/test-determinism-t4.json.
+
 ```bench-review-record
 {
   "version": 1,
