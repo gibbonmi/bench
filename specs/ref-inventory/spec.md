@@ -478,6 +478,8 @@ Not covered: story 56 — the build runs on fixtures only, and the reviewer runs
 - `cmd/bench/main.go`
 - `cmd/bench/spec_retire_listing.go`
 - `cmd/bench/spec_retire_listing_test.go`
+- `.agents/skills/bench-craft-spec/references/map-discipline.md`
+- `projects/benchkit.md`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
@@ -579,6 +581,13 @@ A ref lock across the check would need a stdin-driven Git runner, which decision
 
 The same round fixed the step count in the test-seam notes and scoped the printed-route sentence to an unclaimed branch.
 A third boundary step sits between the read of the planned path and the write, so a competing direct ref has a reachable window.
+
+The round 3 Coverage axis found a symref planted at the branch path before the delete.
+The reviewer granted a third repair cycle on 2026-09-27.
+Row RI103 pins the local no-deref delete, and `DeleteBranchExact` stays unchanged under D1.
+
+The landing composes `main` into the source, and the composed delta is the light-path guidance commit that landed during the build.
+The two guidance paths join the fence for that composition round only, so the review charge can name them.
 
 ### Completion plan
 
