@@ -360,6 +360,7 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - `internal/bounds/bounds_test.go`
 - `internal/git/git.go`
 - `internal/gitguard/checker_junction_test.go`
+- `tests/canary/injected-ports/unregistered-port/`
 - `internal/git/worktree_admin_enum_test.go`
 - `internal/intent/`
 - `internal/handoffdoc/`

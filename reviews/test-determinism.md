@@ -864,7 +864,7 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
 {
   "version": 1,
   "spec": "specs/test-determinism/spec.md",
-  "plan_digest": "sha256:035ed2fb6e30d046e3fe456f0506ea4850b9be2dd96f1e296f168fc97b7f59ba",
+  "plan_digest": "sha256:8ace41d9ac8c3d1c4c35e08da325bc076af4ab381961291bbd8f42e61f3b3997",
   "implementation_session": "codex/test-determinism-inline-20260928",
   "chunks": [
     {
@@ -2107,7 +2107,7 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
       "id": "TD-C3",
       "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
       "tip": "5832b0095ab45369ef4c252b6f95e06b4f4a6ae6",
-      "plan_digest": "sha256:035ed2fb6e30d046e3fe456f0506ea4850b9be2dd96f1e296f168fc97b7f59ba",
+      "plan_digest": "sha256:8ace41d9ac8c3d1c4c35e08da325bc076af4ab381961291bbd8f42e61f3b3997",
       "source_digest": "86a412d916bee27eae39ac3a5969c7abde3fb1eb",
       "acceptance_rows": [
         "TD33",
@@ -3340,6 +3340,24 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
           "TD-C3"
         ]
       }
+    },
+    {
+      "from": "sha256:035ed2fb6e30d046e3fe456f0506ea4850b9be2dd96f1e296f168fc97b7f59ba",
+      "to": "sha256:8ace41d9ac8c3d1c4c35e08da325bc076af4ab381961291bbd8f42e61f3b3997",
+      "chunk_ids": {
+        "TD-C1a": [
+          "TD-C1a"
+        ],
+        "TD-C1b": [
+          "TD-C1b"
+        ],
+        "TD-C2": [
+          "TD-C2"
+        ],
+        "TD-C3": [
+          "TD-C3"
+        ]
+      }
     }
   ]
 }
@@ -3849,3 +3867,7 @@ The enabling plan commit 6cc50fd3 passed its lane but failed the fixture-closure
 The fence now includes the existing unregistered-port canary that pins checker_junction_test.go.
 Its mutation changes the production Checker declaration, which this repair does not edit.
 No repair code changed before the fence correction.
+
+The next enabling commit 6250ff9a exposed a mismatch between the ticket fence and the spec fence list.
+The spec fence list now includes the same existing canary path.
+These preflight failures concern plan wiring, and no repair code changed during either refusal.
