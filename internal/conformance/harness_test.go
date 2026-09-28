@@ -214,7 +214,7 @@ func TestHarnessDefaultsToCurrentGitRoot(t *testing.T) {
 		{name: "outside_git", dir: outsideGit, want: "resolve graded root: git rev-parse --show-toplevel:"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			env := capability.WithoutEnvironment(conformanceSubprocessEnv(), registry.ConformanceScopeEnv)
+			env := capability.WithoutEnvironment(conformanceEnvForTest(t), registry.ConformanceScopeEnv)
 			env = append(env, registry.ConformanceScopeEnv+"=gate-entry-contract")
 			env = append(env, tc.env...)
 			probe := runAtEnv(tc.dir, env, executable, "-test.run=^"+registry.RootConformanceTest+"$", "-test.v")

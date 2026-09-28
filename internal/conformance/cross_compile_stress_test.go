@@ -30,7 +30,12 @@ func crossCompileMatrix(root, buildHelper string) []string {
 	}
 	defer os.RemoveAll(tmp)
 	for _, target := range matrix {
-		env := append(conformanceSubprocessEnv(), "GOOS="+target.Goos, "GOARCH="+target.Goarch)
+		env, cleanupEnv, err := conformanceSubprocessEnv("")
+		if err != nil {
+			return append(diags, "cross-compile setup failed: "+err.Error())
+		}
+		defer cleanupEnv()
+		env = append(env, "GOOS="+target.Goos, "GOARCH="+target.Goarch)
 		probe := runAtEnv(root, env, "bash", buildHelper, root, filepath.Join(tmp, "bench-"+target.Goos+"-"+target.Goarch))
 		if probe == nil || probe.ExitCode != 0 {
 			diags = append(diags, fmt.Sprintf("cross-compile failed: %s/%s", target.Goos, target.Goarch))

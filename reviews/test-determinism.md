@@ -410,6 +410,48 @@ Ticket 6 includes the runner report and canonical transaction path owners.
 All chunk IDs, acceptance rows, existing checks, and pass criteria remain unchanged.
 The learning inbox records the expansion before implementation.
 
+## TD-C2 ticket 3 author result
+
+TD20 failed before implementation in session 86524 because two probes shared one Bench home.
+The environment owner now allocates one home for each call.
+Every caller handles allocation failure and owns cleanup after its children exit.
+The npm cache policy stays unchanged, and the PATH prefix has one composition owner.
+The existing environment and parity tests move without losing assertions.
+
+TD21 was already covered by the owner behavior.
+Its fixed-cache comparison adds a stronger observation at the same seam.
+Additional controls cover an inherited operator home, cleanup isolation, and refusal before child launch.
+The existing npm test reads through the same environment-value helper.
+
+| probe session | mutation | observed failure | restoration |
+| --- | --- | --- | --- |
+| 77091 | Replace the allocated home entry with the former fixed path. | Two probes share the Bench home. | yes |
+| 94273 | Change the default npm cache basename. | The cache differs from the declared shared path. | yes |
+| 25190 | Remove the cleanup effect. | The private home survives cleanup. | yes |
+
+Each probe reports a passing baseline and one behavioral failure.
+These omissions require the independently authored expectations, and each demonstrated red justifies their independence.
+Native output remains in .logs/test-determinism-t3.json.
+The record includes the exact source charge and each verification result.
+
+The full conformance package passes in session 69964 with three capability skips and no environment skips.
+Root conformance passes in session 30195 without a skip.
+The stress-tagged matrix test passes in session 91307.
+The code passes the whitespace check.
+
+### Ticket 3 debug: local supplement paragraph
+
+The first full package run failed on a nine-sentence paragraph in the local author supplement.
+The direct prose command reproduced the same diagnostic before the fix.
+The ranked hypotheses were paragraph size, sentence size, and another paragraph violation.
+Splitting only the metadata paragraph makes the direct command pass.
+The full package and root conformance then pass.
+
+The existing prose check is the regression seam; no new test is needed for this document edit.
+The project has no expected-failure form, so the red ran manually before the fix.
+No diagnostic tool or temporary harness remains.
+The local supplement must pass prose before the package run.
+
 ```bench-review-record
 {
   "version": 1,
