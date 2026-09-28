@@ -147,6 +147,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"bounds-raw-elapsed-wait":                conformanceGoFixture("internal/conformance/bounds_policy_test.go"),
 	"bounds-raw-injected-wait":               conformanceGoFixture("internal/conformance/bounds_policy_test.go"),
 	"bounds-dot-import-package-alias":        conformanceGoFixture("internal/conformance/bounds_policy_test.go"),
+	"bounds-parenthesized-wait":              conformanceGoFixture("internal/conformance/bounds_policy_test.go"),
 	"bounds-multiple-dot-import-wait":        conformanceGoFixture("internal/conformance/bounds_policy_test.go"),
 	"bounds-dot-import-wait":                 conformanceGoFixture("internal/conformance/bounds_policy_test.go"),
 	"bounds-redeclared-wait-duration":        conformanceGoFixture("internal/conformance/bounds_policy_test.go"),

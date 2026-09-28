@@ -3468,3 +3468,40 @@ The coordinator will resolve this uncertainty through the registered bounds-poli
 The all-waits requirement in story 23 supplies the diagnostic target.
 Any demonstrated omission stays inside ticket 8 and follows bench-debug under the user's existing authorization.
 Post-review repair cycles consumed remain 2 before that diagnostic begins.
+
+
+## TD-C3 repair 3: parenthesized expressions
+
+The coordinator resolved the retained uncertainty through bench-debug before final reconciliation.
+The inline author uses model unknown at high effort under the user's uncapped repair authorization.
+The charge is sha256:d883257fbe2d8234d89477eb17632114cb92fb785da520c2b05b788ff03e85bc at 31e8f4af88b40d59b62cea44d45486725a565d2c.
+The author read metadata s1 and the full ticket s2, then passed the current binding once.
+All writes remain inside ticket 8 and the review record.
+
+The parenthesized time.Sleep fixture passed go vet in native chunk c33dcc.
+The complete retained-fixture command then failed in session 91502 because the fixture lacked its exact time.Sleep diagnostic.
+This demonstrates the omission through the registered bounds-policy owner.
+The ranked causes were the unhandled parenthesized target, import resolution, and fixture wiring.
+The source confirmed that the expression type check skipped the call target.
+
+The checker uses Go's existing ast.Unparen utility at expression consumption points.
+The installed Go AST owner was read before its use.
+This preserves function bindings, duration types, assignment targets, accessors, and clock expressions through parentheses.
+The same utility replaces the earlier manual unwrapping branches, with no second parser or new policy registry.
+All previous wait and source-safety rules remain in force.
+
+The same complete retained-fixture command passed in session 48754 after 14.174 seconds.
+The retained parenthesized-call canary binds its independent expectation to the demonstrated omission.
+Full conformance passed in session 58464 after 37.211 seconds.
+It includes root conformance, all retained canaries, and the special-source regression.
+The run reported three capability skips and no environment skips.
+
+The complete diff and whitespace check pass, and all changed Go source is formatted.
+No temporary instrumentation remains.
+The native evidence is .logs/test-determinism-c3-repair-3.json.
+Post-review repair cycles consumed: 3.
+Current C3 verification and a fresh confirming review remain required before the checkpoint.
+
+Earlier final verification remains valid only for source 74956fbc4f97fd19570689114bd9cdd3435bb0a8.
+The new repair requires fresh source-bound results before final completion.
+The broader architecture lesson is to normalize semantically transparent syntax before applying the shared expression rules.
