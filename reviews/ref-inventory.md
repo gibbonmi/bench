@@ -1266,6 +1266,31 @@ edge inventory line, and the assignment `ri-t4-repair-3`. After that repair one
 confirming round runs, and a further blocking finding stops the chunk for the
 reviewer. No command change is necessary.
 
+## RI-C2b repair cycle 3
+
+The session `ri-t4-repair-3` committed `037a4c66` on a lane pass in one
+attempt from the plan commit `c0d1f1d9`. The explicit-base build preflight
+is green at that tip. `discardUnrecordedBranch` now calls a local
+`deleteDiscardedBranch`, which runs `update-ref --no-deref -d` with the exact
+tip, and `DeleteBranchExact` in `internal/git` is unchanged under D1. The new
+test `TestDiscardTargetNeverFollowsASymrefPlantedBeforeTheDelete` observed the
+`removed` outcome: Git checks the old value against the referent, deletes only
+the symref, and the discarded ref stays the one ref at the tip.
+
+The test was red on the unrepaired tree, where the discarded ref read empty.
+The author's probe that removes `--no-deref` bit it with restore `yes`. The
+orchestrator's coordinator probe dropped the exact tip from the new delete, a
+different site, and RI67 bit with restore `yes`. The chunk tip moves to
+`037a4c66`, and the seam commit `12137b64` cites the RI103 test. One
+verification note: the local delete's error text carries the exit status
+without Git's message, because `git.Output` discards stderr, and no row pins
+that text.
+
+### Verification after repair 3
+
+The repair session reran the ticket 4 plan checks at `037a4c66` on a clean
+tree. The JSON payload holds each result after the cycle 2 rows.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2294,9 +2319,9 @@ reviewer. No command change is necessary.
     {
       "id": "RI-C2b",
       "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
-      "tip": "b592c85ab201e0743cde20aa39843846ed309bb9",
-      "plan_digest": "sha256:cc71a72ac8bfb871e337ff3bcd485626ac77cea9437ed51cdbda81d2b3c9bcd7",
-      "source_digest": "5d088fb12ffdf04ba33e51dbc5384ccb599dcbb0",
+      "tip": "037a4c660dabc1ad06cfef2a63d146febcb80cf5",
+      "plan_digest": "sha256:f0253dc65290a525f0d0d25288db32e9183adda8b75df597b8659217604f55c5",
+      "source_digest": "f5f676de61e1dc3053dfa31573fdec0c3a7fd5e5",
       "acceptance_rows": [
         "RI16", "RI29", "RI30", "RI31", "RI32", "RI33", "RI34", "RI35", "RI36", "RI37", "RI38", "RI39", "RI40", "RI41",
         "RI48", "RI49", "RI50", "RI51", "RI52", "RI58", "RI64", "RI65", "RI67", "RI68", "RI69", "RI70", "RI71",
@@ -2478,6 +2503,42 @@ reviewer. No command change is necessary.
             "ref": "claude:agent/ri-t4-repair-2b-20260927/4-cmd@b592c85a",
             "digest": "sha256:074c7fc031961ea8bd92b89b4c157e4e1595e4eb3ac425456b06d153cfcd3247",
             "excerpt": "  github.com/gibbonmi/bench/cmd/bench,pass,11125"
+          },
+          "requirement": "4-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-4-worktree-r4",
+          "performer": "claude:bench-writer/ri-t4-repair-3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f5f676de61e1dc3053dfa31573fdec0c3a7fd5e5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t4-repair-3-20260927/4-worktree@037a4c66",
+            "digest": "sha256:e1fd7d7f465fc07090133129249ce1530a4d5377b2ed58f12fc44334e02d385f",
+            "excerpt": "github.com/gibbonmi/bench/internal/worktree,pass,50120"
+          },
+          "requirement": "4-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-4-cmd-r4",
+          "performer": "claude:bench-writer/ri-t4-repair-3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f5f676de61e1dc3053dfa31573fdec0c3a7fd5e5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t4-repair-3-20260927/4-cmd@037a4c66",
+            "digest": "sha256:8ed609ec7949b90de3bbf295ee4940278f8c93592911aec81b9de60ea653dae4",
+            "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,11114"
           },
           "requirement": "4-cmd",
           "command": "bench test --package ./cmd/bench",
@@ -2755,6 +2816,26 @@ reviewer. No command change is necessary.
     {
       "from": "sha256:68966222ed8dbd00a627580b34364f49d9d39602ff44a32399e31ed01a65b8af",
       "to": "sha256:cc71a72ac8bfb871e337ff3bcd485626ac77cea9437ed51cdbda81d2b3c9bcd7",
+      "chunk_ids": {
+        "RI-C1a": ["RI-C1a"],
+        "RI-C1b": ["RI-C1b"],
+        "RI-C2a": ["RI-C2a"],
+        "RI-C2b": ["RI-C2b"]
+      }
+    },
+    {
+      "from": "sha256:cc71a72ac8bfb871e337ff3bcd485626ac77cea9437ed51cdbda81d2b3c9bcd7",
+      "to": "sha256:324e96d8e574fec35e31d8c08f2af9a675faa75bfdfcd9e7a62f29cced31341c",
+      "chunk_ids": {
+        "RI-C1a": ["RI-C1a"],
+        "RI-C1b": ["RI-C1b"],
+        "RI-C2a": ["RI-C2a"],
+        "RI-C2b": ["RI-C2b"]
+      }
+    },
+    {
+      "from": "sha256:324e96d8e574fec35e31d8c08f2af9a675faa75bfdfcd9e7a62f29cced31341c",
+      "to": "sha256:f0253dc65290a525f0d0d25288db32e9183adda8b75df597b8659217604f55c5",
       "chunk_ids": {
         "RI-C1a": ["RI-C1a"],
         "RI-C1b": ["RI-C1b"],
