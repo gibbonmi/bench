@@ -2106,7 +2106,7 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
     {
       "id": "TD-C3",
       "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
-      "tip": "baa2f53c6e6ac65b378b4df90ad7a5331b9a239e",
+      "tip": "f849978faf7e4947368b89c3f6312e5b567cbb7b",
       "plan_digest": "sha256:8ace41d9ac8c3d1c4c35e08da325bc076af4ab381961291bbd8f42e61f3b3997",
       "source_digest": "2a85f0355432686866e2278fb90b472dceeef86d",
       "acceptance_rows": [
@@ -3221,6 +3221,72 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
           "supersedes": [
             "TD-C3-coverage-3"
           ]
+        },
+        {
+          "id": "TD-C3-standards-5",
+          "performer": "/root/td_c3_standards_confirm4",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "2a85f0355432686866e2278fb90b472dceeef86d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:/root/td_c3_standards_confirm4:final",
+            "digest": "sha256:1b712f8db28b3a7a49b797b86d80ca6a928714ddbb73fda2f798a841de3f2c3c",
+            "excerpt": "**Standards: PASS.** Current findings: **0**. Worst issue: **none**. Distinct remaining Standards repair targets: **0**. No new finding IDs or dispositions.\n\nReaffirmed whole TD-C3 binding:\n\n`52d0ec32306c1e8005d5cb9946996d0618362ae6..f849978faf7e4947368b89c3f6312e5b567cbb7b`\n\nSource: `2a85f0355432686866e2278fb90b472dceeef86d`. Plan: `sha256:8ace41d9ac8c3d1c4c35e08da325bc076af4ab381961291bbd8f42e61f3b3997`.\n\nThe duplicated knowledge check found no defect:\n\n- The production ref-check policy remains owned by `bounds.RefCheckTimeout`; its initializer still uses `VerdictWindow`. The new raw setter composes the adjacent restoration pattern and introduces no policy constant, parser, or fixture harness (`internal/git/git.go:21\u201336`; `internal/bounds/bounds.go:31`, `:130`).\n- The existing fixture installs its own window, registers cleanup, and preserves all three classification assertions. It remains serial with `t.Setenv` and `t.Chdir` (`internal/gitguard/checker_junction_test.go:124\u2013148`). The edited comments describe the current fixture without retaining the production timeout value.\n\nClaim: `{\"status\":\"claimed\",\"confidence\":9}`"
+          },
+          "axis": "Standards",
+          "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
+          "tip": "f849978faf7e4947368b89c3f6312e5b567cbb7b",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C3-standards-4"
+          ]
+        },
+        {
+          "id": "TD-C3-spec-5",
+          "performer": "/root/td_c3_spec_confirm4",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "2a85f0355432686866e2278fb90b472dceeef86d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:/root/td_c3_spec_confirm4:final",
+            "digest": "sha256:266faa12c5c60111265a354df89b9fd199cf50dddbfbd59865ad4bea96af16ca",
+            "excerpt": "**Spec: PASS.** Findings: **0**. Worst issue: **none**. Distinct repair targets: **0**. No new finding IDs or dispositions.\n\nLine: `gpt-6-sol / high / one iteration`.\n\nReaffirm the whole TD-C3 pair:\n\n`52d0ec32306c1e8005d5cb9946996d0618362ae6..f849978faf7e4947368b89c3f6312e5b567cbb7b`\n\nSource: `2a85f0355432686866e2278fb90b472dceeef86d`. Plan: `sha256:8ace41d9ac8c3d1c4c35e08da325bc076af4ab381961291bbd8f42e61f3b3997`.\n\nRepair 4 satisfies the requirement that \u201ca window that a test sets still expires under the switch\u201d (`specs/test-determinism/spec.md:126`). `SetRefCheckTimeoutForTest` assigns the raw argument and returns a restoration function (`internal/git/git.go:26`). The existing fixture installs 10 ms through `t.Cleanup`, then retains all three checkout, forced-creation, and push assertions (`internal/gitguard/checker_junction_test.go:125`, `:137`). Production initialization remains through `VerdictWindow`; `refCheck` consumes the assigned window through `bounds.Context` (`git.go:21`, `:70`).\n\nAll **51 acceptance rows** were audited against behavior, seam, and failure clause:\n\n| Rows | Count | Disposition |\n|---|---:|---|\n| TD1\u2013TD31, TD47\u2013TD49 | 34 | Prior accepted behavior and evidence remain preserved. Review-owned TD19, TD22, and TD48 remain assigned to the review record. |\n| TD33\u2013TD43, TD45\u2013TD46, TD50\u2013TD51 | 15 | Current source and recorded author evidence satisfy the C3 predicates. |\n| TD32, TD44 | 2 | Actual integrated gate obligations remain open and unclaimed. |\n\nClaim: `{\"status\":\"claimed\",\"confidence\":9}`"
+          },
+          "axis": "Spec",
+          "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
+          "tip": "f849978faf7e4947368b89c3f6312e5b567cbb7b",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C3-spec-4"
+          ]
+        },
+        {
+          "id": "TD-C3-coverage-5",
+          "performer": "/root/td_c3_coverage_confirm4",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "2a85f0355432686866e2278fb90b472dceeef86d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:/root/td_c3_coverage_confirm4:final",
+            "digest": "sha256:a5805ef8d3c6e5db9f7dc1191966b0f920c2010dbaeee49ba3635181be95ff7d",
+            "excerpt": "**Coverage: PASS for this confirming round.** Current findings: **0**. Worst issue: **none**. Distinct remaining repair targets: **0**. No new finding IDs or dispositions.\n\nLine: `gpt-6-sol / high / one iteration`.\n\nReaffirmed whole TD-C3 binding:\n\n`52d0ec32306c1e8005d5cb9946996d0618362ae6..f849978faf7e4947368b89c3f6312e5b567cbb7b`\n\nSource: `2a85f0355432686866e2278fb90b472dceeef86d`. Plan: `sha256:8ace41d9ac8c3d1c4c35e08da325bc076af4ab381961291bbd8f42e61f3b3997`.\n\n**Independent bypass/refutation:** I traced a different mutation site from the author\u2019s setter probe: treating a timeout as an ordinary failed Git exit would preserve the focused checkout refusal, because `RefResolves` still returns false. It would make `BranchExists` return false and permit forced creation. The retained companion assertion detects this at `checker_junction_test.go:138`, through `verdict.go:124` and `git.go:58`. A fixture stub that exits zero without waiting also cannot preserve the checkout assertion: `git.go:76` returns a resolving ref and `verdict.go:137` permits checkout. These are source traces, **not executed probes**.\n\nAll **51 coverage rows** were read: **34 preserved prior rows, 15 C3 rows, and two actual gate obligations**. TD32 and TD44 remain pending integrated-gate obligations. Earlier TD-C3-S1/C1/C2 and parenthesis repairs remain confirmed; the no-follow reader, assignment checks, alias resolver, normalization, and registered fixtures remain intact.\n\nClaim: `{\"status\":\"claimed\",\"confidence\":9}`"
+          },
+          "axis": "Coverage",
+          "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
+          "tip": "f849978faf7e4947368b89c3f6312e5b567cbb7b",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C3-coverage-4"
+          ]
         }
       ]
     }
@@ -4087,3 +4153,31 @@ No temporary instrumentation remains.
 Repair cycles consumed for C3: 4, under the user's uncapped bench-debug authorization.
 Fresh confirmation of the Git guard repair remains pending.
 TD32 and TD44 still require the actual integrated gate.
+
+
+## TD-C3 confirmation after repair 4
+
+Standards, Spec, and Coverage pass with zero current findings.
+Each fresh Sol/high reviewer reports confidence 9 and reaffirms the complete current C3 pair.
+The Standards axis confirms one production policy source and the existing raw-setter pattern.
+The Spec axis accounts for all 51 rows and the matching fixture fence.
+The Coverage axis traces the companion branch assertion against a distinct failure-handling mutation.
+That trace is a reviewer claim, and no reviewer ran a test or probe.
+
+Each axis checked the evidence binding once and consumed metadata s1 and consumer pages s104:0 through s104:2.
+Spec and Coverage consumed coverage pages s105:0 and s105:1.
+All three axes read the repair delta from 5832b009 through f849978f and the complete approved spec.
+All fetched spills were consumed.
+Each axis verified the tested file hashes and treated the executions as author evidence.
+The coordinator then verified the unchanged source tip and clean tree.
+
+Two Coverage launches failed because the native agent thread limit was full.
+Neither failed launch produced a reviewer or a review result.
+Coverage launched after Standards returned, and its terminal result closes the third axis.
+The assessment retains both failed launches separately.
+No axis identifies an implementation-command contribution or a new CLI suggestion.
+
+The earlier checker repairs remain confirmed, with their historical findings retained.
+All ten C3 requirements and seven final requirements pass on the current source.
+TD32 and TD44 retain their actual integrated gate obligations.
+Repair cycles consumed for C3: 4, under the user's uncapped bench-debug authorization.
