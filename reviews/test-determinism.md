@@ -734,6 +734,19 @@ The current planned verification results remain valid because no implementation 
 The chunk checkpoint remains pending, and TD32 retains its final landing obligation.
 TD-C3 starts only after the checkpoint passes.
 
+## TD-C2 checkpoint accepted
+
+The reviewed record committed as ec2f3accf08dfe34749e563410219feab348295c.
+Session 74650 passed the required TD-C2 checkpoint at gate-20260928T150800.849687584Z-837288.
+All six phases passed, with eight capability skips and no environment skips.
+The build cache measured 9,943,995,667 bytes, below its 10,737,418,240-byte bound.
+The accepted source remains 56de27cbba48703bf21b64b4c2e378c058ce96f1.
+
+TD-C2 is accepted with one repair cycle consumed and no unresolved findings.
+The final landing still owns TD32, and TD-C3 is the next chunk.
+Implementation remains inline under the user override.
+Independent reviews remain on gpt-6-sol at high effort.
+
 ```bench-review-record
 {
   "version": 1,
