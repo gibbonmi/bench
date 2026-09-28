@@ -379,3 +379,7 @@ func subjectUnavailableHelp() (string, error) {
 		axi.KnownArgument("gate"), axi.KnownArgument("--fresh"),
 	)})
 }
+
+func gateLockPath(gitdir string) string { return filepath.Join(gitdir, "bench-gate.lock") }
+
+func gateOwnerPath(gitdir string) string { return filepath.Join(gitdir, "bench-gate-owner") }

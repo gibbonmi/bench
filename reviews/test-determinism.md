@@ -572,6 +572,53 @@ Both report zero failures and zero skips.
 The native evidence is in .logs/test-determinism-t5.json.
 Ticket 5 is ready for the chunk review after ticket 6.
 
+## TD-C2 ticket 6 author result
+
+Ticket 6 adds the live-checkout guard at the kit phase command.
+It compares untracked and ignored file metadata before and after the phases.
+It also compares Bench-owned files in the checkout administration directory.
+Each changed path gets one failure row, in byte order.
+An unreadable state gets one failure row, and linked roots retain their existing behavior.
+
+The timing, lock, owner, and current run records use their path owners.
+The guard keeps the initial tracked set, so staging a new file cannot hide it.
+The walker reads metadata without following file links.
+The existing verdict reporter renders each guard failure, including escaped control bytes.
+
+TD23 went red before implementation in session 29556 and green in session 54976.
+TD24 to TD31 were already covered when their fixture tests first ran in session 25482.
+The first complete census passed in session 98226 with the guard on.
+The landing retains TD32's final oracle obligation.
+
+Four probes each passed their baseline, caught one behavioral failure, and restored the source.
+Session 39618 omitted the guard composition for TD23.
+Session 18917 omitted modification time for the same-size rewrite in TD24.
+Session 80022 reversed changed-path order for TD29.
+Session 73880 omitted administration records for TD26.
+
+These independent expectations are necessary to catch those omissions and swaps.
+The native results are retained in .logs/test-determinism-t6.json.
+
+### Ticket 6 debug: root aliases
+
+The root-alias fixture failed in session 44729: creating stray left the gate green.
+The ranked hypotheses were a root symlink walk, a write outside the root, and a skipped kit predicate.
+Resolving the root through the canonical path owner was the sole production change.
+The same fixture passed in session 55007, confirming the root walk as the cause.
+
+The run-record alias fixture then failed in session 26349.
+It reported exactly the current log and stream as changed paths.
+The ranked hypotheses were path spelling, incorrect log ownership, and unrelated writes.
+Resolving the declared paths through the same owner made the fixture pass in session 7991.
+The guard and its declared paths must use the same physical root spelling.
+No temporary instrumentation remains, and both regressions remain in the ordinary suite.
+
+The gate package passed in session 42001, and root conformance passed in session 23316.
+The complete census was gate-20260928T143541.236757593Z-310988.
+Its six phases passed with eight capability skips and no environment skips.
+The build cache measured 9,939,719,806 bytes, below the declared 10,737,418,240-byte bound.
+No further writer or declared-path expansion was needed.
+
 ```bench-review-record
 {
   "version": 1,

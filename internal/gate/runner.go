@@ -158,7 +158,7 @@ func runPhasesSerial(ctx context.Context, root string, phases []Phase, skipLog s
 	results, cancelled := schedule(ctx, root, phases, streams.open)
 	return aggregateAndReport(results, cancelled, streams, stdout, stderr, func() ([]string, string, bool) {
 		return reportCapabilitySkips(skipLog)
-	}, cacheFootprintReport(ctx, os.Environ(), gocache.Measure, gocache.Bound))
+	}, cacheFootprintReport(ctx, os.Environ(), gocache.Measure, gocache.Bound), checkoutReport(ctx))
 }
 
 // prefixedPhaseWriters is the outer phase output plumbing. The mutex keeps each

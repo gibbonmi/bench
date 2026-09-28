@@ -291,6 +291,7 @@ func phasesCommandAtKitWithSelection(base context.Context, root, kit string, sel
 		for i := range phases {
 			phases[i].Env = mergeEnv(phases[i].Env, run.Entries())
 		}
+		base = withCheckoutGuard(base, root)
 	}
 	ctx, stop := subprocess.NotifyCancel(base)
 	defer stop()

@@ -32,7 +32,7 @@ import (
 func fixturePhaseRoot(t *testing.T, manifest string) string {
 	t.Helper()
 	t.Setenv(baselinePolicyEnv, "")
-	root := t.TempDir()
+	root := gittest.Repo(t)
 	path := filepath.Join(root, filepath.FromSlash(canary.PhaseManifestPath))
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatal(err)
