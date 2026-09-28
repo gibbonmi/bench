@@ -53,6 +53,33 @@ func TestDeleteBranchExactRefusesMovedRef(t *testing.T) {
 	}
 }
 
+func TestBranchDeletionPreservesSymbolicRefTarget(t *testing.T) {
+	for _, prune := range []bool{false, true} {
+		t.Run(fmt.Sprintf("prune=%t", prune), func(t *testing.T) {
+			root := newRepo(t)
+			runGit(t, root, "branch", "-M", "main")
+			ref := "refs/heads/landed-alias"
+			target := "refs/heads/main"
+			oid := strings.TrimSpace(runGit(t, root, "rev-parse", target))
+			runGit(t, root, "symbolic-ref", ref, target)
+			if prune {
+				count, err := PruneLandedBranches(root, nil)
+				if err != nil || count != 1 {
+					t.Fatalf("prune = %d, %v; want one removed alias", count, err)
+				}
+			} else if err := DeleteBranchExact(root, ref, oid); err != nil {
+				t.Fatal(err)
+			}
+			if got, err := Output("-C", root, "rev-parse", "--verify", target); err != nil || got != oid {
+				t.Fatalf("symbolic target = %q, %v; want retained %s", got, err, oid)
+			}
+			if _, err := Output("-C", root, "symbolic-ref", "-q", ref); err == nil {
+				t.Fatal("deleted alias still exists")
+			}
+		})
+	}
+}
+
 // TestRefResolvesAndBranchExists exercises the two guard probes and their fail-safe
 // posture. They run in the process cwd (the agent's working dir), so the test chdirs
 // into a fixture repo and restores.

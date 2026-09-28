@@ -3,7 +3,6 @@ package worktree
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -55,8 +54,8 @@ func sweepLifecycleRefs(j joins, root string, now time.Time) (int, error) {
 		if err := hit(j.cleanupBoundary, StepLifecycleSweep); err != nil {
 			return swept, err
 		}
-		if out, err := exec.Command("git", "-C", root, "update-ref", "--no-deref", "-d", ref, oid).CombinedOutput(); err != nil {
-			return swept, fmt.Errorf("delete lifecycle ref %s: %s", ref, strings.TrimSpace(string(out)))
+		if err := git.DeleteBranchExact(root, ref, oid); err != nil {
+			return swept, fmt.Errorf("delete lifecycle ref %s: %w", ref, err)
 		}
 		swept++
 	}
