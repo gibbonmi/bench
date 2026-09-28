@@ -157,13 +157,6 @@ func TestKitPhaseGitStartsNoAutoMaintenance(t *testing.T) {
 	}
 }
 
-// A linked root keeps its own git environment: the kit test policy is the kit's alone.
-func TestKitTestEnvSkipsALinkedRoot(t *testing.T) {
-	if got := KitTestEnv(t.TempDir(), t.TempDir()); got != nil {
-		t.Fatalf("linked-root kit test env = %#v, want none", got)
-	}
-}
-
 func TestKitPhaseRunsInTheKitTestRun(t *testing.T) {
 	t.Setenv("TMPDIR", t.TempDir())
 	probe, err := json.Marshal(gittest.KitRunProbe(t, os.Environ()))

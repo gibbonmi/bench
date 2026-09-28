@@ -600,7 +600,5 @@ func writeChangedSubjectGo(t *testing.T, path, listEnvironment, testEnvironment 
 		t.Fatal(err)
 	}
 	source := "#!/usr/bin/env bash\ncase \"$1\" in\nlist)\nenv > " + sanitize.ShellQuote(listEnvironment) + "\nprintf '%s\\n' " + sanitize.ShellQuote(string(listOutput)) + "\n;;\ntest)\nenv > " + sanitize.ShellQuote(testEnvironment) + "\nprintf '%s\\n' " + sanitize.ShellQuote(string(testOutput)) + "\n;;\nesac\n"
-	if err := os.WriteFile(path, []byte(source), 0o755); err != nil {
-		t.Fatal(err)
-	}
+	writeGoStub(t, path, source)
 }

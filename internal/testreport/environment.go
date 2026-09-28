@@ -7,14 +7,13 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
-	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 func conformanceEnvironment(base []string, root, scope string, selection *runbinary.Selection) ([]string, error) {
 	consumerOnly := environmentValue(base, registry.ConsumerOnlyEnv) == "1"
-	env, err := selectedRunEnvironment(base, selection.SourceRoot, selection)
+	env, err := selectedRunEnvironment(base, selection)
 	if err != nil {
 		return nil, err
 	}
@@ -39,14 +38,12 @@ func environmentValue(env []string, name string) string {
 	return ""
 }
 
-// selectedRunEnvironment returns the environment of a Go child that runs in dir. When
-// dir is the kit, the child also carries the kit's git test policy.
-func selectedRunEnvironment(base []string, dir string, selection *runbinary.Selection) ([]string, error) {
+// selectedRunEnvironment pins the executable and operator cache before a child gets a private HOME.
+func selectedRunEnvironment(base []string, selection *runbinary.Selection) ([]string, error) {
 	env, err := testEnvironment(base, selection.Path)
 	if err != nil {
 		return nil, err
 	}
-	env = append(env, gate.KitTestEnv(dir, selection.SourceRoot)...)
 	return append(env, "BENCH_KIT="+selection.SourceRoot), nil
 }
 

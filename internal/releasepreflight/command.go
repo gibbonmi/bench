@@ -14,6 +14,7 @@ import (
 	"syscall"
 
 	"github.com/gibbonmi/bench/internal/env"
+	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
@@ -224,7 +225,7 @@ func (r *runner) runPhase(ctx context.Context, name string) Result {
 	return Result{Name: name, Status: StatusRed, ExitCode: &exitCode, Failure: &failure}
 }
 
-func (r *runner) runExternal(ctx context.Context, name string) (int, error) {
+func (r *runner) runExternal(ctx context.Context, name string) (code int, resultErr error) {
 	if err := r.validatePhaseInputs(ctx, name); err != nil {
 		return 1, err
 	}
@@ -244,8 +245,20 @@ func (r *runner) runExternal(ctx context.Context, name string) (int, error) {
 	}
 	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...)
 	cmd.Dir = r.root
-	// Release preflight grades the kit alone, so every phase carries the kit's git test policy.
-	cmd.Env = append(os.Environ(), env.GitTestConfig()...)
+	base, err := gocache.Apply(os.Environ())
+	if err != nil {
+		return 1, err
+	}
+	run, err := env.OpenKitTestRun(base)
+	if err != nil {
+		return 1, err
+	}
+	defer func() {
+		if err := run.Close(); err != nil {
+			code, resultErr = 1, errors.Join(resultErr, err)
+		}
+	}()
+	cmd.Env = append(base, run.Entries()...)
 	cmd.Stdout = r.stderr
 	cmd.Stderr = r.stderr
 	if runtime.GOOS != "windows" {

@@ -72,9 +72,7 @@ func installCannedGo(t *testing.T, set cannedSet) {
 		body += "printf '%s\\n' " + sanitize.ShellQuote(event) + "\n"
 	}
 	body += "exit " + strconv.Itoa(set.exit) + "\n"
-	if err := os.WriteFile(filepath.Join(dir, "go"), []byte(body), 0o755); err != nil {
-		t.Fatal(err)
-	}
+	writeGoStub(t, filepath.Join(dir, "go"), body)
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 }
 
@@ -225,9 +223,7 @@ func installSignallingGo(t *testing.T) {
 	t.Helper()
 	dir := t.TempDir()
 	body := "#!/usr/bin/env bash\nkill -INT \"$PPID\"\nsleep " + strconv.FormatInt(parkSeconds(), 10) + "\n"
-	if err := os.WriteFile(filepath.Join(dir, "go"), []byte(body), 0o755); err != nil {
-		t.Fatal(err)
-	}
+	writeGoStub(t, filepath.Join(dir, "go"), body)
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 }
 

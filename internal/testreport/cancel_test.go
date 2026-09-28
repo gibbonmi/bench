@@ -183,9 +183,7 @@ func parkingGo(t *testing.T, terminalJSON bool) string {
 	t.Helper()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "go")
-	if err := os.WriteFile(path, []byte(parkingScript(terminalJSON)), 0o755); err != nil {
-		t.Fatal(err)
-	}
+	writeGoStub(t, path, parkingScript(terminalJSON))
 	return path
 }
 

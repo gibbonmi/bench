@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/diff"
+	benchenv "github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/prose"
@@ -151,7 +152,7 @@ func runFocusedRequest(root string, request focusedRequest) (Outcome, string, in
 		if kind != "" {
 			return refusedOutcome(toon.Errorf("changed selection failed", kind+": "+hint)+"\n", 1)
 		}
-		changedEnv, err := selectedRunEnvironment(os.Environ(), root, selection)
+		changedEnv, err := selectedRunEnvironment(os.Environ(), selection)
 		if err != nil {
 			return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 		}
@@ -176,7 +177,7 @@ func runFocusedRequest(root string, request focusedRequest) (Outcome, string, in
 	} else {
 		operands = append(operands, request.packageExpr)
 	}
-	env, err := selectedRunEnvironment(os.Environ(), root, selection)
+	env, err := selectedRunEnvironment(os.Environ(), selection)
 	if err != nil {
 		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 	}
@@ -211,7 +212,7 @@ func runProseCheck(root string) (Outcome, string, int) {
 // conformance scope.
 func runSystemCheck(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (Outcome, string, int) {
 	operands, suiteEnv := gate.SystemSuite(root)
-	env, err := selectedRunEnvironment(os.Environ(), root, selection)
+	env, err := selectedRunEnvironment(os.Environ(), selection)
 	if err != nil {
 		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 	}
@@ -225,10 +226,9 @@ func focusedTestArgv(operands ...string) []string {
 	return gate.BaseTestArgv("", append([]string{"-json"}, operands...)...)
 }
 
-func runGoTest(ctx context.Context, root string, request focusedRequest, argv, env []string) (Outcome, string, int) {
+func runGoTest(ctx context.Context, root string, request focusedRequest, argv, env []string) (outcome Outcome, out string, code int) {
 	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir = root
-	cmd.Env = env
 	// The focused run holds the shared cache lock for its span, so a clean cannot remove an
 	// archive this run is writing or reading. A lock it cannot take refuses the run before
 	// the Go child starts, because a compile that ran unlocked would write archives a clean
@@ -239,6 +239,19 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 		return refusedOutcome(gocache.Refusal(env, err)+"\n", 1)
 	}
 	defer holder.Release()
+	if gate.SystemSuiteRuns(root, environmentValue(env, "BENCH_KIT")) {
+		run, err := benchenv.OpenKitTestRun(env)
+		if err != nil {
+			return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
+		}
+		defer func() {
+			if err := run.Close(); err != nil {
+				outcome, out, code = refusedOutcome(toon.Errorf("kit test cleanup failed", err.Error())+"\n", 1)
+			}
+		}()
+		env = append(env, run.Entries()...)
+	}
+	cmd.Env = env
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	stream, err := cmd.StdoutPipe()
 	if err != nil {
@@ -294,7 +307,7 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 	if incomplete := report.incompletePackages(); len(incomplete) != 0 {
 		return refusedOutcome(toon.Errorf("go test reported incomplete packages", strings.Join(incomplete, ", "))+"\n", 1)
 	}
-	outcome := report.outcome(request.full)
+	outcome = report.outcome(request.full)
 	if request.run != "" && outcome.Kind == OutcomeNoTestRun {
 		return Outcome{Kind: OutcomeNoTestRun}, toon.Errorf("go test reported no test runs", "run pattern matched no tests") + "\n", 1
 	}

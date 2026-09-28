@@ -152,16 +152,6 @@ func rootConformanceEnv(root, kit string) []string {
 // graded root.
 const conformancePackagePath = "internal/conformance"
 
-// KitTestEnv answers the git test policy a child running in dir carries: the kit's
-// policy when dir is the kit, and none otherwise. A linked repository's tests keep the
-// git environment their operator gave them.
-func KitTestEnv(dir, kit string) []string {
-	if !sameDirectory(dir, kit) {
-		return nil
-	}
-	return env.GitTestConfig()
-}
-
 func withRunBinary(phases []Phase, selection *runbinary.Selection) []Phase {
 	selected := make([]Phase, len(phases))
 	for i, phase := range phases {

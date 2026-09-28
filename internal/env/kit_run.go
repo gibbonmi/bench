@@ -50,12 +50,15 @@ func OpenKitTestRun(base []string) (*KitTestRun, error) {
 			return nil, errors.Join(fmt.Errorf("kit test run: TMPDIR: %w", err), run.Close())
 		}
 	}
-	run.entries = append([]string{
+	run.entries = []string{
 		"HOME=" + filepath.Join(dir, "h"),
 		"TMPDIR=" + filepath.Join(dir, "t"),
 		"GIT_CONFIG_GLOBAL=" + os.DevNull,
 		"GIT_CONFIG_NOSYSTEM=1",
-	}, GitTestConfig()...)
+		"GIT_CONFIG_COUNT=1",
+		"GIT_CONFIG_KEY_0=maintenance.auto",
+		"GIT_CONFIG_VALUE_0=false",
+	}
 	for _, name := range settingNames {
 		run.entries = append(run.entries, name+"="+settings[name])
 	}
