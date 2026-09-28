@@ -231,6 +231,8 @@ coverage map; a class skipped here returns as a regression.
   bytes outside the graded tree authoritative. A generator that then rewrites
   that path writes through the link to a target the tree never named. Refusing a
   broken link is not enough — the working link is the destructive half
+- symbolic refs in Bench branch namespaces, including refs whose targets lie
+  outside those namespaces. Verify that deletion preserves the target ref.
 - unquoted multi-word arguments (`$*` vs `$1`)
 - lifecycle guidance that names every sanctioned operation but routes one step
   through raw Git anyway. Swap the route while preserving all command tokens, so
