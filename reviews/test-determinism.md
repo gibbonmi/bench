@@ -3292,11 +3292,190 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
+    "state": "completed",
+    "source_digest": "2a85f0355432686866e2278fb90b472dceeef86d",
     "performer": "codex/test-determinism-inline-20260928",
-    "reconciliation": {},
-    "verification": []
+    "reconciliation": {
+      "TD1": "covered",
+      "TD2": "covered",
+      "TD3": "covered",
+      "TD4": "covered",
+      "TD5": "covered",
+      "TD6": "covered",
+      "TD7": "covered",
+      "TD8": "covered",
+      "TD9": "covered",
+      "TD10": "covered",
+      "TD11": "covered",
+      "TD12": "covered",
+      "TD13": "covered",
+      "TD14": "covered",
+      "TD15": "covered",
+      "TD16": "covered",
+      "TD17": "covered",
+      "TD18": "covered",
+      "TD19": "covered",
+      "TD20": "covered",
+      "TD21": "covered",
+      "TD22": "covered",
+      "TD23": "covered",
+      "TD24": "covered",
+      "TD25": "covered",
+      "TD26": "covered",
+      "TD27": "covered",
+      "TD28": "covered",
+      "TD29": "covered",
+      "TD30": "covered",
+      "TD31": "covered",
+      "TD32": "covered",
+      "TD33": "covered",
+      "TD34": "covered",
+      "TD35": "covered",
+      "TD36": "covered",
+      "TD37": "covered",
+      "TD38": "covered",
+      "TD39": "covered",
+      "TD40": "covered",
+      "TD41": "covered",
+      "TD42": "covered",
+      "TD43": "covered",
+      "TD44": "covered",
+      "TD45": "covered",
+      "TD46": "covered",
+      "TD47": "covered",
+      "TD48": "covered",
+      "TD49": "covered",
+      "TD50": "covered",
+      "TD51": "covered"
+    },
+    "verification": [
+      {
+        "id": "TD-final-coverage-1",
+        "performer": "codex/test-determinism-inline-20260928",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "high",
+        "source_digest": "2a85f0355432686866e2278fb90b472dceeef86d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "codex:exec-chunk-73e4b3",
+          "digest": "sha256:1da299e0e624d1d7b79408898660b1b97ef7d4fb34db7d20dae01fa34ed1ef67",
+          "excerpt": "ok: coverage map valid \u2014 51 row(s)\nuncited: 45 row(s) with no seam-cell citation \u2014 TD1, TD2, TD3, TD4, TD5, TD6, TD7, TD8, TD9, TD10, TD11, TD12, TD13, TD15, TD16, TD17, TD18, TD20, TD21, TD23, TD24, TD25, TD26, TD27, TD28, TD29, TD30, TD31, TD32, TD33, TD34, TD35, TD36, TD37, TD39, TD40, TD41, TD42, TD43, TD44, TD45, TD46, TD47, TD49, TD50\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/test-determinism/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "TD-final-env-1",
+        "performer": "codex/test-determinism-inline-20260928",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "high",
+        "source_digest": "2a85f0355432686866e2278fb90b472dceeef86d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "codex:exec-session-73275",
+          "digest": "sha256:7492ee261ee3b8689eb0dcd2232213fe9a5d0bb08ad17c003be14df7766ca2ba",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/env,pass,922\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "env",
+        "command": "bench test --package ./internal/env",
+        "exit_code": 0
+      },
+      {
+        "id": "TD-final-gate-1",
+        "performer": "codex/test-determinism-inline-20260928",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "high",
+        "source_digest": "2a85f0355432686866e2278fb90b472dceeef86d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "codex:exec-session-6948",
+          "digest": "sha256:d4bdc6eea63e9b5cca2718b85ee085bddb02a5cccad8a42445630975de337cdf",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,13104\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "gate",
+        "command": "bench test --package ./internal/gate",
+        "exit_code": 0
+      },
+      {
+        "id": "TD-final-bounds-1",
+        "performer": "codex/test-determinism-inline-20260928",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "high",
+        "source_digest": "2a85f0355432686866e2278fb90b472dceeef86d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "codex:exec-session-74467",
+          "digest": "sha256:9b798611b3e7522f32e7d5fe554aad1f55ef092b990daf15d670770e6e1752a6",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/bounds,pass,670\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "bounds",
+        "command": "bench test --package ./internal/bounds",
+        "exit_code": 0
+      },
+      {
+        "id": "TD-final-bounds-policy-1",
+        "performer": "codex/test-determinism-inline-20260928",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "high",
+        "source_digest": "2a85f0355432686866e2278fb90b472dceeef86d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "codex:exec-session-63317",
+          "digest": "sha256:34a080195ecc81ac6f251c511a8798381b5c70dec34946fa85ecdc4b77a5010e",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,175\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "bounds-policy",
+        "command": "bench test --check bounds-policy",
+        "exit_code": 0
+      },
+      {
+        "id": "TD-final-system-1",
+        "performer": "codex/test-determinism-inline-20260928",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "high",
+        "source_digest": "2a85f0355432686866e2278fb90b472dceeef86d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "codex:exec-session-18130",
+          "digest": "sha256:2a07d61253098b931bf2b05a9db9e8d3d8fd71897289ec3871a60f1f57aa080e",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,52144\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      },
+      {
+        "id": "TD-final-gitguard-1",
+        "performer": "codex/test-determinism-inline-20260928",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "high",
+        "source_digest": "2a85f0355432686866e2278fb90b472dceeef86d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "codex:exec-session-5327",
+          "digest": "sha256:5a22158f90b9af912b42b24e15080ea4fd7f27a1ada2f388ad400d1a91b68c3d",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gitguard,pass,15277\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "gitguard",
+        "command": "bench test --package ./internal/gitguard",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -4181,3 +4360,34 @@ The earlier checker repairs remain confirmed, with their historical findings ret
 All ten C3 requirements and seven final requirements pass on the current source.
 TD32 and TD44 retain their actual integrated gate obligations.
 Repair cycles consumed for C3: 4, under the user's uncapped bench-debug authorization.
+
+## Final acceptance reconciliation
+
+The C3 checkpoint passed in native session 28173 at gate-20260928T174457.594657057Z-2233708.
+Its six phases passed, with eight capability skips and no environment skips.
+The reviewed source remains 2a85f0355432686866e2278fb90b472dceeef86d, and the tree was clean after the gate.
+All current review axes pass without unresolved findings.
+
+| Phase | Elapsed milliseconds |
+| --- | --- |
+| gofmt | 130 |
+| vet | 1185 |
+| test | 137550 |
+| race | 7627 |
+| system | 41293 |
+| shellcheck | 567 |
+
+All 51 planned rows are reconciled as covered by their retained author evidence, accepted chunk reviews, and current gate result.
+The completion record retains all seven required final commands on the unchanged source.
+The version 1 plan assigns these results to the retained implementation session as author-verification.
+The coverage command validates 51 rows and retains 45 uncited seam warnings from the authored map.
+
+TD32 and TD44 have actual integrated checkpoint evidence.
+The complete checkpoint and prospective landing must still grade those obligations on their exact source.
+No implementation is published by this reconciliation record.
+The broker remains the sole author of the implemented status.
+
+The final reviewed C3 pair is 52d0ec32306c1e8005d5cb9946996d0618362ae6 to f849978faf7e4947368b89c3f6312e5b567cbb7b.
+Only this review record changed after that tip.
+The earlier chunk pairs and their accepted results remain in the native record.
+No cross-chunk concern invalidates their evidence.
