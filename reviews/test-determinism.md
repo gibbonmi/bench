@@ -508,6 +508,51 @@ The preflight fence comparison requires the directory spelling already present i
 Ticket 4 therefore names internal/env/; its repair still edits only the owner and its test file.
 The plan correction changes no behavior or required check.
 
+## Ticket 4 startup repair and author completion
+
+TD49 fails before the shared owner edit in session 13800.
+The controlled Bash startup file emits its marker before the requested child output.
+The owner points BASH_ENV at the null device, and the same regression passes in session 83441.
+The base-environment control still executes the startup file, so the regression does not depend on the operator's profile.
+
+The omission probe in session 65981 reports a passing baseline and one behavioral failure.
+It restores the source and names the inherited startup marker.
+That omission requires the independent child-output expectation and demonstrates its red.
+No runner duplicates the new entry.
+
+The original wrapper loop passes in session 72094 with the normal ambient environment.
+The worktree executable was rebuilt before that run, because the focused command's outer runner owns the environment.
+A run before the rebuild still used the previous runner and remained red.
+The regression and the original surface now agree.
+
+| check | session | outcome |
+| --- | --- | --- |
+| env | 78505 | pass, 875 ms |
+| gittest | 87527 | pass, 23 ms |
+| testrepo | 80262 | pass, 8 ms |
+| cmd/bench | 77094 | pass, 15850 ms |
+| testreport | 16478 | pass, 31359 ms |
+| gate | 65620 | pass, 11571 ms |
+| releasepreflight | 12590 | pass, 516 ms |
+| root conformance | 63041 | pass, 7960 ms |
+| both real build-script tests | 57528 | pass, 2734 ms |
+
+All these runs report zero failures and zero skips.
+The final artifact probe compares six live paths and reports no change.
+It preserves the broker manifest bytes and modification time.
+The final snapshots are in .logs/test-determinism-t4-live-final.json.
+The native repair results are in .logs/test-determinism-t4-repair.json.
+
+The shared kit-run owner is the repair seam for the gate, focused runner, and release preflight.
+The architectural finding is that a private HOME still inherits explicitly named shell startup files.
+The controlled Bash regression guards that boundary at the shared owner.
+Linked-root composition remains unchanged.
+
+The project has no expected-failure form; the regression ran red manually before the fix.
+The verified temporary backups and snapshot helper were removed after the checks.
+The snapshot helper digest was sha256:62325880dbe7bf5b2799de958ac4cacdcf55a6cae3e9d27c910e71ec0ae0790b.
+TD47, TD48, and TD49 now have passing author evidence; independent chunk review and the checkpoint remain pending.
+
 ```bench-review-record
 {
   "version": 1,

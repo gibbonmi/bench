@@ -58,6 +58,7 @@ func OpenKitTestRun(base []string) (*KitTestRun, error) {
 	run.entries = []string{
 		"HOME=" + filepath.Join(dir, "h"),
 		"TMPDIR=" + filepath.Join(dir, "t"),
+		"BASH_ENV=" + os.DevNull,
 		"TEST_TELEMETRY_DIR=" + telemetryDir,
 		"GIT_CONFIG_GLOBAL=" + os.DevNull,
 		"GIT_CONFIG_NOSYSTEM=1",

@@ -129,6 +129,40 @@ func TestKitTestRunCloseRestoresDirectoryAccess(t *testing.T) {
 	}
 }
 
+func TestKitTestRunIgnoresInheritedBashStartup(t *testing.T) {
+	const marker = "inherited-startup"
+	startup := filepath.Join(t.TempDir(), "startup")
+	if err := os.WriteFile(startup, []byte("printf '"+marker+"\\n'\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	base := append(kitRunBase(t), "BASH_ENV="+startup)
+	bashOutput := func(environment []string) string {
+		t.Helper()
+		cmd := exec.Command("bash", "-c", "printf child")
+		cmd.Env = environment
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("Bash child: %v: %s", err, out)
+		}
+		return string(out)
+	}
+	if got := bashOutput(base); got != marker+"\nchild" {
+		t.Fatalf("base startup control = %q", got)
+	}
+	run, err := OpenKitTestRun(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := run.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	if got := bashOutput(append(base, run.Entries()...)); got != "child" {
+		t.Fatalf("kit child sourced the inherited startup file: %q", got)
+	}
+}
+
 func TestKitTestRunRejectsInvalidHomeBeforeCreation(t *testing.T) {
 	for _, home := range []string{"absent", "", "relative"} {
 		t.Run(home, func(t *testing.T) {
