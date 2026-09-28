@@ -44,7 +44,8 @@ Repair cycles consumed: 2 of 2
 
 ## Standards
 
-TD-C3 has one finding, TD-C3-S1, with confidence 9 and disposition auto-fix.
+TD-C3 has zero current Standards findings after repair confirmation.
+TD-C3-S1 retains its historical auto-fix disposition and is confirmed repaired.
 
 TD-C1b: zero blocking findings; worst issue: none.
 TD-C1b-S1 was repaired and confirmed, with confidence 9.
@@ -67,7 +68,8 @@ Later chunks retain their planned rows; this chunk claims only the rows named ab
 
 ## Coverage
 
-TD-C3 has one finding, TD-C3-C1, with confidence 8 and disposition auto-fix.
+TD-C3 has zero current Coverage findings after repair confirmation.
+TD-C3-C1 and TD-C3-C2 retain their historical auto-fix dispositions and are confirmed repaired.
 
 TD-C1b: zero blocking findings; worst issue: none.
 
@@ -2104,7 +2106,7 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
     {
       "id": "TD-C3",
       "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
-      "tip": "6441b10ceebf86129a12daa62a5c09be0612fcc9",
+      "tip": "9920ceae0eaf580df6a0867386e4b81c34ebaa0c",
       "plan_digest": "sha256:99e115a7ba3f3afe54aa29c40f20dd56ecd71925c9b19147fa00a1927dd24288",
       "source_digest": "74956fbc4f97fd19570689114bd9cdd3435bb0a8",
       "acceptance_rows": [
@@ -2744,6 +2746,72 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
           "supersedes": [
             "TD-C3-coverage-1"
           ]
+        },
+        {
+          "id": "TD-C3-standards-3",
+          "performer": "/root/td_c3_standards_confirm2",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "74956fbc4f97fd19570689114bd9cdd3435bb0a8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:/root/td_c3_standards_confirm2:final",
+            "digest": "sha256:75e1eb13a56e9cc47fcbcb8e95ab6d3ded73caae72e1db8dcb6c07f7c8bedf06",
+            "excerpt": "**Standards: PASS.** Raw current findings: **0**. Worst issue: **none**. Distinct remaining Standards repair targets: **0**.\nReaffirmed whole TD-C3 pair: `52d0ec32306c1e8005d5cb9946996d0618362ae6..9920ceae0eaf580df6a0867386e4b81c34ebaa0c`. This pass read the later repair delta `a25f61510a47ddc2f1359f5733ff5c50999fb9f1..9920ceae0eaf580df6a0867386e4b81c34ebaa0c`.\nThe duplication-first check found one import-candidate resolver at `bounds_waits_policy_test.go:203`, reused by wait, accessor, clock, and duration rules. `waitFunctionNames:265` preserves sibling bindings alongside candidates. No export registry, parser, or fixture harness is duplicated. The new comment explains the import-order constraint in the present tense.\nClaim: `{\"status\":\"claimed\",\"confidence\":9}`"
+          },
+          "axis": "Standards",
+          "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
+          "tip": "9920ceae0eaf580df6a0867386e4b81c34ebaa0c",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C3-standards-2"
+          ]
+        },
+        {
+          "id": "TD-C3-coverage-3",
+          "performer": "/root/td_c3_coverage_confirm2",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "74956fbc4f97fd19570689114bd9cdd3435bb0a8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:/root/td_c3_coverage_confirm2:final",
+            "digest": "sha256:000b0550ec27bc4b5a678fa1c55bb6d5155e98f741383494c147270719452311",
+            "excerpt": "**Coverage: PASS for this confirming round.** Raw current findings: **0**. Worst issue: **none**. Distinct remaining repair targets: **0**. No new finding IDs or dispositions.\n**TD-C3-C2 repair confirmed, confidence 9; preserve its historical `auto-fix` disposition.** `waitCallNames` now retains all supported import candidates, and `waitFunctionNames` appends resolved lexical/package bindings instead of returning before sibling resolution (`internal/conformance/bounds_waits_policy_test.go:203`, `:265`). The checker tests each resulting name at `:76`. Both new fixtures explicitly select `bounds-policy`, expect the exact `time.Sleep` diagnostic, and register under its existing owner (`internal/conformance/registry_test.go:149`). `runFixtureBite` requires that diagnostic and its disappearance after restoration (`internal/conformance/fixture_bite_test.go:750`).\n**Independent bypass attempt, outside confirming scope:** `(time.Sleep)(time.Duration(17))` appears to evade recognition because its call target is a `ParenExpr`; both `waitFunctionNames` and the older selector-only checker omit that form (`bounds_waits_policy_test.go:265`; `bounds_policy_test.go:211`). This is unexecuted and therefore **claimed**, not demonstrated. The omission already existed before this repair, and it does not invalidate the multiple-import or sibling-binding controls. Under the confirming-round scope rule, it receives **no finding ID, disposition, count, or repair target**.\nClaim: `{\"status\":\"claimed\",\"confidence\":9}`"
+          },
+          "axis": "Coverage",
+          "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
+          "tip": "9920ceae0eaf580df6a0867386e4b81c34ebaa0c",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C3-coverage-2"
+          ]
+        },
+        {
+          "id": "TD-C3-spec-3",
+          "performer": "/root/td_c3_spec_confirm2",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "74956fbc4f97fd19570689114bd9cdd3435bb0a8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:/root/td_c3_spec_confirm2:final",
+            "digest": "sha256:ca7f0b15db166da6407bf16e7dbaf79ff052394e59502eb13d8e6404d7ff1c2e",
+            "excerpt": "**Spec verdict: PASS; reaffirm the whole current TD-C3 pair.** Raw current findings: **0**. Worst issue: **none**. Distinct remaining repair targets: **0**. New finding IDs, dispositions, and finding confidences: **none**.\nLine: `gpt-6-sol / high / one bounded pass`. Reaffirmed pair: `52d0ec32306c1e8005d5cb9946996d0618362ae6..9920ceae0eaf580df6a0867386e4b81c34ebaa0c`. Source digest: `74956fbc4f97fd19570689114bd9cdd3435bb0a8`. Plan digest: `sha256:99e115a7ba3f3afe54aa29c40f20dd56ecd71925c9b19147fa00a1927dd24288`.\nAll **50 acceptance rows** were audited:\nThese groups account for 34 preserved prior rows, 14 focused C3 rows, and two final oracle obligations.\nClaim: `{\"status\":\"claimed\",\"confidence\":9}`"
+          },
+          "axis": "Spec",
+          "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
+          "tip": "9920ceae0eaf580df6a0867386e4b81c34ebaa0c",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C3-spec-2"
+          ]
         }
       ]
     }
@@ -3360,3 +3428,43 @@ The complete native results are in .logs/test-determinism-c3-repair-2-verificati
 TD-C3-C2 has a repair and valid-source author proof, with independent confirmation still pending.
 The earlier invalid context-and-time example remains explicitly excluded from valid-source proof.
 Post-review repair cycles consumed: 2; the user retains uncapped inline repairs through bench-debug.
+
+
+## TD-C3 confirming review 2
+
+Three fresh Sol/high sessions reaffirm the whole chunk at 9920ceae0eaf580df6a0867386e4b81c34ebaa0c.
+The source stayed clean, with digest 74956fbc4f97fd19570689114bd9cdd3435bb0a8.
+Raw current findings are Standards 0, Spec 0, and Coverage 0.
+The review has no worst issue or remaining repair target.
+Each native claim has confidence 9.
+
+Standards confirms one shared resolver and no duplicate parser, export registry, or fixture harness.
+Coverage confirms TD-C3-C2 through the legal fixtures and corrected author probes.
+Spec audits all 50 rows and preserves the earlier chunks' requirements.
+TD-C3-S1, TD-C3-C1, and TD-C3-C2 retain their historical auto-fix dispositions and are confirmed repaired.
+TD32 and TD44 remain final integrated gate obligations.
+
+Each axis read one diff from a25f61510a47ddc2f1359f5733ff5c50999fb9f1 to the current tip.
+Each read the whole spec, both tickets, its standards, current owners, and untouched consumers.
+All retrieved s1:0 and s99:0 through s99:2 to their terminal cursors.
+Spec and Coverage also retrieved both s100 pages.
+Each binding passed once, every fetched spill was consumed, and no reviewer ran tests or changed the source.
+
+The invalid context-and-time example remains excluded from valid-source proof.
+The two corrected probes and nine required checks remain author execution evidence.
+No implementation-command change was proposed.
+The CLI advice asks for evidence pages that fit the escaped response budget.
+The local terminal supplement is .logs/test-determinism-c3-confirm-2.json.
+
+### Coordinator follow-up before reconciliation
+
+Coverage identified an unexecuted parenthesized-call observation outside this confirming round.
+The example is a parenthesized time.Sleep target with a raw duration.
+The resolver and older selector check omit that AST form at bounds_waits_policy_test.go:265 and bounds_policy_test.go:211.
+The omission predates this repair and does not invalidate its multiple-import or sibling-binding controls.
+It therefore adds no review finding, disposition, count, or target.
+
+The coordinator will resolve this uncertainty through the registered bounds-policy owner before final reconciliation.
+The all-waits requirement in story 23 supplies the diagnostic target.
+Any demonstrated omission stays inside ticket 8 and follows bench-debug under the user's existing authorization.
+Post-review repair cycles consumed remain 2 before that diagnostic begins.
