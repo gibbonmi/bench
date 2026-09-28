@@ -2104,7 +2104,7 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
     {
       "id": "TD-C3",
       "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
-      "tip": "beea10227002209431ab1219647640f905aac39f",
+      "tip": "a25f61510a47ddc2f1359f5733ff5c50999fb9f1",
       "plan_digest": "sha256:99e115a7ba3f3afe54aa29c40f20dd56ecd71925c9b19147fa00a1927dd24288",
       "source_digest": "bf53bcb429e0beac5def72e767eba6b811fc79b7",
       "acceptance_rows": [
@@ -2514,6 +2514,74 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
             "TD-C3-C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "TD-C3-standards-2",
+          "performer": "/root/td_c3_standards_confirm1",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "bf53bcb429e0beac5def72e767eba6b811fc79b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:/root/td_c3_standards_confirm1:final",
+            "digest": "sha256:2ea74cc69eb6b9e18ee82cb1b2f5a4c1a04744e10c6f451364386c142918fe51",
+            "excerpt": "**Standards: PASS.** Raw current findings: **0**. Worst issue: **none**. Distinct remaining Standards repair targets: **0**.\nClaim: `{\"status\":\"claimed\",\"confidence\":9}`\nTD-C3-S1 | Preserve **auto-fix**; repair **confirmed**, confidence **9**. `readBoundsSource` composes `bounds.ClassifyNoFollow` at `internal/conformance/bounds_policy_test.go:330`. Every parser within this check receives classified bytes, including `packageBindings` at `internal/conformance/bounds_waits_policy_test.go:107`. The private registered-owner regression covers symlink and FIFO states at `bounds_policy_test.go:297`. This satisfies the discovered-special-file requirement in `projects/benchkit.md:224`."
+          },
+          "axis": "Standards",
+          "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
+          "tip": "a25f61510a47ddc2f1359f5733ff5c50999fb9f1",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C3-standards-1"
+          ]
+        },
+        {
+          "id": "TD-C3-spec-2",
+          "performer": "/root/td_c3_spec_confirm1",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "bf53bcb429e0beac5def72e767eba6b811fc79b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:/root/td_c3_spec_confirm1:final",
+            "digest": "sha256:bdf81bd156465efea51799b9beac40dd04a44de41d4adf37b297dc8cb9f6ce8f",
+            "excerpt": "**Spec verdict: PASS; reaffirm the whole current C3 pair.** Raw findings: 0. Worst issue: none. Distinct repair targets: 0. Finding IDs and dispositions: none.\nClaim: `{\"status\":\"claimed\",\"confidence\":9}`\nThe reaffirmed pair is `52d0ec32306c1e8005d5cb9946996d0618362ae6..a25f61510a47ddc2f1359f5733ff5c50999fb9f1`. I read one confirming diff, `3556703d715b97ab9f3941f79d07bda9c7f0ea34..a25f61510a47ddc2f1359f5733ff5c50999fb9f1`. Source digest: `bf53bcb429e0beac5def72e767eba6b811fc79b7`; plan digest: `sha256:99e115a7ba3f3afe54aa29c40f20dd56ecd71925c9b19147fa00a1927dd24288`.\nAll 50 acceptance rows were audited:\n| TD32, TD44 | Final landing gate obligations remain open and appropriately unclaimed. |"
+          },
+          "axis": "Spec",
+          "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
+          "tip": "a25f61510a47ddc2f1359f5733ff5c50999fb9f1",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C3-spec-1"
+          ]
+        },
+        {
+          "id": "TD-C3-coverage-2",
+          "performer": "/root/td_c3_coverage_confirm1",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "bf53bcb429e0beac5def72e767eba6b811fc79b7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "codex:/root/td_c3_coverage_confirm1:final",
+            "digest": "sha256:0ecc2516b3a4bf91d5855360085eb9430a2360e879ed2c6c11b205041e4b6c46",
+            "excerpt": "Coverage verdict: **changes requested pending coordinator reproduction**. Raw findings: **1**. Worst issue: **P2**. Distinct repair targets: **2**. Claim: `{\"status\":\"claimed\",\"confidence\":8}`.\n**TD-C3-C2 \u2014 Multiple dot imports can suppress the required wait diagnostic.** Disposition: **auto-fix**. Confidence: **8**. This is a source-derived, unexecuted claim.\nThe imports supply distinct exported names and both are used. In `internal/conformance/bounds_waits_policy_test.go:215`, the resolver accepts the first matching dot-import qualifier and returns `context.Sleep` at line 229 without determining which package exports `Sleep`. The checker recognizes `time.Sleep` at line 76, so the inferred name does not select a wait.\nTicket `8-name-every-production-wait.md:11` requires each production timed wait to pass its window through an accessor. Story 23 and TD40 bind that enforcement to the registered bounds-policy seam. The existing single-dot canary exercises only a context import, so it cannot expose this ambiguity."
+          },
+          "axis": "Coverage",
+          "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
+          "tip": "a25f61510a47ddc2f1359f5733ff5c50999fb9f1",
+          "finding_ids": [
+            "TD-C3-C2"
+          ],
+          "supersedes": [
+            "TD-C3-coverage-1"
+          ]
         }
       ]
     }
@@ -3012,3 +3080,44 @@ The raw FIFO reproduction fixture was inspected and removed after the diagnostic
 No temporary instrumentation remains.
 TD-C3-S1 and TD-C3-C1 have proposed repairs and current author evidence; independent confirmation remains pending.
 TD32 and TD44 retain the final landing gate obligation.
+
+
+## TD-C3 confirming review 1 pickup
+
+Three fresh Sol sessions reviewed the repair delta at high effort.
+The source stayed clean at a25f61510a47ddc2f1359f5733ff5c50999fb9f1, with digest bf53bcb429e0beac5def72e767eba6b811fc79b7.
+The raw finding counts are Standards 0, Spec 0, and Coverage 1.
+Two repair targets remain: import resolution and its registered canary proof.
+
+Standards confirms TD-C3-S1 through the shared no-follow adapter and private special-source regression.
+Coverage confirms all original TD-C3-C1 cases through the current classifier and recorded author proofs.
+Both findings retain their historical auto-fix dispositions, with no further target.
+Spec audits all 50 rows and reaffirms the current chunk.
+TD32 and TD44 retain their final integrated gate obligation.
+
+Coverage finding TD-C3-C2 has disposition auto-fix and confidence 8.
+The resolver at internal/conformance/bounds_waits_policy_test.go:215 returns the first dot import without checking member ownership.
+A valid source imports context and time with dots, uses Background, and calls Sleep with a raw duration.
+The resolver calls that function context.Sleep, which the wait-selection switch does not grade.
+Ticket 8:11 and TD40 require its time.Sleep diagnostic through bounds-policy.
+
+The older bounds checker handles selector calls and does not refute this identifier-call concern.
+The single-dot canary cannot expose the second import.
+Execution remains unverified until the coordinator reproduces it through the registered owner.
+The repair fits ticket 8's current fence and changes no acceptance requirement.
+
+Each axis read one confirming diff from 3556703d715b97ab9f3941f79d07bda9c7f0ea34 to the frozen tip.
+Each read the whole spec, tickets, standards, targeted owners, and untouched consumers.
+All read s1:0 and s90:0 through s90:2 to their terminal cursors.
+Spec and Coverage also read both s91 pages.
+Each current binding passed once, and every fetched spill was consumed fully.
+
+No axis ran tests, probes, builds, or writes.
+Recorded executions remain author evidence, and the invalid compile probe remains excluded.
+No implementation-command change was proposed.
+The CLI advice asks for earlier pagination grammar and evidence pages that fit the escaped response budget.
+This advice carries no finding or repair target.
+
+Post-review repair cycles consumed: 1.
+The user permits further inline repairs while bench-debug governs each cycle.
+The next cycle must reproduce TD-C3-C2 before repair, retain its red, and obtain current three-axis confirmation.
