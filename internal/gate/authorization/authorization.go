@@ -114,7 +114,7 @@ func checkMarker(root, branch, destination, expected string, advance bool) error
 }
 
 func fullCommit(root, value string) bool {
-	resolved, err := benchgit.Output("-C", root, "rev-parse", "--verify", value+"^{commit}")
+	resolved, err := benchgit.ResolveCommit(root, value)
 	return err == nil && resolved == value
 }
 

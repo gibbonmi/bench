@@ -24,7 +24,7 @@ func writeResetEnvelope(root string, plan resetPlan) (intent.Recovery, error) {
 // resetEnvelopeValid runs the reset's three checks and returns the manifest it parsed,
 // so a caller that needs the manifest reads it once.
 func resetEnvelopeValid(root string, envelope intent.Recovery) (recoveryManifest, bool) {
-	resolved, err := git.Output("-C", root, "rev-parse", "--verify", envelope.Ref+"^{commit}")
+	resolved, err := git.ResolveCommit(root, envelope.Ref)
 	if err != nil || resolved != envelope.Root {
 		return recoveryManifest{}, false
 	}

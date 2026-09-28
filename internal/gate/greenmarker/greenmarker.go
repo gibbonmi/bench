@@ -32,7 +32,7 @@ func Read(root, branch string) (commit string, present bool, err error) {
 		}
 		return "", false, nil
 	}
-	commit, err = benchgit.Output("-C", root, "rev-parse", "--verify", marker+"^{commit}")
+	commit, err = benchgit.ResolveCommit(root, marker)
 	if err != nil {
 		return "", true, fmt.Errorf("read project-green marker: %w", err)
 	}

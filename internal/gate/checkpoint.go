@@ -117,9 +117,9 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 	if e.checkpoint.Spec == "" {
 		return plan, nil
 	}
-	tip, err := benchgit.Output("-C", e.identityRoot, "rev-parse", "--verify", "HEAD^{commit}")
+	tip, err := benchgit.ResolveCommit(e.identityRoot, "HEAD")
 	if e.completionSource != "" {
-		tip, err = benchgit.Output("-C", e.identityRoot, "rev-parse", "--verify", e.completionSource+"^{commit}")
+		tip, err = benchgit.ResolveCommit(e.identityRoot, e.completionSource)
 		if err == nil && (!e.prospective || !e.checkpoint.Complete || tip != e.completionSource) {
 			return subject{}, errors.New("invalid prospective completion source")
 		}

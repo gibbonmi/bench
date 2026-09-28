@@ -70,7 +70,7 @@ func reauthorizeParsed(j joins, root string, parsed usage.Result, stdout, stderr
 		fmt.Fprintln(stderr, "bench worktree reauthorize: worktree path is not canonical")
 		return 1
 	}
-	resolvedTip, err := git.Output("-C", root, "rev-parse", "--verify", tip+"^{commit}")
+	resolvedTip, err := git.ResolveCommit(root, tip)
 	if err != nil {
 		fmt.Fprintln(stderr, "bench worktree reauthorize: source tip is not a commit")
 		return 1
@@ -94,7 +94,7 @@ func reauthorizeParsed(j joins, root string, parsed usage.Result, stdout, stderr
 		if err != nil || head != resolvedTip {
 			return errors.New("worktree tip mismatch")
 		}
-		branchTip, err := git.Output("-C", root, "rev-parse", "--verify", a.Branch+"^{commit}")
+		branchTip, err := git.ResolveCommit(root, a.Branch)
 		if err != nil || branchTip != resolvedTip {
 			return errors.New("assignment branch tip mismatch")
 		}

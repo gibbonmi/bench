@@ -191,7 +191,7 @@ func createAt(j joins, root, home, request, label string, fault Fault, now time.
 			startRef = def
 		}
 	}
-	start, err := git.Output("-C", root, "rev-parse", "--verify", startRef+"^{commit}")
+	start, err := git.ResolveCommit(root, startRef)
 	if err != nil {
 		return Creation{}, fmt.Errorf("resolve assignment start: %w", err)
 	}

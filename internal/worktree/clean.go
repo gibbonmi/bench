@@ -243,7 +243,7 @@ func nextEnvelopeRef(root, prefix string) (string, error) {
 	}
 }
 func verifyRecovery(root string, assignment intent.Assignment, recovery intent.Recovery) error {
-	resolved, err := git.Output("-C", root, "rev-parse", "--verify", recovery.Ref+"^{commit}")
+	resolved, err := git.ResolveCommit(root, recovery.Ref)
 	if err != nil || resolved != recovery.Root {
 		return errors.New("recovery ref does not resolve to the recorded root")
 	}
@@ -266,11 +266,11 @@ func anchorDetached(root string, plan CleanupPlan) error {
 	}
 	zero := strings.Repeat("0", len(head))
 	if out, err := exec.Command("git", "-C", root, "update-ref", plan.Recovery, head, zero).CombinedOutput(); err != nil {
-		if existing, readErr := git.Output("-C", root, "rev-parse", "--verify", plan.Recovery+"^{commit}"); readErr != nil || existing != head {
+		if existing, readErr := git.ResolveCommit(root, plan.Recovery); readErr != nil || existing != head {
 			return fmt.Errorf("anchor detached HEAD: %s", strings.TrimSpace(string(out)))
 		}
 	}
-	resolved, err := git.Output("-C", root, "rev-parse", "--verify", plan.Recovery+"^{commit}")
+	resolved, err := git.ResolveCommit(root, plan.Recovery)
 	if err != nil || resolved != head {
 		return errors.New("detached recovery ref failed verification")
 	}

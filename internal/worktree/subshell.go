@@ -173,7 +173,7 @@ func planExplicitWith(j joins, root, path string, options CleanupOptions) (Clean
 	defaultRef, defaultOID := "none", "none"
 	if def, ok := git.ResolvedDefault(root); ok {
 		defaultRef = def
-		if oid, oidErr := git.Output("-C", root, "rev-parse", "--verify", def+"^{commit}"); oidErr == nil {
+		if oid, oidErr := git.ResolveCommit(root, def); oidErr == nil {
 			defaultOID = oid
 		}
 	}
