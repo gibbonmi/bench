@@ -1,12 +1,13 @@
 // The discard transaction's refusals: a handle at the planned discarded path that the write
-// must not replace, a candidate the class function faulted, and a member whose holder an
-// earlier member of the same set removed.
+// must not replace or follow, a candidate the class function faulted, and a member whose
+// holder an earlier member of the same set removed.
 package worktree
 
 import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -41,6 +42,42 @@ func TestDiscardTargetRefusesARefPlantedAfterTheRead(t *testing.T) {
 	applied, code, rows := planAndApply(t, j, root, home, "--discard-branch", "--target", strings.TrimPrefix(ref, "refs/heads/"))
 	if code != 1 || rowAction(rows, ref) != string(ActionError) || refTip(root, ref) != tip || refTip(root, discarded) != planted {
 		t.Fatalf("apply exit=%d stdout=%q, want an error row, the branch at %s, and the planted ref at %s", code, applied, tip, planted)
+	}
+}
+
+// TestDiscardTargetNeverFollowsASymrefPlantedAfterTheRead is RI102: a symref that appears at
+// the planned path after the read found it absent is never followed. A resolving symref fails
+// the write and keeps the branch; a dangling one is replaced by the discarded ref at the row's
+// tip, and no ref appears at its old target.
+func TestDiscardTargetNeverFollowsASymrefPlantedAfterTheRead(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name, target string
+		resolves     bool
+	}{
+		{"resolving", "refs/heads/main", true},
+		{"dangling", "refs/heads/bench/assign/zz/gone", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			root, home := unclaimedBranchFixture(t)
+			ref, tip := uniqueBranch(t, root, "a")
+			discarded := intent.DiscardedRef(discardDay, ref)
+			targetTip := refTip(root, tc.target)
+			j := discardJoins()
+			j.cleanupBoundary = atStep(StepDiscardedRefAbsent, func() error {
+				gitRun(t, root, "symbolic-ref", discarded, tc.target)
+				return nil
+			})
+			applied, code, rows := planAndApply(t, j, root, home, "--discard-branch", "--target", strings.TrimPrefix(ref, "refs/heads/"))
+			symref, _ := git.Output("-C", root, "symbolic-ref", "--quiet", discarded)
+			if tc.resolves && (code != 1 || rowAction(rows, ref) != string(ActionError) || refTip(root, ref) != tip || refTip(root, tc.target) != targetTip || symref != tc.target) {
+				t.Fatalf("apply exit=%d stdout=%q, want an error row, the branch at %s, %s unmoved, and the symref kept", code, applied, tip, tc.target)
+			}
+			if !tc.resolves && (code != 0 || refTip(root, ref) != "" || symref != "" || refTip(root, discarded) != tip || refTip(root, tc.target) != "") {
+				t.Fatalf("apply exit=%d stdout=%q, want the branch removed, %s a direct ref at %s, and no ref at %s", code, applied, discarded, tip, tc.target)
+			}
+		})
 	}
 }
 

@@ -258,7 +258,10 @@ func discardUnrecordedBranch(j joins, root string, row unrecordedCleanupRow) err
 // handle this write must not replace, so the apply refuses and keeps the branch. A symref at
 // the path refuses too: the tip read dereferences it, so a symref to the branch itself would
 // read as a finished write, and the delete would leave the recovery cell naming nothing. The
-// zero old value makes a ref that appears after the read fail the write.
+// zero old value makes a ref that appears after the read fail the write, and the write never
+// follows a symref, so a symref that appears there cannot move the handle off the planned
+// path. A resolving one fails the zero old value; Git reads a dangling one as absent and
+// replaces it with the discarded ref at the row's tip.
 func writeDiscardedRef(j joins, root string, row unrecordedCleanupRow) error {
 	if row.discarded == "" {
 		return nil
@@ -276,7 +279,7 @@ func writeDiscardedRef(j joins, root string, row unrecordedCleanupRow) error {
 		if err := hit(j.cleanupBoundary, StepDiscardedRefAbsent); err != nil {
 			return err
 		}
-		if _, err := git.Output("-C", root, "update-ref", row.discarded, row.oid, strings.Repeat("0", len(row.oid))); err != nil {
+		if _, err := git.Output("-C", root, "update-ref", "--no-deref", row.discarded, row.oid, strings.Repeat("0", len(row.oid))); err != nil {
 			return fmt.Errorf("write discarded ref %s: %w", row.discarded, err)
 		}
 	default:
