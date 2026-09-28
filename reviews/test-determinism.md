@@ -747,11 +747,24 @@ The final landing still owns TD32, and TD-C3 is the next chunk.
 Implementation remains inline under the user override.
 Independent reviews remain on gpt-6-sol at high effort.
 
+## TD-C3 plan ownership amendment
+
+The accepted predecessor remains 52d0ec32306c1e8005d5cb9946996d0618362ae6.
+The amendment adds the intent ledger verdict wait to ticket 8's complete production-wait census.
+TD50 proves its first-accessor owner binding, and the intent package joins required chunk verification.
+The existing system environment helpers can move to a focused file without growing the oversized owner file.
+The wait-expression checker receives its own conformance file under the existing check owner.
+
+The session inspection command test joins the switch census and sets its finite provider window.
+All existing acceptance rows, chunk identities, checkpoints, and pass criteria remain intact.
+The learning record names the census gap and the amended ownership before implementation starts.
+The user-directed inline author and version 1 completion plan remain unchanged.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/test-determinism/spec.md",
-  "plan_digest": "sha256:16abfe4c3e278cb992643dd86dfdb7be1fa874c001dea3ac15c9b9c5050853a8",
+  "plan_digest": "sha256:27e6b2a427af1a721ef859c1d70c7f9d25b667ae3a11c109edc0382e11aae639",
   "implementation_session": "codex/test-determinism-inline-20260928",
   "chunks": [
     {
@@ -2128,6 +2141,24 @@ Independent reviews remain on gpt-6-sol at high effort.
     {
       "from": "sha256:9894c90ea0001faa207d3ef00a969f6ae0349679fa949156817c1c37c2cb544f",
       "to": "sha256:16abfe4c3e278cb992643dd86dfdb7be1fa874c001dea3ac15c9b9c5050853a8",
+      "chunk_ids": {
+        "TD-C1a": [
+          "TD-C1a"
+        ],
+        "TD-C1b": [
+          "TD-C1b"
+        ],
+        "TD-C2": [
+          "TD-C2"
+        ],
+        "TD-C3": [
+          "TD-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:16abfe4c3e278cb992643dd86dfdb7be1fa874c001dea3ac15c9b9c5050853a8",
+      "to": "sha256:27e6b2a427af1a721ef859c1d70c7f9d25b667ae3a11c109edc0382e11aae639",
       "chunk_ids": {
         "TD-C1a": [
           "TD-C1a"

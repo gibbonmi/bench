@@ -135,7 +135,7 @@ The verdict policy windows are these seven:
 - the gate timeout
 - the package load timeout
 
-Session inspection reads the provider timeout and the environment discovery timeout as constants today. It gains one package variable for each window, both through the first accessor, and a setter for tests. Ticket 8 moves three local windows into the bounds registry and adds them to this set. They are the ref-check timeout, the handoff lock deadline, and the capture lock wait.
+Session inspection reads the provider timeout and the environment discovery timeout as constants today. It gains one package variable for each window, both through the first accessor, and a setter for tests. Ticket 8 moves the remaining local verdict windows into the bounds registry and adds them to this set. They are the ref-check timeout, the handoff lock deadline, the capture lock wait, and the intent ledger lock wait.
 
 The bounds-policy check grows one rule. In production code outside the bounds package, a timed wait passes its window through one of the two accessors. The rule covers each context timeout or deadline, each timer, each after-channel, each after-function, and each deadline computed from the current time. The check's owner table names the first accessor around each verdict window, and its required list names each verdict window. The owner table is the inventory of verdict windows.
 
@@ -174,7 +174,7 @@ Gate records truncate their times to whole seconds. The one ordering comparison 
 | TD-C1a / `1-open-kit-test-run.md` | The kit test run owner exists, and the gate's kit phases carry its entries. | TD1, TD2, TD3, TD4, TD5, TD6, TD8, TD9, TD10, TD11, TD12, TD13, TD14, TD15 | `bench test --package ./internal/env`, `bench test --package ./internal/gate` | no |
 | TD-C1b / `2-compose-kit-test-run.md` | `bench test` in the kit and the release preflight phases carry the same entries, and the git policy has one source. | TD7, TD16, TD17, TD18, TD19 | `bench test --package ./internal/testreport`, `bench test --package ./internal/releasepreflight`, `bench test --package ./internal/env`, `bench test --package ./internal/gate`, `bench test --package ./internal/probe`, `bench test --package ./internal/gittest` | no |
 | TD-C2 / `3-isolate-conformance-probe-home.md`, `4-run-build-scripts-on-kit-copy.md`, `5-grade-named-check-on-private-root.md`, `6-guard-live-checkout.md` | Parallel tests share no file, and the gate reds a test that writes the live checkout. | TD20, TD21, TD22, TD23, TD24, TD25, TD26, TD27, TD28, TD29, TD30, TD31, TD32, TD47, TD48, TD49 | `bench test --package ./internal/conformance`, `bench test --package ./internal/gittest`, `bench test --package ./cmd/bench`, `bench test --package ./internal/testreport`, `bench test --package ./internal/gate`, `bench test --package ./internal/env`, `bench test --package ./internal/releasepreflight`, `bench gate` | yes |
-| TD-C3 / `7-switch-verdict-windows.md`, `8-name-every-production-wait.md` | No verdict bound expires in a kit test run unless the test set it, a subprocess child keeps its bounds, and every production wait names its window. | TD33, TD34, TD35, TD36, TD37, TD38, TD39, TD40, TD41, TD42, TD43, TD44, TD45, TD46 | `bench test --package ./internal/bounds`, `bench test --package ./internal/git`, `bench test --package ./internal/sessioninspect`, `bench test --package ./internal/worktree --run TestListCommandRendersBoundExpiryAsTypedFailure`, `bench test --check bounds-policy`, `bench test --check system`, `bench gate` | yes |
+| TD-C3 / `7-switch-verdict-windows.md`, `8-name-every-production-wait.md` | No verdict bound expires in a kit test run unless the test set it, a subprocess child keeps its bounds, and every production wait names its window. | TD33, TD34, TD35, TD36, TD37, TD38, TD39, TD40, TD41, TD42, TD43, TD44, TD45, TD46, TD50 | `bench test --package ./internal/bounds`, `bench test --package ./internal/git`, `bench test --package ./internal/sessioninspect`, `bench test --package ./internal/worktree --run TestListCommandRendersBoundExpiryAsTypedFailure`, `bench test --check bounds-policy`, `bench test --check system`, `bench test --package ./internal/intent`, `bench gate` | yes |
 
 Chunk IDs keep their pass-1 values. TD-C2 gains ticket 4. The pass-1 tickets 4, 5, 6, and 7 are now tickets 5, 6, 7, and 8.
 
@@ -203,6 +203,7 @@ The author read each test below on 2026-09-19. The census sweep searched every t
 | `awaitStartedSpan` in `TestOtelCrashKeepsStartedPhaseLine` | Its wait window derives from the worktree list window of the child. The window stays finite, but a switched child has no inner bound for the window to contain. | The same removal restores the inner bound. |
 | `awaitArtifactBarrier` in `TestProspectiveArtifactRecoveryAfterKilledLanding` | The same shape as `awaitStartedSpan`. | The same removal restores the inner bound. |
 | `TestEnvironmentPhaseTE15StopsAtDiscoveryBound` in session inspection | It runs in process. It asserts that discovery stops near the discovery window, but session inspection reads the constant, so no setter exists. | Ticket 7 gives session inspection a variable and a setter, and the test sets its own window. |
+| `TestCommandInstallsTenSecondDeadline` in session inspection | The command receives an unbounded provider window under the switch. | Ticket 7 sets the provider window through the raw test setter. |
 | `TestWorktreeListTimeoutDefaultUsesPolicy` in the git package | It asserts that the variable equals the policy constant. That equality is false under the switch. | Ticket 7 changes the expected value to the first accessor's result. |
 | `TestUpdateRefusesALockAnotherWriterHolds` in the handoff store | It relies on the two-second lock window to expire. | Ticket 8 gives the test its own window through a setter. |
 
@@ -283,6 +284,7 @@ One candidate is not in the census: the refusal test of the consumers command at
 | TD47 | 31 | The kit copy of the kit root holds every tracked file and every untracked file that is not ignored, its own git directory, and no `dist/` path | planned test in internal/gittest | A copy that uses the live root or copies ignored files holds the live `dist/` or shares the live git directory. |
 | TD48 | 31 | After `TestReleasePreflightBuildDoesNotRebindThePromotionBroker` and `TestGoBuildSubjectModePublishesTheStampedVersion` run, the live checkout holds no new `dist/` path and an unchanged `bin/bench-broker.manifest` | review-owned: reviews/test-determinism.md, with the recorded probe run; the landing gate's guard (TD32) after ticket 6 | A test that still runs the script in the live root recreates `dist/bench-preflight`, and a restore rewrites the live manifest. |
 | TD49 | 4, 14 | A Bash child under the kit-run entries emits only its requested output when the base BASH_ENV names a startup file that prints a marker | planned TestKitTestRunIgnoresInheritedBashStartup in internal/env | An owner that inherits BASH_ENV emits the startup marker before the child output. |
+| TD50 | 23 | The bounds-policy check reds an intent ledger lock window that uses the second accessor | new canary in the `package-core-guard` family that changes the intent lock accessor | A missing owner-table binding accepts a verdict window that stays finite in kit tests. |
 
 Not covered: story 41 — the reviewed exclusion changes no behavior, and the Won't handle line below records it.
 Not covered: story 42 — the reviewed exclusion changes no behavior, and the Won't handle line below records it.
@@ -342,6 +344,7 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - `internal/releasepreflight/external_test.go`
 - `internal/conformance/checks_test.go`
 - `internal/conformance/conformance_env_test.go`
+- `internal/conformance/bounds_waits_policy_test.go`
 - `internal/conformance/bounds_policy_test.go`
 - `internal/conformance/fixture_bite_test.go`
 - `tests/canary/package-core-guard/`
@@ -349,6 +352,7 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - `internal/bounds/bounds_test.go`
 - `internal/git/git.go`
 - `internal/git/worktree_admin_enum_test.go`
+- `internal/intent/`
 - `internal/handoffdoc/`
 - `internal/capturetx/`
 - `internal/runbinary/runbinary.go`
@@ -360,6 +364,7 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - `internal/models/models.go`
 - `internal/sessioninspect/sessioninspect.go`
 - `internal/sessioninspect/sessioninspect_test.go`
+- `internal/systemtest/owner_environment_test.go`
 - `internal/systemtest/owner_test.go`
 - `internal/systemtest/owner_land_race_test.go`
 - `internal/systemtest/owner_artifact_recovery_test.go`
@@ -488,8 +493,20 @@ The staged `ft290-test-projection` spec writes all of `internal/testreport/`, be
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"TD-C1a","tickets":["1-open-kit-test-run.md"],"verification":[{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"TD-C1b","tickets":["2-compose-kit-test-run.md"],"verification":[{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"releasepreflight","command":"bench test --package ./internal/releasepreflight"},{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"probe","command":"bench test --package ./internal/probe"},{"id":"gittest","command":"bench test --package ./internal/gittest"}]},{"id":"TD-C2","tickets":["3-isolate-conformance-probe-home.md","4-run-build-scripts-on-kit-copy.md","5-grade-named-check-on-private-root.md","6-guard-live-checkout.md"],"verification":[{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"gittest","command":"bench test --package ./internal/gittest"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"stress-callers","command":"go test -trimpath -count=1 -tags=stress ./internal/conformance -run '^TestResidualCheckKeepsCrossCompile$'"},{"id":"testrepo","command":"bench test --package ./internal/testrepo"},{"id":"env","command":"bench test --package ./internal/env"},{"id":"releasepreflight","command":"bench test --package ./internal/releasepreflight"}]},{"id":"TD-C3","tickets":["7-switch-verdict-windows.md","8-name-every-production-wait.md"],"verification":[{"id":"bounds","command":"bench test --package ./internal/bounds"},{"id":"git","command":"bench test --package ./internal/git"},{"id":"sessioninspect","command":"bench test --package ./internal/sessioninspect"},{"id":"worktree-bound","command":"bench test --package ./internal/worktree --run TestListCommandRendersBoundExpiryAsTypedFailure"},{"id":"bounds-policy","command":"bench test --check bounds-policy"},{"id":"system","command":"bench test --check system"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/test-determinism/spec.md"},{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"bounds","command":"bench test --package ./internal/bounds"},{"id":"bounds-policy","command":"bench test --check bounds-policy"},{"id":"system","command":"bench test --check system"}]}
+{"version":1,"chunks":[{"id":"TD-C1a","tickets":["1-open-kit-test-run.md"],"verification":[{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"TD-C1b","tickets":["2-compose-kit-test-run.md"],"verification":[{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"releasepreflight","command":"bench test --package ./internal/releasepreflight"},{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"probe","command":"bench test --package ./internal/probe"},{"id":"gittest","command":"bench test --package ./internal/gittest"}]},{"id":"TD-C2","tickets":["3-isolate-conformance-probe-home.md","4-run-build-scripts-on-kit-copy.md","5-grade-named-check-on-private-root.md","6-guard-live-checkout.md"],"verification":[{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"gittest","command":"bench test --package ./internal/gittest"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"stress-callers","command":"go test -trimpath -count=1 -tags=stress ./internal/conformance -run '^TestResidualCheckKeepsCrossCompile$'"},{"id":"testrepo","command":"bench test --package ./internal/testrepo"},{"id":"env","command":"bench test --package ./internal/env"},{"id":"releasepreflight","command":"bench test --package ./internal/releasepreflight"}]},{"id":"TD-C3","tickets":["7-switch-verdict-windows.md","8-name-every-production-wait.md"],"verification":[{"id":"bounds","command":"bench test --package ./internal/bounds"},{"id":"git","command":"bench test --package ./internal/git"},{"id":"sessioninspect","command":"bench test --package ./internal/sessioninspect"},{"id":"worktree-bound","command":"bench test --package ./internal/worktree --run TestListCommandRendersBoundExpiryAsTypedFailure"},{"id":"bounds-policy","command":"bench test --check bounds-policy"},{"id":"system","command":"bench test --check system"},{"id":"intent","command":"bench test --package ./internal/intent"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/test-determinism/spec.md"},{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"bounds","command":"bench test --package ./internal/bounds"},{"id":"bounds-policy","command":"bench test --check bounds-policy"},{"id":"system","command":"bench test --check system"}]}
 ```
+
+### Production wait census closure
+
+The source census includes internal/intent/intent.go:208, whose lock wait has a two-second verdict deadline.
+TD50 puts that owner under the existing all-waits rule without changing its production window.
+The canary uses the registered bounds-policy check and the ordinary retained-fixture proof.
+The required intent package check preserves its concurrent-writer and stale-lock behavior.
+
+Ticket 7 moves the existing system environment helpers into internal/systemtest/owner_environment_test.go.
+This keeps the existing oversized owner test file from growing.
+Ticket 8 can place the wait-expression checker in internal/conformance/bounds_waits_policy_test.go.
+The existing bounds-policy owner calls that checker, so the rule has one executable owner.
 
 ### Flagged additions
 
