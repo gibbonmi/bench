@@ -222,7 +222,15 @@ The probe reports a passing baseline, one failed test, and restored source.
 The complete native output is retained in .logs/test-determinism-c1b-repair-2.json.
 
 Repair cycles consumed for TD-C1b: 2 of 2.
-The second confirming round and full checkpoint remain pending.
+The second confirming round passes on all three axes.
+Raw findings: Standards 0, Spec 0, Coverage 0.
+Distinct repair targets: 0.
+The whole-project checkpoint remains pending.
+
+Each axis read the repair delta and reaffirmed the whole chunk.
+Coverage retried its current-binding query after oversized tool output lost the first response.
+The retry returned the expected current assignment and source pair.
+All reviewers distinguish author execution evidence from their independent source reads.
 
 ```bench-review-record
 {
@@ -459,7 +467,7 @@ The second confirming round and full checkpoint remain pending.
     {
       "id": "TD-C1b",
       "base": "21ad810f4262c1478799618a93356b14969d8b83",
-      "tip": "54f284bb18494a3c3b36bc00000142b5200bdef4",
+      "tip": "dabde5afd26713532dfd5afd28964c2367f21b85",
       "plan_digest": "sha256:a1c65436efe7e608851a1c837dc69d2dec30b6824629417613dbcaf5ccc3325b",
       "source_digest": "f9e429423aa5d946636fc4d7c678baeeb7cfac87",
       "acceptance_rows": [
@@ -832,6 +840,72 @@ The second confirming round and full checkpoint remain pending.
           "finding_ids": [],
           "supersedes": [
             "TD-C1b-Coverage-1"
+          ]
+        },
+        {
+          "id": "TD-C1b-Spec-confirm-2",
+          "performer": "/root/td_c1b_spec_confirm2",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "f9e429423aa5d946636fc4d7c678baeeb7cfac87",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:/root/td_c1b_spec_confirm2",
+            "digest": "sha256:3bbe0c1331136eaee1cfc267102052c164a47709ea4464c1dcf1fbb0d757ae38",
+            "excerpt": "Spec: **pass; 0 blocking findings; worst issue: none.** Finding IDs, dispositions, and finding confidences: none. Distinct repair targets: 0.\n\nI reaffirm the Spec judgment for the complete TD-C1b pair `21ad810f4262c1478799618a93356b14969d8b83..dabde5afd26713532dfd5afd28964c2367f21b85`."
+          },
+          "axis": "Spec",
+          "base": "21ad810f4262c1478799618a93356b14969d8b83",
+          "tip": "dabde5afd26713532dfd5afd28964c2367f21b85",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C1b-Spec-confirm-1"
+          ]
+        },
+        {
+          "id": "TD-C1b-Standards-confirm-2",
+          "performer": "/root/td_c1b_standards_confirm2",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "f9e429423aa5d946636fc4d7c678baeeb7cfac87",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:/root/td_c1b_standards_confirm2",
+            "digest": "sha256:ae81c335eb9a59e223559b13772228ba24977371dd92f07f4490db959b620be4",
+            "excerpt": "Standards: **pass; 0 blocking findings; worst issue: none.** Remaining repair targets: 0. Line: gpt-6-sol / high / one iteration.\n\nI reaffirm the complete TD-C1b pair `21ad810f4262c1478799618a93356b14969d8b83..dabde5afd26713532dfd5afd28964c2367f21b85`."
+          },
+          "axis": "Standards",
+          "base": "21ad810f4262c1478799618a93356b14969d8b83",
+          "tip": "dabde5afd26713532dfd5afd28964c2367f21b85",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C1b-Standards-confirm-1"
+          ]
+        },
+        {
+          "id": "TD-C1b-Coverage-confirm-2",
+          "performer": "/root/td_c1b_coverage_confirm2",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "f9e429423aa5d946636fc4d7c678baeeb7cfac87",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:/root/td_c1b_coverage_confirm2",
+            "digest": "sha256:e9b2117fc9435c0a473ef828fc6218b651d2e06dcdc6010a6601a4201f90aeb6",
+            "excerpt": "Coverage: **pass; 0 blocking findings; worst issue: none.** Finding IDs and dispositions: none. Distinct repair targets: 0.\n\nI reaffirm Coverage for TD7 and TD16\u2013TD19 across the complete current chunk pair. The repair changes the fixture\u2019s forwarding branch and its documentation; existing canned answers and assertions survive."
+          },
+          "axis": "Coverage",
+          "base": "21ad810f4262c1478799618a93356b14969d8b83",
+          "tip": "dabde5afd26713532dfd5afd28964c2367f21b85",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C1b-Coverage-confirm-1"
           ]
         }
       ]
