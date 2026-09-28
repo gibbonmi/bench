@@ -1291,6 +1291,49 @@ that text.
 The repair session reran the ticket 4 plan checks at `037a4c66` on a clean
 tree. The JSON payload holds each result after the cycle 2 rows.
 
+## RI-C2b chunk review, round 4
+
+The round froze base `114f94a2` and tip `037a4c66`. The seam commit
+`12137b64` and the record commit `fc02198b` follow the tip, and the shared
+evidence is `sha256:252eac6c…`. Each axis ran in a fresh `bench-reviewer`
+session on opus at high effort under the blocking bar. Only the Coverage axis
+ran probes, and it left the tree clean.
+
+Raw findings: Standards 0, Spec 0, Coverage 0. R49 is folded on every axis,
+and the chunk closes.
+
+### Standards, round 4
+
+Findings: 0 blocking. The discard file holds one `--no-deref` delete with the
+exact tip, and `internal/git` is unchanged. The comment is in the
+craft-comments register, and no file is over 400 lines.
+
+Advice:
+
+- the discard file and the sweep both run an exact no-deref delete, with different error shapes
+- the comment's claim about other deletes is sampled over the `DeleteBranchExact` callers only
+
+### Spec, round 4
+
+Findings: 0 blocking. RI103 is delivered by its cited test, and RI67 holds
+under the local delete. Every surface carries RI103, and the third cycle is
+recorded as a reviewer grant. Advice: the RI103 test pins the `removed`
+outcome that Git 2.43 produces, and the spec's decision log has no RI103
+sentence.
+
+### Coverage, round 4
+
+Findings: 0 blocking. No constructed input splits the preserve step from the
+discard step. A symref at the branch path to a different tip, or a dangling
+one, makes the delete refuse with both refs kept. The independent bypass forged
+the `show-ref` read, a different site, and eight tests bit.
+
+Advice, parked as ideas:
+
+- a third party can overwrite the discarded ref itself between the write and the delete, and Git 2.43 old-value checks cannot close that
+- no boundary step sits between the `symbolic-ref` check and the `show-ref` read
+- the local delete's error drops Git's stderr
+
 ```bench-review-record
 {
   "version": 2,
@@ -2725,6 +2768,66 @@ tree. The JSON payload holds each result after the cycle 2 rows.
           "tip": "b592c85ab201e0743cde20aa39843846ed309bb9",
           "finding_ids": ["R49"],
           "supersedes": ["ri-c2b-r2-coverage"]
+        },
+        {
+          "id": "ri-c2b-r4-standards",
+          "performer": "claude:bench-reviewer/ri-c2b-standards-r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f5f676de61e1dc3053dfa31573fdec0c3a7fd5e5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2b-standards-r4@037a4c66",
+            "digest": "sha256:efe13453560e7642df1fba6fdfc9ccbf604f68faea298c493e35ecee454db1c1",
+            "excerpt": "Standards round 4: 0 blocking findings. R49 folded with one no-deref delete local to the discard file, and internal/git is unchanged."
+          },
+          "axis": "Standards",
+          "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "tip": "037a4c660dabc1ad06cfef2a63d146febcb80cf5",
+          "finding_ids": [],
+          "supersedes": ["ri-c2b-r3-standards"]
+        },
+        {
+          "id": "ri-c2b-r4-spec",
+          "performer": "claude:bench-reviewer/ri-c2b-spec-r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f5f676de61e1dc3053dfa31573fdec0c3a7fd5e5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2b-spec-r4@037a4c66",
+            "digest": "sha256:803947ead16d18968f01c7228000a66c5fc4a7def95f7428522c39fc194e90b6",
+            "excerpt": "Spec round 4: 0 blocking findings. RI103 delivered by its cited test, RI67 holds, and the coverage map cites every row but the two review-owned ones."
+          },
+          "axis": "Spec",
+          "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "tip": "037a4c660dabc1ad06cfef2a63d146febcb80cf5",
+          "finding_ids": [],
+          "supersedes": ["ri-c2b-r3-spec"]
+        },
+        {
+          "id": "ri-c2b-r4-coverage",
+          "performer": "claude:bench-reviewer/ri-c2b-coverage-r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f5f676de61e1dc3053dfa31573fdec0c3a7fd5e5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2b-coverage-r4@037a4c66",
+            "digest": "sha256:d6405de3e83eb4f54c2f4c5ca9e7072e9e2c52b090b1ebd7534f681e452eb5f3",
+            "excerpt": "Coverage round 4: 0 blocking findings. R49 folded; no constructed input splits the preserve step from the discard step, and a third-party overwrite of the handle stays advice."
+          },
+          "axis": "Coverage",
+          "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "tip": "037a4c660dabc1ad06cfef2a63d146febcb80cf5",
+          "finding_ids": [],
+          "supersedes": ["ri-c2b-r3-coverage"]
         }
       ]
     }
