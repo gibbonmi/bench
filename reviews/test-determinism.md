@@ -2106,7 +2106,7 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
     {
       "id": "TD-C3",
       "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
-      "tip": "464beb14abf4dbda17ded4589c19ab6fb51d7a90",
+      "tip": "5832b0095ab45369ef4c252b6f95e06b4f4a6ae6",
       "plan_digest": "sha256:99e115a7ba3f3afe54aa29c40f20dd56ecd71925c9b19147fa00a1927dd24288",
       "source_digest": "86a412d916bee27eae39ac3a5969c7abde3fb1eb",
       "acceptance_rows": [
@@ -2974,6 +2974,72 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
           "supersedes": [
             "TD-C3-spec-2"
           ]
+        },
+        {
+          "id": "TD-C3-standards-4",
+          "performer": "/root/td_c3_standards_confirm3",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "86a412d916bee27eae39ac3a5969c7abde3fb1eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:/root/td_c3_standards_confirm3:final",
+            "digest": "sha256:13221691ff714be21803fed92b9a15e8863c8c11a368d027876b4cfe5297ea8d",
+            "excerpt": "**Standards: PASS.** Current findings: **0**. Worst issue: **none**. Distinct remaining Standards repair targets: **0**. No new finding IDs or dispositions.\n\nReaffirmed whole TD-C3 binding: `52d0ec32306c1e8005d5cb9946996d0618362ae6..5832b0095ab45369ef4c252b6f95e06b4f4a6ae6`. Source digest: `86a412d916bee27eae39ac3a5969c7abde3fb1eb`. Plan digest: `sha256:99e115a7ba3f3afe54aa29c40f20dd56ecd71925c9b19147fa00a1927dd24288`.\n\nThis confirming pass read exactly one Git diff: `9920ceae0eaf580df6a0867386e4b81c34ebaa0c..5832b0095ab45369ef4c252b6f95e06b4f4a6ae6`. It did not reopen the whole-chunk hunt.\n\nThe prior folds remain intact:\n\n- **TD-C3-S1:** sibling and owner reads still use `readBoundsSource`, which delegates to `bounds.ClassifyNoFollow`; the private symlink/FIFO regression remains (`bounds_waits_policy_test.go:111`; `bounds_policy_test.go:297`, `:330`).\n- **TD-C3-C1:** later local assignments, elapsed-time comparisons, and injected duration positions remain graded through the shared classifier and signature reader (`bounds_waits_policy_test.go:47`, `:62`, `:159`, `:170`, `:312`, `:324`). Their retained mutation fixtures remain present.\n- **TD-C3-C2:** the shared resolver still retains supported import candidates and appends lexical/package bindings (`bounds_waits_policy_test.go:203`, `:265`). Both legal multi-import and sibling-alias canaries remain registered.\n\nClaim: `{\"status\":\"claimed\",\"confidence\":9}`"
+          },
+          "axis": "Standards",
+          "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
+          "tip": "5832b0095ab45369ef4c252b6f95e06b4f4a6ae6",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C3-standards-3"
+          ]
+        },
+        {
+          "id": "TD-C3-spec-4",
+          "performer": "/root/td_c3_spec_confirm3",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "86a412d916bee27eae39ac3a5969c7abde3fb1eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:/root/td_c3_spec_confirm3:final",
+            "digest": "sha256:dea82e0537737c1a71bdad591db2bdd0dfdabe025e4f3dc931a0f7ee5261fd8a",
+            "excerpt": "**Spec: PASS.** Current findings: **0**. Worst issue: **none**. Distinct remaining repair targets: **0**. No new finding IDs, dispositions, or finding confidences.\n\nLine: `gpt-6-sol / high / one iteration`. Reaffirm the whole TD-C3 pair:\n\n`52d0ec32306c1e8005d5cb9946996d0618362ae6..5832b0095ab45369ef4c252b6f95e06b4f4a6ae6`\n\nSource: `86a412d916bee27eae39ac3a5969c7abde3fb1eb`. Plan: `sha256:99e115a7ba3f3afe54aa29c40f20dd56ecd71925c9b19147fa00a1927dd24288`.\n\nRepair 3 satisfies the named all-waits concern in `specs/test-determinism/spec.md:140` and ticket 8:11. The source trace is explicit: `(time.Sleep)` is normalized at `bounds_waits_policy_test.go:61`, resolved through `waitFunctionNames:265` and `waitCallNames:203`, selected as a timed wait at `:82`, and checked for classification at `:85`. Parenthesized accessor, clock, elapsed-time, and assignment expressions use the same normalization.\n\nAll **50 acceptance rows** were audited against their behavior, seam, and failure clause:\n\n| **Total** | **50** | **34 preserved prior rows, 14 C3 rows, 2 oracle obligations.** |\n\nThe current nine C3 checks and six final checks are recorded passing in `.logs/test-determinism-c3-repair-3-verification.json` and `.logs/test-determinism-final-verification-3.json`, bound to the current source digest. Final acceptance reconciliation and the actual gate remain coordinator work.\n\nClaim: `{\"status\":\"claimed\",\"confidence\":9}`"
+          },
+          "axis": "Spec",
+          "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
+          "tip": "5832b0095ab45369ef4c252b6f95e06b4f4a6ae6",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C3-spec-3"
+          ]
+        },
+        {
+          "id": "TD-C3-coverage-4",
+          "performer": "/root/td_c3_coverage_confirm3",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "86a412d916bee27eae39ac3a5969c7abde3fb1eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:/root/td_c3_coverage_confirm3:final",
+            "digest": "sha256:c99aa9e1b5e8ba854449dee5497875c1d67fe5f4eccbb952f67665c62cf56a2f",
+            "excerpt": "**Coverage: PASS for this confirming round.** Current findings: **0**. Worst issue: **none**. Distinct remaining repair targets: **0**. No new finding IDs or dispositions.\n\nReaffirmed whole TD-C3 binding: `52d0ec32306c1e8005d5cb9946996d0618362ae6..5832b0095ab45369ef4c252b6f95e06b4f4a6ae6`. Source digest: `86a412d916bee27eae39ac3a5969c7abde3fb1eb`. Plan digest: `sha256:99e115a7ba3f3afe54aa29c40f20dd56ecd71925c9b19147fa00a1927dd24288`.\n\nThe parenthesized-call repair is confirmed by source inspection, confidence **9**. `check`, `waitFunctionNames`, and `waitCallNames` normalize call targets before selecting wait rules (`internal/conformance/bounds_waits_policy_test.go:61`, `:203`, `:265`). The new canary explicitly selects `bounds-policy`, requires the `time.Sleep` diagnostic, and registers under the existing owner (`internal/conformance/registry_test.go:150`). `runFixtureBite:750` calls that production owner, requires the diagnostic, restores the subject, and requires its disappearance.\n\n**Independent refutation attempts:** I traced nested parenthesized aliases such as `var pause = ((time.Sleep)); (pause)(time.Duration(17))`, parenthesized elapsed calls, and `(window) = time.Duration(19)` after a classified initializer. These reach alias resolution, elapsed-time recognition, or local-assignment rejection respectively (`bounds_waits_policy_test.go:141`, `:170`, `:265`, `:312`). None yields a supported bypass in this bounded source pass. These traces were **not executed**.\n\nClaim: `{\"status\":\"claimed\",\"confidence\":9}`"
+          },
+          "axis": "Coverage",
+          "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
+          "tip": "5832b0095ab45369ef4c252b6f95e06b4f4a6ae6",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C3-coverage-3"
+          ]
         }
       ]
     }
@@ -3687,3 +3753,30 @@ The native records are .logs/test-determinism-c3-repair-3-verification.json and 
 Post-review repair cycles consumed: 3.
 The parenthesized-call concern has author red and green evidence, and fresh independent confirmation remains pending.
 TD32 and TD44 remain actual gate obligations.
+
+
+## TD-C3 confirmation after repair 3
+
+The three fresh Sol/high axes pass with zero current findings.
+Each axis reports confidence 9 and reaffirms the whole current C3 pair.
+The Standards axis finds no duplicated policy or fixture harness in the repair.
+The Spec axis accounts for all 50 acceptance rows.
+The Coverage axis traces nested aliases, elapsed calls, and assignment targets through the shared parenthesis normalization.
+These source traces are reviewer claims; the recorded executions remain author evidence.
+
+TD-C3-S1, TD-C3-C1, and TD-C3-C2 retain their historical auto-fix dispositions and confirmed repairs.
+The coordinator verified the unchanged source tip and clean working tree after all three returns.
+All required current C3 checks pass.
+TD32 and TD44 retain their actual integrated gate obligations.
+
+Every axis read the repair delta from 9920ceae through 5832b009.
+Each axis read the complete approved spec, tickets 7 and 8, its governing sources, and targeted code.
+Each axis checked the evidence binding once and consumed metadata s1 and consumer pages s103:0 through s103:2.
+Spec and Coverage consumed coverage pages s104:0 and s104:1.
+Spec also consumed the complete spec evidence stream s2:0 through s2:7.
+All fetched spills were read, and no axis ran a test or changed a file.
+
+The optional CLI advice concerns escaped page budgets and the position of pagination grammar in help.
+No axis identifies an implementation-command contribution.
+Repair cycles consumed for C3: 3, under the user's uncapped bench-debug authorization.
+The next action is the C3 checkpoint, followed by final acceptance reconciliation.
