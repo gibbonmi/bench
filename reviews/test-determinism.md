@@ -393,6 +393,14 @@ The scheduler source digest was sha256:ee860e612b3e908c07d7be84a547989103d70329a
 The aborted scheduler's known private run was also removed.
 The ordinary shared-probe regression and the native result records remain.
 
+## TD-C1b accepted checkpoint
+
+Checkpoint gate-20260928T135355.249170404Z-4066976 passes on commit 579422ea266ab47a0411da0c2b271430e4263281.
+All six phases pass, including the full test, race, and system phases.
+The gate reports eight capability skips and zero environment skips.
+TD7 and TD16 to TD19 are accepted.
+TD-C2 starts from the following record commit; TD-C3 remains pending.
+
 ```bench-review-record
 {
   "version": 1,
