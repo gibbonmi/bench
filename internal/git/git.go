@@ -22,6 +22,13 @@ var refCheckTimeout = bounds.VerdictWindow(bounds.RefCheckTimeout)
 
 var worktreeListTimeout = bounds.VerdictWindow(bounds.WorktreeListTimeout)
 
+// SetRefCheckTimeoutForTest installs a test-only ref probe bound and restores it.
+func SetRefCheckTimeoutForTest(limit time.Duration) func() {
+	previous := refCheckTimeout
+	refCheckTimeout = limit
+	return func() { refCheckTimeout = previous }
+}
+
 // SetWorktreeListTimeoutForTest installs a test-only discovery bound and restores it.
 func SetWorktreeListTimeoutForTest(limit time.Duration) func() {
 	previous := worktreeListTimeout
