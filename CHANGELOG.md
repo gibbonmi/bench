@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Branch pruning
+
+- Fixed exact branch deletion so the landing prune preserves symbolic-ref targets.
+
 ### Anchor queries
 
 - Added the directory form `bench anchors <dir>`. It prints one row for each anchored guidance file below the directory, with the anchor count, the diagnostic count, and the verdict. A directory with no anchored file gives an empty table.

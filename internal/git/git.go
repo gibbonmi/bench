@@ -109,7 +109,7 @@ func LocalBranches(root string) ([]string, error) {
 // DeleteBranchExact removes one full branch ref only while it still has the
 // caller-proven OID.
 func DeleteBranchExact(root, ref, oid string) error {
-	out, err := exec.Command("git", "-C", root, "update-ref", "-d", ref, oid).CombinedOutput()
+	out, err := exec.Command("git", "-C", root, "update-ref", "--no-deref", "-d", ref, oid).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("update exact branch ref: %w: %s", err, strings.TrimSpace(string(out)))
 	}
