@@ -864,7 +864,7 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
 {
   "version": 1,
   "spec": "specs/test-determinism/spec.md",
-  "plan_digest": "sha256:c71fc344fd2fa8f31004e339b7ffdeeaa6028361a2cdfc825ddf22af75ba9527",
+  "plan_digest": "sha256:035ed2fb6e30d046e3fe456f0506ea4850b9be2dd96f1e296f168fc97b7f59ba",
   "implementation_session": "codex/test-determinism-inline-20260928",
   "chunks": [
     {
@@ -2107,7 +2107,7 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
       "id": "TD-C3",
       "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
       "tip": "5832b0095ab45369ef4c252b6f95e06b4f4a6ae6",
-      "plan_digest": "sha256:c71fc344fd2fa8f31004e339b7ffdeeaa6028361a2cdfc825ddf22af75ba9527",
+      "plan_digest": "sha256:035ed2fb6e30d046e3fe456f0506ea4850b9be2dd96f1e296f168fc97b7f59ba",
       "source_digest": "86a412d916bee27eae39ac3a5969c7abde3fb1eb",
       "acceptance_rows": [
         "TD33",
@@ -3322,6 +3322,24 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
           "TD-C3"
         ]
       }
+    },
+    {
+      "from": "sha256:c71fc344fd2fa8f31004e339b7ffdeeaa6028361a2cdfc825ddf22af75ba9527",
+      "to": "sha256:035ed2fb6e30d046e3fe456f0506ea4850b9be2dd96f1e296f168fc97b7f59ba",
+      "chunk_ids": {
+        "TD-C1a": [
+          "TD-C1a"
+        ],
+        "TD-C1b": [
+          "TD-C1b"
+        ],
+        "TD-C2": [
+          "TD-C2"
+        ],
+        "TD-C3": [
+          "TD-C3"
+        ]
+      }
     }
   ]
 }
@@ -3826,3 +3844,8 @@ The author read the failing source beside the debug instructions before narrowin
 The gate red already existed, but the focused loop should have preceded that source read.
 The author reproduced the exact failure before any repair edit.
 Repair 4 remains pending under the user's uncapped bench-debug authorization.
+
+The enabling plan commit 6cc50fd3 passed its lane but failed the fixture-closure build preflight.
+The fence now includes the existing unregistered-port canary that pins checker_junction_test.go.
+Its mutation changes the production Checker declaration, which this repair does not edit.
+No repair code changed before the fence correction.

@@ -540,3 +540,6 @@ Its timeout fixture sets a raw test window before running the sleeping Git stub.
 TD51 requires the checkout refusal when the kit-run switch is on.
 Ticket 8 owns the existing fixture and verifies the complete Git guard package.
 The existing branch and push assertions remain in force.
+
+The Git guard fixture is pinned by tests/canary/injected-ports/unregistered-port.
+Ticket 8 includes that fixture in its fence and preserves its registered-port mutation.
