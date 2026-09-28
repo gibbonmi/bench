@@ -1166,6 +1166,39 @@ expansion inside the approved behavior, the ticket 4 acceptance line, and the
 assignment. After the repair the blocking bar applies: a further blocking
 finding stops the chunk for the reviewer. No command change is necessary.
 
+The session `ri-t4-repair-2` stopped without a commit on a material acceptance
+shortfall. On Git 2.43 no `update-ref` form fails on a dangling symref at the
+planned path. `--no-deref` stops the write from following it, but Git reads
+the dangling symref as absent and replaces it with a direct ref at the tip. The
+orchestrator confirmed the cause with a throwaway loop in the build worktree
+and a scratch repository, then removed both.
+
+The Codex Astra consultation on the decision produced no output in over three
+hours, and the orchestrator stopped it. The reviewer decided Option A in
+conversation on 2026-09-27. The write uses `--no-deref`, a resolving symref
+fails the write, and a dangling symref is replaced by the discarded ref at the
+row's tip. The reviewer also moved every later consultation to a Fable session
+at high effort. The plan commit `dd3c188a` restates RI102, spec line 225, and
+the ticket 4 acceptance lines, and it records the assignment
+`ri-t4-repair-2b`.
+
+The session `ri-t4-repair-2b` committed `b592c85a` on a lane pass in one
+attempt, and the explicit-base build preflight is green at that tip. The write
+now runs `update-ref --no-deref` with the zero old value, and
+`TestDiscardTargetNeverFollowsASymrefPlantedAfterTheRead` pins both subtests.
+The dangling case was red on the unrepaired tree, and the author's probe that
+removes `--no-deref` bit it with restore `yes`. The orchestrator's coordinator
+probe omitted the pre-read symref check, a different kind and site, and RI96
+bit with restore `yes`. The chunk tip moves to `b592c85a`.
+
+The seams commit `3f778192` cites the test for forty RI-C2b rows, and RI57
+and RI82 stay review-owned.
+
+### Verification after repair 2
+
+The repair session reran the ticket 4 plan checks at `b592c85a` on a clean
+tree. The JSON payload holds each result after the cycle 1 rows.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2194,9 +2227,9 @@ finding stops the chunk for the reviewer. No command change is necessary.
     {
       "id": "RI-C2b",
       "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
-      "tip": "a7fba6acea34ec41fab38fc094ce4610a3ca7283",
-      "plan_digest": "sha256:e06057fede71811ba3f11083f9b78a4a89e6791a66711cbe86ba78d58408cac7",
-      "source_digest": "eef2814a583e4812dfc742725ec343b633f35133",
+      "tip": "b592c85ab201e0743cde20aa39843846ed309bb9",
+      "plan_digest": "sha256:cc71a72ac8bfb871e337ff3bcd485626ac77cea9437ed51cdbda81d2b3c9bcd7",
+      "source_digest": "5d088fb12ffdf04ba33e51dbc5384ccb599dcbb0",
       "acceptance_rows": [
         "RI16", "RI29", "RI30", "RI31", "RI32", "RI33", "RI34", "RI35", "RI36", "RI37", "RI38", "RI39", "RI40", "RI41",
         "RI48", "RI49", "RI50", "RI51", "RI52", "RI58", "RI64", "RI65", "RI67", "RI68", "RI69", "RI70", "RI71",
@@ -2344,6 +2377,42 @@ finding stops the chunk for the reviewer. No command change is necessary.
             "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,12996"
           },
           "requirement": "5-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-4-worktree-r3",
+          "performer": "claude:bench-writer/ri-t4-repair-2b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5d088fb12ffdf04ba33e51dbc5384ccb599dcbb0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t4-repair-2b-20260927/4-worktree@b592c85a",
+            "digest": "sha256:495b16bcd05d0495424f254af982b14a9eeeeb234f3ae03f7b306c544502a66d",
+            "excerpt": "  github.com/gibbonmi/bench/internal/worktree,pass,50136"
+          },
+          "requirement": "4-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-4-cmd-r3",
+          "performer": "claude:bench-writer/ri-t4-repair-2b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5d088fb12ffdf04ba33e51dbc5384ccb599dcbb0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t4-repair-2b-20260927/4-cmd@b592c85a",
+            "digest": "sha256:074c7fc031961ea8bd92b89b4c157e4e1595e4eb3ac425456b06d153cfcd3247",
+            "excerpt": "  github.com/gibbonmi/bench/cmd/bench,pass,11125"
+          },
+          "requirement": "4-cmd",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
         }
@@ -2529,6 +2598,36 @@ finding stops the chunk for the reviewer. No command change is necessary.
     {
       "from": "sha256:54bee6d37901346d57cb0e548d95978a7decdd8b6295875dcd433a200e304536",
       "to": "sha256:e06057fede71811ba3f11083f9b78a4a89e6791a66711cbe86ba78d58408cac7",
+      "chunk_ids": {
+        "RI-C1a": ["RI-C1a"],
+        "RI-C1b": ["RI-C1b"],
+        "RI-C2a": ["RI-C2a"],
+        "RI-C2b": ["RI-C2b"]
+      }
+    },
+    {
+      "from": "sha256:e06057fede71811ba3f11083f9b78a4a89e6791a66711cbe86ba78d58408cac7",
+      "to": "sha256:fe54a3fc0da51e467dc94a8506e9bc2a1b1d257342775e3efd678e5d90633997",
+      "chunk_ids": {
+        "RI-C1a": ["RI-C1a"],
+        "RI-C1b": ["RI-C1b"],
+        "RI-C2a": ["RI-C2a"],
+        "RI-C2b": ["RI-C2b"]
+      }
+    },
+    {
+      "from": "sha256:fe54a3fc0da51e467dc94a8506e9bc2a1b1d257342775e3efd678e5d90633997",
+      "to": "sha256:68966222ed8dbd00a627580b34364f49d9d39602ff44a32399e31ed01a65b8af",
+      "chunk_ids": {
+        "RI-C1a": ["RI-C1a"],
+        "RI-C1b": ["RI-C1b"],
+        "RI-C2a": ["RI-C2a"],
+        "RI-C2b": ["RI-C2b"]
+      }
+    },
+    {
+      "from": "sha256:68966222ed8dbd00a627580b34364f49d9d39602ff44a32399e31ed01a65b8af",
+      "to": "sha256:cc71a72ac8bfb871e337ff3bcd485626ac77cea9437ed51cdbda81d2b3c9bcd7",
       "chunk_ids": {
         "RI-C1a": ["RI-C1a"],
         "RI-C1b": ["RI-C1b"],
