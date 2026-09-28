@@ -269,6 +269,105 @@ A direct 30-repeat run of the reported test passed in 11.091 seconds.
 These results do not reproduce or explain the checkpoint failure.
 The debug loop remains under construction.
 
+## TD-C1b repair 3
+
+The shared owner disables Go telemetry in a private configuration directory before child execution.
+The run keeps HOME and TMPDIR empty at entry.
+All six required package checks pass, and root conformance passes without skips.
+The gittest package compiles without standalone tests; its probe executes through the owner and all three runner tests.
+The repair commit passes its lane, build, and build preflight.
+
+Repair cycles consumed for TD-C1b: 3.
+The user authorizes uncapped repairs while bench-debug governs each repair.
+The first two cycles remain part of this count.
+The local native evidence is .logs/test-determinism-c1b-repair-3.json.
+
+### Cleanup reproduction
+
+Checkpoint gate-20260928T131817.720210575Z-3686879 reproduces the cleanup error in TestChangedRunsWriteNoGateOwnedRecords.
+The smaller tests initially passed: 30 direct repetitions, 20 concurrent Bench commands, and 100 repetitions on one CPU.
+Another 100 repetitions under CPU contention passed and took 328.579 seconds.
+The six owned stress workers stopped before that command returned.
+These green runs supply no fix evidence.
+
+A temporary syscall scheduler then reproduces the original failure twice, in 8.001 and 8.036 seconds.
+It pauses the real telemetry child's upload-directory creation until cleanup reaches the empty parent directory.
+It resumes that creation before the parent's final removal.
+Both runs report directory not empty from the first Command in TestSeparateTopLevelCommandsSelectDifferentPrivatePaths.
+The scheduler changes only process ordering; it creates no telemetry file itself.
+
+The exact command was:
+
+```sh
+bench worktree exec test-determinism -- /tmp/bench-debug-tools-oyba7mbf/schedule bench test --package ./internal/testreport --run '^TestSeparateTopLevelCommandsSelectDifferentPrivatePaths$' --full
+```
+
+The three ranked hypotheses were a detached telemetry writer, an early main-process close, and incomplete removal without concurrent writes.
+The diagnostic GO_TELEMETRY_CHILD=2 run passes with zero telemetry children observed.
+The source waits for the main Go command before deferred cleanup at internal/testreport/command.go:283.
+The permission-restoration regression also passes.
+These observations confirm the detached writer as the cause.
+
+### Regression and mutation evidence
+
+The shared runner probe fails before repair with Go telemetry is enabled.
+Its gate fixture passes after repair.
+Probe 77186 changes the private mode from off to local and detects that exact regression.
+Probe 87025 omits the private telemetry-directory entry and reports that the configuration is outside the run.
+Both probes report a passing baseline, one behavioral failure, and restored source.
+
+The syscall scheduler also observes the repaired configuration path.
+A temporary off-to-local mutation restores the cleanup failure at that new path in 7.730 seconds.
+The preserved source is restored byte for byte.
+The restored loop passes in 8.981 seconds and observes zero telemetry children.
+The regression expectations therefore detect both an enabled writer and an inherited configuration.
+
+### Research: does the toolchain wait for telemetry?
+
+The consumed source is the installed Go 1.25.14 toolchain.
+Its telemetry launcher waits in a goroutine, and its caller discards the returned wait handle.
+The child can therefore outlive the main Go command.
+The runtime reproduction confirms this source-derived conclusion.
+
+Sources: [launcher](/home/mgibs/.local/opt/go-bin-v1.25.0/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.14.linux-amd64/src/cmd/vendor/golang.org/x/telemetry/start.go:189) and [Go caller](/home/mgibs/.local/opt/go-bin-v1.25.0/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.14.linux-amd64/src/cmd/internal/telemetry/telemetry.go:32).
+
+### Research: which control prevents the writer?
+
+The toolchain passes TEST_TELEMETRY_DIR to its counter and telemetry owners.
+An off mode prevents the parent from starting its telemetry child.
+The mode reader accepts an undated off value.
+The repair uses these test-isolation hooks and keeps the mode file within the owned run.
+
+Sources: [counter directory](/home/mgibs/.local/opt/go-bin-v1.25.0/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.14.linux-amd64/src/cmd/internal/telemetry/counter/counter.go:24), [off-mode branch](/home/mgibs/.local/opt/go-bin-v1.25.0/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.14.linux-amd64/src/cmd/vendor/golang.org/x/telemetry/start.go:150), and [mode reader](/home/mgibs/.local/opt/go-bin-v1.25.0/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.14.linux-amd64/src/cmd/vendor/golang.org/x/telemetry/internal/telemetry/dir.go:124).
+
+| control | consequence | use |
+| --- | --- | --- |
+| GO_TELEMETRY_CHILD=2 | It suppresses another telemetry child but retains local counter behavior. | Diagnostic only. |
+| Private telemetry directory with off mode | It suppresses telemetry before the test command starts. | Shared owner repair. |
+
+### Research: where does the repair belong?
+
+OpenKitTestRun owns the environment for the gate phases, focused kit tests, and preflight external phases.
+The three callers already wait for their main child and close the same owner.
+One owner edit therefore preserves the lifecycle invariant across all three callers.
+The regression uses their existing shared probe and the real Go configuration query.
+
+Sources: internal/env/kit_run.go:24, internal/gate/phases.go:278, internal/testreport/command.go:243, and internal/releasepreflight/command.go:252.
+The architecture finding is that direct-child exit does not imply that a toolchain's detached writers have stopped.
+The environment owner must prevent those writers before it exposes disposable directories.
+
+### Research verification and remaining work
+
+The source joins and runtime predictions are verified on this Linux host with Go 1.25.14.
+Other toolchain versions and host platforms were not executed in this debug run.
+A toolchain upgrade must rerun the retained real-Go probe before these compatibility claims can be reused.
+The review record is the consuming artifact; no separate research report is needed.
+
+The project has no expected-failure form for this repair.
+The regression ran red manually before the production edit, and only green source was committed.
+Independent confirming reviews and the full checkpoint remain required.
+The debug harness is temporary; the ordinary shared-probe regression remains in the gate.
+
 ```bench-review-record
 {
   "version": 1,
@@ -504,9 +603,9 @@ The debug loop remains under construction.
     {
       "id": "TD-C1b",
       "base": "21ad810f4262c1478799618a93356b14969d8b83",
-      "tip": "dabde5afd26713532dfd5afd28964c2367f21b85",
-      "plan_digest": "sha256:a1c65436efe7e608851a1c837dc69d2dec30b6824629417613dbcaf5ccc3325b",
-      "source_digest": "f9e429423aa5d946636fc4d7c678baeeb7cfac87",
+      "tip": "52e3d2830a6c6992a5b28656323f814fd8ee069c",
+      "plan_digest": "sha256:c468cfe39ed63f5b14c447aba2d8b3a5178741083d43648063b3ab0224bffdbf",
+      "source_digest": "59fa126a4905713938bde78e16f58167fae45588",
       "acceptance_rows": [
         "TD7",
         "TD16",
@@ -747,6 +846,114 @@ The debug loop remains under construction.
           },
           "requirement": "probe",
           "command": "bench test --package ./internal/probe",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C1b-testreport-repair-3",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "59fa126a4905713938bde78e16f58167fae45588",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-69417",
+            "digest": "sha256:0898db43ed6fadd0fccf7dea787d6599e8cab6a33d26f6073e79fa324214305b",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testreport,pass,23712\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C1b-releasepreflight-repair-3",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "59fa126a4905713938bde78e16f58167fae45588",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-97845",
+            "digest": "sha256:154dc18451dc521ec4158517d4c94bdaf759d4cea4ad47186110ce621f74fa3a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/releasepreflight,pass,429\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "releasepreflight",
+          "command": "bench test --package ./internal/releasepreflight",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C1b-env-repair-3",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "59fa126a4905713938bde78e16f58167fae45588",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-13744",
+            "digest": "sha256:f7ba0b6c9866d652da1ffaa034b70538a57dee59fef7bf9572da360f0f520cb6",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/env,pass,576\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "env",
+          "command": "bench test --package ./internal/env",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C1b-gate-repair-3",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "59fa126a4905713938bde78e16f58167fae45588",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-41317",
+            "digest": "sha256:0b56991dbdf7bdb9fba1dcb64debcef94ac2ba4556abe0d82cf31cc4816f1971",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,14876\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C1b-probe-repair-3",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "59fa126a4905713938bde78e16f58167fae45588",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-72564",
+            "digest": "sha256:7b386e19ad7901fb36cdfeb5d818318500024d0112045d1f149d52c81529e410",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/probe,pass,17979\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "probe",
+          "command": "bench test --package ./internal/probe",
+          "exit_code": 0
+        },
+        {
+          "id": "TD-C1b-gittest-repair-3",
+          "performer": "codex/test-determinism-inline-20260928",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "high",
+          "source_digest": "59fa126a4905713938bde78e16f58167fae45588",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:exec-session-63467",
+            "digest": "sha256:571a6d5fd611d868b01373eb695df8689771225486d910be6c4abca0e2296b3c",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gittest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gittest",
+          "command": "bench test --package ./internal/gittest",
           "exit_code": 0
         }
       ],
