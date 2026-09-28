@@ -1,6 +1,7 @@
 package env
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -39,7 +40,7 @@ func OpenKitTestRun(base []string) (*KitTestRun, error) {
 	if tmp == "" {
 		tmp = os.TempDir()
 	}
-	dir, err := os.MkdirTemp(tmp, "b")
+	dir, err := kitRunDirectory(tmp)
 	if err != nil {
 		return nil, fmt.Errorf("kit test run: TMPDIR: %w", err)
 	}
@@ -59,6 +60,16 @@ func OpenKitTestRun(base []string) (*KitTestRun, error) {
 		run.entries = append(run.entries, name+"="+settings[name])
 	}
 	return run, nil
+}
+
+func kitRunDirectory(tmp string) (string, error) {
+	// Short names leave room for Unix socket paths in descendant tests.
+	for {
+		dir := filepath.Join(tmp, rand.Text()[:6])
+		if err := os.Mkdir(dir, 0o700); !errors.Is(err, os.ErrExist) {
+			return dir, err
+		}
+	}
 }
 
 // Entries returns the environment overrides for children of this run.
