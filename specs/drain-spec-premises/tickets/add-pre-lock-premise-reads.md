@@ -1,7 +1,7 @@
 # Add pre-lock premise reads
 
 Blocked by: none
-Writes: .agents/skills/bench-craft-spec/SKILL.md, internal/anchors, internal/conformance, tests/canary/workflow-guidance-anchors
+Writes: .agents/skills/bench-craft-spec/references/map-discipline.md, internal/anchors, internal/conformance, tests/canary/workflow-guidance-anchors
 Covers: none
 
 ## What to build
