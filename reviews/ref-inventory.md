@@ -1281,7 +1281,8 @@ The test was red on the unrepaired tree, where the discarded ref read empty.
 The author's probe that removes `--no-deref` bit it with restore `yes`. The
 orchestrator's coordinator probe dropped the exact tip from the new delete, a
 different site, and RI67 bit with restore `yes`. The chunk tip moves to
-`037a4c66`, and the seam commit `12137b64` cites the RI103 test. One
+`12137b64`, the seam commit that cites the RI103 test. No later chunk carries
+that citation, and the checkpoint reads the spec as source. One
 verification note: the local delete's error text carries the exit status
 without Git's message, because `git.Output` discards stderr, and no row pins
 that text.
@@ -1289,7 +1290,9 @@ that text.
 ### Verification after repair 3
 
 The repair session reran the ticket 4 plan checks at `037a4c66` on a clean
-tree. The JSON payload holds each result after the cycle 2 rows.
+tree. The chunk tip then moved to the seam commit `12137b64`. The last ticket 4
+session and the last ticket 5 session each reran their plan checks at that
+source, read-only. The JSON payload holds each result after the cycle 2 rows.
 
 ## RI-C2b chunk review, round 4
 
@@ -1338,7 +1341,7 @@ Advice, parked as ideas:
 {
   "version": 2,
   "spec": "specs/ref-inventory/spec.md",
-  "plan_digest": "sha256:6d0a708fb36fc22ce0045e0ced3c44c74de8369398357f838b667ae9f6a545e1",
+  "plan_digest": "sha256:f0253dc65290a525f0d0d25288db32e9183adda8b75df597b8659217604f55c5",
   "implementation_session": "",
   "chunks": [
     {
@@ -2362,9 +2365,9 @@ Advice, parked as ideas:
     {
       "id": "RI-C2b",
       "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
-      "tip": "037a4c660dabc1ad06cfef2a63d146febcb80cf5",
+      "tip": "12137b64025cc6844bc884d9e15462af8652b144",
       "plan_digest": "sha256:f0253dc65290a525f0d0d25288db32e9183adda8b75df597b8659217604f55c5",
-      "source_digest": "f5f676de61e1dc3053dfa31573fdec0c3a7fd5e5",
+      "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
       "acceptance_rows": [
         "RI16", "RI29", "RI30", "RI31", "RI32", "RI33", "RI34", "RI35", "RI36", "RI37", "RI38", "RI39", "RI40", "RI41",
         "RI48", "RI49", "RI50", "RI51", "RI52", "RI58", "RI64", "RI65", "RI67", "RI68", "RI69", "RI70", "RI71",
@@ -2586,6 +2589,78 @@ Advice, parked as ideas:
           "requirement": "4-cmd",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-4-worktree-r5",
+          "performer": "claude:bench-writer/ri-t4-repair-3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t4-repair-3-20260927/4-worktree@12137b64",
+            "digest": "sha256:60f99ea03535850a75a95882e39bfef2aba1bebbf804d89083a3b3fa062937f4",
+            "excerpt": "github.com/gibbonmi/bench/internal/worktree,pass,52659"
+          },
+          "requirement": "4-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-4-cmd-r5",
+          "performer": "claude:bench-writer/ri-t4-repair-3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t4-repair-3-20260927/4-cmd@12137b64",
+            "digest": "sha256:5e5fbe60f0dbf18cea2f1d5ca4c4083dbf07351c6bcea12a7d8f7937258fe9d9",
+            "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,9694"
+          },
+          "requirement": "4-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-5-spec-r3",
+          "performer": "claude:bench-writer/ri-t5-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t5-repair-1-20260927/5-spec@12137b64",
+            "digest": "sha256:e5d1db75773d0a85cf2a0cd8a91bde5d6b3c9c9273533cba3a59748a4aa2ea00",
+            "excerpt": "github.com/gibbonmi/bench/internal/spec,pass,275"
+          },
+          "requirement": "5-spec",
+          "command": "bench test --package ./internal/spec",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-5-cmd-r3",
+          "performer": "claude:bench-writer/ri-t5-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t5-repair-1-20260927/5-cmd@12137b64",
+            "digest": "sha256:ba7f9395169c233a30b438325ce6305150b1f3f0384cfcef9222cce571879f8a",
+            "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,14366"
+          },
+          "requirement": "5-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -2775,17 +2850,17 @@ Advice, parked as ideas:
           "role": "independent-review",
           "model": "opus",
           "effort": "high",
-          "source_digest": "f5f676de61e1dc3053dfa31573fdec0c3a7fd5e5",
+          "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/ri-c2b-standards-r4@037a4c66",
+            "ref": "claude:agent/ri-c2b-standards-r4@fc02198b",
             "digest": "sha256:efe13453560e7642df1fba6fdfc9ccbf604f68faea298c493e35ecee454db1c1",
             "excerpt": "Standards round 4: 0 blocking findings. R49 folded with one no-deref delete local to the discard file, and internal/git is unchanged."
           },
           "axis": "Standards",
           "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
-          "tip": "037a4c660dabc1ad06cfef2a63d146febcb80cf5",
+          "tip": "12137b64025cc6844bc884d9e15462af8652b144",
           "finding_ids": [],
           "supersedes": ["ri-c2b-r3-standards"]
         },
@@ -2795,17 +2870,17 @@ Advice, parked as ideas:
           "role": "independent-review",
           "model": "opus",
           "effort": "high",
-          "source_digest": "f5f676de61e1dc3053dfa31573fdec0c3a7fd5e5",
+          "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/ri-c2b-spec-r4@037a4c66",
+            "ref": "claude:agent/ri-c2b-spec-r4@fc02198b",
             "digest": "sha256:803947ead16d18968f01c7228000a66c5fc4a7def95f7428522c39fc194e90b6",
             "excerpt": "Spec round 4: 0 blocking findings. RI103 delivered by its cited test, RI67 holds, and the coverage map cites every row but the two review-owned ones."
           },
           "axis": "Spec",
           "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
-          "tip": "037a4c660dabc1ad06cfef2a63d146febcb80cf5",
+          "tip": "12137b64025cc6844bc884d9e15462af8652b144",
           "finding_ids": [],
           "supersedes": ["ri-c2b-r3-spec"]
         },
@@ -2815,17 +2890,17 @@ Advice, parked as ideas:
           "role": "independent-review",
           "model": "opus",
           "effort": "high",
-          "source_digest": "f5f676de61e1dc3053dfa31573fdec0c3a7fd5e5",
+          "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/ri-c2b-coverage-r4@037a4c66",
+            "ref": "claude:agent/ri-c2b-coverage-r4@fc02198b",
             "digest": "sha256:d6405de3e83eb4f54c2f4c5ca9e7072e9e2c52b090b1ebd7534f681e452eb5f3",
             "excerpt": "Coverage round 4: 0 blocking findings. R49 folded; no constructed input splits the preserve step from the discard step, and a third-party overwrite of the handle stays advice."
           },
           "axis": "Coverage",
           "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
-          "tip": "037a4c660dabc1ad06cfef2a63d146febcb80cf5",
+          "tip": "12137b64025cc6844bc884d9e15462af8652b144",
           "finding_ids": [],
           "supersedes": ["ri-c2b-r3-coverage"]
         }
