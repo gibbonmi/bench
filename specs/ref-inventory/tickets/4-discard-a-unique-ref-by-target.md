@@ -1,8 +1,8 @@
 # 4. Discard one unique unrecorded ref by target with a discarded ref first
 
 Blocked by: 1-classify-unclaimed-refs.md, 3-sweep-discarded-refs.md
-Writes: internal/worktree/clean_discard.go (new), internal/worktree/clean_discard_test.go (new), internal/worktree/clean_set.go, internal/worktree/clean_set_apply.go, internal/worktree/clean_set_command_test.go, internal/worktree/clean_unclaimed.go, internal/worktree/clean_unclaimed_test.go, internal/worktree/joins.go, internal/worktree/path.go, internal/worktree/worktree.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: RI16, RI29, RI30, RI31, RI32, RI33, RI34, RI35, RI36, RI37, RI38, RI39, RI40, RI41, RI58, RI64, RI65, RI67, RI68, RI74, RI75, RI76, RI78
+Writes: internal/worktree/clean_discard.go (new), internal/worktree/clean_discard_test.go (new), internal/worktree/clean_discard_transaction_test.go (new), internal/worktree/clean_classes.go, internal/worktree/clean_set.go, internal/worktree/clean_set_apply.go, internal/worktree/clean_set_command_test.go, internal/worktree/clean_unclaimed.go, internal/worktree/clean_unclaimed_test.go, internal/worktree/joins.go, internal/worktree/path.go, internal/worktree/worktree.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Covers: RI16, RI29, RI30, RI31, RI32, RI33, RI34, RI35, RI36, RI37, RI38, RI39, RI40, RI41, RI58, RI64, RI65, RI67, RI68, RI74, RI75, RI76, RI78, RI96, RI98, RI99, RI101, RI102, RI103
 
 ## What to build
 
@@ -29,17 +29,21 @@ A landed or subsumed row plans recovery `none`.
 
 The explicit set fingerprint binds each unrecorded row's ref, tip, class, holder, and planned discarded ref.
 The apply needs the set fingerprint, and `--apply-current` stays refused outside the unclaimed mode.
-Change the unique row's detail suffix in the unclaimed plan to `bench worktree clean --discard-branch --target <assignment id>`.
+Change the unique row's detail suffix in the unclaimed plan to `bench worktree clean --discard-branch --target <branch path>`, the row's ref without `refs/heads/`.
 A unique shift row ends with `bench worktree clean --discard-branch --target bench/shift-<stamp>`, and that command plans one row for it.
+The class file owns that suffix in its detail rendering, and the retained text of ticket 1 goes away with its constant.
+The printed route and the apply action derive their selector from one function.
 
 The apply of a unique row runs in this order inside the set apply.
-When the planned ref exists at the row's tip, the write is skipped.
+When the planned ref exists at the row's tip as a direct ref, the write is skipped.
+When the planned path is a symbolic ref, the apply prints an error row, keeps both refs, and writes nothing.
 When it exists at another tip, the apply refuses and keeps the branch.
-Otherwise the write uses the zero old value.
+Otherwise the write uses the zero old value and never follows a symbolic ref.
 
-The delete uses the exact tip.
+The delete uses the exact tip and never follows a symbolic ref.
 A branch moved after the write survives with an error row, and the discarded ref stays at the old tip.
-One fault boundary step precedes the write and one follows it.
+One fault boundary step precedes the read of the planned path, one sits between that read and the write, and one follows the write.
+A target that the class function faults, such as a resolving symref, prints an error row with no fingerprint, and both apply forms refuse.
 The outcome row's recovery cell names the discarded ref.
 
 ## Acceptance
@@ -63,5 +67,12 @@ The outcome row's recovery cell names the discarded ref.
 - [ ] A landed unrecorded target and a subsumed unrecorded target each apply with recovery `none` and write no discarded ref.
 - [ ] A recorded active assignment by label plans through its record with no `class=` prefix.
 - [ ] `--target <id> --apply-current` exits 2 with the usage line.
-- [ ] A unique row in the unclaimed plan ends with `bench worktree clean --discard-branch --target <assignment id>`.
+- [ ] A unique row in the unclaimed plan ends with `bench worktree clean --discard-branch --target <branch path>`.
+- [ ] A symref at the planned discarded path makes the apply print an error row, keep both refs, and write nothing.
+- [ ] An explicit target of a resolving Bench symref prints an error row naming `symref`, no fingerprint, and both apply forms refuse.
+- [ ] After an explicit set removes a recorded holder, its formerly subsumed unrecorded member refuses as stale and survives.
+- [ ] A direct ref planted at the planned path between the read and the write makes the apply refuse and keep both refs.
+- [ ] A resolving symref planted at the planned path between the read and the write makes the apply refuse and keep the branch.
+- [ ] A dangling symref planted there is replaced by the discarded ref at the row's tip, and no ref appears at its old target.
+- [ ] A symref planted at the branch path between the write and the delete is never followed, and the discarded ref survives at the row's tip.
 - [ ] A unique shift row ends with `bench worktree clean --discard-branch --target bench/shift-<stamp>`, and that command plans one row.

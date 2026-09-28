@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/gate"
@@ -78,6 +79,9 @@ type joins struct {
 	resetMove     func(string, string, string) error
 	resetLayers   func(string, recoveryManifest) error
 	resetEnvelope func(string, resetPlan) (intent.Recovery, error)
+	// now is the clock the explicit discard dates its discarded ref by. It is a seam so a
+	// test fixes the day that the planned ref and the fingerprint name.
+	now func() time.Time
 	// home is the Bench home the verb's own boundary resolved. The retirement path
 	// needs it to drop the retired assignment's census records, and it travels in the
 	// seam set because every verb that retires an assignment already carries the set
@@ -119,5 +123,6 @@ func defaultJoins() joins {
 		resetEnvelope:            writeResetEnvelope,
 		build:                    runbinary.Build,
 		buildSubject:             runbinary.BuildSubject,
+		now:                      currentTime,
 	}
 }

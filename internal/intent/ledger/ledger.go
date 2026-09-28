@@ -6,7 +6,10 @@
 // effects, and it re-exports every name declared here.
 package ledger
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 const (
 	LegacySchema = 1
@@ -67,6 +70,32 @@ const RecoveryRefNamespace = "refs/bench/recovery/"
 
 // ResetRefNamespace holds envelopes for recoverable assignment resets.
 const ResetRefNamespace = "refs/bench/reset/"
+
+// DiscardedRefNamespace holds the dated refs a discard writes at the exact tip it deletes.
+// The discard that writes them and the standing cleaner that expires them read this
+// constant. The cleaner does not empty the namespace; it removes a ref by its date.
+const DiscardedRefNamespace = "refs/bench/discarded/"
+
+// discardedRefDateLayout is the UTC date segment that follows DiscardedRefNamespace.
+const discardedRefDateLayout = "20060102"
+
+// DiscardedRef names the discarded ref for branch on the UTC date of at. The name is the
+// namespace, the date, a slash, and the branch path without its refs/heads/ prefix.
+func DiscardedRef(at time.Time, branch string) string {
+	return DiscardedRefNamespace + at.UTC().Format(discardedRefDateLayout) + "/" + strings.TrimPrefix(branch, "refs/heads/")
+}
+
+// DiscardedRefDate parses the date segment of a discarded ref as 00:00:00Z of that day.
+// It reports false for a ref outside the namespace or a segment that is not a date.
+func DiscardedRefDate(ref string) (time.Time, bool) {
+	rest, ok := strings.CutPrefix(ref, DiscardedRefNamespace)
+	if !ok {
+		return time.Time{}, false
+	}
+	segment, _, _ := strings.Cut(rest, "/")
+	date, err := time.Parse(discardedRefDateLayout, segment)
+	return date, err == nil
+}
 
 type AssignmentState string
 

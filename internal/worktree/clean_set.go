@@ -11,7 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
-const explicitSetFingerprintVersion = "bench-explicit-set/v1"
+const explicitSetFingerprintVersion = "bench-explicit-set/v2"
 
 // cleanSelection is one parsed `bench worktree clean` invocation: the single selection
 // mode it names, the modifiers it was asked under, and the apply form it carries. The
@@ -115,33 +115,51 @@ type explicitCleanupRow struct {
 	targetFingerprint string
 }
 
-// explicitCleanupSet is the complete resolved selection. A selection failure leaves the
-// fingerprint empty, so the plan reports every outcome and authorizes no removal.
+// explicitCleanupSet is the complete resolved selection: the recorded members, then the
+// unclaimed branches no record holds. A selection failure leaves the fingerprint empty, so
+// the plan reports every outcome and authorizes no removal.
 type explicitCleanupSet struct {
 	rows        []explicitCleanupRow
+	unrecorded  []unrecordedCleanupRow
 	failures    []CleanupPlan
 	fingerprint string
 }
 
 // planExplicitSet resolves every operand through the assignment identity resolver that
-// the other target-taking verbs share, collapses aliases by that identity, and plans each
-// member through the same explicit planner the single-target form calls. It takes the
-// states a release takes, as the path form does. One unresolved or ambiguous operand makes
-// the whole selection unapplicable.
+// the other target-taking verbs share, with the unclaimed-branch fallback ahead of it for a
+// namespace operand and behind it for an id no record holds. It collapses aliases by
+// identity, a recorded member by its assignment and an unclaimed one by its branch ref, and
+// plans each recorded member through the same explicit planner the single-target form calls.
+// It takes the states a release takes, as the path form does. One unresolved or ambiguous
+// operand makes the whole selection unapplicable.
 func planExplicitSet(j joins, root string, targets []string, options CleanupOptions) explicitCleanupSet {
 	set := explicitCleanupSet{}
 	selected := make(map[string]bool, len(targets))
+	candidates := discardCandidates{root: root}
 	for _, target := range targets {
-		assignment, err := resolveAssignmentIn(root, target, resumeActiveState)
+		resolved, err := candidates.resolve(target)
 		if err != nil {
 			set.failures = append(set.failures, selectionFailurePlan(target, err))
 			continue
 		}
-		if selected[assignment.ID] {
+		key := resolved.assignment.ID
+		if resolved.branch != nil {
+			key = resolved.branch.ref
+		}
+		if selected[key] {
 			continue
 		}
-		selected[assignment.ID] = true
-		row, planErr := planExplicitCleanupRow(j, root, assignment, options)
+		selected[key] = true
+		if resolved.branch != nil {
+			row, planErr := planUnrecordedRow(*resolved.branch, j.now(), options)
+			if planErr != nil {
+				set.failures = append(set.failures, selectionFailurePlan(target, planErr))
+				continue
+			}
+			set.unrecorded = append(set.unrecorded, row)
+			continue
+		}
+		row, planErr := planExplicitCleanupRow(j, root, resolved.assignment, options)
 		if planErr != nil {
 			set.failures = append(set.failures, selectionFailurePlan(target, planErr))
 			continue
@@ -149,14 +167,19 @@ func planExplicitSet(j joins, root string, targets []string, options CleanupOpti
 		set.rows = append(set.rows, row)
 	}
 	sort.Slice(set.rows, func(a, b int) bool { return set.rows[a].assignment.ID < set.rows[b].assignment.ID })
+	sort.Slice(set.unrecorded, func(a, b int) bool { return set.unrecorded[a].ref < set.unrecorded[b].ref })
 	if len(set.failures) == 0 {
-		set.fingerprint = fingerprintExplicitSet(set.rows, options)
+		set.fingerprint = fingerprintExplicitSet(set, options)
+	}
+	fingerprint := unapplicableFingerprint
+	if set.fingerprint != "" {
+		fingerprint = set.fingerprint
 	}
 	for i := range set.rows {
-		set.rows[i].plan.Fingerprint = unapplicableFingerprint
-		if set.fingerprint != "" {
-			set.rows[i].plan.Fingerprint = set.fingerprint
-		}
+		set.rows[i].plan.Fingerprint = fingerprint
+	}
+	for i := range set.unrecorded {
+		set.unrecorded[i].plan.Fingerprint = fingerprint
 	}
 	return set
 }
@@ -204,26 +227,33 @@ func selectionFailurePlan(target string, err error) CleanupPlan {
 }
 
 // fingerprintExplicitSet binds complete membership and each member's own removal-relevant
-// state. The per-target digest is that state: the explicit planner already derives it from
-// every fact a removal reads, so the set never derives the same tuple a second time.
-func fingerprintExplicitSet(rows []explicitCleanupRow, options CleanupOptions) string {
+// state. The per-target digest is that state for a recorded member: the explicit planner
+// already derives it from every fact a removal reads, so the set never derives the same tuple
+// a second time. An unclaimed member binds its ref, tip, class, holder, and discarded ref.
+func fingerprintExplicitSet(set explicitCleanupSet, options CleanupOptions) string {
 	parts := [][]byte{
 		[]byte(explicitSetFingerprintVersion),
 		[]byte(strconv.FormatBool(options.DiscardIgnored)),
 		[]byte(strconv.FormatBool(options.DiscardBranch)),
 		[]byte(strconv.FormatBool(options.Full)),
 	}
-	for _, row := range rows {
+	for _, row := range set.rows {
 		parts = append(parts, []byte(row.assignment.ID), []byte(row.plan.Target), []byte(row.plan.Action), []byte(row.targetFingerprint))
+	}
+	for _, row := range set.unrecorded {
+		parts = append(parts, []byte(row.ref), []byte(row.oid), []byte(row.class), []byte(row.holder), []byte(row.discarded))
 	}
 	return fingerprintParts(parts...)
 }
 
-// plans is every selection outcome in one order: the resolved members by canonical
-// identity, then each operand the resolver refused.
+// plans is every selection outcome in one order: the recorded members by canonical
+// identity, the unclaimed members by branch ref, then each operand the resolver refused.
 func (set explicitCleanupSet) plans() []CleanupPlan {
-	plans := make([]CleanupPlan, 0, len(set.rows)+len(set.failures))
+	plans := make([]CleanupPlan, 0, len(set.rows)+len(set.unrecorded)+len(set.failures))
 	for _, row := range set.rows {
+		plans = append(plans, row.plan)
+	}
+	for _, row := range set.unrecorded {
 		plans = append(plans, row.plan)
 	}
 	return append(plans, set.failures...)
@@ -236,12 +266,16 @@ func (set explicitCleanupSet) applyArguments(options CleanupOptions) []axi.Invoc
 	return append(arguments, axi.KnownArgument("--apply"), axi.KnownArgument(set.fingerprint))
 }
 
-// targetSelectors names each member by its canonical assignment identity. The identity
+// targetSelectors names each member by its canonical identity: a recorded member by its
+// assignment, an unclaimed one by the selector its discard route prints. The identity
 // replaces the operand the caller typed, so no operand text reaches a command line.
 func (set explicitCleanupSet) targetSelectors() []string {
-	selectors := make([]string, 0, 2*len(set.rows))
+	selectors := make([]string, 0, 2*(len(set.rows)+len(set.unrecorded)))
 	for _, row := range set.rows {
 		selectors = append(selectors, "--target", row.assignment.ID)
+	}
+	for _, row := range set.unrecorded {
+		selectors = append(selectors, "--target", discardSelector(row.ref))
 	}
 	return selectors
 }
@@ -253,8 +287,8 @@ func renderExplicitSet(stdout io.Writer, set explicitCleanupSet, options Cleanup
 		return err
 	}
 	removes := false
-	for _, row := range set.rows {
-		removes = removes || row.plan.Action.Removes()
+	for _, plan := range set.plans() {
+		removes = removes || plan.Action.Removes()
 	}
 	if !removes {
 		return nil
@@ -281,32 +315,25 @@ func requalifyExplicitRow(j joins, root string, planned explicitCleanupRow, opti
 	return current, nil
 }
 
-// explicitRowPlans is the plan each selected member carries, in selection order.
-func explicitRowPlans(rows []explicitCleanupRow) []CleanupPlan {
-	plans := make([]CleanupPlan, 0, len(rows))
-	for _, row := range rows {
-		plans = append(plans, row.plan)
-	}
-	return plans
-}
-
-// applyExplicitSet runs every removable member through the existing per-target locked
-// transaction, so each member keeps its own authority checks, receipt, and recovery. A
-// member the plan retained passes through as the plan reported it. Each member re-plans
-// immediately before its own transaction, which gives that transaction the digest the
-// repository answers to now. The first member that cannot finish stops the set, and every
-// member the set never started reports its own unstarted outcome.
+// applyExplicitSet runs every removable recorded member through the existing per-target
+// locked transaction, so each member keeps its own authority checks, receipt, and recovery,
+// and then every unclaimed member through the discard transaction. A member the plan retained
+// passes through as the plan reported it. Each member re-plans immediately before its own
+// transaction, which gives that transaction the digest the repository answers to now. The
+// first member that cannot finish stops the set, and every member the set never started
+// reports its own unstarted outcome.
 func applyExplicitSet(j joins, root string, set explicitCleanupSet, options CleanupOptions) ([]CleanupPlan, error) {
-	plans := make([]CleanupPlan, 0, len(set.rows))
+	members := set.plans()
+	plans := make([]CleanupPlan, 0, len(members))
 	if offender, err := preflightExplicitSet(j, root, set, options); err != nil {
-		return preflightOutcomes(plans, explicitRowPlans(set.rows), offender, err), err
+		return preflightOutcomes(plans, members, offender, err), err
 	}
 	for i, planned := range set.rows {
 		if !planned.plan.Action.Removes() {
 			plans = append(plans, planned.plan)
 			continue
 		}
-		unreached := func() []CleanupPlan { return explicitRowPlans(set.rows[i+1:]) }
+		unreached := func() []CleanupPlan { return members[i+1:] }
 		if err := hit(j.cleanupBoundary, StepMemberRequalify); err != nil {
 			plans = append(plans, faultedPlan(planned.plan, CleanupPlan{}, err))
 			return notAttemptedPlans(plans, unreached(), notAttemptedDetail), err
@@ -323,7 +350,7 @@ func applyExplicitSet(j joins, root string, set explicitCleanupSet, options Clea
 		}
 		plans = append(plans, applied)
 	}
-	return plans, nil
+	return applyUnrecordedRows(j, root, set, options, plans)
 }
 
 // cleanExplicitSet is the explicit-target selection mode. A bare call plans the complete

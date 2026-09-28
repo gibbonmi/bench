@@ -21,6 +21,9 @@ func TestCleanUnclaimedDiscardBranchPlansThenDeletesExactAssignmentRef(t *testin
 	gitRun(t, root, "checkout", "-qb", short)
 	commitInWorktree(t, root, "orphan.txt", "orphan\n", "orphan assignment")
 	gitRun(t, root, "checkout", "-q", "main")
+	gitRun(t, root, "merge", "-q", "--ff-only", short)
+	unique := addUnclaimedBranch(t, root, "c")
+	commitOnBranch(t, root, unique, "unique.txt", "unique\n")
 
 	plan, planErr, planCode := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
 	if planCode != 0 || planErr != "" || !strings.Contains(plan, branch) {
@@ -34,8 +37,8 @@ func TestCleanUnclaimedDiscardBranchPlansThenDeletesExactAssignmentRef(t *testin
 	if code != 0 || stderr != "" || !strings.Contains(output, branch) {
 		t.Fatalf("apply exit=%d stdout=%q stderr=%q, want exact branch deletion", code, output, stderr)
 	}
-	if git.OK("-C", root, "show-ref", "--verify", "--quiet", branch) {
-		t.Fatalf("apply retained %q", branch)
+	if git.OK("-C", root, "show-ref", "--verify", "--quiet", branch) || !git.OK("-C", root, "show-ref", "--verify", "--quiet", unique) {
+		t.Fatalf("apply kept landed %q or removed unique %q", branch, unique)
 	}
 }
 

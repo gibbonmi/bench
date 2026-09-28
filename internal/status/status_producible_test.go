@@ -50,10 +50,8 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 		gitRun(t, root, "branch", "-M", "main")
 		return root
 	}
-	gateCache := func(t *testing.T, root string) string {
-		t.Helper()
-		return filepath.Join(gitRun(t, root, "rev-parse", "--absolute-git-dir"), git.GateCacheFile)
-	}
+	gitDir := func(t *testing.T, root string) string { return gitRun(t, root, "rev-parse", "--absolute-git-dir") }
+	gateCache := func(t *testing.T, root string) string { return filepath.Join(gitDir(t, root), git.GateCacheFile) }
 	writePendingGate := func(t *testing.T, root string) {
 		t.Helper()
 		record := fmt.Sprintf(`{"schema":1,"state":"pending","tree":%q,"oracle":%q,"started_at":%q,"owner_pid":999999}`+"\n",
@@ -97,6 +95,19 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 		exact                []Signal
 		board                string
 		route                *RouteResult
+	}
+	// gitRow pins the one git row of a clean repository; plan is spelled apart from production.
+	gitRow := func(name, detail, action string, arrange func(*testing.T, string)) fixture {
+		return fixture{name: name, signal: "git", detail: detail, setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			arrange(t, root)
+			return root, Query{}
+		}, exact: []Signal{testSignal(1, "git", detail, action)}}
+	}
+	plan := "bench worktree clean --discard-branch --unclaimed"
+	unreadableLedger := func(t *testing.T, root string) { write(t, gitDir(t, root), intent.Filename, "", 0o600) }
+	blobTipRef := func(t *testing.T, root string) {
+		write(t, gitDir(t, root), "refs/heads/bench/assign/orphan/blob", gitRun(t, root, "hash-object", "-w", "tracked.txt")+"\n", 0o644)
 	}
 	cases := []fixture{
 		{name: "setup", signal: "setup", detail: "no .bench/", setup: func(t *testing.T) (string, Query) {
@@ -183,8 +194,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			write(t, root, "tracked.txt", "dirty\n", 0o644)
 			return root, Query{}
 		}},
-		{name: "git unpushed", signal: "git", detail: "unpushed commit", setup: func(t *testing.T) (string, Query) {
-			root := cleanRepo(t)
+		gitRow("git unpushed", "1 unpushed commit", "git push", func(t *testing.T, root string) {
 			branch := gitRun(t, root, "rev-parse", "--abbrev-ref", "HEAD")
 			gitRun(t, root, "remote", "add", "origin", root)
 			gitRun(t, root, "update-ref", "refs/remotes/origin/"+branch, "HEAD")
@@ -192,34 +202,40 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			gitRun(t, root, "config", "branch."+branch+".merge", "refs/heads/"+branch)
 			write(t, root, "ahead.txt", "ahead\n", 0o644)
 			commit(t, root)
-			return root, Query{}
-		}, exact: []Signal{testSignal(1, "git", "1 unpushed commit", "git push")}},
-		{name: "git unique branch", signal: "git", detail: "unique branch", setup: func(t *testing.T) (string, Query) {
-			root := cleanRepo(t)
+		}),
+		gitRow("git unique branch", "1 unique branch", "git push", func(t *testing.T, root string) {
 			gitRun(t, root, "checkout", "-b", "feature")
-			write(t, root, "feature.txt", "feature\n", 0o644)
-			commit(t, root)
-			return root, Query{}
-		}, exact: []Signal{testSignal(1, "git", "1 unique branch", "git push")}},
-		{name: "git unclaimed assignment branch", signal: "git", detail: "unclaimed assignment branch", setup: func(t *testing.T) (string, Query) {
-			root := cleanRepo(t)
-			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/ref")
+			commitFile(t, root, "feature.txt")
+		}),
+		gitRow("git landed subsumed and unique refs", "1 landed ref, 1 subsumed ref, 1 unique ref", plan, func(t *testing.T, root string) {
+			gitRun(t, root, "branch", "bench/assign/orphan/landed")
+			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/subsumed")
+			commitFile(t, root, "orphan.txt")
+			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/unique")
+			commitFile(t, root, "unique.txt")
+			gitRun(t, root, "checkout", "main")
+		}),
+		gitRow("git dirty path and unique ref", "1 dirty path, 1 unique ref", plan, func(t *testing.T, root string) {
+			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/dirty")
 			write(t, root, "orphan.txt", "orphan\n", 0o644)
 			commit(t, root)
 			gitRun(t, root, "checkout", "main")
-			return root, Query{}
-		}, exact: []Signal{testSignal(1, "git", "1 unclaimed assignment branch", "bench worktree clean --discard-branch --unclaimed --apply-current")}},
-		{name: "git mixed unclaimed assignment and feature branches", signal: "git", detail: "1 unclaimed assignment branch, 1 unique branch", setup: func(t *testing.T) (string, Query) {
-			root := cleanRepo(t)
+			write(t, root, "tracked.txt", "dirty\n", 0o644)
+		}),
+		gitRow("git unique ref, its symref, and a feature branch", "1 unique ref, 1 faulted ref, 1 unique branch", plan, func(t *testing.T, root string) { // RI88, RI89
 			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/mixed")
-			write(t, root, "orphan-mixed.txt", "orphan\n", 0o644)
-			commit(t, root)
-			gitRun(t, root, "checkout", "main")
-			gitRun(t, root, "checkout", "-b", "feature-mixed")
-			write(t, root, "feature-mixed.txt", "feature\n", 0o644)
-			commit(t, root)
-			return root, Query{}
-		}, exact: []Signal{testSignal(1, "git", "1 unclaimed assignment branch, 1 unique branch", "bench worktree clean --discard-branch --unclaimed --apply-current")}},
+			commitFile(t, root, "orphan-mixed.txt")
+			gitRun(t, root, "symbolic-ref", "refs/heads/bench/assign/orphan/symref", "refs/heads/bench/assign/orphan/mixed")
+			gitRun(t, root, "checkout", "-b", "feature-mixed", "main")
+			commitFile(t, root, "feature-mixed.txt")
+		}),
+		gitRow("git faulted symref to main", "1 faulted ref", plan, func(t *testing.T, root string) { // RI91
+			gitRun(t, root, "symbolic-ref", "refs/heads/bench/assign/orphan/symref", "refs/heads/main")
+		}),
+		gitRow("git unreadable ledger", "unclaimed refs unavailable", plan, unreadableLedger), // RI90
+		gitRow("git blob-tip ref", "git state unavailable, 1 faulted ref", plan, blobTipRef),  // D4
+		// RI92: inside a repository, a planner error beside a Git state failure still routes to the plan.
+		gitRow("git blob-tip ref beside an unreadable ledger", "git state unavailable, unclaimed refs unavailable", plan, func(t *testing.T, root string) { blobTipRef(t, root); unreadableLedger(t, root) }),
 		{name: "worktree leased and out of pool", signal: "worktree", count: 2, setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			t.Setenv("BENCH_HOME", t.TempDir())
@@ -385,11 +401,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 					t.Errorf("%s board action %q is not typed and parser-invocable", produced.Name, produced.Action)
 				}
 			}
-			want := tc.count
-			if want == 0 {
-				want = 1
-			}
-			if matched != want {
+			if want := max(tc.count, 1); matched != want {
 				t.Fatalf("fixture produced %d matching %s row(s), want %d", matched, tc.signal, want)
 			}
 			if tc.exact != nil && !reflect.DeepEqual(exact, tc.exact) {
@@ -406,18 +418,5 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 				}
 			}
 		})
-	}
-}
-
-func TestGitSignalIgnoresLandedUnclaimedAssignmentBranch(t *testing.T) {
-	t.Parallel()
-	root := initRepo(t)
-	gitRun(t, root, "commit", "--allow-empty", "-m", "base")
-	gitRun(t, root, "branch", "-M", "main")
-	gitRun(t, root, "branch", "bench/assign/orphan/landed")
-	for _, signal := range SignalsWith(root, Query{}) {
-		if signal.Name == "git" {
-			t.Fatalf("landed unclaimed assignment branch produced git signal %#v", signal)
-		}
 	}
 }

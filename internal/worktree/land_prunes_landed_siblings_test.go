@@ -40,10 +40,10 @@ func TestLandCommandPrunesSquashFoldedSiblingBranch(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("land = (%d, %q, %q), want 0", code, stdout.String(), stderr.String())
 	}
-	unclaimed, err := UnclaimedAssignmentBranchRefs(root)
+	unclaimed, err := CountUnclaimedRefs(root)
 	mustNoError(t, err)
-	if len(unclaimed) != 0 {
-		t.Fatalf("landed sibling branch survived the landing as unclaimed: %q", unclaimed)
+	if unclaimed.Rows() != 0 {
+		t.Fatalf("landed sibling branch survived the landing as unclaimed: %+v", unclaimed)
 	}
 }
 

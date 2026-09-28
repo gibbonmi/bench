@@ -133,7 +133,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "spec", Attachment: attachmentDirect, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(
 		helpRow{Order: 41, Suffix: " retire <slug>", Description: "delete a merged spec + its review pickup (validated)"},
 		helpRow{Order: 42, Suffix: " history <slug>", Description: "retire/delete commits for a spec, newest first (TOON)"},
-	), Bound: boundResponse, Run: outputCommand(spec.Command)},
+	), Bound: boundResponse, Run: retireListingCommand(spec.Command)},
 	{Name: "gate-go", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return gate.GateGoCommand(args, c.Stdout, c.Stderr) }},
 	{Name: "gate-prose", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return gate.GateProseCommand(args, c.Stdout, c.Stderr) }},
 	{Name: "guard-git", Hook: true, Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return guardGit(args, c.Stdin, c.Stdout, c.Stderr) }},

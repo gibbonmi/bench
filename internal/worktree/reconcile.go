@@ -16,7 +16,8 @@ import (
 const specbuildRefNamespace = "refs/bench/specbuild/"
 
 // lifecycleRefNamespaces names the namespaces that the cleaner empties.
-// Reset refs have a separate record-bound rule. Green verdict refs stay outside both rules.
+// Reset refs have a separate record-bound rule, and discarded refs a separate dated rule.
+// Green verdict refs stay outside every rule.
 var lifecycleRefNamespaces = []string{specbuildRefNamespace, intent.RecoveryRefNamespace}
 
 func insideLifecycleNamespace(ref string) bool {
@@ -28,11 +29,16 @@ func insideLifecycleNamespace(ref string) bool {
 	return false
 }
 
-// sweepLifecycleRefs empties the lifecycle namespaces and deletes reset refs with no record.
-// Each deletion checks the listed object, so a concurrent ref move refuses.
-func sweepLifecycleRefs(j joins, root string) (int, error) {
+// discardedRefDays is the number of days after its date that a discarded ref stays.
+const discardedRefDays = 30
+
+// sweepLifecycleRefs empties the lifecycle namespaces, deletes reset refs with no record,
+// and deletes discarded refs whose window closed at now.
+// Each deletion checks the listed object, so a concurrent ref move refuses. A deletion
+// removes a symbolic ref itself and never the ref it names.
+func sweepLifecycleRefs(j joins, root string, now time.Time) (int, error) {
 	args := append([]string{"-C", root, "for-each-ref", "--format=%(refname) %(objectname)"}, lifecycleRefNamespaces...)
-	args = append(args, intent.ResetRefNamespace)
+	args = append(args, intent.ResetRefNamespace, intent.DiscardedRefNamespace)
 	listing, err := git.Output(args...)
 	if err != nil {
 		return 0, fmt.Errorf("list lifecycle refs: %w", err)
@@ -43,27 +49,34 @@ func sweepLifecycleRefs(j joins, root string) (int, error) {
 	swept := 0
 	for _, line := range strings.Split(listing, "\n") {
 		ref, oid, ok := strings.Cut(line, " ")
-		if !ok {
+		if !ok || !sweepable(ref, resetPrefixes, now) {
 			continue
-		}
-		if !insideLifecycleNamespace(ref) {
-			if !strings.HasPrefix(ref, intent.ResetRefNamespace) || resetPrefixes == nil {
-				continue
-			}
-			parts := strings.SplitN(strings.TrimPrefix(ref, intent.ResetRefNamespace), "/", 3)
-			if len(parts) == 3 && resetPrefixes[intent.ResetRefPrefix(parts[0], parts[1])] {
-				continue
-			}
 		}
 		if err := hit(j.cleanupBoundary, StepLifecycleSweep); err != nil {
 			return swept, err
 		}
-		if out, err := exec.Command("git", "-C", root, "update-ref", "-d", ref, oid).CombinedOutput(); err != nil {
+		if out, err := exec.Command("git", "-C", root, "update-ref", "--no-deref", "-d", ref, oid).CombinedOutput(); err != nil {
 			return swept, fmt.Errorf("delete lifecycle ref %s: %s", ref, strings.TrimSpace(string(out)))
 		}
 		swept++
 	}
 	return swept, nil
+}
+
+// sweepable reports whether one listed ref is debris at now. A reset ref needs a readable
+// ledger that holds no record for it. A discarded ref needs a date segment that parses.
+func sweepable(ref string, resetPrefixes map[string]bool, now time.Time) bool {
+	switch {
+	case insideLifecycleNamespace(ref):
+		return true
+	case strings.HasPrefix(ref, intent.DiscardedRefNamespace):
+		date, ok := intent.DiscardedRefDate(ref)
+		return ok && !now.Before(date.AddDate(0, 0, discardedRefDays))
+	case strings.HasPrefix(ref, intent.ResetRefNamespace) && resetPrefixes != nil:
+		parts := strings.SplitN(strings.TrimPrefix(ref, intent.ResetRefNamespace), "/", 3)
+		return len(parts) != 3 || !resetPrefixes[intent.ResetRefPrefix(parts[0], parts[1])]
+	}
+	return false
 }
 
 func recordedResetPrefixes(root string) map[string]bool {
@@ -114,9 +127,9 @@ func poolAssignment(a intent.Assignment, registered []Registered, now time.Time)
 
 // reconcileLifecycleDebris removes obsolete refs before it purges obsolete records.
 // A reset ref keeps its record's protection through this pass, even when the purge removes that record.
-// The caller supplies one instant so records of the same age get the same decision.
+// The caller supplies one instant so records and discarded refs of the same age get the same decision.
 func reconcileLifecycleDebris(j joins, root string, registered []Registered, now time.Time) (int, int, error) {
-	swept, err := sweepLifecycleRefs(j, root)
+	swept, err := sweepLifecycleRefs(j, root, now)
 	if err != nil {
 		return swept, 0, err
 	}
