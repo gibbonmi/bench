@@ -864,7 +864,7 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
 {
   "version": 1,
   "spec": "specs/test-determinism/spec.md",
-  "plan_digest": "sha256:99e115a7ba3f3afe54aa29c40f20dd56ecd71925c9b19147fa00a1927dd24288",
+  "plan_digest": "sha256:c71fc344fd2fa8f31004e339b7ffdeeaa6028361a2cdfc825ddf22af75ba9527",
   "implementation_session": "codex/test-determinism-inline-20260928",
   "chunks": [
     {
@@ -2107,7 +2107,7 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
       "id": "TD-C3",
       "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
       "tip": "5832b0095ab45369ef4c252b6f95e06b4f4a6ae6",
-      "plan_digest": "sha256:99e115a7ba3f3afe54aa29c40f20dd56ecd71925c9b19147fa00a1927dd24288",
+      "plan_digest": "sha256:c71fc344fd2fa8f31004e339b7ffdeeaa6028361a2cdfc825ddf22af75ba9527",
       "source_digest": "86a412d916bee27eae39ac3a5969c7abde3fb1eb",
       "acceptance_rows": [
         "TD33",
@@ -2124,7 +2124,8 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
         "TD44",
         "TD45",
         "TD46",
-        "TD50"
+        "TD50",
+        "TD51"
       ],
       "verification": [
         {
@@ -3303,6 +3304,24 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
           "TD-C3"
         ]
       }
+    },
+    {
+      "from": "sha256:99e115a7ba3f3afe54aa29c40f20dd56ecd71925c9b19147fa00a1927dd24288",
+      "to": "sha256:c71fc344fd2fa8f31004e339b7ffdeeaa6028361a2cdfc825ddf22af75ba9527",
+      "chunk_ids": {
+        "TD-C1a": [
+          "TD-C1a"
+        ],
+        "TD-C1b": [
+          "TD-C1b"
+        ],
+        "TD-C2": [
+          "TD-C2"
+        ],
+        "TD-C3": [
+          "TD-C3"
+        ]
+      }
     }
   ]
 }
@@ -3780,3 +3799,30 @@ The optional CLI advice concerns escaped page budgets and the position of pagina
 No axis identifies an implementation-command contribution.
 Repair cycles consumed for C3: 3, under the user's uncapped bench-debug authorization.
 The next action is the C3 checkpoint, followed by final acceptance reconciliation.
+
+
+## TD-C3 checkpoint and repair 4 plan
+
+Checkpoint gate-20260928T172030.870703619Z-1875302 exited 1 at source 8c6ab504.
+The main test phase failed only in TestClassifyRealCheckerTimeoutComposition.
+Its hung-ref row permitted the checkout instead of returning the expected refusal.
+The formatting, vet, race, and system phases passed.
+The checkpoint did not accept C3, and the final landing obligations remain open.
+
+The focused kit test reproduced the same error in native session 70266, with an elapsed time of 3006 ms.
+The same test with BENCH_TEST_UNBOUNDED_WAITS set to zero passed in session 87398, with an elapsed time of 2004 ms.
+The ranked causes were the disabled production window, changed failure handling, and a changed stub environment.
+The control isolates the disabled production window as the cause.
+The original switch census omitted this composition test.
+This is a spec-predicted fixture adaptation under the existing raw-test-window requirement.
+
+The plan adds TD51, the existing Git guard fixture, and complete Git guard package verification to ticket 8.
+All prior rows, chunk IDs, dependencies, and pass criteria stay in force.
+The author will compose the existing raw-setter pattern at the ref-check window.
+The original fixture assertions supply the red-capable regression seam.
+The structure report has no file-length refusal for either edit target; this repair adds no source file.
+
+The author read the failing source beside the debug instructions before narrowing the command.
+The gate red already existed, but the focused loop should have preceded that source read.
+The author reproduced the exact failure before any repair edit.
+Repair 4 remains pending under the user's uncapped bench-debug authorization.
