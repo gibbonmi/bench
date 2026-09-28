@@ -154,6 +154,8 @@ Repair context: <fold targets and author context, each read by the coordinator b
 
 - A diagnostic request contains only one question, the relevant error, minimal code, and attempted hypotheses.
 - A diagnostic return contains a short diagnosis and the next check.
+- A read-only consultation charge names its no-output deadline.
+- If no output arrives by that deadline, the coordinator stops the session and marks the transport incomplete. The coordinator resumes through an already-authorized route. Silence is not a decision.
 - Record the actual consultation line used.
 - If the selected model is unavailable, report the failure and use an available authorized diagnostic route without an undeclared model substitution.
 - The coordinator reads the census record at charge close for a read-only charge.

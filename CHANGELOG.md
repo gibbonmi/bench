@@ -43,6 +43,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Changed craft-line to resolve a mismatched recorded fork through a fresh writer and flag that venue for reviewer veto.
 - Added immediate read-only consultation for judgment calls that the gate cannot settle.
+- Added per-charge no-output deadlines and incomplete-transport handling for read-only consultations.
 
 ### Shaping
 
