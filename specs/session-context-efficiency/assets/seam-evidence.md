@@ -26,12 +26,12 @@ The spec landing must compose the current destination rather than discard that c
 
 | Owner | Definition read | Contract and consumer disposition |
 | --- | --- | --- |
-| Worktree population | `internal/worktree/list.go:15`, `:28`, `:89` | The list owner retains bare output and adds the fixed selected view |
-| Assignment identity | `internal/worktree/path.go:111` | The reporting view reuses identity selection without active-worktree authority |
-| Active path authority | `internal/worktree/path.go:60` | The existing path command remains unchanged |
-| Spec history | `internal/spec/history.go:31`, `:37`, `:150` | The selected view consumes the current typed history producer |
+| Worktree population | `internal/worktree/list.go:16`, `:18`, `:30` | The list owner retains bare output and adds the fixed selected view |
+| Assignment identity | `internal/worktree/path.go:117` | The reporting view reuses identity selection without active-worktree authority |
+| Active path authority | `internal/worktree/path.go:20` | The existing path command remains unchanged |
+| Spec history | `internal/spec/history.go:32`, `:37`, `:150` | The selected view consumes the current typed history producer |
 | History Git reads | `internal/spec/history.go:119`, `:138` | Existing exact matching and literal path behavior remain authoritative |
-| Roadmap projection precedent | `internal/roadmap/context_render.go:24`, `:132` | Selected bodies retain true byte metadata and a complete-detail route |
+| Roadmap projection precedent | `internal/roadmap/context_render.go:24`, `:118` | Selected bodies retain true byte metadata and a complete-detail route |
 | Harness declaration | `internal/harnesses/harnesses.go:59`, `:72`, `:116` | The compiled record and its metric suppliers remain separate from observations |
 | Harness query | `internal/harnesses/command.go:11`, `:52`, `:81` | The proposed record mode supplements both current compiled views |
 | Bench spans | `internal/otelrecord/reader.go:50`, `:83` | Existing span readers retain Bench elapsed-time ownership |
@@ -55,12 +55,12 @@ The proposed reader does not move the SessionStart inspector or duplicate the OT
 
 | Surface | Read reference | Disposition |
 | --- | --- | --- |
-| Public command registry | `cmd/bench/main.go:74`, `cmd/bench/command_registry.go:14` | Every changed command co-names its registry consumers |
-| Public help oracle | `cmd/bench/help_inventory_test.go:32` | Intentional new grammar updates its exact inventory expectation |
-| AXI command cases | `cmd/bench/command_registry_test.go:281`, `:286` | Existing compiled and bare views remain differential cases |
-| Worktree grammar | `internal/usage/worktree.go:10`, `cmd/bench/worktree_leaves.go:18` | One grammar source feeds leaf dispatch and help |
+| Public command registry | `cmd/bench/main.go:70`, `cmd/bench/command_registry.go:121` | Every changed command co-names its registry consumers |
+| Public help oracle | `cmd/bench/help_inventory_test.go:40` | Intentional new grammar updates its exact inventory expectation |
+| AXI command cases | `cmd/bench/command_registry_test.go:281`, `:284` | Existing compiled and bare views remain differential cases |
+| Worktree grammar | `internal/usage/worktree.go:10`, `cmd/bench/worktree_leaves.go:18`, `:36` | One grammar source feeds leaf dispatch and help |
 | Cleanup help expectations | `cmd/bench/command_registry_test.go:536`, `:816` | Repeated targets require matching help changes |
-| Spec help expectation | `cmd/bench/command_registry_test.go:750` | History grammar stays under the existing owner |
+| Spec help expectation | `cmd/bench/command_registry_test.go:482`, `:731` | History grammar stays under the existing owner |
 | AXI approved inventory | `internal/conformance/axi_query_registry_test.go:18`, `:106` | The approved set stays fixed and generic field selection stays forbidden |
 | Routing census | `internal/conformance/subcommand_routing_table_test.go:13` | New internal plumbing needs its declared disposition |
 | Ticket registry closure | `internal/tickets/registry_data.go:15` | Bound command packages co-name all five command registry files |
@@ -166,7 +166,7 @@ Its merged source tip is `09f8e78de17d75cda11663254096d1204ff3de68` before the c
 
 Sol review found two production callers missing from the initial delegated census.
 The coordinator re-ran the whole-tree symbol search and read both definitions.
-The roadmap context parser consumes `History` at `internal/roadmap/context_parse.go:173`.
+The roadmap context parser consumes `History` at `internal/roadmap/context_parse.go:185`.
 QU23 preserves that producer's complete ordered facts without changing the roadmap reader.
 Selected limits remain in the command projection.
 
@@ -175,7 +175,7 @@ CL18 and CL19 retain its scoped automatic cleanup and exclude earlier landed ass
 The coordinator read both cited test functions in the landing cleanup test file.
 The cleanup ticket and fence now name that reader and its tests.
 
-The direct `ListCommand` test callers also include path identifiers, request tokens, landed state, and hostile landed-cleanup cases.
+The direct `ListCommand` test callers also include path identifiers, request tokens, landed state, unlanded routes, and hostile landed-cleanup cases.
 QU9 includes these caller families in the unchanged-default matrix.
 QU19 separately protects positional history.
 The selected-history content case QU25 isolates an unrepresentable commit subject before combined output serialization.
@@ -187,3 +187,10 @@ The coordinator read the changed phase, spec, ticket, line, delegation, and plat
 The new retained-workflow conformance file supplies the model and chunk-table enforcement precedent.
 The behavior owners cited above remain unchanged by that main delta.
 The implementation metadata follows the current platform contract.
+
+## Queries refresh of 2026-09-28
+
+The queries amendment re-read the query rows above at `4bdffd04ed08c3d034bb7acfacc265b58caeb88f`.
+It refreshed the list, path, history, roadmap, registry, help, and grammar citations to their current lines.
+The unlanded-route test file is a new direct `ListCommand` caller, and QU9 includes it.
+The cleanup, harness, and overflow rows keep their 2026-09-11 citations.
