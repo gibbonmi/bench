@@ -496,11 +496,19 @@ The original edits remain intact, and verified copies remain in the local debug 
 The code commit uses the ordinary lane and records the known test failure here.
 Native test and probe results are in .logs/test-determinism-t4.json.
 
+## Ticket 4 startup repair plan
+
+The enabling plan adds TD49 for the confirmed inherited-startup edge.
+Ticket 4 owns the shared environment edit and its real-shell regression.
+The chunk adds environment and release preflight checks.
+The earlier acceptance rows, pass criteria, and linked-root environment remain unchanged.
+The learning entry precedes this expansion and the new source charge.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/test-determinism/spec.md",
-  "plan_digest": "sha256:5a4a015267230e340f4238f75ab928b81a67eefa3a5e4f97476dbbb9ba57d970",
+  "plan_digest": "sha256:9894c90ea0001faa207d3ef00a969f6ae0349679fa949156817c1c37c2cb544f",
   "implementation_session": "codex/test-determinism-inline-20260928",
   "chunks": [
     {
@@ -1450,6 +1458,24 @@ Native test and probe results are in .logs/test-determinism-t4.json.
     {
       "from": "sha256:9e27293b2fc324bfd625c4731e103debbd8ea09bd26741f75f9827a266024f00",
       "to": "sha256:5a4a015267230e340f4238f75ab928b81a67eefa3a5e4f97476dbbb9ba57d970",
+      "chunk_ids": {
+        "TD-C1a": [
+          "TD-C1a"
+        ],
+        "TD-C1b": [
+          "TD-C1b"
+        ],
+        "TD-C2": [
+          "TD-C2"
+        ],
+        "TD-C3": [
+          "TD-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:5a4a015267230e340f4238f75ab928b81a67eefa3a5e4f97476dbbb9ba57d970",
+      "to": "sha256:9894c90ea0001faa207d3ef00a969f6ae0349679fa949156817c1c37c2cb544f",
       "chunk_ids": {
         "TD-C1a": [
           "TD-C1a"
