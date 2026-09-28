@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Broker rehearsal
+
+- Fixed final-check guidance to restore the durable shim target before candidate worktree release.
+
 ### Branch pruning
 
 - Fixed exact branch deletion so the landing prune preserves symbolic-ref targets.
