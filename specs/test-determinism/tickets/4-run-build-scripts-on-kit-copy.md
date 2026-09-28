@@ -1,7 +1,7 @@
 # 4. Run the build-script tests on a private kit copy
 
 Blocked by: none
-Writes: internal/gittest/gittest.go, internal/gittest/gittest_test.go (new), cmd/bench/build_subject_mode_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/testrepo/working_tree.go, internal/env/kit_run.go, internal/env/kit_run_test.go
+Writes: internal/gittest/gittest.go, internal/gittest/gittest_test.go (new), cmd/bench/build_subject_mode_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/testrepo/working_tree.go, internal/env/
 Covers: TD47, TD48, TD49
 
 ## What to build

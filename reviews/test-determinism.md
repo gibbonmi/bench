@@ -504,11 +504,15 @@ The chunk adds environment and release preflight checks.
 The earlier acceptance rows, pass criteria, and linked-root environment remain unchanged.
 The learning entry precedes this expansion and the new source charge.
 
+The preflight fence comparison requires the directory spelling already present in the spec.
+Ticket 4 therefore names internal/env/; its repair still edits only the owner and its test file.
+The plan correction changes no behavior or required check.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/test-determinism/spec.md",
-  "plan_digest": "sha256:9894c90ea0001faa207d3ef00a969f6ae0349679fa949156817c1c37c2cb544f",
+  "plan_digest": "sha256:16abfe4c3e278cb992643dd86dfdb7be1fa874c001dea3ac15c9b9c5050853a8",
   "implementation_session": "codex/test-determinism-inline-20260928",
   "chunks": [
     {
@@ -1476,6 +1480,24 @@ The learning entry precedes this expansion and the new source charge.
     {
       "from": "sha256:5a4a015267230e340f4238f75ab928b81a67eefa3a5e4f97476dbbb9ba57d970",
       "to": "sha256:9894c90ea0001faa207d3ef00a969f6ae0349679fa949156817c1c37c2cb544f",
+      "chunk_ids": {
+        "TD-C1a": [
+          "TD-C1a"
+        ],
+        "TD-C1b": [
+          "TD-C1b"
+        ],
+        "TD-C2": [
+          "TD-C2"
+        ],
+        "TD-C3": [
+          "TD-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:9894c90ea0001faa207d3ef00a969f6ae0349679fa949156817c1c37c2cb544f",
+      "to": "sha256:16abfe4c3e278cb992643dd86dfdb7be1fa874c001dea3ac15c9b9c5050853a8",
       "chunk_ids": {
         "TD-C1a": [
           "TD-C1a"
