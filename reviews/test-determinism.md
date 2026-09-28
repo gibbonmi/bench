@@ -44,6 +44,8 @@ Repair cycles consumed: 2 of 2
 
 ## Standards
 
+TD-C3 has one finding, TD-C3-S1, with confidence 9 and disposition auto-fix.
+
 TD-C1b: zero blocking findings; worst issue: none.
 TD-C1b-S1 was repaired and confirmed, with confidence 9.
 The initial finding had confidence 8 and the auto-fix disposition.
@@ -55,6 +57,8 @@ TD-C1a: zero blocking findings; worst issue: none.
 
 ## Spec
 
+TD-C3 passes with zero findings and confidence 9.
+
 TD-C1b: zero blocking findings; worst issue: none.
 
 
@@ -62,6 +66,8 @@ TD-C1a: zero blocking findings; worst issue: none.
 Later chunks retain their planned rows; this chunk claims only the rows named above.
 
 ## Coverage
+
+TD-C3 has one finding, TD-C3-C1, with confidence 8 and disposition auto-fix.
 
 TD-C1b: zero blocking findings; worst issue: none.
 
@@ -2098,7 +2104,7 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
     {
       "id": "TD-C3",
       "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
-      "tip": "5bf4e43f5609abf741a037083f636c77abfe8eb5",
+      "tip": "3556703d715b97ab9f3941f79d07bda9c7f0ea34",
       "plan_digest": "sha256:99e115a7ba3f3afe54aa29c40f20dd56ecd71925c9b19147fa00a1927dd24288",
       "source_digest": "2990e5f77a214412796e9dcf9a2b8c8fe34681c4",
       "acceptance_rows": [
@@ -2282,7 +2288,72 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "TD-C3-standards-1",
+          "performer": "/root/td_c3_standards",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "2990e5f77a214412796e9dcf9a2b8c8fe34681c4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "codex:/root/td_c3_standards:final",
+            "digest": "sha256:10b932b0d693bde2fb77842bc1a71808a0621c08295350214d21b3c04cf62425",
+            "excerpt": "Standards verdict: **one retained mandatory-rule finding**. No behavioral checks were executed.\n**TD-C3-S1 \u2014 New discovered-file reader omits mandatory special-file rejection.**\nDisposition: **auto-fix** through the authorized coordinator repair route. Confidence: **9**. This is a source-derived claim awaiting coordinator reproduction.\nIn `internal/conformance/bounds_waits_policy_test.go:88`, `packageBindings` excludes directories, non-Go names, and test files. At **line 91**, it then calls `parser.ParseFile` with a pathname and `nil` source. A discovered FIFO named `blocked.go` passes those exclusions and reaches a file read without classification.\n`projects/benchkit.md:224\u2013226` requires special files in discovered paths to be rejected **before reading**, and states that static inspection and ambient commands must not block on them. The new reader supplies no rejection, documented prerequisite, or applicable exception. I am reporting that missing precondition, not an observed hang."
+          },
+          "axis": "Standards",
+          "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
+          "tip": "3556703d715b97ab9f3941f79d07bda9c7f0ea34",
+          "finding_ids": [
+            "TD-C3-S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "TD-C3-spec-1",
+          "performer": "/root/td_c3_spec",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "2990e5f77a214412796e9dcf9a2b8c8fe34681c4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:/root/td_c3_spec:final",
+            "digest": "sha256:be701903c7a73d7adf67bb8dfad87e3ec63ce40681464061ff097f9edae3c66b",
+            "excerpt": "**Spec verdict: PASS for C3.** Raw findings: 0. Worst issue: none. Distinct repair targets: 0. No finding dispositions or repair cycle required.\nAll 50 acceptance rows were audited:\n| Rows | Disposition |\n|---|---|\n| TD1\u201319 | Accepted C1 behavior remains consistent with the frozen changes. |\n| TD20\u201331, TD47\u201349 | Accepted C2 behavior remains consistent with the frozen changes. |\n| TD33\u201343, TD45\u201346, TD50 | C3 source and binding predicates agree; recorded executions remain author evidence. |\n| TD32, TD44 | Open final landing obligations, appropriately unclaimed at this review boundary. |\nClaim: `{\"status\":\"claimed\",\"confidence\":9}`"
+          },
+          "axis": "Spec",
+          "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
+          "tip": "3556703d715b97ab9f3941f79d07bda9c7f0ea34",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "TD-C3-coverage-1",
+          "performer": "/root/td_c3_coverage",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "2990e5f77a214412796e9dcf9a2b8c8fe34681c4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "codex:/root/td_c3_coverage:final",
+            "digest": "sha256:c870657795102bd068bf2d43e30aa21e0d9f9fcf61cfe77bf8e83d5fcdadfad6",
+            "excerpt": "Claim: `{\"status\":\"claimed\",\"confidence\":8}`\n**Verdict: changes requested.** One retained Coverage finding, three distinct source-derived break cases. Worst issue P2. Two repair targets: the wait classifier and its registered canary coverage. Execution remains unverified; coordinator reproduction is required before treating these as demonstrated bypasses. C3 repairs consumed: 0.\nFinding **TD-C3-C1 \u2014 Universal wait enforcement has unrepresented source forms**\nDisposition: **auto-fix**. Confidence: **8/10**, source-derived, unexecuted.\n1. **A later raw local assignment retains the initializer\u2019s classification.** A production function can initialize `window := bounds.FixedWindow(time.Duration(17))`, overwrite it with `window = time.Duration(19)`, and pass `window` to `context.WithTimeout`. The classifier resolves the identifier\u2019s original defining assignment and does not inspect subsequent assignments. The existing raw-duration canary uses a direct argument, so it does not exercise this state transition. Source: `internal/conformance/bounds_waits_policy_test.go:46`, `:117`, `:169`; existing witness `tests/canary/package-core-guard/bounds-raw-wait-duration/MUTATE.json:5`.\n2. **The marker helper\u2019s elapsed-time comparison can lose its classification.** Removing `bounds.FixedWindow` from `now().Sub(started) < bounds.FixedWindow(deadline)` leaves a production wait deadline. The classifier recognizes selected calls and current-time `.Add`; it does not recognize this comparison. Source: `internal/contract/marker_wait.go:35`; `internal/conformance/bounds_waits_policy_test.go:59`, `:64`, `:207`.\n3. **The marker helper\u2019s injected sleeper can lose its classification.** Replacing `sleep(bounds.FixedWindow(10 * time.Millisecond))` with `sleep(10 * time.Millisecond)` leaves the polling wait unclassified. The checker cannot resolve this function parameter through its binding resolver. Source: `internal/contract/marker_wait.go:33`, `:44`; `internal/conformance/bounds_waits_policy_test.go:169`, `:191`."
+          },
+          "axis": "Coverage",
+          "base": "52d0ec32306c1e8005d5cb9946996d0618362ae6",
+          "tip": "3556703d715b97ab9f3941f79d07bda9c7f0ea34",
+          "finding_ids": [
+            "TD-C3-C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2655,3 +2726,42 @@ TD32 and TD44 retain the final integrated gate obligation.
 The chunk has no independent review result yet and is not accepted.
 The three axes will use gpt-6-sol at high effort, as the user directed.
 Post-review repair cycles consumed: 0; the user's uncapped bench-debug authorization remains in force.
+
+
+## TD-C3 review pickup
+
+Three independent gpt-6-sol sessions reviewed the frozen pair at high effort.
+The base is 52d0ec32306c1e8005d5cb9946996d0618362ae6, and the tip is 3556703d715b97ab9f3941f79d07bda9c7f0ea34.
+The source remained clean, with digest 2990e5f77a214412796e9dcf9a2b8c8fe34681c4, after every return.
+Raw findings are Standards 1, Spec 0, and Coverage 1.
+Three repair targets remain: safe source reads, wait-expression classification, and registered regression canaries.
+
+Standards finding TD-C3-S1 cites the new sibling parser at internal/conformance/bounds_waits_policy_test.go:91.
+The profile at projects/benchkit.md:224 requires discovered special files to be rejected before reading.
+The new parser supplies no such classification, so a FIFO can reach its file read.
+The existing bounds.ClassifyNoFollow owner provides the repair seam.
+This is an auto-fix finding with confidence 9; runtime reproduction remains pending.
+
+Coverage finding TD-C3-C1 cites the all-waits rule at specs/test-determinism/spec.md:140 and ticket 8:11.
+The classifier follows an original initializer but misses a later raw assignment.
+It also misses the elapsed-time comparison and injected sleeper inside internal/contract/marker_wait.go.
+The current marker-deadline check covers cross-package calls and cannot detect these internal omissions.
+This is an auto-fix finding with confidence 8; all three bypasses still need executable reproduction.
+
+Spec passes with zero findings after auditing all 50 rows.
+TD32 and TD44 remain final landing obligations.
+No axis ran tests, probes, builds, or writes, and each distinguishes author execution from its source reads.
+The native excerpts above preserve each terminal verdict and finding.
+The local supplement is .logs/test-determinism-c3-review-1.json.
+
+Each axis read the whole spec, tickets 7 and 8, the frozen diff, and its targeted current sources.
+All axes retrieved metadata s1 and consumer pages s70:0 through s70:2 to their terminal cursor.
+Spec and Coverage also retrieved both s71 coverage pages.
+All fetched spills were read fully.
+Standards first misrouted its binding check to the primary checkout; its corrected assignment-bound check passed.
+
+No implementation-command change was proposed.
+Spec and Coverage suggest placing evidence pagination grammar earlier in the help output.
+No optional advice adds a repair target.
+Post-review repair cycles consumed: 0 before the pending first repair.
+The user authorizes uncapped inline repairs while bench-debug governs each cycle.
