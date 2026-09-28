@@ -3121,3 +3121,66 @@ This advice carries no finding or repair target.
 Post-review repair cycles consumed: 1.
 The user permits further inline repairs while bench-debug governs each cycle.
 The next cycle must reproduce TD-C3-C2 before repair, retain its red, and obtain current three-axis confirmation.
+
+
+## TD-C3 repair 2
+
+The inline author uses bench-debug under the user's uncapped repair authorization.
+The charge is sha256:e9adbc74bc880ea26b5304c456e7a2830a54fdbd0b9b1bacfcaa62ee8432800b at pickup 38f1b3a11109637eb7dd825a6a30bfc442260771.
+The author read metadata s1 and the full ticket s2, then passed the current binding once.
+The supplement is .logs/test-determinism-c3-repair-2-charge.md.
+All writes remain in ticket 8's existing fence.
+
+The repro command is the complete retained-fixture test through bench test and the assignment.
+Session 96697 failed because the multiple-dot-import canary lacked its time.Sleep diagnostic.
+It also reported the expected incomplete fixture-proof census.
+The ranked causes were the first-import return, lexical binding, and fixture wiring.
+The source and registered-owner result confirmed the first-import return.
+
+The shared import resolver returns all supported package candidates.
+The existing wait, accessor, clock, and duration rules select the names they already own.
+No second export registry or parser is introduced.
+Session 4790 passed the same retained-fixture command after this repair.
+
+A sibling-alias control then exposed the same early-return problem before package-binding resolution.
+Session 41414 lacked the required time.Sleep diagnostic for a sibling alias with dot imports.
+The ranked causes were the candidate return, missing sibling discovery, and fixture wiring.
+The resolver preserves both candidate names and resolved bindings, which removes that omission at the same seam.
+Two retained canaries use the existing bounds-policy owner and its complete restoration proof.
+
+Session 91245 passed complete conformance after 37.659 seconds.
+It includes both new canaries, all earlier canaries, the special-source regression, and root conformance.
+The run reported three capability skips and no environment skips.
+The complete diff and whitespace check were read, and all changed Go source is formatted.
+No temporary instrumentation remains.
+
+The native observations are retained in .logs/test-determinism-c3-repair-2.json.
+Post-review repair cycles consumed: 2.
+TD-C3-C2 has a demonstrated repair, with current C3 verification and fresh three-axis confirmation still pending.
+A resolver that preserves all candidates and bindings prevents import order from suppressing its callers' rules.
+
+
+### Valid-source correction
+
+The first commit attempt failed vet and created no commit.
+The reported context-and-time dot-import example is invalid because both packages export AfterFunc.
+The focused go vet command for both fixture packages reproduced that conflict in native chunk 9ded47.
+The initial parser-check runs above therefore do not prove a valid-source bypass.
+The original review claim stays retained with this explicit refutation of its example.
+
+The ranked setup causes were overlapping exports, a local declaration conflict, and stale lane input.
+The final direct-call fixture uses bounds and time dot imports, whose used names compile together.
+The sibling-alias fixture needs only a time dot import.
+The same focused go vet command passed both corrected packages in native chunk 4787d7.
+The diagnostic expectation and registered owner stay unchanged.
+
+Probe 74637 restores the first-import return for the bounds candidate.
+Its baseline passed, its mutation removed the direct canary's time.Sleep diagnostic, and restoration succeeded.
+Probe 34838 restores the candidate return before sibling-binding resolution.
+Its baseline passed, its mutation removed the alias canary's time.Sleep diagnostic, and restoration succeeded.
+These probes provide the valid-source red evidence for the retained expectations.
+
+Final complete conformance passed in session 27177 after 37.433 seconds.
+It reported the same three capability skips and no environment skips.
+The repair remains cycle 2, and both targets have current author proof.
+The gate's Go lane caught the invalid example that the read-only Coverage review missed.

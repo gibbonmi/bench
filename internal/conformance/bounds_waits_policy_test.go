@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -68,19 +69,21 @@ func (p *waitPolicy) check(file *ast.File, path, rel string) []string {
 				}
 			}
 		}
-		name := waitFunctionName(call.Fun, file, bindings, map[ast.Expr]bool{})
-		position, wait := p.seams[name]
-		switch name {
-		case "context.WithTimeout", "context.WithTimeoutCause", "context.WithDeadline", "context.WithDeadlineCause":
-			position, wait = 1, true
-		case "time.Sleep", "time.After", "time.AfterFunc", "time.NewTimer", "time.NewTicker", "time.Tick":
-			position, wait = 0, true
-		}
+		names := waitFunctionNames(call.Fun, file, bindings, map[ast.Expr]bool{})
 		if selector, ok := call.Fun.(*ast.SelectorExpr); ok && selector.Sel.Name == "Add" && currentWaitTime(selector.X, file, bindings, map[ast.Expr]bool{}) {
-			name, position, wait = "current-time deadline", 0, true
+			names = append(names, "current-time deadline")
 		}
-		if wait && position < len(call.Args) && !classifiedWait(call.Args[position], file, bindings, map[ast.Expr]bool{}) {
-			diags = append(diags, rel+" has an unclassified wait in "+name)
+		for _, name := range names {
+			position, wait := p.seams[name]
+			switch name {
+			case "context.WithTimeout", "context.WithTimeoutCause", "context.WithDeadline", "context.WithDeadlineCause":
+				position, wait = 1, true
+			case "time.Sleep", "time.After", "time.AfterFunc", "time.NewTimer", "time.NewTicker", "time.Tick", "current-time deadline":
+				position, wait = 0, true
+			}
+			if wait && position < len(call.Args) && !classifiedWait(call.Args[position], file, bindings, map[ast.Expr]bool{}) {
+				diags = append(diags, rel+" has an unclassified wait in "+name)
+			}
 		}
 		return true
 	})
@@ -146,8 +149,8 @@ func classifiedWait(expr ast.Expr, file *ast.File, bindings map[string]waitBindi
 		if selector, ok := value.Fun.(*ast.SelectorExpr); ok && selector.Sel.Name == "Add" && len(value.Args) == 1 && currentWaitTime(selector.X, file, bindings, map[ast.Expr]bool{}) {
 			return classifiedWait(value.Args[0], file, bindings, seen)
 		}
-		name := waitFunctionName(value.Fun, file, bindings, map[ast.Expr]bool{})
-		return name == "bounds.VerdictWindow" || name == "bounds.FixedWindow"
+		names := waitFunctionNames(value.Fun, file, bindings, map[ast.Expr]bool{})
+		return slices.Contains(names, "bounds.VerdictWindow") || slices.Contains(names, "bounds.FixedWindow")
 	case *ast.Ident:
 		binding, ok := resolveWaitBinding(value, file, bindings)
 		if !ok || !classifiedWait(binding.expr, binding.file, bindings, seen) {
@@ -195,23 +198,26 @@ func localWaitAssignments(value *ast.Ident, file *ast.File) []ast.Expr {
 	return values
 }
 
-func waitCallName(expr ast.Expr, file *ast.File) string {
+// A dot import has no qualifier that selects its package. Keep every supported
+// candidate so import order cannot hide a call from the rules that own its name.
+func waitCallNames(expr ast.Expr, file *ast.File) []string {
 	var qualifier, member string
 	switch value := expr.(type) {
 	case *ast.SelectorExpr:
 		ident, ok := value.X.(*ast.Ident)
 		if !ok || ident.Obj != nil {
-			return ""
+			return nil
 		}
 		qualifier, member = ident.Name, value.Sel.Name
 	case *ast.Ident:
 		if value.Obj != nil {
-			return ""
+			return nil
 		}
 		qualifier, member = ".", value.Name
 	default:
-		return ""
+		return nil
 	}
+	var names []string
 	for _, spec := range file.Imports {
 		path, err := strconv.Unquote(spec.Path.Value)
 		if err != nil {
@@ -226,12 +232,12 @@ func waitCallName(expr ast.Expr, file *ast.File) string {
 		}
 		switch path {
 		case "time", "context":
-			return path + "." + member
+			names = append(names, path+"."+member)
 		case "github.com/gibbonmi/bench/internal/bounds":
-			return "bounds." + member
+			names = append(names, "bounds."+member)
 		}
 	}
-	return ""
+	return names
 }
 
 func resolveWaitBinding(value *ast.Ident, file *ast.File, bindings map[string]waitBinding) (waitBinding, bool) {
@@ -256,20 +262,18 @@ func resolveWaitBinding(value *ast.Ident, file *ast.File, bindings map[string]wa
 	return waitBinding{}, false
 }
 
-func waitFunctionName(expr ast.Expr, file *ast.File, bindings map[string]waitBinding, seen map[ast.Expr]bool) string {
+func waitFunctionNames(expr ast.Expr, file *ast.File, bindings map[string]waitBinding, seen map[ast.Expr]bool) []string {
 	if seen[expr] {
-		return ""
+		return nil
 	}
 	seen[expr] = true
-	if name := waitCallName(expr, file); name != "" {
-		return name
-	}
+	names := waitCallNames(expr, file)
 	if ident, ok := expr.(*ast.Ident); ok {
 		if binding, found := resolveWaitBinding(ident, file, bindings); found {
-			return waitFunctionName(binding.expr, binding.file, bindings, seen)
+			names = append(names, waitFunctionNames(binding.expr, binding.file, bindings, seen)...)
 		}
 	}
-	return ""
+	return names
 }
 
 func currentWaitTime(expr ast.Expr, file *ast.File, bindings map[string]waitBinding, seen map[ast.Expr]bool) bool {
@@ -284,7 +288,7 @@ func currentWaitTime(expr ast.Expr, file *ast.File, bindings map[string]waitBind
 		binding, ok := resolveWaitBinding(value, file, bindings)
 		return ok && currentWaitTime(binding.expr, binding.file, bindings, seen)
 	case *ast.CallExpr:
-		if waitFunctionName(value.Fun, file, bindings, map[ast.Expr]bool{}) == "time.Now" {
+		if slices.Contains(waitFunctionNames(value.Fun, file, bindings, map[ast.Expr]bool{}), "time.Now") {
 			return true
 		}
 		if selector, ok := value.Fun.(*ast.SelectorExpr); ok {
@@ -296,7 +300,7 @@ func currentWaitTime(expr ast.Expr, file *ast.File, bindings map[string]waitBind
 		if ident, ok := value.Fun.(*ast.Ident); ok && ident.Obj != nil {
 			if field, ok := ident.Obj.Decl.(*ast.Field); ok {
 				if fn, ok := field.Type.(*ast.FuncType); ok && fn.Results != nil && len(fn.Results.List) == 1 {
-					return waitCallName(fn.Results.List[0].Type, file) == "time.Time"
+					return slices.Contains(waitCallNames(fn.Results.List[0].Type, file), "time.Time")
 				}
 			}
 		}
@@ -309,7 +313,7 @@ func elapsedWaitTime(expr ast.Expr, file *ast.File, bindings map[string]waitBind
 	if !ok || len(call.Args) != 1 {
 		return false
 	}
-	if waitFunctionName(call.Fun, file, bindings, map[ast.Expr]bool{}) == "time.Since" {
+	if slices.Contains(waitFunctionNames(call.Fun, file, bindings, map[ast.Expr]bool{}), "time.Since") {
 		return currentWaitTime(call.Args[0], file, bindings, map[ast.Expr]bool{})
 	}
 	selector, ok := call.Fun.(*ast.SelectorExpr)
@@ -321,7 +325,7 @@ func durationPositions(fn *ast.FuncType, file *ast.File, requiredName string) []
 	position := 0
 	for _, field := range fn.Params.List {
 		count := max(1, len(field.Names))
-		if waitCallName(field.Type, file) == "time.Duration" {
+		if slices.Contains(waitCallNames(field.Type, file), "time.Duration") {
 			for i := 0; i < count; i++ {
 				if requiredName == "" || len(field.Names) > i && field.Names[i].Name == requiredName {
 					positions = append(positions, position+i)
