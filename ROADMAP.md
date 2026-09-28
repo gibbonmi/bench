@@ -17,8 +17,6 @@ findings in the owner details.
 
 **FT318 (HIGH, decision required) — the review record has a native writer.**
 
-**FT115 (HIGH) — the staged test-determinism build removes environment, timing, and shared-file defects.**
-
 **FT290 (MEDIUM) — `bench test` projects a check's fixture family, a widened-set explanation, and a check inventory.**
 
 **FT215 (HIGH, decision required) — the path-aware lane closes its correctness edges before cost tuning.**
@@ -70,8 +68,6 @@ findings in the owner details.
 **FT333 (MEDIUM, decision required) — prepared evidence supports the tickets-only light path.**
 
 **FT349 (MEDIUM) — the ticket checkpoint enforces the check floor and refuses a leftover `planned` citation.**
-
-**FT338 (MEDIUM) — a spec sweeps each retired claim and each affected caller before review, and pairs each rewrite with Forbid rows.**
 
 **FT343 (MEDIUM, decision required) — production `Set*ForTest` hooks have one decided policy that the injected-port audit enforces.**
 
@@ -242,8 +238,8 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. Run `$bench-implement-spec test-determinism` to deliver FT115.
-2. Run `$bench-shape-idea FT341` to settle explicit tree targets.
-3. Run `$bench-shape-idea FT215` to close lane correctness decisions.
+1. Run `$bench-shape-idea FT341` to settle explicit tree targets.
+2. Run `$bench-shape-idea FT215` to close lane correctness decisions.
+3. Run `$bench-shape-idea FT318` to settle the native review-record writer.
 
 The section order supplies the larger sequence. It does not create new literal dependencies.
