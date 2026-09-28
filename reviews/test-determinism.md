@@ -225,12 +225,35 @@ Repair cycles consumed for TD-C1b: 2 of 2.
 The second confirming round passes on all three axes.
 Raw findings: Standards 0, Spec 0, Coverage 0.
 Distinct repair targets: 0.
-The whole-project checkpoint remains pending.
+The whole-project checkpoint failed as recorded below.
 
 Each axis read the repair delta and reaffirmed the whole chunk.
 Coverage retried its current-binding query after oversized tool output lost the first response.
 The retry returned the expected current assignment and source pair.
 All reviewers distinguish author execution evidence from their independent source reads.
+
+## TD-C1b exhausted repair allowance
+
+Checkpoint gate-20260928T130308.412495904Z-3375785 failed in TestSeparateTopLevelCommandsSelectDifferentPrivatePaths.
+The test reports that its first Command returned 1.
+The cleanup error names /tmp/CZHZOT/t/4RPG5T/h/.config/go/telemetry and says directory not empty.
+The failing assertion is internal/testreport/runbinary_test.go:83.
+Formatting, vet, race, system, and shellcheck passed.
+
+The path identifies a Go telemetry directory inside the private run.
+The concurrent writer has not been identified.
+The remaining defect is cleanup after the child exits; no repair has started for this failure.
+No unchanged rerun substitutes for the failed checkpoint.
+
+TD-C1b has consumed both permitted repair cycles.
+The first repaired the scanner's special-file refusal.
+The second repaired the probe fixture's Go command forwarding.
+All three review axes pass on the second repair, but the whole-project checkpoint is red.
+TD-C2 and TD-C3 have not started.
+
+The build needs an explicit extension for one additional TD-C1b repair cycle.
+That cycle must diagnose the writer, repair cleanup within the approved environment behavior, and retain the failure predicate.
+It must then refresh verification, independent confirming reviews, and the full checkpoint before the build continues.
 
 ```bench-review-record
 {
