@@ -856,7 +856,7 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
 {
   "version": 1,
   "spec": "specs/test-determinism/spec.md",
-  "plan_digest": "sha256:95397483990765ccfba4e331058d7febb6ed2286c8efc9195213aa4a51cb3aa5",
+  "plan_digest": "sha256:8725c79056294ad70c7a56217a64948f77a325720648c9669da94740ab026f5a",
   "implementation_session": "codex/test-determinism-inline-20260928",
   "chunks": [
     {
@@ -2301,7 +2301,33 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
           "TD-C3"
         ]
       }
+    },
+    {
+      "from": "sha256:95397483990765ccfba4e331058d7febb6ed2286c8efc9195213aa4a51cb3aa5",
+      "to": "sha256:8725c79056294ad70c7a56217a64948f77a325720648c9669da94740ab026f5a",
+      "chunk_ids": {
+        "TD-C1a": [
+          "TD-C1a"
+        ],
+        "TD-C1b": [
+          "TD-C1b"
+        ],
+        "TD-C2": [
+          "TD-C2"
+        ],
+        "TD-C3": [
+          "TD-C3"
+        ]
+      }
     }
   ]
 }
 ```
+
+## Ticket 8 poll census amendment
+
+Ticket 7 is complete at a5266bb2bf6882979684c33e35a7318ddf8ccd3e.
+Its final lane and build preflight passed.
+The wider census found the evidence-store poll and the contract marker wait outside ticket 8's original fence.
+The fence now owns both files, and the completion plan requires both package checks.
+Their fixed timing stays unchanged, and the existing acceptance rows and checks remain in force.
