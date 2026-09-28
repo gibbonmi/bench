@@ -1,7 +1,7 @@
 # 2. Compose the kit test run into bench test and release preflight
 
 Blocked by: 1-open-kit-test-run.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/probe_test.go, internal/testreport/environment.go, internal/testreport/environment_test.go, internal/releasepreflight/command.go, internal/releasepreflight/external_test.go, internal/env/, internal/gate/phases.go, internal/testreport/command.go, internal/testreport/check_test.go, internal/testreport/testreport_test.go, internal/testreport/outcome_test.go, internal/testreport/selection_test.go, internal/testreport/cancel_test.go, internal/gate/phases_test.go
+Writes: internal/gittest/gittest.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/probe_test.go, internal/testreport/environment.go, internal/testreport/environment_test.go, internal/releasepreflight/command.go, internal/releasepreflight/external_test.go, internal/env/, internal/gate/phases.go, internal/testreport/command.go, internal/testreport/check_test.go, internal/testreport/testreport_test.go, internal/testreport/outcome_test.go, internal/testreport/selection_test.go, internal/testreport/cancel_test.go, internal/gate/phases_test.go
 Covers: TD7, TD16, TD17, TD18, TD19
 
 ## What to build
@@ -16,6 +16,8 @@ This ticket expects no edits to them.
 After both runners use the run, remove the git test configuration function and any gate helper that only forwarded it. The git maintenance policy then has one source, the kit test run. The owner's documentation states that a plain `go test` opens no run.
 
 The command owner keeps the run alive until its child exits.
+The shared probe checks that Go telemetry is off and its configuration belongs to the run.
+The repair preserves the empty HOME and TMPDIR guarantees.
 The affected Go fixtures forward environment queries to Go and retain their test output.
 The linked-root phase test replaces the retired forwarding-helper test.
 

@@ -273,7 +273,7 @@ The debug loop remains under construction.
 {
   "version": 1,
   "spec": "specs/test-determinism/spec.md",
-  "plan_digest": "sha256:a1c65436efe7e608851a1c837dc69d2dec30b6824629417613dbcaf5ccc3325b",
+  "plan_digest": "sha256:c468cfe39ed63f5b14c447aba2d8b3a5178741083d43648063b3ab0224bffdbf",
   "implementation_session": "codex/test-determinism-inline-20260928",
   "chunks": [
     {
@@ -995,6 +995,24 @@ The debug loop remains under construction.
     {
       "from": "sha256:0d5f95e951ad76b239486e744ceff9bc487b8d2c3422daf6f760f420744f000c",
       "to": "sha256:a1c65436efe7e608851a1c837dc69d2dec30b6824629417613dbcaf5ccc3325b",
+      "chunk_ids": {
+        "TD-C1a": [
+          "TD-C1a"
+        ],
+        "TD-C1b": [
+          "TD-C1b"
+        ],
+        "TD-C2": [
+          "TD-C2"
+        ],
+        "TD-C3": [
+          "TD-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:a1c65436efe7e608851a1c837dc69d2dec30b6824629417613dbcaf5ccc3325b",
+      "to": "sha256:c468cfe39ed63f5b14c447aba2d8b3a5178741083d43648063b3ab0224bffdbf",
       "chunk_ids": {
         "TD-C1a": [
           "TD-C1a"
