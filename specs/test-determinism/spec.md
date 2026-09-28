@@ -316,6 +316,9 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 
 ## Ownership fences
 
+- `internal/chargeevidence/store.go`
+- `internal/contract/marker_wait.go`
+
 - `internal/probe/probe_test.go`
 
 - `internal/testreport/cancel_test.go`

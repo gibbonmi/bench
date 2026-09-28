@@ -856,7 +856,7 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
 {
   "version": 1,
   "spec": "specs/test-determinism/spec.md",
-  "plan_digest": "sha256:8725c79056294ad70c7a56217a64948f77a325720648c9669da94740ab026f5a",
+  "plan_digest": "sha256:65356dbfee549d85740553ee95bcd987a9c0638bd20ab17d5dc8b974bb9d03e5",
   "implementation_session": "codex/test-determinism-inline-20260928",
   "chunks": [
     {
@@ -2319,6 +2319,24 @@ The final ticket lane remains pending, with ticket 8 next after that commit.
           "TD-C3"
         ]
       }
+    },
+    {
+      "from": "sha256:8725c79056294ad70c7a56217a64948f77a325720648c9669da94740ab026f5a",
+      "to": "sha256:65356dbfee549d85740553ee95bcd987a9c0638bd20ab17d5dc8b974bb9d03e5",
+      "chunk_ids": {
+        "TD-C1a": [
+          "TD-C1a"
+        ],
+        "TD-C1b": [
+          "TD-C1b"
+        ],
+        "TD-C2": [
+          "TD-C2"
+        ],
+        "TD-C3": [
+          "TD-C3"
+        ]
+      }
     }
   ]
 }
@@ -2331,3 +2349,8 @@ Its final lane and build preflight passed.
 The wider census found the evidence-store poll and the contract marker wait outside ticket 8's original fence.
 The fence now owns both files, and the completion plan requires both package checks.
 Their fixed timing stays unchanged, and the existing acceptance rows and checks remain in force.
+
+The first plan commit passed its lane but failed build preflight on fence-writes.
+The diagnostic named only the two new ticket paths.
+Bench-debug ranked omitted spec entries, path grammar, and stale build state.
+The spec fence lacked those entries, so this repair adds them without changing behavior.
