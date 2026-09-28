@@ -45,8 +45,6 @@ findings in the owner details.
 
 **FT207 (MEDIUM, decision required) — worktree-mutating paths share malformed-admin refusal.**
 
-**FT199 (MEDIUM) — the shipped unclaimed-ref cleanup grows into a recovery-aware repository-wide ref inventory.**
-
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
 **FT344 (MEDIUM) — every rebuild remedy for a pool worktree names `bench worktree build` from one owner.**
@@ -64,6 +62,8 @@ findings in the owner details.
 **FT260 (LOW, decision required) — coordinator worktree diff inspection and sibling-worktree patch transfer need scoped native paths.**
 
 **FT308 (LOW, decision required) — the cleanup transaction's persistence lock leaves `.git` when its record is gone.**
+
+**FT350 (MEDIUM, decision required) — ref transactions define atomic observation and preservation guarantees.**
 
 ## Planning, ownership, and review integrity
 
@@ -111,7 +111,7 @@ findings in the owner details.
 
 **FT204 (LOW, decision required) — one bounded transcript/session query.**
 
-**FT125 (LOW) — reader surfaces that return the slice, not the file.**
+**FT125 (LOW) — section, story, symbol, and worktree readers return precise slices.**
 
 **FT168 (MEDIUM) — file-backed replacements and system or Markdown subjects extend the focused probe.**
 
@@ -121,11 +121,11 @@ findings in the owner details.
 
 **FT326 (MEDIUM, decision required) — stronger needle boundaries need a separate shape.**
 
-**FT299 (LOW) — a landing rehearsal precedes the first landing of a promotion-broker-changing spec.**
-
 **FT302 (MEDIUM) — the deepening batch's residuals: the diff package policy extraction and the Git-reader promotion.**
 
 **FT314 (MEDIUM, decision required) — an unchanged landing composition reuses gate evidence only under a complete authorization key.**
+
+**FT351 (LOW) — an offline diff report carries the approved visual prototype into a supported feature.**
 
 ## Release qualification
 
@@ -135,8 +135,6 @@ qualification requirements are met.
 **FT306 (HIGH, external qualification required) — a qualified release and one Regroup adoption prove the factory on a user-visible change.**
 
 **FT142 (MEDIUM) — FT91 runtime residuals, two tracks.**
-
-**FT58 (LOW) — hardened pool roots.**
 
 ## Deferred capability work
 
@@ -235,7 +233,7 @@ recommended table is sequencing advice.
 | FT | Better specified after | Why |
 |---|---|---|
 | FT305 | FT254, FT283, FT284 | Execution continuity reuses settled worktree and lifecycle contracts. |
-| FT306 | FT142, FT58 | Revalidate qualification residuals before the external pilot. |
+| FT306 | FT142 | Revalidate qualification residuals before the external pilot. |
 | FT222 | FT231 | Routing changes wait for comparable measurement evidence. |
 | FT100 | FT89 | Cut prose after coherence identifies authoritative guidance. |
 | FT172 | FT106 | Reuse document-claim evidence for roadmap claims. |
@@ -244,8 +242,8 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. Run `.agents/commands/bench-implement-spec.md test-determinism` to deliver FT115.
-2. Run `.agents/commands/bench-implement-spec.md ft290-test-projection` to deliver FT290.
-3. Run `.agents/commands/bench-shape-idea.md` on FT199 before any unclaimed sweep runs.
+1. Run `$bench-implement-spec test-determinism` to deliver FT115.
+2. Run `$bench-shape-idea FT341` to settle explicit tree targets.
+3. Run `$bench-shape-idea FT215` to close lane correctness decisions.
 
 The section order supplies the larger sequence. It does not create new literal dependencies.

@@ -468,6 +468,6 @@ only the bounded discretion already listed below.
 - Path: `decisions/byte-preserving-axi-foundation/assets/ft173-helper-compatibility-census.md`
   Supports: #3 and #7 through #10 current helper owners and consumers, byte-preserving versus output-changing moves, runtime parser census, and exact paired-delta or mutation obligations.
   Drift: re-run after any TOON, usage, truncation, aggregate, empty-state, error/exit, contextual-action, renderer, or command-consumer change.
-- Path: `decisions/spec-build-review-gate-cadence.md`
-  Supports: #4 and #5 reviewer-approved full AXI expansion for the spec-build family and FT185 composition boundary.
-  Drift: re-read if cadence tickets #6, #7, or #9 reopen.
+- Path: `.bench/BENCH.md`
+  Supports: the current ticket, chunk review, and landing lifecycle that supersedes the retired cadence map.
+  Drift: re-read when the implementation lifecycle changes.
