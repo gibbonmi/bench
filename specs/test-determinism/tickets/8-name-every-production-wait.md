@@ -1,7 +1,7 @@
 # 8. Name the window of every production wait
 
 Blocked by: 7-switch-verdict-windows.md
-Writes: internal/intent/, internal/conformance/bounds_waits_policy_test.go, internal/conformance/bounds_policy_test.go, internal/conformance/fixture_bite_test.go, tests/canary/package-core-guard/, internal/bounds/bounds.go, internal/git/git.go, internal/handoffdoc/, internal/capturetx/, internal/gate/runner.go, internal/runbinary/runbinary.go, internal/worktree/subshell.go, internal/worktree/exec.go, internal/testreport/command.go, internal/freshness/freshness_publish.go, internal/releaseevidence/release_evidence.go, internal/shift/loop.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/intent/, internal/conformance/bounds_waits_policy_test.go (new), internal/conformance/bounds_policy_test.go, internal/conformance/fixture_bite_test.go, tests/canary/package-core-guard/, internal/bounds/bounds.go, internal/git/git.go, internal/handoffdoc/, internal/capturetx/, internal/gate/runner.go, internal/runbinary/runbinary.go, internal/worktree/subshell.go, internal/worktree/exec.go, internal/testreport/command.go, internal/freshness/freshness_publish.go, internal/releaseevidence/release_evidence.go, internal/shift/loop.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: TD40, TD41, TD50
 
 ## What to build

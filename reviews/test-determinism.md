@@ -760,11 +760,17 @@ All existing acceptance rows, chunk identities, checkpoints, and pass criteria r
 The learning record names the census gap and the amended ownership before implementation starts.
 The user-directed inline author and version 1 completion plan remain unchanged.
 
+The first amendment committed as 0b61f2e0e41aeb34019980007cc885680b3a87c9 on its green prose lane.
+Its post-commit preflight refused the two absent paths because their Writes entries lacked new markers.
+The ranked causes were missing markers, invalid paths, and stale preflight input.
+The canonical parser confirms that these planned files require the marker.
+The corrective amendment adds only those two markers and preserves every fence path.
+
 ```bench-review-record
 {
   "version": 1,
   "spec": "specs/test-determinism/spec.md",
-  "plan_digest": "sha256:27e6b2a427af1a721ef859c1d70c7f9d25b667ae3a11c109edc0382e11aae639",
+  "plan_digest": "sha256:aec9213b88ac300cb6f8a5e0b4cd7cf0ac1909212f388eba03e8da8a8009f9a5",
   "implementation_session": "codex/test-determinism-inline-20260928",
   "chunks": [
     {
@@ -2159,6 +2165,24 @@ The user-directed inline author and version 1 completion plan remain unchanged.
     {
       "from": "sha256:16abfe4c3e278cb992643dd86dfdb7be1fa874c001dea3ac15c9b9c5050853a8",
       "to": "sha256:27e6b2a427af1a721ef859c1d70c7f9d25b667ae3a11c109edc0382e11aae639",
+      "chunk_ids": {
+        "TD-C1a": [
+          "TD-C1a"
+        ],
+        "TD-C1b": [
+          "TD-C1b"
+        ],
+        "TD-C2": [
+          "TD-C2"
+        ],
+        "TD-C3": [
+          "TD-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:27e6b2a427af1a721ef859c1d70c7f9d25b667ae3a11c109edc0382e11aae639",
+      "to": "sha256:aec9213b88ac300cb6f8a5e0b4cd7cf0ac1909212f388eba03e8da8a8009f9a5",
       "chunk_ids": {
         "TD-C1a": [
           "TD-C1a"
