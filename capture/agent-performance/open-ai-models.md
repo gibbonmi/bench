@@ -1,9 +1,9 @@
 # OpenAI model scorecard
 
-Last incorporated landing: `ft337-review-guidance-debug` (`3119dc72d48ad44a0a382bdf13a437a877b3e538`, 2026-09-26 UTC).
-Sol/high completed the guidance repair in one fix cycle after daemon recovery.
-Focused checks, independent omission probes, and the full landing gate passed.
-The gate reported eight informational capability skips and no environment skips.
+Last incorporated landing: `ref-inventory` (`ab886f5b5ee04867110e79e4e1879a920a50434f`, 2026-09-27).
+Astra/xhigh served as the reviewer's decider through `codex exec` for seven consultations on that Claude Code build.
+It decided D1 to D10, including the dropped holder kind, the branch-path route, and the faulted count line.
+The eighth consultation produced no output in over three hours, and the reviewer moved later consultations to Fable/high.
 
 At capture time, FT337 has an accepted draft, but human approval and its staging gate remain pending.
 The spec author and coordinator's exact model metadata and provider costs are unknown.
@@ -18,7 +18,7 @@ The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches dol
 
 | model / effort | role and sample | observed quality | current use | calibration |
 | --- | --- | --- | --- | --- |
-| Astra / ultra, high, medium, low | retained implementation, repair, verification, and coordination | Astra/high prepares the map-retirement debug repair in one cycle. The regression and live CLI probe catch duplicate ownership; the repaired worktree passes the full gate. | Retain the user-approved author through probes and repairs. | Repair forecast: 0.065 over 4 batch pairs; 0 abstentions |
+| Astra / xhigh, ultra, high, medium, low | decider, 8 consultations; retained implementation, repair, verification, and coordination | On `ref-inventory` Astra/xhigh gave exact row text and decisions in seven consultations, and each decision held through the confirming rounds. The eighth run hung with no output and was stopped. | Reviewer decisions by user direction when the route answers; retain the user-approved author through probes and repairs. | Repair forecast: 0.065 over 4 batch pairs; 0 abstentions |
 | Terra / low, medium, high | implementation and fresh-session adoption | Terra/low interprets all six guidance scenarios as intended. This exercise proves comprehension only. | Use fresh readers against committed owner bytes. | unknown |
 | Terra / high, medium, low | research and seam inspection, latest 5 assignments; semantic review, latest 10 axis passes | On `bounded-repair-policy`, all three Terra/high axes passed before a cross-harness reviewer found two policy defects. Each axis verified the repairs; Coverage corrected one source-identity claim after the coordinator checked Git. | Standards, Spec, and Coverage review in separate contexts; independently census production callers. | unknown |
 | Luna / max, medium | prose implementation and bounded repairs | Luna preserved the Ticket 4 prose pass. Review found owner-identity and instruction-shape defects that required an Astra repair and refreshed adoption evidence. | Use Luna for narrow prose changes after an owner census and before independent review. | unknown |
@@ -45,4 +45,5 @@ The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches dol
 - Serialize full gates and landings, with no repository mutation during a gate.
 - Reserve time for the paired capture commit, restoration, and handoff.
 - Keep unknown model usage and costs explicit, and count invalid confidence as an abstention.
+- Stop a `codex exec` consultation that produces no output past its expected window, and reroute the question.
 - Change routing only after two comparable runs, one controlled comparison, or explicit user direction.
