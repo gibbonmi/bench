@@ -1348,16 +1348,45 @@ row of the four chunks reconciles as covered. The JSON payload holds the eight
 `integration-verification` rows under `completion`, with the orchestrator as
 the performer.
 
-The build stays on the base `72a749a3`, one landing behind `main`, by the
-reviewer's earlier decision. The landing composes `main` into the source, and
-the only `main` delta is the light-path guidance commit `41e03007`, which
-touches Markdown under `.agents` and `projects`.
+The build stayed on the base `72a749a3`, one landing behind `main`, by the
+reviewer's earlier decision. The first landing attempt refused, because the
+composition with `main` changed two guidance files that no review covered.
+
+## RI-C2b composition round
+
+The orchestrator composed `main` into the source as the merge `46b68cec`. The
+only `main` delta is the light-path guidance commit `41e03007`, which touches
+`map-discipline.md` and `projects/benchkit.md`. The spec fence commit
+`648583e8` and the ticket 6 `Writes:` commit `ec67fb04` name those two paths,
+so the round has an owner for them. The chunk tip moves to `ec67fb04`, and the
+plan digest moves with the two plan commits.
+
+The charge verb refused this round twice: first on the unfenced paths, then on
+fixture closure for the guidance paths. The three axes therefore read the tree
+directly with no evidence id. Each ran in a fresh `bench-reviewer` session on
+opus at high effort under the blocking bar.
+
+Raw findings: Standards 0, Spec 0, Coverage 0. No Go file changed since
+`12137b64`, and the merge is a merge commit, not a rebase. The composed
+guidance restates no shared rule and contradicts no row or decision. The
+Coverage axis ran the docs-currency and guidance-prose checks at the tip, and
+both pass.
+
+Advice: ticket 6 now names two paths it never wrote, and the spec's
+"composition round only" wording has no matching limit on the fence list; the
+RI103 paragraph in Further notes opens with two sentences of history.
+
+The last ticket 4 session and the last ticket 5 session reran their plan checks
+at `ec67fb04`, read-only. The orchestrator reran the eight final verification
+commands there. Every run exited 0. The JSON payload holds the
+reruns after the earlier rows, and the completion rows now carry the
+composition source.
 
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/ref-inventory/spec.md",
-  "plan_digest": "sha256:f0253dc65290a525f0d0d25288db32e9183adda8b75df597b8659217604f55c5",
+  "plan_digest": "sha256:15482ee1741cbf29a4084944d8db166c02abfbc0b557f9eaae21275bab1ba9f1",
   "implementation_session": "",
   "chunks": [
     {
@@ -1367,9 +1396,47 @@ touches Markdown under `.agents` and `projects`.
       "plan_digest": "sha256:084df113f531adbc7d196def8c112c45a1925608d2a1e45099e9428dbb5ba82b",
       "source_digest": "8cb477fca58ec20c7e531218bc6ed542a9e7391a",
       "acceptance_rows": [
-        "RI1", "RI2", "RI3", "RI4", "RI5", "RI6", "RI7", "RI8", "RI9", "RI10", "RI11", "RI12", "RI13", "RI14", "RI15",
-        "RI17", "RI18", "RI19", "RI20", "RI21", "RI22", "RI23", "RI25", "RI28", "RI55", "RI57", "RI59", "RI60", "RI61",
-        "RI62", "RI63", "RI66", "RI72", "RI73", "RI81", "RI82", "RI83", "RI84", "RI85", "RI86", "RI87"
+        "RI1",
+        "RI2",
+        "RI3",
+        "RI4",
+        "RI5",
+        "RI6",
+        "RI7",
+        "RI8",
+        "RI9",
+        "RI10",
+        "RI11",
+        "RI12",
+        "RI13",
+        "RI14",
+        "RI15",
+        "RI17",
+        "RI18",
+        "RI19",
+        "RI20",
+        "RI21",
+        "RI22",
+        "RI23",
+        "RI25",
+        "RI28",
+        "RI55",
+        "RI57",
+        "RI59",
+        "RI60",
+        "RI61",
+        "RI62",
+        "RI63",
+        "RI66",
+        "RI72",
+        "RI73",
+        "RI81",
+        "RI82",
+        "RI83",
+        "RI84",
+        "RI85",
+        "RI86",
+        "RI87"
       ],
       "verification": [
         {
@@ -1769,7 +1836,14 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Standards",
           "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
           "tip": "c6b2a74effa57cbafdd8bc449c9fbbb24d1468eb",
-          "finding_ids": ["R1", "R2", "R3", "R4", "R5", "R6"],
+          "finding_ids": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5",
+            "R6"
+          ],
           "supersedes": []
         },
         {
@@ -1789,7 +1863,10 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Spec",
           "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
           "tip": "c6b2a74effa57cbafdd8bc449c9fbbb24d1468eb",
-          "finding_ids": ["R7", "R8"],
+          "finding_ids": [
+            "R7",
+            "R8"
+          ],
           "supersedes": []
         },
         {
@@ -1809,7 +1886,12 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Coverage",
           "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
           "tip": "c6b2a74effa57cbafdd8bc449c9fbbb24d1468eb",
-          "finding_ids": ["R9", "R10", "R11", "R12"],
+          "finding_ids": [
+            "R9",
+            "R10",
+            "R11",
+            "R12"
+          ],
           "supersedes": []
         },
         {
@@ -1829,8 +1911,15 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Standards",
           "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
           "tip": "4b80686a12ea46afa0e6c0ba4fe9aab2e00935f6",
-          "finding_ids": ["R13", "R14", "R15", "R16"],
-          "supersedes": ["ri-c1a-r1-standards"]
+          "finding_ids": [
+            "R13",
+            "R14",
+            "R15",
+            "R16"
+          ],
+          "supersedes": [
+            "ri-c1a-r1-standards"
+          ]
         },
         {
           "id": "ri-c1a-r2-spec",
@@ -1849,8 +1938,14 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Spec",
           "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
           "tip": "4b80686a12ea46afa0e6c0ba4fe9aab2e00935f6",
-          "finding_ids": ["R13", "R17", "R18"],
-          "supersedes": ["ri-c1a-r1-spec"]
+          "finding_ids": [
+            "R13",
+            "R17",
+            "R18"
+          ],
+          "supersedes": [
+            "ri-c1a-r1-spec"
+          ]
         },
         {
           "id": "ri-c1a-r2-coverage",
@@ -1869,8 +1964,12 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Coverage",
           "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
           "tip": "4b80686a12ea46afa0e6c0ba4fe9aab2e00935f6",
-          "finding_ids": ["R17"],
-          "supersedes": ["ri-c1a-r1-coverage"]
+          "finding_ids": [
+            "R17"
+          ],
+          "supersedes": [
+            "ri-c1a-r1-coverage"
+          ]
         },
         {
           "id": "ri-c1a-r3-standards",
@@ -1890,7 +1989,9 @@ touches Markdown under `.agents` and `projects`.
           "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
           "tip": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
           "finding_ids": [],
-          "supersedes": ["ri-c1a-r2-standards"]
+          "supersedes": [
+            "ri-c1a-r2-standards"
+          ]
         },
         {
           "id": "ri-c1a-r3-spec",
@@ -1910,7 +2011,9 @@ touches Markdown under `.agents` and `projects`.
           "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
           "tip": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
           "finding_ids": [],
-          "supersedes": ["ri-c1a-r2-spec"]
+          "supersedes": [
+            "ri-c1a-r2-spec"
+          ]
         },
         {
           "id": "ri-c1a-r3-coverage",
@@ -1930,7 +2033,9 @@ touches Markdown under `.agents` and `projects`.
           "base": "72a749a35dc4c37de87f56534959ac9c137099e1",
           "tip": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
           "finding_ids": [],
-          "supersedes": ["ri-c1a-r2-coverage"]
+          "supersedes": [
+            "ri-c1a-r2-coverage"
+          ]
         }
       ]
     },
@@ -1940,7 +2045,16 @@ touches Markdown under `.agents` and `projects`.
       "tip": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
       "plan_digest": "sha256:74f8fb4685ed7e515b51757c2cd9d36d59a79ba8659977672e3b3aad337a118a",
       "source_digest": "039b389cfbca79ef22bfd8e3092c47270ee89388",
-      "acceptance_rows": ["RI24", "RI26", "RI27", "RI88", "RI89", "RI90", "RI91", "RI92"],
+      "acceptance_rows": [
+        "RI24",
+        "RI26",
+        "RI27",
+        "RI88",
+        "RI89",
+        "RI90",
+        "RI91",
+        "RI92"
+      ],
       "verification": [
         {
           "id": "ri-c1b-2-status-r1",
@@ -2069,7 +2183,13 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Standards",
           "base": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
           "tip": "f12046941a0ad1f2812e82de0bf4e9c61303079b",
-          "finding_ids": ["R19", "R20", "R21", "R22", "R23"],
+          "finding_ids": [
+            "R19",
+            "R20",
+            "R21",
+            "R22",
+            "R23"
+          ],
           "supersedes": []
         },
         {
@@ -2089,7 +2209,10 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Spec",
           "base": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
           "tip": "f12046941a0ad1f2812e82de0bf4e9c61303079b",
-          "finding_ids": ["R24", "R25"],
+          "finding_ids": [
+            "R24",
+            "R25"
+          ],
           "supersedes": []
         },
         {
@@ -2109,7 +2232,11 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Coverage",
           "base": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
           "tip": "f12046941a0ad1f2812e82de0bf4e9c61303079b",
-          "finding_ids": ["R24", "R25", "R26"],
+          "finding_ids": [
+            "R24",
+            "R25",
+            "R26"
+          ],
           "supersedes": []
         },
         {
@@ -2130,7 +2257,9 @@ touches Markdown under `.agents` and `projects`.
           "base": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
           "tip": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
           "finding_ids": [],
-          "supersedes": ["ri-c1b-r1-standards"]
+          "supersedes": [
+            "ri-c1b-r1-standards"
+          ]
         },
         {
           "id": "ri-c1b-r2-spec",
@@ -2150,7 +2279,9 @@ touches Markdown under `.agents` and `projects`.
           "base": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
           "tip": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
           "finding_ids": [],
-          "supersedes": ["ri-c1b-r1-spec"]
+          "supersedes": [
+            "ri-c1b-r1-spec"
+          ]
         },
         {
           "id": "ri-c1b-r2-coverage",
@@ -2170,7 +2301,9 @@ touches Markdown under `.agents` and `projects`.
           "base": "09611663f8a49bd5f037b24ba9385eaa2e42be41",
           "tip": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
           "finding_ids": [],
-          "supersedes": ["ri-c1b-r1-coverage"]
+          "supersedes": [
+            "ri-c1b-r1-coverage"
+          ]
         }
       ]
     },
@@ -2180,7 +2313,17 @@ touches Markdown under `.agents` and `projects`.
       "tip": "114f94a2d6541d11833af640e5a886cbe8d01966",
       "plan_digest": "sha256:9bd083f4927a1ed4a55d7489d07f3e1869adfd9f0c05e5fb9a1c37e142c0da39",
       "source_digest": "bef9fc586ec28458a2e0f7ce106c0021cf7589a4",
-      "acceptance_rows": ["RI42", "RI43", "RI44", "RI45", "RI46", "RI47", "RI93", "RI94", "RI95"],
+      "acceptance_rows": [
+        "RI42",
+        "RI43",
+        "RI44",
+        "RI45",
+        "RI46",
+        "RI47",
+        "RI93",
+        "RI94",
+        "RI95"
+      ],
       "verification": [
         {
           "id": "ri-c2a-3-worktree-r1",
@@ -2273,7 +2416,13 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Standards",
           "base": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
           "tip": "5c54f668f2d79291e447dda034c78a2046d9d999",
-          "finding_ids": ["R27", "R28", "R29", "R30", "R31"],
+          "finding_ids": [
+            "R27",
+            "R28",
+            "R29",
+            "R30",
+            "R31"
+          ],
           "supersedes": []
         },
         {
@@ -2313,7 +2462,11 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Coverage",
           "base": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
           "tip": "5c54f668f2d79291e447dda034c78a2046d9d999",
-          "finding_ids": ["R32", "R33", "R34"],
+          "finding_ids": [
+            "R32",
+            "R33",
+            "R34"
+          ],
           "supersedes": []
         },
         {
@@ -2334,7 +2487,9 @@ touches Markdown under `.agents` and `projects`.
           "base": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
           "tip": "114f94a2d6541d11833af640e5a886cbe8d01966",
           "finding_ids": [],
-          "supersedes": ["ri-c2a-r1-standards"]
+          "supersedes": [
+            "ri-c2a-r1-standards"
+          ]
         },
         {
           "id": "ri-c2a-r2-spec",
@@ -2354,7 +2509,9 @@ touches Markdown under `.agents` and `projects`.
           "base": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
           "tip": "114f94a2d6541d11833af640e5a886cbe8d01966",
           "finding_ids": [],
-          "supersedes": ["ri-c2a-r1-spec"]
+          "supersedes": [
+            "ri-c2a-r1-spec"
+          ]
         },
         {
           "id": "ri-c2a-r2-coverage",
@@ -2374,20 +2531,61 @@ touches Markdown under `.agents` and `projects`.
           "base": "c6d2cfbf66d4b82f284e008ab063266bf61c4a23",
           "tip": "114f94a2d6541d11833af640e5a886cbe8d01966",
           "finding_ids": [],
-          "supersedes": ["ri-c2a-r1-coverage"]
+          "supersedes": [
+            "ri-c2a-r1-coverage"
+          ]
         }
       ]
     },
     {
       "id": "RI-C2b",
       "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
-      "tip": "12137b64025cc6844bc884d9e15462af8652b144",
-      "plan_digest": "sha256:f0253dc65290a525f0d0d25288db32e9183adda8b75df597b8659217604f55c5",
-      "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+      "tip": "ec67fb042f6c5a9a2a73a0fc76d4059b9bda0ec2",
+      "plan_digest": "sha256:15482ee1741cbf29a4084944d8db166c02abfbc0b557f9eaae21275bab1ba9f1",
+      "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
       "acceptance_rows": [
-        "RI16", "RI29", "RI30", "RI31", "RI32", "RI33", "RI34", "RI35", "RI36", "RI37", "RI38", "RI39", "RI40", "RI41",
-        "RI48", "RI49", "RI50", "RI51", "RI52", "RI58", "RI64", "RI65", "RI67", "RI68", "RI69", "RI70", "RI71",
-        "RI74", "RI75", "RI76", "RI77", "RI78", "RI79", "RI80", "RI96", "RI97", "RI98", "RI99", "RI100", "RI101", "RI102", "RI103"
+        "RI16",
+        "RI29",
+        "RI30",
+        "RI31",
+        "RI32",
+        "RI33",
+        "RI34",
+        "RI35",
+        "RI36",
+        "RI37",
+        "RI38",
+        "RI39",
+        "RI40",
+        "RI41",
+        "RI48",
+        "RI49",
+        "RI50",
+        "RI51",
+        "RI52",
+        "RI58",
+        "RI64",
+        "RI65",
+        "RI67",
+        "RI68",
+        "RI69",
+        "RI70",
+        "RI71",
+        "RI74",
+        "RI75",
+        "RI76",
+        "RI77",
+        "RI78",
+        "RI79",
+        "RI80",
+        "RI96",
+        "RI97",
+        "RI98",
+        "RI99",
+        "RI100",
+        "RI101",
+        "RI102",
+        "RI103"
       ],
       "verification": [
         {
@@ -2677,6 +2875,78 @@ touches Markdown under `.agents` and `projects`.
           "requirement": "5-cmd",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-4-worktree-r6",
+          "performer": "claude:bench-writer/ri-t4-repair-3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t4-repair-3-20260927/4-worktree@ec67fb04",
+            "digest": "sha256:dc87d0ffd0fd5c4ab771673d51554921490ec5022387d32da63f86263790d01b",
+            "excerpt": "github.com/gibbonmi/bench/internal/worktree,pass,78715"
+          },
+          "requirement": "4-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-4-cmd-r6",
+          "performer": "claude:bench-writer/ri-t4-repair-3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t4-repair-3-20260927/4-cmd@ec67fb04",
+            "digest": "sha256:b918b31b2af5e23b13164ce48fbac2f46afbffb383424d0eabec7db0ec7b427d",
+            "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,11702"
+          },
+          "requirement": "4-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-5-spec-r4",
+          "performer": "claude:bench-writer/ri-t5-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t5-repair-1-20260927/5-spec@ec67fb04",
+            "digest": "sha256:9678d6787281466f922f9410516e6fdfb070e6ea4f31c056958666f88982aec4",
+            "excerpt": "github.com/gibbonmi/bench/internal/spec,pass,274"
+          },
+          "requirement": "5-spec",
+          "command": "bench test --package ./internal/spec",
+          "exit_code": 0
+        },
+        {
+          "id": "ri-c2b-5-cmd-r4",
+          "performer": "claude:bench-writer/ri-t5-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-t5-repair-1-20260927/5-cmd@ec67fb04",
+            "digest": "sha256:9dfa83105f0c5bacb6f7551757a60f0b83fd03095081bd7616fb14efad42c55d",
+            "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,16336"
+          },
+          "requirement": "5-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -2697,7 +2967,13 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Standards",
           "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
           "tip": "7ccd9aaab3a0f4be51d8b2bab0041f8e8ac28835",
-          "finding_ids": ["R35", "R36", "R37", "R38", "R39"],
+          "finding_ids": [
+            "R35",
+            "R36",
+            "R37",
+            "R38",
+            "R39"
+          ],
           "supersedes": []
         },
         {
@@ -2717,7 +2993,9 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Spec",
           "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
           "tip": "7ccd9aaab3a0f4be51d8b2bab0041f8e8ac28835",
-          "finding_ids": ["R40"],
+          "finding_ids": [
+            "R40"
+          ],
           "supersedes": []
         },
         {
@@ -2737,7 +3015,13 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Coverage",
           "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
           "tip": "7ccd9aaab3a0f4be51d8b2bab0041f8e8ac28835",
-          "finding_ids": ["R41", "R42", "R43", "R44", "R45"],
+          "finding_ids": [
+            "R41",
+            "R42",
+            "R43",
+            "R44",
+            "R45"
+          ],
           "supersedes": []
         },
         {
@@ -2758,7 +3042,9 @@ touches Markdown under `.agents` and `projects`.
           "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
           "tip": "a7fba6acea34ec41fab38fc094ce4610a3ca7283",
           "finding_ids": [],
-          "supersedes": ["ri-c2b-r1-standards"]
+          "supersedes": [
+            "ri-c2b-r1-standards"
+          ]
         },
         {
           "id": "ri-c2b-r2-spec",
@@ -2777,8 +3063,13 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Spec",
           "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
           "tip": "a7fba6acea34ec41fab38fc094ce4610a3ca7283",
-          "finding_ids": ["R46", "R47"],
-          "supersedes": ["ri-c2b-r1-spec"]
+          "finding_ids": [
+            "R46",
+            "R47"
+          ],
+          "supersedes": [
+            "ri-c2b-r1-spec"
+          ]
         },
         {
           "id": "ri-c2b-r2-coverage",
@@ -2797,8 +3088,12 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Coverage",
           "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
           "tip": "a7fba6acea34ec41fab38fc094ce4610a3ca7283",
-          "finding_ids": ["R48"],
-          "supersedes": ["ri-c2b-r1-coverage"]
+          "finding_ids": [
+            "R48"
+          ],
+          "supersedes": [
+            "ri-c2b-r1-coverage"
+          ]
         },
         {
           "id": "ri-c2b-r3-standards",
@@ -2818,7 +3113,9 @@ touches Markdown under `.agents` and `projects`.
           "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
           "tip": "b592c85ab201e0743cde20aa39843846ed309bb9",
           "finding_ids": [],
-          "supersedes": ["ri-c2b-r2-standards"]
+          "supersedes": [
+            "ri-c2b-r2-standards"
+          ]
         },
         {
           "id": "ri-c2b-r3-spec",
@@ -2838,7 +3135,9 @@ touches Markdown under `.agents` and `projects`.
           "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
           "tip": "b592c85ab201e0743cde20aa39843846ed309bb9",
           "finding_ids": [],
-          "supersedes": ["ri-c2b-r2-spec"]
+          "supersedes": [
+            "ri-c2b-r2-spec"
+          ]
         },
         {
           "id": "ri-c2b-r3-coverage",
@@ -2857,8 +3156,12 @@ touches Markdown under `.agents` and `projects`.
           "axis": "Coverage",
           "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
           "tip": "b592c85ab201e0743cde20aa39843846ed309bb9",
-          "finding_ids": ["R49"],
-          "supersedes": ["ri-c2b-r2-coverage"]
+          "finding_ids": [
+            "R49"
+          ],
+          "supersedes": [
+            "ri-c2b-r2-coverage"
+          ]
         },
         {
           "id": "ri-c2b-r4-standards",
@@ -2878,7 +3181,9 @@ touches Markdown under `.agents` and `projects`.
           "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
           "tip": "12137b64025cc6844bc884d9e15462af8652b144",
           "finding_ids": [],
-          "supersedes": ["ri-c2b-r3-standards"]
+          "supersedes": [
+            "ri-c2b-r3-standards"
+          ]
         },
         {
           "id": "ri-c2b-r4-spec",
@@ -2898,7 +3203,9 @@ touches Markdown under `.agents` and `projects`.
           "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
           "tip": "12137b64025cc6844bc884d9e15462af8652b144",
           "finding_ids": [],
-          "supersedes": ["ri-c2b-r3-spec"]
+          "supersedes": [
+            "ri-c2b-r3-spec"
+          ]
         },
         {
           "id": "ri-c2b-r4-coverage",
@@ -2918,14 +3225,82 @@ touches Markdown under `.agents` and `projects`.
           "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
           "tip": "12137b64025cc6844bc884d9e15462af8652b144",
           "finding_ids": [],
-          "supersedes": ["ri-c2b-r3-coverage"]
+          "supersedes": [
+            "ri-c2b-r3-coverage"
+          ]
+        },
+        {
+          "id": "ri-c2b-r5-standards",
+          "performer": "claude:bench-reviewer/ri-c2b-standards-r5",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2b-standards-r5@ec67fb04",
+            "digest": "sha256:644517115f3609230bc09685c36fec21dbc1cf02ead475e200fda47012126cd1",
+            "excerpt": "Standards round 5: 0 blocking findings. The composed guidance restates no shared rule, and both fenced paths have one Writes owner."
+          },
+          "axis": "Standards",
+          "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "tip": "ec67fb042f6c5a9a2a73a0fc76d4059b9bda0ec2",
+          "finding_ids": [],
+          "supersedes": [
+            "ri-c2b-r4-standards"
+          ]
+        },
+        {
+          "id": "ri-c2b-r5-spec",
+          "performer": "claude:bench-reviewer/ri-c2b-spec-r5",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2b-spec-r5@ec67fb04",
+            "digest": "sha256:b5d4f53fec4192c9ba725dd7717416a404b24fa1859b3500d7ea502ddd442963",
+            "excerpt": "Spec round 5: 0 blocking findings. The composed guidance contradicts no row or decision, and the version 2 plan is unchanged."
+          },
+          "axis": "Spec",
+          "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "tip": "ec67fb042f6c5a9a2a73a0fc76d4059b9bda0ec2",
+          "finding_ids": [],
+          "supersedes": [
+            "ri-c2b-r4-spec"
+          ]
+        },
+        {
+          "id": "ri-c2b-r5-coverage",
+          "performer": "claude:bench-reviewer/ri-c2b-coverage-r5",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/ri-c2b-coverage-r5@ec67fb04",
+            "digest": "sha256:7136e1d36b8ff9a8c206fb2bc9a1c2bb203c23bfe83648df543b1703c68a7a82",
+            "excerpt": "Coverage round 5: 0 blocking findings. The composition touches no Go file, and the guidance checks pass at the tip."
+          },
+          "axis": "Coverage",
+          "base": "114f94a2d6541d11833af640e5a886cbe8d01966",
+          "tip": "ec67fb042f6c5a9a2a73a0fc76d4059b9bda0ec2",
+          "finding_ids": [],
+          "supersedes": [
+            "ri-c2b-r4-coverage"
+          ]
         }
       ]
     }
   ],
   "completion": {
     "state": "completed",
-    "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+    "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
     "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
     "reconciliation": {
       "RI1": "covered",
@@ -3036,11 +3411,11 @@ touches Markdown under `.agents` and `projects`.
         "role": "integration-verification",
         "model": "fable",
         "effort": "high",
-        "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+        "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-coverage@12137b64",
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-coverage@ec67fb04",
           "digest": "sha256:2e4744e129ab6a424bc130cc10cfce11d8d960882c929988dcfc789b71dafbc2",
           "excerpt": "ok: coverage map valid — 100 row(s)"
         },
@@ -3054,13 +3429,13 @@ touches Markdown under `.agents` and `projects`.
         "role": "integration-verification",
         "model": "fable",
         "effort": "high",
-        "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+        "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-worktree@12137b64",
-          "digest": "sha256:c83d02409651d0d5c1d41405ab5035c0968222ae6c811b35b6e5d89e7d52b9ae",
-          "excerpt": "github.com/gibbonmi/bench/internal/worktree,pass,52122"
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-worktree@ec67fb04",
+          "digest": "sha256:1a779de703de8f046dcf5972428a2c1c14e25ca78b2fc36b42d2616a7c3c8a20",
+          "excerpt": "github.com/gibbonmi/bench/internal/worktree,pass,72186"
         },
         "requirement": "worktree",
         "command": "bench test --package ./internal/worktree",
@@ -3072,13 +3447,13 @@ touches Markdown under `.agents` and `projects`.
         "role": "integration-verification",
         "model": "fable",
         "effort": "high",
-        "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+        "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-status@12137b64",
-          "digest": "sha256:a42ff3c1d238146df64d6e33391f4cbee993d2d28bbbfc03bf2d6afc75969b7e",
-          "excerpt": "github.com/gibbonmi/bench/internal/status,pass,14436"
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-status@ec67fb04",
+          "digest": "sha256:758a5a092ca2cb3b140e9c0a5ee4135c20335ec686736f8248fe1b1d78aec385",
+          "excerpt": "github.com/gibbonmi/bench/internal/status,pass,16099"
         },
         "requirement": "status",
         "command": "bench test --package ./internal/status",
@@ -3090,13 +3465,13 @@ touches Markdown under `.agents` and `projects`.
         "role": "integration-verification",
         "model": "fable",
         "effort": "high",
-        "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+        "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-spec@12137b64",
-          "digest": "sha256:f58248dc4de4f48869cd2a8f8681bd57a85e2173263e978cbf43feffda31213a",
-          "excerpt": "github.com/gibbonmi/bench/internal/spec,pass,263"
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-spec@ec67fb04",
+          "digest": "sha256:93bc5727e176f71d3fa8e0ee6746997b9b809122b8be09932f71a70dfb15f551",
+          "excerpt": "github.com/gibbonmi/bench/internal/spec,pass,282"
         },
         "requirement": "spec",
         "command": "bench test --package ./internal/spec",
@@ -3108,13 +3483,13 @@ touches Markdown under `.agents` and `projects`.
         "role": "integration-verification",
         "model": "fable",
         "effort": "high",
-        "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+        "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-cmd@12137b64",
-          "digest": "sha256:bb0c46583b0bfdce9f4635ae9c4c9d081902fb995ad584882ea64851bbf95e1a",
-          "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,9547"
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-cmd@ec67fb04",
+          "digest": "sha256:d9eabf57a5daf15daa4fcc35bb03ca924aa4fa7670f667a10fdb69d6ceb7a159",
+          "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,11376"
         },
         "requirement": "cmd",
         "command": "bench test --package ./cmd/bench",
@@ -3126,13 +3501,13 @@ touches Markdown under `.agents` and `projects`.
         "role": "integration-verification",
         "model": "fable",
         "effort": "high",
-        "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+        "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-conformance@12137b64",
-          "digest": "sha256:4158cf6ff11dd760a25dee478f95a5f4eff6c71659e90a09fa52195d1966b47e",
-          "excerpt": "github.com/gibbonmi/bench/internal/conformance,pass,39363"
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-conformance@ec67fb04",
+          "digest": "sha256:53c865e264275a5db832180587490a7e0e71164de17552ceb5e8e2479949ad7f",
+          "excerpt": "github.com/gibbonmi/bench/internal/conformance,pass,38527"
         },
         "requirement": "conformance",
         "command": "bench test --package ./internal/conformance",
@@ -3144,13 +3519,13 @@ touches Markdown under `.agents` and `projects`.
         "role": "integration-verification",
         "model": "fable",
         "effort": "high",
-        "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+        "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-anchors@12137b64",
-          "digest": "sha256:4ac36bb6576cb4435db34b36c5d97d1fc2e7ba9d8d68bebb8c9905776f39d04c",
-          "excerpt": "github.com/gibbonmi/bench/internal/anchors,pass,1011"
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-anchors@ec67fb04",
+          "digest": "sha256:f0eea1863acc837e9a4d55e6c07181acb11442bbfa56152f0615104b2774cd00",
+          "excerpt": "github.com/gibbonmi/bench/internal/anchors,pass,980"
         },
         "requirement": "anchors",
         "command": "bench test --package ./internal/anchors",
@@ -3162,13 +3537,13 @@ touches Markdown under `.agents` and `projects`.
         "role": "integration-verification",
         "model": "fable",
         "effort": "high",
-        "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+        "source_digest": "2da8a845ac17d7dbe54846d2746bd6f2ac91e742",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
-          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-system@12137b64",
-          "digest": "sha256:cb3d2bea71e95aca47d537d25337fe785fc7e60c051cffb92836e5e6b434cb60",
-          "excerpt": "github.com/gibbonmi/bench/internal/systemtest,pass,41034"
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-system@ec67fb04",
+          "digest": "sha256:029c3b709b89aa964dc8cca0a6b39b0a9427c9a06a33ab395bffe8375f69e5f4",
+          "excerpt": "github.com/gibbonmi/bench/internal/systemtest,pass,41374"
         },
         "requirement": "system",
         "command": "bench test --check system",
@@ -3181,110 +3556,234 @@ touches Markdown under `.agents` and `projects`.
       "from": "sha256:084df113f531adbc7d196def8c112c45a1925608d2a1e45099e9428dbb5ba82b",
       "to": "sha256:74f8fb4685ed7e515b51757c2cd9d36d59a79ba8659977672e3b3aad337a118a",
       "chunk_ids": {
-        "RI-C1a": ["RI-C1a"],
-        "RI-C1b": ["RI-C1b"],
-        "RI-C2a": ["RI-C2a"],
-        "RI-C2b": ["RI-C2b"]
+        "RI-C1a": [
+          "RI-C1a"
+        ],
+        "RI-C1b": [
+          "RI-C1b"
+        ],
+        "RI-C2a": [
+          "RI-C2a"
+        ],
+        "RI-C2b": [
+          "RI-C2b"
+        ]
       }
     },
     {
       "from": "sha256:74f8fb4685ed7e515b51757c2cd9d36d59a79ba8659977672e3b3aad337a118a",
       "to": "sha256:fdca5b94dd475ee46e691bd0f07ba9d59d7bb3607ead6199f405d4275cd465bd",
       "chunk_ids": {
-        "RI-C1a": ["RI-C1a"],
-        "RI-C1b": ["RI-C1b"],
-        "RI-C2a": ["RI-C2a"],
-        "RI-C2b": ["RI-C2b"]
+        "RI-C1a": [
+          "RI-C1a"
+        ],
+        "RI-C1b": [
+          "RI-C1b"
+        ],
+        "RI-C2a": [
+          "RI-C2a"
+        ],
+        "RI-C2b": [
+          "RI-C2b"
+        ]
       }
     },
     {
       "from": "sha256:fdca5b94dd475ee46e691bd0f07ba9d59d7bb3607ead6199f405d4275cd465bd",
       "to": "sha256:9bd083f4927a1ed4a55d7489d07f3e1869adfd9f0c05e5fb9a1c37e142c0da39",
       "chunk_ids": {
-        "RI-C1a": ["RI-C1a"],
-        "RI-C1b": ["RI-C1b"],
-        "RI-C2a": ["RI-C2a"],
-        "RI-C2b": ["RI-C2b"]
+        "RI-C1a": [
+          "RI-C1a"
+        ],
+        "RI-C1b": [
+          "RI-C1b"
+        ],
+        "RI-C2a": [
+          "RI-C2a"
+        ],
+        "RI-C2b": [
+          "RI-C2b"
+        ]
       }
     },
     {
       "from": "sha256:9bd083f4927a1ed4a55d7489d07f3e1869adfd9f0c05e5fb9a1c37e142c0da39",
       "to": "sha256:6d0a708fb36fc22ce0045e0ced3c44c74de8369398357f838b667ae9f6a545e1",
       "chunk_ids": {
-        "RI-C1a": ["RI-C1a"],
-        "RI-C1b": ["RI-C1b"],
-        "RI-C2a": ["RI-C2a"],
-        "RI-C2b": ["RI-C2b"]
+        "RI-C1a": [
+          "RI-C1a"
+        ],
+        "RI-C1b": [
+          "RI-C1b"
+        ],
+        "RI-C2a": [
+          "RI-C2a"
+        ],
+        "RI-C2b": [
+          "RI-C2b"
+        ]
       }
     },
     {
       "from": "sha256:6d0a708fb36fc22ce0045e0ced3c44c74de8369398357f838b667ae9f6a545e1",
       "to": "sha256:54bee6d37901346d57cb0e548d95978a7decdd8b6295875dcd433a200e304536",
       "chunk_ids": {
-        "RI-C1a": ["RI-C1a"],
-        "RI-C1b": ["RI-C1b"],
-        "RI-C2a": ["RI-C2a"],
-        "RI-C2b": ["RI-C2b"]
+        "RI-C1a": [
+          "RI-C1a"
+        ],
+        "RI-C1b": [
+          "RI-C1b"
+        ],
+        "RI-C2a": [
+          "RI-C2a"
+        ],
+        "RI-C2b": [
+          "RI-C2b"
+        ]
       }
     },
     {
       "from": "sha256:54bee6d37901346d57cb0e548d95978a7decdd8b6295875dcd433a200e304536",
       "to": "sha256:e06057fede71811ba3f11083f9b78a4a89e6791a66711cbe86ba78d58408cac7",
       "chunk_ids": {
-        "RI-C1a": ["RI-C1a"],
-        "RI-C1b": ["RI-C1b"],
-        "RI-C2a": ["RI-C2a"],
-        "RI-C2b": ["RI-C2b"]
+        "RI-C1a": [
+          "RI-C1a"
+        ],
+        "RI-C1b": [
+          "RI-C1b"
+        ],
+        "RI-C2a": [
+          "RI-C2a"
+        ],
+        "RI-C2b": [
+          "RI-C2b"
+        ]
       }
     },
     {
       "from": "sha256:e06057fede71811ba3f11083f9b78a4a89e6791a66711cbe86ba78d58408cac7",
       "to": "sha256:fe54a3fc0da51e467dc94a8506e9bc2a1b1d257342775e3efd678e5d90633997",
       "chunk_ids": {
-        "RI-C1a": ["RI-C1a"],
-        "RI-C1b": ["RI-C1b"],
-        "RI-C2a": ["RI-C2a"],
-        "RI-C2b": ["RI-C2b"]
+        "RI-C1a": [
+          "RI-C1a"
+        ],
+        "RI-C1b": [
+          "RI-C1b"
+        ],
+        "RI-C2a": [
+          "RI-C2a"
+        ],
+        "RI-C2b": [
+          "RI-C2b"
+        ]
       }
     },
     {
       "from": "sha256:fe54a3fc0da51e467dc94a8506e9bc2a1b1d257342775e3efd678e5d90633997",
       "to": "sha256:68966222ed8dbd00a627580b34364f49d9d39602ff44a32399e31ed01a65b8af",
       "chunk_ids": {
-        "RI-C1a": ["RI-C1a"],
-        "RI-C1b": ["RI-C1b"],
-        "RI-C2a": ["RI-C2a"],
-        "RI-C2b": ["RI-C2b"]
+        "RI-C1a": [
+          "RI-C1a"
+        ],
+        "RI-C1b": [
+          "RI-C1b"
+        ],
+        "RI-C2a": [
+          "RI-C2a"
+        ],
+        "RI-C2b": [
+          "RI-C2b"
+        ]
       }
     },
     {
       "from": "sha256:68966222ed8dbd00a627580b34364f49d9d39602ff44a32399e31ed01a65b8af",
       "to": "sha256:cc71a72ac8bfb871e337ff3bcd485626ac77cea9437ed51cdbda81d2b3c9bcd7",
       "chunk_ids": {
-        "RI-C1a": ["RI-C1a"],
-        "RI-C1b": ["RI-C1b"],
-        "RI-C2a": ["RI-C2a"],
-        "RI-C2b": ["RI-C2b"]
+        "RI-C1a": [
+          "RI-C1a"
+        ],
+        "RI-C1b": [
+          "RI-C1b"
+        ],
+        "RI-C2a": [
+          "RI-C2a"
+        ],
+        "RI-C2b": [
+          "RI-C2b"
+        ]
       }
     },
     {
       "from": "sha256:cc71a72ac8bfb871e337ff3bcd485626ac77cea9437ed51cdbda81d2b3c9bcd7",
       "to": "sha256:324e96d8e574fec35e31d8c08f2af9a675faa75bfdfcd9e7a62f29cced31341c",
       "chunk_ids": {
-        "RI-C1a": ["RI-C1a"],
-        "RI-C1b": ["RI-C1b"],
-        "RI-C2a": ["RI-C2a"],
-        "RI-C2b": ["RI-C2b"]
+        "RI-C1a": [
+          "RI-C1a"
+        ],
+        "RI-C1b": [
+          "RI-C1b"
+        ],
+        "RI-C2a": [
+          "RI-C2a"
+        ],
+        "RI-C2b": [
+          "RI-C2b"
+        ]
       }
     },
     {
       "from": "sha256:324e96d8e574fec35e31d8c08f2af9a675faa75bfdfcd9e7a62f29cced31341c",
       "to": "sha256:f0253dc65290a525f0d0d25288db32e9183adda8b75df597b8659217604f55c5",
       "chunk_ids": {
-        "RI-C1a": ["RI-C1a"],
-        "RI-C1b": ["RI-C1b"],
-        "RI-C2a": ["RI-C2a"],
-        "RI-C2b": ["RI-C2b"]
+        "RI-C1a": [
+          "RI-C1a"
+        ],
+        "RI-C1b": [
+          "RI-C1b"
+        ],
+        "RI-C2a": [
+          "RI-C2a"
+        ],
+        "RI-C2b": [
+          "RI-C2b"
+        ]
+      }
+    },
+    {
+      "from": "sha256:f0253dc65290a525f0d0d25288db32e9183adda8b75df597b8659217604f55c5",
+      "to": "sha256:e0cab16352107d9c867a977cca891f13f1d7f647c97f5f1cb43da3308b7b56b2",
+      "chunk_ids": {
+        "RI-C1a": [
+          "RI-C1a"
+        ],
+        "RI-C1b": [
+          "RI-C1b"
+        ],
+        "RI-C2a": [
+          "RI-C2a"
+        ],
+        "RI-C2b": [
+          "RI-C2b"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e0cab16352107d9c867a977cca891f13f1d7f647c97f5f1cb43da3308b7b56b2",
+      "to": "sha256:15482ee1741cbf29a4084944d8db166c02abfbc0b557f9eaae21275bab1ba9f1",
+      "chunk_ids": {
+        "RI-C1a": [
+          "RI-C1a"
+        ],
+        "RI-C1b": [
+          "RI-C1b"
+        ],
+        "RI-C2a": [
+          "RI-C2a"
+        ],
+        "RI-C2b": [
+          "RI-C2b"
+        ]
       }
     }
   ]
