@@ -30,7 +30,7 @@ const rowCap = 200
 
 // Suffix is the symbol form's argument grammar after the command name. The usage line and
 // the `bench help` row both read it, so the two surfaces show one grammar.
-const Suffix = " <qualified-symbol>... [--production | --test] [--full]"
+const Suffix = " <qualified-symbol>... [--production|--test] [--full]"
 
 const usageLine = "usage: bench consumers" + Suffix + " | bench consumers --changed [--base <commit> [--source-tip <commit>]] [--full]"
 
