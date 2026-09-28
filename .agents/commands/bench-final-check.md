@@ -29,6 +29,10 @@ Before the first landing of such a spec, run `bench worktree build <target>` and
 This rehearsal checks the broker seal and manifest on the candidate binary before the landing depends on them.
 If a doctor row says that a landing would refuse, apply the remedy that the row names, even when the row reads `ok`.
 
+Candidate repair can point the installed shim at its temporary worktree.
+For kit-source work, run `bin/bench.sh doctor --fix` from the primary checkout after candidate repair and before landing.
+The post-merge `bench status` call verifies the installed command after source release.
+
 The orchestrator performs the final verification on the final source before the landing. A delegated exit reconciles every known invocation against the recorded assessment attempts. That account carries failed dispatches, every author, every review axis, diagnostics, verification, and orchestration work. Delegated verification launches no paid comparison and changes no model default.
 
 ## Exit handoff
