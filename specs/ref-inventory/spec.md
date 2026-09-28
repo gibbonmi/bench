@@ -224,7 +224,9 @@ When the planned ref exists at the row's tip as a direct ref, the write is skipp
 When it exists at another tip, or when the planned path is a symbolic ref, the apply refuses and writes nothing.
 Otherwise the write uses the zero old value and never follows a symbolic ref.
 A resolving symref that appears after the read fails the write, and Git replaces a dangling one with the discarded ref at the row's tip.
+
 The delete uses the exact tip, so a branch moved after the write survives with an error row.
+The delete never follows a symbolic ref, so a symref planted at the branch path after the write cannot remove the discarded ref.
 
 A fault boundary step precedes the read of the planned path, one sits between that read and the write, and one follows the write.
 A target that the class function faults prints an error row with no fingerprint, and both apply forms refuse.
@@ -253,7 +255,7 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
 | RI-C1a / 1-classify-unclaimed-refs.md, 6-repair-glossary-shift-namespace.md | The unclaimed plan classes each ref, names holders, retains unique rows, applies landed and subsumed rows only, and status routes to the plan | RI1 to RI15, RI17 to RI23, RI25, RI28, RI55, RI57, RI59 to RI63, RI66, RI72, RI73, RI81 to RI87 | `internal/worktree` clean classes and unclaimed tests, the system route test | no |
 | RI-C1b / 2-route-status-to-the-plan.md | Status counts the three classes | RI24, RI26, RI27, RI88 to RI92 | `internal/status` producible signals and the landed second case of the system route test | no |
 | RI-C2a / 3-sweep-discarded-refs.md | The discarded namespace exists, survives the lifecycle emptying, and expires at 30 days | RI42 to RI47, RI93 to RI95 | `internal/worktree` reconcile tests | no |
-| RI-C2b / 4-discard-a-unique-ref-by-target.md, 5-list-retire-candidates.md | An unrecorded unique ref discards by target with a discarded ref first, and retire lists candidates | RI16, RI29 to RI41, RI48 to RI52, RI58, RI64, RI65, RI67 to RI71, RI74 to RI80, RI96 to RI102 | `internal/worktree` discard tests and `cmd/bench` retire dispatch tests | yes |
+| RI-C2b / 4-discard-a-unique-ref-by-target.md, 5-list-retire-candidates.md | An unrecorded unique ref discards by target with a discarded ref first, and retire lists candidates | RI16, RI29 to RI41, RI48 to RI52, RI58, RI64, RI65, RI67 to RI71, RI74 to RI80, RI96 to RI103 | `internal/worktree` discard tests and `cmd/bench` retire dispatch tests | yes |
 
 ## Testing decisions
 
@@ -397,6 +399,7 @@ The glossary term for the holder names an active or cleanup-pending recorded ass
 | RI100 | 50 | Retire with a resolving Bench symref to `main` and a Bench blob-tip ref prints exactly one count line, `unique refs: 0, 2 faulted — bench worktree clean --discard-branch --unclaimed` | `cmd/bench/spec_retire_listing_test.go` (`TestRetireCountsUniqueRefs`) | Ignoring faulted rows or counting them as unique changes the exact line |
 | RI101 | 35, 38 | A direct ref planted at the planned path between the absent-ref read and the write makes the apply print an `error` row, keep both refs unchanged, and write nothing | `internal/worktree/clean_discard_transaction_test.go` (`TestDiscardTargetRefusesARefPlantedAfterTheRead`) | Removing the zero old value lets the write overwrite a handle that appeared after the read |
 | RI102 | 35, 38 | A symref planted at the planned path between the absent-ref read and the write is never followed: a resolving symref fails the write with an `error` row and the branch at its tip, and a dangling symref is replaced by the discarded ref at the row's tip with no ref at its old target | `internal/worktree/clean_discard_transaction_test.go` (`TestDiscardTargetNeverFollowsASymrefPlantedAfterTheRead`) | A write that follows the symref creates a ref outside the planned path and deletes the branch with a `removed` row |
+| RI103 | 35, 38 | A symref planted at the branch path between the write and the delete is never followed: the delete refuses or removes only the symref, and the discarded ref survives at the row's tip | `planned` | A delete that follows the symref passes the exact-tip check through the referent and removes the just-written discarded ref with a `removed` row |
 
 Not covered: story 53 — reviewed exclusion, and the review round confirms that no hold surface is added.
 Not covered: story 54 — reviewed exclusion, and RI48 to RI52 show the listing discards nothing.
@@ -426,6 +429,7 @@ Not covered: story 56 — the build runs on fixtures only, and the reviewer runs
 - A retire path operand, the listing position, and the help form: RI77, RI79, RI80.
 - A fault before the write, a fault after the write, a branch moved after the write, and a conflicting planted ref: RI36, RI37, RI67, RI38.
 - A symref at the planned path, and a direct ref or a symref planted in the absent window: RI96, RI101, RI102.
+- A symref planted at the branch path between the write and the delete: RI103.
 - A faulted explicit target, and a holder removed in the same set: RI98, RI99.
 - The 30-day boundary on each side: RI43 and RI44.
 - A malformed date segment: RI46.
@@ -731,6 +735,18 @@ A third boundary step sits between the read of the planned path and the write, s
           "trigger": "user-directed",
           "stopped": "ri-t4-repair-2 stopped on a material acceptance shortfall for RI102 without a commit; the worktree was clean and the reviewer restated the row",
           "preserved": "no commit; the chunk tip stays a7fba6acea34ec41fab38fc094ce4610a3ca7283"
+        },
+        {
+          "session": "claude:bench-writer/ri-t4-repair-3",
+          "assignment": "ri-t4-repair-3",
+          "model": "opus",
+          "effort": "high",
+          "source": "b592c85ab201e0743cde20aa39843846ed309bb9",
+          "native_ref": "claude:agent/ri-t4-repair-3-20260927@b592c85ab201e0743cde20aa39843846ed309bb9",
+          "predecessor": "claude:bench-writer/ri-t4-repair-2b",
+          "trigger": "user-directed",
+          "stopped": "ri-t4-repair-2b returned its final report and idle notification after its commit b592c85a; the worktree was clean and no further write came from it",
+          "preserved": "b592c85ab201e0743cde20aa39843846ed309bb9 on bench/assign/9cd9510fff4093f7f9f4456f6a029560/3a0fa26e2c3c38179f908f3636fb07ed, the RI-C2b chunk tip; the reviewer granted this third bounded cycle"
         }
       ],
       "5-list-retire-candidates.md": [
@@ -835,7 +851,7 @@ Source-sentence-to-row table:
 | `--target` resolves an unrecorded branch by id segment or path | RI29, RI30, RI31, RI32, RI58, RI74, RI75, RI76, RI78, RI98 |
 | The explicit plan shows class unique and the planned ref, and the apply needs the fingerprint | RI33, RI34 |
 | A class change between plan and apply refuses as stale | RI17, RI63, RI64, RI65, RI85 |
-| The preserve step and the discard step never split | RI36, RI37, RI38, RI96, RI99, RI101, RI102 |
+| The preserve step and the discard step never split | RI36, RI37, RI38, RI96, RI99, RI101, RI102, RI103 |
 | Equal tips make the lexically first ref the root | RI6 |
 | A holder is an active branch, a unique root, or a landed ref (narrowed: no landed ref holds) | RI7, RI8, RI9, RI59, RI60, RI61, RI81, RI82, RI84, RI86, RI87 |
 | A subsumed row names its holder and writes no discarded ref | RI14, RI40, RI68 |
