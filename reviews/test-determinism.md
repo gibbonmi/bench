@@ -780,6 +780,27 @@ The registry stays in its existing file, so its documented readers retain their 
 No check, acceptance predicate, or existing binding is removed.
 The author retained the dirty ticket implementation while the plan correction committed.
 
+## Ticket 7 implementation checkpoint before registry closure
+
+Ticket 7 remains incomplete because two new canaries lack classification entries.
+The expanded fence is committed, but a fresh build charge requires a clean checkout.
+The retained implementation therefore takes a green ordinary lane before the registry repair charge.
+This is not the ticket acceptance commit or the chunk checkpoint.
+
+The bounds, environment, Git, session inspection, gate, models, guards, and system packages pass their current checks.
+The worktree bound and bounds-policy checks also pass with the switch enabled.
+The complete conformance run fails only TestCanaryFixtureRegistryClassifiesEveryFixture.
+The author retains that failure and its focused reproduction in .logs/test-determinism-t7.json.
+
+TD33, TD36, TD39, TD42, TD43, and TD46 have behavioral red-to-green observations.
+TD34, TD35, TD37, and TD38 were already covered when first executed.
+TD45 failed at the real hook before child switch removal and passed afterward.
+The first TD42 fixture attempt lacked a BASE file, so its setup red is not acceptance evidence.
+The corrected fixture then produced the required missing-diagnostic red before the check changed.
+
+Registry closure, the remaining package checks, mutation probes, and final ticket verification are pending.
+TD44 remains the final landing gate's obligation.
+
 ```bench-review-record
 {
   "version": 1,

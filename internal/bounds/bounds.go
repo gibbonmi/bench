@@ -1,4 +1,5 @@
 // Package bounds owns the fixed resource policy for Bench's Go runtime.
+// The test switch removes verdict windows, including the 45-minute gate timeout.
 package bounds
 
 import (
@@ -112,11 +113,34 @@ func TestTimeoutVerdict(wait string, window time.Duration) string {
 
 func Offline() bool { return os.Getenv("BENCH_OFFLINE") == "1" }
 
+// UnboundedWaitsEnv enables unbounded verdict waits only when its value is exactly 1.
+const UnboundedWaitsEnv = "BENCH_TEST_UNBOUNDED_WAITS"
+
+// Unbounded removes a wait's own deadline while preserving parent cancellation.
+const Unbounded time.Duration = -1
+
+// VerdictWindow selects the verdict policy before a caller applies a test override.
+func VerdictWindow(policy time.Duration) time.Duration {
+	if os.Getenv(UnboundedWaitsEnv) == "1" {
+		return Unbounded
+	}
+	return policy
+}
+
+// FixedWindow preserves cancel graces, poll intervals, and operator wall limits.
+func FixedWindow(window time.Duration) time.Duration { return window }
+
 func Context(parent context.Context, limit time.Duration) (context.Context, context.CancelFunc) {
+	if limit == Unbounded {
+		return context.WithCancel(parent)
+	}
 	return context.WithTimeout(parent, limit)
 }
 
 func ContextCause(parent context.Context, limit time.Duration, cause error) (context.Context, context.CancelFunc) {
+	if limit == Unbounded {
+		return context.WithCancel(parent)
+	}
 	return context.WithTimeoutCause(parent, limit, cause)
 }
 
@@ -156,7 +180,7 @@ func run(parent context.Context, limit time.Duration, cmd *exec.Cmd, stdout, std
 	if err := parent.Err(); err != nil {
 		return ProcessResult{Status: ProcessCanceled, Err: err}
 	}
-	ctx, cancel := context.WithTimeout(parent, limit)
+	ctx, cancel := Context(parent, limit)
 	defer cancel()
 	if cmd.SysProcAttr == nil {
 		cmd.SysProcAttr = &syscall.SysProcAttr{}

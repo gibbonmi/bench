@@ -56,7 +56,7 @@ type ScanResult struct {
 	Omitted, Reason          string
 }
 
-var guardScanTimeout = bounds.GuardScanTimeout
+var guardScanTimeout = bounds.VerdictWindow(bounds.GuardScanTimeout)
 
 var enumerateGuards = func(ctx context.Context, root string) ([]candidate, error) {
 	var candidates []candidate

@@ -181,8 +181,8 @@ func assertBenignAdminShape(t *testing.T, state string) {
 }
 
 func TestWorktreeListTimeoutDefaultUsesPolicy(t *testing.T) {
-	if worktreeListTimeout != bounds.WorktreeListTimeout {
-		t.Fatalf("worktreeListTimeout=%s, want %s", worktreeListTimeout, bounds.WorktreeListTimeout)
+	if want := bounds.VerdictWindow(bounds.WorktreeListTimeout); worktreeListTimeout != want {
+		t.Fatalf("worktreeListTimeout=%s, want %s", worktreeListTimeout, want)
 	}
 }
 

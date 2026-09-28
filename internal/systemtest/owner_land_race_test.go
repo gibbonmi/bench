@@ -252,7 +252,7 @@ func systemStartSelected(t *testing.T, dir string, env []string, args ...string)
 	}
 	cmd := exec.Command(owner.selected.path, args...)
 	cmd.Dir = dir
-	cmd.Env = mergeEnvironment(os.Environ(), env)
+	cmd.Env = mergeEnvironment(systemBaseEnvironment(), env)
 	stdout, stderr := &bytes.Buffer{}, &bytes.Buffer{}
 	cmd.Stdout, cmd.Stderr = stdout, stderr
 	owner.mu.Lock()

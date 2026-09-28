@@ -17,29 +17,36 @@ func checkBoundsPolicy(root string) []string {
 	if registry == "" {
 		return []string{"internal/bounds policy registry is absent"}
 	}
-	required := []string{"ProviderTimeout", "GitRefreshTimeout", "WorktreeListTimeout", "GuardScanTimeout", "GateTimeout", "PackageLoadTimeout", "ModelReadLimit", "OutlineFileLimit", "ControlRecordLimit", "IterationMin", "IterationMax", "MainIterationsDefault", "RefactorIterationsDefault", "MaxWall", "LeaseStale", "AssignmentStale", "PreviewRuneLimit"}
+	required := []string{"ModelReadLimit", "OutlineFileLimit", "ControlRecordLimit", "IterationMin", "IterationMax", "MainIterationsDefault", "RefactorIterationsDefault", "MaxWall", "LeaseStale", "AssignmentStale", "PreviewRuneLimit"}
 	var diags []string
-	for _, name := range required {
-		if !strings.Contains(registry, name) {
-			diags = append(diags, "internal/bounds policy registry missing "+name)
-		}
-	}
 	owners := map[string][]string{
-		"internal/models/models.go":                 {"bounds.ProviderTimeout", "bounds.ModelReadLimit"},
-		"internal/sessioninspect/sessioninspect.go": {"bounds.ProviderTimeout"},
+		"internal/models/models.go":                 {"bounds.VerdictWindow(bounds.ProviderTimeout)", "bounds.ModelReadLimit"},
+		"internal/sessioninspect/sessioninspect.go": {"bounds.VerdictWindow(bounds.ProviderTimeout)", "bounds.VerdictWindow(bounds.EnvironmentDiscoveryTimeout)"},
 		"internal/outline/read.go":                  {"bounds.OutlineFileLimit"},
 		"internal/learnings/learnings.go":           {"bounds.ControlRecordLimit"},
 		"internal/maps/maps.go":                     {"bounds.ControlRecordLimit"},
 		"internal/roadmap/roadmap.go":               {"bounds.ControlRecordLimit"},
-		"internal/guards/guards.go":                 {"bounds.GuardScanTimeout"},
+		"internal/guards/guards.go":                 {"bounds.VerdictWindow(bounds.GuardScanTimeout)"},
 		"internal/sanitize/sanitize.go":             {"bounds.PreviewRuneLimit"},
-		"internal/gate/gate.go":                     {"bounds.GateTimeout"},
-		"internal/coverage/citation_execution.go":   {"bounds.PackageLoadTimeout"},
-		"internal/refresh/refresh.go":               {"bounds.GitRefreshTimeout"},
-		"internal/git/git.go":                       {"bounds.WorktreeListTimeout"},
+		"internal/gate/gate.go":                     {"bounds.VerdictWindow(bounds.GateTimeout)"},
+		"internal/coverage/citation_execution.go":   {"bounds.VerdictWindow(bounds.PackageLoadTimeout)"},
+		"internal/refresh/refresh.go":               {"bounds.VerdictWindow(bounds.GitRefreshTimeout)"},
+		"internal/git/git.go":                       {"bounds.VerdictWindow(bounds.WorktreeListTimeout)"},
 		"internal/worktree/lifecycle.go":            {"bounds.LeaseStale"},
 		"internal/worktree/classifier.go":           {"bounds.AssignmentStale"},
 		"internal/shift/loop.go":                    {"bounds.MainIterationsDefault", "bounds.RefactorIterationsDefault", "bounds.IterationMin", "bounds.IterationMax", "bounds.MaxWall"},
+	}
+	for _, tokens := range owners {
+		for _, consumer := range tokens {
+			if name, verdict := strings.CutPrefix(consumer, "bounds.VerdictWindow(bounds."); verdict {
+				required = append(required, strings.TrimSuffix(name, ")"))
+			}
+		}
+	}
+	for _, name := range required {
+		if !strings.Contains(registry, name) {
+			diags = append(diags, "internal/bounds policy registry missing "+name)
+		}
 	}
 	for rel, tokens := range owners {
 		body := readIfExists(filepath.Join(root, filepath.FromSlash(rel)))

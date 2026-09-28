@@ -24,7 +24,7 @@ import (
 // fail-safe default.
 const refCheckTimeout = 2 * time.Second
 
-var worktreeListTimeout = bounds.WorktreeListTimeout
+var worktreeListTimeout = bounds.VerdictWindow(bounds.WorktreeListTimeout)
 
 // SetWorktreeListTimeoutForTest installs a test-only discovery bound and restores it.
 func SetWorktreeListTimeoutForTest(limit time.Duration) func() {

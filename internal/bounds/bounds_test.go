@@ -13,11 +13,74 @@ import (
 	"go/token"
 	"go/types"
 	"math"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
 	"time"
 )
+
+func TestVerdictWindowDisablesEachPolicy(t *testing.T) {
+	t.Setenv(UnboundedWaitsEnv, "1")
+	for _, policy := range registryDurations(t) {
+		if got := VerdictWindow(policy); got != Unbounded {
+			t.Errorf("VerdictWindow(%s) = %s, want unbounded", policy, got)
+		}
+	}
+}
+
+func TestVerdictWindowKeepsPolicyWithoutSwitch(t *testing.T) {
+	t.Setenv(UnboundedWaitsEnv, "")
+	if err := os.Unsetenv(UnboundedWaitsEnv); err != nil {
+		t.Fatal(err)
+	}
+	for _, policy := range registryDurations(t) {
+		if got := VerdictWindow(policy); got != policy {
+			t.Errorf("VerdictWindow(%s) = %s without the switch", policy, got)
+		}
+	}
+}
+
+func TestVerdictWindowRejectsOtherValues(t *testing.T) {
+	for _, value := range []string{"0", "true", " 1", "1\n"} {
+		t.Run(value, func(t *testing.T) {
+			t.Setenv(UnboundedWaitsEnv, value)
+			if got := VerdictWindow(GateTimeout); got != GateTimeout {
+				t.Fatalf("VerdictWindow = %s for %q, want %s", got, value, GateTimeout)
+			}
+		})
+	}
+}
+
+func TestUnboundedWaitsHaveNoDeadline(t *testing.T) {
+	for _, open := range []func() (context.Context, context.CancelFunc){
+		func() (context.Context, context.CancelFunc) { return Context(context.Background(), Unbounded) },
+		func() (context.Context, context.CancelFunc) {
+			return ContextCause(context.Background(), Unbounded, errors.New("finite verdict expired"))
+		},
+	} {
+		ctx, cancel := open()
+		if _, bounded := ctx.Deadline(); bounded {
+			t.Error("unbounded context has a deadline")
+		}
+		cancel()
+		if ctx.Err() != context.Canceled {
+			t.Errorf("cancelled unbounded context = %v", ctx.Err())
+		}
+	}
+	result := Run(context.Background(), Unbounded, exec.Command("sh", "-c", "sleep 0.2"))
+	if result.Status != ProcessComplete {
+		t.Fatalf("unbounded child = %s: %v", result.Status, result.Err)
+	}
+}
+
+func TestFixedWindowPreservesCancelGrace(t *testing.T) {
+	t.Setenv(UnboundedWaitsEnv, "1")
+	const grace = 2 * time.Second
+	if got := FixedWindow(grace); got != grace {
+		t.Fatalf("fixed cancel grace = %s, want %s", got, grace)
+	}
+}
 
 func TestProductionPolicyValues(t *testing.T) {
 	if ProviderTimeout != 10*time.Second || EnvironmentDiscoveryTimeout != 2*time.Second || GitRefreshTimeout != 30*time.Second || GuardScanTimeout != 5*time.Second || GateTimeout != 45*time.Minute {

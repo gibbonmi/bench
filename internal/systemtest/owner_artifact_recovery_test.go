@@ -169,7 +169,7 @@ func startArtifactLand(t *testing.T, root, home, tally, trees, ready, release st
 	}
 	cmd := exec.Command(owner.selected.path, systemLandArgs(source, base)...)
 	cmd.Dir = root
-	cmd.Env = mergeEnvironment(os.Environ(), artifactLandEnv(root, home, tally, trees, ready, release))
+	cmd.Env = mergeEnvironment(systemBaseEnvironment(), artifactLandEnv(root, home, tally, trees, ready, release))
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	stdout, stderr := &bytes.Buffer{}, &bytes.Buffer{}
 	cmd.Stdout, cmd.Stderr = stdout, stderr

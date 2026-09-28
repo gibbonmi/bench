@@ -1,0 +1,7 @@
+[
+  {
+    "path": "internal/sessioninspect/sessioninspect.go",
+    "old": "var discoveryTimeout = bounds.VerdictWindow(bounds.EnvironmentDiscoveryTimeout)",
+    "new": "var discoveryTimeout = bounds.EnvironmentDiscoveryTimeout"
+  }
+]

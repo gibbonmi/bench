@@ -32,7 +32,7 @@ const (
 )
 
 var (
-	providerTimeout = bounds.ProviderTimeout
+	providerTimeout = bounds.VerdictWindow(bounds.ProviderTimeout)
 	runCommand      = func(ctx context.Context, name string, args ...string) ([]byte, error) {
 		result := bounds.Run(ctx, providerTimeout, exec.Command(name, args...))
 		if result.Status != bounds.ProcessComplete {

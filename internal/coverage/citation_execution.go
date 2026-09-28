@@ -15,7 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 )
 
-var packageLoadTimeout = bounds.PackageLoadTimeout
+var packageLoadTimeout = bounds.VerdictWindow(bounds.PackageLoadTimeout)
 
 // executionScope is one Go test phase and the package directories the Go loader expands
 // its operands to. The phase and its packages stay paired here, so no citation can

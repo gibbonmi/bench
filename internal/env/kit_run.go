@@ -10,6 +10,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // KitTestRun owns the private home and temporary directories for one kit test run.
@@ -56,6 +58,7 @@ func OpenKitTestRun(base []string) (*KitTestRun, error) {
 		return nil, errors.Join(fmt.Errorf("kit test run: configure Go telemetry: %w", err), run.Close())
 	}
 	run.entries = []string{
+		bounds.UnboundedWaitsEnv + "=1",
 		"HOME=" + filepath.Join(dir, "h"),
 		"TMPDIR=" + filepath.Join(dir, "t"),
 		"BASH_ENV=" + os.DevNull,
