@@ -638,6 +638,43 @@ No post-review repair cycle has been consumed for this chunk.
 The user removes the repair-cycle cap while bench-debug governs each repair.
 TD-C3 and final reconciliation remain pending.
 
+## TD-C2 initial review pickup
+
+The frozen pair is 786a1d2c69ccbf6b2d3b6f19609329e450c9bede to 6f62c57a10fb616a2de848711c079deb28a535b8.
+Three independent gpt-6-sol sessions used high effort and one iteration each.
+All three read the whole approved spec, the frozen delta, and their required sources.
+All current-binding checks passed, and all returns describe their execution limits.
+No reviewer changed the source or ran subject tests or probes.
+
+## Standards
+
+One finding remains: TD-C2-S1, auto-fix, confidence 8.
+The commit-count expectation at internal/gittest/gittest_test.go:66 requires a demonstrated red under AGENTS.md:42.
+The recorded missing-file and ignore-filter mutations fail before that assertion.
+No recorded mutation demonstrates that the one-commit assertion is necessary.
+The repair must add a second commit, observe the count assertion fail, restore the source, and record green.
+
+## Spec
+
+Zero findings, with no worst issue or repair target.
+The axis audited all 49 rows and found no surviving defect in the 16 TD-C2 rows.
+TD32 remains the final landing-gate obligation.
+
+## Coverage
+
+Zero blocking findings, with no worst issue or repair target.
+A same-size rewrite with a restored modification time falls within the approved metadata-only contract.
+The administration-directory owner refuses a symlink, and the guard tests cover file-link behavior.
+
+Optional advice: seed an existing broker manifest in the private preflight fixture.
+The current copy excludes that ignored file, so the test compares the absent case.
+No current production defect was demonstrated, and this advice has no disposition or finding ID.
+
+The raw counts are Standards 1, Spec 0, and Coverage 0.
+There is one distinct repair target, owned by ticket 4.
+The implementation command needs no change; its existing rule already requires mutation evidence.
+TD-C2 has consumed no repair cycle yet; the next cycle addresses TD-C2-S1 through bench-debug.
+
 ```bench-review-record
 {
   "version": 1,
@@ -1493,7 +1530,7 @@ TD-C3 and final reconciliation remain pending.
     {
       "id": "TD-C2",
       "base": "786a1d2c69ccbf6b2d3b6f19609329e450c9bede",
-      "tip": "74d988ca263b6bd523a36983f13eb33496c0633f",
+      "tip": "6f62c57a10fb616a2de848711c079deb28a535b8",
       "plan_digest": "sha256:16abfe4c3e278cb992643dd86dfdb7be1fa874c001dea3ac15c9b9c5050853a8",
       "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
       "acceptance_rows": [
@@ -1678,7 +1715,70 @@ TD-C3 and final reconciliation remain pending.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "TD-C2-Standards-1",
+          "performer": "/root/td_c2_standards",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "collaboration:/root/td_c2_standards/final",
+            "digest": "sha256:afa736c65edf7aefefc779515ebe150519d606d4da10807958615e609788598f",
+            "excerpt": "Standards result: **1 finding**. Worst issue is an unmet evidence condition for an independently authored test expectation. No runtime defect is claimed.\n\n**TD-C2-S1 \u2014 Record a red that depends on the one-commit expectation.**\nDisposition: **held; auto-fix eligible**. Confidence: **8/10**.\n\n`internal/gittest/gittest_test.go:66\u201367` independently expects exactly one commit. The implementation performs that commit through `internal/testrepo/working_tree.go:66,71`. `AGENTS.md:42\u201348` permits this duplicated implementation knowledge only when the expectation\u2019s independence is necessary for a named omission or mutation to turn the gate red, and that red is recorded and demonstrated.\n\nI inspected the contrary evidence before retaining this finding. `.logs/test-determinism-t4.json:4\u20139` records an initial red for a missing tracked file at test line 19. Its `ignore_filter_probe` at lines 18\u201323 records a red for an included excluded path at test line 55. Both fail before the commit-count assertion. The complete ticket-4 repair artifacts and current review record contain no recorded mutation whose red depends on expecting `\"1\"`. The spec\u2019s one-commit requirement establishes the intended behavior but does not satisfy the separate demonstrated-red condition.\n\nA suitable repair is to record a named mutation that introduces an additional snapshot commit, demonstrate failure specifically at the commit-count assertion, restore the source, and record the green baseline. I did not execute that mutation: the delegation expressly prohibits tests and probes. This is the mandatory-standard finding posture allowed by `.agents/skills/bench-craft-review/references/finding-discipline.md`, rather than an unrefuted runnable-defect claim.\n\nOptional advice: none. Implementation-command contribution: none; the existing instructions already require recorded mutation evidence."
+          },
+          "axis": "Standards",
+          "base": "786a1d2c69ccbf6b2d3b6f19609329e450c9bede",
+          "tip": "6f62c57a10fb616a2de848711c079deb28a535b8",
+          "finding_ids": [
+            "TD-C2-S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "TD-C2-Spec-1",
+          "performer": "/root/td_c2_spec",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/td_c2_spec/final",
+            "digest": "sha256:31aa3e0c80b8387d12a3e0a1f6326fcd662e411f4d4d4a8dc5f2a7591bc0ab07",
+            "excerpt": "Spec: **pass; 0 findings; worst issue: none.** Finding IDs and dispositions: none. Distinct repair targets: 0.\n\nTask supplement: TD-C2 / Spec / gpt-6-sol / high / one iteration / read-only. Frozen pair: `786a1d2c69ccbf6b2d3b6f19609329e450c9bede..6f62c57a10fb616a2de848711c079deb28a535b8`. Evidence: `sha256:e85d2e8b4f08568130912bb3c0665fb26fa943ca47e8e788261a9e29f16a30f3`. Source digest: `56de27cbba48703bf21b64b4c2e378c058ce96f1`. Plan: `sha256:16abfe4c3e278cb992643dd86dfdb7be1fa874c001dea3ac15c9b9c5050853a8`.\n\n**TD32 remains the final landing obligation**, expressly required by `specs/test-determinism/spec.md:268`. The recorded first census and nine current-source checks are author observations. TD-C1a/C1b remain accepted; TD-C3 remains pending.\n\nNo edits, tests, probes, commits, stash, or additional agents. Executable refutation was prohibited, so this is source review without an independent execution verdict. Optional advice: none. Implementation-command contribution: none; no command change is necessary."
+          },
+          "axis": "Spec",
+          "base": "786a1d2c69ccbf6b2d3b6f19609329e450c9bede",
+          "tip": "6f62c57a10fb616a2de848711c079deb28a535b8",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "TD-C2-Coverage-1",
+          "performer": "/root/td_c2_coverage",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/td_c2_coverage/final",
+            "digest": "sha256:95656c0a38bfeeaf06896be7584e4cd4c016bc90f41666ce0f9c8fe444d800bc",
+            "excerpt": "Coverage: **pass; 0 blocking findings; worst issue: none.** Distinct repair targets: 0. No finding IDs or dispositions.\n\nTask supplement: Coverage / gpt-6-sol / high / one iteration. Subject: Bench assignment `test-determinism`. Frozen pair: `786a1d2c69ccbf6b2d3b6f19609329e450c9bede..6f62c57a10fb616a2de848711c079deb28a535b8`. Source: `56de27cbba48703bf21b64b4c2e378c058ce96f1`. Plan: `sha256:16abfe4c3e278cb992643dd86dfdb7be1fa874c001dea3ac15c9b9c5050853a8`.\n\nOptional advice: seed an existing broker manifest in a private release-preflight fixture. The current copy excludes that ignored file (`.gitignore:48`; `working_tree.go:15`), so the test\u2019s pre-build read at `build_subject_mode_test.go:84` exercises absence. An existing-manifest case would strengthen the unchanged-manifest comparison at `:106`. No current production defect was demonstrated.\n\nNo edits, tests, probes, commits, stash operations or extra agents ran. This is source review; execution results remain author evidence. Implementation-command contribution: none; no command change is necessary."
+          },
+          "axis": "Coverage",
+          "base": "786a1d2c69ccbf6b2d3b6f19609329e450c9bede",
+          "tip": "6f62c57a10fb616a2de848711c079deb28a535b8",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
