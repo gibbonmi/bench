@@ -2,8 +2,9 @@
 
 ## Recommendation
 
-Re-author or re-review the two remaining streams against the current `main`, because `main` changed their specs after the wave stopped.
+Re-author or re-review the overflow stream against the current `main`, because `main` changed its spec after the wave stopped.
 The reviewer dropped the shared-delegate-startup stream on 2026-09-28, because it contradicts the current fresh-author and fresh-repair rules.
+The reviewer chose on 2026-09-28 to re-author the queries stream on `main`, with its tip as the reference source for fresh ticket authors.
 
 Scope: the Codex parallel implementation wave on three staged specs, its measurements, and its model findings.
 Evidence status: each stream passed its own chunk checkpoints on its branch. No wave source landed on `main`.
@@ -111,7 +112,7 @@ Source: `52485ec9:capture/retros/parallel-implementation-wave.md:159`.
 `main` is 359 commits past the wave base at `c8c444ffae2fb1578cfa54a22fa632590ffbc322`.
 Commit `b7667d8f` made the FT336 spec own the default output budget and retired queries ticket 4.
 So the QU-C4 numeric decision is now FT336's, and the queries stream carries a ticket that `main` retired.
-Source: `specs/session-context-queries/spec.md:20`.
+Source: `4bdffd04:specs/session-context-queries/spec.md:20`.
 
 No roadmap row owns the three staged specs. FT172 holds that gap and forbids a parent inferred from a shared file.
 Source: `roadmap/FT172.md:27`.
