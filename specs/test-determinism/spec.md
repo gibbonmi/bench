@@ -170,7 +170,7 @@ Gate records truncate their times to whole seconds. The one ordering comparison 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | TD-C1a / `1-open-kit-test-run.md` | The kit test run owner exists, and the gate's kit phases carry its entries. | TD1, TD2, TD3, TD4, TD5, TD6, TD8, TD9, TD10, TD11, TD12, TD13, TD14, TD15 | `bench test --package ./internal/env`, `bench test --package ./internal/gate` | no |
-| TD-C1b / `2-compose-kit-test-run.md` | `bench test` in the kit and the release preflight phases carry the same entries, and the git policy has one source. | TD7, TD16, TD17, TD18, TD19 | `bench test --package ./internal/testreport`, `bench test --package ./internal/releasepreflight`, `bench test --package ./internal/env` | no |
+| TD-C1b / `2-compose-kit-test-run.md` | `bench test` in the kit and the release preflight phases carry the same entries, and the git policy has one source. | TD7, TD16, TD17, TD18, TD19 | `bench test --package ./internal/testreport`, `bench test --package ./internal/releasepreflight`, `bench test --package ./internal/env`, `bench test --package ./internal/gate` | no |
 | TD-C2 / `3-isolate-conformance-probe-home.md`, `4-run-build-scripts-on-kit-copy.md`, `5-grade-named-check-on-private-root.md`, `6-guard-live-checkout.md` | Parallel tests share no file, and the gate reds a test that writes the live checkout. | TD20, TD21, TD22, TD23, TD24, TD25, TD26, TD27, TD28, TD29, TD30, TD31, TD32, TD47, TD48 | `bench test --package ./internal/conformance`, `bench test --package ./internal/gittest`, `bench test --package ./cmd/bench`, `bench test --package ./internal/testreport`, `bench test --package ./internal/gate`, `bench gate` | yes |
 | TD-C3 / `7-switch-verdict-windows.md`, `8-name-every-production-wait.md` | No verdict bound expires in a kit test run unless the test set it, a subprocess child keeps its bounds, and every production wait names its window. | TD33, TD34, TD35, TD36, TD37, TD38, TD39, TD40, TD41, TD42, TD43, TD44, TD45, TD46 | `bench test --package ./internal/bounds`, `bench test --package ./internal/git`, `bench test --package ./internal/sessioninspect`, `bench test --package ./internal/worktree --run TestListCommandRendersBoundExpiryAsTypedFailure`, `bench test --check bounds-policy`, `bench test --check system`, `bench gate` | yes |
 
@@ -245,7 +245,7 @@ One candidate is not in the census: the refusal test of the consumers command at
 | TD11 | 10 | Open with a relative `HOME` returns an error that names `HOME` | planned owner test in internal/env | An owner that tests only for absence accepts the relative value. |
 | TD12 | 11 | Open with a base `TMPDIR` that names a regular file returns an error that names `TMPDIR` | planned owner test in internal/env | An owner that falls back to the system temporary directory returns no error. |
 | TD13 | 12 | Open, the probe, and close succeed with a base `TMPDIR` whose path holds a space | planned owner test in internal/env | An owner that splits or unquotes the path fails to create or to remove the run directory. |
-| TD14 | 13, 39 | `KitTestEnv` for a linked root returns no entry, and the gate phases of a linked root carry no `HOME` entry | `internal/gate/phases_test.go` (`TestKitTestEnvSkipsALinkedRoot`), extended | A kit-only predicate that is dropped hands the linked root the private `HOME`. |
+| TD14 | 13, 39 | The gate phases of a linked root keep the operator HOME | `internal/gate/phases_test.go` (`TestLinkedPhaseKeepsTheOperatorHome`) | A kit-only predicate that is dropped hands the linked root the private `HOME`. |
 | TD15 | 14 | A gate kit fixture phase runs the kit-run probe and the gate exits 0 | planned `TestKitPhaseRunsInTheKitTestRun` in internal/gate, through `runFixturePhases` | A gate composition that misses any entry makes the probe exit nonzero, and the gate goes red. |
 | TD16 | 14 | The `bench test` child environment for the kit runs the kit-run probe with exit 0 | planned test in internal/testreport | A runner that composes only the git entries fails the probe on `HOME` or `TMPDIR`. |
 | TD17 | 14 | A release preflight external phase runs the kit-run probe with exit 0 | planned test in internal/releasepreflight, extending `TestExternalPhaseGitStartsNoAutoMaintenance` | A preflight phase that composes only the git entries fails the probe. |
@@ -310,6 +310,14 @@ The canonical edge classes and the profile's hostile-input checklist, walked at 
 - The causes of CI families B and C — they stay unconfirmed. This spec removes classes of defect, and the family B diagnostic line gives the next evidence.
 
 ## Ownership fences
+
+- `internal/testreport/cancel_test.go`
+
+- `internal/testreport/selection_test.go`
+
+- `internal/testreport/outcome_test.go`
+
+- `internal/testreport/testreport_test.go`
 
 - `reviews/test-determinism.md`
 - `internal/env/`
@@ -424,6 +432,13 @@ The hermetic run left `.cache/bench` and `.config/go` in the private home, and `
 
 ### Fence disposition
 
+Ticket 2 includes the child lifetime owner and the affected Go command fixtures.
+It replaces the retired forwarding-helper test with the existing linked-root phase test.
+TD14 keeps its environment guarantee at that phase seam.
+Release preflight derives the operator cache before it merges the private environment.
+The current preflight runner has no earlier cache derivation, so ticket 2 supplies it.
+
+
 The command registry, its two tests, and the two conformance registry tests join the fence through the binding registry closure only. The guards, coverage, and worktree packages, and the `cmd/bench` package, are bound packages. The build expects no edit to those five files.
 
 ### Collision with a staged spec
@@ -433,7 +448,7 @@ The staged `ft290-test-projection` spec writes all of `internal/testreport/`, be
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"TD-C1a","tickets":["1-open-kit-test-run.md"],"verification":[{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"TD-C1b","tickets":["2-compose-kit-test-run.md"],"verification":[{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"releasepreflight","command":"bench test --package ./internal/releasepreflight"},{"id":"env","command":"bench test --package ./internal/env"}]},{"id":"TD-C2","tickets":["3-isolate-conformance-probe-home.md","4-run-build-scripts-on-kit-copy.md","5-grade-named-check-on-private-root.md","6-guard-live-checkout.md"],"verification":[{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"gittest","command":"bench test --package ./internal/gittest"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"TD-C3","tickets":["7-switch-verdict-windows.md","8-name-every-production-wait.md"],"verification":[{"id":"bounds","command":"bench test --package ./internal/bounds"},{"id":"git","command":"bench test --package ./internal/git"},{"id":"sessioninspect","command":"bench test --package ./internal/sessioninspect"},{"id":"worktree-bound","command":"bench test --package ./internal/worktree --run TestListCommandRendersBoundExpiryAsTypedFailure"},{"id":"bounds-policy","command":"bench test --check bounds-policy"},{"id":"system","command":"bench test --check system"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/test-determinism/spec.md"},{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"bounds","command":"bench test --package ./internal/bounds"},{"id":"bounds-policy","command":"bench test --check bounds-policy"},{"id":"system","command":"bench test --check system"}]}
+{"version":1,"chunks":[{"id":"TD-C1a","tickets":["1-open-kit-test-run.md"],"verification":[{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"TD-C1b","tickets":["2-compose-kit-test-run.md"],"verification":[{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"releasepreflight","command":"bench test --package ./internal/releasepreflight"},{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"TD-C2","tickets":["3-isolate-conformance-probe-home.md","4-run-build-scripts-on-kit-copy.md","5-grade-named-check-on-private-root.md","6-guard-live-checkout.md"],"verification":[{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"gittest","command":"bench test --package ./internal/gittest"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"TD-C3","tickets":["7-switch-verdict-windows.md","8-name-every-production-wait.md"],"verification":[{"id":"bounds","command":"bench test --package ./internal/bounds"},{"id":"git","command":"bench test --package ./internal/git"},{"id":"sessioninspect","command":"bench test --package ./internal/sessioninspect"},{"id":"worktree-bound","command":"bench test --package ./internal/worktree --run TestListCommandRendersBoundExpiryAsTypedFailure"},{"id":"bounds-policy","command":"bench test --check bounds-policy"},{"id":"system","command":"bench test --check system"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/test-determinism/spec.md"},{"id":"env","command":"bench test --package ./internal/env"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"bounds","command":"bench test --package ./internal/bounds"},{"id":"bounds-policy","command":"bench test --check bounds-policy"},{"id":"system","command":"bench test --check system"}]}
 ```
 
 ### Flagged additions
