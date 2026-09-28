@@ -2,9 +2,8 @@
 
 ## Recommendation
 
-Assess the three retained source streams one at a time before any of them lands.
-Start with the shared-delegate-startup stream, because all 52 of its rows passed review and a complete checkpoint.
-Re-author or re-review the other two streams against the current `main`, because `main` changed their specs after the wave stopped.
+Re-author or re-review the two remaining streams against the current `main`, because `main` changed their specs after the wave stopped.
+The reviewer dropped the shared-delegate-startup stream on 2026-09-28, because it contradicts the current fresh-author and fresh-repair rules.
 
 Scope: the Codex parallel implementation wave on three staged specs, its measurements, and its model findings.
 Evidence status: each stream passed its own chunk checkpoints on its branch. No wave source landed on `main`.
@@ -42,7 +41,7 @@ Questions 2 and 3 feed the two blocked decisions.
 Source: `52485ec9:capture/retros/parallel-implementation-wave.md:11`.
 
 The startup stream edits guidance only. It adds no command, flag, or default route.
-Source: `specs/shared-delegate-startup/spec.md:66`.
+Source: `1cb8dae7:specs/shared-delegate-startup/spec.md:66`.
 The queries stream adds selected views to `bench worktree list` and `bench spec history`.
 Source: `194b7dba:specs/session-context-queries/tickets/1-select-worktrees.md`.
 The overflow stream adds runtime evidence only. It enables no adapter.
