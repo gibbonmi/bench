@@ -1337,6 +1337,22 @@ Advice, parked as ideas:
 - no boundary step sits between the `symbolic-ref` check and the `show-ref` read
 - the local delete's error drops Git's stderr
 
+## Final reconciliation
+
+The RI-C2b checkpoint is green at the record commit `8b8de1fa`, with the chunk
+tip at the seam commit `12137b64`. The orchestrator then ran the eight final
+verification commands of the version 2 plan at that source. Each ran through
+the exec form, and each exited 0. The coverage map is valid with 100 rows, and
+every row but the two review-owned glossary rows cites its test. Every planned
+row of the four chunks reconciles as covered. The JSON payload holds the eight
+`integration-verification` rows under `completion`, with the orchestrator as
+the performer.
+
+The build stays on the base `72a749a3`, one landing behind `main`, by the
+reviewer's earlier decision. The landing composes `main` into the source, and
+the only `main` delta is the light-path guidance commit `41e03007`, which
+touches Markdown under `.agents` and `projects`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2908,7 +2924,257 @@ Advice, parked as ideas:
     }
   ],
   "completion": {
-    "state": "pending"
+    "state": "completed",
+    "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+    "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+    "reconciliation": {
+      "RI1": "covered",
+      "RI2": "covered",
+      "RI3": "covered",
+      "RI4": "covered",
+      "RI5": "covered",
+      "RI6": "covered",
+      "RI7": "covered",
+      "RI8": "covered",
+      "RI9": "covered",
+      "RI10": "covered",
+      "RI11": "covered",
+      "RI12": "covered",
+      "RI13": "covered",
+      "RI14": "covered",
+      "RI15": "covered",
+      "RI16": "covered",
+      "RI17": "covered",
+      "RI18": "covered",
+      "RI19": "covered",
+      "RI20": "covered",
+      "RI21": "covered",
+      "RI22": "covered",
+      "RI23": "covered",
+      "RI24": "covered",
+      "RI25": "covered",
+      "RI26": "covered",
+      "RI27": "covered",
+      "RI28": "covered",
+      "RI29": "covered",
+      "RI30": "covered",
+      "RI31": "covered",
+      "RI32": "covered",
+      "RI33": "covered",
+      "RI34": "covered",
+      "RI35": "covered",
+      "RI36": "covered",
+      "RI37": "covered",
+      "RI38": "covered",
+      "RI39": "covered",
+      "RI40": "covered",
+      "RI41": "covered",
+      "RI42": "covered",
+      "RI43": "covered",
+      "RI44": "covered",
+      "RI45": "covered",
+      "RI46": "covered",
+      "RI47": "covered",
+      "RI93": "covered",
+      "RI94": "covered",
+      "RI95": "covered",
+      "RI48": "covered",
+      "RI49": "covered",
+      "RI50": "covered",
+      "RI51": "covered",
+      "RI52": "covered",
+      "RI55": "covered",
+      "RI57": "covered",
+      "RI58": "covered",
+      "RI59": "covered",
+      "RI60": "covered",
+      "RI61": "covered",
+      "RI62": "covered",
+      "RI63": "covered",
+      "RI64": "covered",
+      "RI65": "covered",
+      "RI66": "covered",
+      "RI67": "covered",
+      "RI68": "covered",
+      "RI69": "covered",
+      "RI70": "covered",
+      "RI71": "covered",
+      "RI72": "covered",
+      "RI73": "covered",
+      "RI74": "covered",
+      "RI75": "covered",
+      "RI76": "covered",
+      "RI77": "covered",
+      "RI78": "covered",
+      "RI79": "covered",
+      "RI80": "covered",
+      "RI81": "covered",
+      "RI82": "covered",
+      "RI83": "covered",
+      "RI84": "covered",
+      "RI85": "covered",
+      "RI86": "covered",
+      "RI88": "covered",
+      "RI89": "covered",
+      "RI90": "covered",
+      "RI91": "covered",
+      "RI92": "covered",
+      "RI87": "covered",
+      "RI96": "covered",
+      "RI97": "covered",
+      "RI98": "covered",
+      "RI99": "covered",
+      "RI100": "covered",
+      "RI101": "covered",
+      "RI102": "covered",
+      "RI103": "covered"
+    },
+    "verification": [
+      {
+        "id": "ri-final-coverage",
+        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-coverage@12137b64",
+          "digest": "sha256:2e4744e129ab6a424bc130cc10cfce11d8d960882c929988dcfc789b71dafbc2",
+          "excerpt": "ok: coverage map valid — 100 row(s)"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/ref-inventory/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "ri-final-worktree",
+        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-worktree@12137b64",
+          "digest": "sha256:c83d02409651d0d5c1d41405ab5035c0968222ae6c811b35b6e5d89e7d52b9ae",
+          "excerpt": "github.com/gibbonmi/bench/internal/worktree,pass,52122"
+        },
+        "requirement": "worktree",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      },
+      {
+        "id": "ri-final-status",
+        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-status@12137b64",
+          "digest": "sha256:a42ff3c1d238146df64d6e33391f4cbee993d2d28bbbfc03bf2d6afc75969b7e",
+          "excerpt": "github.com/gibbonmi/bench/internal/status,pass,14436"
+        },
+        "requirement": "status",
+        "command": "bench test --package ./internal/status",
+        "exit_code": 0
+      },
+      {
+        "id": "ri-final-spec",
+        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-spec@12137b64",
+          "digest": "sha256:f58248dc4de4f48869cd2a8f8681bd57a85e2173263e978cbf43feffda31213a",
+          "excerpt": "github.com/gibbonmi/bench/internal/spec,pass,263"
+        },
+        "requirement": "spec",
+        "command": "bench test --package ./internal/spec",
+        "exit_code": 0
+      },
+      {
+        "id": "ri-final-cmd",
+        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-cmd@12137b64",
+          "digest": "sha256:bb0c46583b0bfdce9f4635ae9c4c9d081902fb995ad584882ea64851bbf95e1a",
+          "excerpt": "github.com/gibbonmi/bench/cmd/bench,pass,9547"
+        },
+        "requirement": "cmd",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "ri-final-conformance",
+        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-conformance@12137b64",
+          "digest": "sha256:4158cf6ff11dd760a25dee478f95a5f4eff6c71659e90a09fa52195d1966b47e",
+          "excerpt": "github.com/gibbonmi/bench/internal/conformance,pass,39363"
+        },
+        "requirement": "conformance",
+        "command": "bench test --package ./internal/conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "ri-final-anchors",
+        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-anchors@12137b64",
+          "digest": "sha256:4ac36bb6576cb4435db34b36c5d97d1fc2e7ba9d8d68bebb8c9905776f39d04c",
+          "excerpt": "github.com/gibbonmi/bench/internal/anchors,pass,1011"
+        },
+        "requirement": "anchors",
+        "command": "bench test --package ./internal/anchors",
+        "exit_code": 0
+      },
+      {
+        "id": "ri-final-system",
+        "performer": "claude:session_0156tkEZcRSowaafegWfFZJP",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "8b37247fe68abb4fc90794df561d4071c828de3a",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session_0156tkEZcRSowaafegWfFZJP/final-system@12137b64",
+          "digest": "sha256:cb3d2bea71e95aca47d537d25337fe785fc7e60c051cffb92836e5e6b434cb60",
+          "excerpt": "github.com/gibbonmi/bench/internal/systemtest,pass,41034"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
