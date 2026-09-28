@@ -13,7 +13,7 @@ import (
 
 var retroGrammar = usage.Grammar{
 	Cmd:     "bench retro",
-	Help:    "usage: bench retro <slug> (--body <markdown> | --scaffold)",
+	Help:    "usage: bench retro <slug> (--body <markdown> | --scaffold)\nThe --body form creates a retrospective only once, refuses to replace an existing retrospective, and preserves its content.",
 	Flags:   []usage.Flag{{Name: "--body", HasValue: true, NoEmptyValue: true}, {Name: "--scaffold"}},
 	MaxArgs: 1,
 }
