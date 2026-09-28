@@ -49,6 +49,12 @@ type LandedStateFact struct {
 	UniqueBranchNames []string
 }
 
+// WorktreeDirty reports Git's porcelain dirtiness and preserves query errors.
+func WorktreeDirty(root string) (bool, error) {
+	out, err := Output("-C", root, "status", "--porcelain")
+	return out != "", err
+}
+
 // LandedState derives checkout-local dirtiness and repository-wide commit and branch
 // facts. The dirty count omits excludedDirtyPaths, but only for the named checkout.
 func LandedState(root string, excludedDirtyPaths ...string) (LandedStateFact, error) {

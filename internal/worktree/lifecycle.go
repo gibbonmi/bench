@@ -162,8 +162,8 @@ func isWorktree(dir string) bool {
 
 // isClean reports whether the worktree at dir has no dirty or untracked paths.
 func isClean(dir string) bool {
-	out, err := git.Output("-C", dir, "status", "--porcelain")
-	return err == nil && out == ""
+	dirty, err := git.WorktreeDirty(dir)
+	return err == nil && !dirty
 }
 
 // Acquire leases a clean pooled worktree, resets it to resetRef or HEAD, and removes

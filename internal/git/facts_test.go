@@ -7,6 +7,48 @@ import (
 	"testing"
 )
 
+func TestWorktreeDirty(t *testing.T) {
+	root := newRepo(t)
+	assertDirty := func(want bool) {
+		t.Helper()
+		if got, err := WorktreeDirty(root); err != nil || got != want {
+			t.Fatalf("WorktreeDirty = %v, %v; want %v, nil", got, err, want)
+		}
+	}
+	assertDirty(false)
+	for path, body := range map[string]string{".git/info/exclude": "ignored.txt\n", "ignored.txt": "ignored\n"} {
+		if err := os.WriteFile(filepath.Join(root, path), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	assertDirty(false)
+	path := filepath.Join(root, "new file\n.txt")
+	if err := os.WriteFile(path, []byte("new\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	assertDirty(true)
+	runGit(t, root, "config", "status.showUntrackedFiles", "no")
+	assertDirty(false)
+	runGit(t, root, "add", "--", path)
+	assertDirty(true)
+	runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "stage fixture")
+	assertDirty(false)
+	if err := os.WriteFile(path, []byte("changed\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	assertDirty(true)
+	if err := os.Remove(path); err != nil {
+		t.Fatal(err)
+	}
+	assertDirty(true)
+	if _, err := WorktreeDirty(t.TempDir()); err == nil {
+		t.Fatal("WorktreeDirty concealed the non-repository error")
+	}
+	if _, err := WorktreeDirty(filepath.Join(root, "missing")); err == nil {
+		t.Fatal("WorktreeDirty concealed the missing-root error")
+	}
+}
+
 // TestTreeHashCleanTreeMatchesHEAD is the same-tree property the gate relies on. A
 // clean working tree hashes to HEAD's tree object.
 func TestTreeHashCleanTreeMatchesHEAD(t *testing.T) {

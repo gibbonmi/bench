@@ -47,11 +47,11 @@ func gatherPinned(root, mode, slug, explicitBase, sourceTipPin string, noFollow 
 				return "changed files not readable", err.Error()
 			}
 			if mode == "review" {
-				dirty, statusErr := git.Output("-C", root, "status", "--porcelain")
+				dirty, statusErr := git.WorktreeDirty(root)
 				if statusErr != nil {
 					return "source status unreadable", statusErr.Error()
 				}
-				if dirty != "" {
+				if dirty {
 					return "source not clean", "review source has uncommitted changes"
 				}
 			}
