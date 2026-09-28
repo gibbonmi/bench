@@ -705,6 +705,35 @@ A targeted mutation must reach the expectation it justifies, rather than fail at
 This cycle changes an observation and the finding's proposed closure, so it counts as repair cycle 1.
 All three fresh confirming reviews remain required before the chunk checkpoint.
 
+## TD-C2 confirming review 1
+
+All three fresh gpt-6-sol reviewers used high effort and one iteration.
+The current whole-chunk pair is 786a1d2c69ccbf6b2d3b6f19609329e450c9bede to 284b1cd90bb9a9bde0a5e20b099b9ba80d079835.
+The confirming delta starts at 6f62c57a10fb616a2de848711c079deb28a535b8 and changes only this review record.
+Each reviewer bound the prepared evidence to the current source and read its required sources.
+The source digest remains 56de27cbba48703bf21b64b4c2e378c058ce96f1, and the working tree was clean after review.
+
+Standards passes with zero unresolved findings and confidence 8.
+Its confirmation closes TD-C2-S1 with a no-op disposition for the repaired predicate.
+The original auto-fix occurrence remains above and in the native record.
+The extra-commit mutation reaches the count assertion, and its recorded digests match the native outputs.
+
+Spec passes with zero findings and confidence 9.
+It audited all 49 rows and reaffirmed TD-C2 at the current tip.
+Coverage passes with zero findings and confidence 9.
+Its independent path-alias bypass candidate fails the fixture's excluded-path checks and contradicts the private destination owner.
+
+Raw unresolved counts are Standards 0, Spec 0, and Coverage 0.
+There are zero remaining repair targets and no worst issue.
+The existing broker-manifest fixture advice remains optional, with no finding ID or disposition.
+No implementation-command change is necessary.
+The reviewers suggest clearer evidence retrieval help and complete delivery of long page cells.
+
+TD-C2 consumed one repair cycle under the user-approved uncapped policy with bench-debug.
+The current planned verification results remain valid because no implementation byte changed.
+The chunk checkpoint remains pending, and TD32 retains its final landing obligation.
+TD-C3 starts only after the checkpoint passes.
+
 ```bench-review-record
 {
   "version": 1,
@@ -1560,7 +1589,7 @@ All three fresh confirming reviews remain required before the chunk checkpoint.
     {
       "id": "TD-C2",
       "base": "786a1d2c69ccbf6b2d3b6f19609329e450c9bede",
-      "tip": "6f62c57a10fb616a2de848711c079deb28a535b8",
+      "tip": "284b1cd90bb9a9bde0a5e20b099b9ba80d079835",
       "plan_digest": "sha256:16abfe4c3e278cb992643dd86dfdb7be1fa874c001dea3ac15c9b9c5050853a8",
       "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
       "acceptance_rows": [
@@ -1879,6 +1908,72 @@ All three fresh confirming reviews remain required before the chunk checkpoint.
           "tip": "6f62c57a10fb616a2de848711c079deb28a535b8",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "TD-C2-Standards-confirm-1",
+          "performer": "/root/td_c2_standards_confirm1",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/td_c2_standards_confirm1/final",
+            "digest": "sha256:07e8989e1035124db0e42c0e788fa1ace43d270e6bff591585adf03d54b19082",
+            "excerpt": "Standards: **pass; 0 unresolved findings; worst issue: none.** I reaffirm whole TD-C2 at the current frozen tip. The confirming delta changes only `reviews/test-determinism.md`.\n\n**TD-C2-S1 \u2014 repaired; current disposition: no-op; confidence: 8/10.** Retain its original auto-fix occurrence and confidence. `AGENTS.md:42\u201348` requires a demonstrated red for the independent expectation at `internal/gittest/gittest_test.go:66\u201367`. The native capture at `.logs/test-determinism-c2-repair-1.json:3\u20138` reports a passing baseline, then count `\"2\"` at precisely line 67, with restored=yes. `internal/testrepo/working_tree.go:66,71` confirms the mutation adds an empty commit through the actual snapshot owner without changing copied files. Capture lines 10\u201324 and 33\u201338 record restored package/root passes with no skips. All four output digests match the embedded review excerpts.\n\nNew raw findings: 0. Remaining repair targets: 0. Optional advice: none. Implementation-command contribution: none; no command change necessary. CLI improvements: 0."
+          },
+          "axis": "Standards",
+          "base": "786a1d2c69ccbf6b2d3b6f19609329e450c9bede",
+          "tip": "284b1cd90bb9a9bde0a5e20b099b9ba80d079835",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C2-Standards-1"
+          ]
+        },
+        {
+          "id": "TD-C2-Spec-confirm-1",
+          "performer": "/root/td_c2_spec_confirm1",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/td_c2_spec_confirm1/final",
+            "digest": "sha256:ceefb832424d51a2988c9bc5b27a438b0ab3ce9b66d20c97552ab8c4b46ffc6e",
+            "excerpt": "Spec: **pass; 0 findings; worst issue: none.** Finding IDs/dispositions: none. Distinct repair targets: 0. I reaffirm the whole current TD-C2 chunk.\n\nTask supplement: Spec / gpt-6-sol / high / one iteration / read-only. Whole pair: `786a1d2c69ccbf6b2d3b6f19609329e450c9bede..284b1cd90bb9a9bde0a5e20b099b9ba80d079835`. Confirming delta: `6f62c57a10fb616a2de848711c079deb28a535b8..284b1cd90bb9a9bde0a5e20b099b9ba80d079835`. Source digest: `56de27cbba48703bf21b64b4c2e378c058ce96f1`. Plan digest: `sha256:16abfe4c3e278cb992643dd86dfdb7be1fa874c001dea3ac15c9b9c5050853a8`.\n\nNo edits, tests, probes, builds, commits, stash operations, or delegates ran. Optional advice: none. Implementation-command contribution: none; no command change is necessary. CLI improvement: put evidence retrieval grammar first in `bench preflight evidence --help`; its `--source` form currently falls into the spill."
+          },
+          "axis": "Spec",
+          "base": "786a1d2c69ccbf6b2d3b6f19609329e450c9bede",
+          "tip": "284b1cd90bb9a9bde0a5e20b099b9ba80d079835",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C2-Spec-1"
+          ]
+        },
+        {
+          "id": "TD-C2-Coverage-confirm-1",
+          "performer": "/root/td_c2_coverage_confirm1",
+          "role": "independent-review",
+          "model": "gpt-6-sol",
+          "effort": "high",
+          "source_digest": "56de27cbba48703bf21b64b4c2e378c058ce96f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/td_c2_coverage_confirm1/final",
+            "digest": "sha256:984a2f2804d0f284549442c95112bf98a1bfea0b1815e27ff189edd4717b8441",
+            "excerpt": "Coverage: **pass; whole TD-C2 reaffirmed.** Findings: **0**. Worst issue: **none**. Distinct repair targets: **0**. No retained finding IDs or dispositions.\n\nOptional advice remains separate: seed a present broker manifest in the private preflight fixture to exercise preservation of existing bytes. No production defect was demonstrated.\n\nClaim row: `{\"status\":\"claimed\",\"confidence\":9}`. No tests, probes, edits, builds, commits, stash, or delegation ran. Author execution remains author evidence. C1 remains accepted; C3 and TD32\u2019s final landing obligation remain pending.\n\nImplementation-command contribution: none; no command change is necessary. CLI improvement: expose complete evidence-page content without requiring a spill-file read for long escaped TOON cells."
+          },
+          "axis": "Coverage",
+          "base": "786a1d2c69ccbf6b2d3b6f19609329e450c9bede",
+          "tip": "284b1cd90bb9a9bde0a5e20b099b9ba80d079835",
+          "finding_ids": [],
+          "supersedes": [
+            "TD-C2-Coverage-1"
+          ]
         }
       ]
     }
