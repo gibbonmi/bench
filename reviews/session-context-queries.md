@@ -880,7 +880,7 @@ The spec changed at `90a7e396`, so the plan digest changed from `3b519948` to `9
     {
       "id": "QU-C2",
       "base": "af66f28584c2ee8507fa350bedea483500a05e72",
-      "tip": "9cdbfc6461f6398336e0de614903213dda059de0",
+      "tip": "eccd2516464d50f726cbc6bca81edfce3e30ab40",
       "plan_digest": "sha256:94546d7283167eda11336ea2d54c2ff98bc1bc6aa47c556bc41b6a52db59a814",
       "source_digest": "41d771fa79501ce8d68da37e486e5367b3af148f",
       "acceptance_rows": [
