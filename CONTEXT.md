@@ -153,6 +153,15 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   sanctioned build script. The file is a development artifact; no gate, no fast lane,
   and no `bench test` run reuses it. Not "local build", not "worktree binary", not
   "dist build" — worktree build.
+- **tree target** — the checkout that a tree-scoped verb reads: a worktree label or
+  `primary`. The lifecycle verbs' `<target>` operand is not a tree target. Not
+  "root", not "kit dir", not "target" alone — tree target.
+- **tree-scoped verb** — a public registry leaf that reads or grades tracked content
+  of one checkout: source, configuration, specs, roadmap, or registries. Not
+  "worktree verb", not "local verb" — tree-scoped verb.
+- **repository-scoped verb** — a public registry leaf that reads only Git refs, the
+  worktree ledger, or git-ignored capture files. Not "global verb", not "primary
+  verb" — repository-scoped verb.
 - **follow-on** — a Bash tool call that adds a redirection or a control operator to
   a Bench-headed segment. The follow-on guard reads the first Bench segment and
   refuses the call. A lead is not a follow-on: a `;` or `&&` before the segment is
