@@ -274,11 +274,103 @@ Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardeni
 
 The first checkpoint run refused the TT-C2 verification entries. Each entry held the digest of its full command output, not the digest of its embedded excerpt. The coordinator set each digest to the SHA-256 of its excerpt. This correction is evidence-only: it changes no finding, observation, source identity, or verification outcome. The second checkpoint run was green.
 
+## TT-C3 author evidence
+
+Ticket 3 had a fresh `bench-writer` successor author, `tt-t3-author-2`, on opus at high effort, with a cap of 3 attempts. The first author, `tt-t3-author`, stopped blocked on a fence gap and a behavioral question, and it committed nothing. The reviewer decided both questions, and the coordinator committed the plan change `af654c55`.
+
+The successor started at `af654c55` with the uncommitted diff of the first author. The successor verified that diff again with its own runs. It kept the production behavior, and it changed four test files and one comment. It committed `93b7c071` on a lane pass in the first attempt. The successor then committed this record in a second commit.
+
+The chunk pair is `74daf800..93b7c071`. The base is the accepted TT-C2 tip, because a plan commit is never a chunk base. The payload names the ticket commit as the tip, because a record cannot name its own commit. The source digest does not change at the record commit, because the record file is outside the graded source.
+
+The successor made these changes to the preserved diff:
+
+- `cmd/bench/response_bound_exempt_test.go`: the planted `dashboard` and ship-tier calls print the exempt row on stderr, and the bounded `dashboard` call prints it on stdout. The new `withoutRows` helper removes the leading row of each stream before `requireComplete` and `requireBounded` grade the verb output.
+- `internal/systemtest/adoption_test.go`: each nested Bench call of the scaffolded gate prints its own row. So the gate with an empty `tests/canary` prints 11 lines and spills, and the canary message moves into the spill file. The new `boundedStderr` helper reads the spill file of a spilled response. `assertPrivateHomeEmpty` accepts the `responses` entry, which holds that spill file.
+- `internal/treetarget/identify_test.go`: the path check of TT23 runs before the label check of TT12, so each row has its own red.
+- `cmd/bench/tree_scope_test.go`: the row fixture fixes its commit dates, so HEAD is always the commit `2151c564`. The deviations below give the reason.
+- `cmd/bench/census_output.go`: one comment gets its missing article.
+
+### Red and green log
+
+The production code was already in the tree at the start. So each red came from a `bench probe`, from a run before a test edit, or from a copy-aside edit of a system test. After each probe, the restore read `yes`, and the test passed again.
+
+- TT10, TT25, and TT60: a probe wrote the row into the bounded stream after the verb. `TestTreeRowLeadsTreeResponse` lost the leading row. `TestTreeRowSurvivesSpill` printed `line 01` first, and `TestTreeRowOutsideResponseBound` spilled at 12 lines.
+- TT11: a probe set the primary target to `main`. `TestTreeRowLeadsTreeResponse` failed on the row `main,2151c564…,false`.
+- TT15: a probe cut the head cell to 12 characters. `TestTreeRowLeadsTreeResponse` failed on the row `primary,2151c5641124,false`.
+- TT12: a probe set the target to the assignment ID. `TestIdentifyNamesActiveLabel` failed on the label check.
+- TT23: a probe set the target to the worktree path. `TestIdentifyNamesActiveLabel` failed on the path check.
+- TT13 and TT14: the plan probe `3-unassigned-probe` failed both subtests of `TestIdentifyUnownedWorktree` with the target `primary`.
+- TT14 alone: a probe in `internal/intent/assignment.go` accepted an assignment in any state. The released subtest failed with the target `alpha`.
+- TT16: a probe set the head fallback to an empty string. `TestIdentifyUnbornHead` failed on a quoted empty cell.
+- TT17: a probe added `--untracked-files=no` to the status query in `internal/git/status.go`. The untracked subtest of `TestIdentifyDirtyStates` failed with `false`.
+- TT18: a probe replaced the status query with a query of untracked files only. The modified-file subtest failed with `false`.
+- TT19: a probe set the dirty fallback to `false`. The corrupt-index subtest failed with `false`.
+- TT20: a probe printed the exempt row on stdout. `TestExemptTreeCallPrintsRowOnStderr` failed.
+- TT21: a probe removed the help-form check from the row hook. `bench gate --help` printed the row on stderr.
+- TT22: a probe removed the scope check from the row hook. `bench version` printed the row.
+- TT24: a probe skipped the empty-root check. `bench coverage x` printed the row `unassigned,none,unknown` before its answer.
+- TT56: a probe changed the exit-2 rule to exit 99. `TestRunGateRejectsBriefUsage` failed, because `bench gate --brief` printed the row on stdout.
+- TT61: a probe removed the passing-phase guard in `internal/responsebound/owner.go`. `TestOwnerPrintsNoRowWhenSpillCannotOpen` failed, because the row came after the verb output.
+- The posture sites: before the test edits, `TestDashboardStdoutStaysComplete` and `TestShipTierStaysComplete` failed at lines 93 and 145, and `TestAdoptionSmokeJourney` failed at line 151. With the `responses` allowance removed, the journey failed with `private BENCH_HOME … is not empty: [d otel/ d responses/]`. After each edit, the tests passed.
+- The header expectation in `cmd/bench/tree_scope_test.go`: a probe renamed the field `head` to `commit`. `TestTreeRowLeadsTreeResponse` and `TestTreeRowSurvivesSpill` failed.
+
+### Deviations
+
+- Non-behavioral spec contradiction, for reviewer veto: TOON quotes a string that starts with a zero and a digit. So for a HEAD such as `025072b2…`, the row is `primary,"025072b2…",false`, and not the bare form of the acceptance row. About 4 in 100 commits print quoted. The successor follows the tree convention of TOON quoting, as `internal/diff/review_base_test.go` does. A final run on a random fixture commit gave this red, so the row tests now pin one commit that prints bare.
+- `Row` renders through `toon.TableTyped`, not `toon.Table`. The dirty cell must print a bare `true` or `false`, and `toon.Table` quotes the string `true`. Both functions share one block contract.
+- The row-removal logic lives in the test package `internal/treetarget/treetargettest`, and the `cmd/bench` helper `withoutTreeRow` calls it. The system tests cannot import package `main`, so they call the same function.
+- The adoption journey accepts a `responses` entry in its private home after every leg. By the nested-call decision, any gate response can spill, and a spill writes only that entry.
+- The ticket marks `cmd/bench/tree_scope.go` as new, but ticket 1 created it. No check required an edit to `cmd/bench/help_inventory_test.go` or to the two conformance files in `Writes:`, so the diff leaves them unchanged.
+
+The sweep of duplicated facts found no second source. `withoutRows` and `boundedStderr` compose the existing `withoutTreeRow`, `responseboundtest.Find`, and `readSpillFile`. The row header in `treetargettest` comes from the renderer. The independent expectations are the header, the cell values, and the `responses` entry name. The log above records a red for each.
+
+The source digest is the tree of `93b7c071` without this record file, which is `8bf44343`. The same rule at `74daf800` gives `80fbc1c6`, which confirms the method.
+
+The plan commits after `74daf800` fold the reviewer decisions and add the rows TT60, TT61, and TT62. They also change the fences of tickets 3 and 4 and the ticket 3 assignments. So the plan digest changed from `834182d7` to `ea3ee9d0`. The `ReadPlan` rule at `74daf800` gives `834182d7`, which confirms the method. The payload adds one amendment that maps each chunk ID to itself, because no chunk ID changed.
+
+### Probe verdicts
+
+Each probe ran through `bench probe`, and each restore reads `yes`. The first row is the plan probe `3-unassigned-probe`. The JSON payload holds the exact command and output of the first five rows at `93b7c071`. The other rows ran on the source before the fixture commit dates were fixed, so only this table holds them.
+
+| File | Mutation | Test | Row | Verdict |
+|---|---|---|---|---|
+| `internal/treetarget/identify.go` | swap: `"unassigned"` to `"primary"` | TestIdentifyUnownedWorktree | TT13, TT14 | bit |
+| `cmd/bench/tree_scope.go` | swap: `if exit == 2 {` to `if exit == 99 {` | TestRunGateRejectsBriefUsage | TT56 | bit |
+| `cmd/bench/census_output.go` | swap: `owner.Lead(shownRow(row, exit))` to a write into the bounded stream | the three row placement tests | TT10, TT25, TT60 | bit |
+| `internal/treetarget/identify.go` | swap: `identity.Target = "primary"` to `identity.Target = "main"` | TestTreeRowLeadsTreeResponse | TT11 | bit |
+| `internal/treetarget/identify.go` | swap: `identity.Head = head` to `identity.Head = head[:12]` | TestTreeRowLeadsTreeResponse | TT15 | bit |
+| `internal/treetarget/identify.go` | swap: `assignment.Label` to `assignment.ID` | TestIdentifyNamesActiveLabel | TT12 | bit |
+| `internal/treetarget/identify.go` | swap: `assignment.Label` to `assignment.Worktree` | TestIdentifyNamesActiveLabel | TT23 | bit |
+| `internal/intent/assignment.go` | swap: `a.State == StateActive` to `a.State != ""` | TestIdentifyUnownedWorktree | TT14 | bit |
+| `internal/treetarget/identify.go` | swap: `Head: "none"` to `Head: ""` | TestIdentifyUnbornHead | TT16 | bit |
+| `internal/git/status.go` | swap: add `--untracked-files=no` to the status query | TestIdentifyDirtyStates | TT17 | bit |
+| `internal/git/status.go` | swap: the status query to `ls-files --others --exclude-standard` | TestIdentifyDirtyStates | TT18 | bit |
+| `internal/treetarget/identify.go` | swap: `Dirty: "unknown"` to `Dirty: false` | TestIdentifyDirtyStates | TT19 | bit |
+| `cmd/bench/tree_scope.go` | swap: `c.Stderr` to `c.Stdout` in `finishExempt` | TestExemptTreeCallPrintsRowOnStderr | TT20 | bit |
+| `cmd/bench/tree_scope.go` | swap: remove the help-form clause | TestHelpFormPrintsNoTreeRow | TT21 | bit |
+| `cmd/bench/tree_scope.go` | swap: remove the scope clause | TestHelpFormPrintsNoTreeRow | TT22 | bit |
+| `cmd/bench/tree_scope.go` | swap: `if root == "" {` to `if root == "-" {` | TestTreeRowOutsideRepository | TT24 | bit |
+| `internal/responsebound/owner.go` | swap: remove the `passing` clause of the lead guard | TestOwnerPrintsNoRowWhenSpillCannotOpen | TT61 | bit |
+| `internal/treetarget/identify.go` | swap: the field `"head"` to `"commit"` | TestTreeRowLeadsTreeResponse, TestTreeRowSurvivesSpill | header | bit |
+
+A first placement probe used `fmt.Fprint`, which `census_output.go` does not import. Its verdict was `invalid`, and the table holds the rerun. One more probe added a no-op statement to the exit-2 rule to confirm that the new fixture compiles. Its verdict was `silent`, and it grades no row.
+
+### Verification
+
+The successor ran each TT-C3 plan verification on the source of `93b7c071`, and each passed. The JSON payload holds each result. The successor also ran these checks on the same source, and each passed:
+
+- `bench test --package ./internal/conformance`, with three environment capability skips for unix sockets or device nodes;
+- `bench test --check system`;
+- `bench structure --growth f981cd3d`, which reported that no source file grew past its budget;
+- `gofmt -l` and `go vet -tags system` on the changed packages.
+
+The first post-commit preflight reported `binary-seal` red, because the worktree build was older than the source. After `bench worktree build`, `bench preflight build tree-targets` reported 14 green checks, 1 check that does not apply, and 0 red checks.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/tree-targets/spec.md",
-  "plan_digest": "sha256:834182d7bb87b440ee0493ba5fd18fb70360c237bae9e7a24acfe73bc8fc91a0",
+  "plan_digest": "sha256:ea3ee9d0bf9cd3b6386e8aff692c80c514b0ee1075b723a9256ba5a30f8d0430",
   "implementation_session": "",
   "chunks": [
     {
@@ -1094,6 +1186,236 @@ The first checkpoint run refused the TT-C2 verification entries. Each entry held
           ]
         }
       ]
+    },
+    {
+      "id": "TT-C3",
+      "base": "74daf800f8a11d85083711b31aaabc47797ebc73",
+      "tip": "93b7c07191c61c306292d1f770c977e5684097fe",
+      "plan_digest": "sha256:ea3ee9d0bf9cd3b6386e8aff692c80c514b0ee1075b723a9256ba5a30f8d0430",
+      "source_digest": "8bf4434336ae7fb7c412c3cde6930803bbe93b01",
+      "acceptance_rows": [
+        "TT10",
+        "TT11",
+        "TT12",
+        "TT13",
+        "TT14",
+        "TT15",
+        "TT16",
+        "TT17",
+        "TT18",
+        "TT19",
+        "TT20",
+        "TT21",
+        "TT22",
+        "TT23",
+        "TT24",
+        "TT25",
+        "TT56",
+        "TT60",
+        "TT61"
+      ],
+      "verification": [
+        {
+          "id": "tt-c3-3-cmd-r1",
+          "performer": "claude:bench-writer/tt-t3-author-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bf4434336ae7fb7c412c3cde6930803bbe93b01",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-author-2-20260929/3-cmd@93b7c071",
+            "digest": "sha256:6638158506e5b2b04674be3479a32837a35ae1dcd20e6c1a635248f9fd8c0652",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,12705\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c3-3-treetarget-r1",
+          "performer": "claude:bench-writer/tt-t3-author-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bf4434336ae7fb7c412c3cde6930803bbe93b01",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-author-2-20260929/3-treetarget@93b7c071",
+            "digest": "sha256:7d1c96ef15ef0ae02ae229b00910d58708306ff8aae8107af5e4539143cb8aed",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/treetarget,pass,114\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-treetarget",
+          "command": "bench test --package ./internal/treetarget",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c3-3-responsebound-r1",
+          "performer": "claude:bench-writer/tt-t3-author-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bf4434336ae7fb7c412c3cde6930803bbe93b01",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-author-2-20260929/3-responsebound@93b7c071",
+            "digest": "sha256:c8a94ec4b6eb46bd99be2214c1d7119e94454dfc722ed4ff6a38b776dbe536a8",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,239\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-responsebound",
+          "command": "bench test --package ./internal/responsebound",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c3-3-unassigned-probe-r1",
+          "performer": "claude:bench-writer/tt-t3-author-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bf4434336ae7fb7c412c3cde6930803bbe93b01",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-author-2-20260929/3-unassigned-probe@93b7c071",
+            "digest": "sha256:bd6a7cad29435f241c06ba9eb4ebf9c48af94713cff4652fef179e60999866c1",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/treetarget/identify.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/treetarget,TestIdentifyUnownedWorktree,passed,3\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/treetarget,fail,48"
+          },
+          "requirement": "3-unassigned-probe",
+          "command": "bench probe internal/treetarget/identify.go --swap '\"unassigned\"' --with '\"primary\"' --package ./internal/treetarget --run TestIdentifyUnownedWorktree",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t3-author-2-20260929/3-unassigned-probe@93b7c071",
+              "digest": "sha256:bd6a7cad29435f241c06ba9eb4ebf9c48af94713cff4652fef179e60999866c1",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/treetarget/identify.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/treetarget,TestIdentifyUnownedWorktree,passed,3\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/treetarget,fail,48"
+            }
+          }
+        },
+        {
+          "id": "tt-c3-author-probe-tt56-exit2-r1",
+          "performer": "claude:bench-writer/tt-t3-author-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bf4434336ae7fb7c412c3cde6930803bbe93b01",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-author-2-20260929/tt56-exit2@93b7c071",
+            "digest": "sha256:d823d7b0c34bf474d2f56182712a411227b11e2ed5a4a821d0c3123d564c7857",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/tree_scope.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestRunGateRejectsBriefUsage,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,33"
+          },
+          "requirement": "author-probe-TT56-exit2",
+          "command": "bench probe cmd/bench/tree_scope.go --swap 'if exit == 2 {' --with 'if exit == 99 {' --package ./cmd/bench --run TestRunGateRejectsBriefUsage",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t3-author-2-20260929/tt56-exit2@93b7c071",
+              "digest": "sha256:d823d7b0c34bf474d2f56182712a411227b11e2ed5a4a821d0c3123d564c7857",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/tree_scope.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestRunGateRejectsBriefUsage,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,33"
+            }
+          }
+        },
+        {
+          "id": "tt-c3-author-probe-placement-r1",
+          "performer": "claude:bench-writer/tt-t3-author-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bf4434336ae7fb7c412c3cde6930803bbe93b01",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-author-2-20260929/placement@93b7c071",
+            "digest": "sha256:a79c87b937584f4f8674823262a1c9647a49c3a1b3ff5d0e9f125ce80459032c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/census_output.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestTreeRowLeadsTreeResponse|TestTreeRowSurvivesSpill|TestTreeRowOutsideResponseBound,passed,3"
+          },
+          "requirement": "author-probe-TT25-TT60-placement",
+          "command": "bench probe cmd/bench/census_output.go --swap 'owner.Lead(shownRow(row, exit))' --with '_, _ = c.Stdout.Write([]byte(shownRow(row, exit)))' --package ./cmd/bench --run 'TestTreeRowLeadsTreeResponse|TestTreeRowSurvivesSpill|TestTreeRowOutsideResponseBound'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t3-author-2-20260929/placement@93b7c071",
+              "digest": "sha256:a79c87b937584f4f8674823262a1c9647a49c3a1b3ff5d0e9f125ce80459032c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/census_output.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestTreeRowLeadsTreeResponse|TestTreeRowSurvivesSpill|TestTreeRowOutsideResponseBound,passed,3"
+            }
+          }
+        },
+        {
+          "id": "tt-c3-author-probe-tt11-target-r1",
+          "performer": "claude:bench-writer/tt-t3-author-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bf4434336ae7fb7c412c3cde6930803bbe93b01",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-author-2-20260929/tt11-target@93b7c071",
+            "digest": "sha256:df2e26f046773628a2ebb545e4b9013bae4a6295d0dc02ffd4a218fd6429660e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/treetarget/identify.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestTreeRowLeadsTreeResponse,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,20"
+          },
+          "requirement": "author-probe-TT11-target",
+          "command": "bench probe internal/treetarget/identify.go --swap 'identity.Target = \"primary\"' --with 'identity.Target = \"main\"' --package ./cmd/bench --run TestTreeRowLeadsTreeResponse",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t3-author-2-20260929/tt11-target@93b7c071",
+              "digest": "sha256:df2e26f046773628a2ebb545e4b9013bae4a6295d0dc02ffd4a218fd6429660e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/treetarget/identify.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestTreeRowLeadsTreeResponse,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,20"
+            }
+          }
+        },
+        {
+          "id": "tt-c3-author-probe-tt15-head-r1",
+          "performer": "claude:bench-writer/tt-t3-author-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bf4434336ae7fb7c412c3cde6930803bbe93b01",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-author-2-20260929/tt15-head@93b7c071",
+            "digest": "sha256:df2e26f046773628a2ebb545e4b9013bae4a6295d0dc02ffd4a218fd6429660e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/treetarget/identify.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestTreeRowLeadsTreeResponse,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,20"
+          },
+          "requirement": "author-probe-TT15-head",
+          "command": "bench probe internal/treetarget/identify.go --swap 'identity.Head = head' --with 'identity.Head = head[:12]' --package ./cmd/bench --run TestTreeRowLeadsTreeResponse",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t3-author-2-20260929/tt15-head@93b7c071",
+              "digest": "sha256:df2e26f046773628a2ebb545e4b9013bae4a6295d0dc02ffd4a218fd6429660e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/treetarget/identify.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestTreeRowLeadsTreeResponse,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,20"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1125,6 +1447,24 @@ The first checkpoint run refused the TT-C2 verification entries. Each entry held
     {
       "from": "sha256:ab6c7f85535262e57e3235e5da67d2460d1b56586d98b7ce78c6a487073539fb",
       "to": "sha256:834182d7bb87b440ee0493ba5fd18fb70360c237bae9e7a24acfe73bc8fc91a0",
+      "chunk_ids": {
+        "TT-C1": [
+          "TT-C1"
+        ],
+        "TT-C2": [
+          "TT-C2"
+        ],
+        "TT-C3": [
+          "TT-C3"
+        ],
+        "TT-C4": [
+          "TT-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:834182d7bb87b440ee0493ba5fd18fb70360c237bae9e7a24acfe73bc8fc91a0",
+      "to": "sha256:ea3ee9d0bf9cd3b6386e8aff692c80c514b0ee1075b723a9256ba5a30f8d0430",
       "chunk_ids": {
         "TT-C1": [
           "TT-C1"
