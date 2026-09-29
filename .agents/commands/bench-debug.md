@@ -131,7 +131,7 @@ The feature may have no live spec, because Bench deletes a spec on merge. Do not
 `git log --diff-filter=D -- specs/` lists every deleted spec, and `git log --grep=spec-retire` finds the retirement commits and any promoted decision.
 Recover the origin spec from git history before you hypothesise.
 
-For one known slug, `bench spec history <slug>` merges both queries into one newest-first table.
+For one known slug, `bench spec history <slug>` merges both queries into one newest-first table, with one row for each commit.
 For several slugs or for other evidence, use the focused reads in `craft-cli`.
 When a focused result omits evidence that the diagnosis needs, follow its complete-detail route.
 

@@ -103,17 +103,17 @@ Keep the source identity with each result, so that its complete detail stays rec
 | File | `rg -n '<pattern>' -- <path>` | Read the named file with the file reader. |
 | Git | `git diff --name-only <base> <tip>`, then `git diff <base> <tip> -- <path>` | `git diff <base> <tip>` |
 | Test | `bench test --package <package> --run <test>` | `bench test --full --package <package> --run <test>` |
-| Worktree paths | `bench worktree list --view paths --target <first> --target <second>` | `bench worktree list` |
+| Worktree paths | `bench worktree list --view paths --target <first> --target <second>` | The default `bench worktree list` view |
 | Spec histories | `bench spec history --spec <first> --spec <second> --limit <positive-count>` | The `detail` command of each result |
 | Archived spec | `git log --oneline --diff-filter=D -- specs/` | `git show <deletion-commit>^:<path>` |
 | Shell output or log | `rg -n -e error -e failed -- <log>` | Read the same named log with the file reader. |
 
 Capture the output and exit status of a non-Bench command once, because a rerun can change the evidence.
-Batch the independent archive and log discovery reads, then fetch only the relevant bodies.
+Batch the independent archive and log discovery reads.
+Fetch only the relevant bodies after that discovery.
 Keep polling, mutation, verification, approval, and publication as separate operations.
 
 ## Conformance
 
-The project gate derives the approved set from the production command registry
-and compares both membership directions with the table above. It also grades the
-ten ordered principles, output envelopes, help spellings, and executable behavior.
+The project gate derives the approved set from the production command registry and compares both membership directions with the approved-query table.
+It also grades the ten ordered principles, output envelopes, help spellings, and executable behavior.
