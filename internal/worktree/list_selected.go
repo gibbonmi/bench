@@ -20,6 +20,10 @@ var selectedWorktreeGrammar = usage.Grammar{
 	},
 }
 
+// selectedPathUnrepresentable is the error cell of a resolved record whose stored path the
+// TOON table cannot carry.
+const selectedPathUnrepresentable = "assignment path is not representable"
+
 // selectsWorktrees reports whether args choose the selected view. The check runs before
 // the bare grammar parses, because that grammar refuses every flag.
 func selectsWorktrees(args []string) bool {
@@ -44,7 +48,7 @@ func listSelectedWorktrees(root string, args []string) (string, int) {
 	}
 	assignments, err := intent.Assignments(root)
 	if err != nil {
-		return toon.Errorf("cannot read worktree assignments", "repair the Bench intent ledger and retry") + "\n", 1
+		return assignmentsReadRefusal(), 1
 	}
 	var rows [][]any
 	exit := 0
@@ -57,7 +61,7 @@ func listSelectedWorktrees(root string, args []string) (string, int) {
 		seenTargets[target] = true
 		// An unsafe operand never reaches a cell: its row names the request ordinal.
 		if !lineSafe(target) {
-			rows = append(rows, []any{fmt.Sprintf("target-%d", i+1), "", "", "", "target contains control characters"})
+			rows = append(rows, []any{fmt.Sprintf("target-%d", i+1), "", "", "", errTargetControls.Error()})
 			exit = 1
 			continue
 		}
@@ -74,7 +78,7 @@ func listSelectedWorktrees(root string, args []string) (string, int) {
 		}
 		seenIDs[selected.ID] = true
 		if !toon.Representable(selected.Worktree) {
-			rows = append(rows, []any{target, "", "", "", "assignment path is not representable"})
+			rows = append(rows, []any{target, "", "", "", selectedPathUnrepresentable})
 			exit = 1
 			continue
 		}

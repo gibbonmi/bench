@@ -69,8 +69,7 @@ func TestSelectedWorktreeHelpDiscovery(t *testing.T) {
 }
 
 // TestSelectedWorktreeWithinResponseBound reads the printed response, not the spill file.
-// Three resolved targets give 1 table header, 3 rows, 1 help header, and 1 help row, so one
-// unrequested row makes the count 7.
+// Three resolved targets give 1 table header, 3 rows, 1 help header, and 1 help row: 6 lines.
 func TestSelectedWorktreeWithinResponseBound(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
 	owner := strings.Repeat("b", 32)

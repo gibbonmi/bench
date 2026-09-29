@@ -65,7 +65,7 @@ func resolveAssignment(root, target string) (intent.Assignment, error) {
 // verb takes, as the identity bundle's own state check does.
 func resolveAssignmentIn(root, target string, accepts func(intent.AssignmentState) bool) (intent.Assignment, error) {
 	if !lineSafe(target) {
-		return intent.Assignment{}, errors.New("target contains control characters")
+		return intent.Assignment{}, errTargetControls
 	}
 	assignments, err := intent.Assignments(root)
 	if err != nil {
@@ -99,6 +99,10 @@ func missingTreeRefusal(root string, assignment intent.Assignment) error {
 	recovery := recoverMissingTree(landed, assignment.RequestToken, assignment.Worktree)
 	return refusalError{refusal{detail: "worktree tree is missing", next: recovery.line()}}
 }
+
+// errTargetControls refuses a target that no output line can carry. The refusal names no
+// operand, so it is safe to print for any input.
+var errTargetControls = errors.New("target contains control characters")
 
 // errTargetUnassigned is the selector outcome a caller may act on rather than report: the
 // spelling names no assignment, so a caller with a second lookup falls through to it. The

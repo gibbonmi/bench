@@ -2,6 +2,7 @@ package worktree
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -11,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 func selectedFixture(t *testing.T, states ...intent.AssignmentState) (string, []intent.Assignment) {
@@ -138,10 +140,16 @@ func TestSelectedWorktreePartialFailure(t *testing.T) {
 	if len(rows) != 3 {
 		t.Fatalf("partial results=%#v, want all three operands", rows)
 	}
-	for i, fragment := range map[int]string{0: "unassigned", 2: "ambiguous"} {
-		row := rows[i].(map[string]any)
-		if !strings.Contains(row["error"].(string), fragment) || row["id"] != "" {
-			t.Fatalf("failed result=%#v, want %s", row, fragment)
+	ledger, err := intent.Assignments(root)
+	mustNoError(t, err)
+	var ambiguous ambiguousTargetError
+	_, selectErr := selectAssignment(ledger, assignments[0].Label)
+	if !errors.As(selectErr, &ambiguous) {
+		t.Fatalf("shared label selects %v, want an ambiguity", selectErr)
+	}
+	for i, want := range map[int]string{0: errTargetUnassigned.Error(), 2: ambiguous.Error()} {
+		if row := rows[i].(map[string]any); row["error"] != want || row["id"] != "" {
+			t.Fatalf("failed result=%#v, want error %q", row, want)
 		}
 	}
 	if row := rows[1].(map[string]any); row["id"] != assignments[2].ID || row["error"] != "" {
@@ -230,22 +238,32 @@ func TestSelectedWorktreeHostileTarget(t *testing.T) {
 
 func TestSelectedWorktreeGrammar(t *testing.T) {
 	t.Parallel()
-	for _, args := range [][]string{
-		{"--view"}, {"--target"}, {"--view", "paths"}, {"--target", "one"},
-		{"--view", "other", "--target", "one"}, {"--view", "paths", "--target", ""},
-		{"--view", "paths", "--target", "one", "extra"},
-		{"--view", "paths", "--target", "one", "--limit", "1"},
-		{"--view", "paths", "--target", "one", "--view", "paths"},
-		{"--view", "paths", "--target", "one", "--"},
+	// Each refusal is the selected grammar's own line. The bare grammar refuses the first
+	// flag as an unknown argument, so a request that misses the selected route fails here.
+	selectedHelp := selectedWorktreeGrammar.Help
+	for _, tc := range []struct {
+		args []string
+		want string
+	}{
+		{[]string{"--view"}, toon.MissingArg(usage.WorktreeList, "--view")},
+		{[]string{"--target"}, toon.MissingArg(usage.WorktreeList, "--target")},
+		{[]string{"--view", "paths"}, selectedHelp},
+		{[]string{"--target", "one"}, selectedHelp},
+		{[]string{"--view", "other", "--target", "one"}, selectedHelp},
+		{[]string{"--view", "paths", "--target", ""}, toon.Usage(usage.WorktreeList, usage.EmptyFlagValue("--target"))},
+		{[]string{"--view", "paths", "--target", "one", "extra"}, toon.Usage(usage.WorktreeList, "extra")},
+		{[]string{"--view", "paths", "--target", "one", "--limit", "1"}, toon.Usage(usage.WorktreeList, "--limit")},
+		{[]string{"--view", "paths", "--target", "one", "--view", "paths"}, toon.Usage(usage.WorktreeList, "--view")},
+		{[]string{"--view", "paths", "--target", "one", "--"}, selectedHelp},
 	} {
-		out, code := ListCommand("", "", args)
-		if code != 2 || !strings.HasPrefix(out, "usage:") {
-			t.Errorf("grammar %q = (%d,%q), want usage before repository lookup", args, code, out)
+		out, code := ListCommand("", "", tc.args)
+		if code != 2 || out != tc.want+"\n" {
+			t.Errorf("grammar %q = (%d,%q), want (2,%q) before repository lookup", tc.args, code, out, tc.want+"\n")
 		}
 	}
 	for _, help := range []string{"--help", "-h", "help"} {
 		out, code := ListCommand("", "", []string{help})
-		if code != 0 || out != "usage: bench worktree list\n" {
+		if code != 0 || out != worktreeListGrammar.Help+"\n" {
 			t.Errorf("bare help %q = (%d,%q)", help, code, out)
 		}
 	}
@@ -287,7 +305,7 @@ func TestSelectedWorktreeDetailRoute(t *testing.T) {
 		mustNoError(t, err)
 		actions, err := document.HelpActions()
 		mustNoError(t, err)
-		if len(actions) != 1 || actions[0].Cmd != "bench worktree list" {
+		if len(actions) != 1 || actions[0].Cmd != usage.WorktreeList {
 			t.Fatalf("detail actions=%#v, want complete worktree inventory", actions)
 		}
 	}
@@ -306,7 +324,7 @@ func TestSelectedWorktreeHostilePath(t *testing.T) {
 			mustNoError(t, intent.PutAssignment(root, bad))
 			out, code := ListCommand(root, "", []string{"--view", "paths", "--target", bad.Label, "--target", good.ID, "--target", bad.ID, "--target", bad.Label})
 			wantCode := 1
-			first := map[string]any{"target": bad.Label, "id": "", "path": "", "state": "", "error": "assignment path is not representable"}
+			first := map[string]any{"target": bad.Label, "id": "", "path": "", "state": "", "error": selectedPathUnrepresentable}
 			if tc.permitted {
 				wantCode = 0
 				first = map[string]any{"target": bad.Label, "id": bad.ID, "path": bad.Worktree, "state": string(bad.State), "error": ""}
