@@ -282,7 +282,7 @@ func TestSelectedHistoryHostileSubject(t *testing.T) {
 		t.Fatalf("hidden refused subject exit=%d output=%q", code, out)
 	}
 	rows := historyRows(t, out, "histories")
-	if len(rows) != 5 || rows[0]["error"] != selectedHistoryUnrepresentable || rows[0]["total_events"] != nil || rows[0]["total_bytes"] != nil || rows[0]["omitted_events"] != nil {
+	if len(rows) != 5 || rows[0]["error"] != selectedHistoryUnrepresentable || rows[0]["detail"] != historyDetail("tainted", SlugOf("tainted")) || rows[0]["total_events"] != nil || rows[0]["total_bytes"] != nil || rows[0]["omitted_events"] != nil {
 		t.Fatalf("per-target refused history=%#v", rows)
 	}
 	for _, row := range rows[1:] {

@@ -53,14 +53,21 @@ func historyFixture(t *testing.T) historyFixtureData {
 	return f
 }
 
-// emptyHistoryRepo initializes a repository with a fixed committer identity and makes it
-// the working directory.
-func emptyHistoryRepo(t *testing.T) historyFixtureData {
+// initGitRepo initializes an empty repository on main with a fixed committer identity
+// and returns its root. It is the one Git setup of the spec package tests.
+func initGitRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
 	runGit(t, root, "init", "-q", "-b", "main")
 	runGit(t, root, "config", "user.email", "a@b.c")
 	runGit(t, root, "config", "user.name", "a")
+	return root
+}
+
+// emptyHistoryRepo initializes a repository and makes it the working directory.
+func emptyHistoryRepo(t *testing.T) historyFixtureData {
+	t.Helper()
+	root := initGitRepo(t)
 	t.Chdir(root)
 	return historyFixtureData{root: root, hash: map[string]string{}}
 }
@@ -236,7 +243,7 @@ func TestSelectedSpecPartialFailure(t *testing.T) {
 			t.Fatalf("request order=%#v", rows)
 		}
 		if target == "failed" {
-			if row["error"] != historyDerivationFailed || row["total_events"] != nil || row["total_bytes"] != nil || row["omitted_events"] != nil {
+			if row["error"] != historyDerivationFailed || row["detail"] != historyDetail(target, SlugOf(target)) || row["total_events"] != nil || row["total_bytes"] != nil || row["omitted_events"] != nil {
 				t.Fatalf("unknown failed counts=%#v", row)
 			}
 		} else if row["error"] != "" {
@@ -294,12 +301,12 @@ func TestSelectedHistoryHostileTarget(t *testing.T) {
 	for _, bad := range []string{"bad\x1btarget", "tab\ttarget", "line\ntarget", "return\rtarget", "nul\x00target", "del\x7ftarget", "c1\u0085target"} {
 		for _, c := range []struct {
 			targets []string
-			ordinal string
+			ordinal int
 			failed  int
 		}{
-			{[]string{bad, "mixed", bad, "absent"}, "target-1", 0},
-			{[]string{"mixed", "absent", bad, "retire-only", bad}, "target-3", 2},
-			{[]string{"mixed", "specs/mixed/spec.md", bad}, "target-3", 1},
+			{[]string{bad, "mixed", bad, "absent"}, 1, 0},
+			{[]string{"mixed", "absent", bad, "retire-only", bad}, 3, 2},
+			{[]string{"mixed", "specs/mixed/spec.md", bad}, 3, 1},
 		} {
 			out, code := selectedHistory(t, "1", c.targets...)
 			if code != 1 {
@@ -310,8 +317,9 @@ func TestSelectedHistoryHostileTarget(t *testing.T) {
 				t.Fatalf("unsafe duplicate rows=%#v", rows)
 			}
 			row := rows[c.failed]
-			if row["target"] != c.ordinal || row["slug"] != "" || row["total_events"] != nil || row["detail"] != "" || row["error"] != selectedTargetControls {
-				t.Fatalf("unsafe stable identity=%#v; want %s", row, c.ordinal)
+			pointer := sanitize.TargetPointer(c.ordinal)
+			if row["target"] != pointer || row["slug"] != "" || row["total_events"] != nil || row["detail"] != "" || row["error"] != selectedTargetControls {
+				t.Fatalf("unsafe stable identity=%#v; want %s", row, pointer)
 			}
 			for i, row := range rows {
 				if i != c.failed && row["error"] != "" {

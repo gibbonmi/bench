@@ -1,7 +1,6 @@
 package spec
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -64,7 +63,7 @@ func selectedHistories(args []string) (string, int) {
 		}
 		seenTargets[target] = true
 		if !sanitize.LineSafe(target) {
-			summaries = append(summaries, []any{fmt.Sprintf("target-%d", i+1), "", nil, nil, nil, "", selectedTargetControls})
+			summaries = append(summaries, []any{sanitize.TargetPointer(i + 1), "", nil, nil, nil, "", selectedTargetControls})
 			exit = 1
 			continue
 		}

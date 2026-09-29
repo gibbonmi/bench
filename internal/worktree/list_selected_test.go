@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -201,7 +202,7 @@ func TestSelectedWorktreeHostileTarget(t *testing.T) {
 			if bad["error"] == "" || bad["id"] != "" {
 				t.Fatalf("unsafe result=%#v", bad)
 			}
-			if strings.ContainsAny(target, "\x1b\t\n\r\x00") && (bad["target"] != "target-1" || len(bad["error"].(string)) > 80) {
+			if strings.ContainsAny(target, "\x1b\t\n\r\x00") && (bad["target"] != sanitize.TargetPointer(1) || len(bad["error"].(string)) > 80) {
 				t.Fatalf("unsafe ordinal result=%#v", bad)
 			}
 			if rows[1].(map[string]any)["id"] != assignments[0].ID {
@@ -218,7 +219,8 @@ func TestSelectedWorktreeHostileTarget(t *testing.T) {
 		t.Fatalf("position matrix exit=%d output=%q", code, out)
 	}
 	rows := selectedRows(t, out)
-	wantTargets := []string{assignments[0].Label, "target-2", "target-4", assignments[1].ID, "target-6"}
+	wantTargets := []string{assignments[0].Label, sanitize.TargetPointer(2), sanitize.TargetPointer(4), assignments[1].ID, sanitize.TargetPointer(6)}
+	refused := map[int]bool{1: true, 2: true, 4: true}
 	if len(rows) != len(wantTargets) {
 		t.Fatalf("position results=%#v", rows)
 	}
@@ -227,7 +229,7 @@ func TestSelectedWorktreeHostileTarget(t *testing.T) {
 		if row["target"] != target {
 			t.Fatalf("position %d = %#v, want %q", i, row, target)
 		}
-		if strings.HasPrefix(target, "target-") && (row["id"] != "" || row["error"] == "" || len(row["error"].(string)) > 80) {
+		if refused[i] && (row["id"] != "" || row["error"] == "" || len(row["error"].(string)) > 80) {
 			t.Fatalf("position refusal=%#v", row)
 		}
 	}

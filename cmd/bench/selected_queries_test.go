@@ -11,6 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -142,7 +143,7 @@ func TestSelectedHistoryCommandRoutes(t *testing.T) {
 			}
 			first := rows[0].(map[string]any)
 			if unsafe {
-				if first["target"] != "target-1" || first["error"] == "" {
+				if first["target"] != sanitize.TargetPointer(1) || first["error"] == "" {
 					t.Fatalf("unsafe route=%#v", first)
 				}
 			} else if first["target"] != target || first["error"] != "" || fmt.Sprint(first["total_events"]) != "0" {

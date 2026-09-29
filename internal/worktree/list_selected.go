@@ -1,10 +1,9 @@
 package worktree
 
 import (
-	"fmt"
-
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -61,7 +60,7 @@ func listSelectedWorktrees(root string, args []string) (string, int) {
 		seenTargets[target] = true
 		// An unsafe operand never reaches a cell: its row names the request ordinal.
 		if !lineSafe(target) {
-			rows = append(rows, []any{fmt.Sprintf("target-%d", i+1), "", "", "", errTargetControls.Error()})
+			rows = append(rows, []any{sanitize.TargetPointer(i + 1), "", "", "", errTargetControls.Error()})
 			exit = 1
 			continue
 		}

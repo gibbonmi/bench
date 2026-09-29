@@ -150,3 +150,10 @@ func writeEscaped(b *strings.Builder, runes []rune, preserveLayout bool) {
 // Display-hostile runes outside the control categories — a bidi override, U+2028,
 // invalid UTF-8 — pass. This guards line structure, not how a terminal renders one line.
 func LineSafe(value string) bool { return !strings.ContainsFunc(value, unicode.IsControl) }
+
+// TargetPointer is the pointer a request-shaped caller emits in place of an operand that
+// fails LineSafe: the label target-<n>, where position is the operand's 1-based place in
+// the request. The label names the refused request and carries none of its bytes, so
+// every view that refuses an unsafe operand points at it one way. Each view keeps its own
+// refusal message; only the pointer is shared.
+func TargetPointer(position int) string { return fmt.Sprintf("target-%d", position) }

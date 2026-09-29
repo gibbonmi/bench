@@ -503,10 +503,7 @@ func retireRepo(t *testing.T, slug, body string, extraFiles map[string]string) (
 // retirePrimary builds the repository itself and returns its primary checkout.
 func retirePrimary(t *testing.T, slug, body string, extraFiles map[string]string) (root string) {
 	t.Helper()
-	root = t.TempDir()
-	runGit(t, root, "init", "-q", "-b", "main")
-	runGit(t, root, "config", "user.email", "a@b.c")
-	runGit(t, root, "config", "user.name", "a")
+	root = initGitRepo(t)
 	writeFolderSpec(t, root, slug, body)
 	for path, content := range extraFiles {
 		full := filepath.Join(root, filepath.FromSlash(path))
