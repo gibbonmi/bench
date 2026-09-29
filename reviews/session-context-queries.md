@@ -201,6 +201,46 @@ The spec changed at `3704d6b4`, so the plan digest changed. The author applied t
 
 The checkpoint gate refused the first record with `stale plan amendment`, because the QU-C1 tip carries the earlier plan. The payload now has one amendment from `f9fea3c8` to `3f398b89`, and it maps each chunk ID to itself. The plan delta at `3704d6b4` adds only the ticket 2 author assignment, so no chunk changes its tickets, rows, or verification.
 
+## QU-C2 chunk review, round 1
+
+The frozen pair is base `af66f28584c2ee8507fa350bedea483500a05e72` and tip `f4927b60758ef08958d154bb4bf9bba0d18e727e`. Review preflight requires the current tip, so the chunk tip moves to the last record commit. The source digest stays the same. The shared evidence is `sha256:ea0ea2e1f3c1cee945def7aa85e6cd0b7cf4fe6fe194b906d6806c582b67d6fb`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, on the conditional review line. Only the Coverage axis ran probes, and it left the tree clean.
+
+The consumers outside the diff are the command registry readers and `spec.historyCommand`. The diff does not change the body of `History`, so the roadmap reader at `internal/roadmap/context_parse.go:185` reads the same facts. The Coverage axis ran `./cmd/bench`, `./internal/spec`, and `./internal/roadmap` green.
+
+The raw finding count is 3: Standards 2, Spec 0, and Coverage 1. Each finding names its own fix, so 3 repair targets remain.
+
+## Standards
+
+Findings: 2. The worst issue is that the two selected views derive the unsafe-operand ordinal row separately.
+
+- `internal/spec/history_selected.go:66-67` and `internal/worktree/list_selected.go:63-64` each check `LineSafe` and then write a `target-<n>` ordinal row. The spec states this rule once at `spec.md:96`. The finding was `ask-user`, because one owner is outside both fences. The reviewer chose one owner next to `LineSafe`. Target R1. Confidence 5.
+- The helper `emptyHistoryRepo` in `internal/spec/history_command_test.go` repeats the Git setup of `retirePrimary` at `internal/spec/spec_test.go:507-509`. `AGENTS.md` keeps a fixture harness single-sourced. Target R2. `auto-fix`. Confidence 3.
+
+## Spec
+
+Findings: 0. All thirteen rows of ticket 2 are met. The QU24 fixture uses the kind `delete`, `core.abbrev 8`, and a hash that does not look numeric, and the test asserts 36 + 3 × 31 = 129 bytes. QU27 prints exactly 8 lines, and an ignored limit prints 10. The plan delta at `3704d6b4` adds only the ticket 2 assignment.
+
+## Coverage
+
+Findings: 1. The worst issue is that no test pins the recovery command on a failed history row.
+
+- A swap that blanks the `detail` cell on the Git failure row at `internal/spec/history_selected.go:79` stayed silent in 77 selected tests. The same swap on the unrepresentable row at `:85` stayed silent in `./internal/spec`. QU7 needs that command most when the events of a target are lost. Target R3. `auto-fix`. Confidence 6.
+
+## Advice
+
+- The plan prose at `specs/session-context-queries/spec.md:397` names only the ticket 1 assignment. The orchestrator owns that text.
+- The ticket 2 author wrote test text with a plain heredoc outside `bench worktree exec`. The text is in the ticket commit.
+
+## QU-C2 repair routing
+
+Each repair goes to one fresh `bench-writer` repair session for ticket 2. This is cycle 1 of the two repair cycles for chunk QU-C2. Target R1 expands the ticket 2 fence under the approved plan-expansion policy, and a plan commit records that expansion before the dispatch.
+
+| Target | Ticket | Repair |
+|---|---|---|
+| R1 | 2 | Give the unsafe-operand ordinal one owner next to `LineSafe` in `internal/sanitize`, and make both selected views read it. |
+| R2 | 2 | Give the history test repository setup one source in the spec package tests. |
+| R3 | 2 | Assert the exact `detail` cell on the Git failure row and on the unrepresentable row, and show that a blanked cell now bites. |
+
 ```bench-review-record
 {
   "version": 2,
@@ -749,7 +789,7 @@ The checkpoint gate refused the first record with `stale plan amendment`, becaus
     {
       "id": "QU-C2",
       "base": "af66f28584c2ee8507fa350bedea483500a05e72",
-      "tip": "5f69aebda023509c341cb4dae00fedabe9123c49",
+      "tip": "f4927b60758ef08958d154bb4bf9bba0d18e727e",
       "plan_digest": "sha256:3f398b8941d8bd9961b643b3be948be65c4ff159bec5e0708e26575152510a9c",
       "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
       "acceptance_rows": [
@@ -1450,7 +1490,73 @@ The checkpoint gate refused the first record with `stale plan amendment`, becaus
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "qu-c2-standards-r1",
+          "performer": "claude:bench-reviewer/qu-c2-standards-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/qu-c2-standards-r1@f4927b60",
+            "digest": "sha256:f1ed712a8a26569282bcec17dff045987b4902a2b50699dc6428f21d0dadf4cb",
+            "excerpt": "Standards: 2 findings. Worst: the unsafe-operand ordinal row is derived separately in the worktree and history selected views."
+          },
+          "axis": "Standards",
+          "base": "af66f28584c2ee8507fa350bedea483500a05e72",
+          "tip": "f4927b60758ef08958d154bb4bf9bba0d18e727e",
+          "finding_ids": [
+            "R1",
+            "R2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "qu-c2-spec-r1",
+          "performer": "claude:bench-reviewer/qu-c2-spec-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c2-spec-r1@f4927b60",
+            "digest": "sha256:9fc8ce81011b84fd04c41da9f08a07bc37482c619101b87a3363730b4528d1eb",
+            "excerpt": "Spec: 0 findings. All thirteen ticket 2 rows are met, and the QU24 and QU27 arithmetic holds exactly."
+          },
+          "axis": "Spec",
+          "base": "af66f28584c2ee8507fa350bedea483500a05e72",
+          "tip": "f4927b60758ef08958d154bb4bf9bba0d18e727e",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "qu-c2-coverage-r1",
+          "performer": "claude:bench-reviewer/qu-c2-coverage-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/qu-c2-coverage-r1@f4927b60",
+            "digest": "sha256:469589c5acd51ba5d57a82cd27ba1b278f17aecd13976683748c013a7fdf4af2",
+            "excerpt": "Coverage: 1 finding. No test pins the recovery detail command on a failed history row, so blanking that cell stays silent."
+          },
+          "axis": "Coverage",
+          "base": "af66f28584c2ee8507fa350bedea483500a05e72",
+          "tip": "f4927b60758ef08958d154bb4bf9bba0d18e727e",
+          "finding_ids": [
+            "R3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
