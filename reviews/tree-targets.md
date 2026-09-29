@@ -16,7 +16,7 @@ The author wrote each test before the code that it grades. The red and green log
 The author reported these deviations from the ticket. The Spec axis grades each one.
 
 - The scope check reads a classified entry that is not internal as public. The help-inventory check refuses any third classification. So the scope check reuses `parityInternalCommand` and adds no second test for `publicInventory`. This change follows the duplicated-facts sweep.
-- The check reads the presence of a `Scope` field and does not grade its value. The scope type has no named zero value, so an undeclared value needs an explicit conversion.
+- The author's check read the presence of a `Scope` field and did not grade its value. The author's reason was false: Go accepts an untyped `0` for the scope type, so a line can set the undeclared zero value. Repair R2 grades the value.
 - A tree without the leaf file grades the registry only. The routing check applies the same rule to an absent package, and the canary fixture copies only `cmd/bench/main.go`.
 - Each registry line takes its scope after its bound disposition. So the AXI mutation anchors still match, and `internal/conformance/axi_query_registry_test.go` stays unchanged.
 - No check required an edit to these `Writes:` paths, so the diff leaves them unchanged:
@@ -80,19 +80,48 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 1 on opus
 | R2 | 1 | Accept only `scopeTree` and `scopeRepository` as a declaration, and plant a `Scope: 0` row in `TestCommandScopeCheckBites`. |
 | R3 | 1 | Drive the refusal over every repository-scoped definition that is not a family, read from `commandRegistry`, and show that a refusal narrowed to `version` bites. |
 
+## TT-C1 ticket 1 repair evidence, cycle 1
+
+The session `claude:bench-writer/tt-t1-repair-1` ran on opus at high effort, with a cap of 3 attempts. It started at `56caf792` and committed `258edfd9` on a lane pass in the first attempt. This repair is cycle 1 of the two repair cycles for chunk TT-C1.
+
+- R1: `TestCommandScopeCheckBites` writes both planted files through the package's `writeFixtureFile` helper. The private closure is gone, and the test file makes no other file write. This change has no behavior, so no probe applies. The R2 probes below show that the test still bites through the helper.
+- R2: a public definition and a `worktreeLeaves` row declare a scope only when the `Scope` field names `scopeTree` or `scopeRepository`. A family or a plumbing line still carries no `Scope` field at all. The bite test plants `Scope: 0` on one public line and on one leaf row. Before the fix, the test failed without the two undeclared diagnostics. After the fix, it passed. The reviewer's live probe, `Scope: 0` on the `models` line, now reports `command "models" declares no scope`.
+- R3: `TestRepositoryVerbRefusesTreeTarget` reads each repository-scoped definition from `commandRegistry` and skips a wrapper-only definition. For each verb, it runs `--in primary` and a bare `--in`, and it asserts exit 2, the one usage line on stdout, and an empty stderr. The test sets `BENCH_AGENT` empty, so `bench shift` fails fast when a mutation lets it run. The loop covers `version`, so its separate subtest is gone. The `idea` subtest stays for its file side effect.
+
+The sweep of duplicated facts found one second statement. The scope check names the two scope identifiers, because a conformance check cannot import `package main`. The live `models` probe records the red of that independent expectation.
+
+### Probe verdicts
+
+Each probe ran through `bench probe` at the repair source, and each restore reads `yes`. The JSON payload holds the exact command and output of each probe. The first row is the plan probe `1-scope-probe`. The live R2 probe ran through the worktree build, because a named check compiles from the run binary's source.
+
+| Target | File | Mutation | Test | Verdict |
+|---|---|---|---|---|
+| TT6 | `cmd/bench/tree_scope.go` | swap: `"--in"` to `"--in-x"` | TestRepositoryVerbRefusesTreeTarget, 10 failed | bit |
+| R3 | `cmd/bench/tree_scope.go` | swap: `definition.Scope != scopeRepository ||` to `definition.Name != "version" ||` | TestRepositoryVerbRefusesTreeTarget, 8 failed, `shift` included | bit |
+| R2 | `internal/conformance/command_scope_test.go` | swap: `return ok && declaredScopes[value.Name]` to `return value != nil || !ok` | TestCommandScopeCheckBites | bit |
+| R2 | `cmd/bench/main.go` | swap: `Scope: scopeRepository` to `Scope: 0` on the `models` line | named check `subcommand-routing` | bit |
+
+A first R2 predicate probe swapped the return to `return true`. It did not compile, so its verdict was `invalid`. The table holds the rerun.
+
+### Verification
+
+The session ran each TT-C1 plan verification on the source of `258edfd9`, and each passed. The JSON payload holds each result. The conformance excerpt omits its three skip rows. Each skip is an environment capability skip for unix sockets or device nodes. `bench structure --growth f981cd3d` reported that no source file grew past its budget. After the commit, `bench preflight build tree-targets` reported 14 green checks, 1 check that does not apply, and 0 red checks.
+
+The chunk tip is now the repair commit `258edfd9`. The source digest is the tree of `258edfd9` without this record file. The same rule at `a08359f9` gives the round 1 digest `48cf94fb`, which confirms the method. The spec changed at `56caf792`, so the plan digest changed. The `ReadPlan` rule at `a08359f9` gives the round 1 digest `7355203a`, which confirms the method. The round 1 entries keep their earlier source digest as history.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/tree-targets/spec.md",
-  "plan_digest": "sha256:7355203a687409e19b68ed6613479e382ad1682b9ccc27fc2000604a45e2920c",
+  "plan_digest": "sha256:82131a586bf62c0c3278a5dd81e06c3709beb7d6f263935fa90651ae0c7eccc8",
   "implementation_session": "",
   "chunks": [
     {
       "id": "TT-C1",
       "base": "f981cd3db1a4f27eddba5feede40a80e205bf1c1",
-      "tip": "a08359f9550f64d92d524dfebc3f7e6143a31118",
-      "plan_digest": "sha256:7355203a687409e19b68ed6613479e382ad1682b9ccc27fc2000604a45e2920c",
-      "source_digest": "48cf94fbd9d931f23b9390333303f8cabd76fad6",
+      "tip": "258edfd920b7a457d86c55a374799f43a602cd99",
+      "plan_digest": "sha256:82131a586bf62c0c3278a5dd81e06c3709beb7d6f263935fa90651ae0c7eccc8",
+      "source_digest": "f0adccfef21bee43abd80bd3bdc3e92edfc7ecac",
       "acceptance_rows": [
         "TT1",
         "TT2",
@@ -241,6 +270,176 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 1 on opus
               "ref": "claude:agent/tt-t1-author-20260929/tt2-public-probe@166a3a8f",
               "digest": "sha256:3064fcd3c3bc49a39214018ad6c41a263ea660bb39faaaab910d795894018d0a",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/conformance/command_scope_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,TestCommandScopeCheckBites,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,10"
+            }
+          }
+        },
+        {
+          "id": "tt-c1-1-cmd-r2",
+          "performer": "claude:bench-writer/tt-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f0adccfef21bee43abd80bd3bdc3e92edfc7ecac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t1-repair-1-20260929/1-cmd@258edfd9",
+            "digest": "sha256:47a0b8ad22f673b21149bd428e41c53819faf4f56bc3ba64aa2a6b856eeccd60",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,12624\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "1-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c1-1-routing-r2",
+          "performer": "claude:bench-writer/tt-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f0adccfef21bee43abd80bd3bdc3e92edfc7ecac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t1-repair-1-20260929/1-routing@258edfd9",
+            "digest": "sha256:08f59d6fd9e57035cbbe09a2be129894319125639069e3eee8be894e9faac2ef",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,19\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "1-routing",
+          "command": "bench test --check subcommand-routing",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c1-1-conformance-r2",
+          "performer": "claude:bench-writer/tt-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f0adccfef21bee43abd80bd3bdc3e92edfc7ecac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t1-repair-1-20260929/1-conformance@258edfd9",
+            "digest": "sha256:56bb76195d74696b17d505649cd1ca014cd6b755a8a134c857cd4aa119968d9e",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,39349\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:"
+          },
+          "requirement": "1-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c1-1-scope-probe-r2",
+          "performer": "claude:bench-writer/tt-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f0adccfef21bee43abd80bd3bdc3e92edfc7ecac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t1-repair-1-20260929/1-scope-probe@258edfd9",
+            "digest": "sha256:edb47168d909814f26bffeeb231f307a16745017c23a062dd3caf538ed65d630",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/tree_scope.go,swap,failed,10,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestRepositoryVerbRefusesTreeTarget,passed,28"
+          },
+          "requirement": "1-scope-probe",
+          "command": "bench probe cmd/bench/tree_scope.go --swap '\"--in\"' --with '\"--in-x\"' --package ./cmd/bench --run TestRepositoryVerbRefusesTreeTarget",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t1-repair-1-20260929/1-scope-probe@258edfd9",
+              "digest": "sha256:edb47168d909814f26bffeeb231f307a16745017c23a062dd3caf538ed65d630",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/tree_scope.go,swap,failed,10,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestRepositoryVerbRefusesTreeTarget,passed,28"
+            }
+          }
+        },
+        {
+          "id": "tt-c1-repair-probe-r3-narrow-r2",
+          "performer": "claude:bench-writer/tt-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f0adccfef21bee43abd80bd3bdc3e92edfc7ecac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t1-repair-1-20260929/r3-narrow-probe@258edfd9",
+            "digest": "sha256:d7c512e292145ea15ee442f873b72db9dd94de05ce0e0eabf19e1dd3c6382cc1",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/tree_scope.go,swap,failed,8,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestRepositoryVerbRefusesTreeTarget,passed,28"
+          },
+          "requirement": "repair-probe-R3-narrow",
+          "command": "bench probe cmd/bench/tree_scope.go --swap 'definition.Scope != scopeRepository ||' --with 'definition.Name != \"version\" ||' --package ./cmd/bench --run TestRepositoryVerbRefusesTreeTarget",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t1-repair-1-20260929/r3-narrow-probe@258edfd9",
+              "digest": "sha256:d7c512e292145ea15ee442f873b72db9dd94de05ce0e0eabf19e1dd3c6382cc1",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/tree_scope.go,swap,failed,8,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestRepositoryVerbRefusesTreeTarget,passed,28"
+            }
+          }
+        },
+        {
+          "id": "tt-c1-repair-probe-r2-predicate-r2",
+          "performer": "claude:bench-writer/tt-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f0adccfef21bee43abd80bd3bdc3e92edfc7ecac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t1-repair-1-20260929/r2-predicate-probe@258edfd9",
+            "digest": "sha256:d52c3fad433dc890602431309f3217fb4f9944bad20b8cb108351e881f4f6f51",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/conformance/command_scope_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,TestCommandScopeCheckBites,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,5"
+          },
+          "requirement": "repair-probe-R2-predicate",
+          "command": "bench probe internal/conformance/command_scope_test.go --swap 'return ok && declaredScopes[value.Name]' --with 'return value != nil || !ok' --package ./internal/conformance --run TestCommandScopeCheckBites",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t1-repair-1-20260929/r2-predicate-probe@258edfd9",
+              "digest": "sha256:d52c3fad433dc890602431309f3217fb4f9944bad20b8cb108351e881f4f6f51",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/conformance/command_scope_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,TestCommandScopeCheckBites,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,5"
+            }
+          }
+        },
+        {
+          "id": "tt-c1-repair-probe-r2-live-r2",
+          "performer": "claude:bench-writer/tt-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f0adccfef21bee43abd80bd3bdc3e92edfc7ecac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t1-repair-1-20260929/r2-live-probe@258edfd9",
+            "digest": "sha256:64da265920299c029c9bb310031089464a36dd4b8ebf73dd8cdf73ac3c53db5e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/main.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,subcommand-routing,^TestRootConformance$,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,20\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: command \\\"models\\\" declares no scope\""
+          },
+          "requirement": "repair-probe-R2-live",
+          "command": "./dist/bench probe cmd/bench/main.go --swap 'Bound: boundResponse, Scope: scopeRepository, Run: outputCommand(models.Command)' --with 'Bound: boundResponse, Scope: 0, Run: outputCommand(models.Command)' --check subcommand-routing",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t1-repair-1-20260929/r2-live-probe@258edfd9",
+              "digest": "sha256:64da265920299c029c9bb310031089464a36dd4b8ebf73dd8cdf73ac3c53db5e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/main.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,subcommand-routing,^TestRootConformance$,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,20\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: command \\\"models\\\" declares no scope\""
             }
           }
         }
