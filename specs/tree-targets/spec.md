@@ -120,7 +120,8 @@ row after spec A retires. Map ticket 7 fixes the split.
 The command registry gains one scope type with two values, `tree` and
 `repository`. Its zero value means undeclared. The type sits on the command
 definition and on the leaf row of a command family. The dispatcher reads it once
-for each call.
+for each call. At run time, an undeclared definition prints no row and takes no
+tree target. So a planted test registry keeps its current output.
 
 Three rules fix where a declaration sits:
 
@@ -204,7 +205,7 @@ any other position, the verb's own parser receives it. The dispatcher consumes
 3. A value with a control character refuses at exit 1 through the worktree target refusal.
 4. The keyword `primary` names the primary checkout, the first entry of `git.Worktrees`.
 5. A value that equals the label of exactly one active assignment names that worktree.
-6. A value that matches no label and that `targetPath` in `internal/worktree` reads as a path exits 2 with `toon.Usage("bench <name> --in", <value>)` on stdout. `targetPath` reads an absolute path, `~`, a `~/` prefix, `.`, and each value with `/` as a path.
+6. A value that matches no label and that `targetPath` in `internal/worktree` reads as a path exits 2 with `toon.Usage("bench <name> --in", <value>)` on stdout. `targetPath` reads each of these values as a path shape: an absolute path, `~`, `~user`, a `~/` prefix, `.`, and each value with `/`. A `~user` value gives a path refusal.
 7. Any other value refuses at exit 1 through the worktree target refusal, with the verb `bench <name> --in`.
 
 Step 6 reuses `targetPath` and restates none of its rules. The label resolver in
@@ -290,8 +291,9 @@ scope type, the refusal, the row hook, and the help insertion live in a new
 file, `cmd/bench/tree_scope.go`. The old file only gains the two fields and
 the calls into that file.
 
-`cmd/bench/main.go`, `cmd/bench/main_test.go`, and
-`internal/conformance/subcommand_routing_test.go` are over budget already. An
+`cmd/bench/main.go`, `cmd/bench/main_test.go`,
+`internal/conformance/subcommand_routing_test.go`, and
+`internal/conformance/axi_query_registry_test.go` are over budget already. An
 edit there keeps each file at or under its current line count. Each registry
 line in `main.go` takes its scope inline.
 
@@ -324,7 +326,7 @@ closes first. TT-C3 creates the identity row that each TT-C4 child prints.
 The identity row adds a first block to each tree-scoped response through the
 dispatcher that exits with a code other than 2. The enumeration below covers
 each fixture the row reds. Its needles are each literal `.Run([]string{"<verb>"`
-call, each `Run(nil)` call, and each call of the six dispatch helpers in
+call, each `Run(nil)` call, and each call of the four dispatch helpers in
 `cmd/bench` tests. The system needle is each exact or prefix comparison of a
 tree-scoped stdout in `internal/systemtest`.
 
@@ -344,15 +346,18 @@ That one edit covers each helper call site. The sites include
 `help_inventory_test.go` lines 195 to 237, `response_bound_test.go` line 132,
 and `selected_queries_test.go` lines 40 to 135.
 
-Seven direct sites compare an exact or prefix stdout, and ticket 3 edits each in
+These direct sites compare an exact or prefix stdout, and ticket 3 edits each in
 place:
 
 - `cmd/bench/main_test.go` line 87, the `Run(nil)` prefix of `status --route`.
-- `cmd/bench/main_test.go` line 116, the prefix of the built binary's root route.
+- `cmd/bench/main_test.go` line 122, the prefix of the built binary's root route.
+- `cmd/bench/main_test.go` line 163, the prefix of the built binary's `harnesses` probes, when the response does not spill.
+- `cmd/bench/commit_chain_test.go` lines 79 and 136, the exact stdout of `commit` through `runCommitChain`.
 - `cmd/bench/selected_queries_test.go` line 183, the exact line count of `spec history`.
-- `cmd/bench/isolated_command_fixtures_test.go` line 38, the prefix of `status --route`.
+- `cmd/bench/isolated_command_fixtures_test.go` line 39, the prefix of `status --route`.
 - `internal/systemtest/owner_selection_test.go` lines 250 and 251, the exact `canary` stdout.
-- `internal/systemtest/charge_evidence_test.go` lines 228, 318, and 344, the prefixes of `preflight evidence`.
+- `internal/systemtest/charge_evidence_test.go` lines 228 and 344, the prefixes of `preflight evidence`.
+- `internal/systemtest/charge_evidence_test.go` line 318, which compares the reads of two worktrees, so it compares them without the row.
 
 These sites stay green, and ticket 3 does not edit them:
 
@@ -360,7 +365,7 @@ These sites stay green, and ticket 3 does not edit them:
 - The help forms at `commit_chain_test.go` line 149, `help_inventory_test.go` line 134, and `main_test.go` lines 200 and 264 print no row.
 - `main_test.go` line 54 and `isolated_command_fixtures_test.go` line 58 compare substrings.
 - `response_bound_exempt_test.go` line 97 compares the stdout of `dashboard --stdout`, and the exempt row goes to stderr.
-- `main_test.go` line 118 and `charge_evidence_test.go` lines 341 and 386 compare two reads of one tree.
+- `main_test.go` lines 125 and 129 and `charge_evidence_test.go` lines 341 and 386 compare two reads of one tree.
 - `status_route_converge_test.go` line 50 finds its command by a substring index.
 - The `land_route_test.go`, `owner_land_race_test.go`, and `version` comparisons run repository-scoped verbs.
 
@@ -508,6 +513,10 @@ never reaches a shell, because the child argv is a direct exec.
 - `cmd/bench/spill_support_test.go`
 - `cmd/bench/census_output_test.go`
 - `cmd/bench/preflight_version_test.go`
+- `cmd/bench/commit_chain_test.go`
+- `cmd/bench/census_output.go`
+- `internal/responsebound/owner.go`
+- `internal/responsebound/owner_test.go`
 - `internal/conformance/subcommand_routing_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/conformance/axi_query_registry_test.go`
@@ -573,15 +582,16 @@ Readers of the command registry fields and of the help rows:
 
 - `cmd/bench/command_registry.go`: `Command.Run`, `renderCommandHelp`, `leafRoot`, and `dispatchLeafFamily`.
 - `cmd/bench/census_output.go`: `runBounded` opens the bound owner that the row writes into.
+- `internal/responsebound/owner.go`: `Owner.Finish` writes the retained or projected response, so the row reaches it at finish.
 - `internal/conformance/subcommand_routing_test.go`: `parseCommandRegistry` and `dispatchRegistry`.
 - `internal/conformance/axi_query_registry_test.go`, `entry_point_parity_test.go`, and `help_inventory_single_source_test.go` call `parseCommandRegistry`. The move keeps its name and signature, so they do not change.
 - `cmd/bench/help_inventory_test.go`: `TestHelpInventoryIsComplete` pins the whole root help. `internal/conformance/help_inventory_single_source_test.go` reads source bytes, and no row changes them.
-- The guidance files that name `bench coverage <spec>` and `bench gate` spell invocations, not help rows. The search found no other copy of a root help row outside `CHANGELOG.md` history and dated audit inputs.
+- The guidance files that name `bench coverage <spec>` and `bench gate` spell invocations, not help rows. Two root help rows are also pinned in `cmd/bench/main_test.go` lines 137 and 193. Ticket 4 edits both in place at the current line count. The search found no other copy of a root help row outside `CHANGELOG.md` history and dated audit inputs.
 - `.bench/hooks`, `.bench/adapters`, `bin`, `scripts`, and `.github/workflows` run no tree-scoped verb whose stdout they parse. The session-start hook runs the plumbing verb `session-inspect`.
 
 Proof checklist:
 
-- Cited symbols: each symbol resolves in the tree at `e80e4e41`.
+- Cited symbols: each symbol resolves in the tree at `f981cd3d`.
   - In `cmd/bench`: `commandDefinition`, `commandLeaf`, `Command.Run`, `renderCommandHelp`, `runBounded`, `worktreeLeaves`, `commandRegistry`, `publicInventory`, `internalInventory`, `versionCommand`, and `boundExemptWith`.
   - In `internal/worktree`: `resolveAssignmentIn`, `selectAssignment`, `printTargetRefusal`, `runWorktreeChild`, `execEnv`, `nameWorktree`, `errTargetUnassigned`, and `errTargetControls`.
   - In other packages: `git.Root`, `git.IsPrimaryCheckout`, `git.Worktrees`, `git.ResolveCommit`, `git.WorktreeDirty`, `intent.AssignmentForWorktree`, `intent.AssignmentsOwning`, `freshness.DeclaresBuildInputs`, `freshness.Verify`, `freshness.Publish`, `freshness.PublishedExecutable`, `canonicalpath.Resolve`, `gate.KitSourceCheckout`, `toon.Table`, `toon.Usage`, `toon.MissingArg`, `sanitize.ShellQuote`, and `sanitize.Controls`.
@@ -623,8 +633,12 @@ helper once. It holds no helper call site, such as `anchor_help_test.go` or
 no `gate_route_test.go`, because its calls exit 2 and print no row.
 
 The staged spec `specs/ft290-test-projection/spec.md` also fences
-`cmd/bench/main.go`, `cmd/bench/command_registry.go`, and
-`cmd/bench/help_inventory_test.go`. The build that starts second takes the
+`cmd/bench/main.go`, `cmd/bench/command_registry.go`,
+`cmd/bench/command_registry_test.go`, `cmd/bench/help_inventory_test.go`,
+`internal/conformance/axi_query_registry_test.go`,
+`internal/conformance/subcommand_routing_table_test.go`, and
+`tests/canary/package-core-guard/unrouted-subcommand`. None of its work has
+landed, so this build starts first. The build that starts second takes the
 mid-tier staleness audit that `.agents/commands/bench-implement-spec.md` line 19
 requires over those files. The reviewer recommends that one of the two builds
 lands before the other dispatches.
@@ -654,6 +668,7 @@ Each addition below is not in a map ticket answer. The reviewer can veto each on
 - The Bench-home clause of the repository predicate. It classifies `assessment`, `cache`, `models`, and `repair-pilot`, which read only state under the Bench home.
 - The empty-value and dash-value steps of the value order, TT57 and TT58.
 - The one test helper that removes a leading row inside the four dispatch helpers.
+- The run-time rule for a definition with no declared scope: no row and no tree target. The staleness pass added it, because planted test registries declare no scope.
 
 ### Open reviewer decision
 
@@ -666,3 +681,27 @@ at create. This spec changes neither, and it records the question for spec B.
 
 The reviewer leans to a duplicate-label refusal at `bench worktree create`,
 because map ticket 1 closed the `--in` value set.
+
+### Pending reviewer decisions from the staleness pass
+
+The staleness pass found two behavioral gaps. Ticket 3 waits for the first
+decision, and ticket 4 waits for the second.
+
+1. The row and the response bound. `bounds.ResponseLines` limits one response
+   to 10 lines, and the spec does not say whether the two row lines count. The
+   row depends on the exit code, so the owner knows it only at finish. When the
+   spill file cannot open, the owner flushes its writes before the exit is
+   known.
+
+   The proposed rule has three parts. The two row lines do not count
+   toward the bound. At finish, the owner prints the row before the replayed or
+   projected output. When the spill cannot open, the owner prints no row.
+2. The label lookup precedence. Step 5 matches one active label, but TT34
+   needs the state refusal for a released label. The spec does not say what one
+   active row and one released row with the same label give.
+
+   The proposed rule: the lookup compares the value with the label of every
+   ledger row. Exactly one active match names that worktree. With no active
+   match, exactly one match in another state gives the state refusal. Two or
+   more active matches, or two or more inactive matches with no active match,
+   give the ambiguity refusal.
