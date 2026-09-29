@@ -552,6 +552,14 @@ Findings: 0. The whole `./internal/conformance` and `./internal/anchors` package
 
 Chunk QU-C3 closes after two repair cycles.
 
+## Final reconciliation
+
+The orchestrator reconciled the 25 acceptance rows of the three chunks. Each row is covered by a met Spec verdict in the last review round of its chunk. The retired rows QU14 and QU15 are not in the plan.
+
+The orchestrator ran the five final verifications of the plan on the source of `0e77d29a`, and each passed. The `worktree` run had two capability skips for unix sockets. The source digest is `3206a6a2`, because each commit after `6a686c5f` changes only this record.
+
+`main` moved during the build, because the staleness-pass landing added `e69d9ca0` and its parents. The review chain refuses a `main` merge after the first chunk, so `bench worktree land` composes those commits.
+
 ```bench-review-record
 {
   "version": 2,
@@ -3474,11 +3482,128 @@ Chunk QU-C3 closes after two repair cycles.
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+    "performer": "claude:session_01HvaChf55KS1vG4A5DV4mwW",
+    "reconciliation": {
+      "QU1": "covered",
+      "QU2": "covered",
+      "QU3": "covered",
+      "QU4": "covered",
+      "QU5": "covered",
+      "QU6": "covered",
+      "QU7": "covered",
+      "QU8": "covered",
+      "QU9": "covered",
+      "QU10": "covered",
+      "QU11": "covered",
+      "QU12": "covered",
+      "QU13": "covered",
+      "QU16": "covered",
+      "QU17": "covered",
+      "QU18": "covered",
+      "QU19": "covered",
+      "QU20": "covered",
+      "QU21": "covered",
+      "QU22": "covered",
+      "QU23": "covered",
+      "QU24": "covered",
+      "QU25": "covered",
+      "QU26": "covered",
+      "QU27": "covered"
+    },
+    "verification": [
+      {
+        "id": "completion-coverage-r1",
+        "performer": "claude:session_01HvaChf55KS1vG4A5DV4mwW",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:orchestrator/coverage@0e77d29a",
+          "digest": "sha256:c30f837bbf45da317434fcb9290ba6e2a7084d85e78f2741282e0f932017cab2",
+          "excerpt": "ok: coverage map valid — 25 row(s)"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/session-context-queries/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "completion-worktree-r1",
+        "performer": "claude:session_01HvaChf55KS1vG4A5DV4mwW",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:orchestrator/worktree@0e77d29a",
+          "digest": "sha256:0f4fd40ce5a443ae680479d7398106bd48a4c0a2928a7111e146f0e3450acfa9",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,50910\nfailures[0]{package,test,line}:"
+        },
+        "requirement": "worktree",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      },
+      {
+        "id": "completion-history-r1",
+        "performer": "claude:session_01HvaChf55KS1vG4A5DV4mwW",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:orchestrator/history@0e77d29a",
+          "digest": "sha256:b8c873d76df9a490a785bcb2a354e81aa76c1dc177c29725dd1c87f36e630192",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,pass,1046\nfailures[0]{package,test,line}:"
+        },
+        "requirement": "history",
+        "command": "bench test --package ./internal/spec",
+        "exit_code": 0
+      },
+      {
+        "id": "completion-commands-r1",
+        "performer": "claude:session_01HvaChf55KS1vG4A5DV4mwW",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:orchestrator/commands@0e77d29a",
+          "digest": "sha256:e96d9dff4a1c551aa5d5e9c60267ba392c5c774e8fdf4c46896ade3411eb1188",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,11318\nfailures[0]{package,test,line}:"
+        },
+        "requirement": "commands",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "completion-workflow-r1",
+        "performer": "claude:session_01HvaChf55KS1vG4A5DV4mwW",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:orchestrator/workflow@0e77d29a",
+          "digest": "sha256:7a4ec32694c4a5d67a4f1a512e5aadeecbcb80e9812a9a6ff1d7c6e866ed84f5",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,730\nfailures[0]{package,test,line}:"
+        },
+        "requirement": "workflow",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
