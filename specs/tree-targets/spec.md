@@ -170,6 +170,10 @@ argument. The refusal prints `toon.Usage("bench <name>", "--in")` on stdout at
 exit 2, and the verb does not run. A family routes its first argument as a leaf
 name, so `bench worktree --in <x>` keeps its unknown-leaf answer.
 
+A wrapper-only definition, such as `repair`, never reaches the dispatcher. The
+wrapper answers `--in` with its own usage line on stderr at exit 2, and the verb
+does not run. This form is the reviewer's decision of 2026-09-29.
+
 ### The identity row
 
 The row renders through `toon.Table` as the block `tree[1]{target,head,dirty}:`
@@ -187,6 +191,11 @@ prints the row before the replayed or projected output. When the spill file
 cannot open, the owner has already flushed the verb output, so it prints no
 row. This rule is the reviewer's decision of 2026-09-29, and TT60 and TT61 pin
 it.
+
+A Bench verb can start a Bench child, as the gate starts `bench test`. That child
+prints its own row, because each child call is its own response. So a
+parent response can grow past the bound and spill. This rule is the reviewer's
+decision of 2026-09-29.
 
 The cells have these values:
 
@@ -210,7 +219,7 @@ any other position, the verb's own parser receives it. The dispatcher consumes
 2. A value that starts with `-`, such as `--help`, exits 2 with `toon.Usage("bench <name> --in", <value>)` on stdout.
 3. A value with a control character refuses at exit 1 through the worktree target refusal.
 4. The keyword `primary` names the primary checkout, the first entry of `git.Worktrees`.
-5. A value that equals the label of exactly one active assignment names that worktree.
+5. The lookup compares the value with the label of every ledger row. Exactly one active match names that worktree. With no active match, exactly one match in another state gives the state refusal. Two or more active matches, or two or more inactive matches with no active match, give the ambiguity refusal. This order is the reviewer's decision of 2026-09-29.
 6. A value that matches no label and that `targetPath` in `internal/worktree` reads as a path exits 2 with `toon.Usage("bench <name> --in", <value>)` on stdout. `targetPath` reads each of these values as a path shape: an absolute path, `~`, `~user`, a `~/` prefix, `.`, and each value with `/`. A `~user` value gives a path refusal.
 7. Any other value refuses at exit 1 through the worktree target refusal, with the verb `bench <name> --in`.
 
@@ -283,6 +292,11 @@ The gate's `resolvedPath` helper delegates to `canonicalpath.Resolve`, so
 answers no match. A relative kit directory now matches the root it names, where
 the old helper compared an unabsolute spelling.
 
+For a relative path, `canonicalpath.Resolve` makes the path absolute before it
+resolves symlinks. So a working directory that a process entered through a
+symlink gives the physical spelling, not the symlink spelling. Ticket 4 owns
+this change, by the reviewer's decision of 2026-09-29, and TT62 pins it.
+
 ### The help rows
 
 Root help renders each row of a tree-scoped definition as
@@ -309,8 +323,8 @@ line in `main.go` takes its scope inline.
 | --- | --- | --- | --- | --- |
 | TT-C1 / `1-declare-command-scope.md` | Each public leaf declares its scope, the gate refuses an undeclared leaf, and a repository verb refuses `--in`. | TT1, TT2, TT3, TT4, TT5, TT6, TT7 | `bench test --package ./cmd/bench`, `bench test --check subcommand-routing` | no |
 | TT-C2 / `2-derive-kit-source-path.md` | The kit-source predicate uses the canonical derivation. | TT51, TT52 | `bench test --package ./internal/gate` | no |
-| TT-C3 / `3-name-the-graded-tree.md` | Each tree-scoped response names the tree that it read. | TT10, TT11, TT12, TT13, TT14, TT15, TT16, TT17, TT18, TT19, TT20, TT21, TT22, TT23, TT24, TT25, TT56 | `bench test --package ./cmd/bench`, `bench test --package ./internal/treetarget` | no |
-| TT-C4 / `4-run-verbs-in-tree-target.md`, `5-run-kit-worktree-build.md` | A tree-scoped verb runs in a named tree target, and a kit worktree target runs its own current build. | TT8, TT9, TT26, TT27, TT28, TT29, TT30, TT31, TT32, TT33, TT34, TT35, TT36, TT37, TT38, TT39, TT40, TT41, TT57, TT58, TT59, TT43, TT44, TT45, TT46, TT47, TT48, TT49, TT50, TT53, TT54, TT55 | `bench test --package ./internal/treetarget`, `bench test --package ./internal/worktree`, `bench test --package ./cmd/bench`, `bench test --check system` | yes |
+| TT-C3 / `3-name-the-graded-tree.md` | Each tree-scoped response names the tree that it read. | TT10, TT11, TT12, TT13, TT14, TT15, TT16, TT17, TT18, TT19, TT20, TT21, TT22, TT23, TT24, TT25, TT56, TT60, TT61 | `bench test --package ./cmd/bench`, `bench test --package ./internal/treetarget` | no |
+| TT-C4 / `4-run-verbs-in-tree-target.md`, `5-run-kit-worktree-build.md` | A tree-scoped verb runs in a named tree target, and a kit worktree target runs its own current build. | TT8, TT9, TT26, TT27, TT28, TT29, TT30, TT31, TT32, TT33, TT34, TT35, TT36, TT37, TT38, TT39, TT40, TT41, TT57, TT58, TT59, TT43, TT44, TT45, TT46, TT47, TT48, TT49, TT50, TT53, TT54, TT55, TT62 | `bench test --package ./internal/treetarget`, `bench test --package ./internal/worktree`, `bench test --package ./internal/canonicalpath`, `bench test --package ./cmd/bench`, `bench test --check system` | yes |
 
 TT-C1 creates the scope field that TT-C3 and TT-C4 consume, so its review
 closes first. TT-C3 creates the identity row that each TT-C4 child prints.
@@ -364,13 +378,14 @@ place:
 - `internal/systemtest/owner_selection_test.go` lines 250 and 251, the exact `canary` stdout.
 - `internal/systemtest/charge_evidence_test.go` lines 228 and 344, the prefixes of `preflight evidence`.
 - `internal/systemtest/charge_evidence_test.go` line 318, which compares the reads of two worktrees and the `page[1]` prefix. Both comparisons drop the row.
+- `cmd/bench/response_bound_exempt_test.go` lines 93 and 145, where `requireComplete` demands an empty stderr, and the planted `dashboard` and ship-tier calls now print the exempt row there. The bounded `dashboard` case also gains the two row lines.
+- `internal/systemtest/adoption_test.go` line 150 and later, where the scaffolded gate's nested Bench calls each print a row, so the gate response can spill.
 
 These sites stay green, and ticket 3 does not edit them:
 
 - `cmd/bench/gate_route_test.go` lines 60 to 66 and line 98 take exit 2, so they print no row.
 - The help forms at `commit_chain_test.go` line 149, `help_inventory_test.go` line 134, and `main_test.go` lines 200 and 264 print no row.
 - `main_test.go` line 54 and `isolated_command_fixtures_test.go` line 58 compare substrings.
-- `response_bound_exempt_test.go` line 97 compares the stdout of `dashboard --stdout`, and the exempt row goes to stderr.
 - `main_test.go` lines 125 and 129 and `charge_evidence_test.go` lines 341 and 386 compare two reads of one tree.
 - `status_route_converge_test.go` line 50 finds its command by a substring index.
 - The `land_route_test.go`, `owner_land_race_test.go`, and `version` comparisons run repository-scoped verbs.
@@ -449,6 +464,7 @@ These sites stay green, and ticket 3 does not edit them:
 | TT56 | 39 | `bench gate --brief` exits 2 with an empty stdout and the gate usage on stderr | `cmd/bench/gate_route_test.go` (`TestRunGateRejectsBriefUsage`) | A row that the owner writes at every finish makes stdout non-empty. |
 | TT60 | 6 | A planted tree-scoped verb that prints exactly 10 lines does not spill, and its stdout is the two row lines and then the 10 verb lines | planned TestTreeRowOutsideResponseBound in cmd/bench, through a planted registry | A row that counts toward the bound spills a response of 10 verb lines. |
 | TT61 | 6 | When the spill file cannot open, the response carries the verb output and no `tree[` line | planned TestOwnerPrintsNoRowWhenSpillCannotOpen in internal/responsebound, through an unwritable spill directory | A row written after the passing flush lands after the verb output. |
+| TT62 | 34 | With `BENCH_KIT` set to `.` and the working directory entered through a symlink to the root, `KitSourceCheckout` of the physical root answers true | planned TestResolveRelativeUnderSymlinkedWorkingDirectory in internal/canonicalpath, through `t.Chdir` to a symlink | A resolve that makes the path absolute after the symlink step keeps the symlink spelling and answers false. |
 
 Not covered: story 37 — spec B owns these behaviors, and map ticket 6 holds the decision.
 Not covered: story 38 — FT125 owns the filter, and map ticket 7 excludes it.
@@ -525,6 +541,7 @@ never reaches a shell, because the child argv is a direct exec.
 - `cmd/bench/census_output.go`
 - `internal/responsebound/owner.go`
 - `internal/responsebound/owner_test.go`
+- `cmd/bench/response_bound_exempt_test.go`
 - `internal/conformance/subcommand_routing_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/conformance/axi_query_registry_test.go`
@@ -535,6 +552,8 @@ never reaches a shell, because the child argv is a direct exec.
 - `internal/treetarget/`
 - `internal/worktree/tree_target.go`
 - `internal/worktree/tree_target_test.go`
+- `internal/canonicalpath/canonicalpath.go`
+- `internal/canonicalpath/canonicalpath_test.go`
 - `internal/worktree/exec.go`
 - `internal/systemtest/`
 - `tests/canary/package-core-guard/unrouted-subcommand`
@@ -654,7 +673,7 @@ lands before the other dispatches.
 ### Completion plan
 
 ```bench-completion-plan
-{"version":2,"execution":{"mode":"delegate","run_id":"tree-targets-full-20260929","orchestrator_session":"claude:session-08f8b392-1af7-4e9e-9671-d6d921f3325b","author_limit":1,"assignments":{"1-declare-command-scope.md":[{"session":"claude:bench-writer/tt-t1-author","assignment":"tt-t1-author","model":"opus","effort":"high","source":"f981cd3db1a4f27eddba5feede40a80e205bf1c1","native_ref":"claude:agent/tt-t1-author-20260929@f981cd3db1a4f27eddba5feede40a80e205bf1c1"},{"session":"claude:bench-writer/tt-t1-repair-1","assignment":"tt-t1-repair-1","model":"opus","effort":"high","source":"f84ddebca7406bd6f7ea1e33e391235fc4e344e2","native_ref":"claude:agent/tt-t1-repair-1-20260929@f84ddebca7406bd6f7ea1e33e391235fc4e344e2","predecessor":"claude:bench-writer/tt-t1-author","trigger":"user-directed","stopped":"The author returned its final report after record commit a08359f9 and holds no write.","preserved":"f84ddebca7406bd6f7ea1e33e391235fc4e344e2"}],"2-derive-kit-source-path.md":[{"session":"claude:bench-writer/tt-t2-author","assignment":"tt-t2-author","model":"opus","effort":"high","source":"f84c016ec166fe2fcb4a8e0691248ece461d04ee","native_ref":"claude:agent/tt-t2-author-20260929@f84c016ec166fe2fcb4a8e0691248ece461d04ee"},{"session":"claude:bench-writer/tt-t2-author-2","assignment":"tt-t2-author-2","model":"opus","effort":"high","source":"5685e1878a659a8f6fdeb2d2ece1f073f651a989","native_ref":"claude:agent/tt-t2-author-2-20260929@5685e1878a659a8f6fdeb2d2ece1f073f651a989","predecessor":"claude:bench-writer/tt-t2-author","trigger":"terminal-failure","stopped":"The author returned a blocked report because the plan probe 2-kit-probe could not compile, and it committed nothing.","preserved":"5685e1878a659a8f6fdeb2d2ece1f073f651a989"},{"session":"claude:bench-writer/tt-t2-repair-1","assignment":"tt-t2-repair-1","model":"opus","effort":"high","source":"54e5b7f1653d6e81945636d29e93956577004604","native_ref":"claude:agent/tt-t2-repair-1-20260929@54e5b7f1653d6e81945636d29e93956577004604","predecessor":"claude:bench-writer/tt-t2-author-2","trigger":"user-directed","stopped":"The author returned its final report after record commit c8b9bb94 and holds no write.","preserved":"54e5b7f1653d6e81945636d29e93956577004604"}],"3-name-the-graded-tree.md":[{"session":"claude:bench-writer/tt-t3-author","assignment":"tt-t3-author","model":"opus","effort":"high","source":"b4f4d260410334dc937af7631e36d1b43a9c7a68","native_ref":"claude:agent/tt-t3-author-20260929@b4f4d260410334dc937af7631e36d1b43a9c7a68"}],"4-run-verbs-in-tree-target.md":[],"5-run-kit-worktree-build.md":[]}},"chunks":[{"id":"TT-C1","tickets":["1-declare-command-scope.md"],"verification":[{"id":"1-cmd","command":"bench test --package ./cmd/bench","ticket":"1-declare-command-scope.md"},{"id":"1-routing","command":"bench test --check subcommand-routing","ticket":"1-declare-command-scope.md"},{"id":"1-conformance","command":"bench test --package ./internal/conformance","ticket":"1-declare-command-scope.md"},{"id":"1-scope-probe","command":"bench probe cmd/bench/tree_scope.go --swap '\"--in\"' --with '\"--in-x\"' --package ./cmd/bench --run TestRepositoryVerbRefusesTreeTarget","probe":"swap","ticket":"1-declare-command-scope.md"}]},{"id":"TT-C2","tickets":["2-derive-kit-source-path.md"],"verification":[{"id":"2-gate","command":"bench test --package ./internal/gate","ticket":"2-derive-kit-source-path.md"},{"id":"2-kit-probe","command":"bench probe internal/gate/kit_source.go --swap 'canonicalpath.Resolve' --with 'func(p string) (string, error) { _ = canonicalpath.Resolve; return filepath.EvalSymlinks(p) }' --package ./internal/gate --run TestKitSourceCheckoutResolvesARelativeKit","probe":"swap","ticket":"2-derive-kit-source-path.md"}]},{"id":"TT-C3","tickets":["3-name-the-graded-tree.md"],"verification":[{"id":"3-cmd","command":"bench test --package ./cmd/bench","ticket":"3-name-the-graded-tree.md"},{"id":"3-treetarget","command":"bench test --package ./internal/treetarget","ticket":"3-name-the-graded-tree.md"},{"id":"3-responsebound","command":"bench test --package ./internal/responsebound","ticket":"3-name-the-graded-tree.md"},{"id":"3-unassigned-probe","command":"bench probe internal/treetarget/identify.go --swap '\"unassigned\"' --with '\"primary\"' --package ./internal/treetarget --run TestIdentifyUnownedWorktree","probe":"swap","ticket":"3-name-the-graded-tree.md"}]},{"id":"TT-C4","tickets":["4-run-verbs-in-tree-target.md","5-run-kit-worktree-build.md"],"verification":[{"id":"4-treetarget","command":"bench test --package ./internal/treetarget","ticket":"4-run-verbs-in-tree-target.md"},{"id":"4-worktree","command":"bench test --package ./internal/worktree","ticket":"4-run-verbs-in-tree-target.md"},{"id":"4-cmd","command":"bench test --package ./cmd/bench","ticket":"4-run-verbs-in-tree-target.md"},{"id":"4-system","command":"bench test --check system","ticket":"4-run-verbs-in-tree-target.md"},{"id":"5-treetarget","command":"bench test --package ./internal/treetarget","ticket":"5-run-kit-worktree-build.md"},{"id":"5-system","command":"bench test --check system","ticket":"5-run-kit-worktree-build.md"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/tree-targets/spec.md"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"treetarget","command":"bench test --package ./internal/treetarget"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"routing","command":"bench test --check subcommand-routing"},{"id":"system","command":"bench test --check system"}]}
+{"version":2,"execution":{"mode":"delegate","run_id":"tree-targets-full-20260929","orchestrator_session":"claude:session-08f8b392-1af7-4e9e-9671-d6d921f3325b","author_limit":1,"assignments":{"1-declare-command-scope.md":[{"session":"claude:bench-writer/tt-t1-author","assignment":"tt-t1-author","model":"opus","effort":"high","source":"f981cd3db1a4f27eddba5feede40a80e205bf1c1","native_ref":"claude:agent/tt-t1-author-20260929@f981cd3db1a4f27eddba5feede40a80e205bf1c1"},{"session":"claude:bench-writer/tt-t1-repair-1","assignment":"tt-t1-repair-1","model":"opus","effort":"high","source":"f84ddebca7406bd6f7ea1e33e391235fc4e344e2","native_ref":"claude:agent/tt-t1-repair-1-20260929@f84ddebca7406bd6f7ea1e33e391235fc4e344e2","predecessor":"claude:bench-writer/tt-t1-author","trigger":"user-directed","stopped":"The author returned its final report after record commit a08359f9 and holds no write.","preserved":"f84ddebca7406bd6f7ea1e33e391235fc4e344e2"}],"2-derive-kit-source-path.md":[{"session":"claude:bench-writer/tt-t2-author","assignment":"tt-t2-author","model":"opus","effort":"high","source":"f84c016ec166fe2fcb4a8e0691248ece461d04ee","native_ref":"claude:agent/tt-t2-author-20260929@f84c016ec166fe2fcb4a8e0691248ece461d04ee"},{"session":"claude:bench-writer/tt-t2-author-2","assignment":"tt-t2-author-2","model":"opus","effort":"high","source":"5685e1878a659a8f6fdeb2d2ece1f073f651a989","native_ref":"claude:agent/tt-t2-author-2-20260929@5685e1878a659a8f6fdeb2d2ece1f073f651a989","predecessor":"claude:bench-writer/tt-t2-author","trigger":"terminal-failure","stopped":"The author returned a blocked report because the plan probe 2-kit-probe could not compile, and it committed nothing.","preserved":"5685e1878a659a8f6fdeb2d2ece1f073f651a989"},{"session":"claude:bench-writer/tt-t2-repair-1","assignment":"tt-t2-repair-1","model":"opus","effort":"high","source":"54e5b7f1653d6e81945636d29e93956577004604","native_ref":"claude:agent/tt-t2-repair-1-20260929@54e5b7f1653d6e81945636d29e93956577004604","predecessor":"claude:bench-writer/tt-t2-author-2","trigger":"user-directed","stopped":"The author returned its final report after record commit c8b9bb94 and holds no write.","preserved":"54e5b7f1653d6e81945636d29e93956577004604"}],"3-name-the-graded-tree.md":[{"session":"claude:bench-writer/tt-t3-author","assignment":"tt-t3-author","model":"opus","effort":"high","source":"b4f4d260410334dc937af7631e36d1b43a9c7a68","native_ref":"claude:agent/tt-t3-author-20260929@b4f4d260410334dc937af7631e36d1b43a9c7a68"},{"session":"claude:bench-writer/tt-t3-author-2","assignment":"tt-t3-author-2","model":"opus","effort":"high","source":"c050dc968e92de7d937a8263f08b8b084a5040f5","native_ref":"claude:agent/tt-t3-author-2-20260929@c050dc968e92de7d937a8263f08b8b084a5040f5","predecessor":"claude:bench-writer/tt-t3-author","trigger":"terminal-failure","stopped":"The author returned a blocked report for a fence gap and a behavioral question, and it committed nothing.","preserved":"c050dc968e92de7d937a8263f08b8b084a5040f5"}],"4-run-verbs-in-tree-target.md":[],"5-run-kit-worktree-build.md":[]}},"chunks":[{"id":"TT-C1","tickets":["1-declare-command-scope.md"],"verification":[{"id":"1-cmd","command":"bench test --package ./cmd/bench","ticket":"1-declare-command-scope.md"},{"id":"1-routing","command":"bench test --check subcommand-routing","ticket":"1-declare-command-scope.md"},{"id":"1-conformance","command":"bench test --package ./internal/conformance","ticket":"1-declare-command-scope.md"},{"id":"1-scope-probe","command":"bench probe cmd/bench/tree_scope.go --swap '\"--in\"' --with '\"--in-x\"' --package ./cmd/bench --run TestRepositoryVerbRefusesTreeTarget","probe":"swap","ticket":"1-declare-command-scope.md"}]},{"id":"TT-C2","tickets":["2-derive-kit-source-path.md"],"verification":[{"id":"2-gate","command":"bench test --package ./internal/gate","ticket":"2-derive-kit-source-path.md"},{"id":"2-kit-probe","command":"bench probe internal/gate/kit_source.go --swap 'canonicalpath.Resolve' --with 'func(p string) (string, error) { _ = canonicalpath.Resolve; return filepath.EvalSymlinks(p) }' --package ./internal/gate --run TestKitSourceCheckoutResolvesARelativeKit","probe":"swap","ticket":"2-derive-kit-source-path.md"}]},{"id":"TT-C3","tickets":["3-name-the-graded-tree.md"],"verification":[{"id":"3-cmd","command":"bench test --package ./cmd/bench","ticket":"3-name-the-graded-tree.md"},{"id":"3-treetarget","command":"bench test --package ./internal/treetarget","ticket":"3-name-the-graded-tree.md"},{"id":"3-responsebound","command":"bench test --package ./internal/responsebound","ticket":"3-name-the-graded-tree.md"},{"id":"3-unassigned-probe","command":"bench probe internal/treetarget/identify.go --swap '\"unassigned\"' --with '\"primary\"' --package ./internal/treetarget --run TestIdentifyUnownedWorktree","probe":"swap","ticket":"3-name-the-graded-tree.md"}]},{"id":"TT-C4","tickets":["4-run-verbs-in-tree-target.md","5-run-kit-worktree-build.md"],"verification":[{"id":"4-treetarget","command":"bench test --package ./internal/treetarget","ticket":"4-run-verbs-in-tree-target.md"},{"id":"4-worktree","command":"bench test --package ./internal/worktree","ticket":"4-run-verbs-in-tree-target.md"},{"id":"4-canonicalpath","command":"bench test --package ./internal/canonicalpath","ticket":"4-run-verbs-in-tree-target.md"},{"id":"4-cmd","command":"bench test --package ./cmd/bench","ticket":"4-run-verbs-in-tree-target.md"},{"id":"4-system","command":"bench test --check system","ticket":"4-run-verbs-in-tree-target.md"},{"id":"5-treetarget","command":"bench test --package ./internal/treetarget","ticket":"5-run-kit-worktree-build.md"},{"id":"5-system","command":"bench test --check system","ticket":"5-run-kit-worktree-build.md"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/tree-targets/spec.md"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"treetarget","command":"bench test --package ./internal/treetarget"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"routing","command":"bench test --check subcommand-routing"},{"id":"system","command":"bench test --check system"}]}
 ```
 
 ### Flagged additions
@@ -690,33 +709,18 @@ at create. This spec changes neither, and it records the question for spec B.
 The reviewer leans to a duplicate-label refusal at `bench worktree create`,
 because map ticket 1 closed the `--in` value set.
 
-### Pending reviewer decisions from the staleness pass
+### Reviewer decisions during the build
 
-The staleness pass found two behavioral gaps. The reviewer decided the first on
-2026-09-29, and the identity-row section holds the rule. Ticket 4 waits for the
-second. The TT-C1 review found a third gap, and the TT-C2 review found a fourth.
-Neither blocks a ticket.
+The build found five behavioral gaps, and the reviewer decided each one on
+2026-09-29. Each rule now lives in its spec section.
 
-1. The row and the response bound: decided. The two row lines do not count
-   toward the bound, and TT60 and TT61 pin the rule.
-2. The label lookup precedence. Step 5 matches one active label, but TT34
-   needs the state refusal for a released label. The spec does not say what one
-   active row and one released row with the same label give.
-
-   The proposed rule: the lookup compares the value with the label of every
-   ledger row. Exactly one active match names that worktree. With no active
-   match, exactly one match in another state gives the state refusal. Two or
-   more active matches, or two or more inactive matches with no active match,
-   give the ambiguity refusal.
-3. The wrapper-only `repair` verb. It is repository-scoped, but only
-   `bin/bench.sh` routes it, so the Go dispatcher never refuses its `--in`.
-   The wrapper prints its own usage line on stderr at exit 2, and the verb does
-   not run. The fence holds no wrapper path. The proposed rule: accept the
-   wrapper's refusal for a wrapper-only verb, and record it as a known form.
-4. The symlinked working directory. For a relative path,
-   `canonicalpath.Resolve` keeps the spelling of a working directory that a
-   process entered through a symlink. There, `BENCH_KIT` set to `.` does not
-   match the physical root. TT51 can fail where the temporary directory is a
-   symlink, as on macOS. The fix belongs in `internal/canonicalpath`, which
-   the fence does not hold. The proposed route: park it with `bench idea` for a
-   separate light-path fix before this spec lands.
+1. The row and the response bound: the two row lines do not count toward the
+   bound. The identity-row section holds the rule, and TT60 and TT61 pin it.
+2. The label lookup precedence: exactly one active match wins. Step 5 of the
+   tree-target section holds the rule, and TT34 and TT35 pin it.
+3. The wrapper-only `repair` verb: the wrapper's own refusal stands. The
+   repository-refusal section holds the rule.
+4. The symlinked working directory: ticket 4 fixes `canonicalpath.Resolve`.
+   The path-derivation section holds the rule, and TT62 pins it.
+5. The nested Bench call: each child prints its own row. The identity-row
+   section holds the rule.
